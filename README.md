@@ -17,11 +17,11 @@ Coming Soon!!!
 
 ## Contract Us
 
-Website: [http://www.topnetwork.org](http://www.topnetwork.org)
-Staking: [www.topstaking.io](www.topstaking.io)
-Twitter: [@topnetwork_top](@topnetwork_top)
-Telegram: [https://t.me/topnetwork_top](https://t.me/topnetwork_top)
-News Channel: [https://t.me/top_network](https://t.me/top_network)
-Medium: [https://medium.com/@topnetwork](https://medium.com/@topnetwork)
-Slack: [https://join.slack.com/t/top-network-group/shared_invite/zt-icxq4bec-QIL5SvKGRN4VArYMSQ8B8A](https://join.slack.com/t/top-network-group/shared_invite/zt-icxq4bec-QIL5SvKGRN4VArYMSQ8B8A)
-Official Wallet: [www.hiwallet.org](www.hiwallet.org)
+* Website: [http://www.topnetwork.org](http://www.topnetwork.org)
+* Staking: [www.topstaking.io](www.topstaking.io)
+* Twitter: [@topnetwork_top](@topnetwork_top)
+* Telegram: [https://t.me/topnetwork_top](https://t.me/topnetwork_top)
+* News Channel: [https://t.me/top_network](https://t.me/top_network)
+* Medium: [https://medium.com/@topnetwork](https://medium.com/@topnetwork)
+* Slack: [https://join.slack.com/t/top-network-group/shared_invite/zt-icxq4bec-QIL5SvKGRN4VArYMSQ8B8A](https://join.slack.com/t/top-network-group/shared_invite/zt-icxq4bec-QIL5SvKGRN4VArYMSQ8B8A)
+* Official Wallet: [www.hiwallet.org](www.hiwallet.org)
