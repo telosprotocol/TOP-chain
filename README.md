@@ -25,3 +25,7 @@ Coming Soon!!!
 * Medium: [https://medium.com/@topnetwork](https://medium.com/@topnetwork)
 * Slack: [https://join.slack.com/t/top-network-group/shared_invite/zt-icxq4bec-QIL5SvKGRN4VArYMSQ8B8A](https://join.slack.com/t/top-network-group/shared_invite/zt-icxq4bec-QIL5SvKGRN4VArYMSQ8B8A)
 * Official Wallet: [www.hiwallet.org](www.hiwallet.org)
+
+## Version
+
+Upgrade version to v1.1.1
