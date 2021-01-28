@@ -28,4 +28,4 @@ Coming Soon!!!
 
 ## Version
 
-Upgrade version to v1.1.1
+Upgrade version to v1.1.3
