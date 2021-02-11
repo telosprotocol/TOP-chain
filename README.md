@@ -5,7 +5,7 @@
 
 <h1 align="center">TOP Network</h1>
 
-TOP-chain is an implementation of the TOP Network. For more details about TOP, check out the [TOP Network Spec](https://topnetwork.org).
+TOP Network is a decentralized open communication network that provides secure, high-qualify and low-cost cloud communication services on the blockchain. TOP Network is also a high-performance public blockchain platform designed to handle real-world business of any size or volume. Powered by innovations including three-layer network, two-layer sharding, two-layer lattice DAG , xPBFT-DPoS*, layer-xP2P…check out the [TOP Network Spec](https://topnetwork.org).
 
 ## Documentation
 
