@@ -11,10 +11,6 @@ TOP-chain is an implementation of the TOP Network. For more details about TOP, c
 
 For instructions on how to use, please visit [http://developers.topnetwork.org/](http://developers.topnetwork.org/).
 
-## Source Code
-
-Coming Soon!!!
-
 ## Contract Us
 
 * Website: [http://www.topnetwork.org](http://www.topnetwork.org)
