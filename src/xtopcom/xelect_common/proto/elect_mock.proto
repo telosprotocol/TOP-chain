@@ -1,0 +1,23 @@
+syntax = "proto2";
+
+package top.elect.pb;
+
+message Node {
+    optional uint32 netowrk_id = 1;
+    optional int32 zone_id = 2;
+    optional int32 cluster_id = 3;
+    optional int32 group_id = 4;
+    optional int32 slot_id = 5;
+
+    optional string node_type = 10;
+    optional string account = 11;
+
+    // for map
+    optional uint64 version = 20;
+    optional int64 time_updated = 21;
+}
+
+message ReportNode {
+    optional Node address = 1;
+    repeated uint64 versions = 2;
+}

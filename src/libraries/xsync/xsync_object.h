@@ -1,0 +1,93 @@
+// Copyright (c) 2017-2018 Telos Foundation & contributors
+// Distributed under the MIT software license, see the accompanying
+// file COPYING or http://www.opensource.org/licenses/mit-license.php.
+
+#pragma once
+
+#include <memory>
+#include "xbasic/xmemory.hpp"
+#include "xbasic/xrunnable.h"
+#include "xmbus/xmessage_bus.h"
+#include "xstore/xstore_face.h"
+#include "xsync/xdeceit_node_manager.h"
+#include "xsync/xsession.h"
+#include "xsync/xrole_chains_mgr.h"
+#include "xsync/xrole_xips_manager.h"
+#include "xsync/xsync_status.h"
+#include "xsync/xsync_sender.h"
+#include "xsync/xsync_netmsg_dispatcher.h"
+#include "xsync/xsync_handler.h"
+#include "xsyncbase/xsync_face.h"
+#include "xsync/xsync_event_dispatcher.h"
+#include "xvnetwork/xvhost_face.h"
+#include "xbase/xvledger.h"
+#include "xblockstore/xblockstore_face.h"
+#include "xsync/xsync_store.h"
+#include "xsync/xsync_ratelimit.h"
+#include "xsync/xblock_fetcher.h"
+#include "xsync/xdownloader.h"
+#include "xsync/xsync_gossip.h"
+#include "xsync/xsync_latest.h"
+
+NS_BEG2(top, sync)
+
+class xtop_sync_object final : public xbasic_runnable_t<xtop_sync_object>, public xsync_face_t {
+private:
+    observer_ptr<mbus::xmessage_bus_face_t> m_bus;
+    std::string m_instance;
+
+    std::unique_ptr<sync::xsync_store_face_t> m_sync_store{};
+    std::unique_ptr<sync::xdeceit_node_manager_t> m_blacklist{};
+    std::unique_ptr<sync::xsession_manager_t> m_session_mgr{};
+    std::unique_ptr<sync::xsync_status_t> m_sync_status{};
+
+    std::unique_ptr<sync::xrole_chains_mgr_t> m_role_chains_mgr{};
+    std::unique_ptr<sync::xrole_xips_manager_t> m_role_xips_mgr{};
+    std::unique_ptr<sync::xsync_sender_t> m_sync_sender{};
+    std::unique_ptr<sync::xsync_ratelimit_face_t> m_sync_ratelimit{};
+    std::unique_ptr<sync::xsync_broadcast_t> m_sync_broadcast{};
+    std::unique_ptr<sync::xdownloader_t> m_downloader{};
+
+    std::unique_ptr<sync::xblock_fetcher_t> m_block_fetcher{};
+    std::unique_ptr<sync::xsync_gossip_t> m_sync_gossip{};
+    std::unique_ptr<sync::xsync_latest_t> m_sync_latest{};
+    std::unique_ptr<sync::xsync_handler_t> m_sync_handler{};
+
+    xobject_ptr_t<sync::xsync_event_dispatcher_t> m_sync_event_dispatcher{};
+    std::unique_ptr<sync::xsync_netmsg_dispatcher_t> m_sync_netmsg_dispatcher{};
+
+public:
+    xtop_sync_object(xtop_sync_object const &)             = delete;
+    xtop_sync_object & operator=(xtop_sync_object const &) = delete;
+    xtop_sync_object(xtop_sync_object &&)                  = default;
+    xtop_sync_object & operator=(xtop_sync_object &&)      = default;
+    ~xtop_sync_object()                                    = default;
+
+    xtop_sync_object(observer_ptr<mbus::xmessage_bus_face_t> const & bus,
+                     observer_ptr<store::xstore_face_t> const & store,
+                     observer_ptr<vnetwork::xvhost_face_t> const & vhost,
+                     xobject_ptr_t<base::xvblockstore_t> &blockstore,
+                     xobject_ptr_t<base::xvnodesrv_t> &nodesvr_ptr,
+                     xobject_ptr_t<base::xvcertauth_t> &cert_ptr,
+                     observer_ptr<base::xiothread_t> const & sync_thread,
+                     std::vector<observer_ptr<base::xiothread_t>> const & sync_account_thread_pool,
+                     std::vector<observer_ptr<base::xiothread_t>> const & sync_handler_thread_pool);
+
+    void
+    start() override;
+
+    void
+    stop() override;
+
+    //void
+    //turn_on_synchronizing(observer_ptr<vnode::xvnode_t> const & node);
+
+    std::string help() const override;
+    std::string status() const override;
+
+    void add_vnet(const std::shared_ptr<vnetwork::xvnetwork_driver_face_t> &vnetwork_driver);
+    void remove_vnet(const std::shared_ptr<vnetwork::xvnetwork_driver_face_t> &vnetwork_driver);
+};
+using xsync_object_t = xtop_sync_object;
+
+NS_END2

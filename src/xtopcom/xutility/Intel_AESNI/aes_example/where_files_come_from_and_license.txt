@@ -1,0 +1,58 @@
+/* aes_example.c code originally from http://www.progressive-coding.com/tutorial.php?id=3#end
+ * Modified by Pat Fay
+ *
+ ---------------------------------------------------------------------------
+ Copyright (c) 2007-2010, Laurent Haan, Luxembourg, LU. All rights reserved.
+ 
+ LICENSE TERMS
+ 
+ The redistribution and use of this software (with or without changes)
+ is allowed without the payment of fees or royalties provided that:
+ 
+  1. source code distributions include the above copyright notice, this
+     list of conditions and the following disclaimer;
+ 
+  2. binary distributions include the above copyright notice, this list
+     of conditions and the following disclaimer in their documentation;
+ 
+  3. the name of the copyright holder is not used to endorse products
+     built using this software without specific written permission.
+ 
+ DISCLAIMER
+ 
+ This software is provided 'as is' with no explicit or implied warranties
+ in respect of its properties, including, but not limited to, correctness
+ and/or fitness for purpose.
+ ---------------------------------------------------------------------------
+ Issue Date: 23/02/2010
+ */
+
+The files my_getopt.h and my_getopt.c come from:
+http://xent.com/~bsittler/geocities/#my_getopt
+and the license is 
+/*  http://xent.com/~bsittler/geocities/#my_getopt
+ *  my_getopt.c - my re-implementation of getopt.
+ *  Copyright 1997, 2000, 2001, 2002, 2006, Benjamin Sittler
+ *
+ *  Permission is hereby granted, free of charge, to any person
+ *  obtaining a copy of this software and associated documentation
+ *  files (the "Software"), to deal in the Software without
+ *  restriction, including without limitation the rights to use, copy,
+ *  modify, merge, publish, distribute, sublicense, and/or sell copies
+ *  of the Software, and to permit persons to whom the Software is
+ *  furnished to do so, subject to the following conditions:
+ *  
+ *  The above copyright notice and this permission notice shall be
+ *  included in all copies or substantial portions of the Software.
+ *  
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ *  EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ *  MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ *  NONINFRINGEMENT.  IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+ *  HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+ *  WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ *  DEALINGS IN THE SOFTWARE.
+ */
+
+Other source code files use the license shown in the source code file.
