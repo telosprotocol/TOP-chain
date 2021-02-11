@@ -1,0 +1,22 @@
+cmake_minimum_required(VERSION 3.5)
+
+aux_source_directory(./ src)
+aux_source_directory(./xschnorr src)
+aux_source_directory(./xsignature src)
+aux_source_directory(./xrand src)
+aux_source_directory(./xkeys src)
+aux_source_directory(./xrand src)
+aux_source_directory(./xhash256 src)
+aux_source_directory(./xserialize src)
+aux_source_directory(./xcommon src)
+add_library (xmutisig ${src})
+add_dependencies(xmutisig xxbase)
+
+target_link_libraries (xmutisig PRIVATE ssl crypto xxbase secp256k1)
+
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    if (XENABLE_TESTS)
+        enable_testing()
+        add_subdirectory(unittest)
+    endif()
+endif()

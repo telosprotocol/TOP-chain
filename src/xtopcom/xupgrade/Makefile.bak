@@ -1,0 +1,16 @@
+CC = g++
+CFLAGS=
+TARGET = xupgrade
+SRCS := $(wildcard *.cpp) 
+OBJS := $(patsubst %cpp, %o, $(SRCS)) 
+
+all: $(TARGET) 
+
+$(TARGET): $(OBJS) 
+	$(CC) $(CFLAGS) -o $@ $^ -lpthread -lrt -lz -lm -lssl -lcrypto
+
+%.o:%.cpp
+	$(CC) $(CFLAGS) -std=c++11 -c $<
+
+clean: 
+	rm -f *.o $(TARGET)
