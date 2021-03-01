@@ -93,61 +93,80 @@ static std::string const g_testnet_genesis_config =
 R"T(
 {
     "accounts": {
-        "tcc": {
-                "T00000LfhWJA5JPcKPJovoBVtN4seYnnsVjx2VuB": {
-                    "balance": "1000000000"
-                },
-                "T00000LNEZSwcYJk6w8zWbR78Nhw8gbT2X944CBy": {
-                    "balance": "1000000000"
-                },
-                "T00000LfVA4mibYtKsGqGpGRxf8VZYHmdwriuZNo": {
-                    "balance": "1000000000"
-                }
+        "genesis_funds_account": {
+            "T00000LVgeU1bqasm3TPv6Lm3bKt5ZhqUsnxMqw6": {
+                "balance": "999980000000000"
             },
-            "genesis_funds_account": {
-                "T00000LWUw2ioaCw3TYJ9Lsgu767bbNpmj75kv73": {
-                    "balance": "2999997000000000"
-                },
-                "T00000LTHfpc9otZwKmNcXA24qiA9A6SMHKkxwkg": {
-                    "balance": "6000000000000000"
-                },
-                "T00000Ldf7KcME5YaNvtFsr6jCFwNU9i7NeZ1b5a": {
-                    "balance": "3400000000000000"
-                }
+            "T00000LXJUq2ESPswHemepjLAnK89qCa2j2d2PL2": {
+                "balance": "1000000000000000"
+            },
+            "T00000Ld7MbJzspCG7Etzq9nPt1XaJHxRU3h2Sto": {
+                "balance": "1000000000000000"
+            },
+            "T00000LfsZM361wz9wAWxfe6ziWhNeFQdaAnVK2z": {
+                "balance": "6400000000000000"
+            },
+            "T00000Lfq4CyvRBnrGsWQSxDT63S24VcXonrLMMf": {
+                "balance": "600000000000000"
+            },
+            "T00000LX4U2aWyhPf2ucdEE9br1tFMTJpDCUQwdF": {
+                "balance": "600000000000000"
+            },
+            "T00000Ld37ymxWZKJy8Bzj1DNtmLKyNGYGdm3ovS": {
+                "balance": "600000000000000"
+            },
+            "T00000Lb5mfahHoRhgPASrJL1qSiYRepaWrKjszz": {
+                "balance": "600000000000000"
+            },
+            "T00000LbXwNMTNUBu9VewgDfprfes1JhSeuLvmU8": {
+                "balance": "600000000000000"
             }
+        },
+        "tcc": {
+            "T00000LUhVfsUWeMgb4Gw8Q8MNRamDubgF7nE7ES": {
+                "balance": "10000000000"
+            },
+            "T00000LiP3v3gUnAGbtajwmCLwSyyWtuiXgUWpwo": {
+                "balance": "5000000000"
+            },
+            "T00000LTrdB2vwrQ96RFSBY1fWp6DD6yb85kvNeN": {
+                "balance": "5000000000"
+            }
+        }
     },
     "seedNodes": {
-        "T0000013eh6AcbYg4b3MZiSGJFe85Hx4hDU9RCpj": "A1+X0/Ut/Adz2NZjg57RveRpg9ljQsR5t5vrQ6SYE1xx",
-        "T0000013rDnLF8mkM2ua9MLtMYCoBk9682tyRimu": "A6TT4JsYAhtr9c4W2fNXOQCBJc0+9K7nnWPIV3oXs+2Z",
-        "T0000015jgbeuHRWjD3QPAPhkWC3Y5xQwYEL8HMd": "A87W3lN+anWdz0BxFpTFKiYFEageuAIMp8Ae0kiw2V2o",
-        "T0000016kdzmUVZH4ZkFHJfzTcdRmpc1SkFuNyMx": "Asw6d5H58J3gL2/E5PjvplwTkWUEEC7w4pOsYmO6lSBz",
-        "T000001DNG4izekAUndsy5dAtg4GfY7nVvxmsKbx": "Agm/ekUB2DWkybi4Ly3hn3RJEVvgikxAox3wHLmvBoyX",
-        "T000001JkyJSZTdn2UozFqn1odFtNgqzaswKHBiL": "Ay2bSqZ/HyrrBud2pj4xTyfCy8zWIcjFWxQ0IlTcF8FW",
-        "T000001L6JpJaBKvVsHrWnnUwLAbj1876ZuPSSgM": "A6FA8EeR5BzZvctzz2FKDcTIWnlhxmrUa5ZhWSeW333w",
-        "T00000131d6BERLzV7FnobaCpgEjYuYDQ7R8NAP6": "A9J4uK2TlJwnF5y49Rrbw6EjtGBNgO8MZmlsaC4d5PU3",
-        "T000001Hp6DXZDkWj8bS39NsNuNMz5rr63S2pBza": "A26k32RgcRUDwUcELyd3HypRtZinooPhZ2UE4frqFMIu",
-        "T0000015GwmF4Xkncjq36BE6PbVYFUEnv8v29U8Q": "A8uuVgzP2k98t8Dkbd2God/lk4D4+SrQAs0S974UsFbQ",
-        "T000001KZqPrcUtRaG2nCue4uQMFoWaq5Sasja2": "Ar2rAjlQ9RIbiVk902UAuxi6RMKBnNKO3+ySEBVAEGZS",
-        "T000001KbmrndswCbfmHEM74gvZP51FwDAFS7NSB": "AkL2TS9RCWgLY2YNMOaEip//prt08GpK1dZz9FiwGYor",
-        "T000001L935wdv4NYdM6UuT6VqUi9jgFuR5QUtjR": "ArfMvOaaTPTY2aDu0TBa5itjdfi96cvWJso2k456hBBO",
-        "T0000016Xm6iKhaorpB39LpNHCXJCaTE3YzX8dwG": "AhXGwicjFQG9PXdOcLgzSAb5JkwX3k3Od7FIv44dvFNb",
-        "T000001CsCNrw3UVYBBkjxWEzNBfo4Rq2MufA5UJ": "AtEIFmQrJovGvGYymQN12j6tKuNERIDQttKQyQOE/P25",
-        "T0000016pcBBWTDJU97JWB6Tnq1BPDdQSkk6jN6c": "A+pvsWy0j6QJnzrsYdsYCQ9KhgQDpECkkLW3CPvCRzLM",
-        "T000001CNtsScVadmpB4ZYjQ8iqzKtnAzm2sCSdd": "AwX1G4jH20OrrwbLXOMr6Fyoq0M/xnmLDbvpU8WTI/4i",
-        "T000001DGVoAAopHibS1xqogPGrDwk5obs3C5dGJ": "AhzB+X4qKoIKARXdGEkBt8XTu28YUABNSRdOEnEe1biq",
-        "T000001Lmyi342K73wSLg83d9gH18g7qmjKQNSrR": "A8vn56fHIPONnkQvQgFRdV6gNrcvi4d7/ACGmFbpZZ+q",
-        "T0000012zBtv2LjzosXXVvrFaenApN1r1XJUeitE": "A+Co9+OOopYexEMDgT9r1NDpCHgr6QGCpYTVK+3j2fOI",
-        "T0000014BMwxmqcqHvDceNqeRnSEgToYXieEjnKz": "A2BA+I3t4ONw0SVEOoQguPiSp2MeNNDzNi2ae8e802ZU",
-        "T000001FxxYfDeUWPUFZ8kReaUxJdpoxKiaZc2T9": "A4T8p3TLWEX73oTWaG+OI+RL81xvycNqM0106OWkoPiJ",
-        "T000001MsgcCCNKJ48TfrAdY3egeYdV58v2XXvv3": "A9MwkV26uTRqn6qY0Rjgh0kG3CvnwF99mf/ZRCamGY05",
-        "T000001H9VJuHbYua238tcuHkDgTencuv1MhtNK2": "A3kbBUUnTjGV0iZiF1YFoj24PK2RmSlVSm+Y5UbyZsn8",
-        "T0000016xCd3gv4NiWzrr1hxTFSPFoXYqYHwvGJK": "A9pWY+avClRQEIegF4nXOuTGw8ubowAhHtlrvBNa4S/v",
-        "T0000016P46V1q1gUMzvU7ZSDjuXKC88HmdK9Ssu": "AyAqz47uUhR5Wv1vkZ0MiNvCSPJFoOWMDmodcfXa4ySj",
-        "T0000017mqXU2X1QPnfLsLZHsm4YLRWcbfvwq7BD": "A0MNrA0PTWKh50Ot1JGdqxbwF14ugOHqHwe8xJWeFjwQ",
-        "T000001MPh2GXgxMX4SMi3Y8bw9QGPY1YdN9iunj": "AgXK9lfi6p/CEr2GtOwxtSFAS/pelS8puA6gZdWW/L1K",
-        "T000001PJZWAupW6FYpYnHaeum87QTi13nbboNo6": "A2XvJ+mTPCGArUSoCK5As57N9CfPlPS4JZLAgXmJMyFh",
-        "T000001MczJzUFwyGUPNuUXLSFyJsfQjRDL64s4q": "Aqi+ZqQ6vprCfeUwJuC8J6wR+JR1mTc7gs4k4Jlr1t+O",
-        "T0000019N79oLSm33ZSRGzG6tBnoodxPdiqLasCb": "AlFI4TvQ7R56BmyBmvxJyuBZmCmqmkLgz6hoPN7IHDgR"
+        "T00000LdkgCx94FNHF3AnmEEj3HLyY5w8gr4skYT": "BHnm93i00YjFJDI8v4lSxjxPctWcCKkHupyL3AJmkH2FI2e7m8wCAvxCY6OyGuZq4BJ9H3R8n27iGk2f0DGYXVE=",
+        "T00000LSSi1HPMJKgkuvuzgnD3t7qZsVKRvxjuhj": "BPYP90nOTqCdM1d82XXXkZDdFj6VgzqLNz/lGhvAYIV5TmP8Vvk90HtJmVxiofJ1sqWpfh8nicI2+//Fhotf3VU=",
+        "T00000LZoQ25d4ZJibqRhrRQvDT7TcQ5M1Jwwq3o": "BIT0XbMyOr6Du7EZJ4cV/JDe4JhrcYHrLgfW27KKhsR1EE+5E3rJ9Q9J5crAT2hgeWFL/JgRVL7z5xfIMic3Byc=",
+        "T00000LNCif6hJ5WKWVvvgzj15ru3WBbVd5XsYqd": "BETd2M3lZ/5iqmSHJj4N72E+JYzU5bXwA4V5tKNGPnRo3rOLXhCB4Ogv1oZQESNztY5GxTwXmTaxejXYGPS9Jzg=",
+        "T00000LN6nySYBV9SEQY2j8Qs2cc8fCSp1Q4sJNL": "BLI/KaemiQQtVVmeeTwQIrJXU3p7CrDdoaUqG7jPx3io1l6NHnzEqQpy1/QrL47YZvrwGbbR35HSSLwihJGG4d0=",
+        "T00000LhdiM7RdkiZSnrtgsEGnYKena4r3nZ3WCY": "BNVzrR1XWTsf4Xp+pjdrEySi9bjpJE8pv9kWEhnQJmV71eCwu+o3ci3MsGovT+WmNSAtEp+p5pMgsFyWbj2qXn4=",
+        "T00000LS5hzBt1ieww9WtuC9Pz9hpbhBnPqBzM7p": "BJ7BTx946m/TVPfNpdNVd2V5jYQhpNctLaTxSgCLA6L0WRlIf3UZ3HhnGIy+lDl3dBnfSYrj28Pz+eSHn0svUsI=",
+        "T00000LfTdm2BmPsiSwPJQ4WwZz6mNDfUXPxykjK": "BPRo43Sl7B98zxvB8S5FKdQkh7lllJS8Kfwm2EAWeNAQplnnRqlQKM1GhHSpyY9OGRCVB7wDTZ7QSB5IZXiHvQ4=",
+        "T00000Lbx1jRYujqLUNuomTuaS5oXyhATY19eEoK": "BCnn3qJJ9P9M7eckEYhwE1OZu3fuVWwh0grUiFg35yjqy89kQ4df8WFV0t/Y6N+GFRQwrIDMOtX2hcJFnmiqgII=",
+        "T00000LZXogjUCL1vAgd9CvavgZAEG1aVkC4wRRx": "BF9WTr2q709MfSJHCkX33nHCX45AWPKlvTKGJhRx3dc+l44BSfW5EzVGy0GkmZaVczKvgLz1kNb0RUKWGHmGR+E=",
+        "T00000LQVwfoXXbcXmQ4DRcZ4S7raX44swsrikDz": "BLtIq6G9om6MboeVTDdSm4o7SQ+VPItTLyxcgJUspUoa0wk5xwwbvm6wV/0x+3dRNKYkuXB6EZ66Saqy2q9ZHJo=",
+        "T00000LiWChpMiWhmGKzoKPc7388Hjv6StvQWTvG": "BKGDM14xI1hdv5ay26FNneBItTwJGOvSKUwm7fRJM7iYs3Uq/Wqhui4T3SfGhuZ7cXQWIJSj79bbsRmE8hsb6gU=",
+        "T00000LWFUoPXqdWcPKhpmAXTXAJ5ibL66Sz82nz": "BOCBO5pFw2gFRZg6zSXB0voMxyhYCMWHM0qOQIT41NaJojC8msQUMEbl3gk/sklwlzBk3c/ZjZI99JOy/jiFTwo=",
+        "T00000LfPCU3JfHoKyDpLapaYRdud3kKWQ5NuxiH": "BL5+o5zmv95PzDufP17OQErpF0kbFTZgKL0ZdIlJuDjA//S2PLiAY0ghagPBhJLTqZMEwE934R1AqzqyrGoBuWk=",
+        "T00000LUJvBTq2j9xCdqLCX8ryBPio5RPePjEUCp": "BMB6UsuA12OMbBsILCMjkU0WfZEwP1t2aWefN4u6sxXyeb2+Yn0o428+u7En/LVWyqz2Aci+dyL+17g9K0RIpJY=",
+        "T00000LcpLysLnuc2gm3qnySvuM64q5jTCYEV6rh": "BGFZD6z/z8xWJsY8p8EMLMcdtqC5fW05eEI4uBzEt8LGGB+zhpZywlgL1HVXAwePLcIhGo3Q5x8vrnBlN+f5Jlo=",
+        "T00000Lbe5K4qsFKsR93VBZs1j9c2ytU6h51LZAX": "BMUjiKFB/8lNkW/YSEoJ2zCSMUzlx3ouSjzvKkLPrHjgGCl5kDse6jYIKDiQK2Sii/57cvQ9uymLX2Dg7dZB02s=",
+        "T00000LVt1xonC5cxJMryeeFx4SRHK9T6p6o36vX": "BLfsFumA8GwTZW1NISFMLTNo8D7xJgbTGUz0+Baga6XZ6KbQHQwwoPiY1R0cq0PVF2dtkC2x8Fn9UmlRExt23U4=",
+        "T00000LaHzQAjz2aWRxCBuLpZxBXAKJAaT9Lo74f": "BIrQ+SBu5MlL093AnhtNM/OQOpeM7w4ZehakDqB2mGqCD4dqN97V04ZKm/13JKCqMbqbzrD6BE8AKG9mcT4EQnU=",
+        "T00000LXtozggvP7FobhbtGjTbfw6kVqVgkuU9cN": "BBTWRHjE1qt2Zz5o8eLagOX+JR/OkJJ/fc/G2vDAywtPH/CkLR7wwj+2YBtPmhOH4g4L9++9HmCj65acUJXz4gY=",
+        "T00000LUsPHHkSH5uWfHLV88u3CkbJvf633UkjEe": "BIMMzCphjZ8PaPKDtesDad8/ZfdFQpq62SXvF5fuXuaqDB30FeVP21U8NGEN7vsJMpuhbiBY+Oju6FmshMH3DdE=",
+        "T00000LTgMnzXpzyLfoitrJpS2QP3rPaZ5ycte3y": "BOumiIVptRyB622rtBkT/s7N3f1aKl6mzm5h/n2nMLzlK9FiBPJrlZ6qLgMgkqynSj193R3FcYytmvVVp1vhNaw=",
+        "T00000LhATPpF7Fw2yrt8bhaNQmCRvobAroDNsaN": "BMZCak8s6hvAklHU+daJ2lZ4wIqIOzpjKEPlCzoN/euYYG1dia6maaWS62BXAi0Z9iavjbsP5b4a/RQwFAzqLfM=",
+        "T00000LMH32jPPmimRZQSEEq7ef37fR1iHK4ToCw": "BMqZe2IC9YQqVzbi7J2etGgEh/9wwd5wGXNL6TdpEVoGThgUSn7qnHhfKsE/loHSPc6Q5T/PENbtZd2I+0OfmxM=",
+        "T00000LfTxMaBGoJkY7ongjs448AcZGYjdy8vzq9": "BGrBGGhkn1vQMVtOuOYEl1LiVtKr+oVUR8aCfWbyQknDCW/hDooWYIevn+XcyMjt+AMxjvUqWAVEV4juELfNXfU=",
+        "T00000LdELZJjHcTGauF95DvYf14Bq7hHu9rLsPC": "BCc0DrhxIlmNjBd1IAzHAjGgkY/DiZ6xozdvm5JxJUbfIu8mDE0IhGu7jQ56e6t8fj6g59ZXCw8PkujKNIDiqYA=",
+        "T00000LaUWK4rC7iy6kVmbDTLKndPfmG5TMYZQiS": "BPqvbOb4AlKbE0zR4hIg7ZzzPM6MrdsSvmsTWkvPmOAtoLF5MQYPHq/haeSPHGD0jqNxM4bPElL0I5oLbsAgFs4=",
+        "T00000LU1ak6FrHXnd233q9e9rKmTmjVjovDD5SG": "BLKipdutq87yTH4ZNgfFGbai7wmxddz36I5hSICg8Vq94UPnWz5AhLsr5ESR+BqZwn2bd72UiyYkrhrI8GVAqJQ=",
+        "T00000LNHFETMNpdrmqz6XsNpTSkk4hdK7vHderg": "BKVXRHjjqZCfJbN3YxOuWSCosk0RBL19t9lyn3obEmxJ+GFNHYOWxsl/2yyGYRlVrX4Zz5kuaqPw0YebGTvFNiI=",
+        "T00000LNL2WwX4BVGWcegbK5FXRzNZPCvCjPodWT": "BDsGUkHJz7HjgS8R3wnbCzxYvAeg9kalyhkeeIENszPtCg1IAMPwkP/rlCZo4OIEzERCO64BgzF8779pxavzhV0=",
+        "T00000LhT2y9CCJYWc47kdLVWZEXAP1CPjx3ukCn": "BJcSuJnX/CUFL9WdU4JFIBvexgVSE2C57FViSKBxvEMscXDNqP3S/fwZgMGiQwxgnwT0fAKJ4gz1GeRnIMtzdYI=",
+        "T00000Lc1vvrhq8XLof5LFA4G1JxPpStCvfAj2SB": "BMuHEDnrV5Tz9zzJw9hrgQshOqrtRiqgZGBdDYbjIkYm0RqVaSO6nViGprs2qLKU3pxBAWG2Rc7phvflO7lWQJ4="
     },
     "timestamp": 1599555555
 }

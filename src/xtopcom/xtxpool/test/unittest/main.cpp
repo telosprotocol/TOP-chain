@@ -40,5 +40,7 @@ int main(int argc, char * argv[]) {
     data::xrootblock_t::init(para);
 
     XMETRICS_INIT();
-    return RUN_ALL_TESTS();
+    assert(RUN_ALL_TESTS() == 0);
+    std::this_thread::sleep_for(std::chrono::seconds(2));
+    return 0;
 }

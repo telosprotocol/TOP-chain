@@ -12,6 +12,7 @@
 #include "xdata/tests/test_blockutl.hpp"
 #include "xtxpool/xtxpool_para.h"
 #include "xblockstore/xblockstore_face.h"
+#include "xtestca.hpp"
 
 using namespace top::xtxpool;
 using namespace top::store;
@@ -19,6 +20,7 @@ using namespace top::data;
 using namespace top;
 using namespace top::base;
 using namespace std;
+using namespace top::test;
 
 class xchain_timer_mock final : public time::xchain_time_face_t {
 public:
@@ -333,6 +335,67 @@ TEST_F(test_unconfirm_sendtx_cache, timeout_retry_send_1) {
     xtxpool_receipt_receiver_counter counter;
     std::vector<xcons_transaction_ptr_t> resend_txs = cache.on_timer_check_cache(xverifier::xtx_utl::get_gmttime_s() + send_tx_receipt_first_retry_timeout + 1, counter);
     ASSERT_EQ(resend_txs.size(), 1);
+}
+
+TEST_F(test_unconfirm_sendtx_cache, multi_sign_error) {
+    auto     mbus = std::make_shared<top::mbus::xmessage_bus_t>();
+    auto     store_ptr = xstore_factory::create_store_with_memdb(nullptr);
+    xobject_ptr_t<base::xvblockstore_t> blockstore;
+    blockstore.attach(store::xblockstorehub_t::instance().create_block_store(*store_ptr, ""));
+    xobject_ptr_t<base::xvcertauth_t> cert_ptr;
+    cert_ptr = make_object_ptr<xschnorrcert_t>((uint32_t)1);
+
+    auto     xtxpool = xtxpool_instance::create_xtxpool_inst(make_observer(store_ptr), blockstore, make_observer(mbus.get()), cert_ptr, make_observer(m_chain_timer));
+
+    std::string table_account = xblocktool_t::make_address_table_account(base::enum_chain_zone_consensus_index, 0);
+    xblock_t* genesis_block = (xblock_t*)test_blocktuil::create_genesis_empty_table(table_account);
+    xassert(true == blockstore->store_block(genesis_block));
+
+    std::vector<base::xvblock_t*> blocks;
+
+    base::xvblock_t* prev_block = genesis_block;
+    uint64_t clock = 10;
+    for (uint64_t i = 1; i < 80; i++) {
+        xblock_t* empty_block = (xblock_t*)test_blocktuil::create_next_emptyblock(prev_block, clock++);
+        blocks.push_back(empty_block);
+        prev_block = empty_block;
+    }
+
+    std::string sender = test_xtxpool_util_t::get_account(0);
+    std::string receiver = test_xtxpool_util_t::get_account(1);
+    std::vector<xcons_transaction_ptr_t> txs = test_xtxpool_util_t::create_cons_transfer_txs(0 , 1, 2);
+    xtable_block_t * tx_tableblock1;
+    std::vector<xcons_transaction_ptr_t> sendtx_receipts;
+    {
+        xlightunit_block_para_t para;
+        para.set_input_txs(txs);
+        base::xvblock_t * sender_genesis_block = xblocktool_t::create_genesis_empty_unit(sender);
+        data::xlightunit_block_t*  lightunit = (xlightunit_block_t *)test_blocktuil::create_next_lightunit(para, sender_genesis_block);
+        xtable_block_para_t table_para;
+        table_para.add_unit(lightunit);
+        tx_tableblock1 = (xtable_block_t *)test_blocktuil::create_next_tableblock(table_para, prev_block, clock++);
+        prev_block = tx_tableblock1;
+        xblock_t* empty_block1 = (xblock_t*)test_blocktuil::create_next_emptyblock(prev_block);
+        prev_block = empty_block1;
+        xblock_t* empty_block2 = (xblock_t*)test_blocktuil::create_next_emptyblock_with_justify(prev_block, tx_tableblock1, clock++);
+        prev_block = empty_block2;
+
+        blocks.push_back(tx_tableblock1);
+        blocks.push_back(empty_block1);
+        blocks.push_back(empty_block2);
+
+        std::vector<xcons_transaction_ptr_t> recvtx_receipts;
+        tx_tableblock1->create_txreceipts(sendtx_receipts, recvtx_receipts);
+        assert(!sendtx_receipts.empty());
+        for (auto iter : sendtx_receipts) {
+            iter->set_commit_prove_with_parent_cert(empty_block2->get_cert());
+        }
+    }
+
+    xschnorrcert_t * schnorrcert = dynamic_cast<xschnorrcert_t *>(cert_ptr.get());
+    schnorrcert->set_verify_muti_sign_ret(base::enum_vcert_auth_result::enum_verify_fail);
+    int32_t ret = xtxpool->push_recv_ack_tx(sendtx_receipts[0]);
+    ASSERT_EQ(ret, xtxpool_error_tx_multi_sign_error);
 }
 
 #if 0

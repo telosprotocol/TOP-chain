@@ -14,7 +14,7 @@ NS_BEG2(top, xstake)
 using namespace xvm;
 using namespace xvm::xcontract;
 
-const int XVOTE_TRX_LIMIT = 1000;  // ~= 50K/(40+8)
+const std::size_t XVOTE_TRX_LIMIT = 1000;  // ~= 50K/(40+8)
 
 class xtable_vote_contract final : public xcontract_base {
     using xbase_t = xcontract_base;
@@ -130,6 +130,18 @@ private:
      *
      */
     void split_and_report(std::string const& report_contract, std::string const& report_func, std::map<std::string, std::string> const& report_content);
+
+    /**
+     *
+     * @brief split algorithm helper
+     *
+     * @param report_contect the report content
+     * @param limit the vote trx limit
+     *
+     * @return std::vector<std::map<std::string, std::string>>  splited map array
+     *
+     */
+    std::vector<std::map<std::string, std::string>> trx_split_helper(std::map<std::string, std::string> const& report_content, std::size_t limit = XVOTE_TRX_LIMIT);
 
 };
 

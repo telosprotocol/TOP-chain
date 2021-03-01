@@ -1,0 +1,170 @@
+#include "gtest/gtest.h"
+#include "test_xtxpool_util.h"
+#include "xtxpool_v2/xtx_queue.h"
+#include "xtxpool_v2/xtxpool_base.h"
+#include "xtxpool_v2/xtxpool_error.h"
+
+using namespace top::xtxpool_v2;
+using namespace top::data;
+using namespace top;
+using namespace top::base;
+using namespace std;
+using namespace top::utl;
+
+class test_tx_queue : public testing::Test {
+protected:
+    void SetUp() override {
+    }
+
+    void TearDown() override {
+    }
+};
+
+TEST_F(test_tx_queue, sigle_send_tx) {
+    std::string table_addr = "table_test";
+    xtxpool_shard_info_t shard(0, 0, 0);
+    xtxpool_table_info_t table_para(table_addr, &shard);
+    xtx_queue_t tx_queue(&table_para);
+    uint256_t last_tx_hash = {};
+    uint64_t now = xverifier::xtx_utl::get_gmttime_s();
+
+    xcons_transaction_ptr_t tx = test_xtxpool_util_t::create_cons_transfer_tx(0, 1, 0, now, last_tx_hash);
+    tx->get_transaction()->set_push_pool_timestamp(now);
+
+    xtx_para_t para;
+    std::shared_ptr<xtx_entry> tx_ent = std::make_shared<xtx_entry>(tx, para);
+
+    // push first time
+    int32_t ret = tx_queue.push_tx(tx_ent);
+    ASSERT_EQ(0, ret);
+    auto tx_tmp = tx_queue.query_tx(tx->get_transaction()->get_source_addr(), tx->get_transaction()->digest());
+    ASSERT_NE(tx_tmp, nullptr);
+
+    // duplicate push
+    ret = tx_queue.push_tx(tx_ent);
+    ASSERT_EQ(xtxpool_error_tx_duplicate, ret);
+
+    // pop out
+    auto tx_ent_tmp = tx_queue.pop_tx_by_hash(tx->get_transaction()->get_source_addr(), tx->get_transaction()->digest(), tx->get_tx_subtype());
+    ASSERT_NE(tx_ent_tmp, nullptr);
+    tx_tmp = tx_queue.query_tx(tx->get_transaction()->get_source_addr(), tx->get_transaction()->digest());
+    ASSERT_EQ(tx_tmp, nullptr);
+
+    // push again
+    ret = tx_queue.push_tx(tx_ent);
+    ASSERT_EQ(0, ret);
+    tx_tmp = tx_queue.query_tx(tx->get_transaction()->get_source_addr(), tx->get_transaction()->digest());
+    ASSERT_NE(tx_tmp, nullptr);
+
+    // set account delay, then pop nothing
+    tx_queue.set_delay_accout(tx->get_transaction()->get_source_addr(), tx->get_tx_subtype());
+    auto txs = tx_queue.pop_send_txs(10);
+    ASSERT_EQ(0, txs.size());
+
+    // relieve account delay, pop out the tx
+    tx_queue.refreash_delay_accounts();
+    txs = tx_queue.pop_send_txs(10);
+    ASSERT_EQ(1, txs.size());
+}
+
+TEST_F(test_tx_queue, sigle_account_multi_send_tx) {
+    std::string table_addr = "table_test";
+    xtxpool_shard_info_t shard(0, 0, 0);
+    xtxpool_table_info_t table_para(table_addr, &shard);
+    xtx_queue_t tx_queue(&table_para);
+    uint256_t last_tx_hash = {};
+    uint64_t now = xverifier::xtx_utl::get_gmttime_s();
+
+    uint32_t txs_num = 10;
+    std::vector<xcons_transaction_ptr_t> txs = test_xtxpool_util_t::create_cons_transfer_txs(0, 1, txs_num);
+
+    // push txs by inverted order, high nonce with high charge score
+    for (uint32_t i = txs.size(); i > 0; i--) {
+        xtx_para_t para;
+        para.set_charge_score(i);
+        std::shared_ptr<xtx_entry> tx_ent = std::make_shared<xtx_entry>(txs[i - 1], para);
+        int32_t ret = tx_queue.push_tx(tx_ent);
+        ASSERT_EQ(0, ret);
+    }
+
+    // pop txs, should be ordered by nonce
+    auto tx_ents = tx_queue.pop_send_txs(txs_num);
+    ASSERT_EQ(tx_ents.size(), txs_num);
+    for (uint32_t i = 0; i < tx_ents.size() - 1; i++) {
+        ASSERT_EQ(tx_ents[i]->get_tx()->get_transaction()->get_last_nonce() + 1, tx_ents[i + 1]->get_tx()->get_transaction()->get_last_nonce());
+    }
+
+    // push again
+    for (uint32_t i = txs.size(); i > 0; i--) {
+        int32_t ret = tx_queue.push_tx(tx_ents[i - 1]);
+        ASSERT_EQ(0, ret);
+    }
+
+    // pop one tx, that will pop txs those nonce are less than the poped tx
+    uint32_t pop_pos = 3;
+    auto tx_tmp = tx_queue.pop_tx_by_hash(txs[pop_pos]->get_transaction()->get_source_addr(), txs[pop_pos]->get_transaction()->digest(), txs[pop_pos]->get_tx_subtype());
+    auto tx_ents2 = tx_queue.pop_send_txs(txs_num);
+    ASSERT_EQ(tx_ents2.size(), txs_num - pop_pos - 1);
+    ASSERT_EQ(tx_ents2[0]->get_tx()->get_transaction()->get_last_nonce(), pop_pos + 1);
+    for (uint32_t i = 0; i < tx_ents2.size() - 1; i++) {
+        ASSERT_EQ(tx_ents2[i]->get_tx()->get_transaction()->get_last_nonce() + 1, tx_ents2[i + 1]->get_tx()->get_transaction()->get_last_nonce());
+    }
+}
+
+TEST_F(test_tx_queue, sigle_account_uncontinuous_send_txs) {
+    std::string table_addr = "table_test";
+    xtxpool_shard_info_t shard(0, 0, 0);
+    xtxpool_table_info_t table_para(table_addr, &shard);
+    xtx_queue_t tx_queue(&table_para);
+    uint256_t last_tx_hash = {};
+    uint64_t now = xverifier::xtx_utl::get_gmttime_s();
+
+    uint32_t txs_num = 10;
+    std::vector<xcons_transaction_ptr_t> txs = test_xtxpool_util_t::create_cons_transfer_txs(0, 1, txs_num);
+
+    {
+        xtx_para_t para;
+        std::shared_ptr<xtx_entry> tx_ent = std::make_shared<xtx_entry>(txs[3], para);
+        int32_t ret = tx_queue.push_tx(tx_ent);
+        ASSERT_EQ(0, ret);
+    }
+    {
+        xtx_para_t para;
+        std::shared_ptr<xtx_entry> tx_ent = std::make_shared<xtx_entry>(txs[4], para);
+        int32_t ret = tx_queue.push_tx(tx_ent);
+        ASSERT_EQ(0, ret);
+    }
+    {
+        xtx_para_t para;
+        std::shared_ptr<xtx_entry> tx_ent = std::make_shared<xtx_entry>(txs[6], para);
+        int32_t ret = tx_queue.push_tx(tx_ent);
+        ASSERT_EQ(xtxpool_error_tx_nonce_incontinuity, ret);
+    }
+    {
+        xtx_para_t para;
+        std::shared_ptr<xtx_entry> tx_ent = std::make_shared<xtx_entry>(txs[5], para);
+        int32_t ret = tx_queue.push_tx(tx_ent);
+        ASSERT_EQ(0, ret);
+    }
+    {
+        xtx_para_t para;
+        std::shared_ptr<xtx_entry> tx_ent = std::make_shared<xtx_entry>(txs[2], para);
+        int32_t ret = tx_queue.push_tx(tx_ent);
+        ASSERT_EQ(0, ret);
+    }
+
+    for (uint32_t i = 2; i < 5; i++) {
+        auto tx_tmp = tx_queue.query_tx(txs[i]->get_transaction()->get_source_addr(), txs[i]->get_transaction()->digest());
+        ASSERT_NE(tx_tmp, nullptr);
+    }
+
+    {
+        xtx_para_t para;
+        std::shared_ptr<xtx_entry> tx_ent = std::make_shared<xtx_entry>(txs[0], para);
+        int32_t ret = tx_queue.push_tx(tx_ent);
+        ASSERT_EQ(0, ret);
+    }
+
+    auto tx_ents = tx_queue.pop_send_txs(10);
+    ASSERT_EQ(tx_ents.size(), 1);
+}

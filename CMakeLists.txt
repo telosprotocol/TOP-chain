@@ -361,7 +361,6 @@ include_directories(src/services)
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 link_directories(${LIBRARY_OUTPUT_PATH})
-link_directories(src/xtopcom/libs/Linux/${XBUILD_TYPE})
 
 if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
     add_compile_options(
@@ -448,6 +447,7 @@ if (XENABLE_TESTS)
     add_subdirectory(src/xtopcom/xstore/test)
     add_subdirectory(src/xtopcom/xstore/test_util)
     add_subdirectory(src/xtopcom/xtxpool/test/unittest)
+    add_subdirectory(src/xtopcom/xtxpool_v2/test/unittest)
     add_subdirectory(src/xtopcom/xtxpool_service/test/unittest)
     add_subdirectory(src/xtopcom/xverifier/test)
 

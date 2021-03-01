@@ -139,9 +139,9 @@ bool xbatch_packer::on_view_fire(const base::xvevent_t & event, xcsobject_t * fr
     // check if this node is leader
     std::error_code ec{election::xdata_accessor_errc_t::success};
     auto version = accessor->version_from(common::xip2_t{local_xip.low_addr, local_xip.high_addr}, ec);
-    xassert(!ec);
     if (ec) {
-        xerror("xbatch_packer::on_view_fire xip=%s version from error", xcons_utl::xip_to_hex(local_xip).c_str());
+        // TODO here may happen when many elect blocks sync
+        xwarn("xbatch_packer::on_view_fire xip=%s version from error", xcons_utl::xip_to_hex(local_xip).c_str());
         return false;
     }
     uint16_t rotate_mode = enum_rotate_mode_rotate_by_view_id;
@@ -277,9 +277,9 @@ bool xbatch_packer::recv_in(const xvip2_t & from_addr, const xvip2_t & to_addr, 
             auto accessor = m_para->get_resources()->get_data_accessor();
             std::error_code ec{election::xdata_accessor_errc_t::success};
             auto version = accessor->version_from(common::xip2_t{from_addr.low_addr, from_addr.high_addr}, ec);
-            xassert(!ec);
             if (ec) {
-                xerror("xbatch_packer::on_view_fire xip=%s version from error", xcons_utl::xip_to_hex(from_addr).c_str());
+                // TODO here may happen when many elect blocks sync
+                xwarn("xbatch_packer::on_view_fire xip=%s version from error", xcons_utl::xip_to_hex(from_addr).c_str());
                 return false;
             }
             auto timer_block = m_para->get_resources()->get_vblockstore()->get_latest_cert_block(sys_contract_beacon_timer_addr);

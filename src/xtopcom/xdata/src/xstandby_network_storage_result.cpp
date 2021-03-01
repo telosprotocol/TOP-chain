@@ -75,6 +75,22 @@ std::pair<xtop_standby_network_storage_result::iterator, bool> xtop_standby_netw
     return std::make_pair(m_results.find(value.first), true);
 }
 
+std::pair<xtop_standby_network_storage_result::iterator, bool> xtop_standby_network_storage_result::insert2(value_type const & value) {
+    if (m_results.find(value.first) == m_results.end() || m_results[value.first] == value.second) {
+        return m_results.insert(value);
+    }
+    m_results.at(value.first) = value.second;
+    return std::make_pair(m_results.find(value.first), true);
+}
+
+std::pair<xtop_standby_network_storage_result::iterator, bool> xtop_standby_network_storage_result::insert2(value_type && value) {
+    if (m_results.find(value.first) == m_results.end() || m_results[value.first] == value.second) {
+        return m_results.insert(std::move(value));
+    }
+    m_results.at(value.first) = value.second;
+    return std::make_pair(m_results.find(value.first), true);
+}
+
 bool xtop_standby_network_storage_result::empty() const noexcept {
     return m_results.empty();
 }

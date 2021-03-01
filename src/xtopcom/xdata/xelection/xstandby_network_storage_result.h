@@ -47,11 +47,21 @@ public:
     xstandby_network_result_t
     all_network_result() const;
 
+    // !#TOP-3495 Old `insert` was meant to be compatibled using like `update`,
+    // !But won't work as it should be when updating infos other than stake.
+    // !use insert2 subsequently, NOTED that it only perform like `INSERT`.
+    // !`insert` should be deleted and replaced by `insert2` after updated period.
     std::pair<iterator, bool>
     insert(value_type const & value);
 
     std::pair<iterator, bool>
     insert(value_type && value);
+
+    std::pair<iterator, bool>
+    insert2(value_type const & value);
+
+    std::pair<iterator, bool>
+    insert2(value_type && value);
 
     bool
     empty() const noexcept;

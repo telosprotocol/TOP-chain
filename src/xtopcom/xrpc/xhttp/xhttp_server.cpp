@@ -59,8 +59,7 @@ void xhttp_server::start(uint16_t nPort, uint32_t nThreadNum) {
         xkinfo_rpc("on_error:%s,%d", ec.message().c_str(), ec.value());
     };
     m_server.io_service = m_rpc_service->m_io_service;
-    auto self(shared_from_this());
-    m_server_thread = std::thread([self]() {
+    m_server_thread = std::thread([self = shared_from_this()]() {
         // Start server
         self->m_server.start();
     });
@@ -74,14 +73,22 @@ void xhttp_server::start(uint16_t nPort, uint32_t nThreadNum) {
         m_config.SetAllowBorrowSize(0);
         m_config.SetRequestToken(1000);
         m_ratelimit = top::make_unique<RatelimitServer>(m_config);
-        m_ratelimit->RegistRequestOut([](RatelimitData * data) {
+        m_ratelimit->RegistRequestOut([self = shared_from_this()](RatelimitData * data) {
+            if (data == nullptr) {
+                xdbg("rpc_service http_server null request");
+                return;
+            }
             asio::ip::address_v4 addr_v4(dynamic_cast<RatelimitDataHttp *>(data)->ip_);
             asio::ip::address addr(addr_v4);
             auto ip_s = addr.to_string();
             m_rpc_service->execute(dynamic_cast<RatelimitDataHttp *>(data)->response_, dynamic_cast<RatelimitDataHttp *>(data)->content_, ip_s);
             delete data;
         });
-        m_ratelimit->RegistResponseOut([](RatelimitData * data) {
+        m_ratelimit->RegistResponseOut([self = shared_from_this()](RatelimitData * data) {
+            if (data == nullptr) {
+                xdbg("rpc_service http_server null response");
+                return;
+            }
             RatelimitDataHttp * data_http = dynamic_cast<RatelimitDataHttp *>(data);
             if (data && data->err_ == static_cast<int>(RatelimitDispatch::CheckResult::Refused)) {
                 std::string sequence_id = RatelimitServerHelper::GetSequenceId(data_http->content_);

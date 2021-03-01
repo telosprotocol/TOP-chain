@@ -9,6 +9,7 @@
 #include "xratelimit_dispatch.h"
 #include "xratelimit_thread.h"
 #include "xbasic/xns_macro.h"
+#include <atomic>
 #include <vector>
 #include <memory>
 #include <functional>
@@ -46,11 +47,11 @@ private:
     RatelimitWorkerPool in_worker_pool_;
     RatelimitWorkerPool out_worker_pool_;
 
-    std::vector<std::shared_ptr<RatelimitThread>> request_out_pool_;
-    std::vector<std::shared_ptr<RatelimitThread>> response_out_pool_;
+    std::atomic_bool shut_down_{ false };
     OutFunc request_out_func_;
     OutFunc response_out_func_;
-    bool shut_down_{ false };
+    std::vector<std::shared_ptr<RatelimitThread>> request_out_pool_;
+    std::vector<std::shared_ptr<RatelimitThread>> response_out_pool_;
 };
 
 class RatelimitServerHelper final {

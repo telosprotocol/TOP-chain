@@ -1,3 +1,6 @@
+// Copyright (c) 2017-2018 Telos Foundation & contributors
+// Distributed under the MIT software license, see the accompanying
+// file COPYING or http://www.opensource.org/licenses/mit-license.php.
 #include "protocol.h"
 
 #include "base/utility.h"
@@ -63,9 +66,11 @@ const std::set<std::string> content_name = {
 
 protocol::CreateFuncMap protocol::_create_funcs;
 
-protocol::protocol() : _param_names(nullptr) {}
+protocol::protocol() : _param_names(nullptr) {
+}
 
-protocol::~protocol() {}
+protocol::~protocol() {
+}
 
 int protocol::encode_body_params(const ParamMap & params, xJson::Value & root) {
     if (nullptr == _param_names)
@@ -88,16 +93,6 @@ int protocol::encode_body_params(const ParamMap & params, xJson::Value & root) {
 
 int protocol::encode_body(const ParamMap & params, std::string & body) {
     xJson::Value root;
-    std::string json_string;
-
-    for (auto it : params) {
-        if (it.first == "body" || it.first == "identity_token")
-            continue;
-
-        // if (is_param_key_effect(it.first)) {
-        //     root[it.first] = it.second;
-        // }
-    }
 
     if (trans_action_ != nullptr) {
         encode_transaction_params(root, trans_action_.get());
@@ -106,7 +101,6 @@ int protocol::encode_body(const ParamMap & params, std::string & body) {
     }
     xJson::FastWriter fast_writer;
     body += fast_writer.write(root);
-    //        body += root.toStyledString();
     return body.length();
 }
 
@@ -176,7 +170,7 @@ uint32_t protocol::decode_task_id(const std::string & result) {
 }
 
 protocol * protocol::create(const std::string & method) {
-    if(protocol::_create_funcs.size() == 0){
+    if (protocol::_create_funcs.size() == 0) {
 #ifdef DEBUG
         std::cout << "[debug]register protocols" << std::endl;
 #endif
@@ -318,7 +312,8 @@ bool protocol::is_param_key_effect(const std::string & key) {
     return content_name.find(key) != content_name.end();
 }
 
-CheckTxHashCmd::CheckTxHashCmd() {}
+CheckTxHashCmd::CheckTxHashCmd() {
+}
 
 CheckTxHashCmd::~CheckTxHashCmd() {
     std::cout << "Destroy CheckTxHashCmd" << std::endl;
@@ -343,9 +338,11 @@ int CheckTxHashCmd::encode_body_params(const std::map<std::string, std::string> 
     return 0;
 }
 
-void CheckTxHashCmd::decode(const std::string & params, task_info * info) {}
+void CheckTxHashCmd::decode(const std::string & params, task_info * info) {
+}
 
-AccountTxCmd::AccountTxCmd() {}
+AccountTxCmd::AccountTxCmd() {
+}
 
 AccountTxCmd::~AccountTxCmd() {
     // std::cout << "Destroy CheckTxHashCmd" << std::endl;
@@ -374,9 +371,11 @@ int AccountTxCmd::encode_body_params(const std::map<std::string, std::string> & 
     return 0;
 }
 
-void AccountTxCmd::decode(const std::string & params, task_info * info) {}
+void AccountTxCmd::decode(const std::string & params, task_info * info) {
+}
 
-VoteDetailsCmd::VoteDetailsCmd() {}
+VoteDetailsCmd::VoteDetailsCmd() {
+}
 
 VoteDetailsCmd::~VoteDetailsCmd() {
     // std::cout << "Destroy VoteDetailsCmd" << std::endl;
@@ -420,7 +419,8 @@ void VoteDetailsCmd::decode(const std::string & params, task_info * info) {
     }
 }
 
-CandidateCmd::CandidateCmd() {}
+CandidateCmd::CandidateCmd() {
+}
 
 CandidateCmd::~CandidateCmd() {
     // std::cout << "Destroy CandidateCmd" << std::endl;
@@ -464,7 +464,8 @@ void CandidateCmd::decode(const std::string & params, task_info * info) {
     }
 }
 
-DividendCmd::DividendCmd() {}
+DividendCmd::DividendCmd() {
+}
 
 DividendCmd::~DividendCmd() {
     // std::cout << "Destroy DividendCmd" << std::endl;
@@ -508,7 +509,8 @@ void DividendCmd::decode(const std::string & params, task_info * info) {
     }
 }
 
-RequestTokenCmd::RequestTokenCmd() {}
+RequestTokenCmd::RequestTokenCmd() {
+}
 
 RequestTokenCmd::~RequestTokenCmd() {
     // std::cout << "Destroy RequestTokenCmd" << std::endl;
@@ -779,9 +781,11 @@ void TransferCmd::decode(const std::string & params, task_info * info) {
     }
 }
 
-void PledgeVoteCmd::decode(const std::string & params, task_info * info) {}
+void PledgeVoteCmd::decode(const std::string & params, task_info * info) {
+}
 
-void RedeemVoteCmd::decode(const std::string & params, task_info * info) {}
+void RedeemVoteCmd::decode(const std::string & params, task_info * info) {
+}
 
 KeyStoreCmd::KeyStoreCmd() {
     _param_names = &_cur_param_names;
@@ -814,7 +818,8 @@ int KeyStoreCmd::encode_body_params(const std::map<std::string, std::string> & p
     return 0;
 }
 
-void KeyStoreCmd::decode(const std::string & params, task_info * info) {}
+void KeyStoreCmd::decode(const std::string & params, task_info * info) {
+}
 
 GetPropertyCmd::GetPropertyCmd() {
     _param_names = &_cur_param_names;
@@ -915,31 +920,44 @@ void GetPropertyCmd::decode(const std::string & params, task_info * info) {
     }
 }
 
-void CallContractCmd::decode(const std::string & params, task_info * info) {}
+void CallContractCmd::decode(const std::string & params, task_info * info) {
+}
 
-PublishContractCmd::PublishContractCmd() {}
+PublishContractCmd::PublishContractCmd() {
+}
 
-PublishContractCmd::~PublishContractCmd() {}
+PublishContractCmd::~PublishContractCmd() {
+}
 
-void PublishContractCmd::decode(const std::string & params, task_info * info) {}
+void PublishContractCmd::decode(const std::string & params, task_info * info) {
+}
 
-CreateChildAccountCmd::CreateChildAccountCmd() {}
+CreateChildAccountCmd::CreateChildAccountCmd() {
+}
 
-CreateChildAccountCmd::~CreateChildAccountCmd() {}
+CreateChildAccountCmd::~CreateChildAccountCmd() {
+}
 
-void CreateChildAccountCmd::decode(const std::string & params, task_info * info) {}
+void CreateChildAccountCmd::decode(const std::string & params, task_info * info) {
+}
 
-LockTokenCmd::LockTokenCmd() {}
+LockTokenCmd::LockTokenCmd() {
+}
 
-LockTokenCmd::~LockTokenCmd() {}
+LockTokenCmd::~LockTokenCmd() {
+}
 
-void LockTokenCmd::decode(const std::string & params, task_info * info) {}
+void LockTokenCmd::decode(const std::string & params, task_info * info) {
+}
 
-UnlockTokenCmd::UnlockTokenCmd() {}
+UnlockTokenCmd::UnlockTokenCmd() {
+}
 
-UnlockTokenCmd::~UnlockTokenCmd() {}
+UnlockTokenCmd::~UnlockTokenCmd() {
+}
 
-void UnlockTokenCmd::decode(const std::string & params, task_info * info) {}
+void UnlockTokenCmd::decode(const std::string & params, task_info * info) {
+}
 
 GetBlockCmd::GetBlockCmd() {
     _param_names = &_cur_param_names;
@@ -969,25 +987,35 @@ int GetBlockCmd::encode_body_params(const std::map<std::string, std::string> & p
     return 0;
 }
 
-void GetBlockCmd::decode(const std::string & params, task_info * info) {}
+void GetBlockCmd::decode(const std::string & params, task_info * info) {
+}
 
-void NodeRegisterCmd::decode(const std::string & params, task_info * info) {}
+void NodeRegisterCmd::decode(const std::string & params, task_info * info) {
+}
 
-void NodeDeRegisterCmd::decode(const std::string & params, task_info * info) {}
+void NodeDeRegisterCmd::decode(const std::string & params, task_info * info) {
+}
 
-void NodeRedeemCmd::decode(const std::string & params, task_info * info) {}
+void NodeRedeemCmd::decode(const std::string & params, task_info * info) {
+}
 
-void SetVoteCmd::decode(const std::string & params, task_info * info) {}
+void SetVoteCmd::decode(const std::string & params, task_info * info) {
+}
 
-void ClaimNodeRewardCmd::decode(const std::string & params, task_info * info) {}
+void ClaimNodeRewardCmd::decode(const std::string & params, task_info * info) {
+}
 
-void ClaimRewardCmd::decode(const std::string & params, task_info * info) {}
+void ClaimRewardCmd::decode(const std::string & params, task_info * info) {
+}
 
-void AddProposalCmd::decode(const std::string & params, task_info * info) {}
+void AddProposalCmd::decode(const std::string & params, task_info * info) {
+}
 
-void WithdrawProposalCmd::decode(const std::string & params, task_info * info) {}
+void WithdrawProposalCmd::decode(const std::string & params, task_info * info) {
+}
 
-void VoteProposalCmd::decode(const std::string & params, task_info * info) {}
+void VoteProposalCmd::decode(const std::string & params, task_info * info) {
+}
 
 ChainInfoCmd::ChainInfoCmd() {
     _param_names = &_cur_param_names;
@@ -1121,7 +1149,8 @@ VoteDistCmd::~VoteDistCmd() {
     // std::cout << "Destroy VoteDistCmd" << std::endl;
 }
 
-void VoteDistCmd::decode(const std::string & params, task_info * info) {}
+void VoteDistCmd::decode(const std::string & params, task_info * info) {
+}
 
 VoterRewardCmd::VoterRewardCmd() {
     _param_names = &_cur_param_names;

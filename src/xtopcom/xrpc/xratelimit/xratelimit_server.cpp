@@ -85,8 +85,8 @@ void RatelimitServer::RegistResponseOut(OutFunc func) {
 void RatelimitServer::RequestOutThreadFunc() {
     while (!shut_down_) {
         RatelimitData* request{ nullptr };
-        data_queue_.PluckRequestOut(request);
-        if(!shut_down_){
+        auto ret = data_queue_.PluckRequestOut(request);
+        if(ret && !shut_down_) {
             server_stat_.outqueue_pop_requests_++;
             request_out_func_(request);
         }
@@ -96,8 +96,8 @@ void RatelimitServer::RequestOutThreadFunc() {
 void RatelimitServer::ResponseOutThreadFunc() {
     while (!shut_down_) {
         RatelimitData* response{ nullptr };
-        data_queue_.PluckResponseOut(response);
-        if(!shut_down_){
+        auto ret = data_queue_.PluckResponseOut(response);
+        if(ret && !shut_down_) {
             server_stat_.outqueue_pop_responses_++;
             response_out_func_(response);
         }

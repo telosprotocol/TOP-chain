@@ -118,7 +118,14 @@ void xmutisig::append_sign_points(xsignature *sign,
     xassert(nullptr != _schnorr);
     xassert(nullptr != point_ptr);
     xassert(nullptr != sign_ptr);
-
+    if(nullptr == sign || nullptr == point || nullptr == _schnorr 
+        || nullptr == point_ptr || nullptr == sign_ptr) {
+        return;
+    }
+    xassert(nullptr != _schnorr->curve());
+    if (nullptr == _schnorr->curve()) {
+        return;
+    }
     auto ret = EC_POINT_add(_schnorr->curve()->ec_group(),
                             point_ptr->ec_point(),
                             point_ptr->ec_point(),
@@ -145,6 +152,11 @@ void xmutisig::aggregate_sign_points(const std::vector<xrand_point *> &points,
     xassert(!points.empty());
     xassert(points.size() == signs.size());
     xassert(nullptr != _schnorr);
+    xassert(nullptr != _schnorr->curve());
+
+    if(nullptr == _schnorr || nullptr == _schnorr->curve()) {
+        return;
+    }
 
     point_ptr = std::make_shared<xrand_point>(*points.at(0));
     xassert(nullptr != point_ptr);
@@ -182,7 +194,10 @@ void xmutisig::aggregate_sign_points_2(const std::vector<xrand_point> &points,
     xassert(!points.empty());
     xassert(points.size() == signs.size());
     xassert(nullptr != _schnorr);
-
+    xassert(nullptr != _schnorr->curve());
+    if(nullptr == _schnorr || nullptr == _schnorr->curve()) {
+        return;
+    }
     point_ptr = std::make_shared<xrand_point>(points.at(0));
     xassert(nullptr != point_ptr);
 
@@ -213,6 +228,11 @@ void xmutisig::aggregate_sign_points_2(const std::vector<xrand_point> &points,
 
 std::shared_ptr<xsignature> xmutisig::aggregate_signs(const std::vector<xsignature *> &signs, xschnorr * _schnorr) {
     xassert(0 != signs.size());
+    xassert(nullptr != _schnorr);
+    xassert(nullptr != _schnorr->curve());
+    if(nullptr == _schnorr || nullptr == _schnorr->curve()) {
+        return nullptr;
+    }
 
     std::shared_ptr<xsignature> agg_sign = std::make_shared<xsignature>(*signs.at(0));
     xassert(nullptr != agg_sign);
@@ -235,7 +255,11 @@ std::shared_ptr<xsignature> xmutisig::aggregate_signs(const std::vector<xsignatu
 
 std::shared_ptr<xrand_point> xmutisig::aggregate_rand_points(const std::vector<xrand_point *> &points,xschnorr * _schnorr) {
     xassert(0 != points.size());
-
+    xassert(nullptr != _schnorr);
+    xassert(nullptr != _schnorr->curve());
+    if(nullptr == _schnorr || nullptr == _schnorr->curve()) {
+        return nullptr;
+    }
     std::shared_ptr<xrand_point> agg_point = std::make_shared<xrand_point>(*points.at(0));
     xassert(nullptr != agg_point);
 
@@ -254,7 +278,11 @@ std::shared_ptr<xrand_point> xmutisig::aggregate_rand_points(const std::vector<x
 
 std::shared_ptr<xpubkey> xmutisig::aggregate_pubkeys(const std::vector<xpubkey *> &pubkeys,xschnorr * _schnorr) {
     xassert(0 != pubkeys.size());
-
+    xassert(nullptr != _schnorr);
+    xassert(nullptr != _schnorr->curve());
+    if(nullptr == _schnorr || nullptr == _schnorr->curve()) {
+        return nullptr;
+    }
     std::shared_ptr<xpubkey> agg_pubkey = std::make_shared<xpubkey>(*pubkeys.at(0));
     xassert(nullptr != agg_pubkey);
 
@@ -274,7 +302,8 @@ std::shared_ptr<xpubkey> xmutisig::aggregate_pubkeys(const std::vector<xpubkey *
 
 std::shared_ptr<xpubkey> xmutisig::aggregate_pubkeys_2(const std::vector<xpubkey> &pubkeys,xschnorr * _schnorr) {
     xassert(0 != pubkeys.size());
-
+    xassert(nullptr != _schnorr);
+    xassert(nullptr != _schnorr->curve());
     std::shared_ptr<xpubkey> agg_pubkey = std::make_shared<xpubkey>(pubkeys.at(0));
     xassert(nullptr != agg_pubkey);
 
