@@ -10,6 +10,6 @@ target_link_libraries(xgrpc_mgr PRIVATE
 )
 
 if (BUILD_METRICS)
-    add_dependencies(xgrpc_mgr xmetrics)
+    #add_dependencies(xgrpc_mgr xmetrics)
     target_link_libraries(xgrpc_mgr PRIVATE xmetrics)
 endif()

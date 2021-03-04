@@ -361,6 +361,7 @@ include_directories(src/services)
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 link_directories(${LIBRARY_OUTPUT_PATH})
+link_directories(libs/Linux/${XBUILD_TYPE})
 
 if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
     add_compile_options(

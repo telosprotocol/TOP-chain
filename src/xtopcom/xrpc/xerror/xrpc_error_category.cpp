@@ -7,7 +7,7 @@
 NS_BEG2(top, xrpc)
 using std::string;
 
-static char const * xcodec_errc_map(int const errc) noexcept {
+static std::string xcodec_errc_map(int const errc) noexcept {
     auto const ec = static_cast<enum_xrpc_error_code>(errc);
     switch (ec) {
         case enum_xrpc_error_code::rpc_param_json_parser_error:

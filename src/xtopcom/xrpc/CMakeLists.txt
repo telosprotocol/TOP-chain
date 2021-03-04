@@ -13,12 +13,12 @@ aux_source_directory(./xratelimit xratelimit)
 
 add_library(xrpc STATIC ${error} ${prerequest} ${edge} ${cluster} ${getblock} ${shard} ${xrpc} ${xhttp} ${xws} ${xratelimit})
 
-add_dependencies(xrpc xconfig xcodec xvnetwork xcommon xrouter xverifier xxbase xxg)
+#add_dependencies(xrpc xconfig xcodec xvnetwork xcommon xrouter xverifier xxbase xxg)
 
 target_link_libraries(xrpc PRIVATE xconfig msgpackc xcodec xvnetwork xcommon xrouter xverifier xbasic xxbase xxg crypto pthread)
 
 if (BUILD_METRICS)
-    add_dependencies(xrpc xmetrics)
+    #add_dependencies(xrpc xmetrics)
     target_link_libraries(xrpc PRIVATE xmetrics)
 endif()
 

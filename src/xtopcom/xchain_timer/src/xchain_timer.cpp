@@ -10,7 +10,7 @@
 #include "xbase/xutl.h"
 
 #include <cassert>
-
+#include <cinttypes>
 NS_BEG2(top, time)
 
 void xchain_timer_t::process(data::xblock_t* timer_block, int64_t recv_ms) {
@@ -87,7 +87,7 @@ bool xchain_timer_t::update_time(data::xblock_t* timer_block, bool force) {
         base::xcall_t c((base::xcallback_t) func, this, timer_block, base::xtime_utl::gettimeofday_ms());
         m_timer_thread->send_call(c);
     } else {
-        xwarn("[new xchain_timer_t] update_time failed,id(%x)\n", round);
+        xwarn("[new xchain_timer_t] update_time failed,id(%" PRIu64 ")\n", timer_block->get_height());
     }
     xinfo("new xchain_timer_t m_mutex update_time end");
     return true;

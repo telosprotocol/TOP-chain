@@ -13,7 +13,7 @@ if (XDB_TYPE STREQUAL "ROCKSDB")
         ./src/xdb_rocksdb.cpp
         ./src/xdb_memdb.cpp
     )
-    add_dependencies(xdb xxbase)
+    #add_dependencies(xdb xxbase)
 
     target_link_libraries(xdb PRIVATE
         xxbase
@@ -26,7 +26,7 @@ elseif (XDB_TYPE STREQUAL "LEVELDB")
         ./src/xdb_leveldb.cpp
         ./src/xdb_memdb.cpp
     )
-    add_dependencies(xdb xxbase)
+    #add_dependencies(xdb xxbase)
 
     target_link_libraries(xdb PRIVATE xxbase leveldb)
 

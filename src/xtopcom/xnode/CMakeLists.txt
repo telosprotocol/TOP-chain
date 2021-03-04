@@ -27,5 +27,5 @@ elseif(CMAKE_SYSTEM_NAME STREQUAL "Windows")
     add_compile_options(/utf-8) # input/output as utf-8
 endif()
 
-add_dependencies(topio xpbase)
+#add_dependencies(topio xpbase)
 target_link_libraries(topio PRIVATE xpbase jsoncpp pthread dl)

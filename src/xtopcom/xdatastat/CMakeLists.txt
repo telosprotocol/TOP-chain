@@ -7,12 +7,12 @@ include_directories(./src)
 aux_source_directory(./src src_dir)
 add_library(xdatastat STATIC ${src_dir})
 
-add_dependencies(xdatastat xdata)
+#add_dependencies(xdatastat xdata)
 
 target_link_libraries(xdatastat PRIVATE xdata)
 
 if (BUILD_METRICS)
-    add_dependencies(xdatastat xmetrics)
+    #add_dependencies(xdatastat xmetrics)
     target_link_libraries(xdatastat PRIVATE xmetrics)
 endif()
 

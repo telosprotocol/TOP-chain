@@ -4,7 +4,7 @@ aux_source_directory(./ xunit_service_test_src)
 aux_source_directory(../mock xunit_service_test_src)
 add_executable(xunit_service_test ${xunit_service_test_src})
 
-add_dependencies(xunit_service_test xtxexecutor xunit_service xBFT xvnetwork xxbase xutility xcommon)
+#add_dependencies(xunit_service_test xtxexecutor xunit_service xBFT xvnetwork xxbase xutility xcommon)
 
 target_link_libraries(xunit_service_test PRIVATE xtxexecutor xunit_service xBFT xvnetwork xxbase xutility xcommon gtest gmock)
 

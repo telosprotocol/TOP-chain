@@ -4,5 +4,5 @@ aux_source_directory(./src xbasic_test_src)
 
 add_executable(xbasic_test ${xbasic_test_src})
 
-add_dependencies(xbasic_test xbasic)
+#add_dependencies(xbasic_test xbasic)
 target_link_libraries(xbasic_test PRIVATE xbasic gtest gtest_main)

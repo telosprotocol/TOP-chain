@@ -10,5 +10,5 @@ add_definitions(
     # -D__STRICT_ANSI__
 )
 
-add_dependencies(xapplication xvnode xloader xconfig xelect xelect_net xchain_timer xvnetwork xelection xtxexecutor xunit_service xtxpoolsvr xBFT xsync xtopcl xmbus xelect_common xbasic xcertauth xdatastat)
-target_link_libraries(xapplication PRIVATE xvnode xloader xconfig xelect xelect_net  xchain_timer xvnetwork xtxexecutor xunit_service xtxpoolsvr xBFT xelection xrpc xsync xtopcl xmbus xelect_common xbasic xcertauth xdatastat)
+#add_dependencies(xapplication xvnode xloader xconfig xelect xchain_timer xvnetwork xelection xtxexecutor xunit_service xtxpoolsvr xBFT xsync xtopcl xmbus xelect_common xbasic xcertauth xdatastat)
+target_link_libraries(xapplication PRIVATE xvnode  xvm xloader xconfig xelect xelect_net xstake xchain_timer xvnetwork xtxexecutor xunit_service xtxpoolsvr xBFT xelection xrpc xsync xtopcl xmbus xelect_common xbasic xcertauth xdatastat)

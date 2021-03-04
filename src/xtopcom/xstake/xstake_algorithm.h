@@ -731,8 +731,8 @@ struct xissue_detail final : public xserializable_based_on<void> {
     uint16_t m_auditor_reward_ratio{0};
     uint16_t m_vote_reward_ratio{0};
     uint16_t m_governance_reward_ratio{0};
-    std::size_t m_auditor_group_count{0};
-    std::size_t m_validator_group_count{0};
+    uint64_t m_auditor_group_count{0};
+    uint64_t m_validator_group_count{0};
     std::map<std::string, reward_detail> m_node_rewards;
 
 private:

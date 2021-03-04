@@ -11,13 +11,13 @@
 #include "xstore/xstore_face.h"
 #include "xdata/xgenesis_data.h"
 
-#ifndef __MAC_PLATFORM__
+// #ifndef __MAC_PLATFORM__
     #include "xconfig/xconfig_register.h"
     #include "xdata/xtableblock.h"
     #include "xconfig/xpredefined_configurations.h"
     #include "xmbus/xevent_store.h"
     #include "xmetrics/xmetrics.h"
-#endif
+// #endif
 
 namespace top
 {

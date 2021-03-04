@@ -10,7 +10,7 @@ aux_source_directory(./xhash256 src)
 aux_source_directory(./xserialize src)
 aux_source_directory(./xcommon src)
 add_library (xmutisig ${src})
-add_dependencies(xmutisig xxbase)
+#add_dependencies(xmutisig xxbase)
 
 target_link_libraries (xmutisig PRIVATE ssl crypto xxbase secp256k1)
 

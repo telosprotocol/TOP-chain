@@ -1,7 +1,7 @@
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
     aux_source_directory(./ xgossip_test_dir)
     add_executable(xgossip_test ${xgossip_test_dir})
-    add_dependencies(xgossip_test xgossip)
+    #add_dependencies(xgossip_test xgossip)
     target_link_libraries(xgossip_test xgossip gtest gmock)
 
     if(XENABLE_CODE_COVERAGE)

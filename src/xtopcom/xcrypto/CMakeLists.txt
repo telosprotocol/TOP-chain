@@ -3,7 +3,7 @@ add_compile_options(-static)
 aux_source_directory(./src src_dir)
 add_library(xcrypto STATIC ${src_dir})
 
-add_dependencies(xcrypto xxbase)
+#add_dependencies(xcrypto xxbase)
 
 target_link_libraries(xcrypto PRIVATE trezor-crypto xutility xxbase secp256k1 pthread)
 
