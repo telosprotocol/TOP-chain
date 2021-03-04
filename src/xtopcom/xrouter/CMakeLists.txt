@@ -6,7 +6,7 @@ aux_source_directory(./src src_dir)
 
 add_library(xrouter STATIC ${src_dir})
 
-# add_dependencies(xrouter xvm)
+# #add_dependencies(xrouter xvm)
 
 target_link_libraries(xrouter PRIVATE xvm)
 

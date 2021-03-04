@@ -33,7 +33,7 @@ elseif(CMAKE_SYSTEM_NAME STREQUAL "Windows")
     add_compile_options(/utf-8) # input/output as utf-8
 endif()
 
-set(LINK_ARGS secp256k1 trezor-crypto ssl crypto)
+set(LINK_ARGS secp256k1 trezor-crypto ssl crypto xchain_upgrade)
 if(NOT MSVC)
     set(LINK_ARGS ${LINK_ARGS} hiredis pthread)
 endif()
@@ -54,7 +54,7 @@ set_target_properties(xtopchain PROPERTIES
     VERSION   "${PROGRAM_VERSION}"
     SOVERSION "${PROGRAM_VERSION}"
 )
-#target_link_libraries(xtopchain PRIVATE xchaininit ${LINK_ARGS} xtopcl xxbase xdata xcrypto jsoncpp)
+# target_link_libraries(xtopchain PRIVATE xchaininit ${LINK_ARGS} xtopcl xxbase xdata xcrypto jsoncpp)
 target_link_libraries(xtopchain PRIVATE xchaininit ${LINK_ARGS} xtopcl
     xelect_net  xwrouter xkad xpbase xgossip xtransport xcommon xnetwork xbasic https_client
     xxbase xdata xcrypto jsoncpp)
@@ -63,8 +63,8 @@ target_link_libraries(xtopchain_bin PRIVATE xchaininit ${LINK_ARGS} xtopcl
     xxbase xdata xcrypto jsoncpp)
 
 if (BUILD_METRICS)
-    add_dependencies(xtopchain xmetrics)
+    #add_dependencies(xtopchain xmetrics)
     target_link_libraries(xtopchain PRIVATE xmetrics)
-    add_dependencies(xtopchain_bin xmetrics)
+    #add_dependencies(xtopchain_bin xmetrics)
     target_link_libraries(xtopchain_bin PRIVATE xmetrics)
 endif()

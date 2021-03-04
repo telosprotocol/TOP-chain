@@ -7,7 +7,7 @@ include_directories(./src)
 aux_source_directory(./src src_dir)
 add_library(xblockstore STATIC ${src_dir})
 
-add_dependencies(xblockstore xxbase xstore)
+#add_dependencies(xblockstore xxbase xstore)
 
 target_link_libraries(xblockstore PRIVATE
     xxbase
@@ -15,7 +15,7 @@ target_link_libraries(xblockstore PRIVATE
 )
 
 # if (BUILD_METRICS)
-#     add_dependencies(xblockstore xmetrics)
+#     #add_dependencies(xblockstore xmetrics)
 #     target_link_libraries(xblockstore PRIVATE xmetrics)
 # endif()
 

@@ -64,7 +64,7 @@ void xtxpool_t::subscribe_tables(uint8_t zone, uint16_t front_table_id, uint16_t
             break;
         }
     }
-    if (shard = nullptr) {
+    if (shard == nullptr) {
         shard = std::make_shared<xtxpool_shard_info_t>(zone, front_table_id, back_table_id);
         for (uint16_t i = front_table_id; i <= back_table_id; i++) {
             std::string table_addr = data::xblocktool_t::make_address_table_account((base::enum_xchain_zone_index)zone, i);

@@ -11,5 +11,5 @@ aux_source_directory(./xreward/ xreward)
 
 add_executable(xsystem_contract_test ${main_src} ${xelection_algorithm_fixture} ${xelection_algorithm} ${xelect_contract} ${xrec_standby_algorithm_fixture} ${xrec_standby_algorithm} ${xregistration} ${xreward})
 
-add_dependencies(xsystem_contract_test xvm xcommon xstore xblockstore xxbase xloader)
+#add_dependencies(xsystem_contract_test xvm xcommon xstore xblockstore xxbase xloader)
 target_link_libraries(xsystem_contract_test PRIVATE xvm xcommon xstore xblockstore xxbase xloader gtest)

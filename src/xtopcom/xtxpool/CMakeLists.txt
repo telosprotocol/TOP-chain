@@ -7,7 +7,7 @@ include_directories(./src)
 aux_source_directory(./src src_dir)
 add_library(xtxpool STATIC ${src_dir})
 
-add_dependencies(xtxpool xxbase xstore xverifier xblockstore)
+#add_dependencies(xtxpool xxbase xstore xverifier xblockstore)
 
 target_link_libraries(xtxpool PRIVATE
     xxbase
@@ -17,7 +17,7 @@ target_link_libraries(xtxpool PRIVATE
 )
 
 if (BUILD_METRICS)
-    add_dependencies(xtxpool xmetrics)
+    #add_dependencies(xtxpool xmetrics)
     target_link_libraries(xtxpool PRIVATE xmetrics)
 endif()
 

@@ -5,7 +5,7 @@ remove_definitions(
 aux_source_directory(./ xkad_demo_dir)
 add_executable(xkad_demo ${xkad_demo_dir})
 
-add_dependencies(xkad_demo xgossip xkad xxbase)
+#add_dependencies(xkad_demo xgossip xxbase)
 
 IF (CMAKE_SYSTEM_NAME MATCHES "Linux")
     target_link_libraries(xkad_demo

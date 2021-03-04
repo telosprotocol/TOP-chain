@@ -5,7 +5,9 @@
 #include "main.h"
 
 #include <sys/time.h>
+#if defined(__LINUX_PLATFORM__)
 #include <sys/prctl.h>
+#endif
 #include <cstdlib>
 #include <cstring>
 #include <dirent.h>

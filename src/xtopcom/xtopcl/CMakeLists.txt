@@ -50,7 +50,7 @@ endif()
 
 # SET TARGET
 add_library(xtopcl STATIC ${cppsdk_src})
-add_dependencies(xtopcl xxbase xdata xcrypto)
+#add_dependencies(xtopcl xxbase xdata xcrypto)
 target_include_directories(xtopcl  PUBLIC   ${PROJ_DIR}/include
                                             ${PROJ_DIR}/include/base
                                             ${PROJ_DIR}/include/network

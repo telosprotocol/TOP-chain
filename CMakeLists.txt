@@ -30,7 +30,7 @@ else()
     set(XSYNC_TEST OFF)
 endif()
 
-set(CMAKE_VERBOSE_MAKEFILE ON)
+set(CMAKE_VERBOSE_MAKEFILE OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 if (NOT CMAKE_CXX_COMPILER)
@@ -361,6 +361,7 @@ include_directories(src/services)
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 link_directories(${LIBRARY_OUTPUT_PATH})
+link_directories(libs/Linux/${XBUILD_TYPE})
 
 if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
     add_compile_options(

@@ -10,5 +10,5 @@ add_definitions(
 
 # SET TARGET
 add_executable(xtopcl_cli ${xtopcl_cli_src})
-add_dependencies(xtopcl_cli xxbase xdata xcrypto xtopcl)
+#add_dependencies(xtopcl_cli xxbase xdata xcrypto xtopcl)
 target_link_libraries(xtopcl_cli PRIVATE xtopcl)

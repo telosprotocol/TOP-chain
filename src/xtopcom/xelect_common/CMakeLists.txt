@@ -4,7 +4,7 @@ aux_source_directory(./src SRCS)
 aux_source_directory(./proto SRCS)
 add_library(xelect_common STATIC ${SRCS})
 
-add_dependencies(xelect_common xpbase)
+#add_dependencies(xelect_common xpbase)
 target_link_libraries(xelect_common PRIVATE protobuf xpbase)
 
 # if(CMAKE_SYSTEM_NAME STREQUAL "Linux")

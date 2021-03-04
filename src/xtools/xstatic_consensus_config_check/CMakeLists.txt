@@ -2,5 +2,5 @@ cmake_minimum_required(VERSION 3.8)
 
 add_executable(xstatic_consensus_config_check ./main.cpp)
 
-add_dependencies(xstatic_consensus_config_check xloader xconfig)
+#add_dependencies(xstatic_consensus_config_check xloader xconfig)
 target_link_libraries(xstatic_consensus_config_check xloader xconfig)

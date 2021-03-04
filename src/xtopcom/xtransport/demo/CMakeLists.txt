@@ -1,7 +1,7 @@
 aux_source_directory(./ xtransport_demo_dir)
 add_executable(xtransport_demo ${xtransport_demo_dir})
 
-add_dependencies(xtransport_demo xgossip xtransport xxbase)
+#add_dependencies(xtransport_demo xgossip xtransport xxbase)
 IF (CMAKE_SYSTEM_NAME MATCHES "Linux")
     target_link_libraries(xtransport_demo
         xtransport

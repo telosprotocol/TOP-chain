@@ -6,5 +6,5 @@ aux_source_directory(./testcases/ testcases)
 
 add_executable(uint128_test ${main_src} ${testcases})
 
-add_dependencies(uint128_test xbasic)
+#add_dependencies(uint128_test xbasic)
 target_link_libraries(uint128_test PRIVATE xbasic gtest)

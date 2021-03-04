@@ -7,7 +7,7 @@ add_compile_options(-Werror)
 aux_source_directory(./src src_dir)
 add_library(xgrpcservice STATIC ${src_dir})
 
-add_dependencies(xgrpcservice xxbase)
+#add_dependencies(xgrpcservice xxbase)
 
 target_link_libraries(xgrpcservice PRIVATE
     xvnetwork
