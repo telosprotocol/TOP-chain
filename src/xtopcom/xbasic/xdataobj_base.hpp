@@ -46,6 +46,11 @@ enum enum_xtopcom_object_type {
     xdata_type_whole_block_resource         = 26,  // whole block resource
     xdata_type_origin_tx_resource           = 27,  // origin tx resource
 
+    xdata_type_table_mbt                    = 28,
+    xdata_type_fulltable_block              = 29,
+    xdata_type_fulltable_input_entity       = 30,
+    xdata_type_fulltable_output_entity      = 31,
+
     xtopcom_object_type_max
 };
 

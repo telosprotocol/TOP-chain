@@ -375,7 +375,7 @@ TEST_F(test_create_block, multi_address_in_table_store_BENCH) {
                 base::xauto_ptr<base::xvblock_t> commit_block = blockstore->get_latest_committed_block(table_addr);
                 assert(commit_block != nullptr);
                 assert(commit_block->get_height() == (proposal_tableblock->get_height() - 2));
-                if (commit_block->get_block_class() != base::enum_xvblock_class_nil) {
+                if (commit_block->get_block_class() == base::enum_xvblock_class_light) {
                     data::xtable_block_t* commit_tableblock = dynamic_cast<data::xtable_block_t*>(commit_block.get());
                     assert(commit_tableblock != nullptr);
                     // get unit addresses from commit tableblock

@@ -45,6 +45,8 @@ namespace top
             uint64_t  _highest_connect_block_height; //indicated the last block who is connected all the way to genesis block or last full-block
             std::string _highest_connect_block_hash;
             std::string _highest_execute_block_hash;
+            uint64_t  _genesis_connect_block_height; //indicated the last block who is connected to genesis block
+            std::string _genesis_connect_block_hash;
         };
 
         //each account has own virtual store
@@ -91,6 +93,7 @@ namespace top
             base::xvblock_t*        get_latest_committed_block();   //block with committed status
             base::xvblock_t*        get_latest_executed_block();    //block with executed status
             base::xvblock_t*        get_latest_connected_block();   //block has connected to genesis
+            base::xvblock_t*        get_genesis_connected_block();   //block has connected to genesis
             base::xvblock_t*        get_latest_full_block();        //block has full state,genesis is a full block
             base::xvblock_t*        get_latest_current_block(bool ask_full_load = false);     //block has connected to cert/lock/commit block
             //one api to get latest_commit/latest_lock/latest_cert for better performance
@@ -106,6 +109,7 @@ namespace top
             virtual base::xvblock_t*        load_block_object(const uint64_t height,bool ask_full_load);  //load from db/store ,it must be a lock/commit block
             virtual bool                    load_block_input(base::xvblock_t* block);  //load and assign input data into  xvblock_t
             virtual bool                    load_block_output(base::xvblock_t* block); //load and assign output data into xvblock_t
+            virtual bool                    load_block_offstate(base::xvblock_t* block); //load and assign offstate data into xblock_t
 
             virtual bool                    store_block(base::xvblock_t* block); //update old one or insert as new
             virtual bool                    delete_block(base::xvblock_t* block);//return error code indicate what is result

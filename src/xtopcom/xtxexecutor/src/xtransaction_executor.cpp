@@ -98,7 +98,8 @@ int32_t xtransaction_executor::exec_batch_txs(xaccount_context_t * account_conte
                 // if has successfully txs, should return success
                 xwarn("xtransaction_executor::exec_batch_txs tx exec fail, %s result:fail error:%s",
                     tx->dump().c_str(), chainbase::xmodule_error_to_str(action_ret).c_str());
-                return txs_result.m_exec_succ_txs.size() != 0 ? xsuccess : action_ret;
+                //return txs_result.m_exec_succ_txs.size() != 0 ? xsuccess : action_ret;
+                return action_ret;
             }
         } else {
             tx->set_current_exec_status(enum_xunit_tx_exec_status_success);

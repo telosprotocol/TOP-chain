@@ -72,6 +72,11 @@ class test_blocktuil {
         do_block_consensus(next_block, clock, prev_block->get_viewid() + 1);
         return next_block;
     }
+    static base::xvblock_t*   create_next_indextable_with_consensus(const xfulltable_block_para_t & para, base::xvblock_t* prev_block, uint64_t clock = 0) {
+        auto next_block = xblocktool_t::create_next_fulltable(para, prev_block);
+        do_block_consensus(next_block, clock);
+        return next_block;
+    }
     static base::xvblock_t*   create_next_tableblock_with_next_two_emptyblock(xtable_block_para_t & para, base::xvblock_t* prev_block, uint64_t clock = 0) {
         for (auto & unit : para.get_account_units()) {
             set_block_consensus_para(unit.get(), clock);

@@ -64,6 +64,7 @@ private:
     volatile uint64_t                        m_last_view_id;
     std::shared_ptr<xcons_service_para_face> m_para;
     std::shared_ptr<xblock_maker_face>       m_block_maker;
+    std::shared_ptr<xproposal_maker_face>    m_proposal_maker;
     uint64_t                                 m_cons_start_time_ms;
     xcons_unorder_cache                      m_unorder_cache;
     static constexpr uint32_t                m_empty_block_max_num{2};

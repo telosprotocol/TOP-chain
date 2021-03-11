@@ -130,6 +130,7 @@ class xtable_block_t : public xblock_t {
     uint32_t        get_txs_count() const override;
     int64_t         get_pledge_balance_change_tgas() const override;
     const std::vector<xblock_ptr_t> & get_tableblock_units(bool need_parent_cert = false) const override;
+    std::map<std::string, xaccount_index_t> get_units_index() const override;
 
  private:
     xblock_ptr_t    recreate_unit_from_unit_input_output_resource(uint16_t index) const;

@@ -55,7 +55,7 @@ class xunit_blockmaker_t {
                                     int & error_code,
                                     std::vector<xcons_transaction_ptr_t> & proposal_txs);
  private:
-    bool                can_make_full_unit(xaccount_context_t * context, base::xvblock_t* prev_block);
+    bool                can_make_next_full_block(xaccount_context_t * context, base::xvblock_t* prev_block);
     int                 make_lightunit_output(xaccount_context_t * context, const std::vector<xcons_transaction_ptr_t> & txs, data::xlightunit_block_para_t & lightunit_para);
     int                 make_fullunit_output(xaccount_context_t * context, xfullunit_block_para_t & para);
     int                 verify_proposal_block_class(xaccount_context_t * context, base::xvheader_t* unitheader, base::xvblock_t * latest_unit);

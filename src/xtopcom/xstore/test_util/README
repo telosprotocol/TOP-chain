@@ -1,0 +1,13 @@
+get block from db at specified height
+
+usage: ./xstore_test_util db_path account height
+
+sample output:
+[root@Aries-storage-199 TOP-2000]# ./xstore_test_util 192.168.50.32/db T-21-qZV6Nm6HdynbTPHwaGWj96cZyevzsyWHsU@0 0
+{xblock_t:account=T-21-qZV6Nm6HdynbTPHwaGWj96cZyevzsyWHsU@0,height=0,viewid=0,viewtoken=4294967295,clock=0,flags=0x7a00,validator=ffffffffffffffff,auditor=0,refcount=1,blockhash=ac498e7c4c3242cc6ad3c7d9d74bf91c4e0ebb2d4f516ecc2198ef413f16b08c}
+cosigning_map:df3f619804a92fdb4057192dc43dd748ea778adc52bc498ce80524c014b81119
+gen_comittee:b2a4ca597e05eb604136d22ffc68ad6ab9f5d9bc6705d22d86ee887c75eb4719
+onchain_params:807c9de60284084dff572417f9bef5635ae47549bc85b37a96a722098a120dfa
+proposal_map:df3f619804a92fdb4057192dc43dd748ea778adc52bc498ce80524c014b81119
+voting_map:df3f619804a92fdb4057192dc43dd748ea778adc52bc498ce80524c014b81119
+

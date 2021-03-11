@@ -62,12 +62,16 @@ enum enum_xunit_service_error_type {
     enum_xtxexecutor_error_account_have_no_tx,
     enum_xtxexecutor_error_txpool_empty,
     enum_xtxexecutor_error_tx_nonce_not_match,
+    enum_xtxexecutor_error_account_hehind_block,
+    enum_xtxexecutor_error_account_cannot_make_unit,
+    enum_xtxexecutor_error_account_cannot_make_table,
 
     enum_xtxexecutor_error_backup_verify_fail_table_input_hash,
     enum_xtxexecutor_error_backup_verify_fail_table_output_hash,
     enum_xtxexecutor_error_backup_verify_fail_table_header_hash,
     enum_xtxexecutor_error_backup_verify_fail_check_consensus_para,
-
+    enum_xtxexecutor_error_backup_verify_fail_block_class,
+    enum_xtxexecutor_error_backup_verify_fail_block_not_match_local,
 
     xconsensus_service_error_max,
 };
@@ -123,11 +127,16 @@ inline std::string xunit_error_to_string(int32_t code) {
         XUNIT_TO_STR(enum_xtxexecutor_error_account_have_no_tx),
         XUNIT_TO_STR(enum_xtxexecutor_error_txpool_empty),
         XUNIT_TO_STR(enum_xtxexecutor_error_tx_nonce_not_match),
+        XUNIT_TO_STR(enum_xtxexecutor_error_account_hehind_block),
+        XUNIT_TO_STR(enum_xtxexecutor_error_account_cannot_make_unit),
+        XUNIT_TO_STR(enum_xtxexecutor_error_account_cannot_make_table),
 
         XUNIT_TO_STR(enum_xtxexecutor_error_backup_verify_fail_table_input_hash),
         XUNIT_TO_STR(enum_xtxexecutor_error_backup_verify_fail_table_output_hash),
         XUNIT_TO_STR(enum_xtxexecutor_error_backup_verify_fail_table_header_hash),
-        XUNIT_TO_STR(enum_xtxexecutor_error_backup_verify_fail_check_consensus_para)
+        XUNIT_TO_STR(enum_xtxexecutor_error_backup_verify_fail_check_consensus_para),
+        XUNIT_TO_STR(enum_xtxexecutor_error_backup_verify_fail_block_class),
+        XUNIT_TO_STR(enum_xtxexecutor_error_backup_verify_fail_block_not_match_local)
     };
     return names[code - xconsensus_service_error_base - 1];
 }

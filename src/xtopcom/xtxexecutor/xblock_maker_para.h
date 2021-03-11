@@ -56,7 +56,11 @@ class xtableblock_proposal_input_t : public xserializable_based_on<void> {
     void    add_unit_input(const xunit_proposal_input_t & input) {
         m_unit_inputs.push_back(input);
     }
+    void    clear() {
+        m_unit_inputs.clear();
+    }
     const std::vector<xunit_proposal_input_t> & get_unit_inputs() const {return m_unit_inputs;}
+
 
  public:
     int32_t do_write(base::xstream_t & stream) const override;

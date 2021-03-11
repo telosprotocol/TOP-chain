@@ -201,6 +201,17 @@ namespace top
             std::lock_guard<std::recursive_mutex> _dummy(m_group_locks[index]);
             return get_block_account(index,account)->get_latest_connected_block();
         }
+        base::xauto_ptr<base::xvblock_t>    xvblockstore_impl::get_genesis_connected_block(const std::string & account)
+        {
+            if(base::xvblockstore_t::is_close())
+            {
+                xwarn_err("xvblockstore_impl has closed at store_path=%s",m_store_path.c_str());
+                return nullptr;
+            }
+            const uint32_t index =  cal_group_index_from_account(account);
+            std::lock_guard<std::recursive_mutex> _dummy(m_group_locks[index]);
+            return get_block_account(index,account)->get_genesis_connected_block();
+        }
         base::xauto_ptr<base::xvblock_t>  xvblockstore_impl::get_latest_full_block(const std::string & account)//block has full state,genesis is a full block
         {
             if(base::xvblockstore_t::is_close())

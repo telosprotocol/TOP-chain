@@ -100,6 +100,7 @@ public:
     virtual base::xvblock_t* get_vblock_header(const std::string & store_path,const std::string & account, uint64_t height) const override;
     virtual bool get_vblock_input(const std::string & store_path,base::xvblock_t* for_block) const override;
     virtual bool get_vblock_output(const std::string & store_path,base::xvblock_t* for_block) const override;
+    virtual bool get_vblock_offstate(const std::string & store_path,base::xvblock_t* for_block) const override;
 
     virtual bool delete_block_by_path(const std::string & store_path,const std::string & account, uint64_t height, bool has_input_output) override;
 
@@ -108,6 +109,9 @@ public:
     virtual const std::string get_value(const std::string & key) const override;
 
     virtual bool  execute_block(base::xvblock_t* block) override;
+    virtual std::string get_full_offstate(const std::string & account, uint64_t height) override;
+    virtual base::xdataunit_t* get_full_block_offstate(const std::string & account, uint64_t height) const override;
+    virtual bool set_full_block_offstate(const std::string & account, uint64_t height, base::xdataunit_t* offstate) override;
 
  private:
     // for rocksdb transaction
@@ -138,7 +142,8 @@ public:
 
     bool execute_fullunit(xblockchain2_t* account, const xblock_t* block, std::map<std::string, std::string> & property_pairs);
     bool execute_lightunit(xblockchain2_t* account, const xblock_t* block, std::map<std::string, std::string> & property_pairs);
-    void execute_tableblock(xblockchain2_t* account, const xblock_t *block);
+    bool execute_tableblock_light(xblockchain2_t* account, const xblock_t *block);
+    bool execute_tableblock_full(xblockchain2_t* account, xblock_t *block, std::map<std::string, std::string> & kv_pairs);
 
     xdataobj_ptr_t get_property(const std::string & account, const std::string & prop_name, int32_t type);
     bool set_transaction_hash(xstore_transaction_t& txn, const uint64_t unit_height, const std::string &txhash, enum_transaction_subtype txtype, xtransaction_t* tx);

@@ -209,7 +209,7 @@ class xlightunit_block_t : public xblock_t {
     int64_t                     get_lock_tgas_change() const {return get_tx_output_resource()->get_lock_change_tgas();}
     int64_t                     get_lock_balance_change() const {return get_tx_output_resource()->get_lock_change_balance();}
     int64_t                     get_unvote_num_change() const {return get_tx_output_resource()->get_unvote_num_change();}
-    uint16_t                    get_unconfirm_sendtx_num() const {return get_tx_output_resource()->get_unconfirm_sendtx_num();}
+    uint16_t                    get_unconfirm_sendtx_num() const override {return get_tx_output_resource()->get_unconfirm_sendtx_num();}
     bool                        get_send_trans_info(uint64_t & latest_number, uint256_t & lastest_hash) const;
     bool                        get_recv_trans_info(uint64_t & total_number, uint256_t & latest_hash) const;
     bool                        is_prev_sendtx_confirmed() const { return get_tx_output_resource()->is_prev_sendtx_confirmed();}

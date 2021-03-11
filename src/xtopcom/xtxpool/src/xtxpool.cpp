@@ -101,7 +101,7 @@ void xtxpool_t::on_block_confirmed(xblock_t * block) {
     auto handler = [this](base::xcall_t & call, const int32_t cur_thread_id, const uint64_t timenow_ms) -> bool {
         xblock_t * block = dynamic_cast<xblock_t *>(call.get_param1().get_object());
         xinfo("xtxpool_t::on_block_confirmed process, block:%s", block->dump().c_str());
-        if (block->is_tableblock() && block->get_clock() + block_clock_height_fall_behind_max > this->m_para->get_chain_timer()->logic_time()) {
+        if (block->is_lighttable() && block->get_clock() + block_clock_height_fall_behind_max > this->m_para->get_chain_timer()->logic_time()) {
             make_receipts_and_send(block);
         }
         xtxpool_table_t * xtxpool_table = this->get_txpool_table_by_addr(block->get_account());
@@ -175,9 +175,10 @@ bool xtxpool_t::is_mailbox_over_limit() {
 }
 
 void xtxpool_t::make_receipts_and_send(xblock_t * block) {
-    if (!block->is_tableblock() || block->is_emptyblock() || !block->check_block_flag(base::enum_xvblock_flag_committed)) {
+    if (!block->is_lighttable()) {
         return;
     }
+    xassert(block->check_block_flag(base::enum_xvblock_flag_committed));
 
     if (m_receipt_tranceiver == nullptr) {
         xdbg("m_receipt_tranceiver not set");

@@ -35,6 +35,7 @@ xbatch_packer::xbatch_packer(observer_ptr<mbus::xmessage_bus_face_t> const   &mb
     base::xauto_ptr<xcsobject_t> ptr_engine_obj(create_engine(*this, xconsensus::enum_xconsensus_pacemaker_type_clock_cert));
     m_txpool_table = make_observer(block_maker->get_txpool_table(account_id));
     xdbg("xbatch_packer::xbatch_packer,create,this=%p,account=%s,tableid=%d", this, account_id.c_str(), tableid);
+    m_proposal_maker = block_maker->get_proposal_maker(account_id);
 }
 
 xbatch_packer::~xbatch_packer() {
@@ -51,13 +52,14 @@ void xbatch_packer::set_xip(xblock_maker_para_t & blockpara, const xvip2_t & lea
     if (zone_id == base::enum_chain_zone_consensus_index) {
         if (xcons_utl::is_auditor(leader)) {
             // leader is auditor xip, set auditor_xip to leader, validator to chid group xip
-            blockpara.auditor_xip = leader;
+            // blockpara.auditor_xip = leader;
             xvip2_t child = get_child_xip(leader, get_account());
             auto group_id = child;
             reset_node_id_to_xip2(group_id);
             set_node_id_to_xip2(group_id, 0x3FF);
-            blockpara.validator_xip = group_id;
-            xdbg("[xunitservice] set auditor leader validator:%s auditor:%s", xcons_utl::xip_to_hex(blockpara.validator_xip).c_str(), xcons_utl::xip_to_hex(blockpara.auditor_xip).c_str());
+            // blockpara.validator_xip = group_id;
+            blockpara.set_xip(group_id, leader);
+            xdbg("[xunitservice] set auditor leader validator:%s auditor:%s", xcons_utl::xip_to_hex(blockpara.get_validator_xip()).c_str(), xcons_utl::xip_to_hex(blockpara.get_auditor_xip()).c_str());
         } else {
             // leader is validator xip, set validator_xip to leader, auditor to parent group xip
             // blockpara.auditor_xip = xvip2_t{(uint64_t)0, (uint64_t)0};
@@ -65,14 +67,16 @@ void xbatch_packer::set_xip(xblock_maker_para_t & blockpara, const xvip2_t & lea
             auto group_id = parent;
             reset_node_id_to_xip2(group_id);
             set_node_id_to_xip2(group_id, 0x3FF);
-            blockpara.auditor_xip = group_id;
-            blockpara.validator_xip = leader;
-            xdbg("[xunitservice] set validator leader validator:%s auditor:%s", xcons_utl::xip_to_hex(blockpara.validator_xip).c_str(), xcons_utl::xip_to_hex(blockpara.auditor_xip).c_str());
+            // blockpara.auditor_xip = group_id;
+            // blockpara.validator_xip = leader;
+            blockpara.set_xip(leader, group_id);
+            xdbg("[xunitservice] set validator leader validator:%s auditor:%s", xcons_utl::xip_to_hex(blockpara.get_validator_xip()).c_str(), xcons_utl::xip_to_hex(blockpara.get_auditor_xip()).c_str());
         }
     } else {
         // rec/zec without auditor
-        blockpara.validator_xip = leader;
-        blockpara.auditor_xip = xvip2_t{(uint64_t)0, (uint64_t)0};  // TODO(justin) set real auditor xip
+        // blockpara.validator_xip = leader;
+        // blockpara.auditor_xip = xvip2_t{(uint64_t)0, (uint64_t)0};  // TODO(justin) set real auditor xip
+        blockpara.set_xip(leader, xvip2_t{(uint64_t)0, (uint64_t)0});
     }
 }
 
@@ -104,6 +108,70 @@ bool xbatch_packer::on_view_fire(const base::xvevent_t & event, xcsobject_t * fr
         return false;
     }
 
+#if 1
+    xblock_maker_para_t proposal_para(view_ev->get_clock(), view_ev->get_viewid());
+    if (false == m_proposal_maker->can_make_proposal(proposal_para)) {
+        xwarn("xbatch_packer::on_view_fire fail-cannot make proposal.account=%s,viewid=%ld", get_account().c_str(), view_ev->get_viewid());
+        return false;
+    }
+
+    // check if this node is leader
+    std::error_code ec{election::xdata_accessor_errc_t::success};
+    auto version = accessor->version_from(common::xip2_t{local_xip.low_addr, local_xip.high_addr}, ec);
+    xassert(!ec);
+    if (ec) {
+        xerror("xbatch_packer::on_view_fire xip=%s version from error", xcons_utl::xip_to_hex(local_xip).c_str());
+        return false;
+    }
+    uint16_t rotate_mode = enum_rotate_mode_rotate_by_view_id;
+    xvip2_t leader_xip = leader_election->get_leader_xip(m_last_view_id, get_account(), proposal_para.get_latest_cert_block().get(), local_xip, local_xip, version, rotate_mode);
+    bool is_leader_node = xcons_utl::xip_equals(leader_xip, local_xip);
+    if (!is_leader_node) {
+        // backup do nothing
+        xinfo("JIMMY xbatch_packer::on_view_fire backup_node account=%s,viewid=%" PRIu64 ",height=%" PRIu64 ", this:%p node:%s xip:%s,leader:%s,rotate_mode:%d",
+                get_account().c_str(), m_last_view_id, proposal_para.get_latest_cert_block()->get_height(), this, node_account.c_str(),
+                xcons_utl::xip_to_hex(local_xip).c_str(), xcons_utl::xip_to_hex(leader_xip).c_str(), rotate_mode);
+
+        xconsensus::xcspdu_fire* xcspdu_fire_event = m_unorder_cache.get_proposal_event(m_last_view_id);
+        if (xcspdu_fire_event != nullptr) {
+            recv_in(xcspdu_fire_event->get_from_xip(), xcspdu_fire_event->get_to_xip(), xcspdu_fire_event->_packet, cur_thread_id, timenow_ms);
+            xcspdu_fire_event->release_ref();
+        }
+        return true;
+    }
+    set_xip(proposal_para, local_xip);  // set leader xip
+
+    xdbg("JIMMY xbatch_packer::on_view_fire leader_node account=%s,viewid=%ld,clock=%ld,cert=%s",
+        get_account().c_str(), view_ev->get_viewid(), view_ev->get_clock(), proposal_para.get_latest_cert_block()->dump().c_str());
+    xblock_ptr_t proposal_block = m_proposal_maker->make_proposal(proposal_para);
+    if (proposal_block == nullptr) {
+        xwarn("xbatch_packer::on_view_fire fail-make_proposal.account=%s,viewid=%ld,clock=%ld,cert=%s",
+            get_account().c_str(), view_ev->get_viewid(), view_ev->get_clock(), proposal_para.get_latest_cert_block()->dump().c_str());
+        return false;
+    }
+    base::xauto_ptr<xconsensus::xproposal_start> _event_obj(new xconsensus::xproposal_start(proposal_block.get()));
+    if (!push_event_down(*_event_obj, this, 0, 0)) {
+        xwarn("xbatch_packer::on_view_fire account=%s,viewid=%" PRIu64 ",height=%" PRIu64 ",leader fail-push proposal event down.",
+            get_account().c_str(), view_ev->get_viewid(), proposal_para.get_latest_cert_block()->get_height());
+        return false;
+    }
+    // check viewid again, may changed
+    if (view_ev->get_viewid() != proposal_block->get_viewid()) {
+        xwarn("xbatch_packer::on_view_fire account=%s,viewid=%" PRIu64 ",height=%" PRIu64 ",latest_viewid=%" PRIu64 ",leader fail-viewid changed.",
+            get_account().c_str(), view_ev->get_viewid(), proposal_para.get_latest_cert_block()->get_height(), proposal_block->get_viewid());
+        return false;
+    }
+#ifdef ENABLE_METRICS
+    XMETRICS_COUNTER_INCREMENT("cons_tableblock_start_leader", 1);
+    m_cons_start_time_ms = base::xtime_utl::gmttime_ms();
+#endif
+    xinfo("xbatch_packer::on_view_fire account=%s,viewid=%" PRIu64 ", succ-leader start consensus. block=%s this:%p node:%s xip:%s",
+            get_account().c_str(), m_last_view_id, proposal_block->dump().c_str(), this, node_account.c_str(), xcons_utl::xip_to_hex(local_xip).c_str());
+    return true;
+#endif
+
+
+#if 0
     base::xblock_mptrs latest_blocks = m_para->get_resources()->get_vblockstore()->get_latest_blocks(*this);
     base::xvblock_t* latest_cert_block = latest_blocks.get_latest_cert_block();
 
@@ -212,6 +280,7 @@ bool xbatch_packer::on_view_fire(const base::xvevent_t & event, xcsobject_t * fr
     xinfo("xbatch_packer::on_view_fire account=%s,viewid=%" PRIu64 ", succ-leader start consensus. block=%s this:%p node:%s xip:%s",
             get_account().c_str(), m_last_view_id, proposal_block->dump().c_str(), this, node_account.c_str(), xcons_utl::xip_to_hex(local_xip).c_str());
     return true;
+#endif
 }
 
 bool xbatch_packer::on_pdu_event_up(const base::xvevent_t & event, xcsobject_t * from_child, const int32_t cur_thread_id, const uint64_t timenow_ms) {
@@ -304,6 +373,9 @@ bool xbatch_packer::recv_in(const xvip2_t & from_addr, const xvip2_t & to_addr, 
 }
 
 int xbatch_packer::verify_proposal(base::xvblock_t * proposal_block, base::xvqcert_t * bind_clock_cert, xcsobject_t * _from_child) {
+    return m_proposal_maker->verify_proposal(proposal_block, bind_clock_cert);
+
+#if 0
     base::xblock_mptrs latest_blocks = m_para->get_resources()->get_vblockstore()->get_latest_blocks(*this);
     auto committed_block = latest_blocks.get_latest_committed_block();
     m_txpool_table->update_committed_table_block(dynamic_cast<xblock_t*>(committed_block));
@@ -311,7 +383,7 @@ int xbatch_packer::verify_proposal(base::xvblock_t * proposal_block, base::xvqce
     XMETRICS_COUNTER_INCREMENT("cons_tableblock_verify_backup", 1);
 
     base::xvqcert_t * bind_drand_cert = nullptr;
-    if (proposal_block->get_block_class() != base::enum_xvblock_class_nil) {
+    if (proposal_block->get_block_class() == base::enum_xvblock_class_light) {
         bind_drand_cert = get_bind_drand(proposal_block);
         if (bind_drand_cert == nullptr) {
             XMETRICS_PACKET_INFO("consensus_tableblock",
@@ -342,6 +414,7 @@ int xbatch_packer::verify_proposal(base::xvblock_t * proposal_block, base::xvqce
     }
 
     return ret;
+#endif
 }
 
 base::xvqcert_t* xbatch_packer::get_bind_drand(base::xvblock_t *proposal_block) {

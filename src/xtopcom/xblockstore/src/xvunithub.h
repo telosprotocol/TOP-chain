@@ -56,6 +56,7 @@ namespace top
             virtual base::xauto_ptr<base::xvblock_t>  get_latest_connected_block(const std::string & account) override;//block connected to genesis/full block
             virtual base::xauto_ptr<base::xvblock_t>  get_latest_full_block(const std::string & account) override;//block has full state,genesis is a full block
             virtual base::xauto_ptr<base::xvblock_t>  get_latest_current_block(const std::string & account, bool ask_full_load) override;//block has connected to cert/lock/commit block
+            virtual base::xauto_ptr<base::xvblock_t>  get_genesis_connected_block(const std::string & account) override;//block connected to genesis
 
             //ask_full_load decide load header only or include input/output(that can be loaded seperately by load_block_input/output)
             virtual base::xauto_ptr<base::xvblock_t>  load_block_object(const std::string & account,const uint64_t height,bool ask_full_load = true) override;

@@ -118,6 +118,10 @@ int32_t xunconfirm_sendtx_cache_t::check_and_update_cache(const std::string & ad
         clear_account_cache(address);
         return xtxpool_error_unconfirm_sendtx_not_exist;
     }
+    if (block->is_emptyblock()) {
+        return xsuccess;
+    }
+
 
     data::xlightunit_block_t * lightunit = (data::xlightunit_block_t *)unit->query_interface(data::xlightunit_block_t::get_object_type());
     xassert(lightunit != nullptr);

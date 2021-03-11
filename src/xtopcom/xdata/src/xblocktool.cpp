@@ -83,6 +83,10 @@ base::xvblock_t*  xblocktool_t::create_next_tableblock(const xtable_block_para_t
     return proposal_block;
 }
 
+base::xvblock_t*   xblocktool_t::create_next_fulltable(const xfulltable_block_para_t & para, base::xvblock_t* prev_block) {
+    return xfull_tableblock_t::create_next_block(para, prev_block);
+}
+
 base::xvblock_t*   xblocktool_t::create_next_emptyblock(xblockchain2_t* chain) {
     return xemptyblock_t::create_next_emptyblock(chain);
 }
@@ -162,6 +166,7 @@ bool xblocktool_t::verify_latest_blocks(const base::xblock_mptrs & latest_blocks
     uint64_t latest_cert_block_height = latest_cert_block->get_height();
     // cert height, lock height, commit height is 0
     if (latest_cert_block_height == 0) {
+        xassert(latest_cert_block->check_block_flag(base::enum_xvblock_flag_committed));
         return true;
     }
 
@@ -220,6 +225,15 @@ bool xblocktool_t::can_make_next_empty_block(const base::xblock_mptrs & latest_b
         return false;
     }
     return true;
+}
+
+bool xblocktool_t::can_make_next_full_table(base::xvblock_t* latest_cert_block, uint32_t max_light_num) {
+    uint64_t last_full_block_height = latest_cert_block->get_last_full_block_height();
+    if ( (latest_cert_block->get_block_class() != base::enum_xvblock_class_full)
+        && (latest_cert_block->get_height() - last_full_block_height >= max_light_num) ) {
+        return true;
+    }
+    return false;
 }
 
 NS_END2

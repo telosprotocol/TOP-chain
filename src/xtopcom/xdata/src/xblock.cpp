@@ -26,21 +26,24 @@ std::vector<xobject_ptr_t<xblock_t>>    xblock_t::m_empty_blocks;
 xblock_consensus_para_t::xblock_consensus_para_t(const xvip2_t & validator, base::xvblock_t* prev_block) {
     uint32_t viewtoken = base::xtime_utl::get_fast_randomu();
     uint64_t viewid = prev_block->get_viewid() + 1;
+    uint64_t drand_height = 0;
     xvip2_t auditor_xip;
     set_empty_xip2(auditor_xip);
-    set_common_consensus_para(prev_block->get_clock() + 1, validator, auditor_xip, viewid, viewtoken);
+    set_common_consensus_para(prev_block->get_clock() + 1, validator, auditor_xip, viewid, viewtoken, drand_height);
 }
 
 void xblock_consensus_para_t::set_common_consensus_para(uint64_t clock,
                                                         const xvip2_t & validator,
                                                         const xvip2_t & auditor,
                                                         uint64_t viewid,
-                                                        uint32_t viewtoken) {
+                                                        uint32_t viewtoken,
+                                                        uint64_t drand_height) {
     m_clock = clock;
     m_validator = validator;
     m_auditor = auditor;
     m_viewid = viewid;
     m_viewtoken = viewtoken;
+    m_drand_height = drand_height;
 }
 
 void xblock_consensus_para_t::set_tableblock_consensus_para(uint64_t timestamp,
@@ -97,6 +100,14 @@ void xblockheader_extra_data_t::set_tgas_total_lock_amount_property_height(uint6
     m_paras[enum_extra_data_type_tgas_total_lock_amount_property_height] = height_str;
 }
 
+xobject_ptr_t<xblock_t> xblock_t::raw_vblock_to_object_ptr(base::xvblock_t* vblock) {
+    xblock_ptr_t object_ptr;
+    xblock_t* block_ptr = dynamic_cast<xblock_t*>(vblock);
+    xassert(block_ptr != nullptr);
+    block_ptr->add_ref();
+    object_ptr.attach(block_ptr);
+    return object_ptr;
+}
 
 xblock_t::xblock_t(base::xvheader_t & header, xblockcert_t & cert, enum_xdata_type type)
     : base::xvblock_t(header, cert, nullptr, nullptr, type) {
@@ -231,23 +242,23 @@ std::string xblock_t::dump_cert(base::xvqcert_t * qcert) const {
     ss << ",parent_h="  << qcert->get_parent_block_height();
     // ss << " validator=" << qcert->get_validator().low_addr;
     // ss << " auditor="   << qcert->get_auditor().low_addr;
-    // ss << " sign_h="    << base::xhash64_t::digest(qcert->get_hash_to_sign());
+    ss << " sign_h="    << base::xhash64_t::digest(qcert->get_hash_to_sign());
     ss << " header_h="   << base::xhash64_t::digest(qcert->get_header_hash());
     ss << " input_r="   << base::xhash64_t::digest(qcert->get_input_root_hash());
     ss << " output_r="  << base::xhash64_t::digest(qcert->get_output_root_hash());
-    // ss << " justify_r="  << base::xhash64_t::digest(qcert->get_justify_cert_hash());
-    // ss << " verify_th=" << qcert->get_validator_threshold();
-    // ss << " audit_th="  << qcert->get_auditor_threshold();
-    // ss << " verify_sig="<< qcert->get_verify_signature().size();
-    // ss << " audit_sig=" << qcert->get_audit_signature().size();
-    // ss << " cons_type=" << qcert->get_consensus_type();
-    // ss << " cons_th=" << qcert->get_consensus_threshold();
-    // ss << " cons_flag=" << qcert->get_consensus_flags();
-    // ss << " key_type=" << qcert->get_crypto_key_type();
-    // ss << " sign_type=" << qcert->get_crypto_sign_type();
-    // ss << " hash_type=" << qcert->get_crypto_hash_type();
-    // ss << " extend=" << base::xhash64_t::digest(qcert->get_extend_data());
-    // ss << "," << base::xhash64_t::digest(qcert->get_extend_cert());
+    ss << " justify_r="  << base::xhash64_t::digest(qcert->get_justify_cert_hash());
+    ss << " verify_th=" << qcert->get_validator_threshold();
+    ss << " audit_th="  << qcert->get_auditor_threshold();
+    ss << " verify_sig="<< qcert->get_verify_signature().size();
+    ss << " audit_sig=" << qcert->get_audit_signature().size();
+    ss << " cons_type=" << qcert->get_consensus_type();
+    ss << " cons_th=" << qcert->get_consensus_threshold();
+    ss << " cons_flag=" << qcert->get_consensus_flags();
+    ss << " key_type=" << qcert->get_crypto_key_type();
+    ss << " sign_type=" << qcert->get_crypto_sign_type();
+    ss << " hash_type=" << qcert->get_crypto_hash_type();
+    ss << " extend=" << base::xhash64_t::digest(qcert->get_extend_data());
+    ss << "," << base::xhash64_t::digest(qcert->get_extend_cert());
 
     ss << "}";
 
@@ -362,6 +373,23 @@ void xblock_t::set_consensus_para(const xblock_consensus_para_t & para) {
         get_cert()->set_viewtoken(para.get_viewtoken());
     }
     get_cert()->set_drand(para.get_drand_height());
+}
+
+void xblock_t::set_full_offstate(base::xdataunit_t* offstate) {
+    xassert(m_full_offstate == nullptr);
+    offstate->add_ref();
+    m_full_offstate.attach(offstate);
+}
+
+bool xblock_t::is_full_state_block() const {
+    // full-table block need offstate
+    if (get_header()->get_block_level() == base::enum_xvblock_level_table
+        && get_header()->get_block_class() == base::enum_xvblock_class_full) {
+        if (nullptr == m_full_offstate) {
+            return false;
+        }
+    }
+    return true;
 }
 
 NS_END2

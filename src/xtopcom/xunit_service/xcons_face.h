@@ -118,32 +118,70 @@ enum e_cons_type {
     e_table,
 };
 
-struct xblock_maker_para_t {
-    xblock_maker_para_t() {
-        auditor_xip.high_addr = 0;
-        auditor_xip.low_addr = 0;
+class xblock_maker_para_t {
+ public:
+    xblock_maker_para_t(uint64_t _clock, uint64_t _viewid)
+    : clock(_clock), viewid(_viewid) {
+        set_empty_xip2(validator_xip);
+        set_empty_xip2(auditor_xip);
     }
+
+ public:
+    void    set_xip(const xvip2_t & _validator_xip, const xvip2_t & _auditor_xip) {
+        validator_xip = _validator_xip;
+        auditor_xip = _auditor_xip;
+    }
+    void    set_timer_block(base::xvblock_t* _timer_block) {
+        timer_block = xblock_t::raw_vblock_to_object_ptr(_timer_block);
+    }
+    void    set_drand_block(base::xvblock_t* _drand_block) {
+        drand_block = xblock_t::raw_vblock_to_object_ptr(_drand_block);
+    }
+    void    set_latest_blocks(const base::xblock_mptrs & latest_blocks) {
+        latest_cert_block = xblock_t::raw_vblock_to_object_ptr(latest_blocks.get_latest_cert_block());
+        latest_locked_block = xblock_t::raw_vblock_to_object_ptr(latest_blocks.get_latest_locked_block());
+        latest_committed_block = xblock_t::raw_vblock_to_object_ptr(latest_blocks.get_latest_committed_block());
+    }
+
+    uint64_t                get_clock() const {return clock;}
+    uint64_t                get_viewid() const {return viewid;}
+    const xblock_ptr_t &    get_timer_block() const {return timer_block;}
+    const xblock_ptr_t &    get_drand_block() const {return drand_block;}
+    const xblock_ptr_t &    get_latest_cert_block() const {return latest_cert_block;}
+    const xblock_ptr_t &    get_latest_locked_block() const {return latest_locked_block;}
+    const xblock_ptr_t &    get_latest_committed_block() const {return latest_committed_block;}
+    const xvip2_t &         get_validator_xip() const {return validator_xip;}
+    const xvip2_t &         get_auditor_xip() const {return auditor_xip;}
+
+ private:
     uint64_t                    clock{0};
     uint64_t                    viewid{0};
-    uint64_t                    drand_height{0};
     xvip2_t                     validator_xip;
     xvip2_t                     auditor_xip;
-    base::xvblock_t*            timer_block;
-    base::xvblock_t*            drand_block;
-    base::xblock_mptrs*         latest_blocks;
-    bool                        can_make_empty_block;
-    std::vector<std::string>    unit_accounts;
-    xtxpool::xtxpool_table_face_t*  txpool_table;
+    xblock_ptr_t                timer_block{nullptr};
+    xblock_ptr_t                drand_block{nullptr};
+    xblock_ptr_t                latest_cert_block{nullptr};
+    xblock_ptr_t                latest_locked_block{nullptr};
+    xblock_ptr_t                latest_committed_block{nullptr};
 };
+
+class xproposal_maker_face {
+ public:
+    virtual bool                        can_make_proposal(xblock_maker_para_t & proposal_para) = 0;
+    virtual xblock_ptr_t                make_proposal(const xblock_maker_para_t & proposal_para) = 0;
+    virtual int                         verify_proposal(base::xvblock_t* proposal_block, base::xvqcert_t * bind_clock_cert) = 0;
+};
+
 // block maker face
 class xblock_maker_face {
 public:
-    virtual base::xauto_ptr<base::xvblock_t> get_latest_block(const std::string & account) = 0;
-    virtual base::xvblock_t *                make_block(const std::string & account, uint64_t clock, uint64_t viewid, uint16_t threshold, const xvip2_t & leader_xip) = 0;
-    virtual base::xvblock_t *                make_block(const std::string & account, const xblock_maker_para_t & para, const xvip2_t & leader_xip) = 0;
-    virtual int                              verify_block(base::xvblock_t * proposal_block) = 0;
+    virtual base::xauto_ptr<base::xvblock_t> get_latest_block(const std::string & account) { return nullptr;}
+    virtual base::xvblock_t *                make_block(const std::string & account, uint64_t clock, uint64_t viewid, uint16_t threshold, const xvip2_t & leader_xip) { return nullptr;}
+    virtual base::xvblock_t *                make_block(const std::string & account, const xblock_maker_para_t & para, const xvip2_t & leader_xip) { return nullptr;}
+    virtual int                              verify_block(base::xvblock_t * proposal_block) { return -1;}
     virtual int                              verify_block(base::xvblock_t * proposal_block, base::xvqcert_t * bind_clock_cert, base::xvqcert_t * bind_drand_cert, xtxpool::xtxpool_table_face_t* txpool_table, uint64_t committed_height, const xvip2_t & xip) { return -1; }
     virtual xtxpool::xtxpool_table_face_t*   get_txpool_table(const std::string & table_account) { return nullptr;}
+    virtual std::shared_ptr<xproposal_maker_face>   get_proposal_maker(const std::string & account) {return nullptr;}
 };
 
 using xblock_maker_ptr = std::shared_ptr<xblock_maker_face>;

@@ -58,7 +58,7 @@ base::xvblock_t* xunit_blockmaker_t::create_unit(xaccount_context_t* context,
                                                       int & error_code,
                                                       std::vector<xcons_transaction_ptr_t> & proposal_txs) {
     base::xvblock_t* unit = nullptr;
-    if (can_make_full_unit(context, prev_block)) {
+    if (can_make_next_full_block(context, prev_block)) {
         unit = create_fullunit(context, prev_block, cs_para, error_code);
     } else {
         xassert(!input_txs.empty());
@@ -74,7 +74,6 @@ base::xvblock_t* xunit_blockmaker_t::create_unit(xaccount_context_t* context,
     block->set_consensus_para(cs_para);
     return unit;
 }
-
 
 int xunit_blockmaker_t::make_block(const std::string &account,
                                    const xblock_consensus_para_t & cs_para,
@@ -203,7 +202,7 @@ bool xunit_blockmaker_t::get_lock_block_sign_hash(base::xvblock_t* highqc_block,
 }
 
 int xunit_blockmaker_t::verify_proposal_block_class(xaccount_context_t * context, base::xvheader_t* unitheader, base::xvblock_t * latest_unit) {
-    bool can_fullunit = can_make_full_unit(context, latest_unit);
+    bool can_fullunit = can_make_next_full_block(context, latest_unit);
     if (can_fullunit && unitheader->get_block_class() != base::enum_xvblock_class_full) {
         xerror("xunit_blockmaker_t::verify_proposal_block_class should be fullunit. latest_unit:%s height:%ld",
             unitheader->get_account().c_str(), latest_unit->get_height());
@@ -217,7 +216,7 @@ int xunit_blockmaker_t::verify_proposal_block_class(xaccount_context_t * context
     return xsuccess;
 }
 
-bool xunit_blockmaker_t::can_make_full_unit(xaccount_context_t * context, base::xvblock_t* prev_block) {
+bool xunit_blockmaker_t::can_make_next_full_block(xaccount_context_t * context, base::xvblock_t* prev_block) {
     uint32_t full_unit_count = XGET_ONCHAIN_GOVERNANCE_PARAMETER(fullunit_contain_of_unit_num);
 
     auto account_obj = context->get_blockchain();
@@ -227,11 +226,11 @@ bool xunit_blockmaker_t::can_make_full_unit(xaccount_context_t * context, base::
     uint64_t current_lightunit_count = current_height - current_fullunit_height;
     xassert(current_lightunit_count > 0);
     if (current_lightunit_count >= full_unit_count && account_obj->get_unconfirm_sendtx_num() == 0) {
-        xdbg("xunit_blockmaker_t::can_make_full_unit fullunit. %s height:%ld full_unit_height:%ld unconfirm_sendtx_num:%ld",
+        xdbg("xunit_blockmaker_t::can_make_next_full_block fullunit. %s height:%ld full_unit_height:%ld unconfirm_sendtx_num:%ld",
             account_obj->get_account().c_str(), current_height, current_fullunit_height, account_obj->get_unconfirm_sendtx_num());
         return true;
     }
-    xdbg("xunit_blockmaker_t::can_make_full_unit lightunit. %s height:%ld full_unit_height:%ld unconfirm_sendtx_num:%ld",
+    xdbg("xunit_blockmaker_t::can_make_next_full_block lightunit. %s height:%ld full_unit_height:%ld unconfirm_sendtx_num:%ld",
         account_obj->get_account().c_str(), current_height, current_fullunit_height, account_obj->get_unconfirm_sendtx_num());
     return false;
 }
