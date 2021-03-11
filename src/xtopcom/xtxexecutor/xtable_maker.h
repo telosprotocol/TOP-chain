@@ -34,10 +34,9 @@ class xtable_maker_t : public xblock_maker_t {
     int32_t                 verify_proposal(base::xvblock_t* proposal_block, const xtablemaker_para_t & table_para, const data::xblock_consensus_para_t & cs_para);
 
     int32_t                 default_check_latest_state();
-    virtual int32_t         check_latest_state(base::xvblock_t* latest_cert_block) override;  // check table latest block and state
-    virtual xblock_ptr_t    make_next_block(const data::xblock_consensus_para_t & cs_para, int32_t & error_code) override;
-    virtual xblock_ptr_t    make_next_block(const data::xblock_consensus_para_t & cs_para, xunitmaker_result_t & result) override {return nullptr;}
-    virtual xblock_ptr_t    make_next_block(const data::xblock_consensus_para_t & cs_para, xtablemaker_result_t & result) override;
+    int32_t                 check_latest_state(base::xvblock_t* latest_cert_block); // check table latest block and state
+    virtual xblock_ptr_t    make_next_block(const data::xblock_consensus_para_t & cs_para, int32_t & error_code);
+    virtual xblock_ptr_t    make_next_block(const data::xblock_consensus_para_t & cs_para, xtablemaker_result_t & result);
     virtual bool            can_make_next_block() const override;
     virtual bool            can_make_next_empty_block() const override;
     virtual bool            can_make_next_full_block() const override;
@@ -48,16 +47,16 @@ class xtable_maker_t : public xblock_maker_t {
  protected:
     xblock_ptr_t            make_light_table(const data::xblock_consensus_para_t & cs_para, xtablemaker_result_t & result, int32_t & error_code);
     xblock_ptr_t            make_full_table(const xblock_consensus_para_t & cs_para, int32_t & error_code);
-    bool                    update_unit_makers();
+    void                    clear_old_unit_makers();
     xblock_ptr_t            make_empty_table(base::xvblock_t* prev_block, const xblock_consensus_para_t & cs_para);
     xblock_ptr_t            make_full_table(base::xvblock_t* prev_block, const xfulltable_block_para_t & table_para, const xblock_consensus_para_t & cs_para);
     xblock_ptr_t            make_light_table(base::xvblock_t* prev_block, const xtable_block_para_t & table_para, const xblock_consensus_para_t & cs_para);
 
     xunit_maker_ptr_t       get_unit_maker(const std::string & account);
+    void                    set_unit_maker(const xunit_maker_ptr_t & unitmaker);
     int32_t                 update_full_state(const xblock_ptr_t & latest_committed_block);
     void                    update_uncommit_unit_makers();
     bool                    update_latest_blocks(const xblock_ptr_t & latest_block);
-    int32_t                 set_table_latest_state(base::xvblock_t* latest_committed_block);
     bool                    unpack_table_and_update_units(const xblock_ptr_t & block);
     void                    clear_table_units(const xblock_ptr_t & block);
     bool                    verify_proposal_with_local(base::xvblock_t *proposal_block, base::xvblock_t *local_block) const;

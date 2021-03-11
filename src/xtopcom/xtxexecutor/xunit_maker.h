@@ -25,11 +25,9 @@ class xunit_maker_t : public xblock_maker_t {
     virtual ~xunit_maker_t() {}
 
  public:
-    int32_t                 default_check_latest_state();
-    virtual int32_t         check_latest_state(base::xvblock_t* latest_cert_block = nullptr) override;  // check block and state is latest
-    virtual xblock_ptr_t    make_next_block(const data::xblock_consensus_para_t & cs_para, int32_t & error_code) override;
-    virtual xblock_ptr_t    make_next_block(const data::xblock_consensus_para_t & cs_para, xunitmaker_result_t & result) override;
-    virtual xblock_ptr_t    make_next_block(const data::xblock_consensus_para_t & cs_para, xtablemaker_result_t & result) override {return nullptr;}
+    int32_t                 check_latest_state();  // check block and state is latest
+    virtual xblock_ptr_t    make_next_block(const data::xblock_consensus_para_t & cs_para, int32_t & error_code);
+    virtual xblock_ptr_t    make_next_block(const data::xblock_consensus_para_t & cs_para, xunitmaker_result_t & result);
     virtual bool            can_make_next_block() const override;
     virtual bool            can_make_next_empty_block() const override;
     virtual bool            can_make_next_full_block() const override;
@@ -48,6 +46,7 @@ class xunit_maker_t : public xblock_maker_t {
                                             xbatch_txs_result_t & exec_result,
                                             data::xlightunit_block_para_t & lightunit_para);
     void            init_unit_blocks(const base::xblock_mptrs & latest_blocks);
+    bool            is_account_locked() const;
 
  private:
     std::vector<xcons_transaction_ptr_t>        m_pending_txs;

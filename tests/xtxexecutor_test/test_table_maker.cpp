@@ -71,7 +71,7 @@ TEST_F(test_table_maker, table_maker_2) {
     ASSERT_TRUE(resouces->get_blockstore()->store_block(table1.get()));
 
     ASSERT_EQ(table_maker->default_check_latest_state(), xsuccess);
-    ASSERT_EQ(table_maker->get_proposal_prev_block()->get_height(), 1);
+    ASSERT_EQ(table_maker->get_highest_height_block()->get_height(), 1);
     ASSERT_EQ(table_maker->get_lock_block()->get_height(), 0);
     ASSERT_TRUE(table_maker->can_make_next_block());
     xblock_ptr_t table2 = table_maker->make_next_block(cs_para, error_code);
@@ -230,13 +230,47 @@ TEST_F(test_table_maker, table_maker_roll_back_1) {
     {
         ASSERT_TRUE(resouces->get_blockstore()->store_block(first_table.get()));
         ASSERT_EQ(table_maker->default_check_latest_state(), xsuccess);
-        ASSERT_EQ(table_maker->get_proposal_prev_block()->get_block_hash(), first_table->get_block_hash());
+        ASSERT_EQ(table_maker->get_highest_height_block()->get_block_hash(), first_table->get_block_hash());
     }
     {
         ASSERT_TRUE(resouces->get_blockstore()->store_block(second_table.get()));
         ASSERT_EQ(table_maker->default_check_latest_state(), xsuccess);
-        ASSERT_EQ(table_maker->get_proposal_prev_block()->get_block_hash(), second_table->get_block_hash());
+        ASSERT_EQ(table_maker->get_highest_height_block()->get_block_hash(), second_table->get_block_hash());
     }
+}
+
+TEST_F(test_table_maker, table_maker_make_proposal_0) {
+    xblockmaker_resources_ptr_t resouces = test_xblockmaker_resources_t::create();
+    std::string taccount = xblocktool_t::make_address_shard_table_account(1);
+    std::string account1 = xblocktool_t::make_address_user_account("11111111111111111111");
+    std::string account2 = xblocktool_t::make_address_user_account("22222222222222222222");
+    std::string dstaccount = xblocktool_t::make_address_user_account("222222222222233333");
+
+    xdatamock_tx datamock_account1(resouces, account1);
+    xdatamock_tx datamock_account2(resouces, account2);
+
+    xtable_maker_ptr_t table_maker = make_object_ptr<xtable_maker_t>(taccount, resouces);
+
+    auto txs1 = datamock_account1.generate_transfer_tx(dstaccount, 2);
+    auto txs2 = datamock_account2.generate_transfer_tx(dstaccount, 2);
+
+    xblock_consensus_para_t cs_para;
+    cs_para.set_common_consensus_para(10, {-1, -1}, {0, 0}, 10, 10, 10);
+    cs_para.set_tableblock_consensus_para(10, 10, "random", 10, "extra");
+
+    base::xblock_mptrs latest_blocks = resouces->get_blockstore()->get_latest_blocks(taccount);
+    xtablemaker_para_t table_para(latest_blocks);
+    table_para.set_unitmaker_txs(account1, txs1);
+    table_para.set_unitmaker_txs(account2, txs2);
+
+    xtablemaker_result_t result;
+    xblock_ptr_t table1 = table_maker->make_proposal(table_para, cs_para, result);
+    ASSERT_NE(table1, nullptr);
+    xdatamock_tx::do_mock_signature(table1.get());
+    ASSERT_EQ(table1->get_height(), 1);
+    ASSERT_EQ(table1->get_block_class(), base::enum_xvblock_class_light);
+    ASSERT_EQ(table1->get_tableblock_units(false).size(), 2);
+    ASSERT_EQ(table1->get_txs_count(), 4);
 }
 
 TEST_F(test_table_maker, table_maker_make_proposal_1) {

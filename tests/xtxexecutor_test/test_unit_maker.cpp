@@ -31,8 +31,8 @@ TEST_F(test_unit_maker, unit_maker_1) {
     std::string account1 = xblocktool_t::make_address_user_account("11111111111111111111");
     xblockmaker_resources_ptr_t resouces = test_xblockmaker_resources_t::create();
     xunit_maker_ptr_t unitmaker = make_object_ptr<xunit_maker_t>(account1, resouces);
-    ASSERT_EQ(unitmaker->default_check_latest_state(), xsuccess);
-    ASSERT_EQ(unitmaker->default_check_latest_state(), xsuccess);
+    ASSERT_EQ(unitmaker->check_latest_state(), xsuccess);
+    ASSERT_EQ(unitmaker->check_latest_state(), xsuccess);
     ASSERT_FALSE(unitmaker->can_make_next_block());
 }
 
@@ -44,7 +44,7 @@ TEST_F(test_unit_maker, unit_maker_2) {
     xdatamock_tx datamock_tx(resouces, account1);
 
     xunit_maker_ptr_t unitmaker = make_object_ptr<xunit_maker_t>(account1, resouces);
-    ASSERT_EQ(unitmaker->default_check_latest_state(), xsuccess);
+    ASSERT_EQ(unitmaker->check_latest_state(), xsuccess);
 
     auto txs = datamock_tx.generate_transfer_tx(account2, 5);
     ASSERT_TRUE(unitmaker->push_tx(txs));
@@ -62,7 +62,7 @@ TEST_F(test_unit_maker, unit_maker_2) {
     xdatamock_tx::do_mock_signature(unit1.get());
     ASSERT_TRUE(resouces->get_blockstore()->store_block(unit1.get()));
 
-    ASSERT_EQ(unitmaker->default_check_latest_state(), xsuccess);
+    ASSERT_EQ(unitmaker->check_latest_state(), xsuccess);
     ASSERT_TRUE(unitmaker->can_make_next_block());
     xblock_ptr_t unit2 = unitmaker->make_next_block(cs_para, error_code);
     ASSERT_NE(unit2, nullptr);
@@ -71,7 +71,7 @@ TEST_F(test_unit_maker, unit_maker_2) {
     xdatamock_tx::do_mock_signature(unit2.get());
     ASSERT_TRUE(resouces->get_blockstore()->store_block(unit2.get()));
 
-    ASSERT_EQ(unitmaker->default_check_latest_state(), xsuccess);
+    ASSERT_EQ(unitmaker->check_latest_state(), xsuccess);
     ASSERT_TRUE(unitmaker->can_make_next_block());
     xblock_ptr_t unit3 = unitmaker->make_next_block(cs_para, error_code);
     ASSERT_NE(unit3, nullptr);
@@ -80,7 +80,7 @@ TEST_F(test_unit_maker, unit_maker_2) {
     xdatamock_tx::do_mock_signature(unit3.get());
     ASSERT_TRUE(resouces->get_blockstore()->store_block(unit3.get()));
 
-    ASSERT_EQ(unitmaker->default_check_latest_state(), xsuccess);
+    ASSERT_EQ(unitmaker->check_latest_state(), xsuccess);
     ASSERT_FALSE(unitmaker->can_make_next_block());
     xblock_ptr_t unit4 = unitmaker->make_next_block(cs_para, error_code);
     ASSERT_EQ(unit4, nullptr);
@@ -93,7 +93,7 @@ TEST_F(test_unit_maker, unit_maker_3) {
 
     xdatamock_tx datamock_tx(resouces, account1);
     xunit_maker_ptr_t unitmaker = make_object_ptr<xunit_maker_t>(account1, resouces);
-    ASSERT_EQ(unitmaker->default_check_latest_state(), xsuccess);
+    ASSERT_EQ(unitmaker->check_latest_state(), xsuccess);
 
     auto txs = datamock_tx.generate_transfer_tx(account2, 5);
     unitmaker->push_tx(txs);
@@ -111,7 +111,7 @@ TEST_F(test_unit_maker, unit_maker_3) {
     xdatamock_tx::do_mock_signature(unit1.get());
     ASSERT_TRUE(resouces->get_blockstore()->store_block(unit1.get()));
 
-    ASSERT_EQ(unitmaker->default_check_latest_state(), xsuccess);
+    ASSERT_EQ(unitmaker->check_latest_state(), xsuccess);
     ASSERT_TRUE(unitmaker->can_make_next_block());
     xblock_ptr_t unit2 = unitmaker->make_next_block(cs_para, error_code);
     ASSERT_NE(unit2, nullptr);
@@ -120,7 +120,7 @@ TEST_F(test_unit_maker, unit_maker_3) {
     xdatamock_tx::do_mock_signature(unit2.get());
     ASSERT_TRUE(resouces->get_blockstore()->store_block(unit2.get()));
 
-    ASSERT_EQ(unitmaker->default_check_latest_state(), xsuccess);
+    ASSERT_EQ(unitmaker->check_latest_state(), xsuccess);
     ASSERT_TRUE(unitmaker->can_make_next_block());
     xblock_ptr_t unit3 = unitmaker->make_next_block(cs_para, error_code);
     ASSERT_NE(unit3, nullptr);
@@ -129,13 +129,13 @@ TEST_F(test_unit_maker, unit_maker_3) {
     xdatamock_tx::do_mock_signature(unit3.get());
     ASSERT_TRUE(resouces->get_blockstore()->store_block(unit3.get()));
 
-    ASSERT_EQ(unitmaker->default_check_latest_state(), xsuccess);
+    ASSERT_EQ(unitmaker->check_latest_state(), xsuccess);
     ASSERT_FALSE(unitmaker->can_make_next_block());
     xblock_ptr_t unit4 = unitmaker->make_next_block(cs_para, error_code);
     ASSERT_EQ(unit4, nullptr);
 
     auto txs2 = datamock_tx.generate_transfer_tx(account2, 2);
-    ASSERT_EQ(unitmaker->default_check_latest_state(), xsuccess);
+    ASSERT_EQ(unitmaker->check_latest_state(), xsuccess);
     unitmaker->push_tx(txs2);
     xblock_ptr_t unit5 = unitmaker->make_next_block(cs_para, error_code);
     ASSERT_NE(unit5, nullptr);
@@ -160,7 +160,7 @@ TEST_F(test_unit_maker, unit_maker_contious_1) {
     xunit_maker_ptr_t unitmaker = make_object_ptr<xunit_maker_t>(account1, resouces);
     auto txs = datamock_tx.generate_transfer_tx(account2, 3);
 
-    ASSERT_EQ(unitmaker->default_check_latest_state(), xsuccess);
+    ASSERT_EQ(unitmaker->check_latest_state(), xsuccess);
     ASSERT_TRUE(unitmaker->push_tx(txs));
 
     xblock_ptr_t unit1 = unitmaker->make_next_block(cs_para, error_code);
@@ -168,24 +168,24 @@ TEST_F(test_unit_maker, unit_maker_contious_1) {
     xdatamock_tx::do_mock_signature(unit1.get());
     ASSERT_TRUE(resouces->get_blockstore()->store_block(unit1.get()));
 
-    ASSERT_EQ(unitmaker->default_check_latest_state(), xsuccess);
+    ASSERT_EQ(unitmaker->check_latest_state(), xsuccess);
     ASSERT_TRUE(unitmaker->can_make_next_block());
     xblock_ptr_t unit2 = unitmaker->make_next_block(cs_para, error_code);
     ASSERT_NE(unit2, nullptr);
     xdatamock_tx::do_mock_signature(unit2.get());
     ASSERT_TRUE(resouces->get_blockstore()->store_block(unit2.get()));
 
-    ASSERT_EQ(unitmaker->default_check_latest_state(), xsuccess);
+    ASSERT_EQ(unitmaker->check_latest_state(), xsuccess);
     xblock_ptr_t unit3 = unitmaker->make_next_block(cs_para, error_code);
     ASSERT_NE(unit3, nullptr);
     xdatamock_tx::do_mock_signature(unit3.get());
     ASSERT_TRUE(resouces->get_blockstore()->store_block(unit3.get()));
 
-    ASSERT_EQ(unitmaker->default_check_latest_state(), xsuccess);
+    ASSERT_EQ(unitmaker->check_latest_state(), xsuccess);
     ASSERT_EQ(nullptr, unitmaker->make_next_block(cs_para, error_code));
 
     auto txs2 = datamock_tx.generate_transfer_tx(account2, 2);
-    ASSERT_EQ(unitmaker->default_check_latest_state(), xsuccess);
+    ASSERT_EQ(unitmaker->check_latest_state(), xsuccess);
     unitmaker->push_tx(txs2);
     xblock_ptr_t unit4 = unitmaker->make_next_block(cs_para, error_code);
     ASSERT_NE(unit4, nullptr);
@@ -195,21 +195,21 @@ TEST_F(test_unit_maker, unit_maker_contious_1) {
     xdatamock_tx::do_mock_signature(unit4.get());
     ASSERT_TRUE(resouces->get_blockstore()->store_block(unit4.get()));
 
-    ASSERT_EQ(unitmaker->default_check_latest_state(), xsuccess);
+    ASSERT_EQ(unitmaker->check_latest_state(), xsuccess);
     ASSERT_TRUE(unitmaker->can_make_next_block());
     xblock_ptr_t unit5 = unitmaker->make_next_block(cs_para, error_code);
     ASSERT_NE(unit5, nullptr);
     xdatamock_tx::do_mock_signature(unit5.get());
     ASSERT_TRUE(resouces->get_blockstore()->store_block(unit5.get()));
 
-    ASSERT_EQ(unitmaker->default_check_latest_state(), xsuccess);
+    ASSERT_EQ(unitmaker->check_latest_state(), xsuccess);
     xblock_ptr_t unit6 = unitmaker->make_next_block(cs_para, error_code);
     ASSERT_NE(unit6, nullptr);
     xdatamock_tx::do_mock_signature(unit6.get());
     ASSERT_TRUE(resouces->get_blockstore()->store_block(unit6.get()));
 
     auto txs3 = datamock_tx.generate_transfer_tx(account2, 3);
-    ASSERT_EQ(unitmaker->default_check_latest_state(), xsuccess);
+    ASSERT_EQ(unitmaker->check_latest_state(), xsuccess);
     unitmaker->push_tx(txs3);
     xblock_ptr_t unit7 = unitmaker->make_next_block(cs_para, error_code);
     ASSERT_NE(unit7, nullptr);
@@ -218,14 +218,14 @@ TEST_F(test_unit_maker, unit_maker_contious_1) {
     xdatamock_tx::do_mock_signature(unit7.get());
     ASSERT_TRUE(resouces->get_blockstore()->store_block(unit7.get()));
 
-    ASSERT_EQ(unitmaker->default_check_latest_state(), xsuccess);
+    ASSERT_EQ(unitmaker->check_latest_state(), xsuccess);
     ASSERT_TRUE(unitmaker->can_make_next_block());
     xblock_ptr_t unit8 = unitmaker->make_next_block(cs_para, error_code);
     ASSERT_NE(unit8, nullptr);
     xdatamock_tx::do_mock_signature(unit8.get());
     ASSERT_TRUE(resouces->get_blockstore()->store_block(unit8.get()));
 
-    ASSERT_EQ(unitmaker->default_check_latest_state(), xsuccess);
+    ASSERT_EQ(unitmaker->check_latest_state(), xsuccess);
     xblock_ptr_t unit9 = unitmaker->make_next_block(cs_para, error_code);
     ASSERT_NE(unit9, nullptr);
     xdatamock_tx::do_mock_signature(unit9.get());

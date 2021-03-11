@@ -90,10 +90,6 @@ class xblock_maker_t : public base::xvaccount_t {
     virtual ~xblock_maker_t() {}
 
  public:
-    virtual xblock_ptr_t        make_next_block(const data::xblock_consensus_para_t & cs_para, int32_t & error_code) = 0;
-    virtual xblock_ptr_t        make_next_block(const data::xblock_consensus_para_t & cs_para, xunitmaker_result_t & result) = 0;
-    virtual xblock_ptr_t        make_next_block(const data::xblock_consensus_para_t & cs_para, xtablemaker_result_t & result) = 0;
-    virtual int32_t             check_latest_state(base::xvblock_t* latest_cert_block) = 0;
     virtual bool                can_make_next_block() const = 0;
     virtual bool                can_make_next_empty_block() const = 0;
     virtual bool                can_make_next_full_block() const = 0;
@@ -120,13 +116,14 @@ class xblock_maker_t : public base::xvaccount_t {
     std::string                 get_lock_output_root_hash() const;
     const std::map<uint64_t, xblock_ptr_t> & get_latest_blocks() const {return m_latest_blocks;}
     xblock_ptr_t                get_latest_block(uint64_t height) const;
-    const xblock_ptr_t &        get_proposal_prev_block() const;
-    const xblock_ptr_t &        get_proposal_prev_prev_block() const;
+    const xblock_ptr_t &        get_highest_height_block() const;
+    const xblock_ptr_t &        get_lowest_height_block() const;
+    xblock_ptr_t                get_highest_non_empty_block() const;
     std::vector<xblock_ptr_t>   get_uncommit_blocks() const;
     xblock_ptr_t                get_lock_block() const;
 
  protected:
-    virtual bool                update_latest_state(const xblock_ptr_t & latest_committed_block);
+    void                        set_latest_committed_block(const xblock_ptr_t & latest_committed_block);
     bool                        update_account_state(const xblock_ptr_t & latest_committed_block);
     void                        set_latest_blocks(const base::xblock_mptrs & latest_blocks);
     bool                        is_latest_blocks_valid(const base::xblock_mptrs & latest_blocks);

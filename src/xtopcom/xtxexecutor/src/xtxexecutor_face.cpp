@@ -10,6 +10,10 @@
 NS_BEG2(top, txexecutor)
 
 bool xblock_maker_t::update_account_state(const xblock_ptr_t & latest_committed_block) {
+    if (m_commit_account != nullptr && m_commit_account->get_last_height() == latest_committed_block->get_height()) {
+        return true;
+    }
+
     m_commit_account = get_store()->query_account(get_account());
     if (m_commit_account == nullptr) {
         m_commit_account = make_object_ptr<xblockchain2_t>(get_account());
@@ -48,16 +52,10 @@ bool xblock_maker_t::is_latest_blocks_valid(const base::xblock_mptrs & latest_bl
     return true;
 }
 
-bool xblock_maker_t::update_latest_state(const xblock_ptr_t & latest_committed_block) {
-    if (m_latest_commit_block != nullptr && m_latest_commit_block->get_height() == latest_committed_block->get_height()) {
-        return true;
+void xblock_maker_t::set_latest_committed_block(const xblock_ptr_t & latest_committed_block) {
+    if (m_latest_commit_block == nullptr || m_latest_commit_block->get_height() != latest_committed_block->get_height()) {
+        m_latest_commit_block = latest_committed_block;
     }
-
-    if (!update_account_state(latest_committed_block)) {
-        return false;
-    }
-    m_latest_commit_block = latest_committed_block;
-    return true;
 }
 
 std::vector<xblock_ptr_t> xblock_maker_t::get_uncommit_blocks() const {
@@ -73,7 +71,7 @@ std::vector<xblock_ptr_t> xblock_maker_t::get_uncommit_blocks() const {
 
 bool xblock_maker_t::is_latest_state_unchanged(base::xvblock_t* latest_block) const {
     if ( (!m_latest_blocks.empty())
-        && latest_block->get_block_hash() == get_proposal_prev_block()->get_block_hash()) {
+        && latest_block->get_block_hash() == get_highest_height_block()->get_block_hash()) {
         // already latest state
         return true;
     }
@@ -102,13 +100,13 @@ xblock_ptr_t xblock_maker_t::set_latest_block(const xblock_ptr_t & block) {
         }
     } else {
         m_latest_blocks[block->get_height()] = block;
-        xdbg("xblock_maker_t::set_latest_block block block_cache_change add new block=%s", block->dump().c_str());
+        xdbg("xblock_maker_t::set_latest_block block_cache_change add new block=%s", block->dump().c_str());
     }
 
     if (m_latest_blocks.size() > m_keep_latest_blocks_max) {
         xblock_ptr_t delete_block = m_latest_blocks.begin()->second;
         xassert(delete_block->get_block_hash() != block->get_block_hash());
-        xdbg("xblock_maker_t::set_latest_block block block_cache_change delete old block=%s", delete_block->dump().c_str());
+        xdbg("xblock_maker_t::set_latest_block block_cache_change delete old block=%s", delete_block->dump().c_str());
         m_latest_blocks.erase(m_latest_blocks.begin());
         return delete_block;
     }
@@ -170,18 +168,14 @@ xblock_ptr_t xblock_maker_t::get_latest_block(uint64_t height) const {
     return iter->second;
 }
 
-const xblock_ptr_t & xblock_maker_t::get_proposal_prev_block() const {
+const xblock_ptr_t & xblock_maker_t::get_highest_height_block() const {
     xassert(!m_latest_blocks.empty());
     return m_latest_blocks.rbegin()->second;
 }
 
-const xblock_ptr_t & xblock_maker_t::get_proposal_prev_prev_block() const {
-    xassert(m_latest_blocks.size() >= 2);
-    xassert(m_latest_blocks.rbegin()->first == ((++m_latest_blocks.rbegin())->first + 1));
-    auto iter = m_latest_blocks.rbegin();
-    iter++;
-    xassert(iter != m_latest_blocks.rend());
-    return iter->second;
+const xblock_ptr_t & xblock_maker_t::get_lowest_height_block() const {
+    xassert(!m_latest_blocks.empty());
+    return m_latest_blocks.begin()->second;
 }
 
 uint32_t xblock_maker_t::get_latest_consecutive_empty_block_num() const {
@@ -200,7 +194,8 @@ uint32_t xblock_maker_t::get_latest_consecutive_empty_block_num() const {
 xblock_ptr_t xblock_maker_t::get_lock_block() const {
     xassert(m_latest_blocks.size() > 0);
     if (m_latest_blocks.size() == 1) {
-        return m_latest_blocks.begin()->second;
+        xassert(m_latest_blocks.rbegin()->first == 0);
+        return m_latest_blocks.rbegin()->second;
     } else {
         return (++m_latest_blocks.rbegin())->second;
     }
@@ -209,31 +204,25 @@ xblock_ptr_t xblock_maker_t::get_lock_block() const {
 std::string xblock_maker_t::get_lock_block_sign_hash() const {
     xblock_ptr_t lock_block = get_lock_block();
     return lock_block->get_cert()->get_hash_to_sign();
-
-    // if (m_latest_blocks.size() > 1) {
-    //     auto & lock_block = get_proposal_prev_prev_block();
-    //     return lock_block->get_cert()->get_hash_to_sign();
-    // } else {
-    //     xassert(get_proposal_prev_block()->get_height() == 0);
-    //     return get_proposal_prev_block()->get_cert()->get_hash_to_sign();
-    // }
 }
 
 std::string xblock_maker_t::get_lock_output_root_hash() const {
     xblock_ptr_t lock_block = get_lock_block();
     return lock_block->get_cert()->get_output_root_hash();
-    // if (m_latest_blocks.size() > 1) {
-    //     auto & lock_block = get_proposal_prev_prev_block();
-    //     return lock_block->get_cert()->get_output_root_hash();
-    // } else {
-    //     xassert(get_proposal_prev_block()->get_height() == 0);
-    //     return get_proposal_prev_block()->get_cert()->get_output_root_hash();
-    // }
+}
+
+xblock_ptr_t xblock_maker_t::get_highest_non_empty_block() const {
+    for (auto iter = m_latest_blocks.rbegin(); iter != m_latest_blocks.rend(); iter++) {
+        if (iter->second->get_block_class() != base::enum_xvblock_class_nil) {
+            return iter->second;
+        }
+    }
+    return nullptr;
 }
 
 bool xblock_maker_t::has_uncommitted_blocks() const {
-    xassert(get_proposal_prev_block()->get_height() >= get_latest_committed_block()->get_height());
-    return get_proposal_prev_block()->get_height() > get_latest_committed_block()->get_height();
+    xassert(get_highest_height_block()->get_height() >= get_latest_committed_block()->get_height());
+    return get_highest_height_block()->get_height() > get_latest_committed_block()->get_height();
 }
 
 NS_END2

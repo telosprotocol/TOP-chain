@@ -21,46 +21,45 @@ xunit_maker_t::xunit_maker_t(const std::string & account, const xblockmaker_reso
 void xunit_maker_t::init_unit_blocks(const base::xblock_mptrs & latest_blocks) {
     xblock_ptr_t cert_block = xblock_t::raw_vblock_to_object_ptr(latest_blocks.get_latest_cert_block());
     set_latest_block(cert_block);
-    if (latest_blocks.get_latest_locked_block()->get_block_hash() != get_proposal_prev_block()->get_block_hash()) {
+    if (latest_blocks.get_latest_locked_block()->get_block_hash() != get_highest_height_block()->get_block_hash()) {
         xblock_ptr_t lock_block = xblock_t::raw_vblock_to_object_ptr(latest_blocks.get_latest_locked_block());
         set_latest_block(lock_block);
     }
-    if (latest_blocks.get_latest_committed_block()->get_block_hash() != get_proposal_prev_block()->get_block_hash()) {
+    if (latest_blocks.get_latest_committed_block()->get_block_hash() != get_highest_height_block()->get_block_hash()) {
         xblock_ptr_t commit_block = xblock_t::raw_vblock_to_object_ptr(latest_blocks.get_latest_committed_block());
         set_latest_block(commit_block);
     }
 }
 
-int32_t xunit_maker_t::default_check_latest_state() {
-    base::xblock_mptrs latest_blocks = get_blockstore()->get_latest_blocks(*this);
-    return check_latest_state(latest_blocks.get_latest_cert_block());
-}
-
-int32_t    xunit_maker_t::check_latest_state(base::xvblock_t* latest_cert_block) {
+int32_t    xunit_maker_t::check_latest_state() {
     m_pending_txs.clear();
-
-    xblock_ptr_t latest_block = xblock_t::raw_vblock_to_object_ptr(latest_cert_block);
 
     base::xblock_mptrs latest_blocks = get_blockstore()->get_latest_blocks(*this);
     if (!is_latest_blocks_valid(latest_blocks)) {
+        xerror("xunit_maker_t::check_latest_state fail-is_latest_blocks_valid, account=%s", get_account().c_str());
         return enum_xtxexecutor_error_unit_state_behind;
     }
+    xblock_ptr_t latest_committed_block = xblock_t::raw_vblock_to_object_ptr(latest_blocks.get_latest_committed_block());
+    if (!update_account_state(latest_committed_block)) {
+        xwarn("xunit_maker_t::check_latest_state fail-update_account_state.latest_committed_block=%s",
+            latest_committed_block->dump().c_str());
+        return enum_xtxexecutor_error_unit_state_behind;
+    }
+    set_latest_committed_block(latest_committed_block);
 
     init_unit_blocks(latest_blocks);
 
-    xblock_ptr_t commit_block = xblock_t::raw_vblock_to_object_ptr(latest_blocks.get_latest_committed_block());
-    if (!update_latest_state(commit_block)) {
-        xwarn("xunit_maker_t::check_latest_state fail-update_latest_state, account=%s", get_account().c_str());
-        return enum_xtxexecutor_error_unit_state_behind;
-    }
-
-    xdbg("xunit_maker_t::check_latest_state latest_cert_block=%s,block_size=%d,nonce=%ld",
-        latest_block->dump().c_str(), get_latest_blocks().size(), get_latest_committed_state()->get_account_mstate().get_latest_send_trans_number());
+    xdbg("xunit_maker_t::check_latest_state latest_cert_block=%s,parent_height=%ld,block_size=%d,nonce=%ld",
+        latest_blocks.get_latest_cert_block()->dump().c_str(), latest_blocks.get_latest_cert_block()->get_cert()->get_parent_block_height(),
+        get_latest_blocks().size(), get_latest_committed_state()->get_account_mstate().get_latest_send_trans_number());
     return xsuccess;
 }
 
 bool xunit_maker_t::push_tx(const std::vector<xcons_transaction_ptr_t> & txs) {
     // TODO(jimmy) do repeat filter with cert/lock unit
+    if (is_account_locked()) {
+        return false;
+    }
     m_pending_txs = txs;
     return true;
 }
@@ -95,11 +94,11 @@ xblock_ptr_t xunit_maker_t::make_next_block(const data::xblock_consensus_para_t 
         std::string justify_cert_hash = get_lock_block_sign_hash();
         proposal_unit->get_cert()->set_justify_cert_hash(justify_cert_hash);
         proposal_unit->set_consensus_para(cs_para);
-        xinfo("xunit_maker_t::make_next_block success, block=%s,cert:%s,class=%d",
-            proposal_unit->dump().c_str(), proposal_unit->dump_cert().c_str());
+        xinfo("xunit_maker_t::make_next_block success, block=%s,cert:%s,class=%d,unconfirm_sendtx_num:%d",
+            proposal_unit->dump().c_str(), proposal_unit->dump_cert().c_str(), get_latest_committed_state()->get_unconfirm_sendtx_num());
     } else {
         xwarn("xunit_maker_t::make_next_block fail, latest_cert_unit=%s,error=%s",
-            get_proposal_prev_block()->dump().c_str(), chainbase::xmodule_error_to_str(error_code).c_str());
+            get_highest_height_block()->dump().c_str(), chainbase::xmodule_error_to_str(error_code).c_str());
     }
 
     m_pending_txs.clear();
@@ -123,43 +122,50 @@ bool xunit_maker_t::can_make_next_block() const {
 bool xunit_maker_t::can_make_next_empty_block() const {
     uint32_t num = get_latest_consecutive_empty_block_num();
     // TODO(jimmy)
-    if (get_proposal_prev_block()->get_height() > 0 && num < m_consecutive_empty_unit_max) {
+    if (get_highest_height_block()->get_height() > 0 && num < m_consecutive_empty_unit_max) {
+        return true;
+    }
+    return false;
+}
+
+bool xunit_maker_t::is_account_locked() const {
+    xblock_ptr_t highest_non_empty_block = get_highest_non_empty_block();
+    if (highest_non_empty_block == nullptr) {
+        xassert(get_latest_committed_block()->get_height() == 0);
+        return false;
+    }
+
+    xassert(highest_non_empty_block->get_height() >= get_latest_committed_block()->get_height());
+    if ( (highest_non_empty_block->get_height() > 0)
+        && (highest_non_empty_block->get_height() != get_latest_committed_block()->get_height()) ) {
         return true;
     }
     return false;
 }
 
 bool xunit_maker_t::can_make_next_full_block() const {
-    if (has_uncommitted_blocks()) {
-        xdbg("xunit_maker_t::can_make_next_full_block account locked. account=%s,height=%ld,%ld",
-            get_account().c_str(), get_proposal_prev_block()->get_height(), get_latest_committed_block()->get_height());
+    // TODO(jimmy) non contious block make mode. condition:non-empty block is committed status
+    if (is_account_locked()) {
         return false;
     }
 
-    base::xvblock_t* prev_block = get_proposal_prev_block().get();
+    base::xvblock_t* prev_block = get_highest_height_block().get();
     uint64_t current_height = prev_block->get_height() + 1;
     uint64_t current_fullunit_height = prev_block->get_block_class() == base::enum_xvblock_class_full ? prev_block->get_height() : prev_block->get_last_full_block_height();
     uint64_t current_lightunit_count = current_height - current_fullunit_height;
     xassert(current_lightunit_count > 0);
     if (current_lightunit_count >= m_fullunit_contain_of_unit_num_para && get_latest_committed_state()->get_unconfirm_sendtx_num() == 0) {
-        xdbg("xunit_maker_t::can_make_next_full_block fullunit. %s height:%ld full_unit_height:%ld unconfirm_sendtx_num:%ld",
-            get_account().c_str(), current_height, current_fullunit_height, get_latest_committed_state()->get_unconfirm_sendtx_num());
         return true;
     }
-    xdbg("xunit_maker_t::can_make_next_full_block lightunit. %s height:%ld full_unit_height:%ld unconfirm_sendtx_num:%d",
-        get_account().c_str(), current_height, current_fullunit_height, get_latest_committed_state()->get_unconfirm_sendtx_num());
     return false;
 }
 
 bool xunit_maker_t::can_make_next_light_block() const {
-    if (has_uncommitted_blocks()) {
-        xdbg("xunit_maker_t::can_make_next_light_block account locked. account=%s,height=%ld,%ld",
-            get_account().c_str(), get_proposal_prev_block()->get_height(), get_latest_committed_block()->get_height());
+    if (m_pending_txs.empty()) {
         return false;
     }
-
-    // make two empty unit after light unit
-    if (m_pending_txs.empty()) {
+    // TODO(jimmy) non contious block make mode. condition:non-empty block is committed status
+    if (is_account_locked())  {
         return false;
     }
     return true;
@@ -171,7 +177,7 @@ xblock_ptr_t xunit_maker_t::make_full_unit(int32_t & error_code) {
     if (error_code != xsuccess) {
         return nullptr;
     }
-    base::xvblock_t* prev_block = get_proposal_prev_block().get();
+    base::xvblock_t* prev_block = get_highest_height_block().get();
     base::xvblock_t* _proposal_block = data::xfullunit_block_t::create_next_fullunit(para, prev_block);
     xblock_ptr_t proposal_unit;
     proposal_unit.attach((data::xblock_t*)_proposal_block);
@@ -179,7 +185,7 @@ xblock_ptr_t xunit_maker_t::make_full_unit(int32_t & error_code) {
     return proposal_unit;
 }
 xblock_ptr_t xunit_maker_t::make_empty_unit(int32_t & error_code) {
-    base::xvblock_t* prev_block = get_proposal_prev_block().get();
+    base::xvblock_t* prev_block = get_highest_height_block().get();
     base::xvblock_t* _proposal_block = data::xemptyblock_t::create_next_emptyblock(prev_block);
     xblock_ptr_t proposal_unit;
     proposal_unit.attach((data::xblock_t*)_proposal_block);
@@ -187,7 +193,7 @@ xblock_ptr_t xunit_maker_t::make_empty_unit(int32_t & error_code) {
     return proposal_unit;
 }
 xblock_ptr_t xunit_maker_t::make_light_unit(const xblock_consensus_para_t & cs_para, xbatch_txs_result_t & exec_result, int32_t & error_code) {
-    base::xvblock_t* prev_block = get_proposal_prev_block().get();
+    base::xvblock_t* prev_block = get_highest_height_block().get();
 
     // TODO(jimmy) now only use commit unit account
     std::shared_ptr<store::xaccount_context_t> _account_context = std::make_shared<store::xaccount_context_t>(get_account(), get_store());
