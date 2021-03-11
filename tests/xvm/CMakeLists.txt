@@ -9,4 +9,9 @@ add_executable(xvm_test ${xvm_test_src} ${xcontract} ${xrec} ${zec_src})
 
 #add_dependencies(xvm_test xvm xstore xloader xxbase xblockstore)
 
-target_link_libraries(xvm_test PRIVATE xvm xstore lua xloader xxbase pthread jsoncpp gtest pthread xblockstore)
+target_link_libraries(xvm_test PRIVATE xstake
+    xcertauth
+    xchain_upgrade
+    xvm xstore lua xloader 
+    xxbase pthread jsoncpp 
+    gtest pthread xblockstore)

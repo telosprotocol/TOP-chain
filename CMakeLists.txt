@@ -361,7 +361,6 @@ include_directories(src/services)
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 link_directories(${LIBRARY_OUTPUT_PATH})
-link_directories(libs/Linux/${XBUILD_TYPE})
 
 if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
     add_compile_options(
@@ -378,6 +377,7 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
     link_directories(src/xtopcom/xbase/libs/${CMAKE_SYSTEM_NAME}/${XBUILD_TYPE})
     link_directories(src/xtopcom/libs/${CMAKE_SYSTEM_NAME}/${XBUILD_TYPE})
     link_directories(src/xtopcom/xdepends/libs/linux)
+    link_directories(libs/Linux/${XBUILD_TYPE})
 
     set(XDB_TYPE "ROCKSDB")
     add_subdirectory(src)
@@ -426,9 +426,13 @@ elseif (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
     link_directories(src/xtopcom/xbase/libs/MacOS/${XBUILD_TYPE})
     link_directories(src/xtopcom/libs/MacOS/${XBUILD_TYPE})
     link_directories(src/xtopcom/xdepends/libs/mac)
+    link_directories(libs/MacOS/${XBUILD_TYPE})
 
     set(XDB_TYPE "ROCKSDB")
     add_subdirectory(src)
+    enable_testing()
+    include_directories(.)
+    add_subdirectory(tests)
 endif()
 
 if (XENABLE_TESTS)
