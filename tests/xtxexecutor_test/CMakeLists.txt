@@ -5,14 +5,12 @@ add_compile_options(-static)
 aux_source_directory(./ xtxexecutor2_test_dir)
 add_executable(xtxexecutor2_test ${xtxexecutor2_test_dir})
 
-add_dependencies(xtxexecutor2_test xtxexecutor)
+# add_dependencies(xtxexecutor2_test xtxexecutor)
 # include_directories(src/xtopcom/xblockstore/)
 target_link_libraries(xtxexecutor2_test PRIVATE
-    xstake
-    xcertauth
-    xchain_upgrade
-    xblockstore
     xtxexecutor
+    xblockstore
+    xvm xcertauth xvnetwork xchain_upgrade xstake xelect_common
     gtest
 )
 
