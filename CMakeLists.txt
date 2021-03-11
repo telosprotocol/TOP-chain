@@ -430,9 +430,6 @@ elseif (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
 
     set(XDB_TYPE "ROCKSDB")
     add_subdirectory(src)
-    enable_testing()
-    include_directories(.)
-    add_subdirectory(tests)
 endif()
 
 if (XENABLE_TESTS)
