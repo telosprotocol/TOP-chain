@@ -139,7 +139,7 @@ void xtest_zec_elect_consensus_contract_t::cal_group_stake(std::size_t consensus
         }
         auditor_stake /= auditor_election_group_result.size();
         group_stake_sum[auditor_group_id] += auditor_stake;
-        printf("group:%d %10lu      ", auditor_group_id.value(), auditor_stake);
+        printf("group:%d %" PRIu64 "      ", auditor_group_id.value(), auditor_stake);
         for (std::size_t index2 = 0; index2 < per_validator_group_cnt; index2++) {
             auto validator_group_id = common::xgroup_id_t{validator_group_index};
             auto const & validaotr_election_group_result = all_election_result_store.at(auditor_group_id)
@@ -153,7 +153,7 @@ void xtest_zec_elect_consensus_contract_t::cal_group_stake(std::size_t consensus
             }
             validator_stake /= validaotr_election_group_result.size();
             group_stake_sum[validator_group_id] += validator_stake;
-            printf("group:%d %10lu      ", validator_group_id.value(), validator_stake);
+            printf("group:%d %" PRIu64 "      ", validator_group_id.value(), validator_stake);
             validator_group_index++;
         }
         auditor_group_index++;

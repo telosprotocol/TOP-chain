@@ -5,4 +5,4 @@ add_executable(xrouter_test ${xrouter_test_src})
 
 #add_dependencies(xrouter_test xconfig xrouter xcommon)
 
-target_link_libraries(xrouter_test PRIVATE xconfig xrouter xcommon gtest)
+target_link_libraries(xrouter_test PRIVATE xconfig xrouter xcommon xdata gtest)
