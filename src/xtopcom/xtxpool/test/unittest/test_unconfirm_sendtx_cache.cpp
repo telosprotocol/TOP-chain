@@ -22,7 +22,9 @@ using namespace std;
 
 class xchain_timer_mock final : public time::xchain_time_face_t {
 public:
-    bool update_time(data::xblock_t* timer_block, bool force = false) override { return true; }
+    void update_time(common::xlogic_time_t, time::xlogic_timer_update_strategy_t) override {
+        return;
+    }
 
     //void restore_last_db_time() override {}
 
@@ -31,6 +33,12 @@ public:
     //     st.xtime_round = 1;
     //     return st;
     // }
+
+    void start() override {
+    }
+
+    void stop() override {
+    }
 
     common::xlogic_time_t logic_time() const noexcept override { return timer_height; }
 

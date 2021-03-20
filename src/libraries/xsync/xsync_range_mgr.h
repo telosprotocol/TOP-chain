@@ -23,7 +23,7 @@ public:
     enum_role_changed_result on_role_changed(const xchain_info_t &chain_info);
 
     int update_progress(const data::xblock_ptr_t &current_block, bool head_forked);
-    bool get_next_behind(const data::xblock_ptr_t &current_block, uint32_t count_limit, uint64_t &start_height, uint32_t &count, vnetwork::xvnode_address_t &self_addr, vnetwork::xvnode_address_t &target_addr);
+    bool get_next_behind(const data::xblock_ptr_t &current_block, bool forked, uint32_t count_limit, uint64_t &start_height, uint32_t &count, vnetwork::xvnode_address_t &self_addr, vnetwork::xvnode_address_t &target_addr);
 
     int set_behind_info(const data::xblock_ptr_t &current_block, const data::xblock_ptr_t &successor_block,
                 const vnetwork::xvnode_address_t &self_addr, const vnetwork::xvnode_address_t &target_addr);

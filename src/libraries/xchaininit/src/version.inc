@@ -1,10 +1,10 @@
 const std::string TOP_VERSION_PREFIX  = "TOP_VERSION";
-const std::string TOP_GIT_BRANCH      = "dev/new_horizons_evil_receipt";
+const std::string TOP_GIT_BRANCH      = "dev/feature_fastsync_tps_v2";
 const std::string TOP_GIT_HASH        = "";
 const std::string TOP_GIT_DATE        = "";
-const std::string TOP_GIT_LOG_LATEST  = "00635dca1";
+const std::string TOP_GIT_LOG_LATEST  = "3c1e7282f";
 const std::string TOP_BUILD_DATE      = __DATE__;
 const std::string TOP_BUILD_TIME      = __TIME__;
 const std::string TOP_BUILD_USER      = "uid=501(zhangqianliang)";
 const std::string TOP_BUILD_HOST      = "justindeMacBook-Pro.local";
-const std::string TOP_BUILD_PATH      = "/Users/zhangqianliang/mnt/1.code/top/xchain/cbuild_release";
+const std::string TOP_BUILD_PATH      = "/";

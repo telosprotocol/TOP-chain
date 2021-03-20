@@ -651,46 +651,7 @@ namespace top
                 return connect_next_block;
             }
 
-            // if locked block is diverged, return connect block, need sync connect + 1 block.
-            if (connect_next_block->get_block_hash() != connect_next_next_block->get_last_block_hash())
-            {
-                if ((!connect_next_block->check_block_flag(base::enum_xvblock_flag_committed) && connect_next_next_block->check_block_flag(base::enum_xvblock_flag_committed))
-                  ||(!connect_next_block->check_block_flag(base::enum_xvblock_flag_locked) && connect_next_next_block->check_block_flag(base::enum_xvblock_flag_locked)))
-                {
-                    xwarn("xblockacct_t::get_latest_current_block return connect block for last block hash of connect+2 block is not connect+1 block . meta=%s, connect+1 block=%s,connect+2 block=%s",
-                        m_meta->dump().c_str(), connect_next_block->dump().c_str(), connect_next_next_block->dump().c_str());
-                    connect_next_block->release_ref();
-                    connect_next_next_block->release_ref();
-                    return connect_block;
-                }
-            }
-
-            // find connect + 3 block, check if block is forked
-            base::xvblock_t* connect_next_next_next_block = query_block(m_meta->_highest_connect_block_height + 3,base::enum_xvblock_flag_authenticated);
-            if (connect_next_next_next_block != nullptr)
-            {
-                connect_next_next_next_block->add_ref();
-            }
-            else
-            {
-                connect_next_next_next_block = load_block_object(m_meta->_highest_connect_block_height + 3,ask_full_load);
-            }
-            if (connect_next_next_next_block != nullptr)
-            {
-                if (connect_next_next_block->get_block_hash() != connect_next_next_next_block->get_last_block_hash()
-                 && connect_next_next_next_block->check_block_flag(base::enum_xvblock_flag_committed))
-                {
-                    xwarn("xblockacct_t::get_latest_current_block return connect+1 block for last block hash of connect+3 block is not connect+2 block . meta=%s, connect+2 block=%s,connect+3 block=%s",
-                        m_meta->dump().c_str(), connect_next_next_block->dump().c_str(), connect_next_next_next_block->dump().c_str());
-                    connect_block->release_ref();
-                    connect_next_next_block->release_ref();
-                    connect_next_next_next_block->release_ref();
-                    return connect_next_block;
-                }
-                connect_next_next_next_block->release_ref();
-            }
-
-            xwarn("xblockacct_t::get_latest_current_block return connect+2 block for find connect+2 block. meta=%s,block=%s", m_meta->dump().c_str(), connect_next_next_block->dump().c_str());
+            xwarn("xblockacct_t::get_latest_current_block return connect+2 block for not find connect+2 block. meta=%s,block=%s", m_meta->dump().c_str(), connect_next_next_block->dump().c_str());
             connect_block->release_ref();
             connect_next_block->release_ref();
             return connect_next_next_block;
@@ -1093,21 +1054,6 @@ namespace top
             return true;
         }
 
-        bool xblockacct_t::is_replace_existing_block(base::xvblock_t* existing_block, base::xvblock_t* this_block)
-        {
-            if (!existing_block->check_block_flag(base::enum_xvblock_flag_committed))
-            {
-                base::xauto_ptr<base::xvblock_t> next_block(load_block_object(existing_block->get_height() + 1, true));
-                if (next_block != nullptr && next_block->check_block_flag(base::enum_xvblock_flag_committed) && next_block->get_last_block_hash() == this_block->get_block_hash())
-                {
-                    xwarn("xblockacct_t::is_replace_existing_block,block forked from height(%" PRIu64 ") and view#=%" PRIu64 ",new block=%s connected with next commit block=%s,replace existing block=%s at store(%s)",
-                            this_block->get_height(),existing_block->get_viewid(),this_block->dump().c_str(),next_block->dump().c_str(),existing_block->dump().c_str(),get_blockstore_path().c_str());
-                    return true;
-                }
-            }
-            return false;
-        }
-
         /* 3 rules for managing cache
             #1. clean blocks of lower stage when higher stage coming. stage include : cert, lock and commit
             #2. only allow one block at same height for the locked or committed block,in other words it allow mutiple cert-only blocks
@@ -1243,25 +1189,18 @@ namespace top
                 }
                 else //ensure only one commit in the map
                 {
-                    bool is_replace_block = false;
                     if(existing_block->get_block_hash() != this_block->get_block_hash())//safety check
                     {
-                        // Block chain is forked! If new block can connect with next block which is committed, replace existing block with new block.
-                        if (!is_replace_existing_block(existing_block, this_block))
-                        {
-                            xerror("xblockacct_t::store_block,fail-hash changed for block with exist height(%" PRIu64 ") and view#=%" PRIu64 " vs new block=%s at store(%s)",this_block->get_height(),existing_block->get_viewid(),this_block->dump().c_str(),get_blockstore_path().c_str());
-                            return false;
-                        }
-                        is_replace_block = true;
+                        xerror("xblockacct_t::store_block,fail-hash changed for block with exist height(%" PRIu64 ") and view#=%" PRIu64 " vs new block=%s at store(%s)",this_block->get_height(),existing_block->get_viewid(),this_block->dump().c_str(),get_blockstore_path().c_str());
+                        return false;
                     }
 
                     //apply rule#3. not allow overwrite block with newer/more latest block at same height and same stage
                     const int existing_block_flags = existing_block->get_block_flags();
                     const int new_block_flags      = this_block->get_block_flags();
-                    if(!is_replace_block
-                       && ((existing_block_flags == new_block_flags)
-                         ||(existing_block_flags & base::enum_xvblock_flags_high4bit_mask) > (new_block_flags & base::enum_xvblock_flags_high4bit_mask)
-                         ||(existing_block_flags & base::enum_xvblock_flags_low4bit_mask)  > (new_block_flags & base::enum_xvblock_flags_low4bit_mask))
+                    if(  (existing_block_flags == new_block_flags)
+                       ||(existing_block_flags & base::enum_xvblock_flags_high4bit_mask) > (new_block_flags & base::enum_xvblock_flags_high4bit_mask)
+                       ||(existing_block_flags & base::enum_xvblock_flags_low4bit_mask)  > (new_block_flags & base::enum_xvblock_flags_low4bit_mask)
                        ) //outdated one try to overwrite newer one,abort it
                     {
                         xwarn("xblockacct_t::store_block,warn-try to overwrite newer block with flags(0x%x) by outdated block=%s at store(%s)",existing_block->get_unit_flags(),this_block->dump().c_str(),get_blockstore_path().c_str());

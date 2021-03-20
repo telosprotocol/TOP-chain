@@ -28,7 +28,7 @@ public:
 
 private:
     void update(mbus::xevent_ptr_t e);
-    void chain_timer(const time::xchain_time_st &time);
+    void chain_timer(common::xlogic_time_t time);
     config::xconfig_update_action_ptr_t find(const std::string& type);
 
 private:
