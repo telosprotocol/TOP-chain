@@ -174,14 +174,14 @@ xtop_udp_socket::send_to(xendpoint_t const & peer,
     }
 }
 
-xtop_basic_udp_socket::xtop_basic_udp_socket(std::shared_ptr<xbase_iothread_wrapper_t> io_wrapper,
+xtop_basic_udp_socket::xtop_basic_udp_socket(std::shared_ptr<xbase_io_context_wrapper_t> io_wrapper,
                                              std::uint16_t const port)
 {
     auto tmp_port = port;
     m_socket_ptr.attach(new xsocket_t<base::udp_t>(io_wrapper->context(), nullptr, io_wrapper->thread_id(), base::xsocket_utl::udp_listen(u8"0.0.0.0", tmp_port)));
 }
 
-xtop_basic_udp_socket::xtop_basic_udp_socket(std::shared_ptr<xbase_iothread_wrapper_t> io_wrapper,
+xtop_basic_udp_socket::xtop_basic_udp_socket(std::shared_ptr<xbase_io_context_wrapper_t> io_wrapper,
                                              network::xendpoint_t const & endpoint)
 {
     auto tmp_port = endpoint.port();

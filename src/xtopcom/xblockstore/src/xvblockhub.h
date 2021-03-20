@@ -156,7 +156,6 @@ namespace top
             void              notify_commit_store_event(base::xvblock_t* this_block);
         private:
             void              close_blocks(); //clean all cached blocks
-            bool              is_replace_existing_block(base::xvblock_t* existing_block, base::xvblock_t* this_block);
 
         private:
             uint64_t        m_last_access_time_ms; //UTC ms

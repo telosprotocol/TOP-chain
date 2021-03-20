@@ -48,16 +48,25 @@ void xaccountobj_t::clear_send_queue_by_iter(std::multiset<xsendtx_queue_entry_t
     }
 }
 
-int32_t xaccountobj_t::check_and_erase_old_nonce_duplicate_tx(const xtransaction_t * tx) {
+int32_t xaccountobj_t::check_and_erase_old_nonce_duplicate_tx(const xcons_transaction_ptr_t & tx) {
     auto iter = m_send_queue.begin();
+    auto pre_iter = iter;
     while (iter != m_send_queue.end()) {
-        if (tx->get_last_nonce() == iter->m_tx->get_transaction()->get_last_nonce()) {
-            if (tx->get_fire_timestamp() < iter->m_tx->get_transaction()->get_fire_timestamp()) {
-                // new tx is duplicate and timestamp is older, delete it.
+        if (tx->get_transaction()->get_last_nonce() == iter->m_tx->get_transaction()->get_last_nonce()) {
+            // new tx is duplicate and timestamp is older, or hash not match, delete it.
+            if (tx->get_transaction()->get_fire_timestamp() < iter->m_tx->get_transaction()->get_fire_timestamp()) {
                 return xtxpool_error_tx_nonce_repeat;
             }
-            break;
+        
+            if (tx->get_transaction()->get_last_nonce() == m_latest_send_trans_number && check_send_tx(tx, m_latest_send_trans_hash)) {
+                break;
+            }
+            if (tx->get_transaction()->get_last_nonce() > m_latest_send_trans_number && check_send_tx(tx, pre_iter->m_tx->get_transaction()->digest())) {
+                break;
+            }
+            return xtxpool_error_tx_nonce_repeat;
         }
+        pre_iter = iter;
         iter++;
     }
 
@@ -123,7 +132,7 @@ int32_t xaccountobj_t::push_send_tx(const xcons_transaction_ptr_t & tx) {
             return xtxpool_error_tx_nonce_incontinuity;
         } else {
             // tx nonce is duplicate with one of sendqueue
-            int32_t ret = check_and_erase_old_nonce_duplicate_tx(tx->get_transaction());
+            int32_t ret = check_and_erase_old_nonce_duplicate_tx(tx);
             if (ret != xsuccess) {
                 drop_invalid_tx(tx, ret);
                 return ret;

@@ -7,6 +7,7 @@
 #include "xbase/xthread.h"
 #include "xbasic/xasio_config.h"
 #include "xbasic/xobject_ptr.h"
+#include "xbasic/xmemory.hpp"
 #include "xbasic/xrunnable.h"
 
 #include <asio/executor_work_guard.hpp>
@@ -61,50 +62,33 @@ public:
 };
 using xasio_io_context_wrapper_t = xtop_asio_io_context_wrapper;
 
-/**
- * @brief A simple wrapper on base::xiothread_t.  The start / stop / running are fake.  Basically,
- *        it's not correct to call start after calling stop, since this class is a wrapper of
- *        thread object.  The thread object cannot be restarted after it is closed.
- *        This wrapper is just to make the code in a uniform style when introducing the libxbase.
- */
-template <typename IoThreadT, typename std::enable_if<std::is_base_of<base::xiothread_t, IoThreadT>::value>::type * = nullptr>
-class xtop_base_iothread_wrapper final : public xrunnable_t<xtop_base_iothread_wrapper<IoThreadT>> {
+/// @brief A simple wrapper on base::xiothread_t.  The start / stop / running are fake. Basically,
+///        it's wrong to restart the io context by calling start() after stop(), since xbase's
+///        thead doesn't support restart. The thread object cannot be restarted after it is closed.
+///        This wrapper is just to make the code in a uniform style (like ASIO) when introducing
+///        the libxbase.
+class xtop_base_io_context_wrapper final : public xrunnable_t<xtop_base_io_context_wrapper> {
 private:
-    xobject_ptr_t<IoThreadT> m_iothread_ptr{};
+    xobject_ptr_t<base::xiothread_t> m_iothread_ptr{};
 
 public:
-    xtop_base_iothread_wrapper(xtop_base_iothread_wrapper const &) = delete;
-    xtop_base_iothread_wrapper & operator=(xtop_base_iothread_wrapper const &) = delete;
-    xtop_base_iothread_wrapper(xtop_base_iothread_wrapper &&) = default;
-    xtop_base_iothread_wrapper & operator=(xtop_base_iothread_wrapper &&) = default;
-    ~xtop_base_iothread_wrapper() = default;
+    xtop_base_io_context_wrapper(xtop_base_io_context_wrapper const &) = delete;
+    xtop_base_io_context_wrapper & operator=(xtop_base_io_context_wrapper const &) = delete;
+    xtop_base_io_context_wrapper(xtop_base_io_context_wrapper &&) = default;
+    xtop_base_io_context_wrapper & operator=(xtop_base_io_context_wrapper &&) = default;
+    ~xtop_base_io_context_wrapper() = default;
 
-    xtop_base_iothread_wrapper() {
-        m_iothread_ptr.attach(base::xiothread_t::create_thread(base::xcontext_t::instance(), 0, -1));
-    }
+    xtop_base_io_context_wrapper();
+    explicit xtop_base_io_context_wrapper(xobject_ptr_t<base::xiothread_t> io_thread);
 
-    void start() override {
-    }
+    void start() override;
+    void stop() override;
+    bool running() const noexcept override;
+    void running(bool const) noexcept override;
 
-    void stop() override {
-    }
-
-    bool running() const noexcept override {
-        return m_iothread_ptr->is_running();
-    }
-
-    void running(bool const) noexcept override {
-        // do nothing
-    }
-
-    base::xcontext_t & context() const noexcept {
-        return *m_iothread_ptr->get_context();
-    }
-
-    std::int32_t thread_id() const noexcept {
-        return m_iothread_ptr->get_thread_id();
-    }
+    base::xcontext_t & context() const noexcept;
+    std::int32_t thread_id() const noexcept;
 };
-using xbase_iothread_wrapper_t = xtop_base_iothread_wrapper<base::xiothread_t>;
+using xbase_io_context_wrapper_t = xtop_base_io_context_wrapper;
 
 NS_END1

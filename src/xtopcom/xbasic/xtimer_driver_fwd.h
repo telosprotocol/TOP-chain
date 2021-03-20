@@ -11,4 +11,7 @@ NS_BEG1(top)
 class xtop_timer_driver;
 using xtimer_driver_t = xtop_timer_driver;
 
+class xtop_base_timer_driver;
+using xbase_timer_driver_t = xtop_base_timer_driver;
+
 NS_END1

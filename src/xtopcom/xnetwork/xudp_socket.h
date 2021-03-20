@@ -84,10 +84,10 @@ public:
     xtop_basic_udp_socket & operator=(xtop_basic_udp_socket &&)      = default;
     ~xtop_basic_udp_socket() override                                = default;
 
-    xtop_basic_udp_socket(std::shared_ptr<xbase_iothread_wrapper_t> io_wrapper,
+    xtop_basic_udp_socket(std::shared_ptr<xbase_io_context_wrapper_t> io_wrapper,
                           std::uint16_t const port);
 
-    xtop_basic_udp_socket(std::shared_ptr<xbase_iothread_wrapper_t> io_wrapper,
+    xtop_basic_udp_socket(std::shared_ptr<xbase_io_context_wrapper_t> io_wrapper,
                           network::xendpoint_t const & endpoint);
 
     void

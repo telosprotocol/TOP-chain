@@ -7,14 +7,16 @@
 #include "xdata/xblocktool.h"
 #include "xdata/xgenesis_data.h"
 #include "xunit_service/xcons_utl.h"
+#include "xblockstore/xblockstore_face.h"
 
 #include <cinttypes>
+
 NS_BEG2(top, xunit_service)
 #define WORK_DISPATCH_WATCHER "table_dispatch_timer"
-xworkpool_dispatcher::xworkpool_dispatcher(observer_ptr<mbus::xmessage_bus_face_t> const &mb,
-    std::shared_ptr<xcons_service_para_face> const & p_para, std::shared_ptr<xblock_maker_face> const & block_maker)
+xworkpool_dispatcher::xworkpool_dispatcher(observer_ptr<mbus::xmessage_bus_face_t> const &mb, std::shared_ptr<xcons_service_para_face> const & p_para, std::shared_ptr<xblock_maker_face> const & block_maker)
   : xcons_dispatcher(e_table), m_mbus(mb), m_para(p_para), m_blockmaker(block_maker) {
     xinfo("xworkpool_dispatcher::xworkpool_dispatcher,create,this=%p", this);
+
 }
 
 xworkpool_dispatcher::~xworkpool_dispatcher() {
@@ -57,9 +59,16 @@ bool xworkpool_dispatcher::dispatch(base::xworkerpool_t * pool, base::xcspdu_t *
     return false;
 }
 
-void xworkpool_dispatcher::chain_timer(const time::xchain_time_st & time) {
-    xdbg("xworkpool_dispatcher::chain_timer call on_clock, block height %" PRIu64 ", time round %" PRIu64, time.timer_block->get_height(), time.xtime_round);
-    on_clock(time.timer_block);
+void xworkpool_dispatcher::chain_timer(common::xlogic_time_t time) {
+    assert(m_para);
+
+    auto * blkstore = m_para->get_resources()->get_vblockstore();
+    auto timer_block = blkstore->get_latest_cert_block(base::xvaccount_t(sys_contract_beacon_timer_addr));
+
+    xdbg("xworkpool_dispatcher::chain_timer call on_clock, logic time %" PRIu64 " TC %" PRIu64, time, timer_block->get_height());
+    if (time <= timer_block->get_height()) {
+        on_clock(timer_block.get());
+    }
 }
 
 void xworkpool_dispatcher::on_clock(base::xvblock_t * clock_block) {

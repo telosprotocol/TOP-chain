@@ -54,16 +54,11 @@ set_target_properties(xtopchain PROPERTIES
     VERSION   "${PROGRAM_VERSION}"
     SOVERSION "${PROGRAM_VERSION}"
 )
-target_link_libraries(xtopchain PRIVATE xchaininit ${LINK_ARGS} xtopcl
-    xelect_net  xwrouter xkad xpbase xgossip xtransport xcommon xnetwork xbasic cpp_redis tacopie https_client
-    xxbase xdata xcrypto jsoncpp)
-target_link_libraries(xtopchain_bin PRIVATE xchaininit ${LINK_ARGS} xtopcl
-    xelect_net xwrouter xkad xpbase xgossip xtransport xcommon xnetwork xbasic cpp_redis tacopie https_client
-    xxbase xdata xcrypto jsoncpp)
+target_link_libraries(xtopchain PRIVATE xchaininit ${LINK_ARGS} xtopcl xxbase xdata xcrypto jsoncpp)
 
 if (BUILD_METRICS)
-    add_dependencies(xtopchain xmetrics )
-    target_link_libraries(xtopchain PRIVATE xmetrics )
-    add_dependencies(xtopchain_bin xmetrics )
-    target_link_libraries(xtopchain_bin PRIVATE xmetrics )
+    add_dependencies(xtopchain xmetrics)
+    target_link_libraries(xtopchain PRIVATE xmetrics)
+    add_dependencies(xtopchain_bin xmetrics)
+    target_link_libraries(xtopchain_bin PRIVATE xmetrics)
 endif()

@@ -148,7 +148,8 @@ void xaccount_base_t::on_response_event(const mbus::xevent_ptr_t & e) {
         enum_result_code ret = handle_block(before_vblock, block, is_elect_chain);
 
         if (ret == enum_result_code::success) {
-            xsync_info("[account][event] on_response_event(succ) %s height:%lu viewid:%lu", m_address.c_str(), height, viewid);
+            xsync_info("[account][event] on_response_event(succ) %s height:%lu viewid:%lu prev_hash:%s", 
+                m_address.c_str(), height, viewid, to_hex_str(block->get_last_block_hash()).c_str());
             continue;
         } else if (ret == enum_result_code::exist) {
             xsync_info("[account][event] on_response_event(exist) %s height:%lu viewid:%lu", m_address.c_str(), height, viewid);
@@ -185,8 +186,8 @@ void xaccount_base_t::on_response_event(const mbus::xevent_ptr_t & e) {
     int64_t try_time = 0;
     m_sync_range_mgr.get_try_sync_info(try_count, try_time);
 
-    xsync_info("[account][event] on_response_event(total) %s current(height:%lu viewid:%lu) behind(try_count:%u height:%lu)", 
-        m_address.c_str(), current_vblock->get_height(), current_vblock->get_viewid(), try_count, m_sync_range_mgr.get_behind_height());
+    xsync_info("[account][event] on_response_event(total) %s current(height:%lu viewid:%lu hash:%s) behind(try_count:%u height:%lu)", 
+        m_address.c_str(), current_vblock->get_height(), current_vblock->get_viewid(), to_hex_str(current_vblock->get_block_hash()).c_str(), try_count, m_sync_range_mgr.get_behind_height());
 
     // if try_count is set, it means it's lower than cur_height, may be a old request has been override or discard.
     // when the response of the latest request comes back, it can clear this flag.
@@ -197,7 +198,7 @@ void xaccount_base_t::on_response_event(const mbus::xevent_ptr_t & e) {
 
     m_request = nullptr;
 
-    handle_next(current_block);
+    handle_next(current_block, head_forked);
 
     if (m_request == nullptr) {
         mbus::xevent_ptr_t ev = std::make_shared<mbus::xevent_downloader_complete_t>(m_address, current_block->get_height());
@@ -326,21 +327,24 @@ enum_result_code xaccount_base_t::handle_block(const base::xauto_ptr<base::xvblo
         }
     }
 
-    if (current_block->get_height() > block->get_height() || 
-        (current_block->get_height() == block->get_height() && current_block->get_block_hash() == block->get_block_hash())) {
-        return enum_result_code::exist;
-    }
+    // must equal with current+1 or higher than current_height - 2
+    if (block->get_height() > (current_block->get_height()+1) || (block->get_height() + 2) < current_block->get_height())
+        return enum_result_code::failed;
 
     base::xvblock_t* vblock = dynamic_cast<base::xvblock_t*>(block.get());
     bool ret = m_sync_store->store_block(vblock);
     if (ret) {
 
         base::xauto_ptr<base::xvblock_t> new_current_block = m_sync_store->get_current_block(m_address);
-        if (new_current_block->get_height() < current_block->get_height()) {
+
+        // no change, hash can not connect
+        if ((current_block->get_height()+1) == block->get_height() && 
+            current_block->get_height() == new_current_block->get_height() &&
+            current_block->get_block_hash() == new_current_block->get_block_hash() &&
+            current_block->get_block_hash() != block->get_last_block_hash()) {
             return enum_result_code::forked;
         }
 
-        // same height with multi view is allowed
         return enum_result_code::success;
     }
 
@@ -417,7 +421,7 @@ void xaccount_base_t::send_request(int64_t now) {
     m_sync_sender->send_get_blocks(m_request->owner, m_request->start_height, m_request->count, m_request->self_addr, m_request->target_addr);
 }
 
-void xaccount_base_t::handle_next(const xblock_ptr_t &current_block) {
+void xaccount_base_t::handle_next(const xblock_ptr_t &current_block, bool head_forked) {
     vnetwork::xvnode_address_t self_addr;
     vnetwork::xvnode_address_t target_addr;
 
@@ -425,7 +429,7 @@ void xaccount_base_t::handle_next(const xblock_ptr_t &current_block) {
     uint64_t start_height = 0;
     uint32_t count = 0;
 
-    m_sync_range_mgr.get_next_behind(current_block, count_limit, start_height, count, self_addr, target_addr);
+    m_sync_range_mgr.get_next_behind(current_block, head_forked, count_limit, start_height, count, self_addr, target_addr);
     //xsync_info("[account] next_behind %s range[%lu,%lu]", m_address.c_str(), start_height, start_height+count-1);
 
     if (count > 0) {

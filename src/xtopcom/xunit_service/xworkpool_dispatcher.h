@@ -39,7 +39,7 @@ protected:
     int16_t           get_thread_index(base::xworkerpool_t * pool, uint16_t tableid);
     base::xworker_t * get_worker(base::xworkerpool_t * pool, uint16_t table_id);
     void              fire_clock(base::xvblock_t * block, xbatch_packer_ptr_t packer);
-    void              chain_timer(const time::xchain_time_st & time);
+    void              chain_timer(common::xlogic_time_t time);
     void              on_clock(base::xvblock_t * clock_block) override;
 
 protected:
