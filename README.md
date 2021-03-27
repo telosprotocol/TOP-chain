@@ -1,27 +1,38 @@
-<p align="center">
-  <a href="http://developers.topnetwork.org/" title="TOP Network Docs">
-  </a>
-</p>
+# TOP链介绍
+-----
+> 官网地址: [www.topnetwork.org](https://www.topnetwork.org/)
 
-<h1 align="center">TOP Network</h1>
+## TOP链基本概念
+-----
+> 参考文档: [TOP Network 文档中心](http://developers.topnetwork.org/)
 
-TOP Network is a decentralized open communication network that provides secure, high-qualify and low-cost cloud communication services on the blockchain. TOP Network is also a high-performance public blockchain platform designed to handle real-world business of any size or volume. Powered by innovations including three-layer network, two-layer sharding, two-layer lattice DAG , xPBFT-DPoS*, layer-xP2P…check out the [TOP Network Spec](https://www.topnetwork.org).
+## 编译安装
+-----
+请参考: [编译安装指南](./doc/install.md)
 
-## Documentation
+## 命令使用
+----
+请参考: [TOPIO 使用指南](http://developers.topnetwork.org/Tools/TOPIO/Overview/)
 
-For instructions on how to use, please visit [http://developers.topnetwork.org/](http://developers.topnetwork.org/).
+## 组网部署
+-----
+> 开发组网部署
+- [部署文档](./doc/deploy.md)
 
-## Contract Us
+## 相关文档
+-----
+- 系统合约文档说明: [系统合约文档](./doc/系统合约文档)
+- 共识文档说明: [共识文档](./doc/共识文档)
+- 签名文档说明: [签名文档](./doc/签名文档)
+- 部署文档说明: [部署文档](./doc/部署使用文档)
 
-* Website: [http://www.topnetwork.org](http://www.topnetwork.org)
-* Staking: [www.topstaking.io](www.topstaking.io)
-* Twitter: [@topnetwork_top](@topnetwork_top)
-* Telegram: [https://t.me/topnetwork_top](https://t.me/topnetwork_top)
-* News Channel: [https://t.me/top_network](https://t.me/top_network)
-* Medium: [https://medium.com/@topnetwork](https://medium.com/@topnetwork)
-* Slack: [https://join.slack.com/t/top-network-group/shared_invite/zt-icxq4bec-QIL5SvKGRN4VArYMSQ8B8A](https://join.slack.com/t/top-network-group/shared_invite/zt-icxq4bec-QIL5SvKGRN4VArYMSQ8B8A)
-* Official Wallet: [www.hiwallet.org](www.hiwallet.org)
+## 审计代码
+-----
 
-## Version
-
-Upgrade version to v1.1.3
+- 系统合约代码: src/xtopcom/xvm
+- 共识代码: src/xtopcom/xBFT
+- 签名代码: src/xtopcom/xcertauth
+- 多签代码: src/xtopcom/xmutisig
+- key生成代码: src/xtopcom/xcrypto
+- 交易执行: src/xtopcom/xtxexecutor
+- 节点私钥管理: src/xtopcom/xtopcl

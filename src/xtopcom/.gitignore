@@ -1,8 +1,0 @@
-.DS_Store
-.vscode/
-.vs/
-cbuild*
-build
-**/CMakeFiles
-**/Makefile
-**/*.cmake

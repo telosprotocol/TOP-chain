@@ -328,13 +328,9 @@ if (XENABLE_TESTS)
     add_definitions(-DXENABLE_TESTS)
 endif()
 
-if (XBUILD_GALILEO)
-    add_definitions(-DXBUILD_GALILEO)
-endif()
 
 if (${CMAKE_SYSTEM_NAME} STREQUAL Linux OR ${CMAKE_SYSTEM_NAME} STREQUAL Darwin)
 #  find_package(PkgConfig REQUIRED)
-
 endif()
 
 message(STATUS "CMAKE_BUILD_TYPE:" ${CMAKE_BUILD_TYPE})
@@ -355,13 +351,18 @@ include_directories(SYSTEM src/xtopcom/xdepends/include/trezor-crypto)
 include_directories(SYSTEM src/xtopcom/xdepends/include)
 include_directories(src/xtopcom/xtopcl/src)  # xtopcom build warning will not print
 include_directories(src/xtopcom/xtopcl/include)  # xtopcom build warning will not print
+include_directories(src/xtopcom/xtopcl/include/task)  # xtopcom build warning will not print
+include_directories(src/xtopcom/xtopcl/include/xtop)  # xtopcom build warning will not print
+include_directories(src/xtopcom/xtopcl/include/network)  # xtopcom build warning will not print
+include_directories(src/xtopcom/xtopcl/include/web)  # xtopcom build warning will not print
+include_directories(src/xtopcom/xtopcl/include/base)  # xtopcom build warning will not print
 
 include_directories(src/libraries)
 include_directories(src/services)
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 link_directories(${LIBRARY_OUTPUT_PATH})
-link_directories(src/xtopcom/libs/Linux/${XBUILD_TYPE})
+link_directories(tlib/Linux/${XBUILD_TYPE})
 
 if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
     add_compile_options(
@@ -437,6 +438,7 @@ if (XENABLE_TESTS)
     include_directories(.)
 
     add_subdirectory(tests)
+    add_subdirectory(src/xtopcom/xbasic/tests)
     add_subdirectory(src/xtopcom/xconfig/tests)
     add_subdirectory(src/xtopcom/xdb/test)
 #    add_subdirectory(src/programs/xtopchain_t)
@@ -448,7 +450,6 @@ if (XENABLE_TESTS)
     add_subdirectory(src/xtopcom/xstore/test)
     add_subdirectory(src/xtopcom/xstore/test_util)
     add_subdirectory(src/xtopcom/xtxpool/test/unittest)
-    add_subdirectory(src/xtopcom/xtxpool_service/test/unittest)
     add_subdirectory(src/xtopcom/xverifier/test)
 
 endif()
@@ -457,13 +458,14 @@ endif()
 if (CMAKE_INSTALL_PREFIX STREQUAL "/usr/local")
     #set(CMAKE_INSTALL_PREFIX "/usr/local/topio" CACHE STRING "" FORCE)
 endif()
+
 #message (STATUS "TOPIO Installation directory: CMAKE_INSTALL_PREFIX = " ${CMAKE_INSTALL_PREFIX})
 
 set(INSTALL_BIN_PATH /usr/bin/)
 set(INSTALL_LIB_PATH /lib/)
 
 INSTALL(TARGETS topio xtopchain
-RUNTIME DESTINATION ${INSTALL_BIN_PATH}
-LIBRARY DESTINATION ${INSTALL_LIB_PATH}
-ARCHIVE DESTINATION ${INSTALL_LIB_PATH}
-)
+    RUNTIME DESTINATION ${INSTALL_BIN_PATH}
+    LIBRARY DESTINATION ${INSTALL_LIB_PATH}
+    ARCHIVE DESTINATION ${INSTALL_LIB_PATH}
+    )
