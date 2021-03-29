@@ -252,7 +252,7 @@ int xunit_blockmaker_t::make_lightunit_output(xaccount_context_t * context,
                 failtx->dump().c_str(), chainbase::xmodule_error_to_str(exec_result.m_exec_fail_tx_ret).c_str());
         }
         m_txpool->pop_tx_by_hash(failtx->get_source_addr(), failtx->get_transaction()->digest(), failtx->get_tx_subtype(), exec_result.m_exec_fail_tx_ret);
-
+        // one tx fail will not make unit with other txs
         return exec_ret;
     }
 

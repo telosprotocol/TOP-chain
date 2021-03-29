@@ -26,7 +26,15 @@ using namespace std;
 
 class xchain_timer_mock final : public time::xchain_time_face_t {
 public:
-    bool update_time(data::xblock_t* timer_block, bool force = false) override { return true; }
+    void update_time(common::xlogic_time_t, time::xlogic_timer_update_strategy_t) override {
+        return;
+    }
+
+    void start() override {
+    }
+
+    void stop() override {
+    }
 
     //void restore_last_db_time() override {}
 
@@ -97,6 +105,50 @@ TEST_F(test_tx_queue, tx_order_1_send_repeat) {
             ASSERT_EQ(xtxpool_error_request_tx_repeat, queue->push_send_tx(tx));
         }
     }
+    queue->release_ref();
+}
+
+TEST_F(test_tx_queue, 2_nonce_duplicate_send_tx) {
+    std::shared_ptr<top::mbus::xmessage_bus_t> mbus = std::make_shared<top::mbus::xmessage_bus_t>();
+    auto                                       store_ptr = store::xstore_factory::create_store_with_memdb(make_observer(mbus));
+    xobject_ptr_t<base::xvblockstore_t> blockstore;
+    blockstore.attach(store::xblockstorehub_t::instance().create_block_store(*store_ptr, ""));
+    auto para = std::make_shared<xtxpool_resources>(make_observer(store_ptr), blockstore, nullptr, nullptr, make_observer(m_chain_timer), enum_xtxpool_order_strategy_default);
+    uint64_t        now = xverifier::xtx_utl::get_gmttime_s();
+    uint256_t       last_tx_hash1 = {};
+    uint256_t       last_tx_hash2 = {};
+    xtxpool_table_t table(0, 0, para);
+    xaccountobj_t * queue = new xaccountobj_t("aaaa", 1, last_tx_hash1, &table);
+    std::vector<xcons_transaction_ptr_t> txs1;
+    std::vector<xcons_transaction_ptr_t> txs2;
+
+
+    xcons_transaction_ptr_t tx = test_xtxpool_util_t::create_cons_transfer_tx(0 , 1, 1, now + 1, {});
+    tx->get_transaction()->set_push_pool_timestamp(now + 1);
+    last_tx_hash1 = tx->get_transaction()->digest();
+    last_tx_hash2 = tx->get_transaction()->digest();
+    txs1.push_back(tx);
+    txs2.push_back(tx);
+
+
+    for (uint64_t i = 2; i <= 3; i++) {
+        xcons_transaction_ptr_t tx1 = test_xtxpool_util_t::create_cons_transfer_tx(0 , 1, i, now + i, last_tx_hash1);
+        tx1->get_transaction()->set_push_pool_timestamp(now + i);
+        last_tx_hash1 = tx1->get_transaction()->digest();
+        txs1.push_back(tx1);
+
+        xcons_transaction_ptr_t tx2 = test_xtxpool_util_t::create_cons_transfer_tx(0 , 1, i, now + i + 10, last_tx_hash2);
+        tx2->get_transaction()->set_push_pool_timestamp(now + i + 10);
+        last_tx_hash2 = tx2->get_transaction()->digest();
+        txs2.push_back(tx2);
+    }
+
+    ASSERT_EQ(0, queue->push_send_tx(txs1[0]));
+    ASSERT_EQ(0, queue->push_send_tx(txs1[1]));
+    ASSERT_EQ(0, queue->push_send_tx(txs2[1]));
+    ASSERT_EQ(0, queue->push_send_tx(txs2[2]));
+    ASSERT_EQ(xtxpool_error_tx_nonce_repeat, queue->push_send_tx(txs1[2]));
+
     queue->release_ref();
 }
 

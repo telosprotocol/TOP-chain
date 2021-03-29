@@ -9,11 +9,13 @@
 #include "xapplication/xchain_application.h"
 #include "xbasic/xcrypto_key.h"
 #include "xbasic/xmemory.hpp"
+#include "xbasic/xtimer_driver.h"
 #include "xchain_timer/xchain_timer_face.h"
 #include "xcommon/xip.h"
 #include "xcommon/xlogic_time.h"
 #include "xcommon/xnode_info.h"
 #include "xconfig/xconfig_register.h"
+#include "xdatastat/xdatastat.h"
 #include "xelect/client/xelect_client.h"
 #include "xelect_net/include/elect_main.h"
 #include "xmbus/xmessage_bus.h"
@@ -22,7 +24,6 @@
 #include "xstore/xstore_face.h"
 #include "xsync/xsync_object.h"
 #include "xtxpool/xtxpool_face.h"
-#include "xdatastat/xdatastat.h"
 
 #include <cstdint>
 #include <memory>
@@ -34,9 +35,13 @@ NS_BEG2(top, application)
 enum class xtop_thread_pool_type : std::uint8_t { invalid, unit_service, synchronization };
 using xthread_pool_type_t = xtop_thread_pool_type;
 
+enum class xtop_io_context_type : uint8_t { invalid, general };
+using xio_context_type_t = xtop_io_context_type;
+
 NS_END2
 
 #if !defined XCXX14_OR_ABOVE
+
 NS_BEG1(std)
 
 template <>
@@ -44,7 +49,13 @@ struct hash<top::application::xthread_pool_type_t> final {
     std::size_t operator()(top::application::xthread_pool_type_t const type) const noexcept;
 };
 
+template <>
+struct hash<top::application::xio_context_type_t> final {
+    std::size_t operator()(top::application::xio_context_type_t const type) const noexcept;
+};
+
 NS_END1
+
 #endif
 
 NS_BEG2(top, application)
@@ -52,15 +63,19 @@ NS_BEG2(top, application)
 class xtop_application final : public xapplication_face_t<xtop_application> {
 public:
     using xthread_pool_t = std::vector<xobject_ptr_t<base::xiothread_t>>;
+    using xio_context_pool_t = std::vector<std::shared_ptr<xbase_io_context_wrapper_t>>;
 
 private:
     using xbase_t = xapplication_face_t<xtop_application>;
 
-    static constexpr std::size_t thread_count{2};
     common::xnode_id_t m_node_id;
     xpublic_key_t m_public_key;
     std::string m_sign_key;
 
+    std::unordered_map<xthread_pool_type_t, xthread_pool_t> m_thread_pools{};
+    std::unordered_map<xio_context_type_t, xio_context_pool_t> m_io_context_pools;
+
+    std::shared_ptr<xbase_timer_driver_t> m_timer_driver;
     std::unique_ptr<elect::ElectMain> m_elect_main;
 
     std::unique_ptr<router::xrouter_face_t> m_router;
@@ -74,7 +89,6 @@ private:
     std::vector<xobject_ptr_t<base::xiothread_t>> m_sync_handler_thread_pool{};
     std::unique_ptr<elect::xelect_client_imp> m_elect_client;
     xobject_ptr_t<xtxpool::xtxpool_face_t> m_txpool;
-    std::unordered_map<xthread_pool_type_t, xthread_pool_t> m_thread_pools;
     xobject_ptr_t<base::xvnodesrv_t> m_nodesvr_ptr;
     xobject_ptr_t<base::xvcertauth_t> m_cert_ptr;
     xobject_ptr_t<store::xsyncvstore_t> m_syncstore;
@@ -101,6 +115,8 @@ public:
     xpublic_key_t const & public_key() const noexcept;
 
     std::string const & sign_key() const noexcept;
+
+    observer_ptr<xbase_timer_driver_t> timer_driver() const noexcept;
 
     observer_ptr<network::xnetwork_driver_face_t> network_driver(common::xnetwork_id_t const & network_id) const noexcept;
 

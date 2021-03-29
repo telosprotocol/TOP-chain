@@ -233,45 +233,42 @@ void get_block_handle::getTimerInfo() {
 }
 
 void get_block_handle::getIssuanceDetail() {
-    auto get_zec_workload_map = [&](store::xstore_face_t * store,
-                                                 common::xaccount_address_t const & contract_address,
-                                                 std::string const & property_name,
-                                                 uint64_t height,
-                                                 xJson::Value & json) {
-        std::map<std::string, std::string> workloads;
-        if (store->get_map_property(contract_address.value(), height - 1, property_name, workloads) != 0) {
-            xwarn("[grpc::getIssuanceDetail] get_zec_workload_map contract_address： %s, height: %llu, property_name: %s",
-                contract_address.value().c_str(),
-                height,
-                property_name.c_str());
-            return;
-        }
-
-        xdbg("[grpc::getIssuanceDetail] get_zec_workload_map contract_address： %s, height: %llu, property_name: %s, workloads size: %d",
-                contract_address.value().c_str(),
-                height,
-                property_name.c_str(),
-                workloads.size());
-        //if (store->map_copy_get(contract_address.value(), property_name, workloads) != 0) return;
-        xJson::Value jm;
-        for (auto m : workloads) {
-            auto detail = m.second;
-            base::xstream_t stream{xcontext_t::instance(), (uint8_t *)detail.data(), static_cast<uint32_t>(detail.size())};
-            xstake::cluster_workload_t workload;
-            workload.serialize_from(stream);
-            xJson::Value jn;
-            jn["cluster_total_workload"] = workload.cluster_total_workload;
-            auto const & key_str = workload.cluster_id;
-            common::xcluster_address_t cluster;
-            base::xstream_t key_stream(xcontext_t::instance(), (uint8_t *)key_str.data(), key_str.size());
-            key_stream >> cluster;
-            for (auto node : workload.m_leader_count) {
-                jn[node.first] = node.second;
+    auto get_zec_workload_map =
+        [&](store::xstore_face_t * store, common::xaccount_address_t const & contract_address, std::string const & property_name, uint64_t height, xJson::Value & json) {
+            std::map<std::string, std::string> workloads;
+            if (store->get_map_property(contract_address.value(), height - 1, property_name, workloads) != 0) {
+                xwarn("[grpc::getIssuanceDetail] get_zec_workload_map contract_address： %s, height: %llu, property_name: %s",
+                      contract_address.value().c_str(),
+                      height,
+                      property_name.c_str());
+                return;
             }
-            jm[cluster.group_id().to_string()] = jn;
-        }
-        json[property_name] = jm;
-    };
+
+            xdbg("[grpc::getIssuanceDetail] get_zec_workload_map contract_address： %s, height: %llu, property_name: %s, workloads size: %d",
+                 contract_address.value().c_str(),
+                 height,
+                 property_name.c_str(),
+                 workloads.size());
+            // if (store->map_copy_get(contract_address.value(), property_name, workloads) != 0) return;
+            xJson::Value jm;
+            for (auto m : workloads) {
+                auto detail = m.second;
+                base::xstream_t stream{xcontext_t::instance(), (uint8_t *)detail.data(), static_cast<uint32_t>(detail.size())};
+                xstake::cluster_workload_t workload;
+                workload.serialize_from(stream);
+                xJson::Value jn;
+                jn["cluster_total_workload"] = workload.cluster_total_workload;
+                auto const & key_str = workload.cluster_id;
+                common::xcluster_address_t cluster;
+                base::xstream_t key_stream(xcontext_t::instance(), (uint8_t *)key_str.data(), key_str.size());
+                key_stream >> cluster;
+                for (auto node : workload.m_leader_count) {
+                    jn[node.first] = node.second;
+                }
+                jm[cluster.group_id().to_string()] = jn;
+            }
+            json[property_name] = jm;
+        };
 
     uint64_t height = m_js_req["height"].asUInt64();
     if (height == 0) {
@@ -283,18 +280,16 @@ void get_block_handle::getIssuanceDetail() {
 
     std::string xissue_detail_str;
     if (m_store->get_string_property(sys_contract_zec_reward_addr, height, xstake::XPROPERTY_REWARD_DETAIL, xissue_detail_str) != 0) {
-        xwarn("[grpc::getIssuanceDetail] contract_address： %s, height: %llu, property_name: %s",
-            sys_contract_zec_reward_addr,
-            height,
-            xstake::XPROPERTY_REWARD_DETAIL);
+        xwarn("[grpc::getIssuanceDetail] contract_address： %s, height: %llu, property_name: %s", sys_contract_zec_reward_addr, height, xstake::XPROPERTY_REWARD_DETAIL);
         return;
     }
     xstake::xissue_detail issue_detail;
     issue_detail.serialize_from_string(xissue_detail_str);
-    xdbg("[grpc::getIssuanceDetail] reward contract height: %llu, onchain_timer_round: %llu, m_zec_vote_contract_height: %llu, "
-    "m_zec_workload_contract_height: %llu, m_zec_reward_contract_height: %llu, "
-    "m_edge_reward_ratio: %u, m_archive_reward_ratio: %u, "
-    "m_validator_reward_ratio: %u, m_auditor_reward_ratio: %u, m_vote_reward_ratio: %u, m_governance_reward_ratio: %u",
+    xdbg(
+        "[grpc::getIssuanceDetail] reward contract height: %llu, onchain_timer_round: %llu, m_zec_vote_contract_height: %llu, "
+        "m_zec_workload_contract_height: %llu, m_zec_reward_contract_height: %llu, "
+        "m_edge_reward_ratio: %u, m_archive_reward_ratio: %u, "
+        "m_validator_reward_ratio: %u, m_auditor_reward_ratio: %u, m_vote_reward_ratio: %u, m_governance_reward_ratio: %u",
         height,
         issue_detail.onchain_timer_round,
         issue_detail.m_zec_vote_contract_height,
@@ -307,24 +302,24 @@ void get_block_handle::getIssuanceDetail() {
         issue_detail.m_vote_reward_ratio,
         issue_detail.m_governance_reward_ratio);
     xJson::Value jv;
-    jv["onchain_timer_round"]           = (xJson::UInt64)issue_detail.onchain_timer_round;
-    jv["zec_vote_contract_height"]      = (xJson::UInt64)issue_detail.m_zec_vote_contract_height;
-    jv["zec_workload_contract_height"]  = (xJson::UInt64)issue_detail.m_zec_workload_contract_height;
-    jv["zec_reward_contract_height"]    = (xJson::UInt64)issue_detail.m_zec_reward_contract_height;
-    jv["edge_reward_ratio"]             = issue_detail.m_edge_reward_ratio;
-    jv["archive_reward_ratio"]          = issue_detail.m_archive_reward_ratio;
-    jv["validator_reward_ratio"]        = issue_detail.m_validator_reward_ratio;
-    jv["auditor_reward_ratio"]          = issue_detail.m_auditor_reward_ratio;
-    jv["vote_reward_ratio"]             = issue_detail.m_vote_reward_ratio;
-    jv["governance_reward_ratio"]       = issue_detail.m_governance_reward_ratio;
-    jv["validator_group_count"]         = (xJson::UInt)issue_detail.m_validator_group_count;
-    jv["auditor_group_count"]           = (xJson::UInt)issue_detail.m_auditor_group_count;
+    jv["onchain_timer_round"] = (xJson::UInt64)issue_detail.onchain_timer_round;
+    jv["zec_vote_contract_height"] = (xJson::UInt64)issue_detail.m_zec_vote_contract_height;
+    jv["zec_workload_contract_height"] = (xJson::UInt64)issue_detail.m_zec_workload_contract_height;
+    jv["zec_reward_contract_height"] = (xJson::UInt64)issue_detail.m_zec_reward_contract_height;
+    jv["edge_reward_ratio"] = issue_detail.m_edge_reward_ratio;
+    jv["archive_reward_ratio"] = issue_detail.m_archive_reward_ratio;
+    jv["validator_reward_ratio"] = issue_detail.m_validator_reward_ratio;
+    jv["auditor_reward_ratio"] = issue_detail.m_auditor_reward_ratio;
+    jv["vote_reward_ratio"] = issue_detail.m_vote_reward_ratio;
+    jv["governance_reward_ratio"] = issue_detail.m_governance_reward_ratio;
+    jv["validator_group_count"] = (xJson::UInt)issue_detail.m_validator_group_count;
+    jv["auditor_group_count"] = (xJson::UInt)issue_detail.m_auditor_group_count;
     std::map<std::string, std::string> contract_auditor_votes;
     if (m_store->get_map_property(sys_contract_zec_vote_addr, issue_detail.m_zec_vote_contract_height, xstake::XPORPERTY_CONTRACT_TICKETS_KEY, contract_auditor_votes) != 0) {
         xwarn("[grpc::getIssuanceDetail] contract_address： %s, height: %llu, property_name: %s",
-            sys_contract_zec_vote_addr,
-            issue_detail.m_zec_vote_contract_height,
-            xstake::XPORPERTY_CONTRACT_TICKETS_KEY);
+              sys_contract_zec_vote_addr,
+              issue_detail.m_zec_vote_contract_height,
+              xstake::XPORPERTY_CONTRACT_TICKETS_KEY);
     }
     xJson::Value jvt;
     for (auto const & table_vote : contract_auditor_votes) {
@@ -334,7 +329,7 @@ void get_block_handle::getIssuanceDetail() {
         std::map<std::string, std::string> auditor_votes;
         base::xstream_t stream(xcontext_t::instance(), (uint8_t *)auditor_votes_str.data(), auditor_votes_str.size());
         stream >> auditor_votes;
-        for (auto const & node_vote: auditor_votes) {
+        for (auto const & node_vote : auditor_votes) {
             jvt1[node_vote.first] = (xJson::UInt64)base::xstring_utl::touint64(node_vote.second);
         }
         jvt[contract] = jvt1;
@@ -352,16 +347,16 @@ void get_block_handle::getIssuanceDetail() {
     xJson::Value jr;
     for (auto const & node_reward : issue_detail.m_node_rewards) {
         std::stringstream ss;
-        ss  << "edge_reward: " << static_cast<uint64_t>(node_reward.second.m_edge_reward / xstake::REWARD_PRECISION)
-            << "." << std::setw(6) << std::setfill('0') << static_cast<uint32_t>(node_reward.second.m_edge_reward % xstake::REWARD_PRECISION)
-            << ", archive_reward: " << static_cast<uint64_t>(node_reward.second.m_archive_reward / xstake::REWARD_PRECISION)
-            << "." << std::setw(6) << std::setfill('0') << static_cast<uint32_t>(node_reward.second.m_archive_reward % xstake::REWARD_PRECISION)
-            << ", validator_reward: " << static_cast<uint64_t>(node_reward.second.m_validator_reward / xstake::REWARD_PRECISION)
-            << "." << std::setw(6) << std::setfill('0') << static_cast<uint32_t>(node_reward.second.m_validator_reward % xstake::REWARD_PRECISION)
-            << ", auditor_reward: " << static_cast<uint64_t>(node_reward.second.m_auditor_reward / xstake::REWARD_PRECISION)
-            << "." << std::setw(6) << std::setfill('0') << static_cast<uint32_t>(node_reward.second.m_auditor_reward % xstake::REWARD_PRECISION)
-            << ", voter_reward: " << static_cast<uint64_t>(node_reward.second.m_vote_reward / xstake::REWARD_PRECISION)
-            << "." << std::setw(6) << std::setfill('0') << static_cast<uint32_t>(node_reward.second.m_vote_reward % xstake::REWARD_PRECISION);
+        ss << "edge_reward: " << static_cast<uint64_t>(node_reward.second.m_edge_reward / xstake::REWARD_PRECISION) << "." << std::setw(6) << std::setfill('0')
+           << static_cast<uint32_t>(node_reward.second.m_edge_reward % xstake::REWARD_PRECISION)
+           << ", archive_reward: " << static_cast<uint64_t>(node_reward.second.m_archive_reward / xstake::REWARD_PRECISION) << "." << std::setw(6) << std::setfill('0')
+           << static_cast<uint32_t>(node_reward.second.m_archive_reward % xstake::REWARD_PRECISION)
+           << ", validator_reward: " << static_cast<uint64_t>(node_reward.second.m_validator_reward / xstake::REWARD_PRECISION) << "." << std::setw(6) << std::setfill('0')
+           << static_cast<uint32_t>(node_reward.second.m_validator_reward % xstake::REWARD_PRECISION)
+           << ", auditor_reward: " << static_cast<uint64_t>(node_reward.second.m_auditor_reward / xstake::REWARD_PRECISION) << "." << std::setw(6) << std::setfill('0')
+           << static_cast<uint32_t>(node_reward.second.m_auditor_reward % xstake::REWARD_PRECISION)
+           << ", voter_reward: " << static_cast<uint64_t>(node_reward.second.m_vote_reward / xstake::REWARD_PRECISION) << "." << std::setw(6) << std::setfill('0')
+           << static_cast<uint32_t>(node_reward.second.m_vote_reward % xstake::REWARD_PRECISION);
         jr[node_reward.first] = ss.str();
     }
     jv["node_rewards"] = jr;
@@ -557,6 +552,18 @@ xJson::Value get_block_handle::parse_tx(xtransaction_t * tx_ptr) {
     return ori_tx_info;
 }
 
+void get_block_handle::update_tx_state(xJson::Value & result_json, const xJson::Value & cons) {
+    if (cons["confirm_unit_info"]["exec_status"].asString() == "success") {
+        result_json["tx_state"] = "success";
+    } else if (cons["confirm_unit_info"]["exec_status"].asString() == "failure") {
+        result_json["tx_state"] = "fail";
+    } else if (cons["send_unit_info"]["height"].asUInt64() == 0) {
+        result_json["tx_state"] = "queue";
+    } else {
+        result_json["tx_state"] = "pending";
+    }
+}
+
 xJson::Value get_block_handle::parse_tx(const uint256_t & tx_hash, xtransaction_t * cons_tx_ptr) {
     xtransaction_store_ptr_t tx_store_ptr = m_store->query_transaction_store(tx_hash);
     xJson::Value result_json;
@@ -573,6 +580,8 @@ xJson::Value get_block_handle::parse_tx(const uint256_t & tx_hash, xtransaction_
         cons["confirm_unit_info"] = get_unit_json(tx_ptr->get_source_addr(), tx_store_ptr->m_confirm_unit_height, tx_ptr);
         result_json["tx_consensus_state"] = cons;
 
+        update_tx_state(result_json, cons);
+
         auto ori_tx_info = parse_tx(tx_ptr.get());
         result_json["original_tx_info"] = ori_tx_info;
 
@@ -584,6 +593,7 @@ xJson::Value get_block_handle::parse_tx(const uint256_t & tx_hash, xtransaction_
             auto ori_tx_info = parse_tx(cons_tx_ptr);
             result_json["original_tx_info"] = ori_tx_info;
             result_json["tx_consensus_state"] = cons;
+            result_json["tx_state"] = "queue";
             return result_json;
         }
     }

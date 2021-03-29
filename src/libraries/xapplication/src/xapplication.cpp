@@ -39,10 +39,12 @@ xtop_application::xtop_application(common::xnode_id_t const & node_id, xpublic_k
   : m_node_id{node_id}
   , m_public_key{public_key}
   , m_sign_key(sign_key)
+  , m_io_context_pools{{xio_context_type_t::general, {std::make_shared<xbase_io_context_wrapper_t>()}}}
+  , m_timer_driver{std::make_shared<xbase_timer_driver_t>(m_io_context_pools[xio_context_type_t::general].front())}
   , m_elect_main{top::make_unique<elect::ElectMain>(node_id, std::set<uint32_t>({static_cast<uint32_t>(top::config::to_chainid(XGET_CONFIG(chain_name)))}))}
   , m_router{top::make_unique<router::xrouter_t>()}
   , m_bus{top::make_unique<mbus::xmessage_bus_t>(true, 1000)}
-  , m_logic_timer{make_object_ptr<time::xchain_timer_t>()}
+  , m_logic_timer{make_object_ptr<time::xchain_timer_t>(m_timer_driver)}
   , m_grpc_thread{make_object_ptr<base::xiothread_t>()}
   , m_sync_thread{make_object_ptr<base::xiothread_t>()}
   , m_elect_client{top::make_unique<elect::xelect_client_imp>()} {
@@ -98,7 +100,14 @@ void xtop_application::start() {
         throw std::logic_error{"creating genesis accounts failed"};
     }
 
-    m_logic_timer->init();
+    for (auto & io_context_pool_info : m_io_context_pools) {
+        auto & io_context_pool = top::get<xio_context_pool_t>(io_context_pool_info);
+        for (auto & io_context : io_context_pool) {
+            io_context->start();
+        }
+    }
+    m_timer_driver->start();
+    m_logic_timer->start();
     m_elect_main->start();
 
     // register node callback
@@ -120,14 +129,23 @@ void xtop_application::start() {
         chain_app->start();
     }
 
-    auto latest_timer_block = last_logic_time();
-    m_logic_timer->update_time((data::xblock_t *)latest_timer_block.get(), true);
+    m_logic_timer->update_time(last_logic_time()->get_height(), time::xlogic_timer_update_strategy_t::force);
 }
 
 void xtop_application::stop() {
     for (auto i = m_chain_applications.size(); i > 0; --i) {
         auto const & chain_app = m_chain_applications[i - 1];
         chain_app->stop();
+    }
+
+    m_elect_main->stop();
+    m_logic_timer->stop();
+    m_timer_driver->stop();
+    for (auto & io_context_pool_info : m_io_context_pools) {
+        auto & io_context_pool = top::get<xio_context_pool_t>(io_context_pool_info);
+        for (auto & io_context : io_context_pool) {
+            io_context->stop();
+        }
     }
 }
 
@@ -141,6 +159,10 @@ xpublic_key_t const & xtop_application::public_key() const noexcept {
 
 std::string const & xtop_application::sign_key() const noexcept {
     return m_sign_key;
+}
+
+observer_ptr<xbase_timer_driver_t> xtop_application::timer_driver() const noexcept {
+    return make_observer(m_timer_driver.get());
 }
 
 observer_ptr<network::xnetwork_driver_face_t> xtop_application::network_driver(common::xnetwork_id_t const & network_id) const noexcept {
@@ -361,8 +383,13 @@ bool xtop_application::is_beacon_account() const noexcept {
 NS_END2
 
 #if !defined XCXX14_OR_ABOVE
+
 NS_BEG1(std)
 std::size_t hash<top::application::xthread_pool_type_t>::operator()(top::application::xthread_pool_type_t const type) const noexcept {
+    return static_cast<std::size_t>(type);
+};
+
+std::size_t hash<top::application::xio_context_type_t>::operator()(top::application::xio_context_type_t const type) const noexcept {
     return static_cast<std::size_t>(type);
 };
 

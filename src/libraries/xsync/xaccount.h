@@ -76,7 +76,7 @@ public:
 protected:
     enum_result_code handle_block(const base::xauto_ptr<base::xvblock_t> &current_block, xblock_ptr_t &block, bool is_elect_chain);
 
-    void handle_next(const data::xblock_ptr_t &current_block);
+    void handle_next(const data::xblock_ptr_t &current_block, bool head_forked = false);
 
     void clear();
 

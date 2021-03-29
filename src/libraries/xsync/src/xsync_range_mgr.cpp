@@ -158,7 +158,7 @@ int xsync_range_mgr_t::update_progress(const data::xblock_ptr_t &current_block, 
 }
 
 // TODO consider create time and synced height
-bool xsync_range_mgr_t::get_next_behind(const data::xblock_ptr_t &current_block, uint32_t count_limit, uint64_t &start_height, uint32_t &count, 
+bool xsync_range_mgr_t::get_next_behind(const data::xblock_ptr_t &current_block, bool forked, uint32_t count_limit, uint64_t &start_height, uint32_t &count, 
         vnetwork::xvnode_address_t &self_addr, vnetwork::xvnode_address_t &target_addr) {
 
     if (m_behind_height == 0)
@@ -179,7 +179,15 @@ bool xsync_range_mgr_t::get_next_behind(const data::xblock_ptr_t &current_block,
             return false;
     }
 
-    start_height = current_block->get_height() + 1;
+    if (forked) {
+        if (current_block->get_height() > 1)
+            start_height = current_block->get_height() - 1;
+        else
+            start_height = current_block->get_height();
+    } else {
+        start_height = current_block->get_height() + 1;
+    }
+
     count = m_behind_height - start_height + 1;
     if (count > count_limit)
         count = count_limit;

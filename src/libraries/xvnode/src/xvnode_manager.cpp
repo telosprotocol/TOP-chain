@@ -167,7 +167,7 @@ std::vector<common::xip2_t> xtop_vnode_manager::handle_election_data(std::unorde
     return outdated_xips;
 }
 
-void xtop_vnode_manager::on_timer(time::xchain_time_st const & timer_data) {
+void xtop_vnode_manager::on_timer(common::xlogic_time_t time) {
     if (!running()) {
         xwarn("[vnode mgr] is not running");
         return;
@@ -185,14 +185,14 @@ void xtop_vnode_manager::on_timer(time::xchain_time_st const & timer_data) {
             auto & vnode = top::get<std::shared_ptr<xvnode_face_t>>(*it);
             assert(vnode != nullptr);
 
-            switch (vnode->rotation_status(timer_data.xtime_round)) {
+            switch (vnode->rotation_status(time)) {
             case common::xrotation_status_t::outdated: {
                 vnode->stop();
                 xwarn("[vnode mgr] vnode (%p) at address %s outdates at logic time %" PRIu64 " current logic time %" PRIu64,
                       vnode.get(),
                       vnode->address().to_string().c_str(),
                       vnode->outdate_time(),
-                      timer_data.xtime_round);
+                      time);
 
                 it = m_all_nodes.erase(it);
                 break;
@@ -209,7 +209,7 @@ void xtop_vnode_manager::on_timer(time::xchain_time_st const & timer_data) {
             auto & vnode = top::get<std::shared_ptr<xvnode_face_t>>(*it);
             assert(vnode != nullptr);
 
-            switch (vnode->rotation_status(timer_data.xtime_round)) {
+            switch (vnode->rotation_status(time)) {
             case common::xrotation_status_t::outdated: {
                 assert(false);
                 break;
@@ -223,7 +223,7 @@ void xtop_vnode_manager::on_timer(time::xchain_time_st const & timer_data) {
                           vnode.get(),
                           vnode->address().to_string().c_str(),
                           vnode->fade_time(),
-                          timer_data.xtime_round);
+                          time);
                 }
 
                 break;
@@ -239,7 +239,7 @@ void xtop_vnode_manager::on_timer(time::xchain_time_st const & timer_data) {
             auto & vnode = top::get<std::shared_ptr<xvnode_face_t>>(*it);
             assert(vnode != nullptr);
 
-            switch (vnode->rotation_status(timer_data.xtime_round)) {
+            switch (vnode->rotation_status(time)) {
             case common::xrotation_status_t::outdated: {
                 assert(false);
                 break;
@@ -252,7 +252,7 @@ void xtop_vnode_manager::on_timer(time::xchain_time_st const & timer_data) {
                           vnode.get(),
                           vnode->address().to_string().c_str(),
                           vnode->start_time(),
-                          timer_data.xtime_round);
+                          time);
                 }
                 break;
             }

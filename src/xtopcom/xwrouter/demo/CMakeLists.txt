@@ -4,7 +4,7 @@ add_executable(xwrouter_demo ${xwrouter_demo_dir})
 add_definitions(
 )
 
-#add_dependencies(xwrouter_demo xvnetwork xxbase xpbase)
+#add_dependencies(xwrouter_demo xvnetwork xgossip xkad xxbase xpbase)
 
 IF (CMAKE_SYSTEM_NAME MATCHES "Linux")
     target_link_libraries(xwrouter_demo

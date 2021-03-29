@@ -7,6 +7,8 @@
 #include "xbasic/xmemory.hpp"
 #include "xbasic/xthreading/xbackend_thread.hpp"
 
+#include <cassert>
+
 NS_BEG1(top)
 
 void
@@ -62,4 +64,31 @@ xtop_asio_io_context_wrapper::thread_id() const noexcept {
 }
 #endif
 
+xtop_base_io_context_wrapper::xtop_base_io_context_wrapper() : m_iothread_ptr{make_object_ptr<base::xiothread_t>()} {
+}
+
+xtop_base_io_context_wrapper::xtop_base_io_context_wrapper(xobject_ptr_t<base::xiothread_t> io_thread) : m_iothread_ptr{std::move(io_thread)} {
+}
+
+void xtop_base_io_context_wrapper::start() {
+}
+
+void xtop_base_io_context_wrapper::stop() {
+}
+
+bool xtop_base_io_context_wrapper::running() const noexcept {
+    return m_iothread_ptr->is_running();
+}
+
+void xtop_base_io_context_wrapper::running(bool const) noexcept {
+    assert(false);
+}
+
+base::xcontext_t & xtop_base_io_context_wrapper::context() const noexcept {
+    return *m_iothread_ptr->get_context();
+}
+
+std::int32_t xtop_base_io_context_wrapper::thread_id() const noexcept {
+    return m_iothread_ptr->get_thread_id();
+}
 NS_END1

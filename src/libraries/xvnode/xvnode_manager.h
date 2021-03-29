@@ -28,8 +28,8 @@
 
 NS_BEG2(top, vnode)
 
-class xtop_vnode_manager XFINAL : public xvnode_manager_face_t
-                                , public std::enable_shared_from_this<xtop_vnode_manager> {
+class xtop_vnode_manager : public xvnode_manager_face_t
+                         , public std::enable_shared_from_this<xtop_vnode_manager> {
 private:
     using xbase_t = xvnode_manager_face_t;
 
@@ -80,7 +80,7 @@ public:
     std::vector<common::xip2_t> handle_election_data(std::unordered_map<common::xsharding_address_t, election::cache::xgroup_update_result_t> const & election_data) override;
 
 private:
-    void on_timer(time::xchain_time_st const & timer_data);
+    void on_timer(common::xlogic_time_t time);
 };
 using xvnode_manager_t = xtop_vnode_manager;
 

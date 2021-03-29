@@ -124,9 +124,3 @@
 
 #define XDECLARE_DEFAULTED_DESTRUCTOR(CLASS_NAME)   \
     ~CLASS_NAME() = default
-
-#if defined(XENABLE_TESTS)
-#   define XFINAL
-#else
-#   define XFINAL   final
-#endif

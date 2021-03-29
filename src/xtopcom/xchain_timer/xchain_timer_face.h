@@ -4,70 +4,39 @@
 
 #pragma once
 
+#include "xbase/xthread.h"
+#include "xbasic/xrunnable.h"
+#include "xcommon/xlogic_time.h"
+
 #include <functional>
 #include <string>
 
-#include "xbase/xthread.h"
-#include "xcommon/xlogic_time.h"
-#include "xdata/xblock.h"
-
 NS_BEG2(top, time)
 
-struct xchain_time_st {
-    constexpr xchain_time_st()                         = default;
+using xchain_time_watcher = std::function<void(common::xlogic_time_t)>;
 
-    xchain_time_st (data::xblock_t* _timer_block, int64_t recv_ms)
-    : timer_block{_timer_block}, local_update_time{recv_ms} {
-        if(timer_block != nullptr) {
-            timer_block->add_ref();
-            xtime_round = timer_block->get_height();
-        }
-    }
-
-    virtual ~xchain_time_st() {
-        if(timer_block != nullptr) {
-            timer_block->release_ref();
-        }
-    }
-
-    xchain_time_st & operator=(xchain_time_st const & time) {
-        local_update_time = time.local_update_time;
-        xtime_round = time.xtime_round;
-        if(timer_block != nullptr) {
-            timer_block->release_ref();
-        }
-        timer_block = time.timer_block;
-        if(timer_block != nullptr) {
-            timer_block->add_ref();
-        }
-        return *this;
-    }
-
-    data::xblock_t*       timer_block{};
-    common::xlogic_time_t xtime_round{ 0 };         // chain timestamp periodically updating round number (or version number)
-    int64_t               local_update_time{ 0 };    // local receive time msg time
-};
-
-using xchain_time_watcher = std::function<void(const xchain_time_st &)>;
+enum class xenum_logic_timer_update_strategy : uint8_t { discard_old_value, force };
+using xlogic_timer_update_strategy_t = xenum_logic_timer_update_strategy;
 
 /**
  * @brief Logic chain timer
  *
  */
-class xchain_time_face_t : public base::xobject_t {
- protected:
-    virtual ~xchain_time_face_t() {}
- public:
+class xchain_time_face_t : public base::xobject_t, public xbasic_runnable_t<xchain_time_face_t> {
+protected:
+    ~xchain_time_face_t() override = default;
+public:
 
-    /**
-     * @brief Update logic chain timer. The last logic chain clock is from the input timer_block.
-     *
-     * @param timer_block Timer block, contains the last chain time.
-     * @param force       Force update or not if the input value is different from the local value.
-     * @return true       Update successful.
-     * @return false      Update fails.
-     */
-    virtual bool update_time(data::xblock_t* timer_block, bool force = false) = 0;
+    xchain_time_face_t() = default;
+    xchain_time_face_t(xchain_time_face_t const &) = delete;
+    xchain_time_face_t & operator=(xchain_time_face_t const &) = delete;
+    xchain_time_face_t(xchain_time_face_t &&) = default;
+    xchain_time_face_t & operator=(xchain_time_face_t &&) = default;
+
+    /// @brief Update logic chain timer.
+    /// @param time Value used to update.
+    /// @param update_strategry Update strategry.
+    virtual void update_time(common::xlogic_time_t time, xlogic_timer_update_strategy_t update_strategry) = 0;
 
     /**
      * @brief Watch the logic chain timer pluse by specifing the interval. If time pluse matches the interval, callback cb will be invoked.
