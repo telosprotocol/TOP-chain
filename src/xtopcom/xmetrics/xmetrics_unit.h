@@ -11,7 +11,6 @@
 #include <memory>
 #include <set>
 #include <chrono>
-#include <string>
 NS_BEG2(top, metrics)
 
 using time_point = std::chrono::system_clock::time_point;

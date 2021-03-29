@@ -57,6 +57,7 @@ fi
 
 ubuntu_os="Ubuntu"
 centos_os="CentOS"
+centos_os_version=`cat /etc/os-release  |grep CENTOS_MANTISBT_PROJECT_VERSION |awk -F '"' '{print $2}' `
 
 osname_linux="Linux"
 osname_darwin="Darwin"
@@ -82,15 +83,23 @@ then
 elif [ $osinfo = ${centos_os} ]
 then
     echo "Centos"
-    ntpd_service="ntpd.service"
-    if [ ! -f "$ntpd_path" ]; then
-        echo "prepare topio runtime environment, please wait for seconds..."
-        echo_and_run echo "yum update -y > /dev/null 2>&1" | bash
-        echo_and_run echo "yum install -y ntp > /dev/null 2>&1" | bash
-        if [ $? != 0 ]; then
-            echo "install ntp failed"
-            exit -1
+    if [ $centos_os_version = 7 ]; then
+        ntpd_service="ntpd.service"
+        if [ ! -f "$ntpd_path" ]; then
+            echo "prepare topio runtime environment, please wait for seconds..."
+            echo_and_run echo "yum update -y > /dev/null 2>&1" | bash
+            echo_and_run echo "yum install -y ntp > /dev/null 2>&1" | bash
+            if [ $? != 0 ]; then
+                echo "install ntp failed"
+                exit -1
+            fi
         fi
+    elif [ $centos_os_version = 8 ]; then
+        ntpd_service="chronyd.service"
+        echo_and_run echo "yum -y install chrony > /dev/null 2>&1" | bash
+    else
+        echo "Not Support Centos-Version:$centos_os_version"
+        exit -1
     fi
 else
     echo "unknow osinfo:$osinfo"

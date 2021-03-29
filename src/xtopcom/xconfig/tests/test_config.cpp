@@ -13,6 +13,8 @@
 #include "xconfig/xconfig_register.h"
 #include "xmbus/xevent_store.h"
 #include "xstore/xstore_error.h"
+#include "xbasic/xasio_io_context_wrapper.h"
+#include "xbasic/xtimer_driver.h"
 
 
 class xconfig_register_listener_face_mock_t
@@ -155,7 +157,9 @@ TEST(xconfig_register, offchain_load) {
 
 TEST(xconfig_register, initial_onchain_load) {
     auto store = store::xstore_factory::create_store_with_memdb();
-    auto chain_timer = make_object_ptr<time::xchain_timer_t>();
+    std::shared_ptr<top::xbase_io_context_wrapper_t> io_object = std::make_shared<top::xbase_io_context_wrapper_t>();
+    std::shared_ptr<top::xbase_timer_driver_t> timer_driver = std::make_shared<top::xbase_timer_driver_t>(io_object);
+    auto chain_timer = make_object_ptr<time::xchain_timer_t>(timer_driver);
     auto mbus = new mbus::xmessage_bus_t();
 
     auto& config_center = top::config::xconfig_register_t::get_instance();
@@ -177,7 +181,9 @@ TEST(xconfig_register, load_on_chain) {
     auto tcc_store = store::xstore_factory::create_store_with_memdb();
 
     auto mbus = new mbus::xmessage_bus_t();
-    auto chain_timer = make_object_ptr<time::xchain_timer_t>();
+    std::shared_ptr<top::xbase_io_context_wrapper_t> io_object = std::make_shared<top::xbase_io_context_wrapper_t>();
+    std::shared_ptr<top::xbase_timer_driver_t> timer_driver = std::make_shared<top::xbase_timer_driver_t>(io_object);
+    auto chain_timer = make_object_ptr<time::xchain_timer_t>(timer_driver);
     auto loader = std::make_shared<loader::xconfig_onchain_loader_t>(make_observer(tcc_store), make_observer(mbus), make_observer(chain_timer));
     config_center.add_loader(loader);
     config_center.load();

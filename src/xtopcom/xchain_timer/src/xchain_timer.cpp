@@ -8,22 +8,30 @@
 #include "xbase/xobject.h"
 #include "xbase/xthread.h"
 #include "xbase/xutl.h"
+#include "xbase/xvblock.h"
+
+#include "xbasic/xtimer_driver.h"
 
 #include <cassert>
 #include <cinttypes>
+
 NS_BEG2(top, time)
 
-void xchain_timer_t::process(data::xblock_t* timer_block, int64_t recv_ms) {
-    time::xchain_time_st current_time(timer_block, recv_ms);
+xchain_timer_t::xchain_timer_t(std::shared_ptr<xbase_timer_driver_t> const & timer_driver) noexcept : m_timer_driver{make_observer(timer_driver.get())} {
+    assert(m_timer_driver != nullptr);
+}
+
+void xchain_timer_t::process(common::xlogic_time_t time) {
+    // time::xchain_time_st current_time(timer_block, recv_ms);
     {
         xdbg("m_one_timer_mutex notify_all begin");
         std::lock_guard<std::mutex> lock(m_one_timer_mutex);
         for (auto iter = m_watch_one_map.begin(); iter != m_watch_one_map.end();) {
             xdbg("m_one_timer_mutex notify_all, %d", m_watch_one_map.size());
-            time_watcher_item item = iter->second;
-            if (current_time.xtime_round >= item.interval) {  // use >= for exception
+            auto const & item = iter->second;
+            if (time >= item.interval) {  // use >= for exception
                 auto start = base::xtime_utl::gmttime_ms();
-                item.watcher(current_time);
+                item.watcher(time);
                 auto end = base::xtime_utl::gmttime_ms();
                 if (end - start > 1000) {
                     xwarn("[xchain_timer] watcher one: %ld cost long time:%d", iter->first, end - start);
@@ -57,11 +65,11 @@ void xchain_timer_t::process(data::xblock_t* timer_block, int64_t recv_ms) {
         }
 
         for (auto & iter : callbacks) {
-            time_watcher_item item = iter.second;
-            xinfo("notify_all:%s,%lld", iter.first.c_str(), current_time.xtime_round);
-            if (current_time.xtime_round % item.interval == 0) {
+            time_watcher_item const & item = iter.second;
+            xinfo("notify_all:%s,%lld", iter.first.c_str(), time);
+            if (time % item.interval == 0) {
                 auto start = base::xtime_utl::gmttime_ms();
-                item.watcher(current_time);
+                item.watcher(time);
                 auto end = base::xtime_utl::gmttime_ms();
                 if (end - start > 1000) {
                     xwarn("[xchain_timer] watcher: %s cost long time:%d", iter.first.c_str(), end - start);
@@ -71,26 +79,86 @@ void xchain_timer_t::process(data::xblock_t* timer_block, int64_t recv_ms) {
     }
 }
 
-bool xchain_timer_t::update_time(data::xblock_t* timer_block, bool force) {
-    xinfo("new xchain_timer_t m_mutex update_time,id(%ld, %ld, %p)", timer_block->get_height(), m_latest.load(), this);
-    if (timer_block->get_height() > m_latest || force) {
-        xinfo("[xchain_timer_t::update_time] notify");
-        m_latest = timer_block->get_height(); // update first
-        auto func = [](base::xcall_t &call, const int32_t thread_id, const uint64_t timenow_ms) -> bool {
-            auto _this = (xchain_timer_t*) call.get_param1().get_object();
-            auto block = (data::xblock_t*) call.get_param2().get_object();
-            auto recv_ms = call.get_param3().get_int64();
-            _this->process(block, recv_ms);
-            return true;
-        };
-
-        base::xcall_t c((base::xcallback_t) func, this, timer_block, base::xtime_utl::gettimeofday_ms());
-        m_timer_thread->send_call(c);
-    } else {
-        xwarn("[new xchain_timer_t] update_time failed,id(%" PRIu64 ")\n", timer_block->get_height());
+void xchain_timer_t::update_time(common::xlogic_time_t time, xlogic_timer_update_strategy_t update_strategy) {
+    if (update_strategy != xlogic_timer_update_strategy_t::discard_old_value && update_strategy != xlogic_timer_update_strategy_t::force) {
+        assert(false);
+        return;
     }
-    xinfo("new xchain_timer_t m_mutex update_time end");
-    return true;
+
+    auto const current_time = m_curr_time.load(std::memory_order_relaxed);
+
+    std::chrono::steady_clock::time_point curr_time_update_time_point;
+    {
+        std::lock_guard<std::mutex> lock{m_update_mutex};
+        curr_time_update_time_point = m_curr_time_update_time_point;
+    }
+    xinfo("logic_timer: update timer: input: %" PRIu64 "; current: %" PRIu64 "; last update time %" PRIi64 " current steady time %" PRIi64 " timer object: %p",
+          time,
+          current_time,
+          static_cast<int64_t>(curr_time_update_time_point.time_since_epoch().count()),
+          static_cast<int64_t>(std::chrono::steady_clock::now().time_since_epoch().count()),
+          static_cast<void *>(this));
+
+    if (update_strategy == xlogic_timer_update_strategy_t::discard_old_value && current_time >= time) {
+        return;
+    }
+
+    xinfo("logic_timer: updating timer: input: %" PRIu64 "; current: %" PRIu64 "; last update time %" PRIi64 " current steady time %" PRIi64 " timer object: %p",
+          time,
+          current_time,
+          static_cast<int64_t>(curr_time_update_time_point.time_since_epoch().count()),
+          static_cast<int64_t>(std::chrono::steady_clock::now().time_since_epoch().count()),
+          static_cast<void *>(this));
+    m_curr_time.store(time, std::memory_order_relaxed);
+    {
+        std::lock_guard<std::mutex> lock{m_update_mutex};
+        m_curr_time_update_time_point = std::chrono::steady_clock::now();
+    }
+
+    auto func = [](base::xcall_t & call, const int32_t thread_id, const uint64_t timenow_ms) -> bool {
+        auto _this = (xchain_timer_t *)call.get_param1().get_object();
+        auto time = call.get_param2().get_uint64();
+        auto recv_ms = call.get_param3().get_int64();
+        _this->process(time);
+        return true;
+    };
+
+    base::xcall_t c((base::xcallback_t)func, this, time, base::xtime_utl::gettimeofday_ms());
+    m_timer_thread->send_call(c);
+}
+
+void xchain_timer_t::do_check_logic_time() {
+    m_timer_driver->schedule(std::chrono::minutes{1}, [this](std::chrono::milliseconds) {
+        auto const curr_time = std::chrono::steady_clock::now();
+        std::chrono::steady_clock::time_point last_update_time_point{};
+        {
+            std::lock_guard<std::mutex> lock{m_update_mutex};
+            last_update_time_point = m_curr_time_update_time_point;
+        }
+
+        auto const diff = std::chrono::duration_cast<std::chrono::minutes>(curr_time - last_update_time_point);
+        if (diff >= std::chrono::minutes{2}) {
+            common::xlogic_time_t time = (base::xtime_utl::gmttime() - base::TOP_BEGIN_GMTIME) / 10;
+            xinfo("logic_timer: locally update timer: input: %" PRIu64 "; last update time %" PRIi64 " current steady time %" PRIi64 " timer object: %p",
+                  time,
+                  static_cast<int64_t>(last_update_time_point.time_since_epoch().count()),
+                  static_cast<int64_t>(std::chrono::steady_clock::now().time_since_epoch().count()),
+                  static_cast<void *>(this));
+            update_time(time, xlogic_timer_update_strategy_t::discard_old_value);
+        }
+
+        do_check_logic_time();
+    });
+}
+
+void xchain_timer_t::start() {
+    assert(m_timer_driver != nullptr);
+    init();
+    do_check_logic_time();
+}
+
+void xchain_timer_t::stop() {
+    m_timer_thread->close();
 }
 
 void xchain_timer_t::init() {
@@ -98,7 +166,7 @@ void xchain_timer_t::init() {
 }
 
 uint64_t xchain_timer_t::logic_time() const noexcept {
-    return m_latest;
+    return m_curr_time;
 }
 
 bool xchain_timer_t::watch(const std::string & key, std::uint64_t interval, xchain_time_watcher cb) {

@@ -130,7 +130,7 @@ void xconfig_onchain_loader_t::update(mbus::xevent_ptr_t e) {
     }
 }
 
-void xconfig_onchain_loader_t::chain_timer(const time::xchain_time_st & time) {
+void xconfig_onchain_loader_t::chain_timer(common::xlogic_time_t time) {
     xdbg("[xconfig_onchain_loader_t::chain_timer] %" PRIu64, m_logic_timer->logic_time());
     std::lock_guard<std::mutex> lock(m_action_param_mutex);
 

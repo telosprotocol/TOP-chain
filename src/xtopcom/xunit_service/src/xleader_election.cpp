@@ -143,7 +143,7 @@ xrandom_leader_election::xrandom_leader_election(const xobject_ptr_t<base::xvblo
 xvip2_t get_leader(const xelection_cache_face::elect_set & nodes, const common::xversion_t& version, uint64_t factor) {
     assert(version.has_value());
     if (nodes.empty()) {
-        xerror("[xunitservice] leader_election candidates empty");
+        xwarn("[xunitservice] leader_election candidates empty");
         return xvip2_t{(uint64_t)-1, (uint64_t)-1};
     }
     std::vector<common::xfts_merkle_tree_t<xvip2_t>::value_type> candidates;
@@ -185,7 +185,7 @@ const xvip2_t xrandom_leader_election::get_leader_xip(uint64_t viewId, const std
     if (m_elector != nullptr) {
         auto len = m_elector->get_election(local, &elect_set);
         if (len <= 0) {
-            xerror("[xunitservice] recv invalid candidiate %s at %s", xcons_utl::xip_to_hex(candidate).c_str(), xcons_utl::xip_to_hex(local).c_str());
+            xwarn("[xunitservice] recv invalid candidiate %s at %s", xcons_utl::xip_to_hex(candidate).c_str(), xcons_utl::xip_to_hex(local).c_str());
             return {};
         }
     }
@@ -328,7 +328,6 @@ const xvip2_t xrotate_leader_election::get_leader_xip(uint64_t viewId, const std
 
     if (rotate_mode == enum_rotate_mode_no_rotate) {
         m_elector->get_election(local, &elect_set);
-        xassert(elect_set.size() > 0);
     } else {
         bool rotate = is_rotate_xip(local);
         if (rotate) {
@@ -352,11 +351,9 @@ const xvip2_t xrotate_leader_election::get_leader_xip(uint64_t viewId, const std
                 if (xcons_utl::is_auditor(local)) {
                     // current is auditor load self elect data as candidates
                     m_elector->get_election(local, &elect_set);
-                    xassert(elect_set.size() > 0);
                 } else {
                     // validator load parent elect data as candidates
                     m_elector->get_parent_election(local, &elect_set);
-                    xassert(elect_set.size() > 0);
                 }
             } else {
                 // perv block is auditor as leader
@@ -364,21 +361,17 @@ const xvip2_t xrotate_leader_election::get_leader_xip(uint64_t viewId, const std
                     // current is auditor get children as candidates
                     auto group_id = xcons_utl::get_groupid_by_account(local, account);
                     m_elector->get_group_election(local, group_id, &elect_set);
-                    xassert(elect_set.size() > 0);
                 } else {
                     // validator will load self elect data as candidates
                     m_elector->get_election(local, &elect_set);
-                    xassert(elect_set.size() > 0);
                 }
             }
         } else {
             // get validator as candidates
             m_elector->get_election(local, &elect_set, true);
-            xassert(elect_set.size() > 0);
         }
     }
 
-    xassert(elect_set.size() > 0);
     xvip2_t leader_xip = get_leader(elect_set, version, random);
     xdbg_info("xrotate_leader_election::get_leader_xip account=%s,viewid=%ld,random=%ld,leader_xip=%s,local=%s,candidate=%s,height=%ld,prev_validator=%d,electsize:%d",
         account.c_str(), viewId, random, xcons_utl::xip_to_hex(leader_xip).c_str(),

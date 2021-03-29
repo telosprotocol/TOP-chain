@@ -109,7 +109,7 @@ private:
     uint32_t get_recv_ack_txs(std::vector<xcons_transaction_ptr_t> & txs);
     uint32_t get_recv_txs(std::vector<xcons_transaction_ptr_t> & cons_txs);
     uint32_t get_send_txs(uint64_t account_tx_nonce, const uint256_t & account_tx_hash, std::vector<xcons_transaction_ptr_t> & txs);
-    int32_t  check_and_erase_old_nonce_duplicate_tx(const xtransaction_t * tx);
+    int32_t  check_and_erase_old_nonce_duplicate_tx(const xcons_transaction_ptr_t & tx);
     int32_t  check_send_queue_full_and_proc(const xtransaction_t * tx);
     bool     update_latest_send_trans_number_hash(uint64_t account_tx_nonce, const uint256_t & account_tx_hash);
     void     pop_tx_event(const xcons_transaction_ptr_t & cons_tx, bool is_send, int32_t result, bool clear_map);
