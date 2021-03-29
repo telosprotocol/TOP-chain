@@ -3,8 +3,37 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "xmetrics.h"
-
+#include "xmetrics_unit.h"
+#include <memory>
 NS_BEG2(top, metrics)
+
+// simple metrics counters
+e_metrics::simple_counter e_metrics::s_counters[e_simple_total];
+
+#ifndef DECL_MTRICS
+#define DECL_MTRICS(tag)  std::make_shared<metrics_counter_unit>(#tag, 0)
+#endif
+
+// simple metrics description array
+metrics_variant_ptr e_metrics::s_metrics[e_simple_total] = {
+    DECL_MTRICS(xdata_table_counter),  //xdata_table_counter
+    DECL_MTRICS(xdata_lightunit_counter),  //xdata_lightunit_counter
+    DECL_MTRICS(xdata_fullunit_counter),  //xdata_fullunit_counter
+    DECL_MTRICS(xdata_table_ref_counter),  //xdata_table_ref_counter
+    DECL_MTRICS(xdata_lightunit_ref_counter),  //xdata_lightunit_ref_counter
+    DECL_MTRICS(xdata_fullunit_ref_counter),  //xdata_fullunit_ref_counter
+    DECL_MTRICS(blockstore_cache_block_total),  //blockstore_cache_block_total
+    DECL_MTRICS(xdata_empty_block_counter),  //xempty_block_counter
+    DECL_MTRICS(xdata_root_block_counter),  //xroot_block_counter
+    DECL_MTRICS(xdata_empty_block_ref_counter),  //xempty_block_ref_counter
+    DECL_MTRICS(xdata_root_block_ref_counter),  //xroot_block_ref_counter
+    DECL_MTRICS(xdata_transaction_counter),  //xdata_transaction_counter
+    DECL_MTRICS(xdata_transaction_ref_counter),  //xdata_transaction_ref_counter
+    DECL_MTRICS(xdata_xcons_transaction_t),  //xdata_xcons_transaction_t
+    DECL_MTRICS(xdata_receipt_t),  //xdata_receipt_t
+    DECL_MTRICS(xtxpool_xaccountobj_t), //xtxpool_xaccountobj_t
+    DECL_MTRICS(blockstore_xblockacct_t), //xtxpool_xaccountobj_t
+};
 
 void e_metrics::start() {
     if (running()) {
@@ -36,6 +65,9 @@ void e_metrics::process_message_queue() {
     auto message_v = m_message_queue.wait_and_pop_all();
     if (message_v.empty())
         return;
+    if (message_v.size() > 50000) {
+        xkinfo("[xmetrics]alarm metrics_queue_size %zu", message_v.size());
+    }
     for (auto & msg_event : message_v) {
         if (msg_event.metrics_name.empty())
             continue;
@@ -100,7 +132,19 @@ void e_metrics::update_dump() {
             break;
         }
     }
+    // simpe metrics dump
+    gauge_dump();
     XMETRICS_CONFIG_GET("dump_interval", m_dump_interval);
+}
+
+void e_metrics::gauge_dump() {
+    for(auto index = (int32_t)xdata_table_counter; index < (int32_t)e_simple_total; index++) {
+        auto metrics_ptr = s_metrics[index];
+        auto ptr = metrics_ptr.GetRef<metrics_counter_unit_ptr>();
+        ptr->inner_val = s_counters[index].value;
+        ptr->count = s_counters[index].call_count;
+        m_counter_handler.dump_metrics_info(ptr);
+    }
 }
 
 /*
@@ -125,5 +169,9 @@ void e_metrics::counter_set(std::string metrics_name, int64_t value) {
 }
 void e_metrics::flow_count(std::string metrics_name, int64_t value, time_point timestamp) {
     m_message_queue.push(event_message(metrics::e_metrics_major_id::flow, metrics::e_metrics_minor_id::flow_count, metrics_name, value, metrics_appendant_info{timestamp}));
+}
+void e_metrics::gauge(E_SIMPLE_METRICS_TAG tag, int64_t value) {
+    s_counters[tag].value += value;
+    s_counters[tag].call_count++;
 }
 NS_END2

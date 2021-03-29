@@ -18,6 +18,27 @@
 #include <thread>
 NS_BEG2(top, metrics)
 
+enum E_SIMPLE_METRICS_TAG {
+    xdata_table_counter,
+    xdata_lightunit_counter,
+    xdata_fullunit_counter,
+    xdata_table_ref_counter,
+    xdata_lightunit_ref_counter,
+    xdata_fullunit_ref_counter,
+    blockstore_cache_block_total,
+    xdata_empty_block_counter,
+    xdata_root_block_counter,
+    xdata_empty_block_ref_counter,
+    xdata_root_block_ref_counter,
+    xdata_transaction_counter,
+    xdata_transaction_ref_counter,
+    xdata_xcons_transaction_t,
+    xdata_receipt_t,
+    xtxpool_xaccountobj_t,
+    blockstore_xblockacct_t,
+    e_simple_total = blockstore_xblockacct_t + 1,
+};
+
 class e_metrics : public top::xbasic_runnable_t<e_metrics> {
 public:
     XDECLARE_DELETED_COPY_AND_MOVE_SEMANTICS(e_metrics);
@@ -36,7 +57,7 @@ private:
     void run_process();
     void process_message_queue();
     void update_dump();
-
+    void gauge_dump();
 public:
     void timer_start(std::string metrics_name, time_point value);
     void timer_end(std::string metrics_name, time_point value, metrics_appendant_info info = 0, microseconds timed_out = DEFAULT_TIMED_OUT);
@@ -44,7 +65,7 @@ public:
     void counter_decrease(std::string metrics_name, int64_t value);
     void counter_set(std::string metrics_name, int64_t value);
     void flow_count(std::string metrics_name, int64_t value, time_point timestamp);
-
+    void gauge(E_SIMPLE_METRICS_TAG tag, int64_t value);
 private:
     std::thread m_process_thread;
     std::size_t m_dump_interval;
@@ -52,9 +73,16 @@ private:
     handler::counter_handler_t m_counter_handler;
     handler::timer_handler_t m_timer_handler;
     handler::flow_handler_t m_flow_handler;
-    constexpr static std::size_t message_queue_size{100000};
+    constexpr static std::size_t message_queue_size{500000};
     top::threading::xthreadsafe_queue<event_message, std::vector<event_message>> m_message_queue{message_queue_size};
     std::map<std::string, metrics_variant_ptr> m_metrics_hub;  // {metrics_name, metrics_vaiant_ptr}
+protected:
+    struct simple_counter{
+        std::atomic_long value;
+        std::atomic_long call_count;
+    };
+    static simple_counter s_counters[e_simple_total]; // simple counter counter
+    static metrics_variant_ptr s_metrics[e_simple_total]; // simple metrics dump info
 };
 
 class metrics_time_auto {
@@ -80,42 +108,48 @@ public:
         ins.start();                                                                                                                                                               \
     }
 
-#define SSTR(x) static_cast<std::ostringstream &>((std::ostringstream()  << x)).str()
-#define ADD_THREAD_HASH(metrics_name) SSTR(metrics_name) + "&0x" + std::to_string(std::hash<std::thread::id>{}(std::this_thread::get_id()))
+#define SSTR(x) static_cast<const std::ostringstream &>((std::ostringstream()  << x)).str()
+#define ADD_THREAD_HASH(metrics_name) std::string(metrics_name) + "&0x" + std::to_string(std::hash<std::thread::id>{}(std::this_thread::get_id()))
 #define STR_CONCAT_IMPL(a, b) a##b
 #define STR_CONCAT(str_a, str_b) STR_CONCAT_IMPL(str_a, str_b)
 
-#define MICROSECOND(timeout)                                                                                                                                                       \
+#define MICROSECOND(timeout) \
     std::chrono::microseconds { timeout }
 
-#define XMETRICS_TIME_RECORD(metrics_name)                                                                                                                                         \
-    top::metrics::metrics_time_auto STR_CONCAT(metrics_time_auto, __LINE__) { metrics_name }
-#define XMETRICS_TIME_RECORD_KEY(metrics_name, key)                                                                                                                                \
+#define XMETRICS_TIME_RECORD(metrics_name) \                                                                                                                                        
+     top::metrics::metrics_time_auto STR_CONCAT(metrics_time_auto, __LINE__) { metrics_name }
+#define XMETRICS_TIME_RECORD_KEY(metrics_name, key) \                                                                                                                              
     top::metrics::metrics_time_auto STR_CONCAT(metrics_time_auto, __LINE__) { metrics_name, key }
-#define XMETRICS_TIME_RECORD_KEY_WITH_TIMEOUT(metrics_name, key, timeout)                                                                                                             \
+#define XMETRICS_TIME_RECORD_KEY_WITH_TIMEOUT(metrics_name, key, timeout)  \                                                                                                           
     top::metrics::metrics_time_auto STR_CONCAT(metrics_time_auto, __LINE__) { metrics_name, key, MICROSECOND(timeout) }
 
-#define XMETRICS_TIMER_START(metrics_name) top::metrics::e_metrics::get_instance().timer_start(ADD_THREAD_HASH(metrics_name), std::chrono::system_clock::now());
+#define XMETRICS_TIMER_START(metrics_name) \
+    top::metrics::e_metrics::get_instance().timer_start(ADD_THREAD_HASH(metrics_name), std::chrono::system_clock::now());
 
-#define XMETRICS_TIMER_STOP(metrics_name) top::metrics::e_metrics::get_instance().timer_end(ADD_THREAD_HASH(metrics_name), std::chrono::system_clock::now());
+#define XMETRICS_TIMER_STOP(metrics_name) \
+    top::metrics::e_metrics::get_instance().timer_end(ADD_THREAD_HASH(metrics_name), std::chrono::system_clock::now());
 
-#define XMETRICS_TIMER_STOP_KEY(metrics_name, key) top::metrics::e_metrics::get_instance().timer_end(ADD_THREAD_HASH(metrics_name), std::chrono::system_clock::now(), key);
+#define XMETRICS_TIMER_STOP_KEY(metrics_name, key) \
+    top::metrics::e_metrics::get_instance().timer_end(ADD_THREAD_HASH(metrics_name), std::chrono::system_clock::now(), key);
 
-#define XMETRICS_TIMER_STOP_KEY_WITH_TIMEOUT(metrics_name, key, timeout)                                                                                                              \
+#define XMETRICS_TIMER_STOP_KEY_WITH_TIMEOUT(metrics_name, key, timeout) \
     top::metrics::e_metrics::get_instance().timer_end(ADD_THREAD_HASH(metrics_name), std::chrono::system_clock::now(), key, MICROSECOND(timeout));
 
 #define XMETRICS_COUNTER_INCREMENT(metrics_name, value) top::metrics::e_metrics::get_instance().counter_increase(metrics_name, value)
 #define XMETRICS_COUNTER_DECREMENT(metrics_name, value) top::metrics::e_metrics::get_instance().counter_decrease(metrics_name, value)
 #define XMETRICS_COUNTER_SET(metrics_name, value) top::metrics::e_metrics::get_instance().counter_set(metrics_name, value)
 
-#define XMETRICS_FLOW_COUNT(metrics_name, value) top::metrics::e_metrics::get_instance().flow_count(metrics_name, value, std::chrono::system_clock::now());
+#define XMETRICS_FLOW_COUNT(metrics_name, value) \
+    top::metrics::e_metrics::get_instance().flow_count(metrics_name, value, std::chrono::system_clock::now());
 
-#define XMETRICS_PACKET_INFO(metrics_name, ...)                                                                                                                                    \
-    top::metrics::handler::metrics_pack_unit STR_CONCAT(packet_info_auto_, __LINE__){metrics_name};                                                                                                       \
+#define XMETRICS_PACKET_INFO(metrics_name, ...)  \                                                                                                                           
+    top::metrics::handler::metrics_pack_unit STR_CONCAT(packet_info_auto_, __LINE__){metrics_name};   \                                                                                                     
     top::metrics::handler::metrics_packet_impl(STR_CONCAT(packet_info_auto_, __LINE__), __VA_ARGS__);
 
 #define XMETRICS_XBASE_DATA_CATEGORY_NEW(key) XMETRICS_COUNTER_INCREMENT("dataobject_cur_xbase_type" + std::to_string(key), 1);
 #define XMETRICS_XBASE_DATA_CATEGORY_DELETE(key) XMETRICS_COUNTER_INCREMENT("dataobject_cur_xbase_type" + std::to_string(key), -1);
+
+#define XMETRICS_GAUGE(TAG, value) top::metrics::e_metrics::get_instance().gauge(TAG, value)
 
 #else
 #define XMETRICS_INIT()
@@ -133,6 +167,7 @@ public:
 #define XMETRICS_PACKET_INFO(metrics_name, ...)
 #define XMETRICS_XBASE_DATA_CATEGORY_NEW(key)
 #define XMETRICS_XBASE_DATA_CATEGORY_DELETE(key)
+#define XMETRICS_GAUGE(TAG, value)
 #endif
 
 NS_END2
