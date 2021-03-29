@@ -38,7 +38,7 @@ TEST_F(xclock_block_test, run) {
     xinfo("***************create finish!***************");
     std::this_thread::sleep_for(std::chrono::seconds(3));
     for (size_t i = 0; i < block.m_cons_mgrs.size(); i++) {
-        EXPECT_TRUE(cons_proxies[i]->start());
+        EXPECT_TRUE(cons_proxies[i]->start(10));
     }
     xinfo("***************start finish!***************");
     std::this_thread::sleep_for(std::chrono::seconds(200));
@@ -73,7 +73,7 @@ TEST_F(xclock_block_test, run_xblockstore) {
     xinfo("***************create finish!***************");
     std::this_thread::sleep_for(std::chrono::seconds(3));
     for (size_t i = 0; i < block.m_cons_mgrs.size(); i++) {
-        EXPECT_TRUE(cons_proxies[i]->start());
+        EXPECT_TRUE(cons_proxies[i]->start(10));
     }
     xinfo("***************start finish!***************");
     std::this_thread::sleep_for(std::chrono::seconds(200));
@@ -109,7 +109,7 @@ TEST_F(xclock_block_test, run_emptyblock_xblockstore_xstore) {
     xinfo("***************create finish!***************");
     std::this_thread::sleep_for(std::chrono::seconds(3));
     for (size_t i = 0; i < block.m_cons_mgrs.size(); i++) {
-        EXPECT_TRUE(cons_proxies[i]->start());
+        EXPECT_TRUE(cons_proxies[i]->start(10));
     }
     xinfo("***************start finish!***************");
     std::this_thread::sleep_for(std::chrono::seconds(200));
@@ -159,7 +159,10 @@ void timer_thread_create_transaction(std::string tableaddr, xblock_common* env, 
 
         // TODO(jimmy) need case: push transaction to one node only
         for (size_t j = 0; j < env->m_cons_mgrs.size(); j++) {
-            auto ret = env->txpool_set[j]->push_send_tx(tx);
+            xcons_transaction_ptr_t cons_tx = make_object_ptr<xcons_transaction_t>(tx.get());
+            xtx_para_t para;
+            std::shared_ptr<xtx_entry> tx_ent = std::make_shared<xtx_entry>(cons_tx, para);
+            auto ret = env->txpool_set[j]->push_send_tx(tx_ent);
             //xassert(ret == 0);
         }
     }
@@ -188,7 +191,7 @@ TEST_F(xclock_block_test, run_txpool_maker_1) {
     t1.join();
 
     for (size_t i = 0; i < block.m_cons_mgrs.size(); i++) {
-        EXPECT_TRUE(cons_proxies[i]->start());
+        EXPECT_TRUE(cons_proxies[i]->start(10));
     }
     xinfo("***************start finish!***************");
     std::this_thread::sleep_for(std::chrono::seconds(1000));
@@ -240,7 +243,11 @@ void timer_thread_multi_account_create_transaction(std::string tableaddr, xblock
             for (uint32_t j = 0; j < test_account_count; j++) {
                 auto blockchain = env->store_set[i]->clone_account(account_send[j]);
                 auto tx = blockchain->make_transfer_tx(account_recv[j], 1, get_gmttime_s(), 1000, 0);
-                auto ret = env->txpool_set[i]->push_send_tx(tx);
+
+                xcons_transaction_ptr_t cons_tx = make_object_ptr<xcons_transaction_t>(tx.get());
+                xtx_para_t para;
+                std::shared_ptr<xtx_entry> tx_ent = std::make_shared<xtx_entry>(cons_tx, para);
+                auto ret = env->txpool_set[j]->push_send_tx(tx_ent);
             }
         }
         std::this_thread::sleep_for(std::chrono::seconds(10));
@@ -269,7 +276,7 @@ TEST_F(xclock_block_test, run_txpool_maker_2) {
     std::thread t1 = std::thread(timer_thread_multi_account_create_transaction, block.table_address, &block, 100);
 
     for (size_t i = 0; i < block.m_cons_mgrs.size(); i++) {
-        EXPECT_TRUE(cons_proxies[i]->start());
+        EXPECT_TRUE(cons_proxies[i]->start(10));
     }
     xinfo("***************start finish!***************");
     std::this_thread::sleep_for(std::chrono::seconds(1000));
@@ -299,7 +306,7 @@ TEST_F(xclock_block_test, roundinandout) {
     xinfo("***************create finish!***************");
     std::this_thread::sleep_for(std::chrono::seconds(3));
     for (size_t i = 0; i < block.m_cons_mgrs.size(); i++) {
-        EXPECT_TRUE(cons_proxies[i]->start());
+        EXPECT_TRUE(cons_proxies[i]->start(10));
     }
     xinfo("***************start finish!***************");
     std::this_thread::sleep_for(std::chrono::seconds(15));
@@ -320,7 +327,7 @@ TEST_F(xclock_block_test, roundinandout) {
     xinfo("****************old fade!***************");
     std::this_thread::sleep_for(std::chrono::seconds(3));
     for (size_t i = 0; i < block.m_cons_mgrs.size(); i++) {
-        EXPECT_TRUE(cons_proxies_new[i]->start());
+        EXPECT_TRUE(cons_proxies_new[i]->start(10));
     }
     xinfo("****************start new round finish!***************");
     std::this_thread::sleep_for(std::chrono::seconds(30));

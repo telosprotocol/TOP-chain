@@ -7,9 +7,8 @@ NS_BEG2(top, sync)
 
 using namespace data;
 
-xrole_chains_mgr_t::xrole_chains_mgr_t(std::string vnode_id, xsync_store_face_t* sync_store):
-m_vnode_id(vnode_id),
-m_sync_store(sync_store) {
+xrole_chains_mgr_t::xrole_chains_mgr_t(std::string vnode_id):
+m_vnode_id(vnode_id) {
 }
 
 void xrole_chains_mgr_t::add_role(std::shared_ptr<xrole_chains_t> &role_chains) {
@@ -111,36 +110,6 @@ map_chain_info_t xrole_chains_mgr_t::calc_add_diff(map_chain_info_t &old_chains,
     return diff;
 }
 
-bool xrole_chains_mgr_t::get_chain(const std::string &address, xchain_info_t &info) {
-
-    std::unique_lock<std::mutex> lock(m_lock);
-    {
-        auto it = m_chains.find(address);
-        if (it != m_chains.end()) {
-            info = it->second;
-            return true;
-        }
-    }
-#ifdef SYNC_UNIT
-    std::string table_address = account_address_to_block_address(common::xaccount_address_t{ address });
-
-    {
-        auto it = m_chains.find(table_address);
-        if (it != m_chains.end()) {
-            info.address = address;
-            info.is_sys_account = false;
-            xsync_latest_active_policy empty_policy;
-            info.latest_policy = empty_policy;
-            info.active_policy = empty_policy;
-            info.anchor_policy = xsync_latest_active_policy::anchor_policy();
-            info.history_policy = it->second.history_policy;
-            return true;
-        }
-    }
-#endif
-    return false;
-}
-
 bool xrole_chains_mgr_t::exists(const std::string &address) {
     std::unique_lock<std::mutex> lock(m_lock);
     {
@@ -150,35 +119,7 @@ bool xrole_chains_mgr_t::exists(const std::string &address) {
         }
     }
 
-#ifdef SYNC_UNIT
-    // TODO remove check condition
-    if (data::is_unit_address(common::xaccount_address_t{address})) {
-        std::string table_address = account_address_to_block_address(common::xaccount_address_t{ address });
-        auto it = m_chains.find(table_address);
-        if (it != m_chains.end()) {
-            return true;
-        }
-    }
-#endif
-
     return false;
-}
-
-void xrole_chains_mgr_t::get_height_and_view(const std::string &address, uint64_t &height, uint64_t &view_id) {
-
-    {
-        std::unique_lock<std::mutex> lock(m_lock);
-        auto it = m_chains.find(address);
-        if (it == m_chains.end()) {
-            height = UINT64_MAX;
-            view_id = UINT64_MAX;
-            return;
-        }
-    }
-
-    base::xauto_ptr<base::xvblock_t> current_block = m_sync_store->get_current_block(address);
-    height = current_block->get_height();
-    view_id = current_block->get_viewid();
 }
 
 xsync_roles_t xrole_chains_mgr_t::get_roles() {
@@ -207,6 +148,16 @@ std::string xrole_chains_mgr_t::get_roles_string() {
     str += ")";
 
     return str;
+}
+
+std::shared_ptr<xrole_chains_t> xrole_chains_mgr_t::get_role(const vnetwork::xvnode_address_t &self_address) {
+    std::unique_lock<std::mutex> lock(m_lock);
+
+    auto it = m_roles.find(self_address);
+    if (it == m_roles.end())
+        return nullptr;
+
+    return it->second;
 }
 
 NS_END2

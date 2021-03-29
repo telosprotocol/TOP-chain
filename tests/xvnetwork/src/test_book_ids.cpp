@@ -57,7 +57,9 @@ TEST(test_table_id, table_id) {
     auto const zone_count = XGET_CONFIG(zone_count);
     auto const cluster_count = XGET_CONFIG(cluster_count);
 
-    top::xobject_ptr_t<top::time::xchain_timer_t> chain_timer = top::make_object_ptr<top::time::xchain_timer_t>();
+    std::shared_ptr<top::xbase_io_context_wrapper_t> io_object = std::make_shared<top::xbase_io_context_wrapper_t>();
+    std::shared_ptr<top::xbase_timer_driver_t> timer_driver = std::make_shared<top::xbase_timer_driver_t>(io_object);
+    top::xobject_ptr_t<top::time::xchain_timer_t> chain_timer = top::make_object_ptr<top::time::xchain_timer_t>(timer_driver);
     auto vhost = std::make_shared<top::vnetwork::xvhost_t>(top::make_observer(&top::tests::network::xdummy_network_driver),
                                                            top::make_observer(chain_timer),
                                                            test_net_id,

@@ -18,7 +18,7 @@ public:
 
 public:
     common::xmessage_category_t get_msg_category() override;
-    bool start(const xvip2_t & xip) override;
+    bool start(const xvip2_t & xip, const common::xlogic_time_t& start_time) override;
     bool fade(const xvip2_t & xip) override;
     bool destroy(const xvip2_t & xip) override;
 public:

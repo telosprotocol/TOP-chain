@@ -5,53 +5,34 @@
 #include "xsync/xsync_broadcast.h"
 #include "xsync/xsync_message.h"
 #include "xsync/xsync_log.h"
+#include "xsync/xsync_util.h"
+#include "xcommon/xnode_type.h"
 
 NS_BEG2(top, sync)
 
 using namespace data;
 
-xsync_broadcast_t::xsync_broadcast_t(std::string vnode_id, xrole_xips_manager_t *role_xips_mgr, xsync_sender_t *sync_sender):
+xsync_broadcast_t::xsync_broadcast_t(std::string vnode_id, xsync_peerset_t *peerset, xsync_sender_t *sync_sender):
 m_vnode_id(vnode_id),
-m_role_xips_mgr(role_xips_mgr),
+m_peerset(peerset),
 m_sync_sender(sync_sender) {
 
 }
 
-void xsync_broadcast_t::broadcast_newblock_to_archive(const xblock_ptr_t &block) {
+void xsync_broadcast_t::broadcast_newblockhash_to_archive_neighbors(const data::xblock_ptr_t &block) {
 
-    if (block == nullptr)
+    vnetwork::xvnode_address_t self_addr;
+    std::vector<vnetwork::xvnode_address_t> neighbors;
+
+    if (!m_peerset->get_archive_group(self_addr, neighbors)) {
+        xsync_warn("get archive group failed %s", block->dump().c_str());
         return;
-
-    const std::string account = block->get_block_owner();
-    bool is_table_address = data::is_table_address(common::xaccount_address_t{account});
-    if (!is_table_address)
-        return;
-
-    if (!m_block_keeper.update(block))
-        return;
-
-    base::xvblock_t* vblock = dynamic_cast<base::xvblock_t*>(block.get());
-    vnetwork::xvnode_address_t self_xip;
-    uint32_t self_position = 0;
-    uint32_t deliver_node_count = 0;
-
-    bool ret = m_role_xips_mgr->is_consensus_role_exist(vblock);
-    if (!ret)
-        return;
-
-    ret = m_role_xips_mgr->vrf_send_newblock(vblock, self_xip, self_position, deliver_node_count);
-
-    if (ret) {
-
-        xsync_info("[broadcast] broadcast block %s", vblock->dump().c_str());
-        m_sync_sender->broadcast_newblock(block, self_xip, self_position, deliver_node_count);
     }
-}
 
-void xsync_broadcast_t::broadcast_newblockhash(const xblock_ptr_t &block, const vnetwork::xvnode_address_t &network_self) {
-
-    xsync_info("[broadcast] broadcast blockhash %s", block->dump().c_str());
-    m_sync_sender->broadcast_newblockhash(block, network_self);
+    for (auto &it: neighbors) {
+        const vnetwork::xvnode_address_t &target_addr = it;
+        m_sync_sender->broadcast_newblockhash(block, self_addr, target_addr);
+    }
 }
 
 NS_END2

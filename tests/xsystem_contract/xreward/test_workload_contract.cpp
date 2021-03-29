@@ -24,6 +24,8 @@
 #include "xvm/xvm_service.h"
 #include "xvm/xvm_trace.h"
 #include "xchain_upgrade/xchain_upgrade_center.h"
+#include "xbasic/xasio_io_context_wrapper.h"
+#include "xbasic/xtimer_driver.h"
 
 using namespace top;
 using namespace top::xvm;
@@ -36,7 +38,9 @@ public:
     static void SetUpTestCase() {
         m_store = store::xstore_factory::create_store_with_memdb();
         auto mbus = std::make_shared<top::mbus::xmessage_bus_t>(true, 1000);
-        auto chain_timer = top::make_object_ptr<time::xchain_timer_t>();
+        std::shared_ptr<top::xbase_io_context_wrapper_t> io_object = std::make_shared<top::xbase_io_context_wrapper_t>();
+        std::shared_ptr<top::xbase_timer_driver_t> timer_driver = std::make_shared<top::xbase_timer_driver_t>(io_object);
+        auto chain_timer = top::make_object_ptr<time::xchain_timer_t>(timer_driver);
         auto & config_center = top::config::xconfig_register_t::get_instance();
 
         config::xconfig_loader_ptr_t loader = std::make_shared<loader::xconfig_onchain_loader_t>(make_observer(m_store), make_observer(mbus), make_observer(chain_timer.get()));

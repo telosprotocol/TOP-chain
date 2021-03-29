@@ -28,12 +28,10 @@ main(int argc, char * argv[]) {
     new xhashtest_t();
     testing::InitGoogleTest(&argc, argv);
 
-#if 0
     xinit_log("./a.log", true, true);
     xset_log_level(enum_xlog_level_debug);
     xdbg("------------------------------------------------------------------");
     xinfo("new log start here");
-#endif
 
     top::data::xrootblock_para_t para;
     top::data::xrootblock_t::init(para);

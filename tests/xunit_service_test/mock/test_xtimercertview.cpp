@@ -225,12 +225,32 @@ public:
 };
 #endif
 
+// beacon(4node)
+static xJson::Value create_timercert() {
+
+    xJson::Value v = xJson::objectValue;
+
+    v["group"]["zone0"]["type"] = "zone";
+
+    v["group"]["beacon"]["type"] = "beacon";
+    v["group"]["beacon"]["parent"] = "zone0";
+
+    v["node"]["node0"]["parent"] = "beacon";
+    v["node"]["node1"]["parent"] = "beacon";
+    v["node"]["node2"]["parent"] = "beacon";
+    v["node"]["node3"]["parent"] = "beacon";
+
+    return v;
+}
+
 void test_xtc() {
 
     // auto bs = new test::xunitblockstore_t{}; // error: cannot allocate an object of abstract type ‘top::test::xunitblockstore_t’ auto bs = new test::xunitblockstore_t{};
 
+    xJson::Value timercert_cfg = create_timercert();
+
     // 4 nodes
-    xmock_network_config_t cfg_network("timercert");
+    xmock_network_config_t cfg_network(timercert_cfg);
     xmock_network_t network(cfg_network);
     std::vector<std::shared_ptr<xmock_node_info_t>> nodes = network.get_all_nodes();
 

@@ -12,6 +12,7 @@
 #include "xblockstore/xblockstore_face.h"
 #include "xbase/xvblock.h"
 #include "xblockstore/xsyncvstore_face.h"
+#include "xsyncbase/xsync_policy.h"
 
 NS_BEG2(top, sync)
 
@@ -22,14 +23,12 @@ public:
     virtual base::xauto_ptr<base::xvblock_t> get_latest_committed_block(const std::string & account) = 0;
     virtual base::xauto_ptr<base::xvblock_t> get_latest_locked_block(const std::string & account) = 0;
     virtual base::xauto_ptr<base::xvblock_t> get_latest_cert_block(const std::string & account) = 0;
-    virtual base::xauto_ptr<base::xvblock_t> get_current_block(const std::string & account) = 0;
 
     virtual base::xauto_ptr<base::xvblock_t> load_block_object(const std::string & account, const uint64_t height, bool ask_full_load = true) = 0;
-    virtual bool load_block_input(base::xvblock_t* block) = 0;
-    virtual bool load_block_output(base::xvblock_t* block) = 0;
-
     virtual base::xauto_ptr<base::xvblock_t> get_latest_full_block(const std::string & account) = 0;
     virtual base::xauto_ptr<base::xvblock_t> query_block(const base::xvaccount_t &account, uint64_t height, const std::string &hash) = 0;
+    virtual base::xauto_ptr<base::xvblock_t> get_latest_start_block(const std::string & account, enum_chain_sync_policy sync_policy) = 0;
+    virtual base::xauto_ptr<base::xvblock_t> get_latest_end_block(const std::string & account, enum_chain_sync_policy sync_policy) = 0;
 };
 
 class xsync_store_face_mock_t : public xsync_store_face_t {
@@ -39,14 +38,12 @@ public:
     virtual base::xauto_ptr<base::xvblock_t> get_latest_committed_block(const std::string & account) {return nullptr;}
     virtual base::xauto_ptr<base::xvblock_t> get_latest_locked_block(const std::string & account) {return nullptr;}
     virtual base::xauto_ptr<base::xvblock_t> get_latest_cert_block(const std::string & account) {return nullptr;}
-    virtual base::xauto_ptr<base::xvblock_t> get_current_block(const std::string & account) {return nullptr;}
 
     virtual base::xauto_ptr<base::xvblock_t> load_block_object(const std::string & account, const uint64_t height, bool ask_full_load = true) {return nullptr;}
-    virtual bool load_block_input(base::xvblock_t* block) {return false;}
-    virtual bool load_block_output(base::xvblock_t* block) {return false;}
-
     virtual base::xauto_ptr<base::xvblock_t> get_latest_full_block(const std::string & account) {return nullptr;}
     virtual base::xauto_ptr<base::xvblock_t> query_block(const base::xvaccount_t &account, uint64_t height, const std::string &hash) {return nullptr;}
+    virtual base::xauto_ptr<base::xvblock_t> get_latest_start_block(const std::string & account, enum_chain_sync_policy sync_policy) {return nullptr;}
+    virtual base::xauto_ptr<base::xvblock_t> get_latest_end_block(const std::string & account, enum_chain_sync_policy sync_policy) {return nullptr;}
 };
 
 class xsync_store_t : public xsync_store_face_t {
@@ -57,14 +54,12 @@ public:
     base::xauto_ptr<base::xvblock_t> get_latest_committed_block(const std::string & account) override;
     base::xauto_ptr<base::xvblock_t> get_latest_locked_block(const std::string & account) override;
     base::xauto_ptr<base::xvblock_t> get_latest_cert_block(const std::string & account) override;
-    base::xauto_ptr<base::xvblock_t> get_current_block(const std::string & account) override;
 
     base::xauto_ptr<base::xvblock_t> load_block_object(const std::string & account, const uint64_t height, bool ask_full_load = true) override;
-    bool load_block_input(base::xvblock_t* block) override;
-    bool load_block_output(base::xvblock_t* block) override;
-
     base::xauto_ptr<base::xvblock_t> get_latest_full_block(const std::string & account) override;
     base::xauto_ptr<base::xvblock_t> query_block(const base::xvaccount_t & account, uint64_t height, const std::string &hash) override;
+    base::xauto_ptr<base::xvblock_t> get_latest_start_block(const std::string & account, enum_chain_sync_policy sync_policy) override;
+    base::xauto_ptr<base::xvblock_t> get_latest_end_block(const std::string & account, enum_chain_sync_policy sync_policy) override;
 
 private:
     std::string m_vnode_id;

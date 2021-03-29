@@ -12,8 +12,7 @@
 #include "xdata/xtableblock.h"
 #include "xdata/xblocktool.h"
 #include "xbase/xhash.h"
-#include "xtxexecutor/xtxpool_block_maker.h"
-#include "xtxpool/xtxpool.h"
+#include "xtxpool_v2/xtxpool.h"
 #include "xstore/xstore_face.h"
 #include "xblockstore/test/test_blockstore_datamock.hpp"
 #include "xdata/tests/test_blockutl.hpp"
@@ -21,8 +20,7 @@
 
 using namespace top;
 using namespace top::data;
-using namespace top::txexecutor;
-using namespace top::xtxpool;
+using namespace top::xtxpool_v2;
 using namespace top::store;
 
 class test_basic_case : public testing::Test {
@@ -81,104 +79,6 @@ TEST_F(test_basic_case, god_account_2) {
     xassert(account_ptr != nullptr);
     xassert(account_ptr->balance() == amount);
 }
-
-// TEST_F(test_basic_case, txpool_blockmaker_1) {
-//     uint16_t subaddr = 1;
-//     const std::string account_publick_addr = "1234567890abcdef";
-//     std::string addr1 = base::xvaccount_t::make_account_address(base::enum_vaccount_addr_type_secp256k1_user_account, 0, account_publick_addr, subaddr);
-//     std::string addr2 = base::xvaccount_t::make_account_address(base::enum_vaccount_addr_type_secp256k1_user_account, 0, account_publick_addr, subaddr+1);
-//     std::string table_addr = base::xvaccount_t::make_account_address(base::enum_vaccount_addr_type_block_contract, 0, account_publick_addr, subaddr);
-
-//     auto mbus = std::make_shared<top::mbus::xmessage_bus_t>();
-//     xobject_ptr_t<xstore_face_t> store = xstore_factory::create_store_with_memdb();
-//     create_god_account(store, addr1);
-//     xobject_ptr_t<base::xvblockstore_t> blockstore;
-//     blockstore.attach(store::xblockstorehub_t::instance().create_block_store(*store, ""));
-
-//     auto xtxpool = xtxpool_instance::create_xtxpool_inst(make_observer(store), blockstore, make_observer(mbus.get()));
-//     auto blockmaker = xblockmaker_factory::create_txpool_block_maker(make_observer(store), blockstore.get(), xtxpool.get());
-
-//     xblockchain2_ptr_t account1;
-//     account1.attach(store->clone_account(addr1));
-//     auto tx1 = account1->make_transfer_tx(addr2, 100, xverifier::xtx_utl::get_gmttime_s(), 0, ASSET_TOP(0.1));
-//     auto cons_tx1 = to_constx(tx1);
-//     ASSERT_EQ(0, xtxpool->push_send_tx(cons_tx1));
-
-//     xvip2_t xip;
-//     xip.high_addr = -1;
-//     xip.low_addr = -1;
-//     xblock_maker_para_t blockpara;
-//     blockpara.clock = 1;
-//     blockpara.validator_xip = xip;
-//     blockpara.auditor_xip = xip;
-//     auto block = blockmaker->make_block(table_addr, blockpara, xip);
-//     ASSERT_NE(block, nullptr);
-//     block->set_verify_signature("11");
-
-//     // backup verify and set audit signature
-//     auto ret = blockmaker->verify_block(block, blockpara, xip);
-//     ASSERT_EQ(ret, 0);
-//     block->set_audit_signature("11");
-
-//     // after multisign,set flags
-//     block->set_block_flag(base::enum_xvblock_flag_authenticated);
-//     block->set_block_flag(base::enum_xvblock_flag_locked);
-//     block->set_block_flag(base::enum_xvblock_flag_committed);
-//     if (block->check_block_flag(base::enum_xvblock_flag_committed)) {
-//         data::xblock_t* tableblock = dynamic_cast<data::xblock_t*>(block);
-//         std::cout << "table:" << block->dump() << std::endl;
-//         auto units = tableblock->get_tableblock_units();
-//         xassert(units != nullptr);
-//         for (auto unit : *units) {
-//             std::cout << "unit_header:" << unit->dump_header() << std::endl;
-//             std::cout << "unit_input:" << unit->get_input()->body_dump() << std::endl;
-//             auto txs = unit->get_txs();
-//             ASSERT_EQ(txs.size(), 1);
-//             ASSERT_TRUE(txs[0]->is_send_tx());
-//         }
-//     }
-// }
-
-
-// TEST_F(test_basic_case, txpool_blockmaker_2) {
-//     uint16_t subaddr = 1;
-//     std::string table_addr = base::xvaccount_t::make_account_address(base::enum_vaccount_addr_type_block_contract, 0, "1234567890abcdef", subaddr);
-//     std::string god_account = base::xvaccount_t::make_account_address(base::enum_vaccount_addr_type_secp256k1_user_account, 0, "1234567890abcde1", subaddr);
-//     std::string account1 = base::xvaccount_t::make_account_address(base::enum_vaccount_addr_type_secp256k1_user_account, 0, "1234567890abcde2", subaddr);
-//     std::string account2 = base::xvaccount_t::make_account_address(base::enum_vaccount_addr_type_secp256k1_user_account, 0, "1234567890abcde3", subaddr);
-
-//     auto mbus = std::make_shared<top::mbus::xmessage_bus_t>();
-//     xobject_ptr_t<xstore_face_t> store = xstore_factory::create_store_with_memdb();
-//     create_god_account(store, god_account);
-//     xobject_ptr_t<base::xvblockstore_t> blockstore;
-//     blockstore.attach(store::xblockstorehub_t::instance().create_block_store(*store, ""));
-
-//     auto xtxpool = xtxpool_instance::create_xtxpool_inst(make_observer(store), blockstore, make_observer(mbus.get()));
-//     auto blockmaker = xblockmaker_factory::create_txpool_block_maker(make_observer(store), blockstore.get(), xtxpool.get());
-
-//     base::xauto_ptr<xblockchain2_t> chain(store->clone_account(god_account));
-//     auto tx1 = chain->make_transfer_tx(account1, 100, xverifier::xtx_utl::get_gmttime_s(), 0, ASSET_TOP(0.1));
-//     auto tx2 = chain->make_transfer_tx(account2, 100, xverifier::xtx_utl::get_gmttime_s(), 0, ASSET_TOP(0.1));
-
-//     ASSERT_EQ(xtxpool->push_send_tx(tx1), 0);
-//     ASSERT_EQ(xtxpool->push_send_tx(tx2), 0);
-
-//     xvip2_t xip;
-//     xip.high_addr = -1;
-//     xip.low_addr = -1;
-//     xblock_maker_para_t blockpara;
-//     blockpara.clock = 1;
-//     blockpara.validator_xip = xip;
-//     base::xauto_ptr<xblock_t> block((xblock_t*)blockmaker->make_block(table_addr, blockpara, xip));
-//     if (!block) {
-//         xassert(0);
-//     }
-//     block->set_verify_signature("1");
-//     block->set_block_flag(base::enum_xvblock_flag_authenticated);
-//     xassert(!block->get_block_hash().empty());
-
-//     //xtxpool->on_block_confirmed(block);
-// }
 
 TEST_F(test_basic_case, xvaccount_1) {
     {

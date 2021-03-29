@@ -15,10 +15,7 @@ using namespace base;
 using namespace vnetwork;
 using namespace store;
 using namespace data;
-//using namespace consensus_service;
 using namespace sync;
-using namespace syncbase;
-
 
 ///////////
 
@@ -74,7 +71,6 @@ void xmock_node_t::start() {
     m_sync_obj->start();
     m_sync_obj->add_vnet(m_vnet);
 
-    m_chain_timer->init();
     m_is_start = true;
 }
 
@@ -85,7 +81,6 @@ void xmock_node_t::stop() {
         m_sync_obj->remove_vnet(m_vnet);
         m_sync_obj->stop();
 
-        m_chain_timer->close();
         m_sync_thread->close();
         for (auto it: m_sync_account_thread_pool)
             it->close();
@@ -96,7 +91,7 @@ void xmock_node_t::stop() {
     }
 }
 
-void xmock_node_t::update_chain_timer(const time::xchain_time_st & chain_current_time) {
+void xmock_node_t::update_chain_timer(common::xlogic_time_t chain_current_time) {
     //m_chain_timer->update_time(chain_current_time.xtime_round);
     //m_chain_timer->update_time(1);
 }

@@ -36,6 +36,7 @@ class xcons_transaction_t : public xbase_dataunit_t<xcons_transaction_t, xdata_t
     bool                            is_commit_prove_cert_set() const;
 
     const std::string &     get_source_addr()const {return m_tx->get_source_addr();}
+    const std::string &     get_account_addr() const {return is_recv_tx()? m_tx->get_target_addr() : m_tx->get_source_addr();}
     const std::string &     get_target_addr()const {return m_tx->get_target_addr();}
     const std::string &     get_receipt_source_account()const;
     const std::string &     get_receipt_target_account()const;

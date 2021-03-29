@@ -97,7 +97,7 @@ std::string watcher_name(const xvip2_t & xip) {
     return std::string(WORK_DISPATCH_WATCHER).append("_").append(std::to_string(xip.low_addr));
 }
 
-bool xworkpool_dispatcher::start(const xvip2_t & xip) {
+bool xworkpool_dispatcher::start(const xvip2_t & xip, const common::xlogic_time_t& start_time) {
     // 1. get tableid from election by xip
     // 2. subscribe tableid
     // 3. reset xip
@@ -108,7 +108,7 @@ bool xworkpool_dispatcher::start(const xvip2_t & xip) {
     if (elect_face != nullptr) {
         std::vector<uint16_t> tables;
         elect_face->get_tables(xip, &tables);
-        subscribe(tables, xip);
+        subscribe(tables, xip, start_time);
     }
     return false;
 }
@@ -154,7 +154,7 @@ bool xworkpool_dispatcher::destroy(const xvip2_t & xip) {
     // return false;
 }
 
-bool xworkpool_dispatcher::subscribe(const std::vector<uint16_t> & tables, const xvip2_t & xip) {
+bool xworkpool_dispatcher::subscribe(const std::vector<uint16_t> & tables, const xvip2_t & xip, const common::xlogic_time_t& start_time) {
     auto           pool = m_para->get_resources()->get_workpool();
     auto           pool_size = pool->get_count();
     auto           pool_thread_ids = pool->get_thread_ids();
@@ -187,8 +187,9 @@ bool xworkpool_dispatcher::subscribe(const std::vector<uint16_t> & tables, const
     if (!reset_packers.empty()) {
         for (auto packer_ptr : reset_packers) {
             xbatch_packer * packer = packer_ptr.get();
-            auto            async_reset = [xip](base::xcall_t & call, const int32_t cur_thread_id, const uint64_t timenow_ms) -> bool {
+            auto            async_reset = [xip, start_time](base::xcall_t & call, const int32_t cur_thread_id, const uint64_t timenow_ms) -> bool {
                 auto packer = dynamic_cast<xbatch_packer *>(call.get_param1().get_object());
+                packer->set_start_time(start_time);
                 packer->reset_xip_addr(xip);
                 return true;
             };

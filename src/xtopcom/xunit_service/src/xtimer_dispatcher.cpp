@@ -27,7 +27,7 @@ bool xtimer_dispatcher_t::dispatch(base::xworkerpool_t * pool, base::xcspdu_t * 
     return async_dispatch(pdu, xip_from, xip_to, (xconsensus::xcsaccount_t *)m_picker) == 0;
 }
 
-bool xtimer_dispatcher_t::start(const xvip2_t & xip) {
+bool xtimer_dispatcher_t::start(const xvip2_t & xip, const common::xlogic_time_t& start_time) {
     xinfo("xtimer_dispatcher_t::start %s %p", xcons_utl::xip_to_hex(xip).c_str(), this);
     auto async_reset = [xip](base::xcall_t & call, const int32_t cur_thread_id, const uint64_t timenow_ms) -> bool {
         auto packer = dynamic_cast<xtimer_picker_t *>(call.get_param1().get_object());

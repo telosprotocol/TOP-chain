@@ -158,6 +158,8 @@ XDEFINE_CONFIGURATION(unitblock_recv_transfer_tx_batch_num);
 XDEFINE_CONFIGURATION(unitblock_send_transfer_tx_batch_num);
 XDEFINE_CONFIGURATION(tableblock_batch_tx_max_num);
 XDEFINE_CONFIGURATION(tableblock_batch_unitblock_max_num);
+XDEFINE_CONFIGURATION(fulltable_interval_block_num);
+
 XDEFINE_CONFIGURATION(local_blacklist);
 XDEFINE_CONFIGURATION(local_whitelist);
 

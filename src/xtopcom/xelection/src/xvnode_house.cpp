@@ -108,14 +108,9 @@ void xvnode_house_t::notify_lack_elect_info(uint64_t group_key, const std::strin
 
         xkinfo("get node or group failed %s %u %lu", elect_address.c_str(), (uint32_t)elect_height, group_key);
 
-#ifdef SYNC_UNIT
-        mbus::xevent_behind_ptr_t e = std::make_shared<mbus::xevent_behind_origin_t>(
-                    elect_address, mbus::enum_behind_type_nodeserv, "vnode house get group failed");
-#else
         std::string elect_table_addr = account_address_to_block_address(top::common::xaccount_address_t{elect_address});
-        mbus::xevent_behind_ptr_t e = std::make_shared<mbus::xevent_behind_origin_t>(
-                    elect_table_addr, mbus::enum_behind_type_nodeserv, "vnode house get group failed");
-#endif
+        mbus::xevent_behind_ptr_t e = std::make_shared<mbus::xevent_behind_check_t>(
+                    elect_table_addr, "vnode house");
 
         e->err = mbus::xevent_t::succ;
         m_bus->push_event(e);

@@ -45,6 +45,9 @@ namespace top
             uint64_t  _highest_connect_block_height; //indicated the last block who is connected all the way to genesis block or last full-block
             std::string _highest_connect_block_hash;
             std::string _highest_execute_block_hash;
+            uint64_t  _genesis_connect_block_height; //indicated the last block who is connected to genesis block
+            std::string _genesis_connect_block_hash;
+            uint64_t _highest_sync_height;          // higest continous block started from highest full table block
         };
 
         //each account has own virtual store
@@ -91,6 +94,9 @@ namespace top
             base::xvblock_t*        get_latest_committed_block();   //block with committed status
             base::xvblock_t*        get_latest_executed_block();    //block with executed status
             base::xvblock_t*        get_latest_connected_block();   //block has connected to genesis
+            base::xvblock_t*        get_genesis_connected_block();   //block has connected to genesis
+            base::xvblock_t*        get_genesis_current_block();   //block has connected to genesis
+            base::xvblock_t*        get_highest_sync_block();   //block has connected to genesis
             base::xvblock_t*        get_latest_full_block();        //block has full state,genesis is a full block
             base::xvblock_t*        get_latest_current_block(bool ask_full_load = false);     //block has connected to cert/lock/commit block
             //one api to get latest_commit/latest_lock/latest_cert for better performance
@@ -99,6 +105,7 @@ namespace top
             base::xvblock_t*        get_block(const uint64_t height, const uint64_t viewid);
             base::xvblock_t*        get_block(const uint64_t height, const std::string & blockhash);
             base::xblock_vector     get_blocks(const uint64_t height);
+            int                     get_cache_size();
 
         public://return raw ptr with added reference,caller respond to release it after that
 
@@ -106,6 +113,7 @@ namespace top
             virtual base::xvblock_t*        load_block_object(const uint64_t height,bool ask_full_load);  //load from db/store ,it must be a lock/commit block
             virtual bool                    load_block_input(base::xvblock_t* block);  //load and assign input data into  xvblock_t
             virtual bool                    load_block_output(base::xvblock_t* block); //load and assign output data into xvblock_t
+            virtual bool                    load_block_offstate(base::xvblock_t* block); //load and assign offstate data into xblock_t
 
             virtual bool                    store_block(base::xvblock_t* block); //update old one or insert as new
             virtual bool                    delete_block(base::xvblock_t* block);//return error code indicate what is result
@@ -126,6 +134,7 @@ namespace top
         protected:
             inline xstore_face_t*           get_store() { return m_persist_db; }
             base::xvblockstore_t*           get_blockstore() { return m_blockstore; }
+            void              update_highest_sync_height(base::xvblock_t* this_block);
             bool              save_to_xdb(base::xvblock_t* this_block);
             bool              save_block(base::xvblock_t* this_block); //save block to persisted storage
             //to connect prev block, load_block may call load_block again to get prev-block, reenter_allow_count decide how many times can reenter
@@ -154,8 +163,10 @@ namespace top
             virtual bool      on_block_removing_from_cache(base::xvblock_t* _block);//remove from cache
 
             void              notify_commit_store_event(base::xvblock_t* this_block);
+
         private:
             void              close_blocks(); //clean all cached blocks
+            void              mark_block_connected_flag(base::xvblock_t* this_block);
 
         private:
             uint64_t        m_last_access_time_ms; //UTC ms

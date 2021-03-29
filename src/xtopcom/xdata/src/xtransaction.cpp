@@ -20,7 +20,7 @@
 
 #include "xbasic/xversion.h"
 #include "xdata/xdata_defines.h"
-
+#include <cinttypes>
 namespace top { namespace data {
 
 REG_CLS(xtransaction_t);
@@ -421,7 +421,7 @@ size_t xtransaction_t::get_serialize_size() const {
 std::string xtransaction_t::dump() const {
     char local_param_buf[256];
     xprintf(local_param_buf,    sizeof(local_param_buf),
-    "{transaction:hash=%s,type=%u,subtype=%u,from=%s,to=%s,nonce=%ld,refcount=%d,this=%p}",
+    "{transaction:hash=%s,type=%u,subtype=%u,from=%s,to=%s,nonce=%" PRIu64 ",refcount=%d,this=%p}",
     get_digest_hex_str().c_str(), (uint32_t)get_tx_type(), (uint32_t)get_tx_subtype(), get_source_addr().c_str(), get_target_addr().c_str(),
     get_tx_nonce(), get_refcount(), this);
     return std::string(local_param_buf);

@@ -8,6 +8,7 @@
 #include "xmetrics/Variant.h"
 #include <assert.h>
 
+#include <string>
 #include <memory>
 #include <set>
 #include <chrono>

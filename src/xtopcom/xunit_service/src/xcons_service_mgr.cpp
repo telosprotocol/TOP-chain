@@ -120,7 +120,7 @@ bool xcons_service_mgr::find(const xvip2_t & xip, std::vector<std::shared_ptr<xc
 }
 
 // init consensus service
-bool xcons_service_mgr::start(const xvip2_t & xip) {
+bool xcons_service_mgr::start(const xvip2_t & xip, const common::xlogic_time_t& start_time) {
     auto pelection = m_para->get_resources()->get_election()->get_election_cache_face();
     auto accessor = m_para->get_resources()->get_data_accessor();
     auto now = m_para->get_resources()->get_chain_timer()->logic_time();
@@ -135,7 +135,7 @@ bool xcons_service_mgr::start(const xvip2_t & xip) {
     // destroy all reference service
     if (!find(key_, &services)) {
         for (auto service : services) {
-            service->start(xip);
+            service->start(xip, start_time);
         }
         return true;
     }

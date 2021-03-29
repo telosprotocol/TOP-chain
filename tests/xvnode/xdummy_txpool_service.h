@@ -4,10 +4,10 @@
 
 #pragma once
 
-#include "xtxpool_service/xtxpool_service_face.h"
+#include "xtxpool_service_v2/xtxpool_service_face.h"
 
 NS_BEG3(top, tests, vnode)
-class xtop_dummy_txpool_proxy_face : public top::xtxpool_service::xtxpool_proxy_face {
+class xtop_dummy_txpool_proxy_face : public top::xtxpool_service_v2::xtxpool_proxy_face {
 public:
     bool start() override { return false; }
     bool fade() override { return false; }
@@ -17,9 +17,9 @@ public:
 
 using xdummy_txpool_proxy_face_t = xtop_dummy_txpool_proxy_face;
 
-class xtop_dummy_txpool_service_mgr_face : public top::xtxpool_service::xtxpool_service_mgr_face {
+class xtop_dummy_txpool_service_mgr_face : public top::xtxpool_service_v2::xtxpool_service_mgr_face {
 public:
-    top::xtxpool_service::xtxpool_proxy_face_ptr create(const std::shared_ptr<top::vnetwork::xvnetwork_driver_face_t> & network,
+    top::xtxpool_service_v2::xtxpool_proxy_face_ptr create(const std::shared_ptr<top::vnetwork::xvnetwork_driver_face_t> & network,
                                                         const observer_ptr<top::router::xrouter_face_t> & router) override {
         return std::make_shared<xdummy_txpool_proxy_face_t>();
     }
@@ -28,6 +28,8 @@ public:
     bool start(const xvip2_t & xip, const std::shared_ptr<vnetwork::xvnetwork_driver_face_t> & vnet_driver) override { return false; }
     bool fade(const xvip2_t & xip) override { return false; }
     xcons_transaction_ptr_t query_tx(const std::string & account, const uint256_t & hash) const override {return nullptr;}
+    void start() {}
+    void stop() {}
 };
 using xdummy_txpool_service_mgr_t = xtop_dummy_txpool_service_mgr_face;
 

@@ -24,10 +24,10 @@ public:
 
 public:
     virtual bool dispatch(base::xworkerpool_t * pool, base::xcspdu_t * pdu, const xvip2_t & xip_from, const xvip2_t & xip_to);
-    virtual bool subscribe(const std::vector<uint16_t> & tables, const xvip2_t & xip);
+    virtual bool subscribe(const std::vector<uint16_t> & tables, const xvip2_t & xip, const common::xlogic_time_t& start_time);
 
 public:
-    virtual bool start(const xvip2_t & xip);
+    virtual bool start(const xvip2_t & xip, const common::xlogic_time_t& start_time);
 
     virtual bool fade(const xvip2_t & xip);
 

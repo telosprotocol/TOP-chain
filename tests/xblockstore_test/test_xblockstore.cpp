@@ -90,6 +90,7 @@ TEST_F(test_xblockstore, store_load_block) {
 
     test_blockmock_t blockmock(store_face.get());
 
+    // must greater than enum_max_cached_blocks(32)
     uint64_t count = 100;
 
     base::xvblock_t *prev_block = (blockstore->get_genesis_block(address).get());
@@ -115,6 +116,10 @@ TEST_F(test_xblockstore, store_load_block) {
         ASSERT_NE(unit, nullptr);
         ASSERT_EQ(unit->get_height(), i);
     }
+
+    std::cout << "query count: " << count + 1 << std::endl;
+    std::cout << "cache count: " << blockstore->get_cache_size(address) << std::endl;
+    EXPECT_EQ(32, blockstore->get_cache_size(address));
 }
 
 TEST_F(test_xblockstore, create_units_and_tableblock) {

@@ -32,7 +32,7 @@ using store::xstore_face_t;
 
 xcluster_query_manager::xcluster_query_manager(observer_ptr<store::xstore_face_t> store,
                                                observer_ptr<base::xvblockstore_t> block_store,
-                                               xtxpool_service::xtxpool_proxy_face_ptr const & txpool_service)
+                                               xtxpool_service_v2::xtxpool_proxy_face_ptr const & txpool_service)
   : m_store(store), m_block_store(block_store), m_txpool_service(txpool_service), m_bh(m_store.get(), m_block_store.get(), nullptr) {
     CLUSTER_REGISTER_V1_METHOD(getAccount);
     CLUSTER_REGISTER_V1_METHOD(getTransaction);

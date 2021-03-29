@@ -142,9 +142,12 @@ bool EcVHost::SyncMessageWhenStart(
             && send_address.zone_id() == common::xfrozen_zone_id
             && send_address.cluster_id() == common::xdefault_cluster_id
             && send_address.group_id() == common::xdefault_group_id) {
-        if (message_type == syncbase::xmessage_id_sync_frozen_gossip 
-            || message_type == syncbase::xmessage_id_sync_get_blocks
-            || message_type == syncbase::xmessage_id_sync_blocks) {
+        if (message_type == sync::xmessage_id_sync_frozen_gossip 
+            || message_type == sync::xmessage_id_sync_get_blocks
+            || message_type == sync::xmessage_id_sync_blocks
+            || message_type == sync::xmessage_id_sync_frozen_broadcast_chain_state
+            || message_type == sync::xmessage_id_sync_frozen_response_chain_state
+            ) {
             TOP_DEBUG("found static xip for sync");
             return true;
         }

@@ -51,6 +51,7 @@ xtop_application::xtop_application(common::xnode_id_t const & node_id, xpublic_k
     std::shared_ptr<db::xdb_face_t> db = db::xdb_factory_t::instance(XGET_CONFIG(db_path));
     m_store = store::xstore_factory::create_store_with_static_kvdb(db, make_observer(m_bus));
     m_blockstore.attach(store::xblockstorehub_t::instance().get_block_store(*m_store, ""));
+    m_indexstore = store::xindexstore_factory_t::create_indexstorehub(make_observer(m_store), make_observer(m_blockstore));
 #ifdef ENABLE_METRICS
     m_datastat = make_unique<datastat::xdatastat_t>(make_observer(m_bus));
 #endif
@@ -61,9 +62,13 @@ xtop_application::xtop_application(common::xnode_id_t const & node_id, xpublic_k
     m_cert_ptr.attach(&auth::xauthcontext_t::instance(*m_nodesvr_ptr.get()));
 #endif
 
-    m_txpool = xtxpool::xtxpool_instance::create_xtxpool_inst(make_observer(m_store), m_blockstore, make_observer(m_bus), m_cert_ptr, make_observer(m_logic_timer));
+    m_txpool = xtxpool_v2::xtxpool_instance::create_xtxpool_inst(make_observer(m_store), make_observer(m_blockstore.get()), make_observer(m_cert_ptr.get()), make_observer(m_indexstore.get()));
 
     m_syncstore.attach(new store::xsyncvstore_t(*m_cert_ptr.get(), *m_blockstore.get()));
+
+    xthread_pool_t txpool_service_thp;
+    txpool_service_thp.push_back(make_object_ptr<base::xiothread_t>());
+    m_thread_pools[xtop_thread_pool_type::txpool_service] = txpool_service_thp;
 
     // load configuration first
     auto loader = std::make_shared<loader::xconfig_onchain_loader_t>(make_observer(m_store), make_observer(m_bus), make_observer(m_logic_timer));
@@ -194,17 +199,21 @@ xobject_ptr_t<base::xvblockstore_t> xtop_application::blockstore() const noexcep
     return m_blockstore;
 }
 
+observer_ptr<store::xindexstorehub_t> xtop_application::indexstore() const noexcept {
+    return make_observer(m_indexstore.get());
+}
+
 observer_ptr<router::xrouter_face_t> xtop_application::router() const noexcept {
     return make_observer(m_router.get());
 }
 
 xtop_application::xthread_pool_t const & xtop_application::thread_pool(xthread_pool_type_t const thread_pool_type) const noexcept {
-    assert(thread_pool_type == xthread_pool_type_t::synchronization || thread_pool_type == xthread_pool_type_t::unit_service);
+    assert(thread_pool_type == xthread_pool_type_t::synchronization || thread_pool_type == xthread_pool_type_t::unit_service || thread_pool_type == xthread_pool_type_t::txpool_service);
 
     return m_thread_pools.at(thread_pool_type);
 }
 
-observer_ptr<xtxpool::xtxpool_face_t> xtop_application::txpool() const noexcept {
+observer_ptr<xtxpool_v2::xtxpool_face_t> xtop_application::txpool() const noexcept {
     return make_observer(m_txpool.get());
 }
 

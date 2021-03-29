@@ -55,6 +55,7 @@ public:
     static int32_t get_object_type() {return object_type_value;}
     static xobject_t *create_object(int type);
     void *query_interface(const int32_t _enum_xobject_type_) override;
+    bool is_full_state_block() const override {return true;}
 };
 
 

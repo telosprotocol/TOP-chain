@@ -7,19 +7,19 @@ include_directories(./src)
 aux_source_directory(./src src_dir)
 add_library(xtxexecutor STATIC ${src_dir})
 
-#add_dependencies(xtxexecutor xxbase xtxpool xblockstore xstore xvm xverifier)
-
 target_link_libraries(xtxexecutor PRIVATE
-    xxbase
-    xtxpool
     xblockstore
     xstore
-    xvm
     xverifier
+    xvm
+    xchain_upgrade
+    xstake
+    xelect_common
+    xxbase
 )
 
 if (BUILD_METRICS)
-    #add_dependencies(xtxexecutor xmetrics)
+    # add_dependencies(xtxexecutor xmetrics)
     target_link_libraries(xtxexecutor PRIVATE xmetrics)
 endif()
 

@@ -23,6 +23,31 @@ namespace xtxpool_v2 {
 
 using data::xcons_transaction_ptr_t;
 
+class xcandidate_account_entry {
+public:
+    xcandidate_account_entry(const std::string & account) : m_account(account) {
+    }
+    const std::vector<std::shared_ptr<xtx_entry>> & get_txs() const;
+    void set_select_count(uint32_t count);
+    const std::string & get_addr() const;
+    int32_t push_tx(std::shared_ptr<xtx_entry> tx_ent);
+    std::shared_ptr<xtx_entry> pop_tx(const uint256_t & hash, enum_transaction_subtype subtype, bool clear_follower);
+    const std::shared_ptr<xtx_entry> find(const uint256_t & hash) const;
+    void updata_latest_nonce(uint64_t latest_nonce, const uint256_t & latest_hash);
+    uint32_t get_select_count() const;
+    bool empty();
+    uint8_t get_subtype() const {return m_subtype;}
+
+private:
+    std::vector<std::shared_ptr<xtx_entry>>::iterator find_tx_ent_by_hash(std::vector<std::shared_ptr<xtx_entry>> & txs, const uint256_t & hash) const;
+
+    std::string m_account;
+    uint8_t m_subtype{0};
+    mutable std::vector<std::shared_ptr<xtx_entry>> m_txs;
+    uint32_t m_selected_count{0};
+};
+using candidate_accounts_t = std::vector<std::shared_ptr<xcandidate_account_entry>>;
+
 class xaccount_entry_comp {
 public:
     bool operator()(const std::shared_ptr<xcandidate_account_entry> left, const std::shared_ptr<xcandidate_account_entry> right) const {
@@ -42,10 +67,12 @@ class xpending_accounts_t {
 public:
     xpending_accounts_t(xtxpool_table_info_t * table_para) : m_xtable_info(table_para), m_account_selected_lru(xtxpool_pending_account_selected_count_lru_size) {
     }
-    int32_t push_tx(std::shared_ptr<xtx_entry> tx_ent);
-    std::shared_ptr<xtx_entry> pop_tx_by_hash(const std::string & account_addr, const uint256_t & hash, uint8_t subtype, int32_t err);
-    candidate_accounts pop_accounts(uint32_t count);
-    const xcons_transaction_ptr_t query_tx(const std::string & account, const uint256_t & hash) const;
+    int32_t push_tx(const std::shared_ptr<xtx_entry> & tx_ent);
+    std::shared_ptr<xtx_entry> pop_tx(const std::string & account_addr, const uint256_t & hash, enum_transaction_subtype subtype, bool clear_follower);
+    ready_accounts_t pop_ready_accounts(uint32_t count);
+    ready_accounts_t get_ready_accounts(uint32_t count);
+    const std::shared_ptr<xtx_entry> find(const std::string & account_addr, const uint256_t & hash) const;
+    void updata_latest_nonce(const std::string & account_addr, uint64_t latest_nonce, const uint256_t & latest_hash);
 
 private:
     void tx_count_inc(uint8_t subtype, int32_t count);

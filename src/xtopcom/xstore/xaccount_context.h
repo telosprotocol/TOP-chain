@@ -28,6 +28,7 @@ using data::xtransaction_result_t;
 class xaccount_context_t {
  public:
     xaccount_context_t(const std::string& address, xstore_face_t* store);
+    xaccount_context_t(data::xblockchain2_t* blockchain, xstore_face_t* store);
     virtual ~xaccount_context_t();
 
     data::xblockchain2_t* get_blockchain() const {return m_account; }

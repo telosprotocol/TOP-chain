@@ -3,10 +3,11 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "xvnetwork/xvnetwork_error2.h"
+#include <string>
 
 NS_BEG2(top, vnetwork)
 
-static char const *
+static std::string
 xvnetwork_errc_map(int const errc) noexcept {
     auto const ec = static_cast<xvnetwork_errc2_t>(errc);
     switch (ec) {

@@ -31,9 +31,8 @@ enum xevent_major_type_t {
     xevent_major_type_vnode,
     xevent_major_type_account,
     xevent_major_type_role,
-    xevent_major_type_lack,
     xevent_major_type_blockfetcher,
-    xevent_major_type_downloader,
+    xevent_major_type_sync,
     xevent_major_type_max
 };
 

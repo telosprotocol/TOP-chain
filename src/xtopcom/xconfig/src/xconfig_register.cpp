@@ -114,6 +114,7 @@ void xconfig_register_t::init_static_config() {
     XADD_OFFCHAIN_PARAMETER(unitblock_send_transfer_tx_batch_num);
     XADD_OFFCHAIN_PARAMETER(tableblock_batch_unitblock_max_num);
     XADD_OFFCHAIN_PARAMETER(tableblock_batch_tx_max_num);
+    XADD_OFFCHAIN_PARAMETER(fulltable_interval_block_num);
     XADD_OFFCHAIN_PARAMETER(local_blacklist);
     XADD_OFFCHAIN_PARAMETER(local_whitelist);
 

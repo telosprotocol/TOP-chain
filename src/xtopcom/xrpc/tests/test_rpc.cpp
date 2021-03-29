@@ -25,7 +25,7 @@ protected:
 public:
     std::shared_ptr<tests::vnetwork::xdummy_vnetwork_driver_t> m_vhost;
     observer_ptr<xrouter_face_t> m_router_ptr{nullptr};
-    xtxpool_service::xtxpool_proxy_face_ptr m_unit_service;
+    xtxpool_service_v2::xtxpool_proxy_face_ptr m_unit_service;
     observer_ptr<xstore_face_t> m_store{xstore_factory::create_store_with_memdb().get()};
     observer_ptr<base::xvblockstore_t> m_block_store;
     observer_ptr<elect::ElectMain> m_elect_main;

@@ -22,7 +22,7 @@ using common::xnode_type_t;
 
 // xshard_rpc_handler::xshard_rpc_handler(xvhost_face_t* shard_host)
 xshard_rpc_handler::xshard_rpc_handler(std::shared_ptr<xvnetwork_driver_face_t> shard_host,
-                                       xtxpool_service::xtxpool_proxy_face_ptr const & txpool_service,
+                                       xtxpool_service_v2::xtxpool_proxy_face_ptr const & txpool_service,
                                        observer_ptr<top::base::xiothread_t> thread)
   : m_shard_vhost(shard_host), m_txpool_service(txpool_service), m_thread(thread) {
     assert(nullptr != txpool_service);

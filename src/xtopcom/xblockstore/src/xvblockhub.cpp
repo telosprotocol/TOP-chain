@@ -7,17 +7,18 @@
 #include "xbase/xcontext.h"
 #include "xvblockhub.h"
 #include "xvgenesis.h"
+#include "xdata/xfull_tableblock.h"
 #include "xdata/xnative_contract_address.h"
 #include "xstore/xstore_face.h"
 #include "xdata/xgenesis_data.h"
 
-#ifndef __MAC_PLATFORM__
+// #ifndef __MAC_PLATFORM__
     #include "xconfig/xconfig_register.h"
     #include "xdata/xtableblock.h"
     #include "xconfig/xpredefined_configurations.h"
     #include "xmbus/xevent_store.h"
     #include "xmetrics/xmetrics.h"
-#endif
+// #endif
 
 namespace top
 {
@@ -55,6 +56,8 @@ namespace top
             _highest_execute_block_height  = 0;
             _highest_connect_block_height  = 0;
             _highest_full_block_height     = 0;
+            _genesis_connect_block_height  = 0;
+            _highest_sync_height           = 0;
         }
 
         xacctmeta_t::~xacctmeta_t()
@@ -64,7 +67,7 @@ namespace top
         std::string xacctmeta_t::dump() const
         {
             char local_param_buf[128];
-            xprintf(local_param_buf,sizeof(local_param_buf),"{meta:height for cert=%" PRIu64 ",lock=%" PRIu64 ",commit=%" PRIu64 ",execute=%" PRIu64 ",connected=%" PRIu64 ",full=%" PRIu64 "}",(int64_t)_highest_cert_block_height,(int64_t)_highest_lock_block_height,(int64_t)_highest_commit_block_height,(int64_t)_highest_execute_block_height,(int64_t)_highest_connect_block_height,_highest_full_block_height);
+            xprintf(local_param_buf,sizeof(local_param_buf),"{meta:height for cert=%" PRIu64 ",lock=%" PRIu64 ",commit=%" PRIu64 ",execute=%" PRIu64 ",connected=%" PRIu64 ",full=%" PRIu64 ",gene_connected=%" PRIu64 ",highest_sync=%" PRIu64 "}",(int64_t)_highest_cert_block_height,(int64_t)_highest_lock_block_height,(int64_t)_highest_commit_block_height,(int64_t)_highest_execute_block_height,(int64_t)_highest_connect_block_height,_highest_full_block_height,_genesis_connect_block_height,_highest_sync_height);
 
             return std::string(local_param_buf);
         }
@@ -90,6 +93,9 @@ namespace top
             stream << _highest_connect_block_height;
             stream.write_tiny_string(_highest_connect_block_hash);
             stream.write_tiny_string(_highest_execute_block_hash);
+            stream << _genesis_connect_block_height;
+            stream.write_tiny_string(_genesis_connect_block_hash);
+            stream << _highest_sync_height;
 
             return (stream.size() - begin_size);
         }
@@ -106,6 +112,9 @@ namespace top
             stream >> _highest_connect_block_height;
             stream.read_tiny_string(_highest_connect_block_hash);
             stream.read_tiny_string(_highest_execute_block_hash);
+            stream >> _genesis_connect_block_height;
+            stream.read_tiny_string(_genesis_connect_block_hash);
+            stream >> _highest_sync_height;
 
             return (begin_size - stream.size());
         }
@@ -435,6 +444,73 @@ namespace top
             return true;
         }
 
+        void  xblockacct_t::mark_block_connected_flag(base::xvblock_t* this_block)
+        {
+            const uint64_t this_block_height = this_block->get_height();
+            const int      this_block_flags  = this_block->get_block_flags();
+
+            if((this_block_flags & base::enum_xvblock_flag_connected) != 0)
+            {
+                if(this_block_height > m_meta->_highest_connect_block_height)//recheck
+                {
+                    m_meta->_highest_connect_block_height = this_block_height;
+                    m_meta->_highest_connect_block_hash   = this_block->get_block_hash();
+                }
+                return;
+            }
+
+            // only committed block can mark connected.
+            if((this_block_flags & base::enum_xvblock_flag_committed) == 0)
+            {
+                return;
+            }
+
+            if(this_block_height <= m_meta->_highest_connect_block_height) //block is skiped before,makeup it
+            {
+                this_block->set_block_flag(base::enum_xvblock_flag_connected); //mark connected status
+                return;
+            }
+
+            if(   (this_block_height == (m_meta->_highest_connect_block_height + 1)) //regular check
+                    && (m_meta->_highest_connect_block_hash  == this_block->get_last_block_hash()))
+            {
+                this_block->set_block_flag(base::enum_xvblock_flag_connected);
+                return;
+            }
+
+            if( (this_block->get_prev_block() != NULL) && (this_block->get_prev_block()->check_block_flag(base::enum_xvblock_flag_connected)) )//quick path
+            {
+                xassert(this_block->get_prev_block()->check_block_flag(base::enum_xvblock_flag_committed));//must be true
+                this_block->set_block_flag(base::enum_xvblock_flag_connected);
+                return;
+            }
+
+            if(this_block->get_block_class() == base::enum_xvblock_class_full) //full-block must be a connected block
+            {
+                if (this_block->get_header()->get_block_level() != base::enum_xvblock_level_table)
+                {
+                    this_block->set_block_flag(base::enum_xvblock_flag_connected); //mark connected status
+                }
+                else
+                {
+                    // TODO(jimmy) table can't jump now
+#if 1
+                    // full table-block should has full offstate, then it can be executed from full-block
+                    xfull_tableblock_t* block_ptr = dynamic_cast<xfull_tableblock_t*>(this_block);
+                    xassert(nullptr != block_ptr);
+                    if (!block_ptr->is_full_state_block())
+                    {
+                        xwarn("xblockacct_t::execute_block full-table block can't connect for missing offstate.full block=%s", this_block->dump().c_str());
+                    }
+                    else
+                    {
+                        this_block->set_block_flag(base::enum_xvblock_flag_connected); //mark connected status
+                    }
+#endif
+                }
+            }
+        }
+
         void  xblockacct_t::close_blocks()
         {
             if(false == m_all_blocks.empty())
@@ -450,6 +526,8 @@ namespace top
                         //here go through every stored block to maintain connect status
                         if( (this_block_flags & base::enum_xvblock_flag_stored) != 0)//did stored before
                         {
+                            mark_block_connected_flag(view_it->second);
+#if 0
                             if((this_block_flags & base::enum_xvblock_flag_connected) != 0)
                             {
                                 if(this_block_height > m_meta->_highest_connect_block_height)//recheck
@@ -468,6 +546,7 @@ namespace top
                                     view_it->second->set_block_flag(base::enum_xvblock_flag_connected); //mark connected status
                                 }
                             }
+#endif
                         }
 
                         if(view_it->second->get_modified_count() > 0) //has changed since last store
@@ -545,7 +624,73 @@ namespace top
             }
             return get_genesis_block();
         }
+        base::xvblock_t*  xblockacct_t::get_genesis_connected_block() //block has connected to genesis
+        {
+            //load from _genesis_connect_block_height first
+            {
+                base::xvblock_t* _genesis_connect_block = load_block_object(m_meta->_genesis_connect_block_height,true);
+                xassert(_genesis_connect_block != nullptr);
+                if(_genesis_connect_block != nullptr)
+                    return _genesis_connect_block;//load_block_object already add reference,so here just return
+            }
+            return get_genesis_block();
+        }
+        base::xvblock_t*  xblockacct_t::get_genesis_current_block() // highest block which is continous from genesis
+        {
+            base::xvblock_t* prev_block = get_genesis_block();
+            base::xvblock_t* cur_block = nullptr;
+            uint64_t block_height = m_meta->_genesis_connect_block_height;
+            for(int i = 0; i <= 2; ++i, ++block_height, prev_block = cur_block) {
+                cur_block = query_block(block_height, base::enum_xvblock_flag_authenticated);
+                if (cur_block != nullptr)
+                {
+                    cur_block->add_ref();
+                }
+                else
+                {
+                    cur_block = load_block_object(block_height, true);
+                }
 
+                if (cur_block == nullptr)
+                {
+                    xwarn("xblockacct_t::get_genesis_current_block not find connect block. meta=%s", m_meta->dump().c_str());
+                    return prev_block;
+                }
+
+                if (!prev_block->is_genesis_block())
+                {
+                    auto prev_hash = prev_block->get_block_hash();
+                    auto cur_last_hash = cur_block->get_last_block_hash();
+                    if (prev_hash != cur_last_hash)
+                    {
+                        cur_block->release_ref();
+                        return prev_block;;
+                    }
+                }
+
+                prev_block->release_ref();
+            }
+            return cur_block;
+        }
+        base::xvblock_t*  xblockacct_t::get_highest_sync_block()
+        {
+            base::xvblock_t* sync_block = query_block(m_meta->_highest_sync_height,base::enum_xvblock_flag_authenticated);
+            if (sync_block != nullptr)
+            {
+                sync_block->add_ref();
+            }
+            else
+            {
+                sync_block = load_block_object(m_meta->_highest_sync_height, true);
+            }
+            // return genesis block if not find highest sync block
+            if (sync_block == nullptr)
+            {
+                xerror("xblockacct_t::get_highest_sync_block not find highest sync block. meta=%s", m_meta->dump().c_str());
+                return get_genesis_block();
+            }
+            return sync_block;
+        }
         base::xvblock_t*  xblockacct_t::get_latest_full_block()
         {
             //load from _highest_full_block_height first
@@ -771,6 +916,10 @@ namespace top
             return true;
         }
 
+        int xblockacct_t::get_cache_size(){
+            return m_all_blocks.size();
+        }
+
         //just load vblock object ,but not load header and body those need load seperately if need
         base::xvblock_t*     xblockacct_t::load_block_object(const uint64_t target_height,bool ask_full_load)
         {
@@ -785,9 +934,36 @@ namespace top
                 {
                     load_block_input(loaded_block);
                     load_block_output(loaded_block);
+                    if(loaded_block->get_header()->get_block_level() == base::enum_xvblock_level_table
+                        && loaded_block->get_header()->get_block_class() == base::enum_xvblock_class_full) {
+                        load_block_offstate(loaded_block);
+                    }
                 }
             }
             return loaded_block;
+        }
+
+        bool    xblockacct_t::load_block_offstate(base::xvblock_t* block_ptr) //load and assign body data into  xvblock_t
+        {
+            xassert(block_ptr != NULL);
+            xassert(block_ptr->get_block_class() == base::enum_xvblock_class_full);
+            if( (nullptr == block_ptr) || block_ptr->get_block_class() != base::enum_xvblock_class_full)
+                return false;
+
+            if(block_ptr->check_block_flag(base::enum_xvblock_flag_executed)) //only executed block has offstate in db
+            {
+                if(m_persist_db->get_vblock_offstate(get_account(),block_ptr))
+                {
+                    xdbg_info("xblockacct_t::load_block_offstate,loaded it for block:[chainid:%u->account(%s)->height(%" PRIu64 ")->viewid(%" PRIu64 ") at store(%s)",block_ptr->get_chainid(),block_ptr->get_account().c_str(),block_ptr->get_height(),block_ptr->get_viewid(),get_blockstore_path().c_str());
+                    return true;
+                }
+                else
+                {
+                    xerror("xblockacct_t::load_block_offstate,fail-load it for block:[chainid:%u->account(%s)->height(%" PRIu64 ")->viewid(%" PRIu64 ") at store(%s)",block_ptr->get_chainid(),block_ptr->get_account().c_str(),block_ptr->get_height(),block_ptr->get_viewid(),get_blockstore_path().c_str());
+                    return false;
+                }
+            }
+            return true;
         }
 
         bool    xblockacct_t::load_block_input(base::xvblock_t* block_ptr) //load and assign body data into  xvblock_t
@@ -890,7 +1066,7 @@ namespace top
         bool    xblockacct_t::delete_block(uint64_t height)//return error code indicate what is result
         {
             xkinfo("xblockacct_t::delete_block,delete block:[chainid:%u->account(%s)->height(%" PRIu64 ") at store(%s)",get_chainid(),get_account().c_str(),height,get_blockstore_path().c_str());
-#ifndef __MAC_PLATFORM__
+// #ifndef __MAC_PLATFORM__
             if (get_account() == sys_contract_beacon_timer_addr)
             {
                 //allow delete outdated blocks
@@ -916,7 +1092,7 @@ namespace top
                     }
                 }
             }
-#endif
+// #endif
             return true;
         }
 
@@ -936,10 +1112,10 @@ namespace top
                 return true;
             }
 
-            if(false == unload_subblock_from_container(block)) //check and unload tableblock etc first
-            {
-                return false;
-            }
+            // if(false == unload_subblock_from_container(block)) //check and unload tableblock etc first
+            // {
+            //     return false;
+            // }
 
             bool  is_ready_to_executed = false;
             if(  (0 == m_meta->_highest_execute_block_height)
@@ -957,6 +1133,14 @@ namespace top
             {
                 //full_property_attached to full-block
                 is_ready_to_executed = true;
+                // #ifndef __MAC_PLATFORM__
+                // full table-block should has full offstate, then it can be executed from full-block
+                xfull_tableblock_t* block_ptr = dynamic_cast<xfull_tableblock_t*>(block);
+                if (nullptr != block_ptr && !block_ptr->is_full_state_block()) {
+                    is_ready_to_executed = false;
+                    xwarn("xblockacct_t::execute_block full-table block can't execute for missing offstate.execute height %ld,full block=%s", m_meta->_highest_execute_block_height, block->dump().c_str());
+                }
+                // #endif
             }
 
             if(is_ready_to_executed)
@@ -1007,7 +1191,7 @@ namespace top
         bool   xblockacct_t::unload_subblock_from_container(base::xvblock_t* container_block)
         {
             const int block_flags = container_block->get_block_flags();
-            if( (container_block->get_header()->get_block_class() != base::enum_xvblock_class_nil)//for non-nil container
+            if( (container_block->get_header()->get_block_class() == base::enum_xvblock_class_light)//for non-nil container
               &&((block_flags & base::enum_xvblock_flag_committed) != 0) //only handle committed container
               &&((block_flags & base::enum_xvblock_flag_unpacked) == 0) //and not unpacked yet
                )
@@ -1015,9 +1199,9 @@ namespace top
                 bool unpack_result = false;
                 if(container_block->get_header()->get_block_level() == base::enum_xvblock_level_table) //add other container here if need
                 {
-                    #if defined(__MAC_PLATFORM__) && defined(__ENABLE_MOCK_XSTORE__)
+                    // #if defined(__MAC_PLATFORM__) && defined(__ENABLE_MOCK_XSTORE__)
                     // do nothing
-                    #else
+                    // #else
                     xassert(container_block->is_input_ready(true));
                     xassert(container_block->is_output_ready(true));
 
@@ -1044,7 +1228,7 @@ namespace top
                             }
                         }
                     }
-                    #endif
+                    // #endif
                 }
                 if(unpack_result) //finally check and set flag of enum_xvblock_flag_unpacked
                 {
@@ -1266,7 +1450,7 @@ namespace top
                 }
             }
 
-#ifndef __MAC_PLATFORM__
+// #ifndef __MAC_PLATFORM__
 #if 0
             if (this_block->get_account() == sys_contract_beacon_timer_addr)
             {
@@ -1287,7 +1471,7 @@ namespace top
                 }
             }
 #endif
-#endif
+// #endif
             xdbg("xblockacct_t::store_block,finally cached block=%s of account=%s", this_block->dump().c_str(), m_meta->dump().c_str());
 #ifdef ENABLE_METRICS
             XMETRICS_COUNTER_INCREMENT("blockstore_store_block", 1);
@@ -1336,16 +1520,41 @@ namespace top
             return nullptr;
         }
 
+        void xblockacct_t::update_highest_sync_height(base::xvblock_t* this_block)
+        {
+            const uint64_t this_block_height = this_block->get_height();
+            xblock_t* bp = dynamic_cast<xblock_t*>(this_block);
+            xdbg("xblockacct_t::update_highest_sync_height, block=%s , height=%ull", this_block->dump().c_str(), m_meta->_highest_sync_height);
+            if (bp->is_fullblock())
+            {
+                if (bp->get_height() >= m_meta->_highest_sync_height)
+                {
+                    m_meta->_highest_sync_height = this_block_height;
+                }
+            }
+            else
+            {
+                if (this_block_height == (m_meta->_highest_sync_height + 1))
+                {
+                    m_meta->_highest_sync_height = this_block_height;
+                }
+            }
+        }
+
         bool xblockacct_t::save_to_xdb(base::xvblock_t* this_block)
         {
             const uint64_t this_block_height = this_block->get_height();
             const int      this_block_flags  = this_block->get_block_flags();
+
+            update_highest_sync_height(this_block);
 
             //step#1: mark connected status for committed block
             if((this_block_flags & base::enum_xvblock_flag_committed) != 0)
             {
                 if((this_block_flags & base::enum_xvblock_flag_connected) == 0)
                 {
+                    mark_block_connected_flag(this_block);
+#if 0
                     if(this_block_height <= m_meta->_highest_connect_block_height) //block is skiped before,makeup it
                     {
                         this_block->set_block_flag(base::enum_xvblock_flag_connected); //mark connected status
@@ -1363,6 +1572,23 @@ namespace top
                             && (m_meta->_highest_connect_block_hash  == this_block->get_last_block_hash()))
                     {
                         this_block->set_block_flag(base::enum_xvblock_flag_connected);
+                    }
+#endif
+                }
+
+                // update genesis connect block meta
+                if (0 == m_meta->_genesis_connect_block_height) {
+                    if ( (0 == this_block_height)
+                        || (1 == this_block_height && !m_meta->_genesis_connect_block_hash.empty())) {  // after update by genesis block
+                        m_meta->_genesis_connect_block_height = this_block_height;
+                        m_meta->_genesis_connect_block_hash = this_block->get_block_hash();
+                    }
+                } else if (this_block_height == m_meta->_genesis_connect_block_height + 1) {
+                    if (m_meta->_genesis_connect_block_hash == this_block->get_last_block_hash()) {
+                        m_meta->_genesis_connect_block_height = this_block_height;
+                        m_meta->_genesis_connect_block_hash = this_block->get_block_hash();
+                    } else {
+                        xerror("xblockacct_t::save_block, commit block hash not match. genesis_connect_block_hash=%s,block=%s", base::xstring_utl::to_hex(m_meta->_genesis_connect_block_hash).c_str(), this_block->dump().c_str());
                     }
                 }
             }
@@ -1414,7 +1640,7 @@ namespace top
                     xerror("xblockacct_t::save_block,at store(%s) fail-store portion of block=%s",get_blockstore_path().c_str(),this_block->dump().c_str());
                 }
             }
-            //step#3: after finish persisten store, then ready to update the meta information
+            //step#3: after finish persistent store, then ready to update the meta information
             if(now_stored_result) //just search and match once for each commit block
             {
                 if((this_block_flags & base::enum_xvblock_flag_authenticated) != 0)
@@ -1475,9 +1701,15 @@ namespace top
                     }
                 }
             }
-            //step#4: give chance to trigger db event
+
             if(now_stored_result)
+            {
+                //step#4: unload tableblock
+                unload_subblock_from_container(this_block);  // check and unload tableblock etc first
+
+                //step#5: give chance to trigger db event
                 on_block_stored_to_xdb(this_block);
+            }
 
             return now_stored_result;
         }
@@ -1602,13 +1834,25 @@ namespace top
                         //mark connected status
                         if(false == new_block_ptr->check_block_flag(base::enum_xvblock_flag_connected)) //genesis block must be connected-status
                         {
+                            mark_block_connected_flag(new_block_ptr);
+#if 0
                             if(target_height <= m_meta->_highest_connect_block_height) //block is skiped before,makeup it
                             {
                                 new_block_ptr->set_block_flag(base::enum_xvblock_flag_connected); //mark connected status
                             }
                             else if(new_block_ptr->get_block_class() == base::enum_xvblock_class_full) //full-block must be a connected block
                             {
-                                new_block_ptr->set_block_flag(base::enum_xvblock_flag_connected); //mark connected status
+                                // #ifndef __MAC_PLATFORM__
+                                // full table-block should has full offstate, then it can be executed from full-block
+                                xfull_tableblock_t* block_ptr = dynamic_cast<xfull_tableblock_t*>(new_block_ptr);
+                                if (nullptr != block_ptr && !block_ptr->is_full_state_block()) {
+                                    xwarn("xblockacct_t::execute_block full-table block can't connect for missing offstate.connect height %ld,full block=%s", m_meta->_highest_connect_block_height, new_block_ptr->dump().c_str());
+                                } else {
+                                    new_block_ptr->set_block_flag(base::enum_xvblock_flag_connected); //mark connected status
+                                }
+                                // #else
+                                // new_block_ptr->set_block_flag(base::enum_xvblock_flag_connected); //mark connected status
+                                // #endif
                             }
                             else if( (new_block_ptr->get_prev_block() != NULL) && (new_block_ptr->get_prev_block()->check_block_flag(base::enum_xvblock_flag_connected)) )//quick path
                             {
@@ -1620,6 +1864,7 @@ namespace top
                             {
                                 new_block_ptr->set_block_flag(base::enum_xvblock_flag_connected);
                             }
+#endif
                         }
                         //update record of _highest_connect_block_height/hash now
                         if( (new_block_ptr->check_block_flag(base::enum_xvblock_flag_connected)) && (target_height > m_meta->_highest_connect_block_height) )
@@ -1957,7 +2202,7 @@ namespace top
 
         void  xblockacct_t::notify_commit_store_event(base::xvblock_t* this_block_ptr)
         {
-            #ifndef __MAC_PLATFORM__
+            // #ifndef __MAC_PLATFORM__
             xassert(this_block_ptr != nullptr);
             // send mbus event
             if (m_persist_db->get_mbus() && this_block_ptr->get_height() > 0)
@@ -1972,7 +2217,7 @@ namespace top
                 m_persist_db->get_mbus()->push_event(event);
                 xdbg_info("xblockaccount_t::notify_event,at store(%s) block=%s",get_blockstore_path().c_str(),this_block_ptr->dump().c_str());
             }
-            #endif
+            // #endif
         }
 
         bool      xblockacct_t::on_block_changed(base::xvblock_t* _block)           //stage change from cert->lock->commit->executed ...

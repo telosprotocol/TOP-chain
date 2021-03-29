@@ -10,9 +10,9 @@
 #include "xvtcaccount.h"
 #include "xvunithub.h"
 
-#ifndef __MAC_PLATFORM__
+// #ifndef __MAC_PLATFORM__
     #include "xdata/xnative_contract_address.h"
-#endif
+// #endif
 
 namespace top
 {
@@ -201,6 +201,39 @@ namespace top
             std::lock_guard<std::recursive_mutex> _dummy(m_group_locks[index]);
             return get_block_account(index,account)->get_latest_connected_block();
         }
+        base::xauto_ptr<base::xvblock_t>    xvblockstore_impl::get_genesis_connected_block(const std::string & account)
+        {
+            if(base::xvblockstore_t::is_close())
+            {
+                xwarn_err("xvblockstore_impl has closed at store_path=%s",m_store_path.c_str());
+                return nullptr;
+            }
+            const uint32_t index =  cal_group_index_from_account(account);
+            std::lock_guard<std::recursive_mutex> _dummy(m_group_locks[index]);
+            return get_block_account(index,account)->get_genesis_connected_block();
+        }
+        base::xauto_ptr<base::xvblock_t>    xvblockstore_impl::get_genesis_current_block(const std::string & account)
+        {
+            if(base::xvblockstore_t::is_close())
+            {
+                xwarn_err("xvblockstore_impl has closed at store_path=%s",m_store_path.c_str());
+                return nullptr;
+            }
+            const uint32_t index =  cal_group_index_from_account(account);
+            std::lock_guard<std::recursive_mutex> _dummy(m_group_locks[index]);
+            return get_block_account(index,account)->get_genesis_current_block();
+        }
+        base::xauto_ptr<base::xvblock_t>  xvblockstore_impl::get_highest_sync_block(const std::string & account)
+        {
+            if(base::xvblockstore_t::is_close())
+            {
+                xwarn_err("xvblockstore_impl has closed at store_path=%s",m_store_path.c_str());
+                return nullptr;
+            }
+            const uint32_t index =  cal_group_index_from_account(account);
+            std::lock_guard<std::recursive_mutex> _dummy(m_group_locks[index]);
+            return get_block_account(index,account)->get_highest_sync_block();
+        }
         base::xauto_ptr<base::xvblock_t>  xvblockstore_impl::get_latest_full_block(const std::string & account)//block has full state,genesis is a full block
         {
             if(base::xvblockstore_t::is_close())
@@ -223,6 +256,11 @@ namespace top
             const uint32_t index =  cal_group_index_from_account(account);
             std::lock_guard<std::recursive_mutex> _dummy(m_group_locks[index]);
             return get_block_account(index,account)->get_latest_current_block(ask_full_load);
+        }
+
+        int xvblockstore_impl::get_cache_size(const std::string & account) {
+            const uint32_t index = cal_group_index_from_account(account);
+            return get_block_account(index,account)->get_cache_size();
         }
 
         //just load vblock object but not load header and body those need load seperately if need. create a new one if not found
@@ -607,7 +645,7 @@ namespace top
                     else if(expired_items_count > enum_max_expire_check_count) //not clean too much at each loop
                         break;
                 }
-                
+
                 xblockacct_t* _test_for_account = expire_it->second;
                 if(_test_for_account != nullptr)
                 {

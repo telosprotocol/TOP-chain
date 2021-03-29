@@ -17,6 +17,7 @@
 #include "xsync/xsync_sender.h"
 #include "xsync/xsync_message.h"
 #include "xsync/xgossip_message.h"
+#include "xsync/xsync_store.h"
 
 NS_BEG2(top, sync)
 
@@ -43,15 +44,14 @@ public:
 class xsync_gossip_t {
 public:
 
-    xsync_gossip_t(std::string vnode_id, const observer_ptr<mbus::xmessage_bus_face_t> &mbus,
-            xrole_chains_mgr_t *role_chains_mgr, xrole_xips_manager_t *role_xips_mgr, sync::xsync_sender_t *sync_sender);
+    xsync_gossip_t(std::string vnode_id, const observer_ptr<mbus::xmessage_bus_face_t> &mbus, xsync_store_face_t* sync_store,
+            xrole_chains_mgr_t *role_chains_mgr, xrole_xips_manager_t *role_xips_mgr, xsync_sender_t *sync_sender);
 
     virtual ~xsync_gossip_t();
 
     // 1s
     void on_timer();
     void on_chain_timer(const mbus::xevent_ptr_t& e);
-    void on_behind_event(const mbus::xevent_ptr_t &e);
     void add_role(const vnetwork::xvnode_address_t& addr);
     void remove_role(const vnetwork::xvnode_address_t& addr);
     void handle_message(const std::vector<xgossip_chain_info_ptr_t> &info_list, 
@@ -60,8 +60,6 @@ public:
 protected:
     void walk_role(const vnetwork::xvnode_address_t &self_addr, const std::shared_ptr<xrole_chains_t> &role_chains, enum_walk_type walk_type);
     void process_timer(bool is_frozen);
-    bool handle_consensus_role_behind(const xsync_roles_t &roles, common::xnode_type_t type, const std::string &address);
-    void process_behind_event(const mbus::xevent_ptr_t& e);
     void send_gossip(const vnetwork::xvnode_address_t &self_addr, std::vector<xgossip_chain_info_ptr_t> &info_list, uint32_t max_peers, enum_gossip_target_type target_type);
     void send_gossip_to_target(const vnetwork::xvnode_address_t &self_addr, std::vector<xgossip_chain_info_ptr_t> &info_list, const vnetwork::xvnode_address_t &target_addr);
     void send_frozen_gossip(const vnetwork::xvnode_address_t &self_addr, std::vector<xgossip_chain_info_ptr_t> &info_list, uint32_t max_peers);
@@ -73,6 +71,7 @@ protected:
 private:
     std::string m_vnode_id;
     observer_ptr<mbus::xmessage_bus_face_t> m_mbus;
+    xsync_store_face_t *m_sync_store;
     xrole_chains_mgr_t *m_role_chains_mgr;
     xrole_xips_manager_t *m_role_xips_mgr;
     sync::xsync_sender_t *m_sync_sender;

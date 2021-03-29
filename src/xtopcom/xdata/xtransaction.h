@@ -259,7 +259,7 @@ class xtransaction_store_t : public xbase_dataobj_t<xtransaction_store_t, xdata_
     virtual int32_t    do_read(base::xstream_t & stream) override;
 
     void set_raw_tx(xtransaction_t* tx) {
-        if (m_raw_tx == nullptr) {
+        if (m_raw_tx == nullptr && tx != nullptr) {
             tx->add_ref();
             m_raw_tx.attach(tx);
         }

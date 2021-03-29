@@ -7,8 +7,6 @@
 #include "xsync/xsync_event_dispatcher.h"
 #include "xmbus/xevent_common.h"
 #include "xmbus/xevent_role.h"
-#include "xmbus/xevent_lack.h"
-#include "xmbus/xevent_downloader.h"
 
 #include "xmbus/xevent.h"
 #include "xsyncbase/xmessage_ids.h"
@@ -35,15 +33,11 @@ m_sync_handler(sync_handler) {
     mbus::xevent_queue_cb_t cb = std::bind(&xsync_event_dispatcher_t::push_event, this, std::placeholders::_1);
     m_reg_holder.add_listener((int) mbus::xevent_major_type_timer, cb);
     m_reg_holder.add_listener((int) mbus::xevent_major_type_behind, cb);
-    m_reg_holder.add_listener((int) mbus::xevent_major_type_lack, cb);
-    m_reg_holder.add_listener((int) mbus::xevent_major_type_store, cb);
-    m_reg_holder.add_listener((int) mbus::xevent_major_type_account, cb);
     m_reg_holder.add_listener((int) mbus::xevent_major_type_role, cb);
     m_reg_holder.add_listener((int) mbus::xevent_major_type_consensus, cb);
     m_reg_holder.add_listener((int) mbus::xevent_major_type_chain_timer, cb);
-    m_reg_holder.add_listener((int) mbus::xevent_major_type_downloader, cb);
 
-    xsync_kinfo("[xsync_event_dispatcher_t] create");
+    xsync_kinfo("xsync_event_dispatcher_t create");
 }
 
 xsync_event_dispatcher_t::~xsync_event_dispatcher_t() {
@@ -58,17 +52,9 @@ bool xsync_event_dispatcher_t::filter_event(const mbus::xevent_ptr_t& e) {
             ret = true;
             break;
         case mbus::xevent_major_type_behind:
-            ret = e->minor_type == mbus::xevent_behind_t::type_known ||
-                    e->minor_type == mbus::xevent_behind_t::type_origin;
-            break;
-        case mbus::xevent_major_type_lack:
-            ret = true;
-            break;
-        case mbus::xevent_major_type_store:
-            ret = e->minor_type == xevent_store_t::type_block_to_db;
-            break;
-        case mbus::xevent_major_type_account:
-            ret = true;
+            ret = e->minor_type == mbus::xevent_behind_t::type_download ||
+                    e->minor_type == mbus::xevent_behind_t::type_check ||
+                    e->minor_type == mbus::xevent_behind_t::type_on_demand;
             break;
         case mbus::xevent_major_type_role:
             ret = true;
@@ -77,9 +63,6 @@ bool xsync_event_dispatcher_t::filter_event(const mbus::xevent_ptr_t& e) {
             ret = true;
             break;
         case mbus::xevent_major_type_chain_timer:
-            ret = true;
-            break;
-        case mbus::xevent_major_type_downloader:
             ret = true;
             break;
         default:
@@ -102,18 +85,10 @@ void xsync_event_dispatcher_t::before_event_pushed(const mbus::xevent_ptr_t &e, 
         switch(e->major_type) {
             case mbus::xevent_major_type_behind:
                 switch(e->minor_type) {
-                    case mbus::xevent_behind_t::type_known: XMETRICS_COUNTER_INCREMENT("sync_event_behind_known", 1); break;
-                    case mbus::xevent_behind_t::type_origin: XMETRICS_COUNTER_INCREMENT("sync_event_behind_origin", 1); break;
+                    case mbus::xevent_behind_t::type_download: XMETRICS_COUNTER_INCREMENT("sync_event_behind_known", 1); break;
+                    case mbus::xevent_behind_t::type_check: XMETRICS_COUNTER_INCREMENT("sync_event_behind_table", 1); break;
+                    case mbus::xevent_behind_t::type_on_demand: XMETRICS_COUNTER_INCREMENT("sync_event_behind_on_demand", 1); break;
                 }
-                break;
-            case mbus::xevent_major_type_lack:
-                XMETRICS_COUNTER_INCREMENT("sync_event_lack", 1);
-                break;
-            case mbus::xevent_major_type_store:
-                XMETRICS_COUNTER_INCREMENT("sync_event_store", 1);
-                break;
-            case mbus::xevent_major_type_account:
-                XMETRICS_COUNTER_INCREMENT("sync_event_account", 1);
                 break;
             case mbus::xevent_major_type_role:
                 if (e->minor_type == xevent_role_t::add_role)
@@ -127,9 +102,6 @@ void xsync_event_dispatcher_t::before_event_pushed(const mbus::xevent_ptr_t &e, 
             case mbus::xevent_major_type_chain_timer:
                 XMETRICS_COUNTER_INCREMENT("sync_event_chain_timer", 1);
                 break;
-            case mbus::xevent_major_type_downloader:
-                XMETRICS_COUNTER_INCREMENT("sync_event_downloader", 1);
-                break; 
             default:
                 break;
         }
@@ -146,7 +118,7 @@ void xsync_event_dispatcher_t::dump_queue_info(const mbus::xevent_object_t *e_ob
 void xsync_event_dispatcher_t::check_queue_info(int64_t wait_cost, int32_t queue_size) {
     XMETRICS_COUNTER_INCREMENT("sync_cost_event_queue", wait_cost);
     if (wait_cost > 200) {
-        xsync_warn("[xsync_event_dispatcher_t] too long to wait. wait_cost(%ldms) event_queue(%d)", 
+        xsync_warn("xsync_event_dispatcher_t too long to wait. wait_cost(%ldms) event_queue(%d)", 
                 wait_cost, queue_size);
     }
 }

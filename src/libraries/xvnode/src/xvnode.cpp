@@ -26,8 +26,8 @@ xtop_vnode::xtop_vnode(observer_ptr<elect::ElectMain> const & elect_main,
                        observer_ptr<sync::xsync_object_t> const & sync_obj,
                        observer_ptr<grpcmgr::xgrpc_mgr_t> const & grpc_mgr,
                        observer_ptr<xunit_service::xcons_service_mgr_face> const & cons_mgr,
-                       observer_ptr<xtxpool_service::xtxpool_service_mgr_face> const & txpool_service_mgr,
-                       observer_ptr<xtxpool::xtxpool_face_t> const & txpool,
+                       observer_ptr<xtxpool_service_v2::xtxpool_service_mgr_face> const & txpool_service_mgr,
+                       observer_ptr<xtxpool_v2::xtxpool_face_t> const & txpool,
                        observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor)
   : m_elect_main{elect_main}
   , m_router{router}
@@ -72,8 +72,8 @@ xtop_vnode::xtop_vnode(observer_ptr<elect::ElectMain> const & elect_main,
                        observer_ptr<sync::xsync_object_t> const & sync_obj,
                        observer_ptr<grpcmgr::xgrpc_mgr_t> const & grpc_mgr,
                        observer_ptr<xunit_service::xcons_service_mgr_face> const & cons_mgr,
-                       observer_ptr<xtxpool_service::xtxpool_service_mgr_face> const & txpool_service_mgr,
-                       observer_ptr<xtxpool::xtxpool_face_t> const & txpool,
+                       observer_ptr<xtxpool_service_v2::xtxpool_service_mgr_face> const & txpool_service_mgr,
+                       observer_ptr<xtxpool_v2::xtxpool_face_t> const & txpool,
                        observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor)
   : xtop_vnode{elect_main,
                group_info->node_element(vhost->host_node_id())->address().sharding_address(),
@@ -122,7 +122,7 @@ void xtop_vnode::start() {
     new_driver_added();
     m_grpc_mgr->try_add_listener(common::has<common::xnode_type_t::archive>(vnetwork_driver()->type()));
     if (m_cons_face != nullptr) {
-        m_cons_face->start();
+        m_cons_face->start(this->start_time());
     }
     if (m_txpool_face != nullptr) {
         m_txpool_face->start();

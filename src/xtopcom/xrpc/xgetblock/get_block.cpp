@@ -52,6 +52,7 @@ bool get_block_handle::handle(std::string request) {
     if (iter != m_query_method_map.end()) {
         iter->second();
     } else {
+        xdbg("get_block action %s nonexist!", action.c_str());
         return false;
     }
 
@@ -1620,6 +1621,17 @@ xJson::Value get_block_handle::get_block_json(xblock_t * bp) {
     root["body"] = body;
 
     return root;
+}
+
+void get_block_handle::getSyncNeighbors() {
+    auto roles = m_sync->get_neighbors();
+    xJson::Value v;
+    for (auto role : roles) {
+        for (auto peer : role.second) {
+            v[role.first].append(peer);
+        }
+    }
+    m_js_rsp["value"] = v;
 }
 
 // void get_block_handle::get_sync_overview() {

@@ -16,7 +16,6 @@ public:
 
     base::xauto_ptr<base::xvblock_t> get_latest_block(const std::string &account) override;
     base::xvblock_t *                make_block(const std::string &account, uint64_t clock, uint64_t viewid, uint16_t threshold, const xvip2_t &leader_xip) override;
-    base::xvblock_t *                make_block(const std::string &account, const xblock_maker_para_t &para, const xvip2_t &leader_xip) override;
     int                              verify_block(base::xvblock_t *proposal_block) override;
 
 private:

@@ -450,7 +450,7 @@ namespace top
             }
             if(test_for_cert->get_clock() < verify_group->get_effect_clock())
             {
-                xerror("xauthcontext_t_impl::verify_validator_mutisig,fail-nodes not be effective yet,effective clock=%" PRIx64 " > cert=%s",verify_group->get_effect_clock(),test_for_cert->dump().c_str());
+                xwarn("xauthcontext_t_impl::verify_validator_mutisig,fail-nodes not be effective yet,effective clock=%" PRIx64 " > cert=%s",verify_group->get_effect_clock(),test_for_cert->dump().c_str());
                 return base::enum_vcert_auth_result::enum_nodes_unactived;
             }
             if(get_group_nodes_count_from_xip2(test_for_cert->get_validator()) != verify_group->get_size())

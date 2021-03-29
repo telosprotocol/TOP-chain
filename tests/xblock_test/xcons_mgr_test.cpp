@@ -1,5 +1,7 @@
 #include "xblock_common.hpp"
 #include "xunit_service/xnetwork_proxy.h"
+#include "xbasic/xasio_io_context_wrapper.h"
+#include "xbasic/xtimer_driver.h"
 namespace top {
 namespace test {
 using namespace mock;
@@ -65,7 +67,9 @@ TEST_F(xcons_mgr_test, create) {
     xblock_common                                      comm;
     auto                                               addr = comm.create_address(0, "T_test");
     auto                                               addr2 = comm.create_address(0, "T_test", 2);
-    auto                                               timer = make_observer(new time::xchain_timer_t());
+    std::shared_ptr<top::xbase_io_context_wrapper_t> io_object = std::make_shared<top::xbase_io_context_wrapper_t>();
+    std::shared_ptr<top::xbase_timer_driver_t> timer_driver = std::make_shared<top::xbase_timer_driver_t>(io_object);
+    auto                                               timer = make_observer(new time::xchain_timer_t(timer_driver));
     std::shared_ptr<vnetwork::xvnetwork_driver_face_t> pnet = std::make_shared<network_mock>(addr);
     std::shared_ptr<vnetwork::xvnetwork_driver_face_t> pnet2 = std::make_shared<network_mock>(addr2);
     auto                                               para = create_para("T_test0", timer);
@@ -73,14 +77,14 @@ TEST_F(xcons_mgr_test, create) {
     auto                                               cons_mgr = std::make_shared<xcons_service_mgr_test>(m_netproxy, std::make_shared<xdispatcher_builder_mock>(), para);
     auto                                               cons_proxy = cons_mgr->create(pnet);
     EXPECT_TRUE(cons_proxy != nullptr);
-    EXPECT_TRUE(cons_proxy->start());
+    EXPECT_TRUE(cons_proxy->start(10));
     std::this_thread::sleep_for(std::chrono::seconds(5));
     auto cons_proxy2 = cons_mgr->create(pnet2);
     EXPECT_EQ(cons_mgr->get_size(xcons_utl::to_xip2(addr)), 1);
     EXPECT_NE(cons_proxy->get_ip().low_addr, cons_proxy2->get_ip().low_addr);
     EXPECT_TRUE(cons_proxy2 != nullptr);
     EXPECT_TRUE(cons_proxy->fade());
-    EXPECT_TRUE(cons_proxy2->start());
+    EXPECT_TRUE(cons_proxy2->start(10));
     std::this_thread::sleep_for(std::chrono::seconds(10));
     // delete cons_mgr;
 }

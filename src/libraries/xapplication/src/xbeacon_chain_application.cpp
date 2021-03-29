@@ -4,13 +4,13 @@
 
 #include "xapplication/xbeacon_chain_application.h"
 
-#include "xapplication_util.hpp"
 #include "xapplication/xapplication.h"
 #include "xcodec/xmsgpack_codec.hpp"
 #include "xcommon/xip.h"
 #include "xdata/xcodec/xmsgpack/xelection_result_store_codec.hpp"
 #include "xdata/xelection/xelection_result_property.h"
 #include "xdata/xelection/xelection_result_store.h"
+#include "xdata/xblocktool.h"
 
 NS_BEG2(top, application)
 
@@ -54,9 +54,9 @@ void xtop_beacon_chain_application::load_last_election_data() {
             using top::data::election::xelection_result_store_t;
 
             // only use lightunit
-            auto latest_vblock = xapplication_util::get_latest_lightunit(m_application->blockstore().get(), addr);
+            auto latest_vblock = data::xblocktool_t::get_latest_committed_lightunit(m_application->blockstore().get(), addr);
             if (latest_vblock == nullptr) {
-                xwarn("xtop_beacon_chain_application::load_last_election_data has no latest lightunit. addr=%s", addr.c_str());
+                xerror("xtop_beacon_chain_application::load_last_election_data has no latest lightunit. addr=%s", addr.c_str());
                 continue;
             }
             xblock_t * latest_block = dynamic_cast<xblock_t *>(latest_vblock.get());
@@ -65,7 +65,7 @@ void xtop_beacon_chain_application::load_last_election_data() {
             if (!latest_block->get_native_property().native_string_get(property, result) && !result.empty()) {
                 auto const & election_result_store = codec::msgpack_decode<xelection_result_store_t>({std::begin(result), std::end(result)});
                 if ((addr == sys_contract_rec_elect_rec_addr || addr == sys_contract_rec_elect_zec_addr || addr == sys_contract_zec_elect_consensus_addr) && block_height != 0) {
-                    auto prev_latest_vblock = xapplication_util::get_prev_lightunit(m_application->blockstore().get(), addr, block_height - 1);
+                    auto prev_latest_vblock = data::xblocktool_t::get_committed_lightunit(m_application->blockstore().get(), addr, block_height - 1);
                     if (prev_latest_vblock != nullptr) {
                         xblock_t * next_to_last_block = dynamic_cast<xblock_t *>(prev_latest_vblock.get());
                         auto next_to_last_height = next_to_last_block->get_height();
@@ -73,12 +73,16 @@ void xtop_beacon_chain_application::load_last_election_data() {
                             auto const & election_result_store_last =
                                 codec::msgpack_decode<xelection_result_store_t>({std::begin(result_next_to_last), std::end(result_next_to_last)});
                             on_election_data_updated(election_result_store_last, zone_id, next_to_last_height);
+                        } else {
+                            xerror("xtop_beacon_chain_application::load_last_election_data fail-read property.addr=%s height=%ld", addr.c_str(), block_height - 1);
                         }
                     } else {
-                        xwarn("xtop_beacon_chain_application::load_last_election_data has no prev lightunit. addr=%s height=%ld", addr.c_str(), block_height);
+                        xerror("xtop_beacon_chain_application::load_last_election_data has no prev lightunit. addr=%s height=%ld", addr.c_str(), block_height);
                     }
                 }
                 on_election_data_updated(election_result_store, zone_id, block_height);
+            } else {
+                xerror("xtop_beacon_chain_application::load_last_election_data fail-read property.addr=%s", addr.c_str());
             }
             xinfo("load new sys contract %s", addr.c_str());
         }

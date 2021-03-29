@@ -11,7 +11,7 @@
 #include "xunit_service/xcons_face.h"
 #include "xunit_service/xcons_unorder_cache.h"
 #include "xmbus/xmessage_bus.h"
-#include "xtxpool/xtxpool_face.h"
+#include "xtxpool_v2/xtxpool_face.h"
 
 NS_BEG2(top, xunit_service)
 using xconsensus::xcsaccount_t;
@@ -42,7 +42,7 @@ public:
     virtual bool reset_xip_addr(const xvip2_t & new_addr);
     virtual bool on_proposal_finish(const base::xvevent_t & event, xcsobject_t* from_child, const int32_t cur_thread_id, const uint64_t timenow_ms);
     virtual bool on_consensus_commit(const base::xvevent_t & event, xcsobject_t* from_child, const int32_t cur_thread_id, const uint64_t timenow_ms);
-
+    virtual bool set_start_time(const common::xlogic_time_t& start_time);
 protected:
     virtual bool on_view_fire(const base::xvevent_t &event, xcsobject_t *from_parent, const int32_t cur_thread_id, const uint64_t timenow_ms);
 
@@ -52,10 +52,9 @@ protected:
     // virtual bool on_proposal_start(const base::xvevent_t & event, xcsobject_t* from_parent, const int32_t cur_thread_id, const uint64_t timenow_ms);
 
 protected:
-    base::xvqcert_t* get_bind_drand(base::xvblock_t *proposal_block);
     xvip2_t get_parent_xip(const xvip2_t & local_xip);
     xvip2_t get_child_xip(const xvip2_t & local_xip, const std::string & account);
-    void    set_xip(xblock_maker_para_t & blockpara, const xvip2_t & leader);
+    void    set_xip(xblock_consensus_para_t & blockpara, const xvip2_t & leader);
     void    invoke_sync(const std::string & account, const std::string & reason);
 
 private:
@@ -64,12 +63,14 @@ private:
     volatile uint64_t                        m_last_view_id;
     std::shared_ptr<xcons_service_para_face> m_para;
     std::shared_ptr<xblock_maker_face>       m_block_maker;
+    std::shared_ptr<xproposal_maker_face>    m_proposal_maker;
     uint64_t                                 m_cons_start_time_ms;
     xcons_unorder_cache                      m_unorder_cache;
     static constexpr uint32_t                m_empty_block_max_num{2};
-    observer_ptr<xtxpool::xtxpool_table_face_t> m_txpool_table{nullptr};
-    std::string                                 m_latest_cert_block_hash;
-    bool                                        m_can_make_empty_block{false};
+    std::string                              m_account_id;
+    std::string                              m_latest_cert_block_hash;
+    bool                                     m_can_make_empty_block{false};
+    common::xlogic_time_t                    m_start_time;
 };
 
 using xbatch_packer_ptr_t = xobject_ptr_t<xbatch_packer>;

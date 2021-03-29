@@ -13,7 +13,6 @@
 #include "xsync/xsession.h"
 #include "xsync/xrole_chains_mgr.h"
 #include "xsync/xrole_xips_manager.h"
-#include "xsync/xsync_status.h"
 #include "xsync/xsync_sender.h"
 #include "xsync/xsync_netmsg_dispatcher.h"
 #include "xsync/xsync_handler.h"
@@ -27,7 +26,12 @@
 #include "xsync/xblock_fetcher.h"
 #include "xsync/xdownloader.h"
 #include "xsync/xsync_gossip.h"
-#include "xsync/xsync_latest.h"
+#include "xsync/xsync_on_demand.h"
+#include "xsync/xsync_peerset.h"
+#include "xsync/xsync_peer_keeper.h"
+#include "xsync/xsync_behind_checker.h"
+#include "xsync/xsync_cross_cluster_chain_state.h"
+#include "xsync/xsync_pusher.h"
 
 NS_BEG2(top, sync)
 
@@ -39,18 +43,24 @@ private:
     std::unique_ptr<sync::xsync_store_face_t> m_sync_store{};
     std::unique_ptr<sync::xdeceit_node_manager_t> m_blacklist{};
     std::unique_ptr<sync::xsession_manager_t> m_session_mgr{};
-    std::unique_ptr<sync::xsync_status_t> m_sync_status{};
 
     std::unique_ptr<sync::xrole_chains_mgr_t> m_role_chains_mgr{};
     std::unique_ptr<sync::xrole_xips_manager_t> m_role_xips_mgr{};
     std::unique_ptr<sync::xsync_sender_t> m_sync_sender{};
     std::unique_ptr<sync::xsync_ratelimit_face_t> m_sync_ratelimit{};
+    std::unique_ptr<sync::xsync_peerset_t> m_peerset{};
+    std::unique_ptr<sync::xsync_pusher_t> m_sync_pusher{};
     std::unique_ptr<sync::xsync_broadcast_t> m_sync_broadcast{};
     std::unique_ptr<sync::xdownloader_t> m_downloader{};
 
     std::unique_ptr<sync::xblock_fetcher_t> m_block_fetcher{};
     std::unique_ptr<sync::xsync_gossip_t> m_sync_gossip{};
-    std::unique_ptr<sync::xsync_latest_t> m_sync_latest{};
+    std::unique_ptr<sync::xsync_on_demand_t> m_sync_on_demand{};
+    
+    std::unique_ptr<sync::xsync_peer_keeper_t> m_peer_keeper{};
+    std::unique_ptr<sync::xsync_behind_checker_t> m_behind_checker{};
+    std::unique_ptr<sync::xsync_cross_cluster_chain_state_t> m_cross_cluster_chain_state{};
+
     std::unique_ptr<sync::xsync_handler_t> m_sync_handler{};
 
     xobject_ptr_t<sync::xsync_event_dispatcher_t> m_sync_event_dispatcher{};
@@ -84,6 +94,7 @@ public:
 
     std::string help() const override;
     std::string status() const override;
+    std::map<std::string, std::vector<std::string>> get_neighbors() const override;
 
     void add_vnet(const std::shared_ptr<vnetwork::xvnetwork_driver_face_t> &vnetwork_driver);
     void remove_vnet(const std::shared_ptr<vnetwork::xvnetwork_driver_face_t> &vnetwork_driver);

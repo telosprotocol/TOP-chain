@@ -22,13 +22,13 @@ protected:
 public:
     static const int thread_count_{ 3 };
     static atomic_int count_;
-    static vector<uint32_t> thread_ids_;
+    static vector<std::thread::id> thread_ids_;
     static mutex mutex_;
 };
 
 const int RatelimitWorkerTest::thread_count_;
 atomic_int RatelimitWorkerTest::count_{ 0 };
-vector<uint32_t> RatelimitWorkerTest::thread_ids_;
+vector<std::thread::id> RatelimitWorkerTest::thread_ids_;
 mutex RatelimitWorkerTest::mutex_;
 
 class WorkerMock : public RatelimitWorker {
@@ -40,7 +40,7 @@ public:
     virtual void WorkerLogic() {
         lock_guard<mutex> lock(RatelimitWorkerTest::mutex_);
         RatelimitWorkerTest::count_++;
-        pthread_t t = pthread_self();
+        auto t = std::this_thread::get_id();
         RatelimitWorkerTest::thread_ids_.push_back(t);
     }
 };

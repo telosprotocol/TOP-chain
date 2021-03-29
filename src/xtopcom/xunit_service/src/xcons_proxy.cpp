@@ -18,9 +18,9 @@ xcons_proxy::xcons_proxy(const xvip2_t & xip, const std::shared_ptr<xcons_servic
 }
 
 // vnode start
-bool xcons_proxy::start() {
+bool xcons_proxy::start(const common::xlogic_time_t& start_time) {
     xkinfo("[xunitservice] cons_proxy start %p addr:%s", this, xcons_utl::xip_to_hex(m_xip).c_str());
-    return m_cons_mgr->start(m_xip);
+    return m_cons_mgr->start(m_xip, start_time);
 }
 
 // vnode fade

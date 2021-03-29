@@ -26,7 +26,9 @@ private:
     observer_ptr<network::tests::xobject_manager_t<network::xnetwork_driver_face_t>> m_network_driver_manager;
     std::array<std::shared_ptr<xvhost_face_t>, N> m_vhosts;
 
-    top::xobject_ptr_t<time::xchain_time_face_t> m_chain_timer{ top::make_object_ptr<time::xchain_timer_t>() };
+    std::shared_ptr<top::xbase_io_context_wrapper_t> m_io_object{std::make_shared<top::xbase_io_context_wrapper_t>()};
+    std::shared_ptr<top::xbase_timer_driver_t> m_timer_driver{std::make_shared<top::xbase_timer_driver_t>(m_io_object)};
+    top::xobject_ptr_t<time::xchain_time_face_t> m_chain_timer{ top::make_object_ptr<time::xchain_timer_t>(m_timer_driver) };
 
     xdummy_election_data_accessor_t m_election_data_accessor;
 

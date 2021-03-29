@@ -68,6 +68,7 @@ public:
     virtual base::xvblock_t* get_vblock_header(const std::string & store_path,const std::string & account, uint64_t height) const = 0;//header and cert only
     virtual bool get_vblock_input(const std::string & store_path,base::xvblock_t* for_block) const = 0;//just load input
     virtual bool get_vblock_output(const std::string & store_path,base::xvblock_t* for_block) const = 0;//just load output
+    virtual bool get_vblock_offstate(const std::string & store_path,base::xvblock_t* for_block) const = 0;//just load offstate
 
     virtual bool delete_block_by_path(const std::string & store_path,const std::string & account, uint64_t height, bool has_input_output) = 0;
 
@@ -77,6 +78,10 @@ public:
 
 public:
     virtual bool  execute_block(base::xvblock_t* block) = 0;
+    virtual std::string get_full_offstate(const std::string & account, uint64_t height) = 0;
+
+    virtual base::xdataunit_t* get_full_block_offstate(const std::string & account, uint64_t height) const = 0;
+    virtual bool set_full_block_offstate(const std::string & account, uint64_t height, base::xdataunit_t* offstate) = 0;
 };
 
 using xstore_face_ptr_t = xobject_ptr_t<xstore_face_t>;

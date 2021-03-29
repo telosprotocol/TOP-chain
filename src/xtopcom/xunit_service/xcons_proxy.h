@@ -14,7 +14,7 @@ public:
     explicit xcons_proxy(const xvip2_t & xip,
                          const std::shared_ptr<xcons_service_mgr_face> & cons_mgr);
 public:
-    bool start() override;
+    bool start(const common::xlogic_time_t& start_time);
     bool fade() override;
     bool outdated() override;
     xvip2_t get_ip() override;

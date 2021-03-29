@@ -124,8 +124,14 @@ static void build_network_driver() {
 
 class xtop_chian_timer final : public time::xchain_time_face_t {
 public:
-    bool update_time(data::xblock_t*, bool) override {
-        return true;
+    void start() override {
+    }
+
+    void stop() override {
+    }
+
+    void update_time(common::xlogic_time_t, time::xlogic_timer_update_strategy_t) override {
+        return;
     }
 
     uint64_t logic_time() const noexcept override {

@@ -87,5 +87,4 @@ class xresource_unit_output_t : public xbase_dataunit_t<xresource_unit_output_t,
     std::string     m_unit_justify_hash;
 };
 
-
 NS_END2

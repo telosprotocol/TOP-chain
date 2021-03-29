@@ -21,8 +21,8 @@ xtop_vnode_factory::xtop_vnode_factory(observer_ptr<elect::ElectMain> elect_main
                                        observer_ptr<sync::xsync_object_t> sync,
                                        observer_ptr<grpcmgr::xgrpc_mgr_t> grpc,
                                        observer_ptr<xunit_service::xcons_service_mgr_face> cons_service_mgr,
-                                       observer_ptr<xtxpool_service::xtxpool_service_mgr_face> txpool_service_mgr,
-                                       observer_ptr<xtxpool::xtxpool_face_t> txpool,
+                                       observer_ptr<xtxpool_service_v2::xtxpool_service_mgr_face> txpool_service_mgr,
+                                       observer_ptr<xtxpool_v2::xtxpool_face_t> txpool,
                                        observer_ptr<election::cache::xdata_accessor_face_t> cache_data_accessor)
   : m_elect_main{std::move(elect_main)}
   , m_bus{std::move(bus)}

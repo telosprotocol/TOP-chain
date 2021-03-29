@@ -22,7 +22,7 @@
 #include "xvnetwork/xmessage_callback_hub.h"
 #include "xvnetwork/xvhost_face.h"
 #include "xvnode/xvnode_manager_face.h"
-#include "xtxpool_service/xtxpool_service_face.h"
+#include "xtxpool_service_v2/xtxpool_service_face.h"
 
 #include <memory>
 
@@ -43,7 +43,7 @@ protected:
     std::unique_ptr<sync::xsync_object_t>                       m_sync_obj;
     std::unique_ptr<grpcmgr::xgrpc_mgr_t>                       m_grpc_mgr;
     xunit_service::xcons_service_mgr_ptr                        m_cons_mgr{};
-    std::shared_ptr<xtxpool_service::xtxpool_service_mgr_face>  m_txpool_service_mgr;
+    std::shared_ptr<xtxpool_service_v2::xtxpool_service_mgr_face>  m_txpool_service_mgr;
     std::shared_ptr<vnode::xvnode_manager_face_t>               m_vnode_manager;
 
 public:

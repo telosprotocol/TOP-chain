@@ -11,8 +11,6 @@
 
 NS_BEG2(top, sync)
 
-using namespace syncbase;
-
 class xsync_netmsg_dispatcher_thread_event_para_t : public top::base::xobject_t {
 public:
     xsync_netmsg_dispatcher_thread_event_para_t(xsync_handler_t *sync_handler, const vnetwork::xvnode_address_t &from_address,
@@ -48,73 +46,41 @@ static bool xsync_netmsg_dispatcher_thread_event(top::base::xcall_t& call, const
 
 xsync_netmsg_dispatcher_t::xsync_netmsg_dispatcher_t(std::string vnode_id, const std::vector<observer_ptr<base::xiothread_t>> &thread_pool,
             const observer_ptr<mbus::xmessage_bus_face_t> &mbus, const observer_ptr<vnetwork::xvhost_face_t> &vhost,
-            xsync_status_t *sync_status, xsync_handler_t *sync_handler, int min_compress_threshold):
+            xsync_handler_t *sync_handler, int min_compress_threshold):
 m_vnode_id(vnode_id),
 m_thread_pool(thread_pool),
 m_bus(mbus),
 m_vhost(vhost),
-m_sync_status(sync_status),
 m_sync_handler(sync_handler),
 m_min_compress_threshold(min_compress_threshold) {
     m_thread_count = thread_pool.size();
 }
 
-void xsync_netmsg_dispatcher_t::watch(vnetwork::xvnetwork_driver_face_t* drvier) {
-    xsync_info("[xsync_netmsg_dispatcher_t] watch %s", drvier->address().to_string().c_str());
-    drvier->register_message_ready_notify(xmessage_category_sync,
+void xsync_netmsg_dispatcher_t::watch(vnetwork::xvnetwork_driver_face_t* driver) {
+    xsync_info("xsync_netmsg_dispatcher_t watch %s", driver->address().to_string().c_str());
+    driver->register_message_ready_notify(xmessage_category_sync,
             std::bind(&xsync_netmsg_dispatcher_t::on_receive,
             this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3,
-            drvier->address()));
+            driver->address()));
 }
 
-void xsync_netmsg_dispatcher_t::unwatch(vnetwork::xvnetwork_driver_face_t* drvier) {
-    xsync_info("[xsync_netmsg_dispatcher_t] unwatch %s", drvier->address().to_string().c_str());
-    drvier->unregister_message_ready_notify(xmessage_category_sync);
+void xsync_netmsg_dispatcher_t::unwatch(vnetwork::xvnetwork_driver_face_t* driver) {
+    xsync_info("xsync_netmsg_dispatcher_t unwatch %s", driver->address().to_string().c_str());
+    driver->unregister_message_ready_notify(xmessage_category_sync);
 }
 
 void xsync_netmsg_dispatcher_t::on_receive(vnetwork::xvnode_address_t const & addr, vnetwork::xmessage_t const & msg,
                                                     std::uint64_t const, vnetwork::xvnode_address_t const & vnetwork_self) {
 
     vnetwork::xmessage_t::message_type msg_type = msg.id();
+    uint32_t msg_size = msg.payload().size();
 
-#if defined __clang__
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wswitch"
-#elif defined __GNUC__
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wswitch"
-#endif
-    switch(msg_type) {
-        case xmessage_id_sync_get_blocks:
-        case xmessage_id_sync_blocks:
-        case xmessage_id_sync_newblock:
-        case xmessage_id_sync_newblockhash:
-        case xmessage_id_sync_gossip:
-        case xmessage_id_sync_frozen_gossip:
-        case xmessage_id_sync_latest_block_info:
-        case xmessage_id_sync_get_latest_blocks:
-        case xmessage_id_sync_latest_blocks:
-        {
-            xsync_dbg("[xsync_netmsg_dispatcher_t] on_receive_msg received %x %" PRIx64 " ", msg_type, msg.hash());
-            XMETRICS_COUNTER_INCREMENT("sync_pkgs_in", 1);
-            XMETRICS_COUNTER_INCREMENT("sync_bytes_in", msg.payload().size());
-            xbyte_buffer_t message;
-            xmessage_pack_t::unpack_message(msg.payload(), message);
-            dispatch(addr, vnetwork_self, message, msg_type, msg.hash());
-            break;
-        }
-        default:
-        {
-            xsync_warn("[xsync_netmsg_dispatcher_t] unknown msgid(%x)", msg_type);
-            assert(false);
-            break;
-        }
-    }
-#if defined __clang__
-#pragma clang diagnostic pop
-#elif defined __GNUC__
-#pragma GCC diagnostic pop
-#endif
+    //xsync_dbg("xsync_netmsg_dispatcher_t on_receive_msg received %x %" PRIx64 " ", msg_type, msg.hash());
+    XMETRICS_COUNTER_INCREMENT("sync_pkgs_in", 1);
+    XMETRICS_COUNTER_INCREMENT("sync_bytes_in", msg_size);
+    xbyte_buffer_t message;
+    xmessage_pack_t::unpack_message(msg.payload(), message);
+    dispatch(addr, vnetwork_self, message, msg_type, msg.hash());
 }
 
 void xsync_netmsg_dispatcher_t::dispatch(
@@ -125,7 +91,7 @@ void xsync_netmsg_dispatcher_t::dispatch(
     xtop_vnetwork_message::hash_result_type msg_hash) {
 
     if (msg.size() == 0) {
-        xsync_warn("[xsync_netmsg_dispatcher_t] wrong message from remote %s",
+        xsync_warn("xsync_netmsg_dispatcher_t wrong message from remote %s",
                 from_address.to_string().c_str());
         //notify_deceit_node(from_address);
         return;

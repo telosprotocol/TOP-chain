@@ -18,7 +18,7 @@ public:
               observer_ptr<xrouter_face_t> router_ptr,
               const uint16_t http_port,
               const uint16_t ws_port,
-              xtxpool_service::xtxpool_proxy_face_ptr const &  txpool_service,
+              xtxpool_service_v2::xtxpool_proxy_face_ptr const &  txpool_service,
               observer_ptr<store::xstore_face_t> const & store,
               observer_ptr<base::xvblockstore_t> const & block_store,
               observer_ptr<elect::ElectMain> elect_main,

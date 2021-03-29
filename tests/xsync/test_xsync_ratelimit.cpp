@@ -33,7 +33,7 @@ public:
 
     void send_request(int64_t now) {
         assert(m_send_request_time == 0);
-        if (m_ratelimit->consume(now)) {
+        if (m_ratelimit->get_token(now)) {
             m_send_request_time = now;
             // 10ms response
             m_next_timeout = now + 10;
@@ -51,7 +51,7 @@ public:
 
         int64_t cost = now - m_send_request_time;
 
-        m_ratelimit->on_response(cost, now);
+        m_ratelimit->feedback(cost, now);
 
         for (uint64_t i=1; i<1000; i++)
             for (uint64_t j=1; j<10000; j++)

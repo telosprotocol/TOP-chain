@@ -22,4 +22,17 @@ xtop_serializable_based_on<void>::serialize_from(base::xstream_t & stream) {
     return ret;
 }
 
+std::int32_t xtop_serializable_based_on<void>::serialize_to(base::xbuffer_t & buffer) const {
+    base::xstream_t internal_stream{base::xcontext_t::instance()};
+    do_write(internal_stream);
+    return buffer << internal_stream;
+}
+
+std::int32_t xtop_serializable_based_on<void>::serialize_from(base::xbuffer_t & buffer) {
+    base::xstream_t internal_stream{base::xcontext_t::instance()};
+    auto ret = buffer >> internal_stream;
+    do_read(internal_stream);
+    return ret;
+}
+
 NS_END1

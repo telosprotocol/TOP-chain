@@ -28,6 +28,7 @@ enum enum_xmodule_type {
     xmodule_type_xverifier            = 0x002D0000,
     xmodule_type_xtxpool              = 0x002E0000,
     xmodule_type_xtxexecutor          = 0x002F0000,
+    xmodule_type_xblockmaker          = 0x00300000,
 };
 
 typedef std::string (*xmodule_log_print_fun_t)(int32_t error_code);

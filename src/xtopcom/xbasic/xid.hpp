@@ -41,6 +41,12 @@ template <typename TagT, typename IdT>
 std::int32_t
 operator>>(base::xstream_t & stream, xtop_nullable_id<TagT, IdT> & id);
 
+template <typename TagT, typename IdT>
+std::int32_t operator<<(base::xbuffer_t & buffer, xtop_nullable_id<TagT, IdT> const & id);
+
+template <typename TagT, typename IdT>
+std::int32_t operator>>(base::xbuffer_t & buffer, xtop_nullable_id<TagT, IdT> & id);
+
 /**
  * @brief The id class.  std::uint64_t is the back.
  *
@@ -611,6 +617,10 @@ public:
     std::int32_t
     operator>> <>(base::xstream_t & stream, xtop_nullable_id & id);
 
+    friend std::int32_t operator<<<>(base::xbuffer_t & buffer, xtop_nullable_id const & id);
+
+    friend std::int32_t operator>><>(base::xbuffer_t & buffer, xtop_nullable_id & id);
+
 private:
     std::int32_t
     do_read(base::xstream_t & stream) override {
@@ -646,6 +656,16 @@ template <typename TagT, typename IdT>
 std::int32_t
 operator>>(base::xstream_t & stream, xtop_nullable_id<TagT, IdT> & id) {
     return id.serialize_from(stream);
+}
+
+template <typename TagT, typename IdT>
+std::int32_t operator<<(base::xbuffer_t & buffer, xtop_nullable_id<TagT, IdT> const & id) {
+    return id.serialize_to(buffer);
+}
+
+template <typename TagT, typename IdT>
+std::int32_t operator>>(base::xbuffer_t & buffer, xtop_nullable_id<TagT, IdT> & id) {
+    return id.serialize_from(buffer);
 }
 
 NS_END1

@@ -4,6 +4,7 @@
 
 #include "xsync/xrole_xips_manager.h"
 #include "xsync/xsync_log.h"
+#include "xsync/xsync_util.h"
 
 NS_BEG2(top, sync)
 
@@ -11,14 +12,13 @@ xrole_xips_manager_t::~xrole_xips_manager_t() {
 
 }
 
-xrole_xips_manager_t::xrole_xips_manager_t(std::string vnode_id, const observer_ptr<base::xvnodesrv_t> &nodesrv, xdeceit_node_manager_t *blacklist):
-m_vnode_id(vnode_id),
-m_nodesrv(nodesrv),
-m_blacklist(blacklist) {
+xrole_xips_manager_t::xrole_xips_manager_t(std::string vnode_id):
+m_vnode_id(vnode_id) {
 }
 
 void xrole_xips_manager_t::add_role(const vnetwork::xvnode_address_t& self_xip, const std::vector<vnetwork::xvnode_address_t>& neighbours,
-                const std::vector<vnetwork::xvnode_address_t>& parents, const std::vector<vnetwork::xvnode_address_t>& archives) {
+                const std::vector<vnetwork::xvnode_address_t>& parents, const std::vector<vnetwork::xvnode_address_t>& archives, const std::set<uint16_t> &table_ids) {
+
     std::unique_lock<std::mutex> lock(m_lock);
     // remove old first : version is different
     for(auto& pair : m_map) {
@@ -30,7 +30,7 @@ void xrole_xips_manager_t::add_role(const vnetwork::xvnode_address_t& self_xip, 
 
 
     m_map[self_xip] = {self_xip, create_xip_vector_ptr(neighbours, self_xip), create_xip_vector_ptr(parents, self_xip),
-                        std::make_shared<std::vector<vnetwork::xvnode_address_t>>(neighbours)};
+                        std::make_shared<std::vector<vnetwork::xvnode_address_t>>(neighbours), table_ids};
 
     // only the same archive view can obtain the same vrf and hash result
     m_archive_xips = create_archive_xip_vector_ptr(archives, self_xip);
@@ -80,34 +80,9 @@ std::vector<vnetwork::xvnode_address_t> xrole_xips_manager_t::get_rand_parents(c
     return {};
 }
 
-std::vector<vnetwork::xvnode_address_t> xrole_xips_manager_t::get_rand_archives(const vnetwork::xvnode_address_t& self_xip, uint32_t max_peers) {
+std::vector<vnetwork::xvnode_address_t> xrole_xips_manager_t::get_rand_archives(uint32_t max_peers) {
     std::unique_lock<std::mutex> lock(m_lock);
     return get_rand_peers(m_archive_xips, max_peers);
-}
-
-std::vector<vnetwork::xvnode_address_t> xrole_xips_manager_t::get_vrf_sqrt_archive(const std::string& hash) {
-
-    std::vector<vnetwork::xvnode_address_t> archive_nodes;
-
-    std::unique_lock<std::mutex> lock(m_lock);
-
-    const xip_vector_ptr& ptr = m_archive_xips;
-
-    if (ptr->size() == 0)
-        return {};
-
-    uint32_t max_peers = sqrt(ptr->size());
-    uint32_t value = vrf_value(hash);
-
-    bool found = false;
-
-    uint32_t base_index = value % ptr->size();
-    for (uint32_t i = 0; i < max_peers; i++) {
-        const vnetwork::xvnode_address_t &xip = ptr->at((base_index + i) % ptr->size());
-        archive_nodes.push_back(xip);
-    }
-
-    return archive_nodes;
 }
 
 std::vector<vnetwork::xvnode_address_t> xrole_xips_manager_t::get_archive_list() {
@@ -120,46 +95,6 @@ std::vector<vnetwork::xvnode_address_t> xrole_xips_manager_t::get_archive_list()
     }
 
     return nodes;
-}
-
-bool xrole_xips_manager_t::get_rand_neighbor_by_block(base::xvblock_t *vblock, vnetwork::xvnode_address_t& self_xip, vnetwork::xvnode_address_t& target_xip) {
-
-    const base::xvqcert_t *test_for_cert = vblock->get_cert();
-    base::xauto_ptr<base::xvnodegroup_t> node_group = m_nodesrv->get_group(test_for_cert->get_validator());
-    assert(node_group != nullptr);
-
-    const xvip2_t &group_xip2 = node_group->get_xip2_addr();
-
-    int32_t self_slot_id = -1;
-    int32_t target_slot_id = -1;
-    uint32_t group_size = node_group->get_size();
-
-    const std::vector<base::xvnode_t*> &nodes = node_group->get_nodes();
-    for (const auto &it: nodes) {
-        base::xvnode_t* node = it;
-        const std::string& prikey = node->get_sign_prikey();
-        if (!prikey.empty()) {
-            const xvip2_t & node_xip2 = node->get_xip2_addr();
-            self_slot_id = get_node_id_from_xip2(node_xip2);
-            break;
-        }
-    }
-
-    if (self_slot_id == -1) {
-        //assert(0);
-        return false;
-    }
-
-    while (1) {
-        target_slot_id = RandomUint32()%group_size;
-        if (target_slot_id != self_slot_id)
-            break;
-    }
-
-    self_xip = build_address_from_vnode(group_xip2, nodes, self_slot_id);
-    target_xip = build_address_from_vnode(group_xip2, nodes, target_slot_id);
-
-    return true;
 }
 
 bool xrole_xips_manager_t::vrf_gossip_with_archive(base::xvblock_t *time_vblock, common::xnode_type_t role_type) {
@@ -186,74 +121,42 @@ bool xrole_xips_manager_t::vrf_gossip_with_archive(base::xvblock_t *time_vblock,
     return false;
 }
 
-bool xrole_xips_manager_t::vrf_send_newblock(base::xvblock_t *vblock, vnetwork::xvnode_address_t& self_xip, uint32_t &self_position, uint32_t &deliver_node_count) {
-
-    const std::string& hash = vblock->get_block_hash();
-
-    const base::xvqcert_t *test_for_cert = vblock->get_cert();
-    base::xauto_ptr<base::xvnodegroup_t> node_group = m_nodesrv->get_group(test_for_cert->get_validator());
-
-    uint32_t group_size = node_group->get_size();
-    uint32_t max_senders = sqrt(group_size);
-
-    // 1. get my position
-    int32_t self_slot_id = -1;
-
-    const std::vector<base::xvnode_t*> &nodes = node_group->get_nodes();
-    for (const auto &it: nodes) {
-        base::xvnode_t* node = it;
-        const std::string& prikey = node->get_sign_prikey();
-        if (!prikey.empty()) {
-            const xvip2_t & node_xip2 = node->get_xip2_addr();
-            self_slot_id = get_node_id_from_xip2(node_xip2);
-            break;
-        }
+std::vector<vnetwork::xvnode_address_t> xrole_xips_manager_t::get_all_neighbors(const vnetwork::xvnode_address_t& self_addr) {
+    std::unique_lock<std::mutex> lock(m_lock);
+    auto it = m_map.find(self_addr);
+    if (it == m_map.end()) {
+        return {};
     }
 
-    if (self_slot_id == -1)
-        return false;
+    xrole_xips_t &xips = it->second;
 
-    // 2. calc if contain my position
-    uint32_t value = vrf_value(hash);
-    uint32_t vrf_index = value % group_size;
-    bool found = false;
+    const xip_vector_ptr& neighbour_xips_ptr = xips.neighbour_xips;
+    uint32_t count = neighbour_xips_ptr->size();
 
-    for (uint32_t i = 0; i < max_senders; i++) {
-        uint32_t idx = (vrf_index + i) % group_size;
-        if (idx == (uint32_t)self_slot_id) {
-            self_position = i;
-            found = true;
-            break;
-        }
+    std::vector<vnetwork::xvnode_address_t> neighbors;
+    for (uint32_t i=0; i<count; i++) {
+        neighbors.push_back(neighbour_xips_ptr->at(i));
     }
 
-    if (!found)
-        return false;
-
-    // 3. build address
-    const xvip2_t &group_xip2 = node_group->get_xip2_addr();
-    self_xip = build_address_from_vnode(group_xip2, nodes, self_slot_id);
-    deliver_node_count = max_senders;
-
-    return true;
+    return neighbors;
 }
 
 xip_vector_ptr xrole_xips_manager_t::create_xip_vector_ptr(const std::vector<vnetwork::xvnode_address_t>& list, const vnetwork::xvnode_address_t& self_xip) {
     auto ptr = std::make_shared<std::vector<vnetwork::xvnode_address_t>>();
-    m_blacklist->filter_deceit_nodes([&](const std::set<vnetwork::xaccount_address_t>& _set) {
-        for(auto& addr : list) {
-            if(self_xip != addr && _set.find(addr.account_address()) == _set.end()) {  // filter self xip and deceit nodes
-                ptr->push_back(addr);
-            }
+    for(auto& addr : list) {
+        if(self_xip != addr) {  // filter self xip and deceit nodes
+            ptr->push_back(addr);
         }
-    });
+    }
     return ptr;
 }
 
 xip_vector_ptr xrole_xips_manager_t::create_archive_xip_vector_ptr(const std::vector<vnetwork::xvnode_address_t>& list, const vnetwork::xvnode_address_t& self_xip) {
     auto ptr = std::make_shared<std::vector<vnetwork::xvnode_address_t>>();
     for(auto& addr : list) {
-        ptr->push_back(addr);
+        if (self_xip != addr) {
+            ptr->push_back(addr);
+        }
     }
     return ptr;
 }
@@ -273,67 +176,31 @@ std::vector<vnetwork::xvnode_address_t> xrole_xips_manager_t::get_rand_peers(con
     return rand_list;
 }
 
-uint32_t xrole_xips_manager_t::vrf_value(const std::string& hash) {
-
-    uint32_t value = 0;
-    const uint8_t* data = (const uint8_t*)hash.data();
-    for (size_t i = 0; i < hash.size(); i++) {
-        value += data[i];
-    }
-
-    return value;
-}
-
-bool xrole_xips_manager_t::is_consensus_role_exist(base::xvblock_t *vblock) const {
-
-    const std::string& account = vblock->get_account();
-
-    uint32_t table_id{UINT32_MAX};
-    common::xnode_type_t role = data::get_node_role_from_account(common::xaccount_address_t{ account }, table_id);
-
-    common::xnode_type_t type = common::xnode_type_t::consensus_validator;
-    if (common::has<common::xnode_type_t::committee>(role) || common::has<common::xnode_type_t::zec>(role)) {
-        type = role;
-    }
-
-    bool found = false;
+bool xrole_xips_manager_t::get_self_addr(vnetwork::xvnode_address_t& self_addr) const {
     std::unique_lock<std::mutex> lock(m_lock);
     for(auto& pair : m_map) {
-        if (real_part_type(pair.first.type()) == type) {
-            found = true;
-            break;
+        if (real_part_type(pair.first.type()) != common::xnode_type_t::frozen) {
+            self_addr = pair.first;
+            return true;
         }
     }
 
-    return found;
+    return false;
 }
 
-vnetwork::xvnode_address_t xrole_xips_manager_t::build_address_from_vnode(const xvip2_t &group_xip2, const std::vector<base::xvnode_t*> &nodes, int32_t slot_id) {
+bool xrole_xips_manager_t::get_self_addr(common::xnode_type_t node_type, uint16_t table_id, vnetwork::xvnode_address_t& self_addr) const {
+    std::unique_lock<std::mutex> lock(m_lock);
+    for (auto& it : m_map) {
+        if (common::has(node_type, it.first.type())) {
 
-    assert(slot_id >= 0);
-    assert((uint32_t)slot_id < nodes.size());
+            if (it.second.set_table_ids.find(table_id) != it.second.set_table_ids.end()) {
+                self_addr = it.first;
+                return true;
+            }
+        }
+    }
 
-    common::xzone_id_t zone_id = common::xzone_id_t{uint8_t(get_zone_id_from_xip2(group_xip2))};
-    common::xcluster_id_t cluster_id = common::xcluster_id_t{uint8_t(get_cluster_id_from_xip2(group_xip2))};
-    common::xgroup_id_t group_id = common::xgroup_id_t{uint8_t(get_group_id_from_xip2(group_xip2))};
-    common::xversion_t ver = common::xversion_t{uint8_t(get_network_ver_from_xip2(group_xip2))};
-    common::xnetwork_id_t nid = common::xnetwork_id_t{uint32_t(get_network_id_from_xip2(group_xip2))};
-    uint64_t elect_height = get_network_height_from_xip2(group_xip2);
-
-    uint32_t group_size = nodes.size();
-
-    auto const cluster_addr = common::xsharding_address_t{
-                                    nid,
-                                    zone_id,
-                                    cluster_id,
-                                    group_id
-                                };
-
-    base::xvnode_t* node = nodes[slot_id];
-    common::xaccount_election_address_t account_election_address{ common::xnode_id_t { node->get_account() }, common::xslot_id_t{(uint16_t)slot_id} };
-    vnetwork::xvnode_address_t addr = vnetwork::xvnode_address_t{cluster_addr, account_election_address, ver, (uint16_t)group_size, elect_height};
-
-    return addr;
+    return false;
 }
 
 NS_END2

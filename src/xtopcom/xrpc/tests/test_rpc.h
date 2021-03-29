@@ -1,9 +1,9 @@
 
-#include "xtxpool_service/xtxpool_service_face.h"
+#include "xtxpool_service_v2/xtxpool_service_face.h"
 
 using namespace top;
 
-class xtop_dummy_txpool_proxy_face : public top::xtxpool_service::xtxpool_proxy_face {
+class xtop_dummy_txpool_proxy_face : public top::xtxpool_service_v2::xtxpool_proxy_face {
 public:
     bool start() override { return false; }
     bool fade() override { return false; }

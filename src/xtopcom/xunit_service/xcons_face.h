@@ -12,7 +12,8 @@
 #include "xvnetwork/xvnetwork_driver_face.h"
 #include "xelection/xcache/xdata_accessor_face.h"
 #include "xmbus/xmessage_bus.h"
-#include "xtxpool/xtxpool_face.h"
+#include "xtxpool_v2/xtxpool_face.h"
+#include "xcommon/xlogic_time.h"
 
 #include <string>
 #include <vector>
@@ -118,32 +119,20 @@ enum e_cons_type {
     e_table,
 };
 
-struct xblock_maker_para_t {
-    xblock_maker_para_t() {
-        auditor_xip.high_addr = 0;
-        auditor_xip.low_addr = 0;
-    }
-    uint64_t                    clock{0};
-    uint64_t                    viewid{0};
-    uint64_t                    drand_height{0};
-    xvip2_t                     validator_xip;
-    xvip2_t                     auditor_xip;
-    base::xvblock_t*            timer_block;
-    base::xvblock_t*            drand_block;
-    base::xblock_mptrs*         latest_blocks;
-    bool                        can_make_empty_block;
-    std::vector<std::string>    unit_accounts;
-    xtxpool::xtxpool_table_face_t*  txpool_table;
+class xproposal_maker_face {
+ public:
+    virtual bool                        can_make_proposal(data::xblock_consensus_para_t & proposal_para) = 0;
+    virtual xblock_ptr_t                make_proposal(data::xblock_consensus_para_t & proposal_para) = 0;
+    virtual int                         verify_proposal(base::xvblock_t* proposal_block, base::xvqcert_t * bind_clock_cert) = 0;
 };
+
 // block maker face
 class xblock_maker_face {
 public:
-    virtual base::xauto_ptr<base::xvblock_t> get_latest_block(const std::string & account) = 0;
-    virtual base::xvblock_t *                make_block(const std::string & account, uint64_t clock, uint64_t viewid, uint16_t threshold, const xvip2_t & leader_xip) = 0;
-    virtual base::xvblock_t *                make_block(const std::string & account, const xblock_maker_para_t & para, const xvip2_t & leader_xip) = 0;
-    virtual int                              verify_block(base::xvblock_t * proposal_block) = 0;
-    virtual int                              verify_block(base::xvblock_t * proposal_block, base::xvqcert_t * bind_clock_cert, base::xvqcert_t * bind_drand_cert, xtxpool::xtxpool_table_face_t* txpool_table, uint64_t committed_height, const xvip2_t & xip) { return -1; }
-    virtual xtxpool::xtxpool_table_face_t*   get_txpool_table(const std::string & table_account) { return nullptr;}
+    virtual base::xauto_ptr<base::xvblock_t> get_latest_block(const std::string & account) { return nullptr;}
+    virtual base::xvblock_t *                make_block(const std::string & account, uint64_t clock, uint64_t viewid, uint16_t threshold, const xvip2_t & leader_xip) { return nullptr;}
+    virtual int                              verify_block(base::xvblock_t * proposal_block) { return -1;}
+    virtual std::shared_ptr<xproposal_maker_face>   get_proposal_maker(const std::string & account) {return nullptr;}
 };
 
 using xblock_maker_ptr = std::shared_ptr<xblock_maker_face>;
@@ -177,14 +166,14 @@ using xcons_service_para_ptr = std::shared_ptr<xcons_service_para_face>;
 class xcons_service_face {
 public:
     virtual common::xmessage_category_t get_msg_category() = 0;
-    virtual bool                        start(const xvip2_t & xip) = 0;
+    virtual bool                        start(const xvip2_t & xip, const common::xlogic_time_t& start_time) = 0;
     virtual bool                        fade(const xvip2_t & xip) = 0;
     virtual bool                        destroy(const xvip2_t & xip) = 0;
 };
 
 class xcons_proxy_face {
 public:
-    virtual bool    start() = 0;
+    virtual bool    start(const common::xlogic_time_t& start_time) = 0;
     virtual bool    fade() = 0;
     virtual bool    outdated() = 0;
     virtual xvip2_t get_ip() = 0;
@@ -204,7 +193,7 @@ public:
     virtual void on_clock(base::xvblock_t * clock_block) {}
 
     // start
-    virtual bool start(const xvip2_t & xip) = 0;
+    virtual bool start(const xvip2_t & xip, const common::xlogic_time_t& start_time) = 0;
 
     virtual bool fade(const xvip2_t & xip) = 0;
 
@@ -244,7 +233,7 @@ public:
     virtual bool destroy(const xvip2_t & xip) = 0;
 
     // init reference data
-    virtual bool start(const xvip2_t & xip) = 0;
+    virtual bool start(const xvip2_t & xip, const common::xlogic_time_t& start_time) = 0;
 
     // uninit reference data
     virtual bool fade(const xvip2_t & xip) = 0;

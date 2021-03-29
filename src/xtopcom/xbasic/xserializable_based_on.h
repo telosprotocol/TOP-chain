@@ -71,6 +71,10 @@ public:
     std::int32_t
     serialize_from(base::xstream_t & stream);
 
+    virtual std::int32_t serialize_to(base::xbuffer_t & buffer) const;
+    virtual std::int32_t serialize_from(base::xbuffer_t & buffer);
+
+protected:
     /**
      * @brief Serialize the object into the steam directly.
      */
@@ -85,6 +89,7 @@ public:
     std::int32_t
     do_read(base::xstream_t & stream) = 0;
 
+public:
     std::string serialize_to_string() const {
         base::xstream_t stream(base::xcontext_t::instance());
         serialize_to(stream);

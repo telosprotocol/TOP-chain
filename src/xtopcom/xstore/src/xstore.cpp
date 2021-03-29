@@ -23,6 +23,8 @@
 #include "xdata/xproperty.h"
 #include "xdata/xpropertylog.h"
 #include "xdata/xtableblock.h"
+#include "xdata/xfull_tableblock.h"
+#include "xdata/xgenesis_data.h"
 #include "xdb/xdb_factory.h"
 
 #include "xmbus/xevent_behind.h"
@@ -56,6 +58,7 @@ enum xstore_key_type {
     xstore_key_type_property_log = 2,
     xstore_key_type_block = 3,
     xstore_key_type_blockchain = 4,
+    xstore_key_type_block_offstate = 5,
     xstore_key_type_max
 };
 
@@ -368,8 +371,8 @@ bool xstore::update_blockchain_by_block(xblockchain2_t *blockchain, const data::
         ret = blockchain->update_state_by_next_height_block(block);
         xassert(ret);
     } else if (block->get_height() > blockchain->get_last_height() + 1) {
-        if (block->is_fullunit()) {
-            xdbg("[update blockchain] by full unit. block=%s,last_height:%ld max_height:%ld",
+        if (block->is_fullunit() || block->is_fulltable()) {
+            xdbg("[update blockchain] by full block. block=%s,last_height:%ld max_height:%ld",
                                 block->dump().c_str(), blockchain->get_last_height(), blockchain->get_chain_height());
             ret = blockchain->update_state_by_full_block(block);
             xassert(ret);
@@ -669,25 +672,80 @@ bool xstore::execute_fullunit(xblockchain2_t* account, const xblock_t *block, st
     return true;
 }
 
-void xstore::execute_tableblock(xblockchain2_t* account, const xblock_t *block) {
-    std::set<std::string> unconfirmed_accounts = account->get_unconfirmed_accounts();
-    auto & units = block->get_tableblock_units(false);
-    if (!units.empty()) {
-        for (auto & unit : units) {
-            auto account_name = unit->get_account();
-            if (unit->get_block_class() == base::enum_xvblock_class_light) {
-                data::xlightunit_block_t * lightunit = dynamic_cast<data::xlightunit_block_t *>(unit.get());
-                if (lightunit->get_unconfirm_sendtx_num() > 0) {
-                    unconfirmed_accounts.insert(account_name);
-                } else {
-                    unconfirmed_accounts.erase(account_name);
-                }
-            } else if (unit->get_block_class() == base::enum_xvblock_class_full) {
-                unconfirmed_accounts.erase(account_name);
-            }
-        }
-        account->set_unconfirmed_accounts(unconfirmed_accounts);
+bool xstore::execute_tableblock_light(xblockchain2_t* account, const xblock_t *block) {
+    return account->add_light_table(block);
+}
+
+std::string xstore::get_full_offstate(const std::string & account, uint64_t height) {
+    xstore_key_t last_full_offstate_key = xstore_key_t(xstore_key_type_block_offstate, xstore_block_type_none, account, std::to_string(height));
+    std::string value = get_value(last_full_offstate_key);
+    return value;
+}
+
+base::xdataunit_t* xstore::get_full_block_offstate(const std::string & account, uint64_t height) const {
+    xstore_key_t last_full_offstate_key = xstore_key_t(xstore_key_type_block_offstate, xstore_block_type_none, account, std::to_string(height));
+    std::string value = get_value(last_full_offstate_key);
+    base::xdataunit_t* offstate = nullptr;
+    if (!value.empty()) {
+        base::xstream_t stream(base::xcontext_t::instance(), (uint8_t *)value.c_str(), (uint32_t)value.size());
+        offstate = base::xdataunit_t::read_from(stream);
     }
+    return offstate;
+}
+
+bool xstore::set_full_block_offstate(const std::string & account, uint64_t height, base::xdataunit_t* offstate) {
+    xstore_key_t key = xstore_key_t(xstore_key_type_block_offstate, xstore_block_type_none, account, std::to_string(height));
+    std::string value;
+    offstate->serialize_to_string(value);
+    xassert(!value.empty());
+    return set_value(key.to_db_key(), value);
+}
+
+bool xstore::execute_tableblock_full(xblockchain2_t* account, xfull_tableblock_t *block, std::map<std::string, std::string> & kv_pairs) {
+    const data::xfull_tableblock_t* full_table = dynamic_cast<const data::xfull_tableblock_t*>(block);
+    xassert(full_table != nullptr);
+
+    if (!block->is_full_state_block()) {
+        xtable_mbt_ptr_t last_mbt = make_object_ptr<xtable_mbt_t>();
+        uint64_t last_full_height = block->get_last_full_block_height();
+        if (last_full_height != 0) {
+            base::xdataunit_t* offstate = get_full_block_offstate(account->get_account(), last_full_height);
+            if (nullptr == offstate) {
+                xerror("xstore::execute_tableblock_full load last offstate fail.");
+                return false;
+            }
+            xtable_mbt_t* table_mbt = dynamic_cast<xtable_mbt_t*>(offstate);
+            xassert(table_mbt != nullptr);
+            last_mbt.attach(table_mbt);
+        }
+
+        xfulltable_binlog_resource_ptr_t binlog_resource = full_table->get_fulltable_binlog_resource();
+        xtable_mbt_binlog_ptr_t binlog = binlog_resource->get_binlog();
+        const std::map<std::string, xaccount_index_t> & accounts_index = binlog->get_accounts_index();
+        last_mbt->set_accounts_index_info(accounts_index);
+
+        if (last_mbt->get_root_hash() != full_table->get_bucket_tree_root()) {
+            xerror("xstore::execute_tableblock_full mbt root not match.block=%s", block->dump().c_str());
+            return false;
+        }
+        block->set_full_offstate(last_mbt);  // cache offstate on block
+
+    }
+
+    if (!account->add_full_table(block)) {
+        xerror("xstore::execute_tableblock_full add full table fail");
+        return false;
+    }
+
+    xstore_key_t new_full_offstate_key = xstore_key_t(xstore_key_type_block_offstate, xstore_block_type_none, account->get_account(), std::to_string(block->get_height()));
+    xtable_mbt_ptr_t table_mbt = block->get_full_offstate();
+    std::string new_full_offstate_value;
+    table_mbt->serialize_to_string(new_full_offstate_value);
+    kv_pairs[new_full_offstate_key.to_db_key()] = new_full_offstate_value;
+
+    xdbg("xstore::execute_tableblock_full account=%s,height=%ld,account_size=%d,mem_size=%d",
+        account->get_account().c_str(), block->get_height(), table_mbt->get_account_size(), new_full_offstate_value.size());
+    return true;
 }
 
 int32_t xstore::get_map_property(const std::string &address, uint64_t height, const std::string &name, std::map<std::string, std::string> &value) {
@@ -1079,6 +1137,31 @@ bool xstore::get_vblock_output(const std::string &account, base::xvblock_t* bloc
     return true;
 }
 
+bool xstore::get_vblock_offstate(const std::string &store_path, base::xvblock_t* block) const {
+    xassert(block != nullptr);
+    xassert(block->get_block_class() == base::enum_xvblock_class_full);
+    if (block == nullptr || block->get_block_class() != base::enum_xvblock_class_full) {
+        return false;
+    }
+    xfull_tableblock_t* block_ptr = dynamic_cast<xfull_tableblock_t*>(block);
+    if (block_ptr->get_full_offstate() != nullptr) {
+        return true;
+    }
+
+    base::xdataunit_t* offstate_unit = get_full_block_offstate(block->get_account(), block->get_height());
+    xtable_mbt_ptr_t offstate;
+    offstate.attach((xtable_mbt_t*)offstate_unit);
+    xassert(offstate != nullptr);
+
+    if (nullptr != offstate) {
+        block_ptr->set_full_offstate(offstate);
+        return true;
+    }
+
+    xwarn("xstore::get_vblock_offstate fail.account=%s,height=%ld", block->get_account().c_str(), block->get_height());
+    return false;
+}
+
 bool xstore::delete_block_by_path(const std::string & store_path,const std::string & account, uint64_t height, bool has_input_output) {
     xdbg("xstore::delete_block_by_path path %s account:%s height:% " PRIu64 " has input/output %d", store_path.c_str(), account.c_str(), height, has_input_output);
 
@@ -1147,14 +1230,13 @@ bool  xstore::execute_block(base::xvblock_t* vblock) {
     }
 
     std::map<std::string, std::string> kv_pairs;
+    bool execute_ret = true;
     // first execute block, then update blockchain
     if (block->get_block_class() == base::enum_xvblock_class_full) {
         if (block->get_block_level() == base::enum_xvblock_level_unit) {
-            bool ret = execute_fullunit(account, block, kv_pairs);
-            if (!ret) {
-                xerror("xstore::execute_block fail-for fullunit block=%s", block->dump().c_str());
-                return false;
-            }
+            execute_ret = execute_fullunit(account, block, kv_pairs);
+        } else if (block->get_block_level() == base::enum_xvblock_level_table) {
+            execute_ret = execute_tableblock_full(account, dynamic_cast<xfull_tableblock_t*>(block), kv_pairs);
         } else {
             xassert(0);  // not support othe full block now
             return false;
@@ -1167,14 +1249,17 @@ bool  xstore::execute_block(base::xvblock_t* vblock) {
         }
 
         if (block->is_lightunit()) {
-            if (!execute_lightunit(account, block, kv_pairs)) {
-                xerror("xstore::execute_block fail-for execute lightunit block=%s", block->dump().c_str());
-                return false;
-            }
+            execute_ret = execute_lightunit(account, block, kv_pairs);
         }
-        if (block->is_tableblock()) {
-            execute_tableblock(account, block);
+        if (block->is_lighttable()) {
+            execute_ret = execute_tableblock_light(account, block);
         }
+    }
+
+    if (!execute_ret) {
+        xerror("xstore::execute_block fail-for execute blockchain. block=%s, level:%d class:%d",
+            block->dump().c_str(), block->get_block_level(), block->get_block_class());
+        return false;
     }
 
     bool bret;

@@ -13,6 +13,7 @@
 #include <map>
 #include <set>
 #include <string>
+#include <unordered_set>
 #include <vector>
 
 namespace top {
@@ -20,17 +21,11 @@ namespace xtxpool_v2 {
 
 using data::xcons_transaction_ptr_t;
 
-class send_tx_queue_comp {
+class xready_send_tx_queue_comp {
 public:
     bool operator()(const std::shared_ptr<xtx_entry> left, const std::shared_ptr<xtx_entry> right) const {
         if (left->get_tx()->get_source_addr() == right->get_tx()->get_source_addr()) {
             return left->get_tx()->get_transaction()->get_last_nonce() < right->get_tx()->get_transaction()->get_last_nonce();
-        }
-
-        bool is_sys_l = data::is_sys_contract_address(common::xaccount_address_t{left->get_tx()->get_source_addr()});
-        bool is_sys_r = data::is_sys_contract_address(common::xaccount_address_t{right->get_tx()->get_source_addr()});
-        if (is_sys_l != is_sys_r) {
-            return is_sys_l;
         }
 
         if (left->get_para().get_tx_type_score() == right->get_para().get_tx_type_score()) {
@@ -43,18 +38,9 @@ public:
     }
 };
 
-class xreceipt_queue_comp {
+class xready_receipt_queue_comp {
 public:
     bool operator()(const std::shared_ptr<xtx_entry> left, const std::shared_ptr<xtx_entry> right) const {
-        auto l_addr = left->get_tx()->is_recv_tx() ? left->get_tx()->get_target_addr() : left->get_tx()->get_source_addr();
-        auto r_addr = right->get_tx()->is_recv_tx() ? right->get_tx()->get_target_addr() : right->get_tx()->get_source_addr();
-
-        bool is_sys_l = data::is_sys_contract_address(common::xaccount_address_t{l_addr});
-        bool is_sys_r = data::is_sys_contract_address(common::xaccount_address_t{r_addr});
-        if (is_sys_l != is_sys_r) {
-            return is_sys_l;
-        }
-
         if (left->get_para().get_tx_type_score() == right->get_para().get_tx_type_score()) {
             if (left->get_para().get_timestamp() == right->get_para().get_timestamp()) {
                 return left->get_para().get_charge_score() > right->get_para().get_charge_score();
@@ -65,40 +51,146 @@ public:
     }
 };
 
-using xsend_tx_queue = std::multiset<std::shared_ptr<xtx_entry>, send_tx_queue_comp>;
-using xreceipt_queue = std::multiset<std::shared_ptr<xtx_entry>, xreceipt_queue_comp>;
-
-class xtx_queue_t {
+class xnon_ready_send_tx_queue_comp {
 public:
-    xtx_queue_t(xtxpool_table_info_t * table_para) : m_xtable_info(table_para) {
+    bool operator()(const std::shared_ptr<xtx_entry> left, const std::shared_ptr<xtx_entry> right) const {
+        return left->get_tx()->get_transaction()->get_fire_timestamp() < right->get_tx()->get_transaction()->get_fire_timestamp();
     }
-    int32_t push_tx(std::shared_ptr<xtx_entry> & tx_ent);
-    std::vector<std::shared_ptr<xtx_entry>> pop_send_txs(uint32_t count = 3);
-    std::vector<std::shared_ptr<xtx_entry>> pop_receipts(uint32_t count = 6);
-    std::shared_ptr<xtx_entry> pop_tx_by_hash(std::string account, const uint256_t & hash, uint8_t subtype);
-    const xcons_transaction_ptr_t query_tx(const std::string & account, const uint256_t & hash) const;
-    void set_delay_accout(const std::string & account_addr, uint8_t subtype);
-    void refreash_delay_accounts();
+};
+
+using xready_send_tx_queue_t = std::multiset<std::shared_ptr<xtx_entry>, xready_send_tx_queue_comp>;
+using xready_receipt_queue_t = std::multiset<std::shared_ptr<xtx_entry>, xready_receipt_queue_comp>;
+using xnon_ready_send_tx_queue_t = std::multiset<std::shared_ptr<xtx_entry>, xnon_ready_send_tx_queue_comp>;
+using xready_send_tx_map_t = std::map<std::string, xready_send_tx_queue_t::iterator>;
+using xready_receipt_map_t = std::map<std::string, xready_receipt_queue_t::iterator>;
+using xnon_ready_send_tx_map_t = std::map<std::string, xnon_ready_send_tx_queue_t::iterator>;
+
+class xsend_tx_queue_internal_t {
+public:
+    xsend_tx_queue_internal_t(xtxpool_table_info_t * xtable_info) : m_xtable_info(xtable_info) {
+    }
+    void insert_ready_tx(const std::shared_ptr<xtx_entry> & tx_ent);
+    void insert_non_ready_tx(const std::shared_ptr<xtx_entry> & tx_ent);
+    void erase_ready_tx(const uint256_t & hash);
+    void erase_non_ready_tx(const uint256_t & hash);
+    const std::shared_ptr<xtx_entry> find(const uint256_t & hash) const;
+    const std::shared_ptr<xtx_entry> pick_to_be_droped_tx() const;
+    const std::vector<std::shared_ptr<xtx_entry>> get_expired_txs() const;
+    const xready_send_tx_queue_t & get_ready_queue() const {
+        return m_ready_tx_queue;
+    }
+    uint32_t size() const {
+        return m_ready_tx_queue.size() + m_non_ready_tx_queue.size();
+    }
+    bool full() const {
+        return m_xtable_info->is_send_tx_reached_upper_limit();
+    }
 
 private:
-    int32_t push_receipt(const std::string & hash_str, std::shared_ptr<xtx_entry> & tx_ent);
-    int32_t push_send_tx(const std::string & hash_str, std::shared_ptr<xtx_entry> & tx_ent);
-    int32_t push_send_tx(const std::string & hash_str, std::shared_ptr<xtx_entry> & tx_ent, std::vector<xsend_tx_queue::iterator> & continuous_txs);
-    xsend_tx_queue::iterator erase_send_tx(xsend_tx_queue::iterator send_tx_it);
-    xreceipt_queue::iterator erase_receipt(xreceipt_queue::iterator receipt_it);
-    void clear_old_send_txs(std::vector<xsend_tx_queue::iterator> & continuous_txs, uint32_t from_idx, const std::shared_ptr<xtx_entry> & tx_ent);
-    void refreash_delay_accounts(std::unordered_map<std::string, uint8_t> & accounts_map);
-
-    xsend_tx_queue m_send_tx_queue;
-    xreceipt_queue m_receipt_queue;
-    std::map<std::string, xsend_tx_queue::iterator> m_send_tx_map;                    // be easy to find send tx by hash
-    std::map<std::string, xreceipt_queue::iterator> m_receipt_map;                    // be easy to find receipt by hash
-    std::map<std::string, std::vector<xsend_tx_queue::iterator>> m_send_tx_accounts;  // key:account address, value:nonce continuous txs
-    std::unordered_map<std::string, uint8_t> m_send_tx_delay_accounts;  // key:account address; value: delay time, initial is 3, decrease when pack , if decrease to 0, remove from
-                                                                        // map.
-    std::unordered_map<std::string, uint8_t> m_recv_tx_delay_accounts;
-    std::unordered_map<std::string, uint8_t> m_conf_tx_delay_accounts;
+    xready_send_tx_queue_t m_ready_tx_queue;
+    xready_send_tx_map_t m_ready_tx_map;  // be easy to find send tx by hash
+    xnon_ready_send_tx_queue_t m_non_ready_tx_queue;
+    xnon_ready_send_tx_map_t m_non_ready_tx_map;  // be easy to find send tx by hash
     xtxpool_table_info_t * m_xtable_info;
+};
+
+class xcontinuous_txs_t {
+public:
+    // continuous txs must always keep nonce and hash continuity!
+    xcontinuous_txs_t(xsend_tx_queue_internal_t * send_tx_queue_internal, uint64_t latest_nonce, const uint256_t & latest_hash)
+      : m_send_tx_queue_internal(send_tx_queue_internal), m_latest_nonce(latest_nonce), m_latest_hash(latest_hash) {
+    }
+    uint64_t get_back_nonce() const;
+    void update_latest_nonce(uint64_t latest_nonce, const uint256_t & latest_hash);
+    int32_t insert(std::shared_ptr<xtx_entry> tx_ent);
+    const std::vector<std::shared_ptr<xtx_entry>> get_txs(uint64_t upper_nonce, uint32_t max_num) const;
+    // must call pop_uncontinuous_txs after call erase to keep m_txs continue with m_latest_nonce
+    void erase(uint64_t nonce, bool clear_follower);
+    const std::vector<std::shared_ptr<xtx_entry>> pop_uncontinuous_txs();
+    bool empty() const {
+        return m_txs.empty();
+    }
+
+private:
+    int32_t nonce_check(uint64_t last_nonce);
+    uint256_t get_back_hash() const;
+    void batch_erase(uint32_t from_idx, uint32_t to_idx);  // erase scope: [from_idx, to_idx), not include to_idx
+    std::vector<std::shared_ptr<xtx_entry>> m_txs;
+    xsend_tx_queue_internal_t * m_send_tx_queue_internal;
+    uint64_t m_latest_nonce;
+    uint256_t m_latest_hash;
+};
+
+class xuncontinuous_txs_t {
+public:
+    xuncontinuous_txs_t(xsend_tx_queue_internal_t * send_tx_queue_internal) : m_send_tx_queue_internal(send_tx_queue_internal) {
+    }
+    int32_t insert(std::shared_ptr<xtx_entry> tx_ent);
+    const std::shared_ptr<xtx_entry> pop_by_last_nonce(uint64_t last_nonce);
+    void erase(uint64_t nonce);
+    bool empty() const {
+        return m_txs.empty();
+    }
+
+private:
+    std::map<uint64_t, std::shared_ptr<xtx_entry>> m_txs;
+    xsend_tx_queue_internal_t * m_send_tx_queue_internal;
+};
+
+class xsend_tx_account_t {
+public:
+    xsend_tx_account_t(xsend_tx_queue_internal_t * send_tx_queue_internal, uint64_t latest_nonce, const uint256_t & latest_hash)
+      : m_continuous_txs(send_tx_queue_internal, latest_nonce, latest_hash), m_uncontinuous_txs(send_tx_queue_internal) {
+    }
+    int32_t push_tx(const std::shared_ptr<xtx_entry> & tx_ent);
+    void update_latest_nonce(uint64_t latest_nonce, const uint256_t & latest_hash);
+    void refresh();
+    const std::vector<std::shared_ptr<xtx_entry>> get_continuous_txs(uint64_t upper_nonce, uint32_t max_num) const;
+    void erase(uint64_t nonce, bool clear_follower);
+    bool empty() const {
+        return m_continuous_txs.empty() && m_uncontinuous_txs.empty();
+    }
+    bool need_update() const {
+        return m_continuous_txs.empty() && (!m_uncontinuous_txs.empty());
+    }
+
+private:
+    void try_continue();
+    xcontinuous_txs_t m_continuous_txs;
+    xuncontinuous_txs_t m_uncontinuous_txs;
+};
+
+class xsend_tx_queue_t {
+public:
+    xsend_tx_queue_t(xtxpool_table_info_t * xtable_info) : m_send_tx_queue_internal(xtable_info) {
+    }
+    int32_t push_tx(const std::shared_ptr<xtx_entry> & tx_ent, uint64_t latest_nonce, const uint256_t & latest_hash);
+    const std::vector<std::shared_ptr<xtx_entry>> get_txs(uint32_t max_num) const;
+    const std::shared_ptr<xtx_entry> pop_tx(std::string account_addr, const uint256_t & hash, bool clear_follower);
+    const std::shared_ptr<xtx_entry> find(const std::string & account_addr, const uint256_t & hash) const;
+    void updata_latest_nonce(const std::string & account_addr, uint64_t latest_nonce, const uint256_t & latest_hash);
+    bool is_account_need_update(const std::string & account_addr) const;
+
+private:
+    void clear_expired_txs();
+    xsend_tx_queue_internal_t m_send_tx_queue_internal;
+    std::map<std::string, std::shared_ptr<xsend_tx_account_t>> m_send_tx_accounts;
+    std::unordered_set<std::string> m_refresh_accounts;
+};
+
+class xreceipt_queue_t {
+public:
+    xreceipt_queue_t(xtxpool_table_info_t * xtable_info) : m_xtable_info_ptr(xtable_info) {
+    }
+    int32_t push_tx(const std::shared_ptr<xtx_entry> & tx_ent);
+    const std::vector<std::shared_ptr<xtx_entry>> get_txs(uint32_t max_num) const;
+    const std::shared_ptr<xtx_entry> pop_tx(std::string account_addr, const uint256_t & hash);
+    const std::shared_ptr<xtx_entry> find(const std::string & account_addr, const uint256_t & hash) const;
+
+private:
+    xready_receipt_queue_t m_ready_receipt_queue;
+    xready_receipt_map_t m_ready_receipt_map;  // be easy to find receipt by hash
+    xtxpool_table_info_t * m_xtable_info_ptr;
 };
 
 }  // namespace xtxpool_v2

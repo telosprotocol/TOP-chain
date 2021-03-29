@@ -5,6 +5,7 @@
 #include "xunit_service/xleader_election.h"
 
 #include "xcommon/xfts.h"
+#include "xconfig/xpredefined_configurations.h"
 #include "xconfig/xconfig_register.h"
 #include "xdata/xnative_contract_address.h"
 #include "xelection/xdata_accessor_error.h"

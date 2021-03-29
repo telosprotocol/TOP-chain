@@ -16,4 +16,11 @@ NS_BEG2(top, xtxpool_v2)
 
 std::string get_error_str(int32_t code);
 
+#define xtxpool_dbg xdbg
+#define xtxpool_dbg_info xdbg_info
+#define xtxpool_info xinfo
+#define xtxpool_kinfo xkinfo
+#define xtxpool_warn xwarn
+#define xtxpool_error xerror
+
 NS_END2

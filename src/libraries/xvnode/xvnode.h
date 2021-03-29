@@ -17,8 +17,8 @@
 #include "xrpc/xrpc_init.h"
 #include "xstore/xstore_face.h"
 #include "xsync/xsync_object.h"
-#include "xtxpool/xtxpool_face.h"
-#include "xtxpool_service/xtxpool_service_face.h"
+#include "xtxpool_v2/xtxpool_face.h"
+#include "xtxpool_service_v2/xtxpool_service_face.h"
 #include "xunit_service/xcons_face.h"
 #include "xvnetwork/xvhost_face.h"
 #include "xvnetwork/xvnetwork_driver_face.h"
@@ -40,7 +40,7 @@ private:
     observer_ptr<vnetwork::xvhost_face_t> m_vhost;
     observer_ptr<sync::xsync_object_t> m_sync_obj;
     observer_ptr<grpcmgr::xgrpc_mgr_t> m_grpc_mgr;
-    observer_ptr<xtxpool::xtxpool_face_t> m_txpool;
+    observer_ptr<xtxpool_v2::xtxpool_face_t> m_txpool;
     observer_ptr<election::cache::xdata_accessor_face_t> m_election_cache_data_accessor;
     observer_ptr<data::xdev_params> m_dev_params;
     observer_ptr<data::xuser_params> m_user_params;
@@ -51,7 +51,7 @@ private:
     bool m_sync_started{false};
 
     std::shared_ptr<xunit_service::xcons_proxy_face> m_cons_face;
-    xtxpool_service::xtxpool_proxy_face_ptr m_txpool_face;
+    xtxpool_service_v2::xtxpool_proxy_face_ptr m_txpool_face;
 
 public:
     xtop_vnode(xtop_vnode const &) = delete;
@@ -71,8 +71,8 @@ public:
                observer_ptr<sync::xsync_object_t> const & sync_obj,
                observer_ptr<grpcmgr::xgrpc_mgr_t> const & grpc_mgr,
                observer_ptr<xunit_service::xcons_service_mgr_face> const & cons_mgr,
-               observer_ptr<xtxpool_service::xtxpool_service_mgr_face> const & txpool_service_mgr,
-               observer_ptr<xtxpool::xtxpool_face_t> const & txpool,
+               observer_ptr<xtxpool_service_v2::xtxpool_service_mgr_face> const & txpool_service_mgr,
+               observer_ptr<xtxpool_v2::xtxpool_face_t> const & txpool,
                observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor);
 
     xtop_vnode(observer_ptr<elect::ElectMain> const & elect_main,
@@ -90,8 +90,8 @@ public:
                observer_ptr<sync::xsync_object_t> const & sync_obj,
                observer_ptr<grpcmgr::xgrpc_mgr_t> const & grpc_mgr,
                observer_ptr<xunit_service::xcons_service_mgr_face> const & cons_mgr,
-               observer_ptr<xtxpool_service::xtxpool_service_mgr_face> const & txpool_service_mgr,
-               observer_ptr<xtxpool::xtxpool_face_t> const & txpool,
+               observer_ptr<xtxpool_service_v2::xtxpool_service_mgr_face> const & txpool_service_mgr,
+               observer_ptr<xtxpool_v2::xtxpool_face_t> const & txpool,
                observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor);
 
     std::shared_ptr<vnetwork::xvnetwork_driver_face_t> const & vnetwork_driver() const noexcept;

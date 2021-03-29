@@ -103,7 +103,7 @@ TEST_F(xtimer_test, run) {
     xinfo("create finish!");
     std::this_thread::sleep_for(std::chrono::seconds(3));
     for (size_t i = 0; i < m_cons_mgrs.size(); i++) {
-        EXPECT_TRUE(cons_proxies[i]->start());
+        EXPECT_TRUE(cons_proxies[i]->start(10));
     }
     xinfo("start finish!");
     std::this_thread::sleep_for(std::chrono::minutes(5));
