@@ -1,0 +1,3 @@
+cbuild/
+cbuild_release/
+src/libraries/xchaininit/src/version.inc
