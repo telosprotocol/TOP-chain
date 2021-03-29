@@ -8,9 +8,11 @@
 #include "xmetrics/Variant.h"
 #include <assert.h>
 
+#include <string>
 #include <memory>
 #include <set>
 #include <chrono>
+#include <string>
 NS_BEG2(top, metrics)
 
 using time_point = std::chrono::system_clock::time_point;
@@ -25,9 +27,10 @@ using metrics_appendant_info = Variant<std::string, int64_t, time_point>;
 struct metrics_counter_unit {
     std::string name;
     int64_t inner_val;
+    uint64_t count;
     int64_t last_dump_val;
 
-    metrics_counter_unit(std::string _name, int64_t _val) : name{_name}, inner_val{_val}, last_dump_val{0} {};
+    metrics_counter_unit(std::string _name, int64_t _val) : name{_name}, inner_val{_val}, count{1}, last_dump_val{0} {};
 };
 using metrics_counter_unit_ptr = std::shared_ptr<metrics_counter_unit>;
 
