@@ -432,28 +432,6 @@ elseif (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
     add_subdirectory(src)
 endif()
 
-if (XENABLE_TESTS)
-    enable_testing()
-
-    include_directories(.)
-
-    add_subdirectory(tests)
-    add_subdirectory(src/xtopcom/xbasic/tests)
-    add_subdirectory(src/xtopcom/xconfig/tests)
-    add_subdirectory(src/xtopcom/xdb/test)
-#    add_subdirectory(src/programs/xtopchain_t)
-#    add_subdirectory(src/programs/xvm_t)
-    add_subdirectory(src/xtopcom/xmbus/tests)
-#    add_subdirectory(src/xtopcom/xheartbeat/tests)
-    add_subdirectory(tests/xca)
-    add_subdirectory(src/xtopcom/xrpc/tests)
-    add_subdirectory(src/xtopcom/xstore/test)
-    add_subdirectory(src/xtopcom/xstore/test_util)
-    add_subdirectory(src/xtopcom/xtxpool/test/unittest)
-    add_subdirectory(src/xtopcom/xverifier/test)
-
-endif()
-
 # Users don't have to configure CMAKE_INSTALL_PREFIX unless they want to customize the destination.
 if (CMAKE_INSTALL_PREFIX STREQUAL "/usr/local")
     #set(CMAKE_INSTALL_PREFIX "/usr/local/topio" CACHE STRING "" FORCE)

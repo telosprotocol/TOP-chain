@@ -14,9 +14,3 @@ add_dependencies(xmutisig xxbase)
 
 target_link_libraries (xmutisig PRIVATE ssl crypto xxbase secp256k1)
 
-if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
-    if (XENABLE_TESTS)
-        enable_testing()
-        add_subdirectory(unittest)
-    endif()
-endif()

@@ -1,0 +1,77 @@
+// Copyright (c) 2017-2018 Telos Foundation & contributors
+// Distributed under the MIT software license, see the accompanying
+// file COPYING or http://www.opensource.org/licenses/mit-license.php.
+
+#pragma once
+
+#include "xcommon/xaddress.h"
+#include "xcommon/xlogic_time.h"
+#include "xcommon/xversion.h"
+#include "xdata/xelection/xelection_result_store.h"
+#include "xdata/xnode_info.h"
+#include "xelection/xcache/xcluster_element.h"
+#include "xelection/xcache/xnode_element.h"
+
+#include <system_error>
+#include <unordered_map>
+
+NS_BEG3(top, election, cache)
+
+class xtop_data_accessor_face {
+public:
+    XDECLARE_DEFAULTED_DEFAULT_CONSTRUCTOR(xtop_data_accessor_face);
+    XDECLARE_DELETED_COPY_DEFAULTED_MOVE_SEMANTICS(xtop_data_accessor_face);
+    XDECLARE_DEFAULTED_VIRTULA_DESTRUCTOR(xtop_data_accessor_face);
+
+    virtual
+    common::xnetwork_id_t
+    network_id() const noexcept = 0;
+
+    virtual
+    std::unordered_map<common::xsharding_address_t, xgroup_update_result_t>
+    update_zone(common::xzone_id_t const & zone_id,
+                data::election::xelection_result_store_t const & election_result_store,
+                std::uint64_t const associated_blk_height,
+                std::error_code & ec) = 0;
+
+    virtual
+    std::map<common::xslot_id_t, data::xnode_info_t>
+    sharding_nodes(common::xsharding_address_t const & address,
+                   common::xversion_t const & version,
+                   std::error_code & ec) const = 0;
+
+    virtual
+    common::xnode_address_t
+    parent_address(common::xsharding_address_t const & child_address,
+                   common::xversion_t const & child_version,
+                   std::error_code & ec) const noexcept = 0;
+
+    virtual
+    std::shared_ptr<xnode_element_t>
+    node_element(common::xnode_address_t const & address, std::error_code & ec) const = 0;
+
+    virtual common::xnode_id_t node_id_from(common::xip2_t const & xip2, std::error_code & ec) const = 0;
+
+    virtual
+    std::shared_ptr<xgroup_element_t>
+    group_element(common::xsharding_address_t const & sharding_address,
+                  common::xversion_t const & version,
+                  std::error_code & ec) const = 0;
+
+    virtual
+    std::shared_ptr<xgroup_element_t>
+    group_element(common::xsharding_address_t const & sharding_address,
+                  common::xlogic_time_t const logic_time,
+                  std::error_code & ec) const = 0;
+
+    virtual
+    std::shared_ptr<xgroup_element_t>
+    parent_group_element(common::xsharding_address_t const & child_sharding_address,
+                         common::xversion_t const & child_sharding_version,
+                         std::error_code & ec) const = 0;
+
+    virtual common::xversion_t version_from(common::xip2_t const & xip2, std::error_code & ec) const = 0;
+};
+using xdata_accessor_face_t = xtop_data_accessor_face;
+
+NS_END3

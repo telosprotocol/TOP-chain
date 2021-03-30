@@ -1,0 +1,5 @@
+#pragma once
+#include <string>
+
+// features.majon.minor.patch
+const std::string PROGRAM_VERSION = "@PROGRAM_VERSION@";

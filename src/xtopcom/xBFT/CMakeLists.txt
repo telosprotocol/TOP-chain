@@ -7,7 +7,7 @@ include_directories(./src)
 aux_source_directory(./src src_dir)
 add_library(xBFT STATIC ${src_dir})
 
-#add_dependencies(xBFT xxbase)
+add_dependencies(xBFT xxbase)
 
 target_link_libraries(xBFT PRIVATE
     xxbase
@@ -21,8 +21,3 @@ endif()
 #     add_dependencies(xBFT xmetrics)
 #     target_link_libraries(xBFT PRIVATE xmetrics)
 # endif()
-
-if (XENABLE_TESTS)
-    enable_testing()
-    #add_subdirectory(test/basic)
-endif()
