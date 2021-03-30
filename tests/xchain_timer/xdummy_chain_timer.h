@@ -14,9 +14,14 @@ public:
     XDECLARE_DELETED_COPY_DEFAULTED_MOVE_SEMANTICS(xtop_dummy_chain_timer);
     XDECLARE_DEFAULTED_OVERRIDE_DESTRUCTOR(xtop_dummy_chain_timer);
 
-    bool
-    update_time(data::xblock_t*, bool force = false) override {
-        return false;
+    void start() override{
+    }
+
+    void stop() override {
+    }
+
+    void update_time(common::xlogic_time_t, time::xlogic_timer_update_strategy_t) override {
+        return;
     }
 
     bool

@@ -59,6 +59,7 @@ public:
         REGISTER_QUERY_METHOD(getLatestBlock);
         REGISTER_QUERY_METHOD(getBlockByHeight);
 
+        REGISTER_QUERY_METHOD(getSyncNeighbors);
         // REGISTER_QUERY_METHOD(get_sync_overview);
         // REGISTER_QUERY_METHOD(get_sync_detail_all_table);
         // REGISTER_QUERY_METHOD(get_sync_detail_processing_table);
@@ -118,17 +119,7 @@ private:
     void getGeneralInfos();
     void getRootblockInfo();
 
-    // void get_all_accounts();
-
     void getTransaction();
-
-    // void get_node_size(xJson::Value &jph, xelection_result_store_t &store);
-    // void get_node_size(xJson::Value &jph, xstandby_result_store_t &store);
-    // void get_node_size(xJson::Value &jph, xelection_association_result_store_t &store);
-
-    // void set_elect_node(xJson::Value &jph, const std::string& s, common::xnode_type_t type, xelection_result_store_t &store);
-    // void set_standby_node(xJson::Value &jph, const std::string& s, common::xnode_type_t type, const xstandby_network_result_t& standby_network_result);
-    // void set_association_node(xJson::Value &jph, xelection_association_result_store_t &store);
 
     void get_node_infos();
 
@@ -160,6 +151,7 @@ private:
 
     void set_account_keys(xJson::Value & jph, std::string & owner, std::string & prop_name);
 
+    void getSyncNeighbors();
     void get_sync_overview();
     void get_sync_detail_all_table();
     void get_sync_detail_processing_table();

@@ -11,18 +11,6 @@ using namespace top::sync;
 using namespace top::mbus;
 using namespace top::data;
 
-class xmock_store_t : public xsync_store_face_mock_t {
-public:
-
-    base::xauto_ptr<base::xvblock_t> get_current_block(const std::string & account) override {
-        current_block->add_ref();
-        return current_block;
-    }
-
-public:
-    base::xvblock_t* current_block{};
-};
-
 class xmock_vhost_t : public top::tests::vnetwork::xtop_dummy_vhost {
 
 };

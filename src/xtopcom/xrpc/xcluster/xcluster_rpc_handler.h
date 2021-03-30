@@ -8,7 +8,7 @@
 #include "xrpc/xrpc_define.h"
 #include "xrpc/xrpc_msg_define.h"
 #include "xrpc/xrule_manager.h"
-#include "xtxpool_service/xtxpool_service_face.h"
+#include "xtxpool_service_v2/xtxpool_service_face.h"
 #include "xvnetwork/xaddress.h"
 #include "xvnetwork/xmessage.h"
 #include "xvnetwork/xvhost_face.h"
@@ -24,7 +24,7 @@ class xcluster_rpc_handler : public std::enable_shared_from_this<xcluster_rpc_ha
 public:
     xcluster_rpc_handler(std::shared_ptr<xvnetwork_driver_face_t>        cluster_vhost,
                          observer_ptr<xrouter_face_t>                    router_ptr,
-                         xtxpool_service::xtxpool_proxy_face_ptr const & txpool_service,
+                         xtxpool_service_v2::xtxpool_proxy_face_ptr const & txpool_service,
                          observer_ptr<store::xstore_face_t>              store,
                          observer_ptr<base::xvblockstore_t>              block_store,
                          observer_ptr<top::base::xiothread_t>            thread);
@@ -38,7 +38,7 @@ public:
 private:
     std::shared_ptr<vnetwork::xvnetwork_driver_face_t>   m_cluster_vhost;
     observer_ptr<xrouter_face_t>                         m_router_ptr;
-    xtxpool_service::xtxpool_proxy_face_ptr              m_txpool_service;
+    xtxpool_service_v2::xtxpool_proxy_face_ptr              m_txpool_service;
     unique_ptr<xfilter_manager>                          m_rule_mgr_ptr;
     std::shared_ptr<xcluster_query_manager>              m_cluster_query_mgr;
     observer_ptr<top::base::xiothread_t>                 m_thread;

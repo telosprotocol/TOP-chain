@@ -64,7 +64,7 @@ void xsync_ratelimit_t::on_timer() {
 #endif
 }
 
-bool xsync_ratelimit_t::consume(int64_t now) {
+bool xsync_ratelimit_t::get_token(int64_t now) {
 
     std::unique_lock<std::mutex> lock(m_lock);
 
@@ -79,7 +79,7 @@ bool xsync_ratelimit_t::consume(int64_t now) {
     return false;
 }
 
-void xsync_ratelimit_t::on_response(uint32_t cost, int64_t now) {
+void xsync_ratelimit_t::feedback(uint32_t cost, int64_t now) {
     std::unique_lock<std::mutex> lock(m_lock);
 
     response_info info;

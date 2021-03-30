@@ -1,7 +1,7 @@
 #include "gtest/gtest.h"
 #include "test_xtxpool_util.h"
+#include "xverifier/xverifier_utl.h"
 #include "xtxpool_v2/xpending_account.h"
-#include "xtxpool_v2/xtxpool_base.h"
 #include "xtxpool_v2/xtxpool_error.h"
 
 using namespace top::xtxpool_v2;
@@ -37,26 +37,26 @@ TEST_F(test_pending_account, sigle_send_tx) {
     // push first time
     int32_t ret = pending_accounts.push_tx(tx_ent);
     ASSERT_EQ(0, ret);
-    auto tx_tmp = pending_accounts.query_tx(tx->get_transaction()->get_source_addr(), tx->get_transaction()->digest());
+    auto tx_tmp = pending_accounts.find(tx->get_transaction()->get_source_addr(), tx->get_transaction()->digest());
     ASSERT_NE(tx_tmp, nullptr);
 
     // duplicate push
     ret = pending_accounts.push_tx(tx_ent);
-    ASSERT_EQ(xtxpool_error_tx_duplicate, ret);
+    ASSERT_EQ(xtxpool_error_tx_nonce_expired, ret);
 
     // pop out
-    auto tx_ent_tmp = pending_accounts.pop_tx_by_hash(tx->get_transaction()->get_source_addr(), tx->get_transaction()->digest(), tx->get_tx_subtype(), 0);
+    auto tx_ent_tmp = pending_accounts.pop_tx(tx->get_transaction()->get_source_addr(), tx->get_transaction()->digest(), tx->get_tx_subtype(), false);
     ASSERT_NE(tx_ent_tmp, nullptr);
-    tx_tmp = pending_accounts.query_tx(tx->get_transaction()->get_source_addr(), tx->get_transaction()->digest());
+    tx_tmp = pending_accounts.find(tx->get_transaction()->get_source_addr(), tx->get_transaction()->digest());
     ASSERT_EQ(tx_tmp, nullptr);
 
     // push again
     ret = pending_accounts.push_tx(tx_ent);
     ASSERT_EQ(0, ret);
-    tx_tmp = pending_accounts.query_tx(tx->get_transaction()->get_source_addr(), tx->get_transaction()->digest());
+    tx_tmp = pending_accounts.find(tx->get_transaction()->get_source_addr(), tx->get_transaction()->digest());
     ASSERT_NE(tx_tmp, nullptr);
 
-    auto accounts = pending_accounts.pop_accounts(10);
+    auto accounts = pending_accounts.pop_ready_accounts(10);
     ASSERT_EQ(accounts.size(), 1);
 }
 
@@ -80,18 +80,18 @@ TEST_F(test_pending_account, sigle_account_multi_send_tx) {
     }
 
     // pop one of the txs, index is around middle
-    auto tx_ent_tmp = pending_accounts.pop_tx_by_hash(txs[1]->get_transaction()->get_source_addr(), txs[1]->get_transaction()->digest(), txs[1]->get_tx_subtype(), 0);
+    auto tx_ent_tmp = pending_accounts.pop_tx(txs[1]->get_transaction()->get_source_addr(), txs[1]->get_transaction()->digest(), txs[1]->get_tx_subtype(), false);
     ASSERT_NE(tx_ent_tmp, nullptr);
 
-    xcons_transaction_ptr_t tx_tmp;
+    std::shared_ptr<xtx_entry> tx_tmp;
     uint32_t i = 0;
     for (; i <= 1; i++) {
-        tx_tmp = pending_accounts.query_tx(txs[i]->get_transaction()->get_source_addr(), txs[i]->get_transaction()->digest());
+        tx_tmp = pending_accounts.find(txs[i]->get_transaction()->get_source_addr(), txs[i]->get_transaction()->digest());
         ASSERT_EQ(tx_tmp, nullptr);
     }
 
     for (; i < txs.size(); i++) {
-        tx_tmp = pending_accounts.query_tx(txs[i]->get_transaction()->get_source_addr(), txs[i]->get_transaction()->digest());
+        tx_tmp = pending_accounts.find(txs[i]->get_transaction()->get_source_addr(), txs[i]->get_transaction()->digest());
         ASSERT_NE(tx_tmp, nullptr);
     }
 }

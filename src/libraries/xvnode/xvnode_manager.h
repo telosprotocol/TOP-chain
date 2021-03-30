@@ -13,8 +13,8 @@
 #include "xnetwork/xnetwork_driver_face.h"
 #include "xrouter/xrouter_face.h"
 #include "xsync/xsync_object.h"
-#include "xtxpool/xtxpool_face.h"
-#include "xtxpool_service/xtxpool_service_face.h"
+#include "xtxpool_v2/xtxpool_face.h"
+#include "xtxpool_service_v2/xtxpool_service_face.h"
 #include "xunit_service/xcons_face.h"
 #include "xvnetwork/xmessage_callback_hub.h"
 #include "xvnode/xvnode_face.h"
@@ -65,8 +65,8 @@ public:
                        observer_ptr<sync::xsync_object_t> const & sync_object,
                        observer_ptr<grpcmgr::xgrpc_mgr_t> const & grpc_mgr,
                        observer_ptr<xunit_service::xcons_service_mgr_face> const & cons_mgr,
-                       observer_ptr<xtxpool_service::xtxpool_service_mgr_face> const & txpool_service_mgr,
-                       observer_ptr<xtxpool::xtxpool_face_t> const & txpool,
+                       observer_ptr<xtxpool_service_v2::xtxpool_service_mgr_face> const & txpool_service_mgr,
+                       observer_ptr<xtxpool_v2::xtxpool_face_t> const & txpool,
                        observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor);
 
     xtop_vnode_manager(observer_ptr<time::xchain_time_face_t> logic_timer,

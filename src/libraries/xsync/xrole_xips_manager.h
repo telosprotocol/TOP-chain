@@ -11,7 +11,6 @@
 #include "xdata/xgenesis_data.h"
 #include "xvnetwork/xaddress.h"
 #include "xpbase/base/top_utils.h"
-#include "xsync/xdeceit_node_manager.h"
 #include "xdata/xgenesis_data.h"
 #include "xrouter/xrouter.h"
 #include "xvnetwork/xvhost_face.h"
@@ -26,15 +25,18 @@ struct xrole_xips_t {
     xip_vector_ptr neighbour_xips{};
     xip_vector_ptr parent_xips{};
     xip_vector_ptr orig_neighbour_xips{}; // for special cases
+    std::set<uint16_t> set_table_ids;
 
     xrole_xips_t(const vnetwork::xvnode_address_t& _self_xip,
                  const xip_vector_ptr& neighbour_xips_ptr,
                  const xip_vector_ptr& parent_xips_ptr,
-                 const xip_vector_ptr& orig_neighbour_xips_ptr) :
+                 const xip_vector_ptr& orig_neighbour_xips_ptr,
+                 const std::set<uint16_t> &_set_table_ids) :
     self_xip(_self_xip),
     neighbour_xips(neighbour_xips_ptr),
     parent_xips(parent_xips_ptr),
-    orig_neighbour_xips(orig_neighbour_xips_ptr) {}
+    orig_neighbour_xips(orig_neighbour_xips_ptr),
+    set_table_ids(_set_table_ids) {}
 
     xrole_xips_t() = default;
     xrole_xips_t(const xrole_xips_t& other) = default;
@@ -61,7 +63,7 @@ public:
 
     virtual ~xrole_xips_manager_t();
 
-    xrole_xips_manager_t(std::string vnode_id, const observer_ptr<base::xvnodesrv_t> &nodesrv, xdeceit_node_manager_t *blacklist);
+    xrole_xips_manager_t(std::string vnode_id);
 
     /**
      * add new role : self xip, neighbours' xips and parents' xips.
@@ -72,7 +74,7 @@ public:
      * @param archives archives' xips for this turn
      */
     void add_role(const vnetwork::xvnode_address_t& self_xip, const std::vector<vnetwork::xvnode_address_t>& neighbours,
-                  const std::vector<vnetwork::xvnode_address_t>& parents, const std::vector<vnetwork::xvnode_address_t>& archives);
+                  const std::vector<vnetwork::xvnode_address_t>& parents, const std::vector<vnetwork::xvnode_address_t>& archives, const std::set<uint16_t> &table_ids);
 
     /**
      * remove role by self xip
@@ -105,26 +107,17 @@ public:
 
     std::vector<vnetwork::xvnode_address_t> get_rand_parents(const vnetwork::xvnode_address_t& self_xip, uint32_t max_peers);
 
-    std::vector<vnetwork::xvnode_address_t> get_rand_archives(const vnetwork::xvnode_address_t& self_xip, uint32_t max_peers);
-
-    std::vector<vnetwork::xvnode_address_t> get_vrf_sqrt_archive(const std::string& hash);
+    std::vector<vnetwork::xvnode_address_t> get_rand_archives(uint32_t max_peers);
 
     std::vector<vnetwork::xvnode_address_t> get_archive_list();
 
-    bool is_consensus_role_exist(base::xvblock_t *vblock) const;
-
-    bool get_rand_neighbor_by_block(base::xvblock_t *vblock, vnetwork::xvnode_address_t& self_xip, vnetwork::xvnode_address_t& target_xip);
+    bool get_self_addr(vnetwork::xvnode_address_t& self_addr) const;
 
     bool vrf_gossip_with_archive(base::xvblock_t *time_vblock, common::xnode_type_t role_type);
 
-    /**
-     * vrf sende new block check.
-     *
-     * @param vblock
-     * @param OUTPUT self_xip self xip
-     * @return true if self_xip should be a sender; otherwise false
-     */
-    bool vrf_send_newblock(base::xvblock_t *vblock, vnetwork::xvnode_address_t& self_xip, uint32_t &self_position, uint32_t &deliver_node_count);
+    std::vector<vnetwork::xvnode_address_t> get_all_neighbors(const vnetwork::xvnode_address_t& self_addr);
+
+    bool get_self_addr(common::xnode_type_t node_type, uint16_t table_id, vnetwork::xvnode_address_t& self_addr) const;
 
 protected:
 
@@ -133,18 +126,11 @@ protected:
 
     std::vector<vnetwork::xvnode_address_t> get_rand_peers(const xip_vector_ptr& list_ptr, uint32_t max_peers);
 
-    uint32_t vrf_value(const std::string& hash);
-
-    vnetwork::xvnode_address_t build_address_from_vnode(const xvip2_t &group_xip2, const std::vector<base::xvnode_t*> &nodes, int32_t slot_id);
-
 protected:
     std::string m_vnode_id;
     mutable std::mutex m_lock;
     xip_vector_ptr m_archive_xips{};
     std::unordered_map<vnetwork::xvnode_address_t, xrole_xips_t> m_map;
-
-    observer_ptr<base::xvnodesrv_t> m_nodesrv;
-    xdeceit_node_manager_t *m_blacklist;
 };
 
 NS_END2

@@ -3,6 +3,7 @@
 #include "xvnetwork/xaddress.h"
 #include "tests/xvnetwork/xdummy_vhost.h"
 #include "xvnetwork/xmessage.h"
+#include "xcommon/xip.h"
 
 extern
 top::vnetwork::xvnode_address_t
@@ -68,6 +69,22 @@ public:
     }
 };
 
+class xmsg_item_frozen_t {
+public:
+    top::vnetwork::xmessage_t m_message;
+    top::vnetwork::xvnode_address_t m_src;
+    top::common::xip2_t m_dst;
+
+    xmsg_item_frozen_t() {
+    }
+
+    xmsg_item_frozen_t(const xmsg_item_frozen_t &other) {
+        m_message = other.m_message;
+        m_src = other.m_src;
+        m_dst = other.m_dst;
+    }
+};
+
 class xmock_vhost_sync_t : public top::tests::vnetwork::xtop_dummy_vhost {
 public:
     void send(top::vnetwork::xmessage_t const & message,
@@ -95,6 +112,28 @@ public:
         return true;
     }
 
-public:
+    void broadcast(top::common::xnode_address_t const & src, top::common::xip2_t const & dst, xmessage_t const & message, std::error_code & ec) override {
+        xmsg_item_frozen_t item;
+        item.m_message = message;
+        item.m_src = src;
+        item.m_dst = dst;
+        m_frozen_items.push_back(item);
+    }
+
+    bool read_frozen_broadcast_msg(top::vnetwork::xmessage_t & message,
+                      top::vnetwork::xvnode_address_t & src,
+                      top::common::xip2_t & dst) {
+        if (m_frozen_items.size() == 0)
+            return false;
+
+        message = m_frozen_items.front().m_message;
+        src = m_frozen_items.front().m_src;
+        dst = m_frozen_items.front().m_dst;
+        m_frozen_items.pop_front();
+        return true;
+    }
+
+private:
     std::list<xmsg_item_t> m_items;
+    std::list<xmsg_item_frozen_t> m_frozen_items;
 };

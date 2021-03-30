@@ -8,6 +8,7 @@
 #include "xdata/xtableblock.h"
 #include "xdata/xlightunit.h"
 #include "xdata/xrootblock.h"
+#include "xdata/xemptyblock.h"
 #include "xdata/xblock_resources.h"
 
 NS_BEG2(top, data)
@@ -119,6 +120,8 @@ base::xvblock_t* xtable_block_t::create_tableblock(const std::string & account,
     // update unit cert member by tableblock cert
     for (auto & unit : para.get_account_units()) {
         unit->get_cert()->set_parent_height(height);
+        xblockcert_t* qcert = reinterpret_cast<xblockcert_t*>(unit->get_cert());
+        qcert->set_consensus_flag(base::enum_xconsensus_flag_extend_cert);
     }
 
     xblockbody_para_t blockbody = xtable_block_t::get_blockbody_from_para(para);
@@ -197,6 +200,27 @@ const std::vector<xblock_ptr_t> & xtable_block_t::get_tableblock_units(bool need
     return unpack_and_get_units(need_parent_cert);
 }
 
+std::map<std::string, xaccount_index_t> xtable_block_t::get_units_index() const {
+    std::map<std::string, xaccount_index_t> changed_indexs;
+    auto & units = get_tableblock_units(true);
+    for (auto & unit : units) {
+        xaccount_index_t account_index(unit->get_height(),
+                                       unit->get_block_hash(),
+                                       unit->get_block_class(),
+                                       unit->get_block_type(),
+                                       enum_xblock_consensus_flag_authenticated,  // TODO(jimmy) always use highqc
+                                       unit->get_unconfirm_sendtx_num() != 0,
+                                       false);  // TODO(jimmy)
+        xassert(account_index.is_account_destroy() == false);
+        xassert(account_index.is_has_unconfirm_tx() == (unit->get_unconfirm_sendtx_num() != 0));
+        xassert(account_index.is_match_unit_hash(unit->get_block_hash()));
+        xassert(account_index.get_latest_unit_class() == unit->get_block_class());
+        changed_indexs[unit->get_account()] = account_index;
+    }
+    xassert(!changed_indexs.empty());
+    return changed_indexs;
+}
+
 xblock_ptr_t xtable_block_t::create_whole_unit(const std::string & header,
                                                     const std::string & input,
                                                     const std::string & input_res,
@@ -215,11 +239,13 @@ xblock_ptr_t xtable_block_t::create_whole_unit(const std::string & header,
     xinput_ptr_t _new_input = make_object_ptr<xinput_t>(_input->get_entitys(), input_res);
     xoutput_ptr_t _new_output = make_object_ptr<xoutput_t>(_output->get_entitys(), output_res);
 
-    xblock_t* _new_block;
+    xblock_t* _new_block = nullptr;
     if (_header->get_block_class() == base::enum_xvblock_class_light) {
         _new_block = new xlightunit_block_t(*_header, *qcert, _new_input, _new_output);
-    } else {
+    } else if (_header->get_block_class() == base::enum_xvblock_class_full) {
         _new_block = new xfullunit_block_t(*_header, *qcert, _new_input, _new_output);
+    } else if (_header->get_block_class() == base::enum_xvblock_class_nil) {
+        _new_block = new xemptyblock_t(*_header, *qcert);
     }
     xassert(_new_block != nullptr);
     xblock_ptr_t auto_block_ptr;
@@ -247,9 +273,16 @@ xblock_ptr_t xtable_block_t::recreate_unit_from_unit_input_output_resource(uint1
                                                                     input_resource->get_unit_input_resources(),
                                                                     output_resource->get_unit_output(),
                                                                     output_resource->get_unit_output_resources());
-    _unit_block->get_cert()->set_justify_cert_hash(output_resource->get_unit_justify_hash());
-    //_unit_block->get_cert()->set_consensus_flag(base::enum_xconsensus_flag_extend_cert);
-    _unit_block->get_cert()->set_parent_height(get_height());
+    xassert(_unit_block != nullptr);
+    _unit_block->reset_block_flags();
+    xassert(_unit_block->get_block_hash().empty());
+
+    xblock_consensus_para_t cs_para;
+    cs_para.set_common_consensus_para(get_cert()->get_clock(), get_cert()->get_validator(), get_cert()->get_auditor(),
+                                    get_cert()->get_viewid(), get_cert()->get_viewtoken(), get_cert()->get_drand_height());
+    cs_para.set_justify_cert_hash(output_resource->get_unit_justify_hash());
+    cs_para.set_parent_height(get_height());
+    _unit_block->set_consensus_para(cs_para);
     return _unit_block;
 }
 
@@ -267,20 +300,12 @@ void xtable_block_t::unpack_proposal_units(std::vector<xblock_ptr_t> & units) co
 
         // recreate whole block
         xblock_ptr_t _block_ptr = recreate_unit_from_unit_input_output_resource(index);
-        xassert(_block_ptr != nullptr);
-        _block_ptr->reset_block_flags();
-        xassert(_block_ptr->get_block_hash().empty());
-        xblock_consensus_para_t cs_para(get_cert()->get_clock(),
-                                        get_cert()->get_validator(),
-                                        get_cert()->get_auditor(),
-                                        get_cert()->get_viewtoken(),
-                                        get_cert()->get_viewid(),
-                                        get_cert()->get_drand_height());
-        _block_ptr->set_consensus_para(cs_para);
-
         if (_block_ptr->get_cert()->get_hash_to_sign() != output_unit->get_unit_sign_hash()) {
-            xerror("xtable_block_t::unpack_proposal_units unit hash not match. header:%s, cert:%s",
-                _block_ptr->dump_header().c_str(), _block_ptr->dump_cert().c_str());
+            xerror("unpack_proposal_units fail match. block=%s,cert=%s",
+                _block_ptr->dump().c_str(), _block_ptr->dump_cert().c_str());
+            // xerror("xtable_block_t::unpack_proposal_units not match. header:%s, cert:%s,signhash=%s <-> %s",
+            //     _block_ptr->dump_header().c_str(), _block_ptr->dump_cert().c_str(),
+            //     base::xstring_utl::to_hex(_block_ptr->get_cert()->get_hash_to_sign()).c_str(), base::xstring_utl::to_hex(output_unit->get_unit_sign_hash()).c_str());
         } else {
             xinfo("xtable_block_t::unpack_proposal_units unpack unit succ. table=%s,unit=%s",
                 dump().c_str(), _block_ptr->dump().c_str());
@@ -293,17 +318,24 @@ const std::vector<xblock_ptr_t> & xtable_block_t::unpack_and_get_units(bool need
     if (check_block_flag(base::enum_xvblock_flag_authenticated)) {
         std::call_once(m_once_unpack_flag, [this] () {
             unpack_proposal_units(m_cache_units);
+            cache_units_set_parent_cert(m_cache_units, get_cert());
         });
     }
-    if (need_parent_cert) {
-        xassert(check_block_flag(base::enum_xvblock_flag_authenticated));
-        xassert(check_block_flag(base::enum_xvblock_flag_committed));
-        if (check_block_flag(base::enum_xvblock_flag_committed)) {
-            std::call_once(m_once_set_parent_cert_flag, [this] () {
-                cache_units_set_parent_cert(m_cache_units, get_cert());
-            });
-        }
-    }
+
+    // if (check_block_flag(base::enum_xvblock_flag_authenticated)) {
+    //     std::call_once(m_once_unpack_flag, [this] () {
+    //         unpack_proposal_units(m_cache_units);
+    //     });
+    // }
+    // if (need_parent_cert) {
+    //     xassert(check_block_flag(base::enum_xvblock_flag_authenticated));
+    //     xassert(check_block_flag(base::enum_xvblock_flag_committed));
+    //     if (check_block_flag(base::enum_xvblock_flag_committed)) {
+    //         std::call_once(m_once_set_parent_cert_flag, [this] () {
+    //             cache_units_set_parent_cert(m_cache_units, get_cert());
+    //         });
+    //     }
+    // }
     return m_cache_units;
 }
 

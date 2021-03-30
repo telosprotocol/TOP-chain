@@ -15,7 +15,6 @@
 #include "xcommon/xlogic_time.h"
 #include "xcommon/xnode_info.h"
 #include "xconfig/xconfig_register.h"
-#include "xdatastat/xdatastat.h"
 #include "xelect/client/xelect_client.h"
 #include "xelect_net/include/elect_main.h"
 #include "xmbus/xmessage_bus.h"
@@ -23,7 +22,9 @@
 #include "xrouter/xrouter_face.h"
 #include "xstore/xstore_face.h"
 #include "xsync/xsync_object.h"
-#include "xtxpool/xtxpool_face.h"
+#include "xtxpool_v2/xtxpool_face.h"
+#include "xdatastat/xdatastat.h"
+#include "xindexstore/xindexstore_face.h"
 
 #include <cstdint>
 #include <memory>
@@ -32,7 +33,7 @@
 
 NS_BEG2(top, application)
 
-enum class xtop_thread_pool_type : std::uint8_t { invalid, unit_service, synchronization };
+enum class xtop_thread_pool_type : std::uint8_t { invalid, unit_service, synchronization, txpool_service };
 using xthread_pool_type_t = xtop_thread_pool_type;
 
 enum class xtop_io_context_type : uint8_t { invalid, general };
@@ -72,7 +73,6 @@ private:
     xpublic_key_t m_public_key;
     std::string m_sign_key;
 
-    std::unordered_map<xthread_pool_type_t, xthread_pool_t> m_thread_pools{};
     std::unordered_map<xio_context_type_t, xio_context_pool_t> m_io_context_pools;
 
     std::shared_ptr<xbase_timer_driver_t> m_timer_driver;
@@ -82,13 +82,15 @@ private:
     std::unique_ptr<mbus::xmessage_bus_face_t> m_bus;
     xobject_ptr_t<store::xstore_face_t> m_store;
     xobject_ptr_t<base::xvblockstore_t> m_blockstore;
+    xobject_ptr_t<store::xindexstorehub_t> m_indexstore;
     xobject_ptr_t<time::xchain_time_face_t> m_logic_timer;
     xobject_ptr_t<base::xiothread_t> m_grpc_thread{};
     xobject_ptr_t<base::xiothread_t> m_sync_thread{};
     std::vector<xobject_ptr_t<base::xiothread_t>> m_sync_account_thread_pool{};
     std::vector<xobject_ptr_t<base::xiothread_t>> m_sync_handler_thread_pool{};
     std::unique_ptr<elect::xelect_client_imp> m_elect_client;
-    xobject_ptr_t<xtxpool::xtxpool_face_t> m_txpool;
+    xobject_ptr_t<xtxpool_v2::xtxpool_face_t> m_txpool;
+    std::unordered_map<xthread_pool_type_t, xthread_pool_t> m_thread_pools;
     xobject_ptr_t<base::xvnodesrv_t> m_nodesvr_ptr;
     xobject_ptr_t<base::xvcertauth_t> m_cert_ptr;
     xobject_ptr_t<store::xsyncvstore_t> m_syncstore;
@@ -138,13 +140,14 @@ public:
 
     xthread_pool_t const & thread_pool(xthread_pool_type_t const thread_pool_type) const noexcept;
 
-    observer_ptr<xtxpool::xtxpool_face_t> txpool() const noexcept;
+    observer_ptr<xtxpool_v2::xtxpool_face_t> txpool() const noexcept;
 
     xobject_ptr_t<base::xvnodesrv_t> node_service() const noexcept;
 
     xobject_ptr_t<base::xvcertauth_t> cert_serivce() const noexcept;
 
     xobject_ptr_t<store::xsyncvstore_t> syncstore() const noexcept;
+    observer_ptr<store::xindexstorehub_t> indexstore() const noexcept;
 
 private:
     base::xauto_ptr<top::base::xvblock_t> last_logic_time() const;

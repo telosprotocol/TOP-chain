@@ -72,7 +72,9 @@ public:
     static void SetUpTestCase() {
         m_store = store::xstore_factory::create_store_with_memdb();
         auto mbus = std::make_shared<top::mbus::xmessage_bus_t>(true, 1000);
-        auto chain_timer = top::make_object_ptr<time::xchain_timer_t>();
+        static std::shared_ptr<top::xbase_io_context_wrapper_t> io_object = std::make_shared<top::xbase_io_context_wrapper_t>();
+        static std::shared_ptr<top::xbase_timer_driver_t> timer_driver = std::make_shared<top::xbase_timer_driver_t>(io_object);
+        auto chain_timer = top::make_object_ptr<time::xchain_timer_t>(timer_driver);
 
         //std::string config_file = "/home/yinhp/xchain/src/libraries/xcomponent_administration/config/config.rec1.json";
         std::string config_file = "";

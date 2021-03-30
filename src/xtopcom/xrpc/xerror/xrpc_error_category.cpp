@@ -7,7 +7,7 @@
 NS_BEG2(top, xrpc)
 using std::string;
 
-static char const * xcodec_errc_map(int const errc) noexcept {
+static string xcodec_errc_map(int const errc) noexcept {
     auto const ec = static_cast<enum_xrpc_error_code>(errc);
     switch (ec) {
         case enum_xrpc_error_code::rpc_param_json_parser_error:
@@ -17,7 +17,7 @@ static char const * xcodec_errc_map(int const errc) noexcept {
         case enum_xrpc_error_code::rpc_shard_exec_error:
             return "rpc_shard_exec_error";
         default:
-            return string("Unknown code " + std::to_string(errc)).c_str();
+            return string("Unknown code " + std::to_string(errc));
     }
 }
 

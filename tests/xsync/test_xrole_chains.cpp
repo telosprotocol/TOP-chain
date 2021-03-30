@@ -499,9 +499,9 @@ TEST(xrole_chains, validator) {
 TEST(xrole_chains, archive) {
     top::common::xnode_address_t addr = create_archive_addr(1, "aa", 1);
 
-    std::vector<std::uint16_t> table_ids;
+    std::set<uint16_t> table_ids;
     for (uint32_t i = 0; i < 256; i++) {
-        table_ids.push_back(i);
+        table_ids.insert(i);
     }
 
     xrole_chains_t role_chains(addr, table_ids);
@@ -524,7 +524,8 @@ TEST(xrole_chains, archive) {
 
 TEST(xrole_chains, beacon) {
     top::common::xnode_address_t addr = create_beacon_addr(1, "aa", 1);
-    std::vector<std::uint16_t> table_ids = {0};
+    std::set<uint16_t> table_ids;
+    table_ids.insert(0);
 
     xrole_chains_t role_chains(addr, table_ids);
     const map_chain_info_t & tmp_chains = role_chains.get_chains_wrapper().get_chains();
@@ -546,7 +547,8 @@ TEST(xrole_chains, beacon) {
 
 TEST(xrole_chains, zec) {
     top::common::xnode_address_t addr = create_zec_addr(1, "aa", 1);
-    std::vector<std::uint16_t> table_ids = {0};
+    std::set<uint16_t> table_ids;
+    table_ids.insert(0);
 
     xrole_chains_t role_chains(addr, table_ids);
     const map_chain_info_t & tmp_chains = role_chains.get_chains_wrapper().get_chains();
@@ -569,9 +571,9 @@ TEST(xrole_chains, zec) {
 TEST(xrole_chains, auditor) {
     top::common::xnode_address_t addr = create_auditor_addr(1, "aa", 1);
 
-    std::vector<std::uint16_t> table_ids;
+    std::set<uint16_t> table_ids;
     for (uint32_t i = 0; i < 256; i++) {
-        table_ids.push_back(i);
+        table_ids.insert(i);
     }
 
     xrole_chains_t role_chains(addr, table_ids);
@@ -595,9 +597,9 @@ TEST(xrole_chains, auditor) {
 TEST(xrole_chains, validator) {
     top::common::xnode_address_t addr = create_validator_addr(1, "aa", 1);
 
-    std::vector<std::uint16_t> table_ids;
+    std::set<uint16_t> table_ids;
     for (uint32_t i = 0; i < 256; i++) {
-        table_ids.push_back(i);
+        table_ids.insert(i);
     }
 
     xrole_chains_t role_chains(addr, table_ids);
@@ -621,8 +623,8 @@ TEST(xrole_chains, validator) {
 TEST(xrole_chains, frozen) {
     common::xnode_address_t addr(common::build_frozen_sharding_address());
 
-    std::vector<std::uint16_t> table_ids;
-    table_ids.push_back(0);
+    std::set<uint16_t> table_ids;
+    table_ids.insert(0);
 
     xrole_chains_t role_chains(addr, table_ids);
     const map_chain_info_t & tmp_chains = role_chains.get_chains_wrapper().get_chains();
@@ -656,9 +658,9 @@ TEST(xrole_chains, frozen) {
 TEST(xrole_chains, height_message) {
     top::common::xnode_address_t addr = create_archive_addr(1, "aa", 1);
 
-    std::vector<std::uint16_t> table_ids;
+    std::set<uint16_t> table_ids;
     for (uint32_t i = 0; i < 256; i++) {
-        table_ids.push_back(i);
+        table_ids.insert(i);
     }
 
     xrole_chains_t role_chains(addr, table_ids);

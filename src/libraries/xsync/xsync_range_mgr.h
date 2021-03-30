@@ -1,3 +1,7 @@
+// Copyright (c) 2017-2018 Telos Foundation & contributors
+// Distributed under the MIT software license, see the accompanying
+// file COPYING or http://www.opensource.org/licenses/mit-license.php.
+
 #pragma once
 
 #include "xbasic/xns_macro.h"
@@ -16,22 +20,23 @@ enum enum_role_changed_result {
 
 class xsync_range_mgr_t {
 public:
-    xsync_range_mgr_t(std::string vnode_id, const std::string &address, const observer_ptr<mbus::xmessage_bus_face_t> &mbus);
+    xsync_range_mgr_t(std::string vnode_id, const std::string &address);
     virtual ~xsync_range_mgr_t() {
     }
 
     enum_role_changed_result on_role_changed(const xchain_info_t &chain_info);
 
-    int update_progress(const data::xblock_ptr_t &current_block, bool head_forked);
-    bool get_next_behind(const data::xblock_ptr_t &current_block, bool forked, uint32_t count_limit, uint64_t &start_height, uint32_t &count, vnetwork::xvnode_address_t &self_addr, vnetwork::xvnode_address_t &target_addr);
+    int update_progress(const data::xblock_ptr_t &current_block);
+    bool get_next_behind(uint64_t current_height, bool forked, uint32_t count_limit, uint64_t &start_height, uint32_t &count, vnetwork::xvnode_address_t &self_addr, vnetwork::xvnode_address_t &target_addr);
 
-    int set_behind_info(const data::xblock_ptr_t &current_block, const data::xblock_ptr_t &successor_block,
+    int set_behind_info(uint64_t start_height, uint64_t end_height, enum_chain_sync_policy sync_policy,
                 const vnetwork::xvnode_address_t &self_addr, const vnetwork::xvnode_address_t &target_addr);
-    
+
     void clear_behind_info();
-    void get_try_sync_info(uint8_t &try_count, int64_t &try_time);
 
     uint64_t get_behind_height() const;
+    int64_t get_behind_time() const;
+    bool get_sync_policy(enum_chain_sync_policy &sync_policy) const;
 
 private:
     int64_t get_time();
@@ -40,20 +45,12 @@ private:
     std::string m_vnode_id;
     std::string m_address;
     xchain_info_t m_chain_info;
-    observer_ptr<mbus::xmessage_bus_face_t> m_mbus{};
 
-    // for behind
     uint64_t m_behind_height{0};
-    std::string m_behind_hash;
-
-    uint64_t m_successor_height{0};
-    uint64_t m_successor_view_id{0};
-
-    uint8_t m_behind_try_count{0};
-    int64_t m_behind_try_sync_time{0};
+    enum_chain_sync_policy m_sync_policy;
     vnetwork::xvnode_address_t m_behind_self_addr;
     vnetwork::xvnode_address_t m_behind_target_addr;
-    int64_t m_behind_update_time{0};
+    int64_t m_behind_time{0};
 };
 
 NS_END2

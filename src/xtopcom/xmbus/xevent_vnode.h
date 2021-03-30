@@ -6,7 +6,7 @@
 
 #include "xmbus/xevent.h"
 #include "xstore/xstore_face.h"
-#include "xtxpool_service/xrequest_tx_receiver_face.h"
+#include "xtxpool_service_v2/xrequest_tx_receiver_face.h"
 #include "xvnetwork/xvnetwork_driver_face.h"
 
 #include <condition_variable>
@@ -17,7 +17,7 @@
 NS_BEG2(top, mbus)
 
 struct xevent_vnode_t : public xevent_t {
-    xevent_vnode_t(bool _destory, std::shared_ptr<xtxpool_service::xrequest_tx_receiver_face> const & _unit_service, std::shared_ptr<vnetwork::xvnetwork_driver_face_t> const & _driver)
+    xevent_vnode_t(bool _destory, std::shared_ptr<xtxpool_service_v2::xrequest_tx_receiver_face> const & _unit_service, std::shared_ptr<vnetwork::xvnetwork_driver_face_t> const & _driver)
       : xevent_t(xevent_major_type_vnode), destory(_destory), unit_service(_unit_service), driver(_driver) {}
 
     void wait() {
@@ -34,7 +34,7 @@ struct xevent_vnode_t : public xevent_t {
     }
 
     bool                                               destory{};
-    std::shared_ptr<xtxpool_service::xrequest_tx_receiver_face>   unit_service{};
+    std::shared_ptr<xtxpool_service_v2::xrequest_tx_receiver_face>   unit_service{};
     std::shared_ptr<vnetwork::xvnetwork_driver_face_t> driver{};
 
     std::mutex              lock;

@@ -16,8 +16,8 @@ class xsync_ratelimit_face_t {
 public:
     virtual void start() = 0;
     virtual void stop() = 0;
-    virtual bool consume(int64_t now) = 0;
-    virtual void on_response(uint32_t cost, int64_t now) = 0;
+    virtual bool get_token(int64_t now) = 0;
+    virtual void feedback(uint32_t cost, int64_t now) = 0;
 };
 
 class response_info {
@@ -53,8 +53,8 @@ public:
     void start() override;
     void stop() override;
     void on_timer();
-    bool consume(int64_t now) override;
-    void on_response(uint32_t cost, int64_t now) override;
+    bool get_token(int64_t now) override;
+    void feedback(uint32_t cost, int64_t now) override;
 
 private:
     void data_statistics();

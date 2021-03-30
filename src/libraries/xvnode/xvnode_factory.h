@@ -12,7 +12,7 @@
 #include "xrouter/xrouter_face.h"
 #include "xstore/xstore_face.h"
 #include "xsync/xsync_object.h"
-#include "xtxpool_service/xtxpool_service_face.h"
+#include "xtxpool_service_v2/xtxpool_service_face.h"
 #include "xunit_service/xcons_face.h"
 #include "xvnetwork/xvhost_face.h"
 #include "xvnode/xvnode_factory_face.h"
@@ -33,8 +33,8 @@ private:
     observer_ptr<sync::xsync_object_t> m_sync_obj;
     observer_ptr<grpcmgr::xgrpc_mgr_t> m_grpc_mgr;
     observer_ptr<xunit_service::xcons_service_mgr_face> m_cons_mgr;
-    observer_ptr<xtxpool_service::xtxpool_service_mgr_face> m_txpool_service_mgr;
-    observer_ptr<xtxpool::xtxpool_face_t> m_txpool;
+    observer_ptr<xtxpool_service_v2::xtxpool_service_mgr_face> m_txpool_service_mgr;
+    observer_ptr<xtxpool_v2::xtxpool_face_t> m_txpool;
     observer_ptr<election::cache::xdata_accessor_face_t> m_election_cache_data_accessor;
 
 public:
@@ -48,8 +48,8 @@ public:
                        observer_ptr<sync::xsync_object_t> sync,
                        observer_ptr<grpcmgr::xgrpc_mgr_t> grpc,
                        observer_ptr<xunit_service::xcons_service_mgr_face> cons_service_mgr,
-                       observer_ptr<xtxpool_service::xtxpool_service_mgr_face> txpool_service_mgr,
-                       observer_ptr<xtxpool::xtxpool_face_t> txpool,
+                       observer_ptr<xtxpool_service_v2::xtxpool_service_mgr_face> txpool_service_mgr,
+                       observer_ptr<xtxpool_v2::xtxpool_face_t> txpool,
                        observer_ptr<election::cache::xdata_accessor_face_t> cache_data_accessor);
 
     xtop_vnode_factory(xtop_vnode_factory &&) = default;

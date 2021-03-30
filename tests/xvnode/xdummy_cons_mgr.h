@@ -17,7 +17,7 @@ NS_BEG3(top, tests, vnode)
 class xtop_dummy_cons_proxy_face : public top::xunit_service::xcons_proxy_face {
 public:
     xtop_dummy_cons_proxy_face(uint16_t init_count) : start_count{init_count}, fade_count{init_count} {}
-    bool start() {
+    bool start(const common::xlogic_time_t& start_time) {
         start_count++;
         return false;
     }
@@ -42,7 +42,7 @@ public:
 
     bool destroy(const xvip2_t & xip) { return false; }
 
-    bool start(const xvip2_t & xip) { return false; }
+    bool start(const xvip2_t & xip, const common::xlogic_time_t& start_time) { return false; }
 
     bool fade(const xvip2_t & xip) { return false; }
 

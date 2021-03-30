@@ -27,11 +27,6 @@ base::xvblock_t *xtimer_block_maker_t::make_block(const std::string &account, ui
     return block;
 }
 
-base::xvblock_t *xtimer_block_maker_t::make_block(const std::string &account, const xblock_maker_para_t &para, const xvip2_t &leader_xip) {
-    xassert(0); // TODO(jimmy) need rewrite
-    return nullptr;
-}
-
 int xtimer_block_maker_t::verify_block(base::xvblock_t *proposal_block) {
     // no application level checking
     return 0; // OK

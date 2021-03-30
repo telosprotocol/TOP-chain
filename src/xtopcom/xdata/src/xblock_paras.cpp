@@ -48,6 +48,11 @@ int32_t xblockpara_base_t::do_read(base::xstream_t & stream) {
     return CALC_LEN();
 }
 
+// delete value for saving space
+void xblockpara_base_t::delete_value(const std::string & key) {
+    m_values.erase(key);
+}
+
 void xblockpara_base_t::set_value(const std::string & key, const std::string & value) {
     if (key.size() > 2 || value.size() > 4096 || value.empty()) {
         xerror("xblockpara_base_t::set_value para should limit key and value size. key=%s,value_size=%d",
@@ -67,6 +72,8 @@ std::string xblockpara_base_t::get_value(const std::string & key) const {
 void xblockpara_base_t::set_value(const std::string & key, bool value) {
     if (value) {  // false not set
         set_value(key, std::to_string(value));
+    } else {
+        delete_value(key);
     }
 }
 bool xblockpara_base_t::get_value_bool(const std::string & key) const {
@@ -79,6 +86,8 @@ bool xblockpara_base_t::get_value_bool(const std::string & key) const {
 void xblockpara_base_t::set_value(const std::string & key, uint32_t value) {
     if (value != 0) {  // zero not set
         set_value(key, std::to_string(value));
+    } else {
+        delete_value(key);
     }
 }
 uint32_t xblockpara_base_t::get_value_uint32(const std::string & key) const {
@@ -91,6 +100,8 @@ uint32_t xblockpara_base_t::get_value_uint32(const std::string & key) const {
 void xblockpara_base_t::set_value(const std::string & key, uint64_t value) {
     if (value != 0) {
         set_value(key, std::to_string(value));
+    } else {
+        delete_value(key);
     }
 }
 uint64_t xblockpara_base_t::get_value_uint64(const std::string & key) const {
@@ -103,6 +114,8 @@ uint64_t xblockpara_base_t::get_value_uint64(const std::string & key) const {
 void xblockpara_base_t::set_value(const std::string & key, uint16_t value) {
     if (value != 0) {
         set_value(key, std::to_string(value));
+    } else {
+        delete_value(key);
     }
 }
 uint16_t xblockpara_base_t::get_value_uint16(const std::string & key) const {

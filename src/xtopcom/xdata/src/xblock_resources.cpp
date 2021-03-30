@@ -125,4 +125,5 @@ int32_t xresource_unit_output_t::do_read(base::xstream_t & stream) {
     return CALC_LEN();
 }
 
+
 NS_END2

@@ -6,7 +6,8 @@
 #include "xbase/xvledger.h"
 #include "xbasic/xns_macro.h"
 #include "xstore/xstore_face.h"
-#include "xtxpool/xtxpool_face.h"
+#include "xindexstore/xindexstore_face.h"
+#include "xtxpool_v2/xtxpool_face.h"
 #include "xunit_service/xcons_face.h"
 #include "xmbus/xmessage_bus.h"
 
@@ -65,7 +66,8 @@ public:
     static xunit_service::xcons_service_mgr_ptr build(std::string const & node_account,
                                                       observer_ptr<store::xstore_face_t> const & store,
                                                       xobject_ptr_t<base::xvblockstore_t> const & blockstore,
-                                                      observer_ptr<xtxpool::xtxpool_face_t> const & txpool,
+                                                      observer_ptr<store::xindexstorehub_t> const & indexstore,
+                                                      observer_ptr<xtxpool_v2::xtxpool_face_t> const & txpool,
                                                       observer_ptr<time::xchain_time_face_t> const & tx_timer,
                                                       xobject_ptr_t<base::xvcertauth_t> const & certauth,
                                                       observer_ptr<election::cache::xdata_accessor_face_t> const & accessor,

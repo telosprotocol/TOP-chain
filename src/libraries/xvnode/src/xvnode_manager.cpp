@@ -28,8 +28,8 @@ xtop_vnode_manager::xtop_vnode_manager(observer_ptr<elect::ElectMain> const & el
                                        observer_ptr<sync::xsync_object_t> const & sync_object,
                                        observer_ptr<grpcmgr::xgrpc_mgr_t> const & grpc_mgr,
                                        observer_ptr<xunit_service::xcons_service_mgr_face> const & cons_mgr,
-                                       observer_ptr<xtxpool_service::xtxpool_service_mgr_face> const & txpool_service_mgr,
-                                       observer_ptr<xtxpool::xtxpool_face_t> const & txpool,
+                                       observer_ptr<xtxpool_service_v2::xtxpool_service_mgr_face> const & txpool_service_mgr,
+                                       observer_ptr<xtxpool_v2::xtxpool_face_t> const & txpool,
                                        observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor)
   : m_logic_timer{logic_timer}
   , m_vhost{vhost}

@@ -107,6 +107,16 @@ xaccount_context_t::xaccount_context_t(const std::string& address,
     xinfo("create context, address:%s height:%d", address.c_str(), m_account->get_chain_height());
 }
 
+xaccount_context_t::xaccount_context_t(data::xblockchain2_t* blockchain, xstore_face_t* store)
+: m_address(blockchain->get_account()), m_store(store) {
+    m_account = blockchain;
+    blockchain->add_ref();
+    m_native_property = m_account->get_native_property();
+    m_native_property.clear_dirty();
+    m_accountcmd = std::make_shared<xaccount_cmd>(m_account, store);
+    xinfo("create context, address:%s height:%d", blockchain->get_account().c_str(), m_account->get_chain_height());
+}
+
 xaccount_context_t::~xaccount_context_t() {
     if (m_account != nullptr) {
         m_account->release_ref();

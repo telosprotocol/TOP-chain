@@ -11,12 +11,12 @@
 #include "xdata/xnative_contract_address.h"
 #include "xstore/xstore_face.h"
 
-#ifndef __MAC_PLATFORM__
+// #ifndef __MAC_PLATFORM__
     #include "xconfig/xconfig_register.h"
     #include "xconfig/xpredefined_configurations.h"
     #include "xmbus/xevent_store.h"
     #include "xmetrics/xmetrics.h"
-#endif
+// #endif
 
 namespace top
 {

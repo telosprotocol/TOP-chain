@@ -33,7 +33,7 @@ protected:
 public:
     std::shared_ptr<top::tests::vnetwork::xdummy_vnetwork_driver_t> m_vhost;
     observer_ptr<xrouter_face_t> m_router_ptr{nullptr};
-    xtxpool_service::xtxpool_proxy_face_ptr m_unit_service;
+    xtxpool_service_v2::xtxpool_proxy_face_ptr m_unit_service;
     observer_ptr<store::xstore_face_t> m_store;
     observer_ptr<base::xvblockstore_t> m_block_store;
     std::string m_account{"T00000LdD549VCMVVzS2m2RCgkT9errUXdSjJZbF"};

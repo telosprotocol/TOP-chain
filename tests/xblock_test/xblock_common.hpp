@@ -10,8 +10,7 @@
 #include "xchain_timer/xchain_timer.h"
 #include "xcommon/xip.h"
 #include "xstore/test/xstore_face_mock.h"
-#include "xtxexecutor/xtxpool_block_maker.h"
-#include "xtxpool/xtxpool_face.h"
+#include "xtxpool_v2/xtxpool_face.h"
 #include "xunit_service/xcons_face.h"
 #include "xunit_service/xcons_service_mgr.h"
 #include "xunit_service/xcons_service_para.h"
@@ -28,8 +27,8 @@ namespace test {
 using namespace mock;
 using namespace xunit_service;
 using namespace store;
-using namespace txexecutor;
-using namespace xtxpool;
+//using namespace txexecutor;
+using namespace xtxpool_v2;
 
 class xblock_common {
 public:
@@ -113,7 +112,7 @@ public:
         //     if (test_xtxpool_block_maker_mock_enable) {
         //         block_maker = std::make_shared<xempty_block_maker>(p_srv_para);
         //     } else {
-        //         auto txpool = xtxpool::xtxpool_instance::create_xtxpool_inst(make_observer(persist_db), make_observer(mbus.get()));
+        //         auto txpool = xtxpool_v2::xtxpool_instance::create_xtxpool_inst(make_observer(persist_db), make_observer(mbus.get()));
         //         txpool_set.push_back(txpool);
         //         block_maker = xblockmaker_factory::create_txpool_block_maker(make_observer(persist_db), blockstore.get(), txpool.get());
         //     }

@@ -10,87 +10,103 @@
 #include "xdata/xdata_common.h"
 #include "xdata/xblock.h"
 #include "xvnetwork/xaddress.h"
+#include "xsyncbase/xsync_policy.h"
 
 NS_BEG2(top, mbus)
-
-// <editor-fold defaultstate="collapsed" desc="event type store">
-// published by store, common to ask missed things
-
-enum enum_behind_type {
-    enum_behind_type_cold,
-    enum_behind_type_common,
-    enum_behind_type_nodeserv,
-};
-
-enum enum_behind_source {
-    enum_behind_source_none,
-    enum_behind_source_consensus,
-    enum_behind_source_gossip,
-    enum_behind_source_newblock,
-    enum_behind_source_newblockhash,
-};
 
 class xevent_behind_t : public xevent_t {
 public:
 
     enum _minor_type_ {
-        type_known,
-        type_origin,
+        type_download,
+        type_check,
+        type_on_demand,
     };
 
-    xevent_behind_t(_minor_type_ sub_type, const std::string &_reason,
+    xevent_behind_t(_minor_type_ sub_type,
             direction_type dir = to_listener, bool _sync = true)
-    : xevent_t(xevent_major_type_behind, (int) sub_type, dir, _sync)
-    , reason(_reason) {
+    : xevent_t(xevent_major_type_behind, (int) sub_type, dir, _sync) {
     }
-
-    std::string reason;
 };
 
 DEFINE_SHARED_PTR(xevent_behind);
 
-class xevent_behind_block_t : public xevent_behind_t {
+// table
+class xevent_behind_download_t : public xevent_behind_t {
 public:
 
-    xevent_behind_block_t(
-            const data::xblock_ptr_t &_successor_block,
-            enum_behind_source _source_type,
-            const std::string &_reason,
+    xevent_behind_download_t(
+            const std::string &_address,
+            uint64_t _start_height,
+            uint64_t _end_height,
+            sync::enum_chain_sync_policy _sync_policy,
             vnetwork::xvnode_address_t _self_addr,
             vnetwork::xvnode_address_t _from_addr,
-            direction_type dir = to_listener,
-            bool _sync = true)
-    : xevent_behind_t(type_known, _reason, dir, _sync)
-    , successor_block(_successor_block)
-    , source_type(_source_type)
-    , self_addr(_self_addr)
-    , from_addr(_from_addr) {
-    }
-
-    data::xblock_ptr_t successor_block;
-    enum_behind_source source_type;
-    vnetwork::xvnode_address_t self_addr{};
-    vnetwork::xvnode_address_t from_addr{};
-};
-
-DEFINE_SHARED_PTR(xevent_behind_block);
-
-class xevent_behind_origin_t : public xevent_behind_t {
-public:
-
-    xevent_behind_origin_t(
-            const std::string& _address,
-            enum_behind_type _behind_type,
             const std::string &_reason,
             direction_type dir = to_listener,
             bool _sync = true):
-    xevent_behind_t(type_origin, _reason, dir, _sync),
+    xevent_behind_t(type_download, dir, _sync),
     address(_address),
-    behind_type(_behind_type) {
+    start_height(_start_height),
+    end_height(_end_height),
+    sync_policy(_sync_policy),
+    self_addr(_self_addr),
+    from_addr(_from_addr),
+    reason(_reason) {
     }
 
     std::string address;
-    enum_behind_type behind_type;
+    uint64_t start_height;
+    uint64_t end_height;
+    sync::enum_chain_sync_policy sync_policy;
+    vnetwork::xvnode_address_t self_addr{};
+    vnetwork::xvnode_address_t from_addr{};
+    std::string reason;
+};
+
+//DEFINE_SHARED_PTR(xevent_behind_download);
+
+class xevent_behind_check_t : public xevent_behind_t {
+public:
+
+    xevent_behind_check_t(
+            const std::string& _address,
+            const std::string &_reason,
+            direction_type dir = to_listener,
+            bool _sync = true):
+    xevent_behind_t(type_check, dir, _sync),
+    address(_address),
+    reason(_reason) {
+    }
+
+    std::string address;
+    std::string reason;
+};
+
+class xevent_behind_on_demand_t : public xevent_behind_t {
+public:
+
+    xevent_behind_on_demand_t(
+            const std::string& _address,
+            uint64_t _start_height,
+            uint32_t _count,
+            bool _is_consensus,
+            const std::string &_reason,
+            direction_type dir = to_listener,
+            bool _sync = true):
+    xevent_behind_t(type_on_demand, dir, _sync),
+    address(_address),
+    start_height(_start_height),
+    count(_count),
+    is_consensus(_is_consensus),
+    reason(_reason) {
+    }
+
+    std::string address;
+    uint64_t start_height;
+    uint32_t count;
+    bool is_consensus;
+    std::string reason;
 };
 
 NS_END2

@@ -6,6 +6,7 @@
 
 #include "xmbus/xevent.h"
 #include "xdata/xblock.h"
+#include "xdata/xtableindex.h"
 #include "xvnetwork/xaddress.h"
 
 NS_BEG2(top, mbus)
@@ -16,6 +17,7 @@ public:
     enum _minor_type_ {
         none,
         blocks,
+        chain_snapshot,
     };
 
     xevent_sync_executor_t(_minor_type_ mt = none,
@@ -50,6 +52,29 @@ public:
     vnetwork::xvnode_address_t from_address;
 };
 
+class xevent_chain_snaphsot_t : public xevent_sync_executor_t {
+public:
+    xevent_chain_snaphsot_t(
+            const std::string tbl_account_addr,
+            const xobject_ptr_t<data::xtable_mbt_t> _chain_snapshot,
+            uint64_t height,
+            const vnetwork::xvnode_address_t& _self_address,
+            const vnetwork::xvnode_address_t& _from_address,
+            direction_type dir = to_listener,
+            bool _sync = true) :
+    xevent_sync_executor_t(xevent_sync_executor_t::chain_snapshot, dir, _sync),
+    m_tbl_account_addr(tbl_account_addr),
+    m_chain_snapshot(_chain_snapshot),
+    m_height(height),
+    self_address(_self_address),
+    from_address(_from_address) {
+    }
+    std::string m_tbl_account_addr;
+    xobject_ptr_t<data::xtable_mbt_t> m_chain_snapshot;
+    uint64_t m_height;
+    vnetwork::xvnode_address_t self_address;
+    vnetwork::xvnode_address_t from_address;
+};
 DEFINE_SHARED_PTR(xevent_sync_response_blocks);
 
 NS_END2

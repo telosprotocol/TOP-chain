@@ -24,7 +24,7 @@ TEST(test_, vhost_not_run) {
                                                                                                         make_observer(&tests::vnetwork::xdummy_network_data_accessor));
 
     std::error_code           ec = xvnetwork_errc2_t::success;
-    top::vnetwork::xmessage_t msg(xbyte_buffer_t{}, syncbase::xmessage_id_sync_blocks);
+    top::vnetwork::xmessage_t msg(xbyte_buffer_t{}, sync::xmessage_id_sync_blocks);
 
     common::xaccount_election_address_t account_address{common::xnode_id_t{std::string{"test1"}}, common::xslot_id_t{}};
 

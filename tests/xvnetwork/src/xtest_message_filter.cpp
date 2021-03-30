@@ -107,8 +107,8 @@ public:
     common::xnode_address_t adr_broadcast_ver1 = get_address(test_version1, common::build_network_broadcast_sharding_address(test_network_id));
 
     top::xbyte_buffer_t       byte_buf = random_base58_bytes(20);
-    top::vnetwork::xmessage_t test_msg{byte_buf, syncbase::xmessage_id_sync_blocks};
-    top::vnetwork::xmessage_t test_empty_msg{xbyte_buffer_t{}, syncbase::xmessage_id_sync_blocks};
+    top::vnetwork::xmessage_t test_msg{byte_buf, sync::xmessage_id_sync_blocks};
+    top::vnetwork::xmessage_t test_empty_msg{xbyte_buffer_t{}, sync::xmessage_id_sync_blocks};
 
     xvnetwork_message_t get_vnetwork_message(xvnode_address_t send_adr, xvnode_address_t recv_adr, xmessage_t msg, xlogic_time_t logic_time = xlogic_time_t{0}) {
         return xvnetwork_message_t{send_adr, recv_adr, msg, logic_time};

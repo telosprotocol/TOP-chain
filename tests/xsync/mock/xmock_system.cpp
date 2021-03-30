@@ -78,13 +78,13 @@ void xmock_system_t::stop() {
 void xmock_system_t::on_timer() {
     if (m_is_start) {
 
-        static xchain_time_st chain_current_time;
+        static common::xlogic_time_t chain_current_time;
 
         // chain_current_time.beacon_round++;
         // chain_current_time.beacon_height++;
         // chain_current_time.xtimestamp = base::xtime_utl::gmttime_ms();
-        chain_current_time.xtime_round++;
-        chain_current_time.local_update_time = base::xtime_utl::gmttime_ms();
+        chain_current_time++;
+        // chain_current_time.local_update_time = base::xtime_utl::gmttime_ms();
 
         for (auto it: m_addr_nodes) {
             std::shared_ptr<xmock_node_t> &node = it.second;
@@ -162,7 +162,6 @@ void xmock_system_t::create_mock_node(std::vector<std::shared_ptr<xmock_node_inf
         xobject_ptr_t<base::xvblockstore_t> blockstore = nullptr;
         blockstore.attach(store::xblockstorehub_t::instance().create_block_store(*node_ptr->m_store, ""));
         node_ptr->m_blockstore = blockstore;
-        node_ptr->m_chain_timer = make_object_ptr<time::xchain_timer_t>();
 
         node_ptr->create_sync();
 

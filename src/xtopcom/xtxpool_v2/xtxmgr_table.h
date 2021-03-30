@@ -20,23 +20,24 @@ using data::xcons_transaction_ptr_t;
 
 class xtxmgr_table_t {
 public:
-    xtxmgr_table_t(xtxpool_table_info_t * xtable_info) : m_xtable_info(xtable_info), m_tx_queue(xtable_info), m_pending_accounts(xtable_info) {
+    xtxmgr_table_t(xtxpool_table_info_t * xtable_info) : m_xtable_info(xtable_info), m_send_tx_queue(xtable_info), m_receipt_queue(xtable_info), m_pending_accounts(xtable_info) {
     }
 
-    int32_t push_tx(const xcons_transaction_ptr_t & tx, const xtx_para_t & tx_para);
-    std::shared_ptr<xtx_entry> pop_tx_by_hash(const std::string & account, const uint256_t & hash, uint8_t subtype, int32_t err);
-    candidate_accounts get_accounts_txs(uint32_t count);
-    int32_t push_back_tx(std::shared_ptr<xtx_entry> tx_ent);
-    const xcons_transaction_ptr_t query_tx(const std::string & account, const uint256_t & hash) const;
-    int32_t init();
-    int32_t deinit();
+    int32_t push_send_tx(const std::shared_ptr<xtx_entry> & tx, uint64_t latest_nonce, const uint256_t & latest_hash);
+    int32_t push_receipt(const std::shared_ptr<xtx_entry> & tx);
+    std::shared_ptr<xtx_entry> pop_tx(const std::string & account_addr, const uint256_t & hash, enum_transaction_subtype subtype, bool clear_follower);
+    ready_accounts_t pop_ready_accounts(uint32_t count);
+    ready_accounts_t get_ready_accounts(uint32_t count);
+    const std::shared_ptr<xtx_entry> query_tx(const std::string & account_addr, const uint256_t & hash) const;
+    void updata_latest_nonce(const std::string & account_addr, uint64_t latest_nonce, const uint256_t & latest_hash);
+    bool is_account_need_update(const std::string & account_addr) const;
 
 private:
     void queue_to_pending();
-    bool push_to_pending(std::vector<std::shared_ptr<xtx_entry>> & txs, uint32_t & tx_count);
 
     xtxpool_table_info_t * m_xtable_info;
-    xtx_queue_t m_tx_queue;
+    xsend_tx_queue_t m_send_tx_queue;
+    xreceipt_queue_t m_receipt_queue;
     xpending_accounts_t m_pending_accounts;
 };
 

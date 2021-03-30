@@ -4,7 +4,6 @@
 #include "tests/xvnetwork/xdummy_vhost.h"
 #include "xdata/xgenesis_data.h"
 #include "common.h"
-#include "xsync/xsync_status.h"
 #include "xdata/xnative_contract_address.h"
 #if 0
 using namespace top;

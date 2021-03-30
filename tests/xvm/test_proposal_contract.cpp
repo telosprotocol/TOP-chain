@@ -36,7 +36,9 @@ public:
     static void SetUpTestCase() {
         auto m_store = xstore_factory::create_store_with_memdb();
         auto mbus =  top::make_unique<mbus::xmessage_bus_t>(true, 1000);
-        auto chain_timer = top::make_object_ptr<time::xchain_timer_t>();
+        std::shared_ptr<xbase_io_context_wrapper_t> io_object = std::make_shared<xbase_io_context_wrapper_t>();
+        std::shared_ptr<xbase_timer_driver_t> timer_driver = std::make_shared<xbase_timer_driver_t>(io_object);
+        auto chain_timer = top::make_object_ptr<time::xchain_timer_t>(timer_driver);
         auto& config_center = top::config::xconfig_register_t::get_instance();
 
         config::xconfig_loader_ptr_t loader = std::make_shared<loader::xconfig_onchain_loader_t>(make_observer(m_store), make_observer(mbus), make_observer(chain_timer));

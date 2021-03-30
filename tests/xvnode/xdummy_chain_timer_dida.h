@@ -22,7 +22,7 @@ public:
         for (size_t u = 0; u < m_count; u++) {
             usleep(500000);
             half_sec_cnt++;
-            cb(time::xchain_time_st(nullptr, common::xlogic_time_t(half_sec_cnt)));
+            cb(half_sec_cnt);
         }
         return;
     }

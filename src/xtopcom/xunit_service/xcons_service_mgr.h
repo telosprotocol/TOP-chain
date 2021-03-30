@@ -35,7 +35,7 @@ public:
     virtual bool destroy(const xvip2_t & xip);
 
     // init reference data
-    virtual bool start(const xvip2_t & xip);
+    virtual bool start(const xvip2_t & xip, const common::xlogic_time_t& start_time);
 
     // uninit reference data
     virtual bool fade(const xvip2_t & xip);

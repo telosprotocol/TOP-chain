@@ -11,7 +11,6 @@
 #include "xmetrics/xmetrics.h"
 #include "xsync/xmessage_pack.h"
 #include "xvnetwork/xvhost_face.h"
-#include "xsync/xsync_status.h"
 #include "xsync/xsync_handler.h"
 
 NS_BEG2(top, sync)
@@ -22,10 +21,9 @@ public:
 
     xsync_netmsg_dispatcher_t(std::string vnode_id, const std::vector<observer_ptr<base::xiothread_t>> &thread_pool, const observer_ptr<mbus::xmessage_bus_face_t> &mbus,
         const observer_ptr<vnetwork::xvhost_face_t> &vhost,
-        xsync_status_t *sync_status, 
         xsync_handler_t *sync_handler, int min_compress_threshold = DEFAULT_MIN_COMPRESS_THRESHOLD);
-    void watch(vnetwork::xvnetwork_driver_face_t* drvier);
-    void unwatch(vnetwork::xvnetwork_driver_face_t* drvier);
+    void watch(vnetwork::xvnetwork_driver_face_t* driver);
+    void unwatch(vnetwork::xvnetwork_driver_face_t* driver);
     void on_receive(vnetwork::xvnode_address_t const & addr, vnetwork::xmessage_t const & msg, std::uint64_t const, vnetwork::xvnode_address_t const & vnetwork_self);
 
 private:
@@ -43,7 +41,6 @@ protected:
     uint32_t m_thread_count{0};
     observer_ptr<mbus::xmessage_bus_face_t> m_bus;
     observer_ptr<vnetwork::xvhost_face_t> m_vhost{};
-    xsync_status_t *m_sync_status{};
     xsync_handler_t *m_sync_handler{};
     int m_min_compress_threshold{};
 };

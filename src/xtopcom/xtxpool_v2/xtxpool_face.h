@@ -5,8 +5,11 @@
 #pragma once
 
 #include "xbasic/xmemory.hpp"
+#include "xchain_timer/xchain_timer_face.h"
+#include "xdata/xblock.h"
 #include "xdata/xcons_transaction.h"
-#include "xtxpool_v2/xtxpool_base.h"
+#include "xstore/xstore_face.h"
+#include "xindexstore/xindexstore_face.h"
 
 #include <string>
 #include <vector>
@@ -17,22 +20,112 @@ namespace xtxpool_v2 {
 using data::xcons_transaction_ptr_t;
 using namespace top::data;
 
-// txpool does not consider pack strategy, unit service does
-// enum enum_pack_strategy_type {
-//     pack_strategy_common = 0,
-//     pack_strategy_fast = 1,
-//     pack_strategy_immediately = 2,
-// };
+enum enum_xtx_type_socre_t {
+    enum_xtx_type_socre_normal = 0,
+    enum_xtx_type_socre_system = 1,
+};
 
-class xtxpool_face_t {
+
+class xtx_para_t {
 public:
-    virtual int32_t push_tx(const xcons_transaction_ptr_t & tx, const xtx_para_t & tx_para);
-    virtual const xcons_transaction_ptr_t pop_tx_by_hash(const std::string & account_addr, const uint256_t & hash, uint8_t subtype, int32_t err);
-    virtual candidate_accounts get_candidate_accounts(const std::string & table_addr, uint32_t count);
-    virtual int32_t push_back_tx(std::shared_ptr<xtx_entry> tx_ent);
-    virtual const xcons_transaction_ptr_t query_tx(const std::string & account, const uint256_t & hash) const;
-    virtual void subscribe_tables(uint8_t zone, uint16_t front_table_id, uint16_t back_table_id);
-    virtual void unsubscribe_tables(uint8_t zone, uint16_t front_table_id, uint16_t back_table_id);
+    xtx_para_t() {}
+    xtx_para_t(uint16_t charge_score, uint16_t type_score, uint64_t timestamp, uint64_t check_unit_height, std::string check_unit_hash)
+      : m_charge_score(charge_score), m_type_score(type_score), m_timestamp(timestamp), m_check_unit_height(check_unit_height), m_check_unit_hash(check_unit_hash) {
+    }
+    void set_charge_score(uint16_t score) {
+        m_charge_score = score;
+    }
+    uint16_t get_charge_score() const {
+        return m_charge_score;
+    }
+    void set_tx_type_score(uint16_t score) {
+        m_type_score = score;
+    }
+    uint16_t get_tx_type_score() const {
+        return m_type_score;
+    }
+    void set_timestamp(uint64_t timestamp) {
+        m_timestamp = timestamp;
+    }
+    uint64_t get_timestamp() const {
+        return m_timestamp;
+    }
+    void set_check_unit_height(uint64_t check_unit_height) {
+        m_check_unit_height = check_unit_height;
+    }
+    uint64_t get_check_unit_height() const {
+        return m_check_unit_height;
+    }
+    void set_check_unit_hash(std::string check_unit_hash) {
+        m_check_unit_hash = check_unit_hash;
+    }
+    std::string get_check_unit_hash() const {
+        return m_check_unit_hash;
+    }
+
+private:
+    uint16_t m_charge_score{0};
+    uint16_t m_type_score{0};
+    uint64_t m_timestamp{0};
+    uint64_t m_check_unit_height{0};
+    std::string m_check_unit_hash;
+};
+
+class xtx_entry {
+public:
+    xtx_entry(const xcons_transaction_ptr_t & tx, const xtx_para_t & para) : m_tx(tx), m_para(para) {
+    }
+    xtx_para_t & get_para() {
+        return m_para;
+    }
+    const xcons_transaction_ptr_t & get_tx() const {
+        return m_tx;
+    }
+
+private:
+    xcons_transaction_ptr_t m_tx;
+    xtx_para_t m_para;
+};
+
+class xready_account_t {
+public:
+    xready_account_t(const std::string & account) : m_account(account) {
+    }
+    const std::vector<xcons_transaction_ptr_t> & get_txs() const {return m_txs;}
+    void put_tx(const xcons_transaction_ptr_t & tx) {m_txs.push_back(tx);}
+    const std::string & get_addr() const {return m_account;}
+
+private:
+    std::string m_account;
+    mutable std::vector<xcons_transaction_ptr_t> m_txs;
+};
+using ready_accounts_t = std::vector<std::shared_ptr<xready_account_t>>;
+
+class xtxpool_face_t : public base::xobject_t {
+public:
+    virtual int32_t push_send_tx(const std::shared_ptr<xtx_entry> & tx) = 0;
+    virtual int32_t push_receipt(const std::shared_ptr<xtx_entry> & tx) = 0;
+    virtual const xcons_transaction_ptr_t pop_tx(const std::string & account_addr, const uint256_t & hash, enum_transaction_subtype subtype) = 0;
+    virtual ready_accounts_t pop_ready_accounts(const std::string & table_addr, uint32_t count) = 0;
+    virtual ready_accounts_t get_ready_accounts(const std::string & table_addr, uint32_t count) = 0;
+    virtual const std::shared_ptr<xtx_entry> query_tx(const std::string & account, const uint256_t & hash) const = 0;
+    virtual void updata_latest_nonce(const std::string & account_addr, uint64_t latest_nonce, const uint256_t & latest_hash) = 0;
+    virtual void subscribe_tables(uint8_t zone, uint16_t front_table_id, uint16_t back_table_id) = 0;
+    virtual void unsubscribe_tables(uint8_t zone, uint16_t front_table_id, uint16_t back_table_id) = 0;
+    virtual void on_block_confirmed(xblock_t * block) = 0;
+    virtual xcons_transaction_ptr_t get_unconfirm_tx(const std::string source_addr, const uint256_t & hash) const = 0;
+    virtual int32_t verify_txs(const std::string & account, const std::vector<xcons_transaction_ptr_t> & txs, uint64_t latest_commit_unit_height) = 0;
+    virtual int32_t reject(const xcons_transaction_ptr_t & tx, uint64_t latest_commit_unit_height, bool & deny) = 0;
+    virtual const std::vector<xcons_transaction_ptr_t> get_resend_txs(uint8_t zone, uint16_t subaddr, uint64_t now) = 0;
+    virtual void update_unconfirm_accounts(uint8_t zone, uint16_t subaddr) = 0;
+};
+
+class xtxpool_instance {
+public:
+    static xobject_ptr_t<xtxpool_face_t> create_xtxpool_inst(const observer_ptr<store::xstore_face_t> & store,
+                                                             const observer_ptr<base::xvblockstore_t> & blockstore,
+                                                             const observer_ptr<base::xvcertauth_t> & certauth,
+                                                             const observer_ptr<store::xindexstorehub_t> & indexstorehub);
 };
 
 }  // namespace xtxpool_v2

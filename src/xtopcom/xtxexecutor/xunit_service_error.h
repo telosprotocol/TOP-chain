@@ -44,30 +44,7 @@ enum enum_xunit_service_error_type {
     xtransaction_pledge_contract_owner_sign_err,
     xtransaction_pledge_redeem_vote_err,
 
-    enum_xtxexecutor_error_proposal_unit_not_match_last_unit,
-    enum_xtxexecutor_error_proposal_unit_should_be_fullunit,
-    enum_xtxexecutor_error_proposal_unit_should_be_lightunit,
-    enum_xtxexecutor_error_proposal_unit_not_match_leader_output,
-    enum_xtxexecutor_error_proposal_unit_input_invalid,
-    enum_xtxexecutor_error_unit_height_less_than_leader,
-    enum_xtxexecutor_error_unit_height_larger_than_leader,
-    enum_xtxexecutor_error_unit_leader_hash_not_equal_backup,
-    enum_xtxexecutor_error_unit_height_not_equal_blockchain_height,
-    enum_xtxexecutor_error_unit_state_behind,
-    enum_xtxexecutor_error_unit_property_behind,
-    enum_xtxexecutor_error_unit_usable_timestamp_not_arrive,
-    enum_xtxexecutor_error_proposal_tableblock_should_not_empty_block,
-    enum_xtxexecutor_error_leader_tableblock_behind,
-    enum_xtxexecutor_error_backup_tableblock_behind,
-    enum_xtxexecutor_error_account_have_no_tx,
-    enum_xtxexecutor_error_txpool_empty,
     enum_xtxexecutor_error_tx_nonce_not_match,
-
-    enum_xtxexecutor_error_backup_verify_fail_table_input_hash,
-    enum_xtxexecutor_error_backup_verify_fail_table_output_hash,
-    enum_xtxexecutor_error_backup_verify_fail_table_header_hash,
-    enum_xtxexecutor_error_backup_verify_fail_check_consensus_para,
-
 
     xconsensus_service_error_max,
 };
@@ -105,29 +82,7 @@ inline std::string xunit_error_to_string(int32_t code) {
         XUNIT_TO_STR(xtransaction_pledge_contract_owner_sign_err),
         XUNIT_TO_STR(xtransaction_pledge_redeem_vote_err),
 
-        XUNIT_TO_STR(enum_xtxexecutor_error_proposal_unit_not_match_last_unit),
-        XUNIT_TO_STR(enum_xtxexecutor_error_proposal_unit_should_be_fullunit),
-        XUNIT_TO_STR(enum_xtxexecutor_error_proposal_unit_should_be_lightunit),
-        XUNIT_TO_STR(enum_xtxexecutor_error_proposal_unit_not_match_leader_output),
-        XUNIT_TO_STR(enum_xtxexecutor_error_proposal_unit_input_invalid),
-        XUNIT_TO_STR(enum_xtxexecutor_error_unit_height_less_than_leader),
-        XUNIT_TO_STR(enum_xtxexecutor_error_unit_height_larger_than_leader),
-        XUNIT_TO_STR(enum_xtxexecutor_error_unit_leader_hash_not_equal_backup),
-        XUNIT_TO_STR(enum_xtxexecutor_error_unit_height_not_equal_blockchain_height),
-        XUNIT_TO_STR(enum_xtxexecutor_error_unit_state_behind),
-        XUNIT_TO_STR(enum_xtxexecutor_error_unit_property_behind),
-        XUNIT_TO_STR(enum_xtxexecutor_error_unit_usable_timestamp_not_arrive),
-        XUNIT_TO_STR(enum_xtxexecutor_error_proposal_tableblock_should_not_empty_block),
-        XUNIT_TO_STR(enum_xtxexecutor_error_leader_tableblock_behind),
-        XUNIT_TO_STR(enum_xtxexecutor_error_backup_tableblock_behind),
-        XUNIT_TO_STR(enum_xtxexecutor_error_account_have_no_tx),
-        XUNIT_TO_STR(enum_xtxexecutor_error_txpool_empty),
         XUNIT_TO_STR(enum_xtxexecutor_error_tx_nonce_not_match),
-
-        XUNIT_TO_STR(enum_xtxexecutor_error_backup_verify_fail_table_input_hash),
-        XUNIT_TO_STR(enum_xtxexecutor_error_backup_verify_fail_table_output_hash),
-        XUNIT_TO_STR(enum_xtxexecutor_error_backup_verify_fail_table_header_hash),
-        XUNIT_TO_STR(enum_xtxexecutor_error_backup_verify_fail_check_consensus_para)
     };
     return names[code - xconsensus_service_error_base - 1];
 }

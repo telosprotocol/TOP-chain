@@ -24,13 +24,13 @@ common::xmessage_category_t xcons_service_t::get_msg_category() {
     return m_category;
 }
 
-bool xcons_service_t::start(const xvip2_t & xip) {
+bool xcons_service_t::start(const xvip2_t & xip, const common::xlogic_time_t& start_time) {
     // TODO(justin): add start implement
     // 1. get elect data from election data
     // 2. dispatcher subscribe xip[noversion]: tableids
     //   2.1 reset xip
     xkinfo("xcons_service_t::start %s this=%p", xcons_utl::xip_to_hex(xip).c_str(), this);
-    m_dispatcher->start(xip);
+    m_dispatcher->start(xip, start_time);
     // 3. register network proxy notification
     auto network_proxy = m_para->get_resources()->get_network();
     network_proxy->listen(xip, get_msg_category(), shared_from_this());

@@ -14,6 +14,7 @@
 #include "xbase/xvledger.h"
 #include "xblockstore/xblockstore_face.h"
 #include "xsync/xsync_util.h"
+#include "../xblockstore_test/test_blockmock.hpp"
 
 using namespace top;
 using namespace top::data;
@@ -51,7 +52,7 @@ TEST(xsync_message, get_blocks) {
     }
 
     {
-        xsync_message_get_blocks_ptr_t ptr = make_object_ptr<xsync_message_get_blocks_t>();
+        auto ptr = make_object_ptr<xsync_message_get_blocks_t>();
         ptr->serialize_from(stream);
         ASSERT_EQ(ptr->owner, address);
         ASSERT_EQ(ptr->start_height, 1);
@@ -97,13 +98,12 @@ TEST(xsync_message, blocks) {
     }
 
     {
-        xsync_message_blocks_ptr_t ptr =
-            make_object_ptr<xsync_message_blocks_t>(address, vector_blocks);
+        auto ptr = make_object_ptr<xsync_message_blocks_t>(address, vector_blocks);
         ptr->serialize_to(stream);
     }
 
     {
-        xsync_message_blocks_ptr_t ptr = make_object_ptr<xsync_message_blocks_t>();
+        auto ptr = make_object_ptr<xsync_message_blocks_t>();
         ptr->serialize_from(stream);
         ASSERT_EQ(ptr->owner, address);
         ASSERT_EQ(ptr->blocks.size(), 2);
@@ -124,7 +124,7 @@ static xcons_transaction_ptr_t create_cons_transfer_tx(const std::string & from,
     return cons_tx;
 }
 
-TEST(xsync_message, newblock) {
+TEST(xsync_message, push_newblock) {
     base::xstream_t stream(base::xcontext_t::instance());
 
 #if 0
@@ -156,12 +156,12 @@ TEST(xsync_message, newblock) {
         base::xauto_ptr<base::xvblock_t> autoptr = lightunit1;
         xblock_ptr_t blk = autoptr_to_blockptr(autoptr);
 
-        auto req = make_object_ptr<xsync_message_newblock_t>(blk);
+        auto req = make_object_ptr<xsync_message_push_newblock_t>(blk);
         req->serialize_to(stream);
     }
 
     {
-        xsync_message_newblock_ptr_t ptr = make_object_ptr<xsync_message_newblock_t>();
+        auto ptr = make_object_ptr<xsync_message_push_newblock_t>();
         ptr->serialize_from(stream);
 
         xblock_ptr_t block = ptr->block;
@@ -171,23 +171,46 @@ TEST(xsync_message, newblock) {
     }
 }
 
-TEST(xsync_message, newblockhash) {
+TEST(xsync_message, old_newblockhash) {
     base::xstream_t stream(base::xcontext_t::instance());
 
     std::string owner = data::xblocktool_t::make_address_user_account("11111111111111111111");
+    std::string hash = "123";
 
     {
-        auto req = make_object_ptr<xsync_message_newblockhash_t>(owner, 1, 2);
+        auto req = make_object_ptr<xsync_message_old_newblockhash_t>(owner, 1, 2);
             req->serialize_to(stream);
     }
 
     {
-        xsync_message_newblockhash_ptr_t ptr = make_object_ptr<xsync_message_newblockhash_t>();
+        auto ptr = make_object_ptr<xsync_message_old_newblockhash_t>();
         ptr->serialize_from(stream);
 
         ASSERT_EQ(ptr->address, owner);
         ASSERT_EQ(ptr->height, 1);
         ASSERT_EQ(ptr->view_id, 2);
+    }
+}
+
+TEST(xsync_message, general_newblockhash) {
+    base::xstream_t stream(base::xcontext_t::instance());
+
+    std::string owner = data::xblocktool_t::make_address_user_account("11111111111111111111");
+    std::string hash = "123";
+
+    {
+        auto req = make_object_ptr<xsync_message_general_newblockhash_t>(owner, 1, 2, hash);
+            req->serialize_to(stream);
+    }
+
+    {
+        auto ptr = make_object_ptr<xsync_message_general_newblockhash_t>();
+        ptr->serialize_from(stream);
+
+        ASSERT_EQ(ptr->address, owner);
+        ASSERT_EQ(ptr->height, 1);
+        ASSERT_EQ(ptr->view_id, 2);
+        ASSERT_EQ(ptr->hash, hash);
     }
 }
 
@@ -211,7 +234,7 @@ TEST(xsync_message, gossip) {
     }
 
     {
-        xsync_message_gossip_ptr_t ptr = make_object_ptr<xsync_message_gossip_t>();
+        auto ptr = make_object_ptr<xsync_message_gossip_t>();
         ptr->serialize_from(stream);
 
         std::vector<xgossip_chain_info_ptr_t> &info_list = ptr->info_list;
@@ -241,7 +264,7 @@ TEST(xsync_message, header_body) {
         xsync_message_header_ptr_t header = make_object_ptr<xsync_message_header_t>();
         header->serialize_from(stream);
         ASSERT_EQ(header->random, 100);
-        xsync_message_get_blocks_ptr_t ptr = make_object_ptr<xsync_message_get_blocks_t>();
+        auto ptr = make_object_ptr<xsync_message_get_blocks_t>();
         ptr->serialize_from(stream);
         ASSERT_EQ(ptr->owner, address);
         ASSERT_EQ(ptr->start_height, 1);
@@ -249,137 +272,74 @@ TEST(xsync_message, header_body) {
     }
 }
 
-TEST(xsync_message, latest_block_info) {
-    base::xstream_t stream(base::xcontext_t::instance());
 
-    std::string address = xdatautil::serialize_owner_str(sys_contract_beacon_table_block_addr, 0);
-
-    {
-        std::vector<xlatest_block_info_t> info_list;
-        xlatest_block_info_t info;
-        info.address = address;
-        info.height = 100;
-        info.view_id = 101;
-        info.hash = "abc";
-        info_list.push_back(info);
-
-        auto req = make_object_ptr<xsync_message_latest_block_info_t>(info_list);
-        req->serialize_to(stream);
-    }
-
-    {
-        auto ptr = make_object_ptr<xsync_message_latest_block_info_t>();
-        ptr->serialize_from(stream);
-
-        std::vector<xlatest_block_info_t> &info_list = ptr->info_list;
-        ASSERT_EQ(info_list.size(), 1);
-        ASSERT_EQ(info_list[0].address, address);
-        ASSERT_EQ(info_list[0].height, 100);
-        ASSERT_EQ(info_list[0].view_id, 101);
-        ASSERT_EQ(info_list[0].hash, "abc");
-    }
-}
-
-TEST(xsync_message, get_latest_blocks) {
-    base::xstream_t stream(base::xcontext_t::instance());
+TEST(xsync_message, get_on_demand_blocks) {
 
     std::string address = "abc";
-
-    uint64_t height1 = 123;
-    std::string hash1 = "xyz";
-    uint64_t height2 = 456;
-    std::string hash2 = "nnn";
-
-    xlatest_block_item_t item1;
-    item1.height = height1;
-    item1.hash = hash1;
-
-    xlatest_block_item_t item2;
-    item2.height = height2;
-    item2.hash = hash2;
-
-    std::vector<xlatest_block_item_t> list;
-    list.push_back(item1);
-    list.push_back(item2);
+    uint64_t start_height = 1;
+    uint32_t count = 2;
 
     {
-        auto q = make_object_ptr<xsync_message_get_latest_blocks_t>(
-                address, list);
+        base::xstream_t stream(base::xcontext_t::instance());
+
+        auto q = make_object_ptr<xsync_message_get_on_demand_blocks_t>(
+                address, start_height, count, true);
         q->serialize_to(stream);
-    }
 
-    {
-        auto ptr = make_object_ptr<xsync_message_get_latest_blocks_t>();
+        auto ptr = make_object_ptr<xsync_message_get_on_demand_blocks_t>();
         ptr->serialize_from(stream);
         ASSERT_EQ(ptr->address, address);
-        ASSERT_EQ(ptr->list.size(), 2);
-        ASSERT_EQ(ptr->list[0].height, height1);
-        ASSERT_EQ(ptr->list[0].hash, hash1);
-        ASSERT_EQ(ptr->list[1].height, height2);
-        ASSERT_EQ(ptr->list[1].hash, hash2);
-    }
-}
-
-TEST(xsync_message, latest_blocks_1) {
-    base::xstream_t stream(base::xcontext_t::instance());
-
-    {
-        //xblock_ptr_t blk = datamock.create_unit(owner, prop_list, 0);
-
-        std::string account1 = xblocktool_t::make_address_user_account("11111111111111111111");
-        std::string to_account = xblocktool_t::make_address_user_account("11111111111111122222");
-        base::xvblock_t* account1_genesis_block = test_blocktuil::create_genesis_empty_unit(account1);
-        xcons_transaction_ptr_t account1_tx1 = create_cons_transfer_tx(account1, to_account);
-        xcons_transaction_ptr_t account1_tx2 = create_cons_transfer_tx(account1, to_account);
-        xlightunit_block_para_t para1;
-        para1.set_one_input_tx(account1_tx1);
-        para1.set_one_input_tx(account1_tx2);
-        xblock_t* lightunit1 = (xblock_t*)test_blocktuil::create_next_lightunit(para1, account1_genesis_block);
-
-        base::xauto_ptr<base::xvblock_t> autoptr = lightunit1;
-        xblock_ptr_t blk = autoptr_to_blockptr(autoptr);
-
-        std::vector<xblock_ptr_t> blocks;
-        blocks.push_back(blk);
-
-        auto req = make_object_ptr<xsync_message_latest_blocks_t>(blocks);
-        req->serialize_to(stream);
+        ASSERT_EQ(ptr->start_height, 1);
+        ASSERT_EQ(ptr->count, 2);
+        ASSERT_EQ(ptr->is_consensus, true);
     }
 
     {
-        auto ptr = make_object_ptr<xsync_message_latest_blocks_t>();
+        base::xstream_t stream(base::xcontext_t::instance());
+
+        auto q = make_object_ptr<xsync_message_get_on_demand_blocks_t>(
+                address, start_height, count, false);
+        q->serialize_to(stream);
+
+        auto ptr = make_object_ptr<xsync_message_get_on_demand_blocks_t>();
         ptr->serialize_from(stream);
-        ASSERT_EQ(ptr->blocks.size(), 1);
-        ASSERT_EQ(ptr->blocks[0]->get_height(), 1);
+        ASSERT_EQ(ptr->address, address);
+        ASSERT_EQ(ptr->start_height, 1);
+        ASSERT_EQ(ptr->count, 2);
+        ASSERT_EQ(ptr->is_consensus, false);
     }
 }
 
-TEST(xsync_message, latest_blocks_2) {
+TEST(xsync_message, on_demand_blocks) {
     base::xstream_t stream(base::xcontext_t::instance());
 
-    std::string address = xdatautil::serialize_owner_str(sys_contract_sharding_table_block_addr, 0);
+    xobject_ptr_t<store::xstore_face_t> store = store::xstore_factory::create_store_with_memdb(nullptr);
+    test_blockmock_t blockmock(store.get());
+
+    std::string account_address = xblocktool_t::make_address_user_account("11111111111111111112");
+    std::vector<xblock_ptr_t> blocks;
     {
-        //xblock_ptr_t blk = datamock.create_unit(owner, prop_list, 0);
+        std::string property("election_list");
+        base::xvblock_t *prev_unit_block = blockmock.create_property_block(nullptr, account_address, property);
+        for (uint32_t i = 0; i < 1; i++) {
+            std::string value(std::to_string(i));
+            base::xvblock_t *curr_unit_block = blockmock.create_property_block(prev_unit_block, account_address, property, value);
+            curr_unit_block->add_ref();
 
-        base::xvblock_t* genesis_block = test_blocktuil::create_genesis_empty_table(address);
+            base::xauto_ptr<base::xvblock_t> autoptr = curr_unit_block;
+            xblock_ptr_t blk = autoptr_to_blockptr(autoptr);
+            blocks.push_back(blk);
+            blocks.push_back(blk);
 
-        base::xvblock_t* prev_block = genesis_block;
-        prev_block = test_blocktuil::create_next_emptyblock(prev_block);
-        prev_block->add_ref();
+            prev_unit_block = curr_unit_block;
+        }
 
-        base::xauto_ptr<base::xvblock_t> autoptr = prev_block;
-        xblock_ptr_t block_ptr = autoptr_to_blockptr(autoptr);
-
-        std::vector<xblock_ptr_t> blocks;
-        blocks.push_back(block_ptr);
-        blocks.push_back(block_ptr);
-
-        auto req = make_object_ptr<xsync_message_latest_blocks_t>(blocks);
+        auto req = make_object_ptr<xsync_message_general_blocks_t>(blocks);
         req->serialize_to(stream);
     }
 
     {
-        auto ptr = make_object_ptr<xsync_message_latest_blocks_t>();
+        auto ptr = make_object_ptr<xsync_message_general_blocks_t>();
         ptr->serialize_from(stream);
         ASSERT_EQ(ptr->blocks.size(), 2);
         ASSERT_EQ(ptr->blocks[0]->get_height(), 1);
@@ -387,5 +347,35 @@ TEST(xsync_message, latest_blocks_2) {
     }
 }
 
+TEST(xsync_message, chain_state_info) {
+
+    base::xstream_t stream(base::xcontext_t::instance());
+    {
+        std::vector<xchain_state_info_t> info_list;
+        for (uint32_t i=0; i<5; i++) {
+            xchain_state_info_t info;
+            info.address = std::to_string(i);
+            info.start_height = 0;
+            info.end_height = (uint64_t)i;
+            info_list.push_back(info);
+        }
+
+        auto req = make_object_ptr<xsync_message_chain_state_info_t>(info_list);
+        req->serialize_to(stream);
+    }
+
+    {
+        auto ptr = make_object_ptr<xsync_message_chain_state_info_t>();
+        ptr->serialize_from(stream);
+
+        std::vector<xchain_state_info_t> &info_list = ptr->info_list;
+        ASSERT_EQ(info_list.size(), 5);
+        for (uint32_t i=0; i<5; i++) {
+            ASSERT_EQ(info_list[i].address, std::to_string(i));
+            ASSERT_EQ(info_list[i].start_height, 0);
+            ASSERT_EQ(info_list[i].end_height, (uint64_t)i);
+        }
+    }
+}
 
 // TODO add exception test

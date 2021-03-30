@@ -1,15 +1,21 @@
+// Copyright (c) 2017-2018 Telos Foundation & contributors
+// Distributed under the MIT software license, see the accompanying
+// file COPYING or http://www.opensource.org/licenses/mit-license.php.
+
 #pragma once
 
 #include "xdata/xdata_common.h"
 #include "xconfig/xpredefined_configurations.h"
 #include "xconfig/xconfig_register.h"
+#include "xsyncbase/xsync_policy.h"
 
 NS_BEG2(top, sync)
 
 class xchain_info_t {
 public:
-    xchain_info_t(const std::string &_address)
-    : address(_address) {
+    xchain_info_t(const std::string &_address, enum_chain_sync_policy _sync_policy):
+    address(_address),
+    sync_policy(_sync_policy) {
     }
 
     xchain_info_t() {
@@ -17,14 +23,16 @@ public:
 
     xchain_info_t(const xchain_info_t &o) {
         address = o.address;
-        is_sys_account = o.is_sys_account;
+        sync_policy = o.sync_policy;
     }
 
     void merge(const xchain_info_t &other) {
+        if (other.sync_policy == enum_chain_sync_pocliy_full)
+            sync_policy = enum_chain_sync_pocliy_full;
     }
 
     bool operator ==(const xchain_info_t &other) const {
-        return address==other.address && is_sys_account==other.is_sys_account;
+        return address==other.address && sync_policy==other.sync_policy;
     }
 
     bool operator !=(const xchain_info_t &other) const {
@@ -32,7 +40,7 @@ public:
     }
 
     std::string address;
-    bool is_sys_account{true};
+    enum_chain_sync_policy sync_policy{enum_chain_sync_pocliy_full};
 };
 
 NS_END2

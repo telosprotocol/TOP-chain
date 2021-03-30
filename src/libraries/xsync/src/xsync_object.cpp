@@ -19,25 +19,29 @@ xtop_sync_object::xtop_sync_object(observer_ptr<mbus::xmessage_bus_face_t> const
                                    std::vector<observer_ptr<base::xiothread_t>> const & sync_handler_thread_pool):
     m_bus{ bus },
     m_instance(vhost->host_node_id().c_str()),
-    m_sync_store(top::make_unique<sync::xsync_store_t>(m_instance, make_observer(blockstore))), 
+    m_sync_store(top::make_unique<sync::xsync_store_t>(m_instance, make_observer(blockstore))),
     m_blacklist(top::make_unique<sync::xdeceit_node_manager_t>()),
     m_session_mgr(top::make_unique<sync::xsession_manager_t>(XGET_CONFIG(executor_max_sessions))),
-    m_sync_status(top::make_unique<sync::xsync_status_t>()),
-    m_role_chains_mgr(top::make_unique<sync::xrole_chains_mgr_t>(m_instance, m_sync_store.get())),
-    m_role_xips_mgr(top::make_unique<sync::xrole_xips_manager_t>(m_instance, make_observer(nodesvr_ptr), m_blacklist.get())),
+    m_role_chains_mgr(top::make_unique<sync::xrole_chains_mgr_t>(m_instance)),
+    m_role_xips_mgr(top::make_unique<sync::xrole_xips_manager_t>(m_instance)),
     m_sync_sender(top::make_unique<sync::xsync_sender_t>(m_instance, vhost, m_role_xips_mgr.get())),
     m_sync_ratelimit(top::make_unique<sync::xsync_ratelimit_t>(sync_thread, (uint32_t)100)),
-    m_sync_broadcast(top::make_unique<sync::xsync_broadcast_t>(m_instance, m_role_xips_mgr.get(), m_sync_sender.get())),
+    m_peerset(top::make_unique<sync::xsync_peerset_t>(m_instance)),
+    m_sync_pusher(top::make_unique<sync::xsync_pusher_t>(m_instance, m_role_xips_mgr.get(), m_sync_sender.get())),
+    m_sync_broadcast(top::make_unique<sync::xsync_broadcast_t>(m_instance, m_peerset.get(), m_sync_sender.get())),
     m_downloader(top::make_unique<sync::xdownloader_t>(m_instance, m_sync_store.get(), bus, make_observer(cert_ptr), m_role_chains_mgr.get(),
-        m_sync_status.get(), m_sync_sender.get(), sync_account_thread_pool, m_sync_ratelimit.get())),
-    m_block_fetcher(top::make_unique<sync::xblock_fetcher_t>(m_instance, sync_thread, bus, make_observer(cert_ptr), m_sync_store.get(),
+        m_sync_sender.get(), sync_account_thread_pool, m_sync_ratelimit.get())),
+    m_block_fetcher(top::make_unique<sync::xblock_fetcher_t>(m_instance, sync_thread, bus, make_observer(cert_ptr), m_role_chains_mgr.get(), m_sync_store.get(),
         m_sync_broadcast.get(), m_sync_sender.get())),
-    m_sync_gossip(top::make_unique<sync::xsync_gossip_t>(m_instance, m_bus, m_role_chains_mgr.get(), m_role_xips_mgr.get(), m_sync_sender.get())),
-    m_sync_latest(top::make_unique<sync::xsync_latest_t>(m_instance, make_observer(cert_ptr), m_sync_store.get(), m_role_chains_mgr.get(), m_sync_sender.get())),
+    m_sync_gossip(top::make_unique<sync::xsync_gossip_t>(m_instance, m_bus, m_sync_store.get(), m_role_chains_mgr.get(), m_role_xips_mgr.get(), m_sync_sender.get())),
+    m_sync_on_demand(top::make_unique<sync::xsync_on_demand_t>(m_instance, m_bus, make_observer(cert_ptr), m_sync_store.get(), m_role_chains_mgr.get(), m_role_xips_mgr.get(), m_sync_sender.get())),
+    m_peer_keeper(top::make_unique<sync::xsync_peer_keeper_t>(m_instance, m_sync_store.get(), m_role_chains_mgr.get(), m_role_xips_mgr.get(), m_sync_sender.get(), m_peerset.get())),
+    m_behind_checker(top::make_unique<sync::xsync_behind_checker_t>(m_instance, m_sync_store.get(), m_role_chains_mgr.get(), m_peerset.get(), m_downloader.get())),
+    m_cross_cluster_chain_state(top::make_unique<sync::xsync_cross_cluster_chain_state_t>(m_instance, m_sync_store.get(), m_role_chains_mgr.get(), m_role_xips_mgr.get(), m_sync_sender.get(), m_downloader.get())),
     m_sync_handler(top::make_unique<sync::xsync_handler_t>(
                 m_instance,
                 m_sync_store.get(),
-                bus,
+                make_observer(cert_ptr),
                 m_session_mgr.get(),
                 m_blacklist.get(),
                 m_role_chains_mgr.get(),
@@ -45,14 +49,20 @@ xtop_sync_object::xtop_sync_object(observer_ptr<mbus::xmessage_bus_face_t> const
                 m_downloader.get(),
                 m_block_fetcher.get(),
                 m_sync_gossip.get(),
+                m_sync_pusher.get(),
+                m_sync_broadcast.get(),
                 m_sync_sender.get(),
-                m_sync_latest.get())),
+                m_sync_on_demand.get(),
+                m_peerset.get(),
+                m_peer_keeper.get(),
+                m_behind_checker.get(),
+                m_cross_cluster_chain_state.get())),
     m_sync_event_dispatcher(make_object_ptr<sync::xsync_event_dispatcher_t>(
             sync_thread,
             m_instance,
             bus,
             m_sync_handler.get())),
-    m_sync_netmsg_dispatcher(top::make_unique<sync::xsync_netmsg_dispatcher_t>(m_instance, sync_handler_thread_pool, bus, vhost, m_sync_status.get(), m_sync_handler.get())) {
+    m_sync_netmsg_dispatcher(top::make_unique<sync::xsync_netmsg_dispatcher_t>(m_instance, sync_handler_thread_pool, bus, vhost, m_sync_handler.get())) {
 
 }
 
@@ -155,7 +165,7 @@ std::string xtop_sync_object::status() const {
         if (!data::xdatautil::extract_parts(address, table_prefix, table_id))
             continue;
 
-        base::xauto_ptr<base::xvblock_t> current_block = m_sync_store->get_current_block(address);
+        base::xauto_ptr<base::xvblock_t> current_block = m_sync_store->get_latest_end_block(address, enum_chain_sync_pocliy_full);
         base::xauto_ptr<base::xvblock_t> latest_block = m_sync_store->get_latest_cert_block(address);
         xsync_progress_t info;
         info.cur_height = current_block->get_height();
@@ -211,7 +221,7 @@ std::string xtop_sync_object::status() const {
     // total
     result += "total:";
     if (total_max_height == 0) {
-       result += "100.00%"; 
+       result += "100.00%";
     } else {
         char tmp[100] = {0};
         float f = (double)total_cur_height*100/(double)total_max_height;
@@ -230,7 +240,7 @@ std::string xtop_sync_object::status() const {
         result += "root-beacon chains\t\t\t\t\t\t\t";
 
         if (total_beacon_max_height == 0) {
-            result += "100.00%"; 
+            result += "100.00%";
         } else {
             char tmp[100] = {0};
             float f = (double)total_beacon_cur_height*100/(double)total_beacon_max_height;
@@ -247,7 +257,7 @@ std::string xtop_sync_object::status() const {
         result += "sub-beacon chains\t\t\t\t\t\t\t";
 
         if (total_zec_max_height == 0) {
-            result += "100.00%"; 
+            result += "100.00%";
         } else {
             char tmp[100] = {0};
             float f = (double)total_zec_cur_height*100/(double)total_zec_max_height;
@@ -265,7 +275,7 @@ std::string xtop_sync_object::status() const {
         result += "shard chains\t\t\t\t\t\t\t\t";
 
         if (total_shard_max_height == 0) {
-            result += "100.00%"; 
+            result += "100.00%";
         } else {
             char tmp[100] = {0};
             float f = (double)total_shard_cur_height*100/(double)total_shard_max_height;
@@ -279,6 +289,10 @@ std::string xtop_sync_object::status() const {
     }
 
     return result;
+}
+
+std::map<std::string, std::vector<std::string>> xtop_sync_object::get_neighbors() const {
+    return m_peerset->get_neighbors();
 }
 
 void xtop_sync_object::add_vnet(const std::shared_ptr<vnetwork::xvnetwork_driver_face_t> &vnetwork_driver) {

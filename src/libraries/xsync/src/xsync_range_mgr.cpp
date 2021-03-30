@@ -1,3 +1,7 @@
+// Copyright (c) 2017-2018 Telos Foundation & contributors
+// Distributed under the MIT software license, see the accompanying
+// file COPYING or http://www.opensource.org/licenses/mit-license.php.
+
 #include "xsync/xsync_range_mgr.h"
 #include <inttypes.h>
 #include "xsync/xsync_log.h"
@@ -11,14 +15,11 @@ using namespace mbus;
 using namespace base;
 
 // 10s
-#define BEHIND_TIMEOUT 60000
-#define BEHIND_TRY_COUNT 1
 #define TABLE_PREV_COUNT 1000
 
-xsync_range_mgr_t::xsync_range_mgr_t(std::string vnode_id, const std::string &address, const observer_ptr<mbus::xmessage_bus_face_t> &mbus):
+xsync_range_mgr_t::xsync_range_mgr_t(std::string vnode_id, const std::string &address):
 m_vnode_id(vnode_id),
-m_address(address),
-m_mbus(mbus) {
+m_address(address) {
 }
 
 enum_role_changed_result xsync_range_mgr_t::on_role_changed(const xchain_info_t &chain_info) {
@@ -73,45 +74,27 @@ enum_role_changed_result xsync_range_mgr_t::on_role_changed(const xchain_info_t 
     return enum_role_changed_result_remove_history;
 }
 
-int xsync_range_mgr_t::set_behind_info(const xblock_ptr_t &current_block, const xblock_ptr_t &successor_block,
+int xsync_range_mgr_t::set_behind_info(uint64_t start_height, uint64_t end_height, enum_chain_sync_policy sync_policy,
         const vnetwork::xvnode_address_t &self_addr, const vnetwork::xvnode_address_t &target_addr) {
 
-    if (successor_block->get_height()==0 || successor_block->get_height()==1)
+    // running, ignore
+    if (m_behind_height != 0)
+        return 1;
+
+    if (end_height == 0)
         return -1;
 
     int64_t now = get_time();
 
-    // 1.compare current and successor
-    if ((current_block->get_height()+1) > successor_block->get_height() ||
-        ((current_block->get_height()+1)==successor_block->get_height() && current_block->get_block_hash()==successor_block->get_last_block_hash())) {
+    if (end_height < start_height) {
         return -2;
     }
 
-    // 2.check if successor should be update
-    if (successor_block->get_height() > m_successor_height) {
-        // update
-    } else if (successor_block->get_height() == m_successor_height) {
-        if (successor_block->get_viewid() > m_successor_view_id) {
-            // update
-        } else if (successor_block->get_viewid() == m_successor_view_id) {
-            if ((now-m_behind_update_time) < BEHIND_TIMEOUT)
-                return -3;
-            // update
-        } else {
-            return -4;
-        }
-    }
-
-    m_behind_height = successor_block->get_height() - 1;
-    m_behind_hash = successor_block->get_last_block_hash();
-
-    m_successor_height = successor_block->get_height();
-    m_successor_view_id = successor_block->get_viewid();
-
-    m_behind_try_count = 0;
+    m_behind_height = end_height;
+    m_sync_policy = sync_policy;
     m_behind_self_addr = self_addr;
     m_behind_target_addr = target_addr;
-    m_behind_update_time = now;
+    m_behind_time = now;
     return 0;
 }
 
@@ -119,81 +102,49 @@ uint64_t xsync_range_mgr_t::get_behind_height() const {
     return m_behind_height;
 }
 
+int64_t xsync_range_mgr_t::get_behind_time() const {
+    return m_behind_time;
+}
+
 void xsync_range_mgr_t::clear_behind_info() {
     m_behind_height = 0;
-    m_behind_try_count = 0;
+    m_behind_time = 0;
 }
 
-void xsync_range_mgr_t::get_try_sync_info(uint8_t &try_count, int64_t &try_time) {
-    try_count = m_behind_try_count;
-    try_time = m_behind_try_sync_time;
-}
-
-int xsync_range_mgr_t::update_progress(const data::xblock_ptr_t &current_block, bool head_forked) {
+int xsync_range_mgr_t::update_progress(const data::xblock_ptr_t &current_block) {
 
     uint64_t current_height = current_block->get_height();
     uint64_t current_viewid = current_block->get_viewid();
 
-    if (head_forked) {
-        // ensure retry
-        m_behind_try_count = 0;
-        return 0;
-    }
-
-    m_behind_try_count = 0;
-
-    if (current_height == m_behind_height) {
-        if (current_block->get_block_hash() == m_behind_hash) {
-            m_behind_height = 0;
-        } else {
-            m_behind_height = 0;
-            return -1;
-        }
-    } else if (current_height > m_behind_height) {
-        m_behind_height = 0;
-        return 0;
+    // TODO highqc forked??
+    if (current_height >= m_behind_height) {
+        clear_behind_info();
     }
 
     return 0;
 }
 
-// TODO consider create time and synced height
-bool xsync_range_mgr_t::get_next_behind(const data::xblock_ptr_t &current_block, bool forked, uint32_t count_limit, uint64_t &start_height, uint32_t &count, 
+bool xsync_range_mgr_t::get_next_behind(uint64_t current_height, bool forked, uint32_t count_limit, uint64_t &start_height, uint32_t &count,
         vnetwork::xvnode_address_t &self_addr, vnetwork::xvnode_address_t &target_addr) {
 
     if (m_behind_height == 0)
         return false;
 
-    if (m_behind_try_count >= BEHIND_TRY_COUNT) {
-        xsync_info("[account] behind reach max count %s %lu", m_address.c_str(), m_behind_height);
-        m_behind_try_count = 0;
-        m_behind_height = 0;
+    if (current_height >= m_behind_height)
         return false;
-    }
-
-    if (current_block->get_height() > m_behind_height)
-        return false;
-
-    if (current_block->get_height() == m_behind_height) {
-        if (current_block->get_block_hash() == m_behind_hash)
-            return false;
-    }
 
     if (forked) {
-        if (current_block->get_height() > 1)
-            start_height = current_block->get_height() - 1;
+        if (current_height > 1)
+            start_height = current_height - 1;
         else
-            start_height = current_block->get_height();
+            start_height = current_height;
     } else {
-        start_height = current_block->get_height() + 1;
+        start_height = current_height + 1;
     }
 
     count = m_behind_height - start_height + 1;
     if (count > count_limit)
         count = count_limit;
-
-    m_behind_try_count++;
-    m_behind_try_sync_time = get_time();
 
     self_addr = m_behind_self_addr;
     target_addr = m_behind_target_addr;
@@ -203,6 +154,15 @@ bool xsync_range_mgr_t::get_next_behind(const data::xblock_ptr_t &current_block,
 
 int64_t xsync_range_mgr_t::get_time() {
     return base::xtime_utl::gmttime_ms();
+}
+
+bool xsync_range_mgr_t::get_sync_policy(enum_chain_sync_policy &sync_policy) const {
+    if (m_behind_height == 0)
+        return false;
+
+    sync_policy = m_sync_policy;
+
+    return true;
 }
 
 NS_END2

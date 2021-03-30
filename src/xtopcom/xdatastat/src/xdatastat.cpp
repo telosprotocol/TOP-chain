@@ -116,7 +116,7 @@ void xdatastat_t::on_block_to_db_event(mbus::xevent_ptr_t e) {
     if (addrtype == base::enum_vaccount_addr_type_block_contract) {
         do_tableblock_stat(block);
 
-        if (block->get_header()->get_block_class() != base::enum_xvblock_class_nil) {
+        if (block->get_header()->get_block_class() == base::enum_xvblock_class_light) {
             auto tableblock = dynamic_cast<data::xtable_block_t*>(block);
             xassert(tableblock != nullptr);
 
@@ -162,8 +162,10 @@ void xdatastat_t::do_unitblock_stat(base::xvblock_t* block) {
         XMETRICS_COUNTER_INCREMENT("datastat_unit_light_num_zone" + zone, 1);
     } else if (block->get_header()->get_block_class() == base::enum_xvblock_class_full) {
         XMETRICS_COUNTER_INCREMENT("datastat_unit_full_num_zone" + zone, 1);
+    } else if (block->get_header()->get_block_class() == base::enum_xvblock_class_nil) {
+        XMETRICS_COUNTER_INCREMENT("datastat_unit_empty_num_zone" + zone, 1);
     } else {
-        xassert(0);
+        xassert(false);
     }
 
     switch (addrtype) {

@@ -23,10 +23,11 @@ const uint32_t common_behind_gossip_factor = 3;
 
 const uint32_t max_peer_behind_count = 10000;
 
-xsync_gossip_t::xsync_gossip_t(std::string vnode_id, const observer_ptr<mbus::xmessage_bus_face_t> &mbus,
-        xrole_chains_mgr_t *role_chains_mgr, xrole_xips_manager_t *role_xips_mgr, sync::xsync_sender_t *sync_sender):
+xsync_gossip_t::xsync_gossip_t(std::string vnode_id, const observer_ptr<mbus::xmessage_bus_face_t> &mbus, xsync_store_face_t* sync_store,
+        xrole_chains_mgr_t *role_chains_mgr, xrole_xips_manager_t *role_xips_mgr, xsync_sender_t *sync_sender):
 m_vnode_id(vnode_id),
 m_mbus(mbus),
+m_sync_store(sync_store),
 m_role_chains_mgr(role_chains_mgr),
 m_role_xips_mgr(role_xips_mgr),
 m_sync_sender(sync_sender) {
@@ -36,6 +37,7 @@ xsync_gossip_t::~xsync_gossip_t() {
 }
 
 void xsync_gossip_t::on_timer() {
+
     XMETRICS_TIME_RECORD("sync_cost_gossip_timer_event");
     if (m_frozen_count % FROZEN_TIME_INTERVAl == 0) {
         process_timer(true);
@@ -57,6 +59,7 @@ void xsync_gossip_t::on_timer() {
 }
 
 void xsync_gossip_t::on_chain_timer(const mbus::xevent_ptr_t& e) {
+
     XMETRICS_TIME_RECORD("sync_cost_gossip_chain_timer_event");
     auto bme = std::static_pointer_cast<mbus::xevent_chain_timer_t>(e);
     base::xvblock_t* time_block = bme->time_block;
@@ -83,13 +86,12 @@ void xsync_gossip_t::on_chain_timer(const mbus::xevent_ptr_t& e) {
         const map_chain_info_t &chains = role_chains->get_chains_wrapper().get_chains();
         for (const auto &it: chains) {
 
-            uint64_t height = 0;
-            uint64_t view_id = 0;
-            m_role_chains_mgr->get_height_and_view(it.second.address, height, view_id);
-
-            // if is 0, also send
-            if (height == UINT64_MAX)
+            if (!m_role_chains_mgr->exists(it.second.address))
                 continue;
+
+            base::xauto_ptr<base::xvblock_t> current_block = m_sync_store->get_latest_end_block(it.second.address, enum_chain_sync_pocliy_full);
+            uint64_t height = current_block->get_height();
+            uint64_t view_id = current_block->get_viewid();
 
             xgossip_chain_info_ptr_t info = std::make_shared<xgossip_chain_info_t>();
             info->owner = it.second.address;
@@ -98,7 +100,7 @@ void xsync_gossip_t::on_chain_timer(const mbus::xevent_ptr_t& e) {
             info_list.push_back(info);
         }
 
-        xsync_info("[xsync_gossip] on_chain_timer send gossip timer_height=%lu %s count(%d)", time_block->get_height(), self_addr.to_string().c_str(), info_list.size());
+        xsync_info("xsync_gossip on_chain_timer send gossip timer_height=%lu %s count(%d)", time_block->get_height(), self_addr.to_string().c_str(), info_list.size());
 
         if (!info_list.empty()) {
             send_gossip(self_addr, info_list, 1, enum_gossip_target_type_archive);
@@ -106,14 +108,8 @@ void xsync_gossip_t::on_chain_timer(const mbus::xevent_ptr_t& e) {
     }
 }
 
-void xsync_gossip_t::on_behind_event(const mbus::xevent_ptr_t &e) {
-    XMETRICS_TIME_RECORD("sync_cost_gossip_behind_event");
-    process_behind_event(e);
-}
-
 void xsync_gossip_t::add_role(const vnetwork::xvnode_address_t& addr) {
 
-    // TODO (optimize) if there's no this type of role before, broadcast
 
     XMETRICS_TIME_RECORD("sync_cost_gossip_add_role_event");
 
@@ -143,12 +139,12 @@ void xsync_gossip_t::walk_role(const vnetwork::xvnode_address_t &self_addr, cons
     const map_chain_info_t &chains = role_chains->get_chains_wrapper().get_chains();
     for (const auto &it: chains) {
 
-        uint64_t height = 0;
-        uint64_t view_id = 0;
-        m_role_chains_mgr->get_height_and_view(it.second.address, height, view_id);
-        // if is 0, also send
-        if (height == UINT64_MAX)
+        if (!m_role_chains_mgr->exists(it.second.address))
             continue;
+
+        base::xauto_ptr<base::xvblock_t> current_block = m_sync_store->get_latest_end_block(it.second.address, enum_chain_sync_pocliy_full);
+        uint64_t height = current_block->get_height();
+        uint64_t view_id = current_block->get_viewid();
 
         xgossip_chain_info_ptr_t info = std::make_shared<xgossip_chain_info_t>();
         info->owner = it.second.address;
@@ -159,9 +155,9 @@ void xsync_gossip_t::walk_role(const vnetwork::xvnode_address_t &self_addr, cons
 
     if (!info_list.empty()) {
         if (walk_type == enum_walk_type_add_role)
-            xsync_info("[xsync_gossip] add_role send gossip %s count(%d)", self_addr.to_string().c_str(), info_list.size());
+            xsync_info("xsync_gossip add_role send gossip %s count(%d)", self_addr.to_string().c_str(), info_list.size());
         else if (walk_type == enum_walk_type_timer) {
-            //xsync_dbg("[xsync_gossip] timer send gossip %s count(%d)", self_addr.to_string().c_str(), info_list.size());
+            //xsync_dbg("xsync_gossip timer send gossip %s count(%d)", self_addr.to_string().c_str(), info_list.size());
         }
         if (common::has<common::xnode_type_t::frozen>(self_addr.type())) {
 
@@ -206,155 +202,12 @@ void xsync_gossip_t::process_timer(bool is_frozen) {
     }
 }
 
-bool xsync_gossip_t::handle_consensus_role_behind(const xsync_roles_t &roles, common::xnode_type_t type, const std::string &address) {
-
-    std::vector<xgossip_chain_info_ptr_t> info_list;
-
-    for (const auto &role_it: roles) {
-
-        const vnetwork::xvnode_address_t &network_self = role_it.first;
-
-        if (!common::has(type, network_self.type()))
-            continue;
-
-        const std::shared_ptr<xrole_chains_t> &role_chains = role_it.second;
-        const map_chain_info_t &chains = role_chains->get_chains_wrapper().get_chains();
-        auto it2 = chains.find(address);
-        if (it2 == chains.end())
-            continue;
-
-        uint64_t height = 0;
-        uint64_t view_id = 0;
-        m_role_chains_mgr->get_height_and_view(address, height, view_id);
-        // if is 0, also send
-        if (height == UINT64_MAX)
-            continue;
-
-        xgossip_chain_info_ptr_t info = std::make_shared<xgossip_chain_info_t>();
-        info->owner = address;
-        info->max_height = height;
-        info->view_id = view_id;
-        info_list.push_back(info);
-
-        xsync_dbg("[xsync_gossip] behind send gossip %s height(%lu) viewid(%lu) self(%s)", 
-                    address.c_str(), height, view_id, network_self.to_string().c_str());
-        send_gossip(network_self, info_list, common_behind_gossip_factor, sync::enum_gossip_target_type_neighbor);
-        return true;
-    }
-
-    return false;
-}
-
-void xsync_gossip_t::process_behind_event(const mbus::xevent_ptr_t& e) {
-
-    auto bme = std::static_pointer_cast<mbus::xevent_behind_origin_t>(e);
-    std::string address = bme->address;
-
-    std::string account_prefix;
-    uint32_t table_id = 0;
-
-    bool is_table_address = data::is_table_address(common::xaccount_address_t{address});
-    if (!is_table_address)
-        return;
-
-    if (!data::xdatautil::extract_parts(address, account_prefix, table_id))
-        return;
-
-    xsync_info("[xsync_gossip] behind_event %s type(%d) reason(%s)", address.c_str(), (int32_t)bme->behind_type, bme->reason.c_str());
-    if (bme->behind_type == mbus::enum_behind_type_cold) {
-        XMETRICS_COUNTER_INCREMENT("sync_gossip_origin_behind_source_cold", 1);
-    } else if (bme->behind_type == mbus::enum_behind_type_common) {
-        XMETRICS_COUNTER_INCREMENT("sync_gossip_origin_behind_source_consensus", 1);
-    } else if (bme->behind_type == mbus::enum_behind_type_nodeserv) {
-        XMETRICS_COUNTER_INCREMENT("sync_gossip_origin_behind_source_nodehouse", 1);
-    }
-
-    std::vector<xgossip_chain_info_ptr_t> info_list;
-
-    xsync_roles_t roles = m_role_chains_mgr->get_roles();
-
-    bool found = false;
-
-    // 1.first use corespond consensus cluster
-    if (account_prefix == sys_contract_beacon_table_block_addr) {
-
-        found = handle_consensus_role_behind(roles, common::xnode_type_t::rec, address);
-
-    } else if (account_prefix == sys_contract_zec_table_block_addr) {
-
-        found = handle_consensus_role_behind(roles, common::xnode_type_t::zec, address);
-    
-    } else if (account_prefix == sys_contract_sharding_table_block_addr) {
-
-        found = handle_consensus_role_behind(roles, common::xnode_type_t::validator, address);
-
-        if (!found) {
-            found = handle_consensus_role_behind(roles, common::xnode_type_t::auditor, address);
-        }
-    }
-
-    if (found)
-        return;
-
-    // 2. then use other cluster
-    for (const auto &role_it: roles) {
-
-        const std::shared_ptr<xrole_chains_t> &role_chains = role_it.second;
-        const map_chain_info_t &chains = role_chains->get_chains_wrapper().get_chains();
-
-        auto it2 = chains.find(address);
-        if (it2 == chains.end())
-            continue;
-
-        uint64_t height = 0;
-        uint64_t view_id = 0;
-        m_role_chains_mgr->get_height_and_view(address, height, view_id);
-        // if is 0, also send
-        if (height == UINT64_MAX)
-            continue;
-
-        xgossip_chain_info_ptr_t info = std::make_shared<xgossip_chain_info_t>();
-        info->owner = address;
-        info->max_height = height;
-        info->view_id = view_id;
-        info_list.push_back(info);
-
-        const xvnode_address_t &network_self = role_it.first;
-
-        if (account_prefix==sys_contract_beacon_table_block_addr || account_prefix==sys_contract_zec_table_block_addr) {
-
-            if (common::has<common::xnode_type_t::frozen>(network_self.type())) {
-                xsync_dbg("[xsync_gossip] behind send gossip %s height(%lu) viewid(%lu) self(%s)", 
-                    address.c_str(), height, view_id, network_self.to_string().c_str());
-                send_frozen_gossip(network_self, info_list, frozen_behind_gossip_factor);
-            } else {
-                assert(0);
-            }
-
-        } else {
-            if (bme->behind_type == mbus::enum_behind_type_cold) {
-                // if use parent, need to consider self_addr
-                //send_gossip(role_it.first, info_list, 1, syncbase::enum_gossip_target_type_parent);
-                xsync_dbg("[xsync_gossip] behind send gossip %s height(%lu) viewid(%lu) self(%s)", 
-                    address.c_str(), height, view_id, network_self.to_string().c_str());
-                send_gossip(network_self, info_list, common_behind_gossip_factor, sync::enum_gossip_target_type_archive);
-            } else {
-                xsync_dbg("[xsync_gossip] behind send gossip %s height(%lu) viewid(%lu) self(%s)", 
-                    address.c_str(), height, view_id, network_self.to_string().c_str());
-                send_gossip(network_self, info_list, common_behind_gossip_factor, sync::enum_gossip_target_type_neighbor);
-            }
-        }
-
-        return;
-    }
-}
-
 void xsync_gossip_t::handle_message(const std::vector<xgossip_chain_info_ptr_t> &info_list, 
     const vnetwork::xvnode_address_t &from_address, const vnetwork::xvnode_address_t &network_self, std::map<std::string, xgossip_behind_info_t> &behind_chain_set) {
 
     std::vector<xgossip_chain_info_ptr_t> info_list_rsp;
 
-    //xsync_dbg("[xsync_gossip] recv gossip from %s count(%d)", from_address.to_string().c_str(), info_list.size());
+    //xsync_dbg("xsync_gossip recv gossip from %s count(%d)", from_address.to_string().c_str(), info_list.size());
 
     uint32_t size = info_list.size();
     if (size == 0)
@@ -370,21 +223,22 @@ void xsync_gossip_t::handle_message(const std::vector<xgossip_chain_info_ptr_t> 
 
         const xgossip_chain_info_ptr_t &info = info_list[idx];
 
-        uint64_t local_height = 0;
-        uint64_t local_view_id = 0;
-        m_role_chains_mgr->get_height_and_view(info->owner, local_height, local_view_id);
-        if (local_height == UINT64_MAX) {
-            xsync_warn("[xsync_gossip] local not exist %s peer(%lu, %lu)",
+        if (!m_role_chains_mgr->exists(info->owner)) {
+            xsync_warn("xsync_gossip local not exist %s peer(%lu, %lu)",
                             info->owner.c_str(), info->max_height, info->view_id);
             continue;
         }
+
+        base::xauto_ptr<base::xvblock_t> current_block = m_sync_store->get_latest_end_block(info->owner, enum_chain_sync_pocliy_full);
+        uint64_t local_height = current_block->get_height();
+        uint64_t local_view_id = current_block->get_viewid();
 
         update_behind(info->owner, local_height, local_view_id, info->max_height, info->view_id);
 
         if (info->view_id > local_view_id) {
 
             if (behind_block_count <= max_peer_behind_count) {
-                xsync_info("[xsync_gossip] local is lower %s local(%lu, %lu) peer(%lu, %lu) %s %s",
+                xsync_info("xsync_gossip local is lower %s local(%lu, %lu) peer(%lu, %lu) %s %s",
                     info->owner.c_str(), local_height, local_view_id, info->max_height, info->view_id, network_self.to_string().c_str(), from_address.to_string().c_str());
                 
                 xgossip_behind_info_t behind_info(local_height, local_view_id, info->max_height, info->view_id);
@@ -393,12 +247,12 @@ void xsync_gossip_t::handle_message(const std::vector<xgossip_chain_info_ptr_t> 
                 // add view
                 behind_block_count += (info->max_height - local_height);
             } else {
-                xsync_dbg("[xsync_gossip] local is lower(ignore) %s local(%lu, %lu) peer(%lu, %lu) %s", 
+                xsync_dbg("xsync_gossip local is lower(ignore) %s local(%lu, %lu) peer(%lu, %lu) %s", 
                     info->owner.c_str(), local_height, local_view_id, info->max_height, info->view_id, from_address.to_string().c_str());
             }
 
         } else if (info->view_id < local_view_id) {
-            xsync_info("[xsync_gossip] local is higher %s local(%lu, %lu) peer(%lu, %lu) %s -> %s",
+            xsync_info("xsync_gossip local is higher %s local(%lu, %lu) peer(%lu, %lu) %s -> %s",
                 info->owner.c_str(), local_height, local_view_id, info->max_height, info->view_id, network_self.to_string().c_str(), from_address.to_string().c_str());
             xgossip_chain_info_ptr_t info_rsp = std::make_shared<xgossip_chain_info_t>();
             info_rsp->owner = info->owner;

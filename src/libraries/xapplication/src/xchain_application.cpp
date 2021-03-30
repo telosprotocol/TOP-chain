@@ -11,7 +11,6 @@
 #include "xdata/xchain_param.h"
 #include "xelection/xcache/xdata_accessor.h"
 #include "xelection/xdata_accessor_error.h"
-#include "xtxpool_service/xcons_utl.h"
 #include "xvm/manager/xcontract_manager.h"
 #include "xvnetwork/xvhost.h"
 #include "xvnode/xvnode_manager.h"
@@ -53,14 +52,18 @@ xtop_chain_application::xtop_chain_application(observer_ptr<xapplication_t> cons
   , m_cons_mgr{xcons_mgr_builder::build(data::xuser_params::get_instance().account.value(),
                                         m_application->store(),
                                         m_application->blockstore(),
+                                        m_application->indexstore(),
                                         m_application->txpool(),
                                         m_application->logic_timer(),
                                         m_application->cert_serivce(),
                                         make_observer(m_election_cache_data_accessor),
                                         m_application->message_bus())}
-  , m_txpool_service_mgr{xtxpool_service::xtxpool_service_mgr_instance::create_xtxpool_service_mgr_inst(m_application->store(),
-                                                                                                        m_application->blockstore(),
-                                                                                                        m_application->txpool())}
+  , m_txpool_service_mgr{xtxpool_service_v2::xtxpool_service_mgr_instance::create_xtxpool_service_mgr_inst(m_application->store(),
+                                                                                                        make_observer(m_application->blockstore().get()),
+                                                                                                        m_application->txpool(),
+                                                                                                        make_observer(m_application->thread_pool(xthread_pool_type_t::txpool_service).front().get()),
+                                                                                                        m_application->message_bus(),
+                                                                                                        m_application->logic_timer())}
   , m_vnode_manager{std::make_shared<vnode::xvnode_manager_t>(m_application->elect_main(),
                                                               m_application->message_bus(),
                                                               m_application->store(),
@@ -71,7 +74,7 @@ xtop_chain_application::xtop_chain_application(observer_ptr<xapplication_t> cons
                                                               make_observer(m_sync_obj),
                                                               make_observer(m_grpc_mgr),
                                                               make_observer(m_cons_mgr),
-                                                              make_observer(m_txpool_service_mgr),
+                                                              make_observer(m_txpool_service_mgr.get()),
                                                               m_application->txpool(),
                                                               make_observer(m_election_cache_data_accessor))} {}
 
@@ -80,6 +83,7 @@ void xtop_chain_application::start() {
         m_application->message_bus(), make_observer(m_message_callback_hub.get()), m_application->store(), m_application->syncstore());
     load_last_election_data();
 
+    m_txpool_service_mgr->start();
     m_vhost->start();
     m_message_callback_hub->start();
     m_vnode_manager->start();

@@ -22,21 +22,19 @@ private:
 
 class xrole_chains_t {
 public:
-    xrole_chains_t(const vnetwork::xvnode_address_t &role, const std::vector<std::uint16_t> &table_ids);
+    xrole_chains_t(const vnetwork::xvnode_address_t &role, const std::set<uint16_t> &table_ids);
     xchains_wrapper_t& get_chains_wrapper() {return m_chains_wrapper;}
     vnetwork::xvnode_address_t get_role() {return m_role;}
-    std::vector<std::uint16_t> get_table_ids() {return m_table_ids;}
 
 private:
     void init_chains();
-    void add_chain(common::xnode_type_t allow_types, const std::string& address);
-    void add_chains(const std::vector<std::string>& addrs, common::xnode_type_t allow_types);
-    void add_tables(common::xnode_type_t allow_types, const std::string& address);
+    void add_chain(common::xnode_type_t allow_types, const std::string& address, enum_chain_sync_policy sync_policy);
+    void add_tables(common::xnode_type_t allow_types, const std::string& address, enum_chain_sync_policy sync_policy);
 
 private:
     vnetwork::xvnode_address_t m_role;
     common::xnode_type_t m_type;
-    std::vector<std::uint16_t> m_table_ids;
+    std::set<uint16_t> m_table_ids;
     xchains_wrapper_t m_chains_wrapper;
 };
 

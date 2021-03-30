@@ -26,6 +26,7 @@ class xblockpara_base_t {
     virtual int32_t do_read(base::xstream_t & stream);
 
  protected:
+    void            delete_value(const std::string & key);
     void            set_value(const std::string & key, bool value);
     void            set_value(const std::string & key, uint16_t value);
     void            set_value(const std::string & key, uint32_t value);

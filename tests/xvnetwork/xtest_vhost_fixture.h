@@ -28,7 +28,7 @@ public:
     common::xcluster_id_t      test_cluster_id{0};
     common::xgroup_id_t        test_group_id{65};
 
-    top::vnetwork::xmessage_t test_msg{xbyte_buffer_t{}, syncbase::xmessage_id_sync_blocks};
+    top::vnetwork::xmessage_t test_msg{xbyte_buffer_t{}, sync::xmessage_id_sync_blocks};
 
     top::vnetwork::xvnode_address_t get_address(common::xversion_t version, common::xnetwork_id_t network_id);
 
