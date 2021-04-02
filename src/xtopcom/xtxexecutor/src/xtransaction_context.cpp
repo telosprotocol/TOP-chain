@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2017-2018 Telos Foundation & contributors
+// Copyright (c) 2017-2018 Telos Foundation & contributors
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -310,7 +310,7 @@ int32_t xtransaction_create_contract_account::source_action_exec() {
     raw_tx->add_ref();
     tx.attach(raw_tx);
     xvm::xtransaction_trace_ptr trace = m_vm_service.deal_transaction(tx, _account_context.get());
-    if(trace->m_errno != xvm::enum_xvm_error_code::ok){
+    if(trace->m_errno != xvm::enum_xvm_error_code::ok) {
         return static_cast<int32_t>(trace->m_errno);
     } else {
         return ret;
@@ -334,6 +334,98 @@ int32_t xtransaction_create_contract_account::target_action_exec() {
         xdbg("[target_action_exec] gas: %u, disk: %u", trace->m_tgas_usage, trace->m_disk_usage);
     }
     if(trace->m_errno != xvm::enum_xvm_error_code::ok){
+        return static_cast<int32_t>(trace->m_errno);
+    } else {
+        return ret;
+    }
+}
+
+int32_t xtransaction_clickonce_create_contract_account::source_fee_exec() {
+    m_fee.update_service_fee();
+    int32_t ret = m_account_ctx->top_token_transfer_out(0, 0, m_fee.get_service_fee());
+    m_trans->set_current_beacon_service_fee(m_fee.get_service_fee());
+    return ret;
+}
+
+int32_t xtransaction_clickonce_create_contract_account::check() {
+    if (!m_source_action.is_top_token() || xverifier::xtx_verifier::verify_account_min_deposit(m_source_action.m_asset_out.m_amount)) {
+        return xconsensus_service_error_min_deposit_error;
+    }
+    if (m_trans->get_source_action().get_action_type() != data::xaction_type_asset_out ||
+        m_trans->get_target_action().get_action_type() != data::xaction_type_tep) {
+        return xconsensus_service_error_action_not_valid;
+    }
+    // check address relationship
+    if (!is_user_contract_address(common::xaccount_address_t{m_trans->get_target_addr()})) {
+        return xconsensus_service_error_addr_type_error;
+    }
+    std::string source_addr{m_trans->get_source_addr()};
+    auto authorization = m_trans->get_target_action().get_authorization();
+    if (authorization.empty() || xverifier::UNCOMPRESSED_PUBKEY_LEN != authorization.size()) {
+        return xconsensus_service_error_sign_error;
+    }
+    uint16_t ledger_id = base::xvaccount_t::make_ledger_id(base::enum_main_chain_id, base::enum_chain_zone_consensus_index);
+    utl::xecpubkey_t pub_key{(uint8_t *)authorization.data()};
+    if (m_trans->get_target_addr() != pub_key.to_address(source_addr, base::enum_vaccount_addr_type_custom_contract, ledger_id)) {
+        return xconsensus_service_error_sign_error;
+    }
+    return 0;
+}
+
+int32_t xtransaction_clickonce_create_contract_account::source_action_exec() {
+    int32_t ret = m_account_ctx->top_token_transfer_out(m_source_action.m_asset_out.m_amount, 0);
+    if (ret) {
+        return ret;
+    }
+
+    m_account_ctx->set_lock_balance_change(m_source_action.m_asset_out.m_amount);
+    ret = m_account_ctx->sub_contract_sub_account_check(m_trans->get_target_addr());
+    if (ret) {
+        return ret;
+    }
+    ret = m_account_ctx->set_contract_sub_account(m_trans->get_target_addr());
+    if (ret) {
+        return ret;
+    }
+
+    // check if create contract target action can be executed successfully
+    std::shared_ptr<xaccount_context_t> _account_context = std::make_shared<xaccount_context_t>(m_trans->get_target_addr(), m_account_ctx->get_store());
+    ret = _account_context->set_contract_parent_account(m_source_action.m_asset_out.m_amount, m_trans->get_source_addr());
+    if (ret) {
+        return ret;
+    }
+
+    // set random seed, or else it would be fail
+    _account_context->set_context_para(m_account_ctx->get_timer_height(), m_account_ctx->get_random_seed(), 0, 0);
+    xtransaction_ptr_t tx;
+    xtransaction_t* raw_tx = m_trans->get_transaction();
+    raw_tx->add_ref();
+    tx.attach(raw_tx);
+    xvm::xtransaction_trace_ptr trace = m_vm_service.deal_transaction(tx, _account_context.get());
+    if (trace->m_errno != xvm::enum_xvm_error_code::ok) {
+        return static_cast<int32_t>(trace->m_errno);
+    } else {
+        return ret;
+    }
+}
+
+int32_t xtransaction_clickonce_create_contract_account::target_action_exec() {
+    int32_t ret = m_account_ctx->set_contract_parent_account(m_source_action.m_asset_out.m_amount, m_trans->get_source_addr());
+    if (ret) {
+        return ret;
+    }
+    m_account_ctx->set_tgas_limit(m_target_action.tgas_limit);
+    xtransaction_ptr_t tx;
+    xtransaction_t* raw_tx = m_trans->get_transaction();
+    raw_tx->add_ref();
+    tx.attach(raw_tx);
+    xvm::xtransaction_trace_ptr trace = m_vm_service.deal_transaction(tx, m_account_ctx);
+
+    if (m_fee.need_use_tgas_disk(m_trans->get_target_addr(), m_trans->get_target_addr(), m_target_action.code)) {
+        ret= m_fee.update_tgas_disk_after_sc_exec(trace);
+        xdbg("[target_action_exec] gas: %u, disk: %u", trace->m_tgas_usage, trace->m_disk_usage);
+    }
+    if (trace->m_errno != xvm::enum_xvm_error_code::ok) {
         return static_cast<int32_t>(trace->m_errno);
     } else {
         return ret;

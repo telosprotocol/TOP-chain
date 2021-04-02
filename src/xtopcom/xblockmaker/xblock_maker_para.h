@@ -50,7 +50,7 @@ class xunit_proposal_input_t : public xserializable_based_on<void> {
     std::vector<xcons_transaction_ptr_t>    m_input_txs;
 };
 
-class xtableblock_proposal_input_t : public xserializable_based_on<void> {
+class xtableblock_proposal_input_t : public xserializable_based_on<void>, public xenable_to_string_t<xtableblock_proposal_input_t> {
  public:
     xtableblock_proposal_input_t()  = default;
     void    add_unit_input(const xunit_proposal_input_t & input) {
@@ -61,13 +61,17 @@ class xtableblock_proposal_input_t : public xserializable_based_on<void> {
     }
     const std::vector<xunit_proposal_input_t> & get_unit_inputs() const {return m_unit_inputs;}
 
-
- public:
-    int32_t do_write(base::xstream_t & stream) const override;
-    int32_t do_read(base::xstream_t & stream) override;
+    std::string to_string() const override;
+    void from_string(std::string const & str) override;
+    using xenable_to_string_t<xtableblock_proposal_input_t>::to_string;
+    using xenable_to_string_t<xtableblock_proposal_input_t>::from_string;
 
     std::string         dump() const;
     size_t              get_total_txs() const;
+
+ private:
+    int32_t do_write(base::xstream_t & stream) const override;
+    int32_t do_read(base::xstream_t & stream) override;
 
  private:
     std::vector<xunit_proposal_input_t>     m_unit_inputs;

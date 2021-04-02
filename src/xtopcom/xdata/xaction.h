@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2017-2018 Telos Foundation & contributors
+// Copyright (c) 2017-2018 Telos Foundation & contributors
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -18,12 +18,18 @@ enum enum_xaction_type : uint16_t {
     xaction_type_source_null                = 1,    // source action do nothing
     xaction_type_create_user_account        = 2,    // create user account
     xaction_type_create_contract_account    = 3,    // create contract account
+    xaction_type_tep                        = 4,    // TEP
     xaction_type_run_contract               = 5,    // run contract
     xaction_type_asset_in                   = 6,    // asset transfer in
     xaction_type_alias_name                 = 8,    // set alias name
     xaction_type_set_account_keys           = 12,    // set account keys
     xaction_type_lock_token                 = 13,    // lock token
     xaction_type_unlock_token               = 14,    // unlock token
+    xaction_type_tep0                       = 15,   // system token
+    xaction_type_tep1                       = 16,   // native token
+    xaction_type_tep2                       = 17,   // contract token
+    xaction_type_tep3                       = 18,   // NFT
+    xaction_type_tep4                       = 19,   // DID
     xaction_type_update_pledge_contract     = 20,   // update pledge contract token num
     xaction_type_pledge_token_vote          = 21,   // pledge token in exchange of votes
     xaction_type_redeem_token_vote          = 22,   // redeem token and release votes
@@ -166,8 +172,8 @@ class xaction_t {
  public:
     void set_action_hash(uint32_t hash) {m_action_hash = hash;};
     uint32_t get_action_hash() const {return m_action_hash;};
-    void set_action_type(uint16_t type) {m_action_type = type;};
-    uint16_t get_action_type() const {return m_action_type;};
+    void set_action_type(enum_xaction_type type) {m_action_type = type;};
+    enum_xaction_type get_action_type() const { return m_action_type; };
     void set_action_size(uint16_t size) {m_action_size = size;};
     uint16_t get_action_size() const {return m_action_size;};
     void set_account_addr(const std::string & addr) {m_account_addr = addr;};
@@ -183,7 +189,7 @@ class xaction_t {
     const std::string & get_action_authorization() const {return m_action_authorization;};
 private:
     uint32_t           m_action_hash{0};   // whole action content'xxhash32
-    uint16_t           m_action_type{0};   // type
+    enum_xaction_type  m_action_type{enum_xaction_type::xaction_type_asset_out};  // type
     uint16_t           m_action_size{0};   // total size for whole action object
 
     std::string        m_account_addr{};  // account address must embedded network info(e.g. testnet, mainnet)

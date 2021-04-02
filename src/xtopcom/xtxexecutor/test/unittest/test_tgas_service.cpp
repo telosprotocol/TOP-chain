@@ -314,7 +314,7 @@ end\n\
 
     m_trans->get_transaction()->get_source_action().set_account_addr(m_source_account);
     m_trans->get_transaction()->get_target_action().set_account_addr(sys_contract_rec_registration_addr);
-    dc.serialze_to(m_trans->get_transaction()->get_target_action(), 0, code);
+    // dc.serialze_to(m_trans->get_transaction()->get_target_action(), 0, code);
     xtransaction_create_contract_account tx_dc(m_source_context.get(), m_trans);
     tx_dc.target_action_exec();
 
@@ -360,7 +360,7 @@ function set_property()\n\
 end\n\
 ");
 
-    dc.serialze_to(m_trans->get_transaction()->get_target_action(), 0, code);
+    // dc.serialze_to(m_trans->get_transaction()->get_target_action(), 0, code);
     m_trans->get_transaction()->get_source_action().set_account_addr(m_source_account);
     m_trans->get_transaction()->get_target_action().set_account_addr(m_target_account);
 
@@ -393,7 +393,7 @@ function set_property()\n\
 end\n\
 ");
 
-    dc.serialze_to(m_trans->get_transaction()->get_target_action(), 0, code);
+    // dc.serialze_to(m_trans->get_transaction()->get_target_action(), 0, code);
     m_trans->get_transaction()->get_source_action().set_account_addr(m_source_account);
     m_trans->get_transaction()->get_target_action().set_account_addr(m_target_account);
 
@@ -419,7 +419,7 @@ TEST_F(test_tgas_service, run_contract_illegal) {
 	create_key('hello')\n\
 end\n\
 ");
-    dc.serialze_to(m_trans->get_transaction()->get_target_action(), 0, code);
+    // dc.serialze_to(m_trans->get_transaction()->get_target_action(), 0, code);
     m_trans->get_transaction()->get_source_action().set_account_addr(m_source_account);
     m_trans->get_transaction()->get_target_action().set_account_addr(m_target_account);
     xtransaction_create_contract_account tx_dc(m_source_context.get(), m_trans);
@@ -462,7 +462,7 @@ end\n\
 ");
     m_trans->get_transaction()->get_source_action().set_account_addr(m_source_account);
     m_trans->get_transaction()->get_target_action().set_account_addr(m_target_account);
-    dc.serialze_to(m_trans->get_transaction()->get_target_action(), 0, code);
+    // dc.serialze_to(m_trans->get_transaction()->get_target_action(), 0, code);
     xtransaction_create_contract_account tx_dc(m_source_context.get(), m_trans);
     tx_dc.target_action_exec();
 
@@ -549,7 +549,7 @@ function set_property()\n\
 	print('value:' .. value or '')\n\
 end\n\
 ");
-    dc.serialze_to(tx->get_target_action(), 0, code);
+    // dc.serialze_to(tx->get_target_action(), 0, code);
     tx->set_different_source_target_address(source_account, target_account);
     tx->set_deposit(ASSET_TOP(0.4));
     tx->set_digest();
@@ -619,7 +619,7 @@ function set_property()\n\
 	print('value:' .. value or '')\n\
 end\n\
 ");
-    dc.serialze_to(tx->get_target_action(), 0, code);
+    // dc.serialze_to(tx->get_target_action(), 0, code);
     tx->set_different_source_target_address(source_account, target_account);
     tx->set_deposit(ASSET_TOP(0.4));
     tx->set_digest();
@@ -696,7 +696,7 @@ function set_property()\n\
 	print('value:' .. value or '')\n\
 end\n\
 ");
-    dc.serialze_to(tx->get_target_action(), 0, code);
+    // dc.serialze_to(tx->get_target_action(), 0, code);
     tx->set_different_source_target_address(source_account, target_account);
     tx->set_deposit(ASSET_TOP(0.4));
     tx->set_digest();

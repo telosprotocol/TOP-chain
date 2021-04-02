@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2017-2018 Telos Foundation & contributors
+// Copyright (c) 2017-2018 Telos Foundation & contributors
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -67,6 +67,20 @@ size_t xtableblock_proposal_input_t::get_total_txs() const {
         tx_count += v.get_input_txs().size();
     }
     return tx_count;
+}
+
+std::string xtableblock_proposal_input_t::to_string() const {
+    base::xstream_t stream(base::xcontext_t::instance());
+    serialize_to(stream);
+    return std::string((const char *)stream.data(), stream.size());
+}
+
+void xtableblock_proposal_input_t::from_string(std::string const & str) {
+    base::xstream_t _stream(base::xcontext_t::instance(), (uint8_t *)str.data(), (int32_t)str.size());
+    int32_t ret = serialize_from(_stream);
+    if (ret <= 0) {
+        xerror("serialize_from_string fail. ret=%d,bin_data_size=%d", ret, str.size());
+    }
 }
 
 std::string xtableblock_proposal_input_t::dump() const {
