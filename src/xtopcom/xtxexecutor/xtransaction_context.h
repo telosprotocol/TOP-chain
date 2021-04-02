@@ -150,6 +150,42 @@ class xtransaction_create_contract_account : public xtransaction_face_t{
     xvm::xvm_service m_vm_service;
 };
 
+class xtransaction_clickonce_create_contract_account : public xtransaction_face_t{
+ public:
+    xtransaction_clickonce_create_contract_account(xaccount_context_t* account_ctx, const xcons_transaction_ptr_t & trans)
+    : xtransaction_face_t(account_ctx, trans) {
+    }
+    int32_t parse() override {
+        int32_t ret = m_source_action.parse(m_trans->get_source_action());
+        if (ret == xsuccess) {
+            ret = m_target_action.parse(m_trans->get_target_action());
+        }
+        return ret;
+    }
+
+    int32_t check() override ;
+    int32_t source_fee_exec() override ;
+    int32_t source_action_exec() override ;
+    int32_t target_action_exec() override ;
+    int32_t target_fee_exec() override {
+        return 0;
+    };
+    int32_t source_confirm_fee_exec() override {
+        if (m_trans->is_self_tx()) {
+            return 0;
+        }
+        if (data::is_sys_contract_address(common::xaccount_address_t{ m_trans->get_source_addr() })) {
+            return 0;
+        }
+        return m_fee.update_contract_fee_confirm(m_source_action.m_asset_out.m_amount);
+    };
+
+ private:
+    data::xaction_asset_out m_source_action;
+    data::xaction_deploy_clickonce_contract m_target_action;
+    xvm::xvm_service m_vm_service;
+};
+
 class xtransaction_run_contract : public xtransaction_face_t{
  public:
     xtransaction_run_contract(xaccount_context_t* account_ctx, const xcons_transaction_ptr_t & trans)

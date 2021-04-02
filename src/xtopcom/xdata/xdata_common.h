@@ -11,6 +11,7 @@
 #include "xbasic/xserializable_based_on.h"
 #include "xbasic/xobject_ptr.h"
 #include "xcommon/xrole_type.h"
+#include "xcommon/xaddress.h"
 
 #include <cstdint>
 #include <functional>
@@ -30,6 +31,26 @@ using xstrmap_ptr_t = xobject_ptr_t<base::xstrmap_t>;
 NS_END1
 
 NS_BEG2(top, data)
+
+template <typename ObjectT, typename StreamT, typename std::enable_if<std::is_base_of<xserializable_based_on<void>, ObjectT>::value>::type * = nullptr>
+int32_t serialize(ObjectT const & object, StreamT & stream) {
+    return object.serialize_to(stream);
+}
+
+template <typename ObjectT, typename StreamT, typename std::enable_if<std::is_base_of<xserializable_based_on<void>, ObjectT>::value>::type * = nullptr>
+int32_t deserialize(ObjectT & object, StreamT & stream) {
+    return object.serialize_from(stream);
+}
+
+template <typename ObjectT, typename StreamT, typename std::enable_if<std::is_base_of<xserializable_based_on<void>, ObjectT>::value>::type * = nullptr>
+int32_t serialize(ObjectT const & object, StreamT & stream, std::error_code & ec) {
+    return object.xserializable_based_on<void>::serialize_to(stream, ec);
+}
+
+template <typename ObjectT, typename StreamT, typename std::enable_if<std::is_base_of<xserializable_based_on<void>, ObjectT>::value>::type * = nullptr>
+int32_t deserialize(ObjectT & object, StreamT & stream, std::error_code & ec) {
+    return object.xserializable_based_on<void>::serialize_from(stream, ec);
+}
 
 #define PAIR_SERIALIZE_SIMPLE(stream, pair)                                                                                                                                        \
     do {                                                                                                                                                                           \
@@ -259,17 +280,19 @@ public:
       : m_account{std::move(account)}, m_publickey{std::move(public_key)} {}
 
     void serialize(base::xstream_t & stream) {
-        stream << m_account;
+        stream << m_account.value();
         stream << m_publickey;
     }
 
     void deserialize(base::xstream_t & stream) {
-        stream >> m_account;
+        std::string account;
+        stream >> account;
+        m_account = common::xaccount_address_t{account};
         stream >> m_publickey;
     }
 
 public:
-    std::string m_account;                                            // account for the node
+    common::xaccount_address_t m_account;                               // account for the node
     xpublic_key_t m_publickey;                                          // node public key(hex)
 };
 

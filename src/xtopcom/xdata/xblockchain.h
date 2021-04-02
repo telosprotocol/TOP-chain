@@ -66,7 +66,7 @@ class xblockchain2_t : public xbase_dataobj_t<xblockchain2_t, xdata_type_blockch
     inline void         set_account_send_trans_hash(const uint256_t & hash) {m_account_state.set_latest_send_trans_hash(hash);}
 
 
-    xtransaction_ptr_t  make_transfer_tx(const std::string & to, uint64_t amount, uint64_t firestamp, uint16_t duration, uint32_t deposit);
+    xtransaction_ptr_t  make_transfer_tx(const std::string & to, uint64_t amount, uint64_t firestamp, uint16_t duration, uint32_t deposit, const std::string& token_name = "TOP");
     xtransaction_ptr_t  make_run_contract_tx(const std::string & to, const std::string& func_name, const std::string& func_param, uint64_t amount,
                         uint64_t firestamp, uint16_t duration, uint32_t deposit);
 

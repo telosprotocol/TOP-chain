@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2017-2018 Telos Foundation & contributors
+// Copyright (c) 2017-2018 Telos Foundation & contributors
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -14,6 +14,7 @@ namespace top { namespace chainbase {
 
 enum enum_xmodule_type {
     // xtopcom use 0x00100000, xchain use 0x00200000
+    xmodule_type_xcontract_runtime    = 0x00210000,
     xmodule_type_xstore               = 0x00220000,
     xmodule_type_xsync                = 0x00230000,
     xmodule_type_xelect               = 0x00240000,
@@ -28,6 +29,8 @@ enum enum_xmodule_type {
     xmodule_type_xverifier            = 0x002D0000,
     xmodule_type_xtxpool              = 0x002E0000,
     xmodule_type_xtxexecutor          = 0x002F0000,
+    xmodule_type_property             = 0x00310000,
+
 };
 
 typedef std::string (*xmodule_log_print_fun_t)(int32_t error_code);

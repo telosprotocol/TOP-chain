@@ -4,13 +4,33 @@
 
 #pragma once
 
+#if defined(__clang__)
+#    pragma clang diagnostic push
+#    pragma clang diagnostic ignored "-Wpedantic"
+#elif defined(__GNUC__)
+#    pragma GCC diagnostic push
+#    pragma GCC diagnostic ignored "-Wpedantic"
+#elif defined(_MSC_VER)
+#    pragma warning(push, 0)
+#endif
+
+#include "xbase/xcontext.h"
 #include "xbase/xdata.h"
 #include "xbase/xmem.h"
-#include "xbase/xcontext.h"
+
+#if defined(__clang__)
+#    pragma clang diagnostic pop
+#elif defined(__GNUC__)
+#    pragma GCC diagnostic pop
+#elif defined(_MSC_VER)
+#    pragma warning(pop)
+#endif
+
 #include "xbasic/xns_macro.h"
 
 #include <cstdint>
 #include <string>
+#include <system_error>
 
 NS_BEG1(top)
 
@@ -58,46 +78,45 @@ public:
      *        will serialize the object into a single internal stream and then
      *        serialize this internal stream into the 'stream' parameter object.
      */
-    virtual
-    std::int32_t
-    serialize_to(base::xstream_t & stream) const;
+    virtual std::int32_t serialize_to(base::xstream_t & stream) const;
+
+    /// @brief Serialize the object into the stream.
+    /// @param stream 
+    /// @param ec 
+    /// @return 
+    std::int32_t serialize_to(base::xstream_t & stream, std::error_code & ec) const;
 
     /**
      * @brief Deserialize the object from the stream.  The deserialization operation
      *        will first read out an stream object form the 'stream' parameter and
      *        then deserialze based on the internal stream object.
      */
-    virtual
-    std::int32_t
-    serialize_from(base::xstream_t & stream);
+    virtual std::int32_t serialize_from(base::xstream_t & stream);
 
+    std::int32_t serialize_from(base::xstream_t & stream, std::error_code & ec);
+
+    virtual std::int32_t serialize_to(base::xbuffer_t & stream) const;
+
+    std::int32_t serialize_to(base::xbuffer_t & stream, std::error_code & ec) const;
+
+    virtual std::int32_t serialize_from(base::xbuffer_t & stream);
+
+    std::int32_t serialize_from(base::xbuffer_t & stream, std::error_code & ec);
+
+protected:
     /**
      * @brief Serialize the object into the steam directly.
      */
-    virtual
-    std::int32_t
-    do_write(base::xstream_t & stream) const = 0;
+    virtual std::int32_t do_write(base::xstream_t & stream) const = 0;
+
+    std::int32_t do_write(base::xstream_t & stream, std::error_code & ec) const;
 
     /**
      * @brief Deserialize the object from the stream directly.
      */
-    virtual
-    std::int32_t
-    do_read(base::xstream_t & stream) = 0;
+    virtual std::int32_t do_read(base::xstream_t & stream) = 0;
 
-    std::string serialize_to_string() const {
-        base::xstream_t stream(base::xcontext_t::instance());
-        serialize_to(stream);
-        return std::string((const char*)stream.data(), stream.size());
-    }
-    int32_t serialize_from_string(const std::string & str) {
-        base::xstream_t _stream(base::xcontext_t::instance(), (uint8_t*)str.data(), (int32_t)str.size());
-        int32_t ret = serialize_from(_stream);
-        if (ret <= 0) {
-            xerror("serialize_from_string fail. ret=%d,bin_data_size=%d", ret, str.size());
-        }
-        return ret;
-    }
+    std::int32_t do_read(base::xstream_t & stream, std::error_code & ec);
 };
 
 template <typename BasedOnT>
