@@ -48,7 +48,7 @@ class test_contract_fee_service : public testing::Test {
 
         xtransaction_ptr_t tx = make_object_ptr<xtransaction_t>();
         data::xproperty_asset asset_out{ XGET_CONFIG(min_account_deposit) };
-        tx->make_tx_create_contract_account(asset_out, 0, code);
+        // tx->make_tx_create_contract_account(asset_out, 0, code);
         tx->set_different_source_target_address(m_source_account, m_target_account);
         tx->set_deposit(100000);
         tx->set_digest();

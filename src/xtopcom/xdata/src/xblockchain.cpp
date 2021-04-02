@@ -107,9 +107,9 @@ void xblockchain2_t::set_min_chain_height(uint64_t height) {
     add_modified_count();
 }
 
-xtransaction_ptr_t xblockchain2_t::make_transfer_tx(const std::string & to, uint64_t amount, uint64_t firestamp, uint16_t duration, uint32_t deposit) {
+xtransaction_ptr_t xblockchain2_t::make_transfer_tx(const std::string & to, uint64_t amount, uint64_t firestamp, uint16_t duration, uint32_t deposit, const std::string& token_name) {
     xtransaction_ptr_t tx = make_object_ptr<xtransaction_t>();
-    data::xproperty_asset asset(amount);
+    data::xproperty_asset asset(token_name, amount);
     tx->make_tx_transfer(asset);
     tx->set_last_trans_hash_and_nonce(account_send_trans_hash(), account_send_trans_number());
     tx->set_different_source_target_address(get_account(), to);
@@ -372,7 +372,7 @@ void xblockchain2_t::set_unconfirmed_accounts(const std::set<std::string> & acco
 
 const std::set<std::string> xblockchain2_t::get_unconfirmed_accounts() const {
     std::set<std::string> accounts;
-    auto iter = m_ext.find(enum_blockchain_ext_type_uncnfirmed_accounts); 
+    auto iter = m_ext.find(enum_blockchain_ext_type_uncnfirmed_accounts);
     if (iter == m_ext.end()) {
         return accounts;
     }

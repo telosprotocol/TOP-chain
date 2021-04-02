@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2017-2018 Telos Foundation & contributors
+// Copyright (c) 2017-2018 Telos Foundation & contributors
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -104,8 +104,9 @@ int xtable_blockmaker_t::try_verify_tableblock(base::xvblock_t *proposal_block, 
                                                xtxpool::xtxpool_table_face_t* txpool_table, uint64_t committed_height) {
     xtable_block_t* tableblock = dynamic_cast<xtable_block_t*>(proposal_block);
     xtableblock_proposal_input_t table_proposal_input;
-    int32_t serialize_ret = table_proposal_input.serialize_from_string(proposal_block->get_input()->get_proposal());
-    if (serialize_ret <= 0) {
+    std::error_code ec;
+    table_proposal_input.from_string(proposal_block->get_input()->get_proposal(), ec);
+    if (ec) {
         xerror("xtable_blockmaker_t::verify_block fail-table serialize from proposal input. proposal:%s at-node:%s",
             proposal_block->dump().c_str(), data::xdatautil::xip_to_hex(xip).c_str());
         return xconsensus::enum_xconsensus_error_bad_proposal;
@@ -316,7 +317,7 @@ int xtable_blockmaker_t::make_tableblock(const std::vector<std::string> &account
     data::xblock_t* block = (data::xblock_t*)proposal_block;
     block->set_consensus_para(cs_para);
 
-    std::string proposal_input_str = table_proposal_input.serialize_to_string();
+    std::string proposal_input_str = table_proposal_input.to_string();
     block->get_input()->set_proposal(proposal_input_str);
 
     XMETRICS_PACKET_INFO("consensus_tableblock", "proposal_create", proposal_block->dump(),
