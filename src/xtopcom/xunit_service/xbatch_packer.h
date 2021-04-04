@@ -12,11 +12,12 @@
 #include "xunit_service/xcons_unorder_cache.h"
 #include "xmbus/xmessage_bus.h"
 #include "xtxpool_v2/xtxpool_face.h"
+#include "xbase/xtimer.h"
 
 NS_BEG2(top, xunit_service)
 using xconsensus::xcsaccount_t;
 // default block service entry
-class xbatch_packer : public xcsaccount_t {
+class xbatch_packer : public xcsaccount_t, public base::xtimersink_t {
 public:
     explicit xbatch_packer(observer_ptr<mbus::xmessage_bus_face_t> const   &mb,
                            uint16_t                                        tableid,
@@ -28,6 +29,14 @@ public:
     virtual ~xbatch_packer();
 
 public:
+    virtual bool close(bool force_async = true) override;  // must call close before release object,otherwise object never be cleanup
+    virtual bool on_object_close() override;
+    virtual bool on_timer_fire(const int32_t thread_id, const int64_t timer_id, const int64_t current_time_ms, const int32_t start_timeout_ms, int32_t & in_out_cur_interval_ms) override;
+
+    virtual bool on_timer_start(const int32_t errorcode, const int32_t thread_id, const int64_t timer_id, const int64_t cur_time_ms, const int32_t timeout_ms, const int32_t timer_repeat_ms) override;
+
+    virtual bool on_timer_stop(const int32_t errorcode, const int32_t thread_id, const int64_t timer_id, const int64_t cur_time_ms, const int32_t timeout_ms, const int32_t timer_repeat_ms) override;
+
     virtual uint16_t get_tableid();
 
     // recv_in packet from this object to child layers
@@ -58,6 +67,8 @@ protected:
     void    invoke_sync(const std::string & account, const std::string & reason);
 
 private:
+    bool    start_proposal(base::xblock_mptrs& latest_blocks);
+
     observer_ptr<mbus::xmessage_bus_face_t>  m_mbus;
     uint16_t                                 m_tableid;
     volatile uint64_t                        m_last_view_id;
@@ -67,10 +78,18 @@ private:
     uint64_t                                 m_cons_start_time_ms;
     xcons_unorder_cache                      m_unorder_cache;
     static constexpr uint32_t                m_empty_block_max_num{2};
+    static constexpr uint32_t                m_timer_repeat_time_ms{3000};  // check account by every 3 seconds
     std::string                              m_account_id;
     std::string                              m_latest_cert_block_hash;
     bool                                     m_can_make_empty_block{false};
     common::xlogic_time_t                    m_start_time;
+    base::xtimer_t*                          m_raw_timer{nullptr};
+    // m_is_leader to decide if timer need to do packing units and then start consensus
+    bool                                     m_is_leader{false};
+    // m_leader_packed is used to avoid more than one block produced in one viewid
+    bool                                     m_leader_packed{false};
+    uint64_t                                 m_last_view_clock{0};
+
 };
 
 using xbatch_packer_ptr_t = xobject_ptr_t<xbatch_packer>;

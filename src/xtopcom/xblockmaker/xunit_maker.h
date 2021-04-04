@@ -31,10 +31,11 @@ class xunit_maker_t : public xblock_maker_t {
     bool                    unit_rules_filter(const std::vector<xcons_transaction_ptr_t> & origin_txs,
                                                 std::vector<xcons_transaction_ptr_t> & valid_txs,
                                                 std::vector<xcons_transaction_ptr_t> & pop_txs);
+    bool                    can_make_next_empty_block() const;
 
  protected:
     virtual xblock_ptr_t    make_next_block(const data::xblock_consensus_para_t & cs_para, xunitmaker_result_t & result);
-    bool                    can_make_next_empty_block() const;
+
     bool                    can_make_next_full_block() const;
     bool                    can_make_next_light_block() const;
 

@@ -35,12 +35,32 @@ xbatch_packer::xbatch_packer(observer_ptr<mbus::xmessage_bus_face_t> const   &mb
     set_vblockstore(store);
     register_plugin(store);
     base::xauto_ptr<xcsobject_t> ptr_engine_obj(create_engine(*this, xconsensus::enum_xconsensus_pacemaker_type_clock_cert));
-    xdbg("xbatch_packer::xbatch_packer,create,this=%p,account=%s,tableid=%d", this, account_id.c_str(), tableid);
     m_proposal_maker = block_maker->get_proposal_maker(account_id);
+    m_raw_timer = get_thread()->create_timer((base::xtimersink_t*)this);
+    m_raw_timer->start(m_timer_repeat_time_ms, m_timer_repeat_time_ms);
+    xdbg("xbatch_packer::xbatch_packer,create,this=%p,account=%s,tableid=%d", this, account_id.c_str(), tableid);
 }
 
 xbatch_packer::~xbatch_packer() {
+    if (m_raw_timer != nullptr) {
+        m_raw_timer->release_ref();
+    }
     xdbg("xbatch_packer::~xbatch_packer,destory,this=%p", this);
+}
+
+bool xbatch_packer::close(bool force_async) {
+    xcsaccount_t::close(force_async);
+    // xdbg("xbatch_packer::close, this=%p,refcount=%d", this, get_refcount());
+    return true;
+}
+
+bool xbatch_packer::on_object_close() {
+    // xdbg("xbatch_packer::on_object_close this=%p,refcount=%d", this, get_refcount());
+    if (m_raw_timer != nullptr) {
+        m_raw_timer->stop();
+        m_raw_timer->close();
+    }
+    return xcsaccount_t::on_object_close();
 }
 
 uint16_t xbatch_packer::get_tableid() {
@@ -89,6 +109,44 @@ void xbatch_packer::invoke_sync(const std::string & account, const std::string &
 #endif
 }
 
+bool xbatch_packer::start_proposal(base::xblock_mptrs& latest_blocks) {
+    uint32_t viewtoken = base::xtime_utl::get_fast_randomu();
+    xblock_consensus_para_t proposal_para(get_account(), m_last_view_clock, m_last_view_id, viewtoken, latest_blocks.get_latest_cert_block()->get_height() + 1);
+    proposal_para.set_latest_blocks(latest_blocks);
+
+    if (m_last_view_clock < m_start_time) {
+        return false;
+    }
+
+    if (false == m_proposal_maker->can_make_proposal(proposal_para)) {
+        xwarn("xbatch_packer::start_proposal fail-cannot make proposal.%s", proposal_para.dump().c_str());
+        return false;
+    }
+
+    auto local_xip = get_xip2_addr();
+    set_xip(proposal_para, local_xip);  // set leader xip
+
+    xdbg("xbatch_packer::start_proposal leader_node %s", proposal_para.dump().c_str());
+    xblock_ptr_t proposal_block = m_proposal_maker->make_proposal(proposal_para);
+    if (proposal_block == nullptr) {
+        xwarn("xbatch_packer::start_proposal fail-make_proposal.%s", proposal_para.dump().c_str());
+        return false;
+    }
+    base::xauto_ptr<xconsensus::xproposal_start> _event_obj(new xconsensus::xproposal_start(proposal_block.get()));
+    push_event_down(*_event_obj, this, 0, 0);
+    // check viewid again, may changed
+    if (m_last_view_id != proposal_block->get_viewid()) {
+        xwarn("xbatch_packer::start_proposal fail-finally viewid changed. %s latest_viewid=%" PRIu64 "",
+            proposal_para.dump().c_str(), proposal_block->get_viewid());
+        return false;
+    }
+
+    XMETRICS_COUNTER_INCREMENT("cons_tableblock_start_leader", 1);
+    xinfo("xbatch_packer::start_proposal succ-leader start consensus. block=%s this:%p node:%s xip:%s",
+            proposal_block->dump().c_str(), this, m_para->get_resources()->get_account().c_str(), xcons_utl::xip_to_hex(local_xip).c_str());
+    return true;
+}
+
 // view updated and the judge is_leader
 // then start new consensus from leader
 bool xbatch_packer::on_view_fire(const base::xvevent_t & event, xcsobject_t * from_parent, const int32_t cur_thread_id, const uint64_t timenow_ms) {
@@ -96,6 +154,8 @@ bool xbatch_packer::on_view_fire(const base::xvevent_t & event, xcsobject_t * fr
     xassert(view_ev != nullptr);
     xassert(view_ev->get_viewid() >= m_last_view_id);
     xassert(view_ev->get_account() == get_account());
+    m_is_leader = false;
+    m_leader_packed = false;
     // fix: viewchange on different rounds
     if (view_ev->get_clock() < m_start_time) {
         return false;
@@ -103,6 +163,7 @@ bool xbatch_packer::on_view_fire(const base::xvevent_t & event, xcsobject_t * fr
 
     XMETRICS_TIME_RECORD("cons_tableblock_view_change_time_consuming");
     m_last_view_id = view_ev->get_viewid();
+    m_last_view_clock = view_ev->get_clock();
 
     m_unorder_cache.on_view_fire(m_last_view_id);
 
@@ -117,14 +178,6 @@ bool xbatch_packer::on_view_fire(const base::xvevent_t & event, xcsobject_t * fr
     }
 
     base::xblock_mptrs latest_blocks = m_para->get_resources()->get_vblockstore()->get_latest_blocks(get_account());
-    uint32_t viewtoken = base::xtime_utl::get_fast_randomu();
-    xblock_consensus_para_t proposal_para(get_account(), view_ev->get_clock(), view_ev->get_viewid(), viewtoken, latest_blocks.get_latest_cert_block()->get_height() + 1);
-    proposal_para.set_latest_blocks(latest_blocks);
-
-    if (false == m_proposal_maker->can_make_proposal(proposal_para)) {
-        xwarn("xbatch_packer::on_view_fire fail-cannot make proposal.%s", proposal_para.dump().c_str());
-        return false;
-    }
 
     // check if this node is leader
     std::error_code ec{election::xdata_accessor_errc_t::success};
@@ -135,12 +188,12 @@ bool xbatch_packer::on_view_fire(const base::xvevent_t & event, xcsobject_t * fr
         return false;
     }
     uint16_t rotate_mode = enum_rotate_mode_rotate_by_view_id;
-    xvip2_t leader_xip = leader_election->get_leader_xip(m_last_view_id, get_account(), proposal_para.get_latest_cert_block().get(), local_xip, local_xip, version, rotate_mode);
+    xvip2_t leader_xip = leader_election->get_leader_xip(m_last_view_id, get_account(), latest_blocks.get_latest_cert_block(), local_xip, local_xip, version, rotate_mode);
     bool is_leader_node = xcons_utl::xip_equals(leader_xip, local_xip);
     if (!is_leader_node) {
         // backup do nothing
-        xinfo("xbatch_packer::on_view_fire backup_node %s this:%p node:%s xip:%s,leader:%s,rotate_mode:%d",
-                proposal_para.dump().c_str(), this, node_account.c_str(),
+        xinfo("xbatch_packer::on_view_fire backup_node this:%p node:%s xip:%s,leader:%s,rotate_mode:%d",
+                this, node_account.c_str(),
                 xcons_utl::xip_to_hex(local_xip).c_str(), xcons_utl::xip_to_hex(leader_xip).c_str(), rotate_mode);
 
         xconsensus::xcspdu_fire* xcspdu_fire_event = m_unorder_cache.get_proposal_event(m_last_view_id);
@@ -150,31 +203,29 @@ bool xbatch_packer::on_view_fire(const base::xvevent_t & event, xcsobject_t * fr
         }
         return true;
     }
-    set_xip(proposal_para, local_xip);  // set leader xip
 
-    xdbg("xbatch_packer::on_view_fire leader_node %s", proposal_para.dump().c_str());
-    xblock_ptr_t proposal_block = m_proposal_maker->make_proposal(proposal_para);
-    if (proposal_block == nullptr) {
-        xwarn("xbatch_packer::on_view_fire fail-make_proposal.%s", proposal_para.dump().c_str());
-        return false;
+    m_is_leader = true;
+    m_leader_packed = start_proposal(latest_blocks);
+    return true;
+}
+
+bool  xbatch_packer::on_timer_fire(const int32_t thread_id, const int64_t timer_id, const int64_t current_time_ms, const int32_t start_timeout_ms, int32_t & in_out_cur_interval_ms) {
+    if (!m_is_leader || m_leader_packed) {
+        return true;
     }
-    base::xauto_ptr<xconsensus::xproposal_start> _event_obj(new xconsensus::xproposal_start(proposal_block.get()));
-    if (!push_event_down(*_event_obj, this, 0, 0)) {
-        xerror("xbatch_packer::on_view_fire fail-push proposal event down. %s", proposal_para.dump().c_str());
-        return false;
-    }
-    // check viewid again, may changed
-    if (view_ev->get_viewid() != proposal_block->get_viewid()) {
-        xwarn("xbatch_packer::on_view_fire fail-finally viewid changed. %s latest_viewid=%" PRIu64 "",
-            proposal_para.dump().c_str(), proposal_block->get_viewid());
-        return false;
-    }
-#ifdef ENABLE_METRICS
-    XMETRICS_COUNTER_INCREMENT("cons_tableblock_start_leader", 1);
-    m_cons_start_time_ms = base::xtime_utl::gmttime_ms();
-#endif
-    xinfo("xbatch_packer::on_view_fire succ-leader start consensus. block=%s this:%p node:%s xip:%s",
-            proposal_block->dump().c_str(), this, node_account.c_str(), xcons_utl::xip_to_hex(local_xip).c_str());
+    // xdbg("xbatch_packer::on_timer_fire retry start proposal.this:%p node:%s", this, m_para->get_resources()->get_account().c_str());
+    base::xblock_mptrs latest_blocks = m_para->get_resources()->get_vblockstore()->get_latest_blocks(get_account());
+    m_leader_packed = start_proposal(latest_blocks);
+    return true;
+}
+
+bool  xbatch_packer::on_timer_start(const int32_t errorcode, const int32_t thread_id, const int64_t timer_id, const int64_t cur_time_ms, const int32_t timeout_ms, const int32_t timer_repeat_ms) {
+    // xdbg("xbatch_packer::on_timer_start,this=%p", this);
+    return true;
+}
+
+bool  xbatch_packer::on_timer_stop(const int32_t errorcode, const int32_t thread_id, const int64_t timer_id, const int64_t cur_time_ms, const int32_t timeout_ms, const int32_t timer_repeat_ms) {
+    // xdbg("xbatch_packer::on_timer_stop,this=%p", this);
     return true;
 }
 
@@ -322,13 +373,11 @@ bool xbatch_packer::on_proposal_finish(const base::xvevent_t & event, xcsobject_
     bool is_leader = xcons_utl::xip_equals(xip, _evt_obj->get_target_proposal()->get_cert()->get_validator())
                   || xcons_utl::xip_equals(xip, _evt_obj->get_target_proposal()->get_cert()->get_auditor());
     if (_evt_obj->get_error_code() != xconsensus::enum_xconsensus_code_successful) {
-#ifdef ENABLE_METRICS
         if (is_leader) {
             XMETRICS_COUNTER_INCREMENT("cons_tableblock_leader_finish_fail", 1);
         } else {
             XMETRICS_COUNTER_INCREMENT("cons_tableblock_backup_finish_fail", 1);
         }
-#endif
         // xwarn("xbatch_packer::on_proposal_finish fail. leader:%d,error_code:%d,proposal=%s,at_node:%s",
         //     is_leader,
         //     _evt_obj->get_error_code(),
@@ -340,16 +389,11 @@ bool xbatch_packer::on_proposal_finish(const base::xvevent_t & event, xcsobject_
                             "error_code", _evt_obj->get_error_code(),
                             "node_xip", xcons_utl::xip_to_hex(get_xip2_addr()));
     } else {
-#ifdef ENABLE_METRICS
         if (is_leader) {
-            uint64_t now = base::xtime_utl::gmttime_ms();
-            uint64_t time_consuming = (now > m_cons_start_time_ms) ? (now - m_cons_start_time_ms) : 0;
             XMETRICS_COUNTER_INCREMENT("cons_tableblock_leader_finish_succ", 1);
-            XMETRICS_COUNTER_INCREMENT("cons_tableblock_succ_time_consuming", time_consuming);
         } else {
             XMETRICS_COUNTER_INCREMENT("cons_tableblock_backup_finish_succ", 1);
         }
-#endif
         // xinfo("xbatch_packer::on_proposal_finish succ. leader:%d,proposal=%s,at_node:%s",
         //     is_leader,
         //     _evt_obj->get_target_proposal()->dump().c_str(),
@@ -372,19 +416,8 @@ bool xbatch_packer::on_proposal_finish(const base::xvevent_t & event, xcsobject_
 bool xbatch_packer::on_consensus_commit(const base::xvevent_t & event, xcsobject_t * from_child, const int32_t cur_thread_id, const uint64_t timenow_ms) {
     xcsaccount_t::on_consensus_commit(event, from_child, cur_thread_id, timenow_ms);
     xconsensus::xconsensus_commit * _evt_obj = (xconsensus::xconsensus_commit *)&event;
-    xinfo("xbatch_packer::on_consensus_commit, %s class=%d, at_node:%s",
+    xdbg("xbatch_packer::on_consensus_commit, %s class=%d, at_node:%s",
         _evt_obj->get_target_commit()->dump().c_str(), _evt_obj->get_target_commit()->get_block_class(), xcons_utl::xip_to_hex(get_xip2_addr()).c_str());
-
-#ifdef ENABLE_METRICS
-    if (_evt_obj->get_target_commit()->get_header()->get_block_class() != base::enum_xvblock_class_nil) {
-        uint64_t now = base::xtime_utl::gmttime();
-        if (now > _evt_obj->get_target_commit()->get_cert()->get_gmtime() + CONFIRM_DELAY_TOO_MUCH_TIME) {
-            xwarn("commit delay too much: %s, cert time:%llu,now:%llu", _evt_obj->get_target_commit()->dump().c_str(),
-                  _evt_obj->get_target_commit()->get_cert()->get_gmtime(), now);
-            XMETRICS_COUNTER_INCREMENT("cons_tableblock_commit_delay_too_much", 1);
-        }
-    }
-#endif
     return false;  // throw event up again to let txs-pool or other object start new consensus
 }
 

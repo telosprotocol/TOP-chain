@@ -103,7 +103,6 @@ class xblock_maker_t : public base::xvaccount_t {
     const xblockmaker_resources_ptr_t & get_resources() const {return m_resources;}
 
     bool                        has_uncommitted_blocks() const;
-    bool                        is_latest_state_unchanged(base::xvblock_t* latest_block) const;
     uint32_t                    get_latest_consecutive_empty_block_num() const;
     uint64_t                    get_keep_latest_blocks_max() const {return m_keep_latest_blocks_max;}
     const xblock_ptr_t &        get_latest_committed_block() const {return m_latest_commit_block;}
@@ -116,7 +115,9 @@ class xblock_maker_t : public base::xvaccount_t {
     const xblock_ptr_t &        get_lowest_height_block() const;
     xblock_ptr_t                get_highest_non_empty_block() const;
     std::vector<xblock_ptr_t>   get_uncommit_blocks() const;
-    xblock_ptr_t                get_lock_block() const;
+    xblock_ptr_t                get_highest_lock_block() const;
+    xblock_ptr_t                get_highest_commit_block() const;
+    xblock_ptr_t                get_prev_block(const xblock_ptr_t & current) const;
     xaccount_ptr_t              clone_latest_committed_state() const;
     bool                        verify_latest_blocks(base::xvblock_t* latest_cert_block, base::xvblock_t* lock_block, base::xvblock_t* commited_block);
 

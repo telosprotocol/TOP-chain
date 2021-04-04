@@ -49,9 +49,7 @@ void xblock_consensus_para_t::set_xip(const xvip2_t & _validator_xip, const xvip
     m_validator = _validator_xip;
     m_auditor = _auditor_xip;
 }
-void xblock_consensus_para_t::set_timer_block(base::xvblock_t* _timer_block) {
-    m_timer_block = xblock_t::raw_vblock_to_object_ptr(_timer_block);
-}
+
 void xblock_consensus_para_t::set_drand_block(base::xvblock_t* _drand_block) {
     m_drand_block = xblock_t::raw_vblock_to_object_ptr(_drand_block);
     m_drand_height = _drand_block->get_height();

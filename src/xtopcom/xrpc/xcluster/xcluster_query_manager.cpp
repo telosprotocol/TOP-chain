@@ -140,7 +140,7 @@ void xcluster_query_manager::getBlock(xjson_proc_t & json_proc) {
     if (type == "height") {
         uint64_t hi = std::stoull(height);
         xdbg("height: %llu", hi);
-        auto vb = m_block_store->load_block_object(owner, hi);
+        auto vb = m_block_store->load_block_object_without_cache(owner, hi);
         xblock_t * bp = dynamic_cast<xblock_t *>(vb.get());
         result_json["value"] = m_bh.get_block_json(bp);
     } else if (type == "last") {
@@ -154,7 +154,7 @@ void xcluster_query_manager::getBlock(xjson_proc_t & json_proc) {
 
 void xcluster_query_manager::getChainInfo(xjson_proc_t & json_proc) {
     xJson::Value jv;
-    auto vb = m_block_store->load_block_object(sys_contract_beacon_timer_addr, 0);
+    auto vb = m_block_store->load_block_object_without_cache(sys_contract_beacon_timer_addr, 0);
     xblock_t * bp = static_cast<xblock_t *>(vb.get());
     if (bp != nullptr) {
         jv["first_timerblock_hash"] = bp->get_block_hash_hex_str();

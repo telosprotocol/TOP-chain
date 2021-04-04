@@ -45,7 +45,8 @@ TEST_F(test_pending_account, sigle_send_tx) {
     ASSERT_EQ(xtxpool_error_tx_nonce_expired, ret);
 
     // pop out
-    auto tx_ent_tmp = pending_accounts.pop_tx(tx->get_transaction()->get_source_addr(), tx->get_transaction()->digest(), tx->get_tx_subtype(), false);
+    tx_info_t txinfo(tx);
+    auto tx_ent_tmp = pending_accounts.pop_tx(txinfo, false);
     ASSERT_NE(tx_ent_tmp, nullptr);
     tx_tmp = pending_accounts.find(tx->get_transaction()->get_source_addr(), tx->get_transaction()->digest());
     ASSERT_EQ(tx_tmp, nullptr);
@@ -80,7 +81,8 @@ TEST_F(test_pending_account, sigle_account_multi_send_tx) {
     }
 
     // pop one of the txs, index is around middle
-    auto tx_ent_tmp = pending_accounts.pop_tx(txs[1]->get_transaction()->get_source_addr(), txs[1]->get_transaction()->digest(), txs[1]->get_tx_subtype(), false);
+    tx_info_t txinfo(txs[1]);
+    auto tx_ent_tmp = pending_accounts.pop_tx(txinfo, false);
     ASSERT_NE(tx_ent_tmp, nullptr);
 
     std::shared_ptr<xtx_entry> tx_tmp;

@@ -74,7 +74,6 @@ xblockbody_para_t xtable_block_t::get_blockbody_from_para(const xtable_block_par
         xassert(unit->get_block_hash().empty());
         base::xauto_ptr<xresource_unit_input_t> input_res = new xresource_unit_input_t(unit.get());
         std::string input_res_key = std::to_string(index);
-        xassert(input_res_key.size() <= 2);
         std::string input_res_value;
         input_res->serialize_to_string(input_res_value);
         blockbody.add_input_resource(input_res_key, input_res_value);

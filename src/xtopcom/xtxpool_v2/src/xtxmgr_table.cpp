@@ -23,7 +23,7 @@ int32_t xtxmgr_table_t::push_send_tx(const std::shared_ptr<xtx_entry> & tx, uint
     auto & account_addr = tx->get_tx()->get_transaction()->get_source_addr();
     updata_latest_nonce(account_addr, latest_nonce, latest_hash);
 
-    if (query_tx(account_addr, tx->get_tx()->get_transaction()->digest())) {
+    if (nullptr != query_tx(account_addr, tx->get_tx()->get_transaction()->digest())) {
         xtxpool_warn("xtxmgr_table_t::push_send_tx tx repeat tx:%s", tx->get_tx()->dump().c_str());
         return xtxpool_error_request_tx_repeat;
     }
@@ -46,8 +46,8 @@ int32_t xtxmgr_table_t::push_send_tx(const std::shared_ptr<xtx_entry> & tx, uint
 }
 
 int32_t xtxmgr_table_t::push_receipt(const std::shared_ptr<xtx_entry> & tx) {
-    auto & account_addr = tx->get_tx()->get_transaction()->get_source_addr();
-    if (query_tx(account_addr, tx->get_tx()->get_transaction()->digest())) {
+    auto & account_addr = tx->get_tx()->get_account_addr();
+    if (nullptr != query_tx(account_addr, tx->get_tx()->get_transaction()->digest())) {
         xtxpool_warn("xtxmgr_table_t::push_receipt tx repeat tx:%s", tx->get_tx()->dump().c_str());
         return xtxpool_error_request_tx_repeat;
     }
@@ -64,16 +64,16 @@ int32_t xtxmgr_table_t::push_receipt(const std::shared_ptr<xtx_entry> & tx) {
     return ret;
 }
 
-std::shared_ptr<xtx_entry> xtxmgr_table_t::pop_tx(const std::string & account_addr, const uint256_t & hash, enum_transaction_subtype subtype, bool clear_follower) {
+std::shared_ptr<xtx_entry> xtxmgr_table_t::pop_tx(const tx_info_t & txinfo, bool clear_follower) {
     // maybe m_tx_queue m_pending_accounts both contains the tx
     std::shared_ptr<xtx_entry> tx_ent = nullptr;
-    if (subtype == enum_transaction_subtype_self || subtype == enum_transaction_subtype_send) {
-        tx_ent = m_send_tx_queue.pop_tx(account_addr, hash, clear_follower);
+    if (txinfo.get_subtype() == enum_transaction_subtype_self || txinfo.get_subtype() == enum_transaction_subtype_send) {
+        tx_ent = m_send_tx_queue.pop_tx(txinfo, clear_follower);
     } else {
-        tx_ent = m_receipt_queue.pop_tx(account_addr, hash);
+        tx_ent = m_receipt_queue.pop_tx(txinfo);
     }
     if (tx_ent == nullptr) {
-        tx_ent = m_pending_accounts.pop_tx(account_addr, hash, subtype, clear_follower);
+        tx_ent = m_pending_accounts.pop_tx(txinfo, clear_follower);
     }
 
     return tx_ent;
@@ -133,7 +133,7 @@ void xtxmgr_table_t::queue_to_pending() {
         send_txs_pos_max += send_txs_num_pop_from_queue_batch_num;
 
         // system send/self txs is first priority
-        for (; send_txs[send_txs_pos]->get_para().get_charge_score() > enum_xtx_type_socre_normal && send_txs_pos < send_txs.size(); send_txs_pos++) {
+        for (; send_txs_pos < send_txs.size() && send_txs[send_txs_pos]->get_para().get_charge_score() > enum_xtx_type_socre_normal; send_txs_pos++) {
             // check if send tx is expired.
             ret = xverifier::xtx_verifier::verify_tx_duration_expiration(send_txs[send_txs_pos]->get_tx()->get_transaction(), now);
             if (ret) {
@@ -172,15 +172,18 @@ void xtxmgr_table_t::queue_to_pending() {
     }
 
     for (auto tx_ent : push_succ_receipts) {
-        m_receipt_queue.pop_tx(tx_ent->get_tx()->get_account_addr(), tx_ent->get_tx()->get_transaction()->digest());
+        tx_info_t txinfo(tx_ent->get_tx());
+        m_receipt_queue.pop_tx(txinfo);
     }
 
     for (auto tx_ent : expired_send_txs) {
-        m_send_tx_queue.pop_tx(tx_ent->get_tx()->get_account_addr(), tx_ent->get_tx()->get_transaction()->digest(), true);
+        tx_info_t txinfo(tx_ent->get_tx());
+        m_send_tx_queue.pop_tx(txinfo, true);
     }
 
     for (auto tx_ent : push_succ_send_txs) {
-        m_send_tx_queue.pop_tx(tx_ent->get_tx()->get_account_addr(), tx_ent->get_tx()->get_transaction()->digest(), false);
+        tx_info_t txinfo(tx_ent->get_tx());
+        m_send_tx_queue.pop_tx(txinfo, false);
     }
 }
 

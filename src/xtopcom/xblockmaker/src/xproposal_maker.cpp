@@ -34,20 +34,6 @@ bool xproposal_maker_t::can_make_proposal(data::xblock_consensus_para_t & propos
         return false;
     }
 
-    base::xauto_ptr<base::xvblock_t> timer_block = get_blockstore()->get_latest_cert_block(sys_contract_beacon_timer_addr);
-    if (timer_block->get_clock() == proposal_para.get_clock()) {
-        proposal_para.set_timer_block(timer_block.get());
-    } else {
-        base::xauto_ptr<base::xvblock_t> timer_block_2 = get_blockstore()->load_block_object(sys_contract_beacon_timer_addr, proposal_para.get_clock());
-        if (timer_block_2 != nullptr) {
-            xassert(timer_block_2->get_clock() == proposal_para.get_clock());
-            proposal_para.set_timer_block(timer_block_2.get());
-        } else {
-            xwarn("xproposal_maker_t::can_make_proposal fail-no match timer. %s", proposal_para.dump().c_str());
-            return false;
-        }
-    }
-
     base::xauto_ptr<base::xvblock_t> drand_block = get_blockstore()->get_latest_committed_block(sys_drand_addr);
     if (drand_block->get_clock() == 0) {
         xwarn("xproposal_maker_t::can_make_proposal fail-no valid drand. %s", proposal_para.dump().c_str());
@@ -58,17 +44,23 @@ bool xproposal_maker_t::can_make_proposal(data::xblock_consensus_para_t & propos
 }
 
 xblock_ptr_t xproposal_maker_t::make_proposal(data::xblock_consensus_para_t & proposal_para) {
-    auto & latest_cert_block = proposal_para.get_latest_cert_block();
+    // get batch txs
+    xtablemaker_para_t table_para;
+    update_txpool_txs(proposal_para, table_para);
 
+    bool can_make_next_block = m_table_maker->can_make_next_block(table_para, proposal_para);
+    if (!can_make_next_block) {
+        xdbg("xproposal_maker_t::make_proposal no need make next block.%s error_code=%s",
+            proposal_para.dump().c_str());
+        return nullptr;
+    }
+
+    auto & latest_cert_block = proposal_para.get_latest_cert_block();
     if (false == leader_set_consensus_para(latest_cert_block.get(), proposal_para)) {
         xwarn("xproposal_maker_t::make_proposal fail-leader_set_consensus_para.%s",
             proposal_para.dump().c_str());
         return nullptr;
     }
-
-    // get batch txs
-    xtablemaker_para_t table_para;
-    update_txpool_txs(proposal_para, table_para);
 
     xtablemaker_result_t tablemaker_result;
     xblock_ptr_t proposal_block = m_table_maker->make_proposal(table_para, proposal_para, tablemaker_result);
@@ -230,12 +222,20 @@ xblock_ptr_t xproposal_maker_t::verify_proposal_prev_block(base::xvblock_t * pro
 
 bool xproposal_maker_t::update_txpool_txs(const xblock_consensus_para_t & proposal_para, xtablemaker_para_t & table_para) {
     // TODO(jimmy) use base::xvaccount_t for performance
-    xtxpool_v2::ready_accounts_t ready_accounts = get_txpool()->get_ready_accounts(get_account(), m_max_account_num * 2);
+    std::vector<xtxpool_v2::tx_info_t> locked_tx_vec;
+    get_locked_txs(proposal_para.get_latest_cert_block(), locked_tx_vec);
+    get_locked_txs(proposal_para.get_latest_locked_block(), locked_tx_vec);
+    get_txpool()->update_locked_txs(get_account(), locked_tx_vec);
+
+    xtxpool_v2::ready_accounts_t ready_accounts = get_txpool()->get_ready_accounts(get_account(), m_max_account_num);
     for (auto & ready_account : ready_accounts) {
         xassert(ready_account->get_txs().size() != 0);
         for (auto & tx : ready_account->get_txs()) {
             xinfo("xproposal_maker_t::update_txpool_txs leader-get txs. %s unit_account=%s,txs_size=%d,tx=%s",
-                proposal_para.dump().c_str(), ready_account->get_addr().c_str(), ready_account->get_txs().size(), tx->dump().c_str());
+                  proposal_para.dump().c_str(),
+                  ready_account->get_addr().c_str(),
+                  ready_account->get_txs().size(),
+                  tx->dump().c_str());
         }
         table_para.set_unitmaker_txs(ready_account->get_addr(), ready_account->get_txs());
     }
@@ -315,6 +315,22 @@ bool xproposal_maker_t::backup_set_consensus_para(base::xvblock_t* latest_cert_b
             proposal->dump().c_str(), random_seed.c_str(), total_lock_tgas_token);
     }
     return true;
+}
+
+void xproposal_maker_t::get_locked_txs(const xblock_ptr_t & block, std::vector<xtxpool_v2::tx_info_t> & locked_tx_vec) {
+    const auto & units = block->get_tableblock_units(false);
+    for (auto unit : units) {
+        if (unit->get_block_class() != base::enum_xvblock_class_light) {
+            continue;
+        }
+        data::xlightunit_block_t * lightunit = dynamic_cast<data::xlightunit_block_t *>(unit.get());
+        const std::vector<xlightunit_tx_info_ptr_t> & txs = lightunit->get_txs();
+
+        for (auto & tx : txs) {
+            xtxpool_v2::tx_info_t txinfo(lightunit->get_account(), tx->get_tx_hash_256(), tx->get_tx_subtype());
+            locked_tx_vec.push_back(txinfo);
+        }
+    }
 }
 
 NS_END2

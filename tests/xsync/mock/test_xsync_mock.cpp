@@ -251,8 +251,74 @@ TEST(test_xsync, push_and_broadcast) {
     std::vector<std::shared_ptr<xmock_node_t>> arc_nodes = sys.get_group_node("arc0");
     while (1) {
         for (auto &it: arc_nodes) {
-            printf("%s height=%lu\n", it->m_vnode_id.c_str(), it->m_blockstore->get_latest_current_block(table_address)->get_height());
+            printf("%s height=%lu\n", it->m_vnode_id.c_str(), it->m_blockstore->get_genesis_current_block(table_address)->get_height());
         }
+        sleep(1);
+    } 
+}
+
+// 1 archive(2node)
+static xJson::Value test_v1_newblockhash() {
+
+    xJson::Value v = xJson::objectValue;
+
+    v["group"]["zone0"]["type"] = "zone";
+    v["group"]["arc0"]["type"] = "archive";
+    v["group"]["arc0"]["parent"] = "zone0";
+
+    v["node"]["node0"]["parent"] = "arc0";
+    v["node"]["node1"]["parent"] = "arc0";
+
+    return v;
+}
+
+TEST(test_xsync, v1_newblockhash) {
+
+    xJson::Value virtual_network = test_v1_newblockhash();
+    xmock_network_config_t cfg_network(virtual_network);
+    xmock_network_t network(cfg_network);
+    xmock_system_t sys(network);
+
+    std::vector<std::shared_ptr<xmock_node_t>> arc_nodes = sys.get_group_node("arc0");
+
+    xobject_ptr_t<store::xstore_face_t> store = store::xstore_factory::create_store_with_memdb(nullptr);
+    xobject_ptr_t<base::xvblockstore_t> blockstore = nullptr;
+    blockstore.attach(store::xblockstorehub_t::instance().create_block_store(*store, ""));
+
+    std::string account_address = xblocktool_t::make_address_user_account("11111111111111111112");
+    std::string table_address = account_address_to_block_address(top::common::xaccount_address_t{account_address});
+
+    create_tableblock(store, blockstore, arc_nodes, account_address, 1000);
+
+    sys.start();
+
+    sleep(1);
+
+    for (uint64_t h=1; h<=10; h++) {
+        duplicate_block(blockstore, arc_nodes[0]->m_blockstore, table_address, h);
+
+        base::xauto_ptr<base::xvblock_t> block = blockstore->load_block_object(table_address, h);
+
+        base::xstream_t stream(base::xcontext_t::instance());
+        auto header = make_object_ptr<xsync_message_header_t>(RandomUint64());
+        header->serialize_to(stream);
+
+        auto body = make_object_ptr<sync::xsync_message_v1_newblockhash_t>(block->get_account(), block->get_height(), block->get_viewid());
+        body->serialize_to(stream);
+        vnetwork::xmessage_t _msg = vnetwork::xmessage_t({stream.data(), stream.data() + stream.size()}, xmessage_id_sync_v1_newblockhash);
+
+        xmessage_t msg;
+        xmessage_pack_t::pack_message(_msg, ((int) _msg.payload().size()) >= DEFAULT_MIN_COMPRESS_THRESHOLD, msg);
+
+        arc_nodes[1]->m_vnet->on_message(arc_nodes[0]->m_addr, msg);
+
+        usleep(10);
+    }
+
+    sleep(1);
+
+    while (1) {
+        printf("%s height=%lu\n", arc_nodes[1]->m_vnode_id.c_str(), arc_nodes[1]->m_blockstore->get_genesis_current_block(table_address)->get_height());
         sleep(1);
     } 
 }
@@ -447,7 +513,7 @@ TEST(test_xsync, on_demand_sync_unit_no_consensus) {
 
     create_tableblock(store, blockstore, shard_nodes, account_address, 100);
 
-    base::xauto_ptr<base::xvblock_t> last_table_block = blockstore->get_latest_current_block(table_address);
+    base::xauto_ptr<base::xvblock_t> last_table_block = blockstore->get_genesis_current_block(table_address);
     for (uint64_t h=1 ; h<=last_table_block->get_height(); h++) {
         duplicate_block(blockstore, archive_nodes[0]->m_blockstore, table_address, h);
     }
@@ -489,7 +555,7 @@ TEST(test_xsync, on_demand_sync_unit_consensus) {
 
     create_tableblock(store, blockstore, shard_nodes, account_address, 100);
 
-    base::xauto_ptr<base::xvblock_t> last_table_block = blockstore->get_latest_current_block(table_address);
+    base::xauto_ptr<base::xvblock_t> last_table_block = blockstore->get_genesis_current_block(table_address);
     for (uint64_t h=1 ; h<=last_table_block->get_height(); h++) {
         duplicate_block(blockstore, archive_nodes[0]->m_blockstore, table_address, h);
     }
@@ -531,7 +597,7 @@ TEST(test_xsync, on_demand_sync_table_no_consensus) {
 
     create_tableblock(store, blockstore, shard_nodes, account_address, 100);
 
-    base::xauto_ptr<base::xvblock_t> last_table_block = blockstore->get_latest_current_block(table_address);
+    base::xauto_ptr<base::xvblock_t> last_table_block = blockstore->get_genesis_current_block(table_address);
     for (uint64_t h=1 ; h<=last_table_block->get_height(); h++) {
         duplicate_block(blockstore, archive_nodes[0]->m_blockstore, table_address, h);
     }

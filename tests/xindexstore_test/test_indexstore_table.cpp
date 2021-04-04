@@ -111,3 +111,42 @@ TEST_F(test_indexstore_table, account_index_query_3) {
         ASSERT_TRUE(ret);
     }
 }
+
+TEST_F(test_indexstore_table, mbt_state_query_1) {
+    xobject_ptr_t<store::xstore_face_t> store_face = store::xstore_factory::create_store_with_memdb();
+    base::xauto_ptr<xvblockstore_t> blockstore(xblockstorehub_t::instance().create_block_store(*store_face.get(), {}));
+
+    uint64_t max_block_height = 200;
+    xdatamock_table mocktable;
+    mocktable.genrate_table_chain(max_block_height);
+    const std::vector<xblock_ptr_t> & tables = mocktable.get_history_tables();
+    xassert(tables.size() == max_block_height+1);
+    for (uint64_t i = 0; i <= max_block_height; i++) {
+        ASSERT_TRUE(blockstore->store_block(tables[i].get()));
+    }
+
+    xindexstore_face_ptr_t indexstore = xindexstore_factory_t::create_index_store(make_observer(store_face.get()), make_observer(blockstore.get()), mocktable.get_account());
+    const std::vector<xdatamock_unit> & datamock_units = mocktable.get_mock_units();
+    {
+        auto & account = datamock_units[0].get_account();
+        data::xaccount_index_t account_index;
+        bool ret = indexstore->get_account_index(account, account_index);
+        ASSERT_TRUE(ret);
+        ASSERT_NE(account_index.get_latest_unit_height(), 0);
+        auto committed_unit = blockstore->get_latest_committed_block(account);
+        ASSERT_EQ(committed_unit->get_height(), account_index.get_latest_unit_height());
+        std::cout << "account=" << account << " index=" << account_index.dump() << std::endl;
+    }
+    {
+        auto & account = datamock_units[0].get_account();
+        data::xaccount_index_t account_index;
+        xtable_mbt_new_state_ptr_t new_state = indexstore->get_mbt_new_state();
+        ASSERT_NE(new_state, nullptr);
+        new_state->get_account_index(account, account_index);
+        ASSERT_NE(account_index.get_latest_unit_height(), 0);
+        auto committed_unit = blockstore->get_latest_committed_block(account);
+        ASSERT_EQ(committed_unit->get_height(), account_index.get_latest_unit_height());
+        std::cout << "account=" << account << " index=" << account_index.dump() << std::endl;
+    }
+}
+

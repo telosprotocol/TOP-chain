@@ -26,14 +26,18 @@ int32_t xnon_ready_accounts_t::push_tx(const std::shared_ptr<xtx_entry> & tx_ent
     return xsuccess;
 }
 
-const std::shared_ptr<xtx_entry> xnon_ready_accounts_t::pop_tx(const std::string & account_addr, const uint256_t & hash) {
-    auto it_account = m_account_map.find(account_addr);
+const std::shared_ptr<xtx_entry> xnon_ready_accounts_t::pop_tx(const tx_info_t & txinfo) {
+    auto it_account = m_account_map.find(txinfo.get_addr());
     if (it_account != m_account_map.end()) {
-        std::string hash_str = std::string(reinterpret_cast<char *>(hash.data()), hash.size());
+        std::string hash_str = txinfo.get_hash_str();
         auto & txs_map = it_account->second;
         auto it_tx = txs_map.find(hash_str);
         if (it_tx != txs_map.end()) {
             auto tx_ent = it_tx->second;
+            if (txinfo.get_subtype() !=tx_ent->get_tx()->get_tx_subtype()) {
+                xtxpool_dbg("xnon_ready_accounts_t::pop_tx subtype not match tx:%s, subtype:%d", tx_ent->get_tx()->dump().c_str(), txinfo.get_subtype());
+                return nullptr;
+            }
             txs_map.erase(it_tx);
             m_xtable_info->tx_dec(tx_ent->get_tx()->get_tx_subtype(), 1);
             return tx_ent;

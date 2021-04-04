@@ -38,12 +38,12 @@ int32_t xtxpool_t::push_receipt(const std::shared_ptr<xtx_entry> & tx) {
     return table->push_receipt(tx);
 }
 
-const xcons_transaction_ptr_t xtxpool_t::pop_tx(const std::string & account_addr, const uint256_t & hash, enum_transaction_subtype subtype) {
-    auto table = get_txpool_table_by_addr(account_addr);
+const xcons_transaction_ptr_t xtxpool_t::pop_tx(const tx_info_t & txinfo) {
+    auto table = get_txpool_table_by_addr(txinfo.get_addr());
     if (table == nullptr) {
         return nullptr;
     }
-    auto tx_ent = table->pop_tx(account_addr, hash, subtype, true);
+    auto tx_ent = table->pop_tx(txinfo, true);
     if (tx_ent == nullptr) {
         return nullptr;
     }
@@ -182,6 +182,14 @@ void xtxpool_t::update_unconfirm_accounts(uint8_t zone, uint16_t subaddr) {
     if (m_tables[zone][subaddr] != nullptr) {
         m_tables[zone][subaddr]->update_unconfirm_accounts();
     }
+}
+
+void xtxpool_t::update_locked_txs(const std::string & table_addr, const std::vector<tx_info_t> & locked_tx_vec) {
+    auto table = get_txpool_table_by_addr(table_addr);
+    if (table == nullptr) {
+        return;
+    }
+    return table->update_locked_txs(locked_tx_vec);
 }
 
 bool xtxpool_t::is_table_subscribed(uint8_t zone, uint16_t table_id) const {

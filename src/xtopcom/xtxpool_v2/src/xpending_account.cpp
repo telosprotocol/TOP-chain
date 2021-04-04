@@ -157,7 +157,7 @@ int32_t xpending_accounts_t::push_tx(const std::shared_ptr<xtx_entry> & tx_ent) 
             return xtxpool_error_pending_reached_upper_limit;
         }
         std::shared_ptr<xcandidate_account_entry> account_ent = std::make_shared<xcandidate_account_entry>(addr);
-        account_ent->push_tx(tx_ent);
+        ret = account_ent->push_tx(tx_ent);
         uint16_t selected_count = 0;
         m_account_selected_lru.get(addr, selected_count);
         account_ent->set_select_count(selected_count);
@@ -175,15 +175,15 @@ int32_t xpending_accounts_t::push_tx(const std::shared_ptr<xtx_entry> & tx_ent) 
     return ret;
 }
 
-std::shared_ptr<xtx_entry> xpending_accounts_t::pop_tx(const std::string & account_addr, const uint256_t & hash, enum_transaction_subtype subtype, bool clear_follower) {
-    auto iter = m_account_map.find(account_addr);
+std::shared_ptr<xtx_entry> xpending_accounts_t::pop_tx(const tx_info_t & txinfo, bool clear_follower) {
+    auto iter = m_account_map.find(txinfo.get_addr());
     if (iter == m_account_map.end()) {
         return nullptr;
     } else {
         auto & pending_account = *iter->second;
         int32_t tx_num = pending_account->get_txs().size();
         int32_t delete_num = 0;
-        std::shared_ptr<xtx_entry> tx_ent = pending_account->pop_tx(hash, subtype, clear_follower);
+        std::shared_ptr<xtx_entry> tx_ent = pending_account->pop_tx(txinfo.get_hash(), txinfo.get_subtype(), clear_follower);
         if (tx_ent != nullptr) {
             if (pending_account->empty()) {
                 m_accounts_set.erase(iter->second);
@@ -192,7 +192,7 @@ std::shared_ptr<xtx_entry> xpending_accounts_t::pop_tx(const std::string & accou
             } else {
                 delete_num = tx_num - pending_account->get_txs().size();
             }
-            tx_count_inc(tx_ent->get_tx()->get_tx_subtype(), -delete_num);
+            tx_count_dec(tx_ent->get_tx()->get_tx_subtype(), delete_num);
             xtxpool_info("xpending_accounts_t::pop_tx table:%s tx:%s", m_xtable_info->get_table_addr().c_str(), tx_ent->get_tx()->dump().c_str());
         }
 
@@ -209,7 +209,7 @@ ready_accounts_t xpending_accounts_t::pop_ready_accounts(uint32_t count) {
             account->put_tx(tx_ent->get_tx());
         }
         accounts.push_back(account);
-        tx_count_inc((*iter)->get_subtype(), -(*iter)->get_txs().size());
+        tx_count_dec((*iter)->get_subtype(), (*iter)->get_txs().size());
         m_account_selected_lru.put((*iter)->get_addr(), (*iter)->get_select_count() + 1);
         m_account_map.erase((*iter)->get_addr());
         iter = m_accounts_set.erase(iter);
@@ -267,7 +267,7 @@ void xpending_accounts_t::updata_latest_nonce(const std::string & account_addr, 
         }
         int32_t tx_num = pending_account->get_txs().size();
         pending_account->updata_latest_nonce(latest_nonce, latest_hash);
-        tx_count_inc(enum_transaction_subtype_send, -(tx_num - pending_account->get_txs().size()));
+        tx_count_dec(enum_transaction_subtype_send, (tx_num - pending_account->get_txs().size()));
         if (pending_account->empty()) {
             m_accounts_set.erase(iter->second);
             m_account_map.erase(iter);
@@ -282,6 +282,16 @@ void xpending_accounts_t::tx_count_inc(uint8_t subtype, int32_t count) {
         m_xtable_info->conf_tx_inc(count);
     } else {
         m_xtable_info->send_tx_inc(count);
+    }
+}
+
+void xpending_accounts_t::tx_count_dec(uint8_t subtype, int32_t count) {
+    if (subtype == enum_transaction_subtype_recv) {
+        m_xtable_info->recv_tx_dec(count);
+    } else if (subtype == enum_transaction_subtype_confirm) {
+        m_xtable_info->conf_tx_dec(count);
+    } else {
+        m_xtable_info->send_tx_dec(count);
     }
 }
 

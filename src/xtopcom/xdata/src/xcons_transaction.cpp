@@ -59,6 +59,10 @@ void xcons_transaction_t::set_commit_prove_with_parent_cert(base::xvqcert_t* pro
     m_receipt->set_commit_prove_cert(prove_cert, xprove_cert_class_parent_cert, xprove_cert_type_justify_cert, get_unit_cert()->get_extend_data());
 }
 
+void xcons_transaction_t::set_commit_prove_with_self_cert(base::xvqcert_t* prove_cert) {
+    m_receipt->set_commit_prove_cert(prove_cert, xprove_cert_class_self_cert, xprove_cert_type_justify_cert, {});
+}
+
 bool xcons_transaction_t::is_commit_prove_cert_set() const {
     return m_receipt->is_commit_prove_cert_set();
 }

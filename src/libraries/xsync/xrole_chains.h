@@ -30,6 +30,7 @@ private:
     void init_chains();
     void add_chain(common::xnode_type_t allow_types, const std::string& address, enum_chain_sync_policy sync_policy);
     void add_tables(common::xnode_type_t allow_types, const std::string& address, enum_chain_sync_policy sync_policy);
+    void add_rec_or_zec(common::xnode_type_t allow_types, const std::string &address, enum_chain_sync_policy sync_policy);
 
 private:
     vnetwork::xvnode_address_t m_role;

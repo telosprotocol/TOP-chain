@@ -166,7 +166,7 @@ public:
     }
     int32_t push_tx(const std::shared_ptr<xtx_entry> & tx_ent, uint64_t latest_nonce, const uint256_t & latest_hash);
     const std::vector<std::shared_ptr<xtx_entry>> get_txs(uint32_t max_num) const;
-    const std::shared_ptr<xtx_entry> pop_tx(std::string account_addr, const uint256_t & hash, bool clear_follower);
+    const std::shared_ptr<xtx_entry> pop_tx(const tx_info_t & txinfo, bool clear_follower);
     const std::shared_ptr<xtx_entry> find(const std::string & account_addr, const uint256_t & hash) const;
     void updata_latest_nonce(const std::string & account_addr, uint64_t latest_nonce, const uint256_t & latest_hash);
     bool is_account_need_update(const std::string & account_addr) const;
@@ -184,7 +184,7 @@ public:
     }
     int32_t push_tx(const std::shared_ptr<xtx_entry> & tx_ent);
     const std::vector<std::shared_ptr<xtx_entry>> get_txs(uint32_t max_num) const;
-    const std::shared_ptr<xtx_entry> pop_tx(std::string account_addr, const uint256_t & hash);
+    const std::shared_ptr<xtx_entry> pop_tx(const tx_info_t & txinfo);
     const std::shared_ptr<xtx_entry> find(const std::string & account_addr, const uint256_t & hash) const;
 
 private:

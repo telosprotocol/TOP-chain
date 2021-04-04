@@ -43,19 +43,22 @@ void xunit_maker_t::init_unit_blocks(const base::xblock_mptrs & latest_blocks) {
 }
 
 int32_t    xunit_maker_t::check_latest_state(const xblock_ptr_t & committed_table_block) {
+    // TODO(jimmy) only empty unit maker should init latest blocks
     base::xblock_mptrs latest_blocks = get_blockstore()->get_latest_blocks(*this);
-    if (!is_latest_blocks_valid(latest_blocks)) {
-        xwarn("xunit_maker_t::check_latest_state fail-is_latest_blocks_valid, account=%s", get_account().c_str());
-        return xblockmaker_error_latest_unit_blocks_invalid;
-    }
-
-    if (committed_table_block != nullptr) {
-        if (false == check_index_state(committed_table_block, latest_blocks)) {
-            xwarn("xunit_maker_t::check_latest_state fail-check_index_state.account=%s", get_account().c_str());
+    if (get_latest_blocks().empty()) {
+        if (!is_latest_blocks_valid(latest_blocks)) {
+            xwarn("xunit_maker_t::check_latest_state fail-is_latest_blocks_valid, account=%s", get_account().c_str());
             return xblockmaker_error_latest_unit_blocks_invalid;
         }
-    } else {
-        init_unit_blocks(latest_blocks);
+
+        if (committed_table_block != nullptr) {
+            if (false == check_index_state(committed_table_block, latest_blocks)) {
+                xwarn("xunit_maker_t::check_latest_state fail-check_index_state.account=%s", get_account().c_str());
+                return xblockmaker_error_latest_unit_blocks_invalid;
+            }
+        } else {
+            init_unit_blocks(latest_blocks);
+        }
     }
 
     if (!load_and_cache_enough_blocks()) {
@@ -150,7 +153,8 @@ bool xunit_maker_t::leader_push_txs(const std::vector<xcons_transaction_ptr_t> &
 
     for (auto & tx : pop_txs) {
         xinfo("xunit_maker_t::leader_push_txs pop tx. account=%s,tx=%s", get_account().c_str(), tx->dump().c_str());
-        get_txpool()->pop_tx(get_account(), tx->get_transaction()->digest(), tx->get_tx_subtype());
+        xtxpool_v2::tx_info_t txinfo(get_account(), tx->get_transaction()->digest(), tx->get_tx_subtype());
+        get_txpool()->pop_tx(txinfo);
     }
 
     if (valid_txs.empty()) {
@@ -282,11 +286,12 @@ xblock_ptr_t xunit_maker_t::make_next_block(const data::xblock_consensus_para_t 
         result.m_success_txs = lightunit_build_para->get_origin_txs();
         for (auto & tx : lightunit_build_para->get_fail_txs()) {
             xwarn("xunit_maker_t::make_next_block fail-pop send tx. account=%s,tx=%s", get_account().c_str(), tx->dump().c_str());
-            get_txpool()->pop_tx(get_account(), tx->get_transaction()->digest(), tx->get_tx_subtype());
+            xtxpool_v2::tx_info_t txinfo(get_account(), tx->get_transaction()->digest(), tx->get_tx_subtype());
+            get_txpool()->pop_tx(txinfo);
         }
     } else if (can_make_next_empty_block()) {
         proposal_unit = m_emptyunit_builder->build_block(get_highest_height_block(),
-                                                        get_latest_committed_state(),
+                                                        nullptr,
                                                         cs_para,
                                                         m_default_builder_para);
         result.m_make_block_error_code = m_default_builder_para->get_error_code();
@@ -305,24 +310,26 @@ bool xunit_maker_t::can_make_next_block() const {
 }
 
 bool xunit_maker_t::can_make_next_empty_block() const {
-    uint32_t num = get_latest_consecutive_empty_block_num();
     // TODO(jimmy)
-    if (get_highest_height_block()->get_height() > 0 && num < m_consecutive_empty_unit_max) {
+    const xblock_ptr_t & current_block = get_highest_height_block();
+    if (current_block->get_height() == 0) {
+        return false;
+    }
+    if (current_block->get_block_class() == base::enum_xvblock_class_light) {
+        return true;
+    }
+    xblock_ptr_t prev_block = get_prev_block(current_block);
+    if (prev_block == nullptr) {
+        return false;
+    }
+    if (prev_block->get_block_class() == base::enum_xvblock_class_light) {
         return true;
     }
     return false;
 }
 
 bool xunit_maker_t::is_account_locked() const {
-    xblock_ptr_t highest_non_empty_block = get_highest_non_empty_block();
-    if (highest_non_empty_block == nullptr) {
-        return false;
-    }
-    if ( (highest_non_empty_block->get_height() > 0)
-        && (highest_non_empty_block->get_height() > get_latest_committed_block()->get_height()) ) {
-        return true;
-    }
-    return false;
+    return can_make_next_empty_block();
 }
 
 bool xunit_maker_t::can_make_next_full_block() const {

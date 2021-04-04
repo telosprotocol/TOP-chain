@@ -78,10 +78,17 @@ class test_table_maker_base {
         cs_para.set_latest_blocks(latest_blocks);
 
         xtablemaker_result_t result;
-;        m_table_para.m_proposal_input.clear();
+        m_table_para.m_proposal_input.clear();
 
-        std::map<std::string, std::vector<xcons_transaction_ptr_t>> batch_txs = generate_batch_txs(user_count, tx_count);
-        m_table_para.set_batch_txs(batch_txs);
+        if (user_count != 0) {
+            std::map<std::string, std::vector<xcons_transaction_ptr_t>> batch_txs = generate_batch_txs(user_count, tx_count);
+            m_table_para.set_batch_txs(batch_txs);
+        }
+
+        if (false == m_table_maker->can_make_next_block(m_table_para, cs_para)) {
+            return nullptr;
+        }
+
         xblock_ptr_t proposal_block = m_table_maker->make_proposal(m_table_para, cs_para, result);
         return proposal_block;
     }
@@ -295,13 +302,13 @@ TEST_F(test_table_maker, table_maker_make_proposal_1) {
 
     ASSERT_TRUE(resouces->get_blockstore()->store_block(table1.get()));
 
-    ASSERT_NE(xsuccess, table_maker->verify_proposal(table1.get(), table_para, cs_para));
+    ASSERT_EQ(xsuccess, table_maker->verify_proposal(table1.get(), table_para, cs_para));
 
     base::xblock_mptrs latest_blocks2 = resouces->get_blockstore()->get_latest_blocks(taccount);
     xtablemaker_para_t table_para2;
     table_para2.set_unitmaker_txs(account1, txs1);
     table_para2.set_unitmaker_txs(account2, txs2);
-    ASSERT_NE(xsuccess, table_maker->verify_proposal(table1.get(), table_para2, cs_para));
+    ASSERT_EQ(xsuccess, table_maker->verify_proposal(table1.get(), table_para2, cs_para));
 }
 
 TEST_F(test_table_maker, table_maker_make_proposal_2) {
@@ -353,6 +360,7 @@ TEST_F(test_table_maker, table_maker_make_proposal_2) {
     xtablemaker_para_t table_para;
 
     xtablemaker_result_t result;
+    table_maker->default_check_latest_state();
     xblock_ptr_t table1 = table_maker->make_proposal(table_para, cs_para, result);
     ASSERT_NE(table1, nullptr);
     xdatamock_tx::do_mock_signature(table1.get());
@@ -375,6 +383,7 @@ TEST_F(test_table_maker, table_maker_make_proposal_2) {
     xtablemaker_para_t table_para;
 
     xtablemaker_result_t result;
+    table_maker->default_check_latest_state();
     xblock_ptr_t table1 = table_maker->make_proposal(table_para, cs_para, result);
     ASSERT_NE(table1, nullptr);
     xdatamock_tx::do_mock_signature(table1.get());
@@ -401,6 +410,7 @@ TEST_F(test_table_maker, table_maker_make_proposal_2) {
     table_para.set_unitmaker_txs(account2, txs2);
 
     xtablemaker_result_t result;
+    table_maker->default_check_latest_state();
     xblock_ptr_t table1 = table_maker->make_proposal(table_para, cs_para, result);
     ASSERT_NE(table1, nullptr);
     xdatamock_tx::do_mock_signature(table1.get());
@@ -466,6 +476,7 @@ TEST_F(test_table_maker, table_maker_make_proposal_3) {
     table_para.set_unitmaker_txs(account2, txs2);
 
     xtablemaker_result_t result;
+    table_maker->default_check_latest_state();
     xblock_ptr_t table1 = table_maker->make_proposal(table_para, cs_para, result);
     ASSERT_NE(table1, nullptr);
     xdatamock_tx::do_mock_signature(table1.get());
@@ -487,13 +498,17 @@ TEST_F(test_table_maker, table_maker_make_proposal_3) {
 
 TEST_F(test_table_maker, table_maker_one_account_0) {
     test_table_maker_base   table_maker(1);
-    for (uint64_t height = 1; height < 20; height++) {
+    for (uint64_t height = 1; height < 50; height++) {
         xblock_ptr_t block = table_maker.make_proposal(1, 1);
         ASSERT_NE(block, nullptr);
         ASSERT_EQ(block->get_height(), height);
         xdatamock_tx::do_mock_signature(block.get());
         // ASSERT_EQ(xsuccess, table_maker.verify_proposal(block));
         ASSERT_TRUE(table_maker.get_resources()->get_blockstore()->store_block(block.get()));
+        const std::vector<xblock_ptr_t> & units = block->get_tableblock_units(true);
+        for (auto & unit : units) {
+            std::cout << "unit account=" << unit->get_account() << " height=" << unit->get_height() << " class=" << unit->get_block_class() << std::endl;
+        }
     }
 }
 
@@ -592,8 +607,8 @@ TEST_F(test_table_maker, table_maker_multi_account_1) {
     test_table_maker_base   table_maker(500);
     for (uint64_t height = 1; height < 1000; height++) {
         xblock_ptr_t block = table_maker.make_proposal(1, 2);
-        ASSERT_NE(block, nullptr);
-        ASSERT_EQ(block->get_height(), height);
+        xassert(block != nullptr);
+        xassert(block->get_height() == height);
         xdatamock_tx::do_mock_signature(block.get());
         if (block->get_block_class() != base::enum_xvblock_class_light) {
             std::cout << "full-table height=" << block->get_height() << std::endl;
@@ -619,17 +634,40 @@ TEST_F(test_table_maker, table_maker_multi_account_2) {
 }
 
 TEST_F(test_table_maker, table_maker_multi_account_3) {
-    test_table_maker_base   table_maker(1000);
-    for (uint64_t height = 1; height < 1000; height++) {
-        xblock_ptr_t block = table_maker.make_proposal(table_maker.get_max_batch_txs_account_num(), 2);
-        ASSERT_NE(block, nullptr);
-        ASSERT_EQ(block->get_height(), height);
-        xdatamock_tx::do_mock_signature(block.get());
-        if (block->get_block_class() != base::enum_xvblock_class_light) {
-            std::cout << "full-table height=" << block->get_height() << std::endl;
+    {
+        int64_t start_ms = base::xtime_utl::gettimeofday_ms();
+        test_table_maker_base   table_maker(1000);
+        for (uint64_t height = 1; height < 1000; height++) {
+            xblock_ptr_t block = table_maker.make_proposal(table_maker.get_max_batch_txs_account_num(), 2);
+            ASSERT_NE(block, nullptr);
+            ASSERT_EQ(block->get_height(), height);
+            xdatamock_tx::do_mock_signature(block.get());
+            if (block->get_block_class() != base::enum_xvblock_class_light) {
+                std::cout << "full-table height=" << block->get_height() << std::endl;
+            }
+            ASSERT_EQ(xsuccess, table_maker.verify_proposal(block));
+            ASSERT_TRUE(table_maker.get_resources()->get_blockstore()->store_block(block.get()));
         }
-        ASSERT_EQ(xsuccess, table_maker.verify_proposal(block));
-        ASSERT_TRUE(table_maker.get_resources()->get_blockstore()->store_block(block.get()));
+        int64_t end_ms = base::xtime_utl::gettimeofday_ms();
+        std::cout << "non empty txs timer = " << end_ms - start_ms << std::endl;
+    }
+
+    {
+        int64_t start_ms = base::xtime_utl::gettimeofday_ms();
+        test_table_maker_base   table_maker(1000);
+        for (uint64_t height = 1000; height < 2000; height++) {
+            xblock_ptr_t block = table_maker.make_proposal(0, 2);
+            if (block != nullptr) {
+                ASSERT_NE(block, nullptr);
+                ASSERT_EQ(block->get_height(), height);
+                xdatamock_tx::do_mock_signature(block.get());
+                std::cout << "empty block = " << block->get_height() << std::endl;
+                ASSERT_EQ(xsuccess, table_maker.verify_proposal(block));
+                ASSERT_TRUE(table_maker.get_resources()->get_blockstore()->store_block(block.get()));
+            }
+        }
+        int64_t end_ms = base::xtime_utl::gettimeofday_ms();
+        std::cout << "non empty txs timer = " << end_ms - start_ms << std::endl;
     }
 }
 
