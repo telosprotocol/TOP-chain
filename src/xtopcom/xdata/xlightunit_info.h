@@ -100,7 +100,7 @@ class xlightunit_input_entity_t final: public xventity_face_t<xlightunit_input_e
     const xinput_tx_propertys_t & get_input_tx_propertys() const {return m_inputtx_props;}
     const xtransaction_ptr_t &  get_raw_tx() const {return m_raw_tx;}
 
-    std::string                 dump() const;
+    std::string                 dump() const override;
 
  private:
     xtransaction_key_t          m_tx_key;

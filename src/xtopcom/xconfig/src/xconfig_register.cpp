@@ -5,6 +5,7 @@
 #include <memory>
 #include <algorithm>
 #include <iostream>
+#include <math.h>
 
 #include "xbasic/xobject_ptr.h"
 #include "xconfig/xconfig_register.h"
