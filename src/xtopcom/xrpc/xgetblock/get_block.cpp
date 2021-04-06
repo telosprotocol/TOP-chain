@@ -285,7 +285,7 @@ void get_block_handle::getIssuanceDetail() {
         return;
     }
     xstake::xissue_detail issue_detail;
-    issue_detail.serialize_from_string(xissue_detail_str);
+    issue_detail.from_string(xissue_detail_str);
     xdbg(
         "[grpc::getIssuanceDetail] reward contract height: %llu, onchain_timer_round: %llu, m_zec_vote_contract_height: %llu, "
         "m_zec_workload_contract_height: %llu, m_zec_reward_contract_height: %llu, "

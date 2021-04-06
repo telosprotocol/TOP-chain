@@ -88,11 +88,11 @@ public:
 #define MICROSECOND(timeout)                                                                                                                                                       \
     std::chrono::microseconds { timeout }
 
-#define XMETRICS_TIME_RECORD(metrics_name)                                                                                                                                         \
-    top::metrics::metrics_time_auto STR_CONCAT(metrics_time_auto, __LINE__) { metrics_name }
-#define XMETRICS_TIME_RECORD_KEY(metrics_name, key)                                                                                                                                \
+#define XMETRICS_TIME_RECORD(metrics_name) \
+     top::metrics::metrics_time_auto STR_CONCAT(metrics_time_auto, __LINE__) { metrics_name }
+#define XMETRICS_TIME_RECORD_KEY(metrics_name, key) \
     top::metrics::metrics_time_auto STR_CONCAT(metrics_time_auto, __LINE__) { metrics_name, key }
-#define XMETRICS_TIME_RECORD_KEY_WITH_TIMEOUT(metrics_name, key, timeout)                                                                                                             \
+#define XMETRICS_TIME_RECORD_KEY_WITH_TIMEOUT(metrics_name, key, timeout) \
     top::metrics::metrics_time_auto STR_CONCAT(metrics_time_auto, __LINE__) { metrics_name, key, MICROSECOND(timeout) }
 
 #define XMETRICS_TIMER_START(metrics_name) top::metrics::e_metrics::get_instance().timer_start(ADD_THREAD_HASH(metrics_name), std::chrono::system_clock::now());
@@ -110,8 +110,8 @@ public:
 
 #define XMETRICS_FLOW_COUNT(metrics_name, value) top::metrics::e_metrics::get_instance().flow_count(metrics_name, value, std::chrono::system_clock::now());
 
-#define XMETRICS_PACKET_INFO(metrics_name, ...)                                                                                                                                    \
-    top::metrics::handler::metrics_pack_unit STR_CONCAT(packet_info_auto_, __LINE__){metrics_name};                                                                                                       \
+#define XMETRICS_PACKET_INFO(metrics_name, ...)  \
+    top::metrics::handler::metrics_pack_unit STR_CONCAT(packet_info_auto_, __LINE__){metrics_name};   \
     top::metrics::handler::metrics_packet_impl(STR_CONCAT(packet_info_auto_, __LINE__), __VA_ARGS__);
 
 #define XMETRICS_XBASE_DATA_CATEGORY_NEW(key) XMETRICS_COUNTER_INCREMENT("dataobject_cur_xbase_type" + std::to_string(key), 1);
