@@ -168,7 +168,7 @@ void xedge_method_base<T>::sendTransaction_method(xjson_proc_t & json_proc, cons
     const auto & to = request["receiver_action"]["tx_receiver_account_addr"].asString();
     auto & source_action = tx->get_source_action();
     source_action.set_action_hash(request["sender_action"]["action_hash"].asUInt());
-    source_action.set_action_type(static_cast<uint16_t>(request["sender_action"]["action_type"].asUInt()));
+    source_action.set_action_type(static_cast<enum_xaction_type>(request["sender_action"]["action_type"].asUInt()));
     source_action.set_action_size(static_cast<uint16_t>(request["sender_action"]["action_size"].asUInt()));
     source_action.set_account_addr(from);
     source_action.set_action_name(request["sender_action"]["action_name"].asString());
@@ -183,7 +183,7 @@ void xedge_method_base<T>::sendTransaction_method(xjson_proc_t & json_proc, cons
 
     auto & target_action = tx->get_target_action();
     target_action.set_action_hash(request["receiver_action"]["action_hash"].asUInt());
-    target_action.set_action_type(static_cast<uint16_t>(request["receiver_action"]["action_type"].asUInt()));
+    target_action.set_action_type(static_cast<enum_xaction_type>(request["receiver_action"]["action_type"].asUInt()));
     target_action.set_action_size(static_cast<uint16_t>(request["receiver_action"]["action_size"].asUInt()));
     target_action.set_account_addr(to);
     target_action.set_action_name(request["receiver_action"]["action_name"].asString());
