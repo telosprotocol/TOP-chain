@@ -68,7 +68,7 @@ public:
     xpending_accounts_t(xtxpool_table_info_t * table_para) : m_xtable_info(table_para), m_account_selected_lru(xtxpool_pending_account_selected_count_lru_size) {
     }
     int32_t push_tx(const std::shared_ptr<xtx_entry> & tx_ent);
-    std::shared_ptr<xtx_entry> pop_tx(const std::string & account_addr, const uint256_t & hash, enum_transaction_subtype subtype, bool clear_follower);
+    std::shared_ptr<xtx_entry> pop_tx(const tx_info_t & txinfo, bool clear_follower);
     ready_accounts_t pop_ready_accounts(uint32_t count);
     ready_accounts_t get_ready_accounts(uint32_t count);
     const std::shared_ptr<xtx_entry> find(const std::string & account_addr, const uint256_t & hash) const;
@@ -76,6 +76,7 @@ public:
 
 private:
     void tx_count_inc(uint8_t subtype, int32_t count);
+    void tx_count_dec(uint8_t subtype, int32_t count);
     xtxpool_table_info_t * m_xtable_info;
     accounts_set m_accounts_set;                                      // accounts ordered by account type and selected number
     std::map<std::string, accounts_set::iterator> m_account_map;      // be easy to find account from m_accounts_set by address

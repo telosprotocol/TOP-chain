@@ -45,7 +45,8 @@ TEST_F(test_txmgr_table, sigle_send_tx) {
     ASSERT_EQ(xtxpool_error_request_tx_repeat, ret);
 
     // pop out
-    auto tx_ent_tmp = txmgr_table.pop_tx(tx->get_transaction()->get_source_addr(), tx->get_transaction()->digest(), tx->get_tx_subtype(), false);
+    tx_info_t txinfo(tx);
+    auto tx_ent_tmp = txmgr_table.pop_tx(txinfo, false);
     ASSERT_NE(tx_ent_tmp, nullptr);
     tx_tmp = txmgr_table.query_tx(tx->get_transaction()->get_source_addr(), tx->get_transaction()->digest());
     ASSERT_EQ(tx_tmp, nullptr);
@@ -259,14 +260,16 @@ TEST_F(test_txmgr_table, send_tx_clear_follower) {
     auto txs_ents1 = accounts1[0]->get_txs();
     ASSERT_EQ(txs_ents1.size(), 3);
 
-    txmgr_table.pop_tx(txs_ents1[0]->get_transaction()->get_source_addr(), txs_ents1[0]->get_transaction()->digest(), txs_ents1[0]->get_tx_subtype(), false);
+    tx_info_t txinfo1(txs_ents1[0]);
+    txmgr_table.pop_tx(txinfo1, false);
 
     auto accounts2 = txmgr_table.get_ready_accounts(10);
     ASSERT_EQ(accounts2.size(), 1);
     auto txs_ents2 = accounts2[0]->get_txs();
     ASSERT_EQ(txs_ents2.size(), 2);
 
-    txmgr_table.pop_tx(txs_ents2[0]->get_transaction()->get_source_addr(), txs_ents2[0]->get_transaction()->digest(), txs_ents2[0]->get_tx_subtype(), true);
+    tx_info_t txinfo2(txs_ents2[0]);
+    txmgr_table.pop_tx(txinfo2, true);
 
     auto accounts3 = txmgr_table.get_ready_accounts(10);
     ASSERT_EQ(accounts3.size(), 0);

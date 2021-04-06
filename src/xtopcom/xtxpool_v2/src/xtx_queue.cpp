@@ -161,7 +161,7 @@ void xcontinuous_txs_t::update_latest_nonce(uint64_t latest_nonce, const uint256
 
 void xcontinuous_txs_t::batch_erase(uint32_t from_idx, uint32_t to_idx) {
     for (uint32_t i = from_idx; i < to_idx; i++) {
-        xtxpool_info("xcontinuous_txs_t::update_latest_nonce delete nonce expire tx:%s", m_txs[i]->get_tx()->dump().c_str());
+        xtxpool_info("xcontinuous_txs_t::update_latest_nonce delete tx:%s", m_txs[i]->get_tx()->dump().c_str());
         m_send_tx_queue_internal->erase_ready_tx(m_txs[i]->get_tx()->get_transaction()->digest());
     }
     m_txs.erase(m_txs.begin() + from_idx, m_txs.begin() + to_idx);
@@ -365,7 +365,8 @@ int32_t xsend_tx_queue_t::push_tx(const std::shared_ptr<xtx_entry> & tx_ent, uin
         if (to_be_droped_tx_after_insert != nullptr) {
             to_be_droped_tx = to_be_droped_tx_after_insert;
         }
-        pop_tx(to_be_droped_tx->get_tx()->get_transaction()->get_source_addr(), to_be_droped_tx->get_tx()->get_transaction()->digest(), true);
+        tx_info_t txinfo(to_be_droped_tx->get_tx());
+        pop_tx(txinfo, true);
         if (to_be_droped_tx->get_tx()->get_transaction()->digest() == tx_ent->get_tx()->get_transaction()->digest()) {
             return xtxpool_error_queue_reached_upper_limit;
         }
@@ -403,13 +404,13 @@ const std::vector<std::shared_ptr<xtx_entry>> xsend_tx_queue_t::get_txs(uint32_t
     return ret_txs;
 }
 
-const std::shared_ptr<xtx_entry> xsend_tx_queue_t::pop_tx(std::string account_addr, const uint256_t & hash, bool clear_follower) {
-    auto tx_ent = m_send_tx_queue_internal.find(hash);
+const std::shared_ptr<xtx_entry> xsend_tx_queue_t::pop_tx(const tx_info_t & txinfo, bool clear_follower) {
+    auto tx_ent = m_send_tx_queue_internal.find(txinfo.get_hash());
     if (tx_ent == nullptr) {
         return nullptr;
     }
 
-    auto send_tx_account = m_send_tx_accounts.find(account_addr);
+    auto send_tx_account = m_send_tx_accounts.find(txinfo.get_addr());
     xassert(send_tx_account != m_send_tx_accounts.end());
     send_tx_account->second.get()->erase(tx_ent->get_tx()->get_transaction()->get_tx_nonce(), clear_follower);
     send_tx_account->second.get()->refresh();
@@ -438,7 +439,8 @@ bool xsend_tx_queue_t::is_account_need_update(const std::string & account_addr) 
 void xsend_tx_queue_t::clear_expired_txs() {
     auto expired_txs = m_send_tx_queue_internal.get_expired_txs();
     for (auto tx : expired_txs) {
-        pop_tx(tx->get_tx()->get_transaction()->get_source_addr(), tx->get_tx()->get_transaction()->digest(), false);
+        tx_info_t txinfo(tx->get_tx());
+        pop_tx(txinfo, false);
     }
 }
 
@@ -470,13 +472,17 @@ const std::vector<std::shared_ptr<xtx_entry>> xreceipt_queue_t::get_txs(uint32_t
     return ret_txs;
 }
 
-const std::shared_ptr<xtx_entry> xreceipt_queue_t::pop_tx(std::string account_addr, const uint256_t & hash) {
-    std::string hash_str = std::string(reinterpret_cast<char *>(hash.data()), hash.size());
+const std::shared_ptr<xtx_entry> xreceipt_queue_t::pop_tx(const tx_info_t & txinfo) {
+    std::string hash_str = txinfo.get_hash_str();
     auto it_map = m_ready_receipt_map.find(hash_str);
     if (it_map == m_ready_receipt_map.end()) {
         return nullptr;
     }
     auto tx_ent = *(it_map->second);
+    if (txinfo.get_subtype() != tx_ent->get_tx()->get_tx_subtype()) {
+        xtxpool_info("xreceipt_queue_t::pop_tx tx subtype not match tx:%s", tx_ent->get_tx()->dump().c_str());
+        return nullptr;
+    }
     m_ready_receipt_queue.erase(it_map->second);
     m_ready_receipt_map.erase(it_map);
     if (tx_ent->get_tx()->is_confirm_tx()) {
@@ -484,6 +490,7 @@ const std::shared_ptr<xtx_entry> xreceipt_queue_t::pop_tx(std::string account_ad
     } else {
         m_xtable_info_ptr->recv_tx_dec(1);
     }
+    xtxpool_info("xreceipt_queue_t::pop_tx ,table:%s,tx:%s", m_xtable_info_ptr->get_table_addr().c_str(), tx_ent->get_tx()->dump(true).c_str());
     return tx_ent;
 }
 

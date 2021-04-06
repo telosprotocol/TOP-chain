@@ -26,7 +26,7 @@ public:
     xnon_ready_accounts_t(xtxpool_table_info_t * table_para) : m_xtable_info(table_para) {
     }
     int32_t push_tx(const std::shared_ptr<xtx_entry> & tx_ent);
-    const std::shared_ptr<xtx_entry> pop_tx(const std::string & account_addr, const uint256_t & hash);
+    const std::shared_ptr<xtx_entry> pop_tx(const tx_info_t & txinfo);
     const std::shared_ptr<xtx_entry> find_tx(const std::string & account_addr, const uint256_t & hash) const;
     const std::vector<std::string> get_accounts() const;
     const std::vector<std::shared_ptr<xtx_entry>> pop_account_txs(const std::string & account_addr);

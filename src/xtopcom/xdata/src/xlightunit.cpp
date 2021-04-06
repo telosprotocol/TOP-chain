@@ -448,6 +448,7 @@ xcons_transaction_ptr_t xlightunit_block_t::create_txreceipt(const xtransaction_
     }
     xtx_receipt_ptr_t txreceipt = make_object_ptr<xtx_receipt_t>(txinfo, path, get_blockcert());
     xcons_transaction_ptr_t contx = make_object_ptr<xcons_transaction_t>((xtransaction_t*)tx, txreceipt);
+    contx->set_unit_height(get_height());
     return contx;
 }
 

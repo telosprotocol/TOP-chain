@@ -128,11 +128,13 @@ void xtxpool_service::get_service_table_boundary(base::enum_xchain_zone_index & 
 
 void xtxpool_service::on_timer(uint64_t now) {
     if (m_running && m_is_send_receipt_role) {
+        m_timer_fire_times++;
+        xinfo("xtxpool_service::on_timer, zone id:%d,table id:%d-%d,fire times:%d", m_zone_index, m_cover_front_table_id, m_cover_back_table_id, m_timer_fire_times);
         for (uint32_t i = m_cover_front_table_id; i <= m_cover_back_table_id; i++) {
             if ((m_timer_fire_times % txpool_service_update_unconfirm_accounts_freq) == 0) {
                 m_para->get_txpool()->update_unconfirm_accounts(m_zone_index, i);
             }
-            if ((m_timer_fire_times % txpool_service_resend_recv_tx_freq) == 0 ) {
+            if ((m_timer_fire_times % txpool_service_resend_recv_tx_freq) == 0) {
                 std::vector<xcons_transaction_ptr_t> recv_txs = m_para->get_txpool()->get_resend_txs(m_zone_index, i, now);
                 for (auto recv_tx : recv_txs) {
                     xassert(recv_tx->is_recv_tx());
@@ -202,8 +204,8 @@ void xtxpool_service::on_message_unit_receipt(vnetwork::xvnode_address_t const &
         auto tx = m_para->get_txpool()->get_unconfirm_tx(account_addr, hash);
         if (tx == nullptr) {
             xwarn("xtxpool_service::on_message_unit_receipt unconfirm tx not found:source addr:%s, hash:%s",
-                account_addr.c_str(),
-                confirm_receipt_msg->get_receipt()->get_tx_info()->get_tx_hex_hash().c_str());
+                  account_addr.c_str(),
+                  confirm_receipt_msg->get_receipt()->get_tx_info()->get_tx_hex_hash().c_str());
             return;
         }
         receipt = make_object_ptr<data::xcons_transaction_t>(tx->get_transaction(), confirm_receipt_msg->get_receipt());
@@ -259,17 +261,9 @@ void xtxpool_service::check_and_response_recv_receipt(const xcons_transaction_pt
             auto recv_tx_receipt = lightunit->create_one_txreceipt(tx);
             xassert(recv_tx_receipt->is_confirm_tx());
 
-            std::string table_account = account_address_to_block_address(common::xaccount_address_t(tx->get_target_addr()));
-            uint64_t justify_table_height = recv_tx_receipt->get_unit_cert()->get_parent_block_height() + 2;
-            base::xauto_ptr<base::xvblock_t> justify_tableblock = xblocktool_t::load_justify_block(m_para->get_vblockstore(), table_account, justify_table_height);
-            if (justify_tableblock == nullptr) {
-                xwarn("xtxpool_service::check_and_response_recv_receipt can not load justify tableblock. tx=%s,account=%s,height=%ld",
-                      tx->dump().c_str(),
-                      table_account.c_str(),
-                      justify_table_height);
+            if (!set_commit_prove(recv_tx_receipt)) {
                 return;
             }
-            recv_tx_receipt->set_commit_prove_with_parent_cert(justify_tableblock->get_cert());
             send_receipt_real(recv_tx_receipt);
         } else {
             xerror("xtxpool_service::check_and_response_recv_receipt recv tx unit not exist txhash:%s block_height:%d",
@@ -288,15 +282,24 @@ bool xtxpool_service::set_commit_prove(data::xcons_transaction_ptr_t & cons_tx) 
         std::string account_addr = (cons_tx->is_recv_tx()) ? cons_tx->get_source_addr() : cons_tx->get_target_addr();
         std::string table_account = account_address_to_block_address(common::xaccount_address_t(account_addr));
         uint64_t justify_table_height = cons_tx->get_unit_cert()->get_parent_block_height() + 2;
-        base::xauto_ptr<base::xvblock_t> justify_tableblock = xblocktool_t::load_justify_block(m_para->get_vblockstore(), table_account, justify_table_height);
-        if (justify_tableblock == nullptr) {
-            xwarn("xtxpool_service::set_commit_prove can not load justify tableblock.tx=%s,account=%s,height=%ld",
-                  cons_tx->dump().c_str(),
-                  table_account.c_str(),
-                  justify_table_height);
-            return false;
+        // try load table block first.
+        base::xauto_ptr<base::xvblock_t> justify_table_block = xblocktool_t::load_justify_block(m_para->get_vblockstore(), table_account, justify_table_height);
+        if (justify_table_block != nullptr) {
+            cons_tx->set_commit_prove_with_parent_cert(justify_table_block->get_cert());
+        } else {
+            uint64_t justify_unit_height = cons_tx->get_unit_height() + 2;
+            base::xauto_ptr<base::xvblock_t> justify_unit_block = xblocktool_t::load_justify_block(m_para->get_vblockstore(), account_addr, justify_unit_height);
+            if (justify_unit_block == nullptr) {
+                xwarn("xtxpool_service::set_commit_prove can not load justify tableblock and unit block .tx=%s,account=%s,table height=%ld,unit height=%ld",
+                      cons_tx->dump().c_str(),
+                      table_account.c_str(),
+                      justify_table_height,
+                      justify_unit_height);
+                return false;
+            }
+            cons_tx->set_commit_prove_with_self_cert(justify_unit_block->get_cert());
         }
-        cons_tx->set_commit_prove_with_parent_cert(justify_tableblock->get_cert());
+        xassert(cons_tx->get_receipt()->is_valid());
     } else {
         xdbg("xtxpool_service::set_commit_prove receipt already set commit prove. tx=%s", cons_tx->dump().c_str());
     }
@@ -352,14 +355,14 @@ void xtxpool_service::send_receipt_real(const data::xcons_transaction_ptr_t & co
         xassert(!common::has<common::xnode_type_t::consensus_validator>(m_vnet_driver->type()));
         xassert(m_is_send_receipt_role);
         if (m_vnet_driver->address().cluster_address() == receiver_cluster_addr) {
-            xdbg("xtxpool_service::send_receipt_real broadcast receipt=%s,vnode:%ld", cons_tx->dump().c_str(), m_vnetwork_str.c_str());
+            xinfo("xtxpool_service::send_receipt_real broadcast receipt=%s,vnode:%ld", cons_tx->dump().c_str(), m_vnetwork_str.c_str());
             m_vnet_driver->broadcast(msg);
             on_message_unit_receipt(m_vnet_driver->address(), msg);
         } else {
-            xdbg("xtxpool_service::send_receipt_real forward receipt=%s,from_vnode:%s,to_vnode:%s",
-                 cons_tx->dump().c_str(),
-                 m_vnetwork_str.c_str(),
-                 receiver_cluster_addr.to_string().c_str());
+            xinfo("xtxpool_service::send_receipt_real forward receipt=%s,from_vnode:%s,to_vnode:%s",
+                  cons_tx->dump().c_str(),
+                  m_vnetwork_str.c_str(),
+                  receiver_cluster_addr.to_string().c_str());
             m_vnet_driver->forward_broadcast_message(msg, vnetwork::xvnode_address_t{std::move(receiver_cluster_addr)});
         }
     } catch (vnetwork::xvnetwork_error_t const & eh) {
@@ -397,7 +400,16 @@ bool xtxpool_service::has_receipt_right(const uint256_t & hash, uint32_t resend_
     // calculate a random position that means which node is selected to send the receipt
     // the random position change by resend_time for rotate the selected node, to avoid same node is selected continuously.
     uint32_t rand_pos = (base::xhash32_t::digest(hash_str) + ((resend_time == 0) ? 0 : (resend_time + 1))) % m_shard_size;
-    return is_selected_sender(m_node_id, rand_pos, select_num, m_shard_size);
+    bool ret = is_selected_sender(m_node_id, rand_pos, select_num, m_shard_size);
+    xinfo("xtxpool_service::has_receipt_right ret:%d hash:%s resend_time:u rand_pos:%u select_num:%u node_id:%u shard_size:%u",
+          ret,
+          to_hex_str(hash).c_str(),
+          resend_time,
+          rand_pos,
+          select_num,
+          m_node_id,
+          m_shard_size);
+    return ret;
 }
 
 void xtxpool_service::forward_broadcast_message(const vnetwork::xvnode_address_t & addr, const vnetwork::xmessage_t & message) {

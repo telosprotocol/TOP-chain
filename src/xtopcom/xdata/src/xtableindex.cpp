@@ -431,4 +431,23 @@ size_t xtable_mbt_t::get_account_size() const {
     return count;
 }
 
+xtable_mbt_new_state_t::xtable_mbt_new_state_t() {
+    m_last_full_state = make_object_ptr<xtable_mbt_t>();
+    m_newest_binlog_state = make_object_ptr<xtable_mbt_binlog_t>();
+}
+
+bool xtable_mbt_new_state_t::get_account_index(const std::string & account, xaccount_index_t & account_index) {
+    // firstly, cache index binlog and try to find account index from binlog
+    if (m_newest_binlog_state->get_account_index(account, account_index)) {
+        xdbg("JIMMY xtable_mbt_new_state_t::get_account_index binlog account=%s,height=%ld,state_height=%ld",
+            account.c_str(), account_index.get_latest_unit_height(), m_newest_binlog_state->get_height());
+        return true;
+    }
+    // secondly, cache last full index and try to find accout index from last full index
+    m_last_full_state->get_account_index(account, account_index);
+    xdbg("JIMMY xtable_mbt_new_state_t::get_account_index state account=%s,height=%ld,state_height=%ld",
+        account.c_str(), account_index.get_latest_unit_height(), m_last_full_state->get_height());
+    return true;
+}
+
 NS_END2

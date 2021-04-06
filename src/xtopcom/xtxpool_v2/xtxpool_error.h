@@ -46,6 +46,7 @@ inline std::string xtxpool_error_to_string(int32_t code) {
     static const char * names[] = {XTXPOOL_TO_STR(xtxpool_error_queue_reached_upper_limit),
                                    XTXPOOL_TO_STR(xtxpool_error_request_tx_repeat),
                                    XTXPOOL_TO_STR(xtxpool_error_account_send_txs_reached_upper_limit),
+                                   XTXPOOL_TO_STR(xtxpool_error_account_unconfirm_txs_reached_upper_limit),
                                    XTXPOOL_TO_STR(xtxpool_error_pending_reached_upper_limit),
                                    XTXPOOL_TO_STR(xtxpool_error_pending_account_reached_upper_limit),
                                    XTXPOOL_TO_STR(xtxpool_error_tx_duplicate),

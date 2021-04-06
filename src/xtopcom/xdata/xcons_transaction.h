@@ -33,6 +33,7 @@ class xcons_transaction_t : public xbase_dataunit_t<xcons_transaction_t, xdata_t
     const xlightunit_output_entity_t*     get_tx_info() const {return m_receipt->get_tx_info();}
     bool                            verify_cons_transaction();
     void                            set_commit_prove_with_parent_cert(base::xvqcert_t* prove_cert);
+    void                            set_commit_prove_with_self_cert(base::xvqcert_t* prove_cert);
     bool                            is_commit_prove_cert_set() const;
 
     const std::string &     get_source_addr()const {return m_tx->get_source_addr();}
@@ -52,8 +53,6 @@ class xcons_transaction_t : public xbase_dataunit_t<xcons_transaction_t, xdata_t
     bool                    is_confirm_tx() const {return m_tx->get_tx_subtype() == enum_transaction_subtype_confirm;}
     uint64_t                get_clock() const {return m_receipt->get_unit_cert()->get_clock();}
     std::string             get_digest_hex_str() const {return m_tx->get_digest_hex_str();}
-    bool                    is_confirmed() {return m_is_confirmed;}
-    void                    set_confirmed() {m_is_confirmed = true;}
     uint32_t                get_last_action_used_tgas() const;
     uint32_t                get_last_action_used_deposit() const;
     uint32_t                get_last_action_used_disk() const;
@@ -77,6 +76,10 @@ class xcons_transaction_t : public xbase_dataunit_t<xcons_transaction_t, xdata_t
     void                    set_current_exec_status(enum_xunit_tx_exec_status status) {m_execute_state.set_tx_exec_status(status);}
     void                    set_self_burn_balance(uint64_t value) {m_execute_state.set_self_burn_balance(value);}
 
+    void                    set_unit_height(uint64_t unit_height) {m_unit_height = unit_height;}
+    uint64_t                get_unit_height() {return m_unit_height;}
+
+
     // enum_xunit_tx_exec_status   get_current_exec_status() const {return m_execute_state.get_exec_status();}
     const base::xvqcert_t*  get_unit_cert() const {return m_receipt->get_unit_cert();}
     xtx_receipt_ptr_t       get_receipt() const {return m_receipt;}
@@ -93,8 +96,8 @@ class xcons_transaction_t : public xbase_dataunit_t<xcons_transaction_t, xdata_t
     xtx_receipt_ptr_t   m_receipt{nullptr};
 
  private:  // local member, should not serialize
-    bool                            m_is_confirmed{false};
     xtransaction_exec_state_t    m_execute_state;
+    uint64_t                     m_unit_height{0};
 };
 
 using xcons_transaction_ptr_t = xobject_ptr_t<xcons_transaction_t>;

@@ -47,7 +47,8 @@ TEST_F(test_non_ready_account, non_ready_account_basic) {
     auto accounts = non_ready_accounts.get_accounts();
     ASSERT_EQ(accounts.size(), 1);
 
-    auto poped_tx1 = non_ready_accounts.pop_tx(txs[1]->get_account_addr(), txs[1]->get_transaction()->digest());
+    tx_info_t txinfo(txs[1]);
+    auto poped_tx1 = non_ready_accounts.pop_tx(txinfo);
     ASSERT_NE(poped_tx1, nullptr);
 
     auto find_tx1 = non_ready_accounts.find_tx(txs[1]->get_account_addr(), txs[1]->get_transaction()->digest());

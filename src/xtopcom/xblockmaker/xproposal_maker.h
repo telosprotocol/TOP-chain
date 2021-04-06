@@ -41,6 +41,8 @@ class xproposal_maker_t : public xunit_service::xproposal_maker_face {
     bool                        verify_proposal_with_local(base::xvblock_t *proposal_block, base::xvblock_t *local_block) const;
 
  private:
+    void                        get_locked_txs(const xblock_ptr_t & block, std::vector<xtxpool_v2::tx_info_t> & locked_tx_vec);
+   
     xtable_maker_ptr_t          m_table_maker{nullptr};
     int32_t                     m_tableblock_batch_tx_num_residue{0};
     int32_t                     m_max_account_num{0};

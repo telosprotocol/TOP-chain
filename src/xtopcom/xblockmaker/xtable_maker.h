@@ -32,13 +32,13 @@ class xtable_maker_t : public xblock_maker_t {
     int32_t                 default_check_latest_state();
     xblock_ptr_t            make_proposal(xtablemaker_para_t & table_para, const data::xblock_consensus_para_t & cs_para, xtablemaker_result_t & result);
     int32_t                 verify_proposal(base::xvblock_t* proposal_block, const xtablemaker_para_t & table_para, const data::xblock_consensus_para_t & cs_para);
-    bool                    can_make_next_block() const;
+    bool                    can_make_next_block(xtablemaker_para_t & table_para, const data::xblock_consensus_para_t & cs_para);
 
  protected:
-    int32_t                 check_latest_state(base::xvblock_t* latest_cert_block); // check table latest block and state
+    int32_t                 check_latest_state(const xblock_ptr_t & latest_block); // check table latest block and state
     bool                    can_make_next_empty_block() const;
     bool                    can_make_next_full_block() const;
-    bool                    can_make_next_light_block() const;
+    bool                    can_make_next_light_block(xtablemaker_para_t & table_para) const;
     xunit_maker_ptr_t       create_unit_maker(const std::string & account);
     xunit_maker_ptr_t       pop_unit_maker(const std::string & account);
 
@@ -58,16 +58,17 @@ class xtable_maker_t : public xblock_maker_t {
     std::string             dump() const;
     xblock_ptr_t            leader_make_unit(const xunit_maker_ptr_t & unitmaker, const xunit_proposal_input_t & unit_input, const data::xblock_consensus_para_t & cs_para, xunitmaker_result_t & unit_result);
     bool                    load_table_blocks_from_last_full(const xblock_ptr_t & prev_block, std::vector<xblock_ptr_t> & blocks);
+    bool                    is_latest_state_unchanged(const xblock_ptr_t & latest_block) const;
 
  private:
     std::map<std::string, xunit_maker_ptr_t>    m_unit_makers;
-    static constexpr uint32_t                   m_keep_latest_blocks_max{50};
+    static constexpr uint32_t                   m_keep_latest_blocks_max{20};
     static constexpr uint32_t                   m_empty_block_max_num{2};
-    uint32_t                                    m_full_table_interval_num{100};
-    int32_t                                     m_max_account_num{0};
+    uint32_t                                    m_full_table_interval_num;
     xblock_builder_face_ptr_t                   m_fulltable_builder;
     xblock_builder_face_ptr_t                   m_lighttable_builder;
     store::xindexstore_face_ptr_t               m_indexstore;
+    bool                                        m_check_state_success{false};
     mutable std::mutex                          m_lock;
 };
 

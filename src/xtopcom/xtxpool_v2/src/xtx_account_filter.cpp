@@ -239,8 +239,8 @@ enum_xtxpool_error_type xaccount_confirmtx_filter::initialize() {
 
 enum_xtxpool_error_type xaccount_confirmtx_filter::sync_reject_rules(uint64_t unitblock_height) {
     std::unordered_set<xtx_hash_t> confirm_txs;
-    std::map<xtx_hash_t, xtx_unconfirm_tx_entry> send_txs;
 
+    std::map<xtx_hash_t, xtx_unconfirm_tx_entry> send_txs;
     for (uint64_t cur_height = unitblock_height; cur_height > m_highest_height; cur_height--) {
         auto unit_block = get_blockstore()->load_block_object(get_account_addr(), cur_height);
         if (unit_block == nullptr) {
@@ -258,7 +258,7 @@ enum_xtxpool_error_type xaccount_confirmtx_filter::sync_reject_rules(uint64_t un
             confirm_txs.clear();
             m_permit_rules.clear();
             m_unconfirm_txs.clear();
-            xtxpool_dbg_info("meet the full unitblock, means all send tx have confirmed before the height %llu", unit_block->get_height());
+            xtxpool_info("account:%s meet the full unitblock, means all send tx have confirmed before the height %llu", get_account_addr().c_str(), unit_block->get_height());
             break;
         }
 
@@ -274,7 +274,7 @@ enum_xtxpool_error_type xaccount_confirmtx_filter::sync_reject_rules(uint64_t un
             confirm_txs.clear();
             m_permit_rules.clear();
             m_unconfirm_txs.clear();
-            xtxpool_dbg_info("meet the unconfirm send tx zero light unitblock, means all send tx have confirmed before the height %llu", unit_block->get_height());
+            xtxpool_info("account:%s meet the unconfirm send tx zero light unitblock, means all send tx have confirmed before the height %llu", get_account_addr().c_str(), unit_block->get_height());
             break;
         }
 
@@ -303,6 +303,7 @@ enum_xtxpool_error_type xaccount_confirmtx_filter::sync_reject_rules(uint64_t un
     for (auto & hash : confirm_txs) {
         auto it = m_permit_rules.find(hash);
         if (it != m_permit_rules.end()) {
+            xtxpool_info("erase unconfirm tx:%s", (*it->second).get_raw_tx()->dump(true).c_str());
             m_unconfirm_txs.erase(it->second);
             m_permit_rules.erase(it);
         }
@@ -313,6 +314,7 @@ enum_xtxpool_error_type xaccount_confirmtx_filter::sync_reject_rules(uint64_t un
     }
 
     for (auto it_s : send_txs) {
+        xtxpool_info("add unconfirm tx:%s", it_s.second.get_raw_tx()->dump(true).c_str());
         auto it_unconfirm_txs = m_unconfirm_txs.insert(it_s.second);
         m_permit_rules[it_s.first] = it_unconfirm_txs;
     }

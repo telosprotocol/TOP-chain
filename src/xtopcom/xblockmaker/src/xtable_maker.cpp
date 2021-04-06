@@ -20,7 +20,6 @@ xtable_maker_t::xtable_maker_t(const std::string & account, const xblockmaker_re
     m_lighttable_builder = std::make_shared<xlighttable_builder_t>();
     m_indexstore = resources->get_indexstorehub()->get_index_store(account);
     m_full_table_interval_num = XGET_CONFIG(fulltable_interval_block_num);
-    m_max_account_num = XGET_CONFIG(tableblock_batch_unitblock_max_num);
 }
 
 bool xtable_maker_t::unpack_table_and_update_units(const xblock_ptr_t & block) {
@@ -84,41 +83,33 @@ void xtable_maker_t::clear_table_units(const xblock_ptr_t & block) {
 
 int32_t xtable_maker_t::default_check_latest_state() {
     base::xblock_mptrs latest_blocks = get_blockstore()->get_latest_blocks(*this);
-    return check_latest_state(latest_blocks.get_latest_cert_block());
+    if (!is_latest_blocks_valid(latest_blocks)) {
+        xwarn("xtable_maker_t::default_check_latest_state fail-is_latest_blocks_valid.latest_cert_block=%s",
+            latest_blocks.get_latest_cert_block()->dump().c_str());
+        return xblockmaker_error_latest_table_blocks_invalid;
+    }
+    xblock_ptr_t cert_block = xblock_t::raw_vblock_to_object_ptr(latest_blocks.get_latest_cert_block());
+    return check_latest_state(cert_block);
 }
 
-int32_t xtable_maker_t::check_latest_state(base::xvblock_t* latest_cert_block) {
-    xassert(latest_cert_block != nullptr);
-
-    // TODO(jimmy) check again
-    base::xblock_mptrs latest_blocks = get_blockstore()->get_latest_blocks(*this);
-    if (!is_latest_blocks_valid(latest_blocks)) {
-        xwarn("xtable_maker_t::check_latest_state fail-is_latest_blocks_valid.latest_cert_block=%s",
-            latest_cert_block->dump().c_str());
-        return xblockmaker_error_latest_table_blocks_invalid;
-    }
-    if (latest_blocks.get_latest_cert_block()->get_height() != latest_cert_block->get_height()) {
-        xwarn("xtable_maker_t::check_latest_state fail-latest cert height not match.latest_cert_block=%s,new_cert_block=%s",
-            latest_cert_block->dump().c_str(), latest_blocks.get_latest_cert_block()->dump().c_str());
-        return xblockmaker_error_latest_table_blocks_invalid;
-    }
-
+int32_t xtable_maker_t::check_latest_state(const xblock_ptr_t & latest_block) {
+    xassert(latest_block != nullptr);
     // use this latest cert block to update latest blocks
-    xblock_ptr_t latest_block = xblock_t::raw_vblock_to_object_ptr(latest_cert_block);
-    if (!is_latest_state_unchanged(latest_cert_block)) {
-        if (!update_latest_blocks(latest_block)) {
-            xwarn("xtable_maker_t::check_latest_state fail-update_latest_blocks.latest_cert_block=%s",
-                latest_block->dump().c_str());
-            return xblockmaker_error_latest_table_blocks_invalid;  // TODO(jimmy) error_code
-        }
+    if (is_latest_state_unchanged(latest_block)) {
+        return xsuccess;
     }
-    xassert(get_highest_height_block()->get_block_hash() == latest_cert_block->get_block_hash());
+    m_check_state_success = false;
+    if (!update_latest_blocks(latest_block)) {
+        xwarn("xtable_maker_t::check_latest_state fail-update_latest_blocks.latest_cert_block=%s",
+            latest_block->dump().c_str());
+        return xblockmaker_error_latest_table_blocks_invalid;  // TODO(jimmy) error_code
+    }
 
     // update latest committed block and blockchain state
-    xblock_ptr_t latest_committed_block = xblock_t::raw_vblock_to_object_ptr(latest_blocks.get_latest_committed_block());
-    if (!update_account_state(latest_committed_block)) {
-        xwarn("xtable_maker_t::check_latest_state fail-update_account_state.latest_cert_block=%s",
-            latest_block->dump().c_str());
+    xblock_ptr_t latest_committed_block = get_highest_commit_block();
+    if (!latest_committed_block->check_block_flag(base::enum_xvblock_flag_committed)) {
+        xwarn("xtable_maker_t::check_latest_state fail-committed block flag invalid.latest_committed_block=%s",
+            latest_committed_block->dump().c_str());
         return xblockmaker_error_latest_table_blocks_invalid;
     }
     set_latest_committed_block(latest_committed_block);
@@ -130,7 +121,7 @@ int32_t xtable_maker_t::check_latest_state(base::xvblock_t* latest_cert_block) {
         return xblockmaker_error_latest_table_blocks_invalid;
     }
 
-    xdbg_info("xtable_maker_t::check_latest_state latest_cert_block=%s,unitmaker_size=%d",
+    xdbg_info("xtable_maker_t::check_latest_state finish.latest_cert_block=%s,unitmaker_size=%d",
         latest_block->dump().c_str(), m_unit_makers.size());
     return xsuccess;
 }
@@ -198,15 +189,14 @@ void xtable_maker_t::clear_old_unit_makers() {
     }
 }
 
-bool xtable_maker_t::can_make_next_block() const {
-    if (can_make_next_light_block() || can_make_next_empty_block() || can_make_next_full_block()) {
-        return true;
-    }
-    return false;
-}
-
 bool xtable_maker_t::can_make_next_empty_block() const {
-    // TODO(jimmy) return data::xblocktool_t::can_make_next_empty_block(latest_blocks, m_empty_block_max_num);
+    // TODO(jimmy)
+    for (auto & v : m_unit_makers) {
+        const xunit_maker_ptr_t & unitmaker = v.second;
+        if (unitmaker->can_make_next_empty_block()) {
+            return true;
+        }
+    }
     return false;
 }
 bool xtable_maker_t::can_make_next_full_block() const {
@@ -216,9 +206,14 @@ bool xtable_maker_t::can_make_next_full_block() const {
     }
     return false;
 }
-bool xtable_maker_t::can_make_next_light_block() const {
+bool xtable_maker_t::can_make_next_light_block(xtablemaker_para_t & table_para) const {
     // TODO(jimmy)
-    if (!m_unit_makers.empty()) {
+    return !table_para.m_proposal_input.get_unit_inputs().empty();
+}
+
+bool xtable_maker_t::is_latest_state_unchanged(const xblock_ptr_t & latest_block) const {
+    if ( m_check_state_success && latest_block->get_block_hash() == get_highest_height_block()->get_block_hash()) {
+        // already latest state
         return true;
     }
     return false;
@@ -240,7 +235,6 @@ xblock_ptr_t xtable_maker_t::leader_make_light_table(const xtableblock_proposal_
     // try to make non-empty-unit for left unitmakers
     std::map<std::string, xunit_maker_ptr_t>  txs_unitmakers;
     const std::vector<xunit_proposal_input_t> & unit_inputs = proposal_input.get_unit_inputs();
-    int32_t non_empty_unit_count = 0;
     for (auto & v : unit_inputs) {
         const xunit_proposal_input_t & unit_input = v;
         const std::string & unit_account = unit_input.get_account();
@@ -249,7 +243,6 @@ xblock_ptr_t xtable_maker_t::leader_make_light_table(const xtableblock_proposal_
             txs_unitmakers[unit_account] = unitmaker;
         } else {
             unitmaker = make_object_ptr<xunit_maker_t>(unit_account, get_resources(), m_indexstore);
-            txs_unitmakers[unit_account] = unitmaker;
         }
 
         xunitmaker_result_t unit_result;
@@ -257,12 +250,6 @@ xblock_ptr_t xtable_maker_t::leader_make_light_table(const xtableblock_proposal_
         table_result.m_unit_results.push_back(unit_result);
         if (proposal_unit != nullptr) {
             batch_units.push_back(proposal_unit);
-            if (!proposal_unit->is_emptyblock()) {
-                non_empty_unit_count++;
-                if (non_empty_unit_count >= m_max_account_num) {
-                    break;
-                }
-            }
         }
     }
 
@@ -271,6 +258,9 @@ xblock_ptr_t xtable_maker_t::leader_make_light_table(const xtableblock_proposal_
         xunit_maker_ptr_t & unitmaker = v.second;
         xunitmaker_result_t unit_result;
         xunit_proposal_input_t unit_input;
+        if (!unitmaker->can_make_next_empty_block()) {
+            continue;
+        }
         xblock_ptr_t proposal_unit = leader_make_unit(unitmaker, unit_input, cs_para, unit_result);
         table_result.m_unit_results.push_back(unit_result);
         if (proposal_unit != nullptr) {
@@ -293,7 +283,7 @@ xblock_ptr_t xtable_maker_t::leader_make_light_table(const xtableblock_proposal_
     cs_para.set_justify_cert_hash(get_lock_output_root_hash());
     cs_para.set_parent_height(0);
     xblock_builder_para_ptr_t build_para = std::make_shared<xlighttable_builder_para_t>(batch_units, get_resources());
-    xblock_ptr_t proposal_block = m_lighttable_builder->build_block(get_highest_height_block(), get_latest_committed_state(), cs_para, build_para);
+    xblock_ptr_t proposal_block = m_lighttable_builder->build_block(get_highest_height_block(), nullptr, cs_para, build_para);
     return proposal_block;
 }
 
@@ -308,7 +298,10 @@ xblock_ptr_t xtable_maker_t::backup_make_light_table(const xtableblock_proposal_
     for (auto & v : proposal_input.get_unit_inputs()) {
         const xunit_proposal_input_t & unit_input = v;
         const std::string & unit_account = unit_input.get_account();
-        xunit_maker_ptr_t unitmaker = create_unit_maker(unit_account);
+        xunit_maker_ptr_t unitmaker = get_unit_maker(unit_account);
+        if (unitmaker == nullptr) {
+            unitmaker = make_object_ptr<xunit_maker_t>(unit_account, get_resources(), m_indexstore);
+        }
         int32_t ret = unitmaker->check_latest_state(get_latest_committed_block());
         if (ret != xsuccess) {
             xwarn("xtable_maker_t::backup_make_light_table fail-unit check_latest_state,%s,account=%s,error_code=%s",
@@ -336,41 +329,23 @@ xblock_ptr_t xtable_maker_t::backup_make_light_table(const xtableblock_proposal_
     cs_para.set_justify_cert_hash(get_lock_output_root_hash());
     cs_para.set_parent_height(0);
     xblock_builder_para_ptr_t build_para = std::make_shared<xlighttable_builder_para_t>(batch_units, get_resources());
-    xblock_ptr_t proposal_block = m_lighttable_builder->build_block(get_highest_height_block(), get_latest_committed_state(), cs_para, build_para);
+    xblock_ptr_t proposal_block = m_lighttable_builder->build_block(get_highest_height_block(), nullptr, cs_para, build_para);
     return proposal_block;
 }
 
 xblock_ptr_t xtable_maker_t::make_full_table(const xblock_consensus_para_t & cs_para, int32_t & error_code) {
     // TODO(jimmy) get index state from statestore
-    uint64_t last_full_height = get_highest_height_block()->get_last_full_block_height();
-    base::xauto_ptr<base::xvblock_t> latest_full_block = get_blockstore()->load_block_object(*this, last_full_height);
-    if (latest_full_block == nullptr) {
-        xerror("xtable_maker_t::make_full_table fail-latest full block not match. account=%s,full_height=%" PRIu64 "",
-            get_account().c_str(), last_full_height);
+    xblock_ptr_t commit_block = get_latest_committed_block();
+    xtable_mbt_new_state_ptr_t mbt_state = m_indexstore->get_mbt_new_state(commit_block);
+    if (nullptr == mbt_state) {
+        xerror("xtable_maker_t::make_full_table fail-get mbt state. %s", cs_para.dump().c_str());
         return nullptr;
     }
 
-    // TODO(jimmy)
     std::vector<xblock_ptr_t> blocks_from_last_full;
     if (false == load_table_blocks_from_last_full(get_highest_height_block(), blocks_from_last_full)) {
-        xerror("xtable_maker_t::make_full_table fail-load blocks. account=%s,full_height=%" PRIu64 "",
-            get_account().c_str(), last_full_height);
+        xerror("xtable_maker_t::make_full_table fail-load blocks. %s", cs_para.dump().c_str());
         return nullptr;
-    }
-
-    data::xtable_mbt_ptr_t last_full_table_mbt;
-    if (last_full_height != 0) {
-        data::xfull_tableblock_t* full_block_ptr = dynamic_cast<data::xfull_tableblock_t*>(latest_full_block.get());
-        const xdataunit_ptr_t & full_offstate = full_block_ptr->get_full_offstate();
-        if (full_offstate == nullptr) {
-            xerror("xtable_maker_t::make_full_table fail-load offstate from block. account=%s,full_height=%" PRIu64 "",
-                get_account().c_str(), last_full_height);
-            return nullptr;
-        }
-        full_offstate->add_ref();
-        last_full_table_mbt.attach((data::xtable_mbt_t*)full_offstate.get());
-    } else {
-        last_full_table_mbt = make_object_ptr<xtable_mbt_t>();
     }
 
     cs_para.set_justify_cert_hash(get_lock_output_root_hash());
@@ -379,11 +354,12 @@ xblock_ptr_t xtable_maker_t::make_full_table(const xblock_consensus_para_t & cs_
     xassert(uncommit_blocks.size() == 2);
     xassert(uncommit_blocks[0]->get_height() == get_latest_committed_block()->get_height() + 2);
     xassert(uncommit_blocks[1]->get_height() == get_latest_committed_block()->get_height() + 1);
-    xassert(get_latest_committed_state()->get_last_height() == get_latest_committed_block()->get_height());
-    data::xtable_mbt_binlog_ptr_t commit_mbt_binlog = get_latest_committed_state()->get_table_mbt_binlog();
+
+    xtable_mbt_binlog_ptr_t commit_mbt_binlog = mbt_state->get_mbt_binlog();
+    xtable_mbt_ptr_t last_full_table_mbt = mbt_state->get_last_full_state();
     xassert(commit_mbt_binlog->get_account_size() != 0);
     xblock_builder_para_ptr_t build_para = std::make_shared<xfulltable_builder_para_t>(last_full_table_mbt, commit_mbt_binlog, uncommit_blocks, blocks_from_last_full, get_resources());
-    xblock_ptr_t proposal_block = m_fulltable_builder->build_block(get_highest_height_block(), get_latest_committed_state(), cs_para, build_para);
+    xblock_ptr_t proposal_block = m_fulltable_builder->build_block(get_highest_height_block(), nullptr, cs_para, build_para);
     return proposal_block;
 }
 
@@ -410,6 +386,24 @@ bool    xtable_maker_t::load_table_blocks_from_last_full(const xblock_ptr_t & pr
     return true;;
 }
 
+bool xtable_maker_t::can_make_next_block(xtablemaker_para_t & table_para, const data::xblock_consensus_para_t & cs_para) {
+    std::lock_guard<std::mutex> l(m_lock);
+    // check table maker state
+    const xblock_ptr_t & latest_cert_block = cs_para.get_latest_cert_block();
+    xassert(latest_cert_block != nullptr);
+
+    int32_t ret = check_latest_state(latest_cert_block);
+    if (ret != xsuccess) {
+        xwarn("xtable_maker_t::can_make_next_block fail-check_latest_state. %s", cs_para.dump().c_str());
+        return false;
+    }
+
+    if (can_make_next_light_block(table_para) || can_make_next_empty_block() || can_make_next_full_block()) {
+        return true;
+    }
+    return false;
+}
+
 xblock_ptr_t xtable_maker_t::make_proposal(xtablemaker_para_t & table_para,
                                            const data::xblock_consensus_para_t & cs_para,
                                            xtablemaker_result_t & tablemaker_result) {
@@ -417,9 +411,16 @@ xblock_ptr_t xtable_maker_t::make_proposal(xtablemaker_para_t & table_para,
     // check table maker state
     const xblock_ptr_t & latest_cert_block = cs_para.get_latest_cert_block();
 
-    int32_t ret = check_latest_state(latest_cert_block.get());
-    if (ret != xsuccess) {
-        xwarn("xtable_maker_t::make_proposal fail-check_latest_state. %s", cs_para.dump().c_str());
+    if (get_latest_blocks().empty()) {
+        int32_t ret = check_latest_state(latest_cert_block);
+        if (ret != xsuccess) {
+            xwarn("xtable_maker_t::can_make_next_block fail-check_latest_state. %s", cs_para.dump().c_str());
+            return false;
+        }
+    }
+
+    if (get_highest_height_block()->get_block_hash() != latest_cert_block->get_block_hash()) {
+        xwarn("xtable_maker_t::make_proposal fail-highest block changed. %s", cs_para.dump().c_str());
         return nullptr;
     }
 
@@ -464,7 +465,7 @@ int32_t xtable_maker_t::verify_proposal(base::xvblock_t* proposal_block, const x
     xassert(proposal_block->get_last_block_hash() == latest_cert_block->get_block_hash());
     xassert(proposal_block->get_height() == latest_cert_block->get_height() + 1);
 
-    int32_t ret = check_latest_state(latest_cert_block.get());
+    int32_t ret = check_latest_state(latest_cert_block);
     if (ret != xsuccess) {
         xwarn("xtable_maker_t::verify_proposal fail-check_latest_state.proposal=%s",
             proposal_block->dump().c_str());

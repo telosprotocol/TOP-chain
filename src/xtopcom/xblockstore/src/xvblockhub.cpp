@@ -57,7 +57,7 @@ namespace top
             _highest_connect_block_height  = 0;
             _highest_full_block_height     = 0;
             _genesis_connect_block_height  = 0;
-            _highest_sync_height           = 0;
+            _full_connect_block_height           = 0;
         }
 
         xacctmeta_t::~xacctmeta_t()
@@ -67,7 +67,7 @@ namespace top
         std::string xacctmeta_t::dump() const
         {
             char local_param_buf[128];
-            xprintf(local_param_buf,sizeof(local_param_buf),"{meta:height for cert=%" PRIu64 ",lock=%" PRIu64 ",commit=%" PRIu64 ",execute=%" PRIu64 ",connected=%" PRIu64 ",full=%" PRIu64 ",gene_connected=%" PRIu64 ",highest_sync=%" PRIu64 "}",(int64_t)_highest_cert_block_height,(int64_t)_highest_lock_block_height,(int64_t)_highest_commit_block_height,(int64_t)_highest_execute_block_height,(int64_t)_highest_connect_block_height,_highest_full_block_height,_genesis_connect_block_height,_highest_sync_height);
+            xprintf(local_param_buf,sizeof(local_param_buf),"{meta:height for cert=%" PRIu64 ",lock=%" PRIu64 ",commit=%" PRIu64 ",execute=%" PRIu64 ",connected=%" PRIu64 ",full=%" PRIu64 ",gene_conn=%" PRIu64 ",full_conn=%" PRIu64 "}",(int64_t)_highest_cert_block_height,(int64_t)_highest_lock_block_height,(int64_t)_highest_commit_block_height,(int64_t)_highest_execute_block_height,(int64_t)_highest_connect_block_height,_highest_full_block_height,_genesis_connect_block_height,_full_connect_block_height);
 
             return std::string(local_param_buf);
         }
@@ -95,7 +95,8 @@ namespace top
             stream.write_tiny_string(_highest_execute_block_hash);
             stream << _genesis_connect_block_height;
             stream.write_tiny_string(_genesis_connect_block_hash);
-            stream << _highest_sync_height;
+            stream << _full_connect_block_height;
+            stream.write_tiny_string(_full_connect_block_hash);
 
             return (stream.size() - begin_size);
         }
@@ -114,7 +115,8 @@ namespace top
             stream.read_tiny_string(_highest_execute_block_hash);
             stream >> _genesis_connect_block_height;
             stream.read_tiny_string(_genesis_connect_block_hash);
-            stream >> _highest_sync_height;
+            stream >> _full_connect_block_height;
+            stream.read_tiny_string(_full_connect_block_hash);
 
             return (begin_size - stream.size());
         }
@@ -624,72 +626,76 @@ namespace top
             }
             return get_genesis_block();
         }
-        base::xvblock_t*  xblockacct_t::get_genesis_connected_block() //block has connected to genesis
-        {
-            //load from _genesis_connect_block_height first
-            {
-                base::xvblock_t* _genesis_connect_block = load_block_object(m_meta->_genesis_connect_block_height,true);
-                xassert(_genesis_connect_block != nullptr);
-                if(_genesis_connect_block != nullptr)
-                    return _genesis_connect_block;//load_block_object already add reference,so here just return
-            }
-            return get_genesis_block();
-        }
+
         base::xvblock_t*  xblockacct_t::get_genesis_current_block() // highest block which is continous from genesis
         {
-            base::xvblock_t* prev_block = get_genesis_block();
-            base::xvblock_t* cur_block = nullptr;
-            uint64_t block_height = m_meta->_genesis_connect_block_height;
-            for(int i = 0; i <= 2; ++i, ++block_height, prev_block = cur_block) {
-                cur_block = query_block(block_height, base::enum_xvblock_flag_authenticated);
-                if (cur_block != nullptr)
-                {
-                    cur_block->add_ref();
-                }
-                else
-                {
-                    cur_block = load_block_object(block_height, true);
-                }
-
-                if (cur_block == nullptr)
-                {
-                    xwarn("xblockacct_t::get_genesis_current_block not find connect block. meta=%s", m_meta->dump().c_str());
-                    return prev_block;
-                }
-
-                if (!prev_block->is_genesis_block())
-                {
-                    auto prev_hash = prev_block->get_block_hash();
-                    auto cur_last_hash = cur_block->get_last_block_hash();
-                    if (prev_hash != cur_last_hash)
-                    {
-                        cur_block->release_ref();
-                        return prev_block;;
-                    }
-                }
-
-                prev_block->release_ref();
+            base::xvblock_t* _connect_block = load_block_object_without_cache(m_meta->_genesis_connect_block_height, true, base::enum_xvblock_flag_authenticated);
+            if (nullptr != _connect_block) {
+                xdbg("xblockacct_t::get_genesis_current_block find cert block.account=%s,height=%" PRIu64 "", get_account().c_str(), _connect_block->get_height());
+                return _connect_block;
             }
-            return cur_block;
+
+            if (m_meta->_genesis_connect_block_height > 0) {
+                _connect_block = load_block_object_without_cache(m_meta->_genesis_connect_block_height - 1, true, base::enum_xvblock_flag_authenticated);
+                if (nullptr != _connect_block) {
+                    // m_meta->_genesis_connect_block_height = _connect_block->get_height();
+                    // m_meta->_genesis_connect_block_hash = _connect_block->get_block_hash();
+                    xwarn("xblockacct_t::get_genesis_current_block rollback lock block.account=%s,height=%" PRIu64 "", get_account().c_str(), _connect_block->get_height());
+                    return _connect_block;
+                }
+            }
+
+            if (m_meta->_genesis_connect_block_height > 1) {
+                _connect_block = load_block_object_without_cache(m_meta->_genesis_connect_block_height - 2, true, base::enum_xvblock_flag_authenticated);
+                if (nullptr != _connect_block) {
+                    // m_meta->_genesis_connect_block_height = _connect_block->get_height();
+                    // m_meta->_genesis_connect_block_hash = _connect_block->get_block_hash();
+                    xwarn("xblockacct_t::get_genesis_current_block rollback commit block.account=%s,height=%" PRIu64 "", get_account().c_str(), _connect_block->get_height());
+                    return _connect_block;
+                }
+            }
+
+            xerror("xblockacct_t::get_genesis_current_block load fail. account=%s,meta=%s", get_account().c_str(), m_meta->dump().c_str());
+            return nullptr;
         }
         base::xvblock_t*  xblockacct_t::get_highest_sync_block()
         {
-            base::xvblock_t* sync_block = query_block(m_meta->_highest_sync_height,base::enum_xvblock_flag_authenticated);
-            if (sync_block != nullptr)
-            {
-                sync_block->add_ref();
+            base::xvblock_t* _connect_block = load_block_object_without_cache(m_meta->_full_connect_block_height, true, base::enum_xvblock_flag_authenticated);
+            if (nullptr != _connect_block) {
+                xdbg("xblockacct_t::get_highest_sync_block find cert block.account=%s,height=%" PRIu64 "", get_account().c_str(), _connect_block->get_height());
+                return _connect_block;
             }
-            else
-            {
-                sync_block = load_block_object(m_meta->_highest_sync_height, true);
+
+            if (m_meta->_full_connect_block_height > 0) {
+                _connect_block = load_block_object_without_cache(m_meta->_full_connect_block_height - 1, true, base::enum_xvblock_flag_authenticated);
+                if (nullptr != _connect_block) {
+                    // m_meta->_full_connect_block_height = _connect_block->get_height();
+                    // m_meta->_full_connect_block_hash = _connect_block->get_block_hash();
+                    xwarn("xblockacct_t::get_highest_sync_block rollback lock block.account=%s,height=%" PRIu64 "", get_account().c_str(), _connect_block->get_height());
+                    return _connect_block;
+                }
             }
-            // return genesis block if not find highest sync block
-            if (sync_block == nullptr)
-            {
-                xerror("xblockacct_t::get_highest_sync_block not find highest sync block. meta=%s", m_meta->dump().c_str());
-                return get_genesis_block();
+
+            if (m_meta->_full_connect_block_height > 1) {
+                _connect_block = load_block_object_without_cache(m_meta->_full_connect_block_height - 2, true, base::enum_xvblock_flag_authenticated);
+                if (nullptr != _connect_block) {
+                    // m_meta->_full_connect_block_height = _connect_block->get_height();
+                    // m_meta->_full_connect_block_hash = _connect_block->get_block_hash();
+                    xwarn("xblockacct_t::get_highest_sync_block rollback commit block.account=%s,height=%" PRIu64 "", get_account().c_str(), _connect_block->get_height());
+                    return _connect_block;
+                }
             }
-            return sync_block;
+
+            _connect_block = load_block_object_without_cache(m_meta->_highest_full_block_height, true, base::enum_xvblock_flag_authenticated);
+            if (nullptr != _connect_block) {
+                // m_meta->_full_connect_block_height = _connect_block->get_height();
+                // m_meta->_full_connect_block_hash = _connect_block->get_block_hash();
+                xwarn("xblockacct_t::get_highest_sync_block rollback last full block.account=%s,height=%" PRIu64 "", get_account().c_str(), _connect_block->get_height());
+                return _connect_block;
+            }
+
+            xerror("xblockacct_t::get_highest_sync_block load fail. account=%s,meta=%s", get_account().c_str(), m_meta->dump().c_str());
+            return nullptr;
         }
         base::xvblock_t*  xblockacct_t::get_latest_full_block()
         {
@@ -943,6 +949,49 @@ namespace top
             return loaded_block;
         }
 
+        base::xvblock_t*     xblockacct_t::load_block_object_without_cache(const uint64_t target_height,bool ask_full_load,base::enum_xvblock_flag request_flag)
+        {
+            base::xvblock_t* loaded_block = query_block(target_height,request_flag);//only load locked or committed block
+            if(loaded_block == nullptr)//try load from db if not found at cache
+            {
+                loaded_block = m_persist_db->get_vblock(get_blockstore_path(),get_account(),target_height);//added reference when return by get_vblock
+                if(nullptr == loaded_block)
+                {
+                    if(0 == target_height) //genesis block but dont have data at DB, create it ondemand
+                        loaded_block = xgenesis_block::create_genesis_block(get_account());
+                }
+            }
+
+            if(loaded_block != nullptr)
+            {
+                xassert(target_height == loaded_block->get_height());
+                loaded_block->add_ref();//add reference before return
+                if(ask_full_load) //ensure has input,output as well
+                {
+                    load_block_input(loaded_block);
+                    load_block_output(loaded_block);
+                    if(loaded_block->get_header()->get_block_level() == base::enum_xvblock_level_table
+                        && loaded_block->get_header()->get_block_class() == base::enum_xvblock_class_full) {
+                        load_block_offstate(loaded_block);
+                    }
+                }
+            }
+            else if (request_flag == base::enum_xvblock_flag_authenticated)
+            {
+                xwarn("xblockacct_t::load_block_object_without_cache try find cert db. account=%s,height=%ld",get_account().c_str(),target_height);
+                const std::string full_meta_path = get_blockstore_path() + get_meta_path(*this);
+                const std::string  _last_cert_block_path  = full_meta_path + "/lastcert/";
+                loaded_block = load_block_by_path(_last_cert_block_path);
+                if (loaded_block != nullptr && loaded_block->get_height() != target_height) {
+                    xwarn("xblockacct_t::load_block_object_without_cache cert db not match. account=%s,height=%ld,%ld",get_account().c_str(),target_height,loaded_block->get_height());
+                    loaded_block->release_ref();
+                    loaded_block = nullptr;
+                }
+            }
+            return loaded_block;
+        }
+
+
         bool    xblockacct_t::load_block_offstate(base::xvblock_t* block_ptr) //load and assign body data into  xvblock_t
         {
             xassert(block_ptr != NULL);
@@ -1105,7 +1154,7 @@ namespace top
             {
                 if (m_meta->_highest_execute_block_height < block->get_height())
                 {
-                    xwarn("xblockacct_t::execute_block highest execute block height %ld less than block=%s", m_meta->_highest_execute_block_height, block->dump().c_str());
+                    xwarn("xblockacct_t::execute_block highest execute block height %" PRIu64 " less than block=%s", m_meta->_highest_execute_block_height, block->dump().c_str());
                     m_meta->_highest_execute_block_height = block->get_height();  //update meta info for executed
                     m_meta->_highest_execute_block_hash   = block->get_block_hash();
                 }
@@ -1138,7 +1187,7 @@ namespace top
                 xfull_tableblock_t* block_ptr = dynamic_cast<xfull_tableblock_t*>(block);
                 if (nullptr != block_ptr && !block_ptr->is_full_state_block()) {
                     is_ready_to_executed = false;
-                    xwarn("xblockacct_t::execute_block full-table block can't execute for missing offstate.execute height %ld,full block=%s", m_meta->_highest_execute_block_height, block->dump().c_str());
+                    xwarn("xblockacct_t::execute_block full-table block can't execute for missing offstate.execute height %" PRIu64 ",full block=%s", m_meta->_highest_execute_block_height, block->dump().c_str());
                 }
                 // #endif
             }
@@ -1520,33 +1569,45 @@ namespace top
             return nullptr;
         }
 
-        void xblockacct_t::update_highest_sync_height(base::xvblock_t* this_block)
+        void xblockacct_t::update_connect_height(base::xvblock_t* this_block)
         {
             const uint64_t this_block_height = this_block->get_height();
             xblock_t* bp = dynamic_cast<xblock_t*>(this_block);
-            xdbg("xblockacct_t::update_highest_sync_height, block=%s , height=%ull", this_block->dump().c_str(), m_meta->_highest_sync_height);
-            if (bp->is_fullblock())
-            {
-                if (bp->get_height() >= m_meta->_highest_sync_height)
-                {
-                    m_meta->_highest_sync_height = this_block_height;
+
+            bool is_match_full_connect = false;
+            if (this_block_height == (m_meta->_full_connect_block_height + 1)) {
+                if (this_block->get_last_block_hash() == m_meta->_full_connect_block_hash || this_block_height == 1) {
+                    is_match_full_connect = true;
                 }
+            } else if (this_block_height == m_meta->_full_connect_block_height && m_meta->_full_connect_block_hash != this_block->get_block_hash()) {
+                is_match_full_connect = true;
+            } else if (this_block_height > m_meta->_full_connect_block_height && bp->is_fullblock()) {
+                is_match_full_connect = true;
             }
-            else
-            {
-                if (this_block_height == (m_meta->_highest_sync_height + 1))
-                {
-                    m_meta->_highest_sync_height = this_block_height;
+            if (is_match_full_connect) {
+                m_meta->_full_connect_block_height = this_block->get_height();
+                m_meta->_full_connect_block_hash = this_block->get_block_hash();
+            }
+
+            bool is_match_genesis_connect = false;
+            if (this_block_height == (m_meta->_genesis_connect_block_height + 1)) {
+                if (this_block->get_last_block_hash() == m_meta->_genesis_connect_block_hash || this_block_height == 1) {
+                    is_match_genesis_connect = true;
                 }
+            } else if (this_block_height == m_meta->_genesis_connect_block_height && m_meta->_genesis_connect_block_hash != this_block->get_block_hash()) {
+                is_match_genesis_connect = true;
             }
+            if (is_match_genesis_connect) {
+                m_meta->_genesis_connect_block_height = this_block->get_height();
+                m_meta->_genesis_connect_block_hash = this_block->get_block_hash();
+            }
+            xdbg("xblockacct_t::update_connect_height, account=%s,this_block_height=%" PRIu64 ",meta=%s", get_account().c_str(), this_block_height, m_meta->dump().c_str());
         }
 
         bool xblockacct_t::save_to_xdb(base::xvblock_t* this_block)
         {
             const uint64_t this_block_height = this_block->get_height();
             const int      this_block_flags  = this_block->get_block_flags();
-
-            update_highest_sync_height(this_block);
 
             //step#1: mark connected status for committed block
             if((this_block_flags & base::enum_xvblock_flag_committed) != 0)
@@ -1575,22 +1636,6 @@ namespace top
                     }
 #endif
                 }
-
-                // update genesis connect block meta
-                if (0 == m_meta->_genesis_connect_block_height) {
-                    if ( (0 == this_block_height)
-                        || (1 == this_block_height && !m_meta->_genesis_connect_block_hash.empty())) {  // after update by genesis block
-                        m_meta->_genesis_connect_block_height = this_block_height;
-                        m_meta->_genesis_connect_block_hash = this_block->get_block_hash();
-                    }
-                } else if (this_block_height == m_meta->_genesis_connect_block_height + 1) {
-                    if (m_meta->_genesis_connect_block_hash == this_block->get_last_block_hash()) {
-                        m_meta->_genesis_connect_block_height = this_block_height;
-                        m_meta->_genesis_connect_block_hash = this_block->get_block_hash();
-                    } else {
-                        xerror("xblockacct_t::save_block, commit block hash not match. genesis_connect_block_hash=%s,block=%s", base::xstring_utl::to_hex(m_meta->_genesis_connect_block_hash).c_str(), this_block->dump().c_str());
-                    }
-                }
             }
             else if((this_block_flags & base::enum_xvblock_flag_locked) == 0)//not save for block of non-locked and non-committed
             {
@@ -1601,6 +1646,8 @@ namespace top
                     const std::string full_meta_path = get_blockstore_path() + get_meta_path(*this);
                     const std::string  _last_cert_block_path  = full_meta_path + "/lastcert/";;
                     store_block_by_path(_last_cert_block_path,this_block);
+                    update_connect_height(this_block);
+                    save_meta();
                 }
                 return true;
             }
@@ -1619,6 +1666,8 @@ namespace top
                 else //make sure store persistently first
                 {
                     this_block->reset_modified_count(); //count everything already,just remove status of changed
+                    update_connect_height(this_block);
+                    save_meta();
                     xdbg_info("xblockacct_t::save_block,at store(%s) store full block=%s",get_blockstore_path().c_str(),this_block->dump().c_str());
                 }
             }
@@ -1633,6 +1682,8 @@ namespace top
                 if(now_stored_result)
                 {
                     this_block->reset_modified_count(); //count everything already,just remove status of changed
+                    update_connect_height(this_block);
+                    save_meta();
                     xdbg_info("xblockacct_t::save_block,at store(%s) store portion of block=%s",get_blockstore_path().c_str(),this_block->dump().c_str());
                 }
                 else
@@ -1762,7 +1813,7 @@ namespace top
         //to connect prev block, load_block may call load_block again to get prev-block, reenter_allow_count decide how many times can reenter
         base::xvblock_t*     xblockacct_t::load_block(const uint64_t target_height,int reenter_allow_count)
         {
-            xinfo("xblockacct_t::load_block enter addr=%s,height=%ld,reenter_allow_count=%d", get_account().c_str(), target_height, reenter_allow_count);
+            xinfo("xblockacct_t::load_block enter addr=%s,height=%" PRIu64 ",reenter_allow_count=%d", get_account().c_str(), target_height, reenter_allow_count);
             //xassert(target_height <= m_meta->_highest_lock_block_height);
             //load it from db now
 #ifdef ENABLE_METRICS
@@ -1776,6 +1827,7 @@ namespace top
             }
             if(new_block_ptr != nullptr)
             {
+                update_connect_height(new_block_ptr);  //try update by block load from db, this block may store before
                 new_block_ptr->reset_modified_count();//clear modified count after create block from db
                 if(target_height != new_block_ptr->get_height())
                 {
@@ -1846,7 +1898,7 @@ namespace top
                                 // full table-block should has full offstate, then it can be executed from full-block
                                 xfull_tableblock_t* block_ptr = dynamic_cast<xfull_tableblock_t*>(new_block_ptr);
                                 if (nullptr != block_ptr && !block_ptr->is_full_state_block()) {
-                                    xwarn("xblockacct_t::execute_block full-table block can't connect for missing offstate.connect height %ld,full block=%s", m_meta->_highest_connect_block_height, new_block_ptr->dump().c_str());
+                                    xwarn("xblockacct_t::execute_block full-table block can't connect for missing offstate.connect height %" PRIu64 ",full block=%s", m_meta->_highest_connect_block_height, new_block_ptr->dump().c_str());
                                 } else {
                                     new_block_ptr->set_block_flag(base::enum_xvblock_flag_connected); //mark connected status
                                 }
@@ -2150,6 +2202,7 @@ namespace top
             const std::string _header_cert_path  = block_base_path + base::xvblock_t::get_header_name();
             std::string vheader_cert_bin;
             block_ptr->serialize_to_string(vheader_cert_bin);
+            xdbg("xblockacct_t::store_block_by_path,account=%s,path=%s",get_account().c_str(), _header_cert_path.c_str());
             return store_value_by_path(_header_cert_path,vheader_cert_bin);
         }
 
@@ -2159,10 +2212,11 @@ namespace top
             const std::string _header_cert_content = load_value_by_path(_header_cert_path);
             if(_header_cert_content.empty())
             {
-                xwarn("xblockacct_t::load_block_by_path,not found block object at %s",_header_cert_path.c_str());
+                xwarn("xblockacct_t::load_block_by_path,not found block object at account=%s,path=%s",get_account().c_str(), _header_cert_path.c_str());
                 return nullptr;
             }
             base::xvblock_t* new_block_ptr = base::xvblockstore_t::create_block_object(_header_cert_content);
+            xassert(new_block_ptr != nullptr);
             if(new_block_ptr != NULL && ask_full_load)
             {
                 if(new_block_ptr->get_block_class() != base::enum_xvblock_class_nil)

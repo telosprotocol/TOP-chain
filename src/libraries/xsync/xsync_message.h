@@ -240,14 +240,14 @@ public:
     data::xblock_ptr_t block{};
 };
 
-struct xsync_message_old_newblockhash_t : public top::basic::xserialize_face_t {
+struct xsync_message_v1_newblockhash_t : public top::basic::xserialize_face_t {
 protected:
-    virtual ~xsync_message_old_newblockhash_t() {}
+    virtual ~xsync_message_v1_newblockhash_t() {}
 public:
-    xsync_message_old_newblockhash_t() {
+    xsync_message_v1_newblockhash_t() {
     }
 
-    xsync_message_old_newblockhash_t(
+    xsync_message_v1_newblockhash_t(
             const std::string &_address,
             uint64_t _height,
             uint64_t _view_id) :

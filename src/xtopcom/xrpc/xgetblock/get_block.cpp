@@ -478,7 +478,7 @@ std::string tx_exec_status_to_str(uint8_t exec_status) {
 }
 
 xJson::Value get_block_handle::get_unit_json(const std::string & account, uint64_t unit_height, xtransaction_ptr_t tx_ptr) {
-    auto vb = m_block_store->load_block_object(account, unit_height);
+    auto vb = m_block_store->load_block_object_without_cache(account, unit_height);
     auto block_ptr = dynamic_cast<xblock_t *>(vb.get());
     if (block_ptr == nullptr) {
         throw xrpc_error{enum_xrpc_error_code::rpc_shard_exec_error, "account address does not exist or block height does not exist"};
@@ -881,7 +881,7 @@ void get_block_handle::getLatestBlock() {
 void get_block_handle::getBlockByHeight() {
     std::string owner = m_js_req["account_addr"].asString();
     uint64_t height = m_js_req["height"].asUInt64();
-    auto vblock = m_block_store->load_block_object(owner, height);
+    auto vblock = m_block_store->load_block_object_without_cache(owner, height);
     data::xblock_t * bp = dynamic_cast<data::xblock_t *>(vblock.get());
     auto value = get_block_json(bp);
     m_js_rsp["value"] = value;
@@ -894,7 +894,7 @@ void get_block_handle::getBlock() {
     xJson::Value value;
     if (type == "height") {
         uint64_t height = m_js_req["height"].asUInt64();
-        auto vblock = m_block_store->load_block_object(owner, height);
+        auto vblock = m_block_store->load_block_object_without_cache(owner, height);
         data::xblock_t * bp = dynamic_cast<data::xblock_t *>(vblock.get());
         value = get_block_json(bp);
     } else if (type == "last") {

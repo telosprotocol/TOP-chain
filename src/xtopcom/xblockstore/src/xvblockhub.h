@@ -47,7 +47,8 @@ namespace top
             std::string _highest_execute_block_hash;
             uint64_t  _genesis_connect_block_height; //indicated the last block who is connected to genesis block
             std::string _genesis_connect_block_hash;
-            uint64_t _highest_sync_height;          // higest continous block started from highest full table block
+            uint64_t _full_connect_block_height;          // higest continous block started from highest full table block
+            std::string _full_connect_block_hash;
         };
 
         //each account has own virtual store
@@ -94,7 +95,6 @@ namespace top
             base::xvblock_t*        get_latest_committed_block();   //block with committed status
             base::xvblock_t*        get_latest_executed_block();    //block with executed status
             base::xvblock_t*        get_latest_connected_block();   //block has connected to genesis
-            base::xvblock_t*        get_genesis_connected_block();   //block has connected to genesis
             base::xvblock_t*        get_genesis_current_block();   //block has connected to genesis
             base::xvblock_t*        get_highest_sync_block();   //block has connected to genesis
             base::xvblock_t*        get_latest_full_block();        //block has full state,genesis is a full block
@@ -111,6 +111,7 @@ namespace top
 
             //just load vblock object but not load header and body those need load seperately if need. create a new one if not found
             virtual base::xvblock_t*        load_block_object(const uint64_t height,bool ask_full_load);  //load from db/store ,it must be a lock/commit block
+            virtual base::xvblock_t*        load_block_object_without_cache(const uint64_t height,bool ask_full_load,base::enum_xvblock_flag request_flag);
             virtual bool                    load_block_input(base::xvblock_t* block);  //load and assign input data into  xvblock_t
             virtual bool                    load_block_output(base::xvblock_t* block); //load and assign output data into xvblock_t
             virtual bool                    load_block_offstate(base::xvblock_t* block); //load and assign offstate data into xblock_t
@@ -134,7 +135,7 @@ namespace top
         protected:
             inline xstore_face_t*           get_store() { return m_persist_db; }
             base::xvblockstore_t*           get_blockstore() { return m_blockstore; }
-            void              update_highest_sync_height(base::xvblock_t* this_block);
+            void              update_connect_height(base::xvblock_t* this_block);
             bool              save_to_xdb(base::xvblock_t* this_block);
             bool              save_block(base::xvblock_t* this_block); //save block to persisted storage
             //to connect prev block, load_block may call load_block again to get prev-block, reenter_allow_count decide how many times can reenter

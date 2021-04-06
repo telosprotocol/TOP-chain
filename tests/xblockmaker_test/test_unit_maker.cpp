@@ -174,7 +174,7 @@ TEST_F(test_unit_maker, unit_maker_1) {
     ASSERT_FALSE(unitmaker->can_make_next_block());
 }
 
-TEST_F(test_unit_maker, unit_maker_2) {
+TEST_F(test_unit_maker, DISABLED_unit_maker_2) {
     std::string account1 = xblocktool_t::make_address_user_account("11111111111111111111");
     xblockmaker_resources_ptr_t resouces = test_xblockmaker_resources_t::create();
     std::string account2 = xblocktool_t::make_address_user_account("22222222222222222222");

@@ -313,7 +313,8 @@ TEST_F(test_send_tx_queue, send_tx_queue_sigle_tx) {
     ASSERT_EQ(xtxpool_error_tx_nonce_duplicate, ret);
 
     // pop out
-    auto tx_ent_tmp = send_tx_queue.pop_tx(tx->get_transaction()->get_source_addr(), tx->get_transaction()->digest(), false);
+    tx_info_t txinfo(tx);
+    auto tx_ent_tmp = send_tx_queue.pop_tx(txinfo, false);
     ASSERT_NE(tx_ent_tmp, nullptr);
     tx_tmp = send_tx_queue.find(tx->get_transaction()->get_source_addr(), tx->get_transaction()->digest());
     ASSERT_EQ(tx_tmp, nullptr);
@@ -373,7 +374,8 @@ TEST_F(test_send_tx_queue, send_tx_queue_continuous_txs) {
     }
 
     // pop one tx, that will pop txs those nonce are less than the poped tx, and no continuos tx
-    auto tx_tmp = send_tx_queue.pop_tx(txs[3]->get_transaction()->get_source_addr(), txs[3]->get_transaction()->digest(), false);
+    tx_info_t txinfo(txs[3]);
+    auto tx_tmp = send_tx_queue.pop_tx(txinfo, false);
     auto tx_ents2 = send_tx_queue.get_txs(txs_num);
     ASSERT_EQ(tx_ents2.size(), 0);
 
@@ -620,7 +622,8 @@ TEST_F(test_receipt_queue, receipt_queue_basic) {
     auto get_receipt = receipt_queue.find(receiver, recvtxs[0]->get_transaction()->digest());
     ASSERT_NE(get_receipt, nullptr);
 
-    auto pop_receipt = receipt_queue.pop_tx(receiver, recvtxs[0]->get_transaction()->digest());
+    tx_info_t txinfo(recvtxs[0]);
+    auto pop_receipt = receipt_queue.pop_tx(txinfo);
     ASSERT_NE(get_receipt, nullptr);
 
     get_receipt = receipt_queue.find(receiver, recvtxs[0]->get_transaction()->digest());

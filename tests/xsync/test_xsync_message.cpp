@@ -178,12 +178,12 @@ TEST(xsync_message, old_newblockhash) {
     std::string hash = "123";
 
     {
-        auto req = make_object_ptr<xsync_message_old_newblockhash_t>(owner, 1, 2);
+        auto req = make_object_ptr<xsync_message_v1_newblockhash_t>(owner, 1, 2);
             req->serialize_to(stream);
     }
 
     {
-        auto ptr = make_object_ptr<xsync_message_old_newblockhash_t>();
+        auto ptr = make_object_ptr<xsync_message_v1_newblockhash_t>();
         ptr->serialize_from(stream);
 
         ASSERT_EQ(ptr->address, owner);

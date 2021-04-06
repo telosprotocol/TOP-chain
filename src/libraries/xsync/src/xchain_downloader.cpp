@@ -358,7 +358,7 @@ void xchain_downloader_t::on_behind(uint64_t start_height, uint64_t end_height, 
     // fast sync for table level block chain, write the full table bock first
     // then write the index snapshot
     if (sync_policy != enum_chain_sync_pocliy_fast) {
-        handle_next(start_vblock->get_height());
+        handle_next(end_vblock->get_height());
         return;
     }
 

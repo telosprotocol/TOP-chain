@@ -201,17 +201,6 @@ namespace top
             std::lock_guard<std::recursive_mutex> _dummy(m_group_locks[index]);
             return get_block_account(index,account)->get_latest_connected_block();
         }
-        base::xauto_ptr<base::xvblock_t>    xvblockstore_impl::get_genesis_connected_block(const std::string & account)
-        {
-            if(base::xvblockstore_t::is_close())
-            {
-                xwarn_err("xvblockstore_impl has closed at store_path=%s",m_store_path.c_str());
-                return nullptr;
-            }
-            const uint32_t index =  cal_group_index_from_account(account);
-            std::lock_guard<std::recursive_mutex> _dummy(m_group_locks[index]);
-            return get_block_account(index,account)->get_genesis_connected_block();
-        }
         base::xauto_ptr<base::xvblock_t>    xvblockstore_impl::get_genesis_current_block(const std::string & account)
         {
             if(base::xvblockstore_t::is_close())
@@ -274,6 +263,18 @@ namespace top
             const uint32_t index =  cal_group_index_from_account(account);
             std::lock_guard<std::recursive_mutex> _dummy(m_group_locks[index]);
             return get_block_account(index,account)->load_block_object(height,ask_full_load);
+        }
+
+        base::xauto_ptr<base::xvblock_t>    xvblockstore_impl::load_block_object_without_cache(const std::string & account,const uint64_t height,bool ask_full_load)
+        {
+            if(base::xvblockstore_t::is_close())
+            {
+                xwarn_err("xvblockstore_impl has closed at store_path=%s",m_store_path.c_str());
+                return nullptr;
+            }
+            const uint32_t index =  cal_group_index_from_account(account);
+            std::lock_guard<std::recursive_mutex> _dummy(m_group_locks[index]);
+            return get_block_account(index,account)->load_block_object_without_cache(height,ask_full_load, base::enum_xvblock_flag_locked);
         }
 
         bool  xvblockstore_impl::load_block_input(base::xvblock_t* block)     //load and assign input data into  xvblock_t

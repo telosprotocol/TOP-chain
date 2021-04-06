@@ -149,7 +149,6 @@ class xblock_consensus_para_t {
 
  public:
     void    set_xip(const xvip2_t & _validator_xip, const xvip2_t & _auditor_xip);
-    void    set_timer_block(base::xvblock_t* _timer_block);
     void    set_drand_block(base::xvblock_t* _drand_block);
     void    set_latest_blocks(const base::xblock_mptrs & latest_blocks);
     void    update_latest_cert_block(const xblock_ptr_t & proposal_prev_block) {m_latest_cert_block = proposal_prev_block;}
@@ -174,7 +173,6 @@ class xblock_consensus_para_t {
     uint32_t                get_viewtoken() const {return m_viewtoken;}
     uint64_t                get_timestamp() const {return (uint64_t)(m_clock * 10) + base::TOP_BEGIN_GMTIME;}
     uint64_t                get_drand_height() const {return m_drand_height;}
-    const xblock_ptr_t &    get_timer_block() const {return m_timer_block;}
     const xblock_ptr_t &    get_drand_block() const {return m_drand_block;}
     const xblock_ptr_t &    get_latest_cert_block() const {return m_latest_cert_block;}
     const xblock_ptr_t &    get_latest_locked_block() const {return m_latest_locked_block;}
@@ -201,7 +199,6 @@ class xblock_consensus_para_t {
     uint64_t        m_total_lock_tgas_token{0};
     std::string     m_extra_data;
     std::string     m_dump_str;
-    xblock_ptr_t    m_timer_block{nullptr};
     xblock_ptr_t    m_drand_block{nullptr};
     xblock_ptr_t    m_latest_cert_block{nullptr};
     xblock_ptr_t    m_latest_locked_block{nullptr};

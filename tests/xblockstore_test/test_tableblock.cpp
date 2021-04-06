@@ -151,8 +151,6 @@ TEST_F(test_tableblock, store_table_from_full_table) {
     ASSERT_EQ(latest_connect_block->get_height(), latest_commit_block->get_height());
     auto latest_current_block = blockstore->get_latest_current_block(mocktable.get_account());
     ASSERT_EQ(latest_current_block->get_height(), latest_commit_block->get_height() + 2);
-    auto genesis_connect_block = blockstore->get_genesis_connected_block(mocktable.get_account());
-    ASSERT_EQ(genesis_connect_block->get_height(), genesis_connect_height-2);
 }
 
 TEST_F(test_tableblock, sync_full_table) {

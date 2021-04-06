@@ -23,18 +23,20 @@ class xindexstore_table_t : public xindexstore_face_t {
     virtual bool  get_account_index(const std::string & account, data::xaccount_index_t & account_index);
     virtual bool  get_account_index(const xblock_ptr_t & committed_block, const std::string & account, data::xaccount_index_t & account_index);
     virtual bool  get_account_basic_info(const std::string & account, xaccount_basic_info_t & account_info);
+    virtual xtable_mbt_new_state_ptr_t  get_mbt_new_state(const xblock_ptr_t & committed_block);
+    virtual xtable_mbt_new_state_ptr_t  get_mbt_new_state();
 
  private:
+    xtable_mbt_binlog_ptr_t     query_mbt_binlog(const xblock_ptr_t & committed_block);
+    xtable_mbt_ptr_t            query_last_mbt(const xblock_ptr_t & committed_block);
+    bool                        update_mbt_state(const xblock_ptr_t & committed_block);
     bool                        update_state_full(const xblock_ptr_t & committed_block);
     bool                        update_state_binlog(const xblock_ptr_t & committed_block);
     store::xstore_face_t*       get_store() const {return m_resources->get_store();}
     base::xvblockstore_t*       get_blockstore() const {return m_resources->get_blockstore();}
 
  private:
-    uint64_t                        m_commit_mbt_binlog_height{UINT64_MAX};
-    data::xtable_mbt_binlog_ptr_t   m_commit_mbt_binlog{nullptr};
-    uint64_t                        m_last_full_table_mbt_height{UINT64_MAX};
-    data::xtable_mbt_ptr_t          m_last_full_table_mbt{nullptr};
+    xtable_mbt_new_state_t          m_mbt_new_state;
     xindexstore_resources_ptr_t     m_resources;
     mutable std::mutex              m_lock;
 };

@@ -508,6 +508,40 @@ TEST(xrole_chains, archive) {
     const map_chain_info_t & tmp_chains = role_chains.get_chains_wrapper().get_chains();
     map_chain_info_t chains = tmp_chains;
 
+    // rec
+    {
+        std::set<uint16_t> table_ids;
+
+        for (uint16_t i = 0; i < MAIN_CHAIN_REC_TABLE_USED_NUM; i++) {
+            table_ids.insert(i);
+        }
+
+        for (auto &table_id: table_ids) {
+            std::string address = xdatautil::serialize_owner_str(sys_contract_beacon_table_block_addr, table_id);
+            auto it = chains.find(address);
+            ASSERT_NE(it, chains.end());
+            ASSERT_EQ(it->second.address, address);
+            chains.erase(it);
+        }
+    }
+
+    // zec
+    {
+        std::set<uint16_t> table_ids;
+
+        for (uint16_t i = 0; i < MAIN_CHAIN_ZEC_TABLE_USED_NUM; i++) {
+            table_ids.insert(i);
+        }
+
+        for (auto &table_id: table_ids) {
+            std::string address = xdatautil::serialize_owner_str(sys_contract_zec_table_block_addr, table_id);
+            auto it = chains.find(address);
+            ASSERT_NE(it, chains.end());
+            ASSERT_EQ(it->second.address, address);
+            chains.erase(it);
+        }
+    }
+
     // shard table
     for (auto table_id : table_ids) {
         std::string address = xdatautil::serialize_owner_str(sys_contract_sharding_table_block_addr, table_id);
