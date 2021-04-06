@@ -84,9 +84,7 @@ add_definitions(
 set(EXECUTABLE_OUTPUT_PATH ${XTOPCHAIN_BINARY_DIR}/bin/${CMAKE_SYSTEM_NAME}/)
 set(LIBRARY_OUTPUT_PATH ${XTOPCHAIN_BINARY_DIR}/lib/${CMAKE_SYSTEM_NAME}/)
 
-if (${CMAKE_CXX_COMPILER_ID} STREQUAL Clang OR ${CMAKE_CXX_COMPILER_ID} STREQUAL AppleClang OR ${CMAKE_CXX_COMPILER_ID} STREQUAL GNU)
-    # set common options for Clang or GNUCXX
-
+if (${CMAKE_CXX_COMPILER_ID} STREQUAL GNU)
     add_compile_options(
         $<$<STREQUAL:$<TARGET_PROPERTY:LINKER_LANGUAGE>,CXX>:-fexceptions>  # https://gcc.gnu.org/onlinedocs/gcc-7.3.0/gcc/Code-Gen-Options.html#index-fexceptions
         $<$<STREQUAL:$<TARGET_PROPERTY:LINKER_LANGUAGE>,CXX>:-frtti>        # https://gcc.gnu.org/onlinedocs/gcc-7.3.0/gcc/C_002b_002b-Dialect-Options.html#index-fno-rtti
@@ -97,7 +95,7 @@ if (${CMAKE_CXX_COMPILER_ID} STREQUAL Clang OR ${CMAKE_CXX_COMPILER_ID} STREQUAL
         -fno-strict-aliasing
         -fthreadsafe-statics
         -pthread
-        -fstack-protector-strong
+        #-fstack-protector-strong
         -fno-short-enums
         -fPIC
     )
@@ -126,17 +124,8 @@ if (${CMAKE_CXX_COMPILER_ID} STREQUAL Clang OR ${CMAKE_CXX_COMPILER_ID} STREQUAL
     )
 
     add_definitions(-D_GNU_SOURCE)
+                            #-Werror=exceptions)
 
-    if (${CMAKE_CXX_COMPILER_ID} STREQUAL Clang OR ${CMAKE_CXX_COMPILER_ID} STREQUAL AppleClang)
-        # add_compile_options(-Wabstract-final-class -Wshift-overflow -Wint-to-void-pointer-cast)
-        add_compile_options(-Werror=self-assign
-                            -Werror=exceptions)
-    endif()
-
-    if (${CMAKE_CXX_COMPILER_ID} STREQUAL GNU)
-        # add_compile_options(-Wsuggest-final-methods -Wsuggest-final-types -Wsuggest-override)
-        # add_compile_options(-fno-builtin-malloc -fno-builtin-calloc -fno-builtin-realloc -fno-builtin-free)  // for tcmalloc
-    endif()
 
     #==============================================================================
     # Althrough CMake documentation (3.6.3) says add_compile_options supports
@@ -223,6 +212,22 @@ elseif(${CMAKE_CXX_COMPILER_ID} STREQUAL MSVC)
     # set_property(DIRECTORY APPEND PROPERTY COMPILE_OPTIONS $<$<OR:$<CONFIG:Release>,$<CONFIG:RelWithDebInfo>>:/O2>)
     add_compile_options($<$<OR:$<CONFIG:Release>,$<CONFIG:RelWithDebInfo>,$<CONFIG:release>>:/O2>)
     set_property(DIRECTORY APPEND PROPERTY COMPILE_DEFINITIONS $<$<OR:$<CONFIG:Release>,$<CONFIG:release>>:NDEBUG>)
+elseif(${CMAKE_CXX_COMPILER_ID} STREQUAL Clang OR ${CMAKE_CXX_COMPILER_ID} STREQUAL AppleClang)
+    #add_compile_options($<$<OR:$<CONFIG:Debug>,$<CONFIG:debug>>:-g2 -ggdb -O0 -fno-omit-frame-pointer>)
+    set_property(DIRECTORY APPEND PROPERTY COMPILE_OPTIONS $<$<OR:$<CONFIG:Debug>,$<CONFIG:debug>>:-g3 -ggdb -O0 -fno-omit-frame-pointer>)
+    set_property(DIRECTORY APPEND PROPERTY COMPILE_DEFINITIONS $<$<OR:$<CONFIG:Debug>,$<CONFIG:debug>>:DEBUG _DEBUG>)
+    
+    # options for Release & RelWithDebInfo
+    # add_compile_options($<$<OR:$<CONFIG:Release>,$<CONFIG:RelWithDebInfo>,$<CONFIG:release>>:-fomit-frame-pointer -ffunction-sections -fdata-sections>)
+    set_property(DIRECTORY APPEND PROPERTY COMPILE_OPTIONS $<$<OR:$<CONFIG:Release>,$<CONFIG:RelWithDebInfo>,$<CONFIG:release>>:-ffunction-sections -fdata-sections>)
+    set_property(DIRECTORY APPEND PROPERTY COMPILE_DEFINITIONS $<$<OR:$<CONFIG:Release>,$<CONFIG:RelWithDebInfo>,$<CONFIG:release>>:NDEBUG>)
+    
+    # options for Release
+    add_compile_options($<$<OR:$<CONFIG:Release>,$<CONFIG:release>>:-g0>)
+    
+    # options for RelWithDebInfo
+    add_compile_options($<$<CONFIG:RelWithDebInfo>:-g1>)
+    add_compile_options($<$<CONFIG:RelWithDebInfo>:-ggdb>)
 else()
     message(FATAL_ERROR "Not supported C++ Compiler: " ${CMAKE_CXX_COMPILER_ID})
 endif()
