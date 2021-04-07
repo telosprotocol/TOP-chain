@@ -174,7 +174,7 @@ bool xtxpool_table_t::is_unconfirm_txs_reached_upper_limmit() const {
     std::lock_guard<std::mutex> lck(m_filter_mutex);
     uint32_t num = m_table_filter.get_unconfirm_txs_num();
     XMETRICS_COUNTER_SET("table_unconfirm_tx" + m_xtable_info.get_table_addr(), num);
-    xtxpool_warn("xtxpool_table_t::is_unconfirm_txs_reached_upper_limmit num:%u,max:%u", num, table_unconfirm_txs_num_max);
+    xtxpool_warn("xtxpool_table_t::is_unconfirm_txs_reached_upper_limmit table:%s,num:%u,max:%u", m_xtable_info.get_table_addr().c_str(), num, table_unconfirm_txs_num_max);
     return num >= table_unconfirm_txs_num_max;
 }
 

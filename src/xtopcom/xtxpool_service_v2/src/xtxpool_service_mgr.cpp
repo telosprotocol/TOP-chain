@@ -50,7 +50,7 @@ void xtxpool_service_mgr::on_block_confirmed(xblock_t * block) {
     auto handler = [this](base::xcall_t & call, const int32_t cur_thread_id, const uint64_t timenow_ms) -> bool {
         xblock_t * block = dynamic_cast<xblock_t *>(call.get_param1().get_object());
         uint64_t now_clock = this->m_clock->logic_time();
-        xinfo("xtxpool_service_mgr::on_block_confirmed process, block:%s,level:%d,class:%d,now=%llu", block->dump().c_str(), block->get_block_level(), block->get_block_class(), now_clock);
+        xinfo("xtxpool_service_mgr::on_block_confirmed process,level:%d,class:%d,now=%llu,block:%s", block->get_block_level(), block->get_block_class(), now_clock, block->dump().c_str());
         if (block->is_tableblock() && block->get_clock() + block_clock_height_fall_behind_max > now_clock) {
             make_receipts_and_send(block);
         }
