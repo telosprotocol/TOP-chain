@@ -46,9 +46,9 @@ namespace top
             bool                    delete_block(base::xvblock_t* block) override;//return error code indicate what is result
             bool                    delete_block(uint64_t height) override;//return error code indicate what is result
 
-            virtual bool                    store_blocks(std::vector<base::xvblock_t*> & batch_store_blocks); //better performance
+            virtual bool                    store_blocks(std::vector<base::xvblock_t*> & batch_store_blocks) override; //better performance
 
-            virtual bool                    execute_block(base::xvblock_t* block); //execute block and update state of acccount
+            virtual bool                    execute_block(base::xvblock_t* block) override; //execute block and update state of acccount
 
         protected:
             bool              save_to_xdb(base::xvblock_t* this_block);

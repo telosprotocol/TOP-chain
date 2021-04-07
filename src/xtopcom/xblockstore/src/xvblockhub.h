@@ -23,8 +23,8 @@ namespace top
             xacctmeta_t(const xacctmeta_t &);
             xacctmeta_t & operator = (const xacctmeta_t &);
         public:
-            int32_t   serialize_to_string(std::string & bin_data);
-            int32_t   serialize_from_string(const std::string & bin_data);
+            int32_t   serialize_to_string(std::string & bin_data) override;
+            int32_t   serialize_from_string(const std::string & bin_data) override;
 
             virtual std::string  dump() const override;
         private:

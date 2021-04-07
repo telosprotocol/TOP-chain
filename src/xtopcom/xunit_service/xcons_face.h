@@ -27,6 +27,7 @@ enum {
 
 class xpdu_reactor_face {
 public:
+    virtual ~xpdu_reactor_face(){}
     virtual void on_pdu(const xvip2_t & from_addr, const xvip2_t & to_addr, const base::xcspdu_t & packet) = 0;
     virtual bool is_running() = 0;
 };
@@ -36,6 +37,7 @@ using xpdu_reactor_ptr = std::shared_ptr<xpdu_reactor_face>;
 // internal network proxy
 class xnetwork_proxy_face {
 public:
+    virtual ~xnetwork_proxy_face(){}
     virtual bool send_out(uint32_t msg_type, const xvip2_t & from_addr, const xvip2_t & to_addr, const base::xcspdu_t & packet, int32_t cur_thread_id, uint64_t timenow_ms) = 0;
     virtual bool send_out(common::xmessage_id_t const & id, const xvip2_t & from_addr, const xvip2_t & to_addr, base::xvblock_t * block) = 0;
     virtual bool listen(const xvip2_t & xip, common::xmessage_category_t category, const xpdu_reactor_ptr & reactor) = 0;
@@ -48,6 +50,7 @@ public:
 // system election face
 class xelection_cache_face {
 public:
+    virtual ~xelection_cache_face(){}
     struct xelect_data {
         xvip2_t xip;
         common::xversion_t joined_version;
@@ -84,6 +87,7 @@ public:
 // consensus leader election face
 class xleader_election_face {
 public:
+    virtual ~xleader_election_face(){}
     // judge node is leader according viewid account and existed data
     virtual const xvip2_t get_leader_xip(uint64_t viewId, const std::string & account, base::xvblock_t* prev_block, const xvip2_t & local, const xvip2_t & candidate, const common::xversion_t& version, uint16_t rotate_mode = enum_rotate_mode_rotate_by_last_block) = 0;
 
@@ -94,6 +98,7 @@ public:
 // system resource
 class xresources_face {
 public:
+    virtual ~xresources_face(){}
     // certificate auth face
     virtual base::xvcertauth_t * get_certauth() = 0;
     // work pool
@@ -138,6 +143,7 @@ struct xblock_maker_para_t {
 // block maker face
 class xblock_maker_face {
 public:
+    virtual ~xblock_maker_face(){}
     virtual base::xauto_ptr<base::xvblock_t> get_latest_block(const std::string & account) = 0;
     virtual base::xvblock_t *                make_block(const std::string & account, uint64_t clock, uint64_t viewid, uint16_t threshold, const xvip2_t & leader_xip) = 0;
     virtual base::xvblock_t *                make_block(const std::string & account, const xblock_maker_para_t & para, const xvip2_t & leader_xip) = 0;
@@ -151,6 +157,7 @@ using xblock_maker_ptr = std::shared_ptr<xblock_maker_face>;
 // consensuss parameter
 class xconsensus_para_face {
 public:
+    virtual ~xconsensus_para_face(){}
     // get pacemaker type
     virtual xconsensus::enum_xconsensus_pacemaker_type get_pacemaker_type() = 0;
     // get algorithm type
@@ -165,6 +172,7 @@ public:
 // block service create parameter & depends resources
 class xcons_service_para_face {
 public:
+    virtual ~xcons_service_para_face(){}
     // get system resources
     virtual xresources_face * get_resources() = 0;
     // get consensus para
@@ -176,6 +184,7 @@ using xcons_service_para_ptr = std::shared_ptr<xcons_service_para_face>;
 // consensus engine face
 class xcons_service_face {
 public:
+    virtual ~xcons_service_face(){}
     virtual common::xmessage_category_t get_msg_category() = 0;
     virtual bool                        start(const xvip2_t & xip) = 0;
     virtual bool                        fade(const xvip2_t & xip) = 0;
@@ -184,6 +193,7 @@ public:
 
 class xcons_proxy_face {
 public:
+    virtual ~xcons_proxy_face(){}
     virtual bool    start() = 0;
     virtual bool    fade() = 0;
     virtual bool    outdated() = 0;
@@ -196,6 +206,7 @@ using xcons_proxy_face_ptr = std::shared_ptr<xcons_proxy_face>;
 class xcons_dispatcher {
 public:
     explicit xcons_dispatcher(e_cons_type cons_type) : m_cons_type(cons_type) {}
+    virtual ~xcons_dispatcher(){}
     // virtual ~xcons_dispatcher() {}
     virtual e_cons_type get_cons_type() { return m_cons_type; }
     // dispatch events
@@ -238,6 +249,7 @@ using xcons_dispatcher_builder_ptr = std::shared_ptr<xcons_dispatcher_builder_fa
 // block service builder
 class xcons_service_mgr_face {
 public:
+    virtual ~xcons_service_mgr_face(){}
     // build block service and hold it external
     virtual xcons_proxy_face_ptr create(const std::shared_ptr<vnetwork::xvnetwork_driver_face_t> & network) = 0;
     // destroy useless cons services

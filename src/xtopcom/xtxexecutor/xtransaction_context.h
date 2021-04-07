@@ -383,7 +383,8 @@ class xtransaction_redeem_token_tgas : public xtransaction_redeem_token{
     int32_t redeem_pledge_token_resource(uint64_t amount) override {
         return m_account_ctx->redeem_pledge_token_tgas(amount);
     }
-    uint32_t redeem_type() { return 0; }
+
+    uint32_t redeem_type() override { return 0; }
 };
 
 class xtransaction_pledge_token_disk : public xtransaction_pledge_token{
@@ -404,7 +405,7 @@ class xtransaction_redeem_token_disk : public xtransaction_redeem_token{
     int32_t redeem_pledge_token_resource(uint64_t amount) override {
         return m_account_ctx->redeem_pledge_token_disk(amount);
     }
-    uint32_t redeem_type() { return 1; }
+    uint32_t redeem_type() override { return 1; }
 };
 
 class xtransaction_pledge_token_vote : public xtransaction_face_t{
