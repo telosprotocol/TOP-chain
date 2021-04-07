@@ -14,6 +14,7 @@
 #include "xtxpool/xtxpool_log.h"
 #include "xvnetwork/xvnetwork_error.h"
 #include "xverifier/xtx_verifier.h"
+#include "xtxpool/xtxpool_utl.h"
 #include <cinttypes>
 
 NS_BEG2(top, xtxpool_service)

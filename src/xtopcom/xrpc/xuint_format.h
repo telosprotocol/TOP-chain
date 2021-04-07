@@ -59,7 +59,7 @@ inline vector<uint8_t> hex_to_uint(std::string const& str) {
 }
 
 inline uint256_t hex_to_uint256(const std::string& str) {
-    vector<uint8_t> ret_vec = std::move(hex_to_uint(str));
+    vector<uint8_t> ret_vec = hex_to_uint(str);
     if (ret_vec.size() != 32) {
         throw xrpc_error{enum_xrpc_error_code::rpc_param_param_error, str + " length is not correct"};
     }

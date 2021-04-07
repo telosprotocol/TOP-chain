@@ -152,25 +152,34 @@ bool xcons_transaction_t::verify_cons_transaction() {
     return ret;
 }
 
-std::string xcons_transaction_t::dump(bool detail) const {
+std::string xcons_transaction_t::dump() const {
     std::stringstream ss;
     ss << "{";
     ss << xtransaction_t::transaction_hash_subtype_to_string(get_transaction()->get_digest_str(), get_tx_subtype());
     if (is_self_tx() || is_send_tx()) {
         ss << ",nonce:" << get_transaction()->get_tx_nonce();
     }
-    if (detail) {
-        if (is_self_tx() || is_send_tx()) {
-            ss << ",fire:" << get_transaction()->get_fire_timestamp();
-            ss << ",duration:" << (uint32_t)get_transaction()->get_expire_duration();
-        }
-        ss << ",from:" << get_transaction()->get_source_addr();
-        if (get_transaction()->get_source_addr() != get_transaction()->get_target_addr()) {
-            ss << ",to:" << get_transaction()->get_target_addr();
-        }
-        if (m_receipt != nullptr) {
-            ss << ",txout:" << m_receipt->get_tx_info()->get_tx_exec_state().dump();
-        }
+    ss << "}";
+    return ss.str();
+}
+
+std::string xcons_transaction_t::dump_detail() const {
+    std::stringstream ss;
+    ss << "{";
+    ss << xtransaction_t::transaction_hash_subtype_to_string(get_transaction()->get_digest_str(), get_tx_subtype());
+    if (is_self_tx() || is_send_tx()) {
+        ss << ",nonce:" << get_transaction()->get_tx_nonce();
+    }
+    if (is_self_tx() || is_send_tx()) {
+        ss << ",fire:" << get_transaction()->get_fire_timestamp();
+        ss << ",duration:" << (uint32_t)get_transaction()->get_expire_duration();
+    }
+    ss << ",from:" << get_transaction()->get_source_addr();
+    if (get_transaction()->get_source_addr() != get_transaction()->get_target_addr()) {
+        ss << ",to:" << get_transaction()->get_target_addr();
+    }
+    if (m_receipt != nullptr) {
+        ss << ",txout:" << m_receipt->get_tx_info()->get_tx_exec_state().dump();
     }
     ss << "}";
     return ss.str();

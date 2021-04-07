@@ -311,7 +311,7 @@ std::map<std::string, std::string> xstore::generate_block_object(xblock_t *block
         }
     }
 
-    return std::move(block_pairs);
+    return block_pairs;
 }
 
 uint64_t xstore::get_blockchain_height(const std::string &owner) {
@@ -922,13 +922,12 @@ base::xdataobj_t *xstore::get_object(const xstore_key_t &key) const {
 
 std::string xstore::get_value(const xstore_key_t &key) const {
     std::string value;
-    base::xdataobj_t *obj;
     std::string       db_key = key.to_db_key();
     XMETRICS_TIME_RECORD_KEY_WITH_TIMEOUT("store_get_time", key.printable_key(), uint32_t(2000000));
     m_db->read(db_key, value);
     XMETRICS_COUNTER_INCREMENT("store_get", 1);
     xdbg("[STORE] %s value: %s", key.printable_key().c_str(), value.empty() ? "does NOT exist" : "exists");
-    return std::move(value);
+    return value;
 }
 
 base::xdataobj_t *xstore::get(const xstore_key_t &key) const {

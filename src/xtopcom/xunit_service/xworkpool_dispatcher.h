@@ -23,15 +23,15 @@ public:
     virtual ~xworkpool_dispatcher();
 
 public:
-    virtual bool dispatch(base::xworkerpool_t * pool, base::xcspdu_t * pdu, const xvip2_t & xip_from, const xvip2_t & xip_to);
+    virtual bool dispatch(base::xworkerpool_t * pool, base::xcspdu_t * pdu, const xvip2_t & xip_from, const xvip2_t & xip_to) override;
     virtual bool subscribe(const std::vector<uint16_t> & tables, const xvip2_t & xip);
 
 public:
-    virtual bool start(const xvip2_t & xip);
+    virtual bool start(const xvip2_t & xip) override;
 
-    virtual bool fade(const xvip2_t & xip);
+    virtual bool fade(const xvip2_t & xip) override;
 
-    virtual bool destroy(const xvip2_t & xip);
+    virtual bool destroy(const xvip2_t & xip) override;
 
 protected:
     std::string       account(uint16_t tableid, const xvip2_t & xip);

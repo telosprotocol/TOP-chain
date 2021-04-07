@@ -40,7 +40,7 @@ void MultilayerNetworkChain::start() {
     auto & platform_params = data::xplatform_params::get_instance();
 
     top::base::Config config;
-    if (HandleParamsAndConfig(platform_params, config) != 0) {
+    if (HandleParamsAndConfig_Ex(platform_params, config) != 0) {
         xerror("load platform config failed");
         throw std::runtime_error{ "HandleParamsAndConfig: load platform config failed" };
     }
@@ -150,7 +150,7 @@ void MultilayerNetworkChain::Stop() {
     MultilayerNetwork::Stop();
 }
 
-int MultilayerNetworkChain::HandleParamsAndConfig(
+int MultilayerNetworkChain::HandleParamsAndConfig_Ex(
         const top::data::xplatform_params& platform_param,
         top::base::Config& edge_config) {
     if (!edge_config.Set("db", "path", platform_param.db_path)) {

@@ -48,7 +48,6 @@ do {\
 
 #define CHECK_PROPERTY_NAME_LEN_MAX_NUM(key) \
 do {\
-    auto& config_register = top::config::xconfig_register_t::get_instance(); \
     uint32_t custom_property_name_max_len = XGET_ONCHAIN_GOVERNANCE_PARAMETER(custom_property_name_max_len); \
     if ((key).length() >= custom_property_name_max_len) {\
         return xaccount_property_name_length_exceed_max;\
@@ -919,7 +918,6 @@ int32_t xaccount_context_t::remove_contract_sub_account(const std::string& value
 int32_t xaccount_context_t::set_contract_code(const std::string &code) {
     // check account type
     CHECK_UNIT_HEIGHT_SHOULD_BE_ZERO();
-    auto& config_register = top::config::xconfig_register_t::get_instance();
 
     uint32_t application_contract_code_max_len = XGET_ONCHAIN_GOVERNANCE_PARAMETER(application_contract_code_max_len);
     if (code.size() == 0 || code.size() > application_contract_code_max_len) {
@@ -985,7 +983,6 @@ int32_t xaccount_context_t::check_create_property(const std::string& key) {
     CHECK_CREATE_NATIVE_PROPERTY(key);
     //CHECK_UNIT_HEIGHT_SHOULD_BE_ZERO();
     CHECK_PROPERTY_NAME_LEN_MAX_NUM(key);
-    CHECK_PROPERTY_MAX_NUM();
     return xstore_success;
 }
 

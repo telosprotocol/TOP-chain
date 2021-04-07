@@ -12,6 +12,7 @@ NS_BEG2(top, vnetwork)
 class xtop_message_filter_base {
 public:
     virtual void filt(xvnetwork_message_t & vnetwork_message) = 0;
+    virtual ~xtop_message_filter_base(){}
 };
 using xmessage_filter_base_t = xtop_message_filter_base;
 

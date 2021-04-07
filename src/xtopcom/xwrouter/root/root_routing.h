@@ -75,7 +75,7 @@ public:
     void UnRegisterBootstrapCacheCallback() override;
 
 protected:
-    virtual bool NewNodeReplaceOldNode(kadmlia::NodeInfoPtr node, bool remove);
+    virtual bool NewNodeReplaceOldNode(kadmlia::NodeInfoPtr node, bool remove) override;
 
 private:
     virtual int Bootstrap(

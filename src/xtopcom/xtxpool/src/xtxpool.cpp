@@ -16,6 +16,7 @@
 #include "xtxpool/xtxpool_table.h"
 #include "xtxpool/xtxpool_para.h"
 #include "xtxpool/xtxpool_receipt_receiver_counter.h"
+#include "xtxpool/xtxpool_utl.h"
 
 #include <iostream>
 

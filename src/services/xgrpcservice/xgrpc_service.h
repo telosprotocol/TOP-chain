@@ -23,6 +23,7 @@ class xrpc_handle_face_t
 public:
     virtual bool handle(std::string request) = 0;
     virtual std::string get_response() = 0;
+    virtual ~xrpc_handle_face_t(){}
 };
 
 class xgrpc_service

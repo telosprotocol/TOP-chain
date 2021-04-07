@@ -195,12 +195,13 @@ base::xiothread_t * xchain_timer_t::get_iothread() const noexcept {
     return m_timer_thread;
 }
 
-void xchain_timer_t::close() {
+bool xchain_timer_t::close(bool force_async) {
     if (m_timer_thread != nullptr) {
         m_timer_thread->close();
         m_timer_thread->release_ref();
         m_timer_thread = nullptr;
     }
+    return true;
 }
 
 NS_END2

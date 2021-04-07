@@ -18,6 +18,7 @@ public:
     virtual void stop() = 0;
     virtual bool consume(int64_t now) = 0;
     virtual void on_response(uint32_t cost, int64_t now) = 0;
+    virtual ~xsync_ratelimit_face_t(){}
 };
 
 class response_info {

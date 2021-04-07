@@ -31,7 +31,7 @@ public:
      * 
      * @return int 
      */
-    virtual int Init();
+    virtual int Init() override;
     /**
      * @brief join elect p2p network
      * 
@@ -53,7 +53,7 @@ public:
      * @param drop_accounts list of accounts
      * @return int 
      */
-    virtual int DropNodes(const base::XipParser& xip, const std::vector<std::string>& drop_accounts);
+    virtual int DropNodes(const base::XipParser& xip, const std::vector<std::string>& drop_accounts) override;
 
 private:
     int AddCommitteeRole(base::KadmliaKeyPtr& kad_key);

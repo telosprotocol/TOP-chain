@@ -12,6 +12,7 @@
 #include "xverifier/xverifier_utl.h"
 #include "xverifier/xwhitelist_verifier.h"
 #include "xconfig/xconfig_register.h"
+#include "xtxpool/xtxpool_utl.h"
 
 #include <cinttypes>
 #include <iostream>
@@ -266,7 +267,7 @@ std::vector<xcons_transaction_ptr_t> xtxpool_table_t::get_account_txs(const std:
     }
     for (auto & iter : txs) {
         xinfo("xtxpool_table_t::get_account_txs succ.table=%s,account=%s,height=%llu,%llu,last_nonce=%llu,tx=%s",
-            m_table_account.c_str(), account.c_str(), commit_height, unit_height, last_nonce, iter->dump(false).c_str());
+            m_table_account.c_str(), account.c_str(), commit_height, unit_height, last_nonce, iter->dump().c_str());
     }
     return txs;
 }

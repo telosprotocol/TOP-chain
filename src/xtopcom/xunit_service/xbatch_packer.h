@@ -31,23 +31,23 @@ public:
     virtual uint16_t get_tableid();
 
     // recv_in packet from this object to child layers
-    virtual bool recv_in(const xvip2_t &from_addr, const xvip2_t &to_addr, const base::xcspdu_t &packet, int32_t cur_thread_id, uint64_t timenow_ms);
+    virtual bool recv_in(const xvip2_t &from_addr, const xvip2_t &to_addr, const base::xcspdu_t &packet, int32_t cur_thread_id, uint64_t timenow_ms) override;
 
     // send packet by network
-    virtual bool send_out(const xvip2_t &from_addr, const xvip2_t &to_addr, const base::xcspdu_t &packet, int32_t cur_thread_id, uint64_t timenow_ms);
+    virtual bool send_out(const xvip2_t &from_addr, const xvip2_t &to_addr, const base::xcspdu_t &packet, int32_t cur_thread_id, uint64_t timenow_ms) override;
 
     // return specific error code(enum_xconsensus_result_code) to let caller know reason
     virtual int  verify_proposal(base::xvblock_t * proposal_block, base::xvqcert_t * bind_clock_cert, xcsobject_t * _from_child) override;
 
-    virtual bool reset_xip_addr(const xvip2_t & new_addr);
-    virtual bool on_proposal_finish(const base::xvevent_t & event, xcsobject_t* from_child, const int32_t cur_thread_id, const uint64_t timenow_ms);
-    virtual bool on_consensus_commit(const base::xvevent_t & event, xcsobject_t* from_child, const int32_t cur_thread_id, const uint64_t timenow_ms);
+    virtual bool reset_xip_addr(const xvip2_t & new_addr) override;
+    virtual bool on_proposal_finish(const base::xvevent_t & event, xcsobject_t* from_child, const int32_t cur_thread_id, const uint64_t timenow_ms) override;
+    virtual bool on_consensus_commit(const base::xvevent_t & event, xcsobject_t* from_child, const int32_t cur_thread_id, const uint64_t timenow_ms) override;
 
 protected:
-    virtual bool on_view_fire(const base::xvevent_t &event, xcsobject_t *from_parent, const int32_t cur_thread_id, const uint64_t timenow_ms);
+    virtual bool on_view_fire(const base::xvevent_t &event, xcsobject_t *from_parent, const int32_t cur_thread_id, const uint64_t timenow_ms) override;
 
     // note: to return false may call parent'push_event_up,or stop further routing when return true
-    virtual bool    on_pdu_event_up(const base::xvevent_t & event, xcsobject_t* from_child, const int32_t cur_thread_id, const uint64_t timenow_ms);
+    virtual bool    on_pdu_event_up(const base::xvevent_t & event, xcsobject_t* from_child, const int32_t cur_thread_id, const uint64_t timenow_ms) override;
     // backup receive proposal
     // virtual bool on_proposal_start(const base::xvevent_t & event, xcsobject_t* from_parent, const int32_t cur_thread_id, const uint64_t timenow_ms);
 

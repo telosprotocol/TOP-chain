@@ -27,7 +27,8 @@ class xcons_transaction_t : public xbase_dataunit_t<xcons_transaction_t, xdata_t
     int32_t do_read(base::xstream_t & stream) override;
 
  public:
-    std::string                     dump(bool detail = false) const;
+    std::string                     dump() const override;
+    virtual std::string             dump_detail() const;
     std::string                     dump_execute_state() const {return m_execute_state.dump();}
     inline xtransaction_t*          get_transaction() const {return m_tx;}
     const xlightunit_output_entity_t*     get_tx_info() const {return m_receipt->get_tx_info();}

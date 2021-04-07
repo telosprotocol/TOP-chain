@@ -20,11 +20,11 @@ public:
     bool dispatch(base::xworkerpool_t *pool, base::xcspdu_t *pdu, const xvip2_t &xip_from, const xvip2_t &xip_to) override;
 
 public:
-    virtual bool start(const xvip2_t &xip);
+    virtual bool start(const xvip2_t &xip) override;
 
-    virtual bool fade(const xvip2_t &xip);
+    virtual bool fade(const xvip2_t &xip) override;
 
-    virtual bool destroy(const xvip2_t &xip);
+    virtual bool destroy(const xvip2_t &xip) override;
 
 protected:
     xtimer_picker_t *m_picker{};

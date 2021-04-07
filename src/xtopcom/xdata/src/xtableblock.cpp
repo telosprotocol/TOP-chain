@@ -61,7 +61,6 @@ const std::string xtableblock_output_entity_t::get_merkle_leaf() const {
 
 xblockbody_para_t xtable_block_t::get_blockbody_from_para(const xtable_block_para_t & para) {
     xblockbody_para_t blockbody;
-    uint16_t index = 0;
     uint16_t count = (uint16_t)para.get_account_units().size();
     for (uint16_t index = 0; index < count; index++) {
         const auto & unit = para.get_account_units()[index];
@@ -262,7 +261,6 @@ void xtable_block_t::unpack_proposal_units(std::vector<xblock_ptr_t> & units) co
     xassert(tb_input->get_entitys().size() == tb_output->get_entitys().size());
 
     for (uint16_t index = 0; index < count; index++) {
-        xtableblock_input_entity_t* input_unit = dynamic_cast<xtableblock_input_entity_t*>(tb_input->get_entitys()[index]);
         xtableblock_output_entity_t* output_unit = dynamic_cast<xtableblock_output_entity_t*>(tb_output->get_entitys()[index]);
 
         // recreate whole block

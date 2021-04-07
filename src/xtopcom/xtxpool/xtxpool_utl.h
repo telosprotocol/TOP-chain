@@ -1,0 +1,42 @@
+// Copyright (c) 2017-2020 Telos Foundation & contributors
+// Distributed under the MIT software license, see the accompanying
+// file COPYING or http://www.opensource.org/licenses/mit-license.php.
+
+#pragma once
+
+#include "xbase/xdata.h"
+#include "xbasic/xmemory.hpp"
+#include "xchain_timer/xchain_timer_face.h"
+#include "xdata/xcons_transaction.h"
+#include "xdata/xtransaction.h"
+#include "xstore/xstore_face.h"
+#include "xtxpool/xaccountobj.h"
+#include "xtxpool/xtxpool_resources_face.h"
+
+#include <string>
+
+NS_BEG2(top, xtxpool)
+static uint32_t get_receipt_resend_time(uint64_t cert_time, uint64_t now) {
+    if (now < cert_time) {
+        xdbg("xtxpool_table_t::get_receipt_resend_time receipt gmtime(%llu) is ahead now(%llu)", cert_time, now);
+        return 0;
+    }
+
+    uint64_t delay_time = now - cert_time;
+    if (delay_time < send_tx_receipt_first_retry_timeout) {
+        return 0;
+    } else if (delay_time < send_tx_receipt_first_retry_timeout + send_tx_receipt_common_retry_timeout) {
+        return 1;
+    } else {
+        return 1 + (delay_time - send_tx_receipt_first_retry_timeout)/send_tx_receipt_common_retry_timeout;
+    }
+}
+
+static uint64_t get_next_retry_timestamp(uint64_t cert_time, uint64_t now) {
+    if (now < cert_time + send_tx_receipt_first_retry_timeout) {
+        return cert_time + send_tx_receipt_first_retry_timeout;
+    } else {
+        return now + send_tx_receipt_common_retry_timeout - (now - cert_time - send_tx_receipt_first_retry_timeout)%send_tx_receipt_common_retry_timeout;
+    }
+}
+NS_END2

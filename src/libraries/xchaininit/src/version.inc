@@ -1,0 +1,10 @@
+const std::string TOP_VERSION_PREFIX  = "TOP_VERSION";
+const std::string TOP_GIT_BRANCH      = "feat/new_horizons";
+const std::string TOP_GIT_HASH        = "";
+const std::string TOP_GIT_DATE        = "";
+const std::string TOP_GIT_LOG_LATEST  = "0a13e00";
+const std::string TOP_BUILD_DATE      = __DATE__;
+const std::string TOP_BUILD_TIME      = __TIME__;
+const std::string TOP_BUILD_USER      = "uid=0(root)";
+const std::string TOP_BUILD_HOST      = "localhost.localdomain";
+const std::string TOP_BUILD_PATH      = "/root";

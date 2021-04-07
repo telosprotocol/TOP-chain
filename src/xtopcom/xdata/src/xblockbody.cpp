@@ -46,7 +46,7 @@ std::vector<std::string> xinput_t::get_merkle_leafs() const {
             leafs.push_back(leaf);
         }
     }
-    return std::move(leafs);
+    return leafs;
 }
 
 const std::string xinput_t::get_root_hash() {
@@ -115,7 +115,7 @@ std::vector<std::string> xoutput_t::get_merkle_leafs() const {
             leafs.push_back(leaf);
         }
     }
-    return std::move(leafs);
+    return leafs;
 }
 
 const std::string xoutput_t::get_root_hash() {

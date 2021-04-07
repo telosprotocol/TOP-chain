@@ -58,7 +58,7 @@ public:
     virtual bool                watch(const std::string & key, uint64_t interval, xchain_time_watcher cb) override;
     virtual bool                unwatch(const std::string & key) override;
     virtual bool                watch_one(uint64_t interval, xchain_time_watcher cb) override;
-    virtual void                close() override;
+    virtual bool                close(bool force_async = true) override;
     virtual base::xiothread_t * get_iothread() const noexcept override;
 
 protected:

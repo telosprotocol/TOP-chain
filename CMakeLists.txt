@@ -52,7 +52,6 @@ if (${CMAKE_CXX_COMPILER_ID} STREQUAL MSVC)
         message(FATAL_ERROR "CMAKE_TOOLCHAIN_FILE not found.")
     endif()
 endif()
-
 #=============================================================================
 # for git version
 #==============================================================================
@@ -212,7 +211,8 @@ elseif(${CMAKE_CXX_COMPILER_ID} STREQUAL MSVC)
     # set_property(DIRECTORY APPEND PROPERTY COMPILE_OPTIONS $<$<OR:$<CONFIG:Release>,$<CONFIG:RelWithDebInfo>>:/O2>)
     add_compile_options($<$<OR:$<CONFIG:Release>,$<CONFIG:RelWithDebInfo>,$<CONFIG:release>>:/O2>)
     set_property(DIRECTORY APPEND PROPERTY COMPILE_DEFINITIONS $<$<OR:$<CONFIG:Release>,$<CONFIG:release>>:NDEBUG>)
-elseif(${CMAKE_CXX_COMPILER_ID} STREQUAL Clang OR ${CMAKE_CXX_COMPILER_ID} STREQUAL AppleClang)
+elseif(CMAKE_C_COMPILER_ID MATCHES "Clang")
+    add_compile_options(-fPIC)
     #add_compile_options($<$<OR:$<CONFIG:Debug>,$<CONFIG:debug>>:-g2 -ggdb -O0 -fno-omit-frame-pointer>)
     set_property(DIRECTORY APPEND PROPERTY COMPILE_OPTIONS $<$<OR:$<CONFIG:Debug>,$<CONFIG:debug>>:-g3 -ggdb -O0 -fno-omit-frame-pointer>)
     set_property(DIRECTORY APPEND PROPERTY COMPILE_DEFINITIONS $<$<OR:$<CONFIG:Debug>,$<CONFIG:debug>>:DEBUG _DEBUG>)
@@ -228,8 +228,6 @@ elseif(${CMAKE_CXX_COMPILER_ID} STREQUAL Clang OR ${CMAKE_CXX_COMPILER_ID} STREQ
     # options for RelWithDebInfo
     add_compile_options($<$<CONFIG:RelWithDebInfo>:-g1>)
     add_compile_options($<$<CONFIG:RelWithDebInfo>:-ggdb>)
-else()
-    message(FATAL_ERROR "Not supported C++ Compiler: " ${CMAKE_CXX_COMPILER_ID})
 endif()
 
 if (XENABLE_VERBOSE_DBG)

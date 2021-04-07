@@ -141,7 +141,7 @@ public:
     int SendData(base::xpacket_t& packet) override;
     int SendDataWithProp(
             base::xpacket_t& packet,
-            UdpPropertyPtr& udp_property);
+            UdpPropertyPtr& udp_property) override;
     int SendToLocal(base::xpacket_t& packet) override;
     int SendToLocal(const xbyte_buffer_t& data) override;
     void AddXip2Header(base::xpacket_t& packet) override;
@@ -216,7 +216,7 @@ protected:
         promise_.set_value();  // wake block
         return ret;
     }
-    virtual xslsocket_t*	 on_xslsocket_accept(xfd_handle_t handle,xsocket_property & property, int32_t cur_thread_id,uint64_t timenow_ms);
+    virtual xslsocket_t*	 on_xslsocket_accept(xfd_handle_t handle,xsocket_property & property, int32_t cur_thread_id,uint64_t timenow_ms) override;
 
 private:
     XudpSocket();

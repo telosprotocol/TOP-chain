@@ -79,7 +79,7 @@ public:
     // bool
     // bootstrap(std::vector<network::xdht_node_t> dht_seeds) override;
 
-    void broadcast_to_all(xmessage_t const & message, xvnode_address_t const & src, xvnode_address_t const & dst);
+    void broadcast_to_all(xmessage_t const & message, xvnode_address_t const & src, xvnode_address_t const & dst) override;
 
     void broadcast(xmessage_t const & message, xvnode_address_t const & src) override;
 

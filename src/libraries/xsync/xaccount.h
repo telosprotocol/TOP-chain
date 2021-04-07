@@ -66,7 +66,7 @@ public:
 
     std::string get_address() override;
 
-    int64_t get_next_timeout();
+    int64_t get_next_timeout() override;
     void on_timer_event(int64_t now) override;
     void on_response_event(const mbus::xevent_ptr_t &e) override;
     void on_behind_event(const mbus::xevent_ptr_t &e) override;

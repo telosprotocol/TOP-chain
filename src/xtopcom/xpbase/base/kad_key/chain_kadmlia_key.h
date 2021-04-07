@@ -72,8 +72,8 @@ public:
     virtual const std::string& Get() override;
     virtual std::string GetPrivateKey() override;
     virtual std::string GetPublicKey() override;
-    virtual uint64_t GetServiceType();
-    virtual uint64_t GetServiceType(uint8_t network_type);
+    virtual uint64_t GetServiceType() override;
+    virtual uint64_t GetServiceType(uint8_t network_type) override;
     virtual const std::string& GetNodeIdHash() override;
 
 private:

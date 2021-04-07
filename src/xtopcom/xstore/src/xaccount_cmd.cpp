@@ -103,7 +103,6 @@ int32_t xaccount_cmd::restore_log_instruction(const std::string & prop_name, xpr
 }
 
 int32_t xaccount_cmd::restore_log_instruction(xdataobj_ptr_t & obj, xproperty_instruction_t instruction) {
-    bool add_flag = false;
     switch (instruction.m_op_code) {
         case xproperty_cmd_type_string_create:
             make_property(obj, base::xstring_t::enum_obj_type);
@@ -587,7 +586,7 @@ int32_t xaccount_cmd::map_remove(xdataobj_ptr_t & obj, const std::string & field
 }
 int32_t xaccount_cmd::map_clear(xdataobj_ptr_t & obj) {
     xstrmap_ptr_t prop = dynamic_xobject_ptr_cast<base::xstrmap_t>(obj);
-    bool ret = prop->clear();
+    prop->clear();
     return xstore_success;
 }
 

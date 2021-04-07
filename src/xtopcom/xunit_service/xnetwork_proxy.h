@@ -21,7 +21,7 @@ public:
     // network proxy, just send msg according by address
     virtual bool send_out(uint32_t msg_type, const xvip2_t &from_addr,
                           const xvip2_t &to_addr, const base::xcspdu_t &packet,
-                          int32_t cur_thread_id, uint64_t timenow_ms);
+                          int32_t cur_thread_id, uint64_t timenow_ms) override;
 
     bool send_out(common::xmessage_id_t const &id, const xvip2_t &from_addr, const xvip2_t &to_addr, base::xvblock_t *block) override;
 
@@ -32,12 +32,12 @@ public:
     bool unlisten(const xvip2_t &xip, common::xmessage_category_t category) override;
 
     // add networkdriver, call while new vnode build
-    virtual bool add(const std::shared_ptr<vnetwork::xvnetwork_driver_face_t> &network);
+    virtual bool add(const std::shared_ptr<vnetwork::xvnetwork_driver_face_t> &network) override;
 
-    std::shared_ptr<vnetwork::xvnetwork_driver_face_t> find(xvip2_t const &from_addr);
+    std::shared_ptr<vnetwork::xvnetwork_driver_face_t> find(xvip2_t const &from_addr) override;
 
     // erase networkdriver, call before vnode destroy
-    virtual bool erase(const xvip2_t &addr);
+    virtual bool erase(const xvip2_t &addr) override;
 
 protected:
     // network message callback

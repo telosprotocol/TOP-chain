@@ -79,7 +79,7 @@ public:
      * @param edge_config after parse store config
      * @return int 
      */
-    int HandleParamsAndConfig(
+    int HandleParamsAndConfig_Ex(
         const top::data::xplatform_params& platform_param,
         top::base::Config& edge_config);
     /**

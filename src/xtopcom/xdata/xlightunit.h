@@ -189,7 +189,7 @@ class xlightunit_block_t : public xblock_t {
     void *query_interface(const int32_t _enum_xobject_type_) override;
 
  public:  // lightunit special apis
-    virtual     std::string     dump_body() const;
+    std::string     dump_body() const override;
     void                        create_txreceipts(std::vector<xcons_transaction_ptr_t> & sendtx_receipts, std::vector<xcons_transaction_ptr_t> & recvtx_receipts);
     void                        create_send_txreceipts(std::vector<xcons_transaction_ptr_t> & sendtx_receipts);
     xcons_transaction_ptr_t     create_one_txreceipt(const xtransaction_t* tx);

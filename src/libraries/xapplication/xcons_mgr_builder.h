@@ -30,11 +30,11 @@ private:
 public:
     const uint32_t get_total_nodes() const { return m_total_nodes; }  // just for test purpose ,we put total nodes here
 
-    virtual const std::string get_signer(const xvip2_t & signer);  // query account address of xvip2_t
+    virtual const std::string get_signer(const xvip2_t & signer) override;  // query account address of xvip2_t
     // all returned information build into a xvip_t structure
-    virtual xvip_t get_validator_addr(const std::string & account_addr);                                    // mapping account to target group
-    virtual bool verify_validator_addr(const base::xvblock_t * test_for_block);                             // verify validator and account
-    virtual bool verify_validator_addr(const std::string & for_account, const base::xvqcert_t * for_cert);  // verify validator and account
+    virtual xvip_t get_validator_addr(const std::string & account_addr) override;                                    // mapping account to target group
+    virtual bool verify_validator_addr(const base::xvblock_t * test_for_block) override;                             // verify validator and account
+    virtual bool verify_validator_addr(const std::string & for_account, const base::xvqcert_t * for_cert) override;  // verify validator and account
 
 public:
     virtual const std::string do_sign(const xvip2_t & signer, const base::xvqcert_t * sign_for_cert, const uint64_t random_seed) override;

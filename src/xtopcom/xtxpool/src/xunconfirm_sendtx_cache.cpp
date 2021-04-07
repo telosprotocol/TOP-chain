@@ -10,6 +10,7 @@
 #include "xtxpool/xtxpool_error.h"
 #include "xtxpool/xtxpool_log.h"
 #include "xtxpool/xtxpool_face.h"
+#include "xtxpool/xtxpool_utl.h"
 
 #include <string>
 

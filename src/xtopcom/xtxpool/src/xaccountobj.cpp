@@ -157,7 +157,7 @@ int32_t xaccountobj_t::push_send_tx(const xcons_transaction_ptr_t & tx) {
     xkinfo("xaccountobj_t::tx_push success.table=%s,account=%s,tx=%s,send_queue_size:%ld,recv_queue_size:%ld,ack_queue_size:%ld",
            m_table->get_table_name().c_str(),
            m_address.c_str(),
-           tx->dump(true).c_str(),
+           tx->dump_detail().c_str(),
            m_send_queue.size(),
            m_recv_queue.size(),
            m_recv_ack_queue.size());
@@ -183,7 +183,7 @@ int32_t xaccountobj_t::push_recv_tx(const xcons_transaction_ptr_t & tx) {
     xkinfo("xaccountobj_t::tx_push success.table=%s,account=%s,tx=%s,send_queue_size:%ld,recv_queue_size:%ld,ack_queue_size:%ld",
            m_table->get_table_name().c_str(),
            m_address.c_str(),
-           tx->dump(true).c_str(),
+           tx->dump_detail().c_str(),
            m_send_queue.size(),
            m_recv_queue.size(),
            m_recv_ack_queue.size());
@@ -209,7 +209,7 @@ int32_t xaccountobj_t::push_recv_ack_tx(const xcons_transaction_ptr_t & tx) {
     xkinfo("xaccountobj_t::tx_push success.table=%s,account=%s,tx=%s,send_queue_size:%ld,recv_queue_size:%ld,ack_queue_size:%ld",
            m_table->get_table_name().c_str(),
            m_address.c_str(),
-           tx->dump(true).c_str(),
+           tx->dump_detail().c_str(),
            m_send_queue.size(),
            m_recv_queue.size(),
            m_recv_ack_queue.size());

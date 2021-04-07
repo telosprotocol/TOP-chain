@@ -38,7 +38,7 @@ std::string xunit_proposal_input_t::dump() const {
     ss << m_account;
     ss << ",last=" << m_last_block_height << base::xstring_utl::to_hex(m_last_block_hash);
     for (auto & v : m_input_txs) {
-        ss << v->dump(false);
+        ss << v->dump();
     }
     ss << "}";
     return ss.str();

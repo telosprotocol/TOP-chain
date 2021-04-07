@@ -82,12 +82,6 @@ public:
     virtual common::xlogic_time_t logic_time() const noexcept = 0;
 
     /**
-     * @brief Close
-     *
-     */
-    virtual void close() = 0;
-
-    /**
      * @brief Get the iothread object. For internal use only.
      *
      * @return base::xiothread_t* Points to the iothread object.

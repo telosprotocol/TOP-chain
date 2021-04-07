@@ -32,6 +32,7 @@ class xrouter_face {
  *
  */
 struct xtop_router_face {
+    virtual ~xtop_router_face() {}
     /**
      * @brief Map account to its corresponding sharding address. If the account is a contract account or table account, type is not considered.
      *

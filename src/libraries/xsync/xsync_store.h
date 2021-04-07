@@ -17,6 +17,7 @@ NS_BEG2(top, sync)
 
 class xsync_store_face_t {
 public:
+    virtual ~xsync_store_face_t(){}
     virtual bool store_block(base::xvblock_t* block) = 0;
     virtual base::xauto_ptr<base::xvblock_t> get_latest_connected_block(const std::string & account) = 0;
     virtual base::xauto_ptr<base::xvblock_t> get_latest_committed_block(const std::string & account) = 0;

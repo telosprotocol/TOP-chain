@@ -33,7 +33,7 @@ int32_t xtransaction_executor::exec_one_tx(xaccount_context_t * account_context,
     }
 
     xkinfo("xtransaction_executor::exec_one_tx succ, tx=%s,tx_state=%s",
-        tx->dump(true).c_str(), tx->dump_execute_state().c_str());
+        tx->dump_detail().c_str(), tx->dump_execute_state().c_str());
     return xsuccess;
 }
 

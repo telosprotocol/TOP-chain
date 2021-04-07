@@ -62,19 +62,19 @@ public:
             int timer_interval_seconds = 1);
     ~xmessage_bus_t() override;
 
-    uint32_t add_sourcer(int major_type, xevent_queue_cb_t cb);
-    void remove_sourcer(int major_type, uint32_t id);
-    uint32_t add_listener(int major_type, xevent_queue_cb_t cb);
-    void remove_listener(int major_type, uint32_t id);
+    uint32_t add_sourcer(int major_type, xevent_queue_cb_t cb) override;
+    void remove_sourcer(int major_type, uint32_t id) override;
+    uint32_t add_listener(int major_type, xevent_queue_cb_t cb) override;
+    void remove_listener(int major_type, uint32_t id) override;
 
-    void push_event(const xevent_ptr_t& e);
-    void clear();
+    void push_event(const xevent_ptr_t& e) override;
+    void clear() override;
 
     // monitor functions
-    int size();
-    int sourcers_size();
-    int listeners_size();
-    xevent_queue_ptr_t get_queue(int major_type);
+    int size() override;
+    int sourcers_size() override;
+    int listeners_size() override;
+    xevent_queue_ptr_t get_queue(int major_type) override;
 
 private:
     std::vector<xevent_queue_ptr_t> m_queues;

@@ -378,7 +378,6 @@ void ApiMethod::list_accounts(std::ostringstream & out_str) {
         }
         outAccountBalance(account, out_str);
 
-        size_t j = 0;
         for (size_t j = 0; j < ai.worker_keys.size(); ++j) {
             if (0 == j) {
                 out_str << "worker public-key list:" << std::endl;
@@ -956,6 +955,7 @@ void ApiMethod::query_block(std::string & target, std::string & height, std::ost
     if (height != "latest") {
         try {
             auto hi = std::stoull(height);
+            cout << hi << endl;
         } catch (...) {
             cout << "Could not convert: height=" << height << endl;
             cout << "Parameter 'height' should be an integer or 'latest'." << endl;

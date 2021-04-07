@@ -61,12 +61,12 @@ public:
     virtual int32_t SendPacket(transport::protobuf::RoutingMessage& message) override;
     virtual int32_t RecvPacket(
             transport::protobuf::RoutingMessage& message,
-            base::xpacket_t& packet);
-    int32_t SendToLocal(transport::protobuf::RoutingMessage& message);
+            base::xpacket_t& packet) override;
+    int32_t SendToLocal(transport::protobuf::RoutingMessage& message) override;
     int32_t SendDirect(
             transport::protobuf::RoutingMessage& message,
             const std::string& ip,
-            uint16_t port);
+            uint16_t port) override;
     void SupportRandomPattern();
     bool BroadcastByMultiRandomKadKey(
             const transport::protobuf::RoutingMessage& message,

@@ -19,12 +19,12 @@ using std::cout;
 using std::endl;
 using std::string;
 
-constexpr char account[] = "account";
-constexpr char tx_hash[] = "tx_hash";
-constexpr char from_account_addr[] = "from_account_addr";
-constexpr char to_account_addr[] = "to_account_addr";
+// constexpr char account[] = "account";
+// constexpr char tx_hash[] = "tx_hash";
+// constexpr char from_account_addr[] = "from_account_addr";
+// constexpr char to_account_addr[] = "to_account_addr";
 constexpr char details[] = "details";
-constexpr char amount[] = "amount";
+// constexpr char amount[] = "amount";
 constexpr char turns[] = "turns";
 constexpr char from[] = "from";
 constexpr char to[] = "to";
@@ -33,13 +33,13 @@ constexpr char name[] = "name";
 constexpr char self_rate[] = "self_rate";
 constexpr char total_share[] = "total_share";
 
-constexpr char target_account_addr[] = "target_account_addr";
+// constexpr char target_account_addr[] = "target_account_addr";
 constexpr char identity_token[] = "identity_token";
-constexpr char signature[] = "signature";
+// constexpr char signature[] = "signature";
 constexpr char sign_method[] = "signature_method";
 constexpr char sign_version[] = "signature_ver_code";
 constexpr char secret_key[] = "secret_key";
-constexpr char keyid[] = "keyid";
+// constexpr char keyid[] = "keyid";
 
 // these params come out of body
 const std::set<std::string> content_name = {

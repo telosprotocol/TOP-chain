@@ -51,7 +51,7 @@ public:
     xaccountobj_t *         find_account(const std::string & address) override;                                                                             // for unit test
     xcons_transaction_ptr_t pop_tx_by_hash(const std::string & address, const uint256_t & hash, uint8_t subtype, int32_t result) override;  // for unit test
     bool                    is_mailbox_over_limit() override;
-    xcons_transaction_ptr_t get_unconfirm_tx(const std::string source_addr, const uint256_t & hash);
+    xcons_transaction_ptr_t get_unconfirm_tx(const std::string source_addr, const uint256_t & hash) override;
 protected:
     bool on_timer_fire(const int32_t thread_id, const int64_t timer_id, const int64_t current_time_ms, const int32_t start_timeout_ms, int32_t & in_out_cur_interval_ms) override;
 
