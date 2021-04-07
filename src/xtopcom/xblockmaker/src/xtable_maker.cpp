@@ -306,6 +306,7 @@ xblock_ptr_t xtable_maker_t::backup_make_light_table(const xtableblock_proposal_
         if (ret != xsuccess) {
             xwarn("xtable_maker_t::backup_make_light_table fail-unit check_latest_state,%s,account=%s,error_code=%s",
                 cs_para.dump().c_str(), unit_account.c_str(), chainbase::xmodule_error_to_str(ret).c_str());
+            table_result.m_make_block_error_code = xblockmaker_error_missing_state;
             return nullptr;
         }
 
@@ -314,6 +315,7 @@ xblock_ptr_t xtable_maker_t::backup_make_light_table(const xtableblock_proposal_
         if (proposal_unit == nullptr) {
             xwarn("xtable_maker_t::backup_make_light_table fail-unit verify_proposal.proposal=%s,account=%s,error_code=%s",
                 cs_para.dump().c_str(), unit_account.c_str(), chainbase::xmodule_error_to_str(unit_result.m_make_block_error_code).c_str());
+            table_result.m_make_block_error_code = unit_result.m_make_block_error_code;
             return nullptr;
         }
         batch_units.push_back(proposal_unit);

@@ -89,17 +89,11 @@ enum_xtxpool_error_type xaccount_recvtx_filter::sync_reject_rules_and_reject(con
 
         auto unit_block = get_blockstore()->load_block_object(get_account_addr(), cur_height);
         if (unit_block == nullptr) {
-            xtxpool_dbg_info("lack unitblock, the height is %u ", cur_height);
+            xtxpool_info("lack unitblock, the height is %u tx:%s", cur_height, tx->dump(true).c_str());
             return xtxpool_error_unitblock_lack;
         }
 
         auto xvunit_block = dynamic_cast<xblock_t *>(unit_block.get());
-        uint64_t height_of_clockblock = xvunit_block->get_timerblock_height();
-
-        if ((xvunit_block->get_timerblock_height() + xtxpool_more_clock_height) < tx->get_clock()) {
-            xtxpool_dbg_info("the clockblock height of send tx is %llu, older than %llu", tx->get_clock(), xvunit_block->get_timerblock_height() + xtxpool_more_clock_height);
-            break;
-        }
 
         if (unit_block->get_block_class() != base::enum_xvblock_class_light) {
             continue;
@@ -125,6 +119,11 @@ enum_xtxpool_error_type xaccount_recvtx_filter::sync_reject_rules_and_reject(con
                 return xtxpool_success;
             }
         }
+
+        if ((xvunit_block->get_timerblock_height() + xtxpool_more_clock_height) < tx->get_clock()) {
+            xtxpool_info("the clockblock height of send tx is %llu, older than %llu", tx->get_clock(), xvunit_block->get_timerblock_height() + xtxpool_more_clock_height);
+            break;
+        }
     }
 
     evict();
@@ -132,6 +131,7 @@ enum_xtxpool_error_type xaccount_recvtx_filter::sync_reject_rules_and_reject(con
 }
 
 void xaccount_recvtx_filter::insert(const data::xblock_t * unit_block) {
+    xtxpool_info("xaccount_recvtx_filter::insert block:%s", unit_block->dump().c_str());
     if (unit_block->get_block_class() != base::enum_xvblock_class_light) {
         return;
     }
