@@ -83,7 +83,7 @@ xstatistics_data_t tableblock_statistics(std::vector<xobject_ptr_t<data::xblock_
     xdbg("[tableblock_statistics] blks size: %u", blks.size());
     for (size_t i = 0; i < blks.size(); i++) {
         if (nullptr == blks[i]) {
-            xdbg("[tableblock_statistics] blks[%u] null", i);
+            xerror("[tableblock_statistics] blks[%u] null", i);
             continue;
         }
         xvip2_t leader_xip;
@@ -94,7 +94,8 @@ xstatistics_data_t tableblock_statistics(std::vector<xobject_ptr_t<data::xblock_
         if (!is_xip2_empty(auditor_xip) && get_node_id_from_xip2(auditor_xip) != 0x3FF) {
             leader_xip = auditor_xip;
             vote_num = cal_vote_num(blks[i], true);
-        } else if (!is_xip2_empty(validator_xip) && get_node_id_from_xip2(validator_xip) != 0x3FF) {
+        } else {
+            xassert(!is_xip2_empty(validator_xip) && get_node_id_from_xip2(validator_xip) != 0x3FF);
             leader_xip = validator_xip;
             vote_num = cal_vote_num(blks[i], false);
         }
