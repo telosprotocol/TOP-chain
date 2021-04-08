@@ -33,9 +33,8 @@ std::string xtop_property_utl::property_category_str(xproperty_category_t const&
 }
 
 
-
 xtop_property_access_control::xtop_property_access_control(top::observer_ptr<top::base::xvbstate_t> bstate,  xproperty_access_control_data_t ac_data): bstate_(bstate), ac_data_(ac_data){}
-xtop_property_access_control::~xtop_property_access_control() = default;
+
 /**
  *
  * @brief  map apis

@@ -62,7 +62,7 @@ public:
     metrics_time_auto(std::string metrics_name, metrics_appendant_info key = std::string{"NOT SET appendant_info"}, microseconds timed_out = DEFAULT_TIMED_OUT)
       : m_metrics_name{metrics_name}, m_key{key}, m_timed_out{timed_out} {
         char c[15] = {0};
-        snprintf(c, 14, "%p", this);
+        snprintf(c, 14, "%p", static_cast<void*>(this));
         m_metrics_name = m_metrics_name + "&" + c;
         e_metrics::get_instance().timer_start(m_metrics_name, std::chrono::system_clock::now());
     }
