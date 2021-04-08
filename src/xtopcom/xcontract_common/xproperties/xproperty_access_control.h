@@ -50,10 +50,16 @@ public:
 };
 using xproperty_utl_t = xtop_property_utl;
 
-class xtop_property_access_control {
+class xtop_property_access_control: public std::enable_shared_from_this<xtop_property_access_control> {
 public:
+    xtop_property_access_control(xtop_property_access_control const&) = delete;
+    xtop_property_access_control& operator=(xtop_property_access_control const&) = delete;
+    xtop_property_access_control(xtop_property_access_control&&) = default;
+    xtop_property_access_control& operator=(xtop_property_access_control&&) = default;
+    ~xtop_property_access_control() =  default;
+
     explicit xtop_property_access_control(top::observer_ptr<top::base::xvbstate_t> bstate, xproperty_access_control_data_t ac_data);
-    ~xtop_property_access_control();
+
 
 
     /***********************************************************************/
@@ -208,7 +214,7 @@ public:
     std::map<KEYT, VALUET> map_prop_query(common::xaccount_address_t const & user, xproperty_identifier_t const & prop_id);
 
     /// @brief Get the mapped string type value specified by the string key.
-    /// @param reader 
+    /// @param reader
     /// @param property_full_name Property full name
     template <typename KeyT, typename ValueT, typename std::enable_if<std::is_same<KeyT, std::string>::value && std::is_same<ValueT, std::string>::value>::type * = nullptr>
     ValueT map_at(common::xaccount_address_t const & reader, std::string const & property_full_name, KeyT const & key, std::error_code & ec) const {
