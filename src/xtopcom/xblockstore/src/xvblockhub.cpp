@@ -1521,6 +1521,7 @@ namespace top
             }
 #endif
 // #endif
+            update_connect_height(this_block);
             xdbg("xblockacct_t::store_block,finally cached block=%s of account=%s", this_block->dump().c_str(), m_meta->dump().c_str());
 #ifdef ENABLE_METRICS
             XMETRICS_COUNTER_INCREMENT("blockstore_store_block", 1);
