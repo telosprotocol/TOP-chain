@@ -776,7 +776,7 @@ public:
 
 public:
     std::string to_string() const override;
-    void from_string(std::string const & s) override;
+    int32_t from_string(std::string const & s) override;
     using xenable_to_string_t<xissue_detail>::to_string;
     using xenable_to_string_t<xissue_detail>::from_string;
 

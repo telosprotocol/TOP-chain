@@ -70,7 +70,7 @@ xblock_ptr_t xproposal_maker_t::make_proposal(data::xblock_consensus_para_t & pr
         return nullptr;
     }
 
-    std::string proposal_input_str = table_para.m_proposal_input.serialize_to_string();
+    std::string proposal_input_str = table_para.m_proposal_input.to_string();
     proposal_block->get_input()->set_proposal(proposal_input_str);
     bool bret = proposal_block->reset_prev_block(latest_cert_block.get());
     xassert(bret);
@@ -160,7 +160,7 @@ bool xproposal_maker_t::verify_proposal_input(base::xvblock_t *proposal_block, c
     uint64_t table_commit_height = committed_block->get_height();
     xassert(table_commit_height < proposal_block->get_height());
 
-    int32_t serialize_ret = table_para.m_proposal_input.serialize_from_string(proposal_block->get_input()->get_proposal());
+    int32_t serialize_ret = table_para.m_proposal_input.from_string(proposal_block->get_input()->get_proposal());
     if (serialize_ret <= 0) {
         xerror("xproposal_maker_t::verify_proposal_input fail-table serialize from proposal input. proposal=%s",
             proposal_block->dump().c_str());

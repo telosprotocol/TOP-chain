@@ -42,14 +42,18 @@ public:
         return {};
     }
 
-    virtual void from_string(std::string const & s) {
+    virtual int32_t from_string(std::string const & s) {
         assert(false);
+        return 0;
     };
 
     void from_string(std::string const & s, std::error_code & ec) {
         assert(!ec);
         try {
-            from_string(s);
+            auto ret = from_string(s);
+            if (ret <= 0) {
+                ec = top::error::xbasic_errc_t::deserialization_error;
+            }
         } catch (top::error::xbasic_error_t const & eh) {
             ec = eh.code();
             xwarn("%s", (std::string{typeid(T).name()} + "::from_string failed").c_str());

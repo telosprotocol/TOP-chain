@@ -397,12 +397,13 @@ std::string xissue_detail::to_string() const {
     return std::string((const char *)stream.data(), stream.size());
 }
 
-void xissue_detail::from_string(std::string const & s) {
+int32_t xissue_detail::from_string(std::string const & s) {
     base::xstream_t _stream(base::xcontext_t::instance(), (uint8_t *)s.data(), (int32_t)s.size());
     int32_t ret = serialize_from(_stream);
     if (ret <= 0) {
         xerror("serialize_from_string fail. ret=%d,bin_data_size=%d", ret, s.size());
     }
+    return ret;
 }
 
 int32_t xissue_detail::do_write(base::xstream_t & stream) const {

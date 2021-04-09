@@ -75,12 +75,13 @@ std::string xtableblock_proposal_input_t::to_string() const {
     return std::string((const char *)stream.data(), stream.size());
 }
 
-void xtableblock_proposal_input_t::from_string(std::string const & str) {
+int32_t xtableblock_proposal_input_t::from_string(std::string const & str) {
     base::xstream_t _stream(base::xcontext_t::instance(), (uint8_t *)str.data(), (int32_t)str.size());
     int32_t ret = serialize_from(_stream);
     if (ret <= 0) {
         xerror("serialize_from_string fail. ret=%d,bin_data_size=%d", ret, str.size());
     }
+    return ret;
 }
 
 std::string xtableblock_proposal_input_t::dump() const {

@@ -62,7 +62,7 @@ class xtableblock_proposal_input_t : public xserializable_based_on<void>, public
     const std::vector<xunit_proposal_input_t> & get_unit_inputs() const {return m_unit_inputs;}
 
     std::string to_string() const override;
-    void from_string(std::string const & str) override;
+    int32_t from_string(std::string const & str) override;
     using xenable_to_string_t<xtableblock_proposal_input_t>::to_string;
     using xenable_to_string_t<xtableblock_proposal_input_t>::from_string;
 
