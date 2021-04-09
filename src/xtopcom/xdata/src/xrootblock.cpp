@@ -163,7 +163,7 @@ void xrootblock_t::dump_block_data(xJson::Value & json) const {
     auto genesis_accounts = get_seed_nodes();
     for (auto info : genesis_accounts) {
         xJson::Value accounts_info;
-        accounts_info["node_account_address"] = info.m_account;
+        accounts_info["node_account_address"] = info.m_account.value();
         accounts_info["node_public_key"] = info.m_publickey.to_string();
         json["genesis_accounts"].append(accounts_info);
     }
@@ -207,7 +207,7 @@ std::map<std::string, uint64_t> xrootblock_t::get_all_genesis_accounts() {
     std::map<std::string, uint64_t> accounts = m_instance->get_rootblock_input()->get_account_balances();
     const auto & seed_nodes = m_instance->get_rootblock_input()->get_seed_nodes();
     for (auto & v : seed_nodes) {
-        accounts[v.m_account] = 0;
+        accounts[v.m_account.value()] = 0;
     }
     return accounts;
 }
@@ -215,7 +215,7 @@ std::map<std::string, uint64_t> xrootblock_t::get_all_genesis_accounts() {
 bool xrootblock_t::is_seed_node(const std::string & account) {
     const std::vector<node_info_t> & nodes = get_seed_nodes();
     for (auto & v : nodes) {
-        if (v.m_account == account) {
+        if (v.m_account.value() == account) {
             return true;
         }
     }

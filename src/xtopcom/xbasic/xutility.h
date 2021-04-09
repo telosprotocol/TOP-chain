@@ -134,7 +134,76 @@ get(std::pair<T, U> && pair) noexcept {
 //get(tuple<Types...> const && t) noexcept {
 //}
 
+// Stores a tuple of indices.  Used by tuple and pair, and by bind() to
+// extract the elements in a tuple.
+template <size_t... Indexes>
+struct xtop_index_tuple {
+    using next = xtop_index_tuple<Indexes..., sizeof...(Indexes)>;
+};
+
+template <size_t N>
+struct xtop_build_index_tuple {
+    using type = typename xtop_build_index_tuple<N - 1>::type::next;
+};
+
+template <>
+struct xtop_build_index_tuple<0> {
+    using type =  xtop_index_tuple<>;
+};
+
+/// Class template integer_sequence
+template<typename T, T... I>
+struct integer_sequence {
+    using value_type = T;
+    static constexpr size_t size() { return sizeof...(I); }
+};
+
+template<typename T, T N, typename ISeq = typename xtop_build_index_tuple<N>::type>
+struct xtop_make_integer_sequence;
+
+template<typename T, T N,  size_t... Idx>
+struct xtop_make_integer_sequence<T, N, xtop_index_tuple<Idx...>> {
+    static_assert(N >= 0, "Cannot make integer sequence of negative length" );
+
+    using type = integer_sequence<T, static_cast<T>(Idx)...>;
+};
+
+/// Alias template make_integer_sequence
+template<typename T, T N>
+using make_integer_sequence = typename xtop_make_integer_sequence<T, N>::type;
+
+/// Alias template index_sequence
+template<size_t... Idx>
+using index_sequence = integer_sequence<size_t, Idx...>;
+
+/// Alias template make_index_sequence
+template<size_t N>
+using make_index_sequence = make_integer_sequence<size_t, N>;
+
+/// Alias template index_sequence_for
+template<typename... Types>
+using index_sequence_for = make_index_sequence<sizeof...(Types)>;
+
 #else
+
+template <typename T, T... I>
+using integer_sequence = std::integer_sequence<T, I...>;
+
+/// Alias template make_integer_sequence
+template<typename T, T N>
+using make_integer_sequence = std::make_integer_sequence<T, N>;
+
+/// Alias template index_sequence
+template<size_t... Idx>
+using index_sequence = std::integer_sequence<size_t, Idx...>;
+
+/// Alias template make_index_sequence
+template<size_t N>
+using make_index_sequence = std::make_integer_sequence<size_t, N>;
+
+/// Alias template index_sequence_for
+template<typename... Types>
+using index_sequence_for = std::make_index_sequence<sizeof...(Types)>;
 
 template <typename T, typename U>
 constexpr

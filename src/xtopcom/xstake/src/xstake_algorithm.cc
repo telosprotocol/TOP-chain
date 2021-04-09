@@ -216,7 +216,7 @@ uint64_t xreg_node_info::archive_stake() const noexcept { return 0; }
 
 int32_t xreg_node_info::do_write(base::xstream_t & stream) const {
     const int32_t begin_pos = stream.size();
-    stream << m_account;
+    stream << m_account.value();
     stream << m_account_mortgage;
     ENUM_SERIALIZE(stream, m_registered_role);
     stream << m_vote_amount;
@@ -239,7 +239,9 @@ int32_t xreg_node_info::do_write(base::xstream_t & stream) const {
 
 int32_t xreg_node_info::do_read(base::xstream_t & stream) {
     const int32_t begin_pos = stream.size();
-    stream >> m_account;
+    std::string account;
+    stream >> account;
+    m_account = common::xaccount_address_t{account};
     stream >> m_account_mortgage;
     ENUM_DESERIALIZE(stream, m_registered_role);
     stream >> m_vote_amount;
@@ -389,6 +391,57 @@ xreg_node_info get_reg_info(observer_ptr<store::xstore_face_t> const & store, co
 
 }
 
+std::string xissue_detail::to_string() const {
+    base::xstream_t stream(base::xcontext_t::instance());
+    serialize_to(stream);
+    return std::string((const char *)stream.data(), stream.size());
+}
 
+int32_t xissue_detail::from_string(std::string const & s) {
+    base::xstream_t _stream(base::xcontext_t::instance(), (uint8_t *)s.data(), (int32_t)s.size());
+    int32_t ret = serialize_from(_stream);
+    if (ret <= 0) {
+        xerror("serialize_from_string fail. ret=%d,bin_data_size=%d", ret, s.size());
+    }
+    return ret;
+}
+
+int32_t xissue_detail::do_write(base::xstream_t & stream) const {
+    const int32_t begin_pos = stream.size();
+    stream << onchain_timer_round;
+    stream << m_zec_vote_contract_height;
+    stream << m_zec_workload_contract_height;
+    stream << m_zec_reward_contract_height;
+    stream << m_edge_reward_ratio;
+    stream << m_archive_reward_ratio;
+    stream << m_validator_reward_ratio;
+    stream << m_auditor_reward_ratio;
+    stream << m_vote_reward_ratio;
+    stream << m_governance_reward_ratio;
+    stream << m_auditor_group_count;
+    stream << m_validator_group_count;
+    MAP_OBJECT_SERIALIZE2(stream, m_node_rewards);
+    const int32_t end_pos = stream.size();
+    return (end_pos - begin_pos);
+}
+
+int32_t xissue_detail::do_read(base::xstream_t & stream) {
+    const int32_t begin_pos = stream.size();
+    stream >> onchain_timer_round;
+    stream >> m_zec_vote_contract_height;
+    stream >> m_zec_workload_contract_height;
+    stream >> m_zec_reward_contract_height;
+    stream >> m_edge_reward_ratio;
+    stream >> m_archive_reward_ratio;
+    stream >> m_validator_reward_ratio;
+    stream >> m_auditor_reward_ratio;
+    stream >> m_vote_reward_ratio;
+    stream >> m_governance_reward_ratio;
+    stream >> m_auditor_group_count;
+    stream >> m_validator_group_count;
+    MAP_OBJECT_DESERIALZE2(stream, m_node_rewards);
+    const int32_t end_pos = stream.size();
+    return (begin_pos - end_pos);
+}
 
 NS_END2

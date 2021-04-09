@@ -26,4 +26,22 @@ do_throw_error(std::error_code const & ec, std::string const & extra_what) {
     throw_exception(eh);
 }
 
+void throw_error(std::error_code const & ec) {
+    if (ec) {
+        do_throw_error(ec);
+    }
+}
+
+void throw_error(std::error_code const ec, char const * extra_what) {
+    if (ec) {
+        do_throw_error(ec, extra_what);
+    }
+}
+
+void throw_error(std::error_code const ec, std::string const & extra_what) {
+    if (ec) {
+        do_throw_error(ec, extra_what);
+    }
+}
+
 NS_END1

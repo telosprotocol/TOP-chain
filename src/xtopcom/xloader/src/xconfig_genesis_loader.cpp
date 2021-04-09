@@ -127,7 +127,7 @@ bool xconfig_genesis_loader_t::extract_genesis_para_seedNodes(const xJson::Value
             for (const auto& sub_member : sub_members) {
                 std::string publickey = arrayObj[sub_member].asString();
                 data::node_info_t node;
-                node.m_account = sub_member;
+                node.m_account = common::xaccount_address_t{ sub_member };
                 // node.m_publickey = base::xstring_utl::base64_decode(publickey);
                 node.m_publickey = xpublic_key_t{publickey};
                 genesis_nodes.push_back(node);

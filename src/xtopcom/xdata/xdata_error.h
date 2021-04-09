@@ -21,6 +21,7 @@ enum enum_xdata_error_type {
     xchain_error_action_param_memo_too_long,
     xchain_error_action_param_code_length_too_long,
     xchain_error_action_param_size_too_large,
+    xchain_error_action_param_invalid,
     xchain_error_action_type_invalid,
     xchain_error_action_action_name_invalid,
     xchain_error_lock_token_pubkey_size_beyond_limit,

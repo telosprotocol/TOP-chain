@@ -6,6 +6,8 @@
 #include "xcommon/xnode_id.h"
 #include "xutility/xhash.h"
 
+#include <cassert>
+
 NS_BEG2(top, common)
 
 xtop_node_id::xtop_node_id(char const * v)
@@ -41,7 +43,7 @@ xtop_node_id::operator!=(xtop_node_id const & other) const noexcept {
 void
 xtop_node_id::random() {
     auto ranbytes = random_base58_bytes(33);
-    m_id = u8"T-" + std::string{ std::begin(ranbytes), std::end(ranbytes) };
+    m_id = "T-" + std::string{ std::begin(ranbytes), std::end(ranbytes) };
 }
 
 std::size_t
@@ -57,6 +59,14 @@ xtop_node_id::size() const noexcept {
 char const *
 xtop_node_id::c_str() const noexcept {
     return this->m_id.c_str();
+}
+
+base::enum_vaccount_addr_type xtop_node_id::type() const noexcept {
+    if (m_type == base::enum_vaccount_addr_type::enum_vaccount_addr_type_invalid) {
+        m_type = base::xvaccount_t::get_addrtype_from_account(m_id);
+    }
+    assert(m_type != base::enum_vaccount_addr_type::enum_vaccount_addr_type_invalid);
+    return m_type;
 }
 
 std::int32_t
@@ -81,6 +91,14 @@ operator <<(top::base::xstream_t & stream, top::common::xnode_id_t const & node_
 std::int32_t
 operator >>(top::base::xstream_t & stream, top::common::xnode_id_t & node_id) {
     return node_id.serialize_from(stream);
+}
+
+std::int32_t operator<<(top::base::xbuffer_t & buffer, top::common::xnode_id_t const & node_id) {
+    return node_id.serialize_to(buffer);
+}
+
+std::int32_t operator>>(top::base::xbuffer_t & buffer, top::common::xnode_id_t & node_id) {
+    return node_id.serialize_from(buffer);
 }
 
 std::ostream &
