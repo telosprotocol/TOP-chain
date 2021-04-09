@@ -211,7 +211,7 @@ xtop_cluster_address::hash() const {
 
 std::string
 xtop_cluster_address::to_string() const {
-    return top::common::to_string(m_type) + u8"/" + m_xip.to_string();
+    return top::common::to_string(m_type) + "/" + m_xip.to_string();
 }
 
 std::int32_t
@@ -219,7 +219,7 @@ xtop_cluster_address::do_write(base::xstream_t & stream) const {
     try {
         return stream << codec::msgpack_encode(*this);
     } catch (...) {
-        xerror("[cluster address] do_write failed %s", to_string().c_str());
+        xerror("[cluster address] do_write stream failed %s", to_string().c_str());
         return -1;
     }
 }
@@ -232,7 +232,28 @@ xtop_cluster_address::do_read(base::xstream_t & stream) {
         *this = codec::msgpack_decode<xtop_cluster_address>(buffer);
         return size;
     } catch (...) {
-        xerror("[cluster address] do_read failed");
+        xerror("[cluster address] do_read stream failed");
+        return -1;
+    }
+}
+
+std::int32_t xtop_cluster_address::do_write(base::xbuffer_t & buffer) const {
+    try {
+        return buffer << codec::msgpack_encode(*this);
+    } catch (...) {
+        xerror("[cluster address] do_write buffer failed %s", to_string().c_str());
+        return -1;
+    }
+}
+
+std::int32_t xtop_cluster_address::do_read(base::xbuffer_t & buffer) {
+    try {
+        xbyte_buffer_t bytes;
+        auto const size = buffer >> bytes;
+        *this = codec::msgpack_decode<xtop_cluster_address>(bytes);
+        return size;
+    } catch (...) {
+        xerror("[cluster address] do_read buffer failed");
         return -1;
     }
 }
@@ -245,6 +266,16 @@ operator<<(base::xstream_t & stream, xtop_cluster_address const & o) {
 std::int32_t
 operator>>(base::xstream_t & stream, xtop_cluster_address & o) {
     return o.do_read(stream);
+}
+
+std::int32_t
+operator<<(base::xbuffer_t & buffer, xtop_cluster_address const & o) {
+    return o.do_write(buffer);
+}
+
+std::int32_t
+operator>>(base::xbuffer_t & buffer, xtop_cluster_address & o) {
+    return o.do_read(buffer);
 }
 
 xtop_account_election_address::xtop_account_election_address(xaccount_address_t const & account, xslot_id_t const & slot_id)
