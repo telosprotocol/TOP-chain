@@ -108,13 +108,13 @@ public:
     void
     swap(xtop_cluster_address & other) noexcept;
 
-    friend
-    std::int32_t
-    operator <<(base::xstream_t & stream, xtop_cluster_address const & o);
+    friend std::int32_t operator <<(base::xstream_t & stream, xtop_cluster_address const & o);
 
-    friend
-    std::int32_t
-    operator >>(base::xstream_t & stream, xtop_cluster_address & o);
+    friend std::int32_t operator >>(base::xstream_t & stream, xtop_cluster_address & o);
+
+    friend std::int32_t operator <<(base::xbuffer_t & stream, xtop_cluster_address const & o);
+
+    friend std::int32_t operator >>(base::xbuffer_t & stream, xtop_cluster_address & o);
 
 private:
     std::int32_t
@@ -122,15 +122,18 @@ private:
 
     std::int32_t
     do_read(base::xstream_t & stream);
+
+    std::int32_t do_write(base::xbuffer_t & buffer) const;
+    std::int32_t do_read(base::xbuffer_t & buffer);
 };
 using xcluster_address_t = xtop_cluster_address;
 using xsharding_address_t = xcluster_address_t;
+using xgroup_address_t = xtop_cluster_address;
 
-std::int32_t
-operator <<(base::xstream_t & stream, xtop_cluster_address const & o);
-
-std::int32_t
-operator >>(base::xstream_t & stream, xtop_cluster_address & o);
+std::int32_t operator <<(base::xstream_t & stream, xcluster_address_t const & o);
+std::int32_t operator >>(base::xstream_t & stream, xcluster_address_t & o);
+std::int32_t operator <<(base::xbuffer_t & buffer, xcluster_address_t const & o);
+std::int32_t operator >>(base::xbuffer_t & buffer, xcluster_address_t & o);
 
 class xtop_account_election_address final : public xhashable_t<xtop_account_election_address>
                                           , public xenable_to_string_t<xtop_account_election_address>{

@@ -6,7 +6,7 @@
 
 #include "xbasic/xserializable_based_on.h"
 #include "xbasic/xobject_ptr.h"
-#include "xcommon/xip.h"
+#include "xcommon/xaddress.h"
 #include "xdata/xblock.h"
 
 #include <cstdint>
@@ -80,7 +80,7 @@ int32_t operator<<(base::xbuffer_t & buffer, xgroup_related_statistics_data_t co
 /// @brief Statistics data hold by all groups in one election round.
 struct xtop_election_related_statistics_data : public xserializable_based_on<void> {
     /// @brief Statistics data grouped by the group id;
-    std::map<common::xgroup_id_t, xgroup_related_statistics_data_t> group_statistics_data;
+    std::map<common::xgroup_address_t, xgroup_related_statistics_data_t> group_statistics_data;
 
 private:
     int32_t do_read(base::xstream_t & stream) override;
