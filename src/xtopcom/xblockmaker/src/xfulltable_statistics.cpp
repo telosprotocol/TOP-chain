@@ -23,12 +23,12 @@ static void tableblock_statistics_handle(const xvip2_t leader_xip, const uint32_
         it_height = ret.first;
     }
     // gid
-    uint8_t group_idx = uint8_t(get_group_id_from_xip2(leader_xip));
-    common::xgroup_id_t group_id = common::xgroup_id_t{group_idx};
-    auto it_group = it_height->second.group_statistics_data.find(group_id);
+    auto group_addr = common::xgroup_address_t{ common::xip_t{leader_xip.low_addr} };
+    // common::xgroup_id_t group_id = common::xgroup_id_t{group_idx};
+    auto it_group = it_height->second.group_statistics_data.find(group_addr);
     if (it_group == it_height->second.group_statistics_data.end()) {
         xgroup_related_statistics_data_t group_related_data;
-        std::pair<std::map<common::xgroup_id_t, xgroup_related_statistics_data_t>::iterator, bool> ret = it_height->second.group_statistics_data.insert(std::make_pair(group_id, group_related_data));
+        auto ret = it_height->second.group_statistics_data.insert(std::make_pair(group_addr, group_related_data));
         it_group = ret.first;
     }
     // nid
@@ -42,12 +42,12 @@ static void tableblock_statistics_handle(const xvip2_t leader_xip, const uint32_
     it_group->second.account_statistics_data[slot_idx].block_data.transaction_count += txs_count;
     // vote
     it_group->second.account_statistics_data[slot_idx].vote_data.vote_count += vote_num;
-    xdbg("[tableblock_statistics] xip: [%lu, %lu], block_height: %lu, group_id: %u, slot_id: %u, "
+    xdbg("[tableblock_statistics] xip: [%lu, %lu], block_height: %lu, group_addr: %s, slot_id: %u, "
         "work add block_count: %u, block_count: %u, add txs_count %u, transaction_count: %u, add vote count: %u, vote_count: %u",
             leader_xip.high_addr,
             leader_xip.low_addr,
             block_height,
-            group_idx,
+            group_addr.to_string().c_str(),
             slot_idx,
             1,
             it_group->second.account_statistics_data[slot_idx].block_data.block_count,
