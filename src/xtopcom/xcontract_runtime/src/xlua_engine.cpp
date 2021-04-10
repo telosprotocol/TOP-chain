@@ -27,10 +27,18 @@
 #include "xbasic/xscope_executer.h"
 #include "xcontract_runtime/xerror/xerror.h"
 #include "xcontract_runtime/xuser/xlua/xlua_api.h"
+
+#if defined(__clang__)
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wgnu-zero-variadic-macro-arguments"
+#endif
+
 #include "xcontract_runtime/xvm/xvm_define.h"
+
+#if defined(__clang__)
 #pragma clang diagnostic pop
+#endif
+
 #include "xcontract_common/xcontract_state.h"
 #include "xcontract_common/xcontract_execution_context.h"
 
