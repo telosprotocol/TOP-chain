@@ -375,7 +375,7 @@ bool    xtable_maker_t::load_table_blocks_from_last_full(const xblock_ptr_t & pr
     const std::string & account = prev_block->get_account();
     uint64_t height = begin_height;
     while (height < end_height) {
-        base::xauto_ptr<base::xvblock_t> _block = get_blockstore()->load_block_object(account, height);
+        base::xauto_ptr<base::xvblock_t> _block = get_blockstore()->load_block_object(base::xvaccount_t(account), height, 0, true);
         if (_block == nullptr) {
             xerror("xfulltable_builder_t::load_table_blocks_from_last_full fail-load block.account=%s,height=%ld", account.c_str(), height);
             return false;

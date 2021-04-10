@@ -4,7 +4,7 @@
 
 #include <string>
 #include "xbase/xutl.h"
-#include "xbase/xvledger.h"
+// TODO(jimmy) #include "xbase/xvledger.h"
 #include "xdata/xtableblock.h"
 #include "xdata/xlightunit.h"
 #include "xdata/xrootblock.h"
@@ -226,11 +226,11 @@ xblock_ptr_t xtable_block_t::create_whole_unit(const std::string & header,
                                                     const std::string & output,
                                                     const std::string & output_res) {
     // recreate whole block
-    base::xauto_ptr<base::xvheader_t> _header = base::xvblockstore_t::create_header_object(header);
+    base::xauto_ptr<base::xvheader_t> _header = base::xvblock_t::create_header_object(header);
     xassert(_header != nullptr);
-    base::xauto_ptr<base::xvinput_t> _input = base::xvblockstore_t::create_input_object(input);
+    base::xauto_ptr<base::xvinput_t> _input = base::xvblock_t::create_input_object(input);
     xassert(_input != nullptr);
-    base::xauto_ptr<base::xvoutput_t> _output = base::xvblockstore_t::create_output_object(output);
+    base::xauto_ptr<base::xvoutput_t> _output = base::xvblock_t::create_output_object(output);
     xassert(_output != nullptr);
     base::xauto_ptr<xblockcert_t> qcert = new xblockcert_t(_header->get_account(), _header->get_height());
     qcert->set_consensus_flag(base::enum_xconsensus_flag_extend_cert);

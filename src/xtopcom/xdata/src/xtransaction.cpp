@@ -16,7 +16,7 @@
 #include "xdata/xgenesis_data.h"
 #include "xdata/xmemcheck_dbg.h"
 #include "xvm/manager/xcontract_address_map.h"
-#include "xbase/xvledger.h"
+// TODO(jimmy) #include "xbase/xvledger.h"
 
 #include "xbasic/xversion.h"
 #include "xdata/xdata_defines.h"

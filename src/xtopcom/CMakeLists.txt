@@ -4,6 +4,7 @@ add_compile_options(-static)
 
 add_subdirectory(xcodec)
 add_subdirectory(xbasic)
+add_subdirectory(xvledger)
 add_subdirectory(xconfig)
 add_subdirectory(xloader)
 add_subdirectory(xelection)

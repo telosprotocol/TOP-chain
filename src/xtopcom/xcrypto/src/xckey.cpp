@@ -8,7 +8,7 @@
 #include "xbase/xutl.h"
 #include "xcrypto/xckey.h"
 #include "xutility/xhash.h"
-#include "xbase/xvledger.h"
+#include "xvledger/xvaccount.h"
 
 extern "C"
 {

@@ -184,7 +184,7 @@ TEST_F(test_new_block, lightunit_2) {
 
     std::string block_object_bin;
     lightunit1->serialize_to_string(block_object_bin);
-    base::xvblock_t* new_block = base::xvblockstore_t::create_block_object(block_object_bin);
+    base::xvblock_t* new_block = base::xvblock_t::create_block_object(block_object_bin);
     xlightunit_block_t* lightunit1_recv = (xlightunit_block_t*)new_block;
     xassert(lightunit1_recv != NULL);
     lightunit1_recv->set_input_resources(lightunit1->get_input()->get_resources_data());
@@ -867,7 +867,7 @@ TEST_F(test_new_block, block_serialize_1) {
     ASSERT_TRUE(next_block->get_input()->get_resources_data().empty() == next_block->get_input()->get_resources_hash().empty());
     ASSERT_TRUE(next_block->get_output()->get_resources_data().empty() == next_block->get_output()->get_resources_hash().empty());
 
-    base::xauto_ptr<base::xvblock_t> _sync_block(base::xvblockstore_t::create_block_object(block_object_bin));
+    base::xauto_ptr<base::xvblock_t> _sync_block(base::xvblock_t::create_block_object(block_object_bin));
     ASSERT_NE(_sync_block, nullptr);
     ASSERT_TRUE(_sync_block->is_valid(false));
     ASSERT_TRUE(_sync_block->set_input_resources(input_bin));
@@ -919,7 +919,7 @@ TEST_F(test_new_block, block_serialize_3) {
     ASSERT_TRUE(next_block->get_input()->get_resources_hash().empty());
     ASSERT_TRUE(next_block->get_output()->get_resources_hash().empty());
 
-    base::xauto_ptr<base::xvblock_t> _sync_block(base::xvblockstore_t::create_block_object(block_object_bin));
+    base::xauto_ptr<base::xvblock_t> _sync_block(base::xvblock_t::create_block_object(block_object_bin));
     ASSERT_NE(_sync_block, nullptr);
     ASSERT_TRUE(_sync_block->is_valid(false));
     ASSERT_TRUE(_sync_block->set_input_resources(input_bin));

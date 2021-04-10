@@ -27,7 +27,8 @@
 
 #endif
 
-#include "xbase/xvblock.h"
+#include "xvledger/xvblock.h"
+#include "xvledger/xvblockstore.h"
 
 #if defined(__clang__)
 #    pragma clang diagnostic pop

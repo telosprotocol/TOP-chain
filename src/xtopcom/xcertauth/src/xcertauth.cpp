@@ -579,7 +579,7 @@ namespace top
             base::enum_vcert_auth_result result = base::enum_vcert_auth_result::enum_verify_fail;
             if(target_cert->get_consensus_flags() & base::enum_xconsensus_flag_extend_cert) //by extend cert to verify
             {
-                base::xauto_ptr<base::xvqcert_t> extend_cert(base::xvblockstore_t::create_qcert_object(target_cert->get_extend_cert()));
+                base::xauto_ptr<base::xvqcert_t> extend_cert(base::xvblock_t::create_qcert_object(target_cert->get_extend_cert()));
                 if(extend_cert == nullptr)
                 {
                     xerror("xauthcontext_t_impl::verify_muti_sign,fail-invalid extend cert carried by cert:%s",target_cert->dump().c_str());

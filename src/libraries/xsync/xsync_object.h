@@ -19,7 +19,7 @@
 #include "xsyncbase/xsync_face.h"
 #include "xsync/xsync_event_dispatcher.h"
 #include "xvnetwork/xvhost_face.h"
-#include "xbase/xvledger.h"
+#include "xvledger/xvcnode.h"
 #include "xblockstore/xblockstore_face.h"
 #include "xsync/xsync_store.h"
 #include "xsync/xsync_ratelimit.h"
@@ -56,7 +56,7 @@ private:
     std::unique_ptr<sync::xblock_fetcher_t> m_block_fetcher{};
     std::unique_ptr<sync::xsync_gossip_t> m_sync_gossip{};
     std::unique_ptr<sync::xsync_on_demand_t> m_sync_on_demand{};
-    
+
     std::unique_ptr<sync::xsync_peer_keeper_t> m_peer_keeper{};
     std::unique_ptr<sync::xsync_behind_checker_t> m_behind_checker{};
     std::unique_ptr<sync::xsync_cross_cluster_chain_state_t> m_cross_cluster_chain_state{};

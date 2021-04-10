@@ -4,7 +4,7 @@
 //
 #include "xbase/xhash.h"
 #include "xbase/xutl.h"
-#include "xbase/xvledger.h"
+// TODO(jimmy) #include "xbase/xvledger.h"
 
 #include "xutility/xhash.h"
 #include "xunitblock.hpp"

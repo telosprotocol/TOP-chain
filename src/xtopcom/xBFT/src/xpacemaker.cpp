@@ -419,7 +419,7 @@ namespace top
             const std::string & latest_xclock_cert_bin = _evt_obj->_packet.get_xclock_cert();
             if(latest_xclock_cert_bin.empty() == false) //try to update clock cert
             {
-                base::xauto_ptr<base::xvqcert_t> _clock_cert_obj(base::xvblockstore_t::create_qcert_object(latest_xclock_cert_bin));
+                base::xauto_ptr<base::xvqcert_t> _clock_cert_obj(base::xvblock_t::create_qcert_object(latest_xclock_cert_bin));
                 if(_clock_cert_obj)
                 {
                     //note:#1 safe rule, always cleans up flags carried by peer
@@ -451,7 +451,7 @@ namespace top
                     const std::string & latest_vblock_cert_bin = _evt_obj->_packet.get_vblock_cert();
                     if(latest_vblock_cert_bin.empty() == false) //try to update hqc cert
                     {
-                        base::xauto_ptr<base::xvqcert_t>_vblock_cert_obj(base::xvblockstore_t::create_qcert_object(latest_vblock_cert_bin));
+                        base::xauto_ptr<base::xvqcert_t>_vblock_cert_obj(base::xvblock_t::create_qcert_object(latest_vblock_cert_bin));
                         if(_vblock_cert_obj)
                         {
                             //note:#1 safe rule, always cleans up flags carried by peer

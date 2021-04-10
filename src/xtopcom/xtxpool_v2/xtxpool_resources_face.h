@@ -8,6 +8,7 @@
 
 #include "xbase/xdata.h"
 #include "xbasic/xmemory.hpp"
+#include "xvledger/xvcertauth.h"
 #include "xstore/xstore_face.h"
 #include "xchain_timer/xchain_timer_face.h"
 #include "xindexstore/xindexstore_face.h"

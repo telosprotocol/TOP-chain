@@ -7,7 +7,7 @@ aux_source_directory(./src src_dir)
 add_library(xmbus STATIC ${src_dir})
 
 #add_dependencies(xmbus xvnetwork xbasic)
-target_link_libraries(xmbus PRIVATE xvnetwork xbasic)
+target_link_libraries(xmbus PRIVATE xvnetwork xbasic xvledger)
 
 if (BUILD_METRICS)
     #add_dependencies(xmbus xmetrics)

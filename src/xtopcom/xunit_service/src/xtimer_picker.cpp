@@ -39,7 +39,8 @@ xtimer_picker_t::xtimer_picker_t(base::xcontext_t &                             
     m_cur_view = last_block->get_viewid();
 
     // get latest cert clock for drop old tc timeout msg
-    auto last_clock_blk = get_vblockstore()->get_latest_cert_block(sys_contract_beacon_timer_addr);
+    base::xvaccount_t _timer_vaddress(sys_contract_beacon_timer_addr);
+    auto last_clock_blk = get_vblockstore()->get_latest_cert_block(_timer_vaddress);
     assert(last_clock_blk != nullptr);
     m_latest_cert_clock = last_clock_blk->get_clock();
     xinfo("xtimer_picker_t::xtimer_picker_t,create,this=%p,%s,engine_refcount=%d,latest_cert_clock=%" PRIu64 , this, last_block->dump().c_str(), auto_engine->get_refcount(), m_latest_cert_clock);

@@ -3,7 +3,7 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "xtestclock.hpp"
-#include "xbase/xvledger.h"
+#include "xvledger/xvblock.h"
 #include "xdata/xnative_contract_address.h"
 
 #ifdef __MAC_PLATFORM__
@@ -22,9 +22,8 @@ namespace top
             m_clock_account = sys_contract_beacon_timer_addr;
  
 #ifdef __MAC_PLATFORM__
-            store::xstore_face_t* _persist_db = new xstoredb_t();
             const std::string  default_path = std::string("/");
-            m_blockstore = store::xblockstorehub_t::instance().create_block_store(*_persist_db,default_path);
+            m_blockstore = store::get_vblockstore();
 #else
             m_blockstore = new xunitblockstore_t();
 #endif
@@ -32,8 +31,6 @@ namespace top
         
         xtestclocker_t::~xtestclocker_t()
         {
-            if(m_blockstore != NULL)
-                m_blockstore->release_ref();
         }
         
         base::xauto_ptr<base::xvblock_t>   xtestclocker_t::get_latest_clock()
@@ -61,7 +58,8 @@ namespace top
             clock_block->set_block_flag(base::enum_xvblock_flag_locked);
             clock_block->set_block_flag(base::enum_xvblock_flag_committed);
             
-            m_blockstore->store_block(clock_block);
+            base::xvaccount_t account(clock_block->get_account());
+            m_blockstore->store_block(account,clock_block);
             return clock_block;
         }
     };

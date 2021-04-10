@@ -127,6 +127,7 @@ void xcluster_query_manager::get_property(xjson_proc_t & json_proc) {
 
 void xcluster_query_manager::getBlock(xjson_proc_t & json_proc) {
     std::string owner = json_proc.m_request_json["params"]["account_addr"].asString();
+    base::xvaccount_t _owner_vaddress(owner);
     xdbg("account: %s", owner.c_str());
 
     std::string type = "height";
@@ -140,11 +141,11 @@ void xcluster_query_manager::getBlock(xjson_proc_t & json_proc) {
     if (type == "height") {
         uint64_t hi = std::stoull(height);
         xdbg("height: %llu", hi);
-        auto vb = m_block_store->load_block_object_without_cache(owner, hi);
+        auto vb = m_block_store->load_block_object(_owner_vaddress, hi, 0, true);
         xblock_t * bp = dynamic_cast<xblock_t *>(vb.get());
         result_json["value"] = m_bh.get_block_json(bp);
     } else if (type == "last") {
-        auto vb = m_block_store->get_latest_committed_block(owner);
+        auto vb = m_block_store->get_latest_committed_block(_owner_vaddress);
         xblock_t * bp = dynamic_cast<xblock_t *>(vb.get());
         result_json["value"] = m_bh.get_block_json(bp);
     }
@@ -154,7 +155,8 @@ void xcluster_query_manager::getBlock(xjson_proc_t & json_proc) {
 
 void xcluster_query_manager::getChainInfo(xjson_proc_t & json_proc) {
     xJson::Value jv;
-    auto vb = m_block_store->load_block_object_without_cache(sys_contract_beacon_timer_addr, 0);
+    base::xvaccount_t _timer_vaddress(sys_contract_beacon_timer_addr);
+    auto vb = m_block_store->load_block_object(_timer_vaddress, 0, 0, true);
     xblock_t * bp = static_cast<xblock_t *>(vb.get());
     if (bp != nullptr) {
         jv["first_timerblock_hash"] = bp->get_block_hash_hex_str();

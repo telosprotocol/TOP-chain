@@ -1,5 +1,5 @@
 #include "gtest/gtest.h"
-#include "xbase/xvblock.h"
+#include "xvledger/xvblock.h"
 #include "xBFT/xconsaccount.h"
 #include "xbase/xthread.h"
 #include "xcrypto/xckey.h"

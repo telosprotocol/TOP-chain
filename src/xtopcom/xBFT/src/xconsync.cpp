@@ -111,7 +111,7 @@ namespace top
                 base::xauto_ptr<xcspdu_fire>_event_obj(new xcspdu_fire(get_target_pdu_class()));
                 _event_obj->set_from_xip(from_addr);
                 _event_obj->set_to_xip(to_addr);
-                _event_obj->_packet.set_block_chainid(chainid);
+                _event_obj->_packet.set_block_chainid((uint32_t)chainid);
                 _event_obj->_packet.set_block_account(get_account());
                 _event_obj->_packet.set_block_height(proof_block_height);
                 _event_obj->_packet.set_block_viewid(proof_block_viewid);
@@ -168,7 +168,7 @@ namespace top
                 }
                 else if( (get_lock_block()->get_height() - packet.get_block_height()) < 128 )//search from blockstore at nearby locked block
                 {
-                    base::xauto_ptr<base::xvblock_t> proof_block = get_vblockstore()->load_block_object(*this, packet.get_block_height());
+                    base::xauto_ptr<base::xvblock_t> proof_block = get_vblockstore()->load_block_object(*this, packet.get_block_height(),0,false);
                     if(proof_block != nullptr)
                     {
                         if(  (proof_block->get_viewid()    == packet.get_block_viewid())
@@ -227,7 +227,8 @@ namespace top
             }
             else if( (get_lock_block()->get_height() - target_block_height) < 128 )//search from blockstore at nearby locked block
             {
-                base::xauto_ptr<base::xvblock_t> target_block = get_vblockstore()->load_block_object(*this, target_block_height);
+                bool full_load = (sync_targets & enum_xsync_target_block_input) | (sync_targets & enum_xsync_target_block_output);
+                base::xauto_ptr<base::xvblock_t> target_block = get_vblockstore()->load_block_object(*this, target_block_height,0,full_load);
                 if(target_block == nullptr)
                 {
                     xwarn("xBFTSyncdrv::handle_sync_request_msg,fail-found target block of height:%llu,at node=0x%llx",target_block_height,get_xip2_low_addr());
@@ -239,12 +240,6 @@ namespace top
                     xwarn("xBFTSyncdrv::handle_sync_request_msg,fail-unmatched local-block for packet=%s vs local-block=%s,at node=0x%llx",packet.dump().c_str(),target_block->dump().c_str(),get_xip2_low_addr());
                     return enum_xconsensus_error_bad_packet;
                 }
-
-                if( (sync_targets & enum_xsync_target_block_input) && (false == target_block->is_input_ready(true)) )
-                    get_vblockstore()->load_block_input(target_block.get());
-
-                if( (sync_targets & enum_xsync_target_block_output) && (false == target_block->is_output_ready(true)) )
-                    get_vblockstore()->load_block_output(target_block.get());
 
                 _local_block = target_block.get();
                 _local_block->add_ref(); //hold reference
@@ -317,7 +312,7 @@ namespace top
             }
 
             //step#2: veriry header/cert, input and output are consist with each others
-            base::xauto_ptr<base::xvblock_t> _sync_block(base::xvblockstore_t::create_block_object(_sync_respond_msg.get_block_object()));
+            base::xauto_ptr<base::xvblock_t> _sync_block(base::xvblock_t::create_block_object(_sync_respond_msg.get_block_object()));
             if( (!_sync_block) || (false == _sync_block->is_valid(false)) )
             {
                 xerror("xBFTSyncdrv::handle_sync_respond_msg,fail-invalid block from packet=%s,at node=0x%llx",packet.dump().c_str(),get_xip2_low_addr());

@@ -8,7 +8,7 @@
 #include "xmbus/xevent.h"
 #include "xvnetwork/xaddress.h"
 #include "xbasic/xobject_ptr.h"
-#include "xbase/xvblock.h"
+#include "xvledger/xvblock.h"
 
 NS_BEG2(top, mbus)
 

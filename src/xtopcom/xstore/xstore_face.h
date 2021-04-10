@@ -9,6 +9,7 @@
 #include <vector>
 
 #include "xdb/xdb_face.h"
+#include "xvledger/xvdbstore.h"
 #include "xbase/xobject.h"
 #include "xdata/xblock.h"
 #include "xdata/xblockchain.h"
@@ -21,7 +22,7 @@ namespace top { namespace store {
 
 using xdataobj_ptr_t = xobject_ptr_t<base::xdataobj_t>;
 
-class xstore_face_t : public base::xobject_t {
+class xstore_face_t : public base::xvdbstore_t {
  public:
     virtual mbus::xmessage_bus_face_t* get_mbus() = 0;
 

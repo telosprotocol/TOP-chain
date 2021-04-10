@@ -11,7 +11,7 @@
 #include "xmock_vnet.hpp"
 #include "xmock_vhost.hpp"
 
-#include "xbase/xvledger.h"
+// TODO(jimmy) #include "xbase/xvledger.h"
 #include "xblockstore/xblockstore_face.h"
 #include "xsync/xsync_object.h"
 #include "xbasic/xasio_io_context_wrapper.h"

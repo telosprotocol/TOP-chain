@@ -34,7 +34,7 @@ bool xproposal_maker_t::can_make_proposal(data::xblock_consensus_para_t & propos
         return false;
     }
 
-    base::xauto_ptr<base::xvblock_t> drand_block = get_blockstore()->get_latest_committed_block(sys_drand_addr);
+    base::xauto_ptr<base::xvblock_t> drand_block = get_blockstore()->get_latest_committed_block(base::xvaccount_t(sys_drand_addr));
     if (drand_block->get_clock() == 0) {
         xwarn("xproposal_maker_t::can_make_proposal fail-no valid drand. %s", proposal_para.dump().c_str());
         return false;
@@ -188,7 +188,7 @@ bool xproposal_maker_t::verify_proposal_drand_block(base::xvblock_t *proposal_bl
         return false;
     }
 
-    base::xauto_ptr<base::xvblock_t> _drand_vblock = get_blockstore()->load_block_object(sys_drand_addr, drand_height);
+    base::xauto_ptr<base::xvblock_t> _drand_vblock = get_blockstore()->load_block_object(base::xvaccount_t(sys_drand_addr), drand_height, 0, true);
     if (_drand_vblock == nullptr) {
         XMETRICS_PACKET_INFO("consensus_tableblock",
                             "fail_find_drand", proposal_block->dump(),

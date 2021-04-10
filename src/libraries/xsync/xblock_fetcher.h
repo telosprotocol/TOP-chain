@@ -14,7 +14,7 @@
 #include "xsync/xsync_message.h"
 #include "xsync/xsync_broadcast.h"
 #include "xmbus/xbase_sync_event_monitor.hpp"
-#include "xbase/xvledger.h"
+// TODO(jimmy) #include "xbase/xvledger.h"
 #include "xsync/xchain_block_fetcher.h"
 #include "xsync/xrole_chains_mgr.h"
 #include "xsync/xsync_v1_block_fetcher.h"
@@ -25,7 +25,7 @@ class xblock_fetcher_t;
 
 class xblock_fetcher_event_monitor_t : public mbus::xbase_sync_event_monitor_t {
 public:
-    xblock_fetcher_event_monitor_t(observer_ptr<mbus::xmessage_bus_face_t> const &mbus, 
+    xblock_fetcher_event_monitor_t(observer_ptr<mbus::xmessage_bus_face_t> const &mbus,
         observer_ptr<base::xiothread_t> const & iothread,
         xblock_fetcher_t* block_fetcher);
     bool filter_event(const mbus::xevent_ptr_t& e) override;

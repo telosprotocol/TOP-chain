@@ -28,6 +28,7 @@
 #include "xrouter/xrouter.h"
 #include "xstake/xstake_algorithm.h"
 #include "xstore/xstore_error.h"
+#include "xblockstore/xblockstore_face.h"
 #include "xvm/xsystem_contracts/deploy/xcontract_deploy.h"
 #include "xvm/manager/xcontract_manager.h"
 
@@ -50,7 +51,8 @@ xtop_application::xtop_application(common::xnode_id_t const & node_id, xpublic_k
   , m_elect_client{top::make_unique<elect::xelect_client_imp>()} {
     std::shared_ptr<db::xdb_face_t> db = db::xdb_factory_t::instance(XGET_CONFIG(db_path));
     m_store = store::xstore_factory::create_store_with_static_kvdb(db, make_observer(m_bus));
-    m_blockstore.attach(store::xblockstorehub_t::instance().get_block_store(*m_store, ""));
+    base::xvchain_t::instance().set_xdbstore(m_store.get());
+    m_blockstore.attach(store::get_vblockstore());
     m_indexstore = store::xindexstore_factory_t::create_indexstorehub(make_observer(m_store), make_observer(m_blockstore));
 #ifdef ENABLE_METRICS
     m_datastat = make_unique<datastat::xdatastat_t>(make_observer(m_bus));
@@ -230,7 +232,7 @@ xobject_ptr_t<store::xsyncvstore_t> xtop_application::syncstore() const noexcept
 }
 
 base::xauto_ptr<top::base::xvblock_t> xtop_application::last_logic_time() const {
-    return blockstore()->get_latest_committed_block(sys_contract_beacon_timer_addr);
+    return blockstore()->get_latest_committed_block(base::xvaccount_t(sys_contract_beacon_timer_addr));
 }
 
 bool xtop_application::check_rootblock() {
@@ -363,7 +365,7 @@ bool xtop_application::is_beacon_account() const noexcept {
     top::common::xnode_id_t node_id = top::common::xnode_id_t{user_params.account};
 
     std::string result;
-    base::xauto_ptr<base::xvblock_t> latest_vblock = m_blockstore->get_latest_committed_block(sys_contract_rec_elect_rec_addr);
+    base::xauto_ptr<base::xvblock_t> latest_vblock = m_blockstore->get_latest_committed_block(base::xvaccount_t(sys_contract_rec_elect_rec_addr));
     xblock_t* block = dynamic_cast<xblock_t*>(latest_vblock.get());
     auto property_names = data::election::get_property_name_by_addr(common::xaccount_address_t{sys_contract_rec_elect_rec_addr});
     common::xnetwork_id_t network_id{top::config::to_chainid(XGET_CONFIG(chain_name))};

@@ -2,7 +2,7 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "xbase/xvblock.h"
+#include "xvledger/xvblock.h"
 #include "xdata/xrootblock.h"
 #include "xunit_service/xtimer_block_maker.h"
 

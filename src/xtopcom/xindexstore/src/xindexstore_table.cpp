@@ -6,7 +6,7 @@
 #include <cinttypes>
 #include "xbasic/xmemory.hpp"
 #include "xstore/xstore_face.h"
-#include "xbase/xvledger.h"
+// TODO(jimmy) #include "xbase/xvledger.h"
 #include "xdata/xfull_tableblock.h"
 #include "xindexstore/src/xindexstore_table.h"
 
@@ -40,7 +40,7 @@ xtable_mbt_ptr_t xindexstore_table_t::query_last_mbt(const xblock_ptr_t & commit
     if (committed_block->get_block_class() == base::enum_xvblock_class_full) {
         last_full_block = committed_block;
     } else {
-        base::xauto_ptr<base::xvblock_t> latest_full_block = get_blockstore()->load_block_object(*this, last_full_height);
+        base::xauto_ptr<base::xvblock_t> latest_full_block = get_blockstore()->load_block_object(*this, last_full_height, base::enum_xvblock_flag_committed, true);
         if (latest_full_block == nullptr) {
             xerror("xindexstore_table_t::get_account_index fail-load full block.table=%s,full_height=%" PRIu64 "",
                 get_account().c_str(), last_full_height);
@@ -127,15 +127,11 @@ bool  xindexstore_table_t::get_account_basic_info(const std::string & account, x
         return false;
     }
 
-    auto _load_block = get_blockstore()->load_block_object(account, account_index.get_latest_unit_height());
+    base::xvaccount_t _account_vaddress(account);
+    auto _load_block = get_blockstore()->load_block_object(_account_vaddress, account_index.get_latest_unit_height(), base::enum_xvblock_flag_committed, true);
     if (_load_block == nullptr) {
         xwarn("xindexstore_table_t::get_account_basic_info fail-load block,account=%s,height=%" PRIu64 "",
             account.c_str(), account_index.get_latest_unit_height());
-        return false;
-    }
-    if (!_load_block->check_block_flag(base::enum_xvblock_flag_committed)) {
-        xwarn("xindexstore_table_t::get_account_basic_info fail-not execute block,block=%s",
-            _load_block->dump().c_str());
         return false;
     }
 

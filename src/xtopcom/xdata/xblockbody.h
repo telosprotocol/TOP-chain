@@ -12,7 +12,7 @@
 #include "xbasic/xobject_ptr.h"
 #include "xmetrics/xmetrics.h"
 #include "xbase/xdata.h"
-#include "xbase/xvblock.h"
+#include "xvledger/xvblock.h"
 #include "xutility/xmerkle.hpp"
 #include "xdata/xdata_common.h"
 

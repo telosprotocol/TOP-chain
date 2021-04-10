@@ -10,6 +10,7 @@
 #include "xdata/xcons_transaction.h"
 #include "xindexstore/xindexstore_face.h"
 #include "xstore/xstore_face.h"
+#include "xvledger/xvcertauth.h"
 
 #include <string>
 #include <vector>

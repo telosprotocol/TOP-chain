@@ -7,7 +7,7 @@
 #include <queue>
 #include "xbase/xdata.h"
 #include "xbase/xobject.h"
-#include "xbase/xvblock.h"
+#include "xvledger/xvblock.h"
 
 namespace top
 {

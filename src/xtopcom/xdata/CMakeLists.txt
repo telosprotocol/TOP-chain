@@ -5,7 +5,7 @@ add_library(xdata STATIC ${src_dir})
 
 add_dependencies(xdata xconfig xutility xcommon xcrypto xbasic xxbase)
 
-target_link_libraries(xdata PRIVATE xconfig xutility xcommon xcrypto xbasic jsoncpp xxbase pthread)
+target_link_libraries(xdata PRIVATE xconfig xutility xcommon xcrypto xbasic xvledger jsoncpp xxbase pthread)
 
 if (XENABLE_TESTS)
     enable_testing()

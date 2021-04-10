@@ -20,7 +20,6 @@ namespace top
         {
             _certauth.add_ref();
             m_vcertauth_ptr = &_certauth;
-            _xdb.add_ref();
             m_vblockstore_ptr = &_xdb;
 
             xkinfo("xsyncvstore_t::create");
@@ -30,7 +29,6 @@ namespace top
         {
             xkinfo("xsyncvstore_t::destroy");
             m_vcertauth_ptr->release_ref();
-            m_vblockstore_ptr->release_ref();
         }
 
         bool  xsyncvstore_t::store_block(base::xvblock_t* target_block)  //cache and hold block
@@ -69,7 +67,8 @@ namespace top
                 target_block->set_block_flag(base::enum_xvblock_flag_committed);
             }
             #endif
-            auto res = get_vblockstore()->store_block(target_block);//store block with cert status and to let consensus know it first
+            base::xvaccount_t target_account(target_block->get_account());
+            auto res = get_vblockstore()->store_block(target_account,target_block);//store block with cert status and to let consensus know it first
             xdbg("xsyncvstore_t::store_block %s result:%d", target_block->dump().c_str(), res);
 #ifdef ENABLE_METRICS
             XMETRICS_COUNTER_INCREMENT("blockstore_sync_store_block", 1);
@@ -115,7 +114,7 @@ namespace top
                 target_block->set_block_flag(base::enum_xvblock_flag_committed);
             }
             #endif
-            auto res = get_vblockstore()->store_block(target_block); //store block with cert status and to let consensus know it first
+            auto res = get_vblockstore()->store_block(target_account,target_block); //store block with cert status and to let consensus know it first
             xdbg("xsyncvstore_t::store_block %s result:%d", target_block->dump().c_str(), res);
             return res;
         }

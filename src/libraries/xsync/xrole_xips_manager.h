@@ -14,7 +14,7 @@
 #include "xdata/xgenesis_data.h"
 #include "xrouter/xrouter.h"
 #include "xvnetwork/xvhost_face.h"
-#include "xbase/xvledger.h"
+// TODO(jimmy) #include "xbase/xvledger.h"
 
 NS_BEG2(top, sync)
 
