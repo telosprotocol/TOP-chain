@@ -9,7 +9,7 @@
 #include "xbase/xcontext.h"
 #include "xbase/xint.h"
 #include "xbase/xutl.h"
-#include "xbase/xvledger.h"
+// TODO(jimmy) #include "xbase/xvledger.h"
 #include "xbasic/xcrypto_key.h"
 #include "xbasic/xobject_ptr.h"
 #include "xbasic/xutility.h"

@@ -12,7 +12,7 @@
 #include "xbase/xcontext.h"
 #include "xbase/xlog.h"
 #include "xbase/xutl.h"
-#include "xbase/xvledger.h"
+// TODO(jimmy) #include "xbase/xvledger.h"
 #include "xbase/xhash.h"
 #include "xbasic/xmodule_type.h"
 #include "xbasic/xobject_ptr.h"
@@ -1195,6 +1195,12 @@ const std::string xstore::get_value(const std::string &key) const {
         return std::string();
     }
     return value;
+}
+
+bool  xstore::find_values(const std::string & key,std::vector<std::string> & values)//support wild search
+{
+    xassert(false);
+    return false;
 }
 
 bool  xstore::execute_block(base::xvblock_t* vblock) {

@@ -1,7 +1,7 @@
 #include "gtest/gtest.h"
 #include "tests/xblockstore_test/test_blockmock.hpp"
 #include "tests/xvnetwork/xdummy_vnetwork_driver.h"
-#include "xbase/xvledger.h"
+// TODO(jimmy) #include "xbase/xvledger.h"
 #include "xblockstore/xblockstore_face.h"
 #include "xdata/tests/test_blockutl.hpp"
 #include "xrpc/xcluster/xcluster_query_manager.h"

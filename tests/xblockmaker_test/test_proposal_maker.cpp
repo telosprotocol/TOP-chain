@@ -7,7 +7,7 @@
 #include "xstore/xaccount_context.h"
 #include "xblockstore/xblockstore_face.h"
 #include "xdata/xtransaction_maker.hpp"
-#include "xbase/xvblock.h"
+#include "xvledger/xvblock.h"
 #include "tests/mock/xdatamock_table.hpp"
 #include "tests/mock/xdatamock_tx.hpp"
 #include "tests/mock/xcertauth_util.hpp"

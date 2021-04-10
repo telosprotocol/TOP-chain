@@ -50,7 +50,7 @@ namespace top
             //get prev hqc block from proposal
             if(NULL == hqc) //from backup
             {
-                base::xblock_vector latest_certs = get_vblockstore()->query_block(*this, proposal_block->get_height() - 1);
+                base::xblock_vector latest_certs = get_vblockstore()->load_block_object(*this, proposal_block->get_height() - 1);
                 if(false == latest_certs.get_vector().empty())
                 {
                     for(auto it = latest_certs.get_vector().begin(); it != latest_certs.get_vector().end(); ++it)
@@ -84,7 +84,7 @@ namespace top
                     it_prev_block= it_cur_block;
                     if(it_cur_block->get_prev_block() == NULL)//xdb might have prev block,let us reload it
                     {
-                        base::xauto_ptr<base::xvblock_t> _block = get_vblockstore()->load_block_object(*this, it_cur_block->get_height() -1);
+                        base::xauto_ptr<base::xvblock_t> _block = get_vblockstore()->load_block_object(*this, it_cur_block->get_height() -1,0,false);
                         if(_block != nullptr)
                             it_cur_block = _block.get();//safe to assign,since account not be idle at this moment
                         else
@@ -99,7 +99,9 @@ namespace top
                     xwarn("xcsaccount_t::check_proposal,last related block=%s,at node=%" PRIu64 " ",it_prev_block->dump().c_str(),get_xip2_low_addr());
             }
             xwarn("xcsaccount_t::check_proposal,fail-verify for proposal=%s,at node=%" PRIu64 " ",proposal_block->dump().c_str(),get_xip2_low_addr());
-            return false;
+            
+            //since upper layer may do check whether ok to execute to this hiqhqc, so here just return true for any way
+            return true;
         }
         
         //return specific error code(enum_xconsensus_result_code) to let caller know reason

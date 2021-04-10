@@ -220,7 +220,7 @@ namespace top
             }
             else
             {
-                _peer_prev_block_cert = base::xvblockstore_t::create_qcert_object(packet.get_vblock_cert());
+                _peer_prev_block_cert = base::xvblock_t::create_qcert_object(packet.get_vblock_cert());
                 if(NULL == _peer_prev_block_cert)
                 {
                     xerror("xBFTdriver_t::handle_proposal_msg,fail-a empty cert of prev-block from packet=%s,at node=0x%llx",packet.dump().c_str(),get_xip2_low_addr());
@@ -233,7 +233,7 @@ namespace top
 
 
             //step#2: load proposal block and do safe check
-            base::xauto_ptr<base::xvblock_t> _peer_block(base::xvblockstore_t::create_block_object(_proposal_msg.get_block_object()));
+            base::xauto_ptr<base::xvblock_t> _peer_block(base::xvblock_t::create_block_object(_proposal_msg.get_block_object()));
             if( (!_peer_block) || (false == _peer_block->is_valid(false)) )
             {
                 xerror("xBFTdriver_t::handle_proposal_msg,fail-invalid proposal from packet=%s,at node=0x%llx",packet.dump().c_str(),get_xip2_low_addr());
@@ -310,7 +310,7 @@ namespace top
                 if(last_commit_block == nullptr)//connection might be closed possible,so not rely on it
                 {
                     //check at blockstore
-                    base::xauto_ptr<base::xvblock_t> _block = get_vblockstore()->load_block_object(*this, get_lock_block()->get_height() - 1);
+                    base::xauto_ptr<base::xvblock_t> _block = get_vblockstore()->load_block_object(*this, get_lock_block()->get_height() - 1,0,false);
                     if(_block == nullptr)
                     {
                         send_sync_request(to_addr,from_addr, (get_lock_block()->get_height() - 1),get_lock_block()->get_last_block_hash(),_peer_prev_block_cert,(_peer_block->get_height() - 1),event_obj->get_clock() + 2,get_lock_block()->get_chainid());
@@ -430,7 +430,7 @@ namespace top
             }
 
             //step#5: load qcert from bin data and do check
-            base::xauto_ptr<base::xvqcert_t> _voted_cert(base::xvblockstore_t::create_qcert_object(_vote_msg.get_justify_source()));
+            base::xauto_ptr<base::xvqcert_t> _voted_cert(base::xvblock_t::create_qcert_object(_vote_msg.get_justify_source()));
             if(!_voted_cert) //carry invalid certificaiton of block
             {
                 xerror("xBFTdriver_t::handle_vote_msg,fail-invalid justify source for packet=%s,at node=0x%llx", packet.dump().c_str(),get_xip2_low_addr());
@@ -550,7 +550,7 @@ namespace top
             }
 
             //step#3: load cert object from bin data and do check
-            base::xauto_ptr<base::xvqcert_t> _peer_commit_cert(base::xvblockstore_t::create_qcert_object(packet.get_vblock_cert()));
+            base::xauto_ptr<base::xvqcert_t> _peer_commit_cert(base::xvblock_t::create_qcert_object(packet.get_vblock_cert()));
             if(!_peer_commit_cert) //carry invalid cert for commit
             {
                 xwarn_err("xBFTdriver_t::handle_commit_msg,fail-create_qcert_object for packet=%s,at node=0x%llx",packet.dump().c_str(),get_xip2_low_addr());

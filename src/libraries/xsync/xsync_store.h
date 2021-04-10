@@ -8,9 +8,9 @@
 #include "xdata/xblock.h"
 #include "xstore/xstore_face.h"
 #include "xbasic/xlru_cache.h"
-#include "xbase/xvledger.h"
+// TODO(jimmy) #include "xbase/xvledger.h"
 #include "xblockstore/xblockstore_face.h"
-#include "xbase/xvblock.h"
+#include "xvledger/xvblock.h"
 #include "xblockstore/xsyncvstore_face.h"
 #include "xsyncbase/xsync_policy.h"
 

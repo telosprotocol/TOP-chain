@@ -10,6 +10,8 @@
 #include <thread>
 #include "xbasic/xns_macro.h"
 #include "xmbus/xevent_queue.h"
+#include "xvledger/xveventbus.h"
+#include "xvledger/xvbindex.h"
 
 NS_BEG2(top, mbus)
 
@@ -33,7 +35,7 @@ private:
     xmessage_bus_t* m_message_bus;
 };
 
-class xtop_message_bus_face {
+class xtop_message_bus_face: public base::xveventbus_t {
 public:
     XDECLARE_DEFAULTED_DEFAULT_CONSTRUCTOR(xtop_message_bus_face);
     XDECLARE_DELETED_COPY_DEFAULTED_MOVE_SEMANTICS(xtop_message_bus_face);
@@ -44,7 +46,6 @@ public:
     virtual uint32_t add_listener(int major_type, xevent_queue_cb_t cb) = 0;
     virtual void remove_listener(int major_type, uint32_t id) = 0;
 
-    virtual void push_event(const xevent_ptr_t& e) = 0;
     virtual void clear() = 0;
 
     virtual int size() = 0;
@@ -76,6 +77,10 @@ public:
     int listeners_size();
     xevent_queue_ptr_t get_queue(int major_type);
 
+    //XTODO,add implmentation for below
+    virtual xevent_ptr_t  create_event_for_store_index_to_db(base::xvbindex_t * target_block) override;
+    virtual xevent_ptr_t  create_event_for_store_block_to_db(base::xvblock_t * target_block) override;
+    
 private:
     std::vector<xevent_queue_ptr_t> m_queues;
     xmessage_bus_timer_t m_timer;

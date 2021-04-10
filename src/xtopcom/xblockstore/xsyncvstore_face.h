@@ -3,7 +3,9 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #pragma once
-#include "xbase/xvledger.h"
+#include "xvledger/xvcertauth.h"
+#include "xvledger/xvledger.h"
+#include "xvledger/xvblockstore.h"
 
 namespace top
 {

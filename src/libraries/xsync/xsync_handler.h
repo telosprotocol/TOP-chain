@@ -15,7 +15,7 @@
 #include "xsync/xsync_message.h"
 #include "xdata/xdatautil.h"
 #include "xdata/xblock.h"
-#include "xbase/xvledger.h"
+// TODO(jimmy) #include "xbase/xvledger.h"
 #include "xsync/xsession.h"
 #include "xsync/xrole_chains_mgr.h"
 #include "xbase/xdata.h"
@@ -35,7 +35,7 @@
 
 NS_BEG2(top, sync)
 
-using xsync_handler_netmsg_callback = std::function<void(uint32_t, const vnetwork::xvnode_address_t &, const vnetwork::xvnode_address_t &, const xsync_message_header_ptr_t &, base::xstream_t &, xtop_vnetwork_message::hash_result_type, int64_t)>; 
+using xsync_handler_netmsg_callback = std::function<void(uint32_t, const vnetwork::xvnode_address_t &, const vnetwork::xvnode_address_t &, const xsync_message_header_ptr_t &, base::xstream_t &, xtop_vnetwork_message::hash_result_type, int64_t)>;
 
 class xsync_handler_t {
 public:
@@ -188,7 +188,7 @@ private:
         base::xstream_t &stream,
         xtop_vnetwork_message::hash_result_type msg_hash,
         int64_t recv_time);
-    
+
     void handle_chain_snapshot_request(uint32_t msg_size, const vnetwork::xvnode_address_t &from_address,
     const vnetwork::xvnode_address_t &network_self,
     const xsync_message_header_ptr_t &header,

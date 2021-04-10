@@ -6,7 +6,7 @@
 
 #include "xbasic/xobject_ptr.h"
 #include "xcommon/xip.h"
-#include "xbase/xvledger.h"
+// TODO(jimmy) #include "xbase/xvledger.h"
 #include "xdata/xblock.h"
 #include "xdata/xblock_statistics_data.h"
 

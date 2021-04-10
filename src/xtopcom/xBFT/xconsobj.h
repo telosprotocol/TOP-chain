@@ -7,8 +7,9 @@
 #include <queue>
 #include "xbase/xcontext.h"
 #include "xbase/xthread.h"
-#include "xbase/xvledger.h"
-#include "xbase/xvblock.h"
+#include "xvledger/xvledger.h"
+#include "xvledger/xvblock.h"
+#include "xvledger/xvcertauth.h"
 #include "xconsevent.h"
 #include "xconspdu.h"
 

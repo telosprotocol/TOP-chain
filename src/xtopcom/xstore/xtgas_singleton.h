@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "xbase/xvledger.h"
+// TODO(jimmy) #include "xbase/xvledger.h"
 #include "xstake/xstake_algorithm.h"
 
 NS_BEG2(top, store)

@@ -7,31 +7,26 @@
 #include "xbase/xcontext.h"
 #include "xbase/xthread.h"
 #include "xvblockhub.h"
-#include "xvtcaccount.h"
 #include "xvunithub.h"
-
-// #ifndef __MAC_PLATFORM__
-    #include "xdata/xnative_contract_address.h"
-// #endif
 
 namespace top
 {
     namespace store
     {
-        bool  xvblockstore_impl::init_store(base::xcontext_t &_context)//do initialize for all store objects
-        {
-            xblockacct_t::init_account(_context);//let account has chance to initialize
-            return true;
-        }
+        #define LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account_vid) \
+            if(is_close())\
+            {\
+                xwarn_err("xvblockstore has closed at store_path=%s",m_store_path.c_str());\
+                return nullptr;\
+            }\
+            base::xvtable_t * target_table = base::xvchain_t::instance().get_table(account_vid.get_xvid()); \
+            std::lock_guard<std::recursive_mutex> _dummy(target_table->get_lock()); \
+            base::xauto_ptr<xblockacct_t> account_obj(get_block_account(target_table,account_vid.get_address())); \
 
-        xvblockstore_impl::xvblockstore_impl(const std::string & blockstore_path,xstore_face_t & _persist_db,base::xcontext_t & _context,const int32_t target_thread_id)
-            :base::xiobject_t(_context,target_thread_id,base::enum_xobject_type_vbstore)
+        xvblockstore_impl::xvblockstore_impl(const std::string & blockstore_path,base::xcontext_t & _context,const int32_t target_thread_id)
+            :base::xvblockstore_t(_context,target_thread_id)
         {
-            m_persist_db = nullptr;
             m_raw_timer  = nullptr;
-
-            _persist_db.add_ref();
-            m_persist_db = &_persist_db;
 
             m_store_path = blockstore_path;
             xkinfo("xvblockstore_impl::create,store=%s,at thread=%d",m_store_path.c_str(),target_thread_id);
@@ -45,13 +40,11 @@ namespace top
             {
                 m_raw_timer->release_ref();
             }
-            m_persist_db->release_ref();
             xkinfo("xvblockstore_impl::destroy,store=%s",m_store_path.c_str());
         }
 
         bool    xvblockstore_impl::close(bool force_async) //must call close before release object,otherwise object never be cleanup
         {
-            base::xvblockstore_t::close(force_async);//mark close flag first
             base::xiobject_t::close(force_async); //since mutiple base class has close(),we need call seperately
 
             xkinfo("xvblockstore_impl::close,store=%s",m_store_path.c_str());
@@ -63,19 +56,6 @@ namespace top
         {
             xkinfo("xvblockstore_impl::on_object_close,store=%s",m_store_path.c_str());
 
-            for(int i = 0; i < enum_units_group_count; ++i)
-            {
-                m_group_locks[i].lock();
-
-                std::map<std::string,xblockacct_t*> & units = m_group_units[i];
-                for(auto it = units.begin(); it != units.end(); ++it)
-                {
-                    it->second->close();
-                    it->second->release_ref();
-                }
-                units.clear();
-                m_group_locks[i].unlock();
-            }
             if(m_raw_timer != nullptr)
             {
                 m_raw_timer->stop();
@@ -83,394 +63,246 @@ namespace top
             }
             return base::xiobject_t::on_object_close();
         }
-
-        uint32_t   xvblockstore_impl::cal_group_index_from_account(const std::string & account)
+    
+        base::xauto_ptr<xblockacct_t>  xvblockstore_impl::get_block_account(base::xvtable_t * target_table,const std::string & account_address)
         {
-            return base::xvaccount_t::get_ledgersubaddr_from_account(account) % enum_units_group_count;
-            //return base::xvaccount_t::get_index_from_account(account)% enum_units_group_count;
-        }
-
-        uint32_t   xvblockstore_impl::cal_group_index_from_account(const base::xvaccount_t & account)
-        {
-            return account.get_ledger_subaddr() % enum_units_group_count;
-            // return base::xvaccount_t::get_ledgersubaddr_from_account(account.get_address()) % enum_units_group_count;
-            //return  account.get_account_index()% enum_units_group_count;
-        }
-
-        xblockacct_t*     xvblockstore_impl::get_block_account(const uint32_t group_index,const std::string & account)
-        {
-            bool _create_new_account_obj = false;
-            std::map<std::string,xblockacct_t*>& units = m_group_units[group_index];
-            xblockacct_t* & _target_account = units[account];
-            if( (nullptr == _target_account) || (_target_account->is_close()) )
-            {
-                xblockacct_t * old_account_ptr = _target_account; //backup old one
-                if (account == sys_contract_beacon_timer_addr)
-                {
-                    _target_account = new xtcaccount_t(account,enum_account_idle_timeout_ms,m_store_path,*m_persist_db,*this);//replace by new account address
-                }
-                else
-                {
-                    _target_account = new xchainacct_t(account,enum_account_idle_timeout_ms,m_store_path,*m_persist_db,*this);//replace by new account address
-                }
-                _target_account->init();
-
-                if(old_account_ptr != nullptr) //after idle than 60 seconds
-                    old_account_ptr->release_ref();
-
-                _create_new_account_obj = true;
-            }
+            const xobject_t* exist_block_plugin = target_table->get_account_plugin_unsafe(account_address, base::enum_xvaccount_plugin_blockmgr);//exist_block_plugin has done add_ref by get_account_plugin_unsafe
+            if(exist_block_plugin != NULL)
+                return (xblockacct_t*)exist_block_plugin; //pass reference to xauto_ptr that release later
+ 
+            xblockacct_t * new_plugin = new xchainacct_t(account_address,enum_account_idle_timeout_ms,m_store_path);//replace by new account address;
+            new_plugin->init();
+            
             const uint64_t _timenow = get_time_now();//note:x86 guanrentee it is atomic access for integer
-            _target_account->set_last_access_time(_timenow);
-            if(_create_new_account_obj) //now ready to deliver to monitor thread
+            new_plugin->set_last_access_time(_timenow);
+            //now ready to deliver to monitor thread
             {
-                std::function<void(void*)> _add_new_account_job = [this](void* _account)->void{
-                    xblockacct_t * _new_account_obj = (xblockacct_t*)_account;
-                    m_monitor_expire.insert(std::multimap<uint64_t,xblockacct_t*>::value_type(_new_account_obj->get_idle_duration() + get_time_now(),_new_account_obj));
+                std::function<void(void*)> _add_new_plugin_job = [this](void* _account_plugin)->void{
+                    xblockacct_t * _new_obj = (xblockacct_t*)_account_plugin;
+                    m_monitor_expire.insert(std::multimap<uint64_t,xblockacct_t*>::value_type(_new_obj->get_idle_duration() + get_time_now(),_new_obj));
                 };
-                _target_account->add_ref();//add reference to hold
-                send_call(_add_new_account_job,(void*)_target_account);//send account ptr to store'thread to manage lifecycle
+                new_plugin->add_ref();//add reference to hold by m_monitor_expire
+                send_call(_add_new_plugin_job,(void*)new_plugin);//send account ptr to store'thread to manage lifecycle
             }
-            return _target_account;
+            target_table->set_account_plugin(account_address, new_plugin, base::enum_xvaccount_plugin_blockmgr);
+            return new_plugin;
         }
-
-        base::xauto_ptr<base::xvblock_t>    xvblockstore_impl::get_genesis_block(const std::string & account)
-        {
-            if(base::xvblockstore_t::is_close())
-            {
-                xwarn_err("xvblockstore_impl has closed at store_path=%s",m_store_path.c_str());
-                return nullptr;
-            }
-            const uint32_t index =  cal_group_index_from_account(account);
-            std::lock_guard<std::recursive_mutex> _dummy(m_group_locks[index]);//always use same lock for same account
-            return get_block_account(index,account)->get_genesis_block();
-        }
-        base::xauto_ptr<base::xvblock_t>    xvblockstore_impl::get_latest_cert_block(const std::string & account)
-        {
-            if(base::xvblockstore_t::is_close())
-            {
-                xwarn_err("xvblockstore_impl has closed at store_path=%s",m_store_path.c_str());
-                return nullptr;
-            }
-            const uint32_t index =  cal_group_index_from_account(account);
-            std::lock_guard<std::recursive_mutex> _dummy(m_group_locks[index]);
-            return get_block_account(index,account)->get_latest_cert_block();
-        }
-        base::xauto_ptr<base::xvblock_t>    xvblockstore_impl::get_latest_locked_block(const std::string & account)
-        {
-            if(base::xvblockstore_t::is_close())
-            {
-                xwarn_err("xvblockstore_impl has closed at store_path=%s",m_store_path.c_str());
-                return nullptr;
-            }
-            const uint32_t index =  cal_group_index_from_account(account);
-            std::lock_guard<std::recursive_mutex> _dummy(m_group_locks[index]);
-            return get_block_account(index,account)->get_latest_locked_block();
-        }
-        base::xauto_ptr<base::xvblock_t>    xvblockstore_impl::get_latest_committed_block(const std::string & account)
-        {
-            if(base::xvblockstore_t::is_close())
-            {
-                xwarn_err("xvblockstore_impl has closed at store_path=%s",m_store_path.c_str());
-                return nullptr;
-            }
-            const uint32_t index =  cal_group_index_from_account(account);
-            std::lock_guard<std::recursive_mutex> _dummy(m_group_locks[index]);
-            return get_block_account(index,account)->get_latest_committed_block();
-        }
-        base::xauto_ptr<base::xvblock_t>    xvblockstore_impl::get_latest_executed_block(const std::string & account)
-        {
-            if(base::xvblockstore_t::is_close())
-            {
-                xwarn_err("xvblockstore_impl has closed at store_path=%s",m_store_path.c_str());
-                return nullptr;
-            }
-            const uint32_t index =  cal_group_index_from_account(account);
-            std::lock_guard<std::recursive_mutex> _dummy(m_group_locks[index]);
-            return get_block_account(index,account)->get_latest_executed_block();
-        }
-
-        base::xauto_ptr<base::xvblock_t>    xvblockstore_impl::get_latest_connected_block(const std::string & account)
-        {
-            if(base::xvblockstore_t::is_close())
-            {
-                xwarn_err("xvblockstore_impl has closed at store_path=%s",m_store_path.c_str());
-                return nullptr;
-            }
-            const uint32_t index =  cal_group_index_from_account(account);
-            std::lock_guard<std::recursive_mutex> _dummy(m_group_locks[index]);
-            return get_block_account(index,account)->get_latest_connected_block();
-        }
-        base::xauto_ptr<base::xvblock_t>    xvblockstore_impl::get_genesis_current_block(const std::string & account)
-        {
-            if(base::xvblockstore_t::is_close())
-            {
-                xwarn_err("xvblockstore_impl has closed at store_path=%s",m_store_path.c_str());
-                return nullptr;
-            }
-            const uint32_t index =  cal_group_index_from_account(account);
-            std::lock_guard<std::recursive_mutex> _dummy(m_group_locks[index]);
-            return get_block_account(index,account)->get_genesis_current_block();
-        }
-        base::xauto_ptr<base::xvblock_t>  xvblockstore_impl::get_highest_sync_block(const std::string & account)
-        {
-            if(base::xvblockstore_t::is_close())
-            {
-                xwarn_err("xvblockstore_impl has closed at store_path=%s",m_store_path.c_str());
-                return nullptr;
-            }
-            const uint32_t index =  cal_group_index_from_account(account);
-            std::lock_guard<std::recursive_mutex> _dummy(m_group_locks[index]);
-            return get_block_account(index,account)->get_highest_sync_block();
-        }
-        base::xauto_ptr<base::xvblock_t>  xvblockstore_impl::get_latest_full_block(const std::string & account)//block has full state,genesis is a full block
-        {
-            if(base::xvblockstore_t::is_close())
-            {
-                xwarn_err("xvblockstore_impl has closed at store_path=%s",m_store_path.c_str());
-                return nullptr;
-            }
-            const uint32_t index =  cal_group_index_from_account(account);
-            std::lock_guard<std::recursive_mutex> _dummy(m_group_locks[index]);
-            return get_block_account(index,account)->get_latest_full_block();
-        }
-
-        base::xauto_ptr<base::xvblock_t>  xvblockstore_impl::get_latest_current_block(const std::string & account, bool ask_full_load)
-        {
-            if(base::xvblockstore_t::is_close())
-            {
-                xwarn_err("xvblockstore_impl has closed at store_path=%s",m_store_path.c_str());
-                return nullptr;
-            }
-            const uint32_t index =  cal_group_index_from_account(account);
-            std::lock_guard<std::recursive_mutex> _dummy(m_group_locks[index]);
-            return get_block_account(index,account)->get_latest_current_block(ask_full_load);
-        }
-
-        int xvblockstore_impl::get_cache_size(const std::string & account) {
-            const uint32_t index = cal_group_index_from_account(account);
-            return get_block_account(index,account)->get_cache_size();
-        }
-
-        //just load vblock object but not load header and body those need load seperately if need. create a new one if not found
-        base::xauto_ptr<base::xvblock_t>    xvblockstore_impl::load_block_object(const std::string & account,const uint64_t height,bool ask_full_load)
-        {
-            if(base::xvblockstore_t::is_close())
-            {
-                xwarn_err("xvblockstore_impl has closed at store_path=%s",m_store_path.c_str());
-                return nullptr;
-            }
-            const uint32_t index =  cal_group_index_from_account(account);
-            std::lock_guard<std::recursive_mutex> _dummy(m_group_locks[index]);
-            return get_block_account(index,account)->load_block_object(height,ask_full_load);
-        }
-
-        base::xauto_ptr<base::xvblock_t>    xvblockstore_impl::load_block_object_without_cache(const std::string & account,const uint64_t height,bool ask_full_load)
-        {
-            if(base::xvblockstore_t::is_close())
-            {
-                xwarn_err("xvblockstore_impl has closed at store_path=%s",m_store_path.c_str());
-                return nullptr;
-            }
-            const uint32_t index =  cal_group_index_from_account(account);
-            std::lock_guard<std::recursive_mutex> _dummy(m_group_locks[index]);
-            return get_block_account(index,account)->load_block_object_without_cache(height,ask_full_load, base::enum_xvblock_flag_locked);
-        }
-
-        bool  xvblockstore_impl::load_block_input(base::xvblock_t* block)     //load and assign input data into  xvblock_t
-        {
-            if(base::xvblockstore_t::is_close())
-            {
-                xwarn_err("xvblockstore_impl has closed at store_path=%s",m_store_path.c_str());
-                return false;
-            }
-            if(nullptr == block)
-                return false;
-
-            const uint32_t index =  cal_group_index_from_account(block->get_account());
-            std::lock_guard<std::recursive_mutex> _dummy(m_group_locks[index]);
-            return get_block_account(index,block->get_account())->load_block_input(block);
-        }
-
-        bool  xvblockstore_impl::load_block_output(base::xvblock_t* block)   //load and assign output data into xvblock_t
-        {
-            if(base::xvblockstore_t::is_close())
-            {
-                xwarn_err("xvblockstore_impl has closed at store_path=%s",m_store_path.c_str());
-                return false;
-            }
-            if(nullptr == block)
-                return false;
-
-            const uint32_t index =  cal_group_index_from_account(block->get_account());
-            std::lock_guard<std::recursive_mutex> _dummy(m_group_locks[index]);
-            return get_block_account(index,block->get_account())->load_block_output(block);
-        }
-
-        bool  xvblockstore_impl::store_block(base::xvblock_t* block)    //update old one or insert as new
-        {
-            if(base::xvblockstore_t::is_close())
-            {
-                xwarn_err("xvblockstore_impl has closed at store_path=%s",m_store_path.c_str());
-                return false;
-            }
-            if(nullptr == block)
-                return false;
-
-            const uint32_t index =  cal_group_index_from_account(block->get_account());
-            std::lock_guard<std::recursive_mutex> _dummy(m_group_locks[index]);
-            return get_block_account(index,block->get_account())->store_block(block);
-        }
-
-        bool  xvblockstore_impl::delete_block(base::xvblock_t* block)  //return error code indicate what is result
-        {
-            if(base::xvblockstore_t::is_close())
-            {
-                xwarn_err("xvblockstore_impl has closed at store_path=%s",m_store_path.c_str());
-                return false;
-            }
-            if(nullptr == block)
-                return false;
-
-            const uint32_t index =  cal_group_index_from_account(block->get_account());
-            std::lock_guard<std::recursive_mutex> _dummy(m_group_locks[index]);
-            return get_block_account(index,block->get_account())->delete_block(block);
-        }
+ 
         /////////////////////////////////new api with better performance by passing base::xvaccount_t
+        base::xvblock_t * xvblockstore_impl::load_block_from_index(xblockacct_t* target_account, base::xauto_ptr<base::xvbindex_t> target_index,const uint64_t target_height,bool ask_full_load)
+        {
+            if(!target_index)
+            {
+                if(target_height != 0)
+                    xwarn("xvblockstore_impl load_block_from_index() fail load index at height(%llu) for account(%s) at store(%s)",target_height,target_account->get_address().c_str(),m_store_path.c_str());
+                else
+                    xwarn("xvblockstore_impl load_block_from_index() fail load index of latest for account(%s) at store(%s)",target_account->get_address().c_str(),m_store_path.c_str());
+                return nullptr;
+            }
+            
+            if(target_index->get_this_block() == NULL)
+                target_account->load_block_object(target_index.get());
+            
+            //XTODO, add code to rebuild block from table block
+            
+            if(ask_full_load)
+            {
+                target_account->load_index_input(target_index.get());
+                target_account->load_index_output(target_index.get());
+            }
+            if(target_index->get_this_block() != NULL)
+            {
+                //transfer block flags from index to raw block here
+                xassert(target_index->get_block_flags() >= target_index->get_this_block()->get_block_flags());
+                target_index->get_this_block()->reset_block_flags(target_index->get_block_flags());
+                
+                target_index->get_this_block()->add_ref();//add reference before return
+                return target_index->get_this_block();
+            }
+            
+            xassert(0);
+            return nullptr;
+        }
+    
         base::xauto_ptr<base::xvblock_t>    xvblockstore_impl::get_genesis_block(const base::xvaccount_t & account)
         {
-            if(base::xvblockstore_t::is_close())
-            {
-                xwarn_err("xvblockstore_impl has closed at store_path=%s",m_store_path.c_str());
-                return nullptr;
-            }
-            const uint32_t index = cal_group_index_from_account(account);
-            std::lock_guard<std::recursive_mutex> _dummy(m_group_locks[index]);
-            return get_block_account(index,account.get_account())->get_genesis_block();
+            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
+            return load_block_from_index(account_obj.get(),account_obj->load_genesis_index(),0,false);
         }
         base::xauto_ptr<base::xvblock_t>    xvblockstore_impl::get_latest_cert_block(const base::xvaccount_t & account)
         {
-            if(base::xvblockstore_t::is_close())
-            {
-                xwarn_err("xvblockstore_impl has closed at store_path=%s",m_store_path.c_str());
-                return nullptr;
-            }
-            const uint32_t index = cal_group_index_from_account(account);
-            std::lock_guard<std::recursive_mutex> _dummy(m_group_locks[index]);
-            return get_block_account(index,account.get_account())->get_latest_cert_block();
+            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
+            return load_block_from_index(account_obj.get(),account_obj->load_latest_cert_index(),0,false);
         }
         base::xauto_ptr<base::xvblock_t>    xvblockstore_impl::get_latest_locked_block(const base::xvaccount_t & account)
         {
-            if(base::xvblockstore_t::is_close())
-            {
-                xwarn_err("xvblockstore_impl has closed at store_path=%s",m_store_path.c_str());
-                return nullptr;
-            }
-            const uint32_t index = cal_group_index_from_account(account);
-            std::lock_guard<std::recursive_mutex> _dummy(m_group_locks[index]);
-            return get_block_account(index,account.get_account())->get_latest_locked_block();
+            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
+            return load_block_from_index(account_obj.get(),account_obj->load_latest_locked_index(),0,false);
         }
         base::xauto_ptr<base::xvblock_t>    xvblockstore_impl::get_latest_committed_block(const base::xvaccount_t & account)
         {
-            if(base::xvblockstore_t::is_close())
-            {
-                xwarn_err("xvblockstore_impl has closed at store_path=%s",m_store_path.c_str());
-                return nullptr;
-            }
-            const uint32_t index = cal_group_index_from_account(account);
-            std::lock_guard<std::recursive_mutex> _dummy(m_group_locks[index]);
-            return get_block_account(index,account.get_account())->get_latest_committed_block();
+            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
+            return load_block_from_index(account_obj.get(),account_obj->load_latest_committed_index(),0,false);
         }
         base::xauto_ptr<base::xvblock_t>    xvblockstore_impl::get_latest_executed_block(const base::xvaccount_t & account)
         {
-            if(base::xvblockstore_t::is_close())
-            {
-                xwarn_err("xvblockstore_impl has closed at store_path=%s",m_store_path.c_str());
-                return nullptr;
-            }
-            const uint32_t index = cal_group_index_from_account(account);
-            std::lock_guard<std::recursive_mutex> _dummy(m_group_locks[index]);
-            return get_block_account(index,account.get_account())->get_latest_executed_block();
+            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
+            return load_block_from_index(account_obj.get(),account_obj->load_latest_executed_index(),0,false);
         }
+    
         base::xauto_ptr<base::xvblock_t>    xvblockstore_impl::get_latest_connected_block(const base::xvaccount_t & account)
         {
-            if(base::xvblockstore_t::is_close())
-            {
-                xwarn_err("xvblockstore_impl has closed at store_path=%s",m_store_path.c_str());
-                return nullptr;
-            }
-            const uint32_t index = cal_group_index_from_account(account);
-            std::lock_guard<std::recursive_mutex> _dummy(m_group_locks[index]);
-            return get_block_account(index,account.get_account())->get_latest_connected_block();
+            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
+            return load_block_from_index(account_obj.get(),account_obj->load_latest_connected_index(),0,false);
         }
+    
         base::xauto_ptr<base::xvblock_t>  xvblockstore_impl::get_latest_full_block(const base::xvaccount_t & account)
         {
-            if(base::xvblockstore_t::is_close())
-            {
-                xwarn_err("xvblockstore_impl has closed at store_path=%s",m_store_path.c_str());
-                return nullptr;
-            }
-            const uint32_t index = cal_group_index_from_account(account);
-            std::lock_guard<std::recursive_mutex> _dummy(m_group_locks[index]);
-            return get_block_account(index,account.get_account())->get_latest_full_block();
+            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
+            return load_block_from_index(account_obj.get(),account_obj->load_latest_full_index(),0,false);
         }
-
-        base::xauto_ptr<base::xvblock_t>  xvblockstore_impl::get_latest_current_block(const base::xvaccount_t & account, bool ask_full_load)
-        {
-            if(base::xvblockstore_t::is_close())
-            {
-                xwarn_err("xvblockstore_impl has closed at store_path=%s",m_store_path.c_str());
-                return nullptr;
-            }
-            const uint32_t index = cal_group_index_from_account(account);
-            std::lock_guard<std::recursive_mutex> _dummy(m_group_locks[index]);
-            return get_block_account(index,account.get_account())->get_latest_current_block(ask_full_load);
-        }
-
+ 
         //one api to get latest_commit/latest_lock/latest_cert for better performance
         base::xblock_mptrs  xvblockstore_impl::get_latest_blocks(const base::xvaccount_t & account)
         {
-            if(base::xvblockstore_t::is_close())
-            {
-                xwarn_err("xvblockstore_impl has closed at store_path=%s",m_store_path.c_str());
-                return base::xblock_mptrs();
-            }
-            const uint32_t index = cal_group_index_from_account(account);
-            std::lock_guard<std::recursive_mutex> _dummy(m_group_locks[index]);
+            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
+            
+            base::xvbindex_t*  cert_index    = nullptr;
+            base::xvbindex_t*  lock_index    = nullptr;
+            base::xvbindex_t*  commit_index  = nullptr;
+            //note:cert_index/lock_index/commit_index move to load_block_from_index that may release finally
+            if(account_obj->load_latest_index_list(cert_index,lock_index,commit_index) == false)
+                return base::xblock_mptrs(nullptr,nullptr,nullptr);//move reference to xblock_mptrs
 
-            base::xvblock_t*  cert_block    = nullptr;
-            base::xvblock_t*  lock_block    = nullptr;
-            base::xvblock_t*  commit_block  = nullptr;
-            get_block_account(index,account.get_account())->get_latest_blocks_list(cert_block,lock_block,commit_block);
+            //note:cert_block/lock_block/commit_block move to xblock_mptrs that may release finally
+            base::xvblock_t*  cert_block    = load_block_from_index(account_obj.get(),cert_index,0,false);
+            base::xvblock_t*  lock_block    = load_block_from_index(account_obj.get(),lock_index,0,false);
+            base::xvblock_t*  commit_block  = load_block_from_index(account_obj.get(),commit_index,0,false);
             return base::xblock_mptrs(cert_block,lock_block,commit_block);//move reference to xblock_mptrs
         }
 
-        base::xauto_ptr<base::xvblock_t>    xvblockstore_impl::load_block_object(const base::xvaccount_t & account,const uint64_t height,bool ask_full_load)
+        base::xblock_vector xvblockstore_impl::load_block_object(const base::xvaccount_t & account,const uint64_t height)//might mutiple certs at same height
         {
-            if(base::xvblockstore_t::is_close())
+            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
+            std::vector<base::xvbindex_t*> index_list(account_obj->load_index(height));//returned ptr with added reference
+            if(index_list.empty() == false)
             {
-                xwarn_err("xvblockstore_impl has closed at store_path=%s",m_store_path.c_str());
-                return nullptr;
+                std::vector<base::xvblock_t*> block_list;
+                for(auto & index : index_list)
+                {
+                    if(index != NULL)
+                    {
+                        base::xvblock_t * block = load_block_from_index(account_obj.get(),index,index->get_height(),false);
+                        if(block != NULL)
+                            block_list.push_back(block);//ptr will be released by xblock_vector later
+                        
+                        index->release_ref();//load_index returned ptr with added reference
+                    }
+                }
+                return block_list;
             }
-            const uint32_t index = cal_group_index_from_account(account);
-            std::lock_guard<std::recursive_mutex> _dummy(m_group_locks[index]);
-            return get_block_account(index,account.get_account())->load_block_object(height,ask_full_load);
+            return base::xblock_vector();
         }
-        bool                xvblockstore_impl::store_block(const base::xvaccount_t & account,base::xvblock_t* block)
+    
+        base::xauto_ptr<base::xvblock_t>    xvblockstore_impl::load_block_object(const base::xvaccount_t & account,const uint64_t height,const uint64_t viewid,bool ask_full_load)
         {
-            if(base::xvblockstore_t::is_close())
+            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
+            return load_block_from_index(account_obj.get(),account_obj->load_index(height,viewid),height,ask_full_load);
+        }
+        base::xauto_ptr<base::xvblock_t>    xvblockstore_impl::load_block_object(const base::xvaccount_t & account,const uint64_t height,const std::string & blockhash,bool ask_full_load)
+        {
+            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
+            return load_block_from_index(account_obj.get(),account_obj->load_index(height,blockhash),height,ask_full_load);
+        }
+    
+        base::xauto_ptr<base::xvblock_t>    xvblockstore_impl::load_block_object(const base::xvaccount_t & account,const uint64_t height,base::enum_xvblock_flag required_block,bool ask_full_load)  //just return the highest viewid of matched flag
+        {
+            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
+            return load_block_from_index(account_obj.get(),account_obj->load_index(height,required_block),height,ask_full_load);
+        }
+    
+        bool                xvblockstore_impl::load_block_input(const base::xvaccount_t & account,base::xvblock_t* block)
+        {
+            if( (nullptr == block) || (account.get_account() != block->get_account()) )
             {
-                xwarn_err("xvblockstore_impl has closed at store_path=%s",m_store_path.c_str());
+                xerror("xvblockstore_impl::load_block_input,block NOT match account:%",account.get_account().c_str());
                 return false;
             }
+            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
+            return account_obj->load_block_input(block);//XTODO,add logic to extract from tabeblock
+        }
+    
+        bool                xvblockstore_impl::load_block_output(const base::xvaccount_t & account,base::xvblock_t* block)
+        {
+            if( (nullptr == block) || (account.get_account() != block->get_account()) )
+            {
+                xerror("xvblockstore_impl::load_block_output,block NOT match account:%",account.get_account().c_str());
+                return false;
+            }
+            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
+            return account_obj->load_block_output(block);//XTODO,add logic to extract from tabeblock
+        }
+    
+        bool    xvblockstore_impl::store_block(base::xauto_ptr<xblockacct_t> & container_account,base::xvblock_t * container_block) //store table/book blocks if they are
+        {
+            //store it first at anyway
+            if(!container_account->store_block(container_block))
+            {
+                xwarn("xvblockstore_impl::store_block,fail-store block(%s)", container_block->dump().c_str());
+                return false;
+            }
+            //then try extract for container if that is
+            if(container_block->get_block_class() != base::enum_xvblock_class_nil) //skip nil block
+            {
+                //add other container here if need
+                if(container_block->get_header()->get_block_level() == base::enum_xvblock_level_table)
+                {
+                    xassert(container_block->is_input_ready(true));
+                    xassert(container_block->is_output_ready(true));
+                    
+                    std::vector<base::xvblock_t*> sub_blocks;
+                    if(container_block->extract_sub_blocks(sub_blocks))
+                    {
+                        xinfo("xvblockstore_impl::store_block,table block(%s) carry unit num=%d", container_block->dump().c_str(), (int)sub_blocks.size());
+                        
+                        for (auto & unit_block : sub_blocks)
+                        {
+                            base::xvaccount_t  unit_account(unit_block->get_account());
+                            if(false == store_block(unit_account,unit_block)) //any fail resultin  re-unpack whole table again
+                            {
+                                xerror("xvblockstore_impl::store_block,fail-store unit-block=%s from tableblock=%s",unit_block->dump().c_str(),container_block->dump().c_str());
+                            }
+                            else
+                            {
+                                xinfo("xvblockstore_impl::store_block,stored unit-block=%s from tableblock=%s",unit_block->dump().c_str(),container_block->dump().c_str());
+                                
+                                on_block_stored(unit_block);//throw event for sub blocks
+                            }
+                        }
+                    }
+                    else
+                    {
+                        xerror("xvblockstore_impl::store_block,fail-extract_sub_blocks for table block(%s)", container_block->dump().c_str(), (int)sub_blocks.size());
+                    }
+                }
+            }
+            return true; //still return true since tableblock has been stored successful
+        }
+
+        bool                xvblockstore_impl::store_block(const base::xvaccount_t & account,base::xvblock_t* block)
+        {
             if( (nullptr == block) || (account.get_account() != block->get_account()) )
             {
                 xerror("xvblockstore_impl::store_block,block NOT match account:%",account.get_account().c_str());
                 return false;
             }
-            const uint32_t index = cal_group_index_from_account(account);
-            std::lock_guard<std::recursive_mutex> _dummy(m_group_locks[index]);
-            return get_block_account(index,account.get_account())->store_block(block);
+            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
+            if(store_block(account_obj,block))
+            {
+                on_block_stored(block);
+                return true;
+            }
+            return false;
         }
 
         bool                xvblockstore_impl::store_blocks(const base::xvaccount_t & account,std::vector<base::xvblock_t*> & batch_store_blocks)
@@ -478,129 +310,97 @@ namespace top
             if(batch_store_blocks.empty())
                 return true;
 
-            if(base::xvblockstore_t::is_close())
-            {
-                xwarn_err("xvblockstore_impl has closed at store_path=%s",m_store_path.c_str());
-                return false;
-            }
-
+            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
             for(auto it : batch_store_blocks)
             {
-                if( (it != nullptr) && (it->get_account() != account.get_account()) )
+                if((it != nullptr) && (it->get_account() == account_obj->get_address()) )
                 {
-                    xerror("xvblockstore_impl::store_blocks,block NOT match account:%",account.get_account().c_str());
-                    return false;
+                    if(store_block(account_obj,it))
+                        on_block_stored(it);
                 }
             }
-
-            //note:here skip account check and leave xblockacct_t check whether has correct account address later
-            const uint32_t index = cal_group_index_from_account(account);
-            std::lock_guard<std::recursive_mutex> _dummy(m_group_locks[index]);
-            return get_block_account(index,account.get_account())->store_blocks(batch_store_blocks);
+            return  true;
         }
 
         bool                xvblockstore_impl::delete_block(const base::xvaccount_t & account,base::xvblock_t* block)
         {
-            if(base::xvblockstore_t::is_close())
-            {
-                xwarn_err("xvblockstore_impl has closed at store_path=%s",m_store_path.c_str());
-                return false;
-            }
             if( (nullptr == block) || (account.get_account() != block->get_account()) )
             {
                 xerror("xvblockstore_impl::store_block,block NOT match account:%",account.get_account().c_str());
                 return false;
             }
-            const uint32_t index = cal_group_index_from_account(account);
-            std::lock_guard<std::recursive_mutex> _dummy(m_group_locks[index]);
-            return get_block_account(index,account.get_account())->delete_block(block);
-        }
-
-        //execute block and update state of acccount,note: block must be committed and connected
-        bool                xvblockstore_impl::execute_block(const base::xvaccount_t & account,base::xvblock_t* block)
-        {
-            if(base::xvblockstore_t::is_close())
-            {
-                xwarn_err("xvblockstore_impl has closed at store_path=%s",m_store_path.c_str());
-                return false;
-            }
-            if( (nullptr == block) || (account.get_account() != block->get_account()) )
-            {
-                xerror("xvblockstore_impl::execute_block,block NOT match account:%",account.get_account().c_str());
-                return false;
-            }
-            const uint32_t index = cal_group_index_from_account(account);
-            std::lock_guard<std::recursive_mutex> _dummy(m_group_locks[index]);
-            return get_block_account(index,account.get_account())->execute_block(block);
-        }
-
-        bool                xvblockstore_impl::load_block_input(const base::xvaccount_t & account,base::xvblock_t* block)
-        {
-            if(base::xvblockstore_t::is_close())
-            {
-                xwarn_err("xvblockstore_impl has closed at store_path=%s",m_store_path.c_str());
-                return false;
-            }
-            if( (nullptr == block) || (account.get_account() != block->get_account()) )
-            {
-                xerror("xvblockstore_impl::store_block,block NOT match account:%",account.get_account().c_str());
-                return false;
-            }
-            const uint32_t index = cal_group_index_from_account(account);
-            std::lock_guard<std::recursive_mutex> _dummy(m_group_locks[index]);
-            return get_block_account(index,account.get_account())->load_block_input(block);
-        }
-        bool                xvblockstore_impl::load_block_output(const base::xvaccount_t & account,base::xvblock_t* block)
-        {
-            if(base::xvblockstore_t::is_close())
-            {
-                xwarn_err("xvblockstore_impl has closed at store_path=%s",m_store_path.c_str());
-                return false;
-            }
-            if( (nullptr == block) || (account.get_account() != block->get_account()) )
-            {
-                xerror("xvblockstore_impl::store_block,block NOT match account:%",account.get_account().c_str());
-                return false;
-            }
-            const uint32_t index = cal_group_index_from_account(account);
-            std::lock_guard<std::recursive_mutex> _dummy(m_group_locks[index]);
-            return get_block_account(index,account.get_account())->load_block_output(block);
+            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
+            return account_obj->delete_block(block);
         }
 
         base::xauto_ptr<base::xvblock_t>  xvblockstore_impl::query_block(const base::xvaccount_t & account,const uint64_t height, const uint64_t viewid)
         {
-            if(base::xvblockstore_t::is_close())
-            {
-                xwarn_err("xvblockstore_impl has closed at store_path=%s",m_store_path.c_str());
-                return nullptr;
-            }
-            const uint32_t index = cal_group_index_from_account(account);
-            std::lock_guard<std::recursive_mutex> _dummy(m_group_locks[index]);
-            return get_block_account(index,account.get_account())->get_block(height,viewid);
+            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
+            return load_block_from_index(account_obj.get(),account_obj->query_index(height,viewid),height,false);
         }
 
         base::xauto_ptr<base::xvblock_t>  xvblockstore_impl::query_block(const base::xvaccount_t & account,const uint64_t height, const std::string & blockhash)
         {
-            if(base::xvblockstore_t::is_close())
-            {
-                xwarn_err("xvblockstore_impl has closed at store_path=%s",m_store_path.c_str());
-                return nullptr;
-            }
-            const uint32_t index = cal_group_index_from_account(account);
-            std::lock_guard<std::recursive_mutex> _dummy(m_group_locks[index]);
-            return get_block_account(index,account.get_account())->get_block(height,blockhash);
+            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
+            return load_block_from_index(account_obj.get(),account_obj->query_index(height,blockhash),height,false);
+        }
+    
+        base::xauto_ptr<base::xvblock_t>  xvblockstore_impl::query_block(const base::xvaccount_t & account,const uint64_t height,base::enum_xvblock_flag required_block) //just return the highest viewid of matched flag
+        {
+            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
+            return load_block_from_index(account_obj.get(),account_obj->query_index(height,required_block),height,false);
         }
 
         base::xblock_vector xvblockstore_impl::query_block(const base::xvaccount_t & account,const uint64_t height)//might mutiple certs at same height
         {
-            if(base::xvblockstore_t::is_close())
+            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
+            std::vector<base::xvbindex_t*> index_list(account_obj->query_index(height));//return raw ptr with added reference
+            if(index_list.empty() == false)
             {
-                xwarn_err("xvblockstore_impl has closed at store_path=%s",m_store_path.c_str());
-                return base::xblock_vector();
+                std::vector<base::xvblock_t*> block_list;
+                for(auto & index : index_list)
+                {
+                    if(index != NULL)
+                    {
+                        base::xvblock_t * block = load_block_from_index(account_obj.get(),index,index->get_height(),false);
+                        if(block != NULL)
+                            block_list.push_back(block); //ptr will be released by xblock_vector later
+                        
+                        index->release_ref();//query_index return raw ptr with added reference
+                    }
+                }
+                return block_list;
             }
-            const uint32_t index = cal_group_index_from_account(account);
-            std::lock_guard<std::recursive_mutex> _dummy(m_group_locks[index]);
-            return get_block_account(index,account.get_account())->get_blocks(height);
+            xwarn("xvblockstore_impl query_block(height) fail to load block(%llu) for account(%s) at store(%s)",height,account.get_address().c_str(),m_store_path.c_str());
+            return nullptr;
+        }
+    
+        base::xvbindex_vector   xvblockstore_impl::load_block_index(const base::xvaccount_t & account,const uint64_t height)
+        {
+            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
+            if(account_obj->load_index(height)) //load first
+                return base::xvbindex_vector(account_obj->query_index(height));//then query
+
+            xwarn("xvblockstore_impl load_block_index(height) fail to load block(%llu) for account(%s) at store(%s)",height,account.get_address().c_str(),m_store_path.c_str());
+            return base::xvbindex_vector();
+        }
+    
+        base::xauto_ptr<base::xvbindex_t>  xvblockstore_impl::load_block_index(const base::xvaccount_t & account,const uint64_t height,const uint64_t viewid)
+        {
+            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
+            return account_obj->load_index(height,viewid);
+        }
+    
+        base::xauto_ptr<base::xvbindex_t>  xvblockstore_impl::load_block_index(const base::xvaccount_t & account,const uint64_t height,const std::string & blockhash)
+        {
+            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
+            return account_obj->load_index(height,blockhash);
+        }
+    
+        base::xauto_ptr<base::xvbindex_t>  xvblockstore_impl::load_block_index(const base::xvaccount_t & account,const uint64_t height,base::enum_xvblock_flag required_block)//just return the highest viewid of matched flag
+        {
+            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
+            return account_obj->load_index(height,required_block);
         }
 
         //clean unsed caches of account to recall memory. notes: clean caches not affect the persisten data of account
@@ -611,9 +411,10 @@ namespace top
                 xwarn_err("xvblockstore_impl has closed at store_path=%s",m_store_path.c_str());
                 return false;
             }
-            const uint32_t index = cal_group_index_from_account(account);
-            std::lock_guard<std::recursive_mutex> _dummy(m_group_locks[index]);
-            return get_block_account(index,account.get_account())->clean_caches();
+            base::xvtable_t * target_table = base::xvchain_t::instance().get_table(account.get_xvid());
+            std::lock_guard<std::recursive_mutex> _dummy(target_table->get_lock());
+            base::xauto_ptr<xblockacct_t> target_account(get_block_account(target_table,account.get_address()));
+            return target_account->clean_caches();
         }
 
         //clean all cached blocks after reach max idle duration(as default it is 60 seconds)
@@ -624,9 +425,10 @@ namespace top
                 xwarn_err("xvblockstore_impl has closed at store_path=%s",m_store_path.c_str());
                 return false;
             }
-            const uint32_t index = cal_group_index_from_account(account);
-            std::lock_guard<std::recursive_mutex> _dummy(m_group_locks[index]);
-            return get_block_account(index,account.get_account())->reset_cache_timeout(max_idle_time_ms);
+            base::xvtable_t * target_table = base::xvchain_t::instance().get_table(account.get_xvid());
+            std::lock_guard<std::recursive_mutex> _dummy(target_table->get_lock());
+            base::xauto_ptr<xblockacct_t> target_account(get_block_account(target_table,account.get_address()));
+            return target_account->reset_cache_timeout(max_idle_time_ms);
         }
 
         bool  xvblockstore_impl::on_timer_fire(const int32_t thread_id,const int64_t timer_id,const int64_t current_time_ms,const int32_t start_timeout_ms,int32_t & in_out_cur_interval_ms)
@@ -647,41 +449,30 @@ namespace top
                         break;
                 }
 
-                xblockacct_t* _test_for_account = expire_it->second;
-                if(_test_for_account != nullptr)
+                xblockacct_t* _test_for_plugin = expire_it->second;
+                if(_test_for_plugin != nullptr)
                 {
-                    if( (false == _test_for_account->is_live(current_time_ms)) || (total_active_acounts > enum_max_active_acconts) ) //force to remove most less-active account while too much caches
+                    if( (false == _test_for_plugin->is_live(current_time_ms)) || (total_active_acounts > enum_max_active_acconts) ) //force to remove most less-active account while too much caches
                     {
-                        const uint32_t group_index = cal_group_index_from_account(*_test_for_account);
-                        std::lock_guard<std::recursive_mutex> _dummy(m_group_locks[group_index]);//always use same lock for same account
-
-                        if( (false == _test_for_account->is_live(current_time_ms)) || (total_active_acounts > enum_max_active_acconts) ) //force to remove most less-active account while too much caches
+                        base::xauto_ptr<base::xvaccountobj_t> target_account_container = base::xvchain_t::instance().get_account(*_test_for_plugin);
+                        //always use same lock for same account
+                        std::lock_guard<std::recursive_mutex> _dummy(target_account_container->get_lock());
+                        
+                        if( (false == _test_for_plugin->is_live(current_time_ms)) || (total_active_acounts > enum_max_active_acconts) ) //force to remove most less-active account while too much caches
                         {
-                            _test_for_account->close(); //mark to close first
-
-                            std::map<std::string,xblockacct_t*>& units = m_group_units[group_index];
-                            auto target_it = units.find(_test_for_account->get_account());
-                            if(target_it != units.end())
-                            {
-                                xblockacct_t * to_release = target_it->second;
-                                units.erase(target_it);
-                                if(to_release != nullptr)
-                                {
-                                    to_release->close();//double ensure it is closed
-                                    to_release->release_ref();//release reference hold by units
-                                }
-                            }
-
-                            _test_for_account->release_ref(); //now release last reference hold by m_monitor_expire
+                            _test_for_plugin->close(); //mark to close first
+                            _test_for_plugin->release_ref(); //now release last reference hold by m_monitor_expire
+                            
+                            target_account_container->set_plugin(NULL, base::enum_xvaccount_plugin_blockmgr);
                         }
                         else
                         {
-                            _remonitor_list.push_back(_test_for_account);//transfer to list
+                            _remonitor_list.push_back(_test_for_plugin);//transfer to list
                         }
                     }
                     else
                     {
-                        _remonitor_list.push_back(_test_for_account);//transfer to list
+                        _remonitor_list.push_back(_test_for_plugin);//transfer to list
                     }
                 }
                 auto old = expire_it; //just copy the old value
@@ -715,13 +506,32 @@ namespace top
             xkinfo("xvblockstore_impl::on_timer_stop,store=%s",m_store_path.c_str());
             return true;
         }
-        int32_t  xvblockstore_impl::do_write(base::xstream_t & stream)    //write whole object to binary
+ 
+        bool      xvblockstore_impl::on_block_stored(base::xvblock_t* this_block_ptr)
         {
-            return 0;
-        }
-        int32_t  xvblockstore_impl::do_read(base::xstream_t & stream)      //read from binary and regeneate content of xdataobj_t
-        {
-            return 0;
+            if(this_block_ptr->get_height() == 0) //ignore genesis block
+                return true;
+            
+            const int block_flags = this_block_ptr->get_block_flags();
+            if((block_flags & base::enum_xvblock_flag_executed) != 0)
+            {
+                //here notify execution event if need
+            }
+            else if( ((block_flags & base::enum_xvblock_flag_committed) != 0) && ((block_flags & base::enum_xvblock_flag_connected) != 0) )
+            {
+                base::xveventbus_t * mbus = base::xvchain_t::instance().get_xevmbus();
+                #ifndef __ENABLE_MOCK_XSTORE__
+                xassert(mbus != NULL);
+                #endif
+                if(mbus != NULL)
+                {
+                    xdbg_info("xvblockstore_impl::on_block_stored,at store(%s)-> block=%s",m_store_path.c_str(),this_block_ptr->dump().c_str());
+                    
+                    mbus::xevent_ptr_t event = mbus->create_event_for_store_block_to_db(this_block_ptr);
+                    mbus->push_event(event);
+                }
+            }
+            return true;
         }
 
     };//end of namespace of vstore

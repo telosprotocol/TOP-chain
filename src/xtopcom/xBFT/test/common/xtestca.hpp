@@ -4,7 +4,8 @@
 
 #pragma once
 
-#include "xbase/xvblock.h"
+#include "xvledger/xvblock.h"
+#include "xvledger/xvcertauth.h"
 
 namespace top
 {

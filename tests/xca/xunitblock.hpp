@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "xbase/xvledger.h"
+// TODO(jimmy) #include "xbase/xvledger.h"
 
 namespace top
 {
@@ -14,14 +14,14 @@ namespace top
         {
         public:
             xunitheader_t(const std::string & account,uint64_t height,const std::string & last_block_hash,const std::string & last_full_block_hash,const uint64_t last_full_block_height,const std::string & body_input);
-        protected:            
+        protected:
             virtual ~xunitheader_t();
         private:
             xunitheader_t();
             xunitheader_t(const xunitheader_t &);
             xunitheader_t & operator = (const xunitheader_t &);
         };
-        
+
         class xunitcert_t : public base::xvqcert_t
         {
         public:
@@ -32,7 +32,7 @@ namespace top
             xunitcert_t(const xunitcert_t &);
             xunitcert_t & operator = (const xunitcert_t &);
         };
-        
+
         class xclockblock_t : public base::xvblock_t
         {
         public:
@@ -46,7 +46,7 @@ namespace top
             xclockblock_t(const xclockblock_t &);
             xclockblock_t & operator = (const xclockblock_t &);
         };
-        
+
         class xunitblock_t : public base::xvblock_t
         {
         public:
@@ -65,7 +65,7 @@ namespace top
             virtual int32_t   release_ref() override;
             #endif
         };
-        
+
         //test only,each chainid shared one xunitblockstore_t
         class xunitblockstore_t : public base::xvblockstore_t
         {
@@ -78,12 +78,12 @@ namespace top
             xunitblockstore_t & operator = (const xunitblockstore_t &);
         public:
             base::xvblock_t*            create_clock_block(const std::string & account,const std::string & block_input,const std::string & block_output);
-            
+
             base::xvblock_t*            create_proposal_block(const std::string & account,const std::string & block_input,const std::string & block_output);
-            
+
             //a full path to load vblock could be  get_store_path()/create_object_path()/xvblock_t::name()
             virtual std::string         get_store_path() const override;//each store may has own space at DB/disk
-    
+
         public: //return raw ptr with added reference,caller respond to release it after that.
             //please refer enum_xvblock_flag definition for terms of lock,commit,execute,connect
             virtual base::xauto_ptr<base::xvblock_t>  get_genesis_block(const std::string & account) override;//genesis block
@@ -95,16 +95,16 @@ namespace top
             virtual base::xauto_ptr<base::xvblock_t>  get_latest_full_block(const std::string & account)  override;//block has full state,genesis is a full block
             //just load vblock object but not load header and body those need load seperately if need.
             virtual base::xauto_ptr<base::xvblock_t>  load_block_object(const std::string & account,const uint64_t height,bool ask_full_load = true) override;
-            
+
             virtual bool                load_block_input(base::xvblock_t* block)  override;//load and assign input data into block
             virtual bool                load_block_output(base::xvblock_t* block) override;//load and assign output data into block
-            
+
             virtual bool                store_block(base::xvblock_t* block)  override; //return false if fail to store
             virtual bool                delete_block(base::xvblock_t* block) override; //return false if fail to delete
-            
+
         public://better performance,and return raw ptr with added reference,caller respond to release it after that.
             //please refer enum_xvblock_flag definition for terms of lock,commit,execute,connect
-            
+
             virtual base::xauto_ptr<base::xvblock_t>  get_genesis_block(const base::xvaccount_t & account) override;
             virtual base::xauto_ptr<base::xvblock_t>  get_latest_cert_block(const base::xvaccount_t & account)  override;
             virtual base::xauto_ptr<base::xvblock_t>  get_latest_locked_block(const base::xvaccount_t & account)   override;
@@ -113,13 +113,13 @@ namespace top
             virtual base::xauto_ptr<base::xvblock_t>  get_latest_connected_block(const base::xvaccount_t & account)override;
             virtual base::xauto_ptr<base::xvblock_t>  get_latest_full_block(const base::xvaccount_t & account) override;
             virtual base::xauto_ptr<base::xvblock_t>  load_block_object(const base::xvaccount_t & account,const uint64_t height,bool ask_full_load = true)override;
-            
+
             virtual bool                load_block_input(const base::xvaccount_t & account,base::xvblock_t* block) override;
             virtual bool                load_block_output(const base::xvaccount_t & account,base::xvblock_t* block) override;
-            
+
             virtual bool                store_block(const base::xvaccount_t & account,base::xvblock_t* block) override;
             virtual bool                delete_block(const base::xvaccount_t & account,base::xvblock_t* block) override;
-            
+
         public://batch process api
             virtual base::xblock_mptrs  get_latest_blocks(const base::xvaccount_t & account) override;
             virtual bool                store_blocks(const base::xvaccount_t & account,std::vector<base::xvblock_t*> & batch_store_blocks) override;
@@ -137,7 +137,7 @@ namespace top
             std::map< std::string,std::map<uint64_t,base::xvblock_t*> > m_blocks;
             std::map<std::string,std::string >                        m_dumy_store;
         };
-        
+
     }
 }
 

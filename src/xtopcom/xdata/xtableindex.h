@@ -8,7 +8,7 @@
 #include <map>
 #include <vector>
 #include <set>
-#include "xbase/xvblock.h"
+#include "xvledger/xvblock.h"
 #include "xbasic/xns_macro.h"
 #include "xbasic/xobject_ptr.h"
 #include "xbasic/xdataobj_base.hpp"

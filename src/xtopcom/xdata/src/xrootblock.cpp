@@ -4,7 +4,7 @@
 
 #include "xdata/xrootblock.h"
 
-#include "xbase/xvblock.h"
+#include "xvledger/xvblock.h"
 #include "xbasic/xdataobj_base.hpp"
 #include "xbasic/xns_macro.h"
 #include "xconfig/xconfig_register.h"

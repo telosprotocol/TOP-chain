@@ -7,7 +7,7 @@
 #include "task/task_dispatcher.h"
 #include "topchain_type.h"
 #include "xaction_param.h"
-#include "xbase/xvledger.h"
+// TODO(jimmy) #include "xbase/xvledger.h"
 #include "xcrypto/xckey.h"
 #include "xcrypto_util.h"
 #include "xdata/xnative_contract_address.h"

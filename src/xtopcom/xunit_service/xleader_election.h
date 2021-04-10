@@ -11,7 +11,7 @@
 #include "xunit_service/xcons_face.h"
 #include "xunit_service/xcons_utl.h"
 #include "xbasic/xobject_ptr.h"
-#include "xbase/xvblock.h"
+#include "xvledger/xvblock.h"
 #include "xelection/xcache/xdata_accessor_face.h"
 
 NS_BEG2(top, xunit_service)

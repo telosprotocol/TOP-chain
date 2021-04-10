@@ -9,6 +9,7 @@
 #include "xtestnet.hpp"
 #include "xtestclock.hpp"
 #include "xcertauth/xcertauth_face.h"
+#include "xvledger/xvledger.h"
 
 #ifdef __MAC_PLATFORM__
     #include "xblockstore/xblockstore_face.h"
@@ -34,13 +35,17 @@ namespace top
             snprintf(szBuff,inBufLen,"/0x%llx",node_address.low_addr);
             
             const std::string  default_path = szBuff;
-            store::xstore_face_t* _persist_db = new xstoredb_t();
-            base::xauto_ptr<base::xvblockstore_t> vblockstore_ptr(store::xblockstorehub_t::instance().create_block_store(*_persist_db,default_path));
+            xstoredb_t* _persist_db = new xstoredb_t(default_path);
+            base::xvchain_t::instance().set_xdbstore(_persist_db);
+            base::xvblockstore_t * blockstore_ptr = store::get_vblockstore();
+            set_vblockstore(blockstore_ptr);
+            register_plugin(blockstore_ptr);
             #else
             base::xauto_ptr<base::xvblockstore_t> vblockstore_ptr(new xunitblockstore_t());
-            #endif
             set_vblockstore(vblockstore_ptr.get());
             register_plugin(vblockstore_ptr.get());
+            #endif
+
  
             xdbg("xtestnode_t::create");
         }

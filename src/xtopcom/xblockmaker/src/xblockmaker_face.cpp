@@ -136,7 +136,7 @@ bool xblock_maker_t::load_latest_blocks(const xblock_ptr_t & latest_block, std::
             xdbg("xblock_maker_t::load_latest_blocks finish prev block in cache.account=%s,latest_height=%ld", get_account().c_str(), latest_block->get_height());
             return true;
         }
-        auto _block = get_blockstore()->load_block_object(*this, prev_height);
+        auto _block = get_blockstore()->load_block_object(*this, prev_height, 0, true);
         if (_block == nullptr) {
             xerror("xtable_maker_t::load_latest_blocks fail-load block.account=%s,height=%ld", get_account().c_str(), prev_height);
             return false;
@@ -168,7 +168,7 @@ bool xblock_maker_t::load_and_cache_enough_blocks() {
         uint64_t prev_height = current_block->get_height() - 1;
         xblock_ptr_t prev_block = get_latest_block(prev_height);
         if (prev_block == nullptr) {
-            auto _block = get_blockstore()->load_block_object(*this, prev_height);
+            auto _block = get_blockstore()->load_block_object(*this, prev_height, 0, true);
             if (_block == nullptr) {
                 xerror("xblock_maker_t::load_and_cache_enough_blocks fail-load block.account=%s,height=%ld", get_account().c_str(), prev_height);
                 return false;
