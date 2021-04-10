@@ -11,13 +11,11 @@
 #include "xstore/xstore_face.h"
 #include "xdata/xgenesis_data.h"
 
-#ifndef __MAC_PLATFORM__
-    #include "xconfig/xconfig_register.h"
-    #include "xdata/xtableblock.h"
-    #include "xconfig/xpredefined_configurations.h"
-    #include "xmbus/xevent_store.h"
-    #include "xmetrics/xmetrics.h"
-#endif
+#include "xconfig/xconfig_register.h"
+#include "xdata/xtableblock.h"
+#include "xconfig/xpredefined_configurations.h"
+#include "xmbus/xevent_store.h"
+#include "xmetrics/xmetrics.h"
 
 namespace top
 {
@@ -1015,9 +1013,6 @@ namespace top
                 bool unpack_result = false;
                 if(container_block->get_header()->get_block_level() == base::enum_xvblock_level_table) //add other container here if need
                 {
-                    #if defined(__MAC_PLATFORM__) && defined(__ENABLE_MOCK_XSTORE__)
-                    // do nothing
-                    #else
                     xassert(container_block->is_input_ready(true));
                     xassert(container_block->is_output_ready(true));
 
@@ -1044,7 +1039,6 @@ namespace top
                             }
                         }
                     }
-                    #endif
                 }
                 if(unpack_result) //finally check and set flag of enum_xvblock_flag_unpacked
                 {

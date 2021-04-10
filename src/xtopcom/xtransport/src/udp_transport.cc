@@ -90,12 +90,13 @@ int UdpTransport::Start(
         return kTransportFailed;
     }
 
-    SetOptBuffer();
-
 #if defined(LINUX) || defined(linux) || defined(__linux) || defined(__linux__)
+    SetOptBuffer();
     base::xsocket_utl::set_recv_buffer(udp_handle_, 8 * 1024 * 1024);
 #else
-    base::xsocket_utl::set_recv_buffer(udp_handle_, 4 * 1024 * 1024);  // 4 M for mac
+    base::xsocket_utl::set_recv_buffer(udp_handle_, 156 * 1024);
+    base::xsocket_utl::set_send_buffer(udp_handle_, 156 * 1024);
+    // base::xsocket_utl::set_recv_buffer(udp_handle_, 4 * 1024 * 1024);  // 4 M for mac
 #endif
 
 

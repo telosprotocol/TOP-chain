@@ -10,9 +10,8 @@
 #include "xvtcaccount.h"
 #include "xvunithub.h"
 
-#ifndef __MAC_PLATFORM__
-    #include "xdata/xnative_contract_address.h"
-#endif
+#include "xdata/xnative_contract_address.h"
+
 
 namespace top
 {

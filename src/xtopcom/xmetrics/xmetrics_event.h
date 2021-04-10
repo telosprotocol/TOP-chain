@@ -5,6 +5,7 @@
 #pragma once
 
 #include "xmetrics_unit.h"
+#include <string>
 NS_BEG2(top, metrics)
 
 enum class e_metrics_major_id : size_t {
