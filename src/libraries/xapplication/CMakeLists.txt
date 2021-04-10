@@ -10,5 +10,9 @@ add_definitions(
     # -D__STRICT_ANSI__
 )
 
-add_dependencies(xapplication xvnode xloader xconfig xelect xelect_net xchain_timer xvnetwork xelection xblockmaker xtxexecutor xunit_service xtxpoolsvr_v2 xBFT xsync xtopcl xmbus xelect_common xbasic xcertauth xdatastat)
-target_link_libraries(xapplication PRIVATE xvnode xloader xconfig xelect xelect_net  xchain_timer xvnetwork xblockmaker xtxexecutor xunit_service xtxpoolsvr_v2 xBFT xelection xrpc xsync xtopcl xmbus xelect_common xbasic xcertauth xdatastat)
+# add_dependencies(xapplication xvnode xloader xconfig xelect xelect_net xchain_timer xvnetwork xelection xblockmaker xtxexecutor xunit_service xtxpoolsvr_v2 xBFT xsync xtopcl xmbus xelect_common xbasic xcertauth xdatastat)
+IF (CMAKE_SYSTEM_NAME MATCHES "Darwin")
+    target_link_libraries(xapplication PRIVATE xvnode xloader xconfig xelect xelect_net  xchain_timer xvnetwork xblockmaker xtxexecutor xunit_service xtxpoolsvr_v2 xBFT xelection xrpc xsync xtopcl xmbus xelect_common xbasic xcertauth xdatastat)
+ELSE()
+    target_link_libraries(xapplication PRIVATE xvnode xloader xconfig xelect xelect_net  xchain_timer xvnetwork xblockmaker xtxexecutor xunit_service xtxpoolsvr_v2 xBFT xelection xrpc xsync xtopcl xmbus xelect_common xbasic xcertauth xdatastat intel_aes64)
+ENDIF()
