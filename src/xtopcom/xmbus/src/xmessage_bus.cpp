@@ -119,4 +119,16 @@ xevent_queue_ptr_t xmessage_bus_t::get_queue(int major_type) {
     return m_queues[major_type];
 }
 
+//XTODO,add implmentation for below
+xevent_ptr_t  xmessage_bus_t::create_event_for_store_index_to_db(base::xvbindex_t * target_block) {
+  xassert(false); // TODO xevent_ptr_t should use object ptr
+  return nullptr;
+}
+
+xevent_ptr_t  xmessage_bus_t::create_event_for_store_block_to_db(base::xvblock_t * target_block) {
+  xassert(false); // TODO xevent_ptr_t should use object ptr
+  return nullptr;
+}
+
+
 NS_END2

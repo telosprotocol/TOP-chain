@@ -417,7 +417,7 @@ xblock_ptr_t xtable_maker_t::make_proposal(xtablemaker_para_t & table_para,
         int32_t ret = check_latest_state(latest_cert_block);
         if (ret != xsuccess) {
             xwarn("xtable_maker_t::can_make_next_block fail-check_latest_state. %s", cs_para.dump().c_str());
-            return false;
+            return nullptr;
         }
     }
 

@@ -605,6 +605,21 @@ public:
     uint64_t archive_stake() const noexcept;
 
     common::xrole_type_t role() const noexcept;
+
+    /**
+     * @brief write to stream
+     *
+     * @param stream
+     * @return int32_t
+     */
+    int32_t do_write(base::xstream_t & stream) const override {return 0;}
+    /**
+     * @brief read from stream
+     *
+     * @param stream
+     * @return int32_t
+     */
+    int32_t do_read(base::xstream_t & stream) override {return 0;}
 };
 using xaccount_registration_info_t = xtop_account_registration_info;
 
