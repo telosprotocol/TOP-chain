@@ -7,7 +7,7 @@ aux_source_directory(./src src_dir)
 add_library(xvledger STATIC ${src_dir})
 
 target_link_libraries(xvledger PRIVATE
-    xbase
+    xxbase
 )
 
 # if (XENABLE_TESTS)
