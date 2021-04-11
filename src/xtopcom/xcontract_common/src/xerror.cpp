@@ -56,7 +56,7 @@ std::error_condition make_error_condition(xerrc_t const errc) noexcept {
     return std::error_condition(static_cast<int>(errc), contract_common_category());
 }
 
-xtop_contract_common_error::xtop_contract_common_error() : std::runtime_error{ec_.message()} {
+xtop_contract_common_error::xtop_contract_common_error() : std::runtime_error{make_error_code(xerrc_t::ok).message()} {
 }
 
 xtop_contract_common_error::xtop_contract_common_error(xerrc_t const error_code) : xtop_contract_common_error{make_error_code(error_code)} {
