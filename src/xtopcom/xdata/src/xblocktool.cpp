@@ -7,7 +7,7 @@
 #include "xdata/xlightunit.h"
 #include "xdata/xnative_contract_address.h"
 #include "xdata/xgenesis_data.h"
-#include "xbase/xvledger.h"
+#include "xvledger/xvblockstore.h"
 
 NS_BEG2(top, data)
 
@@ -147,30 +147,17 @@ bool xblocktool_t::is_connect_and_executed_block(base::xvblock_t* block) {
     return false;
 }
 
-// TODO(jimmy) move to blockstore future
-base::xauto_ptr<base::xvblock_t> xblocktool_t::load_justify_block(base::xvblockstore_t* blockstore, const std::string & account, uint64_t height) {
-    base::xauto_ptr<base::xvblock_t> justify_tableblock = blockstore->load_block_object(account, height);
-    if (justify_tableblock != nullptr) {
-        return justify_tableblock;
-    }
-    base::xauto_ptr<base::xvblock_t> latest_cert_block = blockstore->get_latest_cert_block(account);
-    if (latest_cert_block->get_height() == height) {
-        return latest_cert_block;
-    }
-    xwarn("xblocktool_t::load_justify_block fail to load block. account=%s,height=%ld", account.c_str(), height);
-    return nullptr;
-}
-
 base::xauto_ptr<base::xvblock_t> xblocktool_t::get_latest_committed_lightunit(base::xvblockstore_t* blockstore, const std::string & account) {
+    base::xvaccount_t _vaccount(account);
     // there is mostly two empty units
-    base::xauto_ptr<base::xvblock_t> vblock = blockstore->get_latest_committed_block(account);
+    base::xauto_ptr<base::xvblock_t> vblock = blockstore->get_latest_committed_block(_vaccount);
     if (vblock->get_block_class() == base::enum_xvblock_class_light) {
         return vblock;
     }
 
     uint64_t current_height = vblock->get_height();
     while (current_height > 0) {
-        base::xauto_ptr<base::xvblock_t> prev_vblock = blockstore->load_block_object(account, current_height - 1);
+        base::xauto_ptr<base::xvblock_t> prev_vblock = blockstore->load_block_object(_vaccount, current_height - 1, base::enum_xvblock_flag_committed, true);
         if (prev_vblock == nullptr || prev_vblock->get_block_class() == base::enum_xvblock_class_light) {
             return prev_vblock;
         }
@@ -180,8 +167,9 @@ base::xauto_ptr<base::xvblock_t> xblocktool_t::get_latest_committed_lightunit(ba
 }
 
 base::xauto_ptr<base::xvblock_t> xblocktool_t::get_committed_lightunit(base::xvblockstore_t* blockstore, const std::string & account, uint64_t max_height) {
+    base::xvaccount_t _vaccount(account);
     // there is mostly two empty units
-    base::xauto_ptr<base::xvblock_t> vblock = blockstore->load_block_object(account, max_height);
+    base::xauto_ptr<base::xvblock_t> vblock = blockstore->load_block_object(_vaccount, max_height, base::enum_xvblock_flag_committed, true);
     xassert(vblock->check_block_flag(base::enum_xvblock_flag_committed));
     if (vblock->get_block_class() == base::enum_xvblock_class_light) {
         return vblock;
@@ -189,7 +177,7 @@ base::xauto_ptr<base::xvblock_t> xblocktool_t::get_committed_lightunit(base::xvb
 
     uint64_t current_height = vblock->get_height();
     while (current_height > 0) {
-        base::xauto_ptr<base::xvblock_t> prev_vblock = blockstore->load_block_object(account, current_height - 1);
+        base::xauto_ptr<base::xvblock_t> prev_vblock = blockstore->load_block_object(_vaccount, current_height - 1, base::enum_xvblock_flag_committed, true);
         if (prev_vblock == nullptr || prev_vblock->get_block_class() == base::enum_xvblock_class_light) {
             return prev_vblock;
         }

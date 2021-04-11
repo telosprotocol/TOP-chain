@@ -3,11 +3,11 @@
 // Licensed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "xdata/xrootblock.h"
+//#include "xdata/xrootblock.h"
 #include "xvgenesis.h"
+#include "xvledger/xvaccount.h"
 
-#if defined(__MAC_PLATFORM__) && defined(__ENABLE_MOCK_XSTORE__)
-#else
+#if !defined(__ENABLE_MOCK_XSTORE__)
     #include "xdata/xblocktool.h"
 #endif
 
@@ -18,8 +18,8 @@ namespace top
         xgenesis_header::xgenesis_header(const std::string & account)
         {
             const uint16_t ledger_id = base::xvaccount_t::get_ledgerid_from_account(account);
-            // set_chainid(base::xvaccount_t::get_chainid_from_ledgerid(ledger_id));
-            set_chainid(data::xrootblock_t::get_rootblock_chainid());
+            set_chainid(base::xvaccount_t::get_chainid_from_ledgerid(ledger_id));
+            //set_chainid(data::xrootblock_t::get_rootblock_chainid());
             set_account(account);
             set_height(0);
             

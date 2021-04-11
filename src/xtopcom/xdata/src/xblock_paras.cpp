@@ -4,7 +4,7 @@
 
 #include <string>
 #include "xbase/xutl.h"
-#include "xbase/xvledger.h"
+// TODO(jimmy) #include "xbase/xvledger.h"
 #include "xbasic/xversion.h"
 #include "xdata/xblock_paras.h"
 #include "xdata/xdata_common.h"

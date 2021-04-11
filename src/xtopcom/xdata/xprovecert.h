@@ -8,7 +8,7 @@
 
 #include "xbasic/xversion.h"
 #include "xbasic/xdataobj_base.hpp"
-#include "xbase/xvblock.h"
+#include "xvledger/xvblock.h"
 #include "xutility/xmerkle.hpp"
 
 namespace top { namespace data {

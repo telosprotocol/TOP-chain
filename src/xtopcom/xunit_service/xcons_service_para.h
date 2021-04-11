@@ -7,7 +7,7 @@
 #include "xBFT/xconsobj.h"
 #include "xbase/xbase.h"
 #include "xbase/xthread.h"
-#include "xbase/xvblock.h"
+#include "xvledger/xvblock.h"
 #include "xbasic/xmemory.hpp"
 #include "xbasic/xns_macro.h"
 #include "xbasic/xobject_ptr.h"

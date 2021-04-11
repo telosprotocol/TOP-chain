@@ -5,7 +5,7 @@
 #include "xtimercertview.h"
 
 #include "xbase/xutl.h"
-#include "xbase/xvblock.h"
+#include "xvledger/xvblock.h"
 
 #include <inttypes.h>
 
@@ -432,7 +432,7 @@ void xconspacemaker_t::send_msg_for_block(const uint8_t msg_type, const std::str
 
     _event_obj->set_from_xip(from_addr);
     _event_obj->set_to_xip(to_addr);
-    _event_obj->_packet.set_block_chainid(chainid);
+    _event_obj->_packet.set_block_chainid((uint32_t)chainid);
     _event_obj->_packet.set_block_account(get_account());
     _event_obj->_packet.set_block_height(0);
     _event_obj->_packet.set_block_clock(clock);

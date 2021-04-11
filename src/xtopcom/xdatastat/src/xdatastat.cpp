@@ -101,6 +101,8 @@ void xdatastat_t::try_calc_tps(uint64_t end_time) {
 }
 
 void xdatastat_t::on_block_to_db_event(mbus::xevent_ptr_t e) {
+    // TODO(jimmy)
+    return;
     if (e->minor_type != mbus::xevent_store_t::type_block_to_db) {
         return;
     }

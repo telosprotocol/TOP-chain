@@ -13,6 +13,7 @@
 #include "xdata/xelection/xelection_group_result.h"
 #include "xdata/xelection/xelection_result_property.h"
 #include "xbasic/xutility.h"
+#include "xvledger/xvblockstore.h"
 
 NS_BEG2(top, election)
 
@@ -185,7 +186,8 @@ void xvnode_house_t::load_group_from_store(const xvip2_t & target_node) {
     uint64_t elect_height = get_network_height_from_xip2(target_node);
 
     // TODO check flag, use committed block?
-    xauto_ptr<xvblock_t> blk_ptr = m_blockstore->load_block_object(elect_address, elect_height);
+    base::xvaccount_t _vaddress(elect_address);
+    xauto_ptr<xvblock_t> blk_ptr = m_blockstore->load_block_object(_vaddress, elect_height, base::enum_xvblock_flag_committed, true);
     if (blk_ptr == nullptr)
         return;
 

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "xbase/xvstate.h"
+#include "xvledger/xvstate.h"
 #include "xbasic/xobject_ptr.h"
 #include "xcontract_runtime/xuser/xuser_contract_runtime.h"
 #include "xcontract_common/xproperties/xproperty_access_control.h"

@@ -3,7 +3,7 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "xBFT/src/xtimercertview.h"
-#include "xbase/xvblock.h"
+#include "xvledger/xvblock.h"
 #include "xBFT/xconsaccount.h"
 #include "xbase/xthread.h"
 #include "xdata/xgenesis_data.h"
@@ -46,7 +46,7 @@ private:
     int64_t m_shift{};
 };
 
-using xmock_tc_dispatch_callback = std::function<void(const xvip2_t &, const base::xvevent_t &)>; 
+using xmock_tc_dispatch_callback = std::function<void(const xvip2_t &, const base::xvevent_t &)>;
 
 class test_parent_obj_t : public xcsaccount_t {
 public:
@@ -162,7 +162,7 @@ public:
                 test_parent_obj_t *node_obj = it.second;
                 base::xbftpdu_t packet = _evt_obj._packet;
 
-                base::xauto_ptr<xmock_tc_thread_event_para_t> para = 
+                base::xauto_ptr<xmock_tc_thread_event_para_t> para =
                         new xmock_tc_thread_event_para_t(node_obj, from_addr, xip, packet, _thread->get_thread_id(), 0);
                 top::base::xparam_t param(para.get());
                 top::base::xcall_t tmp_func((top::base::xcallback_ptr)xmock_tc_thread_event, param);
@@ -267,7 +267,7 @@ void test_xtc() {
 
         auto * _thread = xiothread_t::create_thread(xcontext_t::instance(), xiothread_t::enum_xthread_type_general, -1);
 
-        test_parent_obj_t *parent = new test_parent_obj_t(*_thread->get_context(), _thread->get_thread_id(), sys_contract_beacon_timer_addr, node_addr, 
+        test_parent_obj_t *parent = new test_parent_obj_t(*_thread->get_context(), _thread->get_thread_id(), sys_contract_beacon_timer_addr, node_addr,
                     std::bind(&test_dispatcher_t::dispatch, &dispatcher, std::placeholders::_1, std::placeholders::_2));
         test_xtimercertview_t *tc = new test_xtimercertview_t(*parent, node->m_certauth.get(), nullptr);
 

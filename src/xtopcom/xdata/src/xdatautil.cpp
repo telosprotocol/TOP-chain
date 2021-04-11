@@ -10,7 +10,7 @@
 #include "xbase/xint.h"
 #include "xbase/xmem.h"
 #include "xbase/xutl.h"
-#include "xbase/xvledger.h"
+// TODO(jimmy) #include "xbase/xvledger.h"
 #include "xdata/xdatautil.h"
 #include "xdata/xblock.h"
 

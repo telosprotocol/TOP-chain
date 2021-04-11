@@ -8,7 +8,7 @@
 #include <mutex>
 #include "xbasic/xmemory.hpp"
 #include "xstore/xstore_face.h"
-#include "xbase/xvledger.h"
+// TODO(jimmy) #include "xbase/xvledger.h"
 #include "xindexstore/xindexstore_face.h"
 
 NS_BEG2(top, store)

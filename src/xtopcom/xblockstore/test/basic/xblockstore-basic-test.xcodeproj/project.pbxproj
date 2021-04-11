@@ -1,0 +1,294 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 46;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		998DBCF02461E7580048BF49 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 998DBCEF2461E7580048BF49 /* main.cpp */; };
+		998DBCF52461E8250048BF49 /* libxbase.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 998DBCF22461E8250048BF49 /* libxbase.a */; };
+		998DBCF62461E8250048BF49 /* libxblockstore.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 998DBCF32461E8250048BF49 /* libxblockstore.a */; };
+		998DBCF72461E8250048BF49 /* libxcertauth.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 998DBCF42461E8250048BF49 /* libxcertauth.a */; };
+		998DBCFA2461E8A60048BF49 /* xunitblock.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 998DBCF82461E8A60048BF49 /* xunitblock.cpp */; };
+		998DBCFD2461E8CF0048BF49 /* xtestca.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 998DBCFB2461E8CF0048BF49 /* xtestca.cpp */; };
+		99D6F947247217C600FF7392 /* xtestdb.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 99D6F945247217C600FF7392 /* xtestdb.cpp */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		998DBCE32461E6750048BF49 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = /usr/share/man/man1/;
+			dstSubfolderSpec = 0;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 1;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		998DBCE52461E6750048BF49 /* xblockstore-basic-test */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = "xblockstore-basic-test"; sourceTree = BUILT_PRODUCTS_DIR; };
+		998DBCEF2461E7580048BF49 /* main.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
+		998DBCF22461E8250048BF49 /* libxbase.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libxbase.a; path = "../../../../../../../../Library/Developer/Xcode/DerivedData/xtopcom-ajajxyvvzkhyzsersovaaixrqafq/Build/Products/Debug/libxbase.a"; sourceTree = "<group>"; };
+		998DBCF32461E8250048BF49 /* libxblockstore.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libxblockstore.a; path = "../../../../../../../../Library/Developer/Xcode/DerivedData/xtopcom-ajajxyvvzkhyzsersovaaixrqafq/Build/Products/Debug/libxblockstore.a"; sourceTree = "<group>"; };
+		998DBCF42461E8250048BF49 /* libxcertauth.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libxcertauth.a; path = "../../../../../../../../Library/Developer/Xcode/DerivedData/xtopcom-ajajxyvvzkhyzsersovaaixrqafq/Build/Products/Debug/libxcertauth.a"; sourceTree = "<group>"; };
+		998DBCF82461E8A60048BF49 /* xunitblock.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = xunitblock.cpp; sourceTree = "<group>"; };
+		998DBCF92461E8A60048BF49 /* xunitblock.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = xunitblock.hpp; sourceTree = "<group>"; };
+		998DBCFB2461E8CF0048BF49 /* xtestca.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = xtestca.cpp; sourceTree = "<group>"; };
+		998DBCFC2461E8CF0048BF49 /* xtestca.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = xtestca.hpp; sourceTree = "<group>"; };
+		99D6F945247217C600FF7392 /* xtestdb.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = xtestdb.cpp; sourceTree = "<group>"; };
+		99D6F946247217C600FF7392 /* xtestdb.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = xtestdb.hpp; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		998DBCE22461E6750048BF49 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				998DBCF52461E8250048BF49 /* libxbase.a in Frameworks */,
+				998DBCF62461E8250048BF49 /* libxblockstore.a in Frameworks */,
+				998DBCF72461E8250048BF49 /* libxcertauth.a in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		998DBCDC2461E6750048BF49 = {
+			isa = PBXGroup;
+			children = (
+				99D6F945247217C600FF7392 /* xtestdb.cpp */,
+				99D6F946247217C600FF7392 /* xtestdb.hpp */,
+				998DBCFB2461E8CF0048BF49 /* xtestca.cpp */,
+				998DBCFC2461E8CF0048BF49 /* xtestca.hpp */,
+				998DBCF82461E8A60048BF49 /* xunitblock.cpp */,
+				998DBCF92461E8A60048BF49 /* xunitblock.hpp */,
+				998DBCEF2461E7580048BF49 /* main.cpp */,
+				998DBCE62461E6750048BF49 /* Products */,
+				998DBCF12461E8250048BF49 /* Frameworks */,
+			);
+			sourceTree = "<group>";
+		};
+		998DBCE62461E6750048BF49 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				998DBCE52461E6750048BF49 /* xblockstore-basic-test */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		998DBCF12461E8250048BF49 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				998DBCF22461E8250048BF49 /* libxbase.a */,
+				998DBCF32461E8250048BF49 /* libxblockstore.a */,
+				998DBCF42461E8250048BF49 /* libxcertauth.a */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		998DBCE42461E6750048BF49 /* xblockstore-basic-test */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 998DBCEC2461E6750048BF49 /* Build configuration list for PBXNativeTarget "xblockstore-basic-test" */;
+			buildPhases = (
+				998DBCE12461E6750048BF49 /* Sources */,
+				998DBCE22461E6750048BF49 /* Frameworks */,
+				998DBCE32461E6750048BF49 /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "xblockstore-basic-test";
+			productName = "xblockstore-basic-test";
+			productReference = 998DBCE52461E6750048BF49 /* xblockstore-basic-test */;
+			productType = "com.apple.product-type.tool";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		998DBCDD2461E6750048BF49 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 0830;
+				ORGANIZATIONNAME = "Taylor Wei";
+				TargetAttributes = {
+					998DBCE42461E6750048BF49 = {
+						CreatedOnToolsVersion = 8.3.2;
+						ProvisioningStyle = Automatic;
+					};
+				};
+			};
+			buildConfigurationList = 998DBCE02461E6750048BF49 /* Build configuration list for PBXProject "xblockstore-basic-test" */;
+			compatibilityVersion = "Xcode 3.2";
+			developmentRegion = English;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+			);
+			mainGroup = 998DBCDC2461E6750048BF49;
+			productRefGroup = 998DBCE62461E6750048BF49 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				998DBCE42461E6750048BF49 /* xblockstore-basic-test */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		998DBCE12461E6750048BF49 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				998DBCFA2461E8A60048BF49 /* xunitblock.cpp in Sources */,
+				998DBCF02461E7580048BF49 /* main.cpp in Sources */,
+				99D6F947247217C600FF7392 /* xtestdb.cpp in Sources */,
+				998DBCFD2461E8CF0048BF49 /* xtestca.cpp in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		998DBCEA2461E6750048BF49 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "c++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "-";
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = c99;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+					__ENABLE_MOCK_XSTORE__,
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.12;
+				MTL_ENABLE_DEBUG_INFO = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		998DBCEB2461E6750048BF49 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "c++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "-";
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = c99;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_PREPROCESSOR_DEFINITIONS = __ENABLE_MOCK_XSTORE__;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.12;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		998DBCED2461E6750048BF49 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				HEADER_SEARCH_PATHS = ../../../xdepends/include;
+				LIBRARY_SEARCH_PATHS = ../../../xdepends/libs/mac;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				USER_HEADER_SEARCH_PATHS = "../../../ ../../../xdepends/include";
+			};
+			name = Debug;
+		};
+		998DBCEE2461E6750048BF49 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				HEADER_SEARCH_PATHS = ../../../xdepends/include;
+				LIBRARY_SEARCH_PATHS = ../../../xdepends/libs/mac;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				USER_HEADER_SEARCH_PATHS = "../../../ ../../../xdepends/include";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		998DBCE02461E6750048BF49 /* Build configuration list for PBXProject "xblockstore-basic-test" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				998DBCEA2461E6750048BF49 /* Debug */,
+				998DBCEB2461E6750048BF49 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		998DBCEC2461E6750048BF49 /* Build configuration list for PBXNativeTarget "xblockstore-basic-test" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				998DBCED2461E6750048BF49 /* Debug */,
+				998DBCEE2461E6750048BF49 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 998DBCDD2461E6750048BF49 /* Project object */;
+}

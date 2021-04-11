@@ -12,7 +12,7 @@
 #include "xsync/xsync_store.h"
 #include "xsync/xsync_sender.h"
 #include "xsync/xsync_message.h"
-#include "xbase/xvledger.h"
+// TODO(jimmy) #include "xbase/xvledger.h"
 #include "xsync/xrole_chains_mgr.h"
 
 NS_BEG2(top, sync)

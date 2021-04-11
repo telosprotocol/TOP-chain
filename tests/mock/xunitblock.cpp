@@ -7,7 +7,7 @@
 #include "xbase/xmem.h"
 #include "xbase/xhash.h"
 #include "xbase/xobject.h"
-#include "xbase/xvledger.h"
+// TODO(jimmy) #include "xbase/xvledger.h"
 
 #ifdef DEBUG
     #define __test_cache_for_block_store__

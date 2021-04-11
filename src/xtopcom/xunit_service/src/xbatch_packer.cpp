@@ -302,7 +302,6 @@ bool xbatch_packer::recv_in(const xvip2_t & from_addr, const xvip2_t & to_addr, 
                 xwarn("xbatch_packer::on_view_fire xip=%s version from error", xcons_utl::xip_to_hex(from_addr).c_str());
                 return false;
             }
-            auto timer_block = m_para->get_resources()->get_vblockstore()->get_latest_cert_block(sys_contract_beacon_timer_addr);
             xvip2_t leader_xip = leader_election->get_leader_xip(packet.get_block_viewid(), get_account(), latest_block.get(), to_addr, from_addr, version, enum_rotate_mode_rotate_by_view_id);
             if (!xcons_utl::xip_equals(leader_xip, from_addr)) {
                 valid = false;

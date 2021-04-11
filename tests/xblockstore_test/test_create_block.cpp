@@ -5,7 +5,7 @@
 #include "xbase/xobject.h"
 #include "xbase/xmem.h"
 #include "xbase/xcontext.h"
-#include "xbase/xvledger.h"
+// TODO(jimmy) #include "xbase/xvledger.h"
 
 #include "xdata/xdatautil.h"
 #include "xdata/xemptyblock.h"

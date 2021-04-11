@@ -11,7 +11,7 @@
 #include "xblockstore/test/test_blockstore_datamock.hpp"
 #include "xdata/xblocktool.h"
 #include "xstore/xstore.h"
-#include "xbase/xvledger.h"
+// TODO(jimmy) #include "xbase/xvledger.h"
 #include "xblockstore/xblockstore_face.h"
 #include "xsync/xsync_util.h"
 #include "../xblockstore_test/test_blockmock.hpp"

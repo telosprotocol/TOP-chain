@@ -5,7 +5,7 @@
 #include "xdata/xblock.h"
 #include "xsync/xsync_store.h"
 #include "xvnetwork/xaddress.h"
-#include "xbase/xvledger.h"
+#include "xvledger/xvcnode.h"
 
 NS_BEG2(top, sync)
 

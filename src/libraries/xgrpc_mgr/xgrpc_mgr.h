@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "xbase/xvledger.h"
+// TODO(jimmy) #include "xbase/xvledger.h"
 #include "xbasic/xmemory.hpp"
 #include "xgrpcservice/xgrpc_service.h"
 #include "xmbus/xbase_sync_event_monitor.hpp"

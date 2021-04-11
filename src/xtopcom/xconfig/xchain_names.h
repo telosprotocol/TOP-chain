@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "xbase/xvledger.h"
+#include "xvledger/xvaccount.h"
 #include "xbasic/xns_macro.h"
 
 #include <string>

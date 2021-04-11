@@ -10,7 +10,7 @@
 #include "xbase/xhash.h"
 #include "xbase/xobject.h"
 #include "xbase/xutl.h"
-#include "xbase/xvledger.h"
+// TODO(jimmy) #include "xbase/xvledger.h"
 
 #include <cinttypes>
 #include <string>

@@ -5,7 +5,7 @@
 #include <string>
 #include "xdata/xtxreceipt.h"
 #include "xdata/xdata_common.h"
-#include "xbase/xvledger.h"
+// TODO(jimmy) #include "xbase/xvledger.h"
 #include "xdata/xlightunit.h"
 
 namespace top {

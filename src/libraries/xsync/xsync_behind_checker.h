@@ -9,7 +9,7 @@
 #include "xbase/xutl.h"
 
 #include "xmbus/xmessage_bus.h"
-#include "xbase/xvblock.h"
+#include "xvledger/xvblock.h"
 #include "xsync/xsync_store.h"
 #include "xsync/xrole_chains_mgr.h"
 #include "xsync/xrole_xips_manager.h"

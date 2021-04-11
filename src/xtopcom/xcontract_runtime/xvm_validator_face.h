@@ -1,6 +1,6 @@
 #pragma once
 
-#include "xbase/xvstate.h"
+#include "xvledger/xvstate.h"
 #include "xbasic/xobject_ptr.h"
 #include "xcommon/xaddress.h"
 #include "xdata/xtransaction.h"

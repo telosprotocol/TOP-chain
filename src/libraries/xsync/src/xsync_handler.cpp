@@ -13,7 +13,7 @@
 #include "xsync/xdeceit_node_manager.h"
 #include "xvnetwork/xmessage.h"
 #include "xsync/xsync_message.h"
-#include "xbase/xvledger.h"
+// TODO(jimmy) #include "xbase/xvledger.h"
 #include "xblockstore/xblockstore_face.h"
 #include "xsync/xsync_util.h"
 #include "xsync/xsync_sender.h"
@@ -303,7 +303,7 @@ void xsync_handler_t::v1_newblockhash(
         return;
     }
 
-    xsync_info("xsync_handler receive v1_newblockhash %" PRIx64 " wait(%ldms) %s,height=%lu,view_id:%lu %s", 
+    xsync_info("xsync_handler receive v1_newblockhash %" PRIx64 " wait(%ldms) %s,height=%lu,view_id:%lu %s",
         msg_hash, get_time()-recv_time, address.c_str(), height, view_id, from_address.to_string().c_str());
 
     m_block_fetcher->handle_v1_newblockhash(address, height, view_id, from_address, network_self);
@@ -666,7 +666,7 @@ void xsync_handler_t::response_chain_state(uint32_t msg_size, const vnetwork::xv
     int64_t recv_time) {
 
     XMETRICS_COUNTER_INCREMENT("sync_pkgs_response_chain_state_recv", 1);
-    XMETRICS_COUNTER_INCREMENT("sync_bytes_response_chain_state_recv", msg_size); 
+    XMETRICS_COUNTER_INCREMENT("sync_bytes_response_chain_state_recv", msg_size);
 
     auto ptr = make_object_ptr<xsync_message_chain_state_info_t>();
     ptr->serialize_from(stream);
@@ -725,7 +725,7 @@ void xsync_handler_t::get_blocks_by_hashes(uint32_t msg_size,
         int64_t recv_time) {
 
     XMETRICS_COUNTER_INCREMENT("sync_pkgs_get_blocks_by_hashes_recv", 1);
-    XMETRICS_COUNTER_INCREMENT("sync_bytes_get_blocks_by_hashes_recv", msg_size); 
+    XMETRICS_COUNTER_INCREMENT("sync_bytes_get_blocks_by_hashes_recv", msg_size);
 
     auto ptr = make_object_ptr<xsync_message_get_blocks_by_hashes_t>();
     ptr->serialize_from(stream);
@@ -934,7 +934,7 @@ void xsync_handler_t::handle_chain_snapshot_request(
             xtable_mbt_ptr_t table_mbt;
             chain_snapshot_ptr->add_ref();
             table_mbt.attach((xtable_mbt_t*)chain_snapshot_ptr.get());
-            xsync_message_chain_snapshot_t chain_snapshot(ptr->m_account_addr, 
+            xsync_message_chain_snapshot_t chain_snapshot(ptr->m_account_addr,
                 table_mbt, ptr->m_height_of_fullblock);
             m_sync_sender->send_chain_snapshot(chain_snapshot, network_self, from_address);
         } else {
@@ -953,17 +953,17 @@ void xsync_handler_t::handle_chain_snapshot_response(uint32_t msg_size, const vn
     base::xstream_t &stream,
     xtop_vnetwork_message::hash_result_type msg_hash,
     int64_t recv_time) {
-        
+
     auto ptr = make_object_ptr<xsync_message_chain_snapshot_t>();
     ptr->serialize_from(stream);
-    
-    xsync_info("xsync_handler chain snapshot reponse %" PRIx64 " wait(%ldms) %s", 
+
+    xsync_info("xsync_handler chain snapshot reponse %" PRIx64 " wait(%ldms) %s",
         msg_hash, get_time()-recv_time, from_address.to_string().c_str());
-    
+
     XMETRICS_COUNTER_INCREMENT("sync_handler_chain_snapshot_reponse", 1);
 
     mbus::xevent_ptr_t e = std::make_shared<mbus::xevent_chain_snaphsot_t>(ptr->m_tbl_account_addr, ptr->m_chain_snapshot, ptr->m_height_of_fullblock, network_self, from_address);
-    m_downloader->push_event(e); 
+    m_downloader->push_event(e);
 }
 
 int64_t xsync_handler_t::get_time() {

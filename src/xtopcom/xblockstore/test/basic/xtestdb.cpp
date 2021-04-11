@@ -56,7 +56,7 @@ namespace top
                     xwarn("xstoredb_t::get_vblock,not found block'header&cert object at %s",_header_cert_bin.c_str());
                 return NULL;
             }
-            base::xvblock_t* block_ptr = base::xvblockstore_t::create_block_object(_header_cert_bin);
+            base::xvblock_t* block_ptr = base::xvblock_t::create_block_object(_header_cert_bin);
             if(block_ptr != NULL)
             {
                 if(block_ptr->get_block_class() != base::enum_xvblock_class_nil)
@@ -88,7 +88,7 @@ namespace top
                     xwarn("xstoredb_t::get_vblock_header,not found block'header&cert object at %s",_header_cert_bin.c_str());
                 return NULL;
             }
-            return base::xvblockstore_t::create_block_object(_header_cert_bin);
+            return base::xvblock_t::create_block_object(_header_cert_bin);
         }
         bool             xstoredb_t::get_vblock_input(const std::string & store_path,base::xvblock_t* block_ptr)  const
         {
