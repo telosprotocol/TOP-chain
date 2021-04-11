@@ -14,7 +14,6 @@
 #include "xdata/xblock.h"
 #include "xdata/xblockchain.h"
 #include "xbasic/xmemory.hpp"
-#include "xmbus/xmessage_bus.h"
 
 using namespace top::data;
 
@@ -24,8 +23,10 @@ using xdataobj_ptr_t = xobject_ptr_t<base::xdataobj_t>;
 
 class xstore_face_t : public base::xvdbstore_t {
  public:
-    virtual mbus::xmessage_bus_face_t* get_mbus() = 0;
-
+    xstore_face_t() = default;
+ protected:
+    virtual ~xstore_face_t() {}
+ public:
     virtual xaccount_ptr_t query_account(const std::string& address) = 0;
 
     virtual uint64_t get_blockchain_height(const std::string& account) = 0;
@@ -60,23 +61,11 @@ class xstore_face_t : public base::xvdbstore_t {
     virtual int32_t map_copy_get(const std::string& account, const std::string & key, std::map<std::string, std::string> & map) const = 0;
 
 public:
-    virtual bool set_vblock(const std::string & store_path,base::xvblock_t* block) = 0; //fullly store header/cert/input/output of block
-    bool set_vblock(base::xvblock_t* block) {return set_vblock(std::string(), block);}
-    virtual bool set_vblock_header(const std::string & store_path,base::xvblock_t* block) = 0;//just store header and cert only
-
-    virtual base::xvblock_t* get_vblock(const std::string & store_path,const std::string & account, uint64_t height) const = 0;//load full
-    base::xvblock_t* get_vblock(const std::string & account, uint64_t height) const {return get_vblock(std::string(), account, height);}
-    virtual base::xvblock_t* get_vblock_header(const std::string & store_path,const std::string & account, uint64_t height) const = 0;//header and cert only
-    virtual bool get_vblock_input(const std::string & store_path,base::xvblock_t* for_block) const = 0;//just load input
-    virtual bool get_vblock_output(const std::string & store_path,base::xvblock_t* for_block) const = 0;//just load output
+    // virtual bool set_vblock(base::xvblock_t* block) = 0;
+    // virtual base::xvblock_t* get_vblock(const std::string & account, uint64_t height) = 0;
     virtual bool get_vblock_offstate(const std::string & store_path,base::xvblock_t* for_block) const = 0;//just load offstate
 
     virtual bool delete_block_by_path(const std::string & store_path,const std::string & account, uint64_t height, bool has_input_output) = 0;
-
-    virtual bool  set_value(const std::string & key, const std::string& value) = 0;
-    virtual bool  delete_value(const std::string & key) = 0;
-    virtual const std::string get_value(const std::string & key) const = 0;
-
 public:
     virtual bool  execute_block(base::xvblock_t* block) = 0;
     virtual std::string get_full_offstate(const std::string & account, uint64_t height) = 0;
@@ -90,10 +79,9 @@ using xstore_face_ptr_t = xobject_ptr_t<xstore_face_t>;
 class xstore_factory {
  public:
     static xobject_ptr_t<xstore_face_t> create_store_with_memdb();
-    static xobject_ptr_t<xstore_face_t> create_store_with_memdb(observer_ptr<mbus::xmessage_bus_face_t> const & bus);
     static xobject_ptr_t<xstore_face_t> create_store_with_kvdb(const std::string & db_path);
-    static xobject_ptr_t<xstore_face_t> create_store_with_static_kvdb(const std::string & db_path, observer_ptr<mbus::xmessage_bus_face_t> const & bus);
-    static xobject_ptr_t<xstore_face_t> create_store_with_static_kvdb(std::shared_ptr<db::xdb_face_t>& db, observer_ptr<mbus::xmessage_bus_face_t> const &bus);
+    static xobject_ptr_t<xstore_face_t> create_store_with_static_kvdb(const std::string & db_path);
+    static xobject_ptr_t<xstore_face_t> create_store_with_static_kvdb(std::shared_ptr<db::xdb_face_t>& db);
 };
 
 }  // namespace store

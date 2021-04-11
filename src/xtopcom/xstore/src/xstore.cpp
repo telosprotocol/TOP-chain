@@ -266,9 +266,6 @@ std::string xstore_key_t::printable_key() const {
 xstore::xstore(const std::shared_ptr<db::xdb_face_t> &db)
     : m_db(db) {}
 
-xstore::xstore(const std::shared_ptr<db::xdb_face_t> &db, observer_ptr<mbus::xmessage_bus_face_t> const &bus)
-    : m_db(db), m_bus(bus) {}
-
 xaccount_ptr_t xstore::query_account(const std::string &address) {
     auto blockchain = clone_account(address);
     xblockchain_ptr_t obj;
@@ -1026,12 +1023,6 @@ xobject_ptr_t<xstore_face_t> xstore_factory::create_store_with_memdb() {
     return store;
 }
 
-xobject_ptr_t<xstore_face_t> xstore_factory::create_store_with_memdb(observer_ptr<mbus::xmessage_bus_face_t> const &bus) {
-    std::shared_ptr<db::xdb_face_t> db = db::xdb_factory_t::create_memdb();
-    auto                            store = top::make_object_ptr<xstore>(db, bus);
-    return store;
-}
-
 xobject_ptr_t<xstore_face_t> xstore_factory::create_store_with_kvdb(const std::string &db_path) {
     xinfo("store init with one db, db path %s", db_path.c_str());
     std::shared_ptr<db::xdb_face_t> db = db::xdb_factory_t::create_kvdb(db_path);
@@ -1039,15 +1030,15 @@ xobject_ptr_t<xstore_face_t> xstore_factory::create_store_with_kvdb(const std::s
     return store;
 }
 
-xobject_ptr_t<xstore_face_t> xstore_factory::create_store_with_static_kvdb(const std::string &db_path, observer_ptr<mbus::xmessage_bus_face_t> const &bus) {
+xobject_ptr_t<xstore_face_t> xstore_factory::create_store_with_static_kvdb(const std::string &db_path) {
     xinfo("static store init with one db, db path %s", db_path.c_str());
     static std::shared_ptr<db::xdb_face_t> db = db::xdb_factory_t::create_kvdb(db_path);
-    auto                                   store = top::make_object_ptr<xstore>(db, bus);
+    auto                                   store = top::make_object_ptr<xstore>(db);
     return store;
 }
 
-xobject_ptr_t<xstore_face_t> xstore_factory::create_store_with_static_kvdb(std::shared_ptr<db::xdb_face_t>& db, observer_ptr<mbus::xmessage_bus_face_t> const &bus) {
-    auto                                   store = top::make_object_ptr<xstore>(db, bus);
+xobject_ptr_t<xstore_face_t> xstore_factory::create_store_with_static_kvdb(std::shared_ptr<db::xdb_face_t>& db) {
+    auto                                   store = top::make_object_ptr<xstore>(db);
     return store;
 }
 

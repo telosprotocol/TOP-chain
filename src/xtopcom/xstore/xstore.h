@@ -55,7 +55,6 @@ private:
 class xstore final: public xstore_face_t {
  public:
     explicit xstore(const std::shared_ptr<db::xdb_face_t>& db);
-    xstore(const std::shared_ptr<db::xdb_face_t>& db, observer_ptr<mbus::xmessage_bus_face_t> const & bus);
 
  protected:
     ~xstore() {}
@@ -79,7 +78,6 @@ class xstore final: public xstore_face_t {
     virtual std::string         get_store_path() const  override {return m_store_path;}
 
  public://other old api
-    mbus::xmessage_bus_face_t* get_mbus() override {return m_bus.get();}
 
     xaccount_ptr_t query_account(const std::string& address) override;
 
@@ -172,7 +170,6 @@ public:
  private:
     std::string                     m_store_path;
     std::shared_ptr<db::xdb_face_t> m_db;
-    observer_ptr<mbus::xmessage_bus_face_t> m_bus{};
 };
 
 }  // namespace store

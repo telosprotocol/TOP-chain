@@ -34,7 +34,7 @@ namespace top
             -[enum_xid_type  :3bit]
         }
         */
-
+    
         enum enum_xvaccount_plugin_type //max 8 plugins
         {
             enum_xvaccount_plugin_start      = 0x00,
@@ -43,16 +43,16 @@ namespace top
             enum_xvaccount_plugin_statemgr   = 0x02, //manage states
             enum_xvaccount_plugin_indexmgr   = 0x03, //manage indexs
             enum_xvaccount_plugin_executemgr = 0x04, //manage contract & function execute
-
+            
             //note:update max once add new plugin at above
             enum_xvaccount_plugin_end        = enum_xvaccount_plugin_executemgr + 1,
             enum_xvaccount_plugin_max        = 0x08,
         };
-
+        
         class xvaccountobj_t : public xobject_t,public xvaccount_t
         {
             friend class xvtable_t;
-
+            
         protected://max as 8 tables per book
             xvaccountobj_t(xvtable_t & parent_object,const std::string & account_address);
             virtual ~xvaccountobj_t();
@@ -64,26 +64,26 @@ namespace top
         public:
             std::recursive_mutex&   get_lock();
             virtual bool            handle_event(const xvevent_t & ev) override;//add entry of handle event
-
+            
             //the returned ptr has done add_ref before return,so release it when nolonger need manually
             xobject_t*              get_plugin(enum_xvaccount_plugin_type plugin);
             //return to indicate setup successful or not
             bool                    set_plugin(xobject_t * plugin_obj,enum_xvaccount_plugin_type plugin_type);
-
+            
         private: //overwrite to protected mode for following api
             virtual bool            close(bool force_async = true) override;
-
+          
             //the returned ptr has done add_ref before return,so release it when nolonger need manually
             xobject_t*              get_plugin_unsafe(enum_xvaccount_plugin_type plugin_type);
             //return to indicate setup successful or not
             bool                    set_plugin_unsafe(xobject_t * plugin_obj,enum_xvaccount_plugin_type plugin_type);
-
+            
         private:
             xvtable_t&          m_ref_table; //link to table
             //note: only support max 8 plugins for one object as considering size and reality
             xobject_t*          m_plugins[enum_xvaccount_plugin_max];
         };
-
+    
         //note: zone_index = bucket_index:range of [0,15], book_index: range of [0,127], table_index: range of [0,7]
         //note: 12bit chain_id = net_id of same definition as XIP,but valid range for xchain is limited as [0,4095]
         //each table manage unlimited accounts
@@ -104,24 +104,24 @@ namespace top
             xvaccountobj_t*            get_account_unsafe(const std::string & account_address);
             xauto_ptr<xvaccountobj_t>  get_account(const std::string & account_address);
             xauto_ptr<xvaccountobj_t>  get_account(const xvaccount_t & account_obj){return get_account(account_obj.get_address());}
-
+            
             xauto_ptr<xobject_t>       get_account_plugin(const std::string & account_address,enum_xvaccount_plugin_type plugin_type);
             //return raw ptr that has been add_ref,caller need manually release it
             xobject_t*                 get_account_plugin_unsafe(const std::string & account_address,enum_xvaccount_plugin_type plugin_type);
-
+            
             //return to indicate setup successful or not
             bool                       set_account_plugin(const std::string & account_address,xobject_t * new_plugin_obj,enum_xvaccount_plugin_type plugin_type);
-
+            
             bool                       close_account(const std::string & account_address);
 
             inline const uint64_t      get_table_index() const {return m_table_index;}
             inline const uint32_t      get_table_combine_addr() const {return m_table_combine_addr;}
-
+            
             inline std::recursive_mutex&  get_lock() {return m_lock;}
         private:
-            //param of force_clean indicate whether force to close valid account
+            //param of force_clean indicate whether force to close valid account 
             virtual bool               clean_all(bool force_clean = false);//clean all accounts & but table self still ok to use
-
+            
         #ifdef DEBUG //debug only purpose
             virtual int32_t   add_ref() override;
             virtual int32_t   release_ref() override;
@@ -132,7 +132,7 @@ namespace top
             std::map<std::string,xvaccountobj_t*> m_accounts;
             uint32_t               m_table_combine_addr; //[ledgerid:16bit][book:7bit][table:3bit]
         };
-
+        
         //each book manage 8 tables
         class xvbook_t : public xionode_t
         {
@@ -149,7 +149,7 @@ namespace top
             xvtable_t*              get_table(const xvid_t & account_id);//return raw ptr as perforamnce
             const uint64_t          get_book_index() const {return m_book_index;}//return uint64_t just for performance
             const uint32_t          get_book_combine_addr() const {return m_book_combine_addr;}//combined address
-
+            
         protected://internal or subcalss use only
             //param of force_clean indicate whether force to close valid account
             virtual bool            clean_all(bool force_clean = false); //just clean all accounts but table object is not release
@@ -161,7 +161,7 @@ namespace top
             xvtable_t*   m_tables[enum_vbook_has_tables_count];
             uint32_t     m_book_combine_addr;  //[ledgerid:16bit][book:7bit][table:3bit]
         };
-
+        
         //each ledger manage 32 books which manage 8 tables,in other words each leadger manage 256 tables
         class xvledger_t  : public xionode_t
         {
@@ -179,20 +179,20 @@ namespace top
             xvtable_t*              get_table(const xvid_t & account_id);//return raw ptr as perforamnce
             xvtable_t*              get_table(const std::string & account_address);//wrap function
             xvtable_t*              get_table(const xvaccount_t & account_obj){return get_table(account_obj.get_xvid());}
-
+            
             xauto_ptr<xvaccountobj_t>   get_account(const std::string & account_address);
             xauto_ptr<xvaccountobj_t>   get_account(const xvaccount_t & account_obj);
             //the returned ptr has done add_ref before return,so release it when nolonger need manually
             //but it is multiple thread safe
             xvaccountobj_t*             get_account_unsafe(const std::string & account_address);
             xvaccountobj_t*             get_account_unsafe(const xvaccount_t & account_obj);
-
+            
             inline const int        get_ledger_id()    const {return (int)m_ledger_id;}
             inline const int        get_chain_id()     const {return ((int)m_ledger_id >> 4);}
             inline const int        get_network_id()   const {return ((int)m_ledger_id >> 4);}
             inline const int        get_bucket_index() const {return ((int)m_ledger_id & 0x0F);}
             inline const int        get_zone_index()   const {return ((int)m_ledger_id & 0x0F);}
-
+            
         protected:
             //param of force_clean indicate whether force to close valid account
             virtual bool            clean_all(bool force_clean = false); //just do clean but not never destory objects of book/table
@@ -203,7 +203,7 @@ namespace top
         protected:
             xvbook_t*   m_books[enum_vbucket_has_books_count];
         };
-
+        
         //each chain manage 16 zone/buckets, each bucket/zone has unique ledger
         class xvchain_t : public xionode_t
         {
@@ -214,7 +214,7 @@ namespace top
                 enum_xvchain_plugin_block_store   = 0x01, //manage all blocks,assocated with xvblockstore_t interface
                 enum_xvchain_plugin_state_store   = 0x02, //manage all states
                 enum_xvchain_plugin_txs_store     = 0x03, //manage all transactions
-                enum_xvchain_plugin_event_mbus    = 0x04, //manage mbus
+                enum_xvchain_plugin_event_mbus    = 0x04, //manage mbus 
                 enum_xvchain_plugin_type_end      = 0x04,
             };
         public:
@@ -232,16 +232,17 @@ namespace top
             xvtable_t*                  get_table(const xvid_t & account_id);
             xvtable_t*                  get_table(const std::string & account_address);//wrap function
             xvtable_t*                  get_table(const xvaccount_t & account_obj){return get_table(account_obj.get_xvid());}
-
+            
             xauto_ptr<xvaccountobj_t>   get_account(const std::string & account_address);
             xauto_ptr<xvaccountobj_t>   get_account(const xvaccount_t & account_obj);
             //the returned ptr has done add_ref before return,so release it when nolonger need manually
             //it is multiple thread safe
             xvaccountobj_t*             get_account_unsafe(const std::string & account_address);
             xvaccountobj_t*             get_account_unsafe(const xvaccount_t & account_obj);
-
+            
             inline const int            get_chain_id()     const {return (int)m_chain_id;}
             inline const int            get_network_id()   const {return (int)m_chain_id;}
+            
         public://note:each bucket/ledger may have own db and blockstore etc
             xvdbstore_t*                get_xdbstore(); //global shared db instance
             xvblockstore_t*             get_xblockstore();//global shared blockstore instance
@@ -250,7 +251,7 @@ namespace top
             bool                        set_xdbstore(xvdbstore_t * new_store);//set global shared instance
             bool                        set_xblockstore(xvblockstore_t * new_store);//set global shared instance
             bool                        set_xevmbus(xveventbus_t * new_mbus);
-
+            
             //param of force_clean indicate whether force to close valid account
             virtual bool                clean_all(bool force_clean = false);//just do clean but not never destory objects of ledger/book/table
         protected:
@@ -262,6 +263,6 @@ namespace top
             xvledger_t*   m_ledgers[enum_vchain_has_buckets_count];
         };
         ///////////////////////provide general structure for xledger and related //////////////////
-
+    
     }//end of namespace of base
 }//end of namespace top

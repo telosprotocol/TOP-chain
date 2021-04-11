@@ -19,48 +19,48 @@ namespace top
          {
             enum_vledger_has_buckets_count       = 16,     //4bit: max 16 buckets(aka zones) of each ledger
             enum_vledger_has_zones_count         = enum_vledger_has_buckets_count
-
+         
             enum_vbucket_has_books_count         = 128,    //7bit: each bucket has max 128 books
             enum_vbook_has_tables_count          = 8,      //3bit: each book has max 8 tables
             enum_vbucket_has_tables_count        = 1024,   //total 1024 = 128 * 8 under one bucket/zone
          };
          */
-
+        
         enum enum_vaccount_addr_type
         {
             enum_vaccount_addr_type_invalid                     =  0,
-
+            
             enum_vaccount_addr_type_root_account                = '$',
             enum_vaccount_addr_type_black_hole                  = '!',
             enum_vaccount_addr_type_timer                       = 't',
             enum_vaccount_addr_type_clock                       = 't', //clock cert
             enum_vaccount_addr_type_drand                       = 'r', //drand cert
-
-
+            
+            
             ////////////////////Edward25519 generated key->accoun///////////////////////////////////////////
             enum_vaccount_addr_type_ed25519_user_account        = 'A',  //Edward25519 generated key->account
             enum_vaccount_addr_type_ed25519_user_sub_account    = 'B',  //Edward25519 generated key->account
-
+            
             //note: reserve 'C'--'Z' here
             enum_vaccount_addr_type_ed25519_reserved_start      = 'C',
             enum_vaccount_addr_type_ed25519_reserved_end        = 'Z',
-
+            
             ////////////////////secp256k1 generated key->accoun/////////////////////////////////////////////
             enum_vaccount_addr_type_secp256k1_user_account      = '0',  //secp256k1 generated key->account
             enum_vaccount_addr_type_secp256k1_user_sub_account  = '1',  //secp256k1 generated key->account
             enum_vaccount_addr_type_native_contract             = '2',  //secp256k1 generated key->account
             enum_vaccount_addr_type_custom_contract             = '3',  //secp256k1 generated key->account
-
+            
             enum_vaccount_addr_type_block_contract              = 'a',  //secp256k1 generated key->account
         };
-
+        
         //each chain has max 16 zones/buckets, define as below
         enum enum_xchain_zone_index
         {
             enum_chain_zone_consensus_index   = 0,  //for consesnus
             enum_chain_zone_beacon_index      = 1,  //for beacon
             enum_chain_zone_zec_index         = 2,  //for election
-
+            
             enum_chain_zone_archive_index     = 14, //for archive nodes
             enum_chain_zone_edge_index        = 15, //for edge nodes
         };
@@ -69,13 +69,13 @@ namespace top
         {
             enum_main_chain_id          = 0,      //main chain for TOP asset
             enum_rootbeacon_chain_id    = 128,    //root beacon of TOP platform
-
+            
             enum_test_chain_id          = 255,    //for test purpose
-
+            
             //service_chain_id defined as below ,that must >= 256
             enum_service_chain_id_start_reserved = 256,
         };
-
+        
         class xvaccount_t : virtual public xrefcount_t
         {
         public:
@@ -109,7 +109,7 @@ namespace top
                 char prefix_chars[32] = {0};
                 snprintf(prefix_chars, sizeof(prefix_chars), "%c", (const char)addr_type);
                 std::string prefix_string(prefix_chars);
-
+                
                 const std::string szledgerid = xstring_utl::uint642hex(ledger_id);//must be 1-4 hex char since ledger_id must <= 65535(0xFFFF)
                 if(szledgerid.size() < 4)
                 {
@@ -197,7 +197,7 @@ namespace top
             {
                 addr_type  = 0; //0 is invalid
                 ledger_id   = 0; //0 is valid and default value
-
+                
                 const int account_address_size = (int)account_addr.size();
                 if( (account_address_size > enum_vaccount_address_min_size) && (account_address_size < enum_vaccount_address_max_size) )
                 {
@@ -208,7 +208,7 @@ namespace top
                 xassert(0);
                 return false;
             }
-
+            
             //ledger_id= [chain_id:12bit][zone_index:4bit]
             static const uint16_t  make_ledger_id(enum_xchain_id chain_id,enum_xchain_zone_index zone_index)
             {
@@ -252,7 +252,7 @@ namespace top
             {
                 return (uint8_t)(subaddr_of_zone & 0x07);
             }
-
+            
         protected:
             static bool get_ledger_fulladdr_from_account(const std::string & account_addr,uint32_t & ledger_id,uint16_t & ledger_sub_addr,uint32_t & account_index)
             {
@@ -263,7 +263,7 @@ namespace top
                 if( (account_address_size < enum_vaccount_address_max_size) && (account_address_size > enum_vaccount_address_min_size) )
                 {
                     ledger_id = get_ledgerid_from_account(account_addr);
-
+                    
                     std::string::size_type _pos_of_subaddr = account_addr.find_last_of('@');
                     if(_pos_of_subaddr != std::string::npos)//system account
                     {
@@ -276,12 +276,12 @@ namespace top
                         ledger_sub_addr = (uint16_t)(account_index);
                     }
                     ledger_sub_addr = (ledger_sub_addr & enum_vbucket_has_tables_count_mask); //force to trim others,to ensure less than 1024
-
+                    
                     return true;
                 }
                 return false;
             }
-
+            
         public: //convert account_address to xid_t
             /*
              //XID : ID of the logic & virtual account/user# at overlay network
@@ -331,11 +331,11 @@ namespace top
             inline const int            get_zone_index()  const {return get_vledger_zone_index(m_account_xid);}
             inline const int            get_bucket_index()const {return get_zone_index();}
             inline const int            get_net_id()      const {return get_chainid();}
-
+            
             inline const int            get_ledger_subaddr() const {return get_vledger_subaddr(m_account_xid);}
             inline const int            get_book_index()     const {return get_vledger_book_index(m_account_xid);}
             inline const int            get_table_index()    const {return get_vledger_table_index(m_account_xid);}
-
+            
             inline const uint16_t       get_short_table_id()//note: short table_id = [zone_index][book_index][table_index]
             {
                   return (uint16_t)((get_zone_index() << 10) | get_ledger_subaddr());
@@ -344,12 +344,12 @@ namespace top
             {
                 return uint32_t((get_ledger_id() << 10) | get_ledger_subaddr());
             }
-
+            
             inline const xvid_t         get_xvid()    const {return m_account_xid;}
             inline const std::string&   get_address() const {return m_account_addr;}
             inline const std::string&   get_account() const {return m_account_addr;}
             inline const uint32_t       get_account_index() const {return get_xid_index(m_account_xid);}
-
+            
             enum_vaccount_addr_type     get_addr_type()const{return get_addrtype_from_account(m_account_addr);}
         private:
             xvid_t                      m_account_xid;

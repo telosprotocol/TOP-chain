@@ -42,7 +42,7 @@ namespace top
             std::string         m_sign_pubkey;  //33 bytes of the compressed public key of ECC(secp256k1 or ed25519 curve)
             std::string         m_sign_prikey;  //32bytes of raw private key of ECC(secp256k1 or ed25519 curve decide by account)
         };
-
+        
         //note: once construction,xvgroup_t never to allow modify until destroy
         class xvnodegroup_t : virtual public xrefcount_t
         {
@@ -70,7 +70,7 @@ namespace top
             uint64_t                m_network_height;       //election height from xip2
             std::vector<xvnode_t*>  m_nodes;                //store actual nodes
         };
-
+        
         //interface to manage node' key & election result
         class xvnodesrv_t : public xdataobj_t
         {
@@ -96,7 +96,7 @@ namespace top
             virtual int32_t                    do_write(base::xstream_t & stream) override;//write whole object to binary
             virtual int32_t                    do_read(base::xstream_t & stream) override; //read from binary and regeneate content
         };
-
+        
         //xvnodehouse_t is a implemenation for xvnodesrv_t interface
         class xvnodehouse_t : public xvnodesrv_t
         {
@@ -119,7 +119,7 @@ namespace top
             uint64_t                           m_vnet_version;//version is same concept as round of election
             std::map<uint64_t,xvnodegroup_t*>  m_vgroups;     //mapping <version/round --> group>
         };
-
+        
         struct xvoter
         {
         public:

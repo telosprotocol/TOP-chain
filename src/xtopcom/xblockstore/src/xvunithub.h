@@ -25,7 +25,7 @@ namespace top
 
                 #ifdef DEBUG //short timeout to give stress for program
                 enum_account_idle_check_interval= 10000,   //check every 5 seconds
-                enum_account_idle_timeout_ms    = 10000,   //account change to idle status if not access within 60 seconds
+                enum_account_idle_timeout_ms    = 60000,   //account change to idle status if not access within 60 seconds
                 #else
                 enum_account_idle_check_interval= 10000,   //check every 10 seconds
                 enum_account_idle_timeout_ms    = 60000,   //account change to idle status if not access within 120 seconds

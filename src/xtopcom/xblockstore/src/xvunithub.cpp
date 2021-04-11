@@ -100,11 +100,10 @@ namespace top
                 return nullptr;
             }
             
+            bool loaded_new_block = false;
             if(target_index->get_this_block() == NULL)
-                target_account->load_block_object(target_index.get());
-            
-            //XTODO, add code to rebuild block from table block
-            
+                loaded_new_block = target_account->load_block_object(target_index.get());
+                        
             if(ask_full_load)
             {
                 target_account->load_index_input(target_index.get());
@@ -113,12 +112,17 @@ namespace top
             if(target_index->get_this_block() != NULL)
             {
                 //transfer block flags from index to raw block here
-                xassert(target_index->get_block_flags() >= target_index->get_this_block()->get_block_flags());
-                target_index->get_this_block()->reset_block_flags(target_index->get_block_flags());
+                xassert(target_index->get_block_flags() == target_index->get_this_block()->get_block_flags());
+                //target_index->get_this_block()->reset_block_flags(target_index->get_block_flags());
                 
+                //must addreference first before clean_caches(),otherwise it might be reset by clean_caches
                 target_index->get_this_block()->add_ref();//add reference before return
+                if(loaded_new_block) //try to keep balance when one new block loaded,so trigger lightly cleanup
+                    target_account->clean_caches(false);//light cleanup
+                
                 return target_index->get_this_block();
             }
+            //XTODO, add code to rebuild block from table block
             
             xassert(0);
             return nullptr;
@@ -414,7 +418,7 @@ namespace top
             base::xvtable_t * target_table = base::xvchain_t::instance().get_table(account.get_xvid());
             std::lock_guard<std::recursive_mutex> _dummy(target_table->get_lock());
             base::xauto_ptr<xblockacct_t> target_account(get_block_account(target_table,account.get_address()));
-            return target_account->clean_caches();
+            return target_account->clean_caches(true);
         }
 
         //clean all cached blocks after reach max idle duration(as default it is 60 seconds)
