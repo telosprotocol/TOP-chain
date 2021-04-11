@@ -3,6 +3,7 @@
 // Licensed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
+#include <cinttypes>
 #include "../xvbindex.h"
 #include "../xvaccount.h"
  
@@ -125,7 +126,10 @@ namespace top
     
         const std::string xvbindex_t::dump() const
         {
-            return std::string();
+            char local_buf[256];
+            xprintf(local_buf,sizeof(local_buf),"{xvbindex_t:account_id(%" PRIu64 "),height=%" PRIu64 ",viewid=%" PRIu64 ",next_viewid(%" PRIu64 "),  parent_height(%" PRIu64 "),block-flags=0x%x,store-flags=0x%x,refcount=%d,this=%p}",m_account_id,m_block_height,m_block_viewid,get_next_viewid(),m_parent_block_height,get_block_flags(),get_store_flags(), get_refcount(),this);
+
+            return std::string(local_buf);
         }
  
         void    xvbindex_t::reset_next_viewid_offset(const int32_t next_viewid_offset)
@@ -184,9 +188,9 @@ namespace top
         int    xvbindex_t::reset_block_flags(const uint32_t new_flags) //replace all flags of block
         {
             uint16_t copy_flags = m_combineflags;
-            copy_flags = (copy_flags & 0x00FF) | enum_index_flag_modified;
-            copy_flags |= (new_flags & 0xFF00); //just keep flags of block
-            m_combineflags = copy_flags;
+            copy_flags &= (~enum_xvblock_flags_mask);//0xFF00-->0x00FF,so clean all flags of block
+            copy_flags |= (new_flags & enum_xvblock_flags_mask); //just keep flags of block(highest 8bit)
+            m_combineflags = copy_flags | enum_index_flag_modified;
             return m_combineflags;
         }
     
@@ -226,10 +230,12 @@ namespace top
             return (m_combineflags & enum_index_store_flags_mask);//[8bit:block-flags][1bit][7bit:store-bits]
         }
     
-        int     xvbindex_t::reset_store_flags() //clean all flags related index
+        int     xvbindex_t::reset_store_flags(const uint32_t new_flags) //clean all flags related index
         {
-            const uint16_t copy_flags = m_combineflags;
-            m_combineflags = (copy_flags & 0xFF00) | enum_index_flag_modified;
+            uint16_t copy_flags = m_combineflags;
+            copy_flags &= (~enum_index_store_flags_mask); //clean stored flags at low 7bit. 0x7F -> 0xFF80
+            copy_flags |= (new_flags & enum_index_store_flags_mask); //apply new flags
+            m_combineflags = copy_flags | enum_index_flag_modified;
             return m_combineflags;
         }
     
@@ -291,7 +297,7 @@ namespace top
                 }
                 else
                 {
-                    xerror("xvbindex_t::reset_next_block,next_block'height != (cur-height + 1),cur-height=%llu vs next_block->dump=%s",get_height(),_new_next_index->dump().c_str());
+                    xerror("xvbindex_t::reset_next_block,next_block'height != (cur-height + 1),cur-height=%" PRIu64 " vs next_block->dump=%s",get_height(),_new_next_index->dump().c_str());
                 }
             }
             else

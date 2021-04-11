@@ -6,7 +6,7 @@
 
 #include <string>
 #include <vector>
-
+ 
 #include "xbase/xvevent.h"
 #include "xbase/xobject.h"
 #include "xvbindex.h"
@@ -24,19 +24,19 @@ namespace top
             xveventbus_t(xveventbus_t &&);
             xveventbus_t(const xveventbus_t &);
             xveventbus_t & operator = (const xveventbus_t &);
-
+            
         public:
             //caller need to cast (void*) to related ptr
             virtual void*  query_interface(const int32_t _enum_xobject_type_) override;
-
+            
         public: //api for event
             virtual bool   handle_event(const xvevent_t & ev) override; //convert then push_event
             virtual void   push_event(const mbus::xevent_ptr_t& e) = 0; //push event into mbus system
-
+            
         public://declares clasic events
             virtual mbus::xevent_ptr_t  create_event_for_store_index_to_db(xvbindex_t * target_block) = 0;
             virtual mbus::xevent_ptr_t  create_event_for_store_block_to_db(xvblock_t * target_block) = 0;
         };
-
+    
     }//end of namespace of base
 }//end of namespace top

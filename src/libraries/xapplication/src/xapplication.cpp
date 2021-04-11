@@ -50,7 +50,7 @@ xtop_application::xtop_application(common::xnode_id_t const & node_id, xpublic_k
   , m_sync_thread{make_object_ptr<base::xiothread_t>()}
   , m_elect_client{top::make_unique<elect::xelect_client_imp>()} {
     std::shared_ptr<db::xdb_face_t> db = db::xdb_factory_t::instance(XGET_CONFIG(db_path));
-    m_store = store::xstore_factory::create_store_with_static_kvdb(db, make_observer(m_bus));
+    m_store = store::xstore_factory::create_store_with_static_kvdb(db);
     base::xvchain_t::instance().set_xdbstore(m_store.get());
     m_blockstore.attach(store::get_vblockstore());
     m_indexstore = store::xindexstore_factory_t::create_indexstorehub(make_observer(m_store), make_observer(m_blockstore));
@@ -237,14 +237,14 @@ base::xauto_ptr<top::base::xvblock_t> xtop_application::last_logic_time() const 
 
 bool xtop_application::check_rootblock() {
     base::xvblock_t* rootblock = xrootblock_t::get_rootblock();
-    base::xvblock_t* db_rootblock = store()->get_vblock(rootblock->get_account(), 0);
+    base::xvblock_t* db_rootblock = store()->get_vblock(std::string(), rootblock->get_account(), 0);
     if (db_rootblock != nullptr) {
         if (db_rootblock->get_block_hash() != rootblock->get_block_hash()) {
             xerror("xtop_application::check_rootblock db rootblock not match");
             return false;
         }
     } else {
-        if (false == store()->set_vblock(rootblock)) {
+        if (false == store()->set_vblock(std::string(), rootblock)) {
             xerror("xtop_application::check_rootblock rootblock set db fail");
             return false;
         }
@@ -277,7 +277,7 @@ bool xtop_application::create_genesis_account(std::string const & address, uint6
     base::xauto_ptr<base::xvblock_t> genesis_block = data::xblocktool_t::create_genesis_lightunit(address, init_balance);
     xassert(genesis_block != nullptr);
 
-    auto ret = m_store->set_vblock(genesis_block.get());
+    auto ret = m_store->set_vblock(std::string(), genesis_block.get());
     if (!ret) {
         xerror("xtop_application::create_genesis_account store genesis block fail");
         return ret;

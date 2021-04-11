@@ -20,6 +20,7 @@
 #include "xtxpool_service_v2/xrequest_tx_receiver_face.h"
 #include "xtxpool_v2/xtxpool_face.h"
 #include "xvnetwork/xvnetwork_driver_face.h"
+#include "xmbus/xmessage_bus.h"
 
 NS_BEG2(top, xtxpool_service_v2)
 

@@ -20,19 +20,19 @@ namespace top
             xcodevar_t::register_object(context);
             xmtokens_t::register_object(context);
             xmkeys_t::register_object(context);
-
+            
             xhashmapvar_t::register_object(context);
-
+            
             xvintvar_t<int64_t>::register_object(context);
             xvintvar_t<uint64_t>::register_object(context);
-
+            
             xdequevar_t<int8_t>::register_object(context);
             xdequevar_t<int16_t>::register_object(context);
             xdequevar_t<int32_t>::register_object(context);
             xdequevar_t<int64_t>::register_object(context);
             xdequevar_t<uint64_t>::register_object(context);
             xdequevar_t<std::string>::register_object(context);
-
+            
             xmapvar_t<int8_t>::register_object(context);
             xmapvar_t<int16_t>::register_object(context);
             xmapvar_t<int32_t>::register_object(context);
@@ -41,7 +41,7 @@ namespace top
             xmapvar_t<std::string>::register_object(context);
             //add others standard property
         }
-
+    
         const std::string  xvbstate_t::make_unit_name(const std::string & account, const uint64_t blockheight)
         {
             const std::string compose_name = account + "." + xstring_utl::tostring(blockheight);
@@ -57,14 +57,14 @@ namespace top
             set_unit_name(make_unit_name(std::string(),m_block_height));
             //ask compressed data while serialization
             set_unit_flag(enum_xdata_flag_acompress);
-
+            
             xauto_ptr<xvcanvas_t> new_canvas(new xvcanvas_t());
             set_canvas(new_canvas.get());
-
+            
             //then register execution methods
             REGISTER_XVIFUNC_ID_API(enum_xvinstruct_class_state_function);
         }
-
+    
         xvbstate_t::xvbstate_t(const std::string & account_addr,const uint64_t block_height,const std::vector<xvproperty_t*> & properties,enum_xdata_type type)
             :base(type)
         {
@@ -78,10 +78,10 @@ namespace top
 
             xauto_ptr<xvcanvas_t> new_canvas(new xvcanvas_t());
             set_canvas(new_canvas.get());
-
+            
             //then register execution methods
             REGISTER_XVIFUNC_ID_API(enum_xvinstruct_class_state_function);
-
+            
             //finally add property object
             for(auto & p : properties)
             {
@@ -89,7 +89,7 @@ namespace top
                     add_child_unit(p);
             }
         }
-
+    
         xvbstate_t::xvbstate_t(const xvbstate_t & obj)
             :base(obj)
         {
@@ -99,17 +99,17 @@ namespace top
             set_unit_name(make_unit_name(m_account_addr,m_block_height)); //set unit name first
             //ask compressed data while serialization
             set_unit_flag(enum_xdata_flag_acompress);
-
+            
             //setup canvas
             xauto_ptr<xvcanvas_t> new_canvas(new xvcanvas_t());
             set_canvas(new_canvas.get());
             //then register execution methods
             REGISTER_XVIFUNC_ID_API(enum_xvinstruct_class_state_function);
-
+            
             //finally set parent ptr
             set_parent_unit(obj.get_parent_unit());
         }
-
+    
         xvbstate_t::xvbstate_t(const uint64_t new_block_height,const xvbstate_t & source)
             :base(source)
         {
@@ -118,44 +118,44 @@ namespace top
             set_unit_name(make_unit_name(m_account_addr,m_block_height)); //set unit name first
             //ask compressed data while serialization
             set_unit_flag(enum_xdata_flag_acompress);
-
+            
             //setup canvas
             xauto_ptr<xvcanvas_t> new_canvas(new xvcanvas_t());
             set_canvas(new_canvas.get());
             //then register execution methods
             REGISTER_XVIFUNC_ID_API(enum_xvinstruct_class_state_function);
-
+            
             //finally set parent ptr
             set_parent_unit(source.get_parent_unit());
         }
-
+        
         xvbstate_t::~xvbstate_t()
         {
         }
-
+        
         xvexeunit_t* xvbstate_t::clone() //each property is readonly after clone
         {
             return new xvbstate_t(*this);
         }
-
+    
         xvbstate_t* xvbstate_t::clone(const uint64_t clone_to_new_block_height) //each property is readonly after clone
         {
             return new xvbstate_t(clone_to_new_block_height,*this);
         }
-
+        
         std::string xvbstate_t::dump() const
         {
             return std::string();
         }
-
+ 
         void*   xvbstate_t::query_interface(const int32_t _enum_xobject_type_)//caller need to cast (void*) to related ptr
         {
             if(_enum_xobject_type_ == enum_xobject_type_vbstate)
                 return this;
-
+            
             return base::query_interface(_enum_xobject_type_);
         }
-
+    
         //clear canvas assocaited with vbstate and properties,all recored instruction are clear as well
         //note:reset_canvas not modify the actua state of properties/block, it just against for instrution on canvas
         bool         xvbstate_t::reset_canvas()
@@ -175,21 +175,21 @@ namespace top
 
             return bin_data;
         }
-
+        
         xvproperty_t*   xvbstate_t::get_property_object(const std::string & name)
         {
             xvexeunit_t * target = find_child_unit(name);
             if(target != nullptr)
                 return (xvproperty_t*)target;
-
+            
             return nullptr;
         }
-
+    
         bool  xvbstate_t::find_property(const std::string & property_name) //check whether property already existing
         {
             if(get_property_object(property_name) != nullptr)
                 return true;
-
+            
             return false;
         }
 
@@ -198,7 +198,7 @@ namespace top
         int32_t    xvbstate_t::do_write(xstream_t & stream)  //allow subclass extend behavior
         {
             const int32_t begin_size = stream.size();
-
+            
             stream.write_tiny_string(m_account_addr);
             stream.write_tiny_string(m_block_output_hash);
             stream << m_block_height;
@@ -206,78 +206,78 @@ namespace top
             base::do_write(stream);
             return (stream.size() - begin_size);
         }
-
+        
         int32_t   xvbstate_t::do_read(xstream_t & stream) //allow subclass extend behavior
         {
             const int32_t begin_size = stream.size();
-
+            
             stream.read_tiny_string(m_account_addr);
             stream.read_tiny_string(m_block_output_hash);
             stream >> m_block_height;
             //set unit name immidiately after read them
             set_unit_name(make_unit_name(m_account_addr,m_block_height));
-
+            
             base::do_read(stream);
-
+            
             return (begin_size - stream.size());
         }
-
+    
         xauto_ptr<xtokenvar_t>  xvbstate_t::new_token_var(const std::string & property_name)
         {
             const xvalue_t result(new_property_internal(property_name,enum_xobject_type_vprop_token));
             if(result.get_error() == enum_xcode_successful)
                 return load_token_var(property_name);
-
+            
             xerror("xvbstate_t::new_token_var,failed as error:%d for name(%s)",result.get_error(),property_name.c_str());
             return nullptr;
         }
-
+    
         xauto_ptr<xnoncevar_t>      xvbstate_t::new_nonce_var(const std::string & property_name)
         {
             const xvalue_t result(new_property_internal(property_name,enum_xobject_type_vprop_nonce));
             if(result.get_error() == enum_xcode_successful)
                 return load_nonce_var(property_name);
-
+            
             xerror("xvbstate_t::new_nonce_var,failed as error:%d for name(%s)",result.get_error(),property_name.c_str());
             return nullptr;
         }
-
+ 
         xauto_ptr<xcodevar_t>   xvbstate_t::new_code_var(const std::string & property_name)
         {
             const xvalue_t result(new_property_internal(property_name,enum_xobject_type_vprop_code));
             if(result.get_error() == enum_xcode_successful)
                 return load_code_var(property_name);
-
+            
             xerror("xvbstate_t::new_code_var,failed as error:%d for name(%s)",result.get_error(),property_name.c_str());
             return nullptr;
         }
-
+    
         xauto_ptr<xmtokens_t>   xvbstate_t::new_multiple_tokens_var(const std::string & property_name)
         {
             const xvalue_t result(new_property_internal(property_name,enum_xobject_type_vprop_mtokens));
             if(result.get_error() == enum_xcode_successful)
                 return load_multiple_tokens_var(property_name);
-
+            
             xerror("xvbstate_t::new_multiple_tokens_var,failed as error:%d for name(%s)",result.get_error(),property_name.c_str());
             return nullptr;
         }
-
+    
         xauto_ptr<xmkeys_t>   xvbstate_t::new_multiple_keys_var(const std::string & property_name) //to manage pubkeys of account
         {
             const xvalue_t result(new_property_internal(property_name,enum_xobject_type_vprop_mkeys));
             if(result.get_error() == enum_xcode_successful)
                 return load_multiple_keys_var(property_name);
-
+            
             xerror("xvbstate_t::new_multiple_keys_var,failed as error:%d for name(%s)",result.get_error(),property_name.c_str());
             return nullptr;
         }
-
+   
         xauto_ptr<xstringvar_t> xvbstate_t::new_string_var(const std::string & property_name)
         {
             const xvalue_t result(new_property_internal(property_name,enum_xobject_type_vprop_string));
             if(result.get_error() == enum_xcode_successful)
                 return load_string_var(property_name);
-
+            
             xerror("xvbstate_t::new_string_var,failed as error:%d for name(%s)",result.get_error(),property_name.c_str());
             return nullptr;
         }
@@ -287,7 +287,7 @@ namespace top
             const xvalue_t result(new_property_internal(property_name,enum_xobject_type_vprop_hashmap));
             if(result.get_error() == enum_xcode_successful)
                 return load_hashmap_var(property_name);
-
+            
             xerror("xvbstate_t::new_hashmap_var,failed as error:%d for name(%s)",result.get_error(),property_name.c_str());
             return nullptr;
         }
@@ -298,143 +298,143 @@ namespace top
             const xvalue_t result(new_property_internal(property_name,enum_xobject_type_vprop_int64));
             if(result.get_error() == enum_xcode_successful)
                 return load_int64_var(property_name);
-
+            
             xerror("xvbstate_t::new_int64_var,failed as error:%d for name(%s)",result.get_error(),property_name.c_str());
             return nullptr;
         }
-
+        
         xauto_ptr<xvintvar_t<uint64_t>> xvbstate_t::new_uint64_var(const std::string & property_name)
         {
             const xvalue_t result(new_property_internal(property_name,enum_xobject_type_vprop_uint64));
             if(result.get_error() == enum_xcode_successful)
                 return load_uint64_var(property_name);
-
+            
             xerror("xvbstate_t::new_uint64_var,failed as error:%d for name(%s)",result.get_error(),property_name.c_str());
             return nullptr;
         }
-
+    
         //xdequevar_t related
         xauto_ptr<xdequevar_t<int8_t>>   xvbstate_t::new_int8_deque_var(const std::string & property_name)
         {
             const xvalue_t result(new_property_internal(property_name,enum_xobject_type_vprop_int8_deque));
             if(result.get_error() == enum_xcode_successful)
                 return load_int8_deque_var(property_name);
-
+            
             xerror("xvbstate_t::new_int8_deque_var,failed as error:%d for name(%s)",result.get_error(),property_name.c_str());
             return nullptr;
         }
-
+     
         xauto_ptr<xdequevar_t<int16_t>>  xvbstate_t::new_int16_deque_var(const std::string & property_name)
         {
             const xvalue_t result(new_property_internal(property_name,enum_xobject_type_vprop_int16_deque));
             if(result.get_error() == enum_xcode_successful)
                 return load_int16_deque_var(property_name);
-
+            
             xerror("xvbstate_t::new_int16_deque_var,failed as error:%d for name(%s)",result.get_error(),property_name.c_str());
             return nullptr;
         }
-
+        
         xauto_ptr<xdequevar_t<int32_t>>  xvbstate_t::new_int32_deque_var(const std::string & property_name)
         {
             const xvalue_t result(new_property_internal(property_name,enum_xobject_type_vprop_int32_deque));
             if(result.get_error() == enum_xcode_successful)
                 return load_int32_deque_var(property_name);
-
+            
             xerror("xvbstate_t::new_int32_deque_var,failed as error:%d for name(%s)",result.get_error(),property_name.c_str());
             return nullptr;
         }
-
+        
         xauto_ptr<xdequevar_t<int64_t>>  xvbstate_t::new_int64_deque_var(const std::string & property_name)
         {
             const xvalue_t result(new_property_internal(property_name,enum_xobject_type_vprop_int64_deque));
             if(result.get_error() == enum_xcode_successful)
                 return load_int64_deque_var(property_name);
-
+            
             xerror("xvbstate_t::new_int64_deque_var,failed as error:%d for name(%s)",result.get_error(),property_name.c_str());
             return nullptr;
         }
-
+        
         xauto_ptr<xdequevar_t<uint64_t>>  xvbstate_t::new_uint64_deque_var(const std::string & property_name)
         {
             const xvalue_t result(new_property_internal(property_name,enum_xobject_type_vprop_uint64_deque));
             if(result.get_error() == enum_xcode_successful)
                 return load_uint64_deque_var(property_name);
-
+            
             xerror("xvbstate_t::new_uint64_deque_var,failed as error:%d for name(%s)",result.get_error(),property_name.c_str());
             return nullptr;
         }
-
+        
         xauto_ptr<xdequevar_t<std::string>>  xvbstate_t::new_string_deque_var(const std::string & property_name)
         {
             const xvalue_t result(new_property_internal(property_name,enum_xobject_type_vprop_string_deque));
             if(result.get_error() == enum_xcode_successful)
                 return load_string_deque_var(property_name);
-
+            
             xerror("xvbstate_t::new_string_deque_var,failed as error:%d for name(%s)",result.get_error(),property_name.c_str());
             return nullptr;
         }
-
+    
         //xmapvar_t related
         xauto_ptr<xmapvar_t<int8_t>>   xvbstate_t::new_int8_map_var(const std::string & property_name)
         {
             const xvalue_t result(new_property_internal(property_name,enum_xobject_type_vprop_int8_map));
             if(result.get_error() == enum_xcode_successful)
                 return load_int8_map_var(property_name);
-
+            
             xerror("xvbstate_t::new_int8_map_var,failed as error:%d for name(%s)",result.get_error(),property_name.c_str());
             return nullptr;
         }
-
+        
         xauto_ptr<xmapvar_t<int16_t>>   xvbstate_t::new_int16_map_var(const std::string & property_name)
         {
             const xvalue_t result(new_property_internal(property_name,enum_xobject_type_vprop_int16_map));
             if(result.get_error() == enum_xcode_successful)
                 return load_int16_map_var(property_name);
-
+            
             xerror("xvbstate_t::new_int16_map_var,failed as error:%d for name(%s)",result.get_error(),property_name.c_str());
             return nullptr;
         }
-
+        
         xauto_ptr<xmapvar_t<int32_t>>   xvbstate_t::new_int32_map_var(const std::string & property_name)
         {
             const xvalue_t result(new_property_internal(property_name,enum_xobject_type_vprop_int32_map));
             if(result.get_error() == enum_xcode_successful)
                 return load_int32_map_var(property_name);
-
+            
             xerror("xvbstate_t::new_int32_map_var,failed as error:%d for name(%s)",result.get_error(),property_name.c_str());
             return nullptr;
         }
-
+        
         xauto_ptr<xmapvar_t<int64_t>>   xvbstate_t::new_int64_map_var(const std::string & property_name)
         {
             const xvalue_t result(new_property_internal(property_name,enum_xobject_type_vprop_int64_map));
             if(result.get_error() == enum_xcode_successful)
                 return load_int64_map_var(property_name);
-
+            
             xerror("xvbstate_t::new_int64_map_var,failed as error:%d for name(%s)",result.get_error(),property_name.c_str());
             return nullptr;
         }
-
+    
         xauto_ptr<xmapvar_t<uint64_t>>   xvbstate_t::new_uint64_map_var(const std::string & property_name)
         {
             const xvalue_t result(new_property_internal(property_name,enum_xobject_type_vprop_uint64_map));
             if(result.get_error() == enum_xcode_successful)
                 return load_uint64_map_var(property_name);
-
+            
             xerror("xvbstate_t::new_uint64_map_var,failed as error:%d for name(%s)",result.get_error(),property_name.c_str());
             return nullptr;
         }
-
+    
         xauto_ptr<xmapvar_t<std::string>>   xvbstate_t::new_string_map_var(const std::string & property_name)
         {
             const xvalue_t result(new_property_internal(property_name,enum_xobject_type_vprop_string_map));
             if(result.get_error() == enum_xcode_successful)
                 return load_string_map_var(property_name);
-
+            
             xerror("xvbstate_t::new_string_map_var,failed as error:%d for name(%s)",result.get_error(),property_name.c_str());
             return nullptr;
         }
-
+    
         xauto_ptr<xtokenvar_t>  xvbstate_t::load_token_var(const std::string & property_name)
         {
             xvproperty_t * property_obj = get_property_object(property_name);
@@ -449,7 +449,7 @@ namespace top
             xerror("xvbstate_t::load_token_var,failed to load for name(%s)",property_name.c_str());
             return nullptr;
         }
-
+        
         xauto_ptr<xnoncevar_t>  xvbstate_t::load_nonce_var(const std::string & property_name)
         {
             xvproperty_t * property_obj = get_property_object(property_name);
@@ -464,7 +464,7 @@ namespace top
             xerror("xvbstate_t::load_nonce_var,failed to load for name(%s)",property_name.c_str());
             return nullptr;
         }
-
+    
         xauto_ptr<xcodevar_t>  xvbstate_t::load_code_var(const std::string & property_name)
         {
             xvproperty_t * property_obj = get_property_object(property_name);
@@ -479,7 +479,7 @@ namespace top
             xerror("xvbstate_t::load_code_var,failed to load for name(%s)",property_name.c_str());
             return nullptr;
         }
-
+    
         xauto_ptr<xmtokens_t>    xvbstate_t::load_multiple_tokens_var(const std::string & property_name)
         {
             xvproperty_t * property_obj = get_property_object(property_name);
@@ -494,7 +494,7 @@ namespace top
             xerror("xvbstate_t::load_multiple_tokens_var,failed to load for name(%s)",property_name.c_str());
             return nullptr;
         }
-
+        
         xauto_ptr<xmkeys_t>    xvbstate_t::load_multiple_keys_var(const std::string & property_name)//to manage pubkeys of account
         {
             xvproperty_t * property_obj = get_property_object(property_name);
@@ -509,7 +509,7 @@ namespace top
             xerror("xvbstate_t::load_multiple_keys_var,failed to load for name(%s)",property_name.c_str());
             return nullptr;
         }
-
+ 
         xauto_ptr<xstringvar_t> xvbstate_t::load_string_var(const std::string & property_name)
         {
             xvproperty_t * property_obj = get_property_object(property_name);
@@ -539,7 +539,7 @@ namespace top
             xerror("xvbstate_t::load_hashmap_var,failed to load for name(%s)",property_name.c_str());
             return nullptr;
         }
-
+        
         //integer related load functions
         xauto_ptr<xvintvar_t<int64_t>>  xvbstate_t::load_int64_var(const std::string & property_name)
         {
@@ -555,7 +555,7 @@ namespace top
             xerror("xvbstate_t::load_int64_var,failed to load for name(%s)",property_name.c_str());
             return nullptr;
         }
-
+        
         xauto_ptr<xvintvar_t<uint64_t>>  xvbstate_t::load_uint64_var(const std::string & property_name)
         {
             xvproperty_t * property_obj = get_property_object(property_name);
@@ -570,7 +570,7 @@ namespace top
             xerror("xvbstate_t::load_uint64_var,failed to load for name(%s)",property_name.c_str());
             return nullptr;
         }
-
+        
         //load functions of deque related
         xauto_ptr<xdequevar_t<int8_t>> xvbstate_t::load_int8_deque_var(const std::string & property_name)
         {
@@ -586,7 +586,7 @@ namespace top
             xerror("xvbstate_t::load_int8_deque_var,failed to load for name(%s)",property_name.c_str());
             return nullptr;
         }
-
+        
         xauto_ptr<xdequevar_t<int16_t>> xvbstate_t::load_int16_deque_var(const std::string & property_name)
         {
             xvproperty_t * property_obj = get_property_object(property_name);
@@ -601,7 +601,7 @@ namespace top
             xerror("xvbstate_t::load_int16_deque_var,failed to load for name(%s)",property_name.c_str());
             return nullptr;
         }
-
+        
         xauto_ptr<xdequevar_t<int32_t>> xvbstate_t::load_int32_deque_var(const std::string & property_name)
         {
             xvproperty_t * property_obj = get_property_object(property_name);
@@ -616,7 +616,7 @@ namespace top
             xerror("xvbstate_t::load_int32_deque_var,failed to load for name(%s)",property_name.c_str());
             return nullptr;
         }
-
+        
         xauto_ptr<xdequevar_t<int64_t>> xvbstate_t::load_int64_deque_var(const std::string & property_name)
         {
             xvproperty_t * property_obj = get_property_object(property_name);
@@ -631,7 +631,7 @@ namespace top
             xerror("xvbstate_t::load_int64_deque_var,failed to load for name(%s)",property_name.c_str());
             return nullptr;
         }
-
+        
         xauto_ptr<xdequevar_t<uint64_t>> xvbstate_t::load_uint64_deque_var(const std::string & property_name)
         {
             xvproperty_t * property_obj = get_property_object(property_name);
@@ -646,7 +646,7 @@ namespace top
             xerror("xvbstate_t::load_uint64_deque_var,failed to load for name(%s)",property_name.c_str());
             return nullptr;
         }
-
+        
         xauto_ptr<xdequevar_t<std::string>> xvbstate_t::load_string_deque_var(const std::string & property_name)
         {
             xvproperty_t * property_obj = get_property_object(property_name);
@@ -661,7 +661,7 @@ namespace top
             xerror("xvbstate_t::load_string_deque_var,failed to load for name(%s)",property_name.c_str());
             return nullptr;
         }
-
+    
         //load functions of map related
         xauto_ptr<xmapvar_t<int8_t>>   xvbstate_t::load_int8_map_var(const std::string & property_name)
         {
@@ -677,7 +677,7 @@ namespace top
             xerror("xvbstate_t::load_int8_map_var,failed to load for name(%s)",property_name.c_str());
             return nullptr;
         }
-
+        
         xauto_ptr<xmapvar_t<int16_t>>   xvbstate_t::load_int16_map_var(const std::string & property_name)
         {
             xvproperty_t * property_obj = get_property_object(property_name);
@@ -692,7 +692,7 @@ namespace top
             xerror("xvbstate_t::load_int16_map_var,failed to load for name(%s)",property_name.c_str());
             return nullptr;
         }
-
+        
         xauto_ptr<xmapvar_t<int32_t>>   xvbstate_t::load_int32_map_var(const std::string & property_name)
         {
             xvproperty_t * property_obj = get_property_object(property_name);
@@ -707,7 +707,7 @@ namespace top
             xerror("xvbstate_t::load_int32_map_var,failed to load for name(%s)",property_name.c_str());
             return nullptr;
         }
-
+        
         xauto_ptr<xmapvar_t<int64_t>>   xvbstate_t::load_int64_map_var(const std::string & property_name)
         {
             xvproperty_t * property_obj = get_property_object(property_name);
@@ -722,7 +722,7 @@ namespace top
             xerror("xvbstate_t::load_int64_map_var,failed to load for name(%s)",property_name.c_str());
             return nullptr;
         }
-
+        
         xauto_ptr<xmapvar_t<uint64_t>>   xvbstate_t::load_uint64_map_var(const std::string & property_name)
         {
             xvproperty_t * property_obj = get_property_object(property_name);
@@ -737,7 +737,7 @@ namespace top
             xerror("xvbstate_t::load_uint64_map_var,failed to load for name(%s)",property_name.c_str());
             return nullptr;
         }
-
+        
         xauto_ptr<xmapvar_t<std::string>>   xvbstate_t::load_string_map_var(const std::string & property_name)
         {
             xvproperty_t * property_obj = get_property_object(property_name);
@@ -752,7 +752,7 @@ namespace top
             xerror("xvbstate_t::load_string_map_var,failed to load for name(%s)",property_name.c_str());
             return nullptr;
         }
-
+    
         xauto_ptr<xvproperty_t> xvbstate_t::load_property(const std::string & property_name)
         {
             xvproperty_t * found_target = get_property_object(property_name);
@@ -760,31 +760,31 @@ namespace top
                 found_target->add_ref();//add reference for xauto_ptr;
             return found_target;
         }
-
+    
         xauto_ptr<xvproperty_t> xvbstate_t::new_property(const std::string & property_name,const int propertyType)
         {
             const xvalue_t result(new_property_internal(property_name,propertyType));
             if(result.get_error() == enum_xcode_successful)
                 return load_property(property_name);
-
+            
             xerror("xvbstate_t::new_property,failed as error:%d for name(%s) and type(%d)",result.get_error(),property_name.c_str(),propertyType);
             return nullptr;
         }
-
+    
         const xvalue_t xvbstate_t::new_property_internal(const std::string & property_name,const int propertyType)
         {
             xvalue_t param_ptype((vint32_t)propertyType);
             xvalue_t param_pname(property_name);
             xvmethod_t instruction(get_execute_uri(),enum_xvinstruct_class_state_function,enum_xvinstruct_state_method_new_property ,param_ptype,param_pname);
-
+            
             return execute(instruction,(xvcanvas_t*)get_canvas()); //excute the instruction
         }
-
+    
         const xvalue_t  xvbstate_t::do_new_property(const xvmethod_t & op)
         {
             const xvalue_t & propertyType = op.get_method_params().at(0);
             const xvalue_t & property_name = op.get_method_params().at(1);
-
+            
             xvproperty_t* existingOne = get_property_object(property_name.get_string());
             if(existingOne != nullptr)
             {
@@ -796,7 +796,7 @@ namespace top
                 xerror("xvbstate_t::do_new_property,the account has too many properites already,account(%s) at height(%lld)",get_account_addr().c_str(),get_block_height());
                 return xvalue_t(enum_xerror_code_over_limit);
             }
-
+            
             xauto_ptr<xobject_t> object(xcontext_t::create_xobject((enum_xobject_type)propertyType.get_int32()));
             xassert(object);
             if(object)
@@ -808,7 +808,7 @@ namespace top
                     property_obj->set_unit_name(property_name.get_string());
                     property_obj->set_canvas(get_canvas());
                     add_child_unit(property_obj);
-
+                    
                     return xvalue_t(enum_xcode_successful);
                 }
                 else
@@ -821,7 +821,7 @@ namespace top
                 return xvalue_t(enum_xerror_code_not_found);
             }
         }
-
+        
         //---------------------------------bin log ---------------------------------//
         enum_xerror_code  xvbstate_t::encode_change_to_binlog(std::string & output_bin)
         {
@@ -845,7 +845,7 @@ namespace top
             xerror("xvbstate_t::encode_change_to_binlog,throw unknow exception");
             return enum_xerror_code_fail;
         }
-
+    
         enum_xerror_code  xvbstate_t::encode_change_to_binlog(xstream_t & _ouptput_stream)
         {
             try{
@@ -869,13 +869,13 @@ namespace top
             xerror("xvbstate_t::encode_change_to_binlog,throw unknow exception");
             return enum_xerror_code_fail;
         }
-
+        
         enum_xerror_code   xvbstate_t::decode_change_from_binlog(const std::string & from_bin_log,std::deque<top::base::xvmethod_t> & out_records)
         {
             xstream_t _input_stream(xcontext_t::instance(),(uint8_t*)from_bin_log.data(),(uint32_t)from_bin_log.size());
             return decode_change_from_binlog(_input_stream,_input_stream.size(),out_records);
         }
-
+    
         enum_xerror_code   xvbstate_t::decode_change_from_binlog(xstream_t & from_bin_log,const uint32_t bin_log_size,std::deque<top::base::xvmethod_t> & out_records)
         {
             if( (from_bin_log.size() < 1) || ((uint32_t)from_bin_log.size() < bin_log_size) )//at least one bytes
@@ -893,7 +893,7 @@ namespace top
                         from_bin_log.pop_front(1);//pop bin_type now
                     else
                         xerror("xvbstate_t::decode_from_binlog,failed as error(%d)",result);
-
+                    
                     return (enum_xerror_code)result;
                 }
                 else
@@ -901,7 +901,7 @@ namespace top
                     xerror("xvbstate_t::decode_from_binlog,invalid bin_type(%c)",bin_type);
                     return enum_xerror_code_bad_type;
                 }
-
+                
             } catch (int error_code){
                 xerror("xvbstate_t::decode_from_binlog,throw exception with error:%d",error_code);
                 return enum_xerror_code_errno;
@@ -909,7 +909,7 @@ namespace top
             xerror("xvbstate_t::decode_from_binlog,throw unknow exception");
             return enum_xerror_code_fail;
         }
-
+        
         bool   xvbstate_t::apply_changes_of_binlog(const std::string & from_bin_log) //apply changes to current states
         {
             std::deque<top::base::xvmethod_t> out_records;
@@ -928,7 +928,7 @@ namespace top
             #endif
             return false;
         }
-
+    
         bool   xvbstate_t::apply_changes_of_binlog(xstream_t & from_bin_log,const uint32_t bin_log_size) //apply changes to current states
         {
             std::deque<top::base::xvmethod_t> out_records;
