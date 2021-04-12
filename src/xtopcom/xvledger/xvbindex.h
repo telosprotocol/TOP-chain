@@ -85,7 +85,7 @@ namespace top
             
             //note:only commited block/index has valid next ptr
             inline xvbindex_t*          get_next_block() const {return m_next_index;}
-            bool                        reset_next_block(xvbindex_t * _new_next_ptr);//return false if hash or height not match
+
 
             inline xvblock_t*           get_this_block() const {return m_linked_block;}
             bool                        reset_this_block(xvblock_t* _block_ptr);
@@ -108,6 +108,7 @@ namespace top
             int32_t            serialize_from(const std::string & bin_data);  //read from binary and regeneate content of
         private:
             void               init(); //init object
+            bool               reset_next_block(xvbindex_t * _new_next_ptr);//return false if hash or height not match
             
         private://not serialized to db
             xvbindex_t*     m_prev_index;

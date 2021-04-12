@@ -1286,9 +1286,6 @@ namespace top
                             {
                                 if(this_block->reset_prev_block(it->second))//previous block <--- this_block successful
                                 {
-                                    if(it->second->get_next_block() == NULL)
-                                        it->second->reset_next_block(this_block);//previous block ---> this_block successful
-                                    
                                     break;
                                 }
                             }
@@ -1308,11 +1305,7 @@ namespace top
             {
                 for(auto it = it_next->second.rbegin(); it != it_next->second.rend(); ++it)//search from higher view
                 {
-                    if(it->second->reset_prev_block(this_block))//this_block  <---next block successful
-                    {
-                        if(this_block->get_next_block() == NULL)//only allow set once
-                            this_block->reset_next_block(it->second);//this_block --->next block successful
-                    }
+                    it->second->reset_prev_block(this_block);//this_block  <---next block successful
                 }
             }
             return true;
@@ -1911,25 +1904,17 @@ namespace top
                 if(this_block->check_block_flag(base::enum_xvblock_flag_locked))//if this_block already been locked status
                 {
                     prev_block->set_block_flag(base::enum_xvblock_flag_committed);//convert prev_block directly to commit
-                    //force to do forward connection for commited block
-                    prev_block->reset_next_block(this_block);
                 }
                 update_meta_metric(prev_block);//update meta since block has change status
             }
             else if(prev_block->check_block_flag(base::enum_xvblock_flag_committed))
             {
-                //force to do forward connection for commited block
-                prev_block->reset_next_block(this_block);
-                
                 if(this_block->check_block_flag(base::enum_xvblock_flag_locked) == false)
                 {
                     this_block->set_block_flag(base::enum_xvblock_flag_locked);//add locked for this block
                     update_meta_metric(this_block); //update meta since block has change status
                 }
             }
-            //try-best: do forward connection just when next is null
-            if(prev_block->get_next_block() == nullptr)
-                prev_block->reset_next_block(this_block);
                     
             base::xvbindex_t* prev_prev_block = prev_block->get_prev_block();
             if(nullptr == prev_prev_block)
@@ -1948,8 +1933,6 @@ namespace top
                 prev_prev_block->set_block_flag(base::enum_xvblock_flag_committed);//change to commit status
                 update_meta_metric(prev_prev_block);//update meta since block has change status
             }
-            //force do forward connection for committed block
-            prev_prev_block->reset_next_block(prev_block);
             return true;
         }
     
