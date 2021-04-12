@@ -984,6 +984,7 @@ namespace top
             }
             else //always assing main entry for genesis block
             {
+                
                 new_index_ptr->set_store_flag(base::enum_index_store_flag_main_entry);
                 xassert(new_index_ptr->check_block_flag(base::enum_xvblock_flag_connected));//should be enable already
             }
@@ -1023,6 +1024,9 @@ namespace top
                 return false;
             
             xkinfo("xblockacct_t::delete_block,delete block:[chainid:%u->account(%s)->height(%" PRIu64 ")->viewid(%" PRIu64 ") at store(%s)",block_ptr->get_chainid(),block_ptr->get_account().c_str(),block_ptr->get_height(),block_ptr->get_viewid(),get_blockstore_path().c_str());
+            
+            if(block_ptr->get_height() == 0)
+                return delete_block(block_ptr->get_height()); //delete all existing ones
             
             if(false == m_all_blocks.empty())
             {
@@ -2050,9 +2054,9 @@ namespace top
                 if(this_block->check_block_flag(base::enum_xvblock_flag_locked))//if this_block already been locked status
                 {
                     prev_block->set_block_flag(base::enum_xvblock_flag_committed);//convert prev_block directly to commit
-                    write_index_to_db(prev_block,true); //trigger db event here if need
                 }
                 update_meta_metric(prev_block);//update meta since block has change status
+                write_index_to_db(prev_block,true); //trigger db event here if need
             }
             else if(prev_block->check_block_flag(base::enum_xvblock_flag_committed))
             {
@@ -2060,6 +2064,7 @@ namespace top
                 {
                     this_block->set_block_flag(base::enum_xvblock_flag_locked);//add locked for this block
                     update_meta_metric(this_block); //update meta since block has change status
+                    write_index_to_db(this_block,true); //trigger db event here if need
                 }
             }
                     
