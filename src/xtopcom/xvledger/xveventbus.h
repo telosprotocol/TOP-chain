@@ -7,9 +7,14 @@
 #include <string>
 #include <vector>
  
-#include "xbase/xvevent.h"
 #include "xbase/xobject.h"
+#include "xbase/xobject_ptr.h"
+#include "xbase/xvevent.h"
 #include "xvbindex.h"
+
+NS_BEG2(top, mbus)
+using xevent_ptr_t = xobject_ptr_t<xevent_t>;
+NS_END2
 
 namespace top
 {

@@ -61,7 +61,7 @@ void xsync_gossip_t::on_timer() {
 void xsync_gossip_t::on_chain_timer(const mbus::xevent_ptr_t& e) {
 
     XMETRICS_TIME_RECORD("sync_cost_gossip_chain_timer_event");
-    auto bme = std::static_pointer_cast<mbus::xevent_chain_timer_t>(e);
+    auto bme = dynamic_xobject_ptr_cast<mbus::xevent_chain_timer_t>(e);
     base::xvblock_t* time_block = bme->time_block;
 
     if (time_block->get_height() <= m_chain_timer_height)

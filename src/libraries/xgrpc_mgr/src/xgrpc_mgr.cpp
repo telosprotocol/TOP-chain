@@ -53,7 +53,7 @@ void xgrpc_mgr_t::process_event(const mbus::xevent_ptr_t & e) {
     if (e->minor_type != mbus::xevent_store_t::type_block_to_db)
         return;
 
-    mbus::xevent_store_block_to_db_ptr_t block_event = std::static_pointer_cast<mbus::xevent_store_block_to_db_t>(e);
+    mbus::xevent_store_block_to_db_ptr_t block_event = dynamic_xobject_ptr_cast<mbus::xevent_store_block_to_db_t>(e);
     xdbg("grpc stream get_block_type %d, minor_type %d \n", block_event->block->get_block_type(), e->minor_type);
     if (!block_event->block->is_tableblock()) {
         return;

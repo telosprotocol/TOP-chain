@@ -411,7 +411,7 @@ bool xbatch_packer::on_proposal_finish(const base::xvevent_t & event, xcsobject_
         xassert(vblock->is_input_ready(true));
         xassert(vblock->is_output_ready(true));
         vblock->add_ref();
-        mbus::xevent_ptr_t ev = std::make_shared<mbus::xevent_consensus_data_t>(vblock, is_leader);
+        mbus::xevent_ptr_t ev = make_object_ptr<mbus::xevent_consensus_data_t>(vblock, is_leader);
         m_mbus->push_event(ev);
     }
     return false;  // throw event up again to let txs-pool or other object start new consensus

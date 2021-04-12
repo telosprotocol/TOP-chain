@@ -30,7 +30,7 @@ public:
     }
 };
 
-DEFINE_SHARED_PTR(xevent_sync_executor);
+using xevent_sync_executor_ptr_t = xobject_ptr_t<xevent_sync_executor_t>;
 
 class xevent_sync_response_blocks_t : public xevent_sync_executor_t {
 public:
@@ -75,6 +75,6 @@ public:
     vnetwork::xvnode_address_t self_address;
     vnetwork::xvnode_address_t from_address;
 };
-DEFINE_SHARED_PTR(xevent_sync_response_blocks);
+using xevent_sync_response_blocks_ptr_t = xobject_ptr_t<xevent_sync_response_blocks_t>;
 
 NS_END2

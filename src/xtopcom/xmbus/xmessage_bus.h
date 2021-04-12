@@ -29,7 +29,7 @@ public:
 
 private:
     std::atomic<bool> m_running {false};
-    int m_interval_milliseconds;
+    uint32_t m_interval_milliseconds;
     std::thread m_thread;
     xmessage_bus_t* m_message_bus;
 };

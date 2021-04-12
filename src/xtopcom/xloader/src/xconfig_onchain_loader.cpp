@@ -47,7 +47,7 @@ void xconfig_onchain_loader_t::update(mbus::xevent_ptr_t e) {
         return;
     }
 
-    mbus::xevent_store_block_to_db_ptr_t block_event = std::static_pointer_cast<mbus::xevent_store_block_to_db_t>(e);
+    mbus::xevent_store_block_to_db_ptr_t block_event = dynamic_xobject_ptr_cast<mbus::xevent_store_block_to_db_t>(e);
 
     if (block_event == nullptr) {
         xassert(0);

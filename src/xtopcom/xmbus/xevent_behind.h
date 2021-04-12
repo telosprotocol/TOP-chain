@@ -29,7 +29,7 @@ public:
     }
 };
 
-DEFINE_SHARED_PTR(xevent_behind);
+using xevent_behind_ptr_t = xobject_ptr_t<xevent_behind_t>;
 
 // table
 class xevent_behind_download_t : public xevent_behind_t {
@@ -64,7 +64,7 @@ public:
     std::string reason;
 };
 
-//DEFINE_SHARED_PTR(xevent_behind_download);
+//using xevent_behind_download_ptr_t = xobject_ptr_t<xevent_behind_download_t>;
 
 class xevent_behind_check_t : public xevent_behind_t {
 public:
