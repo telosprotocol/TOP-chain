@@ -133,7 +133,7 @@ xevent_ptr_t  xmessage_bus_t::create_event_for_store_block_to_db(base::xvblock_t
     data::xblock_ptr_t obj;
     obj.attach(block);
     
-    return  std::make_shared<mbus::xevent_store_block_to_db_t>(obj, obj->get_account(), true);
+    return  make_object_ptr<mbus::xevent_store_block_to_db_t>(obj, obj->get_account(), true);
 }
 
 
