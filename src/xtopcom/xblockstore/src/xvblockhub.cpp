@@ -291,8 +291,7 @@ namespace top
                         for(auto it = view_map.begin(); it != view_map.end(); ++it)
                         {
                             //at entry of quit we need make sure everything is consist
-                            mark_connected_flag(it->second); //update connect status
-                            update_meta_metric(it->second);  //udate other meta excetp connect info
+                            update_meta_metric(it->second);  //udate other meta and connect info
                             if(it->second->check_modified_flag()) //store any modified blocks again
                                 write_index_to_db(it->second);
                             
@@ -376,8 +375,7 @@ namespace top
                         //const int      this_block_flags  = view_it->second->get_block_flags();
                         
                         //at entry of quit we need make sure everything is consist
-                        mark_connected_flag(view_it->second); //update connect status
-                        update_meta_metric(view_it->second);  //udate other meta excetp connect info
+                        update_meta_metric(view_it->second);  //udate other meta and connect info
                         if(view_it->second->check_modified_flag()) //has changed since last store
                             write_index_to_db(view_it->second);//save_block may drop cert-only block
 
@@ -812,8 +810,7 @@ namespace top
                         cache_index(it->second);      //cache it -> link-neighbor->mark-connect->update meta
                         
                         //at entry of load, check connected_flag and meta info
-                        mark_connected_flag(it->second); //connected block in case when load missed block
-                        update_meta_metric(it->second); //update other meta than connect info
+                        update_meta_metric(it->second); //update other meta and connect info
                         
                         it->second->release_ref();   //release ptr that reference added by read_index_from_db
                     }
@@ -991,8 +988,7 @@ namespace top
                 
                 //at entry of store, connect as chain,and check connected_flag and meta
                 connect_index(new_index_ptr);      //connect as chain mode
-                mark_connected_flag(new_index_ptr);//connect update
-                update_meta_metric(new_index_ptr); //update other meta than connect info
+                update_meta_metric(new_index_ptr); //update other meta and connect info
                 
                 if(new_index_ptr->check_modified_flag())//has any changed
                 {
@@ -1325,7 +1321,10 @@ namespace top
             
             if(false == this_block->check_block_flag(base::enum_xvblock_flag_connected))
             {
-                if(this_block->get_block_class() == base::enum_xvblock_class_full) //full-block must be a connected block
+                //full-block must be a connected block
+                if(   (this_block_height <= m_meta->_highest_connect_block_height)
+                   || (this_block->get_block_class() == base::enum_xvblock_class_full)
+                    )
                 {
                     this_block->set_block_flag(base::enum_xvblock_flag_connected); //mark connected status
                 }
@@ -1348,6 +1347,30 @@ namespace top
             {
                 m_meta->_highest_connect_block_height = this_block_height;
                 m_meta->_highest_connect_block_hash   = this_block->get_block_hash();
+                
+                auto heigh_it = m_all_blocks.find(m_meta->_highest_connect_block_height + 1); //search more
+                for(;heigh_it != m_all_blocks.end();++heigh_it)
+                {
+                    if(   (heigh_it->first == (m_meta->_highest_connect_block_height + 1))
+                       && (false == heigh_it->second.empty()) )
+                    {
+                        for(auto view_it = heigh_it->second.begin(); view_it != heigh_it->second.end(); ++view_it)
+                        {
+                            if(  (view_it->second->check_block_flag(base::enum_xvblock_flag_committed))
+                               &&(view_it->second->get_last_block_hash() == m_meta->_highest_connect_block_hash) )
+                            {
+                                m_meta->_highest_connect_block_height = view_it->second->get_height();
+                                m_meta->_highest_connect_block_hash   = view_it->second->get_block_hash();
+                                view_it->second->set_block_flag(base::enum_xvblock_flag_connected); //mark connected status,and save later
+                                break;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
             }
             
             // update genesis connect block meta
@@ -1403,6 +1426,8 @@ namespace top
                 {
                     m_meta->_highest_full_block_height = new_block_height;
                 }
+                
+                mark_connected_flag(new_block_ptr);//connect update
             }
             else if(new_block_ptr->check_block_flag(base::enum_xvblock_flag_locked))
             {
