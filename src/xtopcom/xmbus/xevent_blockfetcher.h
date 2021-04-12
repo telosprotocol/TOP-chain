@@ -26,7 +26,7 @@ public:
     vnetwork::xvnode_address_t from_address;
 };
 
-DEFINE_SHARED_PTR(xevent_blockfetcher);
+using xevent_blockfetcher_ptr_t = xobject_ptr_t<xevent_blockfetcher_t>;
 
 class xevent_blockfetcher_block_t : public xevent_blockfetcher_t {
 public:

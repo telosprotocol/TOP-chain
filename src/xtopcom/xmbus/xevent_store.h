@@ -38,7 +38,7 @@ public:
     std::string owner;
 };
 
-DEFINE_SHARED_PTR(xevent_store);
+using xevent_store_ptr_t = xobject_ptr_t<xevent_store_t>;
 
 class xevent_store_block_to_db_t : public xevent_store_t {
  public:
@@ -56,7 +56,7 @@ class xevent_store_block_to_db_t : public xevent_store_t {
     bool new_block;
 };
 
-DEFINE_SHARED_PTR(xevent_store_block_to_db);
+using xevent_store_block_to_db_ptr_t = xobject_ptr_t<xevent_store_block_to_db_t>;
 
 class xevent_store_accountblock_queue_ready_t : public xevent_store_t {
 public:
@@ -68,7 +68,7 @@ public:
     }
 };
 
-DEFINE_SHARED_PTR(xevent_store_accountblock_queue_ready);
+using xevent_store_accountblock_queue_ready_ptr_t = xobject_ptr_t<xevent_store_accountblock_queue_ready_t>;
 
 class xevent_store_version_update_t : public xevent_store_t {
 public:
@@ -80,7 +80,7 @@ public:
     }
 };
 
-DEFINE_SHARED_PTR(xevent_store_version_update);
+using xevent_store_version_update_ptr_t = xobject_ptr_t<xevent_store_version_update_t>;
 
 // </editor-fold>
 

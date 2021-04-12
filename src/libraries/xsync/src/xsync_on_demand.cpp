@@ -24,7 +24,7 @@ m_sync_sender(sync_sender) {
 }
 
 void xsync_on_demand_t::on_behind_event(const mbus::xevent_ptr_t &e) {
-    auto bme = std::static_pointer_cast<mbus::xevent_behind_on_demand_t>(e);
+    auto bme = dynamic_xobject_ptr_cast<mbus::xevent_behind_on_demand_t>(e);
     std::string address = bme->address;
     uint64_t start_height = bme->start_height;
     uint32_t count = bme->count;
@@ -92,7 +92,7 @@ void xsync_on_demand_t::on_response_event(const std::vector<data::xblock_ptr_t> 
         }
     }
 
-    mbus::xevent_ptr_t e = std::make_shared<mbus::xevent_sync_complete_t>(address);
+    mbus::xevent_ptr_t e = make_object_ptr<mbus::xevent_sync_complete_t>(address);
     m_mbus->push_event(e);
 }
 

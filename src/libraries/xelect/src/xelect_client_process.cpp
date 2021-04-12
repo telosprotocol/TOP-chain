@@ -39,7 +39,7 @@ bool xelect_client_process::filter_event(const xevent_ptr_t & e) {
     switch (e->major_type) {
     case mbus::xevent_major_type_store:
         if (e->minor_type == xevent_store_t::type_block_to_db) {
-            auto bme = std::static_pointer_cast<mbus::xevent_store_block_to_db_t>(e);
+            auto bme = dynamic_xobject_ptr_cast<mbus::xevent_store_block_to_db_t>(e);
             xblock_ptr_t & block = bme->block;
             const std::string & owner = block->get_block_owner();
 
@@ -57,8 +57,8 @@ bool xelect_client_process::filter_event(const xevent_ptr_t & e) {
         }
         return e->minor_type == xevent_store_t::type_block_to_db;
     case mbus::xevent_major_type_chain_timer:
-        assert(std::dynamic_pointer_cast<mbus::xevent_chain_timer_t>(e));
-        return std::static_pointer_cast<mbus::xevent_chain_timer_t>(e)->time_block->get_account() == sys_contract_beacon_timer_addr;
+        assert(dynamic_xobject_ptr_cast<mbus::xevent_chain_timer_t>(e));
+        return dynamic_xobject_ptr_cast<mbus::xevent_chain_timer_t>(e)->time_block->get_account() == sys_contract_beacon_timer_addr;
     default:
         return false;
     }
@@ -78,15 +78,15 @@ void xelect_client_process::process_event(const xevent_ptr_t & e) {
 }
 
 void xelect_client_process::process_timer(const mbus::xevent_ptr_t & e) {
-    assert(std::dynamic_pointer_cast<mbus::xevent_chain_timer_t>(e));
-    auto const & event = std::static_pointer_cast<mbus::xevent_chain_timer_t>(e);
+    assert(dynamic_xobject_ptr_cast<mbus::xevent_chain_timer_t>(e));
+    auto const & event = dynamic_xobject_ptr_cast<mbus::xevent_chain_timer_t>(e);
     auto block = event->time_block;
     xdbg("[xelect_client_process::process_timer] update xchain timer to %" PRIu64, block->get_height());
     m_xchain_timer->update_time(block->get_height(), time::xlogic_timer_update_strategy_t::discard_old_value);
 }
 
 void xelect_client_process::process_elect(const mbus::xevent_ptr_t & e) {
-    auto bme = std::dynamic_pointer_cast<mbus::xevent_store_block_to_db_t>(e);
+    auto bme = dynamic_xobject_ptr_cast<mbus::xevent_store_block_to_db_t>(e);
     assert(bme);
     xblock_ptr_t const & block = bme->block;
 

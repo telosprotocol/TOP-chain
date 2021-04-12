@@ -298,14 +298,14 @@ std::map<std::string, std::vector<std::string>> xtop_sync_object::get_neighbors(
 void xtop_sync_object::add_vnet(const std::shared_ptr<vnetwork::xvnetwork_driver_face_t> &vnetwork_driver) {
     m_sync_netmsg_dispatcher->watch(vnetwork_driver.get());
 
-    mbus::xevent_ptr_t ev = std::make_shared<mbus::xevent_role_add_t>(vnetwork_driver);
+    mbus::xevent_ptr_t ev = make_object_ptr<mbus::xevent_role_add_t>(vnetwork_driver);
     m_bus->push_event(ev);
 }
 
 void xtop_sync_object::remove_vnet(const std::shared_ptr<vnetwork::xvnetwork_driver_face_t> &vnetwork_driver) {
     m_sync_netmsg_dispatcher->unwatch(vnetwork_driver.get());
 
-    mbus::xevent_ptr_t ev = std::make_shared<mbus::xevent_role_remove_t>(vnetwork_driver);
+    mbus::xevent_ptr_t ev = make_object_ptr<mbus::xevent_role_remove_t>(vnetwork_driver);
     m_bus->push_event(ev);
 }
 

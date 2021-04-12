@@ -29,8 +29,7 @@ void xmessage_bus_timer_t::start() {
         while (m_running) {
             std::this_thread::sleep_for(std::chrono::milliseconds(
                     this->m_interval_milliseconds));
-            this->m_message_bus->push_event(std::make_shared<xevent_timer_t>(
-                    this->m_interval_milliseconds));
+            this->m_message_bus->push_event(make_object_ptr<xevent_timer_t>(this->m_interval_milliseconds));
         }
     });
 }

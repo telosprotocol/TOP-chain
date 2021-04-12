@@ -44,7 +44,7 @@ public:
     vnetwork::xmessage_t::message_type msg_type;
 };
 
-DEFINE_SHARED_PTR(xevent_network);
+using xevent_network_ptr_t = xobject_ptr_t<xevent_network_t>;
 
 class xevent_network_sync_t : public xevent_network_t {
 public:
@@ -67,7 +67,7 @@ public:
     }
 };
 
-DEFINE_SHARED_PTR(xevent_network_sync);
+using xevent_network_sync_ptr_t = xobject_ptr_t<xevent_network_sync_t>;
 
 // </editor-fold>
         

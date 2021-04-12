@@ -74,9 +74,11 @@ namespace top
         {
             if(ev.get_type() == enum_xevent_route_path_by_mbus)
             {
-                mbus::xevent_ptr_t mbus_ev_ptr((mbus::xevent_t*)ev.get_cookie());//transfer out xevent_ptr_t from xvevent_t
-                ((xvevent_t&)ev).set_cookie(0); //force to reset it to avoid redeclare
-                
+                auto * ev_ptr = const_cast<xvevent_t *>(&ev);
+                ev_ptr->add_ref();
+                mbus::xevent_ptr_t mbus_ev_ptr;
+                mbus_ev_ptr.attach(dynamic_cast<mbus::xevent_t *>(ev_ptr));
+
                 push_event(mbus_ev_ptr);
                 return true;
             }

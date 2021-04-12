@@ -33,7 +33,7 @@ public:
     }
 };
 
-DEFINE_SHARED_PTR(xevent_consensus);
+using xevent_consensus_ptr_t = xobject_ptr_t<xevent_consensus_t>;
 
 class xevent_consensus_data_t : public xevent_consensus_t {
 public:
@@ -55,6 +55,6 @@ public:
     bool is_leader;
 };
 
-DEFINE_SHARED_PTR(xevent_consensus_data);
+using xevent_consensus_data_ptr_t = xobject_ptr_t<xevent_consensus_data_t>;
 
 NS_END2

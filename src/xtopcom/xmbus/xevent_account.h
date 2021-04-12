@@ -18,7 +18,7 @@ public:
     }
 };
 
-DEFINE_SHARED_PTR(xevent_account);
+using xevent_account_ptr_t = xobject_ptr_t<xevent_account_t>;
 
 class xevent_account_add_role_t : public xevent_account_t {
 public:
