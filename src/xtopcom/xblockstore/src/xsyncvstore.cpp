@@ -41,9 +41,15 @@ namespace top
             if(nullptr == target_block)
                 return false;
 
-#ifdef ENABLE_METRICS
+            if( (target_block->get_height() == 0) && (target_block->get_header()->get_block_level() == base::enum_xvblock_level_unit) )
+            {
+                xerror("xsyncvstore_t::store_block,not allow sync genesis block for unit block,which must be generated from local");
+                return false;
+            }
+            
+            #ifdef ENABLE_METRICS
             XMETRICS_TIME_RECORD_KEY("blockstore_sync_store_block_time", target_block->get_account() + ":" + std::to_string(target_block->get_height()));
-#endif
+            #endif
             target_block->reset_block_flags(); //No.1 safe rule: clean all flags first when sync/replicated one block
             if(   (false == target_block->is_input_ready(true))
                || (false == target_block->is_output_ready(true))
@@ -70,9 +76,9 @@ namespace top
             base::xvaccount_t target_account(target_block->get_account());
             auto res = get_vblockstore()->store_block(target_account,target_block);//store block with cert status and to let consensus know it first
             xdbg("xsyncvstore_t::store_block %s result:%d", target_block->dump().c_str(), res);
-#ifdef ENABLE_METRICS
+            #ifdef ENABLE_METRICS
             XMETRICS_COUNTER_INCREMENT("blockstore_sync_store_block", 1);
-#endif
+            #endif
             return res;
         }
 

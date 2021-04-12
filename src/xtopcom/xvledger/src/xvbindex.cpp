@@ -52,6 +52,7 @@ namespace top
 
         xvbindex_t & xvbindex_t::operator = (const xvbindex_t & obj)
         {
+            m_closed                = obj.m_closed;
             m_account_id            = obj.m_account_id;
             m_block_height          = obj.m_block_height;
             m_last_fullblock_height = obj.m_last_fullblock_height;
@@ -97,6 +98,7 @@ namespace top
  
         void xvbindex_t::init()
         {
+            m_closed            = 0;
             m_prev_index        = NULL;
             m_next_index        = NULL;
             m_linked_block      = NULL;
@@ -118,6 +120,12 @@ namespace top
     
         bool   xvbindex_t::close()
         {
+            m_closed = 1; //mark closed flag first
+            if(m_next_index != NULL)//check whether has index point this
+            {
+                if(m_next_index->get_prev_block() == this)
+                    m_next_index->reset_prev_block(NULL);
+            }
             reset_prev_block(NULL);
             reset_next_block(NULL);
             reset_this_block(NULL);

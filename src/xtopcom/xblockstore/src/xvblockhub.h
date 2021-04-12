@@ -111,8 +111,8 @@ namespace top
             base::xvbindex_t*      load_latest_committed_index();   //block with committed status
             base::xvbindex_t*      load_latest_executed_index();    //block with executed status
             base::xvbindex_t*      load_latest_connected_index();   //block has connected to the last full
+            base::xvbindex_t*      load_latest_genesis_connected_index();  //block has connected to genesis;
             base::xvbindex_t*      load_latest_full_index();        //block has full state,genesis is a full block
-            base::xvbindex_t*      load_latest_genesis_connected_index();  //block has connected to genesis
  
             bool                   load_latest_index_list(base::xvbindex_t* & cert_block,base::xvbindex_t* & lock_block,base::xvbindex_t* & commit_block);     //latest commit/lock/cert
             

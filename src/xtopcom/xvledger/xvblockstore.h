@@ -155,6 +155,8 @@ namespace top
             virtual xauto_ptr<xvblock_t>  get_latest_committed_block(const xvaccount_t & account)  = 0;//block with committed status
             virtual xauto_ptr<xvblock_t>  get_latest_executed_block(const xvaccount_t & account)   = 0;//block with executed status
             virtual xauto_ptr<xvblock_t>  get_latest_connected_block(const xvaccount_t & account)  = 0;//block connected to genesis or fullblock
+            virtual xauto_ptr<xvblock_t>  get_latest_genesis_connected_block(const xvaccount_t & account) = 0; //block has connected to genesis
+            
             virtual xauto_ptr<xvblock_t>  get_latest_full_block(const xvaccount_t & account)  = 0; //block has full state,genesis is a full block
             virtual xblock_mptrs          get_latest_blocks(const xvaccount_t & account)      = 0; //better performance for batch operations
             

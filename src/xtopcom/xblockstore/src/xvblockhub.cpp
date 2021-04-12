@@ -300,10 +300,26 @@ namespace top
                             it->second->close();//disconnect from prev-block and next-block
                             it->second->release_ref();
                         }
+                        //force to clean all prev_pr of next height
+                        if(height_it != m_all_blocks.end())
+                        {
+                            auto & view_map = height_it->second;
+                            for(auto it = view_map.begin(); it != view_map.end(); ++it)
+                                it->second->reset_prev_block(NULL);
+                        }
+                        //erase the this iterator finally
                         m_all_blocks.erase(old_height_it);
                         #ifdef ENABLE_METRICS
                         XMETRICS_COUNTER_INCREMENT("blockstore_cache_block_total", -1);
                         #endif
+                    }
+                    else //clean raw block for those reserved index
+                    {
+                        auto & view_map = old_height_it->second;
+                        for(auto it = view_map.begin(); it != view_map.end(); ++it)
+                        {
+                            it->second->reset_this_block(NULL);
+                        }
                     }
                 }
                 // try to save meta when clean blocks
@@ -324,13 +340,9 @@ namespace top
                         continue;
                     }
                     
-                    if(   (old_height_it->first != 0) //keep genesis
-                       && (old_height_it->first != m_meta->_highest_full_block_height)    //keep latest_full_block
-                       && (old_height_it->first != m_meta->_highest_execute_block_height) //keep latest_executed block
-                       && (old_height_it->first <  m_meta->_highest_commit_block_height)  //keep latest_committed block
+                    if(   (old_height_it->first != m_meta->_highest_commit_block_height)  //keep latest_committed block
                        && (old_height_it->first != m_meta->_highest_lock_block_height)    //keep latest_lock_block
-                       && (old_height_it->first != m_meta->_highest_cert_block_height)    //keep latest_cert block
-                       && (old_height_it->first != m_meta->_highest_connect_block_height))//keep latest_connect_block
+                       && (old_height_it->first != m_meta->_highest_cert_block_height) )  //keep latest_cert block
                     {
                         auto & view_map = old_height_it->second;
                         for(auto it = view_map.begin(); it != view_map.end(); ++it)
@@ -702,7 +714,7 @@ namespace top
                 xwarn("xblockacct_t::load_latest_connected_index,fail load block at height(%" PRIu64 ") of account(%s)",m_meta->_highest_connect_block_height,get_address().c_str());
             
                 load_index(m_meta->_highest_full_block_height);//full-block must be connected status
-                for(uint64_t i = 1; i <=3; ++i)//try forwarded 3 blocks
+                for(uint64_t i = 1; i <= 3; ++i)//try forwarded 3 blocks
                 {
                     if(m_meta->_highest_connect_block_height > i)
                     {
@@ -721,6 +733,33 @@ namespace top
             if(result != nullptr)
                 return result;
 
+            return load_genesis_index();
+        }
+    
+        base::xvbindex_t*  xblockacct_t::load_latest_genesis_connected_index() //block has connected to genesis
+        {
+            if(load_index(m_meta->_highest_genesis_connect_height) == 0)//load first
+            {
+                xwarn("xblockacct_t::load_latest_genesis_connected_index,fail load block at height(%" PRIu64 ") of account(%s)",m_meta->_highest_genesis_connect_height,get_address().c_str());
+                for(uint64_t i = 1; i <= 3; ++i)//try forwarded 3 blocks
+                {
+                    if(m_meta->_highest_genesis_connect_height > i)
+                    {
+                        base::xvbindex_t* alternative = load_index(m_meta->_highest_genesis_connect_height - i, base::enum_xvblock_flag_committed);
+                        if(alternative != NULL)//load_index has been return a added-reference ptr
+                        {
+                            m_meta->_highest_genesis_connect_height = alternative->get_height();
+                            m_meta->_highest_genesis_connect_hash   = alternative->get_block_class();
+                            return alternative;
+                        }
+                    }
+                }
+            }
+            //connected block must be committed as well
+            base::xvbindex_t* result = query_index(m_meta->_highest_genesis_connect_height,base::enum_xvblock_flag_committed);
+            if(result != nullptr)
+                return result;
+            
             return load_genesis_index();
         }
         
@@ -750,34 +789,6 @@ namespace top
             return load_genesis_index();
         }
         
-        //every connected block required committed
-        base::xvbindex_t*  xblockacct_t::load_latest_genesis_connected_index() //block has connected to genesis
-        {
-            //load from _genesis_connect_block_height first
-            if(load_index(m_meta->_highest_genesis_connect_height) == 0)
-            {
-                xwarn("xblockacct_t::load_latest_genesis_connected_index,fail load block at height(%" PRIu64 ") of account(%s)",m_meta->_highest_genesis_connect_height,get_address().c_str());
-                if(m_meta->_highest_genesis_connect_height > 0)//failback by down 1 height and try again
-                {
-                    for(uint64_t i = 1; i <= 3; ++i)//try forwarded 3 blocks
-                    {
-                        if(m_meta->_highest_genesis_connect_height > i)
-                        {
-                            base::xvbindex_t* alternative = load_index(m_meta->_highest_genesis_connect_height - i, base::enum_xvblock_flag_committed);
-                            if(alternative != NULL)
-                            {
-                                m_meta->_highest_genesis_connect_height = alternative->get_height();
-                                m_meta->_highest_genesis_connect_hash   = alternative->get_block_hash();
-                                return alternative;
-                            }
-                        }
-                    }
-                }
-            }
-            //connected block required committed first
-            return query_index(m_meta->_highest_genesis_connect_height, base::enum_xvblock_flag_committed);
-        }
-    
         //caller respond to release those returned ptr
         bool    xblockacct_t::load_latest_index_list(base::xvbindex_t* & cert_block,base::xvbindex_t* & lock_block,base::xvbindex_t* & commit_block)
         {
@@ -840,8 +851,6 @@ namespace top
             
             if(NULL == target_block)
                 xwarn("xblockacct_t::load_index(viewid),faild to load index for addr=%s at height=%ld", get_account().c_str(), target_height);
-            else //given chance to clean and save meta metric
-                clean_blocks(enum_max_cached_blocks,false);
             
             return target_block;
         }
@@ -862,8 +871,6 @@ namespace top
             
             if(NULL == target_block)
                 xwarn("xblockacct_t::load_index(hash),faild to load index for addr=%s at height=%ld", get_account().c_str(), target_height);
-            else //given chance to clean and save meta metric
-                clean_blocks(enum_max_cached_blocks,false);
             
             return target_block;
         }
@@ -884,8 +891,6 @@ namespace top
             
             if(NULL == target_block)
                 xwarn("xblockacct_t::load_index(flag),faild to load index for addr=%s at height=%ld", get_account().c_str(), target_height);
-            else //given chance to clean and save meta metric
-                clean_blocks(enum_max_cached_blocks,false);
             
             return target_block;
         }
@@ -1220,7 +1225,7 @@ namespace top
                     #ifdef ENABLE_METRICS
                     XMETRICS_COUNTER_INCREMENT("blockstore_cache_block_total", 1);
                     #endif
-                    xdbg("xblockacct_t::cache_index,finally cached block=%s of account=%s", this_block->dump().c_str(), m_meta->dump().c_str());
+                    xdbg("xblockacct_t::cache_index,finally update block=%s of account=%s", this_block->dump().c_str(), m_meta->dump().c_str());
                     
                     return true;//indicate at least has changed flags
                 }
@@ -1268,7 +1273,7 @@ namespace top
             
             if(this_block->get_height() > 0)
             {
-                if(this_block->get_prev_block() == NULL)
+                if( (this_block->get_prev_block() == NULL) || this_block->get_prev_block()->is_close() )
                 {
                     //try to link to previous block: previous block <--- this_block
                     if(this_block_height_it != m_all_blocks.begin()) //must check first
@@ -1939,6 +1944,7 @@ namespace top
             {
                 xdbg("xchainacct_t::process_index at store=%s,commit-qc=%s",get_blockstore_path().c_str(),prev_prev_block->dump().c_str());
                 
+                prev_prev_block->set_block_flag(base::enum_xvblock_flag_locked);//change to locked status
                 prev_prev_block->set_block_flag(base::enum_xvblock_flag_committed);//change to commit status
                 update_meta_metric(prev_prev_block);//update meta since block has change status
             }
@@ -1957,56 +1963,31 @@ namespace top
             {
                 if(this_block_height >= 2)
                 {
-                    if(NULL == this_block->get_prev_block())
-                    {
-                        base::xauto_ptr<base::xvbindex_t> last_ptr(load_index(this_block->get_height() - 1, this_block->get_last_block_hash())); //note need release it
-                        if(last_ptr) //note: load_index has added reference
-                        {
-                            base::xauto_ptr<base::xvbindex_t> _dummy(load_index(last_ptr->get_height() - 1, last_ptr->get_last_block_hash()));
-                        }
-                        else
-                        {
-                            load_index(this_block_height - 1);//force load whole height
-                            load_index(this_block_height - 2);//force load whole height
-                        }
-                    }
-                    else
-                    {
-                        base::xauto_ptr<base::xvbindex_t> _dummy(load_index(this_block->get_prev_block()->get_height() - 1, this_block->get_prev_block()->get_last_block_hash()));
-                    }
+                    load_index(this_block_height - 1);//force load height of prev
+                    load_index(this_block_height - 2);//force load height of prev_prev
                 }
                 else //height == 1
                 {
-                    if(NULL == this_block->get_prev_block())
-                    {
-                        base::xauto_ptr<base::xvbindex_t> _dummy(load_index(this_block->get_height() - 1, this_block->get_last_block_hash()));
-                    }
+                    load_index(this_block_height - 1);
                 }
                 process_index(this_block);//now ready process this block
             }
             
-            auto  it_next_height = m_all_blocks.end();
-            if( (this_block_height + 1) < m_meta->_highest_cert_block_height)//possible not loaded
+            if(load_index(this_block_height + 1) > 0) //force this load next block
             {
-                it_next_height = m_all_blocks.find(this_block_height + 1);
-                if(it_next_height == m_all_blocks.end())//dont found next one
-                    load_index(this_block_height+1);//force this load
-            }
-            if(it_next_height != m_all_blocks.end())//found next one
-            {
-                if(it_next_height->first == (this_block->get_height() + 1))//try to link to next block: this_block  <---next block
+                load_index(this_block_height + 2);//force this load next_next block
+                
+                auto  it_next_height = m_all_blocks.find(this_block_height + 1);
+                if(it_next_height != m_all_blocks.end())//found next one
                 {
                     for(auto it = it_next_height->second.rbegin(); it != it_next_height->second.rend(); ++it)//search from higher view
                     {
-                        if(it->second->reset_prev_block(this_block))//this_block  <---next block successful
-                        {
-                            process_index(it->second); //start process from here
-                        }
+                        process_index(it->second); //start process from here
                     }
                     
                     auto  it_next_next = it_next_height; //try to find next and next one if existing
                     ++it_next_next; //calculated first
-                    if( (it_next_next != m_all_blocks.end()) && (it_next_next->first == (this_block->get_height() + 2)) )//if found next_next set
+                    if( (it_next_next != m_all_blocks.end()) && (it_next_next->first == (this_block_height + 2)) )//if found next_next set
                     {
                         //note: xbft using 3-chain mode, so it request process next and next one
                         for(auto it = it_next_next->second.rbegin(); it != it_next_next->second.rend(); ++it)//search from higher view

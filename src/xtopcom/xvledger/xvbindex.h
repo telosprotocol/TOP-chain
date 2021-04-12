@@ -96,6 +96,7 @@ namespace top
             void               set_modified_flag();
             void               reset_modify_flag();
             
+            bool               is_close() const { return (m_closed != 0);}
             bool               close(); //force close object and release linked objects
             const std::string  dump() const;  //just for debug purpose
             
@@ -131,6 +132,7 @@ namespace top
             uint16_t        m_combineflags;     //[8bit:block-flags][1bit][7bit:store-bits]
             //[1][enum_xvblock_class][enum_xvblock_level][enum_xvblock_type][enum_xvblock_reserved]
             uint16_t        m_block_types;
+            uint8_t         m_closed;           //indicated whether closed or not
         };
     
         class xvbindex_vector
