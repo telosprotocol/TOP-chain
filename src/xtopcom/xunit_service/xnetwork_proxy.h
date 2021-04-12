@@ -5,7 +5,6 @@
 #pragma once
 #include "xbase/xbase.h"
 #include "xbase/xthread.h"
-#include "xbasic/xns_macro.h"
 #include "xunit_service/xcons_face.h"
 #include "xunit_service/xcons_utl.h"
 #include "xvnetwork/xvnetwork_driver_face.h"

@@ -26,7 +26,7 @@
 #    pragma warning(pop)
 #endif
 
-#include "xbasic/xns_macro.h"
+#include "xbase/xns_macro.h"
 
 #include <cstdint>
 #include <string>

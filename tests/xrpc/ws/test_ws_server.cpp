@@ -19,7 +19,7 @@
 #include "xrpc/xshard/xshard_rpc_handler.h"
 #include "xrpc/xcluster/xcluster_rpc_handler.h"
 #include "simplewebsocketserver/client_ws.hpp"
-#include "xbasic/xobject_ptr.h"
+#include "xbase/xobject_ptr.h"
 
 NS_BEG3(top, xrpc, test)
 /*using namespace std;

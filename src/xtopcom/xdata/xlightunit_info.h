@@ -7,7 +7,7 @@
 #include <string>
 #include <map>
 #include <vector>
-#include "xbasic/xobject_ptr.h"
+#include "xbase/xobject_ptr.h"
 #include "xbasic/xversion.h"
 #include "xbasic/xdataobj_base.hpp"
 #include "xdata/xtransaction.h"

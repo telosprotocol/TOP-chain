@@ -4,7 +4,6 @@
 
 #pragma once
 
-#include "xbasic/xns_macro.h"
 #include "xdata/xblock.h"
 #include "xstore/xstore_face.h"
 #include "xbasic/xlru_cache.h"

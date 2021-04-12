@@ -6,7 +6,6 @@
 
 #include <mutex>
 #include <unordered_map>
-#include "xbasic/xns_macro.h"
 #include "xsync/xsync_sender.h"
 #include "xdata/xblock.h"
 #include "xsync/xrole_xips_manager.h"

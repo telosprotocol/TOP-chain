@@ -11,7 +11,7 @@
 #include "xstore/xstore.h"
 
 #include "xbase/xdata.h"
-#include "xbasic/xobject_ptr.h"
+#include "xbase/xobject_ptr.h"
 
 #include "xdata/xproperty.h"
 #include "xdata/xpropertylog.h"

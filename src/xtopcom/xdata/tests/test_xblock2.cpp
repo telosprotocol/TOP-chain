@@ -2,7 +2,7 @@
 #include "xbase/xmem.h"
 #include "xbase/xcontext.h"
 #include "xdata/xdata_defines.h"
-#include "xbasic/xobject_ptr.h"
+#include "xbase/xobject_ptr.h"
 #include "xdata/xblock.h"
 #include "xdata/xblockchain.h"
 #include "xdata/xdata_common.h"

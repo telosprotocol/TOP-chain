@@ -2,7 +2,7 @@
 #include <iostream>
 
 #include "gtest/gtest.h"
-#include "xbasic/xobject_ptr.h"
+#include "xbase/xobject_ptr.h"
 
 #include "xbase/xcontext.h"
 #include "xbase/xdata.h"

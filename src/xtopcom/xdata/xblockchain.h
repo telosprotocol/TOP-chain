@@ -5,9 +5,8 @@
 #pragma once
 
 #include <string>
-#include "xbasic/xns_macro.h"
 #include "xdata/xblock.h"
-#include "xbasic/xobject_ptr.h"
+#include "xbase/xobject_ptr.h"
 #include "xdata/xaccount_mstate.h"
 #include "xdata/xtransaction.h"
 #include "xdata/xtableindex.h"

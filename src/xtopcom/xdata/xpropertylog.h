@@ -11,7 +11,7 @@
 #include "xdata/xdata_common.h"
 #include "xdata/xhash_base.hpp"
 
-#include "xbasic/xobject_ptr.h"
+#include "xbase/xobject_ptr.h"
 #include "xbasic/xdataobj_base.hpp"
 #include "xbasic/xversion.h"
 #include "xbasic/xserialize_face.h"

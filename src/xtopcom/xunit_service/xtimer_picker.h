@@ -5,7 +5,6 @@
 #pragma once
 
 #include "xBFT/xconsaccount.h"
-#include "xbasic/xns_macro.h"
 #include "xunit_service/xcons_face.h"
 #include "xmbus/xmessage_bus.h"
 

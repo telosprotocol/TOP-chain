@@ -6,7 +6,6 @@
 
 #include "xvledger/xvblock.h"
 #include "xbasic/xdataobj_base.hpp"
-#include "xbasic/xns_macro.h"
 #include "xconfig/xconfig_register.h"
 #include "xdata/xdata_common.h"
 #include "xdata/xdatautil.h"

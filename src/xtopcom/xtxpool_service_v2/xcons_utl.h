@@ -7,7 +7,6 @@
 #include "xBFT/xconsobj.h"
 #include "xbase/xbase.h"
 #include "xbase/xthread.h"
-#include "xbasic/xns_macro.h"
 #include "xcommon/xmessage_category.h"
 #include "xvnetwork/xmessage.h"
 #include "xvnetwork/xvnetwork_driver_face.h"

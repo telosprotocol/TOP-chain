@@ -7,7 +7,7 @@
 #include <vector>
 #include <map>
 #include "xBFT/xconsaccount.h"
-#include "xbasic/xobject_ptr.h"
+#include "xbase/xobject_ptr.h"
 #include "xunit_service/xcons_face.h"
 #include "xunit_service/xcons_unorder_cache.h"
 #include "xmbus/xmessage_bus.h"

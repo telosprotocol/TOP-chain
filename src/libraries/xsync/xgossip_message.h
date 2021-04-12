@@ -6,7 +6,6 @@
 
 #include <memory>
 #include <list>
-#include "xbasic/xns_macro.h"
 #include "xvnetwork/xmessage.h"
 #include "xbasic/xbyte_buffer.h"
 #include "xdata/xdata_common.h"

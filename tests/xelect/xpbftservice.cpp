@@ -5,7 +5,6 @@
 #include "xpbftservice.h"
 #include "xconsensus/xconsensus_face.h"
 #include "xdata/xconsensus_biz_type.h"
-#include "xbasic/xns_macro.h"
 #include "xconsensus/xconsensus_mgr.h"
 #include "xdata/xchain_param.h"
 #include "xcommon/xnode_type.h"

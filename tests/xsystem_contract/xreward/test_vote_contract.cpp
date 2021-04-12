@@ -8,7 +8,7 @@
 #include <map>
 #
 #define private public
-#include "xbasic/xobject_ptr.h"
+#include "xbase/xobject_ptr.h"
 #include "xchain_timer/xchain_timer.h"
 #include "xdata/xgenesis_data.h"
 #include "xloader/xconfig_onchain_loader.h"

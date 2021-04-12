@@ -7,7 +7,7 @@
 #include "task_dispatcher.h"
 #include "trans_base.h"
 #include "user_info.h"
-#include "xbasic/xns_macro.h"
+#include "xbase/xns_macro.h"
 #include "xcrypto/xckey.h"
 
 //#include <readline/history.h>

@@ -2,7 +2,7 @@
 
 #include "gtest/gtest.h"
 #include "xstore/xstore.h"
-#include "xbasic/xobject_ptr.h"
+#include "xbase/xobject_ptr.h"
 #include "xbase/xcontext.h"
 #include "xbase/xdata.h"
 #include "xbase/xobject.h"

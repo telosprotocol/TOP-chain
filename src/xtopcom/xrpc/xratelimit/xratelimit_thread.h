@@ -5,7 +5,7 @@
 #include <thread>
 #include <memory>
 #include <functional>
-#include "xbasic/xns_macro.h"
+#include "xbase/xns_macro.h"
 #include "xbase/xobject.h"
 #include "xbase/xcontext.h"
 #include "xbase/xthread.h"

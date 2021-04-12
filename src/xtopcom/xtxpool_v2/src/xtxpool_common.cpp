@@ -3,7 +3,6 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "xbasic/xmodule_type.h"
-#include "xbasic/xns_macro.h"
 #include "xtxpool_v2/xtxpool_log.h"
 
 #include <string>

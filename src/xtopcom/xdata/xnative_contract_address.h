@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "xbasic/xcxx_config.h"
+#include "xbase/xcxx_config.h"
 
 #include <cstdint>
 

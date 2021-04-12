@@ -5,7 +5,7 @@
 #pragma once
 
 #include "xbasic/xmemory.hpp"
-#include "xbasic/xobject_ptr.h"
+#include "xbase/xobject_ptr.h"
 #include "xchain_timer/xchain_timer.h"
 #include "xdata/xchain_param.h"
 #include "xelect_net/include/elect_main.h"

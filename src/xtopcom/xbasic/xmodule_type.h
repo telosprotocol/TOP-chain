@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include "xbase/xns_macro.h"
+
 #include <string>
 #include <unordered_map>
 

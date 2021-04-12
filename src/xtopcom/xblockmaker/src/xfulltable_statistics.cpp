@@ -5,7 +5,7 @@
 
 #include "xvledger/xvblock.h"
 // TODO(jimmy) #include "xbase/xvledger.h"
-#include "xbasic/xobject_ptr.h"
+#include "xbase/xobject_ptr.h"
 
 namespace top {
 namespace blockmaker {

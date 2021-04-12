@@ -6,7 +6,7 @@
 
 #include "xvledger/xvcnode.h"
 #include "xvledger/xvcertauth.h"
-#include "xbasic/xobject_ptr.h"
+#include "xbase/xobject_ptr.h"
 
 namespace top
 {

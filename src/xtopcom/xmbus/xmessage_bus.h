@@ -8,7 +8,6 @@
 #include <vector>
 #include <atomic>
 #include <thread>
-#include "xbasic/xns_macro.h"
 #include "xmbus/xevent_queue.h"
 #include "xvledger/xveventbus.h"
 #include "xvledger/xvbindex.h"

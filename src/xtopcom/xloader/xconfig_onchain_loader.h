@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "xbasic/xobject_ptr.h"
+#include "xbase/xobject_ptr.h"
 #include "xconfig/xconfig_face.h"
 #include "xstore/xstore_face.h"
 #include "xmbus/xmessage_bus.h"

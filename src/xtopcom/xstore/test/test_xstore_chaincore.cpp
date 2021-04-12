@@ -3,7 +3,7 @@
 
 #include "gtest/gtest.h"
 #include "xbase/xcontext.h"
-#include "xbasic/xobject_ptr.h"
+#include "xbase/xobject_ptr.h"
 #include "xdata/xblocktool.h"
 #include "xdb/xdb_mem.h"
 #include "xstore/xstore.h"

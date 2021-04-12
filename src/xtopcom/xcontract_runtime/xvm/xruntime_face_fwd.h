@@ -1,6 +1,6 @@
 #pragma once
 
-#include "xbasic/xns_macro.h"
+#include "xbase/xns_macro.h"
 
 NS_BEG3(top, contract_runtime, vm)
 

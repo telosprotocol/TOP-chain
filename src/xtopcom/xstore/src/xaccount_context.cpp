@@ -9,7 +9,7 @@
 #include "xstore/xstore_property.h"
 
 #include "xbase/xlog.h"
-#include "xbasic/xobject_ptr.h"
+#include "xbase/xobject_ptr.h"
 #include "xcrypto/xckey.h"
 #include "xdata/xaction_parse.h"
 #include "xdata/xproperty.h"

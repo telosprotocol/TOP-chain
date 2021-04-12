@@ -11,7 +11,7 @@
 #endif
 
 #include "xbase/xthread.h"
-#include "xbasic/xobject_ptr.h"
+#include "xbase/xobject_ptr.h"
 #include "xmbus/xevent_reg_holder.hpp"
 #include "xmbus/xmessage_bus.h"
 #include "xmetrics/xmetrics.h"

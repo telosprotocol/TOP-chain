@@ -8,7 +8,6 @@
 #include <unordered_map>
 
 #include "json/json.h"
-#include "xbasic/xns_macro.h"
 #include "xconfig/xconfig_face.h"
 
 NS_BEG2(top, loader)

@@ -2,7 +2,6 @@
 //#include <gmock/gmock.h>
 #include "xmutisig/xschnorr/xschnorr.h"
 #include "xmutisig/xmutisig.h"
-#include "xbasic/xns_macro.h"
 #include "xcrypto/xckey.h"
 #include "xdata/xdatautil.h"
 #include "xbase/xutl.h"

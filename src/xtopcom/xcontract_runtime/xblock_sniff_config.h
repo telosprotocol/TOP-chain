@@ -20,7 +20,7 @@
 #    pragma warning(pop)
 #endif
 
-#include "xbasic/xobject_ptr.h"
+#include "xbase/xobject_ptr.h"
 #include "xcommon/xaddress.h"
 
 #include <functional>

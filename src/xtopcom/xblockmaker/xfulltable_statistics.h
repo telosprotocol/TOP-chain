@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "xbasic/xobject_ptr.h"
+#include "xbase/xobject_ptr.h"
 #include "xcommon/xip.h"
 // TODO(jimmy) #include "xbase/xvledger.h"
 #include "xdata/xblock.h"

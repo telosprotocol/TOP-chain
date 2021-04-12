@@ -1,7 +1,7 @@
 #pragma once
 
 #include "xvledger/xvstate.h"
-#include "xbasic/xobject_ptr.h"
+#include "xbase/xobject_ptr.h"
 #include "xcommon/xaddress.h"
 #include "xdata/xtransaction.h"
 

@@ -3,7 +3,7 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #pragma once
-#include "xbasic/xns_macro.h"
+#include "xbase/xns_macro.h"
 
 #include <system_error>
 

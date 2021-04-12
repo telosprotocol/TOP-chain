@@ -5,7 +5,7 @@
 #pragma once
 
 #include "xbase/xbase.h"
-#include "xbasic/xobject_ptr.h"
+#include "xbase/xobject_ptr.h"
 
 #include <memory>
 #include <type_traits>
