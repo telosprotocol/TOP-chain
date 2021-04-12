@@ -3,7 +3,7 @@
 
 #include "gtest/gtest.h"
 #include "xdata/xpropertylog.h"
-#include "xbasic/xobject_ptr.h"
+#include "xbase/xobject_ptr.h"
 #include "xbase/xmem.h"
 #include "xbase/xcontext.h"
 

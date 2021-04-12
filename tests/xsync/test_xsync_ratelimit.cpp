@@ -5,7 +5,7 @@
 #include "xdata/xdata_common.h"
 #include "xsync/xsync_ratelimit.h"
 #include "xbase/xthread.h"
-#include "xbasic/xobject_ptr.h"
+#include "xbase/xobject_ptr.h"
 #include "xbasic/xmemory.hpp"
 #include "xpbase/base/top_utils.h"
 

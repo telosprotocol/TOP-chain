@@ -5,7 +5,7 @@
 #pragma once
 
 #include "xbase/xint.h"
-#include "xbasic/xns_macro.h"
+#include "xbase/xns_macro.h"
 
 #include <cstdint>
 #include <string>

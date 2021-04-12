@@ -4,7 +4,6 @@
 
 #pragma once
 
-#include "xbasic/xns_macro.h"
 #include "xconfig/xconfig_face.h"
 
 NS_BEG2(top, config)

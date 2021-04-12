@@ -6,7 +6,7 @@
 #include <algorithm>
 #include <iostream>
 
-#include "xbasic/xobject_ptr.h"
+#include "xbase/xobject_ptr.h"
 #include "xconfig/xconfig_register.h"
 #include "xconfig/xconfig_to_string_helper.h"
 #include "xconfig/xpredefined_configurations.h"

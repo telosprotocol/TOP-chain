@@ -7,7 +7,7 @@
 #include "xrpc/xws/xws_server.h"
 #include "xrpc/xshard/xshard_rpc_handler.h"
 #include "xrpc/xcluster/xcluster_rpc_handler.h"
-#include "xbasic/xobject_ptr.h"
+#include "xbase/xobject_ptr.h"
 
 NS_BEG2(top, xrpc)
 class xrpc_init

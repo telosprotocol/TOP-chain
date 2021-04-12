@@ -7,7 +7,6 @@
 #include <string>
 #include <vector>
 #include <map>
-#include "xbasic/xns_macro.h"
 #include "xbasic/xdataobj_base.hpp"
 #include "xdata/xblock.h"
 #include "xdata/xcons_transaction.h"

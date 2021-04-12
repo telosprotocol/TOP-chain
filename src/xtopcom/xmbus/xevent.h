@@ -5,7 +5,7 @@
 #pragma once
 
 #include <memory>
-#include "xbasic/xns_macro.h"
+#include "xbase/xns_macro.h"
 #include "xbase/xvevent.h"
 
 NS_BEG2(top, mbus)

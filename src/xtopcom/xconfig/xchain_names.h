@@ -5,7 +5,6 @@
 #pragma once
 
 #include "xvledger/xvaccount.h"
-#include "xbasic/xns_macro.h"
 
 #include <string>
 

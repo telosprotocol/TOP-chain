@@ -9,7 +9,7 @@
 #include <string>
 #include <vector>
 
-#include "xbasic/xns_macro.h"
+#include "xbase/xns_macro.h"
 
 NS_BEG2(top, config)
 

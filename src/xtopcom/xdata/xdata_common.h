@@ -9,7 +9,7 @@
 #include "xbase/xdata.h"
 #include "xbasic/xcrypto_key.h"
 #include "xbasic/xserializable_based_on.h"
-#include "xbasic/xobject_ptr.h"
+#include "xbase/xobject_ptr.h"
 #include "xcommon/xrole_type.h"
 #include "xcommon/xaddress.h"
 

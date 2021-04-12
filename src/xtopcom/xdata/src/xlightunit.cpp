@@ -3,8 +3,7 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include <string>
-#include "xbasic/xns_macro.h"
-#include "xbasic/xobject_ptr.h"
+#include "xbase/xobject_ptr.h"
 #include "xbase/xhash.h"
 #include "xbase/xatom.h"
 #include "xdata/xdatautil.h"

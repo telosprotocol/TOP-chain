@@ -5,7 +5,7 @@
 #pragma once
 
 #include "xbasic/xserializable_based_on.h"
-#include "xbasic/xobject_ptr.h"
+#include "xbase/xobject_ptr.h"
 #include "xcommon/xaddress.h"
 #include "xdata/xblock.h"
 

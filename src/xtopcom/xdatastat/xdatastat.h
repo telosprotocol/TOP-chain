@@ -4,7 +4,6 @@
 
 #pragma once
 
-#include "xbasic/xns_macro.h"
 #include "xbasic/xmemory.hpp"
 #include "xmbus/xmessage_bus.h"
 #include "xvledger/xvblock.h"

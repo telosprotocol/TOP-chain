@@ -2,7 +2,7 @@
 
 #include "xbasic/xbyte_buffer.h"
 #include "xbasic/xmemory.hpp"
-#include "xbasic/xobject_ptr.h"
+#include "xbase/xobject_ptr.h"
 #include "xcommon/xaddress.h"
 #include "xcontract_common/xcontract_state_fwd.h"
 #include "xcontract_common/xcontract_execution_stage.h"

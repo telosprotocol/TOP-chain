@@ -4,7 +4,7 @@
 
 #pragma once
 #include <string>
-#include "xbasic/xns_macro.h"
+#include "xbase/xns_macro.h"
 #include "json/json.h"
 NS_BEG2(top, xrpc)
 

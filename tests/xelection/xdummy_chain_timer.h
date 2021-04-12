@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "xbasic/xobject_ptr.h"
+#include "xbase/xobject_ptr.h"
 #include "tests/xchain_timer/xdummy_chain_timer.h"
 
 NS_BEG3(top, tests, election)

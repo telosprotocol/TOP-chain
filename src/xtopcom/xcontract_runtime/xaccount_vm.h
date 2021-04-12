@@ -21,7 +21,7 @@
 #endif
 
 #include "xbasic/xmemory.hpp"
-#include "xbasic/xobject_ptr.h"
+#include "xbase/xobject_ptr.h"
 #include "xcontract_runtime/xuser/xuser_contract_runtime.h"
 #include "xcontract_runtime/xsystem/xsystem_contract_runtime.h"
 #include "xcontract_runtime/xaccount_vm_execution_result.h"

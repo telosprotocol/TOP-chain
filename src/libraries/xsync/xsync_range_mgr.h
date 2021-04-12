@@ -4,7 +4,6 @@
 
 #pragma once
 
-#include "xbasic/xns_macro.h"
 #include "xsync/xchain_info.h"
 #include "xstore/xstore_face.h"
 #include "xmbus/xevent_behind.h"

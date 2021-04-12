@@ -5,7 +5,6 @@
 #include "xtxpool_service_v2/xtxpool_service.h"
 
 #include "xvledger/xvblock.h"
-#include "xbasic/xns_macro.h"
 #include "xcommon/xmessage_id.h"
 #include "xdata/xblocktool.h"
 #include "xdata/xtableblock.h"

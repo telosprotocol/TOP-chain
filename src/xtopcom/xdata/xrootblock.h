@@ -8,7 +8,6 @@
 #include <mutex>
 #include <string>
 
-#include "xbasic/xns_macro.h"
 #include "xvledger/xvblock.h"
 // TODO(jimmy) #include "xbase/xvledger.h"
 #include "xdata/xdata_common.h"

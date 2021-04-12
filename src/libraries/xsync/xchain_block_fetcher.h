@@ -7,7 +7,7 @@
 #include <mutex>
 #include <unordered_map>
 #include <memory>
-#include "xbasic/xns_macro.h"
+
 #include "xbasic/xmemory.hpp"
 #include "xsync/xsync_store.h"
 #include "xsync/xsync_sender.h"

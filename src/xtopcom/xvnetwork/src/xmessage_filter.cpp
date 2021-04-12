@@ -4,7 +4,6 @@
 
 #include "xvnetwork/xmessage_filter.h"
 
-#include "xbasic/xns_macro.h"
 #include "xelection/xcache/xgroup_element.h"
 #include "xelection/xdata_accessor_error.h"
 #include "xmetrics/xmetrics.h"

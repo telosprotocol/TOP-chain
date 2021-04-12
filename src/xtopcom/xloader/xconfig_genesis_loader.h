@@ -7,7 +7,6 @@
 #include <string>
 #include <unordered_map>
 
-#include "xbasic/xns_macro.h"
 #include "xconfig/xconfig_face.h"
 #include "xdata/xrootblock.h"
 

@@ -6,7 +6,7 @@
 
 #include "xbasic/xasio_io_context_wrapper.h"
 #include "xbasic/xbyte_buffer.h"
-#include "xbasic/xobject_ptr.h"
+#include "xbase/xobject_ptr.h"
 #include "xnetwork/xbasic_socket.h"
 #include "xnetwork/xendpoint.h"
 #include "xnetwork/xnetwork_bytes_message.h"

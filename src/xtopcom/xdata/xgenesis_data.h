@@ -17,7 +17,7 @@
 #include "xdata/xblock.h"
 #include "xdata/xtransaction.h"
 #include "xdata/xnative_contract_address.h"
-#include "xbasic/xobject_ptr.h"
+#include "xbase/xobject_ptr.h"
 #include "xcommon/xip.h"
 
 namespace top { namespace data {

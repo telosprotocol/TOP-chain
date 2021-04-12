@@ -12,7 +12,7 @@
 #include <string>
 #include <memory>
 #include <vector>
-#include "xbasic/xns_macro.h"
+#include "xbase/xns_macro.h"
 #include "json/json.h"
 #include "simplewebserver/utility.hpp"
 

@@ -9,7 +9,7 @@
 #include <vector>
 
 #include "xbasic/xcrypto_key.h"
-#include "xbasic/xobject_ptr.h"
+#include "xbase/xobject_ptr.h"
 #include "xbasic/xdataobj_base.hpp"
 #include "xdata/xaction.h"
 #include "xdata/xproperty.h"

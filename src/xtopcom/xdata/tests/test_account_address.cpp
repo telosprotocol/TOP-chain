@@ -5,7 +5,7 @@
 // TODO(jimmy) #include "xbase/xvledger.h"
 #include "xdata/xdata_defines.h"
 #include "xdata/xnative_contract_address.h"
-#include "xbasic/xobject_ptr.h"
+#include "xbase/xobject_ptr.h"
 #include "xdata/xblock.h"
 #include "xdata/xproperty.h"
 #include "xdata/xdatautil.h"

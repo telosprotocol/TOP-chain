@@ -18,7 +18,7 @@
 #include "xrpc/xws/xws_server.h"
 #include "xrpc/xshard/xshard_rpc_handler.h"
 #include "simplewebsocketserver/client_ws.hpp"
-#include "xbasic/xobject_ptr.h"
+#include "xbase/xobject_ptr.h"
 #include "xcommon/xsharding_info.h"
 #include "xvnetwork/xversion.h"
 #include "xvnetwork/xaddress.h"

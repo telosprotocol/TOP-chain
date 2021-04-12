@@ -13,7 +13,7 @@
 #include "xbasic/xrange.hpp"
 #include "xcommon/xsharding_info.h"
 #include "xbasic/xdataobj_base.hpp"
-#include "xbasic/xobject_ptr.h"
+#include "xbase/xobject_ptr.h"
 #include "xdata/xdata_common.h"
 #include "xconfig/xpredefined_configurations.h"
 #include "json/value.h"

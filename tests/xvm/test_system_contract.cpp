@@ -2,7 +2,7 @@
 #include "xvm/xvm_trace.h"
 #include "xvm/xcontract/xdata_stream.h"
 #include <gtest/gtest.h>
-#include "xbasic/xobject_ptr.h"
+#include "xbase/xobject_ptr.h"
 #include "xbase/xcontext.h"
 #include "xstore/xstore_face.h"
 #include "xbase/xmem.h"
