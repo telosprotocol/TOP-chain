@@ -29,7 +29,9 @@ namespace top
             m_test_account = NULL;
             reset_xip_addr(node_address);
             
-            #ifdef __MAC_PLATFORM__
+            xveventbus_impl * mbus_store = new xveventbus_impl();
+            base::xvchain_t::instance().set_xevmbus(mbus_store);
+            
             char szBuff[32] = {0};
             const int inBufLen = sizeof(szBuff);
             snprintf(szBuff,inBufLen,"/0x%llx",node_address.low_addr);
@@ -40,13 +42,7 @@ namespace top
             base::xvblockstore_t * blockstore_ptr = store::get_vblockstore();
             set_vblockstore(blockstore_ptr);
             register_plugin(blockstore_ptr);
-            #else
-            base::xauto_ptr<base::xvblockstore_t> vblockstore_ptr(new xunitblockstore_t());
-            set_vblockstore(vblockstore_ptr.get());
-            register_plugin(vblockstore_ptr.get());
-            #endif
 
- 
             xdbg("xtestnode_t::create");
         }
         

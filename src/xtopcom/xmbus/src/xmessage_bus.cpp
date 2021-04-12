@@ -5,6 +5,7 @@
 #include <cassert>
 #include "xmbus/xmessage_bus.h"
 #include "xmbus/xevent_timer.h"
+#include "xmbus/xevent_store.h"
 #include "xmetrics/xmetrics.h"
 #include "xbase/xbase.h"
 
@@ -125,9 +126,15 @@ xevent_ptr_t  xmessage_bus_t::create_event_for_store_index_to_db(base::xvbindex_
   return nullptr;
 }
 
-xevent_ptr_t  xmessage_bus_t::create_event_for_store_block_to_db(base::xvblock_t * target_block) {
-  xassert(false); // TODO xevent_ptr_t should use object ptr
-  return nullptr;
+xevent_ptr_t  xmessage_bus_t::create_event_for_store_block_to_db(base::xvblock_t * this_block_ptr) {
+ 
+    data::xblock_t* block = dynamic_cast<data::xblock_t*>(this_block_ptr);
+    xassert(block != nullptr);
+    block->add_ref();
+    data::xblock_ptr_t obj;
+    obj.attach(block);
+    
+    return  std::make_shared<mbus::xevent_store_block_to_db_t>(obj, obj->get_account(), true);
 }
 
 

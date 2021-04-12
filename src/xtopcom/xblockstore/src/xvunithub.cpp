@@ -116,11 +116,13 @@ namespace top
                 //target_index->get_this_block()->reset_block_flags(target_index->get_block_flags());
                 
                 //must addreference first before clean_caches(),otherwise it might be reset by clean_caches
-                target_index->get_this_block()->add_ref();//add reference before return
+                base::xvblock_t * raw_block_ptr = target_index->get_this_block();
+                raw_block_ptr->add_ref();//add reference before return
+                
                 if(loaded_new_block) //try to keep balance when one new block loaded,so trigger lightly cleanup
                     target_account->clean_caches(false);//light cleanup
                 
-                return target_index->get_this_block();
+                return raw_block_ptr;
             }
             //XTODO, add code to rebuild block from table block
             
@@ -342,7 +344,19 @@ namespace top
             LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
             return account_obj->delete_block(block);
         }
-
+    
+        //note: block must be committed and connected
+        bool                xvblockstore_impl::execute_block(const base::xvaccount_t & account,base::xvblock_t* block) //execute block and update state of acccount
+        {
+            if( (nullptr == block) || (account.get_account() != block->get_account()) )
+            {
+                xerror("xvblockstore_impl::execute_block,block NOT match account:%",account.get_account().c_str());
+                return false;
+            }
+            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
+            return account_obj->execute_block(block);
+        }
+    
         base::xauto_ptr<base::xvblock_t>  xvblockstore_impl::query_block(const base::xvaccount_t & account,const uint64_t height, const uint64_t viewid)
         {
             LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
@@ -519,6 +533,8 @@ namespace top
  
         bool      xvblockstore_impl::on_block_stored(base::xvblock_t* this_block_ptr)
         {
+            //we have enable event at xblockacct_t layer,so disable following code
+            /*
             if(this_block_ptr->get_height() == 0) //ignore genesis block
                 return true;
             
@@ -541,6 +557,7 @@ namespace top
                     mbus->push_event(event);
                 }
             }
+            */
             return true;
         }
 

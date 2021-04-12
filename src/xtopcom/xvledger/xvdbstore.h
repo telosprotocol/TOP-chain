@@ -48,6 +48,9 @@ namespace top
             virtual bool             get_vblock_input(const std::string & store_path,xvblock_t* for_block)  const = 0;//just load input
             virtual bool             get_vblock_output(const std::string & store_path,xvblock_t* for_block) const = 0;//just load output
             
+        public://execute_block will move to statestore soon
+            virtual bool             execute_block(base::xvblock_t* block) = 0;
+            
         protected:
 //            using xobject_t::add_ref;
 //            using xobject_t::release_ref;

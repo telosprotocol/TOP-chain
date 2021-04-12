@@ -729,6 +729,8 @@ namespace top
             virtual bool                is_executed() const;                      //block has been executed
             virtual bool                is_input_ready(bool full_check_resources = false)  const;                  //nil-block return true because it dont need input
             virtual bool                is_output_ready(bool full_check_resources = false) const;                  //nil-block return true because it dont need output
+            virtual bool                is_execute_ready() const {return true;}//check whether ready to execute bin-log
+            
             bool                        is_genesis_block() const;                 //test whether it is a genesis block
             virtual bool                is_equal(const xvblock_t & other)   const;//compare everyting except certification
             virtual void*               query_interface(const int32_t _enum_xobject_type_) override;//caller need to cast (void*) to related ptr

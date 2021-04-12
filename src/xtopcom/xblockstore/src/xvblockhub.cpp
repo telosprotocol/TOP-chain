@@ -191,6 +191,12 @@ namespace top
             if(nullptr == m_meta)
                 m_meta = new xacctmeta_t();
 
+            //pre-load latest execution block
+            if(load_index(m_meta->_highest_execute_block_height) == 0)
+            {
+                xwarn_err("xblockacct_t::init(),fail-load highest execution block at height(%" PRId64 ") of account(%s) at store(%s)",m_meta->_highest_execute_block_height,get_account().c_str(),get_blockstore_path().c_str());
+            }
+            
             //pre-load latest commit block
             if(load_index(m_meta->_highest_commit_block_height) == 0)
             {
@@ -293,7 +299,7 @@ namespace top
                             //at entry of quit we need make sure everything is consist
                             update_meta_metric(it->second);  //udate other meta and connect info
                             if(it->second->check_modified_flag()) //store any modified blocks again
-                                write_index_to_db(it->second);
+                                write_index_to_db(it->second,true);//push event to mbus if need
                             
                             xdbg_info("xblockacct_t::clean_caches,index=%s",it->second->dump().c_str());
                             it->second->close();//disconnect from prev-block and next-block
@@ -377,7 +383,7 @@ namespace top
                         //at entry of quit we need make sure everything is consist
                         update_meta_metric(view_it->second);  //udate other meta and connect info
                         if(view_it->second->check_modified_flag()) //has changed since last store
-                            write_index_to_db(view_it->second);//save_block may drop cert-only block
+                            write_index_to_db(view_it->second,false);//save_block but disable trigger event
 
                         xdbg_info("xblockacct_t::close_blocks,block=%s",view_it->second->dump().c_str());
 
@@ -985,23 +991,24 @@ namespace top
             if(cache_index(new_index_ptr)) //insert successful
             {
                 //XTODO,update store flag for new_raw_block
+                new_index_ptr->reset_this_block(new_raw_block); //paired before write_block_to_db/write_index_to_db
                 
                 //at entry of store, connect as chain,and check connected_flag and meta
                 connect_index(new_index_ptr);      //connect as chain mode
                 update_meta_metric(new_index_ptr); //update other meta and connect info
                 
-                if(new_index_ptr->check_modified_flag())//has any changed
-                {
-                    write_index_to_db(new_index_ptr); //save index first
-                }
                 if(new_index_ptr->check_block_flag(base::enum_xvblock_flag_stored) == false)//raw block not stored completely yet
                 {
-                    if(0 == new_raw_block->get_height()) //keep genesis block
-                        new_index_ptr->reset_this_block(new_raw_block); //paired before write_block_to_db
-                    
-                    write_block_to_db(new_index_ptr,new_raw_block); //save raw block then
+                    write_block_to_db(new_index_ptr,new_raw_block); //save raw block first
                 }
-
+                if(new_index_ptr->check_modified_flag())//has any changed
+                {
+                    write_index_to_db(new_index_ptr,true); //save index then
+                }
+                
+                if(0 != new_raw_block->get_height()) //keep genesis block
+                    new_index_ptr->reset_this_block(NULL); //clean it again
+                    
                 clean_blocks(enum_max_cached_blocks,true); //as limited cached memory, clean the oldest one if need
                 new_index_ptr->release_ref();//cache_block may hold own reference
                 return true;
@@ -1100,6 +1107,73 @@ namespace top
                 return false;
             }
             return read_block_output_from_db(target_block,target_index->get_store_flags());
+        }
+        
+        bool   xblockacct_t::execute_block(base::xvblock_t* block) //execute block and update state of acccount
+        {
+            if(block == nullptr)
+            {
+                xassert(0); //should not pass nullptr
+                return false;
+            }
+            
+            if(false == block->check_block_flag(base::enum_xvblock_flag_committed))
+            {
+                xerror("xblockacct_t::execute_block, a non-committed block block=%s",block->dump().c_str());
+                return false;
+            }
+            
+            if(block->check_block_flag(base::enum_xvblock_flag_executed)) //did executed already
+            {
+                if (m_meta->_highest_execute_block_height < block->get_height())
+                {
+                    xwarn("xblockacct_t::execute_block highest execute block height %" PRIu64 " less than block=%s", m_meta->_highest_execute_block_height, block->dump().c_str());
+                    m_meta->_highest_execute_block_height = block->get_height();  //update meta info for executed
+                    m_meta->_highest_execute_block_hash   = block->get_block_hash();
+                }
+                return true;
+            }
+            
+            bool  is_ready_to_executed = false;
+            if(  (0 == m_meta->_highest_execute_block_height)
+               &&(block->get_height() == 0) ) //allow executed genesis block
+            {
+                is_ready_to_executed = true;
+            }
+            else if( (block->get_height() == (m_meta->_highest_execute_block_height + 1))
+                    && (block->get_last_block_hash() == m_meta->_highest_execute_block_hash) ) //restrict matched
+            {
+                is_ready_to_executed = true;
+            }
+            else if(   (block->get_height() > m_meta->_highest_execute_block_height)
+                    && (block->get_block_class() == base::enum_xvblock_class_full) ) //any full block is eligibal to executed
+            {
+                //full-block need check whether state of offchain ready or not
+                is_ready_to_executed = block->is_execute_ready();
+            }
+            
+            if(is_ready_to_executed)
+            {
+                const bool executed_result =  base::xvchain_t::instance().get_xdbstore()->execute_block(block);
+                if(executed_result)
+                {
+                    block->set_block_flag(base::enum_xvblock_flag_executed); //update flag of block
+                    xinfo("xblockacct_t::execute_block,successful-exectued block=%s based on height=%" PRIu64 "  ",block->dump().c_str(),block->get_height());
+                    
+                    //note:store_block may update m_meta->_highest_execute_block_height as well
+                    store_block(block);//update index and persist into db as well
+                    return true;
+                }
+                else
+                {
+                    xwarn("xblockacct_t::execute_block,fail-exectue for block=%s",block->dump().c_str());
+                }
+            }
+            else
+            {
+                xwarn("xblockacct_t::execute_block,fail-ready to execute for block=%s highest_execute_block_height=%lld",block->dump().c_str(), m_meta->_highest_execute_block_height);
+            }
+            return false;
         }
         
         //return true if inserted into cache,otherwise return false.note:just call for new block
@@ -1425,6 +1499,13 @@ namespace top
                    &&(new_block_ptr->get_block_class() == base::enum_xvblock_class_full) )
                 {
                     m_meta->_highest_full_block_height = new_block_height;
+                }
+                
+                if(  (new_block_height >= m_meta->_highest_execute_block_height)
+                   &&(new_block_ptr->check_block_flag(base::enum_xvblock_flag_executed)) )
+                {
+                    m_meta->_highest_execute_block_height = new_block_height;
+                    m_meta->_highest_execute_block_hash   = new_block_ptr->get_block_hash();
                 }
                 
                 mark_connected_flag(new_block_ptr);//connect update
@@ -1765,13 +1846,13 @@ namespace top
             
             for(auto it = indexes.begin(); it != indexes.end(); ++it)
             {
-                write_index_to_db(it->second);//store entry really
+                write_index_to_db(it->second,false);//store entry really
             }
             return true;
         }
     
         //return bool indicated whether has anything writed into db
-        bool   xblockacct_t::write_index_to_db(base::xvbindex_t* index_obj)
+        bool   xblockacct_t::write_index_to_db(base::xvbindex_t* index_obj,bool allo_db_event)
         {
             if(NULL == index_obj)
             {
@@ -1819,6 +1900,46 @@ namespace top
                 
                 xerror("xblockacct_t::write_index_to_db,fail to writed into db,index dump(%s)",index_obj->dump().c_str());
                 return false;
+            }
+            
+            //give chance to trigger db event
+            if(allo_db_event)
+                on_block_stored(index_obj);
+            return true;
+        }
+        
+        bool      xblockacct_t::on_block_stored(base::xvbindex_t* index_ptr)
+        {
+            if(index_ptr->get_height() == 0) //ignore genesis block
+                return true;
+            
+            const int block_flags = index_ptr->get_block_flags();
+            if((block_flags & base::enum_xvblock_flag_executed) != 0)
+            {
+                //here notify execution event if need
+            }
+            else if( ((block_flags & base::enum_xvblock_flag_committed) != 0) && ((block_flags & base::enum_xvblock_flag_connected) != 0) )
+            {
+                base::xveventbus_t * mbus = base::xvchain_t::instance().get_xevmbus();
+                xassert(mbus != NULL);
+                if(mbus != NULL)
+                {
+                    if(index_ptr->get_this_block() == NULL)
+                    {
+                        if(false == read_block_object_from_db(index_ptr))
+                        {
+                            xerror("xvblockstore_impl::on_block_stored,at store(%s)-> block=%s",get_blockstore_path().c_str(),index_ptr->dump().c_str());
+                            return false;
+                        }
+                    }
+                    if(index_ptr->get_this_block() != NULL)
+                    {
+                        mbus::xevent_ptr_t event = mbus->create_event_for_store_block_to_db(index_ptr->get_this_block());
+                        mbus->push_event(event);
+                    }
+                    
+                    xdbg_info("xvblockstore_impl::on_block_stored,at store(%s)-> block=%s",get_blockstore_path().c_str(),index_ptr->dump().c_str());
+                }
             }
             return true;
         }
@@ -1929,6 +2050,7 @@ namespace top
                 if(this_block->check_block_flag(base::enum_xvblock_flag_locked))//if this_block already been locked status
                 {
                     prev_block->set_block_flag(base::enum_xvblock_flag_committed);//convert prev_block directly to commit
+                    write_index_to_db(prev_block,true); //trigger db event here if need
                 }
                 update_meta_metric(prev_block);//update meta since block has change status
             }
@@ -1957,6 +2079,7 @@ namespace top
                 prev_prev_block->set_block_flag(base::enum_xvblock_flag_locked);//change to locked status
                 prev_prev_block->set_block_flag(base::enum_xvblock_flag_committed);//change to commit status
                 update_meta_metric(prev_prev_block);//update meta since block has change status
+                write_index_to_db(prev_prev_block,true); //trigger db event here if need
             }
             return true;
         }

@@ -196,6 +196,12 @@ namespace top
             //clean all cached blocks after reach max idle duration(as default it is 60 seconds)
             virtual bool                  reset_cache_timeout(const xvaccount_t & account,const uint32_t max_idle_time_ms) = 0;
             
+        public:
+            //execute_block will move to statestore soon
+            //execute block and update state of acccount
+            //note: block must be committed and connected
+            virtual bool                 execute_block(const base::xvaccount_t & account,base::xvblock_t* block) = 0;
+            
         protected:
             //only allow remove flag within xvblockstore_t
             void                          remove_block_flag(xvblock_t* to_block, enum_xvblock_flag flag);
