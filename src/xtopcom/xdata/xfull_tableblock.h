@@ -143,6 +143,7 @@ class xfull_tableblock_t : public xblock_t {
     bool                set_full_offstate(const xtable_mbt_ptr_t & offstate) override;
     xtable_mbt_ptr_t    get_full_offstate() const override {return m_full_offstate;}
     bool                is_full_state_block() const override;
+    bool                is_execute_ready() const {return is_full_state_block();}  //check whether ready to execute bin-log
 
  private:
     xtable_mbt_ptr_t                                m_full_offstate{nullptr};  // full block offstate

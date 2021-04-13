@@ -189,29 +189,32 @@ namespace top
             const std::string meta_content = load_value_by_path(full_meta_path);
             m_meta = xacctmeta_t::load(meta_content);
             if(nullptr == m_meta)
+            {
                 m_meta = new xacctmeta_t();
-
-            //pre-load latest execution block
-            if(load_index(m_meta->_highest_execute_block_height) == 0)
-            {
-                xwarn_err("xblockacct_t::init(),fail-load highest execution block at height(%" PRId64 ") of account(%s) at store(%s)",m_meta->_highest_execute_block_height,get_account().c_str(),get_blockstore_path().c_str());
             }
-            
-            //pre-load latest commit block
-            if(load_index(m_meta->_highest_commit_block_height) == 0)
+            else
             {
-                xwarn_err("xblockacct_t::init(),fail-load highest commited block at height(%" PRId64 ") of account(%s) at store(%s)",m_meta->_highest_commit_block_height,get_account().c_str(),get_blockstore_path().c_str());
+                //pre-load latest execution block
+                if(load_index(m_meta->_highest_execute_block_height) == 0)
+                {
+                    xwarn_err("xblockacct_t::init(),fail-load highest execution block at height(%" PRId64 ") of account(%s) at store(%s)",m_meta->_highest_execute_block_height,get_account().c_str(),get_blockstore_path().c_str());
+                }
+                
+                //pre-load latest commit block
+                if(load_index(m_meta->_highest_commit_block_height) == 0)
+                {
+                    xwarn_err("xblockacct_t::init(),fail-load highest commited block at height(%" PRId64 ") of account(%s) at store(%s)",m_meta->_highest_commit_block_height,get_account().c_str(),get_blockstore_path().c_str());
+                }
+                //pre-load latest lock block
+                if(load_index(m_meta->_highest_lock_block_height) == 0)
+                {
+                    xwarn_err("xblockacct_t::init(),fail-load highest locked block at height(%" PRId64 ") of account(%s) at store(%s)",m_meta->_highest_lock_block_height,get_account().c_str(),get_blockstore_path().c_str());
+                }
+                if(load_index(m_meta->_highest_cert_block_height) == 0)
+                {
+                    xwarn_err("xblockacct_t::init(),fail-load highest cert block at height(%" PRId64 ") of account(%s) at store(%s)",m_meta->_highest_cert_block_height,get_account().c_str(),get_blockstore_path().c_str());
+                }
             }
-            //pre-load latest lock block
-            if(load_index(m_meta->_highest_lock_block_height) == 0)
-            {
-                xwarn_err("xblockacct_t::init(),fail-load highest locked block at height(%" PRId64 ") of account(%s) at store(%s)",m_meta->_highest_lock_block_height,get_account().c_str(),get_blockstore_path().c_str());
-            }
-            if(load_index(m_meta->_highest_cert_block_height) == 0)
-            {
-                xwarn_err("xblockacct_t::init(),fail-load highest cert block at height(%" PRId64 ") of account(%s) at store(%s)",m_meta->_highest_cert_block_height,get_account().c_str(),get_blockstore_path().c_str());
-            }
- 
             xinfo("xblockacct_t::init,account=%s at blockstore=%s,objectid=% " PRId64 ",meta=%s",
                     dump().c_str(),m_blockstore_path.c_str(),
                     get_obj_id(),m_meta->base::xobject_t::dump().c_str());
@@ -1572,16 +1575,16 @@ namespace top
                     return false;
                 }
                 
-                if(block_ptr->get_block_version_major() < 1) //lower version has stored everthing inside of block object
-                {
-                    index_ptr->set_store_flag(base::enum_index_store_flag_input_entity);
-                    index_ptr->set_store_flag(base::enum_index_store_flag_input_resource);
-                    index_ptr->set_store_flag(base::enum_index_store_flag_output_entity);
-                    index_ptr->set_store_flag(base::enum_index_store_flag_output_resource);
-                    
-                    index_ptr->set_block_flag(base::enum_xvblock_flag_stored);//mark as stored everything
-                    return true;
-                }
+//                if(block_ptr->get_block_version_major() < 1) //lower version has stored everthing inside of block object
+//                {
+//                    index_ptr->set_store_flag(base::enum_index_store_flag_input_entity);
+//                    index_ptr->set_store_flag(base::enum_index_store_flag_input_resource);
+//                    index_ptr->set_store_flag(base::enum_index_store_flag_output_entity);
+//                    index_ptr->set_store_flag(base::enum_index_store_flag_output_resource);
+//
+//                    index_ptr->set_block_flag(base::enum_xvblock_flag_stored);//mark as stored everything
+//                    return true;
+//                }
                 //new version(>=1) of block may serialize seperately
                 if(block_ptr->get_block_class() == base::enum_xvblock_class_nil)
                 {
@@ -1595,13 +1598,13 @@ namespace top
             //not stored input yet
             if(index_ptr->check_store_flag(base::enum_index_store_flag_input_entity) == false)
             {
-                bool ask_store_input  = false;//XTODO,ask xvunithub.cpp::load_block_from_index handle this case(false)
-                if(  (block_ptr->get_header()->get_block_class() == base::enum_xvblock_class_full) //store everything for full block
-                   ||(block_ptr->get_header()->get_block_level() > base::enum_xvblock_level_unit) //for any container block
-                   )
-                {
-                    ask_store_input  = true;
-                }
+                bool ask_store_input  = true;//XTODO,ask xvunithub.cpp::load_block_from_index handle this case(false)
+//                if(  (block_ptr->get_header()->get_block_class() == base::enum_xvblock_class_full) //store everything for full block
+//                   ||(block_ptr->get_header()->get_block_level() > base::enum_xvblock_level_unit) //for any container block
+//                   )
+//                {
+//                    ask_store_input  = true;
+//                }
                 if(ask_store_input && (block_ptr->get_input() != NULL) )
                 {
                     std::string input_bin;//Note:ASK serialize input & resource together
@@ -1611,7 +1614,7 @@ namespace top
                     {
                         //XTODO for case of seperate input
                         index_ptr->set_store_flag(base::enum_index_store_flag_input_entity);
-                        index_ptr->set_store_flag(base::enum_index_store_flag_input_resource);
+//                        index_ptr->set_store_flag(base::enum_index_store_flag_input_resource);
                         xdbg("xblockacct_t::write_block_to_db,store input to DB for block(%s)",index_ptr->dump().c_str());
                     }
                     else
@@ -1625,14 +1628,14 @@ namespace top
             //not stored output yet
             if(index_ptr->check_store_flag(base::enum_index_store_flag_output_entity) == false)
             {
-                bool ask_store_output = false;//XTODO,ask xvunithub.cpp::load_block_from_index handle this case(false)
-                if(  (block_ptr->get_header()->get_block_class() == base::enum_xvblock_class_full) //store everything for full block
-                   ||(block_ptr->get_header()->get_block_level() > base::enum_xvblock_level_unit) //for any container block
-                   )
-                {
-                    ask_store_output = true;
-                }
-                
+                bool ask_store_output = true;//XTODO,ask xvunithub.cpp::load_block_from_index handle this case(false)
+//                if(  (block_ptr->get_header()->get_block_class() == base::enum_xvblock_class_full) //store everything for full block
+//                   ||(block_ptr->get_header()->get_block_level() > base::enum_xvblock_level_unit) //for any container block
+//                   )
+//                {
+//                    ask_store_output = true;
+//                }
+//
                 if(ask_store_output && (block_ptr->get_output() != NULL) )
                 {
                     if(index_ptr->check_store_flags(base::enum_index_store_flag_output_entity) == false)
@@ -1644,7 +1647,7 @@ namespace top
                         {
                             //XTODO for case of seperate input
                             index_ptr->set_store_flag(base::enum_index_store_flag_output_entity);
-                            index_ptr->set_store_flag(base::enum_index_store_flag_output_resource);
+//                            index_ptr->set_store_flag(base::enum_index_store_flag_output_resource);
                             
                             xdbg("xblockacct_t::write_block_to_db,store output to DB for block(%s)",index_ptr->dump().c_str());
                         }
@@ -1653,6 +1656,48 @@ namespace top
                             xerror("xblockacct_t::store_block_to_db,fail to store output for block(%s)",index_ptr->dump().c_str());
                             return false;
                         }
+                    }
+                }
+            }
+            
+            if(index_ptr->check_store_flag(base::enum_index_store_flag_input_resource) == false)
+            {
+                if(!block_ptr->get_input()->get_resources_hash().empty())
+                {
+                    std::string input_bin;//Note:ASK serialize input & resource together
+                    input_bin = block_ptr->get_input()->get_resources_data();
+                    const std::string input_key = create_block_db_key(block_ptr->get_height(),block_ptr->get_input()->get_resources_hash());
+                    if(base::xvchain_t::instance().get_xdbstore()->set_value(input_key, input_bin))
+                    {
+                        //XTODO for case of seperate input
+                        index_ptr->set_store_flag(base::enum_index_store_flag_input_resource);
+                        xdbg("xblockacct_t::write_block_to_db,store input resource to DB for block(%s)",index_ptr->dump().c_str());
+                    }
+                    else
+                    {
+                        xerror("xblockacct_t::store_block_to_db,fail to store input resource for block(%s)",index_ptr->dump().c_str());
+                        return false;
+                    }
+                }
+            }
+            
+            if(index_ptr->check_store_flag(base::enum_index_store_flag_output_resource) == false)
+            {
+                if(!block_ptr->get_output()->get_resources_hash().empty())
+                {
+                    std::string output_bin;//Note:ASK serialize input & resource together
+                    output_bin = block_ptr->get_output()->get_resources_data();
+                    const std::string output_key = create_block_db_key(block_ptr->get_height(),block_ptr->get_output()->get_resources_hash());
+                    if(base::xvchain_t::instance().get_xdbstore()->set_value(output_key, output_bin))
+                    {
+                        //XTODO for case of seperate input
+                        index_ptr->set_store_flag(base::enum_index_store_flag_output_resource);
+                        xdbg("xblockacct_t::write_block_to_db,store output resource to DB for block(%s)",index_ptr->dump().c_str());
+                    }
+                    else
+                    {
+                        xerror("xblockacct_t::store_block_to_db,fail to store output resource for block(%s)",index_ptr->dump().c_str());
+                        return false;
                     }
                 }
             }
@@ -1723,6 +1768,7 @@ namespace top
                         xerror("xblockacct_t::read_block_input_from_db,read bad input-entity for key(%s)",input_key.c_str());
                         return false;
                     }
+                    xdbg("xblockacct_t::read_block_input_from_db,read block-input,block(%s) ",block_ptr->dump().c_str());
                 }
                 else
                 {
@@ -1731,7 +1777,6 @@ namespace top
             }
             if(block_ptr->get_input() != NULL) //now has valid input
             {
-                /*no-need for resource that has been read at above
                 if(  (block_ptr->get_input()->get_resources_hash().empty() == false) //link resoure data
                    &&(block_ptr->get_input()->has_resource_data() == false) ) //but dont have resource avaiable now
                 {
@@ -1742,18 +1787,18 @@ namespace top
                         
                         const std::string input_resource_bin = base::xvchain_t::instance().get_xdbstore()->get_value(input_resource_key);
                         xassert(input_resource_bin.empty() == false);
-                        if(block_ptr->get_input()->set_resources_data(input_resource_bin) == false)
+                        if(block_ptr->set_input_resources(input_resource_bin) == false)
                         {
                             xerror("xblockacct_t::read_block_input_from_db,load bad input-resource for key(%s)",input_resource_key.c_str());
                             return false;
                         }
+                        xdbg("xblockacct_t::read_block_input_from_db,read block-input resource,block(%s) ",block_ptr->dump().c_str());
                     }
                     else
                     {
-                        xinfo("xblockacct_t::read_block_input_from_db,NOT writed input-resource yet,index(%s) ",index_ptr->dump().c_str());
+                        xinfo("xblockacct_t::read_block_input_from_db,NOT writed input-resource yet,block(%s) ",block_ptr->dump().c_str());
                     }
                 }
-                 */
             }
             return (block_ptr->get_input() != NULL);
         }
@@ -1784,15 +1829,15 @@ namespace top
                         xerror("xblockacct_t::read_block_output_from_db,load bad output-entity form key(%s)",output_key.c_str());
                         return false;
                     }
+                    xdbg("xblockacct_t::read_block_output_from_db,read block-output,block(%s) ",block_ptr->dump().c_str());
                 }
                 else
                 {
-                    xinfo("xblockacct_t::read_block_output_from_db,NOT writed block-output yet,index(%s) ",block_ptr->dump().c_str());
+                    xinfo("xblockacct_t::read_block_output_from_db,NOT writed block-output yet,block(%s) ",block_ptr->dump().c_str());
                 }
             }
             if(block_ptr->get_output() != NULL) //now has valid input
             {
-                /*no-need for resource that has been read at above
                 if(  (block_ptr->get_output()->get_resources_hash().empty() == false) //link resoure data
                    &&(block_ptr->get_output()->has_resource_data() == false) ) //but dont have resource avaiable now
                 {
@@ -1803,18 +1848,18 @@ namespace top
                         
                         const std::string output_resource_bin = base::xvchain_t::instance().get_xdbstore()->get_value(output_resource_key);
                         xassert(output_resource_bin.empty() == false);
-                        if(block_ptr->get_output()->set_resources_data(output_resource_bin) == false)
+                        if(block_ptr->set_output_resources(output_resource_bin) == false)
                         {
                             xerror("xblockacct_t::read_block_output_from_db,read bad output-resource for key(%s)",output_resource_key.c_str());
                             return false;
                         }
+                        xdbg("xblockacct_t::read_block_output_from_db,read block-output resource,block(%s) ",block_ptr->dump().c_str());
                     }
                     else
                     {
-                        xinfo("xblockacct_t::read_block_output_from_db,NOT stored output-resource yet,index(%s) ",index_ptr->dump().c_str());
+                        xinfo("xblockacct_t::read_block_output_from_db,NOT stored output-resource yet,block(%s) ",block_ptr->dump().c_str());
                     }
                 }
-                */
             }
             return true;
         }

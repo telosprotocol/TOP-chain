@@ -91,6 +91,7 @@ namespace top
         /////////////////////////////////new api with better performance by passing base::xvaccount_t
         base::xvblock_t * xvblockstore_impl::load_block_from_index(xblockacct_t* target_account, base::xauto_ptr<base::xvbindex_t> target_index,const uint64_t target_height,bool ask_full_load)
         {
+            ask_full_load = true;  // TODO(jimmy)
             if(!target_index)
             {
                 if(target_height != 0)
