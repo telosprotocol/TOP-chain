@@ -281,6 +281,9 @@ namespace top
                         for (auto & unit_block : sub_blocks)
                         {
                             base::xvaccount_t  unit_account(unit_block->get_account());
+                            //XTODO,move set_parent_block into extract_sub_blocks
+                            //unit_block->set_parent_block(container_block->get_account(),container_block->get_viewid(),xxx);
+                            
                             if(false == store_block(unit_account,unit_block)) //any fail resultin  re-unpack whole table again
                             {
                                 xerror("xvblockstore_impl::store_block,fail-store unit-block=%s from tableblock=%s",unit_block->dump().c_str(),container_block->dump().c_str());

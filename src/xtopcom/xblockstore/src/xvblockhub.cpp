@@ -191,6 +191,8 @@ namespace top
             if(nullptr == m_meta)
             {
                 m_meta = new xacctmeta_t();
+                xinfo("xblockacct_t::init,account=%s at blockstore=%s,objectid=% " PRId64 ",empty meta",
+                      dump().c_str(),m_blockstore_path.c_str(),get_obj_id());
             }
             else
             {
@@ -214,10 +216,10 @@ namespace top
                 {
                     xwarn_err("xblockacct_t::init(),fail-load highest cert block at height(%" PRId64 ") of account(%s) at store(%s)",m_meta->_highest_cert_block_height,get_account().c_str(),get_blockstore_path().c_str());
                 }
+                xinfo("xblockacct_t::init,account=%s at blockstore=%s,objectid=% " PRId64 ",meta=%s",
+                      dump().c_str(),m_blockstore_path.c_str(),
+                      get_obj_id(),m_meta->base::xobject_t::dump().c_str());
             }
-            xinfo("xblockacct_t::init,account=%s at blockstore=%s,objectid=% " PRId64 ",meta=%s",
-                    dump().c_str(),m_blockstore_path.c_str(),
-                    get_obj_id(),m_meta->base::xobject_t::dump().c_str());
             return true;
         }
 
@@ -948,7 +950,7 @@ namespace top
             }
             return true;
         }
-
+    
         //physical store and cache seperately
         /* 3 rules for managing cache
          #1. clean blocks of lower stage when higher stage coming. stage include : cert, lock and commit
@@ -1001,10 +1003,9 @@ namespace top
                 connect_index(new_index_ptr);      //connect as chain mode
                 update_meta_metric(new_index_ptr); //update other meta and connect info
                 
-                if(new_index_ptr->check_block_flag(base::enum_xvblock_flag_stored) == false)//raw block not stored completely yet
-                {
-                    write_block_to_db(new_index_ptr,new_raw_block); //save raw block first
-                }
+                //write_block_to_db may do double-check whether raw block not stored yet
+                write_block_to_db(new_index_ptr,new_raw_block); //save raw block first
+                
                 if(new_index_ptr->check_modified_flag())//has any changed
                 {
                     write_index_to_db(new_index_ptr,true); //save index then
@@ -1574,134 +1575,144 @@ namespace top
                     xerror("xblockacct_t::write_block_to_db,fail to store header for block(%s)",index_ptr->dump().c_str());
                     return false;
                 }
-                
-//                if(block_ptr->get_block_version_major() < 1) //lower version has stored everthing inside of block object
-//                {
-//                    index_ptr->set_store_flag(base::enum_index_store_flag_input_entity);
-//                    index_ptr->set_store_flag(base::enum_index_store_flag_input_resource);
-//                    index_ptr->set_store_flag(base::enum_index_store_flag_output_entity);
-//                    index_ptr->set_store_flag(base::enum_index_store_flag_output_resource);
-//
-//                    index_ptr->set_block_flag(base::enum_xvblock_flag_stored);//mark as stored everything
-//                    return true;
-//                }
-                //new version(>=1) of block may serialize seperately
-                if(block_ptr->get_block_class() == base::enum_xvblock_class_nil)
+                if(block_ptr->get_block_version_major() < 1)
                 {
-                    index_ptr->set_block_flag(base::enum_xvblock_flag_stored); //mark as stored everything
-                    return true;
+                    //lower version has stored entity of input/output inside of block
+                    index_ptr->set_store_flag(base::enum_index_store_flag_input_entity);
+                    index_ptr->set_store_flag(base::enum_index_store_flag_output_entity);
                 }
             }
+            //new version(>=1) of block may serialize seperately
             if(block_ptr->get_block_class() == base::enum_xvblock_class_nil)
-                return true;
-
-            //not stored input yet
-            if(index_ptr->check_store_flag(base::enum_index_store_flag_input_entity) == false)
             {
-                bool ask_store_input  = true;//XTODO,ask xvunithub.cpp::load_block_from_index handle this case(false)
-//                if(  (block_ptr->get_header()->get_block_class() == base::enum_xvblock_class_full) //store everything for full block
-//                   ||(block_ptr->get_header()->get_block_level() > base::enum_xvblock_level_unit) //for any container block
-//                   )
-//                {
-//                    ask_store_input  = true;
-//                }
-                if(ask_store_input && (block_ptr->get_input() != NULL) )
+                index_ptr->set_block_flag(base::enum_xvblock_flag_stored); //mark as stored everything
+                return true;
+            }
+
+            //check stored input or not
+            if(block_ptr->get_input() != NULL)
+            {
+                bool ask_store_input  = false;
+                if(  (block_ptr->get_header()->get_block_class() == base::enum_xvblock_class_full)
+                   ||(block_ptr->get_header()->get_block_level() > base::enum_xvblock_level_unit)
+                   ||(block_ptr->get_block_version_major() < 1) ) //lower version of block keep old way
                 {
-                    std::string input_bin;//Note:ASK serialize input & resource together
-                    block_ptr->get_input()->serialize_to_string(input_bin);
-                    const std::string input_key = create_block_db_key(block_ptr->get_height(),block_ptr->get_input_hash());
-                    if(base::xvchain_t::instance().get_xdbstore()->set_value(input_key, input_bin))
+                    //store everything for full block and any container block
+                    ask_store_input  = true;
+                }
+                //XTODO,ask xvunithub.cpp::load_block_from_index handle the case of "ask_store_input is false"
+                
+                if(ask_store_input)
+                {
+                    if(index_ptr->check_store_flag(base::enum_index_store_flag_input_entity) == false)
                     {
-                        //XTODO for case of seperate input
-                        index_ptr->set_store_flag(base::enum_index_store_flag_input_entity);
-//                        index_ptr->set_store_flag(base::enum_index_store_flag_input_resource);
-                        xdbg("xblockacct_t::write_block_to_db,store input to DB for block(%s)",index_ptr->dump().c_str());
+                        std::string input_bin;
+                        block_ptr->get_input()->serialize_to_string(input_bin);
+                        const std::string input_key = create_block_db_key(block_ptr->get_height(),block_ptr->get_input_hash());
+                        if(base::xvchain_t::instance().get_xdbstore()->set_value(input_key, input_bin))
+                        {
+                            index_ptr->set_store_flag(base::enum_index_store_flag_input_entity);
+                            xdbg("xblockacct_t::write_block_to_db,store input entity to DB for block(%s)",index_ptr->dump().c_str());
+                        }
+                        else
+                        {
+                            xerror("xblockacct_t::store_block_to_db,fail to store input entity for block(%s)",index_ptr->dump().c_str());
+                        }
                     }
-                    else
+                    
+                    if(index_ptr->check_store_flag(base::enum_index_store_flag_input_resource) == false)
                     {
-                        xerror("xblockacct_t::store_block_to_db,fail to store input for block(%s)",index_ptr->dump().c_str());
-                        return false;
+                        if(block_ptr->get_input()->get_resources_hash().empty() == false)
+                        {
+                            const std::string input_bin = block_ptr->get_input()->get_resources_data();
+                            if(input_bin.empty() == false)
+                            {
+                                const std::string input_key = create_block_db_key(block_ptr->get_height(),block_ptr->get_input()->get_resources_hash());
+                                if(base::xvchain_t::instance().get_xdbstore()->set_value(input_key, input_bin))
+                                {
+                                    index_ptr->set_store_flag(base::enum_index_store_flag_input_resource);
+                                    xdbg("xblockacct_t::write_block_to_db,store input resource to DB for block(%s)",index_ptr->dump().c_str());
+                                }
+                                else
+                                {
+                                    xerror("xblockacct_t::store_block_to_db,fail to store input resource for block(%s)",index_ptr->dump().c_str());
+                                }
+                            }
+                            else //fail to found resource data for input of block
+                            {
+                                xerror("xblockacct_t::store_block_to_db,fail to found input resource for block(%s)",index_ptr->dump().c_str());
+                            }
+                        }
+                        else //set flag for empty resource
+                        {
+                             index_ptr->set_store_flag(base::enum_index_store_flag_input_resource);
+                        }
                     }
                 }
             }
-            
-            //not stored output yet
-            if(index_ptr->check_store_flag(base::enum_index_store_flag_output_entity) == false)
+
+            //check stored output or not
+            if(block_ptr->get_output() != NULL)
             {
-                bool ask_store_output = true;//XTODO,ask xvunithub.cpp::load_block_from_index handle this case(false)
-//                if(  (block_ptr->get_header()->get_block_class() == base::enum_xvblock_class_full) //store everything for full block
-//                   ||(block_ptr->get_header()->get_block_level() > base::enum_xvblock_level_unit) //for any container block
-//                   )
-//                {
-//                    ask_store_output = true;
-//                }
-//
-                if(ask_store_output && (block_ptr->get_output() != NULL) )
+                bool ask_store_output = false;
+                if(  (block_ptr->get_header()->get_block_class() == base::enum_xvblock_class_full)
+                   ||(block_ptr->get_header()->get_block_level() > base::enum_xvblock_level_unit)
+                   ||(block_ptr->get_block_version_major() < 1) ) //lower version of block keep old way
+                {
+                    //store everything for full block and any container block
+                    ask_store_output = true;
+                }
+                //XTODO,ask xvunithub.cpp::load_block_from_index handle the case of "ask_store_input is false"
+                
+                if(ask_store_output)
                 {
                     if(index_ptr->check_store_flags(base::enum_index_store_flag_output_entity) == false)
                     {
-                        std::string output_bin;//Note:ASK serialize input & resource together
+                        std::string output_bin;
                         block_ptr->get_output()->serialize_to_string(output_bin);
                         const std::string output_key = create_block_db_key(block_ptr->get_height(),block_ptr->get_output_hash());
                         if(base::xvchain_t::instance().get_xdbstore()->set_value(output_key, output_bin))
                         {
-                            //XTODO for case of seperate input
                             index_ptr->set_store_flag(base::enum_index_store_flag_output_entity);
-//                            index_ptr->set_store_flag(base::enum_index_store_flag_output_resource);
-                            
-                            xdbg("xblockacct_t::write_block_to_db,store output to DB for block(%s)",index_ptr->dump().c_str());
+                            xdbg("xblockacct_t::write_block_to_db,store output entity to DB for block(%s)",index_ptr->dump().c_str());
                         }
                         else
                         {
-                            xerror("xblockacct_t::store_block_to_db,fail to store output for block(%s)",index_ptr->dump().c_str());
-                            return false;
+                            xerror("xblockacct_t::store_block_to_db,fail to store output entity for block(%s)",index_ptr->dump().c_str());
+                        }
+                    }
+                    
+                    if(index_ptr->check_store_flag(base::enum_index_store_flag_output_resource) == false)
+                    {
+                        if(block_ptr->get_output()->get_resources_hash().empty() == false)
+                        {
+                            const std::string output_bin = block_ptr->get_output()->get_resources_data();
+                            const std::string output_key = create_block_db_key(block_ptr->get_height(),block_ptr->get_output()->get_resources_hash());
+                            if(output_bin.empty() == false)
+                            {
+                                if(base::xvchain_t::instance().get_xdbstore()->set_value(output_key, output_bin))
+                                {
+                                    index_ptr->set_store_flag(base::enum_index_store_flag_output_resource);
+                                    xdbg("xblockacct_t::write_block_to_db,store output resource to DB for block(%s)",index_ptr->dump().c_str());
+                                }
+                                else
+                                {
+                                    xerror("xblockacct_t::store_block_to_db,fail to store output resource for block(%s)",index_ptr->dump().c_str());
+                                }
+                            }
+                            else
+                            {
+                                xerror("xblockacct_t::store_block_to_db,fail to find output resource for block(%s)",index_ptr->dump().c_str());
+                            }
+                        }
+                        else //set flag for empty resource
+                        {
+                            index_ptr->set_store_flag(base::enum_index_store_flag_output_resource);
                         }
                     }
                 }
             }
-            
-            if(index_ptr->check_store_flag(base::enum_index_store_flag_input_resource) == false)
-            {
-                if(!block_ptr->get_input()->get_resources_hash().empty())
-                {
-                    std::string input_bin;//Note:ASK serialize input & resource together
-                    input_bin = block_ptr->get_input()->get_resources_data();
-                    const std::string input_key = create_block_db_key(block_ptr->get_height(),block_ptr->get_input()->get_resources_hash());
-                    if(base::xvchain_t::instance().get_xdbstore()->set_value(input_key, input_bin))
-                    {
-                        //XTODO for case of seperate input
-                        index_ptr->set_store_flag(base::enum_index_store_flag_input_resource);
-                        xdbg("xblockacct_t::write_block_to_db,store input resource to DB for block(%s)",index_ptr->dump().c_str());
-                    }
-                    else
-                    {
-                        xerror("xblockacct_t::store_block_to_db,fail to store input resource for block(%s)",index_ptr->dump().c_str());
-                        return false;
-                    }
-                }
-            }
-            
-            if(index_ptr->check_store_flag(base::enum_index_store_flag_output_resource) == false)
-            {
-                if(!block_ptr->get_output()->get_resources_hash().empty())
-                {
-                    std::string output_bin;//Note:ASK serialize input & resource together
-                    output_bin = block_ptr->get_output()->get_resources_data();
-                    const std::string output_key = create_block_db_key(block_ptr->get_height(),block_ptr->get_output()->get_resources_hash());
-                    if(base::xvchain_t::instance().get_xdbstore()->set_value(output_key, output_bin))
-                    {
-                        //XTODO for case of seperate input
-                        index_ptr->set_store_flag(base::enum_index_store_flag_output_resource);
-                        xdbg("xblockacct_t::write_block_to_db,store output resource to DB for block(%s)",index_ptr->dump().c_str());
-                    }
-                    else
-                    {
-                        xerror("xblockacct_t::store_block_to_db,fail to store output resource for block(%s)",index_ptr->dump().c_str());
-                        return false;
-                    }
-                }
-            }
-            
+ 
             const uint32_t everything_flags = base::enum_index_store_flag_mini_block | base::enum_index_store_flag_input_entity | base::enum_index_store_flag_input_resource | base::enum_index_store_flag_output_entity| base::enum_index_store_flag_output_resource;
             if(index_ptr->check_store_flags(everything_flags))
             {
@@ -1820,7 +1831,7 @@ namespace top
             
             if(block_ptr->get_output() == NULL)
             {
-                if(stored_flags & base::enum_index_store_flag_output_entity) //has input stored
+                if(stored_flags & base::enum_index_store_flag_output_entity) //has output stored
                 {
                     const std::string output_key = create_block_db_key(block_ptr->get_height(),block_ptr->get_output_hash());
                     const std::string output_bin = base::xvchain_t::instance().get_xdbstore()->get_value(output_key);
