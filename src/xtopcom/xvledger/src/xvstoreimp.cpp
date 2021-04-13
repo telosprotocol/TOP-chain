@@ -5,7 +5,9 @@
 
 #include "../xvdbstore.h"
 #include "../xvblockstore.h"
+#include "../xvstatestore.h"
 #include "../xveventbus.h"
+#include "../xvledger.h"
  
 namespace top
 {
@@ -85,5 +87,38 @@ namespace top
             return false;
         }
     
+        xvstatestore::xvstatestore()
+            :xobject_t(enum_xobject_type_vstatestore)
+        {
+            
+        }
+    
+        xvstatestore::~xvstatestore()
+        {
+        }
+    
+        void*   xvstatestore::query_interface(const int32_t type)
+        {
+            if(type == enum_xobject_type_vstatestore)
+                return this;
+            
+            return xobject_t::query_interface(type);
+        }
+    
+        bool                   xvstatestore::get_block_state(xvblock_t * target_block) //once successful,assign xvbstate_t into block
+        {
+            return false;
+        }
+    
+        xauto_ptr<xvbstate_t> xvstatestore::get_block_state(xvaccount_t & account,const uint64_t height,const uint64_t view_id)
+        {
+            return nullptr;
+        }
+    
+        xauto_ptr<xvbstate_t> xvstatestore::get_block_state(xvaccount_t & account,const uint64_t height,const std::string& block_hash)
+        {
+            return nullptr;
+        }
+        
     };//end of namespace of base
 };//end of namespace of top

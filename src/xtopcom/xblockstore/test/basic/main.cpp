@@ -119,8 +119,8 @@ int test_sync_vstore(store::xsyncvstore_t* sync_store)
         if(false == index->check_block_flag(base::enum_xvblock_flag_connected))
             printf("block is not connected as detail=%s \n",index->dump().c_str());
         
-        //if(false == it->check_block_flag(base::enum_xvblock_flag_executed))
-        //    printf("block is not executed as detail=%s \n",it->dump().c_str());
+        if(false == index->check_block_flag(base::enum_xvblock_flag_executed))
+            printf("block is not executed as detail=%s \n",index->dump().c_str());
         
         it->release_ref();
     }

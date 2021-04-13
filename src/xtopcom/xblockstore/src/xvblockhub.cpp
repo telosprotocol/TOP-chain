@@ -2108,15 +2108,6 @@ namespace top
                 update_meta_metric(prev_block);//update meta since block has change status
                 write_index_to_db(prev_block,true); //trigger db event here if need
             }
-            else if(prev_block->check_block_flag(base::enum_xvblock_flag_committed))
-            {
-                if(this_block->check_block_flag(base::enum_xvblock_flag_locked) == false)
-                {
-                    this_block->set_block_flag(base::enum_xvblock_flag_locked);//add locked for this block
-                    update_meta_metric(this_block); //update meta since block has change status
-                    write_index_to_db(this_block,true); //trigger db event here if need
-                }
-            }
                     
             base::xvbindex_t* prev_prev_block = prev_block->get_prev_block();
             if(nullptr == prev_prev_block)
