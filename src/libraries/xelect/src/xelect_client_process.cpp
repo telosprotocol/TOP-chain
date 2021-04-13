@@ -40,7 +40,7 @@ bool xelect_client_process::filter_event(const xevent_ptr_t & e) {
     case mbus::xevent_major_type_store:
         if (e->minor_type == xevent_store_t::type_block_to_db) {
             auto bme = dynamic_xobject_ptr_cast<mbus::xevent_store_block_to_db_t>(e);
-            xblock_ptr_t & block = bme->block;
+            auto block = mbus::extract_block_from(bme);
             const std::string & owner = block->get_block_owner();
 
             if (!block->is_lightunit() && block->get_height() != 0 && owner != sys_contract_beacon_timer_addr) {
@@ -88,7 +88,7 @@ void xelect_client_process::process_timer(const mbus::xevent_ptr_t & e) {
 void xelect_client_process::process_elect(const mbus::xevent_ptr_t & e) {
     auto bme = dynamic_xobject_ptr_cast<mbus::xevent_store_block_to_db_t>(e);
     assert(bme);
-    xblock_ptr_t const & block = bme->block;
+    xblock_ptr_t const & block = mbus::extract_block_from(bme);
 
     xinfo("xelect_client_process::process_event %s, %" PRIu64, block->get_block_owner().c_str(), block->get_height());
     std::string result;

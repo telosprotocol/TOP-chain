@@ -79,7 +79,7 @@ private:
     std::unique_ptr<elect::ElectMain> m_elect_main;
 
     std::unique_ptr<router::xrouter_face_t> m_router;
-    std::unique_ptr<mbus::xmessage_bus_face_t> m_bus;
+    xobject_ptr_t<mbus::xmessage_bus_face_t> m_bus;
     xobject_ptr_t<store::xstore_face_t> m_store;
     xobject_ptr_t<base::xvblockstore_t> m_blockstore;
     xobject_ptr_t<store::xindexstorehub_t> m_indexstore;

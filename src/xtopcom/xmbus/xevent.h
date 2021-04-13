@@ -4,7 +4,6 @@
 
 #pragma once
 
-#include <memory>
 #include "xbase/xobject_ptr.h"
 #include "xbase/xvevent.h"
 

@@ -126,13 +126,12 @@ xevent_ptr_t  xmessage_bus_t::create_event_for_store_index_to_db(base::xvbindex_
 }
 
 xevent_ptr_t  xmessage_bus_t::create_event_for_store_block_to_db(base::xvblock_t * this_block_ptr) {
- 
     data::xblock_t* block = dynamic_cast<data::xblock_t*>(this_block_ptr);
     xassert(block != nullptr);
     block->add_ref();
     data::xblock_ptr_t obj;
     obj.attach(block);
-    
+
     return  make_object_ptr<mbus::xevent_store_block_to_db_t>(obj, obj->get_account(), true);
 }
 
