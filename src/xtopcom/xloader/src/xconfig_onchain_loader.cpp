@@ -53,7 +53,7 @@ void xconfig_onchain_loader_t::update(mbus::xevent_ptr_t e) {
         xassert(0);
         return;
     }
-    auto block = block_event->block;
+    auto block = mbus::extract_block_from(block_event);
     xassert(block != nullptr);
 
     if (block->is_unitblock()) {
@@ -73,7 +73,7 @@ void xconfig_onchain_loader_t::update(mbus::xevent_ptr_t e) {
 
         top::base::xstream_t stream(base::xcontext_t::instance(), (uint8_t *)voted_proposal.data(), voted_proposal.size());
         if (stream.size() <= 0) {
-            xwarn("[CONFIG] failed to get stream for block height: %" PRIu64, block_event->block->get_height());
+            xwarn("[CONFIG] failed to get stream for block height: %" PRIu64, block->get_height());
             return;
         }
         proposal.deserialize(stream);

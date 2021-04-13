@@ -39,7 +39,7 @@ void xtxpool_service_mgr::on_block_to_db_event(mbus::xevent_ptr_t e) {
     }
 
     mbus::xevent_store_block_to_db_ptr_t block_event = dynamic_xobject_ptr_cast<mbus::xevent_store_block_to_db_t>(e);
-    const xblock_ptr_t & block = block_event->block;
+    const xblock_ptr_t & block = mbus::extract_block_from(block_event);
     xassert(block->check_block_flag(base::enum_xvblock_flag_committed));
     on_block_confirmed(block.get());
 }

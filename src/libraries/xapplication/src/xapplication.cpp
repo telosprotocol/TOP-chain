@@ -44,7 +44,7 @@ xtop_application::xtop_application(common::xnode_id_t const & node_id, xpublic_k
   , m_timer_driver{std::make_shared<xbase_timer_driver_t>(m_io_context_pools[xio_context_type_t::general].front())}
   , m_elect_main{top::make_unique<elect::ElectMain>(node_id, std::set<uint32_t>({static_cast<uint32_t>(top::config::to_chainid(XGET_CONFIG(chain_name)))}))}
   , m_router{top::make_unique<router::xrouter_t>()}
-  , m_bus{top::make_unique<mbus::xmessage_bus_t>(true, 1000)}
+  , m_bus{top::make_object_ptr<mbus::xmessage_bus_t>(true, 1000)}
   , m_logic_timer{make_object_ptr<time::xchain_timer_t>(m_timer_driver)}
   , m_grpc_thread{make_object_ptr<base::xiothread_t>()}
   , m_sync_thread{make_object_ptr<base::xiothread_t>()}
@@ -56,9 +56,9 @@ xtop_application::xtop_application(common::xnode_id_t const & node_id, xpublic_k
     m_blockstore.attach(store::get_vblockstore());
     m_indexstore = store::xindexstore_factory_t::create_indexstorehub(make_observer(m_store), make_observer(m_blockstore));
 #ifdef ENABLE_METRICS
-    m_datastat = make_unique<datastat::xdatastat_t>(make_observer(m_bus));
+    m_datastat = make_unique<datastat::xdatastat_t>(make_observer(m_bus.get()));
 #endif
-    m_nodesvr_ptr = make_object_ptr<election::xvnode_house_t>(node_id, sign_key, m_blockstore, make_observer(m_bus));
+    m_nodesvr_ptr = make_object_ptr<election::xvnode_house_t>(node_id, sign_key, m_blockstore, make_observer(m_bus.get()));
 #ifdef MOCK_CA
     m_cert_ptr = make_object_ptr<xschnorrcert_t>((uint32_t)1);
 #else
@@ -75,7 +75,7 @@ xtop_application::xtop_application(common::xnode_id_t const & node_id, xpublic_k
     m_thread_pools[xtop_thread_pool_type::txpool_service] = txpool_service_thp;
 
     // load configuration first
-    auto loader = std::make_shared<loader::xconfig_onchain_loader_t>(make_observer(m_store), make_observer(m_bus), make_observer(m_logic_timer));
+    auto loader = std::make_shared<loader::xconfig_onchain_loader_t>(make_observer(m_store), make_observer(m_bus.get()), make_observer(m_logic_timer));
     config::xconfig_register_t::get_instance().add_loader(loader);
     config::xconfig_register_t::get_instance().load();
 

@@ -108,7 +108,8 @@ void xdatastat_t::on_block_to_db_event(mbus::xevent_ptr_t e) {
     }
 
     mbus::xevent_store_block_to_db_ptr_t block_event = dynamic_xobject_ptr_cast<mbus::xevent_store_block_to_db_t>(e);
-    base::xvblock_t*                 block = block_event->block.get();
+    auto associated_blk = mbus::extract_block_from(block_event);
+    base::xvblock_t* block = associated_blk.get();
     xassert(block->check_block_flag(base::enum_xvblock_flag_committed));
 
     try_calc_tps(block->get_cert()->get_gmtime());

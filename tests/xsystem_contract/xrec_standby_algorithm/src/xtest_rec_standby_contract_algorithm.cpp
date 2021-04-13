@@ -36,7 +36,7 @@ TEST_F(xtest_rec_standby_contract_algorithm, test_TOP_3495) {
     node_info.consensus_public_key = pub_key_1;
     node_info.m_account_mortgage = 1000000000000;
     node_info.m_registered_role = common::xrole_type_t::advance;
-    node_info.m_account = node_id;
+    node_info.m_account = xnode_id;
     node_info.m_genesis_node = false;
     node_info.m_network_ids = std::set<uint32_t>({255});
     add_reg_info(node_info);
@@ -75,7 +75,7 @@ TEST_F(xtest_rec_standby_contract_algorithm, test_on_timer_update_pubkey_and_rol
     node_info.m_account_mortgage = 1000000000000;
     node_info.m_vote_amount = 1000000000;
     node_info.m_registered_role = common::xrole_type_t::advance;
-    node_info.m_account = node_id;
+    node_info.m_account = xnode_id;
     node_info.m_genesis_node = false;
     node_info.m_network_ids = std::set<uint32_t>({255});
     add_reg_info(node_info);
@@ -155,7 +155,7 @@ TEST_F(xtest_rec_standby_contract_algorithm, test_on_timer_update_stake) {
     node_info.m_account_mortgage = 1000000000000;
     node_info.m_vote_amount = 1;
     node_info.m_registered_role = common::xrole_type_t::advance;
-    node_info.m_account = node_id;
+    node_info.m_account = xnode_id;
     node_info.m_genesis_node = false;
     node_info.m_network_ids = std::set<uint32_t>({255});
     EXPECT_TRUE(add_reg_info(node_info));
