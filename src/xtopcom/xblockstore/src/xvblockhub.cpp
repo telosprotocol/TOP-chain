@@ -290,8 +290,7 @@ namespace top
                         continue;
                     }
                     
-                    if(   (old_height_it->first != 0) //keep genesis
-                       && (old_height_it->first != m_meta->_highest_full_block_height)    //keep latest_full_block
+                    if(   (old_height_it->first != m_meta->_highest_full_block_height)    //keep latest_full_block
                        && (old_height_it->first != m_meta->_highest_execute_block_height) //keep latest_executed block
                        && (old_height_it->first <  m_meta->_highest_commit_block_height)  //keep latest_committed block
                        && (old_height_it->first != m_meta->_highest_lock_block_height)    //keep latest_lock_block
@@ -350,21 +349,16 @@ namespace top
                         continue;
                     }
                     
-                    if(   (old_height_it->first != m_meta->_highest_commit_block_height)  //keep latest_committed block
-                       && (old_height_it->first != m_meta->_highest_lock_block_height)    //keep latest_lock_block
-                       && (old_height_it->first != m_meta->_highest_cert_block_height) )  //keep latest_cert block
+                    auto & view_map = old_height_it->second;
+                    for(auto it = view_map.begin(); it != view_map.end(); ++it)
                     {
-                        auto & view_map = old_height_it->second;
-                        for(auto it = view_map.begin(); it != view_map.end(); ++it)
+                        if(it->second->get_this_block() != NULL) //clean any block that just reference by index only
                         {
-                            if(it->second->get_this_block() != NULL) //clean any block that just reference by index only
+                            if(it->second->get_this_block()->get_refcount() == 1)//no any other hold
                             {
-                                if(it->second->get_this_block()->get_refcount() == 1)//no any other hold
-                                {
-                                    it->second->reset_this_block(NULL);
-                                    xdbg_info("xblockacct_t::clean_caches,block=%s",it->second->dump().c_str());
-                                    return true; //just reset one at each time
-                                }
+                                it->second->reset_this_block(NULL);
+                                xdbg_info("xblockacct_t::clean_caches,block=%s",it->second->dump().c_str());
+                                return true; //just reset one at each time
                             }
                         }
                     }
