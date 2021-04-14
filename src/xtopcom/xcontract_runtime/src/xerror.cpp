@@ -52,6 +52,9 @@ static char const * const errc_to_string(int code) {
     case xerrc_t::enum_lua_abi_input_name_or_type_error:
         return "LUA ABI input name or type error";
 
+    case xerrc_t::enum_wasm_code_invalid:
+        return "WASM code invlid";
+
     default:
         return "unknown contract runtime error";
     }
