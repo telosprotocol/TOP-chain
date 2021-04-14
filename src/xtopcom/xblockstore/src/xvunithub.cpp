@@ -265,12 +265,14 @@ namespace top
                 xwarn("xvblockstore_impl::store_block,fail-store block(%s)", container_block->dump().c_str());
                 return false;
             }
+            container_account->try_execute_all_block();
             //then try extract for container if that is
-            if(container_block->get_block_class() != base::enum_xvblock_class_nil) //skip nil block
+            if(container_block->get_block_class() == base::enum_xvblock_class_light) //skip nil block
             {
                 //add other container here if need
                 if(container_block->get_header()->get_block_level() == base::enum_xvblock_level_table)
                 {
+                    //XTODO index add flag to avoiding repeat unpack unit
                     xassert(container_block->is_input_ready(true));
                     xassert(container_block->is_output_ready(true));
                     
@@ -287,7 +289,7 @@ namespace top
                             
                             if(false == store_block(unit_account,unit_block.get())) //any fail resultin  re-unpack whole table again
                             {
-                                xerror("xvblockstore_impl::store_block,fail-store unit-block=%s from tableblock=%s",unit_block->dump().c_str(),container_block->dump().c_str());
+                                xwarn("xvblockstore_impl::store_block,fail-store unit-block=%s from tableblock=%s",unit_block->dump().c_str(),container_block->dump().c_str());
                             }
                             else
                             {

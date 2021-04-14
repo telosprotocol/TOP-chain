@@ -134,6 +134,7 @@ namespace top
             bool                   load_block_output(base::xvblock_t* target_block);
  
             bool                   execute_block(base::xvblock_t* block); //execute block and update state of acccount
+            void                   try_execute_all_block();
             
         protected: //help functions
             bool                cache_index(base::xvbindex_t* this_block);

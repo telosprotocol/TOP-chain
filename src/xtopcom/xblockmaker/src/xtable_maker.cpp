@@ -107,11 +107,6 @@ int32_t xtable_maker_t::check_latest_state(const xblock_ptr_t & latest_block) {
 
     // update latest committed block and blockchain state
     xblock_ptr_t latest_committed_block = get_highest_commit_block();
-    if (!latest_committed_block->check_block_flag(base::enum_xvblock_flag_committed)) {
-        xwarn("xtable_maker_t::check_latest_state fail-committed block flag invalid.latest_committed_block=%s",
-            latest_committed_block->dump().c_str());
-        return xblockmaker_error_latest_table_blocks_invalid;
-    }
     set_latest_committed_block(latest_committed_block);
     clear_old_unit_makers();
 
