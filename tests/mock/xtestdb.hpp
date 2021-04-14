@@ -68,11 +68,13 @@ namespace top
         public://declares clasic events
             virtual mbus::xevent_ptr_t  create_event_for_store_index_to_db(base::xvbindex_t * target_block) override
             {
-                return mbus::xevent_ptr_t(new mbus::xevent_t(0));
+                mbus::xevent_ptr_t event = make_object_ptr<mbus::xevent_t>(0);
+                return event;
             }
             virtual mbus::xevent_ptr_t  create_event_for_store_block_to_db(base::xvblock_t * target_block) override
             {
-                return mbus::xevent_ptr_t(new mbus::xevent_t(0));
+                mbus::xevent_ptr_t event = make_object_ptr<mbus::xevent_t>(0);
+                return event;
             }
         };
     };

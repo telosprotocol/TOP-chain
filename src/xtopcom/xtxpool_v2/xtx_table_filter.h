@@ -8,7 +8,7 @@ using namespace top::data;
 using namespace top::basic;
 using data::xblock_t;
 using data::xcons_transaction_ptr_t;
-using data::enum_transaction_subtype;
+using base::enum_transaction_subtype;
 using basic::xlru_cache;
 
 using xaccount_addr_t = std::string;

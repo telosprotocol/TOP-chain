@@ -963,7 +963,15 @@ namespace top
                 xerror("xblockacct_t::store_block,undevlier block=%s,input_ready=%d and output_ready=%d",new_raw_block->dump().c_str(),new_raw_block->is_input_ready(true),new_raw_block->is_output_ready(true));
                 return false;
             }
-            xdbg("xblockacct_t::store_block,prepare for block=%s,cache_size:%zu",new_raw_block->dump().c_str(), m_all_blocks.size());
+
+            // TODO(jimmy) should store and execute genesis block
+            if(new_raw_block->get_height() == 1 && m_meta->_highest_connect_block_hash.empty())
+            {
+                base::xauto_ptr<base::xvblock_t> generis_block(xgenesis_block::create_genesis_block(get_account()));
+                store_block(generis_block.get());
+            }
+
+            xdbg("xblockacct_t::store_block,prepare for block=%s,cache_size:%zu,dump=%s",new_raw_block->dump().c_str(), m_all_blocks.size(), dump().c_str());
             #ifdef ENABLE_METRICS
             XMETRICS_TIME_RECORD_KEY("blockstore_store_block_time", new_raw_block->get_account() + ":" + std::to_string(new_raw_block->get_height()));
             #endif
@@ -1113,6 +1121,7 @@ namespace top
         
         bool   xblockacct_t::execute_block(base::xvblock_t* block) //execute block and update state of acccount
         {
+            xdbg("jimmy xblockacct_t::execute_block,enter block=%s",block->dump().c_str());
             if(block == nullptr)
             {
                 xassert(0); //should not pass nullptr
@@ -1485,7 +1494,7 @@ namespace top
             //update meta information per this block
             if(new_block_ptr->check_block_flag(base::enum_xvblock_flag_committed))
             {
-                xdbg_info("xblockacct_t::update_meta_metric,at store(%s) commit block=%s",get_blockstore_path().c_str(),new_block_ptr->dump().c_str());
+                xdbg_info("xblockacct_t::update_meta_metric,at store(%s) account=%s,commit block=%s",get_blockstore_path().c_str(), get_account().c_str(), new_block_ptr->dump().c_str());
                 
                 //update meta information now
                 if(new_block_height > m_meta->_highest_cert_block_height) //committed block must also a cert block
@@ -1540,6 +1549,16 @@ namespace top
             return key_path;
         }
     
+        std::string  xblockacct_t::create_tx_db_key(const std::string & hashkey, base::enum_transaction_subtype type)
+        {
+            if(type == base::enum_transaction_subtype_self)
+            {
+                type = base::enum_transaction_subtype_send;  //self and send use send type as key, user will only use txhash to query.
+            }
+            const std::string key_path = "/tx/" + base::xstring_utl::tostring((uint32_t)type) + "/" + hashkey;
+            return key_path;
+        }
+        
         bool    xblockacct_t::write_block_to_db(base::xvbindex_t* index_ptr)
         {
             if(NULL == index_ptr)
@@ -1648,6 +1667,39 @@ namespace top
             //check stored output or not
             if(block_ptr->get_output() != NULL)
             {
+                // TODO(jimmy) extract txs and store
+                if( (block_ptr->get_header()->get_block_class() == base::enum_xvblock_class_light)
+                   && (block_ptr->get_header()->get_block_level() == base::enum_xvblock_level_unit) )
+                {
+                    std::vector<base::xvtransaction_index_ptr_t> sub_txs;
+                    if(block_ptr->extract_sub_txs(sub_txs))
+                    {
+                        for(auto & v : sub_txs)
+                        {
+                            std::string tx_key = create_tx_db_key(v->get_tx_hash(), v->get_tx_phase_type());
+                            std::string tx_bin;
+                            v->serialize_to_string(tx_bin);
+                            xassert(!tx_bin.empty());
+                            if(base::xvchain_t::instance().get_xdbstore()->set_value(tx_key, tx_bin))
+                            {
+                                // TODO(jimmy) flag   index_ptr->set_store_flag(base::enum_index_store_flag_output_resource);
+                                xdbg("xblockacct_t::write_block_to_db,store tx to DB for block(%s)",index_ptr->dump().c_str());
+                            }
+                            else
+                            {
+                                xerror("xblockacct_t::store_block_to_db,fail to store tx resource for block(%s)",index_ptr->dump().c_str());
+                                return false;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        xerror("xblockacct_t::store_block_to_db,fail to extract subtxs for block(%s)",index_ptr->dump().c_str());
+                        return false;
+                    }
+                }
+                
+                
                 bool ask_store_output = false;
                 if(  (block_ptr->get_header()->get_block_class() == base::enum_xvblock_class_full)
                    ||(block_ptr->get_header()->get_block_level() > base::enum_xvblock_level_unit)
@@ -1964,9 +2016,9 @@ namespace top
         
         bool      xblockacct_t::on_block_stored(base::xvbindex_t* index_ptr)
         {
-            if(index_ptr->get_height() == 0) //ignore genesis block
-                return true;
-            
+            xdbg("jimmy xvblockstore_impl::on_block_stored,at account=%s,index=%s",get_account().c_str(),index_ptr->dump().c_str());
+//            if(index_ptr->get_height() == 0) //ignore genesis block
+//                return true;
             const int block_flags = index_ptr->get_block_flags();
             if((block_flags & base::enum_xvblock_flag_executed) != 0)
             {
@@ -1980,16 +2032,26 @@ namespace top
                 {
                     if(index_ptr->get_this_block() == NULL)
                     {
+                        // execute_block need whole block
                         if(false == read_block_object_from_db(index_ptr))
                         {
                             xerror("xvblockstore_impl::on_block_stored,at store(%s)-> block=%s",get_blockstore_path().c_str(),index_ptr->dump().c_str());
                             return false;
                         }
+                        load_index_input(index_ptr);
+                        load_index_output(index_ptr);
                     }
                     if(index_ptr->get_this_block() != NULL)
                     {
-                        mbus::xevent_ptr_t event = mbus->create_event_for_store_block_to_db(index_ptr->get_this_block());
-                        mbus->push_event(event);
+                        base::auto_reference<base::xvblock_t> _auto_hold(index_ptr->get_this_block());
+                        // TODO(jimmy)
+                        execute_block(index_ptr->get_this_block());
+
+                        if(index_ptr->get_height() != 0)
+                        {
+                            mbus::xevent_ptr_t event = mbus->create_event_for_store_block_to_db(_auto_hold.get());
+                            mbus->push_event(event);
+                        }
                     }
                     
                     xdbg_info("xvblockstore_impl::on_block_stored,at store(%s)-> block=%s",get_blockstore_path().c_str(),index_ptr->dump().c_str());
@@ -2087,6 +2149,7 @@ namespace top
         //XTODO,set next_next_cert at outside
         bool  xchainacct_t::process_index(base::xvbindex_t* this_block)
         {
+            xdbg("jimmy xchainacct_t::process_index enter account=%s,index=%s", get_account().c_str(), this_block->dump().c_str());
             base::xvbindex_t* prev_block = this_block->get_prev_block();
             if(nullptr == prev_block)
             {
@@ -2132,6 +2195,7 @@ namespace top
     
         bool    xchainacct_t::connect_index(base::xvbindex_t* this_block)
         {
+            xdbg("jimmy xchainacct_t::connect_index enter account=%s,index=%s", get_account().c_str(), this_block->dump().c_str());
             if(NULL == this_block)
                 return false;
             

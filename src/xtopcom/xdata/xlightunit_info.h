@@ -71,7 +71,7 @@ class xinput_tx_propertys_t : public xblockpara_base_t {
 class xlightunit_input_entity_t final: public xventity_face_t<xlightunit_input_entity_t, xdata_type_lightunit_input_entity> {
  public:
     xlightunit_input_entity_t();
-    explicit xlightunit_input_entity_t(enum_transaction_subtype type,
+    explicit xlightunit_input_entity_t(base::enum_transaction_subtype type,
                                         xtransaction_t * tx,
                                         bool _is_contract_create,
                                         enum_xunit_tx_exec_status last_action_status,
@@ -90,7 +90,7 @@ class xlightunit_input_entity_t final: public xventity_face_t<xlightunit_input_e
     bool                        is_send_tx() const {return m_tx_key.is_send_tx();}
     bool                        is_recv_tx() const {return m_tx_key.is_recv_tx();}
     bool                        is_confirm_tx() const {return m_tx_key.is_confirm_tx();}
-    enum_transaction_subtype    get_tx_subtype() const {return m_tx_key.get_tx_subtype();}
+    base::enum_transaction_subtype    get_tx_subtype() const {return m_tx_key.get_tx_subtype();}
     std::string                 get_tx_dump_key() const {return m_tx_key.get_tx_dump_key();}
     const xtransaction_key_t &  get_tx_key() const {return m_tx_key;}
 
@@ -112,7 +112,7 @@ using xlightunit_input_entity_ptr_t = xobject_ptr_t<xlightunit_input_entity_t>;
 class xlightunit_output_entity_t final: public xventity_face_t<xlightunit_output_entity_t, xdata_type_lightunit_output_entity> {
  public:
     xlightunit_output_entity_t();
-    xlightunit_output_entity_t(enum_transaction_subtype type, xtransaction_t * tx, const xtransaction_exec_state_t & txstate);
+    xlightunit_output_entity_t(base::enum_transaction_subtype type, xtransaction_t * tx, const xtransaction_exec_state_t & txstate);
  protected:
     ~xlightunit_output_entity_t();
     int32_t     do_write(base::xstream_t & stream) override;
@@ -125,7 +125,7 @@ class xlightunit_output_entity_t final: public xventity_face_t<xlightunit_output
     bool                        is_send_tx() const {return m_tx_key.is_send_tx();}
     bool                        is_recv_tx() const {return m_tx_key.is_recv_tx();}
     bool                        is_confirm_tx() const {return m_tx_key.is_confirm_tx();}
-    enum_transaction_subtype    get_tx_subtype() const {return m_tx_key.get_tx_subtype();}
+    base::enum_transaction_subtype    get_tx_subtype() const {return m_tx_key.get_tx_subtype();}
     std::string                 get_tx_dump_key() const {return m_tx_key.get_tx_dump_key();}
     uint256_t                   get_tx_hash_256() const {return m_tx_key.get_tx_hash_256();}
     std::string                 get_tx_hex_hash() const {return m_tx_key.get_tx_hex_hash();}
@@ -163,7 +163,7 @@ class xlightunit_tx_info_t {
     bool                        is_send_tx() const {return m_tx_key.is_send_tx();}
     bool                        is_recv_tx() const {return m_tx_key.is_recv_tx();}
     bool                        is_confirm_tx() const {return m_tx_key.is_confirm_tx();}
-    enum_transaction_subtype    get_tx_subtype() const {return m_tx_key.get_tx_subtype();}
+    base::enum_transaction_subtype    get_tx_subtype() const {return m_tx_key.get_tx_subtype();}
     std::string                 get_tx_dump_key() const {return m_tx_key.get_tx_dump_key();}
     uint256_t                   get_tx_hash_256() const {return m_tx_key.get_tx_hash_256();}
     std::string                 get_tx_hex_hash() const {return m_tx_key.get_tx_hex_hash();}

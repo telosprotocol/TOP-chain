@@ -3,7 +3,6 @@
 #include <string>
 #include "xvledger/xvaccount.h"
 #include "xcrypto/xcrypto_util.h"
-#include "tests/mock/xtestdb.hpp"
 
 namespace top {
 namespace mock {

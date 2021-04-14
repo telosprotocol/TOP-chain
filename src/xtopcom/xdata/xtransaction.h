@@ -10,6 +10,7 @@
 
 #include "xbasic/xcrypto_key.h"
 #include "xbase/xobject_ptr.h"
+#include "xvledger/xvtransaction.h"
 #include "xbasic/xdataobj_base.hpp"
 #include "xdata/xaction.h"
 #include "xdata/xproperty.h"
@@ -18,6 +19,12 @@
 #include "xmetrics/xmetrics.h"
 
 namespace top { namespace data {
+
+using base::enum_transaction_subtype;
+using base::enum_transaction_subtype_self;
+using base::enum_transaction_subtype_send;
+using base::enum_transaction_subtype_recv;
+using base::enum_transaction_subtype_confirm;
 
 enum enum_xtransaction_type {
     xtransaction_type_create_user_account        = 0,    // create user account
@@ -43,13 +50,6 @@ enum enum_xtransaction_type {
     xtransaction_type_redeem_token_vote          = 28,   // redeem token
 
     xtransaction_type_max
-};
-
-enum enum_transaction_subtype : uint8_t {
-    enum_transaction_subtype_self      = 1,  // self operate
-    enum_transaction_subtype_send      = 2,  // send to other account
-    enum_transaction_subtype_recv      = 3,  // receive from other account
-    enum_transaction_subtype_confirm   = 4,  // receive ack from other account
 };
 
 enum enum_xunit_tx_exec_status : uint8_t {

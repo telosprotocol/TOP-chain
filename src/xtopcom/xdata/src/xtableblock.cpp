@@ -356,11 +356,11 @@ int64_t xtable_block_t::get_pledge_balance_change_tgas() const {
     return pledge_tgas_change;
 }
 
-bool  xtable_block_t::extract_sub_blocks(std::vector<xvblock_t*> & sub_blocks) {
+bool  xtable_block_t::extract_sub_blocks(std::vector<xobject_ptr_t<base::xvblock_t>> & sub_blocks) {
     const std::vector<xblock_ptr_t> & subblocks = get_tableblock_units(true);
     xassert(!subblocks.empty());
     for (auto & v : subblocks) {
-        sub_blocks.push_back(v.get());
+        sub_blocks.push_back(v);
     }
     return true;
 }

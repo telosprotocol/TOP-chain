@@ -258,6 +258,7 @@ namespace top
     
         bool    xvblockstore_impl::store_block(base::xauto_ptr<xblockacct_t> & container_account,base::xvblock_t * container_block) //store table/book blocks if they are
         {
+            xdbg("jimmy xvblockstore_impl::store_block enter,store block(%s)", container_block->dump().c_str());
             //store it first at anyway
             if(!container_account->store_block(container_block))
             {
@@ -273,7 +274,7 @@ namespace top
                     xassert(container_block->is_input_ready(true));
                     xassert(container_block->is_output_ready(true));
                     
-                    std::vector<base::xvblock_t*> sub_blocks;
+                    std::vector<xobject_ptr_t<base::xvblock_t>> sub_blocks;
                     if(container_block->extract_sub_blocks(sub_blocks))
                     {
                         xinfo("xvblockstore_impl::store_block,table block(%s) carry unit num=%d", container_block->dump().c_str(), (int)sub_blocks.size());
@@ -284,7 +285,7 @@ namespace top
                             //XTODO,move set_parent_block into extract_sub_blocks
                             //unit_block->set_parent_block(container_block->get_account(),container_block->get_viewid(),xxx);
                             
-                            if(false == store_block(unit_account,unit_block)) //any fail resultin  re-unpack whole table again
+                            if(false == store_block(unit_account,unit_block.get())) //any fail resultin  re-unpack whole table again
                             {
                                 xerror("xvblockstore_impl::store_block,fail-store unit-block=%s from tableblock=%s",unit_block->dump().c_str(),container_block->dump().c_str());
                             }
@@ -292,7 +293,7 @@ namespace top
                             {
                                 xinfo("xvblockstore_impl::store_block,stored unit-block=%s from tableblock=%s",unit_block->dump().c_str(),container_block->dump().c_str());
                                 
-                                on_block_stored(unit_block);//throw event for sub blocks
+                                on_block_stored(unit_block.get());//throw event for sub blocks
                             }
                         }
                     }
@@ -359,6 +360,58 @@ namespace top
             }
             LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
             return account_obj->execute_block(block);
+        }
+        
+        base::xvtransaction_store_ptr_t  xvblockstore_impl::query_tx(const std::string & txhash, base::enum_transaction_subtype type)
+        {
+            //XTODO:tx always not cache now
+            std::string txkey;
+            base::xvtransaction_store_ptr_t txstore = make_object_ptr<base::xvtransaction_store_t>();
+            if(type == base::enum_transaction_subtype_all || type == base::enum_transaction_subtype_self || type == base::enum_transaction_subtype_send)
+            {
+                txkey = xblockacct_t::create_tx_db_key(txhash, base::enum_transaction_subtype_send);
+                const std::string txobj_bin = base::xvchain_t::instance().get_xdbstore()->get_value(txkey);
+                if(txobj_bin.empty())
+                {
+                    xwarn("xvblockstore_impl::query_tx send tx not find.tx=%s", base::xstring_utl::to_hex(txhash).c_str());
+                    return nullptr;
+                }
+                base::xvtransaction_index_ptr_t txindex = make_object_ptr<base::xvtransaction_index_t>();
+                txindex->serialize_from_string(txobj_bin);
+                txstore->set_send_unit_info(txindex);
+                if(txindex->is_self_tx())
+                {
+                    xdbg("jimmy xvblockstore_impl::query_tx self tx");  //self tx no need query more
+                    return txstore;
+                }
+            }
+            if(type == base::enum_transaction_subtype_all || type == base::enum_transaction_subtype_recv)
+            {
+                txkey = xblockacct_t::create_tx_db_key(txhash, base::enum_transaction_subtype_recv);
+                const std::string txobj_bin = base::xvchain_t::instance().get_xdbstore()->get_value(txkey);
+                if(txobj_bin.empty())
+                {
+                    xwarn("xvblockstore_impl::query_tx recv tx not find.tx=%s", base::xstring_utl::to_hex(txhash).c_str());
+                    return nullptr;
+                }
+                base::xvtransaction_index_ptr_t txindex = make_object_ptr<base::xvtransaction_index_t>();
+                txindex->serialize_from_string(txobj_bin);
+                txstore->set_recv_unit_info(txindex);
+            }
+            if(type == base::enum_transaction_subtype_all || type == base::enum_transaction_subtype_confirm)
+            {
+                txkey = xblockacct_t::create_tx_db_key(txhash, base::enum_transaction_subtype_confirm);
+                const std::string txobj_bin = base::xvchain_t::instance().get_xdbstore()->get_value(txkey);
+                if(txobj_bin.empty())
+                {
+                    xwarn("xvblockstore_impl::query_tx confirm tx not find.tx=%s", base::xstring_utl::to_hex(txhash).c_str());
+                    return nullptr;
+                }
+                base::xvtransaction_index_ptr_t txindex = make_object_ptr<base::xvtransaction_index_t>();
+                txindex->serialize_from_string(txobj_bin);
+                txstore->set_confirm_unit_info(txindex);
+            }
+            return txstore;
         }
     
         base::xauto_ptr<base::xvblock_t>  xvblockstore_impl::query_block(const base::xvaccount_t & account,const uint64_t height, const uint64_t viewid)
