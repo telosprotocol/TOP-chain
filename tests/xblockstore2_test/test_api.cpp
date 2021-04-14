@@ -5,6 +5,7 @@
 #include "tests/mock/xdatamock_address.hpp"
 #include "tests/mock/xcertauth_util.hpp"
 #include "tests/mock/xdatamock_table.hpp"
+#include "tests/mock/xblock_generator.hpp"
 #include "test_blockstore_util.hpp"
 
 using namespace top;
@@ -104,16 +105,42 @@ TEST_F(test_api, store_unit_block_1) {
 
     base::xauto_ptr<base::xvblock_t> latest_cert_block = blockstore->get_latest_cert_block(unit_vaddr);
     std::cout << "cert=" << latest_cert_block->get_height() << std::endl;
-    // xassert(latest_cert_block->get_height() == count);
+    xassert(latest_cert_block->get_height() == max_block_height);
     base::xauto_ptr<base::xvblock_t> latest_locked_block = blockstore->get_latest_locked_block(unit_vaddr);
     std::cout << "lock=" << latest_locked_block->get_height() << std::endl;
-    // xassert(latest_locked_block->get_height() == count - 1);
+    xassert(latest_locked_block->get_height() == max_block_height - 1);
     base::xauto_ptr<base::xvblock_t> latest_committed_block = blockstore->get_latest_committed_block(unit_vaddr);
     std::cout << "commit=" << latest_committed_block->get_height() << std::endl;
-    // xassert(latest_committed_block->get_height() == count - 2);
+    xassert(latest_committed_block->get_height() == max_block_height - 1);
     base::xauto_ptr<base::xvblock_t> latest_executed_block = blockstore->get_latest_executed_block(unit_vaddr);
     std::cout << "execute=" << latest_executed_block->get_height() << std::endl;
-    // xassert(latest_executed_block->get_height() == count - 2);
+    xassert(latest_executed_block->get_height() == max_block_height - 1);
+}
+
+TEST_F(test_api, execute_block_1) {
+    std::string address = mock::xdatamock_address::make_user_address_random();
+    base::xvaccount_t _vaddr(address);
+    test_blockstore_util blockstore_util;
+    base::xvblockstore_t* blockstore = blockstore_util.get_blockstore();
+
+    uint64_t max_block_height = 8;
+    xblock_generator bgenerator(address);
+    const std::vector<xblock_ptr_t> & blocks = bgenerator.generate_all_empty_blocks(max_block_height);
+    for (uint64_t i = 5; i <= max_block_height; i++) {
+        ASSERT_TRUE(blockstore->store_block(_vaddr, blocks[i].get()));
+    }
+    for (uint64_t i = 4; i >= 1; i--) {
+        ASSERT_TRUE(blockstore->store_block(_vaddr, blocks[i].get()));
+    }
+
+    base::xauto_ptr<base::xvblock_t> latest_cert_block = blockstore->get_latest_cert_block(_vaddr);
+    xassert(latest_cert_block->get_height() == max_block_height);
+    base::xauto_ptr<base::xvblock_t> latest_locked_block = blockstore->get_latest_locked_block(_vaddr);
+    xassert(latest_locked_block->get_height() == max_block_height - 1);
+    base::xauto_ptr<base::xvblock_t> latest_committed_block = blockstore->get_latest_committed_block(_vaddr);
+    xassert(latest_committed_block->get_height() == max_block_height - 2);
+    base::xauto_ptr<base::xvblock_t> latest_executed_block = blockstore->get_latest_executed_block(_vaddr);
+    xassert(latest_executed_block->get_height() == max_block_height - 2);
 }
 
 TEST_F(test_api, store_table_block_1) {

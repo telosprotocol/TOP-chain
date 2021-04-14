@@ -3,7 +3,6 @@
 #include "xblockmaker/xunit_builder.h"
 #include "test_common.hpp"
 #include "xstore/xstore_face.h"
-#include "xstore/test/test_datamock.hpp"
 #include "xstore/xaccount_context.h"
 #include "xblockstore/xblockstore_face.h"
 #include "xdata/xtransaction_maker.hpp"
@@ -199,7 +198,7 @@ TEST_F(test_unit_maker, DISABLED_unit_maker_2) {
     ASSERT_EQ(unit1->get_block_class(), base::enum_xvblock_class_light);
     ASSERT_EQ(unit1->get_txs_count(), 5);
     xdatamock_tx::do_mock_signature(unit1.get());
-    ASSERT_TRUE(resouces->get_blockstore()->store_block(unit1.get()));
+    ASSERT_TRUE(resouces->get_blockstore()->store_block(base::xvaccount_t(unit1->get_account()), unit1.get()));
 
     ASSERT_EQ(unitmaker->check_latest_state(), xsuccess);
     ASSERT_TRUE(unitmaker->can_make_next_block());
@@ -209,7 +208,7 @@ TEST_F(test_unit_maker, DISABLED_unit_maker_2) {
     ASSERT_EQ(unit2->get_height(), 2);
     ASSERT_EQ(unit2->get_block_class(), base::enum_xvblock_class_nil);
     xdatamock_tx::do_mock_signature(unit2.get());
-    ASSERT_TRUE(resouces->get_blockstore()->store_block(unit2.get()));
+    ASSERT_TRUE(resouces->get_blockstore()->store_block(base::xvaccount_t(unit2->get_account()), unit2.get()));
 
     ASSERT_EQ(unitmaker->check_latest_state(), xsuccess);
     ASSERT_TRUE(unitmaker->can_make_next_block());
@@ -219,7 +218,7 @@ TEST_F(test_unit_maker, DISABLED_unit_maker_2) {
     ASSERT_EQ(unit3->get_height(), 3);
     ASSERT_EQ(unit3->get_block_class(), base::enum_xvblock_class_nil);
     xdatamock_tx::do_mock_signature(unit3.get());
-    ASSERT_TRUE(resouces->get_blockstore()->store_block(unit3.get()));
+    ASSERT_TRUE(resouces->get_blockstore()->store_block(base::xvaccount_t(unit3->get_account()), unit3.get()));
 
     ASSERT_EQ(unitmaker->check_latest_state(), xsuccess);
     ASSERT_FALSE(unitmaker->can_make_next_block());
@@ -237,6 +236,6 @@ TEST_F(test_unit_maker, DISABLED_unit_maker_2) {
     ASSERT_EQ(unit5->get_block_class(), base::enum_xvblock_class_light);
     ASSERT_EQ(unit5->get_txs_count(), 2);
     xdatamock_tx::do_mock_signature(unit5.get());
-    ASSERT_TRUE(resouces->get_blockstore()->store_block(unit5.get()));
+    ASSERT_TRUE(resouces->get_blockstore()->store_block(base::xvaccount_t(unit5->get_account()), unit5.get()));
 }
 

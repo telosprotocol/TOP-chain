@@ -58,7 +58,6 @@ bool xblock_maker_t::verify_latest_blocks(base::xvblock_t* latest_cert_block, ba
 }
 
 void xblock_maker_t::set_latest_committed_block(const xblock_ptr_t & latest_committed_block) {
-    xassert(latest_committed_block->check_block_flag(base::enum_xvblock_flag_committed));
     if (m_latest_commit_block == nullptr || m_latest_commit_block->get_height() != latest_committed_block->get_height()) {
         m_latest_commit_block = latest_committed_block;
     }
@@ -110,6 +109,7 @@ xblock_ptr_t xblock_maker_t::set_latest_block(const xblock_ptr_t & block) {
         return block;
     }
     m_latest_blocks[block->get_height()] = block;
+    xdbg("xblock_maker_t::set_latest_block block_cache_change add new block, block=%s", block->dump().c_str());
 
     uint64_t highest_height = m_latest_blocks.rbegin()->first;
     for (auto iter = m_latest_blocks.begin(); iter != m_latest_blocks.end();) {
@@ -136,13 +136,9 @@ bool xblock_maker_t::load_latest_blocks(const xblock_ptr_t & latest_block, std::
             xdbg("xblock_maker_t::load_latest_blocks finish prev block in cache.account=%s,latest_height=%ld", get_account().c_str(), latest_block->get_height());
             return true;
         }
-        auto _block = get_blockstore()->load_block_object(*this, prev_height, 0, true);
+        auto _block = get_blockstore()->load_block_object(*this, prev_height, current_block->get_last_block_hash(), true);
         if (_block == nullptr) {
             xerror("xtable_maker_t::load_latest_blocks fail-load block.account=%s,height=%ld", get_account().c_str(), prev_height);
-            return false;
-        }
-        if (_block->get_block_hash() != current_block->get_last_block_hash()) {
-            xerror("xtable_maker_t::load_latest_blocks fail- not match prev.prev=%s,current=%s", _block->dump().c_str(), current_block->dump().c_str());
             return false;
         }
         prev_block = xblock_t::raw_vblock_to_object_ptr(_block.get());
@@ -168,13 +164,9 @@ bool xblock_maker_t::load_and_cache_enough_blocks() {
         uint64_t prev_height = current_block->get_height() - 1;
         xblock_ptr_t prev_block = get_latest_block(prev_height);
         if (prev_block == nullptr) {
-            auto _block = get_blockstore()->load_block_object(*this, prev_height, 0, true);
+            auto _block = get_blockstore()->load_block_object(*this, prev_height, current_block->get_last_block_hash(), true);
             if (_block == nullptr) {
                 xerror("xblock_maker_t::load_and_cache_enough_blocks fail-load block.account=%s,height=%ld", get_account().c_str(), prev_height);
-                return false;
-            }
-            if (_block->get_block_hash() != current_block->get_last_block_hash()) {
-                xerror("xblock_maker_t::load_and_cache_enough_blocks fail- not match prev.prev=%s,current=%s", _block->dump().c_str(), current_block->dump().c_str());
                 return false;
             }
             prev_block = xblock_t::raw_vblock_to_object_ptr(_block.get());

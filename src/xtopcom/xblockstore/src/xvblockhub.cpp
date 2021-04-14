@@ -2019,12 +2019,41 @@ namespace top
                 on_block_stored(index_obj);
             return true;
         }
+        void      xblockacct_t::try_execute_all_block()
+        {
+            // TODO(jimmy)
+            uint64_t max_count = 10000;
+            do
+            {
+                xdbg("xblockacct_t::try_execute_all_block round. %s", dump().c_str());
+                uint64_t _query_height = (m_meta->_highest_execute_block_height == 0 && m_meta->_highest_execute_block_hash.empty()) ? 0 : m_meta->_highest_execute_block_height + 1;
+                base::xauto_ptr<base::xvbindex_t> _query_bindex = load_index(_query_height, base::enum_xvblock_flag_committed);
+                if(_query_bindex == nullptr)
+                {
+                    xdbg("xblockacct_t::try_execute_all_block no need execute next block. %s", dump().c_str());
+                    return;
+                }
+                if(false == read_block_object_from_db(_query_bindex.get()))
+                {
+                    xerror("xblockacct_t::try_execute_all_block fail-read block,at account=%s,block=%s",get_account().c_str(),_query_bindex->dump().c_str());
+                    return;
+                }
+                load_index_input(_query_bindex.get());
+                load_index_output(_query_bindex.get());
+                if(false == execute_block(_query_bindex->get_this_block()))
+                {
+                    xwarn("xblockacct_t::try_execute_all_block fail-read block,at account=%s,block=%s",get_account().c_str(),_query_bindex->dump().c_str());
+                    return;
+                }
+            }
+            while(max_count-- > 0);
+        }
         
         bool      xblockacct_t::on_block_stored(base::xvbindex_t* index_ptr)
         {
             xdbg("jimmy xvblockstore_impl::on_block_stored,at account=%s,index=%s",get_account().c_str(),index_ptr->dump().c_str());
-//            if(index_ptr->get_height() == 0) //ignore genesis block
-//                return true;
+            if(index_ptr->get_height() == 0) //ignore genesis block
+                return true;
             const int block_flags = index_ptr->get_block_flags();
             if((block_flags & base::enum_xvblock_flag_executed) != 0)
             {
@@ -2049,13 +2078,9 @@ namespace top
                     }
                     if(index_ptr->get_this_block() != NULL)
                     {
-                        base::auto_reference<base::xvblock_t> _auto_hold(index_ptr->get_this_block());
-                        // TODO(jimmy)
-                        execute_block(index_ptr->get_this_block());
-
                         if(index_ptr->get_height() != 0)
                         {
-                            mbus::xevent_ptr_t event = mbus->create_event_for_store_block_to_db(_auto_hold.get());
+                            mbus::xevent_ptr_t event = mbus->create_event_for_store_block_to_db(index_ptr->get_this_block());
                             mbus->push_event(event);
                         }
                     }
