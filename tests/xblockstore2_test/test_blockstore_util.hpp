@@ -23,9 +23,8 @@ class test_blockstore_util {
     }
 
     base::xvblockstore_t*   get_blockstore() {return m_blockstore;}
-
  public:
-    static std::string              create_random_user_address();
+    static std::string                          create_random_user_address();
 
  private:
     xobject_ptr_t<store::xstore_face_t> m_store_face;

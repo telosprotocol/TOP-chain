@@ -64,6 +64,7 @@ namespace top
             enum{enum_max_cached_blocks = 32};
         public:
             static std::string  get_meta_path(base::xvaccount_t & _account);
+            static std::string  create_tx_db_key(const std::string & hashkey, base::enum_transaction_subtype type);
         public:
             xblockacct_t(const std::string & account_addr,const uint64_t timeout_ms,const std::string & blockstore_path);
         protected:

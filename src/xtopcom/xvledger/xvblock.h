@@ -6,7 +6,9 @@
 
 #include "xbase/xdata.h"
 #include "xbase/xmem.h"
+#include "xbase/xobject_ptr.h"
 #include "xvstate.h"
+#include "xvtransaction.h"
 
 namespace top
 {
@@ -777,7 +779,9 @@ namespace top
             const   std::string         get_output_path() const; //path pointed to vbody at DB/disk  under get_block_path()
             
             //note:container(e.g. Table,Book etc) need implement this function as they have mutiple sub blocks inside them,
-            virtual bool  extract_sub_blocks(std::vector<xvblock_t*> & sub_blocks) {return false;}//as default it is none
+            virtual bool  extract_sub_blocks(std::vector<xobject_ptr_t<xvblock_t>> & sub_blocks) {return false;}//as default it is none
+            //note:container(e.g. Lightunit etc) need implement this function as they have mutiple sub txs inside them,
+            virtual bool  extract_sub_txs(std::vector<xvtransaction_index_ptr_t> & sub_txs) {return false;}//as default it is none
             
             virtual bool                close(bool force_async = true) override; //close and release this node only
             virtual std::string         dump() const override;  //just for debug purpose

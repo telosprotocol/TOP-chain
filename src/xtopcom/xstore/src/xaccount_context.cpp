@@ -10,6 +10,7 @@
 
 #include "xbase/xlog.h"
 #include "xbase/xobject_ptr.h"
+#include "xvledger/xvledger.h"
 #include "xcrypto/xckey.h"
 #include "xdata/xaction_parse.h"
 #include "xdata/xproperty.h"
@@ -1525,7 +1526,14 @@ int32_t xaccount_context_t::clear_vote_out_info(const std::string& lock_hash) {
 
 data::xblock_t*
 xaccount_context_t::get_block_by_height(const std::string & owner, uint64_t height) const {
-    return m_store->get_block_by_height(owner, height);
+    // TODO(jimmy)
+    base::xvaccount_t _vaddr(owner);
+    base::xauto_ptr<base::xvblock_t> _block = base::xvchain_t::instance().get_xblockstore()->load_block_object(_vaddr, height, base::enum_xvblock_flag_committed, true);
+    if (_block != nullptr) {
+        _block->add_ref();
+        return dynamic_cast<data::xblock_t*>(_block.get());
+    }
+    return nullptr;
 }
 
 uint64_t

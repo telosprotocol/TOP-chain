@@ -50,7 +50,7 @@ xblock_ptr_t xproposal_maker_t::make_proposal(data::xblock_consensus_para_t & pr
 
     bool can_make_next_block = m_table_maker->can_make_next_block(table_para, proposal_para);
     if (!can_make_next_block) {
-        xdbg("xproposal_maker_t::make_proposal no need make next block.%s error_code=%s",
+        xdbg("xproposal_maker_t::make_proposal no need make next block.%s",
             proposal_para.dump().c_str());
         return nullptr;
     }

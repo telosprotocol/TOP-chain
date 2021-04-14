@@ -335,8 +335,9 @@ void xblock_t::set_parent_cert_and_path(base::xvqcert_t * parent_cert, const xme
 
     get_blockcert()->set_parent_cert_and_path(parent_cert, path);
     set_block_flag(base::enum_xvblock_flag_authenticated);
-    set_block_flag(base::enum_xvblock_flag_locked);
-    set_block_flag(base::enum_xvblock_flag_committed);
+    // TODO(jimmy) highqc table will unpack unit
+    // set_block_flag(base::enum_xvblock_flag_locked);
+    // set_block_flag(base::enum_xvblock_flag_committed);
     xassert(!get_block_hash().empty());
 }
 
