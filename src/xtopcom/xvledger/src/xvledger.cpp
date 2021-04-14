@@ -493,6 +493,9 @@ namespace top
             m_chain_id = chain_id;
             memset(m_ledgers,0,sizeof(m_ledgers));
             
+            //build default stores
+            xauto_ptr<xvstatestore_t> default_store(new xvstatestore_t());
+            set_xstatestore(default_store.get());
             xkinfo("xvchain_t::xvchain_t,chain_id(%d)",m_chain_id);
         }
     
@@ -594,10 +597,17 @@ namespace top
             return (xvblockstore_t*)target;
         }
     
+        xvstatestore_t*    xvchain_t::get_xstatestore()//global shared statestore instance
+        {
+            xobject_t* target = m_plugins[enum_xvchain_plugin_state_store];
+            xassert(target != NULL);
+            return (xvstatestore_t*)target;
+        }
+    
         xveventbus_t*    xvchain_t::get_xevmbus() //global mbus object
         {
             xobject_t* target = m_plugins[enum_xvchain_plugin_event_mbus];
-            //xassert(target != NULL);
+            xassert(target != NULL);
             return (xveventbus_t*)target;
         }
     
@@ -616,6 +626,15 @@ namespace top
                 return false;
             
             return register_plugin(new_store,enum_xvchain_plugin_block_store);
+        }
+    
+        bool    xvchain_t::set_xstatestore(xvstatestore_t* new_store)
+        {
+            xassert(new_store != NULL);
+            if(NULL == new_store)
+                return false;
+            
+            return register_plugin(new_store,enum_xvchain_plugin_state_store);
         }
 
         bool    xvchain_t::set_xevmbus(xveventbus_t * new_mbus)
