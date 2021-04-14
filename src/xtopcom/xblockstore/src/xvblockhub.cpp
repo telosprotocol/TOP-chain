@@ -1096,6 +1096,9 @@ namespace top
             if(NULL == target_block)
                 return false;
             
+            if(target_block->get_block_class() == base::enum_xvblock_class_nil)
+                return true;
+            
             base::xauto_ptr<base::xvbindex_t> target_index(load_index(target_block->get_height(), target_block->get_viewid()));
             if(!target_index)
             {
@@ -1109,6 +1112,9 @@ namespace top
         {
             if(NULL == target_block)
                 return false;
+            
+            if(target_block->get_block_class() == base::enum_xvblock_class_nil)
+                return true;
             
             base::xauto_ptr<base::xvbindex_t> target_index(load_index(target_block->get_height(), target_block->get_viewid()));
             if(!target_index)

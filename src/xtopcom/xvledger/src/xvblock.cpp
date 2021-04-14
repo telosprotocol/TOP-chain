@@ -2729,6 +2729,28 @@ namespace top
             return index_ptr;
         }
         
+        xvbstate_t*     xvblock_t::create_state_object(const std::string & serialized_data)
+        {
+            if(serialized_data.empty())
+                return NULL;
+            
+            xdataunit_t * _data_obj_ptr = xdataunit_t::read_from(serialized_data);
+            if(NULL == _data_obj_ptr)
+            {
+                xerror("xvblock_t::create_state_object,bad serialized_data that not follow spec");
+                return NULL;
+            }
+            xvbstate_t* state_ptr = (xvbstate_t*)_data_obj_ptr->query_interface(enum_xobject_type_vbstate);
+            if(NULL == state_ptr)
+            {
+                xerror("xvblock_t::create_state_object,bad serialized_data is not for xvbstate_t,but for type:%d",_data_obj_ptr->get_obj_type());
+                
+                _data_obj_ptr->release_ref();
+                return NULL;
+            }
+            return state_ptr;
+        }
+        
         //create a  xvheader_t from bin data(could be from DB or from network)
         base::xvblock_t*  xvblock_t::create_block_object(const std::string & vblock_serialized_data)
         {

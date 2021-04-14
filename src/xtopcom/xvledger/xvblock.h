@@ -709,6 +709,7 @@ namespace top
             static xvinput_t*          create_input_object(const std::string  & vinput_serialized_data);
             static xvoutput_t*         create_output_object(const std::string & voutput_serialized_data);
             static xvbindex_t*         create_index_object(const std::string & vindex_serialized_data);
+            static xvbstate_t*         create_state_object(const std::string & serialized_data);
         public:
             virtual std::string        get_obj_name() const override {return name();}
             enum{enum_obj_type = enum_xobject_type_vblock};//allow xbase create xvblock_t object from xdataobj_t::read_from()
@@ -772,7 +773,8 @@ namespace top
             
             inline  xvheader_t*         get_header()      const {return m_vheader_ptr;}  //raw ptr of xvheader_t
             inline  xvqcert_t *         get_cert()        const {return m_vqcert_ptr;}   //raw ptr of xvqcert_t
-
+            inline  xvbstate_t*         get_state()       const {return m_vbstate_ptr;}  //raw ptr of xvbstate
+            
             const   std::string         get_block_path()  const; //a base and relative dir of vblock at DB/disk
             const   std::string         get_header_path() const; //header include vcert part as well under get_block_path()
             const   std::string         get_input_path()  const; //path pointed to vbody at DB/disk  under get_block_path()
