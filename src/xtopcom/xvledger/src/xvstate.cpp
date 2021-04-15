@@ -5,6 +5,7 @@
 
 #include "xbase/xcontext.h"
 #include "xbase/xutl.h"
+#include "../xvblock.h"
 #include "../xvstate.h"
 
 namespace top
@@ -47,12 +48,32 @@ namespace top
             const std::string compose_name = account + "." + xstring_utl::tostring(blockheight);
             return xstring_utl::tostring((uint32_t)xhash64_t::digest(compose_name));//to save space,let use hash32 as unit name for vbstate
         }
-
+    
+        const int   xvbstate_t::get_block_level() const
+        {
+            return xvheader_t::cal_block_level(m_block_types);
+        }
+    
+        const int   xvbstate_t::get_block_class() const
+        {
+            return xvheader_t::cal_block_class(m_block_types);
+        }
+    
+        const int    xvbstate_t::get_block_type() const
+        {
+            return xvheader_t::cal_block_type(m_block_types);
+        }
+ 
         xvbstate_t::xvbstate_t(enum_xdata_type type)
             :base(type)
         {
             //init unit name and block height first
             m_block_height = 0;
+            m_block_viewid = 0;
+            m_last_full_block_height = 0;
+            m_block_versions = 0;
+            m_block_types    = 0;
+            
             //then set unit name
             set_unit_name(make_unit_name(std::string(),m_block_height));
             //ask compressed data while serialization
@@ -64,13 +85,22 @@ namespace top
             //then register execution methods
             REGISTER_XVIFUNC_ID_API(enum_xvinstruct_class_state_function);
         }
-    
-        xvbstate_t::xvbstate_t(const std::string & account_addr,const uint64_t block_height,const std::vector<xvproperty_t*> & properties,enum_xdata_type type)
+
+        xvbstate_t::xvbstate_t(xvblock_t& for_block,xvexeunit_t * parent_unit,enum_xdata_type type)
             :base(type)
         {
             //init unit name and block height first
-            m_account_addr = account_addr;
-            m_block_height = block_height;
+            m_block_types    = for_block.get_header()->get_block_raw_types();
+            m_block_versions = for_block.get_header()->get_block_raw_versions();
+            
+            m_account_addr = for_block.get_account();
+            m_block_height = for_block.get_height();
+            m_block_viewid = for_block.get_viewid();
+            
+            m_last_block_hash = for_block.get_last_block_hash();
+            m_last_full_block_hash = for_block.get_last_full_block_hash();
+            m_last_full_block_height = for_block.get_last_full_block_height();
+            
             //then set unit name
             set_unit_name(make_unit_name(m_account_addr,m_block_height));
             //ask compressed data while serialization
@@ -82,20 +112,24 @@ namespace top
             //then register execution methods
             REGISTER_XVIFUNC_ID_API(enum_xvinstruct_class_state_function);
             
-            //finally add property object
-            for(auto & p : properties)
-            {
-                if(p != nullptr)
-                    add_child_unit(p);
-            }
+            if(parent_unit != NULL)
+                set_parent_unit(parent_unit);
         }
     
         xvbstate_t::xvbstate_t(const xvbstate_t & obj)
             :base(obj)
         {
+            m_block_types    = obj.m_block_types;
+            m_block_versions = obj.m_block_versions;
+            
             m_account_addr = obj.m_account_addr;
             m_block_height = obj.m_block_height;
-            m_block_output_hash = obj.m_block_output_hash;
+            m_block_viewid = obj.m_block_viewid;
+            
+            m_last_block_hash = obj.m_last_block_hash;
+            m_last_full_block_hash = obj.m_last_full_block_hash;
+            m_last_full_block_height = obj.m_last_full_block_height;
+            
             set_unit_name(make_unit_name(m_account_addr,m_block_height)); //set unit name first
             //ask compressed data while serialization
             set_unit_flag(enum_xdata_flag_acompress);
@@ -110,25 +144,6 @@ namespace top
             set_parent_unit(obj.get_parent_unit());
         }
     
-        xvbstate_t::xvbstate_t(const uint64_t new_block_height,const xvbstate_t & source)
-            :base(source)
-        {
-            m_account_addr = source.m_account_addr;
-            m_block_height = new_block_height;
-            set_unit_name(make_unit_name(m_account_addr,m_block_height)); //set unit name first
-            //ask compressed data while serialization
-            set_unit_flag(enum_xdata_flag_acompress);
-            
-            //setup canvas
-            xauto_ptr<xvcanvas_t> new_canvas(new xvcanvas_t());
-            set_canvas(new_canvas.get());
-            //then register execution methods
-            REGISTER_XVIFUNC_ID_API(enum_xvinstruct_class_state_function);
-            
-            //finally set parent ptr
-            set_parent_unit(source.get_parent_unit());
-        }
-        
         xvbstate_t::~xvbstate_t()
         {
         }
@@ -137,12 +152,13 @@ namespace top
         {
             return new xvbstate_t(*this);
         }
-    
-        xvbstate_t* xvbstate_t::clone(const uint64_t clone_to_new_block_height) //each property is readonly after clone
-        {
-            return new xvbstate_t(clone_to_new_block_height,*this);
-        }
         
+        bool    xvbstate_t::clone_properties_from(xvbstate_t& source)//note: just only clone the state of properties
+        {
+            xassert(get_child_units().empty());//must be empty
+            return clone_units_from(source);
+        }
+ 
         std::string xvbstate_t::dump() const
         {
             return std::string();
@@ -199,9 +215,16 @@ namespace top
         {
             const int32_t begin_size = stream.size();
             
+            stream << m_block_types;
+            stream << m_block_versions;
+    
+            stream.write_compact_var(m_block_height);
+            stream.write_compact_var(m_block_viewid);
+            stream.write_compact_var(m_last_full_block_height);
+            
             stream.write_tiny_string(m_account_addr);
-            stream.write_tiny_string(m_block_output_hash);
-            stream << m_block_height;
+            stream.write_tiny_string(m_last_block_hash);
+            stream.write_tiny_string(m_last_full_block_hash);
 
             base::do_write(stream);
             return (stream.size() - begin_size);
@@ -211,12 +234,19 @@ namespace top
         {
             const int32_t begin_size = stream.size();
             
+            stream >> m_block_types;
+            stream >> m_block_versions;
+            
+            stream.read_compact_var(m_block_height);
+            stream.read_compact_var(m_block_viewid);
+            stream.read_compact_var(m_last_full_block_height);
+            
             stream.read_tiny_string(m_account_addr);
-            stream.read_tiny_string(m_block_output_hash);
-            stream >> m_block_height;
+            stream.read_tiny_string(m_last_block_hash);
+            stream.read_tiny_string(m_last_full_block_hash);
+            
             //set unit name immidiately after read them
             set_unit_name(make_unit_name(m_account_addr,m_block_height));
-            
             base::do_read(stream);
             
             return (begin_size - stream.size());

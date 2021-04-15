@@ -15,10 +15,7 @@ namespace top
             //core instrution
             enum_xvinstruct_code_nil                = 0x00,  //nil op code,do nothing
             enum_xvinstruct_code_abort              = 0x01,  //stop & abort current execution,quit it
-            enum_xvinstruct_code_push_value         = 0x02,  //push value to stack
-            enum_xvinstruct_code_pop_value          = 0x03,  //pop top value from stack
-            enum_xvinstruct_code_return             = 0x04,  //restore stack to begin of function execution
-            enum_xvinstruct_code_if                 = 0x05,  //all condition control
+            enum_xvinstruct_code_return             = 0x02,  //restore stack to begin of function execution
  
             enum_xvinstruct_class_core_function     = 0x0a,
             enum_xvinstruct_class_state_function    = 0x0b,  //call to target with method id/
@@ -33,12 +30,16 @@ namespace top
         {
             enum_xvinstruct_core_method_invalid            = 0x00,  //0 always be invalid
             
-            enum_xvinstruct_core_method_add_value          = 0x01,  //logic add
-            enum_xvinstruct_core_method_sub_value          = 0x02,  //logic sub
-            enum_xvinstruct_core_method_mul_value          = 0x03,  //logic multiplcation
-            enum_xvinstruct_core_method_div_value          = 0x04,  //logic dividion
-            enum_xvinstruct_core_method_reset_value        = 0x05,  //logic reset/init to "logic zero"
-            enum_xvinstruct_core_method_compare_value      = 0x06,  //all compare related functio
+            enum_xvinstruct_core_method_push_value         = 0x01,  //push value to stack
+            enum_xvinstruct_core_method_pop_value          = 0x02,  //pop top value from stack
+            enum_xvinstruct_core_method_reset_value        = 0x03,  //logic reset/init to "logic zero"
+            enum_xvinstruct_core_method_compare_value      = 0x04,  //all compare related functio
+            enum_xvinstruct_core_method_if                 = 0x05,  //all condition control
+            
+            enum_xvinstruct_core_method_add_value          = 0x10,  //logic add
+            enum_xvinstruct_core_method_sub_value          = 0x11,  //logic sub
+            enum_xvinstruct_core_method_mul_value          = 0x12,  //logic multiplcation
+            enum_xvinstruct_core_method_div_value          = 0x13,  //logic dividion
         };
     
         //predefined method id for enum_xvinstruct_class_state_function

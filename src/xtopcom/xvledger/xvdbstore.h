@@ -38,6 +38,8 @@ namespace top
             virtual bool              set_value(const std::string & key, const std::string& value) = 0;
             virtual bool              delete_value(const std::string & key) = 0;
             virtual bool              find_values(const std::string & key,std::vector<std::string> & values) = 0;//support wild search
+            //delete all keys are follow by wild_key_path,usally for delete keys at same height of same account
+            virtual bool              delete_mutiple_values(const std::string & wild_key_path) {return false;}
             
         public://old API, here just for compatible
             virtual bool             set_vblock(const std::string & store_path,xvblock_t* block) = 0;

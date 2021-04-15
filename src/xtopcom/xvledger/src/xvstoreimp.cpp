@@ -156,8 +156,11 @@ namespace top
             if(NULL == for_block)
                 return NULL;
             
-            const std::string state_db_key = create_state_db_key(target_account,for_block->get_height(),for_block->get_block_hash());
-            
+            return read_state_from_db(target_account,for_block->get_height(),for_block->get_block_hash());
+        }
+        xvbstate_t*     xvstatestore_t::read_state_from_db(xvaccount_t & target_account,const uint64_t block_height, const std::string & block_hash)
+        {
+            const std::string state_db_key = create_state_db_key(target_account,block_height,block_hash);
             const std::string state_db_bin = base::xvchain_t::instance().get_xdbstore()->get_value(state_db_key);
             if(state_db_bin.empty())
             {
@@ -169,18 +172,54 @@ namespace top
             {
                 base::xvchain_t::instance().get_xdbstore()->delete_value(state_db_key);
                 xerror("xvstatestore::read_state_from_db,invalid data at db for path(%s)",state_db_key.c_str());
+                return NULL;
+            }
+            if(   (state_ptr->get_block_height() != block_height)
+               || (state_ptr->get_account_addr() != target_account.get_address()) )
+            {
+                xerror("xvstatestore::read_state_from_db,bad state(%s) vs ask(account:%s,height:%" PRIu64 ") ",state_ptr->dump().c_str(),target_account.get_address().c_str(),block_height);
+                state_ptr->release_ref();
+                return NULL;
             }
             return state_ptr;
         }
     
+        bool   xvstatestore_t::delete_states_of_db(xvaccount_t & target_account,const uint64_t block_height)
+        {
+            const std::string state_db_key = create_state_db_key(target_account,block_height,"");
+            return base::xvchain_t::instance().get_xdbstore()->delete_mutiple_values(state_db_key);
+        }
+    
+        bool   xvstatestore_t::delete_state_of_db(xvaccount_t & target_account,const uint64_t block_height, const std::string & block_hash)
+        {
+            const std::string state_db_key = create_state_db_key(target_account,block_height,block_hash);
+            return base::xvchain_t::instance().get_xdbstore()->delete_value(state_db_key);
+        }
+        
         bool   xvstatestore_t::rebuild_state_for_block(xvblock_t & target_block)
         {
             if(target_block.get_state() == NULL)
             {
-                xauto_ptr<xvbstate_t> init_state(new xvbstate_t(target_block.get_account(),target_block.get_height(),std::vector<xvproperty_t*>()));
-                target_block.reset_block_state(init_state.get());//must successful
+                xauto_ptr<xvbstate_t> init_state(new xvbstate_t(target_block));
+                if(rebuild_state_for_block(*init_state.get(),target_block))
+                    return target_block.reset_block_state(init_state.get());//must successful
+                
+                return false;
             }
-          
+            else
+            {
+                return rebuild_state_for_block(*target_block.get_state(),target_block);
+            }
+        }
+    
+        bool   xvstatestore_t::rebuild_state_for_block(xvbstate_t & target_state,xvblock_t & target_block)
+        {
+            if(   (target_state.get_block_height() != target_block.get_height())
+               || (target_state.get_account_addr() != target_block.get_account()) )
+            {
+                xerror("xvstatestore::rebuild_state_for_block,state is not match as block(%s)",target_block.dump().c_str());
+                return false;
+            }
             if(target_block.get_block_class() == enum_xvblock_class_nil)
             {
                 xinfo("xvstatestore::rebuild_state_for_block,nothing chanage for state of nil block(%s)",target_block.dump().c_str());
@@ -198,17 +237,13 @@ namespace top
                     }
                 }
                 
-                const std::vector<xventity_t*> & entities = target_block.get_output()->get_entitys();
-                for(auto & ent : entities)
+                const std::string binlog(target_block.get_output()->get_binlog());
+                if(binlog.empty() == false)
                 {
-                    const std::string binlog(ent->query_value("xbinlog"));
-                    if(binlog.empty() == false)
+                    if(false == target_state.apply_changes_of_binlog(binlog))
                     {
-                        if(false == target_block.get_state()->apply_changes_of_binlog(binlog))
-                        {
-                            xerror("xvstatestore::rebuild_state_for_block,invalid binlog and abort it for block(%s)",target_block.dump().c_str());
-                            return false;
-                        }
+                        xerror("xvstatestore::rebuild_state_for_block,invalid binlog and abort it for block(%s)",target_block.dump().c_str());
+                        return false;
                     }
                 }
                 xinfo("xvstatestore::get_block_state,successful rebuilt state for block(%s)",target_block.dump().c_str());
@@ -241,49 +276,57 @@ namespace top
             if(current_block->get_height() == 0) //direct rebuild state from geneis block
             {
                 current_block->reset_block_state(NULL); //force to reset now
-                bool result = rebuild_state_for_block(*current_block);//then rebuild it completely
-                if(result)//persist full state into db
-                   write_state_to_db(current_block);
-                return result;
+                if(rebuild_state_for_block(*current_block))//then rebuild it completely
+                {
+                    write_state_to_db(current_block);//persist full state into db
+                    return true;
+                }
+                xerror("xvstatestore::get_block_state,fail to build state for genesis-block(%s) as rebuild fail",current_block->dump().c_str());
+                return false;
             }
             else if(current_block->get_block_class() == enum_xvblock_class_full)//direct rebuild state for full-block
             {
                 current_block->reset_block_state(NULL); //force to reset now
-                bool result = rebuild_state_for_block(*current_block);//then rebuild it completely
-                if(result)//persist full state into db
-                    write_state_to_db(current_block);
-                return result;
-            }
-    
-            //step#3:rebuild current state based on prev block 'state
-            if(current_block->get_prev_block() == NULL)
-            {
-                xauto_ptr<xvblock_t> prev_block(xvchain_t::instance().get_xblockstore()->load_block_object(target_account,current_block->get_height() - 1,current_block->get_last_block_hash(),true));
-                if(!prev_block)
+                if(rebuild_state_for_block(*current_block))//then rebuild it completely
                 {
-                    xwarn("xvstatestore::get_block_state,fail to load prev-block from current(%s)",current_block->dump().c_str());
-                    return false;
+                    if(write_state_to_db(current_block))
+                    {
+                        if(current_block->get_height() >= 4) //just keep max 4 persisted state
+                            delete_states_of_db(target_account,current_block->get_height() - 4);
+                    }
+                    return true;
                 }
-                if(get_block_state(prev_block.get()))//reenter call prev of prev ... until full-block or genesis block
-                {
-                    xauto_ptr<xvbstate_t> new_current_state_ptr(prev_block->get_state()->clone(current_block->get_height()));
-                    current_block->reset_block_state(new_current_state_ptr.get());//setup first
-                    return rebuild_state_for_block(*current_block); //then reexecute instruction based on last-state
-                }
+                xerror("xvstatestore::get_block_state,fail to build state for full-block(%s) as rebuild fail",current_block->dump().c_str());
+                return false;
             }
-            else if(get_block_state(current_block->get_prev_block()))
+            
+            xauto_ptr<xvbstate_t> prev_block_state(get_block_state(target_account,current_block->get_height() - 1,current_block->get_last_block_hash()));
+            if(prev_block_state)//each xvbstate_t object present the full state
             {
-                xauto_ptr<xvbstate_t> new_current_state_ptr(current_block->get_prev_block()->get_state()->clone(current_block->get_height()));
-                current_block->reset_block_state(new_current_state_ptr.get());//setup first
-                return rebuild_state_for_block(*current_block); //then reexecute instruction based on last-state
+                xauto_ptr<xvbstate_t> new_current_state_ptr(new xvbstate_t(*current_block));
+                new_current_state_ptr->clone_properties_from(*prev_block_state.get());//fullly clone properties
+                
+                //then re-execute instruction based on last-state
+                if(rebuild_state_for_block(*new_current_state_ptr.get(),*current_block))
+                {
+                    if(write_state_to_db(current_block))
+                    {
+                        if(current_block->get_height() >= 4) //just keep max 4 persisted state
+                            delete_states_of_db(target_account,current_block->get_height() - 4);
+                    }
+                    return current_block->reset_block_state(new_current_state_ptr.get());//setup finally
+                }
+       
+                xerror("xvstatestore::get_block_state,fail to build state for normal-block(%s) as rebuild fail",current_block->dump().c_str());
+                return false;
             }
-            xwarn("xvstatestore::get_block_state,fail to load state for block(%s) as prev-one build state fail",current_block->dump().c_str());
+            xwarn("xvstatestore::get_block_state,fail to get state for block(%s) as prev-one build state fail",current_block->dump().c_str());
             return false;
         }
     
         xauto_ptr<xvbstate_t> xvstatestore_t::get_block_state(xvaccount_t & account,const uint64_t height,const uint64_t view_id)
         {
-            xauto_ptr<xvblock_t> target_block(xvchain_t::instance().get_xblockstore()->load_block_object(account,height,view_id,true));
+            xauto_ptr<xvblock_t> target_block(xvchain_t::instance().get_xblockstore()->load_block_object(account,height,view_id,false));
             
             if(get_block_state(target_block.get()))
             {
@@ -296,7 +339,7 @@ namespace top
     
         xauto_ptr<xvbstate_t> xvstatestore_t::get_block_state(xvaccount_t & account,const uint64_t height,const std::string& block_hash)
         {
-            xauto_ptr<xvblock_t> target_block(xvchain_t::instance().get_xblockstore()->load_block_object(account,height,block_hash,true));
+            xauto_ptr<xvblock_t> target_block(xvchain_t::instance().get_xblockstore()->load_block_object(account,height,block_hash,false));
             if(get_block_state(target_block.get()))
             {
                 target_block->get_state()->add_ref();
