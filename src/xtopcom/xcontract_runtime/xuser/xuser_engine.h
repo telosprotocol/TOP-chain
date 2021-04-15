@@ -12,7 +12,7 @@
 #include "xbasic/xmemory.hpp"
 #include "xcontract_common/xcontract_execution_context.h"
 
-NS_BEG3(top, contract_runtime, xuser)
+NS_BEG3(top, contract_runtime, user)
 
 class xtop_user_engine {
 public:

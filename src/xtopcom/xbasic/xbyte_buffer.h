@@ -18,4 +18,6 @@ random_bytes(std::size_t const size);
 xbyte_buffer_t
 random_base58_bytes(std::size_t const size);
 
+xbyte_buffer_t from_bytes(uint8_t* data, std::size_t size);
+
 NS_END1
