@@ -19,6 +19,49 @@
 
 NS_BEG2(top, data)
 
+class xfulltable_statistics_resource_t : public xbase_dataunit_t<xfulltable_statistics_resource_t, xdata_type_fulltable_statistics_resource>{
+ public:
+    static  const std::string   name() { return std::string("o0");}  // common output resource version#0
+    xfulltable_statistics_resource_t() = default;
+    explicit xfulltable_statistics_resource_t(const std::string & statistics_data)
+    : m_statistics_data(statistics_data) {}
+
+ protected:
+    int32_t do_write(base::xstream_t & stream) override;
+    int32_t do_read(base::xstream_t & stream) override;
+
+ public:
+    const xbyte_buffer_t get_statistics_data() const {
+       xbyte_buffer_t data;
+       data.assign(m_statistics_data.begin(), m_statistics_data.end());
+       return data;
+    }
+
+ private:
+    std::string    m_statistics_data;
+};
+using xfulltable_statistics_resource_ptr_t = xobject_ptr_t<xfulltable_statistics_resource_t>;
+
+class xfulltable_binlog_resource_t : public xbase_dataunit_t<xfulltable_binlog_resource_t, xdata_type_fulltable_binlog_resource>{
+ public:
+    static  const std::string   name() { return std::string("i0");}  // common input resource version#0
+    xfulltable_binlog_resource_t() = default;
+    explicit xfulltable_binlog_resource_t(const xtable_mbt_binlog_ptr_t & binlog)
+    : m_index_binlog(binlog) {}
+
+ protected:
+    int32_t do_write(base::xstream_t & stream) override;
+    int32_t do_read(base::xstream_t & stream) override;
+
+ public:
+    const xtable_mbt_binlog_ptr_t & get_binlog() const {return m_index_binlog;}
+
+ private:
+    xtable_mbt_binlog_ptr_t    m_index_binlog{nullptr};
+};
+using xfulltable_binlog_resource_ptr_t = xobject_ptr_t<xfulltable_binlog_resource_t>;
+
+
 class xfulltable_block_para_t {
  public:
     xfulltable_block_para_t(const xtablestate_ptr_t & last_state, const xstatistics_data_t & statistics_data);
