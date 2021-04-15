@@ -9,7 +9,7 @@
 
 extern "C" bool validate_wasm_with_content(uint8_t *s, uint32_t size);
 
-NS_BEG3(top, contract_runtime, xuser)
+NS_BEG3(top, contract_runtime, user)
 
 void xtop_wasm_engine::deploy_contract(xbyte_buffer_t const& code, observer_ptr<contract_common::xcontract_execution_context_t> exe_ctx) {
     if (!validate_wasm_with_content((uint8_t*)code.data(), code.size())) {

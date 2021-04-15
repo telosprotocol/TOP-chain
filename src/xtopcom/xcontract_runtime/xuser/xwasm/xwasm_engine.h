@@ -10,7 +10,7 @@
 
 #include "xcontract_runtime/xuser/xuser_engine.h"
 
-NS_BEG3(top, contract_runtime, xuser)
+NS_BEG3(top, contract_runtime, user)
 
 class xtop_wasm_engine: public xtop_user_engine {
 public:

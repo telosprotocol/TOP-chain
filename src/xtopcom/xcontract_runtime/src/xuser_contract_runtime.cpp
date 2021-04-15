@@ -61,7 +61,7 @@ xtransaction_execution_result_t xtop_user_contract_runtime::execute_transaction(
             base::xstream_t stream(base::xcontext_t::instance(), (uint8_t *)action_data.data(), action_data.size());
             stream >> tgas_limit;
             stream >> code;
-            auto engine = std::make_shared<xuser::xwasm_engine_t>();
+            auto engine = std::make_shared<user::xwasm_engine_t>();
             //std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
             engine->deploy_contract(code, exe_ctx);
         } else {
