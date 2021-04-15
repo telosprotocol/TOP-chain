@@ -5,6 +5,7 @@
 #pragma once
 
 #include "xvproperty.h"
+#include "xvblock.h"
 
 namespace top
 {
@@ -12,10 +13,12 @@ namespace top
     {
         //xvbstate_t(block state) present all properties of one block(specified block height)
         //note: it is not allow to modify anymore after xvbstate_t object is generated from serialize or new(initialize by subclass)
+        class xvblock_t;
         class xvbstate_t : public xvexegroup_t
         {
             friend class xvblock_t;
             friend class xvblockstore_t;
+            friend class xvstatestore_t;
             typedef xvexegroup_t base;
 
         public:
@@ -28,12 +31,11 @@ namespace top
             enum{enum_max_property_count = 256}; //only allow 256 properties for each account
             
         public:
-            xvbstate_t(const std::string & account_addr,const uint64_t block_height,const std::vector<xvproperty_t*> & properties,enum_xdata_type type = (enum_xdata_type)enum_xobject_type_vbstate);
+            xvbstate_t(xvblock_t& for_block,xvexeunit_t * parent_unit = NULL,enum_xdata_type type = (enum_xdata_type)enum_xobject_type_vbstate);
             
         protected:
             xvbstate_t(enum_xdata_type type = (enum_xdata_type)enum_xobject_type_vbstate);
             xvbstate_t(const xvbstate_t & obj);
-            xvbstate_t(const uint64_t new_block_height,const xvbstate_t & source);
             virtual ~xvbstate_t();
             
         private://not implement those private construction
@@ -42,13 +44,13 @@ namespace top
 
         public:
             virtual xvexeunit_t*  clone() override; //cone a new object with same state //each property is readonly after clone
-            xvbstate_t*           clone(const uint64_t clone_to_new_block_height);//note: just only clone the state of properties
+                       
             virtual std::string   dump() const override;  //just for debug purpose
             virtual void*         query_interface(const int32_t _enum_xobject_type_) override;//caller need to cast (void*) to related ptr
             //clear canvas assocaited with vbstate and properties,all recored instruction are clear as well
             //note:reset_canvas not modify the actua state of properties/block, it just against for instrution on canvas
             virtual bool          reset_canvas();
-            
+
         public:
             //bin-log related functions
             enum_xerror_code      encode_change_to_binlog(std::string & output_bin);//
@@ -61,12 +63,26 @@ namespace top
             virtual bool          apply_changes_of_binlog(xstream_t & from_bin_log,const uint32_t bin_log_size);//apply changes to current states,use carefully
 
         public://read-only
-            const std::string&          get_account_addr() const {return m_account_addr;}
-            const std::string&          get_block_output_hash() const {return m_block_output_hash;}
-            const uint64_t              get_block_height() const {return m_block_height;}
+            inline const std::string&   get_account_addr()          const {return m_account_addr;}
+            inline const uint64_t       get_block_height()          const {return m_block_height;}
+            inline const uint64_t       get_block_viewid()          const {return m_block_viewid;}
+            
+            inline const std::string &  get_last_block_hash()       const {return m_last_block_hash;}
+            inline const std::string &  get_last_fullblock_hash()   const {return m_last_full_block_hash;}
+            inline const uint64_t       get_last_fullblock_height() const {return m_last_full_block_height;}
+            
+            const int                   get_block_level() const;
+            const int                   get_block_class() const;
+            const int                   get_block_type()  const;
+            
+            inline uint32_t             get_block_features()      const  { return (m_block_versions >> 24); }
+            inline uint32_t             get_block_version()       const  { return (m_block_versions & 0x00FFFFFF);}
+            inline int                  get_block_version_major() const  { return ((m_block_versions& 0x00FF0000) >> 16);}
+            inline int                  get_block_version_minor() const  { return ((m_block_versions& 0x0000FF00) >> 8);}
+            inline int                  get_block_version_patch() const  { return ((m_block_versions& 0x000000FF));}
             
             bool                        find_property(const std::string & property_name); //check whether property already existing
-            
+        
         public://note: only allow access by our kernel module. it means private for application'contract
             xauto_ptr<xtokenvar_t>              load_token_var(const std::string & property_name);//for main token(e.g. TOP Token)
             xauto_ptr<xnoncevar_t>              load_nonce_var(const std::string & property_name);//for noance of account
@@ -139,11 +155,19 @@ namespace top
             virtual std::string     get_property_value(const std::string & name);
             virtual xvproperty_t*   get_property_object(const std::string & name);
         
-            void   set_block_output_hash(const std::string & block_output_hash) {m_block_output_hash = block_output_hash;}
+            bool                    clone_properties_from(xvbstate_t& source);//note: just only clone the state of properties
         private:
             std::string     m_account_addr;
-            std::string     m_block_output_hash;//output include the binlog generated by xvstate
             uint64_t        m_block_height;
+            uint64_t        m_block_viewid;
+            std::string     m_last_block_hash;       //point the last block'hash
+            std::string     m_last_full_block_hash;  //any block need carry the m_last_full_block_hash
+            uint64_t        m_last_full_block_height;//height of m_last_full_block
+            
+            uint32_t        m_block_versions; //version of chain as [8:features][8:major][8:minor][8:patch]
+            //[1][enum_xvblock_class][enum_xvblock_level][enum_xvblock_type][enum_xvblock_reserved]
+            uint16_t        m_block_types;
+            
         protected: //functions to modify value actually
             virtual const xvalue_t  do_new_property(const xvmethod_t & op);
             

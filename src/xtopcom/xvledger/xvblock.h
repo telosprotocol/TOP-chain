@@ -649,6 +649,8 @@ namespace top
             
             //root of input which usally present a root of merkle tree for input
             virtual const std::string   get_root_hash() {return m_root_hash;}
+            
+            virtual const std::string   get_binlog() {return std::string();}
         protected:
             //just carry by object at memory,not included by serialized
             std::string  m_root_hash;  //root of merkle tree constructed by input

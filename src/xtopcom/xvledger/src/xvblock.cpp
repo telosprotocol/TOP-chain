@@ -1841,8 +1841,8 @@ namespace top
             if(_new_state_ptr != NULL)
             {
                 if(    (get_height()  != _new_state_ptr->get_block_height())
+                    || (get_viewid()  != _new_state_ptr->get_block_viewid())
                     || (get_account() != _new_state_ptr->get_account_addr())
-                    || ((_new_state_ptr->get_block_output_hash().empty() == false) && (get_output_hash() != _new_state_ptr->get_block_output_hash()) )
                     )
                 {
                     xerror("xvblock_t::reset_block_state,this block'info(%s) not match state(%s)",dump().c_str(), _new_state_ptr->dump().c_str());
