@@ -29,7 +29,11 @@ class xfulltable_statistics_resource_t : public xbase_dataunit_t<xfulltable_stat
     int32_t do_read(base::xstream_t & stream) override;
 
  public:
-    const std::string & get_statistics_data() const {return m_statistics_data;}
+    const xbyte_buffer_t get_statistics_data() const {
+       xbyte_buffer_t data;
+       data.assign(m_statistics_data.begin(), m_statistics_data.end());
+       return data;
+    }
 
  private:
     std::string    m_statistics_data;
