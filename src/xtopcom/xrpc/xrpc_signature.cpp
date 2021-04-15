@@ -1,5 +1,5 @@
 #include "xrpc_signature.h"
-#include "xbasic/xns_macro.h"
+#include "xbase/xns_macro.h"
 #include "xrpc_define.h"
 #include <iostream>
 

@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "xbase/xvledger.h"
+// TODO(jimmy) #include "xbase/xvledger.h"
 #include "xbasic/xrange.hpp"
 #include "xcommon/xlogic_time.h"
 #include "xconfig/xchain_names.h"
@@ -295,7 +295,7 @@ XDECLARE_CONFIGURATION(unitblock_send_transfer_tx_batch_num, std::uint32_t, 3);
 XDECLARE_CONFIGURATION(tableblock_batch_unitblock_max_num, std::uint32_t, 64);
 XDECLARE_CONFIGURATION(tableblock_batch_tx_max_num, std::int32_t, 64);
 #endif
-XDECLARE_CONFIGURATION(fulltable_interval_block_num, std::uint32_t, 128);  // TODO(jimmy) 512
+XDECLARE_CONFIGURATION(fulltable_interval_block_num, std::uint32_t, 1048576);  // TODO(jimmy) 512
 XDECLARE_CONFIGURATION(local_blacklist, const char *, "");
 XDECLARE_CONFIGURATION(local_whitelist, const char *, "");
 

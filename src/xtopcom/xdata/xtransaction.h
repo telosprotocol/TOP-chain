@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2017-2018 Telos Foundation & contributors
+// Copyright (c) 2017-2018 Telos Foundation & contributors
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -9,7 +9,8 @@
 #include <vector>
 
 #include "xbasic/xcrypto_key.h"
-#include "xbasic/xobject_ptr.h"
+#include "xbase/xobject_ptr.h"
+#include "xvledger/xvtransaction.h"
 #include "xbasic/xdataobj_base.hpp"
 #include "xdata/xaction.h"
 #include "xdata/xproperty.h"
@@ -19,11 +20,19 @@
 
 namespace top { namespace data {
 
+using base::enum_transaction_subtype;
+using base::enum_transaction_subtype_self;
+using base::enum_transaction_subtype_send;
+using base::enum_transaction_subtype_recv;
+using base::enum_transaction_subtype_confirm;
+
 enum enum_xtransaction_type {
     xtransaction_type_create_user_account        = 0,    // create user account
     xtransaction_type_create_contract_account    = 1,    // create contract account
+    xtransaction_type_run_contract2 = 2,                      // run contract in new mode
     xtransaction_type_run_contract               = 3,    // run contract
     xtransaction_type_transfer                   = 4,    // transfer asset
+    xtransaction_type_clickonce_create_contract_account = 5,// deploy clickonce contract
     xtransaction_type_alias_name                 = 6,    // set account alias name, can be same with other accunnt
     xtransaction_type_set_account_keys           = 11,    // set account's keys, may be elect key, transfer key, data key, consensus key
     xtransaction_type_lock_token                 = 12,    // lock token for doing something
@@ -41,13 +50,6 @@ enum enum_xtransaction_type {
     xtransaction_type_redeem_token_vote          = 28,   // redeem token
 
     xtransaction_type_max
-};
-
-enum enum_transaction_subtype : uint8_t {
-    enum_transaction_subtype_self      = 1,  // self operate
-    enum_transaction_subtype_send      = 2,  // send to other account
-    enum_transaction_subtype_recv      = 3,  // receive from other account
-    enum_transaction_subtype_confirm   = 4,  // receive ack from other account
 };
 
 enum enum_xunit_tx_exec_status : uint8_t {
@@ -177,7 +179,9 @@ class xtransaction_t : public xbase_dataobj_t<xtransaction_t, xdata_type_transac
     int32_t     make_tx_create_sub_account(const data::xproperty_asset & asset_out);
     int32_t     make_tx_transfer(const data::xproperty_asset & asset);
     int32_t     make_tx_run_contract(const data::xproperty_asset & asset_out, const std::string& function_name, const std::string& para);
+    int32_t make_tx_run_contract2(const data::xproperty_asset & asset_out, const std::string & function_name, const std::string & para);
     int32_t     make_tx_run_contract(std::string const & function_name, std::string const & param);
+    int32_t make_tx_run_contract2(std::string const & function_name, std::string const & param);
 
  public:  // get apis
     uint256_t           digest()const {return m_transaction_hash; }

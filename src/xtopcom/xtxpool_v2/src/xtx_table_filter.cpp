@@ -4,7 +4,7 @@
 NS_BEG2(top, xtxpool_v2)
 
 enum_xtxpool_error_type xtx_table_filter::reject(const std::string account, const xcons_transaction_ptr_t &tx, bool &deny){
-    std::shared_ptr<xaccount_filter> filter = get(account,tx->get_tx_subtype());
+    xaccount_filter_ptr_t filter = get(account,tx->get_tx_subtype());
     xassert(filter != nullptr);
 
     enum_xtxpool_error_type result = filter->reject(tx, deny);
@@ -12,7 +12,7 @@ enum_xtxpool_error_type xtx_table_filter::reject(const std::string account, cons
 }
 
 enum_xtxpool_error_type xtx_table_filter::reject(const std::string &account, const xcons_transaction_ptr_t &tx, uint64_t pre_unitblock_height, bool &deny){
-    std::shared_ptr<xaccount_filter> filter = get(account,tx->get_tx_subtype());
+    xaccount_filter_ptr_t filter = get(account,tx->get_tx_subtype());
     xassert(filter != nullptr);
 
     enum_xtxpool_error_type result = filter->reject(tx, pre_unitblock_height, deny);
@@ -20,7 +20,7 @@ enum_xtxpool_error_type xtx_table_filter::reject(const std::string &account, con
 }
 
 enum_xtxpool_error_type xtx_table_filter::update_reject_rule(const std::string &account, const data::xblock_t *unit_block){
-    std::shared_ptr<xaccount_filter> filter;
+    xaccount_filter_ptr_t filter;
     enum_xtxpool_error_type result;
 
     enum_transaction_subtype subtypes[] = {enum_transaction_subtype_recv, enum_transaction_subtype_confirm};
@@ -35,11 +35,11 @@ enum_xtxpool_error_type xtx_table_filter::update_reject_rule(const std::string &
         }
     }
 
-    return xtxpool_success;    
+    return xtxpool_success;
 }
 
 xcons_transaction_ptr_t xtx_table_filter::get_tx(const std::string &account, const std::string hash){
-    std::shared_ptr<xaccount_filter> filter = get(account, enum_transaction_subtype_confirm);
+    xaccount_filter_ptr_t filter = get(account, enum_transaction_subtype_confirm);
     return filter->get_tx(hash);
 }
 
@@ -60,13 +60,13 @@ uint32_t xtx_table_filter::get_unconfirm_txs_num() const {
     return num;
 }
 
-std::shared_ptr<xaccount_filter> xtx_table_filter::get(const std::string &account, uint8_t subtype){
-    std::shared_ptr<xaccount_filter> filter = nullptr;
+xaccount_filter_ptr_t xtx_table_filter::get(const std::string &account, uint8_t subtype){
+    xaccount_filter_ptr_t filter = nullptr;
     switch (subtype) {
         case enum_transaction_subtype_recv:
         {
             if (!m_recv_filters_cache.get(account, filter)){
-                filter = std::make_shared<xaccount_recvtx_filter>(account, m_blockstore);
+                filter = make_object_ptr<xaccount_recvtx_filter>(account, m_blockstore);
                 m_recv_filters_cache.put(account,filter);
             }
             break;
@@ -75,7 +75,7 @@ std::shared_ptr<xaccount_filter> xtx_table_filter::get(const std::string &accoun
         {
             auto it = m_confirm_filters_cache.find(account);
             if (it == m_confirm_filters_cache.end()){
-                filter = std::make_shared<xaccount_confirmtx_filter>(account, m_blockstore);
+                filter = make_object_ptr<xaccount_confirmtx_filter>(account, m_blockstore);
                 m_confirm_filters_cache.insert({account,filter});
             } else {
                 filter = it->second;
@@ -86,7 +86,7 @@ std::shared_ptr<xaccount_filter> xtx_table_filter::get(const std::string &accoun
         {
             break;
         }
-            
+
     }
 
     return filter;

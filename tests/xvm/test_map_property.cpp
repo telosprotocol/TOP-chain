@@ -1,7 +1,7 @@
 #include "xvm/xvm_service.h"
 #include "xvm/xvm_trace.h"
 #include <gtest/gtest.h>
-#include "xbasic/xobject_ptr.h"
+#include "xbase/xobject_ptr.h"
 #include "xstore/xstore_face.h"
 #include "xbase/xmem.h"
 #include "xbase/xcontext.h"

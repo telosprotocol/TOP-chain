@@ -6,8 +6,7 @@
 
 #include <string>
 #include <vector>
-#include "xbase/xvledger.h"
-#include "xbasic/xns_macro.h"
+// TODO(jimmy) #include "xbase/xvledger.h"
 #include "xdata/xemptyblock.h"
 #include "xdata/xtableblock.h"
 #include "xdata/xfull_tableblock.h"
@@ -51,7 +50,6 @@ class xblocktool_t {
 
  public:
     static bool             is_connect_and_executed_block(base::xvblock_t* block);
-    static base::xauto_ptr<base::xvblock_t> load_justify_block(base::xvblockstore_t* blockstore, const std::string & account, uint64_t height);
     static base::xauto_ptr<base::xvblock_t> get_latest_committed_lightunit(base::xvblockstore_t* blockstore, const std::string & account);
     static base::xauto_ptr<base::xvblock_t> get_committed_lightunit(base::xvblockstore_t* blockstore, const std::string & account, uint64_t max_height);
     static bool             verify_latest_blocks(const base::xblock_mptrs & latest_blocks);

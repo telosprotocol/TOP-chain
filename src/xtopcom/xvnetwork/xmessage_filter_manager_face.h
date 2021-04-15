@@ -9,7 +9,6 @@
 
 #pragma once
 #include "xbasic/xmemory.hpp"
-#include "xbasic/xns_macro.h"
 #include "xbasic/xrunnable.h"
 #include "xvnetwork/xmessage_filter_base.h"
 #include "xvnetwork/xvhost_face_fwd.h"
@@ -27,21 +26,21 @@ public:
 
     /**
      * @brief Get the vhost ptr object
-     * 
-     * @return observer_ptr<xvhost_face_t> 
+     *
+     * @return observer_ptr<xvhost_face_t>
      */
     virtual observer_ptr<xvhost_face_t> get_vhost_ptr() const = 0;
 
     /**
      * @brief Get the election data accessor ptr object
-     * 
-     * @return observer_ptr<election::cache::xdata_accessor_face_t> 
+     *
+     * @return observer_ptr<election::cache::xdata_accessor_face_t>
      */
     virtual observer_ptr<election::cache::xdata_accessor_face_t> get_election_data_accessor_ptr() const = 0;
 
     /**
      * @brief filt function implemented by derived class
-     * 
+     *
      * @param msg The message to be filted
      */
     virtual void filt_message(xvnetwork_message_t & msg) const = 0;

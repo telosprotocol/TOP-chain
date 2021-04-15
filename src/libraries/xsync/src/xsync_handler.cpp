@@ -13,7 +13,7 @@
 #include "xsync/xdeceit_node_manager.h"
 #include "xvnetwork/xmessage.h"
 #include "xsync/xsync_message.h"
-#include "xbase/xvledger.h"
+// TODO(jimmy) #include "xbase/xvledger.h"
 #include "xblockstore/xblockstore_face.h"
 #include "xsync/xsync_util.h"
 #include "xsync/xsync_sender.h"
@@ -265,7 +265,7 @@ void xsync_handler_t::push_newblock(uint32_t msg_size,
 
     xsync_info("xsync_handler receive push_newblock %" PRIx64 " %s %s", msg_hash, block->dump().c_str(), from_address.to_string().c_str());
 
-    mbus::xevent_ptr_t ev = std::make_shared<mbus::xevent_blockfetcher_block_t>(block, network_self, from_address);
+    mbus::xevent_ptr_t ev = make_object_ptr<mbus::xevent_blockfetcher_block_t>(block, network_self, from_address);
     m_block_fetcher->push_event(ev);
 }
 
@@ -303,7 +303,7 @@ void xsync_handler_t::v1_newblockhash(
         return;
     }
 
-    xsync_info("xsync_handler receive v1_newblockhash %" PRIx64 " wait(%ldms) %s,height=%lu,view_id:%lu %s", 
+    xsync_info("xsync_handler receive v1_newblockhash %" PRIx64 " wait(%ldms) %s,height=%lu,view_id:%lu %s",
         msg_hash, get_time()-recv_time, address.c_str(), height, view_id, from_address.to_string().c_str());
 
     m_block_fetcher->handle_v1_newblockhash(address, height, view_id, from_address, network_self);
@@ -347,7 +347,7 @@ void xsync_handler_t::push_newblockhash(uint32_t msg_size,
     xsync_info("xsync_handler receive push_newblockhash %" PRIx64 " wait(%ldms) %s,height=%lu,viewid=%lu %s,",
         msg_hash, get_time()-recv_time, address.c_str(), height, view_id, from_address.to_string().c_str());
 
-    mbus::xevent_ptr_t ev = std::make_shared<mbus::xevent_blockfetcher_blockhash_t>(address, height, view_id, hash, network_self, from_address);
+    mbus::xevent_ptr_t ev = make_object_ptr<mbus::xevent_blockfetcher_blockhash_t>(address, height, view_id, hash, network_self, from_address);
     m_block_fetcher->push_event(ev);
 }
 
@@ -388,7 +388,7 @@ void xsync_handler_t::broadcast_newblockhash(uint32_t msg_size,
     xsync_info("xsync_handler receive broadcast_newblockhash %" PRIx64 " wait(%ldms) %s,height=%lu,view_id=%lu %s,",
         msg_hash, get_time()-recv_time, address.c_str(), height, view_id, from_address.to_string().c_str());
 
-    mbus::xevent_ptr_t ev = std::make_shared<mbus::xevent_blockfetcher_blockhash_t>(address, height, view_id, hash, network_self, from_address);
+    mbus::xevent_ptr_t ev = make_object_ptr<mbus::xevent_blockfetcher_blockhash_t>(address, height, view_id, hash, network_self, from_address);
     m_block_fetcher->push_event(ev);
 }
 
@@ -453,7 +453,7 @@ void xsync_handler_t::blocks(uint32_t msg_size, const vnetwork::xvnode_address_t
             return;
     }
 
-    mbus::xevent_ptr_t e = std::make_shared<mbus::xevent_sync_response_blocks_t>(blocks, network_self, from_address);
+    mbus::xevent_ptr_t e = make_object_ptr<mbus::xevent_sync_response_blocks_t>(blocks, network_self, from_address);
     m_downloader->push_event(e);
 }
 
@@ -483,7 +483,7 @@ void xsync_handler_t::gossip(uint32_t msg_size, const vnetwork::xvnode_address_t
         if (info.local_height == info.peer_height)
             continue;
 
-        mbus::xevent_ptr_t ev = std::make_shared<mbus::xevent_behind_download_t>(address, 0, info.peer_height, enum_chain_sync_pocliy_full, network_self, from_address, reason);
+        mbus::xevent_ptr_t ev = make_object_ptr<mbus::xevent_behind_download_t>(address, 0u, info.peer_height, enum_chain_sync_pocliy_full, network_self, from_address, reason);
         m_downloader->push_event(ev);
     }
 }
@@ -666,7 +666,7 @@ void xsync_handler_t::response_chain_state(uint32_t msg_size, const vnetwork::xv
     int64_t recv_time) {
 
     XMETRICS_COUNTER_INCREMENT("sync_pkgs_response_chain_state_recv", 1);
-    XMETRICS_COUNTER_INCREMENT("sync_bytes_response_chain_state_recv", msg_size); 
+    XMETRICS_COUNTER_INCREMENT("sync_bytes_response_chain_state_recv", msg_size);
 
     auto ptr = make_object_ptr<xsync_message_chain_state_info_t>();
     ptr->serialize_from(stream);
@@ -725,7 +725,7 @@ void xsync_handler_t::get_blocks_by_hashes(uint32_t msg_size,
         int64_t recv_time) {
 
     XMETRICS_COUNTER_INCREMENT("sync_pkgs_get_blocks_by_hashes_recv", 1);
-    XMETRICS_COUNTER_INCREMENT("sync_bytes_get_blocks_by_hashes_recv", msg_size); 
+    XMETRICS_COUNTER_INCREMENT("sync_bytes_get_blocks_by_hashes_recv", msg_size);
 
     auto ptr = make_object_ptr<xsync_message_get_blocks_by_hashes_t>();
     ptr->serialize_from(stream);
@@ -784,14 +784,14 @@ void xsync_handler_t::blocks_by_hashes(uint32_t msg_size,
     xsync_info("xsync_handler receive blocks_by_hashes %" PRIx64 " wait(%ldms) count(%u) code(%u) %s",
         msg_hash, get_time()-recv_time, count, header->code, from_address.to_string().c_str());
 
-    mbus::xevent_ptr_t e = std::make_shared<mbus::xevent_sync_response_blocks_t>(blocks, network_self, from_address);
+    mbus::xevent_ptr_t e = make_object_ptr<mbus::xevent_sync_response_blocks_t>(blocks, network_self, from_address);
     m_block_fetcher->push_event(e);
 }
 
 void xsync_handler_t::handle_role_change(const mbus::xevent_ptr_t& e) {
     if (e->minor_type == xevent_role_t::add_role) {
 
-        auto bme = std::static_pointer_cast<mbus::xevent_role_add_t>(e);
+        auto bme = dynamic_xobject_ptr_cast<mbus::xevent_role_add_t>(e);
         std::shared_ptr<vnetwork::xvnetwork_driver_face_t> &vnetwork_driver = bme->m_vnetwork_driver;
 
         vnetwork::xvnode_address_t addr = vnetwork_driver->address();
@@ -840,7 +840,7 @@ void xsync_handler_t::handle_role_change(const mbus::xevent_ptr_t& e) {
         xchains_wrapper_t& chains_wrapper = role_chains->get_chains_wrapper();
         const map_chain_info_t &chains = chains_wrapper.get_chains();
         for (const auto &it: chains) {
-            xevent_ptr_t ev = std::make_shared<mbus::xevent_account_add_role_t>(it.second.address);
+            xevent_ptr_t ev = make_object_ptr<mbus::xevent_account_add_role_t>(it.second.address);
             m_downloader->push_event(ev);
             m_block_fetcher->push_event(ev);
         }
@@ -854,7 +854,7 @@ void xsync_handler_t::handle_role_change(const mbus::xevent_ptr_t& e) {
         xsync_kinfo("xsync_handler add_role_result(after) %s %s", addr.to_string().c_str(), new_role_string.c_str());
 
     } else if (e->minor_type == xevent_role_t::remove_role) {
-        auto bme = std::static_pointer_cast<mbus::xevent_role_remove_t>(e);
+        auto bme = dynamic_xobject_ptr_cast<mbus::xevent_role_remove_t>(e);
         std::shared_ptr<vnetwork::xvnetwork_driver_face_t> &vnetwork_driver = bme->m_vnetwork_driver;
 
         vnetwork::xvnode_address_t addr = vnetwork_driver->address();
@@ -881,7 +881,7 @@ void xsync_handler_t::handle_role_change(const mbus::xevent_ptr_t& e) {
         xchains_wrapper_t& chains_wrapper = role_chains->get_chains_wrapper();
         const map_chain_info_t &chains = chains_wrapper.get_chains();
         for (const auto &it: chains) {
-            xevent_ptr_t ev = std::make_shared<mbus::xevent_account_remove_role_t>(it.second.address);
+            xevent_ptr_t ev = make_object_ptr<mbus::xevent_account_remove_role_t>(it.second.address);
             m_downloader->push_event(ev);
             m_block_fetcher->push_event(ev);
         }
@@ -898,7 +898,7 @@ void xsync_handler_t::handle_role_change(const mbus::xevent_ptr_t& e) {
 
 void xsync_handler_t::handle_consensus_result(const mbus::xevent_ptr_t& e) {
 
-    auto ptr = std::static_pointer_cast<mbus::xevent_consensus_data_t>(e);
+    auto ptr = dynamic_xobject_ptr_cast<mbus::xevent_consensus_data_t>(e);
     xblock_ptr_t block = autoptr_to_blockptr(ptr->vblock_ptr);
 
     const std::string &address = block->get_account();
@@ -923,7 +923,7 @@ void xsync_handler_t::handle_chain_snapshot_request(
     auto ptr = make_object_ptr<xsync_message_chain_snapshot_meta_t>();
     ptr->serialize_from(stream);
 
-	XMETRICS_COUNTER_INCREMENT("sync_handle_chain_snapshot_request", 1);
+    XMETRICS_COUNTER_INCREMENT("sync_handle_chain_snapshot_request", 1);
     xsync_info("xsync_handler receive chain_snapshot_request %" PRIx64 " wait(%ldms) %s",
         msg_hash, get_time()-recv_time, from_address.to_string().c_str());
     base::xauto_ptr<base::xvblock_t> blk = m_sync_store->load_block_object(ptr->m_account_addr, ptr->m_height_of_fullblock);
@@ -934,7 +934,7 @@ void xsync_handler_t::handle_chain_snapshot_request(
             xtable_mbt_ptr_t table_mbt;
             chain_snapshot_ptr->add_ref();
             table_mbt.attach((xtable_mbt_t*)chain_snapshot_ptr.get());
-            xsync_message_chain_snapshot_t chain_snapshot(ptr->m_account_addr, 
+            xsync_message_chain_snapshot_t chain_snapshot(ptr->m_account_addr,
                 table_mbt, ptr->m_height_of_fullblock);
             m_sync_sender->send_chain_snapshot(chain_snapshot, network_self, from_address);
         } else {
@@ -953,17 +953,17 @@ void xsync_handler_t::handle_chain_snapshot_response(uint32_t msg_size, const vn
     base::xstream_t &stream,
     xtop_vnetwork_message::hash_result_type msg_hash,
     int64_t recv_time) {
-        
+
     auto ptr = make_object_ptr<xsync_message_chain_snapshot_t>();
     ptr->serialize_from(stream);
-    
-    xsync_info("xsync_handler chain snapshot reponse %" PRIx64 " wait(%ldms) %s", 
+
+    xsync_info("xsync_handler chain snapshot reponse %" PRIx64 " wait(%ldms) %s",
         msg_hash, get_time()-recv_time, from_address.to_string().c_str());
-    
+
     XMETRICS_COUNTER_INCREMENT("sync_handler_chain_snapshot_reponse", 1);
 
-    mbus::xevent_ptr_t e = std::make_shared<mbus::xevent_chain_snaphsot_t>(ptr->m_tbl_account_addr, ptr->m_chain_snapshot, ptr->m_height_of_fullblock, network_self, from_address);
-    m_downloader->push_event(e); 
+    mbus::xevent_ptr_t e = make_object_ptr<mbus::xevent_chain_snaphsot_t>(ptr->m_tbl_account_addr, ptr->m_chain_snapshot, ptr->m_height_of_fullblock, network_self, from_address);
+    m_downloader->push_event(e);
 }
 
 int64_t xsync_handler_t::get_time() {

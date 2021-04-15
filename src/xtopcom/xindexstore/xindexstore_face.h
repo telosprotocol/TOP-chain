@@ -5,7 +5,7 @@
 #pragma once
 
 #include <string>
-#include "xbase/xvledger.h"
+// TODO(jimmy) #include "xbase/xvledger.h"
 #include "xdata/xblock.h"
 #include "xdata/xtableindex.h"
 #include "xstore/xstore_face.h"

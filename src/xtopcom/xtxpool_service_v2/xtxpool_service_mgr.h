@@ -7,7 +7,6 @@
 #include "xbase/xbase.h"
 #include "xbase/xobject.h"
 #include "xbase/xthread.h"
-#include "xbasic/xns_macro.h"
 #include "xtxpool_service_v2/xcons_utl.h"
 #include "xtxpool_service_v2/xtxpool_service_face.h"
 #include "xtxpool_service_v2/xtxpool_svc_para.h"

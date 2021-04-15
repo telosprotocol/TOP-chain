@@ -1,7 +1,9 @@
 #include "gtest/gtest.h"
+#include "xvledger/xvcertauth.h"
+#include "xvledger/xvledger.h"
 #include "xblockmaker/xunit_maker.h"
 #include "xstore/xstore_face.h"
-#include "xstore/test/test_datamock.hpp"
+// #include "xstore/test/test_datamock.hpp"
 #include "xstore/xaccount_context.h"
 #include "xblockstore/xblockstore_face.h"
 #include "xindexstore/xindexstore_face.h"
@@ -10,7 +12,9 @@
 #include "tests/mock/xdatamock_table.hpp"
 #include "tests/mock/xdatamock_tx.hpp"
 #include "tests/mock/xcertauth_util.hpp"
+#include "tests/mock/xtestdb.hpp"
 
+using namespace top;
 using namespace top::blockmaker;
 using namespace top::store;
 using namespace top::base;
@@ -98,14 +102,16 @@ class test_xblockmaker_resources_t : public xblockmaker_resources_t {
 
  public:
     test_xblockmaker_resources_t() {
-        xobject_ptr_t<xstore_face_t> store_face = xstore_factory::create_store_with_memdb();
-        auto store = store_face.get();
-        m_store = store_face;
-        xvblockstore_t* blockstore = xblockstorehub_t::instance().create_block_store(*store, {});
+        m_store = xstore_factory::create_store_with_memdb();
+        base::xvchain_t::instance().set_xdbstore(m_store.get());
+        m_mbus_store = new mock::xveventbus_impl();
+        base::xvchain_t::instance().set_xevmbus(m_mbus_store);
+
+        xvblockstore_t* blockstore = store::get_vblockstore();
         m_blockstore.attach(blockstore);
-        m_indexstore = xindexstore_factory_t::create_indexstorehub(make_observer(store), make_observer(blockstore));
+        m_indexstore = xindexstore_factory_t::create_indexstorehub(make_observer(m_store.get()), make_observer(blockstore));
         m_ca = make_object_ptr<test_xmock_auth_t>();
-        m_txpool = xtxpool_instance::create_xtxpool_inst(make_observer(store), make_observer(blockstore), make_observer(m_ca.get()), make_observer(m_indexstore.get()));
+        m_txpool = xtxpool_instance::create_xtxpool_inst(make_observer(m_store.get()), make_observer(blockstore), make_observer(m_ca.get()), make_observer(m_indexstore.get()));
     }
 
     virtual store::xstore_face_t*       get_store() const {return m_store.get();}
@@ -114,6 +120,7 @@ class test_xblockmaker_resources_t : public xblockmaker_resources_t {
     virtual store::xindexstorehub_t*    get_indexstorehub() const {return m_indexstore.get();}
 
  private:
+    mock::xveventbus_impl*              m_mbus_store;
     xstore_face_ptr_t               m_store{nullptr};
     xobject_ptr_t<xvblockstore_t>   m_blockstore{nullptr};
     xobject_ptr_t<xindexstorehub_t> m_indexstore{nullptr};

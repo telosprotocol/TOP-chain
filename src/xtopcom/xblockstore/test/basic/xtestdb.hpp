@@ -7,19 +7,21 @@
 #include <string>
 #include <map>
 #include "xblockstore/xblockstore_face.h"
+#include "xvledger/xvdbstore.h"
+#include "xvledger/xveventbus.h"
 
 namespace top
 {
     namespace test
     {
-        #ifdef __MAC_PLATFORM__
-        class xstoredb_t : public store::xstore_face_t
+        class xstoredb_t : public base::xvdbstore_t
         {
         public:
-            xstoredb_t();
+            xstoredb_t(const std::string & store_path);
         protected:
             virtual ~xstoredb_t();
         private:
+            xstoredb_t();
             xstoredb_t(const xstoredb_t &);
             xstoredb_t & operator = (const xstoredb_t &);
             
@@ -32,15 +34,37 @@ namespace top
             virtual bool             get_vblock_input(const std::string & store_path,base::xvblock_t* for_block)  const override;
             virtual bool             get_vblock_output(const std::string & store_path,base::xvblock_t* for_block) const override;
             
-            virtual bool             execute_block(base::xvblock_t* block) override;
         public://key-value manage
             virtual bool                set_value(const std::string & key, const std::string& value) override;
             virtual bool                delete_value(const std::string & key) override;
             virtual const std::string   get_value(const std::string & key) const override;
+            virtual bool                find_values(const std::string & key,std::vector<std::string> & values) override;//support wild search
             
+            virtual bool                execute_block(base::xvblock_t* block) override;
+        public:
+            virtual std::string         get_store_path() const  override {return m_store_path;}
         private:
+            std::string                         m_store_path;
             std::map<std::string,std::string >  m_dumy_store;
         };
-        #endif //end of __MAC_PLATFORM__
+    
+        class xveventbus_impl : public base::xveventbus_t
+        {
+        public:
+            xveventbus_impl(){};
+        protected:
+            virtual ~xveventbus_impl(){};
+        private:
+            xveventbus_impl(xveventbus_impl &&);
+            xveventbus_impl(const xveventbus_impl &);
+            xveventbus_impl & operator = (const xveventbus_impl &);
+            
+        public: //api for event
+            virtual void   push_event(const mbus::xevent_ptr_t& e) override; //push event into mbus system
+            
+        public://declares clasic events
+            virtual mbus::xevent_ptr_t  create_event_for_store_index_to_db(base::xvbindex_t * target_block) override;
+            virtual mbus::xevent_ptr_t  create_event_for_store_block_to_db(base::xvblock_t * target_block) override;
+        };
     };
 };

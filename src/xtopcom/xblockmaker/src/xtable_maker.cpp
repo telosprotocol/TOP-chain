@@ -107,11 +107,6 @@ int32_t xtable_maker_t::check_latest_state(const xblock_ptr_t & latest_block) {
 
     // update latest committed block and blockchain state
     xblock_ptr_t latest_committed_block = get_highest_commit_block();
-    if (!latest_committed_block->check_block_flag(base::enum_xvblock_flag_committed)) {
-        xwarn("xtable_maker_t::check_latest_state fail-committed block flag invalid.latest_committed_block=%s",
-            latest_committed_block->dump().c_str());
-        return xblockmaker_error_latest_table_blocks_invalid;
-    }
     set_latest_committed_block(latest_committed_block);
     clear_old_unit_makers();
 
@@ -375,7 +370,7 @@ bool    xtable_maker_t::load_table_blocks_from_last_full(const xblock_ptr_t & pr
     const std::string & account = prev_block->get_account();
     uint64_t height = begin_height;
     while (height < end_height) {
-        base::xauto_ptr<base::xvblock_t> _block = get_blockstore()->load_block_object(account, height);
+        base::xauto_ptr<base::xvblock_t> _block = get_blockstore()->load_block_object(base::xvaccount_t(account), height, 0, true);
         if (_block == nullptr) {
             xerror("xfulltable_builder_t::load_table_blocks_from_last_full fail-load block.account=%s,height=%ld", account.c_str(), height);
             return false;
@@ -417,7 +412,7 @@ xblock_ptr_t xtable_maker_t::make_proposal(xtablemaker_para_t & table_para,
         int32_t ret = check_latest_state(latest_cert_block);
         if (ret != xsuccess) {
             xwarn("xtable_maker_t::can_make_next_block fail-check_latest_state. %s", cs_para.dump().c_str());
-            return false;
+            return nullptr;
         }
     }
 

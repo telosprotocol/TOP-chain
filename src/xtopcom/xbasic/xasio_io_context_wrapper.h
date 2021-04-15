@@ -6,7 +6,7 @@
 
 #include "xbase/xthread.h"
 #include "xbasic/xasio_config.h"
-#include "xbasic/xobject_ptr.h"
+#include "xbase/xobject_ptr.h"
 #include "xbasic/xmemory.hpp"
 #include "xbasic/xrunnable.h"
 

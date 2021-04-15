@@ -4,7 +4,6 @@
 
 #pragma once
 
-#include "xbasic/xns_macro.h"
 #include "xbasic/xversion.h"
 #include "xBFT/xconsengine.h"
 

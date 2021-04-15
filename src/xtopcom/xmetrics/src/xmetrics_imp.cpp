@@ -14,7 +14,7 @@
 #include "xbase/xcontext.h"
 #include "xbase/xtimer.h"
 #include "xbase/xthread.h"
-#include "xbasic/xobject_ptr.h"
+#include "xbase/xobject_ptr.h"
 #include "xbase/xlog.h"
 #include "xbase/xrwspinlock.h"
 

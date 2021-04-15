@@ -7,7 +7,6 @@
 #include <string>
 #include <vector>
 
-#include "xbasic/xns_macro.h"
 #include "xdata/xtransaction.h"
 #include "xdata/xcons_transaction.h"
 #include "xstore/xaccount_context.h"

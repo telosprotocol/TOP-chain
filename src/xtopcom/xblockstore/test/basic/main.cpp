@@ -39,6 +39,8 @@ int test_sync_vstore(store::xsyncvstore_t* sync_store)
     const std::string account_publick_addr = "1234567890abcdef";
     const std::string test_account_address =  top::base::xvaccount_t::make_account_address(top::base::enum_vaccount_addr_type_secp256k1_user_account, 0, account_publick_addr);
     
+    base::xvaccount_t test_account_obj(test_account_address);
+    
     const int total_test_blocks = 250;
     std::vector<base::xvblock_t*>  generated_blocks;
     generated_blocks.resize(total_test_blocks);
@@ -89,7 +91,19 @@ int test_sync_vstore(store::xsyncvstore_t* sync_store)
 #else
     for(int i = 0; i < total_test_blocks; ++i)
     {
-        sync_store->store_block(generated_blocks[block_indexs[i]]);//push block as random order
+        base::xvblock_t * test_block = generated_blocks[block_indexs[i]];
+        if(test_block->get_height() != 0)
+            sync_store->store_block(test_block);//push block as random order
+    }
+    
+    for(int i = 0; i < total_test_blocks; ++i)
+    {
+        base::xvblock_t * test_block = generated_blocks[i];
+        
+        base::xauto_ptr<base::xvblock_t> loaded_block(sync_store->get_vblockstore()->load_block_object(test_account_obj, test_block->get_height(), test_block->get_viewid(),true));
+        
+        if(loaded_block->check_block_flag(base::enum_xvblock_flag_committed))
+            sync_store->get_vblockstore()->execute_block(test_account_obj,loaded_block.get());//push block as random order
     }
 #endif
     
@@ -98,14 +112,15 @@ int test_sync_vstore(store::xsyncvstore_t* sync_store)
     printf("////////////////////////////////////////////////////////////// \n");
     for(auto it : generated_blocks)
     {
-        if(false == it->check_block_flag(base::enum_xvblock_flag_committed))
-            printf("block is not commit as detail=%s \n",it->dump().c_str());
+        base::xauto_ptr<base::xvbindex_t> index(sync_store->get_vblockstore()->load_block_index(test_account_obj, it->get_height(), it->get_viewid()));
+        if(false == index->check_block_flag(base::enum_xvblock_flag_committed))
+            printf("block is not commit as detail=%s \n",index->dump().c_str());
         
-        if(false == it->check_block_flag(base::enum_xvblock_flag_connected))
-            printf("block is not connected as detail=%s \n",it->dump().c_str());
+        if(false == index->check_block_flag(base::enum_xvblock_flag_connected))
+            printf("block is not connected as detail=%s \n",index->dump().c_str());
         
-        if(false == it->check_block_flag(base::enum_xvblock_flag_executed))
-            printf("block is not executed as detail=%s \n",it->dump().c_str());
+        if(false == index->check_block_flag(base::enum_xvblock_flag_executed))
+            printf("block is not executed as detail=%s \n",index->dump().c_str());
         
         it->release_ref();
     }
@@ -128,19 +143,21 @@ int main(int argc, const char * argv[]) {
     xset_log_level(enum_xlog_level_key_info);
 #endif
     
+    xdup_trace_to_terminal(true);
+    
     new top::xhashtest_t(); //register this plugin into xbase
     
     xschnorrcert_t*       global_certauth   = new xschnorrcert_t(4);
     
-#ifdef __MAC_PLATFORM__
-    const std::string  default_path = std::string("/0x") + base::xstring_utl::tostring(1);
-    store::xstore_face_t* _persist_db = new xstoredb_t();
-    base::xauto_ptr<base::xvblockstore_t> vblockstore_ptr(store::xblockstorehub_t::instance().create_block_store(*_persist_db,default_path));
-#else
-    base::xauto_ptr<base::xvblockstore_t> vblockstore_ptr(new xunitblockstore_t());
-#endif
+    xveventbus_impl * mbus_store = new xveventbus_impl();
+    base::xvchain_t::instance().set_xevmbus(mbus_store);
     
-    store::xsyncvstore_t* global_sync_store = new store::xsyncvstore_t(*global_certauth,*vblockstore_ptr.get());
+    const std::string  default_path = "/";
+    xstoredb_t* _persist_db = new xstoredb_t(default_path);
+    base::xvchain_t::instance().set_xdbstore(_persist_db);
+    base::xvblockstore_t * blockstore_ptr = store::get_vblockstore();
+    
+    store::xsyncvstore_t* global_sync_store = new store::xsyncvstore_t(*global_certauth,*blockstore_ptr);
     
     const int result = test_sync_vstore(global_sync_store);
     if(result != 0)

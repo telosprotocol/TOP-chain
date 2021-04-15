@@ -4,8 +4,8 @@
 
 #pragma once
 
-#include "xbase/xvledger.h"
-#include "xbasic/xns_macro.h"
+#include "xvledger/xvcnode.h"
+#include "xvledger/xvblockstore.h"
 #include "xmbus/xmessage_bus.h"
 #include "xbasic/xmemory.hpp"
 #include "xbasic/xlru_cache.h"

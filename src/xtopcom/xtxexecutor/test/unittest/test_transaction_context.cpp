@@ -181,7 +181,7 @@ function set_property()\n\
   print('value:' .. value or '')\n\
 end\n\
 ");
-    tx->make_tx_create_contract_account(asset_out, 0, code);
+    // tx->make_tx_create_contract_account(asset_out, 0, code);
     tx->get_source_action().set_action_type(data::xaction_type_asset_out);
     tx->set_different_source_target_address(source_account, target_account);
     tx->set_deposit(ASSET_TOP(0.4));
@@ -224,7 +224,7 @@ function set_property()\n\
   print('value:' .. value or '')\n\
 end\n\
 ");
-    tx->make_tx_create_contract_account(asset_out, 0, code);
+    // tx->make_tx_create_contract_account(asset_out, 0, code);
     tx->get_source_action().set_action_type(data::xaction_type_asset_out);
     tx->set_different_source_target_address(source_account, target_account);
     tx->set_deposit(ASSET_TOP(0.4));

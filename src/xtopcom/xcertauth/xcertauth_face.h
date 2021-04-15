@@ -4,9 +4,9 @@
 
 #pragma once
 
-#include "xbase/xvblock.h"
-#include "xbase/xvledger.h"
-#include "xbasic/xobject_ptr.h"
+#include "xvledger/xvcnode.h"
+#include "xvledger/xvcertauth.h"
+#include "xbase/xobject_ptr.h"
 
 namespace top
 {

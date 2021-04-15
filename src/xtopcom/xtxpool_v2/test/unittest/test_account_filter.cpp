@@ -1,6 +1,6 @@
 #include "gtest/gtest.h"
 #include "test_xtxpool_util.h"
-#include "xbase/xvledger.h"
+// TODO(jimmy) #include "xbase/xvledger.h"
 #include "xdata/xgenesis_data.h"
 #include "xdata/xtransaction_maker.hpp"
 #include "xloader/xconfig_onchain_loader.h"
@@ -21,12 +21,12 @@ using namespace std;
 class test_account_recv_filter : public testing::Test {
 protected:
     void SetUp() override {
-        
+
     }
 
     void TearDown() override {}
 public:
-    std::vector<xcons_transaction_ptr_t> get_tx(base::xvblockstore_t *blockstore, xstore_face_t *store, std::string sender, 
+    std::vector<xcons_transaction_ptr_t> get_tx(base::xvblockstore_t *blockstore, xstore_face_t *store, std::string sender,
                         std::string receiver, std::vector<xcons_transaction_ptr_t> txs, xblock_t **block){
         *block = test_xtxpool_util_t::create_unit_with_cons_txs(blockstore, store, sender, txs);
         data::xlightunit_block_t *           lightunit = dynamic_cast<data::xlightunit_block_t *>(*block);
@@ -58,7 +58,7 @@ TEST_F(test_account_recv_filter, recvtx_has_been_committed) {
     block = test_xtxpool_util_t::create_unit_with_cons_txs(blockstore.get(), blockdb.get(), receiver, recvtxs);
 
     //construct sendtx filter
-    std::shared_ptr<xaccount_recvtx_filter> filter = std::make_shared<xaccount_recvtx_filter>(receiver, blockstore.get());
+    xaccount_recvtx_filter_ptr_t filter = make_object_ptr<xaccount_recvtx_filter>(receiver, blockstore.get());
     bool deny = false;
     for (uint32_t i = 0; i < 2;i++){
         enum_xtxpool_error_type ret = filter->reject(recvtxs[0], deny);
@@ -84,9 +84,9 @@ TEST_F(test_account_recv_filter, recvtx_has_not_been_committed_and_blockstore_on
     std::vector<xcons_transaction_ptr_t> recvtxs = get_tx(blockstore.get(), blockdb.get(), sender, receiver, txs, &block);
 
     test_xtxpool_util_t::create_genesis_account(blockdb.get(), receiver);
-    
+
     //construct sendtx filter
-    std::shared_ptr<xaccount_recvtx_filter> filter = std::make_shared<xaccount_recvtx_filter>(receiver, blockstore.get());
+    xaccount_recvtx_filter_ptr_t filter = make_object_ptr<xaccount_recvtx_filter>(receiver, blockstore.get());
     bool deny = false;
     for (uint32_t i = 0; i < 2;i++){
         enum_xtxpool_error_type ret = filter->reject(recvtxs[0], deny);
@@ -94,7 +94,7 @@ TEST_F(test_account_recv_filter, recvtx_has_not_been_committed_and_blockstore_on
         ASSERT_EQ(ret, xtxpool_success);
     }
 
-    filter = std::make_shared<xaccount_recvtx_filter>(receiver, blockstore.get());
+    filter = make_object_ptr<xaccount_recvtx_filter>(receiver, blockstore.get());
     for (uint32_t i = 0; i < 2;i++){
         enum_xtxpool_error_type ret = filter->reject(recvtxs[0], 0, deny);
         ASSERT_EQ(deny, false);
@@ -127,7 +127,7 @@ TEST_F(test_account_recv_filter, recvtx_has_not_been_committed_and_blockstore_ex
     recvtxs = get_tx(blockstore.get(), blockdb.get(), sender, receiver, txs2, &block1);
 
     //construct sendtx filter
-    std::shared_ptr<xaccount_recvtx_filter> filter = std::make_shared<xaccount_recvtx_filter>(receiver, blockstore.get());
+    xaccount_recvtx_filter_ptr_t filter = make_object_ptr<xaccount_recvtx_filter>(receiver, blockstore.get());
     bool deny = false;
     for (uint32_t i = 0; i < 2;i++){
         enum_xtxpool_error_type ret = filter->reject(recvtxs[0], deny);
@@ -135,7 +135,7 @@ TEST_F(test_account_recv_filter, recvtx_has_not_been_committed_and_blockstore_ex
         ASSERT_EQ(ret, xtxpool_success);
     }
 
-    filter = std::make_shared<xaccount_recvtx_filter>(receiver, blockstore.get());
+    filter = make_object_ptr<xaccount_recvtx_filter>(receiver, blockstore.get());
     for (uint32_t i = 0; i < 2;i++){
         enum_xtxpool_error_type ret = filter->reject(recvtxs[0], block->get_height(), deny);
         ASSERT_EQ(deny, false);
@@ -168,9 +168,9 @@ TEST_F(test_account_recv_filter, lack_some_block_in_the_blockstore) {
     xlightunit_block_para_t para;
     para.set_input_txs(txs2);
     base::xvblock_t *not_exist_block = test_blocktuil::create_next_lightunit_with_consensus(para, block);
-    
+
     //construct sendtx filter
-    std::shared_ptr<xaccount_recvtx_filter> filter = std::make_shared<xaccount_recvtx_filter>(receiver, blockstore.get());
+    xaccount_recvtx_filter_ptr_t filter = make_object_ptr<xaccount_recvtx_filter>(receiver, blockstore.get());
     bool deny = false;
     for (uint32_t i = 0; i < 2; i++){
         enum_xtxpool_error_type ret = filter->update_reject_rule(dynamic_cast<data::xblock_t *>(not_exist_block));
@@ -180,7 +180,7 @@ TEST_F(test_account_recv_filter, lack_some_block_in_the_blockstore) {
     std::vector<xcons_transaction_ptr_t> txs3;
     txs3.push_back(txs[2]);
     recvtxs = get_tx(blockstore.get(), blockdb.get(), sender, receiver, txs3, &block);
-    filter = std::make_shared<xaccount_recvtx_filter>(receiver, blockstore.get());
+    filter = make_object_ptr<xaccount_recvtx_filter>(receiver, blockstore.get());
     for (uint32_t i = 0; i < 2; i++){
         enum_xtxpool_error_type ret = filter->reject(recvtxs[0], block->get_height() + 1, deny);
         ASSERT_EQ(deny, false);
@@ -198,7 +198,7 @@ public:
     // xobject_ptr_t<xstore_face_t> m_blockdb;
     // xobject_ptr_t<base::xvblockstore_t> m_blockstore;
 
-    std::vector<xcons_transaction_ptr_t> get_tx(base::xvblockstore_t *blockstore, xstore_face_t *store, std::string sender, 
+    std::vector<xcons_transaction_ptr_t> get_tx(base::xvblockstore_t *blockstore, xstore_face_t *store, std::string sender,
                     std::string receiver, std::vector<xcons_transaction_ptr_t> txs, xblock_t **block){
         *block = test_xtxpool_util_t::create_unit_with_cons_txs(blockstore, store, sender, txs);
         data::xlightunit_block_t *           lightunit = dynamic_cast<data::xlightunit_block_t *>(*block);
@@ -301,7 +301,7 @@ TEST_F(test_account_confirmtx_filter, confirmtx_has_not_been_committed_and_block
     xblock_t *block;
     std::vector<xcons_transaction_ptr_t> confirmtxs = get_tx(blockstore.get(),blockdb.get(), sender, receiver, txs1, &block);
     block = test_xtxpool_util_t::create_unit_with_cons_txs(blockstore.get(),blockdb.get(), sender, confirmtxs);
-    
+
     std::vector<xcons_transaction_ptr_t> txs2;
     txs2.push_back(txs[1]);
     confirmtxs = get_tx(blockstore.get(),blockdb.get(), sender, receiver, txs2, &block);
@@ -341,14 +341,14 @@ TEST_F(test_account_confirmtx_filter, lack_some_block_in_the_blockstore) {
     xblock_t *block;
     std::vector<xcons_transaction_ptr_t> confirmtxs = get_tx(blockstore.get(),blockdb.get(), sender, receiver, txs1, &block);
     block = test_xtxpool_util_t::create_unit_with_cons_txs(blockstore.get(),blockdb.get(), sender, confirmtxs);
-    
+
     // construct not exist block
     xlightunit_block_para_t para;
     std::vector<xcons_transaction_ptr_t> txs2;
     txs2.push_back(txs[1]);
     para.set_input_txs(txs2);
     base::xvblock_t *not_exist_block = test_blocktuil::create_next_lightunit_with_consensus(para, block);
-    
+
     //construct sendtx filter
     std::shared_ptr<xaccount_confirmtx_filter> filter = std::make_shared<xaccount_confirmtx_filter>(sender, blockstore.get());
     bool deny = false;

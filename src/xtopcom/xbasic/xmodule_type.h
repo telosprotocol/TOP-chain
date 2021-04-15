@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include "xbase/xns_macro.h"
+
 #include <string>
 #include <unordered_map>
 
@@ -14,6 +16,7 @@ namespace top { namespace chainbase {
 
 enum enum_xmodule_type {
     // xtopcom use 0x00100000, xchain use 0x00200000
+    xmodule_type_xcontract_runtime    = 0x00210000,
     xmodule_type_xstore               = 0x00220000,
     xmodule_type_xsync                = 0x00230000,
     xmodule_type_xelect               = 0x00240000,

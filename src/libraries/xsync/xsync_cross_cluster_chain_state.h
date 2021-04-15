@@ -7,12 +7,11 @@
 #include <atomic>
 #include <mutex>
 #include <unordered_map>
-#include "xbasic/xns_macro.h"
 #include "xdata/xdata_common.h"
 #include "xbasic/xmemory.hpp"
 #include "xbase/xutl.h"
 
-#include "xbase/xvblock.h"
+#include "xvledger/xvblock.h"
 #include "xsync/xsync_store.h"
 #include "xsync/xrole_chains_mgr.h"
 #include "xsync/xrole_xips_manager.h"

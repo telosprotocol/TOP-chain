@@ -10,7 +10,7 @@
 #    define USE_STANDALONE_ASIO
 #endif
 #include "xbasic/xmemory.hpp"
-#include "xbasic/xobject_ptr.h"
+#include "xbase/xobject_ptr.h"
 #include "xcodec/xmsgpack_codec.hpp"
 #include "xrpc/xrpc_define.h"
 #include "xrpc/xrpc_msg_define.h"

@@ -11,9 +11,9 @@ NS_BEG2(top, xtxpool_v2)
 
 #define xtxpool_more_clock_height (20)
 
-xaccount_addr_t xaccount_filter::get_account_addr() {
-    return m_account_addr;
-}
+// base::xvaccount_t xaccount_filter::get_account_addr() {
+//     return *this;
+// }
 
 base::xvblockstore_t * xaccount_filter::get_blockstore() {
     return m_blockstore;
@@ -22,7 +22,7 @@ base::xvblockstore_t * xaccount_filter::get_blockstore() {
 enum_xtxpool_error_type xaccount_recvtx_filter::reject(const xcons_transaction_ptr_t & tx, bool & deny) {
     deny = false;
     if (m_height_of_unitblocks.empty()) {
-        auto unit_block = get_blockstore()->get_latest_committed_block(get_account_addr());
+        auto unit_block = get_blockstore()->get_latest_committed_block(*this);
         xassert(unit_block != nullptr);
 
         return sync_reject_rules_and_reject(tx, unit_block->get_height(), deny);
@@ -87,7 +87,7 @@ enum_xtxpool_error_type xaccount_recvtx_filter::sync_reject_rules_and_reject(con
             continue;
         }
 
-        auto unit_block = get_blockstore()->load_block_object(get_account_addr(), cur_height);
+        auto unit_block = get_blockstore()->load_block_object(*this, cur_height, base::enum_xvblock_flag_committed, true);
         if (unit_block == nullptr) {
             xtxpool_info("lack unitblock, the height is %u tx:%s", cur_height, tx->dump(true).c_str());
             return xtxpool_error_unitblock_lack;
@@ -231,7 +231,7 @@ const std::vector<xcons_transaction_ptr_t> xaccount_confirmtx_filter::get_resend
 }
 
 enum_xtxpool_error_type xaccount_confirmtx_filter::initialize() {
-    auto unit_block = get_blockstore()->get_latest_committed_block(get_account_addr());
+    auto unit_block = get_blockstore()->get_latest_committed_block(*this);
     xassert(unit_block != nullptr);
     enum_xtxpool_error_type result = sync_reject_rules(unit_block->get_height());
     return result;
@@ -242,14 +242,14 @@ enum_xtxpool_error_type xaccount_confirmtx_filter::sync_reject_rules(uint64_t un
 
     std::map<xtx_hash_t, xtx_unconfirm_tx_entry> send_txs;
     for (uint64_t cur_height = unitblock_height; cur_height > m_highest_height; cur_height--) {
-        auto unit_block = get_blockstore()->load_block_object(get_account_addr(), cur_height);
+        auto unit_block = get_blockstore()->load_block_object(*this, cur_height, base::enum_xvblock_flag_committed, true);
         if (unit_block == nullptr) {
             xtxpool_dbg_info("lack unitblock, the height is %u", cur_height);
             return xtxpool_error_unitblock_lack;
         }
 
         if (unit_block->is_genesis_block() || !data::xblocktool_t::is_connect_and_executed_block(unit_block.get())) {
-            xtxpool_warn("[unconfirm cache]account state behind, can't update.account=%s,block=%s", get_account_addr().c_str(), unit_block->dump().c_str());
+            xtxpool_warn("[unconfirm cache]account state behind, can't update.account=%s,block=%s", get_account().c_str(), unit_block->dump().c_str());
             return xtxpool_error_unitblock_lack;
         }
 
@@ -258,7 +258,7 @@ enum_xtxpool_error_type xaccount_confirmtx_filter::sync_reject_rules(uint64_t un
             confirm_txs.clear();
             m_permit_rules.clear();
             m_unconfirm_txs.clear();
-            xtxpool_info("account:%s meet the full unitblock, means all send tx have confirmed before the height %llu", get_account_addr().c_str(), unit_block->get_height());
+            xtxpool_info("account:%s meet the full unitblock, means all send tx have confirmed before the height %llu", get_account().c_str(), unit_block->get_height());
             break;
         }
 
@@ -274,7 +274,7 @@ enum_xtxpool_error_type xaccount_confirmtx_filter::sync_reject_rules(uint64_t un
             confirm_txs.clear();
             m_permit_rules.clear();
             m_unconfirm_txs.clear();
-            xtxpool_info("account:%s meet the unconfirm send tx zero light unitblock, means all send tx have confirmed before the height %llu", get_account_addr().c_str(), unit_block->get_height());
+            xtxpool_info("account:%s meet the unconfirm send tx zero light unitblock, means all send tx have confirmed before the height %llu", get_account().c_str(), unit_block->get_height());
             break;
         }
 
@@ -323,7 +323,7 @@ enum_xtxpool_error_type xaccount_confirmtx_filter::sync_reject_rules(uint64_t un
     } else if (send_txs.size() < confirm_txs.size()) {
         XMETRICS_COUNTER_DECREMENT("txpool_unconfirm_tx", confirm_txs.size() - send_txs.size());
     }
-    
+
     return xtxpool_success;
 }
 

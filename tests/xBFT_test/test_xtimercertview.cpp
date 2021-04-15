@@ -1,6 +1,6 @@
 #include "gtest/gtest.h"
 #include "xBFT/src/xtimercertview.h"
-#include "xbase/xvblock.h"
+#include "xvledger/xvblock.h"
 #include "xBFT/xconsaccount.h"
 #include "xbase/xthread.h"
 #include "xdata/xgenesis_data.h"
@@ -122,7 +122,7 @@ TEST(xconspacemaker_t, cache_clear_timeout) {
         cache.clear_timeout_clock();
 
         const std::map<xvip2_t,std::string,xvip2_compare>& validators = cache.get_clock_votes(clock);
-    
+
         if (validators.size() == 0)
             break;
     }

@@ -7,7 +7,6 @@
 #include <memory>
 #include <vector>
 #include <string>
-#include "xbasic/xns_macro.h"
 #include "xdata/xdata_common.h"
 #include "xvnetwork/xaddress.h"
 #include "xdata/xdatautil.h"

@@ -1,6 +1,6 @@
 #include "gtest/gtest.h"
 #include "test_xtxpool_util.h"
-#include "xbase/xvledger.h"
+// TODO(jimmy) #include "xbase/xvledger.h"
 #include "xdata/xgenesis_data.h"
 #include "xdata/xtransaction_maker.hpp"
 #include "xloader/xconfig_onchain_loader.h"

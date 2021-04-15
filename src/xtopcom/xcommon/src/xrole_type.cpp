@@ -38,7 +38,7 @@ std::string to_string(xrole_type_t const role) {
 
     default:
         assert(false);
-        return u8"invalid(" + std::to_string(static_cast<std::underlying_type<xrole_type_t>::type>(role)) + u8")";
+        return "invalid(" + std::to_string(static_cast<std::underlying_type<xrole_type_t>::type>(role)) + ")";
     }
 }
 

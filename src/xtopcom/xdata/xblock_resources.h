@@ -5,10 +5,9 @@
 #pragma once
 
 #include <string>
-#include "xbasic/xns_macro.h"
 #include "xbasic/xdataobj_base.hpp"
 #include "xbase/xdata.h"
-#include "xbase/xvblock.h"
+#include "xvledger/xvblock.h"
 #include "xdata/xtransaction.h"
 
 NS_BEG2(top, data)

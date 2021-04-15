@@ -42,6 +42,6 @@ struct xevent_vnode_t : public xevent_t {
     bool                    done{false};
 };
 
-DEFINE_SHARED_PTR(xevent_vnode);
+using xevent_vnode_ptr_t = xobject_ptr_t<xevent_vnode_t>;
 
 NS_END2

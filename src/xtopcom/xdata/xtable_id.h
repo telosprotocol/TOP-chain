@@ -6,8 +6,8 @@
 
 #include <string>
 
-#include "xbasic/xns_macro.h"
-#include "xbase/xvledger.h"
+#include "xbase/xns_macro.h"
+// TODO(jimmy) #include "xbase/xvledger.h"
 
 NS_BEG2(top, data)
 

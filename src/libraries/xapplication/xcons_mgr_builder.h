@@ -3,8 +3,8 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #pragma once
-#include "xbase/xvledger.h"
-#include "xbasic/xns_macro.h"
+// TODO(jimmy) #include "xbase/xvledger.h"
+
 #include "xstore/xstore_face.h"
 #include "xindexstore/xindexstore_face.h"
 #include "xtxpool_v2/xtxpool_face.h"

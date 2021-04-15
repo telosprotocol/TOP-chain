@@ -4,7 +4,7 @@
 #include "xbasic/xserialize_face.h"
 #include "xdata/xblock.h"
 #include "xdata/xtransaction.h"
-#include "xbasic/xobject_ptr.h"
+#include "xbase/xobject_ptr.h"
 #include "xmetrics/xmetrics.h"
 
 namespace top { namespace data {

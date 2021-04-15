@@ -2,9 +2,9 @@
 #include "xcertauth/xcertauth_face.h"
 #include "xvm/manager/xcontract_manager.h"
 
-#include "xbase/xvblock.h"
-#include "xbase/xvledger.h"
-#include "xbasic/xobject_ptr.h"
+#include "xvledger/xvblock.h"
+// TODO(jimmy) #include "xbase/xvledger.h"
+#include "xbase/xobject_ptr.h"
 
 namespace top {
 namespace data {

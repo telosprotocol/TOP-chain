@@ -7,8 +7,28 @@
 #include <unordered_map>
 #include <list>
 #include <mutex>
-#include "xbasic/xns_macro.h"
+#include "xbase/xns_macro.h"
+
+#if defined(__clang__)
+
+#    pragma clang diagnostic push
+#    pragma clang diagnostic ignored "-Wpedantic"
+#elif defined(__GNUC__)
+#    pragma GCC diagnostic push
+#    pragma GCC diagnostic ignored "-Wpedantic"
+#elif defined(_MSC_VER)
+#    pragma warning(push, 0)
+#endif
+
 #include "xbase/xobject.h"
+
+#if defined(__clang__)
+#    pragma clang diagnostic pop
+#elif defined(__GNUC__)
+#    pragma GCC diagnostic pop
+#elif defined(_MSC_VER)
+#    pragma warning(pop)
+#endif
 
 NS_BEG2(top, basic)
 // from https://stackoverflow.com/questions/2504178/lru-cache-design

@@ -7,7 +7,7 @@
 #include "task/task_dispatcher.h"
 #include "topchain_type.h"
 #include "xaction_param.h"
-#include "xbase/xvledger.h"
+// TODO(jimmy) #include "xbase/xvledger.h"
 #include "xcrypto/xckey.h"
 #include "xcrypto_util.h"
 #include "xdata/xnative_contract_address.h"
@@ -177,8 +177,8 @@ bool api_method_imp::key_store(const user_info & uinfo, const std::string & type
     std::string param_s = stream_params(stream_s, (uint64_t)0);
 
     uint16_t x_type{xtransaction_type_set_account_keys};
-    uint16_t s_type{xaction_type_asset_out};
-    uint16_t t_type{xaction_type_set_account_keys};
+    enum_xaction_type s_type{xaction_type_asset_out};
+    enum_xaction_type t_type{xaction_type_set_account_keys};
     // info->trans_action->m_gas_limit = 10000;
     // info->trans_action->m_gas_price = 1;
     info->trans_action->set_deposit(m_deposit);
@@ -643,8 +643,8 @@ bool api_method_imp::create_sub_account(const user_info & uinfo,
     std::string param_t = stream_params(stream_t, MinDeposit);
 
     uint16_t type{xtransaction_type_create_sub_account};
-    uint16_t s_type{xaction_type_asset_out};
-    uint16_t t_type{xaction_type_asset_out};
+    enum_xaction_type s_type{xaction_type_asset_out};
+    enum_xaction_type t_type{xaction_type_asset_out};
     info->trans_action->set_tx_type(type);
     info->trans_action->set_last_nonce(uinfo.nonce);
     info->trans_action->set_fire_timestamp(get_timestamp());
@@ -718,8 +718,8 @@ bool api_method_imp::lock_token(const user_info & uinfo,
     std::string param_s = stream_params(stream_s, (uint64_t)0);
 
     uint16_t x_type{xtransaction_type_lock_token};
-    uint16_t s_type{xaction_type_asset_out};
-    uint16_t t_type{xaction_type_lock_token};
+    enum_xaction_type s_type{xaction_type_asset_out};
+    enum_xaction_type t_type{xaction_type_lock_token};
     // info->trans_action->m_gas_limit = 10000;
     // info->trans_action->m_gas_price = 1;
     info->trans_action->set_deposit(m_deposit);
@@ -761,8 +761,8 @@ bool api_method_imp::unlock_token(const user_info & uinfo,
     std::string param_s = stream_params(stream_s, (uint64_t)0);
 
     uint16_t x_type{xtransaction_type_unlock_token};
-    uint16_t s_type{xaction_type_asset_out};
-    uint16_t t_type{xaction_type_unlock_token};
+    enum_xaction_type s_type{xaction_type_asset_out};
+    enum_xaction_type t_type{xaction_type_unlock_token};
     // info->trans_action->m_gas_limit = 10000;
     // info->trans_action->m_gas_price = 1;
     info->trans_action->set_deposit(m_deposit);
@@ -1061,8 +1061,8 @@ bool api_method_imp::registerNode(const user_info & uinfo,
     param_t = stream_params(stream_t, role, nickname, signing_key, dividend_rate);
 
     uint16_t x_type{xtransaction_type_run_contract};
-    uint16_t s_type{xaction_type_asset_out};
-    uint16_t t_type{xaction_type_run_contract};
+    enum_xaction_type s_type{xaction_type_asset_out};
+    enum_xaction_type t_type{xaction_type_run_contract};
     // info->trans_action->m_gas_limit = 10000;
     // info->trans_action->m_gas_price = 1;
     info->trans_action->set_deposit(m_deposit);
@@ -1108,8 +1108,8 @@ bool api_method_imp::updateNodeType(const user_info & uinfo, const std::string &
     param_t = stream_params(stream_t, role);
 
     uint16_t x_type{xtransaction_type_run_contract};
-    uint16_t s_type{xaction_type_asset_out};
-    uint16_t t_type{xaction_type_run_contract};
+    enum_xaction_type s_type{xaction_type_asset_out};
+    enum_xaction_type t_type{xaction_type_run_contract};
     info->trans_action->set_deposit(m_deposit);
     info->trans_action->set_tx_type(x_type);
     info->trans_action->set_last_nonce(uinfo.nonce);
@@ -1150,8 +1150,8 @@ bool api_method_imp::stake_node_deposit(const user_info & uinfo, uint64_t deposi
     // param_t = stream_params(stream_t, role);
 
     uint16_t x_type{xtransaction_type_run_contract};
-    uint16_t s_type{xaction_type_asset_out};
-    uint16_t t_type{xaction_type_run_contract};
+    enum_xaction_type s_type{xaction_type_asset_out};
+    enum_xaction_type t_type{xaction_type_run_contract};
     // info->trans_action->m_gas_limit = 10000;
     // info->trans_action->m_gas_price = 1;
     info->trans_action->set_deposit(m_deposit);
@@ -1198,8 +1198,8 @@ bool api_method_imp::updateNodeInfo(const user_info & uinfo,
     set_user_info(info, uinfo, CMD_NODE_REGISTER, func);
 
     uint16_t x_type{xtransaction_type_run_contract};
-    uint16_t s_type{xaction_type_asset_out};
-    uint16_t t_type{xaction_type_run_contract};
+    enum_xaction_type s_type{xaction_type_asset_out};
+    enum_xaction_type t_type{xaction_type_run_contract};
     info->trans_action->set_deposit(m_deposit);
     info->trans_action->set_tx_type(x_type);
     info->trans_action->set_last_nonce(uinfo.nonce);
@@ -1252,8 +1252,8 @@ bool api_method_imp::unstake_node_deposit(const user_info & uinfo, uint64_t unst
     param_t = stream_params(stream_t, unstake_deposit);
 
     uint16_t x_type{xtransaction_type_run_contract};
-    uint16_t s_type{xaction_type_asset_out};
-    uint16_t t_type{xaction_type_run_contract};
+    enum_xaction_type s_type{xaction_type_asset_out};
+    enum_xaction_type t_type{xaction_type_run_contract};
     // info->trans_action->m_gas_limit = 10000;
     // info->trans_action->m_gas_price = 1;
     info->trans_action->set_deposit(m_deposit);
@@ -1299,8 +1299,8 @@ bool api_method_imp::setNodeName(const user_info & uinfo, const std::string & ni
     param_t = stream_params(stream_t, nickname);
 
     uint16_t x_type{xtransaction_type_run_contract};
-    uint16_t s_type{xaction_type_asset_out};
-    uint16_t t_type{xaction_type_run_contract};
+    enum_xaction_type s_type{xaction_type_asset_out};
+    enum_xaction_type t_type{xaction_type_run_contract};
     // info->trans_action->m_gas_limit = 10000;
     // info->trans_action->m_gas_price = 1;
     info->trans_action->set_deposit(m_deposit);
@@ -1346,8 +1346,8 @@ bool api_method_imp::updateNodeSignKey(const user_info & uinfo, const std::strin
     param_t = stream_params(stream_t, node_sign_key);
 
     uint16_t x_type{xtransaction_type_run_contract};
-    uint16_t s_type{xaction_type_asset_out};
-    uint16_t t_type{xaction_type_run_contract};
+    enum_xaction_type s_type{xaction_type_asset_out};
+    enum_xaction_type t_type{xaction_type_run_contract};
     // info->trans_action->m_gas_limit = 10000;
     // info->trans_action->m_gas_price = 1;
     info->trans_action->set_deposit(m_deposit);
@@ -1386,8 +1386,8 @@ bool api_method_imp::unRegisterNode(const user_info & uinfo, std::ostringstream 
     set_user_info(info, uinfo, CMD_NODE_DEREGISTER, func);
 
     uint16_t x_type{xtransaction_type_run_contract};
-    uint16_t s_type{xaction_type_asset_out};
-    uint16_t t_type{xaction_type_run_contract};
+    enum_xaction_type s_type{xaction_type_asset_out};
+    enum_xaction_type t_type{xaction_type_run_contract};
     // info->trans_action->m_gas_limit = 10000;
     // info->trans_action->m_gas_price = 1;
     info->trans_action->set_deposit(m_deposit);
@@ -1423,8 +1423,8 @@ bool api_method_imp::redeemNodeDeposit(const user_info & uinfo, std::ostringstre
     set_user_info(info, uinfo, CMD_REDEEM, func);
 
     uint16_t x_type{xtransaction_type_run_contract};
-    uint16_t s_type{xaction_type_asset_out};
-    uint16_t t_type{xaction_type_run_contract};
+    enum_xaction_type s_type{xaction_type_asset_out};
+    enum_xaction_type t_type{xaction_type_run_contract};
     // info->trans_action->m_gas_limit = 10000;
     // info->trans_action->m_gas_price = 1;
     info->trans_action->set_deposit(m_deposit);
@@ -1463,8 +1463,8 @@ bool api_method_imp::setDividendRatio(const user_info & uinfo, uint32_t dividend
     std::string param_t = stream_params(stream_t, dividend_rate);
 
     uint16_t x_type{xtransaction_type_run_contract};
-    uint16_t s_type{xaction_type_asset_out};
-    uint16_t t_type{xaction_type_run_contract};
+    enum_xaction_type s_type{xaction_type_asset_out};
+    enum_xaction_type t_type{xaction_type_run_contract};
     // info->trans_action->m_gas_limit = 10000;
     // info->trans_action->m_gas_price = 1;
     info->trans_action->set_deposit(m_deposit);
@@ -1500,8 +1500,8 @@ bool api_method_imp::stakeVote(const user_info & uinfo, uint64_t mortgage, uint1
     set_user_info(info, uinfo, CMD_PLEDGE_VOTE, func);
 
     uint16_t x_type{xtransaction_type_pledge_token_vote};
-    uint16_t s_type{xaction_type_source_null};
-    uint16_t t_type{xaction_type_pledge_token_vote};
+    enum_xaction_type s_type{xaction_type_source_null};
+    enum_xaction_type t_type{xaction_type_pledge_token_vote};
     // info->trans_action->m_gas_limit = 10000;
     // info->trans_action->m_gas_price = 1;
     info->trans_action->set_deposit(m_deposit);
@@ -1643,8 +1643,8 @@ bool api_method_imp::claimNodeReward(const user_info & uinfo, std::ostringstream
     set_user_info(info, uinfo, CMD_CLAIM_NODE_REWARD, func);
 
     uint16_t x_type{xtransaction_type_run_contract};
-    uint16_t s_type{xaction_type_asset_out};
-    uint16_t t_type{xaction_type_run_contract};
+    enum_xaction_type s_type{xaction_type_asset_out};
+    enum_xaction_type t_type{xaction_type_run_contract};
     // info->trans_action->m_gas_limit = 10000;
     // info->trans_action->m_gas_price = 1;
     info->trans_action->set_deposit(m_deposit);
@@ -1687,8 +1687,8 @@ bool api_method_imp::claimVoterDividend(const user_info & uinfo, std::ostringstr
     set_user_info(info, uinfo, CMD_CLAIM_REWARD, func);
 
     uint16_t x_type{xtransaction_type_run_contract};
-    uint16_t s_type{xaction_type_asset_out};
-    uint16_t t_type{xaction_type_run_contract};
+    enum_xaction_type s_type{xaction_type_asset_out};
+    enum_xaction_type t_type{xaction_type_run_contract};
     // info->trans_action->m_gas_limit = 10000;
     // info->trans_action->m_gas_price = 1;
     info->trans_action->set_deposit(m_deposit);
@@ -1734,8 +1734,8 @@ bool api_method_imp::request_issuance(const user_info & uinfo, std::map<std::str
     std::string param_t = stream_params(stream_t, issuances);
 
     uint16_t x_type{xtransaction_type_run_contract};
-    uint16_t s_type{xaction_type_asset_out};
-    uint16_t t_type{xaction_type_run_contract};
+    enum_xaction_type s_type{xaction_type_asset_out};
+    enum_xaction_type t_type{xaction_type_run_contract};
     // info->trans_action->m_gas_limit = 10000;
     // info->trans_action->m_gas_price = 1;
     info->trans_action->set_deposit(m_deposit);
@@ -1778,8 +1778,8 @@ bool api_method_imp::submitProposal(const user_info & uinfo,
     std::string param_t = stream_params(stream_t, target, value, type, effective_timer_height);
 
     uint16_t x_type{xtransaction_type_run_contract};
-    uint16_t s_type{xaction_type_asset_out};
-    uint16_t t_type{xaction_type_run_contract};
+    enum_xaction_type s_type{xaction_type_asset_out};
+    enum_xaction_type t_type{xaction_type_run_contract};
     info->trans_action->set_deposit(m_deposit);
     info->trans_action->set_tx_type(x_type);
     info->trans_action->set_last_nonce(uinfo.nonce);
@@ -1818,8 +1818,8 @@ bool api_method_imp::withdrawProposal(const user_info & uinfo, const std::string
     std::string param_t = stream_params(stream_t, proposal_id);
 
     uint16_t x_type{xtransaction_type_run_contract};
-    uint16_t s_type{xaction_type_asset_out};
-    uint16_t t_type{xaction_type_run_contract};
+    enum_xaction_type s_type{xaction_type_asset_out};
+    enum_xaction_type t_type{xaction_type_run_contract};
     info->trans_action->set_deposit(m_deposit);
     info->trans_action->set_tx_type(x_type);
     info->trans_action->set_last_nonce(uinfo.nonce);
@@ -1856,8 +1856,8 @@ bool api_method_imp::tccVote(const user_info & uinfo, const std::string & propos
     std::string param_t = stream_params(stream_t, proposal_id, option);
 
     uint16_t x_type{xtransaction_type_run_contract};
-    uint16_t s_type{xaction_type_asset_out};
-    uint16_t t_type{xaction_type_run_contract};
+    enum_xaction_type s_type{xaction_type_asset_out};
+    enum_xaction_type t_type{xaction_type_run_contract};
     info->trans_action->set_deposit(m_deposit);
     info->trans_action->set_tx_type(x_type);
     info->trans_action->set_last_nonce(uinfo.nonce);

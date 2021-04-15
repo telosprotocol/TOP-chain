@@ -8,7 +8,7 @@
 #include "xbase/xobject.h"
 #include "xbase/xthread.h"
 #include "xbase/xutl.h"
-#include "xbase/xvblock.h"
+#include "xvledger/xvblock.h"
 
 #include "xbasic/xtimer_driver.h"
 

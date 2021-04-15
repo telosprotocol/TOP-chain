@@ -93,7 +93,7 @@ void xsync_cross_cluster_chain_state_t::handle_message(const vnetwork::xvnode_ad
             xsync_dbg("cross_cluster_chain_state notify %s,local(start_height=%lu,end_height=%lu) peer(start_height=%lu,end_height=%lu)", 
                         address.c_str(), latest_start_block->get_height(), local_end_height, peer_start_height, peer_end_height);
 
-            mbus::xevent_ptr_t ev = std::make_shared<mbus::xevent_behind_download_t>(address, 
+            mbus::xevent_ptr_t ev = make_object_ptr<mbus::xevent_behind_download_t>(address, 
                     peer_start_height, peer_end_height, enum_chain_sync_pocliy_fast, network_self, from_address, reason);
             m_downloader->push_event(ev);
         }

@@ -14,7 +14,8 @@ uint64_t xtgas_singleton::get_cache_total_lock_tgas_token() {
 }
 
 bool xtgas_singleton::get_latest_property(base::xvblockstore_t* blockstore, std::string & value, uint64_t & height) {
-    auto latest_block = blockstore->get_latest_executed_block(sys_contract_zec_workload_addr);
+    base::xvaccount_t _zec_workload_vaddress(sys_contract_zec_workload_addr);
+    auto latest_block = blockstore->get_latest_executed_block(_zec_workload_vaddress);
     if (latest_block->is_genesis_block()) {
         return false;
     }
@@ -28,7 +29,7 @@ bool xtgas_singleton::get_latest_property(base::xvblockstore_t* blockstore, std:
     }
     uint64_t next_height = latest_block->get_height() - 1;
     while (next_height >= 1) {
-        auto next_block = blockstore->load_block_object(sys_contract_zec_workload_addr, next_height);
+        auto next_block = blockstore->load_block_object(_zec_workload_vaddress, next_height, base::enum_xvblock_flag_committed, true);
         if (next_block == nullptr) {
             xerror("xtgas_singleton::get_latest_property block not exist. height=%ld", next_height);
             return false;
@@ -81,8 +82,8 @@ bool xtgas_singleton::backup_get_total_lock_tgas_token(base::xvblockstore_t* blo
         total_lock_tgas_token = m_last_total_lock_tgas_token;
         return true;
     }
-
-    auto zec_workload_block = blockstore->load_block_object(sys_contract_zec_workload_addr, property_height);
+    base::xvaccount_t _zec_workload_vaddress(sys_contract_zec_workload_addr);
+    auto zec_workload_block = blockstore->load_block_object(_zec_workload_vaddress, property_height, base::enum_xvblock_flag_committed, true);
     if (zec_workload_block == nullptr) {
         xwarn("xtgas_singleton::backup_get_total_lock_tgas_token can't load block. height=%ld", property_height);
         return false;

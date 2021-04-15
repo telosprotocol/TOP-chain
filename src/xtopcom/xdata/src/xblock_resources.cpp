@@ -4,7 +4,7 @@
 
 #include <string>
 #include "xbase/xutl.h"
-#include "xbase/xvledger.h"
+#include "xvledger/xvblockstore.h"
 #include "xbasic/xversion.h"
 #include "xdata/xblock_resources.h"
 #include "xdata/xdata_common.h"
@@ -41,7 +41,7 @@ int32_t xresource_wholeblock_t::do_read(base::xstream_t & stream) {
 }
 
 base::xauto_ptr<base::xvblock_t> xresource_wholeblock_t::create_whole_block() const {
-    base::xauto_ptr<base::xvblock_t> new_block = base::xvblockstore_t::create_block_object(m_block_object);
+    base::xauto_ptr<base::xvblock_t> new_block = base::xvblock_t::create_block_object(m_block_object);
     xassert(new_block != nullptr);
     if (new_block != nullptr && new_block->get_header()->get_block_class() != base::enum_xvblock_class_nil) {
         if (false == new_block->set_input_resources(m_input_resource)) {

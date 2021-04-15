@@ -31,7 +31,7 @@
 #include "xstore/xaccount_cmd.h"
 
 #include "xbasic/xutility.h"
-#include "xbasic/xobject_ptr.h"
+#include "xbase/xobject_ptr.h"
 #include "xbasic/xcrypto_key.h"
 
 #include "test_certauth.hpp"

@@ -4,11 +4,10 @@
 
 #pragma once
 
-#include "xbasic/xns_macro.h"
 #include "xbasic/xmemory.hpp"
 #include "xmbus/xmessage_bus.h"
-#include "xbase/xvblock.h"
-#include "xbase/xvledger.h"
+#include "xvledger/xvblock.h"
+#include "xvledger/xvaccount.h"
 
 #include <string>
 #include <atomic>

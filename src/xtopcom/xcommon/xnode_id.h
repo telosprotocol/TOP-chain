@@ -4,7 +4,33 @@
 
 #pragma once
 
+#if defined(__clang__)
+
+#    pragma clang diagnostic push
+#    pragma clang diagnostic ignored "-Wpedantic"
+
+#elif defined(__GNUC__)
+
+#    pragma GCC diagnostic push
+#    pragma GCC diagnostic ignored "-Wpedantic"
+
+#elif defined(_MSC_VER)
+
+#    pragma warning(push, 0)
+
+#endif
+
 #include "xbase/xmem.h"
+#include "xvledger/xvaccount.h"
+
+#if defined(__clang__)
+#    pragma clang diagnostic pop
+#elif defined(__GNUC__)
+#    pragma GCC diagnostic pop
+#elif defined(_MSC_VER)
+#    pragma warning(pop)
+#endif
+
 #include "xbasic/xhashable.hpp"
 #include "xbasic/xrandomizable.h"
 #include "xbasic/xserializable_based_on.h"
@@ -21,12 +47,18 @@ operator <<(top::base::xstream_t & stream, top::common::xtop_node_id const & nod
 std::int32_t
 operator >>(top::base::xstream_t & stream, top::common::xtop_node_id & node_id);
 
+std::int32_t operator<<(top::base::xbuffer_t & stream, top::common::xtop_node_id const & node_id);
+
+std::int32_t operator>>(top::base::xbuffer_t & stream, top::common::xtop_node_id & node_id);
+
 class xtop_node_id final : public xstring_id_t<xtop_node_id>
                          , public xrandomizable_t<xtop_node_id>
                          , public xserializable_based_on<void>
 {
 private:
     using id_base_t = xstring_id_t<xtop_node_id>;
+
+    mutable base::enum_vaccount_addr_type m_type{base::enum_vaccount_addr_type_invalid};
 
 public:
     xtop_node_id()                                 = default;
@@ -73,6 +105,8 @@ public:
     char const *
     c_str() const noexcept;
 
+    base::enum_vaccount_addr_type type() const noexcept;
+
     friend
     std::int32_t
     operator <<(base::xstream_t & stream, xtop_node_id const & node_id);
@@ -80,6 +114,9 @@ public:
     friend
     std::int32_t
     operator >>(base::xstream_t & stream, xtop_node_id & node_id);
+
+    friend std::int32_t operator<<(base::xbuffer_t & stream, xtop_node_id const & node_id);
+    friend std::int32_t operator>>(base::xbuffer_t & stream, xtop_node_id & node_id);
 
 private:
     std::int32_t

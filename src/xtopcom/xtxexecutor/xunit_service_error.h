@@ -7,7 +7,7 @@
 #include <string>
 #include <assert.h>
 
-#include "xbasic/xns_macro.h"
+#include "xbase/xns_macro.h"
 #include "xbasic/xmodule_type.h"
 
 NS_BEG2(top, txexecutor)

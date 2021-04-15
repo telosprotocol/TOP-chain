@@ -23,7 +23,7 @@ public:
     }
 };
 
-DEFINE_SHARED_PTR(xevent_sync);
+using xevent_sync_ptr_t = xobject_ptr_t<xevent_sync_t>;
 
 class xevent_sync_complete_t : public xevent_sync_t {
 public:
@@ -39,6 +39,6 @@ public:
     std::string address;
 };
 
-DEFINE_SHARED_PTR(xevent_sync_complete);
+using xevent_sync_complete_ptr_t = xobject_ptr_t<xevent_sync_complete_t>;
 
 NS_END2

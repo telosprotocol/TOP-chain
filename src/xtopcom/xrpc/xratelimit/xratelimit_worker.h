@@ -11,7 +11,7 @@
 #include "xratelimit_server_stat.h"
 #include "xratelimit_dispatch.h"
 #include "xratelimit_thread.h"
-#include "xbasic/xns_macro.h"
+#include "xbase/xns_macro.h"
 
 
 NS_BEG2(top, xChainRPC)

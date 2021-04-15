@@ -5,7 +5,6 @@
 #include "xbase/xhash.h"
 #include "xbase/xutl.h"
 #include "xbase/xthread.h"
-#include "xbase/xvledger.h"
 #include "xBFT/xconspdu.h"
 #include "xBFT/xconsobj.h"
 #include "xBFT/xconsengine.h"
@@ -54,6 +53,7 @@ int main(int argc, const char * argv[])
     
 #ifdef DEBUG
     xset_log_level(enum_xlog_level_debug);
+    xdup_trace_to_terminal(true);
 #else
     //xset_log_level(enum_xlog_level_debug);
     xset_log_level(enum_xlog_level_key_info);

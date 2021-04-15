@@ -2,7 +2,7 @@
 #include "gtest/gtest.h"
 #include "xbase/xmem.h"
 #include "xbase/xcontext.h"
-#include "xbase/xvledger.h"
+// TODO(jimmy) #include "xbase/xvledger.h"
 #include "xbase/xobject.h"
 #include "xdata/xblock.h"
 #include "xdata/xlightunit.h"

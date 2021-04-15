@@ -38,7 +38,7 @@ public:
     std::string owner;
 };
 
-DEFINE_SHARED_PTR(xevent_store);
+using xevent_store_ptr_t = xobject_ptr_t<xevent_store_t>;
 
 class xevent_store_block_to_db_t : public xevent_store_t {
  public:
@@ -49,14 +49,18 @@ class xevent_store_block_to_db_t : public xevent_store_t {
             direction_type dir = to_listener,
             bool _sync = true) :
     xevent_store_t(type_block_to_db, _owner, dir, _sync),
-    block(_block),
+    blk_hash{_block->get_block_hash() }, blk_height{_block->get_height()},
     new_block(_new_block) {
     }
-    data::xblock_ptr_t block;
+    // data::xblock_ptr_t block;
+    std::string blk_hash;
+    uint64_t blk_height;
     bool new_block;
 };
 
-DEFINE_SHARED_PTR(xevent_store_block_to_db);
+using xevent_store_block_to_db_ptr_t = xobject_ptr_t<xevent_store_block_to_db_t>;
+
+data::xblock_ptr_t extract_block_from(xevent_store_block_to_db_ptr_t const & ev) noexcept;
 
 class xevent_store_accountblock_queue_ready_t : public xevent_store_t {
 public:
@@ -68,7 +72,7 @@ public:
     }
 };
 
-DEFINE_SHARED_PTR(xevent_store_accountblock_queue_ready);
+using xevent_store_accountblock_queue_ready_ptr_t = xobject_ptr_t<xevent_store_accountblock_queue_ready_t>;
 
 class xevent_store_version_update_t : public xevent_store_t {
 public:
@@ -80,7 +84,7 @@ public:
     }
 };
 
-DEFINE_SHARED_PTR(xevent_store_version_update);
+using xevent_store_version_update_ptr_t = xobject_ptr_t<xevent_store_version_update_t>;
 
 // </editor-fold>
 

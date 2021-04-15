@@ -4,7 +4,7 @@
 
 #pragma once
 #include "xbase/xbase.h"
-#include "xbasic/xns_macro.h"
+#include "xbase/xns_macro.h"
 #include "xmetrics/Variant.h"
 #include <assert.h>
 

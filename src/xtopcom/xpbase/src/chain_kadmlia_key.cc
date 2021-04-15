@@ -16,7 +16,7 @@
 #include "common/secp256k1.h"
 #include "common/sha2.h"
 #include "xpbase/base/top_log.h"
-#include "xbasic/xobject_ptr.h"
+#include "xbase/xobject_ptr.h"
 #include "xutility/xhash.h"
 
 namespace top {

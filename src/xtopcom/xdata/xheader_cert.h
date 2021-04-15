@@ -6,10 +6,9 @@
 
 #include <string>
 #include <vector>
-#include "xbasic/xns_macro.h"
 #include "xbasic/xdataobj_base.hpp"
-#include "xbase/xvblock.h"
-#include "xbase/xvledger.h"
+#include "xvledger/xvblock.h"
+#include "xvledger/xvaccount.h"
 #include "xutility/xmerkle.hpp"
 
 NS_BEG2(top, data)

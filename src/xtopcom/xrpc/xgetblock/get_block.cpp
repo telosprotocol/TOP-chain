@@ -4,7 +4,7 @@
 #include "xbase/xcontext.h"
 #include "xbase/xint.h"
 #include "xbase/xutl.h"
-#include "xbase/xvblock.h"
+#include "xvledger/xvblock.h"
 #include "xbasic/xutility.h"
 #include "xcommon/xip.h"
 #include "xconfig/xconfig_register.h"
@@ -211,7 +211,7 @@ void get_block_handle::getRootblockInfo() {
 }
 
 uint64_t get_block_handle::get_timer_height() const {
-    auto vb = m_block_store->get_latest_committed_block(sys_contract_beacon_timer_addr);
+    auto vb = m_block_store->get_latest_committed_block(base::xvaccount_t(sys_contract_beacon_timer_addr));
     xblock_t * bp = static_cast<xblock_t *>(vb.get());
     if (bp != nullptr) {
         return bp->get_height();
@@ -285,7 +285,7 @@ void get_block_handle::getIssuanceDetail() {
         return;
     }
     xstake::xissue_detail issue_detail;
-    issue_detail.serialize_from_string(xissue_detail_str);
+    issue_detail.from_string(xissue_detail_str);
     xdbg(
         "[grpc::getIssuanceDetail] reward contract height: %llu, onchain_timer_round: %llu, m_zec_vote_contract_height: %llu, "
         "m_zec_workload_contract_height: %llu, m_zec_reward_contract_height: %llu, "
@@ -370,7 +370,7 @@ void get_block_handle::getIssuanceDetail() {
 }
 
 uint64_t get_block_handle::get_timer_clock() const {
-    auto vb = m_block_store->get_latest_committed_block(sys_contract_beacon_timer_addr);
+    auto vb = m_block_store->get_latest_committed_block(base::xvaccount_t(sys_contract_beacon_timer_addr));
     xblock_t * bp = static_cast<xblock_t *>(vb.get());
     if (bp != nullptr) {
         return bp->get_clock();
@@ -478,7 +478,8 @@ std::string tx_exec_status_to_str(uint8_t exec_status) {
 }
 
 xJson::Value get_block_handle::get_unit_json(const std::string & account, uint64_t unit_height, xtransaction_ptr_t tx_ptr) {
-    auto vb = m_block_store->load_block_object_without_cache(account, unit_height);
+    base::xvaccount_t _account_vaddress(account);
+    auto vb = m_block_store->load_block_object(_account_vaddress, unit_height, 0, true);
     auto block_ptr = dynamic_cast<xblock_t *>(vb.get());
     if (block_ptr == nullptr) {
         throw xrpc_error{enum_xrpc_error_code::rpc_shard_exec_error, "account address does not exist or block height does not exist"};
@@ -566,19 +567,23 @@ void get_block_handle::update_tx_state(xJson::Value & result_json, const xJson::
 }
 
 xJson::Value get_block_handle::parse_tx(const uint256_t & tx_hash, xtransaction_t * cons_tx_ptr) {
-    xtransaction_store_ptr_t tx_store_ptr = m_store->query_transaction_store(tx_hash);
+    std::string tx_hash_str = std::string(reinterpret_cast<char*>(tx_hash.data()), tx_hash.size());
+    base::xvtransaction_store_ptr_t tx_store_ptr = m_block_store->query_tx(tx_hash_str, base::enum_transaction_subtype_all);
     xJson::Value result_json;
     xJson::Value cons;
-    if (tx_store_ptr != nullptr && tx_store_ptr->m_raw_tx != nullptr) {
-        xtransaction_ptr_t tx_ptr = tx_store_ptr->m_raw_tx;
+    if (tx_store_ptr != nullptr && tx_store_ptr->get_raw_tx() != nullptr) {
+        xtransaction_ptr_t tx_ptr;
+        tx_store_ptr->get_raw_tx()->add_ref();
+        tx_ptr.attach((xtransaction_t*)tx_store_ptr->get_raw_tx());
+
         // burn tx & self tx only 1 consensus
         if (tx_ptr->get_target_addr() != black_hole_addr && (tx_ptr->get_source_addr() != tx_ptr->get_target_addr())) {
-            cons["send_unit_info"] = get_unit_json(tx_ptr->get_source_addr(), tx_store_ptr->m_send_unit_height, tx_ptr);
+            cons["send_unit_info"] = get_unit_json(tx_ptr->get_source_addr(), tx_store_ptr->get_send_unit_height(), tx_ptr);
             auto beacon_tx_fee = txexecutor::xtransaction_fee_t::cal_service_fee(tx_ptr->get_source_addr(), tx_ptr->get_target_addr());
             cons["send_unit_info"]["tx_fee"] = static_cast<xJson::UInt64>(beacon_tx_fee);
-            cons["recv_unit_info"] = get_unit_json(tx_ptr->get_target_addr(), tx_store_ptr->m_recv_unit_height, tx_ptr);
+            cons["recv_unit_info"] = get_unit_json(tx_ptr->get_target_addr(), tx_store_ptr->get_recv_unit_height(), tx_ptr);
         }
-        cons["confirm_unit_info"] = get_unit_json(tx_ptr->get_source_addr(), tx_store_ptr->m_confirm_unit_height, tx_ptr);
+        cons["confirm_unit_info"] = get_unit_json(tx_ptr->get_source_addr(), tx_store_ptr->get_confirm_unit_height(), tx_ptr);
         result_json["tx_consensus_state"] = cons;
 
         update_tx_state(result_json, cons);
@@ -728,12 +733,15 @@ xJson::Value get_block_handle::parse_action(const xaction_t & action) {
 
 void get_block_handle::getTransaction() {
     uint256_t hash = top::xrpc::hex_to_uint256(m_js_req["tx_hash"].asString());
+    std::string tx_hash_str = std::string(reinterpret_cast<char*>(hash.data()), hash.size());
     try {
         m_js_rsp["value"] = parse_tx(hash);
-        xtransaction_store_ptr_t tx_store_ptr = m_store->query_transaction_store(hash);
+        base::xvtransaction_store_ptr_t tx_store_ptr = m_block_store->query_tx(tx_hash_str, base::enum_transaction_subtype_all);
         if (tx_store_ptr != nullptr) {
-            if (tx_store_ptr->m_raw_tx != nullptr) {
-                xtransaction_ptr_t tx_ptr = tx_store_ptr->m_raw_tx;
+            if (tx_store_ptr->get_raw_tx() != nullptr) {
+                xtransaction_ptr_t tx_ptr;
+                tx_store_ptr->get_raw_tx()->add_ref();
+                tx_ptr.attach((xtransaction_t*)tx_store_ptr->get_raw_tx());
                 auto jsa = parse_action(tx_ptr->get_source_action());
                 m_js_rsp["value"]["original_tx_info"]["tx_action"]["sender_action"]["action_param"] = jsa;
                 auto jta = parse_action(tx_ptr->get_target_action());
@@ -881,7 +889,7 @@ void get_block_handle::getLatestBlock() {
 void get_block_handle::getBlockByHeight() {
     std::string owner = m_js_req["account_addr"].asString();
     uint64_t height = m_js_req["height"].asUInt64();
-    auto vblock = m_block_store->load_block_object_without_cache(owner, height);
+    auto vblock = m_block_store->load_block_object(base::xvaccount_t(owner), height, 0, true);
     data::xblock_t * bp = dynamic_cast<data::xblock_t *>(vblock.get());
     auto value = get_block_json(bp);
     m_js_rsp["value"] = value;
@@ -890,15 +898,16 @@ void get_block_handle::getBlockByHeight() {
 void get_block_handle::getBlock() {
     std::string type = m_js_req["type"].asString();
     std::string owner = m_js_req["account_addr"].asString();
+    base::xvaccount_t _owner_vaddress(owner);
 
     xJson::Value value;
     if (type == "height") {
         uint64_t height = m_js_req["height"].asUInt64();
-        auto vblock = m_block_store->load_block_object_without_cache(owner, height);
+        auto vblock = m_block_store->load_block_object(_owner_vaddress, height, 0, true);
         data::xblock_t * bp = dynamic_cast<data::xblock_t *>(vblock.get());
         value = get_block_json(bp);
     } else if (type == "last") {
-        auto vblock = m_block_store->get_latest_committed_block(owner);
+        auto vblock = m_block_store->get_latest_committed_block(_owner_vaddress);
         data::xblock_t * bp = dynamic_cast<data::xblock_t *>(vblock.get());
         value = get_block_json(bp);
     } else if (type == "prop") {

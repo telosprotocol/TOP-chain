@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include "xbase/xns_macro.h"
+
 #define MAKE_RAW_PTR(T) (new T())
 #define MAKE_SHARED_PTR(T) (std::make_shared<T>())
 #define MAKE_OBJECT_PTR(T) (top::make_object_ptr<T>())

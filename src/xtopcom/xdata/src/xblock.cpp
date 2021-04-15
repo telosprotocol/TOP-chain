@@ -8,7 +8,7 @@
 #include "xbase/xhash.h"
 #include "xbase/xobject.h"
 #include "xbase/xutl.h"
-#include "xbase/xvledger.h"
+// TODO(jimmy) #include "xbase/xvledger.h"
 #include "xmetrics/xmetrics.h"
 #include "xbasic/xdbg.h"
 
@@ -217,7 +217,7 @@ base::xvblock_t* xblock_t::full_block_read_from(base::xstream_t & stream) {
     xassert(stream.size() > 0);
     std::string block_object_bin;
     stream >> block_object_bin;
-    base::xvblock_t* new_block = base::xvblockstore_t::create_block_object(block_object_bin);
+    base::xvblock_t* new_block = base::xvblock_t::create_block_object(block_object_bin);
     xassert(new_block != nullptr);
     if (new_block != nullptr && new_block->get_header()->get_block_class() != base::enum_xvblock_class_nil) {
         std::string _input_content;
@@ -335,8 +335,9 @@ void xblock_t::set_parent_cert_and_path(base::xvqcert_t * parent_cert, const xme
 
     get_blockcert()->set_parent_cert_and_path(parent_cert, path);
     set_block_flag(base::enum_xvblock_flag_authenticated);
-    set_block_flag(base::enum_xvblock_flag_locked);
-    set_block_flag(base::enum_xvblock_flag_committed);
+    // TODO(jimmy) highqc table will unpack unit
+    // set_block_flag(base::enum_xvblock_flag_locked);
+    // set_block_flag(base::enum_xvblock_flag_committed);
     xassert(!get_block_hash().empty());
 }
 

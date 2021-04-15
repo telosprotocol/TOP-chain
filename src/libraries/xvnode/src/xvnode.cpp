@@ -223,7 +223,7 @@ void xtop_vnode::update_rpc_service() {
 
 void xtop_vnode::update_contract_manager(bool destory) {
     // TODO(justin): remove unit_services temp
-    contract::xcontract_manager_t::instance().push_event(std::make_shared<mbus::xevent_vnode_t>(destory, m_txpool_face, m_the_binding_driver));
+    contract::xcontract_manager_t::instance().push_event(make_object_ptr<mbus::xevent_vnode_t>(destory, m_txpool_face, m_the_binding_driver));
 }
 
 void xtop_vnode::sync_add_vnet() {

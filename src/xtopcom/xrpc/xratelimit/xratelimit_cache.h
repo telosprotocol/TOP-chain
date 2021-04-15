@@ -12,7 +12,7 @@
 #include "xratelimit_hashmap.h"
 #include "xratelimit_thread.h"
 #include "xratelimit_config.h"
-#include "xbasic/xns_macro.h"
+#include "xbase/xns_macro.h"
 #include "xbase/xutl.h"
 
 

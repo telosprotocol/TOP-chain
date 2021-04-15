@@ -8,9 +8,8 @@
 #include <map>
 #include <vector>
 #include <set>
-#include "xbase/xvblock.h"
-#include "xbasic/xns_macro.h"
-#include "xbasic/xobject_ptr.h"
+#include "xvledger/xvblock.h"
+#include "xbase/xobject_ptr.h"
 #include "xbasic/xdataobj_base.hpp"
 
 NS_BEG2(top, data)

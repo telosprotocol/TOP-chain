@@ -533,7 +533,7 @@ public:
      */
     void award_credit_score(common::xnode_type_t node_type);
 
-    std::string m_account{""};
+    common::xaccount_address_t m_account{};
     uint64_t m_account_mortgage{0};
     common::xrole_type_t m_registered_role{common::xrole_type_t::invalid};
     uint64_t m_vote_amount{0};
@@ -569,6 +569,59 @@ private:
      */
     int32_t do_read(base::xstream_t & stream) override;
 };
+
+class xtop_account_registration_info final : public xserializable_based_on<void> {
+private:
+    common::xaccount_address_t m_account{};
+    uint64_t m_account_mortgage{0};
+    common::xrole_type_t m_registered_role{common::xrole_type_t::invalid};
+    uint64_t m_vote_amount{0};
+    uint64_t m_auditor_credit_numerator{0};
+    uint64_t m_auditor_credit_denominator{1000000};
+    uint64_t m_validator_credit_numerator{0};
+    uint64_t m_validator_credit_denominator{1000000};
+
+    uint m_support_ratio_numerator{0};  // dividends to voters
+    uint m_support_ratio_denominator{100};
+    common::xlogic_time_t m_last_update_time{0};
+    bool m_genesis_node{false};
+    std::set<common::xnetwork_id_t> m_network_ids;
+    std::string nickname;
+    xpublic_key_t consensus_public_key;
+
+public:
+    bool rec() const noexcept;
+    bool zec() const noexcept;
+    bool auditor() const noexcept;
+    bool validator() const noexcept;
+    bool edge() const noexcept;
+    bool archive() const noexcept;
+
+    uint64_t rec_stake() const noexcept;
+    uint64_t zec_stake() const noexcept;
+    uint64_t auditor_stake() const noexcept;
+    uint64_t validator_stake() const noexcept;
+    uint64_t edge_stake() const noexcept;
+    uint64_t archive_stake() const noexcept;
+
+    common::xrole_type_t role() const noexcept;
+
+    /**
+     * @brief write to stream
+     *
+     * @param stream
+     * @return int32_t
+     */
+    int32_t do_write(base::xstream_t & stream) const override {return 0;}
+    /**
+     * @brief read from stream
+     *
+     * @param stream
+     * @return int32_t
+     */
+    int32_t do_read(base::xstream_t & stream) override {return 0;}
+};
+using xaccount_registration_info_t = xtop_account_registration_info;
 
 /**
  * @brief Get the reg info object from node_addr
@@ -720,7 +773,8 @@ private:
     }
 };
 
-struct xissue_detail final : public xserializable_based_on<void> {
+class xissue_detail final : public xenable_to_string_t<xissue_detail>, public xserializable_based_on<void> {
+public:
     uint64_t onchain_timer_round{0};
     uint64_t m_zec_vote_contract_height{0};
     uint64_t m_zec_workload_contract_height{0};
@@ -735,25 +789,14 @@ struct xissue_detail final : public xserializable_based_on<void> {
     uint64_t m_validator_group_count{0};
     std::map<std::string, reward_detail> m_node_rewards;
 
+public:
+    std::string to_string() const override;
+    int32_t from_string(std::string const & s) override;
+    using xenable_to_string_t<xissue_detail>::to_string;
+    using xenable_to_string_t<xissue_detail>::from_string;
+
 private:
-    int32_t do_write(base::xstream_t & stream) const override {
-        const int32_t begin_pos = stream.size();
-        stream << onchain_timer_round;
-        stream << m_zec_vote_contract_height;
-        stream << m_zec_workload_contract_height;
-        stream << m_zec_reward_contract_height;
-        stream << m_edge_reward_ratio;
-        stream << m_archive_reward_ratio;
-        stream << m_validator_reward_ratio;
-        stream << m_auditor_reward_ratio;
-        stream << m_vote_reward_ratio;
-        stream << m_governance_reward_ratio;
-        stream << m_auditor_group_count;
-        stream << m_validator_group_count;
-        MAP_OBJECT_SERIALIZE2(stream, m_node_rewards);
-        const int32_t end_pos = stream.size();
-        return (end_pos - begin_pos);
-    }
+    int32_t do_write(base::xstream_t & stream) const override;
 
     /**
      * @brief read from stream
@@ -761,24 +804,7 @@ private:
      * @param stream
      * @return int32_t
      */
-    int32_t do_read(base::xstream_t & stream) override {
-        const int32_t begin_pos = stream.size();
-        stream >> onchain_timer_round;
-        stream >> m_zec_vote_contract_height;
-        stream >> m_zec_workload_contract_height;
-        stream >> m_zec_reward_contract_height;
-        stream >> m_edge_reward_ratio;
-        stream >> m_archive_reward_ratio;
-        stream >> m_validator_reward_ratio;
-        stream >> m_auditor_reward_ratio;
-        stream >> m_vote_reward_ratio;
-        stream >> m_governance_reward_ratio;
-        stream >> m_auditor_group_count;
-        stream >> m_validator_group_count;
-        MAP_OBJECT_DESERIALZE2(stream, m_node_rewards);
-        const int32_t end_pos = stream.size();
-        return (begin_pos - end_pos);
-    }
+    int32_t do_read(base::xstream_t & stream) override;
 };
 
 NS_END2

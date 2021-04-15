@@ -5,7 +5,7 @@
 #pragma once
 #include <string>
 #include <chrono>
-#include "xbasic/xns_macro.h"
+#include "xbase/xns_macro.h"
 
 NS_BEG1(top)
 // from https://stackoverflow.com/questions/1861294/how-to-calculate-execution-time-of-a-code-snippet-in-c?noredirect=1&lq=1

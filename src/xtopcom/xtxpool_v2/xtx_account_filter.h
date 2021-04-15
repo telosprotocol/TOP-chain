@@ -1,6 +1,6 @@
 #pragma once
 
-#include "xbase/xvblock.h"
+#include "xvledger/xvblock.h"
 #include "xdata/xblock.h"
 #include "xdata/xcons_transaction.h"
 #include "xdata/xlightunit.h"
@@ -73,11 +73,13 @@ public:
 
 using xtx_unconfirm_txs_t = std::multiset<xtx_unconfirm_tx_entry, xtx_unconfirm_tx_retry_comp>;
 
-class xaccount_filter {
+class xaccount_filter : public base::xvaccount_t {
 public:
-    xaccount_filter() = default;
-    xaccount_filter(xaccount_addr_t account, base::xvblockstore_t * blockstore) : m_account_addr(account), m_blockstore(blockstore){};
-    xaccount_addr_t get_account_addr();
+    xaccount_filter(xaccount_addr_t account, base::xvblockstore_t * blockstore) : base::xvaccount_t(account), m_blockstore(blockstore){};
+protected:
+    ~xaccount_filter() {}
+public:
+    // base::xvaccount_t get_account_addr();
     base::xvblockstore_t * get_blockstore();
     virtual enum_xtxpool_error_type reject(const xcons_transaction_ptr_t & tx, bool & deny) = 0;
     virtual enum_xtxpool_error_type reject(const xcons_transaction_ptr_t & tx, uint64_t pre_unitblock_height, bool & deny) = 0;
@@ -91,13 +93,17 @@ protected:
     virtual enum_xtxpool_error_type sync_reject_rules(uint64_t unitblock_height) = 0;
 
 private:
-    xaccount_addr_t m_account_addr;
     base::xvblockstore_t * m_blockstore{nullptr};
 };
+
+using xaccount_filter_ptr_t = xobject_ptr_t<xaccount_filter>;
 
 class xaccount_recvtx_filter : public xaccount_filter {
 public:
     xaccount_recvtx_filter(xaccount_addr_t account, base::xvblockstore_t * blockstore) : xaccount_filter(account, blockstore){};
+protected:
+    ~xaccount_recvtx_filter() {}
+public:
     enum_xtxpool_error_type reject(const xcons_transaction_ptr_t & tx, bool & deny) override;
     enum_xtxpool_error_type reject(const xcons_transaction_ptr_t & tx, uint64_t pre_unitblock_height, bool & deny) override;
     enum_xtxpool_error_type update_reject_rule(const data::xblock_t * unit_block) override;

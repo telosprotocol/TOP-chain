@@ -3,8 +3,7 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include <string>
-#include "xbasic/xns_macro.h"
-#include "xbase/xvblock.h"
+#include "xvledger/xvblock.h"
 #include "xdata/xdata_common.h"
 #include "xdata/xdatautil.h"
 #include "xdata/xfullunit.h"

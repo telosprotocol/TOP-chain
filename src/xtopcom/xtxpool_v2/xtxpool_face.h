@@ -10,6 +10,7 @@
 #include "xdata/xcons_transaction.h"
 #include "xindexstore/xindexstore_face.h"
 #include "xstore/xstore_face.h"
+#include "xvledger/xvcertauth.h"
 
 #include <string>
 #include <vector>
@@ -110,7 +111,7 @@ using ready_accounts_t = std::vector<std::shared_ptr<xready_account_t>>;
 
 class tx_info_t {
 public:
-    tx_info_t(const std::string & account_addr, const uint256_t & hash, enum_transaction_subtype subtype) : m_account_addr(account_addr), m_hash(hash), m_subtype(subtype) {
+    tx_info_t(const std::string & account_addr, const uint256_t & hash, base::enum_transaction_subtype subtype) : m_account_addr(account_addr), m_hash(hash), m_subtype(subtype) {
     }
     tx_info_t(const xcons_transaction_ptr_t & cons_tx)
       : m_account_addr(cons_tx->get_account_addr()), m_hash(cons_tx->get_transaction()->digest()), m_subtype(cons_tx->get_tx_subtype()) {
@@ -122,7 +123,7 @@ public:
     const uint256_t & get_hash() const {
         return m_hash;
     }
-    enum_transaction_subtype get_subtype() const {
+    base::enum_transaction_subtype get_subtype() const {
         return m_subtype;
     }
     const std::string get_hash_str() const {
@@ -132,7 +133,7 @@ public:
 private:
     std::string m_account_addr;
     uint256_t m_hash;
-    enum_transaction_subtype m_subtype;
+    base::enum_transaction_subtype m_subtype;
 };
 
 class xtxpool_face_t : public base::xobject_t {

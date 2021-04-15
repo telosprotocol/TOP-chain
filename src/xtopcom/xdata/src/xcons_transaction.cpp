@@ -104,9 +104,9 @@ bool xcons_transaction_t::get_commit_prove_cert_and_account(base::xvqcert_t* & c
 void xcons_transaction_t::update_transation() {
     if (m_receipt == nullptr) {
         if (m_tx->get_source_addr() == m_tx->get_target_addr() || data::is_black_hole_address(common::xaccount_address_t{m_tx->get_target_addr()})) {
-            m_tx->set_tx_subtype(data::enum_transaction_subtype_self);
+            m_tx->set_tx_subtype(enum_transaction_subtype_self);
         } else {
-            m_tx->set_tx_subtype(data::enum_transaction_subtype_send);
+            m_tx->set_tx_subtype(enum_transaction_subtype_send);
         }
     } else {
         if (m_receipt->get_tx_info()->get_tx_subtype() == enum_transaction_subtype_send) {

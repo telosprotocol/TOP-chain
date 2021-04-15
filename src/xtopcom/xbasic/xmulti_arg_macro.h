@@ -3,7 +3,7 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #pragma once
-#include "xns_macro.h"
+#include "xbase/xns_macro.h"
 
 NS_BEG1(top)
 

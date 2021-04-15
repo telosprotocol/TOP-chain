@@ -34,7 +34,7 @@ bool xproposal_maker_t::can_make_proposal(data::xblock_consensus_para_t & propos
         return false;
     }
 
-    base::xauto_ptr<base::xvblock_t> drand_block = get_blockstore()->get_latest_committed_block(sys_drand_addr);
+    base::xauto_ptr<base::xvblock_t> drand_block = get_blockstore()->get_latest_committed_block(base::xvaccount_t(sys_drand_addr));
     if (drand_block->get_clock() == 0) {
         xwarn("xproposal_maker_t::can_make_proposal fail-no valid drand. %s", proposal_para.dump().c_str());
         return false;
@@ -50,7 +50,7 @@ xblock_ptr_t xproposal_maker_t::make_proposal(data::xblock_consensus_para_t & pr
 
     bool can_make_next_block = m_table_maker->can_make_next_block(table_para, proposal_para);
     if (!can_make_next_block) {
-        xdbg("xproposal_maker_t::make_proposal no need make next block.%s error_code=%s",
+        xdbg("xproposal_maker_t::make_proposal no need make next block.%s",
             proposal_para.dump().c_str());
         return nullptr;
     }
@@ -70,7 +70,7 @@ xblock_ptr_t xproposal_maker_t::make_proposal(data::xblock_consensus_para_t & pr
         return nullptr;
     }
 
-    std::string proposal_input_str = table_para.m_proposal_input.serialize_to_string();
+    std::string proposal_input_str = table_para.m_proposal_input.to_string();
     proposal_block->get_input()->set_proposal(proposal_input_str);
     bool bret = proposal_block->reset_prev_block(latest_cert_block.get());
     xassert(bret);
@@ -160,7 +160,7 @@ bool xproposal_maker_t::verify_proposal_input(base::xvblock_t *proposal_block, c
     uint64_t table_commit_height = committed_block->get_height();
     xassert(table_commit_height < proposal_block->get_height());
 
-    int32_t serialize_ret = table_para.m_proposal_input.serialize_from_string(proposal_block->get_input()->get_proposal());
+    int32_t serialize_ret = table_para.m_proposal_input.from_string(proposal_block->get_input()->get_proposal());
     if (serialize_ret <= 0) {
         xerror("xproposal_maker_t::verify_proposal_input fail-table serialize from proposal input. proposal=%s",
             proposal_block->dump().c_str());
@@ -188,7 +188,7 @@ bool xproposal_maker_t::verify_proposal_drand_block(base::xvblock_t *proposal_bl
         return false;
     }
 
-    base::xauto_ptr<base::xvblock_t> _drand_vblock = get_blockstore()->load_block_object(sys_drand_addr, drand_height);
+    base::xauto_ptr<base::xvblock_t> _drand_vblock = get_blockstore()->load_block_object(base::xvaccount_t(sys_drand_addr), drand_height, 0, true);
     if (_drand_vblock == nullptr) {
         XMETRICS_PACKET_INFO("consensus_tableblock",
                             "fail_find_drand", proposal_block->dump(),

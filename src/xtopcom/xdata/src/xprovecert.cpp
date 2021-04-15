@@ -6,8 +6,7 @@
 
 #include "xbasic/xversion.h"
 #include "xbasic/xdataobj_base.hpp"
-#include "xbase/xvblock.h"
-#include "xbase/xvledger.h"
+#include "xvledger/xvblock.h"
 #include "xdata/xprovecert.h"
 
 namespace top { namespace data {
@@ -49,7 +48,7 @@ int32_t xprove_cert_t::do_read(base::xstream_t & stream) {
     KEEP_SIZE();
     std::string cert_bin;
     stream >> cert_bin;
-    m_prove_cert = base::xvblockstore_t::create_qcert_object(cert_bin);
+    m_prove_cert = base::xvblock_t::create_qcert_object(cert_bin);
     if (m_prove_cert == nullptr) {
         xassert(0);
         return -1;

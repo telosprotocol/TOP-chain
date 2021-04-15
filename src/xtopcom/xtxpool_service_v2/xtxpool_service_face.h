@@ -6,8 +6,8 @@
 #include "xbase/xbase.h"
 #include "xbase/xdata.h"
 #include "xbase/xthread.h"
-#include "xbase/xvblock.h"
-#include "xbase/xvledger.h"
+#include "xvledger/xvblock.h"
+// TODO(jimmy) #include "xbase/xvledger.h"
 #include "xbasic/xmemory.hpp"
 #include "xchain_timer/xchain_timer_face.h"
 #include "xcommon/xfadable.h"
@@ -20,6 +20,7 @@
 #include "xtxpool_service_v2/xrequest_tx_receiver_face.h"
 #include "xtxpool_v2/xtxpool_face.h"
 #include "xvnetwork/xvnetwork_driver_face.h"
+#include "xmbus/xmessage_bus.h"
 
 NS_BEG2(top, xtxpool_service_v2)
 

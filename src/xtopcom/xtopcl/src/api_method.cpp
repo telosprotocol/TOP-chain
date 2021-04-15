@@ -5,7 +5,7 @@
 #include "task/request_task.h"
 #include "task/task_dispatcher.h"
 #include "xbase/xutl.h"
-#include "xbase/xvledger.h"
+// TODO(jimmy) #include "xbase/xvledger.h"
 #include "xcrypto.h"
 #include "xcrypto/xckey.h"
 #include "xcrypto_util.h"

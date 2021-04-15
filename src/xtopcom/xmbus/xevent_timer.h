@@ -5,7 +5,7 @@
 #pragma once
 
 #include "xmbus/xevent.h"
-#include "xbase/xvblock.h"
+#include "xvledger/xvblock.h"
 
 NS_BEG2(top, mbus)
 
@@ -27,7 +27,7 @@ public:
 
 };
 
-DEFINE_SHARED_PTR(xevent_timer);
+using xevent_timer_ptr_t = xobject_ptr_t<xevent_timer_t>;
 
 class xevent_chain_timer_t : public xevent_t {
 public:
@@ -52,8 +52,8 @@ public:
     base::xvblock_t* time_block{};
 };
 
-DEFINE_SHARED_PTR(xevent_chain_timer);
-        
+using xevent_chain_timer_ptr_t = xobject_ptr_t<xevent_chain_timer_t>;
+
 // </editor-fold>
 
 NS_END2

@@ -2,10 +2,10 @@
 #include "gtest/gtest.h"
 #include "xbase/xmem.h"
 #include "xbase/xcontext.h"
-#include "xbase/xvledger.h"
+// TODO(jimmy) #include "xbase/xvledger.h"
 #include "xdata/xdata_defines.h"
 #include "xdata/xnative_contract_address.h"
-#include "xbasic/xobject_ptr.h"
+#include "xbase/xobject_ptr.h"
 #include "xdata/xblock.h"
 #include "xdata/xproperty.h"
 #include "xdata/xdatautil.h"
@@ -14,7 +14,7 @@
 #include "xutility/xhash.h"
 #include "xcrypto/xcrypto_util.h"
 #include "xcrypto/xckey.h"
-#include "xbase/xvledger.h"
+// TODO(jimmy) #include "xbase/xvledger.h"
 
 using namespace top;
 using namespace top::data;

@@ -47,13 +47,13 @@ void xconfig_onchain_loader_t::update(mbus::xevent_ptr_t e) {
         return;
     }
 
-    mbus::xevent_store_block_to_db_ptr_t block_event = std::static_pointer_cast<mbus::xevent_store_block_to_db_t>(e);
+    mbus::xevent_store_block_to_db_ptr_t block_event = dynamic_xobject_ptr_cast<mbus::xevent_store_block_to_db_t>(e);
 
     if (block_event == nullptr) {
         xassert(0);
         return;
     }
-    auto block = block_event->block;
+    auto block = mbus::extract_block_from(block_event);
     xassert(block != nullptr);
 
     if (block->is_unitblock()) {
@@ -73,7 +73,7 @@ void xconfig_onchain_loader_t::update(mbus::xevent_ptr_t e) {
 
         top::base::xstream_t stream(base::xcontext_t::instance(), (uint8_t *)voted_proposal.data(), voted_proposal.size());
         if (stream.size() <= 0) {
-            xwarn("[CONFIG] failed to get stream for block height: %" PRIu64, block_event->block->get_height());
+            xwarn("[CONFIG] failed to get stream for block height: %" PRIu64, block->get_height());
             return;
         }
         proposal.deserialize(stream);

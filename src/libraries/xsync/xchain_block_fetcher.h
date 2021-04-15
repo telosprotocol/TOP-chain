@@ -7,19 +7,19 @@
 #include <mutex>
 #include <unordered_map>
 #include <memory>
-#include "xbasic/xns_macro.h"
+
 #include "xbasic/xmemory.hpp"
 #include "xsync/xsync_store.h"
 #include "xsync/xsync_sender.h"
 #include "xsync/xsync_message.h"
 #include "xsync/xsync_broadcast.h"
-#include "xbase/xvledger.h"
+// TODO(jimmy) #include "xbase/xvledger.h"
 
 NS_BEG2(top, sync)
 
 class xsync_block_announce_t {
 public:
-    xsync_block_announce_t(uint64_t _height, uint64_t _viewid, const std::string &_hash, 
+    xsync_block_announce_t(uint64_t _height, uint64_t _viewid, const std::string &_hash,
         const vnetwork::xvnode_address_t &_network_self, const vnetwork::xvnode_address_t &_from_address, int64_t _tm):
     height(_height),
     viewid(_viewid),

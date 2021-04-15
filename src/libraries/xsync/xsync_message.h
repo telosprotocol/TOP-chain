@@ -7,7 +7,6 @@
 #include <time.h>
 #include <string>
 #include <vector>
-#include "xbasic/xns_macro.h"
 #include "xdata/xdata_common.h"
 #include "xdata/xblock.h"
 #include "xdata/xtransaction.h"

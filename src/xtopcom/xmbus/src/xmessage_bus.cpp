@@ -5,6 +5,7 @@
 #include <cassert>
 #include "xmbus/xmessage_bus.h"
 #include "xmbus/xevent_timer.h"
+#include "xmbus/xevent_store.h"
 #include "xmetrics/xmetrics.h"
 #include "xbase/xbase.h"
 
@@ -28,8 +29,7 @@ void xmessage_bus_timer_t::start() {
         while (m_running) {
             std::this_thread::sleep_for(std::chrono::milliseconds(
                     this->m_interval_milliseconds));
-            this->m_message_bus->push_event(std::make_shared<xevent_timer_t>(
-                    this->m_interval_milliseconds));
+            this->m_message_bus->push_event(make_object_ptr<xevent_timer_t>(this->m_interval_milliseconds));
         }
     });
 }
@@ -118,5 +118,22 @@ xevent_queue_ptr_t xmessage_bus_t::get_queue(int major_type) {
     assert((major_type > 0 && major_type < (int) m_queues.size()));
     return m_queues[major_type];
 }
+
+//XTODO,add implmentation for below
+xevent_ptr_t  xmessage_bus_t::create_event_for_store_index_to_db(base::xvbindex_t * target_block) {
+  xassert(false); // TODO xevent_ptr_t should use object ptr
+  return nullptr;
+}
+
+xevent_ptr_t  xmessage_bus_t::create_event_for_store_block_to_db(base::xvblock_t * this_block_ptr) {
+    data::xblock_t* block = dynamic_cast<data::xblock_t*>(this_block_ptr);
+    xassert(block != nullptr);
+    block->add_ref();
+    data::xblock_ptr_t obj;
+    obj.attach(block);
+
+    return  make_object_ptr<mbus::xevent_store_block_to_db_t>(obj, obj->get_account(), true);
+}
+
 
 NS_END2

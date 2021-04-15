@@ -4,7 +4,6 @@
 
 #pragma once
 #include "xbasic/xmemory.hpp"
-#include "xbasic/xns_macro.h"
 #include "xbasic/xrunnable.h"
 #include "xvnetwork/xmessage_filter_base.h"
 #include "xvnetwork/xmessage_filter_manager_face.h"

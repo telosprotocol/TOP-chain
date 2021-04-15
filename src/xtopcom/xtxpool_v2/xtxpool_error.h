@@ -5,7 +5,6 @@
 #pragma once
 
 #include "xbasic/xmodule_type.h"
-#include "xbasic/xns_macro.h"
 
 #include <assert.h>
 

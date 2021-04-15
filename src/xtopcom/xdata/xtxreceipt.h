@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2017-2018 Telos Foundation & contributors
+// Copyright (c) 2017-2018 Telos Foundation & contributors
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -11,12 +11,14 @@
 #include "xdata/xlightunit_info.h"
 #include "xdata/xprovecert.h"
 #include "xutility/xmerkle.hpp"
+#include "xbasic/xbyte_buffer.h"
 namespace top { namespace data {
 
 class xtx_receipt_t : public xbase_dataunit_t<xtx_receipt_t, xdata_type_tx_receipt> {
  public:
     xtx_receipt_t() = default;
     xtx_receipt_t(const xlightunit_output_entity_t* txinfo, const xmerkle_path_256_t & path, base::xvqcert_t* cert);
+    xtx_receipt_t(const xlightunit_output_entity_t * txinfo, std::map<std::string, xbyte_buffer_t> data, const xmerkle_path_256_t & path, base::xvqcert_t * cert);
  protected:
     virtual ~xtx_receipt_t();
  private:
@@ -35,11 +37,15 @@ class xtx_receipt_t : public xbase_dataunit_t<xtx_receipt_t, xdata_type_tx_recei
     const base::xvqcert_t*          get_unit_cert() const {return m_tx_info_prove->get_prove_cert();}
     const xprove_cert_t*            get_tx_info_prove() const {return m_tx_info_prove;}
     const xprove_cert_t*            get_commit_prove() const {return m_commit_prove;}
+    std::map<std::string, xbyte_buffer_t> const & data() const noexcept {
+        return m_receipt_data;
+    }
 
  private:
     xlightunit_output_entity_t*   m_tx_info{nullptr};
     xprove_cert_t*          m_tx_info_prove{nullptr};
     xprove_cert_t*          m_commit_prove{nullptr};
+    std::map<std::string, xbyte_buffer_t> m_receipt_data;
 };
 
 using xtx_receipt_ptr_t = xobject_ptr_t<xtx_receipt_t>;

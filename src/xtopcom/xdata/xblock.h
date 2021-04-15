@@ -8,17 +8,45 @@
 #include <vector>
 #include <map>
 #include "json/json.h"
-#include "xbasic/xns_macro.h"
-#include "xbase/xvblock.h"
-#include "xdata/xdata_common.h"
-#include "xbasic/xobject_ptr.h"
-#include "xdata/xnative_property.h"
-#include "xdata/xheader_cert.h"
-#include "xdata/xpropertylog.h"
+
+#if defined(__clang__)
+
+#    pragma clang diagnostic push
+#    pragma clang diagnostic ignored "-Wall"
+#    pragma clang diagnostic ignored "-Wextra"
+#    pragma clang diagnostic ignored "-Wpedantic"
+
+#elif defined(__GNUC__)
+
+#    pragma GCC diagnostic push
+#    pragma GCC diagnostic ignored "-Wpedantic"
+
+#elif defined(_MSC_VER)
+
+#    pragma warning(push, 0)
+
+#endif
+
+#include "xvledger/xvblock.h"
+#include "xvledger/xvblockstore.h"
+
+#if defined(__clang__)
+#    pragma clang diagnostic pop
+#elif defined(__GNUC__)
+#    pragma GCC diagnostic pop
+#elif defined(_MSC_VER)
+#    pragma warning(pop)
+#endif
+
+#include "xbase/xobject_ptr.h"
 #include "xdata/xaccount_mstate.h"
 #include "xdata/xcons_transaction.h"
+#include "xdata/xdata_common.h"
+#include "xdata/xheader_cert.h"
 #include "xdata/xlightunit_info.h"
 #include "xdata/xtableindex.h"
+#include "xdata/xnative_property.h"
+#include "xdata/xpropertylog.h"
 
 NS_BEG2(top, data)
 
