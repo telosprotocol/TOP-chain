@@ -16,6 +16,8 @@ namespace top
         {
             m_value_ptr = nullptr;
             m_value_ptr = new xvalueobj_t();
+            
+            REGISTER_XVIFUNC_ID_API(enum_xvinstruct_class_core_function);
         }
     
         xvproperty_t::xvproperty_t(const std::string & name, const xvalue_t & value,enum_xdata_type type)
@@ -24,6 +26,8 @@ namespace top
             m_value_ptr = nullptr;
             m_value_ptr = new xvalueobj_t(name,value);
             set_unit_name(name);//set unit name
+            
+            REGISTER_XVIFUNC_ID_API(enum_xvinstruct_class_core_function);
         }
     
         xvproperty_t::xvproperty_t(const xvproperty_t & const_obj)
@@ -49,11 +53,27 @@ namespace top
                 m_value_ptr->set_readonly_flag(); //set shared flag
             }
             set_unit_name(const_obj.get_name());//copy unit name finally
+            
+            REGISTER_XVIFUNC_ID_API(enum_xvinstruct_class_core_function);
         }
 
         xvproperty_t::~xvproperty_t()
         {
             m_value_ptr->release_ref();
+        }
+    
+        bool  xvproperty_t::take_snapshot_to(xvcanvas_t & target_canvas) //property create full-snapshot for it'value
+        {
+            auto_reference<xvalueobj_t> ref_valu_obj(load_value_obj());//hold object so that not been release by clear_value();
+            const xvalue_t& orginal_value = ref_valu_obj->get_value();//link the value
+
+            xvmethod_t clear_value_instruction(get_execute_uri(),enum_xvinstruct_class_core_function, enum_xvinstruct_core_method_clear_value);
+            target_canvas.record(this, clear_value_instruction);
+            
+            xvmethod_t new_value_instruction(get_execute_uri(),enum_xvinstruct_class_core_function, enum_xvinstruct_core_method_reset_value,(xvalue_t&)orginal_value);
+            target_canvas.record(this, new_value_instruction);
+            
+            return true;
         }
         
         xvalueobj_t*  xvproperty_t::load_value_obj() const
@@ -97,6 +117,13 @@ namespace top
         //update value,not safe for multiple_thrad
         bool   xvproperty_t::copy_from_value(const xvalue_t & new_val)
         {
+            if(  (new_val.get_type()     != get_value().get_type()) //must be same type
+               &&(get_value().get_type() != xvalue_t::enum_xvalue_type_null) ) //null value allow to replace by any other
+            {
+                xerror("xvproperty_t::copy_from_value,invalid value type(%d) that try to reset current(%d)",(int)new_val.get_type(),(int)get_value().get_type());
+                return false;
+            }
+            
             xvalue_t & writable_value = (xvalue_t&)get_writable_value();
             writable_value = new_val;
             return true;
@@ -104,9 +131,96 @@ namespace top
         
         bool   xvproperty_t::move_from_value(xvalue_t & new_val)
         {
+            if(  (new_val.get_type()     != get_value().get_type()) //must be same type
+               &&(get_value().get_type() != xvalue_t::enum_xvalue_type_null) ) //null value allow to replace by any other
+            {
+                xerror("xvproperty_t::copy_from_value,invalid value type(%d) that try to reset current(%d)",(int)new_val.get_type(),(int)get_value().get_type());
+                return false;
+            }
+            
             xvalue_t & writable_value = (xvalue_t&)get_writable_value();
             writable_value = std::move(new_val);
             return true;
+        }
+    
+        bool  xvproperty_t::clear_value() //erase to empty string
+        {
+            xvmethod_t instruction(get_execute_uri(),enum_xvinstruct_class_core_function, enum_xvinstruct_core_method_clear_value);
+            return (execute(instruction,(xvcanvas_t*)get_canvas()).get_error() == enum_xcode_successful);
+        }
+        
+        bool  xvproperty_t::reset_value(const xvalue_t & new_value) //erase_all and set all
+        {
+            if(  (new_value.get_type()   != get_value().get_type()) //must be same type
+               &&(get_value().get_type() != xvalue_t::enum_xvalue_type_null) ) //null value allow to replace by any other
+            {
+                xerror("xvproperty_t::reset_value,invalid value type(%d) that try to reset current(%d)",(int)new_value.get_type(),(int)get_value().get_type());
+                return false;
+            }
+            xvmethod_t instruction(get_execute_uri(),enum_xvinstruct_class_core_function, enum_xvinstruct_core_method_reset_value,(xvalue_t &)new_value);
+            return (execute(instruction,(xvcanvas_t*)get_canvas()).get_error() == enum_xcode_successful);
+        }
+        
+        const xvalue_t  xvproperty_t::do_clear_value(const xvmethod_t & op)
+        {
+            if(op.get_method_type() != enum_xvinstruct_class_core_function)
+                return xvalue_t(enum_xerror_code_bad_type);
+            
+            if(op.get_method_id() != enum_xvinstruct_core_method_clear_value)
+                return xvalue_t(enum_xerror_code_bad_method);
+            
+            if(op.get_params_count() != 0)
+                return xvalue_t(enum_xerror_code_invalid_param_count);
+            
+            //construction a empty/zero value to replace it
+            xvalue_t & writable_value = (xvalue_t&)get_writable_value();
+            writable_value = get_empty_value();
+
+            return xvalue_t(enum_xcode_successful);
+        }
+    
+        const xvalue_t  xvproperty_t::do_reset_value(const xvmethod_t & op)
+        {
+            if(op.get_method_type() != enum_xvinstruct_class_core_function)
+                return xvalue_t(enum_xerror_code_bad_type);
+            
+            if(op.get_method_id() != enum_xvinstruct_core_method_reset_value)
+                return xvalue_t(enum_xerror_code_bad_method);
+            
+            if(op.get_params_count() != 1) //reset must carry new value
+                return xvalue_t(enum_xerror_code_invalid_param_count);
+            
+            const xvalue_t & new_value = op.get_method_params().at(0);
+            if(  (new_value.get_type()   != get_value().get_type()) //must be same type
+               &&(get_value().get_type() != xvalue_t::enum_xvalue_type_null) ) //null value allow to replace by any other
+            {
+                xerror("xvproperty_t::do_reset_value,invalid value type(%d) that try to reset current(%d)",(int)new_value.get_type(),(int)get_value().get_type());
+                return xvalue_t(enum_xerror_code_invalid_param_type);
+            }
+            
+            //replace by new value_t
+            xvalue_t & writable_value = (xvalue_t&)get_writable_value();
+            writable_value = std::move(new_value);
+
+            return xvalue_t(enum_xcode_successful);
+        }
+    
+        const xvalue_t  xvproperty_t::do_clone_value(const xvmethod_t & op)
+        {
+            if(op.get_method_type() != enum_xvinstruct_class_core_function)
+                return xvalue_t(enum_xerror_code_bad_type);
+            
+            if(op.get_method_id() != enum_xvinstruct_core_method_clone_value)
+                return xvalue_t(enum_xerror_code_bad_method);
+            
+            if(op.get_params_count() != 0)
+                return xvalue_t(enum_xerror_code_invalid_param_count);
+            
+            //completely deep-copy and replace it
+            xauto_ptr<xvalueobj_t> new_value_obj(new xvalueobj_t(get_name(),get_value()));
+            set_value_obj(new_value_obj.get());
+            
+            return xvalue_t(enum_xcode_successful);
         }
     
         void*   xvproperty_t::query_interface(const int32_t _enum_xobject_type_) //caller need to cast (void*) to related ptr
@@ -191,6 +305,11 @@ namespace top
                 return this;
             
             return xvproperty_t::query_interface(_enum_xobject_type_);
+        }
+    
+        xvalue_t  xtokenvar_t::get_empty_value() const//each property must implement it
+        {
+            return vtoken_t(0); //balance of 0 as empty
         }
     
         const vtoken_t  xtokenvar_t::get_balance()
@@ -307,6 +426,11 @@ namespace top
             
             return xvproperty_t::query_interface(_enum_xobject_type_);
         }
+    
+        xvalue_t  xnoncevar_t::get_empty_value() const //each property must implement it
+        {
+            return vnonce_t(0);
+        }
      
         const vnonce_t xnoncevar_t::get_nonce()
         {
@@ -336,19 +460,16 @@ namespace top
         xstringvar_t::xstringvar_t(enum_xdata_type type)
             :xvproperty_t(std::string(),std::string(),type)
         {
-            REGISTER_XVIFUNC_ID_API(enum_xvinstruct_class_state_function);
         }
         
         xstringvar_t::xstringvar_t(const std::string & property_name, const std::string & property_value,enum_xdata_type type)
             :xvproperty_t(property_name,property_value,type)
         {
-            REGISTER_XVIFUNC_ID_API(enum_xvinstruct_class_state_function);
         }
         
         xstringvar_t::xstringvar_t(const xstringvar_t & obj)
             :xvproperty_t(obj)
         {
-            REGISTER_XVIFUNC_ID_API(enum_xvinstruct_class_state_function);
         }
         
         xstringvar_t::~xstringvar_t()
@@ -367,46 +488,26 @@ namespace top
             
             return xvproperty_t::query_interface(_enum_xobject_type_);
         }
+    
+        xvalue_t  xstringvar_t::get_empty_value() const //each property must implement it
+        {
+            return std::string();
+        }
      
         const std::string & xstringvar_t::query() const //return whole string
         {
             return get_value().get_string();
         }
     
-        bool  xstringvar_t::reset() //erase to empty string
+        bool  xstringvar_t::clear() //erase to empty string
         {
-            xvmethod_t instruction(get_execute_uri(),enum_xvinstruct_class_state_function, enum_xvinstruct_state_method_string_reset);
-            return (execute(instruction,(xvcanvas_t*)get_canvas()).get_error() == enum_xcode_successful);
+            return clear_value();
         }
     
         bool  xstringvar_t::reset(const std::string & value) //erase_all and set all
         {
-            xvalue_t new_string_value(value);
-            xvmethod_t instruction(get_execute_uri(),enum_xvinstruct_class_state_function, enum_xvinstruct_state_method_string_reset,new_string_value);
-            return (execute(instruction,(xvcanvas_t*)get_canvas()).get_error() == enum_xcode_successful);
-        }
-    
-        const xvalue_t  xstringvar_t::do_reset(const xvmethod_t & op)
-        {
-            if(op.get_method_id() != enum_xvinstruct_state_method_string_reset)
-                return xvalue_t(enum_xerror_code_bad_method);
-            
-            if(op.get_method_params().size() > 1) //carry too much params
-                return xvalue_t(enum_xerror_code_invalid_param_count);
-                
-            std::string new_string;
-            if(op.get_method_params().size() == 1) //carry new string value
-            {
-                const xvalue_t & new_string_param = op.get_method_params().at(0);
-                if(new_string_param.get_type() != xvalue_t::enum_xvalue_type_string)
-                    return xvalue_t(enum_xerror_code_invalid_param_type);
-                
-                new_string = new_string_param.get_string();
-            }
-            xvalue_t new_value(new_string);
-            move_from_value(new_value);
-            
-            return xvalue_t(enum_xcode_successful);
+            xvalue_t new_val(value);
+            return reset_value(new_val);
         }
         
         //---------------------------------xcodevar_t---------------------------------//
@@ -452,21 +553,10 @@ namespace top
             return xstringvar_t::reset(values);
         }
         
-        const xvalue_t xcodevar_t::do_reset(const xvmethod_t & op)
-        {
-            if(op.get_method_id() != enum_xvinstruct_state_method_string_reset)
-                return xvalue_t(enum_xerror_code_bad_method);
-            
-            if(get_value().get_string().empty() == false) //once deploy, never allow to modify
-                return xvalue_t(enum_xerror_code_bad_privilege);
-            
-            return xstringvar_t::do_reset(op);
-        }
-    
         //---------------------------------xhashmapvar_t---------------------------------//
         IMPL_REGISTER_OBJECT(xhashmapvar_t);
         xhashmapvar_t::xhashmapvar_t(enum_xdata_type type)
-            :xvproperty_t(std::string(),std::map<std::string,std::string>(),type)
+            :xvproperty_t(std::string(),std::map<std::string,std::map<std::string,std::string> >(),type)
         {
             REGISTER_XVIFUNC_ID_API(enum_xvinstruct_class_state_function);
         }
@@ -498,6 +588,11 @@ namespace top
                 return this;
             
             return xvproperty_t::query_interface(_enum_xobject_type_);
+        }
+    
+        xvalue_t  xhashmapvar_t::get_empty_value() const //each property must implement it
+        {
+            return xvalue_t(std::map<std::string,std::map<std::string,std::string> >());
         }
     
         bool   xhashmapvar_t::find(const std::string & key)//test whether key is existing or not
@@ -569,17 +664,15 @@ namespace top
             return (execute(instruction,(xvcanvas_t*)get_canvas()).get_error() == enum_xcode_successful);
         }
         
-        bool  xhashmapvar_t::reset() //erase all key and values
+        bool  xhashmapvar_t::clear() //erase all key and values
         {
-            xvmethod_t instruction(get_execute_uri(),enum_xvinstruct_class_state_function, enum_xvinstruct_state_method_hashmap_reset);
-            return (execute(instruction,(xvcanvas_t*)get_canvas()).get_error() == enum_xcode_successful);
+            return clear_value();
         }
     
         bool  xhashmapvar_t::reset(const std::map<std::string,std::map<std::string,std::string> > & key_values)//erase_all and set all
         {
-            xvalue_t newhashmap(key_values);
-            xvmethod_t instruction(get_execute_uri(),enum_xvinstruct_class_state_function, enum_xvinstruct_state_method_hashmap_reset);
-            return (execute(instruction,(xvcanvas_t*)get_canvas()).get_error() == enum_xcode_successful);
+            xvalue_t new_val(key_values);
+            return reset_value(new_val);
         }
     
         const xvalue_t  xhashmapvar_t::do_insert(const xvmethod_t & op)  //create key if not found key
@@ -664,34 +757,6 @@ namespace top
             return xvalue_t(enum_xerror_code_bad_vproperty);
         }
     
-        const xvalue_t  xhashmapvar_t::do_reset(const xvmethod_t & op)  //erase_all ,then set all
-        {
-            if(op.get_method_id() != enum_xvinstruct_state_method_hashmap_reset)
-                return xvalue_t(enum_xerror_code_bad_method);
-            
-            if(op.get_method_params().size() > 1) //carry too many pararms
-                return xvalue_t(enum_xerror_code_invalid_param_count);
-            
-            if(op.get_method_params().size() == 1)
-            {
-                const xvalue_t & new_map_param = op.get_method_params().at(0);
-                if(new_map_param.get_type() != xvalue_t::enum_xvalue_type_hashmap)
-                    return xvalue_t(enum_xerror_code_invalid_param_type);
-                
-                if(new_map_param.get_hashmap() == nullptr)
-                    return xvalue_t(enum_xerror_code_bad_param);
-                
-                copy_from_value(new_map_param);
-            }
-            else
-            {
-                std::map<std::string,std::map<std::string,std::string> > empty;
-                copy_from_value(empty);
-            }
-            return xvalue_t(enum_xcode_successful);
-        }
-        
-    
         //---------------------------------xvintvar_t<T>---------------------------------//
         template<typename T>
         const int   xvintvar_t<T>::query_obj_type()        {return enum_xdata_type_undefine;}
@@ -773,6 +838,11 @@ namespace top
         {
             return new xmtokens_t(*this);
         }
+    
+        xvalue_t  xmtokens_t::get_empty_value() const //each property must implement it
+        {
+            return std::map<std::string,int64_t>();
+        }
 
         //read interface
         const int64_t  xmtokens_t::get_balance(const std::string & token_name)
@@ -838,6 +908,11 @@ namespace top
         xvexeunit_t*  xmkeys_t::clone() //clone a new object with same state
         {
             return new xmkeys_t(*this);
+        }
+    
+        xvalue_t   xmkeys_t::get_empty_value() const //each property must implement it
+        {
+            return std::map<std::string,std::string>();
         }
         
         //read interface
