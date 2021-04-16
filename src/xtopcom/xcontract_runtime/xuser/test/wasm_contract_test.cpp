@@ -2,6 +2,7 @@
 #include <fstream>
 #include "gtest/gtest.h"
 #include "xcontract_runtime/xuser/xwasm/xwasm_engine.h"
+#include "wasm_vm_interface.h"
 
 #if defined(__clang__)
 #    pragma clang diagnostic push
@@ -36,7 +37,7 @@ using namespace top::base;
 using namespace top::data;
 using namespace top::contract_common::properties;
 
-extern "C" bool validate_wasm_with_content(uint8_t *s, uint32_t size);
+
 
 class test_wasm_contract : public testing::Test {
 public:

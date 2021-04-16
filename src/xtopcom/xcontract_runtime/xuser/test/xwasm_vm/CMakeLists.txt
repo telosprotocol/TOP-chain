@@ -1,0 +1,1 @@
+cargo_build(NAME xwasm_vm)
