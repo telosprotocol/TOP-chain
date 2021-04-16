@@ -41,10 +41,10 @@ namespace top
             if(nullptr == target_block)
                 return false;
 
+            //XTODO,add more restrict for genesis block from sync way,right now temporary enable it
             if( (target_block->get_height() == 0) && (target_block->get_header()->get_block_level() == base::enum_xvblock_level_unit) )
             {
-                xerror("xsyncvstore_t::store_block,not allow sync genesis block for unit block,which must be generated from local");
-                return false;
+                xwarn("xsyncvstore_t::store_block,not allow sync genesis block for unit block,which must be generated from local");
             }
             
             #ifdef ENABLE_METRICS

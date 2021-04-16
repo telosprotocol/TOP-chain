@@ -67,15 +67,12 @@ base::xauto_ptr<base::xvblock_t> xsync_store_t::get_latest_start_block(const std
 base::xauto_ptr<base::xvblock_t> xsync_store_t::get_latest_end_block(const std::string & account, enum_chain_sync_policy sync_policy) {
     base::xvaccount_t _vaddress(account);
     if (sync_policy == enum_chain_sync_pocliy_fast) {
-        // return m_blockstore->get_highest_sync_block(_vaddress);
-        xassert(false);  // TODO(jimmy)
-        return nullptr;
+        // TODO(jimmy) committed block
+        return m_blockstore->get_latest_connected_block(_vaddress);
     } else if (sync_policy == enum_chain_sync_pocliy_full) {
-        // return m_blockstore->get_genesis_current_block(_vaddress);
-        xassert(false);  // TODO(jimmy)
-        return nullptr;
+        return m_blockstore->get_latest_genesis_connected_block(_vaddress);
     }
-
+    xassert(false);
     return nullptr;
 }
 

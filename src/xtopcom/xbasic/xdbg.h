@@ -2,9 +2,11 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "xbasic/xns_macro.h"
+#include "xbase/xns_macro.h"
+
 #include <string>
 #include <vector>
+
 NS_BEG1(top)
 
 class xdbg_helper {

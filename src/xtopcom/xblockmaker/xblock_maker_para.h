@@ -7,7 +7,6 @@
 #include <string>
 #include <vector>
 
-#include "xbasic/xns_macro.h"
 #include "xbasic/xserializable_based_on.h"
 #include "xdata/xcons_transaction.h"
 

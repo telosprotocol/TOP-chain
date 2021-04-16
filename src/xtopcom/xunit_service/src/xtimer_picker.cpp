@@ -205,7 +205,7 @@ bool xtimer_picker_t::on_proposal_finish(const base::xvevent_t & event, xcsobjec
                 network_proxy->send_out(contract::xmessage_block_broadcast_id, get_xip2_addr(), to_addr, high_qc);
             }
         }
-        auto event = std::make_shared<mbus::xevent_chain_timer_t>(high_qc);
+        auto event = make_object_ptr<mbus::xevent_chain_timer_t>(high_qc);
         m_bus->push_event(event);
     } else {
 #ifdef ENABLE_METRICS

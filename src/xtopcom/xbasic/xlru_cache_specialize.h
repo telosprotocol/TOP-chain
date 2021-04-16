@@ -7,7 +7,7 @@
 #include <unordered_map>
 #include <list>
 #include <mutex>
-#include "xbasic/xns_macro.h"
+#include "xbase/xns_macro.h"
 
 NS_BEG2(top, basic)
 // from https://stackoverflow.com/questions/2504178/lru-cache-design

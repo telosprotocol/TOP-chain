@@ -1,7 +1,6 @@
 #include "gtest/gtest.h"
 #include "xblockmaker/xtable_maker.h"
 #include "xstore/xstore_face.h"
-#include "xstore/test/test_datamock.hpp"
 #include "xstore/xaccount_context.h"
 #include "xblockstore/xblockstore_face.h"
 #include "xdata/xtransaction_maker.hpp"
@@ -123,12 +122,13 @@ TEST_F(test_table_maker, table_maker_update_latest_blocks_1) {
     xblockmaker_resources_ptr_t resouces = test_xblockmaker_resources_t::create();
 
     xdatamock_table mocktable(1, 1, resouces->get_store());
+    base::xvaccount_t _vaddr(mocktable.get_account());
     mocktable.genrate_table_chain(3);
     const std::vector<xblock_ptr_t> & tables = mocktable.get_history_tables();
     for (auto & table : tables) {
-        ASSERT_TRUE(resouces->get_blockstore()->store_block(table.get()));
+        ASSERT_TRUE(resouces->get_blockstore()->store_block(_vaddr, table.get()));
     }
-    auto latest_cert_block = resouces->get_blockstore()->get_latest_cert_block(mocktable.get_account());
+    auto latest_cert_block = resouces->get_blockstore()->get_latest_cert_block(_vaddr);
     ASSERT_EQ(latest_cert_block->get_height(), 3);
 
     std::string taccount = mocktable.get_account();
@@ -140,12 +140,13 @@ TEST_F(test_table_maker, table_maker_update_latest_blocks_2) {
     xblockmaker_resources_ptr_t resouces = test_xblockmaker_resources_t::create();
 
     xdatamock_table mocktable(1, 1, resouces->get_store());
+    base::xvaccount_t _vaddr(mocktable.get_account());
     mocktable.genrate_table_chain(100);
     const std::vector<xblock_ptr_t> & tables = mocktable.get_history_tables();
     for (auto & table : tables) {
-        ASSERT_TRUE(resouces->get_blockstore()->store_block(table.get()));
+        ASSERT_TRUE(resouces->get_blockstore()->store_block(_vaddr, table.get()));
     }
-    auto latest_cert_block = resouces->get_blockstore()->get_latest_cert_block(mocktable.get_account());
+    auto latest_cert_block = resouces->get_blockstore()->get_latest_cert_block(_vaddr);
     ASSERT_EQ(latest_cert_block->get_height(), 100);
 
     std::string taccount = mocktable.get_account();
@@ -157,12 +158,13 @@ TEST_F(test_table_maker, table_maker_update_latest_blocks_3) {
     xblockmaker_resources_ptr_t resouces = test_xblockmaker_resources_t::create();
 
     xdatamock_table mocktable(1, 1, resouces->get_store());
+    base::xvaccount_t _vaddr(mocktable.get_account());
     mocktable.genrate_table_chain(1000);
     const std::vector<xblock_ptr_t> & tables = mocktable.get_history_tables();
     for (auto & table : tables) {
-        ASSERT_TRUE(resouces->get_blockstore()->store_block(table.get()));
+        ASSERT_TRUE(resouces->get_blockstore()->store_block(_vaddr, table.get()));
     }
-    auto latest_cert_block = resouces->get_blockstore()->get_latest_cert_block(mocktable.get_account());
+    auto latest_cert_block = resouces->get_blockstore()->get_latest_cert_block(_vaddr);
     ASSERT_EQ(latest_cert_block->get_height(), 1000);
 
     std::string taccount = mocktable.get_account();
@@ -186,7 +188,7 @@ TEST_F(test_table_maker, table_maker_roll_back_1) {
     xblock_ptr_t first_table;
     xblock_ptr_t second_table;
     {
-        base::xblock_mptrs latest_blocks = resouces->get_blockstore()->get_latest_blocks(taccount);
+        base::xblock_mptrs latest_blocks = resouces->get_blockstore()->get_latest_blocks(base::xvaccount_t(taccount));
         xblock_consensus_para_t cs_para(taccount, 10, 10, 10, latest_blocks.get_latest_cert_block()->get_height() + 1);
         cs_para.set_common_consensus_para(10, {-1, -1}, {0, 0}, 10, 10, 10);
         cs_para.set_tableblock_consensus_para(10, "random", 10, "extra");
@@ -201,7 +203,7 @@ TEST_F(test_table_maker, table_maker_roll_back_1) {
         xdatamock_tx::do_mock_signature(first_table.get());
     }
     {
-        base::xblock_mptrs latest_blocks = resouces->get_blockstore()->get_latest_blocks(taccount);
+        base::xblock_mptrs latest_blocks = resouces->get_blockstore()->get_latest_blocks(base::xvaccount_t(taccount));
         xblock_consensus_para_t cs_para(taccount, 20, 20, 20, latest_blocks.get_latest_cert_block()->get_height() + 1);
         cs_para.set_common_consensus_para(20, {-1, -1}, {0, 0}, 20, 20, 20);
         cs_para.set_tableblock_consensus_para(10, "random", 10, "extra");
@@ -217,12 +219,12 @@ TEST_F(test_table_maker, table_maker_roll_back_1) {
     }
 
     {
-        ASSERT_TRUE(resouces->get_blockstore()->store_block(first_table.get()));
+        ASSERT_TRUE(resouces->get_blockstore()->store_block(base::xvaccount_t(taccount), first_table.get()));
         ASSERT_EQ(table_maker->default_check_latest_state(), xsuccess);
         ASSERT_EQ(table_maker->get_highest_height_block()->get_block_hash(), first_table->get_block_hash());
     }
     {
-        ASSERT_TRUE(resouces->get_blockstore()->store_block(second_table.get()));
+        ASSERT_TRUE(resouces->get_blockstore()->store_block(base::xvaccount_t(taccount), second_table.get()));
         ASSERT_EQ(table_maker->default_check_latest_state(), xsuccess);
         ASSERT_EQ(table_maker->get_highest_height_block()->get_block_hash(), second_table->get_block_hash());
     }
@@ -243,7 +245,7 @@ TEST_F(test_table_maker, table_maker_make_proposal_0) {
     auto txs1 = datamock_account1.generate_transfer_tx(dstaccount, 2);
     auto txs2 = datamock_account2.generate_transfer_tx(dstaccount, 2);
 
-    base::xblock_mptrs latest_blocks = resouces->get_blockstore()->get_latest_blocks(taccount);
+    base::xblock_mptrs latest_blocks = resouces->get_blockstore()->get_latest_blocks(base::xvaccount_t(taccount));
     xblock_consensus_para_t cs_para;
     cs_para.set_common_consensus_para(10, {-1, -1}, {0, 0}, 10, 10, 10);
     cs_para.set_tableblock_consensus_para(10, "random", 10, "extra");
@@ -300,7 +302,7 @@ TEST_F(test_table_maker, table_maker_make_proposal_1) {
 
     ASSERT_EQ(xsuccess, table_maker->verify_proposal(table1.get(), table_para, cs_para));
 
-    ASSERT_TRUE(resouces->get_blockstore()->store_block(table1.get()));
+    ASSERT_TRUE(resouces->get_blockstore()->store_block(base::xvaccount_t(taccount), table1.get()));
 
     ASSERT_EQ(xsuccess, table_maker->verify_proposal(table1.get(), table_para, cs_para));
 
@@ -347,11 +349,11 @@ TEST_F(test_table_maker, table_maker_make_proposal_2) {
     ASSERT_EQ(table1->get_txs_count(), 4);
 
     ASSERT_EQ(xsuccess, table_maker->verify_proposal(table1.get(), table_para, cs_para));
-    ASSERT_TRUE(resouces->get_blockstore()->store_block(table1.get()));
+    ASSERT_TRUE(resouces->get_blockstore()->store_block(base::xvaccount_t(taccount), table1.get()));
     }
 
     {
-    base::xblock_mptrs latest_blocks = resouces->get_blockstore()->get_latest_blocks(taccount);
+    base::xblock_mptrs latest_blocks = resouces->get_blockstore()->get_latest_blocks(base::xvaccount_t(taccount));
     xblock_consensus_para_t cs_para;
     cs_para.set_common_consensus_para(10, {-1, -1}, {0, 0}, 10, 10, 10);
     cs_para.set_tableblock_consensus_para(10, "random", 10, "extra");
@@ -370,11 +372,11 @@ TEST_F(test_table_maker, table_maker_make_proposal_2) {
     ASSERT_EQ(table1->get_txs_count(), 0);
 
     ASSERT_EQ(xsuccess, table_maker->verify_proposal(table1.get(), table_para, cs_para));
-    ASSERT_TRUE(resouces->get_blockstore()->store_block(table1.get()));
+    ASSERT_TRUE(resouces->get_blockstore()->store_block(base::xvaccount_t(taccount), table1.get()));
     }
 
     {
-    base::xblock_mptrs latest_blocks = resouces->get_blockstore()->get_latest_blocks(taccount);
+    base::xblock_mptrs latest_blocks = resouces->get_blockstore()->get_latest_blocks(base::xvaccount_t(taccount));
     xblock_consensus_para_t cs_para;
     cs_para.set_common_consensus_para(10, {-1, -1}, {0, 0}, 10, 10, 10);
     cs_para.set_tableblock_consensus_para(10, "random", 10, "extra");
@@ -393,13 +395,13 @@ TEST_F(test_table_maker, table_maker_make_proposal_2) {
     ASSERT_EQ(table1->get_txs_count(), 0);
 
     ASSERT_EQ(xsuccess, table_maker->verify_proposal(table1.get(), table_para, cs_para));
-    ASSERT_TRUE(resouces->get_blockstore()->store_block(table1.get()));
+    ASSERT_TRUE(resouces->get_blockstore()->store_block(base::xvaccount_t(taccount), table1.get()));
     }
 
     {
     auto txs1 = datamock_account1.generate_transfer_tx(dstaccount, 3);
     auto txs2 = datamock_account2.generate_transfer_tx(dstaccount, 3);
-    base::xblock_mptrs latest_blocks = resouces->get_blockstore()->get_latest_blocks(taccount);
+    base::xblock_mptrs latest_blocks = resouces->get_blockstore()->get_latest_blocks(base::xvaccount_t(taccount));
     xblock_consensus_para_t cs_para;
     cs_para.set_common_consensus_para(10, {-1, -1}, {0, 0}, 10, 10, 10);
     cs_para.set_tableblock_consensus_para(10, "random", 10, "extra");
@@ -420,7 +422,7 @@ TEST_F(test_table_maker, table_maker_make_proposal_2) {
     ASSERT_EQ(table1->get_txs_count(), 6);
 
     ASSERT_EQ(xsuccess, table_maker->verify_proposal(table1.get(), table_para, cs_para));
-    ASSERT_TRUE(resouces->get_blockstore()->store_block(table1.get()));
+    ASSERT_TRUE(resouces->get_blockstore()->store_block(base::xvaccount_t(taccount), table1.get()));
     }
 }
 
@@ -439,7 +441,7 @@ TEST_F(test_table_maker, table_maker_make_proposal_3) {
     {
     auto txs1 = datamock_account1.generate_transfer_tx(dstaccount, 2);
     auto txs2 = datamock_account2.generate_transfer_tx(dstaccount, 2);
-    base::xblock_mptrs latest_blocks = resouces->get_blockstore()->get_latest_blocks(taccount);
+    base::xblock_mptrs latest_blocks = resouces->get_blockstore()->get_latest_blocks(base::xvaccount_t(taccount));
     xblock_consensus_para_t cs_para;
     cs_para.set_common_consensus_para(10, {-1, -1}, {0, 0}, 10, 10, 10);
     cs_para.set_tableblock_consensus_para(10, "random", 10, "extra");
@@ -459,13 +461,13 @@ TEST_F(test_table_maker, table_maker_make_proposal_3) {
     ASSERT_EQ(table1->get_txs_count(), 4);
 
     ASSERT_EQ(xsuccess, table_maker->verify_proposal(table1.get(), table_para, cs_para));
-    ASSERT_TRUE(resouces->get_blockstore()->store_block(table1.get()));
+    ASSERT_TRUE(resouces->get_blockstore()->store_block(base::xvaccount_t(taccount), table1.get()));
     }
 
     {
     auto txs1 = datamock_account1.generate_transfer_tx(dstaccount, 2);
     auto txs2 = datamock_account2.generate_transfer_tx(dstaccount, 2);
-    base::xblock_mptrs latest_blocks = resouces->get_blockstore()->get_latest_blocks(taccount);
+    base::xblock_mptrs latest_blocks = resouces->get_blockstore()->get_latest_blocks(base::xvaccount_t(taccount));
     xblock_consensus_para_t cs_para;
     cs_para.set_common_consensus_para(10, {-1, -1}, {0, 0}, 10, 10, 10);
     cs_para.set_tableblock_consensus_para(10, "random", 10, "extra");
@@ -491,7 +493,7 @@ TEST_F(test_table_maker, table_maker_make_proposal_3) {
     ASSERT_EQ(units[1]->get_block_class(), base::enum_xvblock_class_nil);
 
     ASSERT_EQ(xsuccess, table_maker->verify_proposal(table1.get(), table_para, cs_para));
-    ASSERT_TRUE(resouces->get_blockstore()->store_block(table1.get()));
+    ASSERT_TRUE(resouces->get_blockstore()->store_block(base::xvaccount_t(taccount), table1.get()));
     }
 
 }
@@ -504,7 +506,7 @@ TEST_F(test_table_maker, table_maker_one_account_0) {
         ASSERT_EQ(block->get_height(), height);
         xdatamock_tx::do_mock_signature(block.get());
         // ASSERT_EQ(xsuccess, table_maker.verify_proposal(block));
-        ASSERT_TRUE(table_maker.get_resources()->get_blockstore()->store_block(block.get()));
+        ASSERT_TRUE(table_maker.get_resources()->get_blockstore()->store_block(base::xvaccount_t(block->get_account()), block.get()));
         const std::vector<xblock_ptr_t> & units = block->get_tableblock_units(true);
         for (auto & unit : units) {
             std::cout << "unit account=" << unit->get_account() << " height=" << unit->get_height() << " class=" << unit->get_block_class() << std::endl;
@@ -523,7 +525,7 @@ TEST_F(test_table_maker, table_maker_one_account_1) {
             std::cout << "full-table height=" << block->get_height() << std::endl;
         }
         ASSERT_EQ(xsuccess, table_maker.verify_proposal(block));
-        ASSERT_TRUE(table_maker.get_resources()->get_blockstore()->store_block(block.get()));
+        ASSERT_TRUE(table_maker.get_resources()->get_blockstore()->store_block(base::xvaccount_t(block->get_account()), block.get()));
     }
 }
 
@@ -538,7 +540,7 @@ TEST_F(test_table_maker, table_maker_one_account_2) {
             std::cout << "full-table height=" << block->get_height() << std::endl;
         }
         ASSERT_EQ(xsuccess, table_maker.verify_proposal(block));
-        ASSERT_TRUE(table_maker.get_resources()->get_blockstore()->store_block(block.get()));
+        ASSERT_TRUE(table_maker.get_resources()->get_blockstore()->store_block(base::xvaccount_t(block->get_account()), block.get()));
     }
 }
 
@@ -554,7 +556,7 @@ TEST_F(test_table_maker, table_maker_little_account_1) {
             std::cout << "full-table height=" << block->get_height() << std::endl;
         }
         ASSERT_EQ(xsuccess, table_maker.verify_proposal(block));
-        ASSERT_TRUE(table_maker.get_resources()->get_blockstore()->store_block(block.get()));
+        ASSERT_TRUE(table_maker.get_resources()->get_blockstore()->store_block(base::xvaccount_t(block->get_account()), block.get()));
     }
 }
 
@@ -569,7 +571,7 @@ TEST_F(test_table_maker, table_maker_little_account_2) {
             std::cout << "full-table height=" << block->get_height() << std::endl;
         }
         ASSERT_EQ(xsuccess, table_maker.verify_proposal(block));
-        ASSERT_TRUE(table_maker.get_resources()->get_blockstore()->store_block(block.get()));
+        ASSERT_TRUE(table_maker.get_resources()->get_blockstore()->store_block(base::xvaccount_t(block->get_account()), block.get()));
     }
 }
 
@@ -584,7 +586,7 @@ TEST_F(test_table_maker, table_maker_little_account_3) {
             std::cout << "full-table height=" << block->get_height() << std::endl;
         }
         ASSERT_EQ(xsuccess, table_maker.verify_proposal(block));
-        ASSERT_TRUE(table_maker.get_resources()->get_blockstore()->store_block(block.get()));
+        ASSERT_TRUE(table_maker.get_resources()->get_blockstore()->store_block(base::xvaccount_t(block->get_account()), block.get()));
     }
 }
 
@@ -599,7 +601,7 @@ TEST_F(test_table_maker, table_maker_little_account_4) {
             std::cout << "full-table height=" << block->get_height() << std::endl;
         }
         ASSERT_EQ(xsuccess, table_maker.verify_proposal(block));
-        ASSERT_TRUE(table_maker.get_resources()->get_blockstore()->store_block(block.get()));
+        ASSERT_TRUE(table_maker.get_resources()->get_blockstore()->store_block(base::xvaccount_t(block->get_account()), block.get()));
     }
 }
 
@@ -614,7 +616,7 @@ TEST_F(test_table_maker, table_maker_multi_account_1) {
             std::cout << "full-table height=" << block->get_height() << std::endl;
         }
         ASSERT_EQ(xsuccess, table_maker.verify_proposal(block));
-        ASSERT_TRUE(table_maker.get_resources()->get_blockstore()->store_block(block.get()));
+        ASSERT_TRUE(table_maker.get_resources()->get_blockstore()->store_block(base::xvaccount_t(block->get_account()), block.get()));
     }
 }
 
@@ -629,7 +631,7 @@ TEST_F(test_table_maker, table_maker_multi_account_2) {
             std::cout << "full-table height=" << block->get_height() << std::endl;
         }
         ASSERT_EQ(xsuccess, table_maker.verify_proposal(block));
-        ASSERT_TRUE(table_maker.get_resources()->get_blockstore()->store_block(block.get()));
+        ASSERT_TRUE(table_maker.get_resources()->get_blockstore()->store_block(base::xvaccount_t(block->get_account()), block.get()));
     }
 }
 
@@ -646,7 +648,7 @@ TEST_F(test_table_maker, table_maker_multi_account_3) {
                 std::cout << "full-table height=" << block->get_height() << std::endl;
             }
             ASSERT_EQ(xsuccess, table_maker.verify_proposal(block));
-            ASSERT_TRUE(table_maker.get_resources()->get_blockstore()->store_block(block.get()));
+            ASSERT_TRUE(table_maker.get_resources()->get_blockstore()->store_block(base::xvaccount_t(block->get_account()), block.get()));
         }
         int64_t end_ms = base::xtime_utl::gettimeofday_ms();
         std::cout << "non empty txs timer = " << end_ms - start_ms << std::endl;
@@ -663,7 +665,7 @@ TEST_F(test_table_maker, table_maker_multi_account_3) {
                 xdatamock_tx::do_mock_signature(block.get());
                 std::cout << "empty block = " << block->get_height() << std::endl;
                 ASSERT_EQ(xsuccess, table_maker.verify_proposal(block));
-                ASSERT_TRUE(table_maker.get_resources()->get_blockstore()->store_block(block.get()));
+                ASSERT_TRUE(table_maker.get_resources()->get_blockstore()->store_block(base::xvaccount_t(block->get_account()), block.get()));
             }
         }
         int64_t end_ms = base::xtime_utl::gettimeofday_ms();
@@ -722,7 +724,7 @@ TEST_F(test_table_maker, get_unit_block) {
         ASSERT_NE(block, nullptr);
         ASSERT_EQ(block->get_height(), height);
         xdatamock_tx::do_mock_signature(block.get());
-        ASSERT_TRUE(table_maker.get_resources()->get_blockstore()->store_block(block.get()));
+        ASSERT_TRUE(table_maker.get_resources()->get_blockstore()->store_block(base::xvaccount_t(block->get_account()), block.get()));
 
         base::xauto_ptr<base::xvblock_t> lightunit = xblocktool_t::get_latest_committed_lightunit(table_maker.get_resources()->get_blockstore(), unit_account);
         xassert(lightunit->get_block_class() == base::enum_xvblock_class_light);
@@ -737,9 +739,9 @@ TEST_F(test_table_maker, get_unit_block) {
     }
 
     {
-        base::xauto_ptr<base::xvblock_t> lightunit1 = table_maker.get_resources()->get_blockstore()->get_latest_cert_block(unit_account);
-        base::xauto_ptr<base::xvblock_t> lightunit2 = table_maker.get_resources()->get_blockstore()->get_latest_locked_block(unit_account);
-        base::xauto_ptr<base::xvblock_t> lightunit3 = table_maker.get_resources()->get_blockstore()->get_latest_committed_block(unit_account);
+        base::xauto_ptr<base::xvblock_t> lightunit1 = table_maker.get_resources()->get_blockstore()->get_latest_cert_block(base::xvaccount_t(unit_account));
+        base::xauto_ptr<base::xvblock_t> lightunit2 = table_maker.get_resources()->get_blockstore()->get_latest_locked_block(base::xvaccount_t(unit_account));
+        base::xauto_ptr<base::xvblock_t> lightunit3 = table_maker.get_resources()->get_blockstore()->get_latest_committed_block(base::xvaccount_t(unit_account));
         xassert(lightunit1->get_height() == lightunit2->get_height());
         xassert(lightunit1->get_height() == lightunit3->get_height());
         base::xauto_ptr<base::xvblock_t> lightunit = xblocktool_t::get_latest_committed_lightunit(table_maker.get_resources()->get_blockstore(), unit_account);

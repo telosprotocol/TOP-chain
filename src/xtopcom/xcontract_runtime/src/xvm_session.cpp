@@ -30,7 +30,7 @@ xtransaction_execution_result_t xtop_session::execute_transaction(data::xcons_tr
     auto observed_exectx = top::make_observer(execution_context.get());
 
     switch (tx->get_tx_subtype()) {
-    case data::enum_transaction_subtype::enum_transaction_subtype_send : {
+    case base::enum_transaction_subtype::enum_transaction_subtype_send : {
         xscope_executer_t reset_action{[&execution_context] {
             execution_context->execution_stage(contract_common::xcontract_execution_stage_t::invalid);
         }};
@@ -43,7 +43,7 @@ xtransaction_execution_result_t xtop_session::execute_transaction(data::xcons_tr
         return result;
     }
 
-    case data::enum_transaction_subtype::enum_transaction_subtype_recv : {
+    case base::enum_transaction_subtype::enum_transaction_subtype_recv : {
         xscope_executer_t reset_action{[&execution_context] {
             execution_context->execution_stage(contract_common::xcontract_execution_stage_t::invalid);
             execution_context->receipt_data({});
@@ -59,7 +59,7 @@ xtransaction_execution_result_t xtop_session::execute_transaction(data::xcons_tr
         return result;
     }
 
-    case data::enum_transaction_subtype::enum_transaction_subtype_confirm : {
+    case base::enum_transaction_subtype::enum_transaction_subtype_confirm : {
         xscope_executer_t reset_action{[&execution_context] {
             execution_context->execution_stage(contract_common::xcontract_execution_stage_t::invalid);
             execution_context->receipt_data({});
@@ -75,7 +75,7 @@ xtransaction_execution_result_t xtop_session::execute_transaction(data::xcons_tr
         return result;
     }
 
-    case data::enum_transaction_subtype::enum_transaction_subtype_self: {
+    case base::enum_transaction_subtype::enum_transaction_subtype_self: {
         xscope_executer_t reset_action{[&execution_context] {
             execution_context->execution_stage(contract_common::xcontract_execution_stage_t::invalid);
         }};

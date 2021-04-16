@@ -182,25 +182,25 @@ std::string xdownloader_t::get_address_by_event(const mbus::xevent_ptr_t &e) {
     switch(e->major_type) {
     case mbus::xevent_major_type_sync_executor:
         if (e->minor_type == mbus::xevent_sync_executor_t::blocks) {
-            auto bme = std::static_pointer_cast<mbus::xevent_sync_response_blocks_t>(e);
+            auto bme = dynamic_xobject_ptr_cast<mbus::xevent_sync_response_blocks_t>(e);
             return bme->blocks[0]->get_account();
         } else if (e->minor_type == mbus::xevent_sync_executor_t::chain_snapshot) {
-            auto bme = std::static_pointer_cast<mbus::xevent_chain_snaphsot_t>(e);
+            auto bme = dynamic_xobject_ptr_cast<mbus::xevent_chain_snaphsot_t>(e);
             return bme->m_tbl_account_addr;
         }
         break;
     case mbus::xevent_major_type_behind:
         if (e->minor_type == mbus::xevent_behind_t::type_download) {
-            auto bme = std::static_pointer_cast<mbus::xevent_behind_download_t>(e);
+            auto bme = dynamic_xobject_ptr_cast<mbus::xevent_behind_download_t>(e);
             return bme->address;
         }
         break;
     case mbus::xevent_major_type_account:
         if (e->minor_type == mbus::xevent_account_t::add_role) {
-            auto bme = std::static_pointer_cast<mbus::xevent_account_add_role_t>(e);
+            auto bme = dynamic_xobject_ptr_cast<mbus::xevent_account_add_role_t>(e);
             return bme->address;
         } else if (e->minor_type == mbus::xevent_account_t::remove_role) {
-            auto bme = std::static_pointer_cast<mbus::xevent_account_remove_role_t>(e);
+            auto bme = dynamic_xobject_ptr_cast<mbus::xevent_account_remove_role_t>(e);
             return bme->address;
         }
         break;
@@ -259,7 +259,7 @@ void xdownloader_t::process_event(uint32_t idx, const mbus::xevent_ptr_t &e, xac
 }
 
 xchain_downloader_face_ptr_t xdownloader_t::on_add_role(uint32_t idx, const mbus::xevent_ptr_t &e) {
-    auto bme = std::static_pointer_cast<mbus::xevent_account_add_role_t>(e);
+    auto bme = dynamic_xobject_ptr_cast<mbus::xevent_account_add_role_t>(e);
     const std::string &address = bme->address;
 
     if (!m_role_chains_mgr->exists(address))
@@ -276,7 +276,7 @@ xchain_downloader_face_ptr_t xdownloader_t::on_add_role(uint32_t idx, const mbus
 }
 
 xchain_downloader_face_ptr_t xdownloader_t::on_remove_role(uint32_t idx, const mbus::xevent_ptr_t &e) {
-    auto bme = std::static_pointer_cast<mbus::xevent_account_remove_role_t>(e);
+    auto bme = dynamic_xobject_ptr_cast<mbus::xevent_account_remove_role_t>(e);
     const std::string &address = bme->address;
 
     if (!m_role_chains_mgr->exists(address)) {
@@ -297,7 +297,7 @@ xchain_downloader_face_ptr_t xdownloader_t::on_remove_role(uint32_t idx, const m
 xchain_downloader_face_ptr_t xdownloader_t::on_response_event(uint32_t idx, const mbus::xevent_ptr_t &e) {
     //xsync_dbg("downloader on_response_event");
 
-    auto bme = std::static_pointer_cast<mbus::xevent_sync_response_blocks_t>(e);
+    auto bme = dynamic_xobject_ptr_cast<mbus::xevent_sync_response_blocks_t>(e);
 
     const std::string &address = bme->blocks[0]->get_account();
 
@@ -317,7 +317,7 @@ xchain_downloader_face_ptr_t xdownloader_t::on_response_event(uint32_t idx, cons
 // any sync request has event source, only need find, not create
 xchain_downloader_face_ptr_t xdownloader_t::on_chain_snapshot_response_event(uint32_t idx, const mbus::xevent_ptr_t &e) {
     //xsync_dbg("downloader on_response_event");
-    auto bme = std::static_pointer_cast<mbus::xevent_chain_snaphsot_t>(e);
+    auto bme = dynamic_xobject_ptr_cast<mbus::xevent_chain_snaphsot_t>(e);
     const std::string &address = bme->m_tbl_account_addr;
 
     xchain_downloader_face_ptr_t chain_downloader = find_chain_downloader(idx, address);
@@ -333,7 +333,7 @@ xchain_downloader_face_ptr_t xdownloader_t::on_chain_snapshot_response_event(uin
 
 xchain_downloader_face_ptr_t xdownloader_t::on_behind_event(uint32_t idx, const mbus::xevent_ptr_t &e) {
 
-    auto bme = std::static_pointer_cast<mbus::xevent_behind_download_t>(e);
+    auto bme = dynamic_xobject_ptr_cast<mbus::xevent_behind_download_t>(e);
 
     //xsync_dbg("downloader on_behind_event %s", bme->address.c_str());
 

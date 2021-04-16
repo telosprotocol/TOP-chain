@@ -6,7 +6,6 @@
 
 #include <string>
 
-#include "xbasic/xns_macro.h"
 #include "xdata/xtransaction.h"
 
 NS_BEG2(top, data)

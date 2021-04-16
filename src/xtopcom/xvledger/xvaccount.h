@@ -5,9 +5,10 @@
 #pragma once
 
 #include <string>
+#include "xbase/xhash.h"
+#include "xbase/xns_macro.h"
 #include "xbase/xobject.h"
 #include "xbase/xutl.h"
-#include "xbase/xhash.h"
 
 namespace top
 {

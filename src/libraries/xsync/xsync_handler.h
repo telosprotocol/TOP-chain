@@ -6,7 +6,6 @@
 
 #include <time.h>
 #include <functional>
-#include "xbasic/xns_macro.h"
 #include "xbase/xmem.h"
 
 

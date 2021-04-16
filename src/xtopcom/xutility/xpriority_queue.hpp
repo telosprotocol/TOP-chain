@@ -8,7 +8,7 @@
 #include <list>
 #include <queue>
 #include <cassert>
-#include "xbasic/xns_macro.h"
+#include "xbase/xns_macro.h"
 
 NS_BEG2(top, utl)
 

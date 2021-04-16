@@ -2,7 +2,7 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "xbasic/xobject_ptr.h"
+#include "xbase/xobject_ptr.h"
 
 #include "tests/xbasic/test_xobject_ptr_fixture.h"
 

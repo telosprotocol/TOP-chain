@@ -5,7 +5,7 @@
 #pragma once
 
 #include "xbasic/xasio_io_context_wrapper.h"
-#include "xbasic/xobject_ptr.h"
+#include "xbase/xobject_ptr.h"
 #include "xbasic/xmemory.hpp"
 #include "xbasic/xrunnable.h"
 #include "xbasic/xtimer.h"

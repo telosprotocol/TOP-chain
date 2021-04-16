@@ -95,6 +95,16 @@ int test_sync_vstore(store::xsyncvstore_t* sync_store)
         if(test_block->get_height() != 0)
             sync_store->store_block(test_block);//push block as random order
     }
+    
+    for(int i = 0; i < total_test_blocks; ++i)
+    {
+        base::xvblock_t * test_block = generated_blocks[i];
+        
+        base::xauto_ptr<base::xvblock_t> loaded_block(sync_store->get_vblockstore()->load_block_object(test_account_obj, test_block->get_height(), test_block->get_viewid(),true));
+        
+        if(loaded_block->check_block_flag(base::enum_xvblock_flag_committed))
+            sync_store->get_vblockstore()->execute_block(test_account_obj,loaded_block.get());//push block as random order
+    }
 #endif
     
     sleep(2);
@@ -109,8 +119,8 @@ int test_sync_vstore(store::xsyncvstore_t* sync_store)
         if(false == index->check_block_flag(base::enum_xvblock_flag_connected))
             printf("block is not connected as detail=%s \n",index->dump().c_str());
         
-        //if(false == it->check_block_flag(base::enum_xvblock_flag_executed))
-        //    printf("block is not executed as detail=%s \n",it->dump().c_str());
+        if(false == index->check_block_flag(base::enum_xvblock_flag_executed))
+            printf("block is not executed as detail=%s \n",index->dump().c_str());
         
         it->release_ref();
     }
@@ -139,14 +149,13 @@ int main(int argc, const char * argv[]) {
     
     xschnorrcert_t*       global_certauth   = new xschnorrcert_t(4);
     
-#ifdef __MAC_PLATFORM__
+    xveventbus_impl * mbus_store = new xveventbus_impl();
+    base::xvchain_t::instance().set_xevmbus(mbus_store);
+    
     const std::string  default_path = "/";
     xstoredb_t* _persist_db = new xstoredb_t(default_path);
     base::xvchain_t::instance().set_xdbstore(_persist_db);
     base::xvblockstore_t * blockstore_ptr = store::get_vblockstore();
-#else
-    base::xvblockstore_t * blockstore_ptr = new xunitblockstore_t();
-#endif
     
     store::xsyncvstore_t* global_sync_store = new store::xsyncvstore_t(*global_certauth,*blockstore_ptr);
     

@@ -21,7 +21,7 @@ public:
     std::shared_ptr<vnetwork::xvnetwork_driver_face_t> m_vnetwork_driver;
 };
 
-DEFINE_SHARED_PTR(xevent_role);
+using xevent_role_ptr_t = xobject_ptr_t<xevent_role_t>;
 
 class xevent_role_add_t : public xevent_role_t {
 public:
@@ -30,7 +30,7 @@ public:
     }
 };
 
-DEFINE_SHARED_PTR(xevent_role_add);
+using xevent_role_add_ptr_t = xobject_ptr_t<xevent_role_add_t>;
 
 class xevent_role_remove_t : public xevent_role_t {
 public:
@@ -39,6 +39,6 @@ public:
     }
 };
 
-DEFINE_SHARED_PTR(xevent_role_remove);
+using xevent_role_remove_ptr_t = xobject_ptr_t<xevent_role_remove_t>;
 
 NS_END2

@@ -6,7 +6,7 @@
 
 #define private public
 
-#include "xbasic/xobject_ptr.h"
+#include "xbase/xobject_ptr.h"
 #include "xchain_timer/xchain_timer.h"
 #include "xdata/xblocktool.h"
 #include "xdata/xcodec/xmsgpack/xstandby_result_store_codec.hpp"

@@ -53,14 +53,15 @@ void xgrpc_mgr_t::process_event(const mbus::xevent_ptr_t & e) {
     if (e->minor_type != mbus::xevent_store_t::type_block_to_db)
         return;
 
-    mbus::xevent_store_block_to_db_ptr_t block_event = std::static_pointer_cast<mbus::xevent_store_block_to_db_t>(e);
-    xdbg("grpc stream get_block_type %d, minor_type %d \n", block_event->block->get_block_type(), e->minor_type);
-    if (!block_event->block->is_tableblock()) {
+    mbus::xevent_store_block_to_db_ptr_t block_event = dynamic_xobject_ptr_cast<mbus::xevent_store_block_to_db_t>(e);
+    auto block = mbus::extract_block_from(block_event);
+    xdbg("grpc stream get_block_type %d, minor_type %d \n", block->get_block_type(), e->minor_type);
+    if (!block->is_tableblock()) {
         return;
     }
 
     top::chain_info::get_block_handle bh(nullptr, nullptr, nullptr);
-    auto bp = block_event->block.get();
+    auto bp = block.get();
     xJson::Value j;
     j["value"] = bh.get_block_json(bp);
     static std::atomic_int cnt{0};
@@ -80,7 +81,7 @@ void xgrpc_mgr_t::process_event(const mbus::xevent_ptr_t & e) {
     {
         std::unique_lock<std::mutex> lck(tableblock_mtx);
         xdbg("grpc stream tableblock_data before push , size %zu, cnt %d ", tableblock_data.size(), cnt.load());
-        xdbg("grpc stream on_event_tableblock_update, address:%s height:%d", block_event->block->get_block_owner().c_str(), block_event->block->get_height());
+        xdbg("grpc stream on_event_tableblock_update, address:%s height:%d", block->get_block_owner().c_str(), block->get_height());
 
         // only save 2048 table block at most in case grpc disconnected
         const uint16_t deque_size_max{2048};

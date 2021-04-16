@@ -64,6 +64,7 @@ namespace top
             enum{enum_max_cached_blocks = 32};
         public:
             static std::string  get_meta_path(base::xvaccount_t & _account);
+            static std::string  create_tx_db_key(const std::string & hashkey, base::enum_transaction_subtype type);
         public:
             xblockacct_t(const std::string & account_addr,const uint64_t timeout_ms,const std::string & blockstore_path);
         protected:
@@ -132,6 +133,9 @@ namespace top
             bool                   load_block_input(base::xvblock_t* target_block);
             bool                   load_block_output(base::xvblock_t* target_block);
  
+            bool                   execute_block(base::xvblock_t* block); //execute block and update state of acccount
+            void                   try_execute_all_block();
+            
         protected: //help functions
             bool                cache_index(base::xvbindex_t* this_block);
             bool                link_neighbor(base::xvbindex_t* this_block);//just connect prev and next index of list
@@ -151,7 +155,7 @@ namespace top
             const std::string   create_index_db_key(const uint64_t target_height,const uint64_t target_viewid);
             bool                write_index_to_db(const uint64_t target_height);
             bool                write_index_to_db(std::map<uint64_t,base::xvbindex_t*> & indexes);
-            bool                write_index_to_db(base::xvbindex_t* index_obj);
+            bool                write_index_to_db(base::xvbindex_t* index_obj,bool allo_db_event);
             base::xvbindex_t*   read_index_from_db(const std::string & index_db_key_path);
             //return map sorted by viewid from lower to high,caller respond to release ptr later
             std::map<uint64_t,base::xvbindex_t*> read_index_from_db(const uint64_t target_height);
@@ -164,6 +168,7 @@ namespace top
         private:
             void                close_blocks(); //clean all cached blocks
             bool                clean_blocks(const int keep_blocks_count,bool force_release_unused_block);
+            bool                on_block_stored(base::xvbindex_t* index_ptr);
             
         protected: //compatible for old version,e.g read meta and other stuff
             const std::string   load_value_by_path(const std::string & full_path_as_key);

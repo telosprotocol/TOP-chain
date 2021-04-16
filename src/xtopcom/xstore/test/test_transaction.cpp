@@ -5,7 +5,7 @@
 #include "xbase/xcontext.h"
 #include "gtest/gtest.h"
 #include "xbase/xcontext.h"
-#include "xbasic/xobject_ptr.h"
+#include "xbase/xobject_ptr.h"
 #include "xdata/xnative_property.h"
 #include "xstore/xstore_face.h"
 #include "xstore/test/test_datamock.hpp"

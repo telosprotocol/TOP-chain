@@ -6,7 +6,9 @@
 
 #include "xbase/xdata.h"
 #include "xbase/xmem.h"
+#include "xbase/xobject_ptr.h"
 #include "xvstate.h"
+#include "xvtransaction.h"
 
 namespace top
 {
@@ -647,6 +649,8 @@ namespace top
             
             //root of input which usally present a root of merkle tree for input
             virtual const std::string   get_root_hash() {return m_root_hash;}
+            
+            virtual const std::string   get_binlog() {return std::string();}
         protected:
             //just carry by object at memory,not included by serialized
             std::string  m_root_hash;  //root of merkle tree constructed by input
@@ -707,6 +711,7 @@ namespace top
             static xvinput_t*          create_input_object(const std::string  & vinput_serialized_data);
             static xvoutput_t*         create_output_object(const std::string & voutput_serialized_data);
             static xvbindex_t*         create_index_object(const std::string & vindex_serialized_data);
+            static xvbstate_t*         create_state_object(const std::string & serialized_data);
         public:
             virtual std::string        get_obj_name() const override {return name();}
             enum{enum_obj_type = enum_xobject_type_vblock};//allow xbase create xvblock_t object from xdataobj_t::read_from()
@@ -729,6 +734,8 @@ namespace top
             virtual bool                is_executed() const;                      //block has been executed
             virtual bool                is_input_ready(bool full_check_resources = false)  const;                  //nil-block return true because it dont need input
             virtual bool                is_output_ready(bool full_check_resources = false) const;                  //nil-block return true because it dont need output
+            virtual bool                is_execute_ready() const {return true;}//check whether ready to execute bin-log
+            
             bool                        is_genesis_block() const;                 //test whether it is a genesis block
             virtual bool                is_equal(const xvblock_t & other)   const;//compare everyting except certification
             virtual void*               query_interface(const int32_t _enum_xobject_type_) override;//caller need to cast (void*) to related ptr
@@ -768,14 +775,17 @@ namespace top
             
             inline  xvheader_t*         get_header()      const {return m_vheader_ptr;}  //raw ptr of xvheader_t
             inline  xvqcert_t *         get_cert()        const {return m_vqcert_ptr;}   //raw ptr of xvqcert_t
-
+            inline  xvbstate_t*         get_state()       const {return m_vbstate_ptr;}  //raw ptr of xvbstate
+            
             const   std::string         get_block_path()  const; //a base and relative dir of vblock at DB/disk
             const   std::string         get_header_path() const; //header include vcert part as well under get_block_path()
             const   std::string         get_input_path()  const; //path pointed to vbody at DB/disk  under get_block_path()
             const   std::string         get_output_path() const; //path pointed to vbody at DB/disk  under get_block_path()
             
             //note:container(e.g. Table,Book etc) need implement this function as they have mutiple sub blocks inside them,
-            virtual bool  extract_sub_blocks(std::vector<xvblock_t*> & sub_blocks) {return false;}//as default it is none
+            virtual bool  extract_sub_blocks(std::vector<xobject_ptr_t<xvblock_t>> & sub_blocks) {return false;}//as default it is none
+            //note:container(e.g. Lightunit etc) need implement this function as they have mutiple sub txs inside them,
+            virtual bool  extract_sub_txs(std::vector<xvtransaction_index_ptr_t> & sub_txs) {return false;}//as default it is none
             
             virtual bool                close(bool force_async = true) override; //close and release this node only
             virtual std::string         dump() const override;  //just for debug purpose

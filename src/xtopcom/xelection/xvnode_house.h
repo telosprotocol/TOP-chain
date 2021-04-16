@@ -6,7 +6,6 @@
 
 #include "xvledger/xvcnode.h"
 #include "xvledger/xvblockstore.h"
-#include "xbasic/xns_macro.h"
 #include "xmbus/xmessage_bus.h"
 #include "xbasic/xmemory.hpp"
 #include "xbasic/xlru_cache.h"

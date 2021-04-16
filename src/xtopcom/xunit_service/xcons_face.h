@@ -7,7 +7,6 @@
 #include "xBFT/xconsobj.h"
 #include "xbase/xbase.h"
 #include "xbase/xthread.h"
-#include "xbasic/xns_macro.h"
 #include "xchain_timer/xchain_timer_face.h"
 #include "xvnetwork/xvnetwork_driver_face.h"
 #include "xelection/xcache/xdata_accessor_face.h"

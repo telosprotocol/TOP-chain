@@ -5,7 +5,6 @@
 #pragma once
 
 #include "xbasic/xasio_config.h"
-#include "xbasic/xns_macro.h"
 
 #include <asio/socket_base.hpp>
 

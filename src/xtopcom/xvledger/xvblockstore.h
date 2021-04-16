@@ -7,6 +7,7 @@
 #include "xvaccount.h"
 #include "xvblock.h"
 #include "xvbindex.h"
+#include "xvtransaction.h"
 
 namespace top
 {
@@ -195,6 +196,13 @@ namespace top
             virtual bool                  clean_caches(const xvaccount_t & account) = 0;
             //clean all cached blocks after reach max idle duration(as default it is 60 seconds)
             virtual bool                  reset_cache_timeout(const xvaccount_t & account,const uint32_t max_idle_time_ms) = 0;
+            
+        public:
+            //execute_block will move to statestore soon
+            //execute block and update state of acccount
+            //note: block must be committed and connected
+            virtual bool                 execute_block(const base::xvaccount_t & account,base::xvblock_t* block) = 0;
+            virtual xvtransaction_store_ptr_t  query_tx(const std::string & txhash, enum_transaction_subtype type) = 0;
             
         protected:
             //only allow remove flag within xvblockstore_t

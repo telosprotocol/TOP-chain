@@ -36,6 +36,6 @@ public:
     bool new_block{false};
 };
 
-DEFINE_SHARED_PTR(xevent_block);
+using xevent_block_ptr_t = xobject_ptr_t<xevent_block_t>;
 
 NS_END2

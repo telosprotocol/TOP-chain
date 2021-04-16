@@ -33,7 +33,7 @@ class xdatamock_unit {
         m_history_units.push_back(block);
 
         if (m_store != nullptr) {
-            xassert(m_store->set_vblock(genesis_unit) == true);
+            xassert(m_store->set_vblock({}, genesis_unit) == true);
             xassert(m_store->execute_block(genesis_unit) == true);
         }
 
@@ -43,6 +43,7 @@ class xdatamock_unit {
 
     const std::string & get_account() const {return m_account;}
     xblock_ptr_t get_latest_unit() const {return m_history_units.back();}
+    const std::vector<xblock_ptr_t> &   get_history_units() const {return m_history_units;}
     const std::vector<xcons_transaction_ptr_t> & get_txs() const {return m_current_txs;}
 
  public:

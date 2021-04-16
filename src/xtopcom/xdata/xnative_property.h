@@ -9,7 +9,7 @@
 #include <map>
 #include <deque>
 
-#include "xbasic/xobject_ptr.h"
+#include "xbase/xobject_ptr.h"
 #include "xbase/xmem.h"
 #include "xbase/xdata.h"
 #include "xdata/xdata_common.h"

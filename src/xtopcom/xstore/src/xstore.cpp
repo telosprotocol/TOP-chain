@@ -15,7 +15,7 @@
 // TODO(jimmy) #include "xbase/xvledger.h"
 #include "xbase/xhash.h"
 #include "xbasic/xmodule_type.h"
-#include "xbasic/xobject_ptr.h"
+#include "xbase/xobject_ptr.h"
 #include "xcrypto/xcrypto_util.h"
 #include "xdata/xblock.h"
 #include "xdata/xblockchain.h"

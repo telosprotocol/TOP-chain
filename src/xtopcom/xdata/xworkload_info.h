@@ -9,7 +9,7 @@
 #include <vector>
 
 #include "xbasic/xdataobj_base.hpp"
-#include "xbasic/xobject_ptr.h"
+#include "xbase/xobject_ptr.h"
 #include "xbasic/xserializable_based_on.h"
 #include "xbasic/xversion.h"
 #include "xdata/xdata_common.h"

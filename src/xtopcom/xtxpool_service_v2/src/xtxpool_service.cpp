@@ -5,7 +5,6 @@
 #include "xtxpool_service_v2/xtxpool_service.h"
 
 #include "xvledger/xvblock.h"
-#include "xbasic/xns_macro.h"
 #include "xcommon/xmessage_id.h"
 #include "xdata/xblocktool.h"
 #include "xdata/xtableblock.h"
@@ -246,14 +245,15 @@ void xtxpool_service::check_and_response_recv_receipt(const xcons_transaction_pt
     }
 
     xtransaction_t * tx = cons_tx->get_transaction();
-    xtransaction_store_ptr_t tx_store = m_para->get_store()->query_transaction_store(tx->digest());
+    base::xvtransaction_store_ptr_t tx_store = m_para->get_vblockstore()->query_tx(tx->get_digest_str(), base::enum_transaction_subtype_recv);
     // first time consensus transaction has been stored, so it can be found
     // in the second consensus, need check the m_recv_unit_height
 
     // build recv receipt and send out
-    if (tx_store != nullptr && tx_store->m_recv_unit_height != 0) {
+    if (tx_store != nullptr) {
+        xassert(tx_store->get_recv_unit_height() != 0);
         xdbg("xtxpool_service::check_and_response_recv_receipt send tx receipt has been consensused, txhash:%s", tx->get_digest_hex_str().c_str());
-        base::xauto_ptr<base::xvblock_t> blockobj = m_para->get_vblockstore()->load_block_object(base::xvaccount_t(tx->get_target_addr()), tx_store->m_recv_unit_height, base::enum_xvblock_flag_committed, true);
+        base::xauto_ptr<base::xvblock_t> blockobj = m_para->get_vblockstore()->load_block_object(base::xvaccount_t(tx->get_target_addr()), tx_store->get_recv_unit_height(), base::enum_xvblock_flag_committed, true);
         if (blockobj != nullptr) {
             xblock_t * block = dynamic_cast<xblock_t *>(blockobj.get());
             xassert(block->is_lightunit());
@@ -268,7 +268,7 @@ void xtxpool_service::check_and_response_recv_receipt(const xcons_transaction_pt
         } else {
             xerror("xtxpool_service::check_and_response_recv_receipt recv tx unit not exist txhash:%s block_height:%d",
                    tx->get_digest_hex_str().c_str(),
-                   tx_store->m_recv_unit_height);
+                   tx_store->get_recv_unit_height());
         }
     }
 }

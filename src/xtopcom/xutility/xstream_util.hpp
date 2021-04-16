@@ -7,7 +7,7 @@
 #include <memory>
 #include <vector>
 #include <map>
-#include "xbasic/xns_macro.h"
+#include "xbase/xns_macro.h"
 #include "xbase/xcontext.h"
 #include "xbase/xmem.h"
 

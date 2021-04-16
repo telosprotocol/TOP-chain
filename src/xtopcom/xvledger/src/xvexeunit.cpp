@@ -424,16 +424,7 @@ namespace top
         xvexegroup_t::xvexegroup_t(const xvexegroup_t & obj)
             :xvexeunit_t(obj)
         {
-            for(auto & u : obj.m_child_units)
-            {
-                xvexeunit_t * clone_unit = u.second->clone();
-                xassert(clone_unit != nullptr);
-                if(clone_unit != nullptr)
-                {
-                    add_child_unit(clone_unit);
-                    clone_unit->release_ref();
-                }
-            }
+            clone_units_from(obj);
         }
 
         xvexegroup_t::~xvexegroup_t()
@@ -444,6 +435,21 @@ namespace top
                 u.second->release_ref();
             }
             m_child_units.clear();
+        }
+        
+        bool  xvexegroup_t::clone_units_from(const xvexegroup_t & source)
+        {
+            for(auto & u : source.m_child_units)
+            {
+                xvexeunit_t * clone_unit = u.second->clone();
+                xassert(clone_unit != nullptr);
+                if(clone_unit != nullptr)
+                {
+                    add_child_unit(clone_unit);
+                    clone_unit->release_ref();
+                }
+            }
+            return true;
         }
     
         bool  xvexegroup_t::close(bool force_async)
@@ -501,6 +507,19 @@ namespace top
                 m_child_units[child->get_unit_name()] = child;//copy ptr,the above code did add_ref already
             }
             return true;
+        }
+    
+        bool   xvexegroup_t::remove_child_unit(const std::string & unit_name)
+        {
+            auto it = m_child_units.find(unit_name);
+            if(it != m_child_units.end())
+            {
+                it->second->set_parent_unit(NULL);
+                it->second->release_ref();
+                m_child_units.erase(it);
+                return true;
+            }
+            return false;
         }
     
         xvexeunit_t *   xvexegroup_t::find_child_unit(const std::string & unit_name)

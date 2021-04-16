@@ -6,7 +6,6 @@
 
 #include <string>
 #include <vector>
-#include "xbasic/xns_macro.h"
 #include "xbasic/xdataobj_base.hpp"
 #include "xvledger/xvblock.h"
 #include "xvledger/xvaccount.h"

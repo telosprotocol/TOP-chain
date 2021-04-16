@@ -1,6 +1,5 @@
 #pragma once
 
-#include "xbasic/xns_macro.h"
 #include "xbase/xmem.h"
 #include "xdata/xblock.h"
 #include "xsync/xsync_store.h"

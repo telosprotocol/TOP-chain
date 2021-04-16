@@ -8,7 +8,6 @@
 #include <map>
 #include <vector>
 #include <mutex>
-#include "xbasic/xns_macro.h"
 #include "xbasic/xdataobj_base.hpp"
 #include "xvledger/xvblock.h"
 #include "xdata/xdata_common.h"
@@ -132,6 +131,7 @@ class xtable_block_t : public xblock_t {
     int64_t         get_pledge_balance_change_tgas() const override;
     const std::vector<xblock_ptr_t> & get_tableblock_units(bool need_parent_cert = false) const override;
     std::map<std::string, xaccount_index_t> get_units_index() const override;
+    virtual bool  extract_sub_blocks(std::vector<xobject_ptr_t<base::xvblock_t>> & sub_blocks) override;
 
  private:
     xblock_ptr_t    recreate_unit_from_unit_input_output_resource(uint16_t index) const;

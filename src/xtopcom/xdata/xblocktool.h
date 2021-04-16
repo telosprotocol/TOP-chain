@@ -7,7 +7,6 @@
 #include <string>
 #include <vector>
 // TODO(jimmy) #include "xbase/xvledger.h"
-#include "xbasic/xns_macro.h"
 #include "xdata/xemptyblock.h"
 #include "xdata/xtableblock.h"
 #include "xdata/xfull_tableblock.h"

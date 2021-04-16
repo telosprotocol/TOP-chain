@@ -49,7 +49,7 @@ xblock_fetcher_timer_t::~xblock_fetcher_timer_t() {
 }
 
 bool xblock_fetcher_timer_t::on_timer_fire(const int32_t thread_id,const int64_t timer_id,const int64_t current_time_ms,const int32_t start_timeout_ms,int32_t & in_out_cur_interval_ms) {
-    xevent_ptr_t ev = std::make_shared<xevent_timer_t>();
+    xevent_ptr_t ev = make_object_ptr<xevent_timer_t>();
     m_mbus->push_event(ev);
     return true;
 }
@@ -90,10 +90,10 @@ std::string xblock_fetcher_t::get_address_by_event(const mbus::xevent_ptr_t &e) 
     switch(e->major_type) {
     case mbus::xevent_major_type_account:
         if (e->minor_type == mbus::xevent_account_t::add_role) {
-            auto bme = std::static_pointer_cast<mbus::xevent_account_add_role_t>(e);
+            auto bme = dynamic_xobject_ptr_cast<mbus::xevent_account_add_role_t>(e);
             return bme->address;
         } else if (e->minor_type == mbus::xevent_account_t::remove_role) {
-            auto bme = std::static_pointer_cast<mbus::xevent_account_remove_role_t>(e);
+            auto bme = dynamic_xobject_ptr_cast<mbus::xevent_account_remove_role_t>(e);
             return bme->address;
         }
         break;
@@ -101,16 +101,16 @@ std::string xblock_fetcher_t::get_address_by_event(const mbus::xevent_ptr_t &e) 
         break;
     case mbus::xevent_major_type_blockfetcher:
         if (e->minor_type == mbus::xevent_blockfetcher_t::newblock) {
-            auto bme = std::static_pointer_cast<mbus::xevent_blockfetcher_block_t>(e);
+            auto bme = dynamic_xobject_ptr_cast<mbus::xevent_blockfetcher_block_t>(e);
             return bme->block->get_account();
         } else if (e->minor_type == mbus::xevent_blockfetcher_t::newblockhash) {
-            auto bme = std::static_pointer_cast<mbus::xevent_blockfetcher_blockhash_t>(e);
+            auto bme = dynamic_xobject_ptr_cast<mbus::xevent_blockfetcher_blockhash_t>(e);
             return bme->address;
         }
         break;
     case mbus::xevent_major_type_sync_executor:
         {
-            auto bme = std::static_pointer_cast<mbus::xevent_sync_response_blocks_t>(e);
+            auto bme = dynamic_xobject_ptr_cast<mbus::xevent_sync_response_blocks_t>(e);
             return bme->blocks[0]->get_account();
         }
         break;
@@ -162,7 +162,7 @@ void xblock_fetcher_t::process_event(const mbus::xevent_ptr_t& e) {
 }
 
 xchain_block_fetcher_ptr_t xblock_fetcher_t::on_add_role(const std::string &address, const mbus::xevent_ptr_t& e) {
-    auto bme = std::static_pointer_cast<mbus::xevent_account_add_role_t>(e);
+    auto bme = dynamic_xobject_ptr_cast<mbus::xevent_account_add_role_t>(e);
 
     if (!m_role_chains_mgr->exists(address))
         return nullptr;
@@ -175,7 +175,7 @@ xchain_block_fetcher_ptr_t xblock_fetcher_t::on_add_role(const std::string &addr
 }
 
 xchain_block_fetcher_ptr_t xblock_fetcher_t::on_remove_role(const std::string &address, const mbus::xevent_ptr_t& e) {
-    auto bme = std::static_pointer_cast<mbus::xevent_account_remove_role_t>(e);
+    auto bme = dynamic_xobject_ptr_cast<mbus::xevent_account_remove_role_t>(e);
 
     if (!m_role_chains_mgr->exists(address)) {
         remove_chain(address);
@@ -201,7 +201,7 @@ xchain_block_fetcher_ptr_t xblock_fetcher_t::on_newblock_event(const std::string
     xchain_block_fetcher_ptr_t chain = find_chain(address);
     if (chain != nullptr) {
 
-        auto bme = std::static_pointer_cast<mbus::xevent_blockfetcher_block_t>(e);
+        auto bme = dynamic_xobject_ptr_cast<mbus::xevent_blockfetcher_block_t>(e);
         xblock_ptr_t &block = bme->block;
         const vnetwork::xvnode_address_t &network_self = bme->network_self;
         const vnetwork::xvnode_address_t &from_address = bme->from_address;
@@ -215,7 +215,7 @@ xchain_block_fetcher_ptr_t xblock_fetcher_t::on_newblock_event(const std::string
 xchain_block_fetcher_ptr_t xblock_fetcher_t::on_newblockhash_event(const std::string &address, const mbus::xevent_ptr_t& e) {
     xchain_block_fetcher_ptr_t chain = find_chain(address);
     if (chain != nullptr) {
-        auto bme = std::static_pointer_cast<mbus::xevent_blockfetcher_blockhash_t>(e);
+        auto bme = dynamic_xobject_ptr_cast<mbus::xevent_blockfetcher_blockhash_t>(e);
         uint64_t height = bme->height;
         uint64_t view_id = bme->view_id;
         std::string hash = bme->hash;
@@ -230,7 +230,7 @@ xchain_block_fetcher_ptr_t xblock_fetcher_t::on_response_block_event(const std::
     xchain_block_fetcher_ptr_t chain = find_chain(address);
     if (chain != nullptr) {
 
-        auto bme = std::static_pointer_cast<mbus::xevent_sync_response_blocks_t>(e);
+        auto bme = dynamic_xobject_ptr_cast<mbus::xevent_sync_response_blocks_t>(e);
         xblock_ptr_t &block = bme->blocks[0];
         const vnetwork::xvnode_address_t &network_self = bme->self_address;
         const vnetwork::xvnode_address_t &from_address = bme->from_address;

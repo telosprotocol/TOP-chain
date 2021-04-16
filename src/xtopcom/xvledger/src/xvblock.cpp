@@ -1841,8 +1841,8 @@ namespace top
             if(_new_state_ptr != NULL)
             {
                 if(    (get_height()  != _new_state_ptr->get_block_height())
+                    || (get_viewid()  != _new_state_ptr->get_block_viewid())
                     || (get_account() != _new_state_ptr->get_account_addr())
-                    || ((_new_state_ptr->get_block_output_hash().empty() == false) && (get_output_hash() != _new_state_ptr->get_block_output_hash()) )
                     )
                 {
                     xerror("xvblock_t::reset_block_state,this block'info(%s) not match state(%s)",dump().c_str(), _new_state_ptr->dump().c_str());
@@ -2727,6 +2727,28 @@ namespace top
                 return NULL;
             }
             return index_ptr;
+        }
+        
+        xvbstate_t*     xvblock_t::create_state_object(const std::string & serialized_data)
+        {
+            if(serialized_data.empty())
+                return NULL;
+            
+            xdataunit_t * _data_obj_ptr = xdataunit_t::read_from(serialized_data);
+            if(NULL == _data_obj_ptr)
+            {
+                xerror("xvblock_t::create_state_object,bad serialized_data that not follow spec");
+                return NULL;
+            }
+            xvbstate_t* state_ptr = (xvbstate_t*)_data_obj_ptr->query_interface(enum_xobject_type_vbstate);
+            if(NULL == state_ptr)
+            {
+                xerror("xvblock_t::create_state_object,bad serialized_data is not for xvbstate_t,but for type:%d",_data_obj_ptr->get_obj_type());
+                
+                _data_obj_ptr->release_ref();
+                return NULL;
+            }
+            return state_ptr;
         }
         
         //create a  xvheader_t from bin data(could be from DB or from network)

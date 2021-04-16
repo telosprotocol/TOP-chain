@@ -3,7 +3,6 @@
 #include "xblockmaker/xblock_rules.h"
 #include "test_common.hpp"
 #include "xstore/xstore_face.h"
-#include "xstore/test/test_datamock.hpp"
 #include "xstore/xaccount_context.h"
 #include "xblockstore/xblockstore_face.h"
 #include "xdata/xtransaction_maker.hpp"

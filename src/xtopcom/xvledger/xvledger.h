@@ -8,6 +8,7 @@
 #include "xvaccount.h"
 #include "xvdbstore.h"
 #include "xvblockstore.h"
+#include "xvstatestore.h"
 #include "xveventbus.h"
 
 namespace top
@@ -246,12 +247,14 @@ namespace top
         public://note:each bucket/ledger may have own db and blockstore etc
             xvdbstore_t*                get_xdbstore(); //global shared db instance
             xvblockstore_t*             get_xblockstore();//global shared blockstore instance
+            xvstatestore_t*             get_xstatestore();//global shared statestore instance
             xveventbus_t*               get_xevmbus(); //global mbus object
         public:
             bool                        set_xdbstore(xvdbstore_t * new_store);//set global shared instance
             bool                        set_xblockstore(xvblockstore_t * new_store);//set global shared instance
+            bool                        set_xstatestore(xvstatestore_t* new_sotre);
             bool                        set_xevmbus(xveventbus_t * new_mbus);
-            
+
             //param of force_clean indicate whether force to close valid account
             virtual bool                clean_all(bool force_clean = false);//just do clean but not never destory objects of ledger/book/table
         protected:

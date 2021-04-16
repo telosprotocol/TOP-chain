@@ -20,7 +20,7 @@
 #    pragma warning(pop)
 #endif
 
-#include "xbasic/xobject_ptr.h"
+#include "xbase/xobject_ptr.h"
 #include "xcontract_runtime/xaccount_vm_execution_result.h"
 #include "xdata/xcons_transaction.h"
 

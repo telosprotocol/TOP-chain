@@ -9,7 +9,7 @@
 #include <vector>
 #include <functional>
 #include <memory>
-#include "xbasic/xns_macro.h"
+#include "xbase/xns_macro.h"
 #include "xbase/xlog.h"
 
 NS_BEG2(top, xrpc)

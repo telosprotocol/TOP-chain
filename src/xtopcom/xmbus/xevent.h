@@ -4,12 +4,12 @@
 
 #pragma once
 
-#include <memory>
-#include "xbasic/xns_macro.h"
+#include "xbase/xobject_ptr.h"
 #include "xbase/xvevent.h"
 
 NS_BEG2(top, mbus)
 
+using xevent_ptr_t = xobject_ptr_t<xevent_t>;
 
 enum xevent_major_type_t {
     xevent_major_type_none,

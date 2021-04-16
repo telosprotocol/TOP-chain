@@ -92,6 +92,11 @@ namespace top
             //clean all cached blocks after reach max idle duration(as default it is 60 seconds)
             virtual bool                reset_cache_timeout(const base::xvaccount_t & account,const uint32_t max_idle_time_ms) override;
             
+        public://execute_block will move to statestore soon
+            //note: block must be committed and connected
+            virtual bool                 execute_block(const base::xvaccount_t & account,base::xvblock_t* block) override; //execute block and update state of acccount
+            virtual base::xvtransaction_store_ptr_t  query_tx(const std::string & txhash, base::enum_transaction_subtype type) override;
+            
         protected:
             base::xauto_ptr<xblockacct_t>get_block_account(base::xvtable_t * target_table,const std::string & account_address);
             

@@ -3,7 +3,7 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #pragma once
-#include "xbasic/xns_macro.h"
+
 #include "xelection/xcache/xdata_accessor_face.h"
 #include "xvnetwork/xvhost_face_fwd.h"
 #include "xvnetwork/xvnetwork_message.h"

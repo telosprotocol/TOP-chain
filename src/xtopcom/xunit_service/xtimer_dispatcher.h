@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "xbasic/xobject_ptr.h"
+#include "xbase/xobject_ptr.h"
 #include "xunit_service/xtimer_picker.h"
 
 NS_BEG2(top, xunit_service)

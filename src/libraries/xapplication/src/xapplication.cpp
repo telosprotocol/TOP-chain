@@ -44,7 +44,7 @@ xtop_application::xtop_application(common::xnode_id_t const & node_id, xpublic_k
   , m_timer_driver{std::make_shared<xbase_timer_driver_t>(m_io_context_pools[xio_context_type_t::general].front())}
   , m_elect_main{top::make_unique<elect::ElectMain>(node_id, std::set<uint32_t>({static_cast<uint32_t>(top::config::to_chainid(XGET_CONFIG(chain_name)))}))}
   , m_router{top::make_unique<router::xrouter_t>()}
-  , m_bus{top::make_unique<mbus::xmessage_bus_t>(true, 1000)}
+  , m_bus{top::make_object_ptr<mbus::xmessage_bus_t>(true, 1000)}
   , m_logic_timer{make_object_ptr<time::xchain_timer_t>(m_timer_driver)}
   , m_grpc_thread{make_object_ptr<base::xiothread_t>()}
   , m_sync_thread{make_object_ptr<base::xiothread_t>()}
@@ -52,12 +52,13 @@ xtop_application::xtop_application(common::xnode_id_t const & node_id, xpublic_k
     std::shared_ptr<db::xdb_face_t> db = db::xdb_factory_t::instance(XGET_CONFIG(db_path));
     m_store = store::xstore_factory::create_store_with_static_kvdb(db);
     base::xvchain_t::instance().set_xdbstore(m_store.get());
+    base::xvchain_t::instance().set_xevmbus(m_bus.get());
     m_blockstore.attach(store::get_vblockstore());
     m_indexstore = store::xindexstore_factory_t::create_indexstorehub(make_observer(m_store), make_observer(m_blockstore));
 #ifdef ENABLE_METRICS
-    m_datastat = make_unique<datastat::xdatastat_t>(make_observer(m_bus));
+    m_datastat = make_unique<datastat::xdatastat_t>(make_observer(m_bus.get()));
 #endif
-    m_nodesvr_ptr = make_object_ptr<election::xvnode_house_t>(node_id, sign_key, m_blockstore, make_observer(m_bus));
+    m_nodesvr_ptr = make_object_ptr<election::xvnode_house_t>(node_id, sign_key, m_blockstore, make_observer(m_bus.get()));
 #ifdef MOCK_CA
     m_cert_ptr = make_object_ptr<xschnorrcert_t>((uint32_t)1);
 #else
@@ -67,13 +68,14 @@ xtop_application::xtop_application(common::xnode_id_t const & node_id, xpublic_k
     m_txpool = xtxpool_v2::xtxpool_instance::create_xtxpool_inst(make_observer(m_store), make_observer(m_blockstore.get()), make_observer(m_cert_ptr.get()), make_observer(m_indexstore.get()));
 
     m_syncstore.attach(new store::xsyncvstore_t(*m_cert_ptr.get(), *m_blockstore.get()));
+    contract::xcontract_manager_t::instance().init(make_observer(m_store), m_syncstore);
 
     xthread_pool_t txpool_service_thp;
     txpool_service_thp.push_back(make_object_ptr<base::xiothread_t>());
     m_thread_pools[xtop_thread_pool_type::txpool_service] = txpool_service_thp;
 
     // load configuration first
-    auto loader = std::make_shared<loader::xconfig_onchain_loader_t>(make_observer(m_store), make_observer(m_bus), make_observer(m_logic_timer));
+    auto loader = std::make_shared<loader::xconfig_onchain_loader_t>(make_observer(m_store), make_observer(m_bus.get()), make_observer(m_logic_timer));
     config::xconfig_register_t::get_instance().add_loader(loader);
     config::xconfig_register_t::get_instance().load();
 
@@ -268,26 +270,21 @@ bool xtop_application::create_genesis_accounts() {
 
 bool xtop_application::create_genesis_account(std::string const & address, uint64_t const init_balance) {
     xdbg("xtop_application::create_genesis_account address=%s balance=%ld", address.c_str(), init_balance);
-    auto height = m_store->get_blockchain_height(address);
-    if (height != 0) {
-        xdbg("xtop_application::create_genesis_account address=%s already created", address.c_str());
-        return true;
-    }
-
     base::xauto_ptr<base::xvblock_t> genesis_block = data::xblocktool_t::create_genesis_lightunit(address, init_balance);
     xassert(genesis_block != nullptr);
-
-    auto ret = m_store->set_vblock(std::string(), genesis_block.get());
+    base::xvaccount_t _vaddr(address);
+    // m_blockstore->delete_block(_vaddr, genesis_block.get());  // delete default genesis block
+    auto ret = m_blockstore->store_block(_vaddr, genesis_block.get());
     if (!ret) {
         xerror("xtop_application::create_genesis_account store genesis block fail");
-        return ret;
+        return false;
     }
-    ret = m_store->execute_block(genesis_block.get());
+    ret = m_blockstore->execute_block(_vaddr, genesis_block.get());
     if (!ret) {
         xerror("xtop_application::create_genesis_account execute genesis block fail");
-        return ret;
+        return false;
     }
-    return ret;
+    return true;
 }
 
 int32_t xtop_application::handle_register_node(std::string const & node_addr, std::string const & node_sign) {

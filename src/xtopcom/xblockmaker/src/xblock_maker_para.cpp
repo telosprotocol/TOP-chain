@@ -4,7 +4,6 @@
 
 #include <string>
 
-#include "xbasic/xns_macro.h"
 #include "xblockmaker/xblock_maker_para.h"
 
 NS_BEG2(top, blockmaker)

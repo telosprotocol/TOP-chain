@@ -11,7 +11,7 @@
 #include "xbase/xutl.h"
 // TODO(jimmy) #include "xbase/xvledger.h"
 #include "xbasic/xcrypto_key.h"
-#include "xbasic/xobject_ptr.h"
+#include "xbase/xobject_ptr.h"
 #include "xbasic/xutility.h"
 #include "xcommon/xsharding_info.h"
 #include "xdata/xblock.h"

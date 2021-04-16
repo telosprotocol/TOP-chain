@@ -3,7 +3,6 @@
 #include <atomic>
 #include <mutex>
 #include <unordered_map>
-#include "xbasic/xns_macro.h"
 #include "xdata/xdata_common.h"
 #include "xbasic/xmemory.hpp"
 #include "xbase/xutl.h"

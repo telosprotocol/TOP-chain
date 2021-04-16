@@ -38,7 +38,7 @@
 #    pragma warning(pop)
 #endif
 
-#include "xbasic/xobject_ptr.h"
+#include "xbase/xobject_ptr.h"
 #include "xdata/xaccount_mstate.h"
 #include "xdata/xcons_transaction.h"
 #include "xdata/xdata_common.h"
