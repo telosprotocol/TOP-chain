@@ -119,7 +119,8 @@ void xtop_property_access_control::map_prop_clear<std::string, std::string>(comm
         auto prop = bstate_->load_string_map_var(prop_name);
         property_assert(prop, "[xtop_property_access_control::map_prop_clear]property not exist, prop_name: " + prop_name);
 
-        property_assert(prop->reset(), "[xtop_property_access_control::map_prop_clear]property reset error,  prop_name: " + prop_name);
+        xassert(false); // TODO(jimmy)
+        // property_assert(prop->reset(), "[xtop_property_access_control::map_prop_clear]property reset error,  prop_name: " + prop_name);
     } else {
         throw error::xcontract_common_error_t{error::xerrc_t::property_permission_not_allowed, "[xtop_property_access_control::map_prop_clear]permission denied"};
     }
@@ -208,7 +209,8 @@ void xtop_property_access_control::QUEUE_PROP_CLEAR<std::string>(std::string con
     auto prop = bstate_->load_string_deque_var(prop_name);
     property_assert(prop, "[QUEUE_PROP_CLEAR]queue property not exist, prop_name: " + prop_name);
 
-    property_assert(prop->reset(), "[QUEUE_PROP_CLEAR]queue property reset error, prop_name: " + prop_name);
+    xassert(false); // TODO(jimmy)
+//    property_assert(prop->reset(), "[QUEUE_PROP_CLEAR]queue property reset error, prop_name: " + prop_name);
 }
 
 template<>
@@ -260,7 +262,8 @@ void xtop_property_access_control::STR_PROP_CLEAR(std::string const& prop_name) 
     auto prop = bstate_->load_string_var(prop_name);
     property_assert(prop, "[STR_PROP_CLEAR]str property not exist, prop_name: " + prop_name);
 
-    property_assert(prop->reset(), "[STR_PROP_CLEAR]str property clear error, prop_name: " + prop_name);
+    xassert(false); // TODO(jimmy)
+    //property_assert(prop->reset(), "[STR_PROP_CLEAR]str property clear error, prop_name: " + prop_name);
 }
 
 std::string xtop_property_access_control::STR_PROP_QUERY(std::string const& prop_name) {
