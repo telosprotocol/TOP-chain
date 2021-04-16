@@ -6,7 +6,6 @@
 
 #include <string>
 #include <map>
-#include "xbasic/xdataobj_base.hpp"
 #include "xbase/xdata.h"
 #include "xvledger/xvblock.h"
 #include "xdata/xtransaction.h"

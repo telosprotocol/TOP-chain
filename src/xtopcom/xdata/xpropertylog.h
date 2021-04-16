@@ -12,7 +12,7 @@
 #include "xdata/xhash_base.hpp"
 
 #include "xbase/xobject_ptr.h"
-#include "xbasic/xdataobj_base.hpp"
+#include "xvledger/xdataobj_base.hpp"
 #include "xbasic/xversion.h"
 #include "xbasic/xserialize_face.h"
 

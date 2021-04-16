@@ -3,13 +3,12 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include <cinttypes>
-#include "xdata/xtableindex.h"
-#include "xdata/xdata_common.h"
-#include "xbasic/xversion.h"
 #include "xbase/xhash.h"
-#include "xutility/xhash.h"
+#include "xbase/xcontext.h"
+#include "xbase/xobject.h"
+#include "xvledger/xaccountindex.h"
 
-NS_BEG2(top, data)
+NS_BEG2(top, base)
 
 REG_CLS(xtable_mbt_t);
 
@@ -38,19 +37,19 @@ xaccount_index_t::xaccount_index_t(uint64_t height,
 }
 
 int32_t xaccount_index_t::do_write(base::xstream_t & stream) const {
-    KEEP_SIZE();
+    const int32_t begin_size = stream.size();
     stream.write_compact_var(m_latest_unit_height);
     stream.write_compact_var(m_latest_unit_hash);
     stream.write_compact_var(m_account_flag);
-    return CALC_LEN();
+    return (stream.size() - begin_size);
 }
 
 int32_t xaccount_index_t::do_read(base::xstream_t & stream) {
-    KEEP_SIZE();
+    const int32_t begin_size = stream.size();
     stream.read_compact_var(m_latest_unit_height);
     stream.read_compact_var(m_latest_unit_hash);
     stream.read_compact_var(m_account_flag);
-    return CALC_LEN();
+    return (begin_size - stream.size());
 }
 
 // [enum_xvblock_class 3bit][enum_xvblock_type 7bit][enum_xaccount_index_flag 4bit][enum_xblock_consensus_type 2bit] = 16bits
@@ -102,7 +101,7 @@ xtable_mbt_binlog_t::xtable_mbt_binlog_t(const std::map<std::string, xaccount_in
 }
 
 int32_t xtable_mbt_binlog_t::do_write(base::xstream_t & stream) {
-    KEEP_SIZE();
+    const int32_t begin_size = stream.size();
     uint32_t count = m_account_indexs.size();
     xassert(count != 0);
     stream.write_compact_var(count);
@@ -110,10 +109,10 @@ int32_t xtable_mbt_binlog_t::do_write(base::xstream_t & stream) {
         stream.write_compact_var(v.first);
         v.second.do_write(stream);
     }
-    return CALC_LEN();
+    return (stream.size() - begin_size);
 }
 int32_t xtable_mbt_binlog_t::do_read(base::xstream_t & stream) {
-    KEEP_SIZE();
+    const int32_t begin_size = stream.size();
     uint32_t count;
     stream.read_compact_var(count);
     for (uint32_t i = 0; i < count; i++) {
@@ -124,7 +123,7 @@ int32_t xtable_mbt_binlog_t::do_read(base::xstream_t & stream) {
         m_account_indexs[account] = index;
     }
     xassert(m_account_indexs.size() == count);
-    return CALC_LEN();
+    return (begin_size - stream.size());
 }
 
 void xtable_mbt_binlog_t::set_account_index(const std::string & account, const xaccount_index_t & index) {
@@ -157,12 +156,16 @@ bool xtable_mbt_binlog_t::get_account_index(const std::string & account, xaccoun
 }
 
 std::string xtable_mbt_binlog_t::build_binlog_hash() {
-    base::xstream_t stream(top::base::xcontext_t::instance());
-    int32_t size = do_write(stream);
-    xassert(size > 0);
-    uint256_t hash256 = utl::xsha2_256_t::digest((const char*)stream.data(), stream.size());
-    std::string hash = std::string(reinterpret_cast<char*>(hash256.data()), hash256.size());
-    return hash;
+    // base::xstream_t stream(top::base::xcontext_t::instance());
+    // int32_t size = do_write(stream);
+    // xassert(size > 0);
+    // uint256_t hash256 = utl::xsha2_256_t::digest((const char*)stream.data(), stream.size());
+    // std::string hash = std::string(reinterpret_cast<char*>(hash256.data()), hash256.size());
+    // return hash;
+    // TODO(jimmy)
+    std::string bin_str;
+    serialize_to_string(bin_str);
+    return xcontext_t::instance().hash(bin_str, enum_xhash_type_sha2_256);
 }
 
 
@@ -171,7 +174,7 @@ xtable_mbt_bucket_node_t::xtable_mbt_bucket_node_t()
 }
 
 int32_t xtable_mbt_bucket_node_t::do_write_without_hash(base::xstream_t & stream) const {
-    KEEP_SIZE();
+    const int32_t begin_size = stream.size();
     uint32_t count = m_account_indexs.size();
     xassert(count != 0);
     stream.write_compact_var(count);
@@ -179,16 +182,16 @@ int32_t xtable_mbt_bucket_node_t::do_write_without_hash(base::xstream_t & stream
         stream.write_compact_var(v.first);
         v.second.do_write(stream);
     }
-    return CALC_LEN();
+    return (stream.size() - begin_size);
 }
 
 int32_t xtable_mbt_bucket_node_t::do_write(base::xstream_t & stream) {
-    KEEP_SIZE();
+    const int32_t begin_size = stream.size();
     do_write_without_hash(stream);
-    return CALC_LEN();
+    return (stream.size() - begin_size);
 }
 int32_t xtable_mbt_bucket_node_t::do_read(base::xstream_t & stream) {
-    KEEP_SIZE();
+    const int32_t begin_size = stream.size();
     uint32_t count;
     stream.read_compact_var(count);
     for (uint32_t i = 0; i < count; i++) {
@@ -199,7 +202,7 @@ int32_t xtable_mbt_bucket_node_t::do_read(base::xstream_t & stream) {
         m_account_indexs[account] = index;
     }
     xassert(m_account_indexs.size() == count);
-    return CALC_LEN();
+    return (begin_size - stream.size());
 }
 
 void    xtable_mbt_bucket_node_t::set_account_index(const std::string & account, xaccount_index_t index) {
@@ -253,16 +256,16 @@ xtable_mbt_root_node_t::xtable_mbt_root_node_t(const std::map<uint16_t, std::str
 }
 
 int32_t xtable_mbt_root_node_t::do_write(base::xstream_t & stream) {
-    KEEP_SIZE();
+    const int32_t begin_size = stream.size();
     stream.write_compact_var(m_root_hash);
     stream.write_compact_map(m_bucket_hashs);
-    return CALC_LEN();
+    return (stream.size() - begin_size);
 }
 int32_t xtable_mbt_root_node_t::do_read(base::xstream_t & stream) {
-    KEEP_SIZE();
+    const int32_t begin_size = stream.size();
     stream.read_compact_var(m_root_hash);
     stream.read_compact_map(m_bucket_hashs);
-    return CALC_LEN();
+    return (begin_size - stream.size());
 }
 
 std::string xtable_mbt_root_node_t::get_bucket_hash(uint16_t bucket) {
@@ -283,9 +286,12 @@ std::string xtable_mbt_root_node_t::build_root_hash() {
 std::string xtable_mbt_root_node_t::calc_root_hash() const {
     base::xstream_t stream(top::base::xcontext_t::instance());
     stream.write_compact_map(m_bucket_hashs);
-    uint256_t hash256 = utl::xsha2_256_t::digest((const char*)stream.data(), stream.size());
-    std::string root_hash = std::string(reinterpret_cast<char*>(hash256.data()), hash256.size());
-    return root_hash;
+    std::string bin_str((char*)stream.data(), stream.size());
+    // uint256_t hash256 = utl::xsha2_256_t::digest((const char*)stream.data(), stream.size());
+    // std::string root_hash = std::string(reinterpret_cast<char*>(hash256.data()), hash256.size());
+    // return root_hash;
+    // TODO(jimmy)
+    return xcontext_t::instance().hash(bin_str, enum_xhash_type_sha2_256);
 }
 
 bool xtable_mbt_root_node_t::check_root_node() const {
@@ -356,7 +362,7 @@ void xtable_mbt_t::set_accounts_index_info(const std::map<std::string, xaccount_
 }
 
 int32_t xtable_mbt_t::do_write(base::xstream_t & stream) {
-    KEEP_SIZE();
+    const int32_t begin_size = stream.size();
     stream.write_compact_var(m_root_hash);
     uint32_t count = m_buckets.size();
     stream.write_compact_var(count);
@@ -364,10 +370,10 @@ int32_t xtable_mbt_t::do_write(base::xstream_t & stream) {
         stream.write_compact_var(bucket.first);
         bucket.second->serialize_to(stream);
     }
-    return CALC_LEN();
+    return (stream.size() - begin_size);
 }
 int32_t xtable_mbt_t::do_read(base::xstream_t & stream) {
-    KEEP_SIZE();
+    const int32_t begin_size = stream.size();
     stream.read_compact_var(m_root_hash);
     uint32_t count;
     stream.read_compact_var(count);
@@ -378,7 +384,7 @@ int32_t xtable_mbt_t::do_read(base::xstream_t & stream) {
         value->serialize_from(stream);
         m_buckets[key] = value;
     }
-    return CALC_LEN();
+    return (begin_size - stream.size());
 }
 
 xtable_mbt_root_node_ptr_t xtable_mbt_t::get_root_node() const {

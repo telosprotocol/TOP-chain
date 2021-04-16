@@ -9,7 +9,7 @@
 #include <vector>
 #include "xbase/xobject_ptr.h"
 #include "xbasic/xversion.h"
-#include "xbasic/xdataobj_base.hpp"
+#include "xvledger/xdataobj_base.hpp"
 #include "xdata/xtransaction.h"
 #include "xdata/xpropertylog.h"
 #include "xdata/xblock_paras.h"

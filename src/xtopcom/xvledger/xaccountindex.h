@@ -6,13 +6,12 @@
 
 #include <string>
 #include <map>
-#include <vector>
-#include <set>
-#include "xvledger/xvblock.h"
 #include "xbase/xobject_ptr.h"
-#include "xbasic/xdataobj_base.hpp"
+#include "xbase/xns_macro.h"
+#include "xvledger/xvblock.h"
+#include "xvledger/xdataobj_base.hpp"
 
-NS_BEG2(top, data)
+NS_BEG2(top, base)
 
 // [enum_xvblock_class 3bit][enum_xvblock_type 7bit][enum_xaccount_index_flag 4bit][enum_xblock_consensus_type 2bit] = 16bits
 // the account flag for checking need sync or load firstly 4bit
@@ -37,8 +36,8 @@ class xaccount_index_t {
     xaccount_index_t(uint64_t height);
     xaccount_index_t(uint64_t height,
                      const std::string & block_hash,
-                     base::enum_xvblock_class block_class,
-                     base::enum_xvblock_type block_type,
+                     enum_xvblock_class block_class,
+                     enum_xvblock_type block_type,
                      enum_xblock_consensus_type consensus_type,
                      bool has_unconfirm_tx,
                      bool is_account_destroy);

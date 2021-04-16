@@ -9,10 +9,10 @@
 #include <vector>
 #include <set>
 #include "xbase/xobject_ptr.h"
-#include "xbasic/xdataobj_base.hpp"
+#include "xvledger/xdataobj_base.hpp"
 #include "xdata/xblock_paras.h"
 #include "xdata/xblock.h"
-#include "xdata/xtableindex.h"
+#include "xvledger/xaccountindex.h"
 #include "xdata/xblockchain.h"
 
 NS_BEG2(top, data)
@@ -135,15 +135,11 @@ class xfull_tableblock_t : public xblock_t {
     void *query_interface(const int32_t _enum_xobject_type_) override;
 
  public:
-    const std::string &                     get_bucket_tree_root() const;
     xfulltable_statistics_resource_ptr_t    get_fulltable_statistics_resource() const;
     xfulltable_binlog_resource_ptr_t        get_fulltable_binlog_resource() const;
 
  public:  // override base block api
-    bool                set_full_offstate(const xtable_mbt_ptr_t & offstate) override;
-    xtable_mbt_ptr_t    get_full_offstate() const override {return m_full_offstate;}
-    bool                is_full_state_block() const override;
-    bool                is_execute_ready() const {return is_full_state_block();}  //check whether ready to execute bin-log
+    std::string         get_offdata_hash() const override;
 
  private:
     xtable_mbt_ptr_t                                m_full_offstate{nullptr};  // full block offstate

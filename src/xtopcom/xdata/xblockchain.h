@@ -9,9 +9,13 @@
 #include "xbase/xobject_ptr.h"
 #include "xdata/xaccount_mstate.h"
 #include "xdata/xtransaction.h"
-#include "xdata/xtableindex.h"
+#include "xvledger/xaccountindex.h"
 
 NS_BEG2(top, data)
+
+using base::xtable_mbt_ptr_t;
+using base::xtable_mbt_binlog_ptr_t;
+using base::xtable_mbt_binlog_t;
 
 class xblockchain2_t : public xbase_dataobj_t<xblockchain2_t, xdata_type_blockchain> {
     enum {

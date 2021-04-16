@@ -7,7 +7,7 @@
 #include <string>
 
 #include "xbasic/xversion.h"
-#include "xbasic/xdataobj_base.hpp"
+#include "xvledger/xdataobj_base.hpp"
 #include "xdata/xlightunit_info.h"
 #include "xdata/xprovecert.h"
 #include "xutility/xmerkle.hpp"

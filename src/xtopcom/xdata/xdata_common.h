@@ -7,6 +7,7 @@
 #include "xbase/xcontext.h"
 #include "xbase/xint.h"
 #include "xbase/xdata.h"
+#include "xvledger/xdataobj_base.hpp"
 #include "xbasic/xcrypto_key.h"
 #include "xbasic/xserializable_based_on.h"
 #include "xbase/xobject_ptr.h"
@@ -295,18 +296,5 @@ public:
     common::xaccount_address_t m_account;                               // account for the node
     xpublic_key_t m_publickey;                                          // node public key(hex)
 };
-
-// register xobject
-template <class data_cls>
-class register_xcls {
-public:
-    register_xcls() { top::base::xcontext_t::register_xobject((top::base::enum_xobject_type)data_cls::get_object_type(), data_cls::create_object); }
-};
-
-#ifndef REG_CLS
-#    define REG_CLS(CLS)                                                                                                                                                           \
-        using data::register_xcls;                                                                                                                                                 \
-        register_xcls<CLS> g_##CLS
-#endif  // REG_CLS
 
 NS_END2

@@ -5,7 +5,6 @@
 #include <string>
 
 #include "xbasic/xversion.h"
-#include "xbasic/xdataobj_base.hpp"
 #include "xvledger/xvblock.h"
 #include "xdata/xprovecert.h"
 
