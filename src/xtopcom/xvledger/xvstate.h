@@ -33,6 +33,9 @@ namespace top
         public:
             xvbstate_t(xvblock_t& for_block,xvexeunit_t * parent_unit = NULL,enum_xdata_type type = (enum_xdata_type)enum_xobject_type_vbstate);
             
+            //debug & ut-test only
+            xvbstate_t(const std::string & account,const uint64_t block_height,const uint64_t block_viewid,const std::string & last_block_hash,const std::string &last_full_block_hash,const uint64_t last_full_block_height, const uint32_t raw_block_versions,const uint16_t raw_block_types, xvexeunit_t * parent_unit = NULL);
+            
         protected:
             xvbstate_t(enum_xdata_type type = (enum_xdata_type)enum_xobject_type_vbstate);
             xvbstate_t(const xvbstate_t & obj);
@@ -55,13 +58,15 @@ namespace top
             //bin-log related functions
             enum_xerror_code      encode_change_to_binlog(std::string & output_bin);//
             enum_xerror_code      encode_change_to_binlog(xstream_t & output_bin);//
+            //note:rebase_change_to_snapshot rebase all changes into properties and take snapshot,then clean all previsouse changes,useful to generate full block of full-state
+            virtual bool          rebase_change_to_snapshot(); //snapshot for whole xvbstate of every properties
             
             enum_xerror_code      decode_change_from_binlog(const std::string & from_bin_log,std::deque<top::base::xvmethod_t> & out_records);
             enum_xerror_code      decode_change_from_binlog(xstream_t & from_bin_log,const uint32_t bin_log_size,std::deque<top::base::xvmethod_t> & out_records);
             
             bool                  apply_changes_of_binlog(const std::string & from_bin_log);//apply changes to current states,use carefully
             virtual bool          apply_changes_of_binlog(xstream_t & from_bin_log,const uint32_t bin_log_size);//apply changes to current states,use carefully
-
+            
         public://read-only
             inline const std::string&   get_account_addr()          const {return m_account_addr;}
             inline const uint64_t       get_block_height()          const {return m_block_height;}
@@ -146,6 +151,11 @@ namespace top
             xauto_ptr<xmapvar_t<uint64_t>>      new_uint64_map_var(const std::string & property_name);
             xauto_ptr<xmapvar_t<std::string>>   new_string_map_var(const std::string & property_name);
             
+        protected: //internal use only
+            bool      reset_property(const std::string & property_name,const xvalue_t & property_value);
+            bool      renew_property(const std::string & property_name,const int property_type,const xvalue_t & property_value);
+            bool      del_property(const std::string & property_name);
+            
         protected:
             //subclass extend behavior and load more information instead of a raw one
             //return how many bytes readout /writed in, return < 0(enum_xerror_code_type) when have error
@@ -156,6 +166,8 @@ namespace top
             virtual xvproperty_t*   get_property_object(const std::string & name);
         
             bool                    clone_properties_from(xvbstate_t& source);//note: just only clone the state of properties
+            enum_xerror_code        encode_change_to_binlog(xvcanvas_t* source_canvas,std::string & output_bin);
+
         private:
             std::string     m_account_addr;
             uint64_t        m_block_height;
@@ -168,16 +180,23 @@ namespace top
             //[1][enum_xvblock_class][enum_xvblock_level][enum_xvblock_type][enum_xvblock_reserved]
             uint16_t        m_block_types;
             
-        protected: //functions to modify value actually
-            virtual const xvalue_t  do_new_property(const xvmethod_t & op);
+        private: //functions to modify value actually
+            const xvalue_t  do_new_property(const xvmethod_t & op);
+            const xvalue_t  do_reset_property(const xvmethod_t & op);
+            const xvalue_t  do_renew_property(const xvmethod_t & op);
+            const xvalue_t  do_del_property(const xvmethod_t & op);
             
-        private://keep private as safety
+            //keep private as safety
             xauto_ptr<xvproperty_t>  new_property(const std::string & property_name,const int propertyType);
             const xvalue_t  new_property_internal(const std::string & property_name,const int propertyType);
+            xvmethod_t      renew_property_instruction(const std::string & property_name,const int  property_type,const xvalue_t & property_value);
             
         private://declare instruction methods supported by xvstate
             BEGIN_DECLARE_XVIFUNC_ID_API(enum_xvinstruct_class_state_function)
                 IMPL_XVIFUNCE_ID_API(enum_xvinstruct_state_method_new_property,do_new_property)
+                IMPL_XVIFUNCE_ID_API(enum_xvinstruct_state_method_reset_property,do_reset_property)
+                IMPL_XVIFUNCE_ID_API(enum_xvinstruct_state_method_renew_property,do_renew_property)
+                IMPL_XVIFUNCE_ID_API(enum_xvinstruct_state_method_del_property,do_del_property)
             END_DECLARE_XVIFUNC_ID_API(enum_xvinstruct_class_state_function)
         };
         

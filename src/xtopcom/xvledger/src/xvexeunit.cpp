@@ -509,6 +509,19 @@ namespace top
             return true;
         }
     
+        bool   xvexegroup_t::remove_child_unit(const std::string & unit_name)
+        {
+            auto it = m_child_units.find(unit_name);
+            if(it != m_child_units.end())
+            {
+                it->second->set_parent_unit(NULL);
+                it->second->release_ref();
+                m_child_units.erase(it);
+                return true;
+            }
+            return false;
+        }
+    
         xvexeunit_t *   xvexegroup_t::find_child_unit(const std::string & unit_name)
         {
             auto it = m_child_units.find(unit_name);

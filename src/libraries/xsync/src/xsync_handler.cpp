@@ -32,8 +32,6 @@ using namespace mbus;
 using namespace vnetwork;
 using namespace data;
 
-const uint32_t max_request_block_count = 100;
-
 xsync_handler_t::xsync_handler_t(std::string vnode_id,
     xsync_store_face_t *sync_store,
     const observer_ptr<base::xvcertauth_t> &certauth,
@@ -85,6 +83,8 @@ m_cross_cluster_chain_state(cross_cluster_chain_state) {
     register_handler(xmessage_id_sync_cross_cluster_chain_state, std::bind(&xsync_handler_t::cross_cluster_chain_state, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6, std::placeholders::_7));
     register_handler(xmessage_id_sync_chain_snapshot_request, std::bind(&xsync_handler_t::handle_chain_snapshot_request, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6, std::placeholders::_7));
     register_handler(xmessage_id_sync_chain_snapshot_response, std::bind(&xsync_handler_t::handle_chain_snapshot_response, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6, std::placeholders::_7));
+    register_handler(xmessage_id_sync_ondemand_chain_snapshot_request, std::bind(&xsync_handler_t::handle_ondemand_chain_snapshot_request, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6, std::placeholders::_7));
+    register_handler(xmessage_id_sync_ondemand_chain_snapshot_response, std::bind(&xsync_handler_t::handle_ondemand_chain_snapshot_response, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6, std::placeholders::_7));
 }
 
 xsync_handler_t::~xsync_handler_t() {
@@ -501,51 +501,7 @@ void xsync_handler_t::get_on_demand_blocks(uint32_t msg_size, const vnetwork::xv
     auto ptr = make_object_ptr<xsync_message_get_on_demand_blocks_t>();
     ptr->serialize_from(stream);
 
-    std::string &address = ptr->address;
-    uint64_t start_height = ptr->start_height;
-    uint32_t count = ptr->count;
-    bool is_consensus = ptr->is_consensus;
-
-    if (count == 0)
-        return;
-
-    if (count > max_request_block_count)
-        count = max_request_block_count;
-
-    std::vector<data::xblock_ptr_t> blocks;
-
-    if (is_consensus) {
-        uint64_t end_height = start_height + (uint64_t)count;
-
-        base::xauto_ptr<base::xvblock_t> latest_full_block = m_sync_store->get_latest_full_block(address);
-        if (latest_full_block != nullptr && latest_full_block->get_height() > start_height) {
-            start_height = latest_full_block->get_height() + 1;
-            xblock_ptr_t block_ptr = autoptr_to_blockptr(latest_full_block);
-            blocks.push_back(block_ptr);
-        }
-
-        for (uint64_t height = start_height; height <= end_height; height++) {
-            xauto_ptr<xvblock_t> auto_vblock = m_sync_store->load_block_object(address, height);
-            if (auto_vblock != nullptr) {
-                xblock_ptr_t block_ptr = autoptr_to_blockptr(auto_vblock);
-                blocks.push_back(block_ptr);
-            }
-        }
-    } else {
-
-        for (uint32_t i=0; i<count && i<max_request_block_count; i++) {
-            uint64_t height = start_height + (uint64_t)i;
-            xauto_ptr<xvblock_t> auto_vblock = m_sync_store->load_block_object(address, height);
-            if (auto_vblock != nullptr) {
-                xblock_ptr_t block_ptr = autoptr_to_blockptr(auto_vblock);
-                blocks.push_back(block_ptr);
-            } else {
-                break;
-            }
-        }
-    }
-
-    m_sync_sender->send_on_demand_blocks(blocks, network_self, from_address);
+   m_sync_on_demand->handle_blocks_request(*(ptr.get()), from_address, network_self);
 }
 
 void xsync_handler_t::on_demand_blocks(uint32_t msg_size, const vnetwork::xvnode_address_t &from_address,
@@ -565,31 +521,7 @@ void xsync_handler_t::on_demand_blocks(uint32_t msg_size, const vnetwork::xvnode
     if (blocks.size() == 0)
         return;
 
-    // check continuous
-    xvblock_t *successor = nullptr;
-    std::vector<data::xblock_ptr_t>::reverse_iterator rit = blocks.rbegin();
-    for (;rit!=blocks.rend(); rit++) {
-        xblock_ptr_t &block = *rit;
-
-        if (successor != nullptr) {
-
-            if (block->get_account() != successor->get_account()) {
-                xsync_warn("xsync_handler receive on_demand_blocks(address error) (%s, %s)",
-                    block->get_account().c_str(), successor->get_account().c_str());
-                return;
-            }
-
-            if (block->get_block_hash() != successor->get_last_block_hash()) {
-                xsync_warn("xsync_handler receive on_demand_blocks(sequence error) (%s, %s)",
-                    block->dump().c_str(), successor->dump().c_str());
-                return;
-            }
-        }
-
-        successor = block.get();
-    }
-
-    m_sync_on_demand->on_response_event(blocks);
+    m_sync_on_demand->handle_blocks_response(blocks, from_address, network_self);
 }
 
 void xsync_handler_t::broadcast_chain_state(uint32_t msg_size, const vnetwork::xvnode_address_t &from_address,
@@ -930,13 +862,13 @@ void xsync_handler_t::handle_chain_snapshot_request(
     if (blk != nullptr) {
         xfull_tableblock_t* full_block_ptr = dynamic_cast<xfull_tableblock_t*>(xblock_t::raw_vblock_to_object_ptr(blk.get()).get());
         if ((full_block_ptr != nullptr) && (full_block_ptr->is_full_state_block())) {
-            const xdataunit_ptr_t &chain_snapshot_ptr = full_block_ptr->get_full_offstate();
-            xtable_mbt_ptr_t table_mbt;
-            chain_snapshot_ptr->add_ref();
-            table_mbt.attach((xtable_mbt_t*)chain_snapshot_ptr.get());
+            base::xvboffdata_t* _offdata = full_block_ptr->get_offdata();
+            xobject_ptr_t<base::xvboffdata_t> offdata_ptr;
+            offdata_ptr.attach(_offdata);
+            _offdata->add_ref();
             xsync_message_chain_snapshot_t chain_snapshot(ptr->m_account_addr,
-                table_mbt, ptr->m_height_of_fullblock);
-            m_sync_sender->send_chain_snapshot(chain_snapshot, network_self, from_address);
+                offdata_ptr, ptr->m_height_of_fullblock);
+            m_sync_sender->send_chain_snapshot(chain_snapshot, xmessage_id_sync_chain_snapshot_response, network_self, from_address);
         } else {
             xsync_info("xsync_handler receive chain_snapshot_request, account:%s, height:%llu, block_type:%d",
                 ptr->m_account_addr.c_str(), ptr->m_height_of_fullblock, blk->get_block_class());
@@ -953,17 +885,52 @@ void xsync_handler_t::handle_chain_snapshot_response(uint32_t msg_size, const vn
     base::xstream_t &stream,
     xtop_vnetwork_message::hash_result_type msg_hash,
     int64_t recv_time) {
-
+        
     auto ptr = make_object_ptr<xsync_message_chain_snapshot_t>();
     ptr->serialize_from(stream);
-
-    xsync_info("xsync_handler chain snapshot reponse %" PRIx64 " wait(%ldms) %s",
+    
+    xsync_info("xsync_handler chain snapshot reponse %" PRIx64 " wait(%ldms) %s", 
         msg_hash, get_time()-recv_time, from_address.to_string().c_str());
-
+    
     XMETRICS_COUNTER_INCREMENT("sync_handler_chain_snapshot_reponse", 1);
 
     mbus::xevent_ptr_t e = make_object_ptr<mbus::xevent_chain_snaphsot_t>(ptr->m_tbl_account_addr, ptr->m_chain_snapshot, ptr->m_height_of_fullblock, network_self, from_address);
-    m_downloader->push_event(e);
+    m_downloader->push_event(e); 
+}
+
+void xsync_handler_t::handle_ondemand_chain_snapshot_request(
+    uint32_t msg_size, const vnetwork::xvnode_address_t &from_address,
+    const vnetwork::xvnode_address_t &network_self,
+    const xsync_message_header_ptr_t &header,
+    base::xstream_t &stream,
+    xtop_vnetwork_message::hash_result_type msg_hash,
+    int64_t recv_time) {
+
+    auto ptr = make_object_ptr<xsync_message_chain_snapshot_meta_t>();
+    ptr->serialize_from(stream);
+
+	XMETRICS_COUNTER_INCREMENT("sync_handle_ondemand_chain_snapshot_request", 1);
+    xsync_info("xsync_handler receive ondemand_chain_snapshot_request %" PRIx64 " wait(%ldms) %s",
+        msg_hash, get_time()-recv_time, from_address.to_string().c_str());
+    m_sync_on_demand->handle_chain_snapshot_meta(*(ptr.get()), network_self, from_address);
+}
+
+void xsync_handler_t::handle_ondemand_chain_snapshot_response(uint32_t msg_size, const vnetwork::xvnode_address_t &from_address,
+    const vnetwork::xvnode_address_t &network_self,
+    const xsync_message_header_ptr_t &header,
+    base::xstream_t &stream,
+    xtop_vnetwork_message::hash_result_type msg_hash,
+    int64_t recv_time) {
+        
+    auto ptr = make_object_ptr<xsync_message_chain_snapshot_t>();
+    ptr->serialize_from(stream);
+    
+    xsync_info("xsync_handler ondemand chain snapshot reponse %" PRIx64 " wait(%ldms) %s", 
+        msg_hash, get_time()-recv_time, from_address.to_string().c_str());
+    
+    XMETRICS_COUNTER_INCREMENT("sync_handler_ondemand_chain_snapshot_reponse", 1);
+
+    m_sync_on_demand->handle_chain_snapshot(*(ptr.get()), from_address, network_self);
 }
 
 int64_t xsync_handler_t::get_time() {

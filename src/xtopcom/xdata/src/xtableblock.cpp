@@ -207,7 +207,7 @@ std::map<std::string, xaccount_index_t> xtable_block_t::get_units_index() const 
                                        unit->get_block_hash(),
                                        unit->get_block_class(),
                                        unit->get_block_type(),
-                                       enum_xblock_consensus_flag_authenticated,  // TODO(jimmy) always use highqc
+                                       base::enum_xblock_consensus_flag_authenticated,  // TODO(jimmy) always use highqc
                                        unit->get_unconfirm_sendtx_num() != 0,
                                        false);  // TODO(jimmy)
         xassert(account_index.is_account_destroy() == false);

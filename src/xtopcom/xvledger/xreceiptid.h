@@ -6,18 +6,12 @@
 
 #include <string>
 #include <map>
-#include <vector>
-#include <set>
-#include "xvledger/xvblock.h"
+#include "xbase/xdata.h"
 #include "xbase/xobject_ptr.h"
-#include "xbasic/xdataobj_base.hpp"
+#include "xbase/xns_macro.h"
+#include "xvledger/xvaccount.h"
 
-NS_BEG2(top, data)
-
-// TODO(jimmy) move to xvledger
-// table short id
-using xtable_sid_t = uint16_t;  //-[4 bit:zone#/bucket-index][7 bit:book-index][3 bit:table-index]
-#define make_table_sid(zone_index, subaddr) ( (zone_index) << 10 | (subaddr) )
+NS_BEG2(top, base)
 
 // receipt id relations between the two table pair
 class xreceiptid_pair_t {
@@ -49,17 +43,17 @@ class xreceiptid_pairs_t : public base::xdataunit_t {
     int32_t         do_write(base::xstream_t & stream) override;
     int32_t         do_read(base::xstream_t & stream) override;
  public:
-    void            add_pair(xtable_sid_t sid, const xreceiptid_pair_t & pair);
-    void            add_pairs(const std::map<xtable_sid_t, xreceiptid_pair_t> & pairs);
+    void            add_pair(xtable_shortid_t sid, const xreceiptid_pair_t & pair);
+    void            add_pairs(const std::map<xtable_shortid_t, xreceiptid_pair_t> & pairs);
     void            add_binlog(const xobject_ptr_t<xreceiptid_pairs_t> & binlog);
     void            clear_binlog();
 
-    bool            find_pair(xtable_sid_t sid, xreceiptid_pair_t & pair);
-    const std::map<xtable_sid_t, xreceiptid_pair_t> & get_all_pairs() const {return m_all_pairs;}
+    bool            find_pair(xtable_shortid_t sid, xreceiptid_pair_t & pair);
+    const std::map<xtable_shortid_t, xreceiptid_pair_t> & get_all_pairs() const {return m_all_pairs;}
     size_t          get_size() const{return m_all_pairs.size();}
 
  private:
-    std::map<xtable_sid_t, xreceiptid_pair_t>   m_all_pairs;
+    std::map<xtable_shortid_t, xreceiptid_pair_t>   m_all_pairs;
 };
 using xreceiptid_pairs_ptr_t = xobject_ptr_t<xreceiptid_pairs_t>;
 
@@ -74,14 +68,14 @@ class xreceiptid_state_t : public base::xdataunit_t {
     int32_t         do_read(base::xstream_t & stream) override;
 
  public:
-    void            add_pair(xtable_sid_t sid, const xreceiptid_pair_t & pair);
-    void            add_pairs(const std::map<xtable_sid_t, xreceiptid_pair_t> & pairs);
-    bool            find_pair(xtable_sid_t sid, xreceiptid_pair_t & pair);
+    void            add_pair(xtable_shortid_t sid, const xreceiptid_pair_t & pair);
+    void            add_pairs(const std::map<xtable_shortid_t, xreceiptid_pair_t> & pairs);
+    bool            find_pair(xtable_shortid_t sid, xreceiptid_pair_t & pair);
     size_t          get_full_size() const{return m_last_full->get_size();}
     size_t          get_binlog_size() const{return m_binlog->get_size();}
 
     void            merge_new_full();
-    std::string     build_root_hash();
+    std::string     build_root_hash(enum_xhash_type hashtype);
     void            set_binlog(const xreceiptid_pairs_ptr_t & binlog) {m_binlog = binlog;}
     const xreceiptid_pairs_ptr_t &  get_binlog() const {return m_binlog;}
  private:

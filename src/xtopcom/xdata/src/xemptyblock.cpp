@@ -8,7 +8,6 @@
 #include "xdata/xdatautil.h"
 #include "xdata/xemptyblock.h"
 #include "xdata/xrootblock.h"
-#include "xbasic/xdataobj_base.hpp"
 
 NS_BEG2(top, data)
 

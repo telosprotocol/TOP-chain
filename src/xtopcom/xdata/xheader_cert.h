@@ -6,7 +6,7 @@
 
 #include <string>
 #include <vector>
-#include "xbasic/xdataobj_base.hpp"
+#include "xvledger/xdataobj_base.hpp"
 #include "xvledger/xvblock.h"
 #include "xvledger/xvaccount.h"
 #include "xutility/xmerkle.hpp"

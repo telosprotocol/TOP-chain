@@ -106,9 +106,14 @@ int64_t xsync_range_mgr_t::get_behind_time() const {
     return m_behind_time;
 }
 
+uint64_t xsync_range_mgr_t::get_current_sync_start_height() const {
+    return m_current_sync_start_height;
+}
+
 void xsync_range_mgr_t::clear_behind_info() {
     m_behind_height = 0;
     m_behind_time = 0;
+    m_current_sync_start_height = 0;
 }
 
 int xsync_range_mgr_t::update_progress(const data::xblock_ptr_t &current_block) {
@@ -142,13 +147,17 @@ bool xsync_range_mgr_t::get_next_behind(uint64_t current_height, bool forked, ui
         start_height = current_height + 1;
     }
 
+    if (start_height == 0) {
+        start_height++;
+    }
+
     count = m_behind_height - start_height + 1;
     if (count > count_limit)
         count = count_limit;
 
     self_addr = m_behind_self_addr;
     target_addr = m_behind_target_addr;
-
+    m_current_sync_start_height = start_height;
     return count > 0;
 }
 

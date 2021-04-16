@@ -9,6 +9,7 @@
 #include "xbase/xobject_ptr.h"
 #include "xvstate.h"
 #include "xvtransaction.h"
+#include "xvboffdata.h"
 
 namespace top
 {
@@ -712,6 +713,8 @@ namespace top
             static xvoutput_t*         create_output_object(const std::string & voutput_serialized_data);
             static xvbindex_t*         create_index_object(const std::string & vindex_serialized_data);
             static xvbstate_t*         create_state_object(const std::string & serialized_data);
+            static xvboffdata_t*       create_offdata_object(const std::string & serialized_data);
+            
         public:
             virtual std::string        get_obj_name() const override {return name();}
             enum{enum_obj_type = enum_xobject_type_vblock};//allow xbase create xvblock_t object from xdataobj_t::read_from()
@@ -776,6 +779,7 @@ namespace top
             inline  xvheader_t*         get_header()      const {return m_vheader_ptr;}  //raw ptr of xvheader_t
             inline  xvqcert_t *         get_cert()        const {return m_vqcert_ptr;}   //raw ptr of xvqcert_t
             inline  xvbstate_t*         get_state()       const {return m_vbstate_ptr;}  //raw ptr of xvbstate
+            inline  xvboffdata_t*       get_offdata()     const {return m_vboffdata_ptr;}  //raw ptr of xvboffdata
             
             const   std::string         get_block_path()  const; //a base and relative dir of vblock at DB/disk
             const   std::string         get_header_path() const; //header include vcert part as well under get_block_path()
@@ -783,9 +787,10 @@ namespace top
             const   std::string         get_output_path() const; //path pointed to vbody at DB/disk  under get_block_path()
             
             //note:container(e.g. Table,Book etc) need implement this function as they have mutiple sub blocks inside them,
-            virtual bool  extract_sub_blocks(std::vector<xobject_ptr_t<xvblock_t>> & sub_blocks) {return false;}//as default it is none
+            virtual bool                extract_sub_blocks(std::vector<xobject_ptr_t<xvblock_t>> & sub_blocks) {return false;}//as default it is none
             //note:container(e.g. Lightunit etc) need implement this function as they have mutiple sub txs inside them,
-            virtual bool  extract_sub_txs(std::vector<xvtransaction_index_ptr_t> & sub_txs) {return false;}//as default it is none
+            virtual bool                extract_sub_txs(std::vector<xvtransaction_index_ptr_t> & sub_txs) {return false;}//as default it is none
+            virtual std::string         get_offdata_hash() const {return std::string();}//as default has none offdata
             
             virtual bool                close(bool force_async = true) override; //close and release this node only
             virtual std::string         dump() const override;  //just for debug purpose
@@ -822,6 +827,7 @@ namespace top
             bool                        reset_next_block(xvblock_t * _new_next_block);
             //return false if hash or height not match
             bool                        reset_block_state(xvbstate_t * _new_state_ptr);
+            bool                        reset_block_offdata(xvboffdata_t * new_offdata_ptr);
             void                        set_next_next_cert(xvqcert_t * next_next_vqcert_ptr);//reset ptr of next next cert
 
         public: //associated information about parent block(e.g. tableblock)
@@ -853,6 +859,7 @@ namespace top
             xvinput_t*                  m_vinput_ptr;       //note: it must be valid at all time,enven a empty input
             xvoutput_t*                 m_voutput_ptr;      //note: it must be valid at all time,enven a empty output
             xvbstate_t*                 m_vbstate_ptr;      //note: it might be empty. point to current state of this block
+            xvboffdata_t*               m_vboffdata_ptr;    //note:: it might be empty. point to current offdata of this block
             uint64_t                    m_next_next_viewid; //persist store viewid of next and next hqc
             
         private://not serialized to db.

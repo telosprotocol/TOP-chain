@@ -7,7 +7,7 @@
 #include <string>
 
 #include "xbasic/xversion.h"
-#include "xbasic/xdataobj_base.hpp"
+#include "xvledger/xdataobj_base.hpp"
 #include "xvledger/xvblock.h"
 #include "xutility/xmerkle.hpp"
 

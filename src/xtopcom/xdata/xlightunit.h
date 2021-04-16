@@ -7,7 +7,7 @@
 #include <string>
 #include <vector>
 #include <map>
-#include "xbasic/xdataobj_base.hpp"
+#include "xvledger/xdataobj_base.hpp"
 #include "xdata/xblock.h"
 #include "xdata/xcons_transaction.h"
 #include "xdata/xblockchain.h"

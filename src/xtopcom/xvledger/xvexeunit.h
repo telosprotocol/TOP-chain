@@ -133,6 +133,7 @@ namespace top
         protected:
             bool                clone_units_from(const xvexegroup_t & source);
             bool                add_child_unit(xvexeunit_t * child);
+            bool                remove_child_unit(const std::string & unit_name);
             xvexeunit_t *       find_child_unit(const std::string & unit_name);
             const int           get_childs_count() const {return (int)m_child_units.size();}
             const std::map<std::string,xvexeunit_t*> & get_child_units() const {return m_child_units;}

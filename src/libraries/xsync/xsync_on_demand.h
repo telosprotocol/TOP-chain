@@ -17,8 +17,11 @@
 #include "xsync/xrole_chains_mgr.h"
 #include "xsync/xrole_xips_manager.h"
 #include "xsync/xsync_sender.h"
+#include "xsync/xsync_download_tracer_mgr.h"
 
 NS_BEG2(top, sync)
+
+const uint32_t max_request_block_count = 100;
 
 class xsync_on_demand_t {
 public:
@@ -29,10 +32,21 @@ public:
         xrole_xips_manager_t *role_xips_mgr,
         xsync_sender_t *sync_sender);
     void on_behind_event(const mbus::xevent_ptr_t &e);
-    void on_response_event(const std::vector<data::xblock_ptr_t> &blocks);
+    void on_response_event(const std::string account);
+    void handle_blocks_request(const xsync_message_get_on_demand_blocks_t &block, 
+        const vnetwork::xvnode_address_t &to_address, const vnetwork::xvnode_address_t &network_self);
+    void handle_blocks_response(const std::vector<data::xblock_ptr_t> &blocks, 
+        const vnetwork::xvnode_address_t &to_address, const vnetwork::xvnode_address_t &network_self);
+    void handle_chain_snapshot_meta(xsync_message_chain_snapshot_meta_t &chain_meta, 
+        const vnetwork::xvnode_address_t &to_address, const vnetwork::xvnode_address_t &network_self);
+    void handle_chain_snapshot(xsync_message_chain_snapshot_t &chain_snapshot, 
+        const vnetwork::xvnode_address_t &to_address, const vnetwork::xvnode_address_t &network_self);
+    xsync_download_tracer_mgr* download_tracer_mgr();
 
 private:
-    int check(const std::string &account_address);
+    int32_t check(const std::string &account_address);
+    int32_t check(const std::string &account_address, 
+        const vnetwork::xvnode_address_t &to_address, const vnetwork::xvnode_address_t &network_self);
 
 private:
     std::string m_vnode_id;
@@ -42,6 +56,7 @@ private:
     xrole_chains_mgr_t *m_role_chains_mgr;
     xrole_xips_manager_t *m_role_xips_mgr;
     xsync_sender_t *m_sync_sender;
+    xsync_download_tracer_mgr m_download_tracer{};
 };
 
 NS_END2

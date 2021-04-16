@@ -50,14 +50,15 @@ xtable_mbt_ptr_t xindexstore_table_t::query_last_mbt(const xblock_ptr_t & commit
     }
     data::xtable_mbt_ptr_t last_full_table_mbt;
     if (last_full_block->get_height() != 0) {
-        last_full_table_mbt = last_full_block->get_full_offstate();
-        if (last_full_table_mbt == nullptr) {
-            xerror("xindexstore_table_t::get_account_index fail-load offstate from block.block=%s",
-                last_full_block->dump().c_str());
-            return nullptr;
-        }
+        xassert(false); // TODO(jimmy)
+        // last_full_table_mbt = last_full_block->get_full_offstate();
+        // if (last_full_table_mbt == nullptr) {
+        //     xerror("xindexstore_table_t::get_account_index fail-load offstate from block.block=%s",
+        //         last_full_block->dump().c_str());
+        //     return nullptr;
+        // }
     } else {
-        last_full_table_mbt = make_object_ptr<xtable_mbt_t>();
+        last_full_table_mbt = make_object_ptr<base::xtable_mbt_t>();
     }
     last_full_table_mbt->set_height(last_full_height);
     return last_full_table_mbt;
@@ -85,7 +86,7 @@ bool xindexstore_table_t::update_mbt_state(const xblock_ptr_t & committed_block)
     return true;
 }
 
-bool  xindexstore_table_t::get_account_index(const xblock_ptr_t & committed_block, const std::string & account, data::xaccount_index_t & account_index) {
+bool  xindexstore_table_t::get_account_index(const xblock_ptr_t & committed_block, const std::string & account, base::xaccount_index_t & account_index) {
     std::lock_guard<std::mutex> l(m_lock);
     if (false == update_mbt_state(committed_block)) {
         return false;
@@ -93,16 +94,16 @@ bool  xindexstore_table_t::get_account_index(const xblock_ptr_t & committed_bloc
     return m_mbt_new_state.get_account_index(account, account_index);
 }
 
-xtable_mbt_new_state_ptr_t xindexstore_table_t::get_mbt_new_state(const xblock_ptr_t & committed_block) {
+base::xtable_mbt_new_state_ptr_t xindexstore_table_t::get_mbt_new_state(const xblock_ptr_t & committed_block) {
     std::lock_guard<std::mutex> l(m_lock);
     if (false == update_mbt_state(committed_block)) {
         return nullptr;
     }
-    xtable_mbt_new_state_ptr_t state = std::make_shared<xtable_mbt_new_state_t>(m_mbt_new_state);
+    base::xtable_mbt_new_state_ptr_t state = std::make_shared<base::xtable_mbt_new_state_t>(m_mbt_new_state);
     return state;
 }
 
-xtable_mbt_new_state_ptr_t  xindexstore_table_t::get_mbt_new_state() {
+base::xtable_mbt_new_state_ptr_t  xindexstore_table_t::get_mbt_new_state() {
     // query latest table
     auto latest_table = get_blockstore()->get_latest_committed_block(*this);
     xblock_ptr_t committed_block = xblock_t::raw_vblock_to_object_ptr(latest_table.get());
@@ -110,7 +111,7 @@ xtable_mbt_new_state_ptr_t  xindexstore_table_t::get_mbt_new_state() {
 }
 
 
-bool  xindexstore_table_t::get_account_index(const std::string & account, data::xaccount_index_t & account_index) {
+bool  xindexstore_table_t::get_account_index(const std::string & account, base::xaccount_index_t & account_index) {
     // query latest table
     auto latest_table = get_blockstore()->get_latest_committed_block(*this);
     xblock_ptr_t committed_block = xblock_t::raw_vblock_to_object_ptr(latest_table.get());
@@ -122,7 +123,7 @@ bool  xindexstore_table_t::get_account_basic_info(const std::string & account, x
     auto latest_table = get_blockstore()->get_latest_committed_block(*this);
     xblock_ptr_t committed_block = xblock_t::raw_vblock_to_object_ptr(latest_table.get());
 
-    data::xaccount_index_t account_index;
+    base::xaccount_index_t account_index;
     if (false == get_account_index(committed_block, account, account_index)) {
         return false;
     }

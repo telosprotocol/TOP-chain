@@ -1124,6 +1124,17 @@ namespace top
             }
             return read_block_output_from_db(target_block,target_index->get_store_flags());
         }
+    
+        bool   xblockacct_t::load_block_offdata(base::xvblock_t* target_block)
+        {
+            if(NULL == target_block)
+                return false;
+            
+            if(target_block->get_block_class() == base::enum_xvblock_class_nil)
+                return true;
+            
+            return read_offdata_from_db(target_block);
+        }
         
         bool   xblockacct_t::execute_block(base::xvblock_t* block) //execute block and update state of acccount
         {
@@ -1555,6 +1566,12 @@ namespace top
             return key_path;
         }
     
+        const std::string  xblockacct_t::create_offdata_db_key(const uint64_t block_height,const std::string & hashkey)
+        {
+            const std::string key_path = "/offdata/" + base::xstring_utl::tostring(get_xvid()) + "/" + base::xstring_utl::tostring(block_height) + "/" + hashkey;
+            return key_path;
+        }
+    
         std::string  xblockacct_t::create_tx_db_key(const std::string & hashkey, base::enum_transaction_subtype type)
         {
             if(type == base::enum_transaction_subtype_self)
@@ -1764,6 +1781,13 @@ namespace top
                     }
                 }
             }
+            
+            //maybe this block carry data of offchain and need persisted store
+            if(index_ptr->check_store_flag(base::enum_index_store_flag_offchian_data) == false)
+            {
+                if(write_offdata_to_db(block_ptr))
+                    index_ptr->set_store_flag(base::enum_index_store_flag_offchian_data);
+            }
  
             const uint32_t everything_flags = base::enum_index_store_flag_mini_block | base::enum_index_store_flag_input_entity | base::enum_index_store_flag_input_resource | base::enum_index_store_flag_output_entity| base::enum_index_store_flag_output_resource;
             if(index_ptr->check_store_flags(everything_flags))
@@ -1925,6 +1949,52 @@ namespace top
                 }
             }
             return true;
+        }
+    
+        bool   xblockacct_t::write_offdata_to_db(base::xvblock_t * block_ptr)
+        {
+            if( (NULL == block_ptr) || (block_ptr->get_offdata() == NULL) )
+                return false;
+            
+            std::string offdata_bin;
+            block_ptr->get_offdata()->serialize_to_string(offdata_bin);
+            const std::string offdata_key = create_offdata_db_key(block_ptr->get_height(),block_ptr->get_block_hash());
+            if(base::xvchain_t::instance().get_xdbstore()->set_value(offdata_key, offdata_bin))
+            {
+                xdbg("xblockacct_t::write_offdata_to_db,store data to DB for block(%s) at offdata_key(%s)",block_ptr->dump().c_str(),offdata_key.c_str());
+                return true;
+            }
+            else
+            {
+                xerror("xblockacct_t::write_offdata_to_db,fail to store data for block(%s) at offdata_key(%s)",block_ptr->dump().c_str(),offdata_key.c_str());
+                return false;
+            }
+        }
+    
+        bool   xblockacct_t::read_offdata_from_db(base::xvblock_t * block_ptr)
+        {
+            if(NULL == block_ptr)
+                return false;
+            
+            if(block_ptr->get_offdata() != NULL)
+                return true;
+            
+            const std::string offdata_key = create_offdata_db_key(block_ptr->get_height(),block_ptr->get_block_hash());
+            const std::string offdata_bin = base::xvchain_t::instance().get_xdbstore()->get_value(offdata_key);
+            if(offdata_bin.empty())
+            {
+                xwarn("xblockacct_t::read_offdata_from_db,fail to read from db for path(%s)",offdata_key.c_str());
+                return NULL;
+            }
+             
+            base::xvboffdata_t * vboffdata_ptr = base::xvblock_t::create_offdata_object(offdata_bin);
+            if(vboffdata_ptr != NULL)
+            {
+                block_ptr->reset_block_offdata(vboffdata_ptr);
+                return true;
+            }
+            xerror("xblockacct_t::read_offdata_from_db,bad data to create xvboffdata_t object from db-path(%s)",offdata_key.c_str());
+            return false;
         }
     
         //write index into DB at new dir(/index) to avoid confict

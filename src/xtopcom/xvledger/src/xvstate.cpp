@@ -116,6 +116,37 @@ namespace top
                 set_parent_unit(parent_unit);
         }
     
+        //debug & ut-test only
+        xvbstate_t::xvbstate_t(const std::string & account,const uint64_t block_height,const uint64_t block_viewid,const std::string & last_block_hash,const std::string &last_full_block_hash,const uint64_t last_full_block_height, const uint32_t raw_block_versions,const uint16_t raw_block_types, xvexeunit_t * parent_unit)
+            :base((enum_xdata_type)enum_xobject_type_vbstate)
+        {
+            //init unit name and block height first
+            m_block_types    = raw_block_types;
+            m_block_versions = raw_block_versions;
+            
+            m_account_addr = account;
+            m_block_height = block_height;
+            m_block_viewid = block_viewid;
+            
+            m_last_block_hash = last_block_hash;
+            m_last_full_block_hash = last_full_block_hash;
+            m_last_full_block_height = last_full_block_height;
+            
+            //then set unit name
+            set_unit_name(make_unit_name(m_account_addr,m_block_height));
+            //ask compressed data while serialization
+            set_unit_flag(enum_xdata_flag_acompress);
+            
+            xauto_ptr<xvcanvas_t> new_canvas(new xvcanvas_t());
+            set_canvas(new_canvas.get());
+            
+            //then register execution methods
+            REGISTER_XVIFUNC_ID_API(enum_xvinstruct_class_state_function);
+            
+            if(parent_unit != NULL)
+                set_parent_unit(parent_unit);
+        }
+
         xvbstate_t::xvbstate_t(const xvbstate_t & obj)
             :base(obj)
         {
@@ -181,7 +212,7 @@ namespace top
             set_canvas(new_canvas.get());
             return true;
         }
-
+    
         std::string  xvbstate_t::get_property_value(const std::string & name)
         {
             std::string bin_data;
@@ -812,9 +843,12 @@ namespace top
     
         const xvalue_t  xvbstate_t::do_new_property(const xvmethod_t & op)
         {
-            const xvalue_t & propertyType = op.get_method_params().at(0);
-            const xvalue_t & property_name = op.get_method_params().at(1);
+            if(op.get_params_count() < 2) //reset must carry type and name at least
+                return xvalue_t(enum_xerror_code_invalid_param_count);
             
+            const xvalue_t & property_type = op.get_method_params().at(0);
+            const xvalue_t & property_name = op.get_method_params().at(1);
+        
             xvproperty_t* existingOne = get_property_object(property_name.get_string());
             if(existingOne != nullptr)
             {
@@ -827,7 +861,7 @@ namespace top
                 return xvalue_t(enum_xerror_code_over_limit);
             }
             
-            xauto_ptr<xobject_t> object(xcontext_t::create_xobject((enum_xobject_type)propertyType.get_int32()));
+            xauto_ptr<xobject_t> object(xcontext_t::create_xobject((enum_xobject_type)property_type.get_int32()));
             xassert(object);
             if(object)
             {
@@ -851,12 +885,141 @@ namespace top
                 return xvalue_t(enum_xerror_code_not_found);
             }
         }
+    
+        bool   xvbstate_t::reset_property(const std::string & property_name,const xvalue_t & property_value)
+        {
+            xvalue_t param_pname(property_name);
+            xvmethod_t instruction(get_execute_uri(),enum_xvinstruct_class_state_function,enum_xvinstruct_state_method_reset_property ,param_pname,(xvalue_t&)property_value);
+            
+            //excute the instruction
+            auto result = execute(instruction,(xvcanvas_t*)get_canvas());
+            if(result.get_error() == enum_xcode_successful)
+                return true;
+            
+            xerror("xvbstate_t::reset_property,fail for property_name(%s) at xbstate(%s) as error(%d)",property_name.c_str(),dump().c_str(),result.get_error());
+            return false;
+        }
+
+        const xvalue_t  xvbstate_t::do_reset_property(const xvmethod_t & op)
+        {
+            if(op.get_method_type() != enum_xvinstruct_class_state_function)
+                return xvalue_t(enum_xerror_code_bad_type);
+            
+            if(op.get_method_id() != enum_xvinstruct_state_method_reset_property)
+                return xvalue_t(enum_xerror_code_bad_method);
+            
+            if(op.get_params_count() != 2) //reset must carry new value
+                return xvalue_t(enum_xerror_code_invalid_param_count);
+            
+            const xvalue_t & property_name  = op.get_method_params().at(0);
+            const xvalue_t & property_value = op.get_method_params().at(1);
+            
+            xvproperty_t * target_property = get_property_object(property_name.get_string());
+            if(target_property == nullptr)
+            {
+                xerror("xvbstate_t::do_reset_property,NOT find property(%s) at xbstate(%s)",property_name.get_string().c_str(),dump().c_str());
+                return xvalue_t(enum_xerror_code_not_found);
+            }
+            //note:here move property_value with better performance
+            if(target_property->move_from_value((xvalue_t &)property_value))
+                return xvalue_t(enum_xcode_successful);
+            
+            xerror("xvbstate_t::do_reset_property,fail reset property(%s) at xbstate(%s)",property_name.get_string().c_str(),dump().c_str());
+            return xvalue_t(enum_xerror_code_fail);
+        }
+    
+        xvmethod_t  xvbstate_t::renew_property_instruction(const std::string & property_name,const int  property_type,const xvalue_t & property_value)
+        {
+            xvalue_t param_ptype((vint32_t)property_type);//#parm-0
+            xvalue_t param_pname(property_name); //#parm-1
+            return xvmethod_t(get_execute_uri(),enum_xvinstruct_class_state_function,enum_xvinstruct_state_method_renew_property ,param_ptype,param_pname,(xvalue_t&)property_value);
+        }
+    
+        bool   xvbstate_t::renew_property(const std::string & property_name,const int property_type,const xvalue_t & property_value)
+        {
+            xvmethod_t instruction(renew_property_instruction(property_name,property_type,property_value));
+            
+            //excute the instruction
+            auto result = execute(instruction,(xvcanvas_t*)get_canvas());
+            if(result.get_error() == enum_xcode_successful)
+                return true;
+            
+            xerror("xvbstate_t::renew_property,fail for property_name(%s) at xbstate(%s) as error(%d)",property_name.c_str(),dump().c_str(),result.get_error());
+            return false;
+        }
+        
+        const xvalue_t  xvbstate_t::do_renew_property(const xvmethod_t & op)
+        {
+            if(op.get_method_type() != enum_xvinstruct_class_state_function)
+                return xvalue_t(enum_xerror_code_bad_type);
+            
+            if(op.get_method_id() != enum_xvinstruct_state_method_renew_property)
+                return xvalue_t(enum_xerror_code_bad_method);
+            
+            if(op.get_params_count() != 3) //reset must carry new value
+                return xvalue_t(enum_xerror_code_invalid_param_count);
+            
+            //const xvalue_t & property_type  = op.get_method_params().at(0);
+            const xvalue_t & property_name  = op.get_method_params().at(1);
+            const xvalue_t & property_value = op.get_method_params().at(2);
+            
+            xvproperty_t * target_property = get_property_object(property_name.get_string());
+            if(target_property == nullptr)
+            {
+                const xvalue_t new_result(do_new_property(op));
+                if(new_result.get_error() != enum_xcode_successful)
+                {
+                    xerror("xvbstate_t::do_renew_property,fail new property(%s) at xbstate(%s)",property_name.get_string().c_str(),dump().c_str());
+                    return new_result;
+                }
+                target_property = get_property_object(property_name.get_string());
+            }
+            //note:here move property_value with better performance
+            if(target_property->move_from_value((xvalue_t &)property_value))
+                return xvalue_t(enum_xcode_successful);
+            
+            xerror("xvbstate_t::do_renew_property,fail reset property(%s) at xbstate(%s)",property_name.get_string().c_str(),dump().c_str());
+            return xvalue_t(enum_xerror_code_fail);
+        }
+    
+        bool    xvbstate_t::del_property(const std::string & property_name)
+        {
+            xvalue_t param_pname(property_name);
+            xvmethod_t instruction(get_execute_uri(),enum_xvinstruct_class_state_function,enum_xvinstruct_state_method_del_property,param_pname);
+            
+            //excute the instruction
+            auto result = execute(instruction,(xvcanvas_t*)get_canvas());
+            if(result.get_error() == enum_xcode_successful)
+                return true;
+            
+            xerror("xvbstate_t::del_property,fail for property_name(%s) at xbstate(%s) as error(%d)",property_name.c_str(),dump().c_str(),result.get_error());
+            return false;
+        }
+    
+        const xvalue_t  xvbstate_t::do_del_property(const xvmethod_t & op)
+        {
+            if(op.get_method_type() != enum_xvinstruct_class_state_function)
+                return xvalue_t(enum_xerror_code_bad_type);
+            
+            if(op.get_method_id() != enum_xvinstruct_state_method_del_property)
+                return xvalue_t(enum_xerror_code_bad_method);
+            
+            if(op.get_params_count() != 1) //reset must carry new value
+                return xvalue_t(enum_xerror_code_invalid_param_count);
+            
+            const xvalue_t & property_name  = op.get_method_params().at(0);
+            if(remove_child_unit(property_name.get_string()))
+                return xvalue_t(enum_xcode_successful);
+            
+            xerror("xvbstate_t::do_renew_property,fail del property(%s) at xbstate(%s)",property_name.get_string().c_str(),dump().c_str());
+            return xvalue_t(enum_xerror_code_fail);
+        }
         
         //---------------------------------bin log ---------------------------------//
-        enum_xerror_code  xvbstate_t::encode_change_to_binlog(std::string & output_bin)
+        enum_xerror_code  xvbstate_t::encode_change_to_binlog(xvcanvas_t* source_canvas,std::string & output_bin)
         {
             try{
-                const int result = get_canvas()->encode(xvcanvas_t::enum_compile_optimization_all,output_bin);
+                const int result = source_canvas->encode(xvcanvas_t::enum_compile_optimization_all,output_bin);
                 if(result >= enum_xcode_successful)
                 {
                     const char bin_type = '1';  //version#1: new bin-log format
@@ -874,6 +1037,11 @@ namespace top
             }
             xerror("xvbstate_t::encode_change_to_binlog,throw unknow exception");
             return enum_xerror_code_fail;
+        }
+        
+        enum_xerror_code  xvbstate_t::encode_change_to_binlog(std::string & output_bin)
+        {
+           return encode_change_to_binlog(get_canvas(),output_bin);
         }
     
         enum_xerror_code  xvbstate_t::encode_change_to_binlog(xstream_t & _ouptput_stream)
@@ -898,6 +1066,27 @@ namespace top
             }
             xerror("xvbstate_t::encode_change_to_binlog,throw unknow exception");
             return enum_xerror_code_fail;
+        }
+        
+        bool  xvbstate_t::rebase_change_to_snapshot() //snapshot for whole xvbstate of every properties
+        {
+            xauto_ptr<xvcanvas_t> new_canvas(new xvcanvas_t());
+            
+            const std::map<std::string,xvexeunit_t*> & all_units = get_child_units();
+            for(auto & it : all_units)
+            {
+                xvproperty_t * property_ptr = (xvproperty_t*)it.second;
+                xvmethod_t instruction(renew_property_instruction(property_ptr->get_name(),property_ptr->get_obj_type(),property_ptr->get_value()));
+                
+                if(false == new_canvas->record(this, instruction))
+                {
+                    xerror("xvbstate_t::take_snapshot_to_binlog,abort as property fail to take snapshot,propery(%s)",it.second->dump().c_str());
+                    return false;
+                }
+            }
+            
+            set_canvas(new_canvas.get()); //clean all recorded changes by replacing with new canvas
+            return true;
         }
         
         enum_xerror_code   xvbstate_t::decode_change_from_binlog(const std::string & from_bin_log,std::deque<top::base::xvmethod_t> & out_records)
@@ -973,5 +1162,7 @@ namespace top
             xerror("decompile_from_binlog failed for bin-log,length(%u)",(uint32_t)from_bin_log.size());
             return false;
         }
+        
+
     };
 };
