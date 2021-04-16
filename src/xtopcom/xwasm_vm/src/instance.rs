@@ -76,10 +76,14 @@ where
         Ok(instance)
     }
 
+    pub fn get_gas_left(&self)->u64{
+        self.runtime.get_gas_left()
+    }
+
     pub(crate) fn call_function0(&self, name: &str, args: &[Val]) -> VmResult<()> {
         self.runtime.call_function0(name, args)
     }
-    pub(crate) fn call_function1(&self, name: &str, args: &[Val]) -> VmResult<(Val)> {
+    pub(crate) fn call_function1(&self, name: &str, args: &[Val]) -> VmResult<Val> {
         self.runtime.call_function1(name, args)
     }
 }

@@ -158,6 +158,16 @@ impl<A: BackendApi, S: Storage, Q: Querier> Runtime<A, S, Q> {
         });
     }
 
+    pub fn get_gas_left(&self) -> u64 {
+        self.with_wasmer_instance(|instance| {
+            Ok(match get_remaining_points(instance) {
+                MeteringPoints::Remaining(count) => count,
+                MeteringPoints::Exhausted => 0,
+            })
+        })
+        .expect("Wasmer instance is not set. Should set instance first")
+    }
+
     pub fn set_gas_left(&self, gas_limit: u64) {
         self.with_wasmer_instance(|instance| {
             set_remaining_points(instance, gas_limit);
