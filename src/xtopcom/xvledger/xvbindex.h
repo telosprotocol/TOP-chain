@@ -20,8 +20,10 @@ namespace top
             enum_index_store_flag_input_resource  = 0x08, //input  resource has bedn stored
             enum_index_store_flag_output_resource = 0x10, //output resource has bedn stored
             enum_index_store_flag_full_block      = 0x1F, //mark when every piece of block been on DB
+            enum_index_store_flag_offchian_data   = 0x20, //mark when offchain data  been persised on DB
             enum_index_store_flag_main_entry      = 0x40, //indicate that is main entry of mutiple blocks
             enum_index_store_flags_mask           = 0x7F, //Mask to keep them
+            //note:all bit has been used up, not allow add more
         };
         class xvbindex_t : public xrefcount_t
         {

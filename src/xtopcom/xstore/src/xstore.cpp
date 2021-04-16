@@ -721,11 +721,12 @@ bool xstore::execute_tableblock_full(xblockchain2_t* account, xfull_tableblock_t
         const std::map<std::string, xaccount_index_t> & accounts_index = binlog->get_accounts_index();
         last_mbt->set_accounts_index_info(accounts_index);
 
-        if (last_mbt->get_root_hash() != full_table->get_bucket_tree_root()) {
+        if (last_mbt->get_root_hash() != full_table->get_offdata_hash()) {
             xerror("xstore::execute_tableblock_full mbt root not match.block=%s", block->dump().c_str());
             return false;
         }
-        block->set_full_offstate(last_mbt);  // cache offstate on block
+        // TODO(jimmy)
+        block->reset_block_offdata(nullptr);  // cache offstate on block
 
     }
 
@@ -734,14 +735,15 @@ bool xstore::execute_tableblock_full(xblockchain2_t* account, xfull_tableblock_t
         return false;
     }
 
-    xstore_key_t new_full_offstate_key = xstore_key_t(xstore_key_type_block_offstate, xstore_block_type_none, account->get_account(), std::to_string(block->get_height()));
-    xtable_mbt_ptr_t table_mbt = block->get_full_offstate();
-    std::string new_full_offstate_value;
-    table_mbt->serialize_to_string(new_full_offstate_value);
-    kv_pairs[new_full_offstate_key.to_db_key()] = new_full_offstate_value;
+    xassert(false); //TODO(jimmy)
+    // xstore_key_t new_full_offstate_key = xstore_key_t(xstore_key_type_block_offstate, xstore_block_type_none, account->get_account(), std::to_string(block->get_height()));
+    // xtable_mbt_ptr_t table_mbt = block->get_full_offstate();
+    // std::string new_full_offstate_value;
+    // table_mbt->serialize_to_string(new_full_offstate_value);
+    // kv_pairs[new_full_offstate_key.to_db_key()] = new_full_offstate_value;
 
-    xdbg("xstore::execute_tableblock_full account=%s,height=%ld,account_size=%d,mem_size=%d",
-        account->get_account().c_str(), block->get_height(), table_mbt->get_account_size(), new_full_offstate_value.size());
+    // xdbg("xstore::execute_tableblock_full account=%s,height=%ld,account_size=%d,mem_size=%d",
+    //     account->get_account().c_str(), block->get_height(), table_mbt->get_account_size(), new_full_offstate_value.size());
     return true;
 }
 
@@ -1129,27 +1131,30 @@ bool xstore::get_vblock_output(const std::string &account, base::xvblock_t* bloc
 }
 
 bool xstore::get_vblock_offstate(const std::string &store_path, base::xvblock_t* block) const {
-    xassert(block != nullptr);
-    xassert(block->get_block_class() == base::enum_xvblock_class_full);
-    if (block == nullptr || block->get_block_class() != base::enum_xvblock_class_full) {
-        return false;
-    }
-    xfull_tableblock_t* block_ptr = dynamic_cast<xfull_tableblock_t*>(block);
-    if (block_ptr->get_full_offstate() != nullptr) {
-        return true;
-    }
+    // xassert(block != nullptr);
+    // xassert(block->get_block_class() == base::enum_xvblock_class_full);
+    // if (block == nullptr || block->get_block_class() != base::enum_xvblock_class_full) {
+    //     return false;
+    // }
+    // xfull_tableblock_t* block_ptr = dynamic_cast<xfull_tableblock_t*>(block);
+    // if (block_ptr->get_full_offstate() != nullptr) {
+    //     return true;
+    // }
 
-    base::xdataunit_t* offstate_unit = get_full_block_offstate(block->get_account(), block->get_height());
-    xtable_mbt_ptr_t offstate;
-    offstate.attach((xtable_mbt_t*)offstate_unit);
-    xassert(offstate != nullptr);
+    // base::xdataunit_t* offstate_unit = get_full_block_offstate(block->get_account(), block->get_height());
+    // xtable_mbt_ptr_t offstate;
+    // offstate.attach((xtable_mbt_t*)offstate_unit);
+    // xassert(offstate != nullptr);
 
-    if (nullptr != offstate) {
-        block_ptr->set_full_offstate(offstate);
-        return true;
-    }
+    // // TODO(jimmy)
+    // xassert(false);
+    // // if (nullptr != offstate) {
+    // //     block_ptr->set_full_offstate(offstate);
+    // //     return true;
+    // // }
 
-    xwarn("xstore::get_vblock_offstate fail.account=%s,height=%ld", block->get_account().c_str(), block->get_height());
+    // xwarn("xstore::get_vblock_offstate fail.account=%s,height=%ld", block->get_account().c_str(), block->get_height());
+    xassert(false); // TODO(jimmy)
     return false;
 }
 

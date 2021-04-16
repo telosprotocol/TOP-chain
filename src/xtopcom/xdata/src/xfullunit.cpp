@@ -7,7 +7,6 @@
 #include "xdata/xdata_common.h"
 #include "xdata/xdatautil.h"
 #include "xdata/xfullunit.h"
-#include "xbasic/xdataobj_base.hpp"
 
 NS_BEG2(top, data)
 

@@ -83,7 +83,7 @@ int32_t    xunit_maker_t::check_latest_state(const xblock_ptr_t & committed_tabl
 }
 
 bool    xunit_maker_t::check_index_state(const xblock_ptr_t & committed_table_block, const base::xblock_mptrs & latest_blocks) {
-    data::xaccount_index_t account_index;
+    base::xaccount_index_t account_index;
     bool ret = m_indexstore->get_account_index(committed_table_block, get_account(), account_index);
     if (!ret) {
         xwarn("xunit_maker_t::check_index_state fail-get_account_index.account=%s,table_commit_height=%ld",

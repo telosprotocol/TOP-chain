@@ -930,12 +930,12 @@ void xsync_handler_t::handle_chain_snapshot_request(
     if (blk != nullptr) {
         xfull_tableblock_t* full_block_ptr = dynamic_cast<xfull_tableblock_t*>(xblock_t::raw_vblock_to_object_ptr(blk.get()).get());
         if ((full_block_ptr != nullptr) && (full_block_ptr->is_full_state_block())) {
-            const xdataunit_ptr_t &chain_snapshot_ptr = full_block_ptr->get_full_offstate();
-            xtable_mbt_ptr_t table_mbt;
-            chain_snapshot_ptr->add_ref();
-            table_mbt.attach((xtable_mbt_t*)chain_snapshot_ptr.get());
+            base::xvboffdata_t* _offdata = full_block_ptr->get_offdata();
+            xobject_ptr_t<base::xvboffdata_t> offdata_ptr;
+            offdata_ptr.attach(_offdata);
+            _offdata->add_ref();
             xsync_message_chain_snapshot_t chain_snapshot(ptr->m_account_addr,
-                table_mbt, ptr->m_height_of_fullblock);
+                offdata_ptr, ptr->m_height_of_fullblock);
             m_sync_sender->send_chain_snapshot(chain_snapshot, network_self, from_address);
         } else {
             xsync_info("xsync_handler receive chain_snapshot_request, account:%s, height:%llu, block_type:%d",

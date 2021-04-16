@@ -7,7 +7,7 @@
 #include <string>
 #include <vector>
 #include "xblockmaker/xblockmaker_face.h"
-#include "xdata/xtableindex.h"
+#include "xvledger/xaccountindex.h"
 
 NS_BEG2(top, blockmaker)
 

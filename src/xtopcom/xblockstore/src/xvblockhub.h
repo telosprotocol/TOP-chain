@@ -132,7 +132,8 @@ namespace top
             bool                   delete_block(const uint64_t target_height);//return error code indicate what is result
             bool                   load_block_input(base::xvblock_t* target_block);
             bool                   load_block_output(base::xvblock_t* target_block);
- 
+            bool                   load_block_offdata(base::xvblock_t* target_block);
+            
             bool                   execute_block(base::xvblock_t* block); //execute block and update state of acccount
             void                   try_execute_all_block();
             
@@ -150,6 +151,11 @@ namespace top
             bool                read_block_input_from_db(base::xvblock_t* block_ptr,const int stored_flags);
             bool                read_block_output_from_db(base::xvbindex_t* index_ptr);
             bool                read_block_output_from_db(base::xvblock_t * block_ptr,const int stored_flags);
+            
+            //manage data related xvboffdata_t 
+            const std::string   create_offdata_db_key(const uint64_t block_height,const std::string & hashkey);
+            bool                write_offdata_to_db(base::xvblock_t * block_ptr);
+            bool                read_offdata_from_db(base::xvblock_t * block_ptr);
             
             const std::string   create_index_db_key(const uint64_t target_height);//for main entry;
             const std::string   create_index_db_key(const uint64_t target_height,const uint64_t target_viewid);

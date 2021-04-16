@@ -39,7 +39,7 @@ TEST_F(test_indexstore_table, account_index_query_1) {
     for (auto & v : datamock_units) {
         auto & account = v.get_account();
 
-        data::xaccount_index_t account_index;
+        base::xaccount_index_t account_index;
         bool ret = indexstore->get_account_index(account, account_index);
         ASSERT_TRUE(ret);
         ASSERT_NE(account_index.get_latest_unit_height(), 0);
@@ -49,7 +49,7 @@ TEST_F(test_indexstore_table, account_index_query_1) {
     }
     {
         std::string temp_account1 = xblocktool_t::make_address_user_account("21111111111111111111");
-        data::xaccount_index_t account_index;
+        base::xaccount_index_t account_index;
         bool ret = indexstore->get_account_index(temp_account1, account_index);
         ASSERT_TRUE(ret);
         ASSERT_EQ(account_index.get_latest_unit_height(), 0);
@@ -75,7 +75,7 @@ TEST_F(test_indexstore_table, account_index_query_2) {
     while (count--)
     {
         std::string temp_account1 = xblocktool_t::make_address_user_account("21111111111111111111");
-        data::xaccount_index_t account_index;
+        base::xaccount_index_t account_index;
         bool ret = indexstore->get_account_index(temp_account1, account_index);
         ASSERT_TRUE(ret);
         ASSERT_EQ(account_index.get_latest_unit_height(), 0);
@@ -129,7 +129,7 @@ TEST_F(test_indexstore_table, mbt_state_query_1) {
     const std::vector<xdatamock_unit> & datamock_units = mocktable.get_mock_units();
     {
         auto & account = datamock_units[0].get_account();
-        data::xaccount_index_t account_index;
+        base::xaccount_index_t account_index;
         bool ret = indexstore->get_account_index(account, account_index);
         ASSERT_TRUE(ret);
         ASSERT_NE(account_index.get_latest_unit_height(), 0);
@@ -139,7 +139,7 @@ TEST_F(test_indexstore_table, mbt_state_query_1) {
     }
     {
         auto & account = datamock_units[0].get_account();
-        data::xaccount_index_t account_index;
+        base::xaccount_index_t account_index;
         xtable_mbt_new_state_ptr_t new_state = indexstore->get_mbt_new_state();
         ASSERT_NE(new_state, nullptr);
         new_state->get_account_index(account, account_index);
