@@ -3,10 +3,7 @@ aux_source_directory(./ xwasm_contract_src)
 
 
 
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
-enable_language(Rust)
-include(CMakeCargo)
-add_subdirectory(xwasm_vm)
+
 
 # target_link_libraries(xwasm_contract_test PRIVATE xcontract_runtime xvm lua xloader xxbase pthread jsoncpp gtest pthread xblockstore ${CMAKE_CURRENT_SOURCE_DIR}/librustvm.a dl)
 
