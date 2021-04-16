@@ -66,3 +66,109 @@ fn do_validate_wasm_with_path(path: &str) -> Option<Module> {
         }
     };
 }
+
+use crate::backend::{Backend, BackendApi, Querier, Storage};
+use crate::instance::{Instance, InstanceOptions};
+use wasmer::Val;
+
+const DEFAULT_GAS_LIMIT: u64 = 400_000;
+const DEFAULT_INSTANCE_OPTIONS: InstanceOptions = InstanceOptions {
+    gas_limit: DEFAULT_GAS_LIMIT,
+    print_debug: false,
+};
+
+#[derive(Copy, Clone)]
+pub struct MockApi {}
+impl BackendApi for MockApi {}
+
+pub struct MockStorage {}
+impl Storage for MockStorage {}
+
+pub struct MockQuerier {}
+impl Querier for MockQuerier {}
+
+pub fn mock_backend() -> Backend<MockApi, MockStorage, MockQuerier> {
+    Backend {
+        api: MockApi {},
+        storage: MockStorage {},
+        querier: MockQuerier {},
+    }
+}
+
+#[no_mangle]
+pub extern "C" fn get_instance(
+    s: *const u8,
+    size: u32,
+) -> Box<Instance<MockApi, MockStorage, MockQuerier>> {
+    let ptr = s;
+    let mut wasm = Vec::<u8>::new();
+
+    for i in 0..size as usize {
+        unsafe {
+            let iter = ((ptr as usize) + i) as *const u8;
+            wasm.push(*iter);
+            // println!("{}:{:?} : {:?}", i, iter, *iter);
+        }
+    }
+    println!("wasm: {:?}", wasm);
+
+    Box::new(Instance::from_code(&wasm, mock_backend(), DEFAULT_INSTANCE_OPTIONS, None).unwrap())
+}
+
+#[no_mangle]
+pub extern "C" fn use_instance(args: Box<Instance<MockApi, MockStorage, MockQuerier>>) -> bool {
+    let instance = *args;
+
+    let res = instance
+        .call_function1("add", &[Val::I32(1), Val::I32(2)])
+        .unwrap();
+    assert_eq!(res, Val::I32(3));
+
+    true
+}
+
+#[no_mangle]
+pub extern "C" fn use_instance_2_1(
+    args: Box<Instance<MockApi, MockStorage, MockQuerier>>,
+    api_name: *const c_char,
+    a: i32,
+    b: i32,
+) -> i32 {
+    let instance = *args;
+    let api;
+    unsafe {
+        // todo unwrap()
+        api = CStr::from_ptr(api_name).to_str().unwrap();
+        println!("call api {:?}", api);
+    }
+    let res: i32 = instance
+        .call_function1(api, &[Val::I32(a), Val::I32(b)])
+        .unwrap()
+        .i32()
+        .unwrap();
+    println!("res: {}", res);
+
+    res
+}
+
+#[no_mangle]
+pub extern "C" fn use_instance_1_1(
+    args: Box<Instance<MockApi, MockStorage, MockQuerier>>,
+    api_name: *const c_char,
+    a: i32,
+) -> i32 {
+    let instance = *args;
+    let api;
+    unsafe {
+        // todo unwrap()
+        api = CStr::from_ptr(api_name).to_str().unwrap();
+        println!("call api {:?}", api);
+    }
+    let res: i32 = instance
+        .call_function1(api, &[Val::I32(a)])
+        .unwrap()
+        .i32()
+        .unwrap();
+    println!("res: {}", res);
+    res
+}
