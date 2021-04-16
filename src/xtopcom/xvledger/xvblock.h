@@ -713,6 +713,8 @@ namespace top
             static xvoutput_t*         create_output_object(const std::string & voutput_serialized_data);
             static xvbindex_t*         create_index_object(const std::string & vindex_serialized_data);
             static xvbstate_t*         create_state_object(const std::string & serialized_data);
+            static xvboffdata_t*       create_offdata_object(const std::string & serialized_data);
+            
         public:
             virtual std::string        get_obj_name() const override {return name();}
             enum{enum_obj_type = enum_xobject_type_vblock};//allow xbase create xvblock_t object from xdataobj_t::read_from()

@@ -64,7 +64,9 @@ namespace top
             
             virtual bool                load_block_input(const base::xvaccount_t & account,base::xvblock_t* block) override;
             virtual bool                load_block_output(const base::xvaccount_t & account,base::xvblock_t* block) override;
-
+            //load xvboffdata_t and set into xvblock_t
+            virtual bool                load_block_offdata(const base::xvaccount_t & account,base::xvblock_t* block) override;
+            
             virtual bool                store_block(const base::xvaccount_t & account,base::xvblock_t* block) override;
             virtual bool                delete_block(const base::xvaccount_t & account,base::xvblock_t* block) override;
  

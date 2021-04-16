@@ -1759,6 +1759,7 @@ namespace top
                 
                 if(m_vbstate_ptr != NULL)
                     m_vbstate_ptr->close();
+                
                 if(m_vboffdata_ptr != NULL)
                     m_vboffdata_ptr->close();
             }
@@ -1882,6 +1883,9 @@ namespace top
      
         bool  xvblock_t::reset_block_offdata(xvboffdata_t * _new_offdata_ptr)//return false if hash or height not match
         {
+            if(_new_offdata_ptr == m_vboffdata_ptr) //same one
+                return true;
+            
             if(_new_offdata_ptr != NULL)
             {
                 std::string offdata_hash = get_offdata_hash();
@@ -1893,6 +1897,12 @@ namespace top
                 }
                 _new_offdata_ptr->add_ref();
                 xvboffdata_t * old_ptr =  xatomic_t::xexchange(m_vboffdata_ptr, _new_offdata_ptr);
+                if(old_ptr != NULL)
+                    old_ptr->release_ref();
+            }
+            else
+            {
+                xvboffdata_t * old_ptr =  xatomic_t::xexchange(m_vboffdata_ptr, (xvboffdata_t*)NULL);
                 if(old_ptr != NULL)
                     old_ptr->release_ref();
             }
@@ -2622,6 +2632,9 @@ namespace top
             auto lambda_new_block = [](const int type)->xobject_t*{
                 return new xvblock_t();
             };
+            auto lambda_new_offdata = [](const int type)->xobject_t*{
+                return new xvboffdata_t();
+            };
             
             xcontext_t::register_xobject2(_context,(enum_xobject_type)xvqcert_t::enum_obj_type,lambda_new_qcert);
             xcontext_t::register_xobject2(_context,(enum_xobject_type)xvheader_t::enum_obj_type,lambda_new_header);
@@ -2630,6 +2643,7 @@ namespace top
             xcontext_t::register_xobject2(_context,(enum_xobject_type)xvinput_t::enum_obj_type,lambda_new_input);
             xcontext_t::register_xobject2(_context,(enum_xobject_type)xvoutput_t::enum_obj_type,lambda_new_output);
             xcontext_t::register_xobject2(_context,(enum_xobject_type)xvblock_t::enum_obj_type,lambda_new_block);
+            xcontext_t::register_xobject2(_context,(enum_xobject_type)xvboffdata_t::enum_obj_type,lambda_new_offdata);
             
             xvbstate_t::register_object(_context);
         }
@@ -2785,6 +2799,28 @@ namespace top
             return state_ptr;
         }
         
+        xvboffdata_t*     xvblock_t::create_offdata_object(const std::string & serialized_data)
+        {
+            if(serialized_data.empty())
+                return NULL;
+            
+            xdataunit_t * _data_obj_ptr = xdataunit_t::read_from(serialized_data);
+            if(NULL == _data_obj_ptr)
+            {
+                xerror("xvblock_t::create_offdata_object,bad serialized_data that not follow spec");
+                return NULL;
+            }
+            xvboffdata_t* offdata_ptr = (xvboffdata_t*)_data_obj_ptr->query_interface(enum_xobject_type_voffdata);
+            if(NULL == offdata_ptr)
+            {
+                xerror("xvblock_t::create_offdata_object,bad serialized_data is not for xvboffdata_t,but for type:%d",_data_obj_ptr->get_obj_type());
+                
+                _data_obj_ptr->release_ref();
+                return NULL;
+            }
+            return offdata_ptr;
+        }
+    
         //create a  xvheader_t from bin data(could be from DB or from network)
         base::xvblock_t*  xvblock_t::create_block_object(const std::string & vblock_serialized_data)
         {

@@ -102,7 +102,7 @@ xtable_mbt_binlog_t::xtable_mbt_binlog_t(const std::map<std::string, xaccount_in
 
 int32_t xtable_mbt_binlog_t::do_write(base::xstream_t & stream) {
     const int32_t begin_size = stream.size();
-    uint32_t count = m_account_indexs.size();
+    const uint32_t count = (uint32_t)m_account_indexs.size();
     xassert(count != 0);
     stream.write_compact_var(count);
     for (auto & v : m_account_indexs) {
@@ -175,7 +175,7 @@ xtable_mbt_bucket_node_t::xtable_mbt_bucket_node_t()
 
 int32_t xtable_mbt_bucket_node_t::do_write_without_hash(base::xstream_t & stream) const {
     const int32_t begin_size = stream.size();
-    uint32_t count = m_account_indexs.size();
+    const uint32_t count = (uint32_t)m_account_indexs.size();
     xassert(count != 0);
     stream.write_compact_var(count);
     for (auto & v : m_account_indexs) {
@@ -364,7 +364,7 @@ void xtable_mbt_t::set_accounts_index_info(const std::map<std::string, xaccount_
 int32_t xtable_mbt_t::do_write(base::xstream_t & stream) {
     const int32_t begin_size = stream.size();
     stream.write_compact_var(m_root_hash);
-    uint32_t count = m_buckets.size();
+    const uint32_t count = (uint32_t)m_buckets.size();
     stream.write_compact_var(count);
     for (auto & bucket : m_buckets) {
         stream.write_compact_var(bucket.first);
