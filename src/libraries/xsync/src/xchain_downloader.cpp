@@ -190,6 +190,11 @@ void xchain_downloader_t::on_response(std::vector<data::xblock_ptr_t> &blocks, c
         }
     }
 
+    if (m_sync_range_mgr.get_current_sync_start_height() != blocks.begin()->get()->get_height()) {
+        xsync_info("chain_downloader on_response expect height is %llu, but real height is %llu", m_sync_range_mgr.get_current_sync_start_height(), blocks.begin()->get()->get_height());
+        return;
+    }
+
     base::xauto_ptr<base::xvblock_t> current_vblock = m_sync_store->get_latest_end_block(m_address, sync_policy);
     xblock_ptr_t current_block = autoptr_to_blockptr(current_vblock);
 
@@ -218,8 +223,7 @@ void xchain_downloader_t::on_response(std::vector<data::xblock_ptr_t> &blocks, c
         return;
     }
 
-    xauto_ptr<xvblock_t> table_block1 = m_sync_store->get_latest_end_block(m_address, sync_policy);
-    block = autoptr_to_blockptr(table_block1);
+    block = autoptr_to_blockptr(current_vblock);
     if (block->get_height() >= m_sync_range_mgr.get_behind_height()){
         clear();
         return;
@@ -500,7 +504,7 @@ void xchain_downloader_t::send_request(int64_t now, const xsync_message_chain_sn
     xsync_info("chain_downloader send sync request(block). %s,range[%lu,%lu] get_token_cost(%ldms) %s",
                 m_request->owner.c_str(), m_request->start_height, m_request->start_height+m_request->count-1,
                 queue_cost, m_request->target_addr.to_string().c_str());
-    m_sync_sender->send_chain_snapshot_meta(chain_snapshot_meta, m_request->self_addr, m_request->target_addr);
+    m_sync_sender->send_chain_snapshot_meta(chain_snapshot_meta, xmessage_id_sync_chain_snapshot_request, m_request->self_addr, m_request->target_addr);
 }
 void xchain_downloader_t::handle_next(uint64_t current_height, bool forked) {
     vnetwork::xvnode_address_t self_addr;

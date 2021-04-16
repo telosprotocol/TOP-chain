@@ -435,13 +435,14 @@ void xsync_sender_t::send_blocks_by_hashes(const std::vector<data::xblock_ptr_t>
     m_vhost->send(msg, self_addr, target_addr);
 }
 
-void xsync_sender_t::send_chain_snapshot_meta(const xsync_message_chain_snapshot_meta_t &chain_snapshot_meta, const vnetwork::xvnode_address_t &self_addr, const vnetwork::xvnode_address_t &target_addr) {
+void xsync_sender_t::send_chain_snapshot_meta(const xsync_message_chain_snapshot_meta_t &chain_snapshot_meta, const common::xmessage_id_t msgid,
+    const vnetwork::xvnode_address_t &self_addr, const vnetwork::xvnode_address_t &target_addr) {
     base::xstream_t stream(base::xcontext_t::instance());
     auto header = make_object_ptr<xsync_message_header_t>(RandomUint64());
     header->serialize_to(stream);
     auto body = make_object_ptr<xsync_message_chain_snapshot_meta_t>(chain_snapshot_meta.m_account_addr,chain_snapshot_meta.m_height_of_fullblock);
     body->serialize_to(stream);
-    vnetwork::xmessage_t _msg = vnetwork::xmessage_t({stream.data(), stream.data() + stream.size()}, xmessage_id_sync_chain_snapshot_request);
+    vnetwork::xmessage_t _msg = vnetwork::xmessage_t({stream.data(), stream.data() + stream.size()}, msgid);
     xmessage_t msg;
     xmessage_pack_t::pack_message(_msg, ((int) _msg.payload().size()) >= m_min_compress_threshold, msg);
     XMETRICS_COUNTER_INCREMENT("sync_pkgs_chain_snapshot_meta_send", 1);
@@ -451,13 +452,15 @@ void xsync_sender_t::send_chain_snapshot_meta(const xsync_message_chain_snapshot
     xsync_dbg("xsync_sender_t send chain_snapshot_meta src %s dst %s", self_addr.to_string().c_str(), target_addr.to_string().c_str());
     m_vhost->send(msg, self_addr, target_addr);
 }
-void xsync_sender_t::send_chain_snapshot(const xsync_message_chain_snapshot_t &chain_snapshot, const vnetwork::xvnode_address_t &self_addr, const vnetwork::xvnode_address_t &target_addr) {
+
+void xsync_sender_t::send_chain_snapshot(const xsync_message_chain_snapshot_t &chain_snapshot, const common::xmessage_id_t msgid,
+    const vnetwork::xvnode_address_t &self_addr, const vnetwork::xvnode_address_t &target_addr) {
     base::xstream_t stream(base::xcontext_t::instance());
     auto header = make_object_ptr<xsync_message_header_t>(RandomUint64());
     header->serialize_to(stream);
     auto body = make_object_ptr<xsync_message_chain_snapshot_t>(chain_snapshot.m_tbl_account_addr, chain_snapshot.m_chain_snapshot, chain_snapshot.m_height_of_fullblock);
     body->serialize_to(stream);
-    vnetwork::xmessage_t _msg = vnetwork::xmessage_t({stream.data(), stream.data() + stream.size()}, xmessage_id_sync_chain_snapshot_response);
+    vnetwork::xmessage_t _msg = vnetwork::xmessage_t({stream.data(), stream.data() + stream.size()}, msgid);
     xmessage_t msg;
     xmessage_pack_t::pack_message(_msg, ((int) _msg.payload().size()) >= m_min_compress_threshold, msg);
     XMETRICS_COUNTER_INCREMENT("sync_pkgs_chain_snapshot_detail_send", 1);

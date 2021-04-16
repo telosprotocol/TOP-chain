@@ -12,6 +12,7 @@
 #include "xvnetwork/xvhost_face.h"
 #include "xsync/xrole_xips_manager.h"
 #include "xsync/xsync_message.h"
+#include "xsyncbase/xmessage_ids.h"
 
 NS_BEG2(top, sync)
 
@@ -55,8 +56,8 @@ public:
     void send_get_blocks_by_hashes(const std::vector<xblock_hash_t> &hashes, const vnetwork::xvnode_address_t &self_addr, const vnetwork::xvnode_address_t &target_addr);
     void send_blocks_by_hashes(const std::vector<data::xblock_ptr_t> &blocks, const vnetwork::xvnode_address_t &self_addr, const vnetwork::xvnode_address_t &target_addr);
 
-    void send_chain_snapshot(const xsync_message_chain_snapshot_t &chain_snapshot, const vnetwork::xvnode_address_t &self_addr, const vnetwork::xvnode_address_t &target_addr);
-    void send_chain_snapshot_meta(const xsync_message_chain_snapshot_meta_t &chain_snapshot_meta, const vnetwork::xvnode_address_t &self_addr, const vnetwork::xvnode_address_t &target_addr);
+    void send_chain_snapshot(const xsync_message_chain_snapshot_t &chain_snapshot, const common::xmessage_id_t msgid, const vnetwork::xvnode_address_t &self_addr, const vnetwork::xvnode_address_t &target_addr);
+    void send_chain_snapshot_meta(const xsync_message_chain_snapshot_meta_t &chain_snapshot_meta, const common::xmessage_id_t msgid, const vnetwork::xvnode_address_t &self_addr, const vnetwork::xvnode_address_t &target_addr);
 protected:
     std::string m_vnode_id;
     observer_ptr<vnetwork::xvhost_face_t> m_vhost{};

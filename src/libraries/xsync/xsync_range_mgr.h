@@ -34,6 +34,7 @@ public:
     void clear_behind_info();
 
     uint64_t get_behind_height() const;
+    uint64_t get_current_sync_start_height() const;
     int64_t get_behind_time() const;
     bool get_sync_policy(enum_chain_sync_policy &sync_policy) const;
 
@@ -50,6 +51,7 @@ private:
     vnetwork::xvnode_address_t m_behind_self_addr;
     vnetwork::xvnode_address_t m_behind_target_addr;
     int64_t m_behind_time{0};
+    uint64_t m_current_sync_start_height;
 };
 
 NS_END2

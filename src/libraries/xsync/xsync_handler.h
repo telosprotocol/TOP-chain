@@ -187,20 +187,34 @@ private:
         base::xstream_t &stream,
         xtop_vnetwork_message::hash_result_type msg_hash,
         int64_t recv_time);
-
+    
     void handle_chain_snapshot_request(uint32_t msg_size, const vnetwork::xvnode_address_t &from_address,
-    const vnetwork::xvnode_address_t &network_self,
-    const xsync_message_header_ptr_t &header,
-    base::xstream_t &stream,
-    xtop_vnetwork_message::hash_result_type msg_hash,
-    int64_t recv_time);
+        const vnetwork::xvnode_address_t &network_self,
+        const xsync_message_header_ptr_t &header,
+        base::xstream_t &stream,
+        xtop_vnetwork_message::hash_result_type msg_hash,
+        int64_t recv_time);
 
     void handle_chain_snapshot_response(uint32_t msg_size, const vnetwork::xvnode_address_t &from_address,
-    const vnetwork::xvnode_address_t &network_self,
-    const xsync_message_header_ptr_t &header,
-    base::xstream_t &stream,
-    xtop_vnetwork_message::hash_result_type msg_hash,
-    int64_t recv_time);
+        const vnetwork::xvnode_address_t &network_self,
+        const xsync_message_header_ptr_t &header,
+        base::xstream_t &stream,
+        xtop_vnetwork_message::hash_result_type msg_hash,
+        int64_t recv_time);
+
+    void handle_ondemand_chain_snapshot_request(uint32_t msg_size, const vnetwork::xvnode_address_t &from_address,
+        const vnetwork::xvnode_address_t &network_self,
+        const xsync_message_header_ptr_t &header,
+        base::xstream_t &stream,
+        xtop_vnetwork_message::hash_result_type msg_hash,
+        int64_t recv_time);
+
+    void handle_ondemand_chain_snapshot_response(uint32_t msg_size, const vnetwork::xvnode_address_t &from_address,
+        const vnetwork::xvnode_address_t &network_self,
+        const xsync_message_header_ptr_t &header,
+        base::xstream_t &stream,
+        xtop_vnetwork_message::hash_result_type msg_hash,
+        int64_t recv_time);
 
 private:
     void handle_role_change(const mbus::xevent_ptr_t& e);
