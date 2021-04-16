@@ -403,5 +403,12 @@ void xblock_t::set_consensus_para(const xblock_consensus_para_t & para) {
     get_cert()->set_parent_height(para.get_parent_height());
 }
 
+bool xblock_t::is_full_state_block() const {
+    std::string offdata_hash = get_offdata_hash();
+    if (offdata_hash.empty()) {
+        return true;
+    }
+    return get_offdata() != nullptr;
+}
 
 NS_END2

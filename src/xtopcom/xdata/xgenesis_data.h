@@ -13,7 +13,6 @@
 #include <unordered_map>
 #include "xdata/xdata_common.h"
 #include "xdata/xtable_id.h"
-#include "xbasic/xdataobj_base.hpp"
 #include "xdata/xblock.h"
 #include "xdata/xtransaction.h"
 #include "xdata/xnative_contract_address.h"

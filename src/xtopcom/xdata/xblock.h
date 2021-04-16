@@ -29,6 +29,8 @@
 
 #include "xvledger/xvblock.h"
 #include "xvledger/xvblockstore.h"
+#include "xvledger/xvboffdata.h"
+#include "xvledger/xaccountindex.h"
 
 #if defined(__clang__)
 #    pragma clang diagnostic pop
@@ -44,12 +46,12 @@
 #include "xdata/xdata_common.h"
 #include "xdata/xheader_cert.h"
 #include "xdata/xlightunit_info.h"
-#include "xdata/xtableindex.h"
 #include "xdata/xnative_property.h"
 #include "xdata/xpropertylog.h"
 
 NS_BEG2(top, data)
 
+using base::xaccount_index_t;
 class xblock_consensus_para_t;
 
 class xblockheader_extra_data_t : public xserializable_based_on<void> {
@@ -109,9 +111,8 @@ public:
 
  public:
     void            set_consensus_para(const xblock_consensus_para_t & para);
-    virtual bool set_full_offstate(const xtable_mbt_ptr_t & offstate) {return false;}
-    virtual xtable_mbt_ptr_t get_full_offstate() const {return nullptr;}
-    virtual bool is_full_state_block() const {return false;}
+    virtual bool    is_full_state_block() const;
+    bool            is_execute_ready() const override {return is_full_state_block();}  //check whether ready to execute bin-log
 
  public:
     inline base::enum_xvblock_level get_block_level() const {return get_header()->get_block_level();}

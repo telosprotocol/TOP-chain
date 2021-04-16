@@ -43,7 +43,7 @@ int32_t xfulltable_binlog_resource_t::do_read(base::xstream_t & stream) {
 
 xfulltable_block_para_t::xfulltable_block_para_t(const xtable_mbt_ptr_t & last_state, const xtable_mbt_binlog_ptr_t & highqc_binlog) {
     m_state_binlog = highqc_binlog;
-    m_new_full_state = xtable_mbt_t::build_new_tree(last_state, highqc_binlog);
+    m_new_full_state = base::xtable_mbt_t::build_new_tree(last_state, highqc_binlog);
 }
 
 xfulltable_input_entity_t::xfulltable_input_entity_t(const xtable_mbt_binlog_ptr_t & binlog) {
@@ -142,7 +142,7 @@ xfull_tableblock_t::~xfull_tableblock_t() {
 
 }
 
-const std::string &     xfull_tableblock_t::get_bucket_tree_root() const {
+std::string     xfull_tableblock_t::get_offdata_hash() const {
     xfulltable_output_entity_t* entity = dynamic_cast<xfulltable_output_entity_t*>(get_output()->get_entitys()[0]);
     xassert(entity != nullptr);
     return entity->get_tree_root();
@@ -157,28 +157,6 @@ void * xfull_tableblock_t::query_interface(const int32_t _enum_xobject_type_) {
     if (object_type_value == _enum_xobject_type_)
         return this;
     return xvblock_t::query_interface(_enum_xobject_type_);
-}
-
-bool xfull_tableblock_t::set_full_offstate(const xtable_mbt_ptr_t & offstate) {
-    if (offstate == nullptr) {
-        m_full_offstate = nullptr;
-        return true;
-    }
-
-    auto mbt_root_hash = offstate->build_root_hash();
-    auto root_hash = get_bucket_tree_root();
-    if (root_hash == mbt_root_hash) {
-        m_full_offstate = offstate;
-        return true;
-    } else {
-        xwarn("xfull_tableblock_t::set_full_offstate root hash check fail");
-        return false;
-    }
-}
-
-bool xfull_tableblock_t::is_full_state_block() const {
-    // full-table block need offstate
-    return nullptr != m_full_offstate;
 }
 
 xfulltable_statistics_resource_ptr_t    xfull_tableblock_t::get_fulltable_statistics_resource() const {

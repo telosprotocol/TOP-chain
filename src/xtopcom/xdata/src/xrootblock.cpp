@@ -5,7 +5,6 @@
 #include "xdata/xrootblock.h"
 
 #include "xvledger/xvblock.h"
-#include "xbasic/xdataobj_base.hpp"
 #include "xconfig/xconfig_register.h"
 #include "xdata/xdata_common.h"
 #include "xdata/xdatautil.h"

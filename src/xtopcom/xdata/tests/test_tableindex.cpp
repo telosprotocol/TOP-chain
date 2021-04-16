@@ -1,6 +1,6 @@
 #include "gtest/gtest.h"
 #include "xdata/xblock.h"
-#include "xdata/xtableindex.h"
+#include "xvledger/xaccountindex.h"
 #include "xdata/xfull_tableblock.h"
 #include "xdata/xblocktool.h"
 #include "xcrypto/xcrypto_util.h"
@@ -327,7 +327,7 @@ TEST_F(test_tableindex, tableindex_block_1) {
     ASSERT_EQ(block1->get_header()->get_block_level(), base::enum_xvblock_level_table);
 
     xfull_tableblock_t* ftable1 = dynamic_cast<xfull_tableblock_t*>(block1.get());
-    ASSERT_EQ(ftable1->get_bucket_tree_root(), blockpara.get_new_state_root());
+    ASSERT_EQ(ftable1->get_offdata_hash(), blockpara.get_new_state_root());
     ASSERT_EQ(ftable1->get_fulltable_binlog_resource()->get_binlog()->get_accounts_index().size(), accounts_info.size());
 }
 

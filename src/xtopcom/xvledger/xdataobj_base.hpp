@@ -5,8 +5,8 @@
 #pragma once
 
 #include <string>
+#include "xbase/xcontext.h"
 #include "xbase/xdata.h"
-#include "xmetrics/xmetrics.h"
 
 namespace top {
 
@@ -65,11 +65,11 @@ class xbase_dataobj_t : public base::xdataobj_t {
  public:
     xbase_dataobj_t()
     : base::xdataobj_t((enum_xdata_type)object_type_value) {
-        XMETRICS_XBASE_DATA_CATEGORY_NEW(object_type_value);
+        // XMETRICS_XBASE_DATA_CATEGORY_NEW(object_type_value);
     }
 
     virtual ~xbase_dataobj_t() {
-        XMETRICS_XBASE_DATA_CATEGORY_DELETE(object_type_value);
+        // XMETRICS_XBASE_DATA_CATEGORY_DELETE(object_type_value);
     }
 
     static int32_t get_object_type() {
@@ -96,12 +96,12 @@ class xbase_dataunit_t : public base::xdataunit_t {
  public:
     xbase_dataunit_t()
     : base::xdataunit_t((enum_xdata_type)object_type_value) {
-        XMETRICS_XBASE_DATA_CATEGORY_NEW(object_type_value);
+        // XMETRICS_XBASE_DATA_CATEGORY_NEW(object_type_value);
     }
 
  protected:
     virtual ~xbase_dataunit_t() {
-        XMETRICS_XBASE_DATA_CATEGORY_DELETE(object_type_value);
+        // XMETRICS_XBASE_DATA_CATEGORY_DELETE(object_type_value);
     }
 
  public:
@@ -120,5 +120,16 @@ class xbase_dataunit_t : public base::xdataunit_t {
         return base::xdataunit_t::query_interface(_enum_xobject_type_);
     }
 };
+
+template <class data_cls>
+class register_xcls {
+public:
+    register_xcls() { top::base::xcontext_t::register_xobject((top::base::enum_xobject_type)data_cls::get_object_type(), data_cls::create_object); }
+};
+
+#ifndef REG_CLS
+#    define REG_CLS(CLS)                                                                                                                                                           \
+        register_xcls<CLS> g_##CLS
+#endif  // REG_CLS
 
 }  // namespace top
