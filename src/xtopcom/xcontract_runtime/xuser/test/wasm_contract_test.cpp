@@ -82,7 +82,7 @@ TEST_F(test_wasm_contract, wasm_contract_test_deploy) {
     EXPECT_TRUE(validate_wasm_with_content(bytes, bytes_size));
 
     top::contract_runtime::user::xwasm_engine_t wasm_engine;
-    xbyte_buffer_t buffer = from_bytes(bytes, bytes_size);
+    xbyte_buffer_t buffer{bytes, bytes + bytes_size};
     std::cout << buffer.size() << "\n";
 
     // wasm_engine.deploy_contract(buffer, top::make_observer(exe_ctx));

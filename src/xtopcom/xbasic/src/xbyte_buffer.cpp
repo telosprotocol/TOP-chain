@@ -63,13 +63,4 @@ random_base58_bytes(std::size_t const size) {
     return ret;
 }
 
-xbyte_buffer_t from_bytes(uint8_t* data, std::size_t size) {
-    xbyte_buffer_t res(size);
-    for (std::size_t i = 0; i < size; ++i) {
-        res[i] = *(data + i);
-    }
-    return res;
-}
-
-
 NS_END1
