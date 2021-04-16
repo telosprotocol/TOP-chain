@@ -20,14 +20,14 @@
 #    pragma warning(pop)
 #endif
 
-#include "xbasic/xmemory.hpp"
 #include "xbase/xobject_ptr.h"
-#include "xcontract_runtime/xuser/xuser_contract_runtime.h"
-#include "xcontract_runtime/xsystem/xsystem_contract_runtime.h"
+#include "xbasic/xmemory.hpp"
 #include "xcontract_runtime/xaccount_vm_execution_result.h"
+#include "xcontract_runtime/xsystem/xsystem_contract_runtime.h"
+#include "xcontract_runtime/xsystem_contract_manager.h"
+#include "xcontract_runtime/xuser/xuser_contract_runtime.h"
 #include "xcontract_runtime/xvm_executor_face.h"
 #include "xdata/xcons_transaction.h"
-#include "xcontract_runtime/xsystem_contract_manager.h"
 
 NS_BEG2(top, contract_runtime)
 
@@ -53,6 +53,7 @@ public:
     virtual ~xtop_account_vm() = default;
 
     xaccount_vm_execution_result_t execute(std::vector<data::xcons_transaction_ptr_t> const & txs, xobject_ptr_t<base::xvbstate_t> block_state) override;
+    xaccount_vm_execution_result_t execute(std::vector<data::xtop_action_t> const & actions, xobject_ptr_t<base::xvbstate_t> block_state) override;
 };
 using xaccount_vm_t = xtop_account_vm;
 
