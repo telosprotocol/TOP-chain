@@ -293,16 +293,30 @@ TEST(xsync_on_demand, on_response_unit) {
         }
     }
 
-    sync_on_demand.on_response_event(blocks);
-
+    ::sleep(3);
+    std::string reason = "test";
+    mbus::xevent_ptr_t e = std::make_shared<mbus::xevent_behind_on_demand_t>(account_address, 1, 100, false, reason);
+    sync_on_demand.on_behind_event(e);
+    xsync_download_tracer tracer;
+    ASSERT_EQ(sync_on_demand.download_tracer_mgr()->get(account_address, tracer), true);
+    std::map<std::string, std::string> context = tracer.context();
+    uint32_t i = 0;
+    for (i = 0; i < archives.size(); i++){
+        if (archives[i].to_string() == context["dst"]){
+            break;
+        }
+    }
+    sync_on_demand.handle_blocks_response(blocks, archives[i], self_addr);
+    xmessage_t msg;
+    xvnode_address_t src;
+    xvnode_address_t dst;
+    ASSERT_EQ(vhost.read_msg(msg, src, dst), true);
     ASSERT_EQ(sync_store.m_blocks.size(), 10);
 
     for (int i=0; i<10; i++) {
         ASSERT_EQ(sync_store.m_blocks[i]->get_account(), account_address);
         ASSERT_EQ(sync_store.m_blocks[i]->get_height(), i+1); 
     }
-
-    ASSERT_EQ(sync_complete, true);
 }
 
 TEST(xsync_on_demand, on_behind_table) {
@@ -401,6 +415,8 @@ TEST(xsync_on_demand, on_behind_table) {
 
     // test2
     {
+        ::sleep(3);
+        std::string reason = "test";      
         mbus::xevent_ptr_t e = std::make_shared<mbus::xevent_behind_on_demand_t>(table_address, 1, 100, false, reason);
         sync_on_demand.on_behind_event(e);
 
@@ -516,7 +532,22 @@ TEST(xsync_on_demand, on_response_table) {
         blocks.push_back(block_ptr);
     }
 
-    sync_on_demand.on_response_event(blocks);
+    ::sleep(3);
+    std::string reason = "test";
+    mbus::xevent_ptr_t e = std::make_shared<mbus::xevent_behind_on_demand_t>(table_address, 1, 10, false, reason);
+    sync_on_demand.on_behind_event(e);
+    xsync_download_tracer tracer;
+    ASSERT_EQ(sync_on_demand.download_tracer_mgr()->get(table_address, tracer), true);
+    std::map<std::string, std::string> context = tracer.context();
+    uint32_t i = 0;
+    for (i = 0; i< archives.size(); i++){
+        if (archives[i].to_string() == context["dst"]){
+            break;
+        }
+    }
+
+    sync_on_demand.handle_blocks_response(blocks, archives[i], self_addr);
+    sync_on_demand.on_response_event(table_address);
 
     ASSERT_EQ(sync_store.m_blocks.size(), 10);
 
