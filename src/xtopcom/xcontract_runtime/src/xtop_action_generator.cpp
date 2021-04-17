@@ -4,18 +4,33 @@
 
 #include "xcontract_runtime/xtop_action_generator.h"
 
-#include "xdata/xtransaction_action.h"
+#include "xdata/xconsensus_action.h"
+#include "xcommon/xaddress.h"
 
 #include <cassert>
 
 NS_BEG2(top, contract_runtime)
 
-data::xtop_action_t xtop_contract_action_generator::generate(xobject_ptr_t<data::xcons_transaction_t> const & tx) {
-    return data::xtransaction_action_t{ tx };
+data::xbasic_top_action_t xtop_contract_action_generator::generate(xobject_ptr_t<data::xcons_transaction_t> const & tx) {
+    common::xaccount_address_t target_address{ tx->get_transaction()->get_target_addr() };
+    switch (target_address.type()) {
+    case base::enum_vaccount_addr_type_native_contract:
+        return data::xconsensus_action_t<data::xtop_action_type_t::system>{tx};
+
+    case base::enum_vaccount_addr_type_custom_contract:
+        return data::xconsensus_action_t<data::xtop_action_type_t::user>{tx};
+
+    default:
+        assert(false);
+        return data::xbasic_top_action_t{};
+    }
+
+    //assert(false);
+    //return data::xinvalid_top_action_t{};
 }
 
-std::vector<data::xtop_action_t> xtop_contract_action_generator::generate(std::vector<xobject_ptr_t<data::xcons_transaction_t>> const & txs) {
-    std::vector<data::xtop_action_t> r;
+std::vector<data::xbasic_top_action_t> xtop_contract_action_generator::generate(std::vector<xobject_ptr_t<data::xcons_transaction_t>> const & txs) {
+    std::vector<data::xbasic_top_action_t> r;
     r.reserve(txs.size());
 
     for (auto const & tx : txs) {

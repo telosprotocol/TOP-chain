@@ -26,7 +26,7 @@ public:
     xtop_session(observer_ptr<vm::xruntime_face_t> associated_runtime, observer_ptr<contract_common::xcontract_state_t> contract_state) noexcept;
 
     xtransaction_execution_result_t execute_transaction(data::xcons_transaction_ptr_t const & tx);
-    xtransaction_execution_result_t execute_action(data::xtop_action_t const & action);
+    xtransaction_execution_result_t execute_action(data::xbasic_top_action_t const & action);
 };
 using xsession_t = xtop_session;
 

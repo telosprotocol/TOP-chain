@@ -37,7 +37,7 @@ public:
     virtual ~xtop_vm_executor_face() = default;
 
     virtual xaccount_vm_execution_result_t execute(std::vector<data::xcons_transaction_ptr_t> const & txs, xobject_ptr_t<base::xvbstate_t> block_state) = 0;
-    virtual xaccount_vm_execution_result_t execute(std::vector<data::xtop_action_t> const & actions, xobject_ptr_t<base::xvbstate_t> state) = 0;
+    virtual xaccount_vm_execution_result_t execute(std::vector<data::xbasic_top_action_t> const & actions, xobject_ptr_t<base::xvbstate_t> state) = 0;
 };
 using xvm_executor_face_t = xtop_vm_executor_face;
 

@@ -93,7 +93,7 @@ xtransaction_execution_result_t xtop_session::execute_transaction(data::xcons_tr
     }
 }
 
-xtransaction_execution_result_t xtop_session::execute_action(data::xtop_action_t const & action) {
+xtransaction_execution_result_t xtop_session::execute_action(data::xbasic_top_action_t const & action) {
     xtransaction_execution_result_t result;
 
     std::unique_ptr<contract_common::xcontract_execution_context_t> execution_context{ top::make_unique<contract_common::xcontract_execution_context_t>(action, m_contract_state) };
@@ -101,8 +101,8 @@ xtransaction_execution_result_t xtop_session::execute_action(data::xtop_action_t
     auto observed_exectx = top::make_observer(execution_context.get());
 
     switch (action.type()) {
-    case data::xtop_action_type_t::system_contract: {
-        auto const & consensus_action = dynamic_cast<data::xconsensus_action_t const &>(action);
+    case data::xtop_action_type_t::system: {
+        auto const & consensus_action = dynamic_cast<data::xconsensus_action_t<data::xtop_action_type_t::system> const &>(action);
         xscope_executer_t reset_action{ [&execution_context] {
             execution_context->execution_stage(contract_common::xcontract_execution_stage_t::invalid);
             execution_context->consensus_action_stage(data::xconsensus_action_stage_t::invalid);
@@ -117,49 +117,49 @@ xtransaction_execution_result_t xtop_session::execute_action(data::xtop_action_t
         return result;
     }
 
-    case base::enum_transaction_subtype::enum_transaction_subtype_recv:
-    {
-        xscope_executer_t reset_action{ [&execution_context] {
-            execution_context->execution_stage(contract_common::xcontract_execution_stage_t::invalid);
-            execution_context->receipt_data({});
-        } };
-        execution_context->execution_stage(contract_common::xcontract_execution_stage_t::target_action);
-        execution_context->receipt_data(tx->get_receipt()->data());
+    //case base::enum_transaction_subtype::enum_transaction_subtype_recv:
+    //{
+    //    xscope_executer_t reset_action{ [&execution_context] {
+    //        execution_context->execution_stage(contract_common::xcontract_execution_stage_t::invalid);
+    //        execution_context->receipt_data({});
+    //    } };
+    //    execution_context->execution_stage(contract_common::xcontract_execution_stage_t::target_action);
+    //    execution_context->receipt_data(tx->get_receipt()->data());
 
-        result = m_associated_runtime->execute_transaction(observed_exectx);
-        if (result.status.ec) {
-            return result;
-        }
+    //    result = m_associated_runtime->execute_transaction(observed_exectx);
+    //    if (result.status.ec) {
+    //        return result;
+    //    }
 
-        return result;
-    }
+    //    return result;
+    //}
 
-    case base::enum_transaction_subtype::enum_transaction_subtype_confirm:
-    {
-        xscope_executer_t reset_action{ [&execution_context] {
-            execution_context->execution_stage(contract_common::xcontract_execution_stage_t::invalid);
-            execution_context->receipt_data({});
-        } };
-        execution_context->execution_stage(contract_common::xcontract_execution_stage_t::confirm_action);
-        execution_context->receipt_data(tx->get_receipt()->data());
+    //case base::enum_transaction_subtype::enum_transaction_subtype_confirm:
+    //{
+    //    xscope_executer_t reset_action{ [&execution_context] {
+    //        execution_context->execution_stage(contract_common::xcontract_execution_stage_t::invalid);
+    //        execution_context->receipt_data({});
+    //    } };
+    //    execution_context->execution_stage(contract_common::xcontract_execution_stage_t::confirm_action);
+    //    execution_context->receipt_data(tx->get_receipt()->data());
 
-        result = m_associated_runtime->execute_transaction(observed_exectx);
-        //if (result.status.ec) {
-        //    return result;
-        //}
+    //    result = m_associated_runtime->execute_transaction(observed_exectx);
+    //    //if (result.status.ec) {
+    //    //    return result;
+    //    //}
 
-        return result;
-    }
+    //    return result;
+    //}
 
-    case base::enum_transaction_subtype::enum_transaction_subtype_self:
-    {
-        xscope_executer_t reset_action{ [&execution_context] {
-            execution_context->execution_stage(contract_common::xcontract_execution_stage_t::invalid);
-        } };
-        execution_context->execution_stage(contract_common::xcontract_execution_stage_t::self_action);
-        result = m_associated_runtime->execute_transaction(observed_exectx);
-        return result;
-    }
+    //case base::enum_transaction_subtype::enum_transaction_subtype_self:
+    //{
+    //    xscope_executer_t reset_action{ [&execution_context] {
+    //        execution_context->execution_stage(contract_common::xcontract_execution_stage_t::invalid);
+    //    } };
+    //    execution_context->execution_stage(contract_common::xcontract_execution_stage_t::self_action);
+    //    result = m_associated_runtime->execute_transaction(observed_exectx);
+    //    return result;
+    //}
 
     default:
     {

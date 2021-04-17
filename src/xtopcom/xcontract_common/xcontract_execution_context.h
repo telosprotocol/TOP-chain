@@ -20,7 +20,7 @@ class xtop_contract_execution_context {
 private:
     observer_ptr<xcontract_state_t> m_contract_state{};
     xobject_ptr_t<data::xtransaction_t> m_tx;
-    data::xtop_action_t m_action;
+    data::xbasic_top_action_t m_action;
     std::map<std::string, xbyte_buffer_t> m_receipt_data; // input receipt
 
     xcontract_execution_stage_t m_execution_stage{xcontract_execution_stage_t::invalid};
@@ -37,7 +37,7 @@ public:
     ~xtop_contract_execution_context() = default;
 
     xtop_contract_execution_context(xobject_ptr_t<data::xtransaction_t> tx, observer_ptr<xcontract_state_t> s) noexcept;
-    xtop_contract_execution_context(data::xtop_action_t action, observer_ptr<xcontract_state_t> s) noexcept;
+    xtop_contract_execution_context(data::xbasic_top_action_t action, observer_ptr<xcontract_state_t> s) noexcept;
 
     observer_ptr<xcontract_state_t> contract_state() const noexcept;
     xcontract_execution_stage_t execution_stage() const noexcept;

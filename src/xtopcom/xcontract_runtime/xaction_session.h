@@ -31,6 +31,7 @@ public:
 
 NS_END2
 
+#include "xcontract_common/xcontract_state.h"
 #include "xcontract_runtime/xaction_runtime.h"
 
 NS_BEG2(top, contract_runtime)

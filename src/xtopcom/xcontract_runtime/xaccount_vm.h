@@ -53,7 +53,7 @@ public:
     virtual ~xtop_account_vm() = default;
 
     xaccount_vm_execution_result_t execute(std::vector<data::xcons_transaction_ptr_t> const & txs, xobject_ptr_t<base::xvbstate_t> block_state) override;
-    xaccount_vm_execution_result_t execute(std::vector<data::xtop_action_t> const & actions, xobject_ptr_t<base::xvbstate_t> block_state) override;
+    // xaccount_vm_execution_result_t execute(std::vector<data::xtop_action_t> const & actions, xobject_ptr_t<base::xvbstate_t> block_state) override;
 };
 using xaccount_vm_t = xtop_account_vm;
 
