@@ -56,14 +56,14 @@ NS_END2
 NS_BEG2(top, data)
 
 template <xtop_action_type_t ActionTypeV>
-xtop_consensus_action<ActionTypeV>::xtop_consensus_action(xobject_ptr_t<data::xcons_transaction_t> tx) noexcept : xtop_action_t<ActionTypeV>{ tx, tx->is_send_tx() ? static_cast<common::xlogic_time_t>((tx->get_transaction()->get_fire_timestamp() + tx->get_transaction()->get_expire_duration() + XGET_ONCHAIN_GOVERNANCE_PARAMETER(tx_send_timestamp_tolerance)) / XGLOBAL_TIMER_INTERVAL_IN_SECONDS) : common::xjudgement_day } {
+xtop_consensus_action<ActionTypeV>::xtop_consensus_action(xobject_ptr_t<data::xcons_transaction_t> tx) noexcept : xtop_top_action<ActionTypeV>{ tx, tx->is_send_tx() ? static_cast<common::xlogic_time_t>((tx->get_transaction()->get_fire_timestamp() + tx->get_transaction()->get_expire_duration() + XGET_ONCHAIN_GOVERNANCE_PARAMETER(tx_send_timestamp_tolerance)) / XGLOBAL_TIMER_INTERVAL_IN_SECONDS) : common::xjudgement_day } {
 }
 
 template <xtop_action_type_t ActionTypeV>
 xconsensus_action_stage_t xtop_consensus_action<ActionTypeV>::stage() const noexcept {
     auto const & tx = dynamic_xobject_ptr_cast<data::xcons_transaction_t>(this->m_action_src);
     assert(tx != nullptr);
-    switch (tx->get_tx_subtype()) {
+    switch (tx->get_tx_subtype()) {  // NOLINT(clang-diagnostic-switch-enum)
     case base::enum_transaction_subtype_send:
         return xconsensus_action_stage_t::send;
 
@@ -110,6 +110,8 @@ common::xaccount_address_t xtop_consensus_action<ActionTypeV>::execution_address
 
     switch (stage()) {
     case xconsensus_action_stage_t::send:
+        XATTRIBUTE_FALLTHROUGH;
+    case xconsensus_action_stage_t::confirm:
         return common::xaccount_address_t{ tx->get_source_addr() };
 
     case xconsensus_action_stage_t::recv:

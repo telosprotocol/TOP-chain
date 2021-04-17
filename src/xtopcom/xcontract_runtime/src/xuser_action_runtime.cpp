@@ -6,7 +6,6 @@
 
 #include "xcontract_common/xcontract_state.h"
 #include "xcontract_runtime/xaction_session.h"
-// #include "xcontract_common/xerror/xerror.h"
 #include "xcontract_runtime/xerror/xerror.h"
 
 NS_BEG2(top, contract_runtime)
@@ -24,24 +23,6 @@ xtransaction_execution_result_t xtop_action_runtime<data::xconsensus_action_t<da
     }
 
     try {
-        //if (exe_ctx->transaction_type() == data::enum_xtransaction_type::xtransaction_type_create_contract_account) {
-        //    auto action_data = exe_ctx->action_data();
-        //    uint64_t tgas_limit{ 0 };
-        //    std::string code;
-        //    base::xstream_t stream(base::xcontext_t::instance(), (uint8_t *)action_data.data(), action_data.size());
-        //    stream >> tgas_limit;
-        //    stream >> code;
-        //    auto engine = std::make_shared<lua::xlua_engine>();
-        //    //std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
-        //    engine->publish_script(code, exe_ctx);
-        //    exe_ctx->contract_state()->deploy_src_code(code);
-        //    // m_contract_helper->string_set(XPROPERTY_CONTRACT_TGAS_LIMIT_KEY, std::to_string(tgas_limit), true);
-        //} else {
-        //    auto engin = std::make_shared<lua::xlua_engine>();
-        //    auto src_code = exe_ctx->contract_state()->src_code();
-        //    engin->load_script(src_code, exe_ctx);
-        //    engin->process(exe_ctx);
-        //}
     } catch (error::xcontract_runtime_error_t const & eh) {
         result.status.ec = eh.code();
     } catch (std::exception const & eh) {
