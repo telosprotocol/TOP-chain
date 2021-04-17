@@ -29,10 +29,15 @@ public:
     xtransaction_execution_result_t execute_action(ActionT const & action);
 };
 
+template <typename ActionT>
+using xaction_session_t = xtop_action_session<ActionT>;
+
 NS_END2
 
 #include "xcontract_common/xcontract_state.h"
 #include "xcontract_runtime/xaction_runtime.h"
+#include "xbasic/xscope_executer.h"
+#include "xdata/xconsensus_action.h"
 
 NS_BEG2(top, contract_runtime)
 
@@ -51,7 +56,7 @@ xtransaction_execution_result_t xtop_action_session<ActionT>::execute_action(Act
     xscope_executer_t reset_action{ [&execution_context] {
         execution_context->consensus_action_stage(data::xconsensus_action_stage_t::invalid);
     } };
-    execution_context->consensus_action_stage(consensus_action.stage());
+    execution_context->consensus_action_stage(action.stage());
     result = m_associated_runtime->execute(observed_exectx);
     if (result.status.ec) {
         return result;
