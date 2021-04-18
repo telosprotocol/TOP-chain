@@ -35,19 +35,6 @@ public:
 };
 using xbasic_top_action_t = xtop_basic_top_action;
 
-//class xtop_invalid_top_action : public xbasic_top_action_t {
-//public:
-//    xtop_invalid_top_action() = default;
-//    xtop_invalid_top_action(xtop_invalid_top_action const &) = default;
-//    xtop_invalid_top_action & operator=(xtop_invalid_top_action const &) = default;
-//    xtop_invalid_top_action(xtop_invalid_top_action &&) = default;
-//    xtop_invalid_top_action & operator=(xtop_invalid_top_action &&) = default;
-//    ~xtop_invalid_top_action() override = default;
-//
-//    xtop_action_type_t type() const noexcept override final;
-//};
-//using xinvalid_top_action_t = xtop_invalid_top_action;
-
 template <xtop_action_type_t ActionTypeV>
 struct xtop_top_action : public xbasic_top_action_t {
 public:
@@ -55,7 +42,7 @@ public:
     xtop_top_action & operator=(xtop_top_action const &) = default;
     xtop_top_action(xtop_top_action &&) = default;
     xtop_top_action & operator=(xtop_top_action &&) = default;
-    virtual ~xtop_top_action() = default;
+    ~xtop_top_action() override = default;
 
     xtop_top_action(xobject_ptr_t<base::xobject_t> action_src, common::xlogic_time_t expiration_time) noexcept : xbasic_top_action_t{ std::move(action_src), expiration_time } {
     }

@@ -7,8 +7,6 @@
 #include "xcontract_runtime/xtransaction_execution_result.h"
 #include "xdata/xcons_transaction.h"
 
-#include <system_error>
-
 NS_BEG2(top, contract_runtime)
 
 template <typename ActionT>
@@ -47,8 +45,6 @@ xtop_action_session<ActionT>::xtop_action_session(observer_ptr<xaction_runtime_t
 
 template <typename ActionT>
 xtransaction_execution_result_t xtop_action_session<ActionT>::execute_action(ActionT const & action) {
-    xtransaction_execution_result_t result;
-
     std::unique_ptr<contract_common::xcontract_execution_context_t> execution_context{ top::make_unique<contract_common::xcontract_execution_context_t>(action, m_contract_state) };
     assert(m_associated_runtime != nullptr);
     auto observed_exectx = top::make_observer(execution_context.get());
@@ -57,7 +53,7 @@ xtransaction_execution_result_t xtop_action_session<ActionT>::execute_action(Act
         execution_context->consensus_action_stage(data::xconsensus_action_stage_t::invalid);
     } };
     execution_context->consensus_action_stage(action.stage());
-    result = m_associated_runtime->execute(observed_exectx);
+    auto result = m_associated_runtime->execute(observed_exectx);
     if (result.status.ec) {
         return result;
     }

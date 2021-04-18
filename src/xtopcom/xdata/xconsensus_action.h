@@ -9,21 +9,13 @@
 #include "xcommon/xaddress.h"
 #include "xdata/xcons_transaction.h"
 #include "xdata/xconsensus_action_fwd.h"
+#include "xdata/xconsensus_action_stage.h"
 #include "xdata/xtop_action.h"
 
 #include <cstdint>
 #include <string>
 
 NS_BEG2(top, data)
-
-enum class xenum_consensus_action_stage : uint8_t{
-    invalid,
-    send,
-    recv,
-    confirm,
-    self
-};
-using xconsensus_action_stage_t = xenum_consensus_action_stage;
 
 template <xtop_action_type_t ActionTypeV>
 class xtop_consensus_action : public xtop_action_t<ActionTypeV> {
@@ -34,7 +26,7 @@ public:
     xtop_consensus_action & operator=(xtop_consensus_action &&) = default;
     ~xtop_consensus_action() override = default;
 
-    explicit xtop_consensus_action(xobject_ptr_t<data::xcons_transaction_t> tx) noexcept;
+    explicit xtop_consensus_action(xobject_ptr_t<data::xcons_transaction_t> const & tx) noexcept;
 
     xconsensus_action_stage_t stage() const noexcept;
     common::xaccount_address_t from_address() const;
@@ -56,7 +48,7 @@ NS_END2
 NS_BEG2(top, data)
 
 template <xtop_action_type_t ActionTypeV>
-xtop_consensus_action<ActionTypeV>::xtop_consensus_action(xobject_ptr_t<data::xcons_transaction_t> tx) noexcept : xtop_top_action<ActionTypeV>{ tx, tx->is_send_tx() ? static_cast<common::xlogic_time_t>((tx->get_transaction()->get_fire_timestamp() + tx->get_transaction()->get_expire_duration() + XGET_ONCHAIN_GOVERNANCE_PARAMETER(tx_send_timestamp_tolerance)) / XGLOBAL_TIMER_INTERVAL_IN_SECONDS) : common::xjudgement_day } {
+xtop_consensus_action<ActionTypeV>::xtop_consensus_action(xobject_ptr_t<data::xcons_transaction_t> const & tx) noexcept : xtop_top_action<ActionTypeV>{ tx, tx->is_send_tx() ? static_cast<common::xlogic_time_t>((tx->get_transaction()->get_fire_timestamp() + tx->get_transaction()->get_expire_duration() + XGET_ONCHAIN_GOVERNANCE_PARAMETER(tx_send_timestamp_tolerance)) / XGLOBAL_TIMER_INTERVAL_IN_SECONDS) : common::xjudgement_day } {
 }
 
 template <xtop_action_type_t ActionTypeV>

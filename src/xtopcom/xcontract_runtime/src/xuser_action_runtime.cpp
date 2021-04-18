@@ -2,7 +2,7 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "xcontract_runtime/xuser_action_runtime.h"
+#include "xcontract_runtime/xuser/xuser_action_runtime.h"
 
 #include "xcontract_common/xcontract_state.h"
 #include "xcontract_runtime/xaction_session.h"

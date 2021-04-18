@@ -24,6 +24,8 @@ public:
     xtransaction_execution_result_t execute(observer_ptr<contract_common::xcontract_execution_context_t> tx_ctx);
 };
 
-using xuser_action_runtime_t = xtop_action_runtime<data::xconsensus_action_t<data::xtop_action_type_t::user>>;
-
 NS_END2
+
+NS_BEG3(top, contract_runtime, user)
+using xaction_runtime_t = xtop_action_runtime<data::xconsensus_action_t<data::xtop_action_type_t::user>>;
+NS_END3
