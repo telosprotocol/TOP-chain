@@ -807,17 +807,17 @@ namespace top
             auto it = m_all_blocks.find(target_height);
             if(it == m_all_blocks.end())//load all at certain height
             {
-                std::map<uint64_t,base::xvbindex_t*> _indexes(read_index_from_db(target_height));
+                std::vector<base::xvbindex_t*> _indexes(read_index_from_db(target_height));
                 if(_indexes.empty() == false) //found index at db
                 {
                     for(auto it = _indexes.begin(); it != _indexes.end(); ++it)
                     {
-                        cache_index(it->second);      //cache it -> link-neighbor->mark-connect->update meta
+                        cache_index(*it);      //cache it -> link-neighbor->mark-connect->update meta
                         
                         //at entry of load, check connected_flag and meta info
-                        update_meta_metric(it->second); //update other meta and connect info
+                        update_meta_metric(*it); //update other meta and connect info
                         
-                        it->second->release_ref();   //release ptr that reference added by read_index_from_db
+                        (*it)->release_ref();   //release ptr that reference added by read_index_from_db
                     }
                     #ifdef ENABLE_METRICS
                     XMETRICS_TIME_RECORD_KEY("blockstore_load_block_time", get_account() + ":" + std::to_string(target_height));
@@ -932,6 +932,19 @@ namespace top
             
             return  read_block_output_from_db(index_ptr);
         }
+        bool   xblockacct_t::load_index_offdata(base::xvbindex_t* index_ptr)
+        {
+            if(NULL == index_ptr)
+                return false;
+            
+            if(index_ptr->get_this_block() == NULL)
+                read_block_object_from_db(index_ptr);
+            
+            if(index_ptr->get_this_block() == NULL) //check again
+                return false;
+            
+            return  load_block_offdata(index_ptr->get_this_block());
+        }
         
         bool   xblockacct_t::store_blocks(std::vector<base::xvblock_t*> & batch_store_blocks) //better performance
         {
@@ -991,7 +1004,6 @@ namespace top
             }
             else //always assing main entry for genesis block
             {
-                
                 new_index_ptr->set_store_flag(base::enum_index_store_flag_main_entry);
                 xassert(new_index_ptr->check_block_flag(base::enum_xvblock_flag_connected));//should be enable already
             }
@@ -1217,75 +1229,7 @@ namespace top
             auto height_map_pos  = m_all_blocks.emplace(this_block_height,std::map<uint64_t,base::xvbindex_t*>());
             auto & view_map     = height_map_pos.first->second;//hight_map_pos.first->first is height, and hight_map_pos.first->second is viewmap
             
-            auto existing_view_iterator = view_map.end();
-            //apply rule#1 clean blocks of lower stage when higher stage coming. stage include : cert, lock and commit
-            if(this_block->check_block_flag(base::enum_xvblock_flag_committed))   //commit block
-            {
-                xassert(this_block->check_block_flag(base::enum_xvblock_flag_locked)); //must be true
-                for(auto it = view_map.begin(); it != view_map.end();)
-                {
-                    auto old_it = it;
-                    ++it;
-                    
-                    if(old_it->second->check_block_flag(base::enum_xvblock_flag_committed))
-                    {
-                        existing_view_iterator = old_it; //found existing commit block,then reuse this slot
-                    }
-                    else //apply rule#1: clean any cert,lock blocs since a commit block occupy this slot
-                    {
-                        xdbg("xblockacct_t::cache_index,new-commit one clean existing block=%s",old_it->second->dump().c_str());
-                        
-                        old_it->second->close();
-                        old_it->second->release_ref();//old_it->second might be same as this_block
-                        view_map.erase(old_it);
-                    }
-                }
-            }
-            else if(this_block->check_block_flag(base::enum_xvblock_flag_locked)) //lock-only block
-            {
-                for(auto it = view_map.begin(); it != view_map.end();)
-                {
-                    auto old_it = it;
-                    ++it;
-                    
-                    if(old_it->second->check_block_flag(base::enum_xvblock_flag_committed))
-                    {
-                        xwarn("xblockacct_t::cache_index,lock-only block conflict with existing committed block,block=%s",this_block->dump().c_str());
-                        return false; //apply rule#2,not allow put lower stage one
-                    }
-                    else if(old_it->second->check_block_flag(base::enum_xvblock_flag_locked))
-                    {
-                        if(old_it->second->get_viewid() == this_block->get_viewid()) //exactly same viewid
-                            existing_view_iterator = old_it; //found existing lock block,then reuse this slot
-                    }
-                    else //clean any cert-only block
-                    {
-                        xdbg("xblockacct_t::cache_index,new-lock one clean existing block=%s",old_it->second->dump().c_str());
-                        
-                        old_it->second->close();
-                        old_it->second->release_ref();
-                        view_map.erase(old_it);
-                    }
-                }
-            }
-            else if(this_block->check_block_flag(base::enum_xvblock_flag_authenticated))//cert-only
-            {
-                for(auto it = view_map.begin(); it != view_map.end();)
-                {
-                    auto old_it = it;
-                    ++it;
-                    
-                    if(  (old_it->second->check_block_flag(base::enum_xvblock_flag_locked))
-                       ||(old_it->second->check_block_flag(base::enum_xvblock_flag_committed)) )
-                    {
-                        xwarn("xblockacct_t::cache_index,cert-only block conflict with existing locked/committed block,block=%s",this_block->dump().c_str());
-                        return false; //apply rule#2,not allow put lower stage one
-                    }
-                    if(old_it->second->get_viewid() == this_block->get_viewid())
-                        existing_view_iterator = old_it; //found existing cert block,then reuse this slot
-                }
-            }
-            
+            auto existing_view_iterator = view_map.find(this_block->get_viewid());
             if(existing_view_iterator != view_map.end())//apple rule#2 by reuse existing iterator and replace by new value
             {
                 xdbg("xblockacct_t::cache_index, find same viewid block, block=%s",this_block->dump().c_str());
@@ -1302,23 +1246,14 @@ namespace top
                     //apply rule#3. not allow overwrite block with newer/more latest block at same height and same stage
                     const int existing_block_flags = existing_block->get_block_flags();
                     const int new_block_flags      = this_block->get_block_flags();
-                    if(  (existing_block_flags == new_block_flags)
-                       ||(existing_block_flags & base::enum_xvblock_flags_high4bit_mask) > (new_block_flags & base::enum_xvblock_flags_high4bit_mask)
-                       ||(existing_block_flags & base::enum_xvblock_flags_low4bit_mask)  > (new_block_flags & base::enum_xvblock_flags_low4bit_mask)
-                       ) //outdated one try to overwrite newer one,abort it
+                    if(existing_block_flags != new_block_flags)
                     {
-                        if(existing_block_flags != new_block_flags)
-                            xwarn("xblockacct_t::cache_index,warn-try to overwrite newer block with flags(0x%x) by outdated block=%s",existing_block->get_block_flags(),this_block->dump().c_str());
-                        return false;
+                        existing_block->reset_block_flags(existing_block_flags | (new_block_flags & base::enum_xvblock_flags_high4bit_mask));//merge flags(just for high4bit)
+                        existing_block->set_modified_flag();         //force to add flag before call connect_block
                     }
-                    existing_block->reset_block_flags(existing_block_flags | (new_block_flags & base::enum_xvblock_flags_high4bit_mask));//merge flags(just for high4bit)
-                    existing_block->set_modified_flag();         //force to add flag before call connect_block
                     
                     //since found the duplicated one, we need let caller know this fact,so tranfer flag of stored to new index
-                    this_block->reset_store_flags(existing_block->get_store_flags());
-                    if(existing_block->check_block_flag(base::enum_xvblock_flag_stored))
-                        this_block->set_block_flag(base::enum_xvblock_flag_stored);
-                    this_block->set_modified_flag(); //force to add flag to indicate has changed something
+                    *this_block = *existing_block; //transfer all existing info into new one
  
                     #ifdef ENABLE_METRICS
                     XMETRICS_COUNTER_INCREMENT("blockstore_cache_block_total", 1);
@@ -1343,7 +1278,7 @@ namespace top
                         break;
                     }
                 }
-                
+             
                 this_block->add_ref();  //hold reference now
                 this_block->set_modified_flag(); //force to add flag before call connect_block
                 auto view_map_pos = view_map.emplace(this_block->get_viewid(),this_block);
@@ -1955,7 +1890,18 @@ namespace top
         {
             if( (NULL == block_ptr) || (block_ptr->get_offdata() == NULL) )
                 return false;
-            
+#if 1// TODO(jimmy)
+            if(base::xvchain_t::instance().get_xdbstore()->set_vblock_offdata({}, block_ptr))
+            {
+                xdbg("xblockacct_t::write_offdata_to_db,store data to DB for block(%s)",block_ptr->dump().c_str());
+                return true;
+            }
+            else
+            {
+                xerror("xblockacct_t::write_offdata_to_db,fail to store data for block(%s)",block_ptr->dump().c_str());
+                return false;
+            }
+#else
             std::string offdata_bin;
             block_ptr->get_offdata()->serialize_to_string(offdata_bin);
             const std::string offdata_key = create_offdata_db_key(block_ptr->get_height(),block_ptr->get_block_hash());
@@ -1969,6 +1915,7 @@ namespace top
                 xerror("xblockacct_t::write_offdata_to_db,fail to store data for block(%s) at offdata_key(%s)",block_ptr->dump().c_str(),offdata_key.c_str());
                 return false;
             }
+#endif
         }
     
         bool   xblockacct_t::read_offdata_from_db(base::xvblock_t * block_ptr)
@@ -1979,6 +1926,20 @@ namespace top
             if(block_ptr->get_offdata() != NULL)
                 return true;
             
+#if 1// TODO(jimmy)
+            if (block_ptr->get_block_class() == base::enum_xvblock_class_full && block_ptr->get_header()->get_block_level() == base::enum_xvblock_level_table)
+            {
+                if(false == base::xvchain_t::instance().get_xdbstore()->get_vblock_offdata({}, block_ptr))
+                {
+                    xwarn("xblockacct_t::read_offdata_from_db,fail to read offdata from db for block(%s)",block_ptr->dump().c_str());
+                }
+                else
+                {
+                    xassert(block_ptr->get_offdata() != nullptr);
+                }
+            }
+            return true;
+#else
             const std::string offdata_key = create_offdata_db_key(block_ptr->get_height(),block_ptr->get_block_hash());
             const std::string offdata_bin = base::xvchain_t::instance().get_xdbstore()->get_value(offdata_key);
             if(offdata_bin.empty())
@@ -1995,6 +1956,7 @@ namespace top
             }
             xerror("xblockacct_t::read_offdata_from_db,bad data to create xvboffdata_t object from db-path(%s)",offdata_key.c_str());
             return false;
+#endif
         }
     
         //write index into DB at new dir(/index) to avoid confict
@@ -2110,6 +2072,7 @@ namespace top
                 }
                 load_index_input(_query_bindex.get());
                 load_index_output(_query_bindex.get());
+                load_index_offdata(_query_bindex.get());
                 if(false == execute_block(_query_bindex->get_this_block()))
                 {
                     xwarn("xblockacct_t::try_execute_all_block fail-read block,at account=%s,block=%s",get_account().c_str(),_query_bindex->dump().c_str());
@@ -2143,8 +2106,6 @@ namespace top
                             xerror("xvblockstore_impl::on_block_stored,at store(%s)-> block=%s",get_blockstore_path().c_str(),index_ptr->dump().c_str());
                             return false;
                         }
-                        load_index_input(index_ptr);
-                        load_index_output(index_ptr);
                     }
                     if(index_ptr->get_this_block() != NULL)
                     {
@@ -2162,9 +2123,9 @@ namespace top
         }
             
         //return map sorted by viewid from lower to high,caller respond to release ptr later
-        std::map<uint64_t,base::xvbindex_t*>   xblockacct_t::read_index_from_db(const uint64_t target_height)
+        std::vector<base::xvbindex_t*>   xblockacct_t::read_index_from_db(const uint64_t target_height)
         {
-            std::map<uint64_t,base::xvbindex_t*> all_blocks_at_height;
+            std::vector<base::xvbindex_t*> all_blocks_at_height;
             
             const std::string main_entry_key = create_index_db_key(target_height);
             base::xvbindex_t* index_entry = read_index_from_db(main_entry_key);
@@ -2179,7 +2140,7 @@ namespace top
                 index_entry->set_store_flag(base::enum_index_store_flag_main_entry); //mark as main entry again
                 index_entry->set_modified_flag(); //force to write later
             }
-            all_blocks_at_height[index_entry->get_viewid()] = index_entry;//transfer owner to map
+            all_blocks_at_height.push_back(index_entry);//transfer owner to vector
             xdbg("xblockacct_t::read_index_from_db,read main index(%s)",index_entry->dump().c_str());
 
             while(index_entry->get_next_viewid_offset() != 0) //check whether has other view entry
@@ -2189,7 +2150,7 @@ namespace top
                 if(index_entry == NULL)
                     break;
                 
-                all_blocks_at_height[index_entry->get_viewid()] = index_entry;//transfer owner to map
+                all_blocks_at_height.push_back(index_entry);//transfer owner to vector
                 xdbg("xblockacct_t::read_index_from_db,read a index(%s)",index_entry->dump().c_str());
             }
             return all_blocks_at_height;

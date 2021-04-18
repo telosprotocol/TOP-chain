@@ -215,17 +215,10 @@ bool xblockchain2_t::add_light_table(const xblock_t* block) {
         }
         set_unconfirmed_accounts(unconfirmed_accounts);
     }
-
-    const xtable_mbt_binlog_ptr_t & binlog = get_table_mbt_binlog();
-    std::map<std::string, xaccount_index_t> changed_indexs = light_table->get_units_index();
-    binlog->set_accounts_index(changed_indexs);
-    set_table_mbt_binlog(binlog);  // save to string
     return true;
 }
 
 bool xblockchain2_t::add_full_table(const xblock_t* block) {
-    xassert(block->is_fulltable());
-    clear_table_mbt_binlog();
     return true;
 }
 
@@ -395,6 +388,7 @@ uint64_t xblockchain2_t::get_available_tgas(uint64_t timer_height, uint32_t toke
     return available_tgas;
 }
 
+// TODO(jimmy) delete
 void xblockchain2_t::set_unconfirmed_accounts(const std::set<std::string> & accounts) {
     if (accounts.empty()) {
         m_ext.erase(enum_blockchain_ext_type_uncnfirmed_accounts);
@@ -418,42 +412,16 @@ const std::set<std::string> xblockchain2_t::get_unconfirmed_accounts() const {
     return accounts;
 }
 
-void xblockchain2_t::set_table_mbt(const xtable_mbt_ptr_t & table_mbt) {
-    // full state will not save to blockchian, only cache it
-    m_last_full_table_mbt = table_mbt;
+void xblockchain2_t::set_extend_data(uint16_t name, const std::string & value) {
+    m_ext[name] = value;
 }
 
-const xtable_mbt_ptr_t & xblockchain2_t::get_table_mbt() {
-    return m_last_full_table_mbt;
-}
-
-void xblockchain2_t::set_table_mbt_binlog(const xtable_mbt_binlog_ptr_t & table_mbt_binlog) {
-    std::string serialize_str;
-    table_mbt_binlog->serialize_to_string(serialize_str);
-    m_ext[enum_blockchain_ext_type_table_mbt_binlog] = serialize_str;
-    m_current_mbt_binlog = table_mbt_binlog;
-}
-
-void xblockchain2_t::clear_table_mbt_binlog() {
-    auto iter = m_ext.find(enum_blockchain_ext_type_table_mbt_binlog);
+std::string xblockchain2_t::get_extend_data(uint16_t name) {
+    auto iter = m_ext.find(name);
     if (iter != m_ext.end()) {
-        m_ext.erase(iter);
+        return iter->second;
     }
-    xtable_mbt_binlog_ptr_t empty_binlog = make_object_ptr<xtable_mbt_binlog_t>();  // make an empty mbt
-    m_current_mbt_binlog = empty_binlog;
-}
-
-const xtable_mbt_binlog_ptr_t & xblockchain2_t::get_table_mbt_binlog() {
-    std::call_once(m_once_mbt_binlog_flag, [this] () {
-        if (m_current_mbt_binlog == nullptr) {
-            m_current_mbt_binlog = make_object_ptr<xtable_mbt_binlog_t>();  // make an empty mbt
-            auto iter = m_ext.find(enum_blockchain_ext_type_table_mbt_binlog);
-            if (iter != m_ext.end()) {
-                m_current_mbt_binlog->serialize_from_string(iter->second);
-            }
-        }
-    });
-    return m_current_mbt_binlog;
+    return std::string();
 }
 
 }  // namespace data

@@ -252,8 +252,8 @@ xblock_ptr_t xunit_maker_t::verify_proposal(const xunit_proposal_input_t & propo
             cs_para.dump().c_str(), get_account().c_str(), chainbase::xmodule_error_to_str(result.m_make_block_error_code).c_str());
         return nullptr;
     }
-    xdbg("xunit_maker_t::verify_proposal succ. %s,unit=%s,class=%d,unconfirm=%d,prev_confirmed=%d,tx_count=%d,latest_state=%s",
-        cs_para.dump().c_str(), proposal_block->dump().c_str(), proposal_block->get_block_class(),
+    xdbg("xunit_maker_t::verify_proposal succ unit. %s,unit=%s,cert=%s,class=%d,unconfirm=%d,prev_confirmed=%d,tx_count=%d,latest_state=%s",
+        cs_para.dump().c_str(), proposal_block->dump().c_str(), proposal_block->dump_cert().c_str(), proposal_block->get_block_class(),
         proposal_block->get_unconfirm_sendtx_num(), proposal_block->is_prev_sendtx_confirmed(),
         result.m_success_txs.size(), dump().c_str());
     return proposal_block;

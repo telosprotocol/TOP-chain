@@ -4,6 +4,7 @@
 #include "xblockstore/xblockstore_face.h"
 #include "tests/mock/xtableblock_util.hpp"
 #include "tests/mock/xdatamock_table.hpp"
+#include "tests/mock/xvchain_creator.hpp"
 
 using namespace top;
 using namespace top::base;
@@ -22,8 +23,10 @@ protected:
 
 
 TEST_F(test_indexstore_table, account_index_query_1) {
-    xobject_ptr_t<store::xstore_face_t> store_face = store::xstore_factory::create_store_with_memdb();
-    base::xauto_ptr<xvblockstore_t> blockstore(xblockstorehub_t::instance().create_block_store(*store_face.get(), {}));
+    xvchain_creator creator;
+    creator.create_blockstore_with_xstore();
+    base::xvblockstore_t* blockstore = creator.get_blockstore();
+    store::xstore_face_t* xstore = creator.get_xstore();
 
     uint64_t max_block_height = 200;
     xdatamock_table mocktable;
@@ -31,10 +34,10 @@ TEST_F(test_indexstore_table, account_index_query_1) {
     const std::vector<xblock_ptr_t> & tables = mocktable.get_history_tables();
     xassert(tables.size() == max_block_height+1);
     for (uint64_t i = 0; i <= max_block_height; i++) {
-        ASSERT_TRUE(blockstore->store_block(tables[i].get()));
+        ASSERT_TRUE(blockstore->store_block(base::xvaccount_t(mocktable.get_account()), tables[i].get()));
     }
 
-    xindexstore_face_ptr_t indexstore = xindexstore_factory_t::create_index_store(make_observer(store_face.get()), make_observer(blockstore.get()), mocktable.get_account());
+    xindexstore_face_ptr_t indexstore = xindexstore_factory_t::create_index_store(make_observer(xstore), make_observer(blockstore), mocktable.get_account());
     const std::vector<xdatamock_unit> & datamock_units = mocktable.get_mock_units();
     for (auto & v : datamock_units) {
         auto & account = v.get_account();
@@ -58,8 +61,10 @@ TEST_F(test_indexstore_table, account_index_query_1) {
 
 
 TEST_F(test_indexstore_table, account_index_query_2) {
-    xobject_ptr_t<store::xstore_face_t> store_face = store::xstore_factory::create_store_with_memdb();
-    base::xauto_ptr<xvblockstore_t> blockstore(xblockstorehub_t::instance().create_block_store(*store_face.get(), {}));
+    xvchain_creator creator;
+    creator.create_blockstore_with_xstore();
+    base::xvblockstore_t* blockstore = creator.get_blockstore();
+    store::xstore_face_t* xstore = creator.get_xstore();
 
     uint64_t max_block_height = 200;
     xdatamock_table mocktable;
@@ -67,10 +72,10 @@ TEST_F(test_indexstore_table, account_index_query_2) {
     const std::vector<xblock_ptr_t> & tables = mocktable.get_history_tables();
     xassert(tables.size() == max_block_height+1);
     for (uint64_t i = 0; i <= max_block_height; i++) {
-        ASSERT_TRUE(blockstore->store_block(tables[i].get()));
+        ASSERT_TRUE(blockstore->store_block(base::xvaccount_t(mocktable.get_account()), tables[i].get()));
     }
 
-    xindexstore_face_ptr_t indexstore = xindexstore_factory_t::create_index_store(make_observer(store_face.get()), make_observer(blockstore.get()), mocktable.get_account());
+    xindexstore_face_ptr_t indexstore = xindexstore_factory_t::create_index_store(make_observer(xstore), make_observer(blockstore), mocktable.get_account());
     uint32_t count = 100000;
     while (count--)
     {
@@ -83,8 +88,10 @@ TEST_F(test_indexstore_table, account_index_query_2) {
 }
 
 TEST_F(test_indexstore_table, account_index_query_3) {
-    xobject_ptr_t<store::xstore_face_t> store_face = store::xstore_factory::create_store_with_memdb();
-    base::xauto_ptr<xvblockstore_t> blockstore(xblockstorehub_t::instance().create_block_store(*store_face.get(), {}));
+    xvchain_creator creator;
+    creator.create_blockstore_with_xstore();
+    base::xvblockstore_t* blockstore = creator.get_blockstore();
+    store::xstore_face_t* xstore = creator.get_xstore();
 
     uint64_t max_block_height = 200;
     xdatamock_table mocktable;
@@ -92,10 +99,10 @@ TEST_F(test_indexstore_table, account_index_query_3) {
     const std::vector<xblock_ptr_t> & tables = mocktable.get_history_tables();
     xassert(tables.size() == max_block_height+1);
     for (uint64_t i = 0; i <= max_block_height; i++) {
-        ASSERT_TRUE(blockstore->store_block(tables[i].get()));
+        ASSERT_TRUE(blockstore->store_block(base::xvaccount_t(mocktable.get_account()), tables[i].get()));
     }
 
-    xindexstore_face_ptr_t indexstore = xindexstore_factory_t::create_index_store(make_observer(store_face.get()), make_observer(blockstore.get()), mocktable.get_account());
+    xindexstore_face_ptr_t indexstore = xindexstore_factory_t::create_index_store(make_observer(xstore), make_observer(blockstore), mocktable.get_account());
     const std::vector<xdatamock_unit> & datamock_units = mocktable.get_mock_units();
     for (auto & v : datamock_units) {
         auto & account = v.get_account();
@@ -113,8 +120,10 @@ TEST_F(test_indexstore_table, account_index_query_3) {
 }
 
 TEST_F(test_indexstore_table, mbt_state_query_1) {
-    xobject_ptr_t<store::xstore_face_t> store_face = store::xstore_factory::create_store_with_memdb();
-    base::xauto_ptr<xvblockstore_t> blockstore(xblockstorehub_t::instance().create_block_store(*store_face.get(), {}));
+    xvchain_creator creator;
+    creator.create_blockstore_with_xstore();
+    base::xvblockstore_t* blockstore = creator.get_blockstore();
+    store::xstore_face_t* xstore = creator.get_xstore();
 
     uint64_t max_block_height = 200;
     xdatamock_table mocktable;
@@ -122,10 +131,10 @@ TEST_F(test_indexstore_table, mbt_state_query_1) {
     const std::vector<xblock_ptr_t> & tables = mocktable.get_history_tables();
     xassert(tables.size() == max_block_height+1);
     for (uint64_t i = 0; i <= max_block_height; i++) {
-        ASSERT_TRUE(blockstore->store_block(tables[i].get()));
+        ASSERT_TRUE(blockstore->store_block(base::xvaccount_t(mocktable.get_account()), tables[i].get()));
     }
 
-    xindexstore_face_ptr_t indexstore = xindexstore_factory_t::create_index_store(make_observer(store_face.get()), make_observer(blockstore.get()), mocktable.get_account());
+    xindexstore_face_ptr_t indexstore = xindexstore_factory_t::create_index_store(make_observer(xstore), make_observer(blockstore), mocktable.get_account());
     const std::vector<xdatamock_unit> & datamock_units = mocktable.get_mock_units();
     {
         auto & account = datamock_units[0].get_account();
@@ -140,7 +149,7 @@ TEST_F(test_indexstore_table, mbt_state_query_1) {
     {
         auto & account = datamock_units[0].get_account();
         base::xaccount_index_t account_index;
-        xtable_mbt_new_state_ptr_t new_state = indexstore->get_mbt_new_state();
+        xtablestate_ptr_t new_state = indexstore->clone_tablestate();
         ASSERT_NE(new_state, nullptr);
         new_state->get_account_index(account, account_index);
         ASSERT_NE(account_index.get_latest_unit_height(), 0);

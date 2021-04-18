@@ -5,8 +5,8 @@
 #pragma once
 
 #include <string>
-// TODO(jimmy) #include "xbase/xvledger.h"
 #include "xdata/xblock.h"
+#include "xdata/xtablestate.h"
 #include "xvledger/xaccountindex.h"
 #include "xstore/xstore_face.h"
 
@@ -57,13 +57,12 @@ class xindexstore_face_t : public base::xvaccount_t {
     : base::xvaccount_t(account) {}
     virtual ~xindexstore_face_t() {}
 
+    virtual xtablestate_ptr_t     clone_tablestate(const xblock_ptr_t & block) = 0;
+    virtual xtablestate_ptr_t     clone_tablestate() = 0;
+
     virtual bool  get_account_index(const std::string & account, base::xaccount_index_t & account_index) = 0;
     virtual bool  get_account_index(const xblock_ptr_t & committed_block, const std::string & account, base::xaccount_index_t & account_index) = 0;
-
     virtual bool  get_account_basic_info(const std::string & account, xaccount_basic_info_t & account_index_info) = 0;
-
-    virtual base::xtable_mbt_new_state_ptr_t  get_mbt_new_state(const xblock_ptr_t & committed_block) = 0;
-    virtual base::xtable_mbt_new_state_ptr_t  get_mbt_new_state() = 0;
 };
 
 using xindexstore_face_ptr_t = xobject_ptr_t<xindexstore_face_t>;

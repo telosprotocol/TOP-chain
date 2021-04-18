@@ -22,6 +22,7 @@ namespace top
             //extend call instructions
             enum_xvinstruct_class_contract_function = 0x0c,  //VM contract ' function,allow defined max as 111 method id
             enum_xvinstruct_class_rpc_function      = 0x0d,  //RPC call as refection mapping,allow defined max as 111 method id
+            enum_xvinstruct_class_extend_function   = 0x0e,  //customized function with self-defined method id
             enum_xvinstruct_code_max                = 0x0F,  //4bit,NEVER over this max value
         };
     

@@ -124,6 +124,7 @@ namespace top
             bool                   load_block_object(base::xvbindex_t* index_ptr);
             bool                   load_index_input(base::xvbindex_t* target_block);
             bool                   load_index_output(base::xvbindex_t* target_block);
+            bool                   load_index_offdata(base::xvbindex_t* target_block);
             
         public://operated for raw block
             bool                   store_blocks(std::vector<base::xvblock_t*> & batch_store_blocks); //better performance
@@ -164,7 +165,7 @@ namespace top
             bool                write_index_to_db(base::xvbindex_t* index_obj,bool allo_db_event);
             base::xvbindex_t*   read_index_from_db(const std::string & index_db_key_path);
             //return map sorted by viewid from lower to high,caller respond to release ptr later
-            std::map<uint64_t,base::xvbindex_t*> read_index_from_db(const uint64_t target_height);
+            std::vector<base::xvbindex_t*> read_index_from_db(const uint64_t target_height);
       
             //connect this_block to prev_block and next_block
             //connect_blockmay call load_block -->call connect again to get prev-block, reenter_allow_count decide how many times can reenter

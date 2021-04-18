@@ -331,57 +331,51 @@ xblock_ptr_t xtable_maker_t::backup_make_light_table(const xtableblock_proposal_
 }
 
 xblock_ptr_t xtable_maker_t::make_full_table(const xblock_consensus_para_t & cs_para, int32_t & error_code) {
-    xassert(false);
-    return nullptr; // TODO(jimmy)
-    // TODO(jimmy) get index state from statestore
-    // xblock_ptr_t commit_block = get_latest_committed_block();
-    // xtable_mbt_new_state_ptr_t mbt_state = m_indexstore->get_mbt_new_state(commit_block);
-    // if (nullptr == mbt_state) {
-    //     xerror("xtable_maker_t::make_full_table fail-get mbt state. %s", cs_para.dump().c_str());
-    //     return nullptr;
-    // }
+    // TODO(jimmy)
+    std::vector<xblock_ptr_t> blocks_from_last_full;
+    if (false == load_table_blocks_from_last_full(get_highest_height_block(), blocks_from_last_full)) {
+        xerror("xtable_maker_t::make_full_table fail-load blocks. %s", cs_para.dump().c_str());
+        return nullptr;
+    }
 
-    // std::vector<xblock_ptr_t> blocks_from_last_full;
-    // if (false == load_table_blocks_from_last_full(get_highest_height_block(), blocks_from_last_full)) {
-    //     xerror("xtable_maker_t::make_full_table fail-load blocks. %s", cs_para.dump().c_str());
-    //     return nullptr;
-    // }
+    cs_para.set_justify_cert_hash(get_lock_output_root_hash());
+    cs_para.set_parent_height(0);
+    std::vector<xblock_ptr_t> uncommit_blocks = get_uncommit_blocks();
+    xassert(uncommit_blocks.size() == 2);
+    xassert(uncommit_blocks[0]->get_height() == get_latest_committed_block()->get_height() + 2);
+    xassert(uncommit_blocks[1]->get_height() == get_latest_committed_block()->get_height() + 1);
+    xblock_ptr_t commit_block = get_latest_committed_block();
+    xtablestate_ptr_t tablestate = m_indexstore->clone_tablestate(commit_block);
+    if (nullptr == tablestate) {
+        xerror("xtable_maker_t::make_full_table fail-get mbt state. %s", cs_para.dump().c_str());
+        return nullptr;
+    }
+    tablestate->execute_block(uncommit_blocks[1].get());
+    tablestate->execute_block(uncommit_blocks[0].get());
 
-    // cs_para.set_justify_cert_hash(get_lock_output_root_hash());
-    // cs_para.set_parent_height(0);
-    // std::vector<xblock_ptr_t> uncommit_blocks = get_uncommit_blocks();
-    // xassert(uncommit_blocks.size() == 2);
-    // xassert(uncommit_blocks[0]->get_height() == get_latest_committed_block()->get_height() + 2);
-    // xassert(uncommit_blocks[1]->get_height() == get_latest_committed_block()->get_height() + 1);
-
-    // xtable_mbt_binlog_ptr_t commit_mbt_binlog = mbt_state->get_mbt_binlog();
-    // xtable_mbt_ptr_t last_full_table_mbt = mbt_state->get_last_full_state();
-    // xassert(commit_mbt_binlog->get_account_size() != 0);
-    // xblock_builder_para_ptr_t build_para = std::make_shared<xfulltable_builder_para_t>(last_full_table_mbt, commit_mbt_binlog, uncommit_blocks, blocks_from_last_full, get_resources());
-    // xblock_ptr_t proposal_block = m_fulltable_builder->build_block(get_highest_height_block(), nullptr, cs_para, build_para);
-    // return proposal_block;
+    xblock_builder_para_ptr_t build_para = std::make_shared<xfulltable_builder_para_t>(tablestate, blocks_from_last_full, get_resources());
+    xblock_ptr_t proposal_block = m_fulltable_builder->build_block(get_highest_height_block(), nullptr, cs_para, build_para);
+    return proposal_block;
 }
 
 bool    xtable_maker_t::load_table_blocks_from_last_full(const xblock_ptr_t & prev_block, std::vector<xblock_ptr_t> & blocks) {
-    uint64_t begin_height = prev_block->get_last_full_block_height();
-    if (begin_height == 0) {
-        begin_height = 1;
-    }
-    uint64_t end_height = prev_block->get_height();
+    std::vector<xblock_ptr_t> _form_highest_blocks;
+    xblock_ptr_t current_block = prev_block;
+    _form_highest_blocks.push_back(current_block);
 
-    const std::string & account = prev_block->get_account();
-    uint64_t height = begin_height;
-    while (height < end_height) {
-        base::xauto_ptr<base::xvblock_t> _block = get_blockstore()->load_block_object(base::xvaccount_t(account), height, 0, true);
+    while (current_block->get_block_class() != base::enum_xvblock_class_full && current_block->get_height() != 0) {
+        base::xauto_ptr<base::xvblock_t> _block = get_blockstore()->load_block_object(*this, current_block->get_height() - 1, current_block->get_last_block_hash(), true);
         if (_block == nullptr) {
-            xerror("xfulltable_builder_t::load_table_blocks_from_last_full fail-load block.account=%s,height=%ld", account.c_str(), height);
+            xerror("xfulltable_builder_t::load_table_blocks_from_last_full fail-load block.account=%s,height=%ld", get_account().c_str(), current_block->get_height() - 1);
             return false;
         }
-        xblock_ptr_t _block_ptr = xblock_t::raw_vblock_to_object_ptr(_block.get());
-        blocks.push_back(_block_ptr);
-        height++;
+        current_block = xblock_t::raw_vblock_to_object_ptr(_block.get());
+        blocks.push_back(current_block);
     }
-    blocks.push_back(prev_block);
+
+    for (auto iter = _form_highest_blocks.rbegin(); iter != _form_highest_blocks.rend(); iter++) {
+        blocks.push_back(*iter);
+    }
     return true;;
 }
 
@@ -518,7 +512,7 @@ int32_t xtable_maker_t::verify_proposal(base::xvblock_t* proposal_block, const x
 bool xtable_maker_t::verify_proposal_with_local(base::xvblock_t *proposal_block, base::xvblock_t *local_block) const {
     // TODO(jimmy) should not happen input hash not match
     if (local_block->get_input_hash() != proposal_block->get_input_hash()) {
-        xwarn("xtable_maker_t::verify_proposal_with_local fail-input hash not match. %s %s",
+        xerror("xtable_maker_t::verify_proposal_with_local fail-input hash not match. %s %s",
             proposal_block->dump().c_str(),
             local_block->dump().c_str());
         return false;

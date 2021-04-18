@@ -9,18 +9,14 @@
 #include "xbase/xobject_ptr.h"
 #include "xdata/xaccount_mstate.h"
 #include "xdata/xtransaction.h"
-#include "xvledger/xaccountindex.h"
 
 NS_BEG2(top, data)
 
-using base::xtable_mbt_ptr_t;
-using base::xtable_mbt_binlog_ptr_t;
-using base::xtable_mbt_binlog_t;
-
 class xblockchain2_t : public xbase_dataobj_t<xblockchain2_t, xdata_type_blockchain> {
+ public:
     enum {
         enum_blockchain_ext_type_uncnfirmed_accounts = 1,
-        enum_blockchain_ext_type_table_mbt_binlog    = 2,
+        enum_blockchain_ext_type_binlog              = 2,
     };
  public:
     xblockchain2_t(uint32_t chainid, const std::string & account, base::enum_xvblock_level level);
@@ -109,11 +105,8 @@ class xblockchain2_t : public xbase_dataobj_t<xblockchain2_t, xdata_type_blockch
  public: // for table account
     void set_unconfirmed_accounts(const std::set<std::string> & accounts);
     const std::set<std::string> get_unconfirmed_accounts() const;
-    void set_table_mbt(const xtable_mbt_ptr_t & table_mbt);
-    const xtable_mbt_ptr_t &    get_table_mbt();
-    void set_table_mbt_binlog(const xtable_mbt_binlog_ptr_t & table_mbt_binlog);
-    void clear_table_mbt_binlog();
-    const xtable_mbt_binlog_ptr_t &    get_table_mbt_binlog();
+    void            set_extend_data(uint16_t name, const std::string & value);
+    std::string     get_extend_data(uint16_t name);
 
  public:
     bool    add_full_table(const xblock_t* block);
@@ -141,12 +134,6 @@ class xblockchain2_t : public xbase_dataobj_t<xblockchain2_t, xdata_type_blockch
     uint64_t                    m_property_confirm_height{0};
     xaccount_mstate2            m_account_state;
     std::map<uint16_t, std::string> m_ext;
-
- private:
-    mutable std::once_flag      m_once_table_mbt_flag;
-    xtable_mbt_ptr_t            m_last_full_table_mbt{nullptr};
-    mutable std::once_flag      m_once_mbt_binlog_flag;
-    xtable_mbt_binlog_ptr_t     m_current_mbt_binlog{nullptr};
 };
 
 using xaccount_t = xblockchain2_t;

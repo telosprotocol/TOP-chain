@@ -155,6 +155,21 @@ int32_t xtop_statistics_data::do_write(base::xstream_t & stream) const {
     return stream.size() - size;
 }
 
+int32_t xtop_statistics_data::serialize_to_string(std::string & bin_data) const {
+    base::xstream_t stream(base::xcontext_t::instance());
+    int32_t ret = serialize_to(stream);
+    bin_data = std::string((const char *)stream.data(), stream.size());
+    return ret;
+}
+int32_t xtop_statistics_data::serialize_from_string(const std::string & bin_data) {
+    base::xstream_t _stream(base::xcontext_t::instance(), (uint8_t *)bin_data.data(), (int32_t)bin_data.size());
+    int32_t ret = serialize_from(_stream);
+    if (ret <= 0) {
+        xerror("xtop_statistics_data::serialize_from_string fail. ret=%d,bin_data_size=%d", ret, bin_data.size());
+    }
+    return ret;
+}
+
 int32_t operator>>(base::xstream_t & stream, xstatistics_data_t & data_object) {
     return data_object.serialize_from(stream);
 }

@@ -9,7 +9,8 @@ NS_BEG2(top, mbus)
 
 data::xblock_ptr_t extract_block_from(xevent_store_block_to_db_ptr_t const & ev) noexcept {
     auto * blkstore = base::xvchain_t::instance().get_xblockstore();
-    xobject_ptr_t<base::xvblock_t> blk = blkstore->query_block(base::xvaccount_t{ ev->owner }, ev->blk_height, ev->blk_hash);
+    xobject_ptr_t<base::xvblock_t> blk = blkstore->load_block_object(base::xvaccount_t{ ev->owner }, ev->blk_height, ev->blk_hash, true);
+    xassert(blk != nullptr);
     return dynamic_xobject_ptr_cast<data::xblock_t>(blk);
 }
 

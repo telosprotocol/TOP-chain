@@ -76,7 +76,7 @@ class xaccount_index_t {
 };
 
 // the binlog of table mbt index state from last full-tableblock
-class xtable_mbt_binlog_t : public base::xdataunit_t {
+class xtable_mbt_binlog_t : public xbase_dataunit_t<xtable_mbt_binlog_t, xdata_type_accountindex_binlog> {
  public:
     xtable_mbt_binlog_t();
     xtable_mbt_binlog_t(const std::map<std::string, xaccount_index_t> & changed_indexs);
@@ -90,6 +90,8 @@ class xtable_mbt_binlog_t : public base::xdataunit_t {
     void            set_accounts_index(const std::map<std::string, xaccount_index_t> & changed_indexs);
     void            set_account_index(const std::string & account, const xaccount_index_t & index);
     std::string     build_binlog_hash();
+    void            clear_binlog();
+
  public:
     const std::map<std::string, xaccount_index_t> &     get_accounts_index() const {return m_account_indexs;}
     size_t                                              get_account_size() const {return m_account_indexs.size();}
@@ -185,17 +187,16 @@ class xtable_mbt_t : public xbase_dataunit_t<xtable_mbt_t, xdata_type_table_mbt>
 
  public:
     void                            set_accounts_index_info(const std::map<std::string, xaccount_index_t> & accounts_info, bool is_build_root_hash = true);  // must set together
-    bool                            check_tree() const;
     std::string                     build_root_hash();
-
+    void                            add_binlog(const xtable_mbt_binlog_ptr_t & binlog);
  public:
-    xtable_mbt_root_node_ptr_t          get_root_node() const;
+    xtable_mbt_root_node_ptr_t          get_root_node();
     xtable_mbt_bucket_node_ptr_t        get_bucket_node(uint16_t bucket_index) const;
     size_t                              get_account_size() const;
     size_t                              get_bucket_size() const {return m_buckets.size();}
     size_t                              get_max_bucket_size() const {return enum_tableindex_bucket_num;}
     bool                                get_account_index(const std::string & account, xaccount_index_t & index) const;
-    const std::string &                 get_root_hash() const {return m_root_hash;}
+    // const std::string &                 get_root_hash() const {return m_root_hash;}
     const std::map<uint16_t, xtable_mbt_bucket_node_ptr_t> & get_buckets() const {return m_buckets;}
 
  public:
@@ -207,7 +208,7 @@ class xtable_mbt_t : public xbase_dataunit_t<xtable_mbt_t, xdata_type_table_mbt>
     uint16_t        account_to_index(const std::string & account) const;
 
  private:
-    std::string                                         m_root_hash;
+    // std::string                                         m_root_hash;
     std::map<uint16_t, xtable_mbt_bucket_node_ptr_t>    m_buckets;
 
  private:
@@ -217,24 +218,31 @@ class xtable_mbt_t : public xbase_dataunit_t<xtable_mbt_t, xdata_type_table_mbt>
 using xtable_mbt_ptr_t = xobject_ptr_t<xtable_mbt_t>;
 
 // the newest mbt state include last full state and the newest binlog.
-class xtable_mbt_new_state_t {
+class xtable_mbt_new_state_t : public base::xdataunit_t {
  public:
     xtable_mbt_new_state_t();
-    xtable_mbt_new_state_t(const xtable_mbt_ptr_t & last_mbt, const xtable_mbt_binlog_ptr_t & binlog)
-    : m_last_full_state(last_mbt), m_newest_binlog_state(binlog) {}
+    xtable_mbt_new_state_t(const xtable_mbt_ptr_t & last_mbt, const xtable_mbt_binlog_ptr_t & binlog);
 
+ protected:
+    ~xtable_mbt_new_state_t() {}
+    int32_t         do_write(base::xstream_t & stream) override;
+    int32_t         do_read(base::xstream_t & stream) override;
+
+ public:
     void        set_last_full_state(const xtable_mbt_ptr_t & last_mbt) {m_last_full_state = last_mbt;}
-    void        set_mbt_binlog(const xtable_mbt_binlog_ptr_t & binlog) {m_newest_binlog_state = binlog;}
+    void        set_binlog(const xtable_mbt_binlog_ptr_t & binlog) {m_newest_binlog_state = binlog;}
+    void        clear_binlog() {m_newest_binlog_state = make_object_ptr<xtable_mbt_binlog_t>();}
+    void        merge_new_full();
 
  public:
     const xtable_mbt_ptr_t &        get_last_full_state() const {return m_last_full_state;}
-    const xtable_mbt_binlog_ptr_t & get_mbt_binlog() const {return m_newest_binlog_state;}
+    const xtable_mbt_binlog_ptr_t & get_binlog() const {return m_newest_binlog_state;}
     bool                            get_account_index(const std::string & account, xaccount_index_t & account_index);
 
  private:
     xtable_mbt_ptr_t            m_last_full_state{nullptr};
     xtable_mbt_binlog_ptr_t     m_newest_binlog_state{nullptr};
 };
-using xtable_mbt_new_state_ptr_t = std::shared_ptr<xtable_mbt_new_state_t>;
+using xtable_mbt_new_state_ptr_t = xobject_ptr_t<xtable_mbt_new_state_t>;
 
 NS_END2

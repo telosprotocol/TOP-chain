@@ -11,89 +11,66 @@
 NS_BEG2(top, data)
 
 REG_CLS(xfull_tableblock_t);
-REG_CLS(xfulltable_input_entity_t);
 REG_CLS(xfulltable_output_entity_t);
-REG_CLS(xfulltable_statistics_resource_t);
-REG_CLS(xfulltable_binlog_resource_t);
 
-int32_t xfulltable_statistics_resource_t::do_write(base::xstream_t & stream) {
-    KEEP_SIZE();
-    stream.write_compact_var(m_statistics_data);
-    return CALC_LEN();
+xfulltable_block_para_t::xfulltable_block_para_t(const xtablestate_ptr_t & last_state, const xstatistics_data_t & statistics_data) {
+    m_tablestate = last_state;
+    m_block_statistics_data = statistics_data;
 }
 
-int32_t xfulltable_statistics_resource_t::do_read(base::xstream_t & stream) {
-    KEEP_SIZE();
-    stream.read_compact_var(m_statistics_data);
-    return CALC_LEN();
-}
-
-int32_t xfulltable_binlog_resource_t::do_write(base::xstream_t & stream) {
-    KEEP_SIZE();
-    m_index_binlog->serialize_to(stream);
-    return CALC_LEN();
-}
-
-int32_t xfulltable_binlog_resource_t::do_read(base::xstream_t & stream) {
-    KEEP_SIZE();
-    m_index_binlog = make_object_ptr<xtable_mbt_binlog_t>();
-    m_index_binlog->serialize_from(stream);
-    return CALC_LEN();
-}
-
-xfulltable_block_para_t::xfulltable_block_para_t(const xtable_mbt_ptr_t & last_state, const xtable_mbt_binlog_ptr_t & highqc_binlog) {
-    m_state_binlog = highqc_binlog;
-    m_new_full_state = base::xtable_mbt_t::build_new_tree(last_state, highqc_binlog);
-}
-
-xfulltable_input_entity_t::xfulltable_input_entity_t(const xtable_mbt_binlog_ptr_t & binlog) {
-    m_binlog_hash = binlog->build_binlog_hash();
-}
-
-int32_t xfulltable_input_entity_t::do_write(base::xstream_t & stream) {
-    KEEP_SIZE();
-    stream.write_compact_var(m_binlog_hash);
-    return CALC_LEN();
-}
-int32_t xfulltable_input_entity_t::do_read(base::xstream_t & stream) {
-    KEEP_SIZE();
-    stream.read_compact_var(m_binlog_hash);
-    return CALC_LEN();
-}
-
-xfulltable_output_entity_t::xfulltable_output_entity_t(const std::string & tree_root) {
-    m_tree_root = tree_root;
+xfulltable_output_entity_t::xfulltable_output_entity_t(const std::string & offdata_root) {
+    set_offdata_root(offdata_root);
 }
 
 int32_t xfulltable_output_entity_t::do_write(base::xstream_t & stream) {
     KEEP_SIZE();
-    stream.write_compact_var(m_tree_root);
+    stream.write_compact_map(m_paras);
     return CALC_LEN();
 }
 int32_t xfulltable_output_entity_t::do_read(base::xstream_t & stream) {
     KEEP_SIZE();
-    stream.read_compact_var(m_tree_root);
+    stream.read_compact_map(m_paras);
     return CALC_LEN();
+}
+
+void xfulltable_output_entity_t::set_offdata_root(const std::string & root) {
+    m_paras[PARA_OFFDATA_ROOT] = root;
+}
+std::string xfulltable_output_entity_t::get_offdata_root() const {
+    auto iter = m_paras.find(PARA_OFFDATA_ROOT);
+    if (iter != m_paras.end()) {
+        return iter->second;
+    }
+    return {};
 }
 
 xblockbody_para_t xfull_tableblock_t::get_blockbody_from_para(const xfulltable_block_para_t & para) {
     xblockbody_para_t blockbody;
 
-    const xtable_mbt_binlog_ptr_t & binlog = para.get_binlog();
-    xobject_ptr_t<xfulltable_input_entity_t> input = make_object_ptr<xfulltable_input_entity_t>(binlog);
-    xobject_ptr_t<xfulltable_output_entity_t> output = make_object_ptr<xfulltable_output_entity_t>(para.get_new_state_root());
+    xobject_ptr_t<xdummy_entity_t> input = make_object_ptr<xdummy_entity_t>();
     blockbody.add_input_entity(input);
+
+    const xtablestate_ptr_t & latest_state = para.get_tablestate();
+
+    // TODO(jimmy)
+    // std::string binlog_str = latest_state->serialize_to_binlog_data_string();
+    // xassert(!binlog_str.empty());
+    // blockbody.add_input_resource(RESOURCE_ACCOUNT_INDEX_BINLOG, binlog_str);
+
+    // const xreceiptid_pairs_ptr_t & receiptid_binlog = latest_offstate->get_receiptid_state()->get_binlog();
+    // std::string receiptid_binlog_str;
+    // receiptid_binlog->serialize_to_string(receiptid_binlog_str);
+    // blockbody.add_input_resource(RESOURCE_RECEIPTID_PAIRS_BINLOG, receiptid_binlog_str);
+
+    const xstatistics_data_t & statistics_data = para.get_block_statistics_data();
+    std::string statistics_data_str;
+    statistics_data.serialize_to_string(statistics_data_str);
+    blockbody.add_output_resource(RESOURCE_NODE_SIGN_STATISTICS, statistics_data_str);
+
+    latest_state->merge_new_full();
+    std::string offdata_root = latest_state->build_root_hash();
+    xobject_ptr_t<xfulltable_output_entity_t> output = make_object_ptr<xfulltable_output_entity_t>(offdata_root);
     blockbody.add_output_entity(output);
-
-    xfulltable_binlog_resource_ptr_t binlog_resource = make_object_ptr<xfulltable_binlog_resource_t>(binlog);
-    std::string binlog_resource_str;
-    binlog_resource->serialize_to_string(binlog_resource_str);
-    blockbody.add_input_resource(xfulltable_binlog_resource_t::name(), binlog_resource_str);
-
-    xfulltable_statistics_resource_ptr_t statistics_resource = make_object_ptr<xfulltable_statistics_resource_t>(para.get_block_statistics_data());
-    std::string statistics_resource_str;
-    statistics_resource->serialize_to_string(statistics_resource_str);
-    blockbody.add_output_resource(xfulltable_statistics_resource_t::name(), statistics_resource_str);
 
     blockbody.create_default_input_output();
     return blockbody;
@@ -145,7 +122,7 @@ xfull_tableblock_t::~xfull_tableblock_t() {
 std::string     xfull_tableblock_t::get_offdata_hash() const {
     xfulltable_output_entity_t* entity = dynamic_cast<xfulltable_output_entity_t*>(get_output()->get_entitys()[0]);
     xassert(entity != nullptr);
-    return entity->get_tree_root();
+    return entity->get_offdata_root();
 }
 
 base::xobject_t * xfull_tableblock_t::create_object(int type) {
@@ -159,32 +136,12 @@ void * xfull_tableblock_t::query_interface(const int32_t _enum_xobject_type_) {
     return xvblock_t::query_interface(_enum_xobject_type_);
 }
 
-xfulltable_statistics_resource_ptr_t    xfull_tableblock_t::get_fulltable_statistics_resource() const {
-    std::string fulltable_statistics_resource = get_output()->query_resource(xfulltable_statistics_resource_t::name());
-    xassert(!fulltable_statistics_resource.empty());
-    base::xstream_t _stream(base::xcontext_t::instance(), (uint8_t*)fulltable_statistics_resource.data(), (uint32_t)fulltable_statistics_resource.size());
-    xfulltable_statistics_resource_t* _resource_obj = dynamic_cast<xfulltable_statistics_resource_t*>(base::xdataunit_t::read_from(_stream));
-    if (nullptr == _resource_obj) {
-        xassert(_resource_obj != nullptr);
-        return nullptr;
-    }
-    xfulltable_statistics_resource_ptr_t _resource_obj_ptr;
-    _resource_obj_ptr.attach(_resource_obj);
-    return _resource_obj_ptr;
-}
-
-xfulltable_binlog_resource_ptr_t        xfull_tableblock_t::get_fulltable_binlog_resource() const {
-    std::string resource_str = get_input()->query_resource(xfulltable_binlog_resource_t::name());
+xstatistics_data_t xfull_tableblock_t::get_table_statistics() const {
+    std::string resource_str = get_output()->query_resource(RESOURCE_NODE_SIGN_STATISTICS);
     xassert(!resource_str.empty());
-    base::xstream_t _stream(base::xcontext_t::instance(), (uint8_t*)resource_str.data(), (uint32_t)resource_str.size());
-    xfulltable_binlog_resource_t* _resource_obj = dynamic_cast<xfulltable_binlog_resource_t*>(base::xdataunit_t::read_from(_stream));
-    if (nullptr == _resource_obj) {
-        xassert(_resource_obj != nullptr);
-        return nullptr;
-    }
-    xfulltable_binlog_resource_ptr_t _resource_obj_ptr;
-    _resource_obj_ptr.attach(_resource_obj);
-    return _resource_obj_ptr;
+    xstatistics_data_t statistics_data;
+    statistics_data.serialize_from_string(resource_str);
+    return statistics_data;
 }
 
 NS_END2

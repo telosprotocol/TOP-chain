@@ -1340,8 +1340,8 @@ int32_t xaccount_context_t::generate_tx(const std::string& target_addr, const st
         return xaccount_contract_number_exceed_max;
     }
     m_contract_txs.push_back(constx);
-    xdbg("xaccount_context_t::generate_tx tx:%s,from:%s,to:%s,func_name:%s,nonce:%ld",
-        tx->get_digest_hex_str().c_str(), m_address.c_str(), target_addr.c_str(), func_name.c_str(), tx->get_tx_nonce());
+    xdbg("xaccount_context_t::generate_tx tx:%s,from:%s,to:%s,func_name:%s,nonce:%ld,lasthash:%ld,func_param:%ld",
+        tx->get_digest_hex_str().c_str(), m_address.c_str(), target_addr.c_str(), func_name.c_str(), tx->get_tx_nonce(), tx->get_last_hash(), base::xhash64_t::digest(func_param));
     return xstore_success;
 }
 
@@ -1529,6 +1529,7 @@ xaccount_context_t::get_block_by_height(const std::string & owner, uint64_t heig
     // TODO(jimmy)
     base::xvaccount_t _vaddr(owner);
     base::xauto_ptr<base::xvblock_t> _block = base::xvchain_t::instance().get_xblockstore()->load_block_object(_vaddr, height, base::enum_xvblock_flag_committed, true);
+    xassert(_block != nullptr);
     if (_block != nullptr) {
         _block->add_ref();
         return dynamic_cast<data::xblock_t*>(_block.get());

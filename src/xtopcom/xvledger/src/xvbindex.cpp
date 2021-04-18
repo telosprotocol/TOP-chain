@@ -69,6 +69,17 @@ namespace top
             m_combineflags          = obj.m_combineflags;
             m_block_types           = obj.m_block_types;
 
+            //clean first
+            if(m_prev_index != NULL)
+                m_prev_index->release_ref();
+            
+            if(m_next_index != NULL)
+                m_next_index->release_ref();
+            
+            if(m_linked_block != NULL)
+                m_linked_block->release_ref();
+            
+            //then copy ptr
             m_prev_index = obj.m_prev_index;
             if(m_prev_index != NULL)
                 m_prev_index->add_ref();
@@ -167,12 +178,11 @@ namespace top
     
         int    xvbindex_t::set_block_flag(enum_xvblock_flag flag)
         {
-            if(check_block_flag(flag)) //duplicated setting
-                return m_combineflags;
-            
-            const uint16_t copy_flags = m_combineflags;
-            m_combineflags = (copy_flags | flag) | enum_index_flag_modified;
-            
+            if(false == check_block_flag(flag)) //duplicated setting
+            {
+                const uint16_t copy_flags = m_combineflags;
+                m_combineflags = (copy_flags | flag) | enum_index_flag_modified;
+            }
             if(get_this_block() != NULL) //duplicated flag as well
                 get_this_block()->set_block_flag(flag);
             
@@ -199,6 +209,10 @@ namespace top
             copy_flags &= (~enum_xvblock_flags_mask);//0xFF00-->0x00FF,so clean all flags of block
             copy_flags |= (new_flags & enum_xvblock_flags_mask); //just keep flags of block(highest 8bit)
             m_combineflags = copy_flags | enum_index_flag_modified;
+            
+            if(get_this_block() != NULL) //duplicated flags as well
+                get_this_block()->reset_block_flags(new_flags);
+            
             return m_combineflags;
         }
     

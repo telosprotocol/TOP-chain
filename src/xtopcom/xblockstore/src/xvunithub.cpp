@@ -109,11 +109,12 @@ namespace top
             {
                 target_account->load_index_input(target_index.get());
                 target_account->load_index_output(target_index.get());
+                target_account->load_index_offdata(target_index.get());
             }
             if(target_index->get_this_block() != NULL)
             {
                 //transfer block flags from index to raw block here
-                xassert(target_index->get_block_flags() == target_index->get_this_block()->get_block_flags());
+//                xassert(target_index->get_block_flags() == target_index->get_this_block()->get_block_flags());  // TODO(jimmy)
                 //target_index->get_this_block()->reset_block_flags(target_index->get_block_flags());
                 
                 //must addreference first before clean_caches(),otherwise it might be reset by clean_caches

@@ -13,20 +13,20 @@ namespace top
         {
             // TODO(jimmy)
         }
-        
+
         xvboffdata_t::~xvboffdata_t()
         {
         }
-        
+
         //caller respond to cast (void*) to related  interface ptr
         void*   xvboffdata_t::query_interface(const int32_t _enum_xobject_type_)
         {
             if(enum_obj_type == _enum_xobject_type_)
                 return this;
-            
+
             return xdataunit_t::query_interface(_enum_xobject_type_);
         }
-        
+
         int32_t         xvboffdata_t::do_write(base::xstream_t & stream)
         {
             const int32_t begin_size = stream.size();
@@ -39,7 +39,7 @@ namespace top
             }
             return (stream.size() - begin_size);
         }
-    
+
         int32_t         xvboffdata_t::do_read(base::xstream_t & stream)
         {
             const int32_t begin_size = stream.size();
@@ -56,14 +56,19 @@ namespace top
             }
             return (begin_size - stream.size());
         }
-        
+
         std::string xvboffdata_t::build_root_hash(enum_xhash_type hashtype)
         {
             std::string bin_str;
             serialize_to_string(bin_str);
             return xcontext_t::instance().hash(bin_str, hashtype);
         }
-        
+
+        void xvboffdata_t::set_offdata(const std::string & name, const xobject_ptr_t<xdataunit_t> & data)
+        {
+            m_propertys[name] = data;
+        }
+
         xobject_ptr_t<xdataunit_t> xvboffdata_t::query_offdata(const std::string & name) const
         {
             auto iter = m_propertys.find(name);
@@ -73,7 +78,7 @@ namespace top
             xassert(false);
             return nullptr;
         }
-    
+
     }  //end of namespace base
 } //end of namespace top
- 
+

@@ -14,88 +14,30 @@
 #include "xdata/xblock.h"
 #include "xvledger/xaccountindex.h"
 #include "xdata/xblockchain.h"
+#include "xdata/xtablestate.h"
+#include "xdata/xblock_statistics_data.h"
 
 NS_BEG2(top, data)
 
-class xfulltable_statistics_resource_t : public xbase_dataunit_t<xfulltable_statistics_resource_t, xdata_type_fulltable_statistics_resource>{
- public:
-    static  const std::string   name() { return std::string("o0");}  // common output resource version#0
-    xfulltable_statistics_resource_t() = default;
-    explicit xfulltable_statistics_resource_t(const std::string & statistics_data)
-    : m_statistics_data(statistics_data) {}
-
- protected:
-    int32_t do_write(base::xstream_t & stream) override;
-    int32_t do_read(base::xstream_t & stream) override;
-
- public:
-    const std::string & get_statistics_data() const {return m_statistics_data;}
-
- private:
-    std::string    m_statistics_data;
-};
-using xfulltable_statistics_resource_ptr_t = xobject_ptr_t<xfulltable_statistics_resource_t>;
-
-class xfulltable_binlog_resource_t : public xbase_dataunit_t<xfulltable_binlog_resource_t, xdata_type_fulltable_binlog_resource>{
- public:
-    static  const std::string   name() { return std::string("i0");}  // common input resource version#0
-    xfulltable_binlog_resource_t() = default;
-    explicit xfulltable_binlog_resource_t(const xtable_mbt_binlog_ptr_t & binlog)
-    : m_index_binlog(binlog) {}
-
- protected:
-    int32_t do_write(base::xstream_t & stream) override;
-    int32_t do_read(base::xstream_t & stream) override;
-
- public:
-    const xtable_mbt_binlog_ptr_t & get_binlog() const {return m_index_binlog;}
-
- private:
-    xtable_mbt_binlog_ptr_t    m_index_binlog{nullptr};
-};
-using xfulltable_binlog_resource_ptr_t = xobject_ptr_t<xfulltable_binlog_resource_t>;
-
-
 class xfulltable_block_para_t {
  public:
-    xfulltable_block_para_t(const xtable_mbt_ptr_t & last_state, const xtable_mbt_binlog_ptr_t & highqc_binlog);
+    xfulltable_block_para_t(const xtablestate_ptr_t & last_state, const xstatistics_data_t & statistics_data);
     ~xfulltable_block_para_t() = default;
 
-    void                        set_block_statistics_data(const std::string & _data) {m_block_statistics_data = _data;}
-    const std::string &         get_block_statistics_data() const {return m_block_statistics_data;}
-    const xtable_mbt_binlog_ptr_t &     get_binlog() const {return m_state_binlog;}
-    const std::string &         get_new_state_root() const {return m_new_full_state->get_root_hash();}
-    const xtable_mbt_ptr_t &    get_new_state() const {return m_new_full_state;}
+    const xstatistics_data_t &  get_block_statistics_data() const {return m_block_statistics_data;}
+    const xtablestate_ptr_t &   get_tablestate() const {return m_tablestate;}
 
  private:
-    xtable_mbt_binlog_ptr_t                     m_state_binlog{nullptr};  // the binlog of latest light-tableblock from last full-tableblock
-    xtable_mbt_ptr_t                            m_new_full_state{nullptr};
-    std::string                                 m_block_statistics_data;
-};
-
-class xfulltable_input_entity_t final : public xventity_face_t<xfulltable_input_entity_t, xdata_type_fulltable_input_entity> {
- public:
-    xfulltable_input_entity_t() = default;
-    explicit xfulltable_input_entity_t(const xtable_mbt_binlog_ptr_t & highqc_binlog);
- protected:
-    ~xfulltable_input_entity_t() = default;
-    int32_t do_write(base::xstream_t & stream) override;
-    int32_t do_read(base::xstream_t & stream) override;
- private:
-    xfulltable_input_entity_t & operator = (const xfulltable_input_entity_t & other);
- public:
-    virtual const std::string query_value(const std::string & key) override {return std::string();}
- public:
-    const std::string &     get_binlog_hash() const {return m_binlog_hash;}
-
- private:
-    std::string     m_binlog_hash;
+    xtablestate_ptr_t       m_tablestate{nullptr};  // the binlog of latest light-tableblock from last full-tableblock
+    xstatistics_data_t      m_block_statistics_data;
 };
 
 class xfulltable_output_entity_t final : public xventity_face_t<xfulltable_output_entity_t, xdata_type_fulltable_output_entity> {
+ protected:
+    static XINLINE_CONSTEXPR char const * PARA_OFFDATA_ROOT           = "0";
  public:
     xfulltable_output_entity_t() = default;
-    explicit xfulltable_output_entity_t(const std::string & tree_root);
+    explicit xfulltable_output_entity_t(const std::string & offdata_root);
  protected:
     ~xfulltable_output_entity_t() = default;
     int32_t do_write(base::xstream_t & stream) override;
@@ -105,16 +47,21 @@ class xfulltable_output_entity_t final : public xventity_face_t<xfulltable_outpu
  public:
     virtual const std::string query_value(const std::string & key) override {return std::string();}
  public:
-    const std::string &     get_tree_root() const {return m_tree_root;}
-
+    void            set_offdata_root(const std::string & root);
+    std::string     get_offdata_root() const;
  private:
-    std::string     m_tree_root;  // the total bucket tree root
+    std::map<std::string, std::string>  m_paras;
 };
 
 // tableindex block chain
 // input: an array of newest units
 // output: the root of bucket merkle tree of all unit accounts index
 class xfull_tableblock_t : public xblock_t {
+ protected:
+    static XINLINE_CONSTEXPR char const * RESOURCE_ACCOUNT_INDEX_BINLOG     = "0";
+    static XINLINE_CONSTEXPR char const * RESOURCE_RECEIPTID_PAIRS_BINLOG   = "1";
+    static XINLINE_CONSTEXPR char const * RESOURCE_NODE_SIGN_STATISTICS     = "2";
+
  protected:
     enum { object_type_value = enum_xdata_type::enum_xdata_type_max - xdata_type_fulltable_block };
     static xblockbody_para_t get_blockbody_from_para(const xfulltable_block_para_t & para);
@@ -135,14 +82,10 @@ class xfull_tableblock_t : public xblock_t {
     void *query_interface(const int32_t _enum_xobject_type_) override;
 
  public:
-    xfulltable_statistics_resource_ptr_t    get_fulltable_statistics_resource() const;
-    xfulltable_binlog_resource_ptr_t        get_fulltable_binlog_resource() const;
+    xstatistics_data_t                      get_table_statistics() const;
 
  public:  // override base block api
     std::string         get_offdata_hash() const override;
-
- private:
-    xtable_mbt_ptr_t                                m_full_offstate{nullptr};  // full block offstate
 };
 
 NS_END2

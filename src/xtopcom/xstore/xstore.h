@@ -67,6 +67,8 @@ class xstore final: public xstore_face_t {
     virtual base::xvblock_t* get_vblock_header(const std::string & store_path,const std::string & account,const uint64_t height) const override;
     virtual bool             get_vblock_input(const std::string & store_path,base::xvblock_t* for_block)  const override;
     virtual bool             get_vblock_output(const std::string & store_path,base::xvblock_t* for_block) const override;
+    virtual bool             get_vblock_offdata(const std::string & store_path,base::xvblock_t* for_block) const override;
+    virtual bool             set_vblock_offdata(const std::string & store_path,base::xvblock_t* for_block) override;
 
  public://key-value manage
     virtual bool                set_value(const std::string & key, const std::string& value) override;
