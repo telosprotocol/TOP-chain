@@ -6,6 +6,7 @@
 #include "xtxpool_v2/xtx_queue.h"
 #include "xtxpool_v2/xtxpool_error.h"
 #include "xverifier/xverifier_utl.h"
+#include "tests/mock/xvchain_creator.hpp"
 
 using namespace top::xtxpool_v2;
 using namespace top::data;
@@ -601,11 +602,10 @@ TEST_F(test_receipt_queue, receipt_queue_basic) {
 
     xreceipt_queue_t receipt_queue(&table_para);
 
-    // construct block store
-    std::shared_ptr<top::mbus::xmessage_bus_t> mbus = std::make_shared<top::mbus::xmessage_bus_t>();
-    xobject_ptr_t<xstore_face_t> blockdb = store::xstore_factory::create_store_with_memdb(make_observer(mbus));
-    xobject_ptr_t<base::xvblockstore_t> blockstore;
-    blockstore.attach(store::xblockstorehub_t::instance().create_block_store(*blockdb, ""));
+    mock::xvchain_creator creator;
+    creator.create_blockstore_with_xstore();
+    base::xvblockstore_t* blockstore = creator.get_blockstore();
+    store::xstore_face_t* xstore = creator.get_xstore();
 
     // construct account
     std::string sender = xblocktool_t::make_address_user_account(test_xtxpool_util_t::get_account(0));
@@ -614,7 +614,7 @@ TEST_F(test_receipt_queue, receipt_queue_basic) {
     // insert committed txs to blockstore
     std::vector<xcons_transaction_ptr_t> txs = test_xtxpool_util_t::create_cons_transfer_txs(0, 1, 1);
     xblock_t * block;
-    std::vector<xcons_transaction_ptr_t> recvtxs = get_tx(blockstore.get(), blockdb.get(), sender, receiver, txs, &block);
+    std::vector<xcons_transaction_ptr_t> recvtxs = get_tx(blockstore, xstore, sender, receiver, txs, &block);
 
     std::shared_ptr<xtx_entry> tx_ent = std::make_shared<xtx_entry>(recvtxs[0], para);
     int32_t ret = receipt_queue.push_tx(tx_ent);

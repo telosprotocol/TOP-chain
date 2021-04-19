@@ -18,7 +18,6 @@ namespace xtxpool_v2 {
 using namespace top::data;
 
 #define account_send_tx_queue_size_max (16)
-#define account_delay_count_default (1)
 
 #define account_send_tx_move_num_max (3)
 
@@ -161,7 +160,7 @@ void xcontinuous_txs_t::update_latest_nonce(uint64_t latest_nonce, const uint256
 
 void xcontinuous_txs_t::batch_erase(uint32_t from_idx, uint32_t to_idx) {
     for (uint32_t i = from_idx; i < to_idx; i++) {
-        xtxpool_info("xcontinuous_txs_t::update_latest_nonce delete tx:%s", m_txs[i]->get_tx()->dump().c_str());
+        xtxpool_info("xcontinuous_txs_t::batch_erase delete tx:%s", m_txs[i]->get_tx()->dump().c_str());
         m_send_tx_queue_internal->erase_ready_tx(m_txs[i]->get_tx()->get_transaction()->digest());
     }
     m_txs.erase(m_txs.begin() + from_idx, m_txs.begin() + to_idx);
@@ -485,11 +484,7 @@ const std::shared_ptr<xtx_entry> xreceipt_queue_t::pop_tx(const tx_info_t & txin
     }
     m_ready_receipt_queue.erase(it_map->second);
     m_ready_receipt_map.erase(it_map);
-    if (tx_ent->get_tx()->is_confirm_tx()) {
-        m_xtable_info_ptr->conf_tx_dec(1);
-    } else {
-        m_xtable_info_ptr->recv_tx_dec(1);
-    }
+    m_xtable_info_ptr->tx_dec(txinfo.get_subtype(), 1);
     xtxpool_info("xreceipt_queue_t::pop_tx ,table:%s,tx:%s", m_xtable_info_ptr->get_table_addr().c_str(), tx_ent->get_tx()->dump(true).c_str());
     return tx_ent;
 }

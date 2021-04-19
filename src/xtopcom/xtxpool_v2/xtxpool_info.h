@@ -5,9 +5,12 @@
 #pragma once
 
 #include "xbasic/xmemory.hpp"
+#include "xdata/xtransaction.h"
 
 namespace top {
 namespace xtxpool_v2 {
+
+using namespace top::data;
 
 #define table_send_tx_queue_size_max (1024)
 #define table_recv_tx_queue_size_max (1024)
