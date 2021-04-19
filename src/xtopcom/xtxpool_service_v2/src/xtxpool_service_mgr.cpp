@@ -50,7 +50,11 @@ void xtxpool_service_mgr::on_block_confirmed(xblock_t * block) {
     auto handler = [this](base::xcall_t & call, const int32_t cur_thread_id, const uint64_t timenow_ms) -> bool {
         xblock_t * block = dynamic_cast<xblock_t *>(call.get_param1().get_object());
         uint64_t now_clock = this->m_clock->logic_time();
-        xinfo("xtxpool_service_mgr::on_block_confirmed process,level:%d,class:%d,now=%llu,block:%s", block->get_block_level(), block->get_block_class(), now_clock, block->dump().c_str());
+        xinfo("xtxpool_service_mgr::on_block_confirmed process,level:%d,class:%d,now=%llu,block:%s",
+              block->get_block_level(),
+              block->get_block_class(),
+              now_clock,
+              block->dump().c_str());
         if (block->is_tableblock() && block->get_clock() + block_clock_height_fall_behind_max > now_clock) {
             make_receipts_and_send(block);
         }
@@ -82,11 +86,11 @@ void xtxpool_service_mgr::make_receipts_and_send(xblock_t * block) {
 
     uint64_t now = xverifier::xtx_utl::get_gmttime_s();
     for (auto & it_send_receipt : sendtx_receipts) {
-        send_receipt(it_send_receipt, xtxpool_v2::get_receipt_send_times(it_send_receipt->get_unit_cert()->get_gmtime(), now));
+        send_receipt(it_send_receipt);
     }
 
     for (auto & it_recv_receipt : recvtx_receipts) {
-        send_receipt(it_recv_receipt, xtxpool_v2::get_receipt_send_times(it_recv_receipt->get_unit_cert()->get_gmtime(), now));
+        send_receipt(it_recv_receipt);
     }
     xdbg("xtxpool_service_mgr::make_receipts_and_send block:%s", block->dump().c_str());
 }
@@ -183,13 +187,13 @@ bool xtxpool_service_mgr::fade(const xvip2_t & xip) {
     return false;
 }
 
-void xtxpool_service_mgr::send_receipt(xcons_transaction_ptr_t & receipt, uint32_t resend_time) {
+void xtxpool_service_mgr::send_receipt(xcons_transaction_ptr_t & receipt) {
     std::string account_addr = receipt->get_account_addr();
     auto source_tableid = data::account_map_to_table_id(common::xaccount_address_t{account_addr});
     std::shared_ptr<xtxpool_service_face> service = find_receipt_sender(source_tableid, receipt->get_transaction()->digest());
     if (service != nullptr) {
         xdbg("xtxpool_service_mgr::send_receipt service found,zone:%d table:%d tx:%s", source_tableid.get_zone_index(), source_tableid.get_subaddr(), receipt->dump().c_str());
-        service->send_receipt(receipt, resend_time);
+        service->send_receipt(receipt, true);
     } else {
         xdbg("xtxpool_service_mgr::send_receipt no service found,zone:%d table:%d tx:%s", source_tableid.get_zone_index(), source_tableid.get_subaddr(), receipt->dump().c_str());
     }
@@ -229,13 +233,41 @@ void xtxpool_service_mgr::stop() {
     m_timer->release_ref();
 }
 
+#define recover_unconfirmed_txs_interval (0xFF)  // every 256 seconds recover once.
+
 void xtxpool_service_mgr::on_timer() {
     xdbg("xtxpool_service_mgr::on_timer");
     uint64_t now = xverifier::xtx_utl::get_gmttime_s();
-    std::lock_guard<std::mutex> lock(m_mutex);
-    for (auto & iter : m_service_map) {
-        auto service = iter.second;
-        service->on_timer(now);
+    bool is_time_for_recover_unconfirmed_txs = ((now | recover_unconfirmed_txs_interval) == 0);
+    typedef std::tuple<base::enum_xchain_zone_index, uint32_t, uint32_t> table_boundary_t;
+    std::vector<table_boundary_t> table_boundarys;
+    {
+        std::lock_guard<std::mutex> lock(m_mutex);
+        for (auto & iter : m_service_map) {
+            auto service = iter.second;
+            if (is_time_for_recover_unconfirmed_txs) {
+                base::enum_xchain_zone_index zone_id;
+                uint32_t fount_table_id;
+                uint32_t back_table_id;
+                service->get_service_table_boundary(zone_id, fount_table_id, back_table_id);
+                table_boundary_t table_boundary(zone_id, fount_table_id, back_table_id);
+                table_boundarys.push_back(table_boundary);
+            }
+
+            service->resend_receipts(now);
+        }
+    }
+
+    // all nodes should recover unconfirmed txs, for get original tx when receive confirm tx.
+    // because recover might be very time-consuming, recover should not in lock of "m_mutex", or else xtxpool_service_mgr::create may be blocked.
+    for (auto table_boundary : table_boundarys) {
+        base::enum_xchain_zone_index zone_id = std::get<0>(table_boundary);
+        uint32_t fount_table_id = std::get<1>(table_boundary);
+        uint32_t back_table_id = std::get<2>(table_boundary);
+        for (uint32_t table_id = fount_table_id; table_id <= back_table_id; table_id++) {
+            m_para->get_txpool()->update_unconfirm_accounts(zone_id, table_id);
+            m_para->get_txpool()->update_non_ready_accounts(zone_id, table_id);
+        }
     }
 }
 

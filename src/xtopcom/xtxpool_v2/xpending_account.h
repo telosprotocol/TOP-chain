@@ -75,8 +75,6 @@ public:
     void updata_latest_nonce(const std::string & account_addr, uint64_t latest_nonce, const uint256_t & latest_hash);
 
 private:
-    void tx_count_inc(uint8_t subtype, int32_t count);
-    void tx_count_dec(uint8_t subtype, int32_t count);
     xtxpool_table_info_t * m_xtable_info;
     accounts_set m_accounts_set;                                      // accounts ordered by account type and selected number
     std::map<std::string, accounts_set::iterator> m_account_map;      // be easy to find account from m_accounts_set by address

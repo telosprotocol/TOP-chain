@@ -121,6 +121,8 @@ private:
     const uint32_t m_cap_of_heights = 100;
 };
 
+using xaccount_recvtx_filter_ptr_t = xobject_ptr_t<xaccount_recvtx_filter>;
+
 class xaccount_confirmtx_filter : public xaccount_filter {
 public:
     xaccount_confirmtx_filter(xaccount_addr_t account, base::xvblockstore_t * blockstore) : xaccount_filter(account, blockstore){};

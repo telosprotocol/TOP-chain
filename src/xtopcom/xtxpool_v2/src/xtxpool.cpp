@@ -66,6 +66,14 @@ ready_accounts_t xtxpool_t::get_ready_accounts(const std::string & table_addr, u
     return table->get_ready_accounts(count);
 }
 
+std::vector<xcons_transaction_ptr_t> xtxpool_t::get_ready_txs(const std::string & table_addr, uint32_t count) {
+    auto table = get_txpool_table_by_addr(table_addr);
+    if (table == nullptr) {
+        return {};
+    }
+    return table->get_ready_txs(count);
+}
+
 const std::shared_ptr<xtx_entry> xtxpool_t::query_tx(const std::string & account_addr, const uint256_t & hash) const {
     auto table = get_txpool_table_by_addr(account_addr);
     if (table == nullptr) {
@@ -181,6 +189,14 @@ void xtxpool_t::update_unconfirm_accounts(uint8_t zone, uint16_t subaddr) {
     xassert(m_tables[zone][subaddr] != nullptr);
     if (m_tables[zone][subaddr] != nullptr) {
         m_tables[zone][subaddr]->update_unconfirm_accounts();
+    }
+}
+
+void xtxpool_t::update_non_ready_accounts(uint8_t zone, uint16_t subaddr) {
+    xassert(is_table_subscribed(zone, subaddr));
+    xassert(m_tables[zone][subaddr] != nullptr);
+    if (m_tables[zone][subaddr] != nullptr) {
+        m_tables[zone][subaddr]->update_non_ready_accounts();
     }
 }
 

@@ -87,6 +87,8 @@ class xcons_transaction_t : public xbase_dataunit_t<xcons_transaction_t, xdata_t
  public:
     bool                    get_tx_info_prove_cert_and_account(base::xvqcert_t* & cert, std::string & account);
     bool                    get_commit_prove_cert_and_account(base::xvqcert_t* & cert, std::string & account);
+    void                    set_receipt_id(uint64_t receipt_id) {m_receipt_id = receipt_id;}
+    uint64_t                get_receipt_id() const {return m_receipt_id;}
 
  private:
     void        update_transation();
@@ -98,6 +100,7 @@ class xcons_transaction_t : public xbase_dataunit_t<xcons_transaction_t, xdata_t
  private:  // local member, should not serialize
     xtransaction_exec_state_t    m_execute_state;
     uint64_t                     m_unit_height{0};
+    uint64_t                     m_receipt_id{0};
 };
 
 using xcons_transaction_ptr_t = xobject_ptr_t<xcons_transaction_t>;
