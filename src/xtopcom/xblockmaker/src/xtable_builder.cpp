@@ -41,29 +41,11 @@ xblock_ptr_t        xfulltable_builder_t::build_block(const xblock_ptr_t & prev_
     std::shared_ptr<xfulltable_builder_para_t> fulltable_build_para = std::dynamic_pointer_cast<xfulltable_builder_para_t>(build_para);
     xassert(fulltable_build_para != nullptr);
 
-    // TODO(jimmy) always create now highqc binlog
-    const xtable_mbt_binlog_ptr_t & commit_binlog = fulltable_build_para->get_latest_commit_index_binlog();
-    xtable_mbt_binlog_ptr_t highqc_binlog = make_object_ptr<xtable_mbt_binlog_t>(commit_binlog->get_accounts_index());
+    xstatistics_data_t block_statistics = make_block_statistics(fulltable_build_para->get_blocks_from_last_full());
+    xfulltable_block_para_t fulltable_para(fulltable_build_para->get_latest_offstate(), block_statistics);
 
-    auto & uncommit_blocks = fulltable_build_para->get_uncommit_blocks();
-    xassert(uncommit_blocks.size() == 2);
-    xassert(uncommit_blocks[1]->get_height() + 1 == uncommit_blocks[0]->get_height());
-    xassert(uncommit_blocks[0]->get_height() == prev_block->get_height());
-
-    for (auto iter = uncommit_blocks.rbegin(); iter != uncommit_blocks.rend(); iter++) {
-        auto & block = *iter;
-        std::map<std::string, xaccount_index_t> changed_indexs = block->get_units_index();
-        xassert(!changed_indexs.empty());
-        highqc_binlog->set_accounts_index(changed_indexs);
-    }
-
-    std::string block_statistics = make_block_statistics(fulltable_build_para->get_blocks_from_last_full());
-
-    xfulltable_block_para_t fulltable_para(fulltable_build_para->get_last_full_index(), highqc_binlog);
-    fulltable_para.set_block_statistics_data(block_statistics);
-    xdbg("xfulltable_builder_t::build_block %s,lastroot=%s,binlog=%d,%d,newroot=%s,statistics_size=%d",
-        cs_para.dump().c_str(), base::xstring_utl::to_hex(fulltable_build_para->get_last_full_index()->get_root_hash()).c_str(),
-        highqc_binlog->get_account_size(), commit_binlog->get_account_size(), base::xstring_utl::to_hex(fulltable_para.get_new_state_root()).c_str(), block_statistics.size());
+    xdbg("xfulltable_builder_t::build_block %s,full_height=%ld,binlog_height=%ld",
+        cs_para.dump().c_str(), fulltable_build_para->get_latest_offstate()->get_full_height(), fulltable_build_para->get_latest_offstate()->get_binlog_height());
 
     base::xvblock_t* _proposal_block = data::xfull_tableblock_t::create_next_block(fulltable_para, prev_block.get());
     xblock_ptr_t proposal_table;
@@ -72,7 +54,7 @@ xblock_ptr_t        xfulltable_builder_t::build_block(const xblock_ptr_t & prev_
     return proposal_table;
 }
 
-std::string xfulltable_builder_t::make_block_statistics(const std::vector<xblock_ptr_t> & blocks) {
+xstatistics_data_t xfulltable_builder_t::make_block_statistics(const std::vector<xblock_ptr_t> & blocks) {
     // data::xstatistics_data_t _statistics_data = tableblock_statistics(blocks, nodesvr_ptr);
     return {};
 }

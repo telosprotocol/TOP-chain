@@ -7,6 +7,7 @@
 #include "xdata/xtableblock.h"
 #include "xdata/xblocktool.h"
 #include "xdata/xcons_transaction.h"
+#include "xdata/xtablestate.h"
 #include "xstore/xstore_face.h"
 #include "tests/mock/xcertauth_util.hpp"
 #include "tests/mock/xdatamock_unit.hpp"
@@ -32,6 +33,7 @@ class xdatamock_table {
         xblock_ptr_t block;
         block.attach((xblock_t*)genesis_table);
         m_history_tables.push_back(block);
+        m_offstate = make_object_ptr<xtablestate_t>();
 
         set_xstore(store);
 
@@ -80,15 +82,7 @@ class xdatamock_table {
         m_history_tables.push_back(block);
 
         m_table_blockchain->update_state_by_next_height_block(block.get());
-        if (block->is_lighttable()) {
-            xassert(m_table_blockchain->add_light_table(block.get()));
-        } else if (block->is_fulltable()) {
-            if (m_last_full_mbt == nullptr) {
-                m_last_full_mbt = make_object_ptr<xtable_mbt_t>();
-            }
-            m_last_full_mbt = xtable_mbt_t::build_new_tree(m_last_full_mbt, m_table_blockchain->get_table_mbt_binlog());
-            m_table_blockchain->add_full_table(block.get());
-        }
+        m_offstate->execute_block(block.get());
 
         auto tableblock = dynamic_cast<data::xtable_block_t*>(block.get());
         if (tableblock != nullptr) {
@@ -125,12 +119,8 @@ class xdatamock_table {
 
     xblock_ptr_t generate_full_table() {
         xblock_ptr_t prev_tableblock = get_prev_block();
-
-        xtable_mbt_ptr_t last_full_mbt = make_object_ptr<xtable_mbt_t>();
-        if (m_last_full_mbt != nullptr) {
-            last_full_mbt = m_last_full_mbt;
-        }
-        xfulltable_block_para_t blockpara(last_full_mbt, m_table_blockchain->get_table_mbt_binlog());
+        xstatistics_data_t block_statistics;
+        xfulltable_block_para_t blockpara(m_offstate, block_statistics);
         base::xvblock_t* proposal_block = xblocktool_t::create_next_fulltable(blockpara, prev_tableblock.get());
         assert(proposal_block != nullptr);
         xcertauth_util::instance().do_multi_sign(proposal_block);
@@ -192,7 +182,7 @@ class xdatamock_table {
     std::vector<xblock_ptr_t>       m_history_tables;
     uint32_t                        m_last_generate_send_tx_user_index = 0xFFFFFFFF;
     std::vector<xdatamock_unit>     m_mock_units;
-    xtable_mbt_ptr_t                m_last_full_mbt{nullptr};
+    xtablestate_ptr_t               m_offstate{nullptr};
     store::xstore_face_t*           m_store{nullptr};
 };
 

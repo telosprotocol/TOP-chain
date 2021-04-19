@@ -10,6 +10,7 @@
 #include "xbase/xobject_ptr.h"
 #include "xbase/xns_macro.h"
 #include "xvledger/xvaccount.h"
+#include "xvledger/xdataobj_base.hpp"
 
 NS_BEG2(top, base)
 
@@ -35,7 +36,7 @@ class xreceiptid_pair_t {
 };
 
 // the receiptid of the current table with all other tables
-class xreceiptid_pairs_t : public base::xdataunit_t {
+class xreceiptid_pairs_t :  public xbase_dataunit_t<xreceiptid_pairs_t, xdata_type_receiptid> {
  public:
     xreceiptid_pairs_t();
  protected:
@@ -68,6 +69,9 @@ class xreceiptid_state_t : public base::xdataunit_t {
     int32_t         do_read(base::xstream_t & stream) override;
 
  public:
+    void            set_last_full_state(const xreceiptid_pairs_ptr_t & last_full) {m_last_full = last_full;}
+    const xreceiptid_pairs_ptr_t &        get_last_full_state() const {return m_last_full;}
+
     void            add_pair(xtable_shortid_t sid, const xreceiptid_pair_t & pair);
     void            add_pairs(const std::map<xtable_shortid_t, xreceiptid_pair_t> & pairs);
     bool            find_pair(xtable_shortid_t sid, xreceiptid_pair_t & pair);
@@ -77,6 +81,7 @@ class xreceiptid_state_t : public base::xdataunit_t {
     void            merge_new_full();
     std::string     build_root_hash(enum_xhash_type hashtype);
     void            set_binlog(const xreceiptid_pairs_ptr_t & binlog) {m_binlog = binlog;}
+    void            clear_binlog() {m_binlog = make_object_ptr<xreceiptid_pairs_t>();}
     const xreceiptid_pairs_ptr_t &  get_binlog() const {return m_binlog;}
  private:
     xreceiptid_pairs_ptr_t  m_last_full{nullptr};

@@ -8,6 +8,8 @@
 
 NS_BEG2(top, base)
 
+REG_CLS(xreceiptid_pairs_t);
+
 xreceiptid_pair_t::xreceiptid_pair_t(uint64_t sendid_max, uint32_t unconfirm_num, uint64_t recvid_max)
 : m_send_id_max(sendid_max), m_unconfirm_num(unconfirm_num), m_recv_id_max(recvid_max) {
 }
@@ -35,8 +37,7 @@ std::string xreceiptid_pair_t::dump() const {
     return std::string(local_param_buf);
 }
 
-xreceiptid_pairs_t::xreceiptid_pairs_t()
-:base::xdataunit_t(base::xdataunit_t::enum_xdata_type_undefine) {
+xreceiptid_pairs_t::xreceiptid_pairs_t() {
 
 }
 

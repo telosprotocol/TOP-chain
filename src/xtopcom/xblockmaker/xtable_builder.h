@@ -8,6 +8,8 @@
 #include <vector>
 #include "xblockmaker/xblockmaker_face.h"
 #include "xvledger/xaccountindex.h"
+#include "xdata/xtablestate.h"
+#include "xdata/xblock_statistics_data.h"
 
 NS_BEG2(top, blockmaker)
 
@@ -25,23 +27,16 @@ class xlighttable_builder_para_t : public xblock_builder_para_face_t {
 
 class xfulltable_builder_para_t : public xblock_builder_para_face_t {
  public:
-    xfulltable_builder_para_t(const data::xtable_mbt_ptr_t & last_full_index,
-                              const data::xtable_mbt_binlog_ptr_t & latest_commit_index_binlog,
-                              const std::vector<xblock_ptr_t> & uncommit_blocks,
+    xfulltable_builder_para_t(const xtablestate_ptr_t & latest_offstate,
                               const std::vector<xblock_ptr_t> & blocks_from_last_full,
                               const xblockmaker_resources_ptr_t & resources)
-    : xblock_builder_para_face_t(resources), m_last_full_index(last_full_index),
-    m_latest_commit_index_binlog(latest_commit_index_binlog), m_uncommit_blocks(uncommit_blocks), m_blocks_from_last_full(blocks_from_last_full) {}
+    : xblock_builder_para_face_t(resources), m_latest_offstate(latest_offstate), m_blocks_from_last_full(blocks_from_last_full) {}
     virtual ~xfulltable_builder_para_t() {}
 
-    const data::xtable_mbt_ptr_t &          get_last_full_index() const {return m_last_full_index;}
-    const data::xtable_mbt_binlog_ptr_t &   get_latest_commit_index_binlog() const {return m_latest_commit_index_binlog;}
-    const std::vector<xblock_ptr_t> &       get_uncommit_blocks() const {return m_uncommit_blocks;}
+    const xtablestate_ptr_t &               get_latest_offstate() const {return m_latest_offstate;}
     const std::vector<xblock_ptr_t> &       get_blocks_from_last_full() const {return m_blocks_from_last_full;}
  private:
-    data::xtable_mbt_ptr_t          m_last_full_index;
-    data::xtable_mbt_binlog_ptr_t   m_latest_commit_index_binlog;
-    std::vector<xblock_ptr_t>       m_uncommit_blocks;
+    xtablestate_ptr_t               m_latest_offstate;
     std::vector<xblock_ptr_t>       m_blocks_from_last_full;
 };
 
@@ -61,7 +56,7 @@ class xfulltable_builder_t : public xblock_builder_face_t {
                                             xblock_builder_para_ptr_t & build_para);
 
  protected:
-    std::string                 make_block_statistics(const std::vector<xblock_ptr_t> & blocks);
+    xstatistics_data_t                 make_block_statistics(const std::vector<xblock_ptr_t> & blocks);
 };
 
 NS_END2

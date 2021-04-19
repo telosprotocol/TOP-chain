@@ -11,6 +11,7 @@
 NS_BEG2(top, base)
 
 REG_CLS(xtable_mbt_t);
+REG_CLS(xtable_mbt_binlog_t);
 
 xaccount_index_t::xaccount_index_t(uint64_t height) {
     set_latest_unit_height(height);
@@ -91,12 +92,10 @@ std::string xaccount_index_t::dump() const {
     return std::string(local_param_buf);
 }
 
-xtable_mbt_binlog_t::xtable_mbt_binlog_t()
-:base::xdataunit_t(base::xdataunit_t::enum_xdata_type_undefine) {
+xtable_mbt_binlog_t::xtable_mbt_binlog_t() {
 
 }
-xtable_mbt_binlog_t::xtable_mbt_binlog_t(const std::map<std::string, xaccount_index_t> & changed_indexs)
-:base::xdataunit_t(base::xdataunit_t::enum_xdata_type_undefine) {
+xtable_mbt_binlog_t::xtable_mbt_binlog_t(const std::map<std::string, xaccount_index_t> & changed_indexs) {
     m_account_indexs = changed_indexs;
 }
 
@@ -153,6 +152,10 @@ bool xtable_mbt_binlog_t::get_account_index(const std::string & account, xaccoun
         return true;
     }
     return false;
+}
+
+void xtable_mbt_binlog_t::clear_binlog() {
+    m_account_indexs.clear();
 }
 
 std::string xtable_mbt_binlog_t::build_binlog_hash() {
@@ -361,9 +364,13 @@ void xtable_mbt_t::set_accounts_index_info(const std::map<std::string, xaccount_
     }
 }
 
+void xtable_mbt_t::add_binlog(const xtable_mbt_binlog_ptr_t & binlog) {
+    set_accounts_index_info(binlog->get_accounts_index(), false);
+}
+
 int32_t xtable_mbt_t::do_write(base::xstream_t & stream) {
     const int32_t begin_size = stream.size();
-    stream.write_compact_var(m_root_hash);
+    // stream.write_compact_var(m_root_hash);
     const uint32_t count = (uint32_t)m_buckets.size();
     stream.write_compact_var(count);
     for (auto & bucket : m_buckets) {
@@ -374,7 +381,7 @@ int32_t xtable_mbt_t::do_write(base::xstream_t & stream) {
 }
 int32_t xtable_mbt_t::do_read(base::xstream_t & stream) {
     const int32_t begin_size = stream.size();
-    stream.read_compact_var(m_root_hash);
+    // stream.read_compact_var(m_root_hash);
     uint32_t count;
     stream.read_compact_var(count);
     for (uint32_t i = 0; i < count; i++) {
@@ -387,12 +394,13 @@ int32_t xtable_mbt_t::do_read(base::xstream_t & stream) {
     return (begin_size - stream.size());
 }
 
-xtable_mbt_root_node_ptr_t xtable_mbt_t::get_root_node() const {
+xtable_mbt_root_node_ptr_t xtable_mbt_t::get_root_node() {
     std::map<uint16_t, std::string> bucket_hashs;
     for (auto & bucket : m_buckets) {
         bucket_hashs[bucket.first] = bucket.second->build_bucket_hash();
     }
-    xtable_mbt_root_node_ptr_t root_node = make_object_ptr<xtable_mbt_root_node_t>(bucket_hashs, m_root_hash);
+    std::string root_hash = build_root_hash();
+    xtable_mbt_root_node_ptr_t root_node = make_object_ptr<xtable_mbt_root_node_t>(bucket_hashs, root_hash);
     return root_node;
 }
 
@@ -410,13 +418,8 @@ std::string xtable_mbt_t::build_root_hash() {
         bucket_hashs[bucket.first] = bucket.second->build_bucket_hash();
     }
     xtable_mbt_root_node_ptr_t root_node = make_object_ptr<xtable_mbt_root_node_t>(bucket_hashs);
-    m_root_hash = root_node->build_root_hash();
-    return m_root_hash;
-}
-
-bool xtable_mbt_t::check_tree() const {
-    xtable_mbt_root_node_ptr_t root_node = get_root_node();
-    return root_node->check_root_node();
+    std::string root_hash = root_node->build_root_hash();
+    return root_hash;
 }
 
 bool xtable_mbt_t::get_account_index(const std::string & account, xaccount_index_t & index) const {
@@ -437,9 +440,47 @@ size_t xtable_mbt_t::get_account_size() const {
     return count;
 }
 
-xtable_mbt_new_state_t::xtable_mbt_new_state_t() {
+xtable_mbt_new_state_t::xtable_mbt_new_state_t()
+:base::xdataunit_t(base::xdataunit_t::enum_xdata_type_undefine) {
     m_last_full_state = make_object_ptr<xtable_mbt_t>();
     m_newest_binlog_state = make_object_ptr<xtable_mbt_binlog_t>();
+}
+
+xtable_mbt_new_state_t::xtable_mbt_new_state_t(const xtable_mbt_ptr_t & last_mbt, const xtable_mbt_binlog_ptr_t & binlog)
+:base::xdataunit_t(base::xdataunit_t::enum_xdata_type_undefine) {
+    m_last_full_state = last_mbt;
+    if (nullptr == m_last_full_state) {
+        m_last_full_state = make_object_ptr<xtable_mbt_t>();
+    }
+    m_newest_binlog_state = binlog;
+    if (nullptr == m_newest_binlog_state) {
+        m_newest_binlog_state = make_object_ptr<xtable_mbt_binlog_t>();
+    }
+}
+
+int32_t xtable_mbt_new_state_t::do_write(base::xstream_t & stream) {
+    const int32_t begin_size = stream.size();
+    xassert(m_last_full_state != nullptr);
+    m_last_full_state->serialize_to(stream);
+    xassert(m_newest_binlog_state != nullptr);
+    m_newest_binlog_state->serialize_to(stream);
+    return stream.size() - begin_size;
+}
+
+int32_t xtable_mbt_new_state_t::do_read(base::xstream_t & stream) {
+    const int32_t begin_size = stream.size();
+    m_last_full_state = make_object_ptr<xtable_mbt_t>();
+    m_last_full_state->serialize_from(stream);
+    m_newest_binlog_state = make_object_ptr<xtable_mbt_binlog_t>();
+    m_newest_binlog_state->serialize_from(stream);
+    return begin_size - stream.size();
+}
+
+void xtable_mbt_new_state_t::merge_new_full() {
+    if (!m_newest_binlog_state->get_accounts_index().empty()) {
+        m_last_full_state->add_binlog(m_newest_binlog_state);
+        m_newest_binlog_state->clear_binlog();
+    }
 }
 
 bool xtable_mbt_new_state_t::get_account_index(const std::string & account, xaccount_index_t & account_index) {

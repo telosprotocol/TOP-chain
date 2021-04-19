@@ -386,3 +386,4 @@ TEST_F(test_tableindex, new_xbase_serialize) {
         std::cout << "size=" << _test_stream.size() << std::endl;
     }
 }
+

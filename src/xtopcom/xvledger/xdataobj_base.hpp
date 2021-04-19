@@ -47,11 +47,10 @@ enum enum_xtopcom_object_type {
     xdata_type_origin_tx_resource           = 27,  // origin tx resource
 
     xdata_type_table_mbt                    = 28,
-    xdata_type_fulltable_block              = 29,
-    xdata_type_fulltable_input_entity       = 30,
-    xdata_type_fulltable_output_entity      = 31,
-    xdata_type_fulltable_binlog_resource    = 32,
-    xdata_type_fulltable_statistics_resource    = 33,
+    xdata_type_accountindex_binlog          = 29,
+    xdata_type_receiptid                    = 30,
+    xdata_type_fulltable_block              = 31,
+    xdata_type_fulltable_output_entity      = 32,
 
     xtopcom_object_type_max
 };

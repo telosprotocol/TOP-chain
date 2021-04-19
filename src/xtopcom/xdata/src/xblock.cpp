@@ -267,7 +267,7 @@ std::string xblock_t::dump_cert(base::xvqcert_t * qcert) const {
     // ss << ",parent_h="  << qcert->get_parent_block_height();
     // ss << " validator=" << qcert->get_validator().low_addr;
     // ss << " auditor="   << qcert->get_auditor().low_addr;
-    // ss << " sign_h="    << base::xhash64_t::digest(qcert->get_hash_to_sign());
+    ss << " sign_h="    << base::xhash64_t::digest(qcert->get_hash_to_sign());
     // ss << " header_h="   << base::xhash64_t::digest(qcert->get_header_hash());
     // ss << " input_r="   << base::xhash64_t::digest(qcert->get_input_root_hash());
     // ss << " output_r="  << base::xhash64_t::digest(qcert->get_output_root_hash());

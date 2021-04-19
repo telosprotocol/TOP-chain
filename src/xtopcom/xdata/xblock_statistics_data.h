@@ -98,6 +98,9 @@ int32_t operator<<(base::xbuffer_t & buffer, xelection_related_statistics_data_t
 struct xtop_statistics_data : public xserializable_based_on<void> {
     std::map<uint64_t, xelection_related_statistics_data_t> detail;
 
+public:
+    int32_t     serialize_to_string(std::string & bin_data) const;
+    int32_t     serialize_from_string(const std::string & bin_data);
 private:
     int32_t do_read(base::xstream_t & stream) override;
     int32_t do_write(base::xstream_t & stream) const override;
