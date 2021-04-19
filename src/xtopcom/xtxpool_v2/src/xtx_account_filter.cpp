@@ -1,9 +1,9 @@
 #include "xtxpool_v2/xtx_account_filter.h"
-#include "xtxpool_v2/xtxpool_log.h"
 
 #include "xbase/xbase.h"
 #include "xbase/xlog.h"
 #include "xdata/xblocktool.h"
+#include "xtxpool_v2/xtxpool_log.h"
 
 #include <unordered_set>
 
@@ -110,8 +110,8 @@ enum_xtxpool_error_type xaccount_recvtx_filter::sync_reject_rules_and_reject(con
             bool eq2 = (tx1->get_raw_tx()->digest() == tx->get_transaction()->digest());
             if (eq1 != eq2) {
                 xtxpool_error("sync_reject_rules_and_reject:tx1:%s tx:%s equal judge fail",
-                       base::xstring_utl::to_hex(tx1->get_raw_tx()->get_digest_str()).c_str(),
-                       base::xstring_utl::to_hex(tx->get_transaction()->get_digest_str()).c_str());
+                              base::xstring_utl::to_hex(tx1->get_raw_tx()->get_digest_str()).c_str(),
+                              base::xstring_utl::to_hex(tx->get_transaction()->get_digest_str()).c_str());
             }
             if (tx1->get_raw_tx()->get_digest_str() == tx->get_transaction()->get_digest_str()) {
                 deny = true;
@@ -254,7 +254,6 @@ enum_xtxpool_error_type xaccount_confirmtx_filter::sync_reject_rules(uint64_t un
         }
 
         if (unit_block->get_block_class() == base::enum_xvblock_class_full) {
-            XMETRICS_COUNTER_DECREMENT("txpool_unconfirm_tx", m_unconfirm_txs.size());
             confirm_txs.clear();
             m_permit_rules.clear();
             m_unconfirm_txs.clear();
@@ -270,11 +269,12 @@ enum_xtxpool_error_type xaccount_confirmtx_filter::sync_reject_rules(uint64_t un
         data::xlightunit_block_t * lightunit = dynamic_cast<data::xlightunit_block_t *>(xblock);
 
         if (lightunit->get_unconfirm_sendtx_num() == 0) {
-            XMETRICS_COUNTER_DECREMENT("txpool_unconfirm_tx", m_unconfirm_txs.size());
             confirm_txs.clear();
             m_permit_rules.clear();
             m_unconfirm_txs.clear();
-            xtxpool_info("account:%s meet the unconfirm send tx zero light unitblock, means all send tx have confirmed before the height %llu", get_account().c_str(), unit_block->get_height());
+            xtxpool_info("account:%s meet the unconfirm send tx zero light unitblock, means all send tx have confirmed before the height %llu",
+                         get_account().c_str(),
+                         unit_block->get_height());
             break;
         }
 
@@ -318,12 +318,7 @@ enum_xtxpool_error_type xaccount_confirmtx_filter::sync_reject_rules(uint64_t un
         auto it_unconfirm_txs = m_unconfirm_txs.insert(it_s.second);
         m_permit_rules[it_s.first] = it_unconfirm_txs;
     }
-    if (send_txs.size() > confirm_txs.size()) {
-        XMETRICS_COUNTER_INCREMENT("txpool_unconfirm_tx", send_txs.size() - confirm_txs.size());
-    } else if (send_txs.size() < confirm_txs.size()) {
-        XMETRICS_COUNTER_DECREMENT("txpool_unconfirm_tx", confirm_txs.size() - send_txs.size());
-    }
-
+    
     return xtxpool_success;
 }
 
