@@ -17,7 +17,8 @@ namespace top {
             xfork_point_t{xfork_point_type_t::logic_time, 3904920, "reward contract save reward detail"},
             xfork_point_t{xfork_point_type_t::logic_time, 3913560, "vote contract trx split fork point"},
             xfork_point_t{xfork_point_type_t::logic_time, 4000000, "rec standby update programe version"},
-            xfork_point_t{xfork_point_type_t::logic_time, 5000000, "slash and workload contract upgrade"}
+            xfork_point_t{xfork_point_type_t::logic_time, 5000000, "slash and workload contract upgrade"},
+            xfork_point_t{xfork_point_type_t::logic_time, 5100000, "reward fork refactoring"},
         };
 
         // !!!change!!! fork time for galileo
@@ -27,7 +28,8 @@ namespace top {
             xfork_point_t{xfork_point_type_t::logic_time, 3904920, "reward contract save reward detail"},
             xfork_point_t{xfork_point_type_t::logic_time, 3913560, "vote contract trx split fork point"},
             xfork_point_t{xfork_point_type_t::logic_time, 4000000, "rec standby update programe version"},
-            xfork_point_t{xfork_point_type_t::logic_time, 5000000, "slash and workload contract upgrade"}
+            xfork_point_t{xfork_point_type_t::logic_time, 5000000, "slash and workload contract upgrade"},
+            xfork_point_t{xfork_point_type_t::logic_time, 5100000, "reward fork refactoring"},
         };
 
         // !!!change!!! fork time for local develop net
@@ -37,7 +39,8 @@ namespace top {
             xfork_point_t{xfork_point_type_t::logic_time, 3904920, "reward contract save reward detail"},
             xfork_point_t{xfork_point_type_t::logic_time, 3913560, "vote contract trx split fork point"},
             xfork_point_t{xfork_point_type_t::logic_time, 4000000, "rec standby update programe version"},
-            xfork_point_t{xfork_point_type_t::logic_time, 5000000, "slash and workload contract upgrade"}
+            xfork_point_t{xfork_point_type_t::logic_time, 5000000, "slash and workload contract upgrade"},
+            xfork_point_t{xfork_point_type_t::logic_time, 5100000, "reward fork refactoring"},
         };
 
         xchain_fork_config_t const & xtop_chain_fork_config_center::chain_fork_config() noexcept {
