@@ -22,6 +22,7 @@ namespace top
             xblockstorehub_impl(const xblockstorehub_impl &);
             xblockstorehub_impl & operator = (const xblockstorehub_impl &);
         public:
+            base::xvblockstore_t*  create_block_store();
             base::xvblockstore_t*  get_block_store();
         private:
             base::xiothread_t*     m_monitor_thread;
@@ -55,10 +56,22 @@ namespace top
             return _static_blockstore;
         }
  
+         base::xvblockstore_t*  xblockstorehub_impl::create_block_store()
+        {
+            xvblockstore_impl * _blockstore = new xvblockstore_impl(std::string("/"),*m_monitor_thread->get_context(),m_monitor_thread->get_thread_id());
+            return _blockstore;
+        }
+
         base::xvblockstore_t*  get_vblockstore()
         {
             static xblockstorehub_impl _static_blockstore_hub;
             return _static_blockstore_hub.get_block_store();
+        }
+
+        base::xvblockstore_t*  create_vblockstore()
+        {
+            static xblockstorehub_impl _static_blockstore_hub;
+            return _static_blockstore_hub.create_block_store();
         }
 
     };//end of namespace of vstore

@@ -193,7 +193,7 @@ class test_datamock_t {
         xblockchain2_t* account = m_store->clone_account(address);
         if (account == nullptr) {
             base::xvblock_t* genesis_block = test_blocktuil::create_genesis_empty_unit(address);
-            assert(m_store->set_vblock(genesis_block));
+            assert(m_store->set_vblock(std::string(), genesis_block));
             assert(m_store->execute_block(genesis_block));
             account = m_store->clone_account(address);
         } else {
@@ -210,7 +210,7 @@ class test_datamock_t {
             base::xvblock_t* proposal_block = test_blocktuil::create_next_fullunit(account);
             auto block = dynamic_cast<data::xblock_t*>(proposal_block);
             block->set_block_flag(base::enum_xvblock_flag_connected);
-            assert(m_store->set_vblock(proposal_block));
+            assert(m_store->set_vblock(std::string(), proposal_block));
             assert(m_store->execute_block(proposal_block));
             xblock_ptr_t obj;
             obj.attach(block);
@@ -240,7 +240,7 @@ class test_datamock_t {
             proposal_block->set_block_flag(base::enum_xvblock_flag_connected);
             auto block = dynamic_cast<data::xblock_t*>(proposal_block);
 
-            assert(m_store->set_vblock(proposal_block));
+            assert(m_store->set_vblock(std::string(), proposal_block));
             assert(m_store->execute_block(proposal_block));
             xblock_ptr_t obj;
             obj.attach(block);
