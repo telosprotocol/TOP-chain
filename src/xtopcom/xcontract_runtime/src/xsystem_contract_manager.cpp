@@ -2,13 +2,13 @@
 
 #include "xbasic/xutility.h"
 #include "xsystem_contracts/xsystem_contract_addresses.h"
-#include "xsystem_contracts/xtransfer_contract.h"
+// #include "xsystem_contracts/xtransfer_contract.h"
 
 NS_BEG2(top, contract_runtime)
 
 void xtop_system_contract_manager::deploy() {
     m_system_contract_deployment_data = {
-        {common::xaccount_address_t{system_contracts::transfer_address}, xcontract_deployment_data_t{std::make_shared<system_contracts::xtransfer_contract_t>(), {}}}
+        // {common::xaccount_address_t{system_contracts::transfer_address}, xcontract_deployment_data_t{std::make_shared<system_contracts::xtransfer_contract_t>(), {}}}
     };
 }
 

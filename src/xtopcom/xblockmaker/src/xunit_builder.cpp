@@ -4,12 +4,16 @@
 
 #include <string>
 #include <cinttypes>
-#include "xblockmaker/xunit_builder.h"
+
 #include "xblockmaker/xblockmaker_error.h"
-#include "xtxexecutor/xtransaction_executor.h"
-#include "xstore/xaccount_context.h"
-#include "xdata/xfullunit.h"
+#include "xblockmaker/xunit_builder.h"
 #include "xdata/xemptyblock.h"
+#include "xdata/xfullunit.h"
+#include "xstore/xaccount_context.h"
+#include "xtxexecutor/xtransaction_executor.h"
+#include "xvledger/xvledger.h"
+#include "xvledger/xvstatestore.h"
+#include "xcontract_runtime/xaccount_vm.h"
 
 NS_BEG2(top, blockmaker)
 
@@ -117,6 +121,30 @@ xblock_ptr_t        xemptyunit_builder_t::build_block(const xblock_ptr_t & prev_
     proposal_unit.attach((data::xblock_t*)_proposal_block);
     proposal_unit->set_consensus_para(cs_para);
     return proposal_unit;
+}
+
+xblock_ptr_t xtop_lightunit_builder2::build_block(xblock_ptr_t const & prev_block,
+                                                  xaccount_ptr_t const & prev_state,
+                                                  data::xblock_consensus_para_t const & cs_para,
+                                                  xblock_builder_para_ptr_t & build_para) {
+    auto * statestore = base::xvchain_t::instance().get_xstatestore();
+    assert(statestore != nullptr);
+    if (!statestore->get_block_state(prev_block.get())) {
+        return nullptr;
+    }
+
+    xobject_ptr_t<base::xvbstate_t> blockstate;
+    blockstate.attach(prev_block->get_state());
+
+    std::shared_ptr<xlightunit_builder_para_t> lightunit_build_para = std::dynamic_pointer_cast<xlightunit_builder_para_t>(build_para);
+    xassert(lightunit_build_para != nullptr);
+
+    auto const & input_txs = lightunit_build_para->get_origin_txs();
+
+    contract_runtime::xaccount_vm_t account_vm;
+    auto result = account_vm.execute(input_txs, blockstate);
+
+    return nullptr;
 }
 
 
