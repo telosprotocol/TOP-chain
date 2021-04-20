@@ -347,7 +347,7 @@ xblock_ptr_t xtable_maker_t::make_full_table(const xblock_consensus_para_t & cs_
     xblock_ptr_t commit_block = get_latest_committed_block();
     xtablestate_ptr_t tablestate = m_indexstore->clone_tablestate(commit_block);
     if (nullptr == tablestate) {
-        xerror("xtable_maker_t::make_full_table fail-get mbt state. %s", cs_para.dump().c_str());
+        xwarn("xtable_maker_t::make_full_table fail-get mbt state. %s", cs_para.dump().c_str());
         return nullptr;
     }
     tablestate->execute_block(uncommit_blocks[1].get());
@@ -361,9 +361,10 @@ xblock_ptr_t xtable_maker_t::make_full_table(const xblock_consensus_para_t & cs_
 bool    xtable_maker_t::load_table_blocks_from_last_full(const xblock_ptr_t & prev_block, std::vector<xblock_ptr_t> & blocks) {
     std::vector<xblock_ptr_t> _form_highest_blocks;
     xblock_ptr_t current_block = prev_block;
+    xassert(current_block->get_height() > 0);
     _form_highest_blocks.push_back(current_block);
 
-    while (current_block->get_block_class() != base::enum_xvblock_class_full && current_block->get_height() != 0) {
+    while (current_block->get_block_class() != base::enum_xvblock_class_full && current_block->get_height() > 1) {
         base::xauto_ptr<base::xvblock_t> _block = get_blockstore()->load_block_object(*this, current_block->get_height() - 1, current_block->get_last_block_hash(), true);
         if (_block == nullptr) {
             xerror("xfulltable_builder_t::load_table_blocks_from_last_full fail-load block.account=%s,height=%ld", get_account().c_str(), current_block->get_height() - 1);
@@ -373,6 +374,7 @@ bool    xtable_maker_t::load_table_blocks_from_last_full(const xblock_ptr_t & pr
         blocks.push_back(current_block);
     }
 
+    // TOOD(jimmy) use map
     for (auto iter = _form_highest_blocks.rbegin(); iter != _form_highest_blocks.rend(); iter++) {
         blocks.push_back(*iter);
     }

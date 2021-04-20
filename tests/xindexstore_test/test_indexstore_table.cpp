@@ -146,16 +146,5 @@ TEST_F(test_indexstore_table, mbt_state_query_1) {
         ASSERT_EQ(committed_unit->get_height(), account_index.get_latest_unit_height());
         std::cout << "account=" << account << " index=" << account_index.dump() << std::endl;
     }
-    {
-        auto & account = datamock_units[0].get_account();
-        base::xaccount_index_t account_index;
-        xtablestate_ptr_t new_state = indexstore->clone_tablestate();
-        ASSERT_NE(new_state, nullptr);
-        new_state->get_account_index(account, account_index);
-        ASSERT_NE(account_index.get_latest_unit_height(), 0);
-        auto committed_unit = blockstore->get_latest_committed_block(account);
-        ASSERT_EQ(committed_unit->get_height(), account_index.get_latest_unit_height());
-        std::cout << "account=" << account << " index=" << account_index.dump() << std::endl;
-    }
 }
 

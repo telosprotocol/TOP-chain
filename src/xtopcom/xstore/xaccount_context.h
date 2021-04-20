@@ -39,6 +39,7 @@ class xaccount_context_t {
 
     bool    add_transaction(const xcons_transaction_ptr_t& trans);
     void    set_context_para(uint64_t clock, const std::string & random_seed, uint64_t timestamp, uint64_t sys_total_lock_tgas_token);
+    void    set_context_pare_current_table(const std::string & table_addr, uint64_t table_committed_height);
     const std::string & get_random_seed() const {return m_random_seed;}
     uint64_t get_timer_height() const {return m_timer_height;}
     uint64_t get_chain_height() const {return m_account->get_chain_height();}
@@ -230,6 +231,9 @@ class xaccount_context_t {
     uint64_t            m_tgas_limit{0};
     std::string         m_random_seed;
     uint64_t            m_sys_total_lock_tgas_token{0};
+
+    std::string         m_current_table_addr;
+    uint64_t            m_current_table_commit_height{0};
 };
 
 }  // namespace store

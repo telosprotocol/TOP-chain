@@ -3,6 +3,7 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include <assert.h>
+#include <cinttypes>
 
 #include "xstore/xstore_error.h"
 #include "xstore/xaccount_context.h"
@@ -1279,6 +1280,11 @@ void xaccount_context_t::set_context_para(uint64_t clock, const std::string & ra
     m_sys_total_lock_tgas_token = sys_total_lock_tgas_token;
 }
 
+void xaccount_context_t::set_context_pare_current_table(const std::string & table_addr, uint64_t table_committed_height) {
+    m_current_table_addr = table_addr;
+    m_current_table_commit_height = table_committed_height;
+}
+
 bool xaccount_context_t::add_transaction(const xcons_transaction_ptr_t& trans) {
     m_currect_transaction = trans;
     return true;
@@ -1539,10 +1545,16 @@ xaccount_context_t::get_block_by_height(const std::string & owner, uint64_t heig
 
 uint64_t
 xaccount_context_t::get_blockchain_height(const std::string & owner) const {
+    uint64_t height;
     if (owner == m_address) {
-        return m_account->get_chain_height();
+        height = m_account->get_chain_height();
+    } else if (owner == m_current_table_addr) {
+        height = m_current_table_commit_height;
+    } else {
+        height = m_store->get_blockchain_height(owner);
     }
-    return m_store->get_blockchain_height(owner);
+    xdbg("xaccount_context_t::get_blockchain_height owner=%s,height=%" PRIu64 "", owner.c_str(), height);
+    return height;
 }
 
 }  // namespace store
