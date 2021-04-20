@@ -131,7 +131,7 @@ xtablestate_ptr_t xindexstore_table_t::get_target_tablestate(const xblock_ptr_t 
     if (tablestate_target->get_binlog_height() < block->get_height()) {
         tablestate_target = get_target_block_state(tablestate_target, block);
         if (nullptr == tablestate_target) {
-            xerror("xindexstore_table_t::get_target_tablestate fail-get_target_block_state.table=%s,block_height=%" PRIu64 "",
+            xwarn("xindexstore_table_t::get_target_tablestate fail-get_target_block_state.table=%s,block_height=%" PRIu64 "",
                 get_account().c_str(), block->get_height());
             return nullptr;
         }
