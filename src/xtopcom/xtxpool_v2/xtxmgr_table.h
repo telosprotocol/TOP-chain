@@ -35,6 +35,7 @@ public:
     const std::shared_ptr<xtx_entry> query_tx(const std::string & account_addr, const uint256_t & hash) const;
     void updata_latest_nonce(const std::string & account_addr, uint64_t latest_nonce, const uint256_t & latest_hash);
     bool is_account_need_update(const std::string & account_addr) const;
+    void update_table_receipt_id_state(const base::xreceiptid_state_ptr_t & receiptid_state);
 
 private:
     void queue_to_pending();

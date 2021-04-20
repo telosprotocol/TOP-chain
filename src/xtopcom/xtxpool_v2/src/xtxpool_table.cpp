@@ -134,7 +134,9 @@ ready_accounts_t xtxpool_table_t::get_ready_accounts(uint32_t count) {
 }
 
 std::vector<xcons_transaction_ptr_t> xtxpool_table_t::get_ready_txs(uint32_t count) {
+    xtablestate_ptr_t tablestate = m_table_indexstore->clone_tablestate();
     std::lock_guard<std::mutex> lck(m_mgr_mutex);
+    m_txmgr_table.update_table_receipt_id_state(tablestate->get_receiptid_state());
     return m_txmgr_table.get_ready_txs(count);
 }
 
@@ -195,6 +197,7 @@ xcons_transaction_ptr_t xtxpool_table_t::get_unconfirm_tx(const std::string & ac
 }
 
 const std::vector<xcons_transaction_ptr_t> xtxpool_table_t::get_resend_txs(uint64_t now) {
+    // todo:compatibility for old version without receipt id.
     // std::lock_guard<std::mutex> lck(m_filter_mutex);
     // return m_table_filter.get_resend_txs(now);
     std::lock_guard<std::mutex> lck(m_unconfirm_mutex);
@@ -212,8 +215,9 @@ bool xtxpool_table_t::is_unconfirm_txs_reached_upper_limmit() const {
 void xtxpool_table_t::on_block_confirmed(xblock_t * block) {
     // update_reject_rule(block->get_account(), block);
     {
+        xtablestate_ptr_t tablestate = m_table_indexstore->clone_tablestate();
         std::lock_guard<std::mutex> lck(m_unconfirm_mutex);
-        m_unconfirmed_tx_queue.udpate_latest_confirmed_block(block);
+        m_unconfirmed_tx_queue.udpate_latest_confirmed_block(block, tablestate->get_receiptid_state());
     }
 
     if (block->is_lightunit() && !block->is_genesis_block()) {
@@ -266,10 +270,9 @@ void xtxpool_table_t::update_unconfirm_accounts() {
     //         }
     //     }
     // }
+    xtablestate_ptr_t tablestate = m_table_indexstore->clone_tablestate();
     std::lock_guard<std::mutex> lck(m_unconfirm_mutex);
-    // todo: get latest receipt id state
-    xtable_receipt_id_state_t receipt_id_state;
-    return m_unconfirmed_tx_queue.recover(receipt_id_state);
+    return m_unconfirmed_tx_queue.recover(tablestate->get_receiptid_state());
 }
 
 void xtxpool_table_t::update_non_ready_accounts() {

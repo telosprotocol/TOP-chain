@@ -49,7 +49,8 @@ TEST_F(test_unconfirmed_tx_queue, unconfirmed_tx_queue_basic) {
     std::vector<xcons_transaction_ptr_t> txs = test_xtxpool_util_t::create_cons_transfer_txs(0, 1, 1);
     xblock_t * block = test_xtxpool_util_t::create_unit_with_cons_txs(blockstore, xstore, sender, txs);
 
-    unconfirmed_tx_queue.udpate_latest_confirmed_block(block);
+    base::xreceiptid_state_ptr_t receiptid_state = make_object_ptr<base::xreceiptid_state_t>();
+    unconfirmed_tx_queue.udpate_latest_confirmed_block(block, receiptid_state);
 
     auto tx_find = unconfirmed_tx_queue.find(txs[0]->get_source_addr(), txs[0]->get_transaction()->digest());
     ASSERT_NE(tx_find, nullptr);
@@ -86,9 +87,10 @@ TEST_F(test_unconfirmed_tx_queue, recover) {
     std::vector<xcons_transaction_ptr_t> txs = test_xtxpool_util_t::create_cons_transfer_txs(0, 1, tx_num);
     xblock_t * block = test_xtxpool_util_t::create_tableblock_with_send_txs_with_next_two_emptyblock(blockstore, xstore, sender, table_addr, txs, 100);
 
-    xtable_receipt_id_state_t receipt_id_state;
-    receipt_id_state.set_max_out_id(0, tx_num);
-    unconfirmed_tx_queue.recover(receipt_id_state);
+    base::xreceiptid_state_ptr_t receiptid_state = make_object_ptr<base::xreceiptid_state_t>();
+    xreceiptid_pair_t receiptid_pair(0, 5, 0);
+    receiptid_state->add_pair(0, receiptid_pair);
+    unconfirmed_tx_queue.recover(receiptid_state);
 
     for (uint32_t i = 0; i < tx_num; i++) {
         auto tx_find = unconfirmed_tx_queue.find(txs[i]->get_source_addr(), txs[i]->get_transaction()->digest());
@@ -98,8 +100,9 @@ TEST_F(test_unconfirmed_tx_queue, recover) {
     auto resend_txs1 = unconfirmed_tx_queue.get_resend_txs(block->get_timestamp() + 61);
     ASSERT_EQ(resend_txs1.size(), tx_num);
 
-    receipt_id_state.set_latest_commit_out_id(0, 2);
-    unconfirmed_tx_queue.recover(receipt_id_state);
+    xreceiptid_pair_t receiptid_pair2(2, 3, 0);
+    receiptid_state->add_pair(0, receiptid_pair2);
+    unconfirmed_tx_queue.recover(receiptid_state);
 
     for (uint32_t i = 0; i < 2; i++) {
         auto tx_find = unconfirmed_tx_queue.find(txs[i]->get_source_addr(), txs[i]->get_transaction()->digest());
@@ -114,8 +117,9 @@ TEST_F(test_unconfirmed_tx_queue, recover) {
     auto resend_txs2 = unconfirmed_tx_queue.get_resend_txs(block->get_timestamp() + 61);
     ASSERT_EQ(resend_txs2.size(), tx_num - 2);
 
-    receipt_id_state.set_latest_commit_out_id(0, tx_num);
-    unconfirmed_tx_queue.recover(receipt_id_state);
+    xreceiptid_pair_t receiptid_pair3(5, 0, 0);
+    receiptid_state->add_pair(0, receiptid_pair3);
+    unconfirmed_tx_queue.recover(receiptid_state);
 
     auto resend_txs3 = unconfirmed_tx_queue.get_resend_txs(block->get_timestamp() + 61);
     ASSERT_EQ(resend_txs3.size(), 0);
