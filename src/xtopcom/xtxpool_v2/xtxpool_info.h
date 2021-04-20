@@ -83,54 +83,54 @@ private:
     uint16_t m_back_table_id;
 };
 
-class xtxpool_table_info_t {
+class xtxpool_table_info_t : public base::xvaccount_t{
 public:
-    xtxpool_table_info_t(const std::string & address, xtxpool_shard_info_t * shard) : m_address(address), m_shard(shard) {
+    xtxpool_table_info_t(const std::string & address, xtxpool_shard_info_t * shard) : base::xvaccount_t(address), m_shard(shard) {
     }
     const std::string & get_table_addr() const {
-        return m_address;
+        return get_address();
     }
     void send_tx_inc(int32_t count) {
         m_counter.send_tx_inc(count);
         m_shard->send_tx_inc(count);
         XMETRICS_COUNTER_INCREMENT("txpool_push_tx_send_cur", count);
-        XMETRICS_COUNTER_INCREMENT("table_send_tx_cur" + m_address, count);
-        xdbg("send_tx_inc table %s send queue size:%u,shard send queue:%u", m_address.c_str(), m_counter.get_send_tx_count(), m_shard->get_send_tx_count());
+        XMETRICS_COUNTER_INCREMENT("table_send_tx_cur" + get_address(), count);
+        xdbg("send_tx_inc table %s send queue size:%u,shard send queue:%u", get_address().c_str(), m_counter.get_send_tx_count(), m_shard->get_send_tx_count());
     }
     void send_tx_dec(int32_t count) {
         m_counter.send_tx_inc(-count);
         m_shard->send_tx_inc(-count);
         XMETRICS_COUNTER_DECREMENT("txpool_push_tx_send_cur", count);
-        XMETRICS_COUNTER_DECREMENT("table_send_tx_cur" + m_address, count);
-        xdbg("send_tx_dec table %s send queue size:%u,shard send queue:%u", m_address.c_str(), m_counter.get_send_tx_count(), m_shard->get_send_tx_count());
+        XMETRICS_COUNTER_DECREMENT("table_send_tx_cur" + get_address(), count);
+        xdbg("send_tx_dec table %s send queue size:%u,shard send queue:%u", get_address().c_str(), m_counter.get_send_tx_count(), m_shard->get_send_tx_count());
     }
     void recv_tx_inc(int32_t count) {
         m_counter.recv_tx_inc(count);
         m_shard->recv_tx_inc(count);
         XMETRICS_COUNTER_INCREMENT("txpool_push_tx_recv_cur", count);
-        XMETRICS_COUNTER_INCREMENT("table_recv_tx_cur" + m_address, count);
-        xdbg("recv_tx_inc table %s recv queue size:%u,shard recv queue:%u", m_address.c_str(), m_counter.get_recv_tx_count(), m_shard->get_recv_tx_count());
+        XMETRICS_COUNTER_INCREMENT("table_recv_tx_cur" + get_address(), count);
+        xdbg("recv_tx_inc table %s recv queue size:%u,shard recv queue:%u", get_address().c_str(), m_counter.get_recv_tx_count(), m_shard->get_recv_tx_count());
     }
     void recv_tx_dec(int32_t count) {
         m_counter.recv_tx_inc(-count);
         m_shard->recv_tx_inc(-count);
         XMETRICS_COUNTER_DECREMENT("txpool_push_tx_recv_cur", count);
-        XMETRICS_COUNTER_DECREMENT("table_recv_tx_cur" + m_address, count);
-        xdbg("recv_tx_dec table %s recv queue size:%u,shard recv queue:%u", m_address.c_str(), m_counter.get_recv_tx_count(), m_shard->get_recv_tx_count());
+        XMETRICS_COUNTER_DECREMENT("table_recv_tx_cur" + get_address(), count);
+        xdbg("recv_tx_dec table %s recv queue size:%u,shard recv queue:%u", get_address().c_str(), m_counter.get_recv_tx_count(), m_shard->get_recv_tx_count());
     }
     void conf_tx_inc(int32_t count) {
         m_counter.conf_tx_inc(count);
         m_shard->conf_tx_inc(count);
         XMETRICS_COUNTER_INCREMENT("txpool_push_tx_confirm_cur", count);
-        XMETRICS_COUNTER_INCREMENT("table_confirm_tx_cur" + m_address, count);
-        xdbg("conf_tx_inc table %s confirm queue size:%u,shard confirm queue:%u", m_address.c_str(), m_counter.get_conf_tx_count(), m_shard->get_conf_tx_count());
+        XMETRICS_COUNTER_INCREMENT("table_confirm_tx_cur" + get_address(), count);
+        xdbg("conf_tx_inc table %s confirm queue size:%u,shard confirm queue:%u", get_address().c_str(), m_counter.get_conf_tx_count(), m_shard->get_conf_tx_count());
     }
     void conf_tx_dec(int32_t count) {
         m_counter.conf_tx_inc(-count);
         m_shard->conf_tx_inc(-count);
         XMETRICS_COUNTER_DECREMENT("txpool_push_tx_confirm_cur", count);
-        XMETRICS_COUNTER_DECREMENT("table_confirm_tx_cur" + m_address, count);
-        xdbg("conf_tx_dec table %s confirm queue size:%u,shard confirm queue:%u", m_address.c_str(), m_counter.get_conf_tx_count(), m_shard->get_conf_tx_count());
+        XMETRICS_COUNTER_DECREMENT("table_confirm_tx_cur" + get_address(), count);
+        xdbg("conf_tx_dec table %s confirm queue size:%u,shard confirm queue:%u", get_address().c_str(), m_counter.get_conf_tx_count(), m_shard->get_conf_tx_count());
     }
 
     void tx_inc(enum_transaction_subtype subtype, int32_t count) {
@@ -157,7 +157,7 @@ public:
         if (m_counter.get_send_tx_count() >= table_send_tx_queue_size_max || m_counter.get_conf_tx_count() >= table_conf_tx_queue_size_max ||
             m_shard->get_send_tx_count() >= shard_send_tx_queue_size_max) {
             xdbg("is_send_tx_reached_upper_limit table %s send queue size:%u,confirm queue size:%u,shard send queue:%u",
-                 m_address.c_str(),
+                 get_address().c_str(),
                  m_counter.get_send_tx_count(),
                  m_counter.get_conf_tx_count(),
                  m_shard->get_send_tx_count());
@@ -168,7 +168,7 @@ public:
 
     bool is_recv_tx_reached_upper_limit() {
         if (m_counter.get_recv_tx_count() >= table_recv_tx_queue_size_max || m_shard->get_recv_tx_count() >= shard_recv_tx_queue_size_max) {
-            xdbg("is_recv_tx_reached_upper_limit table %s recv queue size:%u,shard recv queue:%u", m_address.c_str(), m_counter.get_recv_tx_count(), m_shard->get_recv_tx_count());
+            xdbg("is_recv_tx_reached_upper_limit table %s recv queue size:%u,shard recv queue:%u", get_address().c_str(), m_counter.get_recv_tx_count(), m_shard->get_recv_tx_count());
             return true;
         }
         return false;
@@ -177,7 +177,7 @@ public:
     bool is_confirm_tx_reached_upper_limit() {
         if (m_counter.get_conf_tx_count() >= table_conf_tx_queue_size_max || m_shard->get_conf_tx_count() >= shard_conf_tx_queue_size_max) {
             xdbg("is_confirm_tx_reached_upper_limit table %s confirm queue size:%u,shard confirm queue:%u",
-                 m_address.c_str(),
+                 get_address().c_str(),
                  m_counter.get_conf_tx_count(),
                  m_shard->get_conf_tx_count());
             return true;
@@ -186,7 +186,6 @@ public:
     }
 
 private:
-    std::string m_address;
     xtxpool_shard_info_t * m_shard{nullptr};
     xtx_counter_t m_counter{};
 };
