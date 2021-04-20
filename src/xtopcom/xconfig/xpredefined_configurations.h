@@ -150,6 +150,7 @@ XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(max_vote_nodes_num, std::uint32_t, normal,
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(votes_report_interval, xinterval_t, normal, 30, 1, std::numeric_limits<xinterval_t>::max());
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(reward_issue_interval, xinterval_t, normal, 8640, 1, std::numeric_limits<xinterval_t>::max());  // 24 hours
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(workload_timer_interval, xinterval_t, normal, 17, 1, std::numeric_limits<xinterval_t>::max());  // 180 seconds
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(workload_collection_interval, xinterval_t, normal, 17, 1, std::numeric_limits<xinterval_t>::max());  // 180 seconds
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(min_node_reward, uint64_t, important, 0, 0, std::numeric_limits<uint64_t>::max());
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(min_voter_dividend, uint64_t, important, 0, 0, std::numeric_limits<uint64_t>::max());
 #endif
@@ -197,6 +198,8 @@ XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(cross_reading_rec_reg_contract_logic_timeo
                                       60,
                                       1,
                                       std::numeric_limits<common::xlogic_time_t>::max());
+// workload:
+
 
 // credit & slash
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(tableslash_report_schedule_interval, xinterval_t, normal, 1, 0, std::numeric_limits<xinterval_t>::max());
