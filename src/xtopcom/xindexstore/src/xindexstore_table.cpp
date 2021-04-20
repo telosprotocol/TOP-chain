@@ -73,7 +73,7 @@ xtablestate_ptr_t xindexstore_table_t::clone_tablestate() {
 bool  xindexstore_table_t::get_account_index(const xblock_ptr_t & committed_block, const std::string & account, base::xaccount_index_t & account_index) {
     std::lock_guard<std::mutex> l(m_lock);
     if (false == update_tablestate(committed_block)) {
-        return nullptr;
+        return false;
     }
     return m_tablestate->get_account_index(account, account_index);
 }

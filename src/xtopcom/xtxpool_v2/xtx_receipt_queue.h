@@ -7,9 +7,10 @@
 #include "xbasic/xmemory.hpp"
 #include "xdata/xcons_transaction.h"
 #include "xdata/xgenesis_data.h"
-#include "xtxpool_v2/xtable_receipt_id_state.h"
 #include "xtxpool_v2/xtxpool_face.h"
 #include "xtxpool_v2/xtxpool_info.h"
+#include "xvledger/xvaccount.h"
+#include "xvledger/xreceiptid.h"
 
 #include <map>
 #include <set>
@@ -75,7 +76,7 @@ private:
     uint64_t m_latest_receipt_id{0};
 };
 
-using xtx_peer_table_map_t = std::unordered_map<uint16_t, std::shared_ptr<xpeer_table_receipts_t>>;
+using xtx_peer_table_map_t = std::unordered_map<base::xtable_shortid_t, std::shared_ptr<xpeer_table_receipts_t>>;
 
 class xreceipt_queue_new_t {
 public:
@@ -85,7 +86,7 @@ public:
     const std::vector<xcons_transaction_ptr_t> get_txs(uint32_t max_num) const;
     const std::shared_ptr<xtx_entry> pop_tx(const tx_info_t & txinfo);
     const std::shared_ptr<xtx_entry> find(const std::string & account_addr, const uint256_t & hash) const;
-    void update_table_receipt_id_state(const xtable_receipt_id_state_t & id_state);
+    void update_table_receipt_id_state(const base::xreceiptid_state_ptr_t & receiptid_state);
 
 private:
     xtx_peer_table_map_t & get_peer_table_map(bool is_recv_tx) {
