@@ -2098,25 +2098,10 @@ namespace top
                 xassert(mbus != NULL);
                 if(mbus != NULL)
                 {
-                    if(index_ptr->get_this_block() == NULL)
-                    {
-                        // execute_block need whole block
-                        if(false == read_block_object_from_db(index_ptr))
-                        {
-                            xerror("xvblockstore_impl::on_block_stored,at store(%s)-> block=%s",get_blockstore_path().c_str(),index_ptr->dump().c_str());
-                            return false;
-                        }
+                    mbus::xevent_ptr_t event = mbus->create_event_for_store_index_to_db(get_account(), index_ptr);
+                    if (event != nullptr) {
+                        mbus->push_event(event);
                     }
-                    if(index_ptr->get_this_block() != NULL)
-                    {
-                        if(index_ptr->get_height() != 0)
-                        {
-                            mbus::xevent_ptr_t event = mbus->create_event_for_store_block_to_db(index_ptr->get_this_block());
-                            mbus->push_event(event);
-                        }
-                    }
-                    
-                    xdbg_info("xvblockstore_impl::on_block_stored,at store(%s)-> block=%s",get_blockstore_path().c_str(),index_ptr->dump().c_str());
                 }
             }
             return true;
