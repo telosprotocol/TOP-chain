@@ -211,7 +211,7 @@ void get_block_handle::getRootblockInfo() {
 }
 
 uint64_t get_block_handle::get_timer_height() const {
-    auto vb = m_block_store->get_latest_committed_block(base::xvaccount_t(sys_contract_beacon_timer_addr));
+    auto vb = m_block_store->get_latest_cert_block(base::xvaccount_t(sys_contract_beacon_timer_addr));
     xblock_t * bp = static_cast<xblock_t *>(vb.get());
     if (bp != nullptr) {
         return bp->get_height();
@@ -370,7 +370,7 @@ void get_block_handle::getIssuanceDetail() {
 }
 
 uint64_t get_block_handle::get_timer_clock() const {
-    auto vb = m_block_store->get_latest_committed_block(base::xvaccount_t(sys_contract_beacon_timer_addr));
+    auto vb = m_block_store->get_latest_cert_block(base::xvaccount_t(sys_contract_beacon_timer_addr));
     xblock_t * bp = static_cast<xblock_t *>(vb.get());
     if (bp != nullptr) {
         return bp->get_clock();
