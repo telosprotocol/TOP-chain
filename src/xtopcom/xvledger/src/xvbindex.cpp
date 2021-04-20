@@ -53,6 +53,9 @@ namespace top
 
         xvbindex_t & xvbindex_t::operator = (const xvbindex_t & obj)
         {
+            if(this == &obj) {
+                return *this;
+            }
             m_closed                = obj.m_closed;
             m_account_addr          = obj.m_account_addr;
             m_account_id            = obj.m_account_id;
@@ -509,11 +512,13 @@ namespace top
         
         bool    xvbnode_t::reset_block(xvblock_t *  new_block_ptr) //replace it with newer viewid
         {
-            if(NULL == new_block_ptr)
-                return false;
-            
+            if (new_block_ptr != nullptr) {
+                new_block_ptr->add_ref();
+            }
+
             xvblock_t * old_block = xatomic_t::xexchange(m_block, new_block_ptr);
-            old_block->release_ref();
+            if(old_block != nullptr)
+                old_block->release_ref();
             return true;
         }
         
