@@ -143,6 +143,11 @@ bool xtxmgr_table_t::is_account_need_update(const std::string & account_addr) co
     return m_send_tx_queue.is_account_need_update(account_addr);
 }
 
+
+void xtxmgr_table_t::update_table_receipt_id_state(const base::xreceiptid_state_ptr_t & receiptid_state) {
+    m_new_receipt_queue.update_table_receipt_id_state(receiptid_state);
+}
+
 void xtxmgr_table_t::queue_to_pending() {
     std::vector<std::shared_ptr<xtx_entry>> expired_send_txs;
     std::vector<std::shared_ptr<xtx_entry>> push_succ_send_txs;

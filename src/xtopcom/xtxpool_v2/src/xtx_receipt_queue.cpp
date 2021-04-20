@@ -105,12 +105,13 @@ int32_t xreceipt_queue_new_t::push_tx(const std::shared_ptr<xtx_entry> & tx_ent)
     auto & peer_table_map = get_peer_table_map(tx_ent->get_tx()->is_recv_tx());
     std::shared_ptr<xpeer_table_receipts_t> peer_table_receipts;
     auto & account_addr = (tx_ent->get_tx()->is_recv_tx()) ? tx_ent->get_tx()->get_source_addr() : tx_ent->get_tx()->get_target_addr();
-    uint16_t table_sid = get_table_sid_by_addr(account_addr);
+    base::xvaccount_t vaccount(account_addr);
+    auto peer_table_sid = vaccount.get_short_table_id();
 
-    auto it = peer_table_map.find(table_sid);
+    auto it = peer_table_map.find(peer_table_sid);
     if (it == peer_table_map.end()) {
         peer_table_receipts = std::make_shared<xpeer_table_receipts_t>(&m_receipt_queue_internal);
-        peer_table_map[table_sid] = peer_table_receipts;
+        peer_table_map[peer_table_sid] = peer_table_receipts;
     } else {
         peer_table_receipts = it->second;
     }
@@ -126,12 +127,13 @@ const std::vector<xcons_transaction_ptr_t> xreceipt_queue_new_t::get_txs(uint32_
         // use receipt id ascending order peculiarity to deduplicate, if tx's peer table is found from map and receipt id is bigger, update it in map.
         bool is_recv_tx = it_tx_map_tx->get()->get_tx()->is_recv_tx();
         auto & account_addr = is_recv_tx ? it_tx_map_tx->get()->get_tx()->get_source_addr() : it_tx_map_tx->get()->get_tx()->get_target_addr();
-        uint16_t table_sid = get_table_sid_by_addr(account_addr);
+        base::xvaccount_t vaccount(account_addr);
+        auto peer_table_sid = vaccount.get_short_table_id();
         uint64_t receipt_id = it_tx_map_tx->get()->get_tx()->get_receipt_id();
         std::map<uint16_t, std::vector<xcons_transaction_ptr_t>> & tx_peer_table_map = is_recv_tx ? recv_peer_table_map : confirm_peer_table_map;
 
         uint32_t old_tx_num = 0;
-        auto it_tx_peer_table_map = tx_peer_table_map.find(table_sid);
+        auto it_tx_peer_table_map = tx_peer_table_map.find(peer_table_sid);
         if (it_tx_peer_table_map != tx_peer_table_map.end()) {
             if (receipt_id <= it_tx_peer_table_map->second.back()->get_receipt_id()) {
                 continue;
@@ -142,11 +144,11 @@ const std::vector<xcons_transaction_ptr_t> xreceipt_queue_new_t::get_txs(uint32_
 
         std::shared_ptr<xpeer_table_receipts_t> peer_table_receipts = nullptr;
         if (is_recv_tx) {
-            auto it = m_recv_tx_peer_table_map.find(table_sid);
+            auto it = m_recv_tx_peer_table_map.find(peer_table_sid);
             xassert(it != m_recv_tx_peer_table_map.end());
             peer_table_receipts = it->second;
         } else {
-            auto it = m_confirm_tx_peer_table_map.find(table_sid);
+            auto it = m_confirm_tx_peer_table_map.find(peer_table_sid);
             xassert(it != m_confirm_tx_peer_table_map.end());
             peer_table_receipts = it->second;
         }
@@ -154,7 +156,7 @@ const std::vector<xcons_transaction_ptr_t> xreceipt_queue_new_t::get_txs(uint32_
         if (txs_tmp.size() <= old_tx_num) {
             continue;
         }
-        tx_peer_table_map[table_sid] = txs_tmp;
+        tx_peer_table_map[peer_table_sid] = txs_tmp;
         xtxpool_dbg("xreceipt_queue_new_t::get_txs receipt_id:%llu,old_tx_num:%u,txs_tmp size=%u", receipt_id, old_tx_num, txs_tmp.size());
         txs_count += (txs_tmp.size() - old_tx_num);
     }
@@ -177,10 +179,11 @@ const std::shared_ptr<xtx_entry> xreceipt_queue_new_t::pop_tx(const tx_info_t & 
     }
 
     auto & account_addr = (tx_ent->get_tx()->is_recv_tx()) ? tx_ent->get_tx()->get_source_addr() : tx_ent->get_tx()->get_target_addr();
-    uint16_t table_sid = get_table_sid_by_addr(account_addr);
+    base::xvaccount_t vaccount(account_addr);
+    auto peer_table_sid = vaccount.get_short_table_id();
     auto & peer_table_map = get_peer_table_map(tx_ent->get_tx()->is_recv_tx());
 
-    auto it_peer_table_receipts = peer_table_map.find(table_sid);
+    auto it_peer_table_receipts = peer_table_map.find(peer_table_sid);
     xassert(it_peer_table_receipts != peer_table_map.end());
     it_peer_table_receipts->second.get()->erase(tx_ent->get_tx()->get_receipt_id());
 
@@ -191,17 +194,21 @@ const std::shared_ptr<xtx_entry> xreceipt_queue_new_t::find(const std::string & 
     return m_receipt_queue_internal.find(hash);
 }
 
-void xreceipt_queue_new_t::update_table_receipt_id_state(const xtable_receipt_id_state_t & id_state) {
+void xreceipt_queue_new_t::update_table_receipt_id_state(const base::xreceiptid_state_ptr_t & receiptid_state) {
     for (auto & it : m_recv_tx_peer_table_map) {
         auto & peer_table_sid = it.first;
         auto & peer_table_tx_queue = it.second;
-        peer_table_tx_queue->update_latest_id(id_state.get_latest_commit_in_id(peer_table_sid));
+        base::xreceiptid_pair_t receiptid_pair;
+        receiptid_state->find_pair(peer_table_sid, receiptid_pair);
+        peer_table_tx_queue->update_latest_id(receiptid_pair.get_recvid_max());
     }
 
     for (auto & it : m_confirm_tx_peer_table_map) {
         auto & peer_table_sid = it.first;
         auto & peer_table_tx_queue = it.second;
-        peer_table_tx_queue->update_latest_id(id_state.get_latest_commit_out_id(peer_table_sid));
+        base::xreceiptid_pair_t receiptid_pair;
+        receiptid_state->find_pair(peer_table_sid, receiptid_pair);
+        peer_table_tx_queue->update_latest_id(receiptid_pair.get_sendid_min());
     }
 }
 
