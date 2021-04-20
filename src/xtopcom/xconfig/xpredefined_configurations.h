@@ -298,6 +298,9 @@ XDECLARE_CONFIGURATION(tableblock_batch_tx_max_num, std::int32_t, 64);
 XDECLARE_CONFIGURATION(fulltable_interval_block_num, std::uint32_t, 128);  // TODO(jimmy) 512
 XDECLARE_CONFIGURATION(local_blacklist, const char *, "");
 XDECLARE_CONFIGURATION(local_whitelist, const char *, "");
+// slash fulltable interval
+XDECLARE_CONFIGURATION(slash_fulltable_interval, xinterval_t, 30); // 5 minutes
+
 
 /* beginning of development parameters */
 XDECLARE_CONFIGURATION(http_port, uint16_t, 19081);
