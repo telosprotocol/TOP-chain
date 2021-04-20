@@ -41,6 +41,15 @@ namespace top
             virtual bool                find_values(const std::string & key,std::vector<std::string> & values) override;//support wild search
             
             virtual bool                execute_block(base::xvblock_t* block) override;
+            
+            virtual bool               get_vblock_offdata(const std::string & store_path,base::xvblock_t* for_block) const override//just load offdata
+            {
+                return false;
+            }
+            virtual bool             set_vblock_offdata(const std::string & store_path,base::xvblock_t* for_block) override//just save offdata
+            {
+                return false;
+            }
         public:
             virtual std::string         get_store_path() const  override {return m_store_path;}
         private:
@@ -63,7 +72,7 @@ namespace top
             virtual void   push_event(const mbus::xevent_ptr_t& e) override; //push event into mbus system
             
         public://declares clasic events
-            virtual mbus::xevent_ptr_t  create_event_for_store_index_to_db(const std::string & account, base::xvbindex_t * target_index) override;
+            virtual mbus::xevent_ptr_t  create_event_for_store_index_to_db(base::xvbindex_t * target_block) override;
             virtual mbus::xevent_ptr_t  create_event_for_store_block_to_db(base::xvblock_t * target_block) override;
         };
     };

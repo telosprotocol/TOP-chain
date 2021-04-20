@@ -20,6 +20,7 @@ namespace top
         {
             init();
             
+            m_account_addr          = obj.get_account();
             m_account_id            = xvaccount_t::get_xid_from_account(obj.get_account());
             m_block_height          = obj.get_height();
             m_last_fullblock_height = obj.get_last_full_block_height();
@@ -53,6 +54,7 @@ namespace top
         xvbindex_t & xvbindex_t::operator = (const xvbindex_t & obj)
         {
             m_closed                = obj.m_closed;
+            m_account_addr          = obj.m_account_addr;
             m_account_id            = obj.m_account_id;
             m_block_height          = obj.m_block_height;
             m_last_fullblock_height = obj.m_last_fullblock_height;
@@ -97,6 +99,8 @@ namespace top
     
         xvbindex_t::~xvbindex_t()
         {
+            xinfo("xvbindex_t::destroy,dump(%s)",dump().c_str());
+            
             if(m_prev_index != NULL)
                 m_prev_index->release_ref();
             
@@ -146,7 +150,7 @@ namespace top
         const std::string xvbindex_t::dump() const
         {
             char local_buf[256];
-            xprintf(local_buf,sizeof(local_buf),"{xvbindex_t:account_id(%" PRIu64 "),height=%" PRIu64 ",viewid=%" PRIu64 ",next_viewid(%" PRIu64 "),  parent_height(%" PRIu64 "),block-flags=0x%x,store-flags=0x%x,refcount=%d,this=%p}",m_account_id,m_block_height,m_block_viewid,get_next_viewid(),m_parent_block_height,get_block_flags(),get_store_flags(), get_refcount(),this);
+            xprintf(local_buf,sizeof(local_buf),"{xvbindex_t:account_id(%" PRIu64 "),account_addr=%s,height=%" PRIu64 ",viewid=%" PRIu64 ",next_viewid(%" PRIu64 "),  parent_height(%" PRIu64 "),block-flags=0x%x,store-flags=0x%x,refcount=%d,this=%p}",m_account_id,m_account_addr.c_str(), m_block_height,m_block_viewid,get_next_viewid(),m_parent_block_height,get_block_flags(),get_store_flags(), get_refcount(),this);
 
             return std::string(local_buf);
         }
