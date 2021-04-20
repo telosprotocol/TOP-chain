@@ -58,7 +58,6 @@ class xindexstore_face_t : public base::xvaccount_t {
     virtual ~xindexstore_face_t() {}
 
     virtual xtablestate_ptr_t     clone_tablestate(const xblock_ptr_t & block) = 0;
-    virtual xtablestate_ptr_t     clone_tablestate() = 0;
 
     virtual bool  get_account_index(const std::string & account, base::xaccount_index_t & account_index) = 0;
     virtual bool  get_account_index(const xblock_ptr_t & committed_block, const std::string & account, base::xaccount_index_t & account_index) = 0;
