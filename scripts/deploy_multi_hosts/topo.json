@@ -1,0 +1,37 @@
+{
+    "connect": {
+        "username": "root",
+        "password": "123456",
+        "port": 22
+    },
+    "public": {
+        "httpPort":19081,
+        "grpcPort": 19082,
+        "wsPort": 19085,
+        "BusPort": 9000,
+        "logLevel": 0,
+        "logPath": "log",
+        "dbPath": "db",
+		"workdir": "/home/top",
+        "min_auditor_group_size" : 3,
+        "max_auditor_group_size" : 3,
+        "min_validator_group_size" : 3,
+        "max_validator_group_size" : 3,
+        "min_election_committee_size" : 6,
+        "max_election_committee_size" : 6,
+        "auditor_group_count" : 1,
+        "validator_group_count" : 1,
+        "rec_election_interval" : 181,
+        "zec_election_interval" : 211,
+        "zone_election_trigger_interval" : 5,
+        "cluster_election_interval" : 71
+    },    
+    "rec": [
+        {"account": "T00000LKy8CAPRETJmUr9DZiwCPcc9VFqDBpQEG6", "host": "192.168.50.136", "pubkey": "BO1GzXnnDufgfv/OYyBGA4b/cgq87H3F0tCkeQiR5b4mePf8V721WoXPHGgvWPdQ2Ci0SsL4VSrSLVdKeheNdyk=", "prikey": "NfKrEefeSvg9WinKKN+xIgxTu0xoWZuogRmD++jobns="},
+        {"account": "T00000LLLK8teSrpbtcVnaYCtykniJHHeMZegQMU", "host": "192.168.50.137", "pubkey": "BHWT6Jr004YIsfnhtUkLl2ZK7Z6gxfhaktgxib+8dKlOhqkTxib0bMQKtrjuKHQWVE2DaEF7QQiMWUeF9mEt59E=", "prikey": "N8e5iRs21tUhOfLs+8zCXSj9QqAbxXyrc41ZMNCQoVM="},
+        {"account": "T00000LPjk6KqsnCu46kHffttVPjToRmitpStvvo", "host": "192.168.50.138", "pubkey": "BKnMfrDLOw2tyuCBK7Fqa+pHp4o8/fQKLVN8EPGxkzEy2wz6rjR2TrKasn2m0R7yEEa1DM3iCjOwyAxiq3eAdcQ=", "prikey": "J5nUDUPx6KcQaIwnMYEIyWOVvgpSPFBCFvgi7eHWe2c="},
+        {"account": "T00000LQkSo2PYR7hVxZmkQphvsxAbiB8V22PwPT", "host": "192.168.50.139", "pubkey": "BJE+S/NmkfMB8OIzHoJcy+lrBs0yD7X0dbKmYTg4PaNzLpaPIG9x5ojAJjSDm4JzpE84YN2C09nenWtJo0Qqxx4=", "prikey": "TFwR8Ge8P+LyrJsfhdDfsU+6s02EcpfhCHJp4UKFXzk="},
+        {"account": "T00000LRauRZ3SvMtNhxcvoHtP8JK9pmZgxQCe7Q", "host": "192.168.50.140", "pubkey": "BBZQTi7Pv4yRCYzFxri1BRUWXV6hd3nXG1tV21niKRfhk9sPmqX5SA1PcPhe3ZECIILpuvceiguSh6arX6Wfd0k=", "prikey": "bN2rhuzl4KmZbfMi3ja8ZgJU+/SQvHdMbKBMnJD3QV4="},
+        {"account": "T00000LRc5LxEXVdUuFcoLezjPiMw4CLYgvkEmtC", "host": "192.168.50.141", "pubkey": "BAR31Ok8x+EXZIMJNhQhgHXdvEfbJJ6EajJn0OZf0jPC3NKzyAAmTP86LPwATfeE+KyZUFom5tdCErx4ThlgQ4Q=", "prikey": "Jfar4eInoDc7om75FMY8VPAHo+Cp9GMAJnBmvwAK0mI="}
+    ]
+}
