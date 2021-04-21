@@ -4,6 +4,7 @@
 
 #include <string>
 #include <vector>
+#include <cinttypes>
 #include <map>
 
 #include "xstore/xstore.h"
@@ -203,6 +204,15 @@ xdataobj_ptr_t xaccount_cmd::get_property(const std::string& prop_name, int32_t 
         xdataobj_ptr_t obj = m_store->clone_property(m_address, prop_name);
         if (obj == nullptr) {
             error_code = xaccount_property_behind_not_exist;
+            return nullptr;
+        }
+
+        // property in db may changed when tx executed
+        std::string db_prop_hash = xhash_base_t::calc_dataunit_hash(obj.get());
+        if (db_prop_hash != hash) {
+            error_code = xaccount_property_behind_not_exist;
+            xwarn("xaccount_cmd::get_property fail-property hash unmatch,account:%s,height=%" PRIu64 ",property(%s).",
+                  m_account->get_account().c_str(), m_account->get_last_height(), prop_name.c_str());
             return nullptr;
         }
 
