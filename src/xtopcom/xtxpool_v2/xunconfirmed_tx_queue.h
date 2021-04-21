@@ -59,7 +59,7 @@ public:
     uint16_t get_peer_table_sid() const {
         return m_peer_table_sid;
     }
-    uint16_t get_receipt_id() const {
+    uint64_t get_receipt_id() const {
         return m_receipt_id;
     }
 
@@ -78,15 +78,15 @@ public:
         return m_unconfirmed_txs.size();
     }
 
-    // for test only, should delete!!!!!
-    void set_test_receipt_id(uint64_t id) {
-        test_receipt_id = id;
-    }
-    uint64_t get_test_receipt_id() {
-        uint64_t tmp_id = test_receipt_id;
-        test_receipt_id++;
-        return tmp_id;
-    }
+    // // for test only, should delete!!!!!
+    // void set_test_receipt_id(uint64_t id) {
+    //     test_receipt_id = id;
+    // }
+    // uint64_t get_test_receipt_id() {
+    //     uint64_t tmp_id = test_receipt_id;
+    //     test_receipt_id++;
+    //     return tmp_id;
+    // }
 
 private:
     uint64_t m_highest_height{0};
@@ -94,8 +94,8 @@ private:
     xpeer_tables_t * m_peer_tables;
     std::map<std::string, std::shared_ptr<xunconfirmed_tx_info_t>> m_unconfirmed_txs;  // key:tx hash, value:tx
 
-    // for test only, should delete!!!!!
-    uint64_t test_receipt_id{1};
+    // // for test only, should delete!!!!!
+    // uint64_t test_receipt_id{1};
 };
 
 class xunconfirmed_tx_queue_t {

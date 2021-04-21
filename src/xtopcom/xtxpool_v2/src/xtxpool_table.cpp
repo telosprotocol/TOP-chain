@@ -21,12 +21,12 @@ int32_t xtxpool_table_t::push_send_tx(const std::shared_ptr<xtx_entry> & tx) {
     }
 
     // todo: flow contral by receipt id.
-    if (is_unconfirm_txs_reached_upper_limmit()) {
-        xtxpool_warn("xtxpool_table_t::push_send_tx unconfirm txs reached upper limmit tx:%s", tx->get_tx()->dump().c_str());
-        XMETRICS_COUNTER_INCREMENT("txpool_push_tx_send_fail_unconfirm_reached_limmit", 1);
-        XMETRICS_COUNTER_INCREMENT("txpool_push_tx_send_fail", 1);
-        return xtxpool_error_account_unconfirm_txs_reached_upper_limit;
-    }
+    // if (is_unconfirm_txs_reached_upper_limmit()) {
+    //     xtxpool_warn("xtxpool_table_t::push_send_tx unconfirm txs reached upper limmit tx:%s", tx->get_tx()->dump().c_str());
+    //     XMETRICS_COUNTER_INCREMENT("txpool_push_tx_send_fail_unconfirm_reached_limmit", 1);
+    //     XMETRICS_COUNTER_INCREMENT("txpool_push_tx_send_fail", 1);
+    //     return xtxpool_error_account_unconfirm_txs_reached_upper_limit;
+    // }
 
     auto account_addr = tx->get_tx()->get_source_addr();
 
@@ -67,26 +67,26 @@ int32_t xtxpool_table_t::push_receipt(const std::shared_ptr<xtx_entry> & tx) {
         return ret;
     }
 
-    auto & account_addr = tx->get_tx()->get_account_addr();
+    // auto & account_addr = tx->get_tx()->get_account_addr();
 
-    store::xaccount_basic_info_t account_basic_info;
-    bool result = m_table_indexstore->get_account_basic_info(account_addr, account_basic_info);
-    if (!result) {
-        // todo : push to non_ready_accounts
-        // std::lock_guard<std::mutex> lck(m_non_ready_mutex);
-        // m_non_ready_accounts.push_tx(tx);
-        xtxpool_warn("xtxpool_table_t::push_receipt account state fall behind tx:%s", tx->get_tx()->dump(true).c_str());
-        return xtxpool_error_account_state_fall_behind;
-    }
+    // store::xaccount_basic_info_t account_basic_info;
+    // bool result = m_table_indexstore->get_account_basic_info(account_addr, account_basic_info);
+    // if (!result) {
+    //     // todo : push to non_ready_accounts
+    //     // std::lock_guard<std::mutex> lck(m_non_ready_mutex);
+    //     // m_non_ready_accounts.push_tx(tx);
+    //     xtxpool_warn("xtxpool_table_t::push_receipt account state fall behind tx:%s", tx->get_tx()->dump(true).c_str());
+    //     return xtxpool_error_account_state_fall_behind;
+    // }
     // auto latest_unit_block = m_para->get_vblockstore()->get_latest_committed_block(account_addr);
 
-    bool deny = false;
-    enum_xtxpool_error_type ret_r = reject(account_addr, tx->get_tx(), account_basic_info.get_latest_block()->get_height(), deny);
-    if (deny) {
-        XMETRICS_COUNTER_INCREMENT("txpool_push_tx_receipt_fail", 1);
-        xtxpool_warn("xtxpool_table_t::push_receipt reject tx:%s,ret:%u", tx->get_tx()->dump(true).c_str(), ret_r);
-        return xtxpool_error_tx_duplicate;
-    }
+    // bool deny = false;
+    // enum_xtxpool_error_type ret_r = reject(account_addr, tx->get_tx(), account_basic_info.get_latest_block()->get_height(), deny);
+    // if (deny) {
+    //     XMETRICS_COUNTER_INCREMENT("txpool_push_tx_receipt_fail", 1);
+    //     xtxpool_warn("xtxpool_table_t::push_receipt reject tx:%s,ret:%u", tx->get_tx()->dump(true).c_str(), ret_r);
+    //     return xtxpool_error_tx_duplicate;
+    // }
 
     if (data::is_sys_contract_address(common::xaccount_address_t{tx->get_tx()->get_account_addr()})) {
         tx->get_para().set_tx_type_score(enum_xtx_type_socre_system);

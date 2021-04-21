@@ -20,7 +20,6 @@ xproposal_maker_t::xproposal_maker_t(const std::string & account, const xblockma
     m_table_maker = make_object_ptr<xtable_maker_t>(account, resources);  // TOOD(jimmy) global
     m_tableblock_batch_tx_num_residue = XGET_CONFIG(tableblock_batch_tx_max_num);  // TOOD(jimmy)
     m_max_account_num = XGET_CONFIG(tableblock_batch_unitblock_max_num);
-    m_indexstore = resources->get_indexstorehub()->get_index_store(account);
 }
 
 bool xproposal_maker_t::can_make_proposal(data::xblock_consensus_para_t & proposal_para) {
@@ -250,18 +249,21 @@ bool xproposal_maker_t::update_txpool_txs(const xblock_consensus_para_t & propos
     get_txpool()->update_locked_txs(get_account(), locked_tx_vec);
 
     // get tablestate related to latest cert block
-    auto tablestate = m_indexstore->clone_tablestate(proposal_para.get_latest_committed_block());
-    if (nullptr == tablestate) {
+    auto tablestate_commit = m_indexstore->clone_tablestate(proposal_para.get_latest_committed_block());
+    if (nullptr == tablestate_commit) {
         xwarn("xproposal_maker_t::update_txpool_txs fail clone tablestate. %s", proposal_para.dump().c_str());
         return false;
     }
 
-    get_txpool()->update_receiptid_state(proposal_para.get_table_account(), tablestate->get_receiptid_state());
+    get_txpool()->update_receiptid_state(proposal_para.get_table_account(), tablestate_commit->get_receiptid_state());
 
-    tablestate->execute_block(proposal_para.get_latest_locked_block().get());
-    tablestate->execute_block(proposal_para.get_latest_cert_block().get());
+    auto tablestate_highqc = m_indexstore->clone_tablestate(proposal_para.get_latest_cert_block());
+    if (nullptr == tablestate_highqc) {
+        xwarn("xproposal_maker_t::update_txpool_txs fail clone tablestate. %s", proposal_para.dump().c_str());
+        return false;
+    }
 
-    xtxpool_v2::xtxs_pack_para_t txpool_pack_para(proposal_para.get_table_account(), tablestate->get_receiptid_state(), 16, 32, 32);
+    xtxpool_v2::xtxs_pack_para_t txpool_pack_para(proposal_para.get_table_account(), tablestate_highqc->get_receiptid_state(), 16, 32, 32);
     xtxpool_v2::ready_accounts_t ready_accounts = get_txpool()->get_ready_accounts(txpool_pack_para);
     // xtxpool_v2::ready_accounts_t ready_accounts = get_txpool()->get_ready_accounts(get_account(), m_max_account_num);
     for (auto & ready_account : ready_accounts) {

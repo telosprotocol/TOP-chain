@@ -48,7 +48,6 @@ class xproposal_maker_t : public xunit_service::xproposal_maker_face {
     xtable_maker_ptr_t          m_table_maker{nullptr};
     int32_t                     m_tableblock_batch_tx_num_residue{0};
     int32_t                     m_max_account_num{0};
-    store::xindexstore_face_ptr_t m_indexstore{nullptr};
 };
 
 NS_END2
