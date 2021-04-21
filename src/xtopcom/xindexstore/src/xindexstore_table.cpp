@@ -19,8 +19,10 @@ xindexstore_table_t::xindexstore_table_t(const std::string & account, const xind
 
 xtablestate_ptr_t xindexstore_table_t::rebuild_tablestate(const xtablestate_ptr_t & old_state, const std::map<uint64_t, xblock_ptr_t> & latest_blocks) {
     for (auto & v : latest_blocks) {
+        xassert(old_state->get_binlog_height() + 1 == v.second->get_height());
         auto ret = old_state->execute_block(v.second.get());
         xassert(ret);
+        xassert(old_state->get_binlog_height() == v.second->get_height());
     }
     return old_state;
 }
@@ -107,72 +109,69 @@ xtablestate_ptr_t xindexstore_table_t::load_base_tablestate_from_db(const xtable
 }
 
 xtablestate_ptr_t xindexstore_table_t::get_target_tablestate(const xblock_ptr_t & block) {
-    if (m_tablestate->get_binlog_height() > block->get_height()) {
-        xwarn("xindexstore_table_t::get_target_tablestate fail-block height less than cache tablestate.table=%s,state_height=%" PRIu64 ",block_height=%" PRIu64 "",
-            get_account().c_str(), m_tablestate->get_binlog_height(), block->get_height());
-        return nullptr;
-    }
     if (m_tablestate->get_binlog_height() == block->get_height()) {
         xdbg("xindexstore_table_t::get_target_tablestate succ-block height match cache tablestate.table=%s,block_height=%" PRIu64 "",
             get_account().c_str(), block->get_height());
         return m_tablestate;
     }
-    xtablestate_ptr_t tablestate_base = load_base_tablestate_from_db(m_tablestate);
+    if (m_tablestate->get_binlog_height() > block->get_height()) {
+        xwarn("xindexstore_table_t::get_target_tablestate fail-block height less than cache tablestate.table=%s,state_height=%" PRIu64 ",block_height=%" PRIu64 "",
+            get_account().c_str(), m_tablestate->get_binlog_height(), block->get_height());
+        return nullptr;
+    }
+
+    xtablestate_ptr_t old_tablestate = m_tablestate->clone();
+    xtablestate_ptr_t tablestate_base = load_base_tablestate_from_db(old_tablestate);
     if (nullptr == tablestate_base) {
         xerror("xindexstore_table_t::get_target_tablestate fail-load_base_tablestate_from_db.table=%s,block_height=%" PRIu64 "",
             get_account().c_str(), block->get_height());
         return nullptr;
     }
-    m_tablestate = tablestate_base;
-    xdbg("xindexstore_table_t::get_target_tablestate succ-cache new tablestate.table=%s,block_height=%" PRIu64 ",full_height=%" PRIu64 "",
-        get_account().c_str(), m_tablestate->get_binlog_height(), m_tablestate->get_full_height());
+    if (m_tablestate->get_binlog_height() < tablestate_base->get_binlog_height()) {
+        // TODO(jimmy)
+        m_tablestate = tablestate_base->clone();
+        xdbg("xindexstore_table_t::get_target_tablestate succ-cache new tablestate.table=%s,block_height=%" PRIu64 ",full_height=%" PRIu64 "",
+            get_account().c_str(), m_tablestate->get_binlog_height(), m_tablestate->get_full_height());
+    }
 
-    xtablestate_ptr_t tablestate_target = tablestate_base;
-    if (tablestate_target->get_binlog_height() < block->get_height()) {
-        tablestate_target = get_target_block_state(tablestate_target, block);
-        if (nullptr == tablestate_target) {
-            xwarn("xindexstore_table_t::get_target_tablestate fail-get_target_block_state.table=%s,block_height=%" PRIu64 "",
-                get_account().c_str(), block->get_height());
+    if (tablestate_base->get_binlog_height() < block->get_height()) {
+        tablestate_base = get_target_block_state(tablestate_base, block);
+        if (nullptr == tablestate_base) {
+            xwarn("xindexstore_table_t::get_target_tablestate fail-get_target_block_state.table=%s,old_state_height=%" PRIu64 ",block_height=%" PRIu64 "",
+                get_account().c_str(), m_tablestate->get_binlog_height(), block->get_height());
             return nullptr;
         }
+        xassert(tablestate_base->get_binlog_height() == block->get_height());
     }
 
-    if (tablestate_target->get_binlog_height() == block->get_height()) {
-        xdbg("xindexstore_table_t::get_target_tablestate succ-block height match cache new base tablestate.table=%s,block_height=%" PRIu64 "",
-            get_account().c_str(), block->get_height());
-        return tablestate_target;
+    if (tablestate_base->get_binlog_height() == block->get_height()) {
+        xdbg("xindexstore_table_t::get_target_tablestate succ.table=%s,old_state_height=%" PRIu64 ",block_height=%" PRIu64 "",
+            get_account().c_str(), m_tablestate->get_binlog_height(), block->get_height());
+        return tablestate_base;
     }
-    xwarn("xindexstore_table_t::get_target_tablestate fail-block height not match state.table=%s,state_height=%" PRIu64 ",block_height=%" PRIu64 "",
-        get_account().c_str(), tablestate_target->get_binlog_height(), block->get_height());
+    xwarn("xindexstore_table_t::get_target_tablestate fail. binlog height larger than block.table=%s,state_height=%" PRIu64 ",block_height=%" PRIu64 "",
+        get_account().c_str(), tablestate_base->get_binlog_height(), block->get_height());
     return nullptr;
-}
-
-bool xindexstore_table_t::update_tablestate(const xblock_ptr_t & block) {
-    if (m_tablestate->get_binlog_height() == block->get_height()) {
-        return true;
-    }
-    xtablestate_ptr_t tablestate_new = get_target_tablestate(block);
-    if (tablestate_new != nullptr) {
-        m_tablestate = tablestate_new;
-        return true;
-    }
-    return false;
 }
 
 xtablestate_ptr_t xindexstore_table_t::clone_tablestate(const xblock_ptr_t & block) {
     std::lock_guard<std::mutex> l(m_lock);
-    if (false == update_tablestate(block)) {
+    xtablestate_ptr_t tablestate = get_target_tablestate(block);
+    if (tablestate == nullptr) {
         return nullptr;
     }
-    return m_tablestate->clone();
+    xassert(tablestate->get_binlog_height() == block->get_height());
+    return tablestate->clone();
 }
 
 bool  xindexstore_table_t::get_account_index(const xblock_ptr_t & committed_block, const std::string & account, base::xaccount_index_t & account_index) {
     std::lock_guard<std::mutex> l(m_lock);
-    if (false == update_tablestate(committed_block)) {
-        return nullptr;
+    xtablestate_ptr_t tablestate = get_target_tablestate(committed_block);
+    if (tablestate == nullptr) {
+        return false;
     }
-    return m_tablestate->get_account_index(account, account_index);
+    xassert(tablestate->get_binlog_height() == committed_block->get_height());
+    return tablestate->get_account_index(account, account_index);
 }
 
 bool  xindexstore_table_t::get_account_index(const std::string & account, base::xaccount_index_t & account_index) {

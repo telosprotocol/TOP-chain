@@ -4,9 +4,9 @@
 
 #include <string>
 #include <cinttypes>
-
-#include "xblockmaker/xblockmaker_error.h"
+#include "xvledger/xreceiptid.h"
 #include "xblockmaker/xunit_builder.h"
+#include "xblockmaker/xblockmaker_error.h"
 #include "xdata/xemptyblock.h"
 #include "xdata/xfullunit.h"
 #include "xstore/xaccount_context.h"
@@ -16,6 +16,37 @@
 #include "xcontract_runtime/xaccount_vm.h"
 
 NS_BEG2(top, blockmaker)
+
+xlightunit_builder_t::xlightunit_builder_t() {
+
+}
+
+void xlightunit_builder_t::alloc_tx_receiptid(const std::vector<xcons_transaction_ptr_t> & input_txs, const base::xreceiptid_state_ptr_t & receiptid_state) {
+    for (auto & tx : input_txs) {
+        if (tx->is_self_tx()) {
+            continue;
+        } else if (tx->is_send_tx()) {
+            std::string target_addr = tx->get_transaction()->get_target_addr();
+            base::xvaccount_t _vaccount(target_addr);
+            base::xtable_shortid_t target_sid = _vaccount.get_short_table_id();
+
+            base::xreceiptid_pair_t receiptid_pair;
+            receiptid_state->find_pair_modified(target_sid, receiptid_pair);
+
+            uint64_t current_receipt_id = receiptid_pair.get_sendid_max() + 1;
+            receiptid_pair.inc_sendid_max();
+            tx->set_current_receipt_id(target_sid, current_receipt_id);
+            receiptid_state->add_pair_modified(target_sid, receiptid_pair);  // save to modified pairs
+            xdbg("xlightunit_builder_t::alloc_tx_receiptid alloc send_tx receipt id. tx=%s", tx->dump(true).c_str());
+        } else if ( tx->is_recv_tx() || tx->is_confirm_tx() ) {
+            // copy receipt id from last phase to current phase
+            uint64_t receipt_id = tx->get_last_action_receipt_id();
+            base::xtable_shortid_t target_sid = tx->get_last_action_receipt_id_tableid();
+            tx->set_current_receipt_id(target_sid, receipt_id);
+            xdbg("xlightunit_builder_t::alloc_tx_receiptid copy receipt_tx receipt id. tx=%s", tx->dump(true).c_str());
+        }
+    }
+}
 
 xblock_ptr_t        xlightunit_builder_t::build_block(const xblock_ptr_t & prev_block,
                                                     const xaccount_ptr_t & prev_state,
@@ -50,7 +81,7 @@ xblock_ptr_t        xlightunit_builder_t::build_block(const xblock_ptr_t & prev_
                 lightunit_build_para->set_fail_tx(tx);
             }
         }
-
+        build_para->set_error_code(xblockmaker_error_tx_execute);
         return nullptr;
     }
 
@@ -60,6 +91,10 @@ xblock_ptr_t        xlightunit_builder_t::build_block(const xblock_ptr_t & prev_
     lightunit_para.set_transaction_result(exec_result.succ_txs_result);
     xassert(unconfirm_num == _account_context->get_blockchain()->get_unconfirm_sendtx_num());
     lightunit_para.set_account_unconfirm_sendtx_num(unconfirm_num);
+
+    base::xreceiptid_state_ptr_t receiptid_state = lightunit_build_para->get_receiptid_state();
+    alloc_tx_receiptid(input_txs, receiptid_state);
+    alloc_tx_receiptid(lightunit_para.get_contract_create_txs(), receiptid_state);
 
     base::xvblock_t* _proposal_block = data::xlightunit_block_t::create_next_lightunit(lightunit_para, prev_block.get());
     xblock_ptr_t proposal_unit;

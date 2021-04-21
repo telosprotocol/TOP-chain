@@ -8,6 +8,7 @@
 #include <map>
 #include <vector>
 #include "xdata/xblock.h"
+#include "xdata/xtablestate.h"
 #include "xstore/xstore_face.h"
 #include "xblockstore/xblockstore_face.h"
 #include "xindexstore/xindexstore_face.h"
@@ -49,6 +50,7 @@ class xblockmaker_resources_impl_t : public xblockmaker_resources_t {
 };
 
 struct xunitmaker_result_t {
+    data::xtablestate_ptr_t                 m_tablestate{nullptr};
     xblock_ptr_t                            m_block{nullptr};
     int32_t                                 m_make_block_error_code{0};
     std::vector<xcons_transaction_ptr_t>    m_success_txs;
@@ -81,6 +83,7 @@ struct xtablemaker_para_t {
         }
     }
     xtableblock_proposal_input_t            m_proposal_input;
+    data::xtablestate_ptr_t                 m_tablestate{nullptr};
 };
 
 class xblock_maker_t : public base::xvaccount_t {

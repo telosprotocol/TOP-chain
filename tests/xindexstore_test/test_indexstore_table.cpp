@@ -148,3 +148,89 @@ TEST_F(test_indexstore_table, mbt_state_query_1) {
     }
 }
 
+TEST_F(test_indexstore_table, get_state_by_block_1) {
+    xvchain_creator creator;
+    creator.create_blockstore_with_xstore();
+    base::xvblockstore_t* blockstore = creator.get_blockstore();
+    store::xstore_face_t* xstore = creator.get_xstore();
+
+    uint64_t max_block_height = 10;
+    xdatamock_table mocktable;
+    mocktable.genrate_table_chain(max_block_height);
+    const std::vector<xblock_ptr_t> & tables = mocktable.get_history_tables();
+    xassert(tables.size() == max_block_height+1);
+    for (uint64_t i = 0; i <= max_block_height; i++) {
+        ASSERT_TRUE(blockstore->store_block(base::xvaccount_t(mocktable.get_account()), tables[i].get()));
+    }
+
+    xindexstore_face_ptr_t indexstore = xindexstore_factory_t::create_index_store(make_observer(xstore), make_observer(blockstore), mocktable.get_account());
+
+    xtablestate_ptr_t tablestate1 = indexstore->clone_tablestate(tables[max_block_height]);
+    xassert(tablestate1->get_binlog_height() == max_block_height);
+    xtablestate_ptr_t tablestate2 = indexstore->clone_tablestate(tables[max_block_height-1]);
+    xassert(tablestate2->get_binlog_height() == max_block_height-1);
+    xtablestate_ptr_t tablestate3 = indexstore->clone_tablestate(tables[max_block_height-2]);
+    xassert(tablestate3->get_binlog_height() == max_block_height-2);
+}
+TEST_F(test_indexstore_table, get_state_by_block_2) {
+    xvchain_creator creator;
+    creator.create_blockstore_with_xstore();
+    base::xvblockstore_t* blockstore = creator.get_blockstore();
+    store::xstore_face_t* xstore = creator.get_xstore();
+
+    uint64_t max_block_height = 200;
+    xdatamock_table mocktable;
+    mocktable.genrate_table_chain(max_block_height);
+    const std::vector<xblock_ptr_t> & tables = mocktable.get_history_tables();
+    xassert(tables.size() == max_block_height+1);
+    for (uint64_t i = 0; i <= max_block_height; i++) {
+        ASSERT_TRUE(blockstore->store_block(base::xvaccount_t(mocktable.get_account()), tables[i].get()));
+    }
+
+    xindexstore_face_ptr_t indexstore = xindexstore_factory_t::create_index_store(make_observer(xstore), make_observer(blockstore), mocktable.get_account());
+
+    xtablestate_ptr_t tablestate1 = indexstore->clone_tablestate(tables[max_block_height]);
+    xassert(tablestate1->get_binlog_height() == max_block_height);
+    xtablestate_ptr_t tablestate2 = indexstore->clone_tablestate(tables[max_block_height-1]);
+    xassert(tablestate2->get_binlog_height() == max_block_height-1);
+    xtablestate_ptr_t tablestate3 = indexstore->clone_tablestate(tables[max_block_height-2]);
+    xassert(tablestate3->get_binlog_height() == max_block_height-2);
+}
+
+TEST_F(test_indexstore_table, get_state_by_block_3) {
+    xvchain_creator creator;
+    creator.create_blockstore_with_xstore();
+    base::xvblockstore_t* blockstore = creator.get_blockstore();
+    store::xstore_face_t* xstore = creator.get_xstore();
+
+    uint64_t max_block_height = 1000;
+    xdatamock_table mocktable;
+    mocktable.genrate_table_chain(max_block_height);
+    const std::vector<xblock_ptr_t> & tables = mocktable.get_history_tables();
+    xassert(tables.size() == max_block_height+1);
+    for (uint64_t i = max_block_height; i >= 0; i--) {
+        if (tables[i]->get_block_class() == base::enum_xvblock_class_full) {
+            std::cout << "full height " << tables[i]->get_height() << std::endl;
+            tables[i]->reset_block_offdata(nullptr);
+            ASSERT_TRUE(blockstore->store_block(base::xvaccount_t(mocktable.get_account()), tables[i].get()));
+            break;
+        } else {
+            ASSERT_TRUE(blockstore->store_block(base::xvaccount_t(mocktable.get_account()), tables[i].get()));
+        }
+    }
+
+    xassert(blockstore->get_latest_cert_block(base::xvaccount_t(mocktable.get_account()))->get_height() == max_block_height);
+    xassert(blockstore->get_latest_locked_block(base::xvaccount_t(mocktable.get_account()))->get_height() == max_block_height-1);
+    xassert(blockstore->get_latest_committed_block(base::xvaccount_t(mocktable.get_account()))->get_height() == max_block_height-2);
+    uint64_t connect_height = blockstore->get_latest_connected_block(base::xvaccount_t(mocktable.get_account()))->get_height();
+    std::cout << "connect_height " << connect_height << std::endl;
+    // xassert(connect_height == max_block_height-2);
+    uint64_t executed_height = blockstore->get_latest_executed_block(base::xvaccount_t(mocktable.get_account()))->get_height();
+    std::cout << "executed_height " << executed_height << std::endl;
+    xassert(executed_height == 0);
+
+    xindexstore_face_ptr_t indexstore = xindexstore_factory_t::create_index_store(make_observer(xstore), make_observer(blockstore), mocktable.get_account());
+
+    xtablestate_ptr_t tablestate1 = indexstore->clone_tablestate(tables[max_block_height]);
+    xassert(tablestate1 == nullptr);
+}

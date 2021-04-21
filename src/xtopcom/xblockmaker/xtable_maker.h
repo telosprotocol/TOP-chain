@@ -42,9 +42,9 @@ class xtable_maker_t : public xblock_maker_t {
     xunit_maker_ptr_t       create_unit_maker(const std::string & account);
     xunit_maker_ptr_t       pop_unit_maker(const std::string & account);
 
-    xblock_ptr_t            leader_make_light_table(const xtableblock_proposal_input_t & proposal_input, const data::xblock_consensus_para_t & cs_para, xtablemaker_result_t & table_result);
-    xblock_ptr_t            backup_make_light_table(const xtableblock_proposal_input_t & proposal_input, const data::xblock_consensus_para_t & cs_para, xtablemaker_result_t & table_result);
-    xblock_ptr_t            make_full_table(const xblock_consensus_para_t & cs_para, int32_t & error_code);
+    xblock_ptr_t            leader_make_light_table(const xtablemaker_para_t & table_para, const data::xblock_consensus_para_t & cs_para, xtablemaker_result_t & table_result);
+    xblock_ptr_t            backup_make_light_table(const xtablemaker_para_t & table_para, const data::xblock_consensus_para_t & cs_para, xtablemaker_result_t & table_result);
+    xblock_ptr_t            make_full_table(const xtablemaker_para_t & table_para, const xblock_consensus_para_t & cs_para, int32_t & error_code);
     void                    clear_old_unit_makers();
 
     xunit_maker_ptr_t       get_unit_maker(const std::string & account);

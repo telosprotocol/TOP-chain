@@ -20,7 +20,7 @@ using namespace top::data;
 class xdatamock_table {
  protected:
     enum config_para {
-        enum_default_full_table_interval_count = 100,
+        enum_default_full_table_interval_count = 128,
         enum_default_empty_table_interval_count = 10,
         enum_default_batch_table_include_unit_count = 1,
         enum_default_batch_table_include_tx_count = 1,
@@ -67,7 +67,7 @@ class xdatamock_table {
         xblock_ptr_t prev_tableblock = get_prev_block();
         xblock_ptr_t next_table = nullptr;
         uint32_t history_table_count = m_history_tables.size();
-        if ((prev_tableblock->get_height() > 0) && (prev_tableblock->get_height() % enum_default_full_table_interval_count == 0)) {
+        if ( ((prev_tableblock->get_height() + 1) % enum_default_full_table_interval_count) == 0) {
             next_table = generate_full_table();
         } else if (history_table_count % enum_default_empty_table_interval_count == 0) {
             next_table = generate_empty_table();
