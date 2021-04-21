@@ -77,8 +77,7 @@ TEST_F(test_new_receipt_queue, receipt_queue_basic) {
     auto receipts1 = receipt_queue.get_txs(10, 10, receiptid_state);
     ASSERT_EQ(receipts1.size(), tx_num);
 
-    base::xreceiptid_state_ptr_t receiptid_state = make_object_ptr<base::xreceiptid_state_t>();
-    xreceiptid_pair_t receiptid_pair(1, 1, 0);
+    xreceiptid_pair_t receiptid_pair(1, 0, 1);
     receiptid_state->add_pair(0, receiptid_pair);
     receipt_queue.update_table_receipt_id_state(receiptid_state);
 
