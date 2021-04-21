@@ -66,6 +66,22 @@ ready_accounts_t xtxpool_t::get_ready_accounts(const std::string & table_addr, u
     return table->get_ready_accounts(count);
 }
 
+ready_accounts_t xtxpool_t::get_ready_accounts(const xtxs_pack_para_t & pack_para) {
+    auto table = get_txpool_table_by_addr(pack_para.get_table_addr());
+    if (table == nullptr) {
+        return {};
+    }
+    return table->get_ready_accounts(pack_para);
+}
+
+std::vector<xcons_transaction_ptr_t> xtxpool_t::get_ready_txs(const xtxs_pack_para_t & pack_para) {
+    auto table = get_txpool_table_by_addr(pack_para.get_table_addr());
+    if (table == nullptr) {
+        return {};
+    }
+    return table->get_ready_txs(pack_para);
+}
+
 std::vector<xcons_transaction_ptr_t> xtxpool_t::get_ready_txs(const std::string & table_addr, uint32_t count) {
     auto table = get_txpool_table_by_addr(table_addr);
     if (table == nullptr) {

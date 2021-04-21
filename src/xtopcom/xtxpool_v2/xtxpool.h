@@ -27,6 +27,8 @@ public:
     int32_t push_receipt(const std::shared_ptr<xtx_entry> & tx) override;
     const xcons_transaction_ptr_t pop_tx(const tx_info_t & txinfo) override;
     ready_accounts_t pop_ready_accounts(const std::string & table_addr, uint32_t count) override;
+    ready_accounts_t get_ready_accounts(const xtxs_pack_para_t & pack_para) override;
+    std::vector<xcons_transaction_ptr_t> get_ready_txs(const xtxs_pack_para_t & pack_para) override;
     ready_accounts_t get_ready_accounts(const std::string & table_addr, uint32_t count) override;  // iteration 1 only use get_ready_accounts not pop_ready_accounts
     std::vector<xcons_transaction_ptr_t> get_ready_txs(const std::string & table_addr, uint32_t count) override;
     const std::shared_ptr<xtx_entry> query_tx(const std::string & account_addr, const uint256_t & hash) const override;

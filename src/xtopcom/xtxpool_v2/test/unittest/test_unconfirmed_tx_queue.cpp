@@ -93,6 +93,7 @@ TEST_F(test_unconfirmed_tx_queue, recover) {
     unconfirmed_tx_queue.recover(receiptid_state);
 
     for (uint32_t i = 0; i < tx_num; i++) {
+        std::cout << "i:" << i << std::endl;
         auto tx_find = unconfirmed_tx_queue.find(txs[i]->get_source_addr(), txs[i]->get_transaction()->digest());
         ASSERT_NE(tx_find, nullptr);
     }
