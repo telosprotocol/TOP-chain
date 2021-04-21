@@ -156,10 +156,22 @@ bool xcons_transaction_t::verify_cons_transaction() {
     return ret;
 }
 
+uint64_t xcons_transaction_t::get_dump_receipt_id() const {
+    if (is_self_tx() || is_send_tx()) {
+        return get_current_receipt_id();
+    } else {
+        return get_last_action_receipt_id();
+    }
+}
+
 std::string xcons_transaction_t::dump(bool detail) const {
     std::stringstream ss;
     ss << "{";
     ss << xtransaction_t::transaction_hash_subtype_to_string(get_transaction()->get_digest_str(), get_tx_subtype());
+    ss << ",id={" << base::xvaccount_t(get_transaction()->get_source_addr()).get_short_table_id();
+    ss << "->" << base::xvaccount_t(get_transaction()->get_target_addr()).get_short_table_id();
+    ss << ":" << get_dump_receipt_id();
+    ss << "}";
     if (is_self_tx() || is_send_tx()) {
         ss << ",nonce:" << get_transaction()->get_tx_nonce();
     }
@@ -168,9 +180,9 @@ std::string xcons_transaction_t::dump(bool detail) const {
             ss << ",fire:" << get_transaction()->get_fire_timestamp();
             ss << ",duration:" << (uint32_t)get_transaction()->get_expire_duration();
         }
-        ss << ",from:" << get_transaction()->get_source_addr();
+        ss << ",addr:" << get_transaction()->get_source_addr();
         if (get_transaction()->get_source_addr() != get_transaction()->get_target_addr()) {
-            ss << ",to:" << get_transaction()->get_target_addr();
+            ss << "->" << get_transaction()->get_target_addr();
         }
         if (m_receipt != nullptr) {
             ss << ",txout:" << m_receipt->get_tx_info()->get_tx_exec_state().dump();
@@ -220,6 +232,20 @@ uint32_t xcons_transaction_t::get_last_action_recv_tx_use_send_tx_tgas() const {
     if (m_receipt != nullptr) {
         xassert(m_receipt->get_tx_info()->is_recv_tx());
         return m_receipt->get_tx_info()->get_tx_exec_state().get_recv_tx_use_send_tx_tgas();
+    }
+    xassert(0);
+    return 0;
+}
+uint64_t xcons_transaction_t::get_last_action_receipt_id() const {
+    if (m_receipt != nullptr) {
+        return m_receipt->get_tx_info()->get_tx_exec_state().get_receipt_id();
+    }
+    xassert(0);
+    return 0;
+}
+base::xtable_shortid_t xcons_transaction_t::get_last_action_receipt_id_tableid() const {
+    if (m_receipt != nullptr) {
+        return m_receipt->get_tx_info()->get_tx_exec_state().get_receipt_id_tableid();
     }
     xassert(0);
     return 0;

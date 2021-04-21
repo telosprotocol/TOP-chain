@@ -163,6 +163,8 @@ XDEFINE_CONFIGURATION(fulltable_interval_block_num);
 XDEFINE_CONFIGURATION(local_blacklist);
 XDEFINE_CONFIGURATION(local_whitelist);
 
+XDEFINE_CONFIGURATION(slash_fulltable_interval);
+
 /* beginning of development parameters */
 XDEFINE_CONFIGURATION(http_port);
 XDEFINE_CONFIGURATION(grpc_port);

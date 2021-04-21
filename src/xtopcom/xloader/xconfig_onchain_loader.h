@@ -11,6 +11,8 @@
 
 #include "xchain_timer/xchain_timer.h"
 #include "xdata/xproposal_data.h"
+#include "xmbus/xbase_sync_event_monitor.hpp"
+
 
 NS_BEG2(top, loader)
 
@@ -33,6 +35,19 @@ private:
     config::xconfig_update_action_ptr_t find(const std::string& type);
 
 private:
+    class xconfig_bus_monitor : public mbus::xbase_sync_event_monitor_t {
+    public:
+        xconfig_bus_monitor(xconfig_onchain_loader_t* parent);
+        virtual ~xconfig_bus_monitor();
+        void init();
+        void uninit();
+        bool filter_event(const mbus::xevent_ptr_t & e) override;
+        void process_event(const mbus::xevent_ptr_t & e) override;
+    private:
+        xconfig_onchain_loader_t * m_parent;
+    };
+
+private:
     std::mutex m_action_param_mutex;
     std::map<std::string, config::xconfig_update_action_ptr_t> m_action_map{};
 
@@ -43,6 +58,7 @@ private:
     std::multimap<uint64_t, tcc::proposal_info> m_pending_proposed_parameters{};
 
     uint32_t m_db_id;
+    xconfig_bus_monitor * m_monitor;
 };
 
 NS_END2

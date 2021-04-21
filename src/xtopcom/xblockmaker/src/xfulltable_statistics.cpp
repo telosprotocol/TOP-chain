@@ -58,23 +58,27 @@ static void tableblock_statistics_handle(const xvip2_t leader_xip, const uint32_
 }
 
 static uint32_t cal_vote_num(xobject_ptr_t<data::xblock_t> const & block, bool is_auditor) {
-    uint32_t vote_num = 0;
-    if (block->is_deliver(false)) {
-        return 0;
+    std::string aggregated_signatures_bin;
+    if (is_auditor) {
+        aggregated_signatures_bin = block->get_cert()->get_audit_signature();
+    } else {
+        aggregated_signatures_bin = block->get_cert()->get_verify_signature();
     }
+    xassert(!aggregated_signatures_bin.empty());
 
-    const std::string & aggregated_signatures_bin = block->get_cert()->get_verify_signature();
     xmutisigdata_t aggregated_sig_obj;
     if (aggregated_sig_obj.serialize_from_string(aggregated_signatures_bin) <= 0) {
+        xassert(false);
         return 0;
     }
     xnodebitset & nodebits = aggregated_sig_obj.get_nodebitset();
+    uint32_t vote_num = 0;
     for (int i = 0; i < nodebits.get_alloc_bits(); ++i) {
         if (nodebits.is_set(i)) {
             vote_num++;
         }
     }
-
+    xassert(vote_num > 0);
     return vote_num;
 }
 
@@ -86,19 +90,17 @@ xstatistics_data_t tableblock_statistics(std::vector<xobject_ptr_t<data::xblock_
             xerror("[tableblock_statistics] blks[%u] null", i);
             continue;
         }
-        xvip2_t leader_xip;
-        uint32_t vote_num;
-        xvip2_t auditor_xip = blks[i]->get_cert()->get_auditor();
-        xvip2_t validator_xip = blks[i]->get_cert()->get_validator();
+
         uint32_t txs_count = blks[i]->get_txs_count();
-        if (!is_xip2_empty(auditor_xip) && get_node_id_from_xip2(auditor_xip) != 0x3FF) {
-            leader_xip = auditor_xip;
-            vote_num = cal_vote_num(blks[i], true);
-        } else {
-            xassert(!is_xip2_empty(validator_xip) && get_node_id_from_xip2(validator_xip) != 0x3FF);
-            leader_xip = validator_xip;
-            vote_num = cal_vote_num(blks[i], false);
+
+        bool is_auditor = false;
+        auto leader_xip = blks[i]->get_cert()->get_validator();
+        if (get_node_id_from_xip2(leader_xip) == 0x3FF) {
+            leader_xip = blks[i]->get_cert()->get_auditor();
+            is_auditor = true;
+            xassert(!blks[i]->get_cert()->get_audit_signature().empty());
         }
+        uint32_t vote_num = cal_vote_num(blks[i], is_auditor);
         tableblock_statistics_handle(leader_xip, txs_count, vote_num, data);
     }
 

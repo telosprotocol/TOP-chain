@@ -20,14 +20,15 @@
 #    pragma warning(pop)
 #endif
 
-#include "xbasic/xmemory.hpp"
 #include "xbase/xobject_ptr.h"
-#include "xcontract_runtime/xuser/xuser_contract_runtime.h"
-#include "xcontract_runtime/xsystem/xsystem_contract_runtime.h"
+#include "xbasic/xmemory.hpp"
 #include "xcontract_runtime/xaccount_vm_execution_result.h"
+#include "xcontract_runtime/xsystem/xsystem_contract_runtime.h"
+#include "xcontract_runtime/xsystem_contract_manager.h"
+#include "xcontract_runtime/xuser/xuser_contract_runtime.h"
+#include "xcontract_runtime/xuser/xuser_action_runtime.h"
 #include "xcontract_runtime/xvm_executor_face.h"
 #include "xdata/xcons_transaction.h"
-#include "xcontract_runtime/xsystem_contract_manager.h"
 
 NS_BEG2(top, contract_runtime)
 
@@ -44,13 +45,15 @@ private:
     std::unique_ptr<user::xuser_contract_runtime_t> user_contract_runtime_{ top::make_unique<user::xuser_contract_runtime_t>() };
     std::unique_ptr<system::xsystem_contract_runtime_t> system_contract_runtime_{top::make_unique<system::xsystem_contract_runtime_t>(top::make_observer(x.get()))};
 
+    std::unique_ptr<user::xaction_runtime_t> user_action_runtime_{ top::make_unique<user::xaction_runtime_t>() };
+
 public:
     xtop_account_vm() = default;
     xtop_account_vm(xtop_account_vm const &) = delete;
     xtop_account_vm & operator=(xtop_account_vm const &) = delete;
     xtop_account_vm(xtop_account_vm &&) = default;
     xtop_account_vm & operator=(xtop_account_vm &&) = default;
-    virtual ~xtop_account_vm() = default;
+    ~xtop_account_vm() override = default;
 
     xaccount_vm_execution_result_t execute(std::vector<data::xcons_transaction_ptr_t> const & txs, xobject_ptr_t<base::xvbstate_t> block_state) override;
 };

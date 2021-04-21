@@ -42,20 +42,34 @@ using xevent_store_ptr_t = xobject_ptr_t<xevent_store_t>;
 
 class xevent_store_block_to_db_t : public xevent_store_t {
  public:
+    xevent_store_block_to_db_t(const std::string & _owner, 
+        base::xvbindex_t* index_ptr,
+        bool _new_block,
+        direction_type dir = to_listener,
+        bool _sync = true) :
+        xevent_store_t(type_block_to_db, _owner, dir, _sync),
+        blk_hash(index_ptr->get_block_hash()), blk_height(index_ptr->get_height()),  new_block(_new_block),
+        blk_viewid(index_ptr->get_viewid()), blk_type(index_ptr->get_block_type()), 
+        blk_level(index_ptr->get_block_level()) {
+    }
     xevent_store_block_to_db_t(
             const data::xblock_ptr_t & _block,
             const std::string& _owner,
             bool _new_block,
             direction_type dir = to_listener,
             bool _sync = true) :
-    xevent_store_t(type_block_to_db, _owner, dir, _sync),
-    blk_hash{_block->get_block_hash() }, blk_height{_block->get_height()},
-    new_block(_new_block) {
+        xevent_store_t(type_block_to_db, _owner, dir, _sync),
+        blk_hash{_block->get_block_hash() }, blk_height{_block->get_height()}, new_block(_new_block),
+        blk_viewid{_block->get_viewid()}, blk_type{_block->get_block_type()},
+        blk_level{_block->get_block_level()} {
     }
     // data::xblock_ptr_t block;
     std::string blk_hash;
     uint64_t blk_height;
     bool new_block;
+    uint64_t blk_viewid;
+    top::base::enum_xvblock_type blk_type;
+    top::base::enum_xvblock_level blk_level;
 };
 
 using xevent_store_block_to_db_ptr_t = xobject_ptr_t<xevent_store_block_to_db_t>;

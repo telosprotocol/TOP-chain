@@ -207,8 +207,13 @@ xblock_ptr_t xunit_maker_t::make_proposal(const xunit_proposal_input_t & proposa
     xblock_ptr_t proposal_block = make_next_block(cs_para, result);
     clear_tx();
     if (proposal_block == nullptr) {
-        xwarn("xunit_maker_t::make_proposal fail-make proposal.%s,account=%s,height=%" PRIu64 ",ret=%s",
-            cs_para.dump().c_str(), get_account().c_str(), get_lowest_height_block()->get_height(), chainbase::xmodule_error_to_str(result.m_make_block_error_code).c_str());
+        if (xblockmaker_error_no_need_make_unit != result.m_make_block_error_code) {
+            xwarn("xunit_maker_t::make_proposal fail-make proposal.%s,account=%s,height=%" PRIu64 ",ret=%s",
+                cs_para.dump().c_str(), get_account().c_str(), get_lowest_height_block()->get_height(), chainbase::xmodule_error_to_str(result.m_make_block_error_code).c_str());
+        } else {
+            xwarn("xunit_maker_t::make_proposal no need make proposal.%s,account=%s,height=%" PRIu64 "",
+                cs_para.dump().c_str(), get_account().c_str(), get_lowest_height_block()->get_height());
+        }
         return nullptr;
     }
     xinfo("xunit_maker_t::make_proposal succ unit.%s,unit=%s,cert=%s,class=%d,unconfirm=%d,prev_confirmed=%d,tx_count=%d,latest_state=%s",
@@ -276,7 +281,8 @@ xblock_ptr_t xunit_maker_t::make_next_block(const data::xblock_consensus_para_t 
                                                         m_default_builder_para);
         result.m_make_block_error_code = m_default_builder_para->get_error_code();
     } else if (can_make_next_light_block()) {
-        xblock_builder_para_ptr_t build_para = std::make_shared<xlightunit_builder_para_t>(m_pending_txs, get_resources());
+        base::xreceiptid_state_ptr_t receiptid_state = result.m_tablestate->get_receiptid_state();
+        xblock_builder_para_ptr_t build_para = std::make_shared<xlightunit_builder_para_t>(m_pending_txs, receiptid_state, get_resources());
         proposal_unit = m_lightunit_builder->build_block(get_highest_height_block(),
                                                         clone_latest_committed_state(),
                                                         cs_para,

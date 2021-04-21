@@ -16,6 +16,7 @@ NS_BEG2(top, blockmaker)
 REG_XMODULE_LOG(chainbase::enum_xmodule_type::xmodule_type_xblockmaker, xblockmaker_error_to_string, xblockmaker_error_base+1, xblockmaker_error_max);
 
 xproposal_maker_t::xproposal_maker_t(const std::string & account, const xblockmaker_resources_ptr_t & resources) {
+    m_indexstore = resources->get_indexstorehub()->get_index_store(account);
     m_table_maker = make_object_ptr<xtable_maker_t>(account, resources);  // TOOD(jimmy) global
     m_tableblock_batch_tx_num_residue = XGET_CONFIG(tableblock_batch_tx_max_num);  // TOOD(jimmy)
     m_max_account_num = XGET_CONFIG(tableblock_batch_unitblock_max_num);
@@ -56,6 +57,14 @@ xblock_ptr_t xproposal_maker_t::make_proposal(data::xblock_consensus_para_t & pr
     }
 
     auto & latest_cert_block = proposal_para.get_latest_cert_block();
+
+    // get tablestate related to latest cert block
+    table_para.m_tablestate = m_indexstore->clone_tablestate(latest_cert_block);
+    if (nullptr == table_para.m_tablestate) {
+        xwarn("xproposal_maker_t::make_proposal fail clone tablestate. %s,cert_height=%" PRIu64 "", proposal_para.dump().c_str(), latest_cert_block->get_height());
+        return nullptr;
+    }
+
     if (false == leader_set_consensus_para(latest_cert_block.get(), proposal_para)) {
         xwarn("xproposal_maker_t::make_proposal fail-leader_set_consensus_para.%s",
             proposal_para.dump().c_str());
@@ -65,8 +74,13 @@ xblock_ptr_t xproposal_maker_t::make_proposal(data::xblock_consensus_para_t & pr
     xtablemaker_result_t tablemaker_result;
     xblock_ptr_t proposal_block = m_table_maker->make_proposal(table_para, proposal_para, tablemaker_result);
     if (proposal_block == nullptr) {
-        xwarn("xproposal_maker_t::make_proposal fail-make_proposal.%s error_code=%s",
-            proposal_para.dump().c_str(), chainbase::xmodule_error_to_str(tablemaker_result.m_make_block_error_code).c_str());
+        if (xblockmaker_error_no_need_make_table != tablemaker_result.m_make_block_error_code) {
+            xwarn("xproposal_maker_t::make_proposal fail-make_proposal.%s error_code=%s",
+                proposal_para.dump().c_str(), chainbase::xmodule_error_to_str(tablemaker_result.m_make_block_error_code).c_str());
+        } else {
+            xdbg("xproposal_maker_t::make_proposal no need make table.%s",
+                proposal_para.dump().c_str());
+        }
         return nullptr;
     }
 
@@ -117,6 +131,13 @@ int xproposal_maker_t::verify_proposal(base::xvblock_t * proposal_block, base::x
         xwarn("xproposal_maker_t::verify_proposal fail-proposal input invalid. proposal=%s",
             proposal_block->dump().c_str());
         return xblockmaker_error_proposal_bad_input;
+    }
+
+    // get tablestate related to latest cert block
+    table_para.m_tablestate = m_indexstore->clone_tablestate(proposal_prev_block);
+    if (nullptr == table_para.m_tablestate) {
+        xwarn("xproposal_maker_t::verify_proposal fail clone tablestate. %s,cert_height=%" PRIu64 "", cs_para.dump().c_str(), proposal_prev_block->get_height());
+        return xblockmaker_error_proposal_table_state_clone;
     }
 
     // get proposal drand block

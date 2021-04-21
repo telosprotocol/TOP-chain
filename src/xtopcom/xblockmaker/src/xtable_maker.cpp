@@ -225,7 +225,8 @@ xblock_ptr_t xtable_maker_t::leader_make_unit(const xunit_maker_ptr_t & unitmake
     return proposal_unit;
 }
 
-xblock_ptr_t xtable_maker_t::leader_make_light_table(const xtableblock_proposal_input_t & proposal_input, const data::xblock_consensus_para_t & cs_para, xtablemaker_result_t & table_result) {
+xblock_ptr_t xtable_maker_t::leader_make_light_table(const xtablemaker_para_t & table_para, const data::xblock_consensus_para_t & cs_para, xtablemaker_result_t & table_result) {
+    const xtableblock_proposal_input_t & proposal_input = table_para.m_proposal_input;
     std::vector<xblock_ptr_t> batch_units;
     // try to make non-empty-unit for left unitmakers
     std::map<std::string, xunit_maker_ptr_t>  txs_unitmakers;
@@ -241,6 +242,7 @@ xblock_ptr_t xtable_maker_t::leader_make_light_table(const xtableblock_proposal_
         }
 
         xunitmaker_result_t unit_result;
+        unit_result.m_tablestate = table_para.m_tablestate;
         xblock_ptr_t proposal_unit = leader_make_unit(unitmaker, unit_input, cs_para, unit_result);
         table_result.m_unit_results.push_back(unit_result);
         if (proposal_unit != nullptr) {
@@ -256,6 +258,7 @@ xblock_ptr_t xtable_maker_t::leader_make_light_table(const xtableblock_proposal_
         if (!unitmaker->can_make_next_empty_block()) {
             continue;
         }
+        unit_result.m_tablestate = table_para.m_tablestate;
         xblock_ptr_t proposal_unit = leader_make_unit(unitmaker, unit_input, cs_para, unit_result);
         table_result.m_unit_results.push_back(unit_result);
         if (proposal_unit != nullptr) {
@@ -270,7 +273,7 @@ xblock_ptr_t xtable_maker_t::leader_make_light_table(const xtableblock_proposal_
 
     if (batch_units.empty()) {
         table_result.m_make_block_error_code = xblockmaker_error_no_need_make_table;
-        xwarn("xtable_maker_t::leader_make_light_table fail-make table. %s",
+        xdbg("xtable_maker_t::leader_make_light_table fail-make table. %s",
             cs_para.dump().c_str());
         return nullptr;
     }
@@ -282,7 +285,8 @@ xblock_ptr_t xtable_maker_t::leader_make_light_table(const xtableblock_proposal_
     return proposal_block;
 }
 
-xblock_ptr_t xtable_maker_t::backup_make_light_table(const xtableblock_proposal_input_t & proposal_input, const data::xblock_consensus_para_t & cs_para, xtablemaker_result_t & table_result) {
+xblock_ptr_t xtable_maker_t::backup_make_light_table(const xtablemaker_para_t & table_para, const data::xblock_consensus_para_t & cs_para, xtablemaker_result_t & table_result) {
+    const xtableblock_proposal_input_t & proposal_input = table_para.m_proposal_input;
     const std::vector<xunit_proposal_input_t> & unit_inputs = proposal_input.get_unit_inputs();
     if (unit_inputs.empty()) {
         xassert(false);
@@ -306,6 +310,7 @@ xblock_ptr_t xtable_maker_t::backup_make_light_table(const xtableblock_proposal_
         }
 
         xunitmaker_result_t unit_result;
+        unit_result.m_tablestate = table_para.m_tablestate;
         xblock_ptr_t proposal_unit = unitmaker->verify_proposal(unit_input, cs_para, unit_result);
         if (proposal_unit == nullptr) {
             xwarn("xtable_maker_t::backup_make_light_table fail-unit verify_proposal.proposal=%s,account=%s,error_code=%s",
@@ -330,7 +335,7 @@ xblock_ptr_t xtable_maker_t::backup_make_light_table(const xtableblock_proposal_
     return proposal_block;
 }
 
-xblock_ptr_t xtable_maker_t::make_full_table(const xblock_consensus_para_t & cs_para, int32_t & error_code) {
+xblock_ptr_t xtable_maker_t::make_full_table(const xtablemaker_para_t & table_para, const xblock_consensus_para_t & cs_para, int32_t & error_code) {
     // TODO(jimmy)
     std::vector<xblock_ptr_t> blocks_from_last_full;
     if (false == load_table_blocks_from_last_full(get_highest_height_block(), blocks_from_last_full)) {
@@ -340,18 +345,9 @@ xblock_ptr_t xtable_maker_t::make_full_table(const xblock_consensus_para_t & cs_
 
     cs_para.set_justify_cert_hash(get_lock_output_root_hash());
     cs_para.set_parent_height(0);
-    std::vector<xblock_ptr_t> uncommit_blocks = get_uncommit_blocks();
-    xassert(uncommit_blocks.size() == 2);
-    xassert(uncommit_blocks[0]->get_height() == get_latest_committed_block()->get_height() + 2);
-    xassert(uncommit_blocks[1]->get_height() == get_latest_committed_block()->get_height() + 1);
-    xblock_ptr_t commit_block = get_latest_committed_block();
-    xtablestate_ptr_t tablestate = m_indexstore->clone_tablestate(commit_block);
-    if (nullptr == tablestate) {
-        xerror("xtable_maker_t::make_full_table fail-get mbt state. %s", cs_para.dump().c_str());
-        return nullptr;
-    }
-    tablestate->execute_block(uncommit_blocks[1].get());
-    tablestate->execute_block(uncommit_blocks[0].get());
+    data::xtablestate_ptr_t tablestate = table_para.m_tablestate;
+    xassert(nullptr != tablestate);
+    xassert(get_highest_height_block()->get_height() == tablestate->get_binlog_height());
 
     xblock_builder_para_ptr_t build_para = std::make_shared<xfulltable_builder_para_t>(tablestate, blocks_from_last_full, get_resources());
     xblock_ptr_t proposal_block = m_fulltable_builder->build_block(get_highest_height_block(), nullptr, cs_para, build_para);
@@ -361,9 +357,10 @@ xblock_ptr_t xtable_maker_t::make_full_table(const xblock_consensus_para_t & cs_
 bool    xtable_maker_t::load_table_blocks_from_last_full(const xblock_ptr_t & prev_block, std::vector<xblock_ptr_t> & blocks) {
     std::vector<xblock_ptr_t> _form_highest_blocks;
     xblock_ptr_t current_block = prev_block;
+    xassert(current_block->get_height() > 0);
     _form_highest_blocks.push_back(current_block);
 
-    while (current_block->get_block_class() != base::enum_xvblock_class_full && current_block->get_height() != 0) {
+    while (current_block->get_block_class() != base::enum_xvblock_class_full && current_block->get_height() > 1) {
         base::xauto_ptr<base::xvblock_t> _block = get_blockstore()->load_block_object(*this, current_block->get_height() - 1, current_block->get_last_block_hash(), true);
         if (_block == nullptr) {
             xerror("xfulltable_builder_t::load_table_blocks_from_last_full fail-load block.account=%s,height=%ld", get_account().c_str(), current_block->get_height() - 1);
@@ -373,6 +370,7 @@ bool    xtable_maker_t::load_table_blocks_from_last_full(const xblock_ptr_t & pr
         blocks.push_back(current_block);
     }
 
+    // TOOD(jimmy) use map
     for (auto iter = _form_highest_blocks.rbegin(); iter != _form_highest_blocks.rend(); iter++) {
         blocks.push_back(*iter);
     }
@@ -419,9 +417,9 @@ xblock_ptr_t xtable_maker_t::make_proposal(xtablemaker_para_t & table_para,
 
     xblock_ptr_t proposal_block = nullptr;
     if (can_make_next_full_block()) {
-        proposal_block = make_full_table(cs_para, tablemaker_result.m_make_block_error_code);
+        proposal_block = make_full_table(table_para, cs_para, tablemaker_result.m_make_block_error_code);
     } else {
-        proposal_block = leader_make_light_table(table_para.m_proposal_input, cs_para, tablemaker_result);
+        proposal_block = leader_make_light_table(table_para, cs_para, tablemaker_result);
     }
 
     if (proposal_block == nullptr) {
@@ -484,9 +482,9 @@ int32_t xtable_maker_t::verify_proposal(base::xvblock_t* proposal_block, const x
     xblock_ptr_t local_block = nullptr;
     xtablemaker_result_t table_result;
     if (can_make_next_full_block()) {
-        local_block = make_full_table(cs_para, table_result.m_make_block_error_code);
+        local_block = make_full_table(table_para, cs_para, table_result.m_make_block_error_code);
     } else {
-        local_block = backup_make_light_table(table_para.m_proposal_input, cs_para, table_result);
+        local_block = backup_make_light_table(table_para, cs_para, table_result);
     }
     if (local_block == nullptr) {
         xwarn("xtable_maker_t::verify_proposal fail-make table. proposal=%s,error_code=%s",
@@ -510,9 +508,9 @@ int32_t xtable_maker_t::verify_proposal(base::xvblock_t* proposal_block, const x
 }
 
 bool xtable_maker_t::verify_proposal_with_local(base::xvblock_t *proposal_block, base::xvblock_t *local_block) const {
-    // TODO(jimmy) should not happen input hash not match
+    // TODO(jimmy) input hash not match may happen when use different property
     if (local_block->get_input_hash() != proposal_block->get_input_hash()) {
-        xerror("xtable_maker_t::verify_proposal_with_local fail-input hash not match. %s %s",
+        xwarn("xtable_maker_t::verify_proposal_with_local fail-input hash not match. %s %s",
             proposal_block->dump().c_str(),
             local_block->dump().c_str());
         return false;

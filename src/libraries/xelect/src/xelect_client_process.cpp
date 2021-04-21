@@ -40,18 +40,17 @@ bool xelect_client_process::filter_event(const xevent_ptr_t & e) {
     case mbus::xevent_major_type_store:
         if (e->minor_type == xevent_store_t::type_block_to_db) {
             auto bme = dynamic_xobject_ptr_cast<mbus::xevent_store_block_to_db_t>(e);
-            auto block = mbus::extract_block_from(bme);
-            const std::string & owner = block->get_block_owner();
-
-            if (!block->is_lightunit() && block->get_height() != 0 && owner != sys_contract_beacon_timer_addr) {
-                xdbg("fullunit seen %s at height %" PRIu64, owner.c_str(), block->get_height());
-                return false;
-            }
-
+            const std::string & owner = bme->owner;
             if (!(owner == sys_contract_rec_elect_edge_addr || owner == sys_contract_rec_elect_archive_addr || owner == sys_contract_rec_elect_rec_addr ||
                   owner == sys_contract_rec_elect_zec_addr || owner == sys_contract_beacon_timer_addr || owner == sys_contract_zec_elect_consensus_addr)) {
                 return false;
             }
+            
+            if (bme->blk_level != top::base::enum_xvblock_level_unit  && bme->blk_height != 0 && owner != sys_contract_beacon_timer_addr) {
+                xdbg("fullunit seen %s at height %" PRIu64, owner.c_str(), bme->blk_height);
+                return false;
+            }
+
         } else {
             xdbg("xelect_client_process ignore event %d", static_cast<int>(e->minor_type));
         }
@@ -86,6 +85,7 @@ void xelect_client_process::process_timer(const mbus::xevent_ptr_t & e) {
 }
 
 void xelect_client_process::process_elect(const mbus::xevent_ptr_t & e) {
+    
     auto bme = dynamic_xobject_ptr_cast<mbus::xevent_store_block_to_db_t>(e);
     assert(bme);
     xblock_ptr_t const & block = mbus::extract_block_from(bme);

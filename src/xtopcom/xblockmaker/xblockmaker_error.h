@@ -21,6 +21,7 @@ enum enum_xblockmaker_error_type {
     xblockmaker_error_missing_block,
     xblockmaker_error_missing_state,
     xblockmaker_error_property_load,
+    xblockmaker_error_tx_execute,
     xblockmaker_error_no_need_make_unit,
     xblockmaker_error_no_need_make_table,
 
@@ -34,6 +35,7 @@ enum enum_xblockmaker_error_type {
     xblockmaker_error_proposal_bad_input_txs,
     xblockmaker_error_proposal_unit_not_match_prev_block,
     xblockmaker_error_proposal_table_not_match_prev_block,
+    xblockmaker_error_proposal_table_state_clone,
 
     xblockmaker_error_max,
 };
@@ -50,6 +52,7 @@ inline std::string xblockmaker_error_to_string(int32_t code) {
         XUNIT_TO_STR(xblockmaker_error_missing_block),
         XUNIT_TO_STR(xblockmaker_error_missing_state),
         XUNIT_TO_STR(xblockmaker_error_property_load),
+        XUNIT_TO_STR(xblockmaker_error_tx_execute),
         XUNIT_TO_STR(xblockmaker_error_no_need_make_unit),
         XUNIT_TO_STR(xblockmaker_error_no_need_make_table),
 
@@ -62,7 +65,8 @@ inline std::string xblockmaker_error_to_string(int32_t code) {
         XUNIT_TO_STR(xblockmaker_error_proposal_not_match_local),
         XUNIT_TO_STR(xblockmaker_error_proposal_bad_input_txs),
         XUNIT_TO_STR(xblockmaker_error_proposal_unit_not_match_prev_block),
-        XUNIT_TO_STR(xblockmaker_error_proposal_table_not_match_prev_block)
+        XUNIT_TO_STR(xblockmaker_error_proposal_table_not_match_prev_block),
+        XUNIT_TO_STR(xblockmaker_error_proposal_table_state_clone),
     };
     return names[code - xblockmaker_error_base - 1];
 }

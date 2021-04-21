@@ -54,7 +54,7 @@ constexpr top::xrange_t<typename OnChainGovernanceParameterT::type> const & get_
 using xinterval_t = std::uint32_t;
 using xgroup_size_t = std::uint16_t;
 
-#define XGLOBAL_TIMER_INTERVAL_IN_SECONDS std::chrono::duration_cast<std::chrono::seconds>(xglobal_timer_interval_configuration_t::value).count()
+#define XGLOBAL_TIMER_INTERVAL_IN_SECONDS std::chrono::duration_cast<std::chrono::seconds>(top::config::xglobal_timer_interval_configuration_t::value).count()
 XDECLARE_CONFIGURATION(global_timer_interval, std::chrono::milliseconds, 10000);  // global timer interval 10
 
 // election onchain:
@@ -298,6 +298,9 @@ XDECLARE_CONFIGURATION(tableblock_batch_tx_max_num, std::int32_t, 64);
 XDECLARE_CONFIGURATION(fulltable_interval_block_num, std::uint32_t, 128);  // TODO(jimmy) 512
 XDECLARE_CONFIGURATION(local_blacklist, const char *, "");
 XDECLARE_CONFIGURATION(local_whitelist, const char *, "");
+// slash fulltable interval
+XDECLARE_CONFIGURATION(slash_fulltable_interval, xinterval_t, 30); // 5 minutes
+
 
 /* beginning of development parameters */
 XDECLARE_CONFIGURATION(http_port, uint16_t, 19081);

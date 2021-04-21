@@ -46,6 +46,7 @@ namespace top
         private:
             
         public:
+            inline const std::string    get_account_addr() const {return m_account_addr;}
             inline const xvid_t         get_account_id() const {return m_account_id;}
             inline const uint64_t       get_height()  const {return m_block_height;}
             inline const uint64_t       get_viewid()  const {return m_block_viewid;}
@@ -118,6 +119,7 @@ namespace top
             xvblock_t*      m_linked_block;
  
         private: //serialized from/to stream/db
+            std::string     m_account_addr;     //added for debug purpose
             uint64_t        m_account_id;       //block owner' account id(refer xvaccount_t::get_xvid())
             uint64_t        m_block_height;     //block 'height
             uint64_t        m_last_fullblock_height;//height of m_last_full_block

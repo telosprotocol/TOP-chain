@@ -2,45 +2,39 @@
 //  main.cpp
 //  xvledger-test
 //
-//  Created by Taylor Wei on 3/15/20.
+//  Created by Taylor Wei on 3/20/20.
 //  Copyright © 2021 Taylor Wei. All rights reserved.
 //
+#include <stdio.h>
+#include <stdlib.h>
+#include <assert.h>
 
+#include "xbase/xlog.h"
 #include "xbase/xutl.h"
- 
+
 int test_xstate(bool is_stress_test);
 
-int main(int argc, const char * argv[])
+using namespace top;
+int main(int argc,char* argv[])
 {
-    #ifdef __WIN_PLATFORM__
-        xinit_log("C:\\Users\\taylo\\Downloads\\", true, true);
-    #else
-        xinit_log("/tmp/",true,true);
-    #endif
-        
-    #ifdef DEBUG
-        xset_log_level(enum_xlog_level_debug);
-        xdup_trace_to_terminal(true);
-    #else
-        //xset_log_level(enum_xlog_level_debug);
-        xset_log_level(enum_xlog_level_key_info);
-    #endif
+#ifdef __WIN_PLATFORM__
+    xinit_log("C:\\Users\\taylo\\Downloads\\", true, true);
+#else
+    xinit_log("/tmp/",true,true);
+#endif
+    xset_log_level(enum_xlog_level_debug);
+    xdup_trace_to_terminal(true);
     
-    bool is_stress_test = false;
-    int test_result = test_xstate(is_stress_test);
-    if(test_result != 0)
-    {
-        printf("test_xstate found error,exit \n");
-        return 0;
-    }
+    xset_trace_lines_per_file(1000);
+   
+    if(test_xstate(true) < 0)
+        return -1;
     
-    sleep(2); //let xtestshard finish initialization
-    
-    bool stop_test = false;
-    while(stop_test == false)
+    printf("finish all test successful \n");
+    //const int total_time_to_wait = 20 * 1000; //20 second
+    while(1)
     {
         sleep(1);
     }
-
-    sleep(2000);//let all resource quit
+    return 0;
 }

@@ -1,0 +1,21 @@
+{
+   "account address" : "T00000LQkSo2PYR7hVxZmkQphvsxAbiB8V22PwPT",
+   "crypto" : {
+      "cipher" : "aes-256-cbc",
+      "cipherparams" : {
+         "iv" : "0x813156842d5d081597436bd8b602d2ac495e71f4c3ec660f169d7a64930630ef"
+      },
+      "ciphertext" : "0x673f5382eba3cfc352af6fa32d1a19fc7ec2725b22f2005fd9d4f81f81c3fe4155714a7eab4e525d1f11e7b64a53a7a2",
+      "kdf" : "hkdf",
+      "kdfparams" : {
+         "dklen" : 64,
+         "info" : "0xfd998d84f46f4fef",
+         "prf" : "sha3-256",
+         "salt" : "0x893998d36f15b0a5bc82c58735b94ce22fe6aa4078234a55e8752960957098b0"
+      },
+      "mac" : "0xca3b93030c510fd5fc6f62e625b7b2a1e7f1fd2336fd029ac5f8ee25052006c3"
+   },
+   "hint" : "",
+   "key_type" : "owner",
+   "public_key" : "BJE+S/NmkfMB8OIzHoJcy+lrBs0yD7X0dbKmYTg4PaNzLpaPIG9x5ojAJjSDm4JzpE84YN2C09nenWtJo0Qqxx4="
+}

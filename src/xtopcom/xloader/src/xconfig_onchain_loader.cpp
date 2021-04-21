@@ -19,7 +19,7 @@ NS_BEG2(top, loader)
 xconfig_onchain_loader_t::xconfig_onchain_loader_t(observer_ptr<store::xstore_face_t> const &     store_ptr,
                                                    observer_ptr<mbus::xmessage_bus_face_t> const &     bus,
                                                    observer_ptr<time::xchain_time_face_t> const & logic_timer)
-  : m_store_ptr{store_ptr}, m_bus{bus}, m_logic_timer{logic_timer} {
+  : m_store_ptr{store_ptr}, m_bus{bus}, m_logic_timer{logic_timer}, m_monitor(nullptr) {
     // create actions
     m_action_map[UPDATE_ACTION_PARAMETER] = std::make_shared<config::xconfig_update_parameter_action_t>();
     m_action_map[XPROPOSAL_TYPE_TO_STR(tcc::proposal_type::proposal_update_parameter_incremental_add)] = std::make_shared<config::xconfig_incremental_add_update_parameter_action_t>();
@@ -31,22 +31,58 @@ xconfig_onchain_loader_t::xconfig_onchain_loader_t(observer_ptr<store::xstore_fa
 void xconfig_onchain_loader_t::start() {
     assert(m_bus);
     // register block event listener
-    m_db_id = m_bus->add_listener(top::mbus::xevent_major_type_store, std::bind(&xconfig_onchain_loader_t::update, shared_from_this(), std::placeholders::_1));
-
+    if (m_monitor == nullptr) {
+        m_monitor = new xconfig_bus_monitor(this);
+        m_monitor->init();
+    }
+    
     m_logic_timer->watch("xconfig_onchain_parameter_loader", 1, std::bind(&xconfig_onchain_loader_t::chain_timer, shared_from_this(), std::placeholders::_1));
 }
 
 void xconfig_onchain_loader_t::stop() {
     // unregister block event listener
     assert(m_bus != nullptr);
-    m_bus->remove_listener(top::mbus::xevent_major_type_store, m_db_id);
+    if (m_monitor != nullptr) {
+        m_monitor->uninit();
+        delete m_monitor;
+        m_monitor = nullptr;
+    }
+}
+
+xconfig_onchain_loader_t::xconfig_bus_monitor::xconfig_bus_monitor(xconfig_onchain_loader_t* parent)
+    : xbase_sync_event_monitor_t(parent->m_bus) ,m_parent(parent) {
+}
+
+xconfig_onchain_loader_t::xconfig_bus_monitor::~xconfig_bus_monitor() {
+    m_parent = nullptr;
+}
+
+void xconfig_onchain_loader_t::xconfig_bus_monitor::init() {
+    mbus::xevent_queue_cb_t cb = std::bind(&xconfig_onchain_loader_t::xconfig_bus_monitor::push_event, this, std::placeholders::_1);
+    m_reg_holder.add_listener((int) mbus::xevent_major_type_store, cb);
+}
+
+void xconfig_onchain_loader_t::xconfig_bus_monitor::uninit() {
+    m_reg_holder.clear();
+}
+
+bool xconfig_onchain_loader_t::xconfig_bus_monitor::filter_event(const mbus::xevent_ptr_t & e) {
+    mbus::xevent_store_block_to_db_ptr_t block_event = dynamic_xobject_ptr_cast<mbus::xevent_store_block_to_db_t>(e);
+    std::string & owner = block_event->owner;
+    return owner == sys_contract_rec_tcc_addr;
+}
+
+void xconfig_onchain_loader_t::xconfig_bus_monitor::process_event(const mbus::xevent_ptr_t & e) {
+    if (m_parent != nullptr) {
+        m_parent->update(e);
+    }
 }
 
 void xconfig_onchain_loader_t::update(mbus::xevent_ptr_t e) {
     if (e->minor_type != mbus::xevent_store_t::type_block_to_db) {
         return;
     }
-
+    
     mbus::xevent_store_block_to_db_ptr_t block_event = dynamic_xobject_ptr_cast<mbus::xevent_store_block_to_db_t>(e);
 
     if (block_event == nullptr) {

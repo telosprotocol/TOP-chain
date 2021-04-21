@@ -1,0 +1,54 @@
+{
+   "ip" : "127.0.0.1",
+   "datadir" : "/tmp/rec1",
+   "db_path" : "/tmp/rec1/db",
+   "log_path" : "/tmp/rec1/log",
+   "log_level" : 0,
+   "grpc_port" : 19082,
+   "http_port" : 19081,
+   "ws_port" : 19085,
+   "node_type" : "advance",
+   "node_id" : "T00000LKy8CAPRETJmUr9DZiwCPcc9VFqDBpQEG6",
+   "public_key" : "BO1GzXnnDufgfv/OYyBGA4b/cgq87H3F0tCkeQiR5b4mePf8V721WoXPHGgvWPdQ2Ci0SsL4VSrSLVdKeheNdyk=",
+   "sign_key" : "NfKrEefeSvg9WinKKN+xIgxTu0xoWZuogRmD++jobns=",
+   "min_auditor_group_size" : 3,
+   "max_auditor_group_size" : 3,
+   "min_validator_group_size" : 3,
+   "max_validator_group_size" : 3,
+   "min_election_committee_size" : 6,
+   "max_election_committee_size" : 6,
+   "auditor_group_count" : 1,
+   "validator_group_count" : 1,
+   "rec_election_interval" : 181,
+   "zec_election_interval" : 211,
+   "zone_election_trigger_interval" : 5,
+   "cluster_election_interval" : 71,
+   "genesis" : {
+      "accounts" : {
+         "tcc": {
+            "T00000LcxcHVTKki5KqCKmX5BbbMSGrUPhTEpwnu": {"balance": "1000000000"},
+            "T00000LfazE9WjtUu4xx5caD9w9dWwiRGggHxxvo": {"balance": "1000000000"},
+            "T00000LfyErVp716mVR89UdJMQaZJ6W9Hv7NsHT4": {"balance": "1000000000"}
+        },
+        "genesis_funds_account": {
+            "T00000Lhj29VReFAT958ZqFWZ2ZdMLot2PS5D5YC": {"balance": "2999997000000000"},
+            "T00000LhPZXie5GqcZqoxu6BkfMUqo7e9x1EaFS6": {"balance": "6000000000000000"},
+            "T00000LKMWBfiHPeN9TShPdB9ctLDr7mmcZa46Da": {"balance": "3400000000000000"}
+        }
+      },
+      "seedNodes" : {
+         "T00000LKy8CAPRETJmUr9DZiwCPcc9VFqDBpQEG6" : "BO1GzXnnDufgfv/OYyBGA4b/cgq87H3F0tCkeQiR5b4mePf8V721WoXPHGgvWPdQ2Ci0SsL4VSrSLVdKeheNdyk=",
+         "T00000LLLK8teSrpbtcVnaYCtykniJHHeMZegQMU" : "BHWT6Jr004YIsfnhtUkLl2ZK7Z6gxfhaktgxib+8dKlOhqkTxib0bMQKtrjuKHQWVE2DaEF7QQiMWUeF9mEt59E=",
+         "T00000LPjk6KqsnCu46kHffttVPjToRmitpStvvo" : "BKnMfrDLOw2tyuCBK7Fqa+pHp4o8/fQKLVN8EPGxkzEy2wz6rjR2TrKasn2m0R7yEEa1DM3iCjOwyAxiq3eAdcQ=",
+         "T00000LQkSo2PYR7hVxZmkQphvsxAbiB8V22PwPT" : "BJE+S/NmkfMB8OIzHoJcy+lrBs0yD7X0dbKmYTg4PaNzLpaPIG9x5ojAJjSDm4JzpE84YN2C09nenWtJo0Qqxx4=",
+         "T00000LRauRZ3SvMtNhxcvoHtP8JK9pmZgxQCe7Q" : "BBZQTi7Pv4yRCYzFxri1BRUWXV6hd3nXG1tV21niKRfhk9sPmqX5SA1PcPhe3ZECIILpuvceiguSh6arX6Wfd0k=",
+         "T00000LRc5LxEXVdUuFcoLezjPiMw4CLYgvkEmtC" : "BAR31Ok8x+EXZIMJNhQhgHXdvEfbJJ6EajJn0OZf0jPC3NKzyAAmTP86LPwATfeE+KyZUFom5tdCErx4ThlgQ4Q="
+      },
+      "timestamp": 1599555555
+   },
+   "platform" : {
+      "business_port" : 9001,
+      "url_endpoints": "http://unnecessary.org",
+      "public_endpoints" : "127.0.0.1:9001,127.0.0.2:9002,127.0.0.3:9003,127.0.0.4:9004,127.0.0.5:9005,127.0.0.6:9006"
+   }
+}

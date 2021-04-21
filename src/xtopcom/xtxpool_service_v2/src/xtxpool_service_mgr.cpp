@@ -37,11 +37,16 @@ void xtxpool_service_mgr::on_block_to_db_event(mbus::xevent_ptr_t e) {
     if (e->minor_type != mbus::xevent_store_t::type_block_to_db) {
         return;
     }
-
-    mbus::xevent_store_block_to_db_ptr_t block_event = dynamic_xobject_ptr_cast<mbus::xevent_store_block_to_db_t>(e);
-    const xblock_ptr_t & block = mbus::extract_block_from(block_event);
-    xassert(block->check_block_flag(base::enum_xvblock_flag_committed));
-    on_block_confirmed(block.get());
+    
+    auto event_handler = [this, e](base::xcall_t & call, const int32_t cur_thread_id, const uint64_t timenow_ms) -> bool {
+        mbus::xevent_store_block_to_db_ptr_t block_event = dynamic_xobject_ptr_cast<mbus::xevent_store_block_to_db_t>(e);
+        const xblock_ptr_t & block = mbus::extract_block_from(block_event);
+        xassert(block->check_block_flag(base::enum_xvblock_flag_committed));
+        on_block_confirmed(block.get());
+        return true;
+    };
+    base::xcall_t asyn_call(event_handler);
+    m_timer->dispatch(asyn_call);
 }
 
 void xtxpool_service_mgr::on_block_confirmed(xblock_t * block) {

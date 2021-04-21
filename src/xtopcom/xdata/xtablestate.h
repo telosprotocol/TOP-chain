@@ -34,6 +34,8 @@ class xtablestate_t : public base::xdataunit_t {
     bool        serialize_from_binlog(const std::string & binlog);
     std::string serialize_to_full_data_string() const;
     std::string serialize_to_binlog_data_string() const;
+    bool                                set_block_full_data(const xobject_ptr_t<base::xvboffdata_t>  & full_data);
+    bool                                set_block_binlog_data(const xobject_ptr_t<base::xvboffdata_t>  & binlog_data);
     xobject_ptr_t<base::xvboffdata_t>   get_block_full_data() const;
     xobject_ptr_t<base::xvboffdata_t>   get_block_binlog_data() const;
 
@@ -52,10 +54,10 @@ class xtablestate_t : public base::xdataunit_t {
     void        set_account_index(const std::string & account, const base::xaccount_index_t & account_index);
     bool        get_account_index(const std::string & account, base::xaccount_index_t & account_index);
     bool        find_receiptid_pair(base::xtable_shortid_t sid, base::xreceiptid_pair_t & pair);
+    const base::xreceiptid_state_ptr_t &        get_receiptid_state() const {return m_receiptid_state;}
+    const base::xtable_mbt_new_state_ptr_t &    get_accountindex_state() const {return m_accountindex_state;}
 
  protected:
-    bool                                set_block_full_data(const xobject_ptr_t<base::xvboffdata_t>  & full_data);
-    bool                                set_block_binlog_data(const xobject_ptr_t<base::xvboffdata_t>  & binlog_data);
     bool                                execute_lighttable(base::xvblock_t* block);
     bool                                execute_fulltable(base::xvblock_t* block);
 
