@@ -92,11 +92,16 @@ class xready_account_t {
 public:
     xready_account_t(const std::string & account) : m_account(account) {
     }
+    xready_account_t(const std::string & account, const std::vector<xcons_transaction_ptr_t> & txs) : m_account(account), m_txs(txs) {
+    }
     const std::vector<xcons_transaction_ptr_t> & get_txs() const {
         return m_txs;
     }
     void put_tx(const xcons_transaction_ptr_t & tx) {
         m_txs.push_back(tx);
+    }
+    void put_txs(const std::vector<xcons_transaction_ptr_t> & txs) {
+        m_txs.insert(m_txs.end(), txs.begin(), txs.end());
     }
     const std::string & get_addr() const {
         return m_account;
@@ -136,6 +141,49 @@ private:
     base::enum_transaction_subtype m_subtype;
 };
 
+class xtxs_pack_para_t {
+public:
+    xtxs_pack_para_t(const std::string & table_addr,
+                     const base::xreceiptid_state_ptr_t & receiptid_state_committed,
+                     const base::xreceiptid_state_ptr_t receiptid_state_highqc,
+                     uint16_t send_txs_max_num,
+                     uint16_t recv_txs_max_num,
+                     uint16_t confirm_txs_max_num)
+      : m_table_addr(table_addr)
+      , m_receiptid_state_committed(receiptid_state_committed)
+      , m_receiptid_state_highqc(receiptid_state_highqc)
+      , m_send_txs_max_num(send_txs_max_num)
+      , m_recv_txs_max_num(recv_txs_max_num)
+      , m_confirm_txs_max_num(confirm_txs_max_num) {
+    }
+    const std::string & get_table_addr() const {
+        return m_table_addr;
+    }
+    const base::xreceiptid_state_ptr_t & get_receiptid_state_committed() const {
+        return m_receiptid_state_committed;
+    }
+    const base::xreceiptid_state_ptr_t & get_receiptid_state_highqc() const {
+        return m_receiptid_state_highqc;
+    }
+    uint16_t get_send_txs_max_num() const {
+        return m_send_txs_max_num;
+    }
+    uint16_t get_recv_txs_max_num() const {
+        return m_recv_txs_max_num;
+    }
+    uint16_t get_confirm_txs_max_num() const {
+        return m_confirm_txs_max_num;
+    }
+
+private:
+    std::string m_table_addr;
+    base::xreceiptid_state_ptr_t m_receiptid_state_committed;
+    base::xreceiptid_state_ptr_t m_receiptid_state_highqc;
+    uint16_t m_send_txs_max_num;
+    uint16_t m_recv_txs_max_num;
+    uint16_t m_confirm_txs_max_num;
+};
+
 class xtxpool_face_t : public base::xobject_t {
 public:
     virtual int32_t push_send_tx(const std::shared_ptr<xtx_entry> & tx) = 0;
@@ -143,6 +191,8 @@ public:
     virtual const xcons_transaction_ptr_t pop_tx(const tx_info_t & txinfo) = 0;
     virtual ready_accounts_t pop_ready_accounts(const std::string & table_addr, uint32_t count) = 0;
     virtual ready_accounts_t get_ready_accounts(const std::string & table_addr, uint32_t count) = 0;
+    virtual ready_accounts_t get_ready_accounts(const xtxs_pack_para_t & pack_para) = 0;
+    virtual std::vector<xcons_transaction_ptr_t> get_ready_txs(const xtxs_pack_para_t & pack_para) = 0;
     virtual std::vector<xcons_transaction_ptr_t> get_ready_txs(const std::string & table_addr, uint32_t count) = 0;
     virtual const std::shared_ptr<xtx_entry> query_tx(const std::string & account, const uint256_t & hash) const = 0;
     virtual void updata_latest_nonce(const std::string & account_addr, uint64_t latest_nonce, const uint256_t & latest_hash) = 0;
