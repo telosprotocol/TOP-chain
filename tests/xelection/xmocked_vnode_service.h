@@ -6,9 +6,9 @@
 
 #define private protected
 
-#include "xelection/xvnode_house.h"
 #include "xbase/xobject_ptr.h"
 #include "xcommon/xaddress.h"
+#include "xelection/xvnode_house.h"
 
 #include <unordered_map>
 
