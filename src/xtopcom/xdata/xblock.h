@@ -211,6 +211,8 @@ class xblock_consensus_para_t {
     uint64_t                get_total_lock_tgas_token() const {return m_total_lock_tgas_token;}
     const std::string &     get_justify_cert_hash() const {return m_justify_cert_hash;}
     uint64_t                get_proposal_height() const {return m_proposal_height;}
+    const std::string &     get_table_account() const {return m_account;}
+    uint64_t                get_table_proposal_height() const {return m_proposal_height;}
     uint64_t                get_parent_height() const {return m_parent_height;}
     const std::string &     dump() const {return m_dump_str;}
 

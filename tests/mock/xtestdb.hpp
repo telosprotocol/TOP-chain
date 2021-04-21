@@ -66,7 +66,7 @@ namespace top
             }
 
         public://declares clasic events
-            virtual mbus::xevent_ptr_t  create_event_for_store_index_to_db(base::xvbindex_t * target_block) override
+            virtual mbus::xevent_ptr_t  create_event_for_store_index_to_db(const std::string & account, base::xvbindex_t * target_index) override
             {
                 mbus::xevent_ptr_t event = make_object_ptr<mbus::xevent_t>(0);
                 return event;

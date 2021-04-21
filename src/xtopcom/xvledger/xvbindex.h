@@ -118,6 +118,7 @@ namespace top
             xvblock_t*      m_linked_block;
  
         private: //serialized from/to stream/db
+            std::string     m_account_addr;     //added for debug purpose
             uint64_t        m_account_id;       //block owner' account id(refer xvaccount_t::get_xvid())
             uint64_t        m_block_height;     //block 'height
             uint64_t        m_last_fullblock_height;//height of m_last_full_block

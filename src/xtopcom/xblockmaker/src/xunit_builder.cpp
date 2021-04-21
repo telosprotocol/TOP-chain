@@ -25,6 +25,10 @@ xblock_ptr_t        xlightunit_builder_t::build_block(const xblock_ptr_t & prev_
     uint32_t unconfirm_num = prev_state->get_unconfirm_sendtx_num();
     std::shared_ptr<store::xaccount_context_t> _account_context = std::make_shared<store::xaccount_context_t>(prev_state.get(), build_para->get_store());
     _account_context->set_context_para(cs_para.get_clock(), cs_para.get_random_seed(), cs_para.get_timestamp(), cs_para.get_total_lock_tgas_token());
+    xassert(!cs_para.get_table_account().empty());
+    xassert(cs_para.get_table_proposal_height() > 0);
+    uint64_t table_committed_height = cs_para.get_table_proposal_height() >= 3 ? cs_para.get_table_proposal_height() - 3 : 0;
+    _account_context->set_context_pare_current_table(cs_para.get_table_account(), table_committed_height);
 
     const std::vector<xcons_transaction_ptr_t> & input_txs = lightunit_build_para->get_origin_txs();
     txexecutor::xbatch_txs_result_t exec_result;

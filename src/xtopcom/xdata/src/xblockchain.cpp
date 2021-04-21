@@ -219,6 +219,8 @@ bool xblockchain2_t::add_light_table(const xblock_t* block) {
 }
 
 bool xblockchain2_t::add_full_table(const xblock_t* block) {
+    m_last_full_block_height = block->get_height();
+    m_last_full_block_hash = block->get_block_hash();
     return true;
 }
 

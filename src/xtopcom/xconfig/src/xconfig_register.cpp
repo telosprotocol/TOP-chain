@@ -118,6 +118,8 @@ void xconfig_register_t::init_static_config() {
     XADD_OFFCHAIN_PARAMETER(local_blacklist);
     XADD_OFFCHAIN_PARAMETER(local_whitelist);
 
+    XADD_OFFCHAIN_PARAMETER(slash_fulltable_interval);
+
     m_param_lock.release_write();
 }
 

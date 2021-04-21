@@ -55,8 +55,9 @@ xblock_ptr_t        xfulltable_builder_t::build_block(const xblock_ptr_t & prev_
 }
 
 xstatistics_data_t xfulltable_builder_t::make_block_statistics(const std::vector<xblock_ptr_t> & blocks) {
-    // data::xstatistics_data_t _statistics_data = tableblock_statistics(blocks, nodesvr_ptr);
-    return {};
+    // TODO(jimmy) should record property
+    data::xstatistics_data_t _statistics_data = tableblock_statistics(blocks);
+    return _statistics_data;
 }
 
 
