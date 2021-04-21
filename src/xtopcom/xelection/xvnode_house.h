@@ -64,14 +64,14 @@ public:
      * @param target_node target node xvip2
      * @return base::xauto_ptr<base::xvnode_t>
      */
-    virtual base::xauto_ptr<base::xvnode_t> get_node(const xvip2_t & target_node) override;
+    virtual base::xauto_ptr<base::xvnode_t> get_node(const xvip2_t & target_node) const override;
     /**
      * @brief Get the group object
      *
      * @param target_group target group xvip2
      * @return base::xauto_ptr<base::xvnodegroup_t>
      */
-    virtual base::xauto_ptr<base::xvnodegroup_t> get_group(const xvip2_t & target_group) override;
+    virtual base::xauto_ptr<base::xvnodegroup_t> get_group(const xvip2_t & target_group) const override;
     /**
      * @brief add group
      *
@@ -89,14 +89,14 @@ private:
      * @param target_group target group xvip2
      * @return base::xauto_ptr<base::xvnodegroup_t>
      */
-    base::xauto_ptr<base::xvnodegroup_t> get_group_internal(const xvip2_t & target_group);
+    base::xauto_ptr<base::xvnodegroup_t> get_group_internal(const xvip2_t & target_group) const;
     /**
      * @brief Get the group object
      *
      * @param target_group target group xvip2
      * @return base::xauto_ptr<base::xvnodegroup_t>
      */
-    base::xauto_ptr<base::xvnodegroup_t> get_group_pure(const xvip2_t & target_group);
+    base::xauto_ptr<base::xvnodegroup_t> get_group_pure(const xvip2_t & target_group) const;
     /**
      * @brief load group from store
      *
@@ -104,21 +104,20 @@ private:
      */
     void load_group_from_store(const xvip2_t & target_node);
 
-private:
     /**
      * @brief Get the group key
      *
      * @param target_group target group xvip2
      * @return uint64_t key
      */
-    uint64_t get_group_key(const xvip2_t & target_group);
+    uint64_t get_group_key(const xvip2_t & target_group) const;
     /**
      * @brief Get the elect address
      *
      * @param target_group target group xvip2
      * @return std::string
      */
-    std::string get_elect_address(const xvip2_t & target_group);
+    std::string get_elect_address(const xvip2_t & target_group) const;
     /**
      * @brief notity to load elect info
      *
@@ -126,7 +125,7 @@ private:
      * @param elect_address elect address
      * @param elect_height elect height
      */
-    void notify_lack_elect_info(uint64_t group_key, const std::string &elect_address, uint64_t elect_height);
+    void notify_lack_elect_info(uint64_t group_key, const std::string &elect_address, uint64_t elect_height) const;
     /**
      * @brief add group
      *
@@ -143,10 +142,10 @@ private:
     std::string m_sign_key;
     xobject_ptr_t<base::xvblockstore_t> m_blockstore;
     observer_ptr<mbus::xmessage_bus_face_t> m_bus;
-    std::mutex                         m_lock;
+    mutable std::mutex                         m_lock;
     //uint64_t                           m_vnetwork_id; //network id,refer definition of xip2 at xbase.h
     //uint64_t                           m_vnet_version;//version is same concept as round of election
-    basic::xlru_cache<uint64_t, base::xvnodegroup_t*, basic::xref_deleter_t<base::xvnodegroup_t>> m_vgroups{10000};     //mapping <version/round --> group>
+    mutable basic::xlru_cache<uint64_t, base::xvnodegroup_t*, basic::xref_deleter_t<base::xvnodegroup_t>> m_vgroups{10000};     //mapping <version/round --> group>
 };
 
 NS_END2

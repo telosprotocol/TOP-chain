@@ -44,7 +44,7 @@ xvnode_house_t::~xvnode_house_t() {
 #endif
 }
 
-base::xauto_ptr<base::xvnode_t> xvnode_house_t::get_node(const xvip2_t & target_node) {
+base::xauto_ptr<base::xvnode_t> xvnode_house_t::get_node(const xvip2_t & target_node) const {
     xdbg("[xvnode_house_t::get_node] target node : {%" PRIu64 ", %" PRIu64 "}", target_node.high_addr, target_node.low_addr);
     base::xauto_ptr<base::xvnodegroup_t> group_ptr = get_group_internal(target_node);
     if (group_ptr == nullptr) {
@@ -62,7 +62,7 @@ base::xauto_ptr<base::xvnode_t> xvnode_house_t::get_node(const xvip2_t & target_
     return node_ptr;
 }
 
-base::xauto_ptr<base::xvnodegroup_t> xvnode_house_t::get_group(const xvip2_t & target_group) {
+base::xauto_ptr<base::xvnodegroup_t> xvnode_house_t::get_group(const xvip2_t & target_group) const {
     xdbg("xvnode_house_t::get_group");
     base::xauto_ptr<base::xvnodegroup_t> group_ptr = get_group_internal(target_group);
     if (group_ptr == nullptr) {
@@ -74,50 +74,6 @@ base::xauto_ptr<base::xvnodegroup_t> xvnode_house_t::get_group(const xvip2_t & t
     }
 
     return group_ptr;
-}
-
-uint64_t xvnode_house_t::get_group_key(const xvip2_t & target_group) {
-    uint64_t group_key = ((target_group.low_addr << 11) >> 21) | ((target_group.high_addr & 0x1FFFFF) << 43);
-    return group_key;
-}
-
-std::string xvnode_house_t::get_elect_address(const xvip2_t & target_group) {
-    uint8_t zone_id = get_zone_id_from_xip2(target_group);
-    uint8_t cluster_id = get_cluster_id_from_xip2(target_group);
-    uint8_t group_id = get_group_id_from_xip2(target_group);
-
-    std::string elect_address{};
-    if (zone_id == 0) {
-        if (cluster_id == 1) {
-            if (group_id>=1 && group_id<127)
-                elect_address = sys_contract_zec_elect_consensus_addr;
-        }
-    } else if (zone_id == 1) {
-        if (cluster_id==0 && group_id==0)
-            elect_address = sys_contract_rec_elect_rec_addr;
-    } else if (zone_id == 2) {
-        if (cluster_id==0 && group_id==0)
-            elect_address = sys_contract_rec_elect_zec_addr;
-    }
-
-    return elect_address;
-}
-
-void xvnode_house_t::notify_lack_elect_info(uint64_t group_key, const std::string &elect_address, uint64_t elect_height) {
-
-    if (!elect_address.empty()) {
-
-        xkinfo("get node or group failed %s %u %lu", elect_address.c_str(), (uint32_t)elect_height, group_key);
-
-        std::string elect_table_addr = account_address_to_block_address(top::common::xaccount_address_t{elect_address});
-        mbus::xevent_behind_ptr_t e = make_object_ptr<mbus::xevent_behind_check_t>(
-                    elect_table_addr, "vnode house");
-
-        e->err = mbus::xevent_t::succ;
-        m_bus->push_event(e);
-    } else {
-        //xkinfo("get node or group failed (%u %u %u)", zone_id, cluster_id, group_id);
-    }
 }
 
 /*
@@ -142,15 +98,57 @@ XIP2 = [high 64bit:label data][low 64bit:XIP]
         -[XIP: 64bit]
 }
 */
-xauto_ptr<xvnodegroup_t> xvnode_house_t::get_group_internal(const xvip2_t & target_group) {
 
-    const uint64_t group_key = get_group_key(target_group);
+uint64_t xvnode_house_t::get_group_key(const xvip2_t & target_group) const {
+    uint64_t group_key = ((target_group.low_addr << 11) >> 21) | ((target_group.high_addr & 0x1FFFFF) << 43);
+    return group_key;
+}
 
+std::string xvnode_house_t::get_elect_address(const xvip2_t & target_group) const {
+    uint8_t zone_id = get_zone_id_from_xip2(target_group);
+    uint8_t cluster_id = get_cluster_id_from_xip2(target_group);
+    uint8_t group_id = get_group_id_from_xip2(target_group);
+
+    std::string elect_address{};
+    if (zone_id == 0) {
+        if (cluster_id == 1) {
+            if (group_id>=1 && group_id<127)
+                elect_address = sys_contract_zec_elect_consensus_addr;
+        }
+    } else if (zone_id == 1) {
+        if (cluster_id==0 && group_id==0)
+            elect_address = sys_contract_rec_elect_rec_addr;
+    } else if (zone_id == 2) {
+        if (cluster_id==0 && group_id==0)
+            elect_address = sys_contract_rec_elect_zec_addr;
+    }
+
+    return elect_address;
+}
+
+void xvnode_house_t::notify_lack_elect_info(uint64_t group_key, const std::string &elect_address, uint64_t elect_height) const {
+
+    if (!elect_address.empty()) {
+
+        xkinfo("get node or group failed %s %u %lu", elect_address.c_str(), (uint32_t)elect_height, group_key);
+
+        std::string elect_table_addr = account_address_to_block_address(top::common::xaccount_address_t{elect_address});
+        mbus::xevent_behind_ptr_t e = make_object_ptr<mbus::xevent_behind_check_t>(
+                    elect_table_addr, "vnode house");
+
+        e->err = mbus::xevent_t::succ;
+        m_bus->push_event(e);
+    } else {
+        //xkinfo("get node or group failed (%u %u %u)", zone_id, cluster_id, group_id);
+    }
+}
+
+xauto_ptr<xvnodegroup_t> xvnode_house_t::get_group_internal(const xvip2_t & target_group) const {
     base::xauto_ptr<base::xvnodegroup_t> group1 = get_group_pure(target_group);
     if (group1 != nullptr)
         return group1;
 
-    load_group_from_store(target_group);
+    const_cast<xvnode_house_t *>(this)->load_group_from_store(target_group);
 
     base::xauto_ptr<base::xvnodegroup_t> group2 = get_group_pure(target_group);
     if (group2 != nullptr)
@@ -159,7 +157,7 @@ xauto_ptr<xvnodegroup_t> xvnode_house_t::get_group_internal(const xvip2_t & targ
     return nullptr;
 }
 
-xauto_ptr<xvnodegroup_t> xvnode_house_t::get_group_pure(const xvip2_t & target_group) {
+xauto_ptr<xvnodegroup_t> xvnode_house_t::get_group_pure(const xvip2_t & target_group) const {
 
     const uint64_t group_key = get_group_key(target_group);
 
@@ -179,9 +177,6 @@ xauto_ptr<xvnodegroup_t> xvnode_house_t::get_group_pure(const xvip2_t & target_g
 }
 
 void xvnode_house_t::load_group_from_store(const xvip2_t & target_node) {
-
-    const uint64_t group_key = get_group_key(target_node);
-
     std::string elect_address = get_elect_address(target_node);
     uint64_t elect_height = get_network_height_from_xip2(target_node);
 
