@@ -148,9 +148,42 @@ bool xtablestate_t::execute_lighttable(base::xvblock_t* block) {
     std::map<std::string, xaccount_index_t> changed_indexs = lighttable->get_units_index();
     accountindex_binlog->set_accounts_index(changed_indexs);
 
-    const base::xreceiptid_pairs_ptr_t & receiptid_binlog = m_receiptid_state->get_binlog();
-    base::xreceiptid_pairs_ptr_t changed_receiptid = lighttable->get_receiptid_binlog();
-    receiptid_binlog->add_binlog(changed_receiptid);
+    auto & units = lighttable->get_tableblock_units(true);
+    // set sendid firstly
+    for (auto & unit : units) {
+        const std::vector<xlightunit_tx_info_ptr_t> & txs_info = unit->get_txs();
+        for (auto & tx : txs_info) {
+            if (tx->is_send_tx()) {
+                uint64_t sendid = tx->get_receipt_id();
+                base::xtable_shortid_t tableid = tx->get_receipt_id_tableid();
+                base::xreceiptid_pair_t pair;
+                m_receiptid_state->find_pair(tableid, pair);
+                pair.set_sendid_max(sendid);
+                m_receiptid_state->add_pair(tableid, pair);
+            }
+        }
+    }
+    // set recv and confirm secondly
+    for (auto & unit : units) {
+        const std::vector<xlightunit_tx_info_ptr_t> & txs_info = unit->get_txs();
+        for (auto & tx : txs_info) {
+            if (tx->is_recv_tx()) {
+                uint64_t recvid = tx->get_receipt_id();
+                base::xtable_shortid_t tableid = tx->get_receipt_id_tableid();
+                base::xreceiptid_pair_t pair;
+                m_receiptid_state->find_pair(tableid, pair);
+                pair.set_recvid_max(recvid);
+                m_receiptid_state->add_pair(tableid, pair);
+            } else if (tx->is_confirm_tx()) {
+                uint64_t confirmid = tx->get_receipt_id();
+                base::xtable_shortid_t tableid = tx->get_receipt_id_tableid();
+                base::xreceiptid_pair_t pair;
+                m_receiptid_state->find_pair(tableid, pair);
+                pair.set_confirmid_max(confirmid);
+                m_receiptid_state->add_pair(tableid, pair);
+            }
+        }
+    }
 
     m_binlog_height = block->get_height();
     return true;

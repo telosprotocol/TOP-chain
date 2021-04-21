@@ -26,8 +26,7 @@ void xlightunit_builder_t::alloc_tx_receiptid(const std::vector<xcons_transactio
         if (tx->is_self_tx()) {
             continue;
         } else if (tx->is_send_tx()) {
-            std::string target_addr = tx->get_transaction()->get_target_addr();
-            base::xvaccount_t _vaccount(target_addr);
+            base::xvaccount_t _vaccount(tx->get_transaction()->get_target_addr());
             base::xtable_shortid_t target_sid = _vaccount.get_short_table_id();
 
             base::xreceiptid_pair_t receiptid_pair;
@@ -38,12 +37,20 @@ void xlightunit_builder_t::alloc_tx_receiptid(const std::vector<xcons_transactio
             tx->set_current_receipt_id(target_sid, current_receipt_id);
             receiptid_state->add_pair_modified(target_sid, receiptid_pair);  // save to modified pairs
             xdbg("xlightunit_builder_t::alloc_tx_receiptid alloc send_tx receipt id. tx=%s", tx->dump(true).c_str());
-        } else if ( tx->is_recv_tx() || tx->is_confirm_tx() ) {
+        } else if ( tx->is_recv_tx()) {
+            base::xvaccount_t _vaccount(tx->get_transaction()->get_source_addr());
+            base::xtable_shortid_t source_sid = _vaccount.get_short_table_id();
             // copy receipt id from last phase to current phase
             uint64_t receipt_id = tx->get_last_action_receipt_id();
-            base::xtable_shortid_t target_sid = tx->get_last_action_receipt_id_tableid();
+            tx->set_current_receipt_id(source_sid, receipt_id);
+            xdbg("xlightunit_builder_t::alloc_tx_receiptid alloc recv_tx receipt id. tx=%s", tx->dump(true).c_str());
+        } else if (tx->is_confirm_tx() ) {
+            base::xvaccount_t _vaccount(tx->get_transaction()->get_target_addr());
+            base::xtable_shortid_t target_sid = _vaccount.get_short_table_id();
+            // copy receipt id from last phase to current phase
+            uint64_t receipt_id = tx->get_last_action_receipt_id();
             tx->set_current_receipt_id(target_sid, receipt_id);
-            xdbg("xlightunit_builder_t::alloc_tx_receiptid copy receipt_tx receipt id. tx=%s", tx->dump(true).c_str());
+            xdbg("xlightunit_builder_t::alloc_tx_receiptid alloc confirm_tx receipt id. tx=%s", tx->dump(true).c_str());
         }
     }
 }
