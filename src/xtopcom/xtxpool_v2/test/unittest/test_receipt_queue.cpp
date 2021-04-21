@@ -79,7 +79,7 @@ TEST_F(test_new_receipt_queue, receipt_queue_basic) {
 
     xreceiptid_pair_t receiptid_pair(1, 0, 1);
     receiptid_state->add_pair(0, receiptid_pair);
-    receipt_queue.update_table_receipt_id_state(receiptid_state);
+    receipt_queue.update_receiptid_state(receiptid_state);
 
     auto receipts2 = receipt_queue.get_txs(10, 10, receiptid_state);
     ASSERT_EQ(receipts2.size(), tx_num - 1);

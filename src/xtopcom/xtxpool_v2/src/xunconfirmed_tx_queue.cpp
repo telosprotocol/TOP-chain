@@ -91,7 +91,7 @@ const xcons_transaction_ptr_t xpeer_tables_t::find(uint16_t peer_table_sid, uint
     return nullptr;
 }
 
-void xpeer_tables_t::update_table_receipt_id_state(const base::xreceiptid_state_ptr_t & receiptid_state) {
+void xpeer_tables_t::update_receiptid_state(const base::xreceiptid_state_ptr_t & receiptid_state) {
     for (auto peer_table : m_peer_tables) {
         auto & peer_table_sid = peer_table.first;
         auto & peer_table_txs = peer_table.second;
@@ -264,7 +264,7 @@ const xcons_transaction_ptr_t xunconfirmed_tx_queue_t::find(const std::string & 
 
 void xunconfirmed_tx_queue_t::recover(const base::xreceiptid_state_ptr_t & receiptid_state) {
     // update table-table receipt id state, if all peer_tables were complate, no need to recover, or else, get unconfirmed accounts, and load their unconfirmed txs.
-    m_peer_tables.update_table_receipt_id_state(receiptid_state);
+    m_peer_tables.update_receiptid_state(receiptid_state);
     // receiptid_state may not be consistance with account state!
     // if (m_peer_tables.is_complated()) {
     //     xtxpool_dbg("xunconfirmed_tx_queue_t::recover table:%s, all peer tables unconfirmed txs is complate, no need to recover.", m_table_info->get_table_addr().c_str());

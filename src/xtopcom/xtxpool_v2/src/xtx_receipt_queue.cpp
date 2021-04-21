@@ -248,7 +248,7 @@ const std::shared_ptr<xtx_entry> xreceipt_queue_new_t::find(const std::string & 
     return m_receipt_queue_internal.find(hash);
 }
 
-void xreceipt_queue_new_t::update_table_receipt_id_state(const base::xreceiptid_state_ptr_t & receiptid_state) {
+void xreceipt_queue_new_t::update_receiptid_state(const base::xreceiptid_state_ptr_t & receiptid_state) {
     for (auto & it : m_recv_tx_peer_table_map) {
         auto & peer_table_sid = it.first;
         auto & peer_table_tx_queue = it.second;
