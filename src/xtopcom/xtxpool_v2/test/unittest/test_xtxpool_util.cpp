@@ -269,8 +269,30 @@ xblock_t * test_xtxpool_util_t::create_tableblock_with_send_txs_with_next_two_em
     table_para.add_unit(unit);
 
     base::xvblock_t * taccount1_genesis_block = xblocktool_t::create_genesis_empty_table(table_address);
-    xblock_t * taccount1_proposal_block = (xblock_t *)test_blocktuil::create_next_tableblock_with_next_two_emptyblock(table_para, taccount1_genesis_block, table_clock);
+    xblock_t * taccount1_proposal_block = (xblock_t *)test_blocktuil::create_next_tableblock(table_para, taccount1_genesis_block, table_clock);
     assert(!taccount1_proposal_block->get_block_hash().empty());
     blockstore->store_block(table_address, taccount1_proposal_block);
+
+    auto unit_in_db1 = blockstore->get_latest_cert_block(account_address);
+    xvblock_t *unit1 = test_blocktuil::create_next_emptyblock(unit_in_db1.get());
+
+    xtable_block_para_t table_para1;
+    table_para1.add_unit(unit1);
+
+    xblock_t * taccount1_proposal_block1 = (xblock_t *)test_blocktuil::create_next_tableblock(table_para1, taccount1_proposal_block, table_clock);
+    assert(!taccount1_proposal_block1->get_block_hash().empty());
+    blockstore->store_block(table_address, taccount1_proposal_block1);
+
+    auto unit_in_db2 = blockstore->get_latest_cert_block(account_address);
+    xvblock_t *unit2 = test_blocktuil::create_next_emptyblock(unit_in_db2.get());
+
+    xtable_block_para_t table_para2;
+    table_para2.add_unit(unit2);
+
+    base::xvblock_t * taccount1_genesis_block2 = xblocktool_t::create_genesis_empty_table(table_address);
+    xblock_t * taccount1_proposal_block2 = (xblock_t *)test_blocktuil::create_next_tableblock(table_para2, taccount1_proposal_block1, table_clock);
+    assert(!taccount1_proposal_block2->get_block_hash().empty());
+    blockstore->store_block(table_address, taccount1_proposal_block2);
+
     return taccount1_proposal_block;
 }
