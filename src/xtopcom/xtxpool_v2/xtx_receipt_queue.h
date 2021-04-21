@@ -9,8 +9,8 @@
 #include "xdata/xgenesis_data.h"
 #include "xtxpool_v2/xtxpool_face.h"
 #include "xtxpool_v2/xtxpool_info.h"
-#include "xvledger/xvaccount.h"
 #include "xvledger/xreceiptid.h"
+#include "xvledger/xvaccount.h"
 
 #include <map>
 #include <set>
@@ -83,7 +83,7 @@ public:
     xreceipt_queue_new_t(xtxpool_table_info_t * xtable_info) : m_receipt_queue_internal(xtable_info) {
     }
     int32_t push_tx(const std::shared_ptr<xtx_entry> & tx_ent);
-    const std::vector<xcons_transaction_ptr_t> get_txs(uint32_t max_num) const;
+    const std::vector<xcons_transaction_ptr_t> get_txs(uint32_t recv_txs_max_num, uint32_t confirm_txs_max_num, const base::xreceiptid_state_ptr_t & receiptid_state) const;
     const std::shared_ptr<xtx_entry> pop_tx(const tx_info_t & txinfo);
     const std::shared_ptr<xtx_entry> find(const std::string & account_addr, const uint256_t & hash) const;
     void update_table_receipt_id_state(const base::xreceiptid_state_ptr_t & receiptid_state);
