@@ -102,7 +102,6 @@ xtable_mbt_binlog_t::xtable_mbt_binlog_t(const std::map<std::string, xaccount_in
 int32_t xtable_mbt_binlog_t::do_write(base::xstream_t & stream) {
     const int32_t begin_size = stream.size();
     const uint32_t count = (uint32_t)m_account_indexs.size();
-    xassert(count != 0);
     stream.write_compact_var(count);
     for (auto & v : m_account_indexs) {
         stream.write_compact_var(v.first);

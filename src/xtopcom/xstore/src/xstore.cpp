@@ -747,9 +747,6 @@ bool xstore::execute_tableblock_full(xblockchain2_t* account, xfull_tableblock_t
         xerror("xstore::execute_tableblock_full execute fail.block=%s", block->dump().c_str());
         return false;
     }
-
-    xobject_ptr_t<base::xvboffdata_t> offdata = tablestate->get_block_full_data();
-    block->reset_block_offdata(offdata.get());  // TODO(jimmy) cache offstate on block
     set_vblock_offdata({}, block);
 
     account->set_extend_data(xblockchain2_t::enum_blockchain_ext_type_binlog, std::string());  // clear binlo
