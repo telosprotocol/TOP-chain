@@ -198,8 +198,6 @@ XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(cross_reading_rec_reg_contract_logic_timeo
                                       60,
                                       1,
                                       std::numeric_limits<common::xlogic_time_t>::max());
-// workload:
-
 
 // credit & slash
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(tableslash_report_schedule_interval, xinterval_t, normal, 1, 0, std::numeric_limits<xinterval_t>::max());
@@ -303,6 +301,7 @@ XDECLARE_CONFIGURATION(local_blacklist, const char *, "");
 XDECLARE_CONFIGURATION(local_whitelist, const char *, "");
 // slash fulltable interval
 XDECLARE_CONFIGURATION(slash_fulltable_interval, xinterval_t, 30); // 5 minutes
+// workload fulltable interval
 XDECLARE_CONFIGURATION(workload_fulltable_interval, xinterval_t, 30); // 5 minutes
 
 
