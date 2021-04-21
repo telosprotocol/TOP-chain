@@ -43,6 +43,7 @@ public:
     void update_unconfirm_accounts(uint8_t zone, uint16_t subaddr) override;
     void update_non_ready_accounts(uint8_t zone, uint16_t subaddr) override;
     void update_locked_txs(const std::string & table_addr, const std::vector<tx_info_t> & locked_tx_vec) override;
+    void update_receiptid_state(const std::string & table_addr, const base::xreceiptid_state_ptr_t & receiptid_state) override;
 
 private:
     bool is_table_subscribed(uint8_t zone, uint16_t table_id) const;

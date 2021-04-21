@@ -224,6 +224,14 @@ void xtxpool_t::update_locked_txs(const std::string & table_addr, const std::vec
     return table->update_locked_txs(locked_tx_vec);
 }
 
+void xtxpool_t::update_receiptid_state(const std::string & table_addr, const base::xreceiptid_state_ptr_t & receiptid_state) {
+    auto table = get_txpool_table_by_addr(table_addr);
+    if (table == nullptr) {
+        return;
+    }
+    return table->update_receiptid_state(receiptid_state);
+}
+
 bool xtxpool_t::is_table_subscribed(uint8_t zone, uint16_t table_id) const {
     std::lock_guard<std::mutex> lck(m_mutex[zone]);
     for (uint32_t i = 0; i < m_shards.size(); i++) {

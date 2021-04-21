@@ -103,8 +103,6 @@ ready_accounts_t xtxmgr_table_t::get_ready_accounts(const xtxs_pack_para_t & pac
 }
 
 std::vector<xcons_transaction_ptr_t> xtxmgr_table_t::get_ready_txs(const xtxs_pack_para_t & pack_para) {
-    update_table_receipt_id_state(pack_para.get_receiptid_state_committed());
-
     // do not care about receipt id continuity of receipts in receipts queue, unit service should assure the continuity,
     // so that receipts in txpool could always be get from txpool to unit service without continuous constraint.
     // receipts not pop from queue to pending, but get from queue to unit service directly,
@@ -174,8 +172,8 @@ bool xtxmgr_table_t::is_account_need_update(const std::string & account_addr) co
     return m_send_tx_queue.is_account_need_update(account_addr);
 }
 
-void xtxmgr_table_t::update_table_receipt_id_state(const base::xreceiptid_state_ptr_t & receiptid_state) {
-    m_new_receipt_queue.update_table_receipt_id_state(receiptid_state);
+void xtxmgr_table_t::update_receiptid_state(const base::xreceiptid_state_ptr_t & receiptid_state) {
+    m_new_receipt_queue.update_receiptid_state(receiptid_state);
 }
 
 void xtxmgr_table_t::queue_to_pending() {
