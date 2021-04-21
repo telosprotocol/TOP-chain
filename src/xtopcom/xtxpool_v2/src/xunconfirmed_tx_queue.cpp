@@ -97,7 +97,7 @@ void xpeer_tables_t::update_receiptid_state(const base::xreceiptid_state_ptr_t &
         auto & peer_table_txs = peer_table.second;
         base::xreceiptid_pair_t receiptid_pair;
         receiptid_state->find_pair(peer_table_sid, receiptid_pair);
-        peer_table_txs->update_receipt_id(receiptid_pair.get_sendid_max(), m_all_unconfirm_txs);
+        peer_table_txs->update_receipt_id(receiptid_pair.get_confirmid_max(), m_all_unconfirm_txs);
     }
 
     // update latest and max receipt id of peer tables, if not found, create one, if anyone have no unconfirmed tx, remove it.
@@ -212,7 +212,7 @@ int32_t xunconfirmed_account_t::update(xblock_t * latest_committed_block, const 
         auto peer_table_sid = vaccount.get_short_table_id();
         base::xreceiptid_pair_t receiptid_pair;
         receiptid_state->find_pair(peer_table_sid, receiptid_pair);
-        if (tx->get_last_action_receipt_id() <= receiptid_pair.get_sendid_max()) {
+        if (tx->get_last_action_receipt_id() <= receiptid_pair.get_confirmid_max()) {
             xtxpool_info("xunconfirmed_account_t::update account:%s tx:%s already confirmed", account_addr.c_str(), tx->dump(true).c_str());
             continue;
         }
