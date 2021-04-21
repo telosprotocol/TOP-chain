@@ -91,6 +91,7 @@ XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(min_credit);
 
 XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(reward_issue_interval);
 XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(workload_timer_interval);
+XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(workload_collection_interval);
 XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(task_num_per_round);
 
 XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(vote_reward_ratio);
@@ -164,6 +165,7 @@ XDEFINE_CONFIGURATION(local_blacklist);
 XDEFINE_CONFIGURATION(local_whitelist);
 
 XDEFINE_CONFIGURATION(slash_fulltable_interval);
+XDEFINE_CONFIGURATION(workload_fulltable_interval);
 
 /* beginning of development parameters */
 XDEFINE_CONFIGURATION(http_port);

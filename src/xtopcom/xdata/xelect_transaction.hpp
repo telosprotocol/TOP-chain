@@ -128,6 +128,7 @@ public:
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(governance_reward_ratio);
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(reward_issue_interval);
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(workload_timer_interval);
+        XADD_ONCHAIN_GOVERNANCE_PARAMETER(workload_collection_interval);
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(task_num_per_round);
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(workload_per_tx);
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(workload_per_tableblock);
