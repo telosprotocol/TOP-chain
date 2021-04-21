@@ -12,6 +12,7 @@ jobs:
   build:
     runs-on: [self-hosted, Linux, X64]
     if: github.repository == 'telosprotocol/TOP-chain'
+    # for ci telos only
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
