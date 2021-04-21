@@ -206,6 +206,15 @@ xdataobj_ptr_t xaccount_cmd::get_property(const std::string& prop_name, int32_t 
             return nullptr;
         }
 
+        // property in db may changed when tx executed
+        std::string db_prop_hash = xhash_base_t::calc_dataunit_hash(obj.get());
+        if (db_prop_hash != hash) {
+            error_code = xaccount_property_behind_not_exist;
+            xwarn("xaccount_cmd::get_property fail-property hash unmatch,account:%s,height=%" PRIu64 ",property(%s).",
+                  m_account->get_account().c_str(), m_account->get_last_height(), prop_name.c_str());
+            return nullptr;
+        }
+
         m_clone_objs[prop_name] = obj;
         error_code = xstore_success;
         return obj;
