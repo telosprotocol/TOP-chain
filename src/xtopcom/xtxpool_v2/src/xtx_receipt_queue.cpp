@@ -171,7 +171,7 @@ const std::vector<xcons_transaction_ptr_t> xreceipt_queue_new_t::get_txs(uint32_
         auto peer_table_sid = it_confirm_peer_table_map.first;
         base::xreceiptid_pair_t receiptid_pair;
         receiptid_state->find_pair(peer_table_sid, receiptid_pair);
-        auto min_receipt_id = receiptid_pair.get_sendid_max();
+        auto min_receipt_id = receiptid_pair.get_confirmid_max();
         auto & confirm_txs = it_confirm_peer_table_map.second;
         for (auto confirm_tx : confirm_txs) {
             if (ret_txs.size() >= confirm_txs_max_num) {
@@ -262,7 +262,7 @@ void xreceipt_queue_new_t::update_receiptid_state(const base::xreceiptid_state_p
         auto & peer_table_tx_queue = it.second;
         base::xreceiptid_pair_t receiptid_pair;
         receiptid_state->find_pair(peer_table_sid, receiptid_pair);
-        peer_table_tx_queue->update_latest_id(receiptid_pair.get_sendid_max());
+        peer_table_tx_queue->update_latest_id(receiptid_pair.get_confirmid_max());
     }
 }
 
