@@ -11,7 +11,7 @@ on:
 jobs:
   build:
     runs-on: [self-hosted, Linux, X64]
-    if: github.repository == 'telosprotocol/TOP-chain'
+    if: github.repository_owner == 'telosprotocol'
     # for ci telos only
     steps:
       - name: Checkout repository
