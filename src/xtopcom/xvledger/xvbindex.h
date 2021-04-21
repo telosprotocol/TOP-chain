@@ -46,6 +46,7 @@ namespace top
         private:
             
         public:
+            inline const std::string    get_account_addr() const {return m_account_addr;}
             inline const xvid_t         get_account_id() const {return m_account_id;}
             inline const uint64_t       get_height()  const {return m_block_height;}
             inline const uint64_t       get_viewid()  const {return m_block_viewid;}

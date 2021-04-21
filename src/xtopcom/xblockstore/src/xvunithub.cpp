@@ -454,23 +454,27 @@ namespace top
         base::xblock_vector xvblockstore_impl::query_block(const base::xvaccount_t & account,const uint64_t height)//might mutiple certs at same height
         {
             LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
-            std::vector<base::xvbindex_t*> index_list(account_obj->query_index(height));//return raw ptr with added reference
-            if(index_list.empty() == false)
+            if(account_obj->load_index(height) > 0) //check and load from db even for query_block
             {
-                std::vector<base::xvblock_t*> block_list;
-                for(auto & index : index_list)
+                std::vector<base::xvbindex_t*> index_list(account_obj->query_index(height));//return raw ptr with added reference
+                if(index_list.empty() == false)
                 {
-                    if(index != NULL)
+                    std::vector<base::xvblock_t*> block_list;
+                    for(auto & index : index_list)
                     {
-                        //query_index return raw ptr with added reference,so here move into auto_ptr to relase it
-                        base::xauto_ptr<base::xvbindex_t> auto_index_ptr(index);
-                        base::xvblock_t * block = load_block_from_index(account_obj.get(),base::xauto_ptr<base::xvbindex_t>(std::move(auto_index_ptr)),index->get_height(),false);
-                        if(block != NULL)
-                            block_list.push_back(block); //ptr will be released by xblock_vector later
+                        if(index != NULL)
+                        {
+                            //query_index return raw ptr with added reference,so here move into auto_ptr to relase it
+                            base::xauto_ptr<base::xvbindex_t> auto_index_ptr(index);
+                            base::xvblock_t * block = load_block_from_index(account_obj.get(),base::xauto_ptr<base::xvbindex_t>(std::move(auto_index_ptr)),index->get_height(),false);
+                            if(block != NULL)
+                                block_list.push_back(block); //ptr will be released by xblock_vector later
+                        }
                     }
+                    return block_list;
                 }
-                return block_list;
             }
+
             xwarn("xvblockstore_impl query_block(height) fail to load block(%llu) for account(%s) at store(%s)",height,account.get_address().c_str(),m_store_path.c_str());
             return nullptr;
         }
