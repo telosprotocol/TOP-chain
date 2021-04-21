@@ -10,8 +10,9 @@ on:
 
 jobs:
   build:
-    runs-on: [self-hosted, Linux, X64]
     if: github.repository_owner == 'telosprotocol'
+    runs-on: [self-hosted, Linux, X64]
+    
     # for ci telos only
     steps:
       - name: Checkout repository
