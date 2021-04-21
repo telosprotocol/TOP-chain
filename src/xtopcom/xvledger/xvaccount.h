@@ -256,10 +256,6 @@ namespace top
             {
                 return (uint8_t)(subaddr_of_zone & 0x07);
             }
-            static const xtable_shortid_t get_short_table_id(int zone_id, int ledger_subaddr)//note: short table_id = [zone_index][book_index][table_index]
-            {
-                  return (xtable_shortid_t)((zone_id << 10) | ledger_subaddr);
-            }
             
         protected:
             static bool get_ledger_fulladdr_from_account(const std::string & account_addr,uint32_t & ledger_id,uint16_t & ledger_sub_addr,uint32_t & account_index)

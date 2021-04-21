@@ -118,23 +118,25 @@ bool xblock_rules::unit_rules_filter(const xblock_ptr_t & rules_end_block,
     xassert(pop_txs.empty());
 
     // one type rule is controlled by txpool
-    if (false == check_rule_txs_one_type(origin_txs)) {
-        return false;
-    }
+    // if (false == check_rule_txs_one_type(origin_txs)) {
+    //     return false;
+    // }
 
     std::vector<xcons_transaction_ptr_t> valid_txs1;
     if (origin_txs[0]->is_self_tx() || origin_txs[0]->is_send_tx()) {
         check_rule_sendtx_duplication(rules_end_state, origin_txs, valid_txs1, pop_txs);
-    } else {
-        check_rule_receipts_duplication(rules_end_block, origin_txs, valid_txs1, pop_txs);
     }
+    //  else {
+    //     check_rule_receipts_duplication(rules_end_block, origin_txs, valid_txs1, pop_txs);
+    // }
 
-    std::vector<xcons_transaction_ptr_t> valid_txs2;
-    check_rule_batch_txs(valid_txs1, valid_txs2, pop_txs);
+    // std::vector<xcons_transaction_ptr_t> valid_txs2;
+    // check_rule_batch_txs(valid_txs1, valid_txs2, pop_txs);
 
-    // TODO(jimmy)  check_rule_tx_timestamp less than unit timestamp
+    // // TODO(jimmy)  check_rule_tx_timestamp less than unit timestamp
 
-    valid_txs = valid_txs2;
+    // valid_txs = valid_txs2;
+    valid_txs = valid_txs1;
     return true;
 }
 
