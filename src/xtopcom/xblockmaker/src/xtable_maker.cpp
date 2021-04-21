@@ -512,9 +512,9 @@ int32_t xtable_maker_t::verify_proposal(base::xvblock_t* proposal_block, const x
 }
 
 bool xtable_maker_t::verify_proposal_with_local(base::xvblock_t *proposal_block, base::xvblock_t *local_block) const {
-    // TODO(jimmy) should not happen input hash not match
+    // TODO(jimmy) input hash not match may happen when use different property
     if (local_block->get_input_hash() != proposal_block->get_input_hash()) {
-        xerror("xtable_maker_t::verify_proposal_with_local fail-input hash not match. %s %s",
+        xwarn("xtable_maker_t::verify_proposal_with_local fail-input hash not match. %s %s",
             proposal_block->dump().c_str(),
             local_block->dump().c_str());
         return false;
