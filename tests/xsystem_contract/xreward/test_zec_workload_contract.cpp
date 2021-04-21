@@ -52,14 +52,14 @@ public:
     xstatistics_data_t data;
 
     void construct_data();
-    void tableblock_statistics_handle(const xvip2_t leader_xip, const uint32_t txs_count, std::vector<base::xvoter> const & voter_info, xstatistics_data_t & data);
+    void tableblock_statistics_handle(const xvip2_t leader_xip, const uint32_t txs_count, const uint32_t blk_count, std::vector<base::xvoter> const & voter_info, xstatistics_data_t & data);
 
     static void SetUpTestCase() {}
     static void TearDownTestCase() {}
 };
 using xtest_workload_contract_v2_t = xtop_test_workload_contract_v2;
 
-void xtest_workload_contract_v2_t::tableblock_statistics_handle(const xvip2_t leader_xip, const uint32_t txs_count, std::vector<base::xvoter> const & voter_info, xstatistics_data_t & data){
+void xtest_workload_contract_v2_t::tableblock_statistics_handle(const xvip2_t leader_xip, const uint32_t txs_count, const uint32_t blk_count, std::vector<base::xvoter> const & voter_info, xstatistics_data_t & data){
     // height
     uint64_t block_height = get_network_height_from_xip2(leader_xip);
     auto it_height = data.detail.find(block_height);
@@ -88,7 +88,7 @@ void xtest_workload_contract_v2_t::tableblock_statistics_handle(const xvip2_t le
         it_group->second.account_statistics_data.resize(slot_idx+1);
     }
     // workload
-    it_group->second.account_statistics_data[slot_idx].block_data.block_count++;
+    it_group->second.account_statistics_data[slot_idx].block_data.block_count += blk_count;
     it_group->second.account_statistics_data[slot_idx].block_data.transaction_count += txs_count;
     // vote
     uint32_t vote_count = 0;
@@ -125,6 +125,7 @@ void xtest_workload_contract_v2_t::construct_data(){
     leader_xip_test[7] = {0x2080c00, 10}; // group id 3, node id 0, time 10
 
     uint32_t tx_count_test[8] = {100, 110, 120, 130, 140, 150, 160, 170};
+    uint32_t blk_count_test[8] = {10, 11, 12, 13, 14, 15, 16, 17};
 
     std::vector<std::vector<base::xvoter>> voter_info_test;
     std::vector<base::xvoter> temp;
@@ -138,7 +139,7 @@ void xtest_workload_contract_v2_t::construct_data(){
     }
 
     for(size_t i = 0; i < 8; i++){
-        tableblock_statistics_handle(leader_xip_test[i], tx_count_test[i], voter_info_test[i], data);
+        tableblock_statistics_handle(leader_xip_test[i], tx_count_test[i], blk_count_test[i], voter_info_test[i], data);
     }
 }
 
@@ -152,46 +153,35 @@ TEST_F(xtest_workload_contract_v2_t, test_construct_data){
     EXPECT_EQ(data.detail[20].group_statistics_data.size(), 2);
     EXPECT_EQ(data.detail[20].group_statistics_data[group_addr7].account_statistics_data.size(), 9);
     for(int i = 0; i < 8; i++){
-        EXPECT_EQ(data.detail[20].group_statistics_data[group_addr7].account_statistics_data[i].vote_data.vote_count, 0);
         EXPECT_EQ(data.detail[20].group_statistics_data[group_addr7].account_statistics_data[i].block_data.block_count, 0);
         EXPECT_EQ(data.detail[20].group_statistics_data[group_addr7].account_statistics_data[i].block_data.transaction_count, 0);
     }
-    EXPECT_EQ(data.detail[20].group_statistics_data[group_addr7].account_statistics_data[8].vote_data.vote_count, 2);
-    EXPECT_EQ(data.detail[20].group_statistics_data[group_addr7].account_statistics_data[8].block_data.block_count, 1);
+    EXPECT_EQ(data.detail[20].group_statistics_data[group_addr7].account_statistics_data[8].block_data.block_count, 11);
     EXPECT_EQ(data.detail[20].group_statistics_data[group_addr7].account_statistics_data[8].block_data.transaction_count, 110);
 
     EXPECT_EQ(data.detail[20].group_statistics_data[group_addr6].account_statistics_data.size(), 9);
     for(int i = 0; i < 8; i++){
-        EXPECT_EQ(data.detail[20].group_statistics_data[group_addr6].account_statistics_data[i].vote_data.vote_count, 0);
         EXPECT_EQ(data.detail[20].group_statistics_data[group_addr6].account_statistics_data[i].block_data.block_count, 0);
         EXPECT_EQ(data.detail[20].group_statistics_data[group_addr6].account_statistics_data[i].block_data.transaction_count, 0);
     }
-    EXPECT_EQ(data.detail[20].group_statistics_data[group_addr6].account_statistics_data[8].vote_data.vote_count, 3);
-    EXPECT_EQ(data.detail[20].group_statistics_data[group_addr6].account_statistics_data[8].block_data.block_count, 1);
+    EXPECT_EQ(data.detail[20].group_statistics_data[group_addr6].account_statistics_data[8].block_data.block_count, 12);
     EXPECT_EQ(data.detail[20].group_statistics_data[group_addr6].account_statistics_data[8].block_data.transaction_count, 120);
 
     EXPECT_EQ(data.detail[10].group_statistics_data.size(), 1);
     EXPECT_EQ(data.detail[10].group_statistics_data[group_addr3].account_statistics_data.size(), 7);
-    EXPECT_EQ(data.detail[10].group_statistics_data[group_addr3].account_statistics_data[0].vote_data.vote_count, 12);
-    EXPECT_EQ(data.detail[10].group_statistics_data[group_addr3].account_statistics_data[0].block_data.block_count, 2);
+    EXPECT_EQ(data.detail[10].group_statistics_data[group_addr3].account_statistics_data[0].block_data.block_count, 30);
     EXPECT_EQ(data.detail[10].group_statistics_data[group_addr3].account_statistics_data[0].block_data.transaction_count, 300);
-    EXPECT_EQ(data.detail[10].group_statistics_data[group_addr3].account_statistics_data[1].vote_data.vote_count, 5);
-    EXPECT_EQ(data.detail[10].group_statistics_data[group_addr3].account_statistics_data[1].block_data.block_count, 1);
+    EXPECT_EQ(data.detail[10].group_statistics_data[group_addr3].account_statistics_data[1].block_data.block_count, 14);
     EXPECT_EQ(data.detail[10].group_statistics_data[group_addr3].account_statistics_data[1].block_data.transaction_count, 140);
-    EXPECT_EQ(data.detail[10].group_statistics_data[group_addr3].account_statistics_data[2].vote_data.vote_count, 6);
-    EXPECT_EQ(data.detail[10].group_statistics_data[group_addr3].account_statistics_data[2].block_data.block_count, 1);
+    EXPECT_EQ(data.detail[10].group_statistics_data[group_addr3].account_statistics_data[2].block_data.block_count, 15);
     EXPECT_EQ(data.detail[10].group_statistics_data[group_addr3].account_statistics_data[2].block_data.transaction_count, 150);
-    EXPECT_EQ(data.detail[10].group_statistics_data[group_addr3].account_statistics_data[3].vote_data.vote_count, 0);
     EXPECT_EQ(data.detail[10].group_statistics_data[group_addr3].account_statistics_data[3].block_data.block_count, 0);
     EXPECT_EQ(data.detail[10].group_statistics_data[group_addr3].account_statistics_data[3].block_data.transaction_count, 0);
-    EXPECT_EQ(data.detail[10].group_statistics_data[group_addr3].account_statistics_data[4].vote_data.vote_count, 1);
-    EXPECT_EQ(data.detail[10].group_statistics_data[group_addr3].account_statistics_data[4].block_data.block_count, 1);
+    EXPECT_EQ(data.detail[10].group_statistics_data[group_addr3].account_statistics_data[4].block_data.block_count, 10);
     EXPECT_EQ(data.detail[10].group_statistics_data[group_addr3].account_statistics_data[4].block_data.transaction_count, 100);
-    EXPECT_EQ(data.detail[10].group_statistics_data[group_addr3].account_statistics_data[5].vote_data.vote_count, 0);
     EXPECT_EQ(data.detail[10].group_statistics_data[group_addr3].account_statistics_data[5].block_data.block_count, 0);
     EXPECT_EQ(data.detail[10].group_statistics_data[group_addr3].account_statistics_data[5].block_data.transaction_count, 0);
-    EXPECT_EQ(data.detail[10].group_statistics_data[group_addr3].account_statistics_data[6].vote_data.vote_count, 7);
-    EXPECT_EQ(data.detail[10].group_statistics_data[group_addr3].account_statistics_data[6].block_data.block_count, 1);
+    EXPECT_EQ(data.detail[10].group_statistics_data[group_addr3].account_statistics_data[6].block_data.block_count, 16);
     EXPECT_EQ(data.detail[10].group_statistics_data[group_addr3].account_statistics_data[6].block_data.transaction_count, 160);
 } 
 
@@ -206,7 +196,7 @@ TEST_F(xtest_workload_contract_v2_t, test_accumulate_auditor_data){
             xgroup_related_statistics_data_t const & group_account_data = group_item.second;
             for (size_t slotid = 0; slotid < group_account_data.account_statistics_data.size(); ++slotid) {
                 auto account_str = std::to_string(slotid);
-                    accumulate_auditor_workload(group_addr, account_str, slotid, group_account_data, slotid+1, bookload_auditor_group_workload_info); 
+                    accumulate_auditor_workload(group_addr, account_str, slotid, group_account_data, 2, 1, bookload_auditor_group_workload_info); 
             }
         }
     }
@@ -216,19 +206,18 @@ TEST_F(xtest_workload_contract_v2_t, test_accumulate_auditor_data){
     common::xgroup_address_t group_addr3(common::xnetwork_id_t{0}, common::xzone_id_t{0}, common::xcluster_id_t{0}, common::xgroup_id_t{3});
 
     EXPECT_EQ(bookload_auditor_group_workload_info[group_addr3].m_leader_count.size(), 7);
-    for(size_t slotid = 0; slotid < 7; ++slotid) {
-        EXPECT_EQ(bookload_auditor_group_workload_info[group_addr3].m_leader_count[std::to_string(0)], (0+1)*(130+170)+2);
-        EXPECT_EQ(bookload_auditor_group_workload_info[group_addr3].m_leader_count[std::to_string(1)], (1+1)*140+1);
-        EXPECT_EQ(bookload_auditor_group_workload_info[group_addr3].m_leader_count[std::to_string(2)], (2+1)*150+1);
-        EXPECT_EQ(bookload_auditor_group_workload_info[group_addr3].m_leader_count[std::to_string(3)], 0);
-        EXPECT_EQ(bookload_auditor_group_workload_info[group_addr3].m_leader_count[std::to_string(4)], (4+1)*100+1);
-        EXPECT_EQ(bookload_auditor_group_workload_info[group_addr3].m_leader_count[std::to_string(5)], 0);
-        EXPECT_EQ(bookload_auditor_group_workload_info[group_addr3].m_leader_count[std::to_string(6)], (6+1)*160+1);
-    }
+    EXPECT_EQ(bookload_auditor_group_workload_info[group_addr3].m_leader_count[std::to_string(0)], (130+170)+2*30);
+    EXPECT_EQ(bookload_auditor_group_workload_info[group_addr3].m_leader_count[std::to_string(1)], 140+2*14);
+    EXPECT_EQ(bookload_auditor_group_workload_info[group_addr3].m_leader_count[std::to_string(2)], 150+2*15);
+    EXPECT_EQ(bookload_auditor_group_workload_info[group_addr3].m_leader_count[std::to_string(3)], 0);
+    EXPECT_EQ(bookload_auditor_group_workload_info[group_addr3].m_leader_count[std::to_string(4)], 100+2*10);
+    EXPECT_EQ(bookload_auditor_group_workload_info[group_addr3].m_leader_count[std::to_string(5)], 0);
+    EXPECT_EQ(bookload_auditor_group_workload_info[group_addr3].m_leader_count[std::to_string(6)], 160+2*16);
+
     EXPECT_EQ(bookload_auditor_group_workload_info[group_addr6].m_leader_count.size(), 9);
     for(size_t slotid = 0; slotid < 9; ++slotid) {
         if(slotid == 8) {
-            EXPECT_EQ(bookload_auditor_group_workload_info[group_addr7].m_leader_count[std::to_string(slotid)], (8+1)*110+1);
+            EXPECT_EQ(bookload_auditor_group_workload_info[group_addr7].m_leader_count[std::to_string(slotid)], 110+2*11);
         } else {
             EXPECT_EQ(bookload_auditor_group_workload_info[group_addr7].m_leader_count[std::to_string(slotid)], 0);
         }
@@ -236,7 +225,7 @@ TEST_F(xtest_workload_contract_v2_t, test_accumulate_auditor_data){
     EXPECT_EQ(bookload_auditor_group_workload_info[group_addr6].m_leader_count.size(), 9);  
     for(size_t slotid = 0; slotid < 9; ++slotid) {
         if(slotid == 8) {
-            EXPECT_EQ(bookload_auditor_group_workload_info[group_addr6].m_leader_count[std::to_string(slotid)], (8+1)*120+1);
+            EXPECT_EQ(bookload_auditor_group_workload_info[group_addr6].m_leader_count[std::to_string(slotid)], 120+2*12);
         } else {
             EXPECT_EQ(bookload_auditor_group_workload_info[group_addr6].m_leader_count[std::to_string(slotid)], 0);
         }
@@ -254,7 +243,7 @@ TEST_F(xtest_workload_contract_v2_t, test_accumulate_validator_data){
             xgroup_related_statistics_data_t const & group_account_data = group_item.second;
             for (size_t slotid = 0; slotid < group_account_data.account_statistics_data.size(); ++slotid) {
                 auto account_str = std::to_string(slotid);
-                    accumulate_validator_workload(group_addr, account_str, slotid, group_account_data, slotid+1, bookload_validator_group_workload_info); 
+                    accumulate_validator_workload(group_addr, account_str, slotid, group_account_data, 2, 1, bookload_validator_group_workload_info); 
             }
         }
     }
@@ -264,19 +253,18 @@ TEST_F(xtest_workload_contract_v2_t, test_accumulate_validator_data){
     common::xgroup_address_t group_addr3(common::xnetwork_id_t{0}, common::xzone_id_t{0}, common::xcluster_id_t{0}, common::xgroup_id_t{3});
 
     EXPECT_EQ(bookload_validator_group_workload_info[group_addr3].m_leader_count.size(), 7);
-    for(size_t slotid = 0; slotid < 7; ++slotid) {
-        EXPECT_EQ(bookload_validator_group_workload_info[group_addr3].m_leader_count[std::to_string(0)], (0+1)*(130+170)+2);
-        EXPECT_EQ(bookload_validator_group_workload_info[group_addr3].m_leader_count[std::to_string(1)], (1+1)*140+1);
-        EXPECT_EQ(bookload_validator_group_workload_info[group_addr3].m_leader_count[std::to_string(2)], (2+1)*150+1);
-        EXPECT_EQ(bookload_validator_group_workload_info[group_addr3].m_leader_count[std::to_string(3)], 0);
-        EXPECT_EQ(bookload_validator_group_workload_info[group_addr3].m_leader_count[std::to_string(4)], (4+1)*100+1);
-        EXPECT_EQ(bookload_validator_group_workload_info[group_addr3].m_leader_count[std::to_string(5)], 0);
-        EXPECT_EQ(bookload_validator_group_workload_info[group_addr3].m_leader_count[std::to_string(6)], (6+1)*160+1);
-    }
+    EXPECT_EQ(bookload_validator_group_workload_info[group_addr3].m_leader_count[std::to_string(0)], (130+170)+2*30);
+    EXPECT_EQ(bookload_validator_group_workload_info[group_addr3].m_leader_count[std::to_string(1)], 140+2*14);
+    EXPECT_EQ(bookload_validator_group_workload_info[group_addr3].m_leader_count[std::to_string(2)], 150+2*15);
+    EXPECT_EQ(bookload_validator_group_workload_info[group_addr3].m_leader_count[std::to_string(3)], 0);
+    EXPECT_EQ(bookload_validator_group_workload_info[group_addr3].m_leader_count[std::to_string(4)], 100+2*10);
+    EXPECT_EQ(bookload_validator_group_workload_info[group_addr3].m_leader_count[std::to_string(5)], 0);
+    EXPECT_EQ(bookload_validator_group_workload_info[group_addr3].m_leader_count[std::to_string(6)], 160+2*16);
+
     EXPECT_EQ(bookload_validator_group_workload_info[group_addr6].m_leader_count.size(), 9);
     for(size_t slotid = 0; slotid < 9; ++slotid) {
         if(slotid == 8) {
-            EXPECT_EQ(bookload_validator_group_workload_info[group_addr7].m_leader_count[std::to_string(slotid)], (8+1)*110+1);
+            EXPECT_EQ(bookload_validator_group_workload_info[group_addr7].m_leader_count[std::to_string(slotid)], 110+2*11);
         } else {
             EXPECT_EQ(bookload_validator_group_workload_info[group_addr7].m_leader_count[std::to_string(slotid)], 0);
         }
@@ -284,7 +272,7 @@ TEST_F(xtest_workload_contract_v2_t, test_accumulate_validator_data){
     EXPECT_EQ(bookload_validator_group_workload_info[group_addr6].m_leader_count.size(), 9);  
     for(size_t slotid = 0; slotid < 9; ++slotid) {
         if(slotid == 8) {
-            EXPECT_EQ(bookload_validator_group_workload_info[group_addr6].m_leader_count[std::to_string(slotid)], (8+1)*120+1);
+            EXPECT_EQ(bookload_validator_group_workload_info[group_addr6].m_leader_count[std::to_string(slotid)], 120+2*12);
         } else {
             EXPECT_EQ(bookload_validator_group_workload_info[group_addr6].m_leader_count[std::to_string(slotid)], 0);
         }
