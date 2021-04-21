@@ -8,6 +8,9 @@ NS_BEG2(top, contract_common)
 xtop_contract_execution_context::xtop_contract_execution_context(xobject_ptr_t<data::xtransaction_t> tx, observer_ptr<xcontract_state_t> s) noexcept : m_contract_state{s}, m_tx{std::move(tx)} {
 }
 
+xtop_contract_execution_context::xtop_contract_execution_context(data::xbasic_top_action_t action, observer_ptr<xcontract_state_t> s) noexcept : m_contract_state{ s }, m_action{ std::move(action) } {
+}
+
 observer_ptr<xcontract_state_t> xtop_contract_execution_context::contract_state() const noexcept {
     return m_contract_state;
 }
@@ -18,6 +21,14 @@ xcontract_execution_stage_t xtop_contract_execution_context::execution_stage() c
 
 void xtop_contract_execution_context::execution_stage(xcontract_execution_stage_t const stage) noexcept {
     m_execution_stage = stage;
+}
+
+data::xconsensus_action_stage_t xtop_contract_execution_context::consensus_action_stage() const noexcept {
+    return m_stage;
+}
+
+void xtop_contract_execution_context::consensus_action_stage(data::xconsensus_action_stage_t const stage) noexcept {
+    m_stage = stage;
 }
 
 xcontract_execution_result_t xtop_contract_execution_context::execution_result() const noexcept {
