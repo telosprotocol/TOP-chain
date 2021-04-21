@@ -147,9 +147,12 @@ std::vector<xcons_transaction_ptr_t> xtxpool_table_t::get_ready_txs(uint32_t cou
     auto latest_table = m_para->get_vblockstore()->get_latest_committed_block(m_xtable_info);
     xblock_ptr_t committed_block = xblock_t::raw_vblock_to_object_ptr(latest_table.get());
     xtablestate_ptr_t tablestate = m_table_indexstore->clone_tablestate(committed_block);
-    std::lock_guard<std::mutex> lck(m_mgr_mutex);
-    m_txmgr_table.update_receiptid_state(tablestate->get_receiptid_state());
-    return m_txmgr_table.get_ready_txs(count);
+    if (tablestate != nullptr) {
+        std::lock_guard<std::mutex> lck(m_mgr_mutex);
+        m_txmgr_table.update_receiptid_state(tablestate->get_receiptid_state());
+        return m_txmgr_table.get_ready_txs(count);
+    }
+    return {};
 }
 
 const std::shared_ptr<xtx_entry> xtxpool_table_t::query_tx(const std::string & account, const uint256_t & hash) {
@@ -230,8 +233,10 @@ void xtxpool_table_t::on_block_confirmed(xblock_t * block) {
         auto latest_table = m_para->get_vblockstore()->get_latest_committed_block(m_xtable_info);
         xblock_ptr_t committed_block = xblock_t::raw_vblock_to_object_ptr(latest_table.get());
         xtablestate_ptr_t tablestate = m_table_indexstore->clone_tablestate(committed_block);
-        std::lock_guard<std::mutex> lck(m_unconfirm_mutex);
-        m_unconfirmed_tx_queue.udpate_latest_confirmed_block(block, tablestate->get_receiptid_state());
+        if (tablestate != nullptr) {
+            std::lock_guard<std::mutex> lck(m_unconfirm_mutex);
+            m_unconfirmed_tx_queue.udpate_latest_confirmed_block(block, tablestate->get_receiptid_state());
+        }
     }
 
     if (block->is_lightunit() && !block->is_genesis_block()) {
@@ -287,8 +292,10 @@ void xtxpool_table_t::update_unconfirm_accounts() {
     auto latest_table = m_para->get_vblockstore()->get_latest_committed_block(m_xtable_info);
     xblock_ptr_t committed_block = xblock_t::raw_vblock_to_object_ptr(latest_table.get());
     xtablestate_ptr_t tablestate = m_table_indexstore->clone_tablestate(committed_block);
-    std::lock_guard<std::mutex> lck(m_unconfirm_mutex);
-    return m_unconfirmed_tx_queue.recover(tablestate->get_receiptid_state());
+    if (tablestate == nullptr) {
+        std::lock_guard<std::mutex> lck(m_unconfirm_mutex);
+        return m_unconfirmed_tx_queue.recover(tablestate->get_receiptid_state());
+    }
 }
 
 void xtxpool_table_t::update_non_ready_accounts() {
