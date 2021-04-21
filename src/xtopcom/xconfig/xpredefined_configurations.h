@@ -303,6 +303,7 @@ XDECLARE_CONFIGURATION(local_blacklist, const char *, "");
 XDECLARE_CONFIGURATION(local_whitelist, const char *, "");
 // slash fulltable interval
 XDECLARE_CONFIGURATION(slash_fulltable_interval, xinterval_t, 30); // 5 minutes
+XDECLARE_CONFIGURATION(workload_fulltable_interval, xinterval_t, 30); // 5 minutes
 
 
 /* beginning of development parameters */

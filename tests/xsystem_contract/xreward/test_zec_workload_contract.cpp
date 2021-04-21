@@ -195,12 +195,100 @@ TEST_F(xtest_workload_contract_v2_t, test_construct_data){
     EXPECT_EQ(data.detail[10].group_statistics_data[group_addr3].account_statistics_data[6].block_data.transaction_count, 160);
 } 
 
-TEST_F(xtest_workload_contract_v2_t, test_accumulate_data){
+TEST_F(xtest_workload_contract_v2_t, test_accumulate_auditor_data){
     construct_data();
+    auto const stat_data = data;
     std::map<common::xgroup_address_t, xauditor_workload_info_t> bookload_auditor_group_workload_info;
+    for (auto const static_item: stat_data.detail) {
+        auto elect_statistic = static_item.second;
+        for (auto const group_item: elect_statistic.group_statistics_data) {
+            common::xgroup_address_t const & group_addr = group_item.first;
+            xgroup_related_statistics_data_t const & group_account_data = group_item.second;
+            for (size_t slotid = 0; slotid < group_account_data.account_statistics_data.size(); ++slotid) {
+                auto account_str = std::to_string(slotid);
+                    accumulate_auditor_workload(group_addr, account_str, slotid, group_account_data, slotid+1, bookload_auditor_group_workload_info); 
+            }
+        }
+    }
+    EXPECT_EQ(bookload_auditor_group_workload_info.size(), 3);
+    common::xgroup_address_t group_addr7(common::xnetwork_id_t{0}, common::xzone_id_t{0}, common::xcluster_id_t{0}, common::xgroup_id_t{7});
+    common::xgroup_address_t group_addr6(common::xnetwork_id_t{0}, common::xzone_id_t{0}, common::xcluster_id_t{0}, common::xgroup_id_t{6});
+    common::xgroup_address_t group_addr3(common::xnetwork_id_t{0}, common::xzone_id_t{0}, common::xcluster_id_t{0}, common::xgroup_id_t{3});
+
+    EXPECT_EQ(bookload_auditor_group_workload_info[group_addr3].m_leader_count.size(), 7);
+    for(size_t slotid = 0; slotid < 7; ++slotid) {
+        EXPECT_EQ(bookload_auditor_group_workload_info[group_addr3].m_leader_count[std::to_string(0)], (0+1)*(130+170)+2);
+        EXPECT_EQ(bookload_auditor_group_workload_info[group_addr3].m_leader_count[std::to_string(1)], (1+1)*140+1);
+        EXPECT_EQ(bookload_auditor_group_workload_info[group_addr3].m_leader_count[std::to_string(2)], (2+1)*150+1);
+        EXPECT_EQ(bookload_auditor_group_workload_info[group_addr3].m_leader_count[std::to_string(3)], 0);
+        EXPECT_EQ(bookload_auditor_group_workload_info[group_addr3].m_leader_count[std::to_string(4)], (4+1)*100+1);
+        EXPECT_EQ(bookload_auditor_group_workload_info[group_addr3].m_leader_count[std::to_string(5)], 0);
+        EXPECT_EQ(bookload_auditor_group_workload_info[group_addr3].m_leader_count[std::to_string(6)], (6+1)*160+1);
+    }
+    EXPECT_EQ(bookload_auditor_group_workload_info[group_addr6].m_leader_count.size(), 9);
+    for(size_t slotid = 0; slotid < 9; ++slotid) {
+        if(slotid == 8) {
+            EXPECT_EQ(bookload_auditor_group_workload_info[group_addr7].m_leader_count[std::to_string(slotid)], (8+1)*110+1);
+        } else {
+            EXPECT_EQ(bookload_auditor_group_workload_info[group_addr7].m_leader_count[std::to_string(slotid)], 0);
+        }
+    }
+    EXPECT_EQ(bookload_auditor_group_workload_info[group_addr6].m_leader_count.size(), 9);  
+    for(size_t slotid = 0; slotid < 9; ++slotid) {
+        if(slotid == 8) {
+            EXPECT_EQ(bookload_auditor_group_workload_info[group_addr6].m_leader_count[std::to_string(slotid)], (8+1)*120+1);
+        } else {
+            EXPECT_EQ(bookload_auditor_group_workload_info[group_addr6].m_leader_count[std::to_string(slotid)], 0);
+        }
+    }  
+}
+
+TEST_F(xtest_workload_contract_v2_t, test_accumulate_validator_data){
+    construct_data();
+    auto const stat_data = data;
     std::map<common::xgroup_address_t, xvalidator_workload_info_t> bookload_validator_group_workload_info;
-    // use node service in function, cannot test function now
-    //accumulate_workload(data, bookload_auditor_group_workload_info, bookload_validator_group_workload_info);    
+    for (auto const static_item: stat_data.detail) {
+        auto elect_statistic = static_item.second;
+        for (auto const group_item: elect_statistic.group_statistics_data) {
+            common::xgroup_address_t const & group_addr = group_item.first;
+            xgroup_related_statistics_data_t const & group_account_data = group_item.second;
+            for (size_t slotid = 0; slotid < group_account_data.account_statistics_data.size(); ++slotid) {
+                auto account_str = std::to_string(slotid);
+                    accumulate_validator_workload(group_addr, account_str, slotid, group_account_data, slotid+1, bookload_validator_group_workload_info); 
+            }
+        }
+    }
+    EXPECT_EQ(bookload_validator_group_workload_info.size(), 3);
+    common::xgroup_address_t group_addr7(common::xnetwork_id_t{0}, common::xzone_id_t{0}, common::xcluster_id_t{0}, common::xgroup_id_t{7});
+    common::xgroup_address_t group_addr6(common::xnetwork_id_t{0}, common::xzone_id_t{0}, common::xcluster_id_t{0}, common::xgroup_id_t{6});
+    common::xgroup_address_t group_addr3(common::xnetwork_id_t{0}, common::xzone_id_t{0}, common::xcluster_id_t{0}, common::xgroup_id_t{3});
+
+    EXPECT_EQ(bookload_validator_group_workload_info[group_addr3].m_leader_count.size(), 7);
+    for(size_t slotid = 0; slotid < 7; ++slotid) {
+        EXPECT_EQ(bookload_validator_group_workload_info[group_addr3].m_leader_count[std::to_string(0)], (0+1)*(130+170)+2);
+        EXPECT_EQ(bookload_validator_group_workload_info[group_addr3].m_leader_count[std::to_string(1)], (1+1)*140+1);
+        EXPECT_EQ(bookload_validator_group_workload_info[group_addr3].m_leader_count[std::to_string(2)], (2+1)*150+1);
+        EXPECT_EQ(bookload_validator_group_workload_info[group_addr3].m_leader_count[std::to_string(3)], 0);
+        EXPECT_EQ(bookload_validator_group_workload_info[group_addr3].m_leader_count[std::to_string(4)], (4+1)*100+1);
+        EXPECT_EQ(bookload_validator_group_workload_info[group_addr3].m_leader_count[std::to_string(5)], 0);
+        EXPECT_EQ(bookload_validator_group_workload_info[group_addr3].m_leader_count[std::to_string(6)], (6+1)*160+1);
+    }
+    EXPECT_EQ(bookload_validator_group_workload_info[group_addr6].m_leader_count.size(), 9);
+    for(size_t slotid = 0; slotid < 9; ++slotid) {
+        if(slotid == 8) {
+            EXPECT_EQ(bookload_validator_group_workload_info[group_addr7].m_leader_count[std::to_string(slotid)], (8+1)*110+1);
+        } else {
+            EXPECT_EQ(bookload_validator_group_workload_info[group_addr7].m_leader_count[std::to_string(slotid)], 0);
+        }
+    }
+    EXPECT_EQ(bookload_validator_group_workload_info[group_addr6].m_leader_count.size(), 9);  
+    for(size_t slotid = 0; slotid < 9; ++slotid) {
+        if(slotid == 8) {
+            EXPECT_EQ(bookload_validator_group_workload_info[group_addr6].m_leader_count[std::to_string(slotid)], (8+1)*120+1);
+        } else {
+            EXPECT_EQ(bookload_validator_group_workload_info[group_addr6].m_leader_count[std::to_string(slotid)], 0);
+        }
+    }  
 }
 
 NS_END3
