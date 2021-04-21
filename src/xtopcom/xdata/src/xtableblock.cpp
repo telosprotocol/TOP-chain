@@ -236,7 +236,7 @@ base::xreceiptid_pairs_ptr_t    xtable_block_t::get_receiptid_binlog() const {
             }
         }
     }
-#if 0 // TODO(jimmy) not enable receiptid now
+#if 1 // TODO(jimmy) not enable receiptid now
     for (auto & unit : units) {
         const std::vector<xlightunit_tx_info_ptr_t> & txs_info = unit->get_txs();
         for (auto & tx : txs_info) {
