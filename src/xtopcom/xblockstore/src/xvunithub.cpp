@@ -401,6 +401,8 @@ namespace top
                 if(txindex->is_self_tx())
                 {
                     xdbg("jimmy xvblockstore_impl::query_tx self tx");  //self tx no need query more
+                    txstore->set_recv_unit_info(txindex);
+                    txstore->set_confirm_unit_info(txindex);
                     return txstore;
                 }
             }
@@ -411,7 +413,7 @@ namespace top
                 if(txobj_bin.empty())
                 {
                     xwarn("xvblockstore_impl::query_tx recv tx not find.tx=%s", base::xstring_utl::to_hex(txhash).c_str());
-                    return nullptr;
+                    return (type == base::enum_transaction_subtype_all) ? txstore : nullptr;
                 }
                 base::xvtransaction_index_ptr_t txindex = make_object_ptr<base::xvtransaction_index_t>();
                 txindex->serialize_from_string(txobj_bin);
@@ -424,7 +426,7 @@ namespace top
                 if(txobj_bin.empty())
                 {
                     xwarn("xvblockstore_impl::query_tx confirm tx not find.tx=%s", base::xstring_utl::to_hex(txhash).c_str());
-                    return nullptr;
+                    return (type == base::enum_transaction_subtype_all) ? txstore : nullptr;
                 }
                 base::xvtransaction_index_ptr_t txindex = make_object_ptr<base::xvtransaction_index_t>();
                 txindex->serialize_from_string(txobj_bin);
