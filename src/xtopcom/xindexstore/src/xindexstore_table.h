@@ -27,7 +27,6 @@ class xindexstore_table_t : public xindexstore_face_t {
  private:
     store::xstore_face_t*       get_store() const {return m_resources->get_store();}
     base::xvblockstore_t*       get_blockstore() const {return m_resources->get_blockstore();}
-    bool                        update_tablestate(const xblock_ptr_t & block);
     xtablestate_ptr_t           get_target_tablestate(const xblock_ptr_t & block);
     xtablestate_ptr_t           get_target_block_state(const xtablestate_ptr_t & old_state, const xblock_ptr_t & block);
     xtablestate_ptr_t           load_base_tablestate_from_db(const xtablestate_ptr_t & old_tablestate);

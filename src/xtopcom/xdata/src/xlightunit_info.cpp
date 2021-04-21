@@ -17,6 +17,12 @@ void xtransaction_exec_state_t::set_tx_exec_status(enum_xunit_tx_exec_status val
         set_value(XTX_STATE_TX_EXEC_STATUS, (uint32_t)value);
     }
 }
+
+void xtransaction_exec_state_t::set_receipt_id(base::xtable_shortid_t sid, uint64_t value) {
+    set_value(XTX_RECEIPT_ID, value);
+    set_value(XTX_RECEIPT_ID_TABLE_ID, sid);
+}
+
 enum_xunit_tx_exec_status xtransaction_exec_state_t::get_tx_exec_status() const {
     enum_xunit_tx_exec_status status = static_cast<enum_xunit_tx_exec_status>(get_value_uint32(XTX_STATE_TX_EXEC_STATUS));
     if (status == 0) {

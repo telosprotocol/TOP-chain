@@ -10,6 +10,7 @@
 #include <mutex>
 #include "xvledger/xdataobj_base.hpp"
 #include "xvledger/xvblock.h"
+#include "xvledger/xreceiptid.h"
 #include "xdata/xdata_common.h"
 #include "xdata/xdatautil.h"
 #include "xdata/xblock.h"
@@ -132,6 +133,7 @@ class xtable_block_t : public xblock_t {
     const std::vector<xblock_ptr_t> & get_tableblock_units(bool need_parent_cert = false) const override;
     std::map<std::string, xaccount_index_t> get_units_index() const override;
     virtual bool  extract_sub_blocks(std::vector<xobject_ptr_t<base::xvblock_t>> & sub_blocks) override;
+    base::xreceiptid_pairs_ptr_t    get_receiptid_binlog() const;
 
  private:
     xblock_ptr_t    recreate_unit_from_unit_input_output_resource(uint16_t index) const;

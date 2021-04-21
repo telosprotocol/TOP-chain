@@ -10,8 +10,10 @@ NS_BEG2(top, base)
 
 REG_CLS(xreceiptid_pairs_t);
 
-xreceiptid_pair_t::xreceiptid_pair_t(uint64_t sendid_max, uint32_t unconfirm_num, uint64_t recvid_max)
-: m_send_id_max(sendid_max), m_unconfirm_num(unconfirm_num), m_recv_id_max(recvid_max) {
+xreceiptid_pair_t::xreceiptid_pair_t(uint64_t sendid_max, uint64_t confirmid_max, uint64_t recvid_max) {
+    set_sendid_max(sendid_max);
+    set_confirmid_max(confirmid_max);
+    set_recvid_max(recvid_max);
 }
 
 int32_t xreceiptid_pair_t::do_write(base::xstream_t & stream) const {
@@ -28,6 +30,28 @@ int32_t xreceiptid_pair_t::do_read(base::xstream_t & stream) {
     stream.read_compact_var(m_unconfirm_num);
     stream.read_compact_var(m_recv_id_max);
     return (begin_size - stream.size());
+}
+
+// should set sendid before confirmid
+void xreceiptid_pair_t::set_sendid_max(uint64_t value) {
+    if (value > m_send_id_max) {
+        m_unconfirm_num += value - m_send_id_max;
+        m_send_id_max = value;
+    }
+}
+void xreceiptid_pair_t::set_confirmid_max(uint64_t value) {
+    xassert(value <= m_send_id_max);
+    uint64_t confirmid_max = get_confirmid_max();
+    if (value > confirmid_max) {
+        uint64_t new_confirmed_num = value - confirmid_max;
+        xassert(m_unconfirm_num >= new_confirmed_num);
+        m_unconfirm_num -= value - confirmid_max;
+    }
+}
+void xreceiptid_pair_t::set_recvid_max(uint64_t value) {
+    if (value > m_recv_id_max) {
+        m_recv_id_max = value;
+    }
 }
 
 std::string xreceiptid_pair_t::dump() const {
@@ -51,7 +75,15 @@ bool xreceiptid_pairs_t::find_pair(xtable_shortid_t sid, xreceiptid_pair_t & pai
 }
 
 void xreceiptid_pairs_t::add_pair(xtable_shortid_t sid, const xreceiptid_pair_t & pair) {
-    m_all_pairs[sid] = pair;
+    auto iter = m_all_pairs.find(sid);
+    if (iter != m_all_pairs.end()) {
+        xreceiptid_pair_t & old_pair = iter->second;
+        old_pair.set_sendid_max(pair.get_sendid_max());
+        old_pair.set_recvid_max(pair.get_recvid_max());
+        old_pair.set_confirmid_max(pair.get_confirmid_max());
+    } else {
+        m_all_pairs[sid] = pair;
+    }
 }
 void xreceiptid_pairs_t::add_pairs(const std::map<xtable_shortid_t, xreceiptid_pair_t> & pairs) {
     for (auto & v : pairs) {
@@ -67,6 +99,37 @@ void xreceiptid_pairs_t::add_binlog(const xobject_ptr_t<xreceiptid_pairs_t> & bi
 
 void xreceiptid_pairs_t::clear_binlog() {
     m_all_pairs.clear();
+}
+
+void xreceiptid_pairs_t::set_sendid_max(xtable_shortid_t sid, uint64_t value) {
+    auto iter = m_all_pairs.find(sid);
+    if (iter != m_all_pairs.end()) {
+        iter->second.set_sendid_max(value);
+    } else {
+        xreceiptid_pair_t pair;
+        pair.set_sendid_max(value);
+        m_all_pairs[sid] = pair;
+    }
+}
+void xreceiptid_pairs_t::set_confirmid_max(xtable_shortid_t sid, uint64_t value) {
+    auto iter = m_all_pairs.find(sid);
+    if (iter != m_all_pairs.end()) {
+        iter->second.set_confirmid_max(value);
+    } else {
+        xreceiptid_pair_t pair;
+        pair.set_confirmid_max(value);
+        m_all_pairs[sid] = pair;
+    }
+}
+void xreceiptid_pairs_t::set_recvid_max(xtable_shortid_t sid, uint64_t value) {
+    auto iter = m_all_pairs.find(sid);
+    if (iter != m_all_pairs.end()) {
+        iter->second.set_recvid_max(value);
+    } else {
+        xreceiptid_pair_t pair;
+        pair.set_recvid_max(value);
+        m_all_pairs[sid] = pair;
+    }
 }
 
 int32_t xreceiptid_pairs_t::do_write(base::xstream_t & stream) {
@@ -99,6 +162,7 @@ xreceiptid_state_t::xreceiptid_state_t()
 :base::xdataunit_t(base::xdataunit_t::enum_xdata_type_undefine) {
     m_last_full = make_object_ptr<xreceiptid_pairs_t>();
     m_binlog = make_object_ptr<xreceiptid_pairs_t>();
+    m_modified_binlog = make_object_ptr<xreceiptid_pairs_t>();
 }
 
 xreceiptid_state_t::xreceiptid_state_t(const xreceiptid_pairs_ptr_t & last_full, const xreceiptid_pairs_ptr_t & binlog)
@@ -112,6 +176,7 @@ xreceiptid_state_t::xreceiptid_state_t(const xreceiptid_pairs_ptr_t & last_full,
     if (m_binlog == nullptr) {
         m_binlog = make_object_ptr<xreceiptid_pairs_t>();
     }
+    m_modified_binlog = make_object_ptr<xreceiptid_pairs_t>();
 }
 
 int32_t xreceiptid_state_t::do_write(base::xstream_t & stream) {
@@ -161,6 +226,18 @@ bool xreceiptid_state_t::find_pair(xtable_shortid_t sid, xreceiptid_pair_t & pai
         return ret;
     }
     return m_last_full->find_pair(sid, pair);
+}
+
+bool xreceiptid_state_t::find_pair_modified(xtable_shortid_t sid, xreceiptid_pair_t & pair) {
+    // firstly find in binlog, secondly find in last full
+    bool ret = m_modified_binlog->find_pair(sid, pair);
+    if (ret) {
+        return ret;
+    }
+    return find_pair(sid, pair);
+}
+void xreceiptid_state_t::add_pair_modified(xtable_shortid_t sid, const xreceiptid_pair_t & pair) {
+    m_modified_binlog->add_pair(sid, pair);
 }
 
 NS_END2
