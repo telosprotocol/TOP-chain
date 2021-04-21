@@ -198,22 +198,26 @@ namespace top
         base::xblock_vector xvblockstore_impl::load_block_object(const base::xvaccount_t & account,const uint64_t height)//might mutiple certs at same height
         {
             LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
-            std::vector<base::xvbindex_t*> index_list(account_obj->load_index(height));//returned ptr with added reference
-            if(index_list.empty() == false)
+            if(account_obj->load_index(height) > 0) //load first
             {
-                std::vector<base::xvblock_t*> block_list;
-                for(auto & index : index_list)
+                std::vector<base::xvbindex_t*> index_list = account_obj->query_index(height);//returned ptr with added reference
+                if(index_list.empty() == false)
                 {
-                    if(index != NULL)
+                    std::vector<base::xvblock_t*> block_list;
+                    for(auto & index : index_list)
                     {
-                        base::xvblock_t * block = load_block_from_index(account_obj.get(),index,index->get_height(),false);
-                        if(block != NULL)
-                            block_list.push_back(block);//ptr will be released by xblock_vector later
-                        
-                        index->release_ref();//load_index returned ptr with added reference
+                        if(index != NULL)
+                        {
+                            //load_index returned ptr with added reference,here move into auto_ptr to manage reference
+                            base::xauto_ptr<base::xvbindex_t> auto_index_ptr(index);
+                            base::xvblock_t * block = load_block_from_index(account_obj.get(),base::xauto_ptr<base::xvbindex_t>(std::move(auto_index_ptr)),index->get_height(),false);
+                            if(block != NULL)
+                                block_list.push_back(block);//ptr will be released by xblock_vector later
+                            
+                        }
                     }
+                    return block_list;
                 }
-                return block_list;
             }
             return base::xblock_vector();
         }
@@ -458,11 +462,11 @@ namespace top
                 {
                     if(index != NULL)
                     {
-                        base::xvblock_t * block = load_block_from_index(account_obj.get(),index,index->get_height(),false);
+                        //query_index return raw ptr with added reference,so here move into auto_ptr to relase it
+                        base::xauto_ptr<base::xvbindex_t> auto_index_ptr(index);
+                        base::xvblock_t * block = load_block_from_index(account_obj.get(),base::xauto_ptr<base::xvbindex_t>(std::move(auto_index_ptr)),index->get_height(),false);
                         if(block != NULL)
                             block_list.push_back(block); //ptr will be released by xblock_vector later
-                        
-                        index->release_ref();//query_index return raw ptr with added reference
                     }
                 }
                 return block_list;
