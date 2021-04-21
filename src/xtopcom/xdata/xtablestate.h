@@ -53,6 +53,7 @@ class xtablestate_t : public base::xdataunit_t {
  public:  // apis for user query
     void        set_account_index(const std::string & account, const base::xaccount_index_t & account_index);
     bool        get_account_index(const std::string & account, base::xaccount_index_t & account_index);
+    uint64_t    get_account_size() const { return m_accountindex_state->get_account_size(); }
     bool        find_receiptid_pair(base::xtable_shortid_t sid, base::xreceiptid_pair_t & pair);
     const base::xreceiptid_state_ptr_t &        get_receiptid_state() const {return m_receiptid_state;}
     const base::xtable_mbt_new_state_ptr_t &    get_accountindex_state() const {return m_accountindex_state;}

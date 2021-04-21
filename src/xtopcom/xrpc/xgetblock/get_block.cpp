@@ -886,6 +886,31 @@ void get_block_handle::getLatestBlock() {
     m_js_rsp["value"] = value;
 }
 
+void get_block_handle::getLatestFullBlock() {
+    std::string owner = m_js_req["account_addr"].asString();
+    auto vblock = m_block_store->get_latest_full_block(owner);
+    data::xblock_t * bp = dynamic_cast<data::xblock_t *>(vblock.get());
+    if (bp) {
+        xJson::Value jv;
+        jv["height"] = static_cast<xJson::UInt64>(bp->get_height());
+        if (bp->is_fulltable()) {
+            xfull_tableblock_t* ftp = dynamic_cast<xfull_tableblock_t*>(bp);
+            auto root_hash = ftp->get_offdata_hash();
+            jv["root_hash"] = to_hex_str(root_hash);
+            auto od = ftp->get_offdata();
+            if (od) {
+                xtablestate_ptr_t tsp = make_object_ptr<xtablestate_t>();
+                auto od_obj = make_object_ptr<xvboffdata_t>();
+                od->add_ref();
+                od_obj.attach(od);
+                tsp->set_block_full_data(od_obj);
+                jv["account_size"] = static_cast<xJson::UInt64>(tsp->get_account_size());
+            }
+        }
+        m_js_rsp["value"] = jv;
+    }
+}
+
 void get_block_handle::getBlockByHeight() {
     std::string owner = m_js_req["account_addr"].asString();
     uint64_t height = m_js_req["height"].asUInt64();

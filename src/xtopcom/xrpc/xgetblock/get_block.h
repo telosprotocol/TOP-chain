@@ -57,6 +57,7 @@ public:
         REGISTER_QUERY_METHOD(queryNodeReward);
 
         REGISTER_QUERY_METHOD(getLatestBlock);
+        REGISTER_QUERY_METHOD(getLatestFullBlock);
         REGISTER_QUERY_METHOD(getBlockByHeight);
 
         REGISTER_QUERY_METHOD(getSyncNeighbors);
@@ -81,6 +82,7 @@ public:
     void set_single_property(xJson::Value & jph, const std::string & owner, const std::string & prop_name);
     void set_single_native_property(xJson::Value & jph, std::string & owner, std::string & prop_name);
     void getLatestBlock();
+    void getLatestFullBlock();
     void getBlockByHeight();
     void getAccount();
     uint64_t get_timer_height() const;
