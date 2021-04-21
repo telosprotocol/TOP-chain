@@ -118,10 +118,14 @@ int32_t xreceipt_queue_new_t::push_tx(const std::shared_ptr<xtx_entry> & tx_ent)
     return peer_table_receipts->push_tx(tx_ent);
 }
 
-const std::vector<xcons_transaction_ptr_t> xreceipt_queue_new_t::get_txs(uint32_t max_num) const {
-    std::map<uint16_t, std::vector<xcons_transaction_ptr_t>> recv_peer_table_map;
-    std::map<uint16_t, std::vector<xcons_transaction_ptr_t>> confirm_peer_table_map;
+const std::vector<xcons_transaction_ptr_t> xreceipt_queue_new_t::get_txs(uint32_t recv_txs_max_num,
+                                                                         uint32_t confirm_txs_max_num,
+                                                                         const base::xreceiptid_state_ptr_t & receiptid_state) const {
+    std::map<base::xtable_shortid_t, std::vector<xcons_transaction_ptr_t>> recv_peer_table_map;
+    std::map<base::xtable_shortid_t, std::vector<xcons_transaction_ptr_t>> confirm_peer_table_map;
+    // uint32_t max_num, const base::xreceiptid_state_ptr_t & receiptid_state
     uint32_t txs_count = 0;
+    uint32_t max_num = (recv_txs_max_num + confirm_txs_max_num) * 2;
     auto & ready_txs = m_receipt_queue_internal.get_queue();
     for (auto it_tx_map_tx = ready_txs.begin(); (txs_count < max_num) && (it_tx_map_tx != ready_txs.end()); it_tx_map_tx++) {
         // use receipt id ascending order peculiarity to deduplicate, if tx's peer table is found from map and receipt id is bigger, update it in map.
@@ -130,7 +134,7 @@ const std::vector<xcons_transaction_ptr_t> xreceipt_queue_new_t::get_txs(uint32_
         base::xvaccount_t vaccount(account_addr);
         auto peer_table_sid = vaccount.get_short_table_id();
         uint64_t receipt_id = it_tx_map_tx->get()->get_tx()->get_receipt_id();
-        std::map<uint16_t, std::vector<xcons_transaction_ptr_t>> & tx_peer_table_map = is_recv_tx ? recv_peer_table_map : confirm_peer_table_map;
+        std::map<base::xtable_shortid_t, std::vector<xcons_transaction_ptr_t>> & tx_peer_table_map = is_recv_tx ? recv_peer_table_map : confirm_peer_table_map;
 
         uint32_t old_tx_num = 0;
         auto it_tx_peer_table_map = tx_peer_table_map.find(peer_table_sid);
@@ -161,12 +165,62 @@ const std::vector<xcons_transaction_ptr_t> xreceipt_queue_new_t::get_txs(uint32_
         txs_count += (txs_tmp.size() - old_tx_num);
     }
 
+    // get receipts continuous with min sendid
     std::vector<xcons_transaction_ptr_t> ret_txs;
     for (auto & it_confirm_peer_table_map : confirm_peer_table_map) {
-        ret_txs.insert(ret_txs.end(), it_confirm_peer_table_map.second.begin(), it_confirm_peer_table_map.second.end());
+        auto peer_table_sid = it_confirm_peer_table_map.first;
+        base::xreceiptid_pair_t receiptid_pair;
+        receiptid_state->find_pair(peer_table_sid, receiptid_pair);
+        auto min_receipt_id = receiptid_pair.get_sendid_min();
+        auto & confirm_txs = it_confirm_peer_table_map.second;
+        for (auto confirm_tx : confirm_txs) {
+            if (ret_txs.size() >= confirm_txs_max_num) {
+                break;
+            }
+            if (confirm_tx->get_receipt_id() <= min_receipt_id) {
+                // receipt id less than min receipt id, skip it
+                continue;
+            } else if (confirm_tx->get_receipt_id() == (min_receipt_id + 1)) {
+                // continuous receipt id
+                ret_txs.push_back(confirm_tx);
+                min_receipt_id++;
+            } else {
+                // not continuous, stop.
+                break;
+            }
+        }
+        if (ret_txs.size() >= confirm_txs_max_num) {
+            break;
+        }
     }
+
+    auto confirm_txs_num = ret_txs.size();
+
     for (auto & it_recv_peer_table_map : recv_peer_table_map) {
-        ret_txs.insert(ret_txs.end(), it_recv_peer_table_map.second.begin(), it_recv_peer_table_map.second.end());
+        auto peer_table_sid = it_recv_peer_table_map.first;
+        base::xreceiptid_pair_t receiptid_pair;
+        receiptid_state->find_pair(peer_table_sid, receiptid_pair);
+        auto min_receipt_id = receiptid_pair.get_recvid_max();
+        auto & recv_txs = it_recv_peer_table_map.second;
+        for (auto recv_tx : recv_txs) {
+            if (ret_txs.size() >= confirm_txs_num + recv_txs_max_num) {
+                break;
+            }
+            if (recv_tx->get_receipt_id() <= min_receipt_id) {
+                // receipt id less than min receipt id, skip it
+                continue;
+            } else if (recv_tx->get_receipt_id() == (min_receipt_id + 1)) {
+                // continuous receipt id
+                ret_txs.push_back(recv_tx);
+                min_receipt_id++;
+            } else {
+                // not continuous, stop.
+                break;
+            }
+        }
+        if (ret_txs.size() >= confirm_txs_num + recv_txs_max_num) {
+            break;
+        }
     }
 
     return ret_txs;

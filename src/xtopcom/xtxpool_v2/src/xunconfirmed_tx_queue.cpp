@@ -236,6 +236,7 @@ const xcons_transaction_ptr_t xunconfirmed_account_t::find(const uint256_t & has
 }
 
 void xunconfirmed_tx_queue_t::udpate_latest_confirmed_block(xblock_t * block, const base::xreceiptid_state_ptr_t & receiptid_state) {
+    xtxpool_dbg("xunconfirmed_tx_queue_t::udpate_latest_confirmed_block block:%s", block->dump().c_str());
     auto it_account = m_unconfirmed_accounts.find(block->get_account());
     if (it_account != m_unconfirmed_accounts.end()) {
         auto & unconfirmed_account = it_account->second;

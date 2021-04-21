@@ -133,6 +133,16 @@ ready_accounts_t xtxpool_table_t::get_ready_accounts(uint32_t count) {
     return m_txmgr_table.get_ready_accounts(count);
 }
 
+ready_accounts_t xtxpool_table_t::get_ready_accounts(const xtxs_pack_para_t & pack_para) {
+    std::lock_guard<std::mutex> lck(m_mgr_mutex);
+    return m_txmgr_table.get_ready_accounts(pack_para);
+}
+
+std::vector<xcons_transaction_ptr_t> xtxpool_table_t::get_ready_txs(const xtxs_pack_para_t & pack_para) {
+    std::lock_guard<std::mutex> lck(m_mgr_mutex);
+    return m_txmgr_table.get_ready_txs(pack_para);
+}
+
 std::vector<xcons_transaction_ptr_t> xtxpool_table_t::get_ready_txs(uint32_t count) {
     xtablestate_ptr_t tablestate = m_table_indexstore->clone_tablestate();
     std::lock_guard<std::mutex> lck(m_mgr_mutex);
