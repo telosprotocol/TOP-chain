@@ -133,8 +133,11 @@ xblock_ptr_t xtop_lightunit_builder2::build_block(xblock_ptr_t const & prev_bloc
         return nullptr;
     }
 
+    auto * state_ptr = prev_block->get_state();
+    assert(state_ptr != nullptr);
+    state_ptr->add_ref();
     xobject_ptr_t<base::xvbstate_t> blockstate;
-    blockstate.attach(prev_block->get_state());
+    blockstate.attach(state_ptr);
 
     std::shared_ptr<xlightunit_builder_para_t> lightunit_build_para = std::dynamic_pointer_cast<xlightunit_builder_para_t>(build_para);
     xassert(lightunit_build_para != nullptr);
