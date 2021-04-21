@@ -252,7 +252,7 @@ make_unique(ArgsT && ... args) {
     return std::unique_ptr<T>(new T{ std::forward<ArgsT>(args)... });
 }
 
-// std::make_unique for arrays of unknown bound
+// top::make_unique for arrays of unknown bound
 template<typename T>
 typename xtop_make_unique<T>::array_object
 make_unique(std::size_t const n) {

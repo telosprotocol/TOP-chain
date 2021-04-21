@@ -54,7 +54,7 @@ constexpr top::xrange_t<typename OnChainGovernanceParameterT::type> const & get_
 using xinterval_t = std::uint32_t;
 using xgroup_size_t = std::uint16_t;
 
-#define XGLOBAL_TIMER_INTERVAL_IN_SECONDS std::chrono::duration_cast<std::chrono::seconds>(xglobal_timer_interval_configuration_t::value).count()
+#define XGLOBAL_TIMER_INTERVAL_IN_SECONDS std::chrono::duration_cast<std::chrono::seconds>(top::config::xglobal_timer_interval_configuration_t::value).count()
 XDECLARE_CONFIGURATION(global_timer_interval, std::chrono::milliseconds, 10000);  // global timer interval 10
 
 // election onchain:
