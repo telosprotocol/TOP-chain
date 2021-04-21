@@ -42,7 +42,7 @@ public:
     void push_tx(const xcons_transaction_ptr_t & tx);
     void erase(uint16_t peer_table_sid, uint64_t receipt_id);
     const xcons_transaction_ptr_t find(uint16_t peer_table_sid, uint64_t receipt_id) const;
-    void update_table_receipt_id_state(const base::xreceiptid_state_ptr_t & receiptid_state);
+    void update_receiptid_state(const base::xreceiptid_state_ptr_t & receiptid_state);
     const xall_unconfirm_tx_set_t & get_all_txs() const {
         return m_all_unconfirm_txs;
     }

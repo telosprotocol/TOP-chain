@@ -144,13 +144,11 @@ private:
 class xtxs_pack_para_t {
 public:
     xtxs_pack_para_t(const std::string & table_addr,
-                     const base::xreceiptid_state_ptr_t & receiptid_state_committed,
                      const base::xreceiptid_state_ptr_t receiptid_state_highqc,
                      uint16_t send_txs_max_num,
                      uint16_t recv_txs_max_num,
                      uint16_t confirm_txs_max_num)
       : m_table_addr(table_addr)
-      , m_receiptid_state_committed(receiptid_state_committed)
       , m_receiptid_state_highqc(receiptid_state_highqc)
       , m_send_txs_max_num(send_txs_max_num)
       , m_recv_txs_max_num(recv_txs_max_num)
@@ -158,9 +156,6 @@ public:
     }
     const std::string & get_table_addr() const {
         return m_table_addr;
-    }
-    const base::xreceiptid_state_ptr_t & get_receiptid_state_committed() const {
-        return m_receiptid_state_committed;
     }
     const base::xreceiptid_state_ptr_t & get_receiptid_state_highqc() const {
         return m_receiptid_state_highqc;
@@ -177,7 +172,6 @@ public:
 
 private:
     std::string m_table_addr;
-    base::xreceiptid_state_ptr_t m_receiptid_state_committed;
     base::xreceiptid_state_ptr_t m_receiptid_state_highqc;
     uint16_t m_send_txs_max_num;
     uint16_t m_recv_txs_max_num;
@@ -206,6 +200,7 @@ public:
     virtual void update_unconfirm_accounts(uint8_t zone, uint16_t subaddr) = 0;
     virtual void update_non_ready_accounts(uint8_t zone, uint16_t subaddr) = 0;
     virtual void update_locked_txs(const std::string & table_addr, const std::vector<tx_info_t> & locked_tx_vec) = 0;
+    virtual void update_receiptid_state(const std::string & table_addr, const base::xreceiptid_state_ptr_t & receiptid_state) = 0;
 };
 
 class xtxpool_instance {
