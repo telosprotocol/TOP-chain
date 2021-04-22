@@ -18,7 +18,7 @@
 // #include "test_blockmock.hpp"
 #include "xstore/xstore.h"
 #include "xblockstore/xblockstore_face.h"
-#include "test_blockstore_util.hpp"
+// #include "test_blockstore_util.hpp"
 #include "tests/mock/xvchain_creator.hpp"
 #include "tests/mock/xdatamock_table.hpp"
 

@@ -15,6 +15,7 @@ namespace top
         class xvchain_creator {
         public:
             void create_blockstore_with_xstore() {
+                base::xvchain_t::instance().clean_all(true);
                 mock::xveventbus_impl* mbus_store = new mock::xveventbus_impl();
                 base::xvchain_t::instance().set_xevmbus(mbus_store);
 

@@ -26,7 +26,7 @@ namespace top
             for(int i = 0; i < enum_xvaccount_plugin_max; ++i)
             {
                 xobject_t* old_ptr = m_plugins[i];
-                xassert(old_ptr == NULL); //MUST did clean before destruction
+// TODO(jimmy)               xassert(old_ptr == NULL); //MUST did clean before destruction
                 if(old_ptr != NULL)//catch exception case if have
                     xcontext_t::instance().delay_release_object(old_ptr);
             }
@@ -40,7 +40,7 @@ namespace top
                 xobject_t::close(true); //force at async mode
                 
                 //clean it fromt table first,since base::on_object_close may clean up parent node information
-                m_ref_table.close_account(get_address());
+                // TODO(jimmy) m_ref_table.close_account(get_address());
             }
             return true;
         }
