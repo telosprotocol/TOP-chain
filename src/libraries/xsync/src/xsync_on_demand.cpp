@@ -180,10 +180,7 @@ void xsync_on_demand_t::handle_blocks_request(const xsync_message_get_on_demand_
     for (uint64_t height = start_height, i = 0; (height <= end_height) && (i < max_request_block_count); height++) {
         std::vector<xvblock_t*> need_blocks = m_sync_store->load_block_objects(address, height).get_vector();
         for (uint32_t j = 0; j < need_blocks.size(); j++){
-            xvblock_ptr_t vblock_ptr =  nullptr;
-            vblock_ptr.attach(need_blocks[j]);
-            xblock_ptr_t  block_ptr = dynamic_xobject_ptr_cast<xblock_t>(vblock_ptr);
-            blocks.push_back(block_ptr);
+            blocks.push_back(xblock_t::raw_vblock_to_object_ptr(need_blocks[j]));
         }
         if (!need_blocks.empty()){
             i++;

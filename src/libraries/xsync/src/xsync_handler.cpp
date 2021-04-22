@@ -181,8 +181,8 @@ void xsync_handler_t::get_blocks(uint32_t msg_size, const vnetwork::xvnode_addre
         uint64_t height = start_height + (uint64_t)i;
 
         auto blocks = m_sync_store->load_block_objects(owner, height).get_vector();
-        for (uint32_t i = 0; i < blocks.size(); i++){
-            vector_blocks.push_back(xblock_t::raw_vblock_to_object_ptr(blocks[i]));
+        for (uint32_t j = 0; j < blocks.size(); j++){
+            vector_blocks.push_back(xblock_t::raw_vblock_to_object_ptr(blocks[j]));
         }
     }
 
