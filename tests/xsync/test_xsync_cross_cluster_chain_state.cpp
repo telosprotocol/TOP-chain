@@ -6,6 +6,7 @@
 #include "common.h"
 #include "xsync/xsync_util.h"
 #include "xsyncbase/xmessage_ids.h"
+#include "tests/mock/xvchain_creator.hpp"
 
 using namespace top;
 using namespace top::sync;
@@ -89,10 +90,10 @@ static xJson::Value build_archives() {
 class xcross_cluster_mock_downloader_t : public xdownloader_face_t {
 public:
     void push_event(const mbus::xevent_ptr_t &e) override {
-        if (e->major_type==xevent_major_type_behind && e->minor_type==xevent_behind_download_t::type_download) {
-            auto bme = std::static_pointer_cast<mbus::xevent_behind_download_t>(e);
-            m_counter++;
-        }
+        // if (e->major_type==xevent_major_type_behind && e->minor_type==xevent_behind_download_t::type_download) {
+        //     auto bme = make_object_ptr<mbus::xevent_behind_download_t>(e);
+        //     m_counter++;
+        // }
     }
 
     int m_counter{0};
@@ -101,9 +102,13 @@ public:
 TEST(xsync_cross_cluster_chain_state, test) {
 
     std::unique_ptr<mbus::xmessage_bus_face_t> mbus = top::make_unique<mbus::xmessage_bus_t>();
-    xobject_ptr_t<store::xstore_face_t> store = store::xstore_factory::create_store_with_memdb(nullptr);
-    xobject_ptr_t<base::xvblockstore_t> blockstore = nullptr;
-    blockstore.attach(store::xblockstorehub_t::instance().create_block_store(*store, ""));
+    mock::xvchain_creator creator;
+    creator.create_blockstore_with_xstore();
+    xobject_ptr_t<store::xstore_face_t> store;
+    store.attach(creator.get_xstore());
+    xobject_ptr_t<base::xvblockstore_t> blockstore;
+    blockstore.attach(creator.get_blockstore());
+
     xsync_store_t sync_store("", make_observer(blockstore));
     xrole_chains_mgr_t role_chains_mgr("");
     xrole_xips_manager_t role_xips_mgr("");

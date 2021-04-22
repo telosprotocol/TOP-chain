@@ -12,6 +12,7 @@
 #include "xmbus/xevent_executor.h"
 #include "xsyncbase/xmessage_ids.h"
 #include "tests/mock/xdatamock_table.hpp"
+#include "tests/mock/xvchain_creator.hpp"
 
 using namespace top;
 using namespace top::sync;
@@ -38,9 +39,13 @@ TEST(xsync_account, no_response) {
 
     std::string address = xdatautil::serialize_owner_str(sys_contract_beacon_table_block_addr, 0);
 
-    xobject_ptr_t<store::xstore_face_t> store = store::xstore_factory::create_store_with_memdb(nullptr);
-    xobject_ptr_t<base::xvblockstore_t> blockstore = nullptr;
-    blockstore.attach(store::xblockstorehub_t::instance().create_block_store(*store, ""));
+
+    mock::xvchain_creator creator;
+    creator.create_blockstore_with_xstore();
+    xobject_ptr_t<store::xstore_face_t> store;
+    store.attach(creator.get_xstore());
+    xobject_ptr_t<base::xvblockstore_t> blockstore;
+    blockstore.attach(creator.get_blockstore());
     xsync_store_t sync_store("", make_observer(blockstore));
 
     xmessage_bus_t mbus;
@@ -120,9 +125,12 @@ TEST(xsync_account, highqc_fork) {
 
     std::string address = xdatautil::serialize_owner_str(sys_contract_sharding_table_block_addr, 0);
 
-    xobject_ptr_t<store::xstore_face_t> store = store::xstore_factory::create_store_with_memdb(nullptr);
-    xobject_ptr_t<base::xvblockstore_t> blockstore = nullptr;
-    blockstore.attach(store::xblockstorehub_t::instance().create_block_store(*store, ""));
+    mock::xvchain_creator creator;
+    creator.create_blockstore_with_xstore();
+    xobject_ptr_t<store::xstore_face_t> store;
+    store.attach(creator.get_xstore());
+    xobject_ptr_t<base::xvblockstore_t> blockstore;
+    blockstore.attach(creator.get_blockstore());
 
     xsync_store_t sync_store("", make_observer(blockstore));
     xmessage_bus_t mbus;
@@ -260,9 +268,12 @@ TEST(xsync_account, lockedqc_fork) {
 
     std::string address = xdatautil::serialize_owner_str(sys_contract_sharding_table_block_addr, 0);
 
-    xobject_ptr_t<store::xstore_face_t> store = store::xstore_factory::create_store_with_memdb(nullptr);
-    xobject_ptr_t<base::xvblockstore_t> blockstore = nullptr;
-    blockstore.attach(store::xblockstorehub_t::instance().create_block_store(*store, ""));
+    mock::xvchain_creator creator;
+    creator.create_blockstore_with_xstore();
+    xobject_ptr_t<store::xstore_face_t> store;
+    store.attach(creator.get_xstore());
+    xobject_ptr_t<base::xvblockstore_t> blockstore;
+    blockstore.attach(creator.get_blockstore());
 
     xsync_store_t sync_store("", make_observer(blockstore));
     xmessage_bus_t mbus;
@@ -399,9 +410,12 @@ TEST(xsync_account, lockedqc_fork) {
 }
 
 TEST(xsync_account, chain_snapshot) {
-    xobject_ptr_t<store::xstore_face_t> store = store::xstore_factory::create_store_with_memdb(nullptr);
-    xobject_ptr_t<base::xvblockstore_t> blockstore = nullptr;
-    blockstore.attach(store::xblockstorehub_t::instance().create_block_store(*store, ""));
+    mock::xvchain_creator creator;
+    creator.create_blockstore_with_xstore();
+    xobject_ptr_t<store::xstore_face_t> store;
+    store.attach(creator.get_xstore());
+    xobject_ptr_t<base::xvblockstore_t> blockstore;
+    blockstore.attach(creator.get_blockstore());
     xsync_store_t sync_store("", make_observer(blockstore));
     xmessage_bus_t mbus;
     xmock_vhost_sync_t vhost;
@@ -418,7 +432,8 @@ TEST(xsync_account, chain_snapshot) {
     xassert(tables.size() == max_block_height+1);
     // tables[101]->set_full_offstate(nullptr);
     for (uint64_t i = 0; i < 100; i++) {
-        ASSERT_TRUE(blockstore->store_block(tables[i].get()));
+        base::xvaccount_t _vaddress(tables[i]->get_account());
+        ASSERT_TRUE(blockstore->store_block(_vaddress, tables[i].get()));
     }
     top::common::xnode_address_t network_self;
     top::common::xnode_address_t target_address;

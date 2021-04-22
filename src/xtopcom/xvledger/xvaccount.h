@@ -9,6 +9,7 @@
 #include "xbase/xns_macro.h"
 #include "xbase/xobject.h"
 #include "xbase/xutl.h"
+#include "xvledger/xvaccount.h"
 
 namespace top
 {

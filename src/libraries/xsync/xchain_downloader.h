@@ -92,9 +92,8 @@ public:
     void on_behind(uint64_t start_height, uint64_t end_height, enum_chain_sync_policy sync_policy, const vnetwork::xvnode_address_t &self_addr, const vnetwork::xvnode_address_t &target_addr, const std::string &reason) override;
     void on_chain_snapshot_response(const std::string &tbl_account_addr,
         const xobject_ptr_t<base::xvboffdata_t> chain_snapshot, uint64_t height, const vnetwork::xvnode_address_t &self_addr, const vnetwork::xvnode_address_t &from_addr) override;
-
 protected:
-    enum_result_code handle_block(const base::xauto_ptr<base::xvblock_t> &current_block, xblock_ptr_t &block, bool is_elect_chain, enum_chain_sync_policy sync_policy);
+    enum_result_code handle_block(xblock_ptr_t &block, bool is_elect_chain, enum_chain_sync_policy sync_policy);
 
     void handle_next(uint64_t current_height, bool head_forked = false);
     void handle_fulltable(uint64_t fulltable_height_of_tablechain, const vnetwork::xvnode_address_t self_addr, const vnetwork::xvnode_address_t target_addr);

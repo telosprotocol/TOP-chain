@@ -155,10 +155,11 @@ void xsync_on_demand_t::handle_blocks_request(const xsync_message_get_on_demand_
     const vnetwork::xvnode_address_t &to_address, const vnetwork::xvnode_address_t &network_self) {
     std::string address = block.address;
     uint64_t start_height = block.start_height;
-    uint32_t count = block.count;
+    uint64_t end_height = 0;
+    uint32_t heights = block.count;
     bool is_consensus = block.is_consensus;
 
-    if (count == 0)
+    if (heights == 0)
         return;
 
     std::vector<data::xblock_ptr_t> blocks;
@@ -171,26 +172,21 @@ void xsync_on_demand_t::handle_blocks_request(const xsync_message_get_on_demand_
             blocks.push_back(block_ptr);
         }
 
-        uint64_t end_height = start_height + (uint64_t)count;
-
-        for (uint64_t height = start_height, i = 0; (height <= end_height) && (i < max_request_block_count); height++) {
-            xauto_ptr<xvblock_t> auto_vblock = m_sync_store->load_block_object(address, height);
-            if (auto_vblock != nullptr) {
-                xblock_ptr_t block_ptr = autoptr_to_blockptr(auto_vblock);
-                blocks.push_back(block_ptr);
-                i++;
-            }
-        }
+        end_height = start_height + (uint64_t)heights;
     } else {
-        for (uint32_t i=0; i<count && i<max_request_block_count; i++) {
-            uint64_t height = start_height + (uint64_t)i;
-            xauto_ptr<xvblock_t> auto_vblock = m_sync_store->load_block_object(address, height);
-            if (auto_vblock != nullptr) {
-                xblock_ptr_t block_ptr = autoptr_to_blockptr(auto_vblock);
-                blocks.push_back(block_ptr);
-            } else {
-                break;
-            }
+        end_height = start_height + (uint64_t)heights;
+    }
+
+    for (uint64_t height = start_height, i = 0; (height <= end_height) && (i < max_request_block_count); height++) {
+        std::vector<xvblock_t*> need_blocks = m_sync_store->load_block_objects(address, height).get_vector();
+        for (uint32_t j = 0; j < need_blocks.size(); j++){
+            xvblock_ptr_t vblock_ptr =  nullptr;
+            vblock_ptr.attach(need_blocks[j]);
+            xblock_ptr_t  block_ptr = dynamic_xobject_ptr_cast<xblock_t>(vblock_ptr);
+            blocks.push_back(block_ptr);
+        }
+        if (!need_blocks.empty()){
+            i++;
         }
     }
 
@@ -283,6 +279,7 @@ int xsync_on_demand_t::check(const std::string &account_address) {
 
     return 0;
 }
+
 int xsync_on_demand_t::check(const std::string &account_address, 
     const vnetwork::xvnode_address_t &to_address, const vnetwork::xvnode_address_t &network_self) {
     xsync_download_tracer tracer;
@@ -298,6 +295,7 @@ int xsync_on_demand_t::check(const std::string &account_address,
     }
     return 0;
 }
+
 xsync_download_tracer_mgr* xsync_on_demand_t::download_tracer_mgr() {
     return &m_download_tracer;
 }
