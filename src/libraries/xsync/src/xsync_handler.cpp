@@ -176,44 +176,13 @@ void xsync_handler_t::get_blocks(uint32_t msg_size, const vnetwork::xvnode_addre
         msg_hash, get_time()-recv_time, owner.c_str(), start_height, start_height+count-1, from_address.to_string().c_str());
 
     std::vector<xblock_ptr_t> vector_blocks;
-#if 0
-    // TODO remove it just now for fastsync update
-    // check service counts
-    auto const max_total_counts = XGET_CONFIG(executor_max_total_sessions_service_counts);
-    auto const total_counts = XGET_CONFIG(executor_max_session_service_counts);
-    auto const time_interval = XGET_CONFIG(executor_session_time_interval);
-
-    if (!m_session_mgr->plus(from_address, max_total_counts, total_counts, time_interval)) {
-        xsync_warn("xsync_handler getblocks out of quota %s %s", owner.c_str(), from_address.to_string().c_str());
-        m_sync_sender->send_blocks(xsync_msg_err_code_t::limit, owner, vector_blocks, from_address, network_self);
-        return;
-    }
-#endif
+    
     for (uint32_t i=0; i<count && i<max_request_block_count; i++) {
         uint64_t height = start_height + (uint64_t)i;
 
-        xblock_ptr_t block = nullptr;
-        xauto_ptr<xvblock_t> blk_ptr = m_sync_store->load_block_object(owner, height);
-        if (blk_ptr != nullptr) {
-            block = autoptr_to_blockptr(blk_ptr);
-        } else {
-            base::xauto_ptr<base::xvblock_t> blk_ptr = m_sync_store->get_latest_cert_block(owner);
-            if (blk_ptr!=nullptr && blk_ptr->get_height()==height) {
-
-                assert(blk_ptr->is_input_ready(true));
-                assert(blk_ptr->is_output_ready(true));
-
-                block = autoptr_to_blockptr(blk_ptr);
-            }
-        }
-
-        if (block != nullptr) {
-#ifdef DEBUG
-            xsync_dbg("xsync_handler get_blocks %s %lu %s",
-                ptr->owner.c_str(), block->get_height(), block->dump().c_str());
-#endif
-
-            vector_blocks.push_back(block);
+        auto blocks = m_sync_store->load_block_objects(owner, height).get_vector();
+        for (uint32_t j = 0; j < blocks.size(); j++){
+            vector_blocks.push_back(xblock_t::raw_vblock_to_object_ptr(blocks[j]));
         }
     }
 
