@@ -713,6 +713,7 @@ bool xstore::execute_tableblock_light(xblockchain2_t* account, const xblock_t *b
         xerror("xstore::execute_tableblock_light execute fail.block=%s", block->dump().c_str());
         return false;
     }
+    xdbg("xstore::execute,%s,height=%ld,receiptid_binlog=%s", block->get_account().c_str(), block->get_height(), tablestate->get_receiptid_state()->get_binlog()->dump().c_str());
     std::string new_binlog_data_str = tablestate->serialize_to_binlog_data_string();
     account->set_extend_data(xblockchain2_t::enum_blockchain_ext_type_binlog, new_binlog_data_str);
     account->add_light_table(block);
@@ -748,6 +749,7 @@ bool xstore::execute_tableblock_full(xblockchain2_t* account, xfull_tableblock_t
         return false;
     }
     set_vblock_offdata({}, block);
+    xdbg("xstore::execute,%s,height=%ld,receiptid_full=%s", block->get_account().c_str(), block->get_height(), tablestate->get_receiptid_state()->get_last_full_state()->dump().c_str());
 
     account->set_extend_data(xblockchain2_t::enum_blockchain_ext_type_binlog, std::string());  // clear binlo
 
