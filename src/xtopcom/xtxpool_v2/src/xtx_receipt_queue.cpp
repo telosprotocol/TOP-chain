@@ -34,9 +34,9 @@ void xreceipt_queue_internal_t::erase_tx(const uint256_t & hash) {
     if (it_tx_map != m_tx_map.end()) {
         auto & tx_ent = *it_tx_map->second;
         xtxpool_info("xreceipt_queue_internal_t::erase_ready_tx from ready txs,table:%s,tx:%s", m_xtable_info->get_table_addr().c_str(), tx_ent->get_tx()->dump(true).c_str());
+        m_xtable_info->tx_dec(tx_ent->get_tx()->get_tx_subtype(), 1);
         m_tx_queue.erase(it_tx_map->second);
         m_tx_map.erase(it_tx_map);
-        m_xtable_info->tx_dec(tx_ent->get_tx()->get_tx_subtype(), 1);
         return;
     }
 }

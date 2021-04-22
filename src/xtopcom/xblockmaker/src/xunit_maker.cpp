@@ -164,8 +164,8 @@ bool xunit_maker_t::leader_push_txs(const std::vector<xcons_transaction_ptr_t> &
     }
 
     m_pending_txs = valid_txs;
-    xdbg("xunit_maker_t::leader_push_txs final succ. account=%s,origin_tx_count=%d,valid_tx_count=%d,pop_tx_count=%d",
-        get_account().c_str(), txs.size(), valid_txs.size(), pop_txs.size());
+    xdbg("xunit_maker_t::leader_push_txs final succ. account=%s,latest_nonce:%llu,origin_tx_count=%d,valid_tx_count=%d,pop_tx_count=%d,latest_committed_block:%s",
+        get_account().c_str(), latest_nonce, txs.size(), valid_txs.size(), pop_txs.size(), get_latest_committed_block()->dump().c_str());
     return true;
 }
 
