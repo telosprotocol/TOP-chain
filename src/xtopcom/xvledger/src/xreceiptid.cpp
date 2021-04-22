@@ -4,6 +4,7 @@
 
 #include <string>
 #include <cinttypes>
+#include <sstream>
 #include "xvledger/xreceiptid.h"
 
 NS_BEG2(top, base)
@@ -157,6 +158,19 @@ int32_t xreceiptid_pairs_t::do_read(base::xstream_t & stream) {
     }
     return (begin_size - stream.size());
 }
+
+std::string xreceiptid_pairs_t::dump() const {
+    std::stringstream ss;
+    for (auto & v : m_all_pairs) {
+        ss << "{" << v.first;
+        ss << " " << v.second.get_sendid_max();
+        ss << ":" << v.second.get_confirmid_max();
+        ss << ":" << v.second.get_recvid_max();
+        ss << "}";
+    }
+    return ss.str();
+}
+
 
 xreceiptid_state_t::xreceiptid_state_t()
 :base::xdataunit_t(base::xdataunit_t::enum_xdata_type_undefine) {
@@ -330,7 +344,7 @@ void xreceiptid_check_t::update_state(const xreceiptid_state_ptr_t & receiptid_s
     for (auto & v : m_sendids) {
         xtable_shortid_t tableid = v.first;
         const std::set<uint64_t> & ids = v.second;
-        uint64_t maxid = *ids.rend();
+        uint64_t maxid = *ids.rbegin();
         base::xreceiptid_pair_t pair;
         receiptid_state->find_pair(tableid, pair);
         pair.set_sendid_max(maxid);
@@ -340,7 +354,7 @@ void xreceiptid_check_t::update_state(const xreceiptid_state_ptr_t & receiptid_s
     for (auto & v : m_recvids) {
         xtable_shortid_t tableid = v.first;
         const std::set<uint64_t> & ids = v.second;
-        uint64_t maxid = *ids.rend();
+        uint64_t maxid = *ids.rbegin();
         base::xreceiptid_pair_t pair;
         receiptid_state->find_pair(tableid, pair);
         pair.set_recvid_max(maxid);
@@ -350,7 +364,7 @@ void xreceiptid_check_t::update_state(const xreceiptid_state_ptr_t & receiptid_s
     for (auto & v : m_confirmids) {
         xtable_shortid_t tableid = v.first;
         const std::set<uint64_t> & ids = v.second;
-        uint64_t maxid = *ids.rend();
+        uint64_t maxid = *ids.rbegin();
         base::xreceiptid_pair_t pair;
         receiptid_state->find_pair(tableid, pair);
         pair.set_confirmid_max(maxid);
