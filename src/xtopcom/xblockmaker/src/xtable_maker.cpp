@@ -37,7 +37,7 @@ bool xtable_maker_t::update_latest_blocks(const xblock_ptr_t & latest_block) {
     // load new latest blocks
     std::map<uint64_t, xblock_ptr_t> latest_blocks;
     if (false == load_latest_blocks(latest_block, latest_blocks)) {
-        xerror("xtable_maker_t::update_latest_blocks fail-load_latest_blocks.account=%s,latest_block=%s",
+        xwarn("xtable_maker_t::update_latest_blocks fail-load_latest_blocks.account=%s,latest_block=%s",
             get_account().c_str(), latest_block->dump().c_str());
         return false;
     }
