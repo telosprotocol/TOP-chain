@@ -372,5 +372,34 @@ void xreceiptid_check_t::update_state(const xreceiptid_state_ptr_t & receiptid_s
     }
 }
 
+std::string xreceiptid_check_t::dump() const {
+    std::stringstream ss;
+    ss << "sendid:";
+    for (auto & v : m_sendids) {
+        ss << "{" << v.first;
+        ss << " " << *v.second.begin();
+        ss << ":" << *v.second.rbegin();
+        xassert(*v.second.rbegin() - *v.second.begin() + 1 == v.second.size());
+        ss << "}";
+    }
+    ss << "recvid:";
+    for (auto & v : m_recvids) {
+        ss << "{" << v.first;
+        ss << " " << *v.second.begin();
+        ss << ":" << *v.second.rbegin();
+        xassert(*v.second.rbegin() - *v.second.begin() + 1 == v.second.size());
+        ss << "}";
+    }
+    ss << "confirmid:";
+    for (auto & v : m_confirmids) {
+        ss << "{" << v.first;
+        ss << " " << *v.second.begin();
+        ss << ":" << *v.second.rbegin();
+        xassert(*v.second.rbegin() - *v.second.begin() + 1 == v.second.size());
+        ss << "}";
+    }
+    return ss.str();
+}
+
 
 NS_END2
