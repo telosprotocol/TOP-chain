@@ -108,19 +108,21 @@ std::vector<xcons_transaction_ptr_t> xtxmgr_table_t::get_ready_txs(const xtxs_pa
     // receipts not pop from queue to pending, but get from queue to unit service directly,
     // because there is no need for queue and pending to maintain same data structure for manage receipts.
 
-    std::vector<xcons_transaction_ptr_t> ready_txs;
-    std::vector<xcons_transaction_ptr_t> ready_receipts =
+    std::vector<xcons_transaction_ptr_t> ready_txs =
         m_new_receipt_queue.get_txs(pack_para.get_recv_txs_max_num(), pack_para.get_confirm_txs_max_num(), pack_para.get_receiptid_state_highqc());
     send_tx_queue_to_pending();
     ready_accounts_t send_txs_accounts = m_pending_accounts.get_ready_accounts(pack_para.get_send_txs_max_num());
 
-    ready_txs.swap(ready_receipts);
     for (auto send_txs_account : send_txs_accounts) {
         auto & account_txs = send_txs_account->get_txs();
         ready_txs.insert(ready_txs.end(), account_txs.begin(), account_txs.end());
     }
 
     xtxpool_dbg("xtxmgr_table_t::get_ready_txs table:%s,ready_txs size:%u", m_xtable_info->get_table_addr().c_str(), ready_txs.size());
+    for (auto & tx :ready_txs) {
+        xtxpool_dbg("xtxmgr_table_t::get_ready_txs table:%s,tx:%s", m_xtable_info->get_table_addr().c_str(), tx->dump().c_str());
+    }
+
     return ready_txs;
 }
 

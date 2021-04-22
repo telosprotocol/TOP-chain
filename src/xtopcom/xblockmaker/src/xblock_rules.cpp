@@ -125,6 +125,9 @@ bool xblock_rules::unit_rules_filter(const xblock_ptr_t & rules_end_block,
     std::vector<xcons_transaction_ptr_t> valid_txs1;
     if (origin_txs[0]->is_self_tx() || origin_txs[0]->is_send_tx()) {
         check_rule_sendtx_duplication(rules_end_state, origin_txs, valid_txs1, pop_txs);
+        valid_txs = valid_txs1;
+    } else {
+        valid_txs = origin_txs;
     }
     //  else {
     //     check_rule_receipts_duplication(rules_end_block, origin_txs, valid_txs1, pop_txs);
@@ -136,7 +139,6 @@ bool xblock_rules::unit_rules_filter(const xblock_ptr_t & rules_end_block,
     // // TODO(jimmy)  check_rule_tx_timestamp less than unit timestamp
 
     // valid_txs = valid_txs2;
-    valid_txs = valid_txs1;
     return true;
 }
 
