@@ -199,3 +199,41 @@ TEST_F(test_receiptid, receiptid_pairs_3) {
     }
 }
 
+TEST_F(test_receiptid, receiptid_check_1) {
+    xreceiptid_state_ptr_t receiptid_state = make_object_ptr<xreceiptid_state_t>();
+
+    xtable_shortid_t sid{1};
+    xreceiptid_pair_t pair{5, 1, 2};
+    receiptid_state->add_pair(sid, pair);
+
+    {
+        xreceiptid_check_t receiptid_check;
+        receiptid_check.set_sendid(sid, 8);
+        receiptid_check.set_sendid(sid, 7);
+        xassert(false == receiptid_check.check_contious(receiptid_state));
+    }
+    {
+        xreceiptid_check_t receiptid_check;
+        receiptid_check.set_sendid(sid, 6);
+        receiptid_check.set_recvid(sid, 4);
+        xassert(false == receiptid_check.check_contious(receiptid_state));
+    }
+    {
+        xreceiptid_check_t receiptid_check;
+        receiptid_check.set_sendid(sid, 6);
+        receiptid_check.set_recvid(sid, 3);
+        receiptid_check.set_confirmid(sid, 3);
+        xassert(false == receiptid_check.check_contious(receiptid_state));
+    }
+    {
+        xreceiptid_check_t receiptid_check;
+        receiptid_check.set_sendid(sid, 8);
+        receiptid_check.set_sendid(sid, 7);
+        receiptid_check.set_sendid(sid, 6);
+        receiptid_check.set_recvid(sid, 4);
+        receiptid_check.set_recvid(sid, 3);
+        receiptid_check.set_confirmid(sid, 3);
+        receiptid_check.set_confirmid(sid, 2);
+        xassert(true == receiptid_check.check_contious(receiptid_state));
+    }
+}
