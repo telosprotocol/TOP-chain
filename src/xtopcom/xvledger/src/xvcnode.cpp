@@ -40,7 +40,7 @@ namespace top
         {            
         }
         
-        xvnodegroup_t::xvnodegroup_t(const xvip2_t & group_address,const uint64_t effect_clock_height,std::vector<xvnode_t*> & nodes)
+        xvnodegroup_t::xvnodegroup_t(const xvip2_t & group_address,const uint64_t effect_clock_height,std::vector<xvnode_t*> const & nodes)
         {
             m_group_address.high_addr = group_address.high_addr;
             m_group_address.low_addr  = group_address.low_addr;
@@ -73,7 +73,7 @@ namespace top
             }
         }
         
-        xvnodegroup_t::xvnodegroup_t(const xvip2_t & group_address,const uint64_t effect_clock_height,std::deque<xvnode_t*> & nodes)
+        xvnodegroup_t::xvnodegroup_t(const xvip2_t & group_address,const uint64_t effect_clock_height,std::deque<xvnode_t*> const & nodes)
         {
             m_group_address.high_addr = group_address.high_addr;
             m_group_address.low_addr  = group_address.low_addr;
@@ -193,7 +193,7 @@ namespace top
             m_lock.unlock();
         }
  
-        xauto_ptr<xvnode_t>        xvnodehouse_t::get_node(const xvip2_t & target_node)
+        xauto_ptr<xvnode_t>        xvnodehouse_t::get_node(const xvip2_t & target_node) const
         {
             //GroupKey = [elect-height:21bit][xnetwork-id: 7-7-7 bit][zone-id:7bit|cluster-id:7bit|group-id:8bit]
             const uint64_t group_key = ((target_node.low_addr << 11) >> 21) | ((target_node.high_addr & 0x1FFFFF) << 43);
@@ -233,7 +233,7 @@ namespace top
                 -[XIP: 64bit]
         }
         */
-        xauto_ptr<xvnodegroup_t>   xvnodehouse_t::get_group(const xvip2_t & target_group)
+        xauto_ptr<xvnodegroup_t>   xvnodehouse_t::get_group(const xvip2_t & target_group) const
         {
             //GroupKey = [elect-height:21bit][xnetwork-id: 7-7-7 bit][zone-id:7bit|cluster-id:7bit|group-id:8bit]
             const uint64_t group_key = ((target_group.low_addr << 11) >> 21) | ((target_group.high_addr & 0x1FFFFF) << 43);
