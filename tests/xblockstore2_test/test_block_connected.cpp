@@ -18,7 +18,6 @@
 // #include "test_blockmock.hpp"
 #include "xstore/xstore.h"
 #include "xblockstore/xblockstore_face.h"
-#include "test_blockstore_util.hpp"
 #include "tests/mock/xvchain_creator.hpp"
 #include "tests/mock/xdatamock_table.hpp"
 
@@ -226,8 +225,6 @@ TEST_F(test_block_connected, store_block_in_unorder_2) {
     ASSERT_EQ(blockstore->get_latest_committed_block(address)->get_height(), 7);
     ASSERT_EQ(blockstore->get_latest_locked_block(address)->get_height(), 8);
     ASSERT_EQ(blockstore->get_latest_cert_block(address)->get_height(), 9);
-
-    ASSERT_TRUE(blockstore->store_block(account, tables[6].get()));
 }
 
 TEST_F(test_block_connected, store_block_in_order_1) {
@@ -265,8 +262,8 @@ TEST_F(test_block_connected, store_block_in_order_1) {
     ASSERT_FALSE(blockstore->store_block(account, tables[3].get()));
 }
 
-#if 1  // this test need 6*80s, cache in blockstore will be released after 60s
-TEST_F(test_block_connected, store_block_in_order_sleep) {
+#if 0  // this test need 6*80s, cache in blockstore will be released after 60s
+TEST_F(test_block_connected, store_block_in_order_sleep_BENCH) {
     mock::xvchain_creator creator;
     creator.create_blockstore_with_xstore();
     base::xvblockstore_t* blockstore = creator.get_blockstore();
