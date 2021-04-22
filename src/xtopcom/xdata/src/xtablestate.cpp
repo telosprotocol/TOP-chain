@@ -15,6 +15,43 @@ xtablestate_t::xtablestate_t()
     m_receiptid_state = make_object_ptr<base::xreceiptid_state_t>();
 }
 
+xtablestate_t::xtablestate_t(const std::string & full_data, uint64_t full_height, const std::string & binlog_data, uint64_t binlog_height)
+:base::xdataunit_t(base::xdataunit_t::enum_xdata_type_undefine) {
+    xassert(binlog_height >= full_height);
+    m_accountindex_state = make_object_ptr<base::xtable_mbt_new_state_t>();
+    m_receiptid_state = make_object_ptr<base::xreceiptid_state_t>();
+    if (full_height > 0) {
+        xassert(!full_data.empty());
+        bool ret = serialize_from_full_offdata(full_data);
+        xassert(ret);
+    }
+    if (!binlog_data.empty()) {
+        bool ret = serialize_from_binlog(binlog_data);
+        xassert(ret);
+    }
+    set_full_height(full_height);
+    set_binlog_height(binlog_height);
+}
+
+xtablestate_t::xtablestate_t(const xobject_ptr_t<base::xvboffdata_t> & full_data, uint64_t full_height, const std::string & binlog_data, uint64_t binlog_height)
+:base::xdataunit_t(base::xdataunit_t::enum_xdata_type_undefine) {
+    xassert(binlog_height >= full_height);
+    m_accountindex_state = make_object_ptr<base::xtable_mbt_new_state_t>();
+    m_receiptid_state = make_object_ptr<base::xreceiptid_state_t>();
+    if (full_height > 0) {
+        xassert(full_data != nullptr);
+        bool ret = set_block_full_data(full_data);
+        xassert(ret);
+    }
+    if (!binlog_data.empty()) {
+        bool ret = serialize_from_binlog(binlog_data);
+        xassert(ret);
+    }
+    set_full_height(full_height);
+    set_binlog_height(binlog_height);
+}
+
+
 int32_t xtablestate_t::do_write(base::xstream_t & stream) {
     const int32_t begin_size = stream.size();
     xassert(m_receiptid_state != nullptr);

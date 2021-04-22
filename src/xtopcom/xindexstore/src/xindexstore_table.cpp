@@ -73,10 +73,9 @@ xtablestate_ptr_t xindexstore_table_t::load_base_tablestate_from_db(const xtable
         return old_tablestate;
     }
 
-    xtablestate_ptr_t new_tablestate = make_object_ptr<xtablestate_t>();
+    xobject_ptr_t<base::xvboffdata_t> full_offdata = nullptr;
     uint64_t last_full_height = account_state->get_last_full_unit_height();
     if (last_full_height != 0) {
-        xobject_ptr_t<base::xvboffdata_t> full_offdata;
         if (last_full_height == old_tablestate->get_full_height()) {
             full_offdata = old_tablestate->get_block_full_data();
         } else {
@@ -94,17 +93,11 @@ xtablestate_ptr_t xindexstore_table_t::load_base_tablestate_from_db(const xtable
             last_full_block->get_offdata()->add_ref();
             full_offdata.attach(last_full_block->get_offdata());
         }
-        new_tablestate->set_block_full_data(full_offdata);
-        new_tablestate->set_full_height(last_full_height);
     }
 
     std::string binlog_str = account_state->get_extend_data(xblockchain2_t::enum_blockchain_ext_type_binlog);
-    if (!binlog_str.empty()) {
-        new_tablestate->serialize_from_binlog(binlog_str);
-    } else {
-        xassert(account_state->get_last_height() == last_full_height);
-    }
-    new_tablestate->set_binlog_height(account_state->get_last_height());
+
+    xtablestate_ptr_t new_tablestate = make_object_ptr<xtablestate_t>(full_offdata, last_full_height, binlog_str, account_state->get_last_height());
     return new_tablestate;
 }
 
