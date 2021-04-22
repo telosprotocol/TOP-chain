@@ -121,6 +121,8 @@ class xreceiptid_check_t {
     bool        check_contious(const xreceiptid_state_ptr_t & receiptid_state) const;
     void        update_state(const xreceiptid_state_ptr_t & receiptid_state) const;
 
+    std::string     dump() const;
+
  private:
     bool    check_receiptids_contious(const std::set<uint64_t> & ids, uint64_t begin_id) const;
 

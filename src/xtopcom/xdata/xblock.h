@@ -31,6 +31,7 @@
 #include "xvledger/xvblockstore.h"
 #include "xvledger/xvboffdata.h"
 #include "xvledger/xaccountindex.h"
+#include "xvledger/xreceiptid.h"
 
 #if defined(__clang__)
 #    pragma clang diagnostic pop
@@ -80,6 +81,7 @@ class xblock_t : public base::xvblock_t {
     static bool check_merkle_path(const std::string &leaf, const xmerkle_path_256_t &hash_path, const std::string & root);
     static std::string get_block_base_path(base::xvblock_t* block) {return block->get_account() + ':' + std::to_string(block->get_height());}
     static xobject_ptr_t<xblock_t> raw_vblock_to_object_ptr(base::xvblock_t* block);
+    static void  batch_units_to_receiptids(const std::vector<xobject_ptr_t<xblock_t>> & units, base::xreceiptid_check_t & receiptid_check);
 public:
     xblock_t(enum_xdata_type type);
     xblock_t(base::xvheader_t & header, xblockcert_t & cert, enum_xdata_type type);

@@ -150,24 +150,25 @@ bool xtablestate_t::execute_lighttable(base::xvblock_t* block) {
 
     base::xreceiptid_check_t receiptid_check;
     auto & units = lighttable->get_tableblock_units(true);
-    for (auto & unit : units) {
-        const std::vector<xlightunit_tx_info_ptr_t> & txs_info = unit->get_txs();
-        for (auto & tx : txs_info) {
-            if (tx->is_send_tx()) {
-                uint64_t sendid = tx->get_receipt_id();
-                base::xtable_shortid_t tableid = tx->get_receipt_id_tableid();
-                receiptid_check.set_sendid(tableid, sendid);
-            } else if (tx->is_recv_tx()) {
-                uint64_t recvid = tx->get_receipt_id();
-                base::xtable_shortid_t tableid = tx->get_receipt_id_tableid();
-                receiptid_check.set_recvid(tableid, recvid);
-            } else if (tx->is_confirm_tx()) {
-                uint64_t confirmid = tx->get_receipt_id();
-                base::xtable_shortid_t tableid = tx->get_receipt_id_tableid();
-                receiptid_check.set_confirmid(tableid, confirmid);
-            }
-        }
-    }
+    xblock_t::batch_units_to_receiptids(units, receiptid_check);
+    // for (auto & unit : units) {
+    //     const std::vector<xlightunit_tx_info_ptr_t> & txs_info = unit->get_txs();
+    //     for (auto & tx : txs_info) {
+    //         if (tx->is_send_tx()) {
+    //             uint64_t sendid = tx->get_receipt_id();
+    //             base::xtable_shortid_t tableid = tx->get_receipt_id_tableid();
+    //             receiptid_check.set_sendid(tableid, sendid);
+    //         } else if (tx->is_recv_tx()) {
+    //             uint64_t recvid = tx->get_receipt_id();
+    //             base::xtable_shortid_t tableid = tx->get_receipt_id_tableid();
+    //             receiptid_check.set_recvid(tableid, recvid);
+    //         } else if (tx->is_confirm_tx()) {
+    //             uint64_t confirmid = tx->get_receipt_id();
+    //             base::xtable_shortid_t tableid = tx->get_receipt_id_tableid();
+    //             receiptid_check.set_confirmid(tableid, confirmid);
+    //         }
+    //     }
+    // }
     if (false == receiptid_check.check_contious(m_receiptid_state)) {
         xerror("xtablestate_t::execute_lighttable fail check receiptid contious");
     }
