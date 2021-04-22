@@ -175,6 +175,12 @@ namespace top
             LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
             return load_block_from_index(account_obj.get(),account_obj->load_latest_full_index(),0,false);
         }
+
+        base::xauto_ptr<base::xvblock_t>  xvblockstore_impl::get_latest_committed_full_block(const base::xvaccount_t & account)
+        {
+            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
+            return load_block_from_index(account_obj.get(),account_obj->load_latest_committed_full_index(),0,false);
+        }
  
         //one api to get latest_commit/latest_lock/latest_cert for better performance
         base::xblock_mptrs  xvblockstore_impl::get_latest_blocks(const base::xvaccount_t & account)
