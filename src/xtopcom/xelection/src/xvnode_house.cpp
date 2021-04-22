@@ -21,27 +21,12 @@ using namespace base;
 using namespace data;
 
 xvnode_house_t::xvnode_house_t(common::xnode_id_t const & node_id, std::string const & sign_key,
-        xobject_ptr_t<base::xvblockstore_t> &blockstore, observer_ptr<mbus::xmessage_bus_face_t> const & bus):
+        xobject_ptr_t<base::xvblockstore_t> const & blockstore, observer_ptr<mbus::xmessage_bus_face_t> const & bus):
 xvnodesrv_t(),
 m_node_id(node_id),
 m_sign_key(sign_key),
 m_blockstore(blockstore),
 m_bus(bus) {
-}
-
-xvnode_house_t::~xvnode_house_t() {
-#if 0
-    m_lock.lock();
-    for(auto it = m_vgroups.begin(); it != m_vgroups.end(); ++it)
-    {
-        if(it->second != nullptr)
-            it->second->release_ref();
-    }
-
-    m_vgroups.clear();
-
-    m_lock.unlock();
-#endif
 }
 
 base::xauto_ptr<base::xvnode_t> xvnode_house_t::get_node(const xvip2_t & target_node) const {

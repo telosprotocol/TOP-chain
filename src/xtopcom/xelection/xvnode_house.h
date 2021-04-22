@@ -50,13 +50,15 @@ public:
      * @param blockstore block store
      * @param bus message bus
      */
-    xvnode_house_t(common::xnode_id_t const & node_id, std::string const & sign_key,
-        xobject_ptr_t<base::xvblockstore_t> &blockstore, observer_ptr<mbus::xmessage_bus_face_t> const & bus);
+    xvnode_house_t(common::xnode_id_t const & node_id,
+                   std::string const & sign_key,
+                   xobject_ptr_t<base::xvblockstore_t> const & blockstore,
+                   observer_ptr<mbus::xmessage_bus_face_t> const & bus);
     /**
      * @brief Destroy the xvnode house t object
      *
      */
-    virtual ~xvnode_house_t();
+    ~xvnode_house_t() override = default;
 
     /**
      * @brief Get the node object

@@ -9,6 +9,7 @@
 #include "xbase/xobject_ptr.h"
 #include "xcommon/xaddress.h"
 #include "xelection/xvnode_house.h"
+#include "xmbus/xmessage_bus.h"
 
 #include <unordered_map>
 
@@ -39,8 +40,13 @@ public:
     xtop_mocked_node_service & operator=(xtop_mocked_node_service &&) = default;
     ~xtop_mocked_node_service() override = default;
 
-    bool add_group(const base::xvnodegroup_t * group_ptr) override;
-    bool remove_group(const xvip2_t & target_group) override;
+    xtop_mocked_node_service(common::xaccount_address_t const & account_address,
+                             std::string const & sign_key,
+                             xobject_ptr_t<base::xvblockstore_t> const & blockstore,
+                             observer_ptr<top::mbus::xmessage_bus_face_t> const & bus);
+
+    xtop_mocked_node_service(common::xaccount_address_t const & account_address,
+                             std::string const & sign_key);
 
     xobject_ptr_t<xmocked_vnode_group_t> add_group(common::xnetwork_id_t const & nid,
                                                    common::xzone_id_t const & zid,
