@@ -1,8 +1,13 @@
+// Copyright (c) 2017-2018 Telos Foundation & contributors
+// Distributed under the MIT software license, see the accompanying
+// file COPYING or http://www.opensource.org/licenses/mit-license.php.
+
 #pragma once
 
+#include "xbase/xcontext.h"
 #include "xbase/xns_macro.h"
-#include "xvledger/xvblockstore.h"
 #include "xvledger/xvblock.h"
+#include "xvledger/xvblockstore.h"
 
 #include <string>
 
@@ -13,38 +18,46 @@ public:
     xtop_dummy_blockstore(xtop_dummy_blockstore const &) = delete;
     xtop_dummy_blockstore & operator=(xtop_dummy_blockstore const &) = delete;
 
-    xtop_dummy_blockstore() : base::xvblockstore_t{ base::xcontext_t::instance(), 0 } {
+    xtop_dummy_blockstore() : base::xvblockstore_t(base::xcontext_t::instance(), 0) {
     }
+
 protected:
     ~xtop_dummy_blockstore() override = default;
 
-public: //return raw ptr with added reference,caller respond to release it after that.
-    //please refer enum_xvblock_flag definition for terms of lock,commit,execute,connect
-    base::xauto_ptr<base::xvblock_t>  get_genesis_block(base::xvaccount_t const & account) override {//genesis block
+public:
+    std::string get_store_path() const {
+        return {};
+    }
+
+    base::xauto_ptr<base::xvblock_t> get_genesis_block(base::xvaccount_t const & account) override {
         return nullptr;
     }
 
-    base::xauto_ptr<base::xvblock_t>  get_latest_cert_block(base::xvaccount_t const &) override {//highest view# for any status
+    base::xauto_ptr<base::xvblock_t> get_latest_cert_block(base::xvaccount_t const &) override {
         return nullptr;
     }
 
-    base::xauto_ptr<base::xvblock_t>  get_latest_locked_block(base::xvaccount_t const &) override {//block with locked status
+    base::xauto_ptr<base::xvblock_t> get_latest_locked_block(base::xvaccount_t const &) override {
         return nullptr;
     }
 
-    base::xauto_ptr<base::xvblock_t>  get_latest_committed_block(base::xvaccount_t const &) override {//block with committed status
+    base::xauto_ptr<base::xvblock_t> get_latest_committed_block(base::xvaccount_t const &) override {
         return nullptr;
     }
 
-    base::xauto_ptr<base::xvblock_t>  get_latest_executed_block(base::xvaccount_t const &)  override {//block with executed status
+    base::xauto_ptr<base::xvblock_t> get_latest_executed_block(base::xvaccount_t const &)  override {
         return nullptr;
     }
 
-    base::xauto_ptr<base::xvblock_t>  get_latest_connected_block(base::xvaccount_t const &) override {//block connected to genesis
+    base::xauto_ptr<base::xvblock_t> get_latest_connected_block(base::xvaccount_t const &) override {
         return nullptr;
     }
 
-    base::xauto_ptr<base::xvblock_t>  get_latest_full_block(base::xvaccount_t const &) override {//block has full state,genesis is a full block
+    base::xauto_ptr<base::xvblock_t> get_latest_genesis_connected_block(const base::xvaccount_t & account) override {
+        return nullptr;
+    }
+
+    base::xauto_ptr<base::xvblock_t> get_latest_full_block(base::xvaccount_t const &) override {
         return nullptr;
     }
 
@@ -64,7 +77,7 @@ public: //return raw ptr with added reference,caller respond to release it after
         return nullptr;
     }
 
-    base::xauto_ptr<base::xvblock_t>  query_block(const base::xvaccount_t &, const uint64_t, base::enum_xvblock_flag) override {
+    base::xauto_ptr<base::xvblock_t> query_block(const base::xvaccount_t &, const uint64_t, base::enum_xvblock_flag) override {
         return nullptr;
     }
 
@@ -80,7 +93,7 @@ public: //return raw ptr with added reference,caller respond to release it after
         return nullptr;
     }
 
-    base::xauto_ptr<base::xvblock_t>  load_block_object(const base::xvaccount_t &, const uint64_t, base::enum_xvblock_flag, bool) override {
+    base::xauto_ptr<base::xvblock_t> load_block_object(const base::xvaccount_t &, const uint64_t, base::enum_xvblock_flag, bool) override {
         return nullptr;
     }
 
@@ -108,7 +121,7 @@ public: //return raw ptr with added reference,caller respond to release it after
         return false;
     }
 
-    base::xvbindex_vector load_block_index(const base::xvaccount_t & account, const uint64_t height) override {
+    base::xvbindex_vector load_block_index(const base::xvaccount_t &, const uint64_t) override {
         return {};
     }
 
