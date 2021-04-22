@@ -228,7 +228,7 @@ xblock_ptr_t xproposal_maker_t::verify_proposal_prev_block(base::xvblock_t * pro
         return proposal_prev_block;
     }
 
-    base::xblock_vector latest_certs = get_blockstore()->query_block(*m_table_maker, proposal_block->get_height() - 1);
+    base::xblock_vector latest_certs = get_blockstore()->load_block_object(*m_table_maker, proposal_block->get_height() - 1);
     if (false == latest_certs.get_vector().empty()) {
         for (auto & latest_cert : latest_certs.get_vector()) {
             if (latest_cert->get_block_hash() == proposal_block->get_last_block_hash()) {  // found conected prev one
