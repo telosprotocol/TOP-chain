@@ -82,6 +82,65 @@ static uint32_t cal_vote_num(xobject_ptr_t<data::xblock_t> const & block, bool i
     return vote_num;
 }
 
+static void set_vote_info(xvip2_t const& vote_xip, xobject_ptr_t<data::xblock_t> const & block, xstatistics_data_t& data, bool is_auditor) {
+    // height
+    uint64_t block_height = get_network_height_from_xip2(vote_xip);
+    auto it_height = data.detail.find(block_height);
+    if (it_height == data.detail.end()) {
+        xelection_related_statistics_data_t election_related_data;
+        std::pair<std::map<uint64_t, xelection_related_statistics_data_t>::iterator, bool> ret = data.detail.insert(std::make_pair(block_height, election_related_data));
+        it_height = ret.first;
+    }
+
+    // gid
+    auto group_addr = common::xgroup_address_t{ common::xip_t{vote_xip.low_addr} };
+    // common::xgroup_id_t group_id = common::xgroup_id_t{group_idx};
+    auto it_group = it_height->second.group_statistics_data.find(group_addr);
+    if (it_group == it_height->second.group_statistics_data.end()) {
+        xgroup_related_statistics_data_t group_related_data;
+        auto ret = it_height->second.group_statistics_data.insert(std::make_pair(group_addr, group_related_data));
+        it_group = ret.first;
+    }
+
+
+    std::string aggregated_signatures_bin;
+    if (is_auditor) {
+      aggregated_signatures_bin = block->get_cert()->get_audit_signature();
+    } else {
+      aggregated_signatures_bin = block->get_cert()->get_verify_signature();
+    }
+    xassert(!aggregated_signatures_bin.empty());
+
+    xmutisigdata_t aggregated_sig_obj;
+    xassert(aggregated_sig_obj.serialize_from_string(aggregated_signatures_bin) > 0);
+
+
+    xnodebitset & nodebits = aggregated_sig_obj.get_nodebitset();
+    if(it_group->second.account_statistics_data.size() < (uint32_t)nodebits.get_alloc_bits()){
+        it_group->second.account_statistics_data.resize(nodebits.get_alloc_bits());
+    }
+    for (int i = 0; i < nodebits.get_alloc_bits(); ++i) {
+        it_group->second.account_statistics_data[i].vote_data.block_count++;
+        if (nodebits.is_set(i)) {
+            it_group->second.account_statistics_data[i].vote_data.vote_count++;
+        }
+    }
+}
+
+static void process_vote_info(xobject_ptr_t<data::xblock_t> const & block, xstatistics_data_t& data) {
+    auto auditor_xip = block->get_cert()->get_auditor();
+    auto validator_xip = block->get_cert()->get_validator();
+
+    if (!is_xip2_empty(auditor_xip)) {//block has auditor info
+        set_vote_info(auditor_xip, block, data, true);
+    }
+
+    if (!is_xip2_empty(validator_xip)) {
+        set_vote_info(validator_xip, block, data, false);
+    }
+
+}
+
 xstatistics_data_t tableblock_statistics(std::vector<xobject_ptr_t<data::xblock_t>> const & blks) {
     xstatistics_data_t data;
     xdbg("[tableblock_statistics] blks size: %u", blks.size());
@@ -100,8 +159,11 @@ xstatistics_data_t tableblock_statistics(std::vector<xobject_ptr_t<data::xblock_
             is_auditor = true;
             xassert(!blks[i]->get_cert()->get_audit_signature().empty());
         }
+
         uint32_t vote_num = cal_vote_num(blks[i], is_auditor);
-        tableblock_statistics_handle(leader_xip, txs_count, vote_num, data);
+        tableblock_statistics_handle(leader_xip, txs_count, 0, data);
+        process_vote_info(blks[i], data);
+
     }
 
     return data;

@@ -35,12 +35,14 @@ int32_t operator<<(base::xstream_t & stream, xblock_data_t const & data_object) 
 /// xconsensus_vote_data_t
 int32_t xtop_consensus_vote_data::do_read(base::xstream_t & stream) {
     auto const size = stream.size();
+    stream >> block_count;
     stream >> vote_count;
     return size - stream.size();
 }
 
 int32_t xtop_consensus_vote_data::do_write(base::xstream_t & stream) const {
     auto const size = stream.size();
+    stream << block_count;
     stream << vote_count;
     return stream.size() - size;
 }
