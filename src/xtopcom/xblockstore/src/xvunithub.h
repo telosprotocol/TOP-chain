@@ -55,6 +55,7 @@ namespace top
             virtual base::xauto_ptr<base::xvblock_t>  get_latest_connected_block(const base::xvaccount_t & account)override;
             virtual base::xauto_ptr<base::xvblock_t>  get_latest_genesis_connected_block(const base::xvaccount_t & account) override; //block has connected to genesis
             virtual base::xauto_ptr<base::xvblock_t>  get_latest_full_block(const base::xvaccount_t & account) override;
+            virtual base::xauto_ptr<base::xvblock_t>  get_latest_committed_full_block(const base::xvaccount_t & account) override;
  
             //ask_full_load decide load header only or include input/output(that can be loaded seperately by load_block_input/output)
             virtual base::xblock_vector               load_block_object(const base::xvaccount_t & account,const uint64_t height) override;

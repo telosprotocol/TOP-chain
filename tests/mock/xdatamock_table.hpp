@@ -53,7 +53,7 @@ class xdatamock_table {
     const xblockchain_ptr_t &           get_blockchain() const {return m_table_blockchain;}
     const std::vector<xblock_ptr_t> &   get_history_tables() const {return m_history_tables;}
     const std::vector<xdatamock_unit> & get_mock_units() const {return m_mock_units;}
-    uint32_t                            get_full_table_interval_count() const {return enum_default_full_table_interval_count;}
+    static uint32_t                     get_full_table_interval_count() {return enum_default_full_table_interval_count;}
 
     void    genrate_table_chain(uint64_t max_block_height) {
         for (uint64_t i = 0; i < max_block_height; i++) {
