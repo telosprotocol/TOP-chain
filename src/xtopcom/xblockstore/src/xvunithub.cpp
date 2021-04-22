@@ -175,6 +175,12 @@ namespace top
             LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
             return load_block_from_index(account_obj.get(),account_obj->load_latest_full_index(),0,false);
         }
+
+        base::xauto_ptr<base::xvblock_t>  xvblockstore_impl::get_latest_committed_full_block(const base::xvaccount_t & account)
+        {
+            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
+            return load_block_from_index(account_obj.get(),account_obj->load_latest_committed_full_index(),0,false);
+        }
  
         //one api to get latest_commit/latest_lock/latest_cert for better performance
         base::xblock_mptrs  xvblockstore_impl::get_latest_blocks(const base::xvaccount_t & account)
@@ -401,6 +407,8 @@ namespace top
                 if(txindex->is_self_tx())
                 {
                     xdbg("jimmy xvblockstore_impl::query_tx self tx");  //self tx no need query more
+                    txstore->set_recv_unit_info(txindex);
+                    txstore->set_confirm_unit_info(txindex);
                     return txstore;
                 }
             }
@@ -411,7 +419,7 @@ namespace top
                 if(txobj_bin.empty())
                 {
                     xwarn("xvblockstore_impl::query_tx recv tx not find.tx=%s", base::xstring_utl::to_hex(txhash).c_str());
-                    return nullptr;
+                    return (type == base::enum_transaction_subtype_all) ? txstore : nullptr;
                 }
                 base::xvtransaction_index_ptr_t txindex = make_object_ptr<base::xvtransaction_index_t>();
                 txindex->serialize_from_string(txobj_bin);
@@ -424,7 +432,7 @@ namespace top
                 if(txobj_bin.empty())
                 {
                     xwarn("xvblockstore_impl::query_tx confirm tx not find.tx=%s", base::xstring_utl::to_hex(txhash).c_str());
-                    return nullptr;
+                    return (type == base::enum_transaction_subtype_all) ? txstore : nullptr;
                 }
                 base::xvtransaction_index_ptr_t txindex = make_object_ptr<base::xvtransaction_index_t>();
                 txindex->serialize_from_string(txobj_bin);
@@ -454,23 +462,27 @@ namespace top
         base::xblock_vector xvblockstore_impl::query_block(const base::xvaccount_t & account,const uint64_t height)//might mutiple certs at same height
         {
             LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
-            std::vector<base::xvbindex_t*> index_list(account_obj->query_index(height));//return raw ptr with added reference
-            if(index_list.empty() == false)
+            if(account_obj->load_index(height) > 0) //check and load from db even for query_block
             {
-                std::vector<base::xvblock_t*> block_list;
-                for(auto & index : index_list)
+                std::vector<base::xvbindex_t*> index_list(account_obj->query_index(height));//return raw ptr with added reference
+                if(index_list.empty() == false)
                 {
-                    if(index != NULL)
+                    std::vector<base::xvblock_t*> block_list;
+                    for(auto & index : index_list)
                     {
-                        //query_index return raw ptr with added reference,so here move into auto_ptr to relase it
-                        base::xauto_ptr<base::xvbindex_t> auto_index_ptr(index);
-                        base::xvblock_t * block = load_block_from_index(account_obj.get(),base::xauto_ptr<base::xvbindex_t>(std::move(auto_index_ptr)),index->get_height(),false);
-                        if(block != NULL)
-                            block_list.push_back(block); //ptr will be released by xblock_vector later
+                        if(index != NULL)
+                        {
+                            //query_index return raw ptr with added reference,so here move into auto_ptr to relase it
+                            base::xauto_ptr<base::xvbindex_t> auto_index_ptr(index);
+                            base::xvblock_t * block = load_block_from_index(account_obj.get(),base::xauto_ptr<base::xvbindex_t>(std::move(auto_index_ptr)),index->get_height(),false);
+                            if(block != NULL)
+                                block_list.push_back(block); //ptr will be released by xblock_vector later
+                        }
                     }
+                    return block_list;
                 }
-                return block_list;
             }
+
             xwarn("xvblockstore_impl query_block(height) fail to load block(%llu) for account(%s) at store(%s)",height,account.get_address().c_str(),m_store_path.c_str());
             return nullptr;
         }

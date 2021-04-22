@@ -10,6 +10,7 @@
 #include "xbase/xobject_ptr.h"
 #include "xbasic/xversion.h"
 #include "xvledger/xdataobj_base.hpp"
+#include "xvledger/xvaccount.h"
 #include "xdata/xtransaction.h"
 #include "xdata/xpropertylog.h"
 #include "xdata/xblock_paras.h"
@@ -27,6 +28,8 @@ class xtransaction_exec_state_t : public xblockpara_base_t {
     static XINLINE_CONSTEXPR char const * XPROPERTY_FEE_TX_BEACON_SERVICE_FEE          = "5";
     static XINLINE_CONSTEXPR char const * XPROPERTY_FEE_TX_SELF_BURN_BALANCE           = "6";
     static XINLINE_CONSTEXPR char const * XTX_STATE_TX_EXEC_STATUS                     = "7";
+    static XINLINE_CONSTEXPR char const * XTX_RECEIPT_ID                               = "8";
+    static XINLINE_CONSTEXPR char const * XTX_RECEIPT_ID_TABLE_ID                      = "9";
 
  public:
     void        set_used_disk(uint32_t value) {set_value(XPROPERTY_FEE_TX_USED_DISK, value);}
@@ -37,6 +40,7 @@ class xtransaction_exec_state_t : public xblockpara_base_t {
     void        set_send_tx_lock_tgas(uint32_t value) {set_value(XPROPERTY_FEE_SEND_TX_LOCK_TGAS, value);}
     void        set_recv_tx_use_send_tx_tgas(uint32_t value) {set_value(XPROPERTY_FEE_RECV_TX_USE_SEND_TX_TGAS, value);}
     void        set_tx_exec_status(enum_xunit_tx_exec_status value);
+    void        set_receipt_id(base::xtable_shortid_t tableid, uint64_t value);
 
  public:
     uint32_t    get_used_disk()const {return get_value_uint32(XPROPERTY_FEE_TX_USED_DISK);}
@@ -47,6 +51,8 @@ class xtransaction_exec_state_t : public xblockpara_base_t {
     uint32_t    get_send_tx_lock_tgas()const {return get_value_uint32(XPROPERTY_FEE_SEND_TX_LOCK_TGAS);}
     uint32_t    get_recv_tx_use_send_tx_tgas()const {return get_value_uint32(XPROPERTY_FEE_RECV_TX_USE_SEND_TX_TGAS);}
     enum_xunit_tx_exec_status   get_tx_exec_status() const;
+    uint64_t    get_receipt_id()const {return get_value_uint64(XTX_RECEIPT_ID);}
+    base::xtable_shortid_t    get_receipt_id_tableid()const {return get_value_uint16(XTX_RECEIPT_ID_TABLE_ID);}
 };
 
 // input tx of lightunit has some propertys, such as tx_type, tx_exec_status, tx_clock.
@@ -179,6 +185,8 @@ class xlightunit_tx_info_t {
     uint32_t                    get_send_tx_lock_tgas()const {return get_exec_state().get_send_tx_lock_tgas();}
     uint32_t                    get_recv_tx_use_send_tx_tgas()const {return get_exec_state().get_recv_tx_use_send_tx_tgas();}
     enum_xunit_tx_exec_status   get_tx_exec_status() const {return get_exec_state().get_tx_exec_status();}
+    uint64_t                    get_receipt_id() const {return get_exec_state().get_receipt_id();}
+    base::xtable_shortid_t       get_receipt_id_tableid()const {return get_exec_state().get_receipt_id_tableid();}
     enum_xunit_tx_exec_status   get_last_action_exec_status() const {return m_inputtx_props.get_last_tx_exec_status();}
     uint64_t                    get_tx_clock() const {return m_inputtx_props.get_tx_clock();}
     uint64_t                    get_last_trans_nonce() const;

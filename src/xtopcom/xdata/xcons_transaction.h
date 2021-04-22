@@ -59,6 +59,8 @@ class xcons_transaction_t : public xbase_dataunit_t<xcons_transaction_t, xdata_t
     uint32_t                get_last_action_send_tx_lock_tgas() const;
     uint32_t                get_last_action_recv_tx_use_send_tx_tgas() const;
     enum_xunit_tx_exec_status   get_last_action_exec_status() const;
+    uint64_t                get_last_action_receipt_id() const;
+    base::xtable_shortid_t  get_last_action_receipt_id_tableid() const;
 
  public:
     const xtransaction_exec_state_t & get_tx_execute_state() const {return m_execute_state;}
@@ -75,6 +77,8 @@ class xcons_transaction_t : public xbase_dataunit_t<xcons_transaction_t, xdata_t
     uint32_t                get_current_recv_tx_use_send_tx_tgas() const {return m_execute_state.get_recv_tx_use_send_tx_tgas();}
     void                    set_current_exec_status(enum_xunit_tx_exec_status status) {m_execute_state.set_tx_exec_status(status);}
     void                    set_self_burn_balance(uint64_t value) {m_execute_state.set_self_burn_balance(value);}
+    uint32_t                get_current_receipt_id() const {return m_execute_state.get_receipt_id();}
+    void                    set_current_receipt_id(base::xtable_shortid_t tableid, uint64_t value) {m_execute_state.set_receipt_id(tableid, value);}
 
     void                    set_unit_height(uint64_t unit_height) {m_unit_height = unit_height;}
     uint64_t                get_unit_height() {return m_unit_height;}
@@ -89,7 +93,8 @@ class xcons_transaction_t : public xbase_dataunit_t<xcons_transaction_t, xdata_t
     bool                    get_commit_prove_cert_and_account(base::xvqcert_t* & cert, std::string & account);
 
  private:
-    void        update_transation();
+    void                    update_transation();
+    uint64_t                get_dump_receipt_id() const;
 
  private:
     xtransaction_t*     m_tx{nullptr};

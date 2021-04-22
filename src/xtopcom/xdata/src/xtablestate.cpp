@@ -132,9 +132,12 @@ bool xtablestate_t::execute_block(base::xvblock_t* block) {
         return execute_lighttable(block);
     } else if (block->get_block_class() == base::enum_xvblock_class_full) {
         return execute_fulltable(block);
-    } else {
+    } else if (block->get_block_class() == base::enum_xvblock_class_nil) {
+        m_binlog_height = block->get_height();
         return true;
     }
+    xassert(false);
+    return false;
 }
 
 bool xtablestate_t::execute_lighttable(base::xvblock_t* block) {
@@ -145,8 +148,10 @@ bool xtablestate_t::execute_lighttable(base::xvblock_t* block) {
     std::map<std::string, xaccount_index_t> changed_indexs = lighttable->get_units_index();
     accountindex_binlog->set_accounts_index(changed_indexs);
 
-    // const xreceiptid_pairs_ptr_t & receiptid_binlog = m_receiptid_state->get_binlog();
-    // TODO(jimmy) update receiptid binlog
+    const base::xreceiptid_pairs_ptr_t & receiptid_binlog = m_receiptid_state->get_binlog();
+    base::xreceiptid_pairs_ptr_t changed_receiptid = lighttable->get_receiptid_binlog();
+    receiptid_binlog->add_binlog(changed_receiptid);
+
     m_binlog_height = block->get_height();
     return true;
 }
@@ -163,7 +168,9 @@ bool xtablestate_t::execute_fulltable(base::xvblock_t* block) {
         xerror("xtablestate_t::execute_fulltable root not match.block=%s", block->dump().c_str());
         return false;
     }
+    block->reset_block_offdata(new_full_data.get());
     m_full_height = block->get_height();
+    m_binlog_height = block->get_height();
     return true;
 }
 
