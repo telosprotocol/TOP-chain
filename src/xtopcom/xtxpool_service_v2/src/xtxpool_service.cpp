@@ -275,7 +275,7 @@ void xtxpool_service::check_and_response_recv_receipt(const xcons_transaction_pt
 
             send_receipt(recv_tx_receipt, true);
         } else {
-            xerror("xtxpool_service::check_and_response_recv_receipt recv tx unit not exist txhash:%s block_height:%d",
+            xwarn("xtxpool_service::check_and_response_recv_receipt recv tx unit not exist txhash:%s block_height:%ld",
                    tx->get_digest_hex_str().c_str(),
                    tx_store->get_recv_unit_height());
         }
