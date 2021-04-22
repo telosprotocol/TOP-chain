@@ -99,7 +99,7 @@ ready_accounts_t xtxmgr_table_t::get_ready_accounts(uint32_t count) {
 
 ready_accounts_t xtxmgr_table_t::get_ready_accounts(const xtxs_pack_para_t & pack_para) {
     auto ready_txs = get_ready_txs(pack_para);
-    return ready_txs_to_ready_accounts(ready_txs);
+    return xordered_ready_txs_t::ready_txs_to_ready_accounts(ready_txs);
 }
 
 std::vector<xcons_transaction_ptr_t> xtxmgr_table_t::get_ready_txs(const xtxs_pack_para_t & pack_para) {
