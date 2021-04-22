@@ -73,6 +73,10 @@ TEST_F(test_receiptid, receiptid_state_2) {
 
     xreceiptid_pair_t pair3;
     xassert(receiptid_state->find_pair(sid, pair3));
+    xassert(pair3.get_sendid_max() == 5);
+    xassert(pair3.get_confirmid_max() == 2);
+    xassert(pair3.get_recvid_max() == 1);
+
     std::string root2 = receiptid_state->build_root_hash(enum_xhash_type_sha2_256);
     xassert(!root2.empty());
     xassert(root1 != root2);
@@ -235,5 +239,69 @@ TEST_F(test_receiptid, receiptid_check_1) {
         receiptid_check.set_confirmid(sid, 3);
         receiptid_check.set_confirmid(sid, 2);
         xassert(true == receiptid_check.check_contious(receiptid_state));
+    }
+}
+
+TEST_F(test_receiptid, receiptid_check_2) {
+    xreceiptid_state_ptr_t receiptid_state = make_object_ptr<xreceiptid_state_t>();
+
+    xtable_shortid_t sid{1};
+    xreceiptid_pair_t pair{5, 1, 2};
+    receiptid_state->add_pair(sid, pair);
+    std::cout << "binlog=" << receiptid_state->get_binlog()->dump() << std::endl;
+
+    {
+        xreceiptid_check_t receiptid_check;
+        receiptid_check.set_sendid(sid, 8);
+        receiptid_check.set_sendid(sid, 7);
+        receiptid_check.set_sendid(sid, 6);
+        receiptid_check.set_confirmid(sid, 3);
+        receiptid_check.set_confirmid(sid, 2);
+        receiptid_check.set_recvid(sid, 4);
+        receiptid_check.set_recvid(sid, 3);
+        xassert(true == receiptid_check.check_contious(receiptid_state));
+        receiptid_check.update_state(receiptid_state);
+        xreceiptid_pair_t pair2;
+        xassert(receiptid_state->find_pair(sid, pair2));
+        xassert(pair2.get_sendid_max() == 8);
+        xassert(pair2.get_confirmid_max() == 3);
+        xassert(pair2.get_recvid_max() == 4);
+        std::cout << "binlog=" << receiptid_state->get_binlog()->dump() << std::endl;
+    }
+    {
+        xreceiptid_check_t receiptid_check;
+        receiptid_check.set_sendid(sid, 10);
+        receiptid_check.set_sendid(sid, 9);
+        receiptid_check.set_confirmid(sid, 5);
+        receiptid_check.set_confirmid(sid, 4);
+        receiptid_check.set_recvid(sid, 6);
+        receiptid_check.set_recvid(sid, 5);
+        xassert(true == receiptid_check.check_contious(receiptid_state));
+        receiptid_check.update_state(receiptid_state);
+        xreceiptid_pair_t pair2;
+        xassert(receiptid_state->find_pair(sid, pair2));
+        xassert(pair2.get_sendid_max() == 10);
+        xassert(pair2.get_confirmid_max() == 5);
+        xassert(pair2.get_recvid_max() == 6);
+        std::cout << "binlog=" << receiptid_state->get_binlog()->dump() << std::endl;
+    }
+    {
+        receiptid_state->merge_new_full();
+        std::cout << "full_state=" << receiptid_state->get_last_full_state()->dump() << std::endl;
+        xreceiptid_check_t receiptid_check;
+        receiptid_check.set_sendid(sid, 12);
+        receiptid_check.set_sendid(sid, 11);
+        receiptid_check.set_confirmid(sid, 7);
+        receiptid_check.set_confirmid(sid, 6);
+        receiptid_check.set_recvid(sid, 8);
+        receiptid_check.set_recvid(sid, 7);
+        xassert(true == receiptid_check.check_contious(receiptid_state));
+        receiptid_check.update_state(receiptid_state);
+        xreceiptid_pair_t pair2;
+        xassert(receiptid_state->find_pair(sid, pair2));
+        xassert(pair2.get_sendid_max() == 12);
+        xassert(pair2.get_confirmid_max() == 7);
+        xassert(pair2.get_recvid_max() == 8);
+        std::cout << "binlog=" << receiptid_state->get_binlog()->dump() << std::endl;
     }
 }
