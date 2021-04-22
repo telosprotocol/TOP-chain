@@ -37,7 +37,11 @@ bool xblock_rules::check_rule_sendtx_duplication(const xaccount_ptr_t & rules_en
     uint256_t latest_hash = rules_end_state->get_account_mstate().get_latest_send_trans_hash();
 
     for (auto & tx : txs) {
-        xassert(tx->is_self_tx() || tx->is_send_tx());
+        if (tx->is_recv_tx() || tx->is_confirm_tx()) {
+            valid_txs.push_back(tx);
+            continue;
+        }
+
         xtransaction_t* tx_ptr = tx->get_transaction();
         if (tx_ptr->get_last_nonce() < latest_nonce) {
             pop_txs.push_back(tx);
@@ -117,26 +121,9 @@ bool xblock_rules::unit_rules_filter(const xblock_ptr_t & rules_end_block,
     xassert(valid_txs.empty());
     xassert(pop_txs.empty());
 
-    // one type rule is controlled by txpool
-    // if (false == check_rule_txs_one_type(origin_txs)) {
-    //     return false;
-    // }
+    check_rule_sendtx_duplication(rules_end_state, origin_txs, valid_txs, pop_txs);
 
-    std::vector<xcons_transaction_ptr_t> valid_txs1;
-    if (origin_txs[0]->is_self_tx() || origin_txs[0]->is_send_tx()) {
-        check_rule_sendtx_duplication(rules_end_state, origin_txs, valid_txs1, pop_txs);
-        valid_txs = valid_txs1;
-    } else {
-        valid_txs = origin_txs;
-    }
-    //  else {
-    //     check_rule_receipts_duplication(rules_end_block, origin_txs, valid_txs1, pop_txs);
-    // }
-
-    // std::vector<xcons_transaction_ptr_t> valid_txs2;
-    // check_rule_batch_txs(valid_txs1, valid_txs2, pop_txs);
-
-    // // TODO(jimmy)  check_rule_tx_timestamp less than unit timestamp
+    // TODO(jimmy)  check_rule_tx_timestamp less than unit timestamp
 
     // valid_txs = valid_txs2;
     return true;

@@ -18,7 +18,7 @@ NS_BEG2(top, base)
 class xreceiptid_pair_t {
  public:
     xreceiptid_pair_t() = default;
-    xreceiptid_pair_t(uint64_t sendid_max, uint64_t confirmid_max, uint64_t recvid_max);
+    xreceiptid_pair_t(uint64_t sendid, uint64_t confirmid, uint64_t recvid);
 
  public:
     int32_t         do_write(base::xstream_t & stream) const;
@@ -106,5 +106,27 @@ class xreceiptid_state_t : public base::xdataunit_t {
     xreceiptid_pairs_ptr_t  m_modified_binlog{nullptr};  // for block maker cache
 };
 using xreceiptid_state_ptr_t = xobject_ptr_t<xreceiptid_state_t>;
+
+
+class xreceiptid_check_t {
+ public:
+    void        set_sendid(xtable_shortid_t sid, uint64_t value);
+    void        set_recvid(xtable_shortid_t sid, uint64_t value);
+    void        set_confirmid(xtable_shortid_t sid, uint64_t value);
+    const std::map<xtable_shortid_t, std::set<uint64_t>> &  get_sendids() const {return m_sendids;}
+    const std::map<xtable_shortid_t, std::set<uint64_t>> &  get_recvids() const {return m_recvids;}
+    const std::map<xtable_shortid_t, std::set<uint64_t>> &  get_confirmids() const {return m_confirmids;}
+
+    bool        check_contious(const xreceiptid_state_ptr_t & receiptid_state) const;
+    void        update_state(const xreceiptid_state_ptr_t & receiptid_state) const;
+
+ private:
+    bool    check_receiptids_contious(const std::set<uint64_t> & ids, uint64_t begin_id) const;
+
+ private:
+    std::map<xtable_shortid_t, std::set<uint64_t>>  m_sendids;
+    std::map<xtable_shortid_t, std::set<uint64_t>>  m_recvids;
+    std::map<xtable_shortid_t, std::set<uint64_t>>  m_confirmids;
+};
 
 NS_END2
