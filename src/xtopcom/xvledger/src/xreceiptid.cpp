@@ -10,10 +10,10 @@ NS_BEG2(top, base)
 
 REG_CLS(xreceiptid_pairs_t);
 
-xreceiptid_pair_t::xreceiptid_pair_t(uint64_t sendid_max, uint64_t confirmid_max, uint64_t recvid_max) {
-    set_sendid_max(sendid_max);
-    set_confirmid_max(confirmid_max);
-    set_recvid_max(recvid_max);
+xreceiptid_pair_t::xreceiptid_pair_t(uint64_t sendid, uint64_t confirmid, uint64_t recvid) {
+    set_sendid_max(sendid);
+    set_confirmid_max(confirmid);
+    set_recvid_max(recvid);
 }
 
 int32_t xreceiptid_pair_t::do_write(base::xstream_t & stream) const {
@@ -239,5 +239,124 @@ bool xreceiptid_state_t::find_pair_modified(xtable_shortid_t sid, xreceiptid_pai
 void xreceiptid_state_t::add_pair_modified(xtable_shortid_t sid, const xreceiptid_pair_t & pair) {
     m_modified_binlog->add_pair(sid, pair);
 }
+
+void    xreceiptid_check_t::set_sendid(xtable_shortid_t sid, uint64_t value) {
+    auto iter = m_sendids.find(sid);
+    if (iter != m_sendids.end()) {
+        std::set<uint64_t> & receiptid_set = iter->second;
+        auto ret = receiptid_set.insert(value);
+        xassert(ret.second);
+    } else {
+        std::set<uint64_t> receiptid_set;
+        receiptid_set.insert(value);
+        m_sendids[sid] = receiptid_set;
+    }
+}
+
+void    xreceiptid_check_t::set_recvid(xtable_shortid_t sid, uint64_t value) {
+    auto iter = m_recvids.find(sid);
+    if (iter != m_recvids.end()) {
+        std::set<uint64_t> & receiptid_set = iter->second;
+        auto ret = receiptid_set.insert(value);
+        xassert(ret.second);
+    } else {
+        std::set<uint64_t> receiptid_set;
+        receiptid_set.insert(value);
+        m_recvids[sid] = receiptid_set;
+    }
+}
+
+void    xreceiptid_check_t::set_confirmid(xtable_shortid_t sid, uint64_t value) {
+    auto iter = m_confirmids.find(sid);
+    if (iter != m_confirmids.end()) {
+        std::set<uint64_t> & receiptid_set = iter->second;
+        auto ret = receiptid_set.insert(value);
+        xassert(ret.second);
+    } else {
+        std::set<uint64_t> receiptid_set;
+        receiptid_set.insert(value);
+        m_confirmids[sid] = receiptid_set;
+    }
+}
+
+bool    xreceiptid_check_t::check_receiptids_contious(const std::set<uint64_t> & ids, uint64_t begin_id) const {
+    for (auto & id : ids) {
+        if (id != begin_id + 1) {
+            return false;
+        }
+        begin_id++;
+    }
+    return true;
+}
+
+bool    xreceiptid_check_t::check_contious(const xreceiptid_state_ptr_t & receiptid_state) const {
+    for (auto & v : m_sendids) {
+        xtable_shortid_t tableid = v.first;
+        const std::set<uint64_t> & ids = v.second;
+        xreceiptid_pair_t pair;
+        receiptid_state->find_pair(tableid, pair);
+        uint64_t begin_id = pair.get_sendid_max();
+        if (false == check_receiptids_contious(ids, begin_id)) {
+            return false;
+        }
+    }
+
+    for (auto & v : m_recvids) {
+        xtable_shortid_t tableid = v.first;
+        const std::set<uint64_t> & ids = v.second;
+        xreceiptid_pair_t pair;
+        receiptid_state->find_pair(tableid, pair);
+        uint64_t begin_id = pair.get_recvid_max();
+        if (false == check_receiptids_contious(ids, begin_id)) {
+            return false;
+        }
+    }
+
+    for (auto & v : m_confirmids) {
+        xtable_shortid_t tableid = v.first;
+        const std::set<uint64_t> & ids = v.second;
+        xreceiptid_pair_t pair;
+        receiptid_state->find_pair(tableid, pair);
+        uint64_t begin_id = pair.get_confirmid_max();
+        if (false == check_receiptids_contious(ids, begin_id)) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+void xreceiptid_check_t::update_state(const xreceiptid_state_ptr_t & receiptid_state) const {
+    for (auto & v : m_sendids) {
+        xtable_shortid_t tableid = v.first;
+        const std::set<uint64_t> & ids = v.second;
+        uint64_t maxid = *ids.rend();
+        base::xreceiptid_pair_t pair;
+        receiptid_state->find_pair(tableid, pair);
+        pair.set_sendid_max(maxid);
+        receiptid_state->add_pair(tableid, pair);
+    }
+
+    for (auto & v : m_recvids) {
+        xtable_shortid_t tableid = v.first;
+        const std::set<uint64_t> & ids = v.second;
+        uint64_t maxid = *ids.rend();
+        base::xreceiptid_pair_t pair;
+        receiptid_state->find_pair(tableid, pair);
+        pair.set_recvid_max(maxid);
+        receiptid_state->add_pair(tableid, pair);
+    }
+
+    for (auto & v : m_confirmids) {
+        xtable_shortid_t tableid = v.first;
+        const std::set<uint64_t> & ids = v.second;
+        uint64_t maxid = *ids.rend();
+        base::xreceiptid_pair_t pair;
+        receiptid_state->find_pair(tableid, pair);
+        pair.set_confirmid_max(maxid);
+        receiptid_state->add_pair(tableid, pair);
+    }
+}
+
 
 NS_END2
