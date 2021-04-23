@@ -8,6 +8,7 @@
 #include "../mock/xmock_auth.hpp"
 #include "common.h"
 #include "xsyncbase/xmessage_ids.h"
+#include "tests/mock/xvchain_creator.hpp"
 
 using namespace top;
 using namespace top::sync;
@@ -20,9 +21,13 @@ TEST(xsync_v1_block_fetcher, not_exist1) {
 
     top::mock::xmock_auth_t auth{1};
 
-    xobject_ptr_t<store::xstore_face_t> store = store::xstore_factory::create_store_with_memdb(nullptr);
-    xobject_ptr_t<base::xvblockstore_t> blockstore = nullptr;
-    blockstore.attach(store::xblockstorehub_t::instance().create_block_store(*store, ""));
+    mock::xvchain_creator creator;
+    creator.create_blockstore_with_xstore();
+    xobject_ptr_t<store::xstore_face_t> store;
+    store.attach(creator.get_xstore());
+    xobject_ptr_t<base::xvblockstore_t> blockstore;
+    blockstore.attach(creator.get_blockstore());
+
     xsync_store_t sync_store("", make_observer(blockstore));
 
     xmock_vhost_sync_t vhost;
@@ -103,9 +108,12 @@ TEST(xsync_v1_block_fetcher, not_exist2) {
 
     top::mock::xmock_auth_t auth{1};
 
-    xobject_ptr_t<store::xstore_face_t> store = store::xstore_factory::create_store_with_memdb(nullptr);
-    xobject_ptr_t<base::xvblockstore_t> blockstore = nullptr;
-    blockstore.attach(store::xblockstorehub_t::instance().create_block_store(*store, ""));
+    mock::xvchain_creator creator;
+    creator.create_blockstore_with_xstore();
+    xobject_ptr_t<store::xstore_face_t> store;
+    store.attach(creator.get_xstore());
+    xobject_ptr_t<base::xvblockstore_t> blockstore;
+    blockstore.attach(creator.get_blockstore());
     xsync_store_t sync_store("", make_observer(blockstore));
 
     xmock_vhost_sync_t vhost;
@@ -189,9 +197,12 @@ TEST(xsync_v1_block_fetcher, exist) {
 
     top::mock::xmock_auth_t auth{1};
 
-    xobject_ptr_t<store::xstore_face_t> store = store::xstore_factory::create_store_with_memdb(nullptr);
-    xobject_ptr_t<base::xvblockstore_t> blockstore = nullptr;
-    blockstore.attach(store::xblockstorehub_t::instance().create_block_store(*store, ""));
+    mock::xvchain_creator creator;
+    creator.create_blockstore_with_xstore();
+    xobject_ptr_t<store::xstore_face_t> store;
+    store.attach(creator.get_xstore());
+    xobject_ptr_t<base::xvblockstore_t> blockstore;
+    blockstore.attach(creator.get_blockstore());
     xsync_store_t sync_store("", make_observer(blockstore));
 
     xmock_vhost_sync_t vhost;
@@ -253,9 +264,12 @@ TEST(xsync_v1_block_fetcher, timeout) {
 
     top::mock::xmock_auth_t auth{1};
 
-    xobject_ptr_t<store::xstore_face_t> store = store::xstore_factory::create_store_with_memdb(nullptr);
-    xobject_ptr_t<base::xvblockstore_t> blockstore = nullptr;
-    blockstore.attach(store::xblockstorehub_t::instance().create_block_store(*store, ""));
+    mock::xvchain_creator creator;
+    creator.create_blockstore_with_xstore();
+    xobject_ptr_t<store::xstore_face_t> store;
+    store.attach(creator.get_xstore());
+    xobject_ptr_t<base::xvblockstore_t> blockstore;
+    blockstore.attach(creator.get_blockstore());
     xsync_store_t sync_store("", make_observer(blockstore));
 
     xmock_vhost_sync_t vhost;

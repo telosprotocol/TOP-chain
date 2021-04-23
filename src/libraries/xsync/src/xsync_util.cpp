@@ -80,4 +80,15 @@ vnetwork::xvnode_address_t build_address_from_vnode(const xvip2_t &group_xip2, c
     return addr;
 }
 
+uint64_t derministic_height(uint64_t my_height, std::pair<uint64_t, uint64_t> neighbor_heights) {
+    uint64_t height = my_height;
+
+    if (my_height >= neighbor_heights.first + xsync_store_t::m_undeterministic_heights) {
+        height = my_height - xsync_store_t::m_undeterministic_heights;
+    } else {
+        height = neighbor_heights.first;
+    }
+    return height;
+}
+
 NS_END2

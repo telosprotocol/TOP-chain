@@ -60,7 +60,7 @@ namespace top
             xveventbus_impl & operator = (const xveventbus_impl &);
 
         public: //api for event
-            virtual void   push_event(const mbus::xevent_ptr_t& e) override //push event into mbus system
+            void   push_event(const mbus::xevent_ptr_t& e) override //push event into mbus system
             {
 
             }

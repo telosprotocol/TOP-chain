@@ -72,7 +72,7 @@ void xsync_on_demand_t::on_behind_event(const mbus::xevent_ptr_t &e) {
     }
 }
 
-void xsync_on_demand_t::handle_blocks_response(const std::vector<data::xblock_ptr_t> &blocks, 
+void xsync_on_demand_t::handle_blocks_response(const std::vector<data::xblock_ptr_t> &blocks,
     const vnetwork::xvnode_address_t &to_address, const vnetwork::xvnode_address_t &network_self) {
 
     if (blocks.empty()) {
@@ -134,12 +134,12 @@ void xsync_on_demand_t::handle_blocks_response(const std::vector<data::xblock_pt
             return;
         }
     }
-    
+
     xsync_download_tracer tracer;
     if (!m_download_tracer.get(account, tracer)){
         return;
     }
-    
+
     std::map<std::string, std::string> context = tracer.context();
     bool is_consensus = std::stoi(context["consensus"]);
     int32_t count = tracer.height_interval().second - tracer.trace_height();
@@ -151,14 +151,15 @@ void xsync_on_demand_t::handle_blocks_response(const std::vector<data::xblock_pt
 }
 
 
-void xsync_on_demand_t::handle_blocks_request(const xsync_message_get_on_demand_blocks_t &block, 
+void xsync_on_demand_t::handle_blocks_request(const xsync_message_get_on_demand_blocks_t &block,
     const vnetwork::xvnode_address_t &to_address, const vnetwork::xvnode_address_t &network_self) {
     std::string address = block.address;
     uint64_t start_height = block.start_height;
-    uint32_t count = block.count;
+    uint64_t end_height = 0;
+    uint32_t heights = block.count;
     bool is_consensus = block.is_consensus;
 
-    if (count == 0)
+    if (heights == 0)
         return;
 
     std::vector<data::xblock_ptr_t> blocks;
@@ -171,33 +172,25 @@ void xsync_on_demand_t::handle_blocks_request(const xsync_message_get_on_demand_
             blocks.push_back(block_ptr);
         }
 
-        uint64_t end_height = start_height + (uint64_t)count;
-
-        for (uint64_t height = start_height, i = 0; (height <= end_height) && (i < max_request_block_count); height++) {
-            xauto_ptr<xvblock_t> auto_vblock = m_sync_store->load_block_object(address, height);
-            if (auto_vblock != nullptr) {
-                xblock_ptr_t block_ptr = autoptr_to_blockptr(auto_vblock);
-                blocks.push_back(block_ptr);
-                i++;
-            }
-        }
+        end_height = start_height + (uint64_t)heights;
     } else {
-        for (uint32_t i=0; i<count && i<max_request_block_count; i++) {
-            uint64_t height = start_height + (uint64_t)i;
-            xauto_ptr<xvblock_t> auto_vblock = m_sync_store->load_block_object(address, height);
-            if (auto_vblock != nullptr) {
-                xblock_ptr_t block_ptr = autoptr_to_blockptr(auto_vblock);
-                blocks.push_back(block_ptr);
-            } else {
-                break;
-            }
+        end_height = start_height + (uint64_t)heights;
+    }
+
+    for (uint64_t height = start_height, i = 0; (height <= end_height) && (i < max_request_block_count); height++) {
+        auto need_blocks = m_sync_store->load_block_objects(address, height);
+        for (uint32_t j = 0; j < need_blocks.size(); j++){
+            blocks.push_back(xblock_t::raw_vblock_to_object_ptr(need_blocks[j].get()));
+        }
+        if (!need_blocks.empty()){
+            i++;
         }
     }
 
     m_sync_sender->send_on_demand_blocks(blocks, network_self, to_address);
 }
 
-void xsync_on_demand_t::handle_chain_snapshot_meta(xsync_message_chain_snapshot_meta_t &chain_meta, 
+void xsync_on_demand_t::handle_chain_snapshot_meta(xsync_message_chain_snapshot_meta_t &chain_meta,
     const vnetwork::xvnode_address_t &to_address, const vnetwork::xvnode_address_t &network_self) {
 
     std::string account = chain_meta.m_account_addr;
@@ -224,7 +217,7 @@ void xsync_on_demand_t::handle_chain_snapshot_meta(xsync_message_chain_snapshot_
 }
 
 
-void xsync_on_demand_t::handle_chain_snapshot(xsync_message_chain_snapshot_t &chain_snapshot, 
+void xsync_on_demand_t::handle_chain_snapshot(xsync_message_chain_snapshot_t &chain_snapshot,
     const vnetwork::xvnode_address_t &to_address, const vnetwork::xvnode_address_t &network_self) {
     std::string account = chain_snapshot.m_tbl_account_addr;
 
@@ -283,7 +276,8 @@ int xsync_on_demand_t::check(const std::string &account_address) {
 
     return 0;
 }
-int xsync_on_demand_t::check(const std::string &account_address, 
+
+int xsync_on_demand_t::check(const std::string &account_address,
     const vnetwork::xvnode_address_t &to_address, const vnetwork::xvnode_address_t &network_self) {
     xsync_download_tracer tracer;
     if (!m_download_tracer.get(account_address, tracer)) {
@@ -298,6 +292,7 @@ int xsync_on_demand_t::check(const std::string &account_address,
     }
     return 0;
 }
+
 xsync_download_tracer_mgr* xsync_on_demand_t::download_tracer_mgr() {
     return &m_download_tracer;
 }
