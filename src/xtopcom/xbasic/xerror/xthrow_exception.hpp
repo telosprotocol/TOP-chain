@@ -6,12 +6,11 @@
 
 #include "xbase/xns_macro.h"
 
-NS_BEG1(top)
+NS_BEG2(top, error)
 
 template <typename ExceptionT>
-void
-throw_exception(ExceptionT const & eh) {
+void throw_exception(ExceptionT const & eh) {
     throw eh;
 }
 
-NS_END1
+NS_END2

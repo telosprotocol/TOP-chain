@@ -29,7 +29,7 @@
 #include "xbasic/xmemory.hpp"
 #include "xbasic/xenable_to_string.h"
 #include "xbasic/xserializable_based_on.h"
-#include "xbasic/xthrow_error.h"
+#include "xbasic/xerror/xthrow_error.h"
 #include "xcommon/xaddress.h"
 #include "xcontract_common/xerror/xerror.h"
 #include "xcontract_common/xproperties/xaccess_control_data.h"

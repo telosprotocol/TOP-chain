@@ -22,7 +22,7 @@
 
 #include "xbasic/xbyte_buffer.h"
 #include "xbasic/xmemory.hpp"
-#include "xbasic/xthrow_error.h"
+#include "xbasic/xerror/xthrow_error.h"
 #include "xcontract_common/xproperties/xproperty_access_control.h"
 #include "xcontract_common/xproperties/xbasic_property.h"
 #include "xcontract_common/xproperties/xproperty_identifier.h"
@@ -69,7 +69,7 @@ public:
     ValueT map_at(std::string const & property_full_name, KeyT const & key) const {
         std::error_code ec;
         auto ret = m_ac->map_at<KeyT, ValueT>(m_action_account_address, property_full_name, key, ec);
-        throw_error(ec);
+        top::error::throw_error(ec);
         return ret;
     }
 

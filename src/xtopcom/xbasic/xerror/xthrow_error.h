@@ -7,19 +7,14 @@
 #include <string>
 #include <system_error>
 
-NS_BEG1(top)
+NS_BEG2(top, error)
 
-void
-do_throw_error(std::error_code const & ec);
-
-void
-do_throw_error(std::error_code const & ec, char const * extra_what);
-
-void
-do_throw_error(std::error_code const & ec, std::string const & extra_what);
+void do_throw_error(std::error_code const & ec);
+void do_throw_error(std::error_code const & ec, char const * extra_what);
+void do_throw_error(std::error_code const & ec, std::string const & extra_what);
 
 void throw_error(std::error_code const & ec);
 void throw_error(std::error_code const ec, char const * extra_what);
 void throw_error(std::error_code const ec, std::string const & extra_what);
 
-NS_END1
+NS_END2
