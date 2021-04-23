@@ -47,8 +47,8 @@ namespace top
         class xvnodegroup_t : virtual public xrefcount_t
         {
         public:
-            xvnodegroup_t(const xvip2_t & group_address,const uint64_t effect_clock_height,std::vector<xvnode_t*> & nodes);
-            xvnodegroup_t(const xvip2_t & group_address,const uint64_t effect_clock_height,std::deque<xvnode_t*> & nodes);
+            xvnodegroup_t(const xvip2_t & group_address,const uint64_t effect_clock_height,std::vector<xvnode_t*> const & nodes);
+            xvnodegroup_t(const xvip2_t & group_address,const uint64_t effect_clock_height,std::deque<xvnode_t*> const & nodes);
         protected:
             virtual ~xvnodegroup_t();
         private:
@@ -87,9 +87,9 @@ namespace top
         public:
             virtual void*                      query_interface(const int32_t _enum_xobject_type_) override;//caller need to cast (void*) to related ptr
         public:
-            virtual xauto_ptr<xvnode_t>        get_node(const xvip2_t & target_node)        = 0;
+            virtual xauto_ptr<xvnode_t>        get_node(const xvip2_t & target_node) const = 0;
         public:
-            virtual xauto_ptr<xvnodegroup_t>   get_group(const xvip2_t & target_group)      = 0;
+            virtual xauto_ptr<xvnodegroup_t>   get_group(const xvip2_t & target_group) const = 0;
             virtual bool                       add_group(const xvnodegroup_t* group_ptr)    = 0;
             virtual bool                       remove_group(const xvip2_t & target_group)   = 0;
         protected:
@@ -109,12 +109,12 @@ namespace top
             xvnodehouse_t(const xvnodehouse_t &);
             xvnodehouse_t  & operator = (const xvnodehouse_t &);
         public:
-            virtual xauto_ptr<xvnode_t>        get_node(const xvip2_t & target_node)       override;
-            virtual xauto_ptr<xvnodegroup_t>   get_group(const xvip2_t & target_group)     override;
+            virtual xauto_ptr<xvnode_t>        get_node(const xvip2_t & target_node) const override;
+            virtual xauto_ptr<xvnodegroup_t>   get_group(const xvip2_t & target_group) const override;
             virtual bool                       add_group(const xvnodegroup_t* group_ptr)   override;
             virtual bool                       remove_group(const xvip2_t & target_group)  override;
         private:
-            std::mutex                         m_lock;
+            mutable std::mutex                 m_lock;
             uint64_t                           m_vnetwork_id; //network id,refer definition of xip2 at xbase.h
             uint64_t                           m_vnet_version;//version is same concept as round of election
             std::map<uint64_t,xvnodegroup_t*>  m_vgroups;     //mapping <version/round --> group>

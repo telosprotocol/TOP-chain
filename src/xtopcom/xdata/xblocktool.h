@@ -6,7 +6,8 @@
 
 #include <string>
 #include <vector>
-// TODO(jimmy) #include "xbase/xvledger.h"
+
+#include "xvledger/xreceiptid.h"
 #include "xdata/xemptyblock.h"
 #include "xdata/xtableblock.h"
 #include "xdata/xfull_tableblock.h"
@@ -56,6 +57,10 @@ class xblocktool_t {
     static bool             verify_latest_blocks(base::xvblock_t* latest_cert_block, base::xvblock_t* lock_block, base::xvblock_t* commited_block);
     static bool             can_make_next_empty_block(const base::xblock_mptrs & latest_blocks, uint32_t max_empty_num);
     static bool             can_make_next_full_table(base::xvblock_t* latest_cert_block, uint32_t max_light_num);
+
+
+ public:
+    static void             alloc_transaction_receiptid(const xcons_transaction_ptr_t & tx, const base::xreceiptid_state_ptr_t & receiptid_state);
 };
 
 // TODO(jimmy) xblocktool_t split to xblock_utl, xreceipt_utl, xaddress_utl

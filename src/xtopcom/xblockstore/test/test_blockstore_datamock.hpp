@@ -123,8 +123,11 @@ class test_blockstore_datamock_t {
                 proposal_block = test_blocktuil::create_next_fullunit(block_para, prev_block, timer_height);
             }
 
-            if (need_store)
-                assert(m_blockstore->store_block(proposal_block));
+            if (need_store) {
+                base::xvaccount_t _vaddress(proposal_block->get_account());
+                assert(m_blockstore->store_block(_vaddress, proposal_block));
+            }
+
 
             xblock_t* block = dynamic_cast<xblock_t*>(proposal_block);
 
@@ -163,8 +166,10 @@ class test_blockstore_datamock_t {
                 proposal_block = test_blocktuil::create_next_lightunit(block_para, prev_block, timer_height);
             }
 
-            if (need_store)
-                assert(m_blockstore->store_block(proposal_block));
+            if (need_store) {
+                base::xvaccount_t vaddress(proposal_block->get_account());
+                assert(m_blockstore->store_block(vaddress, proposal_block));
+            }
 
             xblock_t* block = dynamic_cast<xblock_t*>(proposal_block);
             block->add_ref();
@@ -330,8 +335,9 @@ class test_blockstore_datamock_t {
         base::xvblock_t* prev_block = vblock_ptr.get();
         base::xvblock_t* proposal_block = test_blocktuil::create_next_tableblock(table_para, prev_block, timer_height);
         assert(!proposal_block->get_block_hash().empty());
-
-        assert(m_blockstore->store_block(proposal_block));
+        
+        base::xvaccount_t vaddress(proposal_block->get_account());
+        assert(m_blockstore->store_block(vaddress, proposal_block));
 
         proposal_block->add_ref();
         xdataobj_ptr_t data_obj = nullptr;

@@ -53,7 +53,7 @@ class xdatamock_table {
     const xblockchain_ptr_t &           get_blockchain() const {return m_table_blockchain;}
     const std::vector<xblock_ptr_t> &   get_history_tables() const {return m_history_tables;}
     const std::vector<xdatamock_unit> & get_mock_units() const {return m_mock_units;}
-    uint32_t                            get_full_table_interval_count() const {return enum_default_full_table_interval_count;}
+    static uint32_t                     get_full_table_interval_count() {return enum_default_full_table_interval_count;}
 
     void    genrate_table_chain(uint64_t max_block_height) {
         for (uint64_t i = 0; i < max_block_height; i++) {
@@ -133,9 +133,12 @@ class xdatamock_table {
     xblock_ptr_t generate_batch_table(uint32_t user_count, uint32_t every_user_tx_count) {
         generate_send_tx(user_count, every_user_tx_count);
 
+        const base::xreceiptid_state_ptr_t & receiptid_state = m_offstate->get_receiptid_state();
+        receiptid_state->clear_pair_modified();
+
         std::vector<xblock_ptr_t>   units;
         for (auto & mockunit : m_mock_units) {
-            xblock_ptr_t unit = mockunit.generate_unit();
+            xblock_ptr_t unit = mockunit.generate_unit(receiptid_state);
             if (unit != nullptr) {
                 units.push_back(unit);
             }

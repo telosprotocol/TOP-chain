@@ -1,5 +1,6 @@
 #include "gtest/gtest.h"
 #include "xvledger/xvaccount.h"
+// #include "tests/mock/xvchain_creator.hpp"
 
 using namespace top;
 using namespace top::base;
@@ -20,4 +21,7 @@ TEST_F(test_xvledger, xvaccount_1) {
     std::cout << "vaddr=" << vaddr.get_xvid() << std::endl;
 }
 
+TEST_F(test_xvledger, xchain_clean_all_1) {
+    // xvchain_t::instance().clean_all();
+}
 

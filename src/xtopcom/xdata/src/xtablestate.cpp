@@ -15,6 +15,43 @@ xtablestate_t::xtablestate_t()
     m_receiptid_state = make_object_ptr<base::xreceiptid_state_t>();
 }
 
+xtablestate_t::xtablestate_t(const std::string & full_data, uint64_t full_height, const std::string & binlog_data, uint64_t binlog_height)
+:base::xdataunit_t(base::xdataunit_t::enum_xdata_type_undefine) {
+    xassert(binlog_height >= full_height);
+    m_accountindex_state = make_object_ptr<base::xtable_mbt_new_state_t>();
+    m_receiptid_state = make_object_ptr<base::xreceiptid_state_t>();
+    if (full_height > 0) {
+        xassert(!full_data.empty());
+        bool ret = serialize_from_full_offdata(full_data);
+        xassert(ret);
+    }
+    if (!binlog_data.empty()) {
+        bool ret = serialize_from_binlog(binlog_data);
+        xassert(ret);
+    }
+    set_full_height(full_height);
+    set_binlog_height(binlog_height);
+}
+
+xtablestate_t::xtablestate_t(const xobject_ptr_t<base::xvboffdata_t> & full_data, uint64_t full_height, const std::string & binlog_data, uint64_t binlog_height)
+:base::xdataunit_t(base::xdataunit_t::enum_xdata_type_undefine) {
+    xassert(binlog_height >= full_height);
+    m_accountindex_state = make_object_ptr<base::xtable_mbt_new_state_t>();
+    m_receiptid_state = make_object_ptr<base::xreceiptid_state_t>();
+    if (full_height > 0) {
+        xassert(full_data != nullptr);
+        bool ret = set_block_full_data(full_data);
+        xassert(ret);
+    }
+    if (!binlog_data.empty()) {
+        bool ret = serialize_from_binlog(binlog_data);
+        xassert(ret);
+    }
+    set_full_height(full_height);
+    set_binlog_height(binlog_height);
+}
+
+
 int32_t xtablestate_t::do_write(base::xstream_t & stream) {
     const int32_t begin_size = stream.size();
     xassert(m_receiptid_state != nullptr);
@@ -148,10 +185,69 @@ bool xtablestate_t::execute_lighttable(base::xvblock_t* block) {
     std::map<std::string, xaccount_index_t> changed_indexs = lighttable->get_units_index();
     accountindex_binlog->set_accounts_index(changed_indexs);
 
-    const base::xreceiptid_pairs_ptr_t & receiptid_binlog = m_receiptid_state->get_binlog();
-    base::xreceiptid_pairs_ptr_t changed_receiptid = lighttable->get_receiptid_binlog();
-    receiptid_binlog->add_binlog(changed_receiptid);
+    base::xreceiptid_check_t receiptid_check;
+    auto & units = lighttable->get_tableblock_units(true);
+    xblock_t::batch_units_to_receiptids(units, receiptid_check);
+    // for (auto & unit : units) {
+    //     const std::vector<xlightunit_tx_info_ptr_t> & txs_info = unit->get_txs();
+    //     for (auto & tx : txs_info) {
+    //         if (tx->is_send_tx()) {
+    //             uint64_t sendid = tx->get_receipt_id();
+    //             base::xtable_shortid_t tableid = tx->get_receipt_id_tableid();
+    //             receiptid_check.set_sendid(tableid, sendid);
+    //         } else if (tx->is_recv_tx()) {
+    //             uint64_t recvid = tx->get_receipt_id();
+    //             base::xtable_shortid_t tableid = tx->get_receipt_id_tableid();
+    //             receiptid_check.set_recvid(tableid, recvid);
+    //         } else if (tx->is_confirm_tx()) {
+    //             uint64_t confirmid = tx->get_receipt_id();
+    //             base::xtable_shortid_t tableid = tx->get_receipt_id_tableid();
+    //             receiptid_check.set_confirmid(tableid, confirmid);
+    //         }
+    //     }
+    // }
+    if (false == receiptid_check.check_contious(m_receiptid_state)) {
+        xerror("xtablestate_t::execute_lighttable fail check receiptid contious");
+    }
+    receiptid_check.update_state(m_receiptid_state);
 
+#if 0
+    // set sendid firstly
+    for (auto & unit : units) {
+        const std::vector<xlightunit_tx_info_ptr_t> & txs_info = unit->get_txs();
+        for (auto & tx : txs_info) {
+            if (tx->is_send_tx()) {
+                uint64_t sendid = tx->get_receipt_id();
+                base::xtable_shortid_t tableid = tx->get_receipt_id_tableid();
+                base::xreceiptid_pair_t pair;
+                m_receiptid_state->find_pair(tableid, pair);
+                pair.set_sendid_max(sendid);
+                m_receiptid_state->add_pair(tableid, pair);
+            }
+        }
+    }
+    // set recv and confirm secondly
+    for (auto & unit : units) {
+        const std::vector<xlightunit_tx_info_ptr_t> & txs_info = unit->get_txs();
+        for (auto & tx : txs_info) {
+            if (tx->is_recv_tx()) {
+                uint64_t recvid = tx->get_receipt_id();
+                base::xtable_shortid_t tableid = tx->get_receipt_id_tableid();
+                base::xreceiptid_pair_t pair;
+                m_receiptid_state->find_pair(tableid, pair);
+                pair.set_recvid_max(recvid);
+                m_receiptid_state->add_pair(tableid, pair);
+            } else if (tx->is_confirm_tx()) {
+                uint64_t confirmid = tx->get_receipt_id();
+                base::xtable_shortid_t tableid = tx->get_receipt_id_tableid();
+                base::xreceiptid_pair_t pair;
+                m_receiptid_state->find_pair(tableid, pair);
+                pair.set_confirmid_max(confirmid);
+                m_receiptid_state->add_pair(tableid, pair);
+            }
+        }
+    }
+#endif
     m_binlog_height = block->get_height();
     return true;
 }

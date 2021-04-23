@@ -228,7 +228,7 @@ xblock_ptr_t xproposal_maker_t::verify_proposal_prev_block(base::xvblock_t * pro
         return proposal_prev_block;
     }
 
-    base::xblock_vector latest_certs = get_blockstore()->query_block(*m_table_maker, proposal_block->get_height() - 1);
+    base::xblock_vector latest_certs = get_blockstore()->load_block_object(*m_table_maker, proposal_block->get_height() - 1);
     if (false == latest_certs.get_vector().empty()) {
         for (auto & latest_cert : latest_certs.get_vector()) {
             if (latest_cert->get_block_hash() == proposal_block->get_last_block_hash()) {  // found conected prev one
@@ -248,7 +248,24 @@ bool xproposal_maker_t::update_txpool_txs(const xblock_consensus_para_t & propos
     get_locked_txs(proposal_para.get_latest_locked_block(), locked_tx_vec);
     get_txpool()->update_locked_txs(get_account(), locked_tx_vec);
 
-    xtxpool_v2::ready_accounts_t ready_accounts = get_txpool()->get_ready_accounts(get_account(), m_max_account_num);
+    // get tablestate related to latest cert block
+    auto tablestate_commit = m_indexstore->clone_tablestate(proposal_para.get_latest_committed_block());
+    if (nullptr == tablestate_commit) {
+        xwarn("xproposal_maker_t::update_txpool_txs fail clone tablestate. %s", proposal_para.dump().c_str());
+        return false;
+    }
+
+    get_txpool()->update_receiptid_state(proposal_para.get_table_account(), tablestate_commit->get_receiptid_state());
+
+    auto tablestate_highqc = m_indexstore->clone_tablestate(proposal_para.get_latest_cert_block());
+    if (nullptr == tablestate_highqc) {
+        xwarn("xproposal_maker_t::update_txpool_txs fail clone tablestate. %s", proposal_para.dump().c_str());
+        return false;
+    }
+
+    xtxpool_v2::xtxs_pack_para_t txpool_pack_para(proposal_para.get_table_account(), tablestate_highqc->get_receiptid_state(), 16, 32, 32);
+    xtxpool_v2::ready_accounts_t ready_accounts = get_txpool()->get_ready_accounts(txpool_pack_para);
+    // xtxpool_v2::ready_accounts_t ready_accounts = get_txpool()->get_ready_accounts(get_account(), m_max_account_num);
     for (auto & ready_account : ready_accounts) {
         xassert(ready_account->get_txs().size() != 0);
         for (auto & tx : ready_account->get_txs()) {

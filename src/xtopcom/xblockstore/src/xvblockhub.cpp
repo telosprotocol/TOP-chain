@@ -250,7 +250,7 @@ namespace top
                 save_meta();
 
                 //TODO, retore following assert check after full_block enable
-                xassert(m_meta->_highest_full_block_height    <= m_meta->_highest_connect_block_height);
+                // xassert(m_meta->_highest_full_block_height    <= m_meta->_highest_connect_block_height);
                 xassert(m_meta->_highest_connect_block_height <= m_meta->_highest_commit_block_height);
                 xassert(m_meta->_highest_commit_block_height  <= m_meta->_highest_lock_block_height);
                 xassert(m_meta->_highest_lock_block_height    <= m_meta->_highest_cert_block_height);
@@ -790,6 +790,17 @@ namespace top
             //bottom line from genesis block
             return load_genesis_index();
         }
+
+        base::xvbindex_t*  xblockacct_t::load_latest_committed_full_index()
+        {
+            load_index(m_meta->_highest_full_block_height);
+            base::xvbindex_t* result = query_index(m_meta->_highest_full_block_height,base::enum_xvblock_flag_committed);
+            if(result != nullptr)
+                return result;
+
+            //bottom line from genesis block
+            return load_genesis_index();
+        }
         
         //caller respond to release those returned ptr
         bool    xblockacct_t::load_latest_index_list(base::xvbindex_t* & cert_block,base::xvbindex_t* & lock_block,base::xvbindex_t* & commit_block)
@@ -1275,7 +1286,7 @@ namespace top
                     const int existing_block_flags = existing_block->get_block_flags();
                     const int new_block_flags      = this_block->get_block_flags();
                     if(  (existing_block_flags == new_block_flags)
-                       ||(existing_block_flags & base::enum_xvblock_flags_high4bit_mask) >= (new_block_flags & base::enum_xvblock_flags_high4bit_mask)
+                       ||(existing_block_flags & base::enum_xvblock_flags_high4bit_mask) > (new_block_flags & base::enum_xvblock_flags_high4bit_mask)
                        ) //outdated one try to overwrite newer one,abort it
                     {
                         if(existing_block_flags != new_block_flags)

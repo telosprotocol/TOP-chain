@@ -748,6 +748,7 @@ struct reward_detail final : public xserializable_based_on<void> {
     top::xstake::uint128_t m_validator_reward{0};
     top::xstake::uint128_t m_auditor_reward{0};
     top::xstake::uint128_t m_vote_reward{0};
+    top::xstake::uint128_t m_self_reward{0};
 private:
     int32_t do_write(base::xstream_t & stream) const override {
         const int32_t begin_pos = stream.size();
@@ -756,6 +757,7 @@ private:
         stream << m_validator_reward;
         stream << m_auditor_reward;
         stream << m_vote_reward;
+        stream << m_self_reward;
         const int32_t end_pos = stream.size();
         return (end_pos - begin_pos);
     }
@@ -773,6 +775,9 @@ private:
         stream >> m_validator_reward;
         stream >> m_auditor_reward;
         stream >> m_vote_reward;
+        if (stream.size() > 0) {
+            stream >> m_self_reward;
+        }
         const int32_t end_pos = stream.size();
         return (begin_pos - end_pos);
     }

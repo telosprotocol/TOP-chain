@@ -37,7 +37,7 @@ bool xtable_maker_t::update_latest_blocks(const xblock_ptr_t & latest_block) {
     // load new latest blocks
     std::map<uint64_t, xblock_ptr_t> latest_blocks;
     if (false == load_latest_blocks(latest_block, latest_blocks)) {
-        xerror("xtable_maker_t::update_latest_blocks fail-load_latest_blocks.account=%s,latest_block=%s",
+        xwarn("xtable_maker_t::update_latest_blocks fail-load_latest_blocks.account=%s,latest_block=%s",
             get_account().c_str(), latest_block->dump().c_str());
         return false;
     }
@@ -275,6 +275,17 @@ xblock_ptr_t xtable_maker_t::leader_make_light_table(const xtablemaker_para_t & 
         table_result.m_make_block_error_code = xblockmaker_error_no_need_make_table;
         xdbg("xtable_maker_t::leader_make_light_table fail-make table. %s",
             cs_para.dump().c_str());
+        return nullptr;
+    }
+
+// TODO(jimmy) move to block rules
+    base::xreceiptid_check_t receiptid_check;
+    xblock_t::batch_units_to_receiptids(batch_units, receiptid_check);
+    if (false == receiptid_check.check_contious(table_para.m_tablestate->get_receiptid_state())) {
+        xwarn("xtablestate_t receiptid binlog=%s", table_para.m_tablestate->get_receiptid_state()->get_binlog()->dump().c_str());
+        xwarn("xtablestate_t receiptid full=%s", table_para.m_tablestate->get_receiptid_state()->get_last_full_state()->dump().c_str());
+        xwarn("xtablestate_t receiptid check=%s", receiptid_check.dump().c_str());
+        xerror("xtablestate_t::execute_lighttable fail check receiptid contious. %s", cs_para.dump().c_str());
         return nullptr;
     }
 

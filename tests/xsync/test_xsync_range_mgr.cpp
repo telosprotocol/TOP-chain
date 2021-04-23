@@ -5,6 +5,7 @@
 #include "xdata/xdata_common.h"
 #include "xsync/xsync_range_mgr.h"
 #include "xblockstore/test/test_blockstore_datamock.hpp"
+#include "tests/mock/xvchain_creator.hpp"
 
 using namespace top;
 using namespace top::data;
@@ -16,9 +17,13 @@ TEST(xsync_range_mgr, lack) {
 
     std::string address = xblocktool_t::make_address_user_account("11111111111111111111");
     std::shared_ptr<mbus::xmessage_bus_t> mbus = std::make_shared<top::mbus::xmessage_bus_t>(true, 1000);
-    auto store = store::xstore_factory::create_store_with_memdb(mbus);
-    base::xvblockstore_t* blockstore = store::xblockstorehub_t::instance().create_block_store(*store, "");
+    mock::xvchain_creator creator;
+    creator.create_blockstore_with_xstore();
+    xobject_ptr_t<store::xstore_face_t> store = make_object_ptr<store::xstore_face_t>(*(creator.get_xstore()));
+    xobject_ptr_t<base::xvblockstore_t> blockstore = make_object_ptr<base::xvblockstore_t>(*(creator.get_blockstore()));
+
     test_blockstore_datamock_t datamock(store.get(), blockstore);
+    
 
     syncbase::xdata_mgr_ptr_t data_mgr = std::make_shared<syncbase::xdata_mgr_t>("", store.get(), blockstore, address);
     xsync_policy_lack_t policy("", data_mgr);

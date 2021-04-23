@@ -60,15 +60,16 @@ public:
     void set_params(const xvip2_t & xip, const std::shared_ptr<vnetwork::xvnetwork_driver_face_t> & vnet_driver) override;
     bool is_running() override;
     bool is_receipt_sender(const xtable_id_t & tableid, const uint256_t & hash) override;
-    void send_receipt(xcons_transaction_ptr_t & cons_tx, uint32_t resend_time) override;
+    void send_receipt(xcons_transaction_ptr_t & cons_tx, bool first_send) override;
     bool table_boundary_equal_to(std::shared_ptr<xtxpool_service_face> & service) override;
     void get_service_table_boundary(base::enum_xchain_zone_index & zone_id, uint32_t & fount_table_id, uint32_t & back_table_id) override;
-    void on_timer(uint64_t now) override;
+    void resend_receipts(uint64_t now) override;
     int32_t request_transaction_consensus(const data::xtransaction_ptr_t & tx, bool local) override;
     xcons_transaction_ptr_t query_tx(const std::string & account, const uint256_t & hash) const override {
         return nullptr;
     };
 
+    static bool is_resend_node_for_talbe(uint64_t now, uint32_t table_id, uint16_t shard_size, uint16_t self_node_id);
     static bool is_selected_sender(uint32_t pos, uint32_t rand_pos, uint32_t select_num, uint32_t size);
 
 private:
@@ -79,7 +80,7 @@ private:
     void auditor_forward_receipt_to_shard(const xcons_transaction_ptr_t & cons_tx, vnetwork::xmessage_t const & message);
     bool set_commit_prove(data::xcons_transaction_ptr_t & cons_tx);
     void send_receipt_real(const data::xcons_transaction_ptr_t & cons_tx);
-    bool has_receipt_right(const uint256_t & hash, uint32_t resend_time) const;
+    bool has_receipt_right(const uint256_t & hash) const;
     void forward_broadcast_message(const vnetwork::xvnode_address_t & addr, const vnetwork::xmessage_t & message);
     bool have_repceipt_rights(const std::string & rand, uint32_t num);
 
@@ -91,7 +92,6 @@ private:
     bool m_is_send_receipt_role{false};
     uint32_t m_cover_front_table_id;  // [m_front_table_id,m_back_table_id) is the scope for this service
     uint32_t m_cover_back_table_id;   // present empty if m_front_table_id == m_back_table_id
-    uint32_t m_timer_fire_times{0};
     base::enum_xchain_zone_index m_zone_index;
     uint16_t m_node_id;
     uint16_t m_shard_size;

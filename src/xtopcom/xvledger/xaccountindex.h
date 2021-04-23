@@ -238,6 +238,7 @@ class xtable_mbt_new_state_t : public base::xdataunit_t {
     const xtable_mbt_ptr_t &        get_last_full_state() const {return m_last_full_state;}
     const xtable_mbt_binlog_ptr_t & get_binlog() const {return m_newest_binlog_state;}
     bool                            get_account_index(const std::string & account, xaccount_index_t & account_index);
+    uint64_t                        get_account_size() const { return m_last_full_state->get_account_size(); }
 
  private:
     xtable_mbt_ptr_t            m_last_full_state{nullptr};

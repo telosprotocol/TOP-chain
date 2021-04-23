@@ -357,7 +357,9 @@ void get_block_handle::getIssuanceDetail() {
            << ", auditor_reward: " << static_cast<uint64_t>(node_reward.second.m_auditor_reward / xstake::REWARD_PRECISION) << "." << std::setw(6) << std::setfill('0')
            << static_cast<uint32_t>(node_reward.second.m_auditor_reward % xstake::REWARD_PRECISION)
            << ", voter_reward: " << static_cast<uint64_t>(node_reward.second.m_vote_reward / xstake::REWARD_PRECISION) << "." << std::setw(6) << std::setfill('0')
-           << static_cast<uint32_t>(node_reward.second.m_vote_reward % xstake::REWARD_PRECISION);
+           << static_cast<uint32_t>(node_reward.second.m_vote_reward % xstake::REWARD_PRECISION)
+           << ", self_reward: " << static_cast<uint64_t>(node_reward.second.m_self_reward / xstake::REWARD_PRECISION) << "." << std::setw(6) << std::setfill('0')
+           << static_cast<uint32_t>(node_reward.second.m_self_reward % xstake::REWARD_PRECISION);
         jr[node_reward.first] = ss.str();
     }
     jv["node_rewards"] = jr;
@@ -884,6 +886,31 @@ void get_block_handle::getLatestBlock() {
     data::xblock_t * bp = dynamic_cast<data::xblock_t *>(vblock.get());
     auto value = get_block_json(bp);
     m_js_rsp["value"] = value;
+}
+
+void get_block_handle::getLatestFullBlock() {
+    std::string owner = m_js_req["account_addr"].asString();
+    auto vblock = m_block_store->get_latest_full_block(owner);
+    data::xblock_t * bp = dynamic_cast<data::xblock_t *>(vblock.get());
+    if (bp) {
+        xJson::Value jv;
+        jv["height"] = static_cast<xJson::UInt64>(bp->get_height());
+        if (bp->is_fulltable()) {
+            xfull_tableblock_t* ftp = dynamic_cast<xfull_tableblock_t*>(bp);
+            auto root_hash = ftp->get_offdata_hash();
+            jv["root_hash"] = to_hex_str(root_hash);
+            auto od = ftp->get_offdata();
+            if (od) {
+                auto od_obj = make_object_ptr<xvboffdata_t>();
+                od->add_ref();
+                od_obj.attach(od);                
+                std::string empty_binlog;
+                xtablestate_ptr_t tsp = make_object_ptr<xtablestate_t>(od_obj, ftp->get_height(), empty_binlog, ftp->get_height());
+                jv["account_size"] = static_cast<xJson::UInt64>(tsp->get_account_size());
+            }
+        }
+        m_js_rsp["value"] = jv;
+    }
 }
 
 void get_block_handle::getBlockByHeight() {

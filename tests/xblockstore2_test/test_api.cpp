@@ -6,7 +6,7 @@
 #include "tests/mock/xcertauth_util.hpp"
 #include "tests/mock/xdatamock_table.hpp"
 #include "tests/mock/xblock_generator.hpp"
-#include "test_blockstore_util.hpp"
+#include "tests/mock/xvchain_creator.hpp"
 
 using namespace top;
 using namespace top::base;
@@ -22,9 +22,11 @@ protected:
 };
 
 TEST_F(test_api, store_genesis_block_1) {
+    mock::xvchain_creator creator;
+    creator.create_blockstore_with_xstore();
+    base::xvblockstore_t* blockstore = creator.get_blockstore();
+
     std::string address = mock::xdatamock_address::make_user_address_random();
-    test_blockstore_util blockstore_util;
-    base::xvblockstore_t* blockstore = blockstore_util.get_blockstore();
 
     uint64_t init_balance = 100;
     base::xauto_ptr<base::xvblock_t> genesis_block = data::xblocktool_t::create_genesis_lightunit(address, init_balance);
@@ -33,33 +35,14 @@ TEST_F(test_api, store_genesis_block_1) {
 
     auto ret = blockstore->store_block(_vaddr, genesis_block.get());
     xassert(ret);
-}
-
-TEST_F(test_api, store_genesis_block_2) {
-    std::string address = mock::xdatamock_address::make_user_address_random();
-    test_blockstore_util blockstore_util;
-    base::xvblockstore_t* blockstore = blockstore_util.get_blockstore();
-
-    uint64_t init_balance = 100;
-    base::xauto_ptr<base::xvblock_t> genesis_block = data::xblocktool_t::create_genesis_lightunit(address, init_balance);
-    xassert(genesis_block != nullptr);
-    base::xvaccount_t _vaddr(address);
-    auto ret = blockstore->store_block(_vaddr, genesis_block.get());
-    xassert(ret);
-    sleep(15);
-    xdbg("jimmy========acct_t begin to get");
-    base::xauto_ptr<base::xvblock_t> query_block = blockstore->get_latest_committed_block(_vaddr);
-    xdbg("jimmy========acct_t end to get");
-    xassert(query_block->get_block_class() == base::enum_xvblock_class_light);
-    data::xlightunit_block_t* lightunit = dynamic_cast<data::xlightunit_block_t*>(query_block.get());
-    xassert(lightunit != nullptr);
-    xassert((int64_t)init_balance == lightunit->get_balance_change());
 }
 
 TEST_F(test_api, store_empty_block_1) {
+    mock::xvchain_creator creator;
+    creator.create_blockstore_with_xstore();
+    base::xvblockstore_t* blockstore = creator.get_blockstore();
+
     std::string address = mock::xdatamock_address::make_user_address_random();
-    test_blockstore_util blockstore_util;
-    base::xvblockstore_t* blockstore = blockstore_util.get_blockstore();
 
     uint64_t init_balance = 100;
     base::xauto_ptr<base::xvblock_t> genesis_block = data::xblocktool_t::create_genesis_empty_block(address);
@@ -85,9 +68,11 @@ TEST_F(test_api, store_empty_block_1) {
 }
 
 TEST_F(test_api, store_unit_block_1) {
+    mock::xvchain_creator creator;
+    creator.create_blockstore_with_xstore();
+    base::xvblockstore_t* blockstore = creator.get_blockstore();
+
     std::string address = mock::xdatamock_address::make_user_address_random();
-    test_blockstore_util blockstore_util;
-    base::xvblockstore_t* blockstore = blockstore_util.get_blockstore();
 
     uint64_t max_block_height = 1;
     xdatamock_table mocktable(1, 1);
@@ -118,10 +103,12 @@ TEST_F(test_api, store_unit_block_1) {
 }
 
 TEST_F(test_api, execute_block_1) {
+    mock::xvchain_creator creator;
+    creator.create_blockstore_with_xstore();
+    base::xvblockstore_t* blockstore = creator.get_blockstore();
+
     std::string address = mock::xdatamock_address::make_user_address_random();
     base::xvaccount_t _vaddr(address);
-    test_blockstore_util blockstore_util;
-    base::xvblockstore_t* blockstore = blockstore_util.get_blockstore();
 
     uint64_t max_block_height = 8;
     xblock_generator bgenerator(address);
@@ -144,9 +131,11 @@ TEST_F(test_api, execute_block_1) {
 }
 
 TEST_F(test_api, store_table_block_1) {
+    mock::xvchain_creator creator;
+    creator.create_blockstore_with_xstore();
+    base::xvblockstore_t* blockstore = creator.get_blockstore();
+
     std::string address = mock::xdatamock_address::make_user_address_random();
-    test_blockstore_util blockstore_util;
-    base::xvblockstore_t* blockstore = blockstore_util.get_blockstore();
 
     uint64_t max_block_height = 1;
     xdatamock_table mocktable;
@@ -175,9 +164,11 @@ TEST_F(test_api, store_table_block_1) {
 }
 
 TEST_F(test_api, store_table_block_2) {
+    mock::xvchain_creator creator;
+    creator.create_blockstore_with_xstore();
+    base::xvblockstore_t* blockstore = creator.get_blockstore();
+
     std::string address = mock::xdatamock_address::make_user_address_random();
-    test_blockstore_util blockstore_util;
-    base::xvblockstore_t* blockstore = blockstore_util.get_blockstore();
 
     uint64_t max_block_height = 10;
     xdatamock_table mocktable;
@@ -206,9 +197,11 @@ TEST_F(test_api, store_table_block_2) {
 }
 
 TEST_F(test_api, store_table_block_3) {
+    mock::xvchain_creator creator;
+    creator.create_blockstore_with_xstore();
+    base::xvblockstore_t* blockstore = creator.get_blockstore();
+
     std::string address = mock::xdatamock_address::make_user_address_random();
-    test_blockstore_util blockstore_util;
-    base::xvblockstore_t* blockstore = blockstore_util.get_blockstore();
 
     uint64_t max_block_height = 10;
     xdatamock_table mocktable;
