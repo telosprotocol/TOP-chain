@@ -9,6 +9,7 @@
 #include "xvledger/xvblock.h"
 #include "xvledger/xvblockstore.h"
 
+#include <cstdint>
 #include <string>
 
 NS_BEG3(top, tests, vledger)
@@ -18,7 +19,7 @@ public:
     xtop_dummy_blockstore(xtop_dummy_blockstore const &) = delete;
     xtop_dummy_blockstore & operator=(xtop_dummy_blockstore const &) = delete;
 
-    xtop_dummy_blockstore() : base::xvblockstore_t(base::xcontext_t::instance(), 0) {
+    xtop_dummy_blockstore(int32_t const target_thread_id) : base::xvblockstore_t(base::xcontext_t::instance(), target_thread_id) {
     }
 
 protected:
@@ -54,6 +55,10 @@ public:
     }
 
     base::xauto_ptr<base::xvblock_t> get_latest_genesis_connected_block(const base::xvaccount_t & account) override {
+        return nullptr;
+    }
+
+    base::xauto_ptr<base::xvblock_t> get_latest_committed_full_block(const base::xvaccount_t & account) override {
         return nullptr;
     }
 

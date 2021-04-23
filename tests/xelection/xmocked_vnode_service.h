@@ -29,23 +29,23 @@ protected:
 };
 using xmocked_vnode_group_t = xtop_mocked_vnode_group;
 
-class xtop_mocked_node_service : public top::election::xvnode_house_t {
+class xtop_mocked_vnode_service : public top::election::xvnode_house_t {
 protected:
     std::unordered_map<common::xgroup_address_t, std::vector<xobject_ptr_t<base::xvnode_t>>> m_data;
 public:
-    xtop_mocked_node_service() = default;
-    xtop_mocked_node_service(xtop_mocked_node_service const &) = delete;
-    xtop_mocked_node_service & operator=(xtop_mocked_node_service const &) = delete;
-    xtop_mocked_node_service(xtop_mocked_node_service &&) = default;
-    xtop_mocked_node_service & operator=(xtop_mocked_node_service &&) = default;
-    ~xtop_mocked_node_service() override = default;
+    xtop_mocked_vnode_service() = default;
+    xtop_mocked_vnode_service(xtop_mocked_vnode_service const &) = delete;
+    xtop_mocked_vnode_service & operator=(xtop_mocked_vnode_service const &) = delete;
+    xtop_mocked_vnode_service(xtop_mocked_vnode_service &&) = default;
+    xtop_mocked_vnode_service & operator=(xtop_mocked_vnode_service &&) = default;
+    ~xtop_mocked_vnode_service() override = default;
 
-    xtop_mocked_node_service(common::xaccount_address_t const & account_address,
-                             std::string const & sign_key,
-                             xobject_ptr_t<base::xvblockstore_t> const & blockstore,
-                             observer_ptr<top::mbus::xmessage_bus_face_t> const & bus);
+    xtop_mocked_vnode_service(common::xaccount_address_t const & account_address,
+                              std::string const & sign_key,
+                              xobject_ptr_t<base::xvblockstore_t> const & blockstore,
+                              observer_ptr<top::mbus::xmessage_bus_face_t> const & bus);
 
-    xtop_mocked_node_service(common::xaccount_address_t const & account_address,
+    xtop_mocked_vnode_service(common::xaccount_address_t const & account_address,
                              std::string const & sign_key);
 
     xobject_ptr_t<xmocked_vnode_group_t> add_group(common::xnetwork_id_t const & nid,
@@ -55,6 +55,6 @@ public:
                                                    uint16_t const group_size,
                                                    uint64_t const election_blk_height);
 };
-using xmocked_nodesvr_t = xtop_mocked_node_service;
+using xmocked_vnodesvr_t = xtop_mocked_vnode_service;
 
 NS_END3
