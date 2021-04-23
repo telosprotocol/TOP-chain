@@ -29,3 +29,10 @@
 - 系统合约文档说明: 见系统合约文档目录
 - P2P网络文档: 见P2P网络文档
 
+## 代码
+
+1. leader轮换代码: src/xtopcom/xunit_service/xleader_election.h get_leader_xip
+2. shard轮换机制: src/xtopcom/xvm/xsystem_contracts/xelection/xzec/xzec_elect_consensus_group_contract.h
+3. 出块业务: src/xtopcom/xtxexecutor/xtxpool_block_maker.h
+			src/xtopcom/xtxexecutor/xunit_blockmaker.h 
+
