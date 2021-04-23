@@ -106,6 +106,30 @@ public:
     const std::string & get_addr() const {
         return m_account;
     }
+    void tx_rule_filter() {
+        auto & first_tx = m_txs[0];
+        enum_transaction_subtype first_tx_subtype = first_tx->get_tx_subtype();
+        if (first_tx_subtype == enum_transaction_subtype_self) {
+            first_tx_subtype = enum_transaction_subtype_send;
+        }
+        if (first_tx->get_transaction()->get_tx_type() != xtransaction_type_transfer && !first_tx->is_confirm_tx()) {
+            m_txs.erase(m_txs.begin() + 1, m_txs.end());
+            return;
+        }
+
+        for (auto it = m_txs.begin() + 1; it != m_txs.end();) {
+            enum_transaction_subtype subtype = it->get()->get_tx_subtype();
+            if (subtype == enum_transaction_subtype_self) {
+                subtype = enum_transaction_subtype_send;
+            }
+
+            if (subtype != first_tx_subtype || (first_tx->get_transaction()->get_tx_type() != xtransaction_type_transfer && !first_tx->is_confirm_tx())) {
+                it = m_txs.erase(it);
+            } else {
+                it++;
+            }
+        }
+    }
 
 private:
     std::string m_account;

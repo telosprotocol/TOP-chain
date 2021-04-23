@@ -10,6 +10,7 @@
 #include "xstore/xtgas_singleton.h"
 #include "xdata/xblocktool.h"
 #include "xdata/xnative_contract_address.h"
+#include "xtxpool_v2/xtxpool_tool.h"
 
 NS_BEG2(top, blockmaker)
 
@@ -243,28 +244,7 @@ xblock_ptr_t xproposal_maker_t::verify_proposal_prev_block(base::xvblock_t * pro
 
 bool xproposal_maker_t::update_txpool_txs(const xblock_consensus_para_t & proposal_para, xtablemaker_para_t & table_para) {
     // TODO(jimmy) use base::xvaccount_t for performance
-    std::vector<xtxpool_v2::tx_info_t> locked_tx_vec;
-    get_locked_txs(proposal_para.get_latest_cert_block(), locked_tx_vec);
-    get_locked_txs(proposal_para.get_latest_locked_block(), locked_tx_vec);
-    get_txpool()->update_locked_txs(get_account(), locked_tx_vec);
-
-    // get tablestate related to latest cert block
-    auto tablestate_commit = m_indexstore->clone_tablestate(proposal_para.get_latest_committed_block());
-    if (nullptr == tablestate_commit) {
-        xwarn("xproposal_maker_t::update_txpool_txs fail clone tablestate. %s", proposal_para.dump().c_str());
-        return false;
-    }
-
-    get_txpool()->update_receiptid_state(proposal_para.get_table_account(), tablestate_commit->get_receiptid_state());
-
-    auto tablestate_highqc = m_indexstore->clone_tablestate(proposal_para.get_latest_cert_block());
-    if (nullptr == tablestate_highqc) {
-        xwarn("xproposal_maker_t::update_txpool_txs fail clone tablestate. %s", proposal_para.dump().c_str());
-        return false;
-    }
-
-    xtxpool_v2::xtxs_pack_para_t txpool_pack_para(proposal_para.get_table_account(), tablestate_highqc->get_receiptid_state(), 16, 32, 32);
-    xtxpool_v2::ready_accounts_t ready_accounts = get_txpool()->get_ready_accounts(txpool_pack_para);
+    auto ready_accounts = get_ready_txs(proposal_para);
     // xtxpool_v2::ready_accounts_t ready_accounts = get_txpool()->get_ready_accounts(get_account(), m_max_account_num);
     for (auto & ready_account : ready_accounts) {
         xassert(ready_account->get_txs().size() != 0);
@@ -355,7 +335,7 @@ bool xproposal_maker_t::backup_set_consensus_para(base::xvblock_t* latest_cert_b
     return true;
 }
 
-void xproposal_maker_t::get_locked_txs(const xblock_ptr_t & block, std::vector<xtxpool_v2::tx_info_t> & locked_tx_vec) {
+void xproposal_maker_t::get_locked_txs(const xblock_ptr_t & block, std::vector<xtxpool_v2::tx_info_t> & locked_tx_vec) const {
     const auto & units = block->get_tableblock_units(false);
     for (auto unit : units) {
         if (unit->get_block_class() != base::enum_xvblock_class_light) {
@@ -367,6 +347,71 @@ void xproposal_maker_t::get_locked_txs(const xblock_ptr_t & block, std::vector<x
         for (auto & tx : txs) {
             xtxpool_v2::tx_info_t txinfo(lightunit->get_account(), tx->get_tx_hash_256(), tx->get_tx_subtype());
             locked_tx_vec.push_back(txinfo);
+        }
+    }
+}
+
+xtxpool_v2::ready_accounts_t xproposal_maker_t::filt_noncontinuous_txs(xtxpool_v2::ready_accounts_t & reday_accounts,
+                                                                       const base::xreceiptid_state_ptr_t receiptid_state_highqc) const {
+    xtxpool_v2::xordered_ready_txs_t ordered_ready_txs(reday_accounts);
+    ordered_ready_txs.erase_noncontinuous_receipts(receiptid_state_highqc);
+    return ordered_ready_txs.get_ready_accounts();
+}
+
+xtxpool_v2::ready_accounts_t xproposal_maker_t::get_ready_txs(const xblock_consensus_para_t & proposal_para) const {
+    std::vector<xtxpool_v2::tx_info_t> locked_tx_vec;
+    get_locked_txs(proposal_para.get_latest_cert_block(), locked_tx_vec);
+    get_locked_txs(proposal_para.get_latest_locked_block(), locked_tx_vec);
+    get_txpool()->update_locked_txs(get_account(), locked_tx_vec);
+
+    // get tablestate related to latest cert block
+    auto tablestate_commit = m_indexstore->clone_tablestate(proposal_para.get_latest_committed_block());
+    if (nullptr == tablestate_commit) {
+        xwarn("xproposal_maker_t::update_txpool_txs fail clone tablestate. %s", proposal_para.dump().c_str());
+        return {};
+    }
+
+    get_txpool()->update_receiptid_state(proposal_para.get_table_account(), tablestate_commit->get_receiptid_state());
+
+    auto tablestate_highqc = m_indexstore->clone_tablestate(proposal_para.get_latest_cert_block());
+    if (nullptr == tablestate_highqc) {
+        xwarn("xproposal_maker_t::update_txpool_txs fail clone tablestate. %s", proposal_para.dump().c_str());
+        return {};
+    }
+
+    xtxpool_v2::xtxs_pack_para_t txpool_pack_para(proposal_para.get_table_account(), tablestate_highqc->get_receiptid_state(), 16, 32, 32);
+    xtxpool_v2::ready_accounts_t ready_accounts = get_txpool()->get_ready_accounts(txpool_pack_para);
+
+    return table_rules_filter(proposal_para, tablestate_highqc->get_receiptid_state(), ready_accounts);
+}
+
+xtxpool_v2::ready_accounts_t xproposal_maker_t::table_rules_filter(const xblock_consensus_para_t & proposal_para,
+                                                                   const base::xreceiptid_state_ptr_t receiptid_state_highqc,
+                                                                   xtxpool_v2::ready_accounts_t & ready_accounts) const {
+    std::set<std::string> locked_account_set;
+    get_locked_accounts(proposal_para.get_latest_cert_block(), locked_account_set);
+    get_locked_accounts(proposal_para.get_latest_locked_block(), locked_account_set);
+
+    for (auto it_ready_account = ready_accounts.begin(); it_ready_account != ready_accounts.end();) {
+        auto it_locked_account_set = locked_account_set.find(it_ready_account->get()->get_addr());
+        if (it_locked_account_set != locked_account_set.end()) {
+            // filt locked accounts' txs
+            it_ready_account = ready_accounts.erase(it_ready_account);
+        } else {
+            // filt txs not match rule
+            it_ready_account->get()->tx_rule_filter();
+            it_ready_account++;
+        }
+    }
+
+    return filt_noncontinuous_txs(ready_accounts, receiptid_state_highqc);
+}
+
+void xproposal_maker_t::get_locked_accounts(const xblock_ptr_t & block, std::set<std::string> & locked_account_set) const {
+    const auto & units = block->get_tableblock_units(false);
+    for (auto unit : units) {
+        if (unit->get_block_class() == base::enum_xvblock_class_light || unit->get_block_class() == base::enum_xvblock_class_full) {
+            locked_account_set.insert(unit->get_account());
         }
     }
 }

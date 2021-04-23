@@ -43,9 +43,69 @@ xordered_ready_txs_t::xordered_ready_txs_t(ready_accounts_t reday_accounts) {
                 add_tx(tx, m_peer_table_confirm_tx_map);
             } else if (tx->is_recv_tx()) {
                 add_tx(tx, m_peer_table_recv_tx_map);
+            } else {
+                m_send_txs.push_back(tx);
             }
         }
     }
+}
+
+void xordered_ready_txs_t::erase_noncontinuous_receipts(const base::xreceiptid_state_ptr_t receiptid_state) {
+    for (auto & recv_tx_map_pair : m_peer_table_recv_tx_map) {
+        auto peer_table_sid = recv_tx_map_pair.first;
+        base::xreceiptid_pair_t receiptid_pair;
+        receiptid_state->find_pair(peer_table_sid, receiptid_pair);
+        auto min_receipt_id = receiptid_pair.get_recvid_max();
+        auto & recv_tx_map = recv_tx_map_pair.second;
+        for (auto it_recv_tx_map = recv_tx_map.begin(); it_recv_tx_map != recv_tx_map.end();) {
+            auto & tx = it_recv_tx_map->second;
+            if (tx->get_last_action_receipt_id() != (min_receipt_id + 1)) {
+                xtxpool_warn("xordered_ready_txs_t::erase_noncontinuous_receipts:peer_table_sid:%d,tx:%s, min_receipt_id:%llu", peer_table_sid, tx->dump().c_str(), min_receipt_id);
+                it_recv_tx_map = recv_tx_map.erase(it_recv_tx_map);
+            } else {
+                it_recv_tx_map++;
+                min_receipt_id++;
+            }
+        }
+    }
+
+    for (auto & confirm_tx_map_pair : m_peer_table_confirm_tx_map) {
+        auto peer_table_sid = confirm_tx_map_pair.first;
+        base::xreceiptid_pair_t receiptid_pair;
+        receiptid_state->find_pair(peer_table_sid, receiptid_pair);
+        auto min_receipt_id = receiptid_pair.get_confirmid_max();
+        auto & confirm_tx_map = confirm_tx_map_pair.second;
+        for (auto it_confirm_tx_map = confirm_tx_map.begin(); it_confirm_tx_map != confirm_tx_map.end();) {
+            auto & tx = it_confirm_tx_map->second;
+            if (tx->get_last_action_receipt_id() != (min_receipt_id + 1)) {
+                xtxpool_warn("xordered_ready_txs_t::erase_noncontinuous_receipts:peer_table_sid:%d,tx:%s, min_receipt_id:%llu", peer_table_sid, tx->dump().c_str(), min_receipt_id);
+                it_confirm_tx_map = confirm_tx_map.erase(it_confirm_tx_map);
+            } else {
+                it_confirm_tx_map++;
+                min_receipt_id++;
+            }
+        }
+    }
+}
+
+ready_accounts_t xordered_ready_txs_t::get_ready_accounts() const {
+    std::vector<xcons_transaction_ptr_t> txs;
+    for (auto & tx_map_pair : m_peer_table_confirm_tx_map) {
+        auto & tx_map = tx_map_pair.second;
+        for (auto & tx_pair : tx_map) {
+            txs.push_back(tx_pair.second);
+        }
+    }
+    for (auto & tx_map_pair : m_peer_table_recv_tx_map) {
+        auto & tx_map = tx_map_pair.second;
+        for (auto & tx_pair : tx_map) {
+            txs.push_back(tx_pair.second);
+        }
+    }
+
+    txs.insert(txs.end(), m_send_txs.begin(), m_send_txs.end());
+
+    return ready_txs_to_ready_accounts(txs);
 }
 
 void xordered_ready_txs_t::add_tx(const xcons_transaction_ptr_t & tx, xpeer_table_receipt_map_t & peer_table_map) {
