@@ -97,15 +97,11 @@ std::vector<xcons_transaction_ptr_t> test_xtxpool_util_t::create_cons_transfer_t
 }
 
 xblock_t * test_xtxpool_util_t::create_unit_with_cons_txs(base::xvblockstore_t *blockstore, xstore_face_t * store, const std::string & address, const std::vector<xcons_transaction_ptr_t> & txs) {
-    auto account = store->clone_account(address);
-    base::xvblock_t* latest_block = nullptr;
+    auto latest_block = blockstore->get_latest_cert_block(base::xvaccount_t(address));
+    std::cout << "account is not null,latest_block:" << latest_block << std::endl;
+    auto account = store->query_account(address);
     if (account == nullptr) {
-        latest_block = data::xblocktool_t::create_genesis_empty_unit(address);
-        store->set_vblock(latest_block);
-        store->execute_block(latest_block);
-        account = store->clone_account(address);
-    } else {
-        latest_block = store->get_block_by_height(address, account->get_chain_height());
+        account = make_object_ptr<xblockchain2_t>();
     }
 
     int64_t amount = -100 * txs.size();
@@ -115,19 +111,10 @@ xblock_t * test_xtxpool_util_t::create_unit_with_cons_txs(base::xvblockstore_t *
     para.set_balance_change(amount);
     para.set_account_unconfirm_sendtx_num(account->get_unconfirm_sendtx_num());
 
-    base::xvblock_t *          proposal_block = test_blocktuil::create_next_lightunit_with_consensus(para, latest_block);
-    auto                       block = dynamic_cast<data::xblock_t *>(proposal_block);
-    data::xlightunit_block_t * lightunit = dynamic_cast<data::xlightunit_block_t *>(block);
-    xinfo("create_unit_with_cons_txs: lightunit->is_prev_sendtx_confirmed(): %d", lightunit->is_prev_sendtx_confirmed());
+    base::xvblock_t * block = test_blocktuil::create_next_lightunit_with_consensus(para, latest_block.get());
+    blockstore->store_block(address, block);
 
-    std::vector<xcons_transaction_ptr_t> sendtx_receipts;
-    std::vector<xcons_transaction_ptr_t> recvtx_receipts;
-    lightunit->create_txreceipts(sendtx_receipts, recvtx_receipts);
-    xinfo("create_unit_with_cons_txs: sendtx_receipts size:%d recvtx_receipts size:%d", sendtx_receipts.size(), recvtx_receipts.size());
-
-    blockstore->store_block(block);
-
-    return block;
+    return dynamic_cast<data::xblock_t *>(block);
 }
 
 xblock_t * test_xtxpool_util_t::create_unit_with_contract_create_tx(xstore_face_t * store, const std::string & address, const std::vector<xcons_transaction_ptr_t> & txs, const std::string & receiver) {
@@ -135,7 +122,7 @@ xblock_t * test_xtxpool_util_t::create_unit_with_contract_create_tx(xstore_face_
     base::xvblock_t* latest_block = nullptr;
     if (account == nullptr) {
         latest_block = data::xblocktool_t::create_genesis_empty_unit(address);
-        store->set_vblock(latest_block);
+        store->set_vblock(std::string(), latest_block);
         store->execute_block(latest_block);
         account = store->clone_account(address);
     } else {
@@ -158,7 +145,7 @@ xblock_t * test_xtxpool_util_t::create_unit_with_contract_create_tx(xstore_face_
     base::xvblock_t *          proposal_block = test_blocktuil::create_next_lightunit_with_consensus(para, latest_block);
     auto                       block = dynamic_cast<data::xblock_t *>(proposal_block);
 
-    store->set_vblock(block);
+    store->set_vblock(std::string(), block);
     store->execute_block(block);
 
     return block;
@@ -168,7 +155,7 @@ void test_xtxpool_util_t::create_genesis_account(xstore_face_t * store, const st
     auto account = store->clone_account(address);
     if (account == nullptr) {
         base::xvblock_t * genesis_block = data::xblocktool_t::create_genesis_lightunit(address, 1000000);
-        store->set_vblock(genesis_block);
+        store->set_vblock(std::string(), genesis_block);
         // account = store->clone_account(address);
     }
 
@@ -181,7 +168,7 @@ void test_xtxpool_util_t::create_genesis_account(xstore_face_t * store, const st
 
     // base::xvblock_t* proposal_block = data::xlightunit_block_t::create_next_lightunit(para, account);
     // auto block = dynamic_cast<data::xblock_t*>(proposal_block);
-    // store->set_vblock(block);
+    // store->set_vblock(std::string(), block);
 }
 
 xblock_t * test_xtxpool_util_t::create_tableblock_with_cons_txs(xstore_face_t *                              store,
@@ -212,14 +199,14 @@ xblock_t * test_xtxpool_util_t::create_tableblock_with_cons_txs(xstore_face_t * 
 
     std::string       taccount1 = xblocktool_t::make_address_shard_table_account(100);
     base::xvblock_t * taccount1_genesis_block = xblocktool_t::create_genesis_empty_table(taccount1);
-    // store->set_vblock(taccount1_genesis_block);
+    // store->set_vblock(std::string(), taccount1_genesis_block);
     xblock_t * taccount1_proposal_block = (xblock_t *)test_blocktuil::create_next_tableblock(table_para, taccount1_genesis_block, table_clock);
     assert(!taccount1_proposal_block->get_block_hash().empty());
-    store->set_vblock(taccount1_proposal_block);
+    store->set_vblock(std::string(), taccount1_proposal_block);
     return taccount1_proposal_block;
 }
 
-xblock_t * test_xtxpool_util_t::create_tableblock_with_cons_txs_with_next_two_emptyblock(base::xvblockstore_t *  store,
+xblock_t * test_xtxpool_util_t::create_tableblock_with_cons_txs_with_next_two_emptyblock(base::xvblockstore_t *  blockstore,
                                                                 const std::string &                          address,
                                                                 base::xvblock_t *                            unit_genesis_block,
                                                                 const std::vector<xcons_transaction_ptr_t> & txs,
@@ -250,35 +237,62 @@ xblock_t * test_xtxpool_util_t::create_tableblock_with_cons_txs_with_next_two_em
 
     std::string       taccount1 = xblocktool_t::make_address_shard_table_account(100);
     base::xvblock_t * taccount1_genesis_block = xblocktool_t::create_genesis_empty_table(taccount1);
-    // store->set_vblock(taccount1_genesis_block);
     xblock_t * taccount1_proposal_block = (xblock_t *)test_blocktuil::create_next_tableblock_with_next_two_emptyblock(table_para, taccount1_genesis_block, table_clock);
     assert(!taccount1_proposal_block->get_block_hash().empty());
-    store->store_block(taccount1_proposal_block);
+    blockstore->store_block(taccount1, taccount1_proposal_block);
     return taccount1_proposal_block;
 }
 
 void test_xtxpool_util_t::table_block_set_to_store(xstore_face_t * store, xblock_t * table_block) {
-    store->set_vblock(table_block);
+    store->set_vblock(std::string(), table_block);
 }
 
-xblock_t * test_xtxpool_util_t::create_tableblock_with_send_txs_with_next_two_emptyblock(base::xvblockstore_t *  store,
-                                                                const std::string &                          address,
-                                                                base::xvblock_t *                            unit_genesis_block,
+xblock_t * test_xtxpool_util_t::create_tableblock_with_send_txs_with_next_two_emptyblock(base::xvblockstore_t *  blockstore,
+                                                                xstore_face_t *                              store,
+                                                                const std::string &                          account_address,
+                                                                const std::string &                          table_address,
                                                                 const std::vector<xcons_transaction_ptr_t> & txs,
-                                                                uint64_t                                     tx_clock,
                                                                 uint64_t                                     table_clock) {
+    auto latest_block = blockstore->get_latest_cert_block(base::xvaccount_t(account_address));
+    std::cout << "account is not null,latest_block:" << latest_block << std::endl;
+    auto account = store->query_account(account_address);
+    if (account == nullptr) {
+        account = make_object_ptr<xblockchain2_t>();
+    }
+
+
     xlightunit_block_para_t para;
     para.set_input_txs(txs);
-    xblock_t * unit = (xblock_t *)test_blocktuil::create_next_lightunit(para, unit_genesis_block);
+    xblock_t * unit = (xblock_t *)test_blocktuil::create_next_lightunit(para, latest_block.get());
 
     xtable_block_para_t table_para;
     table_para.add_unit(unit);
 
-    std::string       taccount1 = xblocktool_t::make_address_shard_table_account(100);
-    base::xvblock_t * taccount1_genesis_block = xblocktool_t::create_genesis_empty_table(taccount1);
-    // store->set_vblock(taccount1_genesis_block);
-    xblock_t * taccount1_proposal_block = (xblock_t *)test_blocktuil::create_next_tableblock_with_next_two_emptyblock(table_para, taccount1_genesis_block, table_clock);
+    base::xvblock_t * taccount1_genesis_block = xblocktool_t::create_genesis_empty_table(table_address);
+    xblock_t * taccount1_proposal_block = (xblock_t *)test_blocktuil::create_next_tableblock(table_para, taccount1_genesis_block, table_clock);
     assert(!taccount1_proposal_block->get_block_hash().empty());
-    store->store_block(taccount1_proposal_block);
+    blockstore->store_block(table_address, taccount1_proposal_block);
+
+    auto unit_in_db1 = blockstore->get_latest_cert_block(account_address);
+    xvblock_t *unit1 = test_blocktuil::create_next_emptyblock(unit_in_db1.get());
+
+    xtable_block_para_t table_para1;
+    table_para1.add_unit(unit1);
+
+    xblock_t * taccount1_proposal_block1 = (xblock_t *)test_blocktuil::create_next_tableblock(table_para1, taccount1_proposal_block, table_clock);
+    assert(!taccount1_proposal_block1->get_block_hash().empty());
+    blockstore->store_block(table_address, taccount1_proposal_block1);
+
+    auto unit_in_db2 = blockstore->get_latest_cert_block(account_address);
+    xvblock_t *unit2 = test_blocktuil::create_next_emptyblock(unit_in_db2.get());
+
+    xtable_block_para_t table_para2;
+    table_para2.add_unit(unit2);
+
+    base::xvblock_t * taccount1_genesis_block2 = xblocktool_t::create_genesis_empty_table(table_address);
+    xblock_t * taccount1_proposal_block2 = (xblock_t *)test_blocktuil::create_next_tableblock(table_para2, taccount1_proposal_block1, table_clock);
+    assert(!taccount1_proposal_block2->get_block_hash().empty());
+    blockstore->store_block(table_address, taccount1_proposal_block2);
+
     return taccount1_proposal_block;
 }

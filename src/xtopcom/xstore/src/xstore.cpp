@@ -696,23 +696,29 @@ bool xstore::set_full_block_offstate(const std::string & account, uint64_t heigh
 }
 
 bool xstore::execute_tableblock_light(xblockchain2_t* account, const xblock_t *block) {
+    uint64_t last_full_height = block->get_last_full_block_height();
+    std::string old_full_data_str;
+    if (last_full_height != 0) {
+        xstore_key_t last_full_offstate_key = xstore_key_t(xstore_key_type_block_offstate, xstore_block_type_none, block->get_account(), std::to_string(last_full_height));
+        old_full_data_str = get_value(last_full_offstate_key);
+        if (old_full_data_str.empty()) {
+            xerror("xstore::execute_tableblock_light get full data fail.block=%s", block->dump().c_str());
+            return false;
+        }
+    }
+
     std::string binlog_str = account->get_extend_data(xblockchain2_t::enum_blockchain_ext_type_binlog);
     if (block->get_last_full_block_height() == block->get_height() - 1) {
         xassert(binlog_str.empty());
     }
 
-    xtablestate_ptr_t tablestate = make_object_ptr<xtablestate_t>();
-    if (!binlog_str.empty()) {
-        bool ret = tablestate->serialize_from_binlog(binlog_str);
-        if (!ret) {
-            xerror("xstore::execute_tableblock_light serialize_from_string fail.block=%s", block->dump().c_str());
-            return false;
-        }
-    }
+    xassert(block->get_height() - 1 == account->get_last_height());
+    xtablestate_ptr_t tablestate = make_object_ptr<xtablestate_t>(old_full_data_str, last_full_height, binlog_str, block->get_height() - 1);
     if (!tablestate->execute_block((base::xvblock_t*)block)) {
         xerror("xstore::execute_tableblock_light execute fail.block=%s", block->dump().c_str());
         return false;
     }
+    xdbg("xstore::execute,%s,height=%ld,receiptid_binlog=%s", block->get_account().c_str(), block->get_height(), tablestate->get_receiptid_state()->get_binlog()->dump().c_str());
     std::string new_binlog_data_str = tablestate->serialize_to_binlog_data_string();
     account->set_extend_data(xblockchain2_t::enum_blockchain_ext_type_binlog, new_binlog_data_str);
     account->add_light_table(block);
@@ -721,33 +727,30 @@ bool xstore::execute_tableblock_light(xblockchain2_t* account, const xblock_t *b
 }
 
 bool xstore::execute_tableblock_full(xblockchain2_t* account, xfull_tableblock_t *block, std::map<std::string, std::string> & kv_pairs) {
-    xstore_key_t last_full_offstate_key = xstore_key_t(xstore_key_type_block_offstate, xstore_block_type_none, block->get_account(), std::to_string(block->get_last_full_block_height()));
-    std::string old_full_data_str = get_value(last_full_offstate_key);
-    if (block->get_last_full_block_height() != 0) {
-        xassert(!old_full_data_str.empty());
-    }
-    if (block->get_last_full_block_height() == 0) {
-        xassert(old_full_data_str.empty());
-    }
-    std::string binlog_str = account->get_extend_data(xblockchain2_t::enum_blockchain_ext_type_binlog);
-    xassert(!binlog_str.empty());
-
-    xtablestate_ptr_t tablestate = make_object_ptr<xtablestate_t>();
-    if (!old_full_data_str.empty()) {
-        if (false == tablestate->serialize_from_full_offdata(old_full_data_str)) {
-            xerror("xstore::execute_tableblock_full serialize_from_full_offdata fail.block=%s", block->dump().c_str());
+    uint64_t last_full_height = block->get_last_full_block_height();
+    std::string old_full_data_str;
+    if (last_full_height != 0) {
+        xstore_key_t last_full_offstate_key = xstore_key_t(xstore_key_type_block_offstate, xstore_block_type_none, block->get_account(), std::to_string(block->get_last_full_block_height()));
+        old_full_data_str = get_value(last_full_offstate_key);
+        if (old_full_data_str.empty()) {
+            xerror("xstore::execute_tableblock_full get full data fail.block=%s", block->dump().c_str());
             return false;
         }
     }
-    if (false == tablestate->serialize_from_binlog(binlog_str)) {
-        xerror("xstore::execute_tableblock_full serialize_from_binlog fail.block=%s", block->dump().c_str());
+
+    std::string binlog_str = account->get_extend_data(xblockchain2_t::enum_blockchain_ext_type_binlog);
+    if (binlog_str.empty()) {
+        xerror("xstore::execute_tableblock_full get binlog data fail.block=%s", block->dump().c_str());
         return false;
     }
+
+    xtablestate_ptr_t tablestate = make_object_ptr<xtablestate_t>(old_full_data_str, last_full_height, binlog_str, block->get_height() - 1);
     if (!tablestate->execute_block(block)) {
         xerror("xstore::execute_tableblock_full execute fail.block=%s", block->dump().c_str());
         return false;
     }
     set_vblock_offdata({}, block);
+    xdbg("xstore::execute,%s,height=%ld,receiptid_full=%s", block->get_account().c_str(), block->get_height(), tablestate->get_receiptid_state()->get_last_full_state()->dump().c_str());
 
     account->set_extend_data(xblockchain2_t::enum_blockchain_ext_type_binlog, std::string());  // clear binlo
 

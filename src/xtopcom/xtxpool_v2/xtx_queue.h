@@ -175,7 +175,6 @@ private:
     void clear_expired_txs();
     xsend_tx_queue_internal_t m_send_tx_queue_internal;
     std::map<std::string, std::shared_ptr<xsend_tx_account_t>> m_send_tx_accounts;
-    std::unordered_set<std::string> m_refresh_accounts;
 };
 
 class xreceipt_queue_t {

@@ -136,6 +136,10 @@ void xcandidate_account_entry::set_select_count(uint32_t count) {
     m_selected_count = count;
 }
 
+void xcandidate_account_entry::set_select_count_inc(uint32_t count) {
+    m_selected_count += count;
+}
+
 uint32_t xcandidate_account_entry::get_select_count() const {
     return m_selected_count;
 }
@@ -170,7 +174,7 @@ int32_t xpending_accounts_t::push_tx(const std::shared_ptr<xtx_entry> & tx_ent) 
     }
     if (ret == xsuccess) {
         xtxpool_dbg("xpending_accounts_t::push_tx success table:%s, tx:%s", m_xtable_info->get_table_addr().c_str(), tx_ent->get_tx()->dump().c_str());
-        tx_count_inc(tx_ent->get_tx()->get_tx_subtype(), 1);
+        m_xtable_info->tx_inc(tx_ent->get_tx()->get_tx_subtype(), 1);
     }
     return ret;
 }
@@ -192,7 +196,7 @@ std::shared_ptr<xtx_entry> xpending_accounts_t::pop_tx(const tx_info_t & txinfo,
             } else {
                 delete_num = tx_num - pending_account->get_txs().size();
             }
-            tx_count_dec(tx_ent->get_tx()->get_tx_subtype(), delete_num);
+            m_xtable_info->tx_dec(tx_ent->get_tx()->get_tx_subtype(), delete_num);
             xtxpool_info("xpending_accounts_t::pop_tx table:%s tx:%s", m_xtable_info->get_table_addr().c_str(), tx_ent->get_tx()->dump().c_str());
         }
 
@@ -209,7 +213,7 @@ ready_accounts_t xpending_accounts_t::pop_ready_accounts(uint32_t count) {
             account->put_tx(tx_ent->get_tx());
         }
         accounts.push_back(account);
-        tx_count_dec((*iter)->get_subtype(), (*iter)->get_txs().size());
+        m_xtable_info->tx_dec((enum_transaction_subtype)(*iter)->get_subtype(), (*iter)->get_txs().size());
         m_account_selected_lru.put((*iter)->get_addr(), (*iter)->get_select_count() + 1);
         m_account_map.erase((*iter)->get_addr());
         iter = m_accounts_set.erase(iter);
@@ -218,20 +222,22 @@ ready_accounts_t xpending_accounts_t::pop_ready_accounts(uint32_t count) {
     return accounts;
 }
 
-ready_accounts_t xpending_accounts_t::get_ready_accounts(uint32_t count) {
+ready_accounts_t xpending_accounts_t::get_ready_accounts(uint32_t txs_max_num) {
     candidate_accounts_t c_accounts;
     auto iter = m_accounts_set.begin();
-    while (iter != m_accounts_set.end() && count > 0) {
+    uint32_t txs_num = 0;
+    while (iter != m_accounts_set.end() && txs_num < txs_max_num) {
         std::shared_ptr<xcandidate_account_entry> acccount_ent = *iter;
+        acccount_ent->set_select_count_inc(1);
         c_accounts.push_back(acccount_ent);
         xtxpool_dbg("xpending_accounts_t::get_ready_accounts table:%s,account:%s,tx num:%u",
              m_xtable_info->get_table_addr().c_str(),
              acccount_ent->get_addr().c_str(),
              acccount_ent->get_txs().size());
-        m_account_selected_lru.put(acccount_ent->get_addr(), acccount_ent->get_select_count() + 1);
+        m_account_selected_lru.put(acccount_ent->get_addr(), acccount_ent->get_select_count());
         m_account_map.erase(acccount_ent->get_addr());
         iter = m_accounts_set.erase(iter);
-        count--;
+        txs_num += acccount_ent->get_txs().size();
     }
 
     // reorder
@@ -267,31 +273,11 @@ void xpending_accounts_t::updata_latest_nonce(const std::string & account_addr, 
         }
         int32_t tx_num = pending_account->get_txs().size();
         pending_account->updata_latest_nonce(latest_nonce, latest_hash);
-        tx_count_dec(enum_transaction_subtype_send, (tx_num - pending_account->get_txs().size()));
+        m_xtable_info->tx_dec(enum_transaction_subtype_send, (tx_num - pending_account->get_txs().size()));
         if (pending_account->empty()) {
             m_accounts_set.erase(iter->second);
             m_account_map.erase(iter);
         }
-    }
-}
-
-void xpending_accounts_t::tx_count_inc(uint8_t subtype, int32_t count) {
-    if (subtype == enum_transaction_subtype_recv) {
-        m_xtable_info->recv_tx_inc(count);
-    } else if (subtype == enum_transaction_subtype_confirm) {
-        m_xtable_info->conf_tx_inc(count);
-    } else {
-        m_xtable_info->send_tx_inc(count);
-    }
-}
-
-void xpending_accounts_t::tx_count_dec(uint8_t subtype, int32_t count) {
-    if (subtype == enum_transaction_subtype_recv) {
-        m_xtable_info->recv_tx_dec(count);
-    } else if (subtype == enum_transaction_subtype_confirm) {
-        m_xtable_info->conf_tx_dec(count);
-    } else {
-        m_xtable_info->send_tx_dec(count);
     }
 }
 

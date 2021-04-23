@@ -51,11 +51,11 @@ public:
                                                                 const std::vector<xcons_transaction_ptr_t> & txs,
                                                                 uint64_t                                     tx_clock,
                                                                 uint64_t                                     table_clock);
-    static xblock_t *                           create_tableblock_with_send_txs_with_next_two_emptyblock(base::xvblockstore_t *                              store,
-                                                                const std::string &                          address,
-                                                                base::xvblock_t *                            unit_genesis_block,
+    static xblock_t *                           create_tableblock_with_send_txs_with_next_two_emptyblock(base::xvblockstore_t *  blockstore,
+                                                                xstore_face_t *                              store,
+                                                                const std::string &                          account_address,
+                                                                const std::string &                          table_address,
                                                                 const std::vector<xcons_transaction_ptr_t> & txs,
-                                                                uint64_t                                     tx_clock,
                                                                 uint64_t                                     table_clock);
     static void                                 table_block_set_to_store(xstore_face_t * store, xblock_t * table_block);
     static std::string                          get_account(uint32_t account_idx);

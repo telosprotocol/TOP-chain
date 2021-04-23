@@ -66,6 +66,30 @@ ready_accounts_t xtxpool_t::get_ready_accounts(const std::string & table_addr, u
     return table->get_ready_accounts(count);
 }
 
+ready_accounts_t xtxpool_t::get_ready_accounts(const xtxs_pack_para_t & pack_para) {
+    auto table = get_txpool_table_by_addr(pack_para.get_table_addr());
+    if (table == nullptr) {
+        return {};
+    }
+    return table->get_ready_accounts(pack_para);
+}
+
+std::vector<xcons_transaction_ptr_t> xtxpool_t::get_ready_txs(const xtxs_pack_para_t & pack_para) {
+    auto table = get_txpool_table_by_addr(pack_para.get_table_addr());
+    if (table == nullptr) {
+        return {};
+    }
+    return table->get_ready_txs(pack_para);
+}
+
+std::vector<xcons_transaction_ptr_t> xtxpool_t::get_ready_txs(const std::string & table_addr, uint32_t count) {
+    auto table = get_txpool_table_by_addr(table_addr);
+    if (table == nullptr) {
+        return {};
+    }
+    return table->get_ready_txs(count);
+}
+
 const std::shared_ptr<xtx_entry> xtxpool_t::query_tx(const std::string & account_addr, const uint256_t & hash) const {
     auto table = get_txpool_table_by_addr(account_addr);
     if (table == nullptr) {
@@ -184,12 +208,28 @@ void xtxpool_t::update_unconfirm_accounts(uint8_t zone, uint16_t subaddr) {
     }
 }
 
+void xtxpool_t::update_non_ready_accounts(uint8_t zone, uint16_t subaddr) {
+    xassert(is_table_subscribed(zone, subaddr));
+    xassert(m_tables[zone][subaddr] != nullptr);
+    if (m_tables[zone][subaddr] != nullptr) {
+        m_tables[zone][subaddr]->update_non_ready_accounts();
+    }
+}
+
 void xtxpool_t::update_locked_txs(const std::string & table_addr, const std::vector<tx_info_t> & locked_tx_vec) {
     auto table = get_txpool_table_by_addr(table_addr);
     if (table == nullptr) {
         return;
     }
     return table->update_locked_txs(locked_tx_vec);
+}
+
+void xtxpool_t::update_receiptid_state(const std::string & table_addr, const base::xreceiptid_state_ptr_t & receiptid_state) {
+    auto table = get_txpool_table_by_addr(table_addr);
+    if (table == nullptr) {
+        return;
+    }
+    return table->update_receiptid_state(receiptid_state);
 }
 
 bool xtxpool_t::is_table_subscribed(uint8_t zone, uint16_t table_id) const {

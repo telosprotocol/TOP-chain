@@ -901,11 +901,11 @@ void get_block_handle::getLatestFullBlock() {
             jv["root_hash"] = to_hex_str(root_hash);
             auto od = ftp->get_offdata();
             if (od) {
-                xtablestate_ptr_t tsp = make_object_ptr<xtablestate_t>();
                 auto od_obj = make_object_ptr<xvboffdata_t>();
                 od->add_ref();
-                od_obj.attach(od);
-                tsp->set_block_full_data(od_obj);
+                od_obj.attach(od);                
+                std::string empty_binlog;
+                xtablestate_ptr_t tsp = make_object_ptr<xtablestate_t>(od_obj, ftp->get_height(), empty_binlog, ftp->get_height());
                 jv["account_size"] = static_cast<xJson::UInt64>(tsp->get_account_size());
             }
         }
