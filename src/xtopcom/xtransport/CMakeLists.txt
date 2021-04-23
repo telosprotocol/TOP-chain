@@ -12,7 +12,3 @@ if (BUILD_METRICS)
     #add_dependencies(xtransport xmetrics)
     target_link_libraries(xtransport xmetrics)
 endif()
-
-if(XENABLE_TESTS)
-    add_subdirectory(tests)
-endif()
