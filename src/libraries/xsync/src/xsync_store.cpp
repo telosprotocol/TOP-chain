@@ -68,14 +68,12 @@ base::xauto_ptr<base::xvblock_t> xsync_store_t::get_latest_end_block(const std::
     base::xvaccount_t _vaddress(account);
     uint32_t underministic_height = 0;
     std::vector<std::vector<xvblock_ptr_t>> blocks;
-    base::xvblock_t *block = nullptr;
+    xvblock_ptr_t block = nullptr;
     bool exist = false;
     if (sync_policy == enum_chain_sync_pocliy_fast) {
-        base::xauto_ptr<base::xvblock_t> block1 = m_blockstore->get_latest_connected_block(account);
-        block = block1.get();
+        block = m_blockstore->get_latest_connected_block(account);
     } else if (sync_policy == enum_chain_sync_pocliy_full) {
-        base::xauto_ptr<base::xvblock_t> block1 = m_blockstore->get_latest_genesis_connected_block(account);
-        block = block1.get();
+        block = m_blockstore->get_latest_genesis_connected_block(account);
     }
 
     if (block == nullptr) {
@@ -83,7 +81,7 @@ base::xauto_ptr<base::xvblock_t> xsync_store_t::get_latest_end_block(const std::
     }
 
     std::vector<xvblock_ptr_t> element;
-    element.push_back(xblock_t::raw_vblock_to_object_ptr(block));
+    element.push_back(block);
     blocks.push_back(element);
     for (uint32_t i = 1; i <= m_undeterministic_heights; i++) {
         auto in_blocks = load_block_objects(account, block->get_height() + i);
