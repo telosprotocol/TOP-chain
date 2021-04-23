@@ -254,6 +254,10 @@ void xreceiptid_state_t::add_pair_modified(xtable_shortid_t sid, const xreceipti
     m_modified_binlog->add_pair(sid, pair);
 }
 
+void xreceiptid_state_t::clear_pair_modified() {
+    m_modified_binlog->clear_binlog();
+}
+
 void    xreceiptid_check_t::set_sendid(xtable_shortid_t sid, uint64_t value) {
     auto iter = m_sendids.find(sid);
     if (iter != m_sendids.end()) {

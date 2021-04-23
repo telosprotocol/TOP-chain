@@ -6,6 +6,7 @@
 
 #include <string>
 
+#include "xvledger/xreceiptid.h"
 #include "xdata/xtransaction.h"
 #include "xdata/xtxreceipt.h"
 #include "xdata/xblockbody.h"
@@ -106,6 +107,9 @@ class xcons_transaction_t : public xbase_dataunit_t<xcons_transaction_t, xdata_t
 };
 
 using xcons_transaction_ptr_t = xobject_ptr_t<xcons_transaction_t>;
+
+
+
 
 }  // namespace data
 }  // namespace top

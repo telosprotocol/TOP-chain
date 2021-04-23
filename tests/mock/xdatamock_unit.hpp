@@ -65,7 +65,7 @@ class xdatamock_unit {
 
     }
 
-    xblock_ptr_t generate_unit() {
+    xblock_ptr_t generate_unit(const base::xreceiptid_state_ptr_t & receiptid_state) {
         xblock_ptr_t prev_block = m_history_units.back();
         base::xvblock_t* unit;
         if (prev_block->is_lightunit() && prev_block->get_height() > (prev_block->get_last_full_block_height() + enum_default_fullunit_interval_unit_count)) {
@@ -85,6 +85,7 @@ class xdatamock_unit {
                 } else if (tx->is_recv_tx()) {
                     balance_change += enum_default_transfer_amount;
                 }
+                data::xblocktool_t::alloc_transaction_receiptid(tx, receiptid_state);
             }
             xlightunit_block_para_t lightunit_para;
             lightunit_para.set_input_txs(m_current_txs);
