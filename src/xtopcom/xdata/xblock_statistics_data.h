@@ -32,6 +32,7 @@ int32_t operator<<(base::xstream_t & stream, xblock_data_t const & data_object);
 
 /// @brief Stores consensus execution related data.
 struct xtop_consensus_vote_data : public xserializable_based_on<void> {
+    uint32_t block_count{0};
     uint32_t vote_count{0};
 
 private:
