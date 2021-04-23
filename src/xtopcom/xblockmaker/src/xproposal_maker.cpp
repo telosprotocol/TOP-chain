@@ -410,7 +410,7 @@ xtxpool_v2::ready_accounts_t xproposal_maker_t::table_rules_filter(const xblock_
 void xproposal_maker_t::get_locked_accounts(const xblock_ptr_t & block, std::set<std::string> & locked_account_set) const {
     const auto & units = block->get_tableblock_units(false);
     for (auto unit : units) {
-        if (unit->get_block_class() == base::enum_xvblock_class_light && unit->get_block_class() == base::enum_xvblock_class_full) {
+        if (unit->get_block_class() == base::enum_xvblock_class_light || unit->get_block_class() == base::enum_xvblock_class_full) {
             locked_account_set.insert(unit->get_account());
         }
     }
