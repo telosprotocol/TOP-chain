@@ -11,6 +11,7 @@
 #include "xsync/xsync_behind_checker.h"
 #include "../mock/xmock_network_config.hpp"
 #include "../mock/xmock_network.hpp"
+#include "tests/mock/xvchain_creator.hpp"
 
 using namespace top;
 using namespace top::sync;
@@ -21,10 +22,10 @@ using namespace top::mock;
 class xmock_downloader_t : public xdownloader_face_t {
 public:
     void push_event(const mbus::xevent_ptr_t &e) override {
-        if (e->major_type==xevent_major_type_behind && e->minor_type==xevent_behind_download_t::type_download) {
-            auto bme = std::static_pointer_cast<mbus::xevent_behind_download_t>(e);
-            m_counter++;
-        }
+        // if (e->major_type==xevent_major_type_behind && e->minor_type==xevent_behind_download_t::type_download) {
+        //     auto bme = make_object_ptr<mbus::xevent_behind_download_t>(e);
+        //     m_counter++;
+        // }
     }
 
     int m_counter{0};
@@ -52,10 +53,13 @@ static xJson::Value build_validators() {
 }
 
 TEST(xsync_behind_checker, test) {
+    mock::xvchain_creator creator;
+    creator.create_blockstore_with_xstore();
+    xobject_ptr_t<store::xstore_face_t> store;
+    store.attach(creator.get_xstore());
+    xobject_ptr_t<base::xvblockstore_t> blockstore;
+    blockstore.attach(creator.get_blockstore());
 
-    xobject_ptr_t<store::xstore_face_t> store = store::xstore_factory::create_store_with_memdb(nullptr);
-    xobject_ptr_t<base::xvblockstore_t> blockstore = nullptr;
-    blockstore.attach(store::xblockstorehub_t::instance().create_block_store(*store, ""));
     xsync_store_t sync_store("", make_observer(blockstore));
 
     xrole_chains_mgr_t role_chains_mgr("");
@@ -83,6 +87,13 @@ TEST(xsync_behind_checker, test) {
     std::shared_ptr<xrole_chains_t> role_chains = std::make_shared<xrole_chains_t>(self_address, table_ids);
     const map_chain_info_t &chains = role_chains->get_chains_wrapper().get_chains();
 
+     // add block
+    uint64_t chain_height_base = 0;
+    for (const auto &it: chains) {
+        const std::string &address = it.first;
+        base::xvblock_t* genesis_block = test_blocktuil::create_genesis_empty_table(address);
+        EXPECT_EQ(sync_store.store_block(genesis_block), true);
+    }
 #if 0
     // add block
     uint64_t chain_height_base = 0;

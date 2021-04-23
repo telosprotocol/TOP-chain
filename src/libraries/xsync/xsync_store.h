@@ -28,6 +28,8 @@ public:
     virtual base::xauto_ptr<base::xvblock_t> query_block(const base::xvaccount_t &account, uint64_t height, const std::string &hash) = 0;
     virtual base::xauto_ptr<base::xvblock_t> get_latest_start_block(const std::string & account, enum_chain_sync_policy sync_policy) = 0;
     virtual base::xauto_ptr<base::xvblock_t> get_latest_end_block(const std::string & account, enum_chain_sync_policy sync_policy) = 0;
+    virtual std::vector<data::xvblock_ptr_t> load_block_objects(const std::string & account, const uint64_t height) = 0;
+    const static uint64_t m_undeterministic_heights = 2;
 };
 
 class xsync_store_face_mock_t : public xsync_store_face_t {
@@ -43,6 +45,7 @@ public:
     virtual base::xauto_ptr<base::xvblock_t> query_block(const base::xvaccount_t &account, uint64_t height, const std::string &hash) {return nullptr;}
     virtual base::xauto_ptr<base::xvblock_t> get_latest_start_block(const std::string & account, enum_chain_sync_policy sync_policy) {return nullptr;}
     virtual base::xauto_ptr<base::xvblock_t> get_latest_end_block(const std::string & account, enum_chain_sync_policy sync_policy) {return nullptr;}
+    virtual std::vector<data::xvblock_ptr_t> load_block_objects(const std::string & account, const uint64_t height) {return std::vector<data::xvblock_ptr_t>{};}
 };
 
 class xsync_store_t : public xsync_store_face_t {
@@ -59,6 +62,7 @@ public:
     base::xauto_ptr<base::xvblock_t> query_block(const base::xvaccount_t & account, uint64_t height, const std::string &hash) override;
     base::xauto_ptr<base::xvblock_t> get_latest_start_block(const std::string & account, enum_chain_sync_policy sync_policy) override;
     base::xauto_ptr<base::xvblock_t> get_latest_end_block(const std::string & account, enum_chain_sync_policy sync_policy) override;
+    std::vector<data::xvblock_ptr_t> load_block_objects(const std::string & account, const uint64_t height) override;
 
 private:
     std::string m_vnode_id;

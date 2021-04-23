@@ -189,7 +189,7 @@ private:
             result.m_props = cmd->get_property_hash();
             result.m_prop_log = cmd->get_property_log();
             base::xvblock_t* genesis_block =  data::xblocktool_t::create_genesis_lightunit(address, tx, result);
-            ret = m_store->set_vblock(genesis_block);
+            ret = m_store->set_vblock("/", genesis_block);
             assert(ret);
             m_store->execute_block(genesis_block);
             assert(ret);
