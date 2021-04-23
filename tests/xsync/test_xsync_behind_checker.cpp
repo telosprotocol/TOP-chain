@@ -22,10 +22,10 @@ using namespace top::mock;
 class xmock_downloader_t : public xdownloader_face_t {
 public:
     void push_event(const mbus::xevent_ptr_t &e) override {
-        // if (e->major_type==xevent_major_type_behind && e->minor_type==xevent_behind_download_t::type_download) {
-        //     auto bme = make_object_ptr<mbus::xevent_behind_download_t>(e);
-        //     m_counter++;
-        // }
+        if (e->major_type==xevent_major_type_behind && e->minor_type==xevent_behind_download_t::type_download) {
+            auto bme = dynamic_xobject_ptr_cast<mbus::xevent_behind_download_t>(e);
+            m_counter++;
+        }
     }
 
     int m_counter{0};

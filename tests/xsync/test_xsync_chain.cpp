@@ -211,8 +211,8 @@ TEST(xsync_account, highqc_fork) {
         const std::string &owner = ptr->owner;
         uint64_t start_height = ptr->start_height;
         uint32_t count = ptr->count;
-        ASSERT_EQ(start_height, 21);
-        ASSERT_EQ(count, 10);
+        ASSERT_EQ(start_height, 19);
+        ASSERT_EQ(count, 12);
 
         std::vector<xblock_ptr_t> vector_blocks;
         for (uint64_t h = start_height; h<=(start_height+count); h++) {
@@ -356,8 +356,8 @@ TEST(xsync_account, lockedqc_fork) {
         const std::string &owner = ptr->owner;
         uint64_t start_height = ptr->start_height;
         uint32_t count = ptr->count;
-        ASSERT_EQ(start_height, 22);
-        ASSERT_EQ(count, 9);
+        ASSERT_EQ(start_height, 20);
+        ASSERT_EQ(count, 11);
 
         std::vector<xblock_ptr_t> vector_blocks;
         for (uint64_t h = start_height; h<=(start_height+count); h++) {
@@ -471,5 +471,5 @@ TEST(xsync_account, chain_snapshot) {
         ASSERT_EQ(ptr1->m_height_of_fullblock, 101);
     }
     base::xauto_ptr<base::xvblock_t> cur_block = sync_store.get_latest_end_block(address, enum_chain_sync_pocliy_fast);
-    ASSERT_EQ(cur_block->get_height(), 120);
+    ASSERT_EQ(cur_block->get_height(), 118);
 }

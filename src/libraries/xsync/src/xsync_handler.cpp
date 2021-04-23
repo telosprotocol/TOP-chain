@@ -176,10 +176,9 @@ void xsync_handler_t::get_blocks(uint32_t msg_size, const vnetwork::xvnode_addre
         msg_hash, get_time()-recv_time, owner.c_str(), start_height, start_height+count-1, from_address.to_string().c_str());
 
     std::vector<xblock_ptr_t> vector_blocks;
-    for (uint32_t i=0; i<count && i<max_request_block_count; i++) {
-        uint64_t height = start_height + (uint64_t)i;
+    for (uint32_t height = start_height, i = 0; height < start_height + count && i < max_request_block_count; height++) {
         auto blocks = m_sync_store->load_block_objects(owner, height);
-        for (uint32_t j = 0; j < blocks.size(); j++){
+        for (uint32_t j = 0; j < blocks.size(); j++,i++){
             vector_blocks.push_back(xblock_t::raw_vblock_to_object_ptr(blocks[j].get()));
         }
     }
