@@ -21,4 +21,4 @@ jobs:
       - name: Build XTOP DEBUG
         run: |
           bash .github/scripts/fix_submodule.sh dev/fast_sync_develop
-          bash .github/scripts/build_xtop.sh
+          bash .github/scripts/build_xtop.sh test
