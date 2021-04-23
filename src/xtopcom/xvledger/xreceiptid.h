@@ -96,6 +96,7 @@ class xreceiptid_state_t : public base::xdataunit_t {
     size_t                          get_binlog_size() const{return m_binlog->get_size();}
 
  public:
+    void                            clear_pair_modified();
     bool                            find_pair_modified(xtable_shortid_t sid, xreceiptid_pair_t & pair);
     void                            add_pair_modified(xtable_shortid_t sid, const xreceiptid_pair_t & pair);
 
