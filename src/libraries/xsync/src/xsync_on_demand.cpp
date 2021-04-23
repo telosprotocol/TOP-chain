@@ -115,7 +115,6 @@ void xsync_on_demand_t::handle_blocks_response(const std::vector<data::xblock_pt
         } else {
             xsync_info("xsync_on_demand_t::on_demand_blocks failed %s,height=%lu,viewid=%lu,",
                 block->get_account().c_str(), block->get_height(), block->get_viewid());
-            return;
         }
     }
 
@@ -179,11 +178,8 @@ void xsync_on_demand_t::handle_blocks_request(const xsync_message_get_on_demand_
 
     for (uint64_t height = start_height, i = 0; (height <= end_height) && (i < max_request_block_count); height++) {
         auto need_blocks = m_sync_store->load_block_objects(address, height);
-        for (uint32_t j = 0; j < need_blocks.size(); j++){
+        for (uint32_t j = 0; j < need_blocks.size(); j++, i++){
             blocks.push_back(xblock_t::raw_vblock_to_object_ptr(need_blocks[j].get()));
-        }
-        if (!need_blocks.empty()){
-            i++;
         }
     }
 

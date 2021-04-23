@@ -140,14 +140,10 @@ void xchain_downloader_t::on_response(std::vector<data::xblock_ptr_t> &blocks, c
         if (ret == enum_result_code::success) {
             xsync_info("chain_downloader on_response(succ) %s,height=%lu,viewid=%lu,prev_hash:%s,",
                 m_address.c_str(), height, viewid, to_hex_str(block->get_last_block_hash()).c_str());
-            continue;
-        } else if (ret == enum_result_code::auth_failed) {
-            xsync_info("chain_downloader on_response(auth_failed) %s,height=%lu,viewid=%lu,", m_address.c_str(), height, viewid);
-            m_sync_range_mgr.clear_behind_info();
-            break;
-
         } else if (ret == enum_result_code::failed) {
             xsync_warn("chain_downloader on_response(failed) %s", block->dump().c_str());
+        } else if (ret == enum_result_code::auth_failed) {
+            xsync_info("chain_downloader on_response(auth_failed) %s,height=%lu,viewid=%lu,", m_address.c_str(), height, viewid);
             m_sync_range_mgr.clear_behind_info();
             break;
         } else {
@@ -181,7 +177,7 @@ void xchain_downloader_t::on_response(std::vector<data::xblock_ptr_t> &blocks, c
 
     xauto_ptr<xvblock_t> table_block = m_sync_store->get_latest_start_block(m_address, sync_policy);
     xblock_ptr_t block = autoptr_to_blockptr(table_block);
-    xsync_info("chain_downloader on_response(chain_snapshot) %s, height=%lu",m_address.c_str(), table_block->get_height());
+    xsync_info("chain_downloader on_response %s, height=%lu",m_address.c_str(), table_block->get_height());
     if (!block->is_full_state_block()) {
         xsync_info("chain_downloader on_response(chain_snapshot) %s,current(height=%lu,viewid=%lu,hash=%s) behind(height=%lu)",
         m_address.c_str(), table_block->get_height(), table_block->get_viewid(), to_hex_str(table_block->get_block_hash()).c_str(), m_sync_range_mgr.get_behind_height());
