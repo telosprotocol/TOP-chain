@@ -42,7 +42,11 @@ class xproposal_maker_t : public xunit_service::xproposal_maker_face {
     bool                        verify_proposal_with_local(base::xvblock_t *proposal_block, base::xvblock_t *local_block) const;
 
  private:
-    void                        get_locked_txs(const xblock_ptr_t & block, std::vector<xtxpool_v2::tx_info_t> & locked_tx_vec);
+    xtxpool_v2::ready_accounts_t get_ready_txs(const xblock_consensus_para_t & proposal_para) const;
+    void                        get_locked_txs(const xblock_ptr_t & block, std::vector<xtxpool_v2::tx_info_t> & locked_tx_vec) const;
+    xtxpool_v2::ready_accounts_t table_rules_filter(const xblock_consensus_para_t & proposal_para, const base::xreceiptid_state_ptr_t receiptid_state_highqc, xtxpool_v2::ready_accounts_t & ready_accounts) const;
+    void                        get_locked_accounts(const xblock_ptr_t & block, std::set<std::string> & locked_account_set) const;
+    xtxpool_v2::ready_accounts_t filt_noncontinuous_txs(xtxpool_v2::ready_accounts_t & reday_accounts, const base::xreceiptid_state_ptr_t receiptid_state_highqc) const;
 
     store::xindexstore_face_ptr_t   m_indexstore{nullptr};
     xtable_maker_ptr_t          m_table_maker{nullptr};

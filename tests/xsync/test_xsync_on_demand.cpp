@@ -112,7 +112,7 @@ TEST(xsync_on_demand, on_behind_unit) {
 
     // test1
     {
-        mbus::xevent_ptr_t e = std::make_shared<mbus::xevent_behind_on_demand_t>(account_address, 1, 100, true, reason);
+        mbus::xevent_ptr_t e = make_object_ptr<mbus::xevent_behind_on_demand_t>(account_address, 1, 100, true, reason);
         sync_on_demand.on_behind_event(e);
 
         xmessage_t msg;
@@ -152,7 +152,7 @@ TEST(xsync_on_demand, on_behind_unit) {
 
     // test2
     {
-        mbus::xevent_ptr_t e = std::make_shared<mbus::xevent_behind_on_demand_t>(account_address, 1, 100, false, reason);
+        mbus::xevent_ptr_t e = make_object_ptr<mbus::xevent_behind_on_demand_t>(account_address, 1, 100, false, reason);
         sync_on_demand.on_behind_event(e);
 
         xmessage_t msg;
@@ -249,7 +249,7 @@ TEST(xsync_on_demand, on_response_unit) {
 
         if (e->minor_type == top::mbus::xevent_sync_t::type_complete) {
 
-            auto bme = std::static_pointer_cast<mbus::xevent_sync_complete_t>(e);
+            auto bme = dynamic_xobject_ptr_cast<mbus::xevent_sync_complete_t>(e);
             sync_complete = true;
             ASSERT_EQ(bme->address, account_address);
         }
@@ -295,7 +295,7 @@ TEST(xsync_on_demand, on_response_unit) {
 
     ::sleep(3);
     std::string reason = "test";
-    mbus::xevent_ptr_t e = std::make_shared<mbus::xevent_behind_on_demand_t>(account_address, 1, 100, false, reason);
+    mbus::xevent_ptr_t e = make_object_ptr<mbus::xevent_behind_on_demand_t>(account_address, 1, 100, false, reason);
     sync_on_demand.on_behind_event(e);
     xsync_download_tracer tracer;
     ASSERT_EQ(sync_on_demand.download_tracer_mgr()->get(account_address, tracer), true);
@@ -375,7 +375,7 @@ TEST(xsync_on_demand, on_behind_table) {
 
     // test1
     {
-        mbus::xevent_ptr_t e = std::make_shared<mbus::xevent_behind_on_demand_t>(table_address, 1, 100, true, reason);
+        mbus::xevent_ptr_t e = make_object_ptr<mbus::xevent_behind_on_demand_t>(table_address, 1, 100, true, reason);
         sync_on_demand.on_behind_event(e);
 
         xmessage_t msg;
@@ -417,7 +417,7 @@ TEST(xsync_on_demand, on_behind_table) {
     {
         ::sleep(3);
         std::string reason = "test";      
-        mbus::xevent_ptr_t e = std::make_shared<mbus::xevent_behind_on_demand_t>(table_address, 1, 100, false, reason);
+        mbus::xevent_ptr_t e = make_object_ptr<mbus::xevent_behind_on_demand_t>(table_address, 1, 100, false, reason);
         sync_on_demand.on_behind_event(e);
 
         xmessage_t msg;
@@ -514,7 +514,8 @@ TEST(xsync_on_demand, on_response_table) {
 
         if (e->minor_type == top::mbus::xevent_sync_t::type_complete) {
 
-            auto bme = std::static_pointer_cast<mbus::xevent_sync_complete_t>(e);
+            auto bme = dynamic_xobject_ptr_cast<mbus::xevent_sync_complete_t>(e);
+            
             sync_complete = true;
             ASSERT_EQ(bme->address, table_address);
         }
@@ -534,7 +535,7 @@ TEST(xsync_on_demand, on_response_table) {
 
     ::sleep(3);
     std::string reason = "test";
-    mbus::xevent_ptr_t e = std::make_shared<mbus::xevent_behind_on_demand_t>(table_address, 1, 10, false, reason);
+    mbus::xevent_ptr_t e = make_object_ptr<mbus::xevent_behind_on_demand_t>(table_address, 1, 10, false, reason);
     sync_on_demand.on_behind_event(e);
     xsync_download_tracer tracer;
     ASSERT_EQ(sync_on_demand.download_tracer_mgr()->get(table_address, tracer), true);

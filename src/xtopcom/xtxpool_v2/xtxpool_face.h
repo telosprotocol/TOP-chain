@@ -92,14 +92,43 @@ class xready_account_t {
 public:
     xready_account_t(const std::string & account) : m_account(account) {
     }
+    xready_account_t(const std::string & account, const std::vector<xcons_transaction_ptr_t> & txs) : m_account(account), m_txs(txs) {
+    }
     const std::vector<xcons_transaction_ptr_t> & get_txs() const {
         return m_txs;
     }
     void put_tx(const xcons_transaction_ptr_t & tx) {
         m_txs.push_back(tx);
     }
+    void put_txs(const std::vector<xcons_transaction_ptr_t> & txs) {
+        m_txs.insert(m_txs.end(), txs.begin(), txs.end());
+    }
     const std::string & get_addr() const {
         return m_account;
+    }
+    void tx_rule_filter() {
+        auto & first_tx = m_txs[0];
+        enum_transaction_subtype first_tx_subtype = first_tx->get_tx_subtype();
+        if (first_tx_subtype == enum_transaction_subtype_self) {
+            first_tx_subtype = enum_transaction_subtype_send;
+        }
+        if (first_tx->get_transaction()->get_tx_type() != xtransaction_type_transfer && !first_tx->is_confirm_tx()) {
+            m_txs.erase(m_txs.begin() + 1, m_txs.end());
+            return;
+        }
+
+        for (auto it = m_txs.begin() + 1; it != m_txs.end();) {
+            enum_transaction_subtype subtype = it->get()->get_tx_subtype();
+            if (subtype == enum_transaction_subtype_self) {
+                subtype = enum_transaction_subtype_send;
+            }
+
+            if (subtype != first_tx_subtype || (first_tx->get_transaction()->get_tx_type() != xtransaction_type_transfer && !first_tx->is_confirm_tx())) {
+                it = m_txs.erase(it);
+            } else {
+                it++;
+            }
+        }
     }
 
 private:
@@ -136,6 +165,43 @@ private:
     base::enum_transaction_subtype m_subtype;
 };
 
+class xtxs_pack_para_t {
+public:
+    xtxs_pack_para_t(const std::string & table_addr,
+                     const base::xreceiptid_state_ptr_t receiptid_state_highqc,
+                     uint16_t send_txs_max_num,
+                     uint16_t recv_txs_max_num,
+                     uint16_t confirm_txs_max_num)
+      : m_table_addr(table_addr)
+      , m_receiptid_state_highqc(receiptid_state_highqc)
+      , m_send_txs_max_num(send_txs_max_num)
+      , m_recv_txs_max_num(recv_txs_max_num)
+      , m_confirm_txs_max_num(confirm_txs_max_num) {
+    }
+    const std::string & get_table_addr() const {
+        return m_table_addr;
+    }
+    const base::xreceiptid_state_ptr_t & get_receiptid_state_highqc() const {
+        return m_receiptid_state_highqc;
+    }
+    uint16_t get_send_txs_max_num() const {
+        return m_send_txs_max_num;
+    }
+    uint16_t get_recv_txs_max_num() const {
+        return m_recv_txs_max_num;
+    }
+    uint16_t get_confirm_txs_max_num() const {
+        return m_confirm_txs_max_num;
+    }
+
+private:
+    std::string m_table_addr;
+    base::xreceiptid_state_ptr_t m_receiptid_state_highqc;
+    uint16_t m_send_txs_max_num;
+    uint16_t m_recv_txs_max_num;
+    uint16_t m_confirm_txs_max_num;
+};
+
 class xtxpool_face_t : public base::xobject_t {
 public:
     virtual int32_t push_send_tx(const std::shared_ptr<xtx_entry> & tx) = 0;
@@ -143,6 +209,9 @@ public:
     virtual const xcons_transaction_ptr_t pop_tx(const tx_info_t & txinfo) = 0;
     virtual ready_accounts_t pop_ready_accounts(const std::string & table_addr, uint32_t count) = 0;
     virtual ready_accounts_t get_ready_accounts(const std::string & table_addr, uint32_t count) = 0;
+    virtual ready_accounts_t get_ready_accounts(const xtxs_pack_para_t & pack_para) = 0;
+    virtual std::vector<xcons_transaction_ptr_t> get_ready_txs(const xtxs_pack_para_t & pack_para) = 0;
+    virtual std::vector<xcons_transaction_ptr_t> get_ready_txs(const std::string & table_addr, uint32_t count) = 0;
     virtual const std::shared_ptr<xtx_entry> query_tx(const std::string & account, const uint256_t & hash) const = 0;
     virtual void updata_latest_nonce(const std::string & account_addr, uint64_t latest_nonce, const uint256_t & latest_hash) = 0;
     virtual void subscribe_tables(uint8_t zone, uint16_t front_table_id, uint16_t back_table_id) = 0;
@@ -153,7 +222,9 @@ public:
     virtual int32_t reject(const xcons_transaction_ptr_t & tx, uint64_t latest_commit_unit_height, bool & deny) = 0;
     virtual const std::vector<xcons_transaction_ptr_t> get_resend_txs(uint8_t zone, uint16_t subaddr, uint64_t now) = 0;
     virtual void update_unconfirm_accounts(uint8_t zone, uint16_t subaddr) = 0;
+    virtual void update_non_ready_accounts(uint8_t zone, uint16_t subaddr) = 0;
     virtual void update_locked_txs(const std::string & table_addr, const std::vector<tx_info_t> & locked_tx_vec) = 0;
+    virtual void update_receiptid_state(const std::string & table_addr, const base::xreceiptid_state_ptr_t & receiptid_state) = 0;
 };
 
 class xtxpool_instance {

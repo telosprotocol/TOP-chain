@@ -100,3 +100,52 @@ TEST_F(test_xtxpool_svr, is_select) {
     ASSERT_EQ(xtxpool_service_v2::xtxpool_service::is_selected_sender(3, 3, 3, 4), true);
 }
 
+
+TEST_F(test_xtxpool_svr, is_resend_node) {
+    ASSERT_EQ(xtxpool_service_v2::xtxpool_service::is_resend_node_for_talbe(100, 0, 4, 0), false);
+    ASSERT_EQ(xtxpool_service_v2::xtxpool_service::is_resend_node_for_talbe(100, 0, 4, 1), false);
+    ASSERT_EQ(xtxpool_service_v2::xtxpool_service::is_resend_node_for_talbe(100, 0, 4, 2), false);
+    ASSERT_EQ(xtxpool_service_v2::xtxpool_service::is_resend_node_for_talbe(100, 0, 4, 3), false);
+
+    ASSERT_EQ(xtxpool_service_v2::xtxpool_service::is_resend_node_for_talbe(100, 28, 4, 0), false);
+    ASSERT_EQ(xtxpool_service_v2::xtxpool_service::is_resend_node_for_talbe(100, 28, 4, 1), true);
+    ASSERT_EQ(xtxpool_service_v2::xtxpool_service::is_resend_node_for_talbe(100, 28, 4, 2), false);
+    ASSERT_EQ(xtxpool_service_v2::xtxpool_service::is_resend_node_for_talbe(100, 28, 4, 3), false);
+
+    ASSERT_EQ(xtxpool_service_v2::xtxpool_service::is_resend_node_for_talbe(99, 29, 4, 0), false);
+    ASSERT_EQ(xtxpool_service_v2::xtxpool_service::is_resend_node_for_talbe(99, 29, 4, 1), false);
+    ASSERT_EQ(xtxpool_service_v2::xtxpool_service::is_resend_node_for_talbe(99, 29, 4, 2), true);
+    ASSERT_EQ(xtxpool_service_v2::xtxpool_service::is_resend_node_for_talbe(99, 29, 4, 3), false);
+
+    ASSERT_EQ(xtxpool_service_v2::xtxpool_service::is_resend_node_for_talbe(98, 30, 4, 0), false);
+    ASSERT_EQ(xtxpool_service_v2::xtxpool_service::is_resend_node_for_talbe(98, 30, 4, 1), false);
+    ASSERT_EQ(xtxpool_service_v2::xtxpool_service::is_resend_node_for_talbe(98, 30, 4, 2), false);
+    ASSERT_EQ(xtxpool_service_v2::xtxpool_service::is_resend_node_for_talbe(98, 30, 4, 3), true);
+
+    ASSERT_EQ(xtxpool_service_v2::xtxpool_service::is_resend_node_for_talbe(97, 31, 4, 0), true);
+    ASSERT_EQ(xtxpool_service_v2::xtxpool_service::is_resend_node_for_talbe(97, 31, 4, 1), false);
+    ASSERT_EQ(xtxpool_service_v2::xtxpool_service::is_resend_node_for_talbe(97, 31, 4, 2), false);
+    ASSERT_EQ(xtxpool_service_v2::xtxpool_service::is_resend_node_for_talbe(97, 31, 4, 3), false);
+
+    ASSERT_EQ(xtxpool_service_v2::xtxpool_service::is_resend_node_for_talbe(164, 28, 4, 0), false);
+    ASSERT_EQ(xtxpool_service_v2::xtxpool_service::is_resend_node_for_talbe(164, 28, 4, 1), false);
+    ASSERT_EQ(xtxpool_service_v2::xtxpool_service::is_resend_node_for_talbe(164, 28, 4, 2), true);
+    ASSERT_EQ(xtxpool_service_v2::xtxpool_service::is_resend_node_for_talbe(164, 28, 4, 3), false);
+
+    ASSERT_EQ(xtxpool_service_v2::xtxpool_service::is_resend_node_for_talbe(163, 29, 4, 0), false);
+    ASSERT_EQ(xtxpool_service_v2::xtxpool_service::is_resend_node_for_talbe(163, 29, 4, 1), false);
+    ASSERT_EQ(xtxpool_service_v2::xtxpool_service::is_resend_node_for_talbe(163, 29, 4, 2), false);
+    ASSERT_EQ(xtxpool_service_v2::xtxpool_service::is_resend_node_for_talbe(163, 29, 4, 3), true);
+
+    ASSERT_EQ(xtxpool_service_v2::xtxpool_service::is_resend_node_for_talbe(162, 30, 4, 0), true);
+    ASSERT_EQ(xtxpool_service_v2::xtxpool_service::is_resend_node_for_talbe(162, 30, 4, 1), false);
+    ASSERT_EQ(xtxpool_service_v2::xtxpool_service::is_resend_node_for_talbe(162, 30, 4, 2), false);
+    ASSERT_EQ(xtxpool_service_v2::xtxpool_service::is_resend_node_for_talbe(162, 30, 4, 3), false);
+
+    ASSERT_EQ(xtxpool_service_v2::xtxpool_service::is_resend_node_for_talbe(161, 31, 4, 0), false);
+    ASSERT_EQ(xtxpool_service_v2::xtxpool_service::is_resend_node_for_talbe(161, 31, 4, 1), true);
+    ASSERT_EQ(xtxpool_service_v2::xtxpool_service::is_resend_node_for_talbe(161, 31, 4, 2), false);
+    ASSERT_EQ(xtxpool_service_v2::xtxpool_service::is_resend_node_for_talbe(161, 31, 4, 3), false);
+
+}
+

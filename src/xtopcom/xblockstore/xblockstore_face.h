@@ -11,5 +11,6 @@ namespace top
     namespace store
     {
         base::xvblockstore_t*  get_vblockstore();
+        base::xvblockstore_t*  create_vblockstore();
     };//end of namespace of xledger
 };//end of namespace of top

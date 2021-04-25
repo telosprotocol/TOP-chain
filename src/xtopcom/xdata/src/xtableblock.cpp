@@ -220,41 +220,6 @@ std::map<std::string, xaccount_index_t> xtable_block_t::get_units_index() const 
     return changed_indexs;
 }
 
-base::xreceiptid_pairs_ptr_t    xtable_block_t::get_receiptid_binlog() const {
-    base::xreceiptid_pairs_ptr_t receiptid_binlog = make_object_ptr<base::xreceiptid_pairs_t>();
-
-    auto & units = get_tableblock_units(true);
-
-    // it should set sendid firstly
-    for (auto & unit : units) {
-        const std::vector<xlightunit_tx_info_ptr_t> & txs_info = unit->get_txs();
-        for (auto & tx : txs_info) {
-            if (tx->is_send_tx()) {
-                uint64_t receiptid = tx->get_receipt_id();
-                base::xtable_shortid_t tableid = tx->get_receipt_id_tableid();
-                receiptid_binlog->set_sendid_max(tableid, receiptid);
-            }
-        }
-    }
-#if 0 // TODO(jimmy) not enable receiptid now
-    for (auto & unit : units) {
-        const std::vector<xlightunit_tx_info_ptr_t> & txs_info = unit->get_txs();
-        for (auto & tx : txs_info) {
-            if (tx->is_recv_tx()) {
-                uint64_t receiptid = tx->get_receipt_id();
-                base::xtable_shortid_t tableid = tx->get_receipt_id_tableid();
-                receiptid_binlog->set_recvid_max(tableid, receiptid);
-            } else if (tx->is_confirm_tx()) {
-                uint64_t receiptid = tx->get_receipt_id();
-                base::xtable_shortid_t tableid = tx->get_receipt_id_tableid();
-                receiptid_binlog->set_confirmid_max(tableid, receiptid);
-            }
-        }
-    }
-#endif
-    return receiptid_binlog;
-}
-
 xblock_ptr_t xtable_block_t::create_whole_unit(const std::string & header,
                                                     const std::string & input,
                                                     const std::string & input_res,

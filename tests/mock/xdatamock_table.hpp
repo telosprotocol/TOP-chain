@@ -133,9 +133,12 @@ class xdatamock_table {
     xblock_ptr_t generate_batch_table(uint32_t user_count, uint32_t every_user_tx_count) {
         generate_send_tx(user_count, every_user_tx_count);
 
+        const base::xreceiptid_state_ptr_t & receiptid_state = m_offstate->get_receiptid_state();
+        receiptid_state->clear_pair_modified();
+
         std::vector<xblock_ptr_t>   units;
         for (auto & mockunit : m_mock_units) {
-            xblock_ptr_t unit = mockunit.generate_unit();
+            xblock_ptr_t unit = mockunit.generate_unit(receiptid_state);
             if (unit != nullptr) {
                 units.push_back(unit);
             }

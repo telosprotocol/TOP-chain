@@ -7,14 +7,16 @@
 #include "xmbus/xevent.h"
 #include "xsync/xsync_message.h"
 #include "xsync/xgossip_message.h"
-#include "xblockstore/test/xblockstore_face_mock.h"
-#include "xblockstore/test/test_blockstore_datamock.hpp"
+// #include "xblockstore/test/xblockstore_face_mock.h"
+// #include "xblockstore/test/test_blockstore_datamock.hpp"
 #include "xdata/xblocktool.h"
 #include "xstore/xstore.h"
 // TODO(jimmy) #include "xbase/xvledger.h"
 #include "xblockstore/xblockstore_face.h"
 #include "xsync/xsync_util.h"
 #include "../xblockstore_test/test_blockmock.hpp"
+#include "tests/mock/xvchain_creator.hpp"
+#include "xdata/xnative_contract_address.h"
 
 using namespace top;
 using namespace top::data;
@@ -66,23 +68,6 @@ TEST(xsync_message, blocks) {
     std::string address = xdatautil::serialize_owner_str(sys_contract_sharding_table_block_addr, 0);
     std::vector<xblock_ptr_t> vector_blocks;
 
-#if 0
-    std::string owner = data::xblocktool_t::make_address_user_account("11111111111111111111");
-    xobject_ptr_t<store::xstore_face_t> store = store::xstore_factory::create_store_with_memdb(nullptr);
-    base::xvblockstore_t* blockstore = store::xblockstorehub_t::instance().create_block_store(*store, "");
-    std::map<std::string, std::string> prop_list;
-    test_blockstore_datamock_t datamock(store.get(), blockstore);
-
-    for (uint64_t i=1; i<=2; i++) {
-        xentire_block_ptr_t entire_block = make_object_ptr<xentire_block_t>();
-
-        xblock_ptr_t blk = datamock.create_unit(owner, prop_list, 0);
-
-        entire_block->block_ptr = blk;
-        vector_blocks.push_back(entire_block);
-    }
-#endif
-
     std::vector<base::xvblock_t*> block_vector;
     base::xvblock_t* genesis_block = test_blocktuil::create_genesis_empty_table(address);
 
@@ -126,19 +111,6 @@ static xcons_transaction_ptr_t create_cons_transfer_tx(const std::string & from,
 
 TEST(xsync_message, push_newblock) {
     base::xstream_t stream(base::xcontext_t::instance());
-
-#if 0
-    std::string owner = data::xblocktool_t::make_address_user_account("11111111111111111111");
-    xobject_ptr_t<store::xstore_face_t> store = store::xstore_factory::create_store_with_memdb(nullptr);
-    base::xvblockstore_t* blockstore = store::xblockstorehub_t::instance().create_block_store(*store, "");
-    std::map<std::string, std::string> prop_list;
-    test_blockstore_datamock_t datamock(store.get(), blockstore);
-
-    xtransaction_ptr_t tx = make_object_ptr<xtransaction_t>();
-    tx->set_deposit(100000);
-    std::vector<xtransaction_ptr_t> vector_in_tx = {tx};
-    std::vector<xtransaction_ptr_t> vector_out_tx = {tx};
-#endif
 
     {
         //xblock_ptr_t blk = datamock.create_unit(owner, prop_list, 0);
@@ -313,7 +285,12 @@ TEST(xsync_message, get_on_demand_blocks) {
 TEST(xsync_message, on_demand_blocks) {
     base::xstream_t stream(base::xcontext_t::instance());
 
-    xobject_ptr_t<store::xstore_face_t> store = store::xstore_factory::create_store_with_memdb(nullptr);
+    mock::xvchain_creator creator;
+    creator.create_blockstore_with_xstore();
+    xobject_ptr_t<store::xstore_face_t> store;
+    store.attach(creator.get_xstore());
+    xobject_ptr_t<base::xvblockstore_t> blockstore;
+    blockstore.attach(creator.get_blockstore());
     test_blockmock_t blockmock(store.get());
 
     std::string account_address = xblocktool_t::make_address_user_account("11111111111111111112");

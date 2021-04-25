@@ -29,9 +29,6 @@ enum enum_txpool_service_msg_type  // under pdu  enum_xpdu_type_consensus
     enum_txpool_service_msg_type_recv_receipt = 2,
 };
 
-#define txpool_service_update_unconfirm_accounts_freq (1000)
-#define txpool_service_resend_recv_tx_freq (10)
-
 class txpool_receipt_message_para_t : public top::base::xobject_t {
 public:
     txpool_receipt_message_para_t(vnetwork::xvnode_address_t const & sender, vnetwork::xmessage_t const & message) : m_sender(sender), m_message(message) {
@@ -125,20 +122,35 @@ void xtxpool_service::get_service_table_boundary(base::enum_xchain_zone_index & 
     back_table_id = m_cover_back_table_id;
 }
 
-void xtxpool_service::on_timer(uint64_t now) {
+#define receipt_resend_interval (0x3F)  // every 64 seconds resend once
+#define shifting_for_receipt_resend_interval (6)
+
+bool xtxpool_service::is_resend_node_for_talbe(uint64_t now, uint32_t table_id, uint16_t shard_size, uint16_t self_node_id) {
+    // different table resend at different time by different advance node
+    uint64_t random_num = now + (uint64_t)table_id;
+    bool is_time_for_resend = ((random_num & receipt_resend_interval) == 0);
+    uint16_t resend_node_pos = ((now >> shifting_for_receipt_resend_interval) + (uint64_t)table_id) % shard_size;
+    xinfo("random_num:0x%x,receipt_resend_interval:0x%x,random_num|receipt_resend_interval:0x%x", random_num, receipt_resend_interval, random_num | receipt_resend_interval);
+    xinfo("is_resend_node_for_talbe, table:%d,now:%llu,is_time_for_resend:%d,resend_node_pos:%d,self_node_id:%d", table_id, now, is_time_for_resend, resend_node_pos, self_node_id);
+    return (is_time_for_resend && resend_node_pos == self_node_id);
+}
+
+void xtxpool_service::resend_receipts(uint64_t now) {
     if (m_running && m_is_send_receipt_role) {
-        m_timer_fire_times++;
-        xinfo("xtxpool_service::on_timer, zone id:%d,table id:%d-%d,fire times:%d", m_zone_index, m_cover_front_table_id, m_cover_back_table_id, m_timer_fire_times);
-        for (uint32_t i = m_cover_front_table_id; i <= m_cover_back_table_id; i++) {
-            if ((m_timer_fire_times % txpool_service_update_unconfirm_accounts_freq) == 0) {
-                m_para->get_txpool()->update_unconfirm_accounts(m_zone_index, i);
+        for (uint32_t table_id = m_cover_front_table_id; table_id <= m_cover_back_table_id; table_id++) {
+            if (!is_resend_node_for_talbe(now, table_id, m_shard_size, m_node_id)) {
+                continue;
             }
-            if ((m_timer_fire_times % txpool_service_resend_recv_tx_freq) == 0) {
-                std::vector<xcons_transaction_ptr_t> recv_txs = m_para->get_txpool()->get_resend_txs(m_zone_index, i, now);
-                for (auto recv_tx : recv_txs) {
-                    xassert(recv_tx->is_recv_tx());
-                    send_receipt(recv_tx, xtxpool_v2::get_receipt_send_times(recv_tx->get_unit_cert()->get_gmtime(), now));
+
+            std::vector<xcons_transaction_ptr_t> recv_txs = m_para->get_txpool()->get_resend_txs(m_zone_index, table_id, now);
+            for (auto recv_tx : recv_txs) {
+                xassert(recv_tx->is_recv_tx());
+                // filter out txs witch has already in txpool, just not consensused and committed.
+                auto tx = m_para->get_txpool()->query_tx(recv_tx->get_source_addr(), recv_tx->get_transaction()->digest());
+                if (tx != nullptr && tx->get_tx()->is_confirm_tx()) {
+                    continue;
                 }
+                send_receipt(recv_tx, false);
             }
         }
     }
@@ -261,12 +273,9 @@ void xtxpool_service::check_and_response_recv_receipt(const xcons_transaction_pt
             auto recv_tx_receipt = lightunit->create_one_txreceipt(tx);
             xassert(recv_tx_receipt->is_confirm_tx());
 
-            if (!set_commit_prove(recv_tx_receipt)) {
-                return;
-            }
-            send_receipt_real(recv_tx_receipt);
+            send_receipt(recv_tx_receipt, true);
         } else {
-            xerror("xtxpool_service::check_and_response_recv_receipt recv tx unit not exist txhash:%s block_height:%d",
+            xwarn("xtxpool_service::check_and_response_recv_receipt recv tx unit not exist txhash:%s block_height:%ld",
                    tx->get_digest_hex_str().c_str(),
                    tx_store->get_recv_unit_height());
         }
@@ -308,18 +317,18 @@ bool xtxpool_service::set_commit_prove(data::xcons_transaction_ptr_t & cons_tx) 
     return true;
 }
 
-void xtxpool_service::send_receipt(data::xcons_transaction_ptr_t & cons_tx, uint32_t resend_time) {
+void xtxpool_service::send_receipt(data::xcons_transaction_ptr_t & cons_tx, bool first_send) {
     if (!m_running) {
         return;
     }
-    if (!has_receipt_right(cons_tx->get_transaction()->digest(), resend_time)) {
+    if (first_send && !has_receipt_right(cons_tx->get_transaction()->digest())) {
         return;
     }
     if (!set_commit_prove(cons_tx)) {
         return;
     }
     send_receipt_real(cons_tx);
-    if (resend_time == 0) {
+    if (first_send) {
         XMETRICS_COUNTER_INCREMENT("txpool_receipt_first_send", 1);
     } else {
         XMETRICS_COUNTER_INCREMENT("txpool_receipt_retry_send", 1);
@@ -381,7 +390,7 @@ void xtxpool_service::auditor_forward_receipt_to_shard(const xcons_transaction_p
     }
 
     uint64_t now = xverifier::xtx_utl::get_gmttime_s();
-    bool has_right = has_receipt_right(cons_tx->get_transaction()->digest(), xtxpool_v2::get_receipt_send_times(cons_tx->get_unit_cert()->get_gmtime(), now));
+    bool has_right = has_receipt_right(cons_tx->get_transaction()->digest());
     if (has_right) {
         const std::string & target_address = cons_tx->get_receipt_target_account();
 
@@ -394,19 +403,18 @@ void xtxpool_service::auditor_forward_receipt_to_shard(const xcons_transaction_p
     }
 }
 
-bool xtxpool_service::has_receipt_right(const uint256_t & hash, uint32_t resend_time) const {
+bool xtxpool_service::has_receipt_right(const uint256_t & hash) const {
     // select 2 auditor to send the receipt, select 1 for resend.
-    uint32_t select_num = (resend_time == 0) ? 2 : 1;
+    uint32_t select_num = 1;
     // use tx hash to generate random number
     std::string hash_str{reinterpret_cast<char *>(hash.data()), static_cast<size_t>(hash.size())};
     // calculate a random position that means which node is selected to send the receipt
     // the random position change by resend_time for rotate the selected node, to avoid same node is selected continuously.
-    uint32_t rand_pos = (base::xhash32_t::digest(hash_str) + ((resend_time == 0) ? 0 : (resend_time + 1))) % m_shard_size;
+    uint32_t rand_pos = (base::xhash32_t::digest(hash_str)) % m_shard_size;
     bool ret = is_selected_sender(m_node_id, rand_pos, select_num, m_shard_size);
-    xinfo("xtxpool_service::has_receipt_right ret:%d hash:%s resend_time:u rand_pos:%u select_num:%u node_id:%u shard_size:%u",
+    xinfo("xtxpool_service::has_receipt_right ret:%d hash:%s rand_pos:%u select_num:%u node_id:%u shard_size:%u",
           ret,
           to_hex_str(hash).c_str(),
-          resend_time,
           rand_pos,
           select_num,
           m_node_id,

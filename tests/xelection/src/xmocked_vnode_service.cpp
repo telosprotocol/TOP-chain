@@ -9,8 +9,14 @@
 
 NS_BEG3(top, tests, election)
 
-static xobject_ptr_t<base::xvblockstore_t> dummy_block_store = make_object_ptr<tests::vledger::xdummy_block_store_t>();
-static xobject_ptr_t<top::mbus::xmessage_bus_face_t> dummy_message_bus = make_object_ptr<tests::mbus::xdummy_message_bus_t>();
+struct xtop_mocked_vnode_service_parameters {
+    xobject_ptr_t<base::xiothread_t> dummy_thread = make_object_ptr<base::xiothread_t>();
+    xobject_ptr_t<base::xvblockstore_t> dummy_block_store = make_object_ptr<tests::vledger::xdummy_block_store_t>(dummy_thread->get_thread_id());
+    xobject_ptr_t<top::mbus::xmessage_bus_face_t> dummy_message_bus = make_object_ptr<tests::mbus::xdummy_message_bus_t>();
+};
+using xmocked_vnode_service_parameters_t = xtop_mocked_vnode_service_parameters;
+
+static xmocked_vnode_service_parameters_t mocked_vnode_service_parameters;
 
 xtop_mocked_vnode_group::xtop_mocked_vnode_group(common::xip2_t group_address_with_size_and_height) : top::base::xvnodegroup_t(group_address_with_size_and_height.value(), static_cast<uint64_t>(0), std::vector<top::base::xvnode_t *>{}) {
 }
@@ -39,24 +45,24 @@ std::pair<xobject_ptr_t<base::xvnode_t>, common::xslot_id_t> xtop_mocked_vnode_g
     return { r, common::xslot_id_t{slot_id} };
 }
 
-xtop_mocked_node_service::xtop_mocked_node_service(common::xaccount_address_t const & account_address,
-                                                   std::string const & sign_key,
-                                                   xobject_ptr_t<base::xvblockstore_t> const & blockstore,
-                                                   observer_ptr<top::mbus::xmessage_bus_face_t> const & bus)
+xtop_mocked_vnode_service::xtop_mocked_vnode_service(common::xaccount_address_t const & account_address,
+                                                     std::string const & sign_key,
+                                                     xobject_ptr_t<base::xvblockstore_t> const & blockstore,
+                                                     observer_ptr<top::mbus::xmessage_bus_face_t> const & bus)
     : xvnode_house_t(account_address, sign_key, blockstore, bus) {
 }
 
-xtop_mocked_node_service::xtop_mocked_node_service(common::xaccount_address_t const & account_address, std::string const & sign_key) 
-    : xtop_mocked_node_service(account_address, sign_key, dummy_block_store, make_observer(dummy_message_bus.get())) {
+xtop_mocked_vnode_service::xtop_mocked_vnode_service(common::xaccount_address_t const & account_address, std::string const & sign_key) 
+    : xtop_mocked_vnode_service(account_address, sign_key, mocked_vnode_service_parameters.dummy_block_store, make_observer(mocked_vnode_service_parameters.dummy_message_bus.get())) {
 
 }
 
-xobject_ptr_t<xmocked_vnode_group_t> xtop_mocked_node_service::add_group(common::xnetwork_id_t const & nid,
-                                                                         common::xzone_id_t const & zid,
-                                                                         common::xcluster_id_t const & cid,
-                                                                         common::xgroup_id_t const & gid,
-                                                                         uint16_t const group_size,
-                                                                         uint64_t const election_blk_height) {
+xobject_ptr_t<xmocked_vnode_group_t> xtop_mocked_vnode_service::add_group(common::xnetwork_id_t const & nid,
+                                                                          common::xzone_id_t const & zid,
+                                                                          common::xcluster_id_t const & cid,
+                                                                          common::xgroup_id_t const & gid,
+                                                                          uint16_t const group_size,
+                                                                          uint64_t const election_blk_height) {
     common::xip2_t group_xip2{nid, zid, cid, gid, common::xdefault_network_version, group_size, election_blk_height};
     {
         auto group = get_group_internal(group_xip2);

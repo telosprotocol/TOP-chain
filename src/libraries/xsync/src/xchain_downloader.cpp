@@ -120,29 +120,6 @@ void xchain_downloader_t::on_response(std::vector<data::xblock_ptr_t> &blocks, c
         }
     }
 
-    // 2.modify shard-table block flag
-    if (!is_elect_chain) {
-
-        for (uint32_t i = 0; i < count; i++) {
-            xblock_ptr_t &block = blocks[i];
-            int flag = enum_xvblock_flag_authenticated;
-
-            block->set_block_flag(enum_xvblock_flag(flag));
-
-            if ((count - i) > 1) {
-                flag |= enum_xvblock_flag::enum_xvblock_flag_locked;
-                block->set_block_flag(enum_xvblock_flag(enum_xvblock_flag::enum_xvblock_flag_locked));
-            }
-
-            if ((count - i) > 2) {
-                flag |= enum_xvblock_flag::enum_xvblock_flag_committed;
-                block->set_block_flag(enum_xvblock_flag(enum_xvblock_flag::enum_xvblock_flag_committed));
-            }
-
-            xassert(block->get_block_flags() == flag);
-        }
-    }
-
     enum_chain_sync_policy sync_policy;
     if (!m_sync_range_mgr.get_sync_policy(sync_policy)) {
         xsync_info("chain_downloader on_response(not behind) %s,", m_address.c_str());
@@ -153,36 +130,21 @@ void xchain_downloader_t::on_response(std::vector<data::xblock_ptr_t> &blocks, c
 
     // compare before and after
     for (uint32_t i = 0; i < count; i++) {
-
-        base::xauto_ptr<base::xvblock_t> before_vblock = m_sync_store->get_latest_end_block(m_address, sync_policy);
-
-        xblock_ptr_t &block = blocks[i];
+          xblock_ptr_t &block = blocks[i];
 
         uint64_t height = block->get_height();
         uint64_t viewid = block->get_viewid();
 
-        enum_result_code ret = handle_block(before_vblock, block, is_elect_chain, sync_policy);
+        enum_result_code ret = handle_block(block, is_elect_chain, sync_policy);
 
         if (ret == enum_result_code::success) {
             xsync_info("chain_downloader on_response(succ) %s,height=%lu,viewid=%lu,prev_hash:%s,",
                 m_address.c_str(), height, viewid, to_hex_str(block->get_last_block_hash()).c_str());
-            continue;
-        } else if (ret == enum_result_code::exist) {
-            xsync_info("chain_downloader on_response(exist) %s,height=%lu,viewid=%lu,", m_address.c_str(), height, viewid);
-            continue;
-
+        } else if (ret == enum_result_code::failed) {
+            xsync_warn("chain_downloader on_response(failed) %s", block->dump().c_str());
         } else if (ret == enum_result_code::auth_failed) {
             xsync_info("chain_downloader on_response(auth_failed) %s,height=%lu,viewid=%lu,", m_address.c_str(), height, viewid);
             m_sync_range_mgr.clear_behind_info();
-            break;
-
-        } else if (ret == enum_result_code::failed) {
-            xsync_warn("chain_downloader on_response(failed) %s %s", block->dump().c_str(), before_vblock->dump().c_str());
-            m_sync_range_mgr.clear_behind_info();
-            break;
-        } else if (ret == enum_result_code::forked) {
-            xsync_info("chain_downloader on_response(forked) %s", block->dump().c_str());
-            forked = true;
             break;
         } else {
             assert(0);
@@ -215,7 +177,7 @@ void xchain_downloader_t::on_response(std::vector<data::xblock_ptr_t> &blocks, c
 
     xauto_ptr<xvblock_t> table_block = m_sync_store->get_latest_start_block(m_address, sync_policy);
     xblock_ptr_t block = autoptr_to_blockptr(table_block);
-    xsync_info("chain_downloader on_response(chain_snapshot) %s, height=%lu",m_address.c_str(), table_block->get_height());
+    xsync_info("chain_downloader on_response %s, height=%lu",m_address.c_str(), table_block->get_height());
     if (!block->is_full_state_block()) {
         xsync_info("chain_downloader on_response(chain_snapshot) %s,current(height=%lu,viewid=%lu,hash=%s) behind(height=%lu)",
         m_address.c_str(), table_block->get_height(), table_block->get_viewid(), to_hex_str(table_block->get_block_hash()).c_str(), m_sync_range_mgr.get_behind_height());
@@ -376,13 +338,13 @@ void xchain_downloader_t::on_behind(uint64_t start_height, uint64_t end_height, 
     xauto_ptr<xvblock_t> table_block1 = m_sync_store->get_latest_end_block(m_address,sync_policy);
     current_block = autoptr_to_blockptr(table_block1);
     if ((table_block1->get_height() <= end_height) && (table_block1->get_height() >= start_height)) {
-        handle_next(current_block->get_height());
+        handle_next(sync::derministic_height(current_block->get_height(), std::make_pair(start_height,end_height)));
     } else {
         handle_next(start_height - 1);
     }
 }
 
-enum_result_code xchain_downloader_t::handle_block(const base::xauto_ptr<base::xvblock_t> &current_block, xblock_ptr_t &block, bool is_elect_chain, enum_chain_sync_policy sync_policy) {
+enum_result_code xchain_downloader_t::handle_block(xblock_ptr_t &block, bool is_elect_chain, enum_chain_sync_policy sync_policy) {
 
     if (is_elect_chain) {
         if (!check_auth(m_certauth, block)) {
@@ -390,28 +352,13 @@ enum_result_code xchain_downloader_t::handle_block(const base::xauto_ptr<base::x
         }
     }
 
-    if ((sync_policy != enum_chain_sync_pocliy_fast) ||
-        ((sync_policy == enum_chain_sync_pocliy_fast) && (block->get_block_class() != enum_xvblock_class_full))) {
-        if (block->get_height() > (current_block->get_height()+1) || (block->get_height() + 2) < current_block->get_height())
-            return enum_result_code::failed;
-    }
-    // must in range [current_height - 1, current_height + 1]
+    int flag = enum_xvblock_flag_authenticated;
 
+    block->set_block_flag(enum_xvblock_flag(flag));
 
     base::xvblock_t* vblock = dynamic_cast<base::xvblock_t*>(block.get());
     bool ret = m_sync_store->store_block(vblock);
     if (ret) {
-
-        base::xauto_ptr<base::xvblock_t> new_current_block = m_sync_store->get_latest_end_block(m_address, sync_policy);
-
-        // no change, hash can not connect
-        if ((current_block->get_height()+1) == block->get_height() &&
-            current_block->get_height() == new_current_block->get_height() &&
-            current_block->get_block_hash() == new_current_block->get_block_hash() &&
-            current_block->get_block_hash() != block->get_last_block_hash()) {
-            return enum_result_code::forked;
-        }
-
         return enum_result_code::success;
     }
 

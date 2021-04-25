@@ -44,7 +44,7 @@ private:
     void on_block_to_db_event(mbus::xevent_ptr_t e);
     void on_block_confirmed(xblock_t * block);
     void make_receipts_and_send(xblock_t * block);
-    void send_receipt(xcons_transaction_ptr_t & receipt, uint32_t resend_time);
+    void send_receipt(xcons_transaction_ptr_t & receipt);
     std::shared_ptr<xtxpool_service_face> find_receipt_sender(const xtable_id_t & tableid, const uint256_t & hash);
 
 private:
