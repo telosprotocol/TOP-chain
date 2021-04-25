@@ -103,16 +103,10 @@ xaccount_vm_execution_result_t xtop_account_vm::execute(std::vector<data::xcons_
                 break;
             }
         }
-    } catch (contract_runtime::error::xcontract_runtime_error_t const & eh) {
-        xerror("account_vm: caught contract runtime exception: %s", eh.what());
-    } catch (contract_common::error::xcontract_common_error_t const & eh) {
-        xerror("account_vm: caught contract common exception: %s", eh.what());
     } catch (top::error::xchain_error_t & eh) {
         xerror("account_vm: caught chain error exception: category: %s msg: %s", eh.code().category().name(), eh.what());
     } catch (std::exception const & eh) {
         xerror("account_vm: caught exception: %s", eh.what());
-    } catch (...) {
-        xerror("account_vm: caught unknown exception");
     }
 
     for (auto j = i; j < result.transaction_results.size(); ++j) {

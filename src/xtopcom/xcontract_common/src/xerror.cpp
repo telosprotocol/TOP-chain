@@ -56,25 +56,6 @@ std::error_condition make_error_condition(xerrc_t const errc) noexcept {
     return std::error_condition(static_cast<int>(errc), contract_common_category());
 }
 
-xtop_contract_common_error::xtop_contract_common_error() : std::runtime_error{make_error_code(xerrc_t::ok).message()} {
-}
-
-xtop_contract_common_error::xtop_contract_common_error(xerrc_t const error_code) : xtop_contract_common_error{make_error_code(error_code)} {
-}
-
-xtop_contract_common_error::xtop_contract_common_error(xerrc_t const error_code, std::string const & message) : xtop_contract_common_error{make_error_code(error_code), message} {
-}
-
-xtop_contract_common_error::xtop_contract_common_error(std::error_code const & ec) : std::runtime_error{ec.message()}, ec_{ec} {
-}
-
-xtop_contract_common_error::xtop_contract_common_error(std::error_code const & ec, const std::string& message) : std::runtime_error{message}, ec_{ec} {
-}
-
-const std::error_code & xtop_contract_common_error::code() const noexcept {
-    return ec_;
-}
-
 class xtop_contract_common_category final : public std::error_category {
     char const * name() const noexcept override {
         return "contract_common";

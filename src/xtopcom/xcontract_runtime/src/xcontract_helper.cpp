@@ -3,6 +3,8 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "xcontract_runtime/xcontract_helper.h"
+
+#include "xbasic/xerror/xthrow_error.h"
 #include "xcontract_runtime/xerror/xerror.h"
 #include "xstore/xstore_error.h"
 #include "xchain_upgrade/xchain_upgrade_center.h"
@@ -40,7 +42,8 @@ common::xaccount_address_t xcontract_helper::get_source_account() const {
 std::string xcontract_helper::get_parent_account() const {
     std::string parent{""};
     if (store::xaccount_property_parent_account_exist != m_account_context->get_parent_account(parent)) {
-        throw error::xcontract_runtime_error_t{error::xerrc_t::enum_vm_exception, "get contract parent account error"};
+        std::error_code ec{ error::xerrc_t::enum_vm_exception };
+        top::error::throw_error(ec, "get contract parent account error");
     }
 
     return parent;
@@ -62,18 +65,6 @@ const data::xaction_asset_out& xcontract_helper::get_pay_fee() const {
     return m_account_context->get_source_pay_info();
 }
 
-void xcontract_helper::set_contract_code(const string& code) {
-    if (m_account_context->set_contract_code(code)) {
-        throw error::xcontract_runtime_error_t{error::xerrc_t::enum_vm_exception, "set_contract_code error"};
-    }
-}
-
-void xcontract_helper::get_contract_code(string &code)  const{
-    if (m_account_context->get_contract_code(code)) {
-        throw error::xcontract_runtime_error_t{error::xerrc_t::enum_vm_exception, "get_contract_code error"};
-    }
-}
-
 void xcontract_helper::create_transfer_tx(const string& grant_account, const uint64_t amount) {
     m_account_context->create_transfer_tx(grant_account, amount);
 }
@@ -81,18 +72,21 @@ void xcontract_helper::create_transfer_tx(const string& grant_account, const uin
 
 void xcontract_helper::string_create(const string& key) {
     if (m_account_context->string_create(key)) {
-        throw error::xcontract_runtime_error_t{error::xerrc_t::enum_vm_exception, "STRING_CREATE " + key + " error"};
+        std::error_code ec{ error::xerrc_t::enum_vm_exception };
+        top::error::throw_error(ec, "STRING_CREATE " + key + " error");
     }
 }
 void xcontract_helper::string_set(const string& key, const string& value, bool native) {
     if (m_account_context->string_set(key, value, native)) {
-        throw error::xcontract_runtime_error_t{error::xerrc_t::enum_vm_exception, "STRING_SET " + key + " error"};
+        std::error_code ec{ error::xerrc_t::enum_vm_exception };
+        top::error::throw_error(ec, "STRING_SET " + key + " error");
     }
 }
 string xcontract_helper::string_get(const string& key, const std::string& addr) {
     string value;
     if (m_account_context->string_get(key, value, addr)) {
-        throw error::xcontract_runtime_error_t{error::xerrc_t::enum_vm_exception, "STRING_GET " + key + " error"};
+        std::error_code ec{ error::xerrc_t::enum_vm_exception };
+        top::error::throw_error(ec, "STRING_GET " + key + " error");
     }
     return value;
 }
@@ -111,51 +105,59 @@ bool xcontract_helper::string_exist(const string& key, const std::string& addr) 
     } else if (xstore_success == ret) {
         return true;
     } else {
-        throw error::xcontract_runtime_error_t{error::xerrc_t::enum_vm_exception, "STRING_EXIST error" + std::to_string(ret)};
+        std::error_code ec{ error::xerrc_t::enum_vm_exception };
+        top::error::throw_error(ec, "STRING_EXIST error" + std::to_string(ret));
     }
     return true;
 }
 
 void xcontract_helper::list_create(const string& key) {
     if (m_account_context->list_create(key)) {
-        throw error::xcontract_runtime_error_t{error::xerrc_t::enum_vm_exception, "LIST_CREATE " + key + " error"};
+        std::error_code ec{ error::xerrc_t::enum_vm_exception };
+        top::error::throw_error(ec, "LIST_CREATE " + key + " error");
     }
 }
 
 void xcontract_helper::list_push_back(const string& key, const string& value, bool native) {
     if (m_account_context->list_push_back(key, value, native)) {
-        throw error::xcontract_runtime_error_t{error::xerrc_t::enum_vm_exception, "LIST_PUSH_BACK  " + key + " error"};
+        std::error_code ec{ error::xerrc_t::enum_vm_exception };
+        top::error::throw_error(ec, "LIST_PUSH_BACK  " + key + " error");
     }
 }
 
 void xcontract_helper::list_push_front(const string& key, const string& value, bool native) {
     if (m_account_context->list_push_front(key, value, native)) {
-        throw error::xcontract_runtime_error_t{error::xerrc_t::enum_vm_exception, "LIST_PUSH_FRONT " + key + " error"};
+        std::error_code ec{ error::xerrc_t::enum_vm_exception };
+        top::error::throw_error(ec, "LIST_PUSH_FRONT " + key + " error");
     }
 }
 
 void xcontract_helper::list_pop_back(const string& key, string& value, bool native) {
     if (m_account_context->list_pop_back(key, value, native)) {
-        throw error::xcontract_runtime_error_t{error::xerrc_t::enum_vm_exception, "LIST_POP_BACK " + key + " error"};
+        std::error_code ec{ error::xerrc_t::enum_vm_exception };
+        top::error::throw_error(ec, "LIST_POP_BACK " + key + " error");
     }
 }
 
 void xcontract_helper::list_pop_front(const string& key, string& value, bool native) {
     if (m_account_context->list_pop_front(key, value, native)) {
-        throw error::xcontract_runtime_error_t{error::xerrc_t::enum_vm_exception, key + " LIST_POP_FRONT " + key + " error"};
+        std::error_code ec{ error::xerrc_t::enum_vm_exception };
+        top::error::throw_error(ec, key + " LIST_POP_FRONT " + key + " error");
     }
 }
 
 void xcontract_helper::list_clear(const string& key, bool native) {
     if (m_account_context->list_clear(key, native)) {
-        throw error::xcontract_runtime_error_t{error::xerrc_t::enum_vm_exception, key + " LIST_CLEAR " + key + " error"};
+        std::error_code ec{ error::xerrc_t::enum_vm_exception };
+        top::error::throw_error(ec, key + " LIST_CLEAR " + key + " error");
     }
 }
 
 std::string xcontract_helper::list_get(const std::string& key, int32_t index, const std::string& addr) {
     std::string value{};
     if (m_account_context->list_get(key, index, value, addr)) {
-        throw error::xcontract_runtime_error_t{error::xerrc_t::enum_vm_exception, "LIST_GET " + key + " error"};
+        std::error_code ec{ error::xerrc_t::enum_vm_exception };
+        top::error::throw_error(ec, "LIST_GET " + key + " error");
     }
     return value;
 }
@@ -163,7 +165,8 @@ std::string xcontract_helper::list_get(const std::string& key, int32_t index, co
 int32_t xcontract_helper::list_size(const string& key, const std::string& addr) {
     int32_t size;
     if (m_account_context->list_size(key, size, addr)) {
-        throw error::xcontract_runtime_error_t{error::xerrc_t::enum_vm_exception, "LIST_SIZE " + key + " error"};
+        std::error_code ec{ error::xerrc_t::enum_vm_exception };
+        top::error::throw_error(ec, "LIST_SIZE " + key + " error");
     }
     return size;
 }
@@ -171,7 +174,8 @@ int32_t xcontract_helper::list_size(const string& key, const std::string& addr) 
 vector<string> xcontract_helper::list_get_all(const string& key, const string& addr) {
     vector<string> value_list{};
     if (m_account_context->list_get_all(key, value_list, addr)) {
-        throw error::xcontract_runtime_error_t{error::xerrc_t::enum_vm_exception, "LIST_GET_ALL " + key + " error"};
+        std::error_code ec{ error::xerrc_t::enum_vm_exception };
+        top::error::throw_error(ec, "LIST_GET_ALL " + key + " error");
     }
     return std::move(value_list);
 }
@@ -184,21 +188,24 @@ bool xcontract_helper::list_exist(const string& key) {
     } else if (xstore_success == ret) {
         return true;
     } else {
-        throw error::xcontract_runtime_error_t{error::xerrc_t::enum_vm_exception, "LIST_EXIST error" + std::to_string(ret)};
+        std::error_code ec{ error::xerrc_t::enum_vm_exception };
+        top::error::throw_error(ec, "LIST_EXIST error" + std::to_string(ret));
     }
     return true;
 }
 
 void xcontract_helper::map_create(const string& key) {
     if (m_account_context->map_create(key)) {
-        throw error::xcontract_runtime_error_t{error::xerrc_t::enum_vm_exception, "MAP_CREATE " + key + " error"};
+        std::error_code ec{ error::xerrc_t::enum_vm_exception };
+        top::error::throw_error(ec, "MAP_CREATE " + key + " error");
     }
 }
 
 string xcontract_helper::map_get(const string& key, const string& field, const std::string& addr) {
     string value{};
     if (m_account_context->map_get(key, field, value, addr)) {
-        throw error::xcontract_runtime_error_t{error::xerrc_t::enum_vm_exception, "MAP_GET " + key + " error"};
+        std::error_code ec{ error::xerrc_t::enum_vm_exception };
+        top::error::throw_error(ec, "MAP_GET " + key + " error");
     }
     return value;
 }
@@ -209,27 +216,31 @@ int32_t xcontract_helper::map_get2(const string& key, const string& field, strin
 
 void xcontract_helper::map_set(const string& key, const string& field, const string & value, bool native) {
     if (m_account_context->map_set(key, field, value, native)) {
-        throw error::xcontract_runtime_error_t{error::xerrc_t::enum_vm_exception, "MAP_SET " + key + " error"};
+        std::error_code ec{ error::xerrc_t::enum_vm_exception };
+        top::error::throw_error(ec, "MAP_SET " + key + " error");
     }
 }
 
 void xcontract_helper::map_remove(const string& key, const string& field, bool native) {
     if (m_account_context->map_remove(key, field, native)) {
-        throw error::xcontract_runtime_error_t{error::xerrc_t::enum_vm_exception, "MAP_REMOVE " + key + " error"};
+        std::error_code ec{ error::xerrc_t::enum_vm_exception };
+        top::error::throw_error(ec, "MAP_REMOVE " + key + " error");
     }
 }
 
 int32_t xcontract_helper::map_size(const string& key, const std::string& addr) {
     int32_t size{0};
     if (m_account_context->map_size(key, size, addr)) {
-        throw error::xcontract_runtime_error_t{error::xerrc_t::enum_vm_exception, "MAP_SIZE " + key + " error"};
+        std::error_code ec{ error::xerrc_t::enum_vm_exception };
+        top::error::throw_error(ec, "MAP_SIZE " + key + " error");
     }
     return size;
 }
 
 void xcontract_helper::map_copy_get(const std::string & key, std::map<std::string, std::string> & map, const std::string& addr) {
     if (m_account_context->map_copy_get(key, map, addr)) {
-        throw error::xcontract_runtime_error_t{error::xerrc_t::enum_vm_exception, "MAP_COPY_GET " + key + " error"};
+        std::error_code ec{ error::xerrc_t::enum_vm_exception };
+        top::error::throw_error(ec, "MAP_COPY_GET " + key + " error");
     }
 }
 
@@ -242,7 +253,8 @@ bool xcontract_helper::map_field_exist(const string& key, const string& field) {
     } else if (xstore_success == ret) {
         return true;
     } else {
-        throw error::xcontract_runtime_error_t{error::xerrc_t::enum_vm_exception, "MAP_FIELD_EXIST error:" + std::to_string(ret)};
+        std::error_code ec{ error::xerrc_t::enum_vm_exception };
+        top::error::throw_error(ec, "MAP_FIELD_EXIST error:" + std::to_string(ret));
     }
     return true;
 }
@@ -259,7 +271,8 @@ bool xcontract_helper::map_key_exist(const std::string& key) {
 
 void xcontract_helper::map_clear(const std::string& key, bool native) {
     if (m_account_context->map_clear(key, native)) {
-        throw error::xcontract_runtime_error_t{error::xerrc_t::enum_vm_exception, "MAP_CLEAR " + key + " error"};
+        std::error_code ec{ error::xerrc_t::enum_vm_exception };
+        top::error::throw_error(ec, "MAP_CLEAR " + key + " error");
     }
 }
 
@@ -273,14 +286,16 @@ bool xcontract_helper::map_property_exist(const std::string& key) {
 
 void xcontract_helper::generate_tx(common::xaccount_address_t const & target_addr, const string& func_name, const string& func_param) {
     if (m_contract_account == target_addr) {
-        throw error::xcontract_runtime_error_t{error::xerrc_t::enum_vm_exception, "can't send to self " + target_addr.value()};
+        std::error_code ec{ error::xerrc_t::enum_vm_exception };
+        top::error::throw_error(ec, "can't send to self " + target_addr.value());
     }
     int32_t ret = m_account_context->generate_tx(target_addr.value(), func_name, func_param);
 
     auto const & fork_config = chain_upgrade::xchain_fork_config_center_t::chain_fork_config();
     if (chain_upgrade::xtop_chain_fork_config_center::is_forked(fork_config.reward_fork_point, m_account_context->get_timer_height())) {
         if (ret) {
-            throw error::xcontract_runtime_error_t{error::xerrc_t::enum_vm_exception, "generate tx fail " + store::xstore_error_to_string(ret)};
+            std::error_code ec{ error::xerrc_t::enum_vm_exception };
+            top::error::throw_error(ec, "generate tx fail " + store::xstore_error_to_string(ret));
         }
     }
 }
@@ -288,7 +303,8 @@ void xcontract_helper::generate_tx(common::xaccount_address_t const & target_add
 std::string xcontract_helper::get_random_seed() const {
     auto random_seed = m_account_context->get_random_seed();
     if (random_seed.empty()) {
-        throw error::xcontract_runtime_error_t{error::xerrc_t::enum_vm_exception, "random_seed empty"};
+        std::error_code ec{ error::xerrc_t::enum_vm_exception };
+        top::error::throw_error(ec, "random_seed empty");
     }
     return random_seed;
 }

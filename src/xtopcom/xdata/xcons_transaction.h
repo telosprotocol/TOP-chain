@@ -81,7 +81,7 @@ class xcons_transaction_t : public xbase_dataunit_t<xcons_transaction_t, xdata_t
     void                    set_current_receipt_id(base::xtable_shortid_t tableid, uint64_t value) {m_execute_state.set_receipt_id(tableid, value);}
 
     void                    set_unit_height(uint64_t unit_height) {m_unit_height = unit_height;}
-    uint64_t                get_unit_height() {return m_unit_height;}
+    uint64_t                get_unit_height() const noexcept {return m_unit_height;}
 
 
     // enum_xunit_tx_exec_status   get_current_exec_status() const {return m_execute_state.get_exec_status();}
@@ -89,8 +89,8 @@ class xcons_transaction_t : public xbase_dataunit_t<xcons_transaction_t, xdata_t
     xtx_receipt_ptr_t       get_receipt() const {return m_receipt;}
 
  public:
-    bool                    get_tx_info_prove_cert_and_account(base::xvqcert_t* & cert, std::string & account);
-    bool                    get_commit_prove_cert_and_account(base::xvqcert_t* & cert, std::string & account);
+    bool                    get_tx_info_prove_cert_and_account(base::xvqcert_t* & cert, std::string & account) const;
+    bool                    get_commit_prove_cert_and_account(base::xvqcert_t* & cert, std::string & account) const;
 
  private:
     void                    update_transation();

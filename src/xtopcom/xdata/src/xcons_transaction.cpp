@@ -67,7 +67,7 @@ bool xcons_transaction_t::is_commit_prove_cert_set() const {
     return m_receipt->is_commit_prove_cert_set();
 }
 
-bool xcons_transaction_t::get_tx_info_prove_cert_and_account(base::xvqcert_t* & cert, std::string & account) {
+bool xcons_transaction_t::get_tx_info_prove_cert_and_account(base::xvqcert_t* & cert, std::string & account) const {
     if (m_receipt == nullptr) {
         xerror("no receipt");
         return false;
@@ -82,7 +82,7 @@ bool xcons_transaction_t::get_tx_info_prove_cert_and_account(base::xvqcert_t* & 
     return true;
 }
 
-bool xcons_transaction_t::get_commit_prove_cert_and_account(base::xvqcert_t* & cert, std::string & account) {
+bool xcons_transaction_t::get_commit_prove_cert_and_account(base::xvqcert_t* & cert, std::string & account) const {
     if (m_receipt == nullptr) {
         xerror("no receipt");
         return false;
