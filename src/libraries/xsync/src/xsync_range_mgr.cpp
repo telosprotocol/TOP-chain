@@ -129,8 +129,8 @@ int xsync_range_mgr_t::update_progress(const data::xblock_ptr_t &current_block) 
     return 0;
 }
 
-bool xsync_range_mgr_t::get_next_behind(uint64_t current_height, bool forked, uint32_t count_limit, uint64_t &start_height, uint32_t &count,
-        vnetwork::xvnode_address_t &self_addr, vnetwork::xvnode_address_t &target_addr) {
+bool xsync_range_mgr_t::get_next_behind(uint64_t current_height, uint32_t count_limit, uint64_t &start_height, uint32_t &count,
+    vnetwork::xvnode_address_t &self_addr, vnetwork::xvnode_address_t &target_addr) {
 
     if (m_behind_height == 0)
         return false;
@@ -138,18 +138,7 @@ bool xsync_range_mgr_t::get_next_behind(uint64_t current_height, bool forked, ui
     if (current_height >= m_behind_height)
         return false;
 
-    if (forked) {
-        if (current_height > 1)
-            start_height = current_height - 1;
-        else
-            start_height = current_height;
-    } else {
-        start_height = current_height + 1;
-    }
-
-    if (start_height == 0) {
-        start_height++;
-    }
+    start_height = current_height + 1;
 
     count = m_behind_height - start_height + 1;
     if (count > count_limit)

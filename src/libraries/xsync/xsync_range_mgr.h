@@ -26,7 +26,7 @@ public:
     enum_role_changed_result on_role_changed(const xchain_info_t &chain_info);
 
     int update_progress(const data::xblock_ptr_t &current_block);
-    bool get_next_behind(uint64_t current_height, bool forked, uint32_t count_limit, uint64_t &start_height, uint32_t &count, vnetwork::xvnode_address_t &self_addr, vnetwork::xvnode_address_t &target_addr);
+    bool get_next_behind(uint64_t current_height, uint32_t count_limit, uint64_t &start_height, uint32_t &count, vnetwork::xvnode_address_t &self_addr, vnetwork::xvnode_address_t &target_addr);
 
     int set_behind_info(uint64_t start_height, uint64_t end_height, enum_chain_sync_policy sync_policy,
                 const vnetwork::xvnode_address_t &self_addr, const vnetwork::xvnode_address_t &target_addr);
