@@ -43,14 +43,13 @@ namespace top
             bool                          write_state_to_db(xvaccount_t & target_account,xvblock_t * block_ptr);
             xvbstate_t*                   read_state_from_db(xvblock_t * for_block);
             xvbstate_t*                   read_state_from_db(xvaccount_t & target_account,xvblock_t * for_block);
-            xvbstate_t*                   read_state_from_db(xvaccount_t & target_account,const uint64_t block_height, const std::string & block_hash);
-            
-            bool                          delete_states_of_db(xvaccount_t & target_account,const uint64_t block_height);
-            bool                          delete_state_of_db(xvaccount_t & target_account,const uint64_t block_height, const std::string & block_hash);
+            xvbstate_t*                   read_state_from_db(xvaccount_t & target_account,const std::string & block_hash);
+        
+            bool                          delete_state_of_db(xvaccount_t & target_account,const std::string & block_hash);
+            bool                          delete_states_of_db(xvaccount_t & target_account,const uint64_t height);
             
             bool                          rebuild_state_for_block(xvblock_t & target_block);
             bool                          rebuild_state_for_block(xvbstate_t & target_state,xvblock_t & target_block);
-            const std::string             create_state_db_key(xvaccount_t & account,const uint64_t block_height,const std::string & hashkey);
         };
     
     }//end of namespace of base

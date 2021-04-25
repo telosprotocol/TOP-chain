@@ -13,12 +13,14 @@ namespace top
         {
             m_account_addr  = account_address;
             m_account_xid   = get_xid_from_account(m_account_addr);
+            m_account_xid_str = xstring_utl::uint642hex(m_account_xid);
         }
         
         xvaccount_t::xvaccount_t(const xvaccount_t & obj)
         {
             m_account_addr = obj.m_account_addr;
             m_account_xid  = obj.m_account_xid;
+            m_account_xid_str = obj.m_account_xid_str;
         }
     
         xvaccount_t::~xvaccount_t()

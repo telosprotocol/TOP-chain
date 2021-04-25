@@ -425,7 +425,7 @@ xtxpool_v2::ready_accounts_t xproposal_maker_t::table_rules_filter(const std::se
                                                                    const std::vector<xcons_transaction_ptr_t> & ready_txs) const {
     std::map<std::string, std::shared_ptr<xtxpool_v2::xready_account_t>> ready_account_map;
 
-    enum_transaction_subtype last_tx_subtype = enum_transaction_subtype::enum_transaction_subtype_all;
+    enum_transaction_subtype last_tx_subtype = enum_transaction_subtype::enum_transaction_subtype_invalid;
     base::xtable_shortid_t last_peer_table_shortid;
     uint64_t last_receipt_id;
 

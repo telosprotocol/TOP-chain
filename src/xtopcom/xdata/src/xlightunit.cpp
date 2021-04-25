@@ -463,6 +463,7 @@ xcons_transaction_ptr_t xlightunit_block_t::create_one_txreceipt(const xtransact
             return create_txreceipt(tx, output_entity);
         }
     }
+    xerror("xlightunit_block_t::create_one_txreceipt fail find tx in unit.tx=%s,unit=%s", base::xstring_utl::to_hex(tx->get_digest_str()).c_str(), dump().c_str());
     return nullptr;
 }
 
@@ -511,14 +512,15 @@ const std::vector<xlightunit_tx_info_ptr_t> & xlightunit_block_t::get_txs() cons
     return get_lightunit_body().get_txs();
 }
 
-bool xlightunit_block_t::extract_sub_txs(std::vector<base::xvtransaction_index_ptr_t> & sub_txs) {
+bool xlightunit_block_t::extract_sub_txs(std::vector<base::xtx_extract_info_t> & sub_txs) {
     const std::vector<xlightunit_tx_info_ptr_t> & txs_info = get_txs();
     xassert(!txs_info.empty());
     uint64_t unit_height = get_height();
     const std::string & unit_hash = get_block_hash();
     for (auto & tx : txs_info) {
-        base::xvtransaction_index_ptr_t tx_index = make_object_ptr<base::xvtransaction_index_t>(unit_height, unit_hash, tx->get_tx_hash(), tx->get_tx_subtype(), tx->get_raw_tx().get());
-        sub_txs.push_back(tx_index);
+        base::xvtxindex_ptr_t tx_index = make_object_ptr<base::xvtxindex_t>(unit_height, unit_hash, tx->get_tx_key());
+        base::xtx_extract_info_t sub_txinfo(tx_index, tx->get_raw_tx());
+        sub_txs.push_back(sub_txinfo);
     }
     return true;
 }
