@@ -23,6 +23,7 @@ public:
     explicit xtop_mocked_vnode_group(common::xip2_t group_address_with_size_and_height);
 
     std::pair<xobject_ptr_t<base::xvnode_t>, common::xslot_id_t> add_node(common::xaccount_address_t account_address);
+    void reset_nodes();
 
 protected:
     ~xtop_mocked_vnode_group() override = default;
