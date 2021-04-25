@@ -1,18 +1,62 @@
 use std::borrow::{Borrow, BorrowMut};
+use std::ops::AddAssign;
 use std::ptr::NonNull;
 use std::sync::{Arc, RwLock};
 
-// use wasmer::HostEnvInitError;
+use crate::errors::{VmError, VmResult};
+use wasmer::HostEnvInitError;
 use wasmer::{Instance as WasmerInstance, Val, WasmerEnv};
 use wasmer_middlewares::metering::{get_remaining_points, set_remaining_points, MeteringPoints};
-
-use crate::backend::{Backend, BackendApi, Querier, Storage};
-use crate::errors::{VmError, VmResult};
 
 /// Never can never be instantiated.
 /// Replace this with the [never primitive type](https://doc.rust-lang.org/std/primitive.never.html) when stable.
 #[derive(Debug)]
 pub enum Never {}
+
+#[derive(Copy, Clone, Debug)]
+pub struct GasInfo {
+    /// The gas cost of a computation that was executed already but not yet charged
+    pub cost: u64,
+    /// Gas that was used and charged externally.
+    pub externally_used: u64,
+}
+
+impl GasInfo {
+    pub fn new(cost: u64, externally_used: u64) -> Self {
+        GasInfo {
+            cost,
+            externally_used,
+        }
+    }
+    pub fn with_cost(amount: u64) -> Self {
+        GasInfo {
+            cost: amount,
+            externally_used: 0,
+        }
+    }
+    pub fn with_externally_used(amount: u64) -> Self {
+        GasInfo {
+            cost: 0,
+            externally_used: amount,
+        }
+    }
+
+    pub fn free() -> Self {
+        GasInfo {
+            cost: 0,
+            externally_used: 0,
+        }
+    }
+}
+
+impl AddAssign for GasInfo {
+    fn add_assign(&mut self, other: Self) {
+        *self = GasInfo {
+            cost: self.cost + other.cost,
+            externally_used: self.externally_used + other.cost,
+        }
+    }
+}
 
 /** gas config **/
 
@@ -51,17 +95,16 @@ impl GasState {
 
 /** runtime data **/
 
-pub struct Runtime<A: BackendApi, S: Storage, Q: Querier> {
-    pub api: A,
+pub struct Runtime {
     pub print_debug: bool,
     pub gas_config: GasConfig,
-    data: Arc<RwLock<ContextData<S, Q>>>,
+    data: Arc<RwLock<ContextData>>,
+
 }
 
-impl<A: BackendApi, S: Storage, Q: Querier> Clone for Runtime<A, S, Q> {
+impl Clone for Runtime {
     fn clone(&self) -> Self {
         Runtime {
-            api: self.api,
             print_debug: self.print_debug,
             gas_config: self.gas_config.clone(),
             data: self.data.clone(),
@@ -69,16 +112,18 @@ impl<A: BackendApi, S: Storage, Q: Querier> Clone for Runtime<A, S, Q> {
     }
 }
 
-// impl<A, S, Q> WasmerEnv for Runtime<A, S, Q> {
-//     fn init_with_instance(&mut self, _instance: &WasmInstance) -> Result<(), HostEnvInitError> {
-//         Ok(())
-//     }
-// }
+unsafe impl Send for Runtime {}
+unsafe impl Sync for Runtime {}
 
-impl<A: BackendApi, S: Storage, Q: Querier> Runtime<A, S, Q> {
-    pub fn new(api: A, gas_limit: u64, print_debug: bool) -> Self {
+impl WasmerEnv for Runtime {
+    fn init_with_instance(&mut self, _instance: &WasmerInstance) -> Result<(), HostEnvInitError> {
+        Ok(())
+    }
+}
+
+impl Runtime {
+    pub fn new(gas_limit: u64, print_debug: bool) -> Self {
         Runtime {
-            api,
             print_debug,
             gas_config: GasConfig::default(),
             data: Arc::new(RwLock::new(ContextData::new(gas_limit))),
@@ -87,7 +132,7 @@ impl<A: BackendApi, S: Storage, Q: Querier> Runtime<A, S, Q> {
 
     pub fn with_context_data_mut<C, R>(&self, callback: C) -> R
     where
-        C: FnOnce(&mut ContextData<S, Q>) -> R,
+        C: FnOnce(&mut ContextData) -> R,
     {
         let mut guard = self.data.as_ref().write().unwrap();
         let context_data = guard.borrow_mut();
@@ -95,7 +140,7 @@ impl<A: BackendApi, S: Storage, Q: Querier> Runtime<A, S, Q> {
     }
     pub fn with_context_data<C, R>(&self, callback: C) -> R
     where
-        C: FnOnce(&ContextData<S, Q>) -> R,
+        C: FnOnce(&ContextData) -> R,
     {
         let guard = self.data.as_ref().read().unwrap();
         let context_data = guard.borrow();
@@ -142,14 +187,21 @@ impl<A: BackendApi, S: Storage, Q: Querier> Runtime<A, S, Q> {
         Ok(())
     }
 
-    pub fn call_function1(&self, name: &str, args: &[Val]) -> VmResult<(Val)> {
+    pub fn call_function1(&self, name: &str, args: &[Val]) -> VmResult<Val> {
         let result = self.call_function(name, args)?;
         let expected = 1;
         let actual = result.len();
         if actual != expected {
             return Err(VmError::result_mismatch(name, expected, actual));
         }
-        Ok((result[0].clone()))
+        Ok(result[0].clone())
+    }
+
+    pub fn with_gas_state_mut<C, R>(&self, callback: C) -> R
+    where
+        C: FnOnce(&mut GasState) -> R,
+    {
+        self.with_context_data_mut(|context_data| callback(&mut context_data.gas_state))
     }
 
     pub fn set_wasmer_instance(&self, wasmer_instance: Option<NonNull<WasmerInstance>>) {
@@ -177,22 +229,41 @@ impl<A: BackendApi, S: Storage, Q: Querier> Runtime<A, S, Q> {
     }
 }
 
-pub struct ContextData<S: Storage, Q: Querier> {
+pub struct ContextData {
     gas_state: GasState,
-    storage: Option<S>,
-    storage_readonly: bool,
-    querier: Option<Q>,
+    // storage_readonly: bool,
     wasmer_instance: Option<NonNull<WasmerInstance>>,
 }
 
-impl<S: Storage, Q: Querier> ContextData<S, Q> {
+impl ContextData {
     pub fn new(gas_limit: u64) -> Self {
-        ContextData::<S, Q> {
+        ContextData {
             gas_state: GasState::with_limit(gas_limit),
-            storage: None,
-            storage_readonly: true,
-            querier: None,
+            // storage_readonly: true,
             wasmer_instance: None,
         }
+    }
+}
+
+pub fn process_gas_info(runtime: &Runtime, info: GasInfo) -> VmResult<()> {
+    // Ok(())
+    let gas_left = runtime.get_gas_left();
+
+    let new_limit = runtime.with_gas_state_mut(|gas_state| {
+        gas_state.externally_used_gas += info.externally_used;
+        // These lines reduce the amount of gas available to wasmer
+        // so it can not consume gas that was consumed externally.
+        gas_left
+            .saturating_sub(info.externally_used)
+            .saturating_sub(info.cost)
+    });
+
+    // This tells wasmer how much more gas it can consume from this point in time.
+    runtime.set_gas_left(new_limit);
+
+    if info.externally_used + info.cost > gas_left {
+        Err(VmError::gas_depletion())
+    } else {
+        Ok(())
     }
 }

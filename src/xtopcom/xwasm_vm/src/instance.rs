@@ -1,9 +1,9 @@
 use std::ptr::NonNull;
 
-use wasmer::{Exports, ImportObject, Instance as WasmerInstance, Module, Val};
+use wasmer::{Exports, Function, ImportObject, Instance as WasmerInstance, Module, Val};
 
-use crate::backend::{Backend, BackendApi, Querier, Storage};
 use crate::errors::{VmError, VmResult};
+use crate::imports::{native_c_call, native_c_depoly};
 use crate::runtime::Runtime;
 use crate::size::Size;
 
@@ -23,40 +23,38 @@ pub struct InstanceOptions {
     pub print_debug: bool,
 }
 
-pub struct Instance<A: BackendApi, S: Storage, Q: Querier> {
+pub struct Instance {
     _inner: Box<WasmerInstance>,
-    runtime: Runtime<A, S, Q>,
+    runtime: Runtime,
 }
 
-impl<A, S, Q> Instance<A, S, Q>
-where
-    A: BackendApi + 'static,
-    S: Storage + 'static,
-    Q: Querier + 'static,
-{
+impl Instance {
     pub fn from_code(
         code: &[u8],
-        backend: Backend<A, S, Q>,
         options: InstanceOptions,
         memory_limit: Option<Size>,
     ) -> VmResult<Self> {
         let module = compile(code, memory_limit)?;
-        Instance::from_module(&module, backend, options.gas_limit, options.print_debug)
+        Instance::from_module(&module, options.gas_limit, options.print_debug)
     }
 
-    pub fn from_module(
-        module: &Module,
-        backend: Backend<A, S, Q>,
-        gas_limit: u64,
-        print_debug: bool,
-    ) -> VmResult<Self> {
+    pub fn from_module(module: &Module, gas_limit: u64, print_debug: bool) -> VmResult<Self> {
         let store = module.store();
-        let runtime = Runtime::new(backend.api, gas_limit, print_debug);
+        let runtime = Runtime::new(gas_limit, print_debug);
 
         let mut import_obj = ImportObject::new();
         let mut env_imports = Exports::new();
 
         // todo insert import functions.
+        env_imports.insert(
+            "c_call",
+            Function::new_native_with_env(store, runtime.clone(), native_c_call),
+        );
+        env_imports.insert(
+            "c_depoly",
+            Function::new_native_with_env(store, runtime.clone(), native_c_depoly),
+        );
+
         import_obj.register("env", env_imports);
 
         let wasmer_instance = Box::from(WasmerInstance::new(module, &import_obj).map_err(
@@ -76,7 +74,7 @@ where
         Ok(instance)
     }
 
-    pub fn get_gas_left(&self)->u64{
+    pub fn get_gas_left(&self) -> u64 {
         self.runtime.get_gas_left()
     }
 
