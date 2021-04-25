@@ -4,7 +4,7 @@
 
 #include "xcontract_common/xproperties/xproperty_access_control.h"
 
-#include "xbasic/xthrow_error.h"
+#include "xbasic/xerror/xthrow_error.h"
 
 #include <cassert>
 
@@ -375,7 +375,7 @@ std::string xtop_property_access_control::src_code(xproperty_identifier_t const 
 std::string xtop_property_access_control::src_code(xproperty_identifier_t const & prop_id) const {
     std::error_code ec;
     auto r = src_code(prop_id, ec);
-    throw_error(ec);
+    top::error::throw_error(ec);
     return r;
 }
 
@@ -395,7 +395,7 @@ void xtop_property_access_control::deploy_src_code(xproperty_identifier_t const 
 void xtop_property_access_control::deploy_src_code(xproperty_identifier_t const & prop_id, std::string src_code) {
     std::error_code ec;
     deploy_src_code(prop_id, std::move(src_code), ec);
-    throw_error(ec);
+    top::error::throw_error(ec);
 }
 
 /**

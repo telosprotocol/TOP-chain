@@ -2,7 +2,7 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "xbasic/xchain_error.h"
+#include "xbasic/xerror/xchain_error.h"
 #include "xelection/xdata_accessor_error.h"
 
 NS_BEG2(top, election)

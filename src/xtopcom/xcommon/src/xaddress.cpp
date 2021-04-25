@@ -442,7 +442,7 @@ xtop_logical_version::hash_result_type xtop_logical_version::hash() const {
 }
 
 std::string xtop_logical_version::to_string() const {
-    return m_version.to_string() + u8"/" + std::to_string(m_sharding_size) + u8"/" + std::to_string(m_associated_blk_height);
+    return m_version.to_string() + "/" + std::to_string(m_sharding_size) + "/" + std::to_string(m_associated_blk_height);
 }
 
 xtop_node_address::xtop_node_address(xsharding_address_t const & sharding_address)

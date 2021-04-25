@@ -7,7 +7,7 @@
 #include <stdexcept>
 #include <system_error>
 
-NS_BEG1(top)
+NS_BEG2(top, error)
 
 class xtop_chain_error : public std::runtime_error {
     using base_t = std::runtime_error;
@@ -22,8 +22,7 @@ public:
     xtop_chain_error & operator=(xtop_chain_error &&)      = default;
     ~xtop_chain_error() override                           = default;
 
-    explicit
-    xtop_chain_error(std::error_code ec);
+    explicit xtop_chain_error(std::error_code ec);
     xtop_chain_error(std::error_code ec, std::string const & extra_what);
     xtop_chain_error(std::error_code ec, char const * extra_what);
     xtop_chain_error(int const ev, std::error_category const & ecat);
@@ -35,4 +34,4 @@ public:
 };
 using xchain_error_t = xtop_chain_error;
 
-NS_END1
+NS_END2

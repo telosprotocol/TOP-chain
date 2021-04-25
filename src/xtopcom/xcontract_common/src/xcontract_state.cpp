@@ -1,6 +1,6 @@
 #include "xcontract_common/xcontract_state.h"
 
-#include "xbasic/xthrow_error.h"
+#include "xbasic/xerror/xthrow_error.h"
 #include "xbasic/xutility.h"
 
 #include <cassert>
@@ -43,7 +43,7 @@ std::string xtop_contract_state::src_code(std::error_code & ec) const {
 std::string xtop_contract_state::src_code() const {
     std::error_code ec;
     auto r = src_code(ec);
-    throw_error(ec);
+    top::error::throw_error(ec);
     return r;
 }
 
@@ -55,7 +55,7 @@ void xtop_contract_state::deploy_src_code(std::string code, std::error_code & ec
 void xtop_contract_state::deploy_src_code(std::string code) {
     std::error_code ec;
     deploy_src_code(std::move(code), ec);
-    throw_error(ec);
+    top::error::throw_error(ec);
 }
 
 NS_END2
