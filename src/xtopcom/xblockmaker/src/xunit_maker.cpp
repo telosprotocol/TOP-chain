@@ -135,7 +135,7 @@ bool xunit_maker_t::unit_rules_filter(const std::vector<xcons_transaction_ptr_t>
 bool xunit_maker_t::leader_push_txs(const std::vector<xcons_transaction_ptr_t> & txs) {
     if (is_account_locked()) {
         // TODO(jimmy)
-        xwarn("xunit_maker_t::leader_push_txs fail-account locked.account=%s,hightest_height=ld",
+        xerror("xunit_maker_t::leader_push_txs fail-account locked.account=%s,hightest_height=%ld",
             get_account().c_str(), get_highest_height_block()->get_height());
         return false;
     }
@@ -273,14 +273,8 @@ xblock_ptr_t xunit_maker_t::make_next_block(const data::xblock_consensus_para_t 
     cs_para.set_justify_cert_hash(justify_cert_hash);
     m_default_builder_para->set_error_code(xsuccess);
 
-    // firstly try to make full unit
-    if (can_make_next_full_block()) {
-        proposal_unit = m_fullunit_builder->build_block(get_highest_height_block(),
-                                                        get_latest_committed_state(),
-                                                        cs_para,
-                                                        m_default_builder_para);
-        result.m_make_block_error_code = m_default_builder_para->get_error_code();
-    } else if (can_make_next_light_block()) {
+    // firstly should process txs and try to make lightunit
+    if (can_make_next_light_block()) {
         base::xreceiptid_state_ptr_t receiptid_state = result.m_tablestate->get_receiptid_state();
         xblock_builder_para_ptr_t build_para = std::make_shared<xlightunit_builder_para_t>(m_pending_txs, receiptid_state, get_resources());
         proposal_unit = m_lightunit_builder->build_block(get_highest_height_block(),
@@ -295,6 +289,12 @@ xblock_ptr_t xunit_maker_t::make_next_block(const data::xblock_consensus_para_t 
             xtxpool_v2::tx_info_t txinfo(get_account(), tx->get_transaction()->digest(), tx->get_tx_subtype());
             get_txpool()->pop_tx(txinfo);
         }
+    } else if (can_make_next_full_block()) {
+        proposal_unit = m_fullunit_builder->build_block(get_highest_height_block(),
+                                                        get_latest_committed_state(),
+                                                        cs_para,
+                                                        m_default_builder_para);
+        result.m_make_block_error_code = m_default_builder_para->get_error_code();
     } else if (can_make_next_empty_block()) {
         proposal_unit = m_emptyunit_builder->build_block(get_highest_height_block(),
                                                         nullptr,
@@ -361,6 +361,7 @@ bool xunit_maker_t::can_make_next_light_block() const {
     }
     // TODO(jimmy) non contious block make mode. condition:non-empty block is committed status
     if (is_account_locked())  {
+        xerror("xunit_maker_t::can_make_next_light_block account locked. account=%s", get_account().c_str());
         return false;
     }
     return true;

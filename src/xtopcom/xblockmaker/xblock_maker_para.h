@@ -35,6 +35,14 @@ class xunit_proposal_input_t : public xserializable_based_on<void> {
     const std::string & get_last_block_hash() const {return m_last_block_hash;}
     uint64_t            get_last_block_height() const {return m_last_block_height;}
     const std::vector<xcons_transaction_ptr_t> & get_input_txs() const {return m_input_txs;}
+    bool                has_recv_or_confirm_tx() const {
+        for (auto & tx : m_input_txs) {
+            if (tx->is_recv_tx() || tx->is_confirm_tx()) {
+                return true;
+            }
+        }
+        return false;
+    }
 
     std::string         dump() const;
 
