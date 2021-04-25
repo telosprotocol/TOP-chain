@@ -30,8 +30,10 @@ public:
         : ThreadBase(func)
         , thread_(func_)
     {}
-    virtual ~RatelimitThread() {
-        thread_.join();
+    void join() {
+        if (thread_.joinable()) {
+            thread_.join();
+        }
     }
 
 private:
