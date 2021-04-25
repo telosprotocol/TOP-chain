@@ -351,11 +351,13 @@ void xproposal_maker_t::get_locked_txs(const xblock_ptr_t & block, std::vector<x
     }
 }
 
-xtxpool_v2::ready_accounts_t xproposal_maker_t::filt_noncontinuous_txs(xtxpool_v2::ready_accounts_t & reday_accounts,
-                                                                       const base::xreceiptid_state_ptr_t receiptid_state_highqc) const {
-    xtxpool_v2::xordered_ready_txs_t ordered_ready_txs(reday_accounts);
-    ordered_ready_txs.erase_noncontinuous_receipts(receiptid_state_highqc);
-    return ordered_ready_txs.get_ready_accounts();
+void xproposal_maker_t::get_locked_accounts(const xblock_ptr_t & block, std::set<std::string> & locked_account_set) const {
+    const auto & units = block->get_tableblock_units(false);
+    for (auto unit : units) {
+        if (unit->get_block_class() == base::enum_xvblock_class_light || unit->get_block_class() == base::enum_xvblock_class_full) {
+            locked_account_set.insert(unit->get_account());
+        }
+    }
 }
 
 xtxpool_v2::ready_accounts_t xproposal_maker_t::get_ready_txs(const xblock_consensus_para_t & proposal_para) const {
@@ -380,40 +382,78 @@ xtxpool_v2::ready_accounts_t xproposal_maker_t::get_ready_txs(const xblock_conse
     }
 
     xtxpool_v2::xtxs_pack_para_t txpool_pack_para(proposal_para.get_table_account(), tablestate_highqc->get_receiptid_state(), 16, 32, 32);
-    xtxpool_v2::ready_accounts_t ready_accounts = get_txpool()->get_ready_accounts(txpool_pack_para);
 
-    return table_rules_filter(proposal_para, tablestate_highqc->get_receiptid_state(), ready_accounts);
-}
+    std::vector<xcons_transaction_ptr_t> ready_txs = get_txpool()->get_ready_txs(txpool_pack_para);
 
-xtxpool_v2::ready_accounts_t xproposal_maker_t::table_rules_filter(const xblock_consensus_para_t & proposal_para,
-                                                                   const base::xreceiptid_state_ptr_t receiptid_state_highqc,
-                                                                   xtxpool_v2::ready_accounts_t & ready_accounts) const {
     std::set<std::string> locked_account_set;
     get_locked_accounts(proposal_para.get_latest_cert_block(), locked_account_set);
     get_locked_accounts(proposal_para.get_latest_locked_block(), locked_account_set);
 
-    for (auto it_ready_account = ready_accounts.begin(); it_ready_account != ready_accounts.end();) {
-        auto it_locked_account_set = locked_account_set.find(it_ready_account->get()->get_addr());
-        if (it_locked_account_set != locked_account_set.end()) {
-            // filt locked accounts' txs
-            it_ready_account = ready_accounts.erase(it_ready_account);
-        } else {
-            // filt txs not match rule
-            it_ready_account->get()->tx_rule_filter();
-            it_ready_account++;
-        }
-    }
-
-    return filt_noncontinuous_txs(ready_accounts, receiptid_state_highqc);
+    return table_rules_filter(locked_account_set, tablestate_highqc->get_receiptid_state(), ready_txs);
 }
 
-void xproposal_maker_t::get_locked_accounts(const xblock_ptr_t & block, std::set<std::string> & locked_account_set) const {
-    const auto & units = block->get_tableblock_units(false);
-    for (auto unit : units) {
-        if (unit->get_block_class() == base::enum_xvblock_class_light || unit->get_block_class() == base::enum_xvblock_class_full) {
-            locked_account_set.insert(unit->get_account());
+xtxpool_v2::ready_accounts_t xproposal_maker_t::table_rules_filter(const std::set<std::string> & locked_account_set,
+                                                                   const base::xreceiptid_state_ptr_t & receiptid_state_highqc,
+                                                                   const std::vector<xcons_transaction_ptr_t> & ready_txs) const {
+    std::map<std::string, std::shared_ptr<xtxpool_v2::xready_account_t>> ready_account_map;
+
+    enum_transaction_subtype last_tx_subtype = enum_transaction_subtype::enum_transaction_subtype_all;
+    base::xtable_shortid_t last_peer_table_shortid;
+    uint64_t last_receipt_id;
+
+    for (auto & tx : ready_txs) {
+        auto & account_addr = tx->get_account_addr();
+
+        // remove locked accounts' txs
+        auto it_locked_account_set = locked_account_set.find(account_addr);
+        if (it_locked_account_set != locked_account_set.end()) {
+            continue;
+        }
+
+        enum_transaction_subtype cur_tx_subtype;
+        base::xtable_shortid_t cur_peer_table_sid;
+        uint64_t cur_receipt_id;
+
+        // make sure receipt id is continuous
+        if (tx->is_recv_tx() || tx->is_confirm_tx()) {
+            cur_tx_subtype = tx->get_tx_subtype();
+            auto & account_addr = (tx->is_recv_tx()) ? tx->get_source_addr() : tx->get_target_addr();
+            base::xvaccount_t vaccount(account_addr);
+            cur_peer_table_sid = vaccount.get_short_table_id();
+            cur_receipt_id = tx->get_last_action_receipt_id();
+            if (cur_tx_subtype != last_tx_subtype || last_peer_table_shortid != cur_peer_table_sid) {
+                base::xreceiptid_pair_t receiptid_pair;
+                receiptid_state_highqc->find_pair(cur_peer_table_sid, receiptid_pair);
+                last_receipt_id = tx->is_recv_tx() ? receiptid_pair.get_recvid_max() : receiptid_pair.get_confirmid_max();
+            }
+            if (cur_receipt_id != last_receipt_id + 1) {
+                continue;
+            }
+        }
+
+        // push to account level tx set, there is a filter rule for account tx set, push can be fail.
+        bool ret = true;
+        auto it_ready_account = ready_account_map.find(account_addr);
+        if (it_ready_account == ready_account_map.end()) {
+            auto ready_account = std::make_shared<xtxpool_v2::xready_account_t>(account_addr);
+            ret = ready_account->put_tx(tx);
+            ready_account_map[account_addr] = ready_account;
+        } else {
+            auto & ready_account = it_ready_account->second;
+            ret = ready_account->put_tx(tx);
+        }
+        if (ret && (tx->is_recv_tx() || tx->is_confirm_tx())) {
+            last_tx_subtype = cur_tx_subtype;
+            last_peer_table_shortid = cur_peer_table_sid;
+            last_receipt_id = cur_receipt_id;
         }
     }
+
+    xtxpool_v2::ready_accounts_t ready_accounts;
+    for (auto & ready_account_pair : ready_account_map) {
+        ready_accounts.push_back(ready_account_pair.second);
+    }
+    return ready_accounts;
 }
 
 NS_END2

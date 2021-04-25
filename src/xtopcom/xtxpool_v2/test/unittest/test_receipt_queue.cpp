@@ -60,12 +60,17 @@ TEST_F(test_new_receipt_queue, receipt_queue_basic) {
     uint32_t tx_num = 5;
     // insert committed txs to blockstore
     std::vector<xcons_transaction_ptr_t> txs = test_xtxpool_util_t::create_cons_transfer_txs(0, 1, tx_num);
+    uint64_t receipt_id = 1;
+    for (auto & tx : txs) {
+        tx->set_current_receipt_id(0, receipt_id);
+        receipt_id++;
+    }
+    
     xblock_t * block;
     std::vector<xcons_transaction_ptr_t> recvtxs = get_tx(blockstore, xstore, sender, receiver, txs, &block);
 
 
     for (uint32_t i = 0; i < tx_num; i++) {
-        recvtxs[i]->set_receipt_id(i + 1);
         std::shared_ptr<xtx_entry> tx_ent = std::make_shared<xtx_entry>(recvtxs[i], para);
         int32_t ret = receipt_queue.push_tx(tx_ent);
         ASSERT_EQ(ret, 0);
