@@ -265,5 +265,31 @@ xobject_ptr_t<xtxpool_face_t> xtxpool_instance::create_xtxpool_inst(const observ
     return xtxpool;
 }
 
+bool xready_account_t::put_tx(const xcons_transaction_ptr_t & tx) {
+    enum_transaction_subtype new_tx_subtype = tx->get_tx_subtype();
+    if (new_tx_subtype == enum_transaction_subtype_self) {
+        new_tx_subtype = enum_transaction_subtype_send;
+    }
+
+    if (!m_txs.empty()) {
+        enum_transaction_subtype first_tx_subtype = m_txs[0]->get_tx_subtype();
+        if (first_tx_subtype == enum_transaction_subtype_self) {
+            first_tx_subtype = enum_transaction_subtype_send;
+        }
+        if (new_tx_subtype != first_tx_subtype) {
+            xtxpool_info("xready_account_t::put_tx fail tx type not same with txs already in, tx:%s,m_txs[0]:%s", tx->dump().c_str(), m_txs[0]->dump().c_str());
+            return false;
+        }
+
+        if ((first_tx_subtype != enum_transaction_subtype_confirm) &&
+            (m_txs[0]->get_transaction()->get_tx_type() != xtransaction_type_transfer || tx->get_transaction()->get_tx_type() != xtransaction_type_transfer)) {
+            xtxpool_info("xready_account_t::put_tx fail non transfer tx, tx:%s,m_txs[0]:%s", tx->dump().c_str(), m_txs[0]->dump().c_str());
+            return false;
+        }
+    }
+    m_txs.push_back(tx);
+    return true;
+}
+
 }  // namespace xtxpool_v2
 }  // namespace top
