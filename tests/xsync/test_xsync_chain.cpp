@@ -183,7 +183,7 @@ TEST(xsync_account, highqc_fork) {
         }
     }
 
-    base::xauto_ptr<base::xvblock_t> auto_successor_block = block_vector_2[30];
+    base::xauto_ptr<base::xvblock_t> auto_successor_block = block_vector_2[40];
     xblock_ptr_t successor_block = autoptr_to_blockptr(auto_successor_block);
 
     top::common::xnode_address_t network_self;
@@ -212,7 +212,7 @@ TEST(xsync_account, highqc_fork) {
         uint64_t start_height = ptr->start_height;
         uint32_t count = ptr->count;
         ASSERT_EQ(start_height, 19);
-        ASSERT_EQ(count, 12);
+        ASSERT_EQ(count, 20);
 
         std::vector<xblock_ptr_t> vector_blocks;
         for (uint64_t h = start_height; h<=(start_height+count); h++) {
@@ -245,8 +245,8 @@ TEST(xsync_account, highqc_fork) {
         const std::string &owner = ptr->owner;
         uint64_t start_height = ptr->start_height;
         uint32_t count = ptr->count;
-        ASSERT_EQ(start_height, 19);
-        ASSERT_EQ(count, 12);
+        ASSERT_EQ(start_height, 40);
+        ASSERT_EQ(count, 1);
 
         std::vector<xblock_ptr_t> vector_blocks;
         for (uint32_t i=0; i<count; i++) {
@@ -260,7 +260,7 @@ TEST(xsync_account, highqc_fork) {
     }
 
     base::xauto_ptr<base::xvblock_t> cur_block = sync_store.get_latest_end_block(address, enum_chain_sync_pocliy_full);
-    ASSERT_EQ(cur_block->get_height(), 30);
+    ASSERT_EQ(cur_block->get_height(), 40);
 
 }
 
@@ -328,7 +328,7 @@ TEST(xsync_account, lockedqc_fork) {
         }
     }
 
-    base::xauto_ptr<base::xvblock_t> auto_successor_block = block_vector_2[30];
+    base::xauto_ptr<base::xvblock_t> auto_successor_block = block_vector_2[38];
     xblock_ptr_t successor_block = autoptr_to_blockptr(auto_successor_block);
 
     top::common::xnode_address_t network_self;
@@ -357,7 +357,7 @@ TEST(xsync_account, lockedqc_fork) {
         uint64_t start_height = ptr->start_height;
         uint32_t count = ptr->count;
         ASSERT_EQ(start_height, 20);
-        ASSERT_EQ(count, 11);
+        ASSERT_EQ(count, 19);
 
         std::vector<xblock_ptr_t> vector_blocks;
         for (uint64_t h = start_height; h<=(start_height+count); h++) {
@@ -369,43 +369,8 @@ TEST(xsync_account, lockedqc_fork) {
         chain_downloader->on_response(vector_blocks, network_self, target_address);
     }
 
-    // head fork and sync
-    {
-        xmessage_t msg;
-        xvnode_address_t src;
-        xvnode_address_t dst;
-        ASSERT_EQ(vhost.read_msg(msg, src, dst), true);
-
-        xbyte_buffer_t message;
-        xmessage_pack_t::unpack_message(msg.payload(), message);
-
-        base::xstream_t stream(base::xcontext_t::instance(), (uint8_t*)message.data(), message.size());
-
-        xsync_message_header_ptr_t header = make_object_ptr<xsync_message_header_t>();
-        header->serialize_from(stream);
-
-        auto ptr = make_object_ptr<xsync_message_get_blocks_t>();
-        ptr->serialize_from(stream);
-
-        const std::string &owner = ptr->owner;
-        uint64_t start_height = ptr->start_height;
-        uint32_t count = ptr->count;
-        ASSERT_EQ(start_height, 20);
-        ASSERT_EQ(count, 11);
-
-        std::vector<xblock_ptr_t> vector_blocks;
-        for (uint32_t i=0; i<count; i++) {
-            uint64_t h = start_height + (uint64_t)i;
-            base::xvblock_t* blk = block_vector_2[h];
-            xblock_ptr_t block = copy_block(blk);
-            vector_blocks.push_back(block);
-        }
-
-        chain_downloader->on_response(vector_blocks, network_self, target_address);
-    }
-
     base::xauto_ptr<base::xvblock_t> cur_block = sync_store.get_latest_end_block(address, enum_chain_sync_pocliy_full);
-    ASSERT_EQ(cur_block->get_height(), 30);
+    ASSERT_EQ(cur_block->get_height(), 39);
 
 }
 
