@@ -157,9 +157,9 @@ pub extern "C" fn depoly_erc20(
     ins: &Instance,
     // symbol: *const c_char,
     // total_allowance: u64,
-    params: i32,
+    params: i64,
 ) -> i32 {
-    match ins.call_function1("depoly", &[Val::I32(params)]) {
+    match ins.call_function1("depoly", &[Val::I64(params)]) {
         Ok(_) => 0,
         Err(_) => -1,
     }
@@ -170,9 +170,9 @@ pub extern "C" fn call_erc20(
     ins: &Instance,
     // function_name:*const c_char,
     // function_args:i32,
-    params: i32,
+    params: i64,
 ) -> i32 {
-    match ins.call_function1("call", &[Val::I32(params)]) {
+    match ins.call_function1("call", &[Val::I64(params)]) {
         Ok(_) => 0,
         Err(err) => {
             println!("err {:?}", err);

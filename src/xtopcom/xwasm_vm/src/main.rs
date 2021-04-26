@@ -1,7 +1,7 @@
 #[link(name = "democapi")]
 extern "C" {
-    fn c_call(ptr: i32) -> i32;
-    fn c_depoly(ptr: i32) -> i32;
+    fn c_call(ptr: i64) -> i32;
+    fn c_depoly(ptr: i64) -> i32;
 }
 
 mod errors;
@@ -48,6 +48,6 @@ fn main() {
     let ins = Box::new(Instance::from_code(&wasm, DEFAULT_INSTANCE_OPTIONS, None)).unwrap();
 
     println!("{:?}", ins.get_gas_left());
-    ins.call_function1("call", &[Val::I32(123)]).unwrap();
+    ins.call_function1("call", &[Val::I64(140730243188608)]).unwrap();
     println!("{:?}", ins.get_gas_left());
 }

@@ -73,10 +73,18 @@ void test_call_wasm_api()
     assert(use_instance_1_1(m_ptr2, "fib", 10) == 55);
 }
 
+struct params
+{
+    std::string account_from;
+    std::string account_to;
+    int value;
+    params(std::string _f, std::string _t, int _v) : account_from{_f}, account_to{_t}, value{_v} {}
+};
+
 struct Erc20_Instance;
 extern "C" Erc20_Instance *get_erc20_instance(uint8_t *s, uint32_t size);
-extern "C" int32_t depoly_erc20(Erc20_Instance *ins_ptr, int32_t ptr);
-extern "C" int32_t call_erc20(Erc20_Instance *ins_ptr, int32_t ptr);
+extern "C" int32_t depoly_erc20(Erc20_Instance *ins_ptr, params *ptr);
+extern "C" int32_t call_erc20(Erc20_Instance *ins_ptr, params *ptr);
 extern "C" uint64_t get_gas_left(Erc20_Instance *ins_ptr);
 extern "C" void release_instance(Erc20_Instance *ins_ptr);
 
@@ -100,11 +108,16 @@ Erc20_Instance *get_erc20_by_path(const char *file_path)
 
 void test_erc20()
 {
+    params p1{"fromAAA", "toBBB", 1111};
+    printf("[debug] p1 %p \n", &p1);
+
+    params p2{"fromCCC", "toDDD", 2222};
+    printf("[debug] p2 %p \n", &p2);
 
     Erc20_Instance *ins_ptr = get_erc20_by_path("./test_erc20.wasm");
-    depoly_erc20(ins_ptr, 12345678);
+    depoly_erc20(ins_ptr, &p1);
     std::printf("left gas: %llu\n", get_gas_left(ins_ptr));
-    call_erc20(ins_ptr, 87654321);
+    call_erc20(ins_ptr, &p2);
     std::printf("left gas: %llu\n", get_gas_left(ins_ptr));
     release_instance(ins_ptr);
 }
