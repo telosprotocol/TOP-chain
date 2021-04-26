@@ -39,21 +39,13 @@ void xtxpool_service_mgr::on_block_to_db_event(mbus::xevent_ptr_t e) {
     }
 
     mbus::xevent_store_block_to_db_ptr_t block_event = dynamic_xobject_ptr_cast<mbus::xevent_store_block_to_db_t>(e);
-    const xblock_ptr_t & block = mbus::extract_block_from(block_event);
-    uint64_t now_clock = m_clock->logic_time();
 
-    xinfo("xtxpool_service_mgr::on_block_to_db_event process,level:%d,class:%d,now=%llu,block:%s",
-          block->get_block_level(),
-          block->get_block_class(),
-          now_clock,
-          block->dump().c_str());
-
-    if (!block->is_tableblock() || block->is_emptyblock() || block->is_fullblock() || block->get_clock() + block_clock_height_fall_behind_max <= now_clock) {
+    if (block_event->blk_level != base::enum_xvblock_level_table) {
         return;
     }
 
     if (m_timer->is_mailbox_over_limit()) {
-        xwarn("xtxpool_service_mgr::on_block_to_db_event txpool mailbox limit,drop block=%s", block->dump().c_str());
+        xwarn("xtxpool_service_mgr::on_block_to_db_event txpool mailbox limit,drop block=%s,height:%llu", block_event->blk_hash.c_str(), block_event->blk_height);
         return;
     }
 
@@ -69,12 +61,19 @@ void xtxpool_service_mgr::on_block_to_db_event(mbus::xevent_ptr_t e) {
 }
 
 void xtxpool_service_mgr::on_block_confirmed(xblock_t * block) {
-    if (!block->is_lighttable()) {
+    uint64_t now_clock = m_clock->logic_time();
+
+    xinfo("xtxpool_service_mgr::on_block_to_db_event process,level:%d,class:%d,now=%llu,block:%s",
+          block->get_block_level(),
+          block->get_block_class(),
+          now_clock,
+          block->dump().c_str());
+    if (!block->is_lighttable() || block->get_clock() + block_clock_height_fall_behind_max <= now_clock) {
         return;
     }
 
     make_receipts_and_send(block);
-    
+
     const auto & units = block->get_tableblock_units(false);
     if (!units.empty()) {
         for (auto & unit : units) {
