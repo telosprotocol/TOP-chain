@@ -39,7 +39,6 @@ enum enum_result_code {
     failed,
     auth_failed,
     exist,
-    forked,
 };
 
 class elect_item_t {
@@ -95,7 +94,7 @@ public:
 protected:
     enum_result_code handle_block(xblock_ptr_t &block, bool is_elect_chain, enum_chain_sync_policy sync_policy);
 
-    void handle_next(uint64_t current_height, bool head_forked = false);
+    void handle_next(uint64_t current_height);
     void handle_fulltable(uint64_t fulltable_height_of_tablechain, const vnetwork::xvnode_address_t self_addr, const vnetwork::xvnode_address_t target_addr);
     void clear();
 
