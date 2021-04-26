@@ -239,20 +239,20 @@ void xtxpool_table_t::on_block_confirmed(xblock_t * block) {
         }
     }
 
-    if (block->is_lightunit() && !block->is_genesis_block()) {
-        data::xlightunit_block_t * lightunit = dynamic_cast<data::xlightunit_block_t *>(block);
-        const std::vector<xlightunit_tx_info_ptr_t> & txs = lightunit->get_txs();
-        for (auto & tx : txs) {
-            tx_info_t txinfo(block->get_account(), tx->get_tx_hash_256(), tx->get_tx_subtype());
-            pop_tx(txinfo, false);
-        }
-    }
+    // if (block->is_lightunit() && !block->is_genesis_block()) {
+    //     data::xlightunit_block_t * lightunit = dynamic_cast<data::xlightunit_block_t *>(block);
+    //     const std::vector<xlightunit_tx_info_ptr_t> & txs = lightunit->get_txs();
+    //     for (auto & tx : txs) {
+    //         tx_info_t txinfo(block->get_account(), tx->get_tx_hash_256(), tx->get_tx_subtype());
+    //         pop_tx(txinfo, false);
+    //     }
+    // }
 
-    if (is_account_need_update(block->get_account())) {
-        base::xauto_ptr<xblockchain2_t> blockchain(m_para->get_store()->clone_account(block->get_account()));
-        xassert(blockchain != nullptr);
-        updata_latest_nonce(block->get_account(), blockchain->account_send_trans_number(), blockchain->account_send_trans_hash());
-    }
+    // if (is_account_need_update(block->get_account())) {
+    //     base::xauto_ptr<xblockchain2_t> blockchain(m_para->get_store()->clone_account(block->get_account()));
+    //     xassert(blockchain != nullptr);
+    //     updata_latest_nonce(block->get_account(), blockchain->account_send_trans_number(), blockchain->account_send_trans_hash());
+    // }
 }
 
 int32_t xtxpool_table_t::verify_txs(const std::string & account, const std::vector<xcons_transaction_ptr_t> & txs, uint64_t latest_commit_unit_height) {
