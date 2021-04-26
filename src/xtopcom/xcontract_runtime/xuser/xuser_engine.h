@@ -24,6 +24,7 @@ public:
     ~xtop_user_engine() =  default;
 
     virtual void deploy_contract(xbyte_buffer_t const& code, observer_ptr<contract_common::xcontract_execution_context_t> exe_ctx) = 0;
+    virtual void call_contract(std::string const& func_name, std::vector<xbyte_buffer_t> const& params, observer_ptr<contract_common::xcontract_execution_context_t> exe_ctx) = 0;
 };
 using xengine_t = xtop_user_engine;
 

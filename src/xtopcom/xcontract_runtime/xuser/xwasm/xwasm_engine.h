@@ -22,6 +22,10 @@ public:
     ~xtop_wasm_engine() =  default;
 
     virtual void deploy_contract(xbyte_buffer_t const& code, observer_ptr<contract_common::xcontract_execution_context_t> exe_ctx) override;
+    virtual void call_contract(std::string const& func_name, std::vector<xbyte_buffer_t> const& params, observer_ptr<contract_common::xcontract_execution_context_t> exe_ctx) override;
+
+    virtual void deploy_contract_erc20(std::vector<xbyte_buffer_t> const& params, observer_ptr<contract_common::xcontract_execution_context_t> exe_ctx);
+    virtual void call_contract_erc20(std::string const& func_name, std::vector<xbyte_buffer_t> const& params, observer_ptr<contract_common::xcontract_execution_context_t> exe_ctx);
 };
 using xwasm_engine_t = xtop_wasm_engine;
 

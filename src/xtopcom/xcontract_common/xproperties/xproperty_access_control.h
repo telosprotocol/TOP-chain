@@ -525,6 +525,14 @@ public:
      */
     virtual std::string code_prop_query(common::xaccount_address_t const & user, xproperty_identifier_t const & prop_id);
 
+    /**
+     * @brief set code property
+     * @param prop_name the name of code property
+     * @return std::string
+     */
+    virtual bool code_prop_update(common::xaccount_address_t const & user, xproperty_identifier_t const & prop_id, std::string const& code);
+
+
     std::string src_code(xproperty_identifier_t const & prop_id, std::error_code & ec) const;
     virtual std::string src_code(xproperty_identifier_t const & prop_id) const;
 
