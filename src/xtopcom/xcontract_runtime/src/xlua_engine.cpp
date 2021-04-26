@@ -24,23 +24,14 @@
 #    pragma warning(pop)
 #endif
 
+#include "xbasic/xerror/xchain_error.h"
+#include "xbasic/xerror/xthrow_error.h"
 #include "xbasic/xscope_executer.h"
+#include "xcontract_common/xcontract_execution_context.h"
+#include "xcontract_common/xcontract_state.h"
 #include "xcontract_runtime/xerror/xerror.h"
 #include "xcontract_runtime/xuser/xlua/xlua_api.h"
-
-#if defined(__clang__)
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wgnu-zero-variadic-macro-arguments"
-#endif
-
 #include "xcontract_runtime/xvm/xvm_define.h"
-
-#if defined(__clang__)
-#pragma clang diagnostic pop
-#endif
-
-#include "xcontract_common/xcontract_state.h"
-#include "xcontract_common/xcontract_execution_context.h"
 
 extern "C" {
 #include <lauxlib.h>
@@ -92,7 +83,8 @@ void xlua_engine::register_function() {
 
 void xlua_engine::validate_script(const std::string & code, observer_ptr<contract_common::xcontract_execution_context_t> exe_ctx) {
     if (exe_ctx->contract_address().value().size() >= 64) {
-        throw xcontract_runtime_error_t{xerrc_t::enum_lua_code_owern_error, "contract account length error"};
+        std::error_code ec{ xerrc_t::enum_lua_code_owern_error };
+        top::error::throw_error(ec, "contract account length error");
     }
 
     //auto parent_addr = ctx.contract_helper->get_parent_account();
@@ -102,13 +94,15 @@ void xlua_engine::validate_script(const std::string & code, observer_ptr<contrac
     if (luaL_loadstring(m_lua_mgr, code.c_str())) {
         string error_msg = lua_tostring(m_lua_mgr, -1);
         xkinfo_lua("load lua code error\n %s", code.c_str());
-        throw xcontract_runtime_error_t{xerrc_t::enum_lua_code_parse_error, "lua load code error:" + error_msg};
+        std::error_code ec{ xerrc_t::enum_lua_code_parse_error };
+        top::error::throw_error(ec, "lua load code error:" + error_msg);
     }
 
     if (lua_pcall(m_lua_mgr, 0, 0, 0)) {
         string error_msg = lua_tostring(m_lua_mgr, -1);
         xkinfo_lua("lua_pcall validate:%s", error_msg.c_str());
-        throw xcontract_runtime_error_t{xerrc_t::enum_lua_code_parse_error, "lua_pcall validate error:" + error_msg};
+        std::error_code ec{ xerrc_t::enum_lua_code_parse_error };
+        top::error::throw_error(ec, "lua_pcall validate error:" + error_msg);
     }
     register_function();
 }
@@ -140,7 +134,8 @@ void xlua_engine::call_init() {
     if (ret != 0 && lua_pcall(m_lua_mgr, 0, 0, 0)) {
         string error_msg = lua_tostring(m_lua_mgr, -1);
         xkinfo_lua("lua_pcall init:%s", error_msg.c_str());
-        throw xcontract_runtime_error_t{xerrc_t::enum_lua_code_pcall_error, "lua_pcall init error:" + error_msg};
+        std::error_code ec{ xerrc_t::enum_lua_code_pcall_error };
+        top::error::throw_error(ec, "lua_pcall init error:" + error_msg);
     }
 }
 
@@ -160,7 +155,8 @@ int32_t xlua_engine::arg_parse(xbyte_buffer_t const & action_param) {
             bool arg_bool;
             stream >> arg_num;
             if (arg_num > MAX_ARG_NUM) {
-                throw xcontract_runtime_error_t{xerrc_t::enum_lua_abi_input_error, "arg num " + std::to_string(arg_num) + " great than max number 16"};
+                std::error_code ec{ xerrc_t::enum_lua_abi_input_error };
+                top::error::throw_error(ec, "arg num " + std::to_string(arg_num) + " great than max number 16");
             }
             argn = arg_num;
             while (arg_num--) {
@@ -173,7 +169,8 @@ int32_t xlua_engine::arg_parse(xbyte_buffer_t const & action_param) {
                 case ARG_TYPE_STRING:
                     stream >> arg_str;
                     if (arg_str.size() > MAX_ARG_STRING_SIZE) {
-                        throw xcontract_runtime_error_t{xerrc_t::enum_lua_abi_input_error, "arg string size " + std::to_string(arg_str.size()) + " length greater than 128"};
+                        std::error_code ec{ xerrc_t::enum_lua_abi_input_error };
+                        top::error::throw_error(ec, "arg string size " + std::to_string(arg_str.size()) + " length greater than 128");
                     }
                     lua_pushstring(m_lua_mgr, arg_str.c_str());
                     break;
@@ -182,19 +179,21 @@ int32_t xlua_engine::arg_parse(xbyte_buffer_t const & action_param) {
                     lua_pushboolean(m_lua_mgr, arg_bool);
                     break;
                 default:
-                    throw xcontract_runtime_error_t{xerrc_t::enum_lua_abi_input_error, "param stream not valid"};
+                {
+                    std::error_code ec{ xerrc_t::enum_lua_abi_input_error };
+                    top::error::throw_error(ec, "param stream not valid");
+                }
                 }
             }
         }
-    } catch (const error::xcontract_runtime_error_t & e) {
-        throw e;
-    } catch (enum_xerror_code & e) {
-        throw xcontract_runtime_error_t{xerrc_t::enum_lua_abi_input_error, "action_param stream is not valid"};
+    } catch (top::error::xchain_error_t & e) {
+        throw;
     } catch (const std::exception & e) {
         xkinfo_lua("%s", e.what());
-        throw xcontract_runtime_error_t{xerrc_t::enum_lua_abi_input_error, "param not valid"};
+        throw;
     } catch (...) {
-        throw xcontract_runtime_error_t{xerrc_t::enum_lua_abi_input_error, "unkown exception"};
+        std::error_code ec{ xerrc_t::enum_lua_abi_input_error };
+        top::error::throw_error(ec, "unkown exception");
     }
     return argn;
 }
@@ -204,7 +203,8 @@ void xlua_engine::process(observer_ptr<contract_common::xcontract_execution_cont
     auto const contract_account = exe_ctx->contract_address();
 
     if (contract_account.value().size() >= 64) {
-        throw xcontract_runtime_error_t{xerrc_t::enum_lua_code_owern_error, "contract m_exec_account length error"};
+        std::error_code ec{ xerrc_t::enum_lua_code_owern_error };
+        top::error::throw_error(ec, "contract m_exec_account length error");
     }
     lua_setexecaccount(m_lua_mgr, contract_account.c_str(), contract_account.size());
     lua_setuserdata(m_lua_mgr, reinterpret_cast<void *>(exe_ctx->contract_state().get()));
@@ -214,23 +214,25 @@ void xlua_engine::process(observer_ptr<contract_common::xcontract_execution_cont
 
     try {
         if (exe_ctx->action_name() == "init") {
-            throw xcontract_runtime_error_t{xerrc_t::enum_lua_abi_input_error, "can't call init function"};
+            std::error_code ec{ xerrc_t::enum_lua_abi_input_error };
+            top::error::throw_error(ec, "can't call init function");
         }
 
         if (lua_pcall(m_lua_mgr, arg_parse(exe_ctx->action_data()), 0, 0)) {
             string error_msg = lua_tostring(m_lua_mgr, -1);
             xkinfo_lua("lua_pcall:%s", error_msg.c_str());
-            throw xcontract_runtime_error_t{xerrc_t::enum_lua_code_pcall_error, "lua_pcall error:" + error_msg};
+            std::error_code ec{ xerrc_t::enum_lua_code_pcall_error };
+            top::error::throw_error(ec, "lua_pcall error:" + error_msg);
         } else {
             // TODO: if luapcall is called with third arg non-zero, retrive the return value here
         }
-    } catch (xcontract_runtime_error_t const &) {
+    } catch (top::error::xchain_error_t const &) {
         throw;
     } catch (const std::exception & e) {
         xkinfo_lua("%s", e.what());
-        throw xcontract_runtime_error_t{xerrc_t::enum_lua_abi_input_error, "param not valid"};
+        top::error::throw_error(std::error_code{ xerrc_t::enum_lua_abi_input_error }, "param not valid");
     } catch (...) {
-        throw xcontract_runtime_error_t{xerrc_t::enum_lua_abi_input_error, "unkown exception"};
+        top::error::throw_error(std::error_code{ xerrc_t::enum_lua_abi_input_error }, "unkown exception");
     }
 }
 

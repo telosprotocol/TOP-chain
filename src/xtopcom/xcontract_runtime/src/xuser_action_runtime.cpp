@@ -4,6 +4,7 @@
 
 #include "xcontract_runtime/xuser/xuser_action_runtime.h"
 
+#include "xbasic/xerror/xchain_error.h"
 #include "xcontract_common/xcontract_state.h"
 #include "xcontract_runtime/xaction_session.h"
 #include "xcontract_runtime/xerror/xerror.h"
@@ -20,7 +21,7 @@ xtransaction_execution_result_t xtop_action_runtime<xuser_consensus_action_t>::e
     xtransaction_execution_result_t result;
 
     try {
-    } catch (error::xcontract_runtime_error_t const & eh) {
+    } catch (top::error::xchain_error_t const & eh) {
         result.status.ec = eh.code();
     } catch (std::exception const & eh) {
         result.status.ec = error::xerrc_t::unknown_error;

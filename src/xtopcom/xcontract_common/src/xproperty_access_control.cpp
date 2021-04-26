@@ -13,7 +13,8 @@ NS_BEG3(top, contract_common, properties)
 
 void xtop_property_utl::property_assert(bool condition, error::xerrc_t error_enum, std::string const& exception_msg) {
     if (!condition) {
-        throw error::xcontract_common_error_t{error_enum, exception_msg};
+        std::error_code ec{ error_enum };
+        top::error::throw_error(ec, exception_msg);
     }
 }
 
@@ -48,7 +49,8 @@ void xtop_property_access_control::map_prop_create<std::string, std::string>(com
         auto prop = bstate_->new_string_map_var(prop_name);
         property_assert(prop, "[xtop_property_access_control::map_prop_create]property create error，prop_name: " + prop_name);
     } else {
-        throw error::xcontract_common_error_t{error::xerrc_t::property_permission_not_allowed, "[xtop_property_access_control::map_prop_create]permission denied"};
+        std::error_code ec{ error::xerrc_t::property_permission_not_allowed };
+        top::error::throw_error(ec, "[xtop_property_access_control::map_prop_create]permission denied");
     }
 
 }
@@ -61,7 +63,8 @@ void xtop_property_access_control::map_prop_add<std::string, std::string>(common
         property_assert(prop, "[xtop_property_access_control::map_prop_add]property not exist, prop_name: " + prop_name + " , prop_key: " + prop_key + ", prop_value: " + prop_value);
         property_assert(prop->insert(prop_key, prop_value), "[xtop_property_access_control::map_prop_add]property insert error, prop_name: " + prop_name + " , prop_key: " + prop_key + ", prop_value: " + prop_value);
     } else {
-        throw error::xcontract_common_error_t{error::xerrc_t::property_permission_not_allowed, "[xtop_property_access_control::map_prop_add]permission denied"};
+        std::error_code ec{ error::xerrc_t::property_permission_not_allowed };
+        top::error::throw_error(ec, "[xtop_property_access_control::map_prop_add]permission denied");
     }
 
 
@@ -78,7 +81,8 @@ void xtop_property_access_control::map_prop_update<std::string, std::string>(com
 
         property_assert(prop->insert(prop_key, prop_value), "[xtop_property_access_control::map_prop_update]property update key error, prop_name: " + prop_name + " , prop_key: " + prop_key + ", prop_value: " + prop_value);
     } else {
-        throw error::xcontract_common_error_t{error::xerrc_t::property_permission_not_allowed, "[xtop_property_access_control::map_prop_update]permission denied"};
+        std::error_code ec{ error::xerrc_t::property_permission_not_allowed };
+        top::error::throw_error(ec, "[xtop_property_access_control::map_prop_update]permission denied");
     }
 
 }
@@ -92,7 +96,8 @@ void xtop_property_access_control::map_prop_update<std::string, std::string>(com
         property_assert(prop, "[xtop_property_access_control::map_prop_update]property not exist, prop_name: " + prop_name);
         property_assert(prop->reset(prop_value), "[xtop_property_access_control::map_prop_update]property update error, prop_name: " + prop_name);
     } else {
-        throw error::xcontract_common_error_t{error::xerrc_t::property_permission_not_allowed, "[xtop_property_access_control::map_prop_update]permission denied"};
+        std::error_code ec{ error::xerrc_t::property_permission_not_allowed };
+        top::error::throw_error(ec, "[xtop_property_access_control::map_prop_update]permission denied");
     }
 
 }
@@ -107,7 +112,8 @@ void xtop_property_access_control::map_prop_erase<std::string, std::string>(comm
 
         property_assert(prop->erase(prop_key), "[ xtop_property_access_control::map_prop_erase]property erase key error, prop_name: " + prop_name + ", prop_key: " + prop_key);
     } else {
-        throw error::xcontract_common_error_t{error::xerrc_t::property_permission_not_allowed, "[xtop_property_access_control::map_prop_update]permission denied"};
+        std::error_code ec{ error::xerrc_t::property_permission_not_allowed };
+        top::error::throw_error(ec, "[xtop_property_access_control::map_prop_update]permission denied");
     }
 
 }
@@ -122,7 +128,8 @@ void xtop_property_access_control::map_prop_clear<std::string, std::string>(comm
         xassert(false); // TODO(jimmy)
         // property_assert(prop->reset(), "[xtop_property_access_control::map_prop_clear]property reset error,  prop_name: " + prop_name);
     } else {
-        throw error::xcontract_common_error_t{error::xerrc_t::property_permission_not_allowed, "[xtop_property_access_control::map_prop_clear]permission denied"};
+        std::error_code ec{ error::xerrc_t::property_permission_not_allowed };
+        top::error::throw_error(ec, "[xtop_property_access_control::map_prop_clear]permission denied");
     }
 
 }
@@ -134,9 +141,10 @@ std::string xtop_property_access_control::map_prop_query<std::string, std::strin
         auto prop = bstate_->load_string_map_var(prop_name);
         property_assert(prop, "[xtop_property_access_control::map_prop_query]property not exist, prop_name: " + prop_name + ", prop_key: " + prop_key);
         return prop->query(prop_key);
-
     } else {
-        throw error::xcontract_common_error_t{error::xerrc_t::property_permission_not_allowed, "[xtop_property_access_control::map_prop_query]permission denied"};
+        std::error_code ec{ error::xerrc_t::property_permission_not_allowed };
+        top::error::throw_error(ec, "[xtop_property_access_control::map_prop_query]permission denied");
+        return {};
     }
 }
 
@@ -149,7 +157,9 @@ std::map<std::string, std::string> xtop_property_access_control::map_prop_query<
         property_assert(prop, "[xtop_property_access_control::map_prop_query]property not exist, prop_name: " + prop_name);
         return prop->query();
     } else {
-        throw error::xcontract_common_error_t{error::xerrc_t::property_permission_not_allowed, "[xtop_property_access_control::map_prop_query]permission denied"};
+        std::error_code ec{ error::xerrc_t::property_permission_not_allowed };
+        top::error::throw_error(ec, "[xtop_property_access_control::map_prop_query]permission denied");
+        return {};
     }
 
 }
@@ -287,7 +297,8 @@ void xtop_property_access_control::token_prop_create(common::xaccount_address_t 
 
         property_assert(prop, "[xtop_property_access_control::token_prop_create]property create error, prop_name: " + prop_name);
     } else {
-        throw error::xcontract_common_error_t{error::xerrc_t::property_permission_not_allowed, "[xtop_property_access_control::token_prop_create]permission denied"};
+        std::error_code ec{ error::xerrc_t::property_permission_not_allowed };
+        top::error::throw_error(ec, "[xtop_property_access_control::token_prop_create]permission denied");
     }
 
 }
@@ -299,9 +310,10 @@ uint64_t xtop_property_access_control::withdraw(common::xaccount_address_t const
         property_assert(prop, "[xtop_property_access_control::withdraw]property not exist, token_prop: " + prop_name + ", amount: " + std::to_string(amount));
         return prop->withdraw((base::vtoken_t)amount);
     } else {
-        throw error::xcontract_common_error_t{error::xerrc_t::property_permission_not_allowed, "[xtop_property_access_control::withdraw]permission denied"};
+        std::error_code ec{ error::xerrc_t::property_permission_not_allowed };
+        top::error::throw_error(ec, "[xtop_property_access_control::withdraw]permission denied");
+        return {};
     }
-
 }
 
 uint64_t xtop_property_access_control::deposit(common::xaccount_address_t const & user, xproperty_identifier_t const & prop_id, uint64_t amount) {
@@ -311,7 +323,9 @@ uint64_t xtop_property_access_control::deposit(common::xaccount_address_t const 
         property_assert(prop, "[xtop_property_access_control::deposit]token property not exist, token_prop: " + prop_name + ", amount: " + std::to_string(amount));
         return prop->deposit((base::vtoken_t)amount);
     } else {
-        throw error::xcontract_common_error_t{error::xerrc_t::property_permission_not_allowed, "[xtop_property_access_control::deposit]permission denied"};
+        std::error_code ec{ error::xerrc_t::property_permission_not_allowed };
+        top::error::throw_error(ec, "[xtop_property_access_control::deposit]permission denied");
+        return {};
     }
 
 }
@@ -323,7 +337,9 @@ uint64_t xtop_property_access_control::balance(common::xaccount_address_t const 
         property_assert(prop, "[xtop_property_access_control::balance]property not exist, token_prop: " + prop_name);
         return (uint64_t)prop->get_balance();
     } else {
-        throw error::xcontract_common_error_t{error::xerrc_t::property_permission_not_allowed, "[xtop_property_access_control::balance]permission denied"};
+        std::error_code ec{ error::xerrc_t::property_permission_not_allowed };
+        top::error::throw_error(ec, "[xtop_property_access_control::balance]permission denied");
+        return {};
     }
 
 }
@@ -341,7 +357,8 @@ void xtop_property_access_control::code_prop_create(common::xaccount_address_t c
         auto prop = bstate_->new_code_var(prop_name);
         property_assert(prop, "[xtop_property_access_control::code_prop_create]property create error, prop_name: " + prop_name);
     } else {
-        throw error::xcontract_common_error_t{error::xerrc_t::property_permission_not_allowed, "[xtop_property_access_control::code_prop_create]permission denied"};
+        std::error_code ec{ error::xerrc_t::property_permission_not_allowed };
+        top::error::throw_error(ec, "[xtop_property_access_control::code_prop_create]permission denied");
     }
 
 
@@ -357,7 +374,9 @@ std::string xtop_property_access_control::code_prop_query(common::xaccount_addre
 
         return prop->query();
     } else {
-        throw error::xcontract_common_error_t{error::xerrc_t::property_permission_not_allowed, "[xtop_property_access_control::code_prop_query]permission denied"};
+        std::error_code ec{ error::xerrc_t::property_permission_not_allowed };
+        top::error::throw_error(ec, "[xtop_property_access_control::code_prop_query]permission denied");
+        return {};
     }
 }
 
@@ -369,7 +388,6 @@ std::string xtop_property_access_control::src_code(xproperty_identifier_t const 
     property_assert(prop, "[xtop_property_access_control::src_code]property not exist, prop_name: " + prop_name);
 
     return prop->query();
-
 }
 
 std::string xtop_property_access_control::src_code(xproperty_identifier_t const & prop_id) const {
@@ -417,7 +435,9 @@ bool xtop_property_access_control::prop_exist(common::xaccount_address_t const &
     if (read_permitted(user, prop_id)) {
         return bstate_->find_property(prop_name);
     } else {
-        throw error::xcontract_common_error_t{error::xerrc_t::property_permission_not_allowed, "[xtop_property_api::map_prop_update]permission denied"};
+        std::error_code ec{ error::xerrc_t::property_permission_not_allowed };
+        top::error::throw_error(ec, "[xtop_property_api::map_prop_update]permission denied");
+        return {};
     }
 }
 

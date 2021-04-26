@@ -33,28 +33,6 @@ using xerrc_t = xenum_errc;
 std::error_code make_error_code(xerrc_t const ec) noexcept;
 std::error_condition make_error_condition(xerrc_t const ec) noexcept;
 
-class xtop_contract_common_error final : public std::runtime_error {
-    std::error_code ec_{make_error_code(xerrc_t::ok)};
-
-public:
-    xtop_contract_common_error(xtop_contract_common_error const &) = default;
-    xtop_contract_common_error & operator=(xtop_contract_common_error const &) = default;
-    xtop_contract_common_error(xtop_contract_common_error &&) = default;
-    xtop_contract_common_error & operator=(xtop_contract_common_error &&) = default;
-    ~xtop_contract_common_error() override = default;
-
-    xtop_contract_common_error();
-    xtop_contract_common_error(xerrc_t const error_code);
-    xtop_contract_common_error(xerrc_t const error_code, std::string const & message);
-
-    std::error_code const & code() const noexcept;
-
-private:
-    xtop_contract_common_error(std::error_code const & ec);
-    xtop_contract_common_error(std::error_code const & ec, const std::string & message);
-};
-using xcontract_common_error_t = xtop_contract_common_error;
-
 std::error_category const & contract_common_category();
 
 NS_END3
