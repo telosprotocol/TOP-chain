@@ -128,7 +128,7 @@ namespace top
             m_is_self_tx = txindex->get_tx_key().is_self_tx();
         }
         void xvtransaction_store_t::set_recv_unit_info(const xvtxindex_ptr_t & txindex) {
-            xassert(txindex->get_tx_key().is_recv_tx());
+            xassert(txindex->get_tx_key().is_self_tx() || txindex->get_tx_key().is_recv_tx());
             xassert(txindex->get_unit_height() > 0);
             xassert(m_recv_unit_height == 0 && m_recv_unit_hash.empty());
             m_recv_unit_height = txindex->get_unit_height();
@@ -136,7 +136,7 @@ namespace top
             m_is_self_tx = txindex->get_tx_key().is_self_tx();
         }
         void xvtransaction_store_t::set_confirm_unit_info(const xvtxindex_ptr_t & txindex) {
-            xassert(txindex->get_tx_key().is_confirm_tx());
+            xassert(txindex->get_tx_key().is_self_tx() || txindex->get_tx_key().is_confirm_tx());
             xassert(txindex->get_unit_height() > 0);
             xassert(m_confirm_unit_height == 0 && m_confirm_unit_hash.empty());
             m_confirm_unit_height = txindex->get_unit_height();
