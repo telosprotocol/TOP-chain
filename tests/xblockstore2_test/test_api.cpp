@@ -252,7 +252,7 @@ TEST_F(test_api, store_tx_1) {
 
     std::vector<xcons_transaction_ptr_t> sendtx_receipts;
     std::vector<xcons_transaction_ptr_t> recvtx_receipts;
-    xtable_block_t* lighttable = dynamic_cast<xtable_block_t*>(tables[max_block_height-2].get())
+    xtable_block_t* lighttable = dynamic_cast<xtable_block_t*>(tables[max_block_height-2].get());
     lighttable->create_txreceipts(sendtx_receipts, recvtx_receipts);
     xassert(sendtx_receipts.size() > 0);
 }
