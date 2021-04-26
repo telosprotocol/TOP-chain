@@ -94,15 +94,18 @@ namespace top
             }
             xblock_vector(std::vector<xvblock_t*> & blocks)
             {
-                m_vector = std::move(blocks);
+                m_vector = blocks;//transfer owner of ptr
+                blocks.clear();
             }
             xblock_vector(std::vector<xvblock_t*> && blocks)
             {
-                m_vector = blocks;
+                m_vector = blocks; //transfer owner of ptr
+                blocks.clear();
             }
             xblock_vector(xblock_vector && moved)
             {
-                m_vector = std::move(moved.m_vector);
+                m_vector = moved.m_vector;//transfer owner of ptr
+                moved.m_vector.clear();
             }
             ~xblock_vector()
             {

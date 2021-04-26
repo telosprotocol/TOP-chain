@@ -7,13 +7,16 @@
 #include "../xvdbstore.h"
 #include "../xvblockstore.h"
 #include "../xvstatestore.h"
+#include "../xvtxstore.h"
 #include "../xveventbus.h"
 #include "../xvledger.h"
+#include "../xvdbkey.h"
  
 namespace top
 {
     namespace base
     {
+        //----------------------------------------xvdbstore_t----------------------------------------//
         xvdbstore_t::xvdbstore_t()
             :xobject_t((enum_xobject_type)enum_xobject_type_vxdbstore)
         {
@@ -31,7 +34,153 @@ namespace top
             
             return xobject_t::query_interface(_enum_xobject_type_);
         }
+    
+        //----------------------------------------xvtxstore_t----------------------------------------//
+        xvtxstore_t::xvtxstore_t()
+            :xobject_t((enum_xobject_type)enum_xobject_type_vtxstore)
+        {
+        }
         
+        xvtxstore_t::~xvtxstore_t()
+        {
+        };
+        
+        //caller need to cast (void*) to related ptr
+        void*   xvtxstore_t::query_interface(const int32_t _enum_xobject_type_)
+        {
+            if(_enum_xobject_type_ == enum_xobject_type_vtxstore)
+                return this;
+            
+            return xobject_t::query_interface(_enum_xobject_type_);
+        }
+        
+        bool  xvtxstore_t::store_tx_bin(const std::string & raw_tx_hash,const std::string & raw_tx_bin)
+        {
+            xassert(raw_tx_hash.empty() == false);
+            xassert(raw_tx_bin.empty() == false);
+            if(raw_tx_hash.empty() || raw_tx_bin.empty())
+                return false;
+            
+            const std::string raw_tx_key = xvdbkey_t::create_tx_key(raw_tx_hash);
+            const std::string existing_value = xvchain_t::instance().get_xdbstore()->get_value(raw_tx_key) ;
+            if(existing_value == raw_tx_bin) //has stored already
+                return true;
+            
+            //replace by new one
+            return xvchain_t::instance().get_xdbstore()->set_value(raw_tx_key,raw_tx_bin);
+        }
+        
+        const std::string xvtxstore_t::load_tx_bin(const std::string & raw_tx_hash)
+        {
+            xassert(raw_tx_hash.empty() == false);
+            if(raw_tx_hash.empty())
+                return std::string();
+            
+            const std::string raw_tx_key = xvdbkey_t::create_tx_key(raw_tx_hash);
+            return xvchain_t::instance().get_xdbstore()->get_value(raw_tx_key);
+        }
+    
+        bool   xvtxstore_t::store_tx_obj(const std::string & raw_tx_hash,xdataunit_t * raw_tx_obj)
+        {
+            xassert(raw_tx_hash.empty() == false);
+            xassert(raw_tx_obj != NULL);
+            if( raw_tx_hash.empty() || (raw_tx_obj == NULL) )
+                return false;
+
+            //check whether has stored
+            const std::string raw_tx_key = xvdbkey_t::create_tx_key(raw_tx_hash);
+            std::string raw_tx_bin;
+            raw_tx_obj->serialize_to_string(raw_tx_bin);
+            
+            const std::string existing_value = xvchain_t::instance().get_xdbstore()->get_value(raw_tx_key) ;
+            if(existing_value == raw_tx_bin) //nothing changed
+                return true;
+            
+            //replace by new one
+            return xvchain_t::instance().get_xdbstore()->set_value(raw_tx_key,raw_tx_bin);
+        }
+    
+        xauto_ptr<xdataunit_t>  xvtxstore_t::load_tx_obj(const std::string & raw_tx_hash)
+        {
+            const std::string raw_tx_bin = load_tx_bin(raw_tx_hash);
+            if(raw_tx_bin.empty())
+            {
+                xwarn("xvtxstore_t::load_tx_obj,fail to load raw tx bin for hash(%s)",raw_tx_hash.c_str());
+                return nullptr;
+            }
+            return xdataunit_t::read_from(raw_tx_bin);
+        }
+    
+        bool     xvtxstore_t::store_txs(xvblock_t * block_ptr,bool store_raw_tx_bin)
+        {
+            xassert(block_ptr != NULL);
+            if(NULL == block_ptr)
+                return false;
+            
+            if(block_ptr->get_block_class() == enum_xvblock_class_nil) //nothing to store
+                return true;
+            
+            std::vector<xobject_ptr_t<xvtxindex_t>> sub_txs;
+            if(block_ptr->extract_sub_txs(sub_txs))
+            {
+                bool  has_error = false;
+                std::map<std::string,int> counting_stored_raw_txs;
+                for(auto & v : sub_txs)
+                {
+                    if(store_raw_tx_bin)
+                    {
+                        if(counting_stored_raw_txs.find(v->get_tx_hash()) == counting_stored_raw_txs.end())
+                        {
+                          if(store_tx_obj(v->get_tx_hash(), v->get_tx_obj()))
+                              counting_stored_raw_txs[v->get_tx_hash()] = 1;
+                        }
+                    }
+                    
+                    const std::string tx_key = xvdbkey_t::create_tx_index_key(v->get_tx_hash(), v->get_tx_phase_type());
+                    std::string tx_bin;
+                    v->serialize_to_string(tx_bin);
+                    xassert(!tx_bin.empty());
+                    
+                    if(base::xvchain_t::instance().get_xdbstore()->set_value(tx_key, tx_bin) == false)
+                    {
+                        xerror("xvtxstore_t::store_txs_index,fail to store tx for block(%s)",block_ptr->dump().c_str());
+                        has_error = false; //mark it but let do rest work
+                    }
+                    else
+                    {
+                        xdbg("xvtxstore_t::store_txs_index,store tx to DB for tx_key(%s)",tx_key.c_str());
+                    }
+                }
+                if(has_error)
+                    return false;
+                return true;
+            }
+            else
+            {
+                xerror("xvtxstore_t::store_txs_index,fail to extract subtxs for block(%s)",block_ptr->dump().c_str());
+                return false;
+            }
+        }
+        
+        xauto_ptr<xvtxindex_t> xvtxstore_t::load_tx_idx(const std::string & raw_tx_hash,enum_transaction_subtype type)
+        {
+            const std::string tx_idx_key = xvdbkey_t::create_tx_index_key(raw_tx_hash, type);
+            const std::string tx_idx_bin = base::xvchain_t::instance().get_xdbstore()->get_value(tx_idx_key);
+            if(tx_idx_bin.empty())
+            {
+                xwarn("xvtxstore_t::load_tx_idx,index not find for hahs_tx=%s", base::xstring_utl::to_hex(raw_tx_hash).c_str());
+                return nullptr;
+            }
+            xauto_ptr<xvtxindex_t> txindex(new xvtxindex_t());
+            if(txindex->serialize_from_string(tx_idx_bin) <= 0)
+            {
+                xerror("xvtxstore_t::load_tx_idx,found bad index for hahs_tx=%s", base::xstring_utl::to_hex(raw_tx_hash).c_str());
+                return nullptr;
+            }
+            return txindex;
+        }
+            
+        //----------------------------------------xvblockstore_t----------------------------------------//
         xvblockstore_t::xvblockstore_t(base::xcontext_t & _context,const int32_t target_thread_id)
             :xiobject_t(_context,target_thread_id,(enum_xobject_type)enum_xobject_type_vblockstore)
         {
@@ -57,6 +206,7 @@ namespace top
                 to_block->remove_block_flag(flag);
         }
     
+        //----------------------------------------xveventbus_t----------------------------------------//
         xveventbus_t::xveventbus_t()
             :xobject_t(enum_xevent_route_path_by_mbus)
         {
@@ -88,6 +238,7 @@ namespace top
             return false;
         }
     
+        //----------------------------------------xvstatestore_t-------------------------------------//
         xvstatestore_t::xvstatestore_t()
             :xobject_t(enum_xobject_type_vstatestore)
         {
@@ -104,12 +255,6 @@ namespace top
                 return this;
             
             return xobject_t::query_interface(type);
-        }
-    
-        const std::string  xvstatestore_t::create_state_db_key(xvaccount_t & account,const uint64_t block_height,const std::string & hashkey)
-        {
-            const std::string key_path = "/state/" + base::xstring_utl::tostring(account.get_xvid()) + "/" + base::xstring_utl::tostring(block_height) + "/" + hashkey;
-            return key_path;
         }
     
         bool   xvstatestore_t::write_state_to_db(xvblock_t * block_ptr)
@@ -129,7 +274,7 @@ namespace top
             if(block_ptr->get_state() == NULL)
                 return false;
             
-            const std::string state_db_key = create_state_db_key(target_account,block_ptr->get_height(),block_ptr->get_block_hash());
+            const std::string state_db_key = xvdbkey_t::create_block_state_key(target_account, block_ptr->get_block_hash());
             
             std::string state_db_bin;
             if(block_ptr->get_state()->serialize_to_string(state_db_bin))
@@ -156,11 +301,11 @@ namespace top
             if(NULL == for_block)
                 return NULL;
             
-            return read_state_from_db(target_account,for_block->get_height(),for_block->get_block_hash());
+            return read_state_from_db(target_account,for_block->get_block_hash());
         }
-        xvbstate_t*     xvstatestore_t::read_state_from_db(xvaccount_t & target_account,const uint64_t block_height, const std::string & block_hash)
+        xvbstate_t*     xvstatestore_t::read_state_from_db(xvaccount_t & target_account, const std::string & block_hash)
         {
-            const std::string state_db_key = create_state_db_key(target_account,block_height,block_hash);
+            const std::string state_db_key = xvdbkey_t::create_block_state_key(target_account,block_hash);
             const std::string state_db_bin = base::xvchain_t::instance().get_xdbstore()->get_value(state_db_key);
             if(state_db_bin.empty())
             {
@@ -174,26 +319,33 @@ namespace top
                 xerror("xvstatestore::read_state_from_db,invalid data at db for path(%s)",state_db_key.c_str());
                 return NULL;
             }
-            if(   (state_ptr->get_block_height() != block_height)
-               || (state_ptr->get_account_addr() != target_account.get_address()) )
+            if(state_ptr->get_account_addr() != target_account.get_address())
             {
-                xerror("xvstatestore::read_state_from_db,bad state(%s) vs ask(account:%s,height:%" PRIu64 ") ",state_ptr->dump().c_str(),target_account.get_address().c_str(),block_height);
+                xerror("xvstatestore::read_state_from_db,bad state(%s) vs ask(account:%s) ",state_ptr->dump().c_str(),target_account.get_address().c_str());
                 state_ptr->release_ref();
                 return NULL;
             }
             return state_ptr;
         }
     
-        bool   xvstatestore_t::delete_states_of_db(xvaccount_t & target_account,const uint64_t block_height)
+        bool   xvstatestore_t::delete_state_of_db(xvaccount_t & target_account,const std::string & block_hash)
         {
-            const std::string state_db_key = create_state_db_key(target_account,block_height,"");
-            return base::xvchain_t::instance().get_xdbstore()->delete_mutiple_values(state_db_key);
+            const std::string state_db_key = xvdbkey_t::create_block_state_key(target_account,block_hash);
+            return base::xvchain_t::instance().get_xdbstore()->delete_value(state_db_key);
         }
     
-        bool   xvstatestore_t::delete_state_of_db(xvaccount_t & target_account,const uint64_t block_height, const std::string & block_hash)
+        bool   xvstatestore_t::delete_states_of_db(xvaccount_t & target_account,const uint64_t height)
         {
-            const std::string state_db_key = create_state_db_key(target_account,block_height,block_hash);
-            return base::xvchain_t::instance().get_xdbstore()->delete_value(state_db_key);
+            //delete all stated'object under target height
+            xvbindex_vector auto_vector( base::xvchain_t::instance().get_xblockstore()->load_block_index(target_account,height));
+            for(auto index : auto_vector.get_vector())
+            {
+                if(index != NULL)
+                {
+                    delete_state_of_db(target_account,index->get_block_hash());
+                }
+            }
+            return true;
         }
         
         bool   xvstatestore_t::rebuild_state_for_block(xvblock_t & target_block)
@@ -348,6 +500,8 @@ namespace top
             xwarn("xvstatestore::get_block_state,fail get state for block of account(%s)->height(%" PRIu64 ")->hash(%s)",account.get_address().c_str(),height,block_hash.c_str());
             return nullptr;
         }
-        
+    
+
+
     };//end of namespace of base
 };//end of namespace of top
