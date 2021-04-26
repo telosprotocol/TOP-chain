@@ -350,6 +350,7 @@ namespace top
             }
             
             inline const xvid_t         get_xvid()    const {return m_account_xid;}
+            inline const std::string&   get_xvid_str()const {return m_account_xid_str;}
             inline const std::string&   get_address() const {return m_account_addr;}
             inline const std::string&   get_account() const {return m_account_addr;}
             inline const uint32_t       get_account_index() const {return get_xid_index(m_account_xid);}
@@ -357,6 +358,7 @@ namespace top
             enum_vaccount_addr_type     get_addr_type()const{return get_addrtype_from_account(m_account_addr);}
         private:
             xvid_t                      m_account_xid;
+            std::string                 m_account_xid_str;//tostring(m_account_xid),cache it as performance improve
             std::string                 m_account_addr;
         };
     }//end of namespace of base

@@ -64,7 +64,6 @@ namespace top
             enum{enum_max_cached_blocks = 32};
         public:
             static std::string  get_meta_path(base::xvaccount_t & _account);
-            static std::string  create_tx_db_key(const std::string & hashkey, base::enum_transaction_subtype type);
         public:
             xblockacct_t(const std::string & account_addr,const uint64_t timeout_ms,const std::string & blockstore_path);
         protected:
@@ -144,24 +143,27 @@ namespace top
             bool                cache_index(base::xvbindex_t* this_block);
             bool                link_neighbor(base::xvbindex_t* this_block);//just connect prev and next index of list
             bool                mark_connected_flag(base::xvbindex_t* this_block);
-            bool                update_meta_metric(base::xvbindex_t* new_block_ptr );
+            bool                update_meta_metric(base::xvbindex_t* new_block_ptr);
+            bool                write_tx_to_db(base::xvbindex_t* new_block_ptr);
             
-            const std::string   create_block_db_key(const uint64_t block_height,const std::string & hashkey);
             bool                write_block_to_db(base::xvbindex_t* index_ptr);
             bool                write_block_to_db(base::xvbindex_t* index_ptr,base::xvblock_t * linked_block_ptr);
+            
+            bool                write_block_object_to_db(base::xvbindex_t* index_ptr,base::xvblock_t * block_ptr);
             bool                read_block_object_from_db(base::xvbindex_t* index_ptr);
+            
+            bool                write_block_input_to_db(base::xvbindex_t* index_ptr,base::xvblock_t * block_ptr);
             bool                read_block_input_from_db(base::xvbindex_t* index_ptr);
-            bool                read_block_input_from_db(base::xvblock_t* block_ptr,const int stored_flags);
+            bool                read_block_input_from_db(base::xvblock_t* block_ptr);
+            
+            bool                write_block_output_to_db(base::xvbindex_t* index_ptr,base::xvblock_t * block_ptr);
             bool                read_block_output_from_db(base::xvbindex_t* index_ptr);
-            bool                read_block_output_from_db(base::xvblock_t * block_ptr,const int stored_flags);
+            bool                read_block_output_from_db(base::xvblock_t * block_ptr);
             
-            //manage data related xvboffdata_t 
-            const std::string   create_offdata_db_key(const uint64_t block_height,const std::string & hashkey);
-            bool                write_offdata_to_db(base::xvblock_t * block_ptr);
-            bool                read_offdata_from_db(base::xvblock_t * block_ptr);
+            //manage data related xvboffdata_t
+            bool                write_block_offdata_to_db(base::xvbindex_t* index_ptr,base::xvblock_t * block_ptr);
+            bool                read_block_offdata_from_db(base::xvblock_t * block_ptr);
             
-            const std::string   create_index_db_key(const uint64_t target_height);//for main entry;
-            const std::string   create_index_db_key(const uint64_t target_height,const uint64_t target_viewid);
             bool                write_index_to_db(const uint64_t target_height);
             bool                write_index_to_db(std::map<uint64_t,base::xvbindex_t*> & indexes);
             bool                write_index_to_db(base::xvbindex_t* index_obj,bool allo_db_event);

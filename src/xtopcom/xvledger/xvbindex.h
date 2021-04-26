@@ -19,19 +19,16 @@ namespace top
             enum_index_store_flag_output_entity   = 0x04, //output entity has bedn stored
             enum_index_store_flag_input_resource  = 0x08, //input  resource has bedn stored
             enum_index_store_flag_output_resource = 0x10, //output resource has bedn stored
-            enum_index_store_flag_full_block      = 0x1F, //mark when every piece of block been on DB
-            enum_index_store_flag_offchian_data   = 0x20, //mark when offchain data  been persised on DB
-            enum_index_store_flag_main_entry      = 0x40, //indicate that is main entry of mutiple blocks
-            enum_index_store_flags_mask           = 0x7F, //Mask to keep them
+            enum_index_store_flag_offchain_data   = 0x20, //mark when offchain data  been persised on DB
+            enum_index_store_flag_transactions    = 0x40, //mark txs of this block has been decode and stored seperately
+            enum_index_store_flag_full_block      = 0x7F, //mark when every piece of block been on DB
+            enum_index_store_flag_main_entry      = 0x80, //indicate that is main entry of mutiple blocks
+            enum_index_store_flags_mask           = 0xFF, //Mask to keep them
             //note:all bit has been used up, not allow add more
         };
         class xvbindex_t : public xrefcount_t
         {
             friend class xvblock_t;
-            enum
-            {
-                enum_index_flag_modified          = 0x80, //indicate whether index has any change and sync to db agian
-            };
         public:
             //static  void  register_object(xcontext_t & context);
             enum{enum_obj_type = enum_xobject_type_vbindex};//allow xbase create xvstate_t object from xdataobj_t::read_from()
@@ -95,7 +92,7 @@ namespace top
             
             void                        reset_next_viewid_offset(const int32_t next_viewid_offset);
         public:
-            inline bool        check_modified_flag() const { return ((m_combineflags & enum_index_flag_modified) != 0);}
+            inline bool        check_modified_flag() const { return (m_modified != 0);}
             void               set_modified_flag();
             void               reset_modify_flag();
             
@@ -138,6 +135,7 @@ namespace top
             //[1][enum_xvblock_class][enum_xvblock_level][enum_xvblock_type][enum_xvblock_reserved]
             uint16_t        m_block_types;
             uint8_t         m_closed;           //indicated whether closed or not
+            uint8_t         m_modified;         //indicated whether has any change that need persist again
         };
     
         class xvbindex_vector

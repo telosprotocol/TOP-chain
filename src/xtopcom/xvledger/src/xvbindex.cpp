@@ -56,6 +56,7 @@ namespace top
             if(this == &obj) {
                 return *this;
             }
+            m_modified              = obj.m_modified;
             m_closed                = obj.m_closed;
             m_account_addr          = obj.m_account_addr;
             m_account_id            = obj.m_account_id;
@@ -116,6 +117,7 @@ namespace top
  
         void xvbindex_t::init()
         {
+            m_modified          = 0;
             m_closed            = 0;
             m_prev_index        = NULL;
             m_next_index        = NULL;
@@ -161,19 +163,17 @@ namespace top
         void    xvbindex_t::reset_next_viewid_offset(const int32_t next_viewid_offset)
         {
             m_next_viewid_offset = next_viewid_offset;
-            m_combineflags = m_combineflags | enum_index_flag_modified;
+            set_modified_flag();
         }
     
         void   xvbindex_t::set_modified_flag()
         {
-            const uint16_t copy_flags = m_combineflags;
-            m_combineflags = copy_flags | enum_index_flag_modified;
+            m_modified = 1;
         }
     
         void   xvbindex_t::reset_modify_flag()
         {
-            const uint16_t copy_flags = m_combineflags;
-            m_combineflags = copy_flags & (~enum_index_flag_modified);
+            m_modified = 0;
         }
     
         //[8bit:block-flags][1bit][7bit:store-bits]
@@ -188,7 +188,8 @@ namespace top
             if(false == check_block_flag(flag)) //duplicated setting
             {
                 const uint16_t copy_flags = m_combineflags;
-                m_combineflags = (copy_flags | flag) | enum_index_flag_modified;
+                m_combineflags = (copy_flags | flag);
+                set_modified_flag();
             }
             if(get_this_block() != NULL) //duplicated flag as well
                 get_this_block()->set_block_flag(flag);
@@ -200,7 +201,8 @@ namespace top
         {
             uint16_t copy_flags = m_combineflags;
             copy_flags &= (~flag);
-            m_combineflags = copy_flags | enum_index_flag_modified;
+            m_combineflags = copy_flags;
+            set_modified_flag();
             
             return m_combineflags;
         }
@@ -215,7 +217,8 @@ namespace top
             uint16_t copy_flags = m_combineflags;
             copy_flags &= (~enum_xvblock_flags_mask);//0xFF00-->0x00FF,so clean all flags of block
             copy_flags |= (new_flags & enum_xvblock_flags_mask); //just keep flags of block(highest 8bit)
-            m_combineflags = copy_flags | enum_index_flag_modified;
+            m_combineflags = copy_flags;
+            set_modified_flag();
             
             if(get_this_block() != NULL) //duplicated flags as well
                 get_this_block()->reset_block_flags(new_flags);
@@ -242,7 +245,8 @@ namespace top
                 return m_combineflags;
             
             const uint16_t copy_flags = m_combineflags;
-            m_combineflags = (copy_flags | flag) | enum_index_flag_modified;
+            m_combineflags = (copy_flags | flag);
+            set_modified_flag();
             return m_combineflags;
         }
     
@@ -250,7 +254,8 @@ namespace top
         {
             uint16_t copy_flags = m_combineflags;
             copy_flags &= (~flag);
-            m_combineflags = copy_flags | enum_index_flag_modified;
+            m_combineflags = copy_flags;
+            set_modified_flag();
             return m_combineflags;
         }
     
@@ -264,7 +269,8 @@ namespace top
             uint16_t copy_flags = m_combineflags;
             copy_flags &= (~enum_index_store_flags_mask); //clean stored flags at low 7bit. 0x7F -> 0xFF80
             copy_flags |= (new_flags & enum_index_store_flags_mask); //apply new flags
-            m_combineflags = copy_flags | enum_index_flag_modified;
+            m_combineflags = copy_flags;
+            set_modified_flag();
             return m_combineflags;
         }
     

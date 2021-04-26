@@ -128,10 +128,6 @@ private:
 
 class xtransaction_t : public xbase_dataobj_t<xtransaction_t, xdata_type_transaction>, public xtransaction_header {
  public:
-    static std::string transaction_subtype_to_string(uint8_t type);
-    static std::string transaction_hash_subtype_to_string(const std::string & txhash, uint8_t type);
-
- public:
     xtransaction_t();
  protected:
     ~xtransaction_t() override;
@@ -190,7 +186,7 @@ class xtransaction_t : public xbase_dataobj_t<xtransaction_t, xdata_type_transac
     const std::string & get_source_addr()const {return m_source_action.get_account_addr();}
     const std::string & get_target_addr()const {return m_target_addr.empty() ? m_target_action.get_account_addr() : m_target_addr;}
     uint64_t            get_tx_nonce() const {return get_last_nonce() + 1;}
-    std::string         get_tx_subtype_str() const {return transaction_subtype_to_string(m_tx_subtype);}
+    std::string         get_tx_subtype_str() const {return base::xvtxkey_t::transaction_subtype_to_string((enum_transaction_subtype)m_tx_subtype);}  // TODO(jimmy) delete
     uint8_t             get_tx_subtype() const {return m_tx_subtype;}
     size_t              get_serialize_size() const;
     std::string         dump() const override;  // just for debug purpose
@@ -216,41 +212,6 @@ class xtransaction_t : public xbase_dataobj_t<xtransaction_t, xdata_type_transac
 };
 
 using xtransaction_ptr_t = xobject_ptr_t<xtransaction_t>;
-
-class xtransaction_key_t {
- public:
-    xtransaction_key_t() = default;
-    xtransaction_key_t(const std::string & txhash, enum_transaction_subtype subtype)
-    : m_txhash(txhash), m_subtype(subtype) {}
-
-    bool                        is_self_tx() const {return get_tx_subtype() == enum_transaction_subtype_self;}
-    bool                        is_send_tx() const {return get_tx_subtype() == enum_transaction_subtype_send;}
-    bool                        is_recv_tx() const {return get_tx_subtype() == enum_transaction_subtype_recv;}
-    bool                        is_confirm_tx() const {return get_tx_subtype() == enum_transaction_subtype_confirm;}
-    const std::string &         get_tx_hash() const {return m_txhash;}
-    std::string                 get_tx_dump_key() const {return xtransaction_t::transaction_hash_subtype_to_string(m_txhash, m_subtype);}
-    enum_transaction_subtype    get_tx_subtype() const {return (enum_transaction_subtype)m_subtype;}
-    uint256_t                   get_tx_hash_256() const {return uint256_t((uint8_t*)m_txhash.data());}
-    std::string                 get_tx_hex_hash() const {return base::xstring_utl::to_hex(m_txhash);}
-    std::string                 get_tx_subtype_str() const {return xtransaction_t::transaction_subtype_to_string(m_subtype);}
-
-    int32_t do_write(base::xstream_t & stream) {
-        const int32_t begin_size = stream.size();
-        stream << m_txhash;
-        stream << m_subtype;
-        return (stream.size() - begin_size);
-    }
-    int32_t do_read(base::xstream_t & stream) {
-        const int32_t begin_size = stream.size();
-        stream >> m_txhash;
-        stream >> m_subtype;
-        return (begin_size - stream.size());
-    }
-
- private:
-    std::string                 m_txhash;
-    uint8_t                     m_subtype{0};
-};
 
 class xtransaction_store_t : public xbase_dataobj_t<xtransaction_store_t, xdata_type_transaction_store> {
  public:

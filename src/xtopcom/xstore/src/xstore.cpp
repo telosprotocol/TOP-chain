@@ -12,8 +12,8 @@
 #include "xbase/xcontext.h"
 #include "xbase/xlog.h"
 #include "xbase/xutl.h"
-// TODO(jimmy) #include "xbase/xvledger.h"
 #include "xbase/xhash.h"
+#include "xvledger/xvdbkey.h"
 #include "xbasic/xmodule_type.h"
 #include "xbase/xobject_ptr.h"
 #include "xcrypto/xcrypto_util.h"
@@ -696,11 +696,12 @@ bool xstore::set_full_block_offstate(const std::string & account, uint64_t heigh
 }
 
 bool xstore::execute_tableblock_light(xblockchain2_t* account, const xblock_t *block) {
+    base::xvaccount_t _vaccount(block->get_account());
     uint64_t last_full_height = block->get_last_full_block_height();
     std::string old_full_data_str;
     if (last_full_height != 0) {
-        xstore_key_t last_full_offstate_key = xstore_key_t(xstore_key_type_block_offstate, xstore_block_type_none, block->get_account(), std::to_string(last_full_height));
-        old_full_data_str = get_value(last_full_offstate_key);
+        const std::string offdata_key = base::xvdbkey_t::create_block_offdata_key(_vaccount, block->get_last_full_block_hash());
+        old_full_data_str = get_value(offdata_key);
         if (old_full_data_str.empty()) {
             xerror("xstore::execute_tableblock_light get full data fail.block=%s", block->dump().c_str());
             return false;
@@ -727,31 +728,38 @@ bool xstore::execute_tableblock_light(xblockchain2_t* account, const xblock_t *b
 }
 
 bool xstore::execute_tableblock_full(xblockchain2_t* account, xfull_tableblock_t *block, std::map<std::string, std::string> & kv_pairs) {
-    uint64_t last_full_height = block->get_last_full_block_height();
-    std::string old_full_data_str;
-    if (last_full_height != 0) {
-        xstore_key_t last_full_offstate_key = xstore_key_t(xstore_key_type_block_offstate, xstore_block_type_none, block->get_account(), std::to_string(block->get_last_full_block_height()));
-        old_full_data_str = get_value(last_full_offstate_key);
-        if (old_full_data_str.empty()) {
-            xerror("xstore::execute_tableblock_full get full data fail.block=%s", block->dump().c_str());
+    if (nullptr == block->get_offdata()) {
+        // get latest state
+        base::xvaccount_t _vaccount(block->get_account());
+        uint64_t last_full_height = block->get_last_full_block_height();
+        std::string old_full_data_str;
+        if (last_full_height != 0) {
+            const std::string offdata_key = base::xvdbkey_t::create_block_offdata_key(_vaccount, block->get_last_full_block_hash());
+            old_full_data_str = get_value(offdata_key);
+            if (old_full_data_str.empty()) {
+                xerror("xstore::execute_tableblock_full get full data fail.block=%s", block->dump().c_str());
+                return false;
+            }
+        }
+
+        std::string binlog_str = account->get_extend_data(xblockchain2_t::enum_blockchain_ext_type_binlog);
+        if (binlog_str.empty()) {
+            xerror("xstore::execute_tableblock_full get binlog data fail.block=%s", block->dump().c_str());
             return false;
         }
+
+        xtablestate_ptr_t tablestate = make_object_ptr<xtablestate_t>(old_full_data_str, last_full_height, binlog_str, block->get_height() - 1);
+
+        // apply block on latest state to generate new state
+        if (!tablestate->execute_block(block)) {
+            xerror("xstore::execute_tableblock_full execute fail.block=%s", block->dump().c_str());
+            return false;
+        }
+        xdbg("xstore::execute,%s,height=%ld,receiptid_full=%s", block->get_account().c_str(), block->get_height(), tablestate->get_receiptid_state()->get_last_full_state()->dump().c_str());
     }
 
-    std::string binlog_str = account->get_extend_data(xblockchain2_t::enum_blockchain_ext_type_binlog);
-    if (binlog_str.empty()) {
-        xerror("xstore::execute_tableblock_full get binlog data fail.block=%s", block->dump().c_str());
-        return false;
-    }
-
-    xtablestate_ptr_t tablestate = make_object_ptr<xtablestate_t>(old_full_data_str, last_full_height, binlog_str, block->get_height() - 1);
-    if (!tablestate->execute_block(block)) {
-        xerror("xstore::execute_tableblock_full execute fail.block=%s", block->dump().c_str());
-        return false;
-    }
+    // store new offdata and binlog
     set_vblock_offdata({}, block);
-    xdbg("xstore::execute,%s,height=%ld,receiptid_full=%s", block->get_account().c_str(), block->get_height(), tablestate->get_receiptid_state()->get_last_full_state()->dump().c_str());
-
     account->set_extend_data(xblockchain2_t::enum_blockchain_ext_type_binlog, std::string());  // clear binlo
 
     if (!account->add_full_table(block)) {
@@ -1161,11 +1169,11 @@ bool xstore::get_vblock_offdata(const std::string & store_path,base::xvblock_t* 
 
 bool xstore::set_vblock_offdata(const std::string & store_path,base::xvblock_t* for_block) {
     xassert(for_block->get_offdata() != nullptr);
-    xstore_key_t offdata_key = xstore_key_t(xstore_key_type_block_offstate, xstore_block_type_none, for_block->get_account(), std::to_string(for_block->get_height()));
+    const std::string offdata_key = base::xvdbkey_t::create_block_offdata_key(base::xvaccount_t(for_block->get_account()), for_block->get_block_hash());
     std::string offdata_str;
     for_block->get_offdata()->serialize_to_string(offdata_str);
     xassert(!offdata_str.empty());
-    return set_value(offdata_key.to_db_key(), offdata_str);
+    return set_value(offdata_key, offdata_str);
 }
 
 bool xstore::get_vblock_offstate(const std::string &store_path, base::xvblock_t* block) const {

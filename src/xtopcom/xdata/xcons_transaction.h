@@ -46,7 +46,7 @@ class xcons_transaction_t : public xbase_dataunit_t<xcons_transaction_t, xdata_t
 
     enum_transaction_subtype  get_tx_subtype() const {return (enum_transaction_subtype)m_tx->get_tx_subtype();}
     std::string             get_tx_subtype_str() const {return m_tx->get_tx_subtype_str();}
-    std::string             get_tx_dump_key() const {return xtransaction_t::transaction_hash_subtype_to_string(m_tx->get_digest_str(), get_tx_subtype());}
+    std::string             get_tx_dump_key() const {return base::xvtxkey_t::transaction_hash_subtype_to_string(m_tx->get_digest_str(), get_tx_subtype());}
     bool                    is_self_tx() const {return m_tx->get_tx_subtype() == enum_transaction_subtype_self;}
     bool                    is_send_tx() const {return m_tx->get_tx_subtype() == enum_transaction_subtype_send;}
     bool                    is_recv_tx() const {return m_tx->get_tx_subtype() == enum_transaction_subtype_recv;}

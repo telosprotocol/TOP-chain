@@ -570,13 +570,11 @@ void get_block_handle::update_tx_state(xJson::Value & result_json, const xJson::
 
 xJson::Value get_block_handle::parse_tx(const uint256_t & tx_hash, xtransaction_t * cons_tx_ptr) {
     std::string tx_hash_str = std::string(reinterpret_cast<char*>(tx_hash.data()), tx_hash.size());
-    base::xvtransaction_store_ptr_t tx_store_ptr = m_block_store->query_tx(tx_hash_str, base::enum_transaction_subtype_all);
+    base::xvtransaction_store_ptr_t tx_store_ptr = m_block_store->query_tx(tx_hash_str, base::enum_tx_dbkey_type_all);
     xJson::Value result_json;
     xJson::Value cons;
     if (tx_store_ptr != nullptr && tx_store_ptr->get_raw_tx() != nullptr) {
-        xtransaction_ptr_t tx_ptr;
-        tx_store_ptr->get_raw_tx()->add_ref();
-        tx_ptr.attach((xtransaction_t*)tx_store_ptr->get_raw_tx());
+        xtransaction_ptr_t tx_ptr = dynamic_xobject_ptr_cast<xtransaction_t>(tx_store_ptr->get_raw_tx());
 
         // burn tx & self tx only 1 consensus
         if (tx_ptr->get_target_addr() != black_hole_addr && (tx_ptr->get_source_addr() != tx_ptr->get_target_addr())) {
@@ -738,12 +736,10 @@ void get_block_handle::getTransaction() {
     std::string tx_hash_str = std::string(reinterpret_cast<char*>(hash.data()), hash.size());
     try {
         m_js_rsp["value"] = parse_tx(hash);
-        base::xvtransaction_store_ptr_t tx_store_ptr = m_block_store->query_tx(tx_hash_str, base::enum_transaction_subtype_all);
+        base::xvtransaction_store_ptr_t tx_store_ptr = m_block_store->query_tx(tx_hash_str, base::enum_tx_dbkey_type_all);
         if (tx_store_ptr != nullptr) {
             if (tx_store_ptr->get_raw_tx() != nullptr) {
-                xtransaction_ptr_t tx_ptr;
-                tx_store_ptr->get_raw_tx()->add_ref();
-                tx_ptr.attach((xtransaction_t*)tx_store_ptr->get_raw_tx());
+                xtransaction_ptr_t tx_ptr = dynamic_xobject_ptr_cast<xtransaction_t>(tx_store_ptr->get_raw_tx());
                 auto jsa = parse_action(tx_ptr->get_source_action());
                 m_js_rsp["value"]["original_tx_info"]["tx_action"]["sender_action"]["action_param"] = jsa;
                 auto jta = parse_action(tx_ptr->get_target_action());
@@ -903,7 +899,7 @@ void get_block_handle::getLatestFullBlock() {
             if (od) {
                 auto od_obj = make_object_ptr<xvboffdata_t>();
                 od->add_ref();
-                od_obj.attach(od);                
+                od_obj.attach(od);
                 std::string empty_binlog;
                 xtablestate_ptr_t tsp = make_object_ptr<xtablestate_t>(od_obj, ftp->get_height(), empty_binlog, ftp->get_height());
                 jv["account_size"] = static_cast<xJson::UInt64>(tsp->get_account_size());
