@@ -98,7 +98,7 @@ namespace top
         public://execute_block will move to statestore soon
             //note: block must be committed and connected
             virtual bool                 execute_block(const base::xvaccount_t & account,base::xvblock_t* block) override; //execute block and update state of acccount
-            virtual base::xvtransaction_store_ptr_t  query_tx(const std::string & txhash, base::enum_transaction_subtype type) override;
+            virtual base::xvtransaction_store_ptr_t  query_tx(const std::string & txhash, base::enum_tx_dbkey_type type) override;
             
         protected:
             base::xauto_ptr<xblockacct_t>get_block_account(base::xvtable_t * target_table,const std::string & account_address);

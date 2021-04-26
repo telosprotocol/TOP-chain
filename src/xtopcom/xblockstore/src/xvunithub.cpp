@@ -387,56 +387,79 @@ namespace top
             return account_obj->execute_block(block);
         }
         
-        base::xvtransaction_store_ptr_t  xvblockstore_impl::query_tx(const std::string & txhash, base::enum_transaction_subtype type)
+        base::xvtransaction_store_ptr_t  xvblockstore_impl::query_tx(const std::string & txhash, base::enum_tx_dbkey_type type)
         {
             //XTODO:tx always not cache now
-            std::string txkey;
-            base::xvtransaction_store_ptr_t txstore = make_object_ptr<base::xvtransaction_store_t>();
-            if(type == base::enum_transaction_subtype_all || type == base::enum_transaction_subtype_self || type == base::enum_transaction_subtype_send)
+            base::xvtransaction_store_ptr_t txstore = std::make_shared<base::xvtransaction_store_t>();
+
+            if (type & base::enum_tx_dbkey_type_raw)
             {
-                txkey = xblockacct_t::create_tx_db_key(txhash, base::enum_transaction_subtype_send);
+                std::string rawtxkey = base::xvdbkey_t::create_tx_key(txhash);
+                const std::string rawtxobj_bin = base::xvchain_t::instance().get_xdbstore()->get_value(rawtxkey);
+                if(rawtxobj_bin.empty())
+                {
+                    xwarn("xvblockstore_impl::query_tx tx content not find.tx=%s", base::xstring_utl::to_hex(txhash).c_str());
+                    return nullptr;
+                }
+                base::xstream_t _stream(base::xcontext_t::instance(), (uint8_t *)rawtxobj_bin.data(), rawtxobj_bin.size());
+                base::xauto_ptr<base::xdataunit_t>  raw_tx = base::xdataunit_t::read_from(_stream);
+                if(nullptr == raw_tx)
+                {
+                    xwarn("xvblockstore_impl::query_tx tx content read from fail.tx=%s", base::xstring_utl::to_hex(txhash).c_str());
+                    return nullptr;
+                }
+                xobject_ptr_t<base::xdataunit_t> raw_tx_ptr = raw_tx;
+                txstore->set_raw_tx(raw_tx_ptr);
+                xdbg("jimmy query_tx raw tx=%s", base::xstring_utl::to_hex(txhash).c_str());
+            }
+
+            if(type & base::enum_tx_dbkey_type_sendindex)
+            {
+                std::string txkey = base::xvdbkey_t::create_tx_index_key(txhash, base::enum_txindex_type_send);
                 const std::string txobj_bin = base::xvchain_t::instance().get_xdbstore()->get_value(txkey);
                 if(txobj_bin.empty())
                 {
                     xwarn("xvblockstore_impl::query_tx send tx not find.tx=%s", base::xstring_utl::to_hex(txhash).c_str());
                     return nullptr;
                 }
-                base::xvtransaction_index_ptr_t txindex = make_object_ptr<base::xvtransaction_index_t>();
+                base::xvtxindex_ptr_t txindex = make_object_ptr<base::xvtxindex_t>();
                 txindex->serialize_from_string(txobj_bin);
                 txstore->set_send_unit_info(txindex);
+                xdbg("jimmy query_tx sendindex index=%s", txindex->dump().c_str());
                 if(txindex->is_self_tx())
                 {
-                    xdbg("jimmy xvblockstore_impl::query_tx self tx");  //self tx no need query more
                     txstore->set_recv_unit_info(txindex);
                     txstore->set_confirm_unit_info(txindex);
                     return txstore;
                 }
             }
-            if(type == base::enum_transaction_subtype_all || type == base::enum_transaction_subtype_recv)
+            if(type & base::enum_tx_dbkey_type_recvindex)
             {
-                txkey = xblockacct_t::create_tx_db_key(txhash, base::enum_transaction_subtype_recv);
+                std::string txkey = base::xvdbkey_t::create_tx_index_key(txhash, base::enum_txindex_type_receive);
                 const std::string txobj_bin = base::xvchain_t::instance().get_xdbstore()->get_value(txkey);
                 if(txobj_bin.empty())
                 {
                     xwarn("xvblockstore_impl::query_tx recv tx not find.tx=%s", base::xstring_utl::to_hex(txhash).c_str());
-                    return (type == base::enum_transaction_subtype_all) ? txstore : nullptr;
+                    return (type == base::enum_tx_dbkey_type_all) ? txstore : nullptr;
                 }
-                base::xvtransaction_index_ptr_t txindex = make_object_ptr<base::xvtransaction_index_t>();
+                base::xvtxindex_ptr_t txindex = make_object_ptr<base::xvtxindex_t>();
                 txindex->serialize_from_string(txobj_bin);
                 txstore->set_recv_unit_info(txindex);
+                xdbg("jimmy query_tx recvindex index=%s", txindex->dump().c_str());
             }
-            if(type == base::enum_transaction_subtype_all || type == base::enum_transaction_subtype_confirm)
+            if(type & base::enum_tx_dbkey_type_confirmindex)
             {
-                txkey = xblockacct_t::create_tx_db_key(txhash, base::enum_transaction_subtype_confirm);
+                std::string txkey = base::xvdbkey_t::create_tx_index_key(txhash, base::enum_txindex_type_confirm);
                 const std::string txobj_bin = base::xvchain_t::instance().get_xdbstore()->get_value(txkey);
                 if(txobj_bin.empty())
                 {
                     xwarn("xvblockstore_impl::query_tx confirm tx not find.tx=%s", base::xstring_utl::to_hex(txhash).c_str());
-                    return (type == base::enum_transaction_subtype_all) ? txstore : nullptr;
+                    return (type == base::enum_tx_dbkey_type_all) ? txstore : nullptr;
                 }
-                base::xvtransaction_index_ptr_t txindex = make_object_ptr<base::xvtransaction_index_t>();
+                base::xvtxindex_ptr_t txindex = make_object_ptr<base::xvtxindex_t>();
                 txindex->serialize_from_string(txobj_bin);
                 txstore->set_confirm_unit_info(txindex);
+                xdbg("jimmy query_tx confirmindex index=%s", txindex->dump().c_str());
             }
             return txstore;
         }

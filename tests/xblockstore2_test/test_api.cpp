@@ -232,33 +232,28 @@ TEST_F(test_api, store_table_block_3) {
     xassert(latest_executed_block->get_height() == max_block_height - 2);
 }
 
-// TEST_F(test_api, store_tx_1) {
-//     std::string address = mock::xdatamock_address::make_user_address_random();
-//     test_blockstore_util blockstore_util;
-//     base::xvblockstore_t* blockstore = blockstore_util.get_blockstore();
+TEST_F(test_api, store_tx_1) {
+    mock::xvchain_creator creator;
+    creator.create_blockstore_with_xstore();
+    base::xvblockstore_t* blockstore = creator.get_blockstore();
 
-//     uint64_t init_balance = 100;
-//     base::xauto_ptr<base::xvblock_t> genesis_block = data::xblocktool_t::create_genesis_empty_unit(address);
-//     xtransaction_ptr_t tx = make_object_ptr<xtransaction_t>();
-//     tx->set_digest();
-//     tx->set_len();
-//     xcons_transaction_ptr_t constx = make_object_ptr<xcons_transaction_t>(tx.get());
-//     xlightunit_block_para_t para1;
-//     para1.set_one_input_tx(tx);
-//     base::xauto_ptr<base::xvblock_t> lightunit1 = xblocktool_t::create_next_lightunit(para1, genesis_block.get());
+    std::string address = mock::xdatamock_address::make_user_address_random();
 
-//     xassert(genesis_block != nullptr);
-//     base::xvaccount_t _vaddr(address);
-//     auto ret = blockstore->store_block(_vaddr, lightunit1.get());
-//     xassert(ret);
+    uint64_t max_block_height = 10;
+    xdatamock_table mocktable;
+    mocktable.genrate_table_chain(max_block_height);
 
-//     base::xauto_ptr<base::xvblock_t> query_block = blockstore->get_latest_cert_block(_vaddr);
-//     xassert(query_block->get_block_class() == base::enum_xvblock_class_light);
-//     data::xlightunit_block_t* lightunit = dynamic_cast<data::xlightunit_block_t*>(query_block.get());
-//     xassert(lightunit != nullptr);
-//     xassert(lightunit->get_height() == 1);
+    base::xvaccount_t table_vaddr(mocktable.get_account());
+    const std::vector<xblock_ptr_t> & tables = mocktable.get_history_tables();
+    xassert(tables.size() == max_block_height+1);
+    for (uint64_t i = 0; i <= max_block_height; i++) {
+        ASSERT_TRUE(blockstore->store_block(table_vaddr, tables[i].get()));
+    }
 
-//     xvtransaction_store_ptr_t txstore = blockstore->query_tx(tx->get_digest_str(), enum_transaction_subtype_all);
-//     xassert(txstore != nullptr);
-// }
+    std::vector<xcons_transaction_ptr_t> sendtx_receipts;
+    std::vector<xcons_transaction_ptr_t> recvtx_receipts;
+    xtable_block_t* lighttable = dynamic_cast<xtable_block_t*>(tables[max_block_height-2].get());
+    lighttable->create_txreceipts(sendtx_receipts, recvtx_receipts);
+    xassert(sendtx_receipts.size() > 0);
+}
 

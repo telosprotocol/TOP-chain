@@ -9,6 +9,7 @@
 #include "../xvstatestore.h"
 #include "../xveventbus.h"
 #include "../xvledger.h"
+#include "../xvdbkey.h"
  
 namespace top
 {
@@ -106,12 +107,6 @@ namespace top
             return xobject_t::query_interface(type);
         }
     
-        const std::string  xvstatestore_t::create_state_db_key(xvaccount_t & account,const uint64_t block_height,const std::string & hashkey)
-        {
-            const std::string key_path = "/state/" + base::xstring_utl::tostring(account.get_xvid()) + "/" + base::xstring_utl::tostring(block_height) + "/" + hashkey;
-            return key_path;
-        }
-    
         bool   xvstatestore_t::write_state_to_db(xvblock_t * block_ptr)
         {
             if(NULL == block_ptr)
@@ -129,7 +124,7 @@ namespace top
             if(block_ptr->get_state() == NULL)
                 return false;
             
-            const std::string state_db_key = create_state_db_key(target_account,block_ptr->get_height(),block_ptr->get_block_hash());
+            const std::string state_db_key = xvdbkey_t::create_block_state_key(target_account, block_ptr->get_block_hash());
             
             std::string state_db_bin;
             if(block_ptr->get_state()->serialize_to_string(state_db_bin))
@@ -156,11 +151,11 @@ namespace top
             if(NULL == for_block)
                 return NULL;
             
-            return read_state_from_db(target_account,for_block->get_height(),for_block->get_block_hash());
+            return read_state_from_db(target_account,for_block->get_block_hash());
         }
-        xvbstate_t*     xvstatestore_t::read_state_from_db(xvaccount_t & target_account,const uint64_t block_height, const std::string & block_hash)
+        xvbstate_t*     xvstatestore_t::read_state_from_db(xvaccount_t & target_account, const std::string & block_hash)
         {
-            const std::string state_db_key = create_state_db_key(target_account,block_height,block_hash);
+            const std::string state_db_key = xvdbkey_t::create_block_state_key(target_account,block_hash);
             const std::string state_db_bin = base::xvchain_t::instance().get_xdbstore()->get_value(state_db_key);
             if(state_db_bin.empty())
             {
@@ -174,26 +169,33 @@ namespace top
                 xerror("xvstatestore::read_state_from_db,invalid data at db for path(%s)",state_db_key.c_str());
                 return NULL;
             }
-            if(   (state_ptr->get_block_height() != block_height)
-               || (state_ptr->get_account_addr() != target_account.get_address()) )
+            if(state_ptr->get_account_addr() != target_account.get_address())
             {
-                xerror("xvstatestore::read_state_from_db,bad state(%s) vs ask(account:%s,height:%" PRIu64 ") ",state_ptr->dump().c_str(),target_account.get_address().c_str(),block_height);
+                xerror("xvstatestore::read_state_from_db,bad state(%s) vs ask(account:%s) ",state_ptr->dump().c_str(),target_account.get_address().c_str());
                 state_ptr->release_ref();
                 return NULL;
             }
             return state_ptr;
         }
     
-        bool   xvstatestore_t::delete_states_of_db(xvaccount_t & target_account,const uint64_t block_height)
+        bool   xvstatestore_t::delete_state_of_db(xvaccount_t & target_account,const std::string & block_hash)
         {
-            const std::string state_db_key = create_state_db_key(target_account,block_height,"");
-            return base::xvchain_t::instance().get_xdbstore()->delete_mutiple_values(state_db_key);
+            const std::string state_db_key = xvdbkey_t::create_block_state_key(target_account,block_hash);
+            return base::xvchain_t::instance().get_xdbstore()->delete_value(state_db_key);
         }
     
-        bool   xvstatestore_t::delete_state_of_db(xvaccount_t & target_account,const uint64_t block_height, const std::string & block_hash)
+        bool   xvstatestore_t::delete_states_of_db(xvaccount_t & target_account,const uint64_t height)
         {
-            const std::string state_db_key = create_state_db_key(target_account,block_height,block_hash);
-            return base::xvchain_t::instance().get_xdbstore()->delete_value(state_db_key);
+            //delete all stated'object under target height
+            xvbindex_vector auto_vector( base::xvchain_t::instance().get_xblockstore()->load_block_index(target_account,height));
+            for(auto index : auto_vector.get_vector())
+            {
+                if(index != NULL)
+                {
+                    delete_state_of_db(target_account,index->get_block_hash());
+                }
+            }
+            return true;
         }
         
         bool   xvstatestore_t::rebuild_state_for_block(xvblock_t & target_block)

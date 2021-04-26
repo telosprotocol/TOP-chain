@@ -167,7 +167,7 @@ uint64_t xcons_transaction_t::get_dump_receipt_id() const {
 std::string xcons_transaction_t::dump(bool detail) const {
     std::stringstream ss;
     ss << "{";
-    ss << xtransaction_t::transaction_hash_subtype_to_string(get_transaction()->get_digest_str(), get_tx_subtype());
+    ss << base::xvtxkey_t::transaction_hash_subtype_to_string(get_transaction()->get_digest_str(), get_tx_subtype());
     ss << ",id={" << base::xvaccount_t(get_transaction()->get_source_addr()).get_short_table_id();
     ss << "->" << base::xvaccount_t(get_transaction()->get_target_addr()).get_short_table_id();
     ss << ":" << get_dump_receipt_id();

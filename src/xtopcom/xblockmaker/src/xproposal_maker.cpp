@@ -17,6 +17,7 @@ NS_BEG2(top, blockmaker)
 REG_XMODULE_LOG(chainbase::enum_xmodule_type::xmodule_type_xblockmaker, xblockmaker_error_to_string, xblockmaker_error_base+1, xblockmaker_error_max);
 
 xproposal_maker_t::xproposal_maker_t(const std::string & account, const xblockmaker_resources_ptr_t & resources) {
+    m_resources = resources;
     m_indexstore = resources->get_indexstorehub()->get_index_store(account);
     m_table_maker = make_object_ptr<xtable_maker_t>(account, resources);  // TOOD(jimmy) global
     m_tableblock_batch_tx_num_residue = XGET_CONFIG(tableblock_batch_tx_max_num);  // TOOD(jimmy)
@@ -354,7 +355,7 @@ void xproposal_maker_t::get_locked_txs(const xblock_ptr_t & block, std::vector<x
 void xproposal_maker_t::get_locked_accounts(const xblock_ptr_t & block, std::set<std::string> & locked_account_set) const {
     const auto & units = block->get_tableblock_units(false);
     for (auto unit : units) {
-        if (unit->get_block_class() == base::enum_xvblock_class_light || unit->get_block_class() == base::enum_xvblock_class_full) {
+        if (unit->get_block_class() == base::enum_xvblock_class_light) {// TODO(jimmy) || unit->get_block_class() == base::enum_xvblock_class_full
             locked_account_set.insert(unit->get_account());
         }
     }
@@ -362,6 +363,7 @@ void xproposal_maker_t::get_locked_accounts(const xblock_ptr_t & block, std::set
 
 xtxpool_v2::ready_accounts_t xproposal_maker_t::get_ready_txs(const xblock_consensus_para_t & proposal_para) const {
     std::vector<xtxpool_v2::tx_info_t> locked_tx_vec;
+    // locked txs come from two latest tableblock
     get_locked_txs(proposal_para.get_latest_cert_block(), locked_tx_vec);
     get_locked_txs(proposal_para.get_latest_locked_block(), locked_tx_vec);
     get_txpool()->update_locked_txs(get_account(), locked_tx_vec);
@@ -386,10 +388,37 @@ xtxpool_v2::ready_accounts_t xproposal_maker_t::get_ready_txs(const xblock_conse
     std::vector<xcons_transaction_ptr_t> ready_txs = get_txpool()->get_ready_txs(txpool_pack_para);
 
     std::set<std::string> locked_account_set;
-    get_locked_accounts(proposal_para.get_latest_cert_block(), locked_account_set);
-    get_locked_accounts(proposal_para.get_latest_locked_block(), locked_account_set);
-
+    uint32_t filter_table_count = 0;
+    // locked accounts come from two latest light tableblock
+    if (filter_table_count < 2 && proposal_para.get_latest_cert_block()->get_block_class() == base::enum_xvblock_class_light) {
+        get_locked_accounts(proposal_para.get_latest_cert_block(), locked_account_set);
+        filter_table_count++;
+    }
+    if (filter_table_count < 2 && proposal_para.get_latest_locked_block()->get_block_class() == base::enum_xvblock_class_light) {
+        get_locked_accounts(proposal_para.get_latest_locked_block(), locked_account_set);
+        filter_table_count++;
+    }
+    if (filter_table_count < 2 && proposal_para.get_latest_committed_block()->get_block_class() == base::enum_xvblock_class_light) {
+        get_locked_accounts(proposal_para.get_latest_committed_block(), locked_account_set);
+        filter_table_count++;
+    }
     return table_rules_filter(locked_account_set, tablestate_highqc->get_receiptid_state(), ready_txs);
+}
+
+bool xproposal_maker_t::is_match_account_fullunit_limit(const base::xvaccount_t & _account) const {
+    base::xauto_ptr<base::xvblock_t> latest_cert_block = m_resources->get_blockstore()->get_latest_cert_block(_account);
+    if (latest_cert_block == nullptr) {
+        xassert(false);
+        return false;
+    }
+    uint64_t current_height = latest_cert_block->get_height() + 1;
+    uint64_t current_fullunit_height = latest_cert_block->get_block_class() == base::enum_xvblock_class_full ? latest_cert_block->get_height() : latest_cert_block->get_last_full_block_height();
+    uint64_t current_lightunit_count = current_height - current_fullunit_height;
+    uint64_t max_limit_lightunit_count = XGET_ONCHAIN_GOVERNANCE_PARAMETER(fullunit_contain_of_unit_num);  // TODO(jimmy)
+    if (current_lightunit_count > max_limit_lightunit_count) {
+        return true;
+    }
+    return false;
 }
 
 xtxpool_v2::ready_accounts_t xproposal_maker_t::table_rules_filter(const std::set<std::string> & locked_account_set,
@@ -397,17 +426,27 @@ xtxpool_v2::ready_accounts_t xproposal_maker_t::table_rules_filter(const std::se
                                                                    const std::vector<xcons_transaction_ptr_t> & ready_txs) const {
     std::map<std::string, std::shared_ptr<xtxpool_v2::xready_account_t>> ready_account_map;
 
-    enum_transaction_subtype last_tx_subtype = enum_transaction_subtype::enum_transaction_subtype_all;
+    enum_transaction_subtype last_tx_subtype = enum_transaction_subtype::enum_transaction_subtype_invalid;
     base::xtable_shortid_t last_peer_table_shortid;
     uint64_t last_receipt_id;
 
     for (auto & tx : ready_txs) {
         auto & account_addr = tx->get_account_addr();
+        base::xvaccount_t _current_vaccount(account_addr);
 
         // remove locked accounts' txs
         auto it_locked_account_set = locked_account_set.find(account_addr);
         if (it_locked_account_set != locked_account_set.end()) {
+            xdbg("xproposal_maker_t::table_rules_filter tx filtered for locked account. tx=%s", tx->dump(true).c_str());
             continue;
+        }
+
+        if (is_match_account_fullunit_limit(_current_vaccount)) {
+            // send and self tx is filtered when matching fullunit limit
+            if (tx->is_self_tx() || tx->is_send_tx()) {
+                xdbg("xproposal_maker_t::table_rules_filter tx filtered for fullunit limit. tx=%s", tx->dump(true).c_str());
+                continue;
+            }
         }
 
         enum_transaction_subtype cur_tx_subtype;
@@ -417,9 +456,9 @@ xtxpool_v2::ready_accounts_t xproposal_maker_t::table_rules_filter(const std::se
         // make sure receipt id is continuous
         if (tx->is_recv_tx() || tx->is_confirm_tx()) {
             cur_tx_subtype = tx->get_tx_subtype();
-            auto & account_addr = (tx->is_recv_tx()) ? tx->get_source_addr() : tx->get_target_addr();
-            base::xvaccount_t vaccount(account_addr);
-            cur_peer_table_sid = vaccount.get_short_table_id();
+            auto & target_account_addr = (tx->is_recv_tx()) ? tx->get_source_addr() : tx->get_target_addr();
+            base::xvaccount_t _target_vaccount(target_account_addr);
+            cur_peer_table_sid = _target_vaccount.get_short_table_id();
             cur_receipt_id = tx->get_last_action_receipt_id();
             if (cur_tx_subtype != last_tx_subtype || last_peer_table_shortid != cur_peer_table_sid) {
                 base::xreceiptid_pair_t receiptid_pair;
@@ -427,6 +466,7 @@ xtxpool_v2::ready_accounts_t xproposal_maker_t::table_rules_filter(const std::se
                 last_receipt_id = tx->is_recv_tx() ? receiptid_pair.get_recvid_max() : receiptid_pair.get_confirmid_max();
             }
             if (cur_receipt_id != last_receipt_id + 1) {
+                xdbg("xproposal_maker_t::table_rules_filter tx filtered for receiptid not contious. last_receipt_id=%ld, tx=%s", last_receipt_id, tx->dump().c_str());
                 continue;
             }
         }
@@ -442,10 +482,15 @@ xtxpool_v2::ready_accounts_t xproposal_maker_t::table_rules_filter(const std::se
             auto & ready_account = it_ready_account->second;
             ret = ready_account->put_tx(tx);
         }
-        if (ret && (tx->is_recv_tx() || tx->is_confirm_tx())) {
-            last_tx_subtype = cur_tx_subtype;
-            last_peer_table_shortid = cur_peer_table_sid;
-            last_receipt_id = cur_receipt_id;
+        if (!ret) {
+            xdbg("xproposal_maker_t::table_rules_filter tx filtered for account put tx fail. tx=%s", tx->dump().c_str());
+        } else {
+            // record success tx info for receiptid contious check
+            if (tx->is_recv_tx() || tx->is_confirm_tx()) {
+                last_tx_subtype = cur_tx_subtype;
+                last_peer_table_shortid = cur_peer_table_sid;
+                last_receipt_id = cur_receipt_id;
+            }
         }
     }
 

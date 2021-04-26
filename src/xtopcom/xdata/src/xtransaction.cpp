@@ -72,23 +72,6 @@ int32_t xtransaction_header::serialize_read(base::xstream_t & stream) {
     return (begin_pos - end_pos);
 }
 
-std::string xtransaction_t::transaction_subtype_to_string(uint8_t type) {
-    switch (type) {
-        case enum_transaction_subtype_self: return "self";
-        case enum_transaction_subtype_send: return "send";
-        case enum_transaction_subtype_recv: return "recv";
-        case enum_transaction_subtype_confirm: return "confirm";
-        default: {
-            xassert(0);
-            return "unknown";
-        }
-    }
-}
-
-std::string xtransaction_t::transaction_hash_subtype_to_string(const std::string & txhash, uint8_t type) {
-    return base::xstring_utl::to_hex(txhash) + ":" + transaction_subtype_to_string(type);
-}
-
 xtransaction_t::xtransaction_t() {
     MEMCHECK_ADD_TRACE(this, "tx_create");
 }

@@ -247,6 +247,12 @@ xblock_ptr_t xtable_maker_t::leader_make_light_table(const xtablemaker_para_t & 
         table_result.m_unit_results.push_back(unit_result);
         if (proposal_unit != nullptr) {
             batch_units.push_back(proposal_unit);
+        } else {
+            // recv and confirm should always make unit success
+            if (unit_input.has_recv_or_confirm_tx()) {
+                xwarn("xtable_maker_t::leader_make_light_table fail-make unit. %s, account=%s", cs_para.dump().c_str(), unit_account.c_str());
+                return nullptr;
+            }
         }
     }
 
@@ -255,9 +261,9 @@ xblock_ptr_t xtable_maker_t::leader_make_light_table(const xtablemaker_para_t & 
         xunit_maker_ptr_t & unitmaker = v.second;
         xunitmaker_result_t unit_result;
         xunit_proposal_input_t unit_input;
-        if (!unitmaker->can_make_next_empty_block()) {
-            continue;
-        }
+        // if (!unitmaker->can_make_next_empty_block()) {
+        //     continue;
+        // }
         unit_result.m_tablestate = table_para.m_tablestate;
         xblock_ptr_t proposal_unit = leader_make_unit(unitmaker, unit_input, cs_para, unit_result);
         table_result.m_unit_results.push_back(unit_result);
@@ -282,6 +288,7 @@ xblock_ptr_t xtable_maker_t::leader_make_light_table(const xtablemaker_para_t & 
     base::xreceiptid_check_t receiptid_check;
     xblock_t::batch_units_to_receiptids(batch_units, receiptid_check);
     if (false == receiptid_check.check_contious(table_para.m_tablestate->get_receiptid_state())) {
+        table_result.m_make_block_error_code = xblockmaker_error_receiptid_check;
         xwarn("xtablestate_t receiptid binlog=%s", table_para.m_tablestate->get_receiptid_state()->get_binlog()->dump().c_str());
         xwarn("xtablestate_t receiptid full=%s", table_para.m_tablestate->get_receiptid_state()->get_last_full_state()->dump().c_str());
         xwarn("xtablestate_t receiptid check=%s", receiptid_check.dump().c_str());
@@ -400,10 +407,14 @@ bool xtable_maker_t::can_make_next_block(xtablemaker_para_t & table_para, const 
         return false;
     }
 
+#if 0
     if (can_make_next_light_block(table_para) || can_make_next_empty_block() || can_make_next_full_block()) {
         return true;
     }
     return false;
+#else
+    return true;  // TODO(jimmy) always need try
+#endif
 }
 
 xblock_ptr_t xtable_maker_t::make_proposal(xtablemaker_para_t & table_para,

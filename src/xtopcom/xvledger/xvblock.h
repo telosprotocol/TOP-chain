@@ -789,7 +789,7 @@ namespace top
             //note:container(e.g. Table,Book etc) need implement this function as they have mutiple sub blocks inside them,
             virtual bool                extract_sub_blocks(std::vector<xobject_ptr_t<xvblock_t>> & sub_blocks) {return false;}//as default it is none
             //note:container(e.g. Lightunit etc) need implement this function as they have mutiple sub txs inside them,
-            virtual bool                extract_sub_txs(std::vector<xvtransaction_index_ptr_t> & sub_txs) {return false;}//as default it is none
+            virtual bool                extract_sub_txs(std::vector<base::xtx_extract_info_t> & sub_txs) {return false;}//as default it is none
             virtual std::string         get_offdata_hash() const {return std::string();}//as default has none offdata
             
             virtual bool                close(bool force_async = true) override; //close and release this node only

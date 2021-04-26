@@ -48,7 +48,9 @@ class xproposal_maker_t : public xunit_service::xproposal_maker_face {
     xtxpool_v2::ready_accounts_t table_rules_filter(const std::set<std::string> & locked_account_set,
                                                     const base::xreceiptid_state_ptr_t & receiptid_state_highqc,
                                                     const std::vector<xcons_transaction_ptr_t> & ready_txs) const;
+    bool                        is_match_account_fullunit_limit(const base::xvaccount_t & _account) const;
 
+    xblockmaker_resources_ptr_t     m_resources{nullptr};
     store::xindexstore_face_ptr_t   m_indexstore{nullptr};
     xtable_maker_ptr_t          m_table_maker{nullptr};
     int32_t                     m_tableblock_batch_tx_num_residue{0};

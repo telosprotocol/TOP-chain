@@ -154,7 +154,7 @@ public:
         return false;
     }
 
-    base::xvtransaction_store_ptr_t  query_tx(const std::string &, base::enum_transaction_subtype) override {
+    base::xvtransaction_store_ptr_t  query_tx(const std::string &, base::enum_tx_dbkey_type) override {
         return nullptr;
     }
 };

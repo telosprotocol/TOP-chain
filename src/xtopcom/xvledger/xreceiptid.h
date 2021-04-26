@@ -57,7 +57,7 @@ class xreceiptid_pairs_t :  public xbase_dataunit_t<xreceiptid_pairs_t, xdata_ty
     void            set_sendid_max(xtable_shortid_t sid, uint64_t value);
     void            set_confirmid_max(xtable_shortid_t sid, uint64_t value);
     void            set_recvid_max(xtable_shortid_t sid, uint64_t value);
-    std::string     dump() const;
+    virtual std::string     dump() const override;
 
  public:
     bool            find_pair(xtable_shortid_t sid, xreceiptid_pair_t & pair);
