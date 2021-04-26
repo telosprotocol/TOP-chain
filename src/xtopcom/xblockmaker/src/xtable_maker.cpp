@@ -288,6 +288,7 @@ xblock_ptr_t xtable_maker_t::leader_make_light_table(const xtablemaker_para_t & 
     base::xreceiptid_check_t receiptid_check;
     xblock_t::batch_units_to_receiptids(batch_units, receiptid_check);
     if (false == receiptid_check.check_contious(table_para.m_tablestate->get_receiptid_state())) {
+        table_result.m_make_block_error_code = xblockmaker_error_receiptid_check;
         xwarn("xtablestate_t receiptid binlog=%s", table_para.m_tablestate->get_receiptid_state()->get_binlog()->dump().c_str());
         xwarn("xtablestate_t receiptid full=%s", table_para.m_tablestate->get_receiptid_state()->get_last_full_state()->dump().c_str());
         xwarn("xtablestate_t receiptid check=%s", receiptid_check.dump().c_str());

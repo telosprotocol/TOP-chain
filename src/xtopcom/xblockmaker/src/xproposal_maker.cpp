@@ -408,6 +408,7 @@ xtxpool_v2::ready_accounts_t xproposal_maker_t::get_ready_txs(const xblock_conse
 bool xproposal_maker_t::is_match_account_fullunit_limit(const base::xvaccount_t & _account) const {
     base::xauto_ptr<base::xvblock_t> latest_cert_block = m_resources->get_blockstore()->get_latest_cert_block(_account);
     if (latest_cert_block == nullptr) {
+        xassert(false);
         return false;
     }
     uint64_t current_height = latest_cert_block->get_height() + 1;
@@ -441,8 +442,8 @@ xtxpool_v2::ready_accounts_t xproposal_maker_t::table_rules_filter(const std::se
         }
 
         if (is_match_account_fullunit_limit(_current_vaccount)) {
-            // should limit send and recv tx when matching fullunit limit
-            if (!tx->is_confirm_tx()) {
+            // send and self tx is filtered when matching fullunit limit
+            if (tx->is_self_tx() || tx->is_send_tx()) {
                 xdbg("xproposal_maker_t::table_rules_filter tx filtered for fullunit limit. tx=%s", tx->dump(true).c_str());
                 continue;
             }

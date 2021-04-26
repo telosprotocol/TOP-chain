@@ -349,8 +349,12 @@ bool xunit_maker_t::can_make_next_full_block() const {
     uint64_t current_fullunit_height = prev_block->get_block_class() == base::enum_xvblock_class_full ? prev_block->get_height() : prev_block->get_last_full_block_height();
     uint64_t current_lightunit_count = current_height - current_fullunit_height;
     xassert(current_lightunit_count > 0);
-    if (current_lightunit_count >= m_fullunit_contain_of_unit_num_para && get_latest_committed_state()->get_unconfirm_sendtx_num() == 0) {
-        return true;
+    if (current_lightunit_count >= m_fullunit_contain_of_unit_num_para) {
+        if (get_latest_committed_state()->get_unconfirm_sendtx_num() == 0) {
+            return true;
+        }
+        xwarn("xunit_maker_t::can_make_next_full_block state_height=%ld, unconfirm_sendtx_num=%d,prev_block=%s",
+            get_latest_committed_state()->get_last_height(), get_latest_committed_state()->get_unconfirm_sendtx_num(), prev_block->dump().c_str());
     }
     return false;
 }
