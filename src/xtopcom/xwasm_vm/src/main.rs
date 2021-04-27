@@ -1,4 +1,5 @@
-#[link(name = "democapi")]
+#[allow(unused)]
+#[link(name = "xcontract_api")]
 extern "C" {
     fn c_call(ptr: i64) -> i32;
     fn c_depoly(ptr: i64) -> i32;
@@ -34,7 +35,7 @@ fn main() {
     );
     let mut file = match File::open(path) {
         Ok(file) => file,
-        Err(err) => {
+        Err(_err) => {
             // println!("couldn't open file {} {}", path, err);
             return;
         }

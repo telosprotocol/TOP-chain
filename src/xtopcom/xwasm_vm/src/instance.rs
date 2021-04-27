@@ -78,6 +78,7 @@ impl Instance {
         self.runtime.get_gas_left()
     }
 
+    #[allow(unused)]
     pub(crate) fn call_function0(&self, name: &str, args: &[Val]) -> VmResult<()> {
         self.runtime.call_function0(name, args)
     }
