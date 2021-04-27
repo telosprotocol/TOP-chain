@@ -400,12 +400,6 @@ void xsync_handler_t::blocks(uint32_t msg_size, const vnetwork::xvnode_address_t
                     block->get_account().c_str(), successor->get_account().c_str());
                 return;
             }
-
-            if (block->get_block_hash() != successor->get_last_block_hash()) {
-                xsync_warn("xsync_handler receive blocks(sequence error) (%s, %s)",
-                    block->dump().c_str(), successor->dump().c_str());
-                return;
-            }
         }
 
         successor = block.get();
