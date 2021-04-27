@@ -23,14 +23,19 @@ fn main() {
     //     .status()
     //     .unwrap();
 
-    Command::new("cp")
-        .args(&["/home/charles/Eluvk-project/TOP-chain/cbuild/lib/Linux/libxcontract_api.so"])
+    // .args(&["/home/charles/Eluvk-project/TOP-chain/cbuild/lib/Linux/libxcontract_api.so"])
+    Command::new("cp").arg(&format!("{}/../../../../../../../lib/Linux/libxcontract_api_SHARED.so",out_dir))
         .arg(&format!("{}/libxcontract_api.so", out_dir))
+        .status()
+        .unwrap();
+    
+    Command::new("cp").arg(&format!("{}/../../../../../../../lib/Linux/libxcontract_api.a",out_dir))
+        .arg(&format!("{}/libxcontract_api.a", out_dir))
         .status()
         .unwrap();
 
     println!("cargo:rustc-link-search=native={}", out_dir);
     // println!("cargo:rustc-link-lib=static=democapi");
-    // println!("cargo:rustc-link-lib=static=xcontract_api");
-    println!("cargo:rustc-link-lib=dylib=xcontract_api");
+    println!("cargo:rustc-link-lib=static=xcontract_api");
+    // println!("cargo:rustc-link-lib=dylib=xcontract_api");
 }

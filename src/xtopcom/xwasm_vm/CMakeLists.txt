@@ -21,4 +21,4 @@ add_test(NAME xrustvm_test
     COMMAND cargo test
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 
-add_dependencies(xrustvm xcontract_api)
+add_dependencies(xrustvm xcontract_api xcontract_api_SHARED)
