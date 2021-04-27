@@ -143,8 +143,7 @@ namespace top
             bool                cache_index(base::xvbindex_t* this_block);
             bool                link_neighbor(base::xvbindex_t* this_block);//just connect prev and next index of list
             bool                mark_connected_flag(base::xvbindex_t* this_block);
-            bool                update_meta_metric(base::xvbindex_t* new_block_ptr);
-            bool                write_tx_to_db(base::xvbindex_t* new_block_ptr);
+            bool                update_meta_metric(base::xvbindex_t* new_block_ptr );
             
             bool                write_block_to_db(base::xvbindex_t* index_ptr);
             bool                write_block_to_db(base::xvbindex_t* index_ptr,base::xvblock_t * linked_block_ptr);
@@ -180,6 +179,7 @@ namespace top
             void                close_blocks(); //clean all cached blocks
             bool                clean_blocks(const int keep_blocks_count,bool force_release_unused_block);
             bool                on_block_stored(base::xvbindex_t* index_ptr);
+            bool                store_txs_to_db(base::xvbindex_t* index_ptr);
             
         protected: //compatible for old version,e.g read meta and other stuff
             const std::string   load_value_by_path(const std::string & full_path_as_key);
