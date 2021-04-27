@@ -65,7 +65,7 @@ xtop_application::xtop_application(common::xnode_id_t const & node_id, xpublic_k
     m_cert_ptr.attach(&auth::xauthcontext_t::instance(*m_nodesvr_ptr.get()));
 #endif
 
-    m_txpool = xtxpool_v2::xtxpool_instance::create_xtxpool_inst(make_observer(m_store), make_observer(m_blockstore.get()), make_observer(m_cert_ptr.get()), make_observer(m_indexstore.get()));
+    m_txpool = xtxpool_v2::xtxpool_instance::create_xtxpool_inst(make_observer(m_store), make_observer(m_blockstore.get()), make_observer(m_cert_ptr.get()), make_observer(m_indexstore.get()), make_observer(m_bus.get()));
 
     m_syncstore.attach(new store::xsyncvstore_t(*m_cert_ptr.get(), *m_blockstore.get()));
     contract::xcontract_manager_t::instance().init(make_observer(m_store), m_syncstore);

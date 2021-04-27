@@ -5,6 +5,7 @@
 #include "xtxpool_v2/xtxpool_table.h"
 
 #include "xbasic/xmodule_type.h"
+#include "xmbus/xevent_behind.h"
 #include "xtxpool_v2/xnon_ready_account.h"
 #include "xtxpool_v2/xtxpool_error.h"
 #include "xtxpool_v2/xtxpool_log.h"
@@ -37,6 +38,16 @@ int32_t xtxpool_table_t::push_send_tx(const std::shared_ptr<xtx_entry> & tx) {
         // std::lock_guard<std::mutex> lck(m_non_ready_mutex);
         // m_non_ready_accounts.push_tx(tx);
         xtxpool_warn("xtxpool_table_t::push_send_tx account state fall behind tx:%s", tx->get_tx()->dump(true).c_str());
+
+        // notify sync leak of unit
+        uint64_t sync_height_max = account_basic_info.get_sync_height_max();
+        uint32_t sync_num = account_basic_info.get_sync_num();
+        if (sync_num > 0) {
+            mbus::xevent_behind_ptr_t ev = make_object_ptr<mbus::xevent_behind_on_demand_t>(account_addr, sync_height_max, sync_num, false, "account_state_fall_behind");
+            m_para->get_bus()->push_event(ev);
+            xtxpool_info("xtxpool_table_t::push_send_tx account:%s state fall behind,need sync unit max height:%llu,num:%u", account_addr.c_str(), sync_height_max, sync_num);
+        }
+
         return xtxpool_error_account_state_fall_behind;
     }
 
@@ -340,9 +351,21 @@ void xtxpool_table_t::update_locked_txs(const std::vector<tx_info_t> & locked_tx
     for (auto & unlocked_tx : unlocked_txs) {
         if (unlocked_tx->get_tx()->is_self_tx() || unlocked_tx->get_tx()->is_send_tx()) {
             store::xaccount_basic_info_t account_basic_info;
-            bool result = m_table_indexstore->get_account_basic_info(unlocked_tx->get_tx()->get_account_addr(), account_basic_info);
+            auto & account_addr = unlocked_tx->get_tx()->get_account_addr();
+            bool result = m_table_indexstore->get_account_basic_info(account_addr, account_basic_info);
             if (!result) {
                 // todo : push to non_ready_accounts
+
+                // notify sync leak of unit
+                uint64_t sync_height_max = account_basic_info.get_sync_height_max();
+                uint32_t sync_num = account_basic_info.get_sync_num();
+                if (sync_num > 0) {
+                    mbus::xevent_behind_ptr_t ev = make_object_ptr<mbus::xevent_behind_on_demand_t>(account_addr, sync_height_max, sync_num, false, "account_state_fall_behind");
+                    m_para->get_bus()->push_event(ev);
+                    xtxpool_info(
+                        "xtxpool_table_t::update_locked_txs account:%s state fall behind,need sync unit max height:%llu,num:%u", account_addr.c_str(), sync_height_max, sync_num);
+                }
+
                 xtxpool_warn("xtxpool_table_t::update_locked_txs account state fall behind tx:%s", unlocked_tx->get_tx()->dump().c_str());
                 continue;
             }
