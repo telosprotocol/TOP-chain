@@ -245,25 +245,35 @@ bool  xindexstore_table_t::get_account_basic_info(const std::string & account, x
     //     return false;
     // }
 
-    base::xauto_ptr<base::xvblock_t> _block_ptr = get_blockstore()->get_latest_committed_block(_account_vaddress);
-    xblock_ptr_t latest_unit = xblock_t::raw_vblock_to_object_ptr(_block_ptr.get());
+    base::xauto_ptr<base::xvblock_t> _block_ptr = get_blockstore()->get_latest_cert_block(_account_vaddress);
+    xblock_ptr_t latest_cert_unit = xblock_t::raw_vblock_to_object_ptr(_block_ptr.get());
 
-    xaccount_ptr_t account_state = get_store()->query_account(account);
-    if (account_state == nullptr) {
-        account_state = make_object_ptr<xblockchain2_t>(get_account());
-    }
     // if (account_state->get_last_height() != account_index.get_latest_unit_height()) {
     //     xwarn("xindexstore_table_t::get_account_basic_info fail-state block unmatch.account=%s,state_height=%" PRIu64 ",block_height=%" PRIu64 "",
     //         account.c_str(), account_state->get_last_height(), account_index.get_latest_unit_height());
     //     return false;
     // }
     // TODO(jimmy)
-    if (account_state->get_last_height() != latest_unit->get_height() || account_state->get_last_height() + 2 < account_index.get_latest_unit_height()) {
-        xwarn("xindexstore_table_t::get_account_basic_info fail-state block unmatch.account=%s,state_height=%" PRIu64 ",block_height=%" PRIu64 ",index_height=%" PRIu64 "",
-            account.c_str(), account_state->get_last_height(), latest_unit->get_height(), account_index.get_latest_unit_height());
+    // if (account_state->get_last_height() != latest_unit->get_height() || account_state->get_last_height() + 2 < account_index.get_latest_unit_height()) {
+    //     xwarn("xindexstore_table_t::get_account_basic_info fail-state block unmatch.account=%s,state_height=%" PRIu64 ",block_height=%" PRIu64 ",index_height=%" PRIu64 "",
+    //         account.c_str(), account_state->get_last_height(), latest_unit->get_height(), account_index.get_latest_unit_height());
+    //     account_index_info.set_sync_from_height(account_state->get_last_height() + 1);
+    //     account_index_info.set_sync_to_height(account_index.get_latest_unit_height());
+    //     return false;
+    // }
+
+    if (latest_cert_unit->get_height() < account_index.get_latest_unit_height()) {
+        base::xauto_ptr<base::xvblock_t> _start_block_ptr = get_blockstore()->get_latest_connected_block(_account_vaddress);
+        account_index_info.set_sync_height_max(account_index.get_latest_unit_height());
+        account_index_info.set_sync_num(account_index.get_latest_unit_height() - _start_block_ptr->get_height());
         return false;
     }
-    account_index_info.set_latest_block(latest_unit);
+
+    xaccount_ptr_t account_state = get_store()->query_account(account);
+    if (account_state == nullptr) {
+        account_state = make_object_ptr<xblockchain2_t>(get_account());
+    }
+    // account_index_info.set_latest_block(latest_unit);
     account_index_info.set_latest_state(account_state);
     account_index_info.set_account_index(account_index);
     return true;

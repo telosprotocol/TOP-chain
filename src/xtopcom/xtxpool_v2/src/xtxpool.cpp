@@ -259,8 +259,9 @@ std::shared_ptr<xtxpool_table_t> xtxpool_t::get_txpool_table_by_addr(const std::
 xobject_ptr_t<xtxpool_face_t> xtxpool_instance::create_xtxpool_inst(const observer_ptr<store::xstore_face_t> & store,
                                                                     const observer_ptr<base::xvblockstore_t> & blockstore,
                                                                     const observer_ptr<base::xvcertauth_t> & certauth,
-                                                                    const observer_ptr<store::xindexstorehub_t> & indexstorehub) {
-    auto para = std::make_shared<xtxpool_resources>(store, blockstore, certauth, indexstorehub);
+                                                                    const observer_ptr<store::xindexstorehub_t> & indexstorehub,
+                                                                    const observer_ptr<mbus::xmessage_bus_face_t> & bus) {
+    auto para = std::make_shared<xtxpool_resources>(store, blockstore, certauth, indexstorehub, bus);
     auto xtxpool = top::make_object_ptr<xtxpool_t>(para);
     return xtxpool;
 }

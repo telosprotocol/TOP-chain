@@ -11,6 +11,7 @@
 #include "xindexstore/xindexstore_face.h"
 #include "xstore/xstore_face.h"
 #include "xvledger/xvcertauth.h"
+#include "xmbus/xmessage_bus.h"
 
 #include <string>
 #include <vector>
@@ -203,7 +204,8 @@ public:
     static xobject_ptr_t<xtxpool_face_t> create_xtxpool_inst(const observer_ptr<store::xstore_face_t> & store,
                                                              const observer_ptr<base::xvblockstore_t> & blockstore,
                                                              const observer_ptr<base::xvcertauth_t> & certauth,
-                                                             const observer_ptr<store::xindexstorehub_t> & indexstorehub);
+                                                             const observer_ptr<store::xindexstorehub_t> & indexstorehub,
+                                                             const observer_ptr<mbus::xmessage_bus_face_t> & bus);
 };
 
 }  // namespace xtxpool_v2
