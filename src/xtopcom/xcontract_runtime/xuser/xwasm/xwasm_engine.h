@@ -9,6 +9,7 @@
 #include <memory>
 
 #include "xcontract_runtime/xuser/xuser_engine.h"
+#include "xcontract_runtime/xuser/xwasm/xwasm_rustvm_extern_api.h"
 
 NS_BEG3(top, contract_runtime, user)
 
