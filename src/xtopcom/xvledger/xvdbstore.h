@@ -15,7 +15,7 @@ namespace top
     {
         class xvdbstore_t : public xobject_t
         {
-            friend class xvchaint_t;
+            friend class xvchain_t;
         public:
             static  const std::string   name(){return "xvdbstore";} //"xvblockstore"
             virtual std::string         get_obj_name() const override {return name();}

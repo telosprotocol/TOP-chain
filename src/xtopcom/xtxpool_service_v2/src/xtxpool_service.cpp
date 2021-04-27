@@ -257,7 +257,7 @@ void xtxpool_service::check_and_response_recv_receipt(const xcons_transaction_pt
     }
 
     xtransaction_t * tx = cons_tx->get_transaction();
-    base::xvtransaction_store_ptr_t tx_store = m_para->get_vblockstore()->query_tx(tx->get_digest_str(), base::enum_tx_dbkey_type_recvindex);
+    base::xvtransaction_store_ptr_t tx_store = m_para->get_vblockstore()->query_tx(tx->get_digest_str(), base::enum_transaction_subtype_recv);
     // first time consensus transaction has been stored, so it can be found
     // in the second consensus, need check the m_recv_unit_height
 

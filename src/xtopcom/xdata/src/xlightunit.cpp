@@ -512,15 +512,12 @@ const std::vector<xlightunit_tx_info_ptr_t> & xlightunit_block_t::get_txs() cons
     return get_lightunit_body().get_txs();
 }
 
-bool xlightunit_block_t::extract_sub_txs(std::vector<base::xtx_extract_info_t> & sub_txs) {
+bool xlightunit_block_t::extract_sub_txs(std::vector<base::xvtxindex_ptr> & sub_txs) {
     const std::vector<xlightunit_tx_info_ptr_t> & txs_info = get_txs();
     xassert(!txs_info.empty());
-    uint64_t unit_height = get_height();
-    const std::string & unit_hash = get_block_hash();
     for (auto & tx : txs_info) {
-        base::xvtxindex_ptr_t tx_index = make_object_ptr<base::xvtxindex_t>(unit_height, unit_hash, tx->get_tx_key());
-        base::xtx_extract_info_t sub_txinfo(tx_index, tx->get_raw_tx());
-        sub_txs.push_back(sub_txinfo);
+        base::xvtxindex_ptr tx_index = make_object_ptr<base::xvtxindex_t>(*this, tx->get_raw_tx().get(), tx->get_tx_hash(), tx->get_tx_subtype());
+        sub_txs.push_back(tx_index);
     }
     return true;
 }

@@ -94,15 +94,18 @@ namespace top
             }
             xblock_vector(std::vector<xvblock_t*> & blocks)
             {
-                m_vector = std::move(blocks);
+                m_vector = blocks;//transfer owner of ptr
+                blocks.clear();
             }
             xblock_vector(std::vector<xvblock_t*> && blocks)
             {
-                m_vector = blocks;
+                m_vector = blocks; //transfer owner of ptr
+                blocks.clear();
             }
             xblock_vector(xblock_vector && moved)
             {
-                m_vector = std::move(moved.m_vector);
+                m_vector = moved.m_vector;//transfer owner of ptr
+                moved.m_vector.clear();
             }
             ~xblock_vector()
             {
@@ -205,7 +208,7 @@ namespace top
             //execute block and update state of acccount
             //note: block must be committed and connected
             virtual bool                 execute_block(const base::xvaccount_t & account,base::xvblock_t* block) = 0;
-            virtual xvtransaction_store_ptr_t  query_tx(const std::string & txhash, enum_tx_dbkey_type type) = 0;
+            virtual xvtransaction_store_ptr_t  query_tx(const std::string & txhash, enum_transaction_subtype type) = 0;
             
         protected:
             //only allow remove flag within xvblockstore_t
