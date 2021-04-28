@@ -33,22 +33,28 @@ class xindexstore_resources_impl_t : public xindexstore_resources_t {
 class xaccount_basic_info_t {
  public:
     xaccount_basic_info_t() = default;
-    xaccount_basic_info_t(const xblock_ptr_t & block, const base::xaccount_index_t & index)
-    : m_latest_block(block), m_account_index(index) {}
+   //  xaccount_basic_info_t(const xblock_ptr_t & block, const base::xaccount_index_t & index)
+   //  : m_latest_block(block), m_account_index(index) {}
 
  public:
-    void    set_latest_block(const xblock_ptr_t & block) {m_latest_block = block;}
+   //  void    set_latest_block(const xblock_ptr_t & block) {m_latest_block = block;}
     void    set_account_index(const base::xaccount_index_t & index) {m_account_index = index;}
     void    set_latest_state(const xaccount_ptr_t & state) {m_latest_state = state;}
+    void    set_sync_height_start(uint64_t height) {m_sync_height_start = height;}
+    void    set_sync_num(uint32_t num) {m_sync_num = num;}
 
-    const xblock_ptr_t &            get_latest_block() const {return m_latest_block;}
+   //  const xblock_ptr_t &            get_latest_block() const {return m_latest_block;}
     const xaccount_ptr_t &          get_latest_state() const {return m_latest_state;}
     const base::xaccount_index_t &  get_accout_index() const {return m_account_index;}
+    const uint64_t                  get_sync_height_start() const {return m_sync_height_start;}
+    const uint32_t                  get_sync_num() const {return m_sync_num;}
 
  private:
-    xblock_ptr_t            m_latest_block{nullptr};
+   //  xblock_ptr_t            m_latest_block{nullptr};
     xaccount_ptr_t          m_latest_state{nullptr};
     base::xaccount_index_t  m_account_index;
+    uint64_t                m_sync_height_start{0};
+    uint32_t                m_sync_num{0};
 };
 
 class xindexstore_face_t : public base::xvaccount_t {

@@ -98,7 +98,7 @@ class xlightunit_input_entity_t final: public xventity_face_t<xlightunit_input_e
     bool                        is_confirm_tx() const {return m_tx_key.is_confirm_tx();}
     base::enum_transaction_subtype    get_tx_subtype() const {return m_tx_key.get_tx_subtype();}
     std::string                 get_tx_dump_key() const {return m_tx_key.get_tx_dump_key();}
-    const xtransaction_key_t &  get_tx_key() const {return m_tx_key;}
+    const base::xvtxkey_t &    get_tx_key() const {return m_tx_key;}
 
     bool                        is_contract_create() const {return m_inputtx_props.is_contract_create();}
     enum_xunit_tx_exec_status   get_last_action_exec_status() const {return m_inputtx_props.get_last_tx_exec_status();}
@@ -109,7 +109,7 @@ class xlightunit_input_entity_t final: public xventity_face_t<xlightunit_input_e
     std::string                 dump() const;
 
  private:
-    xtransaction_key_t          m_tx_key;
+    base::xvtxkey_t             m_tx_key;
     xinput_tx_propertys_t       m_inputtx_props;
     xtransaction_ptr_t          m_raw_tx{nullptr};  // TODO(jimmy) raw tx is a resource
 };
@@ -143,14 +143,14 @@ class xlightunit_output_entity_t final: public xventity_face_t<xlightunit_output
     const std::string get_merkle_leaf();
 
  private:
-    xtransaction_key_t          m_tx_key;
+    base::xvtxkey_t             m_tx_key;
     xtransaction_exec_state_t   m_exec_state;
 };
 using xlightunit_output_entity_ptr_t = xobject_ptr_t<xlightunit_output_entity_t>;
 
 class xlightunit_tx_info_t {
  public:
-    xlightunit_tx_info_t(const xtransaction_key_t & txkey,
+    xlightunit_tx_info_t(const base::xvtxkey_t & txkey,
                     xtransaction_t* raw_tx,
                     const xinput_tx_propertys_t & inputtx_props,
                     const xtransaction_exec_state_t & exec_state) {
@@ -164,6 +164,7 @@ class xlightunit_tx_info_t {
     }
 
  public:
+    const base::xvtxkey_t &     get_tx_key() const {return m_tx_key;}
     const std::string &         get_tx_hash() const {return m_tx_key.get_tx_hash();}
     bool                        is_self_tx() const {return m_tx_key.is_self_tx();}
     bool                        is_send_tx() const {return m_tx_key.is_send_tx();}
@@ -193,7 +194,7 @@ class xlightunit_tx_info_t {
     std::string                 dump() const;
 
  private:
-    xtransaction_key_t          m_tx_key;
+    base::xvtxkey_t             m_tx_key;
     xinput_tx_propertys_t       m_inputtx_props;
     xtransaction_ptr_t          m_raw_tx;
     xtransaction_exec_state_t   m_exec_state;

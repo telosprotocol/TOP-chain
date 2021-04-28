@@ -574,9 +574,10 @@ xJson::Value get_block_handle::parse_tx(const uint256_t & tx_hash, xtransaction_
     xJson::Value result_json;
     xJson::Value cons;
     if (tx_store_ptr != nullptr && tx_store_ptr->get_raw_tx() != nullptr) {
+        auto tx = dynamic_cast<xtransaction_t*>(tx_store_ptr->get_raw_tx());
+        tx->add_ref();
         xtransaction_ptr_t tx_ptr;
-        tx_store_ptr->get_raw_tx()->add_ref();
-        tx_ptr.attach((xtransaction_t*)tx_store_ptr->get_raw_tx());
+        tx_ptr.attach(tx);
 
         // burn tx & self tx only 1 consensus
         if (tx_ptr->get_target_addr() != black_hole_addr && (tx_ptr->get_source_addr() != tx_ptr->get_target_addr())) {
@@ -741,9 +742,10 @@ void get_block_handle::getTransaction() {
         base::xvtransaction_store_ptr_t tx_store_ptr = m_block_store->query_tx(tx_hash_str, base::enum_transaction_subtype_all);
         if (tx_store_ptr != nullptr) {
             if (tx_store_ptr->get_raw_tx() != nullptr) {
+                auto tx = dynamic_cast<xtransaction_t*>(tx_store_ptr->get_raw_tx());
+                tx->add_ref();
                 xtransaction_ptr_t tx_ptr;
-                tx_store_ptr->get_raw_tx()->add_ref();
-                tx_ptr.attach((xtransaction_t*)tx_store_ptr->get_raw_tx());
+                tx_ptr.attach(tx);
                 auto jsa = parse_action(tx_ptr->get_source_action());
                 m_js_rsp["value"]["original_tx_info"]["tx_action"]["sender_action"]["action_param"] = jsa;
                 auto jta = parse_action(tx_ptr->get_target_action());
@@ -903,7 +905,7 @@ void get_block_handle::getLatestFullBlock() {
             if (od) {
                 auto od_obj = make_object_ptr<xvboffdata_t>();
                 od->add_ref();
-                od_obj.attach(od);                
+                od_obj.attach(od);
                 std::string empty_binlog;
                 xtablestate_ptr_t tsp = make_object_ptr<xtablestate_t>(od_obj, ftp->get_height(), empty_binlog, ftp->get_height());
                 jv["account_size"] = static_cast<xJson::UInt64>(tsp->get_account_size());

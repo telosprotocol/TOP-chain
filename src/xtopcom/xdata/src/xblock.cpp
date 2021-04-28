@@ -55,6 +55,8 @@ void xblock_consensus_para_t::set_drand_block(base::xvblock_t* _drand_block) {
     m_drand_height = _drand_block->get_height();
 }
 void xblock_consensus_para_t::set_latest_blocks(const base::xblock_mptrs & latest_blocks) {
+    m_account = latest_blocks.get_latest_cert_block()->get_account();
+    m_proposal_height = latest_blocks.get_latest_cert_block()->get_height() + 1;
     m_latest_cert_block = xblock_t::raw_vblock_to_object_ptr(latest_blocks.get_latest_cert_block());
     m_latest_locked_block = xblock_t::raw_vblock_to_object_ptr(latest_blocks.get_latest_locked_block());
     m_latest_committed_block = xblock_t::raw_vblock_to_object_ptr(latest_blocks.get_latest_committed_block());

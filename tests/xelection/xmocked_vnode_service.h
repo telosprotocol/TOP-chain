@@ -46,7 +46,7 @@ public:
                               observer_ptr<top::mbus::xmessage_bus_face_t> const & bus);
 
     xtop_mocked_vnode_service(common::xaccount_address_t const & account_address,
-                             std::string const & sign_key);
+                              std::string const & sign_key);
 
     xobject_ptr_t<xmocked_vnode_group_t> add_group(common::xnetwork_id_t const & nid,
                                                    common::xzone_id_t const & zid,

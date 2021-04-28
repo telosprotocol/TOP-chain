@@ -1,6 +1,7 @@
 #[derive(Copy, Clone, Debug)]
 pub struct Size(pub usize);
 
+#[allow(unused)]
 impl Size {
     /// Creates a size of `n` kilo
     pub const fn kilo(n: usize) -> Self {

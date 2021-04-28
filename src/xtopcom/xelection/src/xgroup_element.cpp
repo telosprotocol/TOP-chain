@@ -4,9 +4,9 @@
 
 #include "xelection/xcache/xgroup_element.h"
 
-#include "xbasic/xchain_error.h"
+#include "xbasic/xerror/xchain_error.h"
 #include "xbasic/xthreading/xutility.h"
-#include "xbasic/xthrow_error.h"
+#include "xbasic/xerror/xthrow_error.h"
 #include "xbasic/xutility.h"
 #include "xelection/xcache/xcluster_element.h"
 #include "xelection/xdata_accessor_error.h"
@@ -71,7 +71,7 @@ std::shared_ptr<xnode_element_t> xtop_group_element::node_element(common::xslot_
 std::shared_ptr<xnode_element_t> xtop_group_element::node_element(common::xslot_id_t const & slot_id) const {
     std::error_code ec;
     auto ret = node_element(slot_id, ec);
-    throw_error(ec);
+    top::error::throw_error(ec);
 
     return ret;
 }
@@ -116,7 +116,7 @@ std::shared_ptr<xnode_element_t> xtop_group_element::node_element(common::xnode_
 std::shared_ptr<xnode_element_t> xtop_group_element::node_element(common::xnode_id_t const & node_id) const {
     std::error_code ec;
     auto ret = node_element(node_id, ec);
-    throw_error(ec);
+    top::error::throw_error(ec);
     return ret;
 }
 
@@ -124,7 +124,7 @@ bool xtop_group_element::contains(common::xnode_id_t const & node_id) const noex
     try {
         std::error_code ec;
         return node_element(node_id, ec) != nullptr;
-    } catch (xchain_error_t const & eh) {
+    } catch (error::xchain_error_t const & eh) {
         xwarn("xtop_group_element::contains %s", eh.what());
     } catch (std::exception const & eh) {
         xwarn("xtop_group_element::contains %s", eh.what());
@@ -262,7 +262,7 @@ void xtop_group_element::associate_parent_group(std::shared_ptr<xtop_group_eleme
 void xtop_group_element::associate_parent_group(std::shared_ptr<xtop_group_element> const & parent_group) {
     std::error_code ec;
     associate_parent_group(parent_group, ec);
-    throw_error(ec);
+    top::error::throw_error(ec);
 }
 
 std::shared_ptr<xtop_group_element> xtop_group_element::associated_parent_group() const {
@@ -378,7 +378,7 @@ bool xtop_group_element::enabled(common::xlogic_time_t const logic_time) const n
 std::map<common::xslot_id_t, std::shared_ptr<xnode_element_t>> xtop_group_element::children() const {
     std::error_code ec{xdata_accessor_errc_t::success};
     auto ret = children(ec);
-    throw_error(ec);
+    top::error::throw_error(ec);
     return ret;
 }
 

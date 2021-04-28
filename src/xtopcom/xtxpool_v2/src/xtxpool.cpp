@@ -216,12 +216,12 @@ void xtxpool_t::update_non_ready_accounts(uint8_t zone, uint16_t subaddr) {
     }
 }
 
-void xtxpool_t::update_locked_txs(const std::string & table_addr, const std::vector<tx_info_t> & locked_tx_vec) {
+void xtxpool_t::update_locked_txs(const std::string & table_addr, const std::vector<tx_info_t> & locked_tx_vec, const base::xreceiptid_state_ptr_t & receiptid_state) {
     auto table = get_txpool_table_by_addr(table_addr);
     if (table == nullptr) {
         return;
     }
-    return table->update_locked_txs(locked_tx_vec);
+    return table->update_locked_txs(locked_tx_vec, receiptid_state);
 }
 
 void xtxpool_t::update_receiptid_state(const std::string & table_addr, const base::xreceiptid_state_ptr_t & receiptid_state) {
@@ -259,10 +259,37 @@ std::shared_ptr<xtxpool_table_t> xtxpool_t::get_txpool_table_by_addr(const std::
 xobject_ptr_t<xtxpool_face_t> xtxpool_instance::create_xtxpool_inst(const observer_ptr<store::xstore_face_t> & store,
                                                                     const observer_ptr<base::xvblockstore_t> & blockstore,
                                                                     const observer_ptr<base::xvcertauth_t> & certauth,
-                                                                    const observer_ptr<store::xindexstorehub_t> & indexstorehub) {
-    auto para = std::make_shared<xtxpool_resources>(store, blockstore, certauth, indexstorehub);
+                                                                    const observer_ptr<store::xindexstorehub_t> & indexstorehub,
+                                                                    const observer_ptr<mbus::xmessage_bus_face_t> & bus) {
+    auto para = std::make_shared<xtxpool_resources>(store, blockstore, certauth, indexstorehub, bus);
     auto xtxpool = top::make_object_ptr<xtxpool_t>(para);
     return xtxpool;
+}
+
+bool xready_account_t::put_tx(const xcons_transaction_ptr_t & tx) {
+    enum_transaction_subtype new_tx_subtype = tx->get_tx_subtype();
+    if (new_tx_subtype == enum_transaction_subtype_self) {
+        new_tx_subtype = enum_transaction_subtype_send;
+    }
+
+    if (!m_txs.empty()) {
+        enum_transaction_subtype first_tx_subtype = m_txs[0]->get_tx_subtype();
+        if (first_tx_subtype == enum_transaction_subtype_self) {
+            first_tx_subtype = enum_transaction_subtype_send;
+        }
+        if (new_tx_subtype != first_tx_subtype) {
+            xtxpool_info("xready_account_t::put_tx fail tx type not same with txs already in, tx:%s,m_txs[0]:%s", tx->dump().c_str(), m_txs[0]->dump().c_str());
+            return false;
+        }
+
+        if ((first_tx_subtype != enum_transaction_subtype_confirm) &&
+            (m_txs[0]->get_transaction()->get_tx_type() != xtransaction_type_transfer || tx->get_transaction()->get_tx_type() != xtransaction_type_transfer)) {
+            xtxpool_info("xready_account_t::put_tx fail non transfer tx, tx:%s,m_txs[0]:%s", tx->dump().c_str(), m_txs[0]->dump().c_str());
+            return false;
+        }
+    }
+    m_txs.push_back(tx);
+    return true;
 }
 
 }  // namespace xtxpool_v2

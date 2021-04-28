@@ -11,7 +11,7 @@ namespace top { namespace mock {
 class xmock_nodesrv_t : public base::xvnodesrv_t {
 public:
     virtual ~xmock_nodesrv_t() {}
-    base::xauto_ptr<base::xvnode_t> get_node(const xvip2_t & target_node) override {
+    base::xauto_ptr<base::xvnode_t> get_node(const xvip2_t & target_node) const override {
 
         uint64_t group_key = get_group_key(target_node);
 
@@ -30,7 +30,7 @@ public:
         return nullptr;
     }
 
-    base::xauto_ptr<base::xvnodegroup_t> get_group(const xvip2_t & target_group) override {
+    base::xauto_ptr<base::xvnodegroup_t> get_group(const xvip2_t & target_group) const override {
 
         uint64_t group_key = get_group_key(target_group);
         auto it = m_vgroups.find(group_key);
@@ -70,7 +70,7 @@ public:
     }
 
 private:
-    uint64_t get_group_key(const xvip2_t & target_group) {
+    uint64_t get_group_key(const xvip2_t & target_group) const {
         uint64_t group_key = ((target_group.low_addr << 11) >> 21) | ((target_group.high_addr & 0x1FFFFF) << 43);
         return group_key;
     }

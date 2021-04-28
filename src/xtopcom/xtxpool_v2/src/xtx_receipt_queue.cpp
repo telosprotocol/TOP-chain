@@ -50,8 +50,9 @@ const std::shared_ptr<xtx_entry> xreceipt_queue_internal_t::find(const uint256_t
     return nullptr;
 }
 
-int32_t xpeer_table_receipts_t::push_tx(const std::shared_ptr<xtx_entry> & tx_ent) {
+int32_t xpeer_table_receipts_t::push_tx(const std::shared_ptr<xtx_entry> & tx_ent, uint64_t latest_receipt_id) {
     uint64_t new_receipt_id = tx_ent->get_tx()->get_last_action_receipt_id();
+    update_latest_id(latest_receipt_id);
     if (new_receipt_id <= m_latest_receipt_id) {
         xtxpool_warn("xpeer_table_receipts_t::push_tx duplicate receipt:%s,id:%llu:%llu", tx_ent->get_tx()->dump().c_str(), new_receipt_id, m_latest_receipt_id);
         return xtxpool_error_tx_duplicate;
@@ -101,12 +102,17 @@ void xpeer_table_receipts_t::erase(uint64_t receipt_id) {
     }
 }
 
-int32_t xreceipt_queue_new_t::push_tx(const std::shared_ptr<xtx_entry> & tx_ent) {
+int32_t xreceipt_queue_new_t::push_tx(const std::shared_ptr<xtx_entry> & tx_ent, const base::xreceiptid_state_ptr_t & receiptid_state) {
     auto & peer_table_map = get_peer_table_map(tx_ent->get_tx()->is_recv_tx());
     std::shared_ptr<xpeer_table_receipts_t> peer_table_receipts;
     auto & account_addr = (tx_ent->get_tx()->is_recv_tx()) ? tx_ent->get_tx()->get_source_addr() : tx_ent->get_tx()->get_target_addr();
     base::xvaccount_t vaccount(account_addr);
     auto peer_table_sid = vaccount.get_short_table_id();
+
+    base::xreceiptid_pair_t receiptid_pair;
+    receiptid_state->find_pair(peer_table_sid, receiptid_pair);
+
+    auto latest_receipt_id = tx_ent->get_tx()->is_recv_tx() ? receiptid_pair.get_recvid_max() : receiptid_pair.get_confirmid_max();
 
     auto it = peer_table_map.find(peer_table_sid);
     if (it == peer_table_map.end()) {
@@ -115,7 +121,7 @@ int32_t xreceipt_queue_new_t::push_tx(const std::shared_ptr<xtx_entry> & tx_ent)
     } else {
         peer_table_receipts = it->second;
     }
-    return peer_table_receipts->push_tx(tx_ent);
+    return peer_table_receipts->push_tx(tx_ent, latest_receipt_id);
 }
 
 const std::vector<xcons_transaction_ptr_t> xreceipt_queue_new_t::get_txs(uint32_t recv_txs_max_num,

@@ -76,6 +76,17 @@ xobject_ptr_t<base::xvboffdata_t> xtablestate_t::get_block_full_data() const {
     full_data->set_offdata(XTABLE_PROPERTY_RECEIPTID, m_receiptid_state->get_last_full_state());
     return full_data;
 }
+xobject_ptr_t<base::xvboffdata_t> xtablestate_t::clone_block_full_data() const {
+    xobject_ptr_t<base::xvboffdata_t> full_data = get_block_full_data();
+    std::string offdata_bin;
+    full_data->serialize_to_string(offdata_bin);
+    base::xauto_ptr<base::xvboffdata_t> _offdata = base::xvblock_t::create_offdata_object(offdata_bin);
+    if (nullptr == _offdata) {
+        xassert(false);
+        return false;
+    }
+    return _offdata;
+}
 xobject_ptr_t<base::xvboffdata_t> xtablestate_t::get_block_binlog_data() const {
     xobject_ptr_t<base::xvboffdata_t> full_data = make_object_ptr<base::xvboffdata_t>();
     full_data->set_offdata(XTABLE_PROPERTY_ACCOUNTINDEX, m_accountindex_state->get_binlog());
@@ -165,6 +176,7 @@ std::string xtablestate_t::serialize_to_binlog_data_string() const {
 }
 
 bool xtablestate_t::execute_block(base::xvblock_t* block) {
+    xassert(m_binlog_height + 1 == block->get_height());
     if (block->get_block_class() == base::enum_xvblock_class_light) {
         return execute_lighttable(block);
     } else if (block->get_block_class() == base::enum_xvblock_class_full) {
@@ -188,67 +200,10 @@ bool xtablestate_t::execute_lighttable(base::xvblock_t* block) {
     base::xreceiptid_check_t receiptid_check;
     auto & units = lighttable->get_tableblock_units(true);
     xblock_t::batch_units_to_receiptids(units, receiptid_check);
-    // for (auto & unit : units) {
-    //     const std::vector<xlightunit_tx_info_ptr_t> & txs_info = unit->get_txs();
-    //     for (auto & tx : txs_info) {
-    //         if (tx->is_send_tx()) {
-    //             uint64_t sendid = tx->get_receipt_id();
-    //             base::xtable_shortid_t tableid = tx->get_receipt_id_tableid();
-    //             receiptid_check.set_sendid(tableid, sendid);
-    //         } else if (tx->is_recv_tx()) {
-    //             uint64_t recvid = tx->get_receipt_id();
-    //             base::xtable_shortid_t tableid = tx->get_receipt_id_tableid();
-    //             receiptid_check.set_recvid(tableid, recvid);
-    //         } else if (tx->is_confirm_tx()) {
-    //             uint64_t confirmid = tx->get_receipt_id();
-    //             base::xtable_shortid_t tableid = tx->get_receipt_id_tableid();
-    //             receiptid_check.set_confirmid(tableid, confirmid);
-    //         }
-    //     }
-    // }
-    if (false == receiptid_check.check_contious(m_receiptid_state)) {
-        xerror("xtablestate_t::execute_lighttable fail check receiptid contious");
-    }
+    xassert(receiptid_check.check_contious(m_receiptid_state));
     receiptid_check.update_state(m_receiptid_state);
-
-#if 0
-    // set sendid firstly
-    for (auto & unit : units) {
-        const std::vector<xlightunit_tx_info_ptr_t> & txs_info = unit->get_txs();
-        for (auto & tx : txs_info) {
-            if (tx->is_send_tx()) {
-                uint64_t sendid = tx->get_receipt_id();
-                base::xtable_shortid_t tableid = tx->get_receipt_id_tableid();
-                base::xreceiptid_pair_t pair;
-                m_receiptid_state->find_pair(tableid, pair);
-                pair.set_sendid_max(sendid);
-                m_receiptid_state->add_pair(tableid, pair);
-            }
-        }
-    }
-    // set recv and confirm secondly
-    for (auto & unit : units) {
-        const std::vector<xlightunit_tx_info_ptr_t> & txs_info = unit->get_txs();
-        for (auto & tx : txs_info) {
-            if (tx->is_recv_tx()) {
-                uint64_t recvid = tx->get_receipt_id();
-                base::xtable_shortid_t tableid = tx->get_receipt_id_tableid();
-                base::xreceiptid_pair_t pair;
-                m_receiptid_state->find_pair(tableid, pair);
-                pair.set_recvid_max(recvid);
-                m_receiptid_state->add_pair(tableid, pair);
-            } else if (tx->is_confirm_tx()) {
-                uint64_t confirmid = tx->get_receipt_id();
-                base::xtable_shortid_t tableid = tx->get_receipt_id_tableid();
-                base::xreceiptid_pair_t pair;
-                m_receiptid_state->find_pair(tableid, pair);
-                pair.set_confirmid_max(confirmid);
-                m_receiptid_state->add_pair(tableid, pair);
-            }
-        }
-    }
-#endif
     m_binlog_height = block->get_height();
+    xdbg("xtablestate_t::execute_lighttable block=%s", block->dump().c_str());
     return true;
 }
 
@@ -256,9 +211,10 @@ bool xtablestate_t::execute_fulltable(base::xvblock_t* block) {
     xfull_tableblock_t* fulltable = dynamic_cast<xfull_tableblock_t*>(block);
     xassert(fulltable != nullptr);
     merge_new_full();
-    xobject_ptr_t<base::xvboffdata_t> new_full_data = get_block_full_data();
+    // should clone a new fulldata, then set to block offdata
+    xobject_ptr_t<base::xvboffdata_t> new_full_data = clone_block_full_data();
     std::string root_in_block = fulltable->get_offdata_hash();
-    std::string root_in_state = new_full_data->build_root_hash(enum_xhash_type_sha2_256);
+    std::string root_in_state = new_full_data->build_root_hash(block->get_cert()->get_crypto_hash_type());
     xassert(root_in_block == root_in_state);
     if (root_in_block != root_in_state) {
         xerror("xtablestate_t::execute_fulltable root not match.block=%s", block->dump().c_str());
@@ -267,6 +223,8 @@ bool xtablestate_t::execute_fulltable(base::xvblock_t* block) {
     block->reset_block_offdata(new_full_data.get());
     m_full_height = block->get_height();
     m_binlog_height = block->get_height();
+    xdbg("xtablestate_t::execute_fulltable block=%s,offdata_root=%s",
+        block->dump().c_str(), base::xstring_utl::to_hex(root_in_state).c_str());
     return true;
 }
 

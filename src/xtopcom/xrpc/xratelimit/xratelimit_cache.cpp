@@ -32,6 +32,7 @@ RatelimitCache::RatelimitCache(const RatelimitConfig* config)
 RatelimitCache::~RatelimitCache() {
     break_out_ = true;
     cv_.notify_all();
+    thread_.join();
     // ip_hashmap_.Foreach([](int, IpCheckContent * p) { delete p; });
     // account_hashmap_.Foreach([](std::string, AccountCheckContent * p) { delete p; });
 }

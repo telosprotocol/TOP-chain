@@ -13,11 +13,7 @@ target_link_libraries(xblockstore2_test PRIVATE
     gtest
 )
 
-# if (BUILD_METRICS)
-#     add_dependencies(xblockstore2_test xmetrics)
-#     target_link_libraries(xblockstore2_test PRIVATE xmetrics)
-# endif()
-
-if (XENABLE_TESTS)
-    enable_testing()
+if (BUILD_METRICS)
+    add_dependencies(xblockstore2_test xmetrics)
+    target_link_libraries(xblockstore2_test PRIVATE xmetrics)
 endif()

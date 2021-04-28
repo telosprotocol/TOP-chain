@@ -494,8 +494,12 @@ namespace top
             memset(m_ledgers,0,sizeof(m_ledgers));
             
             //build default stores
-            xauto_ptr<xvstatestore_t> default_store(new xvstatestore_t());
-            set_xstatestore(default_store.get());
+            xauto_ptr<xvstatestore_t> default_state_store(new xvstatestore_t());
+            set_xstatestore(default_state_store.get());
+            
+            xauto_ptr<xvtxstore_t> default_txs_store(new xvtxstore_t());
+            set_xtxstore(default_txs_store.get());
+            
             xkinfo("xvchain_t::xvchain_t,chain_id(%d)",m_chain_id);
         }
     
@@ -589,6 +593,13 @@ namespace top
             xassert(target != NULL);
             return (xvdbstore_t*)target;
         }
+        
+        xvtxstore_t*    xvchain_t::get_xtxstore() //must be valid
+        {
+            xobject_t* target = m_plugins[enum_xvchain_plugin_txs_store];
+            xassert(target != NULL);
+            return (xvtxstore_t*)target;
+        }
     
         xvblockstore_t* xvchain_t::get_xblockstore() //must be valid
         {
@@ -618,6 +629,15 @@ namespace top
                 return false;
             return register_plugin(new_store,enum_xvchain_plugin_kdb_store);
         }
+        
+        bool    xvchain_t::set_xtxstore(xvtxstore_t * new_store)
+        {
+            xassert(new_store != NULL);
+            if(NULL == new_store)
+                return false;
+            
+            return register_plugin(new_store,enum_xvchain_plugin_txs_store);
+        }
     
         bool    xvchain_t::set_xblockstore(xvblockstore_t * new_store)
         {
@@ -636,7 +656,7 @@ namespace top
             
             return register_plugin(new_store,enum_xvchain_plugin_state_store);
         }
-
+    
         bool    xvchain_t::set_xevmbus(xveventbus_t * new_mbus)
         {
             xassert(new_mbus != NULL);

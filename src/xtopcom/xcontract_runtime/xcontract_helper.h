@@ -39,8 +39,8 @@ public:
     uint64_t get_balance() const;
     common::xlogic_time_t get_timer_height() const;
     const data::xaction_asset_out& get_pay_fee() const;
-    void set_contract_code(const std::string& code);
-    void get_contract_code(std::string &code) const;
+    // void set_contract_code(const std::string& code);
+    // void get_contract_code(std::string &code) const;
     void create_transfer_tx(const std::string& grant_account, const uint64_t amount);
 
     void string_create(const std::string& key);

@@ -100,8 +100,8 @@ base::xauto_ptr<base::xvblock_t> xsync_store_t::get_latest_end_block(const std::
                     continue;
                 }
                 exist = true;
-                if (j > underministic_height) {
-                    underministic_height = j;
+                if ((i+1) > underministic_height) {
+                    underministic_height = i+1;
                 }
                 break;
             }
