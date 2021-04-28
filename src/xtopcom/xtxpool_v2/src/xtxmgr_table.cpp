@@ -51,7 +51,7 @@ int32_t xtxmgr_table_t::push_receipt(const std::shared_ptr<xtx_entry> & tx, cons
     auto tx_inside = query_tx(account_addr, tx->get_tx()->get_transaction()->digest());
     if (tx_inside != nullptr) {
         if (tx_inside->get_tx()->get_tx_subtype() < tx->get_tx()->get_tx_subtype()) {
-            xtxpool_dbg("xtxmgr_table_t::push_receipt same tx hash, new tx:%s replace old tx", tx->get_tx()->dump().c_str(), tx_inside->get_tx()->dump().c_str());
+            xtxpool_dbg("xtxmgr_table_t::push_receipt same tx hash, new tx:%s replace old tx:%s", tx->get_tx()->dump().c_str(), tx_inside->get_tx()->dump().c_str());
             tx_info_t txinfo(tx_inside->get_tx());
             pop_tx(txinfo, false);
         } else {
