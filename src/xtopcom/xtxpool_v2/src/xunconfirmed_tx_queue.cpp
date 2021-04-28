@@ -130,11 +130,11 @@ int32_t xunconfirmed_account_t::update(xblock_t * latest_committed_block, const 
 
     for (uint64_t cur_height = latest_height; cur_height > m_highest_height; cur_height--) {
         auto unit_block = m_para->get_vblockstore()->load_block_object(account_addr, cur_height, 0, true);
-        if (unit_block == nullptr || !data::xblocktool_t::is_connect_and_executed_block(unit_block.get())) {
-            xtxpool_info("xunconfirmed_account_t::update account_addr:%s lack unitblock, the height is %u", account_addr.c_str(), cur_height);
-
+        if (unit_block == nullptr) {
+            base::xauto_ptr<base::xvblock_t> _block_ptr = m_para->get_vblockstore()->get_latest_connected_block(account_addr);
+            uint64_t start_sync_height = _block_ptr->get_height() + 1;
             mbus::xevent_behind_ptr_t ev =
-                make_object_ptr<mbus::xevent_behind_on_demand_t>(account_addr, cur_height, (uint32_t)0, false, "unit_lack");
+                make_object_ptr<mbus::xevent_behind_on_demand_t>(account_addr, start_sync_height, (uint32_t)(cur_height - start_sync_height), true, "unit_lack");
             m_para->get_bus()->push_event(ev);
             xtxpool_info("xunconfirmed_account_t::update account:%s state fall behind,need sync unit cur height:%llu", account_addr.c_str(), cur_height);
             return xtxpool_error_unitblock_lack;

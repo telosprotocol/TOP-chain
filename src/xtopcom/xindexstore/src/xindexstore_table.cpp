@@ -222,7 +222,7 @@ bool  xindexstore_table_t::get_account_basic_info(const std::string & account, x
 
     if (latest_cert_unit->get_height() < account_index.get_latest_unit_height()) {
         base::xauto_ptr<base::xvblock_t> _start_block_ptr = get_blockstore()->get_latest_connected_block(_account_vaddress);
-        account_index_info.set_sync_height_max(account_index.get_latest_unit_height());
+        account_index_info.set_sync_height_start(_start_block_ptr->get_height() + 1);
         account_index_info.set_sync_num(account_index.get_latest_unit_height() - _start_block_ptr->get_height());
         return false;
     }
