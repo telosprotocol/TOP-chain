@@ -29,17 +29,14 @@ int32_t xtxpool_table_t::push_send_tx(const std::shared_ptr<xtx_entry> & tx) {
     //     return xtxpool_error_account_unconfirm_txs_reached_upper_limit;
     // }
 
-    auto account_addr = tx->get_tx()->get_source_addr();
-
-    store::xaccount_basic_info_t account_basic_info;
-    bool result = m_table_indexstore->get_account_basic_info(account_addr, account_basic_info);
+    uint64_t latest_nonce;
+    uint256_t latest_hash;
+    bool result = get_account_latest_nonce_hash(tx->get_tx()->get_source_addr(), latest_nonce, latest_hash);
     if (!result) {
         // todo : push to non_ready_accounts
         // std::lock_guard<std::mutex> lck(m_non_ready_mutex);
         // m_non_ready_accounts.push_tx(tx);
         xtxpool_warn("xtxpool_table_t::push_send_tx account state fall behind tx:%s", tx->get_tx()->dump(true).c_str());
-
-        notify_sync_lacking_units(account_addr, account_basic_info.get_sync_height_start(), account_basic_info.get_sync_num());
         return xtxpool_error_account_state_fall_behind;
     }
 
@@ -49,8 +46,6 @@ int32_t xtxpool_table_t::push_send_tx(const std::shared_ptr<xtx_entry> & tx) {
         tx->get_para().set_tx_type_score(enum_xtx_type_socre_normal);
     }
 
-    uint64_t latest_nonce = account_basic_info.get_latest_state()->account_send_trans_number();
-    uint256_t latest_hash = account_basic_info.get_latest_state()->account_send_trans_hash();
     {
         std::lock_guard<std::mutex> lck(m_mgr_mutex);
         if (m_locked_txs.try_push_tx(tx)) {
@@ -342,17 +337,14 @@ void xtxpool_table_t::update_locked_txs(const std::vector<tx_info_t> & locked_tx
     // roll back txs push to txpool again.
     for (auto & unlocked_tx : unlocked_txs) {
         if (unlocked_tx->get_tx()->is_self_tx() || unlocked_tx->get_tx()->is_send_tx()) {
-            store::xaccount_basic_info_t account_basic_info;
-            auto & account_addr = unlocked_tx->get_tx()->get_account_addr();
-            bool result = m_table_indexstore->get_account_basic_info(account_addr, account_basic_info);
+            uint64_t latest_nonce;
+            uint256_t latest_hash;
+            bool result = get_account_latest_nonce_hash(unlocked_tx->get_tx()->get_source_addr(), latest_nonce, latest_hash);
             if (!result) {
                 // todo : push to non_ready_accounts
-                notify_sync_lacking_units(account_addr, account_basic_info.get_sync_height_start(), account_basic_info.get_sync_num());
                 xtxpool_warn("xtxpool_table_t::update_locked_txs account state fall behind tx:%s", unlocked_tx->get_tx()->dump().c_str());
                 continue;
             }
-            uint64_t latest_nonce = account_basic_info.get_latest_state()->account_send_trans_number();
-            uint256_t latest_hash = account_basic_info.get_latest_state()->account_send_trans_hash();
             std::lock_guard<std::mutex> lck(m_mgr_mutex);
             ret = m_txmgr_table.push_send_tx(unlocked_tx, latest_nonce, latest_hash);
         } else {
@@ -434,12 +426,25 @@ int32_t xtxpool_table_t::verify_receipt_tx(const xcons_transaction_ptr_t & tx) c
     return xsuccess;
 }
 
-void xtxpool_table_t::notify_sync_lacking_units(const std::string & account_addr, uint64_t start_height, uint32_t count) const {
-    if (count > 0) {
-        mbus::xevent_behind_ptr_t ev = make_object_ptr<mbus::xevent_behind_on_demand_t>(account_addr, start_height, count, true, "account_state_fall_behind");
-        m_para->get_bus()->push_event(ev);
-        xtxpool_info("xtxpool_table_t::notify_sync_lacking_units account:%s state fall behind,need sync unit start_height:%llu,count:%u", account_addr.c_str(), start_height, count);
+bool xtxpool_table_t::get_account_latest_nonce_hash(const std::string account_addr, uint64_t & latest_nonce, uint256_t & latest_hash) const {
+    store::xaccount_basic_info_t account_basic_info;
+    bool result = m_table_indexstore->get_account_basic_info(account_addr, account_basic_info);
+    if (!result) {
+        if (account_basic_info.get_sync_num() > 0) {
+            mbus::xevent_behind_ptr_t ev = make_object_ptr<mbus::xevent_behind_on_demand_t>(
+                account_addr, account_basic_info.get_sync_height_start(), account_basic_info.get_sync_num(), true, "account_state_fall_behind");
+            m_para->get_bus()->push_event(ev);
+            xtxpool_info("xtxpool_table_t::get_account_latest_nonce_hash account:%s state fall behind,need sync unit start_height:%llu,count:%u",
+                         account_addr.c_str(),
+                         account_basic_info.get_sync_height_start(),
+                         account_basic_info.get_sync_num());
+        }
+        return false;
     }
+
+    latest_nonce = account_basic_info.get_latest_state()->account_send_trans_number();
+    latest_hash = account_basic_info.get_latest_state()->account_send_trans_hash();
+    return true;
 }
 
 }  // namespace xtxpool_v2

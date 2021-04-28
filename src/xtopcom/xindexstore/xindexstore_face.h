@@ -47,7 +47,7 @@ class xaccount_basic_info_t {
     const xaccount_ptr_t &          get_latest_state() const {return m_latest_state;}
     const base::xaccount_index_t &  get_accout_index() const {return m_account_index;}
     const uint64_t                  get_sync_height_start() const {return m_sync_height_start;}
-    const uint64_t                  get_sync_num() const {return m_sync_num;}
+    const uint32_t                  get_sync_num() const {return m_sync_num;}
 
  private:
    //  xblock_ptr_t            m_latest_block{nullptr};
