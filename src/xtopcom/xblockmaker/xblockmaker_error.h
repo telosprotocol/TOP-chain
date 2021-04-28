@@ -22,7 +22,7 @@ enum enum_xblockmaker_error_type {
     xblockmaker_error_missing_state,
     xblockmaker_error_property_load,
     xblockmaker_error_tx_execute,
-    xblockmaker_error_receiptid_check,
+    xblockmaker_error_tx_check,
     xblockmaker_error_no_need_make_unit,
     xblockmaker_error_no_need_make_table,
 
@@ -54,7 +54,7 @@ inline std::string xblockmaker_error_to_string(int32_t code) {
         XUNIT_TO_STR(xblockmaker_error_missing_state),
         XUNIT_TO_STR(xblockmaker_error_property_load),
         XUNIT_TO_STR(xblockmaker_error_tx_execute),
-        XUNIT_TO_STR(xblockmaker_error_receiptid_check),
+        XUNIT_TO_STR(xblockmaker_error_tx_check),
         XUNIT_TO_STR(xblockmaker_error_no_need_make_unit),
         XUNIT_TO_STR(xblockmaker_error_no_need_make_table),
 

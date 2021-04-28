@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "xbasic/xserializable_based_on.h"
+#include "xvledger/xdataobj_base.hpp"
 #include "xdata/xcons_transaction.h"
 
 NS_BEG2(top, blockmaker)
@@ -84,5 +85,29 @@ class xtableblock_proposal_input_t : public xserializable_based_on<void>, public
     std::vector<xunit_proposal_input_t>     m_unit_inputs;
 };
 
+
+class xtable_proposal_input_t : public xbase_dataunit_t<xtable_proposal_input_t, xdata_type_table_proposal_input> {
+ public:
+    xtable_proposal_input_t();
+    explicit xtable_proposal_input_t(const std::vector<xcons_transaction_ptr_t> & input_txs);
+
+ protected:
+    ~xtable_proposal_input_t() {}
+    int32_t do_write(base::xstream_t & stream) override;
+    int32_t do_read(base::xstream_t & stream) override;
+
+ public:
+    bool    delete_fail_tx(const xcons_transaction_ptr_t & input_tx);
+    void    set_input_tx(const xcons_transaction_ptr_t & tx);
+    void    set_other_account(const std::string & account);
+    const std::vector<xcons_transaction_ptr_t> &    get_input_txs() const {return m_input_txs;}
+    const std::vector<std::string> &                get_other_accounts() const {return m_other_accounts;}
+
+ private:
+    std::vector<xcons_transaction_ptr_t>    m_input_txs;
+    std::vector<std::string>                m_other_accounts;  // for empty or full unit accounts
+};
+
+using xtable_proposal_input_ptr_t = xobject_ptr_t<xtable_proposal_input_t>;
 
 NS_END2
