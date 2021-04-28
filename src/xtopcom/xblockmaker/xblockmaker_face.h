@@ -129,8 +129,6 @@ class xblock_maker_t : public base::xvaccount_t {
 
  public:
     void                        set_latest_block(const xblock_ptr_t & block);
-    void                        clear_block(const xblock_ptr_t & block);
-    bool                        load_latest_blocks(const xblock_ptr_t & latest_block, std::map<uint64_t, xblock_ptr_t> & latest_blocks);  // load latest blocks from db for updating cache
     bool                        load_and_cache_enough_blocks(const xblock_ptr_t & latest_block);
     bool                        check_latest_blocks() const;
 
@@ -141,14 +139,13 @@ class xblock_maker_t : public base::xvaccount_t {
     const xblockmaker_resources_ptr_t & get_resources() const {return m_resources;}
 
     bool                        has_uncommitted_blocks() const;
-    uint32_t                    get_latest_consecutive_empty_block_num() const;
+
     uint64_t                    get_keep_latest_blocks_max() const {return m_keep_latest_blocks_max;}
     const xblock_ptr_t &        get_latest_committed_block() const {return m_latest_commit_block;}
     const xaccount_ptr_t &      get_latest_committed_state() const {return m_commit_account;}
     std::string                 get_lock_block_sign_hash() const;
     std::string                 get_lock_output_root_hash() const;
     const std::map<uint64_t, xblock_ptr_t> & get_latest_blocks() const {return m_latest_blocks;}
-    xblock_ptr_t                get_latest_block(uint64_t height) const;
     const xblock_ptr_t &        get_highest_height_block() const;
     const xblock_ptr_t &        get_lowest_height_block() const;
     xblock_ptr_t                get_highest_non_empty_block() const;
