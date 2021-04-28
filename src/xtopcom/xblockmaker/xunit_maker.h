@@ -26,6 +26,7 @@ class xunit_maker_t : public xblock_maker_t {
  public:
     int32_t                 check_latest_state(const base::xaccount_index_t & account_index);  // check block and state is latest
     bool                    push_tx(const data::xblock_consensus_para_t & cs_para, const xcons_transaction_ptr_t & tx);
+    void                    clear_tx();
     xblock_ptr_t            make_proposal(const xunitmaker_para_t & unit_para, const data::xblock_consensus_para_t & cs_para, xunitmaker_result_t & result);
     bool                    can_make_next_block() const;
     bool                    can_make_next_empty_block() const;
@@ -34,10 +35,7 @@ class xunit_maker_t : public xblock_maker_t {
  protected:
     xblock_ptr_t            make_next_block(const xunitmaker_para_t & unit_para, const data::xblock_consensus_para_t & cs_para, xunitmaker_result_t & result);
     bool                    can_make_next_light_block() const;
-
-    void                    clear_tx();
     bool                    is_account_locked() const;
-    bool                    update_latest_blocks(const xblock_ptr_t & latest_block);
     std::string             dump() const;
     xblock_ptr_t            get_latest_block(const base::xaccount_index_t & account_index);
     void                    find_highest_send_tx(uint64_t & latest_nonce, uint256_t & latest_hash);
