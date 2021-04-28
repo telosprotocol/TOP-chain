@@ -43,7 +43,6 @@ xblock_ptr_t xunit_maker_t::get_latest_block(const base::xaccount_index_t & acco
 
 int32_t    xunit_maker_t::check_latest_state(const base::xaccount_index_t & account_index) {
     if (m_check_state_success && m_latest_account_index == account_index) {
-        xdbg("xunit_maker_t::check_latest_state already ok, account=%s", get_account().c_str());
         return xsuccess;
     }
 
@@ -309,9 +308,7 @@ bool xunit_maker_t::can_make_next_light_block() const {
     if (m_pending_txs.empty()) {
         return false;
     }
-    // TODO(jimmy) non contious block make mode. condition:non-empty block is committed status
     if (is_account_locked())  {
-        xerror("xunit_maker_t::can_make_next_light_block account locked. account=%s", get_account().c_str());
         return false;
     }
     return true;

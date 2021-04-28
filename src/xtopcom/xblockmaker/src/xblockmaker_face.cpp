@@ -98,39 +98,8 @@ void xblock_maker_t::clear_old_blocks() {
 }
 
 void xblock_maker_t::set_latest_block(const xblock_ptr_t & block) {
+    // always replace input block
     m_latest_blocks[block->get_height()] = block;
-}
-
-bool xblock_maker_t::load_latest_blocks(const xblock_ptr_t & latest_block, std::map<uint64_t, xblock_ptr_t> & latest_blocks) {
-    xassert(latest_blocks.empty());
-    latest_blocks[latest_block->get_height()] = latest_block;
-    xdbg("xblock_maker_t::load_latest_blocks start.account=%s,latest_height=%ld", get_account().c_str(), latest_block->get_height());
-    xblock_ptr_t current_block = latest_block;
-    uint32_t count = 1;
-    while (current_block->get_height() > 0) {
-        uint64_t prev_height = current_block->get_height() - 1;
-        xblock_ptr_t prev_block = get_latest_block(prev_height);
-        if (prev_block != nullptr && prev_block->get_block_hash() == current_block->get_last_block_hash()) {
-            xdbg("xblock_maker_t::load_latest_blocks finish prev block in cache.account=%s,latest_height=%ld", get_account().c_str(), latest_block->get_height());
-            return true;
-        }
-        auto _block = get_blockstore()->load_block_object(*this, prev_height, current_block->get_last_block_hash(), true);
-        if (_block == nullptr) {
-            xwarn("xtable_maker_t::load_latest_blocks fail-load block.account=%s,height=%ld", get_account().c_str(), prev_height);
-            return false;
-        }
-        prev_block = xblock_t::raw_vblock_to_object_ptr(_block.get());
-        latest_blocks[prev_block->get_height()] = prev_block;
-        current_block = prev_block;
-        count++;
-        if (count >= m_keep_latest_blocks_max) {
-            xdbg("xtable_maker_t::load_latest_blocks finish arrive max times.account=%s,latest_height=%ld", get_account().c_str(), latest_block->get_height());
-            return true;
-        }
-    }
-    xdbg("xblock_maker_t::load_latest_blocks finish reach genesis.account=%s,latest_height=%ld,current_height=%ld",
-        get_account().c_str(), latest_block->get_height(), current_block->get_height());
-    return true;
 }
 
 bool xblock_maker_t::load_and_cache_enough_blocks(const xblock_ptr_t & latest_block) {
@@ -141,12 +110,11 @@ bool xblock_maker_t::load_and_cache_enough_blocks(const xblock_ptr_t & latest_bl
         if (count >= m_keep_latest_blocks_max) {
             break;
         }
-        uint64_t prev_height = current_block->get_height() - 1;
-        xblock_ptr_t prev_block = get_latest_block(prev_height);
+        xblock_ptr_t prev_block = get_prev_block(current_block);
         if (prev_block == nullptr) {
-            auto _block = get_blockstore()->load_block_object(*this, prev_height, current_block->get_last_block_hash(), true);
+            auto _block = get_blockstore()->load_block_object(*this, current_block->get_height() - 1, current_block->get_last_block_hash(), true);
             if (_block == nullptr) {
-                xwarn("xblock_maker_t::load_and_cache_enough_blocks fail-load block.account=%s,height=%ld", get_account().c_str(), prev_height);
+                xwarn("xblock_maker_t::load_and_cache_enough_blocks fail-load block.account=%s,height=%ld", get_account().c_str(), current_block->get_height() - 1);
                 return false;
             }
             prev_block = xblock_t::raw_vblock_to_object_ptr(_block.get());
@@ -159,25 +127,6 @@ bool xblock_maker_t::load_and_cache_enough_blocks(const xblock_ptr_t & latest_bl
     xdbg("xblock_maker_t::load_and_cache_enough_blocks succ.account=%s,blocks_size=%d,highest=%ld,lowest=%ld",
         get_account().c_str(), m_latest_blocks.size(), get_highest_height_block()->get_height(), get_lowest_height_block()->get_height());
     return true;
-}
-
-void xblock_maker_t::clear_block(const xblock_ptr_t & block) {
-    auto iter = m_latest_blocks.find(block->get_height());
-    if (iter != m_latest_blocks.end()) {
-        xassert(block->get_block_hash() == iter->second->get_block_hash());
-        if (block->get_block_hash() == iter->second->get_block_hash()) {
-            xdbg("xblock_maker_t::clear_block block_cache_change clear, block=%s", block->dump().c_str());
-            m_latest_blocks.erase(iter);
-        }
-    }
-}
-
-xblock_ptr_t xblock_maker_t::get_latest_block(uint64_t height) const {
-    auto iter = m_latest_blocks.find(height);
-    if (iter == m_latest_blocks.end()) {
-        return nullptr;
-    }
-    return iter->second;
 }
 
 xblock_ptr_t xblock_maker_t::get_prev_block(const xblock_ptr_t & current) const {
@@ -197,19 +146,6 @@ const xblock_ptr_t & xblock_maker_t::get_highest_height_block() const {
 const xblock_ptr_t & xblock_maker_t::get_lowest_height_block() const {
     xassert(!m_latest_blocks.empty());
     return m_latest_blocks.begin()->second;
-}
-
-uint32_t xblock_maker_t::get_latest_consecutive_empty_block_num() const {
-    uint32_t num = 0;
-    for (auto iter = m_latest_blocks.rbegin(); iter != m_latest_blocks.rend(); iter++) {
-        if (iter->second->get_block_class() == base::enum_xvblock_class_nil) {
-            num++;
-        } else {
-            break;
-        }
-    }
-    xassert(num <= 2);
-    return num;
 }
 
 bool xblock_maker_t::check_latest_blocks() const {
