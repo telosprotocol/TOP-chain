@@ -157,7 +157,7 @@ public:
     xdataobj_ptr_t get_property(const std::string & account, const std::string & prop_name, int32_t type);
     bool set_transaction_hash(xstore_transaction_t& txn, const uint64_t unit_height, const std::string &txhash, enum_transaction_subtype txtype, xtransaction_t* tx);
 
-    bool update_blockchain_by_block(xblockchain2_t* blockchain, const data::xblock_t* block, uint64_t now);
+    bool update_blockchain_by_block(xblockchain2_t* blockchain, const data::xblock_t* block, uint64_t now) const;
 
     bool save_block(const std::string & store_path, data::xblock_t* block);
 

@@ -5,14 +5,17 @@
 #pragma once
 
 #include <string>
-#include "xdata/xblock.h"
+
 #include "xbase/xobject_ptr.h"
+#include "xcommon/xenable_execute_block.h"
 #include "xdata/xaccount_mstate.h"
+#include "xdata/xblock.h"
 #include "xdata/xtransaction.h"
 
 NS_BEG2(top, data)
 
-class xblockchain2_t : public xbase_dataobj_t<xblockchain2_t, xdata_type_blockchain> {
+class xblockchain2_t : public xbase_dataobj_t<xblockchain2_t, xdata_type_blockchain>
+                     , public common::xenable_execute_block_t<xblockchain2_t> {
  public:
     enum {
         enum_blockchain_ext_type_uncnfirmed_accounts = 1,
@@ -23,15 +26,23 @@ class xblockchain2_t : public xbase_dataobj_t<xblockchain2_t, xdata_type_blockch
     // default is main chain id or get chain id from account
     xblockchain2_t(const std::string & account, base::enum_xvblock_level level);
     xblockchain2_t(const std::string & account);
-    xblockchain2_t();
+    xblockchain2_t() = default;
  protected:
-    virtual ~xblockchain2_t() {}
+     ~xblockchain2_t() override = default;
  private:
     xblockchain2_t(const xblockchain2_t &);
     xblockchain2_t & operator = (const xblockchain2_t &);
  public:
     virtual int32_t do_write(base::xstream_t & stream) override;
     virtual int32_t do_read(base::xstream_t & stream) override;
+
+    void execute_block(xobject_ptr_t<data::xblock_t const> block, std::error_code & ec) override;
+
+private:
+    void execute_genesis_block(xobject_ptr_t<xblock_t const> const & block, std::error_code & ec);
+    void execute_light_block(xobject_ptr_t<xblock_t const> const & block, std::error_code & ec);
+    void execute_full_block(xobject_ptr_t<xblock_t const> const & block, std::error_code & ec);
+    void execute_nil_block(xobject_ptr_t<xblock_t const> const & block, std::error_code & ec);
 
  public:  // update blockchain by block
     bool        update_last_block_state(const xblock_t* block);

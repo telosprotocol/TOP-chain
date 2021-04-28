@@ -348,7 +348,7 @@ data::xblock_t *xstore::get_block_by_height(const std::string &owner, uint64_t h
     return block;
 }
 
-bool xstore::update_blockchain_by_block(xblockchain2_t *blockchain, const data::xblock_t *block, uint64_t now) {
+bool xstore::update_blockchain_by_block(xblockchain2_t *blockchain, const data::xblock_t *block, uint64_t now) const {
 
     blockchain->update_min_max_height(block->get_height());
     blockchain->set_update_stamp(now);
@@ -1310,12 +1310,26 @@ bool  xstore::execute_block(base::xvblock_t* vblock) {
         return false;
     }
 
+#if 0
+    {
+        std::error_code ec;
+        xobject_ptr_t<xblock_t> blk;
+        block->add_ref();
+        blk.attach(block);
+        account->execute_block(std::move(blk), ec);
+        if (ec) {
+            xerror("xstore::execute_block fail-for update blockchain=%s", block->dump().c_str());
+            return false;
+        }
+    }
+#else
     bool bret;
     bret = update_blockchain_by_block(account, block, base::xtime_utl::gettimeofday());
     if (!bret) {
         xerror("xstore::execute_block fail-for update blockchain=%s", block->dump().c_str());
         return false;
     }
+#endif
 
     xstore_key_t blockchain_key(xstore_key_t(xstore_key_type_blockchain, xstore_block_type_none, account->get_account(), {}));
     auto blockchain_pair = generate_db_object(blockchain_key, account);

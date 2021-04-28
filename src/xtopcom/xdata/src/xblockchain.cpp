@@ -3,21 +3,24 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "xdata/xblockchain.h"
+
 #include "xbase/xint.h"
 #include "xbase/xmem.h"
 #include "xbase/xutl.h"
 #include "xbasic/xversion.h"
 #include "xconfig/xconfig_register.h"
+#include "xconfig/xpredefined_configurations.h"
 #include "xdata/xblocktool.h"
 #include "xdata/xdata_common.h"
 #include "xdata/xdata_error.h"
+#include "xdata/xerror/xerror.h"
+#include "xdata/xfull_tableblock.h"
 #include "xdata/xfullunit.h"
 #include "xdata/xgenesis_data.h"
 #include "xdata/xlightunit.h"
-#include "xdata/xfull_tableblock.h"
-#include "xconfig/xpredefined_configurations.h"
 
-#include <assert.h>
+#include <cassert>
+#include <cinttypes>
 #include <string>
 #include <vector>
 
@@ -37,8 +40,6 @@ xblockchain2_t::xblockchain2_t(const std::string & account, base::enum_xvblock_l
 xblockchain2_t::xblockchain2_t(const std::string & account) : m_account(account), m_block_level(base::enum_xvblock_level_unit) {
     add_modified_count();
 }
-
-xblockchain2_t::xblockchain2_t() {}
 
 bool xblockchain2_t::is_property_behind() const {
     if (m_block_level != base::enum_xvblock_level_unit) {
@@ -88,6 +89,163 @@ int32_t xblockchain2_t::do_read(base::xstream_t & stream) {
     m_account_state.serialize_from(stream);
     DESERIALIZE_FIELD_BT(m_ext);
     return CALC_LEN();
+}
+
+void xblockchain2_t::execute_genesis_block(xobject_ptr_t<data::xblock_t const> const & block, std::error_code & ec) {
+    assert(!ec);
+    assert(!block->get_block_hash().empty());
+    assert(block->is_genesis_block());
+
+    // if the genesis block is not the nil block, it must be a "genesis account".
+    // the create time of genesis account should be set to the gmtime of genesis block
+    if (!m_account_state.get_account_create_time() && block->get_header()->get_block_class() != base::enum_xvblock_class_nil) {
+        m_account_state.set_account_create_time(block->get_cert()->get_gmtime());
+        xdbg("execute_genesis_block: address:%s account_create_time:%" PRIu64, block->get_account().c_str(), m_account_state.get_account_create_time());
+    }
+    // update last state
+    if (m_last_state_block_height == 0) {
+        update_last_block_state(block.get());
+        m_last_state_block_height = block->get_height();
+        m_last_state_block_hash = block->get_block_hash();
+        add_modified_count();
+    } else {
+        // disorder set genesis block, only for empty genesis block
+        assert(block->is_emptyblock());
+    }
+    // genesis block as last full block hash
+    if (m_last_full_block_height == 0) {
+        m_last_full_block_height = block->get_height();
+        m_last_full_block_hash = block->get_block_hash();
+    }
+}
+
+void xblockchain2_t::execute_light_block(xobject_ptr_t<data::xblock_t const> const & block, std::error_code & ec) {
+    assert(!ec);
+    assert(!block->get_block_hash().empty());
+    assert(block->get_height() >= 1);
+    assert(block->get_height() == get_last_height() + 1);
+
+    // the create time of non-genesis account should be set to the gmtime of height#1 block
+    if (block->get_height() == 1 && !m_account_state.get_account_create_time()) {
+        m_account_state.set_account_create_time(block->get_cert()->get_gmtime());
+        xdbg("[account change]address:%s account_create_time:%" PRIu64, block->get_account().c_str(), m_account_state.get_account_create_time());
+    }
+
+    if (block->get_block_level() == base::enum_xvblock_level_unit) {
+        auto ret = add_light_unit(block.get());
+        if (!ret) {
+            ec = error::xerrc_t::update_state_failed;
+            xwarn("execute light unit failed, add light unit failed");
+            return;
+        }
+    }
+
+    m_last_state_block_height = block->get_height();
+    m_last_state_block_hash = block->get_block_hash();
+    add_modified_count();
+}
+
+void xblockchain2_t::execute_full_block(xobject_ptr_t<data::xblock_t const> const & block, std::error_code & ec) {
+    assert(!ec);
+    assert(!block->get_block_hash().empty());
+    assert(block->get_block_class() == base::enum_xvblock_class_full);
+
+    if (block->get_block_level() == base::enum_xvblock_level_unit) {
+        auto ret = add_full_unit(block.get());
+        if (!ret) {
+            ec = error::xerrc_t::update_state_failed;
+            xwarn("execute full unit failed, add full unit failed");
+            return;
+        }
+    }
+
+    assert(block->get_height() > m_last_state_block_height);
+    m_last_state_block_height = block->get_height();
+    m_last_state_block_hash = block->get_block_hash();
+    add_modified_count();
+}
+
+void xblockchain2_t::execute_nil_block(xobject_ptr_t<data::xblock_t const> const & block, std::error_code & ec) {
+    assert(!ec);
+    assert(!block->get_block_hash().empty());
+    assert(block->get_height() >= 1);
+    assert(block->get_height() >= get_last_height() + 1);
+
+    // the create time of non-genesis account should be set to the gmtime of height#1 block
+    if (block->get_height() == 1 && !m_account_state.get_account_create_time()) {
+        m_account_state.set_account_create_time(block->get_cert()->get_gmtime());
+        xdbg("[account change]address:%s account_create_time:%" PRIu64, block->get_account().c_str(), m_account_state.get_account_create_time());
+    }
+
+    m_last_state_block_height = block->get_height();
+    m_last_state_block_hash = block->get_block_hash();
+    add_modified_count();
+}
+
+void xblockchain2_t::execute_block(xobject_ptr_t<data::xblock_t const> block, std::error_code & ec) {
+    assert(!ec);
+    assert(block != nullptr);
+
+    update_min_max_height(block->get_height());
+    set_update_stamp(base::xtime_utl::gettimeofday());
+
+    bool ret{ false };
+    // the local initial block
+    if (block->is_genesis_block()) {
+        xdbg("try to update state by genesis block: block=%s,last_height:%" PRIu64 " max_height:%" PRIu64, block->dump().c_str(), get_last_height(), get_chain_height());
+        execute_genesis_block(block, ec);
+        if (ec) {
+            return;
+        }
+    } else {
+        auto const blk_class = block->get_block_class();
+        switch (blk_class) {
+        case base::enum_xvblock_class_light:
+        {
+            // for light block, only the directly followed block can be processed.
+            if (block->get_height() == get_last_height() + 1) {
+                execute_light_block(block, ec);
+            } else {
+                ec = error::xerrc_t::update_state_block_height_mismatch;
+                xdbg("blockchain executes light block but height mismatch. block height %" PRIu64 " state height %" PRIu64, block->get_height(), get_last_height());
+            }
+
+            break;
+        }
+        case base::enum_xvblock_class_full:
+        {
+            // for full block, any block that is followed can be processed.
+            if (block->get_height() >= get_last_height() + 1) {
+                execute_full_block(block, ec);
+            } else {
+                ec = error::xerrc_t::update_state_block_height_mismatch;
+                xdbg("blockchain executes full block but height mismatch. block height %" PRIu64 " state height %" PRIu64, block->get_height(), get_last_height());
+            }
+
+            break;
+        }
+
+        case base::enum_xvblock_class_nil:
+        {
+            // for nil block, any block that is followed can be preocessed.
+            if (block->get_height() >= get_last_height() + 1) {
+                execute_nil_block(block, ec);
+            } else {
+                ec = error::xerrc_t::update_state_block_height_mismatch;
+                xdbg("blockchain executes nil block but height mismatch. block height %" PRIu64 " state height %" PRIu64, block->get_height(), get_last_height());
+            }
+
+            break;
+        }
+
+        default:
+        {
+            ec = error::xerrc_t::update_state_block_type_mismatch;
+            xdbg("blockchain received a block but doesn't know how to execute it. block level %d, block class %d", static_cast<int>(block->get_block_level()), static_cast<int>(block->get_block_class()));
+            break;
+        }
+        }
+    }
 }
 
 void xblockchain2_t::update_min_max_height(uint64_t height) {
