@@ -30,7 +30,7 @@ void xtop_wasm_engine::deploy_contract_erc20(std::vector<xbyte_buffer_t> const& 
     // }
 
     xbyte_buffer_t code = erc20_code;
-    erc20_params params_ptr{exe_ctx->contract_state(), std::string{code.data(), code.data() + code.size()}};
+    erc20_params params_ptr{exe_ctx->contract_state(), std::string{code.data(), code.data() + code.size()},"TST",100000};
     Erc20_Instance * ins_ptr = get_erc20_instance((uint8_t*)code.data(),code.size());
     set_gas_left(ins_ptr, 100);
 
