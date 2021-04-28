@@ -1045,7 +1045,7 @@ namespace top
                 xdbg("xblockacct_t::store_block,done for block,cache_size:%zu,dump=%s",m_all_blocks.size(), dump().c_str());
                 return true;
             }
-            
+
             // TODO(jimmy)
             if(new_raw_block->get_offdata() != NULL && !new_index_ptr->check_store_flag(base::enum_index_store_flag_offchain_data))
             {
@@ -1056,7 +1056,7 @@ namespace top
                 new_index_ptr->release_ref();
                 return true;
             }
-            
+
             xdbg("xblockacct_t::store_block,cache index fail.index=%s", new_index_ptr->dump().c_str());
             new_index_ptr->release_ref();
             return false;
@@ -1554,15 +1554,22 @@ namespace top
             if( (index_ptr->get_block_class() == base::enum_xvblock_class_light)
                && (index_ptr->get_block_level() == base::enum_xvblock_level_unit) )
             {
-                if(load_block_object(index_ptr) == false)
+                if(!index_ptr->check_store_flag(base::enum_index_store_flag_transactions))
                 {
-                    xerror("xblockacct_t::store_txs_to_db,fail to load block object");
-                    return false;
+                    if(load_block_object(index_ptr) == false)
+                    {
+                        xerror("xblockacct_t::store_txs_to_db,fail to load block object");
+                        return false;
+                    }
+                    load_block_input(index_ptr->get_this_block());
+                    load_block_output(index_ptr->get_this_block());
+                    auto ret = base::xvchain_t::instance().get_xtxstore()->store_txs(index_ptr->get_this_block(),true);
+                    if(ret)
+                    {
+                        index_ptr->set_store_flag(base::enum_index_store_flag_transactions);
+                    }
+                    return ret;
                 }
-                load_block_input(index_ptr->get_this_block());
-                load_block_output(index_ptr->get_this_block());
-                xdbg("xblockacct_t::store_txs_to_db, account (%s) ", index_ptr->get_this_block()->get_account().c_str());
-                return base::xvchain_t::instance().get_xtxstore()->store_txs(index_ptr->get_this_block(),true);
             }
             return true;
         }
@@ -2062,7 +2069,7 @@ namespace top
             do
             {
                 xdbg("xblockacct_t::try_execute_all_block round. %s", dump().c_str());
-                
+
                 xobject_ptr_t<base::xvbindex_t> _execute_index = nullptr;
                 if (m_meta->_highest_execute_block_height < m_meta->_highest_full_block_height)
                 {

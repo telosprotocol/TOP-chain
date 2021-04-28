@@ -123,13 +123,11 @@ namespace top
             if(block_ptr->get_block_class() == enum_xvblock_class_nil) //nothing to store
                 return true;
 
-                xdbg_info("xvtxstore_t::store_txs, account (%s) ", block_ptr->get_account().c_str());
             std::vector<xobject_ptr_t<xvtxindex_t>> sub_txs;
             if(block_ptr->extract_sub_txs(sub_txs))
             {
                 bool  has_error = false;
                 std::map<std::string,int> counting_stored_raw_txs;
-                xdbg_info("xvtxstore_t::store_txs, account (%s) , size %d", block_ptr->get_account().c_str(), sub_txs.size());
                 for(auto & v : sub_txs)
                 {
                     if(store_raw_tx_bin)
