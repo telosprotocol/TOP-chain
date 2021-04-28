@@ -48,9 +48,16 @@ int32_t xtxmgr_table_t::push_send_tx(const std::shared_ptr<xtx_entry> & tx, uint
 
 int32_t xtxmgr_table_t::push_receipt(const std::shared_ptr<xtx_entry> & tx, const base::xreceiptid_state_ptr_t & receiptid_state) {
     auto & account_addr = tx->get_tx()->get_account_addr();
-    if (nullptr != query_tx(account_addr, tx->get_tx()->get_transaction()->digest())) {
-        xtxpool_warn("xtxmgr_table_t::push_receipt tx repeat tx:%s", tx->get_tx()->dump().c_str());
-        return xtxpool_error_request_tx_repeat;
+    auto tx_inside = query_tx(account_addr, tx->get_tx()->get_transaction()->digest());
+    if (tx_inside != nullptr) {
+        if (tx_inside->get_tx()->get_tx_subtype() < tx->get_tx()->get_tx_subtype()) {
+            xtxpool_dbg("xtxmgr_table_t::push_receipt same tx hash, new tx:%s replace old tx:%s", tx->get_tx()->dump().c_str(), tx_inside->get_tx()->dump().c_str());
+            tx_info_t txinfo(tx_inside->get_tx());
+            pop_tx(txinfo, false);
+        } else {
+            xtxpool_warn("xtxmgr_table_t::push_receipt tx repeat tx:%s", tx->get_tx()->dump().c_str());
+            return xtxpool_error_request_tx_repeat;
+        }
     }
 
     // todo:backwards compatibility, if receipt have no receipt id, push to old receipt queue.
@@ -119,7 +126,7 @@ std::vector<xcons_transaction_ptr_t> xtxmgr_table_t::get_ready_txs(const xtxs_pa
     }
 
     xtxpool_dbg("xtxmgr_table_t::get_ready_txs table:%s,ready_txs size:%u", m_xtable_info->get_table_addr().c_str(), ready_txs.size());
-    for (auto & tx :ready_txs) {
+    for (auto & tx : ready_txs) {
         xtxpool_dbg("xtxmgr_table_t::get_ready_txs table:%s,tx:%s", m_xtable_info->get_table_addr().c_str(), tx->dump().c_str());
     }
 
