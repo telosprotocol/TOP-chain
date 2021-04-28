@@ -1293,7 +1293,7 @@ namespace top
                     {
                         if(existing_block_flags != new_block_flags)
                             xwarn("xblockacct_t::cache_index,warn-try to overwrite newer block with flags(0x%x) by outdated block=%s",existing_block->get_block_flags(),this_block->dump().c_str());
-                        return false;
+                        return true;
                     }
                     //now combine flags
                     existing_block->reset_block_flags(existing_block_flags | (new_block_flags & base::enum_xvblock_flags_high4bit_mask));//merge flags(just for high4bit)
