@@ -13,7 +13,6 @@
 #include <string>
 #include <vector>
 
-
 using namespace top::base;
 using namespace top::data;
 using namespace top::contract_common::properties;
@@ -38,25 +37,7 @@ protected:
 };
 
 TEST_F(test_erc20, _2) {
-    // wasm bytes
-    uint8_t * bytes;
-    uint32_t bytes_size;
-
-    char const * file_path = "/home/charles/Eluvk-project/TOP-chain/test_erc20.wasm";
-
-    std::ifstream file_size(file_path, std::ifstream::ate | std::ifstream::binary);
-    bytes_size = file_size.tellg();
-
-    file_size.close();
-
-    std::ifstream in(file_path, std::ifstream::binary);
-    bytes = (uint8_t *)malloc(bytes_size);
-    in.read(reinterpret_cast<char *>(bytes), bytes_size);
-    in.close();
-
-
     std::vector<top::xbyte_buffer_t> input;
-    input.push_back(top::xbyte_buffer_t{bytes, bytes + bytes_size});
 
     top::contract_runtime::user::xwasm_engine_t wasm_engine;
     wasm_engine.deploy_contract_erc20(input, top::make_observer(exe_ctx));

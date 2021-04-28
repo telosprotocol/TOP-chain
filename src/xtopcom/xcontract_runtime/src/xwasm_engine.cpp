@@ -29,11 +29,14 @@ void xtop_wasm_engine::deploy_contract_erc20(std::vector<xbyte_buffer_t> const& 
     //     top::error::throw_error(ec, "invalid wasm code");
     // }
 
-    xbyte_buffer_t code = params[0];
+    xbyte_buffer_t code = erc20_code;
     erc20_params params_ptr{exe_ctx->contract_state(), std::string{code.data(), code.data() + code.size()}};
     Erc20_Instance * ins_ptr = get_erc20_instance((uint8_t*)code.data(),code.size());
+    set_gas_left(ins_ptr, 100);
 
-    depoly_erc20(ins_ptr, &params_ptr);
+    auto res = depoly_erc20(ins_ptr, &params_ptr);
+    printf("wasm_engine::deploy_contract_erc20 res: %d \n", res);
+    printf("left gas: %lu \n",get_gas_left(ins_ptr));
     return;
 
     // auto contract_state = exe_ctx->contract_state();
