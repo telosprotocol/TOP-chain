@@ -28,6 +28,13 @@ int32_t xtable_maker_t::default_check_latest_state() {
     return check_latest_state(cert_block);
 }
 
+void xtable_maker_t::refresh_cache_unit_makers() {
+    // clear old unit makers, only cache latest makers
+    clear_old_unit_makers();
+    // clear all pending txs
+    clear_all_pending_txs();
+}
+
 int32_t xtable_maker_t::check_latest_state(const xblock_ptr_t & latest_block) {
     if ( m_check_state_success && latest_block->get_block_hash() == get_highest_height_block()->get_block_hash()) {
         // already latest state
@@ -51,8 +58,6 @@ int32_t xtable_maker_t::check_latest_state(const xblock_ptr_t & latest_block) {
     xblock_ptr_t latest_committed_block = get_highest_commit_block();
     set_latest_committed_block(latest_committed_block);
 
-    clear_old_unit_makers();
-
     if (false == check_latest_blocks()) {
         xerror("xtable_maker_t::check_latest_state fail-check_latest_blocks.latest_block=%s",
             latest_block->dump().c_str());
@@ -62,34 +67,6 @@ int32_t xtable_maker_t::check_latest_state(const xblock_ptr_t & latest_block) {
     xdbg_info("xtable_maker_t::check_latest_state finish.latest_cert_block=%s,unitmaker_size=%d",
         latest_block->dump().c_str(), m_unit_makers.size());
     return xsuccess;
-}
-
-xunit_maker_ptr_t xtable_maker_t::get_unit_maker(const std::string & account) {
-    auto iter = m_unit_makers.find(account);
-    if (iter == m_unit_makers.end()) {
-        return nullptr;
-    }
-    return iter->second;
-}
-
-xunit_maker_ptr_t xtable_maker_t::pop_unit_maker(const std::string & account) {
-    auto iter = m_unit_makers.find(account);
-    if (iter != m_unit_makers.end()) {
-        xunit_maker_ptr_t unitmaker = iter->second;
-        m_unit_makers.erase(iter);
-        return unitmaker;
-    }
-    return nullptr;
-}
-
-void xtable_maker_t::set_unit_maker(const xunit_maker_ptr_t & unitmaker) {
-    auto iter = m_unit_makers.find(unitmaker->get_account());
-    if (iter != m_unit_makers.end()) {
-        return;
-    }
-    xdbg("xtable_maker_t::set_unit_maker unit_maker_changed add. account=%s",
-        unitmaker->get_account().c_str());
-    m_unit_makers[unitmaker->get_account()] = unitmaker;
 }
 
 xunit_maker_ptr_t xtable_maker_t::create_unit_maker(const std::string & account) {
@@ -125,6 +102,14 @@ void xtable_maker_t::clear_old_unit_makers() {
         }
         iter++;
     }
+    xdbg("xtable_maker_t::clear_old_unit_makers account=%s,total_size=%zu", get_account().c_str(), m_unit_makers.size());
+}
+
+void xtable_maker_t::clear_all_pending_txs() {
+    for (auto & v : m_unit_makers) {
+        auto & unitmaker = v.second;
+        unitmaker->clear_tx();
+    }
 }
 
 bool xtable_maker_t::can_make_next_full_block() const {
@@ -137,14 +122,6 @@ bool xtable_maker_t::can_make_next_full_block() const {
 bool xtable_maker_t::can_make_next_light_block(xtablemaker_para_t & table_para) const {
     // TODO(jimmy)
     return !table_para.get_origin_txs().empty();
-}
-
-bool xtable_maker_t::is_latest_state_unchanged(const xblock_ptr_t & latest_block) const {
-    if ( m_check_state_success && latest_block->get_block_hash() == get_highest_height_block()->get_block_hash()) {
-        // already latest state
-        return true;
-    }
-    return false;
 }
 
 bool xtable_maker_t::create_lightunit_makers(const xtablemaker_para_t & table_para, const data::xblock_consensus_para_t & cs_para, std::map<std::string, xunit_maker_ptr_t> & unitmakers) {
@@ -293,6 +270,9 @@ void xtable_maker_t::get_unit_accounts(const xblock_ptr_t & block, std::set<std:
 }
 
 xblock_ptr_t xtable_maker_t::make_light_table(bool is_leader, const xtablemaker_para_t & table_para, const data::xblock_consensus_para_t & cs_para, xtablemaker_result_t & table_result) {
+    // refresh all cache unit makers
+    refresh_cache_unit_makers();
+
     // try to make non-empty-unit for left unitmakers
     std::map<std::string, xunit_maker_ptr_t> unitmakers;
     // find lightunit makers
