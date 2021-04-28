@@ -106,7 +106,8 @@ class test_xblockmaker_resources_t : public xblockmaker_resources_t {
         m_creator.create_blockstore_with_xstore();
         m_indexstore = xindexstore_factory_t::create_indexstorehub(make_observer(get_store()), make_observer(get_blockstore()));
         m_ca = make_object_ptr<test_xmock_auth_t>();
-        m_txpool = xtxpool_instance::create_xtxpool_inst(make_observer(get_store()), make_observer(get_blockstore()), make_observer(m_ca.get()), make_observer(m_indexstore.get()));
+        m_bus = make_object_ptr<mbus::xmessage_bus_t>(true, 1000);
+        m_txpool = xtxpool_instance::create_xtxpool_inst(make_observer(get_store()), make_observer(get_blockstore()), make_observer(m_ca.get()), make_observer(m_indexstore.get()), make_observer(m_bus.get()));
     }
 
     virtual store::xstore_face_t*       get_store() const {return m_creator.get_xstore();}
@@ -118,6 +119,7 @@ class test_xblockmaker_resources_t : public xblockmaker_resources_t {
     xvchain_creator                 m_creator;
     xobject_ptr_t<xindexstorehub_t> m_indexstore{nullptr};
     xobject_ptr_t<base::xvcertauth_t>   m_ca{nullptr};
+    xobject_ptr_t<mbus::xmessage_bus_face_t> m_bus{nullptr};
     xobject_ptr_t<xtxpool_face_t>   m_txpool{nullptr};
 };
 
