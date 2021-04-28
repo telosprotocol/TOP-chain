@@ -40,6 +40,7 @@ class xtablestate_t : public base::xdataunit_t {
     std::string build_root_hash();
     uint64_t    get_full_height() const {return m_full_height;}
     uint64_t    get_binlog_height() const {return m_binlog_height;}
+    uint64_t    get_height() const {return m_binlog_height;}
 
     bool        execute_block(base::xvblock_t* block);
     xobject_ptr_t<xtablestate_t>   clone();
@@ -62,6 +63,7 @@ class xtablestate_t : public base::xdataunit_t {
     void        set_full_height(uint64_t height) {m_full_height = height;}
     void        set_binlog_height(uint64_t height) {m_binlog_height = height;}
     xobject_ptr_t<base::xvboffdata_t>   get_block_binlog_data() const;
+    xobject_ptr_t<base::xvboffdata_t>   clone_block_full_data() const;
 
  private:
     base::xtable_mbt_new_state_ptr_t    m_accountindex_state{nullptr};

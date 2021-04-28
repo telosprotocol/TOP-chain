@@ -233,6 +233,7 @@ void xsync_on_demand_t::handle_chain_snapshot(xsync_message_chain_snapshot_t &ch
     data::xblock_ptr_t current_block = autoptr_to_blockptr(current_vblock);
     if (current_block->is_fullblock() && !current_block->is_full_state_block()) {
         current_block->reset_block_offdata(chain_snapshot.m_chain_snapshot.get());
+        m_sync_store->store_block(current_block.get());
     }
 
     xsync_download_tracer tracer;

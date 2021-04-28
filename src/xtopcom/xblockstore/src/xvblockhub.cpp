@@ -1045,6 +1045,19 @@ namespace top
                 xdbg("xblockacct_t::store_block,done for block,cache_size:%zu,dump=%s",m_all_blocks.size(), dump().c_str());
                 return true;
             }
+            
+            // TODO(jimmy)
+            if(new_raw_block->get_offdata() != NULL && !new_index_ptr->check_store_flag(base::enum_index_store_flag_offchain_data))
+            {
+                //maybe this block carry data of offchain and need persisted store
+                write_block_offdata_to_db(new_index_ptr,new_raw_block);
+                write_index_to_db(new_index_ptr,true); //save index then
+                xdbg("xblockacct_t::store_block,store offdata,block=%s", new_index_ptr->dump().c_str());
+                new_index_ptr->release_ref();
+                return true;
+            }
+            
+            xdbg("xblockacct_t::store_block,cache index fail.index=%s", new_index_ptr->dump().c_str());
             new_index_ptr->release_ref();
             return false;
         }
@@ -2049,24 +2062,44 @@ namespace top
             do
             {
                 xdbg("xblockacct_t::try_execute_all_block round. %s", dump().c_str());
-                uint64_t _query_height = (m_meta->_highest_execute_block_height == 0 && m_meta->_highest_execute_block_hash.empty()) ? 0 : m_meta->_highest_execute_block_height + 1;
-                base::xauto_ptr<base::xvbindex_t> _query_bindex(load_index(_query_height, base::enum_xvblock_flag_committed));
-                if(_query_bindex == nullptr)
+                
+                xobject_ptr_t<base::xvbindex_t> _execute_index = nullptr;
+                if (m_meta->_highest_execute_block_height < m_meta->_highest_full_block_height)
                 {
-                    xdbg("xblockacct_t::try_execute_all_block no need execute next block. %s", dump().c_str());
+                    base::xauto_ptr<base::xvbindex_t> _full_bindex(load_index(m_meta->_highest_full_block_height, base::enum_xvblock_flag_committed));
+                    if(_full_bindex == nullptr)
+                    {
+                        xerror("xblockacct_t::try_execute_all_block no load full index. %s", dump().c_str());
+                        return;
+                    }
+                    _execute_index = _full_bindex;
+                } else {
+                    uint64_t _query_height = (m_meta->_highest_execute_block_height == 0 && m_meta->_highest_execute_block_hash.empty()) ? 0 : m_meta->_highest_execute_block_height + 1;
+                    if (_query_height > m_meta->_highest_commit_block_height)
+                    {
+                        xdbg("xblockacct_t::try_execute_all_block no next committed block to execute. %s", dump().c_str());
+                        return;
+                    }
+                    base::xauto_ptr<base::xvbindex_t> _query_bindex(load_index(_query_height, base::enum_xvblock_flag_committed));
+                    if(_query_bindex == nullptr)
+                    {
+                        xdbg("xblockacct_t::try_execute_all_block no find committed block. %s, query_height=%ld", dump().c_str(), _query_height);
+                        return;
+                    }
+                    _execute_index = _query_bindex;
+                }
+
+                if(false == read_block_object_from_db(_execute_index.get()))
+                {
+                    xerror("xblockacct_t::try_execute_all_block fail-read block,at account=%s,block=%s",get_account().c_str(),_execute_index->dump().c_str());
                     return;
                 }
-                if(false == read_block_object_from_db(_query_bindex.get()))
+                load_index_input(_execute_index.get());
+                load_index_output(_execute_index.get());
+                load_index_offdata(_execute_index.get());
+                if(false == execute_block(_execute_index.get()))
                 {
-                    xerror("xblockacct_t::try_execute_all_block fail-read block,at account=%s,block=%s",get_account().c_str(),_query_bindex->dump().c_str());
-                    return;
-                }
-                load_index_input(_query_bindex.get());
-                load_index_output(_query_bindex.get());
-                load_index_offdata(_query_bindex.get());
-                if(false == execute_block(_query_bindex.get()))
-                {
-                    xwarn("xblockacct_t::try_execute_all_block fail-read block,at account=%s,block=%s",get_account().c_str(),_query_bindex->dump().c_str());
+                    xwarn("xblockacct_t::try_execute_all_block fail-execute block,at block=%s",_execute_index->dump().c_str());
                     return;
                 }
             }

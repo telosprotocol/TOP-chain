@@ -83,44 +83,22 @@ void xblock_maker_t::set_latest_blocks(const base::xblock_mptrs & latest_blocks)
     m_latest_commit_block.attach((data::xblock_t*)commit_block);
 }
 
-xblock_ptr_t xblock_maker_t::set_latest_block(const xblock_ptr_t & block) {
-    xassert(block->get_account() == get_account());
-    auto iter = m_latest_blocks.find(block->get_height());
-    if (iter != m_latest_blocks.end()) {
-        if (iter->second->get_block_hash() != block->get_block_hash()) {
-            xassert(iter->second->get_viewid() != block->get_viewid());
-            xblock_ptr_t delete_block = iter->second;
-            m_latest_blocks[block->get_height()] = block;
-            xinfo("xblock_maker_t::set_latest_block block_cache_change forked, delete old_block=%s, add new block=%s", delete_block->dump().c_str(), block->dump().c_str());
-            return delete_block;
-        }
-        xdbg("xblock_maker_t::set_latest_block already exist, block=%s", block->dump().c_str());
-        return block;
-    }
-
+void xblock_maker_t::clear_old_blocks() {
     if (m_latest_blocks.empty()) {
-        m_latest_blocks[block->get_height()] = block;
-        xdbg("xblock_maker_t::set_latest_block block_cache_change add new block=%s", block->dump().c_str());
-        return block;
+        return;
     }
-
-    if (block->get_height() + m_keep_latest_blocks_max <= m_latest_blocks.rbegin()->first) {
-        xdbg("xblock_maker_t::set_latest_block too old block,block=%s", block->dump().c_str());
-        return block;
-    }
-    m_latest_blocks[block->get_height()] = block;
-    xdbg("xblock_maker_t::set_latest_block block_cache_change add new block, block=%s", block->dump().c_str());
-
     uint64_t highest_height = m_latest_blocks.rbegin()->first;
     for (auto iter = m_latest_blocks.begin(); iter != m_latest_blocks.end();) {
         if (iter->first + m_keep_latest_blocks_max <= highest_height) {
-            xdbg("xblock_maker_t::set_latest_block block_cache_change delete old block=%s", iter->second->dump().c_str());
             iter = m_latest_blocks.erase(iter);
         } else {
             break;
         }
     }
-    return block;
+}
+
+void xblock_maker_t::set_latest_block(const xblock_ptr_t & block) {
+    m_latest_blocks[block->get_height()] = block;
 }
 
 bool xblock_maker_t::load_latest_blocks(const xblock_ptr_t & latest_block, std::map<uint64_t, xblock_ptr_t> & latest_blocks) {
@@ -155,12 +133,14 @@ bool xblock_maker_t::load_latest_blocks(const xblock_ptr_t & latest_block, std::
     return true;
 }
 
-bool xblock_maker_t::load_and_cache_enough_blocks() {
-    xassert(m_latest_blocks.size() > 0);
-
-    xblock_ptr_t current_block = get_highest_height_block();
+bool xblock_maker_t::load_and_cache_enough_blocks(const xblock_ptr_t & latest_block) {
+    xblock_ptr_t current_block = latest_block;
+    set_latest_block(current_block);
     uint32_t count = 1;
     while (current_block->get_height() > 0) {
+        if (count >= m_keep_latest_blocks_max) {
+            break;
+        }
         uint64_t prev_height = current_block->get_height() - 1;
         xblock_ptr_t prev_block = get_latest_block(prev_height);
         if (prev_block == nullptr) {
@@ -172,12 +152,10 @@ bool xblock_maker_t::load_and_cache_enough_blocks() {
             prev_block = xblock_t::raw_vblock_to_object_ptr(_block.get());
             set_latest_block(prev_block);
         }
-        count++;
-        if (count >= m_keep_latest_blocks_max) {
-            break;
-        }
         current_block = prev_block;
+        count++;
     }
+    clear_old_blocks();
     xdbg("xblock_maker_t::load_and_cache_enough_blocks succ.account=%s,blocks_size=%d,highest=%ld,lowest=%ld",
         get_account().c_str(), m_latest_blocks.size(), get_highest_height_block()->get_height(), get_lowest_height_block()->get_height());
     return true;

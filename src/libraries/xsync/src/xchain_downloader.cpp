@@ -213,6 +213,7 @@ void xchain_downloader_t::on_chain_snapshot_response(const std::string &tbl_acco
     data::xblock_ptr_t current_block = autoptr_to_blockptr(current_vblock);
     if (!current_block->is_full_state_block() && current_block->get_height() == height) {
         current_block->reset_block_offdata(chain_snapshot.get());
+        m_sync_store->store_block(current_block.get());
     }
 
     int ret = m_sync_range_mgr.update_progress(autoptr_to_blockptr(current_vblock));

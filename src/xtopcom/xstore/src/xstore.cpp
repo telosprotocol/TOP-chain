@@ -755,7 +755,7 @@ bool xstore::execute_tableblock_full(xblockchain2_t* account, xfull_tableblock_t
             xerror("xstore::execute_tableblock_full execute fail.block=%s", block->dump().c_str());
             return false;
         }
-        xdbg("xstore::execute,%s,height=%ld,receiptid_full=%s", block->get_account().c_str(), block->get_height(), tablestate->get_receiptid_state()->get_last_full_state()->dump().c_str());
+        xdbg("xstore::execute_tableblock_full,%s,height=%ld,receiptid_full=%s", block->get_account().c_str(), block->get_height(), tablestate->get_receiptid_state()->get_last_full_state()->dump().c_str());
     }
 
     // store new offdata and binlog
@@ -1253,10 +1253,10 @@ bool  xstore::execute_block(base::xvblock_t* vblock) {
     }
 
     XMETRICS_TIME_RECORD_KEY_WITH_TIMEOUT("store_block_execution_time", vblock->get_account() + ":" + std::to_string(vblock->get_height()), uint32_t(2000000));
-    if (!block->check_block_flag(base::enum_xvblock_flag_connected)) {
-        xwarn("xstore::execute_block not connected block=%s", block->dump().c_str());
-        return false;
-    }
+    // if (!block->check_block_flag(base::enum_xvblock_flag_connected)) {
+    //     xwarn("xstore::execute_block not connected block=%s", block->dump().c_str());
+    //     return false;
+    // }
 
     xassert(block->check_block_flag(base::enum_xvblock_flag_committed));
     xassert(block->check_block_flag(base::enum_xvblock_flag_locked));

@@ -39,7 +39,8 @@ TEST_F(test_tablestate, tablestate_1) {
     std::string root1 = tablestate->build_root_hash();
     std::string full_str = tablestate->serialize_to_full_data_string();
 
-    xtablestate_ptr_t tablestate2 = make_object_ptr<xtablestate_t>(full_str, 10, {}, 20);
+    std::string binlog_str;
+    xtablestate_ptr_t tablestate2 = make_object_ptr<xtablestate_t>(full_str, 10, binlog_str, 10);
     xassert(true == tablestate2->get_account_index("aaa", info2));
     std::string root2 = tablestate2->build_root_hash();
     xassert(root1 == root2);

@@ -42,6 +42,15 @@ class xaccount_index_t {
                      bool has_unconfirm_tx,
                      bool is_account_destroy);
 
+    bool operator == (const xaccount_index_t &other) const {
+        if (m_latest_unit_height == other.m_latest_unit_height
+            && m_latest_unit_hash == other.m_latest_unit_hash
+            && m_account_flag == other.m_account_flag) {
+            return true;
+        }
+        return false;
+    }
+
     int32_t do_write(base::xstream_t & stream) const;
     int32_t do_read(base::xstream_t & stream);
     std::string     dump() const;
