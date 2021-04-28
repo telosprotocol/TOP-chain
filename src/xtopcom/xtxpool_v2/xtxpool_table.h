@@ -64,7 +64,7 @@ private:
     int32_t verify_send_tx(const xcons_transaction_ptr_t & tx) const;
     int32_t verify_receipt_tx(const xcons_transaction_ptr_t & tx) const;
     int32_t verify_cons_tx(const xcons_transaction_ptr_t & tx) const;
-    void notify_sync_lacking_units(const std::string & account_addr, uint64_t start_height, uint32_t count) const;
+    bool get_account_latest_nonce_hash(const std::string account_addr, uint64_t & latest_nonce, uint256_t & latest_hash) const;
     xtxpool_resources_face * m_para;
     xtxpool_table_info_t m_xtable_info;
     xtxmgr_table_t m_txmgr_table;
