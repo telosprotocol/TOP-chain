@@ -96,9 +96,13 @@ int32_t xtxpool_table_t::push_receipt(const std::shared_ptr<xtx_entry> & tx) {
         auto latest_table = m_para->get_vblockstore()->get_latest_committed_block(m_xtable_info);
         xblock_ptr_t committed_block = xblock_t::raw_vblock_to_object_ptr(latest_table.get());
         xtablestate_ptr_t tablestate = m_table_indexstore->clone_tablestate(committed_block);
+        uint64_t latest_receipt_id = 0;
         std::lock_guard<std::mutex> lck(m_mgr_mutex);
-        m_txmgr_table.update_receiptid_state(tablestate->get_receiptid_state());
-        ret = m_txmgr_table.push_receipt(tx, tablestate->get_receiptid_state());
+        if (tablestate != nullptr) {
+            m_txmgr_table.update_receiptid_state(tablestate->get_receiptid_state());
+            latest_receipt_id = get_tx_corresponding_latest_receipt_id(tx, tablestate->get_receiptid_state());
+        }
+        ret = m_txmgr_table.push_receipt(tx, latest_receipt_id);
     }
     if (ret != xsuccess) {
         XMETRICS_COUNTER_INCREMENT("txpool_push_tx_receipt_fail", 1);
@@ -355,7 +359,8 @@ void xtxpool_table_t::update_locked_txs(const std::vector<tx_info_t> & locked_tx
             ret = m_txmgr_table.push_send_tx(unlocked_tx, latest_nonce, latest_hash);
         } else {
             std::lock_guard<std::mutex> lck(m_mgr_mutex);
-            ret = m_txmgr_table.push_receipt(unlocked_tx, receiptid_state);
+            uint64_t latest_receipt_id = get_tx_corresponding_latest_receipt_id(unlocked_tx, receiptid_state);
+            ret = m_txmgr_table.push_receipt(unlocked_tx, latest_receipt_id);
         }
         xtxpool_info("xtxpool_table_t::update_locked_txs roll back to txmgr table tx:%s,ret:%d", unlocked_tx->get_tx()->dump().c_str(), ret);
     }
@@ -451,6 +456,15 @@ bool xtxpool_table_t::get_account_latest_nonce_hash(const std::string account_ad
     latest_nonce = account_basic_info.get_latest_state()->account_send_trans_number();
     latest_hash = account_basic_info.get_latest_state()->account_send_trans_hash();
     return true;
+}
+
+uint64_t xtxpool_table_t::get_tx_corresponding_latest_receipt_id(const std::shared_ptr<xtx_entry> & tx, const base::xreceiptid_state_ptr_t & receiptid_state) const {
+    base::xreceiptid_pair_t receiptid_pair;
+    auto & account_addr = (tx->get_tx()->is_recv_tx()) ? tx->get_tx()->get_source_addr() : tx->get_tx()->get_target_addr();
+    base::xvaccount_t vaccount(account_addr);
+    auto peer_table_sid = vaccount.get_short_table_id();
+    receiptid_state->find_pair(peer_table_sid, receiptid_pair);
+    return tx->get_tx()->is_recv_tx() ? receiptid_pair.get_recvid_max() : receiptid_pair.get_confirmid_max();
 }
 
 }  // namespace xtxpool_v2
