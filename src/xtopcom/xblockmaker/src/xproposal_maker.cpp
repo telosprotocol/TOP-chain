@@ -244,12 +244,6 @@ xblock_ptr_t xproposal_maker_t::verify_proposal_prev_block(base::xvblock_t * pro
 }
 
 bool xproposal_maker_t::update_txpool_txs(const xblock_consensus_para_t & proposal_para, xtablemaker_para_t & table_para) {
-    // update locked txs for txpool, locked txs come from two latest tableblock
-    std::vector<xtxpool_v2::tx_info_t> locked_tx_vec;
-    get_locked_txs(proposal_para.get_latest_cert_block(), locked_tx_vec);
-    get_locked_txs(proposal_para.get_latest_locked_block(), locked_tx_vec);
-    get_txpool()->update_locked_txs(get_account(), locked_tx_vec);
-
     // update committed receiptid state for txpool, pop output finished txs
     if (proposal_para.get_latest_committed_block()->get_height() > 0) {
         auto tablestate_commit = m_indexstore->clone_tablestate(proposal_para.get_latest_committed_block());
@@ -259,6 +253,12 @@ bool xproposal_maker_t::update_txpool_txs(const xblock_consensus_para_t & propos
             return false;
         }
         get_txpool()->update_receiptid_state(proposal_para.get_table_account(), tablestate_commit->get_receiptid_state());
+
+        // update locked txs for txpool, locked txs come from two latest tableblock
+        std::vector<xtxpool_v2::tx_info_t> locked_tx_vec;
+        get_locked_txs(proposal_para.get_latest_cert_block(), locked_tx_vec);
+        get_locked_txs(proposal_para.get_latest_locked_block(), locked_tx_vec);
+        get_txpool()->update_locked_txs(get_account(), locked_tx_vec, tablestate_commit->get_receiptid_state());
     }
 
     // get table batch txs for execute and make block
