@@ -913,6 +913,7 @@ namespace top
             if(NULL == index_ptr)
                 return false;
 
+            xinfo("xblockacct_t::load_block_object,target index(%s)",index_ptr->dump().c_str());
             if(index_ptr->get_this_block() != NULL)
                 return true;
 
@@ -924,6 +925,7 @@ namespace top
             if(NULL == index_ptr)
                 return false;
 
+            xdbg("xblockacct_t::load_index_input,target index(%s)",index_ptr->dump().c_str());
             if(index_ptr->get_this_block() == NULL)
                 read_block_object_from_db(index_ptr);
 
@@ -935,6 +937,7 @@ namespace top
             if(NULL == index_ptr)
                 return false;
 
+            xdbg("xblockacct_t::load_index_output,target index(%s)",index_ptr->dump().c_str());
             if(index_ptr->get_this_block() == NULL)
                 read_block_object_from_db(index_ptr);
 
@@ -948,6 +951,7 @@ namespace top
             if(NULL == index_ptr)
                 return false;
 
+            xdbg("xblockacct_t::load_index_offdata,target index(%s)",index_ptr->dump().c_str());
             if(index_ptr->get_this_block() == NULL)
                 read_block_object_from_db(index_ptr);
 
@@ -1021,7 +1025,7 @@ namespace top
 
             if(cache_index(new_index_ptr)) //insert successful
             {
-                //XTODO,update store flag for new_raw_block
+                new_raw_block->reset_block_flags(new_index_ptr->get_block_flags());
                 new_index_ptr->reset_this_block(new_raw_block); //paired before write_block_to_db/write_index_to_db
 
                 //at entry of store, connect as chain,and check connected_flag and meta
@@ -1057,7 +1061,7 @@ namespace top
                 return true;
             }
 
-            xdbg("xblockacct_t::store_block,cache index fail.index=%s", new_index_ptr->dump().c_str());
+            xinfo("xblockacct_t::store_block,cache index fail.index=%s", new_index_ptr->dump().c_str());
             new_index_ptr->release_ref();
             return false;
         }
@@ -1137,6 +1141,7 @@ namespace top
             if(target_block->get_block_class() == base::enum_xvblock_class_nil)
                 return true;
 
+            xdbg("xblockacct_t::load_block_input,target block(%s)",target_block->dump().c_str());
             return read_block_input_from_db(target_block);
         }
 
@@ -1148,6 +1153,7 @@ namespace top
             if(target_block->get_block_class() == base::enum_xvblock_class_nil)
                 return true;
 
+            xdbg("xblockacct_t::load_block_output,target block(%s)",target_block->dump().c_str());
             return read_block_output_from_db(target_block);
         }
 
@@ -1159,7 +1165,32 @@ namespace top
             if(target_block->get_block_class() == base::enum_xvblock_class_nil)
                 return true;
 
+            xdbg("xblockacct_t::load_block_offdata,target block(%s)",target_block->dump().c_str());
             return read_block_offdata_from_db(target_block);
+        }
+
+        bool   xblockacct_t::load_block_flags(base::xvblock_t* block_ptr)//update block'flags
+        {
+            if(NULL == block_ptr)
+                return false;
+
+            base::xauto_ptr<base::xvbindex_t> target_index(load_index(block_ptr->get_height(), block_ptr->get_block_hash()));
+            if(!target_index)
+            {
+                xerror("xblockacct_t::load_block_flags,not found associated index for block(%s)",block_ptr->dump().c_str());
+                return false;
+            }
+
+            //update raw block 'flag based on index
+            const int index_block_flags    = target_index->get_block_flags();
+            const int raw_block_flags      = block_ptr->get_block_flags();
+            if((index_block_flags & base::enum_xvblock_flags_high4bit_mask) > (raw_block_flags & base::enum_xvblock_flags_high4bit_mask)
+               ) //outdated one try to overwrite newer one,abort it
+            {
+                block_ptr->reset_block_flags(raw_block_flags | (index_block_flags & base::enum_xvblock_flags_high4bit_mask));//merge flags(just for high4bit)
+                xdbg("xblockacct_t::load_block_flags,updated target block(%s)",block_ptr->dump().c_str());
+            }
+            return true;
         }
 
         bool   xblockacct_t::execute_block(base::xvblock_t* block_ptr) //execute block and update state of acccount
@@ -1179,23 +1210,23 @@ namespace top
                 xerror("xblockacct_t::execute_block,not found associated index for block(%s)",block_ptr->dump().c_str());
                 return false;
             }
-            target_index->reset_this_block(block_ptr);
-            return execute_block(target_index.get());
+
+            return execute_block(target_index.get(),block_ptr);
         }
 
-        bool   xblockacct_t::execute_block(base::xvbindex_t* index_ptr) //execute block and update state of acccount
+        bool   xblockacct_t::execute_block(base::xvbindex_t* index_ptr,base::xvblock_t * block_ptr) //execute block and update state of acccount
         {
             if(index_ptr == nullptr)
             {
                 xassert(0); //should not pass nullptr
                 return false;
             }
-            xdbg("xblockacct_t::execute_block(index),enter block=%s",index_ptr->dump().c_str());
-            if(index_ptr->get_this_block()  == nullptr)
+            if(block_ptr  == nullptr)
             {
                 xassert(0);
                 return false;
             }
+            xdbg("xblockacct_t::execute_block(index),enter block=%s",index_ptr->dump().c_str());
 
             if(false == index_ptr->check_block_flag(base::enum_xvblock_flag_committed))
             {
@@ -1229,15 +1260,16 @@ namespace top
                     && (index_ptr->get_block_class() == base::enum_xvblock_class_full) ) //any full block is eligibal to executed
             {
                 //full-block need check whether state of offchain ready or not
-                is_ready_to_executed = index_ptr->get_this_block()->is_execute_ready();
+                is_ready_to_executed = block_ptr->is_execute_ready();
             }
 
             if(is_ready_to_executed)
             {
-                const bool executed_result =  base::xvchain_t::instance().get_xdbstore()->execute_block(index_ptr->get_this_block());
+                const bool executed_result =  base::xvchain_t::instance().get_xdbstore()->execute_block(block_ptr);
                 if(executed_result)
                 {
-                    index_ptr->set_block_flag(base::enum_xvblock_flag_executed); //update flag of block
+                    index_ptr->set_block_flag(base::enum_xvblock_flag_executed); //update flag of index
+                    block_ptr->set_block_flag(base::enum_xvblock_flag_executed); //update raw block as well
                     xinfo("xblockacct_t::execute_block(index),successful-exectued block=%s based on height=%" PRIu64 "  ",index_ptr->dump().c_str(),index_ptr->get_height());
 
                     //note:store_block may update m_meta->_highest_execute_block_height as well
@@ -1293,7 +1325,7 @@ namespace top
                     {
                         if(existing_block_flags != new_block_flags)
                             xwarn("xblockacct_t::cache_index,warn-try to overwrite newer block with flags(0x%x) by outdated block=%s",existing_block->get_block_flags(),this_block->dump().c_str());
-                        return true;
+                        return false;
                     }
                     //now combine flags
                     existing_block->reset_block_flags(existing_block_flags | (new_block_flags & base::enum_xvblock_flags_high4bit_mask));//merge flags(just for high4bit)
@@ -2104,7 +2136,7 @@ namespace top
                 load_index_input(_execute_index.get());
                 load_index_output(_execute_index.get());
                 load_index_offdata(_execute_index.get());
-                if(false == execute_block(_execute_index.get()))
+                if(false == execute_block(_execute_index.get(),_execute_index->get_this_block()))
                 {
                     xwarn("xblockacct_t::try_execute_all_block fail-execute block,at block=%s",_execute_index->dump().c_str());
                     return;
