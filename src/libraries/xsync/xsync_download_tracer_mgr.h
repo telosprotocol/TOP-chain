@@ -40,7 +40,7 @@ class xsync_download_tracer_mgr {
         bool get(const std::string account, xsync_download_tracer &tracer);
 
         void expire();
-
+        void expire(std::string account);
         // xsync_download_tracer preempt(std::string account, std::pair<uint64_t, uint64_t> expect_height_interval, 
         //     uint32_t prior, const std::map<std::string, std::string> context);
 

@@ -54,7 +54,8 @@ bool xsync_event_dispatcher_t::filter_event(const mbus::xevent_ptr_t& e) {
         case mbus::xevent_major_type_behind:
             ret = e->minor_type == mbus::xevent_behind_t::type_download ||
                     e->minor_type == mbus::xevent_behind_t::type_check ||
-                    e->minor_type == mbus::xevent_behind_t::type_on_demand;
+                    e->minor_type == mbus::xevent_behind_t::type_on_demand ||
+                    e->minor_type == mbus::xevent_behind_t::type_on_demand_by_hash;
             break;
         case mbus::xevent_major_type_role:
             ret = true;
