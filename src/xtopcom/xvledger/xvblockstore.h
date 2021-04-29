@@ -209,6 +209,10 @@ namespace top
             //note: block must be committed and connected
             virtual bool                 execute_block(const base::xvaccount_t & account,base::xvblock_t* block) = 0;
             virtual xvtransaction_store_ptr_t  query_tx(const std::string & txhash, enum_transaction_subtype type) = 0;
+
+        public:
+            //check if genesis block exist 
+            virtual bool                  exist_genesis_block(const base::xvaccount_t & account) = 0;
             
         protected:
             //only allow remove flag within xvblockstore_t

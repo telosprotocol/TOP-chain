@@ -39,29 +39,23 @@ class xtable_maker_t : public xblock_maker_t {
     bool                    can_make_next_full_block() const;
     bool                    can_make_next_light_block(xtablemaker_para_t & table_para) const;
     xunit_maker_ptr_t       create_unit_maker(const std::string & account);
-    xunit_maker_ptr_t       pop_unit_maker(const std::string & account);
 
     xblock_ptr_t            leader_make_light_table(const xtablemaker_para_t & table_para, const data::xblock_consensus_para_t & cs_para, xtablemaker_result_t & table_result);
     xblock_ptr_t            backup_make_light_table(const xtablemaker_para_t & table_para, const data::xblock_consensus_para_t & cs_para, xtablemaker_result_t & table_result);
     xblock_ptr_t            make_full_table(const xtablemaker_para_t & table_para, const xblock_consensus_para_t & cs_para, int32_t & error_code);
     void                    clear_old_unit_makers();
 
-    xunit_maker_ptr_t       get_unit_maker(const std::string & account);
-    void                    set_unit_maker(const xunit_maker_ptr_t & unitmaker);
-    void                    update_uncommit_unit_makers();
-    bool                    update_latest_blocks(const xblock_ptr_t & latest_block);
-    bool                    unpack_table_and_update_units(const xblock_ptr_t & block);
-    void                    clear_table_units(const xblock_ptr_t & block);
     bool                    verify_proposal_with_local(base::xvblock_t *proposal_block, base::xvblock_t *local_block) const;
     bool                    verify_proposal_class(base::xvblock_t *proposal_block) const;
     std::string             dump() const;
     bool                    load_table_blocks_from_last_full(const xblock_ptr_t & prev_block, std::vector<xblock_ptr_t> & blocks);
-    bool                    is_latest_state_unchanged(const xblock_ptr_t & latest_block) const;
     bool                    create_lightunit_makers(const xtablemaker_para_t & table_para, const data::xblock_consensus_para_t & cs_para, std::map<std::string, xunit_maker_ptr_t> & unitmakers);
     bool                    create_non_lightunit_makers(const xtablemaker_para_t & table_para, const data::xblock_consensus_para_t & cs_para, std::map<std::string, xunit_maker_ptr_t> & unitmakers);
     void                    get_unit_accounts(const xblock_ptr_t & block, std::set<std::string> & accounts) const;
     xblock_ptr_t            make_light_table(bool is_leader, const xtablemaker_para_t & table_para, const data::xblock_consensus_para_t & cs_para, xtablemaker_result_t & table_result);
     bool                    create_other_makers(const xtablemaker_para_t & table_para, const data::xblock_consensus_para_t & cs_para, std::map<std::string, xunit_maker_ptr_t> & unitmakers);
+    void                    clear_all_pending_txs();
+    void                    refresh_cache_unit_makers();
 
  private:
     std::map<std::string, xunit_maker_ptr_t>    m_unit_makers;

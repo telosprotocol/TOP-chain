@@ -131,7 +131,7 @@ xJson::Value get_block_handle::parse_account(const std::string & account) {
             result_json["contract_parent_account"] = owner;
         }
 
-        // result_json["table_id"] = account_map_to_table_id(common::xaccount_address_t{account}).get_subaddr();
+        result_json["table_id"] = account_map_to_table_id(common::xaccount_address_t{account}).get_subaddr();
         common::xnetwork_id_t nid{0};
         std::shared_ptr<router::xrouter_face_t> router = std::make_shared<router::xrouter_t>();
         vnetwork::xcluster_address_t addr = router->sharding_address_from_account(common::xaccount_address_t{account}, nid, common::xnode_type_t::consensus_validator);
@@ -1566,15 +1566,12 @@ void get_block_handle::set_fullunit_info(xJson::Value & j_fu, xblock_t * bp) {
 void get_block_handle::set_table_info(xJson::Value & jv, xblock_t * bp) {
     const auto & units = bp->get_tableblock_units(false);
     if (!units.empty()) {
-        // set_object_info(jv, units);
         xJson::Value ju;
-        // set_table_info(ju, table);
         for (auto & unit : units) {
             xJson::Value jui;
             jui["unit_height"] = static_cast<xJson::UInt64>(unit->get_height());
 
             xJson::Value jv;
-            // set_object_info(jv, unit_input);
             auto txs = unit->get_txs();
             for (auto tx : txs) {
                 xJson::Value juj;
@@ -1584,12 +1581,18 @@ void get_block_handle::set_table_info(xJson::Value & jv, xblock_t * bp) {
                     juj["last_tx_nonce"] = static_cast<unsigned int>(tx->get_last_trans_nonce());
                 }
                 juj["sender_tx_locked_gas"] = static_cast<unsigned int>(tx->get_send_tx_lock_tgas());
+                auto tx_ptr = tx->get_raw_tx();
+                if (tx_ptr != nullptr) {
+                    juj["sender"] = tx_ptr->get_source_addr();
+                    juj["receiver"] = tx_ptr->get_target_addr();
+                    juj["action_name"] = tx_ptr->get_target_action_name();
+                    juj["action_param"] = parse_action(tx_ptr->get_target_action());
+                }
                 jv["0x" + tx->get_tx_hex_hash()] = juj;
             }
             jui["lightunit_input"] = jv;
 
             xJson::Value jv1;
-            // set_object_info(jv, state);
             jv1["balance_change"] = static_cast<xJson::Int64>(unit->get_balance_change());
             jv1["burned_amount_change"] = static_cast<xJson::Int64>(unit->get_burn_balance_change());
             xJson::Value jp;

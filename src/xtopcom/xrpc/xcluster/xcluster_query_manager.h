@@ -39,6 +39,7 @@ public:
     void queryProposal(xjson_proc_t & json_proc);
     void getStandbys(xjson_proc_t & json_proc);
     void getCGP(xjson_proc_t & json_proc);
+    void getLatestTables(xjson_proc_t & json_proc);
     std::string tx_exec_status_to_str(uint8_t exec_status);
 
 private:

@@ -101,14 +101,14 @@ void xunit_maker_t::find_highest_send_tx(uint64_t & latest_nonce, uint256_t & la
 
 bool xunit_maker_t::push_tx(const data::xblock_consensus_para_t & cs_para, const xcons_transaction_ptr_t & tx) {
     if (is_account_locked()) {
-        xwarn("xunit_maker_t::push_tx fail-tx filtered for account locked.%s,tx=%s", cs_para.dump().c_str(), tx->dump(true).c_str());
+        xwarn("xunit_maker_t::push_tx fail-tx filtered for account locked.%s,tx=%s", cs_para.dump().c_str(), tx->dump().c_str());
         return false;
     }
 
     if (is_match_account_fullunit_limit()) {
         // send and self tx is filtered when matching fullunit limit
         if (tx->is_self_tx() || tx->is_send_tx()) {
-            xwarn("xunit_maker_t::push_tx fail-tx filtered for fullunit limit.%s,tx=%s", cs_para.dump().c_str(), tx->dump(true).c_str());
+            xwarn("xunit_maker_t::push_tx fail-tx filtered for fullunit limit.%s,tx=%s", cs_para.dump().c_str(), tx->dump().c_str());
             return false;
         }
     }
@@ -123,7 +123,7 @@ bool xunit_maker_t::push_tx(const data::xblock_consensus_para_t & cs_para, const
             uint256_t latest_hash = get_latest_committed_state()->get_account_mstate().get_latest_send_trans_hash();
             get_txpool()->updata_latest_nonce(get_account(), latest_nonce, latest_hash);
             xwarn("xunit_maker_t::push_tx fail-tx filtered for send nonce hash not match,%s,latest_nonce=%ld,tx=%s",
-                cs_para.dump().c_str(), latest_nonce, tx->dump(true).c_str());
+                cs_para.dump().c_str(), latest_nonce, tx->dump().c_str());
             return false;
         }
     }
@@ -151,12 +151,20 @@ bool xunit_maker_t::push_tx(const data::xblock_consensus_para_t & cs_para, const
         data::enum_xtransaction_type first_tx_type = (data::enum_xtransaction_type)m_pending_txs[0]->get_transaction()->get_tx_type();
         if ( (first_tx_subtype != enum_transaction_subtype_confirm) &&
             (first_tx_type != xtransaction_type_transfer || (data::enum_xtransaction_type)tx->get_transaction()->get_tx_type() != data::xtransaction_type_transfer) ) {
-            xwarn("xunit_maker_t::push_tx fail-tx filtered for batch txs.%s,tx=%s", cs_para.dump().c_str(), tx->dump(true).c_str());
+            xwarn("xunit_maker_t::push_tx fail-tx filtered for batch txs.%s,tx=%s", cs_para.dump().c_str(), tx->dump().c_str());
+            return false;
+        }
+    }
+
+    for (auto & v : m_pending_txs) {
+        if (tx->get_transaction()->digest() == v->get_transaction()->digest()) {
+            xerror("xunit_maker_t::push_tx repeat tx.%s,tx=%s,pendingtx=%s", cs_para.dump().c_str(), tx->dump().c_str(), v->dump().c_str());
             return false;
         }
     }
 
     m_pending_txs.push_back(tx);
+    xdbg("xunit_maker_t::push_tx succ.%s,total_size=%zu,tx=%s", cs_para.dump().c_str(), m_pending_txs.size(), tx->dump().c_str());
     return true;
 }
 

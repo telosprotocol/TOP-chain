@@ -46,7 +46,7 @@ int32_t xtxmgr_table_t::push_send_tx(const std::shared_ptr<xtx_entry> & tx, uint
     return ret;
 }
 
-int32_t xtxmgr_table_t::push_receipt(const std::shared_ptr<xtx_entry> & tx, const base::xreceiptid_state_ptr_t & receiptid_state) {
+int32_t xtxmgr_table_t::push_receipt(const std::shared_ptr<xtx_entry> & tx, uint64_t latest_receipt_id) {
     auto & account_addr = tx->get_tx()->get_account_addr();
     auto tx_inside = query_tx(account_addr, tx->get_tx()->get_transaction()->digest());
     if (tx_inside != nullptr) {
@@ -62,7 +62,7 @@ int32_t xtxmgr_table_t::push_receipt(const std::shared_ptr<xtx_entry> & tx, cons
 
     // todo:backwards compatibility, if receipt have no receipt id, push to old receipt queue.
     // int32_t ret = m_receipt_queue.push_tx(tx);
-    int32_t ret = m_new_receipt_queue.push_tx(tx, receiptid_state);
+    int32_t ret = m_new_receipt_queue.push_tx(tx, latest_receipt_id);
     if (ret != xsuccess) {
         xtxpool_warn("xtxmgr_table_t::push_receipt fail.table %s,tx:%s,ret:%s",
                      m_xtable_info->get_table_addr().c_str(),
