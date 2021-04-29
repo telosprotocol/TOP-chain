@@ -16,6 +16,13 @@ enum class xenum_errc {
     update_state_failed,
     update_state_block_height_mismatch,
     update_state_block_type_mismatch,
+
+    property_already_exist,
+    property_type_invalid,
+    property_hash_mismatch,
+    property_not_exist,
+
+    binlog_instruction_type_invalid,
 };
 using xerrc_t = xenum_errc;
 

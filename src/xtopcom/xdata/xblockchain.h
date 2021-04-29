@@ -7,15 +7,18 @@
 #include <string>
 
 #include "xbase/xobject_ptr.h"
+#include "xbasic/xclonable.h"
 #include "xcommon/xenable_execute_block.h"
 #include "xdata/xaccount_mstate.h"
 #include "xdata/xblock.h"
 #include "xdata/xtransaction.h"
+#include "xvledger/xvstate.h"
 
 NS_BEG2(top, data)
 
 class xblockchain2_t : public xbase_dataobj_t<xblockchain2_t, xdata_type_blockchain>
-                     , public common::xenable_execute_block_t<xblockchain2_t> {
+                     , public common::xenable_execute_block_t<xblockchain2_t>
+                     , public xclonable_t<xblockchain2_t> {
  public:
     enum {
         enum_blockchain_ext_type_uncnfirmed_accounts = 1,
@@ -36,13 +39,58 @@ class xblockchain2_t : public xbase_dataobj_t<xblockchain2_t, xdata_type_blockch
     virtual int32_t do_write(base::xstream_t & stream) override;
     virtual int32_t do_read(base::xstream_t & stream) override;
 
+    /////////////////////////// execute block region begin ////////////////////////////////////////
+
+private:
+    enum class xcategory_t : uint8_t {
+        invalid,
+        system,
+        user
+    };
+
+    enum class xtype_t :uint8_t {
+        invalid, string, map, deque
+    };
+
+    struct xstate_object_t {
+        xcategory_t category{ xcategory_t::invalid };
+        xtype_t type{ xtype_t::invalid };
+        xobject_ptr_t<base::xdataunit_t> state_object{ nullptr };
+
+        xstate_object_t() = default;
+        xstate_object_t(xstate_object_t const &) = default;
+        xstate_object_t & operator=(xstate_object_t const &) = default;
+        xstate_object_t(xstate_object_t &&) = default;
+        xstate_object_t & operator=(xstate_object_t &&) = default;
+
+        xstate_object_t(xcategory_t const cat, xtype_t const tp, xobject_ptr_t<base::xdataunit_t> state) noexcept
+            : category{ cat }, type{ tp }, state_object{ std::move(state) } {
+        }
+    };
+
+    std::map<std::string, xdataunit_ptr_t> m_native_state_data;
+    std::map<std::string, xdataobj_ptr_t> m_customized_state_data;
+    xobject_ptr_t<base::xvbstate_t> m_state_object;
+
+    std::map<std::string, xstate_object_t> m_state_data;  // key is the state key name, value is the serialized state object.
+    std::map<std::string, xstate_object_t> m_session_data;
+
+public:
+    xobject_ptr_t<xblockchain2_t> clone() const override;
     void execute_block(xobject_ptr_t<data::xblock_t const> block, std::error_code & ec) override;
 
 private:
     void execute_genesis_block(xobject_ptr_t<xblock_t const> const & block, std::error_code & ec);
-    void execute_light_block(xobject_ptr_t<xblock_t const> const & block, std::error_code & ec);
+    std::map<std::string, xbyte_buffer_t> execute_light_block(xobject_ptr_t<xblock_t const> const & block, std::error_code & ec);
     void execute_full_block(xobject_ptr_t<xblock_t const> const & block, std::error_code & ec);
     void execute_nil_block(xobject_ptr_t<xblock_t const> const & block, std::error_code & ec);
+
+    void execute_instruction(std::string const & property_name, xproperty_instruction_t const & instruction, std::error_code & ec);
+
+    void create_property(std::string const & name, xtype_t const type, std::error_code & ec);
+    void delete_property(std::string const & name, std::error_code & ec);
+
+    /////////////////////////// execute block region end //////////////////////////////////////////
 
  public:  // update blockchain by block
     bool        update_last_block_state(const xblock_t* block);

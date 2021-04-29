@@ -29,7 +29,7 @@ class xaccount_cmd {
     xaccount_cmd(const std::map<std::string, xdataobj_ptr_t> & property_objs);
     std::map<std::string, std::string> get_property_hash();
     std::map<std::string, xdataobj_ptr_t> get_change_property();
-    std::map<std::string, xdataobj_ptr_t> get_all_property();
+    std::map<std::string, xdataobj_ptr_t> const & get_all_property() const noexcept;
     xproperty_log_ptr_t get_property_log();
 
     int32_t do_property_log(const xproperty_log_ptr_t & logs);

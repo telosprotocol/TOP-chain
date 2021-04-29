@@ -308,7 +308,7 @@ std::map<std::string, xdataobj_ptr_t> xaccount_cmd::get_change_property() {
     return obj_map;
 }
 
-std::map<std::string, xdataobj_ptr_t> xaccount_cmd::get_all_property() {
+std::map<std::string, xdataobj_ptr_t> const & xaccount_cmd::get_all_property() const noexcept {
     return m_clone_objs;
 }
 
