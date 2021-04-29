@@ -32,8 +32,14 @@ class xindexstore_table_t : public xindexstore_face_t {
     xtablestate_ptr_t           load_base_tablestate_from_db(const xtablestate_ptr_t & old_tablestate);
     xtablestate_ptr_t           rebuild_tablestate(const xtablestate_ptr_t & old_state, const std::map<uint64_t, xblock_ptr_t> & latest_blocks);
 
+    void                        set_cache_state(const xblock_ptr_t & block, const xtablestate_ptr_t & state);
+    xtablestate_ptr_t           get_cache_state(const xblock_ptr_t & block) const;
+    void                        clear_old_cache_state();
+
  private:
-    xtablestate_ptr_t               m_tablestate;
+    xtablestate_ptr_t                           m_tablestate;  // cache db committed state
+    std::map<std::string, xtablestate_ptr_t>    m_cache_tablestate;  // cache more state for query performance
+    uint64_t                        max_highest_height{0};
     xindexstore_resources_ptr_t     m_resources;
     mutable std::mutex              m_lock;
 };

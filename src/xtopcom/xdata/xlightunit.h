@@ -194,7 +194,7 @@ class xlightunit_block_t : public xblock_t {
     xcons_transaction_ptr_t     create_one_txreceipt(const xtransaction_t* tx);
 
  public:  // override base block api
-    bool                        extract_sub_txs(std::vector<base::xtx_extract_info_t> & sub_txs) override;
+    bool                        extract_sub_txs(std::vector<base::xvtxindex_ptr> & sub_txs) override;
     const std::vector<xlightunit_tx_info_ptr_t> &   get_txs() const override;
     const std::map<std::string, std::string> &      get_property_hash_map() const override {return get_tx_output_resource()->get_property_hash_map();}
     std::string                 get_property_hash(const std::string & prop_name) const override {return get_tx_output_resource()->get_property_hash(prop_name);}

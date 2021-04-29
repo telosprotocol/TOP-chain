@@ -131,7 +131,7 @@ xJson::Value get_block_handle::parse_account(const std::string & account) {
             result_json["contract_parent_account"] = owner;
         }
 
-        // result_json["table_id"] = account_map_to_table_id(common::xaccount_address_t{account}).get_subaddr();
+        result_json["table_id"] = account_map_to_table_id(common::xaccount_address_t{account}).get_subaddr();
         common::xnetwork_id_t nid{0};
         std::shared_ptr<router::xrouter_face_t> router = std::make_shared<router::xrouter_t>();
         vnetwork::xcluster_address_t addr = router->sharding_address_from_account(common::xaccount_address_t{account}, nid, common::xnode_type_t::consensus_validator);
@@ -570,11 +570,14 @@ void get_block_handle::update_tx_state(xJson::Value & result_json, const xJson::
 
 xJson::Value get_block_handle::parse_tx(const uint256_t & tx_hash, xtransaction_t * cons_tx_ptr) {
     std::string tx_hash_str = std::string(reinterpret_cast<char*>(tx_hash.data()), tx_hash.size());
-    base::xvtransaction_store_ptr_t tx_store_ptr = m_block_store->query_tx(tx_hash_str, base::enum_tx_dbkey_type_all);
+    base::xvtransaction_store_ptr_t tx_store_ptr = m_block_store->query_tx(tx_hash_str, base::enum_transaction_subtype_all);
     xJson::Value result_json;
     xJson::Value cons;
     if (tx_store_ptr != nullptr && tx_store_ptr->get_raw_tx() != nullptr) {
-        xtransaction_ptr_t tx_ptr = dynamic_xobject_ptr_cast<xtransaction_t>(tx_store_ptr->get_raw_tx());
+        auto tx = dynamic_cast<xtransaction_t*>(tx_store_ptr->get_raw_tx());
+        tx->add_ref();
+        xtransaction_ptr_t tx_ptr;
+        tx_ptr.attach(tx);
 
         // burn tx & self tx only 1 consensus
         if (tx_ptr->get_target_addr() != black_hole_addr && (tx_ptr->get_source_addr() != tx_ptr->get_target_addr())) {
@@ -736,10 +739,13 @@ void get_block_handle::getTransaction() {
     std::string tx_hash_str = std::string(reinterpret_cast<char*>(hash.data()), hash.size());
     try {
         m_js_rsp["value"] = parse_tx(hash);
-        base::xvtransaction_store_ptr_t tx_store_ptr = m_block_store->query_tx(tx_hash_str, base::enum_tx_dbkey_type_all);
+        base::xvtransaction_store_ptr_t tx_store_ptr = m_block_store->query_tx(tx_hash_str, base::enum_transaction_subtype_all);
         if (tx_store_ptr != nullptr) {
             if (tx_store_ptr->get_raw_tx() != nullptr) {
-                xtransaction_ptr_t tx_ptr = dynamic_xobject_ptr_cast<xtransaction_t>(tx_store_ptr->get_raw_tx());
+                auto tx = dynamic_cast<xtransaction_t*>(tx_store_ptr->get_raw_tx());
+                tx->add_ref();
+                xtransaction_ptr_t tx_ptr;
+                tx_ptr.attach(tx);
                 auto jsa = parse_action(tx_ptr->get_source_action());
                 m_js_rsp["value"]["original_tx_info"]["tx_action"]["sender_action"]["action_param"] = jsa;
                 auto jta = parse_action(tx_ptr->get_target_action());
@@ -1560,15 +1566,12 @@ void get_block_handle::set_fullunit_info(xJson::Value & j_fu, xblock_t * bp) {
 void get_block_handle::set_table_info(xJson::Value & jv, xblock_t * bp) {
     const auto & units = bp->get_tableblock_units(false);
     if (!units.empty()) {
-        // set_object_info(jv, units);
         xJson::Value ju;
-        // set_table_info(ju, table);
         for (auto & unit : units) {
             xJson::Value jui;
             jui["unit_height"] = static_cast<xJson::UInt64>(unit->get_height());
 
             xJson::Value jv;
-            // set_object_info(jv, unit_input);
             auto txs = unit->get_txs();
             for (auto tx : txs) {
                 xJson::Value juj;
@@ -1578,12 +1581,18 @@ void get_block_handle::set_table_info(xJson::Value & jv, xblock_t * bp) {
                     juj["last_tx_nonce"] = static_cast<unsigned int>(tx->get_last_trans_nonce());
                 }
                 juj["sender_tx_locked_gas"] = static_cast<unsigned int>(tx->get_send_tx_lock_tgas());
+                auto tx_ptr = tx->get_raw_tx();
+                if (tx_ptr != nullptr) {
+                    juj["sender"] = tx_ptr->get_source_addr();
+                    juj["receiver"] = tx_ptr->get_target_addr();
+                    juj["action_name"] = tx_ptr->get_target_action_name();
+                    juj["action_param"] = parse_action(tx_ptr->get_target_action());
+                }
                 jv["0x" + tx->get_tx_hex_hash()] = juj;
             }
             jui["lightunit_input"] = jv;
 
             xJson::Value jv1;
-            // set_object_info(jv, state);
             jv1["balance_change"] = static_cast<xJson::Int64>(unit->get_balance_change());
             jv1["burned_amount_change"] = static_cast<xJson::Int64>(unit->get_burn_balance_change());
             xJson::Value jp;

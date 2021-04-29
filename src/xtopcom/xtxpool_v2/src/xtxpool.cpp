@@ -216,12 +216,12 @@ void xtxpool_t::update_non_ready_accounts(uint8_t zone, uint16_t subaddr) {
     }
 }
 
-void xtxpool_t::update_locked_txs(const std::string & table_addr, const std::vector<tx_info_t> & locked_tx_vec) {
+void xtxpool_t::update_locked_txs(const std::string & table_addr, const std::vector<tx_info_t> & locked_tx_vec, const base::xreceiptid_state_ptr_t & receiptid_state) {
     auto table = get_txpool_table_by_addr(table_addr);
     if (table == nullptr) {
         return;
     }
-    return table->update_locked_txs(locked_tx_vec);
+    return table->update_locked_txs(locked_tx_vec, receiptid_state);
 }
 
 void xtxpool_t::update_receiptid_state(const std::string & table_addr, const base::xreceiptid_state_ptr_t & receiptid_state) {
@@ -259,8 +259,9 @@ std::shared_ptr<xtxpool_table_t> xtxpool_t::get_txpool_table_by_addr(const std::
 xobject_ptr_t<xtxpool_face_t> xtxpool_instance::create_xtxpool_inst(const observer_ptr<store::xstore_face_t> & store,
                                                                     const observer_ptr<base::xvblockstore_t> & blockstore,
                                                                     const observer_ptr<base::xvcertauth_t> & certauth,
-                                                                    const observer_ptr<store::xindexstorehub_t> & indexstorehub) {
-    auto para = std::make_shared<xtxpool_resources>(store, blockstore, certauth, indexstorehub);
+                                                                    const observer_ptr<store::xindexstorehub_t> & indexstorehub,
+                                                                    const observer_ptr<mbus::xmessage_bus_face_t> & bus) {
+    auto para = std::make_shared<xtxpool_resources>(store, blockstore, certauth, indexstorehub, bus);
     auto xtxpool = top::make_object_ptr<xtxpool_t>(para);
     return xtxpool;
 }

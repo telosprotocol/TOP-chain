@@ -5,6 +5,7 @@
 #include "xtxpool_v2/xunconfirmed_tx_queue.h"
 
 #include "xdata/xblocktool.h"
+#include "xmbus/xevent_behind.h"
 #include "xtxpool_v2/xtxpool_error.h"
 #include "xtxpool_v2/xtxpool_log.h"
 
@@ -107,8 +108,8 @@ void xpeer_tables_t::update_receiptid_state(const base::xreceiptid_state_ptr_t &
     //     auto & peer_table_id_state = peer_table_id_state_pair.second;
     //     auto it_peer_table_unconfirmed_txs = m_peer_tables.find(peer_table_sid);
     //     if (it_peer_table_unconfirmed_txs != m_peer_tables.end()) {
-    //         it_peer_table_unconfirmed_txs->second->update_receipt_id(peer_table_id_state->get_latest_commit_out_id(), peer_table_id_state->get_max_out_id(), m_all_unconfirm_txs);
-    //         if (it_peer_table_unconfirmed_txs->second->is_all_txs_confirmed()) {
+    //         it_peer_table_unconfirmed_txs->second->update_receipt_id(peer_table_id_state->get_latest_commit_out_id(), peer_table_id_state->get_max_out_id(),
+    //         m_all_unconfirm_txs); if (it_peer_table_unconfirmed_txs->second->is_all_txs_confirmed()) {
     //             m_peer_tables.erase(it_peer_table_unconfirmed_txs);
     //         }
     //     } else {
@@ -130,13 +131,17 @@ int32_t xunconfirmed_account_t::update(xblock_t * latest_committed_block, const 
     for (uint64_t cur_height = latest_height; cur_height > m_highest_height; cur_height--) {
         auto unit_block = m_para->get_vblockstore()->load_block_object(account_addr, cur_height, 0, true);
         if (unit_block == nullptr) {
-            xtxpool_info("xunconfirmed_account_t::update account_addr:%s lack unitblock, the height is %u", account_addr.c_str(), cur_height);
+            base::xauto_ptr<base::xvblock_t> _block_ptr = m_para->get_vblockstore()->get_latest_connected_block(account_addr);
+            uint64_t start_sync_height = _block_ptr->get_height() + 1;
+            mbus::xevent_behind_ptr_t ev =
+                make_object_ptr<mbus::xevent_behind_on_demand_t>(account_addr, start_sync_height, (uint32_t)(cur_height - start_sync_height), true, "unit_lack");
+            m_para->get_bus()->push_event(ev);
+            xtxpool_info("xunconfirmed_account_t::update account:%s state fall behind,need sync unit cur height:%llu", account_addr.c_str(), cur_height);
             return xtxpool_error_unitblock_lack;
         }
 
-        if (unit_block->is_genesis_block() || !data::xblocktool_t::is_connect_and_executed_block(unit_block.get())) {
-            xtxpool_warn("xunconfirmed_account_t::update account state behind, can't update.account=%s,block=%s", account_addr.c_str(), unit_block->dump().c_str());
-            return xtxpool_error_unitblock_lack;
+        if (unit_block->is_genesis_block()) {
+            break;
         }
 
         if (unit_block->get_block_class() == base::enum_xvblock_class_full) {

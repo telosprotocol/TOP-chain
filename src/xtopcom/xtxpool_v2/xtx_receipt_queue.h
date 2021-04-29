@@ -62,7 +62,7 @@ class xpeer_table_receipts_t {
 public:
     xpeer_table_receipts_t(xreceipt_queue_internal_t * receipt_queue_internal) : m_receipt_queue_internal(receipt_queue_internal) {
     }
-    int32_t push_tx(const std::shared_ptr<xtx_entry> & tx_ent);
+    int32_t push_tx(const std::shared_ptr<xtx_entry> & tx_ent, uint64_t latest_receipt_id);
     void update_latest_id(uint64_t latest_receipt_id);
     const std::vector<xcons_transaction_ptr_t> get_txs(uint64_t upper_receipt_id, uint32_t max_num) const;
     void erase(uint64_t receipt_id);
@@ -82,7 +82,7 @@ class xreceipt_queue_new_t {
 public:
     xreceipt_queue_new_t(xtxpool_table_info_t * xtable_info) : m_receipt_queue_internal(xtable_info) {
     }
-    int32_t push_tx(const std::shared_ptr<xtx_entry> & tx_ent);
+    int32_t push_tx(const std::shared_ptr<xtx_entry> & tx_ent, uint64_t latest_receipt_id);
     const std::vector<xcons_transaction_ptr_t> get_txs(uint32_t recv_txs_max_num, uint32_t confirm_txs_max_num, const base::xreceiptid_state_ptr_t & receiptid_state) const;
     const std::shared_ptr<xtx_entry> pop_tx(const tx_info_t & txinfo);
     const std::shared_ptr<xtx_entry> find(const std::string & account_addr, const uint256_t & hash) const;

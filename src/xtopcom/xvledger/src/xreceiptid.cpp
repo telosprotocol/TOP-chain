@@ -297,6 +297,34 @@ void    xreceiptid_check_t::set_confirmid(xtable_shortid_t sid, uint64_t value) 
     }
 }
 
+uint64_t xreceiptid_check_t::get_sendid_max(xtable_shortid_t sid) {
+    auto iter = m_sendids.find(sid);
+    if (iter != m_sendids.end()) {
+        std::set<uint64_t> & ids = iter->second;
+        uint64_t maxid = *ids.rbegin();
+        return maxid;
+    }
+    return 0;
+}
+uint64_t xreceiptid_check_t::get_recvid_max(xtable_shortid_t sid) {
+    auto iter = m_recvids.find(sid);
+    if (iter != m_recvids.end()) {
+        std::set<uint64_t> & ids = iter->second;
+        uint64_t maxid = *ids.rbegin();
+        return maxid;
+    }
+    return 0;
+}
+uint64_t xreceiptid_check_t::get_confirmid_max(xtable_shortid_t sid) {
+    auto iter = m_confirmids.find(sid);
+    if (iter != m_confirmids.end()) {
+        std::set<uint64_t> & ids = iter->second;
+        uint64_t maxid = *ids.rbegin();
+        return maxid;
+    }
+    return 0;
+}
+
 bool    xreceiptid_check_t::check_receiptids_contious(const std::set<uint64_t> & ids, uint64_t begin_id) const {
     for (auto & id : ids) {
         if (id != begin_id + 1) {

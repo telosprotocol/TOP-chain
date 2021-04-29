@@ -14,30 +14,68 @@ NS_BEG2(top, store)
 
 xindexstore_table_t::xindexstore_table_t(const std::string & account, const xindexstore_resources_ptr_t & resources)
 : xindexstore_face_t(account), m_resources(resources) {
-    m_tablestate = make_object_ptr<xtablestate_t>();
+    m_tablestate = make_object_ptr<xtablestate_t>();  // create genensis state
+}
+
+void xindexstore_table_t::set_cache_state(const xblock_ptr_t & block, const xtablestate_ptr_t & state) {
+    xassert(block->get_height() == state->get_height());
+
+    auto iter = m_cache_tablestate.find(block->get_block_hash());
+    if (iter == m_cache_tablestate.end()) {
+        m_cache_tablestate[block->get_block_hash()] = state;
+        xdbg("xindexstore_table_t::set_cache_state table=%s,tablestate_height=%" PRIu64 "",
+        get_account().c_str(), state->get_height());
+    }
+
+    // try to clear old state
+    clear_old_cache_state();
+}
+
+xtablestate_ptr_t xindexstore_table_t::get_cache_state(const xblock_ptr_t & block) const {
+    auto iter = m_cache_tablestate.find(block->get_block_hash());
+    if (iter != m_cache_tablestate.end()) {
+        return iter->second;
+    }
+    return nullptr;
+}
+
+void xindexstore_table_t::clear_old_cache_state() {
+    if (m_cache_tablestate.size() > 6) {
+        for (auto iter = m_cache_tablestate.begin(); iter != m_cache_tablestate.end();) {
+            const xtablestate_ptr_t & state = iter->second;
+            if (state->get_height() + 5 <= max_highest_height) {
+                xdbg("xindexstore_table_t::clear_old_cache_state table=%s,tablestate_height=%" PRIu64 "",
+                    get_account().c_str(), state->get_height());
+                iter = m_cache_tablestate.erase(iter);
+            } else {
+                iter++;
+            }
+        }
+    }
 }
 
 xtablestate_ptr_t xindexstore_table_t::rebuild_tablestate(const xtablestate_ptr_t & old_state, const std::map<uint64_t, xblock_ptr_t> & latest_blocks) {
+    xtablestate_ptr_t new_state = old_state->clone();  // must clone before execute
     for (auto & v : latest_blocks) {
-        xassert(old_state->get_binlog_height() + 1 == v.second->get_height());
-        auto ret = old_state->execute_block(v.second.get());
+        xassert(new_state->get_height() + 1 == v.second->get_height());
+        auto ret = new_state->execute_block(v.second.get());
         xassert(ret);
-        xassert(old_state->get_binlog_height() == v.second->get_height());
+        xassert(new_state->get_height() == v.second->get_height());
     }
-    return old_state;
+    return new_state;
 }
 
 xtablestate_ptr_t xindexstore_table_t::get_target_block_state(const xtablestate_ptr_t & old_state, const xblock_ptr_t & block) {
-    if (old_state->get_binlog_height() == block->get_height()) {
+    if (old_state->get_height() == block->get_height()) {
         return old_state;
     }
 
-    if (old_state->get_binlog_height() > block->get_height()) {
-        xerror("xindexstore_table_t::get_target_block_state block height less than state.block_height=%ld,state_height=%ld", block->get_height(), old_state->get_binlog_height());
+    if (old_state->get_height() > block->get_height()) {
+        xerror("xindexstore_table_t::get_target_block_state block height less than state.block_height=%ld,state_height=%ld", block->get_height(), old_state->get_height());
         return nullptr;
     }
 
-    uint64_t begin_height = old_state->get_binlog_height() + 1;
+    uint64_t begin_height = old_state->get_height() + 1;
     std::map<uint64_t, xblock_ptr_t> latest_blocks;
     xblock_ptr_t current_block = block;
     latest_blocks[current_block->get_height()] = current_block;
@@ -67,9 +105,9 @@ xtablestate_ptr_t xindexstore_table_t::load_base_tablestate_from_db(const xtable
         return nullptr;
     }
 
-    if (old_tablestate->get_binlog_height() >= account_state->get_last_height()) {
+    if (old_tablestate->get_height() >= account_state->get_last_height()) {
         xdbg("xindexstore_table_t::load_base_tablestate_from_db no need reload base.table=%s,tablestate_height=%" PRIu64 ",account_height=%" PRIu64 "",
-            get_account().c_str(), old_tablestate->get_binlog_height(), account_state->get_last_height());
+            get_account().c_str(), old_tablestate->get_height(), account_state->get_last_height());
         return old_tablestate;
     }
 
@@ -102,48 +140,52 @@ xtablestate_ptr_t xindexstore_table_t::load_base_tablestate_from_db(const xtable
 }
 
 xtablestate_ptr_t xindexstore_table_t::get_target_tablestate(const xblock_ptr_t & block) {
-    if (m_tablestate->get_binlog_height() == block->get_height()) {
+    xtablestate_ptr_t state = get_cache_state(block);
+    if (state != nullptr) {
         xdbg("xindexstore_table_t::get_target_tablestate succ-block height match cache tablestate.table=%s,block_height=%" PRIu64 "",
             get_account().c_str(), block->get_height());
+        return state;
+    }
+    if (m_tablestate->get_height() == block->get_height()) {
         return m_tablestate;
     }
-    if (m_tablestate->get_binlog_height() > block->get_height()) {
+
+    if (m_tablestate->get_height() > block->get_height()) {
         xwarn("xindexstore_table_t::get_target_tablestate fail-block height less than cache tablestate.table=%s,state_height=%" PRIu64 ",block_height=%" PRIu64 "",
-            get_account().c_str(), m_tablestate->get_binlog_height(), block->get_height());
+            get_account().c_str(), m_tablestate->get_height(), block->get_height());
         return nullptr;
     }
 
-    xtablestate_ptr_t old_tablestate = m_tablestate->clone();
-    xtablestate_ptr_t tablestate_base = load_base_tablestate_from_db(old_tablestate);
+    xtablestate_ptr_t tablestate_base = load_base_tablestate_from_db(m_tablestate);
     if (nullptr == tablestate_base) {
         xerror("xindexstore_table_t::get_target_tablestate fail-load_base_tablestate_from_db.table=%s,block_height=%" PRIu64 "",
             get_account().c_str(), block->get_height());
         return nullptr;
     }
-    if (m_tablestate->get_binlog_height() < tablestate_base->get_binlog_height()) {
-        // TODO(jimmy)
-        m_tablestate = tablestate_base->clone();
+    if (m_tablestate->get_height() < tablestate_base->get_height()) {
+        m_tablestate = tablestate_base;
         xdbg("xindexstore_table_t::get_target_tablestate succ-cache new tablestate.table=%s,block_height=%" PRIu64 ",full_height=%" PRIu64 "",
-            get_account().c_str(), m_tablestate->get_binlog_height(), m_tablestate->get_full_height());
+            get_account().c_str(), m_tablestate->get_height(), m_tablestate->get_full_height());
     }
 
-    if (tablestate_base->get_binlog_height() < block->get_height()) {
+    if (tablestate_base->get_height() < block->get_height()) {
         tablestate_base = get_target_block_state(tablestate_base, block);
         if (nullptr == tablestate_base) {
             xwarn("xindexstore_table_t::get_target_tablestate fail-get_target_block_state.table=%s,old_state_height=%" PRIu64 ",block_height=%" PRIu64 "",
-                get_account().c_str(), m_tablestate->get_binlog_height(), block->get_height());
+                get_account().c_str(), m_tablestate->get_height(), block->get_height());
             return nullptr;
         }
-        xassert(tablestate_base->get_binlog_height() == block->get_height());
+        xassert(tablestate_base->get_height() == block->get_height());
     }
 
-    if (tablestate_base->get_binlog_height() == block->get_height()) {
+    if (tablestate_base->get_height() == block->get_height()) {
+        set_cache_state(block, tablestate_base);
         xdbg("xindexstore_table_t::get_target_tablestate succ.table=%s,old_state_height=%" PRIu64 ",block_height=%" PRIu64 "",
-            get_account().c_str(), m_tablestate->get_binlog_height(), block->get_height());
+            get_account().c_str(), m_tablestate->get_height(), block->get_height());
         return tablestate_base;
     }
     xwarn("xindexstore_table_t::get_target_tablestate fail. binlog height larger than block.table=%s,state_height=%" PRIu64 ",block_height=%" PRIu64 "",
-        get_account().c_str(), tablestate_base->get_binlog_height(), block->get_height());
+        get_account().c_str(), tablestate_base->get_height(), block->get_height());
     return nullptr;
 }
 
@@ -153,8 +195,8 @@ xtablestate_ptr_t xindexstore_table_t::clone_tablestate(const xblock_ptr_t & blo
     if (tablestate == nullptr) {
         return nullptr;
     }
-    xassert(tablestate->get_binlog_height() == block->get_height());
-    return tablestate->clone();
+    xassert(tablestate->get_height() == block->get_height());
+    return tablestate;
 }
 
 bool  xindexstore_table_t::get_account_index(const xblock_ptr_t & committed_block, const std::string & account, base::xaccount_index_t & account_index) {
@@ -163,7 +205,7 @@ bool  xindexstore_table_t::get_account_index(const xblock_ptr_t & committed_bloc
     if (tablestate == nullptr) {
         return false;
     }
-    xassert(tablestate->get_binlog_height() == committed_block->get_height());
+    xassert(tablestate->get_height() == committed_block->get_height());
     return tablestate->get_account_index(account, account_index);
 }
 
@@ -203,25 +245,35 @@ bool  xindexstore_table_t::get_account_basic_info(const std::string & account, x
     //     return false;
     // }
 
-    base::xauto_ptr<base::xvblock_t> _block_ptr = get_blockstore()->get_latest_committed_block(_account_vaddress);
-    xblock_ptr_t latest_unit = xblock_t::raw_vblock_to_object_ptr(_block_ptr.get());
+    base::xauto_ptr<base::xvblock_t> _block_ptr = get_blockstore()->get_latest_cert_block(_account_vaddress);
+    xblock_ptr_t latest_cert_unit = xblock_t::raw_vblock_to_object_ptr(_block_ptr.get());
 
-    xaccount_ptr_t account_state = get_store()->query_account(account);
-    if (account_state == nullptr) {
-        account_state = make_object_ptr<xblockchain2_t>(get_account());
-    }
     // if (account_state->get_last_height() != account_index.get_latest_unit_height()) {
     //     xwarn("xindexstore_table_t::get_account_basic_info fail-state block unmatch.account=%s,state_height=%" PRIu64 ",block_height=%" PRIu64 "",
     //         account.c_str(), account_state->get_last_height(), account_index.get_latest_unit_height());
     //     return false;
     // }
     // TODO(jimmy)
-    if (account_state->get_last_height() != latest_unit->get_height() || account_state->get_last_height() + 2 < account_index.get_latest_unit_height()) {
-        xwarn("xindexstore_table_t::get_account_basic_info fail-state block unmatch.account=%s,state_height=%" PRIu64 ",block_height=%" PRIu64 ",index_height=%" PRIu64 "",
-            account.c_str(), account_state->get_last_height(), latest_unit->get_height(), account_index.get_latest_unit_height());
+    // if (account_state->get_last_height() != latest_unit->get_height() || account_state->get_last_height() + 2 < account_index.get_latest_unit_height()) {
+    //     xwarn("xindexstore_table_t::get_account_basic_info fail-state block unmatch.account=%s,state_height=%" PRIu64 ",block_height=%" PRIu64 ",index_height=%" PRIu64 "",
+    //         account.c_str(), account_state->get_last_height(), latest_unit->get_height(), account_index.get_latest_unit_height());
+    //     account_index_info.set_sync_from_height(account_state->get_last_height() + 1);
+    //     account_index_info.set_sync_to_height(account_index.get_latest_unit_height());
+    //     return false;
+    // }
+
+    if (latest_cert_unit->get_height() < account_index.get_latest_unit_height()) {
+        base::xauto_ptr<base::xvblock_t> _start_block_ptr = get_blockstore()->get_latest_connected_block(_account_vaddress);
+        account_index_info.set_sync_height_start(_start_block_ptr->get_height() + 1);
+        account_index_info.set_sync_num(account_index.get_latest_unit_height() - _start_block_ptr->get_height());
         return false;
     }
-    account_index_info.set_latest_block(latest_unit);
+
+    xaccount_ptr_t account_state = get_store()->query_account(account);
+    if (account_state == nullptr) {
+        account_state = make_object_ptr<xblockchain2_t>(get_account());
+    }
+    // account_index_info.set_latest_block(latest_unit);
     account_index_info.set_latest_state(account_state);
     account_index_info.set_account_index(account_index);
     return true;

@@ -30,7 +30,7 @@ public:
       : m_para(para)
       , m_xtable_info(table_addr, shard)
       , m_txmgr_table(&m_xtable_info)
-      , m_table_filter(para->get_vblockstore())
+      // , m_table_filter(para->get_vblockstore())
       , m_unconfirmed_tx_queue(para, &m_xtable_info)
       , m_non_ready_accounts(&m_xtable_info)
       , m_table_indexstore(m_para->get_indexstorehub()->get_index_store(m_xtable_info.get_table_addr()))
@@ -53,27 +53,29 @@ public:
     int32_t verify_txs(const std::string & account, const std::vector<xcons_transaction_ptr_t> & txs, uint64_t latest_commit_unit_height);
     void update_unconfirm_accounts();
     void update_non_ready_accounts();
-    void update_locked_txs(const std::vector<tx_info_t> & locked_tx_vec);
+    void update_locked_txs(const std::vector<tx_info_t> & locked_tx_vec, const base::xreceiptid_state_ptr_t & receiptid_state);
     void update_receiptid_state(const base::xreceiptid_state_ptr_t & receiptid_state);
 
 private:
     enum_xtxpool_error_type update_reject_rule(const std::string & account, const data::xblock_t * unit_block);
     bool is_account_need_update(const std::string & account_addr) const;
-    bool is_unconfirm_txs_reached_upper_limmit() const;
+    // bool is_unconfirm_txs_reached_upper_limmit() const;
     int32_t verify_tx_common(const xcons_transaction_ptr_t & tx) const;
     int32_t verify_send_tx(const xcons_transaction_ptr_t & tx) const;
     int32_t verify_receipt_tx(const xcons_transaction_ptr_t & tx) const;
     int32_t verify_cons_tx(const xcons_transaction_ptr_t & tx) const;
+    bool get_account_latest_nonce_hash(const std::string account_addr, uint64_t & latest_nonce, uint256_t & latest_hash) const;
+    uint64_t get_tx_corresponding_latest_receipt_id(const std::shared_ptr<xtx_entry> & tx, const base::xreceiptid_state_ptr_t & receiptid_state) const;
     xtxpool_resources_face * m_para;
     xtxpool_table_info_t m_xtable_info;
     xtxmgr_table_t m_txmgr_table;
-    xtx_table_filter m_table_filter;
+    // xtx_table_filter m_table_filter;
     xunconfirmed_tx_queue_t m_unconfirmed_tx_queue;
     xnon_ready_accounts_t m_non_ready_accounts;
     store::xindexstore_face_ptr_t m_table_indexstore;
     xlocked_txs_t m_locked_txs;
     mutable std::mutex m_mgr_mutex;        // lock m_txmgr_table and m_locked_txs
-    mutable std::mutex m_filter_mutex;     // lock m_table_filter
+    // mutable std::mutex m_filter_mutex;     // lock m_table_filter
     mutable std::mutex m_unconfirm_mutex;  // lock m_unconfirmed_tx_queue
     mutable std::mutex m_non_ready_mutex;  // lock m_non_ready_accounts
 };

@@ -45,7 +45,7 @@ TEST_F(test_proposal_maker, table_maker_2) {
     xobject_ptr_t<base::xvblockstore_t> blockstore;
     blockstore.attach(store::xblockstorehub_t::instance().create_block_store(*store_ptr, ""));
 
-    auto     xtxpool = xtxpool_instance::create_xtxpool_inst(make_observer(store_ptr), make_observer(blockstore.get()), nullptr, nullptr);
+    auto     xtxpool = xtxpool_instance::create_xtxpool_inst(make_observer(store_ptr), make_observer(blockstore.get()), nullptr, nullptr, nullptr);
     uint64_t now = xverifier::xtx_utl::get_gmttime_s();
     uint256_t last_tx_hash = {};
 
@@ -111,7 +111,7 @@ TEST_F(test_proposal_maker, table_maker_3) {
     blockstore.attach(store::xblockstorehub_t::instance().create_block_store(*store_ptr, ""));
     std::shared_ptr<test_xchain_timer_mock> chain_timer = std::make_shared<test_xchain_timer_mock>();
 
-    auto     xtxpool = xtxpool_instance::create_xtxpool_inst(make_observer(store_ptr), blockstore, make_observer(mbus.get()), nullptr,  make_observer(chain_timer));
+    auto     xtxpool = xtxpool_instance::create_xtxpool_inst(make_observer(store_ptr), blockstore, make_observer(mbus.get()), nullptr,  make_observer(chain_timer), nullptr);
     uint64_t now = xverifier::xtx_utl::get_gmttime_s();
     uint256_t last_tx_hash = {};
 

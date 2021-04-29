@@ -51,6 +51,7 @@ enum enum_xtopcom_object_type {
     xdata_type_receiptid                    = 30,
     xdata_type_fulltable_block              = 31,
     xdata_type_fulltable_output_entity      = 32,
+    xdata_type_table_proposal_input         = 33,
 
     xtopcom_object_type_max
 };
