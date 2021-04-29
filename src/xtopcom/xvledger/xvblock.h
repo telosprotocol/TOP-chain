@@ -879,6 +879,7 @@ namespace top
         private://just using them at running and stored in sepereated place than xvblock_t.
             std::string                 m_dump_info;        //pre-print debug inforatmion and just for performance
         };
+        using xvblock_ptr_t = xobject_ptr_t<base::xvblock_t>;
 
         struct less_by_block_height
         {
