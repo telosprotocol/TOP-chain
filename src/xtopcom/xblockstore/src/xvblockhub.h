@@ -125,7 +125,7 @@ namespace top
             bool                   load_index_input(base::xvbindex_t* target_block);
             bool                   load_index_output(base::xvbindex_t* target_block);
             bool                   load_index_offdata(base::xvbindex_t* target_block);
-            int                    load_index_by_height(const uint64_t target_height);
+            size_t                 load_index_by_height(const uint64_t target_height);
             
         public://operated for raw block
             bool                   store_blocks(std::vector<base::xvblock_t*> & batch_store_blocks); //better performance

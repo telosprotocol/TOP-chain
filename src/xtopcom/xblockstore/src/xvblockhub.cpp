@@ -848,7 +848,7 @@ namespace top
             return (int)it->second.size(); //found existing ones
         }
 
-        int   xblockacct_t::load_index_by_height(const uint64_t target_height)
+        size_t   xblockacct_t::load_index_by_height(const uint64_t target_height)
         {
             auto it = m_all_blocks.find(target_height);
             if(it == m_all_blocks.end())//load all at certain height

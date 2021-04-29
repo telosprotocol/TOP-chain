@@ -678,7 +678,7 @@ namespace top
                 xdbg("xvblockstore_impl::exist_genesis_block target_block null after load");
             }
 #endif
-            return (NULL != target_block);
+            return (nullptr != target_block);
         }
     };//end of namespace of vstore
 };//end of namespace of top
