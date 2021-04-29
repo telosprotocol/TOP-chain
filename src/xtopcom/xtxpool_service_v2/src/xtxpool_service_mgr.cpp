@@ -30,7 +30,7 @@ xtxpool_service_mgr::xtxpool_service_mgr(const observer_ptr<store::xstore_face_t
                                          const observer_ptr<base::xiothread_t> & iothread,
                                          const observer_ptr<mbus::xmessage_bus_face_t> & mbus,
                                          const observer_ptr<time::xchain_time_face_t> & clock)
-  : m_para(make_object_ptr<xtxpool_svc_para_t>(store, blockstore, txpool)), m_iothread(iothread), m_mbus(mbus), m_clock(clock) {
+  : m_para(make_object_ptr<xtxpool_svc_para_t>(store, blockstore, txpool, mbus)), m_iothread(iothread), m_mbus(mbus), m_clock(clock) {
 }
 
 void xtxpool_service_mgr::on_block_to_db_event(mbus::xevent_ptr_t e) {

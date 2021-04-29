@@ -4,7 +4,6 @@
 
 #include "xtxpool_service_v2/xtxpool_service.h"
 
-#include "xvledger/xvblock.h"
 #include "xcommon/xmessage_id.h"
 #include "xdata/xblocktool.h"
 #include "xdata/xtableblock.h"
@@ -13,7 +12,9 @@
 #include "xtxpool_v2/xtxpool_error.h"
 #include "xtxpool_v2/xtxpool_log.h"
 #include "xverifier/xtx_verifier.h"
+#include "xvledger/xvblock.h"
 #include "xvnetwork/xvnetwork_error.h"
+#include "xmbus/xevent_behind.h"
 
 #include <cinttypes>
 
@@ -265,7 +266,8 @@ void xtxpool_service::check_and_response_recv_receipt(const xcons_transaction_pt
     if (tx_store != nullptr) {
         xassert(tx_store->get_recv_unit_height() != 0);
         xdbg("xtxpool_service::check_and_response_recv_receipt send tx receipt has been consensused, txhash:%s", tx->get_digest_hex_str().c_str());
-        base::xauto_ptr<base::xvblock_t> blockobj = m_para->get_vblockstore()->load_block_object(base::xvaccount_t(tx->get_target_addr()), tx_store->get_recv_unit_height(), base::enum_xvblock_flag_committed, true);
+        base::xauto_ptr<base::xvblock_t> blockobj =
+            m_para->get_vblockstore()->load_block_object(base::xvaccount_t(tx->get_target_addr()), tx_store->get_recv_unit_height(), base::enum_xvblock_flag_committed, true);
         if (blockobj != nullptr) {
             xblock_t * block = dynamic_cast<xblock_t *>(blockobj.get());
             xassert(block->is_lightunit());
@@ -281,8 +283,9 @@ void xtxpool_service::check_and_response_recv_receipt(const xcons_transaction_pt
         }
     } else {
         // TODO(jimmy) sync invoke
-        xwarn("xtxpool_service::check_and_response_recv_receipt recv tx not found txhash:%s",
-                tx->get_digest_hex_str().c_str());
+        mbus::xevent_ptr_t ev = make_object_ptr<mbus::xevent_behind_on_demand_by_hash_t>(tx->get_target_addr(), tx->get_digest_str(), "lack of unit");
+        m_para->get_bus()->push_event(ev);
+        xwarn("xtxpool_service::check_and_response_recv_receipt unit of recv tx not found, need sync on demand,tx:%s", cons_tx->dump().c_str());
     }
 }
 
@@ -297,13 +300,15 @@ bool xtxpool_service::set_commit_prove(data::xcons_transaction_ptr_t & cons_tx) 
         uint64_t justify_table_height = cons_tx->get_unit_cert()->get_parent_block_height() + 2;
         // try load table block first.
         base::xvaccount_t table_vaccount(table_account);
-        base::xauto_ptr<base::xvblock_t> justify_table_block = m_para->get_vblockstore()->load_block_object(table_vaccount, justify_table_height, base::enum_xvblock_flag_authenticated, false);
+        base::xauto_ptr<base::xvblock_t> justify_table_block =
+            m_para->get_vblockstore()->load_block_object(table_vaccount, justify_table_height, base::enum_xvblock_flag_authenticated, false);
         if (justify_table_block != nullptr) {
             cons_tx->set_commit_prove_with_parent_cert(justify_table_block->get_cert());
         } else {
             uint64_t justify_unit_height = cons_tx->get_unit_height() + 2;
             base::xvaccount_t unit_vaccount(account_addr);
-            base::xauto_ptr<base::xvblock_t> justify_unit_block = m_para->get_vblockstore()->load_block_object(unit_vaccount, justify_unit_height, base::enum_xvblock_flag_authenticated, false);
+            base::xauto_ptr<base::xvblock_t> justify_unit_block =
+                m_para->get_vblockstore()->load_block_object(unit_vaccount, justify_unit_height, base::enum_xvblock_flag_authenticated, false);
             if (justify_unit_block == nullptr) {
                 xwarn("xtxpool_service::set_commit_prove can not load justify tableblock and unit block .tx=%s,account=%s,table height=%ld,unit height=%ld",
                       cons_tx->dump().c_str(),
