@@ -184,6 +184,7 @@ namespace top
             virtual bool                  load_block_output(const xvaccount_t & account,xvblock_t* block) = 0;
             //load xvboffdata_t and set into xvblock_t
             virtual bool                  load_block_offdata(const xvaccount_t & account,xvblock_t* block) = 0;
+            virtual bool                  load_block_flags(const xvaccount_t & account,xvblock_t* block) = 0;//update block'flags
             
             virtual bool                  store_block(const xvaccount_t & account,xvblock_t* block)  = 0;
             virtual bool                  delete_block(const xvaccount_t & account,xvblock_t* block) = 0;

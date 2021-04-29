@@ -278,6 +278,17 @@ namespace top
             LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
             return account_obj->load_block_offdata(block);//XTODO,add logic to extract from tabeblock
         }
+    
+        bool                xvblockstore_impl::load_block_flags(const base::xvaccount_t & account,base::xvblock_t* block)//update block'flags
+        {
+            if( (nullptr == block) || (account.get_account() != block->get_account()) )
+            {
+                xerror("xvblockstore_impl::load_block_flags,block NOT match account:%",account.get_account().c_str());
+                return false;
+            }
+            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
+            return account_obj->load_block_flags(block);
+        }
 
         bool    xvblockstore_impl::store_block(base::xauto_ptr<xblockacct_t> & container_account,base::xvblock_t * container_block) //store table/book blocks if they are
         {
