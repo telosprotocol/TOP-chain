@@ -8,6 +8,7 @@
 #include "xcrypto/xckey.h"
 #include "xbase/xutl.h"
 #include "xcertauth/xcertauth_face.h"
+#include "tests/mock/xvchain_creator.hpp"
 
 namespace top { namespace mock {
 
@@ -158,9 +159,15 @@ void xmock_system_t::create_mock_node(std::vector<std::shared_ptr<xmock_node_inf
         node_ptr->m_vhost = vhost_ptr;
         node_ptr->m_vnet = vnet_ptr;
         node_ptr->m_mbus = top::make_unique<mbus::xmessage_bus_t>(true, 1000);
-        node_ptr->m_store = store::xstore_factory::create_store_with_memdb(make_observer(node_ptr->m_mbus));
-        xobject_ptr_t<base::xvblockstore_t> blockstore = nullptr;
-        blockstore.attach(store::xblockstorehub_t::instance().create_block_store(*node_ptr->m_store, ""));
+
+        mock::xvchain_creator creator;
+        creator.create_blockstore_with_xstore();
+        xobject_ptr_t<store::xstore_face_t> store;
+        store.attach(creator.get_xstore());
+        xobject_ptr_t<base::xvblockstore_t> blockstore;
+        blockstore.attach(creator.get_blockstore());
+  
+        node_ptr->m_store = store;
         node_ptr->m_blockstore = blockstore;
 
         node_ptr->create_sync();
