@@ -848,6 +848,38 @@ namespace top
             return (int)it->second.size(); //found existing ones
         }
 
+        size_t   xblockacct_t::load_index_by_height(const uint64_t target_height)
+        {
+            auto it = m_all_blocks.find(target_height);
+            if(it == m_all_blocks.end())//load all at certain height
+            {
+                std::vector<base::xvbindex_t*> _indexes(read_index_from_db(target_height));
+                if(_indexes.empty() == false) //found index at db
+                {
+                    for(auto it = _indexes.begin(); it != _indexes.end(); ++it)
+                    {
+                        cache_index(*it);      //cache it -> link-neighbor->mark-connect->update meta
+
+                        //at entry of load, check connected_flag and meta info
+                        update_meta_metric(*it); //update other meta and connect info
+
+                        (*it)->release_ref();   //release ptr that reference added by read_index_from_db
+                    }
+                    #ifdef ENABLE_METRICS
+                    XMETRICS_TIME_RECORD_KEY("blockstore_load_block_time", get_account() + ":" + std::to_string(target_height));
+                    #endif
+                    return (int)_indexes.size();
+                }
+                //genesis block but dont have data at DB, create it ondemand
+                if(0 == target_height)
+                {
+                    xwarn("xblockacct_t::load_index(),fail found index for addr=%s at height=%" PRIu64 "", get_account().c_str(), target_height);
+                    return 0;
+                }
+            }
+            return (int)it->second.size(); //found existing ones
+        }
+
         //load specific index of block with view_id
         base::xvbindex_t*     xblockacct_t::load_index(const uint64_t target_height,const uint64_t view_id)
         {
