@@ -649,6 +649,18 @@ namespace top
             */
             return true;
         }
-
+        
+        bool      xvblockstore_impl::exist_genesis_block(const base::xvaccount_t & account) {
+            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
+            base::xvbindex_t* target_block = account_obj->query_index(0, 0);
+#if (defined DEBUG)
+            if(target_block != NULL) {//the ptr has been add reference by query_index
+                xdbg("xvblockstore_impl::exist_genesis_block target_block not null");
+            } else {
+                xdbg("xvblockstore_impl::exist_genesis_block target_block null");
+            }
+#endif
+            return (NULL == target_block) ? false : true;
+        }
     };//end of namespace of vstore
 };//end of namespace of top
