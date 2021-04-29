@@ -187,9 +187,8 @@ bool xbatch_packer::on_view_fire(const base::xvevent_t & event, xcsobject_t * fr
     // check if this node is leader
     std::error_code ec{election::xdata_accessor_errc_t::success};
     auto version = accessor->version_from(common::xip2_t{local_xip.low_addr, local_xip.high_addr}, ec);
-    xassert(!ec);
     if (ec) {
-        xerror("xbatch_packer::on_view_fire xip=%s version from error", xcons_utl::xip_to_hex(local_xip).c_str());
+        xwarn("xbatch_packer::on_view_fire xip=%s version from error", xcons_utl::xip_to_hex(local_xip).c_str());
         return false;
     }
     uint16_t rotate_mode = enum_rotate_mode_rotate_by_view_id;
