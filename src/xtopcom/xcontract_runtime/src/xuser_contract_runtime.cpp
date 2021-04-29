@@ -29,8 +29,9 @@
 #include "xcontract_common/xcontract_execution_context.h"
 #include "xcontract_runtime/xerror/xerror.h"
 #include "xcontract_runtime/xuser/xlua/xlua_engine.h"
+#ifdef DBUILD_RUSTVM
 #include "xcontract_runtime/xuser/xwasm/xwasm_engine.h"
-
+#endif
 #include <cassert>
 
 NS_BEG3(top, contract_runtime, user)
@@ -54,6 +55,7 @@ xtransaction_execution_result_t xtop_user_contract_runtime::execute_transaction(
             auto engine = std::make_shared<lua::xlua_engine>();
             engine->publish_script(code, exe_ctx);
             exe_ctx->contract_state()->deploy_src_code(code);
+        #ifdef DBUILD_RUSTVM
         } else if (exe_ctx->transaction_type() == data::enum_xtransaction_type::xtransaction_type_deploy_wasm_contract) {
             auto action_data = exe_ctx->action_data();
             uint64_t tgas_limit{0};
@@ -64,6 +66,7 @@ xtransaction_execution_result_t xtop_user_contract_runtime::execute_transaction(
             auto engine = std::make_shared<user::xwasm_engine_t>();
             //std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
             engine->deploy_contract(code, exe_ctx);
+        #endif
         } else {
             auto engin = std::make_shared<lua::xlua_engine>();
             auto src_code = exe_ctx->contract_state()->src_code();
