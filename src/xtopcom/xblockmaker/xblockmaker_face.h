@@ -26,6 +26,7 @@ class xblockmaker_resources_t {
     virtual base::xvblockstore_t*       get_blockstore() const = 0;
     virtual xtxpool_v2::xtxpool_face_t* get_txpool() const = 0;
     virtual store::xindexstorehub_t*    get_indexstorehub() const = 0;
+    virtual mbus::xmessage_bus_face_t*  get_bus() const = 0;
 };
 using xblockmaker_resources_ptr_t = std::shared_ptr<xblockmaker_resources_t>;
 
@@ -34,19 +35,22 @@ class xblockmaker_resources_impl_t : public xblockmaker_resources_t {
     xblockmaker_resources_impl_t(const observer_ptr<store::xstore_face_t> & store,
                                  const observer_ptr<base::xvblockstore_t> & blockstore,
                                  const observer_ptr<xtxpool_v2::xtxpool_face_t> & txpool,
-                                 const observer_ptr<store::xindexstorehub_t> & indexstorehub)
-    : m_store(store), m_blockstore(blockstore), m_txpool(txpool), m_indexstorehub(indexstorehub) {}
+                                 const observer_ptr<store::xindexstorehub_t> & indexstorehub,
+                                 const observer_ptr<mbus::xmessage_bus_face_t> & bus)
+    : m_store(store), m_blockstore(blockstore), m_txpool(txpool), m_indexstorehub(indexstorehub), m_bus(bus) {}
 
     virtual store::xstore_face_t*       get_store() const {return m_store.get();}
     virtual base::xvblockstore_t*       get_blockstore() const {return m_blockstore.get();}
     virtual xtxpool_v2::xtxpool_face_t* get_txpool() const {return m_txpool.get();}
     virtual store::xindexstorehub_t*    get_indexstorehub() const {return m_indexstorehub.get();}
+    virtual mbus::xmessage_bus_face_t*  get_bus() const {return m_bus.get();}
 
  private:
     observer_ptr<store::xstore_face_t>          m_store{nullptr};
     observer_ptr<base::xvblockstore_t>          m_blockstore{nullptr};
     observer_ptr<xtxpool_v2::xtxpool_face_t>    m_txpool{nullptr};
     observer_ptr<store::xindexstorehub_t>       m_indexstorehub{nullptr};
+    observer_ptr<mbus::xmessage_bus_face_t>     m_bus{nullptr};
 };
 
 struct xunitmaker_result_t {
@@ -136,6 +140,7 @@ class xblock_maker_t : public base::xvaccount_t {
     store::xstore_face_t*       get_store() const {return m_resources->get_store();}
     base::xvblockstore_t*       get_blockstore() const {return m_resources->get_blockstore();}
     xtxpool_v2::xtxpool_face_t*    get_txpool() const {return m_resources->get_txpool();}
+    mbus::xmessage_bus_face_t*  get_bus() const {return m_resources->get_bus();}
     const xblockmaker_resources_ptr_t & get_resources() const {return m_resources;}
 
     bool                        has_uncommitted_blocks() const;
