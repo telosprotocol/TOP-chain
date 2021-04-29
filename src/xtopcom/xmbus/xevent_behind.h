@@ -21,6 +21,7 @@ public:
         type_download,
         type_check,
         type_on_demand,
+        type_on_demand_by_hash,
     };
 
     xevent_behind_t(_minor_type_ sub_type,
@@ -85,12 +86,11 @@ public:
 
 class xevent_behind_on_demand_t : public xevent_behind_t {
 public:
-
     xevent_behind_on_demand_t(
             const std::string& _address,
-            uint64_t _start_height,
-            uint32_t _count,
-            bool _is_consensus,
+            const uint64_t _start_height,
+            const uint32_t _count,
+            const bool _is_consensus,
             const std::string &_reason,
             direction_type dir = to_listener,
             bool _sync = true):
@@ -108,5 +108,93 @@ public:
     bool is_consensus;
     std::string reason;
 };
+
+class xevent_behind_on_demand_by_hash_t : public xevent_behind_t {
+public:
+    xevent_behind_on_demand_by_hash_t(
+            const std::string& _address,
+            const std::string& _hash,
+            const std::string &_reason,
+            direction_type dir = to_listener,
+            bool _sync = true):
+    xevent_behind_t(type_on_demand, dir, _sync),
+    address(_address),
+    hash(_hash),
+    reason(_reason) {
+    }
+
+    std::string address;
+    std::string hash;
+    std::string reason;
+};
+
+// class sync_condition{
+// public:
+//     enum sync_condition_type
+//     {
+//         enum_sync_condition_none        = 0,
+//         enum_sync_condition_block_class = 0,
+//         enum_sync_condition_hash        = 1, 
+//         enum_sync_condition_height      = 2, 
+//     };
+    
+// public:
+//     sync_condition() {
+//         memset((uint8_t *)&m_content, 0, sizeof(m_content));
+//         m_conditon_type = enum_sync_condition_block_class;
+//     }
+
+//     sync_condition(const sync_condition & obj) {
+//         memcpy((uint8_t *)&m_content, (uint8_t *)&obj.m_content, sizeof(m_content));
+//         m_conditon_type = obj.m_conditon_type;
+//     }
+    
+//     sync_condition & operator = (const sync_condition & right) {
+//         memcpy((uint8_t *)&m_content, (uint8_t *)&right.m_content, sizeof(m_content));
+//         m_conditon_type = right.m_conditon_type;
+//         return *this;
+//     }
+
+//     union {
+//         struct {
+//             uint8_t m_none[0];
+//         } none;
+
+//         struct {
+//             uint8_t m_xvblock_class[2];
+//         } block_class; //relation to sync_condition_type.enum_sync_condition_block_class
+
+//         struct {
+//             uint8_t m_hash[32]; 
+//         } hash; //relation to sync_condition_type.enum_sync_condition_hash
+
+//         struct {
+//             uint8_t m_height[8];
+//         } height; //relation to sync_condition_type.enum_sync_condition_height
+//     } m_content;
+//     sync_condition_type m_conditon_type{enum_sync_condition_block_class};
+// };
+
+// class xevent_command_on_demand_t : public xevent_behind_t {
+// public:
+//     xevent_command_on_demand_t(
+//             const std::string& _address,
+//             const sync_condition &left_of_interval,
+//             const sync_condition &right_of_interval,
+//             const std::string &_reason,
+//             const direction_type dir = to_listener,
+//             const bool _sync = true):
+//     xevent_behind_t(type_on_demand, dir, _sync),
+//     m_address(_address),
+//     m_left_of_interval(left_of_interval),
+//     m_right_of_interval(right_of_interval),
+//     m_reason(_reason) {
+//     }
+
+//     std::string m_address;
+//     sync_condition m_left_of_interval;
+//     sync_condition m_right_of_interval;
+//     std::string m_reason;
+// };
 
 NS_END2
