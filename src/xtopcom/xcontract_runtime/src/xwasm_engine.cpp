@@ -1,8 +1,6 @@
 // Copyright (c) 2017-2018 Telos Foundation & contributors
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
-// #ifdef BUILD_RUSTVM
-
 #include "xbase/xbase.h"
 #include "xcontract_common/xcontract_state.h"
 #include "xcontract_runtime/xerror/xerror.h"
@@ -70,4 +68,3 @@ void xtop_wasm_engine::call_contract_erc20(std::string const& func_name, std::ve
 }
 
 NS_END3
-// #endif
