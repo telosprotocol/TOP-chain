@@ -130,7 +130,7 @@ void xchain_downloader_t::on_response(std::vector<data::xblock_ptr_t> &blocks, c
 
     // compare before and after
     for (uint32_t i = 0; i < count; i++) {
-          xblock_ptr_t &block = blocks[i];
+        xblock_ptr_t &block = blocks[i];
 
         uint64_t height = block->get_height();
         uint64_t viewid = block->get_viewid();

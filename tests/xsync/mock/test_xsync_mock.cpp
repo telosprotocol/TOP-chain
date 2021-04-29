@@ -15,6 +15,7 @@
 #include "../../mock/xmock_network_config.hpp"
 #include "../../mock/xmock_network.hpp"
 #include "xmbus/xevent_blockfetcher.h"
+#include "tests/mock/xvchain_creator.hpp"
 
 using namespace top;
 
@@ -58,7 +59,7 @@ static void create_tableblock(xobject_ptr_t<store::xstore_face_t> &store, xobjec
     std::string property("election_list");
     base::xvblock_t *prev_unit_block = blockmock.create_property_block(nullptr, account_address, property);
     base::xvblock_t* prev_table_block = xblocktool_t::create_genesis_empty_table(table_address);
-
+    base::xvaccount_t _vaddress(table_address);
     for (uint32_t i = 0; i < count; i++) {
         std::string value(std::to_string(i));
         base::xvblock_t *curr_unit_block = blockmock.create_property_block(prev_unit_block, account_address, property, value);
@@ -70,15 +71,16 @@ static void create_tableblock(xobject_ptr_t<store::xstore_face_t> &store, xobjec
 
         base::xvblock_t* curr_table_block = xtableblock_util::create_tableblock_no_sign(units, prev_table_block, leader_xip);
         do_multi_sign(shard_nodes, leader_xip, curr_table_block);
-        assert(blockstore->store_block(curr_table_block));
+        
+        assert(blockstore->store_block(_vaddress, curr_table_block));
 
         base::xauto_ptr<base::xvblock_t> lock_tableblock = xblocktool_t::create_next_emptyblock(curr_table_block);
         do_multi_sign(shard_nodes, leader_xip, lock_tableblock.get());
-        assert(blockstore->store_block(lock_tableblock.get()));
+        assert(blockstore->store_block(_vaddress, lock_tableblock.get()));
 
         base::xauto_ptr<base::xvblock_t> cert_tableblock = xblocktool_t::create_next_emptyblock(lock_tableblock.get());
         do_multi_sign(shard_nodes, leader_xip, cert_tableblock.get());
-        assert(blockstore->store_block(cert_tableblock.get()));
+        assert(blockstore->store_block(_vaddress, cert_tableblock.get()));
 
         base::xauto_ptr<base::xvblock_t> commit_unitblock = blockstore->get_latest_committed_block(account_address);
 
@@ -98,11 +100,12 @@ static void create_tableblock(xobject_ptr_t<store::xstore_face_t> &store, xobjec
 static int duplicate_block(xobject_ptr_t<base::xvblockstore_t> &from, xobject_ptr_t<base::xvblockstore_t> &to, const std::string & address, uint64_t height) {
     base::xstream_t stream(base::xcontext_t::instance());
 
-    xauto_ptr<xvblock_t> block = from->load_block_object(address, height);
-    if (block != nullptr) {
-        dynamic_cast<xblock_t*>(block.get())->full_block_serialize_to(stream);
+    base::xvaccount_t _vaddress(address);
+    xblock_vector block = from->load_block_object(_vaddress, height);
+    if (!block.get_vector().empty()) {
+        dynamic_cast<xblock_t*>(block.get_vector()[0])->full_block_serialize_to(stream);
     } else {
-        xauto_ptr<xvblock_t> block2 = from->get_latest_current_block(address);
+        xauto_ptr<xvblock_t> block2 = from->get_latest_cert_block(_vaddress);
         if (block2 == nullptr)
             return -1;
 
@@ -121,7 +124,7 @@ static int duplicate_block(xobject_ptr_t<base::xvblockstore_t> &from, xobject_pt
     block_ptr->reset_block_flags();
     block_ptr->set_block_flag(base::enum_xvblock_flag_authenticated);
 
-    bool ret = to->store_block(block_ptr.get());
+    bool ret = to->store_block(_vaddress, block_ptr.get());
 
     if (ret)
         return 0;
@@ -157,13 +160,16 @@ TEST(test_xsync, behind) {
 
     std::vector<std::shared_ptr<xmock_node_t>> shard_nodes = sys.get_group_node("shard0");
 
-    xobject_ptr_t<store::xstore_face_t> store = store::xstore_factory::create_store_with_memdb(nullptr);
-    xobject_ptr_t<base::xvblockstore_t> blockstore = nullptr;
-    blockstore.attach(store::xblockstorehub_t::instance().create_block_store(*store, ""));
+    mock::xvchain_creator creator;
+    creator.create_blockstore_with_xstore();
+    xobject_ptr_t<store::xstore_face_t> store;
+    store.attach(creator.get_xstore());
+    xobject_ptr_t<base::xvblockstore_t> blockstore;
+    blockstore.attach(creator.get_blockstore());
 
     std::string account_address = xblocktool_t::make_address_user_account("11111111111111111112");
     std::string table_address = account_address_to_block_address(top::common::xaccount_address_t{account_address});
-
+    base::xvaccount_t _vaddress(table_address);
     create_tableblock(store, blockstore, shard_nodes, account_address, 1000);
 
     // set block to node2
@@ -177,7 +183,7 @@ TEST(test_xsync, behind) {
 
     while (1) {
         sleep(1);
-        base::xauto_ptr<base::xvblock_t> blk = shard_nodes[0]->m_blockstore->get_latest_current_block(table_address);
+        base::xauto_ptr<base::xvblock_t> blk = shard_nodes[0]->m_blockstore->get_latest_cert_block(_vaddress);
         printf("height=%lu expect:%u\n", blk->get_height(), 1000);
     }
 }
@@ -219,12 +225,16 @@ TEST(test_xsync, push_and_broadcast) {
 
     std::vector<std::shared_ptr<xmock_node_t>> shard_nodes = sys.get_group_node("shard0");
 
-    xobject_ptr_t<store::xstore_face_t> store = store::xstore_factory::create_store_with_memdb(nullptr);
-    xobject_ptr_t<base::xvblockstore_t> blockstore = nullptr;
-    blockstore.attach(store::xblockstorehub_t::instance().create_block_store(*store, ""));
+    mock::xvchain_creator creator;
+    creator.create_blockstore_with_xstore();
+    xobject_ptr_t<store::xstore_face_t> store;
+    store.attach(creator.get_xstore());
+    xobject_ptr_t<base::xvblockstore_t> blockstore;
+    blockstore.attach(creator.get_blockstore());
 
     std::string account_address = xblocktool_t::make_address_user_account("11111111111111111112");
     std::string table_address = account_address_to_block_address(top::common::xaccount_address_t{account_address});
+    base::xvaccount_t _vaddress(table_address);
 
     create_tableblock(store, blockstore, shard_nodes, account_address, 1000);
 
@@ -236,10 +246,10 @@ TEST(test_xsync, push_and_broadcast) {
         duplicate_block(blockstore, shard_nodes[0]->m_blockstore, table_address, h);
         duplicate_block(blockstore, shard_nodes[1]->m_blockstore, table_address, h);
 
-        base::xauto_ptr<base::xvblock_t> vblock = blockstore->load_block_object(table_address, h);
+        base::xblock_vector vblock = blockstore->load_block_object(_vaddress, h);
 
-        vblock->add_ref();
-        mbus::xevent_ptr_t ev = std::make_shared<mbus::xevent_consensus_data_t>(vblock.get(), false);
+        vblock.get_vector()[0]->add_ref();
+        mbus::xevent_ptr_t ev =  make_object_ptr<mbus::xevent_consensus_data_t>(vblock.get_vector()[0], false);
         shard_nodes[0]->m_mbus->push_event(ev);
         shard_nodes[1]->m_mbus->push_event(ev);
 
@@ -251,7 +261,7 @@ TEST(test_xsync, push_and_broadcast) {
     std::vector<std::shared_ptr<xmock_node_t>> arc_nodes = sys.get_group_node("arc0");
     while (1) {
         for (auto &it: arc_nodes) {
-            printf("%s height=%lu\n", it->m_vnode_id.c_str(), it->m_blockstore->get_genesis_current_block(table_address)->get_height());
+            //printf("%s height=%lu\n", it->m_vnode_id.c_str(), it->m_blockstore->get_genesis_current_block(table_address)->get_height());
         }
         sleep(1);
     } 
@@ -281,13 +291,16 @@ TEST(test_xsync, v1_newblockhash) {
 
     std::vector<std::shared_ptr<xmock_node_t>> arc_nodes = sys.get_group_node("arc0");
 
-    xobject_ptr_t<store::xstore_face_t> store = store::xstore_factory::create_store_with_memdb(nullptr);
-    xobject_ptr_t<base::xvblockstore_t> blockstore = nullptr;
-    blockstore.attach(store::xblockstorehub_t::instance().create_block_store(*store, ""));
+    mock::xvchain_creator creator;
+    creator.create_blockstore_with_xstore();
+    xobject_ptr_t<store::xstore_face_t> store;
+    store.attach(creator.get_xstore());
+    xobject_ptr_t<base::xvblockstore_t> blockstore;
+    blockstore.attach(creator.get_blockstore());
 
     std::string account_address = xblocktool_t::make_address_user_account("11111111111111111112");
     std::string table_address = account_address_to_block_address(top::common::xaccount_address_t{account_address});
-
+    base::xvaccount_t _vaddress(table_address);
     create_tableblock(store, blockstore, arc_nodes, account_address, 1000);
 
     sys.start();
@@ -297,13 +310,13 @@ TEST(test_xsync, v1_newblockhash) {
     for (uint64_t h=1; h<=10; h++) {
         duplicate_block(blockstore, arc_nodes[0]->m_blockstore, table_address, h);
 
-        base::xauto_ptr<base::xvblock_t> block = blockstore->load_block_object(table_address, h);
+        xblock_vector block = blockstore->load_block_object(table_address, h);
 
         base::xstream_t stream(base::xcontext_t::instance());
         auto header = make_object_ptr<xsync_message_header_t>(RandomUint64());
         header->serialize_to(stream);
 
-        auto body = make_object_ptr<sync::xsync_message_v1_newblockhash_t>(block->get_account(), block->get_height(), block->get_viewid());
+        auto body = make_object_ptr<sync::xsync_message_v1_newblockhash_t>(block.get_vector()[0]->get_account(), block.get_vector()[0]->get_height(), block.get_vector()[0]->get_viewid());
         body->serialize_to(stream);
         vnetwork::xmessage_t _msg = vnetwork::xmessage_t({stream.data(), stream.data() + stream.size()}, xmessage_id_sync_v1_newblockhash);
 
@@ -318,7 +331,7 @@ TEST(test_xsync, v1_newblockhash) {
     sleep(1);
 
     while (1) {
-        printf("%s height=%lu\n", arc_nodes[1]->m_vnode_id.c_str(), arc_nodes[1]->m_blockstore->get_genesis_current_block(table_address)->get_height());
+        //printf("%s height=%lu\n", arc_nodes[1]->m_vnode_id.c_str(), arc_nodes[1]->m_blockstore->get_genesis_current_block(table_address)->get_height());
         sleep(1);
     } 
 }
@@ -504,16 +517,20 @@ TEST(test_xsync, on_demand_sync_unit_no_consensus) {
     std::vector<std::shared_ptr<xmock_node_t>> shard_nodes = sys.get_group_node("shard0");
     std::vector<std::shared_ptr<xmock_node_t>> archive_nodes = sys.get_group_node("arc0");
 
-    xobject_ptr_t<store::xstore_face_t> store = store::xstore_factory::create_store_with_memdb(nullptr);
-    xobject_ptr_t<base::xvblockstore_t> blockstore = nullptr;
-    blockstore.attach(store::xblockstorehub_t::instance().create_block_store(*store, ""));
+    mock::xvchain_creator creator;
+    creator.create_blockstore_with_xstore();
+    xobject_ptr_t<store::xstore_face_t> store;
+    store.attach(creator.get_xstore());
+    xobject_ptr_t<base::xvblockstore_t> blockstore;
+    blockstore.attach(creator.get_blockstore());
 
     std::string account_address = xblocktool_t::make_address_user_account("11111111111111111112");
     std::string table_address = account_address_to_block_address(top::common::xaccount_address_t{account_address});
+    base::xvaccount_t _vaddress(table_address);
 
     create_tableblock(store, blockstore, shard_nodes, account_address, 100);
 
-    base::xauto_ptr<base::xvblock_t> last_table_block = blockstore->get_genesis_current_block(table_address);
+    base::xauto_ptr<base::xvblock_t> last_table_block = blockstore->get_latest_cert_block(_vaddress);
     for (uint64_t h=1 ; h<=last_table_block->get_height(); h++) {
         duplicate_block(blockstore, archive_nodes[0]->m_blockstore, table_address, h);
     }
@@ -522,15 +539,16 @@ TEST(test_xsync, on_demand_sync_unit_no_consensus) {
 
     sleep(1);
 
-    mbus::xevent_behind_ptr_t ev = std::make_shared<mbus::xevent_behind_on_demand_t>(
+    mbus::xevent_behind_ptr_t ev = make_object_ptr<mbus::xevent_behind_on_demand_t>(
                     account_address, 1, 99, false, "test");
     shard_nodes[0]->m_mbus->push_event(ev);
 
+    base::xvaccount_t account_vaddress(account_address);
     while (1) {
-        base::xauto_ptr<base::xvblock_t> blk_current = shard_nodes[0]->m_blockstore->get_latest_current_block(table_address);
-        base::xauto_ptr<base::xvblock_t> blk_commit = shard_nodes[0]->m_blockstore->get_latest_committed_block(account_address);
-        base::xauto_ptr<base::xvblock_t> blk_lock = shard_nodes[0]->m_blockstore->get_latest_locked_block(account_address);
-        base::xauto_ptr<base::xvblock_t> blk_cert = shard_nodes[0]->m_blockstore->get_latest_cert_block(account_address);
+        base::xauto_ptr<base::xvblock_t> blk_current = shard_nodes[0]->m_blockstore->get_latest_cert_block(account_vaddress);
+        base::xauto_ptr<base::xvblock_t> blk_commit = shard_nodes[0]->m_blockstore->get_latest_committed_block(account_vaddress);
+        base::xauto_ptr<base::xvblock_t> blk_lock = shard_nodes[0]->m_blockstore->get_latest_locked_block(account_vaddress);
+        base::xauto_ptr<base::xvblock_t> blk_cert = shard_nodes[0]->m_blockstore->get_latest_cert_block(account_vaddress);
         printf("height current=%lu %lu,%lu,%lu\n", blk_current->get_height(), blk_commit->get_height(), blk_lock->get_height(), blk_cert->get_height());
         sleep(1);
     }
@@ -546,16 +564,20 @@ TEST(test_xsync, on_demand_sync_unit_consensus) {
     std::vector<std::shared_ptr<xmock_node_t>> shard_nodes = sys.get_group_node("shard0");
     std::vector<std::shared_ptr<xmock_node_t>> archive_nodes = sys.get_group_node("arc0");
 
-    xobject_ptr_t<store::xstore_face_t> store = store::xstore_factory::create_store_with_memdb(nullptr);
-    xobject_ptr_t<base::xvblockstore_t> blockstore = nullptr;
-    blockstore.attach(store::xblockstorehub_t::instance().create_block_store(*store, ""));
+    mock::xvchain_creator creator;
+    creator.create_blockstore_with_xstore();
+    xobject_ptr_t<store::xstore_face_t> store;
+    store.attach(creator.get_xstore());
+    xobject_ptr_t<base::xvblockstore_t> blockstore;
+    blockstore.attach(creator.get_blockstore());
 
     std::string account_address = xblocktool_t::make_address_user_account("11111111111111111112");
     std::string table_address = account_address_to_block_address(top::common::xaccount_address_t{account_address});
+    base::xvaccount_t _vaddress(table_address);
 
     create_tableblock(store, blockstore, shard_nodes, account_address, 100);
 
-    base::xauto_ptr<base::xvblock_t> last_table_block = blockstore->get_genesis_current_block(table_address);
+    base::xauto_ptr<base::xvblock_t> last_table_block = blockstore->get_latest_cert_block(_vaddress);
     for (uint64_t h=1 ; h<=last_table_block->get_height(); h++) {
         duplicate_block(blockstore, archive_nodes[0]->m_blockstore, table_address, h);
     }
@@ -564,15 +586,16 @@ TEST(test_xsync, on_demand_sync_unit_consensus) {
 
     sleep(1);
 
-    mbus::xevent_behind_ptr_t ev = std::make_shared<mbus::xevent_behind_on_demand_t>(
+    mbus::xevent_behind_ptr_t ev = make_object_ptr<mbus::xevent_behind_on_demand_t>(
                     account_address, 86, 100, true, "test");
     shard_nodes[0]->m_mbus->push_event(ev);
 
+    base::xvaccount_t account_vaddress(account_address);
     while (1) {
-        base::xauto_ptr<base::xvblock_t> blk_current = shard_nodes[0]->m_blockstore->get_latest_current_block(table_address);
-        base::xauto_ptr<base::xvblock_t> blk_commit = shard_nodes[0]->m_blockstore->get_latest_committed_block(account_address);
-        base::xauto_ptr<base::xvblock_t> blk_lock = shard_nodes[0]->m_blockstore->get_latest_locked_block(account_address);
-        base::xauto_ptr<base::xvblock_t> blk_cert = shard_nodes[0]->m_blockstore->get_latest_cert_block(account_address);
+        base::xauto_ptr<base::xvblock_t> blk_current = shard_nodes[0]->m_blockstore->get_latest_cert_block(account_vaddress);
+        base::xauto_ptr<base::xvblock_t> blk_commit = shard_nodes[0]->m_blockstore->get_latest_committed_block(account_vaddress);
+        base::xauto_ptr<base::xvblock_t> blk_lock = shard_nodes[0]->m_blockstore->get_latest_locked_block(account_vaddress);
+        base::xauto_ptr<base::xvblock_t> blk_cert = shard_nodes[0]->m_blockstore->get_latest_cert_block(account_vaddress);
         printf("height current=%lu %lu,%lu,%lu\n", blk_current->get_height(), blk_commit->get_height(), blk_lock->get_height(), blk_cert->get_height());
         sleep(1);
     }
@@ -588,16 +611,20 @@ TEST(test_xsync, on_demand_sync_table_no_consensus) {
     std::vector<std::shared_ptr<xmock_node_t>> shard_nodes = sys.get_group_node("shard0");
     std::vector<std::shared_ptr<xmock_node_t>> archive_nodes = sys.get_group_node("arc0");
 
-    xobject_ptr_t<store::xstore_face_t> store = store::xstore_factory::create_store_with_memdb(nullptr);
-    xobject_ptr_t<base::xvblockstore_t> blockstore = nullptr;
-    blockstore.attach(store::xblockstorehub_t::instance().create_block_store(*store, ""));
+    mock::xvchain_creator creator;
+    creator.create_blockstore_with_xstore();
+    xobject_ptr_t<store::xstore_face_t> store;
+    store.attach(creator.get_xstore());
+    xobject_ptr_t<base::xvblockstore_t> blockstore;
+    blockstore.attach(creator.get_blockstore());
 
     std::string account_address = xblocktool_t::make_address_user_account("11111111111111111112");
     std::string table_address = account_address_to_block_address(top::common::xaccount_address_t{account_address});
+    base::xvaccount_t _vaddress(table_address);
 
     create_tableblock(store, blockstore, shard_nodes, account_address, 100);
 
-    base::xauto_ptr<base::xvblock_t> last_table_block = blockstore->get_genesis_current_block(table_address);
+    base::xauto_ptr<base::xvblock_t> last_table_block = blockstore->get_latest_cert_block(_vaddress);
     for (uint64_t h=1 ; h<=last_table_block->get_height(); h++) {
         duplicate_block(blockstore, archive_nodes[0]->m_blockstore, table_address, h);
     }
@@ -606,16 +633,16 @@ TEST(test_xsync, on_demand_sync_table_no_consensus) {
 
     sleep(1);
 
-    mbus::xevent_behind_ptr_t ev = std::make_shared<mbus::xevent_behind_on_demand_t>(
+    mbus::xevent_behind_ptr_t ev = make_object_ptr<mbus::xevent_behind_on_demand_t>(
                     table_address, 1, 99, false, "test");
     shard_nodes[0]->m_mbus->push_event(ev);
 
     while (1) {
         sleep(1);
-        base::xauto_ptr<base::xvblock_t> blk_current = shard_nodes[0]->m_blockstore->get_latest_current_block(table_address);
-        base::xauto_ptr<base::xvblock_t> blk_commit = shard_nodes[0]->m_blockstore->get_latest_committed_block(table_address);
-        base::xauto_ptr<base::xvblock_t> blk_lock = shard_nodes[0]->m_blockstore->get_latest_locked_block(table_address);
-        base::xauto_ptr<base::xvblock_t> blk_cert = shard_nodes[0]->m_blockstore->get_latest_cert_block(table_address);
+        base::xauto_ptr<base::xvblock_t> blk_current = shard_nodes[0]->m_blockstore->get_latest_cert_block(_vaddress);
+        base::xauto_ptr<base::xvblock_t> blk_commit = shard_nodes[0]->m_blockstore->get_latest_committed_block(_vaddress);
+        base::xauto_ptr<base::xvblock_t> blk_lock = shard_nodes[0]->m_blockstore->get_latest_locked_block(_vaddress);
+        base::xauto_ptr<base::xvblock_t> blk_cert = shard_nodes[0]->m_blockstore->get_latest_cert_block(_vaddress);
         printf("height current=%lu %lu,%lu,%lu\n", blk_current->get_height(), blk_commit->get_height(), blk_lock->get_height(), blk_cert->get_height());
     }
 }
