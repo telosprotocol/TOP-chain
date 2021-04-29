@@ -1,7 +1,7 @@
 // Copyright (c) 2017-2018 Telos Foundation & contributors
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
-#ifdef DBUILD_RUSTVM
+// #ifdef BUILD_RUSTVM
 
 #include "xbase/xbase.h"
 #include "xcontract_common/xcontract_state.h"
@@ -30,14 +30,19 @@ void xtop_wasm_engine::deploy_contract_erc20(std::vector<xbyte_buffer_t> const& 
     //     top::error::throw_error(ec, "invalid wasm code");
     // }
 
-    xbyte_buffer_t code = erc20_code;
-    erc20_params params_ptr{exe_ctx->contract_state(), std::string{code.data(), code.data() + code.size()},"TST",100000};
-    Erc20_Instance * ins_ptr = get_erc20_instance((uint8_t*)code.data(),code.size());
-    set_gas_left(ins_ptr, 100);
+    assert(params.size() == 3); // 0: the code, 1: erc20 symbal, 2: total supply
+    erc20_params params_ptr{
+        exe_ctx->contract_state(),
+        std::string{params[0].data(),  params[0].data() +  params[0].size()},
+        std::string{params[1].data(),  params[1].data() +  params[1].size()},
+        std::string{params[2].data(),  params[2].data() +  params[2].size()},
+    };
+    Erc20_Instance * ins_ptr = get_erc20_instance((uint8_t*)params[0].data(),params[0].size());
 
-    auto res = depoly_erc20(ins_ptr, &params_ptr);
-    printf("wasm_engine::deploy_contract_erc20 res: %d \n", res);
-    printf("left gas: %lu \n",get_gas_left(ins_ptr));
+    set_gas_left(ins_ptr, 1000);
+    auto result = depoly_erc20(ins_ptr, &params_ptr);
+    std::cout << "result" << result << "\n";
+
     return;
 
     // auto contract_state = exe_ctx->contract_state();
@@ -65,4 +70,4 @@ void xtop_wasm_engine::call_contract_erc20(std::string const& func_name, std::ve
 }
 
 NS_END3
-#endif
+// #endif

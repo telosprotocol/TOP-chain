@@ -10,23 +10,26 @@ int32_t c_call(erc20_params * ptr, int32_t * used_gas) {
 
 int32_t c_depoly(erc20_params * ptr, int32_t * used_gas) {
     printf("[debug]test c_depoly %p\n", ptr);
-    // printf("[debug]%s \n", ptr->code.c_str());
-    printf("[debug]%s \n", ptr->token_symbol.c_str());
-    printf("[debug]%lu \n", ptr->total_supply);
 
     auto contract_state = ptr->contract_state;
     auto state_account = contract_state->state_account_address();
+    // code
     top::contract_common::properties::xproperty_identifier_t src_property_id{
         "src_code", top::contract_common::properties::xproperty_type_t::src_code, top::contract_common::properties::xproperty_category_t::user};
     contract_state->access_control()->code_prop_create(state_account, src_property_id);
     contract_state->access_control()->code_prop_update(state_account, src_property_id, ptr->code);
-
+    // balances map & owner balance
     top::contract_common::properties::xproperty_identifier_t balances_property_id{
         "map_balances", top::contract_common::properties::xproperty_type_t::map, top::contract_common::properties::xproperty_category_t::user};
     contract_state->access_control()->map_prop_create<std::string, std::string>(state_account, balances_property_id);
+    contract_state->access_control()->map_prop_add<std::string, std::string>(
+        state_account, balances_property_id, state_account.value(), ptr->total_supply);
+    //symbol
+    std::string symbol_property_name = "symbol";
+    contract_state->access_control()->STR_PROP_CREATE(symbol_property_name);
+    contract_state->access_control()->STR_PROP_UPDATE(symbol_property_name, ptr->symbol);
 
-    contract_state->access_control()->STR_PROP_CREATE("token_symbol");
-    contract_state->access_control()->STR_PROP_UPDATE("token_symbol", ptr->token_symbol);
+    std::cout << "in c_deploy" << contract_state->access_control()->STR_PROP_QUERY(symbol_property_name) << "\n";
 
 
     printf("used_gas: %p %d\n", used_gas, *used_gas);

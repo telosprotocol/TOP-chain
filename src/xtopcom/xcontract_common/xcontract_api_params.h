@@ -9,12 +9,18 @@ using top::contract_common::xcontract_state_t;
 struct erc20_params {
     observer_ptr<xcontract_state_t> contract_state;
     std::string code;
-    std::string token_symbol;
-    uint64_t total_supply;
+    std::string symbol;
+    std::string total_supply;
 
-    // depoly
-    erc20_params(observer_ptr<xcontract_state_t> _contract_state, std::string const & _code, std::string const & _token_symbol, uint64_t _total_supply)
-      : contract_state{_contract_state}, code{_code}, token_symbol{_token_symbol}, total_supply{_total_supply} {
+    std::string account_from;
+    std::string account_to;
+    int value;
+    erc20_params(observer_ptr<xcontract_state_t> contract_state, std::string const& code, std::string const& symbol, std::string const& total_supply):
+                contract_state(contract_state), code(code), symbol(symbol), total_supply(total_supply){
+    }
+    erc20_params(std::string _f, std::string _t, int _v) : account_from{_f}, account_to{_t}, value{_v} {
+    }
+    erc20_params(observer_ptr<xcontract_state_t> _contract_state, std::string _code) : contract_state{_contract_state}, code{_code} {
     }
     // call
     // erc20_params()
