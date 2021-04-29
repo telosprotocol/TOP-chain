@@ -102,6 +102,10 @@ public:
         return nullptr;
     }
 
+    std::vector<base::xvblock_ptr_t> load_block_object(const std::string & tx_hash,const base::enum_transaction_subtype type) override {
+        return {};
+    }
+
     bool load_block_input(const base::xvaccount_t &, base::xvblock_t *) override {
         return false;
     }
