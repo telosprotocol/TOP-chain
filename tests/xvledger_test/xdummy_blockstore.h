@@ -157,6 +157,10 @@ public:
     base::xvtransaction_store_ptr_t  query_tx(const std::string &, base::enum_transaction_subtype) override {
         return nullptr;
     }
+    
+    bool exist_genesis_block(base::xvaccount_t const & account) override {
+        return false;
+    }
 };
 using xdummy_block_store_t = xtop_dummy_blockstore;
 
