@@ -1535,7 +1535,6 @@ xaccount_context_t::get_block_by_height(const std::string & owner, uint64_t heig
     // TODO(jimmy)
     base::xvaccount_t _vaddr(owner);
     base::xauto_ptr<base::xvblock_t> _block = base::xvchain_t::instance().get_xblockstore()->load_block_object(_vaddr, height, base::enum_xvblock_flag_committed, true);
-    xassert(_block != nullptr);
     if (_block != nullptr) {
         _block->add_ref();
         return dynamic_cast<data::xblock_t*>(_block.get());
