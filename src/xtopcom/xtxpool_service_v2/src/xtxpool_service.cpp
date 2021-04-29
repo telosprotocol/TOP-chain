@@ -285,7 +285,7 @@ void xtxpool_service::check_and_response_recv_receipt(const xcons_transaction_pt
         // TODO(jimmy) sync invoke
         mbus::xevent_ptr_t ev = make_object_ptr<mbus::xevent_behind_on_demand_by_hash_t>(tx->get_target_addr(), tx->get_digest_str(), "lack of unit");
         m_para->get_bus()->push_event(ev);
-        xwarn("xtxpool_service::check_and_response_recv_receipt recv tx not found txhash:%s", tx->get_digest_hex_str().c_str());
+        xwarn("xtxpool_service::check_and_response_recv_receipt unit of recv tx not found, need sync on demand,tx:%s", cons_tx->dump().c_str());
     }
 }
 
