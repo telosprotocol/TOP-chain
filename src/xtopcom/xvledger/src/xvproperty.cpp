@@ -324,6 +324,10 @@ namespace top
     
         const vtoken_t xtokenvar_t::deposit(const vtoken_t add_token)
         {
+            xassert(add_token >= 0);
+            if((int64_t)add_token <= 0)
+                return get_balance();
+            
             xvalue_t param(add_token);
             xvmethod_t instruction(get_execute_uri(),enum_xvinstruct_class_state_function, enum_xvinstruct_state_method_deposit_token,param);
             return (vtoken_t)execute(instruction,(xvcanvas_t*)get_canvas()).get_token();
@@ -854,24 +858,30 @@ namespace top
         }
         
         //write interface
-        bool  xmtokens_t::deposit(const std::string & token_name ,const int64_t add_token)//return the updated balance
+        int64_t  xmtokens_t::deposit(const std::string & token_name ,const int64_t add_token)//return the updated balance
         {
-            xassert(add_token > 0);
-            if(add_token <= 0)
-                return false;
-            
             const int64_t cur_balance = get_balance(token_name);
-            return base::insert(token_name, (cur_balance + add_token));
+            xassert(add_token >= 0);
+            if(add_token <= 0)
+                return cur_balance;
+ 
+            if(base::insert(token_name, (cur_balance + add_token)))
+                return (cur_balance + add_token);
+            else
+                return cur_balance;
         }
     
-        bool  xmtokens_t::withdraw(const std::string & token_name,const int64_t sub_token)//return the updated balance
+        int64_t  xmtokens_t::withdraw(const std::string & token_name,const int64_t sub_token)//return the updated balance
         {
-            xassert(sub_token > 0);
-            if(sub_token <= 0)
-                return false;
-            
             const int64_t cur_balance = get_balance(token_name);
-            return base::insert(token_name, (cur_balance - sub_token));
+            xassert(sub_token >= 0);
+            if(sub_token <= 0)
+                return cur_balance;
+ 
+            if(base::insert(token_name, (cur_balance - sub_token)))
+                return (cur_balance - sub_token);
+            else
+                return cur_balance;
         }
     
         //---------------------------------xmtokens_t---------------------------------//

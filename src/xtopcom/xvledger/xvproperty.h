@@ -863,8 +863,8 @@ namespace top
             const int64_t  get_balance(const std::string & token_name);
             
         public: //write interface
-            bool  deposit(const std::string & token_name ,const int64_t add_token);
-            bool  withdraw(const std::string & token_name,const int64_t sub_token);
+            int64_t  deposit(const std::string & token_name ,const int64_t add_token);
+            int64_t  withdraw(const std::string & token_name,const int64_t sub_token);
             
         private://disable write api exposed by xstringvar_t
             using  base::insert;

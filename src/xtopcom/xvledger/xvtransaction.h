@@ -12,6 +12,7 @@ namespace top
 {
     namespace base
     {
+       
         class xvtransaction_store_t : public xdataunit_t
         {
         public:
