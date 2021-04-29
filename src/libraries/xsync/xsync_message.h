@@ -740,4 +740,49 @@ public:
     uint64_t m_height_of_fullblock;
 };
 
+struct xsync_message_get_on_demand_by_hash_blocks_t : public top::basic::xserialize_face_t {
+protected:
+    virtual ~xsync_message_get_on_demand_by_hash_blocks_t() {}
+public:
+    xsync_message_get_on_demand_by_hash_blocks_t() {
+    }
+
+    xsync_message_get_on_demand_by_hash_blocks_t(
+            const std::string& _address,
+            const std::string& _hash) :
+    address(_address),
+    hash(_hash) {
+    }
+
+protected:
+    int32_t do_write(base::xstream_t & stream) override {
+        KEEP_SIZE();
+        SERIALIZE_FIELD_BT(address);
+        SERIALIZE_FIELD_BT(hash);
+
+        return CALC_LEN();
+    }
+
+    int32_t do_read(base::xstream_t & stream) override {
+
+        try {
+
+            KEEP_SIZE();
+            DESERIALIZE_FIELD_BT(address);
+            DESERIALIZE_FIELD_BT(hash);
+
+            return CALC_LEN();
+        } catch (...) {
+            address = "";
+            hash = "";
+        }
+
+        return 0;
+    }
+
+public:
+    std::string address;
+    std::string hash;
+};
+
 NS_END2
