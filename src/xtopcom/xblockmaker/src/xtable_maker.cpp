@@ -156,9 +156,9 @@ bool xtable_maker_t::create_lightunit_makers(const xtablemaker_para_t & table_pa
         }
 
         // 3.then check if tx is invalid
-        base::enum_transaction_subtype cur_tx_subtype;
-        base::xtable_shortid_t cur_tableid;
-        uint64_t cur_receipt_id;
+        base::enum_transaction_subtype cur_tx_subtype = base::enum_transaction_subtype_invalid;
+        base::xtable_shortid_t cur_tableid = 0xFFFF;
+        uint64_t cur_receipt_id = 0;
         if (tx->is_recv_tx() || tx->is_confirm_tx()) {
             cur_tx_subtype = tx->get_tx_subtype();
             auto & target_account_addr = (tx->is_recv_tx()) ? tx->get_source_addr() : tx->get_target_addr();
