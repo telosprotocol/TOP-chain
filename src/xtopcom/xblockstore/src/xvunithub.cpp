@@ -664,14 +664,21 @@ namespace top
         bool      xvblockstore_impl::exist_genesis_block(const base::xvaccount_t & account) {
             LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
             base::xvbindex_t* target_block = account_obj->query_index(0, 0);
+            if (target_block != NULL) {
+                xdbg("xvblockstore_impl::exist_genesis_block target_block not null");
+                return true;
+            }
+            if (account_obj->load_index_by_height(0) > 0) {
+                target_block = account_obj->query_index(0, 0); //found existing ones
+            }
 #if (defined DEBUG)
             if(target_block != NULL) {//the ptr has been add reference by query_index
-                xdbg("xvblockstore_impl::exist_genesis_block target_block not null");
+                xdbg("xvblockstore_impl::exist_genesis_block target_block not null after load");
             } else {
-                xdbg("xvblockstore_impl::exist_genesis_block target_block null");
+                xdbg("xvblockstore_impl::exist_genesis_block target_block null after load");
             }
 #endif
-            return (NULL == target_block) ? false : true;
+            return (NULL != target_block);
         }
     };//end of namespace of vstore
 };//end of namespace of top

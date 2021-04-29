@@ -258,6 +258,11 @@ bool xtop_application::check_rootblock() {
 bool xtop_application::create_genesis_accounts() {
     std::map<std::string, uint64_t> genesis_accounts = xrootblock_t::get_all_genesis_accounts();
     for (auto const & pair : genesis_accounts) {
+        common::xaccount_address_t account_address{pair.first};
+        if (m_blockstore->exist_genesis_block(account_address.value())) {
+            xdbg("xtop_contract_manager::setup_chain blockchain account %s genesis block exist", account_address.c_str());
+            continue;
+        }
         if (!create_genesis_account(pair.first, pair.second)) {
             xassert(0);
             return false;
@@ -276,12 +281,12 @@ bool xtop_application::create_genesis_account(std::string const & address, uint6
     // m_blockstore->delete_block(_vaddr, genesis_block.get());  // delete default genesis block
     auto ret = m_blockstore->store_block(_vaddr, genesis_block.get());
     if (!ret) {
-        xwarn("xtop_application::create_genesis_account store genesis block fail");
+        xerror("xtop_application::create_genesis_account store genesis block fail");
         return false;
     }
     ret = m_blockstore->execute_block(_vaddr, genesis_block.get());
     if (!ret) {
-        xwarn("xtop_application::create_genesis_account execute genesis block fail");
+        xerror("xtop_application::create_genesis_account execute genesis block fail");
         return false;
     }
     return true;
