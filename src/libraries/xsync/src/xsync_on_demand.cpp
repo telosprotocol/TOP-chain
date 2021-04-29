@@ -338,8 +338,11 @@ void xsync_on_demand_t::handle_blocks_by_hash_request(const xsync_message_get_on
         return;
 
     std::vector<data::xblock_ptr_t> blocks;
+    auto xvblocks = m_sync_store -> load_block_objects(hash, enum_transaction_subtype_recv);
 
-    /* todo */
+    for (uint32_t i = 0; i < xvblocks.size(); i++){
+        blocks.push_back(xblock_t::raw_vblock_to_object_ptr(xvblocks[i].get()));
+    }
     m_sync_sender->send_on_demand_blocks(blocks, xmessage_id_sync_on_demand_by_hash_blocks, "on_demand_by_hash_blocks", network_self, to_address);
 }
 
