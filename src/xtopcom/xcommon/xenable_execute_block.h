@@ -12,7 +12,7 @@
 
 NS_BEG2(top, common)
 
-template <class T, template <typename> class SmartPtrT>
+template <class StateT, template <typename> class SmartPtrT>
 class xtop_enable_execute_block {
 public:
     xtop_enable_execute_block() = default;
@@ -22,12 +22,18 @@ public:
     xtop_enable_execute_block & operator=(xtop_enable_execute_block &&) = default;
     virtual ~xtop_enable_execute_block() = default;
 
-    /// @brief Apply block data onto current object of type T.
+    /// @brief Apply block data onto current object of type StateT.
     /// @param block The block object to be applied.
     /// @param ec The error code that will be set in the execute process.
     virtual void execute_block(SmartPtrT<data::xblock_t const> block, std::error_code & ec) = 0;
 
-    /// @brief Apply block data onto current object of type T.
+    virtual SmartPtrT<StateT> execute_block(SmartPtrT<data::xblock_t const> block, std::error_code & ec) const {
+        SmartPtrT<StateT> new_state_object = static_cast<StateT const *>(this)->clone();
+        new_state_object->execute_block(std::move(block), ec);
+        return new_state_object;
+    }
+
+    /// @brief Apply block data onto current object of type StateT.
     ///        If any error is seen, top::error::xchain_error_t exception will be thrown.
     /// @param block The block object ot be applied.
     virtual void execute_block(SmartPtrT<data::xblock_t const> block) {

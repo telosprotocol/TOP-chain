@@ -170,7 +170,7 @@ class xproperty_binlog_t : public xserializable_based_on<void> {
         return false;
     }
 
-    std::vector<xproperty_instruction_t> get_logs() {
+    std::vector<xproperty_instruction_t> const & get_logs() const noexcept {
         return m_logs;
     }
 

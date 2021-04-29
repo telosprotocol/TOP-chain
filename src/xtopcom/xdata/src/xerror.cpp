@@ -22,6 +22,21 @@ static char const * const errc_to_string(int code) {
     case xerrc_t::update_state_block_type_mismatch:
         return "update state failed due to mismatch block type";
 
+    case xerrc_t::property_already_exist:
+        return "property name already exist";
+
+    case xerrc_t::property_type_invalid:
+        return "property type invalid";
+
+    case xerrc_t::property_hash_mismatch:
+        return "property hash mismatch";
+
+    case xerrc_t::property_not_exist:
+        return "property not exist";
+
+    case xerrc_t::binlog_instruction_type_invalid:
+        return "binlog instruction type invalid";
+
     default:
         return "unknown data module error";
     }
