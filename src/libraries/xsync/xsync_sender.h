@@ -41,7 +41,7 @@ public:
     void send_blocks(xsync_msg_err_code_t code, const std::string &address, const std::vector<data::xblock_ptr_t> &blocks, const vnetwork::xvnode_address_t& self_addr, const vnetwork::xvnode_address_t& target_addr);
 
     void send_get_on_demand_blocks(const std::string &address, uint64_t start_height, uint32_t count, bool is_consensus, const vnetwork::xvnode_address_t &self_addr, const vnetwork::xvnode_address_t &target_addr);
-    void send_on_demand_blocks(const std::vector<data::xblock_ptr_t> &blocks, const vnetwork::xvnode_address_t &self_addr, const vnetwork::xvnode_address_t &target_addr);
+    void send_on_demand_blocks(const std::vector<data::xblock_ptr_t> &blocks, const common::xmessage_id_t msgid, const std::string metric_key, const vnetwork::xvnode_address_t &self_addr, const vnetwork::xvnode_address_t &target_addr);
 
     void send_broadcast_chain_state(const std::vector<xchain_state_info_t> &info_list, const vnetwork::xvnode_address_t &self_addr, const vnetwork::xvnode_address_t &target_addr);
     void send_response_chain_state(const std::vector<xchain_state_info_t> &info_list, const vnetwork::xvnode_address_t &self_addr, const vnetwork::xvnode_address_t &target_addr);
@@ -58,6 +58,10 @@ public:
 
     void send_chain_snapshot(const xsync_message_chain_snapshot_t &chain_snapshot, const common::xmessage_id_t msgid, const vnetwork::xvnode_address_t &self_addr, const vnetwork::xvnode_address_t &target_addr);
     void send_chain_snapshot_meta(const xsync_message_chain_snapshot_meta_t &chain_snapshot_meta, const common::xmessage_id_t msgid, const vnetwork::xvnode_address_t &self_addr, const vnetwork::xvnode_address_t &target_addr);
+
+    void send_get_on_demand_by_hash_blocks(const std::string &address, const std::string &hash, const vnetwork::xvnode_address_t &self_addr, const vnetwork::xvnode_address_t &target_addr);
+    void send_on_demand_by_hash_blocks(const std::vector<data::xblock_ptr_t> &blocks, const vnetwork::xvnode_address_t &self_addr, const vnetwork::xvnode_address_t &target_addr);
+    void send_message(xobject_ptr_t<basic::xserialize_face_t> serializer, const common::xmessage_id_t msgid, const std::string metric_key, const vnetwork::xvnode_address_t &self_addr, const vnetwork::xvnode_address_t &target_addr);
 protected:
     std::string m_vnode_id;
     observer_ptr<vnetwork::xvhost_face_t> m_vhost{};
