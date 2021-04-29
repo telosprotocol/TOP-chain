@@ -111,11 +111,6 @@ class xproperty_binlog_t : public xserializable_based_on<void> {
             if (ret) {
                 return;
             }
-        } else if (instruction.m_op_code == xproperty_cmd_type_map_remove) {
-            auto ret = delete_binlog_map_set(xproperty_cmd_type_map_set, instruction.m_op_para1);
-            if (ret) {
-                return;
-            }
         } else if (instruction.m_op_code == xproperty_cmd_type_string_set) {
             delete_binlog_string_set(xproperty_cmd_type_string_set);
         } else if (instruction.m_op_code == xproperty_cmd_type_list_clear) {
