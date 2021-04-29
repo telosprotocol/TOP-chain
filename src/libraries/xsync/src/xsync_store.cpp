@@ -132,4 +132,9 @@ std::vector<data::xvblock_ptr_t> xsync_store_t::load_block_objects(const std::st
     return blocks;
 }
 
+std::vector<data::xvblock_ptr_t> xsync_store_t::load_block_objects(const std::string & tx_hash, const base::enum_transaction_subtype type) {
+    auto blocks = m_blockstore->load_block_object(tx_hash, type);
+    return blocks;
+}
+
 NS_END2
