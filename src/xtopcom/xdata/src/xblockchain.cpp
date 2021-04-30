@@ -158,8 +158,8 @@ bool xblockchain2_t::add_light_unit(const xblock_t * block) {
 
         // check propertys size
         std::map<std::string, xdataobj_ptr_t> clone_props = cmd.get_all_property();
-        xdbg("xblockchain2_t::add_light_unit %s clone_props_size=%zu,unit_prop_size=%zu",
-            block->dump().c_str(), clone_props.size(), block->get_property_hash_map().size());
+        xdbg("xblockchain2_t::add_light_unit %s current_props_size=%zu,clone_props_size=%zu,unit_prop_size=%zu",
+            block->dump().c_str(), current_props.size(), clone_props.size(), block->get_property_hash_map().size());
 
         // check propertys hash and save property
         for (auto &prop : clone_props) {
@@ -173,9 +173,9 @@ bool xblockchain2_t::add_light_unit(const xblock_t * block) {
                     block->dump().c_str(), to_hex_str(prop_hash).c_str(), to_hex_str(unit_prop_hash).c_str());
                 return false;
             }
-            set_property(prop.first, prop.second);
             xdbg("xblockchain2_t::add_light_unit block=%s, changed property name=%s", block->dump().c_str(), prop.first.c_str());
         }
+        set_all_propertys(clone_props);
     }
 
     m_account_state.set_balance_change(unit->get_balance_change());
@@ -534,6 +534,18 @@ std::string xblockchain2_t::get_extend_data(uint16_t name) {
 
 void xblockchain2_t::set_property(const std::string & prop, const xdataobj_ptr_t & obj) {
     m_property_objs[prop] = obj;
+}
+
+void xblockchain2_t::set_all_propertys(const std::map<std::string, xdataobj_ptr_t> & propobjs) {
+    m_property_objs = propobjs;
+}
+
+xdataobj_ptr_t xblockchain2_t::find_property(const std::string & prop) const {
+    auto iter = m_property_objs.find(prop);
+    if (iter != m_property_objs.end()) {
+        return iter->second;
+    }
+    return nullptr;
 }
 
 

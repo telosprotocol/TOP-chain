@@ -204,6 +204,7 @@ class xaccount_context_t {
     int32_t get_vote_info(const std::string& lock_hash_str, std::string& value);
     int32_t get_vote_out_info(const std::string& addr_to, const std::string& lock_hash_str, std::string& value);
     int32_t clear_vote_out_info(const std::string& lock_hash);
+    bool    load_blocks_from_full(const xblock_ptr_t & latest_block, std::map<uint64_t, xblock_ptr_t> & blocks);
 
  public:
     uint32_t get_token_price() const ;

@@ -119,7 +119,9 @@ class xblockchain2_t : public xbase_dataobj_t<xblockchain2_t, xdata_type_blockch
 
  public:  // property apis
     void        set_property(const std::string & prop, const xdataobj_ptr_t & obj);
-    const std::map<std::string, xdataobj_ptr_t> &   get_property_objs() {return m_property_objs;}
+    void        set_all_propertys(const std::map<std::string, xdataobj_ptr_t> & propobjs);
+    xdataobj_ptr_t      find_property(const std::string & prop) const;
+    const std::map<std::string, xdataobj_ptr_t> &   get_property_objs() const {return m_property_objs;}
 
  private:
     uint8_t                     m_version{0};

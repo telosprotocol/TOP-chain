@@ -1230,12 +1230,78 @@ int32_t xaccount_context_t::map_copy_get(const std::string & key, std::map<std::
     }
 }
 
+bool xaccount_context_t::load_blocks_from_full(const xblock_ptr_t & latest_block, std::map<uint64_t, xblock_ptr_t> & blocks) {
+    base::xvaccount_t _vaddr(latest_block->get_account());
+    // load latest blocks and then apply to state
+    xblock_ptr_t current_block = latest_block;
+    blocks[current_block->get_height()] = current_block;
+    while (1) {
+        if ( current_block->is_genesis_block() && current_block->is_fullblock() ) {
+            break;
+        }
+
+        auto _block = base::xvchain_t::instance().get_xblockstore()->load_block_object(_vaddr, current_block->get_height() - 1, current_block->get_last_block_hash(), true);
+        if (_block == nullptr) {
+            xwarn("xaccount_context_t::load_blocks_from_full fail-load block.account=%s,height=%ld", latest_block->get_account().c_str(), current_block->get_height() - 1);
+            return false;
+        }
+        current_block = xblock_t::raw_vblock_to_object_ptr(_block.get());
+        blocks[current_block->get_height()] = current_block;
+    }
+    xdbg("xaccount_context_t::load_blocks_from_full latest_block=%s,blocks_size=%zu", latest_block->dump().c_str(), blocks.size());
+    return true;
+}
+
 int32_t xaccount_context_t::get_map_property(const std::string& key, std::map<std::string, std::string>& value, uint64_t height, const std::string& addr) {
+    std::string account_addr = addr;
     if (addr.empty()) {
-        return m_store->get_map_property(get_address(), height, key, value);
+        account_addr = get_address();
     }
 
-    return m_store->get_map_property(addr, height, key, value);
+    base::xvaccount_t _vaddr(account_addr);
+    base::xauto_ptr<base::xvblock_t> _block = base::xvchain_t::instance().get_xblockstore()->load_block_object(_vaddr, height, base::enum_xvblock_flag_committed, true);
+    if (_block == nullptr) {
+        xwarn("xaccount_context_t::get_map_property fail-load block.addr=%s,account=%s,key=%s,height=%ld",
+            addr.c_str(), account_addr.c_str(), key.c_str(), height);
+        return -1;
+    }
+    xblock_ptr_t latest_block = xblock_t::raw_vblock_to_object_ptr(_block.get());
+
+    std::map<uint64_t, xblock_ptr_t> blocks;
+    if (false == load_blocks_from_full(latest_block, blocks)) {
+        xwarn("xaccount_context_t::get_map_property fail-load_blocks_from_full.addr=%s,account=%s,key=%s,height=%ld",
+            addr.c_str(), account_addr.c_str(), key.c_str(), height);
+        return -1;
+    }
+
+    xaccount_ptr_t state = make_object_ptr<xblockchain2_t>(account_addr);
+    for (auto & v : blocks) {
+        auto & block = v.second;
+        if (false == state->apply_block(block.get())) {
+            xwarn("xaccount_context_t::get_map_property fail-load_blocks_from_full.addr=%s,account=%s,key=%s,height=%ld,block=%s",
+                addr.c_str(), account_addr.c_str(), key.c_str(), height, block->dump().c_str());
+            return -1;
+        }
+    }
+
+    xdataobj_ptr_t property = state->find_property(key);
+    if (property == nullptr) {
+        xwarn("xaccount_context_t::get_map_property fail-find property in state.addr=%s,account=%s,key=%s,height=%ld",
+            addr.c_str(), account_addr.c_str(), key.c_str(), height);
+        return -1;
+    }
+
+    xstrmap_ptr_t mapobj = dynamic_xobject_ptr_cast<base::xstrmap_t>(property);
+    if (mapobj == nullptr) {
+        xwarn("xaccount_context_t::get_map_property fail-cast to map.addr=%s,account=%s,key=%s,height=%ld",
+            addr.c_str(), account_addr.c_str(), key.c_str(), height);
+        return -1;
+    }
+
+    value = mapobj->get_map();
+    xdbg("xaccount_context_t::get_map_property succ.addr=%s,account=%s,key=%s,height=%ld,map_size=%zu",
+        addr.c_str(), account_addr.c_str(), key.c_str(), height, value.size());
+    return true;
 }
 
 int32_t xaccount_context_t::map_property_exist(const std::string& key) {

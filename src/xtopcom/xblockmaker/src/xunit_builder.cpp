@@ -92,8 +92,9 @@ xblock_ptr_t        xfullunit_builder_t::build_block(const xblock_ptr_t & prev_b
     uint64_t prev_height = prev_block->get_height();
     std::map<std::string, std::string> propertys;
     const auto & property_map = prev_state->get_property_hash_map();
+    const auto & property_objs_map = prev_state->get_property_objs();
     for (auto & v : property_map) {
-        xdataobj_ptr_t db_prop = build_para->get_store()->clone_property(account, v.first);
+        xdataobj_ptr_t db_prop = prev_state->find_property(v.first);
         if (db_prop == nullptr) {
             build_para->set_error_code(xblockmaker_error_property_load);
             xerror("xfullunit_builder_t::build_block fail-property load,%s,account:%s,height=%" PRIu64 ",property(%s) not exist.",
@@ -105,7 +106,7 @@ xblock_ptr_t        xfullunit_builder_t::build_block(const xblock_ptr_t & prev_b
         if (db_prop_hash != v.second) {
             build_para->set_error_code(xblockmaker_error_property_unmatch);
             // TODO(jimmy) might happen, because property is not stored by height
-            xwarn("xfullunit_builder_t::build_block fail-property unmatch,%s,account:%s,height=%" PRIu64 ",property(%s) hash not match fullunit.",
+            xerror("xfullunit_builder_t::build_block fail-property unmatch,%s,account:%s,height=%" PRIu64 ",property(%s) hash not match fullunit.",
                   cs_para.dump().c_str(), account.c_str(), prev_height, v.first.c_str());
             return nullptr;
         }
