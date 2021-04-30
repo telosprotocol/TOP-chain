@@ -294,7 +294,7 @@ void xsync_on_demand_t::on_behind_by_hash_event(const mbus::xevent_ptr_t &e) {
     const vnetwork::xvnode_address_t &target_addr = archive_list[0];
 
     xsync_info("xsync_on_demand_t::on_behind_by_hash_event send sync request(on_demand) %s,hash(%s)",
-        address.c_str(), hash.c_str());
+        address.c_str(), data::to_hex_str(hash).c_str());
 
     std::map<std::string, std::string> context;
     context["src"] = self_addr.to_string();
@@ -311,6 +311,7 @@ void xsync_on_demand_t::on_behind_by_hash_event(const mbus::xevent_ptr_t &e) {
 void xsync_on_demand_t::handle_blocks_by_hash_response(const std::vector<data::xblock_ptr_t> &blocks,
     const vnetwork::xvnode_address_t &to_address, const vnetwork::xvnode_address_t &network_self) {
 
+    xsync_dbg("xsync_on_demand_t::handle_blocks_by_hash_response from %s to %s, block size %d", to_address.to_string().c_str(), network_self.to_string().c_str(), blocks.size());
     if (blocks.empty()) {
         m_download_tracer.expire();
         return;
@@ -334,6 +335,8 @@ void xsync_on_demand_t::handle_blocks_by_hash_request(const xsync_message_get_on
     std::string address = block.address;
     std::string hash = block.hash;
 
+    xsync_dbg("xsync_on_demand_t::handle_blocks_by_hash_request from %s to %s, account:%s, hash:%s", to_address.to_string().c_str(), 
+        network_self.to_string().c_str(), address.c_str(), data::to_hex_str(hash).c_str());
     if (hash.empty())
         return;
 
@@ -372,6 +375,8 @@ bool xsync_on_demand_t::store_blocks(const std::vector<data::xblock_ptr_t> &bloc
                 block->get_account().c_str(), block->get_height(), block->get_viewid());
             return false;
         }
+
+        block->set_block_flag(enum_xvblock_flag_authenticated);
 
         base::xvblock_t* vblock = dynamic_cast<base::xvblock_t*>(block.get());
         if (m_sync_store->store_block(vblock)) {
