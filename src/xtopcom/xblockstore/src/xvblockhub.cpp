@@ -957,9 +957,15 @@ namespace top
             if(NULL == index_ptr)
                 return false;
 
+            if(index_ptr->get_block_class() == base::enum_xvblock_class_nil)
+                return true;
+
             xdbg("xblockacct_t::load_index_input,target index(%s)",index_ptr->dump().c_str());
             if(index_ptr->get_this_block() == NULL)
                 read_block_object_from_db(index_ptr);
+
+            if(index_ptr->get_this_block() == NULL) //check again
+                return false;
 
             return  read_block_input_from_db(index_ptr);
         }
@@ -968,6 +974,9 @@ namespace top
         {
             if(NULL == index_ptr)
                 return false;
+
+            if(index_ptr->get_block_class() == base::enum_xvblock_class_nil)
+                return true;
 
             xdbg("xblockacct_t::load_index_output,target index(%s)",index_ptr->dump().c_str());
             if(index_ptr->get_this_block() == NULL)
@@ -980,7 +989,7 @@ namespace top
         }
         bool   xblockacct_t::load_index_offdata(base::xvbindex_t* index_ptr)
         {
-            if(NULL == index_ptr)
+            if(NULL == index_ptr || !index_ptr->is_fulltable())
                 return false;
 
             xdbg("xblockacct_t::load_index_offdata,target index(%s)",index_ptr->dump().c_str());
@@ -2034,7 +2043,7 @@ namespace top
             if(offdata_bin.empty())
             {
                 xwarn("xblockacct_t::read_block_offdata_from_db,fail to read from db for path(%s)",offdata_key.c_str());
-                return NULL;
+                return false;
             }
 
             base::xauto_ptr<base::xvboffdata_t> vboffdata_ptr(base::xvblock_t::create_offdata_object(offdata_bin));
