@@ -143,37 +143,30 @@ class xblock_maker_t : public base::xvaccount_t {
     mbus::xmessage_bus_face_t*  get_bus() const {return m_resources->get_bus();}
     const xblockmaker_resources_ptr_t & get_resources() const {return m_resources;}
 
-    bool                        has_uncommitted_blocks() const;
-
     uint64_t                    get_keep_latest_blocks_max() const {return m_keep_latest_blocks_max;}
-    const xblock_ptr_t &        get_latest_committed_block() const {return m_latest_commit_block;}
-    const xaccount_ptr_t &      get_latest_committed_state() const {return m_commit_account;}
+    const xaccount_ptr_t &      get_latest_bstate() const {return m_latest_bstate;}
+    xaccount_ptr_t              get_latest_committed_state() const;
     std::string                 get_lock_block_sign_hash() const;
     std::string                 get_lock_output_root_hash() const;
     const std::map<uint64_t, xblock_ptr_t> & get_latest_blocks() const {return m_latest_blocks;}
     const xblock_ptr_t &        get_highest_height_block() const;
     const xblock_ptr_t &        get_lowest_height_block() const;
     xblock_ptr_t                get_highest_non_empty_block() const;
-    std::vector<xblock_ptr_t>   get_uncommit_blocks() const;
     xblock_ptr_t                get_highest_lock_block() const;
     xblock_ptr_t                get_highest_commit_block() const;
     xblock_ptr_t                get_prev_block(const xblock_ptr_t & current) const;
-    xaccount_ptr_t              clone_latest_committed_state() const;
     bool                        verify_latest_blocks(base::xvblock_t* latest_cert_block, base::xvblock_t* lock_block, base::xvblock_t* commited_block);
 
  protected:
-    void                        set_latest_committed_block(const xblock_ptr_t & latest_committed_block);
     bool                        update_account_state(const xblock_ptr_t & latest_committed_block);
-    void                        set_latest_blocks(const base::xblock_mptrs & latest_blocks);
     bool                        is_latest_blocks_valid(const base::xblock_mptrs & latest_blocks);
     void                        clear_old_blocks();
 
  private:
     xblockmaker_resources_ptr_t             m_resources{nullptr};
-    xblock_ptr_t                            m_latest_commit_block{nullptr};
     std::map<uint64_t, xblock_ptr_t>        m_latest_blocks;
     uint32_t                                m_keep_latest_blocks_max{0};
-    xaccount_ptr_t                          m_commit_account{nullptr};
+    xaccount_ptr_t                          m_latest_bstate{nullptr};
 };
 
 class xblock_rules_face_t {

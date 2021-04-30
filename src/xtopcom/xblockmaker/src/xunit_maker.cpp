@@ -74,17 +74,15 @@ int32_t    xunit_maker_t::check_latest_state(const base::xaccount_index_t & acco
         return xblockmaker_error_latest_unit_blocks_invalid;
     }
 
-    xblock_ptr_t latest_committed_block = get_highest_commit_block();
-    if (!update_account_state(latest_committed_block)) {
-        xwarn("xunit_maker_t::check_latest_state fail-update_account_state.latest_committed_block=%s",
-            latest_committed_block->dump().c_str());
+    if (!update_account_state(latest_block)) {
+        xwarn("xunit_maker_t::check_latest_state fail-update_account_state.latest_block=%s",
+            latest_block->dump().c_str());
         return xblockmaker_error_latest_unit_blocks_invalid;
     }
-    set_latest_committed_block(latest_committed_block);
 
     if (false == check_latest_blocks()) {
-        xerror("xunit_maker_t::check_latest_state fail-check_latest_blocks.latest_committed_block=%s",
-            latest_committed_block->dump().c_str());
+        xerror("xunit_maker_t::check_latest_state fail-check_latest_blocks.latest_block=%s",
+            latest_block->dump().c_str());
         return xblockmaker_error_latest_unit_blocks_invalid;
     }
     m_latest_account_index = account_index;
@@ -101,8 +99,8 @@ void xunit_maker_t::find_highest_send_tx(uint64_t & latest_nonce, uint256_t & la
             return;
         }
     }
-    latest_nonce = get_latest_committed_state()->get_account_mstate().get_latest_send_trans_number();
-    latest_hash = get_latest_committed_state()->get_account_mstate().get_latest_send_trans_hash();
+    latest_nonce = get_latest_bstate()->get_account_mstate().get_latest_send_trans_number();
+    latest_hash = get_latest_bstate()->get_account_mstate().get_latest_send_trans_hash();
 }
 
 bool xunit_maker_t::push_tx(const data::xblock_consensus_para_t & cs_para, const xcons_transaction_ptr_t & tx) {
@@ -125,9 +123,12 @@ bool xunit_maker_t::push_tx(const data::xblock_consensus_para_t & cs_para, const
         uint256_t latest_hash;
         find_highest_send_tx(latest_nonce, latest_hash);
         if (tx->get_transaction()->get_last_nonce() != latest_nonce || !tx->get_transaction()->check_last_trans_hash(latest_hash)) {
-            uint64_t latest_nonce = get_latest_committed_state()->get_account_mstate().get_latest_send_trans_number();
-            uint256_t latest_hash = get_latest_committed_state()->get_account_mstate().get_latest_send_trans_hash();
-            get_txpool()->updata_latest_nonce(get_account(), latest_nonce, latest_hash);
+            xaccount_ptr_t committed_state = get_store()->query_account(get_account());
+            if (committed_state != nullptr) {
+                uint64_t account_latest_nonce = committed_state->get_account_mstate().get_latest_send_trans_number();
+                uint256_t account_latest_hash = committed_state->get_account_mstate().get_latest_send_trans_hash();
+                get_txpool()->updata_latest_nonce(get_account(), account_latest_nonce, account_latest_hash);
+            }
             xwarn("xunit_maker_t::push_tx fail-tx filtered for send nonce hash not match,%s,latest_nonce=%ld,tx=%s",
                 cs_para.dump().c_str(), latest_nonce, tx->dump().c_str());
             return false;
@@ -216,7 +217,7 @@ xblock_ptr_t xunit_maker_t::make_next_block(const xunitmaker_para_t & unit_para,
         base::xreceiptid_state_ptr_t receiptid_state = unit_para.m_tablestate->get_receiptid_state();
         xblock_builder_para_ptr_t build_para = std::make_shared<xlightunit_builder_para_t>(m_pending_txs, receiptid_state, get_resources());
         proposal_unit = m_lightunit_builder->build_block(get_highest_height_block(),
-                                                        clone_latest_committed_state(),
+                                                        get_latest_bstate()->clone_state(),
                                                         cs_para,
                                                         build_para);
         result.m_make_block_error_code = build_para->get_error_code();
@@ -234,7 +235,7 @@ xblock_ptr_t xunit_maker_t::make_next_block(const xunitmaker_para_t & unit_para,
     // secondly try to make full unit
     if (nullptr == proposal_unit && can_make_next_full_block()) {
         proposal_unit = m_fullunit_builder->build_block(get_highest_height_block(),
-                                                        get_latest_committed_state(),
+                                                        get_latest_bstate()->clone_state(),
                                                         cs_para,
                                                         m_default_builder_para);
         result.m_make_block_error_code = m_default_builder_para->get_error_code();
@@ -307,12 +308,12 @@ bool xunit_maker_t::can_make_next_full_block() const {
     xassert(current_lightunit_count > 0);
     uint64_t max_limit_lightunit_count = XGET_ONCHAIN_GOVERNANCE_PARAMETER(fullunit_contain_of_unit_num);
     if (current_lightunit_count >= max_limit_lightunit_count) {
-        if (get_latest_committed_state()->get_unconfirm_sendtx_num() == 0) {
+        if (get_latest_bstate()->get_unconfirm_sendtx_num() == 0) {
             return true;
         }
         if (current_lightunit_count >= max_limit_lightunit_count * 5) {  // TODO(jimmy)
             xwarn("xunit_maker_t::can_make_next_full_block too many lightunit.current_height=%ld,state_height=%ld,lightunit_count=%ld,unconfirm_sendtx_num=%d",
-                current_height,get_latest_committed_state()->get_last_height(), current_lightunit_count, get_latest_committed_state()->get_unconfirm_sendtx_num());
+                current_height,get_latest_bstate()->get_last_height(), current_lightunit_count, get_latest_bstate()->get_unconfirm_sendtx_num());
         }
     }
     return false;
@@ -332,13 +333,12 @@ std::string xunit_maker_t::dump() const {
     char local_param_buf[128];
     uint64_t highest_height = get_highest_height_block()->get_height();
     uint64_t lowest_height = get_lowest_height_block()->get_height();
-    uint64_t state_height = get_latest_committed_state()->get_chain_height();
-    uint64_t commit_height = get_latest_committed_block()->get_height();
+    uint64_t state_height = get_latest_bstate()->get_chain_height();
 
     xprintf(local_param_buf,sizeof(local_param_buf),
-        "{highest=%" PRIu64 ",lowest=%" PRIu64 ",commit=%" PRIu64 ",state=%" PRIu64 ",nonce=%" PRIu64 ",parent=%" PRIu64 "}",
-        highest_height, lowest_height, commit_height, state_height,
-        get_latest_committed_state()->get_account_mstate().get_latest_send_trans_number(),
+        "{highest=%" PRIu64 ",lowest=%" PRIu64 ",state=%" PRIu64 ",nonce=%" PRIu64 ",parent=%" PRIu64 "}",
+        highest_height, lowest_height, state_height,
+        get_latest_bstate()->get_account_mstate().get_latest_send_trans_number(),
         get_highest_height_block()->get_cert()->get_parent_block_height());
     return std::string(local_param_buf);
 }

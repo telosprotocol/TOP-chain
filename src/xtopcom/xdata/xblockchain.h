@@ -38,6 +38,8 @@ class xblockchain2_t : public xbase_dataobj_t<xblockchain2_t, xdata_type_blockch
     bool        update_state_by_genesis_block(const xblock_t* block);
     bool        update_state_by_next_height_block(const xblock_t* block);
     bool        update_state_by_full_block(const xblock_t* block);
+    bool        apply_block(const xblock_t* block);  // TODO(jimmy) should move to statestore future
+    xobject_ptr_t<xblockchain2_t>   clone_state();
 
  public:  // api for basic blockchain
     const std::string & get_account()const {return m_account;}
@@ -116,9 +118,15 @@ class xblockchain2_t : public xbase_dataobj_t<xblockchain2_t, xdata_type_blockch
     bool        add_light_unit(const xblock_t* block);
     bool        add_full_unit(const xblock_t* block);
     bool        add_table(const xblock_t* block);
+    void        update_block_height_hash_info(const xblock_t * block);
+    void        update_account_create_time(const xblock_t * block);
 
  public:  // old apis
     const std::string & address() {return m_account;}
+
+ public:  // property apis
+    void        set_property(const std::string & prop, const xdataobj_ptr_t & obj);
+    const std::map<std::string, xdataobj_ptr_t> &   get_property_objs() {return m_property_objs;}
 
  private:
     uint8_t                     m_version{0};
@@ -134,6 +142,7 @@ class xblockchain2_t : public xbase_dataobj_t<xblockchain2_t, xdata_type_blockch
     uint64_t                    m_property_confirm_height{0};
     xaccount_mstate2            m_account_state;
     std::map<uint16_t, std::string> m_ext;
+    std::map<std::string, xdataobj_ptr_t>   m_property_objs;
 };
 
 using xaccount_t = xblockchain2_t;

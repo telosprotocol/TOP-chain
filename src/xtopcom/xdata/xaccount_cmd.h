@@ -8,8 +8,6 @@
 #include <vector>
 #include <map>
 
-#include "xstore/xstore.h"
-
 #include "xbase/xdata.h"
 #include "xbase/xobject_ptr.h"
 
@@ -17,22 +15,18 @@
 #include "xdata/xpropertylog.h"
 
 
-namespace top { namespace store {
+namespace top { namespace data {
 
 using data::xproperty_instruction_t;
 using data::xaccount_binlog_t;
 using data::xproperty_op_code_t;
 using data::xproperty_log_ptr_t;
-using data::xaccount_ptr_t;
 
 // modify blockchain state according to property binlog
 // caller need verify whether it is duplicated set/modify
 class xaccount_cmd {
  public:
-    xaccount_cmd(xblockchain2_t* account, xstore_face_t* store)
-    : m_account(account), m_address(account->get_account()), m_store(store), m_proplogs(make_object_ptr<xaccount_binlog_t>(account->get_chain_height() + 1))
-    {}
-    xstore_face_t* get_store() { return m_store; }
+    xaccount_cmd(const std::map<std::string, xdataobj_ptr_t> & property_objs);
     std::map<std::string, std::string> get_property_hash();
     std::map<std::string, xdataobj_ptr_t> get_change_property();
     std::map<std::string, xdataobj_ptr_t> get_all_property();
@@ -98,9 +92,6 @@ class xaccount_cmd {
 
 
  private:
-    xblockchain2_t*             m_account{nullptr};
-    std::string                 m_address;
-    xstore_face_t*              m_store;
     xproperty_log_ptr_t         m_proplogs;
     std::map<std::string, xdataobj_ptr_t>   m_clone_objs;
 };

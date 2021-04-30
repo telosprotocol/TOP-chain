@@ -31,14 +31,14 @@ enum enum_xstore_error_type {
     xaccount_property_contract_count_exceed_max,
     xaccount_property_contract_code_size_invalid,
     xaccount_property_can_only_set_once,
-    xaccount_property_set_value_same,
+
     xaccount_property_not_create,
     xaccount_property_map_field_not_create,
     xaccount_property_behind_not_exist,
     xaccount_property_behind_not_match,
-    xaccount_property_has_already_create,
-    xaccount_property_has_already_delete,
-    xaccount_property_operate_type_unmatch,
+
+
+
     xaccount_property_create_fail,
     xaccount_property_not_exist,
     xaccount_property_operate_fail,
@@ -111,14 +111,14 @@ inline std::string xstore_error_to_string(int32_t code) {
         XSTORE_TO_STR(xaccount_property_contract_count_exceed_max),
         XSTORE_TO_STR(xaccount_property_contract_code_size_invalid),
         XSTORE_TO_STR(xaccount_property_can_only_set_once),
-        XSTORE_TO_STR(xaccount_property_set_value_same),
+
         XSTORE_TO_STR(xaccount_property_not_create),
         XSTORE_TO_STR(xaccount_property_map_field_not_create),
         XSTORE_TO_STR(xaccount_property_behind_not_exist),
         XSTORE_TO_STR(xaccount_property_behind_not_match),
-        XSTORE_TO_STR(xaccount_property_has_already_create),
-        XSTORE_TO_STR(xaccount_property_has_already_delete),
-        XSTORE_TO_STR(xaccount_property_operate_type_unmatch),
+
+
+
         XSTORE_TO_STR(xaccount_property_create_fail),
         XSTORE_TO_STR(xaccount_property_not_exist),
         XSTORE_TO_STR(xaccount_property_operate_fail),

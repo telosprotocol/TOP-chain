@@ -31,7 +31,7 @@
 #include "xmbus/xevent_consensus.h"
 #include "xmbus/xevent_store.h"
 #include "xmetrics/xmetrics.h"
-#include "xstore/xaccount_cmd.h"
+#include "xdata/xaccount_cmd.h"
 #include "xstore/xaccount_context.h"
 #include "xstore/xstore.h"
 #include "xstore/xstore_error.h"
@@ -454,52 +454,54 @@ xdataobj_ptr_t xstore::clone_property(const std::string &address, const std::str
 }
 
 bool xstore::execute_lightunit(xblockchain2_t *account, const xblock_t *block, std::map<std::string, std::string> & property_pairs) {
-    xassert(account != nullptr);
-    xassert(block != nullptr);
+    xassert(false); // TODO(jimmy)
 
-    xaccount_binlog_t *proplog = block->get_property_log();
-    if (proplog == nullptr) {
-        return true;
-    }
+    // xassert(account != nullptr);
+    // xassert(block != nullptr);
 
-    xaccount_cmd cmd(account, this);
-    auto         logs = proplog->get_instruction();
-    for (auto &log_ : logs) {
-        xdbg("xstore::execute_lightunit %s do_property prop_name:%s", block->dump().c_str(), log_.first.c_str());
-        auto instructions = log_.second.get_logs();
-        for (auto &instruction : instructions) {
-            xdbg("xstore::execute_lightunit %s do_property code;%d para1:%s para2:%s",
-                 block->dump().c_str(), instruction.m_op_code, instruction.m_op_para1.c_str(), instruction.m_op_para2.c_str());
-            auto restore_ret = cmd.restore_log_instruction(log_.first.c_str(), instruction);
-            if (restore_ret) {
-                xerror("xstore::execute_lightunit %s do instruction fail, %s, err:%s",
-                       block->dump().c_str(), log_.first.c_str(), xstore_error_to_string(restore_ret).c_str());
-                return false;
-            }
-        }
-    }
+    // xaccount_binlog_t *proplog = block->get_property_log();
+    // if (proplog == nullptr) {
+    //     return true;
+    // }
 
-    std::map<std::string, xdataobj_ptr_t> clone_props = cmd.get_all_property();
-    if (clone_props.size() != block->get_property_hash_map().size()) {
-        xerror("xstore::execute_lightunit %s property size %ld not match lightunit %ld",
-               block->dump().c_str(), clone_props.size(), block->get_property_hash_map().size());
-        return false;
-    }
+    // xaccount_cmd cmd(account, this);
+    // auto         logs = proplog->get_instruction();
+    // for (auto &log_ : logs) {
+    //     xdbg("xstore::execute_lightunit %s do_property prop_name:%s", block->dump().c_str(), log_.first.c_str());
+    //     auto instructions = log_.second.get_logs();
+    //     for (auto &instruction : instructions) {
+    //         xdbg("xstore::execute_lightunit %s do_property code;%d para1:%s para2:%s",
+    //              block->dump().c_str(), instruction.m_op_code, instruction.m_op_para1.c_str(), instruction.m_op_para2.c_str());
+    //         auto restore_ret = cmd.restore_log_instruction(log_.first.c_str(), instruction);
+    //         if (restore_ret) {
+    //             xerror("xstore::execute_lightunit %s do instruction fail, %s, err:%s",
+    //                    block->dump().c_str(), log_.first.c_str(), xstore_error_to_string(restore_ret).c_str());
+    //             return false;
+    //         }
+    //     }
+    // }
 
-    for (auto &prop : clone_props) {
-        std::string prop_hash = xhash_base_t::calc_dataunit_hash(prop.second.get());
-        std::string unit_prop_hash = block->get_property_hash(prop.first);
-        if (prop_hash != unit_prop_hash) {
-            xerror("xstore::execute_lightunit %s property hash: %s, unit property hash: %s",
-                   block->dump().c_str(), to_hex_str(prop_hash).c_str(), to_hex_str(unit_prop_hash).c_str());
-            return false;
-        }
+    // std::map<std::string, xdataobj_ptr_t> clone_props = cmd.get_all_property();
+    // if (clone_props.size() != block->get_property_hash_map().size()) {
+    //     xerror("xstore::execute_lightunit %s property size %ld not match lightunit %ld",
+    //            block->dump().c_str(), clone_props.size(), block->get_property_hash_map().size());
+    //     return false;
+    // }
 
-        xstore_key_t property_key(xstore_key_type_property, xstore_block_type_none, block->get_account(), prop.first);
-        auto prop_pair = generate_db_object(property_key, prop.second.get());
-        property_pairs.emplace(prop_pair);
-        xdbg("xstore::execute_lightunit block=%s lastest property name=%s", block->dump().c_str(), property_key.printable_key().c_str());
-    }
+    // for (auto &prop : clone_props) {
+    //     std::string prop_hash = xhash_base_t::calc_dataunit_hash(prop.second.get());
+    //     std::string unit_prop_hash = block->get_property_hash(prop.first);
+    //     if (prop_hash != unit_prop_hash) {
+    //         xerror("xstore::execute_lightunit %s property hash: %s, unit property hash: %s",
+    //                block->dump().c_str(), to_hex_str(prop_hash).c_str(), to_hex_str(unit_prop_hash).c_str());
+    //         return false;
+    //     }
+
+    //     xstore_key_t property_key(xstore_key_type_property, xstore_block_type_none, block->get_account(), prop.first);
+    //     auto prop_pair = generate_db_object(property_key, prop.second.get());
+    //     property_pairs.emplace(prop_pair);
+    //     xdbg("xstore::execute_lightunit block=%s lastest property name=%s", block->dump().c_str(), property_key.printable_key().c_str());
+    // }
 
     return true;
 }
@@ -833,127 +835,129 @@ xdataobj_ptr_t xstore::get_property_object(const std::string & account, const st
 
 // system contract start with 0, user account start with 1
 int32_t xstore::get_property(const std::string &address, uint64_t height, const std::string &name, xdataobj_ptr_t &obj) {
-    xblock_t *             block = nullptr;
-    std::stack<xblock_t *> following_blocks;
+    xwarn("xstore::get_property fail. address=%s,height=%ld,name=%s", address.c_str(), height, name.c_str());
+    return xaccount_property_not_exist;
+    // xblock_t *             block = nullptr;
+    // std::stack<xblock_t *> following_blocks;
 
-    uint64_t last_height = height;
-    while (true) {
-        block = get_block_by_height(address, last_height);
-        if (block == nullptr) {
-            xwarn("xstore::get_property account=%s missing block height=%" PRIu64 " prop name=%s", address.c_str(), last_height, name.c_str());
-            obj = nullptr;
-            while (!following_blocks.empty()) {
-                block = following_blocks.top();
-                xassert(block);
-                following_blocks.pop();
-                block->release_ref();
-            }
-            return xstore_check_block_not_exist;
-        }
+    // uint64_t last_height = height;
+    // while (true) {
+    //     block = get_block_by_height(address, last_height);
+    //     if (block == nullptr) {
+    //         xwarn("xstore::get_property account=%s missing block height=%" PRIu64 " prop name=%s", address.c_str(), last_height, name.c_str());
+    //         obj = nullptr;
+    //         while (!following_blocks.empty()) {
+    //             block = following_blocks.top();
+    //             xassert(block);
+    //             following_blocks.pop();
+    //             block->release_ref();
+    //         }
+    //         return xstore_check_block_not_exist;
+    //     }
 
-        if (block->is_fullunit()) {
-            break;
-        } else {
-            // block height 0 need also be included to restore the property
-            following_blocks.push(block);
-            if (block->is_genesis_block()) {
-                break;
-            }
-        }
-        --last_height;
-    }
+    //     if (block->is_fullunit()) {
+    //         break;
+    //     } else {
+    //         // block height 0 need also be included to restore the property
+    //         following_blocks.push(block);
+    //         if (block->is_genesis_block()) {
+    //             break;
+    //         }
+    //     }
+    //     --last_height;
+    // }
 
-    xassert(block != nullptr);
-    base::xauto_ptr<xblockchain2_t> account = clone_account(address);
-    xassert(account != nullptr);
-    xaccount_cmd cmd(account.get(), this);
+    // xassert(block != nullptr);
+    // base::xauto_ptr<xblockchain2_t> account = clone_account(address);
+    // xassert(account != nullptr);
+    // xaccount_cmd cmd(account.get(), this);
 
-    xdataobj_ptr_t prop_at_fullunit = nullptr;
-    bool found = false;
-    if (last_height != 0) {
-        xassert(block->is_fullunit());
-        auto full_block = dynamic_cast<xfullunit_block_t*>(block);
-        xassert(block->is_fullunit());
-        auto properties = full_block->get_fullunit_propertys();
+    // xdataobj_ptr_t prop_at_fullunit = nullptr;
+    // bool found = false;
+    // if (last_height != 0) {
+    //     xassert(block->is_fullunit());
+    //     auto full_block = dynamic_cast<xfullunit_block_t*>(block);
+    //     xassert(block->is_fullunit());
+    //     auto properties = full_block->get_fullunit_propertys();
 
-        if (properties != nullptr) {
-            auto it = properties->find(name);
-            if (it != properties->end()) {
-                found = true;
-                prop_at_fullunit = get_property_object(block->get_account(), name, full_block->get_height());
-            }
-        }
+    //     if (properties != nullptr) {
+    //         auto it = properties->find(name);
+    //         if (it != properties->end()) {
+    //             found = true;
+    //             prop_at_fullunit = get_property_object(block->get_account(), name, full_block->get_height());
+    //         }
+    //     }
 
-        if (prop_at_fullunit == nullptr) {
-            xdbg("xstore::get_property block=%s has no property name=%s ", address.c_str(), name.c_str());
-            obj = nullptr;
-            full_block->release_ref();
+    //     if (prop_at_fullunit == nullptr) {
+    //         xdbg("xstore::get_property block=%s has no property name=%s ", address.c_str(), name.c_str());
+    //         obj = nullptr;
+    //         full_block->release_ref();
 
-            while (!following_blocks.empty()) {
-                block = following_blocks.top();
-                xassert(block);
-                following_blocks.pop();
-                block->release_ref();
-            }
-            return xstore_check_property_log_not_include_in_unit;
-        } else {
-            full_block->release_ref();
-        }
-    } else {
-        xassert (block->is_genesis_block());
-        // can't release_ref here since genesis block is referred in the stack
-    }
+    //         while (!following_blocks.empty()) {
+    //             block = following_blocks.top();
+    //             xassert(block);
+    //             following_blocks.pop();
+    //             block->release_ref();
+    //         }
+    //         return xstore_check_property_log_not_include_in_unit;
+    //     } else {
+    //         full_block->release_ref();
+    //     }
+    // } else {
+    //     xassert (block->is_genesis_block());
+    //     // can't release_ref here since genesis block is referred in the stack
+    // }
 
-    while (!following_blocks.empty()) {
-        block = following_blocks.top();
-        xassert(block);
-        following_blocks.pop();
+    // while (!following_blocks.empty()) {
+    //     block = following_blocks.top();
+    //     xassert(block);
+    //     following_blocks.pop();
 
-        if (block->get_property_hash(name).empty()) {
-            xdbg("xstore::get_property account=%s block height=%" PRIu64 " empty prop name=%s",
-                        address.c_str(), block->get_height(), name.c_str());
-            block->release_ref();
-            continue;
-        }
+    //     if (block->get_property_hash(name).empty()) {
+    //         xdbg("xstore::get_property account=%s block height=%" PRIu64 " empty prop name=%s",
+    //                     address.c_str(), block->get_height(), name.c_str());
+    //         block->release_ref();
+    //         continue;
+    //     }
 
-        auto proplog = block->get_property_log();
-        if (proplog == nullptr) {
-            xdbg("xstore::get_property account=%s block height=%" PRIu64 " empty binlog for prop name=%s",
-                        address.c_str(), block->get_height(), name.c_str());
-            block->release_ref();
-            continue;
-        }
+    //     auto proplog = block->get_property_log();
+    //     if (proplog == nullptr) {
+    //         xdbg("xstore::get_property account=%s block height=%" PRIu64 " empty binlog for prop name=%s",
+    //                     address.c_str(), block->get_height(), name.c_str());
+    //         block->release_ref();
+    //         continue;
+    //     }
 
-        auto logs = proplog->get_instruction();
-        for (auto &prop_log : logs) {
-            if (prop_log.first == name) {
-                found = true;
-                xdbg("xstore::get_property account=%s block height=%" PRIu64 " do_property prop name=%s",
-                        address.c_str(), block->get_height(), name.c_str());
-                auto instructions = prop_log.second.get_logs();
-                for (auto &instruction : instructions) {
-                    xdbg("xstore::get_property account=%s block height=%" PRIu64 " instruction code;%d para1:%s para2:%s",
-                         address.c_str(), block->get_height(), instruction.m_op_code,
-                         instruction.m_op_para1.c_str(), to_hex_str(instruction.m_op_para2).c_str());
-                    auto restore_ret = cmd.restore_log_instruction(prop_at_fullunit, instruction);
-                    if (restore_ret) {
-                        xerror("xstore::get_property account=%s height:%" PRIu64 " do instruction fail, %s, err:%s",
-                               address.c_str(), block->get_height(), prop_log.first.c_str(), xstore_error_to_string(restore_ret).c_str());
-                        obj = nullptr;
-                        block->release_ref();
-                        return restore_ret;
-                    }
-                }
-            }
-        }
-        block->release_ref();
-    }
-    obj = prop_at_fullunit;
-    if (found) {
-        return xsuccess;
-    } else {
-        return xaccount_property_not_exist;
-    }
+    //     auto logs = proplog->get_instruction();
+    //     for (auto &prop_log : logs) {
+    //         if (prop_log.first == name) {
+    //             found = true;
+    //             xdbg("xstore::get_property account=%s block height=%" PRIu64 " do_property prop name=%s",
+    //                     address.c_str(), block->get_height(), name.c_str());
+    //             auto instructions = prop_log.second.get_logs();
+    //             for (auto &instruction : instructions) {
+    //                 xdbg("xstore::get_property account=%s block height=%" PRIu64 " instruction code;%d para1:%s para2:%s",
+    //                      address.c_str(), block->get_height(), instruction.m_op_code,
+    //                      instruction.m_op_para1.c_str(), to_hex_str(instruction.m_op_para2).c_str());
+    //                 auto restore_ret = cmd.restore_log_instruction(prop_at_fullunit, instruction);
+    //                 if (restore_ret) {
+    //                     xerror("xstore::get_property account=%s height:%" PRIu64 " do instruction fail, %s, err:%s",
+    //                            address.c_str(), block->get_height(), prop_log.first.c_str(), xstore_error_to_string(restore_ret).c_str());
+    //                     obj = nullptr;
+    //                     block->release_ref();
+    //                     return restore_ret;
+    //                 }
+    //             }
+    //         }
+    //     }
+    //     block->release_ref();
+    // }
+    // obj = prop_at_fullunit;
+    // if (found) {
+    //     return xsuccess;
+    // } else {
+    //     return xaccount_property_not_exist;
+    // }
 }
 
 bool xstore::set_object(const xstore_key_t &key, const std::string &value, const std::string &detail_info) {
@@ -1279,41 +1283,23 @@ bool  xstore::execute_block(base::xvblock_t* vblock) {
 
     std::map<std::string, std::string> kv_pairs;
     bool execute_ret = true;
+
     // first execute block, then update blockchain
-    if (block->get_block_class() == base::enum_xvblock_class_full) {
-        if (block->get_block_level() == base::enum_xvblock_level_unit) {
-            execute_ret = execute_fullunit(account, block, kv_pairs);
-        } else if (block->get_block_level() == base::enum_xvblock_level_table) {
-            execute_ret = execute_tableblock_full(account, dynamic_cast<xfull_tableblock_t*>(block), kv_pairs);
-        } else {
-            xassert(0);  // not support othe full block now
-            return false;
-        }
-    } else {
-        if (block->get_height() != 0 && block->get_height() > account->get_last_height() + 1) {
-            xerror("xstore::execute_block fail-for non-full block=%s should not larger than last execute height. last_height:%ld",
-                block->dump().c_str(), account->get_last_height());
-            return false;
-        }
-
-        if (block->is_lightunit()) {
-            execute_ret = execute_lightunit(account, block, kv_pairs);
-        }
-        if (block->is_lighttable()) {
-            execute_ret = execute_tableblock_light(account, block);
-        }
+    if (block->is_fulltable()) {
+        execute_ret = execute_tableblock_full(account, dynamic_cast<xfull_tableblock_t*>(block), kv_pairs);
+    } else if (block->is_lighttable()) {
+        execute_ret = execute_tableblock_light(account, block);
     }
-
     if (!execute_ret) {
-        xerror("xstore::execute_block fail-for execute blockchain. block=%s, level:%d class:%d",
+        xerror("xstore::execute_block fail-for execute table. block=%s, level:%d class:%d",
             block->dump().c_str(), block->get_block_level(), block->get_block_class());
         return false;
     }
 
-    bool bret;
-    bret = update_blockchain_by_block(account, block, base::xtime_utl::gettimeofday());
-    if (!bret) {
-        xerror("xstore::execute_block fail-for update blockchain=%s", block->dump().c_str());
+    execute_ret = account->apply_block(block);
+    if (!execute_ret) {
+        xerror("xstore::execute_block fail-account apply block, block=%s",
+            block->dump().c_str());
         return false;
     }
 
