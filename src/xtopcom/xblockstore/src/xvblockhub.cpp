@@ -2020,12 +2020,12 @@ namespace top
             if(base::xvchain_t::instance().get_xdbstore()->set_value(offdata_key, offdata_bin))
             {
                 index_ptr->set_store_flag(base::enum_index_store_flag_offchain_data);
-                xdbg("xblockacct_t::write_block_offdata_to_db,store data to DB for block(%s) at offdata_key(%s)",block_ptr->dump().c_str(),offdata_key.c_str());
+                xdbg("xblockacct_t::write_block_offdata_to_db,store data to DB for block(%s) at offdata_key(%s)",block_ptr->dump().c_str(),base::xstring_utl::to_hex(offdata_key).c_str());
                 return true;
             }
             else
             {
-                xerror("xblockacct_t::write_block_offdata_to_db,fail to store data for block(%s) at offdata_key(%s)",block_ptr->dump().c_str(),offdata_key.c_str());
+                xerror("xblockacct_t::write_block_offdata_to_db,fail to store data for block(%s) at offdata_key(%s)",block_ptr->dump().c_str(),base::xstring_utl::to_hex(offdata_key).c_str());
                 return false;
             }
         }
@@ -2042,7 +2042,7 @@ namespace top
             const std::string offdata_bin = base::xvchain_t::instance().get_xdbstore()->get_value(offdata_key);
             if(offdata_bin.empty())
             {
-                xwarn("xblockacct_t::read_block_offdata_from_db,fail to read from db for path(%s)",offdata_key.c_str());
+                xwarn("xblockacct_t::read_block_offdata_from_db,fail to read from db for path(%s)",base::xstring_utl::to_hex(offdata_key).c_str());
                 return false;
             }
 
@@ -2052,7 +2052,7 @@ namespace top
                 block_ptr->reset_block_offdata(vboffdata_ptr.get());
                 return true;
             }
-            xerror("xblockacct_t::read_block_offdata_from_db,bad data to create xvboffdata_t object from db-path(%s)",offdata_key.c_str());
+            xerror("xblockacct_t::read_block_offdata_from_db,bad data to create xvboffdata_t object from db-path(%s)",base::xstring_utl::to_hex(offdata_key).c_str());
             return false;
         }
 
