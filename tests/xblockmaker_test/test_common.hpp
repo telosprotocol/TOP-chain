@@ -114,6 +114,7 @@ class test_xblockmaker_resources_t : public xblockmaker_resources_t {
     virtual base::xvblockstore_t*       get_blockstore() const {return m_creator.get_blockstore();}
     virtual xtxpool_v2::xtxpool_face_t* get_txpool() const {return m_txpool.get();}
     virtual store::xindexstorehub_t*    get_indexstorehub() const {return m_indexstore.get();}
+    virtual mbus::xmessage_bus_face_t*  get_bus() const {return m_bus.get();}
 
  private:
     xvchain_creator                 m_creator;
