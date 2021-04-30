@@ -105,7 +105,7 @@ xaccount_context_t::xaccount_context_t(const std::string& address,
         m_native_property = m_account->get_native_property();
         m_native_property.clear_dirty();
     }
-    m_accountcmd = std::make_shared<xaccount_cmd>(m_account, store);
+    m_accountcmd = std::make_shared<xaccount_cmd>(m_account->get_property_objs());
     xinfo("create context, address:%s height:%d", address.c_str(), m_account->get_chain_height());
 }
 
@@ -115,7 +115,7 @@ xaccount_context_t::xaccount_context_t(data::xblockchain2_t* blockchain, xstore_
     blockchain->add_ref();
     m_native_property = m_account->get_native_property();
     m_native_property.clear_dirty();
-    m_accountcmd = std::make_shared<xaccount_cmd>(m_account, store);
+    m_accountcmd = std::make_shared<xaccount_cmd>(m_account->get_property_objs());
     xinfo("create context, address:%s height:%d", blockchain->get_account().c_str(), m_account->get_chain_height());
 }
 

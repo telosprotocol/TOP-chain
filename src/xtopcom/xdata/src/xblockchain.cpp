@@ -15,6 +15,7 @@
 #include "xdata/xgenesis_data.h"
 #include "xdata/xlightunit.h"
 #include "xdata/xfull_tableblock.h"
+#include "xdata/xaccount_cmd.h"
 #include "xconfig/xpredefined_configurations.h"
 
 #include <assert.h>
@@ -69,6 +70,14 @@ int32_t xblockchain2_t::do_write(base::xstream_t & stream) {
     SERIALIZE_FIELD_BT(m_last_full_block_hash);
     m_account_state.serialize_to(stream);
     SERIALIZE_FIELD_BT(m_ext);
+
+    uint32_t prop_objs_count = m_property_objs.size();
+    stream.write_compact_var(prop_objs_count);
+    for (auto & v : m_property_objs) {
+        stream.write_compact_var(v.first);
+        v.second->serialize_to(stream);
+    }
+
     return CALC_LEN();
 }
 
@@ -87,6 +96,18 @@ int32_t xblockchain2_t::do_read(base::xstream_t & stream) {
     DESERIALIZE_FIELD_BT(m_last_full_block_hash);
     m_account_state.serialize_from(stream);
     DESERIALIZE_FIELD_BT(m_ext);
+
+    uint32_t prop_objs_count;
+    stream.read_compact_var(prop_objs_count);
+    for (uint32_t i = 0; i < prop_objs_count; i++) {
+        std::string prop_name;
+        stream.read_compact_var(prop_name);
+        xdataobj_ptr_t prop_obj;
+        base::xdataobj_t *obj = base::xdataobj_t::read_from(stream);
+        xassert(obj != nullptr);
+        prop_obj.attach(obj);
+        m_property_objs[prop_name] = prop_obj;
+    }
     return CALC_LEN();
 }
 
@@ -152,6 +173,49 @@ xtransaction_ptr_t xblockchain2_t::make_run_contract_tx(const std::string & to,
 bool xblockchain2_t::add_light_unit(const xblock_t * block) {
     const xlightunit_block_t * unit = dynamic_cast<const xlightunit_block_t *>(block);
     xassert(unit != nullptr);
+
+    xaccount_binlog_t *proplog = block->get_property_log();
+    if (proplog != nullptr) {
+        const std::map<std::string, xdataobj_ptr_t> & current_props = get_property_objs();
+        xaccount_cmd cmd(current_props);
+        auto         logs = proplog->get_instruction();
+        for (auto &log_ : logs) {
+            xdbg("xblockchain2_t::add_light_unit %s do_property prop_name:%s", block->dump().c_str(), log_.first.c_str());
+            auto instructions = log_.second.get_logs();
+            for (auto &instruction : instructions) {
+                xdbg("xblockchain2_t::add_light_unit %s do_property code;%d para1:%s para2:%s",
+                    block->dump().c_str(), instruction.m_op_code, instruction.m_op_para1.c_str(), instruction.m_op_para2.c_str());
+                auto restore_ret = cmd.restore_log_instruction(log_.first.c_str(), instruction);
+                if (restore_ret) {
+                    xerror("xblockchain2_t::add_light_unit %s do instruction fail, %s, err=0x%x",
+                        block->dump().c_str(), log_.first.c_str(), restore_ret);
+                    return false;
+                }
+            }
+        }
+
+        // check propertys size
+        std::map<std::string, xdataobj_ptr_t> clone_props = cmd.get_all_property();
+        xdbg("xstore::execute_lightunit %s clone_props_size=%zu,unit_prop_size=%zu",
+            block->dump().c_str(), clone_props.size(), block->get_property_hash_map().size());
+
+        // check propertys hash and save property
+        for (auto &prop : clone_props) {
+            std::string unit_prop_hash = block->get_property_hash(prop.first);
+            if (unit_prop_hash.empty()) {  // not changed in this block
+                continue;
+            }
+            std::string prop_hash = xhash_base_t::calc_dataunit_hash(prop.second.get());
+            if (prop_hash != unit_prop_hash) {
+                xerror("xstore::execute_lightunit %s property hash: %s, unit property hash: %s",
+                    block->dump().c_str(), to_hex_str(prop_hash).c_str(), to_hex_str(unit_prop_hash).c_str());
+                return false;
+            }
+            set_property(prop.first, prop.second);
+            xdbg("xstore::execute_lightunit block=%s, changed property name=%s", block->dump().c_str(), prop.first.c_str());
+        }
+    }
+
     m_account_state.set_balance_change(unit->get_balance_change());
     m_account_state.set_burn_balance_change(unit->get_burn_balance_change());
     m_account_state.set_pledge_tgas_balance_change(unit->get_pledge_balance_change_tgas());
@@ -188,6 +252,25 @@ bool xblockchain2_t::add_light_unit(const xblock_t * block) {
 
 bool xblockchain2_t::add_full_unit(const xblock_t * block) {
     xassert(block->is_fullunit());
+
+    m_property_objs.clear();
+    auto properties = block->get_fullunit_propertys();
+    if (properties != nullptr) {
+        std::map<std::string, xdataobj_ptr_t> all_property_objs;
+        for (auto &v : *properties) {
+            const auto & prop_name = v.first;
+            const auto & prop_value = v.second;
+            base::xstream_t   stream(base::xcontext_t::instance(), (uint8_t *)prop_value.data(), (uint32_t)prop_value.size());
+            base::xdataobj_t *data = base::xdataobj_t::read_from(stream);
+            xassert(nullptr != data);
+            xdataobj_ptr_t prop_obj;
+            prop_obj.attach(data);
+            all_property_objs[prop_name] = prop_obj;
+            xdbg("xblockchain2_t::add_full_unit block=%s,prop_name=%s", block->dump().c_str(), prop_name.c_str());
+        }
+        m_property_objs = all_property_objs;
+    }
+
     m_account_state = *block->get_fullunit_mstate();
     m_last_full_block_height = block->get_height();
     m_last_full_block_hash = block->get_block_hash();
@@ -222,6 +305,70 @@ bool xblockchain2_t::add_full_table(const xblock_t* block) {
     m_last_full_block_height = block->get_height();
     m_last_full_block_hash = block->get_block_hash();
     return true;
+}
+
+xobject_ptr_t<xblockchain2_t> xblockchain2_t::clone_state() {
+    std::string stream_str;
+    serialize_to_string(stream_str);
+    xobject_ptr_t<xblockchain2_t> blockchain = make_object_ptr<xblockchain2_t>(get_account());
+    blockchain->serialize_from_string(stream_str);
+    return blockchain;
+}
+
+bool xblockchain2_t::apply_block(const xblock_t* block) {
+    bool ret = true;
+    if (block->is_lightunit()) {
+        ret = add_light_unit(block);
+    } else if (block->is_fullunit()) {
+        ret = add_full_unit(block);
+    }
+    if (!ret) {
+        xassert(false);
+        xerror("xblockchain2_t::apply_block fail.block=%s", block->dump().c_str());
+        return ret;
+    }
+
+    update_block_height_hash_info(block);
+
+    if ( (block->get_block_level() == base::enum_xvblock_level_unit)
+        && (block->is_genesis_block() || block->get_height() == 1) ) {
+        update_account_create_time(block);
+    }
+    add_modified_count();
+    return true;
+}
+
+void xblockchain2_t::update_block_height_hash_info(const xblock_t * block) {
+    m_last_state_block_height = block->get_height();
+    m_last_state_block_hash = block->get_block_hash();
+    if (block->is_genesis_block() || block->is_fullblock()) {
+        m_last_full_block_height = block->get_height();
+        m_last_full_block_hash = block->get_block_hash();
+    }
+}
+
+void xblockchain2_t::update_account_create_time(const xblock_t * block) {
+    if (block->get_block_level() != base::enum_xvblock_level_unit) {
+        xassert(false);
+        return;
+    }
+
+    if (block->is_genesis_block()) {
+        // if the genesis block is not the nil block, it must be a "genesis account".
+        // the create time of genesis account should be set to the gmtime of genesis block
+        if (!m_account_state.get_account_create_time() && block->get_header()->get_block_class() != base::enum_xvblock_class_nil) {
+            m_account_state.set_account_create_time(block->get_cert()->get_gmtime());
+            xdbg("xblockchain2_t::update_account_create_time,address:%s account_create_time:%ld", block->get_account().c_str(), m_account_state.get_account_create_time());
+        }
+    } else if (block->get_height() == 1) {
+        // the create time of non-genesis account should be set to the gmtime of height#1 block
+        if (!m_account_state.get_account_create_time()) {
+            m_account_state.set_account_create_time(block->get_cert()->get_gmtime());
+            xdbg("xblockchain2_t::update_account_create_time,address:%s account_create_time:%ld", block->get_account().c_str(), m_account_state.get_account_create_time());
+        }
+    } else {
+        xassert(false);
+    }
 }
 
 bool xblockchain2_t::update_last_block_state(const xblock_t * block) {
@@ -425,6 +572,11 @@ std::string xblockchain2_t::get_extend_data(uint16_t name) {
     }
     return std::string();
 }
+
+void xblockchain2_t::set_property(const std::string & prop, const xdataobj_ptr_t & obj) {
+    m_property_objs[prop] = obj;
+}
+
 
 }  // namespace data
 }  // namespace top

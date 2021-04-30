@@ -54,10 +54,6 @@ int32_t xtable_maker_t::check_latest_state(const xblock_ptr_t & latest_block) {
         return xblockmaker_error_latest_table_blocks_invalid;
     }
 
-    // update latest committed block and blockchain state
-    xblock_ptr_t latest_committed_block = get_highest_commit_block();
-    set_latest_committed_block(latest_committed_block);
-
     if (false == check_latest_blocks()) {
         xerror("xtable_maker_t::check_latest_state fail-check_latest_blocks.latest_block=%s",
             latest_block->dump().c_str());

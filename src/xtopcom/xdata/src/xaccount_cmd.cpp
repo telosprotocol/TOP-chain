@@ -7,9 +7,8 @@
 #include <cinttypes>
 #include <map>
 
-#include "xstore/xstore.h"
-#include "xstore/xaccount_cmd.h"
-#include "xstore/xstore_error.h"
+#include "xdata/xaccount_cmd.h"
+#include "xdata/xdata_error.h"
 
 #include "xbase/xdata.h"
 #include "xbase/xobject_ptr.h"
@@ -17,7 +16,7 @@
 #include "xdata/xproperty.h"
 #include "xdata/xpropertylog.h"
 
-namespace top { namespace store {
+namespace top { namespace data {
 
 #define CLONE_PROPERTY(prop, name, type)\
 do {\
@@ -39,24 +38,29 @@ do {\
     }\
 }while(0)
 
+xaccount_cmd::xaccount_cmd(const std::map<std::string, xdataobj_ptr_t> & property_objs) {
+    m_clone_objs = property_objs;
+    m_proplogs = make_object_ptr<xaccount_binlog_t>();
+}
+
 int32_t xaccount_cmd::do_property_log(const xproperty_log_ptr_t & log) {
     int32_t ret;
     auto logs = log->get_instruction();
     for (auto & proplog : logs) {
-        xdbg("do_property prop_name:%s", proplog.first.c_str());
+        xdbg("xaccount_cmd::do_property_log prop_name:%s", proplog.first.c_str());
         auto instructions = proplog.second.get_logs();
         for (auto & instruction : instructions) {
-            xdbg("do_property code;%d para1:%s para2:%s",
+            xdbg("xaccount_cmd::do_property_log code;%d para1:%s para2:%s",
                 instruction.m_op_code, instruction.m_op_para1.c_str(), instruction.m_op_para2.c_str());
             ret = restore_log_instruction(proplog.first.c_str(), instruction);
             if (ret) {
-                xdbg("do_property restore_log_instruction fail %s", xstore_error_to_string(ret).c_str());
+                xwarn("xaccount_cmd::do_property_log restore_log_instruction fail 0x%x", ret);
                 return ret;
             }
         }
     }
 
-    return xstore_success;
+    return xsuccess;
 }
 
 int32_t xaccount_cmd::restore_log_instruction(const std::string & prop_name, xproperty_instruction_t instruction) {
@@ -98,8 +102,8 @@ int32_t xaccount_cmd::restore_log_instruction(const std::string & prop_name, xpr
             return map_clear(prop_name, add_flag);
         }
         default:
-            assert(0);
-            return xaccount_property_cmd_invalid;
+            xassert(0);
+            return -1;  // TODO(jimmy)
     }
 }
 
@@ -142,8 +146,8 @@ int32_t xaccount_cmd::restore_log_instruction(xdataobj_ptr_t & obj, xproperty_in
             return map_clear(obj);
         }
         default:
-            assert(0);
-            return xaccount_property_cmd_invalid;
+            xassert(0);
+            return -1;
     }
 }
 
@@ -182,8 +186,8 @@ int32_t xaccount_cmd::do_instruction(const std::string & prop_name, xproperty_in
             return map_clear(prop_name, add_flag);
         }
         default:
-            assert(0);
-            return xaccount_property_cmd_invalid;
+            xassert(0);
+            return -1;
     }
 }
 
@@ -191,37 +195,13 @@ xdataobj_ptr_t xaccount_cmd::get_property(const std::string& prop_name, int32_t 
     auto iter = m_clone_objs.find(prop_name);
     if (iter != m_clone_objs.end()) {
         if (iter->second != nullptr) {
-            error_code = xstore_success;
+            error_code = xsuccess;
             return iter->second;
         }
-        error_code = xaccount_property_has_already_delete;
+        error_code = xaccount_cmd_property_has_already_delete;
         return nullptr;
     }
-
-    std::string hash;
-    bool has_property = m_account->get_property_hash(prop_name, hash);
-    if (has_property) {
-        xdataobj_ptr_t obj = m_store->clone_property(m_address, prop_name);
-        if (obj == nullptr) {
-            error_code = xaccount_property_behind_not_exist;
-            return nullptr;
-        }
-
-        // property in db may changed when tx executed
-        std::string db_prop_hash = xhash_base_t::calc_dataunit_hash(obj.get());
-        if (db_prop_hash != hash) {
-            error_code = xaccount_property_behind_not_exist;
-            xwarn("xaccount_cmd::get_property fail-property hash unmatch,account:%s,height=%" PRIu64 ",property(%s).",
-                  m_account->get_account().c_str(), m_account->get_last_height(), prop_name.c_str());
-            return nullptr;
-        }
-
-        m_clone_objs[prop_name] = obj;
-        error_code = xstore_success;
-        return obj;
-    }
-
-    error_code = xaccount_property_not_create;
+    error_code = xaccount_cmd_property_not_create;
     return nullptr;
 }
 
@@ -234,7 +214,7 @@ xdataobj_ptr_t xaccount_cmd::get_property_with_type(const std::string& prop_name
     }
 
     if (obj->get_obj_type() != type) {
-        error_code = xaccount_property_operate_type_unmatch;
+        error_code = xaccount_cmd_property_operate_type_unmatch;
         return nullptr;
     }
 
@@ -282,30 +262,30 @@ void xaccount_cmd::make_property(xdataobj_ptr_t & obj, int32_t type) {
 int32_t xaccount_cmd::create_property(const std::string & prop_name, int32_t type) {
     int32_t error_code;
     xdataobj_ptr_t obj = get_property(prop_name, error_code);
-    if (obj != nullptr || error_code != xaccount_property_not_create) {
-        return xaccount_property_has_already_create;
+    if (obj != nullptr || error_code != xaccount_cmd_property_not_create) {
+        return xaccount_cmd_property_has_already_create;
     }
 
     make_property(prop_name, type);
-    return xstore_success;
+    return xsuccess;
 }
 
 int32_t xaccount_cmd::delete_property(const std::string & prop_name, bool add_flag) {
     int32_t error_code;
     xdataobj_ptr_t obj = get_property(prop_name, error_code);
-    if (error_code == xaccount_property_has_already_delete || error_code == xaccount_property_not_create) {
+    if (error_code == xaccount_cmd_property_has_already_delete || error_code == xaccount_cmd_property_not_create) {
         return error_code;
     }
     m_clone_objs[prop_name] = nullptr;
     if (add_flag) {
         m_proplogs->add_instruction(prop_name, xproperty_cmd_type_delete);
     }
-    return xstore_success;
+    return xsuccess;
 }
 
 int32_t xaccount_cmd::delete_property(xdataobj_ptr_t & obj) {
     obj = nullptr;
-    return xstore_success;
+    return xsuccess;
 }
 
 std::map<std::string, std::string> xaccount_cmd::get_property_hash() {
@@ -341,7 +321,7 @@ xproperty_log_ptr_t xaccount_cmd::get_property_log() {
 
 int32_t xaccount_cmd::string_create(const std::string& prop_name, bool add_flag) {
     auto ret = create_property(prop_name, base::xstring_t::enum_obj_type);
-    if (add_flag && ret == xstore_success) {
+    if (add_flag && ret == xsuccess) {
         m_proplogs->add_instruction(prop_name, xproperty_cmd_type_string_create);
     }
     return ret;
@@ -352,12 +332,12 @@ int32_t xaccount_cmd::string_set(const std::string& prop_name, const std::string
     xdataobj_ptr_t prop;
     CLONE_PROPERTY(prop, prop_name, base::xstring_t::enum_obj_type);
     int32_t ret = string_set(prop, value);
-    if (ret == xstore_success && add_flag) {
+    if (ret == xsuccess && add_flag) {
         m_proplogs->add_instruction(prop_name, xproperty_cmd_type_string_set, value);
     } else {
         xdbg("property set repeat invalid. prop_name:%s", prop_name.c_str());
     }
-    return xstore_success;
+    return xsuccess;
 }
 
 int32_t xaccount_cmd::string_set(xdataobj_ptr_t & obj, const std::string& value) {
@@ -366,33 +346,33 @@ int32_t xaccount_cmd::string_set(xdataobj_ptr_t & obj, const std::string& value)
     prop->get(value_in_prop);
     if (value != value_in_prop) {
         prop->set(value);
-        return xstore_success;
+        return xsuccess;
     }
-    return xaccount_property_set_value_same;
+    return xaccount_cmd_property_set_value_same;
 }
 
 int32_t xaccount_cmd::string_get(const std::string& prop_name, std::string& value) {
     xstring_ptr_t prop;
     CLONE_PROPERTY(prop, prop_name, base::xstring_t::enum_obj_type);
     value = prop->get();
-    return xstore_success;
+    return xsuccess;
 }
 int32_t xaccount_cmd::string_empty(const std::string& prop_name, bool& empty) {
     xstring_ptr_t prop;
     CLONE_PROPERTY(prop, prop_name, base::xstring_t::enum_obj_type);
     empty = prop->empty();
-    return xstore_success;
+    return xsuccess;
 }
 int32_t xaccount_cmd::string_size(const std::string& prop_name, int32_t& size) {
     xstring_ptr_t prop;
     CLONE_PROPERTY(prop, prop_name, base::xstring_t::enum_obj_type);
     size = prop->size();
-    return xstore_success;
+    return xsuccess;
 }
 
 int32_t xaccount_cmd::list_create(const std::string& prop_name, bool add_flag) {
     auto ret = create_property(prop_name, base::xstrdeque_t::enum_obj_type);
-    if (add_flag && ret == xstore_success) {
+    if (add_flag && ret == xsuccess) {
         m_proplogs->add_instruction(prop_name, xproperty_cmd_type_list_create);
     }
     return ret;
@@ -403,7 +383,7 @@ int32_t xaccount_cmd::list_push_back(const std::string& prop_name, const std::st
     xdataobj_ptr_t prop;
     CLONE_PROPERTY(prop, prop_name, base::xstrdeque_t::enum_obj_type);
     bool ret = list_push_back(prop, value);
-    if (ret == xstore_success && add_flag) {
+    if (ret == xsuccess && add_flag) {
         m_proplogs->add_instruction(prop_name, xproperty_cmd_type_list_push_back, value);
     }
     return ret;
@@ -414,7 +394,7 @@ int32_t xaccount_cmd::list_push_front(const std::string& prop_name, const std::s
     xdataobj_ptr_t prop;
     CLONE_PROPERTY(prop, prop_name, base::xstrdeque_t::enum_obj_type);
     int32_t ret = list_push_front(prop, value);
-    if (ret == xstore_success && add_flag) {
+    if (ret == xsuccess && add_flag) {
         m_proplogs->add_instruction(prop_name, xproperty_cmd_type_list_push_front, value);
     }
     return ret;
@@ -424,7 +404,7 @@ int32_t xaccount_cmd::list_pop_back(const std::string& prop_name, std::string& v
     xdataobj_ptr_t prop;
     CLONE_PROPERTY(prop, prop_name, base::xstrdeque_t::enum_obj_type);
     int32_t ret = list_pop_back(prop, value);
-    if (ret == xstore_success && add_flag) {
+    if (ret == xsuccess && add_flag) {
         m_proplogs->add_instruction(prop_name, xproperty_cmd_type_list_pop_back);
     }
     return ret;
@@ -434,7 +414,7 @@ int32_t xaccount_cmd::list_pop_front(const std::string& prop_name, std::string& 
     xdataobj_ptr_t prop;
     CLONE_PROPERTY(prop, prop_name, base::xstrdeque_t::enum_obj_type);
     int32_t ret = list_pop_front(prop, value);
-    if (ret == xstore_success && add_flag) {
+    if (ret == xsuccess && add_flag) {
         m_proplogs->add_instruction(prop_name, xproperty_cmd_type_list_pop_front, value);
     }
     return ret;
@@ -444,7 +424,7 @@ int32_t xaccount_cmd::list_clear(const std::string& prop_name, bool add_flag) {
     xdataobj_ptr_t prop;
     CLONE_PROPERTY(prop, prop_name, base::xstrdeque_t::enum_obj_type);
     int32_t ret = list_clear(prop);
-    if (ret == xstore_success && add_flag) {
+    if (ret == xsuccess && add_flag) {
         m_proplogs->add_instruction(prop_name, xproperty_cmd_type_list_clear);
     }
     return ret;
@@ -453,59 +433,59 @@ int32_t xaccount_cmd::list_clear(const std::string& prop_name, bool add_flag) {
 int32_t xaccount_cmd::list_push_back(xdataobj_ptr_t & obj, const std::string& value) {
     xstrdeque_ptr_t prop = dynamic_xobject_ptr_cast<base::xstrdeque_t>(obj);
     bool ret = prop->push_back(value);
-    return (ret == true) ? xstore_success : xaccount_property_operate_fail;
+    return (ret == true) ? xsuccess : xaccount_cmd_property_operate_fail;
 }
 
 int32_t xaccount_cmd::list_push_front(xdataobj_ptr_t & obj, const std::string& value) {
     xstrdeque_ptr_t prop = dynamic_xobject_ptr_cast<base::xstrdeque_t>(obj);
     bool ret = prop->push_front(value);
-    return (ret == true) ? xstore_success : xaccount_property_operate_fail;
+    return (ret == true) ? xsuccess : xaccount_cmd_property_operate_fail;
 }
 int32_t xaccount_cmd::list_pop_back(xdataobj_ptr_t & obj, std::string& value) {
     xstrdeque_ptr_t prop = dynamic_xobject_ptr_cast<base::xstrdeque_t>(obj);
     bool ret = prop->pop_back(value);
-    return (ret == true) ? xstore_success : xaccount_property_operate_fail;
+    return (ret == true) ? xsuccess : xaccount_cmd_property_operate_fail;
 }
 int32_t xaccount_cmd::list_pop_front(xdataobj_ptr_t & obj, std::string& value) {
     xstrdeque_ptr_t prop = dynamic_xobject_ptr_cast<base::xstrdeque_t>(obj);
     bool ret = prop->pop_front(value);
-    return (ret == true) ? xstore_success : xaccount_property_operate_fail;
+    return (ret == true) ? xsuccess : xaccount_cmd_property_operate_fail;
 }
 int32_t xaccount_cmd::list_clear(xdataobj_ptr_t & obj) {
     xstrdeque_ptr_t prop = dynamic_xobject_ptr_cast<base::xstrdeque_t>(obj);
     bool ret = prop->clear();
-    return (ret == true) ? xstore_success : xaccount_property_operate_fail;
+    return (ret == true) ? xsuccess : xaccount_cmd_property_operate_fail;
 }
 
 int32_t xaccount_cmd::list_get_back(const std::string& prop_name, std::string & value) {
     xstrdeque_ptr_t prop;
     CLONE_PROPERTY(prop, prop_name, base::xstrdeque_t::enum_obj_type);
     bool ret = prop->get_back(value);
-    return (ret == true) ? xstore_success : xaccount_property_operate_fail;
+    return (ret == true) ? xsuccess : xaccount_cmd_property_operate_fail;
 }
 int32_t xaccount_cmd::list_get_front(const std::string& prop_name, std::string & value) {
     xstrdeque_ptr_t prop;
     CLONE_PROPERTY(prop, prop_name, base::xstrdeque_t::enum_obj_type);
     bool ret = prop->get_front(value);
-    return (ret == true) ? xstore_success : xaccount_property_operate_fail;
+    return (ret == true) ? xsuccess : xaccount_cmd_property_operate_fail;
 }
 int32_t xaccount_cmd::list_get(const std::string& prop_name, const uint32_t index, std::string & value) {
     xstrdeque_ptr_t prop;
     CLONE_PROPERTY(prop, prop_name, base::xstrdeque_t::enum_obj_type);
     bool ret = prop->get(index, value);
-    return (ret == true) ? xstore_success : xaccount_property_operate_fail;
+    return (ret == true) ? xsuccess : xaccount_cmd_property_operate_fail;
 }
 int32_t xaccount_cmd::list_empty(const std::string& prop_name, bool& empty) {
     xstrdeque_ptr_t prop;
     CLONE_PROPERTY(prop, prop_name, base::xstrdeque_t::enum_obj_type);
     empty = prop->empty();
-    return xstore_success;
+    return xsuccess;
 }
 int32_t xaccount_cmd::list_size(const std::string& prop_name, int32_t& size) {
     xstrdeque_ptr_t prop;
     CLONE_PROPERTY(prop, prop_name, base::xstrdeque_t::enum_obj_type);
     size = prop->size();
-    return xstore_success;
+    return xsuccess;
 }
 int32_t xaccount_cmd::list_get_range(const std::string &prop_name, int32_t start, int32_t stop, std::vector<std::string> &values) {
     xstrdeque_ptr_t prop;
@@ -521,7 +501,7 @@ int32_t xaccount_cmd::list_get_range(const std::string &prop_name, int32_t start
         values.push_back(value);
     }
 
-    return xstore_success;
+    return xsuccess;
 }
 int32_t xaccount_cmd::list_get_all(const std::string &prop_name, std::vector<std::string> &values) {
     xstrdeque_ptr_t prop;
@@ -533,19 +513,19 @@ int32_t xaccount_cmd::list_get_all(const std::string &prop_name, std::vector<std
         assert(ret);
         values.push_back(value);
     }
-    return xstore_success;
+    return xsuccess;
 }
 
 int32_t xaccount_cmd::list_copy_get(const std::string &prop_name, std::deque<std::string> & deque) {
     xstrdeque_ptr_t prop;
     CLONE_PROPERTY(prop, prop_name, base::xstrdeque_t::enum_obj_type);
     deque = prop->get_deque();
-    return xstore_success;
+    return xsuccess;
 }
 
 int32_t xaccount_cmd::map_create(const std::string& prop_name, bool add_flag) {
     auto ret = create_property(prop_name, base::xstrmap_t::enum_obj_type);
-    if (add_flag && ret == xstore_success) {
+    if (add_flag && ret == xsuccess) {
         m_proplogs->add_instruction(prop_name, xproperty_cmd_type_map_create);
     }
     return ret;
@@ -555,7 +535,7 @@ int32_t xaccount_cmd::map_get(const std::string & prop_name, const std::string &
     xstrmap_ptr_t prop;
     CLONE_PROPERTY(prop, prop_name, base::xstrmap_t::enum_obj_type);
     bool ret = prop->get(field, value);
-    return (ret == true) ? xstore_success : xaccount_property_map_field_not_create;
+    return (ret == true) ? xsuccess : xaccount_cmd_property_map_field_not_create;
 }
 int32_t xaccount_cmd::map_set(const std::string & prop_name, const std::string & field, const std::string & value, bool add_flag) {
     xstrmap_ptr_t prop;
@@ -564,7 +544,7 @@ int32_t xaccount_cmd::map_set(const std::string & prop_name, const std::string &
     if (add_flag) {
         m_proplogs->add_instruction(prop_name, xproperty_cmd_type_map_set, field, value);
     }
-    return xstore_success;
+    return xsuccess;
 }
 int32_t xaccount_cmd::map_remove(const std::string & prop_name, const std::string & field, bool add_flag) {
     xstrmap_ptr_t prop;
@@ -573,7 +553,7 @@ int32_t xaccount_cmd::map_remove(const std::string & prop_name, const std::strin
     if (add_flag && ret) {
         m_proplogs->add_instruction(prop_name, xproperty_cmd_type_map_remove, field);
     }
-    return (ret == true) ? xstore_success : xaccount_property_operate_fail;
+    return (ret == true) ? xsuccess : xaccount_cmd_property_operate_fail;
 }
 int32_t xaccount_cmd::map_clear(const std::string & prop_name, bool add_flag) {
     xstrmap_ptr_t prop;
@@ -582,42 +562,42 @@ int32_t xaccount_cmd::map_clear(const std::string & prop_name, bool add_flag) {
     if (add_flag && ret) {
         m_proplogs->add_instruction(prop_name, xproperty_cmd_type_map_clear);
     }
-    return xstore_success;
+    return xsuccess;
 }
 
 int32_t xaccount_cmd::map_set(xdataobj_ptr_t & obj, const std::string & field, const std::string & value) {
     xstrmap_ptr_t prop = dynamic_xobject_ptr_cast<base::xstrmap_t>(obj);
     prop->set(field, value);
-    return xstore_success;
+    return xsuccess;
 }
 int32_t xaccount_cmd::map_remove(xdataobj_ptr_t & obj, const std::string & field) {
     xstrmap_ptr_t prop = dynamic_xobject_ptr_cast<base::xstrmap_t>(obj);
     bool ret = prop->remove(field);
-    return (ret == true) ? xstore_success : xaccount_property_operate_fail;
+    return (ret == true) ? xsuccess : xaccount_cmd_property_operate_fail;
 }
 int32_t xaccount_cmd::map_clear(xdataobj_ptr_t & obj) {
     xstrmap_ptr_t prop = dynamic_xobject_ptr_cast<base::xstrmap_t>(obj);
     bool ret = prop->clear();
-    return xstore_success;
+    return xsuccess;
 }
 
 int32_t xaccount_cmd::map_empty(const std::string & prop_name, bool& empty) {
     xstrmap_ptr_t prop;
     CLONE_PROPERTY(prop, prop_name, base::xstrmap_t::enum_obj_type);
     empty = prop->empty();
-    return xstore_success;
+    return xsuccess;
 }
 int32_t xaccount_cmd::map_size(const std::string & prop_name, int32_t& size) {
     xstrmap_ptr_t prop;
     CLONE_PROPERTY(prop, prop_name, base::xstrmap_t::enum_obj_type);
     size = prop->size();
-    return xstore_success;
+    return xsuccess;
 }
 int32_t xaccount_cmd::map_copy_get(const std::string & prop_name, std::map<std::string, std::string> & map) {
     xstrmap_ptr_t prop;
     CLONE_PROPERTY(prop, prop_name, base::xstrmap_t::enum_obj_type);
     map = prop->get_map();
-    return xstore_success;
+    return xsuccess;
 }
 
 }  // namespace store
