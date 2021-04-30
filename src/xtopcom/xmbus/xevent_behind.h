@@ -117,7 +117,7 @@ public:
             const std::string &_reason,
             direction_type dir = to_listener,
             bool _sync = true):
-    xevent_behind_t(type_on_demand, dir, _sync),
+    xevent_behind_t(type_on_demand_by_hash, dir, _sync),
     address(_address),
     hash(_hash),
     reason(_reason) {
