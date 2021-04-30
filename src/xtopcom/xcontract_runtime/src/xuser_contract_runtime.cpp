@@ -71,7 +71,7 @@ xtransaction_execution_result_t xtop_user_contract_runtime::execute_transaction(
             engin->load_script(src_code, exe_ctx);
             engin->process(exe_ctx);
         }
-    } catch (top::error::xchain_error_t const & eh) {
+    } catch (top::error::xtop_error_t const & eh) {
         result.status.ec = eh.code();
     } catch (std::exception const & eh) {
         result.status.ec = error::xerrc_t::unknown_error;

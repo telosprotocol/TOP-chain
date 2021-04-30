@@ -103,7 +103,7 @@ xaccount_vm_execution_result_t xtop_account_vm::execute(std::vector<data::xcons_
                 break;
             }
         }
-    } catch (top::error::xchain_error_t & eh) {
+    } catch (top::error::xtop_error_t & eh) {
         xerror("account_vm: caught chain error exception: category: %s msg: %s", eh.code().category().name(), eh.what());
     } catch (std::exception const & eh) {
         xerror("account_vm: caught exception: %s", eh.what());

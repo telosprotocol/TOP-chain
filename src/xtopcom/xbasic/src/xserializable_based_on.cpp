@@ -97,7 +97,7 @@ template <>
 xbyte_buffer_t xtop_serializable_based_on<void>::serialize_based_on<base::xstream_t>(std::error_code & ec) const {
     try {
         return serialize_based_on<base::xstream_t>();
-    } catch (top::error::xchain_error_t const & eh) {
+    } catch (top::error::xtop_error_t const & eh) {
         ec = eh.code();
 #if defined(XENABLE_TESTS)
         xwarn("xserializable_based_on serialize error category %s; msg %s", ec.category().name(), eh.what());
@@ -143,7 +143,7 @@ template <>
 void xtop_serializable_based_on<void>::deserialize_based_on<base::xstream_t>(xbyte_buffer_t bytes, std::error_code & ec) {
     try {
         deserialize_based_on<base::xstream_t>(std::move(bytes));
-    } catch (top::error::xchain_error_t const & eh) {
+    } catch (top::error::xtop_error_t const & eh) {
         ec = eh.code();
 #if defined(XENABLE_TESTS)
         xwarn("xserializable_based_on deserialize error category %s; msg %s", ec.category().name(), eh.what());
