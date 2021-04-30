@@ -26,7 +26,7 @@ protected:
     void SetUp() override {}
 };
 
-TEST_F(test_erc20, depoly_erc20) {
+TEST_F(test_erc20, erc20) {
     // wasm bytes
     // uint8_t * bytes;
     // uint32_t bytes_size;
@@ -72,6 +72,18 @@ TEST_F(test_erc20, depoly_erc20) {
 
     auto res_symbol_state = exe_ctx->contract_state()->access_control()->STR_PROP_QUERY("symbol");
     EXPECT_EQ(res_symbol_state, "erc20_symbol");
+
+    // call function
+    input.clear();
+    std::string function_name = "balanceof";
+    input.push_back(top::xbyte_buffer_t{function_name.data(), function_name.data() + function_name.size()});
+    // just test param
+    std::string test_param = "justtestparam";
+    input.push_back(top::xbyte_buffer_t{test_param.data(), test_param.data() + test_param.size()});
+
+
+    wasm_engine.call_contract_erc20(input, top::make_observer(exe_ctx));
+
 
 
 }

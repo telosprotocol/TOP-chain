@@ -12,7 +12,7 @@ const DEFAULT_INSTANCE_OPTIONS: InstanceOptions = InstanceOptions {
 pub fn vm_res_handle(vm_res: VmResult<Val>) -> i32 {
     match vm_res {
         Ok(res) => {
-            println!("rustvm excute depoly ok {}", res.unwrap_i32());
+            println!("rustvm execute ok {}", res.unwrap_i32());
             0
         }
         Err(err) => match err {

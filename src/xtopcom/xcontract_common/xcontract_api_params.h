@@ -1,5 +1,6 @@
 #pragma once
 #include "xbasic/xmemory.hpp"
+#include "xbasic/xbyte_buffer.h"
 #include "xcontract_common/xcontract_state.h"
 
 #include <string>
@@ -12,12 +13,14 @@ struct erc20_params {
     std::string symbol;
     std::string total_supply;
 
+    std::vector<top::xbyte_buffer_t> const call_param;
     std::string account_from;
     std::string account_to;
     int value;
     erc20_params(observer_ptr<xcontract_state_t> contract_state, std::string const& code, std::string const& symbol, std::string const& total_supply):
                 contract_state(contract_state), code(code), symbol(symbol), total_supply(total_supply){
     }
+    erc20_params(observer_ptr<xcontract_state_t> contract_state, std::vector<top::xbyte_buffer_t> const param): contract_state(contract_state), call_param(param){}
     erc20_params(std::string _f, std::string _t, int _v) : account_from{_f}, account_to{_t}, value{_v} {
     }
     erc20_params(observer_ptr<xcontract_state_t> _contract_state, std::string _code) : contract_state{_contract_state}, code{_code} {

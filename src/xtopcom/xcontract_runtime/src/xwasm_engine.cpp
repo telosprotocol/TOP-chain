@@ -58,13 +58,16 @@ void xtop_wasm_engine::deploy_contract_erc20(std::vector<xbyte_buffer_t> const& 
 }
 
 
-void xtop_wasm_engine::call_contract_erc20(std::string const& func_name, std::vector<xbyte_buffer_t> const& params, observer_ptr<contract_common::xcontract_execution_context_t> exe_ctx) {
-    if (func_name == "balanceof") {
-        contract_common::properties::xproperty_identifier_t balances_property_id{"map_balances", contract_common::properties::xproperty_type_t::map, contract_common::properties::xproperty_category_t::user};
-        auto contract_state = exe_ctx->contract_state();
-        auto state_account = contract_state->state_account_address();
-        contract_state->access_control()->map_prop_query<std::string, std::string>(state_account, balances_property_id, state_account.value());
-    }
+void xtop_wasm_engine::call_contract_erc20(std::vector<xbyte_buffer_t> const&  params, observer_ptr<contract_common::xcontract_execution_context_t> exe_ctx) {
+    erc20_params params_ptr{
+        exe_ctx->contract_state(),
+        params,
+    };
+    Erc20_Instance * ins_ptr = get_erc20_instance((uint8_t*)erc20_code.data(), erc20_code.size());
+
+    set_gas_left(ins_ptr, 1000);
+    auto result = call_erc20(ins_ptr, &params_ptr);
+    std::cout << "result" << result << "\n";
 }
 
 NS_END3
