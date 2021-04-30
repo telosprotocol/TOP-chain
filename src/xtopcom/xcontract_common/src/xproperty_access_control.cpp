@@ -380,6 +380,20 @@ std::string xtop_property_access_control::code_prop_query(common::xaccount_addre
     }
 }
 
+bool xtop_property_access_control::code_prop_update(common::xaccount_address_t const & user, xproperty_identifier_t const & prop_id, std::string const& code) {
+    auto prop_name = prop_id.full_name();
+    if (write_permitted(user, prop_id)) {
+        auto prop = bstate_->load_code_var(prop_name);
+        property_assert(prop, "[xtop_property_access_control::code_prop_query]property not exist, prop_name: " + prop_name);
+        return prop->deploy_code(code);
+
+    } else {
+        std::error_code ec{ error::xerrc_t::property_permission_not_allowed };
+        top::error::throw_error(ec, "[xtop_property_access_control::code_prop_query]permission denied");
+        return {};
+    }
+}
+
 
 std::string xtop_property_access_control::src_code(xproperty_identifier_t const & prop_id, std::error_code & ec) const {
     assert(!ec);

@@ -60,7 +60,7 @@ protected:
     void SetUp() override {
         std::string address = xblocktool_t::make_address_user_account("T00000LPggAizKRsMxzS3xwKBRk3Q8qu5xGbz2Q3");
         top::xobject_ptr_t<xvbstate_t> vbstate;
-        vbstate.attach(new xvbstate_t{address, 1,std::vector<top::base::xvproperty_t*>()});
+        vbstate.attach(new xvbstate_t{address, (uint64_t)1, (uint64_t)0, std::string{""}, std::string{""}, (uint64_t)0, (uint32_t)0, (uint16_t)0});
         xproperty_access_control_data_t ac_data;
         std::shared_ptr<xproperty_access_control_t> api_ = std::make_shared<xproperty_access_control_t>(top::make_observer(vbstate.get()), ac_data);
 
