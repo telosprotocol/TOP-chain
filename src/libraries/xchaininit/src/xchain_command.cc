@@ -711,7 +711,7 @@ int parse_execute_command(const char * config_file_extra, int argc, char * argv[
                      "Miner account address(es) and votes. For example, if you want to withdraw votes on 2 miners, you can execute command as: topio staking withdrawVotes "
                      "miner_addr1 80000 miner_addr2 10000")
         ->required();
-    withdrawVotes_app->callback(std::bind(&ApiMethod::withdraw_votes, &topcl.api, std::ref(vote_infos), std::ref(out_str)));
+    withdrawVotes_app->callback(std::bind(&ApiMethod::withdraw_votes, &topcl.api, std::ref(withdrawVotes_vote_infos), std::ref(out_str)));
 
     // query votes
     auto queryVotes_app = staking_app->add_subcommand("queryVotes", "Query allocation information of vote tickets.");
