@@ -34,7 +34,7 @@ public:
     }
 
     /// @brief Apply block data onto current object of type StateT.
-    ///        If any error is seen, top::error::xchain_error_t exception will be thrown.
+    ///        If any error is seen, top::error::xtop_error_t exception will be thrown.
     /// @param block The block object ot be applied.
     virtual void execute_block(SmartPtrT<data::xblock_t const> block) {
         std::error_code ec;
