@@ -11,7 +11,6 @@
 #include "xpbase/base/rand_util.h"
 #include "xpbase/base/top_log.h"
 #include "xpbase/base/top_string_util.h"
-#include "xtransport/message_manager/message_manager_intf.h"
 #include "xmetrics/xmetrics.h"
 #include "xpbase/base/top_utils.h"
 #include "xtransport/udp_transport/transport_util.h"
@@ -78,23 +77,9 @@ bool  ThreadHandler::on_databox_open(base::xpacket_t & packet,int32_t cur_thread
                 pro_message.id(),
                 pro_message.is_root());
     }
-    if (callback_) {
-        callback_(pro_message, packet);
-    } else {
-        message_manager_->HandleMessage(pro_message, packet);
-    }
-    /*
-    TOP_NETWORK_DEBUG_FOR_PROTOMESSAGE2("transport handled", pro_message,cur_thread_id);
-    auto thread_end_time = GetCurrentTimeMicSec();  // us
-    auto thread_taking_time = thread_end_time - thread_begin_time;
-    TOP_DBG_INFO("%s ThreadHandler filter end. type:%d thread_index:%d,hop:%d size:%d taking:%llu",
-            transport::FormatMsgid(pro_message).c_str(),
-            pro_message.type(),
-            raw_thread_index_,
-            pro_message.hop_num(),
-            packet.get_size(),
-            thread_taking_time);
-            */
+    assert(callback_);
+    callback_(pro_message, packet);
+
     return true;
 }
 

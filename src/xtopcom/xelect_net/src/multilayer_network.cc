@@ -11,7 +11,7 @@
 #include "xkad/nat_detect/nat_manager_intf.h"
 #include "xkad/routing_table/routing_utils.h"
 #include "xwrouter/register_routing_table.h"
-#include "xtransport/udp_config.h"
+#include "xwrouter/multi_routing/multi_routing.h"
 #include "xwrouter/multi_routing/small_net_cache.h"
 #include "xwrouter/multi_routing/service_node_cache.h"
 #include "xkad/proto/ledger.pb.h"
@@ -35,11 +35,11 @@ MultilayerNetwork::MultilayerNetwork() {
 
 
 bool MultilayerNetwork::Init(const base::Config& config) {
-    bool show_cmd = true;
-    config.Get("node", "show_cmd", show_cmd);
-    bool first_node = false;
-    config.Get("node", "first_node", first_node);
-    elect_cmd_.Init(first_node, show_cmd);
+    // bool show_cmd = true;
+    // config.Get("node", "show_cmd", show_cmd);
+    // bool first_node = false;
+    // config.Get("node", "first_node", first_node);
+    // elect_cmd_.Init(first_node, show_cmd);
     std::string db_path;
     if (!config.Get("db", "path", db_path)) {
         TOP_ERROR("get db path from conf failed[%s]", db_path.c_str());
@@ -98,7 +98,7 @@ bool MultilayerNetwork::Init(const base::Config& config) {
     }
     TOP_INFO("created EcNetcard");
     ec_netcard_->Init();
-    elect_cmd_.set_netcard(ec_netcard_);
+    // elect_cmd_.set_netcard(ec_netcard_);
     return true;
 }
 
@@ -320,20 +320,6 @@ void MultilayerNetwork::RegisterCallbackForMultiThreadHandler(
             std::placeholders::_2));
 }
 
-int MultilayerNetwork::InitLog(const std::string& log_path, bool log_debug, bool log_off) {
-    if (log_off) {
-        return top::kadmlia::kKadSuccess;
-    }
-
-    xinit_log(log_path.c_str(), true, true);
-    if (log_debug) {
-        xset_log_level(enum_xlog_level_debug);
-    } else {
-        xset_log_level(enum_xlog_level_debug);
-    }
-    return top::kadmlia::kKadSuccess;
-}
-
 std::shared_ptr<top::wrouter::RootRoutingManager> MultilayerNetwork::CreateRootManager(
         bool client,
         std::shared_ptr<transport::Transport> transport,
@@ -353,7 +339,7 @@ std::shared_ptr<top::wrouter::RootRoutingManager> MultilayerNetwork::CreateRootM
         }
     }
     auto root_manager_ptr = wrouter::RootRoutingManager::Instance();
-    wrouter::SetRootRoutingManager(root_manager_ptr);
+    wrouter::MultiRouting::Instance()->SetRootRoutingManager(root_manager_ptr);
 
     uint32_t zone_id = 0;
     if (!kadmlia::GetZoneIdFromConfig(config, zone_id)) {
@@ -391,7 +377,7 @@ int MultilayerNetwork::ResetRootRouting(
         std::shared_ptr<transport::Transport> transport,
         const base::Config& config) {
     root_manager_ptr_.reset();
-    wrouter::SetRootRoutingManager(nullptr);
+    wrouter::MultiRouting::Instance()->SetRootRoutingManager(nullptr);
     std::set<std::pair<std::string, uint16_t>> public_endpoints_config;
     kadmlia::GetPublicEndpointsConfig(config, public_endpoints_config);
 

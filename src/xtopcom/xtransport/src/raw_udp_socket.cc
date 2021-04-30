@@ -1,7 +1,7 @@
 // Copyright (c) 2017-2019 Telos Foundation & contributors
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
-
+#if 0
 #include "xtransport/udp_transport/raw_udp_socket.h"
 
 #include <stdio.h>
@@ -184,3 +184,4 @@ int RawUdpSocket::CheckRatelimitMap(const std::string& to_addr) {
 }  // namespace transport
 
 }  // namespace top
+#endif

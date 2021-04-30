@@ -13,7 +13,6 @@
 #include "xpbase/base/top_utils.h"
 #include "xpbase/base/top_log.h"
 #include "xpbase/base/multirelay_log.h"
-#include "xtransport/transport_message_register.h"
 #include "xkad/routing_table/routing_utils.h"
 #include "xkad/routing_table/callback_manager.h"
 #include "xkad/routing_table/node_info.h"

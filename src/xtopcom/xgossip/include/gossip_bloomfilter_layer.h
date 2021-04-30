@@ -24,7 +24,10 @@ public:
             kadmlia::RoutingTablePtr& routing_table);
 
 private:
-
+    void SelectNodes(transport::protobuf::RoutingMessage & message,
+                     kadmlia::RoutingTablePtr & routing_table,
+                     std::shared_ptr<base::Uint64BloomFilter> & bloomfilter,
+                     std::vector<kadmlia::NodeInfoPtr> & select_nodes);
     DISALLOW_COPY_AND_ASSIGN(GossipBloomfilterLayer);
 };
 

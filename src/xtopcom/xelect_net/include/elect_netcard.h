@@ -77,11 +77,9 @@ public:
      */
     void unregister_message_ready_notify(const uint32_t& xnetwork_id);
 protected:
-    int GossipWithHeaderBlock(
-            transport::protobuf::RoutingMessage& pbft_message,
-            uint32_t block_gossip_type,
-            uint32_t chain_data_hash,
-            uint32_t chain_msgid) const;
+    int GossipWithHeaderBlock(transport::protobuf::RoutingMessage & pbft_message, uint32_t block_gossip_type, uint32_t chain_data_hash, uint32_t chain_msgid) const;
+    int GossipOldRootBroadcast(transport::protobuf::RoutingMessage & pbft_message, uint32_t block_gossip_type, uint32_t chain_data_hash, uint32_t chain_msgid) const;
+    int GossipOldLayerBroadcast(transport::protobuf::RoutingMessage & pbft_message, uint32_t block_gossip_type, uint32_t chain_data_hash, uint32_t chain_msgid) const;
 
 private:
     void HandleRumorMessage(

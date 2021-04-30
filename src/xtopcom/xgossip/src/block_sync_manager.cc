@@ -6,7 +6,6 @@
 
 #include "xpbase/base/top_log.h"
 #include "xpbase/base/kad_key/get_kadmlia_key.h"
-#include "xtransport/transport_message_register.h"
 #include "xkad/routing_table/callback_manager.h"
 #include "xkad/routing_table/routing_table.h"
 #include "xwrouter/register_routing_table.h"
@@ -16,13 +15,16 @@
 #include "xpbase/base/redis_client.h"
 #include "xpbase/base/top_utils.h"
 #include "xwrouter/xwrouter.h"
+#include "xmetrics/xmetrics.h"
+
+#include <cinttypes>
 
 namespace top {
 
 namespace gossip {
 
 static const uint32_t kMaxBlockQueueSize = 1024u;
-static const uint32_t kCheckHeaderHashPeriod = 3 * 1000 * 1000;  // 1s
+static const uint32_t kCheckHeaderHashPeriod = 500 * 1000;  // 1s
 static const uint32_t kSyncAskNeighborCount = 3u;  // random ask 3 neighbors who has block
 static const uint32_t kHeaderSavePeriod = 30 * 1000;  // keep 30s
 static const uint32_t kHeaderRequestedPeriod = 2 * 1000;  // request 3s
@@ -71,6 +73,7 @@ BlockSyncManager* BlockSyncManager::Instance() {
 
 void BlockSyncManager::NewBroadcastMessage(transport::protobuf::RoutingMessage& message) {
     if (!message.gossip().has_header_hash() || message.gossip().header_hash().empty()) {
+        xinfo("[BlockSyncManager] NewBroadcastMessage return 1:%s", message.gossip().header_hash().c_str());
         return;
     }
     /*
@@ -80,20 +83,18 @@ void BlockSyncManager::NewBroadcastMessage(transport::protobuf::RoutingMessage& 
             HexEncode(message.gossip().header_hash()).c_str());
             */
     if (DataExists(message.gossip().header_hash())) {
-        TOP_DEBUG("blockmessage: already have");
+        xinfo("[BlockSyncManager] NewBroadcastMessage return 2 data already exists:%s", message.gossip().header_hash().c_str());
         return;
     }
 
     if (message.gossip().has_block() && !message.gossip().block().empty()) {
-        TOP_DEBUG("add block message: id(%u) header_hash(%s)",
-                message.id(),
-                HexEncode(message.gossip().header_hash()).c_str());
+        xinfo("[BlockSyncManager] NewBroadcastMessage return 3 data add now:%s", message.gossip().header_hash().c_str());
         header_block_data_->AddData(message.gossip().header_hash(), message.SerializeAsString());
         return;
     }
 
     if (HeaderHashExists(message.gossip().header_hash())) {
-        TOP_DEBUG("blockmessage header hash already have: %s", HexEncode(message.gossip().header_hash()).c_str());
+        xinfo("[BlockSyncManager] NewBroadcastMessage return 4 data head hash already add:%s", message.gossip().header_hash().c_str());
         return;
     }
     uint64_t des_service_type;
@@ -103,7 +104,6 @@ void BlockSyncManager::NewBroadcastMessage(transport::protobuf::RoutingMessage& 
         des_service_type = GetRoutingServiceType(message.des_node_id());
     }
 
-    TOP_DEBUG("add header hash:%s to queue", HexEncode(message.gossip().header_hash()).c_str());
     AddHeaderHashToQueue(
             message.gossip().header_hash(),
             des_service_type);
@@ -126,6 +126,7 @@ bool BlockSyncManager::HeaderHashExists(const std::string& header_hash) {
 void BlockSyncManager::AddHeaderHashToQueue(
         const std::string& header_hash,
         uint64_t service_type) {
+    xinfo("[BlockSyncManager] AddHeaderHashToQueue header block hash:%s", header_hash.c_str());
     std::unique_lock<std::mutex> lock(block_map_mutex_);
     block_map_.insert(std::make_pair(
             header_hash,
@@ -245,6 +246,8 @@ void BlockSyncManager::CheckHeaderHashQueue() {
     std::map<std::string, std::shared_ptr<SyncBlockItem>> block_map;
     {
         std::unique_lock<std::mutex> lock(block_map_mutex_);
+        if (block_map_.empty())
+            return;
         block_map = block_map_;
     }
 
@@ -253,6 +256,7 @@ void BlockSyncManager::CheckHeaderHashQueue() {
         for (auto iter = block_map.begin(); iter != block_map.end(); ++iter) {
             auto item = iter->second;
             if (item->time_point <= tp_now || DataExists(item->header_hash)) {
+                xinfo("[BlockSyncManager] remove header block hash:%s", item->header_hash.c_str());
                 RemoveHeaderBlock(item->header_hash);
                 continue;
             }
@@ -430,6 +434,8 @@ void BlockSyncManager::HandleSyncResponse(
             TOP_WARN("[gossip_sync] header hash(%s) not equal", HexEncode(header_hash).c_str());
             return;
         }
+        // RRS_pull_flag. only for local metrics statistics
+        sync_message.set_ack_id(181819);
         base::xpacket_t packet;
         wrouter::Wrouter::Instance()->HandleOwnSyncPacket(sync_message, packet);
         TOP_DEBUG("blockmessage callback hash:%u,header_hash:%s,type:%d", vhash, HexEncode(header_hash).c_str(), sync_message.type());
@@ -444,11 +450,9 @@ void BlockSyncManager::HandleSyncResponse(
         sync_message.set_ack_id(99);
         base::xpacket_t packet;
         wrouter::Wrouter::Instance()->HandleOwnSyncPacket(sync_message, packet);
-        TOP_DEBUG("blockmessage callback msg_hash:%u,header_hash:%s,type:%d", sync_message.gossip().msg_hash(), HexEncode(header_hash).c_str(), sync_message.type());
     }
-
     RemoveHeaderBlock(header_hash);
-    TOP_DEBUG("blockmessage add block data size(%d),hash:%s", gossip_data.block().size(), HexEncode(header_hash).c_str());
+    xinfo("blockmessage callback msg_hash:%u,header_hash:%s,type:%d", sync_message.gossip().msg_hash(), header_hash.c_str(), sync_message.type());
 }
 
 void BlockSyncManager::RemoveHeaderBlock(const std::string& header_hash) {

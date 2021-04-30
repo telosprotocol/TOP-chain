@@ -13,21 +13,17 @@ namespace kadmlia {
 class RoutingTable;
 }
 
-namespace wrouter {
-    class RootRoutingManager;
-}
-
 namespace elect {
 
 // now chain genesis by root election committee
-class ElectNode : public NodeManagerBase {
+class NodeManager : public NodeManagerBase {
 public:
-    ElectNode(
+    NodeManager(
             std::shared_ptr<transport::Transport>,
             const base::Config&);
-    ~ElectNode();
+    ~NodeManager();
     /**
-     * @brief init ElectNode
+     * @brief init NodeManager
      * 
      * @return int 
      */
@@ -57,12 +53,11 @@ public:
 
 private:
     int AddCommitteeRole(base::KadmliaKeyPtr& kad_key);
-    int AddBackupRole(base::KadmliaKeyPtr& kad_key);
 
     std::map<uint64_t, std::shared_ptr<RoutingManager>> ec_manager_map_;
     std::mutex ec_manager_map_mutex_;
 
-    DISALLOW_COPY_AND_ASSIGN(ElectNode);
+    DISALLOW_COPY_AND_ASSIGN(NodeManager);
 };
 
 }  // namespace elect

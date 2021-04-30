@@ -187,6 +187,7 @@ uint32_t MultilayerNetworkChainQuery::Broadcast(uint32_t msg_size, uint32_t coun
     gossip_block->set_neighber_count(4);
     gossip_block->set_stop_times(gossip::kGossipBloomfilter);
     gossip_block->set_max_hop_num(20);
+    // next version delete all `set_evil_rate`
     gossip_block->set_evil_rate(0);
     if (message.is_root()) {
         gossip_block->set_ign_bloomfilter_level(gossip::kGossipBloomfilterIgnoreLevel);
