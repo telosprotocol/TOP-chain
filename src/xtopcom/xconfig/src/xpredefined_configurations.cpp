@@ -165,7 +165,6 @@ XDEFINE_CONFIGURATION(local_blacklist);
 XDEFINE_CONFIGURATION(local_whitelist);
 
 XDEFINE_CONFIGURATION(slash_fulltable_interval);
-XDEFINE_CONFIGURATION(workload_fulltable_interval);
 
 /* beginning of development parameters */
 XDEFINE_CONFIGURATION(http_port);
