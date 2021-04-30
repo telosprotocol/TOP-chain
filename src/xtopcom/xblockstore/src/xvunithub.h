@@ -62,6 +62,7 @@ namespace top
             virtual base::xauto_ptr<base::xvblock_t>  load_block_object(const base::xvaccount_t & account,const uint64_t height,const uint64_t viewid,bool ask_full_load) override;
             virtual base::xauto_ptr<base::xvblock_t>  load_block_object(const base::xvaccount_t & account,const uint64_t height,const std::string & blockhash,bool ask_full_load) override;
             virtual base::xauto_ptr<base::xvblock_t>  load_block_object(const base::xvaccount_t & account,const uint64_t height,base::enum_xvblock_flag required_block,bool ask_full_load) override; //just return the highest viewid of matched flag
+            virtual std::vector<base::xvblock_ptr_t>  load_block_object(const std::string & tx_hash,const base::enum_transaction_subtype type) override;
 
             virtual bool                load_block_input(const base::xvaccount_t & account,base::xvblock_t* block) override;
             virtual bool                load_block_output(const base::xvaccount_t & account,base::xvblock_t* block) override;

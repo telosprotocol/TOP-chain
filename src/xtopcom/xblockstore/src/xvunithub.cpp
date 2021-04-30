@@ -245,6 +245,61 @@ namespace top
             return load_block_from_index(account_obj.get(),account_obj->load_index(height,required_block),height,ask_full_load);
         }
 
+        std::vector<base::xvblock_ptr_t> xvblockstore_impl::load_block_object(const std::string & tx_hash,const base::enum_transaction_subtype type)
+        {
+            base::xvtxindex_ptr txindex = base::xvchain_t::instance().get_xtxstore()->load_tx_idx(tx_hash, type);
+            if(!txindex)
+            {
+                xwarn("xvblockstore_impl::load_block_object tx not find.tx=%s, type=%u", base::xstring_utl::to_hex(tx_hash).c_str(), type);
+                return std::vector<base::xvblock_ptr_t>{};
+            }
+
+            // get unit block in which stores the tx, plus trailing unit blocks(only height +1 & +2)
+            const base::xvaccount_t account(txindex->get_block_addr());
+            const uint64_t height = txindex->get_block_height();
+            std::vector<std::vector<base::xvblock_ptr_t>> blocks_vv;
+            const uint8_t max_fork_height = 2;
+            for(uint64_t i = 0; i <= max_fork_height; ++i)
+            {
+                auto blks = load_block_object(account, height + i);
+                std::vector<base::xvblock_t*> blks_ptr = blks.get_vector();
+                // if block not committed, return directly
+                if((i == 0 && blks_ptr.size() > 1) || (blks_ptr.size() == 0))
+                    return std::vector<base::xvblock_ptr_t>{};
+
+                std::vector<base::xvblock_ptr_t> blocks_v;
+                for (uint32_t j = 0; j < blks_ptr.size(); j++)
+                {
+                    blks_ptr[j]->add_ref();
+                    base::xvblock_ptr_t bp;
+                    bp.attach(blks_ptr[j]);
+                    blocks_v.push_back(bp);
+                }
+                blocks_vv.push_back(blocks_v);
+            }
+
+            // select one legal 3-blocks chain
+            std::vector<base::xvblock_ptr_t> result(3, nullptr);
+            result[0] = blocks_vv[0][0];
+            for(uint16_t i = 0; i < blocks_vv[1].size(); ++i)
+            {
+                if(blocks_vv[1][i]->get_last_block_hash() != result[0]->get_block_hash())
+                    continue;
+
+                result[1] = blocks_vv[1][i];
+                for(uint16_t j = 0; j < blocks_vv[2].size(); ++j)
+                {
+                    if(blocks_vv[2][j]->get_last_block_hash() == result[1]->get_block_hash())
+                    {
+                        result[2] = blocks_vv[2][j];
+                        return result;
+                    }
+                }
+            }
+
+            return std::vector<base::xvblock_ptr_t>{};
+        }
+
         bool                xvblockstore_impl::load_block_input(const base::xvaccount_t & account,base::xvblock_t* block)
         {
             if( (nullptr == block) || (account.get_account() != block->get_account()) )

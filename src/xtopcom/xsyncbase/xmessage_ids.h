@@ -31,5 +31,7 @@ XDEFINE_MSG_ID(xmessage_category_sync, xmessage_id_sync_chain_snapshot_request, 
 XDEFINE_MSG_ID(xmessage_category_sync, xmessage_id_sync_chain_snapshot_response, 0x16);
 XDEFINE_MSG_ID(xmessage_category_sync, xmessage_id_sync_ondemand_chain_snapshot_request, 0x17);
 XDEFINE_MSG_ID(xmessage_category_sync, xmessage_id_sync_ondemand_chain_snapshot_response, 0x18);
+XDEFINE_MSG_ID(xmessage_category_sync, xmessage_id_sync_get_on_demand_by_hash_blocks, 0x19);
+XDEFINE_MSG_ID(xmessage_category_sync, xmessage_id_sync_on_demand_by_hash_blocks, 0x20);
 
 NS_END2

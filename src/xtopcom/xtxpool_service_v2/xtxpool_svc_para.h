@@ -19,8 +19,9 @@ class xtxpool_svc_para_t : public base::xobject_t {
 public:
     xtxpool_svc_para_t(const observer_ptr<store::xstore_face_t> & store,
                        const observer_ptr<base::xvblockstore_t> & blockstore,
-                       const observer_ptr<xtxpool_v2::xtxpool_face_t> & txpool)
-      : m_store(store), m_blockstore(blockstore), m_txpool(txpool) {
+                       const observer_ptr<xtxpool_v2::xtxpool_face_t> & txpool,
+                       const observer_ptr<mbus::xmessage_bus_face_t> & bus)
+      : m_store(store), m_blockstore(blockstore), m_txpool(txpool), m_bus(bus) {
     }
 
 public:
@@ -39,12 +40,16 @@ public:
     xtxpool_service_dispatcher_t * get_dispatcher() const {
         return m_dispatcher.get();
     }
+    mbus::xmessage_bus_face_t * get_bus() const {
+        return m_bus.get();
+    }
 
 private:
     observer_ptr<store::xstore_face_t> m_store{nullptr};
     observer_ptr<base::xvblockstore_t> m_blockstore{nullptr};
     observer_ptr<xtxpool_v2::xtxpool_face_t> m_txpool{nullptr};
     observer_ptr<xtxpool_service_dispatcher_t> m_dispatcher{nullptr};
+    observer_ptr<mbus::xmessage_bus_face_t> m_bus{nullptr};
 };
 
 NS_END2

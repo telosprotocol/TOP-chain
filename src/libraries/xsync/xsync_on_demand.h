@@ -41,12 +41,18 @@ public:
         const vnetwork::xvnode_address_t &to_address, const vnetwork::xvnode_address_t &network_self);
     void handle_chain_snapshot(xsync_message_chain_snapshot_t &chain_snapshot, 
         const vnetwork::xvnode_address_t &to_address, const vnetwork::xvnode_address_t &network_self);
+    void on_behind_by_hash_event(const mbus::xevent_ptr_t &e);
+    void handle_blocks_by_hash_request(const xsync_message_get_on_demand_by_hash_blocks_t &block, 
+        const vnetwork::xvnode_address_t &to_address, const vnetwork::xvnode_address_t &network_self);
+    void handle_blocks_by_hash_response(const std::vector<data::xblock_ptr_t> &blocks, 
+        const vnetwork::xvnode_address_t &to_address, const vnetwork::xvnode_address_t &network_self);    
     xsync_download_tracer_mgr* download_tracer_mgr();
 
 private:
     int32_t check(const std::string &account_address);
     int32_t check(const std::string &account_address, 
         const vnetwork::xvnode_address_t &to_address, const vnetwork::xvnode_address_t &network_self);
+    bool store_blocks(const std::vector<data::xblock_ptr_t> &blocks); 
 
 private:
     std::string m_vnode_id;
