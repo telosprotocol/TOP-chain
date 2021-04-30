@@ -49,6 +49,8 @@ enum enum_xtransaction_type {
     xtransaction_type_pledge_token_vote          = 27,   // pledge token for disk
     xtransaction_type_redeem_token_vote          = 28,   // redeem token
 
+    xtransaction_type_deploy_wasm_contract       = 29,   // deploy wasm contract
+
     xtransaction_type_max
 };
 

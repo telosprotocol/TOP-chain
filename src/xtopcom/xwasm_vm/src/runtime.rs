@@ -22,6 +22,7 @@ pub struct GasInfo {
 }
 
 impl GasInfo {
+    #[allow(unused)]
     pub fn new(cost: u64, externally_used: u64) -> Self {
         GasInfo {
             cost,
@@ -34,6 +35,7 @@ impl GasInfo {
             externally_used: 0,
         }
     }
+    #[allow(unused)]
     pub fn with_externally_used(amount: u64) -> Self {
         GasInfo {
             cost: 0,
@@ -41,6 +43,7 @@ impl GasInfo {
         }
     }
 
+    #[allow(unused)]
     pub fn free() -> Self {
         GasInfo {
             cost: 0,
@@ -177,6 +180,7 @@ impl Runtime {
         })
     }
 
+    #[allow(unused)]
     pub fn call_function0(&self, name: &str, args: &[Val]) -> VmResult<()> {
         let result = self.call_function(name, args)?;
         let expected = 0;
