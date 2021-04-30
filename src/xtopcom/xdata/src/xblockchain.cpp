@@ -41,30 +41,13 @@ xblockchain2_t::xblockchain2_t(const std::string & account) : m_account(account)
 
 xblockchain2_t::xblockchain2_t() {}
 
-bool xblockchain2_t::is_property_behind() const {
-    if (m_block_level != base::enum_xvblock_level_unit) {
-        return false;
-    }
-    return m_max_block_height != m_property_confirm_height;
-}
-
-void xblockchain2_t::set_update_stamp(uint64_t timestamp) {
-    if (m_update_stamp < timestamp) {
-        m_update_stamp = timestamp;
-        add_modified_count();
-    }
-}
-
 int32_t xblockchain2_t::do_write(base::xstream_t & stream) {
     KEEP_SIZE();
     SERIALIZE_FIELD_BT(m_version);
     SERIALIZE_FIELD_BT(m_account);
     SERIALIZE_FIELD_BT(m_block_level);
-    SERIALIZE_FIELD_BT(m_min_block_height);
-    SERIALIZE_FIELD_BT(m_max_block_height);
     SERIALIZE_FIELD_BT(m_last_state_block_height);
     SERIALIZE_FIELD_BT(m_last_state_block_hash);
-    SERIALIZE_FIELD_BT(m_update_stamp);
     SERIALIZE_FIELD_BT(m_property_confirm_height);
     SERIALIZE_FIELD_BT(m_last_full_block_height);
     SERIALIZE_FIELD_BT(m_last_full_block_hash);
@@ -86,11 +69,8 @@ int32_t xblockchain2_t::do_read(base::xstream_t & stream) {
     DESERIALIZE_FIELD_BT(m_version);
     DESERIALIZE_FIELD_BT(m_account);
     DESERIALIZE_FIELD_BT(m_block_level);
-    DESERIALIZE_FIELD_BT(m_min_block_height);
-    DESERIALIZE_FIELD_BT(m_max_block_height);
     DESERIALIZE_FIELD_BT(m_last_state_block_height);
     DESERIALIZE_FIELD_BT(m_last_state_block_hash);
-    DESERIALIZE_FIELD_BT(m_update_stamp);
     DESERIALIZE_FIELD_BT(m_property_confirm_height);
     DESERIALIZE_FIELD_BT(m_last_full_block_height);
     DESERIALIZE_FIELD_BT(m_last_full_block_hash);
@@ -109,24 +89,6 @@ int32_t xblockchain2_t::do_read(base::xstream_t & stream) {
         m_property_objs[prop_name] = prop_obj;
     }
     return CALC_LEN();
-}
-
-void xblockchain2_t::update_min_max_height(uint64_t height) {
-    // update number
-    if (m_min_block_height == 0 || m_min_block_height > height) {
-        m_min_block_height = height;
-        add_modified_count();
-    }
-
-    if (m_max_block_height < height) {
-        m_max_block_height = height;
-        add_modified_count();
-    }
-}
-
-void xblockchain2_t::set_min_chain_height(uint64_t height) {
-    m_min_block_height = height;
-    add_modified_count();
 }
 
 xtransaction_ptr_t xblockchain2_t::make_transfer_tx(const std::string & to, uint64_t amount, uint64_t firestamp, uint16_t duration, uint32_t deposit, const std::string& token_name) {
@@ -196,7 +158,7 @@ bool xblockchain2_t::add_light_unit(const xblock_t * block) {
 
         // check propertys size
         std::map<std::string, xdataobj_ptr_t> clone_props = cmd.get_all_property();
-        xdbg("xstore::execute_lightunit %s clone_props_size=%zu,unit_prop_size=%zu",
+        xdbg("xblockchain2_t::add_light_unit %s clone_props_size=%zu,unit_prop_size=%zu",
             block->dump().c_str(), clone_props.size(), block->get_property_hash_map().size());
 
         // check propertys hash and save property
@@ -207,12 +169,12 @@ bool xblockchain2_t::add_light_unit(const xblock_t * block) {
             }
             std::string prop_hash = xhash_base_t::calc_dataunit_hash(prop.second.get());
             if (prop_hash != unit_prop_hash) {
-                xerror("xstore::execute_lightunit %s property hash: %s, unit property hash: %s",
+                xerror("xblockchain2_t::add_light_unit %s property hash: %s, unit property hash: %s",
                     block->dump().c_str(), to_hex_str(prop_hash).c_str(), to_hex_str(unit_prop_hash).c_str());
                 return false;
             }
             set_property(prop.first, prop.second);
-            xdbg("xstore::execute_lightunit block=%s, changed property name=%s", block->dump().c_str(), prop.first.c_str());
+            xdbg("xblockchain2_t::add_light_unit block=%s, changed property name=%s", block->dump().c_str(), prop.first.c_str());
         }
     }
 
@@ -454,11 +416,8 @@ bool xblockchain2_t::update_state_by_full_block(const xblock_t * block) {
 std::string xblockchain2_t::to_basic_string() const {
     std::stringstream ss;
     ss << "{";
-    ss << ",min_h=" << m_min_block_height;
-    ss << ",max_h=" << m_max_block_height;
     ss << ",state_height=" << m_last_state_block_height;
     ss << ",state_hash=" << base::xstring_utl::to_hex(m_last_state_block_hash);
-    ss << ",updatestamp=" << m_update_stamp;
     ss << "}";
     return ss.str();
 }

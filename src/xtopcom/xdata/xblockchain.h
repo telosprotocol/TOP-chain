@@ -44,17 +44,10 @@ class xblockchain2_t : public xbase_dataobj_t<xblockchain2_t, xdata_type_blockch
  public:  // api for basic blockchain
     const std::string & get_account()const {return m_account;}
     base::enum_xvblock_level    get_block_level() const {return m_block_level;}
-    uint64_t            get_chain_height()const {return m_max_block_height;}
-    uint64_t            get_min_chain_height()const {return m_min_block_height;}
-    void                set_min_chain_height(uint64_t height);
+    uint64_t            get_chain_height()const {return m_last_state_block_height;}
     uint64_t            get_account_create_time() const {return m_account_state.get_account_create_time();}
     uint64_t            get_last_height()const {return m_last_state_block_height;}
     const std::string & get_last_block_hash()const {return m_last_state_block_hash;}
-    bool                is_state_behind()const {return m_max_block_height != m_last_state_block_height;}
-    bool                is_property_behind()const;
-    void                set_update_stamp(uint64_t timestamp);
-    uint64_t            get_update_stamp() const {return m_update_stamp;}
-    void                update_min_max_height(uint64_t height);
     std::string         to_basic_string() const;
 
  public:  // set api for account context, use for save temp change
@@ -132,13 +125,10 @@ class xblockchain2_t : public xbase_dataobj_t<xblockchain2_t, xdata_type_blockch
     uint8_t                     m_version{0};
     std::string                 m_account;
     base::enum_xvblock_level    m_block_level;
-    uint64_t                    m_min_block_height{0};
-    uint64_t                    m_max_block_height{0};
     uint64_t                    m_last_state_block_height{0};
     std::string                 m_last_state_block_hash{};
     uint64_t                    m_last_full_block_height{0};
     std::string                 m_last_full_block_hash{};
-    uint64_t                    m_update_stamp{0};
     uint64_t                    m_property_confirm_height{0};
     xaccount_mstate2            m_account_state;
     std::map<uint16_t, std::string> m_ext;
