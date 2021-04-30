@@ -412,9 +412,11 @@ bool xstore::save_block(const std::string & store_path, data::xblock_t *block) {
 }
 
 xdataobj_ptr_t xstore::clone_property(const std::string &address, const std::string &property_name) {
-    xdataobj_ptr_t property;
-    auto           obj = get_object(xstore_key_t(xstore_key_type_property, xstore_block_type_none, address, property_name));
-    property.attach(dynamic_cast<base::xdataobj_t *>(obj));
+    xdataobj_ptr_t property = nullptr;
+    xaccount_ptr_t state = query_account(address);
+    if (state != nullptr) {
+        property = state->find_property(property_name);
+    }
     xdbg("account: %s  property name: %s, has %s property", address.c_str(), property_name.c_str(), property == nullptr ? "empty" : "not empty");
     return property;
 }
@@ -708,15 +710,6 @@ int32_t xstore::get_string_property(const std::string &address, uint64_t height,
         value = obj->get();
     }
     return xsuccess;
-}
-
-xdataobj_ptr_t xstore::get_property_object(const std::string & account, const std::string & prop_name, uint64_t height) {
-    xdataobj_ptr_t obj = nullptr;
-    xstore_key_t property_key(xstore_key_type_property, xstore_block_type_none, account, prop_name, std::to_string(height));
-    xinfo("xstore::get_property_object property name=%s", property_key.printable_key().c_str());
-    auto property = get_object(property_key);
-    obj.attach(property);
-    return obj;
 }
 
 // system contract start with 0, user account start with 1
