@@ -50,9 +50,6 @@ int32_t    xunit_maker_t::check_latest_state(const base::xaccount_index_t & acco
     if (account_index.get_latest_unit_height() < m_latest_account_index.get_latest_unit_height()) {
         xwarn("xunit_maker_t::check_latest_state fail-account index behind, account=%s,cache_height=%ld,index_height=%ld",
             get_account().c_str(), m_latest_account_index.get_latest_unit_height(), account_index.get_latest_unit_height());
-        mbus::xevent_behind_ptr_t ev = make_object_ptr<mbus::xevent_behind_on_demand_t>(
-            get_address(), account_index.get_latest_unit_height(), (uint32_t)(m_latest_account_index.get_latest_unit_height() - account_index.get_latest_unit_height()), true, "account_state_fall_behind");
-        get_bus()->push_event(ev);
         return xblockmaker_error_latest_unit_blocks_invalid;
     }
 
@@ -60,7 +57,12 @@ int32_t    xunit_maker_t::check_latest_state(const base::xaccount_index_t & acco
     xblock_ptr_t latest_block = get_latest_block(account_index);
     if (nullptr == latest_block) {
         // TODO(jimmy) invoke sync
-        xwarn("xunit_maker_t::check_latest_state fail-is_latest_blocks_valid, account=%s", get_account().c_str());
+        base::xauto_ptr<base::xvblock_t> _block_ptr = get_blockstore()->get_latest_connected_block(get_account());
+        uint64_t start_sync_height = _block_ptr->get_height() + 1;
+        mbus::xevent_behind_ptr_t ev = make_object_ptr<mbus::xevent_behind_on_demand_t>(
+            get_address(), start_sync_height, (uint32_t)(account_index.get_latest_unit_height() - start_sync_height), true, "account_state_fall_behind");
+        get_bus()->push_event(ev);
+        xwarn("xunit_maker_t::check_latest_state fail-is_latest_blocks_valid, account=%s,try sync from %llu to %llu", get_account().c_str(), start_sync_height, account_index.get_latest_unit_height());
         return xblockmaker_error_latest_unit_blocks_invalid;
     }
 
