@@ -239,18 +239,16 @@ base::xauto_ptr<top::base::xvblock_t> xtop_application::last_logic_time() const 
 
 bool xtop_application::check_rootblock() {
     base::xvblock_t* rootblock = xrootblock_t::get_rootblock();
-    base::xvblock_t* db_rootblock = store()->get_vblock(std::string(), rootblock->get_account(), 0);
-    if (db_rootblock != nullptr) {
-        if (db_rootblock->get_block_hash() != rootblock->get_block_hash()) {
-            xerror("xtop_application::check_rootblock db rootblock not match");
-            return false;
-        }
-    } else {
-        if (false == store()->set_vblock(std::string(), rootblock)) {
-            xerror("xtop_application::check_rootblock rootblock set db fail");
-            return false;
-        }
+
+    if (true == blockstore()->exist_genesis_block(base::xvaccount_t(rootblock->get_account()))) {
+        return true;
     }
+
+    if (false == blockstore()->store_block(base::xvaccount_t(rootblock->get_account()), rootblock)) {
+        xerror("xtop_application::check_rootblock rootblock set db fail");
+        return false;
+    }
+
     xinfo("xtop_application::check_rootblock success");
     return true;
 }

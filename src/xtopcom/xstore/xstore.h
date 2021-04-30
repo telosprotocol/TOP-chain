@@ -164,6 +164,7 @@ public:
 
     base::xdataobj_t* get(const xstore_key_t & key) const;
     bool set(const std::string& key, base::xdataobj_t* object);
+    bool load_blocks_from_full_or_state(const xaccount_ptr_t & state, const xblock_ptr_t & latest_block, std::map<uint64_t, xblock_ptr_t> & blocks);
 
  private:
     std::string                     m_store_path;
