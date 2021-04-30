@@ -14,7 +14,6 @@
 #include "xkad/nat_detect/nat_manager_intf.h"
 #include "xkad/routing_table/routing_utils.h"
 #include "xwrouter/register_routing_table.h"
-#include "xtransport/udp_config.h"
 #include "xgossip/include/block_sync_manager.h"
 #include "xwrouter/multi_routing/small_net_cache.h"
 #include "xwrouter/multi_routing/service_node_cache.h"

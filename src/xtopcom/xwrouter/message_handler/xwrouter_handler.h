@@ -42,25 +42,20 @@ using Xip2Header = _xip2_header;
 
 class WrouterHandler {
 public:
-    WrouterHandler(
-            transport::TransportPtr transport_ptr,
-            std::shared_ptr<gossip::GossipInterface> bloom_gossip_ptr,
-            std::shared_ptr<gossip::GossipInterface> layered_gossip_ptr,
-            std::shared_ptr<gossip::GossipInterface> bloom_layer_gossip_ptr,
-            std::shared_ptr<gossip::GossipInterface> set_layer_gossip_ptr,
-            std::shared_ptr<gossip::GossipInterface> bloom_gossip_merge_ptr,
-            std::shared_ptr<gossip::GossipInterface> bloom_gossip_zone_ptr,
-            std::shared_ptr<gossip::GossipInterface> bloom_gossip_super_ptr);
+    WrouterHandler(transport::TransportPtr transport_ptr,
+                   std::shared_ptr<gossip::GossipInterface> bloom_gossip_ptr,
+                   std::shared_ptr<gossip::GossipInterface> bloom_layer_gossip_ptr,
+                   std::shared_ptr<gossip::GossipInterface> gossip_rrs_ptr);
     virtual ~WrouterHandler();
 
     // xip
-    virtual int32_t SendPacket(base::xpacket_t& packet) { return 0; }
-    virtual int32_t RecvPacket(base::xpacket_t& packet) { return 0; }
-    virtual int32_t SendToLocal(base::xpacket_t& packet) { return 0; }
-    virtual int32_t SendDirect(
-            base::xpacket_t& packet,
-            const std::string& ip,
-            uint16_t port) { return 0; }
+//     virtual int32_t SendPacket(base::xpacket_t& packet) { return 0; }
+//     virtual int32_t RecvPacket(base::xpacket_t& packet) { return 0; }
+//     virtual int32_t SendToLocal(base::xpacket_t& packet) { return 0; }
+//     virtual int32_t SendDirect(
+//             base::xpacket_t& packet,
+//             const std::string& ip,
+//             uint16_t port) { return 0; }
 
     // xid
     virtual int32_t SendPacket(transport::protobuf::RoutingMessage& message) { return 0; }
@@ -94,12 +89,8 @@ protected:
 protected:
     transport::TransportPtr transport_ptr_;
     std::shared_ptr<gossip::GossipInterface> bloom_gossip_ptr_;
-    std::shared_ptr<gossip::GossipInterface> layered_gossip_ptr_;
     std::shared_ptr<gossip::GossipInterface> bloom_layer_gossip_ptr_;
-    std::shared_ptr<gossip::GossipInterface> set_layer_gossip_ptr_;
-    std::shared_ptr<gossip::GossipInterface> bloom_gossip_merge_ptr_;
-    std::shared_ptr<gossip::GossipInterface> bloom_gossip_zone_ptr_;   
-    std::shared_ptr<gossip::GossipInterface> bloom_gossip_super_ptr_;
+    std::shared_ptr<gossip::GossipInterface> gossip_rrs_ptr_;
 };
 
 } // namespace wrouter 

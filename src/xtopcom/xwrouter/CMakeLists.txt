@@ -7,8 +7,8 @@ add_library(xwrouter STATIC ${xwrouter_src})
 
 target_link_libraries(xwrouter PRIVATE xkad xgossip cpp_redis tacopie)
 
-add_subdirectory(demo)
+# add_subdirectory(demo)
 
-if(XENABLE_TESTS)
-    add_subdirectory(tests)
-endif()
+# if(XENABLE_TESTS)
+#     add_subdirectory(tests)
+# endif()

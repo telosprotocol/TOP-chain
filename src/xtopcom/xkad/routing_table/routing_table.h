@@ -62,7 +62,6 @@ public:
     virtual void GetBootstrapCache(std::set<std::pair<std::string, uint16_t>>& boot_endpoints);
     virtual bool IsDestination(const std::string& des_node_id, bool check_closest);
     virtual void SetFreqMessage(transport::protobuf::RoutingMessage& message);
-    virtual void SetSpeClientMessage(transport::protobuf::RoutingMessage& message);
     virtual uint64_t GetRoutingTableType() { return local_node_ptr_->service_type();}
     virtual void PrintRoutingTable();
 
@@ -117,13 +116,13 @@ public:
     void SetMultiRelayMsg(
             const transport::protobuf::RoutingMessage& message,
             transport::protobuf::RoutingMessage& res_message);
-    void SmartSendReply(transport::protobuf::RoutingMessage& res_message);
-    void SmartSendReply(transport::protobuf::RoutingMessage& res_message, bool add_hop);
+//     void SmartSendReply(transport::protobuf::RoutingMessage& res_message);
+//     void SmartSendReply(transport::protobuf::RoutingMessage& res_message, bool add_hop);
     int ClosestToTarget(const std::string& target, bool& closest);
-    int ClosestToTarget(
-            const std::string& target,
-            const std::set<std::string>& exclude,
-            bool& closest);
+//     int ClosestToTarget(
+//             const std::string& target,
+//             const std::set<std::string>& exclude,
+//             bool& closest);
     std::vector<NodeInfoPtr> nodes();
     void GetRangeNodes(
             const uint64_t& min,

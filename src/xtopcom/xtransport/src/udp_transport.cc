@@ -16,8 +16,6 @@
 #include "xtransport/udp_transport/xudp_socket.h"
 #include "xtransport/utils/transport_utils.h"
 #include "xtransport/message_manager/multi_message_handler.h"
-#include "xtransport/udp_config.h"
-#include "xtransport/udp_transport/raw_udp_socket.h"
 #include "xtransport/udp_transport/transport_filter.h"
 
 using namespace top;
@@ -101,19 +99,13 @@ int UdpTransport::Start(
 
     message_handler_ = message_handler;
 
-    if (transport::UdpConfig::Instance()->UseXudp()) {
+
         udp_socket_ = new XudpSocket(
             base::xcontext_t::instance(),
             io_thread_->get_thread_id(),
             udp_handle_,
             message_handler_);
-    } else {
-        udp_socket_ = new RawUdpSocket(
-            base::xcontext_t::instance(),
-            io_thread_->get_thread_id(),
-            udp_handle_,
-            message_handler_);
-    }
+
     udp_socket_->StartRead();
     local_ip_ = local_ip;
     local_port_ = udp_socket_->GetLocalPort();
@@ -227,21 +219,14 @@ int UdpTransport::ReStartServer() {
 
     // SetOptBuffer();
 
-    if (transport::UdpConfig::Instance()->UseXudp()) {
+ 
         udp_socket_ = new XudpSocket(
             base::xcontext_t::instance(),
             io_thread_->get_thread_id(),
             udp_handle_,
             message_handler_);
         TOP_FATAL("new socket(%p)", udp_socket_);
-    } else {
-        udp_socket_ = new RawUdpSocket(
-            base::xcontext_t::instance(),
-            io_thread_->get_thread_id(),
-            udp_handle_,
-            message_handler_);
-        TOP_FATAL("new socket(%p)", udp_socket_);
-    }
+
     udp_socket_->StartRead();
     socket_connected_ = true;
     TOP_INFO("UdpTransport::ReStartServer() success");

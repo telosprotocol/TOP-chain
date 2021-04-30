@@ -18,12 +18,6 @@ namespace kadmlia {
     class RoutingTable;
 }
 
-namespace wrouter {
-
-class RootRoutingManager;
-
-}
-
 namespace elect {
 
 

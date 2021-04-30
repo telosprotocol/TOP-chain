@@ -408,10 +408,10 @@ enum RoutingMessageType {
     kKadMessageTypeMax,  // other message mast bigger than it
 
     kGossipBlockSyncInvalid = kKadMessageTypeMax + 1, // now is 30
-    kGossipBlockSyncAsk,
-    kGossipBlockSyncAck,
-    kGossipBlockSyncRequest,
-    kGossipBlockSyncResponse,
+    kGossipBlockSyncAsk = 19,
+    kGossipBlockSyncAck = 20,
+    kGossipBlockSyncRequest = 21,
+    kGossipBlockSyncResponse = 22,
     kGossipMaxMessageType,
 
     kMessageTypeMin = kKadMessageTypeMax + 1000,   // now is 1029
@@ -503,8 +503,8 @@ enum RoutingMessageType {
     kTestRecMessage,
     kTestZecMessage,
     kRegZoneMessage,
-    kElectVhostRumorP2PMessage,
-    kElectVhostRumorGossipMessage,
+    kElectVhostRumorP2PMessage = 1159,
+    kElectVhostRumorGossipMessage = 1160,
 
 
     // for xedge module bitvpn

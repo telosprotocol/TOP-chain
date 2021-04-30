@@ -16,7 +16,6 @@
 #include "xpbase/base/top_log.h"
 #include "xtransport/utils/transport_utils.h"
 #include "xtransport/message_manager/multi_message_handler.h"
-#include "xtransport/udp_config.h"
 #include "xmetrics/xmetrics.h"
 #include "xtransport/udp_transport/transport_filter.h"
 #include "json/json.h"

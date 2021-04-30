@@ -26,45 +26,39 @@ public:
     static MultiRouting* Instance();
     kadmlia::RoutingTablePtr GetRoutingTable(const uint64_t& type, bool root = false);
     kadmlia::RoutingTablePtr GetRoutingTable(const std::string& routing_id, bool root = false);
+    void AddRoutingTable(uint64_t type, kadmlia::RoutingTablePtr routing_table);
+    void RemoveRoutingTable(uint64_t type);
+
+
+    void SetRootRoutingManager(std::shared_ptr<RootRoutingManager> root_manager_ptr);
+
 private:
-    friend void RegisterRoutingTable(
-            uint64_t type,
-            std::shared_ptr<kadmlia::RoutingTable> routing_table);
-    friend void UnregisterRoutingTable(uint64_t type);
-    friend void UnregisterAllRoutingTable();
     friend std::shared_ptr<kadmlia::RoutingTable> GetRoutingTable(const uint64_t& type, bool root);
     friend std::shared_ptr<kadmlia::RoutingTable> GetRoutingTable(const std::string& routing_id, bool root);
-    friend void SetRootRoutingManager(std::shared_ptr<RootRoutingManager> root_manager_ptr);
+
     friend void GetAllRegisterType(std::vector<uint64_t>& vec_type);
     friend void GetAllRegisterRoutingTable(std::vector<std::shared_ptr<kadmlia::RoutingTable>>& vec_rt);
-    friend bool CheckTypeExist(uint64_t type);
-    friend std::shared_ptr<kadmlia::RoutingTable> GetSmartRoutingTable(uint64_t type);
-    friend uint64_t TryGetSmartRoutingTable(uint64_t type);
+
+
     friend bool GetServiceBootstrapRootNetwork(
         uint64_t service_type,
         std::set<std::pair<std::string, uint16_t>>& boot_endpoints);
     friend bool SetCacheServiceType(uint64_t service_type);
-    void AddRoutingTable(uint64_t type, kadmlia::RoutingTablePtr routing_table);
-    void RemoveRoutingTable(uint64_t type);
+    
+    
     void RemoveAllRoutingTable();
-    void SetRootRoutingManager(std::shared_ptr<RootRoutingManager> root_manager_ptr);
+    
     void GetAllRegisterType(std::vector<uint64_t>& vec_type);
     void GetAllRegisterRoutingTable(std::vector<std::shared_ptr<kadmlia::RoutingTable>>& vec_rt);
-    bool CheckTypeExist(uint64_t type);
+
     kadmlia::RoutingTablePtr GetServiceRoutingTable(const uint64_t& type);
     kadmlia::RoutingTablePtr GetServiceRoutingTable(const std::string& routing_id);
-    kadmlia::RoutingTablePtr GetSmartRoutingTable(uint64_t type);
-    uint64_t TryGetSmartRoutingTable(uint64_t type);
 
     bool GetServiceBootstrapRootNetwork(
         uint64_t service_type,
         std::set<std::pair<std::string, uint16_t>>& boot_endpoints);
     bool SetCacheServiceType(uint64_t service_type);
 
-    // be careful, will change message
-    void SendToNetwork(transport::protobuf::RoutingMessage& message, bool add_hop = true);
-    // be careful, will not change message
-    void SendToNetwork(const transport::protobuf::RoutingMessage& message, bool add_hop = true);
     void CheckSingleNodeNetwork();
     void WaitCheckSignal();
     void NotifyCheckSignal();

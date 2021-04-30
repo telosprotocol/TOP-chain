@@ -4,37 +4,30 @@
 
 #include "xwrouter/xwrouter.h"
 
-#include <algorithm>
-
-#include "xpbase/base/kad_key/get_kadmlia_key.h"
-#include "xpbase/base/xip_parser.h"
-#include "xpbase/base/kad_key/platform_kadmlia_key.h"
-#include "xkad/routing_table/routing_table.h"
-#include "xkad/routing_table/routing_utils.h"
-#include "xwrouter/register_routing_table.h"
-#include "xwrouter/message_handler/wrouter_message_handler.h"
-#include "xpbase/base/xip_parser.h"
+#include "xbase/xutl.h"
+#include "xgossip/include/gossip_bloomfilter.h"
+#include "xgossip/include/gossip_bloomfilter_layer.h"
+#include "xgossip/include/gossip_rrs.h"
+#include "xgossip/include/gossip_filter.h"
+#include "xgossip/include/gossip_utils.h"
+#include "xkad/gossip/rumor_filter.h"
 #include "xkad/routing_table/client_node_manager.h"
 #include "xkad/routing_table/dynamic_xip_manager.h"
-#include "xtransport/utils/transport_utils.h"
+#include "xkad/routing_table/routing_table.h"
+#include "xkad/routing_table/routing_utils.h"
 #include "xpbase/base/kad_key/get_kadmlia_key.h"
-#include "xpbase/base/uint64_bloomfilter.h"
+#include "xpbase/base/kad_key/platform_kadmlia_key.h"
 #include "xpbase/base/redis_client.h"
-#include "xkad/gossip/rumor_filter.h"
-#include "xgossip/include/broadcast_layered.h"
-#include "xgossip/include/gossip_bloomfilter.h"
-#include "xgossip/include/gossip_bloomfilter_merge.h"
-#include "xgossip/include/gossip_bloomfilter_zone.h"
-#include "xgossip/include/gossip_bloomfilter_layer.h"
-#include "xgossip/include/gossip_set_layer.h"
-#include "xgossip/include/gossip_bloomfilter_super_node.h"
-#include "xgossip/include/gossip_utils.h"
-#include "xbase/xutl.h"
-#include "xtransport/message_manager/message_manager_intf.h"
-#include "xwrouter/message_handler/xwrouter_xid_handler.h"
-#include "xwrouter/message_handler/xwrouter_xip_handler.h"
-#include "xgossip/include/gossip_filter.h"
+#include "xpbase/base/uint64_bloomfilter.h"
+#include "xpbase/base/xip_parser.h"
 #include "xtransport/udp_transport/transport_util.h"
+#include "xtransport/utils/transport_utils.h"
+#include "xwrouter/message_handler/wrouter_message_handler.h"
+#include "xwrouter/message_handler/xwrouter_xid_handler.h"
+#include "xwrouter/register_routing_table.h"
+#include "xmetrics/xmetrics.h"
+
+#include <algorithm>
 
 namespace top {
 
@@ -43,157 +36,81 @@ using namespace gossip;
 
 namespace wrouter {
 
-Wrouter::Wrouter()
-    : wxid_handler_(nullptr),
-    wxip_handler_(nullptr) {}
+Wrouter::Wrouter() : wxid_handler_(nullptr) /*, wxip_handler_(nullptr)*/ {
+}
 
 Wrouter::~Wrouter() {
 }
 
-Wrouter* Wrouter::Instance() {
+Wrouter * Wrouter::Instance() {
     static Wrouter ins;
     return &ins;
 }
 
-void Wrouter::Init(
-        base::xcontext_t& context,
-        const uint32_t thread_id,
-        transport::TransportPtr transport_ptr) {
+void Wrouter::Init(base::xcontext_t & context, const uint32_t thread_id, transport::TransportPtr transport_ptr) {
     assert(transport_ptr);
     auto bloom_gossip_ptr = std::make_shared<GossipBloomfilter>(transport_ptr);
-    auto layered_gossip_ptr = std::make_shared<BroadcastLayered>(transport_ptr);
     auto bloom_layer_gossip_ptr = std::make_shared<GossipBloomfilterLayer>(transport_ptr);
-    auto set_layer_gossip_ptr = std::make_shared<GossipSetLayer>(transport_ptr);
-    auto bloom_gossip_merge_ptr = std::make_shared<GossipBloomfilterMerge>(transport_ptr);
-    auto bloom_gossip_zone_ptr = std::make_shared<GossipBloomfilterZone>(transport_ptr);
-    auto bloom_gossip_super_ptr = std::make_shared<GossipBloomfilterSuperNode>(transport_ptr,
-                                                                          bloom_gossip_ptr,
-                                                                          bloom_layer_gossip_ptr);
+    auto gossip_rrs_ptr = std::make_shared<GossipRRS>(transport_ptr);
     wxid_handler_ = std::make_shared<WrouterXidHandler>(
-            transport_ptr,
-            bloom_gossip_ptr,
-            layered_gossip_ptr,
-            bloom_layer_gossip_ptr,
-            set_layer_gossip_ptr,
-            bloom_gossip_merge_ptr,
-            bloom_gossip_zone_ptr,
-            bloom_gossip_super_ptr);
-    wxip_handler_ = std::make_shared<WrouterXipHandler>(
-            transport_ptr,
-            bloom_gossip_ptr,
-            layered_gossip_ptr,
-            bloom_layer_gossip_ptr,
-            set_layer_gossip_ptr,
-            bloom_gossip_merge_ptr,
-            bloom_gossip_zone_ptr
-            );
+        transport_ptr, bloom_gossip_ptr, bloom_layer_gossip_ptr, gossip_rrs_ptr);
 
-    // GossipFilter for global 
+    // GossipFilter for global
     gossip::GossipFilter::Instance()->Init();
 }
 
-void Wrouter::register_on_receive_own_callback(on_receive_own_callback_t callback) {
-    std::unique_lock<std::mutex> lock(callback_mutex_);
-    assert(callback_ == nullptr);
-    callback_ = callback;
-}
+#define IS_BROADCAST(message) (message.broadcast())
+#define IS_RRS_GOSSIP_MESSAGE(message) (message.is_root() && message.broadcast() && message.gossip().gossip_type() == 8)
+#define MESSAGE_BASIC_INFO(message) "src_node_id", HexEncode(message.src_node_id()), "dst_node_id", HexEncode(message.des_node_id()), "hop_num", message.hop_num()
+#define MESSAGE_RRS_FEATURE(message) "gossip_header_hash", std::stol(message.gossip().header_hash()), "gossip_block_size", message.gossip().block().size()
+#define MESSAGE_FEATURE(message) "msg_hash", message.gossip().msg_hash(), "msg_size", message.gossip().block().size()
+#define IS_ROOT_BROADCAST(message) "is_root", message.is_root(), "is_broadcast", message.broadcast()
+#define PACKET_SIZE(packet) "packet_size", packet.get_size()
+#define NOW_TIME "timestamp", GetCurrentTimeMsec()
 
-void Wrouter::unregister_on_receive_own_callback() {
-    std::unique_lock<std::mutex> lock(callback_mutex_);
-    callback_ = nullptr;
-}
-
-int32_t Wrouter::send(base::xpacket_t& packet) {
-    Xip2Header* xip2_header = ParserXip2Header(packet);
-    if (!xip2_header) {
-        TOP_WARN("xip2_header invalid,send failed");
-        return enum_xerror_code_fail;
+int32_t Wrouter::send(transport::protobuf::RoutingMessage & message) {
+    if (message.has_broadcast() && message.broadcast()) {
+        auto gossip = message.mutable_gossip();
+        if (!gossip->has_msg_hash()) {
+            std::string bin_data = message.data();
+            if (gossip->has_block()) {
+                bin_data = gossip->block();
+            }
+            if (!gossip->has_block() && gossip->has_header_hash()) {
+                bin_data = gossip->header_hash();
+            }
+            uint32_t msg_hash = base::xhash32_t::digest(message.xid() + std::to_string(message.id()) + bin_data);
+            gossip->set_msg_hash(msg_hash);
+        }
     }
-    if (xip2_header->to_xaddr_low != 0x0
-            && xip2_header->to_xaddr_low  != 0xFFFFFFFFFFFFFFFFULL
-            && xip2_header->to_xaddr_high != 0x0
-            && xip2_header->to_xaddr_high != 0xFFFFFFFFFFFFFFFFULL) {
-        return wxip_handler_->SendPacket(packet);
-    }
-
-    std::string content((const char*)packet.get_body().data() + enum_xip2_header_len,
-            packet.get_body().size() - enum_xip2_header_len);
-    transport::protobuf::RoutingMessage message;
-    if (!message.ParseFromString(content)) {
-        TOP_WARN("Message ParseFromString failed");
-        return enum_xerror_code_bad_data;
+    if (IS_RRS_GOSSIP_MESSAGE(message)) {
+        XMETRICS_PACKET_INFO("p2pperf_wroutersend_info", MESSAGE_BASIC_INFO(message), MESSAGE_RRS_FEATURE(message), IS_ROOT_BROADCAST(message), NOW_TIME);
+    } else {
+        if (IS_BROADCAST(message)) {
+            XMETRICS_PACKET_INFO("p2pnormal_wroutersend_info", MESSAGE_BASIC_INFO(message), MESSAGE_FEATURE(message), IS_ROOT_BROADCAST(message), NOW_TIME);
+        }
     }
     return wxid_handler_->SendPacket(message);
 }
 
-int32_t Wrouter::send(transport::protobuf::RoutingMessage& message) {
-    return wxid_handler_->SendPacket(message);
-}
-
-int32_t Wrouter::SendToLocal(transport::protobuf::RoutingMessage& message) {
-    return wxid_handler_->SendToLocal(message);
-}
-
-int32_t Wrouter::SendDirect(
-        transport::protobuf::RoutingMessage& message,
-        const std::string& ip,
-        uint16_t port) {
-    return wxid_handler_->SendDirect(message, ip, port);
-}
-
-int32_t Wrouter::recv(
-        transport::protobuf::RoutingMessage& message,
-        base::xpacket_t& packet) {
-//     Xip2Header* xip2_header = ParserXip2Header(packet);
-//     if (!xip2_header) {
-//         TOP_WARN("ParserXip2Header error, recv failed");
-//         return enum_xerror_code_fail;
-//     }
-//     
-//     if (xip2_header->to_xaddr_low != 0x0
-//             && xip2_header->to_xaddr_low  != 0xFFFFFFFFFFFFFFFFULL
-//             && xip2_header->to_xaddr_high != 0x0
-//             && xip2_header->to_xaddr_high != 0xFFFFFFFFFFFFFFFFULL) {
-//         int32_t rcode = wxip_handler_->RecvPacket(packet);
-//         if (rcode == kRecvOwn) {
-//             return HandleOwnPacket(packet);
-//         }
-//         return rcode;
-//     }
-
+int32_t Wrouter::recv(transport::protobuf::RoutingMessage & message, base::xpacket_t & packet) {
     if (message.hop_num() >= kHopToLive) {
-        TOP_WARN("stop send msg because hop to live is max: %d [%s] des[%s] "
-             "message_type[%d]",
-             kHopToLive,
-             HexSubstr(message.src_node_id()).c_str(),
-             HexSubstr(message.des_node_id()).c_str(),
-             message.type());
+        TOP_WARN(
+            "stop send msg because hop to live is max: %d [%s] des[%s] "
+            "message_type[%d]",
+            kHopToLive,
+            HexSubstr(message.src_node_id()).c_str(),
+            HexSubstr(message.des_node_id()).c_str(),
+            message.type());
         return enum_xerror_code_fail;
     }
 
     int32_t rcode = wxid_handler_->RecvPacket(message, packet);
-    if (message.type() == kTestChainTrade) {
-        TOP_DEBUG("recv2 testchaintradehash:%u", message.gossip().msg_hash());
-        if ((message.gossip().has_header_hash() && message.gossip().has_block())
-                || (!message.gossip().has_header_hash() && message.has_data())) {
-            uint32_t track = message.gossip().msg_hash() % 100 == 0?true:false;
-            if (track) { // 1%
-#ifdef USE_REDIS
-                uint32_t des_network_id;
-                if (message.has_is_root() && message.is_root()) {
-                    des_network_id = 1; // kRoot
-                } else {
-                    auto kad_key = base::GetKadmliaKey(message.des_node_id());
-                    des_network_id = kad_key->xnetwork_id();
-                }
-                std::string redis_base_key = "recver:" + std::to_string(des_network_id) + ":" + HexEncode(global_xid->Get());
-                auto redis_cli = base::RedisClient::Instance()->redis_cli();
-                if (redis_cli->is_connected()) {
-                    redis_cli->hincrby(redis_base_key + ":" + std::to_string(message.gossip().msg_hash()), "total_recv", 1);
-                    redis_cli->commit();
-                }
-#endif
-            }
+    if (IS_RRS_GOSSIP_MESSAGE(message)) {
+        XMETRICS_PACKET_INFO("p2pperf_wrouterrecv_info", MESSAGE_BASIC_INFO(message), MESSAGE_RRS_FEATURE(message), IS_ROOT_BROADCAST(message), PACKET_SIZE(packet), NOW_TIME);
+    } else {
+        if (IS_BROADCAST(message)) {
+            XMETRICS_PACKET_INFO("p2pnormal_wrouterrecv_info", MESSAGE_BASIC_INFO(message), MESSAGE_FEATURE(message), IS_ROOT_BROADCAST(message), PACKET_SIZE(packet), NOW_TIME);
         }
     }
 
@@ -203,39 +120,21 @@ int32_t Wrouter::recv(
     return rcode;
 }
 
-void Wrouter::SupportRandomPattern() {
-    WrouterXidHandler* sub_wxid = dynamic_cast<WrouterXidHandler*>(wxid_handler_.get());
-    if (sub_wxid != nullptr) {
-        sub_wxid->SupportRandomPattern();
-    }
-}
+#undef IS_BROADCAST
+#undef IS_RRS_GOSSIP_MESSAGE
+#undef MESSAGE_BASIC_INFO
+#undef MESSAGE_RRS_FEATURE
+#undef MESSAGE_FEATURE
+#undef IS_ROOT_BROADCAST
+#undef PACKET_SIZE
+#undef NOW_TIME
 
-
-bool Wrouter::BroadcastByMultiRandomKadKey(
-        const transport::protobuf::RoutingMessage& message,
-        kadmlia::ResponseFunctor call_back,
-        int64_t recursive_count) {
-    WrouterXidHandler* sub_wxid = dynamic_cast<WrouterXidHandler*>(wxid_handler_.get());
-    if (sub_wxid != nullptr) {
-        return sub_wxid->BroadcastByMultiRandomKadKey(message, call_back, recursive_count);
-    }
-    return false;
-}
-
-int32_t Wrouter::HandleOwnPacket(
-        transport::protobuf::RoutingMessage& message,
-        base::xpacket_t& packet) {
-    if (callback_) {
-        callback_(message, packet);
-    }
-
+int32_t Wrouter::HandleOwnPacket(transport::protobuf::RoutingMessage & message, base::xpacket_t & packet) {
     WrouterMessageHandler::Instance()->HandleMessage(message, packet);
     return enum_xcode_successful;
 }
 
-int32_t Wrouter::HandleOwnSyncPacket(
-        transport::protobuf::RoutingMessage& message,
-        base::xpacket_t& packet) {
+int32_t Wrouter::HandleOwnSyncPacket(transport::protobuf::RoutingMessage & message, base::xpacket_t & packet) {
     if (gossip::GossipFilter::Instance()->FilterMessage(message)) {
         TOP_NETWORK_DEBUG_FOR_PROTOMESSAGE("wrouter sync filtered", message);
         return enum_xcode_successful;
@@ -245,88 +144,6 @@ int32_t Wrouter::HandleOwnSyncPacket(
     return enum_xcode_successful;
 }
 
-int32_t Wrouter::HandleOwnPacket(base::xpacket_t& packet) {
-    transport::protobuf::RoutingMessage message;
-    std::string content(
-            (const char*)packet.get_body().data() + enum_xip2_header_len,
-            packet.get_body().size() - enum_xip2_header_len);
-    if (!message.ParseFromString(content)) {
-        TOP_WARN("Message ParseFromString from string failed!");
-        return enum_xerror_code_fail;
-    }
-    return HandleOwnPacket(message, packet);
-}
+}  // namespace wrouter
 
-// parse xip2_header from packet
-Xip2Header* Wrouter::ParserXip2Header(base::xpacket_t& packet)
-{
-    //test size of header and body together
-    if((size_t)packet.get_size() < enum_xip2_header_len)
-    {
-        TOP_WARN("xip2_header_len invalid, packet_size(%d) smaller than enum_xip2_header_len(%d)",
-                packet.get_body().size(),
-                enum_xip2_header_len);
-        return nullptr;
-    }
-    if(packet.get_header().size() > 0)
-        return (Xip2Header*)(packet.get_header().data());
-    else
-        return (Xip2Header*)(packet.get_body().data());
-}
-
-
-std::vector<std::string> Wrouter::GetAllLocalIds() {
-    std::vector<std::string> all_id_vec;
-    std::vector<uint64_t> vec_type;
-    GetAllRegisterType(vec_type);
-    kadmlia::RoutingTablePtr routing_table = GetRoutingTable(kRoot, true);
-
-    if (vec_type.empty() && !routing_table) {
-        return {};
-    }
-
-    all_id_vec.push_back(routing_table->get_local_node_info()->id());
-
-    for (auto& t : vec_type) {
-        routing_table = GetRoutingTable(t, false);
-        if (routing_table) {
-            all_id_vec.push_back(routing_table->get_local_node_info()->id());
-        }
-
-        routing_table = GetRoutingTable(t, true);
-        if (routing_table) {
-            all_id_vec.push_back(routing_table->get_local_node_info()->id());
-        }
-    }
-    return all_id_vec;
-}
-
-std::vector<std::string> Wrouter::GetAllLocalXips() {
-    std::vector<std::string> all_id_vec;
-    std::vector<uint64_t> vec_type;
-    GetAllRegisterType(vec_type);
-    kadmlia::RoutingTablePtr routing_table = GetRoutingTable(kRoot, true);
-
-    if (vec_type.empty() && !routing_table) {
-        return {};
-    }
-
-    all_id_vec.push_back(routing_table->get_local_node_info()->xip());
-
-    for (auto& t : vec_type) {
-        routing_table = GetRoutingTable(t, false);
-        if (routing_table) {
-            all_id_vec.push_back(routing_table->get_local_node_info()->xip());
-        }
-
-        routing_table = GetRoutingTable(t, true);
-        if (routing_table) {
-            all_id_vec.push_back(routing_table->get_local_node_info()->xip());
-        }
-    }
-    return all_id_vec;
-}
-
-} // namespace wrouter 
-
-} // namespace top
+}  // namespace top
