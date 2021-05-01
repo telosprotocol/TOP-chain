@@ -83,7 +83,7 @@ xobject_ptr_t<base::xvboffdata_t> xtablestate_t::clone_block_full_data() const {
     base::xauto_ptr<base::xvboffdata_t> _offdata = base::xvblock_t::create_offdata_object(offdata_bin);
     if (nullptr == _offdata) {
         xassert(false);
-        return false;
+        return nullptr;
     }
     return _offdata;
 }

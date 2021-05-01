@@ -28,7 +28,9 @@ xmsg_filter_version_still_empty::xmsg_filter_version_still_empty(xmessage_filter
 void xmsg_filter_message_empty::filt(xvnetwork_message_t & vnetwork_message) {
     xvnetwork_message_t empty_message{};
     if (vnetwork_message.empty()) {
+        #if VHOST_METRICS
         XMETRICS_COUNTER_INCREMENT("vhost_received_invalid", 1);
+        #endif
         xinfo("[vnetwork][message_filter] hash: %" PRIx64 ", vnetwork message empty", vnetwork_message.hash());
         vnetwork_message = empty_message;
         return;
@@ -57,7 +59,9 @@ void xmsg_filter_message_empty::filt(xvnetwork_message_t & vnetwork_message) {
          vnetwork_message.logic_time());
 
     if (vnetwork_message.empty()) {
+        #if VHOST_METRICS
         XMETRICS_COUNTER_INCREMENT("vhost_received_invalid", 1);
+        #endif
         // assert(false);
         xinfo("[vnetwork][message_filter] hash: %" PRIx64 ", msg id %" PRIx32 " receiving an empty message", vnetwork_message.hash(), static_cast<std::uint32_t>(message.id()));
         vnetwork_message = empty_message;
@@ -71,7 +75,9 @@ void xmsg_filter_wrong_dst::filt(xvnetwork_message_t & vnetwork_message) {
     auto & receiver = vnetwork_message.receiver();
 
     if (!common::broadcast(receiver.network_id()) && receiver.network_id() != m_filter_mgr_ptr->get_vhost_ptr()->network_id()) {
+        #if VHOST_METRICS
         XMETRICS_COUNTER_INCREMENT("vhost_received_invalid", 1);
+        #endif
         xinfo("[vnetwork][message_filter] hash: %" PRIx64 ", vnetwork message network id not matched: this network id %" PRIu32 "; sent to %" PRIu32 " ",
               vnetwork_message.hash(),
               static_cast<std::uint32_t>(m_filter_mgr_ptr->get_vhost_ptr()->network_id().value()),
@@ -100,7 +106,9 @@ void xmsg_filter_local_time::filt(xvnetwork_message_t & vnetwork_message) {
                   vnetwork_message.hash(),
                   msg_time,
                   local_time);
-            XMETRICS_COUNTER_INCREMENT("vhost_discard_validation_failure", 1);
+        #if VHOST_METRICS
+        XMETRICS_COUNTER_INCREMENT("vhost_discard_validation_failure", 1);
+        #endif  
             // assert(false);
             vnetwork_message = empty_message;
             return;
@@ -112,7 +120,9 @@ void xmsg_filter_local_time::filt(xvnetwork_message_t & vnetwork_message) {
                   vnetwork_message.hash(),
                   msg_time,
                   local_time);
-            XMETRICS_COUNTER_INCREMENT("vhost_discard_validation_failure", 1);
+        #if VHOST_METRICS
+        XMETRICS_COUNTER_INCREMENT("vhost_discard_validation_failure", 1);
+        #endif
             // assert(false);
             vnetwork_message = empty_message;
         }
@@ -131,7 +141,9 @@ void xmsg_filter_validator_neighbors_version_mismatch::filt(xvnetwork_message_t 
     xvnetwork_message_t empty_message{};
 
     if (sender.version().has_value() && receiver.version().has_value() && sender.version() != receiver.version()) {
+        #if VHOST_METRICS
         XMETRICS_COUNTER_INCREMENT("vhost_discard_validation_failure", 1);
+        #endif
         xinfo("[vnetwork][message_filter] hash: %" PRIx64 ", %s receives a message %" PRIx32 " hash %" PRIx64 " from %s to %s but version not match",
               vnetwork_message.hash(),
               m_filter_mgr_ptr->get_vhost_ptr()->host_node_id().to_string().c_str(),
@@ -145,7 +157,9 @@ void xmsg_filter_validator_neighbors_version_mismatch::filt(xvnetwork_message_t 
     assert(sender.version().has_value() || receiver.version().has_value());
 
     if (sender.version().empty()) {
+        #if VHOST_METRICS
         XMETRICS_COUNTER_INCREMENT("vhost_discard_validation_failure", 1);
+        #endif
 
         xinfo("[vnetwork][message_filter] hash: %" PRIx64 ", %s receives a message %" PRIx32 " hash %" PRIx64 " from %s to %s, but sender doesn't provide round version",
               vnetwork_message.hash(),
@@ -187,7 +201,9 @@ void xmsg_filter_validator_from_auditor::filt(xvnetwork_message_t & vnetwork_mes
     xvnetwork_message_t empty_message{};
 
     if (!common::has<common::xnode_type_t::consensus_auditor>(src_type) && !common::has<common::xnode_type_t::archive>(src_type)) {
+        #if VHOST_METRICS
         XMETRICS_COUNTER_INCREMENT("vhost_discard_validation_failure", 1);
+        #endif
         xinfo("[vnetwork][message_filter] hash: %" PRIx64 ", %s received a message id %" PRIx32 " hash %" PRIx64 " from %s to %s which is not an auditor or archive node",
               vnetwork_message.hash(),
               m_filter_mgr_ptr->get_vhost_ptr()->host_node_id().to_string().c_str(),
@@ -220,7 +236,9 @@ void xmsg_filter_validator_from_auditor::filt(xvnetwork_message_t & vnetwork_mes
         }
 
         if (!(sender.cluster_address() == associated_parent->address().cluster_address() && sender.version() == associated_parent->version())) {
+            #if VHOST_METRICS
             XMETRICS_COUNTER_INCREMENT("vhost_discard_validation_failure", 1);
+            #endif
             xinfo("[vnetwork][message_filter] hash: %" PRIx64 ", %s received a message id %" PRIx32 " sent to %s from %s which is not its associated parent (%s)",
                   message.hash(),
                   m_filter_mgr_ptr->get_vhost_ptr()->host_node_id().to_string().c_str(),
@@ -438,7 +456,9 @@ void xmsg_filter_auditor_from_validator::filt(xvnetwork_message_t & vnetwork_mes
     }
 
     if (!valid_child) {
+        #if VHOST_METRICS
         XMETRICS_COUNTER_INCREMENT("vhost_discard_validation_failure", 1);
+        #endif
         xinfo("[vnetwork][message_filter] hash: %" PRIx64 ", %s received a message id %" PRIx32 " hash %" PRIx64 " sent to %s from %s which is not its associated child",
               vnetwork_message.hash(),
               m_filter_mgr_ptr->get_vhost_ptr()->host_node_id().to_string().c_str(),
@@ -452,7 +472,9 @@ void xmsg_filter_auditor_from_validator::filt(xvnetwork_message_t & vnetwork_mes
 }
 
 void xmsg_filter_version_still_empty::filt(xvnetwork_message_t & vnetwork_message) {
+    #if VHOST_METRICS
     XMETRICS_COUNTER_INCREMENT("vhost_received_valid", 1);
+    #endif
 
     if (vnetwork_message.receiver().version().empty()) {
         auto & message = vnetwork_message.message();
