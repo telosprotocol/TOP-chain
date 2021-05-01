@@ -39,10 +39,11 @@ void xmsg_filter_message_empty::filt(xvnetwork_message_t & vnetwork_message) {
     auto & message = vnetwork_message.message();
     auto & receiver = vnetwork_message.receiver();
     auto & sender = vnetwork_message.sender();
-
+    #if VHOST_METRICS
     XMETRICS_COUNTER_INCREMENT(
         "vhost_" + std::to_string(static_cast<std::uint16_t>(common::get_message_category(message.id()))) + "_in_vhost" + std::to_string(static_cast<std::uint32_t>(message.id())),
         1);
+    #endif
 
     xdbg("[vnetwork] recv message :%" PRIx32 " (hash %" PRIx64 " logic time %" PRIu64 ") from:%s to:%s",
          static_cast<std::uint32_t>(message.id()),

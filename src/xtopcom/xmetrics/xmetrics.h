@@ -19,7 +19,8 @@
 NS_BEG2(top, metrics)
 
 enum E_SIMPLE_METRICS_TAG {
-    xdata_table_counter,
+    e_simple_begin = 0,
+    xdata_table_counter = e_simple_begin,
     xdata_lightunit_counter,
     xdata_fullunit_counter,
     xdata_table_ref_counter,
@@ -145,7 +146,7 @@ public:
 
 #define XMETRICS_XBASE_DATA_CATEGORY_NEW(key) XMETRICS_COUNTER_INCREMENT("dataobject_cur_xbase_type" + std::to_string(key), 1);
 #define XMETRICS_XBASE_DATA_CATEGORY_DELETE(key) XMETRICS_COUNTER_INCREMENT("dataobject_cur_xbase_type" + std::to_string(key), -1);
-
+#define XMETRICS_GAUGE(TAG, value) top::metrics::e_metrics::get_instance().gauge(TAG, value)
 #else
 #define XMETRICS_INIT()
 #define XMETRICS_TIME_RECORD(metrics_name)
@@ -162,6 +163,7 @@ public:
 #define XMETRICS_PACKET_INFO(metrics_name, ...)
 #define XMETRICS_XBASE_DATA_CATEGORY_NEW(key)
 #define XMETRICS_XBASE_DATA_CATEGORY_DELETE(key)
+#define XMETRICS_GAUGE(TAG, value)
 #endif
 
 NS_END2

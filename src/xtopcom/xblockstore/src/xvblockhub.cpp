@@ -286,7 +286,7 @@ namespace top
                     {
                         m_all_blocks.erase(old_height_it);
                         #ifdef ENABLE_METRICS
-                        XMETRICS_COUNTER_INCREMENT("blockstore_cache_block_total", -1);
+                        XMETRICS_GAUGE(metrics::blockstore_cache_block_total, -1);
                         #endif
                         continue;
                     }
@@ -299,6 +299,7 @@ namespace top
                        && (old_height_it->first != m_meta->_highest_connect_block_height))//keep latest_connect_block
                     {
                         auto & view_map = old_height_it->second;
+                        auto erase_count = view_map.size();
                         for(auto it = view_map.begin(); it != view_map.end(); ++it)
                         {
                             //at entry of quit we need make sure everything is consist
@@ -320,7 +321,7 @@ namespace top
                         //erase the this iterator finally
                         m_all_blocks.erase(old_height_it);
                         #ifdef ENABLE_METRICS
-                        XMETRICS_COUNTER_INCREMENT("blockstore_cache_block_total", -1);
+                        XMETRICS_GAUGE(metrics::blockstore_cache_block_total, -1 * erase_count);
                         #endif
                     }
                     else //clean raw block for those reserved index
@@ -345,7 +346,7 @@ namespace top
                     {
                         m_all_blocks.erase(old_height_it);
                         #ifdef ENABLE_METRICS
-                        XMETRICS_COUNTER_INCREMENT("blockstore_cache_block_total", -1);
+                        XMETRICS_GAUGE(metrics::blockstore_cache_block_total, -1);
                         #endif
                         continue;
                     }
@@ -391,7 +392,7 @@ namespace top
                     }
                 }
                 #ifdef ENABLE_METRICS
-                XMETRICS_COUNTER_DECREMENT("blockstore_cache_block_total", m_all_blocks.size());
+                XMETRICS_COUNTER_DECREMENT("metrics::blockstore_cache_block_total", m_all_blocks.size());
                 #endif
                 m_all_blocks.clear();
             }
@@ -1134,7 +1135,7 @@ namespace top
                     {
                         m_all_blocks.erase(height_it);
                         #ifdef ENABLE_METRICS
-                        XMETRICS_COUNTER_INCREMENT("blockstore_cache_block_total", -1);
+                        XMETRICS_GAUGE(metrics::blockstore_cache_block_total, -1);
                         #endif
                     }
                     //XTODO remove raw block at db as well
@@ -1158,7 +1159,7 @@ namespace top
                     {
                         m_all_blocks.erase(height_it);
                         #ifdef ENABLE_METRICS
-                        XMETRICS_COUNTER_INCREMENT("blockstore_cache_block_total", -1);
+                        XMETRICS_GAUGE(metrics::blockstore_cache_block_total, -1);
                         #endif
                     }
 
@@ -1376,7 +1377,7 @@ namespace top
                     *this_block = *existing_block; //transfer all existing info into new one
 
                     #ifdef ENABLE_METRICS
-                    XMETRICS_COUNTER_INCREMENT("blockstore_cache_block_total", 1);
+                    XMETRICS_GAUGE(metrics::blockstore_cache_block_total, 1);
                     #endif
                     xdbg("xblockacct_t::cache_index,finally update block=%s of account=%s", this_block->dump().c_str(), m_meta->dump().c_str());
 
@@ -1407,7 +1408,7 @@ namespace top
                 link_neighbor(this_block); //link as neighbor first
 
                 #ifdef ENABLE_METRICS
-                XMETRICS_COUNTER_INCREMENT("blockstore_cache_block_total", 1);
+                XMETRICS_GAUGE(metrics::blockstore_cache_block_total, 1);
                 #endif
                 xdbg("xblockacct_t::cache_index,finally cached block=%s of account=%s", this_block->dump().c_str(), m_meta->dump().c_str());
                 return true;

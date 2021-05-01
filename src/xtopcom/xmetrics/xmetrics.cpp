@@ -159,6 +159,9 @@ void e_metrics::flow_count(std::string metrics_name, int64_t value, time_point t
     m_message_queue.push(event_message(metrics::e_metrics_major_id::flow, metrics::e_metrics_minor_id::flow_count, metrics_name, value, metrics_appendant_info{timestamp}));
 }
 void e_metrics::gauge(E_SIMPLE_METRICS_TAG tag, int64_t value) {
+    if (tag >= e_simple_total || tag < e_simple_begin ) {
+        return;
+    }
     s_counters[tag].value += value;
     s_counters[tag].call_count++;
 }
