@@ -153,6 +153,32 @@ namespace top
                     {
                         xdbg("xvtxstore_t::store_txs_index,store tx to DB for tx_key %s, %d", base::xstring_utl::to_hex(v->get_tx_hash()).c_str(), txindex_type);
                     }
+
+#ifdef  DEBUG_LONG_CONFIRM_TX_ENABLE  // TODO(jimmy)
+
+                    if (txindex_type == base::enum_txindex_type_confirm)
+                    {
+                        base::xauto_ptr<base::xvtxindex_t> send_txindex = base::xvchain_t::instance().get_xtxstore()->load_tx_idx(v->get_tx_hash(), base::enum_transaction_subtype_confirm);
+                        if (send_txindex == nullptr)
+                        {
+                            xwarn("xvtxstore_t::store_txs,fail find sendtx index. tx=%s",base::xstring_utl::to_hex(v->get_tx_hash()).c_str());
+                        }
+                        else
+                        {
+                            uint64_t confirmtx_clock = block_ptr->get_clock();
+                            uint64_t sendtx_clock = send_txindex->get_block_clock();
+                            if ( (confirmtx_clock > sendtx_clock) && (confirmtx_clock - sendtx_clock >= 15*60) )  // seconds
+                            {
+                                xwarn("xvtxstore_t::store_txs,confirm tx time long. time=%ld,tx=%s", confirmtx_clock - sendtx_clock, base::xstring_utl::to_hex(v->get_tx_hash()).c_str());
+                            }
+                            else
+                            {
+                                xinfo("xvtxstore_t::store_txs,confirm tx time normal.time=%ld,tx=%s", confirmtx_clock - sendtx_clock, base::xstring_utl::to_hex(v->get_tx_hash()).c_str());
+                            }
+                        }
+                    }
+
+#endif
                 }
                 if(has_error)
                     return false;
