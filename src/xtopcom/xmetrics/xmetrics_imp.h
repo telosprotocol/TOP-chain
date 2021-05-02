@@ -7,7 +7,7 @@
 #include <string>
 #include "xbase/xthread.h"
 #include "xbase/xns_macro.h"
-#include "xbasic/xobject_ptr.h"
+#include "xbase/xobject_ptr.h"
 #include "xmetrics/xmetrics.h"
 
 
