@@ -248,9 +248,8 @@ void xtxpool_service_mgr::stop() {
 #define recover_unconfirmed_txs_interval (0xFF)  // every 256 seconds recover once.
 
 void xtxpool_service_mgr::on_timer() {
-    xdbg("xtxpool_service_mgr::on_timer");
     uint64_t now = xverifier::xtx_utl::get_gmttime_s();
-    bool is_time_for_recover_unconfirmed_txs = ((now | recover_unconfirmed_txs_interval) == 0);
+    bool is_time_for_recover_unconfirmed_txs = ((now % recover_unconfirmed_txs_interval) == 0);
     typedef std::tuple<base::enum_xchain_zone_index, uint32_t, uint32_t> table_boundary_t;
     std::vector<table_boundary_t> table_boundarys;
     {

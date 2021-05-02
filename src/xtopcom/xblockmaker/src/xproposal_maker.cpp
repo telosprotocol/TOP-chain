@@ -269,7 +269,7 @@ bool xproposal_maker_t::update_txpool_txs(const xblock_consensus_para_t & propos
     xtxpool_v2::xtxs_pack_para_t txpool_pack_para(proposal_para.get_table_account(), tablestate_highqc->get_receiptid_state(), send_txs_max_num, recv_txs_max_num, confirm_txs_max_num);
     std::vector<xcons_transaction_ptr_t> origin_txs = get_txpool()->get_ready_txs(txpool_pack_para);
     for (auto & tx : origin_txs) {
-        xdbg("xproposal_maker_t::update_txpool_txs leader-get txs. %s tx=%s",
+        xdbg_info("xproposal_maker_t::update_txpool_txs leader-get txs. %s tx=%s",
                 proposal_para.dump().c_str(), tx->dump().c_str());
     }
     table_para.set_origin_txs(origin_txs);

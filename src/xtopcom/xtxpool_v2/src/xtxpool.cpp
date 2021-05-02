@@ -233,6 +233,7 @@ void xtxpool_t::update_receiptid_state(const std::string & table_addr, const bas
 }
 
 bool xtxpool_t::is_table_subscribed(uint8_t zone, uint16_t table_id) const {
+    xassert(table_id < enum_vbucket_has_tables_count);
     std::lock_guard<std::mutex> lck(m_mutex[zone]);
     for (uint32_t i = 0; i < m_shards.size(); i++) {
         if (m_shards[i]->is_id_contained(zone, table_id)) {
