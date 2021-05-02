@@ -11,6 +11,9 @@ namespace top
 {
     namespace base
     {
+
+        #define DEBUG_LONG_CONFIRM_TX_ENABLE  1  // TODO(jimmy)
+
         enum enum_transaction_subtype
         {
             enum_transaction_subtype_invalid   = 0,
@@ -76,6 +79,7 @@ namespace top
             inline bool                        is_self_tx() const {return m_tx_phase_type == enum_transaction_subtype_self;}
 
             inline xdataunit_t*                get_tx_obj()         const {return m_raw_tx_obj;}
+            const uint64_t                     get_block_clock()   const;
         protected:
             virtual int32_t    do_write(base::xstream_t & stream) override;
             virtual int32_t    do_read(base::xstream_t & stream) override;
@@ -88,6 +92,9 @@ namespace top
             std::string                 m_tx_hash;      //raw tx 'hash
             uint8_t                     m_tx_phase_type;//refer enum_transaction_subtype
             uint8_t                     m_block_flags;  //refer enum_xvblock_flag,here just stored 8bit to save space
+#ifdef  DEBUG_LONG_CONFIRM_TX_ENABLE
+            uint64_t                    m_block_clock;  //associated block 'clock
+#endif
         };
         using xvtxindex_ptr             = xobject_ptr_t<xvtxindex_t>;//define short type
 
