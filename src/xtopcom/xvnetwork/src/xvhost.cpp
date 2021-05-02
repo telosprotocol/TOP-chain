@@ -132,13 +132,17 @@ void xtop_vhost::send(xmessage_t const & message,
                  static_cast<std::uint32_t>(message.id()));
             auto new_hash_val = base::xhash32_t::digest(std::string((char *)bytes_message.data(), bytes_message.size()));
             xdbg("[vnetwork] send msg %" PRIx32 " [hash: %" PRIx64 "] [to_hash:%u]", static_cast<std::uint32_t>(message.id()), message.hash(), new_hash_val);
+            #if VHOST_METRICS
             XMETRICS_COUNTER_INCREMENT("vhost_" + std::to_string(static_cast<std::uint16_t>(common::get_message_category(message.id()))) + "_out_vhost_send" +
                                            std::to_string(static_cast<std::uint32_t>(message.id())),
                                        1);
+            #endif
 
+            #if VHOST_METRICS
             XMETRICS_COUNTER_INCREMENT("vhost_" + std::to_string(static_cast<std::uint16_t>(common::get_message_category(message.id()))) + "_out_vhost_send_size" +
                                            std::to_string(static_cast<std::uint32_t>(message.id())),
                                        bytes_message.size());
+            #endif
 
             m_network_driver->send_to(dst.account_address(), bytes_message, transmission_property);
         } else if (dst.empty()) {
@@ -207,13 +211,17 @@ void xtop_vhost::forward_broadcast_message(xmessage_t const & message, common::x
               src.to_string().c_str(),
               dst.to_string().c_str());
 
+        #if VHOST_METRICS
         XMETRICS_COUNTER_INCREMENT("vhost_" + std::to_string(static_cast<std::uint16_t>(common::get_message_category(message.id()))) + "_out_vhost_forward_broadcast_message" +
                                        std::to_string(static_cast<std::uint32_t>(message.id())),
                                    1);
+        #endif
 
+        #if VHOST_METRICS
         XMETRICS_COUNTER_INCREMENT("vhost_" + std::to_string(static_cast<std::uint16_t>(common::get_message_category(message.id()))) + "_out_vhost_forward_broadcast_message_size" +
                                        std::to_string(static_cast<std::uint32_t>(message.id())),
                                    bytes_message.size());
+        #endif
 
         on_network_data_ready(host_node_id(), bytes_message);
 
@@ -257,14 +265,16 @@ void xtop_vhost::broadcast_to_all(xmessage_t const & message, common::xnode_addr
 
         xdbg("[vnetwork] broadcast msg %x from:%s to:%s hash %" PRIx64, message.id(), src.to_string().c_str(), dst.to_string().c_str(), message.hash());
 
+        #if VHOST_METRICS
         XMETRICS_COUNTER_INCREMENT("vhost_" + std::to_string(static_cast<std::uint16_t>(common::get_message_category(message.id()))) + "_out_vhost_broadcast_to_all" +
                                        std::to_string(static_cast<std::uint32_t>(message.id())),
                                    1);
-
+        #endif
+        #if VHOST_METRICS
         XMETRICS_COUNTER_INCREMENT("vhost_" + std::to_string(static_cast<std::uint16_t>(common::get_message_category(message.id()))) + "_out_vhost_broadcast_to_all_size" +
                                        std::to_string(static_cast<std::uint32_t>(message.id())),
                                    bytes_message.size());
-
+        #endif
         assert(m_network_driver);
         m_network_driver->spread_rumor(bytes_message);
     } catch (xvnetwork_error_t const & eh) {
@@ -309,13 +319,16 @@ void xtop_vhost::broadcast(xmessage_t const & message, common::xnode_address_t c
     auto new_hash_val = base::xhash32_t::digest(std::string((char *)packet_msg.data(), packet_msg.size()));
     xinfo("[vnetwork]xtop_vhost::broadcast [vnet hash: %" PRIx64 "] [hash: %u] [to_hash:%u]", vmsg.hash(), message.hash(), new_hash_val);
 
+    #if VHOST_METRICS
     XMETRICS_COUNTER_INCREMENT("vhost_" + std::to_string(static_cast<std::uint16_t>(common::get_message_category(message.id()))) + "_out_vhost_broadcast" +
                                    std::to_string(static_cast<std::uint32_t>(message.id())),
                                1);
-
+    #endif
+    #if VHOST_METRICS
     XMETRICS_COUNTER_INCREMENT("vhost_" + std::to_string(static_cast<std::uint16_t>(common::get_message_category(message.id()))) + "_out_vhost_broadcast_size" +
                                    std::to_string(static_cast<std::uint32_t>(message.id())),
                                packet_msg.size());
+    #endif
 
     m_network_driver->spread_rumor(src.cluster_address().sharding_info(), packet_msg);
 }
@@ -394,14 +407,16 @@ void xtop_vhost::broadcast(common::xnode_address_t const & src, common::xip2_t c
         auto new_hash_val = base::xhash32_t::digest(std::string((char *)bytes.data(), bytes.size()));
         xinfo("[vnetwork]xtop_vhost::broadcast [vnet hash: %" PRIx64 "] [msg hash: %u] [xxh32 to_hash:%" PRIu32 "]", vmsg.hash(), message.hash(), new_hash_val);
 
+        #if VHOST_METRICS
         XMETRICS_COUNTER_INCREMENT("vhost_" + std::to_string(static_cast<std::uint16_t>(common::get_message_category(message.id()))) + "_out_vhost_broadcast" +
                                        std::to_string(static_cast<std::uint32_t>(message.id())),
                                    1);
-
+        #endif
+        #if VHOST_METRICS
         XMETRICS_COUNTER_INCREMENT("vhost_" + std::to_string(static_cast<std::uint16_t>(common::get_message_category(message.id()))) + "_out_vhost_broadcast_size" +
                                        std::to_string(static_cast<std::uint32_t>(message.id())),
                                    bytes.size());
-
+        #endif
         m_network_driver->spread_rumor(src.sharding_address().sharding_info(), bytes);
         // } else if (common::broadcast(dst.network_id())) {
         //     ec = xvnetwork_errc2_t::not_supported;
@@ -418,14 +433,16 @@ void xtop_vhost::broadcast(common::xnode_address_t const & src, common::xip2_t c
 
         xdbg("%s broadcast msg %x from:%s to:%s hash %" PRIx64, vnetwork_category2().name(), message.id(), src.to_string().c_str(), dst.to_string().c_str(), message.hash());
 
+        #if VHOST_METRICS
         XMETRICS_COUNTER_INCREMENT("vhost_" + std::to_string(static_cast<std::uint16_t>(common::get_message_category(message.id()))) + "_out_vhost_broadcast_to_all" +
                                        std::to_string(static_cast<std::uint32_t>(message.id())),
                                    1);
-
+        #endif
+        #if VHOST_METRICS
         XMETRICS_COUNTER_INCREMENT("vhost_" + std::to_string(static_cast<std::uint16_t>(common::get_message_category(message.id()))) + "_out_vhost_broadcast_to_all_size" +
                                        std::to_string(static_cast<std::uint32_t>(message.id())),
                                    bytes_message.size());
-
+        #endif
         assert(m_network_driver);
         m_network_driver->spread_rumor(bytes_message);
     } else if (common::broadcast(dst.slot_id())) {
@@ -447,14 +464,16 @@ void xtop_vhost::broadcast(common::xnode_address_t const & src, common::xip2_t c
               src.to_string().c_str(),
               to.to_string().c_str());
 
+        #if VHOST_METRICS
         XMETRICS_COUNTER_INCREMENT("vhost_" + std::to_string(static_cast<std::uint16_t>(common::get_message_category(message.id()))) + "_out_vhost_forward_broadcast_message" +
                                        std::to_string(static_cast<std::uint32_t>(message.id())),
                                    1);
-
+        #endif
+        #if VHOST_METRICS
         XMETRICS_COUNTER_INCREMENT("vhost_" + std::to_string(static_cast<std::uint16_t>(common::get_message_category(message.id()))) + "_out_vhost_forward_broadcast_message_size" +
                                        std::to_string(static_cast<std::uint32_t>(message.id())),
                                    bytes_message.size());
-
+        #endif
         on_network_data_ready(host_node_id(), bytes_message);
 
         m_network_driver->forward_broadcast(to.cluster_address().sharding_info(), to.type(), bytes_message);
@@ -464,16 +483,18 @@ void xtop_vhost::broadcast(common::xnode_address_t const & src, common::xip2_t c
 }
 
 void xtop_vhost::on_network_data_ready(common::xnode_id_t const &, xbyte_buffer_t const & bytes) {
-    XMETRICS_COUNTER_INCREMENT("vhost_on_data_ready_called", 1);
-
+    #if VHOST_METRICS
+        XMETRICS_COUNTER_INCREMENT("vhost_on_data_ready_called", 1);
+    #endif
     try {
         if (!running()) {
             xwarn("[vnetwork] vhost not run");
             return;
         }
 
+        #if VHOST_METRICS
         XMETRICS_COUNTER_INCREMENT("vhost_total_size_of_all_messages", bytes.size());
-
+        #endif
         m_message_queue.push(bytes);
     } catch (std::exception const & eh) {
         xwarn("[vnetwork] std::exception exception caught: %s", eh.what());
@@ -529,10 +550,11 @@ void xtop_vhost::do_handle_network_data() {
                          sender.to_string().c_str(),
                          receiver.to_string().c_str());
 
+                    #if VHOST_METRICS
                     XMETRICS_COUNTER_INCREMENT("vhost_" + std::to_string(static_cast<std::uint16_t>(common::get_message_category(vnetwork_message.message().id()))) +
                                                    "_in_vhost_size" + std::to_string(static_cast<std::uint32_t>(vnetwork_message.message().id())),
                                                bytes.size());
-
+                    #endif
                     m_filter_manager->filt_message(vnetwork_message);
                     if (vnetwork_message.empty()) {
                         continue;
@@ -555,7 +577,9 @@ void xtop_vhost::do_handle_network_data() {
                             }
 
                             if (!contains) {
+                                #if VHOST_METRICS
                                 XMETRICS_COUNTER_INCREMENT("vhost_discard_addr_not_match", 1);
+                                #endif
                                 xdbg("[vnetwork] callback at address %s not matched", callback_addr.to_string().c_str());
                                 continue;
                             }
@@ -638,7 +662,8 @@ xtop_vhost::do_handle_network_data() {
         try {
             auto all_byte_messages = m_message_queue.wait_and_pop_all();
 
-            XMETRICS_COUNTER_INCREMENT("vhost_handle_data_ready_called", all_byte_messages.size());
+            #if VHOST_METRICS
+        XMETRICS_COUNTER_INCREMENT("vhost_handle_data_ready_called", all_byte_messages.size());
 
             XMETRICS_TIME_RECORD("vhost_handle_data_ready_called_time");
 
@@ -652,7 +677,8 @@ xtop_vhost::do_handle_network_data() {
 
                     auto vnetwork_message = top::codec::msgpack_decode<xvnetwork_message_t>(bytes);
                     if (vnetwork_message.empty()) {
-                        XMETRICS_COUNTER_INCREMENT("vhost_received_invalid", 1);
+                        #if VHOST_METRICS
+        XMETRICS_COUNTER_INCREMENT("vhost_received_invalid", 1);
                         xwarn("[vnetwork] vnetwork message empty");
                         continue;
                     }
@@ -677,7 +703,8 @@ xtop_vhost::do_handle_network_data() {
                          receiver.to_string().c_str());
 
                     // if (receiver.empty()) {
-                    //     XMETRICS_COUNTER_INCREMENT("vhost_received_invalid", 1);
+                    //     #if VHOST_METRICS
+        XMETRICS_COUNTER_INCREMENT("vhost_received_invalid", 1);
                     //     assert(false);
                     //     xwarn("[vnetwork] vnetwork message receiver address is empty");
                     //     continue;
@@ -691,7 +718,8 @@ xtop_vhost::do_handle_network_data() {
                          vnetwork_message.logic_time());
 
                     if (vnetwork_message.empty()) {
-                        XMETRICS_COUNTER_INCREMENT("vhost_received_invalid", 1);
+                        #if VHOST_METRICS
+        XMETRICS_COUNTER_INCREMENT("vhost_received_invalid", 1);
                         assert(false);
                         xwarn("[vnetwork] receiving an empty message. msg id %" PRIx32, static_cast<std::uint32_t>(message.id()));
                         continue;
@@ -699,7 +727,8 @@ xtop_vhost::do_handle_network_data() {
 
 
                     if (!common::broadcast(receiver.network_id()) && receiver.network_id() != network_id()) {
-                        XMETRICS_COUNTER_INCREMENT("vhost_received_invalid", 1);
+                        #if VHOST_METRICS
+        XMETRICS_COUNTER_INCREMENT("vhost_received_invalid", 1);
                         xdbg("[vnetwork] vnetwork message network id not matched: this network id %" PRIu32 "; sent to %" PRIu32,
                              static_cast<std::uint32_t>(network_id().value()),
                              static_cast<std::uint32_t>(receiver.network_id().value()));
@@ -724,7 +753,8 @@ xtop_vhost::do_handle_network_data() {
                             xwarn("[vnetwork] receive a message whose logic time is %" PRIu64 " which is much more newer than current node %" PRIu64,
                                   msg_time,
                                   local_time);
-                            XMETRICS_COUNTER_INCREMENT("vhost_discard_validation_failure", 1);
+                            #if VHOST_METRICS
+        XMETRICS_COUNTER_INCREMENT("vhost_discard_validation_failure", 1);
                             // assert(false);
                             continue;
                         }
@@ -736,7 +766,8 @@ xtop_vhost::do_handle_network_data() {
                             xwarn("[vnetwork] receive a message whose logic time is %" PRIu64 " which is much more older than current node %" PRIu64,
                                   msg_time,
                                   local_time);
-                            XMETRICS_COUNTER_INCREMENT("vhost_discard_validation_failure", 1);
+                            #if VHOST_METRICS
+        XMETRICS_COUNTER_INCREMENT("vhost_discard_validation_failure", 1);
                             // assert(false);
                             continue;
                         }
@@ -752,7 +783,8 @@ xtop_vhost::do_handle_network_data() {
                             // message from neighbors.
 
                             if (sender.version().has_value() && receiver.version().has_value() && sender.version() != receiver.version()) {
-                                XMETRICS_COUNTER_INCREMENT("vhost_discard_validation_failure", 1);
+                                #if VHOST_METRICS
+        XMETRICS_COUNTER_INCREMENT("vhost_discard_validation_failure", 1);
                                 xwarn("[vnetwork] %s receives a message %" PRIx32 " hash %" PRIx64 " from %s to %s but version not match",
                                       host_node_id().to_string().c_str(),
                                       static_cast<std::uint32_t>(message.id()),
@@ -765,7 +797,8 @@ xtop_vhost::do_handle_network_data() {
                             assert(sender.version().has_value() || receiver.version().has_value());
 
                             if (sender.version().empty()) {
-                                XMETRICS_COUNTER_INCREMENT("vhost_discard_validation_failure", 1);
+                                #if VHOST_METRICS
+        XMETRICS_COUNTER_INCREMENT("vhost_discard_validation_failure", 1);
                                 xwarn("[vnetwork] %s receives a message %" PRIx32 " hash %" PRIx64 " from %s to %s, but sender doesn't provide round version",
                                       host_node_id().to_string().c_str(),
                                       static_cast<std::uint32_t>(message.id()),
@@ -790,7 +823,8 @@ receiver.sharding_size(), receiver.associated_blk_height() };
 
                             if (!common::has<common::xnode_type_t::consensus_auditor>(src_type) &&
                                 !common::has<common::xnode_type_t::archive>(src_type)) {
-                                XMETRICS_COUNTER_INCREMENT("vhost_discard_validation_failure", 1);
+                                #if VHOST_METRICS
+        XMETRICS_COUNTER_INCREMENT("vhost_discard_validation_failure", 1);
                                 xwarn("[vnetwork] %s received a message id %" PRIx32 " hash %" PRIx64 " from %s to %s which is not an auditor or archive node",
                                       host_node_id().to_string().c_str(),
                                       static_cast<std::uint32_t>(message.id()),
@@ -821,7 +855,8 @@ receiver.sharding_size(), receiver.associated_blk_height() };
 
                                     if (!(sender.cluster_address() == associated_parent->address().cluster_address() &&
                                           sender.version() == associated_parent->version())) {
-                                        XMETRICS_COUNTER_INCREMENT("vhost_discard_validation_failure", 1);
+                                        #if VHOST_METRICS
+        XMETRICS_COUNTER_INCREMENT("vhost_discard_validation_failure", 1);
                                         xwarn("[vnetwork] %s received a message id %" PRIx32 " hash %" PRIx64 " sent to %s from %s which is not its associated parent (%s)",
                                               host_node_id().to_string().c_str(),
                                               static_cast<std::uint32_t>(message.id()),
@@ -1015,7 +1050,8 @@ logic time %" PRIu64, receiver.to_string().c_str(), sender.to_string().c_str(), 
                             }
 
                             if (!valid_child) {
-                                XMETRICS_COUNTER_INCREMENT("vhost_discard_validation_failure", 1);
+                                #if VHOST_METRICS
+        XMETRICS_COUNTER_INCREMENT("vhost_discard_validation_failure", 1);
                                 xwarn("[vnetwork] %s received a message id %" PRIx32 " hash %" PRIx64 " sent to %s from %s which is not its associated child",
                                       host_node_id().to_string().c_str(),
                                       static_cast<std::uint32_t>(message.id()),
@@ -1028,7 +1064,8 @@ logic time %" PRIu64, receiver.to_string().c_str(), sender.to_string().c_str(), 
                         }
                     }
 
-                    XMETRICS_COUNTER_INCREMENT("vhost_received_valid", 1);
+                    #if VHOST_METRICS
+        XMETRICS_COUNTER_INCREMENT("vhost_received_valid", 1);
 
                     // for a _cross cluster_, _cross zone_ or _cross network_ communication, the send
                     // side don't need to know the election round the receive side is.  the rule here
@@ -1111,7 +1148,8 @@ group_element->sharding_size(), group_element->associated_blk_height() };
                             }
 
                             if (!contains) {
-                                XMETRICS_COUNTER_INCREMENT("vhost_discard_addr_not_match", 1);
+                                #if VHOST_METRICS
+        XMETRICS_COUNTER_INCREMENT("vhost_discard_addr_not_match", 1);
                                 continue;
                             }
 
@@ -1128,7 +1166,8 @@ group_element->sharding_size(), group_element->associated_blk_height() };
                             if (version_matched && account_matched) {
                                 callbacks.push_back(callback_info);
                             } else {
-                                XMETRICS_COUNTER_INCREMENT("vhost_discard_addr_not_match", 1);
+                                #if VHOST_METRICS
+        XMETRICS_COUNTER_INCREMENT("vhost_discard_addr_not_match", 1);
                                 xdbg("[vnetwork] callback at address %s not matched", callback_addr.to_string().c_str());
                             }
                         }
