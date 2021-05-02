@@ -18,6 +18,27 @@
 #include <thread>
 NS_BEG2(top, metrics)
 
+enum E_SIMPLE_METRICS_TAG {
+    e_simple_begin = 0,
+    xdata_table_counter = e_simple_begin,
+    xdata_lightunit_counter,
+    xdata_fullunit_counter,
+    xdata_table_ref_counter,
+    xdata_lightunit_ref_counter,
+    xdata_fullunit_ref_counter,
+    blockstore_cache_block_total,
+    xdata_empty_block_counter,
+    xdata_root_block_counter,
+    xdata_empty_block_ref_counter,
+    xdata_root_block_ref_counter,
+    xdata_transaction_counter,
+    xdata_transaction_ref_counter,
+    xdata_xcons_transaction_t,
+    xdata_receipt_t,
+    xtxpool_xaccountobj_t,
+    e_simple_total = xtxpool_xaccountobj_t + 1,
+};
+
 class e_metrics : public top::xbasic_runnable_t<e_metrics> {
 public:
     XDECLARE_DELETED_COPY_AND_MOVE_SEMANTICS(e_metrics);
@@ -36,6 +57,7 @@ private:
     void run_process();
     void process_message_queue();
     void update_dump();
+    void gauge_dump();
 
 public:
     void timer_start(std::string metrics_name, time_point value);
@@ -44,6 +66,7 @@ public:
     void counter_decrease(std::string metrics_name, int64_t value);
     void counter_set(std::string metrics_name, int64_t value);
     void flow_count(std::string metrics_name, int64_t value, time_point timestamp);
+    void gauge(E_SIMPLE_METRICS_TAG tag, int64_t value);
 
 private:
     std::thread m_process_thread;
@@ -52,9 +75,16 @@ private:
     handler::counter_handler_t m_counter_handler;
     handler::timer_handler_t m_timer_handler;
     handler::flow_handler_t m_flow_handler;
-    constexpr static std::size_t message_queue_size{100000};
+    constexpr static std::size_t message_queue_size{500000};
     top::threading::xthreadsafe_queue<event_message, std::vector<event_message>> m_message_queue{message_queue_size};
     std::map<std::string, metrics_variant_ptr> m_metrics_hub;  // {metrics_name, metrics_vaiant_ptr}
+protected:
+    struct simple_counter{
+        std::atomic_long value;
+        std::atomic_long call_count;
+    };
+    static simple_counter s_counters[e_simple_total]; // simple counter counter
+    static metrics_variant_ptr s_metrics[e_simple_total]; // simple metrics dump info
 };
 
 class metrics_time_auto {
@@ -62,7 +92,7 @@ public:
     metrics_time_auto(std::string metrics_name, metrics_appendant_info key = std::string{"NOT SET appendant_info"}, microseconds timed_out = DEFAULT_TIMED_OUT)
       : m_metrics_name{metrics_name}, m_key{key}, m_timed_out{timed_out} {
         char c[15] = {0};
-        snprintf(c, 14, "%p", static_cast<void*>(this));
+        snprintf(c, 14, "%p", (void*)(this));
         m_metrics_name = m_metrics_name + "&" + c;
         e_metrics::get_instance().timer_start(m_metrics_name, std::chrono::system_clock::now());
     }
@@ -88,11 +118,11 @@ public:
 #define MICROSECOND(timeout)                                                                                                                                                       \
     std::chrono::microseconds { timeout }
 
-#define XMETRICS_TIME_RECORD(metrics_name) \
-     top::metrics::metrics_time_auto STR_CONCAT(metrics_time_auto, __LINE__) { metrics_name }
-#define XMETRICS_TIME_RECORD_KEY(metrics_name, key) \
+#define XMETRICS_TIME_RECORD(metrics_name)                                                                                                                                         \
+    top::metrics::metrics_time_auto STR_CONCAT(metrics_time_auto, __LINE__) { metrics_name }
+#define XMETRICS_TIME_RECORD_KEY(metrics_name, key)                                                                                                                                \
     top::metrics::metrics_time_auto STR_CONCAT(metrics_time_auto, __LINE__) { metrics_name, key }
-#define XMETRICS_TIME_RECORD_KEY_WITH_TIMEOUT(metrics_name, key, timeout) \
+#define XMETRICS_TIME_RECORD_KEY_WITH_TIMEOUT(metrics_name, key, timeout)                                                                                                             \
     top::metrics::metrics_time_auto STR_CONCAT(metrics_time_auto, __LINE__) { metrics_name, key, MICROSECOND(timeout) }
 
 #define XMETRICS_TIMER_START(metrics_name) top::metrics::e_metrics::get_instance().timer_start(ADD_THREAD_HASH(metrics_name), std::chrono::system_clock::now());
@@ -110,13 +140,13 @@ public:
 
 #define XMETRICS_FLOW_COUNT(metrics_name, value) top::metrics::e_metrics::get_instance().flow_count(metrics_name, value, std::chrono::system_clock::now());
 
-#define XMETRICS_PACKET_INFO(metrics_name, ...)  \
-    top::metrics::handler::metrics_pack_unit STR_CONCAT(packet_info_auto_, __LINE__){metrics_name};   \
+#define XMETRICS_PACKET_INFO(metrics_name, ...)                                                                                                                                    \
+    top::metrics::handler::metrics_pack_unit STR_CONCAT(packet_info_auto_, __LINE__){metrics_name};                                                                                                       \
     top::metrics::handler::metrics_packet_impl(STR_CONCAT(packet_info_auto_, __LINE__), __VA_ARGS__);
 
 #define XMETRICS_XBASE_DATA_CATEGORY_NEW(key) XMETRICS_COUNTER_INCREMENT("dataobject_cur_xbase_type" + std::to_string(key), 1);
 #define XMETRICS_XBASE_DATA_CATEGORY_DELETE(key) XMETRICS_COUNTER_INCREMENT("dataobject_cur_xbase_type" + std::to_string(key), -1);
-
+#define XMETRICS_GAUGE(TAG, value) top::metrics::e_metrics::get_instance().gauge(TAG, value)
 #else
 #define XMETRICS_INIT()
 #define XMETRICS_TIME_RECORD(metrics_name)
@@ -133,6 +163,7 @@ public:
 #define XMETRICS_PACKET_INFO(metrics_name, ...)
 #define XMETRICS_XBASE_DATA_CATEGORY_NEW(key)
 #define XMETRICS_XBASE_DATA_CATEGORY_DELETE(key)
+#define XMETRICS_GAUGE(TAG, value)
 #endif
 
 NS_END2

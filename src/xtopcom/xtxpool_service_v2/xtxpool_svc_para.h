@@ -9,7 +9,8 @@
 #include "xstore/xstore_face.h"
 #include "xtxpool_service_v2/xtxpool_service_face.h"
 #include "xtxpool_v2/xtxpool_face.h"
-
+#include "xvledger/xvtxstore.h"
+#include "xvledger/xvledger.h"
 #include <atomic>
 #include <string>
 
@@ -43,7 +44,9 @@ public:
     mbus::xmessage_bus_face_t * get_bus() const {
         return m_bus.get();
     }
-
+    base::xvtxstore_t * get_vtxstore() const {
+        return base::xvchain_t::instance().get_xtxstore();
+    }
 private:
     observer_ptr<store::xstore_face_t> m_store{nullptr};
     observer_ptr<base::xvblockstore_t> m_blockstore{nullptr};

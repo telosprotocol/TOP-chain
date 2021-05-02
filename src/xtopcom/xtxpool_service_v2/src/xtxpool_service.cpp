@@ -214,13 +214,25 @@ void xtxpool_service::on_message_unit_receipt(vnetwork::xvnode_address_t const &
         auto & account_addr = confirm_receipt_msg->get_source_addr();
         auto hash = confirm_receipt_msg->get_receipt()->get_tx_info()->get_tx_hash_256();
         auto tx = m_para->get_txpool()->get_unconfirm_tx(account_addr, hash);
-        if (tx == nullptr) {
-            xwarn("xtxpool_service::on_message_unit_receipt unconfirm tx not found:source addr:%s, hash:%s",
-                  account_addr.c_str(),
-                  confirm_receipt_msg->get_receipt()->get_tx_info()->get_tx_hex_hash().c_str());
-            return;
+        xtransaction_t*  transction_ptr = nullptr;
+        if (tx != nullptr) {
+            transction_ptr = tx->get_transaction();
+        } else {
+            auto str_hash(std::string(reinterpret_cast<char*>(hash.data()), hash.size()));
+            auto tx_obj = m_para->get_vtxstore()->load_tx_obj(str_hash);
+            if(tx_obj != nullptr) {
+                top::xobject_ptr_t<top::data::xtransaction_t> tx_ptr = dynamic_xobject_ptr_cast<top::data::xtransaction_t>(tx_obj);
+                if (tx_ptr != nullptr) {
+                    transction_ptr = tx_ptr.get();
+                }
+            } else {
+                xwarn("xtxpool_service::on_message_unit_receipt unconfirm tx not found:source addr:%s, hash:%s",
+                    account_addr.c_str(), confirm_receipt_msg->get_receipt()->get_tx_info()->get_tx_hex_hash().c_str());
+                return;
+            }
         }
-        receipt = make_object_ptr<data::xcons_transaction_t>(tx->get_transaction(), confirm_receipt_msg->get_receipt());
+
+        receipt = make_object_ptr<data::xcons_transaction_t>(transction_ptr, confirm_receipt_msg->get_receipt());
     } else {
         ret = receipt->serialize_from(stream);
         if (ret <= 0) {

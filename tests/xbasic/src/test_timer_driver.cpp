@@ -12,6 +12,7 @@
 #include <memory>
 #include <random>
 #include <system_error>
+#include <array>
 
 TEST(xbasic, timer_driver) {
     auto io_context_wrapper = std::make_shared<top::xasio_io_context_wrapper_t>();
