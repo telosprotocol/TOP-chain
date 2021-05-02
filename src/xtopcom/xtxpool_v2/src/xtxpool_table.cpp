@@ -300,7 +300,7 @@ void xtxpool_table_t::update_unconfirm_accounts() {
     auto latest_table = m_para->get_vblockstore()->get_latest_committed_block(m_xtable_info);
     xblock_ptr_t committed_block = xblock_t::raw_vblock_to_object_ptr(latest_table.get());
     xtablestate_ptr_t tablestate = m_table_indexstore->clone_tablestate(committed_block);
-    if (tablestate == nullptr) {
+    if (tablestate != nullptr) {
         std::lock_guard<std::mutex> lck(m_unconfirm_mutex);
         return m_unconfirmed_tx_queue.recover(tablestate->get_receiptid_state());
     }

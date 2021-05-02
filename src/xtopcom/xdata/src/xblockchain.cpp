@@ -259,6 +259,7 @@ bool xblockchain2_t::add_light_table(const xblock_t* block) {
             }
         }
         set_unconfirmed_accounts(unconfirmed_accounts);
+        xdbg("xblockchain2_t::set_unconfirmed_accounts size=%zu, block=%s", unconfirmed_accounts.size(), block->dump().c_str());
     }
     return true;
 }
@@ -517,6 +518,7 @@ const std::set<std::string> xblockchain2_t::get_unconfirmed_accounts() const {
 
     base::xstream_t stream(base::xcontext_t::instance(), (uint8_t*)(iter->second.data()), (uint32_t)(iter->second.size()));
     stream >> accounts;
+    xdbg("xblockchain2_t::get_unconfirmed_accounts size=%zu", accounts.size());
     return accounts;
 }
 

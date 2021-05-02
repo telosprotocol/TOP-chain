@@ -25,7 +25,6 @@ xlightunit_builder_t::xlightunit_builder_t() {
 void xlightunit_builder_t::alloc_tx_receiptid(const std::vector<xcons_transaction_ptr_t> & input_txs, const base::xreceiptid_state_ptr_t & receiptid_state) {
     for (auto & tx : input_txs) {
         data::xblocktool_t::alloc_transaction_receiptid(tx, receiptid_state);
-        xdbg("xlightunit_builder_t::alloc_tx_receiptid alloc receipt id. tx=%s", tx->dump(true).c_str());
     }
 }
 
