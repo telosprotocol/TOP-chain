@@ -309,7 +309,7 @@ xblock_ptr_t xtable_maker_t::make_light_table(bool is_leader, const xtablemaker_
     for (auto & v : unitmakers) {
         xunit_maker_ptr_t & unitmaker = v.second;
         xunitmaker_result_t unit_result;
-        xunitmaker_para_t unit_para(table_para.get_tablestate());
+        xunitmaker_para_t unit_para(table_para.get_tablestate(), is_leader);
         xblock_ptr_t proposal_unit = unitmaker->make_proposal(unit_para, cs_para, unit_result);
         table_result.m_unit_results.push_back(unit_result);
         if (false == table_para.delete_fail_tx_from_proposal(unit_result.m_fail_txs) ) {

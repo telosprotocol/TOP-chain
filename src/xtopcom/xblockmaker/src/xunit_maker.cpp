@@ -199,13 +199,13 @@ xblock_ptr_t xunit_maker_t::make_proposal(const xunitmaker_para_t & unit_para, c
         }
         return nullptr;
     }
-    xinfo("xunit_maker_t::make_proposal succ unit.%s,unit=%s,cert=%s,class=%d,unconfirm=%d,prev_confirmed=%d,tx_count=%d,latest_state=%s",
-        cs_para.dump().c_str(), proposal_block->dump().c_str(), proposal_block->dump_cert().c_str(), proposal_block->get_block_class(),
+    xinfo("xunit_maker_t::make_proposal succ unit.is_leader=%d,%s,unit=%s,cert=%s,class=%d,unconfirm=%d,prev_confirmed=%d,tx_count=%d,latest_state=%s",
+        unit_para.m_is_leader, cs_para.dump().c_str(), proposal_block->dump().c_str(), proposal_block->dump_cert().c_str(), proposal_block->get_block_class(),
         proposal_block->get_unconfirm_sendtx_num(), proposal_block->is_prev_sendtx_confirmed(),
         result.m_success_txs.size(), dump().c_str());
     for (auto & tx : result.m_success_txs) {
-        xinfo("xunit_maker_t::make_proposal succ tx.%s,unit=%s,tx=%s",
-            cs_para.dump().c_str(), proposal_block->dump().c_str(), tx->dump().c_str());
+        xinfo("xunit_maker_t::make_proposal succ tx.is_leader=%d,%s,unit=%s,tx=%s",
+            unit_para.m_is_leader, cs_para.dump().c_str(), proposal_block->dump().c_str(), tx->dump().c_str());
     }
 
     return proposal_block;
