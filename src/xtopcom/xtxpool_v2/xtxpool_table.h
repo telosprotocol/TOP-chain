@@ -22,7 +22,7 @@
 namespace top {
 namespace xtxpool_v2 {
 
-#define table_unconfirm_txs_num_max (1024)
+#define table_unconfirm_txs_num_max (100)
 
 class xtxpool_table_t {
 public:

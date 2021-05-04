@@ -305,4 +305,9 @@ const std::vector<xcons_transaction_ptr_t> xunconfirmed_tx_queue_t::get_resend_t
     return resend_txs;
 }
 
+uint32_t xunconfirmed_tx_queue_t::size() const {
+    return m_peer_tables.get_all_txs().size();
+}
+
+
 NS_END2
