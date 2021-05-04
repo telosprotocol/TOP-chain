@@ -280,7 +280,8 @@ bool xunit_maker_t::can_make_next_empty_block() const {
 }
 
 bool xunit_maker_t::is_account_locked() const {
-    return can_make_next_empty_block();
+    // return can_make_next_empty_block();
+    return false;  // TODO(jimmy)
 }
 
 bool xunit_maker_t::is_match_account_fullunit_limit() const {
