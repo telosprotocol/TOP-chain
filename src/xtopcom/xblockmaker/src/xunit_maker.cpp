@@ -91,16 +91,24 @@ int32_t    xunit_maker_t::check_latest_state(const base::xaccount_index_t & acco
 }
 
 void xunit_maker_t::find_highest_send_tx(uint64_t & latest_nonce, uint256_t & latest_hash) {
+    uint64_t max_tx_nonce = 0;
+    uint256_t tx_hash;
     for (auto iter = m_pending_txs.rbegin(); iter != m_pending_txs.rend(); iter++) {
         auto & tx = *iter;
         if (tx->is_send_tx() || tx->is_self_tx()) {
-            latest_nonce = tx->get_transaction()->get_tx_nonce();
-            latest_hash = tx->get_transaction()->digest();
-            return;
+            if (tx->get_transaction()->get_tx_nonce() > max_tx_nonce) {
+                max_tx_nonce = tx->get_transaction()->get_tx_nonce();
+                tx_hash = tx->get_transaction()->digest();
+            }
         }
     }
-    latest_nonce = get_latest_bstate()->get_account_mstate().get_latest_send_trans_number();
-    latest_hash = get_latest_bstate()->get_account_mstate().get_latest_send_trans_hash();
+    if (max_tx_nonce > 0) {
+        latest_nonce = max_tx_nonce;
+        latest_hash = tx_hash;
+    } else {
+        latest_nonce = get_latest_bstate()->get_account_mstate().get_latest_send_trans_number();
+        latest_hash = get_latest_bstate()->get_account_mstate().get_latest_send_trans_hash();
+    }
 }
 
 bool xunit_maker_t::push_tx(const data::xblock_consensus_para_t & cs_para, const xcons_transaction_ptr_t & tx) {
@@ -136,29 +144,28 @@ bool xunit_maker_t::push_tx(const data::xblock_consensus_para_t & cs_para, const
     }
 
     // TODO(jimmy) same subtype limit
-    if (!m_pending_txs.empty()) {
-        base::enum_transaction_subtype first_tx_subtype = m_pending_txs[0]->get_tx_subtype();
-        if (first_tx_subtype == base::enum_transaction_subtype_self) {
-            first_tx_subtype = base::enum_transaction_subtype_send;
-        }
-        base::enum_transaction_subtype new_tx_subtype = tx->get_tx_subtype();
-        if (new_tx_subtype == base::enum_transaction_subtype_self) {
-            new_tx_subtype = base::enum_transaction_subtype_send;
-        }
-        if (new_tx_subtype != first_tx_subtype) {
-            xwarn("xunit_maker_t::push_tx fail-tx filtered for not same subtype.%s,tx=%s,tx_count=%zu,first_tx=%s",
-                cs_para.dump().c_str(), tx->dump().c_str(), m_pending_txs.size(), m_pending_txs[0]->dump().c_str());
-            return false;
-        }
-    }
+    // if (!m_pending_txs.empty()) {
+    //     base::enum_transaction_subtype first_tx_subtype = m_pending_txs[0]->get_tx_subtype();
+    //     if (first_tx_subtype == base::enum_transaction_subtype_self) {
+    //         first_tx_subtype = base::enum_transaction_subtype_send;
+    //     }
+    //     base::enum_transaction_subtype new_tx_subtype = tx->get_tx_subtype();
+    //     if (new_tx_subtype == base::enum_transaction_subtype_self) {
+    //         new_tx_subtype = base::enum_transaction_subtype_send;
+    //     }
+    //     if (new_tx_subtype != first_tx_subtype) {
+    //         xwarn("xunit_maker_t::push_tx fail-tx filtered for not same subtype.%s,tx=%s,tx_count=%zu,first_tx=%s",
+    //             cs_para.dump().c_str(), tx->dump().c_str(), m_pending_txs.size(), m_pending_txs[0]->dump().c_str());
+    //         return false;
+    //     }
+    // }
 
-    // TODO(jimmy) batch txs limit
+    // TODO(jimmy) non-transfer tx only include one tx limit
     if (!m_pending_txs.empty()) {
         base::enum_transaction_subtype first_tx_subtype = m_pending_txs[0]->get_tx_subtype();
         data::enum_xtransaction_type first_tx_type = (data::enum_xtransaction_type)m_pending_txs[0]->get_transaction()->get_tx_type();
-        if ( (first_tx_subtype != enum_transaction_subtype_confirm) &&
-            (first_tx_type != xtransaction_type_transfer || (data::enum_xtransaction_type)tx->get_transaction()->get_tx_type() != data::xtransaction_type_transfer) ) {
-            xwarn("xunit_maker_t::push_tx fail-tx filtered for batch txs.%s,tx=%s", cs_para.dump().c_str(), tx->dump().c_str());
+        if ( (first_tx_type != xtransaction_type_transfer) || ((data::enum_xtransaction_type)tx->get_transaction()->get_tx_type() != data::xtransaction_type_transfer) ) {
+            xwarn("xunit_maker_t::push_tx fail-tx filtered for non-transfer txs.%s,tx=%s", cs_para.dump().c_str(), tx->dump(true).c_str());
             return false;
         }
     }
