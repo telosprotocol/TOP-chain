@@ -107,6 +107,7 @@ public:
     void recover(const base::xreceiptid_state_ptr_t & receiptid_state);
     const xcons_transaction_ptr_t find(const std::string & account_addr, const uint256_t & hash) const;
     const std::vector<xcons_transaction_ptr_t> get_resend_txs(uint64_t now);
+    uint32_t size() const;
 
 private:
     xtxpool_resources_face * m_para;

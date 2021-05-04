@@ -29,6 +29,15 @@ int32_t xtxpool_table_t::push_send_tx(const std::shared_ptr<xtx_entry> & tx) {
     //     return xtxpool_error_account_unconfirm_txs_reached_upper_limit;
     // }
 
+    {
+        std::lock_guard<std::mutex> lck(m_unconfirm_mutex);
+        auto unconfirm_txs_num = m_unconfirmed_tx_queue.size();
+        if (unconfirm_txs_num >= table_unconfirm_txs_num_max) {
+            xtxpool_warn("xtxpool_table_t::push_send_tx unconfirm txs reached upper limmit tx:%s", tx->get_tx()->dump().c_str());
+            return xtxpool_error_account_unconfirm_txs_reached_upper_limit;
+        }
+    }
+
     uint64_t latest_nonce;
     uint256_t latest_hash;
     bool result = get_account_latest_nonce_hash(tx->get_tx()->get_source_addr(), latest_nonce, latest_hash);
