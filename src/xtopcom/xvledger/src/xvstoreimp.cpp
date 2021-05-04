@@ -151,7 +151,7 @@ namespace top
                     }
                     else
                     {
-                        xdbg("xvtxstore_t::store_txs_index,store tx to DB for tx_key %s, %d", base::xstring_utl::to_hex(v->get_tx_hash()).c_str(), txindex_type);
+                        xinfo("xvtxstore_t::store_txs_index,store tx to DB for tx=%s", base::xvtxkey_t::transaction_hash_subtype_to_string(v->get_tx_hash(), v->get_tx_phase_type()).c_str());
                     }
 
 #ifdef  DEBUG_LONG_CONFIRM_TX_ENABLE  // TODO(jimmy)
@@ -169,7 +169,7 @@ namespace top
                             uint64_t sendtx_clock = send_txindex->get_block_clock();
                             uint64_t delay_time = confirmtx_clock - sendtx_clock;
                             static std::atomic<uint64_t> max_time{0};
-                            if ( (confirmtx_clock > sendtx_clock) && (delay_time >= 15*6) )  // 15 minutes
+                            if ( (confirmtx_clock > sendtx_clock) && (delay_time >= 10*6) )  // 10 minutes
                             {
                                 if (max_time < delay_time)
                                 {

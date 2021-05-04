@@ -61,13 +61,14 @@ struct xunitmaker_result_t {
 };
 
 struct xunitmaker_para_t {
-    xunitmaker_para_t(const data::xtablestate_ptr_t & tablestate)
-    : m_tablestate(tablestate) {}
+    xunitmaker_para_t(const data::xtablestate_ptr_t & tablestate, bool is_leader)
+    : m_tablestate(tablestate), m_is_leader(is_leader) {}
     xunitmaker_para_t(const data::xtablestate_ptr_t & tablestate, const xunit_proposal_input_t & unit_input)
     : m_tablestate(tablestate), m_unit_input(unit_input) {}
 
     data::xtablestate_ptr_t                 m_tablestate{nullptr};
     xunit_proposal_input_t                  m_unit_input;
+    bool                                    m_is_leader{false};
 };
 
 struct xtablemaker_result_t {
