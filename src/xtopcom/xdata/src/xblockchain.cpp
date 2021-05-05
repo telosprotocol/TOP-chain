@@ -46,8 +46,6 @@ xblockchain2_t::xblockchain2_t(const std::string & account) : m_account(account)
     add_modified_count();
 }
 
-xblockchain2_t::xblockchain2_t() {}
-
 int32_t xblockchain2_t::do_write(base::xstream_t & stream) {
     KEEP_SIZE();
     SERIALIZE_FIELD_BT(m_version);
@@ -417,9 +415,6 @@ void xblockchain2_t::execute_block(xobject_ptr_t<data::xblock_t const> block, st
 
     assert(block->check_block_flag(base::enum_xvblock_flag_committed));
     assert(block->check_block_flag(base::enum_xvblock_flag_locked));
-
-    update_min_max_height(block->get_height());
-    set_update_stamp(base::xtime_utl::gettimeofday());
 
     if (block->is_genesis_block()) {
         xdbg("try to update state by genesis block: block=%s,last_height:%" PRIu64 " max_height:%" PRIu64, block->dump().c_str(), get_last_height(), get_chain_height());

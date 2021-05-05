@@ -86,9 +86,27 @@ public:
         value_ += other.value_;
         other.value_ = 0;
     }
+
+    uint64_t data() const noexcept {
+        return value_;
+    }
 };
 
-template <char const * SYMBOL>
-using xtoken_t = xtop_token;
+template <xtoken_type_t TypeV>
+using xtoken_t = xtop_token<TypeV>;
+
+using xtop_token_t = xtoken_t<xtoken_type_t::TOP>;
+using xvpn_token_t = xtoken_t<xtoken_type_t::VPN>;
 
 NS_END2
+
+namespace std {
+
+template <top::state::xtoken_type_t TypeV>
+struct hash<top::state::xtoken_t<TypeV>> {
+    size_t operator()(top::state::xtoken_t<TypeV> const & amount) const noexcept {
+        return static_cast<size_t>(amount.data());
+    }
+};
+
+}
