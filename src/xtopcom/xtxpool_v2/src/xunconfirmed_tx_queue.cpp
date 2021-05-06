@@ -185,7 +185,7 @@ int32_t xunconfirmed_account_t::update(xblock_t * latest_committed_block, const 
     for (auto & hash : confirm_txs) {
         auto it = m_unconfirmed_txs.find(hash);
         if (it != m_unconfirmed_txs.end()) {
-            m_peer_tables->erase(it->second->get_receipt_id(), it->second->get_receipt_id());
+            m_peer_tables->erase(it->second->get_peer_table_sid(), it->second->get_receipt_id());
             m_unconfirmed_txs.erase(it);
             xtxpool_info("xunconfirmed_account_t::update unconfirm pop tx,account=%s,tx=%s", account_addr.c_str(), base::xstring_utl::to_hex(hash).c_str());
         }
@@ -254,7 +254,7 @@ const xcons_transaction_ptr_t xunconfirmed_tx_queue_t::find(const std::string & 
 }
 
 void xunconfirmed_tx_queue_t::recover(const base::xreceiptid_state_ptr_t & receiptid_state) {
-    xtxpool_dbg("xunconfirmed_tx_queue_t::recover table=%s", m_table_info->get_table_addr().c_str());
+    xtxpool_info("xunconfirmed_tx_queue_t::recover table=%s", m_table_info->get_table_addr().c_str());
     // update table-table receipt id state, if all peer_tables were complate, no need to recover, or else, get unconfirmed accounts, and load their unconfirmed txs.
     m_peer_tables.update_receiptid_state(receiptid_state);
     // receiptid_state may not be consistance with account state!
@@ -267,14 +267,14 @@ void xunconfirmed_tx_queue_t::recover(const base::xreceiptid_state_ptr_t & recei
     if (blockchain != nullptr) {
         std::set<std::string> accounts = blockchain->get_unconfirmed_accounts();
         if (!accounts.empty()) {
-            xtxpool_dbg("xunconfirmed_tx_queue_t::recover unconfirmed accounts not empty size:%u", accounts.size());
+            xtxpool_info("xunconfirmed_tx_queue_t::recover unconfirmed accounts not empty size:%u", accounts.size());
 
             // remove unconfirmed accounts which not found from accounts.
             for (auto it_unconfirmed_account = m_unconfirmed_accounts.begin(); it_unconfirmed_account != m_unconfirmed_accounts.end();) {
                 auto & account_addr = it_unconfirmed_account->first;
                 auto it_accounts = accounts.find(account_addr);
                 if (it_accounts == accounts.end()) {
-                    xtxpool_dbg("xunconfirmed_tx_queue_t::recover unconfirm pop account=%s", account_addr.c_str());
+                    xtxpool_info("xunconfirmed_tx_queue_t::recover unconfirm pop account=%s", account_addr.c_str());
                     it_unconfirmed_account = m_unconfirmed_accounts.erase(it_unconfirmed_account);
                 } else {
                     it_unconfirmed_account++;
@@ -283,6 +283,7 @@ void xunconfirmed_tx_queue_t::recover(const base::xreceiptid_state_ptr_t & recei
 
             // recover unconfirmed txs.
             for (auto & account : accounts) {
+                xtxpool_info("xunconfirmed_tx_queue_t::recover account:%s", account.c_str());
                 base::xauto_ptr<base::xvblock_t> unitblock = m_para->get_vblockstore()->get_latest_committed_block(account);
                 if (unitblock != nullptr) {
                     xblock_t * block = dynamic_cast<xblock_t *>(unitblock.get());

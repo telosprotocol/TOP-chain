@@ -311,7 +311,9 @@ void xtxpool_table_t::update_unconfirm_accounts() {
     xtablestate_ptr_t tablestate = m_table_indexstore->clone_tablestate(committed_block);
     if (tablestate != nullptr) {
         std::lock_guard<std::mutex> lck(m_unconfirm_mutex);
-        return m_unconfirmed_tx_queue.recover(tablestate->get_receiptid_state());
+        m_unconfirmed_tx_queue.recover(tablestate->get_receiptid_state());
+    } else {
+        xtxpool_info("xtxpool_table_t::update_unconfirm_accounts clone table state fail,table:%s", m_xtable_info.get_address().c_str());
     }
 }
 

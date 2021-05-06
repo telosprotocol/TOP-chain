@@ -275,6 +275,7 @@ void xtxpool_service_mgr::on_timer() {
         base::enum_xchain_zone_index zone_id = std::get<0>(table_boundary);
         uint32_t fount_table_id = std::get<1>(table_boundary);
         uint32_t back_table_id = std::get<2>(table_boundary);
+        xinfo("xtxpool_service_mgr::on_timer, recover unconfirmed txs for zone:%d table:%d:%d", zone_id, fount_table_id, back_table_id);
         for (uint32_t table_id = fount_table_id; table_id <= back_table_id; table_id++) {
             m_para->get_txpool()->update_unconfirm_accounts(zone_id, table_id);
             m_para->get_txpool()->update_non_ready_accounts(zone_id, table_id);
