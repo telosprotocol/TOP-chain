@@ -1010,8 +1010,6 @@ void get_block_handle::set_header_info(xJson::Value & header, xblock_t * bp) {
         if (contract::xtop_contract_manager::get_account_from_xip(auditor, addr) == 0) {
             header["auditor"] = addr;
         }
-
-        header["multisign"] = to_hex_str(bp->get_cert()->get_audit_signature());
     }
 
     auto validator = bp->get_cert()->get_validator();
@@ -1021,8 +1019,6 @@ void get_block_handle::set_header_info(xJson::Value & header, xblock_t * bp) {
         if (contract::xtop_contract_manager::get_account_from_xip(validator, addr) == 0) {
             header["validator"] = addr;
         }
-
-        header["multisign"] = to_hex_str(bp->get_cert()->get_verify_signature());
     }
     if (bp->is_tableblock()) {
         header["multisign_auditor"] = to_hex_str(bp->get_cert()->get_audit_signature());
