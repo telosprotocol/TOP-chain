@@ -134,7 +134,9 @@ xtransaction_ptr_t xblockchain2_t::make_run_contract_tx(const std::string & to,
 
 bool xblockchain2_t::add_light_unit(const xblock_t * block) {
     const xlightunit_block_t * unit = dynamic_cast<const xlightunit_block_t *>(block);
-    xassert(unit != nullptr);
+    if (unit == nullptr) {
+        xerror("xblockchain2_t::add_light_unit block=%s", block->dump().c_str());
+    }
 
     xaccount_binlog_t *proplog = block->get_property_log();
     if (proplog != nullptr) {
@@ -280,6 +282,9 @@ xobject_ptr_t<xblockchain2_t> xblockchain2_t::clone_state() {
 
 bool xblockchain2_t::apply_block(const xblock_t* block) {
     bool ret = true;
+    if (block == nullptr) {
+        xerror("xblockchain2_t::apply_block block is null");
+    }
     if (block->is_lightunit()) {
         ret = add_light_unit(block);
     } else if (block->is_fullunit()) {
