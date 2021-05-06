@@ -125,6 +125,15 @@ bool xunit_maker_t::push_tx(const data::xblock_consensus_para_t & cs_para, const
         }
     }
 
+    if (tx->is_confirm_tx()) {
+        auto latest_nonce = get_latest_bstate()->get_account_mstate().get_latest_send_trans_number();
+        if (tx->get_transaction()->get_tx_nonce() > latest_nonce) {
+            xwarn("xunit_maker_t::push_tx fail-tx filtered for nonce is overstepped. %s latest_nonce=%llu, tx=%s",
+                cs_para.dump().c_str(), latest_nonce, tx->dump(true).c_str());
+            return false;
+        }
+    }
+
     // send tx contious nonce rules
     if (tx->is_send_tx() || tx->is_self_tx()) {
         uint64_t latest_nonce;
