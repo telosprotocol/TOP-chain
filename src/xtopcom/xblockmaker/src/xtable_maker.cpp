@@ -152,14 +152,6 @@ bool xtable_maker_t::create_lightunit_makers(const xtablemaker_para_t & table_pa
         }
 
         // 3.then check if tx is invalid
-        if (tx->is_confirm_tx()) {
-            auto latest_nonce = unitmaker->get_latest_bstate()->get_account_mstate().get_latest_send_trans_number();
-            if (tx->get_transaction()->get_tx_nonce() > latest_nonce) {
-                xwarn("xtable_maker_t::create_lightunit_makers fail-tx filtered for nonce is overstepped. %s latest_nonce=%llu, tx=%s",
-                    cs_para.dump().c_str(), latest_nonce, tx->dump(true).c_str());
-                continue;
-            }
-        }
         base::enum_transaction_subtype cur_tx_subtype = base::enum_transaction_subtype_invalid;
         base::xtable_shortid_t cur_tableid = 0xFFFF;
         uint64_t cur_receipt_id = 0;
