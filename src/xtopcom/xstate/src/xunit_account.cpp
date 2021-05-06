@@ -15,12 +15,12 @@ base::xvaccount_t xtop_unit_account::address() const {
     return base::xvaccount_t{ m_state->get_account_addr() };
 }
 
-uint64_t xtop_unit_account::balance() const {
+uint64_t xtop_unit_account::balance() const noexcept {
     assert(m_state != nullptr);
 
     std::string const balance_property_name{ "balance" };
 
-    auto balance_prop = m_state->load_token_var(balance_property_name);
+    xobject_ptr_t<base::xtokenvar_t> balance_prop = m_state->load_token_var(balance_property_name);
     if (balance_prop == nullptr) {
         balance_prop = m_state->new_token_var(balance_property_name);
     }
@@ -33,7 +33,7 @@ uint64_t xtop_unit_account::nonce() const {
 
     std::string const nonce_property_name{ "nonce" };
 
-    auto nonce_prop = m_state->load_nonce_var(nonce_property_name);
+    xobject_ptr_t<base::xnoncevar_t> nonce_prop = m_state->load_nonce_var(nonce_property_name);
     if (nonce_prop == nullptr) {
         nonce_prop = m_state->new_nonce_var(nonce_property_name);
     }
@@ -45,7 +45,7 @@ uint64_t xtop_unit_account::locked_balance() const {
     return 0;
 }
 
-xobject_ptr_t<base::xdataunit_t> get_property(std::string const & property_name) const {
+xobject_ptr_t<base::xdataunit_t> xtop_unit_account::get_property(std::string const & property_name) const {
     return nullptr;
 }
 

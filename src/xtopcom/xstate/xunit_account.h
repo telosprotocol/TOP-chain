@@ -19,9 +19,9 @@ class xtop_unit_account : public xunit_state_t {
 
 public:
     base::xvaccount_t address() const override;
-    uint64_t balance() const override;
-    uint64_t nonce() const override;
-    uint64_t locked_balance() const override;
+    uint64_t balance() const noexcept override;
+    uint64_t nonce() const noexcept override;
+    uint64_t locked_balance() const noexcept override;
     xobject_ptr_t<base::xdataunit_t> get_property(std::string const & property_name) const override;
 };
 using xunit_account_t = xtop_unit_account;
