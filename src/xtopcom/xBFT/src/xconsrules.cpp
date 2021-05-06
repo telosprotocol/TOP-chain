@@ -515,7 +515,7 @@ namespace top
         /*safe rule for any voting block
          1. first it must be a valid proposal block  and pass the locked block,both done  at safe_check_for_proposal_block
          2. never voted at same view#,and never voted passed and voted-view#; and never voted passed height
-         3. never voted confilct with existing proposal of same view# or same height#
+         3. never voted confilct with existing proposal of same view# or lower height#
          4. never fork from locked block
          */
         //bool  xBFTRules::safe_check_for_vote_block(base::xvblock_t * _vote_block)//safe rule for voting block
@@ -544,12 +544,12 @@ namespace top
                 }
             }
             
-            //safe-rule#3: never voted confilct with existing proposal of same view# or same height#
+            //safe-rule#3: never voted confilct with existing proposal of same view# or lower height#
             base::xvblock_t *  latest_proposal = get_latest_proposal_block();
             if(latest_proposal != NULL) //never vote behind proposal block
             {
                 if(  (_vote_block->get_viewid() <= latest_proposal->get_viewid())
-                   ||(_vote_block->get_height() <= latest_proposal->get_height()) )
+                   ||(_vote_block->get_height() <  latest_proposal->get_height()) )
                 {
                     xwarn("xBFTRules::safe_check_for_vote_block,warn-conflict existing proposal, proposal=%s <= latest_proposal=%s at node=0x%llx",_vote_block->dump().c_str(), latest_proposal->dump().c_str(),get_xip2_addr().low_addr);
                     return false;

@@ -755,7 +755,9 @@ namespace top
                     xproposal_t * _to_remove = *it;
                     if(_to_remove->is_leader()) //at leader'node for this proposal
                     {
-                        xwarn("xBFTdriver_t::notify_proposal_fail,leader timeout for a proposal=%s,at node=0x%llx",_to_remove->dump().c_str(),get_xip2_low_addr());
+                        xwarn("xBFTdriver_t::notify_proposal_fail,leader timeout for a proposal=%s,at node=0x%llx,auditor:voted=%zu,threshold=%u,validator:voted=%zu,threshold=%u",
+                        _to_remove->dump().c_str(),get_xip2_low_addr(),
+                        _to_remove->get_voted_auditors().size(),_to_remove->get_cert()->get_auditor_threshold(),_to_remove->get_voted_validators().size(),_to_remove->get_cert()->get_validator_threshold());
 
                         fire_pdu_event_up(xcommit_msg_t::get_msg_type(),msg_stream,0,get_xip2_addr(),broadcast_addr,_to_remove->get_block(),_commit_result_cert);//_commit_result_cert embbed into packet'header
                     }
