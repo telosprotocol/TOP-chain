@@ -1020,6 +1020,10 @@ void get_block_handle::set_header_info(xJson::Value & header, xblock_t * bp) {
             header["validator"] = addr;
         }
     }
+    if (bp->is_tableblock()) {
+        header["multisign_auditor"] = to_hex_str(bp->get_cert()->get_audit_signature());
+        header["multisign_validator"] = to_hex_str(bp->get_cert()->get_verify_signature());
+    }
 }
 
 void get_block_handle::set_native_property_info(xJson::Value & jp, const data::xnative_property_t & property) {
