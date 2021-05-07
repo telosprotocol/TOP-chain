@@ -186,7 +186,7 @@ int32_t xlua_engine::arg_parse(xbyte_buffer_t const & action_param) {
                 }
             }
         }
-    } catch (top::error::xchain_error_t & e) {
+    } catch (top::error::xtop_error_t & e) {
         throw;
     } catch (const std::exception & e) {
         xkinfo_lua("%s", e.what());
@@ -226,7 +226,7 @@ void xlua_engine::process(observer_ptr<contract_common::xcontract_execution_cont
         } else {
             // TODO: if luapcall is called with third arg non-zero, retrive the return value here
         }
-    } catch (top::error::xchain_error_t const &) {
+    } catch (top::error::xtop_error_t const &) {
         throw;
     } catch (const std::exception & e) {
         xkinfo_lua("%s", e.what());

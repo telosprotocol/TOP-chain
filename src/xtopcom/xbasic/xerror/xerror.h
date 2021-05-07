@@ -1,6 +1,6 @@
 #pragma once
 
-#include "xbase/xns_macro.h"
+#include "xbasic/xerror/xchain_error.h"
 
 #include <limits>
 #include <system_error>
@@ -22,22 +22,6 @@ std::error_condition make_error_condition(xbasic_errc_t errc) noexcept;
 
 std::error_category const & basic_category();
 
-class xtop_basic_error : public std::runtime_error {
-public:
-    xtop_basic_error(xbasic_errc_t const error_code);
-    xtop_basic_error(xbasic_errc_t const error_code, std::string extra_msg);
-
-    std::error_code const & code() const noexcept;
-
-private:
-    xtop_basic_error(std::error_code ec);
-    xtop_basic_error(std::error_code ec, std::string extra_msg);
-
-private:
-    std::error_code m_ec;
-};
-using xbasic_error_t = xtop_basic_error;
-
 NS_END2
 
 NS_BEG1(std)
@@ -49,12 +33,13 @@ struct hash<top::error::xbasic_errc_t> final {
     size_t operator()(top::error::xbasic_errc_t errc) const noexcept;
 };
 
+#endif
+
 template <>
 struct is_error_code_enum<top::error::xbasic_errc_t> : std::true_type {};
 
 template <>
 struct is_error_condition_enum<top::error::xbasic_errc_t> : std::true_type {};
 
-#endif
 
 NS_END1

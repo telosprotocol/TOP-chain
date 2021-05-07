@@ -21,7 +21,7 @@ xtransaction_execution_result_t xtop_action_runtime<xuser_consensus_action_t>::e
     xtransaction_execution_result_t result;
 
     try {
-    } catch (top::error::xchain_error_t const & eh) {
+    } catch (top::error::xtop_error_t const & eh) {
         result.status.ec = eh.code();
     } catch (std::exception const & eh) {
         result.status.ec = error::xerrc_t::unknown_error;

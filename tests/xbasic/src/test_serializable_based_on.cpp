@@ -97,6 +97,17 @@ TEST(serializable, read_old_data1) {
     EXPECT_EQ(expected.i, actual.i);
     EXPECT_EQ(expected.j, actual.j);
     EXPECT_EQ(expected.next, actual.next);
+
+    std::error_code ec;
+    auto bytes = expected.serialize_based_on<top::base::xstream_t>(ec);
+    EXPECT_EQ(0, ec.value());
+
+    old_data actual2;
+    actual2.deserialize_based_on<top::base::xstream_t>(bytes, ec);
+    EXPECT_EQ(0, ec.value());
+    EXPECT_EQ(expected.i, actual2.i);
+    EXPECT_EQ(expected.j, actual2.j);
+    EXPECT_EQ(expected.next, actual2.next);
 }
 
 TEST(serializable, read_old_data2) {
@@ -118,6 +129,19 @@ TEST(serializable, read_old_data2) {
     EXPECT_TRUE(actual.next != nullptr);
     EXPECT_EQ(expected.next->i, actual.next->i);
     EXPECT_EQ(expected.next->j, actual.next->j);
+
+    std::error_code ec;
+    auto bytes = expected.serialize_based_on<top::base::xstream_t>(ec);
+    EXPECT_EQ(0, ec.value());
+
+    old_data actual2;
+    actual2.deserialize_based_on<top::base::xstream_t>(bytes, ec);
+    EXPECT_EQ(0, ec.value());
+    EXPECT_EQ(expected.i, actual2.i);
+    EXPECT_EQ(expected.j, actual2.j);
+    EXPECT_TRUE(actual2.next != nullptr);
+    EXPECT_EQ(expected.next->i, actual2.next->i);
+    EXPECT_EQ(expected.next->j, actual2.next->j);
 }
 
 TEST(serializable, new_read_old_data1) {
@@ -140,6 +164,20 @@ TEST(serializable, new_read_old_data1) {
     EXPECT_TRUE(actual.pre == nullptr);
     EXPECT_EQ(expected.next->i, actual.next->i);
     EXPECT_EQ(expected.next->j, actual.next->j);
+
+    std::error_code ec;
+    auto bytes = expected.serialize_based_on<top::base::xstream_t>(ec);
+    EXPECT_EQ(0, ec.value());
+
+    new_data actual2;
+    actual2.deserialize_based_on<top::base::xstream_t>(bytes, ec);
+    EXPECT_EQ(0, ec.value());
+    EXPECT_EQ(expected.i, actual2.i);
+    EXPECT_EQ(expected.j, actual2.j);
+    EXPECT_TRUE(actual2.next != nullptr);
+    EXPECT_TRUE(actual2.pre == nullptr);
+    EXPECT_EQ(expected.next->i, actual2.next->i);
+    EXPECT_EQ(expected.next->j, actual2.next->j);
 }
 
 TEST(serializable, new_read_old_data2) {
@@ -157,6 +195,18 @@ TEST(serializable, new_read_old_data2) {
     EXPECT_EQ(expected.j, actual.j);
     EXPECT_TRUE(actual.next == nullptr);
     EXPECT_TRUE(actual.pre == nullptr);
+
+    std::error_code ec;
+    auto bytes = expected.serialize_based_on<top::base::xstream_t>(ec);
+    EXPECT_EQ(0, ec.value());
+
+    new_data actual2;
+    actual2.deserialize_based_on<top::base::xstream_t>(bytes, ec);
+    EXPECT_EQ(0, ec.value());
+    EXPECT_EQ(expected.i, actual2.i);
+    EXPECT_EQ(expected.j, actual2.j);
+    EXPECT_TRUE(actual2.next == nullptr);
+    EXPECT_TRUE(actual2.pre == nullptr);
 }
 
 TEST(serializable, old_read_new_data1) {
@@ -173,6 +223,17 @@ TEST(serializable, old_read_new_data1) {
     EXPECT_EQ(expected.i, actual.i);
     EXPECT_EQ(expected.j, actual.j);
     EXPECT_TRUE(actual.next == nullptr);
+
+    std::error_code ec;
+    auto bytes = expected.serialize_based_on<top::base::xstream_t>(ec);
+    EXPECT_EQ(0, ec.value());
+
+    old_data actual2;
+    actual2.deserialize_based_on<top::base::xstream_t>(bytes, ec);
+    EXPECT_EQ(0, ec.value());
+    EXPECT_EQ(expected.i, actual2.i);
+    EXPECT_EQ(expected.j, actual2.j);
+    EXPECT_TRUE(actual2.next == nullptr);
 }
 
 TEST(serializable, old_read_new_data2) {
@@ -200,6 +261,22 @@ TEST(serializable, old_read_new_data2) {
     EXPECT_TRUE(expected.next->next != nullptr);
     EXPECT_EQ(expected.next->next->i, actual.next->next->i);
     EXPECT_EQ(expected.next->next->j, actual.next->next->j);
+
+    std::error_code ec;
+    auto bytes = expected.serialize_based_on<top::base::xstream_t>(ec);
+    EXPECT_EQ(0, ec.value());
+
+    old_data actual2;
+    actual2.deserialize_based_on<top::base::xstream_t>(bytes, ec);
+    EXPECT_EQ(0, ec.value());
+    EXPECT_EQ(expected.i, actual2.i);
+    EXPECT_EQ(expected.j, actual2.j);
+    EXPECT_TRUE(actual2.next != nullptr);
+    EXPECT_EQ(expected.next->i, actual2.next->i);
+    EXPECT_EQ(expected.next->j, actual2.next->j);
+    EXPECT_TRUE(expected.next->next != nullptr);
+    EXPECT_EQ(expected.next->next->i, actual2.next->next->i);
+    EXPECT_EQ(expected.next->next->j, actual2.next->next->j);
 }
 
 TEST(serializable, old_read_new_data3) {
@@ -230,4 +307,31 @@ TEST(serializable, old_read_new_data3) {
     EXPECT_TRUE(expected.next->next != nullptr);
     EXPECT_EQ(expected.next->next->i, actual.next->next->i);
     EXPECT_EQ(expected.next->next->j, actual.next->next->j);
+
+    std::error_code ec;
+    auto bytes = expected.serialize_based_on<top::base::xstream_t>(ec);
+    EXPECT_EQ(0, ec.value());
+
+    old_data actual2;
+    actual2.deserialize_based_on<top::base::xstream_t>(bytes, ec);
+    EXPECT_EQ(0, ec.value());
+    EXPECT_EQ(expected.i, actual2.i);
+    EXPECT_EQ(expected.j, actual2.j);
+    EXPECT_TRUE(actual2.next != nullptr);
+    EXPECT_EQ(expected.next->i, actual2.next->i);
+    EXPECT_EQ(expected.next->j, actual2.next->j);
+    EXPECT_TRUE(expected.next->next != nullptr);
+    EXPECT_EQ(expected.next->next->i, actual2.next->next->i);
+    EXPECT_EQ(expected.next->next->j, actual2.next->next->j);
+}
+
+TEST(serializable, deserialize_from_invalid_input) {
+    std::error_code ec;
+    top::xbyte_buffer_t empty_bytes;
+
+    EXPECT_NO_THROW(
+        old_data data;
+        data.deserialize_based_on<top::base::xstream_t>(empty_bytes, ec);
+    );
+    EXPECT_NE(0, ec.value());
 }

@@ -1,6 +1,8 @@
-// Copyright (c) 2017-2018 Telos Foundation & contributors
+// Copyright (c) 2017-2021 Telos Foundation & contributors
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
+
+#pragma once
 
 #include "xbase/xns_macro.h"
 
@@ -9,29 +11,29 @@
 
 NS_BEG2(top, error)
 
-class xtop_chain_error : public std::runtime_error {
+class xtop_top_error : public std::runtime_error {
     using base_t = std::runtime_error;
 
     std::error_code m_ec{};
 
 public:
-    xtop_chain_error()                                     = default;
-    xtop_chain_error(xtop_chain_error const &)             = default;
-    xtop_chain_error & operator=(xtop_chain_error const &) = default;
-    xtop_chain_error(xtop_chain_error &&)                  = default;
-    xtop_chain_error & operator=(xtop_chain_error &&)      = default;
-    ~xtop_chain_error() override                           = default;
+    xtop_top_error()                                   = default;
+    xtop_top_error(xtop_top_error const &)             = default;
+    xtop_top_error & operator=(xtop_top_error const &) = default;
+    xtop_top_error(xtop_top_error &&)                  = default;
+    xtop_top_error & operator=(xtop_top_error &&)      = default;
+    ~xtop_top_error() override                         = default;
 
-    explicit xtop_chain_error(std::error_code ec);
-    xtop_chain_error(std::error_code ec, std::string const & extra_what);
-    xtop_chain_error(std::error_code ec, char const * extra_what);
-    xtop_chain_error(int const ev, std::error_category const & ecat);
-    xtop_chain_error(int const ev, std::error_category const & ecat, std::string const & extra_what);
-    xtop_chain_error(int const ev, std::error_category const & ecat, char const * extra_what);
+    explicit xtop_top_error(std::error_code ec);
+    xtop_top_error(std::error_code ec, std::string const & extra_what);
+    xtop_top_error(std::error_code ec, char const * extra_what);
+    xtop_top_error(int const ev, std::error_category const & ecat);
+    xtop_top_error(int const ev, std::error_category const & ecat, std::string const & extra_what);
+    xtop_top_error(int const ev, std::error_category const & ecat, char const * extra_what);
 
     std::error_code const &
     code() const noexcept;
 };
-using xchain_error_t = xtop_chain_error;
+using xtop_error_t = xtop_top_error;
 
 NS_END2

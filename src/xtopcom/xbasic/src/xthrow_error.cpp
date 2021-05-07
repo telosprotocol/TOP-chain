@@ -9,17 +9,17 @@
 NS_BEG2(top, error)
 
 void do_throw_error(std::error_code const & ec) {
-    xchain_error_t eh{ ec };
+    xtop_error_t eh{ ec };
     throw_exception(eh);
 }
 
 void do_throw_error(std::error_code const & ec, char const * extra_what) {
-    xchain_error_t eh{ ec, extra_what };
+    xtop_error_t eh{ ec, extra_what };
     throw_exception(eh);
 }
 
 void do_throw_error(std::error_code const & ec, std::string const & extra_what) {
-    xchain_error_t eh{ ec, extra_what };
+    xtop_error_t eh{ ec, extra_what };
     throw_exception(eh);
 }
 
