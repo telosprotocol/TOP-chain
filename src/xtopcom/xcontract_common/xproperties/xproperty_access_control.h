@@ -539,6 +539,12 @@ public:
     void deploy_src_code(xproperty_identifier_t const & prop_id, std::string src_code, std::error_code & ec);
     void deploy_src_code(xproperty_identifier_t const & prop_id, std::string src_code);
 
+    xbyte_buffer_t bin_code(xproperty_identifier_t const & prop_id, std::error_code & ec) const;
+    xbyte_buffer_t bin_code(xproperty_identifier_t const & prop_id) const;
+
+    void deploy_bin_code(xproperty_identifier_t const & prop_id, xbyte_buffer_t bin_code, std::error_code & ec);
+    void deploy_bin_code(xproperty_identifier_t const & prop_id, xbyte_buffer_t bin_code);
+
     /**
      * @brief query if property exists
      *

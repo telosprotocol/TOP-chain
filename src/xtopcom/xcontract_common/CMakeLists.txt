@@ -1,4 +1,4 @@
-add_compile_options(-Wall -Werror -Wpedantic)
+add_compile_options(-Wpedantic)
 
 aux_source_directory(./src src_dir)
 add_library(xcontract_common STATIC ${src_dir})

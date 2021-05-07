@@ -9,27 +9,31 @@
 #include "xcontract_common/xcontract_state.h"
 #include "xcontract_runtime/xerror/xerror.h"
 
-// extern "C" bool validate_wasm_with_content(uint8_t *s, uint32_t size);
+#if defined(BUILD_RUSTVM)
+extern "C" bool validate_wasm_with_content(uint8_t *s, uint32_t size);
+#endif
 
 NS_BEG3(top, contract_runtime, user)
 
 void xtop_wasm_engine::deploy_contract(xbyte_buffer_t const& code, observer_ptr<contract_common::xcontract_execution_context_t> exe_ctx) {
-    // if (!validate_wasm_with_content((uint8_t*)code.data(), code.size())) {
-    //     std::error_code ec{ error::xenum_errc::enum_wasm_code_invalid };
-    //     top::error::throw_error(ec, "invalid wasm code");
-    // }
-    // exe_ctx->contract_state()->deploy_src_code(std::string{(char*)code.data(), code.size()});
-
+#if defined(BUILD_RUSTVM)
+     if (!validate_wasm_with_content((uint8_t*)code.data(), code.size())) {
+         std::error_code ec{ error::xenum_errc::enum_wasm_code_invalid };
+         top::error::throw_error(ec, "invalid wasm code");
+     }
+#endif
+    exe_ctx->contract_state()->deploy_bin_code(code);
 }
 
 void xtop_wasm_engine::call_contract(std::string const& func_name, std::vector<xbyte_buffer_t> const& params, observer_ptr<contract_common::xcontract_execution_context_t> exe_ctx) {
 }
 
 void xtop_wasm_engine::deploy_contract_erc20(std::vector<xbyte_buffer_t> const& params, observer_ptr<contract_common::xcontract_execution_context_t> exe_ctx) {
-    // if (!validate_wasm_with_content((uint8_t*)params[0].data(), params[0].size())) {
-    //     std::error_code ec{ error::xenum_errc::enum_wasm_code_invalid };
-    //     top::error::throw_error(ec, "invalid wasm code");
-    // }
+#if defined(BUILD_RUSTVM)
+    if (!validate_wasm_with_content((uint8_t*)params[0].data(), params[0].size())) {
+        std::error_code ec{ error::xenum_errc::enum_wasm_code_invalid };
+        top::error::throw_error(ec, "invalid wasm code");
+    }
 
     assert(params.size() == 3); // 0: the code, 1: erc20 symbal, 2: total supply
     erc20_params params_ptr{
@@ -58,10 +62,12 @@ void xtop_wasm_engine::deploy_contract_erc20(std::vector<xbyte_buffer_t> const& 
     // // contract_common::properties::xproperty_identifier_t balances_property_id{std::string{params[0].data(), params[0].size()}, contract_common::properties::xproperty_type_t::map, contract_common::properties::xproperty_category_t::user};
     // contract_state->access_control()->STR_PROP_CREATE(std::string{params[0].data(), params[0].data() + params[0].size()});
     // contract_state->access_control()->map_prop_add<std::string, std::string>(state_account, src_property_id, state_account.value(), std::string{params[1].data(), params[1].data() + params[1].size()});
+#endif
 }
 
 
 void xtop_wasm_engine::call_contract_erc20(std::vector<xbyte_buffer_t> const&  params, observer_ptr<contract_common::xcontract_execution_context_t> exe_ctx) {
+#if defined(BUILD_RUSTVM)
     erc20_params params_ptr{
         exe_ctx->contract_state(),
         params,
@@ -71,6 +77,7 @@ void xtop_wasm_engine::call_contract_erc20(std::vector<xbyte_buffer_t> const&  p
     set_gas_left(ins_ptr, 1000);
     auto result = call_erc20(ins_ptr, &params_ptr);
     std::cout << "result" << result << "\n";
+#endif
 }
 
 NS_END3

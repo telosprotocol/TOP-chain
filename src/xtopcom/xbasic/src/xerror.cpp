@@ -2,6 +2,38 @@
 
 #include <type_traits>
 
+class xtop_base_category : public std::error_category {
+public:
+    const char * name() const noexcept override {
+        return "base";
+    }
+
+    std::string message(int errc) const override {
+        auto const ec = static_cast<enum_xerror_code>(errc);
+        switch (ec) {
+        case enum_xerror_code_bad_packet:
+            return "bad packet";
+
+        default:
+            return "unknown error";
+        }
+    }
+};
+using xbase_category_t = xtop_base_category;
+
+std::error_category const & base_category() {
+    static xbase_category_t base_cagegory;
+    return base_cagegory;
+}
+
+std::error_code make_error_code(enum_xerror_code ec) noexcept {
+    return std::error_code{ static_cast<int>(ec), base_category() };
+}
+
+std::error_condition make_error_condition(enum_xerror_code ec) noexcept {
+    return std::error_condition{ static_cast<int>(ec), base_category() };
+}
+
 NS_BEG2(top, error)
 
 static char const * errc_to_message(int const errc) noexcept {

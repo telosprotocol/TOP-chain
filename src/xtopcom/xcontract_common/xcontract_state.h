@@ -69,6 +69,9 @@ public:
     void deploy_src_code(std::string code, std::error_code & ec);
     void deploy_src_code(std::string code);
 
+    void deploy_bin_code(xbyte_buffer_t bin_code, std::error_code & ec);
+    void deploy_bin_code(xbyte_buffer_t bin_code);
+
     template <typename KeyT, typename ValueT>
     ValueT map_at(std::string const & property_full_name, KeyT const & key) const {
         std::error_code ec;
