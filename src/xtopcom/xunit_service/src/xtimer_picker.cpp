@@ -58,7 +58,11 @@ bool xtimer_picker_t::on_view_fire(const base::xvevent_t & event, xconsensus::xc
         common::xversion_t version{0};
         xvip2_t leader_xip = m_leader_selector->get_leader_xip(m_cur_view, get_account(), nullptr, local_xip, local_xip, version, enum_rotate_mode_no_rotate);
         if (xcons_utl::xip_equals(leader_xip, local_xip)) {
-            base::xauto_ptr<base::xvblock_t> proposal_block(m_block_maker->make_block(get_account(), view_event.get_clock(), m_cur_view, 0, get_xip2_addr()));
+            auto blk = m_block_maker->make_block(get_account(), view_event.get_clock(), m_cur_view, 0, get_xip2_addr());
+            if (blk == nullptr) {
+                return false;
+            }
+            base::xauto_ptr<base::xvblock_t> proposal_block(blk);
             xinfo("[xtimer_picker_t::on_timer_fire] newview(leader) proposal self %" PRIx64 ", view %" PRIu64 ", height %" PRIu64 ", cur_view %" PRIu64 "\n",
                 get_xip2_low_addr(),
                 proposal_block->get_viewid(),

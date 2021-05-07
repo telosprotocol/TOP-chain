@@ -170,6 +170,12 @@ bool xbatch_packer::on_view_fire(const base::xvevent_t & event, xcsobject_t * fr
     m_last_view_id = view_ev->get_viewid();
     m_last_view_clock = view_ev->get_clock();
 
+    base::xblock_mptrs latest_blocks = m_para->get_resources()->get_vblockstore()->get_latest_blocks(get_account());
+    if (m_last_view_clock < latest_blocks.get_latest_cert_block()->get_clock()) {
+        xwarn("xbatch_packer::on_view_fire fail-clock cur=%ull,prev=%ull", m_last_view_clock, latest_blocks.get_latest_cert_block()->get_clock());
+        return false;
+    }
+
     m_unorder_cache.on_view_fire(m_last_view_id);
 
     auto accessor = m_para->get_resources()->get_data_accessor();
@@ -181,8 +187,6 @@ bool xbatch_packer::on_view_fire(const base::xvevent_t & event, xcsobject_t * fr
         xerror("xbatch_packer::on_view_fire fail-wrong zone id. zoneid=%d", zone_id);
         return false;
     }
-
-    base::xblock_mptrs latest_blocks = m_para->get_resources()->get_vblockstore()->get_latest_blocks(get_account());
 
     // check if this node is leader
     std::error_code ec{election::xdata_accessor_errc_t::success};
