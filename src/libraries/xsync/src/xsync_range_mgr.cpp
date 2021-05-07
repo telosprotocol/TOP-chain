@@ -121,7 +121,6 @@ int xsync_range_mgr_t::update_progress(const data::xblock_ptr_t &current_block) 
     uint64_t current_height = current_block->get_height();
     uint64_t current_viewid = current_block->get_viewid();
 
-    // TODO highqc forked??
     if (current_height >= m_behind_height) {
         clear_behind_info();
     }
