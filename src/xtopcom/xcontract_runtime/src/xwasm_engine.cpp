@@ -1,11 +1,13 @@
 // Copyright (c) 2017-2018 Telos Foundation & contributors
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
-#ifdef BUILD_RUSTVM
+
+
+#include "xcontract_runtime/xuser/xwasm/xwasm_engine.h"
+
 #include "xbase/xbase.h"
 #include "xcontract_common/xcontract_state.h"
 #include "xcontract_runtime/xerror/xerror.h"
-#include "xcontract_runtime/xuser/xwasm/xwasm_engine.h"
 
 // extern "C" bool validate_wasm_with_content(uint8_t *s, uint32_t size);
 
@@ -72,4 +74,3 @@ void xtop_wasm_engine::call_contract_erc20(std::vector<xbyte_buffer_t> const&  p
 }
 
 NS_END3
-#endif

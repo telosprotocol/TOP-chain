@@ -1,4 +1,5 @@
 #pragma once
+
 #include "xbasic/xbyte_buffer.h"
 #include "xcontract_common/xcontract_api_params.h"
 
