@@ -31,7 +31,7 @@ public:
         assert(!ec);
         try {
             return to_string();
-        } catch (top::error::xbasic_error_t const & eh) {
+        } catch (top::error::xtop_error_t const & eh) {
             ec = eh.code();
             xwarn("%s", (std::string{typeid(T).name()} + "::to_string failed").c_str());
         } catch (...) {
@@ -54,7 +54,7 @@ public:
             if (ret <= 0) {
                 ec = top::error::xbasic_errc_t::deserialization_error;
             }
-        } catch (top::error::xbasic_error_t const & eh) {
+        } catch (top::error::xtop_error_t const & eh) {
             ec = eh.code();
             xwarn("%s", (std::string{typeid(T).name()} + "::from_string failed").c_str());
         } catch (...) {

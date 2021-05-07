@@ -57,7 +57,7 @@ enum enum_xtopcom_object_type {
 };
 
 
-template <typename T, int type_value>
+template <typename T, enum_xtopcom_object_type type_value>
 class xbase_dataobj_t : public base::xdataobj_t {
  protected:
     enum { object_type_value = enum_xdata_type_max - type_value };

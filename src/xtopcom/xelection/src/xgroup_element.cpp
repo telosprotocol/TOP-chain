@@ -124,7 +124,7 @@ bool xtop_group_element::contains(common::xnode_id_t const & node_id) const noex
     try {
         std::error_code ec;
         return node_element(node_id, ec) != nullptr;
-    } catch (error::xchain_error_t const & eh) {
+    } catch (error::xtop_error_t const & eh) {
         xwarn("xtop_group_element::contains %s", eh.what());
     } catch (std::exception const & eh) {
         xwarn("xtop_group_element::contains %s", eh.what());
