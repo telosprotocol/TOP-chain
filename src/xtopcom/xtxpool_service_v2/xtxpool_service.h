@@ -60,7 +60,7 @@ public:
     void set_params(const xvip2_t & xip, const std::shared_ptr<vnetwork::xvnetwork_driver_face_t> & vnet_driver) override;
     bool is_running() override;
     bool is_receipt_sender(const xtable_id_t & tableid, const uint256_t & hash) override;
-    void send_receipt(xcons_transaction_ptr_t & cons_tx, bool first_send) override;
+    void send_receipt(xcons_transaction_ptr_t & cons_tx, uint32_t resend_time) override;
     bool table_boundary_equal_to(std::shared_ptr<xtxpool_service_face> & service) override;
     void get_service_table_boundary(base::enum_xchain_zone_index & zone_id, uint32_t & fount_table_id, uint32_t & back_table_id) override;
     void resend_receipts(uint64_t now) override;
@@ -80,9 +80,8 @@ private:
     void auditor_forward_receipt_to_shard(const xcons_transaction_ptr_t & cons_tx, vnetwork::xmessage_t const & message);
     bool set_commit_prove(data::xcons_transaction_ptr_t & cons_tx);
     void send_receipt_real(const data::xcons_transaction_ptr_t & cons_tx);
-    bool has_receipt_right(const uint256_t & hash) const;
+    bool has_receipt_right(const uint256_t & hash, uint32_t resend_time, bool is_recv) const;
     void forward_broadcast_message(const vnetwork::xvnode_address_t & addr, const vnetwork::xmessage_t & message);
-    bool have_repceipt_rights(const std::string & rand, uint32_t num);
 
 private:
     xvip2_t m_xip;
