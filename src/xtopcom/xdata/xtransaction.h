@@ -33,21 +33,16 @@ enum enum_xtransaction_type {
     xtransaction_type_run_contract               = 3,    // run contract
     xtransaction_type_transfer                   = 4,    // transfer asset
     xtransaction_type_clickonce_create_contract_account = 5,// deploy clickonce contract
-    xtransaction_type_alias_name                 = 6,    // set account alias name, can be same with other accunnt
-    xtransaction_type_set_account_keys           = 11,    // set account's keys, may be elect key, transfer key, data key, consensus key
-    xtransaction_type_lock_token                 = 12,    // lock token for doing something
-    xtransaction_type_unlock_token               = 13,    // unlock token
-    xtransaction_type_create_sub_account         = 16,    // create sub account
 
     xtransaction_type_vote                       = 20,
     xtransaction_type_abolish_vote               = 21,
 
     xtransaction_type_pledge_token_tgas          = 22,   // pledge token for tgas
     xtransaction_type_redeem_token_tgas          = 23,   // redeem token
-    xtransaction_type_pledge_token_disk          = 24,   // pledge token for disk
-    xtransaction_type_redeem_token_disk          = 25,   // redeem token
     xtransaction_type_pledge_token_vote          = 27,   // pledge token for disk
     xtransaction_type_redeem_token_vote          = 28,   // redeem token
+
+    xtransaction_type_deploy_wasm_contract       = 29,   // deploy wasm contract
 
     xtransaction_type_max
 };
@@ -128,10 +123,6 @@ private:
 
 class xtransaction_t : public xbase_dataobj_t<xtransaction_t, xdata_type_transaction>, public xtransaction_header {
  public:
-    static std::string transaction_subtype_to_string(uint8_t type);
-    static std::string transaction_hash_subtype_to_string(const std::string & txhash, uint8_t type);
-
- public:
     xtransaction_t();
  protected:
     ~xtransaction_t() override;
@@ -176,7 +167,6 @@ class xtransaction_t : public xbase_dataobj_t<xtransaction_t, xdata_type_transac
 
     int32_t     make_tx_create_user_account(const std::string & addr);
     int32_t     make_tx_create_contract_account(const data::xproperty_asset & asset_out, uint64_t tgas_limit, const std::string& code);
-    int32_t     make_tx_create_sub_account(const data::xproperty_asset & asset_out);
     int32_t     make_tx_transfer(const data::xproperty_asset & asset);
     int32_t     make_tx_run_contract(const data::xproperty_asset & asset_out, const std::string& function_name, const std::string& para);
     int32_t make_tx_run_contract2(const data::xproperty_asset & asset_out, const std::string & function_name, const std::string & para);
@@ -190,7 +180,7 @@ class xtransaction_t : public xbase_dataobj_t<xtransaction_t, xdata_type_transac
     const std::string & get_source_addr()const {return m_source_action.get_account_addr();}
     const std::string & get_target_addr()const {return m_target_addr.empty() ? m_target_action.get_account_addr() : m_target_addr;}
     uint64_t            get_tx_nonce() const {return get_last_nonce() + 1;}
-    std::string         get_tx_subtype_str() const {return transaction_subtype_to_string(m_tx_subtype);}
+    std::string         get_tx_subtype_str() const {return base::xvtxkey_t::transaction_subtype_to_string((enum_transaction_subtype)m_tx_subtype);}  // TODO(jimmy) delete
     uint8_t             get_tx_subtype() const {return m_tx_subtype;}
     size_t              get_serialize_size() const;
     std::string         dump() const override;  // just for debug purpose
@@ -216,41 +206,6 @@ class xtransaction_t : public xbase_dataobj_t<xtransaction_t, xdata_type_transac
 };
 
 using xtransaction_ptr_t = xobject_ptr_t<xtransaction_t>;
-
-class xtransaction_key_t {
- public:
-    xtransaction_key_t() = default;
-    xtransaction_key_t(const std::string & txhash, enum_transaction_subtype subtype)
-    : m_txhash(txhash), m_subtype(subtype) {}
-
-    bool                        is_self_tx() const {return get_tx_subtype() == enum_transaction_subtype_self;}
-    bool                        is_send_tx() const {return get_tx_subtype() == enum_transaction_subtype_send;}
-    bool                        is_recv_tx() const {return get_tx_subtype() == enum_transaction_subtype_recv;}
-    bool                        is_confirm_tx() const {return get_tx_subtype() == enum_transaction_subtype_confirm;}
-    const std::string &         get_tx_hash() const {return m_txhash;}
-    std::string                 get_tx_dump_key() const {return xtransaction_t::transaction_hash_subtype_to_string(m_txhash, m_subtype);}
-    enum_transaction_subtype    get_tx_subtype() const {return (enum_transaction_subtype)m_subtype;}
-    uint256_t                   get_tx_hash_256() const {return uint256_t((uint8_t*)m_txhash.data());}
-    std::string                 get_tx_hex_hash() const {return base::xstring_utl::to_hex(m_txhash);}
-    std::string                 get_tx_subtype_str() const {return xtransaction_t::transaction_subtype_to_string(m_subtype);}
-
-    int32_t do_write(base::xstream_t & stream) {
-        const int32_t begin_size = stream.size();
-        stream << m_txhash;
-        stream << m_subtype;
-        return (stream.size() - begin_size);
-    }
-    int32_t do_read(base::xstream_t & stream) {
-        const int32_t begin_size = stream.size();
-        stream >> m_txhash;
-        stream >> m_subtype;
-        return (begin_size - stream.size());
-    }
-
- private:
-    std::string                 m_txhash;
-    uint8_t                     m_subtype{0};
-};
 
 class xtransaction_store_t : public xbase_dataobj_t<xtransaction_store_t, xdata_type_transaction_store> {
  public:

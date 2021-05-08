@@ -19,8 +19,9 @@ public:
 protected:
     void SetUp() override {
         address = xblocktool_t::make_address_user_account("T00000LPggAizKRsMxzS3xwKBRk3Q8qu5xGbz2Q3");
+        top::base::xvblock_t::register_object(top::base::xcontext_t::instance());
         xproperty_access_control_data_t access_data;
-        top::observer_ptr<xvbstate_t> vbstate{new xvbstate_t{address, 1,std::vector<top::base::xvproperty_t*>()}};
+        top::observer_ptr<xvbstate_t> vbstate{new xvbstate_t{address, (uint64_t)1, (uint64_t)1, std::string(), std::string(), (uint64_t)0, (uint32_t)0, (uint16_t)0}};
         api_ = new xproperty_api_t{vbstate, access_data};
     }
 };

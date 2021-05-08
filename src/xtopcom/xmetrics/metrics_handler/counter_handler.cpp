@@ -19,6 +19,7 @@ void counter_handler_t::dump_metrics_info(metrics_variant_ptr const & metrics_pt
         res["category"] = get_category(ptr->name);
         res["tag"] = get_tag(ptr->name);
         res["type"] = "counter";
+        cont["count"] = ptr->count;
         cont["value"] = ptr->inner_val;
         res["content"] = cont;
         std::stringstream ss;
@@ -37,6 +38,7 @@ void counter_handler_t::dump_metrics_info(metrics_variant_ptr const & metrics_pt
 void counter_handler_t::process_message_event(metrics_variant_ptr & metrics_ptr, event_message const & msg) {
     auto ptr = metrics_ptr.GetRef<metrics_counter_unit_ptr>();
     assert(ptr);
+    ptr->count++;
     switch (msg.minor_id) {
     case e_metrics_minor_id::increase:
         ptr->inner_val += msg.metrics_value.GetConstRef<int64_t>();

@@ -72,23 +72,6 @@ int32_t xtransaction_header::serialize_read(base::xstream_t & stream) {
     return (begin_pos - end_pos);
 }
 
-std::string xtransaction_t::transaction_subtype_to_string(uint8_t type) {
-    switch (type) {
-        case enum_transaction_subtype_self: return "self";
-        case enum_transaction_subtype_send: return "send";
-        case enum_transaction_subtype_recv: return "recv";
-        case enum_transaction_subtype_confirm: return "confirm";
-        default: {
-            xassert(0);
-            return "unknown";
-        }
-    }
-}
-
-std::string xtransaction_t::transaction_hash_subtype_to_string(const std::string & txhash, uint8_t type) {
-    return base::xstring_utl::to_hex(txhash) + ":" + transaction_subtype_to_string(type);
-}
-
 xtransaction_t::xtransaction_t() {
     MEMCHECK_ADD_TRACE(this, "tx_create");
 }
@@ -195,13 +178,6 @@ bool xtransaction_t::transaction_type_check() const {
     switch (get_tx_type()) {
 #ifdef DEBUG  // debug use
         case xtransaction_type_create_user_account:
-        case xtransaction_type_set_account_keys:
-        case xtransaction_type_lock_token:
-        case xtransaction_type_unlock_token:
-        case xtransaction_type_alias_name:
-        case xtransaction_type_create_sub_account:
-        case xtransaction_type_pledge_token_disk:
-        case xtransaction_type_redeem_token_disk:
 #endif
         case xtransaction_type_create_contract_account:
         case xtransaction_type_run_contract:
@@ -295,15 +271,6 @@ int32_t xtransaction_t::make_tx_create_contract_account(const data::xproperty_as
     return xsuccess;
 }
 
-int32_t xtransaction_t::make_tx_create_sub_account(const data::xproperty_asset & asset_out) {
-    set_tx_type(xtransaction_type_create_sub_account);
-    int32_t ret = xaction_asset_out::serialze_to(m_source_action, asset_out);
-    if (ret) { return ret; }
-    ret = xaction_asset_out::serialze_to(m_target_action, asset_out);
-    if (ret) { return ret; }
-    return xsuccess;
-}
-
 int32_t xtransaction_t::make_tx_transfer(const data::xproperty_asset & asset) {
     set_tx_type(xtransaction_type_transfer);
     int32_t ret = xaction_asset_out::serialze_to(m_source_action, asset);
@@ -390,7 +357,6 @@ void xtransaction_t::set_fire_and_expire_time(uint16_t expire_duration) {
 
 
 bool xtransaction_t::sign_check() const {
-    static std::set<uint16_t> no_check_tx_type { xtransaction_type_lock_token, xtransaction_type_unlock_token };
     std::string addr_prefix;
     if (std::string::npos != get_source_addr().find_last_of('@')) {
         uint16_t subaddr;
@@ -408,9 +374,7 @@ bool xtransaction_t::sign_check() const {
         xwarn("network_id error:%d,%d", config_network_id, network_id);
         return false;
     }
-    if (no_check_tx_type.find(get_tx_type()) != std::end(no_check_tx_type)) {  // no check for other key
-        return true;
-    }
+
     utl::xecdsasig_t signature_obj((uint8_t *)m_authorization.c_str());
     if (data::is_sub_account_address(common::xaccount_address_t{ get_source_addr() }) || data::is_user_contract_address(common::xaccount_address_t{ get_source_addr() })) {
         return key_address.verify_signature(signature_obj, m_transaction_hash, get_parent_account());

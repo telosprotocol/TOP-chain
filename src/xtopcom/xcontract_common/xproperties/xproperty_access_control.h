@@ -29,7 +29,7 @@
 #include "xbasic/xmemory.hpp"
 #include "xbasic/xenable_to_string.h"
 #include "xbasic/xserializable_based_on.h"
-#include "xbasic/xthrow_error.h"
+#include "xbasic/xerror/xthrow_error.h"
 #include "xcommon/xaddress.h"
 #include "xcontract_common/xerror/xerror.h"
 #include "xcontract_common/xproperties/xaccess_control_data.h"
@@ -524,6 +524,14 @@ public:
      * @return std::string
      */
     virtual std::string code_prop_query(common::xaccount_address_t const & user, xproperty_identifier_t const & prop_id);
+
+    /**
+     * @brief set code property
+     * @param prop_name the name of code property
+     * @return std::string
+     */
+    virtual bool code_prop_update(common::xaccount_address_t const & user, xproperty_identifier_t const & prop_id, std::string const& code);
+
 
     std::string src_code(xproperty_identifier_t const & prop_id, std::error_code & ec) const;
     virtual std::string src_code(xproperty_identifier_t const & prop_id) const;

@@ -12,7 +12,7 @@ namespace top
 {
     namespace base
     {
-       
+
         class xvtransaction_store_t : public xdataunit_t
         {
         public:
@@ -23,9 +23,9 @@ namespace top
             virtual int32_t    do_read(base::xstream_t & stream) override;
 
         public:
-            void            set_send_unit_info(const xvtransaction_index_ptr_t & txindex);
-            void            set_recv_unit_info(const xvtransaction_index_ptr_t & txindex);
-            void            set_confirm_unit_info(const xvtransaction_index_ptr_t & txindex);
+            void            set_send_unit_info(const xvtxindex_ptr & txindex);
+            void            set_recv_unit_info(const xvtxindex_ptr & txindex);
+            void            set_confirm_unit_info(const xvtxindex_ptr & txindex);
             void            set_raw_tx(xdataunit_t* tx);
 
         public:

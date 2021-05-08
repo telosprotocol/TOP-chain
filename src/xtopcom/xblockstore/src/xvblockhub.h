@@ -125,6 +125,7 @@ namespace top
             bool                   load_index_input(base::xvbindex_t* target_block);
             bool                   load_index_output(base::xvbindex_t* target_block);
             bool                   load_index_offdata(base::xvbindex_t* target_block);
+            size_t                 load_index_by_height(const uint64_t target_height);
             
         public://operated for raw block
             bool                   store_blocks(std::vector<base::xvblock_t*> & batch_store_blocks); //better performance
@@ -134,9 +135,10 @@ namespace top
             bool                   load_block_input(base::xvblock_t* target_block);
             bool                   load_block_output(base::xvblock_t* target_block);
             bool                   load_block_offdata(base::xvblock_t* target_block);
+            bool                   load_block_flags(base::xvblock_t* target_block);//update block'flags
             
             bool                   execute_block(base::xvblock_t* block_ptr); //execute block and update state of acccount
-            bool                   execute_block(base::xvbindex_t* index_ptr);//usall internal useonly
+            bool                   execute_block(base::xvbindex_t* index_ptr,base::xvblock_t * block_ptr);//usall internal useonly
             void                   try_execute_all_block();
             
         protected: //help functions

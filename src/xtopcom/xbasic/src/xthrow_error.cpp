@@ -2,27 +2,24 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "xbasic/xchain_error.h"
-#include "xbasic/xthrow_error.h"
-#include "xbasic/xthrow_exception.hpp"
+#include "xbasic/xerror/xchain_error.h"
+#include "xbasic/xerror/xthrow_error.h"
+#include "xbasic/xerror/xthrow_exception.hpp"
 
-NS_BEG1(top)
+NS_BEG2(top, error)
 
-void
-do_throw_error(std::error_code const & ec) {
-    xchain_error_t eh{ ec };
+void do_throw_error(std::error_code const & ec) {
+    xtop_error_t eh{ ec };
     throw_exception(eh);
 }
 
-void
-do_throw_error(std::error_code const & ec, char const * extra_what) {
-    xchain_error_t eh{ ec, extra_what };
+void do_throw_error(std::error_code const & ec, char const * extra_what) {
+    xtop_error_t eh{ ec, extra_what };
     throw_exception(eh);
 }
 
-void
-do_throw_error(std::error_code const & ec, std::string const & extra_what) {
-    xchain_error_t eh{ ec, extra_what };
+void do_throw_error(std::error_code const & ec, std::string const & extra_what) {
+    xtop_error_t eh{ ec, extra_what };
     throw_exception(eh);
 }
 
@@ -44,4 +41,4 @@ void throw_error(std::error_code const ec, std::string const & extra_what) {
     }
 }
 
-NS_END1
+NS_END2

@@ -105,7 +105,7 @@ xaccount_context_t::xaccount_context_t(const std::string& address,
         m_native_property = m_account->get_native_property();
         m_native_property.clear_dirty();
     }
-    m_accountcmd = std::make_shared<xaccount_cmd>(m_account, store);
+    m_accountcmd = std::make_shared<xaccount_cmd>(m_account->get_property_objs());
     xinfo("create context, address:%s height:%d", address.c_str(), m_account->get_chain_height());
 }
 
@@ -115,7 +115,7 @@ xaccount_context_t::xaccount_context_t(data::xblockchain2_t* blockchain, xstore_
     blockchain->add_ref();
     m_native_property = m_account->get_native_property();
     m_native_property.clear_dirty();
-    m_accountcmd = std::make_shared<xaccount_cmd>(m_account, store);
+    m_accountcmd = std::make_shared<xaccount_cmd>(m_account->get_property_objs());
     xinfo("create context, address:%s height:%d", blockchain->get_account().c_str(), m_account->get_chain_height());
 }
 
@@ -133,18 +133,6 @@ int32_t xaccount_context_t::create_user_account(const std::string& address) {
     xinfo("tmp create account lock sum %d, for authority", XGET_CONFIG(min_account_deposit));
     // just for test debug
     m_balance_change = ASSET_TOP(100000000);
-    return xstore_success;
-}
-
-int32_t xaccount_context_t::exist_sub_or_contract_account() {
-    int32_t size = 0;
-    if (!m_native_property.native_deque_size(XPORPERTY_SUB_ACCOUNT_KEY, size) && size > 0) {
-        return xaccount_property_sub_account_exist;
-    }
-
-    if (!m_native_property.native_deque_size(XPORPERTY_CONTRACT_SUB_ACCOUNT_KEY, size) && size > 0) {
-        return xaccount_property_contract_sub_account_exist;
-    }
     return xstore_success;
 }
 
@@ -178,19 +166,6 @@ int32_t xaccount_context_t::get_parent_account(std::string &value){
         return xaccount_property_parent_account_exist;
     }
     return xaccount_property_parent_account_not_exist;
-}
-
-int32_t xaccount_context_t::account_alias_name_set(const std::string& name) {
-    uint64_t lock_sum = get_lock_token_sum();
-    if (!can_work()) {
-        xwarn("xaccount_context_t::lock_sum %d less than min_deposit %d", lock_sum, XGET_CONFIG(min_account_deposit));
-        return xaccount_balance_not_enough;
-    }
-    if (m_account->get_chain_height() == 0) {
-        xwarn("xaccount_context_t::create_user_account unit height not zero");
-        return xaccount_unit_height_should_not_zero;
-    }
-    return m_native_property.native_string_set(data::XPROPERTY_ALIAS_NAME, name);
 }
 
 int32_t xaccount_context_t::token_transfer_out(const data::xproperty_asset& asset, uint64_t gas_fee, uint64_t service_fee) {
@@ -291,23 +266,6 @@ int32_t xaccount_context_t::top_token_transfer_in(uint64_t amount) {
     m_balance_change += (amount - lock_amount);
 
     return xstore_success;
-}
-
-int32_t xaccount_context_t::account_set_keys(const std::string &key, const std::string &value) {
-    xinfo("xaccount_context_t::account_set_keys, [%s:%s]", key.c_str(), value.c_str());
-    uint64_t lock_sum = get_lock_token_sum();
-    if (!can_work()) {
-        xwarn("xaccount_context_t::lock_sum %d less than min_deposit %d", lock_sum, XGET_CONFIG(min_account_deposit));
-        return xaccount_balance_not_enough;
-    }
-    if (key != XPROPERTY_ACCOUNT_VOTE_KEY
-        && key != XPROPERTY_ACCOUNT_TRANSFER_KEY
-        && key != XPROPERTY_ACCOUNT_DATA_KEY
-        && key != XPROPERTY_ACCOUNT_CONSENSUS_KEY) {
-        return xaccount_set_keys_key_illegal;
-    }
-    // TODO (ernest) check value = 65
-    return m_native_property.native_map_set(data::XPROPERTY_ACCOUNT_KEYS, key, value);
 }
 
 uint64_t xaccount_context_t::get_lock_token_sum() {
@@ -521,61 +479,9 @@ int32_t xaccount_context_t::set_last_tx_hour(uint64_t num){
     return 0;
 }
 
-uint64_t xaccount_context_t::get_pledge_token_disk(){
-    return m_account->disk_balance();
-}
-
-int32_t xaccount_context_t::set_pledge_token_disk(uint64_t num){
-    if(m_account->balance() < num){
-        return xtransaction_pledge_too_much_token;
-    }
-    m_pledge_balance_change.disk += num;
-    num += get_pledge_token_disk();
-    m_account->set_disk_balance(num);
-    return 0;
-}
-
-int32_t xaccount_context_t::redeem_pledge_token_disk(uint64_t num){
-    auto pledge_token = get_pledge_token_disk();
-    if(pledge_token < num){
-        return xtransaction_not_enough_pledge_token_disk;
-    }
-    m_pledge_balance_change.disk -= num;
-    m_account->set_disk_balance(pledge_token - num);
-    return 0;
-}
-
-uint64_t xaccount_context_t::get_used_disk(){
-    int32_t ret = 0;
-    std::string v;
-    ret = m_native_property.native_string_get(XPROPERTY_USED_DISK_KEY, v);
-    if (0 == ret) {
-        return (uint64_t)std::stoull(v);
-    }
-    return 0;
-}
-
-int32_t xaccount_context_t::set_used_disk(uint64_t num){
-    m_native_property.native_string_set(XPROPERTY_USED_DISK_KEY, std::to_string(num));
-    return 0;
-}
-
 int32_t xaccount_context_t::update_disk(uint64_t disk_usage){
-#if 0 // disk is 0 at present
-    uint64_t used_disk = get_used_disk();
-    uint64_t pledge_disk = get_pledge_token_disk() / config::config_register.get<xdisk_price_per_byte_configuration_t>();
-    uint64_t total_disk = pledge_disk + config::config_register.get<xfree_disk_configuration_t>();
-    xdbg("tgas_disk disk_usage: %d, used_disk: %d, pledge_disk: %d, total_disk: %d", disk_usage, used_disk, pledge_disk, total_disk);
-    disk_usage += used_disk;
-    if(disk_usage > total_disk){
-        return xtransaction_not_enough_pledge_token_disk;
-    }
-
-    auto ret = set_used_disk(disk_usage);
-    return ret;
-#else
+    // disk is 0 at present
     return 0;
-#endif
 }
 
 bool xaccount_context_t::can_work() {
@@ -884,48 +790,6 @@ int32_t xaccount_context_t::redeem_pledge_vote_property(uint64_t num){
     }
     xdbg("pledge_redeem_vote no expire vote");
     return xtransaction_pledge_redeem_vote_err;
-}
-
-data::xproperty_asset xaccount_context_t::get_source_transfer_in() {
-    data::xproperty_asset asset(0);
-    if (m_balance_change >= 0) {
-        asset.m_amount = m_balance_change;
-    }
-    return asset;
-}
-
-int32_t xaccount_context_t::set_parent_account(const uint64_t amount, const std::string& value) {
-    std::string _value;
-    if (!m_native_property.native_string_get(XPORPERTY_PARENT_ACCOUNT_KEY, _value)) {
-        return xaccount_property_parent_account_exist;
-    }
-    uint64_t balance = amount > XGET_CONFIG(min_account_deposit) ? (amount - XGET_CONFIG(min_account_deposit)) : 0;
-    set_lock_token_sum(XGET_CONFIG(min_account_deposit));
-    top_token_transfer_in(balance);
-    return m_native_property.native_string_set(XPORPERTY_PARENT_ACCOUNT_KEY, value);
-}
-
-int32_t xaccount_context_t::set_sub_account(const std::string& value) {
-    return m_native_property.native_deque_push_back(XPORPERTY_SUB_ACCOUNT_KEY, value);
-}
-
-int32_t xaccount_context_t::sub_account_check(const std::string& value) {
-    if (m_native_property.native_deque_exist(XPORPERTY_SUB_ACCOUNT_KEY, value)) {
-        return xaccount_property_sub_account_exist;
-    }
-    int32_t size;
-    if (!m_native_property.native_deque_size(XPORPERTY_SUB_ACCOUNT_KEY, size) && size >= MAX_SUB_ACCOUNT) {
-        return xaccount_property_sub_account_overflow;
-    }
-    return xstore_success;
-}
-
-int32_t xaccount_context_t::remove_sub_account(const std::string& value) {
-    return m_native_property.native_deque_erase(XPORPERTY_SUB_ACCOUNT_KEY, value);
-}
-
-int32_t xaccount_context_t::remove_contract_sub_account(const std::string& value) {
-    return m_native_property.native_deque_erase(XPORPERTY_CONTRACT_SUB_ACCOUNT_KEY, value);
 }
 
 int32_t xaccount_context_t::set_contract_code(const std::string &code) {
@@ -1535,7 +1399,6 @@ xaccount_context_t::get_block_by_height(const std::string & owner, uint64_t heig
     // TODO(jimmy)
     base::xvaccount_t _vaddr(owner);
     base::xauto_ptr<base::xvblock_t> _block = base::xvchain_t::instance().get_xblockstore()->load_block_object(_vaddr, height, base::enum_xvblock_flag_committed, true);
-    xassert(_block != nullptr);
     if (_block != nullptr) {
         _block->add_ref();
         return dynamic_cast<data::xblock_t*>(_block.get());

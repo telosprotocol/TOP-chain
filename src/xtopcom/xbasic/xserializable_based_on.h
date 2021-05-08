@@ -27,6 +27,7 @@
 #endif
 
 #include "xbase/xns_macro.h"
+#include "xbasic/xbyte_buffer.h"
 
 #include <cstdint>
 #include <string>
@@ -103,6 +104,18 @@ public:
 
     std::int32_t serialize_from(base::xbuffer_t & stream, std::error_code & ec);
 
+    template <typename StreamT>
+    xbyte_buffer_t serialize_based_on() const;
+
+    template <typename StreamT>
+    xbyte_buffer_t serialize_based_on(std::error_code & ec) const;
+
+    template <typename StreamT>
+    void deserialize_based_on(xbyte_buffer_t bytes);
+
+    template <typename StreamT>
+    void deserialize_based_on(xbyte_buffer_t bytes, std::error_code & ec);
+
 protected:
     /**
      * @brief Serialize the object into the steam directly.
@@ -124,3 +137,18 @@ using xserializable_based_on = xtop_serializable_based_on<BasedOnT>;
 
 NS_END1
 
+NS_BEG1(top)
+
+template <>
+xbyte_buffer_t xtop_serializable_based_on<void>::serialize_based_on<base::xstream_t>() const;
+
+template <>
+xbyte_buffer_t xtop_serializable_based_on<void>::serialize_based_on<base::xstream_t>(std::error_code & ec) const;
+
+template <>
+void xtop_serializable_based_on<void>::deserialize_based_on<base::xstream_t>(xbyte_buffer_t bytes);
+
+template <>
+void xtop_serializable_based_on<void>::deserialize_based_on<base::xstream_t>(xbyte_buffer_t bytes, std::error_code & ec);
+
+NS_END1

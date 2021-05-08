@@ -113,6 +113,10 @@ do
         CMAKE_EXTRA_OPTIONS+=" -DDB_CACHE=ON"
         echo "BUILD WITH DB_CACHE"
     ;;
+    rustvm)
+        CMAKE_EXTRA_OPTIONS+=" -DBUILD_RUSTVM=ON"
+        echo "BUILD RUSTVM(need cargo toolchain)"
+    ;;
     *)
         CMAKE_EXTRA_OPTIONS=" -DXENABLE_TESTS=OFF -DXENABLE_CODE_COVERAGE=OFF"
     ;;

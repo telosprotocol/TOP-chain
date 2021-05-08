@@ -17,6 +17,7 @@ NS_BEG2(top, blockmaker)
 REG_XMODULE_LOG(chainbase::enum_xmodule_type::xmodule_type_xblockmaker, xblockmaker_error_to_string, xblockmaker_error_base+1, xblockmaker_error_max);
 
 xproposal_maker_t::xproposal_maker_t(const std::string & account, const xblockmaker_resources_ptr_t & resources) {
+    m_resources = resources;
     m_indexstore = resources->get_indexstorehub()->get_index_store(account);
     m_table_maker = make_object_ptr<xtable_maker_t>(account, resources);  // TOOD(jimmy) global
     m_tableblock_batch_tx_num_residue = XGET_CONFIG(tableblock_batch_tx_max_num);  // TOOD(jimmy)
@@ -46,25 +47,17 @@ bool xproposal_maker_t::can_make_proposal(data::xblock_consensus_para_t & propos
 }
 
 xblock_ptr_t xproposal_maker_t::make_proposal(data::xblock_consensus_para_t & proposal_para) {
-    // get batch txs
-    xtablemaker_para_t table_para;
-    update_txpool_txs(proposal_para, table_para);
-
-    bool can_make_next_block = m_table_maker->can_make_next_block(table_para, proposal_para);
-    if (!can_make_next_block) {
-        xdbg("xproposal_maker_t::make_proposal no need make next block.%s",
-            proposal_para.dump().c_str());
-        return nullptr;
-    }
-
-    auto & latest_cert_block = proposal_para.get_latest_cert_block();
-
     // get tablestate related to latest cert block
-    table_para.m_tablestate = m_indexstore->clone_tablestate(latest_cert_block);
-    if (nullptr == table_para.m_tablestate) {
+    auto & latest_cert_block = proposal_para.get_latest_cert_block();
+    xtablestate_ptr_t tablestate = m_indexstore->clone_tablestate(latest_cert_block);
+    if (nullptr == tablestate) {
         xwarn("xproposal_maker_t::make_proposal fail clone tablestate. %s,cert_height=%" PRIu64 "", proposal_para.dump().c_str(), latest_cert_block->get_height());
         return nullptr;
     }
+
+    xtablemaker_para_t table_para(tablestate);
+    // get batch txs
+    update_txpool_txs(proposal_para, table_para);
 
     if (false == leader_set_consensus_para(latest_cert_block.get(), proposal_para)) {
         xwarn("xproposal_maker_t::make_proposal fail-leader_set_consensus_para.%s",
@@ -85,10 +78,13 @@ xblock_ptr_t xproposal_maker_t::make_proposal(data::xblock_consensus_para_t & pr
         return nullptr;
     }
 
-    std::string proposal_input_str = table_para.m_proposal_input.to_string();
+    auto & proposal_input = table_para.get_proposal();
+    std::string proposal_input_str;
+    proposal_input->serialize_to_string(proposal_input_str);
     proposal_block->get_input()->set_proposal(proposal_input_str);
     bool bret = proposal_block->reset_prev_block(latest_cert_block.get());
     xassert(bret);
+    xdbg("xproposal_maker_t::make_proposal succ.%s,proposal_block=%s", proposal_para.dump().c_str(), proposal_block->dump().c_str());
     return proposal_block;
 }
 
@@ -127,18 +123,17 @@ int xproposal_maker_t::verify_proposal(base::xvblock_t * proposal_block, base::x
             proposal_block->dump().c_str(), proposal_prev_block->dump().c_str());
     }
 
-    xtablemaker_para_t table_para;
+    // get tablestate related to latest cert block
+    xtablestate_ptr_t tablestate = m_indexstore->clone_tablestate(proposal_prev_block);
+    if (nullptr == tablestate) {
+        xwarn("xproposal_maker_t::verify_proposal fail clone tablestate. %s,cert_height=%" PRIu64 "", cs_para.dump().c_str(), proposal_prev_block->get_height());
+        return xblockmaker_error_proposal_table_state_clone;
+    }
+    xtablemaker_para_t table_para(tablestate);
     if (false == verify_proposal_input(proposal_block, cs_para.get_latest_committed_block(), table_para)) {
         xwarn("xproposal_maker_t::verify_proposal fail-proposal input invalid. proposal=%s",
             proposal_block->dump().c_str());
         return xblockmaker_error_proposal_bad_input;
-    }
-
-    // get tablestate related to latest cert block
-    table_para.m_tablestate = m_indexstore->clone_tablestate(proposal_prev_block);
-    if (nullptr == table_para.m_tablestate) {
-        xwarn("xproposal_maker_t::verify_proposal fail clone tablestate. %s,cert_height=%" PRIu64 "", cs_para.dump().c_str(), proposal_prev_block->get_height());
-        return xblockmaker_error_proposal_table_state_clone;
     }
 
     // get proposal drand block
@@ -182,18 +177,25 @@ bool xproposal_maker_t::verify_proposal_input(base::xvblock_t *proposal_block, c
     uint64_t table_commit_height = committed_block->get_height();
     xassert(table_commit_height < proposal_block->get_height());
 
-    int32_t serialize_ret = table_para.m_proposal_input.from_string(proposal_block->get_input()->get_proposal());
-    if (serialize_ret <= 0) {
+    std::string proposal_input_str = proposal_block->get_input()->get_proposal();
+    xtable_proposal_input_ptr_t proposal_input = make_object_ptr<xtable_proposal_input_t>();
+    int32_t ret = proposal_input->serialize_from_string(proposal_input_str);
+    if (ret <= 0) {
         xerror("xproposal_maker_t::verify_proposal_input fail-table serialize from proposal input. proposal=%s",
             proposal_block->dump().c_str());
         return false;
     }
-    const std::vector<xunit_proposal_input_t> & unit_proposal_inputs = table_para.m_proposal_input.get_unit_inputs();
-    if (unit_proposal_inputs.size() == 0) {
-        xerror("xproposal_maker_t::verify_proposal_input fail-table no proposal input. proposal=%s",
+
+    const std::vector<xcons_transaction_ptr_t> & origin_txs = proposal_input->get_input_txs();
+    const std::vector<std::string> & other_accounts = proposal_input->get_other_accounts();
+    if (origin_txs.empty() && other_accounts.empty()) {
+        xerror("xproposal_maker_t::verify_proposal_input fail-table proposal input empty. proposal=%s",
             proposal_block->dump().c_str());
         return false;
     }
+
+    table_para.set_origin_txs(origin_txs);
+    table_para.set_other_accounts(other_accounts);
     return true;
 }
 
@@ -241,23 +243,37 @@ xblock_ptr_t xproposal_maker_t::verify_proposal_prev_block(base::xvblock_t * pro
     return nullptr;
 }
 
-
 bool xproposal_maker_t::update_txpool_txs(const xblock_consensus_para_t & proposal_para, xtablemaker_para_t & table_para) {
-    // TODO(jimmy) use base::xvaccount_t for performance
-    auto ready_accounts = get_ready_txs(proposal_para);
-    // xtxpool_v2::ready_accounts_t ready_accounts = get_txpool()->get_ready_accounts(get_account(), m_max_account_num);
-    for (auto & ready_account : ready_accounts) {
-        xassert(ready_account->get_txs().size() != 0);
-        for (auto & tx : ready_account->get_txs()) {
-            xinfo("xproposal_maker_t::update_txpool_txs leader-get txs. %s unit_account=%s,txs_size=%d,tx=%s",
-                  proposal_para.dump().c_str(),
-                  ready_account->get_addr().c_str(),
-                  ready_account->get_txs().size(),
-                  tx->dump().c_str());
+    // update committed receiptid state for txpool, pop output finished txs
+    if (proposal_para.get_latest_committed_block()->get_height() > 0) {
+        auto tablestate_commit = m_indexstore->clone_tablestate(proposal_para.get_latest_committed_block());
+        if (nullptr == tablestate_commit) {
+            xwarn("xproposal_maker_t::update_txpool_txs fail clone tablestate. %s,committed_block=%s",
+                proposal_para.dump().c_str(), proposal_para.get_latest_committed_block()->dump().c_str());
+            return false;
         }
-        table_para.set_unitmaker_txs(ready_account->get_addr(), ready_account->get_txs());
+        get_txpool()->update_receiptid_state(proposal_para.get_table_account(), tablestate_commit->get_receiptid_state());
+
+        // update locked txs for txpool, locked txs come from two latest tableblock
+        std::vector<xtxpool_v2::tx_info_t> locked_tx_vec;
+        get_locked_txs(proposal_para.get_latest_cert_block(), locked_tx_vec);
+        get_locked_txs(proposal_para.get_latest_locked_block(), locked_tx_vec);
+        get_txpool()->update_locked_txs(get_account(), locked_tx_vec, tablestate_commit->get_receiptid_state());
     }
-    return table_para.m_proposal_input.get_unit_inputs().size() != 0;
+
+    // get table batch txs for execute and make block
+    auto & tablestate_highqc = table_para.get_tablestate();
+    uint16_t send_txs_max_num = 16;  // TODO(jimmy) config paras
+    uint16_t recv_txs_max_num = 32;
+    uint16_t confirm_txs_max_num = 32;
+    xtxpool_v2::xtxs_pack_para_t txpool_pack_para(proposal_para.get_table_account(), tablestate_highqc->get_receiptid_state(), send_txs_max_num, recv_txs_max_num, confirm_txs_max_num);
+    std::vector<xcons_transaction_ptr_t> origin_txs = get_txpool()->get_ready_txs(txpool_pack_para);
+    for (auto & tx : origin_txs) {
+        xdbg_info("xproposal_maker_t::update_txpool_txs leader-get txs. %s tx=%s",
+                proposal_para.dump().c_str(), tx->dump().c_str());
+    }
+    table_para.set_origin_txs(origin_txs);
+    return true;
 }
 
 std::string xproposal_maker_t::calc_random_seed(base::xvblock_t* latest_cert_block, base::xvqcert_t* drand_cert, uint64_t viewtoken) {
@@ -347,71 +363,6 @@ void xproposal_maker_t::get_locked_txs(const xblock_ptr_t & block, std::vector<x
         for (auto & tx : txs) {
             xtxpool_v2::tx_info_t txinfo(lightunit->get_account(), tx->get_tx_hash_256(), tx->get_tx_subtype());
             locked_tx_vec.push_back(txinfo);
-        }
-    }
-}
-
-xtxpool_v2::ready_accounts_t xproposal_maker_t::filt_noncontinuous_txs(xtxpool_v2::ready_accounts_t & reday_accounts,
-                                                                       const base::xreceiptid_state_ptr_t receiptid_state_highqc) const {
-    xtxpool_v2::xordered_ready_txs_t ordered_ready_txs(reday_accounts);
-    ordered_ready_txs.erase_noncontinuous_receipts(receiptid_state_highqc);
-    return ordered_ready_txs.get_ready_accounts();
-}
-
-xtxpool_v2::ready_accounts_t xproposal_maker_t::get_ready_txs(const xblock_consensus_para_t & proposal_para) const {
-    std::vector<xtxpool_v2::tx_info_t> locked_tx_vec;
-    get_locked_txs(proposal_para.get_latest_cert_block(), locked_tx_vec);
-    get_locked_txs(proposal_para.get_latest_locked_block(), locked_tx_vec);
-    get_txpool()->update_locked_txs(get_account(), locked_tx_vec);
-
-    // get tablestate related to latest cert block
-    auto tablestate_commit = m_indexstore->clone_tablestate(proposal_para.get_latest_committed_block());
-    if (nullptr == tablestate_commit) {
-        xwarn("xproposal_maker_t::update_txpool_txs fail clone tablestate. %s", proposal_para.dump().c_str());
-        return {};
-    }
-
-    get_txpool()->update_receiptid_state(proposal_para.get_table_account(), tablestate_commit->get_receiptid_state());
-
-    auto tablestate_highqc = m_indexstore->clone_tablestate(proposal_para.get_latest_cert_block());
-    if (nullptr == tablestate_highqc) {
-        xwarn("xproposal_maker_t::update_txpool_txs fail clone tablestate. %s", proposal_para.dump().c_str());
-        return {};
-    }
-
-    xtxpool_v2::xtxs_pack_para_t txpool_pack_para(proposal_para.get_table_account(), tablestate_highqc->get_receiptid_state(), 16, 32, 32);
-    xtxpool_v2::ready_accounts_t ready_accounts = get_txpool()->get_ready_accounts(txpool_pack_para);
-
-    return table_rules_filter(proposal_para, tablestate_highqc->get_receiptid_state(), ready_accounts);
-}
-
-xtxpool_v2::ready_accounts_t xproposal_maker_t::table_rules_filter(const xblock_consensus_para_t & proposal_para,
-                                                                   const base::xreceiptid_state_ptr_t receiptid_state_highqc,
-                                                                   xtxpool_v2::ready_accounts_t & ready_accounts) const {
-    std::set<std::string> locked_account_set;
-    get_locked_accounts(proposal_para.get_latest_cert_block(), locked_account_set);
-    get_locked_accounts(proposal_para.get_latest_locked_block(), locked_account_set);
-
-    for (auto it_ready_account = ready_accounts.begin(); it_ready_account != ready_accounts.end();) {
-        auto it_locked_account_set = locked_account_set.find(it_ready_account->get()->get_addr());
-        if (it_locked_account_set != locked_account_set.end()) {
-            // filt locked accounts' txs
-            it_ready_account = ready_accounts.erase(it_ready_account);
-        } else {
-            // filt txs not match rule
-            it_ready_account->get()->tx_rule_filter();
-            it_ready_account++;
-        }
-    }
-
-    return filt_noncontinuous_txs(ready_accounts, receiptid_state_highqc);
-}
-
-void xproposal_maker_t::get_locked_accounts(const xblock_ptr_t & block, std::set<std::string> & locked_account_set) const {
-    const auto & units = block->get_tableblock_units(false);
-    for (auto unit : units) {
-        if (unit->get_block_class() == base::enum_xvblock_class_light || unit->get_block_class() == base::enum_xvblock_class_full) {
-            locked_account_set.insert(unit->get_account());
         }
     }
 }

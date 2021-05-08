@@ -114,6 +114,19 @@ void xsync_download_tracer_mgr::expire() {
     expire(now);
 }
 
+void xsync_download_tracer_mgr::expire(std::string account) {
+    std::lock_guard<std::mutex> lck(m_lock);
+    for (auto it = m_elapses.begin(); it != m_elapses.end(); it++){
+        if (it->second == account) {
+            m_elapses.erase(it);
+            break;
+        }
+    }
+
+    m_account_elapses.erase(account);
+    m_tracers.erase(account);
+}
+
 // xsync_download_tracer xsync_download_tracer_mgr::preempt(std::string account, std::pair<uint64_t, uint64_t> expect_height_interval, 
 //     uint32_t prior, const std::map<std::string, std::string> context) {
     
@@ -151,7 +164,7 @@ void xsync_download_tracer_mgr::update(xchain_account_t account, xsync_download_
     tracer.set_trace_height(trace_height);
     m_tracers[account] = tracer;
     m_account_elapses[account] = now;
-    for (auto it = m_elapses.begin(); it != m_elapses.end();){
+    for (auto it = m_elapses.begin(); it != m_elapses.end();it++){
         if (it->second == account) {
             m_elapses.erase(it);
             break;

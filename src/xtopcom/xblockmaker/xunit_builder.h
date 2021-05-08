@@ -60,6 +60,9 @@ public:
                              xaccount_ptr_t const & prev_state,
                              data::xblock_consensus_para_t const & cs_para,
                              xblock_builder_para_ptr_t & build_para) override;
+
+private:
+    void alloc_tx_receiptid(const std::vector<xcons_transaction_ptr_t> & input_txs, const base::xreceiptid_state_ptr_t & receiptid_state);
 };
 using xlightunit_builder2_t = xtop_lightunit_builder2;
 

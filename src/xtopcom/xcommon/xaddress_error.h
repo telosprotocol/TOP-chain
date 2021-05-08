@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "xbasic/xchain_error.h"
+#include "xbasic/xerror/xchain_error.h"
 
 #include <cstdint>
 #include <string>
@@ -67,9 +67,9 @@ make_error_condition(xaddress_errc_t const errc);
 std::error_category const &
 address_category();
 
-class xtop_address_error final : public xchain_error_t
+class xtop_address_error final : public top::error::xtop_error_t
 {
-    using base_t = xchain_error_t;
+    using base_t = top::error::xtop_error_t;
 
 public:
     xtop_address_error(xaddress_errc_t const errc, std::size_t const line, char const * file);

@@ -25,7 +25,6 @@ xlightunit_builder_t::xlightunit_builder_t() {
 void xlightunit_builder_t::alloc_tx_receiptid(const std::vector<xcons_transaction_ptr_t> & input_txs, const base::xreceiptid_state_ptr_t & receiptid_state) {
     for (auto & tx : input_txs) {
         data::xblocktool_t::alloc_transaction_receiptid(tx, receiptid_state);
-        xdbg("xlightunit_builder_t::alloc_tx_receiptid alloc receipt id. tx=%s", tx->dump(true).c_str());
     }
 }
 
@@ -92,8 +91,9 @@ xblock_ptr_t        xfullunit_builder_t::build_block(const xblock_ptr_t & prev_b
     uint64_t prev_height = prev_block->get_height();
     std::map<std::string, std::string> propertys;
     const auto & property_map = prev_state->get_property_hash_map();
+    const auto & property_objs_map = prev_state->get_property_objs();
     for (auto & v : property_map) {
-        xdataobj_ptr_t db_prop = build_para->get_store()->clone_property(account, v.first);
+        xdataobj_ptr_t db_prop = prev_state->find_property(v.first);
         if (db_prop == nullptr) {
             build_para->set_error_code(xblockmaker_error_property_load);
             xerror("xfullunit_builder_t::build_block fail-property load,%s,account:%s,height=%" PRIu64 ",property(%s) not exist.",
@@ -105,7 +105,7 @@ xblock_ptr_t        xfullunit_builder_t::build_block(const xblock_ptr_t & prev_b
         if (db_prop_hash != v.second) {
             build_para->set_error_code(xblockmaker_error_property_unmatch);
             // TODO(jimmy) might happen, because property is not stored by height
-            xwarn("xfullunit_builder_t::build_block fail-property unmatch,%s,account:%s,height=%" PRIu64 ",property(%s) hash not match fullunit.",
+            xerror("xfullunit_builder_t::build_block fail-property unmatch,%s,account:%s,height=%" PRIu64 ",property(%s) hash not match fullunit.",
                   cs_para.dump().c_str(), account.c_str(), prev_height, v.first.c_str());
             return nullptr;
         }
@@ -163,8 +163,67 @@ xblock_ptr_t xtop_lightunit_builder2::build_block(xblock_ptr_t const & prev_bloc
     contract_runtime::xaccount_vm_t account_vm;
     auto result = account_vm.execute(input_txs, blockstate);
 
-    return nullptr;
+    if (result.status.ec) {
+        for (auto i = 0u; i < result.transaction_results.size(); ++i) {
+            auto const & r = result.transaction_results[i];
+            if (r.status.ec) {
+                lightunit_build_para->set_fail_tx(input_txs[i]);
+                break;
+            }
+        }
+
+        build_para->set_error_code(xblockmaker_error_tx_execute);
+        return nullptr;
+    }
+
+    xlightunit_block_para_t lightunit_para;
+    // set lightunit para by tx result
+    lightunit_para.set_input_txs(input_txs);
+    // lightunit_para.set_transaction_result(exec_result.succ_txs_result);
+    // lightunit_para.set_account_unconfirm_sendtx_num(unconfirm_num);
+
+    base::xreceiptid_state_ptr_t receiptid_state = lightunit_build_para->get_receiptid_state();
+    alloc_tx_receiptid(input_txs, receiptid_state);
+    alloc_tx_receiptid(lightunit_para.get_contract_create_txs(), receiptid_state);
+
+    base::xvblock_t * _proposal_block = data::xlightunit_block_t::create_next_lightunit(lightunit_para, prev_block.get());
+    xblock_ptr_t proposal_unit;
+    proposal_unit.attach((data::xblock_t *)_proposal_block);
+    proposal_unit->set_consensus_para(cs_para);
+    return proposal_unit;
 }
 
+void xtop_lightunit_builder2::alloc_tx_receiptid(const std::vector<xcons_transaction_ptr_t> & input_txs, const base::xreceiptid_state_ptr_t & receiptid_state) {
+    for (auto & tx : input_txs) {
+        if (tx->is_self_tx()) {
+            continue;
+        } else if (tx->is_send_tx()) {
+            base::xvaccount_t _vaccount(tx->get_transaction()->get_target_addr());
+            base::xtable_shortid_t target_sid = _vaccount.get_short_table_id();
 
+            base::xreceiptid_pair_t receiptid_pair;
+            receiptid_state->find_pair_modified(target_sid, receiptid_pair);
+
+            uint64_t current_receipt_id = receiptid_pair.get_sendid_max() + 1;
+            receiptid_pair.inc_sendid_max();
+            tx->set_current_receipt_id(target_sid, current_receipt_id);
+            receiptid_state->add_pair_modified(target_sid, receiptid_pair);  // save to modified pairs
+            xdbg("xlightunit_builder_t::alloc_tx_receiptid alloc send_tx receipt id. tx=%s", tx->dump(true).c_str());
+        } else if (tx->is_recv_tx()) {
+            base::xvaccount_t _vaccount(tx->get_transaction()->get_source_addr());
+            base::xtable_shortid_t source_sid = _vaccount.get_short_table_id();
+            // copy receipt id from last phase to current phase
+            uint64_t receipt_id = tx->get_last_action_receipt_id();
+            tx->set_current_receipt_id(source_sid, receipt_id);
+            xdbg("xlightunit_builder_t::alloc_tx_receiptid alloc recv_tx receipt id. tx=%s", tx->dump(true).c_str());
+        } else if (tx->is_confirm_tx()) {
+            base::xvaccount_t _vaccount(tx->get_transaction()->get_target_addr());
+            base::xtable_shortid_t target_sid = _vaccount.get_short_table_id();
+            // copy receipt id from last phase to current phase
+            uint64_t receipt_id = tx->get_last_action_receipt_id();
+            tx->set_current_receipt_id(target_sid, receipt_id);
+            xdbg("xlightunit_builder_t::alloc_tx_receiptid alloc confirm_tx receipt id. tx=%s", tx->dump(true).c_str());
+        }
+    }
+}
 NS_END2

@@ -6,7 +6,7 @@
 
 #include "xbasic/xmemory.hpp"
 #include "xbasic/xthreading/xutility.h"
-#include "xbasic/xthrow_error.h"
+#include "xbasic/xerror/xthrow_error.h"
 #include "xbasic/xutility.h"
 #include "xcommon/xelection_result_keepalive_strategy.h"
 #include "xcommon/xip.h"
@@ -121,7 +121,7 @@ xgroup_update_result_t xtop_cluster_element::add_group_element(common::xgroup_id
                                                                std::uint64_t const associated_election_blk_height) {
     std::error_code ec;
     auto ret = add_group_element(group_id, version, timestamp, start_time, sharding_size, associated_election_blk_height, ec);
-    throw_error(ec);
+    top::error::throw_error(ec);
     return ret;
 }
 
@@ -210,7 +210,7 @@ std::shared_ptr<xgroup_element_t> xtop_cluster_element::group_element(common::xg
     std::error_code ec;
 
     auto ret = group_element(group_id, version, ec);
-    throw_error(ec);
+    top::error::throw_error(ec);
     return ret;
 }
 
@@ -283,7 +283,7 @@ std::shared_ptr<xgroup_element_t> xtop_cluster_element::group_element(common::xg
 std::shared_ptr<xgroup_element_t> xtop_cluster_element::group_element(common::xgroup_id_t const & group_id, common::xversion_t const & version) const {
     std::error_code ec;
     auto ret = group_element(group_id, version, ec);
-    throw_error(ec);
+    top::error::throw_error(ec);
     return ret;
 }
 
@@ -341,7 +341,7 @@ std::shared_ptr<xgroup_element_t> xtop_cluster_element::group_element(common::xg
 std::shared_ptr<xgroup_element_t> xtop_cluster_element::group_element(common::xgroup_id_t const & group_id, common::xlogic_time_t const logic_time) const {
     std::error_code ec;
     auto ret = group_element(group_id, logic_time, ec);
-    throw_error(ec);
+    top::error::throw_error(ec);
     return ret;
 }
 
@@ -363,7 +363,7 @@ common::xversion_t xtop_cluster_element::group_version(common::xgroup_id_t const
 common::xversion_t xtop_cluster_element::group_version(common::xgroup_id_t const & group_id, common::xlogic_time_t const logic_time) const {
     std::error_code ec;
     auto ret = this->group_version(group_id, logic_time, ec);
-    throw_error(ec);
+    top::error::throw_error(ec);
     return ret;
 }
 
@@ -411,7 +411,7 @@ std::vector<std::shared_ptr<xgroup_element_t>> xtop_cluster_element::children(co
 std::vector<std::shared_ptr<xgroup_element_t>> xtop_cluster_element::children(common::xnode_type_t const child_type, common::xlogic_time_t const logic_time) const {
     std::error_code ec;
     auto ret = children(child_type, logic_time, ec);
-    throw_error(ec);
+    top::error::throw_error(ec);
     return ret;
 }
 

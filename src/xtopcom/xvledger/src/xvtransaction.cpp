@@ -54,19 +54,25 @@ namespace top
             }
         }
 
-        void xvtransaction_store_t::set_send_unit_info(const xvtransaction_index_ptr_t & txindex) {
+        void xvtransaction_store_t::set_send_unit_info(const xvtxindex_ptr & txindex) {
+            xassert(txindex->get_block_height() > 0);
+            xassert(m_send_unit_height == 0 && m_send_unit_hash.empty());
             m_send_unit_height = txindex->get_block_height();
             m_send_unit_hash = txindex->get_block_hash();
             m_is_self_tx = txindex->get_tx_phase_type() == enum_transaction_subtype_self;
             //set_raw_tx(txindex->get_raw_tx());
         }
-        void xvtransaction_store_t::set_recv_unit_info(const xvtransaction_index_ptr_t & txindex) {
+        void xvtransaction_store_t::set_recv_unit_info(const xvtxindex_ptr & txindex) {
+            xassert(txindex->get_block_height() > 0);
+            xassert(m_recv_unit_height == 0 && m_recv_unit_hash.empty());
             m_recv_unit_height = txindex->get_block_height();
             m_recv_unit_hash = txindex->get_block_hash();
             m_is_self_tx = false;
             //set_raw_tx(txindex->get_raw_tx());
         }
-        void xvtransaction_store_t::set_confirm_unit_info(const xvtransaction_index_ptr_t & txindex) {
+        void xvtransaction_store_t::set_confirm_unit_info(const xvtxindex_ptr & txindex) {
+            xassert(txindex->get_block_height() > 0);
+            xassert(m_confirm_unit_height == 0 && m_confirm_unit_hash.empty());
             m_confirm_unit_height = txindex->get_block_height();
             m_confirm_unit_hash = txindex->get_block_hash();
             m_is_self_tx = false;

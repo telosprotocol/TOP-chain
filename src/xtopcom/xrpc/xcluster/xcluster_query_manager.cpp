@@ -4,6 +4,7 @@
 
 #include "xcluster_query_manager.h"
 
+#include "xdata/xblocktool.h"
 #include "xdata/xelection/xelection_result_property.h"
 #include "xdata/xgenesis_data.h"
 #include "xdata/xproposal_data.h"
@@ -50,6 +51,7 @@ xcluster_query_manager::xcluster_query_manager(observer_ptr<store::xstore_face_t
     CLUSTER_REGISTER_V1_METHOD(queryProposal);
     CLUSTER_REGISTER_V1_METHOD(getStandbys);
     CLUSTER_REGISTER_V1_METHOD(getCGP);
+    CLUSTER_REGISTER_V1_METHOD(getLatestTables);
 }
 
 void xcluster_query_manager::call_method(xjson_proc_t & json_proc) {
@@ -489,4 +491,18 @@ void xcluster_query_manager::getCGP(xjson_proc_t & json_proc) {
     json_proc.m_response_json["data"] = jv[prop_name];
 }
 
+void xcluster_query_manager::getLatestTables(xjson_proc_t & json_proc) {
+    std::string owner = json_proc.m_request_json["params"]["account_addr"].asString();
+    xdbg("getLatestTables account: %s", owner.c_str());
+
+    xJson::Value jv;
+    for(auto i = 0; i < enum_vbucket_has_tables_count; ++i) {
+        std::string addr = xblocktool_t::make_address_shard_table_account(i);
+        auto vb = m_block_store->get_latest_committed_block(addr);
+        jv.append(static_cast<xJson::UInt64>(vb->get_height()));
+        xdbg("getLatestTables addr %s, height %ull", addr.c_str(), vb->get_height());
+    }
+
+    json_proc.m_response_json["data"] = jv;
+}
 NS_END2

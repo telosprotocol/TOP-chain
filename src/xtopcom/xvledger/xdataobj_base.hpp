@@ -51,12 +51,13 @@ enum enum_xtopcom_object_type {
     xdata_type_receiptid                    = 30,
     xdata_type_fulltable_block              = 31,
     xdata_type_fulltable_output_entity      = 32,
+    xdata_type_table_proposal_input         = 33,
 
     xtopcom_object_type_max
 };
 
 
-template <typename T, int type_value>
+template <typename T, enum_xtopcom_object_type type_value>
 class xbase_dataobj_t : public base::xdataobj_t {
  protected:
     enum { object_type_value = enum_xdata_type_max - type_value };

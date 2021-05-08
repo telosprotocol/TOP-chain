@@ -149,15 +149,11 @@ public:
 
     xdataobj_ptr_t get_property_object(const std::string & account, const std::string & prop_name, uint64_t height);
 
-    bool execute_fullunit(xblockchain2_t* account, const xblock_t* block, std::map<std::string, std::string> & property_pairs);
-    bool execute_lightunit(xblockchain2_t* account, const xblock_t* block, std::map<std::string, std::string> & property_pairs);
     bool execute_tableblock_light(xblockchain2_t* account, const xblock_t *block);
     bool execute_tableblock_full(xblockchain2_t* account, xfull_tableblock_t *block, std::map<std::string, std::string> & kv_pairs);
 
     xdataobj_ptr_t get_property(const std::string & account, const std::string & prop_name, int32_t type);
     bool set_transaction_hash(xstore_transaction_t& txn, const uint64_t unit_height, const std::string &txhash, enum_transaction_subtype txtype, xtransaction_t* tx);
-
-    bool update_blockchain_by_block(xblockchain2_t* blockchain, const data::xblock_t* block, uint64_t now);
 
     bool save_block(const std::string & store_path, data::xblock_t* block);
 
@@ -168,6 +164,7 @@ public:
 
     base::xdataobj_t* get(const xstore_key_t & key) const;
     bool set(const std::string& key, base::xdataobj_t* object);
+    bool load_blocks_from_full_or_state(const xaccount_ptr_t & state, const xblock_ptr_t & latest_block, std::map<uint64_t, xblock_ptr_t> & blocks);
 
  private:
     std::string                     m_store_path;

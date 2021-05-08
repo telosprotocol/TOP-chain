@@ -102,6 +102,10 @@ public:
         return nullptr;
     }
 
+    std::vector<base::xvblock_ptr_t> load_block_object(const std::string & tx_hash,const base::enum_transaction_subtype type) override {
+        return {};
+    }
+
     bool load_block_input(const base::xvaccount_t &, base::xvblock_t *) override {
         return false;
     }
@@ -111,6 +115,10 @@ public:
     }
 
     bool load_block_offdata(const base::xvaccount_t & account, base::xvblock_t * block) override {
+        return false;
+    }
+
+    bool load_block_flags(const base::xvaccount_t & account, base::xvblock_t* block) override {
         return false;
     }
 
@@ -156,6 +164,10 @@ public:
 
     base::xvtransaction_store_ptr_t  query_tx(const std::string &, base::enum_transaction_subtype) override {
         return nullptr;
+    }
+    
+    bool exist_genesis_block(base::xvaccount_t const & account) override {
+        return false;
     }
 };
 using xdummy_block_store_t = xtop_dummy_blockstore;

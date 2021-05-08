@@ -12,8 +12,10 @@
 #include "xbase/xcontext.h"
 #include "xbase/xlog.h"
 #include "xbase/xutl.h"
-// TODO(jimmy) #include "xbase/xvledger.h"
 #include "xbase/xhash.h"
+#include "xvledger/xvdbkey.h"
+#include "xvledger/xvledger.h"
+#include "xvledger/xvblockstore.h"
 #include "xbasic/xmodule_type.h"
 #include "xbase/xobject_ptr.h"
 #include "xcrypto/xcrypto_util.h"
@@ -31,7 +33,7 @@
 #include "xmbus/xevent_consensus.h"
 #include "xmbus/xevent_store.h"
 #include "xmetrics/xmetrics.h"
-#include "xstore/xaccount_cmd.h"
+#include "xdata/xaccount_cmd.h"
 #include "xstore/xaccount_context.h"
 #include "xstore/xstore.h"
 #include "xstore/xstore_error.h"
@@ -348,40 +350,6 @@ data::xblock_t *xstore::get_block_by_height(const std::string &owner, uint64_t h
     return block;
 }
 
-bool xstore::update_blockchain_by_block(xblockchain2_t *blockchain, const data::xblock_t *block, uint64_t now) {
-
-    blockchain->update_min_max_height(block->get_height());
-    blockchain->set_update_stamp(now);
-
-    bool ret{false};
-    // the local initial block
-    if (block->get_height() == 0) {
-        xdbg("[update blockchain] by local zero block. block=%s,last_height:%ld max_height:%ld",
-                                block->dump().c_str(), blockchain->get_last_height(), blockchain->get_chain_height());
-        ret = blockchain->update_state_by_genesis_block(block);
-        xassert(ret);
-        return ret;
-    }
-
-    if (blockchain->get_last_height() + 1 == block->get_height()) {
-        xdbg("[update blockchain] by next block. block=%s,last_height:%ld max_height:%ld",
-                                block->dump().c_str(), blockchain->get_last_height(), blockchain->get_chain_height());
-        ret = blockchain->update_state_by_next_height_block(block);
-        xassert(ret);
-    } else if (block->get_height() > blockchain->get_last_height() + 1) {
-        if (block->is_fullunit() || block->is_fulltable()) {
-            xdbg("[update blockchain] by full block. block=%s,last_height:%ld max_height:%ld",
-                                block->dump().c_str(), blockchain->get_last_height(), blockchain->get_chain_height());
-            ret = blockchain->update_state_by_full_block(block);
-            xassert(ret);
-        } else {
-            xerror("must be fullunit. block=%s", block->dump().c_str());
-            return false;
-        }
-    }
-    return ret;
-}
-
 bool xstore::save_block(const std::string & store_path, data::xblock_t *block) {
     bool save_successfully = true;
     bool committed = false;
@@ -446,62 +414,13 @@ bool xstore::save_block(const std::string & store_path, data::xblock_t *block) {
 }
 
 xdataobj_ptr_t xstore::clone_property(const std::string &address, const std::string &property_name) {
-    xdataobj_ptr_t property;
-    auto           obj = get_object(xstore_key_t(xstore_key_type_property, xstore_block_type_none, address, property_name));
-    property.attach(dynamic_cast<base::xdataobj_t *>(obj));
+    xdataobj_ptr_t property = nullptr;
+    xaccount_ptr_t state = query_account(address);
+    if (state != nullptr) {
+        property = state->find_property(property_name);
+    }
     xdbg("account: %s  property name: %s, has %s property", address.c_str(), property_name.c_str(), property == nullptr ? "empty" : "not empty");
     return property;
-}
-
-bool xstore::execute_lightunit(xblockchain2_t *account, const xblock_t *block, std::map<std::string, std::string> & property_pairs) {
-    xassert(account != nullptr);
-    xassert(block != nullptr);
-
-    xaccount_binlog_t *proplog = block->get_property_log();
-    if (proplog == nullptr) {
-        return true;
-    }
-
-    xaccount_cmd cmd(account, this);
-    auto         logs = proplog->get_instruction();
-    for (auto &log_ : logs) {
-        xdbg("xstore::execute_lightunit %s do_property prop_name:%s", block->dump().c_str(), log_.first.c_str());
-        auto instructions = log_.second.get_logs();
-        for (auto &instruction : instructions) {
-            xdbg("xstore::execute_lightunit %s do_property code;%d para1:%s para2:%s",
-                 block->dump().c_str(), instruction.m_op_code, instruction.m_op_para1.c_str(), instruction.m_op_para2.c_str());
-            auto restore_ret = cmd.restore_log_instruction(log_.first.c_str(), instruction);
-            if (restore_ret) {
-                xerror("xstore::execute_lightunit %s do instruction fail, %s, err:%s",
-                       block->dump().c_str(), log_.first.c_str(), xstore_error_to_string(restore_ret).c_str());
-                return false;
-            }
-        }
-    }
-
-    std::map<std::string, xdataobj_ptr_t> clone_props = cmd.get_all_property();
-    if (clone_props.size() != block->get_property_hash_map().size()) {
-        xerror("xstore::execute_lightunit %s property size %ld not match lightunit %ld",
-               block->dump().c_str(), clone_props.size(), block->get_property_hash_map().size());
-        return false;
-    }
-
-    for (auto &prop : clone_props) {
-        std::string prop_hash = xhash_base_t::calc_dataunit_hash(prop.second.get());
-        std::string unit_prop_hash = block->get_property_hash(prop.first);
-        if (prop_hash != unit_prop_hash) {
-            xerror("xstore::execute_lightunit %s property hash: %s, unit property hash: %s",
-                   block->dump().c_str(), to_hex_str(prop_hash).c_str(), to_hex_str(unit_prop_hash).c_str());
-            return false;
-        }
-
-        xstore_key_t property_key(xstore_key_type_property, xstore_block_type_none, block->get_account(), prop.first);
-        auto prop_pair = generate_db_object(property_key, prop.second.get());
-        property_pairs.emplace(prop_pair);
-        xdbg("xstore::execute_lightunit block=%s lastest property name=%s", block->dump().c_str(), property_key.printable_key().c_str());
-    }
-
-    return true;
 }
 
 bool xstore::set_transaction_hash(xstore_transaction_t& txn, const uint64_t unit_height, const std::string &txhash, enum_transaction_subtype txtype, xtransaction_t* tx) {
@@ -643,33 +562,6 @@ xtransaction_store_ptr_t xstore::query_transaction_store(const uint256_t &hash) 
     return tx_store;
 }
 
-bool xstore::execute_fullunit(xblockchain2_t* account, const xblock_t *block, std::map<std::string, std::string> & property_pairs) {
-    xassert(block->is_fullunit());
-    xassert(account != nullptr);
-
-    auto properties = block->get_fullunit_propertys();
-    if (properties == nullptr) {
-        xdbg("xstore::execute_fullunit no property block=%s", block->dump().c_str());
-        return true;
-    }
-
-    for (auto &v : *properties) {
-        xstore_key_t property_key(xstore_key_type_property, xstore_block_type_none, block->get_account(), v.first, std::to_string(block->get_height()));
-        property_pairs.insert(std::make_pair(property_key.to_db_key(), v.second));
-        xinfo("xstore::execute_fullunit block=%s property name=%s", block->dump().c_str(), property_key.printable_key().c_str());
-    }
-
-    if (account->get_last_height() + 1 != block->get_height()) {
-        for (auto &v : *properties) {
-            xstore_key_t property_key(xstore_key_type_property, xstore_block_type_none, block->get_account(), v.first);
-            property_pairs.insert(std::make_pair(property_key.to_db_key(), v.second));
-            xinfo("xstore::execute_fullunit block=%s lastest property name=%s", block->dump().c_str(), property_key.printable_key().c_str());
-        }
-    }
-
-    return true;
-}
-
 std::string xstore::get_full_offstate(const std::string & account, uint64_t height) {
     xstore_key_t last_full_offstate_key = xstore_key_t(xstore_key_type_block_offstate, xstore_block_type_none, account, std::to_string(height));
     std::string value = get_value(last_full_offstate_key);
@@ -696,11 +588,12 @@ bool xstore::set_full_block_offstate(const std::string & account, uint64_t heigh
 }
 
 bool xstore::execute_tableblock_light(xblockchain2_t* account, const xblock_t *block) {
+    base::xvaccount_t _vaccount(block->get_account());
     uint64_t last_full_height = block->get_last_full_block_height();
     std::string old_full_data_str;
     if (last_full_height != 0) {
-        xstore_key_t last_full_offstate_key = xstore_key_t(xstore_key_type_block_offstate, xstore_block_type_none, block->get_account(), std::to_string(last_full_height));
-        old_full_data_str = get_value(last_full_offstate_key);
+        const std::string offdata_key = base::xvdbkey_t::create_block_offdata_key(_vaccount, block->get_last_full_block_hash());
+        old_full_data_str = get_value(offdata_key);
         if (old_full_data_str.empty()) {
             xerror("xstore::execute_tableblock_light get full data fail.block=%s", block->dump().c_str());
             return false;
@@ -727,31 +620,38 @@ bool xstore::execute_tableblock_light(xblockchain2_t* account, const xblock_t *b
 }
 
 bool xstore::execute_tableblock_full(xblockchain2_t* account, xfull_tableblock_t *block, std::map<std::string, std::string> & kv_pairs) {
-    uint64_t last_full_height = block->get_last_full_block_height();
-    std::string old_full_data_str;
-    if (last_full_height != 0) {
-        xstore_key_t last_full_offstate_key = xstore_key_t(xstore_key_type_block_offstate, xstore_block_type_none, block->get_account(), std::to_string(block->get_last_full_block_height()));
-        old_full_data_str = get_value(last_full_offstate_key);
-        if (old_full_data_str.empty()) {
-            xerror("xstore::execute_tableblock_full get full data fail.block=%s", block->dump().c_str());
+    if (nullptr == block->get_offdata()) {
+        // get latest state
+        base::xvaccount_t _vaccount(block->get_account());
+        uint64_t last_full_height = block->get_last_full_block_height();
+        std::string old_full_data_str;
+        if (last_full_height != 0) {
+            const std::string offdata_key = base::xvdbkey_t::create_block_offdata_key(_vaccount, block->get_last_full_block_hash());
+            old_full_data_str = get_value(offdata_key);
+            if (old_full_data_str.empty()) {
+                xerror("xstore::execute_tableblock_full get full data fail.block=%s", block->dump().c_str());
+                return false;
+            }
+        }
+
+        std::string binlog_str = account->get_extend_data(xblockchain2_t::enum_blockchain_ext_type_binlog);
+        if (binlog_str.empty()) {
+            xerror("xstore::execute_tableblock_full get binlog data fail.block=%s", block->dump().c_str());
             return false;
         }
+
+        xtablestate_ptr_t tablestate = make_object_ptr<xtablestate_t>(old_full_data_str, last_full_height, binlog_str, block->get_height() - 1);
+
+        // apply block on latest state to generate new state
+        if (!tablestate->execute_block(block)) {
+            xerror("xstore::execute_tableblock_full execute fail.block=%s", block->dump().c_str());
+            return false;
+        }
+        xdbg("xstore::execute_tableblock_full,%s,height=%ld,receiptid_full=%s", block->get_account().c_str(), block->get_height(), tablestate->get_receiptid_state()->get_last_full_state()->dump().c_str());
     }
 
-    std::string binlog_str = account->get_extend_data(xblockchain2_t::enum_blockchain_ext_type_binlog);
-    if (binlog_str.empty()) {
-        xerror("xstore::execute_tableblock_full get binlog data fail.block=%s", block->dump().c_str());
-        return false;
-    }
-
-    xtablestate_ptr_t tablestate = make_object_ptr<xtablestate_t>(old_full_data_str, last_full_height, binlog_str, block->get_height() - 1);
-    if (!tablestate->execute_block(block)) {
-        xerror("xstore::execute_tableblock_full execute fail.block=%s", block->dump().c_str());
-        return false;
-    }
+    // store new offdata and binlog
     set_vblock_offdata({}, block);
-    xdbg("xstore::execute,%s,height=%ld,receiptid_full=%s", block->get_account().c_str(), block->get_height(), tablestate->get_receiptid_state()->get_last_full_state()->dump().c_str());
-
     account->set_extend_data(xblockchain2_t::enum_blockchain_ext_type_binlog, std::string());  // clear binlo
 
     if (!account->add_full_table(block)) {
@@ -814,138 +714,81 @@ int32_t xstore::get_string_property(const std::string &address, uint64_t height,
     return xsuccess;
 }
 
-xdataobj_ptr_t xstore::get_property_object(const std::string & account, const std::string & prop_name, uint64_t height) {
-    xdataobj_ptr_t obj = nullptr;
-    xstore_key_t property_key(xstore_key_type_property, xstore_block_type_none, account, prop_name, std::to_string(height));
-    xinfo("xstore::get_property_object property name=%s", property_key.printable_key().c_str());
-    auto property = get_object(property_key);
-    obj.attach(property);
-    return obj;
+bool xstore::load_blocks_from_full_or_state(const xaccount_ptr_t & state, const xblock_ptr_t & latest_block, std::map<uint64_t, xblock_ptr_t> & blocks) {
+    if (state->get_last_height() == latest_block->get_height()) {
+        xassert(state->get_last_block_hash() == latest_block->get_block_hash() || latest_block->is_genesis_block());
+        return true;
+    }
+
+    base::xvaccount_t _vaddr(latest_block->get_account());
+    // load latest blocks and then apply to state
+    xblock_ptr_t current_block = latest_block;
+    blocks[current_block->get_height()] = current_block;
+    while (true) {
+        if ( current_block->is_genesis_block() || current_block->is_fullblock() ) {
+            break;
+        }
+        if (current_block->get_last_block_hash() == state->get_last_block_hash()) {
+            break;
+        }
+
+        auto _block = base::xvchain_t::instance().get_xblockstore()->load_block_object(_vaddr, current_block->get_height() - 1, current_block->get_last_block_hash(), true);
+        if (_block == nullptr) {
+            xwarn("xstore::load_blocks_from_full_or_state fail-load block.account=%s,height=%ld", latest_block->get_account().c_str(), current_block->get_height() - 1);
+            return false;
+        }
+        current_block = xblock_t::raw_vblock_to_object_ptr(_block.get());
+        blocks[current_block->get_height()] = current_block;
+    }
+    xdbg("xstore::load_blocks_from_full_or_state state_height=%ld,latest_block_height=%ld,blocks_size=%zu",
+        state->get_last_height(), latest_block->get_height(), blocks.size());
+    return true;
 }
 
 // system contract start with 0, user account start with 1
 int32_t xstore::get_property(const std::string &address, uint64_t height, const std::string &name, xdataobj_ptr_t &obj) {
-    xblock_t *             block = nullptr;
-    std::stack<xblock_t *> following_blocks;
+    xdbg("xstore::get_property_by_height enter.account=%s,key=%s,height=%ld", address.c_str(), name.c_str(), height);
+    base::xvaccount_t _vaddr(address);
+    base::xauto_ptr<base::xvblock_t> _block = base::xvchain_t::instance().get_xblockstore()->load_block_object(_vaddr, height, base::enum_xvblock_flag_committed, true);
+    if (_block == nullptr) {
+        xwarn("xstore::get_property_by_height load block fail.account=%s,key=%s,height=%ld", address.c_str(), name.c_str(), height);
+        return -1;
+    }
+    xblock_ptr_t latest_block = xblock_t::raw_vblock_to_object_ptr(_block.get());
 
-    uint64_t last_height = height;
-    while (true) {
-        block = get_block_by_height(address, last_height);
-        if (block == nullptr) {
-            xwarn("xstore::get_property account=%s missing block height=%" PRIu64 " prop name=%s", address.c_str(), last_height, name.c_str());
-            obj = nullptr;
-            while (!following_blocks.empty()) {
-                block = following_blocks.top();
-                xassert(block);
-                following_blocks.pop();
-                block->release_ref();
-            }
-            return xstore_check_block_not_exist;
+    xaccount_ptr_t current_state = query_account(address);
+    if (current_state->get_last_height() == height) {
+        if (current_state->get_last_block_hash() != latest_block->get_block_hash()) {
+            current_state = make_object_ptr<xblockchain2_t>(address);  // reset state to genesis
         }
-
-        if (block->is_fullunit()) {
-            break;
-        } else {
-            // block height 0 need also be included to restore the property
-            following_blocks.push(block);
-            if (block->is_genesis_block()) {
-                break;
-            }
-        }
-        --last_height;
+    } else if (current_state->get_last_height() > height) {
+        current_state = make_object_ptr<xblockchain2_t>(address);  // reset state to genesis
     }
 
-    xassert(block != nullptr);
-    base::xauto_ptr<xblockchain2_t> account = clone_account(address);
-    xassert(account != nullptr);
-    xaccount_cmd cmd(account.get(), this);
-
-    xdataobj_ptr_t prop_at_fullunit = nullptr;
-    bool found = false;
-    if (last_height != 0) {
-        xassert(block->is_fullunit());
-        auto full_block = dynamic_cast<xfullunit_block_t*>(block);
-        xassert(block->is_fullunit());
-        auto properties = full_block->get_fullunit_propertys();
-
-        if (properties != nullptr) {
-            auto it = properties->find(name);
-            if (it != properties->end()) {
-                found = true;
-                prop_at_fullunit = get_property_object(block->get_account(), name, full_block->get_height());
-            }
-        }
-
-        if (prop_at_fullunit == nullptr) {
-            xdbg("xstore::get_property block=%s has no property name=%s ", address.c_str(), name.c_str());
-            obj = nullptr;
-            full_block->release_ref();
-
-            while (!following_blocks.empty()) {
-                block = following_blocks.top();
-                xassert(block);
-                following_blocks.pop();
-                block->release_ref();
-            }
-            return xstore_check_property_log_not_include_in_unit;
-        } else {
-            full_block->release_ref();
-        }
-    } else {
-        xassert (block->is_genesis_block());
-        // can't release_ref here since genesis block is referred in the stack
+    std::map<uint64_t, xblock_ptr_t> blocks;
+    if (false == load_blocks_from_full_or_state(current_state, latest_block, blocks)) {
+        xwarn("xstore::get_property_by_height load block fail.account=%s,key=%s,height=%ld", address.c_str(), name.c_str(), height);
+        return -1;
     }
 
-    while (!following_blocks.empty()) {
-        block = following_blocks.top();
-        xassert(block);
-        following_blocks.pop();
-
-        if (block->get_property_hash(name).empty()) {
-            xdbg("xstore::get_property account=%s block height=%" PRIu64 " empty prop name=%s",
-                        address.c_str(), block->get_height(), name.c_str());
-            block->release_ref();
-            continue;
+    for (auto & v : blocks) {
+        auto & block = v.second;
+        if (false == current_state->apply_block(block.get())) {
+            xwarn("xstore::get_property_by_height fail apply block.account=%s,key=%s,state_height=%ld,block_height=%ld",
+                address.c_str(), name.c_str(), current_state->get_last_height(), height);
+            return -1;
         }
-
-        auto proplog = block->get_property_log();
-        if (proplog == nullptr) {
-            xdbg("xstore::get_property account=%s block height=%" PRIu64 " empty binlog for prop name=%s",
-                        address.c_str(), block->get_height(), name.c_str());
-            block->release_ref();
-            continue;
-        }
-
-        auto logs = proplog->get_instruction();
-        for (auto &prop_log : logs) {
-            if (prop_log.first == name) {
-                found = true;
-                xdbg("xstore::get_property account=%s block height=%" PRIu64 " do_property prop name=%s",
-                        address.c_str(), block->get_height(), name.c_str());
-                auto instructions = prop_log.second.get_logs();
-                for (auto &instruction : instructions) {
-                    xdbg("xstore::get_property account=%s block height=%" PRIu64 " instruction code;%d para1:%s para2:%s",
-                         address.c_str(), block->get_height(), instruction.m_op_code,
-                         instruction.m_op_para1.c_str(), to_hex_str(instruction.m_op_para2).c_str());
-                    auto restore_ret = cmd.restore_log_instruction(prop_at_fullunit, instruction);
-                    if (restore_ret) {
-                        xerror("xstore::get_property account=%s height:%" PRIu64 " do instruction fail, %s, err:%s",
-                               address.c_str(), block->get_height(), prop_log.first.c_str(), xstore_error_to_string(restore_ret).c_str());
-                        obj = nullptr;
-                        block->release_ref();
-                        return restore_ret;
-                    }
-                }
-            }
-        }
-        block->release_ref();
     }
-    obj = prop_at_fullunit;
-    if (found) {
-        return xsuccess;
-    } else {
+
+    obj = current_state->find_property(name);
+    if (obj == nullptr) {
+        xwarn("xstore::get_property_by_height fail apply block.account=%s,key=%s,tate_height=%ld,block_height=%ld",
+            address.c_str(), name.c_str(), current_state->get_last_height(), height);
         return xaccount_property_not_exist;
     }
+    xdbg("xstore::get_property_by_height succ.account=%s,key=%s,tate_height=%ld,block_height=%ld,blocks_size=%zu",
+        address.c_str(), name.c_str(), current_state->get_last_height(), height, blocks.size());
+    return xsuccess;
 }
 
 bool xstore::set_object(const xstore_key_t &key, const std::string &value, const std::string &detail_info) {
@@ -1161,11 +1004,11 @@ bool xstore::get_vblock_offdata(const std::string & store_path,base::xvblock_t* 
 
 bool xstore::set_vblock_offdata(const std::string & store_path,base::xvblock_t* for_block) {
     xassert(for_block->get_offdata() != nullptr);
-    xstore_key_t offdata_key = xstore_key_t(xstore_key_type_block_offstate, xstore_block_type_none, for_block->get_account(), std::to_string(for_block->get_height()));
+    const std::string offdata_key = base::xvdbkey_t::create_block_offdata_key(base::xvaccount_t(for_block->get_account()), for_block->get_block_hash());
     std::string offdata_str;
     for_block->get_offdata()->serialize_to_string(offdata_str);
     xassert(!offdata_str.empty());
-    return set_value(offdata_key.to_db_key(), offdata_str);
+    return set_value(offdata_key, offdata_str);
 }
 
 bool xstore::get_vblock_offstate(const std::string &store_path, base::xvblock_t* block) const {
@@ -1245,10 +1088,10 @@ bool  xstore::execute_block(base::xvblock_t* vblock) {
     }
 
     XMETRICS_TIME_RECORD_KEY_WITH_TIMEOUT("store_block_execution_time", vblock->get_account() + ":" + std::to_string(vblock->get_height()), uint32_t(2000000));
-    if (!block->check_block_flag(base::enum_xvblock_flag_connected)) {
-        xwarn("xstore::execute_block not connected block=%s", block->dump().c_str());
-        return false;
-    }
+    // if (!block->check_block_flag(base::enum_xvblock_flag_connected)) {
+    //     xwarn("xstore::execute_block not connected block=%s", block->dump().c_str());
+    //     return false;
+    // }
 
     xassert(block->check_block_flag(base::enum_xvblock_flag_committed));
     xassert(block->check_block_flag(base::enum_xvblock_flag_locked));
@@ -1271,41 +1114,23 @@ bool  xstore::execute_block(base::xvblock_t* vblock) {
 
     std::map<std::string, std::string> kv_pairs;
     bool execute_ret = true;
+
     // first execute block, then update blockchain
-    if (block->get_block_class() == base::enum_xvblock_class_full) {
-        if (block->get_block_level() == base::enum_xvblock_level_unit) {
-            execute_ret = execute_fullunit(account, block, kv_pairs);
-        } else if (block->get_block_level() == base::enum_xvblock_level_table) {
-            execute_ret = execute_tableblock_full(account, dynamic_cast<xfull_tableblock_t*>(block), kv_pairs);
-        } else {
-            xassert(0);  // not support othe full block now
-            return false;
-        }
-    } else {
-        if (block->get_height() != 0 && block->get_height() > account->get_last_height() + 1) {
-            xerror("xstore::execute_block fail-for non-full block=%s should not larger than last execute height. last_height:%ld",
-                block->dump().c_str(), account->get_last_height());
-            return false;
-        }
-
-        if (block->is_lightunit()) {
-            execute_ret = execute_lightunit(account, block, kv_pairs);
-        }
-        if (block->is_lighttable()) {
-            execute_ret = execute_tableblock_light(account, block);
-        }
+    if (block->is_fulltable()) {
+        execute_ret = execute_tableblock_full(account, dynamic_cast<xfull_tableblock_t*>(block), kv_pairs);
+    } else if (block->is_lighttable()) {
+        execute_ret = execute_tableblock_light(account, block);
     }
-
     if (!execute_ret) {
-        xerror("xstore::execute_block fail-for execute blockchain. block=%s, level:%d class:%d",
+        xerror("xstore::execute_block fail-for execute table. block=%s, level:%d class:%d",
             block->dump().c_str(), block->get_block_level(), block->get_block_class());
         return false;
     }
 
-    bool bret;
-    bret = update_blockchain_by_block(account, block, base::xtime_utl::gettimeofday());
-    if (!bret) {
-        xerror("xstore::execute_block fail-for update blockchain=%s", block->dump().c_str());
+    execute_ret = account->apply_block(block);
+    if (!execute_ret) {
+        xerror("xstore::execute_block fail-account apply block, block=%s",
+            block->dump().c_str());
         return false;
     }
 

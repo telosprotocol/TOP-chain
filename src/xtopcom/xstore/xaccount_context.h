@@ -16,7 +16,7 @@
 #include "xdata/xnative_property.h"
 #include "xdata/xproperty.h"
 #include "xdata/xlightunit.h"
-#include "xstore/xaccount_cmd.h"
+#include "xdata/xaccount_cmd.h"
 #include "xstore/xstore.h"
 
 namespace top { namespace store {
@@ -46,15 +46,12 @@ class xaccount_context_t {
 
     // property APIs
     int32_t create_user_account(const std::string& address);
-    int32_t account_alias_name_set(const std::string& name);
     int32_t token_transfer_out(const data::xproperty_asset& asset, uint64_t gas_fee = 0, uint64_t service_fee = 0);
     int32_t other_token_transfer_out(const data::xproperty_asset& asset, uint64_t gas_fee = 0, uint64_t service_fee = 0);
     int32_t top_token_transfer_out(uint64_t amount, uint64_t gas_fee = 0, uint64_t service_fee = 0);
     int32_t token_transfer_in(const data::xproperty_asset& asset);
     int32_t other_token_transfer_in(const data::xproperty_asset& asset);
     int32_t top_token_transfer_in(uint64_t amount);
-
-    int32_t account_set_keys(const std::string &key, const std::string &value);
 
     // check legal in transaction parse check, here, check balance and execute
     int32_t lock_token(const uint256_t &tran_hash, uint64_t amount, const std::string &tran_params);
@@ -83,12 +80,6 @@ class xaccount_context_t {
     uint64_t get_last_tx_hour();
     int32_t  set_last_tx_hour(uint64_t);
 
-    uint64_t get_pledge_token_disk();
-    int32_t  set_pledge_token_disk(uint64_t);
-    int32_t  redeem_pledge_token_disk(uint64_t);
-
-    uint64_t get_used_disk();
-    int32_t  set_used_disk(uint64_t);
     int32_t  update_disk(uint64_t);
 
     uint64_t get_tgas_limit();
@@ -100,17 +91,11 @@ class xaccount_context_t {
     int64_t get_tgas_balance_change() {return m_pledge_balance_change.tgas;}
     void    set_tgas_balance_change(int64_t tgas_balance_change) {m_pledge_balance_change.tgas += tgas_balance_change;}
 
-    int64_t get_disk_balance_change() {return m_pledge_balance_change.disk;}
-    void    set_disk_balance_change(int64_t disk_balance_change) {m_pledge_balance_change.disk += disk_balance_change;}
-
     int64_t get_vote_balance_change() {return m_pledge_balance_change.vote;}
     void    set_vote_balance_change(int64_t vote_balance_change) {m_pledge_balance_change.vote += vote_balance_change;}
 
     int64_t get_lock_balance_change() {return m_lock_balance_change;}
     void    set_lock_balance_change(int64_t change) {m_lock_balance_change += change;}
-
-    //int64_t get_lock_balance_change() {return m_lock_balance_change;}
-    //void    set_lock_balance_change(int64_t change) {m_lock_balance_change += change;}
 
     int64_t get_lock_tgas_change() {return m_lock_tgas_change;}
     void    set_lock_tgas_change(int64_t lock_tgas_change) {m_lock_tgas_change += lock_tgas_change;}
@@ -125,7 +110,6 @@ class xaccount_context_t {
 
     void deserilize_vote(const std::string& str, uint64_t& vote_num, uint16_t& duration, uint64_t& lock_time);
     std::string serilize_vote(uint64_t vote_num, uint16_t duration, uint64_t lock_time);
-    data::xproperty_asset get_source_transfer_in();
 
     int32_t do_prop_set(xproperty_op_code_t cmd, const std::string & key);
     int32_t do_prop_set(xproperty_op_code_t cmd, const std::string & key, const std::string & op_para1);
@@ -174,16 +158,10 @@ class xaccount_context_t {
     int32_t create_transfer_tx(const std::string & receiver, uint64_t amount);
     int32_t generate_tx(const std::string& target_addr, const std::string& func_name, const std::string& func_param);
     int32_t check_create_property(const std::string& key);
-    int32_t set_parent_account(const uint64_t amount, const std::string& value);
-    int32_t set_sub_account(const std::string& value);
-    int32_t sub_account_check(const std::string& value);
-    int32_t remove_sub_account(const std::string& value);
-    int32_t remove_contract_sub_account(const std::string& value);
 
     int32_t set_contract_sub_account(const std::string& value);
     int32_t set_contract_parent_account(const uint64_t amount, const std::string& value);
     int32_t sub_contract_sub_account_check(const std::string& value);
-    int32_t exist_sub_or_contract_account();
 
     int32_t get_parent_account(std::string &value);
 

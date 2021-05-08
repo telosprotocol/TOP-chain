@@ -46,23 +46,6 @@ std::error_category const & basic_category() {
     return category;
 }
 
-xtop_basic_error::xtop_basic_error(xbasic_errc_t errc) : xtop_basic_error{make_error_code(errc)} {
-}
-
-xtop_basic_error::xtop_basic_error(xbasic_errc_t errc, std::string extra_msg) : xtop_basic_error{make_error_code(errc), std::move(extra_msg)} {
-}
-
-xtop_basic_error::xtop_basic_error(std::error_code ec) : std::runtime_error{ec.message()}, m_ec{std::move(ec)} {
-}
-
-xtop_basic_error::xtop_basic_error(std::error_code ec, std::string extra_msg)
-  : std::runtime_error{extra_msg += ":" + ec.message()}, m_ec{std::move(ec)} {
-}
-
-std::error_code const & xtop_basic_error::code() const noexcept {
-    return m_ec;
-}
-
 NS_END2
 
 NS_BEG1(std)

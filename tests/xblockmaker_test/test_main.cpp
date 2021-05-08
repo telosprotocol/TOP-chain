@@ -46,7 +46,7 @@ int main(int argc, char **argv) {
 
     testing::InitGoogleTest(&argc, argv);
 
-    xinit_log("./xtxexecutor_test.log", true, true);
+    xinit_log("./xblockmaker_test.log", true, true);
     xset_log_level(enum_xlog_level_debug);
     xdbg("------------------------------------------------------------------");
     xinfo("new log start here");

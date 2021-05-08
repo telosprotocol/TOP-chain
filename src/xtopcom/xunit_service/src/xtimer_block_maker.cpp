@@ -19,6 +19,10 @@ base::xauto_ptr<base::xvblock_t> xtimer_block_maker_t::get_latest_block(const st
 
 base::xvblock_t *xtimer_block_maker_t::make_block(const std::string &account, uint64_t clock, uint64_t viewid, uint16_t threshold, const xvip2_t &leader_xip) {
     auto                           prev_block = get_latest_block(account);
+    if (clock < prev_block->get_clock()) {
+        xwarn("xtimer_block_maker_t::make_block fail-clock cur=%ull,prev=%ull", clock, prev_block->get_clock());
+        return nullptr;
+    }
     base::xvblock_t *              block = data::xemptyblock_t::create_next_emptyblock(prev_block.get(), base::enum_xvblock_type_clock);
     block->get_cert()->set_clock(clock);
     block->get_cert()->set_viewid(viewid);

@@ -7,7 +7,6 @@
 #include <vector>
 // #include "xvm_define.h"
 #include "xcontract_runtime/xerror/xerror.h"
-#include "xcontract_runtime/xcontract_helper.h"
 #include "xcontract_common/xcontract_state.h"
 #include "xcontract_common/xproperties/xproperty_identifier.h"
 #include "xcommon/xaddress.h"
@@ -19,10 +18,8 @@ extern "C"
     #include <lualib.h>
     #include <lauxlib.h>
 }
-using top::contract_runtime::xcontract_helper;
-using top::contract_runtime::error::xcontract_runtime_error_t;
+
 using top::contract_runtime::error::xerrc_t;
-using top::data::xaction_asset_out;
 using std::string;
 using std::vector;
 
@@ -53,10 +50,10 @@ static int L_grant(lua_State *L)
     if (lua_isstring(L, 1) && lua_isnumber(L, 2)) {
         string grant_account = luaL_checkstring(L, 1);
         uint64_t amount = luaL_checknumber(L, 2);
-        xcontract_helper* contract_helper = reinterpret_cast<xcontract_helper*>(lua_getuserdata(L));
-        contract_helper->create_transfer_tx(grant_account, amount);
+        // xcontract_helper* contract_helper = reinterpret_cast<xcontract_helper*>(lua_getuserdata(L));
+        // contract_helper->create_transfer_tx(grant_account, amount);
     } else {
-        throw xcontract_runtime_error_t{xerrc_t::enum_vm_exception, "set_key error, key value is not string"};
+        // throw xcontract_runtime_error_t{xerrc_t::enum_vm_exception, "set_key error, key value is not string"};
     }
     lua_pushnil(L);
     return 0;
@@ -64,19 +61,19 @@ static int L_grant(lua_State *L)
 static int L_get_balance(lua_State *L)
 {
     lua_addinstructioncount(L, DB_OP_INSTRUCTION_COUNT);
-    xcontract_helper* contract_helper = reinterpret_cast<xcontract_helper*>(lua_getuserdata(L));
-    uint64_t balance = contract_helper->get_balance();
-    lua_pushnumber(L, balance);
+    // xcontract_helper* contract_helper = reinterpret_cast<xcontract_helper*>(lua_getuserdata(L));
+    // uint64_t balance = contract_helper->get_balance();
+    // lua_pushnumber(L, balance);
     return 1;
 }
 
 static int L_get_pay_fee(lua_State *L)
 {
     lua_addinstructioncount(L, DB_OP_INSTRUCTION_COUNT);
-    xcontract_helper* contract_helper = reinterpret_cast<xcontract_helper*>(lua_getuserdata(L));
-    const xaction_asset_out& pay_info = contract_helper->get_pay_fee();
-    lua_pushstring(L, pay_info.m_asset_out.m_token_name.c_str());
-    lua_pushnumber(L, pay_info.m_asset_out.m_amount);
+    // xcontract_helper* contract_helper = reinterpret_cast<xcontract_helper*>(lua_getuserdata(L));
+    // const xaction_asset_out& pay_info = contract_helper->get_pay_fee();
+    // lua_pushstring(L, pay_info.m_asset_out.m_token_name.c_str());
+    // lua_pushnumber(L, pay_info.m_asset_out.m_amount);
     return 3;
 }
 
@@ -90,9 +87,9 @@ static int L_exec_account(lua_State *L)
 static int L_random_seed(lua_State *L)
 {
     lua_addinstructioncount(L, DB_OP_INSTRUCTION_COUNT);
-    xcontract_helper* contract_helper = reinterpret_cast<xcontract_helper*>(lua_getuserdata(L));
-    auto random_seed = contract_helper->get_random_seed();
-    lua_pushnumber(L, top::utl::xxh64_t::digest(random_seed.c_str(), random_seed.size()));
+    // xcontract_helper* contract_helper = reinterpret_cast<xcontract_helper*>(lua_getuserdata(L));
+    // auto random_seed = contract_helper->get_random_seed();
+    // lua_pushnumber(L, top::utl::xxh64_t::digest(random_seed.c_str(), random_seed.size()));
     return 1;
 }
 
@@ -108,7 +105,7 @@ static int L_map_prop_create(lua_State* L) {
         // account_state->api_handler()->MAP_PROP_CREATE<std::string, std::string>(prop_name);
 
     } else {
-        throw xcontract_runtime_error_t{xerrc_t::enum_vm_exception, "L_map_prop_create params error"};
+        // throw xcontract_runtime_error_t{xerrc_t::enum_vm_exception, "L_map_prop_create params error"};
     }
 
     return 0;
@@ -127,7 +124,7 @@ static int L_map_prop_exist(lua_State* L) {
         //     lua_pushboolean(L, 0);
         // }
     } else {
-        throw xcontract_runtime_error_t{xerrc_t::enum_vm_exception, "L_map_prop_exist params error"};
+        // throw xcontract_runtime_error_t{xerrc_t::enum_vm_exception, "L_map_prop_exist params error"};
     }
 
     return 1;
@@ -145,7 +142,7 @@ static int L_map_prop_add(lua_State* L) {
         // account_state->api_handler()->MAP_PROP_ADD<std::string, std::string>(prop_name, key, value);
 
     } else {
-        throw xcontract_runtime_error_t{xerrc_t::enum_vm_exception, "L_map_prop_add params error"};
+        // throw xcontract_runtime_error_t{xerrc_t::enum_vm_exception, "L_map_prop_add params error"};
     }
 
     return 0;
@@ -162,7 +159,7 @@ static int L_map_prop_update(lua_State* L) {
         // account_state->api_handler()->MAP_PROP_UPDATE<std::string, std::string>(prop_name, key, value);
 
     } else {
-        throw xcontract_runtime_error_t{xerrc_t::enum_vm_exception, "L_map_prop_update params error"};
+        // throw xcontract_runtime_error_t{xerrc_t::enum_vm_exception, "L_map_prop_update params error"};
     }
 
     return 0;
@@ -179,7 +176,7 @@ static int L_map_prop_erase(lua_State* L) {
         // account_state->api_handler()->MAP_PROP_ERASE<std::string, std::string>(prop_name, key);
 
     } else {
-        throw xcontract_runtime_error_t{xerrc_t::enum_vm_exception, "L_map_prop_erase params error"};
+        // throw xcontract_runtime_error_t{xerrc_t::enum_vm_exception, "L_map_prop_erase params error"};
     }
 
     return 0;
@@ -195,7 +192,7 @@ static int L_map_prop_clear(lua_State* L) {
         // account_state->api_handler()->MAP_PROP_CLEAR<std::string, std::string>(prop_name);
 
     } else {
-        throw xcontract_runtime_error_t{xerrc_t::enum_vm_exception, "L_map_prop_clear params error"};
+        // throw xcontract_runtime_error_t{xerrc_t::enum_vm_exception, "L_map_prop_clear params error"};
     }
 
     return 0;
@@ -214,7 +211,7 @@ static int L_map_prop_query(lua_State* L) {
 
         lua_pushstring(L, res.c_str());
     } else {
-        throw xcontract_runtime_error_t{xerrc_t::enum_vm_exception, "L_map_prop_query params error"};
+        // throw xcontract_runtime_error_t{xerrc_t::enum_vm_exception, "L_map_prop_query params error"};
     }
 
     return 1;
@@ -229,7 +226,7 @@ static int L_str_prop_create(lua_State* L) {
         // top::contract::xaccount_state_t* account_state = reinterpret_cast<top::contract::xaccount_state_t*>(lua_getuserdata(L));
         // account_state->api_handler()->STR_PROP_CREATE(prop_name);
     } else {
-        throw xcontract_runtime_error_t{xerrc_t::enum_vm_exception, "L_str_prop_create params error"};
+        // throw xcontract_runtime_error_t{xerrc_t::enum_vm_exception, "L_str_prop_create params error"};
     }
 
     return 0;
@@ -247,7 +244,7 @@ static int L_str_prop_exist(lua_State* L) {
         //     lua_pushboolean(L, 0);
         // }
     } else {
-        throw xcontract_runtime_error_t{xerrc_t::enum_vm_exception, "L_str_prop_exist params error"};
+        // throw xcontract_runtime_error_t{xerrc_t::enum_vm_exception, "L_str_prop_exist params error"};
     }
 
     return 1;
@@ -263,7 +260,7 @@ static int L_str_prop_update(lua_State* L) {
         // account_state->api_handler()->STR_PROP_UPDATE(prop_name, value);
 
     } else {
-        throw xcontract_runtime_error_t{xerrc_t::enum_vm_exception, "L_str_prop_update params error"};
+        // throw xcontract_runtime_error_t{xerrc_t::enum_vm_exception, "L_str_prop_update params error"};
     }
 
     return 0;
@@ -278,7 +275,7 @@ static int L_str_prop_clear(lua_State* L) {
         // account_state->api_handler()->STR_PROP_CLEAR(prop_name);
 
     } else {
-        throw xcontract_runtime_error_t{xerrc_t::enum_vm_exception, "L_str_prop_clear params error"};
+        // throw xcontract_runtime_error_t{xerrc_t::enum_vm_exception, "L_str_prop_clear params error"};
     }
 
     return 0;
@@ -295,7 +292,7 @@ static int L_str_prop_query(lua_State* L) {
         // lua_pushstring(L, res.c_str());
 
     } else {
-        throw xcontract_runtime_error_t{xerrc_t::enum_vm_exception, "L_str_prop_query params error"};
+        // throw xcontract_runtime_error_t{xerrc_t::enum_vm_exception, "L_str_prop_query params error"};
     }
 
     return 1;
