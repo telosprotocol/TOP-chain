@@ -183,7 +183,7 @@ namespace top
             xproposal_t * _local_block = find_proposal(packet.get_block_viewid());
             if(NULL != _local_block)
             {
-                if(_local_block->is_valid_packet(packet))
+                if(_local_block->is_valid_packet(packet) == false)
                 {
                     xwarn("xBFTdriver_t::handle_proposal_msg,fail-unmatched packet=%s vs local(%s),at node=0x%llx",packet.dump().c_str(),_local_block->dump().c_str(),get_xip2_low_addr());
                     return enum_xconsensus_error_bad_packet;

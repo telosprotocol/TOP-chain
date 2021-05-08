@@ -107,6 +107,11 @@ namespace top
     
         void   xcsclock_fire::reset_latest_block(base::xvblock_t* highest_block)
         {
+            if(_latest_block != NULL)
+            {
+                _latest_block->release_ref();
+                _latest_block = NULL;
+            }
             if(highest_block != NULL)
             {
                 highest_block->add_ref();
