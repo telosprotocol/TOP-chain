@@ -1635,6 +1635,10 @@ void get_block_handle::set_body_info(xJson::Value & body, xblock_t * bp) {
         set_table_info(j_tb, bp);
         body["tableblock"] = j_tb;
 
+        if (bp->is_fulltable()) {
+            body["statistics"] = dynamic_cast<data::xfull_tableblock_t *>(bp)->get_table_statistics().to_json_object<xJson::Value>();
+        }
+
         break;
     }
 
