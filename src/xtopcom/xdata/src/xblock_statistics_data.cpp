@@ -10,6 +10,11 @@ namespace top {
 namespace data {
 
 /// xblock_data_t
+
+std::string xtop_block_data::to_json_string() const {
+    return to_json_object<xJson::Value>().asString();
+}
+
 int32_t xtop_block_data::do_read(base::xstream_t & stream) {
     auto const size = stream.size();
     stream >> transaction_count;
@@ -33,6 +38,10 @@ int32_t operator<<(base::xstream_t & stream, xblock_data_t const & data_object) 
 }
 
 /// xconsensus_vote_data_t
+std::string xtop_consensus_vote_data::to_json_string() const {
+    return to_json_object<xJson::Value>().asString();
+}
+
 int32_t xtop_consensus_vote_data::do_read(base::xstream_t & stream) {
     auto const size = stream.size();
     stream >> block_count;
@@ -56,6 +65,10 @@ int32_t operator<<(base::xstream_t & stream, xconsensus_vote_data_t const & data
 }
 
 /// xaccount_related_statistics_data_t
+std::string xtop_account_related_statistics_data::to_json_string() const {
+    return to_json_object<xJson::Value>().asString();
+}
+
 int32_t xtop_account_related_statistics_data::do_read(base::xstream_t & stream) {
     auto const size = stream.size();
     stream >> block_data;
@@ -87,6 +100,10 @@ int32_t operator<<(base::xbuffer_t & stream, xaccount_related_statistics_data_t 
 }
 
 /// xgroup_related_statistics_data_t
+std::string xtop_group_releated_statistics_data::to_json_string() const {
+    return to_json_object<xJson::Value>().asString();
+}
+
 int32_t xtop_group_releated_statistics_data::do_read(base::xstream_t & stream) {
     auto const size = stream.size();
     stream >> account_statistics_data;
@@ -116,6 +133,10 @@ int32_t operator<<(base::xbuffer_t & buffer, xgroup_related_statistics_data_t co
 }
 
 /// xelection_related_statistics_data_t
+std::string xtop_election_related_statistics_data::to_json_string() const {
+    return to_json_object<xJson::Value>().asString();
+}
+
 int32_t xtop_election_related_statistics_data::do_read(base::xstream_t & stream) {
     auto const size = stream.size();
     stream >> group_statistics_data;
@@ -145,6 +166,10 @@ int32_t operator<<(base::xbuffer_t & buffer, xelection_related_statistics_data_t
 }
 
 /// xstatistics_data_t
+std::string xtop_statistics_data::to_json_string() const {
+    return to_json_object<xJson::Value>().asString();
+}
+
 int32_t xtop_statistics_data::do_read(base::xstream_t & stream) {
     auto const size = stream.size();
     stream >> detail;
@@ -155,21 +180,6 @@ int32_t xtop_statistics_data::do_write(base::xstream_t & stream) const {
     auto const size = stream.size();
     stream << detail;
     return stream.size() - size;
-}
-
-int32_t xtop_statistics_data::serialize_to_string(std::string & bin_data) const {
-    base::xstream_t stream(base::xcontext_t::instance());
-    int32_t ret = serialize_to(stream);
-    bin_data = std::string((const char *)stream.data(), stream.size());
-    return ret;
-}
-int32_t xtop_statistics_data::serialize_from_string(const std::string & bin_data) {
-    base::xstream_t _stream(base::xcontext_t::instance(), (uint8_t *)bin_data.data(), (int32_t)bin_data.size());
-    int32_t ret = serialize_from(_stream);
-    if (ret <= 0) {
-        xerror("xtop_statistics_data::serialize_from_string fail. ret=%d,bin_data_size=%d", ret, bin_data.size());
-    }
-    return ret;
 }
 
 int32_t operator>>(base::xstream_t & stream, xstatistics_data_t & data_object) {

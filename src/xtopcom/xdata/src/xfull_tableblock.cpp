@@ -5,6 +5,7 @@
 #include <string>
 #include "xbase/xutl.h"
 // TODO(jimmy) #include "xbase/xvledger.h"
+#include "xbasic/xutility.h"
 #include "xdata/xfull_tableblock.h"
 #include "xdata/xrootblock.h"
 
@@ -63,9 +64,8 @@ xblockbody_para_t xfull_tableblock_t::get_blockbody_from_para(const xfulltable_b
     // blockbody.add_input_resource(RESOURCE_RECEIPTID_PAIRS_BINLOG, receiptid_binlog_str);
 
     const xstatistics_data_t & statistics_data = para.get_block_statistics_data();
-    std::string statistics_data_str;
-    statistics_data.serialize_to_string(statistics_data_str);
-    blockbody.add_output_resource(RESOURCE_NODE_SIGN_STATISTICS, statistics_data_str);
+    auto const & serialized_data = statistics_data.serialize_based_on<base::xstream_t>();
+    blockbody.add_output_resource(RESOURCE_NODE_SIGN_STATISTICS, {std::begin(serialized_data), std::end(serialized_data) });
 
     latest_state->merge_new_full();
     std::string offdata_root = latest_state->build_root_hash();
@@ -140,7 +140,7 @@ xstatistics_data_t xfull_tableblock_t::get_table_statistics() const {
     std::string resource_str = get_output()->query_resource(RESOURCE_NODE_SIGN_STATISTICS);
     xassert(!resource_str.empty());
     xstatistics_data_t statistics_data;
-    statistics_data.serialize_from_string(resource_str);
+    statistics_data.deserialize_based_on<base::xstream_t>({ std::begin(resource_str), std::end(resource_str) });
     return statistics_data;
 }
 
