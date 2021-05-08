@@ -1344,6 +1344,53 @@ namespace top
             auto height_map_pos  = m_all_blocks.emplace(this_block_height,std::map<uint64_t,base::xvbindex_t*>());
             auto & view_map     = height_map_pos.first->second;//hight_map_pos.first->first is height, and hight_map_pos.first->second is viewmap
 
+            if(this_block->check_block_flag(base::enum_xvblock_flag_committed))   //commit block
+            {
+                xassert(this_block->check_block_flag(base::enum_xvblock_flag_locked)); //must be true
+                for(auto it = view_map.begin(); it != view_map.end();)
+                {
+                    auto old_it = it;
+                    ++it;
+                    
+                    //apply rule#1: clean any cert,lock blocs since a commit block occupy this slot
+                    if(false == old_it->second->check_block_flag(base::enum_xvblock_flag_committed))
+                    {
+                        xinfo("xblockacct_t::cache_index,new-commit one clean existing block=%s",old_it->second->dump().c_str());
+                        
+                        //XTODO fire event first
+                        //push_event(enum_blockstore_event_revoke, old_it->second);
+                        
+                        //then clean from map
+                        old_it->second->close();
+                        old_it->second->release_ref();//old_it->second might be same as this_block
+                        view_map.erase(old_it);
+                    }
+                }
+            }
+            else if(this_block->check_block_flag(base::enum_xvblock_flag_locked)) //lock-only block
+            {
+                #ifdef __NOT_ALLOW_FORK_AT_LOCK_BLOCK__
+                for(auto it = view_map.begin(); it != view_map.end();)
+                {
+                    auto old_it = it;
+                    ++it;
+                    
+                    //clean any cert-only block
+                    if( (old_it->second->get_block_flags() & (base::enum_xvblock_flag_committed | base::enum_xvblock_flag_locked)) == 0)
+                    {
+                        xinfo("xblockacct_t::cache_index,new-lock one clean existing block=%s",old_it->second->dump().c_str());
+                        //XTODO fire event first
+                        //push_event(enum_blockstore_event_revoke, old_it->second);
+                        
+                        //then close it
+                        old_it->second->close();
+                        old_it->second->release_ref();
+                        view_map.erase(old_it);
+                    }
+                }
+                #endif // __NOT_ALLOW_FORK_AT_LOCK_BLOCK__
+            }
+            
             auto existing_view_iterator = view_map.find(this_block->get_viewid());
             if(existing_view_iterator != view_map.end())//apple rule#2 by reuse existing iterator and replace by new value
             {

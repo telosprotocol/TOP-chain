@@ -124,6 +124,13 @@ namespace top
             {
                 base::xauto_ptr<xcsobject_t> ptr_engine_obj(create_engine_object());
             }
+            
+            base::xauto_ptr<base::xvblock_t>  highest_block(get_vblockstore()->get_latest_cert_block(*this));
+            if(highest_block)
+            {
+                xcsclock_fire * _clock_event = (xcsclock_fire*)&event;
+                _clock_event->reset_latest_block(highest_block()); //carry latest cert block from blockstore ,so that it may sync to xbft
+            }
             return false; //contiuse let event go down
         }
 

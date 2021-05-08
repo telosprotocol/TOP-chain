@@ -120,7 +120,7 @@ namespace top
 
                 _event_obj->_packet.reset_message(xsync_request_t::get_msg_type(), get_default_msg_ttl(),msg_stream,0,from_addr.low_addr,to_addr.low_addr);
 
-                xdbg("xBFTSyncdrv::send_sync_request,send request for block={height=%llu with proof of height=%llu,viewid=%llu,viewtoken=%u to node=0x%llx,at node=0x%llx",target_block_height,proof_block_height,proof_block_viewid,proof_block_viewtoken,to_addr.low_addr,from_addr.low_addr);
+                xinfo("xBFTSyncdrv::send_sync_request,send request for target block={height=%llu} with proof of height=%llu,viewid=%llu,viewtoken=%u to node=0x%llx,at node=0x%llx",target_block_height,proof_block_height,proof_block_viewid,proof_block_viewtoken,to_addr.low_addr,from_addr.low_addr);
                 get_parent_node()->push_event_up(*_event_obj, this, get_thread_id(), get_time_now());
 
                 return true;
@@ -168,7 +168,7 @@ namespace top
                 }
                 else if( (get_lock_block()->get_height() - packet.get_block_height()) < 128 )//search from blockstore at nearby locked block
                 {
-                    base::xauto_ptr<base::xvblock_t> proof_block = get_vblockstore()->load_block_object(*this, packet.get_block_height(),0,false);
+                    base::xauto_ptr<base::xvblock_t> proof_block = get_vblockstore()->load_block_object(*this, packet.get_block_height(),packet.get_block_viewid(),false);//packet carry proof 'info
                     if(proof_block != nullptr)
                     {
                         if(  (proof_block->get_viewid()    == packet.get_block_viewid())
@@ -205,7 +205,7 @@ namespace top
                 }
                 if(NULL == _local_block) //search from blockstore
                 {
-                    base::xauto_ptr<base::xvblock_t> target_block = get_vblockstore()->query_block(*this, target_block_height, target_block_hash);
+                    base::xauto_ptr<base::xvblock_t> target_block = get_vblockstore()->load_block_object(*this, target_block_height, target_block_hash,true);
                     if(target_block == nullptr)
                     {
                         xwarn("xBFTSyncdrv::handle_sync_request_msg,fail-found target cert of height:%llu,at node=0x%llx",target_block_height,get_xip2_low_addr());
@@ -228,7 +228,7 @@ namespace top
             else if( (get_lock_block()->get_height() - target_block_height) < 128 )//search from blockstore at nearby locked block
             {
                 bool full_load = (sync_targets & enum_xsync_target_block_input) | (sync_targets & enum_xsync_target_block_output);
-                base::xauto_ptr<base::xvblock_t> target_block = get_vblockstore()->load_block_object(*this, target_block_height,0,full_load);
+                base::xauto_ptr<base::xvblock_t> target_block = get_vblockstore()->load_block_object(*this, target_block_height,target_block_hash,full_load);//specific load target block
                 if(target_block == nullptr)
                 {
                     xwarn("xBFTSyncdrv::handle_sync_request_msg,fail-found target block of height:%llu,at node=0x%llx",target_block_height,get_xip2_low_addr());
@@ -271,12 +271,12 @@ namespace top
                 std::string msg_stream;
                 respond_msg.serialize_to_string(msg_stream);
 
-                xdbg("xBFTSyncdrv::handle_sync_request_msg,deliver a block for packet=%s,cert-block=%s,at node=0x%llx",packet.dump().c_str(),_local_block->dump().c_str(),get_xip2_low_addr());
+                xinfo("xBFTSyncdrv::handle_sync_request_msg,deliver a block for packet=%s,cert-block=%s,at node=0x%llx",packet.dump().c_str(),_local_block->dump().c_str(),get_xip2_low_addr());
                 fire_pdu_event_up(xsync_respond_t::get_msg_type(), msg_stream, packet.get_msg_nonce() + 1, to_addr, from_addr, _local_block);
             }
             else
             {
-                xinfo("xBFTSyncdrv::handle_sync_request_msg,local cert block has been removed for packet=%s,at node=0x%llx",packet.dump().c_str(),get_xip2_low_addr());
+                xwarn("xBFTSyncdrv::handle_sync_request_msg,local cert block has been removed for packet=%s,at node=0x%llx",packet.dump().c_str(),get_xip2_low_addr());
             }
             return enum_xconsensus_code_successful;
         }
@@ -306,7 +306,7 @@ namespace top
                         xwarn("xBFTSyncdrv::handle_sync_respond_msg,fail-unmatched packet=%s vs local certified block=%s,at node=0x%llx",packet.dump().c_str(),_local_cert_block->dump().c_str(),get_xip2_low_addr());
                         return enum_xconsensus_error_bad_packet;
                     }
-                    xdbg("xBFTdriver_t::handle_sync_respond_msg,target block has finished and deliver to certified _local_cert_block=%s, at node=0x%llx",_local_cert_block->dump().c_str(),get_xip2_low_addr());
+                    xinfo("xBFTdriver_t::handle_sync_respond_msg,target block has finished and deliver to certified _local_cert_block=%s, at node=0x%llx",_local_cert_block->dump().c_str(),get_xip2_low_addr());
                     return enum_xconsensus_code_successful;//local proposal block has verified and ready,so it is duplicated commit msg
                 }
             }
@@ -336,7 +336,10 @@ namespace top
             if(sync_request_it == m_syncing_requests.end())
             {
                 xinfo("xBFTSyncdrv::handle_sync_respond_msg,warn-NOT find request for packet=%s,at node=0x%llx",packet.dump().c_str(),get_xip2_low_addr());
-                return enum_xconsensus_error_bad_packet;//it is not a wanted response for this node
+                
+                //XTODO, need restore it with better control later
+                //here simply just pass any responsed block
+                //return enum_xconsensus_error_not_found;//it is not a wanted response for this node
             }
 
             //step#4: do deep check finally
@@ -350,6 +353,11 @@ namespace top
                     xinfo("xBFTSyncdrv::handle_sync_respond_msg,pulled un-verified commit-block:%s at node=0x%llx from peer:0x%llx",_sync_block->dump().c_str(),get_xip2_addr().low_addr,from_addr.low_addr);
                     fire_verify_syncblock_job(_sync_block.get(),NULL);
                 }
+            }
+            else
+            {
+                xwarn("xBFTSyncdrv::handle_sync_respond_msg,failed pass safe-check for block:%s at node=0x%llx from peer:0x%llx",_sync_block->dump().c_str(),get_xip2_addr().low_addr,from_addr.low_addr);
+                fire_verify_syncblock_job(_sync_block.get(),NULL);
             }
             return enum_xconsensus_code_successful;
         }

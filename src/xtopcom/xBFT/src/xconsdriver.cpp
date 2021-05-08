@@ -183,9 +183,9 @@ namespace top
             xproposal_t * _local_block = find_proposal(packet.get_block_viewid());
             if(NULL != _local_block)
             {
-                if(_local_block->is_valid_packet(packet))
+                if(_local_block->is_valid_packet(packet) == false)
                 {
-                    xwarn("xBFTdriver_t::handle_proposal_msg,fail-unmatched packet=%s,at node=0x%llx",packet.dump().c_str(),get_xip2_low_addr());
+                    xwarn("xBFTdriver_t::handle_proposal_msg,fail-unmatched packet=%s vs local(%s),at node=0x%llx",packet.dump().c_str(),_local_block->dump().c_str(),get_xip2_low_addr());
                     return enum_xconsensus_error_bad_packet;
                 }
                 if( (_local_block->is_input_ready(false)) && (_local_block->is_valid(false)) )  // local proposal may be non-full block
@@ -195,7 +195,7 @@ namespace top
                 }
                 if(_local_block->is_deliver(false))//target has been  finish one round of consensus
                 {
-                    xdbg("xBFTdriver_t::handle_proposal_msg,target proposal has finished voted as _local_block=%s, at node=0x%llx",_local_block->dump().c_str(),get_xip2_low_addr());
+                    xinfo("xBFTdriver_t::handle_proposal_msg,target proposal has finished voted as _local_block=%s, at node=0x%llx",_local_block->dump().c_str(),get_xip2_low_addr());
                     return enum_xconsensus_code_successful;
                 }
             }
@@ -213,7 +213,7 @@ namespace top
                         xwarn("xBFTdriver_t::handle_proposal_msg,fail-unmatched packet=%s vs local certified block=%s,at node=0x%llx",packet.dump().c_str(),_local_cert_block->dump().c_str(),get_xip2_low_addr());
                         return enum_xconsensus_error_bad_packet;
                     }
-                    xdbg("xBFTdriver_t::handle_proposal_msg,target proposal has finished and changed to certified _local_cert_block=%s, at node=0x%llx",_local_cert_block->dump().c_str(),get_xip2_low_addr());
+                    xinfo("xBFTdriver_t::handle_proposal_msg,target proposal has finished and changed to certified _local_cert_block=%s, at node=0x%llx",_local_cert_block->dump().c_str(),get_xip2_low_addr());
                     return enum_xconsensus_code_successful;//local proposal block has verified and ready,so it is duplicated commit msg
                 }
             }
@@ -389,7 +389,7 @@ namespace top
             };
 
             add_proposal(*_final_proposal_block); //add proposal block and increase voted-height/voted-view first
-            xdbg("xBFTdriver_t::handle_proposal_msg,finally start verify proposal=%s of packet=%s at node=0x%llx",_peer_block->dump().c_str(), packet.dump().c_str(),get_xip2_low_addr());
+            xinfo("xBFTdriver_t::handle_proposal_msg,finally start verify proposal=%s of packet=%s at node=0x%llx",_peer_block->dump().c_str(), packet.dump().c_str(),get_xip2_low_addr());
             //routing to worker thread per account_address
             fire_verify_proposal_job(from_addr,replica_xip,_final_proposal_block(),_after_verify_proposal_job);
             return enum_xconsensus_code_successful;
@@ -475,18 +475,19 @@ namespace top
 
                         _local_proposal->get_cert()->serialize_to_string(_commit_block_cert);//here generated full data of cert
 
-                        //then fire proposal event now
-                        fire_proposal_finish_event(_local_proposal->get_block(), NULL, NULL, NULL, NULL);
-
                         //at last send out commit message
                         //addres of -1 means broadcast to all consensus node,0 means not specified address that upper layer need fillin based on message type
                         xvip2_t broadcast_addr = {(xvip_t)-1,(uint64_t)-1};
                         fire_pdu_event_up(xcommit_msg_t::get_msg_type(),msg_stream,1,get_xip2_addr(),broadcast_addr,_local_proposal->get_block(),_commit_block_cert);//ship block cert by packet
+                        
+                        //change-log: sendout commit-packet to replicator first,then let leader continue handle it
+                        //fire proposal event now,note:the leader is possible to still be leader of next round
+                        fire_proposal_finish_event(_local_proposal->get_block(), NULL, NULL, NULL, NULL);
                     }
                 }
                 _local_proposal->release_ref();//release reference added by fire_verify_vote_job
             };
-            xdbg("xBFTdriver_t::handle_vote_msg,finally start verify vote=%s of packet=%s at node=0x%llx",_voted_cert->dump().c_str(), packet.dump().c_str(),get_xip2_low_addr());
+            xinfo("xBFTdriver_t::handle_vote_msg,finally start verify vote=%s of packet=%s at node=0x%llx",_voted_cert->dump().c_str(), packet.dump().c_str(),get_xip2_low_addr());
 
             //routing to worer thread per account_address
             fire_verify_vote_job(from_addr,_voted_cert.get(),_local_proposal_block,_after_verify_vote_callback);
