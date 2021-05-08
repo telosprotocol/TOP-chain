@@ -131,14 +131,14 @@ namespace top
             return true;
         }
         
-        base::xvblock_t*   xtestnode_t::create_proposal_block(const std::string & account,const std::string & block_input,const std::string & block_output)
+        base::xvblock_t*   xtestnode_t::create_proposal_block(const std::string & account,const std::string & block_input,const std::string & block_output,const uint64_t new_viewid)
         {
             base::xauto_ptr<base::xvblock_t> last_block = get_vblockstore()->get_latest_cert_block(account); //return ptr that has been added reference
             if(last_block == nullptr)//blockstore has been closed
                 return NULL;
         
             base::xauto_ptr<base::xvblock_t> last_full_block = get_vblockstore()->get_latest_full_block(account);
-            base::xvblock_t* new_proposal_block = xunitblock_t::create_unitblock(account,last_block->get_height() + 1,0,last_block->get_viewid() + 1,last_block->get_block_hash(),last_full_block->get_block_hash(),last_full_block->get_height(),block_input,block_output);
+            base::xvblock_t* new_proposal_block = xunitblock_t::create_unitblock(account,last_block->get_height() + 1,0,new_viewid,last_block->get_block_hash(),last_full_block->get_block_hash(),last_full_block->get_height(),block_input,block_output);
             new_proposal_block->reset_prev_block(last_block.get()); //point previous block
             return new_proposal_block;
         }
@@ -206,7 +206,7 @@ namespace top
                     m_txs_pool[m_test_account->get_account()].pop_front();
                 }
  
-                base::xvblock_t*  proposal_block = create_proposal_block(m_test_account->get_account(),txs,txs);
+                base::xvblock_t*  proposal_block = create_proposal_block(m_test_account->get_account(),txs,txs,m_latest_viewid);
                 if(proposal_block != NULL)
                 {
                     xvip2_t leader_xip =  get_xip2_addr();

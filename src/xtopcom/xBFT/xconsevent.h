@@ -114,8 +114,11 @@ namespace top
             xcsclock_fire& operator = (const xcsclock_fire & obj);
         public:
             base::xvblock_t*  get_clock_block() const {return _clock_block;}
+            base::xvblock_t*  get_latest_block()const {return _latest_block;}
+            void              reset_latest_block(base::xvblock_t* highest_block);
         protected:
             base::xvblock_t*  _clock_block;  //global clock block
+            base::xvblock_t*  _latest_block; //let clock carry highest block to update view as well
         };
         
         class xcsview_fire : public base::xvevent_t

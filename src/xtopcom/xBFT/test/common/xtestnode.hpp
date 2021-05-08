@@ -47,7 +47,7 @@ public:
 
     bool                  start_consensus(base::xvblock_t *proposal_block);
             
-    base::xvblock_t *     create_proposal_block(const std::string &account,const std::string &block_input, const std::string &block_output);
+    base::xvblock_t *     create_proposal_block(const std::string &account,const std::string &block_input, const std::string &block_output,const uint64_t new_viewid);
 public:
     virtual int verify_proposal(base::xvblock_t * proposal_block,base::xvqcert_t * bind_clock_cert,xcsobject_t * _from_child) override;
 

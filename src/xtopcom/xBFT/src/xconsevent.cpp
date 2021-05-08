@@ -91,14 +91,27 @@ namespace top
         xcsclock_fire::xcsclock_fire(base::xvblock_t & clock_block)
             :base::xvevent_t(base::enum_xevent_core_type_clock)
         {
+            _latest_block = NULL;
             clock_block.add_ref();
             _clock_block = &clock_block;
         }
-        
+    
         xcsclock_fire::~xcsclock_fire()
         {
             if(_clock_block != NULL)
                 _clock_block->release_ref();
+            
+            if(_latest_block != NULL)
+                _latest_block->release_ref();
+        }
+    
+        void   xcsclock_fire::reset_latest_block(base::xvblock_t* highest_block)
+        {
+            if(highest_block != NULL)
+            {
+                highest_block->add_ref();
+                _latest_block = highest_block;
+            }
         }
         
         xcsview_fire::xcsview_fire(const std::string & target_account,const uint64_t new_view_id,const uint64_t global_clock)
