@@ -26,7 +26,7 @@ namespace top
             enum_index_store_flags_mask           = 0xFF, //Mask to keep them
             //note:all bit has been used up, not allow add more
         };
-        class xvbindex_t : public xrefcount_t
+        class xvbindex_t : public xvaccount_t
         {
             friend class xvblock_t;
         public:
@@ -43,14 +43,13 @@ namespace top
         private:
 
         public:
-            inline const std::string    get_account_addr() const {return m_account_addr;}
-            inline const xvid_t         get_account_id() const {return m_account_id;}
             inline const uint64_t       get_height()  const {return m_block_height;}
             inline const uint64_t       get_viewid()  const {return m_block_viewid;}
             inline const std::string &  get_block_hash()      const {return m_block_hash;}
             inline const std::string &  get_last_block_hash() const {return m_last_block_hash;}
-            inline const uint64_t       get_last_fullblock_height()  const {return m_last_fullblock_height;}
-
+            inline const std::string &  get_last_full_block_hash()    const {return m_last_fullblock_hash;}
+            inline const uint64_t       get_last_full_block_height()  const {return m_last_fullblock_height;}
+            
             inline const int32_t        get_next_viewid_offset() const {return m_next_viewid_offset;}
             inline const uint64_t       get_next_viewid()  const {return (m_block_viewid + m_next_viewid_offset);}
 
@@ -118,26 +117,26 @@ namespace top
             xvblock_t*      m_linked_block;
 
         private: //serialized from/to stream/db
-            std::string     m_account_addr;     //added for debug purpose
-            uint64_t        m_account_id;       //block owner' account id(refer xvaccount_t::get_xvid())
             uint64_t        m_block_height;     //block 'height
-            uint64_t        m_last_fullblock_height;//height of m_last_full_block
             uint64_t        m_block_viewid;     //view#id associated this block
-            //(m_block_viewid + m_next_viewid_offset)point the block at same height but different viewid
-            int32_t         m_next_viewid_offset;
             std::string     m_block_hash;       //point to block'qcert hash that logicaly same as block hash
             std::string     m_last_block_hash;  //point the last block'hash
-
+            std::string     m_last_fullblock_hash; //point to last full-block'hash
+            uint64_t        m_last_fullblock_height;//height of m_last_full_block
+            
             uint64_t        m_parent_account_id;  //container(e.g.tableblock)'account id(refer xvaccount_t::get_xvid())
             uint64_t        m_parent_block_height;//height of container(e.gtableblock) that may carry this block
             uint64_t        m_parent_view_id;     //viewid of container(e.gtableblock) that may carry this block
             uint16_t        m_entityid_at_parent; //entityid of under parent 'block(e.g tableblock)
-
+            
             uint16_t        m_combineflags;     //[8bit:block-flags][1bit][7bit:store-bits]
             //[1][enum_xvblock_class][enum_xvblock_level][enum_xvblock_type][enum_xvblock_reserved]
             uint16_t        m_block_types;
             uint8_t         m_closed;           //indicated whether closed or not
             uint8_t         m_modified;         //indicated whether has any change that need persist again
+            
+            //(m_block_viewid + m_next_viewid_offset)point the block at same height but different viewid
+            int32_t         m_next_viewid_offset;
         };
 
         class xvbindex_vector

@@ -7,14 +7,17 @@
 #include "xbase/xdata.h"
 #include "xbase/xmem.h"
 #include "xbase/xobject_ptr.h"
-#include "xvstate.h"
-#include "xvtransaction.h"
-#include "xvboffdata.h"
+#include "xventity.h"
+#include "xvtransact.h"
 
 namespace top
 {
     namespace base
     {
+        class xvbindex_t;
+        class xvbstate_t;
+        class xvboffdata_t;
+    
         /*  Very High Level structre/View
 
          #1: The xvblock manage unified block struture, v-header connected as chain, v-cert as proof for v-header ,and v-body carry business(txs,cmds etc).
@@ -60,7 +63,7 @@ namespace top
 
 
         /////////////////////////2 byte for vblock types /////////////////////////
-        //[1][enum_xvblock_level][enum_xvblock_class][enum_xvblock_type][enum_xvblock_reserved] =  [1][3][3][7][2] = 16bits
+        //[1][enum_xvblock_level][enum_xvblock_class][enum_xvblock_type][enum_xvblock_character] =  [1][3][3][7][2] = 16bits
 
         //total 3bits = max 8 definition
         enum enum_xvblock_level
@@ -95,11 +98,14 @@ namespace top
             enum_xvblock_type_cmds      = 7, //smart-contract related
             enum_xvblock_type_view      = 8, //view block or timeout block
             enum_xvblock_type_elction   = 9, //election block from REC/ZEC etc
+            enum_xvblock_type_batch     = 10,//that is a batch group(like table or book)
         };
 
         //total 2bits = max 4 definition
-        enum enum_xvblock_reserved //reserved for future definition
+        enum enum_xvblock_character // for future definition
         {
+            enum_xvblock_character_block_state      = 0x0, //block-based state management(default one)
+            enum_xvblock_character_account_state    = 0x1, //account-based state management
         };
 
         constexpr uint64_t TOP_BEGIN_GMTIME = 1573189200;
@@ -114,6 +120,7 @@ namespace top
         class xvheader_t : public xdataunit_t
         {
             friend class xvblock_t;
+            friend class xvbmaker_t;
             friend class xvblockstore_t;
         public:
             static  const std::string   name(){ return std::string("xvheader");}
@@ -127,7 +134,7 @@ namespace top
             static int                  cal_block_version_minor(const uint32_t version){ return ((version& 0x0000FF00) >> 8);}
             static int                  cal_block_version_patch(const uint32_t version){ return ((version& 0x000000FF));}
 
-            //[0][enum_xvblock_level][enum_xvblock_class][enum_xvblock_type][enum_xvblock_reserved] =  [1][3][3][7][2] = 16bits
+            //[0][enum_xvblock_level][enum_xvblock_class][enum_xvblock_type][enum_xvblock_character] =  [1][3][3][7][2] = 16bits
             static enum_xvblock_level   cal_block_level(const int types){return (enum_xvblock_level)((types >> 12) & 0x07);}
             static enum_xvblock_class   cal_block_class(const int types){return (enum_xvblock_class)((types >> 9) & 0x07);}
             static enum_xvblock_type    cal_block_type(const int types){return (enum_xvblock_type) ((types >> 2) & 0x7F);}
@@ -143,12 +150,13 @@ namespace top
             virtual bool               is_valid()  const;
             virtual bool               is_equal(const xvheader_t & other) const;
             virtual void*              query_interface(const int32_t _enum_xobject_type_) override final;//caller need to cast (void*) to related ptr
+            virtual xauto_ptr<xvheader_t> clone() const;
         public:
-            //[0][enum_xvblock_level][enum_xvblock_class][enum_xvblock_type][enum_xvblock_reserved] =  [1][3][3][7][2] = 16bits
+            //[0][enum_xvblock_level][enum_xvblock_class][enum_xvblock_type][enum_xvblock_state_mode] =  [1][3][3][7][2] = 16bits
             inline enum_xvblock_level          get_block_level()  const {return (enum_xvblock_level)((m_types >> 12) & 0x07);}
             inline enum_xvblock_class          get_block_class()  const {return (enum_xvblock_class)((m_types >> 9) & 0x07);}
             inline enum_xvblock_type           get_block_type()   const {return (enum_xvblock_type) ((m_types >> 2) & 0x7F);}
-            //inline enum_xvblock_reserved     get_block_reserved() const {return (enum_xvblock_reserved)(m_types & 0x03);}
+            inline enum_xvblock_character      get_block_character() const {return (enum_xvblock_character)(m_types & 0x03);}
             inline const uint16_t              get_block_raw_types() const {return m_types;}
 
             //common information for this block
@@ -176,7 +184,7 @@ namespace top
 
         protected: //the reason provide beblow setting, just given subclass the flex for construction function
 
-            //[1][enum_xvblock_level][enum_xvblock_class][enum_xvblock_type][enum_xvblock_reserved] =  [1][3][3][7][2] = 16bits
+            //[1][enum_xvblock_level][enum_xvblock_class][enum_xvblock_type][enum_xvblock_character] =  [1][3][3][7][2] = 16bits
             inline void                 set_block_level(enum_xvblock_level _level)  {m_types = ( (m_types & 0x8FFF) | (_level << 12));}
             inline void                 set_block_class(enum_xvblock_class _class)  {m_types = ( (m_types & 0xF1FF) | (_class << 9 ));}
             inline void                 set_block_type(enum_xvblock_type  _type)    {m_types = ( (m_types & 0xFE03) | (_type  << 2));}
@@ -280,6 +288,7 @@ namespace top
         class xvqcert_t : public xdataunit_t
         {
             friend class xvblock_t;
+            friend class xvbmaker_t;
             friend class xvblockstore_t;
         public:
             static  const std::string   name(){ return std::string("xvqcert");}
@@ -310,7 +319,7 @@ namespace top
             virtual void*              query_interface(const int32_t _enum_xobject_type_) override;//caller need to cast (void*) to related ptr
 
             virtual std::string        dump() const override;  //just for debug purpose
-
+            virtual xauto_ptr<xvqcert_t> clone() const;
         public:
             inline  uint64_t           get_clock()     const {return m_clock;} //start/create time of this cert
             inline  uint64_t           get_expired()   const {return (m_expired == (uint32_t)-1) ? ((uint64_t)-1) : (m_clock + m_expired);}//return absolute clock'height
@@ -423,7 +432,7 @@ namespace top
             std::string         m_header_hash;      //hash of xvheader_t ' bindata
             std::string         m_input_root_hash;  //merkle tree' root of commands(or txs),it might be nil
             std::string         m_output_root_hash; //merkle tree' root of the executed result of cmds/txs,it might be nil
-            std::string         m_justify_cert_hash;//point the block hash of locked block for unit-block,but point to m_output_root_hash of locked block for other cases(refer enum_xvblock_level)
+            std::string         m_justify_cert_hash;//point the block hash of locked block for unit-block,or point to m_output_root_hash of locked block for other cases depend on enum_xvblock_level
 
             //combine the above data together as "hash to sign" by verify_signature and audit_signature
             std::string         m_verify_signature; //Quorum-Signature of BLS/Schnorr,or PoW Proof as signature
@@ -434,150 +443,8 @@ namespace top
             std::string         m_extend_cert;      //higher layer' qcert that certify for hash(full bin data of this cert), or comming block'cert as proof for previouse block
         };
 
-        class xvexecontext_t;
-        //Entity is a lambda execution(aka:"执行体") that have execution instructions and related data, like PE(Potable Execution) it may also link to the extend resource at Data-Section.
-        //xventity_t of output present "bin-log" of "state" as result
-        //xventity_t of input  present "bin-log" of "event and call" as source
-        class xventity_t : public xdataunit_t
-        {
-            friend class xvblock_t;
-            friend class xvexecontext_t;
-        public:
-            static  const std::string   name(){ return std::string("xventity");}
-            virtual std::string         get_obj_name() const override {return name();}
-            enum{enum_obj_type = enum_xobject_type_ventity};//allow xbase create xventity_t object from xdataobj_t::read_from()
-
-        protected:
-            xventity_t(enum_xdata_type type = (enum_xdata_type)enum_xobject_type_ventity);
-            virtual ~xventity_t();
-        private:
-            xventity_t(const xventity_t & other);
-            xventity_t & operator = (const xventity_t & other);
-
-        public:
-            virtual bool    close(bool force_async = false) override;
-
-            virtual void*   query_interface(const int32_t _enum_xobject_type_) override//caller need to cast (void*) to related ptr
-            {
-                if(_enum_xobject_type_ == enum_xobject_type_ventity)
-                    return this;
-
-                return xdataunit_t::query_interface(_enum_xobject_type_);
-            }
-
-            //general key-value query, e.g. query leaf of merkle tree by query_data("merkle-tree-leaf")
-            virtual const std::string query_value(const std::string & key) = 0;//virtual key-value for entity
-
-            const int          get_entity_index() const {return m_entity_index;}
-
-        protected://not open for public
-            void               set_exe_context(xvexecontext_t * execontext_ptr);
-            xvexecontext_t *   get_exe_context() const {return m_exe_context;}
-
-            //subclass extend behavior and load more information instead of a raw one
-            //return how many bytes readout /writed in, return < 0(enum_xerror_code_type) when have error
-            virtual int32_t    do_write(xstream_t & stream) override; //allow subclass extend behavior
-            virtual int32_t    do_read(xstream_t & stream)  override; //allow subclass extend behavior
-
-        private:
-            void               set_entity_index(const uint16_t index){m_entity_index = index;}
-        private:
-            xvexecontext_t *   m_exe_context;
-            uint16_t           m_entity_index;  //index at xvexecontext_t
-        };
-
-        //xvbinentity_t present binary or unknow entity
-        class xvbinentity_t : public xventity_t
-        {
-            friend class xvblock_t;
-            friend class xvblockstore_t;
-            friend class xventitymgr_t;
-        public:
-            static  const std::string   name(){ return std::string("xvbinentity");}
-            virtual std::string         get_obj_name() const override {return name();}
-            enum{enum_obj_type = enum_xobject_type_binventity};//allow xbase create xventity_t object from xdataobj_t::read_from()
-
-        public:
-            xvbinentity_t(const std::string & raw_bin_data);
-        protected:
-            xvbinentity_t();
-             virtual ~xvbinentity_t();
-        private:
-            xvbinentity_t(const xvbinentity_t & other);
-            xvbinentity_t & operator = (const xvbinentity_t & other);
-
-        public:
-            virtual void*   query_interface(const int32_t _enum_xobject_type_) override//caller need to cast (void*) to related ptr
-            {
-                if(_enum_xobject_type_ == enum_xobject_type_binventity)
-                    return this;
-
-                return xventity_t::query_interface(_enum_xobject_type_);
-            }
-
-            //general key-value query, e.g. query leaf of merkle tree by query_data("merkle-tree-leaf")
-            virtual const std::string query_value(const std::string & key) override {return std::string();}//virtual key-value for entity
-
-        protected: //subclass extend behavior and load more information instead of a raw one
-            //return how many bytes readout /writed in, return < 0(enum_xerror_code_type) when have error
-            virtual int32_t     do_write(xstream_t & stream) override; //allow subclass extend behavior
-            virtual int32_t     do_read(xstream_t & stream)  override; //allow subclass extend behavior
-
-        private: //note each entity not allow over 64KB
-            std::string    m_raw_data;
-        };
-
-        //rule#1: each block of the account always use xventity_t of entity_index(0) for own state
-        //rule#2: each block of account get final state by combining the xvbstate of prev-block and current entity of output
-        //rule#3: full-block'output'xventity(0) present full state
-        //rule#4: table use xventity_t(index than #1) to present the included units
-        //rule#5: each unit in table has one(only one) linked xventity
-        //xvexecontext manage the entities and resources
-        class xvexecontext_t : public xdataunit_t
-        {
-            friend class xvblock_t;
-        protected:
-            xvexecontext_t(enum_xdata_type type);
-            xvexecontext_t(const std::vector<xventity_t*> & entitys,const std::string & raw_resource_data,enum_xdata_type type);
-            xvexecontext_t(const std::vector<xventity_t*> & entitys,xstrmap_t & resource, enum_xdata_type type);
-            virtual ~xvexecontext_t();
-        private:
-            xvexecontext_t();
-            xvexecontext_t(const xvexecontext_t & other);
-            xvexecontext_t & operator = (const xvexecontext_t & other);
-
-        public:
-            //note: close first before do the last release,otherwise may leak memory
-            virtual bool      close(bool force_async = false) override;
-
-            const std::vector<xventity_t*> &  get_entitys()  const {return m_entitys;}
-
-        public: //resource might be treat as key-value database,or data reference by instructions
-            virtual const std::string query_resource(const std::string & key);//virtual key-value for query resource
-
-            virtual const std::string get_resources_data(); //combine whole extend resource into one single string
-            const   std::string       get_resources_hash() const {return m_resources_hash;}//m_resource_hash for raw_resources
-            bool                      has_resource_data()  const {return (m_resources_obj != NULL);}
-
-        protected: //for subclass or friend class
-            const xstrmap_t     *     get_resources() const {return m_resources_obj;}
-
-            virtual int32_t     do_write(xstream_t & stream) override; //not allow subclass change behavior
-            virtual int32_t     do_read(xstream_t & stream)  override; //not allow subclass change behavior
-
-        private:  //not allow override any more
-            //set_resources_data only open to xvblock where may verify hash first
-            bool                set_resources_data(const std::string & raw_resource_data);
-            bool                set_resources_hash(const std::string & raw_resources_hash);
-
-        private://entity(instructions) <==> resource(data)
-            std::vector<xventity_t*>    m_entitys;       //manage entity that are unit of execution
-            xstrmap_t*                  m_resources_obj; //both key-value are string that might be from xdataobj or raw content
-            std::string                 m_resources_hash; //point to a object of  xmap_t<std::string>,which may store/load seperately
-        };
-
         //once xvinput_t constructed,it not allow modify then
-        class xvinput_t : public xvexecontext_t
+        class xvinput_t : public xvexemodule_t
         {
             friend class xvblock_t;
             friend class xvblockstore_t;
@@ -588,6 +455,8 @@ namespace top
 
         public:
             xvinput_t(const std::vector<xventity_t*> & entitys,const std::string & raw_resource_data,enum_xdata_type type = (enum_xdata_type)enum_xobject_type_vinput);
+            
+            xvinput_t(std::vector<xventity_t*> && entitys,xstrmap_t & resource_obj,enum_xdata_type type = (enum_xdata_type)enum_xobject_type_vinput);
             xvinput_t(const std::vector<xventity_t*> & entitys,xstrmap_t & resource_obj,enum_xdata_type type = (enum_xdata_type)enum_xobject_type_vinput);
         protected:
             xvinput_t(enum_xdata_type type = (enum_xdata_type)enum_xobject_type_vinput);
@@ -597,13 +466,8 @@ namespace top
             xvinput_t & operator = (const xvinput_t & other);
 
         public:
-            virtual void*   query_interface(const int32_t _enum_xobject_type_) override//caller need to cast (void*) to related ptr
-            {
-                if(_enum_xobject_type_ == enum_xobject_type_vinput)
-                    return this;
-
-                return xvexecontext_t::query_interface(_enum_xobject_type_);
-            }
+            //caller need to cast (void*) to related ptr
+            virtual void*   query_interface(const int32_t _enum_xobject_type_) override;
 
         public:
             //proposal usally include raw transaction & receipts. note:following methods are not thread-safe
@@ -620,7 +484,7 @@ namespace top
         };
 
         //once xvoutput_t constructed,it not allow modify then
-        class xvoutput_t : public xvexecontext_t
+        class xvoutput_t : public xvexemodule_t
         {
             friend class xvblock_t;
             friend class xvblockstore_t;
@@ -630,6 +494,7 @@ namespace top
             enum{enum_obj_type = enum_xobject_type_voutput};//allow xbase create xvoutput_t object from xdataobj_t::read_from()
 
         public:
+            xvoutput_t(std::vector<xventity_t*> && entitys,enum_xdata_type type = (enum_xdata_type)enum_xobject_type_voutput);
             xvoutput_t(const std::vector<xventity_t*> & entitys,const std::string & raw_resource_data, enum_xdata_type type = (enum_xdata_type)enum_xobject_type_voutput);
             xvoutput_t(const std::vector<xventity_t*> & entitys,xstrmap_t & resource,enum_xdata_type type = (enum_xdata_type)enum_xobject_type_voutput);//xvqcert_t used for genreate hash for resource
         protected:
@@ -640,13 +505,8 @@ namespace top
             xvoutput_t & operator = (const xvoutput_t & other);
 
         public:
-            virtual void*   query_interface(const int32_t _enum_xobject_type_) override//caller need to cast (void*) to related ptr
-            {
-                if(_enum_xobject_type_ == enum_xobject_type_voutput)
-                    return this;
-
-                return xvexecontext_t::query_interface(_enum_xobject_type_);
-            }
+            //caller need to cast (void*) to related ptr
+            virtual void*   query_interface(const int32_t _enum_xobject_type_) override;
 
             //root of input which usally present a root of merkle tree for input
             virtual const std::string   get_root_hash() {return m_root_hash;}
@@ -691,11 +551,10 @@ namespace top
             enum_xvblock_flags_mask             = 0xFF00, //mask to get all block flags
         };
 
-        class xvbindex_t;
-        class xvbstate_t;
         //note: xvblock must have associated xvheader_t and xvqcert_t objects
         class xvblock_t : public xdataobj_t
         {
+            friend class xvbmaker_t;
             friend class xvblockstore_t;
         public:
             static  const std::string  name(){return "xvblock";}
@@ -752,8 +611,15 @@ namespace top
             inline  const std::string&  get_account()     const {return m_vheader_ptr->get_account();}
             inline  enum_xvblock_class  get_block_class() const {return m_vheader_ptr->get_block_class();}
             inline  enum_xvblock_type   get_block_type()  const {return m_vheader_ptr->get_block_type();}
+            inline  enum_xvblock_level  get_block_level() const {return m_vheader_ptr->get_block_level();}
+            
+            //note:block'hash actually = cert'hash
+            inline  const  std::string& get_cert_hash()   const {return m_cert_hash;}
+            inline  const  std::string& get_block_hash()  const {return get_cert_hash();}
+            inline  const  std::string& get_last_block_hash()   const {return m_vheader_ptr->get_last_block_hash();}
             inline  uint64_t            get_last_full_block_height() const {return m_vheader_ptr->get_last_full_block_height();}
-
+            inline  const  std::string& get_last_full_block_hash() const{return m_vheader_ptr->get_last_full_block_hash();}
+            
             inline uint32_t             get_block_version()       const  { return m_vheader_ptr->get_block_version();}
             inline int                  get_block_version_major() const  { return m_vheader_ptr->get_block_version_major();}
             inline int                  get_block_version_minor() const  { return m_vheader_ptr->get_block_version_minor();}
@@ -764,12 +630,7 @@ namespace top
             inline  const  std::string& get_output_hash() const {return m_vheader_ptr->get_output_hash();}
             inline  const  std::string& get_input_root_hash()   const {return m_vqcert_ptr->get_input_root_hash();}
             inline  const  std::string& get_output_root_hash()  const {return m_vqcert_ptr->get_output_root_hash();}
-            inline  const  std::string& get_last_block_hash()   const {return m_vheader_ptr->get_last_block_hash();}
             inline  const  std::string& get_justify_cert_hash() const {return m_vqcert_ptr->get_justify_cert_hash();}
-            inline  const  std::string& get_last_full_block_hash() const{return m_vheader_ptr->get_last_full_block_hash();}
-
-            inline  const  std::string& get_cert_hash()   const {return m_cert_hash;}//note:block'hash actually = cert'hash
-            inline  const  std::string& get_block_hash()  const {return get_cert_hash();}
 
             inline  xvblock_t*          get_prev_block()  const {return m_prev_block;}   //raw ptr of parent block of this
             inline  xvblock_t*          get_next_block()  const {return m_next_block;}   //raw ptr of child/next block of this

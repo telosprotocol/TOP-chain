@@ -6,13 +6,47 @@
 #include "xbase/xhash.h"
 #include "xbase/xcontext.h"
 #include "xbase/xthread.h"
-#include "xvblockhub.h"
 #include "xvunithub.h"
 
 namespace top
 {
     namespace store
     {
+        auto_xblockacct_ptr::auto_xblockacct_ptr(std::recursive_mutex & locker)
+            :base_class(nullptr),
+             m_mutex(locker)
+        {
+            m_mutex.lock();
+        }
+ 
+        auto_xblockacct_ptr::~auto_xblockacct_ptr()
+        {
+            //first process all pending events at this moment
+            if(m_raw_ptr != NULL)
+                m_raw_ptr->process_events();
+            
+            //then release raw ptr
+            xblockacct_t * old_ptr = m_raw_ptr;
+            m_raw_ptr = NULL;
+            if(old_ptr != NULL)
+                old_ptr->release_ref();
+            
+            //finally unlock it
+            m_mutex.unlock();
+        }
+    
+        //transfer owner to auto_xblockacct_ptr from raw_ptr
+        void  auto_xblockacct_ptr::transfer_owner(xblockacct_t * raw_ptr)
+        {
+            if(m_raw_ptr != raw_ptr)
+            {
+                xblockacct_t * old_ptr = m_raw_ptr;
+                m_raw_ptr = raw_ptr;
+                if(old_ptr != NULL)
+                    old_ptr->release_ref();
+            }
+        }
+    
         #define LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account_vid) \
             if(is_close())\
             {\
@@ -20,8 +54,8 @@ namespace top
                 return nullptr;\
             }\
             base::xvtable_t * target_table = base::xvchain_t::instance().get_table(account_vid.get_xvid()); \
-            std::lock_guard<std::recursive_mutex> _dummy(target_table->get_lock()); \
-            base::xauto_ptr<xblockacct_t> account_obj(get_block_account(target_table,account_vid.get_address())); \
+            auto_xblockacct_ptr account_obj(target_table->get_lock()); \
+            get_block_account(target_table,account_vid.get_address(),account_obj); \
 
         xvblockstore_impl::xvblockstore_impl(const std::string & blockstore_path,base::xcontext_t & _context,const int32_t target_thread_id)
             :base::xvblockstore_t(_context,target_thread_id)
@@ -64,11 +98,14 @@ namespace top
             return base::xiobject_t::on_object_close();
         }
 
-        base::xauto_ptr<xblockacct_t>  xvblockstore_impl::get_block_account(base::xvtable_t * target_table,const std::string & account_address)
+        bool  xvblockstore_impl::get_block_account(base::xvtable_t * target_table,const std::string & account_address,auto_xblockacct_ptr & inout_account_obj)
         {
             const xobject_t* exist_block_plugin = target_table->get_account_plugin_unsafe(account_address, base::enum_xvaccount_plugin_blockmgr);//exist_block_plugin has done add_ref by get_account_plugin_unsafe
             if(exist_block_plugin != NULL)
-                return (xblockacct_t*)exist_block_plugin; //pass reference to xauto_ptr that release later
+            {
+                inout_account_obj.transfer_owner((xblockacct_t*)exist_block_plugin);
+                return true; //pass reference to xauto_ptr that release later
+            }
 
             xblockacct_t * new_plugin = new xchainacct_t(account_address,enum_account_idle_timeout_ms,m_store_path);//replace by new account address;
             new_plugin->init();
@@ -85,7 +122,8 @@ namespace top
                 send_call(_add_new_plugin_job,(void*)new_plugin);//send account ptr to store'thread to manage lifecycle
             }
             target_table->set_account_plugin(account_address, new_plugin, base::enum_xvaccount_plugin_blockmgr);
-            return new_plugin;
+            inout_account_obj.transfer_owner(new_plugin);
+            return true;
         }
 
         /////////////////////////////////new api with better performance by passing base::xvaccount_t
@@ -345,53 +383,109 @@ namespace top
             return account_obj->load_block_flags(block);
         }
 
-        bool    xvblockstore_impl::store_block(base::xauto_ptr<xblockacct_t> & container_account,base::xvblock_t * container_block) //store table/book blocks if they are
+        bool    xvblockstore_impl::unpack_table_block(xblockacct_t* container_account,base::xvblock_t * container_block) //store table/book blocks if they are
         {
-            xdbg("jimmy xvblockstore_impl::store_block enter,store block(%s)", container_block->dump().c_str());
-            //store it first at anyway
-            if(!container_account->store_block(container_block))
-            {
-                xwarn("xvblockstore_impl::store_block,fail-store block(%s)", container_block->dump().c_str());
+            if(container_block->get_header()->get_block_level() != base::enum_xvblock_level_table)
                 return false;
-            }
-            container_account->try_execute_all_block();
+                
             //then try extract for container if that is
             if(container_block->get_block_class() == base::enum_xvblock_class_light) //skip nil block
             {
-                //add other container here if need
-                if(container_block->get_header()->get_block_level() == base::enum_xvblock_level_table)
+                //XTODO index add flag to avoiding repeat unpack unit
+                xassert(container_block->is_input_ready(true));
+                xassert(container_block->is_output_ready(true));
+                
+                std::vector<xobject_ptr_t<base::xvblock_t>> sub_blocks;
+                if(container_block->extract_sub_blocks(sub_blocks))
                 {
-                    //XTODO index add flag to avoiding repeat unpack unit
-                    xassert(container_block->is_input_ready(true));
-                    xassert(container_block->is_output_ready(true));
-
-                    std::vector<xobject_ptr_t<base::xvblock_t>> sub_blocks;
-                    if(container_block->extract_sub_blocks(sub_blocks))
+                    xinfo("xvblockstore_impl::unpack_table_block,table block(%s) carry unit num=%d", container_block->dump().c_str(), (int)sub_blocks.size());
+                    
+                    for (auto & unit_block : sub_blocks)
                     {
-                        xinfo("xvblockstore_impl::store_block,table block(%s) carry unit num=%d", container_block->dump().c_str(), (int)sub_blocks.size());
-
-                        for (auto & unit_block : sub_blocks)
+                        base::xvaccount_t  unit_account(unit_block->get_account());
+                        //XTODO,move set_parent_block into extract_sub_blocks
+                        //unit_block->set_parent_block(container_block->get_account(),container_block->get_viewid(),xxx);
+                        
+                        //batch'table just treat as container, so all drivered by unit self
+                        if(container_block->get_block_type() != base::enum_xvblock_type_batch)
                         {
-                            base::xvaccount_t  unit_account(unit_block->get_account());
-                            //XTODO,move set_parent_block into extract_sub_blocks
-                            //unit_block->set_parent_block(container_block->get_account(),container_block->get_viewid(),xxx);
-
-                            if(false == store_block(unit_account,unit_block.get())) //any fail resultin  re-unpack whole table again
+                            //update unit block 'flag based on table
+                            const int table_block_flags   = container_block->get_block_flags();
+                            const int unit_block_flags    = unit_block->get_block_flags();
+                            if((table_block_flags & base::enum_xvblock_flags_high4bit_mask) > (unit_block_flags & base::enum_xvblock_flags_high4bit_mask)
+                               )//merge flags(just for high4bit)
                             {
-                                xwarn("xvblockstore_impl::store_block,fail-store unit-block=%s from tableblock=%s",unit_block->dump().c_str(),container_block->dump().c_str());
-                            }
-                            else
-                            {
-                                xinfo("xvblockstore_impl::store_block,stored unit-block=%s from tableblock=%s",unit_block->dump().c_str(),container_block->dump().c_str());
-
-                                on_block_stored(unit_block.get());//throw event for sub blocks
+                                unit_block->reset_block_flags(unit_block_flags | (table_block_flags & base::enum_xvblock_flags_high4bit_mask));
                             }
                         }
+                        
+                        if(store_block(unit_account,unit_block.get()) <= 0) //any fail resultin  re-unpack whole table again
+                        {
+                            xwarn("xvblockstore_impl::unpack_table_block,fail-store unit-block=%s from tableblock=%s",unit_block->dump().c_str(),container_block->dump().c_str());
+                        }
+                        else
+                        {
+                            xinfo("xvblockstore_impl::unpack_table_block,stored unit-block=%s from tableblock=%s",unit_block->dump().c_str(),container_block->dump().c_str());
+                            
+                            on_block_stored(unit_block.get());//throw event for sub blocks
+                        }
                     }
-                    else
+                    return true;
+                }
+                else
+                {
+                    xerror("xvblockstore_impl::unpack_table_block,fail-extract_sub_blocks for table block(%s)", container_block->dump().c_str(), (int)sub_blocks.size());
+                }
+            }
+            return false;
+        }
+    
+        bool    xvblockstore_impl::store_block(base::xauto_ptr<xblockacct_t> & container_account,base::xvblock_t * container_block) //store table/book blocks if they are
+        {
+            xdbg("jimmy xvblockstore_impl::store_block enter,store block(%s)", container_block->dump().c_str());
+            
+            if(container_block->get_header()->get_block_level() == base::enum_xvblock_level_table)
+            {
+                //batch'table just treat as container, so all drivered by unit self
+                if(container_block->get_block_type() == base::enum_xvblock_type_batch)
+                {
+                    //batch table just only need unpack once,so unpack first before store table
+                    if(container_block->check_block_flag(base::enum_xvblock_flag_unpacked) == false)
                     {
-                        xerror("xvblockstore_impl::store_block,fail-extract_sub_blocks for table block(%s)", container_block->dump().c_str(), (int)sub_blocks.size());
+                        if(unpack_table_block(container_account.get(),container_block))
+                            container_block->set_block_flag(base::enum_xvblock_flag_unpacked);
                     }
+                    //then store it by carry enum_xvblock_flag_unpacked flag
+                    const int stored_result = container_account->store_block(container_block);
+                    if(stored_result < 0)//failed case
+                    {
+                        xwarn("xvblockstore_impl::store_block,fail-store batch block(%s)", container_block->dump().c_str());
+                        return false;
+                    }
+                }
+                else //for non-batch table, we need extract unit whenever table changed status
+                {
+                    //store it first at anyway for regular table
+                    const int stored_result = container_account->store_block(container_block);
+                    if(stored_result < 0)//failed case or nothing changed
+                    {
+                        xwarn("xvblockstore_impl::store_block,fail-store block(%s)", container_block->dump().c_str());
+                        return false;
+                    }
+                    if(stored_result > 0) //just unpack or execute at new status
+                    {
+                        container_account->try_execute_all_block();
+                        unpack_table_block(container_account.get(),container_block);//unpack at every new status
+                    }
+                }
+            }
+            else //non-table block
+            {
+                const int stored_result = container_account->store_block(container_block);
+                if(stored_result < 0)//failed case or nothing changed
+                {
+                    xwarn("xvblockstore_impl::store_block,fail-store unit block(%s)", container_block->dump().c_str());
+                    return false;
                 }
             }
             return true; //still return true since tableblock has been stored successful
@@ -590,10 +684,8 @@ namespace top
                 xwarn_err("xvblockstore_impl has closed at store_path=%s",m_store_path.c_str());
                 return false;
             }
-            base::xvtable_t * target_table = base::xvchain_t::instance().get_table(account.get_xvid());
-            std::lock_guard<std::recursive_mutex> _dummy(target_table->get_lock());
-            base::xauto_ptr<xblockacct_t> target_account(get_block_account(target_table,account.get_address()));
-            return target_account->clean_caches(true);
+            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
+            return account_obj->clean_caches(true);
         }
 
         //clean all cached blocks after reach max idle duration(as default it is 60 seconds)
@@ -604,10 +696,8 @@ namespace top
                 xwarn_err("xvblockstore_impl has closed at store_path=%s",m_store_path.c_str());
                 return false;
             }
-            base::xvtable_t * target_table = base::xvchain_t::instance().get_table(account.get_xvid());
-            std::lock_guard<std::recursive_mutex> _dummy(target_table->get_lock());
-            base::xauto_ptr<xblockacct_t> target_account(get_block_account(target_table,account.get_address()));
-            return target_account->reset_cache_timeout(max_idle_time_ms);
+            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
+            return account_obj->reset_cache_timeout(max_idle_time_ms);
         }
 
         bool  xvblockstore_impl::on_timer_fire(const int32_t thread_id,const int64_t timer_id,const int64_t current_time_ms,const int32_t start_timeout_ms,int32_t & in_out_cur_interval_ms)

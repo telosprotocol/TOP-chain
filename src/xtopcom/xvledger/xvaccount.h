@@ -325,10 +325,10 @@ namespace top
             xvaccount_t(const std::string & account_address);
             virtual ~xvaccount_t();
         protected:
-            xvaccount_t(const xvaccount_t & obj);
-        private:
             xvaccount_t();
-            xvaccount_t & operator = (const xvaccount_t &);
+            xvaccount_t(const xvaccount_t & obj);
+            xvaccount_t & operator = (const xvaccount_t & obj);
+            xvaccount_t & operator = (const std::string & new_account_addr);
         public:
             inline const int            get_ledger_id()   const {return get_vledger_ledger_id(m_account_xid);}
             inline const int            get_chainid()     const {return get_vledger_chain_id(m_account_xid);}

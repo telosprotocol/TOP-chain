@@ -8,12 +8,31 @@
 #include <map>
 #include "xvledger/xvledger.h"
 #include "../xblockstore_face.h"
+#include "xvblockhub.h"
 
 namespace top
 {
     namespace store
     {
-        class xblockacct_t;
+        class auto_xblockacct_ptr : public base::xauto_ptr<xblockacct_t>
+        {
+            typedef base::xauto_ptr<xblockacct_t> base_class;
+        public:
+            auto_xblockacct_ptr(std::recursive_mutex & locker);
+            ~auto_xblockacct_ptr();
+        public:
+            //transfer owner to auto_xblockacct_ptr from raw_ptr
+            void    transfer_owner(xblockacct_t * raw_ptr);
+        private:
+            auto_xblockacct_ptr();
+            auto_xblockacct_ptr(auto_xblockacct_ptr && moved);
+            auto_xblockacct_ptr(const auto_xblockacct_ptr & );
+            auto_xblockacct_ptr & operator = (const auto_xblockacct_ptr &);
+            auto_xblockacct_ptr & operator = (auto_xblockacct_ptr && moved);
+        private:
+            std::recursive_mutex &  m_mutex;
+        };
+    
         //note: layers for store :  [xvblock-store] --> [xstore] -->[xdb]
         class xvblockstore_impl : public base::xvblockstore_t,public base::xtimersink_t
         {
@@ -106,8 +125,8 @@ namespace top
             virtual bool                 exist_genesis_block(const base::xvaccount_t & account) override;
 
         protected:
-            base::xauto_ptr<xblockacct_t>get_block_account(base::xvtable_t * target_table,const std::string & account_address);
-
+            bool    get_block_account(base::xvtable_t * target_table,const std::string & account_address,auto_xblockacct_ptr & inout_account_obj);
+            
             base::xvblock_t *            load_block_from_index(xblockacct_t* target_account, base::xauto_ptr<base::xvbindex_t> target_index,const uint64_t target_height,bool ask_full_load);
 
             //store table/book blocks if they are
@@ -117,6 +136,7 @@ namespace top
             virtual std::string          get_store_path() const override {return m_store_path;}//each store may has own space at DB/disk
 
         private:
+            bool                        unpack_table_block(xblockacct_t* table_account,base::xvblock_t * table_block); //store table/book blocks if they are
             bool                        on_block_stored(base::xvblock_t* this_block_ptr);//event for block store
 
             virtual bool                on_object_close() override;

@@ -154,9 +154,14 @@ namespace top
         {
         }
  
-        mbus::xevent_ptr_t  xveventbus_impl::create_event_for_store_index_to_db(const std::string & account,base::xvbindex_t * target_block)
+        mbus::xevent_ptr_t  xveventbus_impl::create_event_for_store_index_to_db(base::xvbindex_t * target_block)
         {
             //return mbus::xevent_ptr_t(new mbus::xevent_t(0));
+            return nullptr;
+        }
+    
+        mbus::xevent_ptr_t  xveventbus_impl::create_event_for_revoke_index_to_db(base::xvbindex_t * target_index)
+        {
             return nullptr;
         }
     

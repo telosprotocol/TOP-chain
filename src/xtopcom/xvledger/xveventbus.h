@@ -39,7 +39,8 @@ namespace top
             virtual void   push_event(const mbus::xevent_ptr_t& e) = 0; //push event into mbus system
             
         public://declares clasic events
-            virtual mbus::xevent_ptr_t  create_event_for_store_index_to_db(const std::string & account, base::xvbindex_t * target_index) = 0;
+            virtual mbus::xevent_ptr_t  create_event_for_store_index_to_db(base::xvbindex_t * target_index) = 0;
+            virtual mbus::xevent_ptr_t  create_event_for_revoke_index_to_db(base::xvbindex_t * target_index)= 0;
             virtual mbus::xevent_ptr_t  create_event_for_store_block_to_db(xvblock_t * target_block) = 0;
         };
     

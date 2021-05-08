@@ -17,16 +17,16 @@ namespace top
         }
 
         xvbindex_t::xvbindex_t(xvblock_t & obj)
+            :xvaccount_t(obj.get_account())
         {
             init();
-            
-            m_account_addr          = obj.get_account();
-            m_account_id            = xvaccount_t::get_xid_from_account(obj.get_account());
+
             m_block_height          = obj.get_height();
-            m_last_fullblock_height = obj.get_last_full_block_height();
             m_block_viewid          = obj.get_viewid();
             m_block_hash            = obj.get_block_hash();
             m_last_block_hash       = obj.get_last_block_hash();
+            m_last_fullblock_hash   = obj.get_last_full_block_hash();
+            m_last_fullblock_height = obj.get_last_full_block_height();
             
             m_parent_account_id   = obj.get_parent_account_id();
             m_parent_block_height = obj.get_parent_block_height();
@@ -40,12 +40,14 @@ namespace top
         }
     
         xvbindex_t::xvbindex_t(xvbindex_t && obj)
+            :xvaccount_t(obj)
         {
             init();
             *this = obj;
         }
     
         xvbindex_t::xvbindex_t(const xvbindex_t & obj)
+            :xvaccount_t(obj)
         {
             init();
             *this = obj;
@@ -56,17 +58,20 @@ namespace top
             if(this == &obj) {
                 return *this;
             }
+            xvaccount_t::operator=(obj);
+            
             m_modified              = obj.m_modified;
             m_closed                = obj.m_closed;
-            m_account_addr          = obj.m_account_addr;
-            m_account_id            = obj.m_account_id;
+            
             m_block_height          = obj.m_block_height;
-            m_last_fullblock_height = obj.m_last_fullblock_height;
             m_block_viewid          = obj.m_block_viewid;
-            m_next_viewid_offset    = obj.m_next_viewid_offset;
             m_block_hash            = obj.m_block_hash;
             m_last_block_hash       = obj.m_last_block_hash;
+            m_last_fullblock_hash   = obj.m_last_fullblock_hash;
+            m_last_fullblock_height = obj.m_last_fullblock_height;
             
+            m_next_viewid_offset    = obj.m_next_viewid_offset;
+
             m_parent_account_id     = obj.m_parent_account_id;
             m_parent_block_height   = obj.m_parent_block_height;
             m_parent_view_id        = obj.m_parent_view_id;
@@ -123,10 +128,9 @@ namespace top
             m_next_index        = NULL;
             m_linked_block      = NULL;
             
-            m_account_id        = 0;
             m_block_height      = 0;
-            m_last_fullblock_height = 0;
             m_block_viewid      = 0;
+            m_last_fullblock_height = 0;
             m_next_viewid_offset= 0;
             
             m_parent_account_id  = 0;
@@ -155,7 +159,7 @@ namespace top
         const std::string xvbindex_t::dump() const
         {
             char local_buf[256];
-            xprintf(local_buf,sizeof(local_buf),"{xvbindex_t:account_id(%" PRIu64 "),account_addr=%s,height=%" PRIu64 ",viewid=%" PRIu64 ",next_viewid(%" PRIu64 "),  parent_height(%" PRIu64 "),block-flags=0x%x,store-flags=0x%x,refcount=%d,this=%p}",m_account_id,m_account_addr.c_str(), m_block_height,m_block_viewid,get_next_viewid(),m_parent_block_height,get_block_flags(),get_store_flags(), get_refcount(),this);
+            xprintf(local_buf,sizeof(local_buf),"{xvbindex_t:account_id(%" PRIu64 "),account_addr=%s,height=%" PRIu64 ",viewid=%" PRIu64 ",next_viewid(%" PRIu64 "),  parent_height(%" PRIu64 "),block-flags=0x%x,store-flags=0x%x,refcount=%d,this=%p}",get_xvid(),get_account().c_str(), m_block_height,m_block_viewid,get_next_viewid(),m_parent_block_height,get_block_flags(),get_store_flags(), get_refcount(),this);
 
             return std::string(local_buf);
         }
@@ -387,11 +391,15 @@ namespace top
         {
             const int32_t begin_size = stream.size();
             
-            stream << m_account_id;
+            stream.write_compact_var(get_account());
             stream.write_compact_var(m_block_height);
-            stream.write_compact_var(m_last_fullblock_height);
             stream.write_compact_var(m_block_viewid);
+            stream.write_tiny_string(m_block_hash);
+            stream.write_tiny_string(m_last_block_hash);
+            stream.write_tiny_string(m_last_fullblock_hash);
+            stream.write_compact_var(m_last_fullblock_height);
             stream.write_compact_var(m_next_viewid_offset);
+            
             stream << m_parent_account_id;
             stream.write_compact_var(m_parent_block_height);
             stream.write_compact_var(m_parent_view_id);
@@ -399,9 +407,6 @@ namespace top
             stream << m_combineflags;
             stream << m_block_types;
             
-            stream.write_tiny_string(m_block_hash);
-            stream.write_tiny_string(m_last_block_hash);
-          
             return (stream.size() - begin_size);
         }
     
@@ -410,11 +415,16 @@ namespace top
             const int32_t begin_size = stream.size();
             try
             {
-                stream >> m_account_id;
+                std::string account_addr;
+                stream.read_compact_var(account_addr);
                 stream.read_compact_var(m_block_height);
-                stream.read_compact_var(m_last_fullblock_height);
                 stream.read_compact_var(m_block_viewid);
+                stream.read_tiny_string(m_block_hash);
+                stream.read_tiny_string(m_last_block_hash);
+                stream.read_tiny_string(m_last_fullblock_hash);
+                stream.read_compact_var(m_last_fullblock_height);
                 stream.read_compact_var(m_next_viewid_offset);
+                
                 stream >> m_parent_account_id;
                 stream.read_compact_var(m_parent_block_height);
                 stream.read_compact_var(m_parent_view_id);
@@ -422,9 +432,8 @@ namespace top
                 stream >> m_combineflags;
                 stream >> m_block_types;
                 
-                stream.read_tiny_string(m_block_hash);
-                stream.read_tiny_string(m_last_block_hash);
-                
+                //finally reset account information
+                xvaccount_t::operator=(account_addr);
             }catch (int error_code){
                 xerror("xvbindex_t::serialize_from,throw exception with error:%d",error_code);
             }
