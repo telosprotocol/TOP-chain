@@ -126,8 +126,6 @@ void xchain_downloader_t::on_response(std::vector<data::xblock_ptr_t> &blocks, c
         return;
     }
 
-    bool forked = false;
-
     // compare before and after
     for (uint32_t i = 0; i < count; i++) {
         xblock_ptr_t &block = blocks[i];

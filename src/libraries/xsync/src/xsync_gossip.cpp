@@ -80,31 +80,8 @@ void xsync_gossip_t::on_chain_timer(const mbus::xevent_ptr_t& e) {
 
         if (!m_role_xips_mgr->vrf_gossip_with_archive(time_block, role_type))
             continue;
-
-        std::vector<xgossip_chain_info_ptr_t> info_list;
-
-        const map_chain_info_t &chains = role_chains->get_chains_wrapper().get_chains();
-        for (const auto &it: chains) {
-
-            if (!m_role_chains_mgr->exists(it.second.address))
-                continue;
-
-            base::xauto_ptr<base::xvblock_t> current_block = m_sync_store->get_latest_end_block(it.second.address, enum_chain_sync_pocliy_full);
-            uint64_t height = current_block->get_height();
-            uint64_t view_id = current_block->get_viewid();
-
-            xgossip_chain_info_ptr_t info = std::make_shared<xgossip_chain_info_t>();
-            info->owner = it.second.address;
-            info->max_height = height;
-            info->view_id = view_id;
-            info_list.push_back(info);
-        }
-
-        xsync_info("xsync_gossip on_chain_timer send gossip timer_height=%lu %s count(%d)", time_block->get_height(), self_addr.to_string().c_str(), info_list.size());
-
-        if (!info_list.empty()) {
-            send_gossip(self_addr, info_list, 1, enum_gossip_target_type_archive);
-        }
+        
+        walk_role(self_addr, role_chains, enum_walk_type_timer);
     }
 }
 
@@ -141,6 +118,10 @@ void xsync_gossip_t::walk_role(const vnetwork::xvnode_address_t &self_addr, cons
 
         if (!m_role_chains_mgr->exists(it.second.address))
             continue;
+
+        if (it.second.sync_policy == enum_chain_sync_pocliy_fast) {
+            continue;
+        }
 
         base::xauto_ptr<base::xvblock_t> current_block = m_sync_store->get_latest_end_block(it.second.address, enum_chain_sync_pocliy_full);
         uint64_t height = current_block->get_height();
