@@ -12,7 +12,6 @@
 #include "xtransport/proto/transport.pb.h"
 #include "xpbase/base/top_timer.h"
 #include "xgossip/include/header_block_data.h"
-#include "xtransport/message_manager/message_manager_intf.h"
 
 namespace top {
 
@@ -80,7 +79,6 @@ private:
     std::mutex requested_headers_mutex_;
     std::shared_ptr<HeaderBlockData> header_block_data_{ nullptr };
     kadmlia::RoutingTablePtr routing_table_;
-    transport::MessageManagerIntf* message_manager_{transport::MessageManagerIntf::Instance()};
 
     std::mutex sync_ask_filter_map_mutex_;
     std::unordered_map<std::string, std::vector<SyncAskFilterPtr> > sync_ask_filter_map_;

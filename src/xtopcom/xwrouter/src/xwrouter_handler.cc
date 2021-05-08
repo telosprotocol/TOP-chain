@@ -22,14 +22,12 @@
 #include "xpbase/base/uint64_bloomfilter.h"
 #include "xpbase/base/redis_client.h"
 #include "xkad/gossip/rumor_filter.h"
-#include "xgossip/include/broadcast_layered.h"
 #include "xgossip/include/gossip_bloomfilter.h"
 #include "xgossip/include/gossip_bloomfilter_layer.h"
 #include "xgossip/include/gossip_utils.h"
 #include "xgossip/gossip_interface.h"
 #include "xpbase/base/top_log.h"
 #include "xbase/xutl.h"
-#include "xtransport/message_manager/message_manager_intf.h"
 
 namespace top {
 
@@ -38,33 +36,21 @@ using namespace gossip;
 
 namespace wrouter {
 
-WrouterHandler::WrouterHandler(
-        transport::TransportPtr transport_ptr,
-        std::shared_ptr<gossip::GossipInterface> bloom_gossip_ptr,
-        std::shared_ptr<gossip::GossipInterface> layered_gossip_ptr,
-        std::shared_ptr<gossip::GossipInterface> bloom_layer_gossip_ptr,
-        std::shared_ptr<gossip::GossipInterface> set_layer_gossip_ptr,
-        std::shared_ptr<gossip::GossipInterface> bloom_gossip_merge_ptr,
-        std::shared_ptr<gossip::GossipInterface> bloom_gossip_zone_ptr,
-        std::shared_ptr<gossip::GossipInterface> bloom_gossip_super_ptr)
-        : transport_ptr_(transport_ptr),
-        bloom_gossip_ptr_(bloom_gossip_ptr),
-        layered_gossip_ptr_(layered_gossip_ptr),
-        bloom_layer_gossip_ptr_(bloom_layer_gossip_ptr),
-        set_layer_gossip_ptr_(set_layer_gossip_ptr),
-        bloom_gossip_merge_ptr_(bloom_gossip_merge_ptr),
-        bloom_gossip_zone_ptr_(bloom_gossip_zone_ptr),
-        bloom_gossip_super_ptr_(bloom_gossip_super_ptr){}
- 
+WrouterHandler::WrouterHandler(transport::TransportPtr transport_ptr,
+                               std::shared_ptr<gossip::GossipInterface> bloom_gossip_ptr,
+                               std::shared_ptr<gossip::GossipInterface> bloom_layer_gossip_ptr,
+                               std::shared_ptr<gossip::GossipInterface> gossip_rrs_ptr)
+  : transport_ptr_(transport_ptr)
+  , bloom_gossip_ptr_(bloom_gossip_ptr)
+  , bloom_layer_gossip_ptr_(bloom_layer_gossip_ptr)
+  , gossip_rrs_ptr_(gossip_rrs_ptr) {
+}
 
 WrouterHandler::~WrouterHandler() {
     transport_ptr_ = nullptr;
     bloom_gossip_ptr_ = nullptr;
-    layered_gossip_ptr_ = nullptr;
     bloom_layer_gossip_ptr_ = nullptr;
-    set_layer_gossip_ptr_ = nullptr;
-    bloom_gossip_merge_ptr_ = nullptr;
-    bloom_gossip_zone_ptr_ = nullptr;
+    gossip_rrs_ptr_ = nullptr;
 }
 
 kadmlia::RoutingTablePtr WrouterHandler::FindRoutingTable(

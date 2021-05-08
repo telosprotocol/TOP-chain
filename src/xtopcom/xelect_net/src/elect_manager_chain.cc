@@ -8,7 +8,7 @@
 #include "xwrouter/register_message_handler.h"
 #include "xwrouter/multi_routing/small_net_cache.h"
 #include "xchain_timer/xchain_timer.h"
-#include "xelect_net/include/elect_node.h"
+#include "xelect_net/include/node_manager.h"
 #include "xelect_net/include/elect_uitils.h"
 #include "xbasic/xelapsed_time.h"
 

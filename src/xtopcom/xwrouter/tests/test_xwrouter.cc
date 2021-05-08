@@ -106,14 +106,14 @@ void TestXwrouter::send() {
     m2.set_is_root(false);
     m2.set_broadcast(false);
     w_->send(m2);
-    w_->SendToLocal(m2);
-    w_->SendToLocal(m2);
-    w_->SendToLocal(m2);
-    w_->SendToLocal(m2);
-    w_->SendDirect(m2, "127.0.0.1", 20001);
+    // w_->SendToLocal(m2);
+    // w_->SendToLocal(m2);
+    // w_->SendToLocal(m2);
+    // w_->SendToLocal(m2);
+    // w_->SendDirect(m2, "127.0.0.1", 20001);
 
-    w_->GetAllLocalIds();
-    w_->GetAllLocalXips();
+    // w_->GetAllLocalIds();
+    // w_->GetAllLocalXips();
 
     transport::protobuf::RoutingMessage m3(original_message);
     m3.set_is_root(false);

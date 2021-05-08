@@ -16,7 +16,6 @@
 #include "xvnode/xvnode_manager.h"
 #include "xchaininit/xchain_command.h"
 #include "xchaininit/xchain_info_query.h"
-#include "xelect_net/include/elect_command.h"
 #include "xelect_net/include/multilayer_network_chain_query.h"
 
 #include <cinttypes>

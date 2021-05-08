@@ -18,7 +18,6 @@ namespace top {
 namespace kadmlia {
 class RoutingTable;
 class Transport;
-class RootRoutingManager;
 }
 
 namespace elect {

@@ -10,7 +10,6 @@
 #include "xwrouter/root/root_routing_manager.h"
 #include "xelect_net/include/elect_manager_base.h"
 #include "xelect_net/include/elect_vhost.h"
-#include "xelect_net/include/elect_command.h"
 #include "xelect_net/include/multilayer_network_base.h"
 #include "xdb/xdb.h"
 
@@ -40,23 +39,6 @@ public:
     inline EcNetcardPtr& GetEcNetcard() { 
         return ec_netcard_; 
     };
-    /**
-     * @brief Get the Elect Cmd object
-     * 
-     * @return ElectCommands& 
-     */
-    inline ElectCommands& GetElectCmd() {
-        return elect_cmd_;
-    }
-    /**
-     * @brief (not used)
-     * 
-     * @param log_path 
-     * @param log_debug 
-     * @param log_off 
-     * @return int 
-     */
-    int InitLog(const std::string& log_path, bool log_debug, bool log_off);
     /**
      * @brief create db instance
      * 
@@ -100,7 +82,6 @@ private:
     transport::TransportPtr nat_transport_{ nullptr };
     std::shared_ptr<db::xdb_face_t> net_db_ { nullptr };
     std::shared_ptr<transport::MultiThreadHandler> multi_message_handler_{ nullptr };
-    ElectCommands elect_cmd_;
     EcNetcardPtr ec_netcard_ { nullptr };
 };
 

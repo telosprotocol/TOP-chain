@@ -29,6 +29,7 @@ enum GossipType {
     kGossipBloomfilterMerge = 5,
     kGossipBloomfilterZone = 6,
     kGossipBloomfilterSuperNode = 7,
+    kGossipRRS = 8,
 };
 
 /*
@@ -50,6 +51,18 @@ static const uint32_t kGossipBloomfilterHashNum = 4u;
 static const uint32_t kGossipBloomfilterIgnoreLevel = 1u;
 static const uint32_t kGossipDefaultMaxHopNum = 10u;
 static const uint32_t kGossipSwitchLayerHopNum = 0u;
+
+// layer_gossip
+static const uint32_t kGossipLayerSwitchLayerHopNum = 0u;
+static const uint32_t kGossipLayerNeighborNum = 3u;
+static const uint32_t kGossipLayerBloomfilterIgnoreLevel = 1u;
+static const uint32_t kGossipLayerStopTimes = 3u;
+
+// rrs_gossip
+static const uint32_t kGossipRRSSwitchLayerHopNum = 4u;
+static const uint32_t kGossipRRSNeighborNum = 6u;
+static const uint32_t kGossipRRSStopTimes = 3u;
+static const uint32_t kGossipRRSBloomfilterIgnoreLevel = 1u;
 
 uint32_t GetRandomNeighbersCount(uint32_t reliable_level);
 

@@ -20,7 +20,6 @@
 #include "xkad/proto/kadmlia.pb.h"
 #include "xwrouter/wrouter_utils/wrouter_utils.h"
 #include "xwrouter/register_message_handler.h"
-#include "xtransport/message_manager/message_manager_intf.h"
 #include "xkad/nat_detect/nat_manager_intf.h"
 
 namespace top {
@@ -48,9 +47,6 @@ private:
     friend void WrouterRegisterMessageRequestType(int msg_type, int request_type);
     friend void WrouterUnregisterMessageRequestType(int msg_type);
     friend int WrouterGetRequestType(int msg_type);
-    friend void WrouterSelfHandleMessage(
-            transport::protobuf::RoutingMessage& message,
-            base::xpacket_t& packet);
 
     static WrouterMessageHandler* Instance();
     void HandleMessage(
@@ -77,36 +73,6 @@ private:
 
     void CheckBitVPNClientMessage(transport::protobuf::RoutingMessage& message);
     void CheckNatDetectMessage(transport::protobuf::RoutingMessage& message);
-    int HandleClientMessage(
-            transport::protobuf::RoutingMessage& message,
-            base::xpacket_t& packet);
-    int HandleMultiRelayMessage(
-            transport::protobuf::RoutingMessage& message,
-            base::xpacket_t& packet);
-    bool CheckMultiRelay(transport::protobuf::RoutingMessage& message);
-    std::shared_ptr<kadmlia::RoutingTable> MultiRelayGetSmartRoutingTable(
-            transport::protobuf::RoutingMessage& message);
-    int HandleMultiRelayMessageSpearHead(
-            transport::protobuf::RoutingMessage& message,
-            base::xpacket_t& packet);
-    int CheckRelayMsgToNextEdgeNetwork(transport::protobuf::RoutingMessage& message);
-    void RelayMsgToNextEdgeNetwork(transport::protobuf::RoutingMessage& message);
-    void RelayMsgToNextServiceNetwork(
-            transport::protobuf::RoutingMessage& message,
-            std::shared_ptr<kadmlia::RoutingTable> routing_table);
-
-    void SendMultiRelayResponse(transport::protobuf::RoutingMessage& message);
-    int HandleMultiRelayRequest(
-            transport::protobuf::RoutingMessage& message,
-            base::xpacket_t& packet);
-
-    void CallbackMultiRelayResponse(transport::protobuf::RoutingMessage& message);
-    int HandleMultiRelayResponse(
-            transport::protobuf::RoutingMessage& message,
-            base::xpacket_t& packet);
-
-    void PrintRelayHopInfo(transport::protobuf::RoutingMessage& message);
-    void PrintTraceRoute(transport::protobuf::RoutingMessage& message);
 
     void HandleConnectRequest(
             transport::protobuf::RoutingMessage& message,
@@ -124,9 +90,6 @@ private:
     void HandleFindNodesResponse(
             transport::protobuf::RoutingMessage& message,
             base::xpacket_t& packet);
-    void SendAck(
-            transport::protobuf::RoutingMessage& message, 
-            base::xpacket_t& packet);
     void HandleHeartbeatRequest(
             transport::protobuf::RoutingMessage& message,
             base::xpacket_t& packet);
@@ -137,27 +100,9 @@ private:
             transport::protobuf::RoutingMessage& message,
             base::xpacket_t& packet);
 
-    // test multi relay message
-    void HandleTestMultiRelayRequest(
-            transport::protobuf::RoutingMessage& message,
-            base::xpacket_t& packet);
-    void HandleTestMultiRelayResponse(
-            transport::protobuf::RoutingMessage& message,
-            base::xpacket_t& packet);
-    void HandleBroadcastFromMultiChannelRequest(
-            transport::protobuf::RoutingMessage& message,
-            base::xpacket_t& packet);
-    void HandleBroadcastFromMultiChannelAck(
-            transport::protobuf::RoutingMessage& message,
-            base::xpacket_t& packet);
-    void HandleSendToFromRandomNeighborsRequest(
-            transport::protobuf::RoutingMessage& message,
-            base::xpacket_t& packet);
-
     ArrayHandlers array_handlers_;
     std::mutex map_request_type_mutex_;
     std::map<int, int> map_request_type_;
-    transport::MessageManagerIntf* message_manager_{transport::MessageManagerIntf::Instance()};
     kadmlia::NatManagerIntf* nat_manager_{kadmlia::NatManagerIntf::Instance()};
 };
 

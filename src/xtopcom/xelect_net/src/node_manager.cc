@@ -5,7 +5,7 @@
 //  Copyright (c) 2017-2019 Telos Foundation & contributors
 //
 
-#include "xelect_net/include/elect_node.h"
+#include "xelect_net/include/node_manager.h"
 
 #include "xpbase/base/kad_key/chain_kadmlia_key.h"
 #include "xtransport/transport.h"
@@ -20,15 +20,15 @@ using namespace kadmlia;
 
 namespace elect {
 
-ElectNode::ElectNode(
+NodeManager::NodeManager(
         std::shared_ptr<transport::Transport> transport,
         const base::Config& config)
         : NodeManagerBase(transport, config) {
         }
 
-ElectNode::~ElectNode() {}
+NodeManager::~NodeManager() {}
 
-int ElectNode::Init() {
+int NodeManager::Init() {
     NodeManagerBase::Init();
     return kKadSuccess;
 
@@ -54,7 +54,7 @@ int ElectNode::Init() {
     */
 }
 
-int ElectNode::Join(const base::XipParser& xip) {
+int NodeManager::Join(const base::XipParser& xip) {
     base::KadmliaKeyPtr kad_key = GetKadmliaKey(xip);
     TOP_INFO("Join committee[%d][%d]", xip.xnetwork_id(), xip.zone_id());
     if (AddCommitteeRole(kad_key) != kadmlia::kKadSuccess) {
@@ -65,7 +65,7 @@ int ElectNode::Join(const base::XipParser& xip) {
     return kKadSuccess;
 }
 
-int ElectNode::Quit(const base::XipParser& xip) {
+int NodeManager::Quit(const base::XipParser& xip) {
     std::shared_ptr<RoutingManager> quit_ptr = nullptr;
     base::KadmliaKeyPtr kad_key = GetKadmliaKey(xip);
     {
@@ -83,7 +83,7 @@ int ElectNode::Quit(const base::XipParser& xip) {
 }
 
 
-int ElectNode::DropNodes(const base::XipParser& xip, const std::vector<std::string>& drop_accounts) {
+int NodeManager::DropNodes(const base::XipParser& xip, const std::vector<std::string>& drop_accounts) {
     base::KadmliaKeyPtr kad_key = GetKadmliaKey(xip);
     std::vector<std::string> drop_nodes;
     drop_nodes.reserve(30);
@@ -114,21 +114,7 @@ int ElectNode::DropNodes(const base::XipParser& xip, const std::vector<std::stri
     return kKadSuccess;
 }
 
-int ElectNode::AddBackupRole(base::KadmliaKeyPtr& kad_key) {
-    std::unique_lock<std::mutex> lock(ec_manager_map_mutex_);
-    auto iter = ec_manager_map_.find(kad_key->GetServiceType());
-    if (iter != ec_manager_map_.end()) {
-        TOP_WARN("this node has role: %llu", kad_key->GetServiceType());
-        return top::kadmlia::kKadFailed;
-    }
-
-    // just create RoutingManager and do not init it, the purpose is to release resource when quit
-    auto ec_manager = std::make_shared<RoutingManager>(kad_key->GetServiceType());
-    ec_manager_map_[kad_key->GetServiceType()] = ec_manager;
-    return kKadSuccess;
-}
-
-int ElectNode::AddCommitteeRole(base::KadmliaKeyPtr& kad_key) {
+int NodeManager::AddCommitteeRole(base::KadmliaKeyPtr& kad_key) {
     auto rt = wrouter::GetRoutingTable(kad_key->GetServiceType(), false);
 
     std::unique_lock<std::mutex> lock(ec_manager_map_mutex_);

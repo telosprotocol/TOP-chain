@@ -18,12 +18,13 @@
 #include "xkad/routing_table/routing_table.h"
 #include "xwrouter/register_routing_table.h"
 #include "xwrouter/root/root_routing_manager.h"
+#include "xwrouter/multi_routing/multi_routing.h"
 
 namespace top {
 
 namespace elect {
 
-static const int kElectRoutingMaxNodesSize = 128;
+static const int kElectRoutingMaxNodesSize = 256;
 
 class RoutingManagerBase {
 public:
@@ -48,7 +49,7 @@ protected:
     }
     virtual ~RoutingManagerBase() {
         TOP_WARN("unregister routing table: %llu", service_type_);
-        wrouter::UnregisterRoutingTable(service_type_);
+        wrouter::MultiRouting::Instance()->RemoveRoutingTable(service_type_);
     }
 
     template<typename RoutingType>
@@ -73,7 +74,8 @@ int RoutingManagerBase::TemplateInit(
             transport,
             config);
     if (!routing_ptr_) {
-        top::wrouter::UnregisterRoutingTable(kad_key->GetServiceType());
+        TOP_KINFO("unregister routing table %llu", kad_key->GetServiceType());
+        wrouter::MultiRouting::Instance()->RemoveRoutingTable(kad_key->GetServiceType());
         return top::kadmlia::kKadFailed;
     }
 
@@ -103,7 +105,9 @@ std::shared_ptr<top::kadmlia::RoutingTable> RoutingManagerBase::CreateRoutingTab
     uint64_t service_type =  kad_key->GetServiceType();
     routing_table_ptr->get_local_node_info()->set_service_type(service_type);
     service_type_ = service_type;
-    wrouter::RegisterRoutingTable(service_type, routing_table_ptr);
+    // wrouter::RegisterRoutingTable(service_type, routing_table_ptr);
+    TOP_KINFO("register routing table %llu", service_type);
+    wrouter::MultiRouting::Instance()->AddRoutingTable(service_type, routing_table_ptr);
     bool first_node = false;
     std::set<std::pair<std::string, uint16_t>> join_endpoints;
     auto ret = wrouter::NetworkExists(kad_key, join_endpoints);
