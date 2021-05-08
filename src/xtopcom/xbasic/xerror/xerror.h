@@ -1,10 +1,20 @@
+// Copyright (c) 2017-2021 Telos Foundation & contributors
+// Distributed under the MIT software license, see the accompanying
+// file COPYING or http://www.opensource.org/licenses/mit-license.php.
+
 #pragma once
 
+#include "xbase/xbase.h"
 #include "xbasic/xerror/xchain_error.h"
 
 #include <limits>
 #include <system_error>
 #include <type_traits>
+
+std::error_category const & base_category();
+std::error_code make_error_code(enum_xerror_code ec) noexcept;
+std::error_condition make_error_condition(enum_xerror_code ec) noexcept;
+
 
 NS_BEG2(top, error)
 
@@ -34,6 +44,14 @@ struct hash<top::error::xbasic_errc_t> final {
 };
 
 #endif
+
+template <>
+struct is_error_code_enum<enum_xerror_code> : std::true_type {
+};
+
+template <>
+struct is_error_condition_enum<enum_xerror_code> : std::true_type {
+};
 
 template <>
 struct is_error_code_enum<top::error::xbasic_errc_t> : std::true_type {};

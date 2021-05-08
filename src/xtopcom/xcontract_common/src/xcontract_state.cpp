@@ -1,3 +1,7 @@
+// Copyright (c) 2017-2021 Telos Foundation & contributors
+// Distributed under the MIT software license, see the accompanying
+// file COPYING or http://www.opensource.org/licenses/mit-license.php.
+
 #include "xcontract_common/xcontract_state.h"
 
 #include "xbasic/xerror/xthrow_error.h"
@@ -55,6 +59,17 @@ void xtop_contract_state::deploy_src_code(std::string code, std::error_code & ec
 void xtop_contract_state::deploy_src_code(std::string code) {
     std::error_code ec;
     deploy_src_code(std::move(code), ec);
+    top::error::throw_error(ec);
+}
+
+void xtop_contract_state::deploy_bin_code(xbyte_buffer_t code, std::error_code & ec) {
+    properties::xproperty_identifier_t src_property_id{ "src_code", properties::xproperty_type_t::src_code, properties::xproperty_category_t::user };
+    m_ac->deploy_bin_code(src_property_id, std::move(code), ec);
+}
+
+void xtop_contract_state::deploy_bin_code(xbyte_buffer_t code) {
+    std::error_code ec;
+    deploy_bin_code(std::move(code), ec);
     top::error::throw_error(ec);
 }
 
