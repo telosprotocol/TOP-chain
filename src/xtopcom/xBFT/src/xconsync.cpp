@@ -347,7 +347,8 @@ namespace top
             {
                 //note:#1 safe rule, always cleans up flags carried by peer
                 _sync_block->reset_block_flags();  //now force to clean all flags for both block and cert
-                m_syncing_requests.erase(sync_request_it); //safe to remove local request now
+                if(sync_request_it != m_syncing_requests.end())
+                    m_syncing_requests.erase(sync_request_it); //safe to remove local request now
                 //fire asyn job to verify signature & cert then
                 {
                     xinfo("xBFTSyncdrv::handle_sync_respond_msg,pulled un-verified commit-block:%s at node=0x%llx from peer:0x%llx",_sync_block->dump().c_str(),get_xip2_addr().low_addr,from_addr.low_addr);
