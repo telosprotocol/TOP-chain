@@ -1343,7 +1343,7 @@ namespace top
             //note: emplace return a pair<iterator,bool>, value of bool indicate whether inserted or not, value of iterator point to inserted it
             auto height_map_pos  = m_all_blocks.emplace(this_block_height,std::map<uint64_t,base::xvbindex_t*>());
             auto & view_map     = height_map_pos.first->second;//hight_map_pos.first->first is height, and hight_map_pos.first->second is viewmap
-
+#if 0  // TODO(jimmy)
             if(this_block->check_block_flag(base::enum_xvblock_flag_committed))   //commit block
             {
                 xassert(this_block->check_block_flag(base::enum_xvblock_flag_locked)); //must be true
@@ -1390,7 +1390,7 @@ namespace top
                 }
                 #endif // __NOT_ALLOW_FORK_AT_LOCK_BLOCK__
             }
-            
+#endif
             auto existing_view_iterator = view_map.find(this_block->get_viewid());
             if(existing_view_iterator != view_map.end())//apple rule#2 by reuse existing iterator and replace by new value
             {
