@@ -7,8 +7,6 @@
 #include "xbase/xint.h"
 #include "xbase/xmem.h"
 #include "xbase/xutl.h"
-#include "xbasic/xerror/xerror.h"
-#include "xbasic/xutility.h"
 #include "xbasic/xversion.h"
 #include "xconfig/xconfig_register.h"
 #include "xconfig/xpredefined_configurations.h"
@@ -21,9 +19,7 @@
 #include "xdata/xgenesis_data.h"
 #include "xdata/xlightunit.h"
 
-#include <algorithm>
 #include <cassert>
-#include <cstring>
 #include <string>
 #include <vector>
 
