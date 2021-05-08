@@ -193,7 +193,7 @@ bool xblocktool_t::verify_latest_blocks(const base::xblock_mptrs & latest_blocks
 bool xblocktool_t::verify_latest_blocks(base::xvblock_t* latest_cert_block, base::xvblock_t* lock_block, base::xvblock_t* commited_block) {
     // check committed anc connectted flag first
     if (!commited_block->check_block_flag(base::enum_xvblock_flag_connected)) {
-        xwarn("xblock_maker_t::verify_latest_blocks, fail-committed not connected. commit_block=%s",
+        xwarn("xblocktool_t::verify_latest_blocks, fail-committed not connected. commit_block=%s",
             commited_block->dump().c_str());
         return false;
     }
