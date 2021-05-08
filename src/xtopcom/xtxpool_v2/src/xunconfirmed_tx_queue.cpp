@@ -53,11 +53,14 @@ const xcons_transaction_ptr_t xpeer_table_unconfirmed_txs_t::find(uint64_t recei
 }
 
 void xpeer_table_unconfirmed_txs_t::update_receipt_id(uint64_t latest_id, xall_unconfirm_tx_set_t & all_unconfirm_tx_set) {
+    if (m_latest_receipt_id >= latest_id) {
+        return;
+    }
+
     uint64_t front_receipt_id = m_unconfirmed_txs.begin()->first;
     for (uint64_t id = front_receipt_id; id <= latest_id; id++) {
         erase(id, all_unconfirm_tx_set);
     }
-    xassert(m_latest_receipt_id <= latest_id);
     m_latest_receipt_id = latest_id;
 }
 
