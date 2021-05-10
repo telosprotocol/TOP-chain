@@ -4,13 +4,15 @@
 #include "xdata/xgenesis_data.h"
 #include "xdata/xtransaction_maker.hpp"
 #include "xloader/xconfig_onchain_loader.h"
-#include "xstore/test/test_datamock.hpp"
+// #include "xstore/test/test_datamock.hpp"
 #include "xstore/xaccount_context.h"
 #include "xstore/xstore_face.h"
 #include "xtxpool_v2/xtx_account_filter.h"
 #include "xtxpool_v2/xtxpool_error.h"
 #include "xblockstore/xblockstore_face.h"
 #include "tests/mock/xvchain_creator.hpp"
+#include "xdata/xblocktool.h"
+#include "xdata/tests/test_blockutl.hpp"
 
 using namespace top::xtxpool_v2;
 using namespace top::store;

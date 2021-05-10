@@ -12,6 +12,7 @@
 #include "xmbus/xevent_store.h"
 #include "xstore/xstore.h"
 #include "xtxpool_service_v2/xcons_utl.h"
+#include "xtxpool_service_v2/xreceipt_strategy.h"
 #include "xtxpool_service_v2/xtxpool_proxy.h"
 #include "xtxpool_service_v2/xtxpool_service.h"
 #include "xtxpool_v2/xreceipt_resend.h"
@@ -86,23 +87,9 @@ void xtxpool_service_mgr::on_block_confirmed(xblock_t * block) {
 }
 
 void xtxpool_service_mgr::make_receipts_and_send(xblock_t * block) {
-    if (!block->is_lighttable() || !block->check_block_flag(base::enum_xvblock_flag_committed)) {
-        xinfo("xtxpool_service_mgr::make_receipts_and_send block:%s", block->dump().c_str());
-        return;
-    }
-
-    xtable_block_t * tableblock = dynamic_cast<xtable_block_t *>(block);
-    std::vector<xcons_transaction_ptr_t> sendtx_receipts;
-    std::vector<xcons_transaction_ptr_t> recvtx_receipts;
-    tableblock->create_txreceipts(sendtx_receipts, recvtx_receipts);
-
-    uint64_t now = xverifier::xtx_utl::get_gmttime_s();
-    for (auto & it_send_receipt : sendtx_receipts) {
-        send_receipt(it_send_receipt);
-    }
-
-    for (auto & it_recv_receipt : recvtx_receipts) {
-        send_receipt(it_recv_receipt);
+    auto receipts = xreceipt_strategy_t::make_receipts(block);
+    for (auto & receipt : receipts) {
+        send_receipt(receipt);
     }
     xdbg("xtxpool_service_mgr::make_receipts_and_send block:%s", block->dump().c_str());
 }
@@ -245,11 +232,9 @@ void xtxpool_service_mgr::stop() {
     m_timer->release_ref();
 }
 
-#define recover_unconfirmed_txs_interval (0xFF)  // every 256 seconds recover once.
-
 void xtxpool_service_mgr::on_timer() {
     uint64_t now = xverifier::xtx_utl::get_gmttime_s();
-    bool is_time_for_recover_unconfirmed_txs = ((now % recover_unconfirmed_txs_interval) == 0);
+    bool is_time_for_recover_unconfirmed_txs = xreceipt_strategy_t::is_time_for_recover_unconfirmed_txs(now);
     typedef std::tuple<base::enum_xchain_zone_index, uint32_t, uint32_t> table_boundary_t;
     std::vector<table_boundary_t> table_boundarys;
     {
