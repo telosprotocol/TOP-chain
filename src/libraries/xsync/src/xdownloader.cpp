@@ -152,7 +152,7 @@ m_ratelimit(ratelimit) {
         m_mbus_list.push_back(bus);
 
         xaccount_timer_t *timer = new xaccount_timer_t(vnode_id, top::base::xcontext_t::instance(), thread_pool[i]->get_thread_id());
-        timer->start(0, 10);
+        timer->start(0, GET_TOKEN_RETRY_INTERVAL / 10);
         m_timer_list.push_back(timer);
 
         std::shared_ptr<xevent_monitor_t> monitor = std::make_shared<xevent_monitor_t>(i, make_observer(bus.get()), thread_pool[i], timer, this);
@@ -324,7 +324,7 @@ xchain_downloader_face_ptr_t xdownloader_t::on_chain_snapshot_response_event(uin
     if (chain_downloader != nullptr) {
         vnetwork::xvnode_address_t &self_addr = bme->self_address;
         vnetwork::xvnode_address_t &from_addr = bme->from_address;
-        chain_downloader->on_chain_snapshot_response(bme->m_tbl_account_addr, 
+        chain_downloader->on_chain_snapshot_response(bme->m_tbl_account_addr,
                 bme->m_chain_snapshot, bme->m_height, self_addr, from_addr);
     }
 
