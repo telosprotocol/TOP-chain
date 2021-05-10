@@ -15,6 +15,8 @@
 
 NS_BEG2(top, sync)
 
+#define GET_TOKEN_RETRY_INTERVAL 6000
+
 class xchain_downloader_face_t {
 public:
     virtual ~xchain_downloader_face_t() {}

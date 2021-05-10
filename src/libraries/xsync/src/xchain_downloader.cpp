@@ -20,7 +20,6 @@ using namespace mbus;
 using namespace data;
 
 #define BATCH_SIZE 20
-#define GET_TOKEN_RETRY_INTERVAL 6000
 
 xchain_downloader_t::xchain_downloader_t(std::string vnode_id,
                                  xsync_store_face_t * sync_store,
