@@ -14,53 +14,85 @@ NS_BEG2(top, store)
 
 xindexstore_table_t::xindexstore_table_t(const std::string & account, const xindexstore_resources_ptr_t & resources)
 : xindexstore_face_t(account), m_resources(resources) {
+    xdbg("xindexstore_table_t::xindexstore_table_t create,this=%p,account=%s", this, account.c_str());
     m_tablestate = make_object_ptr<xtablestate_t>();  // create genensis state
+}
+xindexstore_table_t::~xindexstore_table_t() {
+    xdbg("xindexstore_table_t::xindexstore_table_t destroy,this=%p", this);
 }
 
 void xindexstore_table_t::set_cache_state(const xblock_ptr_t & block, const xtablestate_ptr_t & state) {
     xassert(block->get_height() == state->get_height());
 
-    auto iter = m_cache_tablestate.find(block->get_block_hash());
+    auto iter = m_cache_tablestate.find(block->get_height());
     if (iter == m_cache_tablestate.end()) {
-        m_cache_tablestate[block->get_block_hash()] = state;
-        xdbg("xindexstore_table_t::set_cache_state table=%s,tablestate_height=%" PRIu64 "",
-        get_account().c_str(), state->get_height());
+        std::map<std::string, xtablestate_ptr_t> hash_map;
+        hash_map[block->get_block_hash()] = state;
+        m_cache_tablestate[block->get_height()] = hash_map;
+    } else {
+        std::map<std::string, xtablestate_ptr_t> & hash_map = iter->second;
+        xassert(hash_map.size() < 4);  // should not has too many different blocks in same height
+        auto iter2 = hash_map.find(block->get_block_hash());
+        if (iter2 == hash_map.end()) {
+            hash_map[block->get_block_hash()] = state;
+        } else {
+            return;
+        }
     }
-
+    xdbg("xindexstore_table_t::set_cache_state table=%s,height=%" PRIu64 ",hash=%s",
+        get_account().c_str(), state->get_height(), base::xstring_utl::to_hex(block->get_block_hash()).c_str());
     // try to clear old state
     clear_old_cache_state();
 }
 
 xtablestate_ptr_t xindexstore_table_t::get_cache_state(const xblock_ptr_t & block) const {
-    auto iter = m_cache_tablestate.find(block->get_block_hash());
+    auto iter = m_cache_tablestate.find(block->get_height());
     if (iter != m_cache_tablestate.end()) {
-        return iter->second;
+        const std::map<std::string, xtablestate_ptr_t> & hash_map = iter->second;
+        auto iter2 = hash_map.find(block->get_block_hash());
+        if (iter2 != hash_map.end()) {
+            return iter2->second;
+        }
     }
     return nullptr;
 }
 
 void xindexstore_table_t::clear_old_cache_state() {
-    if (m_cache_tablestate.size() > 6) {
-        for (auto iter = m_cache_tablestate.begin(); iter != m_cache_tablestate.end();) {
-            const xtablestate_ptr_t & state = iter->second;
-            if (state->get_height() + 5 <= max_highest_height) {
-                xdbg("xindexstore_table_t::clear_old_cache_state table=%s,tablestate_height=%" PRIu64 "",
-                    get_account().c_str(), state->get_height());
-                iter = m_cache_tablestate.erase(iter);
-            } else {
-                iter++;
-            }
-        }
+    if (m_cache_tablestate.size() > 4) {  // only cache 4 height blocks
+        // clear lowest height state
+        auto iter = m_cache_tablestate.begin();
+        xdbg("xindexstore_table_t::clear_old_cache_state table=%s,height=%" PRIu64 "",
+            get_account().c_str(), iter->first);
+        m_cache_tablestate.erase(iter);
     }
+    xassert(m_cache_tablestate.size() <= 4);
+}
+
+xtablestate_ptr_t xindexstore_table_t::execute_block_to_new_state(const xtablestate_ptr_t & prev_state, const xblock_ptr_t & current_block) {
+    xassert(prev_state->get_height() + 1 == current_block->get_height());
+    xtablestate_ptr_t new_state;
+    if (current_block->get_block_class() == base::enum_xvblock_class_full) {
+        new_state = prev_state->clone();
+    } else {
+        new_state = prev_state->clone_with_fulldata();
+    }
+    xdbg("xindexstore_table_t::execute_block_to_new_state account=%s,height=%ld,old=%p,new=%p,old=%p,new=%p",
+        current_block->get_account().c_str(),
+        current_block->get_height(),
+        prev_state->get_accountindex_state()->get_last_full_state().get(),
+        new_state->get_accountindex_state()->get_last_full_state().get(),
+        prev_state->get_accountindex_state()->get_binlog().get(),
+        new_state->get_accountindex_state()->get_binlog().get());
+    new_state->execute_block(current_block.get());
+    xassert(new_state->get_height() == current_block->get_height());
+    return new_state;
 }
 
 xtablestate_ptr_t xindexstore_table_t::rebuild_tablestate(const xtablestate_ptr_t & old_state, const std::map<uint64_t, xblock_ptr_t> & latest_blocks) {
-    xtablestate_ptr_t new_state = old_state->clone();  // must clone before execute
+    xtablestate_ptr_t new_state = old_state;
     for (auto & v : latest_blocks) {
-        xassert(new_state->get_height() + 1 == v.second->get_height());
-        auto ret = new_state->execute_block(v.second.get());
-        xassert(ret);
-        xassert(new_state->get_height() == v.second->get_height());
+        new_state = execute_block_to_new_state(new_state, v.second);
+        set_cache_state(v.second, new_state);
     }
     return new_state;
 }
@@ -179,7 +211,6 @@ xtablestate_ptr_t xindexstore_table_t::get_target_tablestate(const xblock_ptr_t 
     }
 
     if (tablestate_base->get_height() == block->get_height()) {
-        set_cache_state(block, tablestate_base);
         xdbg("xindexstore_table_t::get_target_tablestate succ.table=%s,old_state_height=%" PRIu64 ",block_height=%" PRIu64 "",
             get_account().c_str(), m_tablestate->get_height(), block->get_height());
         return tablestate_base;

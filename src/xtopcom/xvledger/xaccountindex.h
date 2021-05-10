@@ -90,7 +90,7 @@ class xtable_mbt_binlog_t : public xbase_dataunit_t<xtable_mbt_binlog_t, xdata_t
     xtable_mbt_binlog_t();
     xtable_mbt_binlog_t(const std::map<std::string, xaccount_index_t> & changed_indexs);
  protected:
-    ~xtable_mbt_binlog_t() = default;
+    ~xtable_mbt_binlog_t();
 
     int32_t do_write(base::xstream_t & stream) override;
     int32_t do_read(base::xstream_t & stream) override;
@@ -189,7 +189,7 @@ class xtable_mbt_t : public xbase_dataunit_t<xtable_mbt_t, xdata_type_table_mbt>
     explicit xtable_mbt_t(const std::map<uint16_t, xtable_mbt_bucket_node_ptr_t> & bucket_nodes);
 
  protected:
-    ~xtable_mbt_t() = default;
+    ~xtable_mbt_t();
 
     int32_t do_write(base::xstream_t & stream) override;
     int32_t do_read(base::xstream_t & stream) override;
@@ -233,7 +233,7 @@ class xtable_mbt_new_state_t : public base::xdataunit_t {
     xtable_mbt_new_state_t(const xtable_mbt_ptr_t & last_mbt, const xtable_mbt_binlog_ptr_t & binlog);
 
  protected:
-    ~xtable_mbt_new_state_t() {}
+    ~xtable_mbt_new_state_t();
     int32_t         do_write(base::xstream_t & stream) override;
     int32_t         do_read(base::xstream_t & stream) override;
 

@@ -22,7 +22,7 @@ class xtablestate_t : public base::xdataunit_t {
     xtablestate_t(const std::string & full_data, uint64_t full_height, const std::string & binlog_data, uint64_t binlog_height);
     xtablestate_t(const xobject_ptr_t<base::xvboffdata_t> & full_data, uint64_t full_height, const std::string & binlog_data, uint64_t binlog_height);
  protected:
-    ~xtablestate_t() {}
+    ~xtablestate_t();
     int32_t do_write(base::xstream_t & stream) override;
     int32_t do_read(base::xstream_t & stream) override;
 
@@ -44,6 +44,7 @@ class xtablestate_t : public base::xdataunit_t {
 
     bool        execute_block(base::xvblock_t* block);
     xobject_ptr_t<xtablestate_t>   clone();
+    xobject_ptr_t<xtablestate_t>   clone_with_fulldata();
 
  public:  // apis for user query
     void        set_account_index(const std::string & account, const base::xaccount_index_t & account_index);

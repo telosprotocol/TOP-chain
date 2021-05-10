@@ -21,7 +21,7 @@ NS_BEG2(top, blockmaker)
 class xunit_maker_t : public xblock_maker_t {
  public:
     explicit xunit_maker_t(const std::string & account, const xblockmaker_resources_ptr_t & resources, const store::xindexstore_face_ptr_t & indexstore = nullptr);
-    virtual ~xunit_maker_t() {}
+    virtual ~xunit_maker_t();
 
  public:
     int32_t                 check_latest_state(const base::xaccount_index_t & account_index);  // check block and state is latest

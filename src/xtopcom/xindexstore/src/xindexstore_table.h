@@ -15,7 +15,7 @@ NS_BEG2(top, store)
 class xindexstore_table_t : public xindexstore_face_t {
  public:
     xindexstore_table_t(const std::string & account, const xindexstore_resources_ptr_t & resources);
-    ~xindexstore_table_t() {}
+    ~xindexstore_table_t();
 
  public:
     virtual xtablestate_ptr_t       clone_tablestate(const xblock_ptr_t & block);
@@ -31,6 +31,7 @@ class xindexstore_table_t : public xindexstore_face_t {
     xtablestate_ptr_t           get_target_block_state(const xtablestate_ptr_t & old_state, const xblock_ptr_t & block);
     xtablestate_ptr_t           load_base_tablestate_from_db(const xtablestate_ptr_t & old_tablestate);
     xtablestate_ptr_t           rebuild_tablestate(const xtablestate_ptr_t & old_state, const std::map<uint64_t, xblock_ptr_t> & latest_blocks);
+    xtablestate_ptr_t           execute_block_to_new_state(const xtablestate_ptr_t & prev_state, const xblock_ptr_t & current_block);
 
     void                        set_cache_state(const xblock_ptr_t & block, const xtablestate_ptr_t & state);
     xtablestate_ptr_t           get_cache_state(const xblock_ptr_t & block) const;
@@ -38,7 +39,7 @@ class xindexstore_table_t : public xindexstore_face_t {
 
  private:
     xtablestate_ptr_t                           m_tablestate;  // cache db committed state
-    std::map<std::string, xtablestate_ptr_t>    m_cache_tablestate;  // cache more state for query performance
+    std::map<uint64_t, std::map<std::string, xtablestate_ptr_t>>    m_cache_tablestate;  // cache more state for query performance
     uint64_t                        max_highest_height{0};
     xindexstore_resources_ptr_t     m_resources;
     mutable std::mutex              m_lock;
