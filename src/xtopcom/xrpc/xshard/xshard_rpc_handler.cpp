@@ -39,7 +39,7 @@ void xshard_rpc_handler::on_message(const xvnode_address_t & edge_sender, xmessa
            timer_height,
            message.hash());
 
-    auto process_request = [this](base::xcall_t & call, const int32_t cur_thread_id, const uint64_t timenow_ms) -> bool {
+    auto process_request = [self = shared_from_this()](base::xcall_t & call, const int32_t cur_thread_id, const uint64_t timenow_ms) -> bool {
         rpc_message_para_t * para = dynamic_cast<rpc_message_para_t *>(call.get_param1().get_object());
         auto message = para->m_message;
         auto edge_sender = para->m_sender;
@@ -50,7 +50,7 @@ void xshard_rpc_handler::on_message(const xvnode_address_t & edge_sender, xmessa
             xrpc_msg_request_t msg = codec::xmsgpack_codec_t<xrpc_msg_request_t>::decode(para->m_message.payload());
             msg.m_advance_address = edge_sender;
             msg.m_timer_height = timer_height;
-            this->shard_process_request(msg, edge_sender, message.hash());
+            self->shard_process_request(msg, edge_sender, message.hash());
         }
         return true;
     };
