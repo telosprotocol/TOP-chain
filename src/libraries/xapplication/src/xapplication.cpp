@@ -365,7 +365,7 @@ bool xtop_application::is_beacon_account() const noexcept {
     top::common::xnode_id_t node_id = top::common::xnode_id_t{user_params.account};
 
     std::string result;
-    base::xauto_ptr<base::xvblock_t> latest_vblock = m_blockstore->get_latest_committed_block(base::xvaccount_t(sys_contract_rec_elect_rec_addr));
+    auto latest_vblock = data::xblocktool_t::get_latest_committed_lightunit(m_blockstore.get(), sys_contract_rec_elect_rec_addr);
     xblock_t* block = dynamic_cast<xblock_t*>(latest_vblock.get());
     auto property_names = data::election::get_property_name_by_addr(common::xaccount_address_t{sys_contract_rec_elect_rec_addr});
     common::xnetwork_id_t network_id{top::config::to_chainid(XGET_CONFIG(chain_name))};
