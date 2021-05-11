@@ -19,6 +19,7 @@ NS_BEG2(top, blockmaker)
 
 xunit_maker_t::xunit_maker_t(const std::string & account, const xblockmaker_resources_ptr_t & resources, const store::xindexstore_face_ptr_t & indexstore)
 : xblock_maker_t(account, resources, m_keep_latest_blocks_max) {
+    xdbg("xunit_maker_t::xunit_maker_t create,this=%p,account=%s", this, account.c_str());
     m_fullunit_contain_of_unit_num_para = XGET_ONCHAIN_GOVERNANCE_PARAMETER(fullunit_contain_of_unit_num);
     m_block_rules = std::make_shared<xblock_rules>(resources);
 
@@ -27,6 +28,10 @@ xunit_maker_t::xunit_maker_t(const std::string & account, const xblockmaker_reso
     m_emptyunit_builder = std::make_shared<xemptyunit_builder_t>();
     m_default_builder_para = std::make_shared<xblock_builder_para_face_t>(resources);
     m_indexstore = indexstore;
+}
+
+xunit_maker_t::~xunit_maker_t() {
+    xdbg("xunit_maker_t::xunit_maker_t destroy,this=%p", this);
 }
 
 xblock_ptr_t xunit_maker_t::get_latest_block(const base::xaccount_index_t & account_index) {

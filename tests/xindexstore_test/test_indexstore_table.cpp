@@ -103,7 +103,7 @@ TEST_F(test_indexstore_table, get_state_by_block_1) {
     base::xvblockstore_t* blockstore = creator.get_blockstore();
     store::xstore_face_t* xstore = creator.get_xstore();
 
-    uint64_t max_block_height = 10;
+    uint64_t max_block_height = 250;
     xdatamock_table mocktable;
     mocktable.genrate_table_chain(max_block_height);
     const std::vector<xblock_ptr_t> & tables = mocktable.get_history_tables();

@@ -17,11 +17,16 @@ NS_BEG2(top, blockmaker)
 REG_XMODULE_LOG(chainbase::enum_xmodule_type::xmodule_type_xblockmaker, xblockmaker_error_to_string, xblockmaker_error_base+1, xblockmaker_error_max);
 
 xproposal_maker_t::xproposal_maker_t(const std::string & account, const xblockmaker_resources_ptr_t & resources) {
+    xdbg("xproposal_maker_t::xproposal_maker_t create,this=%p,account=%s", this, account.c_str());
     m_resources = resources;
     m_indexstore = resources->get_indexstorehub()->get_index_store(account);
     m_table_maker = make_object_ptr<xtable_maker_t>(account, resources);  // TOOD(jimmy) global
     m_tableblock_batch_tx_num_residue = XGET_CONFIG(tableblock_batch_tx_max_num);  // TOOD(jimmy)
     m_max_account_num = XGET_CONFIG(tableblock_batch_unitblock_max_num);
+}
+
+xproposal_maker_t::~xproposal_maker_t() {
+    xdbg("xproposal_maker_t::xproposal_maker_t destroy,this=%p", this);
 }
 
 bool xproposal_maker_t::can_make_proposal(data::xblock_consensus_para_t & proposal_para) {
