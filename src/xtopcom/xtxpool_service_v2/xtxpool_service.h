@@ -69,7 +69,6 @@ public:
         return nullptr;
     };
 
-    static bool is_resend_node_for_talbe(uint64_t now, uint32_t table_id, uint16_t shard_size, uint16_t self_node_id);
     static bool is_selected_sender(uint32_t pos, uint32_t rand_pos, uint32_t select_num, uint32_t size);
 
 private:
@@ -80,7 +79,7 @@ private:
     void auditor_forward_receipt_to_shard(const xcons_transaction_ptr_t & cons_tx, vnetwork::xmessage_t const & message);
     bool set_commit_prove(data::xcons_transaction_ptr_t & cons_tx);
     void send_receipt_real(const data::xcons_transaction_ptr_t & cons_tx);
-    bool has_receipt_right(const uint256_t & hash, uint32_t resend_time, bool is_recv) const;
+    bool has_receipt_right(const xcons_transaction_ptr_t & cons_tx, uint32_t resend_time) const;
     void forward_broadcast_message(const vnetwork::xvnode_address_t & addr, const vnetwork::xmessage_t & message);
 
 private:

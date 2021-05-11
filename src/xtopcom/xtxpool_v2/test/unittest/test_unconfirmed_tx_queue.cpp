@@ -37,7 +37,7 @@ TEST_F(test_unconfirmed_tx_queue, unconfirmed_tx_queue_basic) {
     base::xvblockstore_t* blockstore = creator.get_blockstore();
     store::xstore_face_t* xstore = creator.get_xstore();
 
-    xtxpool_resources resources(make_observer(xstore), make_observer(blockstore), nullptr, nullptr);
+    xtxpool_resources resources(make_observer(xstore), make_observer(blockstore), nullptr, nullptr, nullptr);
 
     xunconfirmed_tx_queue_t unconfirmed_tx_queue(&resources, &table_para);
 
@@ -74,7 +74,7 @@ TEST_F(test_unconfirmed_tx_queue, recover) {
     base::xvblockstore_t* blockstore = creator.get_blockstore();
     store::xstore_face_t* xstore = creator.get_xstore();
 
-    xtxpool_resources resources(make_observer(xstore), make_observer(blockstore), nullptr, nullptr);
+    xtxpool_resources resources(make_observer(xstore), make_observer(blockstore), nullptr, nullptr, nullptr);
 
     xunconfirmed_tx_queue_t unconfirmed_tx_queue(&resources, &table_para);
 
