@@ -128,7 +128,7 @@ public:
 
     observer_ptr<store::xstore_face_t> store() const noexcept;
 
-    xobject_ptr_t<base::xvblockstore_t> blockstore() const noexcept;
+    observer_ptr<base::xvblockstore_t> blockstore() const noexcept;
 
     observer_ptr<router::xrouter_face_t> router() const noexcept;
 
