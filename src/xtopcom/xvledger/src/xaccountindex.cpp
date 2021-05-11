@@ -93,10 +93,14 @@ std::string xaccount_index_t::dump() const {
 }
 
 xtable_mbt_binlog_t::xtable_mbt_binlog_t() {
-
+    xdbg("xtable_mbt_binlog_t::xtable_mbt_binlog_t create,this=%p", this);
 }
 xtable_mbt_binlog_t::xtable_mbt_binlog_t(const std::map<std::string, xaccount_index_t> & changed_indexs) {
+    xdbg("xtable_mbt_binlog_t::xtable_mbt_binlog_t create,this=%p", this);
     m_account_indexs = changed_indexs;
+}
+xtable_mbt_binlog_t::~xtable_mbt_binlog_t() {
+    xdbg("xtable_mbt_binlog_t::xtable_mbt_binlog_t destroy,this=%p", this);
 }
 
 int32_t xtable_mbt_binlog_t::do_write(base::xstream_t & stream) {
@@ -327,13 +331,15 @@ xobject_ptr_t<xtable_mbt_t> xtable_mbt_t::build_new_tree(const xobject_ptr_t<xta
 }
 
 xtable_mbt_t::xtable_mbt_t() {
-
+    xdbg("xtable_mbt_t::xtable_mbt_t create,this=%p", this);
 }
-
 xtable_mbt_t::xtable_mbt_t(const std::map<uint16_t, xtable_mbt_bucket_node_ptr_t> & bucket_nodes) {
+    xdbg("xtable_mbt_t::xtable_mbt_t create,this=%p", this);
     m_buckets = bucket_nodes;
 }
-
+xtable_mbt_t::~xtable_mbt_t() {
+    xdbg("xtable_mbt_t::xtable_mbt_t destroy,this=%p", this);
+}
 uint16_t xtable_mbt_t::account_to_index(const std::string & account) const {
     uint32_t account_hash = base::xhash32_t::digest(account);
     uint16_t account_index = account_hash % enum_tableindex_bucket_num;
@@ -441,12 +447,14 @@ size_t xtable_mbt_t::get_account_size() const {
 
 xtable_mbt_new_state_t::xtable_mbt_new_state_t()
 :base::xdataunit_t(base::xdataunit_t::enum_xdata_type_undefine) {
+    xdbg("xtable_mbt_new_state_t::xtable_mbt_new_state_t create,this=%p", this);
     m_last_full_state = make_object_ptr<xtable_mbt_t>();
     m_newest_binlog_state = make_object_ptr<xtable_mbt_binlog_t>();
 }
 
 xtable_mbt_new_state_t::xtable_mbt_new_state_t(const xtable_mbt_ptr_t & last_mbt, const xtable_mbt_binlog_ptr_t & binlog)
 :base::xdataunit_t(base::xdataunit_t::enum_xdata_type_undefine) {
+    xdbg("xtable_mbt_new_state_t::xtable_mbt_new_state_t create,this=%p", this);
     m_last_full_state = last_mbt;
     if (nullptr == m_last_full_state) {
         m_last_full_state = make_object_ptr<xtable_mbt_t>();
@@ -455,6 +463,10 @@ xtable_mbt_new_state_t::xtable_mbt_new_state_t(const xtable_mbt_ptr_t & last_mbt
     if (nullptr == m_newest_binlog_state) {
         m_newest_binlog_state = make_object_ptr<xtable_mbt_binlog_t>();
     }
+}
+
+xtable_mbt_new_state_t::~xtable_mbt_new_state_t() {
+    xdbg("xtable_mbt_new_state_t::xtable_mbt_new_state_t destroy,this=%p", this);
 }
 
 int32_t xtable_mbt_new_state_t::do_write(base::xstream_t & stream) {

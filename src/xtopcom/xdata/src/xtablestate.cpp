@@ -11,12 +11,14 @@ NS_BEG2(top, data)
 
 xtablestate_t::xtablestate_t()
 :base::xdataunit_t(base::xdataunit_t::enum_xdata_type_undefine) {
+    xdbg("xtablestate_t::xtablestate_t create,this=%p", this);
     m_accountindex_state = make_object_ptr<base::xtable_mbt_new_state_t>();
     m_receiptid_state = make_object_ptr<base::xreceiptid_state_t>();
 }
 
 xtablestate_t::xtablestate_t(const std::string & full_data, uint64_t full_height, const std::string & binlog_data, uint64_t binlog_height)
 :base::xdataunit_t(base::xdataunit_t::enum_xdata_type_undefine) {
+    xdbg("xtablestate_t::xtablestate_t create,this=%p", this);
     xassert(binlog_height >= full_height);
     m_accountindex_state = make_object_ptr<base::xtable_mbt_new_state_t>();
     m_receiptid_state = make_object_ptr<base::xreceiptid_state_t>();
@@ -35,6 +37,7 @@ xtablestate_t::xtablestate_t(const std::string & full_data, uint64_t full_height
 
 xtablestate_t::xtablestate_t(const xobject_ptr_t<base::xvboffdata_t> & full_data, uint64_t full_height, const std::string & binlog_data, uint64_t binlog_height)
 :base::xdataunit_t(base::xdataunit_t::enum_xdata_type_undefine) {
+    xdbg("xtablestate_t::xtablestate_t create,this=%p", this);
     xassert(binlog_height >= full_height);
     m_accountindex_state = make_object_ptr<base::xtable_mbt_new_state_t>();
     m_receiptid_state = make_object_ptr<base::xreceiptid_state_t>();
@@ -51,6 +54,9 @@ xtablestate_t::xtablestate_t(const xobject_ptr_t<base::xvboffdata_t> & full_data
     set_binlog_height(binlog_height);
 }
 
+xtablestate_t::~xtablestate_t() {
+    xdbg("xtablestate_t::xtablestate_t destroy,this=%p", this);
+}
 
 int32_t xtablestate_t::do_write(base::xstream_t & stream) {
     const int32_t begin_size = stream.size();
@@ -101,6 +107,11 @@ xobject_ptr_t<xtablestate_t> xtablestate_t::clone() {
     newstate->serialize_from_string(bin_str);
     newstate->m_full_height = m_full_height;
     newstate->m_binlog_height = m_binlog_height;
+    return newstate;
+}
+
+xobject_ptr_t<xtablestate_t> xtablestate_t::clone_with_fulldata() {
+    xobject_ptr_t<xtablestate_t> newstate = make_object_ptr<xtablestate_t>(get_block_full_data(), m_full_height, serialize_to_binlog_data_string(), m_binlog_height);
     return newstate;
 }
 

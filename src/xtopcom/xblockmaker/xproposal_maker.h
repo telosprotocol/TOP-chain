@@ -18,7 +18,7 @@ NS_BEG2(top, blockmaker)
 class xproposal_maker_t : public xunit_service::xproposal_maker_face {
  public:
     xproposal_maker_t(const std::string & account, const xblockmaker_resources_ptr_t & resources);
-
+    virtual ~xproposal_maker_t();
  public:
     virtual bool                can_make_proposal(xblock_consensus_para_t & proposal_para) override;
     virtual xblock_ptr_t        make_proposal(xblock_consensus_para_t & proposal_para) override;

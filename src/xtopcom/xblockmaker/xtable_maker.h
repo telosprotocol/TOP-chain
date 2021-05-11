@@ -26,7 +26,7 @@ using data::xfulltable_block_para_t;
 class xtable_maker_t : public xblock_maker_t {
  public:
     explicit xtable_maker_t(const std::string & account, const xblockmaker_resources_ptr_t & resources);
-    virtual ~xtable_maker_t() {}
+    virtual ~xtable_maker_t();
 
  public:
     int32_t                 default_check_latest_state();

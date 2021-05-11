@@ -16,10 +16,15 @@ NS_BEG2(top, blockmaker)
 
 xtable_maker_t::xtable_maker_t(const std::string & account, const xblockmaker_resources_ptr_t & resources)
 : xblock_maker_t(account, resources, m_keep_latest_blocks_max) {
+    xdbg("xtable_maker_t::xtable_maker_t create,this=%p,account=%s", this, account.c_str());
     m_fulltable_builder = std::make_shared<xfulltable_builder_t>();
     m_lighttable_builder = std::make_shared<xlighttable_builder_t>();
     m_indexstore = resources->get_indexstorehub()->get_index_store(account);
     m_full_table_interval_num = XGET_CONFIG(fulltable_interval_block_num);
+}
+
+xtable_maker_t::~xtable_maker_t() {
+    xdbg("xtable_maker_t::xtable_maker_t destroy,this=%p", this);
 }
 
 int32_t xtable_maker_t::default_check_latest_state() {
@@ -346,7 +351,7 @@ xblock_ptr_t xtable_maker_t::make_light_table(bool is_leader, const xtablemaker_
     xblock_t::batch_units_to_receiptids(batch_units, receiptid_check);
     if (false == receiptid_check.check_contious(table_para.get_tablestate()->get_receiptid_state())) {
         table_result.m_make_block_error_code = xblockmaker_error_tx_check;
-        xerror("xtablestate_t::make_light_table fail check receiptid contious.is_leader=%d,%s", is_leader, cs_para.dump().c_str());
+        xerror("xtable_maker_t::make_light_table fail check receiptid contious.is_leader=%d,%s", is_leader, cs_para.dump().c_str());
         return nullptr;
     }
 
