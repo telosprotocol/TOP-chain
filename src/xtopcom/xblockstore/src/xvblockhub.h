@@ -161,6 +161,8 @@ namespace top
             bool                read_block_output_from_db(base::xvbindex_t* index_ptr);
             bool                read_block_output_from_db(base::xvblock_t * block_ptr);
             
+            bool                delete_block_from_db(base::xvbindex_t* index_ptr);
+            
             //manage data related xvboffdata_t
             bool                write_block_offdata_to_db(base::xvbindex_t* index_ptr,base::xvblock_t * block_ptr);
             bool                read_block_offdata_from_db(base::xvblock_t * block_ptr);

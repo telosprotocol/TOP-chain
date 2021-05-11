@@ -1113,10 +1113,10 @@ namespace top
             if(nullptr == block_ptr)
                 return false;
 
-            xkinfo("xblockacct_t::delete_block,delete block:[chainid:%u->account(%s)->height(%" PRIu64 ")->viewid(%" PRIu64 ") at store(%s)",block_ptr->get_chainid(),block_ptr->get_account().c_str(),block_ptr->get_height(),block_ptr->get_viewid(),get_blockstore_path().c_str());
-
             if(block_ptr->get_height() == 0)
-                return delete_block(block_ptr->get_height()); //delete all existing ones
+                return false; //not allow delete genesis block
+            
+            xkinfo("xblockacct_t::delete_block,delete block:[chainid:%u->account(%s)->height(%" PRIu64 ")->viewid(%" PRIu64 ") at store(%s)",block_ptr->get_chainid(),block_ptr->get_account().c_str(),block_ptr->get_height(),block_ptr->get_viewid(),get_blockstore_path().c_str());
 
             if(false == m_all_blocks.empty())
             {
@@ -1127,6 +1127,10 @@ namespace top
                     auto view_it = view_map.find(block_ptr->get_viewid());
                     if(view_it != view_map.end())
                     {
+                        //delete data at DB first
+                        delete_block_from_db(view_it->second);
+                        
+                        //remove entry then
                         view_it->second->close();
                         view_it->second->release_ref();
                         view_map.erase(view_it);
@@ -1138,7 +1142,7 @@ namespace top
                         XMETRICS_GAUGE(metrics::blockstore_cache_block_total, -1);
                         #endif
                     }
-                    //XTODO remove raw block at db as well
+
                 }
             }
             return true;
@@ -1146,6 +1150,9 @@ namespace top
 
         bool    xblockacct_t::delete_block(const uint64_t height)//return error code indicate what is result
         {
+            if(height == 0)
+                return false; //not allow delete genesis block
+            
             xkinfo("xblockacct_t::delete_block,delete block:[chainid:%u->account(%s)->height(%" PRIu64 ") at store(%s)",get_chainid(),get_account().c_str(),height,get_blockstore_path().c_str());
 
             //allow delete outdated blocks
@@ -1155,21 +1162,25 @@ namespace top
                 if(height_it != m_all_blocks.end())
                 {
                     auto & view_map  = height_it->second;
-                    if(view_map.empty() == false)
+                    if(view_map.empty())
                     {
                         m_all_blocks.erase(height_it);
                         #ifdef ENABLE_METRICS
                         XMETRICS_GAUGE(metrics::blockstore_cache_block_total, -1);
                         #endif
                     }
-
-                    for(auto view_it = view_map.begin(); view_it != view_map.end(); ++view_it)
+                    else
                     {
-                        view_it->second->close();
-                        view_it->second->release_ref();
-                        view_map.erase(view_it);
+                        for(auto view_it = view_map.begin(); view_it != view_map.end(); ++view_it)
+                        {
+                            //delete data at DB first
+                            delete_block_from_db(view_it->second);
+                            //remove entry then
+                            view_it->second->close();
+                            view_it->second->release_ref();
+                        }
+                        m_all_blocks.erase(height_it);
                     }
-                    //XTODO, add code to remove raw block at DB as well
                 }
             }
             return true;
@@ -1343,54 +1354,57 @@ namespace top
             //note: emplace return a pair<iterator,bool>, value of bool indicate whether inserted or not, value of iterator point to inserted it
             auto height_map_pos  = m_all_blocks.emplace(this_block_height,std::map<uint64_t,base::xvbindex_t*>());
             auto & view_map     = height_map_pos.first->second;//hight_map_pos.first->first is height, and hight_map_pos.first->second is viewmap
-#if 0  // TODO(jimmy)
-            if(this_block->check_block_flag(base::enum_xvblock_flag_committed))   //commit block
+
+            //precheck to resolve any possible fork
+            for(auto it = view_map.begin(); it != view_map.end();)
             {
-                xassert(this_block->check_block_flag(base::enum_xvblock_flag_locked)); //must be true
-                for(auto it = view_map.begin(); it != view_map.end();)
+                auto old_it = it;
+                ++it;
+                
+                //apply rule#1: clean any cert,lock blocs since a commit block occupy this slot
+                if(old_it->second->check_block_flag(base::enum_xvblock_flag_committed))
                 {
-                    auto old_it = it;
-                    ++it;
-                    
-                    //apply rule#1: clean any cert,lock blocs since a commit block occupy this slot
-                    if(false == old_it->second->check_block_flag(base::enum_xvblock_flag_committed))
+                    if(  (old_it->second->get_viewid() != this_block->get_viewid())
+                       ||(old_it->second->get_block_hash() != this_block->get_block_hash()) )
                     {
-                        xinfo("xblockacct_t::cache_index,new-commit one clean existing block=%s",old_it->second->dump().c_str());
-                        
-                        //XTODO fire event first
-                        //push_event(enum_blockstore_event_revoke, old_it->second);
-                        
-                        //then clean from map
-                        old_it->second->close();
-                        old_it->second->release_ref();//old_it->second might be same as this_block
-                        view_map.erase(old_it);
+                        xwarn("xblockacct_t::cache_index,new block try to overwrite the existing commmited block(%s) vs new(%s)",old_it->second->dump().c_str(),this_block->dump().c_str());
+                        return false;
+                    }
+                }
+                else if(old_it->second->check_block_flag(base::enum_xvblock_flag_locked))
+                {
+                    if(  (old_it->second->get_viewid() != this_block->get_viewid())
+                       ||(old_it->second->get_block_hash() != this_block->get_block_hash()) )
+                    {
+                        xwarn("xblockacct_t::cache_index,new block try to overwrite the existing locked block(%s) vs new(%s)",old_it->second->dump().c_str(),this_block->dump().c_str());
+                        return false;
+                    }
+                }
+                else //existing one is a cert-only block
+                {
+                    //new block has higher status,so clean lower ones
+                    if(  this_block->check_block_flag(base::enum_xvblock_flag_committed)
+                       ||this_block->check_block_flag(base::enum_xvblock_flag_locked) )
+                    {
+                        //check whether same block
+                        if(  (old_it->second->get_viewid() != this_block->get_viewid())
+                           ||(old_it->second->get_block_hash() != this_block->get_block_hash()) )
+                        {
+                            xinfo("xblockacct_t::cache_index,clean existing cert block=%s",old_it->second->dump().c_str());
+                            
+                            //XTODO fire event first
+                            //push_event(enum_blockstore_event_revoke, old_it->second);
+                            delete_block_from_db(old_it->second);
+                            
+                            //then clean from map
+                            old_it->second->close();
+                            old_it->second->release_ref();//old_it->second might be same as this_block
+                            view_map.erase(old_it);
+                        }
                     }
                 }
             }
-            else if(this_block->check_block_flag(base::enum_xvblock_flag_locked)) //lock-only block
-            {
-                #ifdef __NOT_ALLOW_FORK_AT_LOCK_BLOCK__
-                for(auto it = view_map.begin(); it != view_map.end();)
-                {
-                    auto old_it = it;
-                    ++it;
-                    
-                    //clean any cert-only block
-                    if( (old_it->second->get_block_flags() & (base::enum_xvblock_flag_committed | base::enum_xvblock_flag_locked)) == 0)
-                    {
-                        xinfo("xblockacct_t::cache_index,new-lock one clean existing block=%s",old_it->second->dump().c_str());
-                        //XTODO fire event first
-                        //push_event(enum_blockstore_event_revoke, old_it->second);
-                        
-                        //then close it
-                        old_it->second->close();
-                        old_it->second->release_ref();
-                        view_map.erase(old_it);
-                    }
-                }
-                #endif // __NOT_ALLOW_FORK_AT_LOCK_BLOCK__
-            }
-#endif
+            
             auto existing_view_iterator = view_map.find(this_block->get_viewid());
             if(existing_view_iterator != view_map.end())//apple rule#2 by reuse existing iterator and replace by new value
             {
@@ -1614,7 +1628,7 @@ namespace top
             //update meta information per this block
             if(new_block_ptr->check_block_flag(base::enum_xvblock_flag_committed))
             {
-                xdbg_info("xblockacct_t::update_meta_metric,at store(%s) account=%s,commit block=%s",get_blockstore_path().c_str(), get_account().c_str(), new_block_ptr->dump().c_str());
+                xinfo("xblockacct_t::update_meta_metric,at store(%s) account=%s,commit block=%s",get_blockstore_path().c_str(), get_account().c_str(), new_block_ptr->dump().c_str());
 
                 //update meta information now
                 if(new_block_height > m_meta->_highest_cert_block_height) //committed block must also a cert block
@@ -1651,7 +1665,7 @@ namespace top
                 if(new_block_height > m_meta->_highest_lock_block_height)
                     m_meta->_highest_lock_block_height = new_block_height;
 
-                xdbg_info("xblockacct_t::update_meta_metric,at store(%s) lock block=%s",get_blockstore_path().c_str(),new_block_ptr->dump().c_str());
+                xinfo("xblockacct_t::update_meta_metric,at store(%s) lock block=%s",get_blockstore_path().c_str(),new_block_ptr->dump().c_str());
             }
             else if(new_block_ptr->check_block_flag(base::enum_xvblock_flag_authenticated)) //xstore should only store commit&locked block
             {
@@ -2103,6 +2117,48 @@ namespace top
             xerror("xblockacct_t::read_block_offdata_from_db,bad data to create xvboffdata_t object from db-path(%s)",base::xstring_utl::to_hex(offdata_key).c_str());
             return false;
         }
+    
+        bool    xblockacct_t::delete_block_from_db(base::xvbindex_t* index_ptr)
+        {
+            if(NULL == index_ptr)
+                return false;
+            
+            //step#1: remove index first
+            {
+                if(index_ptr->check_store_flag(base::enum_index_store_flag_main_entry))
+                {
+                    const std::string index_key = base::xvdbkey_t::create_block_index_key(*this,index_ptr->get_height());
+                    base::xvchain_t::instance().get_xdbstore()->delete_value(index_key);
+                }
+                else
+                {
+                    const std::string index_key = base::xvdbkey_t::create_block_index_key(*this,index_ptr->get_height(),index_ptr->get_viewid());
+                    base::xvchain_t::instance().get_xdbstore()->delete_value(index_key);
+                }
+            }
+            //step#2: remove raw block at db
+            {
+                const std::string block_obj_key = base::xvdbkey_t::create_block_object_key(*this,index_ptr->get_block_hash());
+                base::xvchain_t::instance().get_xdbstore()->delete_value(block_obj_key);
+            }
+            //delete input
+            {
+                const std::string block_input_key = base::xvdbkey_t::create_block_input_key(*this,index_ptr->get_block_hash());
+                base::xvchain_t::instance().get_xdbstore()->delete_value(block_input_key);
+            }
+            //delete output
+            {
+                const std::string block_output_key = base::xvdbkey_t::create_block_output_key(*this,index_ptr->get_block_hash());
+                base::xvchain_t::instance().get_xdbstore()->delete_value(block_output_key);
+            }
+            
+            //step#3: remove offdata
+            {
+                const std::string offdata_key = base::xvdbkey_t::create_block_offdata_key(*this, index_ptr->get_block_hash());
+                base::xvchain_t::instance().get_xdbstore()->delete_value(offdata_key);
+            }
+            return true;
+        }
 
         //return bool indicated whether has anything writed into db
         bool xblockacct_t::write_index_to_db(const uint64_t target_height)
@@ -2364,7 +2420,7 @@ namespace top
             //transfer to locked status
             if(false == prev_block->check_block_flag(base::enum_xvblock_flag_locked))
             {
-                xdbg("xchainacct_t::process_index at store=%s,lock-qc=%s",get_blockstore_path().c_str(),prev_block->dump().c_str());
+                xinfo("xchainacct_t::process_index at store=%s,lock-qc=%s",get_blockstore_path().c_str(),prev_block->dump().c_str());
 
                 prev_block->set_block_flag(base::enum_xvblock_flag_locked);
                 if(this_block->check_block_flag(base::enum_xvblock_flag_locked))//if this_block already been locked status
@@ -2391,7 +2447,7 @@ namespace top
             //transfer to commit status
             if(false == prev_prev_block->check_block_flag(base::enum_xvblock_flag_committed))
             {
-                xdbg("xchainacct_t::process_index at store=%s,commit-qc=%s",get_blockstore_path().c_str(),prev_prev_block->dump().c_str());
+                xinfo("xchainacct_t::process_index at store=%s,commit-qc=%s",get_blockstore_path().c_str(),prev_prev_block->dump().c_str());
 
                 prev_prev_block->set_block_flag(base::enum_xvblock_flag_locked);//change to locked status
                 prev_prev_block->set_block_flag(base::enum_xvblock_flag_committed);//change to commit status
