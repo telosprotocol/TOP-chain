@@ -93,7 +93,20 @@ int test_sync_vstore(store::xsyncvstore_t* sync_store)
     {
         base::xvblock_t * test_block = generated_blocks[block_indexs[i]];
         if(test_block->get_height() != 0)
+        {
             sync_store->store_block(test_block);//push block as random order
+        
+            if(1)//test fork
+            {
+                xunitblock_t * fork_block = xunitblock_t::create_unitblock(test_account_address, test_block->get_height(), test_block->get_clock()+1, test_block->get_viewid()+10000, test_block->get_last_block_hash(), test_block->get_last_full_block_hash(), test_block->get_last_full_block_height(), test_input_output, test_input_output);
+                fork_block->get_cert()->set_validator(any_xip);
+                fork_block->set_verify_signature(std::string("fake-signature"));
+                fork_block->set_block_flag(base::enum_xvblock_flag_authenticated);
+                
+                sync_store->store_block(fork_block);//push block as random order
+            }
+
+        }
     }
     
     for(int i = 0; i < total_test_blocks; ++i)
@@ -112,7 +125,7 @@ int test_sync_vstore(store::xsyncvstore_t* sync_store)
     printf("////////////////////////////////////////////////////////////// \n");
     for(auto it : generated_blocks)
     {
-        base::xauto_ptr<base::xvbindex_t> index(sync_store->get_vblockstore()->load_block_index(test_account_obj, it->get_height(), it->get_viewid()));
+        base::xauto_ptr<base::xvbindex_t> index(sync_store->get_vblockstore()->load_block_index(test_account_obj, it->get_height(), 0));
         if(false == index->check_block_flag(base::enum_xvblock_flag_committed))
             printf("block is not commit as detail=%s \n",index->dump().c_str());
         
