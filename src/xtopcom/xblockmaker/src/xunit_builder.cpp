@@ -48,19 +48,11 @@ xblock_ptr_t        xlightunit_builder_t::build_block(const xblock_ptr_t & prev_
     const std::vector<xcons_transaction_ptr_t> & input_txs = lightunit_build_para->get_origin_txs();
     txexecutor::xbatch_txs_result_t exec_result;
     int exec_ret = txexecutor::xtransaction_executor::exec_batch_txs(_account_context.get(), input_txs, exec_result);
+    // some send txs may execute fail but some recv/confirm txs may execute successfully
+    if (!exec_result.m_exec_fail_txs.empty()) {
+        lightunit_build_para->set_fail_txs(exec_result.m_exec_fail_txs);
+    }
     if (exec_ret != xsuccess) {
-        xassert(exec_result.m_exec_fail_tx_ret != 0);
-        xassert(exec_result.m_exec_fail_tx != nullptr);
-        const auto & failtx = exec_result.m_exec_fail_tx;
-        xassert(failtx->is_self_tx() || failtx->is_send_tx());
-        xwarn("xlightunit_builder_t::build_block fail-tx execute. %s,account:%s,height=%" PRIu64 ",tx=%s",
-            cs_para.dump().c_str(), account.c_str(), prev_height, failtx->dump().c_str());
-        // tx execute fail, this tx and follower txs should be pop out for hash must be not match with the new tx witch will replace the fail tx.
-        for (auto & tx : input_txs) {
-            if (tx->get_transaction()->get_tx_nonce() >= failtx->get_transaction()->get_tx_nonce()) {
-                lightunit_build_para->set_fail_tx(tx);
-            }
-        }
         build_para->set_error_code(xblockmaker_error_tx_execute);
         return nullptr;
     }
