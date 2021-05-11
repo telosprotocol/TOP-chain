@@ -315,7 +315,7 @@ void xsync_handler_t::push_newblockhash(uint32_t msg_size,
         return;
     }
 
-    xsync_info("xsync_handler receive push_newblockhash %" PRIx64 " wait(%ldms) %s,height=%lu,viewid=%lu %s,",
+    xsync_dbg("xsync_handler receive push_newblockhash %" PRIx64 " wait(%ldms) %s,height=%lu,viewid=%lu %s,",
         msg_hash, get_time()-recv_time, address.c_str(), height, view_id, from_address.to_string().c_str());
 
     mbus::xevent_ptr_t ev = make_object_ptr<mbus::xevent_blockfetcher_blockhash_t>(address, height, view_id, hash, network_self, from_address);
