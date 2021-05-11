@@ -843,7 +843,7 @@ namespace top
                     store_block(generis_block.get());
                     return 1; //genesis always be 1 block at height(0)
                 }
-                xwarn("xblockacct_t::load_index(),fail found index for addr=%s at height=%" PRIu64 "", get_account().c_str(), target_height);
+                xdbg("xblockacct_t::load_index(),fail found index for addr=%s at height=%" PRIu64 "", get_account().c_str(), target_height);
                 return 0;
             }
             return (int)it->second.size(); //found existing ones
@@ -946,7 +946,7 @@ namespace top
             if(NULL == index_ptr)
                 return false;
 
-            xinfo("xblockacct_t::load_block_object,target index(%s)",index_ptr->dump().c_str());
+            xdbg("xblockacct_t::load_block_object,target index(%s)",index_ptr->dump().c_str());
             if(index_ptr->get_this_block() != NULL)
                 return true;
 
@@ -1312,7 +1312,7 @@ namespace top
                 {
                     index_ptr->set_block_flag(base::enum_xvblock_flag_executed); //update flag of index
                     block_ptr->set_block_flag(base::enum_xvblock_flag_executed); //update raw block as well
-                    xinfo("xblockacct_t::execute_block(index),successful-exectued block=%s based on height=%" PRIu64 "  ",index_ptr->dump().c_str(),index_ptr->get_height());
+                    xdbg("xblockacct_t::execute_block(index),successful-exectued block=%s based on height=%" PRIu64 "  ",index_ptr->dump().c_str(),index_ptr->get_height());
 
                     //note:store_block may update m_meta->_highest_execute_block_height as well
                     update_meta_metric(index_ptr);
@@ -2277,7 +2277,7 @@ namespace top
             base::xvbindex_t* index_entry = read_index_from_db(main_entry_key);
             if(index_entry == NULL) //main entry
             {
-                xwarn("xblockacct_t::read_index_from_db,dont find main entry for height(%" PRIu64 ")",target_height);
+                xdb("xblockacct_t::read_index_from_db,dont find main entry for height(%" PRIu64 ")",target_height);
                 return all_blocks_at_height;
             }
             if(index_entry->check_store_flag(base::enum_index_store_flag_main_entry) == false)
@@ -2307,7 +2307,7 @@ namespace top
             const std::string index_bin = base::xvchain_t::instance().get_xdbstore()->get_value(index_db_key_path);
             if(index_bin.empty())
             {
-                xwarn("xblockacct_t::read_index_from_db,fail to read from db for path(%s)",index_db_key_path.c_str());
+                xdbg("xblockacct_t::read_index_from_db,fail to read from db for path(%s)",index_db_key_path.c_str());
                 return NULL;
             }
 
