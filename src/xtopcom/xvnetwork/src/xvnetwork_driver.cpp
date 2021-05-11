@@ -63,26 +63,31 @@ common::xnode_address_t xtop_vnetwork_driver::parent_group_address() const {
 
 void xtop_vnetwork_driver::send_to(common::xnode_address_t const & to, xmessage_t const & message, network::xtransmission_property_t const & transmission_property) {
     assert(m_vhost);
+    #if VHOST_METRICS
     XMETRICS_COUNTER_INCREMENT("vnetwork_" + std::to_string(static_cast<std::uint16_t>(common::get_message_category(message.id()))) + "_out_vnetwork_driver_send_to" +
                                    std::to_string(static_cast<std::uint32_t>(message.id())),
                                1);
-
+    #endif
     m_vhost->send(message, m_address, to, transmission_property);
 }
 
 void xtop_vnetwork_driver::broadcast(xmessage_t const & message) {
     assert(m_vhost);
+    #if VHOST_METRICS
     XMETRICS_COUNTER_INCREMENT("vnetwork_" + std::to_string(static_cast<std::uint16_t>(common::get_message_category(message.id()))) + "_out_vnetwork_driver_broadcast" +
                                    std::to_string(static_cast<std::uint32_t>(message.id())),
                                1);
+    #endif
     m_vhost->broadcast(message, m_address);
 }
 
 void xtop_vnetwork_driver::forward_broadcast_message(xmessage_t const & message, common::xnode_address_t const & dst) {
     assert(m_vhost);
+    #if VHOST_METRICS
     XMETRICS_COUNTER_INCREMENT("vnetwork_" + std::to_string(static_cast<std::uint16_t>(common::get_message_category(message.id()))) +
                                    "_out_vnetwork_driver_forward_broadcast_message" + std::to_string(static_cast<std::uint32_t>(message.id())),
                                1);
+    #endif
     m_vhost->forward_broadcast_message(message, m_address, dst);
 }
 
@@ -278,13 +283,17 @@ void xtop_vnetwork_driver::on_vhost_message_data_ready(common::xnode_address_t c
         return;
     }
 
+    #if VHOST_METRICS
     XMETRICS_COUNTER_INCREMENT("vnetwork_" + std::to_string(static_cast<std::uint16_t>(common::get_message_category(msg.id()))) + "_in_vnetwork_driver" +
                                    std::to_string(static_cast<std::uint32_t>(msg.id())),
                                1);
+    #endif
 
     XLOCK_GUARD(m_message_cache_mutex) {
         int ret = 0;
+        #if VHOST_METRICS
         XMETRICS_TIME_RECORD("vnetwork_lru_cache");
+        #endif
         if (m_message_cache.contains(msg.hash())) {
             xkinfo(u8"[vnetwork driver] received a dup msg %" PRIx64 " message id %" PRIx32, msg.hash(), static_cast<std::uint32_t>(msg.id()));
             ret = -1;
@@ -295,11 +304,13 @@ void xtop_vnetwork_driver::on_vhost_message_data_ready(common::xnode_address_t c
         }
     }
 
+    #if VHOST_METRICS
     XMETRICS_COUNTER_INCREMENT("vnetwork_" + std::to_string(static_cast<std::uint16_t>(common::get_message_category(msg.id()))) + "_in_vnetwork_driver_filtered" +
                                    std::to_string(static_cast<std::uint32_t>(msg.id())),
                                1);
 
     XMETRICS_COUNTER_INCREMENT("vnetwork_driver_received", 1);
+    #endif
 
     xvnetwork_message_ready_callback_t callback;
     auto const message_id = msg.id();
@@ -318,9 +329,11 @@ void xtop_vnetwork_driver::on_vhost_message_data_ready(common::xnode_address_t c
     }
 
     if (callback) {
+        #if VHOST_METRICS
         XMETRICS_COUNTER_INCREMENT("vnetwork_" + std::to_string(static_cast<std::uint16_t>(common::get_message_category(msg.id()))) + "_in_vnetwork_driver_callback" +
                                        std::to_string(static_cast<std::uint32_t>(msg.id())),
                                    1);
+        #endif
 
         xdbg("[vnetwork driver] host %s push msg %" PRIx64 " message id %" PRIx32 " at address %s to callback from %s",
              host_node_id().to_string().c_str(),

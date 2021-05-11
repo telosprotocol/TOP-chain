@@ -401,7 +401,7 @@ void EcNetcard::HandleRumorMessage(
         }
     }
 
-#ifdef ENABLE_METRICS
+#ifdef XENABLE_P2P_BENDWIDTH
 
     if (message.type() == kElectVhostRumorP2PMessage) {
         XMETRICS_FLOW_COUNT("p2p_transport_p2pchain_afterfilter_packet_recv", 1);
