@@ -23,12 +23,13 @@ bool TransportFilter::Init() {
     if (inited_) {
         return true;
     }
+    #if defined(XENABLE_P2P_BENDWIDTH) || defined(ENABLE_XSECURITY)
     dump_timer_ = std::make_shared<base::TimerRepeated>(base::TimerManager::Instance(), "TransportFilter::Dump");
     dump_timer_->Start(
             500ll * 1000ll,
             kDumpPeriod,
             std::bind(&TransportFilter::Dump, this));
-
+    #endif
     inited_ = true;
     TOP_INFO("TransportFilter::Init ok");
     return true;
@@ -43,7 +44,7 @@ TransportFilter::~TransportFilter() {
 
 void TransportFilter::Dump() {
     float time_step = static_cast<float>(kDumpPeriod / 1000.0 / 1000.0);
-#ifdef ENABLE_METRICS
+#ifdef XENABLE_P2P_BENDWIDTH
     static ArrayInfo last_aryinfo;
     for (uint32_t i = 0; i < aryinfo_.size(); ++i) {
         if (aryinfo_[i].send_packet == 0 && aryinfo_[i].recv_packet == 0) {
