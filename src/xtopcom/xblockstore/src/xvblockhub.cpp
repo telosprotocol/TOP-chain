@@ -1351,15 +1351,15 @@ namespace top
                 {
                     auto old_it = it;
                     ++it;
-                    
+
                     //apply rule#1: clean any cert,lock blocs since a commit block occupy this slot
                     if(false == old_it->second->check_block_flag(base::enum_xvblock_flag_committed))
                     {
                         xinfo("xblockacct_t::cache_index,new-commit one clean existing block=%s",old_it->second->dump().c_str());
-                        
+
                         //XTODO fire event first
                         //push_event(enum_blockstore_event_revoke, old_it->second);
-                        
+
                         //then clean from map
                         old_it->second->close();
                         old_it->second->release_ref();//old_it->second might be same as this_block
@@ -1374,14 +1374,14 @@ namespace top
                 {
                     auto old_it = it;
                     ++it;
-                    
+
                     //clean any cert-only block
                     if( (old_it->second->get_block_flags() & (base::enum_xvblock_flag_committed | base::enum_xvblock_flag_locked)) == 0)
                     {
                         xinfo("xblockacct_t::cache_index,new-lock one clean existing block=%s",old_it->second->dump().c_str());
                         //XTODO fire event first
                         //push_event(enum_blockstore_event_revoke, old_it->second);
-                        
+
                         //then close it
                         old_it->second->close();
                         old_it->second->release_ref();
@@ -2200,8 +2200,14 @@ namespace top
                         xerror("xblockacct_t::try_execute_all_block no load full index. %s", dump().c_str());
                         return;
                     }
+                    if (load_index_offdata(_full_bindex.get()))
+                    {
                     _execute_index = _full_bindex;
-                } else {
+                    }
+                }
+
+                if (_execute_index == nullptr)
+                {
                     uint64_t _query_height = (m_meta->_highest_execute_block_height == 0 && m_meta->_highest_execute_block_hash.empty()) ? 0 : m_meta->_highest_execute_block_height + 1;
                     if (_query_height > m_meta->_highest_commit_block_height)
                     {
@@ -2224,7 +2230,6 @@ namespace top
                 }
                 load_index_input(_execute_index.get());
                 load_index_output(_execute_index.get());
-                load_index_offdata(_execute_index.get());
                 if(false == execute_block(_execute_index.get(),_execute_index->get_this_block()))
                 {
                     xwarn("xblockacct_t::try_execute_all_block fail-execute block,at block=%s",_execute_index->dump().c_str());
