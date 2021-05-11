@@ -83,23 +83,34 @@ int32_t xtransaction_executor::exec_tx(xaccount_context_t * account_context, con
 int32_t xtransaction_executor::exec_batch_txs(xaccount_context_t * account_context, const std::vector<xcons_transaction_ptr_t> & txs,
     xbatch_txs_result_t & txs_result) {
 
+    int32_t error_code = xsuccess;
     const std::string & address = account_context->get_address();
     for (auto & tx : txs) {
+        // if previous send tx fail, other send txs no need execute
+        if (tx->is_send_tx() || tx->is_self_tx()) {
+            if (!txs_result.m_exec_fail_txs.empty()) {
+                txs_result.m_exec_fail_txs.push_back(tx);
+                xwarn("xtransaction_executor::exec_batch_txs fail-for previous send tx exec error, tx=%s",
+                    tx->dump(true).c_str());
+                continue;
+            }
+        }
+
         xtransaction_result_t result;
         int32_t action_ret = xtransaction_executor::exec_tx(account_context, tx, result);
         if (action_ret) {
-            tx->set_current_exec_status(enum_xunit_tx_exec_status_fail);
-            // receive tx should always consensus success, contract only can exec one tx once time, TODO(jimmy) need record fail/success
-            if (tx->is_recv_tx() || tx->is_confirm_tx()) {
-                xassert(txs.size() == 1);
-            } else {
-                txs_result.m_exec_fail_tx = tx;
-                txs_result.m_exec_fail_tx_ret = action_ret;
-                // if has successfully txs, should return success
-                xwarn("xtransaction_executor::exec_batch_txs tx exec fail, %s result:fail error:%s",
-                    tx->dump().c_str(), chainbase::xmodule_error_to_str(action_ret).c_str());
-                return action_ret;  // one send tx fail will ignore success tx before
+            // record failure send tx which will be pop from txpool
+            if (tx->is_send_tx() || tx->is_self_tx()) {
+                txs_result.m_exec_fail_txs.push_back(tx);
+                xwarn("xtransaction_executor::exec_batch_txs fail-for send tx exec error, tx=%s error:%s",
+                    tx->dump(true).c_str(), chainbase::xmodule_error_to_str(action_ret).c_str());
+                error_code = action_ret;
+                continue;
             }
+
+            // receive tx should always consensus success, contract only can exec one tx once time, TODO(jimmy) need record fail/success
+            tx->set_current_exec_status(enum_xunit_tx_exec_status_fail);
+            xassert(txs.size() == 1);
         } else {
             tx->set_current_exec_status(enum_xunit_tx_exec_status_success);
             txs_result.succ_txs_result = result;
@@ -109,7 +120,11 @@ int32_t xtransaction_executor::exec_batch_txs(xaccount_context_t * account_conte
         xkinfo("xtransaction_executor::exec_batch_txs tx exec succ, tx=%s,total_result:%s",
             tx->dump().c_str(), result.dump().c_str());
     }
-
+    if (txs_result.m_exec_succ_txs.empty()) {
+        xassert(error_code != xsuccess);
+        xassert(!txs_result.m_exec_fail_txs.empty());
+        return error_code;
+    }
     return xsuccess;
 }
 
