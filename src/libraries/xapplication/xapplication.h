@@ -15,16 +15,16 @@
 #include "xcommon/xlogic_time.h"
 #include "xcommon/xnode_info.h"
 #include "xconfig/xconfig_register.h"
+#include "xdatastat/xdatastat.h"
 #include "xelect/client/xelect_client.h"
 #include "xelect_net/include/elect_main.h"
+#include "xindexstore/xindexstore_face.h"
 #include "xmbus/xmessage_bus.h"
 #include "xnetwork/xnetwork_driver_face.h"
 #include "xrouter/xrouter_face.h"
 #include "xstore/xstore_face.h"
 #include "xsync/xsync_object.h"
 #include "xtxpool_v2/xtxpool_face.h"
-#include "xdatastat/xdatastat.h"
-#include "xindexstore/xindexstore_face.h"
 
 #include <cstdint>
 #include <memory>
