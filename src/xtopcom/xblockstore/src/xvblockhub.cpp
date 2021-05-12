@@ -785,6 +785,7 @@ namespace top
                     if(result != NULL)//load_index has been return a added-reference ptr
                     {
                         m_meta->_highest_full_block_height = result->get_height();
+                        mark_connected_flag(result);//connect update
                         return result;
                     }
                 }
@@ -1351,15 +1352,15 @@ namespace top
                 {
                     auto old_it = it;
                     ++it;
-                    
+
                     //apply rule#1: clean any cert,lock blocs since a commit block occupy this slot
                     if(false == old_it->second->check_block_flag(base::enum_xvblock_flag_committed))
                     {
                         xinfo("xblockacct_t::cache_index,new-commit one clean existing block=%s",old_it->second->dump().c_str());
-                        
+
                         //XTODO fire event first
                         //push_event(enum_blockstore_event_revoke, old_it->second);
-                        
+
                         //then clean from map
                         old_it->second->close();
                         old_it->second->release_ref();//old_it->second might be same as this_block
@@ -1374,14 +1375,14 @@ namespace top
                 {
                     auto old_it = it;
                     ++it;
-                    
+
                     //clean any cert-only block
                     if( (old_it->second->get_block_flags() & (base::enum_xvblock_flag_committed | base::enum_xvblock_flag_locked)) == 0)
                     {
                         xinfo("xblockacct_t::cache_index,new-lock one clean existing block=%s",old_it->second->dump().c_str());
                         //XTODO fire event first
                         //push_event(enum_blockstore_event_revoke, old_it->second);
-                        
+
                         //then close it
                         old_it->second->close();
                         old_it->second->release_ref();
