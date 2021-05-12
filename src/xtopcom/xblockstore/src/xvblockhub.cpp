@@ -2277,7 +2277,7 @@ namespace top
             base::xvbindex_t* index_entry = read_index_from_db(main_entry_key);
             if(index_entry == NULL) //main entry
             {
-                xdb("xblockacct_t::read_index_from_db,dont find main entry for height(%" PRIu64 ")",target_height);
+                xdbg("xblockacct_t::read_index_from_db,dont find main entry for height(%" PRIu64 ")",target_height);
                 return all_blocks_at_height;
             }
             if(index_entry->check_store_flag(base::enum_index_store_flag_main_entry) == false)
