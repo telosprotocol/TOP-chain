@@ -151,7 +151,7 @@ namespace top
                     }
                     else
                     {
-                        xinfo("xvtxstore_t::store_txs_index,store tx to DB for tx=%s", base::xvtxkey_t::transaction_hash_subtype_to_string(v->get_tx_hash(), v->get_tx_phase_type()).c_str());
+                        xdbg("xvtxstore_t::store_txs_index,store tx to DB for tx=%s", base::xvtxkey_t::transaction_hash_subtype_to_string(v->get_tx_hash(), v->get_tx_phase_type()).c_str());
                     }
 
 #ifdef  DEBUG_LONG_CONFIRM_TX_ENABLE  // TODO(jimmy)

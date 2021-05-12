@@ -1142,8 +1142,8 @@ bool  xstore::execute_block(base::xvblock_t* vblock) {
     success = m_db->write(kv_pairs);
     XMETRICS_COUNTER_INCREMENT("store_block_execution", 1);
     xassert(success);
-
-    xinfo("xstore::execute_block success,block=%s, level:%d class:%d account=%s",
+    // default execute success
+    xdbg("xstore::execute_block success,block=%s, level:%d class:%d account=%s",
         block->dump().c_str(), block->get_block_level(),
         block->get_block_class(), account->to_basic_string().c_str());
     return success;
