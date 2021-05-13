@@ -722,7 +722,7 @@ int parse_execute_command(const char * config_file_extra, int argc, char * argv[
     // query reward
     auto queryReward_app = staking_app->add_subcommand("queryReward", "Query reward amount.");
     std::string queryReward_account;
-    queryReward_app->add_option("account_addr", queryReward_account, "Account address. If you do not add this parameters, your defalt miner account will be queried.");
+    queryReward_app->add_option("account_addr", queryReward_account, "Account address. If you do not add this parameters, your default miner account will be queried.");
     queryReward_app->callback(std::bind(&ApiMethod::query_reward, &topcl.api, std::ref(queryReward_account), std::ref(out_str)));
 
     // claim reward

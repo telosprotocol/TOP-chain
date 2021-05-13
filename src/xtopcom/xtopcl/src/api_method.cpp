@@ -645,14 +645,12 @@ void ApiMethod::transfer1(std::string & to, std::string & amount_d, std::string 
         std::cout << "note size: " << note.size() << " > maximum size 128" << endl;
         return;
     }
-    std::cout<<"amount_d:" << amount_d<<std::endl;
+
     uint64_t amount;  // = ASSET_TOP(amount_d);
     parse_top_double(amount_d, TOP_UNIT_LENGTH, amount);
-    std::cout<<"amount:" << amount<<std::endl;
     uint64_t tx_deposit;  // = ASSET_TOP(tx_deposit_d);
-    std::cout<<"tx_deposit_d:" << tx_deposit_d<<std::endl;
     parse_top_double(tx_deposit_d, TOP_UNIT_LENGTH, tx_deposit);
-    std::cout<<"tx_deposit:" << tx_deposit<<std::endl;    
+
     if (tx_deposit != 0) {
         api_method_imp_.set_tx_deposit(tx_deposit);
     }
