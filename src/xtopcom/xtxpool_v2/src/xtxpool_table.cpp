@@ -456,7 +456,7 @@ bool xtxpool_table_t::get_account_latest_nonce_hash(const std::string account_ad
             mbus::xevent_behind_ptr_t ev = make_object_ptr<mbus::xevent_behind_on_demand_t>(
                 account_addr, account_basic_info.get_sync_height_start(), account_basic_info.get_sync_num(), true, "account_state_fall_behind");
             m_para->get_bus()->push_event(ev);
-            xtxpool_info("xtxpool_table_t::get_account_latest_nonce_hash account:%s state fall behind,need sync unit start_height:%llu,count:%u",
+            xtxpool_info("xtxpool_table_t::get_account_latest_nonce_hash account:%s state fall behind,try sync unit from:%llu,count:%u",
                          account_addr.c_str(),
                          account_basic_info.get_sync_height_start(),
                          account_basic_info.get_sync_num());

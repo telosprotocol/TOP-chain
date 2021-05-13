@@ -50,11 +50,12 @@ xblock_ptr_t xunit_maker_t::get_latest_block(const base::xaccount_index_t & acco
 void xunit_maker_t::try_sync_lacked_blocks(const uint64_t latest_lack_block_height, const std::string & reason) {
     base::xauto_ptr<base::xvblock_t> _block_ptr = get_blockstore()->get_latest_connected_block(get_account());
     uint64_t start_sync_height = _block_ptr->get_height() + 1;
+    uint32_t sync_num = (uint32_t)(latest_lack_block_height - start_sync_height);
     mbus::xevent_behind_ptr_t ev = make_object_ptr<mbus::xevent_behind_on_demand_t>(
-        get_address(), start_sync_height, (uint32_t)(latest_lack_block_height - start_sync_height), true, "account_state_fall_behind");
+        get_address(), start_sync_height, sync_num, true, "account_state_fall_behind");
     get_bus()->push_event(ev);
     
-    xwarn("xunit_maker_t::try_sync_lacked_blocks reason:%s, account=%s,try sync from %llu to %llu", reason.c_str(),  get_account().c_str(), start_sync_height, latest_lack_block_height);
+    xinfo("xunit_maker_t::try_sync_lacked_blocks check_latest_state fail-%s, account=%s,try sync unit from %llu,num:%u", reason.c_str(),  get_account().c_str(), start_sync_height, sync_num);
 }
 
 int32_t    xunit_maker_t::check_latest_state(const base::xaccount_index_t & account_index) {
@@ -85,7 +86,7 @@ int32_t    xunit_maker_t::check_latest_state(const base::xaccount_index_t & acco
     }
 
     if (!update_account_state(latest_block, lacked_block_height)) {
-        xwarn("xunit_maker_t::check_latest_state fail-update_account_state.latest_block=%s",
+        xinfo("xunit_maker_t::check_latest_state fail-update_account_state.latest_block=%s",
             latest_block->dump().c_str());
         if (lacked_block_height > 0) {
             try_sync_lacked_blocks(lacked_block_height, "update_account_state");

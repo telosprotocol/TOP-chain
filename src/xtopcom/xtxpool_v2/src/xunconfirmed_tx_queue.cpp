@@ -136,18 +136,17 @@ int32_t xunconfirmed_account_t::update(xblock_t * latest_committed_block, const 
         if (_block == nullptr) {
             base::xauto_ptr<base::xvblock_t> _block_ptr = m_para->get_vblockstore()->get_latest_connected_block(account_addr);
             uint64_t start_sync_height = _block_ptr->get_height() + 1;
-            mbus::xevent_behind_ptr_t ev =
-                make_object_ptr<mbus::xevent_behind_on_demand_t>(account_addr, start_sync_height, (uint32_t)(cur_height - start_sync_height), true, "unit_lack");
+            uint32_t sync_num = (uint32_t)(cur_height - start_sync_height);
+            mbus::xevent_behind_ptr_t ev = make_object_ptr<mbus::xevent_behind_on_demand_t>(account_addr, start_sync_height, sync_num, true, "unit_lack");
             m_para->get_bus()->push_event(ev);
-            xtxpool_info("xunconfirmed_account_t::update account:%s state fall behind,need sync unit cur height:%llu", account_addr.c_str(), cur_height);
+            xtxpool_info("xunconfirmed_account_t::update account:%s state fall behind,try sync unit from:%llu,num:%u", account_addr.c_str(), start_sync_height, sync_num);
             return xtxpool_error_unitblock_lack;
         }
 
         data::xblock_t * unit_block = dynamic_cast<data::xblock_t *>(_block.get());
         // check if finish load block
-        if ( unit_block->is_genesis_block()
-            || (unit_block->get_block_class() == base::enum_xvblock_class_full)
-            || (unit_block->get_block_class() == base::enum_xvblock_class_light && unit_block->get_unconfirm_sendtx_num() == 0) ) {
+        if (unit_block->is_genesis_block() || (unit_block->get_block_class() == base::enum_xvblock_class_full) ||
+            (unit_block->get_block_class() == base::enum_xvblock_class_light && unit_block->get_unconfirm_sendtx_num() == 0)) {
             confirm_txs.clear();
             for (auto & tx_info : m_unconfirmed_txs) {
                 // clear confirmed tx receiptid
@@ -312,6 +311,5 @@ const std::vector<xcons_transaction_ptr_t> xunconfirmed_tx_queue_t::get_resend_t
 uint32_t xunconfirmed_tx_queue_t::size() const {
     return m_peer_tables.get_all_txs().size();
 }
-
 
 NS_END2
