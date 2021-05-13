@@ -134,7 +134,7 @@ class xblock_maker_t : public base::xvaccount_t {
 
  public:
     void                        set_latest_block(const xblock_ptr_t & block);
-    bool                        load_and_cache_enough_blocks(const xblock_ptr_t & latest_block);
+    bool                        load_and_cache_enough_blocks(const xblock_ptr_t & latest_block, uint64_t & lacked_block_height);
     bool                        check_latest_blocks() const;
 
  public:
@@ -159,7 +159,7 @@ class xblock_maker_t : public base::xvaccount_t {
     bool                        verify_latest_blocks(base::xvblock_t* latest_cert_block, base::xvblock_t* lock_block, base::xvblock_t* commited_block);
 
  protected:
-    bool                        update_account_state(const xblock_ptr_t & latest_committed_block);
+    bool                        update_account_state(const xblock_ptr_t & latest_committed_block, uint64_t & lacked_block_height);
     bool                        is_latest_blocks_valid(const base::xblock_mptrs & latest_blocks);
     void                        clear_old_blocks();
 

@@ -11,7 +11,7 @@
 NS_BEG2(top, blockmaker)
 
 // create the state matching latest block and cache it
-bool xblock_maker_t::update_account_state(const xblock_ptr_t & latest_block) {
+bool xblock_maker_t::update_account_state(const xblock_ptr_t & latest_block, uint64_t & lacked_block_height) {
     if (m_latest_bstate != nullptr && m_latest_bstate->get_last_block_hash() == latest_block->get_block_hash()) {
         xdbg("xblock_maker_t::update_account_state find cache state. account=%s,height=%ld",
             get_account().c_str(), latest_block->get_height());
@@ -60,6 +60,7 @@ bool xblock_maker_t::update_account_state(const xblock_ptr_t & latest_block) {
             auto _block = get_blockstore()->load_block_object(*this, current_block->get_height() - 1, current_block->get_last_block_hash(), true);
             if (_block == nullptr) {
                 xwarn("xblock_maker_t::update_account_state fail-load block.account=%s,height=%ld", get_account().c_str(), current_block->get_height() - 1);
+                lacked_block_height = current_block->get_height() - 1;
                 return false;
             }
             prev_block = xblock_t::raw_vblock_to_object_ptr(_block.get());
@@ -130,7 +131,7 @@ void xblock_maker_t::set_latest_block(const xblock_ptr_t & block) {
     m_latest_blocks[block->get_height()] = block;
 }
 
-bool xblock_maker_t::load_and_cache_enough_blocks(const xblock_ptr_t & latest_block) {
+bool xblock_maker_t::load_and_cache_enough_blocks(const xblock_ptr_t & latest_block, uint64_t & lacked_block_height) {
     xblock_ptr_t current_block = latest_block;
     set_latest_block(current_block);
     uint32_t count = 1;
@@ -143,6 +144,7 @@ bool xblock_maker_t::load_and_cache_enough_blocks(const xblock_ptr_t & latest_bl
             auto _block = get_blockstore()->load_block_object(*this, current_block->get_height() - 1, current_block->get_last_block_hash(), true);
             if (_block == nullptr) {
                 xwarn("xblock_maker_t::load_and_cache_enough_blocks fail-load block.account=%s,height=%ld", get_account().c_str(), current_block->get_height() - 1);
+                lacked_block_height = current_block->get_height() - 1;
                 return false;
             }
             prev_block = xblock_t::raw_vblock_to_object_ptr(_block.get());
