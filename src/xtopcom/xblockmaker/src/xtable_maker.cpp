@@ -53,8 +53,9 @@ int32_t xtable_maker_t::check_latest_state(const xblock_ptr_t & latest_block) {
     }
 
     m_check_state_success = false;
+    uint64_t lacked_block_height = 0;
     // cache latest block
-    if (!load_and_cache_enough_blocks(latest_block)) {
+    if (!load_and_cache_enough_blocks(latest_block, lacked_block_height)) {
         xwarn("xunit_maker_t::check_latest_state fail-load_and_cache_enough_blocks.account=%s", get_account().c_str());
         return xblockmaker_error_latest_table_blocks_invalid;
     }
