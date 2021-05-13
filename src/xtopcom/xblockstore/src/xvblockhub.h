@@ -15,6 +15,65 @@ namespace top
 {
     namespace store
     {
+        enum enum_blockstore_event
+        {
+            enum_blockstore_event_committed  = 1, //block is committed
+            enum_blockstore_event_revoke     = 2, //block is revoke and removed by consensus
+            enum_blockstore_event_stored     = 4, //block is stored persistedly
+        };
+    
+        class xblockevent_t
+        {
+        public:
+            xblockevent_t(enum_blockstore_event type,base::xvbindex_t* target)
+            {
+                _event_type     = type;
+                _target_index   = target;
+                if(target != NULL)
+                    target->add_ref();
+            }
+            xblockevent_t(xblockevent_t && obj)
+            {
+                _event_type     = obj._event_type;
+                _target_index   = obj._target_index;
+                obj._target_index = NULL;
+            }
+            xblockevent_t(const xblockevent_t & obj)
+            {
+                _event_type     = obj._event_type;
+                _target_index   = obj._target_index;
+                if(_target_index != NULL)
+                    _target_index->add_ref();
+            }
+            xblockevent_t & operator = (const xblockevent_t & obj)
+            {
+                base::xvbindex_t* old_ptr = _target_index;
+                
+                _event_type     = obj._event_type;
+                _target_index   = obj._target_index;
+                if(_target_index != NULL)
+                    _target_index->add_ref();
+                
+                if(old_ptr != NULL)
+                    old_ptr->release_ref();
+                
+                return *this;
+            }
+            ~xblockevent_t()
+            {
+                if(_target_index != NULL)
+                    _target_index->release_ref();
+            }
+        private:
+            xblockevent_t();
+        public:
+            inline enum_blockstore_event get_type() const {return _event_type;}
+            inline base::xvbindex_t*     get_index()const {return _target_index;}
+        protected:
+            enum_blockstore_event   _event_type;
+            base::xvbindex_t*       _target_index;
+        };
+    
         class xacctmeta_t : public base::xdataobj_t
         {
         public:
@@ -91,6 +150,8 @@ namespace top
             
             inline const std::string &   get_blockstore_path()   const {return m_blockstore_path;};
             
+            bool                   process_events();
+            
         public://just search at cache layer
             std::vector<base::xvbindex_t*>  query_index(const uint64_t height);
             base::xvbindex_t*      query_index(const uint64_t height, const uint64_t viewid);
@@ -126,6 +187,7 @@ namespace top
             bool                   load_index_output(base::xvbindex_t* target_block);
             bool                   load_index_offdata(base::xvbindex_t* target_block);
             size_t                 load_index_by_height(const uint64_t target_height);
+            bool                   delete_block_from_db(base::xvbindex_t* index_ptr);
             
         public://operated for raw block
             bool                   store_blocks(std::vector<base::xvblock_t*> & batch_store_blocks); //better performance
@@ -180,14 +242,16 @@ namespace top
         private:
             void                close_blocks(); //clean all cached blocks
             bool                clean_blocks(const int keep_blocks_count,bool force_release_unused_block);
+            bool                on_block_revoked(base::xvbindex_t* index_ptr);
             bool                on_block_stored(base::xvbindex_t* index_ptr);
+            bool                on_block_committed(base::xvbindex_t* index_ptr);
             bool                store_txs_to_db(base::xvbindex_t* index_ptr);
             
         protected: //compatible for old version,e.g read meta and other stuff
             const std::string   load_value_by_path(const std::string & full_path_as_key);
             bool                store_value_by_path(const std::string & full_path_as_key,const std::string & value);
             bool                delete_value_by_path(const std::string & full_path_as_key);
-           
+            bool                push_event(enum_blockstore_event type,base::xvbindex_t* target);
         private:
             uint64_t        m_last_access_time_ms; //UTC ms
             uint64_t        m_idle_timeout_ms;     //how long(ms) it will change to idle status
@@ -195,6 +259,7 @@ namespace top
             std::string     m_last_save_vmeta_bin;
         protected:
             xacctmeta_t *   m_meta;
+            std::deque<xblockevent_t> m_events_queue;  //stored event
             std::map<uint64_t,std::map<uint64_t,base::xvbindex_t*> > m_all_blocks;  // < height#, <view#,block*> > sort from lower to higher
         };
 

@@ -14,6 +14,7 @@ namespace top
         xBFTRules::xBFTRules(xcscoreobj_t & parent_object)
             :xcsdriver_t(parent_object)
         {
+            m_latest_commit_block = NULL;
             m_latest_lock_block   = NULL;
             m_latest_voted_height = 0;
             m_latest_voted_viewid = 0;
@@ -27,6 +28,10 @@ namespace top
             
             if(m_latest_lock_block != NULL)
                 m_latest_lock_block->release_ref();
+            
+            if(m_latest_commit_block != NULL)
+                m_latest_commit_block->release_ref();
+            
             xinfo("xBFTRules::~xBFTRules,destroy,this=%p",this);
         }
         
@@ -44,7 +49,7 @@ namespace top
             }
             else
             {
-                const base::xvblock_t * commit_block = m_latest_lock_block->get_prev_block();
+                const base::xvblock_t * commit_block = m_latest_commit_block;
                 if(commit_block != NULL)
                     xprintf(local_param_buf,sizeof(local_param_buf),"{commited={height=%" PRIu64 ",viewid=%" PRIu64 ",viewtoken=%u} <-- locked={height=%" PRIu64 ",viewid=%" PRIu64 ",viewtoken=%u} <-- hqc={height=%" PRIu64 ",viewid=%" PRIu64 ",viewtoken=%u} <-- hviewid=%" PRIu64 "}",commit_block->get_height(),commit_block->get_viewid(),commit_block->get_viewtoken(),m_latest_lock_block->get_height(),m_latest_lock_block->get_viewid(),m_latest_lock_block->get_viewtoken(),_latest_cert->get_height(),_latest_cert->get_viewid(),_latest_cert->get_viewtoken(),get_latest_voted_viewid());
                 else
@@ -54,6 +59,73 @@ namespace top
         }
         
         //////////////////////////////block managed fro proposal//////////////////////////////
+        base::xvblock_t *  xBFTRules::get_commit_block()
+        {
+            if(m_latest_commit_block != nullptr)
+                return m_latest_commit_block;
+            
+            base::xvblock_t * locked_block = get_lock_block();
+            if(locked_block != NULL)
+            {
+                if(locked_block->get_height() > 0)//
+                {
+                    base::xauto_ptr<base::xvblock_t> commit_block(get_vblockstore()->load_block_object(*this, locked_block->get_height() - 1,locked_block->get_last_block_hash(),false));
+                    if(commit_block)
+                    {
+                        m_latest_commit_block = commit_block();
+                        m_latest_commit_block->add_ref();
+                    }
+                }
+            }
+            else
+            {
+                base::xauto_ptr<base::xvblock_t>  latest_commit_block(get_vblockstore()->get_latest_committed_block(*this));
+                if(latest_commit_block)
+                {
+                    m_latest_commit_block = latest_commit_block();
+                    m_latest_commit_block->add_ref();
+                }
+            }
+            return m_latest_commit_block;
+        }
+    
+        bool        xBFTRules::set_commit_block(base::xvblock_t * new_commit_block)//update block of  commited one
+        {
+            if(NULL == new_commit_block)
+                return false;
+            
+            if(new_commit_block == m_latest_commit_block)
+                return true; //same object
+            
+            if(m_latest_commit_block != NULL)
+            {
+                if(   (m_latest_commit_block->get_height() == new_commit_block->get_height())
+                   || (m_latest_commit_block->get_block_hash() == new_commit_block->get_block_hash()) )
+                {
+                    return true; //same block
+                }
+            }
+            
+            base::xvblock_t * locked_block = get_lock_block();
+            if(locked_block != NULL)
+            {
+                if(  (locked_block->get_height() != new_commit_block->get_height() + 1)
+                   ||(locked_block->get_last_block_hash() != new_commit_block->get_block_hash()) )
+                {
+                    return false;
+                }
+                
+                if(m_latest_commit_block != NULL)
+                    m_latest_commit_block->release_ref();
+                
+                m_latest_commit_block = new_commit_block;
+                m_latest_commit_block->add_ref();
+                return true;
+            }
+            //locked block must be valid first
+            return false;
+        }
+    
         base::xvblock_t * xBFTRules::get_lock_block()
         {
             if(m_latest_lock_block != nullptr)
@@ -247,19 +319,36 @@ namespace top
             if(nullptr == _target_block)
                 return false;
             
-            //filtered forked cert if have
-            if(get_lock_block() != nullptr)
+            //filtered forked cert if not follow rule
+            if(safe_check_add_cert_fork(_target_block) < 0) //allow unknow case continue
             {
-                if(safe_check_follow_locked_branch(_target_block) < 0)//allow unknow case continue
+                xwarn("xBFTRules::add_cert_block,fail-as safe_check_resolve_cert_fork for block(%s)",_target_block->dump().c_str());
+                return false;
+            }
+            //clean any lower viewid of height than _target_block
+            for(auto it = m_certified_blocks.begin(); it != m_certified_blocks.end();)
+            {
+                auto old_it = it;
+                ++it;
+                if(old_it->second->get_height() == _target_block->get_height()) //found same height
                 {
-                    xwarn("xBFTRules::add_cert_block,fail-as safe_check_follow_locked_branch");
-                    return false;
+                    if(old_it->second->get_viewid() < _target_block->get_viewid()) //has lower viewid block at same height
+                    {
+                        //remove any block of th lower viewid
+                        base::xvblock_t* _to_remove = old_it->second;
+                        m_certified_blocks.erase(old_it);
+                        
+                         xinfo("xBFTRules::add_cert_block,remove lower-viewid block(%s)",_to_remove->dump().c_str());
+                        _to_remove->release_ref();
+                    }
                 }
             }
+            //then insert it
             auto insert_result = m_certified_blocks.emplace(_target_block->get_viewid(),_target_block);
             if(insert_result.second)//note:not allow overwrited existing cert with same view#
                 _target_block->add_ref();//hold referene for map
  
+            xdbg("xBFTRules::add_cert_block,added new cert block(%s)",_target_block->dump().c_str());
             return insert_result.second;//return true means it inserted into map at brandnew
         }
         bool  xBFTRules::remove_cert_block(const uint64_t view_id)
@@ -446,6 +535,74 @@ namespace top
                 return false;
             }
             return true;
+        }
+        
+        //return  1     when true
+        //return  -1    when false
+        //return  0     when unknow
+        //note: safe_check_resolve_cert_fork decide whether allow to store any synced block
+        int xBFTRules::safe_check_add_cert_fork(base::xvblock_t * _test_for_block)
+        {
+            if(NULL == _test_for_block)
+                return -1;
+            
+            //rule#1: only keep highest cert block at same height
+            base::xvblock_t *  latest_cert_block = get_latest_cert_block();
+            if(latest_cert_block != NULL)
+            {
+                if(_test_for_block->get_height() == latest_cert_block->get_height())
+                {
+                    if(_test_for_block->get_viewid() < latest_cert_block->get_viewid())
+                    {
+                        xwarn("xBFTRules::safe_check_add_cert_fork,warn-conflict existing cert,test cert(%s) < latest_cert_block(%s) at node=0x%llx",_test_for_block->dump().c_str(), latest_cert_block->dump().c_str(),get_xip2_addr().low_addr);
+                        return -1;
+                    }
+                    else if(_test_for_block->get_viewid() == latest_cert_block->get_viewid())
+                    {
+                        if(_test_for_block->get_block_hash() != latest_cert_block->get_block_hash())
+                        {
+                            xerror("xBFTRules::safe_check_add_cert_fork,error-invalid test cert(=%s) != latest_cert_block(%s) at node=0x%llx",_test_for_block->dump().c_str(), latest_cert_block->dump().c_str(),get_xip2_addr().low_addr);
+                            
+                            return -1;
+                        }
+                    }
+                }
+            }
+            
+            base::xvblock_t *  latest_lock_block = get_lock_block();
+            if(latest_lock_block != nullptr)
+            {
+                //rule#2: only keep heighest locked block at same height
+                if(_test_for_block->get_height() == latest_lock_block->get_height()) //same height as local locked one
+                {
+                    if(_test_for_block->get_viewid() < latest_lock_block->get_viewid())//not allow block of lower viewid
+                    {
+                        xwarn("xBFTRules::safe_check_add_cert_fork,detected forked lock block(%s) < local(%s) at node=0x%llx",_test_for_block->dump().c_str(), latest_lock_block->dump().c_str(),get_xip2_addr().low_addr);
+                        return -1;
+                    }
+                    else if(_test_for_block->get_viewid() > latest_lock_block->get_viewid())//exception case happen
+                    {
+                        xwarn("xBFTRules::safe_check_add_cert_fork,detected forked lock block(%s) > local(%s) at node=0x%llx",_test_for_block->dump().c_str(), latest_lock_block->dump().c_str(),get_xip2_addr().low_addr);
+                        //a newer viewid of locked block, let pass check first then let blockstore decide whether need replace old locked one
+                        return 1;
+                    }
+                    else if(_test_for_block->get_block_hash() != get_lock_block()->get_block_hash())
+                    {
+                        xerror("xBFTRules::safe_check_add_cert_fork,fail-block with same height of locked,but different hash of proposal=%s vs locked=%s at node=0x%llx",_test_for_block->dump().c_str(), get_lock_block()->dump().c_str(),get_xip2_addr().low_addr);
+                        return -1;
+                    }
+                    return 1;
+                }
+                
+                //rule#3: any cert block must follow locked_branch
+                if(safe_check_follow_locked_branch(_test_for_block) < 0)//allow unknow case continue
+                {
+                    xwarn("xBFTRules::safe_check_add_cert_fork,fail-as safe_check_follow_locked_branch");
+                    return -1;
+                }
+            }
+            
+            return 1;
         }
         
         //return  1     when true

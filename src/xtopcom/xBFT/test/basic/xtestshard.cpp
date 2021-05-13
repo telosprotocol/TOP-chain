@@ -46,7 +46,7 @@ namespace top
                 ++last_node_index;
             }
             m_leader_slot = base::xtime_utl::get_fast_random(m_total_nodes);
-            m_raw_timer->start(10000, 10000); //generate a clock block every 10 seconds
+            m_raw_timer->start(1000, 1000); //generate a clock block every 1 seconds
         }
     
         xtestshard::~xtestshard()
