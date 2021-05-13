@@ -187,6 +187,7 @@ namespace top
             bool                   load_index_output(base::xvbindex_t* target_block);
             bool                   load_index_offdata(base::xvbindex_t* target_block);
             size_t                 load_index_by_height(const uint64_t target_height);
+            bool                   delete_block_from_db(base::xvbindex_t* index_ptr);
             
         public://operated for raw block
             bool                   store_blocks(std::vector<base::xvblock_t*> & batch_store_blocks); //better performance

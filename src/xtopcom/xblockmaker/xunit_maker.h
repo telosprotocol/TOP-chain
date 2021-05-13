@@ -40,6 +40,7 @@ class xunit_maker_t : public xblock_maker_t {
     xblock_ptr_t            get_latest_block(const base::xaccount_index_t & account_index);
     void                    find_highest_send_tx(uint64_t & latest_nonce, uint256_t & latest_hash);
     bool                    is_match_account_fullunit_limit() const;
+    void                    try_sync_lacked_blocks(const uint64_t latest_lack_block_height, const std::string & reason);
 
  private:
     std::vector<xcons_transaction_ptr_t>        m_pending_txs;
