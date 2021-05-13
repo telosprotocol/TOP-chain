@@ -28,6 +28,9 @@ public:
     xthreadsafe_queue(std::size_t const max_size = std::numeric_limits<std::size_t>::max())
         : m_max_size{ max_size }
     {
+        // if (m_max_size != std::numeric_limits<std::size_t>::max()) {
+        //     m_queue.reserve(m_max_size);
+        // }
     }
 
     void
