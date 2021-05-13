@@ -8,7 +8,7 @@ NS_BEG2(top, xunit_service)
 xresources::xresources(const std::string & account,
                        const xobject_ptr_t<base::xworkerpool_t> & pwork,
                        const xobject_ptr_t<base::xvcertauth_t> & auth,
-                       const xobject_ptr_t<base::xvblockstore_t> & blockstore,
+                       const observer_ptr<base::xvblockstore_t> & blockstore,
                        const std::shared_ptr<xnetwork_proxy_face> & network,
                        const std::shared_ptr<xleader_election_face> & elect_face,
                        observer_ptr<time::xchain_time_face_t> const & timer,

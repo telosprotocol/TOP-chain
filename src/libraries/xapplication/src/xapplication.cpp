@@ -199,8 +199,8 @@ observer_ptr<store::xstore_face_t> xtop_application::store() const noexcept {
     return make_observer(m_store.get());
 }
 
-xobject_ptr_t<base::xvblockstore_t> xtop_application::blockstore() const noexcept {
-    return m_blockstore;
+observer_ptr<base::xvblockstore_t> xtop_application::blockstore() const noexcept {
+    return make_observer(m_blockstore.get());
 }
 
 observer_ptr<store::xindexstorehub_t> xtop_application::indexstore() const noexcept {

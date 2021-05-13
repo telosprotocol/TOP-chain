@@ -25,7 +25,7 @@ public:
     xresources(const std::string & account,
                const xobject_ptr_t<base::xworkerpool_t> & pwork,
                const xobject_ptr_t<base::xvcertauth_t> & auth,
-               const xobject_ptr_t<base::xvblockstore_t> & blockstore,
+               const observer_ptr<base::xvblockstore_t> & blockstore,
                const std::shared_ptr<xnetwork_proxy_face> & network,
                const std::shared_ptr<xleader_election_face> & elect_face,
                observer_ptr<time::xchain_time_face_t> const & tx_timer,
@@ -56,7 +56,7 @@ private:
     xobject_ptr_t<base::xworkerpool_t> m_worker_pool;
     std::shared_ptr<xnetwork_proxy_face> m_network;
     xobject_ptr_t<base::xvcertauth_t> m_certauth;
-    xobject_ptr_t<base::xvblockstore_t> m_blockstore;
+    observer_ptr<base::xvblockstore_t> m_blockstore;
     std::shared_ptr<xleader_election_face> m_election;
     std::string m_account;
     observer_ptr<time::xchain_time_face_t> m_timer;

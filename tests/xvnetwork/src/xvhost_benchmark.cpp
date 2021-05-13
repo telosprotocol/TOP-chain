@@ -63,8 +63,7 @@ public:
         m_cb = nullptr;
     }
 
-    void
-    send_data(std::size_t const limit) {
+    std::chrono::high_resolution_clock::time_point send_data(std::size_t const limit) {
         assert(m_cb);
         std::vector<xbyte_buffer_t> messages;
         messages.reserve(limit);
@@ -103,6 +102,7 @@ public:
             messages.push_back(codec::msgpack_encode(msg));
         }
 
+        std::printf("start to send data...\n");
         auto begin = std::chrono::high_resolution_clock::now();
         assert(messages.size() == limit);
         for (auto i = 0u; i < limit; ++i) {
@@ -113,6 +113,8 @@ public:
         auto const ms = static_cast<std::int64_t>(std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count());
         std::printf("vhost accepts %zu packs using %" PRIi64 "ms.  tps = %f\n",
                     limit, ms, (limit / static_cast<double>(ms) * 1000));
+
+        return begin;
     }
 };
 using xbenchmark_network_driver_helper_t = xtop_benchmark_network_driver_helper;
@@ -245,43 +247,47 @@ static void build_vhost() {
 
 NS_END3
 
-TEST(vnet, benchmark) {
 #if 0
-    constexpr std::size_t data_pack_count{ 1000000 };
+TEST(vnet, benchmark) {
+    constexpr std::size_t data_pack_count{ 100000 };
     top::vnetwork::tests::build_vhost();
-    auto begin = std::chrono::high_resolution_clock::now();
-    top::vnetwork::tests::network_driver->send_data(data_pack_count);
+    for (auto i = 0; i < 10; ++i) {
+        std::printf("begin test...\n");
+        auto begin = top::vnetwork::tests::network_driver->send_data(data_pack_count);
+        // std::this_thread::sleep_for(std::chrono::seconds{ 5 });
+        while (data_pack_count != top::vnetwork::tests::c.load(std::memory_order_relaxed)) {
+            std::this_thread::sleep_for(std::chrono::milliseconds{ 50 });
+            //printf("%zu\n", top::vnetwork::tests::c.load(std::memory_order_relaxed));
+            //std::this_thread::sleep_for(std::chrono::seconds{10});
+            //printf("%zu\n", top::vnetwork::tests::c.load(std::memory_order_relaxed));
+            //std::this_thread::sleep_for(std::chrono::seconds{10});
+            //printf("%zu\n", top::vnetwork::tests::c.load(std::memory_order_relaxed));
+            //std::this_thread::sleep_for(std::chrono::seconds{10});
+            //printf("%zu\n", top::vnetwork::tests::c.load(std::memory_order_relaxed));
+            //std::this_thread::sleep_for(std::chrono::seconds{10});
+            //printf("%zu\n", top::vnetwork::tests::c.load(std::memory_order_relaxed));
+            //std::this_thread::sleep_for(std::chrono::seconds{10});
+            //printf("%zu\n", top::vnetwork::tests::c.load(std::memory_order_relaxed));
+            //std::this_thread::sleep_for(std::chrono::seconds{10});
+            //printf("%zu\n", top::vnetwork::tests::c.load(std::memory_order_relaxed));
+            //std::this_thread::sleep_for(std::chrono::seconds{10});
+            //printf("%zu\n", top::vnetwork::tests::c.load(std::memory_order_relaxed));
+            //std::this_thread::sleep_for(std::chrono::seconds{10});
+            //printf("%zu\n", top::vnetwork::tests::c.load(std::memory_order_relaxed));
+            //std::this_thread::sleep_for(std::chrono::seconds{10});
+            //printf("%zu\n", top::vnetwork::tests::c.load(std::memory_order_relaxed));
+            //break;
+        }
 
-    while (data_pack_count != top::vnetwork::tests::c.load(std::memory_order_relaxed)) {
-        //std::this_thread::sleep_for(std::chrono::seconds{10});
-        //printf("%zu\n", top::vnetwork::tests::c.load(std::memory_order_relaxed));
-        //std::this_thread::sleep_for(std::chrono::seconds{10});
-        //printf("%zu\n", top::vnetwork::tests::c.load(std::memory_order_relaxed));
-        //std::this_thread::sleep_for(std::chrono::seconds{10});
-        //printf("%zu\n", top::vnetwork::tests::c.load(std::memory_order_relaxed));
-        //std::this_thread::sleep_for(std::chrono::seconds{10});
-        //printf("%zu\n", top::vnetwork::tests::c.load(std::memory_order_relaxed));
-        //std::this_thread::sleep_for(std::chrono::seconds{10});
-        //printf("%zu\n", top::vnetwork::tests::c.load(std::memory_order_relaxed));
-        //std::this_thread::sleep_for(std::chrono::seconds{10});
-        //printf("%zu\n", top::vnetwork::tests::c.load(std::memory_order_relaxed));
-        //std::this_thread::sleep_for(std::chrono::seconds{10});
-        //printf("%zu\n", top::vnetwork::tests::c.load(std::memory_order_relaxed));
-        //std::this_thread::sleep_for(std::chrono::seconds{10});
-        //printf("%zu\n", top::vnetwork::tests::c.load(std::memory_order_relaxed));
-        //std::this_thread::sleep_for(std::chrono::seconds{10});
-        //printf("%zu\n", top::vnetwork::tests::c.load(std::memory_order_relaxed));
-        //std::this_thread::sleep_for(std::chrono::seconds{10});
-        //printf("%zu\n", top::vnetwork::tests::c.load(std::memory_order_relaxed));
-        //break;
+        auto end = std::chrono::high_resolution_clock::now();
+        auto ms = static_cast<std::size_t>(std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count());
+
+        std::printf("vhost processed in %zu milliseconds against %zu packs tps = %lf \n",
+            ms,
+            data_pack_count,
+            static_cast<double>(data_pack_count) / ms * 1000);
+
+        top::vnetwork::tests::c.store(0);
     }
-
-    auto end = std::chrono::high_resolution_clock::now();
-    auto ms = static_cast<std::size_t>(std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count());
-
-    std::printf("vhost processed in %zu milliseconds against %zu packs tps = %lf \n",
-                ms,
-                data_pack_count,
-                static_cast<double>(data_pack_count) / ms * 1000);
-#endif
 }
+#endif

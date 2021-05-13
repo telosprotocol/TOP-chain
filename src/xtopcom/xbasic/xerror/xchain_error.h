@@ -17,7 +17,7 @@ class xtop_top_error : public std::runtime_error {
     std::error_code m_ec{};
 
 public:
-    xtop_top_error()                                   = default;
+
     xtop_top_error(xtop_top_error const &)             = default;
     xtop_top_error & operator=(xtop_top_error const &) = default;
     xtop_top_error(xtop_top_error &&)                  = default;

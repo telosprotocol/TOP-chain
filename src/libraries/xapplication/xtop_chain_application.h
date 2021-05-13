@@ -2,6 +2,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
+#if 0
+
 #pragma once
 
 #include "xapplication/xchain_application.h"
@@ -38,3 +40,5 @@ protected:
 using xtop_chain_application_t = xtop_top_chain_application;
 
 NS_END2
+
+#endif

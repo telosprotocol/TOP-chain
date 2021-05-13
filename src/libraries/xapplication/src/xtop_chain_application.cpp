@@ -2,6 +2,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
+#if 0
+
 #include "xapplication/xtop_chain_application.h"
 
 #include "xapplication/xapplication.h"
@@ -94,3 +96,5 @@ void xtop_top_chain_application::load_last_election_data() {
 }
 
 NS_END2
+
+#endif
