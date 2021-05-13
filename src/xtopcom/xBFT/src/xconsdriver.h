@@ -101,6 +101,9 @@ namespace top
                 return  _block->get_cert()->get_auditor();
             }
         protected: //blocks mangagement
+            base::xvblock_t *   get_commit_block();
+            bool                set_commit_block(base::xvblock_t * lastst_commit_block);//update block of  commited one
+            
             base::xvblock_t *   get_lock_block();
             virtual bool        set_lock_block(base::xvblock_t * lastst_lock_block);//update block of  locked one
 
@@ -127,6 +130,8 @@ namespace top
         protected: //safe rules
             virtual bool       safe_check_for_block(base::xvblock_t * _test_block);//the minimal rule for block,
             virtual bool       safe_check_for_packet(base::xcspdu_t & _test_packet);//the minimal rule for packet
+            
+            int     safe_check_add_cert_fork(base::xvblock_t * _test_for_block);//rule to resolve any possible fork for cert 
             
             //return  > 0 when true, and return  < 0 when false, and return  0  when unknow
             int     safe_check_follow_locked_branch(base::xvblock_t * _test_for_block); //test whether at locked branch
@@ -161,6 +166,7 @@ namespace top
              \
              {syncing_blocks}
              */
+            base::xvblock_t *                    m_latest_commit_block; //latest commited block passed by context
             base::xvblock_t *                    m_latest_lock_block; //latest locked block passed by context
             std::map<uint64_t,base::xvblock_t*>  m_certified_blocks;  //sort by view#id from lower to higher
             std::map<uint64_t,xproposal_t*>      m_proposal_blocks;   //sort by view#id from lower to higher

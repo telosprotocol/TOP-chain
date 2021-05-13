@@ -63,6 +63,8 @@ namespace top
                     xerror("xBFTdriver_t::start_consensus,fail-lock block is out of date,need to be update,lock->dump(%s) at node=0x%llx",lastest_lock_block->dump().c_str(),get_xip2_addr().low_addr);
                 }
             }
+            //now safe to keep commit
+            set_commit_block(_evt_obj->get_latest_commit());
             if(_evt_obj->get_latest_cert() != NULL)   //update latest cert block from upper layer
                 add_cert_block(_evt_obj->get_latest_cert());
 
@@ -278,6 +280,27 @@ namespace top
                 xerror("xBFTdriver_t::handle_proposal_msg,fail-invalid proposal=%s <!=> packet=%s,at node=0x%llx",_peer_block->dump().c_str(),packet.dump().c_str(),get_xip2_low_addr());
                 return enum_xconsensus_error_bad_proposal;
             }
+            
+            //precheck whether leader and backup both have the matched hq cert or not
+            base::xvblock_t *  local_latest_cert_block = get_latest_cert_block();
+            if(local_latest_cert_block != NULL)
+            {
+                //_peer_block is peer proposal
+                if(_peer_block->get_height() <= local_latest_cert_block->get_height()) //never vote outofdated proposal
+                {
+                    xwarn("xBFTdriver_t::handle_proposal_msg,fail-outofdate proposal(%s) vs dump=%s at node=0x%llx",_peer_block->dump().c_str(),dump().c_str(),get_xip2_low_addr());
+                    return enum_xconsensus_error_bad_proposal;
+                }
+                else if(_peer_block->get_height() == local_latest_cert_block->get_height() + 1)
+                {
+                    //_peer_prev_block_cert carry peer-proposal->prev cert, so check
+                    if(_peer_prev_block_cert->get_viewid() < local_latest_cert_block->get_viewid())
+                    {
+                        xwarn("xBFTdriver_t::handle_proposal_msg,fail-outofdate hqcert(%s) of proposal(%s) vs dump=%s at node=0x%llx",_peer_prev_block_cert->dump().c_str(), _peer_block->dump().c_str(),dump().c_str(),get_xip2_low_addr());
+                        return enum_xconsensus_error_outofdate; //ask leader sync cert/hq block from this backup
+                    }
+                }
+            }
 
             //step#3: load/sync the missed commit,lock and cert blocks
             //first check whether need sync lock and cert blocks as well
@@ -312,16 +335,11 @@ namespace top
             //then sync latest commit if need
             if(get_lock_block()->get_height() > 1)
             {
-                base::xvblock_t* last_commit_block = get_lock_block()->get_prev_block();
-                if(last_commit_block == nullptr)//connection might be closed possible,so not rely on it
+                base::xvblock_t* last_commit_block = get_commit_block();
+                if(last_commit_block == nullptr)//get_commit_block already include logic to load it from blockstore
                 {
-                    //check at blockstore
-                    base::xauto_ptr<base::xvblock_t> _block = get_vblockstore()->load_block_object(*this, get_lock_block()->get_height() - 1,0,false);
-                    if(_block == nullptr)
-                    {
-                        send_sync_request(to_addr,from_addr, (get_lock_block()->get_height() - 1),get_lock_block()->get_last_block_hash(),_peer_prev_block_cert,(_peer_block->get_height() - 1),event_obj->get_clock() + 2,get_lock_block()->get_chainid());
-                        return enum_xconsensus_code_need_data;//not voting but trigger sync missed commited block
-                    }
+                    send_sync_request(to_addr,from_addr, (get_lock_block()->get_height() - 1),get_lock_block()->get_last_block_hash(),_peer_prev_block_cert,(_peer_block->get_height() - 1),event_obj->get_clock() + 2,get_lock_block()->get_chainid());
+                    return enum_xconsensus_code_need_data;//not voting but trigger sync missed commited block
                 }
 
                 #ifdef __xbft_enable_sync_unconneted_commit_block__
@@ -646,6 +664,7 @@ namespace top
             {
                 xwarn("xBFTdriver_t::handle_votereport_msg,fail-peer node report err-code(%d) with peer=%s vs local=%s from peer:0x%llx,at node=0x%llx",_report_msg.get_error_code(),_report_msg.get_error_detail().c_str(),dump().c_str(),from_addr.low_addr,to_addr.low_addr);
 
+                //try sync peer commit block if newer than local. note: commit = lock - 1
                 if( get_lock_block()->get_height() < (_report_msg.get_latest_commit_height() + 1) )
                 {
                     const uint64_t    sync_target_block_height = _report_msg.get_latest_commit_height();
@@ -1110,7 +1129,7 @@ namespace top
                 xvote_report_t _vote_msg(result,dump());
                 _vote_msg.set_latest_cert_block(get_latest_cert_block());
                 _vote_msg.set_latest_lock_block(get_lock_block());
-                _vote_msg.set_latest_commit_block(get_lock_block()->get_prev_block());
+                _vote_msg.set_latest_commit_block(get_commit_block());
                 _vote_msg.serialize_to_string(msg_stream);
 
                 base::xcspdu_t & packet = event_obj->_packet;
