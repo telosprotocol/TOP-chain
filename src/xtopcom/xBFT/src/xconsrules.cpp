@@ -107,7 +107,7 @@ namespace top
             }
             
             base::xvblock_t * locked_block = get_lock_block();
-            if(locked_block != NULL)
+            if(locked_block != NULL)//must match existing locked block
             {
                 if(  (locked_block->get_height() != new_commit_block->get_height() + 1)
                    ||(locked_block->get_last_block_hash() != new_commit_block->get_block_hash()) )
