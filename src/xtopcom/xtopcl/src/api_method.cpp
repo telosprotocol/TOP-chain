@@ -647,9 +647,11 @@ void ApiMethod::transfer1(std::string & to, std::string & amount_d, std::string 
     }
 
     uint64_t amount;  // = ASSET_TOP(amount_d);
-    parse_top_double(amount_d, TOP_UNIT_LENGTH, amount);
+    if (parse_top_double(amount_d, TOP_UNIT_LENGTH, amount) != 0)
+        return;
     uint64_t tx_deposit;  // = ASSET_TOP(tx_deposit_d);
-    parse_top_double(tx_deposit_d, TOP_UNIT_LENGTH, tx_deposit);
+    if (parse_top_double(tx_deposit_d, TOP_UNIT_LENGTH, tx_deposit) != 0)
+        return;
 
     if (tx_deposit != 0) {
         api_method_imp_.set_tx_deposit(tx_deposit);
@@ -694,11 +696,21 @@ int ApiMethod::parse_top_double(const std::string &amount, const uint32_t unit, 
     std::string::size_type pos = new_amount.find('.');
     if (pos == std::string::npos)
     {
+        if (new_amount.size() > TOP_MAX_LENGTH)
+        {
+            cout<<"Data length is too long."<<endl;
+            return 1;
+        }
         uint32_t top_unit = 1;
         for (uint32_t i = 0; i < unit; i++)
             top_unit *= 10;
         out = stoull(new_amount) * top_unit;
         return 0;
+    }
+    if (pos > TOP_MAX_LENGTH)
+    {
+        cout << "Data length is too long." << endl;
+        return 1;
     }
     new_amount.erase(pos, 1);
     if (new_amount.size() > pos + unit)
