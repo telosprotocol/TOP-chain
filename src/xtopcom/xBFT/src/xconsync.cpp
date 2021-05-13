@@ -339,7 +339,6 @@ namespace top
                 
                 //XTODO, need restore it with better control later
                 //here simply just pass any responsed block
-                //return enum_xconsensus_error_not_found;//it is not a wanted response for this node
             }
 
             //step#4: do deep check finally
