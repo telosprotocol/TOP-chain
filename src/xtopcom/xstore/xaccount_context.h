@@ -25,6 +25,12 @@ using data::xtransaction_result_t;
 
 #define HASH_POINTERS_KEY   "_haskpt_key_"
 
+const uint16_t MIN_VOTE_LOCK_DAYS = 30;
+const uint16_t MAX_VOTE_LOCK_DAYS = 570;
+const uint64_t AMPLIFY_FACTOR = 1e6;
+const uint64_t MAX_TOP_VOTE_RATE = 2 * AMPLIFY_FACTOR;
+const uint64_t EXP_BASE = 104 * 1e4;
+
 class xaccount_context_t {
  public:
     xaccount_context_t(const std::string& address, xstore_face_t* store);
@@ -107,6 +113,7 @@ class xaccount_context_t {
     int32_t merge_pledge_vote_property();
     int32_t insert_pledge_vote_property(xaction_pledge_token_vote& action);
     int32_t redeem_pledge_vote_property(uint64_t num);
+    uint64_t get_top_by_vote(uint64_t vote_num, uint16_t duration) const ;
 
     void deserilize_vote(const std::string& str, uint64_t& vote_num, uint16_t& duration, uint64_t& lock_time);
     std::string serilize_vote(uint64_t vote_num, uint16_t duration, uint64_t lock_time);

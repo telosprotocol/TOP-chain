@@ -436,8 +436,8 @@ class xtransaction_pledge_token_vote : public xtransaction_face_t{
     }
     int32_t check() override {
         uint16_t min_pledge_vote_num = XGET_ONCHAIN_GOVERNANCE_PARAMETER(min_stake_votes_num);
-        // lock duration must be multiples of min_vote_lock_days and can not be 0
-        if(m_target_action.m_vote_num < min_pledge_vote_num || m_target_action.m_lock_duration % config::min_vote_lock_days != 0 || m_target_action.m_lock_duration == 0){
+        // lock duration must be multiples of MIN_VOTE_LOCK_DAYS and can not be 0
+        if(m_target_action.m_vote_num < min_pledge_vote_num || m_target_action.m_lock_duration % store::MIN_VOTE_LOCK_DAYS != 0 || m_target_action.m_lock_duration == 0){
             xdbg("pledge_token_vote err, vote_num: %u, duration: %u", m_target_action.m_vote_num, m_target_action.m_lock_duration);
             return xtransaction_pledge_redeem_vote_err;
         }
