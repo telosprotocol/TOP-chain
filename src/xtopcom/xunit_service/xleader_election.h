@@ -88,7 +88,7 @@ class xrandom_leader_election : public xleader_election_face {
 
 class xrotate_leader_election : public xleader_election_face {
     public:
-    explicit xrotate_leader_election(const xobject_ptr_t<base::xvblockstore_t>& block_store, const std::shared_ptr<xelection_cache_face> & face);
+    explicit xrotate_leader_election(const observer_ptr<base::xvblockstore_t>& block_store, const std::shared_ptr<xelection_cache_face> & face);
  public:
     static bool is_rotate_xip(const xvip2_t & local);
 
@@ -98,7 +98,7 @@ class xrotate_leader_election : public xleader_election_face {
     // get election face which manager elect datas
     virtual xelection_cache_face * get_election_cache_face();
  private:
-    xobject_ptr_t<base::xvblockstore_t> m_blockstore;
+     observer_ptr<base::xvblockstore_t> m_blockstore;
     std::shared_ptr<xelection_cache_face> m_elector;
 };
 NS_END2

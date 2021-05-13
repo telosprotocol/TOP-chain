@@ -306,7 +306,7 @@ bool xelection_wrapper::on_network_destory(xelection_cache_face * p_election, co
     return p_election->erase(xip);
 }
 
-xrotate_leader_election::xrotate_leader_election(const xobject_ptr_t<base::xvblockstore_t> & block_store, const std::shared_ptr<xelection_cache_face> & face)
+xrotate_leader_election::xrotate_leader_election(const observer_ptr<base::xvblockstore_t> & block_store, const std::shared_ptr<xelection_cache_face> & face)
   : m_blockstore(block_store), m_elector(face) {}
 
 bool xrotate_leader_election::is_rotate_xip(const xvip2_t & local) {
