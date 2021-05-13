@@ -17,6 +17,7 @@ constexpr uint64_t TOP_UNIT = 1e6;  // 1TOP = 1e6 uTOP
 constexpr uint64_t TOTAL_ISSUANCE = 200 * 1e8 * TOP_UNIT;
 #define ASSET_TOP(num) ((uint64_t)((num)*TOP_UNIT))
 #define ASSET_uTOP(num) ((uint64_t)(num))
+#define TOP_UNIT_LENGTH  6
 
 NS_BEG2(top, config)
 

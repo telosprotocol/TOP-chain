@@ -633,7 +633,7 @@ void ApiMethod::import_key(std::string & base64_pri, std::ostringstream & out_st
     }
 }
 
-void ApiMethod::transfer1(std::string & to, double & amount_d, std::string & note, double & tx_deposit_d, std::ostringstream & out_str) {
+void ApiMethod::transfer1(std::string & to, std::string & amount_d, std::string & note, std::string & tx_deposit_d, std::ostringstream & out_str) {
     std::ostringstream res;
     if (update_account(res) != 0) {
         return;
@@ -645,9 +645,14 @@ void ApiMethod::transfer1(std::string & to, double & amount_d, std::string & not
         std::cout << "note size: " << note.size() << " > maximum size 128" << endl;
         return;
     }
-
-    uint64_t amount = ASSET_TOP(amount_d);
-    uint64_t tx_deposit = ASSET_TOP(tx_deposit_d);
+    std::cout<<"amount_d:" << amount_d<<std::endl;
+    uint64_t amount;  // = ASSET_TOP(amount_d);
+    parse_top_double(amount_d, TOP_UNIT_LENGTH, amount);
+    std::cout<<"amount:" << amount<<std::endl;
+    uint64_t tx_deposit;  // = ASSET_TOP(tx_deposit_d);
+    std::cout<<"tx_deposit_d:" << tx_deposit_d<<std::endl;
+    parse_top_double(tx_deposit_d, TOP_UNIT_LENGTH, tx_deposit);
+    std::cout<<"tx_deposit:" << tx_deposit<<std::endl;    
     if (tx_deposit != 0) {
         api_method_imp_.set_tx_deposit(tx_deposit);
     }
@@ -685,8 +690,30 @@ void ApiMethod::query_miner_info(std::string & account, std::ostringstream & out
     string null_out = g_userinfo.account + " account has not registered miner.";
     tackle_null_query(out_str, null_out);
 }
-
-void ApiMethod::register_node(const double & mortgage_d,
+int ApiMethod::parse_top_double(const std::string &amount, const uint32_t unit, uint64_t &out)
+{
+    std::string new_amount = amount;
+    std::string::size_type pos = new_amount.find('.');
+    if (pos == std::string::npos)
+    {
+        uint32_t top_unit = 1;
+        for (uint32_t i = 0; i < unit; i++)
+            top_unit *= 10;
+        out = stoull(new_amount) * top_unit;
+        return 0;
+    }
+    new_amount.erase(pos, 1);
+    if (new_amount.size() > pos + unit)
+        new_amount = new_amount.substr(0, pos + unit);
+    int append_zero = unit - (new_amount.size() - pos);
+    for (int i = 0; i < append_zero; i++)
+    {
+        new_amount += '0';
+    }
+    out = stoull(new_amount);
+    return 0;
+}
+void ApiMethod::register_node(const std::string & mortgage_d,
                               const std::string & role,
                               const std::string & nickname,
                               const uint32_t & dividend_rate,
@@ -697,13 +724,7 @@ void ApiMethod::register_node(const double & mortgage_d,
     if (update_account(res, root) != 0) {
         return;
     }
-    /*
-        uint64_t account_balance = root["data"]["balance"].asUInt64();
-        if (ASSET_TOP(mortgage_d + MinTxDeposit) > account_balance) {
-            cout << g_userinfo.account << " account balance is not enough." << endl;
-            return;
-        }
-    */
+
     if (signing_key.empty()) {
         signing_key = top::utl::xcrypto_util::get_base64_public_key(g_userinfo.private_key);
     } else {
@@ -737,7 +758,8 @@ void ApiMethod::register_node(const double & mortgage_d,
         return;
     }
 
-    uint64_t mortgage = ASSET_TOP(mortgage_d);
+    uint64_t mortgage;
+    parse_top_double(mortgage_d, TOP_UNIT_LENGTH, mortgage);
     api_method_imp_.registerNode(g_userinfo, mortgage, role, nickname, signing_key, dividend_rate, out_str);
     auto result = out_str.str();
     xJson::Reader reader;
@@ -798,12 +820,13 @@ void ApiMethod::claim_miner_reward(std::ostringstream & out_str) {
     tackle_send_tx_request(out_str);
 }
 
-void ApiMethod::set_dividend_ratio(const uint32_t & dividend_rate, const double & tx_deposit_d, std::ostringstream & out_str) {
+void ApiMethod::set_dividend_ratio(const uint32_t & dividend_rate, const std::string & tx_deposit_d, std::ostringstream & out_str) {
     std::ostringstream res;
     if (update_account(res) != 0) {
         return;
     }
-    uint64_t tx_deposit = ASSET_TOP(tx_deposit_d);
+    uint64_t tx_deposit; // = ASSET_TOP(tx_deposit_d);
+    parse_top_double(tx_deposit_d, TOP_UNIT_LENGTH, tx_deposit);
     if (tx_deposit != 0) {
         api_method_imp_.set_tx_deposit(tx_deposit);
     }
@@ -847,7 +870,7 @@ void ApiMethod::unregister_node(std::ostringstream & out_str) {
 void ApiMethod::update_miner_info(const std::string & role,
                                   const std::string & name,
                                   const uint32_t & updated_deposit_type,
-                                  double & node_deposit_d,
+                                  const std::string & node_deposit_d,
                                   const uint32_t & dividend_rate,
                                   const std::string & node_sign_key,
                                   std::ostringstream & out_str) {
@@ -876,29 +899,26 @@ void ApiMethod::update_miner_info(const std::string & role,
         return;
     }
 
-    uint64_t node_deposit = ASSET_TOP(node_deposit_d);
+    uint64_t node_deposit;  // = ASSET_TOP(node_deposit_d);
+    parse_top_double(node_deposit_d, TOP_UNIT_LENGTH, node_deposit);
     api_method_imp_.updateNodeInfo(g_userinfo, role, name, updated_deposit_type, node_deposit, dividend_rate, node_sign_key, out_str);
     tackle_send_tx_request(out_str);
 }
 
-void ApiMethod::add_deposit(const double & deposit_d, std::ostringstream & out_str) {
+void ApiMethod::add_deposit(const std::string & deposit_d, std::ostringstream & out_str) {
     std::ostringstream res;
     xJson::Value root;
     if (update_account(res, root) != 0) {
         return;
     }
 
-    // uint64_t account_balance = root["data"]["balance"].asUInt64();
-    // if ((ASSET_TOP(deposit_d) + MinTxDeposit) > account_balance) {
-    //     cout << g_userinfo.account << " account balance is not enough." << endl;
-    //     return;
-    // }
-    uint64_t deposit = ASSET_TOP(deposit_d);
+    uint64_t deposit;  // = ASSET_TOP(deposit_d);
+    parse_top_double(deposit_d, TOP_UNIT_LENGTH, deposit);
     api_method_imp_.stake_node_deposit(g_userinfo, deposit, out_str);
     tackle_send_tx_request(out_str);
 }
 
-void ApiMethod::reduce_deposit(const double & deposit_d, std::ostringstream & out_str) {
+void ApiMethod::reduce_deposit(const std::string & deposit_d, std::ostringstream & out_str) {
     cout << "Do you confirm your remaining miner deposit after reducing is still enough for the miner." << endl;
     cout << "Comfirmed: Y or y" << endl;
     cout << "Unconfirmed：Any character other than Y/y" << endl;
@@ -911,7 +931,8 @@ void ApiMethod::reduce_deposit(const double & deposit_d, std::ostringstream & ou
     if (update_account(res) != 0) {
         return;
     }
-    uint64_t deposit = ASSET_TOP(deposit_d);
+    uint64_t deposit;  // = ASSET_TOP(deposit_d);
+    parse_top_double(deposit_d, TOP_UNIT_LENGTH, deposit);
     api_method_imp_.unstake_node_deposit(g_userinfo, deposit, out_str);
     tackle_send_tx_request(out_str);
 }
@@ -971,7 +992,7 @@ void ApiMethod::chain_info(std::ostringstream & out_str) {
     api_method_imp_.getChainInfo(g_userinfo, out_str);
 }
 
-void ApiMethod::deploy_contract(const uint64_t & tgas_limit, const double & amount_d, const std::string & code_path, const double & tx_deposit_d, std::ostringstream & out_str) {
+void ApiMethod::deploy_contract(const uint64_t & tgas_limit, const std::string & amount_d, const std::string & code_path, const std::string & tx_deposit_d, std::ostringstream & out_str) {
     std::ostringstream res;
     if (update_account(res) != 0) {
         return;
@@ -981,8 +1002,10 @@ void ApiMethod::deploy_contract(const uint64_t & tgas_limit, const double & amou
     tmp << code_file.rdbuf();
     string code = tmp.str();
 
-    uint64_t amount = ASSET_TOP(amount_d);
-    uint64_t tx_deposit = ASSET_TOP(tx_deposit_d);
+    uint64_t amount;  // = ASSET_TOP(amount_d);
+    parse_top_double(amount_d, TOP_UNIT_LENGTH, amount);
+    uint64_t tx_deposit;  // = ASSET_TOP(tx_deposit_d);
+    parse_top_double(tx_deposit_d, TOP_UNIT_LENGTH, tx_deposit);
     if (tx_deposit != 0) {
         api_method_imp_.set_tx_deposit(tx_deposit);
     }
@@ -991,18 +1014,20 @@ void ApiMethod::deploy_contract(const uint64_t & tgas_limit, const double & amou
     tackle_send_tx_request(out_str);
 }
 
-void ApiMethod::call_contract(const double & amount_d,
+void ApiMethod::call_contract(const std::string & amount_d,
                               const string & addr,
                               const std::string & func,
                               const string & params,
-                              const double & tx_deposit_d,
+                              const std::string & tx_deposit_d,
                               std::ostringstream & out_str) {
     std::ostringstream res;
     if (update_account(res) != 0) {
         return;
     }
-    uint64_t amount = ASSET_TOP(amount_d);
-    uint64_t tx_deposit = ASSET_TOP(tx_deposit_d);
+    uint64_t amount;  // = ASSET_TOP(amount_d);
+    parse_top_double(amount_d, TOP_UNIT_LENGTH, amount);
+    uint64_t tx_deposit;  // = ASSET_TOP(tx_deposit_d);
+    parse_top_double(tx_deposit_d, TOP_UNIT_LENGTH, tx_deposit);
     if (tx_deposit != 0) {
         api_method_imp_.set_tx_deposit(tx_deposit);
     }
@@ -1028,14 +1053,15 @@ void ApiMethod::cgp(std::ostringstream & out_str) {
 void ApiMethod::submit_proposal(uint8_t & type,
                                 const std::string & target,
                                 const std::string & value,
-                                double & deposit_d,
+                                std::string & deposit_d,
                                 uint64_t & effective_timer_height,
                                 std::ostringstream & out_str) {
     std::ostringstream res;
     if (update_account(res) != 0) {
         return;
     }
-    uint64_t deposit = ASSET_TOP(deposit_d);
+    uint64_t deposit; // = ASSET_TOP(deposit_d);
+    parse_top_double(deposit_d, TOP_UNIT_LENGTH, deposit);
     api_method_imp_.submitProposal(g_userinfo, type, target, value, deposit, effective_timer_height, out_str);
     tackle_send_tx_request(out_str);
 }
@@ -1065,22 +1091,24 @@ void ApiMethod::tcc_vote(const std::string & proposal_id, const std::string & op
 /*
 resource
 */
-void ApiMethod::stake_for_gas(double & amount_d, std::ostringstream & out_str) {
+void ApiMethod::stake_for_gas(std::string & amount_d, std::ostringstream & out_str) {
     std::ostringstream res;
     if (update_account(res) != 0) {
         return;
     }
-    uint64_t amount = ASSET_TOP(amount_d);
+    uint64_t amount; // = ASSET_TOP(amount_d);
+    parse_top_double(amount_d, TOP_UNIT_LENGTH, amount);
     api_method_imp_.stakeGas(g_userinfo, g_userinfo.account, g_userinfo.account, amount, out_str);
     tackle_send_tx_request(out_str);
 }
 
-void ApiMethod::withdraw_fund(double & amount_d, std::ostringstream & out_str) {
+void ApiMethod::withdraw_fund(std::string & amount_d, std::ostringstream & out_str) {
     std::ostringstream res;
     if (update_account(res) != 0) {
         return;
     }
-    uint64_t amount = ASSET_TOP(amount_d);
+    uint64_t amount; // = ASSET_TOP(amount_d);
+    parse_top_double(amount_d, TOP_UNIT_LENGTH, amount);
     api_method_imp_.unStakeGas(g_userinfo, g_userinfo.account, g_userinfo.account, amount, out_str);
     tackle_send_tx_request(out_str);
 }
@@ -1097,12 +1125,13 @@ void ApiMethod::stake_fund(uint64_t & amount, uint16_t & lock_duration, std::ost
     tackle_send_tx_request(out_str);
 }
 
-void ApiMethod::stake_withdraw_fund(uint64_t & amount, const double & tx_deposit_d, std::ostringstream & out_str) {
+void ApiMethod::stake_withdraw_fund(uint64_t & amount, const std::string & tx_deposit_d, std::ostringstream & out_str) {
     std::ostringstream res;
     if (update_account(res) != 0) {
         return;
     }
-    uint64_t tx_deposit = ASSET_TOP(tx_deposit_d);
+    uint64_t tx_deposit;  // = ASSET_TOP(tx_deposit_d);
+    parse_top_double(tx_deposit_d, TOP_UNIT_LENGTH, tx_deposit);
     if (tx_deposit != 0) {
         api_method_imp_.set_tx_deposit(tx_deposit);
     }
