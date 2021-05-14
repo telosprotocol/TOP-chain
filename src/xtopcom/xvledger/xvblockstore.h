@@ -125,6 +125,7 @@ namespace top
             std::vector<xvblock_t*> m_vector;
         };
 
+
         //manage/connect "virtual block" with "virtual header",usally it implement based on xvblocknode_t
         //note: each chain may has own block store by assined different store_path at DB/disk
         class xvblockstore_t : public xiobject_t
@@ -159,7 +160,8 @@ namespace top
             virtual xauto_ptr<xvblock_t>  get_latest_committed_block(const xvaccount_t & account)  = 0;//block with committed status
             virtual xauto_ptr<xvblock_t>  get_latest_executed_block(const xvaccount_t & account)   = 0;//block with executed status
             virtual xauto_ptr<xvblock_t>  get_latest_connected_block(const xvaccount_t & account)  = 0;//block connected to genesis or fullblock
-            virtual xauto_ptr<xvblock_t>  get_latest_genesis_connected_block(const xvaccount_t & account) = 0; //block has connected to genesis
+            virtual xauto_ptr<xvblock_t>  get_latest_genesis_connected_block(const xvaccount_t & account,bool ask_full_search = true) = 0; //block has connected to genesis
+            virtual xauto_ptr<xvbindex_t> get_latest_genesis_connected_index(const xvaccount_t & account,bool ask_full_search = true) = 0; //block has connected to genesis
 
             virtual xauto_ptr<xvblock_t>  get_latest_full_block(const xvaccount_t & account)  = 0; //block has full state,genesis is a full block
             virtual xauto_ptr<xvblock_t>  get_latest_committed_full_block(const xvaccount_t & account)  = 0; // full block with committed status, genesis is a full block

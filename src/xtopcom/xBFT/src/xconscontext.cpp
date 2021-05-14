@@ -487,13 +487,11 @@ namespace top
                     else //new_cert_block might be duplicated or behind commit block as well
                     {
                         xwarn("xBFTcontext_t::on_proposal_finish,drop proposal as false as do_update for block:%s at node=0x%llx",new_cert_block->dump().c_str(),get_xip2_addr().low_addr);
-                        return true; //stop handle this proposal
                     }
                 }
                 else
                 {
-                    xerror("xBFTcontext_t::on_proposal_finish,fail-safe_check_for_block for block:%s at node=0x%llx",new_cert_block->dump().c_str(),get_xip2_addr().low_addr);
-                    return true; //stop handle this error proposal
+                    xwarn("xBFTcontext_t::on_proposal_finish,fail-safe_check_for_block for block:%s at node=0x%llx",new_cert_block->dump().c_str(),get_xip2_addr().low_addr);
                 }
             }
     
@@ -574,13 +572,11 @@ namespace top
                     else //new_cert_block might be duplicated or behind commit block as well
                     {
                         xwarn("xBFTcontext_t::on_replicate_finish,drop cert as false as do_update for block:%s at node=0x%llx",new_cert_block->dump().c_str(),get_xip2_addr().low_addr);
-                        return true; //stop handle this proposal
                     }
                 }
                 else
                 {
-                    xerror("xBFTcontext_t::on_replicate_finish,fail-safe_check_for_block for block:%s at node=0x%llx",new_cert_block->dump().c_str(),get_xip2_addr().low_addr);
-                    return true; //stop handle this error proposal
+                    xwarn("xBFTcontext_t::on_replicate_finish,fail-safe_check_for_block for block:%s at node=0x%llx",new_cert_block->dump().c_str(),get_xip2_addr().low_addr);
                 }
                 
                 //go default handle ,bring latest information of commit and lock

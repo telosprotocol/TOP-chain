@@ -32,7 +32,7 @@ namespace top
 
 //#define __portional_random__
 #define __full_random__
-#define __fork_test__
+//#define __fork_test__
 //#define __execute_test__
 int test_sync_vstore(store::xsyncvstore_t* sync_store)
 {
@@ -160,8 +160,11 @@ int test_sync_vstore(store::xsyncvstore_t* sync_store)
 #endif //end of __execute_test__
     
     sleep(2);
-    
+
     printf("////////////////////////////////////////////////////////////// \n");
+    base::xauto_ptr<base::xvbindex_t> index(sync_store->get_vblockstore()->get_latest_genesis_connected_index(test_account_obj,true));
+    printf("latest_genesis_connected_index as detail=%s \n",index->dump().c_str());
+    
     for(auto it : generated_blocks)
     {
         base::xauto_ptr<base::xvbindex_t> index(sync_store->get_vblockstore()->load_block_index(test_account_obj, it->get_height(), 0));
