@@ -136,10 +136,12 @@ int32_t xunconfirmed_account_t::update(xblock_t * latest_committed_block, const 
         if (_block == nullptr) {
             base::xauto_ptr<base::xvblock_t> _block_ptr = m_para->get_vblockstore()->get_latest_connected_block(account_addr);
             uint64_t start_sync_height = _block_ptr->get_height() + 1;
-            uint32_t sync_num = (uint32_t)(cur_height - start_sync_height);
-            mbus::xevent_behind_ptr_t ev = make_object_ptr<mbus::xevent_behind_on_demand_t>(account_addr, start_sync_height, sync_num, true, "unit_lack");
-            m_para->get_bus()->push_event(ev);
-            xtxpool_info("xunconfirmed_account_t::update account:%s state fall behind,try sync unit from:%llu,num:%u", account_addr.c_str(), start_sync_height, sync_num);
+            xtxpool_info("xunconfirmed_account_t::update account:%s state fall behind,try sync unit from:%llu,end:%llu", account_addr.c_str(), start_sync_height, cur_height);
+            if (cur_height > start_sync_height) {
+                uint32_t sync_num = (uint32_t)(cur_height - start_sync_height);
+                mbus::xevent_behind_ptr_t ev = make_object_ptr<mbus::xevent_behind_on_demand_t>(account_addr, start_sync_height, sync_num, true, "unit_lack");
+                m_para->get_bus()->push_event(ev);
+            }
             return xtxpool_error_unitblock_lack;
         }
 

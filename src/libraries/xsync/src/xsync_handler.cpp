@@ -87,7 +87,7 @@ m_cross_cluster_chain_state(cross_cluster_chain_state) {
     register_handler(xmessage_id_sync_ondemand_chain_snapshot_response, std::bind(&xsync_handler_t::handle_ondemand_chain_snapshot_response, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6, std::placeholders::_7));
     register_handler(xmessage_id_sync_get_on_demand_by_hash_blocks, std::bind(&xsync_handler_t::get_on_demand_by_hash_blocks, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6, std::placeholders::_7));
     register_handler(xmessage_id_sync_on_demand_by_hash_blocks, std::bind(&xsync_handler_t::on_demand_by_hash_blocks, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6, std::placeholders::_7));
- 
+
 }
 
 xsync_handler_t::~xsync_handler_t() {
@@ -183,6 +183,9 @@ void xsync_handler_t::get_blocks(uint32_t msg_size, const vnetwork::xvnode_addre
     std::vector<xblock_ptr_t> vector_blocks;
     for (uint32_t height = start_height, i = 0; height < start_height + count && i < max_request_block_count; height++) {
         auto blocks = m_sync_store->load_block_objects(owner, height);
+        if (blocks.empty()) {
+            break;
+        }
         for (uint32_t j = 0; j < blocks.size(); j++,i++){
             vector_blocks.push_back(xblock_t::raw_vblock_to_object_ptr(blocks[j].get()));
         }
