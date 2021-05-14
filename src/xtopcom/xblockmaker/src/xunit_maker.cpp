@@ -226,9 +226,10 @@ xblock_ptr_t xunit_maker_t::make_proposal(const xunitmaker_para_t & unit_para, c
         unit_para.m_is_leader, cs_para.dump().c_str(), proposal_block->dump().c_str(), proposal_block->dump_cert().c_str(), proposal_block->get_block_class(),
         proposal_block->get_unconfirm_sendtx_num(), proposal_block->is_prev_sendtx_confirmed(),
         result.m_success_txs.size(), dump().c_str());
+    uint64_t now = xverifier::xtx_utl::get_gmttime_s();
     for (auto & tx : result.m_success_txs) {
-        xinfo("xunit_maker_t::make_proposal succ tx.is_leader=%d,%s,unit=%s,tx=%s",
-            unit_para.m_is_leader, cs_para.dump().c_str(), proposal_block->dump().c_str(), tx->dump().c_str());
+        xinfo("xunit_maker_t::make_proposal succ tx.is_leader=%d,%s,unit=%s,tx=%s,delay=%llu",
+            unit_para.m_is_leader, cs_para.dump().c_str(), proposal_block->dump().c_str(), tx->dump().c_str(), now - tx->get_transaction()->get_push_pool_timestamp());
     }
 
     return proposal_block;
