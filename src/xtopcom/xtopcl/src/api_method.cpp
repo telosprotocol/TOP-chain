@@ -700,8 +700,10 @@ int ApiMethod::parse_top_double(const std::string &amount, const uint32_t unit, 
     }
     int dot_count = count_if(amount.begin(), amount.end(), [](char c) { return c == '.'; });
     if (dot_count > 1)
+    {
+        cout << "Data format is invalid." << endl;
         return 1;
-
+    }
     std::string input = amount;
     bool dot_found{false};
     size_t i{0};
