@@ -385,6 +385,7 @@ void EcNetcard::HandleRumorMessage(
     //         "dest_node_id", HexEncode(message.des_node_id()),
     //         "is_root", message.is_root(),
     //         "broadcast", message.broadcast());
+#ifdef XENABLE_P2P_BENDWIDTH
     if (IS_RRS_GOSSIP_MESSAGE(message)) {
         XMETRICS_PACKET_INFO("p2pperf_vhostrecv_info",
                              MESSAGE_BASIC_INFO(message),
@@ -401,7 +402,6 @@ void EcNetcard::HandleRumorMessage(
         }
     }
 
-#ifdef XENABLE_P2P_BENDWIDTH
 
     if (message.type() == kElectVhostRumorP2PMessage) {
         XMETRICS_FLOW_COUNT("p2p_transport_p2pchain_afterfilter_packet_recv", 1);
