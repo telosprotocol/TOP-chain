@@ -19,6 +19,11 @@ m_downloader(downloader) {
 }
 
 void xsync_cross_cluster_chain_state_t::on_timer() {
+
+    if (m_time_rejecter.reject()){
+        return;
+    }
+
     // 10 min
     m_counter++;
     if (m_counter < 600)

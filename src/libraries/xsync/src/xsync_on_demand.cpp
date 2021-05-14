@@ -74,6 +74,9 @@ void xsync_on_demand_t::on_behind_event(const mbus::xevent_ptr_t &e) {
 
 void xsync_on_demand_t::handle_blocks_response(const std::vector<data::xblock_ptr_t> &blocks,
     const vnetwork::xvnode_address_t &to_address, const vnetwork::xvnode_address_t &network_self) {
+    
+    xsync_dbg("xsync_on_demand_t::handle_blocks_response receive blocks(on_demand) %s, %s, count %d",
+        network_self.to_string().c_str(), to_address.to_string().c_str(), blocks.size());
 
     if (blocks.empty()) {
         m_download_tracer.expire();
@@ -81,6 +84,8 @@ void xsync_on_demand_t::handle_blocks_response(const std::vector<data::xblock_pt
     }
 
     std::string account = blocks[0]->get_account();
+    xsync_dbg("xsync_on_demand_t::handle_blocks_response receive blocks of account %s, count %d",
+        account.c_str(), blocks.size());
     int ret = check(account, to_address, network_self);
     if (ret != 0) {
         xsync_warn("xsync_on_demand_t::on_response_event check the source of message failed %s,ret=%d", account.c_str(), ret);
@@ -135,6 +140,9 @@ void xsync_on_demand_t::handle_blocks_request(const xsync_message_get_on_demand_
     if (heights == 0)
         return;
 
+    xsync_dbg("xsync_on_demand_t::handle_blocks_request receive request of account %s, start_height %llu, count %u",
+        address.c_str(), start_height, heights);
+
     std::vector<data::xblock_ptr_t> blocks;
 
     end_height = start_height + (uint64_t)heights;
@@ -162,6 +170,9 @@ void xsync_on_demand_t::handle_chain_snapshot_meta(xsync_message_chain_snapshot_
 
     std::string account = chain_meta.m_account_addr;
 
+    xsync_dbg("xsync_on_demand_t::handle_chain_snapshot_meta receive snapshot request of account %s, height %llu",
+        account.c_str(), chain_meta.m_height_of_fullblock);
+
     base::xauto_ptr<base::xvblock_t> blk = m_sync_store->load_block_object(account, chain_meta.m_height_of_fullblock);
     if (blk != nullptr) {
         xfull_tableblock_t* full_block_ptr = dynamic_cast<xfull_tableblock_t*>(xblock_t::raw_vblock_to_object_ptr(blk.get()).get());
@@ -187,6 +198,9 @@ void xsync_on_demand_t::handle_chain_snapshot_meta(xsync_message_chain_snapshot_
 void xsync_on_demand_t::handle_chain_snapshot(xsync_message_chain_snapshot_t &chain_snapshot,
     const vnetwork::xvnode_address_t &to_address, const vnetwork::xvnode_address_t &network_self) {
     std::string account = chain_snapshot.m_tbl_account_addr;
+
+    xsync_dbg("xsync_on_demand_t::handle_chain_snapshot_meta receive snapshot response of account %s, height %llu",
+        account.c_str(), chain_snapshot.m_height_of_fullblock);
 
     int32_t ret = check(account);
     if (ret != 0) {

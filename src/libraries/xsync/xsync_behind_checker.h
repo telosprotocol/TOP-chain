@@ -17,6 +17,7 @@
 
 #include "xsync/xsync_peerset.h"
 #include "xsync/xdownloader.h"
+#include "xsync/xsync_time_rejecter.h"
 
 NS_BEG2(top, sync)
 
@@ -35,6 +36,8 @@ private:
     xrole_chains_mgr_t *m_role_chains_mgr;
     xsync_peerset_t *m_peerset;
     xdownloader_face_t *m_downloader;
+    xsync_time_rejecter_t m_time_rejecter{50};
+
     int m_counter{0};
 };
 

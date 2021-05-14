@@ -17,6 +17,7 @@
 #include "xsync/xrole_xips_manager.h"
 #include "xsync/xsync_sender.h"
 #include "xsync/xdownloader.h"
+#include "xsync/xsync_time_rejecter.h"
 
 NS_BEG2(top, sync)
 
@@ -36,6 +37,7 @@ private:
     xsync_sender_t *m_sync_sender;
     xdownloader_face_t *m_downloader;
     uint32_t m_counter{0};
+    xsync_time_rejecter_t m_time_rejecter{50};
 };
 
 NS_END2

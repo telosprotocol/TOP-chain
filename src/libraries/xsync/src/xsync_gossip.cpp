@@ -39,6 +39,10 @@ xsync_gossip_t::~xsync_gossip_t() {
 void xsync_gossip_t::on_timer() {
 
     XMETRICS_TIME_RECORD("sync_cost_gossip_timer_event");
+    if (m_time_rejecter.reject()){
+        return;
+    }
+    
     if (m_frozen_count % FROZEN_TIME_INTERVAl == 0) {
         process_timer(true);
         m_frozen_count = 1;

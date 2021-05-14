@@ -5,6 +5,7 @@ NS_BEG2(top, sync)
 const float min_val = 5;
 const uint32_t sample_count = 10;
 const uint32_t cost_upper = 100;
+const uint32_t clean_time_ms = 100;
 
 xsync_ratelimit_t::xsync_ratelimit_t(observer_ptr<base::xiothread_t> const & iothread, uint32_t max_allowed_parallels):
 m_iothread(iothread) {
@@ -21,7 +22,7 @@ m_iothread(iothread) {
 
 void xsync_ratelimit_t::start() {
     m_timer = new xsync_ratelimit_timer_t(top::base::xcontext_t::instance(), m_iothread->get_thread_id(), this);
-    m_timer->start(0, 100);
+    m_timer->start(0, clean_time_ms);
     m_is_start = true;
 }
 
@@ -32,9 +33,11 @@ void xsync_ratelimit_t::stop() {
 }
 
 void xsync_ratelimit_t::on_timer() {
-    int64_t now = base::xtime_utl::gmttime_ms();
-
     std::unique_lock<std::mutex> lock(m_lock);
+    
+    if (m_time_rejecter.reject()){
+        return;
+    }
 
     xsync_ratelimit_ctx_t new_ctx;
 
@@ -65,9 +68,11 @@ void xsync_ratelimit_t::on_timer() {
 }
 
 bool xsync_ratelimit_t::get_token(int64_t now) {
+    if (!m_time_rejecter.reject()){
+        on_timer();
+    }
 
     std::unique_lock<std::mutex> lock(m_lock);
-
     if (m_bucket >= 1.0) {
         m_last_success_count++;
         m_bucket--;

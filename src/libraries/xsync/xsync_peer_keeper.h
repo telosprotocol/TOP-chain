@@ -19,6 +19,7 @@
 #include "xsync/xsync_sender.h"
 #include "xsync/xgossip_message.h"
 #include "xsync/xsync_peerset.h"
+#include "xsync/xsync_time_rejecter.h"
 
 NS_BEG2(top, sync)
 
@@ -49,6 +50,7 @@ private:
 
     std::mutex m_lock;
     std::map<vnetwork::xvnode_address_t, std::set<vnetwork::xvnode_address_t>> m_maps;
+    xsync_time_rejecter_t m_time_rejecter{50};
 };
 
 NS_END2

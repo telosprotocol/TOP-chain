@@ -14,6 +14,10 @@ m_downloader(downloader) {
 
 void xsync_behind_checker_t::on_timer() {
 
+    if (m_time_rejecter.reject()){
+        return;
+    }
+    
     m_counter++;
     if (m_counter %10 != 0)
         return;

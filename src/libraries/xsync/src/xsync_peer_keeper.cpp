@@ -18,13 +18,15 @@ m_role_chains_mgr(role_chains_mgr),
 m_role_xips_mgr(role_xips_mgr),
 m_sync_sender(sync_sender),
 m_peerset(peerset) {
-
 }
 
 void xsync_peer_keeper_t::on_timer() {
     XMETRICS_TIME_RECORD("sync_cost_peerkeeper_timer_event");
 
     std::unique_lock<std::mutex> lock(m_lock);
+    if (m_time_rejecter.reject()){
+        return;
+    }
 
     if (m_count % COMMON_TIME_INTERVAl == 0) {
         process_timer();

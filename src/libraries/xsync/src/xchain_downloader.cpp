@@ -37,9 +37,7 @@ xchain_downloader_t::xchain_downloader_t(std::string vnode_id,
   m_address(address),
   m_sync_range_mgr(vnode_id, address) {
     //m_sync_range_mgr.on_role_changed(address);
-
     xsync_info("chain_downloader create_chain %s", m_address.c_str());
-
     XMETRICS_COUNTER_INCREMENT("sync_downloader_chain_count", 1);
 }
 
@@ -62,286 +60,73 @@ void xchain_downloader_t::on_role_changed(const xchain_info_t & chain_info) {
     xsync_dbg("chain_downloader on_role_changed %s", m_address.c_str());
 }
 
-int64_t xchain_downloader_t::get_next_timeout() {
-
-    return get_next_send_time();
-}
 
 void xchain_downloader_t::destroy() {
     clear();
 }
 
 void xchain_downloader_t::on_timer(int64_t now) {
+    std::pair<uint64_t, uint64_t> interval; 
+    vnetwork::xvnode_address_t self_addr; 
+    vnetwork::xvnode_address_t target_addr;
+    
+    if (!m_task.finished()){
+        return;
+    }
 
-    int64_t next_send_time = get_next_send_time();
-    if (next_send_time!=0 && now>=next_send_time) {
-        send_request(now);
+    if (!m_task.expired()) {
+        return;
+    }
+
+    for (uint32_t index = (m_current_object_index + 1) % enum_chain_sync_pocliy_max, count = 0; count < enum_chain_sync_pocliy_max; 
+            count++, index = (index + 1) % enum_chain_sync_pocliy_max){
+        if (!m_chain_objects[index].pick(interval, self_addr, target_addr)){
+            continue;
+        }
+
+        m_task.start();
+        xsync_download_command_t command(interval, (enum_chain_sync_policy)index, self_addr, target_addr);
+        if (finish == m_task.execute(command)) {
+            m_chain_objects[index].set_height(m_chain_objects[index].picked_height());
+        }
+        m_current_object_index = index;
     }
 }
 
 void xchain_downloader_t::on_response(std::vector<data::xblock_ptr_t> &blocks, const vnetwork::xvnode_address_t &self_addr, const vnetwork::xvnode_address_t &from_addr) {
-
-    uint32_t count = blocks.size();
-
-    if (m_request == nullptr)
-        return;
-
-    if (count == 0)
-        return;
-
-    int64_t now = get_time();
-    int64_t total_cost = now - m_request->send_time;
-
-    xsync_info("chain_downloader on_response(overview) %s count(%u) cost(%ldms) %s",
-        m_address.c_str(), count, total_cost, from_addr.to_string().c_str());
-
-    m_ratelimit->feedback(total_cost, now);
-    XMETRICS_COUNTER_INCREMENT("sync_downloader_response", 1);
-    XMETRICS_COUNTER_INCREMENT("sync_cost_peer_response", total_cost);
-
-    // 1.verify shard-table block multi-sign
-    bool is_elect_chain = false;
-
-    std::string account_prefix;
-    uint32_t table_id = 0;
-    data::xdatautil::extract_parts(m_address, account_prefix, table_id);
-
-    if (account_prefix==sys_contract_beacon_table_block_addr || account_prefix==sys_contract_zec_table_block_addr) {
-        is_elect_chain = true;
-    }
-
-    if (!is_elect_chain) {
-        xblock_ptr_t &block = blocks[count-1];
-        if (!check_auth(m_certauth, block)) {
-            xsync_info("chain_downloader on_response(auth_failed) %s,height=%lu,", m_address.c_str(), block->get_height());
-            m_sync_range_mgr.clear_behind_info();
-            return;
+    xsync_on_blocks_response_command_t command(blocks, self_addr, from_addr);
+    if ((!m_task.finished()) && (!m_task.expired())) {
+        if (finish == m_task.execute(command)) {
+            m_chain_objects[m_current_object_index].set_height(m_chain_objects[m_current_object_index].picked_height());
         }
     }
+}  
 
-    enum_chain_sync_policy sync_policy;
-    if (!m_sync_range_mgr.get_sync_policy(sync_policy)) {
-        xsync_info("chain_downloader on_response(not behind) %s,", m_address.c_str());
-        return;
-    }
-
-    // compare before and after
-    for (uint32_t i = 0; i < count; i++) {
-        xblock_ptr_t &block = blocks[i];
-
-        uint64_t height = block->get_height();
-        uint64_t viewid = block->get_viewid();
-
-        enum_result_code ret = handle_block(block, is_elect_chain, sync_policy);
-
-        if (ret == enum_result_code::success) {
-            xsync_info("chain_downloader on_response(succ) %s,height=%lu,viewid=%lu,prev_hash:%s,",
-                m_address.c_str(), height, viewid, to_hex_str(block->get_last_block_hash()).c_str());
-        } else if (ret == enum_result_code::failed) {
-            xsync_warn("chain_downloader on_response(failed) %s", block->dump().c_str());
-        } else if (ret == enum_result_code::auth_failed) {
-            xsync_info("chain_downloader on_response(auth_failed) %s,height=%lu,viewid=%lu,", m_address.c_str(), height, viewid);
-            m_sync_range_mgr.clear_behind_info();
-            break;
-        } else {
-            assert(0);
-            break;
-        }
-    }
-
-    if (m_sync_range_mgr.get_current_sync_start_height() != blocks.begin()->get()->get_height()) {
-        xsync_info("chain_downloader on_response expect height is %llu, but real height is %llu", m_sync_range_mgr.get_current_sync_start_height(), blocks.begin()->get()->get_height());
-        return;
-    }
-
-    base::xauto_ptr<base::xvblock_t> current_vblock = m_sync_store->get_latest_end_block(m_address, sync_policy);
-    xblock_ptr_t current_block = autoptr_to_blockptr(current_vblock);
-
-    int ret = m_sync_range_mgr.update_progress(current_block);
-    if (ret < 0) {
-        xsync_warn("chain_downloader on_response(update_progress failed ret=%d) %s", ret, current_vblock->dump().c_str());
-    }
-
-    xsync_info("chain_downloader on_response(total) %s,current(height=%lu,viewid=%lu,hash=%s) behind(height=%lu)",
-        m_address.c_str(), current_vblock->get_height(), current_vblock->get_viewid(), to_hex_str(current_vblock->get_block_hash()).c_str(), m_sync_range_mgr.get_behind_height());
-
-    m_request = nullptr;
-
-    if (sync_policy != enum_chain_sync_pocliy_fast) {
-        handle_next(current_block->get_height());
-        return;
-    }
-
-    xauto_ptr<xvblock_t> table_block = m_sync_store->get_latest_start_block(m_address, sync_policy);
-    xblock_ptr_t block = autoptr_to_blockptr(table_block);
-    xsync_info("chain_downloader on_response %s, height=%lu",m_address.c_str(), table_block->get_height());
-    if (!block->is_full_state_block()) {
-        xsync_info("chain_downloader on_response(chain_snapshot) %s,current(height=%lu,viewid=%lu,hash=%s) behind(height=%lu)",
-        m_address.c_str(), table_block->get_height(), table_block->get_viewid(), to_hex_str(table_block->get_block_hash()).c_str(), m_sync_range_mgr.get_behind_height());
-        handle_fulltable(block->get_height(), self_addr, from_addr);
-        return;
-    }
-
-    block = autoptr_to_blockptr(current_vblock);
-    if (block->get_height() >= m_sync_range_mgr.get_behind_height()){
-        clear();
-        return;
-    }
-
-    handle_next(current_block->get_height());
-}
-
-void xchain_downloader_t::on_chain_snapshot_response(const std::string &tbl_account_addr,
+void xchain_downloader_t::on_chain_snapshot_response(
         const xobject_ptr_t<base::xvboffdata_t> chain_snapshot, uint64_t height, const vnetwork::xvnode_address_t &self_addr, const vnetwork::xvnode_address_t &from_addr) {
-    if (m_request == nullptr)
-        return;
-
-    int64_t now = get_time();
-    int64_t total_cost = now - m_request->send_time;
-
-    xsync_info("chain_downloader on_response(overview) %s  cost(%ldms) %s",
-        m_address.c_str(), total_cost, from_addr.to_string().c_str());
-
-    m_ratelimit->feedback(total_cost, now);
-    XMETRICS_COUNTER_INCREMENT("sync_downloader_response", 1);
-    XMETRICS_COUNTER_INCREMENT("sync_cost_peer_response", total_cost);
-
-    base::xauto_ptr<base::xvblock_t> current_vblock = m_sync_store->get_latest_start_block(m_address, enum_chain_sync_pocliy_fast);
-    data::xblock_ptr_t current_block = autoptr_to_blockptr(current_vblock);
-    if (!current_block->is_full_state_block() && current_block->get_height() == height) {
-        current_block->reset_block_offdata(chain_snapshot.get());
-        m_sync_store->store_block(current_block.get());
+    xsync_on_snapshot_response_command_t command(chain_snapshot, height, self_addr, from_addr);
+    if ((!m_task.finished()) && (!m_task.expired())) {
+        if (finish == m_task.execute(command)) {
+            m_chain_objects[m_current_object_index].set_height(m_chain_objects[m_current_object_index].picked_height());
+        }
     }
-
-    int ret = m_sync_range_mgr.update_progress(autoptr_to_blockptr(current_vblock));
-    if (ret < 0) {
-        xsync_warn("chain_downloader on_response(update_progress failed ret=%d) %s", ret, current_vblock->dump().c_str());
-    }
-
-    xsync_info("chain_downloader on_response(total) %s,current(height=%lu,viewid=%lu,hash=%s) behind(height=%lu)",
-        m_address.c_str(), current_vblock->get_height(), current_vblock->get_viewid(), to_hex_str(current_vblock->get_block_hash()).c_str(), m_sync_range_mgr.get_behind_height());
-
-    m_request = nullptr;
-    base::xauto_ptr<base::xvblock_t> vblock = m_sync_store->get_latest_end_block(m_address,enum_chain_sync_pocliy_fast);
-    current_block = autoptr_to_blockptr(vblock);
-    if (current_block->get_height() >= m_sync_range_mgr.get_behind_height()){
-        clear();
-        return;
-    }
-    handle_next(current_block->get_height());
 }
 
 void xchain_downloader_t::on_behind(uint64_t start_height, uint64_t end_height, enum_chain_sync_policy sync_policy, const vnetwork::xvnode_address_t &self_addr, const vnetwork::xvnode_address_t &target_addr, const std::string &reason) {
-
-    if (end_height == 0) {
-        xsync_warn("chain_downloader on_behind(param error) %s,height=%lu,", m_address.c_str(), end_height);
+    if ((start_height > end_height) || end_height == 0) {
         return;
     }
 
-    std::string account_prefix;
-    uint32_t table_id = 0;
-
-    if (!data::xdatautil::extract_parts(m_address, account_prefix, table_id)){
-        return;
-    }
-    {
-        if (account_prefix == sys_contract_beacon_table_block_addr) {
-            // ignore
-        } else if (account_prefix == sys_contract_zec_table_block_addr) {
-
-            if (!check_behind(end_height, sys_contract_rec_elect_rec_addr)) {
-                xsync_info("chain_downloader on_behind(depend chain is syncing) %s,height=%lu,", m_address.c_str(), end_height);
-                return;
-            }
-
-        } else if (account_prefix == sys_contract_sharding_table_block_addr) {
-
-            if (!check_behind(end_height, sys_contract_zec_elect_consensus_addr)) {
-                xsync_info("chain_downloader on_behind(depend chain is syncing) %s,height=%lu,", m_address.c_str(), end_height);
-                return;
-            }
-
-        } else {
-            return;
-        }
-    }
-
-    xauto_ptr<xvblock_t> start_vblock = m_sync_store->get_latest_start_block(m_address, sync_policy);
-    xauto_ptr<xvblock_t> end_vblock = m_sync_store->get_latest_end_block(m_address, sync_policy);
-    xblock_ptr_t end_block = autoptr_to_blockptr(end_vblock);
-
-    auto now = get_time();
-    if (m_request != nullptr) {
-        const int request_create_timeout = 5 * 1000;
-        if ((now - m_request->create_time) > request_create_timeout) {
-            xsync_info("chain_downloader on_behind(request life time out) %s, now %lld, last create time %lld reason=%s",
-                     m_address.c_str(), now, m_request->create_time, reason.c_str());
-            clear();
-        } else {
-            xsync_info("chain_downloader on_behind(in process) %s,local(height=%lu,) peer(height=%lu) reason=%s",
-                m_address.c_str(), end_block->get_height(), end_height, reason.c_str());
-            return;
-        }
-    } else {
-        int64_t behind_time = m_sync_range_mgr.get_behind_time();
-        const int behind_info_create_timeout = 30 * 1000;
-        if (behind_time > 0 && (now-behind_time) > behind_info_create_timeout) {
-            xsync_info("chain_downloader on_behind(behind info life time out) %s, now %lld, last create time %lld peer(height=%lu) reason=%s",
-                     m_address.c_str(), now, behind_time, end_height, reason.c_str());
-            clear();
-        }
-    }
-
-    int ret = 0;
-    if (sync_policy == enum_chain_sync_pocliy_fast) {
-        ret = m_sync_range_mgr.set_behind_info(start_height, end_height, enum_chain_sync_pocliy_fast,self_addr, target_addr);
-    } else {
-        ret = m_sync_range_mgr.set_behind_info(start_vblock->get_height(), end_height, enum_chain_sync_pocliy_full,self_addr, target_addr);
-    }
-
-    if (ret > 0) {
-        // in process
-        xsync_info("chain_downloader on_behind(ret=%d) %s,local(height=%lu,) peer(height=%lu,) reason=%s",
-            ret, m_address.c_str(), start_height, end_height, reason.c_str());
-        return;
-    } else if (ret < 0) {
-        xsync_info("chain_downloader on_behind(ret=%d) %s,local(height=%lu,) peer(height=%lu,) reason=%s",
-            ret, m_address.c_str(), start_height, end_height, reason.c_str());
-        return;
-    }
-
-    xsync_info("chain_downloader on_behind %s,local(height=%lu,) peer(height=%lu,) reason=%s %s -> %s",
-            m_address.c_str(),
-            start_vblock->get_height(),
-            end_height,
-            reason.c_str(),
-            self_addr.to_string().c_str(),
-            target_addr.to_string().c_str());
-
-    XMETRICS_COUNTER_INCREMENT("sync_downloader_block_behind", 1);
-    // fast sync for table level block chain, write the full table bock first
-    // then write the index snapshot
-    if (sync_policy != enum_chain_sync_pocliy_fast) {
-        handle_next(sync::derministic_height(end_vblock->get_height(), std::make_pair(start_height,end_height)));
-        return;
-    }
-
-    data::xblock_ptr_t current_block = autoptr_to_blockptr(start_vblock);
-    if (!current_block->is_full_state_block() && current_block->get_height() == start_height) {
-        handle_fulltable(start_height, self_addr, target_addr);
-        return;
-    }
-
-    current_block = autoptr_to_blockptr(end_vblock);
-    if ((current_block->get_height() <= end_height) && (current_block->get_height() >= start_height)) {
-        handle_next(sync::derministic_height(current_block->get_height(), std::make_pair(start_height,end_height)));
-    } else {
-        handle_next(start_height - 1);
-    }
+    uint64_t height = 0;
+    uint64_t picked_height = 0;
+    height = m_chain_objects[sync_policy].height();
+    picked_height = m_chain_objects[sync_policy].picked_height();
+    m_chain_objects[sync_policy] = xchain_object_t{start_height, end_height, self_addr, target_addr};
+    m_chain_objects[sync_policy].set_height(height);  
+    m_chain_objects[sync_policy].set_picked_height(picked_height);
 }
 
 enum_result_code xchain_downloader_t::handle_block(xblock_ptr_t &block, bool is_elect_chain, enum_chain_sync_policy sync_policy) {
-
     if (is_elect_chain) {
         if (!check_auth(m_certauth, block)) {
             return enum_result_code::auth_failed;
@@ -389,55 +174,30 @@ bool xchain_downloader_t::check_behind(uint64_t height, const char *elect_addres
     return true;
 }
 
-int64_t xchain_downloader_t::get_next_send_time() {
-    if (m_request == nullptr)
-        return 0;
-
-    if (m_request->send_time == 0) {
-        int64_t next_time = m_request->try_time + GET_TOKEN_RETRY_INTERVAL;
-        return next_time;
-    }
-
-    return 0;
-}
-
-void xchain_downloader_t::send_request(int64_t now) {
-
-    if (m_request == nullptr)
-        return;
-
-    if (m_request->send_time != 0)
-        return;
-
+bool xchain_downloader_t::send_request(int64_t now) {
     if (!m_ratelimit->get_token(now)) {
         xsync_dbg("chain_downloader get token failed. %s", m_address.c_str());
-        m_request->try_time = now;
-        return;
+        return false;
     }
 
     XMETRICS_COUNTER_INCREMENT("sync_downloader_request", 1);
-
     m_request->send_time = now;
-
     int64_t queue_cost = m_request->send_time - m_request->create_time;
-
     xsync_info("chain_downloader send sync request(block). %s,range[%lu,%lu] get_token_cost(%ldms) %s",
                 m_request->owner.c_str(), m_request->start_height, m_request->start_height+m_request->count-1,
                 queue_cost, m_request->target_addr.to_string().c_str());
-
     m_sync_sender->send_get_blocks(m_request->owner, m_request->start_height, m_request->count, m_request->self_addr, m_request->target_addr);
+    return true;
 }
 
-void xchain_downloader_t::send_request(int64_t now, const xsync_message_chain_snapshot_meta_t &chain_snapshot_meta) {
-    if (m_request == nullptr)
-        return;
-    if (m_request->send_time != 0)
-        return;
+bool xchain_downloader_t::send_request(int64_t now, const xsync_message_chain_snapshot_meta_t &chain_snapshot_meta) {
+    
+    
     if (!m_ratelimit->get_token(now)) {
         xsync_dbg("chain_downloader get token failed. %s", m_address.c_str());
-        m_request->try_time = now;
-        return;
+        return false;
     }
+
     XMETRICS_COUNTER_INCREMENT("sync_downloader_request", 1);
     m_request->send_time = now;
     int64_t queue_cost = m_request->send_time - m_request->create_time;
@@ -445,8 +205,10 @@ void xchain_downloader_t::send_request(int64_t now, const xsync_message_chain_sn
                 m_request->owner.c_str(), m_request->start_height, m_request->start_height+m_request->count-1,
                 queue_cost, m_request->target_addr.to_string().c_str());
     m_sync_sender->send_chain_snapshot_meta(chain_snapshot_meta, xmessage_id_sync_chain_snapshot_request, m_request->self_addr, m_request->target_addr);
+    return true;
 }
-void xchain_downloader_t::handle_next(uint64_t current_height) {
+
+xsync_command_execute_result xchain_downloader_t::handle_next(uint64_t current_height) {
     vnetwork::xvnode_address_t self_addr;
     vnetwork::xvnode_address_t target_addr;
 
@@ -455,11 +217,8 @@ void xchain_downloader_t::handle_next(uint64_t current_height) {
     uint32_t count = 0;
 
     m_sync_range_mgr.get_next_behind(current_height, count_limit, start_height, count, self_addr, target_addr);
-    //xsync_info("chain_downloader next_behind %s range[%lu,%lu]", m_address.c_str(), start_height, start_height+count-1);
 
     if (count > 0) {
-        // xsync_dbg("get_next_range=%s size=%d", m_address.c_str(), next_blocks.size());
-
         int64_t now = get_time();
 
         xentire_block_request_ptr_t req = create_request(start_height, count);
@@ -470,12 +229,18 @@ void xchain_downloader_t::handle_next(uint64_t current_height) {
             req->try_time = 0;
             req->send_time = 0;
             m_request = req;
-            send_request(now);
+            if (send_request(now)){
+                return wait_response;
+            }
         }
+
+        return abort;
     }
+
+    return finish;
 }
 
-void xchain_downloader_t::handle_fulltable(uint64_t fulltable_height_of_tablechain, const vnetwork::xvnode_address_t self_addr, const vnetwork::xvnode_address_t target_addr) {
+bool xchain_downloader_t::handle_fulltable(uint64_t fulltable_height_of_tablechain, const vnetwork::xvnode_address_t self_addr, const vnetwork::xvnode_address_t target_addr) {
     int64_t now = get_time();
 
     xsync_message_chain_snapshot_meta_t chain_snapshot_meta{m_address, fulltable_height_of_tablechain};
@@ -487,8 +252,9 @@ void xchain_downloader_t::handle_fulltable(uint64_t fulltable_height_of_tablecha
         req->try_time = 0;
         req->send_time = 0;
         m_request = req;
-        send_request(now, chain_snapshot_meta);
+        return send_request(now, chain_snapshot_meta);
     }
+    return false;
 }
 
 void xchain_downloader_t::clear() {
@@ -538,12 +304,6 @@ dependency_info_t xchain_downloader_t::get_depend_elect_info(const data::xblock_
 }
 
 xentire_block_request_ptr_t xchain_downloader_t::create_request(uint64_t start_height, uint32_t count) {
-
-    std::string account_prefix;
-    uint32_t table_id = 0;
-    if (!data::xdatautil::extract_parts(m_address, account_prefix, table_id))
-        return nullptr;
-
     xentire_block_request_ptr_t ptr = std::make_shared<xentire_block_request_t>(
                                 m_address,
                                 start_height,
@@ -553,6 +313,273 @@ xentire_block_request_ptr_t xchain_downloader_t::create_request(uint64_t start_h
             m_address.c_str(), start_height, start_height+count-1);
 
     return ptr;
+}
+
+xsync_command_execute_result xchain_downloader_t::execute_download(uint64_t start_height, uint64_t end_height, enum_chain_sync_policy sync_policy, const vnetwork::xvnode_address_t &self_addr, const vnetwork::xvnode_address_t &target_addr, const std::string &reason) {
+    std::string account_prefix;
+    uint32_t table_id = 0;
+
+    if (!data::xdatautil::extract_parts(m_address, account_prefix, table_id)){
+        return abort;
+    }
+    {
+        if (account_prefix == sys_contract_beacon_table_block_addr) {
+            // ignore
+        } else if (account_prefix == sys_contract_zec_table_block_addr) {
+
+            if (!check_behind(end_height, sys_contract_rec_elect_rec_addr)) {
+                xsync_info("chain_downloader on_behind(depend chain is syncing) %s,height=%lu,", m_address.c_str(), end_height);
+                return abort;
+            }
+        } else if (account_prefix == sys_contract_sharding_table_block_addr) {
+
+            if (!check_behind(end_height, sys_contract_zec_elect_consensus_addr)) {
+                xsync_info("chain_downloader on_behind(depend chain is syncing) %s,height=%lu,", m_address.c_str(), end_height);
+                return abort;
+            }
+        } else {
+            return abort;
+        }
+    }
+
+    xauto_ptr<xvblock_t> start_vblock = m_sync_store->get_latest_start_block(m_address, sync_policy);
+    xauto_ptr<xvblock_t> end_vblock = m_sync_store->get_latest_end_block(m_address, sync_policy);
+    xblock_ptr_t end_block = autoptr_to_blockptr(end_vblock);
+
+    int ret = 0;
+    if (sync_policy == enum_chain_sync_pocliy_fast) {
+        ret = m_sync_range_mgr.set_behind_info(start_height, end_height, enum_chain_sync_pocliy_fast, self_addr, target_addr);
+    } else {
+        ret = m_sync_range_mgr.set_behind_info(start_vblock->get_height(), end_height, enum_chain_sync_pocliy_full,self_addr, target_addr);
+    }
+
+    if (!ret) {
+        return finish;
+    }
+
+    xsync_info("chain_downloader on_behind %s,local(height=%lu,) peer(height=%lu,) reason=%s %s -> %s",
+            m_address.c_str(),
+            start_vblock->get_height(),
+            end_height,
+            reason.c_str(),
+            self_addr.to_string().c_str(),
+            target_addr.to_string().c_str());
+
+    XMETRICS_COUNTER_INCREMENT("sync_downloader_block_behind", 1);
+    // fast sync for table level block chain, write the full table bock first
+    // then write the index snapshot
+    if (sync_policy != enum_chain_sync_pocliy_fast) {
+        return handle_next(sync::derministic_height(end_vblock->get_height(), std::make_pair(start_height,end_height)));
+    }
+
+    data::xblock_ptr_t current_block = autoptr_to_blockptr(start_vblock);
+    if (!current_block->is_full_state_block() && current_block->get_height() == start_height) {
+        if (!handle_fulltable(start_height, self_addr, target_addr)){
+            return abort;
+        }
+        return wait_response;
+    }
+
+    current_block = autoptr_to_blockptr(end_vblock);
+    if ((current_block->get_height() <= end_height) && (current_block->get_height() >= start_height)) {
+        return handle_next(sync::derministic_height(current_block->get_height(), std::make_pair(start_height,end_height)));
+    } 
+    
+    return handle_next(start_height - 1);
+}
+
+xsync_command_execute_result xchain_downloader_t::execute_next_download(std::vector<data::xblock_ptr_t> &blocks, const vnetwork::xvnode_address_t &self_addr, const vnetwork::xvnode_address_t &from_addr) {
+
+    uint32_t count = blocks.size();
+
+    if (count == 0)
+        return abort;
+
+    int64_t now = get_time();
+    int64_t total_cost = now - m_request->send_time;
+
+    xsync_info("chain_downloader on_response(overview) %s count(%u) cost(%ldms) %s",
+        m_address.c_str(), count, total_cost, from_addr.to_string().c_str());
+
+    m_ratelimit->feedback(total_cost, now);
+    XMETRICS_COUNTER_INCREMENT("sync_downloader_response", 1);
+    XMETRICS_COUNTER_INCREMENT("sync_cost_peer_response", total_cost);
+
+    // 1.verify shard-table block multi-sign
+    bool is_elect_chain = false;
+
+    std::string account_prefix;
+    uint32_t table_id = 0;
+    data::xdatautil::extract_parts(m_address, account_prefix, table_id);
+
+    if (account_prefix==sys_contract_beacon_table_block_addr || account_prefix==sys_contract_zec_table_block_addr) {
+        xblock_ptr_t &block = blocks[count-1];
+        if (!check_auth(m_certauth, block)) {
+            xsync_info("chain_downloader on_response(auth_failed) %s,height=%lu,", m_address.c_str(), block->get_height());
+            m_sync_range_mgr.clear_behind_info();
+            return abort;
+        }
+    }
+
+    enum_chain_sync_policy sync_policy;
+    if (!m_sync_range_mgr.get_sync_policy(sync_policy)) {
+        xsync_info("chain_downloader on_response(not behind) %s,", m_address.c_str());
+        return abort;
+    }
+
+    // compare before and after
+    for (uint32_t i = 0; i < count; i++) {
+        xblock_ptr_t &block = blocks[i];
+
+        uint64_t height = block->get_height();
+        uint64_t viewid = block->get_viewid();
+
+        enum_result_code ret = handle_block(block, is_elect_chain, sync_policy);
+
+        if (ret == enum_result_code::success) {
+            xsync_info("chain_downloader on_response(succ) %s,height=%lu,viewid=%lu,prev_hash:%s,",
+                m_address.c_str(), height, viewid, to_hex_str(block->get_last_block_hash()).c_str());
+        } else if (ret == enum_result_code::failed) {
+            xsync_warn("chain_downloader on_response(failed) %s", block->dump().c_str());
+        } else if (ret == enum_result_code::auth_failed) {
+            xsync_info("chain_downloader on_response(auth_failed) %s,height=%lu,viewid=%lu,", m_address.c_str(), height, viewid);
+            m_sync_range_mgr.clear_behind_info();
+            break;
+        } else {
+            assert(0);
+            break;
+        }
+    }
+
+    if (m_sync_range_mgr.get_current_sync_start_height() != blocks.begin()->get()->get_height()) {
+        xsync_info("chain_downloader on_response expect height is %llu, but real height is %llu", m_sync_range_mgr.get_current_sync_start_height(), blocks.begin()->get()->get_height());
+        return abort;
+    }
+
+    base::xauto_ptr<base::xvblock_t> current_vblock = m_sync_store->get_latest_end_block(m_address, sync_policy);
+    xblock_ptr_t current_block = autoptr_to_blockptr(current_vblock);
+
+    m_sync_range_mgr.update_progress(current_block);
+
+    xsync_info("chain_downloader on_response(total) %s,current(height=%lu,viewid=%lu,hash=%s) behind(height=%lu)",
+        m_address.c_str(), current_vblock->get_height(), current_vblock->get_viewid(), to_hex_str(current_vblock->get_block_hash()).c_str(), m_sync_range_mgr.get_behind_height());
+
+    // temporary defend code, need to remove in future
+    if (m_sync_range_mgr.get_current_sync_start_height() <= current_block->get_height()){
+        clear();
+        xsync_info("chain_downloader on_response %s, failed to move to expect height, current(height=%lu,viewid=%lu,hash=%s) behind(height=%lu)",
+        m_address.c_str(), current_vblock->get_height(), current_vblock->get_viewid(), to_hex_str(current_vblock->get_block_hash()).c_str(), m_sync_range_mgr.get_behind_height());
+        return abort;
+    }
+
+    m_request = nullptr;
+
+    if (sync_policy != enum_chain_sync_pocliy_fast) {
+        return handle_next(current_block->get_height());
+    }
+
+    xauto_ptr<xvblock_t> table_block = m_sync_store->get_latest_start_block(m_address, sync_policy);
+    xblock_ptr_t block = autoptr_to_blockptr(table_block);
+    xsync_info("chain_downloader on_response %s, height=%lu",m_address.c_str(), table_block->get_height());
+    if (!block->is_full_state_block()) {
+        xsync_info("chain_downloader on_response(chain_snapshot) %s,current(height=%lu,viewid=%lu,hash=%s) behind(height=%lu)",
+        m_address.c_str(), table_block->get_height(), table_block->get_viewid(), to_hex_str(table_block->get_block_hash()).c_str(), m_sync_range_mgr.get_behind_height());
+        if (!handle_fulltable(block->get_height(), self_addr, from_addr)) {
+            return abort;
+        }
+        return wait_response;
+    }
+
+    block = autoptr_to_blockptr(current_vblock);
+    if (block->get_height() >= m_sync_range_mgr.get_behind_height()){
+        clear();
+        return finish;
+    }
+
+    return handle_next(current_block->get_height());
+}
+
+xsync_command_execute_result xchain_downloader_t::execute_next_download(const xobject_ptr_t<base::xvboffdata_t> chain_snapshot, 
+    uint64_t height, const vnetwork::xvnode_address_t &self_addr, const vnetwork::xvnode_address_t &from_addr) {
+
+    int64_t now = get_time();
+    int64_t total_cost = now - m_request->send_time;
+
+    xsync_info("chain_downloader on_response(overview) %s  cost(%ldms) %s",
+        m_address.c_str(), total_cost, from_addr.to_string().c_str());
+
+    m_ratelimit->feedback(total_cost, now);
+    XMETRICS_COUNTER_INCREMENT("sync_downloader_response", 1);
+    XMETRICS_COUNTER_INCREMENT("sync_cost_peer_response", total_cost);
+
+    base::xauto_ptr<base::xvblock_t> current_vblock = m_sync_store->get_latest_start_block(m_address, enum_chain_sync_pocliy_fast);
+    data::xblock_ptr_t current_block = autoptr_to_blockptr(current_vblock);
+    if (!current_block->is_full_state_block() && current_block->get_height() == height) {
+        current_block->reset_block_offdata(chain_snapshot.get());
+        m_sync_store->store_block(current_block.get());
+    }
+
+    //double check,check block state is really store successfully
+    base::xauto_ptr<base::xvblock_t> current_vblock2 = m_sync_store->get_latest_start_block(m_address, enum_chain_sync_pocliy_fast);
+    current_block = autoptr_to_blockptr(current_vblock2);
+    if (!current_block->is_full_state_block() && current_block->get_height() == height) {
+        clear();
+        return abort;
+    }
+
+    m_sync_range_mgr.update_progress(current_block);
+
+    xsync_info("chain_downloader on_response(total) %s,current(height=%lu,viewid=%lu,hash=%s) behind(height=%lu)",
+        m_address.c_str(), current_vblock->get_height(), current_vblock->get_viewid(), to_hex_str(current_vblock->get_block_hash()).c_str(), m_sync_range_mgr.get_behind_height());
+
+    m_request = nullptr;
+    base::xauto_ptr<base::xvblock_t> vblock = m_sync_store->get_latest_end_block(m_address,enum_chain_sync_pocliy_fast);
+    current_block = autoptr_to_blockptr(vblock);
+    if (current_block->get_height() >= m_sync_range_mgr.get_behind_height()){
+        clear();
+        return finish;
+    }
+
+    return handle_next(current_block->get_height());
+}
+
+bool xchain_object_t::pick(std::pair<uint64_t, uint64_t> &interval, vnetwork::xvnode_address_t &self_addr, vnetwork::xvnode_address_t &target_addr){
+    if (m_end_height == 0){
+        return false;
+    }
+
+    if (m_current_height > m_end_height) {
+        return false;
+    } else {
+        interval.second = (m_current_height + 100) > m_end_height ? m_end_height : m_current_height + 100;
+    }
+
+    if (m_current_height >= m_start_height) {
+        interval.first = m_current_height;
+    } else {
+        interval.first = m_start_height;
+    }
+
+    self_addr = m_self_addr;
+    target_addr = m_target_addr;
+    m_picked_height = interval.second;
+    return true;
+}
+
+uint64_t xchain_object_t::height() {
+    return m_current_height;
+}
+
+void xchain_object_t::set_height(uint64_t height) {
+    m_current_height = height;
+}
+
+void xchain_object_t::set_picked_height(uint64_t height) {
+    m_picked_height = height;
+}
+
+uint64_t xchain_object_t::picked_height() {
+    return m_picked_height;
 }
 
 NS_END2

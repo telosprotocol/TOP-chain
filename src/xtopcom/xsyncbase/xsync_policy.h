@@ -11,6 +11,7 @@ NS_BEG2(top, sync)
 enum enum_chain_sync_policy {
     enum_chain_sync_pocliy_fast,
     enum_chain_sync_pocliy_full,
+    enum_chain_sync_pocliy_max,
 };
 
 NS_END2
