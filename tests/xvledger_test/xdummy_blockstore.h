@@ -54,7 +54,7 @@ public:
         return nullptr;
     }
 
-    base::xauto_ptr<base::xvblock_t> get_latest_genesis_connected_block(const base::xvaccount_t & account, bool ask_full_search = true) override {
+    base::xauto_ptr<base::xvblock_t> get_latest_genesis_connected_block(const base::xvaccount_t & account, bool ask_full_search) override {
         return nullptr;
     }
 
