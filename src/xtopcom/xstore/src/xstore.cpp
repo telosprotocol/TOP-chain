@@ -269,7 +269,7 @@ std::string xstore_key_t::printable_key() const {
 xstore::xstore(const std::shared_ptr<db::xdb_face_t> &db)
     : m_db(db) {}
 
-xaccount_ptr_t xstore::query_account(const std::string &address) {
+xaccount_ptr_t xstore::query_account(const std::string &address) const {
     auto blockchain = clone_account(address);
     xblockchain_ptr_t obj;
     obj.attach(blockchain);
@@ -413,7 +413,7 @@ bool xstore::save_block(const std::string & store_path, data::xblock_t *block) {
     return false;
 }
 
-xdataobj_ptr_t xstore::clone_property(const std::string &address, const std::string &property_name) {
+xdataobj_ptr_t xstore::clone_property(const std::string &address, const std::string &property_name) const {
     xdataobj_ptr_t property = nullptr;
     xaccount_ptr_t state = query_account(address);
     if (state != nullptr) {
@@ -461,7 +461,7 @@ bool xstore::set_transaction_hash(xstore_transaction_t& txn, const uint64_t unit
     return true;
 }
 
-xdataobj_ptr_t xstore::get_property(const std::string &address, const std::string &property_name, int32_t type) {
+xdataobj_ptr_t xstore::get_property(const std::string &address, const std::string &property_name, int32_t type) const {
     xdataobj_ptr_t obj = clone_property(address, property_name);
     if (obj == nullptr) {
         return nullptr;
@@ -662,7 +662,7 @@ bool xstore::execute_tableblock_full(xblockchain2_t* account, xfull_tableblock_t
     return true;
 }
 
-int32_t xstore::get_map_property(const std::string &address, uint64_t height, const std::string &name, std::map<std::string, std::string> &value) {
+int32_t xstore::get_map_property(const std::string &address, uint64_t height, const std::string &name, std::map<std::string, std::string> &value) const {
     xdataobj_ptr_t target;
     int32_t        ret = get_property(address, height, name, target);
 
@@ -714,7 +714,7 @@ int32_t xstore::get_string_property(const std::string &address, uint64_t height,
     return xsuccess;
 }
 
-bool xstore::load_blocks_from_full_or_state(const xaccount_ptr_t & state, const xblock_ptr_t & latest_block, std::map<uint64_t, xblock_ptr_t> & blocks) {
+bool xstore::load_blocks_from_full_or_state(const xaccount_ptr_t & state, const xblock_ptr_t & latest_block, std::map<uint64_t, xblock_ptr_t> & blocks) const {
     if (state->get_last_height() == latest_block->get_height()) {
         xassert(state->get_last_block_hash() == latest_block->get_block_hash() || latest_block->is_genesis_block());
         return true;
@@ -746,7 +746,7 @@ bool xstore::load_blocks_from_full_or_state(const xaccount_ptr_t & state, const 
 }
 
 // system contract start with 0, user account start with 1
-int32_t xstore::get_property(const std::string &address, uint64_t height, const std::string &name, xdataobj_ptr_t &obj) {
+int32_t xstore::get_property(const std::string &address, uint64_t height, const std::string &name, xdataobj_ptr_t &obj) const {
     xdbg("xstore::get_property_by_height enter.account=%s,key=%s,height=%ld", address.c_str(), name.c_str(), height);
     base::xvaccount_t _vaddr(address);
     base::xauto_ptr<base::xvblock_t> _block = base::xvchain_t::instance().get_xblockstore()->load_block_object(_vaddr, height, base::enum_xvblock_flag_committed, true);
