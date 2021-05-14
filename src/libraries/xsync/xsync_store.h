@@ -30,6 +30,9 @@ public:
     virtual base::xauto_ptr<base::xvblock_t> get_latest_end_block(const std::string & account, enum_chain_sync_policy sync_policy) = 0;
     virtual std::vector<data::xvblock_ptr_t> load_block_objects(const std::string & account, const uint64_t height) = 0;
     virtual std::vector<data::xvblock_ptr_t> load_block_objects(const std::string & tx_hash, const base::enum_transaction_subtype type) = 0;
+
+    virtual void update_latest_genesis_connected_block(const std::string & account) = 0;
+
     const static uint64_t m_undeterministic_heights = 2;
 };
 
@@ -48,6 +51,8 @@ public:
     virtual base::xauto_ptr<base::xvblock_t> get_latest_end_block(const std::string & account, enum_chain_sync_policy sync_policy) {return nullptr;}
     virtual std::vector<data::xvblock_ptr_t> load_block_objects(const std::string & account, const uint64_t height) {return std::vector<data::xvblock_ptr_t>{};}
     virtual std::vector<data::xvblock_ptr_t> load_block_objects(const std::string & tx_hash, const base::enum_transaction_subtype type) {return std::vector<data::xvblock_ptr_t>{};}
+
+    virtual void update_latest_genesis_connected_block(const std::string & account) override;
 };
 
 class xsync_store_t : public xsync_store_face_t {
@@ -66,6 +71,8 @@ public:
     base::xauto_ptr<base::xvblock_t> get_latest_end_block(const std::string & account, enum_chain_sync_policy sync_policy) override;
     std::vector<data::xvblock_ptr_t> load_block_objects(const std::string & account, const uint64_t height) override;
     std::vector<data::xvblock_ptr_t> load_block_objects(const std::string & tx_hash, const base::enum_transaction_subtype type) override;
+
+    virtual void update_latest_genesis_connected_block(const std::string & account) override;
 
 private:
     std::string m_vnode_id;

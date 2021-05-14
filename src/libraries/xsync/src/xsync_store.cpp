@@ -44,6 +44,12 @@ base::xauto_ptr<base::xvblock_t> xsync_store_t::load_block_object(const std::str
     return m_blockstore->load_block_object(_vaddress, height, 0, ask_full_load);
 }
 
+// force update _highest_connect_block_height
+void xsync_store_t::update_latest_genesis_connected_block(const std::string & account) {
+    base::xvaccount_t _vaddress(account);
+    m_blockstore->get_latest_genesis_connected_index(_vaddress, true);
+}
+
 base::xauto_ptr<base::xvblock_t> xsync_store_t::get_latest_full_block(const std::string & account) {
     base::xvaccount_t _vaddress(account);
     return m_blockstore->get_latest_full_block(_vaddress);
