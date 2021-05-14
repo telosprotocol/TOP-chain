@@ -172,7 +172,7 @@ namespace top
             base::xvbindex_t*      load_latest_committed_index();   //block with committed status
             base::xvbindex_t*      load_latest_executed_index();    //block with executed status
             base::xvbindex_t*      load_latest_connected_index();   //block has connected to the last full
-            base::xvbindex_t*      load_latest_genesis_connected_index();  //block has connected to genesis;
+            base::xvbindex_t*      load_latest_genesis_connected_index(bool ask_full_search);  //block has connected to genesis;
             base::xvbindex_t*      load_latest_full_index();        //block has full state,genesis is a full block
             base::xvbindex_t*      load_latest_committed_full_index();  // full block with committed status
  
@@ -222,9 +222,7 @@ namespace top
             bool                write_block_output_to_db(base::xvbindex_t* index_ptr,base::xvblock_t * block_ptr);
             bool                read_block_output_from_db(base::xvbindex_t* index_ptr);
             bool                read_block_output_from_db(base::xvblock_t * block_ptr);
-            
-            bool                delete_block_from_db(base::xvbindex_t* index_ptr);
-            
+                 
             //manage data related xvboffdata_t
             bool                write_block_offdata_to_db(base::xvbindex_t* index_ptr,base::xvblock_t * block_ptr);
             bool                read_block_offdata_from_db(base::xvblock_t * block_ptr);

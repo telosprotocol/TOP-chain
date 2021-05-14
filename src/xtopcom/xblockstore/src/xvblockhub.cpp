@@ -742,7 +742,8 @@ namespace top
             return load_genesis_index();
         }
 
-        base::xvbindex_t*  xblockacct_t::load_latest_genesis_connected_index() //block has connected to genesis
+        //note:load_latest_genesis_connected_index is dedicated for sync-module only
+        base::xvbindex_t*  xblockacct_t::load_latest_genesis_connected_index(bool ask_full_search) //block has connected to genesis
         {
             if(load_index(m_meta->_highest_genesis_connect_height) == 0)//load first
             {
@@ -761,6 +762,29 @@ namespace top
                     }
                 }
             }
+            //note:when ask_full_search is true ,here may do heavy job to search all blocks until highest one
+            if(ask_full_search)
+            {
+                for(uint64_t h = m_meta->_highest_genesis_connect_height + 1; h <= m_meta->_highest_commit_block_height; ++h)
+                {
+                    const uint64_t try_height = m_meta->_highest_genesis_connect_height + 1;
+                    if(load_index(try_height) == 0)//block of this height are not present
+                        break;
+                    
+                    if(try_height == (m_meta->_highest_genesis_connect_height + 1))//if nothing changed
+                        break;//which means blocks of 'try_height' is not connected prevs
+                    
+                    if(try_height >= m_meta->_highest_commit_block_height)//done all
+                        break;
+                }
+                
+                xinfo("xblockacct_t::load_latest_genesis_connected_index,navigate to new height(%" PRIu64 ") vs commit-height(%" PRIu64 ")  of account(%s)",m_meta->_highest_genesis_connect_height,m_meta->_highest_commit_block_height,get_address().c_str());
+            }
+            else
+            {
+                xinfo("xblockacct_t::load_latest_genesis_connected_index,load org height(%" PRIu64 ") vs commit-height(%" PRIu64 ")  of account(%s)",m_meta->_highest_genesis_connect_height,m_meta->_highest_commit_block_height,get_address().c_str());
+            }
+            
             //connected block must be committed as well
             base::xvbindex_t* result = query_index(m_meta->_highest_genesis_connect_height,base::enum_xvblock_flag_committed);
             if(result != nullptr)
@@ -1381,7 +1405,7 @@ namespace top
                     if(   (this_block->get_viewid() != cur_it->second->get_viewid())
                        || (this_block->get_block_hash() != cur_it->second->get_block_hash()) )
                     {
-                        xerror("xblockacct_t::cache_index,error-try fork by new block(%s) vs existing commit block(%s) at store(%s)",this_block->dump().c_str(),cur_it->second->dump().c_str(),get_blockstore_path().c_str());
+                        xwarn("xblockacct_t::cache_index,error-try fork by new block(%s) vs existing commit block(%s) at store(%s)",this_block->dump().c_str(),cur_it->second->dump().c_str(),get_blockstore_path().c_str());
                         return false;
                     }
                 }
@@ -1629,6 +1653,31 @@ namespace top
                 {
                     m_meta->_highest_genesis_connect_height = this_block_height;
                     m_meta->_highest_genesis_connect_hash   = this_block->get_block_hash();
+                    
+                    //search more for cached blocks
+                    auto heigh_it = m_all_blocks.find(m_meta->_highest_genesis_connect_height + 1);
+                    for(;heigh_it != m_all_blocks.end();++heigh_it)
+                    {
+                        if(   (heigh_it->first == (m_meta->_highest_genesis_connect_height + 1))
+                           && (false == heigh_it->second.empty()) )
+                        {
+                            for(auto view_it = heigh_it->second.begin(); view_it != heigh_it->second.end(); ++view_it)
+                            {
+                                if(  (view_it->second->check_block_flag(base::enum_xvblock_flag_committed))
+                                   &&(view_it->second->get_last_block_hash() == m_meta->_highest_genesis_connect_hash) )
+                                {
+                                    m_meta->_highest_genesis_connect_height = view_it->second->get_height();
+                                    m_meta->_highest_genesis_connect_hash   = view_it->second->get_block_hash();
+ 
+                                    break;
+                                }
+                            }
+                        }
+                        else
+                        {
+                            break;
+                        }
+                    }
                 }
                 else
                 {
