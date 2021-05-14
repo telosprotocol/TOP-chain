@@ -64,7 +64,7 @@ void xtxpool_service_mgr::on_block_to_db_event(mbus::xevent_ptr_t e) {
 void xtxpool_service_mgr::on_block_confirmed(xblock_t * block) {
     uint64_t now_clock = m_clock->logic_time();
 
-    xinfo("xtxpool_service_mgr::on_block_to_db_event process,level:%d,class:%d,now=%llu,block:%s",
+    xinfo("xtxpool_service_mgr::on_block_confirmed process,level:%d,class:%d,now=%llu,block:%s",
           block->get_block_level(),
           block->get_block_class(),
           now_clock,
@@ -88,7 +88,9 @@ void xtxpool_service_mgr::on_block_confirmed(xblock_t * block) {
 
 void xtxpool_service_mgr::make_receipts_and_send(xblock_t * block) {
     auto receipts = xreceipt_strategy_t::make_receipts(block);
+    uint64_t now = xverifier::xtx_utl::get_gmttime_s();
     for (auto & receipt : receipts) {
+        xinfo("xtxpool_service_mgr::make_receipts_and_send tx=%s", receipt->dump().c_str());
         send_receipt(receipt);
     }
     xdbg("xtxpool_service_mgr::make_receipts_and_send block:%s", block->dump().c_str());
