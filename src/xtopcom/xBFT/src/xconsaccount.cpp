@@ -149,7 +149,8 @@ namespace top
                 xwarn("xcsaccount_t::on_pdu_event_down,wrong dest address(%llu) at node=%llu",get_xip2_addr().low_addr,get_xip2_low_addr());
                 _evt_obj->set_to_xip(get_xip2_addr());//correct target address to make sure it always be this address
             }
-            if(_evt_obj->_packet.get_msg_type() == enum_consensus_msg_type_proposal) //replica get proposal from leader
+            if(   (_evt_obj->_packet.get_msg_type() == enum_consensus_msg_type_proposal) //replica get proposal from leader
+               || (_evt_obj->_packet.get_msg_type() == enum_consensus_msg_type_commit) ) //try sync first for commit msg
             {
                 if(get_child_node() != NULL)
                 {
