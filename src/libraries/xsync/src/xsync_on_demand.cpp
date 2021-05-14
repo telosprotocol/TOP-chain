@@ -147,8 +147,12 @@ void xsync_on_demand_t::handle_blocks_request(const xsync_message_get_on_demand_
         }
     }
 
+    xsync_info("xsync_on_demand_t::handle_blocks_request %s range[%llu,%llu]", address.c_str(), start_height, end_height);
     for (uint64_t height = start_height, i = 0; (height <= end_height) && (i < max_request_block_count); height++) {
         auto need_blocks = m_sync_store->load_block_objects(address, height);
+        if (need_blocks.empty()) {
+            break;
+        }
         for (uint32_t j = 0; j < need_blocks.size(); j++, i++){
             blocks.push_back(xblock_t::raw_vblock_to_object_ptr(need_blocks[j].get()));
         }
@@ -335,7 +339,7 @@ void xsync_on_demand_t::handle_blocks_by_hash_request(const xsync_message_get_on
     std::string address = block.address;
     std::string hash = block.hash;
 
-    xsync_dbg("xsync_on_demand_t::handle_blocks_by_hash_request from %s to %s, account:%s, hash:%s", to_address.to_string().c_str(), 
+    xsync_dbg("xsync_on_demand_t::handle_blocks_by_hash_request from %s to %s, account:%s, hash:%s", to_address.to_string().c_str(),
         network_self.to_string().c_str(), address.c_str(), data::to_hex_str(hash).c_str());
     if (hash.empty())
         return;
@@ -387,7 +391,7 @@ bool xsync_on_demand_t::store_blocks(const std::vector<data::xblock_ptr_t> &bloc
                 block->get_account().c_str(), block->get_height(), block->get_viewid());
         }
     }
-    
+
     return true;
 }
 
