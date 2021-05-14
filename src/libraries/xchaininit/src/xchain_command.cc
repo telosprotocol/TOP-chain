@@ -466,7 +466,7 @@ int parse_execute_command(const char * config_file_extra, int argc, char * argv[
 
     // register miner
     auto registerMiner_app = mining_app->add_subcommand("registerMiner", "Register to the mining pool. ");
-    double registerMiner_amount = 0;
+    std::string registerMiner_amount("0");
     std::string miner_type;
     std::string miner_name;
     registerMiner_app->add_option("top_num", registerMiner_amount, "miner register deposit,unit is TOP.")->required();
@@ -516,7 +516,7 @@ int parse_execute_command(const char * config_file_extra, int argc, char * argv[
     std::string updateMinerInfo_type;
     std::string updateMinerInfo_name;
     uint32_t updateMinerInfo_deposit_type = 0;
-    double updateMinerInfo_deposit = 0;
+    std::string updateMinerInfo_deposit("0");
     uint32_t updateMinerInfo_rate = 0;
     std::string updateMinerInfo_sign_key;
     updateMinerInfo_app->add_option("miner_type", updateMinerInfo_type, "New miner type: edge, validator and advance.")->required();
@@ -538,7 +538,7 @@ int parse_execute_command(const char * config_file_extra, int argc, char * argv[
     // set dividend ratio
     auto setDividendRatio_app = mining_app->add_subcommand("setDividendRatio", "Set devidend ratio for voters who support you.");
     uint32_t setDividendRatio_ratio = 0;
-    double setDividendRatio_deposit = 0;
+    std::string setDividendRatio_deposit("0");
     setDividendRatio_app->add_option("percent", setDividendRatio_ratio, "Dividend ratio(≥0，≤100).")->required()->check(CLI::Range((uint16_t)0, (uint16_t)100));
     setDividendRatio_app->add_option("-t,--tx_deposit", setDividendRatio_deposit, "Transaction deposit, a minimum of 0.1 TOP.");
     setDividendRatio_app->callback(std::bind(&ApiMethod::set_dividend_ratio, &topcl.api, std::ref(setDividendRatio_ratio), std::ref(setDividendRatio_deposit), std::ref(out_str)));
@@ -551,13 +551,13 @@ int parse_execute_command(const char * config_file_extra, int argc, char * argv[
 
     // add deposit
     auto addDeposit_app = mining_app->add_subcommand("addDeposit", "Pledge more deposit for the miner. ");
-    double addDeposit_deposit = 0;
+    std::string addDeposit_deposit("0");
     addDeposit_app->add_option("top_num", addDeposit_deposit, "Amounts of miner deposit will be increased, unit is TOP.")->required();
     addDeposit_app->callback(std::bind(&ApiMethod::add_deposit, &topcl.api, std::ref(addDeposit_deposit), std::ref(out_str)));
 
     // reduce deposit
     auto reduceDeposit_app = mining_app->add_subcommand("reduceDeposit", "Reduce the deposit of the miner. ");
-    double reduceDeposit_deposit = 0;
+    std::string reduceDeposit_deposit("0");
     reduceDeposit_app->add_option("top_num", reduceDeposit_deposit, "Amounts of miner deposit will be decreased, unit is TOP.")->required();
     reduceDeposit_app->callback(std::bind(&ApiMethod::reduce_deposit, &topcl.api, std::ref(reduceDeposit_deposit), std::ref(out_str)));
 
@@ -685,7 +685,7 @@ int parse_execute_command(const char * config_file_extra, int argc, char * argv[
     // stake withdraw fund
     auto stake_withdrawFund_app = staking_app->add_subcommand("withdrawFund", "Withdraw pledged TOP tokens and tickets.");
     uint64_t stake_withdrawFund_amount = 0;
-    double stake_withdrawFund_deposit = 0;
+    std::string stake_withdrawFund_deposit("0");
     stake_withdrawFund_app->add_option("votes_num", stake_withdrawFund_amount, "Votes amount, unlock the corresponding TOP token.")->required();
     stake_withdrawFund_app->add_option("-t,--tx_deposit", stake_withdrawFund_deposit, "Transaction deposit, a minimum of 0.1 TOP.");
     stake_withdrawFund_app->callback(
@@ -733,9 +733,9 @@ int parse_execute_command(const char * config_file_extra, int argc, char * argv[
      * transfer
      */
     std::string to;
-    double amount = 0;
+    std::string amount("0");
     std::string note;
-    double tx_deposit = 0;
+    std::string tx_deposit("0");
     auto transfer = app.add_subcommand("transfer", "Send TOP token to an account.");
     transfer->callback(std::bind(&ApiMethod::transfer1, &topcl.api, std::ref(to), std::ref(amount), std::ref(note), std::ref(tx_deposit), std::ref(out_str)));
     transfer->add_option("account_addr", to, "The receipt account address.")->required();
@@ -781,9 +781,9 @@ int parse_execute_command(const char * config_file_extra, int argc, char * argv[
     // deploy contract
     auto deployContract_app = chain_app->add_subcommand("deployContract", "Create a contract account and deploy a code to the contract.");
     uint64_t deployContract_gas_limit = 0;
-    double deployContract_amount = 0;
+    std::string deployContract_amount("0");
     std::string deployContract_path;
-    double deployContract_tx_deposit = 0;
+    std::string deployContract_tx_deposit("0");
     deployContract_app->add_option("gas_limit", deployContract_gas_limit, "Upper limit of gas fees that the contract is willing to pay for the sender of the transaction.")
         ->required();
     deployContract_app->add_option("top_num", deployContract_amount, "The TOP token amounts transferred to the contract account.The unit is TOP.")->required();
@@ -799,11 +799,11 @@ int parse_execute_command(const char * config_file_extra, int argc, char * argv[
 
     // call contract
     auto callContract_app = chain_app->add_subcommand("callContract", "Send a transaction to a contract.");
-    double callContract_amount = 0;
+    std::string callContract_amount("0");
     std::string callContract_addr;
     std::string callContract_func;
     std::string callContract_params;
-    double callContract_tx_deposit = 0;
+    std::string callContract_tx_deposit("0");
     callContract_app->add_option("contract_addr", callContract_addr, "Contract account address, beginning with the symbol \"T30000\".")->required();
     callContract_app->add_option("contract_func", callContract_func, "The name of the contract function.")->required();
     callContract_app->add_option("top_num", callContract_amount, "The TOP token amounts transferred to the application contract account.The unit is TOP.");
@@ -832,13 +832,13 @@ int parse_execute_command(const char * config_file_extra, int argc, char * argv[
 
     // stake for gas
     auto stakeForGas_app = resource_app->add_subcommand("stakeForGas", "Stake TOP tokens to receive free gas.");
-    double stakeForGas_amount = 0;
+    std::string stakeForGas_amount("0");
     stakeForGas_app->add_option("top_num", stakeForGas_amount, "Amounts of deposit for gas will be withdrawed, unit is TOP.")->required();
     stakeForGas_app->callback(std::bind(&ApiMethod::stake_for_gas, &topcl.api, std::ref(stakeForGas_amount), std::ref(out_str)));
 
     // withdraw staked token for gas
     auto withdrawFund_app = resource_app->add_subcommand("withdrawFund", "Withdraw TOP tokens staked for resources (free gas).");
-    double withdrawFund_amount = 0;
+    std::string withdrawFund_amount("0");
     withdrawFund_app->add_option("top_num", withdrawFund_amount, "Amounts of deposit for gas will be withdrawed, unit is TOP.")->required();
     withdrawFund_app->callback(std::bind(&ApiMethod::withdraw_fund, &topcl.api, std::ref(withdrawFund_amount), std::ref(out_str)));
 
@@ -862,7 +862,7 @@ int parse_execute_command(const char * config_file_extra, int argc, char * argv[
     uint8_t submitProposal_type = 0;
     std::string submitProposal_target;
     std::string submitProposal_value;
-    double submitProposal_deposit = 0;
+    std::string submitProposal_deposit("0");
     uint64_t submitProposal_effective_timer_height = 0;
     submitProposal_app
         ->add_option("proposal_type", submitProposal_type, "Proposal Type：1--on-chain governance parameter modification proposal；2--community fund management proposal.")
