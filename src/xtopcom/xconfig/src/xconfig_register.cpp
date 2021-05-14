@@ -477,16 +477,6 @@ xconfig_register_t& xconfig_register_t::get_instance() {
     return inst;
 }
 
-// 1 top token equals factor number votes
-double get_top_vote_rate(uint16_t duration){
-    double factor = max_top_vote_rate;
-    if(duration < max_vote_lock_days){
-        factor = static_cast<double>(static_cast<int64_t>((pow(exp_base, duration / min_vote_lock_days - 1))*1000000))/1000000;
-    }
-    xdbg("pledge_redeem_vote factor: %f", factor);
-    return factor;
-}
-
 // uint32_t get_receive_tx_cache_time() {
 //     uint32_t receive_tx_cache_time = xreceive_tx_cache_time_s_configuration_t::value;
 //     if (!config_register.get<uint32_t>(xreceive_tx_cache_time_s_configuration_t::name, receive_tx_cache_time)) {

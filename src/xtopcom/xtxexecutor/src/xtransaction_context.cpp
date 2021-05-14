@@ -475,7 +475,7 @@ int32_t xtransaction_transfer::source_fee_exec() {
 }
 
 int32_t xtransaction_pledge_token_vote::source_fee_exec(){
-    m_lock_token = TOP_UNIT * m_target_action.m_vote_num / config::get_top_vote_rate(m_target_action.m_lock_duration);
+    m_lock_token = m_account_ctx->get_top_by_vote(m_target_action.m_vote_num, m_target_action.m_lock_duration);
     return m_fee.update_tgas_disk_sender(m_lock_token, false);
 }
 

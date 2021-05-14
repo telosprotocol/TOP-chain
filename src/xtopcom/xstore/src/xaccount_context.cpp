@@ -24,7 +24,6 @@
 #include "xconfig/xconfig_register.h"
 #include "xutility/xstream_util.hpp"
 #include "xvm/manager/xcontract_address_map.h"
-#include "xconfig/xconfig_register.h"
 #include "xstake/xstake_algorithm.h"
 #include "xchain_upgrade/xchain_upgrade_center.h"
 
@@ -697,7 +696,7 @@ int32_t xaccount_context_t::merge_pledge_vote_property(){
             m_native_property.native_deque_erase(XPROPERTY_PLEDGE_VOTE_KEY, str);
             vote_sum += vote_num;
             if(0 != duration){ // if not calculated in XPROPERTY_EXPIRE_VOTE_TOKEN_KEY
-                expire_token += (TOP_UNIT * vote_num / config::get_top_vote_rate(duration));
+                expire_token += get_top_by_vote(vote_num, duration);
             }
         }
         xdbg("pledge_redeem_vote expire %s, %d, %d, %d, %d, %d", str.c_str(), vote_num, duration, lock_time, m_timer_height, vote_sum);
@@ -790,6 +789,29 @@ int32_t xaccount_context_t::redeem_pledge_vote_property(uint64_t num){
     }
     xdbg("pledge_redeem_vote no expire vote");
     return xtransaction_pledge_redeem_vote_err;
+}
+
+// calculate the top num needed to get specific votes
+uint64_t xaccount_context_t::get_top_by_vote(uint64_t vote_num, uint16_t duration) const {
+    auto factor = MAX_TOP_VOTE_RATE;
+    if (duration < MAX_VOTE_LOCK_DAYS) {
+        uint64_t af = AMPLIFY_FACTOR;
+        auto power = duration / MIN_VOTE_LOCK_DAYS - 1;
+        for (auto i = 0; i < power; ++i) {
+            af *= EXP_BASE;
+            af /= AMPLIFY_FACTOR;
+        }
+        factor = af;
+    }
+    auto original_num = (top::xstake::uint128_t)vote_num * TOP_UNIT * AMPLIFY_FACTOR / factor;
+    uint64_t top_num = 0;
+    if (original_num > UINT64_MAX) {
+        top_num = UINT64_MAX;
+    } else {
+        top_num = original_num;
+    }
+    xdbg("get_top_by_vote factor: %llu, top_num: %llu, vote_num: %llu, duration: %d", factor, top_num, vote_num, duration);
+    return top_num;
 }
 
 int32_t xaccount_context_t::set_contract_code(const std::string &code) {
