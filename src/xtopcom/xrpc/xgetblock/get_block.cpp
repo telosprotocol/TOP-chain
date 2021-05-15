@@ -21,6 +21,7 @@
 #include "xtxexecutor/xtransaction_fee.h"
 #include "xvm/manager/xcontract_address_map.h"
 #include "xvm/manager/xcontract_manager.h"
+#include "xdata/xnative_contract_address.h"
 
 #include <cstdint>
 #include <iostream>
@@ -143,49 +144,6 @@ xJson::Value get_block_handle::parse_account(const std::string & account) {
         throw xrpc::xrpc_error{xrpc::enum_xrpc_error_code::rpc_shard_exec_error, "account not found on chain"};
     }
 }
-
-// void get_block_handle::get_nodes(const std::string & sys_addr) {
-// std::string result;
-// base::xauto_ptr<base::xvblock_t> latest_vblock = m_block_store->get_latest_committed_block(sys_addr);
-// xblock_t * block = dynamic_cast<xblock_t *>(latest_vblock.get());
-// auto property_names = data::election::get_property_name_by_addr(common::xaccount_address_t{sys_addr});
-// using top::data::election::xelection_result_store_t;
-// for (auto const & property : property_names) {
-//     if (block->get_native_property().native_string_get(property, result) || result.empty()) {
-//         continue;
-//     }
-//     auto const & election_result_store = codec::msgpack_decode<xelection_result_store_t>({std::begin(result), std::end(result)});
-
-//     for (auto const & election_result_info : election_result_store) {
-//         auto const & election_type_results = top::get<data::election::xelection_network_result_t>(election_result_info);
-//         for (auto const & election_type_result : election_type_results) {
-//             auto node_type = top::get<common::xnode_type_t const>(election_type_result);
-//             auto const & election_result = top::get<data::election::xelection_result_t>(election_type_result);
-
-//             for (auto const & cluster_result_info : election_result) {
-//                 auto const & cluster_id = top::get<common::xcluster_id_t const>(cluster_result_info);
-//                 auto const & cluster_result = top::get<xelection_cluster_result_t>(cluster_result_info);
-
-//                 for (auto const & group_result_info : cluster_result) {
-//                     auto const & group_id = top::get<common::xgroup_id_t const>(group_result_info);
-//                     auto const & group_result = top::get<xelection_group_result_t>(group_result_info);
-
-//                     for (auto const & node_info : group_result) {
-//                         auto const & node_id = top::get<xelection_info_bundle_t>(node_info).node_id();
-//                         if (node_id.empty()) {
-//                             continue;
-//                         }
-//                         auto const & election_info = top::get<xelection_info_bundle_t>(node_info).election_info();
-
-//                         m_js_rsp["value"].append(node_id.to_string());
-//                     }
-//                 }
-//             }
-//         }
-//     }
-// }
-// top::contract::xcontract_manager_t::instance().get_contract_data(top::common::xaccount_address_t{sys_addr}, top::contract::xjson_format_t::simple, m_js_rsp["value"]);
-// }
 
 void get_block_handle::getGeneralInfos() {
     xJson::Value j;
@@ -886,8 +844,20 @@ void get_block_handle::getLatestBlock() {
     std::string owner = m_js_req["account_addr"].asString();
     auto vblock = m_block_store->get_latest_committed_block(owner);
     data::xblock_t * bp = dynamic_cast<data::xblock_t *>(vblock.get());
-    auto value = get_block_json(bp);
-    m_js_rsp["value"] = value;
+    if (owner == sys_contract_zec_slash_info_addr) {
+        assert(false);
+        std::error_code ec;
+        xJson::Value value;
+        top::contract::xcontract_manager_t::instance().get_contract_data(top::common::xaccount_address_t{ owner }, bp->get_height(), top::contract::xjson_format_t::detail, value, ec);
+        if (ec) {
+            value["query_status"] = ec.message();
+        }
+
+        m_js_rsp["value"] = value;
+    } else {
+        auto value = get_block_json(bp);
+        m_js_rsp["value"] = value;
+    }
 }
 
 void get_block_handle::getLatestFullBlock() {
@@ -918,10 +888,21 @@ void get_block_handle::getLatestFullBlock() {
 void get_block_handle::getBlockByHeight() {
     std::string owner = m_js_req["account_addr"].asString();
     uint64_t height = m_js_req["height"].asUInt64();
-    auto vblock = m_block_store->load_block_object(base::xvaccount_t(owner), height, 0, true);
-    data::xblock_t * bp = dynamic_cast<data::xblock_t *>(vblock.get());
-    auto value = get_block_json(bp);
-    m_js_rsp["value"] = value;
+    if (owner == sys_contract_zec_slash_info_addr) {
+        std::error_code ec;
+        xJson::Value value;
+        top::contract::xcontract_manager_t::instance().get_contract_data(top::common::xaccount_address_t{ owner }, height, top::contract::xjson_format_t::detail, value, ec);
+        if (ec) {
+            value["query_status"] = ec.message();
+        }
+
+        m_js_rsp["value"] = value;
+    } else {
+        auto vblock = m_block_store->load_block_object(base::xvaccount_t(owner), height, 0, true);
+        data::xblock_t * bp = dynamic_cast<data::xblock_t *>(vblock.get());
+        auto value = get_block_json(bp);
+        m_js_rsp["value"] = value;
+    }
 }
 
 void get_block_handle::getBlock() {
@@ -932,9 +913,17 @@ void get_block_handle::getBlock() {
     xJson::Value value;
     if (type == "height") {
         uint64_t height = m_js_req["height"].asUInt64();
-        auto vblock = m_block_store->load_block_object(_owner_vaddress, height, 0, true);
-        data::xblock_t * bp = dynamic_cast<data::xblock_t *>(vblock.get());
-        value = get_block_json(bp);
+        if (owner == sys_contract_zec_slash_info_addr) {
+            std::error_code ec;
+            top::contract::xcontract_manager_t::instance().get_contract_data(top::common::xaccount_address_t{ owner }, height, top::contract::xjson_format_t::detail, value, ec);
+            if (ec) {
+                value["query_status"] = ec.message();
+            }
+        } else {
+            auto vblock = m_block_store->load_block_object(_owner_vaddress, height, 0, true);
+            data::xblock_t * bp = dynamic_cast<data::xblock_t *>(vblock.get());
+            value = get_block_json(bp);
+        }
     } else if (type == "last") {
         auto vblock = m_block_store->get_latest_committed_block(_owner_vaddress);
         data::xblock_t * bp = dynamic_cast<data::xblock_t *>(vblock.get());
@@ -1007,7 +996,7 @@ void get_block_handle::set_header_info(xJson::Value & header, xblock_t * bp) {
     header["auditor_xip"] = xdatautil::xip_to_hex(auditor);
     std::string addr;
     if (auditor.high_addr != 0 && auditor.low_addr != 0 && get_node_id_from_xip2(auditor) != 0x3FF) {
-        if (contract::xtop_contract_manager::get_account_from_xip(auditor, addr) == 0) {
+        if (contract::xcontract_manager_t::get_account_from_xip(auditor, addr) == 0) {
             header["auditor"] = addr;
         }
     }
@@ -1016,7 +1005,7 @@ void get_block_handle::set_header_info(xJson::Value & header, xblock_t * bp) {
     header["validator_xip"] = xdatautil::xip_to_hex(validator);
     // header["validator"] = xdatautil::xip_to_hex(validator);
     if (validator.high_addr != 0 && validator.low_addr != 0 && get_node_id_from_xip2(validator) != 0x3FF) {
-        if (contract::xtop_contract_manager::get_account_from_xip(validator, addr) == 0) {
+        if (contract::xcontract_manager_t::get_account_from_xip(validator, addr) == 0) {
             header["validator"] = addr;
         }
     }
@@ -1053,82 +1042,6 @@ void get_block_handle::set_native_property_info(xJson::Value & jp, const data::x
     }
 }
 
-// void get_block_handle::set_elect_node(xJson::Value & jph, const std::string & s, common::xnode_type_t type, xelection_result_store_t & store) {
-//     std::vector<common::xnetwork_id_t> net_ids{common::xtopchain_network_id, common::xbeacon_network_id};
-//     for (auto id : net_ids) {
-//         xJson::Value jn;
-//         auto clusters = store.result_of(id).result_of(type).results();
-//         for (auto c : clusters) {
-//             xelection_cluster_result_t cr = c.second;
-//             auto gs = cr.results();
-//             for (auto g : gs) {
-//                 auto round = g.second.group_version().value();
-//                 auto ns = g.second.results();
-//                 for (auto n : ns) {
-//                     auto node = n.second;
-//                     xJson::Value j;
-//                     xelection_info_t elect = node.election_info();
-//                     j["group_id"] = g.first.value();
-//                     j["stake"] = static_cast<xJson::UInt64>(elect.stake);
-//                     j["round"] = static_cast<xJson::UInt64>(round);
-//                     jn[node.node_id().to_string()].append(j);
-//                 }
-//             }
-//         }
-//         jph[common::to_string(id)][s] = jn;
-//     }
-// }
-
-// void get_block_handle::get_node_size(xJson::Value & jph, xelection_result_store_t & store) {
-//     set_elect_node(jph, "rec", common::xnode_type_t::committee, store);
-//     set_elect_node(jph, "zec", common::xnode_type_t::zec, store);
-//     set_elect_node(jph, "auditor", common::xnode_type_t::consensus_auditor, store);
-//     set_elect_node(jph, "validator", common::xnode_type_t::consensus_validator, store);
-//     set_elect_node(jph, "arc", common::xnode_type_t::archive, store);
-//     set_elect_node(jph, "edge", common::xnode_type_t::edge, store);
-// }
-
-// void get_block_handle::set_standby_node(xJson::Value & jph, const std::string & s, common::xnode_type_t type, const xstandby_network_result_t & standby_network_result) {
-//     try {
-//         auto node = standby_network_result.result_of(type);
-//         auto nodes = node.results();
-//         for (auto n : nodes) {
-//             xJson::Value j;
-//             j["consensus_public_key"] = top::get<xstandby_node_info_t>(n).consensus_public_key.to_string();
-//             j["stake"] = static_cast<xJson::UInt64>(top::get<xstandby_node_info_t>(n).stake);
-//             j["node_id"] = top::get<common::xnode_id_t const>(n).value();
-//             jph[s].append(j);
-//         }
-//     } catch (std::out_of_range & e) {
-//         xdbg("standby map does not exist type: %s ", common::to_string(type).c_str());
-//     }
-// }
-
-// void get_block_handle::get_node_size(xJson::Value & jph, xstandby_result_store_t & store) {
-//     const xstandby_network_result_t standby_network_result = store.result_of(common::xtopchain_network_id);
-//     set_standby_node(jph, "rec", common::xnode_type_t::committee, standby_network_result);
-//     set_standby_node(jph, "zec", common::xnode_type_t::zec, standby_network_result);
-//     set_standby_node(jph, "auditor", common::xnode_type_t::consensus_auditor, standby_network_result);
-//     set_standby_node(jph, "validator", common::xnode_type_t::consensus_validator, standby_network_result);
-//     set_standby_node(jph, "arc", common::xnode_type_t::archive, standby_network_result);
-//     set_standby_node(jph, "edge", common::xnode_type_t::edge, standby_network_result);
-// }
-
-// void get_block_handle::set_association_node(xJson::Value & jph, xelection_association_result_store_t & store) {
-//     auto assos = store.results();
-//     for (auto asso : assos) {
-//         xelection_association_result_t ar = asso.second;
-//         auto rs = ar.results();
-//         for (auto r : rs) {
-//             xJson::Value j;
-//             jph[r.second.to_string()].append(r.first.value());
-//         }
-//     }
-// }
-
-// void get_block_handle::get_node_size(xJson::Value & jph, xelection_association_result_store_t & store) {
-//     set_association_node(jph, store);
-// }
 
 void get_block_handle::set_account_keys(xJson::Value & jph, std::string & owner, std::string & prop_name) {
     xJson::Value j;
