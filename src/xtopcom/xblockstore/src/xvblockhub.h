@@ -204,10 +204,25 @@ namespace top
             void                   try_execute_all_block();
             
         protected: //help functions
-            bool                cache_index(base::xvbindex_t* this_block);
+            bool                resort_index_of_store(const uint64_t target_height);
+            bool                resort_index_of_store(std::map<uint64_t,base::xvbindex_t*> & target_height_map);
+            const uint64_t      cal_index_base_weight(base::xvbindex_t * index);
+            //define weight system for block' weight = ([status]) + [prev-connected]
+            //to speed up clean up any forked or useless block, let it allow store first then rebase it
+            bool                rebase_chain_at_height(const uint64_t target_height);
+            bool                rebase_chain_at_height(std::map<uint64_t,base::xvbindex_t*> & target_height_map);
+            
+            bool                precheck_new_index(base::xvbindex_t * new_index);
+            bool                precheck_new_index(base::xvbindex_t * new_index,std::map<uint64_t,base::xvbindex_t*> & target_height_map);
+            
+            base::xvbindex_t*   new_index(base::xvblock_t* new_raw_block);
+            base::xvbindex_t*   cache_index(base::xvbindex_t* this_block);//return cached ptr for performance
+            base::xvbindex_t*   cache_index(base::xvbindex_t* this_block,std::map<uint64_t,base::xvbindex_t*> & target_height_map);
+            
             bool                link_neighbor(base::xvbindex_t* this_block);//just connect prev and next index of list
             bool                mark_connected_flag(base::xvbindex_t* this_block);
             bool                update_meta_metric(base::xvbindex_t* new_block_ptr );
+
             
             bool                write_block_to_db(base::xvbindex_t* index_ptr);
             bool                write_block_to_db(base::xvbindex_t* index_ptr,base::xvblock_t * linked_block_ptr);
