@@ -185,7 +185,36 @@ namespace top
                 m_latest_voted_height = std::max(m_latest_voted_height,latest_lock_block->get_height());
                 m_latest_voted_viewid = std::max(m_latest_voted_viewid,latest_lock_block->get_viewid());
                 
-                recheck_block(m_certified_blocks);//any cert block has been notified upper layer
+                //clean cert that not follow lock branch(decided by blockstore now)
+                for(auto it = m_certified_blocks.begin(); it != m_certified_blocks.end();)
+                {
+                    auto cur_it = it;
+                    ++it;
+                    
+                    if(   (cur_it->second->get_height()  <= m_latest_lock_block->get_height())
+                       || (cur_it->second->get_viewid()  <= m_latest_lock_block->get_viewid())
+                       || (cur_it->second->get_chainid() != m_latest_lock_block->get_chainid())
+                       || (cur_it->second->get_account() != m_latest_lock_block->get_account())
+                       ) //not follow locked block
+                    {
+                        base::xvblock_t* _to_remove = cur_it->second;
+                        m_certified_blocks.erase(cur_it);
+                        
+                        xinfo("xBFTRules::set_lock_block,remove un-satified cert block(%s)",_to_remove->dump().c_str());
+                        _to_remove->release_ref();
+                    }
+                    else if(cur_it->second->get_height() == (m_latest_lock_block->get_height() + 1) ) //found next height
+                    {
+                        if(cur_it->second->get_last_block_hash() != m_latest_lock_block->get_block_hash())//not connect to lock
+                        {
+                            base::xvblock_t* _to_remove = cur_it->second;
+                            m_certified_blocks.erase(cur_it);
+                            
+                            xinfo("xBFTRules::set_lock_block,remove un-connected cert block(%s)",_to_remove->dump().c_str());
+                            _to_remove->release_ref();
+                        }
+                    }
+                }
                 
                 //filter too old proposal and put into removed_list
                 std::vector<xproposal_t*> removed_list;
@@ -531,7 +560,24 @@ namespace top
             if(NULL == _test_for_block)
                 return -1;
             
-            //rule#1: allow multiple cert at same heght since blockstore may do resolve now
+            //note:since blockstore may do realtime resolving for forked blocks, so here just losse limit
+            //allow most blocks pass to blockstore where may keep best one
+            
+            //rule#1: need follow branch of commit
+            base::xvblock_t *  latest_commit_block = get_commit_block();
+            if(latest_commit_block != NULL)
+            {
+                if(_test_for_block->get_height() == (latest_commit_block->get_height() + 1))
+                {
+                    if(_test_for_block->get_last_block_hash() != latest_commit_block->get_block_hash())
+                    {
+                        xwarn("xBFTRules::safe_check_add_cert_fork,fail-cert not follow the commited branch, cert(%s) vs commited(%s) at node=0x%llx",_test_for_block->dump().c_str(), latest_commit_block->dump().c_str(),get_xip2_addr().low_addr);
+                        return -1;
+                    }
+                }
+            }
+            
+            //rule#2: not conflict with existing cert block
             base::xvblock_t *  latest_cert_block = get_latest_cert_block();
             if(latest_cert_block != NULL)
             {
@@ -549,36 +595,17 @@ namespace top
                 }
             }
             
+            //rule#3: not conflict with existing lock block
             base::xvblock_t *  latest_lock_block = get_lock_block();
             if(latest_lock_block != nullptr)
             {
-                //rule#2: only keep heighest locked block at same height
                 if(_test_for_block->get_height() == latest_lock_block->get_height()) //same height as local locked one
                 {
-                    if(_test_for_block->get_viewid() < latest_lock_block->get_viewid())//not allow block of lower viewid
-                    {
-                        xwarn("xBFTRules::safe_check_add_cert_fork,detected forked lock block(%s) < local(%s) at node=0x%llx",_test_for_block->dump().c_str(), latest_lock_block->dump().c_str(),get_xip2_addr().low_addr);
-                        return -1;
-                    }
-                    else if(_test_for_block->get_viewid() > latest_lock_block->get_viewid())//exception case happen
-                    {
-                        xwarn("xBFTRules::safe_check_add_cert_fork,detected forked lock block(%s) > local(%s) at node=0x%llx",_test_for_block->dump().c_str(), latest_lock_block->dump().c_str(),get_xip2_addr().low_addr);
-                        //a newer viewid of locked block, let pass check first then let blockstore decide whether need replace old locked one
-                        return 1;
-                    }
-                    else if(_test_for_block->get_block_hash() != get_lock_block()->get_block_hash())
+                    if(_test_for_block->get_block_hash() != get_lock_block()->get_block_hash())
                     {
                         xerror("xBFTRules::safe_check_add_cert_fork,fail-block with same height of locked,but different hash of proposal=%s vs locked=%s at node=0x%llx",_test_for_block->dump().c_str(), get_lock_block()->dump().c_str(),get_xip2_addr().low_addr);
                         return -1;
                     }
-                    return 1;
-                }
-                
-                //rule#3: any cert block must follow locked_branch
-                if(safe_check_follow_locked_branch(_test_for_block) < 0)//allow unknow case continue
-                {
-                    xwarn("xBFTRules::safe_check_add_cert_fork,fail-as safe_check_follow_locked_branch");
-                    return -1;
                 }
             }
             
