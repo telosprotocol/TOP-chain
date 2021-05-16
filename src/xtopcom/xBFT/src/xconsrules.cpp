@@ -326,23 +326,8 @@ namespace top
                 return false;
             }
             //clean any lower viewid of height than _target_block
-            for(auto it = m_certified_blocks.begin(); it != m_certified_blocks.end();)
-            {
-                auto old_it = it;
-                ++it;
-                if(old_it->second->get_height() == _target_block->get_height()) //found same height
-                {
-                    if(old_it->second->get_viewid() < _target_block->get_viewid()) //has lower viewid block at same height
-                    {
-                        //remove any block of th lower viewid
-                        base::xvblock_t* _to_remove = old_it->second;
-                        m_certified_blocks.erase(old_it);
-                        
-                         xinfo("xBFTRules::add_cert_block,remove lower-viewid block(%s)",_to_remove->dump().c_str());
-                        _to_remove->release_ref();
-                    }
-                }
-            }
+            //note: let us rely on blockstore to clean since it allow realtime resolve forked block now
+ 
             //then insert it
             auto insert_result = m_certified_blocks.emplace(_target_block->get_viewid(),_target_block);
             if(insert_result.second)//note:not allow overwrited existing cert with same view#
@@ -546,18 +531,13 @@ namespace top
             if(NULL == _test_for_block)
                 return -1;
             
-            //rule#1: only keep highest cert block at same height
+            //rule#1: allow multiple cert at same heght since blockstore may do resolve now
             base::xvblock_t *  latest_cert_block = get_latest_cert_block();
             if(latest_cert_block != NULL)
             {
                 if(_test_for_block->get_height() == latest_cert_block->get_height())
                 {
-                    if(_test_for_block->get_viewid() < latest_cert_block->get_viewid())
-                    {
-                        xwarn("xBFTRules::safe_check_add_cert_fork,warn-conflict existing cert,test cert(%s) < latest_cert_block(%s) at node=0x%llx",_test_for_block->dump().c_str(), latest_cert_block->dump().c_str(),get_xip2_addr().low_addr);
-                        return -1;
-                    }
-                    else if(_test_for_block->get_viewid() == latest_cert_block->get_viewid())
+                    if(_test_for_block->get_viewid() == latest_cert_block->get_viewid())
                     {
                         if(_test_for_block->get_block_hash() != latest_cert_block->get_block_hash())
                         {
@@ -706,7 +686,7 @@ namespace top
             if(latest_proposal != NULL) //never vote behind proposal block
             {
                 if(  (_vote_block->get_viewid() <= latest_proposal->get_viewid())
-                   ||(_vote_block->get_height() <  latest_proposal->get_height()) )
+                   ||(_vote_block->get_height() <= latest_proposal->get_height()) )
                 {
                     xwarn("xBFTRules::safe_check_for_vote_block,warn-conflict existing proposal, proposal=%s <= latest_proposal=%s at node=0x%llx",_vote_block->dump().c_str(), latest_proposal->dump().c_str(),get_xip2_addr().low_addr);
                     return false;
