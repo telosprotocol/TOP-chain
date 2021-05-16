@@ -32,7 +32,7 @@ namespace top
 
 //#define __portional_random__
 #define __full_random__
-//#define __fork_test__
+#define __fork_test__
 //#define __execute_test__
 int test_sync_vstore(store::xsyncvstore_t* sync_store)
 {
@@ -70,10 +70,10 @@ int test_sync_vstore(store::xsyncvstore_t* sync_store)
     }
     
     #ifdef __fork_test__
-    last_block = genesis_cert_block.get();
     for(int i = 1; i < total_test_blocks; ++i)
     {
         xunitblock_t * new_block = NULL;
+        last_block = generated_blocks[i-1];
         const uint32_t random = top::base::xtime_utl::get_fast_randomu();
         if( (random % 2) == 1)
             new_block = xunitblock_t::create_unitblock(test_account_address, last_block->get_height()+1, last_block->get_clock()+1, last_view_id+1, last_block->get_block_hash(), generated_blocks[0]->get_block_hash(), 0, empty_input_output, empty_input_output);
@@ -86,7 +86,6 @@ int test_sync_vstore(store::xsyncvstore_t* sync_store)
         
         last_view_id += 1;
         generated_blocks.push_back(new_block);
-        last_block = new_block;
     }
     #endif
     
