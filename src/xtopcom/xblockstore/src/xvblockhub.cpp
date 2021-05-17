@@ -2348,7 +2348,7 @@ namespace top
             {
                 //here notify execution event if need
             }
-            else if( ((block_flags & base::enum_xvblock_flag_committed) != 0) && ((block_flags & base::enum_xvblock_flag_connected) != 0) )
+            if( ((block_flags & base::enum_xvblock_flag_committed) != 0) && ((block_flags & base::enum_xvblock_flag_connected) != 0) )
             {
                 base::xveventbus_t * mbus = base::xvchain_t::instance().get_xevmbus();
                 xassert(mbus != NULL);
