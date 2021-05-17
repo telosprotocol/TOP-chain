@@ -6,13 +6,47 @@
 #include "xbase/xhash.h"
 #include "xbase/xcontext.h"
 #include "xbase/xthread.h"
-#include "xvblockhub.h"
 #include "xvunithub.h"
 
 namespace top
 {
     namespace store
     {
+        auto_xblockacct_ptr::auto_xblockacct_ptr(std::recursive_mutex & locker)
+            :base_class(nullptr),
+             m_mutex(locker)
+        {
+            m_mutex.lock();
+        }
+ 
+        auto_xblockacct_ptr::~auto_xblockacct_ptr()
+        {
+            //first process all pending events at this moment
+            if(m_raw_ptr != NULL)
+                m_raw_ptr->process_events();
+            
+            //then release raw ptr
+            xblockacct_t * old_ptr = m_raw_ptr;
+            m_raw_ptr = NULL;
+            if(old_ptr != NULL)
+                old_ptr->release_ref();
+            
+            //finally unlock it
+            m_mutex.unlock();
+        }
+    
+        //transfer owner to auto_xblockacct_ptr from raw_ptr
+        void  auto_xblockacct_ptr::transfer_owner(xblockacct_t * raw_ptr)
+        {
+            if(m_raw_ptr != raw_ptr)
+            {
+                xblockacct_t * old_ptr = m_raw_ptr;
+                m_raw_ptr = raw_ptr;
+                if(old_ptr != NULL)
+                    old_ptr->release_ref();
+            }
+        }
+    
         #define LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account_vid) \
             if(is_close())\
             {\
@@ -20,8 +54,8 @@ namespace top
                 return nullptr;\
             }\
             base::xvtable_t * target_table = base::xvchain_t::instance().get_table(account_vid.get_xvid()); \
-            std::lock_guard<std::recursive_mutex> _dummy(target_table->get_lock()); \
-            base::xauto_ptr<xblockacct_t> account_obj(get_block_account(target_table,account_vid.get_address())); \
+            auto_xblockacct_ptr account_obj(target_table->get_lock()); \
+            get_block_account(target_table,account_vid.get_address(),account_obj); \
 
         xvblockstore_impl::xvblockstore_impl(const std::string & blockstore_path,base::xcontext_t & _context,const int32_t target_thread_id)
             :base::xvblockstore_t(_context,target_thread_id)
@@ -64,11 +98,14 @@ namespace top
             return base::xiobject_t::on_object_close();
         }
 
-        base::xauto_ptr<xblockacct_t>  xvblockstore_impl::get_block_account(base::xvtable_t * target_table,const std::string & account_address)
+        bool  xvblockstore_impl::get_block_account(base::xvtable_t * target_table,const std::string & account_address,auto_xblockacct_ptr & inout_account_obj)
         {
             const xobject_t* exist_block_plugin = target_table->get_account_plugin_unsafe(account_address, base::enum_xvaccount_plugin_blockmgr);//exist_block_plugin has done add_ref by get_account_plugin_unsafe
             if(exist_block_plugin != NULL)
-                return (xblockacct_t*)exist_block_plugin; //pass reference to xauto_ptr that release later
+            {
+                inout_account_obj.transfer_owner((xblockacct_t*)exist_block_plugin);
+                return true; //pass reference to xauto_ptr that release later
+            }
 
             xblockacct_t * new_plugin = new xchainacct_t(account_address,enum_account_idle_timeout_ms,m_store_path);//replace by new account address;
             new_plugin->init();
@@ -85,7 +122,8 @@ namespace top
                 send_call(_add_new_plugin_job,(void*)new_plugin);//send account ptr to store'thread to manage lifecycle
             }
             target_table->set_account_plugin(account_address, new_plugin, base::enum_xvaccount_plugin_blockmgr);
-            return new_plugin;
+            inout_account_obj.transfer_owner(new_plugin);
+            return true;
         }
 
         /////////////////////////////////new api with better performance by passing base::xvaccount_t
@@ -596,10 +634,8 @@ namespace top
                 xwarn_err("xvblockstore_impl has closed at store_path=%s",m_store_path.c_str());
                 return false;
             }
-            base::xvtable_t * target_table = base::xvchain_t::instance().get_table(account.get_xvid());
-            std::lock_guard<std::recursive_mutex> _dummy(target_table->get_lock());
-            base::xauto_ptr<xblockacct_t> target_account(get_block_account(target_table,account.get_address()));
-            return target_account->clean_caches(true);
+            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
+            return account_obj->clean_caches(true);
         }
 
         //clean all cached blocks after reach max idle duration(as default it is 60 seconds)
@@ -610,10 +646,8 @@ namespace top
                 xwarn_err("xvblockstore_impl has closed at store_path=%s",m_store_path.c_str());
                 return false;
             }
-            base::xvtable_t * target_table = base::xvchain_t::instance().get_table(account.get_xvid());
-            std::lock_guard<std::recursive_mutex> _dummy(target_table->get_lock());
-            base::xauto_ptr<xblockacct_t> target_account(get_block_account(target_table,account.get_address()));
-            return target_account->reset_cache_timeout(max_idle_time_ms);
+            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
+            return account_obj->reset_cache_timeout(max_idle_time_ms);
         }
 
         bool  xvblockstore_impl::on_timer_fire(const int32_t thread_id,const int64_t timer_id,const int64_t current_time_ms,const int32_t start_timeout_ms,int32_t & in_out_cur_interval_ms)
