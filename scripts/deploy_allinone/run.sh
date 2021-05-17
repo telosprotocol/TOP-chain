@@ -1,5 +1,6 @@
 echo "clean env"
-kill -9 $(ps -ef |grep "[.]/xtopchain" |grep -v grep|awk '{print $2}')
+
+ps -ef |grep "[.]/xtopchain"|awk '{print $2}'|xargs -I {} bash -c 'kill -9 {}'
 
 set -e
 

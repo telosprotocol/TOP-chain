@@ -22,3 +22,7 @@ jobs:
         run: |
           bash .github/scripts/fix_submodule.sh dev/fast_sync_develop
           bash .github/scripts/build_xtop.sh test
+
+      - name: TEST XTOP AllInOne
+        run: |
+          bash .github/scripts/test_xtop_allinone.sh
