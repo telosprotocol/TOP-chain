@@ -41,9 +41,8 @@ xblock_ptr_t xunit_maker_t::get_latest_block(const base::xaccount_index_t & acco
             return xblock_t::raw_vblock_to_object_ptr(block);
         }
     }
-    if (!blocks.get_vector().empty()) {
-        xerror("xunit_maker_t::get_latest_block fail find match block. account=%s,height=%ld,block_size=%zu", get_account().c_str(), account_index.get_latest_unit_height(), blocks.get_vector().size());
-    }
+    xwarn("xunit_maker_t::get_latest_block fail find match block. account=%s,height=%ld,block_size=%zu",
+        get_account().c_str(), account_index.get_latest_unit_height(), blocks.get_vector().size());
     return nullptr;
 }
 

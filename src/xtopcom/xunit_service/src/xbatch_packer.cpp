@@ -126,7 +126,7 @@ bool xbatch_packer::start_proposal(base::xblock_mptrs& latest_blocks) {
     auto local_xip = get_xip2_addr();
     set_xip(proposal_para, local_xip);  // set leader xip
 
-    xdbg("xbatch_packer::start_proposal leader_node %s", proposal_para.dump().c_str());
+    xdbg_info("xbatch_packer::start_proposal leader begin make_proposal.%s cert_block_viewid=%ld", proposal_para.dump().c_str(), latest_blocks.get_latest_cert_block()->get_viewid());
     xblock_ptr_t proposal_block = m_proposal_maker->make_proposal(proposal_para);
     if (proposal_block == nullptr) {
         xwarn("xbatch_packer::start_proposal fail-make_proposal.%s", proposal_para.dump().c_str());
