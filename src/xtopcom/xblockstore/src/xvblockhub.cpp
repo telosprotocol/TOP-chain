@@ -307,7 +307,7 @@ namespace top
                             //at entry of quit we need make sure everything is consist
                             update_meta_metric(it->second);  //udate other meta and connect info
                             if(it->second->check_modified_flag()) //store any modified blocks again
-                                write_index_to_db(it->second,false);//push event to mbus if need
+                                write_index_to_db(it->second);//push event to mbus if need
 
                             xdbg_info("xblockacct_t::clean_caches,index=%s",it->second->dump().c_str());
                             it->second->close();//disconnect from prev-block and next-block
@@ -385,7 +385,7 @@ namespace top
                         //at entry of quit we need make sure everything is consist
                         update_meta_metric(view_it->second);  //udate other meta and connect info
                         if(view_it->second->check_modified_flag()) //has changed since last store
-                            write_index_to_db(view_it->second,false);//save_block but disable trigger event
+                            write_index_to_db(view_it->second);//save_block but disable trigger event
 
                         xdbg_info("xblockacct_t::close_blocks,block=%s",view_it->second->dump().c_str());
 
@@ -966,6 +966,12 @@ namespace top
 
             return target_block;
         }
+    
+        std::vector<base::xvbindex_t*>  xblockacct_t::load_indexes(const uint64_t target_height)//load indexes from db for height
+        {
+            load_index(target_height); //load first
+            return query_index(target_height);//then query
+        }
 
         bool    xblockacct_t::load_block_object(base::xvbindex_t* index_ptr)
         {
@@ -1089,7 +1095,10 @@ namespace top
  
                 //try save index finally
                 if(final_cached_index->check_modified_flag()) //if has anything changed
-                    write_index_to_db(final_cached_index,true);
+                {
+                    if(write_index_to_db(final_cached_index)) //save index then
+                        push_event(enum_blockstore_event_stored, final_cached_index);//then fire stored event
+                }
 
                 xdbg("xblockacct_t::store_block,done for block,cache_size:%zu,dump=%s",m_all_blocks.size(), dump().c_str());
                 return true;
@@ -1318,7 +1327,7 @@ namespace top
 
                     //note:store_block may update m_meta->_highest_execute_block_height as well
                     update_meta_metric(index_ptr);
-                    write_index_to_db(index_ptr,false);
+                    write_index_to_db(index_ptr);
                     return true;
                 }
                 else
@@ -1617,7 +1626,6 @@ namespace top
                 }
 
                 mark_connected_flag(new_block_ptr);//connect update
-                store_txs_to_db(new_block_ptr); //extract and store txs now
             }
             else if(new_block_ptr->check_block_flag(base::enum_xvblock_flag_locked))
             {
@@ -2141,13 +2149,13 @@ namespace top
 
             for(auto it = indexes.begin(); it != indexes.end(); ++it)
             {
-                write_index_to_db(it->second,false);//store entry really
+                write_index_to_db(it->second);//store entry really
             }
             return true;
         }
 
         //return bool indicated whether has anything writed into db
-        bool   xblockacct_t::write_index_to_db(base::xvbindex_t* index_obj,bool allo_db_event)
+        bool   xblockacct_t::write_index_to_db(base::xvbindex_t* index_obj)
         {
             if(NULL == index_obj)
             {
@@ -2196,10 +2204,6 @@ namespace top
                 xerror("xblockacct_t::write_index_to_db,fail to writed into db,index dump(%s)",index_obj->dump().c_str());
                 return false;
             }
-
-            //give chance to trigger db event
-            if(allo_db_event)
-                on_block_stored(index_obj);
             return true;
         }
         void      xblockacct_t::try_execute_all_block()
@@ -2368,13 +2372,12 @@ namespace top
             if(NULL == index_ptr)
                 return false;
             
-            #ifdef __ENABLE_ASYNC_EVENT_HANDLE__
             xdbg("xblockacct_t::on_block_committed,at account=%s,index=%s",get_account().c_str(),index_ptr->dump().c_str());
             if(index_ptr->get_block_flags() & base::enum_xvblock_flag_committed)
             {
                 store_txs_to_db(index_ptr); //extract and store txs now
             }
-            #endif //end of __ENABLE_ASYNC_EVENT_HANDLE__
+
             return true;
         }
     
@@ -2725,7 +2728,10 @@ namespace top
                         if(prev_block->is_close() == false)//prev_block is still valid to use
                         {
                             update_meta_metric(prev_block);//update meta since block has change status
-                            write_index_to_db(prev_block,true); //trigger db event here if need
+
+                            push_event(enum_blockstore_event_committed,prev_block);
+                            if(write_index_to_db(prev_block)) //trigger db event here if need
+                                push_event(enum_blockstore_event_stored,prev_block);
                         }
                     }
                     else
@@ -2734,7 +2740,7 @@ namespace top
                         if(prev_block->is_close() == false)//prev_block is still valid to use
                         {
                             update_meta_metric(prev_block);//update meta since block has change status
-                            write_index_to_db(prev_block,false); //not send db event
+                            write_index_to_db(prev_block); //not send db event
                         }
                     }
                 }
@@ -2762,7 +2768,10 @@ namespace top
                 if(prev_prev_block->is_close() == false) //prev_prev_block is still valid to use
                 {
                     update_meta_metric(prev_prev_block);//update meta since block has change status
-                    write_index_to_db(prev_prev_block,true); //trigger db event here if need
+                    
+                    push_event(enum_blockstore_event_committed,prev_prev_block);//fire event for commit
+                    if(write_index_to_db(prev_prev_block)) //trigger db event here if need
+                        push_event(enum_blockstore_event_stored,prev_prev_block);
                 }
                 prev_prev_block->release_ref(); //safe release now
             }
@@ -2774,6 +2783,9 @@ namespace top
             xdbg("jimmy xchainacct_t::connect_index enter account=%s,index=%s", get_account().c_str(), this_block->dump().c_str());
             if(NULL == this_block)
                 return false;
+            
+            if(this_block->check_block_flag(base::enum_xvblock_flag_committed)) //trace it as well
+                push_event(enum_blockstore_event_committed,this_block);
 
             const uint64_t this_block_height = this_block->get_height();
             if(this_block_height > 0)

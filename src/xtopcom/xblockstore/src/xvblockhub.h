@@ -182,6 +182,8 @@ namespace top
             base::xvbindex_t*      load_index(const uint64_t target_height,const uint64_t view_id);
             base::xvbindex_t*      load_index(const uint64_t target_height,const std::string & block_hash);
             base::xvbindex_t*      load_index(const uint64_t target_height,base::enum_xvblock_flag request_flag);
+            std::vector<base::xvbindex_t*>  load_indexes(const uint64_t target_height);//load indexes from db for height
+            
             bool                   load_block_object(base::xvbindex_t* index_ptr);
             bool                   load_index_input(base::xvbindex_t* target_block);
             bool                   load_index_output(base::xvbindex_t* target_block);
@@ -244,7 +246,7 @@ namespace top
             
             bool                write_index_to_db(const uint64_t target_height);
             bool                write_index_to_db(std::map<uint64_t,base::xvbindex_t*> & indexes);
-            bool                write_index_to_db(base::xvbindex_t* index_obj,bool allo_db_event);
+            bool                write_index_to_db(base::xvbindex_t* index_obj);
             base::xvbindex_t*   read_index_from_db(const std::string & index_db_key_path);
             //return map sorted by viewid from lower to high,caller respond to release ptr later
             std::vector<base::xvbindex_t*> read_index_from_db(const uint64_t target_height);
