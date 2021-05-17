@@ -44,6 +44,7 @@ bool test_chain_fork_center::is_fork_point_equal(xfork_point_t const& origin_for
             origin_fork_point.point == fork_point.point;
 }
 
+#if 0
 TEST_F(test_xchain_upgrade, test_config_select) {
     using namespace top::config;
     config_register.set(std::string{xchain_name_configuration_t::name}, std::string{chain_name_mainnet});
@@ -56,6 +57,7 @@ TEST_F(test_xchain_upgrade, test_config_select) {
 
 
 }
+#endif
 
 TEST_F(test_xchain_upgrade, test_config_center) {
     using namespace top::config;
