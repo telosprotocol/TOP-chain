@@ -27,18 +27,18 @@ class xstore_face_t : public base::xvdbstore_t {
  protected:
     virtual ~xstore_face_t() {}
  public:
-    virtual xaccount_ptr_t query_account(const std::string& address) = 0;
+    virtual xaccount_ptr_t query_account(const std::string& address) const = 0;
 
     virtual uint64_t get_blockchain_height(const std::string& account) = 0;
 
     virtual data::xblock_t* get_block_by_height(const std::string& account, uint64_t height) const = 0;
 
-    virtual int32_t get_map_property(const std::string& account, uint64_t height, const std::string& name, std::map<std::string, std::string>& value) = 0;
+    virtual int32_t get_map_property(const std::string& account, uint64_t height, const std::string& name, std::map<std::string, std::string>& value) const = 0;
     virtual int32_t  get_list_property(const std::string& account, uint64_t height, const std::string& name, std::vector<std::string>& value) = 0;
     virtual int32_t get_string_property(const std::string& account, uint64_t height, const std::string& name, std::string& value) = 0;
-    virtual int32_t get_property(const std::string& account, uint64_t height, const std::string& name, xdataobj_ptr_t& obj) = 0;
+    virtual int32_t get_property(const std::string& account, uint64_t height, const std::string& name, xdataobj_ptr_t& obj) const = 0;
     virtual xblockchain2_t* clone_account(const std::string& account) const = 0;
-    virtual xobject_ptr_t<base::xdataobj_t> clone_property(const std::string& account, const std::string& property_name) = 0;
+    virtual xobject_ptr_t<base::xdataobj_t> clone_property(const std::string& account, const std::string& property_name) const = 0;
 
     virtual xtransaction_store_ptr_t query_transaction_store(const uint256_t &hash) = 0;
 
