@@ -13,11 +13,8 @@ NS_BEG3(top, contract_common, properties)
 
 char category_character(xproperty_category_t const c) noexcept {
     switch (c) {
-    case xproperty_category_t::sys_kernel:
+    case xproperty_category_t::system:
         return '$';
-
-    case xproperty_category_t::sys_business:
-        return '@';
 
     case xproperty_category_t::user:
         return '#';

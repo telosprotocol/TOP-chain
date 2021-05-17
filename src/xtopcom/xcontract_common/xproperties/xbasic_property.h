@@ -25,10 +25,9 @@ protected:
 
 
 public:
-    xproperty_identifier_t const& identifier() const;
+    xproperty_identifier_t const & identifier() const;
     common::xaccount_address_t owner() const;
     common::xaccount_address_t accessor() const;
-    static xproperty_category_t convert_from_contract_type(contract_common::xcontract_type_t type);
 
 protected:
     observer_ptr<xbasic_contract_t> m_associated_contract{nullptr};

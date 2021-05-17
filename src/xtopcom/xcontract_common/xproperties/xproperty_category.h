@@ -12,10 +12,8 @@ NS_BEG3(top, contract_common, properties)
 
 enum class xenum_property_category: std::uint8_t {
     invalid,
-    sys_kernel,
-    sys_business,
-    user,
-    all
+    system,
+    user
 };
 using xproperty_category_t = xenum_property_category;
 
