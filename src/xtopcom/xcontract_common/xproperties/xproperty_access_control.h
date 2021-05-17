@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2018 Telos Foundation & contributors
+// Copyright (c) 2017-2021 Telos Foundation & contributors
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -525,11 +525,25 @@ public:
      */
     virtual std::string code_prop_query(common::xaccount_address_t const & user, xproperty_identifier_t const & prop_id);
 
+    /**
+     * @brief set code property
+     * @param prop_name the name of code property
+     * @return std::string
+     */
+    virtual bool code_prop_update(common::xaccount_address_t const & user, xproperty_identifier_t const & prop_id, std::string const& code);
+
+
     std::string src_code(xproperty_identifier_t const & prop_id, std::error_code & ec) const;
     virtual std::string src_code(xproperty_identifier_t const & prop_id) const;
 
     void deploy_src_code(xproperty_identifier_t const & prop_id, std::string src_code, std::error_code & ec);
     void deploy_src_code(xproperty_identifier_t const & prop_id, std::string src_code);
+
+    xbyte_buffer_t bin_code(xproperty_identifier_t const & prop_id, std::error_code & ec) const;
+    xbyte_buffer_t bin_code(xproperty_identifier_t const & prop_id) const;
+
+    void deploy_bin_code(xproperty_identifier_t const & prop_id, xbyte_buffer_t bin_code, std::error_code & ec);
+    void deploy_bin_code(xproperty_identifier_t const & prop_id, xbyte_buffer_t bin_code);
 
     /**
      * @brief query if property exists

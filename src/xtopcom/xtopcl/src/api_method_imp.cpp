@@ -166,41 +166,7 @@ bool api_method_imp::passport(const user_info & uinfo, std::function<void(Reques
 }
 
 bool api_method_imp::key_store(const user_info & uinfo, const std::string & type, const std::string & value, std::function<void(ResultBase *)> func) {
-    auto info = new task_info_callback<ResultBase>();
-    set_user_info(info, uinfo, CMD_KEY_STORE, func);
-
-    // body->params
-    top::base::xstream_t stream(top::base::xcontext_t::instance());
-    std::string param = stream_params(stream, type, value);
-
-    top::base::xstream_t stream_s(top::base::xcontext_t::instance());
-    std::string param_s = stream_params(stream_s, (uint64_t)0);
-
-    uint16_t x_type{xtransaction_type_set_account_keys};
-    enum_xaction_type s_type{xaction_type_asset_out};
-    enum_xaction_type t_type{xaction_type_set_account_keys};
-    // info->trans_action->m_gas_limit = 10000;
-    // info->trans_action->m_gas_price = 1;
-    info->trans_action->set_deposit(m_deposit);
-    info->trans_action->set_tx_type(x_type);
-    info->trans_action->set_last_nonce(uinfo.nonce);
-    info->trans_action->set_fire_timestamp(get_timestamp());
-    info->trans_action->set_expire_duration(100);
-    info->trans_action->set_last_hash(uinfo.last_hash_xxhash64);
-
-    info->trans_action->get_source_action().set_action_type(s_type);
-    info->trans_action->get_source_action().set_account_addr(uinfo.account);
-    info->trans_action->get_source_action().set_action_param(param_s);
-    info->trans_action->get_target_action().set_action_type(t_type);
-    info->trans_action->get_target_action().set_account_addr(uinfo.account);
-    info->trans_action->get_target_action().set_action_param(param);
-
-    if (!hash_signature(info->trans_action.get(), uinfo.private_key)) {
-        delete info;
-        return false;
-    }
-
-    task_dispatcher::get_instance()->post_message(msgAddTask, (uint32_t *)info, 0);
+    xassert(false); // XTODO not support
     return true;
 }
 
@@ -329,64 +295,12 @@ bool api_method_imp::unStakeGas(const user_info & uinfo,
 }
 
 bool api_method_imp::pledgedisk(const user_info & uinfo, const std::string & from, const std::string & to, uint64_t amount, std::function<void(TransferResult *)> func) {
-    auto info = new task_info_callback<TransferResult>();
-    set_user_info(info, uinfo, CMD_PLEDGEDISK, func);
-
-    // body->params
-    xaction_asset_param asset_param(this, "", amount);
-    std::string param = asset_param.create();
-    info->trans_action->set_deposit(m_deposit);
-    info->trans_action->set_tx_type(xtransaction_type_pledge_token_disk);
-    info->trans_action->set_last_nonce(uinfo.nonce);
-    info->trans_action->set_fire_timestamp(get_timestamp());
-    info->trans_action->set_expire_duration(100);
-    info->trans_action->set_last_hash(uinfo.last_hash_xxhash64);
-
-    info->trans_action->get_source_action().set_action_type(xaction_type_source_null);
-    info->trans_action->get_source_action().set_account_addr(from);
-    info->trans_action->get_source_action().set_action_param("");
-
-    info->trans_action->get_target_action().set_action_type(xaction_type_pledge_token);
-    info->trans_action->get_target_action().set_account_addr(to);
-    info->trans_action->get_target_action().set_action_param(param);
-
-    if (!hash_signature(info->trans_action.get(), uinfo.private_key)) {
-        delete info;
-        return false;
-    }
-
-    task_dispatcher::get_instance()->post_message(msgAddTask, (uint32_t *)info, 0);
+    xassert(false);
     return true;
 }
 
 bool api_method_imp::redeemdisk(const user_info & uinfo, const std::string & from, const std::string & to, uint64_t amount, std::function<void(TransferResult *)> func) {
-    auto info = new task_info_callback<TransferResult>();
-    set_user_info(info, uinfo, CMD_REDEEMDISK, func);
-
-    // body->params
-    xaction_asset_param asset_param(this, "", amount);
-    std::string param = asset_param.create();
-    info->trans_action->set_deposit(m_deposit);
-    info->trans_action->set_tx_type(xtransaction_type_redeem_token_disk);
-    info->trans_action->set_last_nonce(uinfo.nonce);
-    info->trans_action->set_fire_timestamp(get_timestamp());
-    info->trans_action->set_expire_duration(100);
-    info->trans_action->set_last_hash(uinfo.last_hash_xxhash64);
-
-    info->trans_action->get_source_action().set_action_type(xaction_type_source_null);
-    info->trans_action->get_source_action().set_account_addr(from);
-    info->trans_action->get_source_action().set_action_param("");
-
-    info->trans_action->get_target_action().set_action_type(xaction_type_redeem_token);
-    info->trans_action->get_target_action().set_account_addr(to);
-    info->trans_action->get_target_action().set_action_param(param);
-
-    if (!hash_signature(info->trans_action.get(), uinfo.private_key)) {
-        delete info;
-        return false;
-    }
-
-    task_dispatcher::get_instance()->post_message(msgAddTask, (uint32_t *)info, 0);
+    xassert(false);
     return true;
 }
 
@@ -618,57 +532,7 @@ bool api_method_imp::create_sub_account(const user_info & uinfo,
                                         const std::string & child_address,
                                         const std::array<std::uint8_t, PRI_KEY_LEN> & child_private_key,
                                         std::function<void(CreateSubAccountResult *)> func) {
-    if (uinfo.account.empty() || uinfo.identity_token.empty() || uinfo.last_hash.empty() || uinfo.child.account.empty()) {
-        LOG("uinfo.account.empty()=",
-            uinfo.account.empty(),
-            " uinfo.identity_token.empty()=",
-            uinfo.identity_token.empty(),
-            " uinfo.last_hash.empty()=",
-            uinfo.last_hash.empty(),
-            " uinfo.child.account.empty()=",
-            uinfo.child.account.empty());
-        return false;
-    }
-
-    std::string pubilc_key = get_public_key(uinfo.private_key);
-
-    auto info = new task_info_callback<CreateSubAccountResult>();
-    set_user_info(info, uinfo, CMD_CREATE_CHILD_ACCOUNT, func);
-
-    // body->params
-    top::base::xstream_t stream_s(top::base::xcontext_t::instance());
-    std::string param_s = stream_params(stream_s, MinDeposit);
-
-    top::base::xstream_t stream_t(top::base::xcontext_t::instance());
-    std::string param_t = stream_params(stream_t, MinDeposit);
-
-    uint16_t type{xtransaction_type_create_sub_account};
-    enum_xaction_type s_type{xaction_type_asset_out};
-    enum_xaction_type t_type{xaction_type_asset_out};
-    info->trans_action->set_tx_type(type);
-    info->trans_action->set_last_nonce(uinfo.nonce);
-    info->trans_action->set_fire_timestamp(get_timestamp());
-    info->trans_action->set_expire_duration(100);
-    info->trans_action->set_last_hash(uinfo.last_hash_xxhash64);
-
-    info->trans_action->get_source_action().set_action_type(s_type);
-    info->trans_action->get_source_action().set_account_addr(uinfo.account);
-    info->trans_action->get_source_action().set_action_param(param_s);
-    info->trans_action->get_target_action().set_action_type(t_type);
-    info->trans_action->get_target_action().set_account_addr(child_address);
-    info->trans_action->get_target_action().set_action_param(param_t);
-
-    if (hash_signature_action(info->trans_action->get_target_action(), child_private_key).empty()) {
-        delete info;
-        return false;
-    }
-
-    if (!hash_signature(info->trans_action.get(), uinfo.private_key)) {
-        delete info;
-        return false;
-    }
-
-    task_dispatcher::get_instance()->post_message(msgAddTask, (uint32_t *)info, 0);
+    xassert(false);
     return true;
 }
 
@@ -707,41 +571,7 @@ bool api_method_imp::lock_token(const user_info & uinfo,
                                 uint32_t unlock_type,
                                 const std::vector<std::string> & unlock_value,
                                 std::function<void(LockTokenResult *)> func) {
-    auto info = new task_info_callback<LockTokenResult>();
-    set_user_info(info, uinfo, CMD_LOCK_TOKEN, func);
-
-    // body->params
-    top::base::xstream_t stream_t(top::base::xcontext_t::instance());
-    std::string param_t = stream_params(stream_t, version, amount, unlock_type, unlock_value);
-
-    top::base::xstream_t stream_s(top::base::xcontext_t::instance());
-    std::string param_s = stream_params(stream_s, (uint64_t)0);
-
-    uint16_t x_type{xtransaction_type_lock_token};
-    enum_xaction_type s_type{xaction_type_asset_out};
-    enum_xaction_type t_type{xaction_type_lock_token};
-    // info->trans_action->m_gas_limit = 10000;
-    // info->trans_action->m_gas_price = 1;
-    info->trans_action->set_deposit(m_deposit);
-    info->trans_action->set_tx_type(x_type);
-    info->trans_action->set_last_nonce(uinfo.nonce);
-    info->trans_action->set_fire_timestamp(get_timestamp());
-    info->trans_action->set_expire_duration(100);
-    info->trans_action->set_last_hash(uinfo.last_hash_xxhash64);
-
-    info->trans_action->get_source_action().set_action_type(s_type);
-    info->trans_action->get_source_action().set_account_addr(uinfo.account);
-    info->trans_action->get_source_action().set_action_param(param_s);
-    info->trans_action->get_target_action().set_action_type(t_type);
-    info->trans_action->get_target_action().set_account_addr(uinfo.account);
-    info->trans_action->get_target_action().set_action_param(param_t);
-
-    if (!hash_signature(info->trans_action.get(), uinfo.private_key)) {
-        delete info;
-        return false;
-    }
-
-    task_dispatcher::get_instance()->post_message(msgAddTask, (uint32_t *)info, 0);
+    xassert(false);  // XTODO not support
     return true;
 }
 
@@ -750,41 +580,7 @@ bool api_method_imp::unlock_token(const user_info & uinfo,
                                   const std::string & tx_hash,
                                   const std::vector<std::string> & signs,
                                   std::function<void(UnlockTokenResult *)> func) {
-    auto info = new task_info_callback<UnlockTokenResult>();
-    set_user_info(info, uinfo, CMD_UNLOCK_TOKEN, func);
-
-    // body->params
-    top::base::xstream_t stream_t(top::base::xcontext_t::instance());
-    std::string param_t = stream_params(stream_t, version, tx_hash, signs);
-
-    top::base::xstream_t stream_s(top::base::xcontext_t::instance());
-    std::string param_s = stream_params(stream_s, (uint64_t)0);
-
-    uint16_t x_type{xtransaction_type_unlock_token};
-    enum_xaction_type s_type{xaction_type_asset_out};
-    enum_xaction_type t_type{xaction_type_unlock_token};
-    // info->trans_action->m_gas_limit = 10000;
-    // info->trans_action->m_gas_price = 1;
-    info->trans_action->set_deposit(m_deposit);
-    info->trans_action->set_tx_type(x_type);
-    info->trans_action->set_last_nonce(uinfo.nonce);
-    info->trans_action->set_fire_timestamp(get_timestamp());
-    info->trans_action->set_expire_duration(100);
-    info->trans_action->set_last_hash(uinfo.last_hash_xxhash64);
-
-    info->trans_action->get_source_action().set_action_type(s_type);
-    info->trans_action->get_source_action().set_account_addr(uinfo.account);
-    info->trans_action->get_source_action().set_action_param(param_s);
-    info->trans_action->get_target_action().set_action_type(t_type);
-    info->trans_action->get_target_action().set_account_addr(uinfo.account);
-    info->trans_action->get_target_action().set_action_param(param_t);
-
-    if (!hash_signature(info->trans_action.get(), uinfo.private_key)) {
-        delete info;
-        return false;
-    }
-
-    task_dispatcher::get_instance()->post_message(msgAddTask, (uint32_t *)info, 0);
+    xassert(false);
     return true;
 }
 

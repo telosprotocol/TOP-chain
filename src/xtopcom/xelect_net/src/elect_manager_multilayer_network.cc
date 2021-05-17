@@ -8,7 +8,7 @@
 #include "xwrouter/register_message_handler.h"
 #include "xwrouter/multi_routing/small_net_cache.h"
 #include "xchain_timer/xchain_timer.h"
-#include "xelect_net/include/elect_node.h"
+#include "xelect_net/include/node_manager.h"
 #include "xelect_net/include/elect_uitils.h"
 #include "xbasic/xelapsed_time.h"
 
@@ -46,7 +46,7 @@ int ElectManagerMulNet::OnElectDropNodes(
 }
 
 bool ElectManagerMulNet::Start() {
-    node_manager_ = std::make_shared<ElectNode>(transport_, config_);
+    node_manager_ = std::make_shared<NodeManager>(transport_, config_);
     if (node_manager_->Init() != top::kadmlia::kKadSuccess) {
         TOP_ERROR("node_manager init fail.");
         node_manager_ = nullptr;
@@ -93,7 +93,6 @@ void ElectManagerMulNet::OnElectUpdated(const std::vector<ElectNetNode>& elect_d
         }
     }
 
-    wrouter::SmallNetNodes::Instance()->AddNodeMarkEnd();
     TOP_DEBUG("onelectupdated end");
     return;
 }

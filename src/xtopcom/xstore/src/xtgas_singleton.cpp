@@ -58,8 +58,9 @@ bool xtgas_singleton::leader_get_total_lock_tgas_token(base::xvblockstore_t* blo
     std::string value;
     uint64_t height;
     if (get_latest_property(blockstore, value, height)) {
-        if (m_last_property_height < height) {
-            m_last_total_lock_tgas_token = base::xstring_utl::touint64(value);
+        auto new_total_lock_tgas_token = base::xstring_utl::touint64(value);
+        if ((m_last_property_height < height) && (m_last_total_lock_tgas_token != new_total_lock_tgas_token)) {
+            m_last_total_lock_tgas_token = new_total_lock_tgas_token;
             m_last_property_height = height;
             total_lock_tgas_token = m_last_total_lock_tgas_token;
             property_height = m_last_property_height;

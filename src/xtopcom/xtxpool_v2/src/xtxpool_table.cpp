@@ -29,6 +29,15 @@ int32_t xtxpool_table_t::push_send_tx(const std::shared_ptr<xtx_entry> & tx) {
     //     return xtxpool_error_account_unconfirm_txs_reached_upper_limit;
     // }
 
+    {
+        std::lock_guard<std::mutex> lck(m_unconfirm_mutex);
+        auto unconfirm_txs_num = m_unconfirmed_tx_queue.size();
+        if (unconfirm_txs_num >= table_unconfirm_txs_num_max) {
+            xtxpool_warn("xtxpool_table_t::push_send_tx unconfirm txs reached upper limmit tx:%s", tx->get_tx()->dump().c_str());
+            return xtxpool_error_account_unconfirm_txs_reached_upper_limit;
+        }
+    }
+
     uint64_t latest_nonce;
     uint256_t latest_hash;
     bool result = get_account_latest_nonce_hash(tx->get_tx()->get_source_addr(), latest_nonce, latest_hash);
@@ -300,9 +309,11 @@ void xtxpool_table_t::update_unconfirm_accounts() {
     auto latest_table = m_para->get_vblockstore()->get_latest_committed_block(m_xtable_info);
     xblock_ptr_t committed_block = xblock_t::raw_vblock_to_object_ptr(latest_table.get());
     xtablestate_ptr_t tablestate = m_table_indexstore->clone_tablestate(committed_block);
-    if (tablestate == nullptr) {
+    if (tablestate != nullptr) {
         std::lock_guard<std::mutex> lck(m_unconfirm_mutex);
-        return m_unconfirmed_tx_queue.recover(tablestate->get_receiptid_state());
+        m_unconfirmed_tx_queue.recover(tablestate->get_receiptid_state());
+    } else {
+        xtxpool_info("xtxpool_table_t::update_unconfirm_accounts clone table state fail,table:%s", m_xtable_info.get_address().c_str());
     }
 }
 
@@ -445,7 +456,7 @@ bool xtxpool_table_t::get_account_latest_nonce_hash(const std::string account_ad
             mbus::xevent_behind_ptr_t ev = make_object_ptr<mbus::xevent_behind_on_demand_t>(
                 account_addr, account_basic_info.get_sync_height_start(), account_basic_info.get_sync_num(), true, "account_state_fall_behind");
             m_para->get_bus()->push_event(ev);
-            xtxpool_info("xtxpool_table_t::get_account_latest_nonce_hash account:%s state fall behind,need sync unit start_height:%llu,count:%u",
+            xtxpool_info("xtxpool_table_t::get_account_latest_nonce_hash account:%s state fall behind,try sync unit from:%llu,count:%u",
                          account_addr.c_str(),
                          account_basic_info.get_sync_height_start(),
                          account_basic_info.get_sync_num());

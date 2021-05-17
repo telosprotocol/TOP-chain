@@ -4,7 +4,7 @@
 #include "xdata/xgenesis_data.h"
 #include "xdata/xtransaction_maker.hpp"
 #include "xloader/xconfig_onchain_loader.h"
-#include "xstore/test/test_datamock.hpp"
+// #include "xstore/test/test_datamock.hpp"
 #include "xstore/xaccount_context.h"
 #include "xstore/xstore_face.h"
 #include "xtxpool_v2/xtx_account_filter.h"

@@ -119,7 +119,6 @@ void xconfig_register_t::init_static_config() {
     XADD_OFFCHAIN_PARAMETER(local_whitelist);
 
     XADD_OFFCHAIN_PARAMETER(slash_fulltable_interval);
-    XADD_OFFCHAIN_PARAMETER(workload_fulltable_interval);
 
     m_param_lock.release_write();
 }
@@ -476,16 +475,6 @@ bool xconfig_register_t::is_param_changed(const std::string& key, const std::str
 xconfig_register_t& xconfig_register_t::get_instance() {
     static xconfig_register_t inst;
     return inst;
-}
-
-// 1 top token equals factor number votes
-double get_top_vote_rate(uint16_t duration){
-    double factor = max_top_vote_rate;
-    if(duration < max_vote_lock_days){
-        factor = static_cast<double>(static_cast<int64_t>((pow(exp_base, duration / min_vote_lock_days - 1))*1000000))/1000000;
-    }
-    xdbg("pledge_redeem_vote factor: %f", factor);
-    return factor;
 }
 
 // uint32_t get_receive_tx_cache_time() {

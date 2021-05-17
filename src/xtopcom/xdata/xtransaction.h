@@ -33,21 +33,16 @@ enum enum_xtransaction_type {
     xtransaction_type_run_contract               = 3,    // run contract
     xtransaction_type_transfer                   = 4,    // transfer asset
     xtransaction_type_clickonce_create_contract_account = 5,// deploy clickonce contract
-    xtransaction_type_alias_name                 = 6,    // set account alias name, can be same with other accunnt
-    xtransaction_type_set_account_keys           = 11,    // set account's keys, may be elect key, transfer key, data key, consensus key
-    xtransaction_type_lock_token                 = 12,    // lock token for doing something
-    xtransaction_type_unlock_token               = 13,    // unlock token
-    xtransaction_type_create_sub_account         = 16,    // create sub account
 
     xtransaction_type_vote                       = 20,
     xtransaction_type_abolish_vote               = 21,
 
     xtransaction_type_pledge_token_tgas          = 22,   // pledge token for tgas
     xtransaction_type_redeem_token_tgas          = 23,   // redeem token
-    xtransaction_type_pledge_token_disk          = 24,   // pledge token for disk
-    xtransaction_type_redeem_token_disk          = 25,   // redeem token
     xtransaction_type_pledge_token_vote          = 27,   // pledge token for disk
     xtransaction_type_redeem_token_vote          = 28,   // redeem token
+
+    xtransaction_type_deploy_wasm_contract       = 29,   // deploy wasm contract
 
     xtransaction_type_max
 };
@@ -172,7 +167,6 @@ class xtransaction_t : public xbase_dataobj_t<xtransaction_t, xdata_type_transac
 
     int32_t     make_tx_create_user_account(const std::string & addr);
     int32_t     make_tx_create_contract_account(const data::xproperty_asset & asset_out, uint64_t tgas_limit, const std::string& code);
-    int32_t     make_tx_create_sub_account(const data::xproperty_asset & asset_out);
     int32_t     make_tx_transfer(const data::xproperty_asset & asset);
     int32_t     make_tx_run_contract(const data::xproperty_asset & asset_out, const std::string& function_name, const std::string& para);
     int32_t make_tx_run_contract2(const data::xproperty_asset & asset_out, const std::string & function_name, const std::string & para);

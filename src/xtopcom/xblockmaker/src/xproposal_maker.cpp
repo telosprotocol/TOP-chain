@@ -17,11 +17,16 @@ NS_BEG2(top, blockmaker)
 REG_XMODULE_LOG(chainbase::enum_xmodule_type::xmodule_type_xblockmaker, xblockmaker_error_to_string, xblockmaker_error_base+1, xblockmaker_error_max);
 
 xproposal_maker_t::xproposal_maker_t(const std::string & account, const xblockmaker_resources_ptr_t & resources) {
+    xdbg("xproposal_maker_t::xproposal_maker_t create,this=%p,account=%s", this, account.c_str());
     m_resources = resources;
     m_indexstore = resources->get_indexstorehub()->get_index_store(account);
     m_table_maker = make_object_ptr<xtable_maker_t>(account, resources);  // TOOD(jimmy) global
     m_tableblock_batch_tx_num_residue = XGET_CONFIG(tableblock_batch_tx_max_num);  // TOOD(jimmy)
     m_max_account_num = XGET_CONFIG(tableblock_batch_unitblock_max_num);
+}
+
+xproposal_maker_t::~xproposal_maker_t() {
+    xdbg("xproposal_maker_t::xproposal_maker_t destroy,this=%p", this);
 }
 
 bool xproposal_maker_t::can_make_proposal(data::xblock_consensus_para_t & proposal_para) {
@@ -269,7 +274,7 @@ bool xproposal_maker_t::update_txpool_txs(const xblock_consensus_para_t & propos
     xtxpool_v2::xtxs_pack_para_t txpool_pack_para(proposal_para.get_table_account(), tablestate_highqc->get_receiptid_state(), send_txs_max_num, recv_txs_max_num, confirm_txs_max_num);
     std::vector<xcons_transaction_ptr_t> origin_txs = get_txpool()->get_ready_txs(txpool_pack_para);
     for (auto & tx : origin_txs) {
-        xdbg("xproposal_maker_t::update_txpool_txs leader-get txs. %s tx=%s",
+        xdbg_info("xproposal_maker_t::update_txpool_txs leader-get txs. %s tx=%s",
                 proposal_para.dump().c_str(), tx->dump().c_str());
     }
     table_para.set_origin_txs(origin_txs);

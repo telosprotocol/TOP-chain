@@ -151,12 +151,6 @@ private:
 
 static xconfig_register_t& config_register = config::xconfig_register_t::get_instance();
 
-const uint16_t min_vote_lock_days = 30;
-const uint16_t max_vote_lock_days = 570;
-const uint8_t  max_top_vote_rate = 2;
-const float    exp_base = 1.04; // 1.039999962
-double   get_top_vote_rate(uint16_t);
-
 NS_END2
 
 #define XGET_CONFIG(NAME) static_cast<top::config::xconfig_register_t const &>(top::config::xconfig_register_t::get_instance()).get<top::config::x ## NAME ## _configuration_t>()

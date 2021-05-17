@@ -82,10 +82,10 @@ class xfull_tableblock_t : public xblock_t {
     void *query_interface(const int32_t _enum_xobject_type_) override;
 
  public:
-    xstatistics_data_t                      get_table_statistics() const;
+    xstatistics_data_t get_table_statistics() const;
 
  public:  // override base block api
-    std::string         get_offdata_hash() const override;
+    std::string get_offdata_hash() const override;
 };
 
 NS_END2

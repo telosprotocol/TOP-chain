@@ -22,7 +22,7 @@
 namespace top {
 namespace xtxpool_v2 {
 
-#define table_unconfirm_txs_num_max (1024)
+#define table_unconfirm_txs_num_max (100)
 
 class xtxpool_table_t {
 public:
@@ -32,7 +32,7 @@ public:
       , m_txmgr_table(&m_xtable_info)
       // , m_table_filter(para->get_vblockstore())
       , m_unconfirmed_tx_queue(para, &m_xtable_info)
-      , m_non_ready_accounts(&m_xtable_info)
+      // , m_non_ready_accounts(&m_xtable_info)
       , m_table_indexstore(m_para->get_indexstorehub()->get_index_store(m_xtable_info.get_table_addr()))
       , m_locked_txs(&m_xtable_info) {
     }
@@ -71,13 +71,13 @@ private:
     xtxmgr_table_t m_txmgr_table;
     // xtx_table_filter m_table_filter;
     xunconfirmed_tx_queue_t m_unconfirmed_tx_queue;
-    xnon_ready_accounts_t m_non_ready_accounts;
+    // xnon_ready_accounts_t m_non_ready_accounts;
     store::xindexstore_face_ptr_t m_table_indexstore;
     xlocked_txs_t m_locked_txs;
     mutable std::mutex m_mgr_mutex;        // lock m_txmgr_table and m_locked_txs
     // mutable std::mutex m_filter_mutex;     // lock m_table_filter
     mutable std::mutex m_unconfirm_mutex;  // lock m_unconfirmed_tx_queue
-    mutable std::mutex m_non_ready_mutex;  // lock m_non_ready_accounts
+    // mutable std::mutex m_non_ready_mutex;  // lock m_non_ready_accounts
 };
 
 }  // namespace xtxpool_v2

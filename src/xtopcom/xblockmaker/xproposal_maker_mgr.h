@@ -27,7 +27,8 @@ class xblockmaker_factory {
     static std::shared_ptr<xunit_service::xblock_maker_face> create_table_proposal(const observer_ptr<store::xstore_face_t> & store,
                                                                                    const observer_ptr<base::xvblockstore_t> & blockstore,
                                                                                    const observer_ptr<xtxpool_v2::xtxpool_face_t> & txpool,
-                                                                                   const observer_ptr<store::xindexstorehub_t> & indexstore);
+                                                                                   const observer_ptr<store::xindexstorehub_t> & indexstore,
+                                                                                   const observer_ptr<mbus::xmessage_bus_face_t> & bus);
 };
 
 

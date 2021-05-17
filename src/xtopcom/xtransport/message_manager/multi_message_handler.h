@@ -21,7 +21,6 @@
 #include "xbase/xthread.h"
 #include "xtransport/proto/transport.pb.h"
 #include "xtransport/utils/transport_utils.h"
-#include "xtransport/message_manager/message_manager_intf.h"
 
 namespace top {
 
@@ -64,7 +63,6 @@ private:
     uint32_t raw_thread_index_;
     std::mutex callback_mutex_;
     on_dispatch_callback_t callback_;
-    transport::MessageManagerIntf* message_manager_{transport::MessageManagerIntf::Instance()};
 };
 
 class MultiThreadHandler : public std::enable_shared_from_this<MultiThreadHandler>

@@ -20,7 +20,6 @@ using namespace mbus;
 using namespace data;
 
 #define BATCH_SIZE 20
-#define GET_TOKEN_RETRY_INTERVAL 6000
 
 xchain_downloader_t::xchain_downloader_t(std::string vnode_id,
                                  xsync_store_face_t * sync_store,
@@ -126,11 +125,10 @@ void xchain_downloader_t::on_response(std::vector<data::xblock_ptr_t> &blocks, c
         return;
     }
 
-    bool forked = false;
-
+    uint32_t fail_cnt = 0;
     // compare before and after
     for (uint32_t i = 0; i < count; i++) {
-          xblock_ptr_t &block = blocks[i];
+        xblock_ptr_t &block = blocks[i];
 
         uint64_t height = block->get_height();
         uint64_t viewid = block->get_viewid();
@@ -141,6 +139,7 @@ void xchain_downloader_t::on_response(std::vector<data::xblock_ptr_t> &blocks, c
             xsync_info("chain_downloader on_response(succ) %s,height=%lu,viewid=%lu,prev_hash:%s,",
                 m_address.c_str(), height, viewid, to_hex_str(block->get_last_block_hash()).c_str());
         } else if (ret == enum_result_code::failed) {
+            fail_cnt++;
             xsync_warn("chain_downloader on_response(failed) %s", block->dump().c_str());
         } else if (ret == enum_result_code::auth_failed) {
             xsync_info("chain_downloader on_response(auth_failed) %s,height=%lu,viewid=%lu,", m_address.c_str(), height, viewid);
@@ -150,6 +149,11 @@ void xchain_downloader_t::on_response(std::vector<data::xblock_ptr_t> &blocks, c
             assert(0);
             break;
         }
+    }
+
+    if ((BATCH_SIZE == fail_cnt) && (sync_policy == enum_chain_sync_pocliy_full)) {
+        xsync_info("chain_downloader update_latest_genesis_connected_block %s,count=%lu,fail_cnt=%lu", m_address.c_str(), count, fail_cnt);
+        m_sync_store->update_latest_genesis_connected_block(m_address);
     }
 
     if (m_sync_range_mgr.get_current_sync_start_height() != blocks.begin()->get()->get_height()) {

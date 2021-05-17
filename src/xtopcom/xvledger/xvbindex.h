@@ -79,6 +79,8 @@ namespace top
             int                         get_store_flags() const;  //return all flags related index
             int                         reset_store_flags(const uint32_t new_flags); //clean all flags related index
 
+            bool is_fulltable() const {return get_block_level() == base::enum_xvblock_level_table && get_block_class() == base::enum_xvblock_class_full;}
+
         public:
             inline xvbindex_t*          get_prev_block() const {return m_prev_index;}
             bool                        reset_prev_block(xvbindex_t * _new_prev_ptr);//return false if hash or height not match

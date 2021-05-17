@@ -14,7 +14,7 @@ enum class xenum_top_action_type : uint8_t {
     invalid,
     system,
     user,
-    kernel,
+    kernel,// TODO just a placeholder, may remove later.
     event
 };
 using xtop_action_type_t = xenum_top_action_type;

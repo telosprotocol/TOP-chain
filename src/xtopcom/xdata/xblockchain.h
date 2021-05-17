@@ -38,21 +38,16 @@ class xblockchain2_t : public xbase_dataobj_t<xblockchain2_t, xdata_type_blockch
     bool        update_state_by_genesis_block(const xblock_t* block);
     bool        update_state_by_next_height_block(const xblock_t* block);
     bool        update_state_by_full_block(const xblock_t* block);
+    bool        apply_block(const xblock_t* block);  // TODO(jimmy) should move to statestore future
+    xobject_ptr_t<xblockchain2_t>   clone_state();
 
  public:  // api for basic blockchain
     const std::string & get_account()const {return m_account;}
     base::enum_xvblock_level    get_block_level() const {return m_block_level;}
-    uint64_t            get_chain_height()const {return m_max_block_height;}
-    uint64_t            get_min_chain_height()const {return m_min_block_height;}
-    void                set_min_chain_height(uint64_t height);
+    uint64_t            get_chain_height()const {return m_last_state_block_height;}
     uint64_t            get_account_create_time() const {return m_account_state.get_account_create_time();}
     uint64_t            get_last_height()const {return m_last_state_block_height;}
     const std::string & get_last_block_hash()const {return m_last_state_block_hash;}
-    bool                is_state_behind()const {return m_max_block_height != m_last_state_block_height;}
-    bool                is_property_behind()const;
-    void                set_update_stamp(uint64_t timestamp);
-    uint64_t            get_update_stamp() const {return m_update_stamp;}
-    void                update_min_max_height(uint64_t height);
     std::string         to_basic_string() const;
 
  public:  // set api for account context, use for save temp change
@@ -116,24 +111,30 @@ class xblockchain2_t : public xbase_dataobj_t<xblockchain2_t, xdata_type_blockch
     bool        add_light_unit(const xblock_t* block);
     bool        add_full_unit(const xblock_t* block);
     bool        add_table(const xblock_t* block);
+    void        update_block_height_hash_info(const xblock_t * block);
+    void        update_account_create_time(const xblock_t * block);
 
  public:  // old apis
     const std::string & address() {return m_account;}
+
+ public:  // property apis
+    void        set_property(const std::string & prop, const xdataobj_ptr_t & obj);
+    void        set_all_propertys(const std::map<std::string, xdataobj_ptr_t> & propobjs);
+    xdataobj_ptr_t      find_property(const std::string & prop) const;
+    const std::map<std::string, xdataobj_ptr_t> &   get_property_objs() const {return m_property_objs;}
 
  private:
     uint8_t                     m_version{0};
     std::string                 m_account;
     base::enum_xvblock_level    m_block_level;
-    uint64_t                    m_min_block_height{0};
-    uint64_t                    m_max_block_height{0};
     uint64_t                    m_last_state_block_height{0};
     std::string                 m_last_state_block_hash{};
     uint64_t                    m_last_full_block_height{0};
     std::string                 m_last_full_block_hash{};
-    uint64_t                    m_update_stamp{0};
     uint64_t                    m_property_confirm_height{0};
     xaccount_mstate2            m_account_state;
     std::map<uint16_t, std::string> m_ext;
+    std::map<std::string, xdataobj_ptr_t>   m_property_objs;
 };
 
 using xaccount_t = xblockchain2_t;

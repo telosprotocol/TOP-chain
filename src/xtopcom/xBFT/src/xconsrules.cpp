@@ -14,6 +14,7 @@ namespace top
         xBFTRules::xBFTRules(xcscoreobj_t & parent_object)
             :xcsdriver_t(parent_object)
         {
+            m_latest_commit_block = NULL;
             m_latest_lock_block   = NULL;
             m_latest_voted_height = 0;
             m_latest_voted_viewid = 0;
@@ -27,6 +28,10 @@ namespace top
             
             if(m_latest_lock_block != NULL)
                 m_latest_lock_block->release_ref();
+            
+            if(m_latest_commit_block != NULL)
+                m_latest_commit_block->release_ref();
+            
             xinfo("xBFTRules::~xBFTRules,destroy,this=%p",this);
         }
         
@@ -44,7 +49,7 @@ namespace top
             }
             else
             {
-                const base::xvblock_t * commit_block = m_latest_lock_block->get_prev_block();
+                const base::xvblock_t * commit_block = m_latest_commit_block;
                 if(commit_block != NULL)
                     xprintf(local_param_buf,sizeof(local_param_buf),"{commited={height=%" PRIu64 ",viewid=%" PRIu64 ",viewtoken=%u} <-- locked={height=%" PRIu64 ",viewid=%" PRIu64 ",viewtoken=%u} <-- hqc={height=%" PRIu64 ",viewid=%" PRIu64 ",viewtoken=%u} <-- hviewid=%" PRIu64 "}",commit_block->get_height(),commit_block->get_viewid(),commit_block->get_viewtoken(),m_latest_lock_block->get_height(),m_latest_lock_block->get_viewid(),m_latest_lock_block->get_viewtoken(),_latest_cert->get_height(),_latest_cert->get_viewid(),_latest_cert->get_viewtoken(),get_latest_voted_viewid());
                 else
@@ -54,6 +59,73 @@ namespace top
         }
         
         //////////////////////////////block managed fro proposal//////////////////////////////
+        base::xvblock_t *  xBFTRules::get_commit_block()
+        {
+            if(m_latest_commit_block != nullptr)
+                return m_latest_commit_block;
+            
+            base::xvblock_t * locked_block = get_lock_block();
+            if(locked_block != NULL)
+            {
+                if(locked_block->get_height() > 0)//
+                {
+                    base::xauto_ptr<base::xvblock_t> commit_block(get_vblockstore()->load_block_object(*this, locked_block->get_height() - 1,locked_block->get_last_block_hash(),false));
+                    if(commit_block)
+                    {
+                        m_latest_commit_block = commit_block();
+                        m_latest_commit_block->add_ref();
+                    }
+                }
+            }
+            else
+            {
+                base::xauto_ptr<base::xvblock_t>  latest_commit_block(get_vblockstore()->get_latest_committed_block(*this));
+                if(latest_commit_block)
+                {
+                    m_latest_commit_block = latest_commit_block();
+                    m_latest_commit_block->add_ref();
+                }
+            }
+            return m_latest_commit_block;
+        }
+    
+        bool        xBFTRules::set_commit_block(base::xvblock_t * new_commit_block)//update block of  commited one
+        {
+            if(NULL == new_commit_block)
+                return false;
+            
+            if(new_commit_block == m_latest_commit_block)
+                return true; //same object
+            
+            if(m_latest_commit_block != NULL)
+            {
+                if(   (m_latest_commit_block->get_height() == new_commit_block->get_height())
+                   || (m_latest_commit_block->get_block_hash() == new_commit_block->get_block_hash()) )
+                {
+                    return true; //same block
+                }
+            }
+            
+            base::xvblock_t * locked_block = get_lock_block();
+            if(locked_block != NULL)
+            {
+                if(  (locked_block->get_height() != new_commit_block->get_height() + 1)
+                   ||(locked_block->get_last_block_hash() != new_commit_block->get_block_hash()) )
+                {
+                    return false;
+                }
+                
+                if(m_latest_commit_block != NULL)
+                    m_latest_commit_block->release_ref();
+                
+                m_latest_commit_block = new_commit_block;
+                m_latest_commit_block->add_ref();
+                return true;
+            }
+            //locked block must be valid first
+            return false;
+        }
+    
         base::xvblock_t * xBFTRules::get_lock_block()
         {
             if(m_latest_lock_block != nullptr)
@@ -113,7 +185,36 @@ namespace top
                 m_latest_voted_height = std::max(m_latest_voted_height,latest_lock_block->get_height());
                 m_latest_voted_viewid = std::max(m_latest_voted_viewid,latest_lock_block->get_viewid());
                 
-                recheck_block(m_certified_blocks);//any cert block has been notified upper layer
+                //clean cert that not follow lock branch(decided by blockstore now)
+                for(auto it = m_certified_blocks.begin(); it != m_certified_blocks.end();)
+                {
+                    auto cur_it = it;
+                    ++it;
+                    
+                    if(   (cur_it->second->get_height()  <= m_latest_lock_block->get_height())
+                       || (cur_it->second->get_viewid()  <= m_latest_lock_block->get_viewid())
+                       || (cur_it->second->get_chainid() != m_latest_lock_block->get_chainid())
+                       || (cur_it->second->get_account() != m_latest_lock_block->get_account())
+                       ) //not follow locked block
+                    {
+                        base::xvblock_t* _to_remove = cur_it->second;
+                        m_certified_blocks.erase(cur_it);
+                        
+                        xinfo("xBFTRules::set_lock_block,remove un-satified cert block(%s)",_to_remove->dump().c_str());
+                        _to_remove->release_ref();
+                    }
+                    else if(cur_it->second->get_height() == (m_latest_lock_block->get_height() + 1) ) //found next height
+                    {
+                        if(cur_it->second->get_last_block_hash() != m_latest_lock_block->get_block_hash())//not connect to lock
+                        {
+                            base::xvblock_t* _to_remove = cur_it->second;
+                            m_certified_blocks.erase(cur_it);
+                            
+                            xinfo("xBFTRules::set_lock_block,remove un-connected cert block(%s)",_to_remove->dump().c_str());
+                            _to_remove->release_ref();
+                        }
+                    }
+                }
                 
                 //filter too old proposal and put into removed_list
                 std::vector<xproposal_t*> removed_list;
@@ -247,19 +348,21 @@ namespace top
             if(nullptr == _target_block)
                 return false;
             
-            //filtered forked cert if have
-            if(get_lock_block() != nullptr)
+            //filtered forked cert if not follow rule
+            if(safe_check_add_cert_fork(_target_block) < 0) //allow unknow case continue
             {
-                if(safe_check_follow_locked_branch(_target_block) < 0)//allow unknow case continue
-                {
-                    xwarn("xBFTRules::add_cert_block,fail-as safe_check_follow_locked_branch");
-                    return false;
-                }
+                xwarn("xBFTRules::add_cert_block,fail-as safe_check_resolve_cert_fork for block(%s)",_target_block->dump().c_str());
+                return false;
             }
+            //clean any lower viewid of height than _target_block
+            //note: let us rely on blockstore to clean since it allow realtime resolve forked block now
+ 
+            //then insert it
             auto insert_result = m_certified_blocks.emplace(_target_block->get_viewid(),_target_block);
             if(insert_result.second)//note:not allow overwrited existing cert with same view#
                 _target_block->add_ref();//hold referene for map
  
+            xdbg("xBFTRules::add_cert_block,added new cert block(%s)",_target_block->dump().c_str());
             return insert_result.second;//return true means it inserted into map at brandnew
         }
         bool  xBFTRules::remove_cert_block(const uint64_t view_id)
@@ -451,6 +554,67 @@ namespace top
         //return  1     when true
         //return  -1    when false
         //return  0     when unknow
+        //note: safe_check_resolve_cert_fork decide whether allow to store any synced block
+        int xBFTRules::safe_check_add_cert_fork(base::xvblock_t * _test_for_block)
+        {
+            if(NULL == _test_for_block)
+                return -1;
+            
+            //note:since blockstore may do realtime resolving for forked blocks, so here just losse limit
+            //allow most blocks pass to blockstore where may keep best one
+            
+            //rule#1: need follow branch of commit
+            base::xvblock_t *  latest_commit_block = get_commit_block();
+            if(latest_commit_block != NULL)
+            {
+                if(_test_for_block->get_height() == (latest_commit_block->get_height() + 1))
+                {
+                    if(_test_for_block->get_last_block_hash() != latest_commit_block->get_block_hash())
+                    {
+                        xwarn("xBFTRules::safe_check_add_cert_fork,fail-cert not follow the commited branch, cert(%s) vs commited(%s) at node=0x%llx",_test_for_block->dump().c_str(), latest_commit_block->dump().c_str(),get_xip2_addr().low_addr);
+                        return -1;
+                    }
+                }
+            }
+            
+            //rule#2: not conflict with existing cert block
+            base::xvblock_t *  latest_cert_block = get_latest_cert_block();
+            if(latest_cert_block != NULL)
+            {
+                if(_test_for_block->get_height() == latest_cert_block->get_height())
+                {
+                    if(_test_for_block->get_viewid() == latest_cert_block->get_viewid())
+                    {
+                        if(_test_for_block->get_block_hash() != latest_cert_block->get_block_hash())
+                        {
+                            xerror("xBFTRules::safe_check_add_cert_fork,error-invalid test cert(=%s) != latest_cert_block(%s) at node=0x%llx",_test_for_block->dump().c_str(), latest_cert_block->dump().c_str(),get_xip2_addr().low_addr);
+                            
+                            return -1;
+                        }
+                    }
+                }
+            }
+            
+            //rule#3: not conflict with existing lock block
+            base::xvblock_t *  latest_lock_block = get_lock_block();
+            if(latest_lock_block != nullptr)
+            {
+                if(_test_for_block->get_height() == latest_lock_block->get_height()) //same height as local locked one
+                {
+                    if(_test_for_block->get_block_hash() != get_lock_block()->get_block_hash())
+                    {
+                        xerror("xBFTRules::safe_check_add_cert_fork,fail-block with same height of locked,but different hash of proposal=%s vs locked=%s at node=0x%llx",_test_for_block->dump().c_str(), get_lock_block()->dump().c_str(),get_xip2_addr().low_addr);
+                        return -1;
+                    }
+                }
+            }
+            
+            return 1;
+        }
+        
+        //return  1     when true
+        //return  -1    when false
+        //return  0     when unknow
         int xBFTRules::safe_check_follow_locked_branch(base::xvblock_t * _test_for_block)
         {
             if(NULL == _test_for_block)
@@ -515,7 +679,7 @@ namespace top
         /*safe rule for any voting block
          1. first it must be a valid proposal block  and pass the locked block,both done  at safe_check_for_proposal_block
          2. never voted at same view#,and never voted passed and voted-view#; and never voted passed height
-         3. never voted confilct with existing proposal of same view# or same height#
+         3. never voted confilct with existing proposal of same view# or lower height#
          4. never fork from locked block
          */
         //bool  xBFTRules::safe_check_for_vote_block(base::xvblock_t * _vote_block)//safe rule for voting block
@@ -544,7 +708,7 @@ namespace top
                 }
             }
             
-            //safe-rule#3: never voted confilct with existing proposal of same view# or same height#
+            //safe-rule#3: never voted confilct with existing proposal of same view# or lower height#
             base::xvblock_t *  latest_proposal = get_latest_proposal_block();
             if(latest_proposal != NULL) //never vote behind proposal block
             {

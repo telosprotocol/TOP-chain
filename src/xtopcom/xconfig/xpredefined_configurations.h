@@ -17,6 +17,8 @@ constexpr uint64_t TOP_UNIT = 1e6;  // 1TOP = 1e6 uTOP
 constexpr uint64_t TOTAL_ISSUANCE = 200 * 1e8 * TOP_UNIT;
 #define ASSET_TOP(num) ((uint64_t)((num)*TOP_UNIT))
 #define ASSET_uTOP(num) ((uint64_t)(num))
+#define TOP_UNIT_LENGTH  6
+#define TOP_MAX_LENGTH  12  // enough for 20,000,000,000 tokens
 
 NS_BEG2(top, config)
 
@@ -138,7 +140,6 @@ XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(max_vote_nodes_num, std::uint32_t, normal,
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(votes_report_interval, xinterval_t, normal, 10, 1, std::numeric_limits<xinterval_t>::max());
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(reward_issue_interval, xinterval_t, normal, 30, 1, std::numeric_limits<xinterval_t>::max());    // 10 minutes
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(workload_timer_interval, xinterval_t, normal, 20, 1, std::numeric_limits<xinterval_t>::max());  // 200 seconds
-XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(workload_collection_interval, xinterval_t, normal, 17, 1, std::numeric_limits<xinterval_t>::max());  // 180 seconds
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(min_node_reward, uint64_t, important, 100, 0, std::numeric_limits<uint64_t>::max());
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(min_voter_dividend, uint64_t, important, 100, 0, std::numeric_limits<uint64_t>::max());
 #else
@@ -151,11 +152,11 @@ XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(max_vote_nodes_num, std::uint32_t, normal,
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(votes_report_interval, xinterval_t, normal, 30, 1, std::numeric_limits<xinterval_t>::max());
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(reward_issue_interval, xinterval_t, normal, 8640, 1, std::numeric_limits<xinterval_t>::max());  // 24 hours
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(workload_timer_interval, xinterval_t, normal, 17, 1, std::numeric_limits<xinterval_t>::max());  // 180 seconds
-XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(workload_collection_interval, xinterval_t, normal, 17, 1, std::numeric_limits<xinterval_t>::max());  // 180 seconds
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(min_node_reward, uint64_t, important, 0, 0, std::numeric_limits<uint64_t>::max());
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(min_voter_dividend, uint64_t, important, 0, 0, std::numeric_limits<uint64_t>::max());
 #endif
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(tableworkload_report_schedule_interval, xinterval_t, important, 1, 1, std::numeric_limits<xinterval_t>::max());
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(workload_collection_interval, xinterval_t, normal, 18, 1, std::numeric_limits<xinterval_t>::max());
 // mainnet node active
 
 #if defined XBUILD_GALILEO
@@ -302,8 +303,6 @@ XDECLARE_CONFIGURATION(local_blacklist, const char *, "");
 XDECLARE_CONFIGURATION(local_whitelist, const char *, "");
 // slash fulltable interval
 XDECLARE_CONFIGURATION(slash_fulltable_interval, xinterval_t, 30); // 5 minutes
-// workload fulltable interval
-XDECLARE_CONFIGURATION(workload_fulltable_interval, xinterval_t, 30); // 5 minutes
 
 
 /* beginning of development parameters */

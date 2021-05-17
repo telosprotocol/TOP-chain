@@ -1,3 +1,7 @@
+// Copyright (c) 2017-2021 Telos Foundation & contributors
+// Distributed under the MIT software license, see the accompanying
+// file COPYING or http://www.opensource.org/licenses/mit-license.php.
+
 #include "xcontract_common/xproperties/xproperty_token.h"
 #include "xcontract_common/xerror/xerror.h"
 #include "xcontract_common/xcontract_state.h"

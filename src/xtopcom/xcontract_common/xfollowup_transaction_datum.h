@@ -1,3 +1,7 @@
+// Copyright (c) 2017-2021 Telos Foundation & contributors
+// Distributed under the MIT software license, see the accompanying
+// file COPYING or http://www.opensource.org/licenses/mit-license.php.
+
 #pragma once
 
 #include "xbase/xns_macro.h"
@@ -13,9 +17,14 @@ enum class xenum_followup_transaction_schedule_type {
 using xfollowup_transaction_schedule_type_t = xenum_followup_transaction_schedule_type;
 
 struct xtop_followup_transaction_datum {
-    xtop_followup_transaction_datum(data::xtransaction_ptr_t && tx, xfollowup_transaction_schedule_type_t type) : followed_transaction(std::move(tx)), schedule_type(type) {
-   
-    }
+    xtop_followup_transaction_datum() = default;
+    xtop_followup_transaction_datum(xtop_followup_transaction_datum const &) = default;
+    xtop_followup_transaction_datum & operator=(xtop_followup_transaction_datum const &) = default;
+    xtop_followup_transaction_datum(xtop_followup_transaction_datum &&) = default;
+    xtop_followup_transaction_datum & operator=(xtop_followup_transaction_datum &&) = default;
+    ~xtop_followup_transaction_datum() = default;
+
+    xtop_followup_transaction_datum(data::xtransaction_ptr_t && tx, xfollowup_transaction_schedule_type_t type);
 
     data::xtransaction_ptr_t followed_transaction{nullptr};
     xfollowup_transaction_schedule_type_t schedule_type{xfollowup_transaction_schedule_type_t::invalid};

@@ -39,33 +39,31 @@ protected:
     virtual ~GossipInterface() {}
 
     uint64_t GetDistance(const std::string& src, const std::string& des);
-    void Send(
-            transport::protobuf::RoutingMessage& message,
-            const std::vector<kadmlia::NodeInfoPtr>& nodes);
-    void MutableSend(
-            transport::protobuf::RoutingMessage& message,
-            const std::vector<kadmlia::NodeInfoPtr>& nodes);
+    void Send(transport::protobuf::RoutingMessage & message, const std::vector<kadmlia::NodeInfoPtr> & nodes);
+    void MutableSend(transport::protobuf::RoutingMessage & message, const std::vector<kadmlia::NodeInfoPtr> & nodes);
+    void MutableSendHash(transport::protobuf::RoutingMessage & message, const std::vector<kadmlia::NodeInfoPtr> & nodes);
+    // todo next version delete GetNeighborCount.(only used in old broadcast)
     uint32_t GetNeighborCount(transport::protobuf::RoutingMessage& message);
     std::vector<kadmlia::NodeInfoPtr> GetRandomNodes(
             std::vector<kadmlia::NodeInfoPtr>& neighbors,
             uint32_t number_to_get) const;
-    void SelectNodes(
-            transport::protobuf::RoutingMessage& message,
-            const std::vector<kadmlia::NodeInfoPtr>& nodes,
-            std::vector<kadmlia::NodeInfoPtr>& select_nodes);
-    void SelectNodes(
-            transport::protobuf::RoutingMessage& message,
-            kadmlia::RoutingTablePtr& routing_table,
-            std::shared_ptr<base::Uint64BloomFilter>& bloomfilter,
-            std::vector<kadmlia::NodeInfoPtr>& select_nodes);
+//     void SelectNodes(
+//             transport::protobuf::RoutingMessage& message,
+//             const std::vector<kadmlia::NodeInfoPtr>& nodes,
+//             std::vector<kadmlia::NodeInfoPtr>& select_nodes);
+//     void SelectNodes(
+//             transport::protobuf::RoutingMessage& message,
+//             kadmlia::RoutingTablePtr& routing_table,
+//             std::shared_ptr<base::Uint64BloomFilter>& bloomfilter,
+//             std::vector<kadmlia::NodeInfoPtr>& select_nodes);
     void SendLayered(
             transport::protobuf::RoutingMessage& message,
             const std::vector<kadmlia::NodeInfoPtr>& nodes);
     void CheckDiffNetwork(transport::protobuf::RoutingMessage& message);
 
     // TODO(Charlie): for test evil
-    bool ThisNodeIsEvil(transport::protobuf::RoutingMessage& message);
-    bool IsIpValid(const std::string& ip);
+//     bool ThisNodeIsEvil(transport::protobuf::RoutingMessage& message);
+//     bool IsIpValid(const std::string& ip);
 
     transport::TransportPtr transport_ptr_;
 

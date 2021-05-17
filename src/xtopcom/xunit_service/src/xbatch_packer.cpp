@@ -126,7 +126,7 @@ bool xbatch_packer::start_proposal(base::xblock_mptrs& latest_blocks) {
     auto local_xip = get_xip2_addr();
     set_xip(proposal_para, local_xip);  // set leader xip
 
-    xdbg("xbatch_packer::start_proposal leader_node %s", proposal_para.dump().c_str());
+    xdbg_info("xbatch_packer::start_proposal leader begin make_proposal.%s cert_block_viewid=%ld", proposal_para.dump().c_str(), latest_blocks.get_latest_cert_block()->get_viewid());
     xblock_ptr_t proposal_block = m_proposal_maker->make_proposal(proposal_para);
     if (proposal_block == nullptr) {
         xwarn("xbatch_packer::start_proposal fail-make_proposal.%s", proposal_para.dump().c_str());
@@ -170,6 +170,12 @@ bool xbatch_packer::on_view_fire(const base::xvevent_t & event, xcsobject_t * fr
     m_last_view_id = view_ev->get_viewid();
     m_last_view_clock = view_ev->get_clock();
 
+    base::xblock_mptrs latest_blocks = m_para->get_resources()->get_vblockstore()->get_latest_blocks(get_account());
+    if (m_last_view_clock < latest_blocks.get_latest_cert_block()->get_clock()) {
+        xwarn("xbatch_packer::on_view_fire fail-clock cur=%ull,prev=%ull", m_last_view_clock, latest_blocks.get_latest_cert_block()->get_clock());
+        return false;
+    }
+
     m_unorder_cache.on_view_fire(m_last_view_id);
 
     auto accessor = m_para->get_resources()->get_data_accessor();
@@ -182,14 +188,11 @@ bool xbatch_packer::on_view_fire(const base::xvevent_t & event, xcsobject_t * fr
         return false;
     }
 
-    base::xblock_mptrs latest_blocks = m_para->get_resources()->get_vblockstore()->get_latest_blocks(get_account());
-
     // check if this node is leader
     std::error_code ec{election::xdata_accessor_errc_t::success};
     auto version = accessor->version_from(common::xip2_t{local_xip.low_addr, local_xip.high_addr}, ec);
-    xassert(!ec);
     if (ec) {
-        xerror("xbatch_packer::on_view_fire xip=%s version from error", xcons_utl::xip_to_hex(local_xip).c_str());
+        xwarn("xbatch_packer::on_view_fire xip=%s version from error", xcons_utl::xip_to_hex(local_xip).c_str());
         return false;
     }
     uint16_t rotate_mode = enum_rotate_mode_rotate_by_view_id;

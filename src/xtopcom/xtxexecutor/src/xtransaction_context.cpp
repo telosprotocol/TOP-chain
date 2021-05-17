@@ -36,23 +36,6 @@ int32_t xtransaction_context_t::parse() {
         case xtransaction_type_transfer:
             m_trans_obj = std::make_shared<xtransaction_transfer>(m_account_ctx, m_trans);
             break;
-
-        case xtransaction_type_set_account_keys:
-            m_trans_obj = std::make_shared<xtransaction_set_keys>(m_account_ctx, m_trans);
-            break;
-        case xtransaction_type_lock_token:
-            m_trans_obj = std::make_shared<xtransaction_lock_token>(m_account_ctx, m_trans);
-            break;
-        case xtransaction_type_unlock_token:
-            m_trans_obj = std::make_shared<xtransaction_unlock_token>(m_account_ctx, m_trans);
-            break;
-        case xtransaction_type_alias_name:
-            m_trans_obj = std::make_shared<xtransaction_alias_name>(m_account_ctx, m_trans);
-            break;
-        case xtransaction_type_create_sub_account:
-            m_trans_obj = std::make_shared<xtransaction_create_sub_account>(m_account_ctx, m_trans);
-            break;
-
         case xtransaction_type_vote:
             m_trans_obj = std::make_shared<xtransaction_vote>(m_account_ctx, m_trans);
             break;
@@ -65,12 +48,6 @@ int32_t xtransaction_context_t::parse() {
             break;
         case xtransaction_type_redeem_token_tgas:
             m_trans_obj = std::make_shared<xtransaction_redeem_token_tgas>(m_account_ctx, m_trans);
-            break;
-        case xtransaction_type_pledge_token_disk:
-            m_trans_obj = std::make_shared<xtransaction_pledge_token_disk>(m_account_ctx, m_trans);
-            break;
-        case xtransaction_type_redeem_token_disk:
-            m_trans_obj = std::make_shared<xtransaction_redeem_token_disk>(m_account_ctx, m_trans);
             break;
         case xtransaction_type_pledge_token_vote:
             m_trans_obj = std::make_shared<xtransaction_pledge_token_vote>(m_account_ctx, m_trans);
@@ -497,36 +474,8 @@ int32_t xtransaction_transfer::source_fee_exec() {
     return ret;
 }
 
-int32_t xtransaction_set_keys::source_fee_exec() {
-    return m_fee.update_tgas_disk_sender(0, false);
-}
-
-int32_t xtransaction_lock_token::source_fee_exec() {
-    return m_fee.update_tgas_disk_sender(m_target_action.m_amount, false);
-}
-
-int32_t xtransaction_unlock_token::source_fee_exec() {
-    return m_fee.update_tgas_disk_sender(0, false);
-}
-
-int32_t xtransaction_create_sub_account::source_fee_exec() {
-    return m_fee.update_tgas_disk_sender(m_source_action.m_asset_out.m_amount, false);
-}
-
-int32_t xtransaction_alias_name::source_fee_exec() {
-    return m_fee.update_tgas_disk_sender(0, false);
-}
-
-// int32_t xtransaction_vote::source_fee_exec() {
-//     return 0;
-// }
-
-// int32_t xtransaction_abolish_vote::source_fee_exec() {
-//     return 0;
-// }
-
 int32_t xtransaction_pledge_token_vote::source_fee_exec(){
-    m_lock_token = TOP_UNIT * m_target_action.m_vote_num / config::get_top_vote_rate(m_target_action.m_lock_duration);
+    m_lock_token = m_account_ctx->get_top_by_vote(m_target_action.m_vote_num, m_target_action.m_lock_duration);
     return m_fee.update_tgas_disk_sender(m_lock_token, false);
 }
 

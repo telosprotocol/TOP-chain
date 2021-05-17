@@ -1020,6 +1020,10 @@ void get_block_handle::set_header_info(xJson::Value & header, xblock_t * bp) {
             header["validator"] = addr;
         }
     }
+    if (bp->is_tableblock()) {
+        header["multisign_auditor"] = to_hex_str(bp->get_cert()->get_audit_signature());
+        header["multisign_validator"] = to_hex_str(bp->get_cert()->get_verify_signature());
+    }
 }
 
 void get_block_handle::set_native_property_info(xJson::Value & jp, const data::xnative_property_t & property) {
@@ -1630,6 +1634,10 @@ void get_block_handle::set_body_info(xJson::Value & body, xblock_t * bp) {
         xJson::Value j_tb;
         set_table_info(j_tb, bp);
         body["tableblock"] = j_tb;
+
+        if (bp->is_fulltable()) {
+            body["statistics"] = dynamic_cast<data::xfull_tableblock_t *>(bp)->get_table_statistics().to_json_object<xJson::Value>();
+        }
 
         break;
     }

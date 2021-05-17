@@ -26,6 +26,7 @@ class xblockmaker_resources_t {
     virtual base::xvblockstore_t*       get_blockstore() const = 0;
     virtual xtxpool_v2::xtxpool_face_t* get_txpool() const = 0;
     virtual store::xindexstorehub_t*    get_indexstorehub() const = 0;
+    virtual mbus::xmessage_bus_face_t*  get_bus() const = 0;
 };
 using xblockmaker_resources_ptr_t = std::shared_ptr<xblockmaker_resources_t>;
 
@@ -34,19 +35,22 @@ class xblockmaker_resources_impl_t : public xblockmaker_resources_t {
     xblockmaker_resources_impl_t(const observer_ptr<store::xstore_face_t> & store,
                                  const observer_ptr<base::xvblockstore_t> & blockstore,
                                  const observer_ptr<xtxpool_v2::xtxpool_face_t> & txpool,
-                                 const observer_ptr<store::xindexstorehub_t> & indexstorehub)
-    : m_store(store), m_blockstore(blockstore), m_txpool(txpool), m_indexstorehub(indexstorehub) {}
+                                 const observer_ptr<store::xindexstorehub_t> & indexstorehub,
+                                 const observer_ptr<mbus::xmessage_bus_face_t> & bus)
+    : m_store(store), m_blockstore(blockstore), m_txpool(txpool), m_indexstorehub(indexstorehub), m_bus(bus) {}
 
     virtual store::xstore_face_t*       get_store() const {return m_store.get();}
     virtual base::xvblockstore_t*       get_blockstore() const {return m_blockstore.get();}
     virtual xtxpool_v2::xtxpool_face_t* get_txpool() const {return m_txpool.get();}
     virtual store::xindexstorehub_t*    get_indexstorehub() const {return m_indexstorehub.get();}
+    virtual mbus::xmessage_bus_face_t*  get_bus() const {return m_bus.get();}
 
  private:
     observer_ptr<store::xstore_face_t>          m_store{nullptr};
     observer_ptr<base::xvblockstore_t>          m_blockstore{nullptr};
     observer_ptr<xtxpool_v2::xtxpool_face_t>    m_txpool{nullptr};
     observer_ptr<store::xindexstorehub_t>       m_indexstorehub{nullptr};
+    observer_ptr<mbus::xmessage_bus_face_t>     m_bus{nullptr};
 };
 
 struct xunitmaker_result_t {
@@ -57,13 +61,14 @@ struct xunitmaker_result_t {
 };
 
 struct xunitmaker_para_t {
-    xunitmaker_para_t(const data::xtablestate_ptr_t & tablestate)
-    : m_tablestate(tablestate) {}
+    xunitmaker_para_t(const data::xtablestate_ptr_t & tablestate, bool is_leader)
+    : m_tablestate(tablestate), m_is_leader(is_leader) {}
     xunitmaker_para_t(const data::xtablestate_ptr_t & tablestate, const xunit_proposal_input_t & unit_input)
     : m_tablestate(tablestate), m_unit_input(unit_input) {}
 
     data::xtablestate_ptr_t                 m_tablestate{nullptr};
     xunit_proposal_input_t                  m_unit_input;
+    bool                                    m_is_leader{false};
 };
 
 struct xtablemaker_result_t {
@@ -129,46 +134,40 @@ class xblock_maker_t : public base::xvaccount_t {
 
  public:
     void                        set_latest_block(const xblock_ptr_t & block);
-    bool                        load_and_cache_enough_blocks(const xblock_ptr_t & latest_block);
+    bool                        load_and_cache_enough_blocks(const xblock_ptr_t & latest_block, uint64_t & lacked_block_height);
     bool                        check_latest_blocks() const;
 
  public:
     store::xstore_face_t*       get_store() const {return m_resources->get_store();}
     base::xvblockstore_t*       get_blockstore() const {return m_resources->get_blockstore();}
     xtxpool_v2::xtxpool_face_t*    get_txpool() const {return m_resources->get_txpool();}
+    mbus::xmessage_bus_face_t*  get_bus() const {return m_resources->get_bus();}
     const xblockmaker_resources_ptr_t & get_resources() const {return m_resources;}
 
-    bool                        has_uncommitted_blocks() const;
-
     uint64_t                    get_keep_latest_blocks_max() const {return m_keep_latest_blocks_max;}
-    const xblock_ptr_t &        get_latest_committed_block() const {return m_latest_commit_block;}
-    const xaccount_ptr_t &      get_latest_committed_state() const {return m_commit_account;}
+    const xaccount_ptr_t &      get_latest_bstate() const {return m_latest_bstate;}
+    xaccount_ptr_t              get_latest_committed_state() const;
     std::string                 get_lock_block_sign_hash() const;
     std::string                 get_lock_output_root_hash() const;
     const std::map<uint64_t, xblock_ptr_t> & get_latest_blocks() const {return m_latest_blocks;}
     const xblock_ptr_t &        get_highest_height_block() const;
     const xblock_ptr_t &        get_lowest_height_block() const;
     xblock_ptr_t                get_highest_non_empty_block() const;
-    std::vector<xblock_ptr_t>   get_uncommit_blocks() const;
     xblock_ptr_t                get_highest_lock_block() const;
     xblock_ptr_t                get_highest_commit_block() const;
     xblock_ptr_t                get_prev_block(const xblock_ptr_t & current) const;
-    xaccount_ptr_t              clone_latest_committed_state() const;
     bool                        verify_latest_blocks(base::xvblock_t* latest_cert_block, base::xvblock_t* lock_block, base::xvblock_t* commited_block);
 
  protected:
-    void                        set_latest_committed_block(const xblock_ptr_t & latest_committed_block);
-    bool                        update_account_state(const xblock_ptr_t & latest_committed_block);
-    void                        set_latest_blocks(const base::xblock_mptrs & latest_blocks);
+    bool                        update_account_state(const xblock_ptr_t & latest_committed_block, uint64_t & lacked_block_height);
     bool                        is_latest_blocks_valid(const base::xblock_mptrs & latest_blocks);
     void                        clear_old_blocks();
 
  private:
     xblockmaker_resources_ptr_t             m_resources{nullptr};
-    xblock_ptr_t                            m_latest_commit_block{nullptr};
     std::map<uint64_t, xblock_ptr_t>        m_latest_blocks;
     uint32_t                                m_keep_latest_blocks_max{0};
-    xaccount_ptr_t                          m_commit_account{nullptr};
+    xaccount_ptr_t                          m_latest_bstate{nullptr};
 };
 
 class xblock_rules_face_t {

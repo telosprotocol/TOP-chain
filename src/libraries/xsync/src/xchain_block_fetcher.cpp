@@ -153,7 +153,7 @@ void xchain_block_fetcher_t::on_newblockhash(uint64_t height, uint64_t view_id, 
         base::xauto_ptr<base::xvblock_t> blk = m_sync_store->query_block(m_address, height, hash);
         if (blk != nullptr) {
             forget_hash(hash);
-            xsync_info("chain_fetcher on_newblockhash(exist) %s,height=%lu,viewid=%lu,hash=%s,", m_address.c_str(), height, view_id, to_hex_str(hash).c_str());
+            xsync_dbg("chain_fetcher on_newblockhash(exist) %s,height=%lu,viewid=%lu,hash=%s,", m_address.c_str(), height, view_id, to_hex_str(hash).c_str());
             return;
         }
 

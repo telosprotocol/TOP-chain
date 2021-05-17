@@ -170,7 +170,7 @@ namespace top
             //part#2: information about previouse blocks
             inline const std::string &         get_last_block_hash()        const {return m_last_block_hash;}
             inline const std::string &         get_last_full_block_hash()   const {return m_last_full_block_hash;}
-            inline const uint64_t              get_last_full_block_height() const {return m_last_full_block_height;}
+            inline const uint64_t              get_last_full_block_height() const {if (m_height != 0) {assert(m_height != m_last_full_block_height);} return m_last_full_block_height;}
             //part#3:extra data
             inline const std::string &         get_extra_data()             const {return m_extra_data;}
 
@@ -879,6 +879,7 @@ namespace top
         private://just using them at running and stored in sepereated place than xvblock_t.
             std::string                 m_dump_info;        //pre-print debug inforatmion and just for performance
         };
+        using xvblock_ptr_t = xobject_ptr_t<base::xvblock_t>;
 
         struct less_by_block_height
         {

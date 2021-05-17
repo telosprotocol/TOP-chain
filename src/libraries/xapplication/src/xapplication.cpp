@@ -199,8 +199,8 @@ observer_ptr<store::xstore_face_t> xtop_application::store() const noexcept {
     return make_observer(m_store.get());
 }
 
-xobject_ptr_t<base::xvblockstore_t> xtop_application::blockstore() const noexcept {
-    return m_blockstore;
+observer_ptr<base::xvblockstore_t> xtop_application::blockstore() const noexcept {
+    return make_observer(m_blockstore.get());
 }
 
 observer_ptr<store::xindexstorehub_t> xtop_application::indexstore() const noexcept {
@@ -239,18 +239,16 @@ base::xauto_ptr<top::base::xvblock_t> xtop_application::last_logic_time() const 
 
 bool xtop_application::check_rootblock() {
     base::xvblock_t* rootblock = xrootblock_t::get_rootblock();
-    base::xvblock_t* db_rootblock = store()->get_vblock(std::string(), rootblock->get_account(), 0);
-    if (db_rootblock != nullptr) {
-        if (db_rootblock->get_block_hash() != rootblock->get_block_hash()) {
-            xerror("xtop_application::check_rootblock db rootblock not match");
-            return false;
-        }
-    } else {
-        if (false == store()->set_vblock(std::string(), rootblock)) {
-            xerror("xtop_application::check_rootblock rootblock set db fail");
-            return false;
-        }
+
+    if (true == blockstore()->exist_genesis_block(base::xvaccount_t(rootblock->get_account()))) {
+        return true;
     }
+
+    if (false == blockstore()->store_block(base::xvaccount_t(rootblock->get_account()), rootblock)) {
+        xerror("xtop_application::check_rootblock rootblock set db fail");
+        return false;
+    }
+
     xinfo("xtop_application::check_rootblock success");
     return true;
 }
@@ -258,6 +256,11 @@ bool xtop_application::check_rootblock() {
 bool xtop_application::create_genesis_accounts() {
     std::map<std::string, uint64_t> genesis_accounts = xrootblock_t::get_all_genesis_accounts();
     for (auto const & pair : genesis_accounts) {
+        common::xaccount_address_t account_address{pair.first};
+        if (m_blockstore->exist_genesis_block(account_address.value())) {
+            xdbg("xtop_contract_manager::setup_chain blockchain account %s genesis block exist", account_address.c_str());
+            continue;
+        }
         if (!create_genesis_account(pair.first, pair.second)) {
             xassert(0);
             return false;
@@ -276,12 +279,12 @@ bool xtop_application::create_genesis_account(std::string const & address, uint6
     // m_blockstore->delete_block(_vaddr, genesis_block.get());  // delete default genesis block
     auto ret = m_blockstore->store_block(_vaddr, genesis_block.get());
     if (!ret) {
-        xwarn("xtop_application::create_genesis_account store genesis block fail");
+        xerror("xtop_application::create_genesis_account store genesis block fail");
         return false;
     }
     ret = m_blockstore->execute_block(_vaddr, genesis_block.get());
     if (!ret) {
-        xwarn("xtop_application::create_genesis_account execute genesis block fail");
+        xerror("xtop_application::create_genesis_account execute genesis block fail");
         return false;
     }
     return true;
@@ -362,7 +365,7 @@ bool xtop_application::is_beacon_account() const noexcept {
     top::common::xnode_id_t node_id = top::common::xnode_id_t{user_params.account};
 
     std::string result;
-    base::xauto_ptr<base::xvblock_t> latest_vblock = m_blockstore->get_latest_committed_block(base::xvaccount_t(sys_contract_rec_elect_rec_addr));
+    auto latest_vblock = data::xblocktool_t::get_latest_committed_lightunit(m_blockstore.get(), sys_contract_rec_elect_rec_addr);
     xblock_t* block = dynamic_cast<xblock_t*>(latest_vblock.get());
     auto property_names = data::election::get_property_name_by_addr(common::xaccount_address_t{sys_contract_rec_elect_rec_addr});
     common::xnetwork_id_t network_id{top::config::to_chainid(XGET_CONFIG(chain_name))};

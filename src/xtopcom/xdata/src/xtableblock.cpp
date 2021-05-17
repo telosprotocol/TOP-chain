@@ -306,7 +306,7 @@ void xtable_block_t::unpack_proposal_units(std::vector<xblock_ptr_t> & units) co
             //     _block_ptr->dump_header().c_str(), _block_ptr->dump_cert().c_str(),
             //     base::xstring_utl::to_hex(_block_ptr->get_cert()->get_hash_to_sign()).c_str(), base::xstring_utl::to_hex(output_unit->get_unit_sign_hash()).c_str());
         } else {
-            xinfo("xtable_block_t::unpack_proposal_units unpack unit succ. table=%s,unit=%s",
+            xdbg("xtable_block_t::unpack_proposal_units unpack unit succ. table=%s,unit=%s",
                 dump().c_str(), _block_ptr->dump().c_str());
         }
         units.push_back(_block_ptr);

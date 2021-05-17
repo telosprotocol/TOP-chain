@@ -10,20 +10,75 @@
 
 NS_BEG2(top, blockmaker)
 
-bool xblock_maker_t::update_account_state(const xblock_ptr_t & latest_committed_block) {
-    if (m_commit_account != nullptr && m_commit_account->get_last_height() == latest_committed_block->get_height()) {
+// create the state matching latest block and cache it
+bool xblock_maker_t::update_account_state(const xblock_ptr_t & latest_block, uint64_t & lacked_block_height) {
+    if (m_latest_bstate != nullptr && m_latest_bstate->get_last_block_hash() == latest_block->get_block_hash()) {
+        xdbg("xblock_maker_t::update_account_state find cache state. account=%s,height=%ld",
+            get_account().c_str(), latest_block->get_height());
         return true;
     }
 
-    m_commit_account = get_store()->query_account(get_account());
-    if (m_commit_account == nullptr) {
-        m_commit_account = make_object_ptr<xblockchain2_t>(get_account());
+    m_latest_bstate = get_store()->query_account(get_account());
+    if (m_latest_bstate == nullptr) {
+        m_latest_bstate = make_object_ptr<xblockchain2_t>(get_account());
     }
-    if (m_commit_account->get_last_height() != latest_committed_block->get_height()) {
-        xwarn("xblock_maker_t::update_account_state fail-load commmit account. account=%s,actual_account_height=%ld,demand_account_height=%ld",
-            get_account().c_str(), m_commit_account->get_last_height(), latest_committed_block->get_height());
+    if (m_latest_bstate->get_last_height() > latest_block->get_height()) {
+        xwarn("xblock_maker_t::update_account_state fail-block behind account. account=%s,actual_account_height=%ld,demand_account_height=%ld",
+            get_account().c_str(), m_latest_bstate->get_last_height(), latest_block->get_height());
+        return false;
+    } else if (m_latest_bstate->get_last_height() == latest_block->get_height()) {
+        if (m_latest_bstate->get_last_block_hash() == latest_block->get_block_hash() || latest_block->is_genesis_block()) {
+            return true;
+        }
+        xerror("xblock_maker_t::update_account_state fail-block hash not match commit account. account=%s,state_height=%ld,block=%s",
+            get_account().c_str(), m_latest_bstate->get_last_height(), latest_block->dump().c_str());
         return false;
     }
+
+    // load latest blocks and then apply to state
+    std::map<uint64_t, xblock_ptr_t> blocks;
+    xblock_ptr_t current_block = latest_block;
+    blocks[current_block->get_height()] = current_block;
+    while (1) {
+        if ( current_block->is_genesis_block() && m_latest_bstate->get_last_height() == 0 ) {
+            break;
+        }
+        if (current_block->get_last_block_hash() == m_latest_bstate->get_last_block_hash()) {
+            break;
+        }
+        if (current_block->is_fullblock()) {
+            break;
+        }
+        if (current_block->get_height() == 0) {
+            xerror("xblock_maker_t::update_account_state fail-not match account state. block=%s",
+                latest_block->dump().c_str());
+            return false;
+        }
+
+        xblock_ptr_t prev_block = get_prev_block(current_block);
+        if (prev_block == nullptr) {
+            auto _block = get_blockstore()->load_block_object(*this, current_block->get_height() - 1, current_block->get_last_block_hash(), true);
+            if (_block == nullptr) {
+                xwarn("xblock_maker_t::update_account_state fail-load block.account=%s,height=%ld", get_account().c_str(), current_block->get_height() - 1);
+                lacked_block_height = current_block->get_height() - 1;
+                return false;
+            }
+            prev_block = xblock_t::raw_vblock_to_object_ptr(_block.get());
+        }
+        current_block = prev_block;
+        blocks[current_block->get_height()] = current_block;
+    }
+
+    // make new state
+    xaccount_ptr_t new_state = m_latest_bstate->clone_state();
+    for (auto & v : blocks) {
+        xblock_ptr_t & block = v.second;
+        new_state->apply_block(block.get());
+    }
+    m_latest_bstate = new_state;
+
+    xdbg("xblock_maker_t::update_account_state succ cache new state. account=%s,height=%ld,blocks_count=%zu",
+        get_account().c_str(), m_latest_bstate->get_last_height(), blocks.size());
     return true;
 }
 
@@ -57,32 +112,6 @@ bool xblock_maker_t::verify_latest_blocks(base::xvblock_t* latest_cert_block, ba
     return true;
 }
 
-void xblock_maker_t::set_latest_committed_block(const xblock_ptr_t & latest_committed_block) {
-    if (m_latest_commit_block == nullptr || m_latest_commit_block->get_height() != latest_committed_block->get_height()) {
-        m_latest_commit_block = latest_committed_block;
-    }
-}
-
-std::vector<xblock_ptr_t> xblock_maker_t::get_uncommit_blocks() const {
-    std::vector<xblock_ptr_t> uncommit_blocks;
-    for (auto iter = m_latest_blocks.rbegin(); iter != m_latest_blocks.rend(); iter++) {
-        if (iter->first <= m_latest_commit_block->get_height()) {
-            break;
-        }
-        uncommit_blocks.push_back(iter->second);
-    }
-    return uncommit_blocks;
-}
-
-void xblock_maker_t::set_latest_blocks(const base::xblock_mptrs & latest_blocks) {
-    base::xvblock_t* commit_block = latest_blocks.get_latest_committed_block();
-    base::xvblock_t* lock_block = latest_blocks.get_latest_locked_block();
-    base::xvblock_t* cert_block = latest_blocks.get_latest_cert_block();
-    // update latest blocks
-    commit_block->add_ref();
-    m_latest_commit_block.attach((data::xblock_t*)commit_block);
-}
-
 void xblock_maker_t::clear_old_blocks() {
     if (m_latest_blocks.empty()) {
         return;
@@ -102,7 +131,7 @@ void xblock_maker_t::set_latest_block(const xblock_ptr_t & block) {
     m_latest_blocks[block->get_height()] = block;
 }
 
-bool xblock_maker_t::load_and_cache_enough_blocks(const xblock_ptr_t & latest_block) {
+bool xblock_maker_t::load_and_cache_enough_blocks(const xblock_ptr_t & latest_block, uint64_t & lacked_block_height) {
     xblock_ptr_t current_block = latest_block;
     set_latest_block(current_block);
     uint32_t count = 1;
@@ -115,6 +144,7 @@ bool xblock_maker_t::load_and_cache_enough_blocks(const xblock_ptr_t & latest_bl
             auto _block = get_blockstore()->load_block_object(*this, current_block->get_height() - 1, current_block->get_last_block_hash(), true);
             if (_block == nullptr) {
                 xwarn("xblock_maker_t::load_and_cache_enough_blocks fail-load block.account=%s,height=%ld", get_account().c_str(), current_block->get_height() - 1);
+                lacked_block_height = current_block->get_height() - 1;
                 return false;
             }
             prev_block = xblock_t::raw_vblock_to_object_ptr(_block.get());
@@ -182,11 +212,6 @@ bool xblock_maker_t::check_latest_blocks() const {
         }
     }
 
-    if (get_lowest_height_block()->get_height() > get_latest_committed_block()->get_height()) {
-        xassert(0);
-        return false;
-    }
-
     uint64_t distance_height = get_highest_height_block()->get_height() - get_lowest_height_block()->get_height() + 1;
     if (distance_height != m_latest_blocks.size()) {
         xassert(0);
@@ -249,19 +274,6 @@ xblock_ptr_t xblock_maker_t::get_highest_non_empty_block() const {
         }
     }
     return nullptr;
-}
-
-bool xblock_maker_t::has_uncommitted_blocks() const {
-    xassert(get_highest_height_block()->get_height() >= get_latest_committed_block()->get_height());
-    return get_highest_height_block()->get_height() > get_latest_committed_block()->get_height();
-}
-
-xaccount_ptr_t xblock_maker_t::clone_latest_committed_state() const {
-    std::string stream_str;
-    get_latest_committed_state()->serialize_to_string(stream_str);
-    xaccount_ptr_t blockchain = make_object_ptr<xblockchain2_t>(get_account());
-    blockchain->serialize_from_string(stream_str);
-    return blockchain;
 }
 
 xblock_ptr_t        xblock_builder_face_t::build_empty_block(const xblock_ptr_t & prev_block,

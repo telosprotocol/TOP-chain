@@ -332,6 +332,10 @@ if (XBUILD_GALILEO)
     add_definitions(-DXBUILD_GALILEO)
 endif()
 
+if (BUILD_RUSTVM)
+    add_definitions(-DBUILD_RUSTVM)
+endif()
+
 if (${CMAKE_SYSTEM_NAME} STREQUAL Linux OR ${CMAKE_SYSTEM_NAME} STREQUAL Darwin)
 #  find_package(PkgConfig REQUIRED)
 

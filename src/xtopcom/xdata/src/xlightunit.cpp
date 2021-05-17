@@ -334,15 +334,18 @@ base::xvblock_t* xlightunit_block_t::create_genesis_lightunit(const std::string 
 }
 
 base::xvblock_t* xlightunit_block_t::create_next_lightunit(const xlightunit_block_para_t & para, base::xvblock_t* prev_block) {
-    if (prev_block->is_genesis_block() || prev_block->get_block_class() == base::enum_xvblock_class_full) {
-        return create_lightunit(prev_block->get_account(), prev_block->get_height() + 1,
-            prev_block->get_block_hash(), std::string(), prev_block->get_viewid() + 1, prev_block->get_clock() + 1,
-            prev_block->get_block_hash(), prev_block->get_height(), para);
-    } else {
-        return create_lightunit(prev_block->get_account(), prev_block->get_height() + 1,
-            prev_block->get_block_hash(), std::string(), prev_block->get_viewid() + 1, prev_block->get_clock() + 1,
-            prev_block->get_last_full_block_hash(), prev_block->get_last_full_block_height(), para);
-    }
+    bool const prev_block_genesis_or_full = prev_block->is_genesis_block() || prev_block->get_block_class() == base::enum_xvblock_class_full;
+
+    return create_lightunit(prev_block->get_account(),
+                            prev_block->get_height() + 1,
+                            prev_block->get_block_hash(),
+                            std::string(),
+                            prev_block->get_viewid() + 1,
+                            prev_block->get_clock() + 1,
+                            prev_block_genesis_or_full ? prev_block->get_block_hash() : prev_block->get_last_full_block_hash(),
+                            prev_block_genesis_or_full ? prev_block->get_height() : prev_block->get_last_full_block_height(),
+                            para);
+
 }
 base::xvblock_t* xlightunit_block_t::create_next_lightunit(const xlightunit_block_para_t & para, xblockchain2_t* chain) {
     return create_lightunit(chain->get_account(), chain->get_chain_height() + 1,

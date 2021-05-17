@@ -292,6 +292,9 @@ namespace top
             //xdbg("xclockcert_view::on_clock_fire,recv new clock=%s at node=0x%llx",_clock_event->get_clock_block()->dump().c_str(),get_xip2_addr().low_addr);
 
             update_clock_cert(_clock_event->get_clock_block());
+            if(_clock_event->get_latest_block() != NULL)
+                update_vblock_cert(_clock_event->get_latest_block());
+            
             return false;//let lower layer continue get notified
         }
 

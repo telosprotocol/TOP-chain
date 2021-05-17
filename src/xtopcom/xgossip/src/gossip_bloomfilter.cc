@@ -47,11 +47,6 @@ void GossipBloomfilter::Broadcast(
         return;
     }
 
-    if (ThisNodeIsEvil(message)) {
-        TOP_WARN2("this node(%s) is evil", HexEncode(global_xid->Get()).c_str());
-        return;
-    }
-
     MessageKey msg_key(0,message.gossip().msg_hash(),0);
     if (MessageWithBloomfilter::Instance()->StopGossip(msg_key, message.gossip().stop_times())) {
         TOP_NETWORK_DEBUG_FOR_REDIS(message, "hop_num");
@@ -77,11 +72,6 @@ void GossipBloomfilter::Broadcast(
 
         if (bloomfilter->Contain((*iter)->hash64)) {
             ++filtered;
-#ifdef TOP_TESTING_PERFORMANCE
-            TOP_NETWORK_DEBUG_FOR_PROTOMESSAGE(
-                    std::string("message filterd: ") + (*iter)->public_ip +
-                    ":" + std::to_string((*iter)->public_port), message);
-#endif
             continue;
         }
 
@@ -146,11 +136,6 @@ void GossipBloomfilter::BroadcastWithNoFilter(
         return;
     }
 
-
-    if (ThisNodeIsEvil(message)) {
-        TOP_WARN2("this node(%s) is evil", HexEncode(local_id).c_str());
-        return;
-    }
     Send(message, neighbors);
 }
 

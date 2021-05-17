@@ -16,10 +16,15 @@ NS_BEG2(top, blockmaker)
 
 xtable_maker_t::xtable_maker_t(const std::string & account, const xblockmaker_resources_ptr_t & resources)
 : xblock_maker_t(account, resources, m_keep_latest_blocks_max) {
+    xdbg("xtable_maker_t::xtable_maker_t create,this=%p,account=%s", this, account.c_str());
     m_fulltable_builder = std::make_shared<xfulltable_builder_t>();
     m_lighttable_builder = std::make_shared<xlighttable_builder_t>();
     m_indexstore = resources->get_indexstorehub()->get_index_store(account);
     m_full_table_interval_num = XGET_CONFIG(fulltable_interval_block_num);
+}
+
+xtable_maker_t::~xtable_maker_t() {
+    xdbg("xtable_maker_t::xtable_maker_t destroy,this=%p", this);
 }
 
 int32_t xtable_maker_t::default_check_latest_state() {
@@ -48,15 +53,12 @@ int32_t xtable_maker_t::check_latest_state(const xblock_ptr_t & latest_block) {
     }
 
     m_check_state_success = false;
+    uint64_t lacked_block_height = 0;
     // cache latest block
-    if (!load_and_cache_enough_blocks(latest_block)) {
+    if (!load_and_cache_enough_blocks(latest_block, lacked_block_height)) {
         xwarn("xunit_maker_t::check_latest_state fail-load_and_cache_enough_blocks.account=%s", get_account().c_str());
         return xblockmaker_error_latest_table_blocks_invalid;
     }
-
-    // update latest committed block and blockchain state
-    xblock_ptr_t latest_committed_block = get_highest_commit_block();
-    set_latest_committed_block(latest_committed_block);
 
     if (false == check_latest_blocks()) {
         xerror("xtable_maker_t::check_latest_state fail-check_latest_blocks.latest_block=%s",
@@ -156,9 +158,9 @@ bool xtable_maker_t::create_lightunit_makers(const xtablemaker_para_t & table_pa
         }
 
         // 3.then check if tx is invalid
-        base::enum_transaction_subtype cur_tx_subtype;
-        base::xtable_shortid_t cur_tableid;
-        uint64_t cur_receipt_id;
+        base::enum_transaction_subtype cur_tx_subtype = base::enum_transaction_subtype_invalid;
+        base::xtable_shortid_t cur_tableid = 0xFFFF;
+        uint64_t cur_receipt_id = 0;
         if (tx->is_recv_tx() || tx->is_confirm_tx()) {
             cur_tx_subtype = tx->get_tx_subtype();
             auto & target_account_addr = (tx->is_recv_tx()) ? tx->get_source_addr() : tx->get_target_addr();
@@ -313,7 +315,7 @@ xblock_ptr_t xtable_maker_t::make_light_table(bool is_leader, const xtablemaker_
     for (auto & v : unitmakers) {
         xunit_maker_ptr_t & unitmaker = v.second;
         xunitmaker_result_t unit_result;
-        xunitmaker_para_t unit_para(table_para.get_tablestate());
+        xunitmaker_para_t unit_para(table_para.get_tablestate(), is_leader);
         xblock_ptr_t proposal_unit = unitmaker->make_proposal(unit_para, cs_para, unit_result);
         table_result.m_unit_results.push_back(unit_result);
         if (false == table_para.delete_fail_tx_from_proposal(unit_result.m_fail_txs) ) {
@@ -350,7 +352,7 @@ xblock_ptr_t xtable_maker_t::make_light_table(bool is_leader, const xtablemaker_
     xblock_t::batch_units_to_receiptids(batch_units, receiptid_check);
     if (false == receiptid_check.check_contious(table_para.get_tablestate()->get_receiptid_state())) {
         table_result.m_make_block_error_code = xblockmaker_error_tx_check;
-        xerror("xtablestate_t::make_light_table fail check receiptid contious.is_leader=%d,%s", is_leader, cs_para.dump().c_str());
+        xerror("xtable_maker_t::make_light_table fail check receiptid contious.is_leader=%d,%s", is_leader, cs_para.dump().c_str());
         return nullptr;
     }
 

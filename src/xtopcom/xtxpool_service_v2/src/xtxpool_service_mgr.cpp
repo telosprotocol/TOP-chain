@@ -12,6 +12,7 @@
 #include "xmbus/xevent_store.h"
 #include "xstore/xstore.h"
 #include "xtxpool_service_v2/xcons_utl.h"
+#include "xtxpool_service_v2/xreceipt_strategy.h"
 #include "xtxpool_service_v2/xtxpool_proxy.h"
 #include "xtxpool_service_v2/xtxpool_service.h"
 #include "xtxpool_v2/xreceipt_resend.h"
@@ -30,7 +31,7 @@ xtxpool_service_mgr::xtxpool_service_mgr(const observer_ptr<store::xstore_face_t
                                          const observer_ptr<base::xiothread_t> & iothread,
                                          const observer_ptr<mbus::xmessage_bus_face_t> & mbus,
                                          const observer_ptr<time::xchain_time_face_t> & clock)
-  : m_para(make_object_ptr<xtxpool_svc_para_t>(store, blockstore, txpool)), m_iothread(iothread), m_mbus(mbus), m_clock(clock) {
+  : m_para(make_object_ptr<xtxpool_svc_para_t>(store, blockstore, txpool, mbus)), m_iothread(iothread), m_mbus(mbus), m_clock(clock) {
 }
 
 void xtxpool_service_mgr::on_block_to_db_event(mbus::xevent_ptr_t e) {
@@ -63,7 +64,7 @@ void xtxpool_service_mgr::on_block_to_db_event(mbus::xevent_ptr_t e) {
 void xtxpool_service_mgr::on_block_confirmed(xblock_t * block) {
     uint64_t now_clock = m_clock->logic_time();
 
-    xinfo("xtxpool_service_mgr::on_block_to_db_event process,level:%d,class:%d,now=%llu,block:%s",
+    xinfo("xtxpool_service_mgr::on_block_confirmed process,level:%d,class:%d,now=%llu,block:%s",
           block->get_block_level(),
           block->get_block_class(),
           now_clock,
@@ -86,23 +87,11 @@ void xtxpool_service_mgr::on_block_confirmed(xblock_t * block) {
 }
 
 void xtxpool_service_mgr::make_receipts_and_send(xblock_t * block) {
-    if (!block->is_lighttable() || !block->check_block_flag(base::enum_xvblock_flag_committed)) {
-        xinfo("xtxpool_service_mgr::make_receipts_and_send block:%s", block->dump().c_str());
-        return;
-    }
-
-    xtable_block_t * tableblock = dynamic_cast<xtable_block_t *>(block);
-    std::vector<xcons_transaction_ptr_t> sendtx_receipts;
-    std::vector<xcons_transaction_ptr_t> recvtx_receipts;
-    tableblock->create_txreceipts(sendtx_receipts, recvtx_receipts);
-
+    auto receipts = xreceipt_strategy_t::make_receipts(block);
     uint64_t now = xverifier::xtx_utl::get_gmttime_s();
-    for (auto & it_send_receipt : sendtx_receipts) {
-        send_receipt(it_send_receipt);
-    }
-
-    for (auto & it_recv_receipt : recvtx_receipts) {
-        send_receipt(it_recv_receipt);
+    for (auto & receipt : receipts) {
+        xinfo("xtxpool_service_mgr::make_receipts_and_send tx=%s", receipt->dump().c_str());
+        send_receipt(receipt);
     }
     xdbg("xtxpool_service_mgr::make_receipts_and_send block:%s", block->dump().c_str());
 }
@@ -205,7 +194,7 @@ void xtxpool_service_mgr::send_receipt(xcons_transaction_ptr_t & receipt) {
     std::shared_ptr<xtxpool_service_face> service = find_receipt_sender(source_tableid, receipt->get_transaction()->digest());
     if (service != nullptr) {
         xdbg("xtxpool_service_mgr::send_receipt service found,zone:%d table:%d tx:%s", source_tableid.get_zone_index(), source_tableid.get_subaddr(), receipt->dump().c_str());
-        service->send_receipt(receipt, true);
+        service->send_receipt(receipt, 0);
     } else {
         xdbg("xtxpool_service_mgr::send_receipt no service found,zone:%d table:%d tx:%s", source_tableid.get_zone_index(), source_tableid.get_subaddr(), receipt->dump().c_str());
     }
@@ -245,12 +234,9 @@ void xtxpool_service_mgr::stop() {
     m_timer->release_ref();
 }
 
-#define recover_unconfirmed_txs_interval (0xFF)  // every 256 seconds recover once.
-
 void xtxpool_service_mgr::on_timer() {
-    xdbg("xtxpool_service_mgr::on_timer");
     uint64_t now = xverifier::xtx_utl::get_gmttime_s();
-    bool is_time_for_recover_unconfirmed_txs = ((now | recover_unconfirmed_txs_interval) == 0);
+    bool is_time_for_recover_unconfirmed_txs = xreceipt_strategy_t::is_time_for_recover_unconfirmed_txs(now);
     typedef std::tuple<base::enum_xchain_zone_index, uint32_t, uint32_t> table_boundary_t;
     std::vector<table_boundary_t> table_boundarys;
     {
@@ -276,6 +262,7 @@ void xtxpool_service_mgr::on_timer() {
         base::enum_xchain_zone_index zone_id = std::get<0>(table_boundary);
         uint32_t fount_table_id = std::get<1>(table_boundary);
         uint32_t back_table_id = std::get<2>(table_boundary);
+        xinfo("xtxpool_service_mgr::on_timer, recover unconfirmed txs for zone:%d table:%d:%d", zone_id, fount_table_id, back_table_id);
         for (uint32_t table_id = fount_table_id; table_id <= back_table_id; table_id++) {
             m_para->get_txpool()->update_unconfirm_accounts(zone_id, table_id);
             m_para->get_txpool()->update_non_ready_accounts(zone_id, table_id);

@@ -54,7 +54,11 @@ public:
         return nullptr;
     }
 
-    base::xauto_ptr<base::xvblock_t> get_latest_genesis_connected_block(const base::xvaccount_t & account) override {
+    base::xauto_ptr<base::xvblock_t> get_latest_genesis_connected_block(const base::xvaccount_t & account, bool ask_full_search) override {
+        return nullptr;
+    }
+    
+    base::xauto_ptr<base::xvbindex_t> get_latest_genesis_connected_index(const base::xvaccount_t & account,bool ask_full_search) override {
         return nullptr;
     }
 
@@ -102,6 +106,10 @@ public:
         return nullptr;
     }
 
+    std::vector<base::xvblock_ptr_t> load_block_object(const std::string & tx_hash,const base::enum_transaction_subtype type) override {
+        return {};
+    }
+
     bool load_block_input(const base::xvaccount_t &, base::xvblock_t *) override {
         return false;
     }
@@ -111,6 +119,10 @@ public:
     }
 
     bool load_block_offdata(const base::xvaccount_t & account, base::xvblock_t * block) override {
+        return false;
+    }
+
+    bool load_block_flags(const base::xvaccount_t & account, base::xvblock_t* block) override {
         return false;
     }
 

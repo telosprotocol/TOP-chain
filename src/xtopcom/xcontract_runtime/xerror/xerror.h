@@ -56,6 +56,9 @@ enum class xenum_errc {
     vm_vote_update_db_error,
     vm_vote_proposal_property_error,
 
+    // wasm user contract
+    enum_wasm_code_invalid,
+
     unknown_error,
 };
 using xerrc_t = xenum_errc;

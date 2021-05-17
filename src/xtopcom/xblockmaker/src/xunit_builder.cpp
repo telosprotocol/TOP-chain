@@ -25,7 +25,6 @@ xlightunit_builder_t::xlightunit_builder_t() {
 void xlightunit_builder_t::alloc_tx_receiptid(const std::vector<xcons_transaction_ptr_t> & input_txs, const base::xreceiptid_state_ptr_t & receiptid_state) {
     for (auto & tx : input_txs) {
         data::xblocktool_t::alloc_transaction_receiptid(tx, receiptid_state);
-        xdbg("xlightunit_builder_t::alloc_tx_receiptid alloc receipt id. tx=%s", tx->dump(true).c_str());
     }
 }
 
@@ -49,19 +48,11 @@ xblock_ptr_t        xlightunit_builder_t::build_block(const xblock_ptr_t & prev_
     const std::vector<xcons_transaction_ptr_t> & input_txs = lightunit_build_para->get_origin_txs();
     txexecutor::xbatch_txs_result_t exec_result;
     int exec_ret = txexecutor::xtransaction_executor::exec_batch_txs(_account_context.get(), input_txs, exec_result);
+    // some send txs may execute fail but some recv/confirm txs may execute successfully
+    if (!exec_result.m_exec_fail_txs.empty()) {
+        lightunit_build_para->set_fail_txs(exec_result.m_exec_fail_txs);
+    }
     if (exec_ret != xsuccess) {
-        xassert(exec_result.m_exec_fail_tx_ret != 0);
-        xassert(exec_result.m_exec_fail_tx != nullptr);
-        const auto & failtx = exec_result.m_exec_fail_tx;
-        xassert(failtx->is_self_tx() || failtx->is_send_tx());
-        xwarn("xlightunit_builder_t::build_block fail-tx execute. %s,account:%s,height=%" PRIu64 ",tx=%s",
-            cs_para.dump().c_str(), account.c_str(), prev_height, failtx->dump().c_str());
-        // tx execute fail, this tx and follower txs should be pop out for hash must be not match with the new tx witch will replace the fail tx.
-        for (auto & tx : input_txs) {
-            if (tx->get_transaction()->get_tx_nonce() >= failtx->get_transaction()->get_tx_nonce()) {
-                lightunit_build_para->set_fail_tx(tx);
-            }
-        }
         build_para->set_error_code(xblockmaker_error_tx_execute);
         return nullptr;
     }
@@ -92,8 +83,9 @@ xblock_ptr_t        xfullunit_builder_t::build_block(const xblock_ptr_t & prev_b
     uint64_t prev_height = prev_block->get_height();
     std::map<std::string, std::string> propertys;
     const auto & property_map = prev_state->get_property_hash_map();
+    const auto & property_objs_map = prev_state->get_property_objs();
     for (auto & v : property_map) {
-        xdataobj_ptr_t db_prop = build_para->get_store()->clone_property(account, v.first);
+        xdataobj_ptr_t db_prop = prev_state->find_property(v.first);
         if (db_prop == nullptr) {
             build_para->set_error_code(xblockmaker_error_property_load);
             xerror("xfullunit_builder_t::build_block fail-property load,%s,account:%s,height=%" PRIu64 ",property(%s) not exist.",
@@ -105,7 +97,7 @@ xblock_ptr_t        xfullunit_builder_t::build_block(const xblock_ptr_t & prev_b
         if (db_prop_hash != v.second) {
             build_para->set_error_code(xblockmaker_error_property_unmatch);
             // TODO(jimmy) might happen, because property is not stored by height
-            xwarn("xfullunit_builder_t::build_block fail-property unmatch,%s,account:%s,height=%" PRIu64 ",property(%s) hash not match fullunit.",
+            xerror("xfullunit_builder_t::build_block fail-property unmatch,%s,account:%s,height=%" PRIu64 ",property(%s) hash not match fullunit.",
                   cs_para.dump().c_str(), account.c_str(), prev_height, v.first.c_str());
             return nullptr;
         }

@@ -9,8 +9,8 @@ add_library(xkad ${xkad_src})
 #add_dependencies(xkad xpbase xtransport xdb)
 target_link_libraries(xkad xpbase xtransport xdb protobuf)
 
-if(XENABLE_TESTS)
-    add_subdirectory(tests)
-endif()
+# if(XENABLE_TESTS)
+#     add_subdirectory(tests)
+# endif()
 
-add_subdirectory(bench)
+# add_subdirectory(bench)

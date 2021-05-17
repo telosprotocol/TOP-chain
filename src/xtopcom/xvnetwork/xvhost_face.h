@@ -28,6 +28,10 @@
 
 NS_BEG2(top, vnetwork)
 
+#ifndef VHOST_METRICS
+#define VHOST_METRICS 0
+#endif
+
 // using callback_registration_token = xid_t<xmessage_ready_callback_t, std::size_t>;
 /**
  * @brief xtop_vhost_face (or xvhost_face_t) is a virtual host delegate.

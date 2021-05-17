@@ -16,7 +16,6 @@
 #include "xpbase/base/top_log.h"
 #include "xtransport/utils/transport_utils.h"
 #include "xtransport/message_manager/multi_message_handler.h"
-#include "xtransport/udp_config.h"
 #include "xmetrics/xmetrics.h"
 #include "xtransport/udp_transport/transport_filter.h"
 #include "json/json.h"
@@ -194,7 +193,7 @@ int xp2pudp_t::send(xpacket_t& packet)
     }
     int ret_status = xslsocket_t::send(0, 0, 0, 0, packet, 0, 0, NULL);
 
-#ifdef ENABLE_METRICS
+#ifdef XENABLE_P2P_BENDWIDTH
     transport::protobuf::RoutingMessage message;
     if (!message.ParseFromArray((const char*)packet.get_body().data() + enum_xip2_header_len,packet.get_body().size() - enum_xip2_header_len))
     {
@@ -281,7 +280,7 @@ int32_t xp2pudp_t::recv(
         return enum_xerror_code_fail;
     }
 
-#ifdef ENABLE_METRICS
+#ifdef XENABLE_P2P_BENDWIDTH
     transport::protobuf::RoutingMessage message;
     if (!message.ParseFromArray((const char*)packet.get_body().data() + enum_xip2_header_len,packet.get_body().size() - enum_xip2_header_len))
     {

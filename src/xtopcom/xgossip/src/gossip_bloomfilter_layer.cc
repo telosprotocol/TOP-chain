@@ -37,7 +37,7 @@ void GossipBloomfilterLayer::Broadcast(
         transport::protobuf::RoutingMessage& message,
         kadmlia::RoutingTablePtr& routing_table) {
     CheckDiffNetwork(message);
-    BlockSyncManager::Instance()->NewBroadcastMessage(message);
+    // BlockSyncManager::Instance()->NewBroadcastMessage(message);
     auto gossip_max_hop_num = kGossipDefaultMaxHopNum;
     if (message.gossip().max_hop_num() > 0) {
         gossip_max_hop_num = message.gossip().max_hop_num();
@@ -55,9 +55,8 @@ void GossipBloomfilterLayer::Broadcast(
     auto kad_key_ptr  = base::GetKadmliaKey(message.des_node_id());    
     uint64_t service_type = kad_key_ptr->GetServiceType();
     MessageKey msg_key(0,message.gossip().msg_hash(),service_type);
-    if (MessageWithBloomfilter::Instance()->StopGossip(msg_key, message.gossip().stop_times())) {
-        TOP_DEBUG("stop gossip for msg_hash:%u msg_type:%d stop_times:%d", 
-                 message.gossip().msg_hash(),message.type(), message.gossip().stop_times());
+    if (MessageWithBloomfilter::Instance()->StopGossip(msg_key, kGossipLayerStopTimes)) {
+        TOP_DEBUG("stop gossip for msg_hash:%u msg_type:%d stop_times:%d", message.gossip().msg_hash(), message.type(), kGossipLayerStopTimes);
         return;
     }
     auto bloomfilter = MessageWithBloomfilter::Instance()->GetMessageBloomfilter(message);
@@ -69,7 +68,7 @@ void GossipBloomfilterLayer::Broadcast(
     }
 
     // multi-service_type may filtered
-    if (message.hop_num() >= message.gossip().ign_bloomfilter_level() && message.hop_num() != 0) {
+    if (message.hop_num() >= kGossipLayerBloomfilterIgnoreLevel && message.hop_num() != 0) {
         bloomfilter->Add(routing_table->get_local_node_info()->hash64());
     }
 
@@ -83,23 +82,7 @@ void GossipBloomfilterLayer::Broadcast(
         return;
     }
 
-#ifdef TOP_TESTING_PERFORMANCE
-    std::string goed_ids;
-    for (uint32_t i = 0; i < message.hop_nodes_size(); ++i) {
-        goed_ids += HexEncode(message.hop_nodes(i).node_id()) + ",";
-    }
-    std::string data = base::StringUtil::str_fmt(
-            "GossipBloomfilterLayer Broadcast select_node size %d,"
-            "filtered %d nodes [hop num: %d][%s][%s]",
-            select_nodes.size(),
-            filtered,
-            message.hop_num(),
-            goed_ids.c_str(),
-            bloomfilter->string().c_str());
-    TOP_NETWORK_DEBUG_FOR_PROTOMESSAGE(data, message);
-#endif
-
-    if ((message.hop_num() + 1) > message.gossip().ign_bloomfilter_level()) {
+    if ((message.hop_num() + 1) > kGossipLayerBloomfilterIgnoreLevel) {
         for (auto iter = select_nodes.begin();
                 iter != select_nodes.end(); ++iter) {
             bloomfilter->Add((*iter)->hash64);
@@ -111,15 +94,79 @@ void GossipBloomfilterLayer::Broadcast(
         message.add_bloomfilter(bloomfilter_vec[i]);
     }
 
-    auto gossip_switch_layer_hop_num = kGossipSwitchLayerHopNum;
-    if (message.gossip().switch_layer_hop_num() > 0) {
-        gossip_switch_layer_hop_num = message.gossip().switch_layer_hop_num();
-    }
+    auto gossip_switch_layer_hop_num = kGossipLayerSwitchLayerHopNum;
+    // if (message.gossip().switch_layer_hop_num() > 0) {
+    //     gossip_switch_layer_hop_num = message.gossip().switch_layer_hop_num();
+    // }
     if (message.hop_num() >= gossip_switch_layer_hop_num) {
         SendLayered(message, select_nodes);
     } else {
         Send(message, select_nodes);
     }
+}
+
+void GossipBloomfilterLayer::SelectNodes(transport::protobuf::RoutingMessage & message,
+                                         kadmlia::RoutingTablePtr & routing_table,
+                                         std::shared_ptr<base::Uint64BloomFilter> & bloomfilter,
+                                         std::vector<kadmlia::NodeInfoPtr> & select_nodes) {
+    uint64_t min_dis = message.gossip().min_dis();
+    uint64_t max_dis = message.gossip().max_dis();
+    if (max_dis <= 0) {
+        max_dis = std::numeric_limits<uint64_t>::max();
+    }
+    uint64_t left_min = message.gossip().left_min();
+    uint64_t right_max = message.gossip().right_max();
+    uint32_t left_overlap = message.gossip().left_overlap();
+    uint32_t right_overlap = message.gossip().right_overlap();
+    if (left_overlap > 0 && left_overlap < 20) {
+        uint64_t tmp_min_dis = min_dis;
+        double rate = (double)left_overlap / 10;
+        uint64_t step = static_cast<uint64_t>((tmp_min_dis - left_min) * rate);
+        if (step > tmp_min_dis) {
+            min_dis = 0;
+        } else {
+            min_dis = tmp_min_dis - step;
+        }
+    }
+    if (right_overlap > 0 && right_overlap < 20) {
+        uint64_t tmp_max_dis = max_dis;
+        double rate = (double)right_overlap / 10;
+        uint64_t step = static_cast<uint64_t>((right_max - max_dis) * rate);
+        if (std::numeric_limits<uint64_t>::max() - step > tmp_max_dis) {
+            max_dis = tmp_max_dis + step;
+        } else {
+            max_dis = std::numeric_limits<uint64_t>::max();
+        }
+    }
+
+    std::vector<kadmlia::NodeInfoPtr> nodes;
+    routing_table->GetRangeNodes(min_dis, max_dis, nodes);
+    if (nodes.empty()) {
+        TOP_WARN("getrangenodes empty");
+        return;
+    }
+
+    TOP_DEBUG("selectnodes hop_num:%u min_dis:%llu max_dis:%llu size:%u", message.hop_num(), min_dis, max_dis, nodes.size());
+
+    uint32_t filtered = 0;
+    std::random_shuffle(nodes.begin(), nodes.end());
+    for (auto iter = nodes.begin(); iter != nodes.end(); ++iter) {
+        if (select_nodes.size() >= kGossipLayerNeighborNum) {
+            break;
+        }
+
+        if ((*iter)->hash64 == 0) {
+            continue;
+        }
+
+        if (bloomfilter->Contain((*iter)->hash64)) {
+            ++filtered;
+            continue;
+        }
+
+        select_nodes.push_back(*iter);
+    }
+    std::sort(select_nodes.begin(), select_nodes.end(), [](const kadmlia::NodeInfoPtr & left, const kadmlia::NodeInfoPtr & right) -> bool { return left->hash64 < right->hash64; });
 }
 
 }  // namespace gossip

@@ -380,6 +380,20 @@ std::string xtop_property_access_control::code_prop_query(common::xaccount_addre
     }
 }
 
+bool xtop_property_access_control::code_prop_update(common::xaccount_address_t const & user, xproperty_identifier_t const & prop_id, std::string const& code) {
+    auto prop_name = prop_id.full_name();
+    if (write_permitted(user, prop_id)) {
+        auto prop = bstate_->load_code_var(prop_name);
+        property_assert(prop, "[xtop_property_access_control::code_prop_query]property not exist, prop_name: " + prop_name);
+        return prop->deploy_code(code);
+
+    } else {
+        std::error_code ec{ error::xerrc_t::property_permission_not_allowed };
+        top::error::throw_error(ec, "[xtop_property_access_control::code_prop_query]permission denied");
+        return {};
+    }
+}
+
 
 std::string xtop_property_access_control::src_code(xproperty_identifier_t const & prop_id, std::error_code & ec) const {
     assert(!ec);
@@ -413,6 +427,41 @@ void xtop_property_access_control::deploy_src_code(xproperty_identifier_t const 
 void xtop_property_access_control::deploy_src_code(xproperty_identifier_t const & prop_id, std::string src_code) {
     std::error_code ec;
     deploy_src_code(prop_id, std::move(src_code), ec);
+    top::error::throw_error(ec);
+}
+
+xbyte_buffer_t xtop_property_access_control::bin_code(xproperty_identifier_t const & prop_id, std::error_code & ec) const {
+    assert(!ec);
+    auto prop_name = prop_id.full_name();
+    auto prop = bstate_->load_code_var(prop_name);
+    property_assert(prop, "[xtop_property_access_control::src_code]property not exist, prop_name: " + prop_name);
+
+    return { std::begin(prop->query()), std::end(prop->query()) };
+}
+
+xbyte_buffer_t xtop_property_access_control::bin_code(xproperty_identifier_t const & prop_id) const {
+    std::error_code ec;
+    auto r = bin_code(prop_id, ec);
+    top::error::throw_error(ec);
+    return r;
+}
+
+void xtop_property_access_control::deploy_bin_code(xproperty_identifier_t const & prop_id, xbyte_buffer_t bin_code, std::error_code & ec) {
+    assert(!ec);
+    if (bstate_->find_property(prop_id.full_name())) {
+        ec = error::xerrc_t::property_already_exist;
+        return;
+    }
+
+    auto src_prop = bstate_->new_code_var(prop_id.full_name());
+    if (!src_prop->deploy_code({ std::begin(bin_code), std::end(bin_code) })) {
+        ec = error::xerrc_t::deploy_code_failed;
+    }
+}
+
+void xtop_property_access_control::deploy_bin_code(xproperty_identifier_t const & prop_id, xbyte_buffer_t bin_code) {
+    std::error_code ec;
+    deploy_bin_code(prop_id, std::move(bin_code), ec);
     top::error::throw_error(ec);
 }
 
