@@ -141,6 +141,7 @@ public:
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(cross_reading_rec_reg_contract_logic_timeout_limitation);
 
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(contract_call_contracts_num);
+        XADD_ONCHAIN_GOVERNANCE_PARAMETER(workload_collection_interval);
 
         std::vector<std::string> committee_addrs = xrootblock_t::get_tcc_initial_committee_addr();
         for (auto & v : committee_addrs) {
