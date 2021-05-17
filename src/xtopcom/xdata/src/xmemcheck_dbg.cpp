@@ -3,10 +3,6 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "xdata/xmemcheck_dbg.h"
-#include "xbase/xutl.h"
-//#include "xbase/xdata.h"
-#include "xbase/xcontext.h"
-#include "xbasic/xdbg.h"
 
 NS_BEG2(top, data)
 

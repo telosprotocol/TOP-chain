@@ -4,16 +4,25 @@
 
 #include "xkad/nat_detect/nat_handshake_manager.h"
 
-#include "xbase/xutl.h"
+#include <assert.h>
+#include <functional>
+#include <utility>
 
-#include "xpbase/base/top_utils.h"
 #include "xkad/routing_table/callback_manager.h"
 #include "xtransport/proto/transport.pb.h"
-#include "xkad/proto/kadmlia.pb.h"
 // #include "xkad/nat_detect/nat_log.h"
 #include "xpbase/base/top_log_name.h"
+#include "xbasic/xbyte_buffer.h"
+#include "xpbase/base/error_code.h"
+#include "xpbase/base/top_log.h"
+#include "xpbase/base/top_timer.h"
+#include "xtransport/transport.h"
 
 namespace top {
+namespace base {
+class TimerManager;
+}  // namespace base
+
 namespace kadmlia {
 
 static const int32_t kDetectionPeriod = 50;  // 50ms

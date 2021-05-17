@@ -1,12 +1,15 @@
 #pragma once
 
-#include "xnetwork/xnode.h"
-#include "xnetwork/xp2p/xdistance.hpp"
-#include "xnetwork/xp2p/xtime_point.h"
-
 #include <cassert>
 #include <functional>
 #include <utility>
+#include <iosfwd>
+#include <system_error>
+
+#include "xnetwork/xnode.h"
+#include "xnetwork/xp2p/xdistance.hpp"
+#include "xnetwork/xp2p/xtime_point.h"
+#include "xbase/xns_macro.h"
 
 NS_BEG3(top, network, p2p)
 

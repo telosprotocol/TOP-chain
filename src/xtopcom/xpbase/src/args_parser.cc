@@ -7,11 +7,14 @@
 
 #include "xpbase/base/args_parser.h"
 
+#include <stddef.h>
 #include <cassert>
-
 #include <list>
+#include <memory>
+#include <utility>
 
 #include "xbase/xutl.h"
+#include "xpbase/base/error_code.h"
 
 namespace top {
 

@@ -3,6 +3,8 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 #include "xrpc_error.h"
 
+#include "xrpc/xerror/xrpc_error_code.h"
+
 NS_BEG2(top, xrpc)
 using std::string;
 

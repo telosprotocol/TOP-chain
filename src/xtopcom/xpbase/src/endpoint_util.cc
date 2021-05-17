@@ -1,7 +1,11 @@
 #include "xpbase/base/endpoint_util.h"
 
+#include <ext/alloc_traits.h>
+#include <stddef.h>
 #include <utility>
 #include <string>
+#include <cstdint>
+#include <type_traits>
 
 #include "xpbase/base/line_parser.h"
 #include "xpbase/base/check_cast.h"

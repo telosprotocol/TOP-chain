@@ -2,8 +2,24 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
+#include <assert.h>
+#include <iosfwd>
+#include <iterator>
+#include <map>
+#include <stdexcept>
+#include <utility>
+
 #include "xbasic/xutility.h"
 #include "xdata/xelection/xelection_group_result.h"
+#include "xbase/xns_macro.h"
+#include "xbasic/xid.hpp"
+#include "xbasic/xversion.hpp"
+#include "xcommon/xip.h"
+#include "xcommon/xlogic_time.h"
+#include "xcommon/xnode_id.h"
+#include "xcommon/xversion.h"
+#include "xdata/xelection/xelection_info.h"
+#include "xdata/xelection/xelection_info_bundle.h"
 
 NS_BEG3(top, data, election)
 

@@ -4,13 +4,23 @@
 
 #pragma once
 
+#include <stdint.h>
 #include <queue>
+#include <string>
+
 #include "xbase/xdata.h"
 #include "xbase/xobject.h"
 #include "xvledger/xvblock.h"
+#include "xbase/xbase.h"
+#include "xbase/xvevent.h"
 
 namespace top
 {
+namespace base {
+class xvblock_t;
+class xvqcert_t;
+}  // namespace base
+
     namespace xconsensus
     {
         enum enum_xcsevent_type

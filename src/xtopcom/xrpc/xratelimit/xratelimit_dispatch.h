@@ -3,14 +3,25 @@
 #define RATELIMIT_DISPATCH_H_
 
 
+#include <list>
+#include <memory>
+#include <functional>
+
 #include "xratelimit_cache.h"
 #include "xratelimit_config.h"
 #include "xratelimit_data_queue.h"
 #include "xratelimit_server_stat.h"
-#include <list>
-#include <memory>
-#include <functional>
 #include "xbase/xns_macro.h"
+
+namespace top {
+namespace xChainRPC {
+class RatelimitCache;
+class RatelimitConfig;
+class RatelimitData;
+class RatelimitDataQueue;
+class RatelimitServerStat;
+}  // namespace xChainRPC
+}  // namespace top
 
 
 NS_BEG2(top, xChainRPC)

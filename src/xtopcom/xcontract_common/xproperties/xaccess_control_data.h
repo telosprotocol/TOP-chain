@@ -4,12 +4,14 @@
 
 #pragma once
 
+#include <unordered_map>
+#include <unordered_set>
+
 #include "xcommon/xaddress.h"
 #include "xcontract_common/xproperties/xproperty_identifier.h"
 #include "xcontract_common/xproperties/xproperty_type.h"
-
-#include <unordered_map>
-#include <unordered_set>
+#include "xbase/xns_macro.h"
+#include "xcontract_common/xproperties/xproperty_category.h"
 
 NS_BEG3(top, contract_common, properties)
 

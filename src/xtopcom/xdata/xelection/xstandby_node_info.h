@@ -6,13 +6,15 @@
 
 #include "xbasic/xcrypto_key.h"
 #include "xcommon/xlogic_time.h"
+#include "xbase/xns_macro.h"
 #if defined XENABLE_MOCK_ZEC_STAKE
 #    include "xcommon/xrole_type.h"
 #endif
-#include "xcommon/xnode_type.h"
-
 #include <cstdint>
 #include <map>
+#include <string>
+
+#include "xcommon/xnode_type.h"
 
 NS_BEG3(top, data, election)
 

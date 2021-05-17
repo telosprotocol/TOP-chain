@@ -2,8 +2,17 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
+#include <stdint.h>
+#include <utility>
+
 #include "xbase/xcontext.h"
 #include "xsync/xmessage_pack.h"
+#include "xbase/xbase.h"
+#include "xbase/xmem.h"
+#include "xbase/xns_macro.h"
+#include "xbase/xpacket.h"
+#include "xbasic/xbyte_buffer.h"
+#include "xvnetwork/xmessage.h"
 
 NS_BEG2(top, sync)
 

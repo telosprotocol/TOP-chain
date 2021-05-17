@@ -5,12 +5,21 @@
 #pragma once
 
 #include <functional>
+
 #include "xtransport/transport_fwd.h"
 #include "xkad/proto/kadmlia.pb.h"
 #include "xbase/xpacket.h"
 
 namespace top {
+namespace base {
+class xpacket_t;
+}  // namespace base
+
 namespace transport {
+namespace protobuf {
+class RoutingMessage;
+}  // namespace protobuf
+
 typedef std::function<void(transport::protobuf::RoutingMessage & message, base::xpacket_t & packet)> HandlerProc;
 }
 namespace wrouter {

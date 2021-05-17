@@ -4,22 +4,19 @@
 
 #include "xkad/routing_table/kad_message_handler.h"
 
-#include <vector>
+#include <assert.h>
+#include <stdint.h>
 #include <string>
-#include <utility>
-#include <map>
 
-#include "xpbase/base/line_parser.h"
 #include "xpbase/base/top_utils.h"
 #include "xpbase/base/top_log.h"
-#include "xpbase/base/multirelay_log.h"
 #include "xkad/routing_table/routing_utils.h"
-#include "xkad/routing_table/callback_manager.h"
-#include "xkad/routing_table/node_info.h"
 #include "xkad/routing_table/routing_table.h"
-#include "xkad/routing_table/node_detection_manager.h"
 #include "xkad/routing_table/client_node_manager.h"
 #include "xkad/routing_table/local_node_info.h"
+#include "xbase/xpacket.h"
+#include "xpbase/base/error_code.h"
+#include "xtransport/proto/transport.pb.h"
 
 namespace top {
 

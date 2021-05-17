@@ -26,12 +26,19 @@
 #    pragma warning(pop)
 #endif
 
-#include "xbase/xns_macro.h"
-#include "xbasic/xbyte_buffer.h"
-
 #include <cstdint>
 #include <string>
 #include <system_error>
+
+#include "xbase/xns_macro.h"
+#include "xbasic/xbyte_buffer.h"
+
+namespace top {
+namespace base {
+class xbuffer_t;
+class xstream_t;
+}  // namespace base
+}  // namespace top
 
 NS_BEG1(top)
 

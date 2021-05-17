@@ -5,6 +5,7 @@
 #include "xcodec/xcodec_error.h"
 
 #include <string>
+#include <utility>
 
 NS_BEG2(top, codec)
 

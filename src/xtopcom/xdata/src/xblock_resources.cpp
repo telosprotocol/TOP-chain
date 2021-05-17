@@ -2,12 +2,19 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
+#include <stdint.h>
 #include <string>
-#include "xbase/xutl.h"
-#include "xvledger/xvblockstore.h"
+
 #include "xbasic/xversion.h"
 #include "xdata/xblock_resources.h"
-#include "xdata/xdata_common.h"
+#include "xbase/xbase.h"
+#include "xbase/xmem.h"
+#include "xbase/xns_macro.h"
+#include "xbase/xobject.h"
+#include "xbase/xobject_ptr.h"
+#include "xdata/xtransaction.h"
+#include "xvledger/xdataobj_base.hpp"
+#include "xvledger/xvblock.h"
 
 NS_BEG2(top, data)
 

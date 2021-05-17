@@ -1,6 +1,15 @@
+#include <mutex>
+#include <cstdint>
+#include <iterator>
+#include <map>
+#include <string>
+#include <unordered_map>
+#include <utility>
+
 #include "xbase/xutl.h"
 #include "xsync/xsync_download_tracer_mgr.h"
-#include <mutex>
+#include "xbase/xns_macro.h"
+
 NS_BEG2(top, sync)
 
 xsync_download_tracer::xsync_download_tracer(){

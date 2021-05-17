@@ -4,12 +4,23 @@
 
 #include "xkad/nat_detect/nat_manager.h"
 
-#include "xtransport/message_manager/multi_message_handler.h"
+#include <assert.h>
+#include <kadmlia.pb.h>
+#include <chrono>
+#include <functional>
+#include <map>
+
 #include "xkad/nat_detect/nat_handshake_manager.h"
 #include "xkad/nat_detect/nat_defines.h"
 // #include "xkad/nat_detect/nat_log.h"
 #include "xkad/routing_table/callback_manager.h"
 #include "xpbase/base/top_log_name.h"
+#include "xbase/xpacket.h"
+#include "xpbase/base/error_code.h"
+#include "xpbase/base/top_log.h"
+#include "xpbase/base/top_timer.h"
+#include "xtransport/proto/transport.pb.h"
+#include "xtransport/transport.h"
 
 namespace top {
 namespace kadmlia {

@@ -5,6 +5,9 @@
 #include "xapplication/xerror/xerror.h"
 
 #include <type_traits>
+#include <string>
+
+#include "xbase/xns_macro.h"
 
 namespace top {
 namespace application {

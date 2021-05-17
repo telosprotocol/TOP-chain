@@ -2,8 +2,14 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 #include "xpre_request_handler_mgr.h"
-#include "json/json.h"
+
+#include <json/value.h>
+
 #include "xrpc/xrpc_method.h"
+#include "xrpc/prerequest/xpre_request_data.h"
+#include "xrpc/prerequest/xpre_request_handler.h"
+#include "xrpc/xerror/xrpc_error.h"
+#include "xrpc/xerror/xrpc_error_code.h"
 
 NS_BEG2(top, xrpc)
 using std::string;

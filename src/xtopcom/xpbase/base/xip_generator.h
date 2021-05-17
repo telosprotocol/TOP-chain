@@ -14,6 +14,7 @@
 #include <arpa/inet.h>
 #endif
 
+#include <stdint.h>
 #include <limits>
 #include <string>
 #include <memory>
@@ -25,6 +26,7 @@
 namespace top {
 
 namespace base {
+class XipParser;
 
 class XipGenerator {
 public:

@@ -4,11 +4,18 @@
 
 #pragma once
 
+#include <stddef.h>
 #include <cstdint>
 #include <string>
 
 #include "xbase/xns_macro.h"
 #include "xbase/xmem.h"
+
+namespace top {
+namespace base {
+class xstream_t;
+}  // namespace base
+}  // namespace top
 
 NS_BEG2(top, tcc)
 

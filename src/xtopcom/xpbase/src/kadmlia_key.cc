@@ -10,7 +10,6 @@
 #include <assert.h>
 #include <iostream>
 
-#include "xpbase/base/check_cast.h"
 #include "xpbase/base/top_string_util.h"
 
 namespace top {

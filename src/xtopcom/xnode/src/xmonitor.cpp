@@ -1,7 +1,8 @@
 #include "xmonitor.h"
+
 #include <xbase/xutl.h>
 #include <xbase/xcontext.h>
-#include "xpbase/base/top_timer.h"
+
 #include "xpbase/base/top_log.h"
 
 using namespace top::base;
@@ -77,6 +78,7 @@ bool xmonitor_t::monitor_cpu_and_network()
 }
 
 #include <stdio.h>
+
 static bool get_default_net_device(std::string& default_net_device) {
 	FILE * pfd = fopen("/proc/net/route", "r");
 	if (NULL == pfd) {

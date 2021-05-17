@@ -3,6 +3,9 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 #include "xutility/xhash.h"
 
+#include <stdlib.h>
+#include <string.h>
+
 #define XXH_INLINE_ALL  //define it first,then include xxhash.h
 #include "xutility/xxHash/xxhash.h" //from xxhash lib
 

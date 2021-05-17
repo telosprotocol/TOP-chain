@@ -1,5 +1,9 @@
 #include "utility.h"
+
 #include <time.h>
+#include <locale.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <chrono>
 #include <sstream>
 #include <memory>

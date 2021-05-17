@@ -4,10 +4,11 @@
 
 #pragma once
 
-#include "xbasic/xsimple_message.hpp"
-
 #include <cstdint>
 #include <string>
+
+#include "xbasic/xsimple_message.hpp"
+#include "xbase/xns_macro.h"
 
 
 NS_BEG2(top, network)

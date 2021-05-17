@@ -1,17 +1,24 @@
 #pragma once
 
-#include "xpbase/base/top_timer2.h"
+#include <stddef.h>
+#include <stdint.h>
 #include <chrono>
 #include <atomic>
 #include <future>
 #include <memory>
 #include <map>
+#include <functional>
+#include <mutex>
+#include <string>
+#include <vector>
 
+#include "xpbase/base/top_timer2.h"
 #include "xbase/xtimer.h"
 #include "xbase/xthread.h"
 
 namespace top {
 namespace base {
+class xiothread_t;
 
 // --------------------------------------------------------------------------------
 using OnTimerProc = std::function<void(bool stop)>;
@@ -46,6 +53,7 @@ private:
 
 // --------------------------------------------------------------------------------
 class TimerManagerXbase;
+
 class TimerXbase : public Timer2, public std::enable_shared_from_this<TimerXbase> {
     using Mutex = std::mutex;
     using Lock = std::unique_lock<Mutex>;

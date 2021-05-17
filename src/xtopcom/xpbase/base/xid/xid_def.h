@@ -1,9 +1,9 @@
 #pragma once
 
-#include <algorithm>
-#include <memory>
 #include <stdint.h>
 #include <string.h>
+#include <algorithm>
+#include <memory>
 #include <string>
 
 #include "xpbase/base/top_log.h"

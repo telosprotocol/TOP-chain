@@ -7,13 +7,27 @@
 
 #include "xchaininit/xchain_command.h"
 
+#include <dirent.h>
+#include <nlohmann/json.hpp>
+#include <ctype.h>
+#include <stdio.h>
+#include <sys/stat.h>
+#include <time.h>
+#include <unistd.h>
+#include <algorithm>
+#include <cassert>
+#include <cstring>
+#include <iostream>
+#include <string>
+#include <utility>
+#include <vector>
+#include <cstdint>
+#include <exception>
+#include <initializer_list>
+#include <stdexcept>
+
 #include "CLI11.hpp"
 #include "db_tool/db_tool.h"
-#include "rocksdb/convenience.h"
-#include "rocksdb/db.h"
-#include "rocksdb/options.h"
-#include "rocksdb/slice.h"
-#include "rocksdb/table.h"
 #include "rocksdb/utilities/backupable_db.h"
 #include "xchaininit/admin_http_client.h"
 #include "xchaininit/version.h"
@@ -24,19 +38,11 @@
 #include "xpbase/base/top_utils.h"
 #include "xtopcl/include/topcl.h"
 #include "xtopcl/include/xcrypto.h"
+#include "api_method.h"
+#include "global_definition.h"
+#include "user_info.h"
+#include "xsyncbase/xsync_face.h"
 
-#include <dirent.h>
-#include <nlohmann/json.hpp>
-
-#include <algorithm>
-#include <cassert>
-#include <chrono>
-#include <cstring>
-#include <fstream>
-#include <iostream>
-#include <string>
-#include <utility>
-#include <vector>
 using json = nlohmann::json;
 
 namespace top {

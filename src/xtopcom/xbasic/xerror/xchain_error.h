@@ -4,10 +4,11 @@
 
 #pragma once
 
-#include "xbase/xns_macro.h"
-
 #include <stdexcept>
 #include <system_error>
+#include <string>
+
+#include "xbase/xns_macro.h"
 
 NS_BEG2(top, error)
 

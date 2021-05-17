@@ -4,8 +4,6 @@
 
 #pragma once
 
-#include "xkad/nat_detect/nat_manager_intf.h"
-
 #include <stdint.h>
 #include <map>
 #include <mutex>
@@ -16,7 +14,10 @@
 #include <utility>
 #include <string>
 #include <condition_variable>
+#include <atomic>
+#include <deque>
 
+#include "xkad/nat_detect/nat_manager_intf.h"
 #include "xbase/xpacket.h"
 #include "xtransport/transport.h"
 #include "xtransport/proto/transport.pb.h"
@@ -26,14 +27,25 @@
 #include "xkad/proto/kadmlia.pb.h"
 #include "xkad/nat_detect/nat_defines.h"
 #include "xkad/nat_detect/nat_handshake_manager.h"
+#include "xbasic/xbyte_buffer.h"
+#include "xpbase/base/top_timer2.h"
 
 namespace top {
+namespace base {
+class Timer;
+class xpacket_t;
+}  // namespace base
 
 namespace transport {
     class MultiThreadHandler;
+class Transport;
+namespace protobuf {
+class RoutingMessage;
+}  // namespace protobuf
 }
 
 namespace kadmlia {
+class NatHandshakeManager;
 
 class NatManager : public NatManagerIntf {
     using MessagePtr = std::shared_ptr<transport::protobuf::RoutingMessage>;

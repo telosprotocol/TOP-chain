@@ -3,14 +3,22 @@
 // Licensed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
+#include <stddef.h>
+#include <string>
+
 #include "xbase/xcontext.h"
 #include "xbase/xthread.h"
 #include "xvledger/xvledger.h"
 #include "xblockstore_face.h"
 #include "xvunithub.h"
+#include "xbase/xbase.h"
 
 namespace top
 {
+namespace base {
+class xvblockstore_t;
+}  // namespace base
+
     namespace store
     {
         class xblockstorehub_impl

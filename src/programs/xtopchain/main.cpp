@@ -1,17 +1,19 @@
-#include <assert.h>
+#include <stdlib.h>
+#include <string.h>
 #include <string>
-#include <unistd.h>
 #include <iostream>
 #include <chrono>
 #include <thread>
+#include <exception>
+#include <stdexcept>
+#include <vector>
 
 #include "xchaininit/xinit.h"
-#include "xpbase/base/top_utils.h"
 #include "xchaininit/version.h"
 #include "xdata/xoperation_config.h"
-
-#include "xmetrics/xmetrics.h"
 #include "tcmalloc_options.h"
+#include "xbase/xbase.h"
+#include "xbase/xtls.h"
 
 using namespace top;
 
@@ -53,9 +55,6 @@ void ntp_thread_proc() {
 }
 
 int start_monitor_thread() {
-#ifdef ENABLE_NTP
-    // std::thread(ntp_thread_proc).detach();
-#endif
     return 0;
 }
 

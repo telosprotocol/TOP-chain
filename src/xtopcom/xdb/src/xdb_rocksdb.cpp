@@ -2,21 +2,28 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
+#include <rocksdb/advanced_options.h>
+#include <rocksdb/iterator.h>
+#include <rocksdb/status.h>
+#include <rocksdb/utilities/transaction.h>
+#include <rocksdb/write_batch.h>
+#include <stddef.h>
 #include <string>
-#include <iostream>
 #include <vector>
+#include <map>
+#include <memory>
+#include <utility>
 
 #include "rocksdb/db.h"
 #include "rocksdb/slice.h"
 #include "rocksdb/options.h"
 #include "rocksdb/table.h"
-#include "rocksdb/convenience.h"
 #include "rocksdb/filter_policy.h"
 #include "rocksdb/utilities/transaction_db.h"
 #include "rocksdb/utilities/optimistic_transaction_db.h"
-
-#include "xbase/xlog.h"
 #include "xdb/xdb.h"
+#include "xbase/xbase.h"
+#include "xdb/xdb_face.h"
 
 using std::string;
 

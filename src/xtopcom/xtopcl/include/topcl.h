@@ -3,6 +3,17 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 #pragma once
 
+//#include <readline/history.h>
+//#include <readline/readline.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <algorithm>
+#include <csignal>
+#include <fstream>
+#include <iostream>
+#include <string>
+#include <vector>
+
 #include "api_method.h"
 #include "task_dispatcher.h"
 #include "trans_base.h"
@@ -10,17 +21,9 @@
 #include "xbase/xns_macro.h"
 #include "xcrypto/xckey.h"
 
-//#include <readline/history.h>
-//#include <readline/readline.h>
-#include <stdio.h>
-#include <stdlib.h>
-
-#include <algorithm>
-#include <csignal>
-#include <fstream>
-#include <iostream>
-#include <string>
-#include <vector>
+namespace CLI {
+class App;
+}  // namespace CLI
 
 NS_BEG2(top, xtopcl)
 

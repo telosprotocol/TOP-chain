@@ -4,9 +4,20 @@
 
 #include "xcontract_common/xproperties/xproperty_access_control.h"
 
-#include "xbasic/xerror/xthrow_error.h"
-
 #include <cassert>
+#include <iterator>
+#include <utility>
+#include <vector>
+
+#include "xbasic/xerror/xthrow_error.h"
+#include "xbase/xbase.h"
+#include "xbase/xvmethod.h"
+
+namespace top {
+namespace base {
+class xvbstate_t;
+}  // namespace base
+}  // namespace top
 
 NS_BEG3(top, contract_common, properties)
 

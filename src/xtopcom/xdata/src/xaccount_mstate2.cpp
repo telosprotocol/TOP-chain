@@ -2,17 +2,21 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
+#include <stdint.h>
 #include <string>
 #include <map>
+#include <ostream>
+#include <utility>
 
-#include "xbase/xint.h"
-#include "xbase/xlog.h"
 #include "xbasic/xversion.h"
-#include "xbasic/xserializable_based_on.h"
-#include "xdata/xdata_common.h"
 #include "xdata/xnative_property.h"
-#include "xdata/xdatautil.h"
 #include "xdata/xaccount_mstate.h"
+
+namespace top {
+namespace base {
+class xstream_t;
+}  // namespace base
+}  // namespace top
 
 namespace top { namespace data {
 

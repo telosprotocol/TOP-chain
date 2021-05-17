@@ -4,10 +4,25 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "xconsaccount.h"
-#include "xconscontext.h"
+
+#include <stddef.h>
 #include <cinttypes>
+#include <vector>
+
+#include "xbase/xbase.h"
+#include "xbase/xdata.h"
+#include "xbase/xobject.h"
+#include "xconsevent.h"
+#include "xconspdu.h"
+#include "xvledger/xvblock.h"
+#include "xvledger/xvblockstore.h"
+
 namespace top
 {
+namespace base {
+class xcontext_t;
+}  // namespace base
+
     namespace xconsensus
     {
         xcsaccount_t::xcsaccount_t(xcsobject_t & parent_object,const std::string & account_addr)

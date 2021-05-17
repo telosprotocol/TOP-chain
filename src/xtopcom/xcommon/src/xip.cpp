@@ -4,8 +4,6 @@
 
 #include "xcommon/xip.h"
 
-#include "xbase/xlog.h"
-
 #include <cassert>
 #include <iomanip>
 #include <ios>

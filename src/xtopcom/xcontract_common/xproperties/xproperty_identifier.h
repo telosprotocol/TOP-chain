@@ -4,10 +4,11 @@
 
 #pragma once
 
+#include <string>
+
 #include "xcontract_common/xproperties/xproperty_category.h"
 #include "xcontract_common/xproperties/xproperty_type.h"
-
-#include <string>
+#include "xbase/xns_macro.h"
 
 NS_BEG3(top, contract_common, properties)
 

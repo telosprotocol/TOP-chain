@@ -4,9 +4,14 @@
 
 #pragma once
 
+#include <stdint.h>
+
 #include "xcommon/xaddress.h"
 #include "xcommon/xnode_type.h"
 #include "xcommon/xversion.h"
+#include "xbase/xns_macro.h"
+#include "xcommon/xip.h"
+#include "xcommon/xnode_id.h"
 
 NS_BEG3(top, election, cache)
 

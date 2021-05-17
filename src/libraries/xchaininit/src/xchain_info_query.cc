@@ -1,6 +1,7 @@
 #include "xchaininit/xchain_info_query.h"
 
 #include <cassert>
+#include <memory>
 
 #include "xpbase/base/top_log.h"
 

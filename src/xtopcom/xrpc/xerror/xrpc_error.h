@@ -5,7 +5,11 @@
 #pragma once
 #include <stdexcept>
 #include <string>
+#include <system_error>
+
 #include "xrpc_error_code.h"
+#include "xbase/xns_macro.h"
+
 NS_BEG2(top, xrpc)
 class xrpc_error final : public std::runtime_error
 {

@@ -3,9 +3,23 @@
 // Licensed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
+#include <stddef.h>
+#include <stdint.h>
+#include <deque>
+#include <functional>
+#include <map>
+#include <string>
+#include <utility>
+
 #include "xbase/xcontext.h"
 #include "xbase/xutl.h"
 #include "../xvexeunit.h"
+#include "xbase/xatom.h"
+#include "xbase/xbase.h"
+#include "xbase/xdata.h"
+#include "xbase/xmem.h"
+#include "xbase/xobject.h"
+#include "xbase/xvmethod.h"
 
 namespace top
 {

@@ -5,12 +5,8 @@
 #include "xkad/routing_table/bootstrap_cache.h"
 
 #include <assert.h>
-#include <string>
-#include <limits>
+#include <stdint.h>
 #include <mutex>
-
-#include "xpbase/base/top_log.h"
-#include "xkad/routing_table/routing_utils.h"
 
 namespace top {
 namespace kadmlia {

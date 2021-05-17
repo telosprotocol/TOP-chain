@@ -4,12 +4,11 @@
 
 
 #include <stdio.h>
-#include <stdlib.h>
 #include <unistd.h>
 #include <string>
+
 #include "xbase/xutl.h"
-#include "xbase/xobject.h"
-#include "xbase/xcontext.h"
+#include "xbase/xbase.h"
 // #include "xpbftservice.h"
 
 #ifdef __MAC_PLATFORM__

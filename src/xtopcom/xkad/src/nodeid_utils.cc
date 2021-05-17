@@ -3,9 +3,12 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "xkad/routing_table/nodeid_utils.h"
-#include "xbase/xhash.h"
 
+#include <stdint.h>
 #include <limits>
+#include <utility>
+
+#include "xbase/xhash.h"
 
 namespace top {
 

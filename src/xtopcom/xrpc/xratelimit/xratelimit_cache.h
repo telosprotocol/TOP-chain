@@ -3,17 +3,26 @@
 #define RATELIMIT_CACHE_H_
 
 
+#include <stdint.h>
 #include <thread>
 #include <mutex>
 #include <memory>
 #include <chrono>
 #include <functional>
 #include <condition_variable>
+#include <string>
+
 #include "xratelimit_hashmap.h"
 #include "xratelimit_thread.h"
 #include "xratelimit_config.h"
 #include "xbase/xns_macro.h"
 #include "xbase/xutl.h"
+
+namespace top {
+namespace xChainRPC {
+class RatelimitConfig;
+}  // namespace xChainRPC
+}  // namespace top
 
 
 

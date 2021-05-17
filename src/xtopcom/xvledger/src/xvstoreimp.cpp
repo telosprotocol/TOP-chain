@@ -3,7 +3,14 @@
 // Licensed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
+#include <stddef.h>
+#include <stdint.h>
 #include <cinttypes>
+#include <atomic>
+#include <map>
+#include <string>
+#include <vector>
+
 #include "../xvdbstore.h"
 #include "../xvblockstore.h"
 #include "../xvstatestore.h"
@@ -11,6 +18,18 @@
 #include "../xveventbus.h"
 #include "../xvledger.h"
 #include "../xvdbkey.h"
+#include "xbase/xbase.h"
+#include "xbase/xcontext.h"
+#include "xbase/xdata.h"
+#include "xbase/xobject.h"
+#include "xbase/xobject_ptr.h"
+#include "xbase/xutl.h"
+#include "xbase/xvevent.h"
+#include "xvaccount.h"
+#include "xvbindex.h"
+#include "xvblock.h"
+#include "xvstate.h"
+#include "xvtxindex.h"
 
 namespace top
 {

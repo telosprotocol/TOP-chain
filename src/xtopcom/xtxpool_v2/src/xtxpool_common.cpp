@@ -2,10 +2,12 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
+#include <stdint.h>
+#include <string>
+
 #include "xbasic/xmodule_type.h"
 #include "xtxpool_v2/xtxpool_log.h"
-
-#include <string>
+#include "xbase/xns_macro.h"
 
 NS_BEG2(top, xtxpool_v2)
 

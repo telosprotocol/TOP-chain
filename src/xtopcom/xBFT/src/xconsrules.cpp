@@ -4,7 +4,25 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include <inttypes.h>
+#include <stddef.h>
+#include <algorithm>
+#include <cstdint>
+#include <iterator>
+#include <map>
+#include <string>
+#include <utility>
+#include <vector>
+
 #include "xconsdriver.h"
+#include "xbase/xatom.h"
+#include "xbase/xbase.h"
+#include "xbase/xdata.h"
+#include "xbase/xobject.h"
+#include "xconsengine.h"
+#include "xconsobj.h"
+#include "xconspdu.h"
+#include "xvledger/xvblock.h"
+#include "xvledger/xvblockstore.h"
 
 namespace top
 {

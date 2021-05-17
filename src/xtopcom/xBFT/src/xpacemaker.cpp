@@ -4,10 +4,27 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include <inttypes.h>
+#include <stdint.h>
+#include <cstdlib>
+#include <functional>
+#include <string>
 
 #include "xclockcertview.h"
 #include "xtimercertview.h"
-#include <cstdlib>
+#include "xbase/xatom.h"
+#include "xbase/xbase.h"
+#include "xbase/xdata.h"
+#include "xbase/xhash.h"
+#include "xbase/xobject.h"
+#include "xbase/xthread.h"
+#include "xbase/xvevent.h"
+#include "xconsengine.h"
+#include "xconsevent.h"
+#include "xconsobj.h"
+#include "xconspdu.h"
+#include "xvledger/xvblock.h"
+#include "xvledger/xvblockstore.h"
+#include "xvledger/xvcertauth.h"
 
 namespace top
 {

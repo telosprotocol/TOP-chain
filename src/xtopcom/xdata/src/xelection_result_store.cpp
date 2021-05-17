@@ -2,11 +2,16 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "xbasic/xutility.h"
-#include "xdata/xelection/xelection_result_store.h"
-
 #include <exception>
 #include <utility>
+#include <iosfwd>
+#include <map>
+#include <type_traits>
+
+#include "xdata/xelection/xelection_result_store.h"
+#include "xbase/xns_macro.h"
+#include "xcommon/xip.h"
+#include "xdata/xelection/xelection_network_result.h"
 
 NS_BEG3(top, data, election)
 

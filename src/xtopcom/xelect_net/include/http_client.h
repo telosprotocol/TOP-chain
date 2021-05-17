@@ -6,6 +6,7 @@
 
 #include <memory>
 #include <vector>
+#include <string>
 
 #include "simplewebserver/client_http.hpp"
 

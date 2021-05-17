@@ -4,12 +4,21 @@
 
 #pragma once
 
-#include "xbase/xmem.h"
-#include "xcommon/xnode_type.h"
-
+#include <stdint.h>
 #include <string>
 #include <vector>
 #include <type_traits>
+
+#include "xbase/xmem.h"
+#include "xcommon/xnode_type.h"
+#include "xbase/xcxx_config.h"
+#include "xbase/xns_macro.h"
+
+namespace top {
+namespace base {
+class xstream_t;
+}  // namespace base
+}  // namespace top
 
 NS_BEG2(top, common)
 

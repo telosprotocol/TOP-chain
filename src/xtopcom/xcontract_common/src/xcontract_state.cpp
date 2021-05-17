@@ -4,10 +4,11 @@
 
 #include "xcontract_common/xcontract_state.h"
 
-#include "xbasic/xerror/xthrow_error.h"
-#include "xbasic/xutility.h"
+#include <type_traits>
+#include <utility>
 
-#include <cassert>
+#include "xbasic/xerror/xthrow_error.h"
+#include "xcontract_common/xproperties/xproperty_identifier.h"
 
 NS_BEG2(top, contract_common)
 

@@ -1,5 +1,11 @@
 #include "xmetrics_packet_info.h"
 
+#include <nlohmann/json.hpp>
+#include <iosfwd>
+
+#include "xbase/xbase.h"
+#include "xmetrics/metrics_handler/basic_handler.h"
+
 NS_BEG3(top, metrics, handler)
 
 // using val_unit = Variant<std::string, int64_t>;

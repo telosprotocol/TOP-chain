@@ -5,6 +5,9 @@
 #pragma once
 
 #include <memory>
+#include <algorithm>
+#include <cstdint>
+#include <vector>
 
 #include "xtransport/proto/transport.pb.h"
 #include "xkad/proto/kadmlia.pb.h"

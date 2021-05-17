@@ -4,6 +4,8 @@
 
 #include "xdata/xelection/xstandby_result.h"
 
+#include <type_traits>
+
 NS_BEG3(top, data, election)
 
 std::pair<xtop_standby_result::iterator, bool>

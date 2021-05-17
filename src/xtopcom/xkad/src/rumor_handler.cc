@@ -4,6 +4,13 @@
 
 #include "xkad/gossip/rumor_handler.h"
 
+#include <assert.h>
+#include <algorithm>
+#include <cstdint>
+#include <set>
+#include <string>
+#include <utility>
+
 #include "xpbase/base/uint64_bloomfilter.h"
 #include "xkad/gossip/rumor_def.h"
 #include "xkad/routing_table/local_node_info.h"
@@ -11,6 +18,10 @@
 #include "xkad/routing_table/routing_table.h"
 #include "xkad/routing_table/node_info.h"
 #include "xpbase/base/kad_key/get_kadmlia_key.h"
+#include "xpbase/base/error_code.h"
+#include "xpbase/base/kad_key/kadmlia_key.h"
+#include "xpbase/base/top_log.h"
+#include "xtransport/proto/transport.pb.h"
 
 namespace top {
 namespace gossip {

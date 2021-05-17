@@ -1,12 +1,9 @@
-#include "xelect_net/include/elect_uitils.h"
-
-#include <iostream>
+#include <stdint.h>
+#include <string>
+#include <vector>
 
 #include "xbase/xutl.h"
 #include "xbase/xhash.h"
-#include "xpbase/base/check_cast.h"
-#include "xpbase/base/top_string_util.h"
-#include "xpbase/base/kad_key/kadmlia_key.h"
 
 namespace top {
 

@@ -4,6 +4,8 @@
 
 #include "xdata/xelection/xelection_result.h"
 
+#include <type_traits>
+
 NS_BEG3(top, data, election)
 
 std::pair<xtop_election_result::iterator, bool>

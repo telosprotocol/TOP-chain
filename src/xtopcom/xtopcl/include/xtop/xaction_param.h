@@ -1,6 +1,12 @@
 #pragma once
+#include <stdint.h>
 #include <string>
+
 #include "api_method_imp.h"
+
+namespace xChainSDK {
+class api_method_imp;
+}  // namespace xChainSDK
 
 constexpr char const* XPROPERTY_ASSET_TOP = "TOP";
 

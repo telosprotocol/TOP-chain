@@ -4,17 +4,16 @@
 
 #include "xgossip/include/gossip_bloomfilter.h"
 
-#include "xbase/xhash.h"
-#include "xbase/xcontext.h"
-#include "xbase/xbase.h"
+#include <assert.h>
+
 #include "xpbase/base/top_log.h"
 #include "xpbase/base/top_utils.h"
 #include "xpbase/base/uint64_bloomfilter.h"
-#include "xpbase/base/redis_client.h"
 #include "xgossip/include/gossip_utils.h"
 #include "xgossip/include/mesages_with_bloomfilter.h"
 #include "xgossip/include/block_sync_manager.h"
 #include "xpbase/base/redis_utils.h"
+#include "xtransport/proto/transport.pb.h"
 
 namespace top {
 

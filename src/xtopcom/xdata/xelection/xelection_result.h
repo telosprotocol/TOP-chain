@@ -4,11 +4,14 @@
 
 #pragma once
 
-#include "xcommon/xip.h"
-#include "xdata/xelection/xelection_cluster_result.h"
-
 #include <map>
 #include <string>
+#include <iosfwd>
+#include <utility>
+
+#include "xcommon/xip.h"
+#include "xdata/xelection/xelection_cluster_result.h"
+#include "xbase/xns_macro.h"
 
 NS_BEG3(top, data, election)
 

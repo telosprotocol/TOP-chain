@@ -1,4 +1,16 @@
 #pragma once
+#include <json/value.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <functional>
+#include <map>
+#include <sstream>
+#include <string>
+#include <vector>
+#include <memory>
+#include <unordered_map>
+#include <utility>
+
 #include "CLI11.hpp"
 #include "api_method_imp.h"
 #include "base/config_file.h"
@@ -7,13 +19,13 @@
 #include "topchain_type.h"
 #include "user_info.h"
 
-#include <functional>
-#include <map>
-#include <sstream>
-#include <string>
-#include <vector>
+namespace CLI {
+class App;
+}  // namespace CLI
 
 namespace xChainSDK {
+struct user_info;
+
 using std::string;
 std::vector<std::string> const COMMAND_LEVEL_FILTER = {"get", "system", "sendtx", "debug", "wallet"};
 std::vector<std::string> const COMMAND_HELP_STRING = {"-h", "--help"};

@@ -4,7 +4,11 @@
 
 #include "xcontract_common/xproperties/xaccess_control_data.h"
 
+#include <iterator>
+#include <utility>
+
 #include "xbasic/xutility.h"
+#include "xcommon/xnode_id.h"
 
 NS_BEG3(top, contract_common, properties)
 

@@ -8,17 +8,19 @@
 
 #include "xpbase/base/redis_utils.h"
 
+#include <stdint.h>
+#include <cpp_redis/core/client.hpp>
+#include <cpp_redis/core/reply.hpp>
 #include <cstdarg>
-
 #include <string>
-#include <iostream>
-
+#include <future>
+#include <memory>
 
 #include "xpbase/base/redis_client.h"
-#include "xbase/xpacket.h"
 #include "xpbase/base/top_log.h"
 #include "xpbase/base/top_utils.h"
 #include "xpbase/base/kad_key/kadmlia_key.h"
+#include "xtransport/proto/transport.pb.h"
 
 
 using namespace top;

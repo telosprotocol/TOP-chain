@@ -7,6 +7,7 @@
 
 #include "xpbase/base/uint64_bloomfilter.h"
 
+#include <common/xxhash.h>
 #include <cassert>
 
 namespace top {

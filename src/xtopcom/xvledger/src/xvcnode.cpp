@@ -3,13 +3,28 @@
 // Licensed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
+#include <stddef.h>
 #include <cinttypes>
+#include <cstdint>
+#include <deque>
+#include <map>
+#include <mutex>
+#include <string>
+#include <utility>
+#include <vector>
+
 #include "../xvcnode.h"
+#include "xbase/xbase.h"
+#include "xbase/xdata.h"
+#include "xbase/xobject.h"
+#include "xvaccount.h"
 
 namespace top
 {
     namespace base
     {
+class xstream_t;
+
         xvnode_t::xvnode_t(const std::string & account,const xvip2_t & xip2_addr,const std::string & sign_pub_key)
             :xvaccount_t(account)
         {

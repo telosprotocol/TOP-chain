@@ -3,12 +3,21 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #pragma once
+#include <cstdint>
+#include <memory>
+
 #include "xpbase/base/contain_template.h"
 #include "xtransport/proto/transport.pb.h"
 #include "xkad/proto/kadmlia.pb.h"
 #include "xkad/gossip/rumor_def.h"
 
 namespace top {
+namespace transport {
+namespace protobuf {
+class RoutingMessage;
+}  // namespace protobuf
+}  // namespace transport
+
 namespace gossip {
 
 class RumorFilter :

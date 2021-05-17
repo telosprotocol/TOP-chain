@@ -4,16 +4,27 @@
 
 #include "xgrpcservice/xgrpc_service.h"
 
-#include "xbase/xbase.h"
-#include "xbasic/xutility.h"
-
 #include <grpcpp/grpcpp.h>
-
-#include <atomic>
+#include <grpcpp/impl/codegen/server_context.h>
+#include <grpcpp/impl/codegen/status_code_enum.h>
+#include <grpcpp/impl/codegen/sync_stream.h>
+#include <grpcpp/security/server_credentials.h>
+#include <json/reader.h>
 #include <iostream>
 #include <memory>
 #include <string>
 #include <thread>
+
+#include "xbase/xbase.h"
+#include "xgrpcservice/src/xrpc.pb.h"
+
+namespace grpc {
+class ServerCompletionQueue;
+template <class W> class ServerAsyncResponseWriter;
+}  // namespace grpc
+namespace top {
+class xrpc_service;
+}  // namespace top
 
 using namespace std;
 

@@ -5,6 +5,11 @@
 
 #include "xconsevent.h"
 
+#include <stddef.h>
+
+#include "xbase/xatom.h"
+#include "xvledger/xvblock.h"
+
 namespace top
 {
     namespace xconsensus

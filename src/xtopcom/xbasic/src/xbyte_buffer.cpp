@@ -4,10 +4,10 @@
 
 #include "xbasic/xbyte_buffer.h"
 
-#include <array>
 #include <limits>
 #include <random>
 #include <algorithm>
+#include <iterator>
 
 NS_BEG1(top)
 

@@ -4,11 +4,13 @@
 
 #pragma once
 
-#include "xbasic/xsimple_message.hpp"
-#include "xcommon/xnode_id.h"
-
 #include <chrono>
 #include <cstdint>
+
+#include "xbasic/xsimple_message.hpp"
+#include "xcommon/xnode_id.h"
+#include "xbase/xns_macro.h"
+#include "xbasic/xbyte_buffer.h"
 
 NS_BEG3(top, network, p2p)
 

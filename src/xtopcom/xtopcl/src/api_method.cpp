@@ -1,8 +1,25 @@
 #include "api_method.h"
 
+#include <ctype.h>
+#include <ext/alloc_traits.h>
+#include <json/reader.h>
+#include <json/writer.h>
+#include <unistd.h>
+#include <CLI11.hpp>
+#include <algorithm>
+#include <cstdlib>
+#include <fstream>
+#include <iostream>
+#include <memory>
+#include <chrono>
+#include <cstdint>
+#include <exception>
+#include <iomanip>
+#include <stdexcept>
+#include <type_traits>
+
 #include "base/log.h"
 #include "base/utility.h"
-#include "task/request_task.h"
 #include "task/task_dispatcher.h"
 #include "xbase/xutl.h"
 // TODO(jimmy) #include "xbase/xvledger.h"
@@ -10,16 +27,14 @@
 #include "xcrypto/xckey.h"
 #include "xcrypto_util.h"
 #include "xdata/xnative_contract_address.h"
-
-#include <dirent.h>
-
-#include <algorithm>
-#include <cstdio>
-#include <cstdlib>
-#include <fstream>
-#include <iostream>
-#include <memory>
-#include <cmath>
+#include "config_file.h"
+#include "global_definition.h"
+#include "stat.h"
+#include "trans_base.h"
+#include "user_info.h"
+#include "utility.hpp"
+#include "xconfig/xpredefined_configurations.h"
+#include "xvledger/xvaccount.h"
 
 namespace xChainSDK {
 using namespace xcrypto;
@@ -3815,28 +3830,6 @@ void ApiMethod::dump_userinfo(const user_info & info) {
     std::cout << "last_hash: " << info.last_hash << std::endl;
     std::cout << "balance: " << info.balance << std::endl;
     std::cout << "nonce: " << info.nonce << std::endl;
-#ifdef DEBUG
-// std::cout << "secret_key: " << info.secret_key << std::endl;
-// std::cout << "sign_method: " << info.sign_method << std::endl;
-// std::cout << "sign_version: " << info.sign_version << std::endl;
-// std::string private_key = uint_to_str(info.private_key, uinfo::key_len);
-// std::cout << "private_key: " << private_key.c_str() << std::endl;
-// if (private_key.length() > 2) {
-//     std::cout << "public_key: " << api_method_imp_.get_public_key(info.private_key) << std::endl;
-// }
-
-// std::cout << "child_account: " << info.child.account << std::endl;
-// private_key = uint_to_str(info.child.private_key, uinfo::key_len);
-// std::cout << "child_private_key: " << private_key.c_str() << std::endl;
-
-// std::cout << "contract_account: " << info.contract.account << std::endl;
-// private_key = uint_to_str(info.contract.private_key, uinfo::key_len);
-// std::cout << "contract_private_key: " << private_key.c_str() << std::endl;
-// auto table_id = top::data::xaccount_mapping::account_to_table_id(info.account);
-// std::stringstream ss;
-// ss << "(0x" << std::hex << std::setw(4) << std::setfill('0') << table_id << ")";
-// std::cout << "table id: " << table_id << ss.str() << std::endl;
-#endif
 }
 
 int ApiMethod::set_userinfo() {

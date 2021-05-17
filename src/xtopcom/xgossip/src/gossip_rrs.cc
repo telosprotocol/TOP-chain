@@ -4,9 +4,16 @@
 
 #include "xgossip/include/gossip_rrs.h"
 
+#include <assert.h>
+#include <string>
+
 #include "xgossip/include/block_sync_manager.h"
 #include "xgossip/include/gossip_utils.h"
 #include "xgossip/include/mesages_with_bloomfilter.h"
+#include "xpbase/base/top_log.h"
+#include "xpbase/base/top_utils.h"
+#include "xpbase/base/uint64_bloomfilter.h"
+#include "xtransport/proto/transport.pb.h"
 // #include "xwrouter/multi_routing/service_node_cache.h"
 
 namespace top {

@@ -4,6 +4,8 @@
 
 #include "xcontract_common/xerror/xerror.h"
 
+#include <string>
+
 NS_BEG3(top, contract_common, error)
 
 static char const * const errc_to_string(int code) {

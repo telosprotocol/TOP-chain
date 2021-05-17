@@ -4,10 +4,13 @@
 
 #include "xkad/routing_table/dynamic_xip_manager.h"
 
+#include <utility>
+
 //#include "xbase/xutl.h"
 #include "xkad/routing_table/client_node_manager.h"
 #include "xpbase/base/top_log.h"
 #include "xpbase/base/xip_parser.h"
+#include "xpbase/base/error_code.h"
 
 #define d_get_process_id(id) ( ((id) & 0xF00000) >> 16 )
 #define d_get_router_id(id) ( ((id) & 0x0F0000) >> 16 )

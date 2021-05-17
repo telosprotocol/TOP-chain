@@ -4,13 +4,15 @@
 
 #pragma once
 
-#include "xbasic/xerror/xchain_error.h"
-
 #include <cstdint>
 #include <string>
 #include <stdexcept>
 #include <system_error>
 #include <type_traits>
+#include <iosfwd>
+
+#include "xbasic/xerror/xchain_error.h"
+#include "xbase/xns_macro.h"
 
 NS_BEG2(top, common)
 

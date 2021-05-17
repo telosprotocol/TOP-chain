@@ -1,5 +1,10 @@
 #include "xpbase/base/xid/xid_parser.h"
+
+#include <stdint.h>
+#include <string.h>
+
 #include "xpbase/base/xid/xid_def.h"
+#include "xpbase/base/top_log.h"
 
 namespace top {
 

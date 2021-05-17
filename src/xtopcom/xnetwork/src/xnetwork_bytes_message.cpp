@@ -4,6 +4,8 @@
 
 #include "xnetwork/xnetwork_bytes_message.h"
 
+#include <utility>
+
 NS_BEG2(top, network)
 
 xtop_network_bytes_message::xtop_network_bytes_message(xbyte_buffer_t pd,

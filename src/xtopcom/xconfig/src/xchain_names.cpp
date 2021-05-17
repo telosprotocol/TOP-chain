@@ -2,8 +2,12 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "xconfig/xconfig_register.h"
+#include <assert.h>
+#include <string>
+
 #include "xconfig/xchain_names.h"
+#include "xbase/xns_macro.h"
+#include "xvledger/xvaccount.h"
 
 NS_BEG2(top, config)
 

@@ -3,10 +3,15 @@
 // Licensed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include <cinttypes>
+#include <string>
+
 #include "xsyncvstore_face.h"
-#include "xbase/xcontext.h"
-#include "xbase/xthread.h"
+#include "xbase/xbase.h"
+#include "xmetrics/xmetrics_unit.h"
+#include "xvledger/xvaccount.h"
+#include "xvledger/xvblock.h"
+#include "xvledger/xvblockstore.h"
+#include "xvledger/xvcertauth.h"
 
 #ifdef ENABLE_METRICS
     #include "xmetrics/xmetrics.h"

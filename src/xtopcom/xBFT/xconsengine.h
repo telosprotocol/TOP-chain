@@ -3,11 +3,27 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #pragma once
+#include <stdint.h>
 #include <map>
+#include <atomic>
+#include <set>
+#include <string>
+
 #include "xconsobj.h"
+#include "xbase/xbase.h"
+#include "xbase/xvevent.h"
+#include "xvledger/xvbindex.h"
 
 namespace top
 {
+namespace base {
+class xcspdu_t;
+class xionode_t;
+class xvblock_t;
+class xvcertauth_t;
+class xvqcert_t;
+}  // namespace base
+
     namespace xconsensus
     {
         //guarantee all message are deliver and handle at single thread that is xcspacemaker_t'host thread

@@ -5,7 +5,9 @@
 
 #pragma once
 
+#include <stdint.h>
 #include <string>
+
 #include "xbasic/xoptional.hpp"
 #include "xchain_upgrade_type.h"
 

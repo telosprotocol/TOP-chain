@@ -1,6 +1,8 @@
 #pragma once
 
+#include <stdint.h>
 #include <string>
+
 #include "xbase/xcontext.h"
 
 namespace top {

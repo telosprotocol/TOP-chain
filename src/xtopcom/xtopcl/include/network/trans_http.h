@@ -5,6 +5,8 @@
 
 #include <memory>
 #include <thread>
+#include <string>
+
 #include "trans_base.h"
 #include "client_http.hpp"
 

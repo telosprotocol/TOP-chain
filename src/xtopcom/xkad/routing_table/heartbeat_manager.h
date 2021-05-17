@@ -9,7 +9,11 @@
 #include <functional>
 #include <mutex>
 #include <vector>
+#include <cstdint>
+#include <utility>
+
 #include "xpbase/base/top_timer.h"
+#include "xpbase/base/top_timer2.h"
 
 namespace top {
 namespace kadmlia {

@@ -4,8 +4,18 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "../xvledger.h"
+
+#include <string.h>
+#include <utility>
+
 #include "xbase/xcontext.h"
 #include "xbase/xthread.h"
+#include "xbase/xatom.h"
+#include "xvblockstore.h"
+#include "xvdbstore.h"
+#include "xveventbus.h"
+#include "xvstatestore.h"
+#include "xvtxstore.h"
 
 namespace top
 {

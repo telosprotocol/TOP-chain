@@ -1,10 +1,11 @@
 #pragma once
 
 #include <stdint.h>
-
 #include <memory>
 #include <string>
 #include <condition_variable>
+#include <iosfwd>
+#include <mutex>
 
 #include "cpp_redis/core/client.hpp"
 #include "xpbase/base/sem.h"

@@ -2,11 +2,23 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
+#include <stddef.h>
 #include <cinttypes>
+#include <cstdint>
+#include <map>
+#include <string>
+#include <utility>
+
 #include "xbase/xhash.h"
 #include "xbase/xcontext.h"
-#include "xbase/xobject.h"
 #include "xvledger/xaccountindex.h"
+#include "xbase/xbase.h"
+#include "xbase/xdata.h"
+#include "xbase/xmem.h"
+#include "xbase/xns_macro.h"
+#include "xbase/xobject_ptr.h"
+#include "xdataobj_base.hpp"
+#include "xvblock.h"
 
 NS_BEG2(top, base)
 

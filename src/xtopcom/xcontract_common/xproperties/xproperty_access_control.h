@@ -16,6 +16,12 @@
 
 #include "xvledger/xvstate.h"
 #include "xbase/xvmethod.h"
+#include "xbase/xcontext.h"
+#include "xbase/xmem.h"
+#include "xbase/xns_macro.h"
+#include "xbase/xobject.h"
+#include "xcontract_common/xproperties/xproperty_category.h"
+#include "xvledger/xvproperty.h"
 
 #if defined(__clang__)
 #    pragma clang diagnostic pop
@@ -24,6 +30,14 @@
 #elif defined(_MSC_VER)
 #    pragma warning(pop)
 #endif
+
+#include <stdint.h>
+#include <map>
+#include <memory>
+#include <string>
+#include <type_traits>
+#include <deque>
+#include <system_error>
 
 #include "xbasic/xbyte_buffer.h"
 #include "xbasic/xmemory.hpp"
@@ -35,10 +49,11 @@
 #include "xcontract_common/xproperties/xaccess_control_data.h"
 #include "xcontract_common/xproperties/xproperty_identifier.h"
 
-#include <map>
-#include <memory>
-#include <string>
-#include <type_traits>
+namespace top {
+namespace base {
+class xvbstate_t;
+}  // namespace base
+}  // namespace top
 
 NS_BEG3(top, contract_common, properties)
 

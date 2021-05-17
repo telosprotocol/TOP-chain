@@ -6,8 +6,18 @@
 #include <string>
 #include <memory>
 #include <mutex>
+
 #include "xpre_request_data.h"
 #include "xpre_request_handler.h"
+#include "xbase/xns_macro.h"
+#include "xrpc/prerequest/xpre_request_handler_server.h"
+#include "xrpc/xrpc_define.h"
+
+namespace top {
+namespace xrpc {
+class xpre_request_data_t;
+}  // namespace xrpc
+}  // namespace top
 
 
 NS_BEG2(top, xrpc)

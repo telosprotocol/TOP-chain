@@ -1,6 +1,17 @@
+#include <stdint.h>
+#include <stdio.h>
+#include <iostream>
+#include <memory>
+#include <string>
+#include <type_traits>
+#include <vector>
+
 #include "xcontract_common/xcontract_api_params.h"
 #include "xcontract_common/xproperties/xproperty_identifier.h"
-#include "xbase/xutl.h"
+#include "xbasic/xmemory.hpp"
+#include "xcommon/xnode_id.h"
+#include "xcontract_common/xproperties/xproperty_category.h"
+#include "xcontract_common/xproperties/xproperty_type.h"
 
 extern "C" {
 int32_t c_call(erc20_params * ptr, int32_t * used_gas) {

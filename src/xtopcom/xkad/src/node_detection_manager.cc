@@ -4,19 +4,29 @@
 
 #include "xkad/routing_table/node_detection_manager.h"
 
-#include "xbase/xutl.h"
+#include <functional>
+#include <utility>
 
+#include "xbase/xutl.h"
 #include "xtransport/transport.h"
 #include "xpbase/base/top_log.h"
 #include "xpbase/base/top_utils.h"
-#include "xkad/routing_table/callback_manager.h"
 #include "xkad/routing_table/node_info.h"
 #include "xtransport/proto/transport.pb.h"
 #include "xkad/proto/kadmlia.pb.h"
 #include "xkad/routing_table/local_node_info.h"
 #include "xkad/routing_table/routing_table.h"
+#include "xbasic/xbyte_buffer.h"
+#include "xkad/nat_detect/nat_defines.h"
+#include "xkad/routing_table/routing_utils.h"
+#include "xpbase/base/error_code.h"
+#include "xpbase/base/kad_key/kadmlia_key.h"
+#include "xpbase/base/top_timer.h"
 
 namespace top {
+namespace base {
+class TimerManager;
+}  // namespace base
 
 namespace kadmlia {
 

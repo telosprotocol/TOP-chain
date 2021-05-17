@@ -7,6 +7,10 @@
 
 #pragma once
 
+#include <stdint.h>
+#include <memory>
+#include <string>
+
 #include "xpbase/base/top_utils.h"
 #include "xpbase/base/xip_generator.h"
 #include "xpbase/base/xip_parser.h"

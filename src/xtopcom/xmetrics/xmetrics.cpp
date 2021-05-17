@@ -4,6 +4,20 @@
 
 #include "xmetrics.h"
 
+#include <assert.h>
+#include <cstdint>
+#include <memory>
+#include <utility>
+
+#include "xbase/xbase.h"
+#include "xmetrics/Variant.h"
+#include "xmetrics/metrics_handler/counter_handler.h"
+#include "xmetrics/metrics_handler/flow_handler.h"
+#include "xmetrics/metrics_handler/timer_handler.h"
+#include "xmetrics/xmetrics_config.h"
+#include "xmetrics/xmetrics_event.h"
+#include "xmetrics/xmetrics_unit.h"
+
 NS_BEG2(top, metrics)
 
 // simple metrics counters

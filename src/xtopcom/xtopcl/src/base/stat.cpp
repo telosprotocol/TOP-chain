@@ -1,5 +1,6 @@
 #include "stat.h"
-#include <iostream>
+
+#include <chrono>
 
 namespace xChainSDK
 {
@@ -54,14 +55,6 @@ namespace xChainSDK
 
     void request_stat::print_stat()
     {
-    #ifdef DEBUG
-        // std::cout << "total request : " << request_count_ << std::endl;
-        // std::cout << "total response : " << response_count_ << std::endl;
-        // std::cout << "response success : " << response_succ_count_ << std::endl;
-        // std::cout << "response failed: " << response_fail_count_ << std::endl;
-        // std::cout << "response success max: " << response_succ_count_max_ << std::endl;
-        // std::cout << "response success min: " << response_succ_count_min_ << std::endl;
-    #endif
     }
     void request_stat::clear()
     {

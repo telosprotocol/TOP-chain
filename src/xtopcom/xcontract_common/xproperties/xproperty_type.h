@@ -15,6 +15,7 @@
 #endif
 
 #include "xvledger/xvstate.h"
+#include "xbase/xvmethod.h"
 
 #if defined(__clang__)
 #    pragma clang diagnostic pop
@@ -24,12 +25,14 @@
 #    pragma warning(pop)
 #endif
 
-#include "xbase/xns_macro.h"
-
 #include <map>
 #include <vector>
 #include <string>
 #include <cstdint>
+#include <iosfwd>
+#include <system_error>
+
+#include "xbase/xns_macro.h"
 
 NS_BEG3(top, contract_common, properties)
 

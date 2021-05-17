@@ -2,10 +2,13 @@
 #ifndef RATELIMIT_SERVER_STAT_H_
 #define RATELIMIT_SERVER_STAT_H_
 
+#include <stdint.h>
 #include <atomic>
 #include <memory>
 #include <thread>
 #include <condition_variable>
+#include <mutex>
+
 #include "xbase/xns_macro.h"
 
 

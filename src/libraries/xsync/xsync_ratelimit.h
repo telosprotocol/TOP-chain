@@ -1,11 +1,23 @@
 #pragma once
 
+#include <stdint.h>
 #include <atomic>
 #include <mutex>
 #include <unordered_map>
+#include <list>
+
 #include "xdata/xdata_common.h"
 #include "xbasic/xmemory.hpp"
 #include "xbase/xutl.h"
+#include "xbase/xns_macro.h"
+#include "xbase/xtimer.h"
+
+namespace top {
+namespace base {
+class xcontext_t;
+class xiothread_t;
+}  // namespace base
+}  // namespace top
 
 NS_BEG2(top, sync)
 

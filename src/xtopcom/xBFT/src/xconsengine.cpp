@@ -5,6 +5,14 @@
 
 #include "xconsengine.h"
 
+#include <stddef.h>
+#include <utility>
+
+#include "xbase/xdata.h"
+#include "xbase/xobject.h"
+#include "xvledger/xvblock.h"
+#include "xvledger/xvcertauth.h"
+
 namespace top
 {
     namespace xconsensus

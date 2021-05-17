@@ -5,9 +5,17 @@
 #pragma once
 #include <string>
 #include <memory>
+
 #include "xpre_request_data.h"
 #include "xrpc/xrpc_method.h"
 #include "xpre_request_handler_face.h"
+#include "xbase/xns_macro.h"
+
+namespace top {
+namespace xrpc {
+class xpre_request_data_t;
+}  // namespace xrpc
+}  // namespace top
 
 NS_BEG2(top, xrpc)
 

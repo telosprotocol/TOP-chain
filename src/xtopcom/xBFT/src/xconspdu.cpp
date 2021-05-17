@@ -4,7 +4,14 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "xconspdu.h"
+
+#include <stddef.h>
+
 #include "xbase/xcontext.h"
+#include "xbase/xbase.h"
+#include "xbase/xmem.h"
+#include "xconsobj.h"
+#include "xvledger/xvblock.h"
 
 namespace top
 {

@@ -3,13 +3,37 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #pragma once
+#include <stddef.h>
+#include <stdint.h>
+#include <map>
+#include <string>
+#include <vector>
+
 #include "xconsengine.h"
 #include "xbase/xthread.h"
+#include "xbase/xbase.h"
+#include "xbase/xdata.h"
+#include "xbase/xobject.h"
+#include "xbase/xvevent.h"
+#include "xvledger/xvblock.h"
 
 namespace top
 {
+namespace base {
+class xworkerpool_t;
+}  // namespace base
+
     namespace xconsensus
     {
+class xcommit_msg_t;
+class xcscoreobj_t;
+class xcsobject_t;
+class xcspdu_fire;
+class xproposal_msg_t;
+class xsync_request_t;
+class xsync_respond_t;
+class xvote_msg_t;
+
         struct block_helper
         {
         public:

@@ -4,9 +4,13 @@
 
 
 #include "xchain_upgrade/xchain_upgrade_center.h"
+
+#include <string>
+
 #include "xconfig/xpredefined_configurations.h"
 #include "xconfig/xconfig_register.h"
 #include "xconfig/xchain_names.h"
+#include "xchain_upgrade/xchain_upgrade_type.h"
 
 namespace top {
     namespace chain_upgrade {

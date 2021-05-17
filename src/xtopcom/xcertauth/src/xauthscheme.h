@@ -4,11 +4,23 @@
 
 #pragma once
 
+#include <stdint.h>
+#include <set>
+#include <string>
+#include <vector>
+
 #include "xvledger/xvcnode.h"
 #include "xvledger/xvblock.h"
+#include "xbase/xbase.h"
+#include "xbase/xrefcount.h"
 
 namespace top
 {
+namespace base {
+class xvnode_t;
+class xvnodegroup_t;
+}  // namespace base
+
     namespace auth
     {
         class xauthscheme_t : public base::xrefcount_t

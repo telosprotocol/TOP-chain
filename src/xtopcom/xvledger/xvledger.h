@@ -4,13 +4,20 @@
 
 #pragma once
 
+#include <stdint.h>
 #include <mutex>
+#include <map>
+#include <string>
+
 #include "xvaccount.h"
 #include "xvdbstore.h"
 #include "xvblockstore.h"
 #include "xvstatestore.h"
 #include "xvtxstore.h"
 #include "xveventbus.h"
+#include "xbase/xbase.h"
+#include "xbase/xobject.h"
+#include "xbase/xvevent.h"
 
 namespace top
 {
@@ -20,6 +27,11 @@ namespace top
         class xvbook_t;
         class xvledger_t;
         class xvchain_t;
+class xvblockstore_t;
+class xvdbstore_t;
+class xveventbus_t;
+class xvstatestore_t;
+class xvtxstore_t;
 
         /*
         XID/xvvid  definition as total 64bit =

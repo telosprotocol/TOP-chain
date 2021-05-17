@@ -4,9 +4,13 @@
 
 #pragma once
 
-#include "xcodec/xcodec_errc.h"
-
 #include <stdexcept>
+#include <iosfwd>
+#include <string>
+#include <system_error>
+
+#include "xcodec/xcodec_errc.h"
+#include "xbase/xns_macro.h"
 
 NS_BEG2(top, codec)
 

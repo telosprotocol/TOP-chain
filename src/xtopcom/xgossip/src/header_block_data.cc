@@ -4,8 +4,14 @@
 
 #include "xgossip/include/header_block_data.h"
 
+#include <functional>
+#include <type_traits>
+#include <utility>
+#include <vector>
+
 #include "xpbase/base/top_log.h"
 #include "xpbase/base/top_timer.h"
+#include "xpbase/base/top_timer2.h"
 
 namespace top {
 

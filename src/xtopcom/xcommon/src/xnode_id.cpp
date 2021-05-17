@@ -2,11 +2,20 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
+#include <stdint.h>
+#include <cassert>
+#include <iterator>
+#include <ostream>
+#include <string>
+#include <utility>
+#include <vector>
+
 #include "xbasic/xbyte_buffer.h"
 #include "xcommon/xnode_id.h"
-#include "xutility/xhash.h"
-
-#include <cassert>
+#include "xbase/xmem.h"
+#include "xbase/xns_macro.h"
+#include "xcommon/xstring_id.hpp"
+#include "xvledger/xvaccount.h"
 
 NS_BEG2(top, common)
 

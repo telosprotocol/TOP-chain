@@ -6,8 +6,10 @@
 //
 
 #include "xpbase/base/rand_util.h"
+
 #include <mutex>
 #include <random>
+#include <cstdint>
 
 namespace top {
 namespace base {

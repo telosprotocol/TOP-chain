@@ -4,16 +4,22 @@
 
 #pragma once
 
+#include <stdint.h>
 #include <string>
 #include <map>
+
 #include "xbase/xdata.h"
 #include "xbase/xobject_ptr.h"
 #include "xbase/xns_macro.h"
+#include "xbase/xbase.h"
+#include "xbase/xobject.h"
 
 namespace top
 {
     namespace base
     {
+class xstream_t;
+
         // the block offdata includes some propertys
         class xvboffdata_t : public xdataunit_t
         {

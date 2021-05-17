@@ -4,6 +4,9 @@
 
 #include "xdata/xelection/xelection_result_property.h"
 
+#include <assert.h>
+#include <algorithm>
+
 #include "xconfig/xconfig_register.h"
 #include "xdata/xnative_contract_address.h"
 #include "xconfig/xpredefined_configurations.h"

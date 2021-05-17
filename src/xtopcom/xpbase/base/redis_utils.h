@@ -8,12 +8,18 @@
 #pragma once
 
 #include <cstdarg>
-
 #include <string>
 #include <iostream>
 
-
 #include "xtransport/proto/transport.pb.h"
+
+namespace top {
+namespace transport {
+namespace protobuf {
+class RoutingMessage;
+}  // namespace protobuf
+}  // namespace transport
+}  // namespace top
 
 
 

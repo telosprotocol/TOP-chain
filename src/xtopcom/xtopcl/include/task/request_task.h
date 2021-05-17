@@ -5,12 +5,18 @@
 #include <string>
 #include <memory>
 #include <iostream>
+
 #include "trans_base.h"
 #include "task_info.h"
 
 
 namespace xChainSDK
 {
+class protocol;
+class task_info;
+class trans_base;
+struct RequestTokenResult;
+
     class request_task
     {
     public:

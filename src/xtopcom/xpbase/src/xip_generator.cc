@@ -1,5 +1,12 @@
 #include "xpbase/base/xip_generator.h"
 
+#include <arpa/inet.h>
+#include <netinet/in.h>
+#include <sys/socket.h>
+#include <limits>
+
+#include "xpbase/base/xip_parser.h"
+
 namespace top {
 
 namespace base {

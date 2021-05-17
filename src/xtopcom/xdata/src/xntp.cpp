@@ -1,5 +1,7 @@
 #include "xdata/xntp.h"
 
+#include <time.h>
+
 #ifdef _WIN32
 #include <WinSock2.h>
 #include <WS2tcpip.h>
@@ -10,16 +12,16 @@
 #include <unistd.h>
 #include <string.h>
 #include <sys/socket.h>
-#include <sys/ioctl.h>
 #include <sys/time.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>
-#include <netinet/tcp.h>
 #include <netdb.h>
 #endif // _WIN32
 
 #include <string>
 #include <vector>
+
+#include "xbase/xbase.h"
 
 namespace top {
 

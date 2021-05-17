@@ -2,11 +2,16 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
+#include <stdint.h>
 #include <string>
 #include <vector>
+#include <map>
+#include <utility>
 
 #include "xbase/xutl.h"
 #include "xdata/xpropertylog.h"
+#include "xbase/xbase.h"
+#include "xvledger/xdataobj_base.hpp"
 
 namespace top { namespace data {
 

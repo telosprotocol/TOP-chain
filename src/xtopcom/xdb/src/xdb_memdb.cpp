@@ -2,17 +2,18 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
+#include <stddef.h>
 #include <string>
-#include <stdexcept>
 #include <map>
-#include <memory>
 #include <mutex>
 #include <set>
 #include <vector>
+#include <utility>
 
 #include "xdb/xdb_mem.h"
 
 namespace top { namespace db {
+class xdb_transaction_t;
 
 bool xdb_mem_t::read(const std::string& key, std::string& value) const {
     std::lock_guard<std::mutex> lock(m_lock);

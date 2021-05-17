@@ -1,14 +1,19 @@
 // Copyright (c) 2017-2018 Telos Foundation & contributors
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
-#include <mutex>
-#include "json/json.h"
+#include <json/value.h>
+#include <chrono>
+#include <functional>
+#include <string>
+#include <utility>
+
 #include "xpre_request_handler.h"
 #include "crossguid/Guid.hpp"
-#include "xpre_request_handler_mgr.h"
-#include "xrpc/xerror/xrpc_error.h"
 #include "xrpc/xrpc_signature.h"
 #include "xrpc/prerequest/xpre_request_handler_server.h"
+#include "xbasic/xlru_cache_specialize.h"
+#include "xrpc/prerequest/xpre_request_data.h"
+#include "xrpc/xrpc_define.h"
 
 NS_BEG2(top, xrpc)
 

@@ -4,12 +4,15 @@
 
 #pragma once
 
-#include "xbasic/xhashable.hpp"
-#include "xbasic/xenable_to_string.h"
-
 #include <cstdint>
 #include <functional>
 #include <string>
+#include <iosfwd>
+#include <system_error>
+
+#include "xbasic/xhashable.hpp"
+#include "xbasic/xenable_to_string.h"
+#include "xbase/xns_macro.h"
 
 NS_BEG2(top, network)
 

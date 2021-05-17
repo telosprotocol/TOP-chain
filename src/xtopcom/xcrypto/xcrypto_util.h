@@ -3,9 +3,10 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #pragma once
-#include "xbase/xint.h"
-
+#include <stdint.h>
 #include <string>
+
+#include "xbase/xint.h"
 
 namespace top {
 namespace utl {

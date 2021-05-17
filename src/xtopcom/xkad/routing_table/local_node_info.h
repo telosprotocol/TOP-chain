@@ -5,10 +5,12 @@
 #pragma once
 
 #include <assert.h>
+#include <stdint.h>
 #include <string>
 #include <mutex>
 #include <list>
 #include <memory>
+#include <map>
 
 #include "xkad/routing_table/routing_utils.h"
 #include "xpbase/base/xid/xid_def.h"
@@ -16,6 +18,7 @@
 #include "xpbase/base/kad_key/kadmlia_key.h"
 #include "xpbase/base/xip_parser.h"
 #include "xkad/nat_detect/nat_manager_intf.h"
+#include "xpbase/base/top_utils.h"
 
 namespace top {
 

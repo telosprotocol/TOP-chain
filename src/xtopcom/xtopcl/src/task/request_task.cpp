@@ -3,8 +3,12 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 #include "request_task.h"
 
-#include "global_definition.h"
-#include "network/trans_http.h"
+#include <assert.h>
+
+#include "api_method.h"
+#include "protocol.h"
+#include "task_info.h"
+#include "trans_base.h"
 
 namespace xChainSDK {
 std::string request_task::_req_content = "";

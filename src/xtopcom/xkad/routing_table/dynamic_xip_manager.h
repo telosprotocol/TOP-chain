@@ -4,13 +4,16 @@
 
 #pragma once
 
+#include <stdint.h>
 #include <map>
 #include <mutex>
 #include <string>
 #include <thread>
 #include <memory>
+#include <atomic>
 
 #include "xkad/routing_table/routing_utils.h"
+#include "xpbase/base/top_utils.h"
 
 namespace top {
 
@@ -21,6 +24,7 @@ class XipParser;
 namespace kadmlia {
 
 struct ClientNodeInfo;
+
 typedef std::shared_ptr<ClientNodeInfo> ClientNodeInfoPtr;
 
 class DynamicXipManager {

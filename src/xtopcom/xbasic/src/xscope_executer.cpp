@@ -4,6 +4,8 @@
 
 #include "xbasic/xscope_executer.h"
 
+#include <utility>
+
 NS_BEG1(top)
 
 xtop_scope_executer::xtop_scope_executer(std::function<void()> && execution_body) noexcept

@@ -2,10 +2,17 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
+#include <cstdint>
+#include <map>
+#include <vector>
+
 #include "xbasic/xversion.h"
 #include "xcommon/xnode_id.h"
 #include "xdata/xdata_common.h"
 #include "xdata/xslash.h"
+#include "xbase/xmem.h"
+#include "xbase/xns_macro.h"
+#include "xcommon/xnode_type.h"
 
 NS_BEG2(top, data)
 

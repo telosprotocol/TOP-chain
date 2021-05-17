@@ -4,10 +4,12 @@
 
 #pragma once
 
-#include "xcommon/xaddress.h"
-
 #include <string>
 #include <vector>
+
+#include "xcommon/xaddress.h"
+#include "xbase/xns_macro.h"
+#include "xcommon/xip.h"
 
 NS_BEG3(top, data, election)
 

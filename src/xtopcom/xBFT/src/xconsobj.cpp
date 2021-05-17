@@ -3,14 +3,33 @@
 // Licensed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
+#include <stddef.h>
+#include <stdint.h>
 #include <cinttypes>
+#include <functional>
+#include <string>
+
 #include "xconsobj.h"
-#include "xbase/xhash.h"
 #include "xdata/xnative_contract_address.h"
+#include "xbase/xatom.h"
+#include "xbase/xbase.h"
+#include "xbase/xdata.h"
+#include "xbase/xobject.h"
+#include "xbase/xthread.h"
+#include "xbase/xvevent.h"
+#include "xconsevent.h"
+#include "xvledger/xvaccount.h"
+#include "xvledger/xvblock.h"
+#include "xvledger/xvblockstore.h"
+#include "xvledger/xvcertauth.h"
 
 
 namespace top
 {
+namespace base {
+class xcontext_t;
+}  // namespace base
+
     namespace xconsensus
     {
         const std::string  xcsobject_t::get_xclock_account_address() //find the account address of global clock-contract

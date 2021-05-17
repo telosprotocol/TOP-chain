@@ -4,11 +4,13 @@
 
 #pragma once
 
+#include <stdint.h>
+#include <string>
+#include <atomic>
+
 #include "topcl.h"
 #include "user_info.h"
 #include "xconfig/xpredefined_configurations.h"
-
-#include <string>
 
 #if defined XBUILD_GALILEO
 #    define SEED_URL "http://galileo.edge.topnetwork.org"

@@ -4,6 +4,15 @@
 
 #pragma once
 #include "basic_handler.h"
+#include "xbase/xcxx_config.h"
+#include "xbase/xns_macro.h"
+#include "xmetrics/xmetrics_unit.h"
+
+namespace top {
+namespace metrics {
+struct event_message;
+}  // namespace metrics
+}  // namespace top
 
 NS_BEG3(top, metrics, handler)
 

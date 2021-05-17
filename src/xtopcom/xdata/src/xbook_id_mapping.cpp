@@ -2,12 +2,19 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "xbase/xlog.h"
-#include "xbasic/xutility.h"
-#include "xcommon/xsharding_info.h"
-#include "xdata/xbook_id_mapping.h"
-
+#include <assert.h>
 #include <cinttypes>
+#include <cstdint>
+#include <iosfwd>
+#include <string>
+#include <utility>
+
+#include "xbasic/xutility.h"
+#include "xdata/xbook_id_mapping.h"
+#include "xbase/xbase.h"
+#include "xbase/xns_macro.h"
+#include "xbasic/xid.hpp"
+#include "xcommon/xip.h"
 
 NS_BEG2(top, data)
 

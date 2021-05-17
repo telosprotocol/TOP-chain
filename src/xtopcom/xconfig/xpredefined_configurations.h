@@ -4,14 +4,15 @@
 
 #pragma once
 
+#include <chrono>
+#include <cstdint>
+#include <limits>
+
 // TODO(jimmy) #include "xbase/xvledger.h"
 #include "xbasic/xrange.hpp"
 #include "xcommon/xlogic_time.h"
 #include "xconfig/xchain_names.h"
-
-#include <chrono>
-#include <cstdint>
-#include <limits>
+#include "xbase/xns_macro.h"
 
 constexpr uint64_t TOP_UNIT = 1e6;  // 1TOP = 1e6 uTOP
 constexpr uint64_t TOTAL_ISSUANCE = 200 * 1e8 * TOP_UNIT;

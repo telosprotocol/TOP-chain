@@ -1,6 +1,7 @@
 #include "xbasic/xerror/xerror.h"
 
 #include <type_traits>
+#include <string>
 
 class xtop_base_category : public std::error_category {
 public:

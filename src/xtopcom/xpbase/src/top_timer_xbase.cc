@@ -1,8 +1,11 @@
 #include "top_timer_xbase.h"
-#include "xpbase/base/top_log.h"
-#include "xpbase/base/top_utils.h"
-#include "xpbase/base/top_string_util.h"
+
 #include <assert.h>
+
+#include "xpbase/base/top_log.h"
+#include "xpbase/base/top_string_util.h"
+#include "xbase/xcontext.h"
+#include "xbase/xthread.h"
 
 namespace top {
 namespace base {

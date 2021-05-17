@@ -4,11 +4,12 @@
 
 #pragma once
 
-#include "xcommon/xaddress_error.h"
-
 #include <cstdint>
 #include <string>
 #include <system_error>
+
+#include "xcommon/xaddress_error.h"
+#include "xbase/xns_macro.h"
 
 NS_BEG2(top, vnetwork)
 //enum class xenum_vnetwork_errc : std::uint32_t {

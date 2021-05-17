@@ -4,11 +4,16 @@
 
 #include "xgossip/include/gossip_filter.h"
 
+#include <ext/alloc_traits.h>
 #include <cassert>
+#include <algorithm>
+#include <functional>
+#include <utility>
 
 #include "xpbase/base/top_log.h"
 #include "xpbase/base/top_timer.h"
-#include "xpbase/base/kad_key/kadmlia_key.h"
+#include "xpbase/base/top_timer2.h"
+#include "xtransport/proto/transport.pb.h"
 
 namespace top {
 

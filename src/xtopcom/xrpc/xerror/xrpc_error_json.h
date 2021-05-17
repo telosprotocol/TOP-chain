@@ -3,9 +3,14 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #pragma once
+#include <json/value.h>
+#include <json/writer.h>
+#include <stdint.h>
 #include <string>
+
 #include "xbase/xns_macro.h"
 #include "json/json.h"
+
 NS_BEG2(top, xrpc)
 
 class xrpc_error_json

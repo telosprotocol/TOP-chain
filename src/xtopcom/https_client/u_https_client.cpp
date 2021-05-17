@@ -7,10 +7,17 @@
 #include <netinet/in.h>
 #include <unistd.h>
 #include <arpa/inet.h>
-#include <openssl/ssl.h>
 #include <openssl/err.h>
+#include <openssl/ossl_typ.h>
+#include <openssl/ssl.h>
+#include <string.h>
+#include <sys/select.h>
+#include <sys/time.h>
 #include <string>
+#include <iosfwd>
+
 #include "u_https_client.h"
+
 using namespace std;
 
 SSL *ssl;

@@ -4,10 +4,21 @@
 
 #pragma once
 
+#include <stdint.h>
+#include <memory>
+#include <vector>
+
 #include "xgossip/gossip_interface.h"
 #include "xtransport/transport.h"
+#include "xkad/routing_table/node_info.h"
+#include "xkad/routing_table/routing_table.h"
 
 namespace top {
+namespace transport {
+namespace protobuf {
+class RoutingMessage;
+}  // namespace protobuf
+}  // namespace transport
 
 namespace gossip {
 

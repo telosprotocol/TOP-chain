@@ -4,10 +4,13 @@
 
 #pragma once
 
+#include <map>
+#include <iosfwd>
+#include <utility>
+
 #include "xcommon/xip.h"
 #include "xcommon/xversion.h"
-
-#include <map>
+#include "xbase/xns_macro.h"
 
 NS_BEG3(top, data, election)
 

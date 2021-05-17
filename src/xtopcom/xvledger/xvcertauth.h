@@ -4,13 +4,22 @@
 
 #pragma once
 
+#include <stdint.h>
+#include <map>
+#include <string>
+#include <vector>
+
 #include "xbase/xobject.h"
 #include "xvblock.h"
+#include "xbase/xbase.h"
 
 namespace top
 {
     namespace base
     {
+class xvblock_t;
+class xvqcert_t;
+
         enum class enum_vcert_auth_result
         {
             enum_successful     =  0, //successful

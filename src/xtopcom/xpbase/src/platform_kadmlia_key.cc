@@ -7,16 +7,15 @@
 
 #include "xpbase/base/kad_key/platform_kadmlia_key.h"
 
+#include <assert.h>
+#include <stdlib.h>
 #include <limits>
 
-#include "common/xxhash.h"
 #include "common/xdfcurve.h"
-#include "common/xaes.h"
-#include "common/secp256k1.h"
 #include "common/sha2.h"
-#include "xbase/xobject_ptr.h"
-
 #include "xpbase/base/top_log.h"
+#include "xpbase/base/rand_util.h"
+#include "xpbase/base/xip_parser.h"
 
 namespace top {
 

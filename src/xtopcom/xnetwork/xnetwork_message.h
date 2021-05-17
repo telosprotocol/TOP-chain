@@ -4,12 +4,16 @@
 
 #pragma once
 
+#include <cstdint>
+#include <functional>
+#include <iosfwd>
+#include <system_error>
+
 #include "xcommon/xnode_id.h"
 #include "xnetwork/xmessage.h"
 #include "xnetwork/xmessage_transmission_property.h"
-
-#include <cstdint>
-#include <functional>
+#include "xbase/xns_macro.h"
+#include "xbasic/xhashable.hpp"
 
 NS_BEG2(top, network)
 

@@ -4,9 +4,10 @@
 
 #include "xkad/routing_table/client_node_manager.h"
 
-#include "xbase/xutl.h"
-#include "xkad/routing_table/routing_table.h"
-#include "xpbase/base/top_log.h"
+#include <utility>
+
+#include "xkad/routing_table/dynamic_xip_manager.h"
+#include "xpbase/base/error_code.h"
 
 namespace top {
 

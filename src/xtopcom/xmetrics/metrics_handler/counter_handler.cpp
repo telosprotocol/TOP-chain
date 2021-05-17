@@ -4,6 +4,20 @@
 
 #include "counter_handler.h"
 
+#include <assert.h>
+#include <stdint.h>
+#include <nlohmann/json.hpp>
+#include <iomanip>
+#include <memory>
+#include <ostream>
+#include <string>
+
+#include "xbase/xbase.h"
+#include "xmetrics/Variant.h"
+#include "xmetrics/metrics_handler/basic_handler.h"
+#include "xmetrics/xmetrics_config.h"
+#include "xmetrics/xmetrics_event.h"
+
 NS_BEG3(top, metrics, handler)
 
 metrics_variant_ptr counter_handler_t::init_new_metrics(event_message const & msg) {

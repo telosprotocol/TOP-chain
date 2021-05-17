@@ -4,7 +4,10 @@
 
 #pragma once
 #include <string>
+
 #include "xrpc_define.h"
+#include "xbase/xns_macro.h"
+
 NS_BEG2(top, xrpc)
 class xtraffic_controller {
 public:

@@ -8,6 +8,7 @@
 #pragma once
 
 #include <stdint.h>
+#include <limits.h>
 #include <limits>
 #include <string>
 #include <sstream>

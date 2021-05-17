@@ -4,9 +4,11 @@
 
 #pragma once
 
-#include "xbasic/xbyte.h"
-
 #include <vector>
+#include <iosfwd>
+
+#include "xbasic/xbyte.h"
+#include "xbase/xns_macro.h"
 
 NS_BEG1(top)
 

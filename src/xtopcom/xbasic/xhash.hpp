@@ -4,15 +4,19 @@
 
 #pragma once
 
-#include "xbasic/xbyte.h"
-#include "xbasic/xbyte_buffer.h"
-
 #include <array>
 #include <cstdint>
 #include <cstring>
 #include <limits>
 #include <random>
 #include <type_traits>
+#include <algorithm>
+#include <iosfwd>
+
+#include "xbasic/xbyte.h"
+#include "xbasic/xbyte_buffer.h"
+#include "xbase/xcxx_config.h"
+#include "xbase/xns_macro.h"
 
 NS_BEG1(top)
 

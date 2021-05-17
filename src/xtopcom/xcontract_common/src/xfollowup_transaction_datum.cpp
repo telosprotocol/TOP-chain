@@ -4,6 +4,8 @@
 
 #include "xcontract_common/xfollowup_transaction_datum.h"
 
+#include <utility>
+
 namespace top {
 namespace contract_common {
 

@@ -2,19 +2,23 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
+#include <assert.h>
+#include <stdint.h>
 #include <string>
 #include <vector>
-#include <cinttypes>
 #include <map>
+#include <deque>
+#include <utility>
 
 #include "xdata/xaccount_cmd.h"
 #include "xdata/xdata_error.h"
-
 #include "xbase/xdata.h"
 #include "xbase/xobject_ptr.h"
-
-#include "xdata/xproperty.h"
 #include "xdata/xpropertylog.h"
+#include "xbase/xbase.h"
+#include "xbasic/xmodule_type.h"
+#include "xdata/xdata_common.h"
+#include "xdata/xhash_base.hpp"
 
 namespace top { namespace data {
 

@@ -4,9 +4,10 @@
 
 #include "xcrypto/xcrypto_util.h"
 
-#include "xcrypto/xckey.h"
-
+#include <string.h>
 #include <string>
+
+#include "xcrypto/xckey.h"
 
 namespace top {
 namespace utl {

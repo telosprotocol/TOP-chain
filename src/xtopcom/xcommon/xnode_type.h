@@ -4,10 +4,13 @@
 
 #pragma once
 
-#include "xbase/xns_macro.h"
-
+#include <stdint.h>
 #include <functional>
 #include <string>
+#include <iosfwd>
+#include <type_traits>
+
+#include "xbase/xns_macro.h"
 
 NS_BEG2(top, common)
 

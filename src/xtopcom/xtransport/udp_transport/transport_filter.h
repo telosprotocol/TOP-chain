@@ -4,11 +4,13 @@
 
 #pragma once
 
+#include <stdint.h>
 #include <unordered_map>
 #include <vector>
 #include <memory>
 #include <array>
 #include <deque>
+#include <atomic>
 
 #include "xtransport/proto/transport.pb.h"
 

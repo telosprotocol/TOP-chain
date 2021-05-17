@@ -7,15 +7,13 @@
 
 #include "xpbase/base/top_utils.h"
 
-#include <ctype.h>
 #include <string.h>
-#include <stdarg.h>
-#include <array>
+#include <stdlib.h>
 #include <cstdint>
-#include <algorithm>
 #include <limits>
-#include <sstream>
-#include <locale>
+#include <chrono>
+#include <iterator>
+#include <thread>
 
 #ifdef _WIN32
 #include <winsock2.h>
@@ -30,8 +28,8 @@
 #endif
 
 #include "common/xxhash.h"
-#include "xpbase/base/top_log.h"
 #include "xpbase/base/check_cast.h"
+#include "xpbase/base/exception.h"
 
 namespace top {
 

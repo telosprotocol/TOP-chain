@@ -4,12 +4,14 @@
 
 #pragma once
 
-#include "xbase/xbase.h"
-#include "xbasic/xerror/xchain_error.h"
-
 #include <limits>
 #include <system_error>
 #include <type_traits>
+#include <iosfwd>
+
+#include "xbase/xbase.h"
+#include "xbasic/xerror/xchain_error.h"
+#include "xbase/xns_macro.h"
 
 std::error_category const & base_category();
 std::error_code make_error_code(enum_xerror_code ec) noexcept;

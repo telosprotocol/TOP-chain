@@ -4,8 +4,10 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "xauthscheme.h"
+
+#include <stddef.h>
+
 #include "xschnorrsig.h"
-#include "xblssig.h"
 
 namespace top
 {

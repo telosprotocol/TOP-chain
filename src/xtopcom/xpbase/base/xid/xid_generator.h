@@ -4,6 +4,8 @@
 
 #include <map>
 #include <mutex>
+#include <memory>
+#include <string>
 
 #include "xpbase/base/top_utils.h"
 #include "xpbase/base/xid/xid_def.h"

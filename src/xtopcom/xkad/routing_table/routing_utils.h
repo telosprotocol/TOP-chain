@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <stdint.h>
 #include <string>
 #include <mutex>
 #include <random>
@@ -11,6 +12,8 @@
 #include <chrono>
 #include <vector>
 #include <set>
+#include <memory>
+#include <utility>
 
 #include "xpbase/base/top_utils.h"
 #include "xpbase/base/error_code.h"
@@ -20,10 +23,14 @@
 #include "xpbase/base/kad_key/kadmlia_key.h"
 
 namespace top {
+namespace base {
+class Config;
+}  // namespace base
 
 namespace kadmlia {
 
 class LocalNodeInfo;
+
 typedef std::shared_ptr<LocalNodeInfo> LocalNodeInfoPtr;
 
 enum RoutingMessageRequestType {

@@ -1,8 +1,14 @@
 #include "trans_ws.h"
+
+#include <stdint.h>
 #include <string>
 #include <iostream>
-#include <algorithm>
+#include <functional>
+#include <system_error>
+
 #include "task/task_dispatcher.h"
+#include "api_method.h"
+#include "client_http.hpp"
 
 
 namespace xChainSDK

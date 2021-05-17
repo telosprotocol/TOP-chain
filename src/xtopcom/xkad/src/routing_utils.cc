@@ -4,25 +4,32 @@
 
 #include "xkad/routing_table/routing_utils.h"
 
+#include <assert.h>
+#include <ctype.h>
+#include <string.h>
+
 #ifdef _MSC_VER
 #define _WINSOCKAPI_
 #include <windows.h>
 #endif
 
-#include <locale>
 #include <limits>
 #include <algorithm>
+#include <exception>
 
 #include "xpbase/base/top_log.h"
 #include "xpbase/base/top_utils.h"
 #include "xpbase/base/endpoint_util.h"
-#include "xkad/routing_table/routing_table.h"
 #include "xkad/routing_table/nodeid_utils.h"
 #include "xpbase/base/line_parser.h"
 #include "xpbase/base/xid/xid_parser.h"
 #include "xpbase/base/xip_parser.h"
 #include "xpbase/base/kad_key/get_kadmlia_key.h"
 #include "xbase/xhash.h"
+#include "xkad/routing_table/local_node_info.h"
+#include "xpbase/base/check_cast.h"
+#include "xpbase/base/top_config.h"
+#include "xpbase/base/xid/xid_def.h"
 
 namespace top {
 

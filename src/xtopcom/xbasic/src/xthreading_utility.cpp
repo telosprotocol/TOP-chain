@@ -1,4 +1,7 @@
+#include <mutex>
+
 #include "xbasic/xthreading/xutility.h"
+#include "xbase/xns_macro.h"
 
 NS_BEG2(top, threading)
 

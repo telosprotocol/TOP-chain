@@ -15,6 +15,10 @@
 #endif
 
 #include "xvledger/xvstate.h"
+#include "xbase/xns_macro.h"
+#include "xcommon/xaddress.h"
+#include "xcontract_common/xproperties/xproperty_category.h"
+#include "xcontract_common/xproperties/xproperty_type.h"
 
 #if defined(__clang__)
 #    pragma clang diagnostic pop
@@ -24,6 +28,12 @@
 #    pragma warning(pop)
 #endif
 
+#include <stdint.h>
+#include <cassert>
+#include <type_traits>
+#include <system_error>
+#include <string>
+
 #include "xbasic/xbyte_buffer.h"
 #include "xbasic/xmemory.hpp"
 #include "xbasic/xerror/xthrow_error.h"
@@ -32,10 +42,6 @@
 #include "xcontract_common/xproperties/xproperty_identifier.h"
 #include "xcontract_common/xcontract_state_fwd.h"
 #include "xdata/xtransaction.h"
-
-#include <cassert>
-#include <type_traits>
-#include <system_error>
 
 NS_BEG2(top, contract_common)
 

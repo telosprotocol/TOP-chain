@@ -4,6 +4,8 @@
 
 #include "xdata/xelection/xelection_association_result.h"
 
+#include <type_traits>
+
 NS_BEG3(top, data, election)
 
 xtop_election_association_result::iterator

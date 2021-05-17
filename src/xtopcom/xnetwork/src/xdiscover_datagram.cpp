@@ -5,6 +5,12 @@
 #include "xnetwork/xp2p/xdiscover_datagram.h"
 
 #include <cassert>
+#include <iterator>
+#include <stdexcept>
+#include <unordered_map>
+#include <utility>
+
+#include "xnetwork/xendpoint.h"
 
 NS_BEG3(top, network, p2p)
 

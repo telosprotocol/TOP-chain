@@ -4,6 +4,8 @@
 
 #include "xkad/gossip/rumor_message_manager.h"
 
+#include <stdint.h>
+
 #include "xpbase/base/top_log.h"
 
 namespace top {

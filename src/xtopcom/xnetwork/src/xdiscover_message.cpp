@@ -4,6 +4,9 @@
 
 #include "xnetwork/xp2p/xdiscover_message.h"
 
+#include <type_traits>
+#include <utility>
+
 NS_BEG3(top, network, p2p)
 
 constexpr std::chrono::seconds xtop_discover_message::ttl;

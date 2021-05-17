@@ -4,9 +4,14 @@
 
 #include "message_manager.h"
 
-#include <cassert>
+#include <string.h>
+#include <transport.pb.h>
+#include <functional>
 
 namespace top {
+namespace base {
+class xpacket_t;
+}  // namespace base
 
 namespace transport {
 
@@ -93,9 +98,6 @@ void MessageManager::HandleMessage(
     else
     {
         xwarn("MessageManager::HandleMessage,empty callback for message type(%d)",message_type);
-        #ifdef DEBUG
-//         xassert(0);//logic exception,throw error  Charlie(for dynamic message)
-        #endif
     }
 }
 

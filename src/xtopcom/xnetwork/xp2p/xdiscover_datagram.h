@@ -4,11 +4,14 @@
 
 #pragma once
 
-#include "xbasic/xhash.hpp"
-#include "xnetwork/xnode.h"
-
 #include <unordered_map>
 #include <unordered_set>
+
+#include "xbasic/xhash.hpp"
+#include "xnetwork/xnode.h"
+#include "xbase/xns_macro.h"
+#include "xcommon/xnode_id.h"
+#include "xnetwork/xnode_endpoint.h"
 
 NS_BEG3(top, network, p2p)
 

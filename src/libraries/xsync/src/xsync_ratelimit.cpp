@@ -1,5 +1,16 @@
 #include "xsync/xsync_ratelimit.h"
 
+#include <type_traits>
+
+#include "xbase/xcontext.h"
+#include "xbase/xutl.h"
+
+namespace top {
+namespace base {
+class xiothread_t;
+}  // namespace base
+}  // namespace top
+
 NS_BEG2(top, sync)
 
 const float min_val = 5;

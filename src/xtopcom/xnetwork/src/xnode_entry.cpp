@@ -4,6 +4,8 @@
 
 #include "xnetwork/xp2p/xnode_entry.hpp"
 
+#include "xcommon/xnode_id.h"
+
 NS_BEG1(std)
 
 std::size_t

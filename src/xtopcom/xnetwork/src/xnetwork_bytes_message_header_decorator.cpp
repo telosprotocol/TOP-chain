@@ -2,13 +2,24 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
+#include <endian.h>
+#include <stdint.h>
+#include <cassert>
+#include <cstring>
+#include <iosfwd>
+#include <iterator>
+#include <vector>
+
 #include "xcodec/xbuffer_codec.hpp"
 #include "xcodec/xdecorators/xprepend_size_decorator.hpp"
 #include "xnetwork/xcodec/xdecorators/xnetwork_bytes_message_header_decorator.h"
-
-
-#include <cassert>
-#include <cstring>
+#include "xbase/xcxx_config.h"
+#include "xbase/xns_macro.h"
+#include "xbasic/xbyte_buffer.h"
+#include "xcodec/xcodec_errc.h"
+#include "xcodec/xcodec_error.h"
+#include "xnetwork/xcodec/xmessage_flags.h"
+#include "xnetwork/xsocket_message.h"
 
 #ifdef __LINUX__
 #include <endian.h>  // TODO(bluecl): linux only?

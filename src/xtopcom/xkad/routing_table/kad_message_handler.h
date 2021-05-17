@@ -6,6 +6,7 @@
 
 #include <string>
 #include <map>
+#include <memory>
 
 #include "xbase/xlog.h"
 #include "xbase/xobject.h"
@@ -15,7 +16,6 @@
 #include "xbase/xpacket.h"
 #include "xbase/xsocket.h"
 #include "xbase/xutl.h"
-
 #include "xtransport/proto/transport.pb.h"
 #include "xkad/proto/kadmlia.pb.h"
 #include "xkad/routing_table/routing_utils.h"
@@ -24,11 +24,20 @@
 #include "xkad/nat_detect/nat_manager_intf.h"
 
 namespace top {
+namespace base {
+class xpacket_t;
+}  // namespace base
+namespace transport {
+namespace protobuf {
+class RoutingMessage;
+}  // namespace protobuf
+}  // namespace transport
 
 namespace kadmlia {
 
 class RoutingTable;
 class ThreadHandler;
+
 typedef std::shared_ptr<RoutingTable> RoutingTablePtr;
 
 class KadMessageHandler {

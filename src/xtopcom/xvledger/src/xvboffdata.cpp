@@ -4,6 +4,11 @@
 
 #include "../xvboffdata.h"
 
+#include <utility>
+
+#include "xbase/xcontext.h"
+#include "xbase/xmem.h"
+
 namespace top
 {
     namespace base

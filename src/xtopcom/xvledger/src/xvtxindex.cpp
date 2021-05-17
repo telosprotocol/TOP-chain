@@ -3,9 +3,18 @@
 // Licensed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include <cinttypes>
+#include <stddef.h>
+#include <stdint.h>
+#include <string>
+
 #include "../xvblock.h"
 #include "../xvtxindex.h"
+#include "xbase/xbase.h"
+#include "xbase/xdata.h"
+#include "xbase/xint.h"
+#include "xbase/xmem.h"
+#include "xbase/xutl.h"
+#include "xvdbkey.h"
 
 namespace top
 {

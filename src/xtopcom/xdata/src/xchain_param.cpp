@@ -3,7 +3,10 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "xdata/xchain_param.h"
+
 #include "xpbase/base/line_parser.h"
+#include "xbase/xbase.h"
+#include "xverifier/xverifier_utl.h"
 
 namespace top {
 

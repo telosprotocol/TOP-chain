@@ -5,6 +5,9 @@
 
 #include "xblssig.h"
 
+#include "xbase/xutl.h"
+#include "xvledger/xvcnode.h"
+
 namespace top
 {
     namespace auth

@@ -3,9 +3,11 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #pragma once
-#include "xbase/xns_macro.h"
-
+#include <stdint.h>
 #include <system_error>
+#include <type_traits>
+
+#include "xbase/xns_macro.h"
 
 NS_BEG2(top, xrpc)
 

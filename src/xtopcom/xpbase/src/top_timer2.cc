@@ -1,13 +1,9 @@
 
-#include "top_timer_asio.h"
+#include <memory>
+#include <string>
+
 #include "top_timer_xbase.h"
-
-#include <assert.h>
-#include <vector>
-#include <iostream>
-
-#include "xpbase/base/top_log.h"
-#include "xpbase/base/top_utils.h"
+#include "xpbase/base/top_timer2.h"
 
 namespace top {
 namespace base {

@@ -4,11 +4,17 @@
 
 #pragma once
 
-#include "xdata/xdata_common.h"
-#include "xdata/xelection/xstandby_network_result.h"
-
 #include <map>
 #include <string>
+#include <iosfwd>
+#include <utility>
+
+#include "xdata/xdata_common.h"
+#include "xdata/xelection/xstandby_network_result.h"
+#include "xbase/xns_macro.h"
+#include "xcommon/xnode_id.h"
+#include "xcommon/xnode_type.h"
+#include "xdata/xelection/xstandby_node_info.h"
 
 NS_BEG3(top, data, election)
 

@@ -4,7 +4,11 @@
 
 #include "xdata/xtop_action.h"
 
-#include <cassert>
+namespace top {
+namespace base {
+class xobject_t;
+}  // namespace base
+}  // namespace top
 
 NS_BEG2(top, data)
 

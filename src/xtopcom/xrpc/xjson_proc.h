@@ -3,13 +3,25 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #pragma once
+#include <json/reader.h>
+#include <json/value.h>
+#include <json/writer.h>
 #include <string>
 #include <memory>
+#include <unordered_set>
+
 #include "json/json.h"
 #include "xbase/xutl.h"
 #include "xdata/xtransaction.h"
 #include "prerequest/xpre_request_data.h"
 #include "xrpc_define.h"
+#include "xbase/xns_macro.h"
+
+namespace top {
+namespace xrpc {
+class xpre_request_data_t;
+}  // namespace xrpc
+}  // namespace top
 
 NS_BEG2(top, xrpc)
 class xjson_proc_t

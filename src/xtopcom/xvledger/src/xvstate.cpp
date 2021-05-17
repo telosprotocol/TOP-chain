@@ -3,10 +3,27 @@
 // Licensed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
+#include <stddef.h>
+#include <cstdint>
+#include <deque>
+#include <functional>
+#include <map>
+#include <string>
+#include <utility>
+
 #include "xbase/xcontext.h"
 #include "xbase/xutl.h"
 #include "../xvblock.h"
 #include "../xvstate.h"
+#include "xbase/xbase.h"
+#include "xbase/xdata.h"
+#include "xbase/xhash.h"
+#include "xbase/xmem.h"
+#include "xbase/xobject.h"
+#include "xbase/xvmethod.h"
+#include "xvexeunit.h"
+#include "xvinstruction.h"
+#include "xvproperty.h"
 
 namespace top
 {

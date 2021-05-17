@@ -4,11 +4,7 @@
 
 #include "xtransport/udp_transport/transport_filter.h"
 
-#include <cassert>
-
 #include "xpbase/base/top_log.h"
-#include "xpbase/base/top_timer.h"
-#include "xpbase/base/kad_key/kadmlia_key.h"
 
 namespace top {
 

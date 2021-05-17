@@ -4,10 +4,11 @@
 
 #pragma once
 
-#include "xbase/xns_macro.h"
-
 #include <cstdint>
 #include <system_error>
+#include <type_traits>
+
+#include "xbase/xns_macro.h"
 
 NS_BEG3(top, data, error)
 

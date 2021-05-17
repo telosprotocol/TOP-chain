@@ -4,13 +4,16 @@
 
 #pragma once
 
+#include <cstdint>
+
 #include "xbasic/xhashable.hpp"
 #include "xbasic/xsimple_message.hpp"
 #include "xcommon/xaddress.h"
 #include "xcommon/xlogic_time.h"
 #include "xvnetwork/xmessage.h"
-
-#include <cstdint>
+#include "xbase/xns_macro.h"
+#include "xbasic/xbyte_buffer.h"
+#include "xcommon/xmessage_id.h"
 
 NS_BEG2(top, vnetwork)
 

@@ -1,5 +1,13 @@
-#include "xbasic/uint128_t.build"
 #include <cstring>
+#include <cstdint>
+#include <ios>
+#include <stdexcept>
+#include <string>
+#include <utility>
+#include <vector>
+
+#include "xbasic/uint128_t.build"
+#include "xbase/xmem.h"
 
 namespace top { namespace xstake {
 

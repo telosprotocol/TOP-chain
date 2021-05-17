@@ -4,8 +4,6 @@
 
 #include "xnetwork/xcodec/xdecorators/xfragment_decorator.h"
 
-#include <iterator>
-
 NS_BEG4(top, network, codec, decorators)
 
 xbyte_buffer_t

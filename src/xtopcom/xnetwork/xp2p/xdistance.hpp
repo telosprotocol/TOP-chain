@@ -4,11 +4,13 @@
 
 #pragma once
 
-#include "xbase/xns_macro.h"
-
 #include <functional>
 #include <limits>
 #include <type_traits>
+#include <iosfwd>
+
+#include "xbase/xns_macro.h"
+#include "xbase/xcxx_config.h"
 
 NS_BEG3(top, network, p2p)
 

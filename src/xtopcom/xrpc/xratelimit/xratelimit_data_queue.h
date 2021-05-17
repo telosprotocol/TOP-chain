@@ -2,7 +2,10 @@
 #ifndef RATELIMIT_DATA_QUEUE_H_
 #define RATELIMIT_DATA_QUEUE_H_
 
+#include <stddef.h>
+#include <stdint.h>
 #include <string>
+
 #include "xratelimit_thread_queue.h"
 #include "xbase/xns_macro.h"
 

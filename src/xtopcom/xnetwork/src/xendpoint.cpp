@@ -4,6 +4,9 @@
 
 #include "xnetwork/xendpoint.h"
 
+#include <functional>
+#include <utility>
+
 NS_BEG2(top, network)
 
 xtop_endpoint::xtop_endpoint(std::string address, std::uint16_t const p)

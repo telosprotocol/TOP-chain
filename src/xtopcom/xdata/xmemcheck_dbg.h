@@ -8,6 +8,7 @@
 #include <map>
 #include <vector>
 #include <mutex>
+
 #include "xbase/xobject.h"
 #include "xbase/xns_macro.h"
 

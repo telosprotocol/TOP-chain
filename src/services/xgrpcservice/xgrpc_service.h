@@ -1,11 +1,26 @@
 #pragma once
 
+#include <grpcpp/impl/codegen/status.h>
+#include <json/value.h>
+#include <stdint.h>
 #include <string>
 #include <thread>
 #include <deque>
 #include <condition_variable>
+#include <memory>
+#include <mutex>
+
 #include "json/json.h"
 #include "src/xrpc.grpc.pb.h"
+
+namespace grpc {
+class ServerContext;
+template <class W> class ServerWriter;
+}  // namespace grpc
+namespace top {
+class xrpc_reply;
+class xrpc_request;
+}  // namespace top
 
 using grpc::Status;
 using grpc::ServerContext;

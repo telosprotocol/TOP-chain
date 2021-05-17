@@ -3,9 +3,14 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "xbasic/xdbg.h"
-#include "xbase/xbase.h"
+
 #include <cxxabi.h>
 #include <execinfo.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+#include "xbase/xbase.h"
+
 NS_BEG1(top)
 
 #define STACK_LEN 5

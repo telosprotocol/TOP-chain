@@ -4,6 +4,8 @@
 
 #include "xcontract_common/xproperties/xproperty_identifier.h"
 
+#include <utility>
+
 NS_BEG3(top, contract_common, properties)
 
 xtop_property_identifier::xtop_property_identifier(std::string n, xproperty_type_t t, xproperty_category_t c) noexcept

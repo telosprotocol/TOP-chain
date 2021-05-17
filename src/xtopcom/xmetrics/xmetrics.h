@@ -3,6 +3,16 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #pragma once
+#include <stdint.h>
+#include <stdio.h>
+#include <chrono>
+#include <map>
+#include <string>
+#include <thread>
+#include <atomic>
+#include <iosfwd>
+#include <vector>
+
 #include "metrics_handler/counter_handler.h"
 #include "metrics_handler/flow_handler.h"
 #include "metrics_handler/timer_handler.h"
@@ -11,11 +21,9 @@
 #include "xbasic/xthreading/xthreadsafe_queue.hpp"
 #include "xmetrics_event.h"
 #include "xmetrics_unit.h"
+#include "xbase/xcxx_config.h"
+#include "xbase/xns_macro.h"
 
-#include <chrono>
-#include <map>
-#include <string>
-#include <thread>
 NS_BEG2(top, metrics)
 
 enum E_SIMPLE_METRICS_TAG {

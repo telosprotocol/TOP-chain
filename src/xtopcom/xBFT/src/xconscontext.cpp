@@ -5,6 +5,19 @@
 
 #include "xconscontext.h"
 
+#include <stddef.h>
+#include <algorithm>
+#include <cstdint>
+#include <deque>
+#include <utility>
+
+#include "xbase/xatom.h"
+#include "xbase/xbase.h"
+#include "xconsevent.h"
+#include "xconsobj.h"
+#include "xvledger/xvbindex.h"
+#include "xvledger/xvblock.h"
+
 namespace top
 {
     namespace xconsensus

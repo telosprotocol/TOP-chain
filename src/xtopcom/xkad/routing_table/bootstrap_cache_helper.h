@@ -5,12 +5,14 @@
 #pragma once
 
 #include <stdint.h>
-
 #include <string>
 #include <vector>
 #include <mutex>
 #include <map>
 #include <set>
+#include <functional>
+#include <memory>
+#include <utility>
 
 #include "xpbase/base/top_timer.h"
 #include "xpbase/base/rand_util.h"
@@ -19,6 +21,11 @@
 #include "xkad/routing_table/node_info.h"
 
 namespace top {
+namespace base {
+class TimerManager;
+class TimerRepeated;
+}  // namespace base
+
 namespace kadmlia {
 
 // get public nodes from self routing table

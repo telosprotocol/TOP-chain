@@ -6,6 +6,7 @@
 
 #include <string>
 #include <map>
+#include <cstdint>
 
 #include "xpbase/base/top_utils.h"
 

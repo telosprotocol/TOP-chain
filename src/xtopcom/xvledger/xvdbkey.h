@@ -4,7 +4,9 @@
 
 #pragma once
 
+#include <stdint.h>
 #include <string>
+
 #include "xvaccount.h"
 
 namespace top

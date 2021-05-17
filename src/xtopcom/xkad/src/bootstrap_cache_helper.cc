@@ -6,13 +6,21 @@
 
 #include <assert.h>
 #include <functional>
+#include <algorithm>
+#include <cstdint>
+#include <iterator>
 
 #include "xpbase/base/top_utils.h"
 #include "xpbase/base/top_log.h"
 #include "xpbase/base/check_cast.h"
 #include "xpbase/base/endpoint_util.h"
+#include "xpbase/base/top_timer.h"
 
 namespace top {
+namespace base {
+class TimerManager;
+}  // namespace base
+
 namespace kadmlia {
 
 bool BootstrapCacheHelper::Start(

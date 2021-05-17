@@ -2,16 +2,26 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
+#include <stddef.h>
+#include <stdint.h>
 #include <memory>
 #include <algorithm>
 #include <iostream>
+#include <list>
+#include <map>
+#include <mutex>
+#include <string>
+#include <type_traits>
+#include <utility>
 
-#include "xbase/xobject_ptr.h"
 #include "xconfig/xconfig_register.h"
 #include "xconfig/xconfig_to_string_helper.h"
 #include "xconfig/xpredefined_configurations.h"
-
 #include "xpbase/base/check_cast.h"
+#include "xbase/xbase.h"
+#include "xbase/xlock.h"
+#include "xbase/xns_macro.h"
+#include "xconfig/xconfig_face.h"
 
 NS_BEG2(top, config)
 

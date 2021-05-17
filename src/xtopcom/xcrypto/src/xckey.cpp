@@ -4,16 +4,23 @@
 
 #include <assert.h>
 #include <time.h>
+#include <hasher.h>
+#include <stdint.h>
+#include <string.h>
 #include <chrono>
+#include <algorithm>
+#include <string>
+#include <vector>
+
 #include "xbase/xutl.h"
 #include "xcrypto/xckey.h"
 #include "xutility/xhash.h"
 #include "xvledger/xvaccount.h"
+#include "xbase/xbase.h"
+#include "xbase/xint.h"
 
 extern "C"
 {
-    #include "trezor-crypto/rand.h"
-    #include "trezor-crypto/secp256k1.h"
     #include "trezor-crypto/ecdsa.h"
 }
 #include "secp256k1/secp256k1.h"

@@ -4,12 +4,13 @@
 
 #pragma once
 
+#include <cstdint>
+
 #include "xbasic/xcrypto_key.h"
 #include "xcommon/xversion.h"
 #include "xdata/xdata_common.h"
 #include "xdata/xelection/xstandby_node_info.h"
-
-#include <cstdint>
+#include "xbase/xns_macro.h"
 
 NS_BEG3(top, data, election)
 

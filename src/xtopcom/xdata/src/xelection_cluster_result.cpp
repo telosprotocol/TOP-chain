@@ -4,6 +4,8 @@
 
 #include "xdata/xelection/xelection_cluster_result.h"
 
+#include <type_traits>
+
 NS_BEG3(top, data, election)
 
 xtop_election_cluster_result::iterator

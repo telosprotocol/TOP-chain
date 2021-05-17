@@ -3,12 +3,26 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #pragma once
+#include <stdint.h>
+#include <map>
+#include <set>
+#include <string>
+
 #include "xconsengine.h"
+#include "xbase/xvevent.h"
 
 namespace top
 {
+namespace base {
+class xvblock_t;
+class xvbnode_t;
+}  // namespace base
+
     namespace xconsensus
     {
+class xcscoreobj_t;
+class xcsobject_t;
+
         class xBFTcontext_t : public xcscontext_t
         {
         public:

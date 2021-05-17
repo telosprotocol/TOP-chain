@@ -1,14 +1,21 @@
 #pragma once
 
+#include <stdint.h>
 #include <vector>
 #include <functional>
 #include <map>
 #include <mutex>
+#include <memory>
+#include <string>
+#include <utility>
 
 #include "xelect_net/include/multilayer_network_interface.h"
 #include "xsyncbase/xsync_face.h"
 
 namespace top {
+namespace sync {
+class xsync_face_t;
+}  // namespace sync
 
 using XchainArguments = std::vector<std::string>;
 using XchainCommandProc = std::function<void (const XchainArguments &, const std::string &cmdline, std::string &result)>;

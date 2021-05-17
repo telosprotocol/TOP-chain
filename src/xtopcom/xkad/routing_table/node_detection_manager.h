@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <stdint.h>
 #include <map>
 #include <mutex>
 #include <string>
@@ -12,8 +13,13 @@
 
 #include "xpbase/base/top_timer.h"
 #include "xkad/routing_table/routing_utils.h"
+#include "xpbase/base/top_utils.h"
 
 namespace top {
+namespace base {
+class TimerManager;
+class TimerRepeated;
+}  // namespace base
 
 namespace kadmlia {
 

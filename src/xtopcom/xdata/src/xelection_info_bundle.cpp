@@ -4,6 +4,8 @@
 
 #include "xdata/xelection/xelection_info_bundle.h"
 
+#include <utility>
+
 NS_BEG3(top, data, election)
 
 bool 

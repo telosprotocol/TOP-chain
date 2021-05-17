@@ -4,16 +4,20 @@
 
 #include "xtransport/message_manager/multi_message_handler.h"
 
-#include <iostream>
+#include <assert.h>
+#include <transport.pb.h>
 #include <atomic>
+#include <string>
 
-#include "xbase/xutl.h"
-#include "xpbase/base/rand_util.h"
 #include "xpbase/base/top_log.h"
-#include "xpbase/base/top_string_util.h"
-#include "xmetrics/xmetrics.h"
 #include "xpbase/base/top_utils.h"
 #include "xtransport/udp_transport/transport_util.h"
+#include "xbase/xcontext.h"
+#include "xbase/xhash.h"
+#include "xbase/xmailbox.h"
+#include "xbase/xmem.h"
+#include "xbase/xpacket.h"
+#include "xbase/xthread.h"
 
 namespace top {
 

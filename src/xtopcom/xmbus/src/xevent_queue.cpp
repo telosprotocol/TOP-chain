@@ -2,9 +2,13 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include <algorithm>
+#include <stdint.h>
 
 #include "xmbus/xevent_queue.h"
+#include "xbase/xns_macro.h"
+#include "xbase/xvevent.h"
+#include "xmbus/xevent.h"
+#include "xmbus/xevent_ports.h"
 
 NS_BEG2(top, mbus)
 

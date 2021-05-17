@@ -10,6 +10,9 @@
 #include <functional>
 #include <map>
 #include <mutex>
+#include <cstdint>
+#include <memory>
+#include <utility>
 
 #include "xpbase/base/top_utils.h"
 #include "xpbase/base/top_config.h"

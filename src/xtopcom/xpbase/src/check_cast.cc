@@ -8,6 +8,10 @@
 #include "xpbase/base/check_cast.h"
 
 #include <string.h>
+#include <errno.h>
+#include <stdint.h>
+#include <stdlib.h>
+#include <limits>
 
 #ifndef LONG_MIN
 #define LONG_MIN std::numeric_limits<long>::min()  // NOLINT

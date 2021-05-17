@@ -4,6 +4,8 @@
 
 #include "xnetwork/xnode.h"
 
+#include "xnetwork/xendpoint.h"
+
 NS_BEG2(top, common)
 
 // template

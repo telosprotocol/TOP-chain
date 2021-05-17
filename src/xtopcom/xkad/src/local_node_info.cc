@@ -4,15 +4,10 @@
 
 #include "xkad/routing_table/local_node_info.h"
 
-#include <limits>
+#include <assert.h>
+#include <utility>
 
 #include "xbase/xhash.h"
-#include "common/xdfcurve.h"
-#include "common/xaes.h"
-#include "common/secp256k1.h"
-#include "common/sha2.h"
-
-#include "xpbase/base/rand_util.h"
 #include "xpbase/base/top_log.h"
 
 namespace top {

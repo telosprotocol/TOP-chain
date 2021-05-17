@@ -4,7 +4,12 @@
 
 #pragma once
 
+#include <stdint.h>
 #include <unordered_map>
+#include <chrono>
+#include <memory>
+#include <mutex>
+#include <string>
 
 #include "xpbase/base/top_utils.h"
 

@@ -4,19 +4,29 @@
 
 #pragma once
 
+#include <stdint.h>
 #include <mutex>
 #include <vector>
+#include <memory>
 
 #include "xkad/proto/kadmlia.pb.h"
 #include "xkad/gossip/rumor_message_manager.h"
 #include "xkad/gossip/rumor_def.h"
 #include "xkad/routing_table/node_info.h"
 #include "xkad/routing_table/local_node_info.h"
+#include "xpbase/base/top_utils.h"
 
 namespace top {
+namespace transport {
+namespace protobuf {
+class RoutingMessage;
+}  // namespace protobuf
+}  // namespace transport
 
 namespace kadmlia {
     class RoutingTable;
+class LocalNodeInfo;
+
     typedef std::shared_ptr<RoutingTable> RoutingTablePtr;
 }
 

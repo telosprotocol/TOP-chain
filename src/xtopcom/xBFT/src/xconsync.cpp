@@ -3,8 +3,27 @@
 // Licensed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include <inttypes.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <functional>
+#include <iterator>
+#include <map>
+#include <string>
+#include <utility>
+
 #include "xconsdriver.h"
+#include "xbase/xbase.h"
+#include "xbase/xdata.h"
+#include "xbase/xobject.h"
+#include "xbase/xthread.h"
+#include "xbase/xutl.h"
+#include "xbase/xvevent.h"
+#include "xconsevent.h"
+#include "xconsobj.h"
+#include "xconspdu.h"
+#include "xvledger/xvblock.h"
+#include "xvledger/xvblockstore.h"
+#include "xvledger/xvcertauth.h"
 
 namespace top
 {

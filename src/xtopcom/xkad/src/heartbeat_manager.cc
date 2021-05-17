@@ -3,6 +3,9 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "xkad/routing_table/heartbeat_manager.h"
+
+#include <stdint.h>
+
 #include "xpbase/base/top_log.h"
 
 namespace top {

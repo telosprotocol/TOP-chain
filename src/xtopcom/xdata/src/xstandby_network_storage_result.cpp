@@ -4,7 +4,14 @@
 
 #include "xdata/xelection/xstandby_network_storage_result.h"
 
+#include <cstdint>
+#include <exception>
+#include <stdexcept>
+#include <type_traits>
+
 #include "xbasic/xutility.h"
+#include "xbase/xbase.h"
+#include "xdata/xelection/xstandby_result.h"
 
 NS_BEG3(top, data, election)
 

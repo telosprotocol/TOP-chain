@@ -4,7 +4,7 @@
 
 #include "xvnetwork/xvnetwork_message.h"
 
-#include <type_traits>
+#include <utility>
 
 NS_BEG2(top, vnetwork)
 

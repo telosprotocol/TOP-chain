@@ -4,9 +4,11 @@
 
 #pragma once
 
-#include "xbase/xns_macro.h"
-
+#include <stdint.h>
 #include <functional>
+#include <iosfwd>
+
+#include "xbase/xns_macro.h"
 
 NS_BEG3(top, contract_common, properties)
 

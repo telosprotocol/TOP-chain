@@ -3,6 +3,9 @@
 #define XCHAIN_TRANS_WS
 
 #include <thread>
+#include <memory>
+#include <string>
+
 #include "trans_base.h"
 #include "client_ws.hpp"
 #include "thread_queue.h"

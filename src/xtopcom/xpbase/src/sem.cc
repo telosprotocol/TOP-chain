@@ -1,7 +1,6 @@
 #include "xpbase/base/sem.h"
-#include <chrono>
 
-#include "xpbase/base/top_utils.h"
+#include <chrono>
 
 namespace top {
 namespace base {

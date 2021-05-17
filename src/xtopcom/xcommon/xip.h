@@ -4,6 +4,14 @@
 
 #pragma once
 
+#include <cstdint>
+#include <functional>
+#include <string>
+#include <type_traits>
+#include <iosfwd>
+#include <limits>
+#include <system_error>
+
 #include "xbase/xbase.h"
 #include "xvledger/xvaccount.h"
 #include "xbasic/xenable_to_string.h"
@@ -12,11 +20,12 @@
 #include "xbasic/xid.hpp"
 #include "xcommon/xnode_type.h"
 #include "xcommon/xversion.h"
+#include "xbase/xcxx_config.h"
+#include "xbase/xns_macro.h"
 
-#include <cstdint>
-#include <functional>
-#include <string>
-#include <type_traits>
+namespace top {
+template <typename T> class xtop_extended;
+}  // namespace top
 
 NS_BEG2(top, common)
 

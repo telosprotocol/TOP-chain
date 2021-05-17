@@ -4,9 +4,8 @@
 
 #include "xkad/gossip/rumor_filter.h"
 
-#include "xkad/gossip/rumor_def.h"
-#include "xkad/routing_table/routing_utils.h"
 #include "xpbase/base/top_log.h"
+#include "xtransport/proto/transport.pb.h"
 
 namespace top {
 namespace gossip {

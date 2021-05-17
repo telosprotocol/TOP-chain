@@ -7,13 +7,18 @@
 
 #pragma once
 
+#include <stdint.h>
+#include <string.h>
 #include <iostream>
+#include <string>
 
 #include "xpbase/base/kad_key/kadmlia_key.h"
+#include "xpbase/base/top_utils.h"
 
 namespace top {
 
 namespace base {
+class XipParser;
 
 #pragma pack(push) 
 #pragma pack(1)

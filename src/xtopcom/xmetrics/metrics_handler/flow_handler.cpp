@@ -4,6 +4,23 @@
 
 #include "flow_handler.h"
 
+#include <assert.h>
+#include <stdint.h>
+#include <nlohmann/json.hpp>
+#include <algorithm>
+#include <chrono>
+#include <iomanip>
+#include <memory>
+#include <ostream>
+#include <ratio>
+#include <string>
+
+#include "xbase/xbase.h"
+#include "xmetrics/Variant.h"
+#include "xmetrics/metrics_handler/basic_handler.h"
+#include "xmetrics/xmetrics_config.h"
+#include "xmetrics/xmetrics_event.h"
+
 NS_BEG3(top, metrics, handler)
 
 metrics_variant_ptr flow_handler_t::init_new_metrics(event_message const & msg) {

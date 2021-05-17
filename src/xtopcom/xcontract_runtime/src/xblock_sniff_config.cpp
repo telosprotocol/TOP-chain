@@ -1,5 +1,20 @@
+#include <functional>
+#include <initializer_list>
+#include <iterator>
+#include <unordered_map>
+#include <utility>
+
 #include "xbasic/xutility.h"
 #include "xcontract_runtime/xblock_sniff_config.h"
+#include "xbase/xns_macro.h"
+#include "xcommon/xaddress.h"
+
+namespace top {
+namespace base {
+class xvblock_t;
+}  // namespace base
+template <class T> class xobject_ptr_t;
+}  // namespace top
 
 NS_BEG2(top, contract_runtime)
 

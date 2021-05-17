@@ -1,6 +1,16 @@
-#include "xconfig/xconfig_face.h"
+#include <assert.h>
+#include <algorithm>
+#include <iterator>
+#include <map>
+#include <string>
+#include <utility>
+#include <vector>
+
 #include "xconfig/xconfig_register.h"
 #include "xconfig/xconfig_update_parameter_action.h"
+#include "xbase/xbase.h"
+#include "xbase/xns_macro.h"
+#include "xbase/xutl.h"
 
 NS_BEG2(top, config)
 

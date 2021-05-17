@@ -4,13 +4,17 @@
 
 #include "xbasic/xserializable_based_on.h"
 
+#include <stddef.h>
+#include <cassert>
+#include <exception>
+#include <utility>
+
 #include "xbase/xcontext.h"
-#include "xbase/xlog.h"
 #include "xbasic/xerror/xchain_error.h"
 #include "xbasic/xerror/xerror.h"
 #include "xbasic/xerror/xthrow_error.h"
-
-#include <cassert>
+#include "xbase/xbase.h"
+#include "xbase/xmem.h"
 
 NS_BEG1(top)
 

@@ -2,8 +2,11 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
+#include <system_error>
+
 #include "xcodec/xcodec_category.h"
 #include "xcodec/xcodec_errc.h"
+#include "xbase/xns_macro.h"
 
 NS_BEG2(top, codec)
 

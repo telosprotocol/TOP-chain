@@ -2,8 +2,13 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 #include "xjson_proc.h"
+
 #include <exception>
+
 #include "xerror/xrpc_error.h"
+#include "xrpc/prerequest/xpre_request_data.h"
+#include "xrpc/xerror/xrpc_error_code.h"
+#include "xrpc/xrpc_define.h"
 
 NS_BEG2(top, xrpc)
 

@@ -4,11 +4,25 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include <cinttypes>
+#include <algorithm>
+#include <cstdint>
+#include <iterator>
+#include <utility>
+
 #include "xbase/xutl.h"
 #include "xbase/xcontext.h"
 #include "xvblockhub.h"
 #include "xvgenesis.h"
 #include "xvledger/xvdbkey.h"
+#include "xbase/xbase.h"
+#include "xbase/xmem.h"
+#include "xbase/xobject_ptr.h"
+#include "xmetrics/xmetrics_unit.h"
+#include "xvledger/xvboffdata.h"
+#include "xvledger/xvdbstore.h"
+#include "xvledger/xveventbus.h"
+#include "xvledger/xvledger.h"
+#include "xvledger/xvtxstore.h"
 
 #ifdef ENABLE_METRICS
     #include "xmetrics/xmetrics.h"

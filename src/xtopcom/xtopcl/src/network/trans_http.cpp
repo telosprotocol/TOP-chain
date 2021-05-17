@@ -1,9 +1,16 @@
 
 #include "trans_http.h"
+
+#include <stdint.h>
+#include <asio/impl/io_context.ipp>
+#include <asio/io_context.hpp>
 #include <string>
-#include <iostream>
-#include <algorithm>
+#include <memory>
+
 #include "task/task_dispatcher.h"
+#include "api_method.h"
+#include "client_ws.hpp"
+#include "global_definition.h"
 
 namespace xChainSDK
 {

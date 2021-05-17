@@ -5,10 +5,14 @@
 #pragma once
 
 #include "xcommon/xnode.hpp"
-#include "xcommon/xnode_id.h"
-#include "xnetwork/xnode_endpoint.h"
 
 #include <functional>
+#include <iosfwd>
+#include <system_error>
+
+#include "xcommon/xnode_id.h"
+#include "xnetwork/xnode_endpoint.h"
+#include "xbase/xns_macro.h"
 
 NS_BEG2(top, common)
 

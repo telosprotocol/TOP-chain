@@ -3,13 +3,21 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #pragma once
+#include <stdint.h>
 #include <string>
+
 #include "xconsobj.h"
 #include "xbase/xdata.h"
 
 
 namespace top
 {
+namespace base {
+class xstream_t;
+class xvblock_t;
+class xvqcert_t;
+}  // namespace base
+
     //put common pdu for consensus
     namespace xconsensus
     {

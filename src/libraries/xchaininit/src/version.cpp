@@ -1,8 +1,14 @@
 // #include "xpbase/base/top_log.h"
+#include <stdint.h>
+#include <stdio.h>
+#include <string.h>
+#include <unistd.h>
 #include <iostream>
 #include <string>
+
 #include "xbase/xcontext.h"
 #include "generated/version.h"
+
 namespace top {
 
 std::string get_md5() {

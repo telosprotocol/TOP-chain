@@ -4,14 +4,30 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include <limits.h>
+#include <stddef.h>
+#include <stdint.h>
 #include <cinttypes>
+#include <string>
+#include <vector>
+
 #include "xbase/xutl.h"
 #include "../xvblock.h"
+#include "xbase/xatom.h"
+#include "xbase/xbase.h"
+#include "xbase/xcontext.h"
+#include "xbase/xdata.h"
+#include "xbase/xhash.h"
+#include "xbase/xmem.h"
+#include "xbase/xobject.h"
+#include "xvboffdata.h"
+#include "xvstate.h"
 
 namespace top
 {
     namespace base
     {
+class xvbindex_t;
+
         //////////////////////////////////xvblock and related implementation /////////////////////////////
         xvheader_t::xvheader_t()  //just use when seralized from db/store
         :xdataunit_t((enum_xdata_type)enum_xobject_type_vheader)

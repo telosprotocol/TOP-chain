@@ -4,6 +4,10 @@
 
 #include "xdata/xelection/xstandby_node_info.h"
 
+#include <utility>
+
+#include "xbase/xbase.h"
+
 NS_BEG3(top, data, election)
 
 bool xtop_standby_node_info::operator==(xtop_standby_node_info const & other) const noexcept {

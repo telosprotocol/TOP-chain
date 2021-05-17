@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <stdint.h>
 #include <map>
 #include <mutex>
 
@@ -11,10 +12,17 @@
 #include "xpbase/base/top_utils.h"
 #include "xtransport/proto/transport.pb.h"
 #include "xtransport/message_manager/message_manager_intf.h"
+#include "xbase/xbase.h"
 
 namespace top {
+namespace base {
+class xpacket_t;
+}  // namespace base
 
 namespace transport {
+namespace protobuf {
+class RoutingMessage;
+}  // namespace protobuf
 
 class MessageManager : public MessageManagerIntf {
 public:

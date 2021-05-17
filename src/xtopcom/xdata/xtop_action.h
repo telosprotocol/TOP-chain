@@ -4,13 +4,21 @@
 
 #pragma once
 
+#include <cstdint>
+#include <utility>
+
 #include "xbase/xobject_ptr.h"
 #include "xbase/xobject.h"
 #include "xcommon/xlogic_time.h"
 #include "xdata/xtop_action_fwd.h"
 #include "xdata/xtop_action_type.h"
+#include "xbase/xns_macro.h"
 
-#include <cstdint>
+namespace top {
+namespace base {
+class xobject_t;
+}  // namespace base
+}  // namespace top
 
 NS_BEG2(top, data)
 

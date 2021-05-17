@@ -1,10 +1,11 @@
+#include <stdint.h>
+#include <string.h>
+#include <unistd.h>
+#include <string>
+
 #include "xchaininit/xinit.h"
 #include "xchaininit/xchain_command.h"
 #include "xchaininit/version.h"
-
-#include <string>
-#include <fstream>
-#include <algorithm>
 
 extern "C" {
     int init_component(const char *config_file, const char *config_file_extra);

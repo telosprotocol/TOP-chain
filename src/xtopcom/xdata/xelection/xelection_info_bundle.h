@@ -6,6 +6,7 @@
 
 #include "xcommon/xnode_id.h"
 #include "xdata/xelection/xelection_info.h"
+#include "xbase/xns_macro.h"
 
 NS_BEG3(top, data, election)
 

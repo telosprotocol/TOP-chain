@@ -2,8 +2,20 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
+#include <exception>
+#include <iosfwd>
+#include <iterator>
+#include <map>
+#include <stdexcept>
+#include <type_traits>
+#include <utility>
+
 #include "xbasic/xutility.h"
 #include "xdata/xelection/xstandby_network_result.h"
+#include "xbase/xbase.h"
+#include "xbase/xns_macro.h"
+#include "xcommon/xnode_type.h"
+#include "xdata/xelection/xstandby_result.h"
 
 NS_BEG3(top, data, election)
 

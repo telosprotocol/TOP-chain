@@ -4,6 +4,11 @@
 #ifndef XCHAIN_TRANS_BASE
 #define XCHAIN_TRANS_BASE
 
+#include <functional>
+#include <map>
+#include <memory>
+#include <string>
+
 #include "protocol.h"
 
 

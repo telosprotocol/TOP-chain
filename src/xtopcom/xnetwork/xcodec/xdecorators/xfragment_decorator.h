@@ -4,9 +4,10 @@
 
 #pragma once
 
-#include "xbasic/xbyte_buffer.h"
-
 #include <cstddef>
+
+#include "xbasic/xbyte_buffer.h"
+#include "xbase/xns_macro.h"
 
 NS_BEG4(top, network, codec, decorators)
 

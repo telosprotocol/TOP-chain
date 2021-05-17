@@ -1,6 +1,9 @@
 #include "xpbase/base/redis_client.h"
 
+#include <cpp_redis/core/client.hpp>
 #include <cassert>
+#include <functional>
+#include <iostream>
 
 namespace top {
 

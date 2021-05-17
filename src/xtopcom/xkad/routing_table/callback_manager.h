@@ -4,22 +4,32 @@
 
 #pragma once
 
+#include <stdint.h>
 #include <thread>
 #include <memory>
 #include <map>
 #include <atomic>
 #include <mutex>
 #include <condition_variable>
+#include <functional>
 
 #include "xpbase/base/top_timer.h"
 #include "xkad/routing_table/routing_utils.h"
 #include "xtransport/proto/transport.pb.h"
 #include "xkad/proto/kadmlia.pb.h"
+#include "xpbase/base/top_timer2.h"
+#include "xpbase/base/top_utils.h"
 
 namespace top {
+namespace transport {
+namespace protobuf {
+class RoutingMessage;
+}  // namespace protobuf
+}  // namespace transport
 
 namespace base {
 class xpacket_t;
+class TimerRepeated;
 }
 
 namespace kadmlia {

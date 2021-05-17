@@ -4,12 +4,16 @@
 
 #pragma once
 
-#include "xbase/xlog.h"
-#include "xbasic/xbyte_buffer.h"
-
+#include <stdio.h>
 #include <string>
 #include <utility>
 #include <stdexcept>
+#include <type_traits>
+
+#include "xbase/xlog.h"
+#include "xbasic/xbyte_buffer.h"
+#include "xbase/xbase.h"
+#include "xbase/xns_macro.h"
 
 NS_BEG1(top)
 

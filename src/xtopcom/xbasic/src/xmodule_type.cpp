@@ -2,13 +2,14 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
+#include <assert.h>
 #include <string>
 #include <unordered_map>
-#include <assert.h>
-#include <iostream>
+#include <cstdint>
+#include <utility>
 
 #include "xbasic/xmodule_type.h"
-#include "xbase/xlog.h"
+#include "xbase/xbase.h"
 
 namespace top { namespace chainbase {
 

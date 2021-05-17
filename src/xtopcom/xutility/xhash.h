@@ -4,12 +4,13 @@
 
 #pragma once
 
-#include "xbase/xint.h"
-#include "xbase/xns_macro.h"
-
+#include <stddef.h>
 #include <cstdint>
 #include <string>
 #include <vector>
+
+#include "xbase/xint.h"
+#include "xbase/xns_macro.h"
 
 
 NS_BEG2(top, utl)

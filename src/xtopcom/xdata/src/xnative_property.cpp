@@ -2,19 +2,27 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
+#include <assert.h>
+#include <stdint.h>
 #include <string>
 #include <vector>
 #include <map>
-#include <iostream>
+#include <utility>
 
 #include "xdata/xdata_error.h"
 #include "xdata/xnative_property.h"
 #include "xdata/xdata_common.h"
-
 #include "xbase/xdata.h"
 #include "xbase/xobject_ptr.h"
-
 #include "xbasic/xversion.h"
+#include "xbase/xbase.h"
+#include "xbasic/xmodule_type.h"
+
+namespace top {
+namespace base {
+class xstream_t;
+}  // namespace base
+}  // namespace top
 
 namespace top { namespace data {
 

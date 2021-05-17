@@ -4,10 +4,10 @@
 
 #include "xcommon/xrole_type.h"
 
-#include "xbase/xutl.h"
-
 #include <cassert>
 #include <type_traits>
+
+#include "xbase/xmem.h"
 
 NS_BEG2(top, common)
 

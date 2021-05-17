@@ -1,6 +1,10 @@
 
 #include "xpbase/base/xid/xid_def.h"
 
+#include <string.h>
+
+#include "xpbase/base/top_string_util.h"
+
 namespace top {
 namespace base {
 

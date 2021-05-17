@@ -1,24 +1,20 @@
-#include <iostream>
 #include <sys/stat.h>
-#include <sys/types.h>
-#include <dirent.h>
-#include <string.h>
-#include <unistd.h>
-#include <utime.h>
 #include <errno.h>
-
+#include <features.h>
+#include <rocksdb/db.h>
+#include <rocksdb/env.h>
+#include <rocksdb/options.h>
+#include <rocksdb/status.h>
+#include <rocksdb/utilities/backupable_db.h>
+#include <rocksdb/write_batch.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <string>
 #include <vector>
 #include <fstream>
+#include <cstring>
 
 #include "db_tool.h"
-// #include "rocksdb/slice.h"
-// #include "rocksdb/options.h"
-// #include "rocksdb/table.h"
-// #include "rocksdb/convenience.h"
-// #include "rocksdb/utilities/backupable_db.h"
-#include "xbase/xbase.h"
-#include <cstring>
 
 
 #ifndef __USE_FILE_OFFSET64
@@ -36,8 +32,6 @@
 
 extern "C"
 {
-#include "zlib.h"
-#include "contrib/minizip/zip.h"
 #include "contrib/minizip/unzip.h"
 }
 #define CASESENSITIVITY (0)

@@ -2,13 +2,18 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
+#include <stdint.h>
+#include <limits>
+#include <iosfwd>
+
 #include "xcodec/xbuffer_codec.hpp"
 #include "xcodec/xcodec_error.h"
 #include "xcodec/xdecorators/xprepend_size_decorator.hpp"
 #include "xnetwork/xcodec/xdecorators/xnetwork_bytes_message_decorator.h"
 #include "xzlib/xdecorators/xcrc32_decorator.h"
-
-#include <limits>
+#include "xbase/xns_macro.h"
+#include "xbasic/xbyte_buffer.h"
+#include "xcodec/xcodec_errc.h"
 
 NS_BEG4(top, network, codec, decorators)
 

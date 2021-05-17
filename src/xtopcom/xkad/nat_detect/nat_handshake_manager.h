@@ -4,19 +4,30 @@
 
 #pragma once
 
+#include <stdint.h>
 #include <map>
 #include <mutex>
 #include <string>
 #include <thread>
 #include <memory>
+#include <atomic>
 
 #include "xtransport/transport.h"
 #include "xpbase/base/xbyte_buffer.h"
 #include "xpbase/base/top_timer.h"
 #include "xkad/routing_table/routing_utils.h"
 #include "xkad/routing_table/node_info.h"
+#include "xpbase/base/top_utils.h"
 
 namespace top {
+namespace base {
+class TimerManager;
+class TimerRepeated;
+}  // namespace base
+namespace transport {
+class Transport;
+}  // namespace transport
+
 namespace kadmlia {
 
 class NatHandshakeManager {

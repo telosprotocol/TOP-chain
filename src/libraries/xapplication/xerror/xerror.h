@@ -4,9 +4,11 @@
 
 #pragma once
 
-#include "xbase/xns_macro.h"
-
 #include <system_error>
+#include <iosfwd>
+#include <type_traits>
+
+#include "xbase/xns_macro.h"
 
 namespace top {
 namespace application {

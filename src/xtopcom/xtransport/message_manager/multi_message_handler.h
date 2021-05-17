@@ -9,22 +9,32 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
-
+#include <stdint.h>
 #include <memory>
 #include <vector>
 #include <thread>
 #include <mutex>
 #include <condition_variable>
 #include <queue>
+#include <functional>
 
 #include "xbase/xpacket.h"
 #include "xbase/xthread.h"
 #include "xtransport/proto/transport.pb.h"
 #include "xtransport/utils/transport_utils.h"
+#include "xbase/xobject.h"
 
 namespace top {
+namespace base {
+class xiothread_t;
+class xpacket_t;
+}  // namespace base
 
 namespace transport {
+namespace protobuf {
+class RoutingMessage;
+}  // namespace protobuf
+
 using on_dispatch_callback_t = std::function<void(transport::protobuf::RoutingMessage& message, base::xpacket_t&)>;
 
 class MessageHandler;

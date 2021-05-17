@@ -2,6 +2,13 @@
 #ifndef RATELIMIT_SERVER_H_
 #define RATELIMIT_SERVER_H_
 
+#include <stddef.h>
+#include <atomic>
+#include <vector>
+#include <memory>
+#include <functional>
+#include <string>
+
 #include "xratelimit_config.h"
 #include "xratelimit_server_stat.h"
 #include "xratelimit_data_queue.h"
@@ -9,10 +16,14 @@
 #include "xratelimit_dispatch.h"
 #include "xratelimit_thread.h"
 #include "xbase/xns_macro.h"
-#include <atomic>
-#include <vector>
-#include <memory>
-#include <functional>
+#include "xrpc/xratelimit/xratelimit_cache.h"
+
+namespace top {
+namespace xChainRPC {
+class RatelimitConfig;
+class RatelimitThread;
+}  // namespace xChainRPC
+}  // namespace top
 
 
 NS_BEG2(top, xChainRPC)

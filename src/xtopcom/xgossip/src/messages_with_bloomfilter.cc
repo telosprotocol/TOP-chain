@@ -1,11 +1,18 @@
 // Copyright (c) 2017-2019 Telos Foundation & contributors
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
-#include "xgossip/include/mesages_with_bloomfilter.h"
+#include <cstdint>
+#include <memory>
+#include <mutex>
+#include <unordered_map>
+#include <utility>
+#include <vector>
 
-#include "xbase/xhash.h"
+#include "xgossip/include/mesages_with_bloomfilter.h"
 #include "xgossip/include/gossip_utils.h"
 #include "xpbase/base/top_log.h"
+#include "xpbase/base/uint64_bloomfilter.h"
+#include "xtransport/proto/transport.pb.h"
 
 namespace top {
 

@@ -4,17 +4,19 @@
 
 #include "xelect_net/include/https_client.h"
 
-#include <iostream>
-#include <fstream>
-#include <chrono>
-#include <thread>
-#include <memory>
-
 // nlohmann_json
 #include <nlohmann/json.hpp>
+#include <stdint.h>
+#include <asio/detail/impl/reactive_socket_service_base.ipp>
+#include <asio/ssl/impl/context.ipp>
+#include <simplewebserver/client_http.hpp>
+#include <simplewebserver/client_https.hpp>
+#include <memory>
+#include <exception>
+#include <initializer_list>
+
 using json = nlohmann::json;
 
-#include "xpbase/base/line_parser.h"
 #include "xpbase/base/top_log.h"
 
 namespace  top {

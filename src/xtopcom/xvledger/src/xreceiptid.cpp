@@ -5,7 +5,21 @@
 #include <string>
 #include <cinttypes>
 #include <sstream>
+#include <cstdint>
+#include <iterator>
+#include <map>
+#include <set>
+#include <utility>
+
 #include "xvledger/xreceiptid.h"
+#include "xbase/xbase.h"
+#include "xbase/xcontext.h"
+#include "xbase/xdata.h"
+#include "xbase/xmem.h"
+#include "xbase/xns_macro.h"
+#include "xbase/xobject_ptr.h"
+#include "xdataobj_base.hpp"
+#include "xvaccount.h"
 
 NS_BEG2(top, base)
 

@@ -1,7 +1,11 @@
 #include "xrpc_signature.h"
+
+#include <stddef.h>
+#include <stdint.h>
+#include <utility>
+
 #include "xbase/xns_macro.h"
 #include "xrpc_define.h"
-#include <iostream>
 
 extern "C" {
 #include "trezor-crypto/hmac.h"

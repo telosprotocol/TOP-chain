@@ -1,5 +1,8 @@
 #include "xaction_param.h"
+
 #include "api_method_imp.h"
+#include "xbase/xcontext.h"
+#include "xbase/xmem.h"
 
 
 namespace xChainSDK {

@@ -1,5 +1,13 @@
 #include "xratelimit_server.h"
 
+#include <stdint.h>
+
+#include "xrpc/xratelimit/xratelimit_config.h"
+#include "xrpc/xratelimit/xratelimit_data_queue.h"
+#include "xrpc/xratelimit/xratelimit_server_stat.h"
+#include "xrpc/xratelimit/xratelimit_thread.h"
+#include "xrpc/xratelimit/xratelimit_worker.h"
+
 
 NS_BEG2(top, xChainRPC)
 

@@ -4,9 +4,13 @@
 
 #pragma once
 
-#include "xcommon/xmessage_category.h"
-
 #include <cstdint>
+#include <functional>
+#include <iosfwd>
+
+#include "xcommon/xmessage_category.h"
+#include "xbase/xcxx_config.h"
+#include "xbase/xns_macro.h"
 
 #define XDEFINE_MSG_ID(MSG_CATEGORY_ID, MSG_NAME, MSG_ID)                                                                                                                               \
     XINLINE_CONSTEXPR top::common::xmessage_id_t MSG_NAME                                                                                                                               \

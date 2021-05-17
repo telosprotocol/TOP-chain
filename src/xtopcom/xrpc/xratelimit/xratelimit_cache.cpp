@@ -1,5 +1,13 @@
 #include "xratelimit_cache.h"
 
+#include <chrono>
+#include <cstdint>
+#include <functional>
+#include <type_traits>
+
+#include "xrpc/xratelimit/xratelimit_config.h"
+#include "xrpc/xratelimit/xratelimit_thread.h"
+
 
 
 NS_BEG2(top, xChainRPC)

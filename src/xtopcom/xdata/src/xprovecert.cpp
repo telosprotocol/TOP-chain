@@ -2,11 +2,19 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
+#include <stdint.h>
+#include <string.h>
 #include <string>
 
 #include "xbasic/xversion.h"
 #include "xvledger/xvblock.h"
 #include "xdata/xprovecert.h"
+#include "xbase/xbase.h"
+#include "xbase/xcontext.h"
+#include "xbase/xint.h"
+#include "xbase/xmem.h"
+#include "xutility/xhash.h"
+#include "xutility/xmerkle.hpp"
 
 namespace top { namespace data {
 

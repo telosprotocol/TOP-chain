@@ -4,11 +4,22 @@
 
 #pragma once
 
-#include "xauthscheme.h"
+#include <stdint.h>
 #include <bitset>
+#include <set>
+#include <string>
+#include <vector>
+
+#include "xauthscheme.h"
+#include "xbase/xbase.h"
 
 namespace top
 {
+namespace base {
+class xvnode_t;
+class xvnodegroup_t;
+}  // namespace base
+
     namespace auth
     {
         //threshold bls

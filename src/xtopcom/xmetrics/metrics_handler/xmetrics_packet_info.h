@@ -3,7 +3,14 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #pragma once
+#include <stdint.h>
+#include <string>
+#include <utility>
+#include <vector>
+
 #include "basic_handler.h"
+#include "xbase/xns_macro.h"
+#include "xmetrics/Variant.h"
 
 NS_BEG3(top, metrics, handler)
 

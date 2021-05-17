@@ -4,7 +4,8 @@
 
 
 #include "xdata/xproposal_data.h"
-#include "xbase/xutl.h"
+
+#include "xbase/xmem.h"
 
 NS_BEG2(top, tcc)
 

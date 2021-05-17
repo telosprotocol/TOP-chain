@@ -2,9 +2,13 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
+#include <string>
+#include <system_error>
+
 #include "xbasic/xerror/xchain_error.h"
 #include "xbasic/xerror/xthrow_error.h"
 #include "xbasic/xerror/xthrow_exception.hpp"
+#include "xbase/xns_macro.h"
 
 NS_BEG2(top, error)
 

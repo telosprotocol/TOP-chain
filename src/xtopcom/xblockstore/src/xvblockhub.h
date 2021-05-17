@@ -4,15 +4,27 @@
 
 #pragma once
 
+#include <stddef.h>
+#include <stdint.h>
 #include <string>
 #include <vector>
 #include <map>
+#include <deque>
+
 #include "xvledger/xvbindex.h"
 #include "xvledger/xvledger.h"
 #include "xblockstore/xblockstore_face.h"
+#include "xbase/xdata.h"
+#include "xbase/xobject.h"
+#include "xvledger/xvaccount.h"
+#include "xvledger/xvblock.h"
 
 namespace top
 {
+namespace base {
+class xstream_t;
+}  // namespace base
+
     namespace store
     {
         enum enum_blockstore_event
