@@ -18,8 +18,8 @@ jobs:
       - name: Print event
         env:
           GITHUB_CONTEXT: ${{ toJson(github) }}
-          run: |
-            echo "$GITHUB_CONTEXT"
+        run: |
+          echo "$GITHUB_CONTEXT"
 
       - name: Checkout repository
         uses: actions/checkout@v2
