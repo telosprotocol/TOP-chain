@@ -8,6 +8,7 @@
 #include "xmbus/xevent_behind.h"
 #include "xtxpool_v2/xtxpool_error.h"
 #include "xtxpool_v2/xtxpool_log.h"
+#include "xtxpool_v2/xreceipt_state_cache.h"
 
 #include <unordered_set>
 
@@ -95,13 +96,11 @@ const xcons_transaction_ptr_t xpeer_tables_t::find(uint16_t peer_table_sid, uint
     return nullptr;
 }
 
-void xpeer_tables_t::update_receiptid_state(const base::xreceiptid_state_ptr_t & receiptid_state) {
+void xpeer_tables_t::update_receiptid_state(const xreceipt_state_cache_t & receiptid_state_cache) {
     for (auto peer_table : m_peer_tables) {
         auto & peer_table_sid = peer_table.first;
         auto & peer_table_txs = peer_table.second;
-        base::xreceiptid_pair_t receiptid_pair;
-        receiptid_state->find_pair(peer_table_sid, receiptid_pair);
-        peer_table_txs->update_receipt_id(receiptid_pair.get_confirmid_max(), m_all_unconfirm_txs);
+        peer_table_txs->update_receipt_id(receiptid_state_cache.get_confirmid_max(peer_table_sid), m_all_unconfirm_txs);
     }
 
     // update latest and max receipt id of peer tables, if not found, create one, if anyone have no unconfirmed tx, remove it.
@@ -125,7 +124,7 @@ void xpeer_tables_t::update_receiptid_state(const base::xreceiptid_state_ptr_t &
     // }
 }
 
-int32_t xunconfirmed_account_t::update(xblock_t * latest_committed_block, const base::xreceiptid_state_ptr_t & receiptid_state) {
+int32_t xunconfirmed_account_t::update(xblock_t * latest_committed_block, const xreceipt_state_cache_t & receiptid_state_cache) {
     std::unordered_set<std::string> confirm_txs;
     std::map<std::string, xcons_transaction_ptr_t> unconfirmed_txs;
     auto account_addr = latest_committed_block->get_account();
@@ -203,9 +202,8 @@ int32_t xunconfirmed_account_t::update(xblock_t * latest_committed_block, const 
         auto & tx = it_s.second;
         base::xvaccount_t vaccount(tx->get_target_addr());
         auto peer_table_sid = vaccount.get_short_table_id();
-        base::xreceiptid_pair_t receiptid_pair;
-        receiptid_state->find_pair(peer_table_sid, receiptid_pair);
-        if (tx->get_last_action_receipt_id() <= receiptid_pair.get_confirmid_max()) {
+        auto confirmid_max = receiptid_state_cache.get_confirmid_max(peer_table_sid);
+        if (tx->get_last_action_receipt_id() <= confirmid_max) {
             xtxpool_info("xunconfirmed_account_t::update account:%s tx:%s already confirmed", account_addr.c_str(), tx->dump(true).c_str());
             continue;
         }
@@ -228,19 +226,19 @@ const xcons_transaction_ptr_t xunconfirmed_account_t::find(const uint256_t & has
     return nullptr;
 }
 
-void xunconfirmed_tx_queue_t::udpate_latest_confirmed_block(xblock_t * block, const base::xreceiptid_state_ptr_t & receiptid_state) {
+void xunconfirmed_tx_queue_t::udpate_latest_confirmed_block(xblock_t * block, const xreceipt_state_cache_t & receiptid_state_cache) {
     xtxpool_dbg("xunconfirmed_tx_queue_t::udpate_latest_confirmed_block block:%s", block->dump().c_str());
     auto it_account = m_unconfirmed_accounts.find(block->get_account());
     if (it_account != m_unconfirmed_accounts.end()) {
         auto & unconfirmed_account = it_account->second;
-        unconfirmed_account->update(block, receiptid_state);
+        unconfirmed_account->update(block, receiptid_state_cache);
         if (unconfirmed_account->size() == 0) {
             xtxpool_dbg("xunconfirmed_tx_queue_t::udpate_latest_confirmed_block unconfirm pop account,block=%s", block->dump().c_str());
             m_unconfirmed_accounts.erase(it_account);
         }
     } else {
         auto unconfirmed_account = std::make_shared<xunconfirmed_account_t>(m_para, &m_peer_tables);
-        unconfirmed_account->update(block, receiptid_state);
+        unconfirmed_account->update(block, receiptid_state_cache);
         if (unconfirmed_account->size() != 0) {
             xtxpool_dbg("xunconfirmed_tx_queue_t::udpate_latest_confirmed_block unconfirm push account,block=%s", block->dump().c_str());
             m_unconfirmed_accounts[block->get_account()] = unconfirmed_account;
@@ -257,10 +255,10 @@ const xcons_transaction_ptr_t xunconfirmed_tx_queue_t::find(const std::string & 
     return nullptr;
 }
 
-void xunconfirmed_tx_queue_t::recover(const base::xreceiptid_state_ptr_t & receiptid_state) {
+void xunconfirmed_tx_queue_t::recover(const xreceipt_state_cache_t & receiptid_state_cache) {
     xtxpool_info("xunconfirmed_tx_queue_t::recover table=%s", m_table_info->get_table_addr().c_str());
     // update table-table receipt id state, if all peer_tables were complate, no need to recover, or else, get unconfirmed accounts, and load their unconfirmed txs.
-    m_peer_tables.update_receiptid_state(receiptid_state);
+    m_peer_tables.update_receiptid_state(receiptid_state_cache);
     // receiptid_state may not be consistance with account state!
     // if (m_peer_tables.is_complated()) {
     //     xtxpool_dbg("xunconfirmed_tx_queue_t::recover table:%s, all peer tables unconfirmed txs is complate, no need to recover.", m_table_info->get_table_addr().c_str());
@@ -291,7 +289,7 @@ void xunconfirmed_tx_queue_t::recover(const base::xreceiptid_state_ptr_t & recei
                 base::xauto_ptr<base::xvblock_t> unitblock = m_para->get_vblockstore()->get_latest_committed_block(account);
                 if (unitblock != nullptr) {
                     xblock_t * block = dynamic_cast<xblock_t *>(unitblock.get());
-                    udpate_latest_confirmed_block(block, receiptid_state);
+                    udpate_latest_confirmed_block(block, receiptid_state_cache);
                 }
             }
         }

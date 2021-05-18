@@ -101,9 +101,9 @@ int32_t xtxpool_table_t::push_receipt(const std::shared_ptr<xtx_entry> & tx) {
         tx->get_para().set_tx_type_score(enum_xtx_type_socre_normal);
     }
 
+    uint64_t latest_receipt_id = m_receipt_state_cache.get_tx_corresponding_latest_receipt_id(tx);
     {
         std::lock_guard<std::mutex> lck(m_mgr_mutex);
-        uint64_t latest_receipt_id = get_tx_corresponding_latest_receipt_id(tx);
         ret = m_txmgr_table.push_receipt(tx, latest_receipt_id);
     }
     if (ret != xsuccess) {
@@ -228,9 +228,8 @@ const std::vector<xcons_transaction_ptr_t> xtxpool_table_t::get_resend_txs(uint6
 void xtxpool_table_t::on_block_confirmed(xblock_t * block) {
     // update_reject_rule(block->get_account(), block);
     {
-        auto state_cache = clone_receiptid_state_cache();
         std::lock_guard<std::mutex> lck(m_unconfirm_mutex);
-        m_unconfirmed_tx_queue.udpate_latest_confirmed_block(block, state_cache);
+        m_unconfirmed_tx_queue.udpate_latest_confirmed_block(block, m_receipt_state_cache);
     }
 
     // if (block->is_lightunit() && !block->is_genesis_block()) {
@@ -283,9 +282,8 @@ void xtxpool_table_t::update_unconfirm_accounts() {
     //         }
     //     }
     // }
-    auto state_cache = clone_receiptid_state_cache();
     std::lock_guard<std::mutex> lck(m_unconfirm_mutex);
-    m_unconfirmed_tx_queue.recover(state_cache);
+    m_unconfirmed_tx_queue.recover(m_receipt_state_cache);
 }
 
 void xtxpool_table_t::update_non_ready_accounts() {
@@ -340,8 +338,8 @@ void xtxpool_table_t::update_locked_txs(const std::vector<tx_info_t> & locked_tx
             std::lock_guard<std::mutex> lck(m_mgr_mutex);
             ret = m_txmgr_table.push_send_tx(unlocked_tx, latest_nonce, latest_hash);
         } else {
+            uint64_t latest_receipt_id = m_receipt_state_cache.get_tx_corresponding_latest_receipt_id(unlocked_tx);
             std::lock_guard<std::mutex> lck(m_mgr_mutex);
-            uint64_t latest_receipt_id = get_tx_corresponding_latest_receipt_id(unlocked_tx);
             ret = m_txmgr_table.push_receipt(unlocked_tx, latest_receipt_id);
         }
         xtxpool_info("xtxpool_table_t::update_locked_txs roll back to txmgr table tx:%s,ret:%d", unlocked_tx->get_tx()->dump().c_str(), ret);
@@ -349,7 +347,7 @@ void xtxpool_table_t::update_locked_txs(const std::vector<tx_info_t> & locked_tx
 }
 
 void xtxpool_table_t::update_receiptid_state(const base::xreceiptid_state_ptr_t & receiptid_state) {
-    update_receiptid_state_cache(receiptid_state);
+    m_receipt_state_cache.update(receiptid_state);
 
     std::lock_guard<std::mutex> lck(m_mgr_mutex);
     m_txmgr_table.update_receiptid_state(receiptid_state);
@@ -440,32 +438,6 @@ bool xtxpool_table_t::get_account_latest_nonce_hash(const std::string account_ad
     latest_nonce = account_basic_info.get_latest_state()->account_send_trans_number();
     latest_hash = account_basic_info.get_latest_state()->account_send_trans_hash();
     return true;
-}
-
-uint64_t xtxpool_table_t::get_tx_corresponding_latest_receipt_id(const std::shared_ptr<xtx_entry> & tx) const {
-    base::xreceiptid_pair_t receiptid_pair;
-    auto & account_addr = (tx->get_tx()->is_recv_tx()) ? tx->get_tx()->get_source_addr() : tx->get_tx()->get_target_addr();
-    base::xvaccount_t vaccount(account_addr);
-    auto peer_table_sid = vaccount.get_short_table_id();\
-
-    std::lock_guard<std::mutex> lck(m_receiptid_mutex);
-    m_receiptid_state->find_pair(peer_table_sid, receiptid_pair);
-    return tx->get_tx()->is_recv_tx() ? receiptid_pair.get_recvid_max() : receiptid_pair.get_confirmid_max();
-}
-
-void xtxpool_table_t::update_receiptid_state_cache(const base::xreceiptid_state_ptr_t & receiptid_state) {
-    std::lock_guard<std::mutex> lck(m_receiptid_mutex);
-    m_receiptid_state->clear_binlog();
-    m_receiptid_state->add_pairs(receiptid_state->get_last_full_state()->get_all_pairs());
-    m_receiptid_state->add_pairs(receiptid_state->get_binlog()->get_all_pairs());
-}
-
-base::xreceiptid_state_ptr_t xtxpool_table_t::clone_receiptid_state_cache() const {
-    auto receiptid_state = make_object_ptr<base::xreceiptid_state_t>();
-    std::lock_guard<std::mutex> lck(m_receiptid_mutex);
-    receiptid_state->add_pairs(m_receiptid_state->get_last_full_state()->get_all_pairs());
-    receiptid_state->add_pairs(m_receiptid_state->get_binlog()->get_all_pairs());
-    return receiptid_state;
 }
 
 }  // namespace xtxpool_v2

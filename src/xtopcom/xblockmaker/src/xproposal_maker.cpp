@@ -128,14 +128,19 @@ int xproposal_maker_t::verify_proposal(base::xvblock_t * proposal_block, base::x
             proposal_block->dump().c_str(), proposal_prev_block->dump().c_str());
     }
 
+    // update txpool receiptid state
+    xblock_ptr_t commit_block = xblock_t::raw_vblock_to_object_ptr(latest_blocks.get_latest_committed_block());
+    xtablestate_ptr_t commit_tablestate = m_indexstore->clone_tablestate(commit_block);
+    if (commit_tablestate != nullptr) {
+        get_txpool()->update_receiptid_state(proposal_block->get_account(), commit_tablestate->get_receiptid_state());
+    }
+
     // get tablestate related to latest cert block
     xtablestate_ptr_t tablestate = m_indexstore->clone_tablestate(proposal_prev_block);
     if (nullptr == tablestate) {
         xwarn("xproposal_maker_t::verify_proposal fail clone tablestate. %s,cert_height=%" PRIu64 "", cs_para.dump().c_str(), proposal_prev_block->get_height());
         return xblockmaker_error_proposal_table_state_clone;
     }
-
-    get_txpool()->update_receiptid_state(proposal_block->get_account(), tablestate->get_receiptid_state());
 
     xtablemaker_para_t table_para(tablestate);
     if (false == verify_proposal_input(proposal_block, cs_para.get_latest_committed_block(), table_para)) {

@@ -12,6 +12,7 @@
 #include "xtxpool_v2/xtxpool_info.h"
 #include "xtxpool_v2/xtxpool_resources_face.h"
 #include "xtxpool_v2/xunconfirmed_tx_queue.h"
+#include "xtxpool_v2/xreceipt_state_cache.h"
 
 #include <map>
 #include <set>
@@ -35,7 +36,6 @@ public:
       // , m_non_ready_accounts(&m_xtable_info)
       , m_table_indexstore(m_para->get_indexstorehub()->get_index_store(m_xtable_info.get_table_addr()))
       , m_locked_txs(&m_xtable_info) {
-        m_receiptid_state = make_object_ptr<base::xreceiptid_state_t>();
     }
     int32_t push_send_tx(const std::shared_ptr<xtx_entry> & tx);
     int32_t push_receipt(const std::shared_ptr<xtx_entry> & tx);
@@ -65,9 +65,6 @@ private:
     int32_t verify_receipt_tx(const xcons_transaction_ptr_t & tx) const;
     int32_t verify_cons_tx(const xcons_transaction_ptr_t & tx) const;
     bool get_account_latest_nonce_hash(const std::string account_addr, uint64_t & latest_nonce, uint256_t & latest_hash) const;
-    uint64_t get_tx_corresponding_latest_receipt_id(const std::shared_ptr<xtx_entry> & tx) const;
-    void update_receiptid_state_cache(const base::xreceiptid_state_ptr_t & receiptid_state);
-    base::xreceiptid_state_ptr_t clone_receiptid_state_cache() const;
     xtxpool_resources_face * m_para;
     xtxpool_table_info_t m_xtable_info;
     xtxmgr_table_t m_txmgr_table;
@@ -80,8 +77,7 @@ private:
     // mutable std::mutex m_filter_mutex;     // lock m_table_filter
     mutable std::mutex m_unconfirm_mutex;  // lock m_unconfirmed_tx_queue
     // mutable std::mutex m_non_ready_mutex;  // lock m_non_ready_accounts
-    base::xreceiptid_state_ptr_t m_receiptid_state;
-    mutable std::mutex m_receiptid_mutex;  // lock m_receiptid_state
+    xreceipt_state_cache_t m_receipt_state_cache;
 };
 
 }  // namespace xtxpool_v2
