@@ -233,7 +233,14 @@ void xtxpool_service::on_message_unit_receipt(vnetwork::xvnode_address_t const &
 
     xtxpool_v2::xtx_para_t para;
     std::shared_ptr<xtxpool_v2::xtx_entry> tx_ent = std::make_shared<xtxpool_v2::xtx_entry>(receipt, para);
-    ret = m_para->get_txpool()->push_receipt(tx_ent);
+
+    bool is_self_send = (m_vnet_driver->address() == sender);
+    if (is_self_send) {
+        XMETRICS_COUNTER_INCREMENT("txpool_received_self_send_receipt_num", 1);
+    } else {
+        XMETRICS_COUNTER_INCREMENT("txpool_received_other_send_receipt_num", 1);
+    }
+    ret = m_para->get_txpool()->push_receipt(tx_ent, is_self_send);
     // push success means may be not consensused. duplicate means already committed, and need response recv receipt
     if (ret == xtxpool_v2::xtxpool_error_tx_duplicate) {
         check_and_response_recv_receipt(receipt);

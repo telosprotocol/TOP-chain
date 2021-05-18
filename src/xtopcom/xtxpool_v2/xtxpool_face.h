@@ -177,7 +177,7 @@ private:
 class xtxpool_face_t : public base::xobject_t {
 public:
     virtual int32_t push_send_tx(const std::shared_ptr<xtx_entry> & tx) = 0;
-    virtual int32_t push_receipt(const std::shared_ptr<xtx_entry> & tx) = 0;
+    virtual int32_t push_receipt(const std::shared_ptr<xtx_entry> & tx, bool is_self_send) = 0;
     virtual const xcons_transaction_ptr_t pop_tx(const tx_info_t & txinfo) = 0;
     virtual ready_accounts_t pop_ready_accounts(const std::string & table_addr, uint32_t count) = 0;
     virtual ready_accounts_t get_ready_accounts(const std::string & table_addr, uint32_t count) = 0;

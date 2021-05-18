@@ -68,10 +68,20 @@ int32_t xtxpool_table_t::push_send_tx(const std::shared_ptr<xtx_entry> & tx) {
     return ret;
 }
 
-int32_t xtxpool_table_t::push_receipt(const std::shared_ptr<xtx_entry> & tx) {
-    int32_t ret = verify_receipt_tx(tx->get_tx());
-    if (ret != xsuccess) {
-        return ret;
+int32_t xtxpool_table_t::push_receipt(const std::shared_ptr<xtx_entry> & tx, bool is_self_send) {
+    uint64_t latest_receipt_id = m_receipt_state_cache.get_tx_corresponding_latest_receipt_id(tx);
+    uint64_t tx_receipt_id = tx->get_tx()->get_last_action_receipt_id();
+    if (tx_receipt_id < latest_receipt_id) {
+        xtxpool_warn("xpeer_table_receipts_t::push_tx duplicate receipt:%s,id:%llu:%llu", tx->get_tx()->dump().c_str(), tx_receipt_id, latest_receipt_id);
+        return xtxpool_error_tx_duplicate;
+    }
+
+    int32_t ret = xsuccess;
+    if (!is_self_send) {
+        int32_t ret = verify_receipt_tx(tx->get_tx());
+        if (ret != xsuccess) {
+            return ret;
+        }    
     }
 
     // auto & account_addr = tx->get_tx()->get_account_addr();
@@ -101,10 +111,9 @@ int32_t xtxpool_table_t::push_receipt(const std::shared_ptr<xtx_entry> & tx) {
         tx->get_para().set_tx_type_score(enum_xtx_type_socre_normal);
     }
 
-    uint64_t latest_receipt_id = m_receipt_state_cache.get_tx_corresponding_latest_receipt_id(tx);
     {
         std::lock_guard<std::mutex> lck(m_mgr_mutex);
-        ret = m_txmgr_table.push_receipt(tx, latest_receipt_id);
+        ret = m_txmgr_table.push_receipt(tx);
     }
     if (ret != xsuccess) {
         XMETRICS_COUNTER_INCREMENT("txpool_push_tx_receipt_fail", 1);
@@ -339,8 +348,13 @@ void xtxpool_table_t::update_locked_txs(const std::vector<tx_info_t> & locked_tx
             ret = m_txmgr_table.push_send_tx(unlocked_tx, latest_nonce, latest_hash);
         } else {
             uint64_t latest_receipt_id = m_receipt_state_cache.get_tx_corresponding_latest_receipt_id(unlocked_tx);
+            uint64_t tx_receipt_id = unlocked_tx->get_tx()->get_last_action_receipt_id();
+            if (tx_receipt_id < latest_receipt_id) {
+                continue;
+            }
+
             std::lock_guard<std::mutex> lck(m_mgr_mutex);
-            ret = m_txmgr_table.push_receipt(unlocked_tx, latest_receipt_id);
+            ret = m_txmgr_table.push_receipt(unlocked_tx);
         }
         xtxpool_info("xtxpool_table_t::update_locked_txs roll back to txmgr table tx:%s,ret:%d", unlocked_tx->get_tx()->dump().c_str(), ret);
     }
