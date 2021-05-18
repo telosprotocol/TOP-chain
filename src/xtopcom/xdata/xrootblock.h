@@ -5,7 +5,6 @@
 #pragma once
 
 #include <map>
-#include <mutex>
 #include <string>
 
 #include "xvledger/xvblock.h"

@@ -603,7 +603,7 @@ namespace top
                 {
                     if(_test_for_block->get_block_hash() != get_lock_block()->get_block_hash())
                     {
-                        xerror("xBFTRules::safe_check_add_cert_fork,fail-block with same height of locked,but different hash of proposal=%s vs locked=%s at node=0x%llx",_test_for_block->dump().c_str(), get_lock_block()->dump().c_str(),get_xip2_addr().low_addr);
+                        xwarn("xBFTRules::safe_check_add_cert_fork,fail-block with same height of locked,but different hash of proposal=%s vs locked=%s at node=0x%llx",_test_for_block->dump().c_str(), get_lock_block()->dump().c_str(),get_xip2_addr().low_addr);
                         return -1;
                     }
                 }

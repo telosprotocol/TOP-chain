@@ -7,7 +7,6 @@
 #include <string>
 #include <map>
 #include <vector>
-#include <mutex>
 #include "xvledger/xdataobj_base.hpp"
 #include "xvledger/xvblock.h"
 #include "xvledger/xreceiptid.h"
