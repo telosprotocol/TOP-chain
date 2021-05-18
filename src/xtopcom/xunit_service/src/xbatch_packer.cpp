@@ -326,6 +326,7 @@ bool xbatch_packer::recv_in(const xvip2_t & from_addr, const xvip2_t & to_addr, 
 }
 
 int xbatch_packer::verify_proposal(base::xvblock_t * proposal_block, base::xvqcert_t * bind_clock_cert, xcsobject_t * _from_child) {
+    XMETRICS_TIME_RECORD("cons_tableblock_verfiy_proposal_time_consuming");
     return m_proposal_maker->verify_proposal(proposal_block, bind_clock_cert);
 }
 
