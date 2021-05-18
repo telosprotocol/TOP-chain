@@ -15,6 +15,12 @@ jobs:
     
     # for ci telos only
     steps:
+      - name: Print event
+        env:
+          GITHUB_CONTEXT: ${{ toJson(github) }}
+        run: |
+          echo "$GITHUB_CONTEXT"
+
       - name: Checkout repository
         uses: actions/checkout@v2
 
@@ -22,3 +28,8 @@ jobs:
         run: |
           bash .github/scripts/fix_submodule.sh dev/fast_sync_develop
           bash .github/scripts/build_xtop.sh test
+
+      - name: TEST XTOP AllInOne
+        if: github.event.sender.id == ''
+        run: |
+          bash .github/scripts/test_xtop_allinone.sh
