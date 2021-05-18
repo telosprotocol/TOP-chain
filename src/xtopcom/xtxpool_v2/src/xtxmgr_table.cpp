@@ -133,31 +133,6 @@ std::vector<xcons_transaction_ptr_t> xtxmgr_table_t::get_ready_txs(const xtxs_pa
     return ready_txs;
 }
 
-std::vector<xcons_transaction_ptr_t> xtxmgr_table_t::get_ready_txs(uint32_t count) {
-    // uint32_t max_sent_txs_count = (count >> 2);
-    // uint32_t max_receipts_count = count - max_sent_txs_count;
-
-    // // do not care about receipt id continuity of receipts in receipts queue, unit service should assure the continuity,
-    // // so that receipts in txpool could always be get from txpool to unit service without continuous constraint.
-    // // receipts not pop from queue to pending, but get from queue to unit service directly,
-    // // because there is no need for queue and pending to maintain same data structure for manage receipts.
-    // std::vector<xcons_transaction_ptr_t> ret_txs = m_new_receipt_queue.get_txs(max_receipts_count);
-    // send_tx_queue_to_pending();
-    // ready_accounts_t send_txs_accounts = m_pending_accounts.get_ready_accounts(max_sent_txs_count);
-
-    // for (auto it : send_txs_accounts) {
-    //     auto & txs_tmp = it->get_txs();
-    //     ret_txs.insert(ret_txs.end(), txs_tmp.begin(), txs_tmp.end());
-    //     if (ret_txs.size() >= count) {
-    //         break;
-    //     }
-    // }
-
-    // xtxpool_dbg("xtxmgr_table_t::get_ready_txs table:%s,txs size:%u", m_xtable_info->get_table_addr().c_str(), ret_txs.size());
-    // return ret_txs;
-    return {};
-}
-
 const std::shared_ptr<xtx_entry> xtxmgr_table_t::query_tx(const std::string & account_addr, const uint256_t & hash) const {
     auto tx = m_send_tx_queue.find(account_addr, hash);
     if (tx == nullptr) {

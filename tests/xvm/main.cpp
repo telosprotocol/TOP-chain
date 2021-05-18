@@ -33,7 +33,6 @@ int main(int argc, char * argv[])
     top::data::xrootblock_t::init(para);
 
     top::contract::xcontract_manager_t::instance().register_contract<hello_param>(top::common::xaccount_address_t{"T-400"}, top::common::xtopchain_network_id);
-    top::contract::xcontract_manager_t::instance().register_contract<hello>(top::common::xaccount_address_t{"T-200"}, top::common::xtopchain_network_id);
     top::contract::xcontract_manager_t::instance().register_contract_cluster_address(top::common::xaccount_address_t{"T-400"}, top::common::xaccount_address_t{"T-400"});
     top::contract::xcontract_manager_t::instance().register_contract_cluster_address(top::common::xaccount_address_t{"T-200"}, top::common::xaccount_address_t{"T-200"});
     top::contract::xcontract_manager_t::instance().register_contract_cluster_address(top::common::xaccount_address_t{"T-123456789012345678901234567890125"}, top::common::xaccount_address_t{"T-123456789012345678901234567890125"});

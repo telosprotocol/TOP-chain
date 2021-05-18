@@ -60,7 +60,7 @@ xtop_chain_application::xtop_chain_application(observer_ptr<xapplication_t> cons
   , m_txpool_service_mgr{xtxpool_service_v2::xtxpool_service_mgr_instance::create_xtxpool_service_mgr_inst(m_application->store(),
                                                                                                         make_observer(m_application->blockstore().get()),
                                                                                                         m_application->txpool(),
-                                                                                                        make_observer(m_application->thread_pool(xthread_pool_type_t::txpool_service).front().get()),
+                                                                                                        m_application->thread_pool(xthread_pool_type_t::txpool_service),
                                                                                                         m_application->message_bus(),
                                                                                                         m_application->logic_timer())}
   , m_vnode_manager{std::make_shared<vnode::xvnode_manager_t>(m_application->elect_main(),
