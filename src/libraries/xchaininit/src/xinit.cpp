@@ -30,6 +30,10 @@
 #include <nlohmann/json.hpp>
 using json = nlohmann::json;
 
+#ifdef LEAK_TRACER
+#include "leaktracer/MemoryTrace.hpp"
+#include <csignal>
+#endif
 namespace top{
 
 bool g_topchain_init_finish_flag = false;
@@ -70,6 +74,23 @@ static bool create_rootblock(const std::string & config_file) {
     xinfo("create_rootblock success");
     return true;
 }
+#ifdef LEAK_TRACER
+void export_mem_trace(int signal)
+{
+    leaktracer::MemoryTrace::GetInstance().stopMonitoringAllocations();
+    leaktracer::MemoryTrace::GetInstance().stopAllMonitoring();
+
+    std::ofstream oleaks;
+
+    oleaks.open(global_node_id + std::to_string(std::chrono::system_clock::now().time_since_epoch().count()) + "leaks.out", std::ios_base::out);
+    if (oleaks.is_open())
+        leaktracer::MemoryTrace::GetInstance().writeLeaks(oleaks);
+    else
+        std::cerr << "Failed to write to \"leaks.out\"\n";
+
+    oleaks.close();
+}
+#endif
 
 int topchain_init(const std::string& config_file, const std::string& config_extra) {
     using namespace std;
@@ -78,6 +99,11 @@ int topchain_init(const std::string& config_file, const std::string& config_extr
     using namespace vnetwork;
     using namespace store;
     using namespace rpc;
+
+#ifdef LEAK_TRACER
+    std::signal(SIGUSR1, export_mem_trace);
+    leaktracer::MemoryTrace::GetInstance().startMonitoringAllThreads();
+#endif
 
     //using top::elect::xbeacon_xelect_imp;
     auto hash_plugin = new xtop_hash_t();

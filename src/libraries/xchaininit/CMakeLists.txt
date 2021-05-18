@@ -55,3 +55,7 @@ target_link_libraries(xchaininit PRIVATE ${LINK_ARGS}
     xxbase
     jsoncpp
     -lpthread -ldl)
+
+if (LEAK_TRACER)
+    target_link_libraries(xchaininit PRIVATE leaktracer)
+endif()
