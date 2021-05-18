@@ -30,12 +30,12 @@ int32_t xtxpool_t::push_send_tx(const std::shared_ptr<xtx_entry> & tx) {
     return table->push_send_tx(tx);
 }
 
-int32_t xtxpool_t::push_receipt(const std::shared_ptr<xtx_entry> & tx) {
+int32_t xtxpool_t::push_receipt(const std::shared_ptr<xtx_entry> & tx, bool is_self_send) {
     auto table = get_txpool_table_by_addr(tx->get_tx()->get_account_addr());
     if (table == nullptr) {
         return xtxpool_error_account_not_in_charge;
     }
-    return table->push_receipt(tx);
+    return table->push_receipt(tx, is_self_send);
 }
 
 const xcons_transaction_ptr_t xtxpool_t::pop_tx(const tx_info_t & txinfo) {

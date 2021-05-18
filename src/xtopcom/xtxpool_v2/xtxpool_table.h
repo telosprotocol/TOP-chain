@@ -38,7 +38,7 @@ public:
       , m_locked_txs(&m_xtable_info) {
     }
     int32_t push_send_tx(const std::shared_ptr<xtx_entry> & tx);
-    int32_t push_receipt(const std::shared_ptr<xtx_entry> & tx);
+    int32_t push_receipt(const std::shared_ptr<xtx_entry> & tx, bool is_self_send);
     std::shared_ptr<xtx_entry> pop_tx(const tx_info_t & txinfo, bool clear_follower);
     ready_accounts_t pop_ready_accounts(uint32_t count);
     ready_accounts_t get_ready_accounts(uint32_t count);
