@@ -4,6 +4,7 @@
 
 #include "xsync/xsync_peer_keeper.h"
 #include "xsync/xsync_log.h"
+#include "xsync/xsync_util.h"
 
 NS_BEG2(top, sync)
 
@@ -18,13 +19,15 @@ m_role_chains_mgr(role_chains_mgr),
 m_role_xips_mgr(role_xips_mgr),
 m_sync_sender(sync_sender),
 m_peerset(peerset) {
-
 }
 
 void xsync_peer_keeper_t::on_timer() {
     XMETRICS_TIME_RECORD("sync_cost_peerkeeper_timer_event");
 
     std::unique_lock<std::mutex> lock(m_lock);
+    if (m_time_rejecter.reject()){
+        return;
+    }
 
     if (m_count % COMMON_TIME_INTERVAl == 0) {
         process_timer();
@@ -138,6 +141,10 @@ void xsync_peer_keeper_t::walk_role(const vnetwork::xvnode_address_t &self_addr,
 
         base::xauto_ptr<base::xvblock_t> latest_start_block = m_sync_store->get_latest_start_block(address, chain_info.sync_policy);
         base::xauto_ptr<base::xvblock_t> latest_end_block = m_sync_store->get_latest_end_block(address, chain_info.sync_policy);
+        xblock_ptr_t block = autoptr_to_blockptr(latest_start_block);
+        if ((chain_info.sync_policy == enum_chain_sync_pocliy_fast) && !block->is_full_state_block()) {
+            continue;
+        }
         xchain_state_info_t info;
         info.address = address;
         info.start_height = latest_start_block->get_height();

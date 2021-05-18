@@ -824,8 +824,8 @@ void xsync_handler_t::handle_chain_snapshot_request(
     ptr->serialize_from(stream);
 
     XMETRICS_COUNTER_INCREMENT("sync_handle_chain_snapshot_request", 1);
-    xsync_info("xsync_handler receive chain_snapshot_request %" PRIx64 " wait(%ldms) %s",
-        msg_hash, get_time()-recv_time, from_address.to_string().c_str());
+    xsync_info("xsync_handler receive chain_snapshot_request %" PRIx64 " wait(%ldms) %s, account %s, height %llu",
+        msg_hash, get_time()-recv_time, from_address.to_string().c_str(), ptr->m_account_addr.c_str(), ptr->m_height_of_fullblock);
     base::xauto_ptr<base::xvblock_t> blk = m_sync_store->load_block_object(ptr->m_account_addr, ptr->m_height_of_fullblock);
     if (blk != nullptr) {
         xfull_tableblock_t* full_block_ptr = dynamic_cast<xfull_tableblock_t*>(xblock_t::raw_vblock_to_object_ptr(blk.get()).get());
@@ -857,8 +857,8 @@ void xsync_handler_t::handle_chain_snapshot_response(uint32_t msg_size, const vn
     auto ptr = make_object_ptr<xsync_message_chain_snapshot_t>();
     ptr->serialize_from(stream);
 
-    xsync_info("xsync_handler chain snapshot reponse %" PRIx64 " wait(%ldms) %s",
-        msg_hash, get_time()-recv_time, from_address.to_string().c_str());
+    xsync_info("xsync_handler chain snapshot reponse %" PRIx64 " wait(%ldms) %s, account %s, height %llu",
+        msg_hash, get_time()-recv_time, from_address.to_string().c_str(), ptr->m_tbl_account_addr.c_str(), ptr->m_height_of_fullblock);
 
     XMETRICS_COUNTER_INCREMENT("sync_handler_chain_snapshot_reponse", 1);
 
@@ -878,8 +878,8 @@ void xsync_handler_t::handle_ondemand_chain_snapshot_request(
     ptr->serialize_from(stream);
 
 	XMETRICS_COUNTER_INCREMENT("sync_handle_ondemand_chain_snapshot_request", 1);
-    xsync_info("xsync_handler receive ondemand_chain_snapshot_request %" PRIx64 " wait(%ldms) %s",
-        msg_hash, get_time()-recv_time, from_address.to_string().c_str());
+    xsync_info("xsync_handler receive ondemand_chain_snapshot_request %" PRIx64 " wait(%ldms) %s, account %s, height %llu",
+        msg_hash, get_time()-recv_time, from_address.to_string().c_str(), ptr->m_account_addr.c_str(), ptr->m_height_of_fullblock);
     m_sync_on_demand->handle_chain_snapshot_meta(*(ptr.get()), network_self, from_address);
 }
 
@@ -893,8 +893,8 @@ void xsync_handler_t::handle_ondemand_chain_snapshot_response(uint32_t msg_size,
     auto ptr = make_object_ptr<xsync_message_chain_snapshot_t>();
     ptr->serialize_from(stream);
 
-    xsync_info("xsync_handler ondemand chain snapshot reponse %" PRIx64 " wait(%ldms) %s",
-        msg_hash, get_time()-recv_time, from_address.to_string().c_str());
+    xsync_info("xsync_handler ondemand chain snapshot reponse %" PRIx64 " wait(%ldms) %s, account %s, height %llu",
+        msg_hash, get_time()-recv_time, from_address.to_string().c_str(), ptr->m_tbl_account_addr.c_str(), ptr->m_height_of_fullblock);
 
     XMETRICS_COUNTER_INCREMENT("sync_handler_ondemand_chain_snapshot_reponse", 1);
 
