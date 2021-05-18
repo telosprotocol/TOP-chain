@@ -73,7 +73,7 @@ public:
     static std::shared_ptr<xtxpool_service_mgr_face> create_xtxpool_service_mgr_inst(const observer_ptr<store::xstore_face_t> & store,
                                                                                      const observer_ptr<base::xvblockstore_t> & blockstore,
                                                                                      const observer_ptr<xtxpool_v2::xtxpool_face_t> & txpool,
-                                                                                     const observer_ptr<base::xiothread_t> & iothread,
+                                                                                     const std::vector<xobject_ptr_t<base::xiothread_t>> & iothreads,
                                                                                      const observer_ptr<mbus::xmessage_bus_face_t> & mbus,
                                                                                      const observer_ptr<time::xchain_time_face_t> & clock);
 };

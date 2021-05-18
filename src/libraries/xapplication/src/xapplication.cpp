@@ -72,6 +72,7 @@ xtop_application::xtop_application(common::xnode_id_t const & node_id, xpublic_k
 
     xthread_pool_t txpool_service_thp;
     txpool_service_thp.push_back(make_object_ptr<base::xiothread_t>());
+    txpool_service_thp.push_back(make_object_ptr<base::xiothread_t>());
     m_thread_pools[xtop_thread_pool_type::txpool_service] = txpool_service_thp;
 
     // load configuration first
