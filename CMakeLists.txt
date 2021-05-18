@@ -336,6 +336,10 @@ if (BUILD_RUSTVM)
     add_definitions(-DBUILD_RUSTVM)
 endif()
 
+if (LEAK_TRACER)
+    add_definitions(-DLEAK_TRACER)
+endif()
+
 if (${CMAKE_SYSTEM_NAME} STREQUAL Linux OR ${CMAKE_SYSTEM_NAME} STREQUAL Darwin)
 #  find_package(PkgConfig REQUIRED)
 

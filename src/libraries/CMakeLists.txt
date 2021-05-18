@@ -7,3 +7,6 @@ add_subdirectory(xchaininit)
 add_subdirectory(xsync)
 add_subdirectory(xgrpc_mgr)
 
+if (LEAK_TRACER)
+add_subdirectory(leaktracer)
+endif()
