@@ -33,7 +33,6 @@ public:
     ready_accounts_t get_ready_accounts(uint32_t count);
     ready_accounts_t get_ready_accounts(const xtxs_pack_para_t & pack_para);
     std::vector<xcons_transaction_ptr_t> get_ready_txs(const xtxs_pack_para_t & pack_para);
-    std::vector<xcons_transaction_ptr_t> get_ready_txs(uint32_t count);
     const std::shared_ptr<xtx_entry> query_tx(const std::string & account_addr, const uint256_t & hash) const;
     void updata_latest_nonce(const std::string & account_addr, uint64_t latest_nonce, const uint256_t & latest_hash);
     bool is_account_need_update(const std::string & account_addr) const;

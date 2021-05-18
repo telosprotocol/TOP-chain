@@ -134,6 +134,9 @@ int xproposal_maker_t::verify_proposal(base::xvblock_t * proposal_block, base::x
         xwarn("xproposal_maker_t::verify_proposal fail clone tablestate. %s,cert_height=%" PRIu64 "", cs_para.dump().c_str(), proposal_prev_block->get_height());
         return xblockmaker_error_proposal_table_state_clone;
     }
+
+    get_txpool()->update_receiptid_state(proposal_block->get_account(), tablestate->get_receiptid_state());
+
     xtablemaker_para_t table_para(tablestate);
     if (false == verify_proposal_input(proposal_block, cs_para.get_latest_committed_block(), table_para)) {
         xwarn("xproposal_maker_t::verify_proposal fail-proposal input invalid. proposal=%s",
@@ -263,7 +266,7 @@ bool xproposal_maker_t::update_txpool_txs(const xblock_consensus_para_t & propos
         std::vector<xtxpool_v2::tx_info_t> locked_tx_vec;
         get_locked_txs(proposal_para.get_latest_cert_block(), locked_tx_vec);
         get_locked_txs(proposal_para.get_latest_locked_block(), locked_tx_vec);
-        get_txpool()->update_locked_txs(get_account(), locked_tx_vec, tablestate_commit->get_receiptid_state());
+        get_txpool()->update_locked_txs(get_account(), locked_tx_vec);
     }
 
     // get table batch txs for execute and make block
