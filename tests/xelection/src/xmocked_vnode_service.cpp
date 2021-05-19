@@ -45,6 +45,10 @@ std::pair<xobject_ptr_t<base::xvnode_t>, common::xslot_id_t> xtop_mocked_vnode_g
     return { r, common::xslot_id_t{slot_id} };
 }
 
+void xtop_mocked_vnode_group::reset_nodes() {
+    m_nodes.resize(0);
+}
+
 xtop_mocked_vnode_service::xtop_mocked_vnode_service(common::xaccount_address_t const & account_address,
                                                      std::string const & sign_key,
                                                      xobject_ptr_t<base::xvblockstore_t> const & blockstore,
@@ -52,9 +56,9 @@ xtop_mocked_vnode_service::xtop_mocked_vnode_service(common::xaccount_address_t 
     : xvnode_house_t(account_address, sign_key, blockstore, bus) {
 }
 
-xtop_mocked_vnode_service::xtop_mocked_vnode_service(common::xaccount_address_t const & account_address, std::string const & sign_key) 
-    : xtop_mocked_vnode_service(account_address, sign_key, mocked_vnode_service_parameters.dummy_block_store, make_observer(mocked_vnode_service_parameters.dummy_message_bus.get())) {
 
+xtop_mocked_vnode_service::xtop_mocked_vnode_service(common::xaccount_address_t const & account_address, std::string const & sign_key)
+    : xtop_mocked_vnode_service(account_address, sign_key, mocked_vnode_service_parameters.dummy_block_store, make_observer(mocked_vnode_service_parameters.dummy_message_bus.get())) {
 }
 
 xobject_ptr_t<xmocked_vnode_group_t> xtop_mocked_vnode_service::add_group(common::xnetwork_id_t const & nid,
