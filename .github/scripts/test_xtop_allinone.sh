@@ -1,13 +1,16 @@
 #!/bin/bash
 source /etc/profile
 
-ps -ef |grep "[.]/xtopchain"|awk '{print $2}'|xargs -I {} bash -c 'kill -9 {}'
+NUM=$1
+echo "run number: "${NUM}
+
 
 xtop=cbuild/bin/Linux/xtopchain
 topio=cbuild/bin/Linux/topio
 solib=cbuild/lib/Linux/libxtopchain.so.*
 
 cpwd=$(pwd)
+clear=${cpwd}/.github/scripts/test_clear.sh
 workdir=${cpwd}/scripts/deploy_allinone
 
 if [ ! -f ${xtop} ];then
@@ -28,6 +31,8 @@ cp ${xtop} ${workdir}/
 cp ${topio} ${workdir}/
 cp ${solib} ${workdir}/libxtopchain.so
 
+sh ${clear} -o clean
+
 cd ${workdir}
 export TOPIO_HOME=${workdir}
 echo "====== deploy start ======"
@@ -39,7 +44,7 @@ echo "====== check genesis ======"
 ret=$(grep -a 'vnode mgr' /tmp/rec*/log/xtop*log|grep -a consensus|grep -a 'starts at'|wc -l)
 if [[ -z ${ret} ]];then
     echo "consensus start log not match"
-    # need clean
+    sh ${clear} -o archive -i ${NUM} -d ${workdir}
     exit -1
 fi
 echo "hit log: "${ret}
@@ -49,7 +54,7 @@ sleep 1
 ret=$(./topio wallet listaccounts|grep T00000Lhj29VReFAT958ZqFWZ2ZdMLot2PS5D5YC -A 3|grep balance)
 if [[ ${ret} != "balance: 2999997000.000000 TOP" ]];then
     echo "check god fail: "${ret}
-    # need clean
+    sh ${clear} -o archive -i ${NUM} -d ${workdir}
     exit -1
 fi
 addr=$(./topio wallet createaccount | grep -a "T00000"|awk -F ':' '{print $2}')
@@ -62,7 +67,7 @@ if [[ ${stat} -eq 1 ]];then
     echo "====== tx success, end ======"
 else
     echo "====== tx fail, end ======"
-    # need clean
+    sh ${clear} -o archive -i ${NUM} -d ${workdir}
     exit -1
 fi
 

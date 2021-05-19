@@ -30,6 +30,6 @@ jobs:
           bash .github/scripts/build_xtop.sh test
 
       - name: TEST XTOP AllInOne
-        if: github.event.sender.id == ''
+        # if: github.event.sender.id == ''
         run: |
-          bash .github/scripts/test_xtop_allinone.sh
+          bash .github/scripts/test_xtop_allinone.sh github.run_number
