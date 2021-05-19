@@ -46,16 +46,25 @@ if [[ -z ${ret} ]];then
     sh ${clear} -o archive -i ${NUM} -d ${workdir}
     exit -1
 fi
-echo "hit log: "${ret}
+echo "hit log, genesis success"
 echo "====== test tx ======"
-./topio wallet setDefaultAccount T00000Lhj29VReFAT958ZqFWZ2ZdMLot2PS5D5YC
+login_info=$(./topio wallet setDefaultAccount T00000Lhj29VReFAT958ZqFWZ2ZdMLot2PS5D5YC)
+login_ret=$(echo "${login_info}"|grep "successfully"|wc -l)
+if [[ ${login_ret} -eq 1 ]];then
+    echo "set default account success"
+else
+    echo "set default account fail, see follow output:"
+    echo "${login_info}"
+    # sh ${clear} -o archive -i ${NUM} -d ${workdir}
+    exit -1
+fi
 sleep 1
 accounts_info=$(./topio wallet listaccounts)
 balance=$(echo "${accounts_info}"|grep T00000Lhj29VReFAT958ZqFWZ2ZdMLot2PS5D5YC -A 3|grep balance)
 if [[ ${balance} != "balance: 2999997000.000000 TOP" ]];then
     echo "check god balance fail, see follow output:"
     echo "${accounts_info}"
-    sh ${clear} -o archive -i ${NUM} -d ${workdir}
+    # sh ${clear} -o archive -i ${NUM} -d ${workdir}
     exit -1
 fi
 addr=$(./topio wallet createaccount | grep -a "T00000"|awk -F ':' '{print $2}')
@@ -65,7 +74,7 @@ tx=$(echo "${tx_info}" | grep -a "Transaction hash"|awk -F ':' '{print $2}')
 if [[ -z ${tx} ]];then
     echo "tx fail, see follow output:"
     echo "${tx_info}"
-    sh ${clear} -o archive -i ${NUM} -d ${workdir}
+    # sh ${clear} -o archive -i ${NUM} -d ${workdir}
     exit -1
 fi
 echo "tx: "${tx}
@@ -78,7 +87,7 @@ if [[ ${stat} -eq 1 ]];then
 else
     echo "tx check fail, see follow output:"
     echo "${tx_ret}"
-    sh ${clear} -o archive -i ${NUM} -d ${workdir}
+    # sh ${clear} -o archive -i ${NUM} -d ${workdir}
     echo "====== tx fail, end ======"
     exit -1
 fi
