@@ -36,9 +36,9 @@ cd ${workdir}
 export TOPIO_HOME=${workdir}
 echo "====== deploy start ======"
 sh run.sh
-echo "====== deploy end ======"
-echo "====== wait genesis 300s ======"
-sleep 300
+echo "====== wait genesis ======"
+echo "sleep 360s"
+sleep 360
 echo "====== check genesis ======"
 ret=$(grep -a 'vnode mgr' /tmp/rec*/log/xtop*log|grep -a consensus|grep -a 'starts at'|wc -l)
 if [[ -z ${ret} ]];then
@@ -55,7 +55,7 @@ if [[ ${login_ret} -eq 1 ]];then
 else
     echo "set default account fail, see follow output:"
     echo "${login_info}"
-    # sh ${clear} -o archive -i ${NUM} -d ${workdir}
+    sh ${clear} -o archive -i ${NUM} -d ${workdir}
     exit -1
 fi
 sleep 1
@@ -64,7 +64,7 @@ balance=$(echo "${accounts_info}"|grep T00000Lhj29VReFAT958ZqFWZ2ZdMLot2PS5D5YC 
 if [[ ${balance} != "balance: 2999997000.000000 TOP" ]];then
     echo "check god balance fail, see follow output:"
     echo "${accounts_info}"
-    # sh ${clear} -o archive -i ${NUM} -d ${workdir}
+    sh ${clear} -o archive -i ${NUM} -d ${workdir}
     exit -1
 fi
 addr=$(./topio wallet createaccount | grep -a "T00000"|awk -F ':' '{print $2}')
@@ -74,20 +74,21 @@ tx=$(echo "${tx_info}" | grep -a "Transaction hash"|awk -F ':' '{print $2}')
 if [[ -z ${tx} ]];then
     echo "tx fail, see follow output:"
     echo "${tx_info}"
-    # sh ${clear} -o archive -i ${NUM} -d ${workdir}
+    sh ${clear} -o archive -i ${NUM} -d ${workdir}
     exit -1
 fi
 echo "tx: "${tx}
+echo "sleep 60s"
 sleep 60
 tx_ret=$(./topio querytx ${tx})
 stat=$(echo "${tx_ret}" | grep -a '\"exec_status\"'|grep "success"|wc -l)
 if [[ ${stat} -eq 1 ]];then
-    echo "====== tx success, end ======"
+    echo "====== tx check success, end ======"
     sh ${clear} -o clean
 else
     echo "tx check fail, see follow output:"
     echo "${tx_ret}"
-    # sh ${clear} -o archive -i ${NUM} -d ${workdir}
+    sh ${clear} -o archive -i ${NUM} -d ${workdir}
     echo "====== tx fail, end ======"
     exit -1
 fi
