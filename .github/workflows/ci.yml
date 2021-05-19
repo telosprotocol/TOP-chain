@@ -10,10 +10,9 @@ on:
 
 jobs:
   build:
-    # if: github.repository_owner == 'telosprotocol'
-    # runs-on: [self-hosted, Linux, X64]
+    if: github.repository_owner == 'telosprotocol'
     if: github.event.action == 'opened' || github.event.action == 'reopened'
-    runs-on: self-hosted
+    runs-on: [self-hosted, Linux, X64]
     
     # for ci telos only
     steps:
