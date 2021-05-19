@@ -10,7 +10,7 @@ on:
 
 jobs:
   build:
-    if: github.repository_owner == 'telosprotocol'
+    # if: github.repository_owner == 'telosprotocol'
     runs-on: [self-hosted, Linux, X64]
     
     # for ci telos only
