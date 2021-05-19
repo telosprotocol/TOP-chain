@@ -10,7 +10,8 @@ on:
 
 jobs:
   build:
-    # if: github.repository_owner == 'telosprotocol'
+    if: github.repository_owner == 'telosprotocol' && (github.event.action == 'opened' || github.event.action == 'reopened')
+    # if: github.event.action == 'opened' || github.event.action == 'reopened'
     runs-on: [self-hosted, Linux, X64]
     
     # for ci telos only
@@ -31,5 +32,7 @@ jobs:
 
       - name: TEST XTOP AllInOne
         # if: github.event.sender.id == ''
+        env:
+          RUN_NUM: ${{ github.run_number }}
         run: |
-          bash .github/scripts/test_xtop_allinone.sh github.run_number
+          bash .github/scripts/test_xtop_allinone.sh "$RUN_NUM"

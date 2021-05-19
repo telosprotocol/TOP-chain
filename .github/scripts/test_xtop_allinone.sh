@@ -4,7 +4,6 @@ source /etc/profile
 NUM=$1
 echo "run number: "${NUM}
 
-
 xtop=cbuild/bin/Linux/xtopchain
 topio=cbuild/bin/Linux/topio
 solib=cbuild/lib/Linux/libxtopchain.so.*
@@ -61,10 +60,11 @@ addr=$(./topio wallet createaccount | grep -a "T00000"|awk -F ':' '{print $2}')
 echo "new local addr: "${addr}
 tx=$(./topio transfer ${addr} 123456 tx_test | grep -a "Transaction hash"|awk -F ':' '{print $2}')
 echo "tx: "${tx}
-sleep 120
+sleep 60
 stat=$(./topio querytx ${tx} | grep -a '\"exec_status\"'|grep "success"|wc -l)
 if [[ ${stat} -eq 1 ]];then
     echo "====== tx success, end ======"
+    sh ${clear} -o clean
 else
     echo "====== tx fail, end ======"
     sh ${clear} -o archive -i ${NUM} -d ${workdir}
