@@ -41,26 +41,19 @@ TEST_F(xtest_rec_standby_contract_algorithm, test_TOP_3495) {
     node_info.m_network_ids = std::set<uint32_t>({255});
     add_reg_info(node_info);
 
-    EXPECT_TRUE(rec_standby_contract.nodeJoinNetworkImpl1(node_id, program_version_1, node_info, standby_result_store));
-
     auto & standby_node_info = standby_result_store.result_of(common::xnetwork_id_t{255}).result_of(xnode_id);
     EXPECT_TRUE(standby_node_info.program_version == program_version_1);
     EXPECT_TRUE(standby_node_info.consensus_public_key == pub_key_1);
     EXPECT_TRUE(standby_node_info.is_genesis_node == false);
 
-    // changed program_version and rejoin:
-    // #TOP-3495:
     std::string program_version_2{"version_2"};
-    EXPECT_TRUE(rec_standby_contract.nodeJoinNetworkImpl1(node_id, program_version_2, node_info, standby_result_store));  // return true. but program_version has not be updated.
-    EXPECT_FALSE(standby_node_info.program_version == program_version_2);
-    // after fork:
-    EXPECT_TRUE(rec_standby_contract.nodeJoinNetworkImpl2(node_id, program_version_2, node_info, standby_result_store));
+    EXPECT_TRUE(rec_standby_contract.nodeJoinNetworkImpl(node_id, program_version_2, node_info, standby_result_store));
     EXPECT_TRUE(standby_node_info.program_version == program_version_2);
-    EXPECT_FALSE(rec_standby_contract.nodeJoinNetworkImpl2(node_id, program_version_2, node_info, standby_result_store));  // rejoin shouldn't changed the result.
+    EXPECT_FALSE(rec_standby_contract.nodeJoinNetworkImpl(node_id, program_version_2, node_info, standby_result_store));  // rejoin shouldn't changed the result.
 
     top::xpublic_key_t pub_key_2{"test_pub_key_2"};
     node_info.consensus_public_key = pub_key_2;
-    EXPECT_TRUE(rec_standby_contract.nodeJoinNetworkImpl2(node_id, program_version_2, node_info, standby_result_store));
+    EXPECT_TRUE(rec_standby_contract.nodeJoinNetworkImpl(node_id, program_version_2, node_info, standby_result_store));
     EXPECT_TRUE(standby_node_info.consensus_public_key == pub_key_2);
 }
 
@@ -80,7 +73,7 @@ TEST_F(xtest_rec_standby_contract_algorithm, test_on_timer_update_pubkey_and_rol
     node_info.m_network_ids = std::set<uint32_t>({255});
     add_reg_info(node_info);
 
-    EXPECT_TRUE(rec_standby_contract.nodeJoinNetworkImpl1(node_id, program_version_1, node_info, standby_result_store));
+    EXPECT_TRUE(rec_standby_contract.nodeJoinNetworkImpl(node_id, program_version_1, node_info, standby_result_store));
 
     auto & standby_node_info = standby_result_store.result_of(common::xnetwork_id_t{255}).result_of(xnode_id);
     EXPECT_TRUE(standby_node_info.program_version == program_version_1);
@@ -160,7 +153,7 @@ TEST_F(xtest_rec_standby_contract_algorithm, test_on_timer_update_stake) {
     node_info.m_network_ids = std::set<uint32_t>({255});
     EXPECT_TRUE(add_reg_info(node_info));
 
-    EXPECT_TRUE(rec_standby_contract.nodeJoinNetworkImpl1(node_id, program_version_1, node_info, standby_result_store));
+    EXPECT_TRUE(rec_standby_contract.nodeJoinNetworkImpl(node_id, program_version_1, node_info, standby_result_store));
 
     auto & standby_node_info = standby_result_store.result_of(common::xnetwork_id_t{255}).result_of(xnode_id);
     EXPECT_TRUE(standby_node_info.program_version == program_version_1);
