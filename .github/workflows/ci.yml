@@ -11,7 +11,8 @@ on:
 jobs:
   build:
     # if: github.repository_owner == 'telosprotocol'
-    runs-on: [self-hosted, Linux, X64]
+    # runs-on: [self-hosted, Linux, X64]
+    runs-on: self-hosted
     
     # for ci telos only
     steps:
