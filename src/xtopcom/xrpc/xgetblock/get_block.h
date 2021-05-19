@@ -46,6 +46,7 @@ public:
         REGISTER_QUERY_METHOD(getRootblockInfo);
         REGISTER_QUERY_METHOD(getTimerInfo);
         REGISTER_QUERY_METHOD(getIssuanceDetail);
+        REGISTER_QUERY_METHOD(getWorkloadDetail);
 
         REGISTER_QUERY_METHOD(getRecs);
         REGISTER_QUERY_METHOD(getZecs);
@@ -88,6 +89,7 @@ public:
     uint64_t get_timer_height() const;
     void getTimerInfo();
     void getIssuanceDetail();
+    void getWorkloadDetail();
     uint64_t get_timer_clock() const;
     xJson::Value parse_account(const std::string & account);
     void update_tx_state(xJson::Value & result, const xJson::Value & cons);
