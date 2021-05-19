@@ -12,6 +12,7 @@ jobs:
   build:
     # if: github.repository_owner == 'telosprotocol'
     # runs-on: [self-hosted, Linux, X64]
+    if: github.event.action == 'opened' || github.event.action == 'reopened'
     runs-on: self-hosted
     
     # for ci telos only
