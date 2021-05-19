@@ -32,5 +32,7 @@ jobs:
 
       - name: TEST XTOP AllInOne
         # if: github.event.sender.id == ''
+        env:
+          RUN_NUM: ${{ github.run_number }}
         run: |
-          bash .github/scripts/test_xtop_allinone.sh github.run_number
+          bash .github/scripts/test_xtop_allinone.sh "$RUN_NUM"
