@@ -1067,7 +1067,6 @@ void ApiMethod::query_account(std::string & target, std::ostringstream & out_str
     } else {
         g_userinfo.account = target;
     }
-    cout << "account:" <<g_userinfo.account.c_str()<<","<<target.c_str()<<endl;
     api_method_imp_.getAccount(g_userinfo, g_userinfo.account, out_str);
     tackle_null_query(out_str);
 }
@@ -2464,7 +2463,6 @@ void ApiMethod::outAccountBalance(const std::string & account, std::ostringstrea
     std::ostringstream as;
     auto tmp = g_userinfo.account;
     g_userinfo.account = account;
-    cout << "account:" <<account.c_str()<<endl;
     api_method_imp_.getAccount(g_userinfo, account, as);
     g_userinfo.account = tmp;
     xJson::Reader reader;
