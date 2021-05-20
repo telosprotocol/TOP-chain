@@ -913,17 +913,17 @@ void get_block_handle::getBlock() {
     xJson::Value value;
     if (type == "height") {
         uint64_t height = m_js_req["height"].asUInt64();
+
+        auto vblock = m_block_store->load_block_object(_owner_vaddress, height, 0, true);
+        data::xblock_t * bp = dynamic_cast<data::xblock_t *>(vblock.get());
+        value = get_block_json(bp);
+
         if (owner == sys_contract_zec_slash_info_addr) {
             std::error_code ec;
             top::contract::xcontract_manager_t::instance().get_contract_data(top::common::xaccount_address_t{ owner }, height, top::contract::xjson_format_t::detail, value, ec);
-            if (ec) {
-                value["query_status"] = ec.message();
-            }
-        } else {
-            auto vblock = m_block_store->load_block_object(_owner_vaddress, height, 0, true);
-            data::xblock_t * bp = dynamic_cast<data::xblock_t *>(vblock.get());
-            value = get_block_json(bp);
         }
+
+
     } else if (type == "last") {
         auto vblock = m_block_store->get_latest_committed_block(_owner_vaddress);
         data::xblock_t * bp = dynamic_cast<data::xblock_t *>(vblock.get());
