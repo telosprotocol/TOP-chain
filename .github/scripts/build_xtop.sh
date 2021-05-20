@@ -1,6 +1,6 @@
 #!/bin/bash
 source /etc/profile
-set -x
+# set -x
 
 BUILD_ARGS=$1
 
@@ -13,7 +13,15 @@ echo "build args: "${fix_args}
 ./build.sh ${fix_args}
 
 if [ ! -f "cbuild/bin/Linux/xtopchain" ];then
-    echo "build failed!!!"
+    echo "build xtopchain failed!!!"
+    exit -1
+fi
+if [ ! -f "cbuild/bin/Linux/topio" ];then
+    echo "build topio failed!!!"
+    exit -1
+fi
+if [ ! -f "cbuild/lib/Linux/libxtopchain.so" ];then
+    echo "build libxtopchain.so failed!!!"
     exit -1
 fi
 

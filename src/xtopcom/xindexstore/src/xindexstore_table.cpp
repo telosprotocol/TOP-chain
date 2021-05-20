@@ -142,11 +142,10 @@ xtablestate_ptr_t xindexstore_table_t::create_target_tablestate(const xblock_ptr
     std::map<uint64_t, xblock_ptr_t> latest_blocks;
     xblock_ptr_t current_block = block;
     latest_blocks[current_block->get_height()] = current_block;
-    uint32_t count = 0;
     uint32_t max_count = 6;  // TODO(jimmy)
     xtablestate_ptr_t db_state = nullptr;
 
-    while (count < max_count) {
+    for (uint32_t count = 0; count < max_count; ++count) {
         // find prev state in cache
         xtablestate_ptr_t prev_state = get_cache_state(current_block->get_height() - 1, current_block->get_last_block_hash());
         if (nullptr != prev_state) {

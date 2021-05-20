@@ -28,10 +28,15 @@ NS_BEG2(top, xtxpool_service_v2)
 xtxpool_service_mgr::xtxpool_service_mgr(const observer_ptr<store::xstore_face_t> & store,
                                          const observer_ptr<base::xvblockstore_t> & blockstore,
                                          const observer_ptr<xtxpool_v2::xtxpool_face_t> & txpool,
-                                         const observer_ptr<base::xiothread_t> & iothread,
+                                         const observer_ptr<base::xiothread_t> & iothread_timer,
+                                         const observer_ptr<base::xiothread_t> & iothread_dispather,
                                          const observer_ptr<mbus::xmessage_bus_face_t> & mbus,
                                          const observer_ptr<time::xchain_time_face_t> & clock)
-  : m_para(make_object_ptr<xtxpool_svc_para_t>(store, blockstore, txpool, mbus)), m_iothread(iothread), m_mbus(mbus), m_clock(clock) {
+  : m_para(make_object_ptr<xtxpool_svc_para_t>(store, blockstore, txpool, mbus))
+  , m_iothread_timer(iothread_timer)
+  , m_iothread_dispatcher(iothread_dispather)
+  , m_mbus(mbus)
+  , m_clock(clock) {
 }
 
 void xtxpool_service_mgr::on_block_to_db_event(mbus::xevent_ptr_t e) {
@@ -45,7 +50,7 @@ void xtxpool_service_mgr::on_block_to_db_event(mbus::xevent_ptr_t e) {
         return;
     }
 
-    if (m_timer->is_mailbox_over_limit()) {
+    if (m_dispatcher->is_mailbox_over_limit()) {
         xwarn("xtxpool_service_mgr::on_block_to_db_event txpool mailbox limit,drop block=%s,height:%llu", block_event->blk_hash.c_str(), block_event->blk_height);
         return;
     }
@@ -58,7 +63,7 @@ void xtxpool_service_mgr::on_block_to_db_event(mbus::xevent_ptr_t e) {
         return true;
     };
     base::xcall_t asyn_call(event_handler);
-    m_timer->dispatch(asyn_call);
+    m_dispatcher->dispatch(asyn_call);
 }
 
 void xtxpool_service_mgr::on_block_confirmed(xblock_t * block) {
@@ -222,10 +227,12 @@ xcons_transaction_ptr_t xtxpool_service_mgr::query_tx(const std::string & accoun
 void xtxpool_service_mgr::start() {
     xinfo("xtxpool_service_mgr::start");
     m_bus_listen_id = m_mbus->add_listener(top::mbus::xevent_major_type_store, std::bind(&xtxpool_service_mgr::on_block_to_db_event, this, std::placeholders::_1));
-    m_timer = new xtxpool_service_timer_t(top::base::xcontext_t::instance(), m_iothread->get_thread_id(), this);
-    m_timer->create_mailbox(256, max_mailbox_num, max_mailbox_num);  // create dedicated mailbox for txpool
+    m_timer = new xtxpool_service_timer_t(top::base::xcontext_t::instance(), m_iothread_timer->get_thread_id(), this);
     m_timer->start(0, 1000);
-    m_para->set_dispatcher(make_observer(m_timer));
+
+    m_dispatcher = new xtxpool_service_dispatcher_imp_t(top::base::xcontext_t::instance(), m_iothread_dispatcher->get_thread_id(), this);
+    m_dispatcher->create_mailbox(256, max_mailbox_num, max_mailbox_num);  // create dedicated mailbox for txpool
+    m_para->set_dispatcher(make_observer(m_dispatcher));
 }
 
 void xtxpool_service_mgr::stop() {
@@ -273,11 +280,38 @@ void xtxpool_service_mgr::on_timer() {
 std::shared_ptr<xtxpool_service_mgr_face> xtxpool_service_mgr_instance::create_xtxpool_service_mgr_inst(const observer_ptr<store::xstore_face_t> & store,
                                                                                                         const observer_ptr<base::xvblockstore_t> & blockstore,
                                                                                                         const observer_ptr<xtxpool_v2::xtxpool_face_t> & txpool,
-                                                                                                        const observer_ptr<base::xiothread_t> & iothread,
+                                                                                                        const std::vector<xobject_ptr_t<base::xiothread_t>> & iothreads,
                                                                                                         const observer_ptr<mbus::xmessage_bus_face_t> & mbus,
                                                                                                         const observer_ptr<time::xchain_time_face_t> & clock) {
-    auto txpool_service_mgr = std::make_shared<xtxpool_service_mgr>(store, blockstore, txpool, iothread, mbus, clock);
+    xassert(iothreads.size() == 2);
+    auto txpool_service_mgr = std::make_shared<xtxpool_service_mgr>(store, blockstore, txpool, make_observer(iothreads[0].get()), make_observer(iothreads[1].get()), mbus, clock);
     return txpool_service_mgr;
+}
+
+bool xtxpool_service_timer_t::on_timer_fire(const int32_t thread_id,
+                                            const int64_t timer_id,
+                                            const int64_t current_time_ms,
+                                            const int32_t start_timeout_ms,
+                                            int32_t & in_out_cur_interval_ms) {
+    // printf("on_timer_fire,timer_id=%lld,current_time_ms =%lld,start_timeout_ms=%d, in_out_cur_interval_ms=%d \n",get_timer_id(),
+    // current_time_ms,start_timeout_ms,in_out_cur_interval_ms);
+    m_txpool_service_mgr->on_timer();
+    return true;
+}
+
+void xtxpool_service_dispatcher_imp_t::dispatch(base::xcall_t & call) {
+    send_call(call);
+}
+
+bool xtxpool_service_dispatcher_imp_t::is_mailbox_over_limit() {
+    int64_t in, out;
+    int32_t queue_size = count_calls(in, out);
+    bool discard = queue_size >= max_mailbox_num;
+    if (discard) {
+        xwarn("xtxpool_service_dispatcher_imp_t::is_mailbox_over_limit in=%ld,out=%ld", in, out);
+        return true;
+    }
+    return false;
 }
 
 NS_END2

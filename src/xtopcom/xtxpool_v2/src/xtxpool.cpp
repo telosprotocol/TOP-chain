@@ -30,12 +30,12 @@ int32_t xtxpool_t::push_send_tx(const std::shared_ptr<xtx_entry> & tx) {
     return table->push_send_tx(tx);
 }
 
-int32_t xtxpool_t::push_receipt(const std::shared_ptr<xtx_entry> & tx) {
+int32_t xtxpool_t::push_receipt(const std::shared_ptr<xtx_entry> & tx, bool is_self_send) {
     auto table = get_txpool_table_by_addr(tx->get_tx()->get_account_addr());
     if (table == nullptr) {
         return xtxpool_error_account_not_in_charge;
     }
-    return table->push_receipt(tx);
+    return table->push_receipt(tx, is_self_send);
 }
 
 const xcons_transaction_ptr_t xtxpool_t::pop_tx(const tx_info_t & txinfo) {
@@ -80,14 +80,6 @@ std::vector<xcons_transaction_ptr_t> xtxpool_t::get_ready_txs(const xtxs_pack_pa
         return {};
     }
     return table->get_ready_txs(pack_para);
-}
-
-std::vector<xcons_transaction_ptr_t> xtxpool_t::get_ready_txs(const std::string & table_addr, uint32_t count) {
-    auto table = get_txpool_table_by_addr(table_addr);
-    if (table == nullptr) {
-        return {};
-    }
-    return table->get_ready_txs(count);
 }
 
 const std::shared_ptr<xtx_entry> xtxpool_t::query_tx(const std::string & account_addr, const uint256_t & hash) const {
@@ -216,12 +208,12 @@ void xtxpool_t::update_non_ready_accounts(uint8_t zone, uint16_t subaddr) {
     }
 }
 
-void xtxpool_t::update_locked_txs(const std::string & table_addr, const std::vector<tx_info_t> & locked_tx_vec, const base::xreceiptid_state_ptr_t & receiptid_state) {
+void xtxpool_t::update_locked_txs(const std::string & table_addr, const std::vector<tx_info_t> & locked_tx_vec) {
     auto table = get_txpool_table_by_addr(table_addr);
     if (table == nullptr) {
         return;
     }
-    return table->update_locked_txs(locked_tx_vec, receiptid_state);
+    return table->update_locked_txs(locked_tx_vec);
 }
 
 void xtxpool_t::update_receiptid_state(const std::string & table_addr, const base::xreceiptid_state_ptr_t & receiptid_state) {

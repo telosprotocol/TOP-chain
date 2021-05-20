@@ -117,6 +117,10 @@ do
         CMAKE_EXTRA_OPTIONS+=" -DBUILD_RUSTVM=ON"
         echo "BUILD RUSTVM(need cargo toolchain)"
     ;;
+    leak_trace)
+        CMAKE_EXTRA_OPTIONS+=" -DLEAK_TRACER=ON"
+        echo "BUILD WITH LEAK_TRACER tool"
+    ;;
     *)
         CMAKE_EXTRA_OPTIONS=" -DXENABLE_TESTS=OFF -DXENABLE_CODE_COVERAGE=OFF"
     ;;
