@@ -131,7 +131,7 @@ void xblock_maker_t::set_latest_block(const xblock_ptr_t & block) {
     m_latest_blocks[block->get_height()] = block;
 }
 
-bool xblock_maker_t::load_and_cache_enough_blocks(const xblock_ptr_t & latest_block, uint64_t & lacked_block_height) {
+bool xblock_maker_t::load_and_cache_enough_blocks(const xblock_ptr_t & latest_block, uint64_t & from_height, uint64_t & lacked_block_height) {
     xblock_ptr_t current_block = latest_block;
     set_latest_block(current_block);
     uint32_t count = 1;
@@ -144,6 +144,7 @@ bool xblock_maker_t::load_and_cache_enough_blocks(const xblock_ptr_t & latest_bl
             auto _block = get_blockstore()->load_block_object(*this, current_block->get_height() - 1, current_block->get_last_block_hash(), true);
             if (_block == nullptr) {
                 xwarn("xblock_maker_t::load_and_cache_enough_blocks fail-load block.account=%s,height=%ld", get_account().c_str(), current_block->get_height() - 1);
+                from_height = (latest_block->get_height() >= m_keep_latest_blocks_max) ? (latest_block->get_height() + 1 - m_keep_latest_blocks_max) : 0;
                 lacked_block_height = current_block->get_height() - 1;
                 return false;
             }
