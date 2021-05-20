@@ -329,6 +329,22 @@ void get_block_handle::getIssuanceDetail() {
     m_js_rsp["data"] = j;
 }
 
+void get_block_handle::getWorkloadDetail() {
+    uint64_t height = m_js_req["height"].asUInt64();
+    if (height == 0) {
+        xwarn("[grpc::getWorkloadDetail] height: %llu", height);
+        return;
+    }
+
+    std::error_code ec;
+    xJson::Value value;
+    top::contract::xcontract_manager_t::instance().get_contract_data(top::common::xaccount_address_t{ sys_contract_zec_reward_addr }, height, top::contract::xjson_format_t::detail, value, ec);
+    if (ec) {
+        value["query_status"] = ec.message();
+    }
+    m_js_rsp["value"] = value;
+}
+
 uint64_t get_block_handle::get_timer_clock() const {
     auto vb = m_block_store->get_latest_cert_block(base::xvaccount_t(sys_contract_beacon_timer_addr));
     xblock_t * bp = static_cast<xblock_t *>(vb.get());
