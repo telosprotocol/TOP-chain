@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include "xbasic/xbyte_buffer.h"
+
 #if defined(__clang__)
 #    pragma clang diagnostic push
 #    pragma clang diagnostic ignored "-Wpedantic"
@@ -23,8 +25,6 @@
 #elif defined(_MSC_VER)
 #    pragma warning(pop)
 #endif
-
-#include "xbasic/xbyte_buffer.h"
 
 #include <map>
 #include <vector>
@@ -62,15 +62,66 @@ using xproperty_type_t = xenum_property_type;
 //template <xproperty_type_t TypeV, typename ValueT>
 //struct xtop_type_of;
 
-template <xproperty_type_t TypeV>
+template <xproperty_type_t PropertyTypeV>
 struct xtop_type_of;
 
-template <xproperty_type_t TypeV>
-using xtype_of_t = xtop_type_of<TypeV>;
+template <xproperty_type_t PropertyTypeV>
+using xtype_of_t = xtop_type_of<PropertyTypeV>;
+
+template <xproperty_type_t PropertyTypeV>
+struct xtop_element_type_of;
+
+template <xproperty_type_t PropertyTypeV>
+using xelement_type_of_t = xtop_element_type_of<PropertyTypeV>;
+
+template <>
+struct xtop_type_of<xproperty_type_t::int8> {
+    using type = int8_t;
+};
+
+template <>
+struct xtop_type_of<xproperty_type_t::int16> {
+    using type = int16_t;
+};
+
+template <>
+struct xtop_type_of<xproperty_type_t::int32> {
+    using type = int32_t;
+};
+
+template <>
+struct xtop_type_of<xproperty_type_t::int64> {
+    using type = int64_t;
+};
+
+template <>
+struct xtop_type_of<xproperty_type_t::uint8> {
+    using type = uint8_t;
+};
+
+template <>
+struct xtop_type_of<xproperty_type_t::uint16> {
+    using type = uint16_t;
+};
+
+template <>
+struct xtop_type_of<xproperty_type_t::uint32> {
+    using type = uint32_t;
+};
+
+template <>
+struct xtop_type_of<xproperty_type_t::uint64> {
+    using type = uint64_t;
+};
 
 template <>
 struct xtop_type_of<xproperty_type_t::map> {
-    using type = typename std::map<std::string, xbyte_buffer_t>;
+    using type = std::map<std::string, xbyte_buffer_t>;
+};
+
+template <>
+struct xtop_element_type_of<xproperty_type_t::map> {
+    using type = xtype_of_t<xproperty_type_t::map>::type::value_type;
 };
 
 template <>
@@ -81,6 +132,11 @@ struct xtop_type_of<xproperty_type_t::vector> {
 template <>
 struct xtop_type_of<xproperty_type_t::string> {
     using type = std::string;
+};
+
+template <>
+struct xtop_element_type_of<xproperty_type_t::string> {
+    using type = xtype_of_t<xproperty_type_t::string>::type;
 };
 
 template <>

@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "xstate/xstate_access_control.h"
+#include "xstate/xstate_accessor.h"
 
 namespace top {
 namespace state {
@@ -18,7 +18,7 @@ using xstate_type_t = xenum_state_type;
 
 class xtop_state_face {
 protected:
-    std::unique_ptr<xstate_access_control_t> m_state_accessor{ nullptr };
+    std::unique_ptr<xstate_accessor_t> m_state_accessor{ nullptr };
     xstate_type_t m_state_type{ xstate_type_t::invalid };
 public:
     xtop_state_face() = default;
@@ -29,7 +29,7 @@ public:
     virtual ~xtop_state_face() = default;
 
 protected:
-    xtop_state_face(std::unique_ptr<xstate_access_control_t> state_accessor, xstate_type_t const type) noexcept;
+    xtop_state_face(std::unique_ptr<xstate_accessor_t> state_accessor, xstate_type_t const type) noexcept;
 
 public:
     xstate_type_t type() const noexcept;

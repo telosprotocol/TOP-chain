@@ -4,28 +4,11 @@
 
 #pragma once
 
+#include "xcommon/xaddress.h"
 #include "xbase/xobject_ptr.h"
-#include "xstate/xunit_state_face.h"
-
-#if defined(__clang__)
-#    pragma clang diagnostic push
-#    pragma clang diagnostic ignored "-Wpedantic"
-#elif defined(__GNUC__)
-#    pragma GCC diagnostic push
-#    pragma GCC diagnostic ignored "-Wpedantic"
-#elif defined(_MSC_VER)
-#    pragma warning(push, 0)
-#endif
-
+#include "xstate/xunitstate_face.h"
+#include "xstore/xstore_face.h"
 #include "xvledger/xvstate.h"
-
-#if defined(__clang__)
-#    pragma clang diagnostic pop
-#elif defined(__GNUC__)
-#    pragma GCC diagnostic pop
-#elif defined(_MSC_VER)
-#    pragma warning(pop)
-#endif
 
 #include <cstdint>
 
@@ -35,6 +18,7 @@ namespace state {
 class xtop_unit_state : public xunit_state_face_t {
 private:
     xobject_ptr_t<base::xvbstate_t> m_state{ nullptr };
+    observer_ptr<store::xstore_face_t> m_store{ nullptr };
 
 public:
     xtop_unit_state() = default;
@@ -44,12 +28,16 @@ public:
     xtop_unit_state & operator=(xtop_unit_state &&) = default;
     virtual ~xtop_unit_state() = default;
 
-    uint64_t balance() const override;
-    uint64_t balance(std::string const & symbol) const override;
-    uint64_t nonce() const override;
+    uint64_t balance() const noexcept override;
+    uint64_t balance(std::string const & symbol) const noexcept override;
+    uint64_t nonce() const noexcept override;
 
-    xtoken_t withdraw(uint64_t const amount) override;
-    xtoken_t withdraw(std::string const & symbol, uint64_t const amount) override;
+    xtoken_t withdraw(uint64_t const amount, std::error_code & ec) override;
+    xtoken_t withdraw(std::string const & symbol, uint64_t const amount, std::error_code & ec) override;
+
+    // ============================== account context related APIs ==============================
+    void string_create(std::string const & property_name, std::error_code & ec);
+    xobject_ptr_t<base::xvbstate_t> internal_state_object(common::xaccount_address_t const & account_address, std::error_code & ec) const;
 };
 using xunit_state_t = xtop_unit_state;
 

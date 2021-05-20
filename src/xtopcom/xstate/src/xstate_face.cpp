@@ -9,7 +9,7 @@
 namespace top {
 namespace state {
 
-xtop_state_face::xtop_state_face(std::unique_ptr<xstate_access_control_t> state_accessor, xstate_type_t const type) noexcept
+xtop_state_face::xtop_state_face(std::unique_ptr<xstate_accessor_t> state_accessor, xstate_type_t const type) noexcept
     : m_state_accessor{ std::move(state_accessor) }, m_state_type{ type } {
     assert(type != xstate_type_t::invalid);
 }

@@ -14,6 +14,9 @@ static char const * errc_to_message(int const errc) noexcept {
     case xerrc_t::ok:
         return "successful";
 
+    case xerrc_t::invalid_state_backend:
+        return "invalid state backend";
+
     case xerrc_t::token_insufficient:
         return "token insufficient";
 
@@ -29,14 +32,26 @@ static char const * errc_to_message(int const errc) noexcept {
     case xerrc_t::property_not_exist:
         return "property not exist";
 
+    case xerrc_t::property_already_exist:
+        return "property already exist";
+
     case xerrc_t::property_value_out_of_range:
         return "property value out of range";
 
-    case xerrc_t::property_name_too_long:
-        return "property name too long";
+    case xerrc_t::property_name_out_of_range:
+        return "property name length out of range";
 
     case xerrc_t::create_property_failed:
         return "create property failed";
+
+    case xerrc_t::property_id_conversion_invalid:
+        return "property id conversion invalid";
+
+    case xerrc_t::update_property_failed:
+        return "update property failed";
+
+    case xerrc_t::property_not_changed:
+        return "property not changed";
 
     default:
         return "unknown error";

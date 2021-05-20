@@ -16,15 +16,25 @@ namespace error {
 
 enum class xenum_errc : uint16_t {
     ok,
+    invalid_state_backend,
+
     token_insufficient,
 
     invalid_property_type,
     property_access_denied,
     load_property_failed,
     property_not_exist,
+    property_already_exist,
     property_value_out_of_range,
-    property_name_too_long,
+    property_name_out_of_range,
     create_property_failed,
+    update_property_failed,
+    property_not_changed,
+
+    property_id_conversion_invalid,
+
+    // capability errors
+    load_account_state_failed,
 };
 using xerrc_t = xenum_errc;
 

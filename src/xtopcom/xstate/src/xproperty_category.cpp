@@ -21,7 +21,7 @@ char category_character(xproperty_category_t const c) noexcept {
 
     default:
         assert(false);
-        return '\0';
+        return '#';
     }
 }
 

@@ -23,6 +23,15 @@ public:
     virtual uint64_t nonce() const noexcept = 0;
     virtual xtoken_t withdraw(std::string const & symbol, uint64_t const amount, std::error_code & ec) = 0;
     virtual xtoken_t withdraw(uint64_t const amount, std::error_code & ec) = 0;
+
+    virtual void create_property(properties::xproperty_identifier_t const & property_id, std::error_code & ec) = 0;
+    /// @brief Update property by 
+    /// @param property_id 
+    /// @param string_value 
+    /// @param ec 
+    virtual void set_property(properties::xproperty_identifier_t const & property_id, std::string const & string_value, std::error_code & ec) = 0;
+    virtual void set_property(properties::xproperty_identifier_t const & property_id, std::string const & key, xbyte_buffer_t const & value, std::error_code & ec);
+
 };
 using xunit_state_face_t = xtop_unit_state_face;
 

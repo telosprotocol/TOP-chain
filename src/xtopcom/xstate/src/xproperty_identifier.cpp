@@ -30,11 +30,11 @@ xproperty_category_t xtop_property_identifier::category() const noexcept {
     return m_category;
 }
 
-bool xtop_property_identifier::system_property(xproperty_identifier_t const & property_id) noexcept {
+bool system_property(xproperty_identifier_t const & property_id) noexcept {
     return property_id.category() == xproperty_category_t::system;
 }
 
-bool xtop_property_identifier::user_property(xproperty_identifier_t const & property_id) noexcept {
+bool user_property(xproperty_identifier_t const & property_id) noexcept {
     return property_id.category() == xproperty_category_t::user;
 }
 
