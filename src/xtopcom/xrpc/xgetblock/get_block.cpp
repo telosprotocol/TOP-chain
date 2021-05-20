@@ -330,60 +330,19 @@ void get_block_handle::getIssuanceDetail() {
 }
 
 void get_block_handle::getWorkloadDetail() {
-    auto get_workload =
-        [&](store::xstore_face_t * store, common::xaccount_address_t const & contract_address, std::string const & property_name, uint64_t height, xJson::Value & json) {
-            std::map<std::string, std::string> workloads;
-            if (store->get_map_property(contract_address.value(), height, property_name, workloads) != 0) {
-                xwarn("[grpc::getWorkloadDetail] get_zec_workload_map contract_address： %s, height: %llu, property_name: %s",
-                      contract_address.value().c_str(),
-                      height,
-                      property_name.c_str());
-                return;
-            }
-
-            xdbg("[grpc::getWorkloadDetail] get_zec_workload_map contract_address： %s, height: %llu, property_name: %s, workloads size: %d",
-                 contract_address.value().c_str(),
-                 height,
-                 property_name.c_str(),
-                 workloads.size());
-            // if (store->map_copy_get(contract_address.value(), property_name, workloads) != 0) return;
-            xJson::Value jm;
-            for (auto m : workloads) {
-                auto detail = m.second;
-                base::xstream_t stream{xcontext_t::instance(), (uint8_t *)detail.data(), static_cast<uint32_t>(detail.size())};
-                xstake::cluster_workload_t workload;
-                workload.serialize_from(stream);
-                xJson::Value jn;
-                jn["cluster_total_workload"] = workload.cluster_total_workload;
-                auto const & key_str = workload.cluster_id;
-                common::xcluster_address_t cluster;
-                base::xstream_t key_stream(xcontext_t::instance(), (uint8_t *)key_str.data(), key_str.size());
-                key_stream >> cluster;
-                for (auto node : workload.m_leader_count) {
-                    jn[node.first] = node.second;
-                }
-                jm[cluster.group_id().to_string()] = jn;
-            }
-            json[property_name] = jm;
-        };
-
     uint64_t height = m_js_req["height"].asUInt64();
     if (height == 0) {
         xwarn("[grpc::getWorkloadDetail] height: %llu", height);
         return;
     }
 
-    xJson::Value j;
-    xJson::Value j_property;
-    common::xaccount_address_t contract_addr{sys_contract_zec_reward_addr};
-    std::string prop_name = xstake::XPORPERTY_CONTRACT_WORKLOAD_KEY;
-    get_workload(m_store, contract_addr, prop_name, height, j_property);
-    j["auditor_workloads"] = j_property[prop_name];
-    prop_name = xstake::XPORPERTY_CONTRACT_VALIDATOR_WORKLOAD_KEY;
-    get_workload(m_store, contract_addr, prop_name, height, j_property);
-    j["validator_workloads"] = j_property[prop_name];
-
-    m_js_rsp["data"] = j;
+    std::error_code ec;
+    xJson::Value value;
+    top::contract::xcontract_manager_t::instance().get_contract_data(top::common::xaccount_address_t{ sys_contract_zec_reward_addr }, height, top::contract::xjson_format_t::detail, value, ec);
+    if (ec) {
+        value["query_status"] = ec.message();
+    }
+    m_js_rsp["value"] = value;
 }
 
 uint64_t get_block_handle::get_timer_clock() const {
