@@ -10,6 +10,7 @@
 #include "user_info.h"
 #include "xcrypto_util.h"
 #include "xrpc/xuint_format.h"
+#include "xpbase/base/top_utils.h"
 
 #include <dirent.h>
 #include <sys/stat.h>
@@ -63,8 +64,10 @@ string create_new_keystore(const string & pw, string & dir, bool is_key, string 
     }
 
     xcrypto_util::make_private_key(g_userinfo.private_key);
-    g_userinfo.account = xcrypto_util::make_address_by_assigned_key(g_userinfo.private_key);
-    auto base64_pri = utility::base64_encode(g_userinfo.private_key.data(), PRI_KEY_LEN);
+    g_userinfo.account = xcrypto_util::make_eth_address_by_assigned_key(g_userinfo.private_key);
+    //auto base64_pri = utility::base64_encode(g_userinfo.private_key.data(), PRI_KEY_LEN);
+    std::string hex_pri((char*)g_userinfo.private_key.data(), PRI_KEY_LEN);
+    hex_pri = top::HexEncode(hex_pri);
 
     auto path = get_keystore_filepath(dir, g_userinfo.account);
     std::ofstream key_file(path, std::ios::out | std::ios::trunc);
@@ -72,18 +75,18 @@ string create_new_keystore(const string & pw, string & dir, bool is_key, string 
         std::cout << "Open Key File: " << path << " Error" << std::endl;
     }
 
-    aes256_cbc_encrypt(pw, base64_pri, key_file);
+    aes256_cbc_encrypt(pw, hex_pri, key_file);
     return path;
 }
 
-string create_new_keystore(const string & pw, string & dir, const string & base64_pri, bool is_key, string account) {
+string create_new_keystore(const string & pw, string & dir, const string & str_pri, bool is_key, string account) {
     g_is_key = is_key;
 
     if (g_userinfo.account.size() != 0) {
         copy_g_userinfo = g_userinfo;
     }
 
-    set_g_userinfo(base64_pri);
+    set_g_userinfo(str_pri);
 
     auto path = get_keystore_filepath(dir, g_userinfo.account);
     std::ofstream key_file(path, std::ios::out | std::ios::trunc);
@@ -91,7 +94,7 @@ string create_new_keystore(const string & pw, string & dir, const string & base6
         std::cout << "Open Key File: " << path << " Error" << std::endl;
     }
 
-    aes256_cbc_encrypt(pw, base64_pri, key_file);
+    aes256_cbc_encrypt(pw, str_pri, key_file);
     return path;
 }
 
@@ -153,8 +156,9 @@ void writeKeystoreFile(std::ofstream & key_file, byte * iv, const string & ciphe
 
     xecprikey_t pri_key_obj(g_userinfo.private_key.data());
     xecpubkey_t pub_key_obj = pri_key_obj.get_public_key();
-    auto base64_pub = utility::base64_encode(pub_key_obj.data(), pub_key_obj.size());
-    key_info["public_key"] = base64_pub;
+    //auto base64_pub = utility::base64_encode(pub_key_obj.data(), pub_key_obj.size());
+    std::string str_pub = top::HexEncode(std::string((char*)pub_key_obj.data()+1, pub_key_obj.size()-1));
+    key_info["public_key"] = str_pub;
 
     // cipher
     key_info["crypto"]["cipher"] = "aes-256-cbc";
@@ -200,15 +204,24 @@ void update_keystore_file(const std::string & pw, const string & raw_text, std::
     key_file << key_info.toStyledString();
 }
 
-bool set_g_userinfo(const string & base64_pri) {
-    if (base64_pri.empty()) {
+bool set_g_userinfo(const string & str_pri) {
+    if (str_pri.empty()) {
         return false;
     }
+    if (str_pri.size() == BASE64_PRI_KEY_LEN)
+    {
+        auto sign_key = utility::base64_decode(str_pri);
+        xecprikey_t pri_key_obj((uint8_t *)sign_key.data());
+        memcpy(g_userinfo.private_key.data(), pri_key_obj.data(), pri_key_obj.size());
+        g_userinfo.account = xcrypto_util::make_address_by_assigned_key(g_userinfo.private_key);
+    } else 
+    {
+        std::string sign_key = top::HexDecode(str_pri);
+        xecprikey_t pri_key_obj((uint8_t *)sign_key.data());
+        memcpy(g_userinfo.private_key.data(), pri_key_obj.data(), pri_key_obj.size());
+        g_userinfo.account = xcrypto_util::make_eth_address_by_assigned_key(g_userinfo.private_key);
+    }
 
-    auto sign_key = utility::base64_decode(base64_pri);
-    xecprikey_t pri_key_obj((uint8_t *)sign_key.data());
-    memcpy(g_userinfo.private_key.data(), pri_key_obj.data(), pri_key_obj.size());
-    g_userinfo.account = xcrypto_util::make_address_by_assigned_key(g_userinfo.private_key);
     return g_userinfo.account.size() > 0;
 }
 

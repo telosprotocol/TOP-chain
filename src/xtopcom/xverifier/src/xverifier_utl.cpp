@@ -12,7 +12,6 @@ NS_BEG2(top, xverifier)
 int32_t xtx_utl::address_is_valid(const std::string & addr) {
     bool res = true;
     std::vector<std::string> parts;
-    
     try {
         if (base::xstring_utl::split_string(addr,'@',parts) >= 2) {
             int32_t subaddr = base::xstring_utl::toint32(parts[1]);

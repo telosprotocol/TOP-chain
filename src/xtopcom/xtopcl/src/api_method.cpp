@@ -10,6 +10,7 @@
 #include "xcrypto/xckey.h"
 #include "xcrypto_util.h"
 #include "xdata/xnative_contract_address.h"
+#include "xpbase/base/top_utils.h"
 
 #include <dirent.h>
 
@@ -30,8 +31,8 @@ using std::ifstream;
 using std::ostringstream;
 static const std::string SAFEBOX_ENDPOINT_ENV = "SAFEBOX_ENDPOINT";
 
-bool check_pri_key(const std::string & base64_pri) {
-    return BASE64_PRI_KEY_LEN == base64_pri.size();
+bool check_pri_key(const std::string & str_pri) {
+    return BASE64_PRI_KEY_LEN == str_pri.size() || HEX_PRI_KEY_LEN == str_pri.size();
 }
 
 xJson::Value ApiMethod::get_response_from_daemon() {
@@ -129,14 +130,14 @@ int ApiMethod::set_prikey_to_daemon(const string & account, const string & pri_k
 
 bool ApiMethod::set_default_prikey(std::ostringstream & out_str) {
     if (g_userinfo.account.size() == 0) {
-        auto base64_pri = get_prikey_from_daemon(out_str);
+        std::string base64_pri = get_prikey_from_daemon(out_str);
         if (!base64_pri.empty()) {
             set_g_userinfo(base64_pri);
         } else {
             std::vector<std::string> files = xChainSDK::xcrypto::scan_key_dir(g_keystore_dir);
             std::vector<std::string> accounts;
             for (auto file : files) {
-                if (file.substr(0, TOP_ACCOUNT_PREFIX.size()) == TOP_ACCOUNT_PREFIX) {
+                if (file.substr(0, TOP_ACCOUNT_PREFIX.size()) == TOP_ACCOUNT_PREFIX || file.substr(0, ETH_ACCOUNT_PREFIX.size()) == ETH_ACCOUNT_PREFIX) {
                     accounts.push_back(file);
                 }
             }
@@ -148,12 +149,12 @@ bool ApiMethod::set_default_prikey(std::ostringstream & out_str) {
                 cout << "There are multiple accounts in your wallet, please set a default account first." << std::endl;
                 return false;
             }
-            std::string base64_pri = xChainSDK::xcrypto::import_existing_keystore(empty_pw, g_keystore_dir + "/" + accounts[0]);
-            if (base64_pri.empty()) {
+            std::string str_pri = xChainSDK::xcrypto::import_existing_keystore(empty_pw, g_keystore_dir + "/" + accounts[0]);
+            if (str_pri.empty()) {
                 cout << "Please set a default account by command `topio wallet setDefaultAccount`." << std::endl;
                 return false;
             }
-            if (xChainSDK::xcrypto::set_g_userinfo(base64_pri)) {
+            if (xChainSDK::xcrypto::set_g_userinfo(str_pri)) {
 #ifdef DEBUG
                 cout << "[debug]" << g_userinfo.account << " has been set as the default account." << std::endl;
 #endif
@@ -254,8 +255,7 @@ void ApiMethod::create_account(const int32_t & pf, const string & pw_path, std::
     out_str << "Successfully create an account locally!\n" << std::endl;
 
     out_str << "Account Address: " << g_userinfo.account << std::endl;
-    out_str << "Owner public-Key: " << top::utl::xcrypto_util::get_base64_public_key(g_userinfo.private_key) << "\n\n";
-
+    out_str << "Owner public-Key: " << top::utl::xcrypto_util::get_hex_public_key(g_userinfo.private_key) << "\n\n";
     out_str << "You can share your public key and account address with anyone.Others need them to interact with you!" << std::endl;
     out_str << "You must nerver share the private key and account keystore file with anyone!They control access to your funds!" << std::endl;
     out_str << "You must backup your account keystore file!Without the file,you’ll be impossible to access account funds!" << std::endl;
@@ -289,7 +289,7 @@ void ApiMethod::create_key(std::string & owner_account, const int32_t & pf, cons
     auto path = create_new_keystore(cache_pw, dir, true, owner_account);
     out_str << "Successfully create an worker keystore file!\n" << std::endl;
     out_str << "Account Address: " << owner_account << std::endl;
-    out_str << "Public Key: " << top::utl::xcrypto_util::get_base64_public_key(g_userinfo.private_key) << "\n\n";
+    out_str << "Public Key: " << top::utl::xcrypto_util::get_hex_public_key(g_userinfo.private_key) << "\n\n";
     out_str << "You can share your public key with anyone.Others need it to interact with you!" << std::endl;
     out_str << "You must nerver share the private key and keystore file with anyone!They can use them to make the node malicious." << std::endl;
     out_str << "You must backup your keystore file!Without the file,you may not be able to send transactions." << std::endl;
@@ -441,7 +441,11 @@ void ApiMethod::import_keystore(const std::string & keystore, std::ostringstream
     auto key_type = key_info_js["key_type"].asString();
     auto file_name = account;
     if (key_type == "worker") {
-        auto public_key_b = utility::base64_decode(public_key);
+        std::string public_key_b;
+        if (public_key.size() == HEX_PUB_KEY_LEN)
+            public_key_b = top::HexDecode(public_key);
+        else
+            public_key_b = utility::base64_decode(public_key);
         top::utl::xecpubkey_t pub_key_obj((uint8_t *)(public_key_b.data()));
         file_name = pub_key_obj.to_address('0', 0);
         file_name = file_name.substr(4);
@@ -497,6 +501,72 @@ void ApiMethod::reset_keystore_password(std::string & public_key, std::ostringst
             }
         }
     }
+}
+
+void ApiMethod::import_account(const int32_t & pf, std::ostringstream & out_str) {
+    is_account = true;
+    cache_pw = empty_pw;
+    if (pf == 1) {
+        if (!check_password()) {
+            return;
+        }
+    }
+    std::string pri_str;
+    if (input_pri_key(pri_str) != 0)
+        return;
+
+    std::string dir;
+    auto path = create_new_keystore(cache_pw, dir, pri_str);
+
+    out_str << "Import successfully.\n" << std::endl;
+    out_str << "Account Address: " << g_userinfo.account << std::endl;
+    out_str << "Public-Key: " << top::utl::xcrypto_util::get_hex_public_key(g_userinfo.private_key) << "\n\n";
+    return;
+}
+
+void ApiMethod::export_account(const std::string & account, std::ostringstream & out_str) {
+    if (account.empty()) {
+        std::string account_temp = get_account_from_daemon();
+        if (!account_temp.empty())
+            g_userinfo.account = account_temp;
+    } else {
+        g_userinfo.account = account;
+    }
+    if (g_userinfo.account.empty())
+    {
+        out_str << "Please input account address." << std::endl;
+        return;
+    }
+    std::vector<std::string> keys = scan_key_dir(g_keystore_dir);
+    if (keys.size() == 0) {
+        out_str << "There is no account in wallet." << std::endl;
+        return;
+    }
+    for (size_t i = 0; i < keys.size(); ++i) {
+        if (keys[i] != g_userinfo.account)
+            continue;
+        std::string pw = empty_pw;
+        std::string keystore_file = g_keystore_dir + "/" + keys[i];
+        std::string str_pri = import_existing_keystore(pw, keystore_file, true);
+        if (str_pri.empty())
+        {
+            std::cout << "Please Input Password." << std::endl;
+            pw = input_hiding();
+
+            str_pri = import_existing_keystore(pw, keystore_file);
+            if (str_pri.empty()) {
+                out_str << "Password error！" << std::endl;
+                return;
+            }
+        }
+        out_str << "Export successfully.\n" << std::endl;
+        out_str << "Keystore file: " << keystore_file << std::endl;
+        out_str << "Account Address: " << account << std::endl;
+        out_str << "Private-Key: " << str_pri << "\n\n";
+        return;
+    }
+    out_str << "Please input the correct account address." << std::endl;
+    return;
 }
 
 int ApiMethod::set_default_miner(const std::string & pub_key, const std::string & pw_path, std::ostringstream & out_str) {
@@ -624,7 +694,7 @@ void ApiMethod::import_key(std::string & base64_pri, std::ostringstream & out_st
     set_g_userinfo(base64_pri);
     string dir = "";
     auto path = create_new_keystore(empty_pw, dir, base64_pri, false);
-    std::cout << "Public Key: " << top::utl::xcrypto_util::get_base64_public_key(g_userinfo.private_key) << std::endl;
+    std::cout << "Public Key: " << top::utl::xcrypto_util::get_hex_public_key(g_userinfo.private_key) << std::endl;
     std::cout << "Keystore File Path: " << path << std::endl;
     auto ed_key = get_symmetric_ed_key(empty_pw, path);
     if (set_prikey_to_daemon(g_userinfo.account, ed_key, out_str) == 0) {
@@ -997,6 +1067,7 @@ void ApiMethod::query_account(std::string & target, std::ostringstream & out_str
     } else {
         g_userinfo.account = target;
     }
+    cout << "account:" <<g_userinfo.account.c_str()<<","<<target.c_str()<<endl;
     api_method_imp_.getAccount(g_userinfo, g_userinfo.account, out_str);
     tackle_null_query(out_str);
 }
@@ -2003,6 +2074,16 @@ bool ApiMethod::check_password() {
         return true;
     }
 }
+int ApiMethod::input_pri_key(std::string& pri_str) {
+    cout<<"Please input private key."<<endl;
+    std::string pri_key = input_hiding();
+    if (check_pri_key(pri_key) == false) {
+        std::cout << "Private key length error!" << std::endl;
+        return 1;
+    }
+    pri_str = pri_key;
+    return 0;
+}
 
 int ApiMethod::CreateAccount(const ParamList & param_list) {
     if (param_list.size() > 1 && (COMMAND_HELP_STRING[0] == param_list[1] || COMMAND_HELP_STRING[1] == param_list[1])) {
@@ -2037,7 +2118,7 @@ int ApiMethod::CreateAccount(const ParamList & param_list) {
     std::cout << "You must nerver share the private key and account keystore file with anyone!They control access to your funds!" << std::endl;
     std::cout << "You must backup your account keystore file!Without the file,you’ll be impossible to access account funds!" << std::endl;
     std::cout << "You must remember your password!Without the password,it’s impossible to use the keystore file!" << std::endl;
-    std::cout << "Public Key: " << top::utl::xcrypto_util::get_base64_public_key(g_userinfo.private_key) << std::endl;
+    std::cout << "Public Key: " << top::utl::xcrypto_util::get_hex_public_key(g_userinfo.private_key) << std::endl;
     std::cout << "Account Address: " << g_userinfo.account << std::endl;
     std::cout << "Account Keystore File Path: " << path << std::endl;
     if (copy_g_userinfo.account.size() != 0) {
@@ -2064,10 +2145,10 @@ int ApiMethod::CreateAccountKeystore(const ParamList & param_list) {
         return -1;
     }
 
-    std::string base64_pri;
+    std::string str_pri;
     if (param_list.size() > 1) {
-        base64_pri = param_list[1];
-        if (!check_pri_key(base64_pri)) {
+        str_pri = param_list[1];
+        if (!check_pri_key(str_pri)) {
             cout << "private key error" << endl;
             return -1;
         }
@@ -2088,13 +2169,16 @@ int ApiMethod::CreateAccountKeystore(const ParamList & param_list) {
         }
     }
 
-    auto path = create_new_keystore(cache_pw, dir, base64_pri);
+    auto path = create_new_keystore(cache_pw, dir, str_pri);
     std::cout << "Successfully create an account keystore file!\n" << std::endl;
     std::cout << "You can share your public key and account address with anyone.Others need them to interact with you!" << std::endl;
     std::cout << "You must nerver share the private key and account keystore file with anyone!They control access to your funds!" << std::endl;
     std::cout << "You must backup your account keystore file!Without the file,you’ll be impossible to access account funds!" << std::endl;
     std::cout << "You must remember your password!Without the password,it’s impossible to use the keystore file!" << std::endl;
-    std::cout << "Public Key: " << top::utl::xcrypto_util::get_base64_public_key(g_userinfo.private_key) << std::endl;
+    if (str_pri.size() == BASE64_PRI_KEY_LEN)
+        std::cout << "Public Key: " << top::utl::xcrypto_util::get_base64_public_key(g_userinfo.private_key) << std::endl;
+    else
+        std::cout << "Public Key: " << top::utl::xcrypto_util::get_hex_public_key(g_userinfo.private_key) << std::endl;
     std::cout << "Account Address: " << g_userinfo.account << std::endl;
     std::cout << "Account Keystore File Path: " << path << std::endl;
     if (copy_g_userinfo.account.size() != 0) {
@@ -2136,7 +2220,7 @@ int ApiMethod::CreateKey(const ParamList & param_list) {
     std::cout << "You must nerver share the private key and keystore file with anyone!They can use them to make the node malicious." << std::endl;
     std::cout << "You must backup your keystore file!Without the file,you may not be able to send transactions." << std::endl;
     std::cout << "You must remember your password!Without the password,it’s impossible to use the keystore file!" << std::endl;
-    std::cout << "Public Key: " << top::utl::xcrypto_util::get_base64_public_key(g_userinfo.private_key) << std::endl;
+    std::cout << "Public Key: " << top::utl::xcrypto_util::get_hex_public_key(g_userinfo.private_key) << std::endl;
     std::cout << "Keystore File Path: " << path << std::endl;
     g_userinfo = copy_g_userinfo;
     copy_g_userinfo.clear();
@@ -2159,10 +2243,10 @@ int ApiMethod::CreateKeypairKeystore(const ParamList & param_list) {
         return -1;
     }
 
-    std::string base64_pri;
+    std::string str_pri;
     if (param_list.size() > 1) {
-        base64_pri = param_list[1];
-        if (!check_pri_key(base64_pri)) {
+        str_pri = param_list[1];
+        if (!check_pri_key(str_pri)) {
             cout << "private key error" << endl;
             return -1;
         }
@@ -2181,13 +2265,16 @@ int ApiMethod::CreateKeypairKeystore(const ParamList & param_list) {
         }
     }
 
-    auto path = create_new_keystore(cache_pw, dir, base64_pri, true);
+    auto path = create_new_keystore(cache_pw, dir, str_pri, true);
     std::cout << "Successfully create a publice-private key pair keystore file!\n" << std::endl;
     std::cout << "You can share your public key and account address with anyone.Others need them to interact with you!" << std::endl;
     std::cout << "You must nerver share the private key and account keystore file with anyone!They control access to your funds!" << std::endl;
     std::cout << "You must backup your account keystore file!Without the file,you’ll be impossible to access account funds!" << std::endl;
     std::cout << "You must remember your password!Without the password,it’s impossible to use the keystore file!" << std::endl;
-    std::cout << "Public Key: " << top::utl::xcrypto_util::get_base64_public_key(g_userinfo.private_key) << std::endl;
+    if (str_pri.size() == BASE64_PRI_KEY_LEN)
+        std::cout << "Public Key: " << top::utl::xcrypto_util::get_base64_public_key(g_userinfo.private_key) << std::endl;
+    else
+        std::cout << "Public Key: " << top::utl::xcrypto_util::get_hex_public_key(g_userinfo.private_key) << std::endl;
     std::cout << "Keystore File Path: " << path << std::endl;
     g_userinfo = copy_g_userinfo;
     copy_g_userinfo.clear();
@@ -2234,7 +2321,7 @@ int ApiMethod::attachCreateKey(const ParamList & param_list, std::ostringstream 
     out_str << "You must nerver share the private key and keystore file with anyone!They can use them to make the node malicious." << std::endl;
     out_str << "You must backup your keystore file!Without the file,you may not be able to send transactions." << std::endl;
     out_str << "You must remember your password!Without the password,it’s impossible to use the keystore file!" << std::endl;
-    out_str << "Public Key: " << top::utl::xcrypto_util::get_base64_public_key(g_userinfo.private_key) << std::endl;
+    out_str << "Public Key: " << top::utl::xcrypto_util::get_hex_public_key(g_userinfo.private_key) << std::endl;
     out_str << "Keystore File Path: " << path << std::endl;
     g_userinfo = copy_g_userinfo;
     copy_g_userinfo.clear();
@@ -2282,7 +2369,7 @@ int ApiMethod::attachCreateAccount(const ParamList & param_list, std::ostringstr
     out_str << "You must nerver share the private key and keystore file with anyone!They control access to your funds!" << std::endl;
     out_str << "You must backup your keystore file!Without the file,you’ll be impossible to access account funds!" << std::endl;
     out_str << "You must remember your password!Without the password,it’s impossible to use the keystore file!" << std::endl;
-    out_str << "Public Key: " << top::utl::xcrypto_util::get_base64_public_key(g_userinfo.private_key) << std::endl;
+    out_str << "Public Key: " << top::utl::xcrypto_util::get_hex_public_key(g_userinfo.private_key) << std::endl;
     out_str << "Account Address: " << g_userinfo.account << std::endl;
     out_str << "Account Keystore File Path: " << path << std::endl;
     if (copy_g_userinfo.account.size() != 0) {
@@ -2377,6 +2464,7 @@ void ApiMethod::outAccountBalance(const std::string & account, std::ostringstrea
     std::ostringstream as;
     auto tmp = g_userinfo.account;
     g_userinfo.account = account;
+    cout << "account:" <<account.c_str()<<endl;
     api_method_imp_.getAccount(g_userinfo, account, as);
     g_userinfo.account = tmp;
     xJson::Reader reader;

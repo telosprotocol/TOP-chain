@@ -51,7 +51,7 @@ namespace top
             enum_vaccount_addr_type_secp256k1_user_sub_account  = '1',  //secp256k1 generated key->account
             enum_vaccount_addr_type_native_contract             = '2',  //secp256k1 generated key->account
             enum_vaccount_addr_type_custom_contract             = '3',  //secp256k1 generated key->account
-            
+            enum_vaccount_addr_type_eth_user_account            = '8',
             enum_vaccount_addr_type_block_contract              = 'a',  //secp256k1 generated key->account
         };
         
