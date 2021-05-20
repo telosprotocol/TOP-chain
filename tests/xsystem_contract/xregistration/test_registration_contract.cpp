@@ -268,16 +268,9 @@ public:
 
         top::base::xstream_t tstream(base::xcontext_t::instance());
         std::string target_action;
-        chain_upgrade::xtop_chain_fork_config_center fork_config_center;
-        auto fork_config = fork_config_center.chain_fork_config();
-        if (chain_upgrade::xtop_chain_fork_config_center::is_forked(fork_config.reward_fork_point, cur_time)) {
-            tstream << cur_time;
-            tstream << adv_votes;
-            target_action = "update_batch_stake_v2";
-        } else {
-            tstream << adv_votes;
-            target_action = "update_batch_stake";
-        }
+        tstream << cur_time;
+        tstream << adv_votes;
+        target_action = "update_batch_stake_v2";
 
         xtransaction_ptr_t tx = make_object_ptr<xtransaction_t>();
         tx->get_source_action().set_account_addr(table_vote_contract_addr);
@@ -463,9 +456,6 @@ TEST_F(test_suite_xcontract_t, update_batch_stake) {
     uint64_t auditor_stake = (node_info.m_account_mortgage / TOP_UNIT + node_info.m_vote_amount / 2) * node_info.m_auditor_credit_numerator / node_info.m_auditor_credit_denominator;
     ASSERT_TRUE(node_info.get_auditor_stake() == auditor_stake);
 
-    chain_upgrade::xtop_chain_fork_config_center fork_config_center;
-    auto fork_config = fork_config_center.chain_fork_config();
-
     {
         node_account = "T00000LWUw2ioaCw3TYJ9Lsgu767bbNpmj75kv73";
         int ret = create_update_batch_stake_tx(node_account, votes, cur_time);
@@ -490,12 +480,7 @@ TEST_F(test_suite_xcontract_t, update_batch_stake) {
             base::xstream_t stream(base::xcontext_t::instance(), (uint8_t *)value.c_str(), value.size());
             stream >> contract_adv_votes;
             xdbg("[test_suite_xcontract_t update_batch_stake] contract_adv_votes size: %d", contract_adv_votes.size());
-
-            if (chain_upgrade::xtop_chain_fork_config_center::is_forked(fork_config.reward_fork_point, cur_time)) {
-                ASSERT_TRUE(contract_adv_votes.size() == 2);
-            } else {
-                ASSERT_TRUE(contract_adv_votes.size() == 1);
-            }
+            ASSERT_TRUE(contract_adv_votes.size() == 2);
         }
     }
 

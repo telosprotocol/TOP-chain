@@ -1216,12 +1216,9 @@ int32_t xaccount_context_t::generate_tx(const std::string& target_addr, const st
 
     xtransaction_ptr_t tx = m_account->make_run_contract_tx(target_addr, func_name, func_param, 0, m_timestamp, 0, 0);
 #if 0  // TODO(jimmy) not check now
-    auto const & fork_config = chain_upgrade::xchain_fork_config_center_t::chain_fork_config();
-    if (chain_upgrade::xtop_chain_fork_config_center::is_forked(fork_config.reward_fork_point, get_timer_height())) {
-        bool ret = tx->transaction_len_check();
-        if (!ret) {
-            return xtransaction_param_invalid;
-        }
+    bool ret = tx->transaction_len_check();
+    if (!ret) {
+        return xtransaction_param_invalid;
     }
 #endif
     xcons_transaction_ptr_t constx = make_object_ptr<xcons_transaction_t>(tx.get());

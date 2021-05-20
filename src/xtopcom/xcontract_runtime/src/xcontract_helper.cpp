@@ -290,13 +290,9 @@ void xcontract_helper::generate_tx(common::xaccount_address_t const & target_add
         top::error::throw_error(ec, "can't send to self " + target_addr.value());
     }
     int32_t ret = m_account_context->generate_tx(target_addr.value(), func_name, func_param);
-
-    auto const & fork_config = chain_upgrade::xchain_fork_config_center_t::chain_fork_config();
-    if (chain_upgrade::xtop_chain_fork_config_center::is_forked(fork_config.reward_fork_point, m_account_context->get_timer_height())) {
-        if (ret) {
-            std::error_code ec{ error::xerrc_t::enum_vm_exception };
-            top::error::throw_error(ec, "generate tx fail " + store::xstore_error_to_string(ret));
-        }
+    if (ret) {
+        std::error_code ec{ error::xerrc_t::enum_vm_exception };
+        top::error::throw_error(ec, "generate tx fail " + store::xstore_error_to_string(ret));
     }
 }
 

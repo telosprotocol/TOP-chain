@@ -320,16 +320,9 @@ public:
 
         top::base::xstream_t tstream(base::xcontext_t::instance());
         std::string target_action;
-        chain_upgrade::xtop_chain_fork_config_center fork_config_center;
-        auto fork_config = fork_config_center.chain_fork_config();
-        if (chain_upgrade::xtop_chain_fork_config_center::is_forked(fork_config.reward_fork_point, cur_time)) {
-            tstream << cur_time;
-            tstream << contract_adv_votes;
-            target_action = "on_receive_shard_votes_v2";
-        } else {
-            tstream << contract_adv_votes;
-            target_action = "on_receive_shard_votes";
-        }
+        tstream << cur_time;
+        tstream << contract_adv_votes;
+        target_action = "on_receive_shard_votes_v2";
 
         xtransaction_ptr_t tx = make_object_ptr<xtransaction_t>();
         tx->set_tx_type(xtransaction_type_run_contract);
