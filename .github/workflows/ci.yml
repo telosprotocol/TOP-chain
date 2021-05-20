@@ -10,8 +10,8 @@ on:
 
 jobs:
   build:
-    if: github.repository_owner == 'telosprotocol' && (github.event.action == 'opened' || github.event.action == 'reopened' || github.event.action == 'synchronize')
-    # if: github.event.action == 'opened' || github.event.action == 'reopened'
+    # if: github.repository_owner == 'telosprotocol' && (github.event.action == 'opened' || github.event.action == 'reopened' || github.event.action == 'synchronize' || github.event.action == 'pushed')
+    if: github.event.action == 'opened' || github.event.action == 'reopened' || github.event.action == 'pushed'
     runs-on: [self-hosted, Linux, X64]
     
     # for ci telos only
