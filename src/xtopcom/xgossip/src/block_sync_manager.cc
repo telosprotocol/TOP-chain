@@ -12,7 +12,6 @@
 #include "xwrouter/message_handler/wrouter_message_handler.h"
 #include "xgossip/include/gossip_utils.h"
 #include "xutility/xhash.h"
-#include "xpbase/base/redis_client.h"
 #include "xpbase/base/top_utils.h"
 #include "xwrouter/xwrouter.h"
 #include "xmetrics/xmetrics.h"
