@@ -321,16 +321,9 @@ public:
 
         top::base::xstream_t tstream(base::xcontext_t::instance());
         std::string target_action;
-        chain_upgrade::xtop_chain_fork_config_center fork_config_center;
-        auto fork_config = fork_config_center.chain_fork_config();
-        if (chain_upgrade::xtop_chain_fork_config_center::is_forked(fork_config.reward_fork_point, cur_time)) {
-            tstream << cur_time;
-            tstream << contract_adv_votes;
-            target_action = "on_receive_shard_votes_v2";
-        } else {
-            tstream << contract_adv_votes;
-            target_action = "on_receive_shard_votes";
-        }
+        tstream << cur_time;
+        tstream << contract_adv_votes;
+        target_action = "on_receive_shard_votes_v2";
 
         xtransaction_ptr_t tx = make_object_ptr<xtransaction_t>();
         tx->set_tx_type(xtransaction_type_run_contract);
@@ -703,8 +696,6 @@ TEST_F(test_suite_xworkload_contract_t, on_receive_shard_votes) {
     ASSERT_TRUE(xstring_utl::touint64(iter->second) == votes);
     ASSERT_TRUE(contract_adv_votes.size() == 1);
 
-    chain_upgrade::xtop_chain_fork_config_center fork_config_center;
-    auto fork_config = fork_config_center.chain_fork_config();
     {
         node_account = "T00000LWUw2ioaCw3TYJ9Lsgu767bbNpmj75kv73";
         ret = on_receive_shard_votes(node_account, votes, cur_time);
@@ -716,11 +707,7 @@ TEST_F(test_suite_xworkload_contract_t, on_receive_shard_votes) {
         base::xstream_t stream(base::xcontext_t::instance(), (uint8_t *)value.c_str(), value.size());
         stream >> contract_adv_votes;
         xdbg("[test_suite_xworkload_contract_t on_receive_shard_votes] contract_adv_votes size: %d", contract_adv_votes.size());
-        if (chain_upgrade::xtop_chain_fork_config_center::is_forked(fork_config.reward_fork_point, cur_time)) {
-            ASSERT_TRUE(contract_adv_votes.size() == 2);
-        } else {
-            ASSERT_TRUE(contract_adv_votes.size() == 1);
-        }
+        ASSERT_TRUE(contract_adv_votes.size() == 2);
     }
 
     {
@@ -779,62 +766,43 @@ TEST_F(test_suite_xworkload_contract_t, on_reward_timer) {
 
     if (!is_mainnet_activated()) return;
 
-    chain_upgrade::xtop_chain_fork_config_center fork_config_center;
-    auto fork_config = fork_config_center.chain_fork_config();
-    if (chain_upgrade::xtop_chain_fork_config_center::is_forked(fork_config.reward_fork_point, onchain_timer_round)) {
-        auto reg_contract_height = m_store->get_blockchain_height(sys_contract_rec_registration_addr);
-        XSET_ONCHAIN_GOVERNANCE_PARAMETER(reward_issue_interval, reg_contract_height);
-        onchain_timer_round = 1;
-        for (uint64_t i = 0; i < reg_contract_height; i++) { // update registration contract height
-            int ret = on_reward_timer(onchain_timer_round++);
-            ASSERT_TRUE(ret == 0);
-        }
-
-        auto timer_interval = XGET_ONCHAIN_GOVERNANCE_PARAMETER(reward_issue_interval);
-        onchain_timer_round = timer_interval + 1;
-        int ret = on_reward_timer(onchain_timer_round);
+    auto reg_contract_height = m_store->get_blockchain_height(sys_contract_rec_registration_addr);
+    XSET_ONCHAIN_GOVERNANCE_PARAMETER(reward_issue_interval, reg_contract_height);
+    onchain_timer_round = 1;
+    for (uint64_t i = 0; i < reg_contract_height; i++) { // update registration contract height
+        int ret = on_reward_timer(onchain_timer_round++);
         ASSERT_TRUE(ret == 0);
-
-        std::map<std::string, std::string> dispatch_tasks;
-        ret = m_store->map_copy_get(sys_contract_zec_reward_addr, XPORPERTY_CONTRACT_TASK_KEY, dispatch_tasks);
-        ASSERT_TRUE(ret == 0);
-
-        int table_node_reward_tasks = 0;
-        int table_vote_reward_tasks = 0;
-        for (auto t : dispatch_tasks) {
-            xstream_t stream(xcontext_t::instance(), (uint8_t *)t.second.c_str(), (uint32_t)t.second.size());
-            xreward_dispatch_task task;
-            task.serialize_from(stream);
-
-            xdbg("[test_suite_xworkload_contract_t, on_reward_timer] task id: %s, onchain_timer_round: %llu, contract: %s, action: %s\n",
-                 t.first.c_str(),
-                 task.onchain_timer_round,
-                 task.contract.c_str(),
-                 task.action.c_str());
-            if (task.action == XREWARD_CLAIMING_ADD_NODE_REWARD) {
-                table_node_reward_tasks++;
-            } else if (task.action == XREWARD_CLAIMING_ADD_VOTER_DIVIDEND_REWARD) {
-                table_vote_reward_tasks++;
-            }
-        }
-        //ASSERT_TRUE(table_node_reward_tasks == 2);
-        ASSERT_TRUE(table_vote_reward_tasks == 2);
-    } else {
-        int ret = on_reward_timer(onchain_timer_round);
-        ASSERT_TRUE(ret == 0);
-
-        int32_t size;
-        ret = m_store->map_size(sys_contract_zec_reward_addr, XPORPERTY_CONTRACT_TASK_KEY, size);
-        ASSERT_TRUE(ret == 0);
-        ASSERT_TRUE(size == 0);
-
-        ret = on_reward_timer(onchain_timer_round + 1);
-        ASSERT_TRUE(ret == 0);
-
-        ret = m_store->map_size(sys_contract_zec_reward_addr, XPORPERTY_CONTRACT_TASK_KEY, size);
-        ASSERT_TRUE(ret == 0);
-        ASSERT_TRUE(size == 0);
     }
+
+    auto timer_interval = XGET_ONCHAIN_GOVERNANCE_PARAMETER(reward_issue_interval);
+    onchain_timer_round = timer_interval + 1;
+    int ret = on_reward_timer(onchain_timer_round);
+    ASSERT_TRUE(ret == 0);
+
+    std::map<std::string, std::string> dispatch_tasks;
+    ret = m_store->map_copy_get(sys_contract_zec_reward_addr, XPORPERTY_CONTRACT_TASK_KEY, dispatch_tasks);
+    ASSERT_TRUE(ret == 0);
+
+    int table_node_reward_tasks = 0;
+    int table_vote_reward_tasks = 0;
+    for (auto t : dispatch_tasks) {
+        xstream_t stream(xcontext_t::instance(), (uint8_t *)t.second.c_str(), (uint32_t)t.second.size());
+        xreward_dispatch_task task;
+        task.serialize_from(stream);
+
+        xdbg("[test_suite_xworkload_contract_t, on_reward_timer] task id: %s, onchain_timer_round: %llu, contract: %s, action: %s\n",
+                t.first.c_str(),
+                task.onchain_timer_round,
+                task.contract.c_str(),
+                task.action.c_str());
+        if (task.action == XREWARD_CLAIMING_ADD_NODE_REWARD) {
+            table_node_reward_tasks++;
+        } else if (task.action == XREWARD_CLAIMING_ADD_VOTER_DIVIDEND_REWARD) {
+            table_vote_reward_tasks++;
+        }
+    }
+    //ASSERT_TRUE(table_node_reward_tasks == 2);
+    ASSERT_TRUE(table_vote_reward_tasks == 2);
 }
 
 /*TEST_F(test_suite_xworkload_contract_t, calc_auditor_reward) {
