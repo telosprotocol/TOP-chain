@@ -32,6 +32,7 @@ int32_t xtxpool_table_t::push_send_tx(const std::shared_ptr<xtx_entry> & tx) {
     {
         std::lock_guard<std::mutex> lck(m_unconfirm_mutex);
         auto unconfirm_txs_num = m_unconfirmed_tx_queue.size();
+        XMETRICS_COUNTER_SET("table_unconfirm_txs_num" + m_xtable_info.get_table_addr(), unconfirm_txs_num);
         if (unconfirm_txs_num >= table_unconfirm_txs_num_max) {
             xtxpool_warn("xtxpool_table_t::push_send_tx unconfirm txs reached upper limmit tx:%s", tx->get_tx()->dump().c_str());
             return xtxpool_error_account_unconfirm_txs_reached_upper_limit;
@@ -238,7 +239,14 @@ void xtxpool_table_t::on_block_confirmed(xblock_t * block) {
     // update_reject_rule(block->get_account(), block);
     {
         std::lock_guard<std::mutex> lck(m_unconfirm_mutex);
+        uint32_t tx_num_before = m_unconfirmed_tx_queue.size();
         m_unconfirmed_tx_queue.udpate_latest_confirmed_block(block, m_receipt_state_cache);
+        uint32_t tx_num_after = m_unconfirmed_tx_queue.size();
+        if (tx_num_after > tx_num_before) {
+            XMETRICS_COUNTER_INCREMENT("txpool_unconfirm_txs_num", tx_num_after - tx_num_before);
+        } else if (tx_num_after < tx_num_before) {
+            XMETRICS_COUNTER_DECREMENT("txpool_unconfirm_txs_num", tx_num_before - tx_num_after);
+        }
     }
 
     // if (block->is_lightunit() && !block->is_genesis_block()) {
@@ -292,7 +300,14 @@ void xtxpool_table_t::update_unconfirm_accounts() {
     //     }
     // }
     std::lock_guard<std::mutex> lck(m_unconfirm_mutex);
+    uint32_t tx_num_before = m_unconfirmed_tx_queue.size();
     m_unconfirmed_tx_queue.recover(m_receipt_state_cache);
+    uint32_t tx_num_after = m_unconfirmed_tx_queue.size();
+    if (tx_num_after > tx_num_before) {
+        XMETRICS_COUNTER_INCREMENT("txpool_unconfirm_txs_num", tx_num_after - tx_num_before);
+    } else if (tx_num_after < tx_num_before) {
+        XMETRICS_COUNTER_DECREMENT("txpool_unconfirm_txs_num", tx_num_before - tx_num_after);
+    }
 }
 
 void xtxpool_table_t::update_non_ready_accounts() {
