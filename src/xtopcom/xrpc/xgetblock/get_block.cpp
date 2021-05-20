@@ -878,7 +878,7 @@ void get_block_handle::getLatestBlock() {
 
 void get_block_handle::getLatestFullBlock() {
     std::string owner = m_js_req["account_addr"].asString();
-    auto vblock = m_block_store->get_latest_full_block(owner);
+    auto vblock = m_block_store->get_latest_committed_full_block(owner);
     data::xblock_t * bp = dynamic_cast<data::xblock_t *>(vblock.get());
     if (bp) {
         xJson::Value jv;

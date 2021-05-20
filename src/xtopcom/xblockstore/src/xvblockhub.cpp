@@ -251,7 +251,6 @@ namespace top
                 save_meta();
 
                 //TODO, retore following assert check after full_block enable
-                xassert(m_meta->_highest_full_block_height    <= m_meta->_highest_connect_block_height);
                 xassert(m_meta->_highest_connect_block_height <= m_meta->_highest_commit_block_height);
                 xassert(m_meta->_highest_commit_block_height  <= m_meta->_highest_lock_block_height);
                 xassert(m_meta->_highest_lock_block_height    <= m_meta->_highest_cert_block_height);
