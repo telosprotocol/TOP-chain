@@ -1,5 +1,6 @@
 #include "xsync/xsync_behind_checker.h"
 #include "xsync/xsync_log.h"
+#include "xsync/xsync_util.h"
 
 NS_BEG2(top, sync)
 
@@ -14,6 +15,10 @@ m_downloader(downloader) {
 
 void xsync_behind_checker_t::on_timer() {
 
+    if (m_time_rejecter.reject()){
+        return;
+    }
+    
     m_counter++;
     if (m_counter %10 != 0)
         return;
@@ -86,8 +91,12 @@ void xsync_behind_checker_t::check_one(const std::string &address, enum_chain_sy
         if (peer_end_height == 0)
             return;
 
-        if (local_end_height >= peer_end_height)
-            return;
+        if (local_end_height >= peer_end_height) {
+            xblock_ptr_t block = autoptr_to_blockptr(latest_start_block);
+            if (!((sync_policy == enum_chain_sync_pocliy_fast) && !block->is_full_state_block())) {
+                return;
+            }
+        }
 
         xsync_dbg("behind_checker notify %s,local(start_height=%lu,end_height=%lu) peer(start_height=%lu,end_height=%lu) sync_policy(%d) reason=%s", 
             address.c_str(), latest_start_block->get_height(), local_end_height, peer_start_height, peer_end_height, (int32_t)sync_policy, reason.c_str());

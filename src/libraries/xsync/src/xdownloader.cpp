@@ -21,88 +21,42 @@ m_vnode_id(vnode_id) {
 xaccount_timer_t::~xaccount_timer_t() {
 }
 
-void xaccount_timer_t::set_timeout_event(xchain_downloader_face_ptr_t &chain_downloader) {
-
-    int64_t next_timeout = chain_downloader->get_next_timeout();
-
-    if (next_timeout == 0)
-        return;
-
-    std::string address = chain_downloader->get_address();
-    {
-        auto it = m_accounts.find(address);
-        if (it != m_accounts.end()) {
-
-            if (it->second == next_timeout) {
-                return;
-            }
-
-            auto it2 = m_timeout_events.find(it->second);
-            assert(it2 != m_timeout_events.end());
-
-            std::list<xchain_downloader_face_ptr_t>::iterator it3 = it2->second.begin();
-            for (;it3!=it2->second.end();) {
-                std::string tmp = (*it3)->get_address();
-                if (address != tmp) {
-                    ++it3;
-                } else {
-                    it2->second.erase(it3++);
-                    break;
-                }
-            }
-
-            if (it2->second.empty())
-                m_timeout_events.erase(it2);
-
-            m_accounts.erase(address);
+void xaccount_timer_t::set_chain(xchain_downloader_face_ptr_t &chain_downloader) {
+    for (auto it : m_chains) {
+        if (it->get_address() == chain_downloader->get_address()) {
+            break;
         }
     }
 
-    auto it = m_timeout_events.find(next_timeout);
-    if (it == m_timeout_events.end()) {
-        std::list<xchain_downloader_face_ptr_t> list_accounts;
-        list_accounts.push_back(chain_downloader);
-        m_timeout_events[next_timeout] = list_accounts;
-    } else {
-        it->second.push_back(chain_downloader);
-    }
-
-    xsync_dbg("downloader set_account_timer %s %ld", address.c_str(), next_timeout);
-
-    m_accounts[address] = next_timeout;
+    m_chains.push_back(chain_downloader);
 }
 
 bool xaccount_timer_t::on_timer_fire(const int32_t thread_id,const int64_t timer_id,const int64_t current_time_ms,const int32_t start_timeout_ms,int32_t & in_out_cur_interval_ms) {
     //printf("on_timer_fire,timer_id=%lld,current_time_ms =%lld,start_timeout_ms=%d, in_out_cur_interval_ms=%d \n",get_timer_id(), current_time_ms,start_timeout_ms,in_out_cur_interval_ms);
     int64_t now = base::xtime_utl::gmttime_ms();
-    std::list<xchain_downloader_face_ptr_t> list_timeout_events;
 
-    std::map<int64_t,std::list<xchain_downloader_face_ptr_t>>::iterator it = m_timeout_events.begin();
-    for (;it!=m_timeout_events.end();) {
+    if (m_time_rejecter.reject()){
+        return true; 
+    }
 
-        if (now < it->first) {
+    if (m_chains.size() == 0) {
+        return true;
+    }
+
+    uint32_t index = m_current_index_Of_chain % m_chains.size();
+    for (uint32_t count = 0; count < m_chains.size(); index = (index + 1) % m_chains.size()) {
+        count++;
+        if (m_chains[index]->downloading(now)){
+            continue;
+        }
+        
+        if (!m_chains[index]->on_timer(now)) {
             break;
         }
-
-        while (!it->second.empty()) {
-            xchain_downloader_face_ptr_t &chain_downloader = it->second.front();
-
-            chain_downloader->on_timer(now);
-            list_timeout_events.push_back(chain_downloader);
-
-            std::string address = chain_downloader->get_address();
-            m_accounts.erase(address);
-
-            it->second.pop_front();
-        }
-
-        m_timeout_events.erase(it++);
     }
 
-    for (auto &it : list_timeout_events) {
-        set_timeout_event(it);
-    }
-
+    m_current_index_Of_chain = index;
+    
     return true;
 }
 
@@ -244,6 +198,9 @@ void xdownloader_t::process_event(uint32_t idx, const mbus::xevent_ptr_t &e, xac
         if (e->minor_type == mbus::xevent_account_t::add_role) {
             XMETRICS_TIME_RECORD("sync_cost_chain_add_role_event");
             chain_downloader = on_add_role(idx, e);
+            if (chain_downloader != nullptr) {
+                timer->set_chain(chain_downloader);
+            }
         } else if (e->minor_type == mbus::xevent_account_t::remove_role) {
             XMETRICS_TIME_RECORD("sync_cost_chain_remove_role_event");
             chain_downloader = on_remove_role(idx, e);
@@ -251,10 +208,6 @@ void xdownloader_t::process_event(uint32_t idx, const mbus::xevent_ptr_t &e, xac
         break;
     default:
         break;
-    }
-
-    if (chain_downloader != nullptr) {
-        timer->set_timeout_event(chain_downloader);
     }
 }
 
@@ -324,8 +277,7 @@ xchain_downloader_face_ptr_t xdownloader_t::on_chain_snapshot_response_event(uin
     if (chain_downloader != nullptr) {
         vnetwork::xvnode_address_t &self_addr = bme->self_address;
         vnetwork::xvnode_address_t &from_addr = bme->from_address;
-        chain_downloader->on_chain_snapshot_response(bme->m_tbl_account_addr,
-                bme->m_chain_snapshot, bme->m_height, self_addr, from_addr);
+        chain_downloader->on_chain_snapshot_response(bme->m_chain_snapshot, bme->m_height, self_addr, from_addr);
     }
 
     return chain_downloader;

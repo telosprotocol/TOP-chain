@@ -28,7 +28,7 @@ public:
     int update_progress(const data::xblock_ptr_t &current_block);
     bool get_next_behind(uint64_t current_height, uint32_t count_limit, uint64_t &start_height, uint32_t &count, vnetwork::xvnode_address_t &self_addr, vnetwork::xvnode_address_t &target_addr);
 
-    int set_behind_info(uint64_t start_height, uint64_t end_height, enum_chain_sync_policy sync_policy,
+    bool set_behind_info(const uint64_t start_height, const uint64_t end_height, const enum_chain_sync_policy sync_policy,
                 const vnetwork::xvnode_address_t &self_addr, const vnetwork::xvnode_address_t &target_addr);
 
     void clear_behind_info();

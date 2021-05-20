@@ -95,12 +95,12 @@ void xsync_sender_t::send_frozen_gossip_to_target(const std::vector<xgossip_chai
     send_message(body, xmessage_id_sync_frozen_gossip, "frozen_gossip_to_target", self_xip, target);
 }
 
-void xsync_sender_t::send_get_blocks(const std::string &address,
+bool xsync_sender_t::send_get_blocks(const std::string &address,
             uint64_t start_height, uint32_t count,
             const vnetwork::xvnode_address_t &self_addr,
             const vnetwork::xvnode_address_t &target_addr) {
     auto body = make_object_ptr<xsync_message_get_blocks_t>(address, start_height, count);
-    send_message(body, xmessage_id_sync_get_blocks, "getblocks", self_addr, target_addr);
+    return send_message(body, xmessage_id_sync_get_blocks, "getblocks", self_addr, target_addr);
 }
 
 void xsync_sender_t::send_blocks(xsync_msg_err_code_t code, const std::string &address, const std::vector<data::xblock_ptr_t> &blocks, const vnetwork::xvnode_address_t& self_addr, const vnetwork::xvnode_address_t& target_addr) {
@@ -208,10 +208,10 @@ void xsync_sender_t::send_blocks_by_hashes(const std::vector<data::xblock_ptr_t>
     send_message(body, xmessage_id_sync_blocks_by_hashes, "blocks_hashes", self_addr, target_addr);
 }
 
-void xsync_sender_t::send_chain_snapshot_meta(const xsync_message_chain_snapshot_meta_t &chain_snapshot_meta, const common::xmessage_id_t msgid,
+bool xsync_sender_t::send_chain_snapshot_meta(const xsync_message_chain_snapshot_meta_t &chain_snapshot_meta, const common::xmessage_id_t msgid,
     const vnetwork::xvnode_address_t &self_addr, const vnetwork::xvnode_address_t &target_addr) {
     auto body = make_object_ptr<xsync_message_chain_snapshot_meta_t>(chain_snapshot_meta.m_account_addr,chain_snapshot_meta.m_height_of_fullblock);
-    send_message(body, msgid, "chain_snapshot_meta", self_addr, target_addr);
+    return send_message(body, msgid, "chain_snapshot_meta", self_addr, target_addr);
 }
 
 void xsync_sender_t::send_chain_snapshot(const xsync_message_chain_snapshot_t &chain_snapshot, const common::xmessage_id_t msgid,
@@ -228,7 +228,7 @@ void xsync_sender_t::send_get_on_demand_by_hash_blocks(const std::string &addres
     send_message(body, xmessage_id_sync_get_on_demand_by_hash_blocks, "get_on_demand_by_hash_blocks", self_addr, target_addr);
 }
 
-void xsync_sender_t::send_message(
+bool xsync_sender_t::send_message(
             const xobject_ptr_t<basic::xserialize_face_t> serializer,
             const common::xmessage_id_t msgid, 
             const std::string metric_key,
@@ -254,6 +254,7 @@ void xsync_sender_t::send_message(
     XMETRICS_COUNTER_INCREMENT("sync_bytes_out", msg.payload().size());
 
     m_vhost->send(msg, self_addr, target_addr);
+    return true;
 }
 
 NS_END2

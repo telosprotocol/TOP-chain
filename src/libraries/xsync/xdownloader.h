@@ -4,13 +4,14 @@
 
 #pragma once
 
-#include <unordered_map>
+#include <vector>
 #include "xsync/xchain_downloader.h"
 #include "xsync/xrole_chains_mgr.h"
 #include "xsync/xsync_store.h"
 #include "xsync/xsync_sender.h"
 #include "xmbus/xbase_sync_event_monitor.hpp"
 #include "xsync/xsync_ratelimit.h"
+#include "xsync/xsync_time_rejecter.h"
 
 NS_BEG2(top, sync)
 
@@ -24,7 +25,7 @@ public:
 class xaccount_timer_t : public top::base::xxtimer_t {
 public:
     xaccount_timer_t(std::string vnode_id, base::xcontext_t &_context, int32_t timer_thread_id);
-    void set_timeout_event(xchain_downloader_face_ptr_t &chain_downloader);
+    void set_chain(xchain_downloader_face_ptr_t &chain_downloader);
 
 protected:
     ~xaccount_timer_t() override;
@@ -34,8 +35,10 @@ protected:
 
 private:
     std::string m_vnode_id;
-    std::map<int64_t,std::list<xchain_downloader_face_ptr_t>> m_timeout_events;
-    std::unordered_map<std::string,int64_t> m_accounts;
+    std::vector<xchain_downloader_face_ptr_t> m_chains;
+    xsync_time_rejecter_t m_time_rejecter{600};
+    //const uint32_t m_max_concurrent_chains{30};
+    uint32_t m_current_index_Of_chain{0};
 };
 
 class xevent_monitor_t : public mbus::xbase_sync_event_monitor_t {

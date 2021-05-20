@@ -6,6 +6,7 @@
 #include "xdata/xdata_common.h"
 #include "xbasic/xmemory.hpp"
 #include "xbase/xutl.h"
+#include "xsync/xsync_time_rejecter.h"
 
 NS_BEG2(top, sync)
 
@@ -17,6 +18,7 @@ public:
     virtual void stop() = 0;
     virtual bool get_token(int64_t now) = 0;
     virtual void feedback(uint32_t cost, int64_t now) = 0;
+    virtual void resume() = 0;
 };
 
 class response_info {
@@ -54,6 +56,7 @@ public:
     void on_timer();
     bool get_token(int64_t now) override;
     void feedback(uint32_t cost, int64_t now) override;
+    void resume() override;
 
 private:
     void data_statistics();
@@ -71,6 +74,7 @@ private:
     uint32_t m_last_fail_count{0};
     std::list<response_info> m_last_response_list;
     std::list<xsync_ratelimit_ctx_t> m_list_ctx;
+    xsync_time_rejecter_t m_time_rejecter{100};// the callback thread of timer maybe blocked
 };
 
 class xsync_ratelimit_timer_t : public top::base::xxtimer_t {
