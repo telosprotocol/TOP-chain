@@ -194,14 +194,14 @@ bool xtxpool_service_mgr::fade(const xvip2_t & xip) {
 }
 
 void xtxpool_service_mgr::send_receipt(xcons_transaction_ptr_t & receipt) {
-    std::string account_addr = receipt->get_account_addr();
+    std::string account_addr = receipt->is_recv_tx() ? receipt->get_source_addr() : receipt->get_target_addr();
     auto source_tableid = data::account_map_to_table_id(common::xaccount_address_t{account_addr});
     std::shared_ptr<xtxpool_service_face> service = find_receipt_sender(source_tableid, receipt->get_transaction()->digest());
     if (service != nullptr) {
         xdbg("xtxpool_service_mgr::send_receipt service found,zone:%d table:%d tx:%s", source_tableid.get_zone_index(), source_tableid.get_subaddr(), receipt->dump().c_str());
         service->send_receipt(receipt, 0);
     } else {
-        xdbg("xtxpool_service_mgr::send_receipt no service found,zone:%d table:%d tx:%s", source_tableid.get_zone_index(), source_tableid.get_subaddr(), receipt->dump().c_str());
+        xwarn("xtxpool_service_mgr::send_receipt fail,no service found,zone:%d table:%d tx:%s", source_tableid.get_zone_index(), source_tableid.get_subaddr(), receipt->dump().c_str());
     }
 }
 

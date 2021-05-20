@@ -91,12 +91,13 @@ void xtxpool_service::set_params(const xvip2_t & xip, const std::shared_ptr<vnet
 bool xtxpool_service::start(const xvip2_t & xip) {
     m_vnet_driver->register_message_ready_notify(xmessage_category_txpool, std::bind(&xtxpool_service::on_message_receipt, this, std::placeholders::_1, std::placeholders::_2));
 
-    xinfo("xtxpool_service::start node:%s, cluster_address:%s, zone:%d table:%d %d",
+    xinfo("xtxpool_service::start node:%s, cluster_address:%s, zone:%d table:%d %d,is_send_receipt_role:%d",
           m_vnetwork_str.c_str(),
           m_vnet_driver->address().cluster_address().to_string().c_str(),
           m_zone_index,
           m_cover_front_table_id,
-          m_cover_back_table_id);
+          m_cover_back_table_id,
+          m_is_send_receipt_role);
     m_running = true;
     return m_running;
 }
