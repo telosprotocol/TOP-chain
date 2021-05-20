@@ -10,11 +10,9 @@
 #include "xpbase/base/top_log.h"
 #include "xpbase/base/top_utils.h"
 #include "xpbase/base/uint64_bloomfilter.h"
-#include "xpbase/base/redis_client.h"
 #include "xgossip/include/gossip_utils.h"
 #include "xgossip/include/mesages_with_bloomfilter.h"
 #include "xgossip/include/block_sync_manager.h"
-#include "xpbase/base/redis_utils.h"
 
 namespace top {
 
@@ -30,7 +28,6 @@ void GossipBloomfilter::Broadcast(
         transport::protobuf::RoutingMessage& message,
         std::shared_ptr<std::vector<kadmlia::NodeInfoPtr>> prt_neighbors) {
     auto neighbors = *prt_neighbors;
-    TOP_NETWORK_DEBUG_FOR_REDIS(message, "recv_count");
 
     //TOP_DEBUG("GossipBloomfilter Broadcast neighbors size %d", neighbors.size());
 
@@ -49,7 +46,6 @@ void GossipBloomfilter::Broadcast(
 
     MessageKey msg_key(0,message.gossip().msg_hash(),0);
     if (MessageWithBloomfilter::Instance()->StopGossip(msg_key, message.gossip().stop_times())) {
-        TOP_NETWORK_DEBUG_FOR_REDIS(message, "hop_num");
         TOP_DEBUG("stop gossip for message.type(%d) hop_num(%d)", message.type(), message.gossip().stop_times());
         return;
     }
@@ -114,7 +110,6 @@ void GossipBloomfilter::Broadcast(
         Send(message, rest_random_neighbors);
     }
 
-    TOP_NETWORK_DEBUG_FOR_REDIS(message, "hop_num");
 }
 
 void GossipBloomfilter::BroadcastWithNoFilter(
