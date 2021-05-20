@@ -97,6 +97,7 @@ namespace top
         public:
             bool         verify_signature(xecdsasig_t & signature,const uint256_t & msg_digest); //for normal account address
             bool         verify_signature(xecdsasig_t & signature,const uint256_t & msg_digest,const std::string & parent_addr);//for child account address
+            bool         verify_eth_signature(xecdsasig_t & signature,const uint256_t & msg_digest);
 
             bool         verify_signature(
                             xecdsasig_t & signature,
@@ -201,7 +202,6 @@ namespace top
         public: //signature
             xecdsasig_t     sign(const uint256_t & msg_digest) const;
             bool            verify_signature(xecdsasig_t & signature,const uint256_t & msg_digest);
-            void            generate_public_key2(); //generate related public key
         protected:
             void            generate_public_key(); //generate related public key
         private:

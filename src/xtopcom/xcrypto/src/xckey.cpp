@@ -192,7 +192,6 @@ namespace top
             uint8_t addr_type;
             uint16_t ledger_id;
             bool ret = base::xvaccount_t::get_type_and_ledgerid_from_account(addr_type, ledger_id, m_account_address);
-            xinfo("addr_type:%d, ledger_id:%d, m_account_address:%s", addr_type, ledger_id, m_account_address.c_str());
             if (ret) {
                 if (addr_type == base::enum_vaccount_addr_type_eth_user_account)
                     return true;
@@ -225,20 +224,7 @@ namespace top
 
             if (addr_type == base::enum_vaccount_addr_type_eth_user_account)
             {
-                uint8_t addr_type = 0;
-                uint16_t net_id = 0;
-                if (false == base::xvaccount_t::get_type_and_ledgerid_from_account(addr_type, net_id, m_account_address))
-                    return false;
-                uint8_t out_publickey_data[65] = {0};
-                if (xsecp256k1_t::get_publickey_from_signature(signature, msg_digest, out_publickey_data)) //signature is valid
-                {
-                    xecpubkey_t verify_key(out_publickey_data);
-                    if (verify_key.to_eth_address(addr_type, net_id) == m_account_address) //then check whether is from this address
-                    {
-                        return true;
-                    }
-                }
-                return false;
+                return verify_eth_signature(signature, msg_digest);
             }
             uint8_t out_publickey_data[65] = {0};
             if(xsecp256k1_t::get_publickey_from_signature(signature,msg_digest,out_publickey_data))//signature is valid
@@ -261,20 +247,7 @@ namespace top
 
             if (addr_type == base::enum_vaccount_addr_type_eth_user_account) 
             {
-                uint8_t addr_type = 0;
-                uint16_t net_id = 0;
-                if (false == base::xvaccount_t::get_type_and_ledgerid_from_account(addr_type, net_id, m_account_address))
-                    return false;
-                uint8_t out_publickey_data[65] = {0};
-                if (xsecp256k1_t::get_publickey_from_signature(signature, msg_digest, out_publickey_data)) //signature is valid
-                {
-                    xecpubkey_t verify_key(out_publickey_data);
-                    if (verify_key.to_eth_address(addr_type, net_id) == m_account_address) //then check whether is from this address
-                    {
-                        return true;
-                    }
-                }
-                return false;
+                return verify_eth_signature(signature, msg_digest);
             }
             
             uint8_t out_publickey_data[65] = {0};
@@ -288,7 +261,23 @@ namespace top
             }
             return false;
         }
-
+        bool xkeyaddress_t::verify_eth_signature(xecdsasig_t & signature,const uint256_t & msg_digest)
+        {
+            uint8_t addr_type = 0;
+            uint16_t net_id = 0;
+            if (false == base::xvaccount_t::get_type_and_ledgerid_from_account(addr_type, net_id, m_account_address))
+                return false;
+            uint8_t out_publickey_data[65] = {0};
+            if (xsecp256k1_t::get_publickey_from_signature(signature, msg_digest, out_publickey_data)) //signature is valid
+            {
+                xecpubkey_t verify_key(out_publickey_data);
+                if (verify_key.to_eth_address(addr_type, net_id) == m_account_address) //then check whether is from this address
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
         bool   xkeyaddress_t::verify_signature(
                     xecdsasig_t & signature,
                     const uint256_t & msg_digest,
@@ -397,9 +386,7 @@ namespace top
         std::string       xecpubkey_t::to_eth_address(const uint8_t* publickey, const char addr_type,const uint16_t ledger_id)
         {
             char address[128] = {0};
-            //const uint32_t version_uint32 = (((uint32_t)ledger_id) << 8) | ((uint32_t)addr_type);
-            //ecdsa_get_address(publickey, version_uint32, HASHER_SHA2_RIPEMD, HASHER_SHA2D, address, sizeof(address));
-            //const std::string pubkey_sub_addr(address);
+
             uint256_t hash_value = xkeccak256_t::digest(publickey + 1, size() - 1);
             std::string eth_address((char *)&hash_value + 12, sizeof(hash_value) - 12);
             eth_address = top::HexEncode(eth_address);
@@ -502,19 +489,6 @@ namespace top
             xassert(1 == ret);
             xassert(serialize_pubkey_size == 65);
             memcpy(m_publickey_key,serialize_pubkey_data,serialize_pubkey_size);
-        }
-        void  xecprikey_t::generate_public_key2()  //generate related public key
-        {
-            size_t  serialize_pubkey_size = 65;
-            uint8_t serialize_pubkey_data[65] = {0};
-
-            secp256k1_pubkey  secppubkey;
-            int ret = secp256k1_ec_pubkey_create((secp256k1_context*)static_secp256k1_context_sign, &secppubkey, m_private_key);
-            xassert(1 == ret);
-            //ret = secp256k1_ec_pubkey_serialize((secp256k1_context*)static_secp256k1_context_sign, serialize_pubkey_data, &serialize_pubkey_size, &secppubkey,SECP256K1_EC_UNCOMPRESSED);
-            //xassert(1 == ret);
-            //xassert(serialize_pubkey_size == 65);
-            memcpy(m_publickey_key,secppubkey.data,sizeof(secppubkey));
         }
 
         xecpubkey_t  xecprikey_t::get_public_key()  //generate related public key
