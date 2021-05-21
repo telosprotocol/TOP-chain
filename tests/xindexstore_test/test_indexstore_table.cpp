@@ -217,7 +217,7 @@ TEST_F(test_indexstore_table, get_state_by_block_4) {
     std::cout << "executed_height " << executed_height << std::endl;
     xassert(executed_height == 0);
 
-    base::xauto_ptr<base::xvblock_t>  latest_full_block = blockstore->get_latest_full_block(base::xvaccount_t(mocktable.get_account()));
+    base::xauto_ptr<base::xvblock_t>  latest_full_block = blockstore->get_latest_committed_full_block(base::xvaccount_t(mocktable.get_account()));
     xassert(latest_full_block->get_height() == full_block_height);
     xassert(latest_full_block->get_offdata() == nullptr);
     latest_full_block->reset_block_offdata(offdata.get());

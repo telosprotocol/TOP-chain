@@ -112,10 +112,6 @@ TEST_F(test_block_connected, block_connect_discrete_1) {
     }
 
     {
-        auto latest_full_block = blockstore->get_latest_full_block(account);
-        ASSERT_TRUE(latest_full_block != nullptr);
-        EXPECT_EQ(latest_full_block->get_height(), full_height);
-
         auto latest_committed_full_block = blockstore->get_latest_committed_full_block(account);
         ASSERT_TRUE(latest_committed_full_block != nullptr);
         EXPECT_EQ(latest_committed_full_block->get_height(), 0);
@@ -131,10 +127,6 @@ TEST_F(test_block_connected, block_connect_discrete_1) {
         auto genesis_block = blockstore->get_genesis_block(account);
         ASSERT_TRUE(genesis_block != nullptr);
         EXPECT_EQ(genesis_block->get_height(), 0);
-
-        auto latest_full_block = blockstore->get_latest_full_block(account);
-        ASSERT_TRUE(latest_full_block != nullptr);
-        EXPECT_EQ(latest_full_block->get_height(), full_height);
 
         auto latest_committed_full_block = blockstore->get_latest_committed_full_block(account);
         ASSERT_TRUE(latest_committed_full_block != nullptr);
@@ -249,10 +241,6 @@ TEST_F(test_block_connected, store_block_in_order_1) {
         ASSERT_EQ(blockstore->get_latest_committed_block(address)->get_height(), i >= 2 ? i - 2 : 0);
         ASSERT_EQ(blockstore->get_latest_connected_block(address)->get_height(), i >= 2 ? i - 2 : 0);
         ASSERT_EQ(blockstore->get_latest_executed_block(address)->get_height(), i >= 2 ? i - 2 : 0);
-
-        auto latest_full_block = blockstore->get_latest_full_block(account);
-        ASSERT_TRUE(latest_full_block != nullptr);
-        EXPECT_EQ(latest_full_block->get_height(), (i >= (full_height)) ? full_height: 0);
 
         auto latest_committed_full_block = blockstore->get_latest_committed_full_block(account);
         ASSERT_TRUE(latest_committed_full_block != nullptr);
