@@ -6,6 +6,7 @@
 #include "xvnetwork/xmessage_filter.h"
 #include "xvnetwork/xvhost_face_fwd.h"
 #include "xmetrics/xmetrics.h"
+#include <cinttypes>
 
 NS_BEG2(top, vnetwork)
 
@@ -45,9 +46,9 @@ void xmessage_filter_manager_t::filt_message(xvnetwork_message_t  & msg) const {
     m_filtered_num = 1;
 #endif
 #ifdef ENABLE_METRICS
-    char hex_msg_id[9] = {0};
-    snprintf(hex_msg_id, 8, "%x", msg.message().id());
-    XMETRICS_TIME_RECORD_KEY_WITH_TIMEOUT("vhost_handle_data_filter", hex_msg_id, uint32_t(100000));
+    char msg_info[30] = {0};
+    snprintf(msg_info, 29, "%x|%" PRIx64, msg.message().id(), msg.hash());
+    XMETRICS_TIME_RECORD_KEY_WITH_TIMEOUT("vhost_handle_data_filter", msg_info, uint32_t(10000));
 #endif
     for (auto & filter_ptr : m_filter_list) {
         filter_ptr->filt(msg);
