@@ -381,18 +381,20 @@ bool xsync_on_demand_t::store_blocks(const std::vector<data::xblock_ptr_t> &bloc
         return false;
     }
 
+    xblock_ptr_t block = blocks[blocks.size() -1];
+
+    if (!check_auth(m_certauth, block)) {
+            xsync_info("xsync_on_demand_t::store_blocks auth_failed %s,height=%lu,viewid=%lu,",
+                account.c_str(), block->get_height(), block->get_viewid());
+            return false;
+    }
+
     for (uint32_t i = 0; i< blocks.size(); i++) {
-        xblock_ptr_t block = blocks[i];
+        block = blocks[i];
 
         if (block->get_account() != account) {
             xsync_warn("xsync_on_demand_t::store_blocks receive on_demand_blocks(address error) (%s, %s)",
                 block->get_account().c_str(), account.c_str());
-            return false;
-        }
-
-        if (!check_auth(m_certauth, block)) {
-            xsync_info("xsync_on_demand_t::store_blocks auth_failed %s,height=%lu,viewid=%lu,",
-                block->get_account().c_str(), block->get_height(), block->get_viewid());
             return false;
         }
 

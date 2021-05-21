@@ -31,6 +31,15 @@ void xaccount_timer_t::set_chain(xchain_downloader_face_ptr_t &chain_downloader)
     m_chains.push_back(chain_downloader);
 }
 
+void xaccount_timer_t::del_chain(const std::string &address) {
+    for (uint32_t i = 0; i < m_chains.size(); i++) {
+        if (m_chains[i]->get_address() == address) {
+            m_chains.erase(m_chains.begin() + i);
+            break;
+        }
+    }
+}
+
 bool xaccount_timer_t::on_timer_fire(const int32_t thread_id,const int64_t timer_id,const int64_t current_time_ms,const int32_t start_timeout_ms,int32_t & in_out_cur_interval_ms) {
     //printf("on_timer_fire,timer_id=%lld,current_time_ms =%lld,start_timeout_ms=%d, in_out_cur_interval_ms=%d \n",get_timer_id(), current_time_ms,start_timeout_ms,in_out_cur_interval_ms);
     int64_t now = base::xtime_utl::gmttime_ms();
@@ -197,13 +206,10 @@ void xdownloader_t::process_event(uint32_t idx, const mbus::xevent_ptr_t &e, xac
     case mbus::xevent_major_type_account:
         if (e->minor_type == mbus::xevent_account_t::add_role) {
             XMETRICS_TIME_RECORD("sync_cost_chain_add_role_event");
-            chain_downloader = on_add_role(idx, e);
-            if (chain_downloader != nullptr) {
-                timer->set_chain(chain_downloader);
-            }
+            chain_downloader = on_add_role(idx, e, timer);
         } else if (e->minor_type == mbus::xevent_account_t::remove_role) {
             XMETRICS_TIME_RECORD("sync_cost_chain_remove_role_event");
-            chain_downloader = on_remove_role(idx, e);
+            chain_downloader = on_remove_role(idx, e, timer);
         }
         break;
     default:
@@ -211,7 +217,7 @@ void xdownloader_t::process_event(uint32_t idx, const mbus::xevent_ptr_t &e, xac
     }
 }
 
-xchain_downloader_face_ptr_t xdownloader_t::on_add_role(uint32_t idx, const mbus::xevent_ptr_t &e) {
+xchain_downloader_face_ptr_t xdownloader_t::on_add_role(uint32_t idx, const mbus::xevent_ptr_t &e, xaccount_timer_t *timer) {
     auto bme = dynamic_xobject_ptr_cast<mbus::xevent_account_add_role_t>(e);
     const std::string &address = bme->address;
 
@@ -221,6 +227,9 @@ xchain_downloader_face_ptr_t xdownloader_t::on_add_role(uint32_t idx, const mbus
     xchain_downloader_face_ptr_t chain_downloader = find_chain_downloader(idx, address);
     if (chain_downloader == nullptr) {
         chain_downloader = create_chain_downloader(idx, address);
+        if (chain_downloader != nullptr){
+            timer->set_chain(chain_downloader);
+        }    
     } else {
         // TODO
         //chain_downloader->on_role_changed(info);
@@ -228,11 +237,12 @@ xchain_downloader_face_ptr_t xdownloader_t::on_add_role(uint32_t idx, const mbus
     return chain_downloader;
 }
 
-xchain_downloader_face_ptr_t xdownloader_t::on_remove_role(uint32_t idx, const mbus::xevent_ptr_t &e) {
+xchain_downloader_face_ptr_t xdownloader_t::on_remove_role(uint32_t idx, const mbus::xevent_ptr_t &e, xaccount_timer_t *timer) {
     auto bme = dynamic_xobject_ptr_cast<mbus::xevent_account_remove_role_t>(e);
     const std::string &address = bme->address;
 
     if (!m_role_chains_mgr->exists(address)) {
+        timer->del_chain(address);
         remove_chain_downloader(idx, address);
         return nullptr;
     }

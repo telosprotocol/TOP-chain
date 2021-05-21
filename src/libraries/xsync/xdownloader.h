@@ -26,6 +26,7 @@ class xaccount_timer_t : public top::base::xxtimer_t {
 public:
     xaccount_timer_t(std::string vnode_id, base::xcontext_t &_context, int32_t timer_thread_id);
     void set_chain(xchain_downloader_face_ptr_t &chain_downloader);
+    void del_chain(const std::string &address);
 
 protected:
     ~xaccount_timer_t() override;
@@ -76,8 +77,8 @@ private:
 
     void process_event(uint32_t idx, const mbus::xevent_ptr_t &e, xaccount_timer_t *timer);
 
-    xchain_downloader_face_ptr_t on_add_role(uint32_t idx, const mbus::xevent_ptr_t &e);
-    xchain_downloader_face_ptr_t on_remove_role(uint32_t idx, const mbus::xevent_ptr_t &e);
+    xchain_downloader_face_ptr_t on_add_role(uint32_t idx, const mbus::xevent_ptr_t &e, xaccount_timer_t *timer);
+    xchain_downloader_face_ptr_t on_remove_role(uint32_t idx, const mbus::xevent_ptr_t &e, xaccount_timer_t *timer);
     xchain_downloader_face_ptr_t on_response_event(uint32_t idx, const mbus::xevent_ptr_t &e);
     xchain_downloader_face_ptr_t on_behind_event(uint32_t idx, const mbus::xevent_ptr_t &e);
     xchain_downloader_face_ptr_t on_chain_snapshot_response_event(uint32_t idx, const mbus::xevent_ptr_t &e);
