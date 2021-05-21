@@ -77,12 +77,22 @@ int32_t xtxpool_table_t::push_receipt(const std::shared_ptr<xtx_entry> & tx, boo
         return xtxpool_error_tx_duplicate;
     }
 
+    // check if receipt is repeat before verify it, because receipt verify is a time-consuming job.
+    {
+        std::lock_guard<std::mutex> lck(m_mgr_mutex);
+        bool is_repeat = m_txmgr_table.is_repeat_tx(tx);
+        if (is_repeat) {
+            xtxpool_warn("xpeer_table_receipts_t::push_tx repeat receipt:%s", tx->get_tx()->dump().c_str());
+            return xtxpool_error_request_tx_repeat;
+        }
+    }
+
     int32_t ret = xsuccess;
     if (!is_self_send) {
         int32_t ret = verify_receipt_tx(tx->get_tx());
         if (ret != xsuccess) {
             return ret;
-        }    
+        }
     }
 
     // auto & account_addr = tx->get_tx()->get_account_addr();

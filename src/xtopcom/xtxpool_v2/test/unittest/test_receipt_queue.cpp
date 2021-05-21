@@ -72,7 +72,7 @@ TEST_F(test_new_receipt_queue, receipt_queue_basic) {
 
     for (uint32_t i = 0; i < tx_num; i++) {
         std::shared_ptr<xtx_entry> tx_ent = std::make_shared<xtx_entry>(recvtxs[i], para);
-        int32_t ret = receipt_queue.push_tx(tx_ent, 0);
+        int32_t ret = receipt_queue.push_tx(tx_ent);
         ASSERT_EQ(ret, 0);
         auto find_receipt = receipt_queue.find(receiver, recvtxs[i]->get_transaction()->digest());
         ASSERT_NE(find_receipt, nullptr);

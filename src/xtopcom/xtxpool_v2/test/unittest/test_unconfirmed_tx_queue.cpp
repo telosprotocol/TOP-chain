@@ -50,7 +50,9 @@ TEST_F(test_unconfirmed_tx_queue, unconfirmed_tx_queue_basic) {
     xblock_t * block = test_xtxpool_util_t::create_unit_with_cons_txs(blockstore, xstore, sender, txs);
 
     base::xreceiptid_state_ptr_t receiptid_state = make_object_ptr<base::xreceiptid_state_t>();
-    unconfirmed_tx_queue.udpate_latest_confirmed_block(block, receiptid_state);
+    xreceipt_state_cache_t receipt_state_cache;
+    receipt_state_cache.update(receiptid_state);
+    unconfirmed_tx_queue.udpate_latest_confirmed_block(block, receipt_state_cache);
 
     auto tx_find = unconfirmed_tx_queue.find(txs[0]->get_source_addr(), txs[0]->get_transaction()->digest());
     ASSERT_NE(tx_find, nullptr);
@@ -90,7 +92,10 @@ TEST_F(test_unconfirmed_tx_queue, recover) {
     base::xreceiptid_state_ptr_t receiptid_state = make_object_ptr<base::xreceiptid_state_t>();
     xreceiptid_pair_t receiptid_pair(0, 5, 0);
     receiptid_state->add_pair(0, receiptid_pair);
-    unconfirmed_tx_queue.recover(receiptid_state);
+
+    xreceipt_state_cache_t receipt_state_cache;
+    receipt_state_cache.update(receiptid_state);
+    unconfirmed_tx_queue.recover(receipt_state_cache);
 
     for (uint32_t i = 0; i < tx_num; i++) {
         std::cout << "i:" << i << std::endl;
@@ -103,7 +108,8 @@ TEST_F(test_unconfirmed_tx_queue, recover) {
 
     xreceiptid_pair_t receiptid_pair2(2, 3, 0);
     receiptid_state->add_pair(0, receiptid_pair2);
-    unconfirmed_tx_queue.recover(receiptid_state);
+    receipt_state_cache.update(receiptid_state);
+    unconfirmed_tx_queue.recover(receipt_state_cache);
 
     for (uint32_t i = 0; i < 2; i++) {
         auto tx_find = unconfirmed_tx_queue.find(txs[i]->get_source_addr(), txs[i]->get_transaction()->digest());
@@ -120,7 +126,8 @@ TEST_F(test_unconfirmed_tx_queue, recover) {
 
     xreceiptid_pair_t receiptid_pair3(5, 0, 0);
     receiptid_state->add_pair(0, receiptid_pair3);
-    unconfirmed_tx_queue.recover(receiptid_state);
+    receipt_state_cache.update(receiptid_state);
+    unconfirmed_tx_queue.recover(receipt_state_cache);
 
     auto resend_txs3 = unconfirmed_tx_queue.get_resend_txs(block->get_timestamp() + 61);
     ASSERT_EQ(resend_txs3.size(), 0);

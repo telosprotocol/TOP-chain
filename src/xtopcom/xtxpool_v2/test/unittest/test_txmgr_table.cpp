@@ -607,3 +607,40 @@ TEST_F(test_txmgr_table, table_rules_filter_basic) {
         ASSERT_EQ(ready_accounts[2]->get_txs().size(), 6);
     }
 }
+
+TEST_F(test_txmgr_table, repeat_receipt) {
+    std::string table_addr = "table_test";
+    xtxpool_shard_info_t shard(0, 0, 0);
+    xtxpool_table_info_t table_para(table_addr, &shard);
+    xtxmgr_table_t txmgr_table(&table_para);
+    uint256_t last_tx_hash = {};
+    uint64_t now = xverifier::xtx_utl::get_gmttime_s();
+    xtx_para_t para;
+
+    mock::xvchain_creator creator;
+    creator.create_blockstore_with_xstore();
+    base::xvblockstore_t* blockstore = creator.get_blockstore();
+    store::xstore_face_t* xstore = creator.get_xstore();
+
+    // construct account
+    std::string sender = test_xtxpool_util_t::get_account(0);
+    std::string receiver = test_xtxpool_util_t::get_account(1);
+
+    uint32_t tx_num = 5;
+    // insert committed txs to blockstore
+    std::vector<xcons_transaction_ptr_t> txs = test_xtxpool_util_t::create_cons_transfer_txs(0, 1, tx_num);
+    uint64_t receipt_id = 1;
+    for (auto & tx : txs) {
+        tx->set_current_receipt_id(0, receipt_id);
+        receipt_id++;
+    }
+    
+    xblock_t * block;
+    std::vector<xcons_transaction_ptr_t> recvtxs = get_tx(blockstore, xstore, sender, receiver, txs, &block);
+
+    std::shared_ptr<xtx_entry> tx_ent = std::make_shared<xtx_entry>(recvtxs[0], para);
+    int32_t ret = txmgr_table.push_receipt(tx_ent);
+    ASSERT_EQ(ret, 0);
+    bool is_repeat = txmgr_table.is_repeat_tx(tx_ent);
+    ASSERT_EQ(is_repeat, true);
+}
