@@ -149,10 +149,10 @@ void xsync_on_demand_t::handle_blocks_request(const xsync_message_get_on_demand_
     if (is_consensus) {
         base::xauto_ptr<base::xvblock_t> latest_full_block = m_sync_store->get_latest_full_block(address);
         if (latest_full_block != nullptr && latest_full_block->get_height() > start_height) {
-            start_height = latest_full_block->get_height() + 1;
-            if (end_height >= start_height) {
+            if (end_height >= latest_full_block->get_height()) {
                 xblock_ptr_t block_ptr = autoptr_to_blockptr(latest_full_block);
                 blocks.push_back(block_ptr);
+                start_height = latest_full_block->get_height() + 1;
             }
         }
     }
