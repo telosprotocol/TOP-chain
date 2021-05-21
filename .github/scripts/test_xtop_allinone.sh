@@ -68,7 +68,7 @@ if [[ ${balance} != "balance: 2999997000.000000 TOP" ]];then
     exit -1
 fi
 create_info=$(./topio wallet createaccount)
-addr=$(echo "${create_info}" | grep -a "Account Address: "|awk -F ':' '{print $2}')
+addr=$(echo "${create_info}" | grep -a "Account Address:"|awk -F ':' '{print $2}')
 if [[ -z ${addr} ]];then
     echo "create account fail, see follow output:"
     echo "${create_info}"
