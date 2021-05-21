@@ -919,8 +919,10 @@ void get_block_handle::getBlock() {
         value = get_block_json(bp);
 
         if (owner == sys_contract_zec_slash_info_addr) {
+            xJson::Value slash_prop;
             std::error_code ec;
-            top::contract::xcontract_manager_t::instance().get_contract_data(top::common::xaccount_address_t{ owner }, height, top::contract::xjson_format_t::detail, value, ec);
+            top::contract::xcontract_manager_t::instance().get_contract_data(top::common::xaccount_address_t{ owner }, height, top::contract::xjson_format_t::detail, slash_prop, ec);
+            value["property_info"] = slash_prop;
         }
 
 

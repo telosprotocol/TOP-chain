@@ -11,8 +11,6 @@
 
 NS_BEG2(top, data)
 
-#define SLASH_DELETE_PROPERTY  "SLASH_DELETE_PROPERTY"
-
 struct xnode_vote_percent_t final : public xserializable_based_on<void> {
     uint32_t block_count;
     uint32_t subset_count;
