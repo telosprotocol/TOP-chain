@@ -34,6 +34,11 @@ using json = nlohmann::json;
 #include "leaktracer/MemoryTrace.hpp"
 #include <csignal>
 #endif
+
+#ifdef ENABLE_GPERF
+#include "gperftools/profiler.h"
+#include <csignal>
+#endif
 namespace top{
 
 bool g_topchain_init_finish_flag = false;
@@ -92,6 +97,26 @@ void export_mem_trace(int signal)
 }
 #endif
 
+#ifdef ENABLE_GPERF
+void setGperfStatus(int signum) {
+    static bool is_open = false;
+    if (signum != SIGUSR2) {
+        return ;
+    }
+    if (!is_open) {  // start
+        is_open = true;
+        ProfilerStart(std::string{"gperf_" + global_node_id + std::to_string(std::chrono::system_clock::now().time_since_epoch().count()) + ".prof"}.c_str());
+        xkinfo("ProfilerStart success");
+        std::cout << "ProfilerStart success" << std::endl;
+    } else {  // stop
+        is_open = false;
+        ProfilerStop();
+        xkinfo("ProfilerStop success");
+        std::cout << "ProfilerStop success" << std::endl;
+    }
+}
+#endif
+
 int topchain_init(const std::string& config_file, const std::string& config_extra) {
     using namespace std;
     using namespace base;
@@ -103,6 +128,11 @@ int topchain_init(const std::string& config_file, const std::string& config_extr
 #ifdef LEAK_TRACER
     std::signal(SIGUSR1, export_mem_trace);
     leaktracer::MemoryTrace::GetInstance().startMonitoringAllThreads();
+#endif
+
+#ifdef ENABLE_GPERF
+    std::signal(SIGUSR2, setGperfStatus);
+    std::cout << "———— ENABLE_GPERF ————" << std::endl;
 #endif
 
     //using top::elect::xbeacon_xelect_imp;
