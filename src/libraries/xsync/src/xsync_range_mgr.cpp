@@ -74,20 +74,13 @@ enum_role_changed_result xsync_range_mgr_t::on_role_changed(const xchain_info_t 
     return enum_role_changed_result_remove_history;
 }
 
-int xsync_range_mgr_t::set_behind_info(uint64_t start_height, uint64_t end_height, enum_chain_sync_policy sync_policy,
+bool xsync_range_mgr_t::set_behind_info(uint64_t start_height, uint64_t end_height, enum_chain_sync_policy sync_policy,
         const vnetwork::xvnode_address_t &self_addr, const vnetwork::xvnode_address_t &target_addr) {
-
-    // running, ignore
-    if (m_behind_height != 0)
-        return 1;
-
-    if (end_height == 0)
-        return -1;
 
     int64_t now = get_time();
 
     if (end_height < start_height) {
-        return -2;
+        return false;
     }
 
     m_behind_height = end_height;
@@ -95,7 +88,7 @@ int xsync_range_mgr_t::set_behind_info(uint64_t start_height, uint64_t end_heigh
     m_behind_self_addr = self_addr;
     m_behind_target_addr = target_addr;
     m_behind_time = now;
-    return 0;
+    return true;
 }
 
 uint64_t xsync_range_mgr_t::get_behind_height() const {
@@ -121,6 +114,7 @@ int xsync_range_mgr_t::update_progress(const data::xblock_ptr_t &current_block) 
     uint64_t current_height = current_block->get_height();
     uint64_t current_viewid = current_block->get_viewid();
 
+    // TODO highqc forked??
     if (current_height >= m_behind_height) {
         clear_behind_info();
     }

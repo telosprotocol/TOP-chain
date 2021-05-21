@@ -16,8 +16,6 @@
 #include "xkad/routing_table/routing_utils.h"
 #include "xpbase/base/kad_key/get_kadmlia_key.h"
 #include "xpbase/base/kad_key/platform_kadmlia_key.h"
-#include "xpbase/base/redis_client.h"
-#include "xpbase/base/redis_utils.h"
 #include "xpbase/base/top_utils.h"
 #include "xpbase/base/uint64_bloomfilter.h"
 #include "xpbase/base/xip_parser.h"

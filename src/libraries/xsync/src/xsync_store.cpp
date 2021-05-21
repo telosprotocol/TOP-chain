@@ -52,7 +52,7 @@ void xsync_store_t::update_latest_genesis_connected_block(const std::string & ac
 
 base::xauto_ptr<base::xvblock_t> xsync_store_t::get_latest_full_block(const std::string & account) {
     base::xvaccount_t _vaddress(account);
-    return m_blockstore->get_latest_full_block(_vaddress);
+    return m_blockstore->get_latest_committed_full_block(_vaddress);
 }
 
 base::xauto_ptr<base::xvblock_t> xsync_store_t::query_block(const base::xvaccount_t &account, uint64_t height, const std::string &hash) {

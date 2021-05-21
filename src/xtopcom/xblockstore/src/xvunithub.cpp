@@ -222,8 +222,14 @@ namespace top
 
         base::xauto_ptr<base::xvblock_t>  xvblockstore_impl::get_latest_committed_full_block(const base::xvaccount_t & account)
         {
-            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
-            return load_block_from_index(account_obj.get(),account_obj->load_latest_committed_full_index(),0,false);
+            auto connect_block = get_latest_connected_block(account);
+            if(connect_block != nullptr)
+            {
+                auto latest_committed_full_height = connect_block->get_height();
+                return load_block_object(account, latest_committed_full_height, 0, true);
+            }
+
+            return nullptr;
         }
 
         //one api to get latest_commit/latest_lock/latest_cert for better performance

@@ -20,7 +20,6 @@
 #include "xtransport/utils/transport_utils.h"
 #include "xpbase/base/kad_key/get_kadmlia_key.h"
 #include "xpbase/base/uint64_bloomfilter.h"
-#include "xpbase/base/redis_client.h"
 #include "xkad/gossip/rumor_filter.h"
 #include "xgossip/include/gossip_bloomfilter.h"
 #include "xgossip/include/gossip_bloomfilter_layer.h"

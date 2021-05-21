@@ -57,13 +57,13 @@ void xsync_on_demand_t::on_behind_event(const mbus::xevent_ptr_t &e) {
     const vnetwork::xvnode_address_t &target_addr = archive_list[0];
 
     xsync_info("xsync_on_demand_t::on_behind_event send sync request(on_demand) %s,range(%lu,%lu) is_consensus(%d) %s",
-        address.c_str(), start_height, start_height+count, is_consensus, target_addr.to_string().c_str());
+        address.c_str(), start_height, start_height + count -1, is_consensus, target_addr.to_string().c_str());
 
     std::map<std::string, std::string> context;
     context["src"] = self_addr.to_string();
     context["dst"] = target_addr.to_string();
     context["consensus"] = std::to_string(is_consensus);
-    bool permit = m_download_tracer.apply(address, std::make_pair(start_height, start_height + count), context);
+    bool permit = m_download_tracer.apply(address, std::make_pair(start_height, start_height + count - 1), context);
     if (permit) {
         m_sync_sender->send_get_on_demand_blocks(address, start_height, count, is_consensus, self_addr, target_addr);
     } else {
@@ -74,6 +74,9 @@ void xsync_on_demand_t::on_behind_event(const mbus::xevent_ptr_t &e) {
 
 void xsync_on_demand_t::handle_blocks_response(const std::vector<data::xblock_ptr_t> &blocks,
     const vnetwork::xvnode_address_t &to_address, const vnetwork::xvnode_address_t &network_self) {
+    
+    xsync_dbg("xsync_on_demand_t::handle_blocks_response receive blocks(on_demand) %s, %s, count %d",
+        network_self.to_string().c_str(), to_address.to_string().c_str(), blocks.size());
 
     if (blocks.empty()) {
         m_download_tracer.expire();
@@ -81,6 +84,8 @@ void xsync_on_demand_t::handle_blocks_response(const std::vector<data::xblock_pt
     }
 
     std::string account = blocks[0]->get_account();
+    xsync_dbg("xsync_on_demand_t::handle_blocks_response receive blocks of account %s, count %d",
+        account.c_str(), blocks.size());
     int ret = check(account, to_address, network_self);
     if (ret != 0) {
         xsync_warn("xsync_on_demand_t::on_response_event check the source of message failed %s,ret=%d", account.c_str(), ret);
@@ -116,7 +121,7 @@ void xsync_on_demand_t::handle_blocks_response(const std::vector<data::xblock_pt
     bool is_consensus = std::stoi(context["consensus"]);
     int32_t count = tracer.height_interval().second - tracer.trace_height();
     if (count > 0) {
-        m_sync_sender->send_get_on_demand_blocks(account, tracer.trace_height(), count, is_consensus, network_self, to_address);
+        m_sync_sender->send_get_on_demand_blocks(account, tracer.trace_height() + 1, count, is_consensus, network_self, to_address);
     } else {
         m_download_tracer.expire(account);
         on_response_event(account);
@@ -135,15 +140,20 @@ void xsync_on_demand_t::handle_blocks_request(const xsync_message_get_on_demand_
     if (heights == 0)
         return;
 
+    xsync_dbg("xsync_on_demand_t::handle_blocks_request receive request of account %s, start_height %llu, count %u",
+        address.c_str(), start_height, heights);
+
     std::vector<data::xblock_ptr_t> blocks;
 
-    end_height = start_height + (uint64_t)heights;
+    end_height = start_height + (uint64_t)heights - 1;
     if (is_consensus) {
         base::xauto_ptr<base::xvblock_t> latest_full_block = m_sync_store->get_latest_full_block(address);
         if (latest_full_block != nullptr && latest_full_block->get_height() > start_height) {
             start_height = latest_full_block->get_height() + 1;
-            xblock_ptr_t block_ptr = autoptr_to_blockptr(latest_full_block);
-            blocks.push_back(block_ptr);
+            if (end_height >= start_height) {
+                xblock_ptr_t block_ptr = autoptr_to_blockptr(latest_full_block);
+                blocks.push_back(block_ptr);
+            }
         }
     }
 
@@ -165,6 +175,9 @@ void xsync_on_demand_t::handle_chain_snapshot_meta(xsync_message_chain_snapshot_
     const vnetwork::xvnode_address_t &to_address, const vnetwork::xvnode_address_t &network_self) {
 
     std::string account = chain_meta.m_account_addr;
+
+    xsync_dbg("xsync_on_demand_t::handle_chain_snapshot_meta receive snapshot request of account %s, height %llu",
+        account.c_str(), chain_meta.m_height_of_fullblock);
 
     base::xauto_ptr<base::xvblock_t> blk = m_sync_store->load_block_object(account, chain_meta.m_height_of_fullblock);
     if (blk != nullptr) {
@@ -191,6 +204,9 @@ void xsync_on_demand_t::handle_chain_snapshot_meta(xsync_message_chain_snapshot_
 void xsync_on_demand_t::handle_chain_snapshot(xsync_message_chain_snapshot_t &chain_snapshot,
     const vnetwork::xvnode_address_t &to_address, const vnetwork::xvnode_address_t &network_self) {
     std::string account = chain_snapshot.m_tbl_account_addr;
+
+    xsync_dbg("xsync_on_demand_t::handle_chain_snapshot_meta receive snapshot response of account %s, height %llu",
+        account.c_str(), chain_snapshot.m_height_of_fullblock);
 
     int32_t ret = check(account);
     if (ret != 0) {
@@ -221,7 +237,7 @@ void xsync_on_demand_t::handle_chain_snapshot(xsync_message_chain_snapshot_t &ch
     int32_t count = tracer.height_interval().second - tracer.trace_height();
     if (count > 0) {
         m_download_tracer.refresh(account);
-        m_sync_sender->send_get_on_demand_blocks(account, tracer.trace_height(), count, is_consensus, network_self, to_address);
+        m_sync_sender->send_get_on_demand_blocks(account, tracer.trace_height() + 1, count, is_consensus, network_self, to_address);
     } else {
         on_response_event(account);
     }
