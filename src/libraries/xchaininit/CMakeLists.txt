@@ -59,3 +59,7 @@ target_link_libraries(xchaininit PRIVATE ${LINK_ARGS}
 if (LEAK_TRACER)
     target_link_libraries(xchaininit PRIVATE leaktracer)
 endif()
+
+if (BUILD_GPERF)
+    target_link_libraries(xchaininit PRIVATE profiler)
+endif()
