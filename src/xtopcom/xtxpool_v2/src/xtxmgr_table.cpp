@@ -160,6 +160,19 @@ void xtxmgr_table_t::update_receiptid_state(const base::xreceiptid_state_ptr_t &
     m_new_receipt_queue.update_receiptid_state(receiptid_state);
 }
 
+bool xtxmgr_table_t::is_repeat_tx(const std::shared_ptr<xtx_entry> & tx) const {
+    auto & account_addr = tx->get_tx()->get_account_addr();
+    auto tx_inside = query_tx(account_addr, tx->get_tx()->get_transaction()->digest());
+    if (tx_inside != nullptr) {
+        if (tx_inside->get_tx()->get_tx_subtype() < tx->get_tx()->get_tx_subtype()) {
+            return false;
+        } else {
+            return true;
+        }
+    }
+    return false;
+}
+
 void xtxmgr_table_t::queue_to_pending() {
     std::vector<std::shared_ptr<xtx_entry>> expired_send_txs;
     std::vector<std::shared_ptr<xtx_entry>> push_succ_send_txs;
