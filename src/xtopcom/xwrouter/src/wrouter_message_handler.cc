@@ -62,14 +62,7 @@ void WrouterMessageHandler::HandleMessage(
     }
 
     //TOP_NETWORK_DEBUG_FOR_PROTOMESSAGE("wrouter handle message", message);
-    CheckBitVPNClientMessage(message);
     CheckNatDetectMessage(message);
-
-    std::string version;
-    if (message.has_version_tag()) {
-        transport::protobuf::VersionTag version_tag = message.version_tag();
-        version = version_tag.version();
-    }
 
     if (message.type() >= MsgHandlerMaxSize) {
         TOP_WARN("invalid message.type(%d), beyond %d", message.type(), MsgHandlerMaxSize);
@@ -211,32 +204,6 @@ void WrouterMessageHandler::RemoveRequestType(int msg_type) {
     if (it != map_request_type_.end()) {
         map_request_type_.erase(it);
         return;
-    }
-}
-
-// check bitvpn 0.5.0(just for now) message 
-void WrouterMessageHandler::CheckBitVPNClientMessage(
-        transport::protobuf::RoutingMessage& message) {
-    std::string version;
-    if (!message.has_version_tag()) {
-        return;
-    }
-
-    transport::protobuf::VersionTag version_tag = message.version_tag();
-    version = version_tag.version();
-    if (version.compare("0.5.0") != 0)  {
-        return;
-    }
-
-    if (!message.has_src_service_type() || !message.has_des_service_type()){
-        // usually this is the first node which recv client msg,meaning node is the relay node
-        message.set_src_service_type(top::kEdgeXVPN);
-        message.set_des_service_type(top::kEdgeXVPN);
-        message.set_client_id(message.src_node_id());
-        message.set_relay_flag(false);
-        TOP_DEBUG("client version 0.5.0 msg come, set service_type %d, "
-                "set client_id and relay_flag",
-                top::kEdgeXVPN);
     }
 }
 

@@ -112,12 +112,6 @@ public:
     bool CanAddNode(NodeInfoPtr node);
     NodeInfoPtr GetRandomNode();
     bool GetRandomNodes(std::vector<NodeInfoPtr>& vec, size_t size);
-    void SetVersion(transport::protobuf::RoutingMessage& message);
-    void SetMultiRelayMsg(
-            const transport::protobuf::RoutingMessage& message,
-            transport::protobuf::RoutingMessage& res_message);
-//     void SmartSendReply(transport::protobuf::RoutingMessage& res_message);
-//     void SmartSendReply(transport::protobuf::RoutingMessage& res_message, bool add_hop);
     int ClosestToTarget(const std::string& target, bool& closest);
 //     int ClosestToTarget(
 //             const std::string& target,
@@ -236,7 +230,6 @@ protected:
     virtual int SendHeartbeat(NodeInfoPtr node_ptr, uint64_t des_service_type);
 
     bool SetJoin(const std::string& boot_id, const std::string& boot_ip, int boot_port);
-    int CheckAndSendMultiRelay(transport::protobuf::RoutingMessage& message);
     // -1: all bits equal(and return kKadFailed)
     // 0: all bits equal expect the last bit
     // 1: all bits equal expect the last second bit
@@ -324,8 +317,6 @@ protected:
     std::mutex heart_beat_callback_mutex_;
 
 private:
-//     bool CheckRumorLicense() const;
-    void SetTestTraceInfo(transport::protobuf::RoutingMessage& message);
 
     std::mutex use_nodes_mutex_;
     std::shared_ptr<std::vector<NodeInfoPtr>> no_lock_for_use_nodes_{ nullptr };

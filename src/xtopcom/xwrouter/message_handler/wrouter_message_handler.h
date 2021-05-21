@@ -71,7 +71,6 @@ private:
     ~WrouterMessageHandler();
     void AddBaseHandlers();
 
-    void CheckBitVPNClientMessage(transport::protobuf::RoutingMessage& message);
     void CheckNatDetectMessage(transport::protobuf::RoutingMessage& message);
 
     void HandleConnectRequest(
