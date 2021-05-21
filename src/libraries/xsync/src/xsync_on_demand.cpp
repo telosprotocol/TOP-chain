@@ -148,16 +148,14 @@ void xsync_on_demand_t::handle_blocks_request(const xsync_message_get_on_demand_
     end_height = start_height + (uint64_t)heights - 1;
     if (is_consensus) {
         base::xauto_ptr<base::xvblock_t> latest_full_block = m_sync_store->get_latest_full_block(address);
-        if (latest_full_block != nullptr && latest_full_block->get_height() > start_height) {
-            start_height = latest_full_block->get_height() + 1;
-            if (end_height >= start_height) {
+        if (latest_full_block != nullptr && latest_full_block->get_height() >= start_height &&
+            end_height >= latest_full_block->get_height()) {
                 xblock_ptr_t block_ptr = autoptr_to_blockptr(latest_full_block);
                 blocks.push_back(block_ptr);
-            }
+                start_height = latest_full_block->get_height() + 1;
         }
     }
 
-    xsync_info("xsync_on_demand_t::handle_blocks_request %s range[%llu,%llu]", address.c_str(), start_height, end_height);
     for (uint64_t height = start_height, i = 0; (height <= end_height) && (i < max_request_block_count); height++) {
         auto need_blocks = m_sync_store->load_block_objects(address, height);
         if (need_blocks.empty()) {
@@ -168,6 +166,11 @@ void xsync_on_demand_t::handle_blocks_request(const xsync_message_get_on_demand_
         }
     }
 
+    if (blocks.size() != 0){
+        xsync_info("xsync_on_demand_t::handle_blocks_request %s range[%llu,%llu]", address.c_str(), 
+            blocks.front()->get_height(), blocks.back()->get_height());
+    }
+    
     m_sync_sender->send_on_demand_blocks(blocks, xmessage_id_sync_on_demand_blocks, "on_demand_blocks", network_self, to_address);
 }
 
