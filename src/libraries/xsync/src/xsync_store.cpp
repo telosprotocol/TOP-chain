@@ -82,10 +82,6 @@ base::xauto_ptr<base::xvblock_t> xsync_store_t::get_latest_end_block(const std::
         block = m_blockstore->get_latest_genesis_connected_block(account);
     }
 
-    if (block == nullptr) {
-        return nullptr;
-    }
-
     std::vector<xvblock_ptr_t> element;
     element.push_back(block);
     blocks.push_back(element);
