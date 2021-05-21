@@ -506,10 +506,6 @@ int RoutingTable::SendData(
         transport::protobuf::RoutingMessage& message,
         const std::string& peer_ip,
         uint16_t peer_port) {
-    // TOP_FATAL_NAME("to %s:%d, \n ----%s", peer_ip.c_str(), (int)peer_port, message.DebugString().c_str());
-    SetTestTraceInfo(message);
-    SetVersion(message);
-
     std::string msg;
     if (!message.SerializeToString(&msg)) {
         TOP_INFO_NAME("RoutingMessage SerializeToString failed!");
@@ -523,10 +519,6 @@ int RoutingTable::SendPing(
         transport::protobuf::RoutingMessage& message,
         const std::string& peer_ip,
         uint16_t peer_port) {
-    // TOP_FATAL_NAME("to %s:%d, \n ----%s", peer_ip.c_str(), (int)peer_port, message.DebugString().c_str());
-    SetTestTraceInfo(message);
-    SetVersion(message);
-
     std::string msg;
     if (!message.SerializeToString(&msg)) {
         TOP_INFO_NAME("RoutingMessage SerializeToString failed!");
@@ -540,10 +532,6 @@ int RoutingTable::SendData(transport::protobuf::RoutingMessage& message, NodeInf
     if (node->same_vlan) {
         return SendData(message, node->local_ip, node->local_port);
     }
-
-//    return SendData(message, node->public_ip, node->public_port);
-	SetTestTraceInfo(message);
-	SetVersion(message);
 
 	std::string msg;
 	if (!message.SerializeToString(&msg)) {
@@ -564,39 +552,6 @@ int RoutingTable::SendData(transport::protobuf::RoutingMessage& message, NodeInf
 	packet.set_to_ip_port(node->public_port);
     TOP_DEBUG_NAME("xkad send message.type:%d size:%d", message.type(), packet.get_size());
 	return transport_ptr_->SendDataWithProp(packet, node->udp_property);
-}
-
-void RoutingTable::SetTestTraceInfo(transport::protobuf::RoutingMessage& message) {
-    int request_type = kadmlia::kNone;  // GetRequestType(message.type());
-    if (request_type == kadmlia::kNone) {
-        return;
-    }
-    if (!message.has_multi_relay() || !message.multi_relay()) {
-        return;
-    }
-
-    std::string prefix;
-    request_type == kadmlia::kRequestMsg? prefix = "QQQ": prefix = "AAA";
-    if (!message.has_xrequest_id()) {
-        std::string random_xrequest_id = RandomAscString(16);
-        message.set_xrequest_id(prefix + random_xrequest_id);
-    }
-
-    if (!message.has_seq()) {
-        message.set_seq(0);
-        SMDEBUG(message.xrequest_id().c_str(), message.seq(),
-                "%s relay message begin type(%d) msgid(%d) from this node(%s)",
-                prefix.c_str(),
-                message.type(),
-                message.id(),
-                HexEncode(local_node_ptr_->id()).c_str());
-    }
-
-    // next seq = seq + 1
-    int old_seq = message.seq();
-    message.set_seq(++old_seq);
-    message.add_trace_route(HexEncode(local_node_ptr_->id()));
-    return;
 }
 
 void RoutingTable::ResetNodeHeartbeat(const std::string& id) {
@@ -2546,108 +2501,6 @@ int RoutingTable::CheckAndSendRelay(transport::protobuf::RoutingMessage& message
     return kKadSuccess;
 }
 
-int RoutingTable::CheckAndSendMultiRelay(transport::protobuf::RoutingMessage& message) {
-    if (!message.has_multi_relay() || !message.multi_relay()) {
-        return kKadFailed;
-    }
-    if (message.has_is_root() && message.is_root()) {
-        return kKadFailed;
-    }
-    if (message.des_node_id() != local_node_ptr_->id()) {
-        return kKadFailed;
-    }
-    int relay_hop_info_size = message.relay_hop_info_size();
-    // jude the original asker
-    if (relay_hop_info_size <= 0) {
-        return kKadFailed;
-    }
-    const transport::protobuf::RelayHopInfo& last_relay_hop_info =
-        message.relay_hop_info(relay_hop_info_size - 1);
-
-    // get last hop info
-    std::string last_relay_hop_entry_id = last_relay_hop_info.relay_entry_id();
-    std::string last_relay_hop_exit_id = last_relay_hop_info.relay_exit_id();
-    uint64_t last_relay_hop_service_type = last_relay_hop_info.service_type();
-
-    message.set_des_node_id(last_relay_hop_entry_id);
-    message.set_des_service_type(last_relay_hop_service_type);
-
-    std::string ip;
-    uint16_t port;
-    ClientNodeInfoPtr client_node_ptr =
-        ClientNodeManager::Instance()->FindClientNode(last_relay_hop_exit_id);
-    if (!client_node_ptr) {
-        if (!local_node_ptr_->first_node()) {
-            TOP_WARN_NAME("<smaug>MultiRelay:: response arrive the %d relay node[%s] from bottom,"
-                    "but can't find cache_relay info",
-                    relay_hop_info_size,
-                    HexEncode(local_node_ptr_->id()).c_str());
-            return kKadFailed;
-        }
-
-        // specially for first node, TODO(smaug)  use a better way in the future
-        ip = local_node_ptr_->local_ip();
-        port = local_node_ptr_->local_port();
-    } else {
-        ip = client_node_ptr->public_ip;
-        port = client_node_ptr->public_port;
-    }
-
-    SendData(message, ip, port);
-    TOP_DEBUG_NAME("<smaug>MultiRelay:: SendData from [%s] to [%s][%s:%d]",
-            HexEncode(local_node_ptr_->id()).c_str(),
-            HexEncode(last_relay_hop_exit_id).c_str(),
-            ip.c_str(),
-            port);
-    return kKadSuccess;
-}
-
-void RoutingTable::SetMultiRelayMsg(
-        const transport::protobuf::RoutingMessage& message,
-        transport::protobuf::RoutingMessage& res_message){
-    if (message.has_multi_relay()) {
-        res_message.set_multi_relay(message.multi_relay());
-    }
-    // keep relay_hop_info of this message (from original asker to this replier)
-    int req_relay_hop_info_size = message.relay_hop_info_size();
-    // attention: the last one hop_info will be abandoned
-    for (int i = 0; i < req_relay_hop_info_size - 1; ++i) {
-        const transport::protobuf::RelayHopInfo& req_relay_hop_info = message.relay_hop_info(i);
-        transport::protobuf::RelayHopInfo* res_relay_hop_info = res_message.add_relay_hop_info();
-        res_relay_hop_info->set_relay_entry_id(req_relay_hop_info.relay_entry_id());
-        res_relay_hop_info->set_relay_exit_id(req_relay_hop_info.relay_exit_id());
-        res_relay_hop_info->set_service_type(req_relay_hop_info.service_type());
-        res_relay_hop_info->set_relay_flag(req_relay_hop_info.relay_flag());
-    }
-
-    if (message.has_xrequest_id()) {
-        // set response xrequest_id
-        res_message.set_xrequest_id("AAA"+ message.xrequest_id());
-    }
-    int req_trace_route_size = message.trace_route_size();
-    for (int i = 0; i < req_trace_route_size; ++i) {
-        res_message.add_trace_route(message.trace_route(i));
-    }
-}
-
-// // only use when send reply(response)
-// void RoutingTable::SmartSendReply(transport::protobuf::RoutingMessage& res_message) {
-//     if (CheckAndSendMultiRelay(res_message) != kKadSuccess) {
-//         SendToClosestNode(res_message);
-//     }
-// }
-
-// // only use when send reply(response)
-// void RoutingTable::SmartSendReply(transport::protobuf::RoutingMessage& res_message, bool add_hop) {
-//     TOP_WARN_NAME("smart MultiRelay now send data: [%s] to [%s] client[%s]",
-//             HexEncode(res_message.src_node_id()).c_str(),
-//             HexEncode(res_message.des_node_id()).c_str(),
-//             HexEncode(res_message.client_id()).c_str());
-//     if (CheckAndSendMultiRelay(res_message) != kKadSuccess) {
-//         SendToClosestNode(res_message, add_hop);
-//     }
-// }
-
 bool RoutingTable::StartBootstrapCacheSaver() {
     auto get_public_nodes = [this](std::vector<NodeInfoPtr>& nodes) {
         {
@@ -2702,13 +2555,6 @@ void RoutingTable::SetFreqMessage(transport::protobuf::RoutingMessage& message) 
         gossip->set_evil_rate(0);
         gossip->set_switch_layer_hop_num(gossip::kGossipSwitchLayerCount);
         gossip->set_ign_bloomfilter_level(gossip::kGossipBloomfilterIgnoreLevel);
-    }
-}
-
-void RoutingTable::SetVersion(transport::protobuf::RoutingMessage& message) {
-    if (!message.has_version_tag()) {
-        transport::protobuf::VersionTag* version_tag  = message.mutable_version_tag();
-        version_tag->set_version("0.6.0");
     }
 }
 

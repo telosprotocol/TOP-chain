@@ -1,7 +1,7 @@
 #include "xelect_net/demo/elect_perf.h"
 
 #include "xbase/xutl.h"
-#include "xelect_net/include/performance_utils.h"
+#include "xwrouter/wrouter_utils/wrouter_utils.h"
 #include "xkad/routing_table/local_node_info.h"
 #include "xkad/routing_table/routing_table.h"
 #include "xmetrics/xmetrics.h"
