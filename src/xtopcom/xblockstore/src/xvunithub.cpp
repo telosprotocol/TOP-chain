@@ -226,6 +226,10 @@ namespace top
             if(connect_block != nullptr)
             {
                 auto latest_committed_full_height = connect_block->get_last_full_block_height();
+                if(connect_block->get_block_class() == base::enum_xvblock_class_full)
+                {
+                    latest_committed_full_height = connect_block->get_height();
+                }
                 return load_block_object(account, latest_committed_full_height, 0, true);
             }
 
