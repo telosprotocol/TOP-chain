@@ -67,7 +67,14 @@ if [[ ${balance} != "balance: 2999997000.000000 TOP" ]];then
     sh ${clear} -o archive -i ${NUM} -d ${workdir}
     exit -1
 fi
-addr=$(./topio wallet createaccount | grep -a "T00000"|awk -F ':' '{print $2}')
+create_info=$(./topio wallet createaccount)
+addr=$(echo "${create_info}" | grep -a "Account Address: "|awk -F ':' '{print $2}')
+if [[ -z ${addr} ]];then
+    echo "create account fail, see follow output:"
+    echo "${create_info}"
+    sh ${clear} -o archive -i ${NUM} -d ${workdir}
+    exit -1
+fi
 echo "new local addr: "${addr}
 tx_info=$(./topio transfer ${addr} 123456 tx_test)
 tx=$(echo "${tx_info}" | grep -a "Transaction hash"|awk -F ':' '{print $2}')
