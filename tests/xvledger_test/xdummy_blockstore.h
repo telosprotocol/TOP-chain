@@ -57,16 +57,12 @@ public:
     base::xauto_ptr<base::xvblock_t> get_latest_genesis_connected_block(const base::xvaccount_t & account, bool ask_full_search) override {
         return nullptr;
     }
-    
+
     base::xauto_ptr<base::xvbindex_t> get_latest_genesis_connected_index(const base::xvaccount_t & account,bool ask_full_search) override {
         return nullptr;
     }
 
     base::xauto_ptr<base::xvblock_t> get_latest_committed_full_block(const base::xvaccount_t & account) override {
-        return nullptr;
-    }
-
-    base::xauto_ptr<base::xvblock_t> get_latest_full_block(base::xvaccount_t const &) override {
         return nullptr;
     }
 
@@ -169,7 +165,7 @@ public:
     base::xvtransaction_store_ptr_t  query_tx(const std::string &, base::enum_transaction_subtype) override {
         return nullptr;
     }
-    
+
     bool exist_genesis_block(base::xvaccount_t const & account) override {
         return false;
     }

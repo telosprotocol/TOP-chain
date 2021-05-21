@@ -214,12 +214,6 @@ namespace top
             return account_obj->load_latest_genesis_connected_index(ask_full_search);
         }
 
-        base::xauto_ptr<base::xvblock_t>  xvblockstore_impl::get_latest_full_block(const base::xvaccount_t & account)
-        {
-            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
-            return load_block_from_index(account_obj.get(),account_obj->load_latest_full_index(),0,false);
-        }
-
         base::xauto_ptr<base::xvblock_t>  xvblockstore_impl::get_latest_committed_full_block(const base::xvaccount_t & account)
         {
             auto connect_block = get_latest_connected_block(account);
