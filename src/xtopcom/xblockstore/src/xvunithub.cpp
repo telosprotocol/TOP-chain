@@ -225,7 +225,7 @@ namespace top
             auto connect_block = get_latest_connected_block(account);
             if(connect_block != nullptr)
             {
-                auto latest_committed_full_height = connect_block->get_height();
+                auto latest_committed_full_height = connect_block->get_last_full_block_height();
                 return load_block_object(account, latest_committed_full_height, 0, true);
             }
 
