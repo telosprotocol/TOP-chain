@@ -1,18 +1,17 @@
-//
-//  chain_genesis.cc
-//
-//  Created by Charlie Xie on 04/01/2019.
-//  Copyright (c) 2017-2019 Telos Foundation & contributors
-//
+// Copyright (c) 2017-2018 Telos Foundation & contributors
+// Distributed under the MIT software license, see the accompanying
+// file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "xelect_net/include/node_manager.h"
 
-#include "xpbase/base/kad_key/chain_kadmlia_key.h"
-#include "xtransport/transport.h"
-#include "xkad/routing_table/routing_utils.h"
-#include "xelect_net/include/routing_manager.h"
 #include "xelect_net/include/elect_manager.h"
 #include "xelect_net/include/elect_uitils.h"
+#include "xelect_net/include/routing_manager.h"
+#include "xkad/routing_table/routing_utils.h"
+#include "xpbase/base/kad_key/chain_kadmlia_key.h"
+#include "xpbase/base/kad_key/get_kadmlia_key.h"
+#include "xtransport/transport.h"
+#include "xwrouter/register_routing_table.h"
 
 namespace top {
 
@@ -61,7 +60,7 @@ int NodeManager::Join(const base::XipParser& xip) {
         return top::kadmlia::kKadFailed;
     }
 
-    TOP_INFO("this is rec node add rec root success.");
+    // TOP_INFO("this is rec node add rec root success.");
     return kKadSuccess;
 }
 
@@ -150,11 +149,11 @@ int NodeManager::AddCommitteeRole(base::KadmliaKeyPtr& kad_key) {
         return top::kadmlia::kKadFailed;
     }
     ec_manager_map_[kad_key->GetServiceType()] = ec_manager;
-    auto ec_routing = std::dynamic_pointer_cast<ElectRouting>(ec_manager->routing_table());
-    if (!ec_routing) {
-        TOP_ERROR("dynamic cast routing  table failed!");
-        return top::kadmlia::kKadFailed;
-    }
+    // auto ec_routing = std::dynamic_pointer_cast<ElectRouting>(ec_manager->routing_table());
+    // if (!ec_routing) {
+    //     TOP_ERROR("dynamic cast routing  table failed!");
+    //     return top::kadmlia::kKadFailed;
+    // }
     std::cout << "new service : " << kad_key->GetServiceType() << " joined." << std::endl;
     return top::kadmlia::kKadSuccess;
 }

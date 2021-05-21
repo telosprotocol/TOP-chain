@@ -10,7 +10,6 @@
 
 #include "xbase/xutl.h"
 #include "xbasic/xmemory.hpp"
-#include "xelect_net/include/elect_routing.h"
 #include "xelect_net/include/elect_uitils.h"
 #include "xgrpcservice/xgrpc_service.h"
 #include "xkad/routing_table/callback_manager.h"
