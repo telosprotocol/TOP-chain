@@ -24,6 +24,8 @@ enum class xenum_errc : uint16_t {
     property_access_denied,
     load_property_failed,
     property_not_exist,
+    property_key_not_exist,
+    property_key_out_of_range,
     property_already_exist,
     property_value_out_of_range,
     property_name_out_of_range,

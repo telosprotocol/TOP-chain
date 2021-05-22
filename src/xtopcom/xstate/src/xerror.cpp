@@ -32,6 +32,12 @@ static char const * errc_to_message(int const errc) noexcept {
     case xerrc_t::property_not_exist:
         return "property not exist";
 
+    case xerrc_t::property_key_not_exist:
+        return "property key not exist";
+
+    case xerrc_t::property_key_out_of_range:
+        return "property key out of range";
+
     case xerrc_t::property_already_exist:
         return "property already exist";
 
