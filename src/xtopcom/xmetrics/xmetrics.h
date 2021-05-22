@@ -20,23 +20,10 @@ NS_BEG2(top, metrics)
 
 enum E_SIMPLE_METRICS_TAG {
     e_simple_begin = 0,
-    xdata_table_counter = e_simple_begin,
-    xdata_lightunit_counter,
-    xdata_fullunit_counter,
-    xdata_table_ref_counter,
-    xdata_lightunit_ref_counter,
-    xdata_fullunit_ref_counter,
-    blockstore_cache_block_total,
-    xdata_empty_block_counter,
-    xdata_root_block_counter,
-    xdata_empty_block_ref_counter,
-    xdata_root_block_ref_counter,
-    xdata_transaction_counter,
-    xdata_transaction_ref_counter,
-    xdata_xcons_transaction_t,
-    xdata_receipt_t,
-    xtxpool_xaccountobj_t,
-    e_simple_total = xtxpool_xaccountobj_t + 1,
+    blockstore_cache_block_total = e_simple_begin,
+    txpool_cons_transaction,
+    cons_tableblock_start_leader,
+    e_simple_total = cons_tableblock_start_leader + 1,
 };
 
 class e_metrics : public top::xbasic_runnable_t<e_metrics> {

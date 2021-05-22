@@ -6,6 +6,7 @@
 #include "xdata/xcons_transaction.h"
 #include "xdata/xdata_common.h"
 #include "xdata/xgenesis_data.h"
+#include "xmetrics/xmetrics.h"
 
 namespace top { namespace data {
 
@@ -15,7 +16,7 @@ xcons_transaction_t::xcons_transaction_t(xtransaction_t* tx) {
     m_tx = tx;
     m_tx->add_ref();
     xassert(!tx->digest().empty());
-
+    XMETRICS_GAUGE(metrics::txpool_cons_transaction, 1);
     update_transation();
 }
 
@@ -27,7 +28,7 @@ xcons_transaction_t::xcons_transaction_t(xtransaction_t* tx, xtx_receipt_ptr_t r
     m_tx = (xtransaction_t*)base::xdataobj_t::read_from(stream);
     xassert(receipt != nullptr);
     m_receipt = receipt;
-
+    XMETRICS_GAUGE(metrics::txpool_cons_transaction, 1);
     update_transation();
 }
 
@@ -35,6 +36,7 @@ xcons_transaction_t::~xcons_transaction_t() {
     if (m_tx != nullptr) {
         m_tx->release_ref();
     }
+    XMETRICS_GAUGE(metrics::txpool_cons_transaction, -1);
 }
 
 const std::string & xcons_transaction_t::get_receipt_source_account()const {

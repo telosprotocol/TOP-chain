@@ -7,6 +7,7 @@
 #include <string>
 #include "xbase/xcontext.h"
 #include "xbase/xdata.h"
+#include "xmetrics/xmetrics.h"
 
 namespace top {
 
@@ -65,11 +66,11 @@ class xbase_dataobj_t : public base::xdataobj_t {
  public:
     xbase_dataobj_t()
     : base::xdataobj_t((enum_xdata_type)object_type_value) {
-        // XMETRICS_XBASE_DATA_CATEGORY_NEW(object_type_value);
+        XMETRICS_XBASE_DATA_CATEGORY_NEW(object_type_value);
     }
 
     virtual ~xbase_dataobj_t() {
-        // XMETRICS_XBASE_DATA_CATEGORY_DELETE(object_type_value);
+        XMETRICS_XBASE_DATA_CATEGORY_DELETE(object_type_value);
     }
 
     static int32_t get_object_type() {
@@ -96,12 +97,12 @@ class xbase_dataunit_t : public base::xdataunit_t {
  public:
     xbase_dataunit_t()
     : base::xdataunit_t((enum_xdata_type)object_type_value) {
-        // XMETRICS_XBASE_DATA_CATEGORY_NEW(object_type_value);
+        XMETRICS_XBASE_DATA_CATEGORY_NEW(object_type_value);
     }
 
  protected:
     virtual ~xbase_dataunit_t() {
-        // XMETRICS_XBASE_DATA_CATEGORY_DELETE(object_type_value);
+        XMETRICS_XBASE_DATA_CATEGORY_DELETE(object_type_value);
     }
 
  public:
