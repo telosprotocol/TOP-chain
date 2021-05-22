@@ -21,7 +21,7 @@ NS_BEG2(top, metrics)
 enum E_SIMPLE_METRICS_TAG {
     e_simple_begin = 0,
     blockstore_cache_block_total = e_simple_begin,
-    txpool_cons_transaction,
+    dataobject_cur_xbase_type_cons_transaction,
     cons_tableblock_start_leader,
     e_simple_total = cons_tableblock_start_leader + 1,
 };
