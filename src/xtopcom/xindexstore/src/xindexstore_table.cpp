@@ -217,6 +217,7 @@ xtablestate_ptr_t xindexstore_table_t::get_target_tablestate(const xblock_ptr_t 
 }
 
 xtablestate_ptr_t xindexstore_table_t::clone_tablestate(const xblock_ptr_t & block) {
+    XMETRICS_TIME_RECORD("cons_tableblock_verfiy_proposal_clone_tablestate");
     std::lock_guard<std::mutex> l(m_lock);
     xtablestate_ptr_t tablestate = get_target_tablestate(block);
     if (tablestate == nullptr) {

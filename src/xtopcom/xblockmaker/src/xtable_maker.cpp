@@ -41,6 +41,7 @@ void xtable_maker_t::refresh_cache_unit_makers() {
 }
 
 int32_t xtable_maker_t::check_latest_state(const xblock_ptr_t & latest_block) {
+    XMETRICS_TIME_RECORD("cons_tableblock_verfiy_proposal_check_latest_state");
     if ( m_check_state_success && latest_block->get_block_hash() == get_highest_height_block()->get_block_hash()) {
         // already latest state
         return xsuccess;
@@ -458,6 +459,7 @@ xblock_ptr_t xtable_maker_t::make_proposal(xtablemaker_para_t & table_para,
 }
 
 int32_t xtable_maker_t::verify_proposal(base::xvblock_t* proposal_block, const xtablemaker_para_t & table_para, const data::xblock_consensus_para_t & cs_para) {
+    XMETRICS_TIME_RECORD("cons_tableblock_verfiy_proposal_imp");
     std::lock_guard<std::mutex> l(m_lock);
 
     // check table maker state

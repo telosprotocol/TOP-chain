@@ -218,6 +218,7 @@ void xtxpool_t::update_locked_txs(const std::string & table_addr, const std::vec
 }
 
 void xtxpool_t::update_receiptid_state(const std::string & table_addr, const base::xreceiptid_state_ptr_t & receiptid_state) {
+    XMETRICS_TIME_RECORD("cons_tableblock_verfiy_proposal_update_receiptid_state");
     auto table = get_txpool_table_by_addr(table_addr);
     if (table == nullptr) {
         return;
