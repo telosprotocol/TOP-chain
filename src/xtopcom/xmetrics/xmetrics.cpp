@@ -18,6 +18,7 @@ metrics_variant_ptr e_metrics::s_metrics[e_simple_total] = {
     DECL_MTRICS(blockstore_cache_block_total),  //blockstore_cache_block_total
     DECL_MTRICS(dataobject_cur_xbase_type_cons_transaction),  //txpool_cons_transaction
     DECL_MTRICS(cons_tableblock_start_leader), //cons_tableblock_start_leader
+    DECL_MTRICS(txpool_new_receipt), //cons_tableblock_start_leader
 };
 
 void e_metrics::start() {

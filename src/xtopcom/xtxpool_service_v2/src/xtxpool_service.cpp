@@ -190,10 +190,12 @@ void xtxpool_service::on_message_receipt(vnetwork::xvnode_address_t const & send
 
 void xtxpool_service::on_message_unit_receipt(vnetwork::xvnode_address_t const & sender, vnetwork::xmessage_t const & message) {
     (void)sender;
+    XMETRICS_TIME_RECORD("txpool_message_unit_receipt");
     base::xstream_t stream(top::base::xcontext_t::instance(), (uint8_t *)message.payload().data(), (uint32_t)message.payload().size());
     data::xcons_transaction_ptr_t receipt = make_object_ptr<data::xcons_transaction_t>();
     int32_t ret;
     if (message.id() == xtxpool_msg_recv_receipt) {
+        XMETRICS_TIME_RECORD("txpool_message_unit_receipt_recv_receipt");
         xobject_ptr_t<xtxpool_confirm_receipt_msg_t> confirm_receipt_msg = make_object_ptr<xtxpool_confirm_receipt_msg_t>();
         ret = confirm_receipt_msg->serialize_from(stream);
         if (ret <= 0) {
@@ -246,7 +248,7 @@ void xtxpool_service::on_message_unit_receipt(vnetwork::xvnode_address_t const &
     if (ret == xtxpool_v2::xtxpool_error_tx_duplicate) {
         check_and_response_recv_receipt(receipt);
     }
-    if (ret == 0) {
+    if (receipt != nullptr) {
         auditor_forward_receipt_to_shard(receipt, message);
     }
 }
@@ -258,6 +260,7 @@ void xtxpool_service::check_and_response_recv_receipt(const xcons_transaction_pt
     if (!m_is_send_receipt_role) {
         return;
     }
+    XMETRICS_TIME_RECORD("txpool_message_unit_receipt_check_receipt");
     xdbg("xtxpool_service::check_and_response_recv_receipt receipt=%s at_node:%ld", cons_tx->dump().c_str(), m_xip.low_addr);
     const xlightunit_output_entity_t * info = cons_tx->get_tx_info();
 

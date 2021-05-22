@@ -23,7 +23,8 @@ enum E_SIMPLE_METRICS_TAG {
     blockstore_cache_block_total = e_simple_begin,
     dataobject_cur_xbase_type_cons_transaction,
     cons_tableblock_start_leader,
-    e_simple_total = cons_tableblock_start_leader + 1,
+    txpool_new_receipt,
+    e_simple_total,
 };
 
 class e_metrics : public top::xbasic_runnable_t<e_metrics> {
