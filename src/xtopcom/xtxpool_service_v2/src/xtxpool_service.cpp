@@ -306,14 +306,23 @@ bool xtxpool_service::set_commit_prove(data::xcons_transaction_ptr_t & cons_tx) 
     if (!cons_tx->is_commit_prove_cert_set()) {
         std::string account_addr = (cons_tx->is_recv_tx()) ? cons_tx->get_source_addr() : cons_tx->get_target_addr();
         std::string table_account = account_address_to_block_address(common::xaccount_address_t(account_addr));
-        uint64_t justify_table_height = cons_tx->get_unit_cert()->get_parent_block_height() + 2;
-        // try load table block first.
+        uint64_t parent_table_height = cons_tx->get_unit_cert()->get_parent_block_height();
+        uint64_t justify_table_height = parent_table_height + 2;
         base::xvaccount_t table_vaccount(table_account);
-        base::xauto_ptr<base::xvblock_t> justify_table_block =
-            m_para->get_vblockstore()->load_block_object(table_vaccount, justify_table_height, base::enum_xvblock_flag_authenticated, false);
-        if (justify_table_block != nullptr) {
-            cons_tx->set_commit_prove_with_parent_cert(justify_table_block->get_cert());
-        } else {
+
+        // check if parent table block is committed.
+        base::xauto_ptr<base::xvblock_t> parent_table_block =
+            m_para->get_vblockstore()->load_block_object(table_vaccount, parent_table_height, base::enum_xvblock_flag_committed, false);
+        if (parent_table_block != nullptr) {
+            // try load table block first.
+            base::xauto_ptr<base::xvblock_t> justify_table_block =
+                m_para->get_vblockstore()->load_block_object(table_vaccount, justify_table_height, base::enum_xvblock_flag_authenticated, false);
+            if (justify_table_block != nullptr) {
+                cons_tx->set_commit_prove_with_parent_cert(justify_table_block->get_cert());
+            }
+        }
+
+        if (!cons_tx->is_commit_prove_cert_set()) {
             uint64_t justify_unit_height = cons_tx->get_unit_height() + 2;
             base::xvaccount_t unit_vaccount(account_addr);
             base::xauto_ptr<base::xvblock_t> justify_unit_block =
@@ -340,7 +349,8 @@ void xtxpool_service::send_receipt(data::xcons_transaction_ptr_t & cons_tx, uint
         return;
     }
     // if tx subtype is recv and is resend, need not select by function has_receipt_right, because sender is already selected by gmtime before here.
-    if (xreceipt_strategy_t::is_need_select_sender(cons_tx->get_tx_subtype(), resend_time) && (!xreceipt_strategy_t::is_selected_sender(cons_tx, resend_time, m_node_id, m_shard_size))) {
+    if (xreceipt_strategy_t::is_need_select_sender(cons_tx->get_tx_subtype(), resend_time) &&
+        (!xreceipt_strategy_t::is_selected_sender(cons_tx, resend_time, m_node_id, m_shard_size))) {
         return;
     }
     if (!set_commit_prove(cons_tx)) {

@@ -131,7 +131,7 @@ int32_t xunconfirmed_account_t::update(xblock_t * latest_committed_block, const 
     uint64_t latest_height = latest_committed_block->get_height();
 
     for (uint64_t cur_height = latest_height; cur_height > m_highest_height; cur_height--) {
-        auto _block = m_para->get_vblockstore()->load_block_object(account_addr, cur_height, 0, true);
+        auto _block = m_para->get_vblockstore()->load_block_object(account_addr, cur_height, base::enum_xvblock_flag_committed, true);
         if (_block == nullptr) {
             base::xauto_ptr<base::xvblock_t> _block_ptr = m_para->get_vblockstore()->get_latest_connected_block(account_addr);
             uint64_t start_sync_height = _block_ptr->get_height() + 1;
