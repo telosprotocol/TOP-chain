@@ -50,6 +50,7 @@ void print_version() {
     std::cout << "topio version: " << PROGRAM_VERSION << std::endl;
     std::cout << "git branch: " << TOP_GIT_BRANCH << std::endl;
     std::cout << "git commit info: " << TOP_GIT_LOG_LATEST << std::endl;
+    std::cout << "git submodule: " << TOP_GIT_SUBMODULE << std::endl;
     std::cout << "build date_time: " << TOP_BUILD_DATE << " " << TOP_BUILD_TIME << std::endl;
     std::cout << "build user: " << TOP_BUILD_USER << std::endl;
     std::cout << "build host: " << TOP_BUILD_HOST << std::endl;
@@ -64,6 +65,7 @@ void print_version() {
     std::cout << "================================================" << std::endl;
     std::cout << "topio version: " << PROGRAM_VERSION << std::endl;
     std::cout << "git commit info: " << TOP_GIT_LOG_LATEST << std::endl;
+    std::cout << "git submodule: " << TOP_GIT_SUBMODULE << std::endl;
     std::cout << "build date: " << TOP_BUILD_DATE << " " << TOP_BUILD_TIME << std::endl;
     std::cout << "MD5:" << get_md5() << std::endl;
     std::cout << "================================================" << std::endl;
