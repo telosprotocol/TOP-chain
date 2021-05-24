@@ -13,6 +13,9 @@
 #include "xvledger/xvblock.h"
 #include <fstream>
 #include <iostream>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <signal.h>
 
 #define ALWAYS_OVERWRITE false
 
@@ -107,6 +110,7 @@ static std::vector<std::pair<std::string, std::string>> table_stake_map_string_s
 
 struct tx_ext_t {
     std::string hash{""};
+    int32_t tableid{-1};
     uint64_t height{0};
     uint64_t timestamp{0};
     std::string src{""};
@@ -246,55 +250,59 @@ public:
         result_json[account] = result;
     }
 
-    void query_all_table_tx_info(json & result_json) {
+    void query_all_table_tx_info() {
         const std::map<std::pair<std::string, std::string>, int> addr2name = {
             std::make_pair(std::make_pair(std::string{sys_contract_sharding_table_block_addr}, "sharding"), 256),
             std::make_pair(std::make_pair(std::string{sys_contract_zec_table_block_addr}, "zec"), 3),
             std::make_pair(std::make_pair(std::string{sys_contract_beacon_table_block_addr}, "beacon"), 1),
         };
+        mkdir("all_table_tx_info", 0750);
         for (auto const & _p : addr2name) {
             for (auto index = 0; index < _p.second; ++index) {
+                json result_json;
                 std::string address = _p.first.first + "@" + std::to_string(index);
-                query_tx_info(address, result_json);
+                std::string filename = "./all_table_tx_info/" + address + "_tx_info.json";
+                std::ofstream out_json(filename);
+                query_tx_info(address, result_json, index);
+                out_json << std::setw(4) << result_json[address];
+                std::cout << "table " << index << " finish" << std::endl;
             }
         }
     }
 
-    void query_tx_info(std::string const & account, json & result_json) {
-        auto latest_block = m_blockstore->get_latest_committed_block(account);
-        data::xblock_t * block = dynamic_cast<data::xblock_t *>(latest_block.get());
-        if (latest_block == nullptr) {
-            std::cout << "account " << account << "latest committed block is null" << std::endl;
-            return;
-        }
-        auto block_height = latest_block->get_height();
+    void query_tx_info(std::string const & account, json & result_json, int tableid = -1) {
+        auto const & latest_block = m_blockstore->get_latest_committed_block(account);
+        auto const block_height = latest_block->get_height();
         std::map<std::string, tx_ext_t> send;
         std::map<std::string, tx_ext_t> confirm;
         std::map<std::string, tx_ext_t> self;
         std::set<std::string> multi_tx;
         std::vector<tx_ext_t> multi;
         for (uint64_t h = 0; h <= block_height; h++) {
-            auto vblock = m_blockstore->load_block_object(account,h,0,false);
-            data::xblock_t * block = dynamic_cast<data::xblock_t *>(vblock.get());
+            auto const & vblock = m_blockstore->load_block_object(account,h,0,false);
+            const data::xblock_t * block = dynamic_cast<data::xblock_t *>(vblock.get());
             if (block == nullptr) {
                 std::cout << " table " << account << " height " << h << " block null" << std::endl;
                 continue;
             }
             assert(block->get_block_level() == base::enum_xvblock_level_table);
-            uint64_t timestamp = block->get_timestamp();
+            const uint64_t timestamp = block->get_timestamp();
             const auto & units = block->get_tableblock_units(false);
             if (units.empty()) {
                 continue;
             }
-            for (auto & unit : units) {
-                uint64_t unit_height = unit->get_height();
-                auto txs = unit->get_txs();
+            for (auto const & unit : units) {
+                const uint64_t unit_height = unit->get_height();
+                auto const & txs = unit->get_txs();
                 for (auto tx : txs) {
                     tx_ext_t tx_ext;
                     auto tx_ptr = tx->get_raw_tx();
                     if (tx_ptr != nullptr) {
                         tx_ext.src = tx_ptr->get_source_addr();
                         tx_ext.target = tx_ptr->get_target_addr();
+                    }
+                    if (tableid != -1) {
+                        tx_ext.tableid = tableid;
                     }
                     tx_ext.height = h;
                     tx_ext.timestamp = timestamp;
@@ -363,6 +371,9 @@ public:
                 tx["target address"] = item.target;
                 tx["unit height"] = item.unit_height;
                 tx["phase"] = item.phase;
+                if (item.tableid != -1) {
+                    tx["table id"] = item.tableid;
+                }
                 j[item.hash] = tx;
             }
         };
@@ -390,11 +401,14 @@ public:
                 }
             }
         };
-        for (auto const & item : send) {
-            if (confirm.count(item.first)) {
-                confirmedv.push_back(std::make_pair(item.second, confirm[item.first]));
-                send.erase(item.first);
-                confirm.erase(item.first);
+        for(auto it = send.begin(); it != send.end(); ) {
+            if (confirm.count(it->first)) {
+                confirmedv.push_back(std::make_pair(it->second, confirm[it->first]));
+                confirm.erase(it->first);
+                send.erase(it++);
+            }
+            else{
+                ++it;
             }
         }
         map_value_to_vec(send, sendv);
@@ -420,13 +434,15 @@ public:
         setj(multi, tx_multi);
         json j;
         j["confirmed conut"] = count;
+        j["send only count"] = sendv.size();
+        j["confirmed only count"] = confirmv.size();
         j["confirmed total time"] = total_confirm_time;
         j["confirmed max time"] = max_confirm_time;
         j["confirmed avg time"] = float(total_confirm_time) / count;
         j["confirmed detail"] = tx_confirmed;
-        j["send only"] = tx_send;
-        j["confirmed only"] = tx_confirm;
-        j["multi"] = tx_multi;
+        j["send only detail"] = tx_send;
+        j["confirmed only detail"] = tx_confirm;
+        j["multi detail"] = tx_multi;
         result_json[account] = j;
     }
 
@@ -738,8 +754,8 @@ int main(int argc, char ** argv) {
         json result_json;
         std::string filename;
         if (argc == 3) {
-            tools.query_all_table_tx_info(result_json);
-            filename = "all_table_tx_info.json";
+            tools.query_all_table_tx_info();
+            return 0;
         } else if (argc == 4) {
             std::string address{argv[3]};
             tools.query_tx_info(address, result_json);

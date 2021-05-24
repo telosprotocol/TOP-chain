@@ -149,7 +149,7 @@ public:
  public:
     uint64_t    get_timerblock_height() const {return get_clock();}
     std::string get_block_owner()const {return get_account();}
-    uint64_t    get_timestamp() {return get_cert()->get_gmtime();}
+    uint64_t    get_timestamp() const {return get_cert()->get_gmtime();}
 
  private:
     static std::map<std::string, std::string>      m_empty_map;
