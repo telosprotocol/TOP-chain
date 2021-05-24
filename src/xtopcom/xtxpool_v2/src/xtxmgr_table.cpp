@@ -48,6 +48,7 @@ int32_t xtxmgr_table_t::push_send_tx(const std::shared_ptr<xtx_entry> & tx, uint
 }
 
 int32_t xtxmgr_table_t::push_receipt(const std::shared_ptr<xtx_entry> & tx) {
+    XMETRICS_TIME_RECORD("txpool_message_unit_receipt_push_receipt_table_push_receipt");
     auto & account_addr = tx->get_tx()->get_account_addr();
     auto tx_inside = query_tx(account_addr, tx->get_tx()->get_transaction()->digest());
     if (tx_inside != nullptr) {

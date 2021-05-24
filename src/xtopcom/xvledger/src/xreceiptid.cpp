@@ -336,6 +336,7 @@ bool    xreceiptid_check_t::check_receiptids_contious(const std::set<uint64_t> &
 }
 
 bool    xreceiptid_check_t::check_contious(const xreceiptid_state_ptr_t & receiptid_state) const {
+    XMETRICS_TIME_RECORD("cons_tableblock_verfiy_proposal_imp_check_contious");
     for (auto & v : m_sendids) {
         xtable_shortid_t tableid = v.first;
         const std::set<uint64_t> & ids = v.second;
