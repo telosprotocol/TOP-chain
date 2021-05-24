@@ -22,7 +22,6 @@
 
 NS_BEG2(top, xtxpool_service_v2)
 
-#define block_clock_height_fall_behind_max (30)
 #define max_mailbox_num (8192)
 
 xtxpool_service_mgr::xtxpool_service_mgr(const observer_ptr<store::xstore_face_t> & store,
@@ -74,31 +73,24 @@ void xtxpool_service_mgr::on_block_confirmed(xblock_t * block) {
           block->get_block_class(),
           now_clock,
           block->dump().c_str());
-    if (!block->is_lighttable() || block->get_clock() + block_clock_height_fall_behind_max <= now_clock) {
-        return;
-    }
 
-    make_receipts_and_send(block);
+    deal_table_block(block, now_clock);
 
-    const auto & units = block->get_tableblock_units(false);
-    if (!units.empty()) {
-        for (auto & unit : units) {
-            if (unit->get_block_class() != base::enum_xvblock_class_light) {
-                continue;
-            }
-            m_para->get_txpool()->on_block_confirmed(unit.get());
-        }
+    if (block->is_lighttable() && block->get_clock() + block_clock_height_fall_behind_max > now_clock) {
+        m_para->get_txpool()->on_block_confirmed(block);
     }
 }
 
-void xtxpool_service_mgr::make_receipts_and_send(xblock_t * block) {
-    auto receipts = xreceipt_strategy_t::make_receipts(block);
-    uint64_t now = xverifier::xtx_utl::get_gmttime_s();
-    for (auto & receipt : receipts) {
-        xinfo("xtxpool_service_mgr::make_receipts_and_send tx=%s", receipt->dump().c_str());
-        send_receipt(receipt);
+void xtxpool_service_mgr::deal_table_block(xblock_t * block, uint64_t now_clock) {
+    std::string account_addr = block->get_account();
+    auto tableid = data::account_map_to_table_id(common::xaccount_address_t{account_addr});
+    std::shared_ptr<xtxpool_service_face> service = find_receipt_sender(tableid);
+    if (service != nullptr) {
+        xinfo("xtxpool_service_mgr::deal_table_block service found,zone:%d table:%d block:%s", tableid.get_zone_index(), tableid.get_subaddr(), block->dump().c_str());
+        service->deal_table_block(block, now_clock);
+    } else {
+        xwarn("xtxpool_service_mgr::deal_table_block fail,no service found,zone:%d table:%d block:%s", tableid.get_zone_index(), tableid.get_subaddr(), block->dump().c_str());
     }
-    xdbg("xtxpool_service_mgr::make_receipts_and_send block:%s", block->dump().c_str());
 }
 
 // create txpool proxy by networkdriver
@@ -193,23 +185,11 @@ bool xtxpool_service_mgr::fade(const xvip2_t & xip) {
     return false;
 }
 
-void xtxpool_service_mgr::send_receipt(xcons_transaction_ptr_t & receipt) {
-    std::string account_addr = receipt->is_recv_tx() ? receipt->get_source_addr() : receipt->get_target_addr();
-    auto source_tableid = data::account_map_to_table_id(common::xaccount_address_t{account_addr});
-    std::shared_ptr<xtxpool_service_face> service = find_receipt_sender(source_tableid, receipt->get_transaction()->digest());
-    if (service != nullptr) {
-        xdbg("xtxpool_service_mgr::send_receipt service found,zone:%d table:%d tx:%s", source_tableid.get_zone_index(), source_tableid.get_subaddr(), receipt->dump().c_str());
-        service->send_receipt(receipt, 0);
-    } else {
-        xwarn("xtxpool_service_mgr::send_receipt fail,no service found,zone:%d table:%d tx:%s", source_tableid.get_zone_index(), source_tableid.get_subaddr(), receipt->dump().c_str());
-    }
-}
-
-std::shared_ptr<xtxpool_service_face> xtxpool_service_mgr::find_receipt_sender(const xtable_id_t & tableid, const uint256_t & hash) {
+std::shared_ptr<xtxpool_service_face> xtxpool_service_mgr::find_receipt_sender(const xtable_id_t & tableid) {
     std::lock_guard<std::mutex> lock(m_mutex);
     for (auto & iter : m_service_map) {
         auto service = iter.second;
-        if (service->is_receipt_sender(tableid, hash)) {
+        if (service->is_receipt_sender(tableid)) {
             return service;
         }
     }

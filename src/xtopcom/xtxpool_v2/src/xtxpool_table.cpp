@@ -245,12 +245,12 @@ const std::vector<xcons_transaction_ptr_t> xtxpool_table_t::get_resend_txs(uint6
 //     return num >= table_unconfirm_txs_num_max;
 // }
 
-void xtxpool_table_t::on_block_confirmed(xblock_t * block) {
+void xtxpool_table_t::unit_block_process(xblock_t * unit_block) {
     // update_reject_rule(block->get_account(), block);
     {
         std::lock_guard<std::mutex> lck(m_unconfirm_mutex);
         uint32_t tx_num_before = m_unconfirmed_tx_queue.size();
-        m_unconfirmed_tx_queue.udpate_latest_confirmed_block(block, m_receipt_state_cache);
+        m_unconfirmed_tx_queue.udpate_latest_confirmed_block(unit_block, m_receipt_state_cache);
         uint32_t tx_num_after = m_unconfirmed_tx_queue.size();
         if (tx_num_after > tx_num_before) {
             XMETRICS_COUNTER_INCREMENT("txpool_unconfirm_txs_num", tx_num_after - tx_num_before);
@@ -273,6 +273,18 @@ void xtxpool_table_t::on_block_confirmed(xblock_t * block) {
     //     xassert(blockchain != nullptr);
     //     updata_latest_nonce(block->get_account(), blockchain->account_send_trans_number(), blockchain->account_send_trans_hash());
     // }
+}
+
+void xtxpool_table_t::on_block_confirmed(xblock_t * table_block) {
+    const auto & units = table_block->get_tableblock_units(false);
+    if (!units.empty()) {
+        for (auto & unit : units) {
+            if (unit->get_block_class() != base::enum_xvblock_class_light) {
+                continue;
+            }
+            unit_block_process(unit.get());
+        }
+    }
 }
 
 int32_t xtxpool_table_t::verify_txs(const std::string & account, const std::vector<xcons_transaction_ptr_t> & txs, uint64_t latest_commit_unit_height) {

@@ -9,6 +9,8 @@
 #include "xdata/xcons_transaction.h"
 NS_BEG2(top, xtxpool_service_v2)
 
+#define block_clock_height_fall_behind_max (30)
+
 class xreceipt_strategy_t {
 public:
     static bool is_time_for_recover_unconfirmed_txs(uint64_t now);

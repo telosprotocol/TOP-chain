@@ -49,7 +49,7 @@ public:
     enum_xtxpool_error_type reject(const std::string & account, const xcons_transaction_ptr_t & tx, uint64_t pre_unitblock_height, bool & deny);
     xcons_transaction_ptr_t get_unconfirm_tx(const std::string & account, const uint256_t & hash);
     const std::vector<xcons_transaction_ptr_t> get_resend_txs(uint64_t now);
-    void on_block_confirmed(xblock_t * block);
+    void on_block_confirmed(xblock_t * table_block);
     int32_t verify_txs(const std::string & account, const std::vector<xcons_transaction_ptr_t> & txs, uint64_t latest_commit_unit_height);
     void update_unconfirm_accounts();
     void update_non_ready_accounts();
@@ -65,6 +65,7 @@ private:
     int32_t verify_receipt_tx(const xcons_transaction_ptr_t & tx) const;
     int32_t verify_cons_tx(const xcons_transaction_ptr_t & tx) const;
     bool get_account_latest_nonce_hash(const std::string account_addr, uint64_t & latest_nonce, uint256_t & latest_hash) const;
+    void unit_block_process(xblock_t * unit_block);
     xtxpool_resources_face * m_para;
     xtxpool_table_info_t m_xtable_info;
     xtxmgr_table_t m_txmgr_table;
