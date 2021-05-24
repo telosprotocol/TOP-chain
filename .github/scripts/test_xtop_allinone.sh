@@ -93,17 +93,21 @@ echo "sleep 60s"
 sleep 60
 tx_ret=$(./topio querytx ${tx})
 tx_stat=$(echo "${tx_ret}" | grep -a '\"exec_status\"'|grep "success"|wc -l)
-address_ret=$(./topio chain queryaccount ${addr})
-address_balance=$(echo "${address_ret}" | grep -a '\"balance\"'|grep "123456000000"|wc -l)
-if [[ ${tx_stat} -eq 1 ]] && [[ ${address_balance} -eq 1 ]];then
+send_ret=$(./topio chain queryaccount T00000Lhj29VReFAT958ZqFWZ2ZdMLot2PS5D5YC)
+send_balance=$(echo "${send_ret}" | grep -a '\"balance\"'|grep "2999873544000000"|wc -l)
+recv_ret=$(./topio chain queryaccount ${addr})
+recv_balance=$(echo "${recv_ret}" | grep -a '\"balance\"'|grep "123456000000"|wc -l)
+if [[ ${tx_stat} -eq 1 ]] && [[ ${send_balance} -eq 1 ]] && [[ ${recv_balance} -eq 1 ]];then
     echo "====== tx check success, end ======"
     sh ${clear} -o clean
 else
     echo "tx check fail, see follow output:"
     echo "query_tx_ret:"
     echo "${tx_ret}"
-    echo "query_address_ret:"
-    echo "${address_balance}"
+    echo "query_send_ret:"
+    echo "${send_ret}"
+    echo "query_recv_ret:"
+    echo "${recv_ret}"
     sh ${clear} -o archive -i ${NUM} -d ${workdir}
     echo "====== tx fail, end ======"
     exit -1
