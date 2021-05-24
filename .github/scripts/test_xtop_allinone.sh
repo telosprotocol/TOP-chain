@@ -100,9 +100,9 @@ if [[ ${tx_stat} -eq 1 ]] && [[ ${address_balance} -eq 1 ]];then
     sh ${clear} -o clean
 else
     echo "tx check fail, see follow output:"
-    echo "query_tx_ret: "
+    echo "query_tx_ret:"
     echo "${tx_ret}"
-    echo "query_address_ret: 
+    echo "query_address_ret:"
     echo "${address_balance}"
     sh ${clear} -o archive -i ${NUM} -d ${workdir}
     echo "====== tx fail, end ======"
