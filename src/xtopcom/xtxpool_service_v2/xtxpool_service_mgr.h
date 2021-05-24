@@ -45,9 +45,8 @@ private:
     std::shared_ptr<xtxpool_service_face> find(const xvip2_t & xip);
     void on_block_to_db_event(mbus::xevent_ptr_t e);
     void on_block_confirmed(xblock_t * block);
-    void make_receipts_and_send(xblock_t * block);
-    void send_receipt(xcons_transaction_ptr_t & receipt);
-    std::shared_ptr<xtxpool_service_face> find_receipt_sender(const xtable_id_t & tableid, const uint256_t & hash);
+    void deal_table_block(xblock_t * block, uint64_t now_clock);
+    std::shared_ptr<xtxpool_service_face> find_receipt_sender(const xtable_id_t & tableid);
 
 private:
     xobject_ptr_t<xtxpool_svc_para_t> m_para;
