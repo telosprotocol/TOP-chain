@@ -38,6 +38,14 @@ xtop_beacon_chain_application::xtop_beacon_chain_application(observer_ptr<xappli
             sync_handler_thread_pool} {
 }
 
+/// @brief Load election data by the specified block height @p block_height_upper_limit. If block at the @p block_height_upper_limit doesn't exist, go ahead.
+/// @param blockstore Block store instance for querying the blocks.
+/// @param contract_address Election contract to be queried.
+/// @param block_height_upper_limit Load block from this height, if block isn't seen at this height, go ahead.
+/// @param property_name Property name to be queried.
+/// @param returned_data_block_height The height of the block contains the return election data.
+/// @param ec Log the error code in the operation.
+/// @return The election data.
 static top::data::election::xelection_result_store_t load_election_data(observer_ptr<xvblockstore_t> const & blockstore,
                                                                         common::xaccount_address_t const & contract_address,
                                                                         uint64_t const block_height_upper_limit,
@@ -156,12 +164,12 @@ void xtop_beacon_chain_application::load_last_election_data() {
             }
 
             uint64_t block_height = latest_vblock->get_height();
-            auto const & election_result_store = load_election_data(m_application->blockstore(),
-                                                                    common::xaccount_address_t{ addr },
-                                                                    block_height,
-                                                                    property,
-                                                                    block_height,
-                                                                    ec);
+            auto const & last_election_result_store = load_election_data(m_application->blockstore(),
+                                                                         common::xaccount_address_t{ addr },
+                                                                         block_height,
+                                                                         property,
+                                                                         block_height,
+                                                                         ec);
             if (ec) {
                 xwarn("xbeacon_chain_application::load_last_election_data fail to load election data. addr %s; property %s; from height %" PRIu64, addr.c_str(), property.c_str(), block_height);
                 continue;
@@ -169,19 +177,20 @@ void xtop_beacon_chain_application::load_last_election_data() {
 
             if ((addr == sys_contract_rec_elect_rec_addr || addr == sys_contract_rec_elect_zec_addr || addr == sys_contract_zec_elect_consensus_addr) && block_height != 0) {
                 uint64_t prev_block_height = block_height - 1;
-                auto const & election_result_store_last = load_election_data(m_application->blockstore(),
-                                                                             common::xaccount_address_t{ addr },
-                                                                             prev_block_height,
-                                                                             property,
-                                                                             prev_block_height,
-                                                                             ec);
+                auto const & before_last_election_result_store = load_election_data(m_application->blockstore(),
+                                                                                   common::xaccount_address_t{ addr },
+                                                                                   prev_block_height,
+                                                                                   property,
+                                                                                   prev_block_height,
+                                                                                   ec);
                 if (!ec) {
-                    on_election_data_updated(election_result_store_last, zone_id, block_height);
+                    assert(block_height > prev_block_height);
+                    on_election_data_updated(before_last_election_result_store, zone_id, prev_block_height);
                 } else {
                     xwarn("xbeacon_chain_application::load_last_election_data fail to load prev election data. addr %s; property %s; from height %" PRIu64, addr.c_str(), property.c_str(), prev_block_height);
                 }
             }
-            on_election_data_updated(election_result_store, zone_id, block_height);
+            on_election_data_updated(last_election_result_store, zone_id, block_height);
         }
     }
 }
