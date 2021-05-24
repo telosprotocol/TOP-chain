@@ -432,6 +432,7 @@ int32_t xtxpool_table_t::verify_send_tx(const xcons_transaction_ptr_t & tx) cons
 }
 
 int32_t xtxpool_table_t::verify_receipt_tx(const xcons_transaction_ptr_t & tx) const {
+    XMETRICS_TIME_RECORD("txpool_message_unit_receipt_push_receipt_verify_receipt_tx");
     // only check digest here for process too long zec_workload contract transaction receipt
     // should recover length check at later version
     if (!tx->get_transaction()->digest_check()) {

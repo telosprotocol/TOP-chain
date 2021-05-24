@@ -31,6 +31,7 @@ int32_t xtxpool_t::push_send_tx(const std::shared_ptr<xtx_entry> & tx) {
 }
 
 int32_t xtxpool_t::push_receipt(const std::shared_ptr<xtx_entry> & tx, bool is_self_send) {
+    XMETRICS_TIME_RECORD("txpool_message_unit_receipt_push_receipt");
     auto table = get_txpool_table_by_addr(tx->get_tx()->get_account_addr());
     if (table == nullptr) {
         return xtxpool_error_account_not_in_charge;
@@ -217,6 +218,7 @@ void xtxpool_t::update_locked_txs(const std::string & table_addr, const std::vec
 }
 
 void xtxpool_t::update_receiptid_state(const std::string & table_addr, const base::xreceiptid_state_ptr_t & receiptid_state) {
+    XMETRICS_TIME_RECORD("cons_tableblock_verfiy_proposal_update_receiptid_state");
     auto table = get_txpool_table_by_addr(table_addr);
     if (table == nullptr) {
         return;

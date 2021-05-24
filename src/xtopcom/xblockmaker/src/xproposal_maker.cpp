@@ -238,6 +238,7 @@ bool xproposal_maker_t::verify_proposal_drand_block(base::xvblock_t *proposal_bl
 }
 
 xblock_ptr_t xproposal_maker_t::verify_proposal_prev_block(base::xvblock_t * proposal_block, base::xvblock_t* default_latest_cert) const {
+    XMETRICS_TIME_RECORD("cons_tableblock_verfiy_proposal_prev_block");
     if (proposal_block->get_last_block_hash() == default_latest_cert->get_block_hash()) {
         xblock_ptr_t proposal_prev_block = xblock_t::raw_vblock_to_object_ptr(default_latest_cert);
         xassert(proposal_block->get_height() == proposal_prev_block->get_height() + 1);

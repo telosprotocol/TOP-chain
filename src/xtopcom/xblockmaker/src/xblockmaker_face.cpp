@@ -132,6 +132,7 @@ void xblock_maker_t::set_latest_block(const xblock_ptr_t & block) {
 }
 
 bool xblock_maker_t::load_and_cache_enough_blocks(const xblock_ptr_t & latest_block, uint64_t & from_height, uint64_t & lacked_block_height) {
+    XMETRICS_TIME_RECORD("cons_tableblock_verfiy_proposal_load_and_cache_enough_blocks");
     xblock_ptr_t current_block = latest_block;
     set_latest_block(current_block);
     uint32_t count = 1;
@@ -180,6 +181,7 @@ const xblock_ptr_t & xblock_maker_t::get_lowest_height_block() const {
 }
 
 bool xblock_maker_t::check_latest_blocks() const {
+    XMETRICS_TIME_RECORD("cons_tableblock_verfiy_proposal_checklatest_blocks");
     uint32_t count = m_latest_blocks.size();
     if (count == 0) {
         xassert(0);

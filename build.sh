@@ -40,6 +40,11 @@ if [ $? -eq 1 ]; then
     
     source ./build_options.sh
     
+    command_line_option_include_item "$options" "leak_trace"
+    if [ $? -eq 0 ]; then
+        CBUILD_DIR="${CBUILD_DIR}_leak"
+    fi
+
     echo "CMAKE_EXTRA_OPTIONS: ${CMAKE_EXTRA_OPTIONS}"
     echo "CBUILD_DIR: ${CBUILD_DIR}"
     
@@ -69,6 +74,7 @@ else
     if [ $? -eq 0 ]; then
         cbuild_path="cbuild_release"
     fi
+
     echo "install found, install mode from path:$cbuild_path"
     cd $cbuild_path
     make install

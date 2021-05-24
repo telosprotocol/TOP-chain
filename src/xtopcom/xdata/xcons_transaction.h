@@ -14,7 +14,7 @@ namespace top { namespace data {
 
 class xcons_transaction_t : public xbase_dataunit_t<xcons_transaction_t, xdata_type_cons_transaction> {
  public:
-    xcons_transaction_t() = default;
+    xcons_transaction_t();
     xcons_transaction_t(xtransaction_t* raw_tx);
     xcons_transaction_t(xtransaction_t* tx, xtx_receipt_ptr_t receipt);
  protected:

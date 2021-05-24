@@ -9,6 +9,7 @@
 #include "xtxpool_v2/xtxpool_tool.h"
 #include "xverifier/xtx_verifier.h"
 #include "xverifier/xverifier_utl.h"
+#include "xmetrics/xmetrics.h"
 
 namespace top {
 namespace xtxpool_v2 {
@@ -47,6 +48,7 @@ int32_t xtxmgr_table_t::push_send_tx(const std::shared_ptr<xtx_entry> & tx, uint
 }
 
 int32_t xtxmgr_table_t::push_receipt(const std::shared_ptr<xtx_entry> & tx) {
+    XMETRICS_TIME_RECORD("txpool_message_unit_receipt_push_receipt_table_push_receipt");
     auto & account_addr = tx->get_tx()->get_account_addr();
     auto tx_inside = query_tx(account_addr, tx->get_tx()->get_transaction()->digest());
     if (tx_inside != nullptr) {
@@ -69,6 +71,7 @@ int32_t xtxmgr_table_t::push_receipt(const std::shared_ptr<xtx_entry> & tx) {
                      tx->get_tx()->dump(true).c_str(),
                      xtxpool_error_to_string(ret).c_str());
     } else {
+        XMETRICS_GAUGE(metrics::txpool_new_receipt, 1);
         xtxpool_info("xtxmgr_table_t::push_receipt success.table %s,tx:%s", m_xtable_info->get_table_addr().c_str(), tx->get_tx()->dump(true).c_str());
     }
     return ret;
@@ -83,6 +86,7 @@ std::shared_ptr<xtx_entry> xtxmgr_table_t::pop_tx(const tx_info_t & txinfo, bool
         // todo:backwards compatibility, try pop from both old and new receipt queue
         // tx_ent = m_receipt_queue.pop_tx(txinfo);
         tx_ent = m_new_receipt_queue.pop_tx(txinfo);
+        XMETRICS_GAUGE(metrics::txpool_new_receipt, -1);
     }
     if (tx_ent == nullptr) {
         tx_ent = m_pending_accounts.pop_tx(txinfo, clear_follower);

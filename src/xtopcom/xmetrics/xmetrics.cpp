@@ -15,22 +15,10 @@ e_metrics::simple_counter e_metrics::s_counters[e_simple_total];
 
 // simple metrics description array
 metrics_variant_ptr e_metrics::s_metrics[e_simple_total] = {
-    DECL_MTRICS(xdata_table_counter),  //xdata_table_counter
-    DECL_MTRICS(xdata_lightunit_counter),  //xdata_lightunit_counter
-    DECL_MTRICS(xdata_fullunit_counter),  //xdata_fullunit_counter
-    DECL_MTRICS(xdata_table_ref_counter),  //xdata_table_ref_counter
-    DECL_MTRICS(xdata_lightunit_ref_counter),  //xdata_lightunit_ref_counter
-    DECL_MTRICS(xdata_fullunit_ref_counter),  //xdata_fullunit_ref_counter
     DECL_MTRICS(blockstore_cache_block_total),  //blockstore_cache_block_total
-    DECL_MTRICS(xdata_empty_block_counter),  //xempty_block_counter
-    DECL_MTRICS(xdata_root_block_counter),  //xroot_block_counter
-    DECL_MTRICS(xdata_empty_block_ref_counter),  //xempty_block_ref_counter
-    DECL_MTRICS(xdata_root_block_ref_counter),  //xroot_block_ref_counter
-    DECL_MTRICS(xdata_transaction_counter),  //xdata_transaction_counter
-    DECL_MTRICS(xdata_transaction_ref_counter),  //xdata_transaction_ref_counter
-    DECL_MTRICS(xdata_xcons_transaction_t),  //xdata_xcons_transaction_t
-    DECL_MTRICS(xdata_receipt_t),  //xdata_receipt_t
-    DECL_MTRICS(xtxpool_xaccountobj_t), //xtxpool_xaccountobj_t
+    DECL_MTRICS(dataobject_cur_xbase_type_cons_transaction),  //txpool_cons_transaction
+    DECL_MTRICS(cons_tableblock_start_leader), //cons_tableblock_start_leader
+    DECL_MTRICS(txpool_new_receipt), //cons_tableblock_start_leader
 };
 
 void e_metrics::start() {
@@ -167,7 +155,7 @@ void e_metrics::gauge(E_SIMPLE_METRICS_TAG tag, int64_t value) {
 }
 
 void e_metrics::gauge_dump() {
-    for(auto index = (int32_t)xdata_table_counter; index < (int32_t)e_simple_total; index++) {
+    for(auto index = (int32_t)e_simple_begin; index < (int32_t)e_simple_total; index++) {
         auto metrics_ptr = s_metrics[index];
         auto ptr = metrics_ptr.GetRef<metrics_counter_unit_ptr>();
         ptr->inner_val = s_counters[index].value;

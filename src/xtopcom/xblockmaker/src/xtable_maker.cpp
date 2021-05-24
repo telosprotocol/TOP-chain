@@ -34,6 +34,7 @@ int32_t xtable_maker_t::default_check_latest_state() {
 }
 
 void xtable_maker_t::refresh_cache_unit_makers() {
+     XMETRICS_TIME_RECORD("cons_tableblock_verfiy_proposal_refresh_cache_unit_makers");
     // clear old unit makers, only cache latest makers
     clear_old_unit_makers();
     // clear all pending txs
@@ -41,6 +42,7 @@ void xtable_maker_t::refresh_cache_unit_makers() {
 }
 
 int32_t xtable_maker_t::check_latest_state(const xblock_ptr_t & latest_block) {
+    XMETRICS_TIME_RECORD("cons_tableblock_verfiy_proposal_imp_check_latest_state");
     if ( m_check_state_success && latest_block->get_block_hash() == get_highest_height_block()->get_block_hash()) {
         // already latest state
         return xsuccess;
@@ -274,6 +276,7 @@ void xtable_maker_t::get_unit_accounts(const xblock_ptr_t & block, std::set<std:
 
 xblock_ptr_t xtable_maker_t::make_light_table(bool is_leader, const xtablemaker_para_t & table_para, const data::xblock_consensus_para_t & cs_para, xtablemaker_result_t & table_result) {
     // refresh all cache unit makers
+    XMETRICS_TIME_RECORD("cons_tableblock_verfiy_proposal_imp_make_light_table");
     refresh_cache_unit_makers();
 
     // try to make non-empty-unit for left unitmakers
@@ -375,6 +378,7 @@ xblock_ptr_t xtable_maker_t::backup_make_light_table(const xtablemaker_para_t & 
 
 xblock_ptr_t xtable_maker_t::make_full_table(const xtablemaker_para_t & table_para, const xblock_consensus_para_t & cs_para, int32_t & error_code) {
     // TODO(jimmy)
+    XMETRICS_TIME_RECORD("cons_tableblock_verfiy_proposal_imp_make_full_table");
     std::vector<xblock_ptr_t> blocks_from_last_full;
     if (false == load_table_blocks_from_last_full(get_highest_height_block(), blocks_from_last_full)) {
         xerror("xtable_maker_t::make_full_table fail-load blocks. %s", cs_para.dump().c_str());
@@ -458,6 +462,7 @@ xblock_ptr_t xtable_maker_t::make_proposal(xtablemaker_para_t & table_para,
 }
 
 int32_t xtable_maker_t::verify_proposal(base::xvblock_t* proposal_block, const xtablemaker_para_t & table_para, const data::xblock_consensus_para_t & cs_para) {
+    XMETRICS_TIME_RECORD("cons_tableblock_verfiy_proposal_imp");
     std::lock_guard<std::mutex> l(m_lock);
 
     // check table maker state
@@ -522,6 +527,7 @@ int32_t xtable_maker_t::verify_proposal(base::xvblock_t* proposal_block, const x
 }
 
 bool xtable_maker_t::verify_proposal_with_local(base::xvblock_t *proposal_block, base::xvblock_t *local_block) const {
+    XMETRICS_TIME_RECORD("cons_tableblock_verfiy_proposal_imp_with_local");
     // TODO(jimmy) input hash not match may happen when use different property
     if (local_block->get_input_hash() != proposal_block->get_input_hash()) {
         xwarn("xtable_maker_t::verify_proposal_with_local fail-input hash not match. %s %s",
