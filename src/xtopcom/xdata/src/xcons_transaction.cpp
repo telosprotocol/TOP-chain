@@ -12,6 +12,10 @@ namespace top { namespace data {
 
 REG_CLS(xcons_transaction_t);
 
+xcons_transaction_t::xcons_transaction_t() {
+    XMETRICS_GAUGE(metrics::dataobject_cur_xbase_type_cons_transaction, 1);
+}
+
 xcons_transaction_t::xcons_transaction_t(xtransaction_t* tx) {
     m_tx = tx;
     m_tx->add_ref();
