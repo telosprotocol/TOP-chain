@@ -14,15 +14,19 @@ workdir=${cpwd}/scripts/deploy_allinone
 
 if [ ! -f ${xtop} ];then
     echo ${xtop}" no exist!"
+    exit -1
 fi
 if [ ! -f ${topio} ];then
     echo ${topio}" no exist!"
+    exit -1
 fi
 if [ ! -f ${solib} ];then
     echo ${solib}" no exist!"
+    exit -1
 fi
 if [ ! -d ${workdir} ];then
     echo ${workdir}" no exist!"
+    exit -1
 fi
 
 rm -f ${workdir}/xtopchain ${workdir}/topio ${workdir}/libxtopchain.so
@@ -88,13 +92,18 @@ echo "tx: "${tx}
 echo "sleep 60s"
 sleep 60
 tx_ret=$(./topio querytx ${tx})
-stat=$(echo "${tx_ret}" | grep -a '\"exec_status\"'|grep "success"|wc -l)
-if [[ ${stat} -eq 1 ]];then
+tx_stat=$(echo "${tx_ret}" | grep -a '\"exec_status\"'|grep "success"|wc -l)
+address_ret=$(./topio chain queryaccount ${addr})
+address_balance=$(echo "${address_ret}" | grep -a '\"balance\"'|grep "123456000000"|wc -l)
+if [[ ${tx_stat} -eq 1 ]] && [[ ${address_balance} -eq 1 ]];then
     echo "====== tx check success, end ======"
     sh ${clear} -o clean
 else
     echo "tx check fail, see follow output:"
+    echo "query_tx_ret: "
     echo "${tx_ret}"
+    echo "query_address_ret: 
+    echo "${address_balance}"
     sh ${clear} -o archive -i ${NUM} -d ${workdir}
     echo "====== tx fail, end ======"
     exit -1
