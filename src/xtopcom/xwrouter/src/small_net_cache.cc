@@ -60,35 +60,6 @@ void SmallNetNodes::GetAllServiceType(std::set<uint64_t> & svec) {
     return;
 }
 
-bool SmallNetNodes::GetLocalNodeInfo(uint64_t service_type, NetNode & local_node) {
-    std::unique_lock<std::mutex> lockself(local_node_cache_map_mutex_);
-    auto ifind = local_node_cache_map_.find(service_type);
-    if (ifind == local_node_cache_map_.end()) {
-        TOP_WARN("find local node info failed, no elect data caching");
-        return false;
-    }
-    local_node = ifind->second;
-    TOP_DEBUG("GetLocalNodeInfo %llu", service_type);
-    return true;
-}
-
-// for shard, get service type of adv which is the super-up level
-bool SmallNetNodes::GetAdvanceOfConsensus(base::KadmliaKeyPtr con_kad, uint8_t associated_gid, uint64_t & adv_service_type) {
-    base::KadmliaKeyPtr adv_kad_key = base::GetKadmliaKey();
-    if (!adv_kad_key) {
-        TOP_WARN("GetKadmliaKey failed");
-        return false;
-    }
-    adv_kad_key->set_xnetwork_id(kChainAdvanceGroup);
-    adv_kad_key->set_zone_id(con_kad->Xip().zone_id());
-    adv_kad_key->set_cluster_id(con_kad->Xip().cluster_id());
-    adv_kad_key->set_group_id(associated_gid);  // attention
-    // adv_kad_key->set_xip_type(elect::kElectionCommittee);
-    adv_service_type = adv_kad_key->GetServiceType();
-    TOP_DEBUG("GetAdvance %llu of con: %s %llu", adv_service_type, HexEncode(con_kad->Get()).c_str(), con_kad->GetServiceType());
-    return true;
-}
-
 bool SmallNetNodes::HasServiceType(const uint64_t & service_type) {
     std::unique_lock<std::mutex> lock(net_nodes_cache_map_mutex_);
     auto ifind = net_nodes_cache_map_.find(service_type);
@@ -96,66 +67,6 @@ bool SmallNetNodes::HasServiceType(const uint64_t & service_type) {
         TOP_WARN("service type: %llu not caching", service_type);
         return false;
     }
-    return true;
-}
-
-// TODO(smaug)
-bool SmallNetNodes::GetAllRelatedServiceType(std::map<uint64_t, std::set<uint64_t>> & smap) {
-    std::set<uint64_t> svec;
-    GetAllServiceType(svec);
-    if (svec.empty()) {
-        TOP_INFO("no elect data caching");
-        return false;
-    }
-
-    std::vector<std::shared_ptr<kadmlia::RoutingTable>> vec_rt;
-    wrouter::GetAllRegisterRoutingTable(vec_rt);
-    TOP_DEBUG("GetAllRegisterRoutingTable size: %d", vec_rt.size());
-    if (vec_rt.empty()) {
-        TOP_INFO("no service routing table registered");
-        return false;
-    }
-
-    for (auto & rt : vec_rt) {
-        auto xnetwork_id = rt->get_local_node_info()->kadmlia_key()->xnetwork_id();
-        auto local_service_type = rt->get_local_node_info()->kadmlia_key()->GetServiceType();
-        NetNode local_node;
-        if (!GetLocalNodeInfo(local_service_type, local_node)) {
-            TOP_WARN("get relationship of local service type: %llu failed", local_service_type);
-            continue;
-        }
-        switch (xnetwork_id) {
-        case kChainConsensusGroup:
-            // for shard, concerned with higher-up cluster(adv)
-            uint64_t adv_service_type;
-            if (!GetAdvanceOfConsensus(rt->get_local_node_info()->kadmlia_key(), local_node.m_associated_gid, adv_service_type)) {
-                break;
-            }
-            if (!HasServiceType(adv_service_type)) {
-                break;
-            }
-            smap[local_service_type].insert(adv_service_type);
-            TOP_DEBUG("insert relationship service type, local: %llu des: %llu", local_service_type, adv_service_type);
-            break;
-        case kChainAdvanceGroup:
-            // for adv, concerned with beacon(rec/zec) and other adv
-            break;
-        case kChainArchiveNet:
-            // for archive, concerned with self
-            break;
-        case kChainEdgeNet:
-            // for edge, concerned with self
-            break;
-        case kChainZecNet:
-        case kChainRecNet:
-            // for beacon(rec/zec), concerned with one adv and backup and edge, and archive
-            break;
-        default:
-            TOP_WARN("invalid service_type, xnetwork_id: %d", xnetwork_id);
-            break;
-        }
-    }
-
     return true;
 }
 
@@ -210,37 +121,6 @@ bool SmallNetNodes::CheckHasNode(const std::string & node_id, uint64_t service_t
 
     TOP_WARN("check elect data of node_id:%s failed", HexEncode(node_id).c_str());
     return false;
-}
-
-bool SmallNetNodes::FindNode(const std::string & account, NetNode & Fnode) {
-    std::unique_lock<std::mutex> lock(net_nodes_cache_map_mutex_);
-    for (auto mitem : net_nodes_cache_map_) {
-        for (auto & item : mitem.second->nodes) {
-            if (item.m_account == account) {
-                Fnode = item;
-                return true;
-            }
-        }
-    }
-    TOP_WARN("findnode of account:%s failed", account.c_str());
-    return false;
-}
-
-bool SmallNetNodes::FindNode(uint32_t index, NetNode & Fnode, uint64_t service_type) {
-    std::unique_lock<std::mutex> lock(net_nodes_cache_map_mutex_);
-    auto ifind = net_nodes_cache_map_.find(service_type);
-    if (ifind == net_nodes_cache_map_.end()) {
-        return false;
-    }
-    auto size = (ifind->second)->nodes.size();
-    if (size <= index) {
-        TOP_WARN("index:%d beyond vector.size:%d", index, size);
-        return false;
-    }
-
-    Fnode = (ifind->second)->nodes[index];
-    TOP_DEBUG("findnode of index:%d account:%s", index, Fnode.m_account.c_str());
-    return true;
 }
 
 bool SmallNetNodes::FindRandomNode(NetNode & Fnode, uint64_t service_type) {
@@ -327,7 +207,7 @@ uint32_t SmallNetNodes::AddNode(NetNode node) {
     if (ifind == net_nodes_cache_map_.end()) {
         auto net_nodes = std::make_shared<NetNodes>();
         net_nodes->latest_version = node.m_version;
-        AddNodeLimit(service_type, net_nodes->nodes, node);
+        net_nodes->nodes.push_back(node);
         net_nodes_cache_map_[service_type] = net_nodes;
         TOP_DEBUG("bluever %ld add node(%s) version(%llu)", (long)service_type, node.m_account.c_str(), node.m_version);
     } else {

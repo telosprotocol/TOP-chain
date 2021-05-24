@@ -31,13 +31,9 @@ public:
     bool Init();
 
     void GetAllServiceType(std::set<uint64_t> & svec);
-    bool GetLocalNodeInfo(uint64_t service_type, NetNode & local_node);
-    bool GetAdvanceOfConsensus(base::KadmliaKeyPtr con_kad, uint8_t associated_gid, uint64_t & adv_service_type);
-    // key is local service_type, value is set of dest service_type
-    bool GetAllRelatedServiceType(std::map<uint64_t, std::set<uint64_t>> & smap);
+
     uint32_t AddNode(NetNode node);
-    bool FindNode(const std::string & account, NetNode & Fnode);
-    bool FindNode(uint32_t index, NetNode & Fnode, uint64_t service_type);
+
     bool FindNewNode(NetNode & Fnode, uint64_t service_type);
     bool FindRandomNode(NetNode & Fnode, uint64_t service_type);
     bool FindAllNode(std::vector<NetNode> & node_vec, uint64_t service_type);
