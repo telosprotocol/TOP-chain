@@ -116,15 +116,15 @@ int NodeManager::DropNodes(const base::XipParser& xip, const std::vector<std::st
 int NodeManager::AddCommitteeRole(base::KadmliaKeyPtr& kad_key) {
     auto rt = wrouter::GetRoutingTable(kad_key->GetServiceType(), false);
 
+    if (rt) {
+        xwarn("this node has role: %llu", kad_key->GetServiceType());
+        return top::kadmlia::kKadFailed;
+    }
+
     std::unique_lock<std::mutex> lock(ec_manager_map_mutex_);
     auto iter = ec_manager_map_.find(kad_key->GetServiceType());
     if (iter != ec_manager_map_.end()) {
-        if (rt) {
-            TOP_WARN("this node has role: %llu", kad_key->GetServiceType());
-            return top::kadmlia::kKadFailed;
-        } else {
-            ec_manager_map_.erase(iter);
-        }
+        ec_manager_map_.erase(iter);
     }
 
     auto ec_manager = std::make_shared<RoutingManager>(kad_key->GetServiceType());
