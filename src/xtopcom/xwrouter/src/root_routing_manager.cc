@@ -131,7 +131,7 @@ int RootRoutingManager::CreateRoutingTable(std::shared_ptr<transport::Transport>
     RoutingTablePtr routing_table_ptr;
     routing_table_ptr.reset(new RootRouting(transport, local_node_ptr));
 
-    if (!routing_table_ptr->Init()) {
+    if (!routing_table_ptr->Init()) { // RootRouting::Init()
         TOP_FATAL("init edge bitvpn routing table failed!");
         return kKadFailed;
     }

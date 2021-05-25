@@ -69,24 +69,10 @@ void RootRouting::SetFreqMessage(transport::protobuf::RoutingMessage& message) {
 }
 
 bool RootRouting::ContainRootId(const std::string& id) {
-    if (local_node_ptr_->service_type() == kRoot) {
-        std::unique_lock<std::mutex> lock(root_id_set_mutex_);
-        auto iter = root_id_set_.find(id);
-        return iter != root_id_set_.end();
-    }
-
-    RoutingTablePtr root_routing_ptr = GetRoutingTable(kRoot, true);
-    if (!root_routing_ptr) {
-        TOP_WARN("root manager must first add root routing!");
-        return false;
-    }
-
-    RootRouting* root = dynamic_cast<RootRouting*>(root_routing_ptr.get());
-    if (!root) {
-        TOP_WARN("root manager must first add root routing!");
-        return false;
-    }
-    return root->ContainRootId(id);
+    assert(local_node_ptr_->service_type() == kRoot);
+    std::unique_lock<std::mutex> lock(root_id_set_mutex_);
+    auto iter = root_id_set_.find(id);
+    return iter != root_id_set_.end();
 }
 
 bool RootRouting::NewNodeReplaceOldNode(NodeInfoPtr node, bool remove) {
@@ -368,50 +354,21 @@ int RootRouting::GetRootNodes(uint64_t service_type, std::vector<NodeInfoPtr>& n
     return GetRootNodes(kad_key->Get(), nodes);
 }
 
-
 bool RootRouting::Init() {
     local_node_ptr_->set_is_root(true);
-     if (!WrouterBaseRouting::Init()) {
+    if (!WrouterBaseRouting::Init()) {
         TOP_ERROR("WrouterBaseRouting::Init failed");
         return false;
     }
-    //if (network_id == kRoot) {
-    if (local_node_ptr_->kadmlia_key()->xnetwork_id() == kRoot) {
-        local_node_ptr_->set_kadmlia_key(global_xid);
-        if (!StartBootstrapCacheSaver()) {
-            TOP_ERROR("WrouterBaseRouting::StartBootstrapCacheSaver failed");
-            return false;
-        }
-        AddNetworkRootId(local_node_ptr_->id());
-    } else {
-        RoutingTablePtr root_routing_ptr = GetRoutingTable(kRoot, true);
-        if (!root_routing_ptr) {
-            TOP_ERROR("root manager must first add root routing!");
-            return false;
-        }
-
-        RootRouting* root = dynamic_cast<RootRouting*>(root_routing_ptr.get());
-        if (!root) {
-            TOP_ERROR("root manager must first add root routing!");
-            return false;
-        }
-        root->AddNetworkRootId(local_node_ptr_->id());
-
-        // add by smaug
-        NodeInfoPtr self_service_root_node;
-        self_service_root_node.reset(new NodeInfo(local_node_ptr_->id()));
-        self_service_root_node->local_ip = local_node_ptr_->local_ip();
-        self_service_root_node->local_port = local_node_ptr_->local_port();
-        self_service_root_node->public_ip  = local_node_ptr_->public_ip();
-        self_service_root_node->public_port = local_node_ptr_->public_port();
-        self_service_root_node->nat_type = local_node_ptr_->nat_type();
-        self_service_root_node->xip = local_node_ptr_->xip();
-        self_service_root_node->xid = global_xid->Get();
-        self_service_root_node->hash64 = base::xhash64_t::digest(self_service_root_node->node_id);
-        root->AddNode(self_service_root_node);
+    assert(local_node_ptr_->kadmlia_key()->xnetwork_id() == kRoot);
+    local_node_ptr_->set_kadmlia_key(global_xid);
+    if (!StartBootstrapCacheSaver()) {
+        TOP_ERROR("WrouterBaseRouting::StartBootstrapCacheSaver failed");
+        return false;
     }
-    TOP_INFO("bitvpn routing table Init success");
-    // return SupportRumor(true);
+    AddNetworkRootId(local_node_ptr_->id());
+
+    TOP_INFO("root routing table Init success");
     return true;
 }
 
@@ -429,12 +386,6 @@ void RootRouting::HandleRootGetNodesRequest(
     base::KadmliaKeyPtr kad_key = base::GetKadmliaKey(message.des_node_id());
     uint64_t node_service_type = kad_key->GetServiceType();
     if (message.des_node_id() != local_node_ptr_->id()) {
-        std::set<std::string> root_id_set;
-        {
-            std::unique_lock<std::mutex> lock(root_id_set_mutex_);
-            root_id_set = root_id_set_;
-        }
-
         bool closest = false;
         std::set<std::string> exclude;
         exclude.insert(message.src_node_id());
