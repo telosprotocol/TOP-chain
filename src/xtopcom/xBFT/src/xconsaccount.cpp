@@ -361,6 +361,17 @@ namespace top
             xassert(0);
             return false;
         }
+        
+        bool xcsaccount_t::is_mailbox_over_limit(const int32_t max_mailbox_num) {
+            int64_t in, out;
+            int32_t queue_size = count_calls(in, out);
+            bool discard = queue_size >= max_mailbox_num;
+            if (discard) {
+                xwarn("xcsaccount_t::is_mailbox_over_limit in=%lld,out=%lld,queue:%d,max_mailbox_num:%d", in, out, queue_size, max_mailbox_num);
+                return true;
+            }
+            return false;
+        }
 
     };//end of namespace of xconsensus
 

@@ -179,7 +179,7 @@ public:
 };
 
 using xcons_proxy_face_ptr = std::shared_ptr<xcons_proxy_face>;
-
+const int32_t max_mailbox_num = 8192;
 // block dispatcher
 class xcons_dispatcher {
 public:
@@ -201,6 +201,10 @@ public:
 protected:
     template <typename T>
     int async_dispatch(base::xcspdu_t * pdu, const xvip2_t & xip_from, const xvip2_t & xip_to, T * picker) {
+        if (picker->is_mailbox_over_limit(max_mailbox_num)) {
+            return -1;
+        }
+
         auto handler = [xip_from, xip_to](base::xcall_t & call, const int32_t cur_thread_id, const uint64_t timenow_ms) -> bool {
             auto packer = dynamic_cast<T *>(call.get_param1().get_object());
             auto raw_pdu = dynamic_cast<base::xcspdu_t *>(call.get_param2().get_object());

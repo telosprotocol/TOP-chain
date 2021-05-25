@@ -286,6 +286,7 @@ bool xbatch_packer::recv_in(const xvip2_t & from_addr, const xvip2_t & to_addr, 
                         // "from_xip", xcons_utl::xip_to_hex(from_addr),
                         // "to_xip", xcons_utl::xip_to_hex(to_addr),
                         "node_xip", xcons_utl::xip_to_hex(get_xip2_addr()));
+    XMETRICS_TIME_RECORD("cons_tableblock_recv_in_time_consuming");
 
     // proposal should pass to xbft, so xbft could realize local is beind in view/block and do sync
     m_unorder_cache.filter_event(m_last_view_id, from_addr, to_addr, packet);
@@ -326,7 +327,7 @@ bool xbatch_packer::recv_in(const xvip2_t & from_addr, const xvip2_t & to_addr, 
 }
 
 int xbatch_packer::verify_proposal(base::xvblock_t * proposal_block, base::xvqcert_t * bind_clock_cert, xcsobject_t * _from_child) {
-    XMETRICS_TIME_RECORD("cons_tableblock_verfiy_proposal_time_consuming");
+    XMETRICS_TIME_RECORD("cons_tableblock_verify_proposal_time_consuming");
     return m_proposal_maker->verify_proposal(proposal_block, bind_clock_cert);
 }
 
