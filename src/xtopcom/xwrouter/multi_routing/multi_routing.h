@@ -29,7 +29,6 @@ public:
     void AddRoutingTable(uint64_t type, kadmlia::RoutingTablePtr routing_table);
     void RemoveRoutingTable(uint64_t type);
 
-
     void SetRootRoutingManager(std::shared_ptr<RootRoutingManager> root_manager_ptr);
 
 private:
@@ -44,9 +43,6 @@ private:
         uint64_t service_type,
         std::set<std::pair<std::string, uint16_t>>& boot_endpoints);
     friend bool SetCacheServiceType(uint64_t service_type);
-    
-    
-    void RemoveAllRoutingTable();
     
     void GetAllRegisterType(std::vector<uint64_t>& vec_type);
     void GetAllRegisterRoutingTable(std::vector<std::shared_ptr<kadmlia::RoutingTable>>& vec_rt);

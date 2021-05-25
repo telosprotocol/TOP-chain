@@ -66,8 +66,8 @@ void MultiRouting::AddRoutingTable(uint64_t type, RoutingTablePtr routing_table)
 }
 
 void MultiRouting::RemoveRoutingTable(uint64_t type) {
-    if (root_manager_ptr_) {
-        root_manager_ptr_->RemoveRoutingTable(type);
+    if (type == kRoot && root_manager_ptr_) {
+        root_manager_ptr_->Destory();
         TOP_KINFO("remove root routing table: %llu", type);
     }
 
@@ -92,25 +92,6 @@ void MultiRouting::RemoveRoutingTable(uint64_t type) {
     }
 }
 
-void MultiRouting::RemoveAllRoutingTable() {
-    if (root_manager_ptr_) {
-        root_manager_ptr_->RemoveAllRoutingTable();
-        TOP_KINFO("remove all root routing table");
-    }
-
-    decltype(routing_table_map_) rt_map;
-    {
-        std::unique_lock<std::mutex> lock(routing_table_map_mutex_);
-        rt_map = routing_table_map_;
-    }
-
-    for (auto it = rt_map.begin(); it != rt_map.end();) {
-        it->second->UnInit();
-        it = rt_map.erase(it);
-        TOP_KINFO("remove all service routing table");
-    }
-}
-
 RoutingTablePtr MultiRouting::GetRoutingTable(const uint64_t & type, bool root) {
     if (root || type == kRoot) {
         if (!root_manager_ptr_) {
@@ -126,7 +107,7 @@ RoutingTablePtr MultiRouting::GetRoutingTable(const std::string & routing_id, bo
         if (!root_manager_ptr_) {
             return nullptr;
         }
-        return root_manager_ptr_->GetRoutingTable(routing_id);
+        return root_manager_ptr_->GetRoutingTable(kRoot);
     }
     return GetServiceRoutingTable(routing_id);
 }

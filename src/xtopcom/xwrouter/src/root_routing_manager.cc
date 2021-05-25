@@ -25,83 +25,48 @@ RootRoutingManagerPtr RootRoutingManager::Instance() {
     return ins;
 }
 
-RootRoutingManager::RootRoutingManager()
-        : root_routing_map_(),
-          root_routing_map_mutex_() {}
+RootRoutingManager::RootRoutingManager() : root_routing_table_(nullptr), root_routing_table_mutex_() {
+}
 
 RootRoutingManager::~RootRoutingManager() {
-    std::unique_lock<std::mutex> lock(root_routing_map_mutex_);
-    for (auto iter = root_routing_map_.begin(); iter != root_routing_map_.end(); ++iter) {
-        iter->second->UnInit();
+    Destory();
+}
+
+void RootRoutingManager::Destory() {
+    std::unique_lock<std::mutex> lock(root_routing_table_mutex_);
+    if (root_routing_table_ != nullptr) {
+        root_routing_table_->UnInit();
+        root_routing_table_.reset();
     }
-    root_routing_map_.clear();
 }
 
 int RootRoutingManager::GetRootNodes(
         uint32_t network_id,
         std::vector<NodeInfoPtr>& root_nodes) {
-    RoutingTablePtr routing_table;
-    {
-        std::unique_lock<std::mutex> lock(root_routing_map_mutex_);
-        auto iter = root_routing_map_.find(kRoot);
-        if (iter == root_routing_map_.end()) {
-            TOP_WARN("service type[%d] has not added!", network_id);
-            return kKadFailed;
-        }
-        routing_table = iter->second;
-    }
-    if (!routing_table) {
+    std::unique_lock<std::mutex> lock(root_routing_table_mutex_);
+    if (!root_routing_table_) {
         TOP_WARN("get routing table failed!");
         return kKadFailed;
     }
-    RootRouting* root_table = static_cast<RootRouting*>(routing_table.get());
-    if (!routing_table) {
+    RootRouting* root_table = static_cast<RootRouting*>(root_routing_table_.get());
+    if (!root_table) {
         TOP_WARN("get routing table failed!");
         return kKadFailed;
     }
     return root_table->GetRootNodes(network_id, root_nodes);
 }
 
-int RootRoutingManager::GetRootNodes(
-        const std::string& des_id,
-        std::vector<NodeInfoPtr>& root_nodes) {
-    RoutingTablePtr routing_table;
-    {
-        std::unique_lock<std::mutex> lock(root_routing_map_mutex_);
-        auto iter = root_routing_map_.find(kRoot);
-        if (iter == root_routing_map_.end()) {
-            TOP_WARN("service type[%s] has not added!", HexEncode(des_id).c_str());
-            return kKadFailed;
-        }
-        routing_table = iter->second;
-    }
-    if (!routing_table) {
-        TOP_WARN("get routing table failed!");
-        return kKadFailed;
-    }
-    RootRouting* root_table = static_cast<RootRouting*>(routing_table.get());
-    return root_table->GetRootNodes(des_id, root_nodes);
-}
-
 int RootRoutingManager::GetRootNodesV2(
         const std::string& des_id,
         uint64_t service_type,
         std::vector<NodeInfoPtr>& root_nodes) {
-    RoutingTablePtr routing_table;
-    {
-        std::unique_lock<std::mutex> lock(root_routing_map_mutex_);
-        auto iter = root_routing_map_.find(kRoot);
-        if (iter == root_routing_map_.end()) {
-            TOP_WARN("service type[%s] has not added!", HexEncode(des_id).c_str());
-            return kKadFailed;
-        }
-        routing_table = iter->second;
-    }
-    if (!routing_table) {
+    std::unique_lock<std::mutex> lock(root_routing_table_mutex_);
+
+    if (!root_routing_table_) {
         TOP_WARN("get routing table failed!");
         return kKadFailed;
     }
-    RootRouting* root_table = static_cast<RootRouting*>(routing_table.get());
+    RootRouting * root_table = static_cast<RootRouting *>(root_routing_table_.get());
     return root_table->GetRootNodesV2(des_id, service_type, root_nodes);
 }
 
@@ -117,13 +82,12 @@ int RootRoutingManager::GetRootBootstrapCache(
     return kKadSuccess;
 }
 
-int RootRoutingManager::AddRoutingTable(
-        std::shared_ptr<transport::Transport> transport,
-        const base::Config& config,
-        base::KadmliaKeyPtr kad_key_ptr,
-        on_bootstrap_cache_get_callback_t get_cache_callback,
-        on_bootstrap_cache_set_callback_t set_cache_callback,
-        bool wait_for_joined) {
+int RootRoutingManager::InitRootRoutingTable(std::shared_ptr<transport::Transport> transport,
+                                             const base::Config & config,
+                                             base::KadmliaKeyPtr kad_key_ptr,
+                                             on_bootstrap_cache_get_callback_t get_cache_callback,
+                                             on_bootstrap_cache_set_callback_t set_cache_callback,
+                                             bool wait_for_joined) {
     if (!transport) {
         TOP_FATAL("invalid udp transport!");
         return kKadFailed;
@@ -142,90 +106,27 @@ int RootRoutingManager::AddRoutingTable(
 
     return kKadSuccess;
 }
-    
-void RootRoutingManager::RemoveRoutingTable(uint64_t service_type) {
-    RoutingTablePtr root_routing = nullptr;
-    {
-        std::unique_lock<std::mutex> lock(root_routing_map_mutex_);
-        auto iter = root_routing_map_.find(service_type);
-        if (iter != root_routing_map_.end()) {
-            root_routing = iter->second;
-            root_routing_map_.erase(iter);
-        }
-    }
-
-    if (root_routing) {
-        root_routing->UnInit();
-    }
-}
-
-void RootRoutingManager::RemoveAllRoutingTable() {
-    decltype(root_routing_map_) rt_map;
-    {
-        std::unique_lock<std::mutex> lock(root_routing_map_mutex_);
-        rt_map = root_routing_map_;
-    }
-
-    for (auto it = rt_map.begin(); it != rt_map.end();) {
-        it->second->UnInit();
-        it = rt_map.erase(it);
-        TOP_KINFO("remove all root service routing table");
-    }
-
-
-    /*
-    std::unique_lock<std::mutex> lock(root_routing_map_mutex_);
-    for (auto it = root_routing_map_.begin(); it != root_routing_map_.end();) {
-        it->second->UnInit();
-        it = root_routing_map_.erase(it);
-    }
-    */
-}
-
 
 std::shared_ptr<RoutingTable> RootRoutingManager::GetRoutingTable(uint64_t service_type) {
-    std::unique_lock<std::mutex> lock(root_routing_map_mutex_);
-    auto iter = root_routing_map_.find(service_type);
-    if (iter != root_routing_map_.end()) {
-        return iter->second;
-    }
-    return nullptr;
+    assert(service_type == kRoot);
+    std::unique_lock<std::mutex> lock(root_routing_table_mutex_);
+    return root_routing_table_;
 }
 
-std::shared_ptr<RoutingTable> RootRoutingManager::GetRoutingTable(const std::string& routing_id) {
-    {
-        std::unique_lock<std::mutex> lock(root_routing_map_mutex_);
-        for (auto& item : root_routing_map_) {
-            auto routing_ptr = item.second;
-            if (routing_ptr->get_local_node_info()->id() == routing_id) {
-                return routing_ptr;
-            }
-        }
-    }
-    // handle kRoot nodeid
-    auto kad_key_ptr = base::GetKadmliaKey(routing_id);
-    auto xnetwork_id = kad_key_ptr->xnetwork_id();
-    if (xnetwork_id == kRoot) {
-        return this->GetRoutingTable(kRoot);
-    }
-    return nullptr;
-}
-
-int RootRoutingManager::CreateRoutingTable(
-        std::shared_ptr<transport::Transport> transport,
-        const base::Config& config,
-        base::KadmliaKeyPtr kad_key_ptr,
-        on_bootstrap_cache_get_callback_t get_cache_callback,
-        on_bootstrap_cache_set_callback_t set_cache_callback,
-        bool wait_for_joined) {
+int RootRoutingManager::CreateRoutingTable(std::shared_ptr<transport::Transport> transport,
+                                           const base::Config & config,
+                                           base::KadmliaKeyPtr kad_key_ptr,
+                                           on_bootstrap_cache_get_callback_t get_cache_callback,
+                                           on_bootstrap_cache_set_callback_t set_cache_callback,
+                                           bool wait_for_joined) {
     uint64_t service_type = kRoot;
+    assert(kad_key_ptr->Xip().xnetwork_id() == kRoot);
     if (kad_key_ptr->Xip().xnetwork_id() != kRoot) {
         service_type = kad_key_ptr->GetServiceType();
     }
     {
-        std::unique_lock<std::mutex> lock(root_routing_map_mutex_);
-        auto iter = root_routing_map_.find(service_type);
-        if (iter != root_routing_map_.end()) {
+        std::unique_lock<std::mutex> lock(root_routing_table_mutex_);
+        if (root_routing_table_ != nullptr) {
             TOP_WARN("service type[%lu] has added!", service_type);
             return kKadSuccess;
         }
@@ -250,34 +151,26 @@ int RootRoutingManager::CreateRoutingTable(
     }
 
     // enable bootstrap public endpoints cache
-    if (service_type == kRoot) {
-        routing_table_ptr->RegisterBootstrapCacheCallback(get_cache_callback, set_cache_callback);
-        TOP_INFO("kroot routing table enable bootstrapcache, register set and get");
-    }
+    routing_table_ptr->RegisterBootstrapCacheCallback(get_cache_callback, set_cache_callback);
+    TOP_INFO("kroot routing table enable bootstrapcache, register set and get");
 
     routing_table_ptr->get_local_node_info()->set_service_type(service_type);
     {
-        std::unique_lock<std::mutex> lock(root_routing_map_mutex_);
-        root_routing_map_[service_type] = routing_table_ptr;
+        std::unique_lock<std::mutex> lock(root_routing_table_mutex_);
+        root_routing_table_ = routing_table_ptr;
     }
 
-    if (service_type == kRoot) {
-        bool first_node = false;
-        if (config.Get("node", "first_node", first_node)) {
-            if (first_node) {
-                TOP_INFO("first node started!");
-                return kKadSuccess;
-            }
+    bool first_node = false;
+    if (config.Get("node", "first_node", first_node)) {
+        if (first_node) {
+            TOP_INFO("first node started!");
+            return kKadSuccess;
         }
     }
 
     TOP_INFO("before public_endpoints_all");
     std::set<std::pair<std::string, uint16_t>> public_endpoints_all;
-    if (service_type == kRoot) {
-        routing_table_ptr->GetBootstrapCache(public_endpoints_all);
-    } else {
-        GetRootBootstrapCache(public_endpoints_all);
-    }
+    routing_table_ptr->GetBootstrapCache(public_endpoints_all);
 
     TOP_INFO("before MergeEndpoints");
     base::MergeEndpoints(public_endpoints_config, public_endpoints_all);
@@ -295,7 +188,6 @@ int RootRoutingManager::CreateRoutingTable(
     } else {
         routing_table_ptr->MultiJoinAsync(public_endpoints_all);
     }
-
     return kKadSuccess;
 }
 
@@ -341,41 +233,23 @@ int RootRoutingManager::GetBootstrapRootNetwork(
 bool RootRoutingManager::GetServiceBootstrapRootNetwork(
         uint64_t service_type,
         std::set<std::pair<std::string, uint16_t>>& boot_endpoints) {
-    RoutingTablePtr routing_table;
-    {
-        std::unique_lock<std::mutex> lock(root_routing_map_mutex_);
-        auto iter = root_routing_map_.find(kRoot);
-        if (iter == root_routing_map_.end()) {
-            TOP_WARN("service type[%d] has not added!", service_type);
-            return false;
-        }
-        routing_table = iter->second;
-    }
-    if (!routing_table) {
+    std::unique_lock<std::mutex> lock(root_routing_table_mutex_);
+    if (!root_routing_table_) {
         TOP_WARN("get routing table failed!");
         return false;
     }
-    RootRouting* root_table = static_cast<RootRouting*>(routing_table.get());
+    RootRouting * root_table = static_cast<RootRouting *>(root_routing_table_.get());
     return root_table->GetCacheServicePublicNodes(service_type, boot_endpoints);
 }
 
 
 bool RootRoutingManager::SetCacheServiceType(uint64_t service_type) {
-    RoutingTablePtr routing_table;
-    {
-        std::unique_lock<std::mutex> lock(root_routing_map_mutex_);
-        auto iter = root_routing_map_.find(kRoot);
-        if (iter == root_routing_map_.end()) {
-            TOP_WARN("service type[%d] has not added!", service_type);
-            return false;
-        }
-        routing_table = iter->second;
-    }
-    if (!routing_table) {
+    std::unique_lock<std::mutex> lock(root_routing_table_mutex_);
+    if (!root_routing_table_) {
         TOP_WARN("get routing table failed!");
         return false;
     }
-    RootRouting* root_table = static_cast<RootRouting*>(routing_table.get());
+    RootRouting * root_table = static_cast<RootRouting *>(root_routing_table_.get());
     return root_table->SetCacheServiceType(service_type);
 }
 

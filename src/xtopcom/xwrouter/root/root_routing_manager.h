@@ -34,21 +34,15 @@ public:
     static RootRoutingManagerPtr Instance();
     RootRoutingManager();
     ~RootRoutingManager();
-    int AddRoutingTable(
-            std::shared_ptr<transport::Transport> transport,
-            const base::Config& config,
-            base::KadmliaKeyPtr kad_key_ptr,
-            on_bootstrap_cache_get_callback_t get_cache_callback,
-            on_bootstrap_cache_set_callback_t set_cache_callback,
-            bool wait_for_joined = true);
-    void RemoveRoutingTable(uint64_t service_type);
-    void RemoveAllRoutingTable();
+    void Destory();
+    int InitRootRoutingTable(std::shared_ptr<transport::Transport> transport,
+                             const base::Config & config,
+                             base::KadmliaKeyPtr kad_key_ptr,
+                             on_bootstrap_cache_get_callback_t get_cache_callback,
+                             on_bootstrap_cache_set_callback_t set_cache_callback,
+                             bool wait_for_joined = true);
     std::shared_ptr<kadmlia::RoutingTable> GetRoutingTable(uint64_t service_type);
-    std::shared_ptr<kadmlia::RoutingTable> GetRoutingTable(const std::string& routing_id);
     int GetRootNodes(uint32_t network_id, std::vector<kadmlia::NodeInfoPtr>& root_nodes);
-    int GetRootNodes(
-            const std::string& des_id,
-            std::vector<kadmlia::NodeInfoPtr>& root_nodes);
     int GetRootNodesV2(
             const std::string& des_id,
             uint64_t service_type,
@@ -84,9 +78,8 @@ private:
             uint64_t service_type,
             const std::vector<kadmlia::NodeInfoPtr>& nodes);
 
-private:
-    std::map<uint64_t, std::shared_ptr<kadmlia::RoutingTable>> root_routing_map_;
-    std::mutex root_routing_map_mutex_;
+	std::shared_ptr<kadmlia::RoutingTable> root_routing_table_;
+    std::mutex root_routing_table_mutex_;
 
     DISALLOW_COPY_AND_ASSIGN(RootRoutingManager);
 };
