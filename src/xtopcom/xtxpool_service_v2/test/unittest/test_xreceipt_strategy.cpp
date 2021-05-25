@@ -31,13 +31,6 @@ TEST_F(test_receipt_strategy, is_time_for_recover) {
     ASSERT_EQ(select_count, 1);
 }
 
-TEST_F(test_receipt_strategy, is_need_select_sender) {
-    ASSERT_EQ(xreceipt_strategy_t::is_need_select_sender(base::enum_transaction_subtype_confirm, 0), true);
-    ASSERT_EQ(xreceipt_strategy_t::is_need_select_sender(base::enum_transaction_subtype_confirm, 1), true);
-    ASSERT_EQ(xreceipt_strategy_t::is_need_select_sender(base::enum_transaction_subtype_recv, 0), true);
-    ASSERT_EQ(xreceipt_strategy_t::is_need_select_sender(base::enum_transaction_subtype_recv, 1), false);
-}
-
 TEST_F(test_receipt_strategy, calc_resend_time) {
     uint64_t now = xverifier::xtx_utl::get_gmttime_s();
     ASSERT_EQ(xreceipt_strategy_t::calc_resend_time(now - 63, now), 0);

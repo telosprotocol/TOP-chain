@@ -76,7 +76,7 @@ void xtxpool_service_mgr::on_block_confirmed(xblock_t * block) {
 
     deal_table_block(block, now_clock);
 
-    if (block->is_lighttable() && block->get_clock() + block_clock_height_fall_behind_max > now_clock) {
+    if (block->is_lighttable()) {
         m_para->get_txpool()->on_block_confirmed(block);
     }
 }
@@ -230,7 +230,8 @@ void xtxpool_service_mgr::on_timer() {
         std::lock_guard<std::mutex> lock(m_mutex);
         for (auto & iter : m_service_map) {
             auto service = iter.second;
-            if (is_time_for_recover_unconfirmed_txs) {
+            // only receipt sender need recover unconfirmed txs.
+            if (service->is_send_receipt_role() && is_time_for_recover_unconfirmed_txs) {
                 base::enum_xchain_zone_index zone_id;
                 uint32_t fount_table_id;
                 uint32_t back_table_id;
@@ -243,7 +244,6 @@ void xtxpool_service_mgr::on_timer() {
         }
     }
 
-    // all nodes should recover unconfirmed txs, for get original tx when receive confirm tx.
     // because recover might be very time-consuming, recover should not in lock of "m_mutex", or else xtxpool_service_mgr::create may be blocked.
     for (auto table_boundary : table_boundarys) {
         base::enum_xchain_zone_index zone_id = std::get<0>(table_boundary);
@@ -252,7 +252,7 @@ void xtxpool_service_mgr::on_timer() {
         xinfo("xtxpool_service_mgr::on_timer, recover unconfirmed txs for zone:%d table:%d:%d", zone_id, fount_table_id, back_table_id);
         for (uint32_t table_id = fount_table_id; table_id <= back_table_id; table_id++) {
             m_para->get_txpool()->update_unconfirm_accounts(zone_id, table_id);
-            m_para->get_txpool()->update_non_ready_accounts(zone_id, table_id);
+            // m_para->get_txpool()->update_non_ready_accounts(zone_id, table_id);
         }
     }
 }

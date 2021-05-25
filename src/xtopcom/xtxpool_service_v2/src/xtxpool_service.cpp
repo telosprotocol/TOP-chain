@@ -117,11 +117,11 @@ bool xtxpool_service::fade(const xvip2_t & xip) {
     return !m_running;
 }
 
-bool xtxpool_service::is_running() {
+bool xtxpool_service::is_running() const {
     return m_running;
 }
 
-void xtxpool_service::get_service_table_boundary(base::enum_xchain_zone_index & zone_id, uint32_t & fount_table_id, uint32_t & back_table_id) {
+void xtxpool_service::get_service_table_boundary(base::enum_xchain_zone_index & zone_id, uint32_t & fount_table_id, uint32_t & back_table_id) const {
     zone_id = m_zone_index;
     fount_table_id = m_cover_front_table_id;
     back_table_id = m_cover_back_table_id;
@@ -142,20 +142,20 @@ void xtxpool_service::resend_receipts(uint64_t now) {
                 if (tx != nullptr && tx->get_tx()->is_confirm_tx()) {
                     continue;
                 }
-                send_receipt(recv_tx, 1);
+                send_receipt_retry(recv_tx);
             }
         }
     }
 }
 
-bool xtxpool_service::is_belong_to_service(xtable_id_t tableid) {
+bool xtxpool_service::is_belong_to_service(xtable_id_t tableid) const {
     if (tableid.get_zone_index() == m_zone_index && (tableid.get_subaddr() >= m_cover_front_table_id && tableid.get_subaddr() <= m_cover_back_table_id)) {
         return true;
     }
     return false;
 }
 
-bool xtxpool_service::table_boundary_equal_to(std::shared_ptr<xtxpool_service_face> & service) {
+bool xtxpool_service::table_boundary_equal_to(std::shared_ptr<xtxpool_service_face> & service) const {
     base::enum_xchain_zone_index zone_id;
     uint32_t fount_table_id;
     uint32_t back_table_id;
@@ -195,43 +195,10 @@ void xtxpool_service::on_message_unit_receipt(vnetwork::xvnode_address_t const &
     XMETRICS_TIME_RECORD("txpool_message_unit_receipt");
     base::xstream_t stream(top::base::xcontext_t::instance(), (uint8_t *)message.payload().data(), (uint32_t)message.payload().size());
     data::xcons_transaction_ptr_t receipt = make_object_ptr<data::xcons_transaction_t>();
-    int32_t ret;
-    if (message.id() == xtxpool_msg_recv_receipt) {
-        XMETRICS_TIME_RECORD("txpool_message_unit_receipt_recv_receipt");
-        xobject_ptr_t<xtxpool_confirm_receipt_msg_t> confirm_receipt_msg = make_object_ptr<xtxpool_confirm_receipt_msg_t>();
-        ret = confirm_receipt_msg->serialize_from(stream);
-        if (ret <= 0) {
-            xerror("xtxpool_service::on_message_unit_receipt confirm receipt serialize_from fail ret:%d", ret);
-            return;
-        }
-        auto & account_addr = confirm_receipt_msg->get_source_addr();
-        auto hash = confirm_receipt_msg->get_receipt()->get_tx_info()->get_tx_hash_256();
-        auto tx = m_para->get_txpool()->get_unconfirm_tx(account_addr, hash);
-        xobject_ptr_t<xtransaction_t> transction_ptr = nullptr;
-        if (tx != nullptr) {
-            tx->get_transaction()->add_ref();
-            transction_ptr.attach(tx->get_transaction());
-        } else {
-            // todo:check if confirm tx is duplicate first.
-            auto str_hash(std::string(reinterpret_cast<char *>(hash.data()), hash.size()));
-            auto tx_obj = m_para->get_vtxstore()->load_tx_obj(str_hash);
-            if (tx_obj != nullptr) {
-                transction_ptr = dynamic_xobject_ptr_cast<top::data::xtransaction_t>(tx_obj);
-            } else {
-                xwarn("xtxpool_service::on_message_unit_receipt unconfirm tx not found:source addr:%s, hash:%s",
-                      account_addr.c_str(),
-                      confirm_receipt_msg->get_receipt()->get_tx_info()->get_tx_hex_hash().c_str());
-                return;
-            }
-        }
-
-        receipt = make_object_ptr<data::xcons_transaction_t>(transction_ptr.get(), confirm_receipt_msg->get_receipt());
-    } else {
-        ret = receipt->serialize_from(stream);
-        if (ret <= 0) {
-            xerror("xtxpool_service::on_message_unit_receipt receipt serialize_from fail ret:%d", ret);
-            return;
-        }
+    int32_t ret = receipt->serialize_from(stream);
+    if (ret <= 0) {
+        xerror("xtxpool_service::on_message_unit_receipt receipt serialize_from fail ret:%d", ret);
+        return;
     }
 
     xinfo("xtxpool_service::on_message_unit_receipt receipt=%s,from_vnode:%s,at_node:%s", receipt->dump().c_str(), sender.to_string().c_str(), m_vnetwork_str.c_str());
@@ -256,18 +223,20 @@ void xtxpool_service::on_message_unit_receipt(vnetwork::xvnode_address_t const &
 }
 
 void xtxpool_service::check_and_response_recv_receipt(const xcons_transaction_ptr_t & cons_tx) {
-    if (!cons_tx->is_recv_tx()) {
-        return;
-    }
-    if (!m_is_send_receipt_role) {
+    if (!cons_tx->is_recv_tx() || !m_is_send_receipt_role) {
         return;
     }
     XMETRICS_TIME_RECORD("txpool_message_unit_receipt_check_receipt");
     xdbg("xtxpool_service::check_and_response_recv_receipt receipt=%s at_node:%ld", cons_tx->dump().c_str(), m_xip.low_addr);
     const xlightunit_output_entity_t * info = cons_tx->get_tx_info();
 
-    if (!info->is_send_tx()) {
-        xassert(0);
+    xassert(info->is_send_tx());
+    
+    // if tx subtype is recv and is resend, need not select by function has_receipt_right, because sender is already selected by gmtime before here.
+    
+    uint32_t resend_time = xreceipt_strategy_t::calc_resend_time(cons_tx->get_unit_cert()->get_gmtime(), xverifier::xtx_utl::get_gmttime_s());
+    if (xreceipt_strategy_t::is_selected_sender(cons_tx, resend_time, m_node_id, m_shard_size)) {
+        return;
     }
 
     xtransaction_t * tx = cons_tx->get_transaction();
@@ -288,22 +257,20 @@ void xtxpool_service::check_and_response_recv_receipt(const xcons_transaction_pt
             auto recv_tx_receipt = lightunit->create_one_txreceipt(tx);
             xassert(recv_tx_receipt->is_confirm_tx());
 
-            uint32_t resend_time = xreceipt_strategy_t::calc_resend_time(recv_tx_receipt->get_unit_cert()->get_gmtime(), xverifier::xtx_utl::get_gmttime_s());
-            send_receipt(recv_tx_receipt, resend_time);
+            send_receipt_retry(recv_tx_receipt);
         } else {
             xerror("xtxpool_service::check_and_response_recv_receipt recv tx unit not exist txhash:%s block_height:%ld",
                    tx->get_digest_hex_str().c_str(),
                    tx_store->get_recv_unit_height());
         }
     } else {
-        // TODO(jimmy) sync invoke
         mbus::xevent_ptr_t ev = make_object_ptr<mbus::xevent_behind_on_demand_by_hash_t>(tx->get_target_addr(), tx->get_digest_str(), "lack of unit");
         m_para->get_bus()->push_event(ev);
         xwarn("xtxpool_service::check_and_response_recv_receipt unit of recv tx not found, try sync unit for tx:%s", cons_tx->dump().c_str());
     }
 }
 
-bool xtxpool_service::is_receipt_sender(const xtable_id_t & tableid) {
+bool xtxpool_service::is_receipt_sender(const xtable_id_t & tableid) const {
     return m_running && m_is_send_receipt_role && is_belong_to_service(tableid);
 }
 
@@ -349,23 +316,20 @@ bool xtxpool_service::set_commit_prove(data::xcons_transaction_ptr_t & cons_tx) 
     return true;
 }
 
-void xtxpool_service::send_receipt(data::xcons_transaction_ptr_t & cons_tx, uint32_t resend_time) {
-    if (!m_running) {
-        return;
-    }
-    // if tx subtype is recv and is resend, need not select by function has_receipt_right, because sender is already selected by gmtime before here.
-    if (xreceipt_strategy_t::is_need_select_sender(cons_tx->get_tx_subtype(), resend_time) && (!xreceipt_strategy_t::is_selected_sender(cons_tx, resend_time, m_node_id, m_shard_size))) {
-        return;
-    }
+void xtxpool_service::send_receipt_retry(data::xcons_transaction_ptr_t & cons_tx) {
     if (!set_commit_prove(cons_tx)) {
         return;
     }
     send_receipt_real(cons_tx);
-    if (resend_time) {
-        XMETRICS_COUNTER_INCREMENT("txpool_receipt_first_send", 1);
-    } else {
-        XMETRICS_COUNTER_INCREMENT("txpool_receipt_retry_send", 1);
-    }
+
+    XMETRICS_COUNTER_INCREMENT("txpool_receipt_retry_send", 1);
+}
+
+void xtxpool_service::send_receipt_first_time(data::xcons_transaction_ptr_t & cons_tx, xblock_t * cert_block) {
+    cons_tx->set_commit_prove_with_parent_cert(cert_block->get_cert());
+    xassert(cons_tx->get_receipt()->is_valid());
+    send_receipt_real(cons_tx);
+    XMETRICS_COUNTER_INCREMENT("txpool_receipt_first_send", 1);
 }
 
 void xtxpool_service::send_receipt_real(const data::xcons_transaction_ptr_t & cons_tx) {
@@ -373,15 +337,10 @@ void xtxpool_service::send_receipt_real(const data::xcons_transaction_ptr_t & co
         std::string target_addr = cons_tx->get_receipt_target_account();
 
         top::base::xautostream_t<4096> stream(top::base::xcontext_t::instance());
-        vnetwork::xmessage_t msg;
-        if (cons_tx->is_recv_tx()) {
-            cons_tx->serialize_to(stream);
-            msg = vnetwork::xmessage_t({stream.data(), stream.data() + stream.size()}, xtxpool_msg_send_receipt);
-        } else {
-            xtxpool_confirm_receipt_msg_t confirm_receipt_msg(cons_tx->get_source_addr(), cons_tx->get_receipt());
-            confirm_receipt_msg.serialize_to(stream);
-            msg = vnetwork::xmessage_t({stream.data(), stream.data() + stream.size()}, xtxpool_msg_recv_receipt);
-        }
+        cons_tx->serialize_to(stream);
+        vnetwork::xmessage_t msg =
+            vnetwork::xmessage_t({stream.data(), stream.data() + stream.size()}, cons_tx->is_recv_tx() ? xtxpool_msg_send_receipt : xtxpool_msg_recv_receipt);
+
         // TODO(jimmy)  first get target account's table id, then get network addr by table id
         auto receiver_cluster_addr =
             m_router->sharding_address_from_account(common::xaccount_address_t{target_addr}, m_vnet_driver->network_id(), common::xnode_type_t::consensus_auditor);
@@ -482,9 +441,12 @@ void xtxpool_service::deal_table_block(xblock_t * block, uint64_t now_clock) {
         auto table_height_pair = m_table_db_event_height_map.find(tableid.get_subaddr());
         if (table_height_pair != m_table_db_event_height_map.end()) {
             uint64_t min_height = (block->get_height() > table_height_pair->second + load_blocks_for_missing_block_event_max) ?
-                                    (block->get_height() - load_blocks_for_missing_block_event_max) :
-                                    (table_height_pair->second + 1);
+                                      (block->get_height() - load_blocks_for_missing_block_event_max) :
+                                      (table_height_pair->second + 1);
             for (uint64_t height = block->get_height() - 1; height >= min_height; height--) {
+                if (!xreceipt_strategy_t::is_selected_sender(height, m_node_id, m_shard_size)) {
+                    continue;
+                }
                 base::xauto_ptr<base::xvblock_t> blockobj =
                     m_para->get_vblockstore()->load_block_object(base::xvaccount_t(block->get_account()), height, base::enum_xvblock_flag_committed, true);
                 if (blockobj != nullptr) {
@@ -507,11 +469,18 @@ void xtxpool_service::make_receipts_and_send(xblock_t * block) {
     if (!block->is_lighttable()) {
         return;
     }
+    uint64_t cert_height = block->get_height() + 2;
+    base::xauto_ptr<base::xvblock_t> cert_block = m_para->get_vblockstore()->load_block_object(block->get_account(), cert_height, base::enum_xvblock_flag_authenticated, false);
+    if (cert_block == nullptr) {
+        xwarn("xtxpool_service::make_receipts_and_send load cert block fail table:%s,height:%llu", block->get_account().c_str(), cert_height);
+        return;
+    }
+    xblock_t * raw_cert_block = dynamic_cast<xblock_t *>(cert_block.get());
     auto receipts = xreceipt_strategy_t::make_receipts(block);
     uint64_t now = xverifier::xtx_utl::get_gmttime_s();
     for (auto & receipt : receipts) {
         xinfo("xtxpool_service::make_receipts_and_send tx=%s,block:%s", receipt->dump().c_str(), block->dump().c_str());
-        send_receipt(receipt, 0);
+        send_receipt_first_time(receipt, raw_cert_block);
     }
 }
 

@@ -7,14 +7,13 @@
 #include "xdata/xtableblock.h"
 NS_BEG2(top, xtxpool_service_v2)
 
-#define recover_unconfirmed_txs_interval (0xFF)  // every 256 seconds recover once.
+#define recover_unconfirmed_txs_interval (16)  // every 16 seconds recover once.
 
-#define receipt_resend_interval (0x3F)  // every 64 seconds resend once
-#define shifting_for_receipt_resend_interval (6)
+#define receipt_resend_interval (16)  // every 16 seconds resend once
 #define receipt_sender_select_num (2)
 
 bool xreceipt_strategy_t::is_time_for_recover_unconfirmed_txs(uint64_t now) {
-    return (now & recover_unconfirmed_txs_interval) == 0;
+    return (now % recover_unconfirmed_txs_interval) == 0;
 }
 
 std::vector<data::xcons_transaction_ptr_t> xreceipt_strategy_t::make_receipts(data::xblock_t * block) {
@@ -34,8 +33,8 @@ std::vector<data::xcons_transaction_ptr_t> xreceipt_strategy_t::make_receipts(da
 bool xreceipt_strategy_t::is_resend_node_for_talbe(uint64_t now, uint32_t table_id, uint16_t shard_size, uint16_t self_node_id) {
     // different table resend at different time by different advance node
     uint64_t random_num = now + (uint64_t)table_id;
-    bool is_time_for_resend = ((random_num & receipt_resend_interval) == 0);
-    uint16_t resend_node_pos = ((now >> shifting_for_receipt_resend_interval) + (uint64_t)table_id) % shard_size;
+    bool is_time_for_resend = ((random_num % receipt_resend_interval) == 0);
+    uint16_t resend_node_pos = ((now / receipt_resend_interval) + (uint64_t)table_id) % shard_size;
     xinfo("xreceipt_strategy_t::is_resend_node_for_talbe table:%d,now:%llu,interval0x%x,is_time_for_resend:%d,shard_size:%d,resend_node_pos:%d,self_node_id:%d",
           table_id,
           now,
@@ -45,11 +44,6 @@ bool xreceipt_strategy_t::is_resend_node_for_talbe(uint64_t now, uint32_t table_
           resend_node_pos,
           self_node_id);
     return (is_time_for_resend && resend_node_pos == self_node_id);
-}
-
-bool xreceipt_strategy_t::is_need_select_sender(base::enum_transaction_subtype subtype, uint32_t resend_time) {
-    // resend recv tx need not select sender, because already selected sender by gmtime before.
-    return (subtype == base::enum_transaction_subtype_confirm || resend_time == 0);
 }
 
 bool xreceipt_strategy_t::is_selected_sender(const data::xcons_transaction_ptr_t & cons_tx, uint32_t resend_time, uint16_t node_id, uint16_t shard_size) {
@@ -70,8 +64,24 @@ bool xreceipt_strategy_t::is_selected_sender(const data::xcons_transaction_ptr_t
     return ret;
 }
 
+bool xreceipt_strategy_t::is_selected_sender(uint64_t block_height, uint16_t node_id, uint16_t shard_size) {
+    // select 2 auditor to send the receipt
+    uint32_t select_num = receipt_sender_select_num;
+    // calculate a random position that means which node is selected to send the receipt
+    uint64_t rand_pos = block_height % (uint64_t)shard_size;
+    bool ret = is_selected_pos(node_id, (uint32_t)rand_pos, select_num, shard_size);
+    xinfo("xreceipt_strategy_t::is_selected_sender ret:%d block_height:%llu rand_pos:%llu select_num:%u node_id:%u shard_size:%u",
+          ret,
+          block_height,
+          rand_pos,
+          select_num,
+          node_id,
+          shard_size);
+    return ret;
+}
+
 uint32_t xreceipt_strategy_t::calc_resend_time(uint64_t tx_cert_time, uint64_t now) {
-    return (now - tx_cert_time) >> shifting_for_receipt_resend_interval;
+    return (now - tx_cert_time) >> receipt_resend_interval;
 }
 
 bool xreceipt_strategy_t::is_selected_pos(uint32_t pos, uint32_t rand_pos, uint32_t select_num, uint32_t size) {
