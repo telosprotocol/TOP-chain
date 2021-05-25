@@ -88,26 +88,6 @@ void ServiceNodes::OnGetRootNodesAsync(uint64_t service_type, const std::vector<
     }
 }
 
-bool ServiceNodes::GetRootNodes(uint64_t service_type, const std::string & account, std::vector<kadmlia::NodeInfoPtr> & node_vec) {
-    if (FindNode(service_type, node_vec)) {
-        TOP_DEBUG("getrootnodes of service_type: %llu ok, size: %d", service_type, node_vec.size());
-        return true;
-    }
-
-    base::KadmliaKeyPtr kad_key = base::GetKadmliaKey(account, true);  // kRoot id
-    if (!kad_key) {
-        return false;
-    }
-
-    {
-        using namespace std::placeholders;
-        auto cb = std::bind(&ServiceNodes::OnGetRootNodesAsync, this, _1, _2);
-        RootRoutingManager::Instance()->GetRootNodesV2Async(kad_key->Get(), service_type, cb);  // just call
-    }
-    TOP_WARN("getrootnodes of service_type:%llu account:%s failed", service_type, account.c_str());
-    return false;
-}
-
 bool ServiceNodes::CheckHasNode(base::KadmliaKeyPtr kad_key) {
     std::unique_lock<std::mutex> lock(service_nodes_cache_map_mutex_);
     auto ifind = service_nodes_cache_map_.find(kad_key->GetServiceType());
@@ -123,25 +103,6 @@ bool ServiceNodes::CheckHasNode(base::KadmliaKeyPtr kad_key) {
         }
     }
     return false;
-}
-
-bool ServiceNodes::FindNode(uint64_t service_type, kadmlia::NodeInfoPtr & node) {
-    std::unique_lock<std::mutex> lock(service_nodes_cache_map_mutex_);
-    auto ifind = service_nodes_cache_map_.find(service_type);
-    if (ifind == service_nodes_cache_map_.end()) {
-        TOP_WARN("can't find service_node of service_type: %llu", service_type);
-        return false;
-    }
-    if (ifind->second.empty()) {
-        TOP_WARN("can't find service_node of service_type: %llu", service_type);
-        return false;
-    }
-
-    auto size = (ifind->second).size();
-    uint32_t index = RandomUint32() % size;
-    node = (ifind->second)[index];
-    TOP_DEBUG("find node:(%s:%d) service_node of service_type: %llu", (node->public_ip).c_str(), node->public_port, service_type);
-    return true;
 }
 
 bool ServiceNodes::FindNode(uint64_t service_type, const std::string & des_node_id, kadmlia::NodeInfoPtr & node) {

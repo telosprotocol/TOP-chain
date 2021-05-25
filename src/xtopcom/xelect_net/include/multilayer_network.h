@@ -62,7 +62,6 @@ private:
     void RegisterCallbackForMultiThreadHandler(
             std::shared_ptr<top::transport::MultiThreadHandler> multi_thread_message_handler);
     std::shared_ptr<top::wrouter::RootRoutingManager> CreateRootManager(
-            bool client,
             std::shared_ptr<transport::Transport> transport,
             const top::base::Config& config,
             const std::set<std::pair<std::string, uint16_t>>& public_endpoints_config);

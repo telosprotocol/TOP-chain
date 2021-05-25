@@ -321,7 +321,6 @@ void MultilayerNetwork::RegisterCallbackForMultiThreadHandler(
 }
 
 std::shared_ptr<top::wrouter::RootRoutingManager> MultilayerNetwork::CreateRootManager(
-        bool client,
         std::shared_ptr<transport::Transport> transport,
         const top::base::Config& config,
         const std::set<std::pair<std::string, uint16_t>>& public_endpoints_config) {
@@ -332,12 +331,6 @@ std::shared_ptr<top::wrouter::RootRoutingManager> MultilayerNetwork::CreateRootM
         return nullptr;
     }
 
-    if (client) {
-        if (!new_config.Set("node", "client_mode", true)) {
-            TOP_ERROR("set config node client_mode failed!");
-            return nullptr;
-        }
-    }
     auto root_manager_ptr = wrouter::RootRoutingManager::Instance();
     wrouter::MultiRouting::Instance()->SetRootRoutingManager(root_manager_ptr);
 
@@ -360,12 +353,7 @@ std::shared_ptr<top::wrouter::RootRoutingManager> MultilayerNetwork::CreateRootM
 
     auto get_cache_callback = std::bind(&MultilayerNetwork::GetBootstrapCacheCallback, this, std::placeholders::_1, std::placeholders::_2);
     auto set_cache_callback = std::bind(&MultilayerNetwork::SetBootstrapCacheCallback, this, std::placeholders::_1, std::placeholders::_2);
-    if (root_manager_ptr->AddRoutingTable(
-            transport,
-            new_config,
-            kad_key_ptr,
-            get_cache_callback,
-            set_cache_callback) != top::kadmlia::kKadSuccess) {
+    if (root_manager_ptr->InitRootRoutingTable(transport, new_config, kad_key_ptr, get_cache_callback, set_cache_callback) != top::kadmlia::kKadSuccess) {
         TOP_ERROR("<blueshi> add root_table[root] failed!");
         return nullptr;
     }
@@ -382,7 +370,6 @@ int MultilayerNetwork::ResetRootRouting(
     kadmlia::GetPublicEndpointsConfig(config, public_endpoints_config);
 
     root_manager_ptr_ = CreateRootManager(
-            false,
             transport,
             config,
             public_endpoints_config);

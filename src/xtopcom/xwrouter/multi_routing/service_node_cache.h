@@ -30,12 +30,10 @@ public:
 
     // search service_type nodes from bootstrap network
     bool GetRootNodes(uint64_t service_type, std::vector<kadmlia::NodeInfoPtr> & node_vec);
-    bool GetRootNodes(uint64_t service_type, const std::string & account, std::vector<kadmlia::NodeInfoPtr> & node_vec);
     // for point2point, get des_node_id if exist, or get same service_type node
     bool GetRootNodes(uint64_t service_type, const std::string & des_node_id, kadmlia::NodeInfoPtr & node_ptr);
 
     bool FindNode(uint64_t service_type, std::vector<kadmlia::NodeInfoPtr> & node_vec);
-    bool FindNode(uint64_t service_type, kadmlia::NodeInfoPtr & node_ptr);
     bool FindNode(uint64_t service_type, const std::string & des_node_id, kadmlia::NodeInfoPtr & node_ptr);
     bool CheckHasNode(base::KadmliaKeyPtr kad_key);
     void RemoveExpired(const std::unordered_map<uint64_t, std::vector<std::string>> & expired_node_vec);
