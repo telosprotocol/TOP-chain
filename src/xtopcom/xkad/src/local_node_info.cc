@@ -26,7 +26,6 @@ bool LocalNodeInfo::Init(
         const std::string& local_ip,
         uint16_t local_port,
         bool first_node,
-        bool client,
         const std::string& idtype,
         base::KadmliaKeyPtr kadmlia_key,
         uint64_t service_type,
@@ -34,7 +33,6 @@ bool LocalNodeInfo::Init(
     local_ip_ = local_ip;
     local_port_ = local_port;
     first_node_ = first_node;
-    client_mode_ = client;
     idtype_ = idtype;
     kadmlia_key_ = kadmlia_key;
     xip_ = std::make_shared<base::XipParser>(kadmlia_key->Xip());
@@ -68,7 +66,6 @@ void LocalNodeInfo::Reset() {
     local_ip_ = "";
     local_port_ = 0;
     first_node_ = false;
-    client_mode_ = false;
     private_key_ = "";
     public_key_ = "";
     public_ip_ = "";
@@ -112,17 +109,6 @@ std::string LocalNodeInfo::id() {
 }
 
 base::XipParser& LocalNodeInfo::GetXipParser() {
-    if (client_mode_) {
-        std::unique_lock<std::mutex> lock(dxip_node_map_mutex_);
-        base::XipParserPtr client_xip_ptr;
-        if (dxip_node_map_.empty()) {
-            client_xip_ptr.reset(new base::XipParser());
-            return *client_xip_ptr;
-        }
-        std::string client_random_self_dxip = dxip_node_map_.begin()->first;
-        client_xip_ptr.reset(new base::XipParser(client_random_self_dxip));
-        return *client_xip_ptr;
-    }
     return *xip_;
 };
 

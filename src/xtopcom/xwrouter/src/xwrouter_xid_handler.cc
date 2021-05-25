@@ -10,8 +10,6 @@
 #include "xgossip/include/gossip_filter.h"
 #include "xgossip/include/gossip_utils.h"
 #include "xkad/gossip/rumor_filter.h"
-#include "xkad/routing_table/client_node_manager.h"
-#include "xkad/routing_table/dynamic_xip_manager.h"
 #include "xkad/routing_table/routing_table.h"
 #include "xkad/routing_table/routing_utils.h"
 #include "xpbase/base/kad_key/get_kadmlia_key.h"

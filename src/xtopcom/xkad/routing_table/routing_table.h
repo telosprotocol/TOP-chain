@@ -26,7 +26,6 @@
 #include "xkad/routing_table/bootstrap_cache_helper.h"
 // #include "xkad/gossip/rumor_handler.h"
 #include "xkad/routing_table/local_node_info.h"
-#include "xkad/routing_table/dynamic_xip_manager.h"
 #include "xbase/xbase.h"
 #include "heartbeat_manager.h"
 
@@ -128,7 +127,6 @@ public:
             std::vector<NodeInfoPtr>& vec);
     int32_t GetSelfIndex();
     uint32_t nodes_size();
-    int CheckAndSendRelay(transport::protobuf::RoutingMessage& message);
     int MultiJoin(const std::set<std::pair<std::string, uint16_t>>& boot_endpoints);
     void MultiJoinAsync(const std::set<std::pair<std::string, uint16_t>>& boot_endpoints);
     bool IsJoined();
@@ -195,10 +193,6 @@ public:
     }
     std::shared_ptr<LocalNodeInfo> get_local_node_info() {
         return local_node_ptr_;
-    }
-
-    DynamicXipManagerPtr get_dy_manager() {
-        return dy_manager_;
     }
 
     int SendData(
@@ -308,9 +302,6 @@ protected:
 
     std::shared_ptr<kadmlia::BootstrapCacheHelper> bootstrap_cache_helper_;
     uint32_t kadmlia_key_len_;
-//     bool support_rumor_;
-//     gossip::RumorHandlerSptr rumor_handler_;
-    DynamicXipManagerPtr dy_manager_;
     std::map<std::string, std::string> heart_beat_info_map_;
     std::mutex heart_beat_info_map_mutex_;
     on_heart_beat_info_receive_callback_t heart_beat_callback_;

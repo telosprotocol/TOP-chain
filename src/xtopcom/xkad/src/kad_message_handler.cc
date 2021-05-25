@@ -18,7 +18,6 @@
 #include "xkad/routing_table/node_info.h"
 #include "xkad/routing_table/routing_table.h"
 #include "xkad/routing_table/node_detection_manager.h"
-#include "xkad/routing_table/client_node_manager.h"
 #include "xkad/routing_table/local_node_info.h"
 
 namespace top {
@@ -108,66 +107,6 @@ void KadMessageHandler::AddBaseHandlers() {
             base::xpacket_t& packet){
         nat_manager_->PushMessage(message, packet);
     });
-}
-
-int KadMessageHandler::HandleClientMessage(
-        transport::protobuf::RoutingMessage& message,
-        base::xpacket_t& packet) {
-    if (!message.has_client_id()) {
-        return kContinue;
-    }
-
-    LocalNodeInfoPtr local_node = routing_ptr_->get_local_node_info();
-    if (!local_node) {
-        TOP_ERROR("get routing table by next service type[%llu] failed!",
-            message.des_service_type());
-        return kKadFailed;
-    }
-
-    if (!message.relay_flag()) {
-        if (message.client_id() == local_node->id()) {
-            return kContinue;
-        }
-
-        ClientNodeInfoPtr client_node_ptr;
-        client_node_ptr.reset(new ClientNodeInfo(message.client_id()));
-        client_node_ptr->public_ip = packet.get_from_ip_addr();
-        client_node_ptr->public_port = packet.get_from_ip_port();
-        ClientNodeManager::Instance()->AddClientNode(client_node_ptr);  // just cover
-        if (message.has_xid() && !message.xid().empty()) {
-            ClientNodeInfoPtr client_node_ptr;
-            client_node_ptr.reset(new ClientNodeInfo(message.xid()));
-            client_node_ptr->public_ip = packet.get_from_ip_addr();
-            client_node_ptr->public_port = packet.get_from_ip_port();
-            ClientNodeManager::Instance()->AddClientNode(client_node_ptr);  // just cover
-        }
-        message.set_relay_flag(true);
-        message.set_src_node_id(local_node->id());
-        return kContinue;
-    }
-
-    if (message.des_node_id() != local_node->id()) {
-        return kContinue;
-    }
-
-    // request message arrive des node or  response message arrive the first relay node
-    ClientNodeInfoPtr client_node_ptr = ClientNodeManager::Instance()->FindClientNode(
-            message.client_id());
-    if (!client_node_ptr) {
-        TOP_DEBUG("client[%s] request message arrive this dest node[%s]",
-                HexEncode(message.client_id()).c_str(),
-                HexEncode(local_node->id()).c_str());
-        return kContinue;
-    }
-    TOP_DEBUG("response message of client[%s] arrive this first relay node[%s]",
-            HexEncode(message.client_id()).c_str(),
-            HexEncode(local_node->id()).c_str());
-
-    std::string client_pub_ip = client_node_ptr->public_ip;
-    uint16_t client_pub_port = client_node_ptr->public_port;
-    message.set_relay_flag(false);
-    message.set_des_node_id(client_node_ptr->node_id);
-    return routing_ptr_->SendData(message, client_pub_ip, client_pub_port);
 }
 
 void KadMessageHandler::HandleHeartbeatRequest(

@@ -15,8 +15,6 @@
 #include "xwrouter/message_handler/wrouter_message_handler.h"
 #include "xpbase/base/xip_parser.h"
 #include "xpbase/base/top_utils.h"
-#include "xkad/routing_table/client_node_manager.h"
-#include "xkad/routing_table/dynamic_xip_manager.h"
 #include "xtransport/utils/transport_utils.h"
 #include "xpbase/base/kad_key/get_kadmlia_key.h"
 #include "xpbase/base/uint64_bloomfilter.h"

@@ -86,20 +86,12 @@ int RootRouting::AddNode(NodeInfoPtr node) {
         return res;
     }
 
-    if (node->is_client) {
-        return res;
-    }
-
     return res;
 }
 
 int RootRouting::DropNode(NodeInfoPtr node) {
     int res = WrouterBaseRouting::DropNode(node);
     if (res != kKadSuccess) {
-        return res;
-    }
-
-    if (node->is_client) {
         return res;
     }
 
@@ -219,23 +211,7 @@ int RootRouting::GetRootNodes(const std::string& node_id, std::vector<NodeInfoPt
     message.set_debug(debug_info);
     TOP_NETWORK_DEBUG_FOR_PROTOMESSAGE("root_get_nodes_begin", message);
 #endif
-    if (local_node_ptr_->client_mode()) {
-        message.set_client_id(local_node_ptr_->id());
-        message.set_relay_flag(false);
-    }
 
-    /*
-    std::set<std::string> root_id_set;
-    {
-        std::unique_lock<std::mutex> lock(root_id_set_mutex_);
-        root_id_set = root_id_set_;
-    }
-
-    for (auto iter = root_id_set.begin(); iter != root_id_set.end(); ++iter) {
-        transport::protobuf::HopInfo* hop_info = message.add_hop_nodes();
-        hop_info->set_node_id(*iter);
-    }
-    */
     protobuf::RootGetNodesRequest get_nodes_req;
     get_nodes_req.set_id(node_id);
     get_nodes_req.set_count(kGetNodesSize);
@@ -466,10 +442,6 @@ void RootRouting::HandleRootGetNodesRequest(
     res_message.set_des_node_id(message.src_node_id());
     res_message.set_type(kRootMessage);
     res_message.set_id(message.id());
-    if (message.has_client_id()) {
-        res_message.set_client_id(message.client_id());
-        res_message.set_relay_flag(message.relay_flag());
-    }
     protobuf::RootGetNodesResponse get_nodes_res;
     if (local_node_ptr) {
         protobuf::NodeInfo* node_info = get_nodes_res.add_nodes();
@@ -525,22 +497,18 @@ void RootRouting::HandleRootGetNodesRequest(
     }
 
     res_message.set_data(root_data);
-    if (!local_node_ptr_->client_mode() &&
-            !message.has_client_id() &&
-            ContainRootId(res_message.des_node_id())) {
+    if (ContainRootId(res_message.des_node_id())) {
         CallbackManager::Instance()->Callback(res_message.id(), res_message, packet);
         return;
     }
 
-    if (CheckAndSendRelay(res_message) != kKadSuccess) {
-        RoutingTablePtr target_routing = FindRoutingTable(res_message.des_node_id());
-        if (!target_routing) {
-            TOP_WARN("FindRoutingTable failed");
-            return;
-        }
-        target_routing->SendToClosestNode(res_message);
+    RoutingTablePtr target_routing = FindRoutingTable(res_message.des_node_id());
+    if (!target_routing) {
+        TOP_WARN("FindRoutingTable failed");
         return;
     }
+    target_routing->SendToClosestNode(res_message);
+    return;
 }
 
 void RootRouting::HandleRootGetNodesResponse(
@@ -668,10 +636,6 @@ int RootRouting::GetRootNodesV2(
     message.set_debug(debug_info);
     TOP_NETWORK_DEBUG_FOR_PROTOMESSAGE("root_get_nodes_begin", message);
 #endif
-    if (local_node_ptr_->client_mode()) {
-        message.set_client_id(local_node_ptr_->id());
-        message.set_relay_flag(false);
-    }
 
     protobuf::RootGetElectNodesRequest get_nodes_req;
     get_nodes_req.set_des_service_type(des_service_type);
@@ -763,10 +727,6 @@ int RootRouting::GetRootNodesV2Async(
     message.set_debug(debug_info);
     TOP_NETWORK_DEBUG_FOR_PROTOMESSAGE("root_get_nodes_begin", message);
 #endif
-    if (local_node_ptr_->client_mode()) {
-        message.set_client_id(local_node_ptr_->id());
-        message.set_relay_flag(false);
-    }
 
     protobuf::RootGetElectNodesRequest get_nodes_req;
     get_nodes_req.set_des_service_type(des_service_type);
@@ -908,10 +868,6 @@ void RootRouting::HandleGetElectNodesRequest(
     res_message.set_des_node_id(message.src_node_id());
     res_message.set_type(kRootMessage);
     res_message.set_id(message.id());
-    if (message.has_client_id()) {
-        res_message.set_client_id(message.client_id());
-        res_message.set_relay_flag(message.relay_flag());
-    }
     protobuf::RootGetElectNodesResponse get_nodes_res;
     if (local_node_ptr->public_port() > 0) {
         protobuf::NodeInfo* node_info = get_nodes_res.add_nodes();
@@ -975,13 +931,11 @@ void RootRouting::HandleGetElectNodesRequest(
 
     res_message.set_data(root_data);
 
-    if (CheckAndSendRelay(res_message) != kKadSuccess) {
-        TOP_DEBUG("send response of msg.des: %s size: %d",
-                HexEncode(message.des_node_id()).c_str(),
-                tmp_ready_nodes);
-        SendToClosestNode(res_message);
-        return;
-    }
+    TOP_DEBUG("send response of msg.des: %s size: %d",
+              HexEncode(message.des_node_id()).c_str(),
+              tmp_ready_nodes);
+    SendToClosestNode(res_message);
+    return;
 }
 
 void RootRouting::HandleGetElectNodesResponse(

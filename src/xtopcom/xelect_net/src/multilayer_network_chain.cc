@@ -194,12 +194,6 @@ int MultilayerNetworkChain::HandleParamsAndConfig(
         return 1;
     }
 
-    std::string client_mode_str = (platform_param.client_mode?"true":"false");
-    if (!edge_config.Set("node", "client_mode", client_mode_str)) {
-        TOP_ERROR("set config failed [node][client_mode][%s]", client_mode_str.c_str());
-        return 1;
-    }
-
     std::string public_endpoints(platform_param.public_endpoints);
     TOP_INFO("config get public_endpoints %s", public_endpoints.c_str());
 

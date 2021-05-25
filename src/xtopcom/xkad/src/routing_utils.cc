@@ -196,8 +196,6 @@ LocalNodeInfoPtr CreateLocalInfoFromConfig(
         TOP_ERROR("get node id is null!");
         return nullptr;
     }
-    bool client_mode = false;
-    config.Get("node", "client_mode", client_mode);
     bool first_node = false;
     config.Get("node", "first_node", first_node);
     std::string local_ip;
@@ -214,7 +212,6 @@ LocalNodeInfoPtr CreateLocalInfoFromConfig(
             local_ip,
             local_port,
             first_node,
-            client_mode,
             idtype,
             kad_key,
             kad_key->xnetwork_id(),

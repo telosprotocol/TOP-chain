@@ -17,7 +17,6 @@
 #include "xkad/routing_table/node_info.h"
 #include "xkad/routing_table/routing_table.h"
 #include "xkad/routing_table/node_detection_manager.h"
-#include "xkad/routing_table/client_node_manager.h"
 #include "xkad/routing_table/local_node_info.h"
 #include "xwrouter/register_routing_table.h"
 #include "xpbase/base/multirelay_log.h"

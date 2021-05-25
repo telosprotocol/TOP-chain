@@ -34,7 +34,6 @@
 #include "xpbase/base/kad_key/get_kadmlia_key.h"
 #include "xgossip/include/gossip_utils.h"
 #include "xkad/routing_table/node_detection_manager.h"
-#include "xkad/routing_table/client_node_manager.h"
 #include "xkad/routing_table/callback_manager.h"
 #include "xkad/routing_table/nodeid_utils.h"
 #include "xkad/routing_table/local_node_info.h"
@@ -82,9 +81,6 @@ RoutingTable::RoutingTable(
           set_endpoints_mutex_(),
           after_join_(false),
           kadmlia_key_len_(kadmlia_key_len),
-        //   support_rumor_(false),
-        //   rumor_handler_(nullptr),
-          dy_manager_(nullptr),
           heart_beat_info_map_(),
           heart_beat_info_map_mutex_(),
           heart_beat_callback_(nullptr),
@@ -134,7 +130,6 @@ bool RoutingTable::Init() {
     }
 
     node_detection_ptr_.reset(new NodeDetectionManager(timer_manager_, *this));
-    dy_manager_.reset(new DynamicXipManager);
 
     // attention: hearbeat timer does not do hearbeating really(using xudp do)
     timer_heartbeat_ = std::make_shared<base::TimerRepeated>(timer_manager_, "RoutingTable::HeartbeatProc");
@@ -1500,20 +1495,12 @@ int RoutingTable::Bootstrap(
             des_service_type);
     message.set_des_node_id("");
     message.set_type(kKadBootstrapJoinRequest);
-    if (local_node_ptr_->client_mode()) {
-        // usually for bootstrapjoin type,set cleint_msg is enough
-        message.set_client_id(local_node_ptr_->id());
-        message.set_relay_flag(false);
-    }
 
     protobuf::BootstrapJoinRequest join_req;
     join_req.set_local_ip(local_node_ptr_->local_ip());
     join_req.set_local_port(local_node_ptr_->local_port());
     join_req.set_nat_type(local_node_ptr_->nat_type());
     join_req.set_xid(global_xid->Get());
-    if (!local_node_ptr_->client_mode()) {
-        join_req.set_xip(local_node_ptr_->xip());
-    }
     std::string data;
     if (!join_req.SerializeToString(&data)) {
         TOP_INFO_NAME("ConnectReq SerializeToString failed!");
@@ -1940,12 +1927,6 @@ void RoutingTable::SendConnectRequest(const std::string& id, uint64_t service_ty
     message.set_des_node_id(id);
     message.set_type(kKadConnectRequest);
     message.set_priority(enum_xpacket_priority_type_flash);
-    if (local_node_ptr_->client_mode()) {
-        message.set_client_msg(true);
-        message.set_relay_flag(true);
-        message.set_request_type(true);
-        message.set_client_id(local_node_ptr_->id());
-    }
 
     protobuf::ConnectReq conn_req;
     conn_req.set_local_ip(local_node_ptr_->local_ip());
@@ -1982,12 +1963,6 @@ void RoutingTable::SendConnectRequest(
     message.set_des_node_id(id);
     message.set_type(kKadConnectRequest);
     message.set_priority(enum_xpacket_priority_type_flash);
-    if (local_node_ptr_->client_mode()) {
-        message.set_client_msg(true);
-        message.set_relay_flag(true);
-        message.set_request_type(true);
-        message.set_client_id(local_node_ptr_->id());
-    }
 
     protobuf::ConnectReq conn_req;
     conn_req.set_local_ip(local_node_ptr_->local_ip());
@@ -2021,9 +1996,6 @@ void RoutingTable::TellNeighborsDropAllNode() {
 }
 
 void RoutingTable::SendDropNodeRequest(const std::string& id) {
-    if (local_node_ptr_->client_mode()) {
-        return;
-    }
     transport::protobuf::RoutingMessage message;
     SetFreqMessage(message);
     message.set_des_node_id(id);
@@ -2216,9 +2188,6 @@ void RoutingTable::HandleHandshake(
     res_message.set_type(kKadHandshake);
     res_message.set_id(message.id());
     message.set_priority(enum_xpacket_priority_type_flash);
-    if (local_node_ptr_->client_mode()) {
-        res_message.set_client_msg(true);
-    }
 
     res_message.set_data(data);
     SendPing(
@@ -2474,31 +2443,6 @@ void RoutingTable::HandleHeartbeatResponse(
         base::xpacket_t& packet) {
     TOP_WARN_NAME("HandleHeartbeatResponse from %s:%d", packet.get_from_ip_addr().c_str(), packet.get_from_ip_port());
     ResetNodeHeartbeat(message.src_node_id());
-}
-
-int RoutingTable::CheckAndSendRelay(transport::protobuf::RoutingMessage& message) {
-    if (!message.has_client_id()) {
-        return kKadFailed;
-    }
-
-    if (!message.relay_flag()) {
-        return kKadFailed;
-    }
-
-    if (message.des_node_id() != local_node_ptr_->id()) {
-        return kKadFailed;
-    }
-
-    ClientNodeInfoPtr client_node_ptr = ClientNodeManager::Instance()->FindClientNode(
-            message.client_id());
-    if (!client_node_ptr) {
-        return kKadFailed;
-    }
-
-    message.set_relay_flag(false);
-    message.set_des_node_id(client_node_ptr->node_id);
-    SendData(message, client_node_ptr->public_ip, client_node_ptr->public_port);
-    return kKadSuccess;
 }
 
 bool RoutingTable::StartBootstrapCacheSaver() {
