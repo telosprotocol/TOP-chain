@@ -9,7 +9,7 @@ public:
     bool reject();
 
 private:
-    int64_t m_time_ms;
+    int64_t m_time_ms{0};
     int64_t m_min_time_interval_ms;
 };
 
