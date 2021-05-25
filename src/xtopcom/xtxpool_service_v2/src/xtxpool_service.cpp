@@ -472,7 +472,7 @@ void xtxpool_service::make_receipts_and_send(xblock_t * block) {
     uint64_t cert_height = block->get_height() + 2;
     base::xauto_ptr<base::xvblock_t> cert_block = m_para->get_vblockstore()->load_block_object(block->get_account(), cert_height, base::enum_xvblock_flag_authenticated, false);
     if (cert_block == nullptr) {
-        xwarn("xtxpool_service::make_receipts_and_send load cert block fail table:%s,height:%llu", block->get_account().c_str(), cert_height);
+        xerror("xtxpool_service::make_receipts_and_send load cert block fail table:%s,height:%llu", block->get_account().c_str(), cert_height);
         return;
     }
     xblock_t * raw_cert_block = dynamic_cast<xblock_t *>(cert_block.get());

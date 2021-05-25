@@ -81,7 +81,7 @@ bool xreceipt_strategy_t::is_selected_sender(uint64_t block_height, uint16_t nod
 }
 
 uint32_t xreceipt_strategy_t::calc_resend_time(uint64_t tx_cert_time, uint64_t now) {
-    return (now - tx_cert_time) >> receipt_resend_interval;
+    return (now - tx_cert_time) / receipt_resend_interval;
 }
 
 bool xreceipt_strategy_t::is_selected_pos(uint32_t pos, uint32_t rand_pos, uint32_t select_num, uint32_t size) {
