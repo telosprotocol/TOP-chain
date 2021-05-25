@@ -47,12 +47,12 @@ public:
     const std::shared_ptr<xtx_entry> query_tx(const std::string & account, const uint256_t & hash);
     void updata_latest_nonce(const std::string & account_addr, uint64_t latest_nonce, const uint256_t & latest_hash);
     enum_xtxpool_error_type reject(const std::string & account, const xcons_transaction_ptr_t & tx, uint64_t pre_unitblock_height, bool & deny);
-    xcons_transaction_ptr_t get_unconfirm_tx(const std::string & account, const uint256_t & hash);
+    // xcons_transaction_ptr_t get_unconfirm_tx(const std::string & account, const uint256_t & hash);
     const std::vector<xcons_transaction_ptr_t> get_resend_txs(uint64_t now);
     void on_block_confirmed(xblock_t * table_block);
     int32_t verify_txs(const std::string & account, const std::vector<xcons_transaction_ptr_t> & txs, uint64_t latest_commit_unit_height);
     void update_unconfirm_accounts();
-    void update_non_ready_accounts();
+    // void update_non_ready_accounts();
     void update_locked_txs(const std::vector<tx_info_t> & locked_tx_vec);
     void update_receiptid_state(const base::xreceiptid_state_ptr_t & receiptid_state);
 
@@ -79,6 +79,7 @@ private:
     mutable std::mutex m_unconfirm_mutex;  // lock m_unconfirmed_tx_queue
     // mutable std::mutex m_non_ready_mutex;  // lock m_non_ready_accounts
     xreceipt_state_cache_t m_receipt_state_cache;
+    uint64_t m_unconfirmed_tx_num{0};
 };
 
 }  // namespace xtxpool_v2

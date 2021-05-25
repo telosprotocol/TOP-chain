@@ -29,14 +29,9 @@ int32_t xtxpool_table_t::push_send_tx(const std::shared_ptr<xtx_entry> & tx) {
     //     return xtxpool_error_account_unconfirm_txs_reached_upper_limit;
     // }
 
-    {
-        std::lock_guard<std::mutex> lck(m_unconfirm_mutex);
-        auto unconfirm_txs_num = m_unconfirmed_tx_queue.size();
-        XMETRICS_COUNTER_SET("table_unconfirm_txs_num" + m_xtable_info.get_table_addr(), unconfirm_txs_num);
-        if (unconfirm_txs_num >= table_unconfirm_txs_num_max) {
-            xtxpool_warn("xtxpool_table_t::push_send_tx unconfirm txs reached upper limmit tx:%s", tx->get_tx()->dump().c_str());
-            return xtxpool_error_account_unconfirm_txs_reached_upper_limit;
-        }
+    if (m_unconfirmed_tx_num >= table_unconfirm_txs_num_max) {
+        xtxpool_warn("xtxpool_table_t::push_send_tx unconfirm txs reached upper limmit tx:%s", tx->get_tx()->dump().c_str());
+        return xtxpool_error_account_unconfirm_txs_reached_upper_limit;
     }
 
     uint64_t latest_nonce;
@@ -208,9 +203,9 @@ enum_xtxpool_error_type xtxpool_table_t::reject(const std::string & account_addr
     return reject_ret;
 }
 
-xcons_transaction_ptr_t xtxpool_table_t::get_unconfirm_tx(const std::string & account_addr, const uint256_t & hash) {
-    std::lock_guard<std::mutex> lck(m_unconfirm_mutex);
-    return m_unconfirmed_tx_queue.find(account_addr, hash);
+// xcons_transaction_ptr_t xtxpool_table_t::get_unconfirm_tx(const std::string & account_addr, const uint256_t & hash) {
+//     std::lock_guard<std::mutex> lck(m_unconfirm_mutex);
+//     return m_unconfirmed_tx_queue.find(account_addr, hash);
     // xcons_transaction_ptr_t unconfirm_tx = nullptr;
     // std::string hash_str = std::string(reinterpret_cast<char *>(hash.data()), hash.size());
     // {
@@ -227,7 +222,7 @@ xcons_transaction_ptr_t xtxpool_table_t::get_unconfirm_tx(const std::string & ac
     //     }
     // }
     // return unconfirm_tx;
-}
+// }
 
 const std::vector<xcons_transaction_ptr_t> xtxpool_table_t::get_resend_txs(uint64_t now) {
     // todo:compatibility for old version without receipt id.
@@ -246,27 +241,27 @@ const std::vector<xcons_transaction_ptr_t> xtxpool_table_t::get_resend_txs(uint6
 // }
 
 void xtxpool_table_t::unit_block_process(xblock_t * unit_block) {
-    // update_reject_rule(block->get_account(), block);
-    {
-        std::lock_guard<std::mutex> lck(m_unconfirm_mutex);
-        uint32_t tx_num_before = m_unconfirmed_tx_queue.size();
-        m_unconfirmed_tx_queue.udpate_latest_confirmed_block(unit_block, m_receipt_state_cache);
-        uint32_t tx_num_after = m_unconfirmed_tx_queue.size();
-        if (tx_num_after > tx_num_before) {
-            XMETRICS_COUNTER_INCREMENT("txpool_unconfirm_txs_num", tx_num_after - tx_num_before);
-        } else if (tx_num_after < tx_num_before) {
-            XMETRICS_COUNTER_DECREMENT("txpool_unconfirm_txs_num", tx_num_before - tx_num_after);
-        }
-    }
-
-    // if (block->is_lightunit() && !block->is_genesis_block()) {
-    //     data::xlightunit_block_t * lightunit = dynamic_cast<data::xlightunit_block_t *>(block);
-    //     const std::vector<xlightunit_tx_info_ptr_t> & txs = lightunit->get_txs();
-    //     for (auto & tx : txs) {
-    //         tx_info_t txinfo(block->get_account(), tx->get_tx_hash_256(), tx->get_tx_subtype());
-    //         pop_tx(txinfo, false);
+    // // update_reject_rule(block->get_account(), block);
+    // {
+    //     std::lock_guard<std::mutex> lck(m_unconfirm_mutex);
+    //     uint32_t tx_num_before = m_unconfirmed_tx_queue.size();
+    //     m_unconfirmed_tx_queue.udpate_latest_confirmed_block(unit_block, m_receipt_state_cache);
+    //     uint32_t tx_num_after = m_unconfirmed_tx_queue.size();
+    //     if (tx_num_after > tx_num_before) {
+    //         XMETRICS_COUNTER_INCREMENT("txpool_unconfirm_txs_num", tx_num_after - tx_num_before);
+    //     } else if (tx_num_after < tx_num_before) {
+    //         XMETRICS_COUNTER_DECREMENT("txpool_unconfirm_txs_num", tx_num_before - tx_num_after);
     //     }
     // }
+
+    if (unit_block->is_lightunit() && !unit_block->is_genesis_block()) {
+        data::xlightunit_block_t * lightunit = dynamic_cast<data::xlightunit_block_t *>(unit_block);
+        const std::vector<xlightunit_tx_info_ptr_t> & txs = lightunit->get_txs();
+        for (auto & tx : txs) {
+            tx_info_t txinfo(unit_block->get_account(), tx->get_tx_hash_256(), tx->get_tx_subtype());
+            pop_tx(txinfo, false);
+        }
+    }
 
     // if (is_account_need_update(block->get_account())) {
     //     base::xauto_ptr<xblockchain2_t> blockchain(m_para->get_store()->clone_account(block->get_account()));
@@ -325,6 +320,8 @@ void xtxpool_table_t::update_unconfirm_accounts() {
     uint32_t tx_num_before = m_unconfirmed_tx_queue.size();
     m_unconfirmed_tx_queue.recover(m_receipt_state_cache);
     uint32_t tx_num_after = m_unconfirmed_tx_queue.size();
+    m_unconfirmed_tx_num = m_unconfirmed_tx_queue.size();
+    XMETRICS_COUNTER_SET("table_unconfirm_txs_num" + m_xtable_info.get_table_addr(), m_unconfirmed_tx_num);
     if (tx_num_after > tx_num_before) {
         XMETRICS_COUNTER_INCREMENT("txpool_unconfirm_txs_num", tx_num_after - tx_num_before);
     } else if (tx_num_after < tx_num_before) {
@@ -332,7 +329,7 @@ void xtxpool_table_t::update_unconfirm_accounts() {
     }
 }
 
-void xtxpool_table_t::update_non_ready_accounts() {
+// void xtxpool_table_t::update_non_ready_accounts() {
     // std::vector<std::shared_ptr<xtx_entry>> repush_txs;
     // {
     //     std::lock_guard<std::mutex> lck(m_non_ready_mutex);
@@ -354,7 +351,7 @@ void xtxpool_table_t::update_non_ready_accounts() {
     //         push_receipt(tx_ent);
     //     }
     // }
-}
+// }
 
 void xtxpool_table_t::update_locked_txs(const std::vector<tx_info_t> & locked_tx_vec) {
     std::vector<std::shared_ptr<xtx_entry>> unlocked_txs;

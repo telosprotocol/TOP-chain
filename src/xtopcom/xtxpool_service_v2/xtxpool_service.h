@@ -58,11 +58,11 @@ public:
     bool start(const xvip2_t & xip) override;
     bool fade(const xvip2_t & xip) override;
     void set_params(const xvip2_t & xip, const std::shared_ptr<vnetwork::xvnetwork_driver_face_t> & vnet_driver) override;
-    bool is_running() override;
-    bool is_receipt_sender(const xtable_id_t & tableid) override;
-    void send_receipt(xcons_transaction_ptr_t & cons_tx, uint32_t resend_time) override;
-    bool table_boundary_equal_to(std::shared_ptr<xtxpool_service_face> & service) override;
-    void get_service_table_boundary(base::enum_xchain_zone_index & zone_id, uint32_t & fount_table_id, uint32_t & back_table_id) override;
+    bool is_running() const override;
+    bool is_receipt_sender(const xtable_id_t & tableid) const override;
+    bool is_send_receipt_role() const override {return m_is_send_receipt_role;}
+    bool table_boundary_equal_to(std::shared_ptr<xtxpool_service_face> & service) const override;
+    void get_service_table_boundary(base::enum_xchain_zone_index & zone_id, uint32_t & fount_table_id, uint32_t & back_table_id) const override;
     void resend_receipts(uint64_t now) override;
     int32_t request_transaction_consensus(const data::xtransaction_ptr_t & tx, bool local) override;
     void deal_table_block(xblock_t * block, uint64_t now_clock) override;
@@ -71,7 +71,7 @@ public:
     };
 
 private:
-    bool is_belong_to_service(xtable_id_t tableid);
+    bool is_belong_to_service(xtable_id_t tableid) const;
     void on_message_receipt(vnetwork::xvnode_address_t const & sender, vnetwork::xmessage_t const & message);
     void on_message_unit_receipt(vnetwork::xvnode_address_t const & sender, vnetwork::xmessage_t const & message);
     void check_and_response_recv_receipt(const xcons_transaction_ptr_t & cons_tx);
@@ -81,6 +81,8 @@ private:
     bool has_receipt_right(const xcons_transaction_ptr_t & cons_tx, uint32_t resend_time) const;
     void forward_broadcast_message(const vnetwork::xvnode_address_t & addr, const vnetwork::xmessage_t & message);
     void make_receipts_and_send(xblock_t * block);
+    void send_receipt_retry(xcons_transaction_ptr_t & cons_tx);
+    void send_receipt_first_time(data::xcons_transaction_ptr_t & cons_tx, xblock_t * cert_block);
 
 private:
     xvip2_t m_xip;

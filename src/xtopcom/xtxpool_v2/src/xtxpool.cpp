@@ -158,13 +158,13 @@ void xtxpool_t::on_block_confirmed(xblock_t * block) {
     table->on_block_confirmed(block);
 }
 
-xcons_transaction_ptr_t xtxpool_t::get_unconfirm_tx(const std::string source_addr, const uint256_t & hash) const {
-    auto table = get_txpool_table_by_addr(source_addr);
-    if (table == nullptr) {
-        return nullptr;
-    }
-    return table->get_unconfirm_tx(source_addr, hash);
-}
+// xcons_transaction_ptr_t xtxpool_t::get_unconfirm_tx(const std::string source_addr, const uint256_t & hash) const {
+//     auto table = get_txpool_table_by_addr(source_addr);
+//     if (table == nullptr) {
+//         return nullptr;
+//     }
+//     return table->get_unconfirm_tx(source_addr, hash);
+// }
 
 int32_t xtxpool_t::verify_txs(const std::string & account, const std::vector<xcons_transaction_ptr_t> & txs, uint64_t latest_commit_unit_height) {
     auto table = get_txpool_table_by_addr(account);
@@ -201,13 +201,13 @@ void xtxpool_t::update_unconfirm_accounts(uint8_t zone, uint16_t subaddr) {
     }
 }
 
-void xtxpool_t::update_non_ready_accounts(uint8_t zone, uint16_t subaddr) {
-    xassert(is_table_subscribed(zone, subaddr));
-    xassert(m_tables[zone][subaddr] != nullptr);
-    if (m_tables[zone][subaddr] != nullptr) {
-        m_tables[zone][subaddr]->update_non_ready_accounts();
-    }
-}
+// void xtxpool_t::update_non_ready_accounts(uint8_t zone, uint16_t subaddr) {
+//     xassert(is_table_subscribed(zone, subaddr));
+//     xassert(m_tables[zone][subaddr] != nullptr);
+//     if (m_tables[zone][subaddr] != nullptr) {
+//         m_tables[zone][subaddr]->update_non_ready_accounts();
+//     }
+// }
 
 void xtxpool_t::update_locked_txs(const std::string & table_addr, const std::vector<tx_info_t> & locked_tx_vec) {
     auto table = get_txpool_table_by_addr(table_addr);
