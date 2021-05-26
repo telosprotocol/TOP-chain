@@ -7,10 +7,11 @@
 #include "xdata/xtableblock.h"
 NS_BEG2(top, xtxpool_service_v2)
 
-#define recover_unconfirmed_txs_interval (16)  // every 16 seconds recover once.
+#define recover_unconfirmed_txs_interval (64)  // every 64 seconds recover once.
 
-#define receipt_resend_interval (16)  // every 16 seconds resend once
-#define receipt_sender_select_num (2)
+#define receipt_resend_interval (64)  // every 64 seconds resend once
+#define receipt_sender_select_num (2)   // select 2 nodes to send receipt at the first time
+#define receipt_resender_select_num (1) // select 1 nodes to resend receipt
 
 bool xreceipt_strategy_t::is_time_for_recover_unconfirmed_txs(uint64_t now) {
     return (now % recover_unconfirmed_txs_interval) == 0;
@@ -46,14 +47,14 @@ bool xreceipt_strategy_t::is_resend_node_for_talbe(uint64_t now, uint32_t table_
     return (is_time_for_resend && resend_node_pos == self_node_id);
 }
 
-bool xreceipt_strategy_t::is_selected_sender(const data::xcons_transaction_ptr_t & cons_tx, uint32_t resend_time, uint16_t node_id, uint16_t shard_size) {
+bool xreceipt_strategy_t::is_selected_resender(const data::xcons_transaction_ptr_t & cons_tx, uint32_t resend_time, uint16_t node_id, uint16_t shard_size) {
     // select 2 auditor to send the receipt
-    uint32_t select_num = receipt_sender_select_num;
+    uint32_t select_num = receipt_resender_select_num;
     // calculate a random position that means which node is selected to send the receipt
     // the random position change by resend_time for rotate the selected node, to avoid same node is selected continuously.
     uint32_t rand_pos = (base::xhash32_t::digest(cons_tx->get_transaction()->get_digest_str()) + resend_time) % shard_size;
     bool ret = is_selected_pos(node_id, rand_pos, select_num, shard_size);
-    xinfo("xreceipt_strategy_t::is_selected_sender ret:%d tx:%s rand_pos:%u select_num:%u node_id:%u shard_size:%u resend_time:%u",
+    xinfo("xreceipt_strategy_t::is_selected_resender ret:%d tx:%s rand_pos:%u select_num:%u node_id:%u shard_size:%u resend_time:%u",
           ret,
           cons_tx->dump().c_str(),
           rand_pos,

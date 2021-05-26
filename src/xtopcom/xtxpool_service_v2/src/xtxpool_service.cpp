@@ -235,7 +235,7 @@ void xtxpool_service::check_and_response_recv_receipt(const xcons_transaction_pt
     // if tx subtype is recv and is resend, need not select by function has_receipt_right, because sender is already selected by gmtime before here.
     
     uint32_t resend_time = xreceipt_strategy_t::calc_resend_time(cons_tx->get_unit_cert()->get_gmtime(), xverifier::xtx_utl::get_gmttime_s());
-    if (xreceipt_strategy_t::is_selected_sender(cons_tx, resend_time, m_node_id, m_shard_size)) {
+    if (xreceipt_strategy_t::is_selected_resender(cons_tx, resend_time, m_node_id, m_shard_size)) {
         return;
     }
 
@@ -373,8 +373,8 @@ void xtxpool_service::auditor_forward_receipt_to_shard(const xcons_transaction_p
         return;
     }
 
-    uint64_t now = xverifier::xtx_utl::get_gmttime_s();
-    bool has_right = xreceipt_strategy_t::is_selected_sender(cons_tx, 0, m_node_id, m_shard_size);
+    uint32_t resend_time = xreceipt_strategy_t::calc_resend_time(cons_tx->get_unit_cert()->get_gmtime(), xverifier::xtx_utl::get_gmttime_s());
+    bool has_right = xreceipt_strategy_t::is_selected_resender(cons_tx, resend_time, m_node_id, m_shard_size);
     if (has_right) {
         const std::string & target_address = cons_tx->get_receipt_target_account();
 
@@ -460,7 +460,9 @@ void xtxpool_service::deal_table_block(xblock_t * block, uint64_t now_clock) {
             }
         }
 
-        make_receipts_and_send(block);
+        if (xreceipt_strategy_t::is_selected_sender(block->get_height(), m_node_id, m_shard_size)) {
+            make_receipts_and_send(block);
+        }
     }
     m_table_db_event_height_map[tableid.get_subaddr()] = block->get_height();
 }

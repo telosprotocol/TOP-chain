@@ -17,7 +17,7 @@ public:
     static bool is_time_for_recover_unconfirmed_txs(uint64_t now);
     static std::vector<data::xcons_transaction_ptr_t> make_receipts(data::xblock_t * block);
     static bool is_resend_node_for_talbe(uint64_t now, uint32_t table_id, uint16_t shard_size, uint16_t self_node_id);
-    static bool is_selected_sender(const data::xcons_transaction_ptr_t & cons_tx, uint32_t resend_time, uint16_t node_id, uint16_t shard_size);
+    static bool is_selected_resender(const data::xcons_transaction_ptr_t & cons_tx, uint32_t resend_time, uint16_t node_id, uint16_t shard_size);
     static bool is_selected_sender(uint64_t block_height, uint16_t node_id, uint16_t shard_size);
     static uint32_t calc_resend_time(uint64_t tx_cert_time, uint64_t now);
     static bool is_selected_pos(uint32_t pos, uint32_t rand_pos, uint32_t select_num, uint32_t size);
