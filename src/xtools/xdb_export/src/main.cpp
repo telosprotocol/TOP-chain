@@ -58,7 +58,8 @@ void usage() {
     std::cout << "        - all_account" << std::endl;
     std::cout << "        - all_property" << std::endl;
     std::cout << "        - stake_property" << std::endl;
-    std::cout << "        - check_fast_sync [table | unit | file] [account address]" << std::endl;
+    std::cout << "        - check_fast_sync [table | unit] [account address]" << std::endl;
+    std::cout << "        - check_block_exist <account address> <height>" << std::endl;
     std::cout << "        - check_tx_info [table]" << std::endl;
     std::cout << "        - query <account address>" << std::endl;
     std::cout << "-------  end  -------" << std::endl;
@@ -446,6 +447,16 @@ public:
         result_json[account] = j;
     }
 
+    void query_block_exist(std::string const & address, const uint64_t height) {
+        auto const & vblock = m_blockstore->load_block_object(address,height,0,false);
+        const data::xblock_t * block = dynamic_cast<data::xblock_t *>(vblock.get());
+        if (block == nullptr) {
+            std::cout << "account: " << address << " , height: " << height << " , block not exist" << std::endl;
+        } else {
+            std::cout << "account: " << address << " , height: " << height << " , block exist" << std::endl;
+        }
+    }
+
     void query_unit_property(std::string const & address, json & accounts_json) {
         std::cout << "account " << address << std::endl;
         xaccount_ptr_t account_ptr = m_store->query_account(address);
@@ -766,6 +777,15 @@ int main(int argc, char ** argv) {
         }
         std::ofstream out_json(filename);
         out_json << std::setw(4) << result_json;
+    } else if (function_name == "check_block_exist") {
+        if (argc < 5) {
+            usage();
+            return -1;
+        }
+        std::string address{argv[3]};
+        std::string height_s{argv[4]};
+        uint64_t height = std::stoi(height_s);
+        tools.query_block_exist(address, height);
     } else {
         usage();
     }
