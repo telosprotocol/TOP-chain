@@ -239,8 +239,6 @@ void xtxpool_service_mgr::on_timer() {
                 table_boundary_t table_boundary(zone_id, fount_table_id, back_table_id);
                 table_boundarys.push_back(table_boundary);
             }
-
-            service->resend_receipts(now);
         }
     }
 
@@ -253,6 +251,15 @@ void xtxpool_service_mgr::on_timer() {
         for (uint32_t table_id = fount_table_id; table_id <= back_table_id; table_id++) {
             m_para->get_txpool()->update_unconfirm_accounts(zone_id, table_id);
             // m_para->get_txpool()->update_non_ready_accounts(zone_id, table_id);
+        }
+    }
+
+    // recover unconfirm txs first, then resend receipts.
+    {
+        std::lock_guard<std::mutex> lock(m_mutex);
+        for (auto & iter : m_service_map) {
+            auto service = iter.second;
+            service->resend_receipts(now);
         }
     }
 }

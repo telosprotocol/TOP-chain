@@ -2652,8 +2652,10 @@ namespace top
                 return nullptr;
             
             base::xauto_ptr<base::xvbindex_t > new_idx(new base::xvbindex_t(*new_raw_block));
-            if(0 != new_idx->get_height())
+            if(0 != new_idx->get_height()) {
+                new_idx->reset_block_flags(base::enum_xvblock_flag_authenticated);
                 load_index(new_idx->get_height()); //always load index first for non-genesis block
+            }
             
             //note: emplace return a pair<iterator,bool>, value of bool indicate whether inserted or not, value of iterator point to inserted it
             auto height_map_pos  = m_all_blocks.emplace(new_idx->get_height(),std::map<uint64_t,base::xvbindex_t*>());

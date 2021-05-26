@@ -14,7 +14,7 @@
 
 NS_BEG2(top, xtxpool_v2)
 
-#define resend_time_threshold (60)
+#define resend_time_threshold (64)
 
 void xpeer_table_unconfirmed_txs_t::push_tx(const xcons_transaction_ptr_t & tx) {
     auto it = m_unconfirmed_txs.find(tx->get_last_action_receipt_id());
