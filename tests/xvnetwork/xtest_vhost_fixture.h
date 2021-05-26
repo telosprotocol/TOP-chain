@@ -32,10 +32,9 @@ public:
 
     top::vnetwork::xvnode_address_t get_address(common::xversion_t version, common::xnetwork_id_t network_id);
 
-    top::common::xip2_t get_xip2_address(common::xnetwork_version_t version, common::xnetwork_id_t network_id);
+    top::common::xip2_t get_xip2_address(common::xnetwork_id_t network_id);
 
-    top::common::xip2_t get_xip2_address(common::xnetwork_version_t version,
-                                         common::xnetwork_id_t      network_id,
+    top::common::xip2_t get_xip2_address(common::xnetwork_id_t      network_id,
                                          common::xzone_id_t         zone_id,
                                          common::xcluster_id_t      cluster_id,
                                          common::xgroup_id_t        group_id);

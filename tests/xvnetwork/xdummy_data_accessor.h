@@ -14,7 +14,7 @@ NS_BEG3(top, tests, vnetwork)
 
 class xtop_dummy_vnetwork_temp_data_accessor : public top::tests::election::xdummy_election_cache_data_accessor_t {
     common::xnetwork_id_t                                   network_id() const noexcept override { return common::xnetwork_id_t{1}; }
-    std::shared_ptr<top::election::cache::xgroup_element_t> group_element(common::xsharding_address_t const & sharding_address,
+    std::shared_ptr<top::election::cache::xgroup_element_t> group_element_by_logic_time(common::xsharding_address_t const & sharding_address,
                                                                           common::xlogic_time_t const         logic_time,
                                                                           std::error_code &                   ec) const override {
         common::xversion_t    test_version1{1}, test_version0{0};

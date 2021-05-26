@@ -16,7 +16,9 @@ xvip2_t xcons_utl::to_xip2(const common::xnode_address_t & address, bool bwith_v
 
 xvip2_t xcons_utl::erase_version(const xvip2_t & xip) {
     xvip2_t xip_copy{xip.low_addr, (uint64_t)-1};
-    set_network_ver_to_xip2(xip_copy, 0xFF);
+    assert(get_network_ver_from_xip2(xip_copy) == 0);
+    assert(get_network_ver_from_xip2(xip) == 0);
+    // set_network_ver_to_xip2(xip_copy, 0xFF);
     return xip_copy;
 }
 
@@ -29,7 +31,7 @@ bool xcons_utl::is_broadcast_address(const xvip2_t & addr) {
 }
 
 common::xnode_address_t xcons_utl::to_address(const xvip2_t & xip2, common::xversion_t const & version) {
-    auto network_version_value = static_cast<common::xnetwork_version_t::value_type>(get_network_ver_from_xip2(xip2));
+    // auto network_version_value = static_cast<common::xnetwork_version_t::value_type>(get_network_ver_from_xip2(xip2));
     auto network_id_value = static_cast<common::xnetwork_id_t::value_type>(get_network_id_from_xip2(xip2));
     auto zone_id_value = static_cast<common::xzone_id_t::value_type>(get_zone_id_from_xip2(xip2));
     auto cluster_id_value = static_cast<common::xcluster_id_t::value_type>(get_cluster_id_from_xip2(xip2));
@@ -38,7 +40,7 @@ common::xnode_address_t xcons_utl::to_address(const xvip2_t & xip2, common::xver
     auto shard_size = static_cast<std::uint16_t>(get_group_nodes_count_from_xip2(xip2));
     auto associated_blk_height = static_cast<std::uint64_t>(get_network_height_from_xip2(xip2));
 
-    assert(common::xnetwork_version_t{network_version_value} == version);  // NOLINT
+    // assert(common::xnetwork_version_t{network_version_value} == version);  // NOLINT
 
     common::xslot_id_t slot_id{slot_id_value};
     if (!slot_id.empty()) {

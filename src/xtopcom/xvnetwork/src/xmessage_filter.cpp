@@ -328,7 +328,7 @@ void xmsg_filter_validator_from_archive::filt(xvnetwork_message_t & vnetwork_mes
 
     if (receiver.version().empty()) {
         std::error_code ec{election::xdata_accessor_errc_t::success};
-        auto const group = m_filter_mgr_ptr->get_election_data_accessor_ptr()->group_element(receiver.sharding_address(), msg_time, ec);
+        auto const group = m_filter_mgr_ptr->get_election_data_accessor_ptr()->group_element_by_logic_time(receiver.sharding_address(), msg_time, ec);
         if (ec) {
             xinfo("[vnetwork][message_filter] hash: %" PRIx64 ", network %" PRIu32 " node %s receives msg sent to %s. ignored. error: %s",
                   vnetwork_message.hash(),
@@ -491,7 +491,7 @@ void xmsg_filter_version_still_empty::filt(xvnetwork_message_t & vnetwork_messag
         }
 
         std::error_code ec{election::xdata_accessor_errc_t::success};
-        auto const group_element = m_filter_mgr_ptr->get_election_data_accessor_ptr()->group_element(receiver.sharding_address(), msg_time, ec);
+        auto const group_element = m_filter_mgr_ptr->get_election_data_accessor_ptr()->group_element_by_logic_time(receiver.sharding_address(), msg_time, ec);
         if (!ec) {
             if (receiver.account_election_address().empty()) {
                 vnetwork_message.receiver(

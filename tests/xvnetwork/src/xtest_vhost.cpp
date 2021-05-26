@@ -87,11 +87,10 @@ TEST_F(xvhost_fixture_t, func_msg) {
 }
 
 TEST_F(xvhost_fixture_t, func_msg_ec) {
-    common::xnetwork_version_t test_network_version1{1};
     common::xnode_address_t    src_v1 = get_address(test_version1, test_network_id);
     common::xnode_address_t    src_v2 = get_address(test_version0, test_network_id);
     common::xnode_address_t    dst_v1 = get_address(test_version1, test_network_id2);
-    common::xip2_t             dst_xip2_v1 = get_xip2_address(test_network_version1, test_network_id2);
+    common::xip2_t             dst_xip2_v1 = get_xip2_address(test_network_id2);
 
     common::xip2_t          empty_dst;
     common::xnode_address_t dst_group_address = get_dst_group_address(test_version1, test_network_id, test_zone_id, test_cluster_id, test_group_id);
@@ -110,14 +109,14 @@ TEST_F(xvhost_fixture_t, func_msg_ec) {
 
     // broadcast message in the same sharding
     common::xip2_t broadcast_dst_xip2_v1 =
-        top::common::xip2_t{common::xnetwork_id_t{1}, common::xzone_id_t{1}, common::xcluster_id_t{1}, common::xgroup_id_t{1}, common::xslot_id_t{1023}, test_network_version1};
+        top::common::xip2_t{common::xnetwork_id_t{1}, common::xzone_id_t{1}, common::xcluster_id_t{1}, common::xgroup_id_t{1}, common::xslot_id_t{1023}};
     common::xnode_address_t src = get_address(common::xversion_t{1}, common::xnetwork_id_t{1}, common::xzone_id_t{1}, common::xcluster_id_t{1}, common::xgroup_id_t{1});
     vhost_test_ptr->broadcast(src, broadcast_dst_xip2_v1, test_msg, ec);
     EXPECT_EQ(m_cnt_spread_rumor, 1);
 
     // broadcast in the specified network
     common::xip2_t broadcast_dst_xip2_v1_net_broadcast =
-        top::common::xip2_t{common::xnetwork_id_t{1}, common::xzone_id_t{127}, common::xcluster_id_t{1}, common::xgroup_id_t{1}, common::xslot_id_t{1023}, test_network_version1};
+        top::common::xip2_t{common::xnetwork_id_t{1}, common::xzone_id_t{127}, common::xcluster_id_t{1}, common::xgroup_id_t{1}, common::xslot_id_t{1023}};
     vhost_test_ptr->broadcast(src, broadcast_dst_xip2_v1_net_broadcast, test_msg, ec);
     EXPECT_EQ(m_cnt_spread_rumor, 2);
 

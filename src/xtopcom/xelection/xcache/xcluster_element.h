@@ -61,11 +61,11 @@ public:
     std::shared_ptr<xgroup_element_t> group_element(common::xgroup_id_t const & group_id, common::xversion_t const & version, std::error_code & ec) const;
     std::shared_ptr<xgroup_element_t> group_element(common::xgroup_id_t const & group_id, common::xversion_t const & version) const;
 
-    std::shared_ptr<xgroup_element_t> group_element(common::xgroup_id_t const & group_id, common::xnetwork_version_t const & version, std::error_code & ec) const;
-    std::shared_ptr<xgroup_element_t> group_element(common::xgroup_id_t const & group_id, common::xnetwork_version_t const & version) const;
+    std::shared_ptr<xgroup_element_t> group_element_by_height(common::xgroup_id_t const & group_id, uint64_t const election_blk_height, std::error_code & ec) const;
+    std::shared_ptr<xgroup_element_t> group_element_by_height(common::xgroup_id_t const & group_id, uint64_t const election_blk_height) const;
 
-    std::shared_ptr<xgroup_element_t> group_element(common::xgroup_id_t const & group_id, common::xlogic_time_t const logic_time, std::error_code & ec) const;
-    std::shared_ptr<xgroup_element_t> group_element(common::xgroup_id_t const & group_id, common::xlogic_time_t const logic_time) const;
+    std::shared_ptr<xgroup_element_t> group_element_by_logic_time(common::xgroup_id_t const & group_id, common::xlogic_time_t const logic_time, std::error_code & ec) const;
+    std::shared_ptr<xgroup_element_t> group_element_by_logic_time(common::xgroup_id_t const & group_id, common::xlogic_time_t const logic_time) const;
 
     common::xversion_t group_version(common::xgroup_id_t const & group_id, common::xlogic_time_t const logic_time, std::error_code & ec) const;
     common::xversion_t group_version(common::xgroup_id_t const & group_id, common::xlogic_time_t const logic_time) const;

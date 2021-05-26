@@ -125,9 +125,9 @@ xgroup_update_result_t xtop_cluster_element::add_group_element(common::xgroup_id
     return ret;
 }
 
-std::shared_ptr<xgroup_element_t> xtop_cluster_element::group_element(common::xgroup_id_t const & group_id,
-                                                                      common::xnetwork_version_t const & version,
-                                                                      std::error_code & ec) const {
+std::shared_ptr<xgroup_element_t> xtop_cluster_element::group_element_by_height(common::xgroup_id_t const & group_id,
+                                                                                uint64_t const election_blk_height,
+                                                                                std::error_code & ec) const {
     assert(!ec);
     if (group_id.empty() || common::broadcast(group_id)) {
         ec = xdata_accessor_errc_t::group_id_empty;
@@ -141,31 +141,18 @@ std::shared_ptr<xgroup_element_t> xtop_cluster_element::group_element(common::xg
         return {};
     }
 
-    if (version.empty()) {
-        ec = xdata_accessor_errc_t::group_version_empty;
-
-        xwarn("%s network %" PRIu32 " zone %" PRIu16 " cluster %" PRIu16 ": looking for group %" PRIu16 " but with empty network version",
-              ec.category().name(),
-              static_cast<std::uint32_t>(network_id().value()),
-              static_cast<std::uint16_t>(zone_id().value()),
-              static_cast<std::uint16_t>(cluster_id().value()),
-              static_cast<std::uint16_t>(group_id.value()));
-
-        return {};
-    }
-
     XLOCK(m_group_elements_mutex);
     auto const it = m_group_elements.find(group_id);
     if (it == std::end(m_group_elements)) {
         ec = xdata_accessor_errc_t::group_not_exist;
 
-        xwarn("%s network %" PRIu32 " zone %" PRIu16 " cluster %" PRIu16 ": doesn't have group %" PRIu16 " with network version %" PRIu64,
+        xwarn("%s network %" PRIu32 " zone %" PRIu16 " cluster %" PRIu16 ": doesn't have group %" PRIu16 " with election block height %" PRIu64,
               ec.category().name(),
               static_cast<std::uint32_t>(network_id().value()),
               static_cast<std::uint16_t>(zone_id().value()),
               static_cast<std::uint16_t>(cluster_id().value()),
               static_cast<std::uint16_t>(group_id.value()),
-              static_cast<std::uint64_t>(version.value()));
+              static_cast<std::uint64_t>(election_blk_height));
 
         return {};
     }
@@ -175,41 +162,30 @@ std::shared_ptr<xgroup_element_t> xtop_cluster_element::group_element(common::xg
         assert(top::get<std::shared_ptr<xgroup_element_t>>(group_info));
         auto const & group_element = top::get<std::shared_ptr<xgroup_element_t>>(group_info);
 
-        if (group_element->version() == version) {
+        if (group_element->associated_blk_height() == election_blk_height) {
             return group_element;
         }
 
-        xdbg("xcluster_element_t::group_element comparing version(%s) vs network version(%s)", group_element->version().to_string().c_str(), version.to_string().c_str());
+        xdbg("xcluster_element_t::group_element comparing associated election blk height(%" PRIu64 ") vs queried election blk height(%" PRIu64 ")", group_element->associated_blk_height(), election_blk_height);
     }
 
     ec = xdata_accessor_errc_t::group_not_exist;
 
-    if (version == common::xdefault_network_version) {
-        xwarn("%s network %" PRIu32 " zone %" PRIu16 " cluster %" PRIu16 ": doesn't have group %" PRIu16 " with network version %" PRIu64
-              ". But version is xdefault_network_version",
-              ec.category().name(),
-              static_cast<std::uint32_t>(network_id().value()),
-              static_cast<std::uint16_t>(zone_id().value()),
-              static_cast<std::uint16_t>(cluster_id().value()),
-              static_cast<std::uint16_t>(group_id.value()),
-              static_cast<std::uint64_t>(version.value()));
-    } else {
-        xwarn("%s network %" PRIu32 " zone %" PRIu16 " cluster %" PRIu16 ": doesn't have group %" PRIu16 " with network version %" PRIu64,
-              ec.category().name(),
-              static_cast<std::uint32_t>(network_id().value()),
-              static_cast<std::uint16_t>(zone_id().value()),
-              static_cast<std::uint16_t>(cluster_id().value()),
-              static_cast<std::uint16_t>(group_id.value()),
-              static_cast<std::uint64_t>(version.value()));
-    }
+    xwarn("%s network %" PRIu32 " zone %" PRIu16 " cluster %" PRIu16 ": doesn't have group %" PRIu16 " with election block height %" PRIu64,
+            ec.category().name(),
+            static_cast<std::uint32_t>(network_id().value()),
+            static_cast<std::uint16_t>(zone_id().value()),
+            static_cast<std::uint16_t>(cluster_id().value()),
+            static_cast<std::uint16_t>(group_id.value()),
+            static_cast<std::uint64_t>(election_blk_height));
 
     return {};
 }
 
-std::shared_ptr<xgroup_element_t> xtop_cluster_element::group_element(common::xgroup_id_t const & group_id, common::xnetwork_version_t const & version) const {
+std::shared_ptr<xgroup_element_t> xtop_cluster_element::group_element_by_height(common::xgroup_id_t const & group_id, uint64_t const election_blk_height) const {
     std::error_code ec;
 
-    auto ret = group_element(group_id, version, ec);
+    auto ret = group_element_by_height(group_id, election_blk_height, ec);
     top::error::throw_error(ec);
     return ret;
 }
@@ -287,7 +263,7 @@ std::shared_ptr<xgroup_element_t> xtop_cluster_element::group_element(common::xg
     return ret;
 }
 
-std::shared_ptr<xgroup_element_t> xtop_cluster_element::group_element(common::xgroup_id_t const & group_id, common::xlogic_time_t const logic_time, std::error_code & ec) const {
+std::shared_ptr<xgroup_element_t> xtop_cluster_element::group_element_by_logic_time(common::xgroup_id_t const & group_id, common::xlogic_time_t const logic_time, std::error_code & ec) const {
     assert(!ec);
     if (group_id.empty() || common::broadcast(group_id)) {
         ec = xdata_accessor_errc_t::group_id_empty;
@@ -338,16 +314,16 @@ std::shared_ptr<xgroup_element_t> xtop_cluster_element::group_element(common::xg
     return {};
 }
 
-std::shared_ptr<xgroup_element_t> xtop_cluster_element::group_element(common::xgroup_id_t const & group_id, common::xlogic_time_t const logic_time) const {
+std::shared_ptr<xgroup_element_t> xtop_cluster_element::group_element_by_logic_time(common::xgroup_id_t const & group_id, common::xlogic_time_t const logic_time) const {
     std::error_code ec;
-    auto ret = group_element(group_id, logic_time, ec);
+    auto ret = group_element_by_logic_time(group_id, logic_time, ec);
     top::error::throw_error(ec);
     return ret;
 }
 
 common::xversion_t xtop_cluster_element::group_version(common::xgroup_id_t const & group_id, common::xlogic_time_t const logic_time, std::error_code & ec) const {
     assert(!ec);
-    auto const group_element = this->group_element(group_id, logic_time, ec);
+    auto const group_element = this->group_element_by_logic_time(group_id, logic_time, ec);
     if (!ec) {
         assert(group_element);
         return group_element->version();

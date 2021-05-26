@@ -22,16 +22,15 @@ top::vnetwork::xvnode_address_t xvnetwork_fixture_t::get_address(common::xversio
     return common::xnode_address_t(cluster_addr, account_address, version, std::uint16_t{1024}, std::uint16_t{0});
 }
 
-top::common::xip2_t xvnetwork_fixture_t::get_xip2_address(common::xnetwork_version_t version, common::xnetwork_id_t network_id) {
-    return top::common::xip2_t(network_id, common::xzone_id_t{1}, common::xcluster_id_t{1}, common::xgroup_id_t{1}, common::xslot_id_t{1}, version);
+top::common::xip2_t xvnetwork_fixture_t::get_xip2_address(common::xnetwork_id_t network_id) {
+    return top::common::xip2_t(network_id, common::xzone_id_t{1}, common::xcluster_id_t{1}, common::xgroup_id_t{1}, common::xslot_id_t{1});
 }
 
-top::common::xip2_t xvnetwork_fixture_t::get_xip2_address(common::xnetwork_version_t version,
-                                                          common::xnetwork_id_t      network_id,
+top::common::xip2_t xvnetwork_fixture_t::get_xip2_address(common::xnetwork_id_t      network_id,
                                                           common::xzone_id_t         zone_id,
                                                           common::xcluster_id_t      cluster_id,
                                                           common::xgroup_id_t        group_id) {
-    return top::common::xip2_t{network_id, zone_id, cluster_id, group_id, common::xslot_id_t{1}, version};
+    return top::common::xip2_t{network_id, zone_id, cluster_id, group_id, common::xslot_id_t{1}};
 }
 
 top::vnetwork::xvnode_address_t xvnetwork_fixture_t::get_address(common::xversion_t    version,

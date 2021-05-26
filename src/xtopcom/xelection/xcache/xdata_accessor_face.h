@@ -58,11 +58,13 @@ public:
                   common::xversion_t const & version,
                   std::error_code & ec) const = 0;
 
-    virtual
-    std::shared_ptr<xgroup_element_t>
-    group_element(common::xsharding_address_t const & sharding_address,
-                  common::xlogic_time_t const logic_time,
-                  std::error_code & ec) const = 0;
+    virtual std::shared_ptr<xgroup_element_t> group_element_by_height(common::xgroup_address_t const & group_address,
+                                                            uint64_t const election_blk_height,
+                                                            std::error_code & ec) const = 0;
+
+    virtual std::shared_ptr<xgroup_element_t> group_element_by_logic_time(common::xsharding_address_t const & sharding_address,
+                                                                          common::xlogic_time_t const logic_time,
+                                                                          std::error_code & ec) const = 0;
 
     virtual
     std::shared_ptr<xgroup_element_t>

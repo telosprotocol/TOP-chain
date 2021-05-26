@@ -30,7 +30,7 @@ std::pair<xobject_ptr_t<base::xvnode_t>, common::xslot_id_t> xtop_mocked_vnode_g
         group_xip2.zone_id(),
         group_xip2.cluster_id(),
         group_xip2.group_id(),
-        common::xdefault_network_version,
+        // common::xdefault_network_version,
         group_xip2.size(),
         group_xip2.height()
     };
@@ -67,7 +67,7 @@ xobject_ptr_t<xmocked_vnode_group_t> xtop_mocked_vnode_service::add_group(common
                                                                           common::xgroup_id_t const & gid,
                                                                           uint16_t const group_size,
                                                                           uint64_t const election_blk_height) {
-    common::xip2_t group_xip2{nid, zid, cid, gid, common::xdefault_network_version, group_size, election_blk_height};
+    common::xip2_t group_xip2{nid, zid, cid, gid, group_size, election_blk_height};
     {
         auto group = get_group_internal(group_xip2);
         if (group != nullptr) {

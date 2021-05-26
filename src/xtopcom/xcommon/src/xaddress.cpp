@@ -617,7 +617,7 @@ xtop_node_address::xip2() const noexcept {
         sharding_xip.cluster_id(),
         sharding_xip.group_id(),
         xslot_id_t{ m_account_election_address.slot_id().value_or(xbroadcast_slot_id_value) },
-        xnetwork_version_t{ static_cast<xnetwork_version_t::value_type>(version().value_or(xdefault_network_version_value)) },
+        // xnetwork_version_t{ static_cast<xnetwork_version_t::value_type>(version().value_or(xdefault_network_version_value)) },
         sharding_size(),
         associated_blk_height()
     };
@@ -685,7 +685,7 @@ xtop_node_address::swap(xtop_node_address & other) noexcept {
 
 std::string
 xtop_node_address::to_string() const {
-    return m_cluster_address.to_string() + u8"/" + m_account_election_address.to_string() + u8"/" + m_logic_version.to_string();
+    return m_cluster_address.to_string() + "/" + m_account_election_address.to_string() + "/" + m_logic_version.to_string();
 }
 
 std::int32_t

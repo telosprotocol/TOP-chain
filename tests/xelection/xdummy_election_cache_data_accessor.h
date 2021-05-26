@@ -55,9 +55,15 @@ public:
     }
 
     std::shared_ptr<top::election::cache::xgroup_element_t>
-    group_element(common::xsharding_address_t const &,
+    group_element_by_logic_time(common::xsharding_address_t const &,
                   common::xlogic_time_t const,
                   std::error_code &) const override {
+        return {};
+    }
+
+    std::shared_ptr<top::election::cache::xgroup_element_t> group_element_by_height(common::xgroup_address_t const &,
+                                                                                    uint64_t const,
+                                                                                    std::error_code &) const override {
         return {};
     }
 
