@@ -147,10 +147,24 @@ bool xtimer_picker_t::recv_in(const xvip2_t & from_addr, const xvip2_t & to_addr
     if (xcons_utl::xip_equals(from_addr, get_xip2_addr())) {
         return true;
     }
+
     bool valid = true;
     auto type = packet.get_msg_type();
     common::xversion_t version{0};
     xvip2_t leader_xip;
+
+    if (from_addr.high_addr != to_addr.high_addr) {
+        // fix TOP-3720. XIP's network version is deprecated now and will be used for other purpose in the future.
+        // so for consensusing logic time, only epoch matched msg can be processed.
+        // Epoch is defined in XIP's high part.
+        xwarn("[xtimer_picker_t::recv_in] recv invalid msg %x from %" PRIx64 ":%" PRIx64 " to %" PRIx64 ":%" PRIx64,
+              type,
+              from_addr.high_addr,
+              from_addr.low_addr,
+              to_addr.high_addr,
+              to_addr.low_addr);
+        return false;
+    }
 
     if (type == xconsensus::enum_consensus_msg_type_proposal ||
         type == xconsensus::enum_consensus_msg_type_commit) {
