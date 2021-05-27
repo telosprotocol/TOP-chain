@@ -29,7 +29,6 @@ NodeInfo::NodeInfo(const NodeInfo& other)
             detection_delay_count(other.detection_delay_count),
             heartbeat_count(other.heartbeat_count),
             service_type(other.service_type),
-            is_client(other.is_client),
             same_vlan(other.same_vlan),
             xid(other.xid),
             xip(other.xip),
@@ -65,7 +64,6 @@ NodeInfo& NodeInfo::operator=(const NodeInfo& other) {
     detection_delay_count = other.detection_delay_count;
     heartbeat_count = other.heartbeat_count;  // count > 3
     service_type = other.service_type;
-    is_client = other.is_client;
     tp_next_time_to_heartbeat = other.tp_next_time_to_heartbeat;
     same_vlan = other.same_vlan;
     xid = other.xid;

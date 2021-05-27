@@ -4,13 +4,13 @@
 
 #include "xwrouter/root/root_routing_manager.h"
 
+#include "xkad/routing_table/local_node_info.h"
+#include "xkad/routing_table/routing_table.h"
+#include "xkad/routing_table/routing_utils.h"
 #include "xpbase/base/check_cast.h"
+#include "xpbase/base/endpoint_util.h"
 #include "xpbase/base/line_parser.h"
 #include "xpbase/base/top_log.h"
-#include "xpbase/base/endpoint_util.h"
-#include "xkad/routing_table/routing_utils.h"
-#include "xkad/routing_table/routing_table.h"
-#include "xkad/routing_table/local_node_info.h"
 #include "xwrouter/register_routing_table.h"
 #include "xwrouter/root/root_routing.h"
 
@@ -40,15 +40,13 @@ void RootRoutingManager::Destory() {
     }
 }
 
-int RootRoutingManager::GetRootNodes(
-        uint32_t network_id,
-        std::vector<NodeInfoPtr>& root_nodes) {
+int RootRoutingManager::GetRootNodes(uint32_t network_id, std::vector<NodeInfoPtr> & root_nodes) {
     std::unique_lock<std::mutex> lock(root_routing_table_mutex_);
     if (!root_routing_table_) {
         TOP_WARN("get routing table failed!");
         return kKadFailed;
     }
-    RootRouting* root_table = static_cast<RootRouting*>(root_routing_table_.get());
+    RootRouting * root_table = static_cast<RootRouting *>(root_routing_table_.get());
     if (!root_table) {
         TOP_WARN("get routing table failed!");
         return kKadFailed;
@@ -56,10 +54,7 @@ int RootRoutingManager::GetRootNodes(
     return root_table->GetRootNodes(network_id, root_nodes);
 }
 
-int RootRoutingManager::GetRootNodesV2(
-        const std::string& des_id,
-        uint64_t service_type,
-        std::vector<NodeInfoPtr>& root_nodes) {
+int RootRoutingManager::GetRootNodesV2(const std::string & des_id, uint64_t service_type, std::vector<NodeInfoPtr> & root_nodes) {
     std::unique_lock<std::mutex> lock(root_routing_table_mutex_);
 
     if (!root_routing_table_) {
@@ -70,8 +65,7 @@ int RootRoutingManager::GetRootNodesV2(
     return root_table->GetRootNodesV2(des_id, service_type, root_nodes);
 }
 
-int RootRoutingManager::GetRootBootstrapCache(
-        std::set<std::pair<std::string, uint16_t>>& boot_endpoints) {
+int RootRoutingManager::GetRootBootstrapCache(std::set<std::pair<std::string, uint16_t>> & boot_endpoints) {
     auto routing_table_ptr = GetRoutingTable(kRoot);
     if (!routing_table_ptr) {
         TOP_INFO("<blueshi> no routing_table(kRoot)");
@@ -93,13 +87,7 @@ int RootRoutingManager::InitRootRoutingTable(std::shared_ptr<transport::Transpor
         return kKadFailed;
     }
 
-    if (CreateRoutingTable(
-            transport,
-            config,
-            kad_key_ptr,
-            get_cache_callback,
-            set_cache_callback,
-            wait_for_joined) != kKadSuccess) {
+    if (CreateRoutingTable(transport, config, kad_key_ptr, get_cache_callback, set_cache_callback, wait_for_joined) != kKadSuccess) {
         TOP_FATAL("create routing table failed!");
         return kKadFailed;
     }
@@ -135,9 +123,7 @@ int RootRoutingManager::CreateRoutingTable(std::shared_ptr<transport::Transport>
     std::set<std::pair<std::string, uint16_t>> public_endpoints_config;
     GetPublicEndpointsConfig(config, public_endpoints_config);
     TOP_INFO("enter CreateRoutingTable:%lu", service_type);
-    kadmlia::LocalNodeInfoPtr local_node_ptr = kadmlia::CreateLocalInfoFromConfig(
-            config,
-            kad_key_ptr);
+    kadmlia::LocalNodeInfoPtr local_node_ptr = kadmlia::CreateLocalInfoFromConfig(config, kad_key_ptr);
     if (!local_node_ptr) {
         TOP_FATAL("create local_node_ptr for service_type(%ld) failed", (long)service_type);
         return kKadFailed;
@@ -145,7 +131,7 @@ int RootRoutingManager::CreateRoutingTable(std::shared_ptr<transport::Transport>
     RoutingTablePtr routing_table_ptr;
     routing_table_ptr.reset(new RootRouting(transport, local_node_ptr));
 
-    if (!routing_table_ptr->Init()) {
+    if (!routing_table_ptr->Init()) { // RootRouting::Init()
         TOP_FATAL("init edge bitvpn routing table failed!");
         return kKadFailed;
     }
@@ -191,9 +177,7 @@ int RootRoutingManager::CreateRoutingTable(std::shared_ptr<transport::Transport>
     return kKadSuccess;
 }
 
-int RootRoutingManager::GetBootstrapRootNetwork(
-        uint64_t service_type,
-        std::set<std::pair<std::string, uint16_t>>& boot_endpoints) {
+int RootRoutingManager::GetBootstrapRootNetwork(uint64_t service_type, std::set<std::pair<std::string, uint16_t>> & boot_endpoints) {
     TOP_INFO("get bootstrap from root network, service_type=%llu ...", service_type);
     std::vector<top::kadmlia::NodeInfoPtr> nodes;
     for (int i = 0; i < 3; ++i) {  // try 3 times
@@ -204,12 +188,11 @@ int RootRoutingManager::GetBootstrapRootNetwork(
             continue;
         }
 
-        for (auto& node_ptr : nodes_tmp) {
+        for (auto & node_ptr : nodes_tmp) {
             if (node_ptr->IsPublicNode()) {
                 nodes.push_back(node_ptr);
             } else {
-                TOP_INFO("ignore local node(%s:%d)",
-                    node_ptr->public_ip.c_str(), (int)node_ptr->public_port);
+                TOP_INFO("ignore local node(%s:%d)", node_ptr->public_ip.c_str(), (int)node_ptr->public_port);
             }
         }
 
@@ -221,18 +204,15 @@ int RootRoutingManager::GetBootstrapRootNetwork(
     }
 
     boot_endpoints.clear();
-    for (auto& node_ptr : nodes) {
+    for (auto & node_ptr : nodes) {
         boot_endpoints.insert(std::make_pair(node_ptr->public_ip, node_ptr->public_port));
-        TOP_INFO("boostrap node(%s:%d)",
-            node_ptr->public_ip.c_str(), node_ptr->public_port);
+        TOP_INFO("boostrap node(%s:%d)", node_ptr->public_ip.c_str(), node_ptr->public_port);
     }
 
     return kKadSuccess;
 }
 
-bool RootRoutingManager::GetServiceBootstrapRootNetwork(
-        uint64_t service_type,
-        std::set<std::pair<std::string, uint16_t>>& boot_endpoints) {
+bool RootRoutingManager::GetServiceBootstrapRootNetwork(uint64_t service_type, std::set<std::pair<std::string, uint16_t>> & boot_endpoints) {
     std::unique_lock<std::mutex> lock(root_routing_table_mutex_);
     if (!root_routing_table_) {
         TOP_WARN("get routing table failed!");
@@ -241,7 +221,6 @@ bool RootRoutingManager::GetServiceBootstrapRootNetwork(
     RootRouting * root_table = static_cast<RootRouting *>(root_routing_table_.get());
     return root_table->GetCacheServicePublicNodes(service_type, boot_endpoints);
 }
-
 
 bool RootRoutingManager::SetCacheServiceType(uint64_t service_type) {
     std::unique_lock<std::mutex> lock(root_routing_table_mutex_);
@@ -253,10 +232,7 @@ bool RootRoutingManager::SetCacheServiceType(uint64_t service_type) {
     return root_table->SetCacheServiceType(service_type);
 }
 
-int RootRoutingManager::GetRootNodesV2Async(
-        const std::string& des_kroot_id,
-        uint64_t des_service_type,
-        GetRootNodesV2AsyncCallback cb) {
+int RootRoutingManager::GetRootNodesV2Async(const std::string & des_kroot_id, uint64_t des_service_type, GetRootNodesV2AsyncCallback cb) {
     TOP_DEBUG("bluerootasync start");
     auto root_routing = std::dynamic_pointer_cast<RootRouting>(GetRoutingTable(kRoot));
     if (!root_routing) {
@@ -267,10 +243,7 @@ int RootRoutingManager::GetRootNodesV2Async(
     std::vector<kadmlia::NodeInfoPtr> nodes;
     using namespace std::placeholders;
     auto callback = std::bind(&RootRoutingManager::OnGetRootNodesV2Async, this, cb, des_service_type, _1);
-    if (root_routing->GetRootNodesV2Async(
-                des_kroot_id,
-                des_service_type,
-                callback) != kadmlia::kKadSuccess) {
+    if (root_routing->GetRootNodesV2Async(des_kroot_id, des_service_type, callback) != kadmlia::kKadSuccess) {
         /*
         TOP_WARN("getrootnodes failed,des_kroot_id: %s des_service_type: %llu",
                 HexEncode(des_kroot_id).c_str(),
@@ -282,10 +255,7 @@ int RootRoutingManager::GetRootNodesV2Async(
     return kadmlia::kKadSuccess;
 }
 
-void RootRoutingManager::OnGetRootNodesV2Async(
-        GetRootNodesV2AsyncCallback cb,
-        uint64_t service_type,
-        const std::vector<kadmlia::NodeInfoPtr>& nodes) {
+void RootRoutingManager::OnGetRootNodesV2Async(GetRootNodesV2AsyncCallback cb, uint64_t service_type, const std::vector<kadmlia::NodeInfoPtr> & nodes) {
     TOP_DEBUG("bluerootasync callback");
     std::vector<kadmlia::NodeInfoPtr> ret_nodes;
     for (uint32_t i = 0; i < nodes.size(); ++i) {

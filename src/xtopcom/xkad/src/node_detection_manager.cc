@@ -112,9 +112,6 @@ int NodeDetectionManager::Handshake(std::shared_ptr<NodeInfo> node_ptr) {
     message.set_des_service_type(node_ptr->service_type);
     message.set_des_node_id(node_ptr->node_id);
     message.set_type(kKadHandshake);
-    if (local_node->client_mode()) {
-        message.set_client_msg(true);
-    }
 
     std::shared_ptr<transport::Transport> transport_ptr = routing_table_.get_transport();
     if (!transport_ptr) {

@@ -30,7 +30,6 @@ public:
             const std::string& local_ip,
             uint16_t local_port,
             bool first_node,
-            bool client,
             const std::string& idtype,
             base::KadmliaKeyPtr kadmlia_key,
             uint64_t service_type,
@@ -47,7 +46,6 @@ public:
     void set_local_port(uint16_t local_port) { local_port_ = local_port; }
     bool first_node() { return first_node_; }
     void set_first_node(bool first_node) { first_node_ = first_node; }
-    bool client_mode() { return client_mode_; }
     const std::string& private_key() { return private_key_; }
     const std::string& public_key() { return public_key_; }
     std::string public_ip() {
@@ -101,7 +99,6 @@ private:
     uint16_t rpc_http_port_{ 0 };
     uint16_t rpc_ws_port_{ 0 };
     bool first_node_{ false };
-    bool client_mode_{ false };
     std::string private_key_;
     std::string public_key_;
     std::mutex public_mutex_;

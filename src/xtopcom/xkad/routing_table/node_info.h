@@ -47,7 +47,6 @@ public:
     int32_t detection_delay_count{ 0 };
     int32_t heartbeat_count{ 0 };  // count > 3
     uint64_t service_type{ 0 };
-    bool is_client{ false };
     std::chrono::steady_clock::time_point tp_next_time_to_heartbeat;
     bool same_vlan{ false };
     std::string xid;

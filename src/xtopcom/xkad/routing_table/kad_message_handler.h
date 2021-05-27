@@ -41,7 +41,6 @@ public:
 
 private:
     void AddBaseHandlers();
-    int HandleClientMessage(transport::protobuf::RoutingMessage& message, base::xpacket_t& packet);
     void HandleConnectRequest(transport::protobuf::RoutingMessage& message, base::xpacket_t& packet);
     void HandleHandshake(transport::protobuf::RoutingMessage& message, base::xpacket_t& packet);
     void HandleBootstrapJoinRequest(transport::protobuf::RoutingMessage& message, base::xpacket_t& packet);
