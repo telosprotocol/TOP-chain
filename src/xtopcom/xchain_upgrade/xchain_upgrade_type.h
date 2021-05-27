@@ -64,12 +64,6 @@ namespace top {
          *
          */
         struct xtop_chain_fork_config {
-            top::optional<xfork_point_t> reward_fork_point;
-            top::optional<xfork_point_t> reward_fork_spark;
-            top::optional<xfork_point_t> reward_fork_detail;
-            top::optional<xfork_point_t> vote_contract_trx_split;
-            top::optional<xfork_point_t> rec_standby_update_program_version;
-            top::optional<xfork_point_t> slash_workload_contract_upgrade;
         };
         using xchain_fork_config_t = xtop_chain_fork_config;
     }
