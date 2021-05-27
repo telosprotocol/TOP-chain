@@ -248,7 +248,7 @@ void xvnode_house_t::add_group(const std::string &elect_address, uint64_t elect_
                             zone_id,
                             cluster_id,
                             group_id,
-                            common::xnetwork_version_t{static_cast<common::xnetwork_version_t::value_type>(election_group_result.group_version().value())},
+                            // common::xnetwork_version_t{static_cast<common::xnetwork_version_t::value_type>(election_group_result.group_version().value())},
                             static_cast<uint16_t>(election_group_result.size()),
                             elect_height};
 
@@ -264,7 +264,7 @@ void xvnode_house_t::add_group(const std::string &elect_address, uint64_t elect_
                             xip2.cluster_id(),
                             xip2.group_id(),
                             slot_id,
-                            xip2.network_version(),
+                            // xip2.network_version(),
                             xip2.size(),
                             xip2.height()
                         };

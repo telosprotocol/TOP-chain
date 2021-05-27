@@ -51,7 +51,7 @@ XINLINE_CONSTEXPR xcluster_id_t::value_type xmax_cluster_id_value{xbroadcast_clu
 XINLINE_CONSTEXPR xgroup_id_t::value_type xmax_group_id_value{xbroadcast_group_id_value - 1};
 XINLINE_CONSTEXPR xslot_id_t::value_type xmax_slot_id_value{xbroadcast_slot_id_value - 1};
 
-XINLINE_CONSTEXPR xnetwork_version_t::value_type xdefault_network_version_value{0x07};
+XINLINE_CONSTEXPR xnetwork_version_t::value_type xdefault_network_version_value{0x00};
 
 XINLINE_CONSTEXPR std::uint16_t xdefault_group_size_value{0x03FF};
 XINLINE_CONSTEXPR std::uint64_t xdefault_associated_blk_height_value{0x3FFFFFFFFFFFFF};
@@ -99,7 +99,7 @@ public:
     using value_type = xvip_t;
 
 private:
-    value_type m_xip{std::numeric_limits<value_type>::max()};
+    value_type m_xip{ 0xFF1FFFFFFFFFFFFF };// network version defaults to ZERO. Don't use network version field for now.
 
 public:
     xtop_ip() = default;
@@ -129,12 +129,12 @@ public:
             xgroup_id_t const & group_id,
             xaddress_domain_t const domain = xaddress_domain_t::enum_xaddress_domain_xip) noexcept;
 
-    xtop_ip(xnetwork_id_t const & network_id,
-            xzone_id_t const & zone_id,
-            xcluster_id_t const & cluster_id,
-            xgroup_id_t const & group_id,
-            xnetwork_version_t const & version,
-            xaddress_domain_t const domain = xaddress_domain_t::enum_xaddress_domain_xip) noexcept;
+    //xtop_ip(xnetwork_id_t const & network_id,
+    //        xzone_id_t const & zone_id,
+    //        xcluster_id_t const & cluster_id,
+    //        xgroup_id_t const & group_id,
+    //        xnetwork_version_t const & version,
+    //        xaddress_domain_t const domain = xaddress_domain_t::enum_xaddress_domain_xip) noexcept;
 
     xtop_ip(xnetwork_id_t const & network_id,
             xzone_id_t const & zone_id,
@@ -143,13 +143,13 @@ public:
             xslot_id_t const & slot_id,
             xaddress_domain_t const domain = xaddress_domain_t::enum_xaddress_domain_xip) noexcept;
 
-    xtop_ip(xnetwork_id_t const & network_id,
-            xzone_id_t const & zone_id,
-            xcluster_id_t const & cluster_id,
-            xgroup_id_t const & group_id,
-            xslot_id_t const & slot_id,
-            xnetwork_version_t const & version,
-            xaddress_domain_t const domain = xaddress_domain_t::enum_xaddress_domain_xip) noexcept;
+    //xtop_ip(xnetwork_id_t const & network_id,
+    //        xzone_id_t const & zone_id,
+    //        xcluster_id_t const & cluster_id,
+    //        xgroup_id_t const & group_id,
+    //        xslot_id_t const & slot_id,
+    //        xnetwork_version_t const & version,
+    //        xaddress_domain_t const domain = xaddress_domain_t::enum_xaddress_domain_xip) noexcept;
 
     void swap(xtop_ip & other) noexcept;
 
@@ -258,11 +258,19 @@ public:
                   common::xgroup_id_t const & group_id,
                   common::xaddress_domain_t const domain = common::xaddress_domain_t::enum_xaddress_domain_xip2);
 
+    //xtop_extended(common::xnetwork_id_t const & network_id,
+    //              common::xzone_id_t const & zone_id,
+    //              common::xcluster_id_t const & cluster_id,
+    //              common::xgroup_id_t const & group_id,
+    //              common::xnetwork_version_t const & network_version,
+    //              common::xaddress_domain_t const domain = common::xaddress_domain_t::enum_xaddress_domain_xip2);
+
     xtop_extended(common::xnetwork_id_t const & network_id,
                   common::xzone_id_t const & zone_id,
                   common::xcluster_id_t const & cluster_id,
                   common::xgroup_id_t const & group_id,
-                  common::xnetwork_version_t const & network_version,
+                  uint16_t const size,
+                  uint64_t const height,
                   common::xaddress_domain_t const domain = common::xaddress_domain_t::enum_xaddress_domain_xip2);
 
     xtop_extended(common::xnetwork_id_t const & network_id,
@@ -279,7 +287,7 @@ public:
                   common::xcluster_id_t const & cluster_id,
                   common::xgroup_id_t const & group_id,
                   common::xslot_id_t const & slot_id,
-                  common::xnetwork_version_t const & network_version,
+                  // common::xnetwork_version_t const & network_version,
                   common::xaddress_domain_t const domain = common::xaddress_domain_t::enum_xaddress_domain_xip2);
 
     xtop_extended(common::xnetwork_id_t const & network_id,
@@ -287,7 +295,7 @@ public:
                   common::xcluster_id_t const & cluster_id,
                   common::xgroup_id_t const & group_id,
                   common::xslot_id_t const & slot_id,
-                  common::xnetwork_version_t const & network_version,
+                  // common::xnetwork_version_t const & network_version,
                   uint16_t const size,
                   uint64_t const height,
                   common::xaddress_domain_t const domain = common::xaddress_domain_t::enum_xaddress_domain_xip2);
@@ -308,7 +316,7 @@ public:
 
     common::xnetwork_type_t network_type() const noexcept;
 
-    common::xnetwork_version_t network_version() const noexcept;
+    // common::xnetwork_version_t network_version() const noexcept;
 
     common::xnetwork_id_t network_id() const noexcept;
 
@@ -355,8 +363,8 @@ xnode_type_t node_type_from(xzone_id_t const & zone_id, xcluster_id_t const & cl
 
 xnode_type_t node_type_from(xzone_id_t const & zone_id, xcluster_id_t const & cluster_id, xgroup_id_t const & group_id);
 
-bool operator==(xversion_t const & lhs, xnetwork_version_t const & rhs) noexcept;
-bool operator==(xnetwork_version_t const & lhs, xversion_t const & rhs) noexcept;
+//bool operator==(xversion_t const & lhs, xnetwork_version_t const & rhs) noexcept;
+//bool operator==(xnetwork_version_t const & lhs, xversion_t const & rhs) noexcept;
 
 #if defined XCXX14_OR_ABOVE
 XINLINE_CONSTEXPR xnetwork_version_t

@@ -49,9 +49,13 @@ public:
 
     std::shared_ptr<xgroup_element_t> group_element(common::xsharding_address_t const & sharding_address, common::xversion_t const & version, std::error_code & ec) const override;
 
-    std::shared_ptr<xgroup_element_t> group_element(common::xsharding_address_t const & sharding_address,
-                                                    common::xlogic_time_t const logic_time,
-                                                    std::error_code & ec) const override;
+    std::shared_ptr<xgroup_element_t> group_element_by_height(common::xgroup_address_t const & group_address,
+                                                              uint64_t const election_blk_height,
+                                                              std::error_code & ec) const override;
+
+    std::shared_ptr<xgroup_element_t> group_element_by_logic_time(common::xsharding_address_t const & sharding_address,
+                                                                  common::xlogic_time_t const logic_time,
+                                                                  std::error_code & ec) const override;
 
     std::shared_ptr<xgroup_element_t> parent_group_element(common::xsharding_address_t const & child_sharding_address,
                                                            common::xversion_t const & child_sharding_version,
@@ -114,19 +118,19 @@ private:
                                                     common::xversion_t const & version,
                                                     std::error_code & ec) const;
 
-    std::shared_ptr<xgroup_element_t> group_element(common::xnetwork_id_t const & network_id,
-                                                    common::xzone_id_t const & zone_id,
-                                                    common::xcluster_id_t const & cluster_id,
-                                                    common::xgroup_id_t const & group_id,
-                                                    common::xnetwork_version_t const & network_version,
-                                                    std::error_code & ec) const;
+    std::shared_ptr<xgroup_element_t> group_element_by_height(common::xnetwork_id_t const & network_id,
+                                                              common::xzone_id_t const & zone_id,
+                                                              common::xcluster_id_t const & cluster_id,
+                                                              common::xgroup_id_t const & group_id,
+                                                              uint64_t const election_block_height,
+                                                              std::error_code & ec) const;
 
-    std::shared_ptr<xgroup_element_t> group_element(common::xnetwork_id_t const & network_id,
-                                                    common::xzone_id_t const & zone_id,
-                                                    common::xcluster_id_t const & cluster_id,
-                                                    common::xgroup_id_t const & group_id,
-                                                    common::xlogic_time_t const logic_time,
-                                                    std::error_code & ec) const;
+    std::shared_ptr<xgroup_element_t> group_element_by_logic_time(common::xnetwork_id_t const & network_id,
+                                                                  common::xzone_id_t const & zone_id,
+                                                                  common::xcluster_id_t const & cluster_id,
+                                                                  common::xgroup_id_t const & group_id,
+                                                                  common::xlogic_time_t const logic_time,
+                                                                  std::error_code & ec) const;
 
     std::shared_ptr<xcluster_element_t> cluster_element(common::xnetwork_id_t const & network_id,
                                                         common::xzone_id_t const & zone_id,

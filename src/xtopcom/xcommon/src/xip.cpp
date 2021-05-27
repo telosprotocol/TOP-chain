@@ -38,13 +38,13 @@ static void reset_raw_xip2_network_type(xvip2_t & xip2) noexcept {
 #endif
 }
 
-static void reset_raw_xip2_network_version(xvip2_t & xip2) noexcept {
-    reset_network_ver_to_xip2(xip2);
-#if !defined NDEBUG
-    auto const version = static_cast<xnetwork_version_t::value_type>(get_network_ver_from_xip2(xip2));
-    assert(version == 0);
-#endif
-}
+//static void reset_raw_xip2_network_version(xvip2_t & xip2) noexcept {
+//    reset_network_ver_to_xip2(xip2);
+//#if !defined NDEBUG
+//    auto const version = static_cast<xnetwork_version_t::value_type>(get_network_ver_from_xip2(xip2));
+//    assert(version == 0);
+//#endif
+//}
 
 static void reset_raw_xip2_network_id(xvip2_t & xip2) noexcept {
     reset_network_id_to_xip2(xip2);
@@ -145,16 +145,16 @@ static void set_raw_xip_network_type(xvip_t & xip, xnetwork_type_t const type) n
     xip = xip2.low_addr;
 }
 
-static void set_raw_xip2_network_version(xvip2_t & xip2, std::uint8_t const version) noexcept {
-    reset_raw_xip2_network_version(xip2);
-    set_network_ver_to_xip2(xip2, version);
-}
+//static void set_raw_xip2_network_version(xvip2_t & xip2, std::uint8_t const version) noexcept {
+//    reset_raw_xip2_network_version(xip2);
+//    set_network_ver_to_xip2(xip2, version);
+//}
 
-static void set_raw_xip_network_version(xvip_t & xip, std::uint8_t const version) noexcept {
-    xvip2_t xip2{xip, 0};
-    set_raw_xip2_network_version(xip2, version);
-    xip = xip2.low_addr;
-}
+//static void set_raw_xip_network_version(xvip_t & xip, std::uint8_t const version) noexcept {
+//    xvip2_t xip2{xip, 0};
+//    set_raw_xip2_network_version(xip2, version);
+//    xip = xip2.low_addr;
+//}
 
 static void set_raw_xip2_network_id(xvip2_t & xip2, xnetwork_id_t::value_type const nid) noexcept {
     reset_raw_xip2_network_id(xip2);
@@ -325,34 +325,34 @@ xtop_ip::xtop_ip(xnetwork_id_t const & network_id,
     assert(static_cast<xgroup_id_t::value_type>(get_group_id_from_xip2(xip2)) == (group_id.value() & xbroadcast_group_id_value));
 }
 
-xtop_ip::xtop_ip(xnetwork_id_t const & network_id,
-                 xzone_id_t const & zone_id,
-                 xcluster_id_t const & cluster_id,
-                 xgroup_id_t const & group_id,
-                 xnetwork_version_t const & network_version,
-                 xaddress_domain_t const domain) noexcept {
-    assert(network_id.has_value());
-    assert(zone_id.has_value());
-    assert(cluster_id.has_value());
-    assert(group_id.has_value());
-    assert(network_version.has_value());
-
-    xvip2_t xip2{m_xip, 0};
-    set_raw_xip2_address_domain(xip2, domain);
-    set_raw_xip2_network_type(xip2, xnetwork_type_t::enum_xnetwork_type_xchain);
-    set_raw_xip2_network_id(xip2, network_id.value());
-    set_raw_xip2_zone_id(xip2, zone_id.value());
-    set_raw_xip2_cluster_id(xip2, cluster_id.value());
-    set_raw_xip2_group_id(xip2, group_id.value());
-    set_raw_xip2_network_version(xip2, network_version.value());
-    m_xip = xip2.low_addr;
-
-    assert(static_cast<xnetwork_id_t::value_type>(get_network_id_from_xip2(xip2)) == (network_id.value() & xbroadcast_network_id_value));
-    assert(static_cast<xzone_id_t::value_type>(get_zone_id_from_xip2(xip2)) == (zone_id.value() & xbroadcast_zone_id_value));
-    assert(static_cast<xcluster_id_t::value_type>(get_cluster_id_from_xip2(xip2)) == (cluster_id.value() & xbroadcast_cluster_id_value));
-    assert(static_cast<xgroup_id_t::value_type>(get_group_id_from_xip2(xip2)) == (group_id.value() & xbroadcast_group_id_value));
-    assert(static_cast<xnetwork_version_t::value_type>(get_network_ver_from_xip2(xip2)) == (network_version.value() & xdefault_network_version_value));
-}
+//xtop_ip::xtop_ip(xnetwork_id_t const & network_id,
+//                 xzone_id_t const & zone_id,
+//                 xcluster_id_t const & cluster_id,
+//                 xgroup_id_t const & group_id,
+//                 xnetwork_version_t const & network_version,
+//                 xaddress_domain_t const domain) noexcept {
+//    assert(network_id.has_value());
+//    assert(zone_id.has_value());
+//    assert(cluster_id.has_value());
+//    assert(group_id.has_value());
+//    assert(network_version.has_value());
+//
+//    xvip2_t xip2{m_xip, 0};
+//    set_raw_xip2_address_domain(xip2, domain);
+//    set_raw_xip2_network_type(xip2, xnetwork_type_t::enum_xnetwork_type_xchain);
+//    set_raw_xip2_network_id(xip2, network_id.value());
+//    set_raw_xip2_zone_id(xip2, zone_id.value());
+//    set_raw_xip2_cluster_id(xip2, cluster_id.value());
+//    set_raw_xip2_group_id(xip2, group_id.value());
+//    set_raw_xip2_network_version(xip2, network_version.value());
+//    m_xip = xip2.low_addr;
+//
+//    assert(static_cast<xnetwork_id_t::value_type>(get_network_id_from_xip2(xip2)) == (network_id.value() & xbroadcast_network_id_value));
+//    assert(static_cast<xzone_id_t::value_type>(get_zone_id_from_xip2(xip2)) == (zone_id.value() & xbroadcast_zone_id_value));
+//    assert(static_cast<xcluster_id_t::value_type>(get_cluster_id_from_xip2(xip2)) == (cluster_id.value() & xbroadcast_cluster_id_value));
+//    assert(static_cast<xgroup_id_t::value_type>(get_group_id_from_xip2(xip2)) == (group_id.value() & xbroadcast_group_id_value));
+//    assert(static_cast<xnetwork_version_t::value_type>(get_network_ver_from_xip2(xip2)) == (network_version.value() & xdefault_network_version_value));
+//}
 
 xtop_ip::xtop_ip(xnetwork_id_t const & network_id,
                  xzone_id_t const & zone_id,
@@ -383,38 +383,38 @@ xtop_ip::xtop_ip(xnetwork_id_t const & network_id,
     assert(static_cast<xslot_id_t::value_type>(get_node_id_from_xip2(xip2)) == (slot_id.value() & xbroadcast_slot_id_value));
 }
 
-xtop_ip::xtop_ip(xnetwork_id_t const & network_id,
-                 xzone_id_t const & zone_id,
-                 xcluster_id_t const & cluster_id,
-                 xgroup_id_t const & group_id,
-                 xslot_id_t const & slot_id,
-                 xnetwork_version_t const & network_version,
-                 xaddress_domain_t const domain) noexcept {
-    assert(network_id.has_value());
-    assert(zone_id.has_value());
-    assert(cluster_id.has_value());
-    assert(group_id.has_value());
-    assert(slot_id.has_value());
-    assert(network_version.has_value());
-
-    xvip2_t xip2{m_xip, 0};
-    set_raw_xip2_address_domain(xip2, domain);
-    set_raw_xip2_network_type(xip2, xnetwork_type_t::enum_xnetwork_type_xchain);
-    set_raw_xip2_network_id(xip2, network_id.value());
-    set_raw_xip2_zone_id(xip2, zone_id.value());
-    set_raw_xip2_cluster_id(xip2, cluster_id.value());
-    set_raw_xip2_group_id(xip2, group_id.value());
-    set_raw_xip2_slot_id(xip2, slot_id.value());
-    set_raw_xip2_network_version(xip2, network_version.value());
-    m_xip = xip2.low_addr;
-
-    assert(static_cast<xnetwork_id_t::value_type>(get_network_id_from_xip2(xip2)) == (network_id.value() & xbroadcast_network_id_value));
-    assert(static_cast<xzone_id_t::value_type>(get_zone_id_from_xip2(xip2)) == (zone_id.value() & xbroadcast_zone_id_value));
-    assert(static_cast<xcluster_id_t::value_type>(get_cluster_id_from_xip2(xip2)) == (cluster_id.value() & xbroadcast_cluster_id_value));
-    assert(static_cast<xgroup_id_t::value_type>(get_group_id_from_xip2(xip2)) == (group_id.value() & xbroadcast_group_id_value));
-    assert(static_cast<xslot_id_t::value_type>(get_node_id_from_xip2(xip2)) == (slot_id.value() & xbroadcast_slot_id_value));
-    assert(static_cast<xnetwork_version_t::value_type>(get_network_ver_from_xip2(xip2)) == (network_version.value() & xdefault_network_version_value));
-}
+//xtop_ip::xtop_ip(xnetwork_id_t const & network_id,
+//                 xzone_id_t const & zone_id,
+//                 xcluster_id_t const & cluster_id,
+//                 xgroup_id_t const & group_id,
+//                 xslot_id_t const & slot_id,
+//                 xnetwork_version_t const & network_version,
+//                 xaddress_domain_t const domain) noexcept {
+//    assert(network_id.has_value());
+//    assert(zone_id.has_value());
+//    assert(cluster_id.has_value());
+//    assert(group_id.has_value());
+//    assert(slot_id.has_value());
+//    assert(network_version.has_value());
+//
+//    xvip2_t xip2{m_xip, 0};
+//    set_raw_xip2_address_domain(xip2, domain);
+//    set_raw_xip2_network_type(xip2, xnetwork_type_t::enum_xnetwork_type_xchain);
+//    set_raw_xip2_network_id(xip2, network_id.value());
+//    set_raw_xip2_zone_id(xip2, zone_id.value());
+//    set_raw_xip2_cluster_id(xip2, cluster_id.value());
+//    set_raw_xip2_group_id(xip2, group_id.value());
+//    set_raw_xip2_slot_id(xip2, slot_id.value());
+//    set_raw_xip2_network_version(xip2, network_version.value());
+//    m_xip = xip2.low_addr;
+//
+//    assert(static_cast<xnetwork_id_t::value_type>(get_network_id_from_xip2(xip2)) == (network_id.value() & xbroadcast_network_id_value));
+//    assert(static_cast<xzone_id_t::value_type>(get_zone_id_from_xip2(xip2)) == (zone_id.value() & xbroadcast_zone_id_value));
+//    assert(static_cast<xcluster_id_t::value_type>(get_cluster_id_from_xip2(xip2)) == (cluster_id.value() & xbroadcast_cluster_id_value));
+//    assert(static_cast<xgroup_id_t::value_type>(get_group_id_from_xip2(xip2)) == (group_id.value() & xbroadcast_group_id_value));
+//    assert(static_cast<xslot_id_t::value_type>(get_node_id_from_xip2(xip2)) == (slot_id.value() & xbroadcast_slot_id_value));
+//    assert(static_cast<xnetwork_version_t::value_type>(get_network_ver_from_xip2(xip2)) == (network_version.value() & xdefault_network_version_value));
+//}
 
 xaddress_domain_t xtop_ip::address_domain() const noexcept {
     xvip2_t xip2{m_xip, 0};
@@ -452,8 +452,11 @@ common::xnetwork_type_t xtop_ip::network_type() const noexcept {
 }
 
 xnetwork_version_t xtop_ip::network_version() const noexcept {
-    xvip2_t tmp_xip{m_xip, 0};
-    return xnetwork_version_t{static_cast<xnetwork_version_t::value_type>(get_network_ver_from_xip2(tmp_xip))};
+    // xvip2_t tmp_xip{m_xip, 0};
+    // auto ret = xnetwork_version_t{static_cast<xnetwork_version_t::value_type>(get_network_ver_from_xip2(tmp_xip))};
+    // assert(ret == xdefault_network_version);
+    // return ret;
+    return xdefault_network_version;
 }
 
 xnetwork_id_t xtop_ip::network_id() const noexcept {
@@ -499,7 +502,7 @@ std::string to_string(xnetwork_version_t const network_version) {
     if (network_version.has_value()) {
         return std::to_string(static_cast<std::uint16_t>(network_version.value()));
     } else {
-        return u8"(null)";
+        return "(null)";
     }
 }
 
@@ -507,7 +510,7 @@ std::string to_string(xnetwork_id_t const & nid) {
     if (nid.has_value()) {
         return std::to_string(nid.value());
     } else {
-        return u8"(null)";
+        return "(null)";
     }
 }
 
@@ -515,7 +518,7 @@ std::string to_string(xzone_id_t const & zid) {
     if (zid.has_value()) {
         return std::to_string(static_cast<std::uint16_t>(zid.value()));
     } else {
-        return u8"(null)";
+        return "(null)";
     }
 }
 
@@ -523,7 +526,7 @@ std::string to_string(xcluster_id_t const & cid) {
     if (cid.has_value()) {
         return std::to_string(static_cast<std::uint16_t>(cid.value()));
     } else {
-        return u8"(null)";
+        return "(null)";
     }
 }
 
@@ -531,7 +534,7 @@ std::string to_string(xgroup_id_t const & gid) {
     if (gid.has_value()) {
         return std::to_string(static_cast<std::uint16_t>(gid.value()));
     } else {
-        return u8"(null)";
+        return "(null)";
     }
 }
 
@@ -539,7 +542,7 @@ std::string to_string(xslot_id_t const & sid) {
     if (sid.has_value()) {
         return std::to_string(static_cast<std::uint16_t>(sid.value()));
     } else {
-        return u8"(null)";
+        return "(null)";
     }
 }
 
@@ -590,13 +593,28 @@ xtop_extended<common::xip_t>::xtop_extended(common::xnetwork_id_t const & networ
   : m_xip{network_id, zone_id, cluster_id, group_id, domain} {
 }
 
+//xtop_extended<common::xip_t>::xtop_extended(common::xnetwork_id_t const & network_id,
+//                                            common::xzone_id_t const & zone_id,
+//                                            common::xcluster_id_t const & cluster_id,
+//                                            common::xgroup_id_t const & group_id,
+//                                            common::xnetwork_version_t const & network_version,
+//                                            common::xaddress_domain_t const domain)
+//  : m_xip{network_id, zone_id, cluster_id, group_id, network_version, domain} {
+//}
+
 xtop_extended<common::xip_t>::xtop_extended(common::xnetwork_id_t const & network_id,
                                             common::xzone_id_t const & zone_id,
                                             common::xcluster_id_t const & cluster_id,
                                             common::xgroup_id_t const & group_id,
-                                            common::xnetwork_version_t const & network_version,
+                                            uint16_t const size,
+                                            uint64_t const height,
                                             common::xaddress_domain_t const domain)
-  : m_xip{network_id, zone_id, cluster_id, group_id, network_version, domain} {
+  : m_xip{network_id, zone_id, cluster_id, group_id, domain} {
+    xvip2_t xip2{0, 0};
+    set_group_nodes_count_to_xip2(xip2, size);
+    set_network_height_to_xip2(xip2, height);
+
+    m_extent = xip2.high_addr;
 }
 
 xtop_extended<common::xip_t>::xtop_extended(common::xnetwork_id_t const & network_id,
@@ -607,7 +625,7 @@ xtop_extended<common::xip_t>::xtop_extended(common::xnetwork_id_t const & networ
                                             uint16_t const size,
                                             uint64_t const height,
                                             common::xaddress_domain_t const domain)
-  : m_xip{network_id, zone_id, cluster_id, group_id, network_version, domain} {
+  : m_xip{network_id, zone_id, cluster_id, group_id, domain} {
     xvip2_t xip2{0, 0};
     set_group_nodes_count_to_xip2(xip2, size);
     set_network_height_to_xip2(xip2, height);
@@ -620,9 +638,9 @@ xtop_extended<common::xip_t>::xtop_extended(common::xnetwork_id_t const & networ
                                             common::xcluster_id_t const & cluster_id,
                                             common::xgroup_id_t const & group_id,
                                             common::xslot_id_t const & slot_id,
-                                            common::xnetwork_version_t const & network_version,
+                                            // common::xnetwork_version_t const & network_version,
                                             common::xaddress_domain_t const domain)
-  : m_xip{network_id, zone_id, cluster_id, group_id, slot_id, network_version, domain} {
+  : m_xip{network_id, zone_id, cluster_id, group_id, slot_id, domain} {
 }
 
 xtop_extended<common::xip_t>::xtop_extended(common::xnetwork_id_t const & network_id,
@@ -630,11 +648,11 @@ xtop_extended<common::xip_t>::xtop_extended(common::xnetwork_id_t const & networ
                                             common::xcluster_id_t const & cluster_id,
                                             common::xgroup_id_t const & group_id,
                                             common::xslot_id_t const & slot_id,
-                                            common::xnetwork_version_t const & network_version,
+                                            // common::xnetwork_version_t const & network_version,
                                             uint16_t const size,
                                             uint64_t const height,
                                             common::xaddress_domain_t const domain)
-  : m_xip{network_id, zone_id, cluster_id, group_id, slot_id, network_version, domain} {
+  : m_xip{network_id, zone_id, cluster_id, group_id, slot_id, domain} {
     xvip2_t xip2{0, 0};
     set_group_nodes_count_to_xip2(xip2, size);
     set_network_height_to_xip2(xip2, height);
@@ -669,9 +687,9 @@ common::xnetwork_type_t xtop_extended<common::xip_t>::network_type() const noexc
     return m_xip.network_type();
 }
 
-common::xnetwork_version_t xtop_extended<common::xip_t>::network_version() const noexcept {
-    return m_xip.network_version();
-}
+//common::xnetwork_version_t xtop_extended<common::xip_t>::network_version() const noexcept {
+//    return m_xip.network_version();
+//}
 
 common::xnetwork_id_t xtop_extended<common::xip_t>::network_id() const noexcept {
     return m_xip.network_id();
@@ -786,21 +804,21 @@ xnode_type_t node_type_from(common::xzone_id_t const & zone_id, common::xcluster
     return node_type;
 }
 
-bool operator==(common::xversion_t const & lhs, xnetwork_version_t const & rhs) noexcept {
-    if (!lhs.has_value() || !rhs.has_value()) {
-        return false;
-    }
-
-    assert(rhs <= common::xdefault_network_version);
-    auto const lhs_value = static_cast<xnetwork_version_t::value_type>(lhs.value() & xdefault_network_version_value);
-    auto const rhs_value = static_cast<xnetwork_version_t::value_type>(rhs.value() & xdefault_network_version_value);
-
-    return rhs_value == lhs_value;
-}
-
-bool operator==(xnetwork_version_t const & lhs, xversion_t const & rhs) noexcept {
-    return rhs == lhs;
-}
+//bool operator==(common::xversion_t const & lhs, xnetwork_version_t const & rhs) noexcept {
+//    if (!lhs.has_value() || !rhs.has_value()) {
+//        return false;
+//    }
+//
+//    assert(rhs <= common::xdefault_network_version);
+//    auto const lhs_value = static_cast<xnetwork_version_t::value_type>(lhs.value() & xdefault_network_version_value);
+//    auto const rhs_value = static_cast<xnetwork_version_t::value_type>(rhs.value() & xdefault_network_version_value);
+//
+//    return rhs_value == lhs_value;
+//}
+//
+//bool operator==(xnetwork_version_t const & lhs, xversion_t const & rhs) noexcept {
+//    return rhs == lhs;
+//}
 
 template <>
 bool broadcast<xnetwork_id_t>(xnetwork_id_t const & network_id) noexcept {

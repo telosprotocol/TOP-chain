@@ -17,9 +17,8 @@ using top::vnetwork::xvnode_address_t;
 NS_BEG3(top, tests, vnetwork)
 
 TEST_F(xvnetwork_driver_fixture_t, test_vhost_not_run_ec) {
-    common::xnetwork_version_t test_network_version1{1};
     xvnode_address_t           dst = get_address(test_version1, test_network_id);
-    xip2_t                     dst_xip2 = get_xip2_address(test_network_version1, test_network_id);
+    xip2_t                     dst_xip2 = get_xip2_address(test_network_id);
     xvnode_address_t           dst_group_address = get_dst_group_address(test_version1, test_network_id, test_zone_id, test_cluster_id, test_group_id);
 
     int & m_cnt = tests::network::xdummy_network_driver.m_counter;
@@ -41,7 +40,7 @@ TEST_F(xvnetwork_driver_fixture_t, test_vhost_not_run_ec) {
 
 TEST_F(xvnetwork_driver_fixture_t, test_send_to_ec) {
     std::uint32_t max_net_id = 0x00000FFF;
-    xip2_t        dst_xip2 = get_xip2_address(test_network_version1, test_network_id);
+    xip2_t        dst_xip2 = get_xip2_address(test_network_id);
     // test: send_to->send->cnt_send_to
     int & m_cnt1 = tests::network::xdummy_network_driver.m_counter_send_to;
     m_cnt1 = 0;
@@ -74,7 +73,7 @@ TEST_F(xvnetwork_driver_fixture_t, test_broadcast_ec) {
 
     // broadcast in the specified network
     xip2_t broadcast_dst_xip2_v1_net_broadcast{
-        common::xnetwork_id_t{1}, common::xzone_id_t{127}, common::xcluster_id_t{1}, common::xgroup_id_t{1}, common::xslot_id_t{1023}, test_network_version1};
+        common::xnetwork_id_t{1}, common::xzone_id_t{127}, common::xcluster_id_t{1}, common::xgroup_id_t{1}, common::xslot_id_t{1023}};
 
     int & m_cnt = tests::network::xdummy_network_driver.m_counter_spread_rumor;
     m_cnt = 0;
@@ -87,7 +86,7 @@ TEST_F(xvnetwork_driver_fixture_t, test_broadcast_ec) {
 
     // broadcast message in the same sharding
     xip2_t broadcast_dst_xip2_v1{
-        common::xnetwork_id_t{1}, common::xzone_id_t{1}, common::xcluster_id_t{1}, common::xgroup_id_t{1}, common::xslot_id_t{1023}, test_network_version1};
+        common::xnetwork_id_t{1}, common::xzone_id_t{1}, common::xcluster_id_t{1}, common::xgroup_id_t{1}, common::xslot_id_t{1023}};
 
     int & m_cnt2 = tests::network::xdummy_network_driver.m_counter_forward_broadcast;
     m_cnt2 = 0;

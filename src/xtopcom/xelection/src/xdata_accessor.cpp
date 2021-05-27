@@ -177,7 +177,7 @@ std::shared_ptr<xnode_element_t> xtop_data_accessor::node_element(common::xnode_
 
 common::xnode_id_t xtop_data_accessor::node_id_from(common::xip2_t const & xip2, std::error_code & ec) const {
     assert(!ec);
-    auto group_element = this->group_element(xip2.network_id(), xip2.zone_id(), xip2.cluster_id(), xip2.group_id(), xip2.network_version(), ec);
+    auto group_element = this->group_element_by_height(xip2.network_id(), xip2.zone_id(), xip2.cluster_id(), xip2.group_id(), xip2.height(), ec);
     if (ec) {
         xwarn("%s %s", ec.category().name(), ec.message().c_str());
         return {};
@@ -212,9 +212,27 @@ std::shared_ptr<xgroup_element_t> xtop_data_accessor::group_element(common::xsha
     return group_element(sharding_address.network_id(), sharding_address.zone_id(), sharding_address.cluster_id(), sharding_address.group_id(), version, ec);
 }
 
-std::shared_ptr<xgroup_element_t> xtop_data_accessor::group_element(common::xsharding_address_t const & sharding_address,
-                                                                    common::xlogic_time_t const logic_time,
-                                                                    std::error_code & ec) const {
+std::shared_ptr<xgroup_element_t> xtop_data_accessor::group_element_by_height(common::xgroup_address_t const & group_address,
+                                                                              uint64_t const election_blk_height,
+                                                                              std::error_code & ec) const {
+    assert(!ec);
+    assert(m_network_element != nullptr);
+
+    if (group_address.empty()) {
+        ec = xdata_accessor_errc_t::address_empty;
+
+        xwarn("%s child address empty", ec.category().name());
+
+        return {};
+    }
+
+    xdbg("looking for %s", group_address.to_string().c_str());
+    return group_element_by_height(group_address.network_id(), group_address.zone_id(), group_address.cluster_id(), group_address.group_id(), election_blk_height, ec);
+}
+
+std::shared_ptr<xgroup_element_t> xtop_data_accessor::group_element_by_logic_time(common::xsharding_address_t const & sharding_address,
+                                                                                  common::xlogic_time_t const logic_time,
+                                                                                  std::error_code & ec) const {
     assert(!ec);
     assert(m_network_element != nullptr);
 
@@ -226,7 +244,7 @@ std::shared_ptr<xgroup_element_t> xtop_data_accessor::group_element(common::xsha
         return {};
     }
 
-    return group_element(sharding_address.network_id(), sharding_address.zone_id(), sharding_address.cluster_id(), sharding_address.group_id(), logic_time, ec);
+    return group_element_by_logic_time(sharding_address.network_id(), sharding_address.zone_id(), sharding_address.cluster_id(), sharding_address.group_id(), logic_time, ec);
 }
 
 std::shared_ptr<xgroup_element_t> xtop_data_accessor::parent_group_element(common::xsharding_address_t const & child_sharding_address,
@@ -251,7 +269,7 @@ std::shared_ptr<xgroup_element_t> xtop_data_accessor::parent_group_element(commo
 
 common::xversion_t xtop_data_accessor::version_from(common::xip2_t const & xip2, std::error_code & ec) const {
     assert(!ec);
-    auto group_element = this->group_element(xip2.network_id(), xip2.zone_id(), xip2.cluster_id(), xip2.group_id(), xip2.network_version(), ec);
+    auto group_element = this->group_element_by_height(xip2.network_id(), xip2.zone_id(), xip2.cluster_id(), xip2.group_id(), xip2.height(), ec);
     if (ec) {
         xwarn("%s %s", ec.category().name(), ec.message().c_str());
         return {};
