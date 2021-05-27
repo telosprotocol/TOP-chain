@@ -2652,8 +2652,8 @@ namespace top
                 return nullptr;
             
             base::xauto_ptr<base::xvbindex_t > new_idx(new base::xvbindex_t(*new_raw_block));
-            if(0 != new_idx->get_height()) {
-                new_idx->reset_block_flags(base::enum_xvblock_flag_authenticated);
+            if(0 != new_idx->get_height())
+            {
                 load_index(new_idx->get_height()); //always load index first for non-genesis block
             }
             
