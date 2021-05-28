@@ -22,9 +22,9 @@ xvip2_t xcons_utl::erase_version(const xvip2_t & xip) {
     xvip2_t xip_copy{xip.low_addr, (uint64_t)-1};
     assert(get_network_ver_from_xip2(xip_copy) == 0);
     assert(get_network_ver_from_xip2(xip) == 0);
-    // reset_network_ver_to_xip2(xip_copy);
-    // set_network_ver_to_xip2(xip_copy, 0xFF);
-    // reset_network_ver_to_xip2(xip_copy);
+    // We don't use network version field for now.
+    // but in case some peer node modifies this field, any correct node should force obey this rule.
+    reset_network_ver_to_xip2(xip_copy);
     set_node_id_to_xip2(xip_copy, 0xFFF);
     return xip_copy;
 }

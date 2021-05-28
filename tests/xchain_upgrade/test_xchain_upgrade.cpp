@@ -59,24 +59,23 @@ TEST_F(test_xchain_upgrade, test_config_select) {
 }
 #endif
 
-TEST_F(test_xchain_upgrade, test_config_center) {
-    using namespace top::config;
-    config_register.set(std::string{xchain_name_configuration_t::name}, std::string{chain_name_mainnet});
-    auto initial_config = center.chain_fork_config();
-    ASSERT_TRUE(initial_config.reward_fork_point.has_value());
-    // ASSERT_TRUE(center.is_fork_point_equal(initial_config.point.value(), xfork_point_t{xtop_fork_point_type_t::logic_time, 0, "original fork point"}));
-
-
-    xchain_fork_config_t another_chain_config{ xfork_point_t(xfork_point_type_t::logic_time, 100, "original fork point")};
-    center.set_chain_fork_config(another_chain_config);
-    auto set_config =  center.chain_fork_config();
-    ASSERT_TRUE(set_config.reward_fork_point.has_value());
-    // ASSERT_TRUE(center.is_fork_point_equal(set_config.point.value(), xfork_point_t{xtop_fork_point_type_t::logic_time, 100, "original fork point"}));
-    ASSERT_TRUE(center.is_forked(set_config.reward_fork_point, 100));
-    ASSERT_TRUE(center.is_forked(set_config.reward_fork_point, 110));
-    ASSERT_FALSE(center.is_forked(set_config.reward_fork_point, 99));
-
-}
+//TEST_F(test_xchain_upgrade, test_config_center) {
+//    using namespace top::config;
+//    config_register.set(std::string{xchain_name_configuration_t::name}, std::string{chain_name_mainnet});
+//    auto initial_config = center.chain_fork_config();
+//    ASSERT_TRUE(initial_config.reward_fork_point.has_value());
+//    // ASSERT_TRUE(center.is_fork_point_equal(initial_config.point.value(), xfork_point_t{xtop_fork_point_type_t::logic_time, 0, "original fork point"}));
+//
+//
+//    xchain_fork_config_t another_chain_config{ xfork_point_t(xfork_point_type_t::logic_time, 100, "original fork point")};
+//    center.set_chain_fork_config(another_chain_config);
+//    auto set_config =  center.chain_fork_config();
+//    ASSERT_TRUE(set_config.reward_fork_point.has_value());
+//    // ASSERT_TRUE(center.is_fork_point_equal(set_config.point.value(), xfork_point_t{xtop_fork_point_type_t::logic_time, 100, "original fork point"}));
+//    ASSERT_TRUE(center.is_forked(set_config.reward_fork_point, 100));
+//    ASSERT_TRUE(center.is_forked(set_config.reward_fork_point, 110));
+//    ASSERT_FALSE(center.is_forked(set_config.reward_fork_point, 99));
+//}
 
 
 

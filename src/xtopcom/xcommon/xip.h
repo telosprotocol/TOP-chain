@@ -92,9 +92,7 @@ using xbroadcast_id_t = xtop_broadcast_id;
 /**
  * @brief Structured XIP
  */
-class xtop_ip final
-  : public xhashable_t<xtop_ip, std::size_t>
-  , public xenable_to_string_t<xtop_ip> {
+class xtop_ip final {
 public:
     using value_type = xvip_t;
 
@@ -182,9 +180,9 @@ public:
 
     operator value_type() const noexcept;
 
-    std::size_t hash() const override;
+    std::size_t hash() const;
 
-    std::string to_string() const override;
+    std::string to_string() const;
 
     value_type value() const noexcept;
 
@@ -221,9 +219,7 @@ NS_END2
 NS_BEG1(top)
 
 template <>
-class xtop_extended<common::xip_t> final
-  : public xhashable_t<xtop_extended<common::xip_t>, std::size_t>
-  , public xenable_to_string_t<xtop_extended<common::xip_t>> {
+class xtop_extended<common::xip_t> final {
     common::xip_t m_xip{};
     std::uint64_t m_extent{std::numeric_limits<std::uint64_t>::max()};
 
@@ -338,9 +334,9 @@ public:
 
     std::uint64_t raw_low_part() const noexcept;
 
-    std::size_t hash() const override;
+    std::size_t hash() const;
 
-    std::string to_string() const override;
+    std::string to_string() const;
 
     xvip2_t value() const noexcept;
 
