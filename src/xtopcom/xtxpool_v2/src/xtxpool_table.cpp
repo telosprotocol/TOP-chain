@@ -403,6 +403,12 @@ void xtxpool_table_t::update_receiptid_state(const base::xreceiptid_state_ptr_t 
     m_txmgr_table.update_receiptid_state(receiptid_state);
 }
 
+void xtxpool_table_t::clean() {
+    uint32_t tx_num = m_unconfirmed_tx_queue.size();
+    XMETRICS_COUNTER_DECREMENT("txpool_unconfirm_txs_num", tx_num);
+    m_xtable_info.clean();
+}
+
 // enum_xtxpool_error_type xtxpool_table_t::update_reject_rule(const std::string & account, const data::xblock_t * unit_block) {
 //     std::lock_guard<std::mutex> lck(m_filter_mutex);
 //     return m_table_filter.update_reject_rule(account, unit_block);

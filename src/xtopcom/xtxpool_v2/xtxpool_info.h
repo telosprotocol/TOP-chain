@@ -156,7 +156,7 @@ public:
     bool is_send_tx_reached_upper_limit() {
         if (m_counter.get_send_tx_count() >= table_send_tx_queue_size_max || m_counter.get_conf_tx_count() >= table_conf_tx_queue_size_max ||
             m_shard->get_send_tx_count() >= shard_send_tx_queue_size_max) {
-            xdbg("is_send_tx_reached_upper_limit table %s send queue size:%u,confirm queue size:%u,shard send queue:%u",
+            xwarn("is_send_tx_reached_upper_limit table %s send queue size:%u,confirm queue size:%u,shard send queue:%u",
                  get_address().c_str(),
                  m_counter.get_send_tx_count(),
                  m_counter.get_conf_tx_count(),
@@ -168,7 +168,7 @@ public:
 
     bool is_recv_tx_reached_upper_limit() {
         if (m_counter.get_recv_tx_count() >= table_recv_tx_queue_size_max || m_shard->get_recv_tx_count() >= shard_recv_tx_queue_size_max) {
-            xdbg("is_recv_tx_reached_upper_limit table %s recv queue size:%u,shard recv queue:%u", get_address().c_str(), m_counter.get_recv_tx_count(), m_shard->get_recv_tx_count());
+            xwarn("is_recv_tx_reached_upper_limit table %s recv queue size:%u,shard recv queue:%u", get_address().c_str(), m_counter.get_recv_tx_count(), m_shard->get_recv_tx_count());
             return true;
         }
         return false;
@@ -176,13 +176,24 @@ public:
 
     bool is_confirm_tx_reached_upper_limit() {
         if (m_counter.get_conf_tx_count() >= table_conf_tx_queue_size_max || m_shard->get_conf_tx_count() >= shard_conf_tx_queue_size_max) {
-            xdbg("is_confirm_tx_reached_upper_limit table %s confirm queue size:%u,shard confirm queue:%u",
+            xwarn("is_confirm_tx_reached_upper_limit table %s confirm queue size:%u,shard confirm queue:%u",
                  get_address().c_str(),
                  m_counter.get_conf_tx_count(),
                  m_shard->get_conf_tx_count());
             return true;
         }
         return false;
+    }
+
+    void clean() {
+        XMETRICS_COUNTER_DECREMENT("txpool_push_tx_send_cur", m_counter.get_send_tx_count());
+        XMETRICS_COUNTER_SET("table_send_tx_cur" + get_address(), 0);
+        
+        XMETRICS_COUNTER_DECREMENT("txpool_push_tx_recv_cur", m_counter.get_recv_tx_count());
+        XMETRICS_COUNTER_SET("table_recv_tx_cur" + get_address(), 0);
+
+        XMETRICS_COUNTER_DECREMENT("txpool_push_tx_confirm_cur", m_counter.get_conf_tx_count());
+        XMETRICS_COUNTER_SET("table_confirm_tx_cur" + get_address(), 0);
     }
 
 private:

@@ -89,7 +89,7 @@ void xtxpool_service_mgr::deal_table_block(xblock_t * block, uint64_t now_clock)
         xinfo("xtxpool_service_mgr::deal_table_block service found,zone:%d table:%d block:%s", tableid.get_zone_index(), tableid.get_subaddr(), block->dump().c_str());
         service->deal_table_block(block, now_clock);
     } else {
-        xwarn("xtxpool_service_mgr::deal_table_block fail,no service found,zone:%d table:%d block:%s", tableid.get_zone_index(), tableid.get_subaddr(), block->dump().c_str());
+        xdbg("xtxpool_service_mgr::deal_table_block fail,no service found,zone:%d table:%d block:%s", tableid.get_zone_index(), tableid.get_subaddr(), block->dump().c_str());
     }
 }
 

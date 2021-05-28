@@ -136,6 +136,7 @@ void xtxpool_t::unsubscribe_tables(uint8_t zone, uint16_t front_table_id, uint16
             (*it)->unsubscribe();
             if ((*it)->get_sub_count() == 0) {
                 for (uint16_t i = front_table_id; i <= back_table_id; i++) {
+                    m_tables[zone][i]->clean();
                     m_tables[zone][i] = nullptr;
                 }
             }
@@ -218,6 +219,7 @@ void xtxpool_t::update_locked_txs(const std::string & table_addr, const std::vec
 }
 
 void xtxpool_t::update_receiptid_state(const std::string & table_addr, const base::xreceiptid_state_ptr_t & receiptid_state) {
+    xtxpool_info("xtxpool_t::update_receiptid_state table:%s", table_addr.c_str());
     XMETRICS_TIME_RECORD("cons_tableblock_verfiy_proposal_update_receiptid_state");
     auto table = get_txpool_table_by_addr(table_addr);
     if (table == nullptr) {

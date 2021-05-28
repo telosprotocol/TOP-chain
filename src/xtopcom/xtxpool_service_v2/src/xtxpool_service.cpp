@@ -172,16 +172,16 @@ void xtxpool_service::on_message_receipt(vnetwork::xvnode_address_t const & send
     }
     (void)sender;
     if (message.id() == xtxpool_msg_send_receipt || message.id() == xtxpool_msg_recv_receipt) {
+        if (m_para->get_dispatcher()->is_mailbox_over_limit()) {
+            xwarn("xtxpool_service::on_message_receipt txpool mailbox limit,drop receipt");
+            return;
+        }
+
         auto handler = [this](base::xcall_t & call, const int32_t cur_thread_id, const uint64_t timenow_ms) -> bool {
             txpool_receipt_message_para_t * para = dynamic_cast<txpool_receipt_message_para_t *>(call.get_param1().get_object());
             this->on_message_unit_receipt(para->m_sender, para->m_message);
             return true;
         };
-
-        if (m_para->get_dispatcher()->is_mailbox_over_limit()) {
-            xwarn("xtxpool_service::on_message_receipt txpool mailbox limit,drop receipt");
-            return;
-        }
         base::xauto_ptr<txpool_receipt_message_para_t> para = new txpool_receipt_message_para_t(sender, message);
         base::xcall_t asyn_call(handler, para.get());
         m_para->get_dispatcher()->dispatch(asyn_call);

@@ -55,6 +55,7 @@ public:
     // void update_non_ready_accounts();
     void update_locked_txs(const std::vector<tx_info_t> & locked_tx_vec);
     void update_receiptid_state(const base::xreceiptid_state_ptr_t & receiptid_state);
+    void clean();
 
 private:
     enum_xtxpool_error_type update_reject_rule(const std::string & account, const data::xblock_t * unit_block);
