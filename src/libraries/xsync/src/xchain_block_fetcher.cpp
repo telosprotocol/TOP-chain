@@ -18,8 +18,6 @@ const uint32_t ARRIVE_TIMEOUT = 400;
 // 5s
 const uint32_t FETCHER_TIMEOUT = 5000;
 
-const uint32_t batch_count = 5;
-
 xchain_block_fetcher_t::xchain_block_fetcher_t(std::string vnode_id,
         const std::string &address,
         const observer_ptr<base::xvcertauth_t> &certauth,
@@ -35,19 +33,14 @@ m_sync_sender(sync_sender) {
 }
 
 void xchain_block_fetcher_t::on_timer() {
-
+    // clear timeout
     int64_t now = get_time();
-
-    {
-        // clear timeout
-        std::unordered_map<std::string, xsync_block_announce_ptr_t>::iterator it = m_fetching.begin();
-        for (;it!=m_fetching.end();) {
-            if ((now - it->second->tm) > FETCHER_TIMEOUT) {
-                xsync_info("chain_fetcher remove timeout %s", to_hex_str(it->first.c_str()).c_str());
-                m_fetching.erase(it++);
-            } else {
-                ++it;
-            }
+    for (auto it = m_fetching.begin(); it!=m_fetching.end();) {
+        if ((now - it->second->tm) > FETCHER_TIMEOUT) {
+            xsync_info("chain_fetcher remove timeout %s", to_hex_str(it->first.c_str()).c_str());
+            m_fetching.erase(it++);
+        } else {
+            ++it;
         }
     }
 
@@ -80,10 +73,9 @@ void xchain_block_fetcher_t::on_timer() {
         forget_hash(it);
     }
 
-    for (auto &it: requests) {
-        xsync_block_announce_ptr_t &ptr = it;
-        m_fetching[ptr->hash] = ptr;
-        request_sync_blocks(ptr);
+    for (auto &request: requests) {
+        m_fetching[request->hash] = request;
+        request_sync_blocks(request);
     }
 }
 
@@ -106,37 +98,22 @@ void xchain_block_fetcher_t::on_newblockhash(uint64_t height, uint64_t view_id, 
 
     xsync_info("chain_fetcher on_newblockhash %s,height=%lu,viewid=%lu,hash=%s,", m_address.c_str(), height, view_id, to_hex_str(hash).c_str());
 
-    int count = 0;
-    auto it = m_announces.find(from_address);
-    if (it == m_announces.end()) {
-        count = 1;
+    if (m_announces.find(from_address) == m_announces.end()) {
+        m_announces[from_address] = 1;
     } else {
-        count = it->second + 1;
+        m_announces[from_address] += 1;
+    }
+
+    if (m_announces[from_address] % 100 == 0) {
+        xdbg("chain_fetcher on_newblockhash self: %s, recv count: %d, from node: %s", network_self.to_string().c_str(), m_announces[from_address], from_address.to_string().c_str());
     }
 
     if (height==0 || view_id==0 || hash=="")
-        return;
+            return;
 
-    // TODO detail check. check distance?
-
-    if (count > 100) {
-        // exceed
-        return;
-    }
-
-    {
-        auto it = m_fetching.find(hash);
-        if (it != m_fetching.end()) {
+    if ((m_fetching.find(hash) != m_fetching.end()) || (m_completing.find(hash) != m_completing.end())) {
             return;
         }
-    }
-
-    {
-        auto it = m_completing.find(hash);
-        if (it != m_completing.end()) {
-            return;
-        }
-    }
 
     xsync_block_announce_ptr_t announce = std::make_shared<xsync_block_announce_t>(height, view_id, hash, network_self, from_address, get_time());
 
@@ -163,20 +140,12 @@ void xchain_block_fetcher_t::on_newblockhash(uint64_t height, uint64_t view_id, 
         return;
     }
 
-    // TODO how to decrease
-    m_announces[from_address] = count;
-
-    {
-        auto it2 = m_announced.find(hash);
-        if (it2 == m_announced.end()) {
-            std::vector<xsync_block_announce_ptr_t> lists;
-            lists.push_back(announce);
-            m_announced[hash] = lists;
-        } else {
-            std::vector<xsync_block_announce_ptr_t> &lists = it2->second;
-            lists.push_back(announce);
-        }
+    if (m_announced.find(hash) == m_announced.end()) {
+        m_announced[hash] = std::vector<xsync_block_announce_ptr_t>{announce};
+    } else {
+        m_announced[hash].push_back(announce);
     }
+
 }
 
 void xchain_block_fetcher_t::on_response_blocks(xblock_ptr_t &block, const vnetwork::xvnode_address_t &network_self, const vnetwork::xvnode_address_t &from_address) {
@@ -247,9 +216,9 @@ void xchain_block_fetcher_t::import_block(xblock_ptr_t &block) {
                 xsync_info("chain_fetcher store data succ(exist cert) %s", blk->dump().c_str());
             } else {
                 assert(0);
-                return;
             }
         }
+        return;
     }
 
     if (m_sync_broadcast != nullptr)

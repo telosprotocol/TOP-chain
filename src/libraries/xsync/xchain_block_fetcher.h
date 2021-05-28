@@ -39,13 +39,6 @@ public:
 
 using xsync_block_announce_ptr_t = std::shared_ptr<xsync_block_announce_t>;
 
-class xsync_block_inject_t {
-public:
-    data::xblock_ptr_t block;
-    vnetwork::xvnode_address_t from_address;
-    vnetwork::xvnode_address_t network_self;
-};
-
 class xchain_block_fetcher_t {
 public:
     xchain_block_fetcher_t(std::string vnode_id,
