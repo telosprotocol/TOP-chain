@@ -1099,7 +1099,7 @@ namespace top
                         push_event(enum_blockstore_event_stored, final_cached_index);//then fire stored event
                 }
 
-                xdbg("xblockacct_t::store_block,done for block,cache_size:%zu,dump=%s",m_all_blocks.size(), dump().c_str());
+                xinfo("xblockacct_t::store_block,done for block,cache_size:%zu,new_raw_block=%s,dump=%s",m_all_blocks.size(), new_raw_block->dump().c_str(), dump().c_str());
                 return true;
             }
              
