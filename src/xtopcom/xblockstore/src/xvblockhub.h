@@ -222,7 +222,7 @@ namespace top
             base::xvbindex_t*   cache_index(base::xvbindex_t* this_block,std::map<uint64_t,base::xvbindex_t*> & target_height_map);
             
             bool                link_neighbor(base::xvbindex_t* this_block);//just connect prev and next index of list
-            bool                mark_connected_flag(base::xvbindex_t* this_block);
+            bool                full_connect_to(base::xvbindex_t* this_block);//connect to all the way to fullblock or geneis
             bool                update_meta_metric(base::xvbindex_t* new_block_ptr );
 
             

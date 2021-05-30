@@ -42,7 +42,29 @@ namespace top
         xvbindex_t::xvbindex_t(xvbindex_t && obj)
         {
             init();
-            *this = obj;
+            
+            m_modified              = obj.m_modified;
+            m_closed                = obj.m_closed;
+            m_account_addr          = obj.m_account_addr;
+            m_account_id            = obj.m_account_id;
+            m_block_height          = obj.m_block_height;
+            m_last_fullblock_height = obj.m_last_fullblock_height;
+            m_block_viewid          = obj.m_block_viewid;
+            m_next_viewid_offset    = obj.m_next_viewid_offset;
+            m_block_hash            = obj.m_block_hash;
+            m_last_block_hash       = obj.m_last_block_hash;
+            
+            m_parent_account_id     = obj.m_parent_account_id;
+            m_parent_block_height   = obj.m_parent_block_height;
+            m_parent_view_id        = obj.m_parent_view_id;
+            m_entityid_at_parent    = obj.m_entityid_at_parent;
+            
+            m_combineflags          = obj.m_combineflags;
+            m_block_types           = obj.m_block_types;
+ 
+            m_prev_index = obj.m_prev_index;
+            m_next_index = obj.m_next_index;
+            m_linked_block = obj.m_linked_block;
         }
     
         xvbindex_t::xvbindex_t(const xvbindex_t & obj)
