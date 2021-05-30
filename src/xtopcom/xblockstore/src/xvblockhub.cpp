@@ -2672,6 +2672,19 @@ namespace top
             if(precheck_new_index(new_idx(),height_view_map) == false)
             {
                 xinfo("xblockacct_t::new_index,failed-precheck for block(%s) at store(%s)",new_idx->dump().c_str(),get_blockstore_path().c_str());
+                
+                //remove below after merged jimmy'branch which nolonger need store offdata anymore
+                for(auto it = height_view_map.begin(); it != height_view_map.end();++it)
+                {
+                    if(   (it->second->get_height() == new_raw_block->get_height())
+                       && (it->second->get_block_hash() == new_raw_block->get_block_hash())  )
+                    {
+                        //since every block reset as cert-only,so it is impossible to update the existing index by block with higher flag
+                        //the only way to trigger write offdata is here
+                        write_block_offdata_to_db(it->second, new_raw_block);
+                        break;
+                    }
+                }
                 return nullptr;
             }
             
