@@ -1560,6 +1560,9 @@ namespace top
 
                 for(uint64_t it_height = this_block_height + 1; it_height <= m_meta->_highest_commit_block_height; ++it_height)
                 {
+                    if( (false == geneis_connect_more) && (false == logic_connect_more) )//quit if both nolonger need search
+                        break;
+                    
                     if(load_index(it_height) == 0) //missed block
                         break;
                     
