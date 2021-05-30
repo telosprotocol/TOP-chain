@@ -1098,7 +1098,7 @@ namespace top
                     write_index_to_db(final_cached_index); //save index then
                 }
 
-                xdbg("xblockacct_t::store_block,done for block,cache_size:%zu,dump=%s",m_all_blocks.size(), dump().c_str());
+                xinfo("xblockacct_t::store_block,done for block,cache_size:%zu,new_raw_block=%s,dump=%s",m_all_blocks.size(), new_raw_block->dump().c_str(), dump().c_str());
                 return true;
             }
              
