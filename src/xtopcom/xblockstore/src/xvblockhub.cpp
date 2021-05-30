@@ -2651,9 +2651,16 @@ namespace top
             if(NULL == new_raw_block)
                 return nullptr;
             
+            if(new_raw_block->check_block_flag(base::enum_xvblock_flag_authenticated) == false)//safety protect
+                return nullptr;
+            
             base::xauto_ptr<base::xvbindex_t > new_idx(new base::xvbindex_t(*new_raw_block));
             if(0 != new_idx->get_height())
             {
+                new_idx->reset_block_flags(0);//reset all flags and redo it from authenticated status
+                new_idx->set_block_flag(base::enum_xvblock_flag_authenticated);//init it as  authenticated
+                new_idx->reset_modify_flag(); //remove modified flag to avoid double saving
+                
                 load_index(new_idx->get_height()); //always load index first for non-genesis block
             }
             
@@ -2678,17 +2685,23 @@ namespace top
                 //rebase forked blocks if have ,after connect_index
                 rebase_chain_at_height(height_view_map);
             }
-            
-            //research to find target index after rebase that maybe remove it
-            for(auto it = height_view_map.begin(); it != height_view_map.end();++it)
+            else //remove below after merged jimmy'branch which nolonger need store offdata anymore
             {
-                if(   (it->second->get_height() == new_raw_block->get_height())
-                   && (it->second->get_block_hash() == new_raw_block->get_block_hash())  )
+                //research to find target index after rebase that maybe remove it
+                for(auto it = height_view_map.begin(); it != height_view_map.end();++it)
                 {
-                    return it->second;
+                    if(   (it->second->get_height() == new_raw_block->get_height())
+                       && (it->second->get_block_hash() == new_raw_block->get_block_hash())  )
+                    {
+                        //since every block reset as cert-only,so it is impossible to update the existing index by block with higher flag
+                        //the only way to trigger write offdata is here
+                        write_block_offdata_to_db(it->second, new_raw_block);
+                        break;
+                    }
                 }
             }
-            return nullptr;
+            
+            return cached_index_ptr;
         }
     
         xchainacct_t::xchainacct_t(const std::string & account_addr,const uint64_t timeout_ms,const std::string & blockstore_path)
