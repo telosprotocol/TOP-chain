@@ -45,7 +45,7 @@ namespace top
                 return NULL;
             
             std::string empty_txs;
-            base::xauto_ptr<base::xvblock_t> last_full_block = m_blockstore->get_latest_full_block(m_clock_account);
+            base::xauto_ptr<base::xvblock_t> last_full_block = m_blockstore->get_latest_committed_block(m_clock_account);
             base::xvblock_t* clock_block = xclockblock_t::create_clockblock(m_clock_account,last_block->get_height() + 1,last_block->get_clock() + 1,last_block->get_viewid() + 1,last_block->get_block_hash(),last_full_block->get_block_hash(),last_full_block->get_height(),empty_txs,empty_txs);
             clock_block->reset_prev_block(last_block.get()); //point previous block
  
