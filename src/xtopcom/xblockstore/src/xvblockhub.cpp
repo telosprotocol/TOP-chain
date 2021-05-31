@@ -177,7 +177,7 @@ namespace top
         std::string xblockacct_t::dump() const  //just for debug purpose
         {
             char local_param_buf[256];
-            xprintf(local_param_buf,sizeof(local_param_buf),"{account_id(%" PRIu64 "),account_addr=%s ->latest height for full=%" PRId64 ",connect=%" PRId64 ",commit=%" PRId64 ",execute=%" PRId64 " < lock=%" PRId64 " < cert=%" PRId64 "; at store(%s)}",get_xvid(), get_address().c_str(),m_meta->_highest_full_block_height,m_meta->_highest_connect_block_height,m_meta->_highest_commit_block_height,m_meta->_highest_execute_block_height,m_meta->_highest_lock_block_height,m_meta->_highest_cert_block_height,get_blockstore_path().c_str());
+            xprintf(local_param_buf,sizeof(local_param_buf),"{account_id(%" PRIu64 "),account_addr=%s ->latest height for full=%" PRId64 ",geneis_connect=%" PRId64 ", connect=%" PRId64 ",commit=%" PRId64 ",execute=%" PRId64 " < lock=%" PRId64 " < cert=%" PRId64 "; at store(%s)}",get_xvid(), get_address().c_str(),m_meta->_highest_full_block_height,m_meta->_highest_genesis_connect_height,m_meta->_highest_connect_block_height,m_meta->_highest_commit_block_height,m_meta->_highest_execute_block_height,m_meta->_highest_lock_block_height,m_meta->_highest_cert_block_height,get_blockstore_path().c_str());
 
             return std::string(local_param_buf);
         }
@@ -1095,8 +1095,7 @@ namespace top
                 //try save index finally
                 if(final_cached_index->check_modified_flag()) //if has anything changed
                 {
-                    if(write_index_to_db(final_cached_index)) //save index then
-                        push_event(enum_blockstore_event_stored, final_cached_index);//then fire stored event
+                    write_index_to_db(final_cached_index); //save index then
                 }
 
                 xinfo("xblockacct_t::store_block,done for block,cache_size:%zu,new_raw_block=%s,dump=%s",m_all_blocks.size(), new_raw_block->dump().c_str(), dump().c_str());
@@ -1473,7 +1472,7 @@ namespace top
         }
 
         //note: genesis block must has been  connected-status
-        bool  xblockacct_t::mark_connected_flag(base::xvbindex_t* this_block)
+        bool  xblockacct_t::full_connect_to(base::xvbindex_t* this_block)
         {
             if(NULL == this_block)
                 return false;
@@ -1506,38 +1505,28 @@ namespace top
                 else if(0 == this_block_height) //force to add it if not
                     this_block->set_block_flag(base::enum_xvblock_flag_connected);
             }
-
+            
+            bool  logic_connect_more  = false;//logic connection that just ask connect to all the way to any fullblock
+            bool  geneis_connect_more = false;//geneis connection that ask connect connect to all the way to geneis block
+            std::vector<base::xauto_ptr<base::xvbindex_t>> fire_stored_events;
+            fire_stored_events.reserve(16);//resever some sapce first
+            
             //update record of _highest_connect_block_height/hash now
-            if( (this_block->check_block_flag(base::enum_xvblock_flag_connected)) && (this_block_height >= m_meta->_highest_connect_block_height) ) //covered case of genesis block
+            if(this_block->check_block_flag(base::enum_xvblock_flag_connected))
             {
-                m_meta->_highest_connect_block_height = this_block_height;
-                m_meta->_highest_connect_block_hash   = this_block->get_block_hash();
-
-                auto heigh_it = m_all_blocks.find(m_meta->_highest_connect_block_height + 1); //search more
-                for(;heigh_it != m_all_blocks.end();++heigh_it)
+                //covered case of genesis block
+                if(   ((0 == this_block_height) && (0 == m_meta->_highest_connect_block_height))
+                   || (this_block_height > m_meta->_highest_connect_block_height) )
                 {
-                    if(   (heigh_it->first == (m_meta->_highest_connect_block_height + 1))
-                       && (false == heigh_it->second.empty()) )
-                    {
-                        for(auto view_it = heigh_it->second.begin(); view_it != heigh_it->second.end(); ++view_it)
-                        {
-                            if(  (view_it->second->check_block_flag(base::enum_xvblock_flag_committed))
-                               &&(view_it->second->get_last_block_hash() == m_meta->_highest_connect_block_hash) )
-                            {
-                                m_meta->_highest_connect_block_height = view_it->second->get_height();
-                                m_meta->_highest_connect_block_hash   = view_it->second->get_block_hash();
-                                view_it->second->set_block_flag(base::enum_xvblock_flag_connected); //mark connected status,and save later
-                                break;
-                            }
-                        }
-                    }
-                    else
-                    {
-                        break;
-                    }
+                    m_meta->_highest_connect_block_height = this_block_height;
+                    m_meta->_highest_connect_block_hash   = this_block->get_block_hash();
+                    
+                    this_block->add_ref();//fire_stored_events need hold a reference to construct xauto_ptr object
+                    fire_stored_events.emplace_back(base::xauto_ptr<base::xvbindex_t>(this_block));
+                    logic_connect_more = true; //ask search more
                 }
             }
-
+            
             // update genesis connect block meta
             if (0 == m_meta->_highest_genesis_connect_height)
             {
@@ -1547,6 +1536,7 @@ namespace top
                     // after update by genesis block
                     m_meta->_highest_genesis_connect_height = this_block_height;
                     m_meta->_highest_genesis_connect_hash   = this_block->get_block_hash();
+                    geneis_connect_more = true;//ask search more
                 }
             }
             else if (this_block_height == m_meta->_highest_genesis_connect_height + 1)
@@ -1555,38 +1545,80 @@ namespace top
                 {
                     m_meta->_highest_genesis_connect_height = this_block_height;
                     m_meta->_highest_genesis_connect_hash   = this_block->get_block_hash();
-                    
-                    //search more for cached blocks
-                    auto heigh_it = m_all_blocks.find(m_meta->_highest_genesis_connect_height + 1);
-                    for(;heigh_it != m_all_blocks.end();++heigh_it)
-                    {
-                        if(   (heigh_it->first == (m_meta->_highest_genesis_connect_height + 1))
-                           && (false == heigh_it->second.empty()) )
-                        {
-                            for(auto view_it = heigh_it->second.begin(); view_it != heigh_it->second.end(); ++view_it)
-                            {
-                                if(  (view_it->second->check_block_flag(base::enum_xvblock_flag_committed))
-                                   &&(view_it->second->get_last_block_hash() == m_meta->_highest_genesis_connect_hash) )
-                                {
-                                    m_meta->_highest_genesis_connect_height = view_it->second->get_height();
-                                    m_meta->_highest_genesis_connect_hash   = view_it->second->get_block_hash();
- 
-                                    break;
-                                }
-                            }
-                        }
-                        else
-                        {
-                            break;
-                        }
-                    }
+                    geneis_connect_more = true;//ask search more
                 }
                 else
                 {
-                    xerror("xblockacct_t::mark_connected_flag, commit block hash not match. genesis_connect_block_hash=%s,block=%s", base::xstring_utl::to_hex(m_meta->_highest_genesis_connect_hash).c_str(), this_block->dump().c_str());
+                    xerror("xblockacct_t::full_connect_to, commit block hash not match. genesis_connect_block_hash=%s,block=%s", base::xstring_utl::to_hex(m_meta->_highest_genesis_connect_hash).c_str(), this_block->dump().c_str());
                 }
             }
-            return false;
+            
+            //heavy job to search from current height to m_meta->_highest_commit_block_height
+            if(logic_connect_more || geneis_connect_more) //search more
+            {
+                xinfo("xblockacct_t::full_connect_to logic_connect_more(%d) or geneis_connect_more(%d) by block=%s",logic_connect_more,geneis_connect_more, this_block->dump().c_str());
+
+                for(uint64_t it_height = this_block_height + 1; it_height <= m_meta->_highest_commit_block_height; ++it_height)
+                {
+                    if( (false == geneis_connect_more) && (false == logic_connect_more) )//quit if both nolonger need search
+                        break;
+                    
+                    if(load_index(it_height) == 0) //missed block
+                        break;
+                    
+                    base::xauto_ptr<base::xvbindex_t> cur_commit(query_index(it_height, base::enum_xvblock_flag_committed));
+                    if(!cur_commit) //dont have commited block
+                        break;
+                    
+                    if(geneis_connect_more)
+                    {
+                        if(   (cur_commit->get_height() == (m_meta->_highest_genesis_connect_height + 1))
+                           && (cur_commit->get_last_block_hash() == m_meta->_highest_genesis_connect_hash) )
+                        {
+                            m_meta->_highest_genesis_connect_height = cur_commit->get_height();
+                            m_meta->_highest_genesis_connect_hash   = cur_commit->get_block_hash();
+                        }
+                        else //stop search
+                        {
+                            geneis_connect_more = false;
+                            if(cur_commit->get_height() == (m_meta->_highest_genesis_connect_height + 1))//tracking
+                            {
+                                xerror("xblockacct_t::full_connect_to, commit block hash not match. genesis_connect_block_hash=%s,block=%s", base::xstring_utl::to_hex(m_meta->_highest_genesis_connect_hash).c_str(), this_block->dump().c_str());
+                            }
+                        }
+                    }
+                    
+                    if(logic_connect_more)
+                    {
+                        if(   (cur_commit->get_height() == (m_meta->_highest_connect_block_height + 1))
+                           && (cur_commit->get_last_block_hash() == m_meta->_highest_connect_block_hash) )
+                        {
+                            m_meta->_highest_connect_block_height = cur_commit->get_height();
+                            m_meta->_highest_connect_block_hash   = cur_commit->get_block_hash();
+                            cur_commit->set_block_flag(base::enum_xvblock_flag_connected); //mark connected status,and save later
+                            
+                            fire_stored_events.emplace_back(std::move(cur_commit));//note:never use cur_commit anymore
+                        }
+                        else //stop search
+                        {
+                            logic_connect_more = false;
+                            if(cur_commit->get_height() == (m_meta->_highest_connect_block_height + 1))//tracking
+                            {
+                                xerror("xblockacct_t::full_connect_to,commit block hash not match. _highest_connect_block_hash=%s,block=%s", base::xstring_utl::to_hex(m_meta->_highest_connect_block_hash).c_str(), cur_commit->dump().c_str());
+                            }
+                        }
+                    }
+                }
+            }
+            
+            //finally send out all events.
+            for(auto & index : fire_stored_events)
+            {
+                //XTODO,it might be good to just send latest one instead every events
+                on_block_stored(index());
+            }
+            
+            return true;
         }
 
         //update other meta except connected info
@@ -1624,7 +1656,6 @@ namespace top
                     m_meta->_highest_execute_block_hash   = new_block_ptr->get_block_hash();
                 }
 
-                mark_connected_flag(new_block_ptr);//connect update
             }
             else if(new_block_ptr->check_block_flag(base::enum_xvblock_flag_locked))
             {
@@ -2339,7 +2370,7 @@ namespace top
         
         bool      xblockacct_t::on_block_stored(base::xvbindex_t* index_ptr)
         {
-            xdbg("jimmy xvblockstore_impl::on_block_stored,at account=%s,index=%s",get_account().c_str(),index_ptr->dump().c_str());
+            xdbg("jimmy xblockacct_t::on_block_stored,at account=%s,index=%s",get_account().c_str(),index_ptr->dump().c_str());
             if(index_ptr->get_height() == 0) //ignore genesis block
                 return true;
             const int block_flags = index_ptr->get_block_flags();
@@ -2360,7 +2391,7 @@ namespace top
                             mbus->push_event(event);
                         }
                     }
-                    xdbg_info("xvblockstore_impl::on_block_stored,done at store(%s)-> block=%s",get_blockstore_path().c_str(),index_ptr->dump().c_str());
+                    xdbg_info("xblockacct_t::on_block_stored,done at store(%s)-> block=%s",get_blockstore_path().c_str(),index_ptr->dump().c_str());
                 }
             }
             return true;
@@ -2376,6 +2407,8 @@ namespace top
             {
                 store_txs_to_db(index_ptr); //extract and store txs now
             }
+            //fully connect to geneis block or last full-block here
+            full_connect_to(index_ptr);
 
             return true;
         }
@@ -2432,10 +2465,6 @@ namespace top
                     if(enum_blockstore_event_committed == event.get_type())
                     {
                         on_block_committed(event.get_index());
-                    }
-                    else if(enum_blockstore_event_stored == event.get_type())
-                    {
-                        on_block_stored(event.get_index());
                     }
                     else if(enum_blockstore_event_revoke == event.get_type())
                     {
@@ -2651,9 +2680,16 @@ namespace top
             if(NULL == new_raw_block)
                 return nullptr;
             
+            if(new_raw_block->check_block_flag(base::enum_xvblock_flag_authenticated) == false)//safety protect
+                return nullptr;
+            
             base::xauto_ptr<base::xvbindex_t > new_idx(new base::xvbindex_t(*new_raw_block));
             if(0 != new_idx->get_height())
             {
+                new_idx->reset_block_flags(0);//reset all flags and redo it from authenticated status
+                new_idx->set_block_flag(base::enum_xvblock_flag_authenticated);//init it as  authenticated
+                new_idx->reset_modify_flag(); //remove modified flag to avoid double saving
+                
                 load_index(new_idx->get_height()); //always load index first for non-genesis block
             }
             
@@ -2665,6 +2701,19 @@ namespace top
             if(precheck_new_index(new_idx(),height_view_map) == false)
             {
                 xinfo("xblockacct_t::new_index,failed-precheck for block(%s) at store(%s)",new_idx->dump().c_str(),get_blockstore_path().c_str());
+                
+                //remove below after merged jimmy'branch which nolonger need store offdata anymore
+                for(auto it = height_view_map.begin(); it != height_view_map.end();++it)
+                {
+                    if(   (it->second->get_height() == new_raw_block->get_height())
+                       && (it->second->get_block_hash() == new_raw_block->get_block_hash())  )
+                    {
+                        //since every block reset as cert-only,so it is impossible to update the existing index by block with higher flag
+                        //the only way to trigger write offdata is here
+                        write_block_offdata_to_db(it->second, new_raw_block);
+                        break;
+                    }
+                }
                 return nullptr;
             }
             
@@ -2678,17 +2727,23 @@ namespace top
                 //rebase forked blocks if have ,after connect_index
                 rebase_chain_at_height(height_view_map);
             }
-            
-            //research to find target index after rebase that maybe remove it
-            for(auto it = height_view_map.begin(); it != height_view_map.end();++it)
+            else //remove below after merged jimmy'branch which nolonger need store offdata anymore
             {
-                if(   (it->second->get_height() == new_raw_block->get_height())
-                   && (it->second->get_block_hash() == new_raw_block->get_block_hash())  )
+                //research to find target index after rebase that maybe remove it
+                for(auto it = height_view_map.begin(); it != height_view_map.end();++it)
                 {
-                    return it->second;
+                    if(   (it->second->get_height() == new_raw_block->get_height())
+                       && (it->second->get_block_hash() == new_raw_block->get_block_hash())  )
+                    {
+                        //since every block reset as cert-only,so it is impossible to update the existing index by block with higher flag
+                        //the only way to trigger write offdata is here
+                        write_block_offdata_to_db(it->second, new_raw_block);
+                        break;
+                    }
                 }
             }
-            return nullptr;
+            
+            return cached_index_ptr;
         }
     
         xchainacct_t::xchainacct_t(const std::string & account_addr,const uint64_t timeout_ms,const std::string & blockstore_path)
@@ -2721,28 +2776,12 @@ namespace top
                 prev_block->add_ref();//hold it to avoid be released by rebase_chain_at_height
                 {
                     prev_block->set_block_flag(base::enum_xvblock_flag_locked);
-                    if(this_block->check_block_flag(base::enum_xvblock_flag_locked))//if this_block already been locked status
+                    
+                    rebase_chain_at_height(prev_block->get_height()); //resolve other block of lower-weight thans this
+                    if(prev_block->is_close() == false)//prev_block is still valid to use
                     {
-                        prev_block->set_block_flag(base::enum_xvblock_flag_committed);//convert prev_block directly to commit
-                        
-                        rebase_chain_at_height(prev_block->get_height()); //resolve other block of lower-weight thans this
-                        if(prev_block->is_close() == false)//prev_block is still valid to use
-                        {
-                            update_meta_metric(prev_block);//update meta since block has change status
-
-                            push_event(enum_blockstore_event_committed,prev_block);
-                            if(write_index_to_db(prev_block)) //trigger db event here if need
-                                push_event(enum_blockstore_event_stored,prev_block);
-                        }
-                    }
-                    else
-                    {
-                        rebase_chain_at_height(prev_block->get_height()); //resolve other block of lower-weight thans this
-                        if(prev_block->is_close() == false)//prev_block is still valid to use
-                        {
-                            update_meta_metric(prev_block);//update meta since block has change status
-                            write_index_to_db(prev_block); //not send db event
-                        }
+                        update_meta_metric(prev_block);//update meta since block has change status
+                        write_index_to_db(prev_block); //not send db event
                     }
                 }
                 prev_block->release_ref();//safe release now
@@ -2771,8 +2810,7 @@ namespace top
                     update_meta_metric(prev_prev_block);//update meta since block has change status
                     
                     push_event(enum_blockstore_event_committed,prev_prev_block);//fire event for commit
-                    if(write_index_to_db(prev_prev_block)) //trigger db event here if need
-                        push_event(enum_blockstore_event_stored,prev_prev_block);
+                    write_index_to_db(prev_prev_block); //trigger db event here if need
                 }
                 prev_prev_block->release_ref(); //safe release now
             }

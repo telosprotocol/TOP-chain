@@ -683,6 +683,7 @@ namespace top
 
                         if( (false == _test_for_plugin->is_live(current_time_ms)) || (total_active_acounts > enum_max_active_acconts) ) //force to remove most less-active account while too much caches
                         {
+                            _test_for_plugin->process_events(); //fired any pending events first
                             _test_for_plugin->close(); //mark to close first
                             _test_for_plugin->release_ref(); //now release last reference hold by m_monitor_expire
 

@@ -48,6 +48,7 @@ int test_sync_vstore(store::xsyncvstore_t* sync_store)
     std::vector<base::xvblock_t*>  generated_blocks;
     base::xauto_ptr<base::xvblock_t> genesis_cert_block = sync_store->get_vblockstore()->get_latest_cert_block(test_account_address);
     base::xvblock_t * last_block = genesis_cert_block.get();
+    last_block->add_ref();
     generated_blocks.push_back(last_block);
     uint64_t last_view_id = last_block->get_viewid();
     
@@ -221,5 +222,6 @@ int main(int argc, const char * argv[]) {
     }
     
     printf("test over, quit now! \n");
+    sleep(60);
     return 0;
 }

@@ -347,6 +347,12 @@ namespace top
                     {
                         base::xvblock_t* lock_block = it->get_child()->get_block();
                         base::xvblock_t* hqc_block  = it->get_child()->get_child()->get_block();
+                        
+                        fire_consensus_commit_event(it->get_block(), it->get_block(), lock_block, hqc_block);
+                    }
+                    else //sync module operated and transfer it to commited status
+                    {
+                        fire_consensus_commit_event(it->get_block(), it->get_block(), get_latest_lock_block(), highest_cert_block);
                     }
                 }
                 for(auto it : to_commit_blocks)

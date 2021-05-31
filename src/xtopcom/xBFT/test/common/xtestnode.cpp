@@ -137,7 +137,7 @@ namespace top
             if(last_block == nullptr)//blockstore has been closed
                 return NULL;
         
-            base::xauto_ptr<base::xvblock_t> last_full_block = get_vblockstore()->get_latest_full_block(account);
+            base::xauto_ptr<base::xvblock_t> last_full_block = get_vblockstore()->get_latest_committed_block(account);
             base::xvblock_t* new_proposal_block = xunitblock_t::create_unitblock(account,last_block->get_height() + 1,0,new_viewid,last_block->get_block_hash(),last_full_block->get_block_hash(),last_full_block->get_height(),block_input,block_output);
             new_proposal_block->reset_prev_block(last_block.get()); //point previous block
             return new_proposal_block;

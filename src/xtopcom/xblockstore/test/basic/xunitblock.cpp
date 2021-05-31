@@ -41,7 +41,7 @@ namespace top
                 if(body_input.empty())
                     set_block_class(base::enum_xvblock_class_nil);
                 else
-                    set_block_class(base::enum_xvblock_class_full); //test
+                    set_block_class(base::enum_xvblock_class_light); //test
             }
         }
         
