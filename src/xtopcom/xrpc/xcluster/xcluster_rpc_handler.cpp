@@ -111,7 +111,7 @@ void xcluster_rpc_handler::cluster_process_request(const xrpc_msg_request_t & ed
                    msg.hash());
             try {
                 m_cluster_vhost->forward_broadcast_message(msg, vaddr);
-            } catch (vnetwork::xvnetwork_error_t const & eh) {
+            } catch (top::error::xtop_error_t const & eh) {
                 xwarn("[global_trace][advance_rpc][forward shard] %s src %s dst %s msg hash %" PRIx64 " msg id %" PRIx32,
                       tx_hash.c_str(),
                       m_cluster_vhost->address().to_string().c_str(),
@@ -167,7 +167,7 @@ void xcluster_rpc_handler::cluster_process_response(const xmessage_t & msg, cons
     try {
         xkinfo("m_cluster_vhost response:%" PRIx64, msg.hash());
         m_cluster_vhost->send_to(shard_msg.m_source_address, msg);
-    } catch (vnetwork::xvnetwork_error_t const & eh) {
+    } catch (top::error::xtop_error_t const & eh) {
         xwarn("[global_trace][advance_rpc][send] src %s send msg %" PRIx64 " to dst %s",
               m_cluster_vhost->address().to_string().c_str(),
               msg.hash(),

@@ -5,6 +5,7 @@
 #include "xvnetwork/xvnetwork_driver.h"
 
 #include "xbase/xlog.h"
+#include "xbasic/xerror/xthrow_error.h"
 #include "xbasic/xthreading/xutility.h"
 #include "xbasic/xutility.h"
 #include "xconfig/xconfig_register.h"
@@ -27,7 +28,7 @@ static constexpr std::size_t book_id_count{enum_vbucket_has_books_count};
 
 xtop_vnetwork_driver::xtop_vnetwork_driver(observer_ptr<xvhost_face_t> const & vhost, common::xnode_address_t const & address) : m_vhost{vhost}, m_address{address} {
     if (m_vhost == nullptr) {
-        XTHROW(xvnetwork_error_t, xvnetwork_errc_t::vhost_empty, u8"constructing xvnetwork_driver_t at address " + m_address.to_string());
+        top::error::throw_error({ xvnetwork_errc_t::vhost_empty }, "constructing xvnetwork_driver_t at address " + m_address.to_string());
     }
 }
 
@@ -130,8 +131,8 @@ std::map<common::xslot_id_t, data::xnode_info_t> xtop_vnetwork_driver::children_
         xcluster_address_t child_cluster_address{address().network_id(), address().zone_id(), address().cluster_id(), gid};
 
         return m_vhost->members_info_of_group2(child_cluster_address, version);
-    } catch (xvnetwork_error_t const & eh) {
-        xwarn("[vnetwork] xvnetwork_error_t exception caught: %s", eh.what());
+    } catch (top::error::xtop_error_t const & eh) {
+        xwarn("[vnetwork] xtop_error_t exception caught: cateogry:%s; msg:%s; error code:%d; error msg:%s", eh.code().category().name(), eh.what(), eh.code().value(), eh.code().message().c_str());
     } catch (std::exception const & eh) {
         xwarn("[vnetwork] std::exception exception caught: %s", eh.what());
     } catch (...) {
@@ -223,8 +224,8 @@ std::vector<std::uint16_t> xtop_vnetwork_driver::table_ids() const {
             for (auto i = consensus_range.first; i < consensus_range.second; ++i) {
                 book_ids.push_back(i);
             }
-        } catch (vnetwork::xvnetwork_error_t const & eh) {
-            xwarn("[vnetwork dirver] caught vnetwork exception %s", eh.what());
+        } catch (top::error::xtop_error_t const & eh) {
+            xwarn("[vnetwork] xtop_error_t exception caught: cateogry:%s; msg:%s; error code:%d; error msg:%s", eh.code().category().name(), eh.what(), eh.code().value(), eh.code().message().c_str());
         } catch (std::exception const & eh) {
             xwarn("[vnetwork driver] caught std::exception %s", eh.what());
         } catch (...) {
@@ -341,6 +342,11 @@ void xtop_vnetwork_driver::on_vhost_message_data_ready(common::xnode_address_t c
              static_cast<std::uint32_t>(msg.id()),
              address().to_string().c_str(),
              src.to_string().c_str());
+#if defined(ENABLE_METRICS) && defined(VHOST_METRICS) && VHOST_METRICS
+        char msg_info[30] = { 0 };
+        snprintf(msg_info, 29, "%" PRIx32 "|%" PRIx64, static_cast<uint32_t>(message_id), msg.hash());
+        XMETRICS_TIME_RECORD_KEY_WITH_TIMEOUT("vnetdriver_handle_data_callback", msg_info, uint32_t(100000));
+#endif
         callback(src, msg, msg_time);
         XLOCK_GUARD(m_message_cache_mutex) { m_message_cache.insert({msg.hash(), std::time(nullptr)}); }
     } else {
