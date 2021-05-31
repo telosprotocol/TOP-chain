@@ -226,6 +226,12 @@ const xcons_transaction_ptr_t xunconfirmed_account_t::find(const uint256_t & has
     return nullptr;
 }
 
+xunconfirmed_tx_queue_t::~xunconfirmed_tx_queue_t() {
+    uint32_t num = size();
+    XMETRICS_COUNTER_DECREMENT("txpool_unconfirm_txs_num", num);
+    // XMETRICS_COUNTER_SET("table_unconfirm_txs_num" + m_xtable_info.get_table_addr(), num);
+}
+
 void xunconfirmed_tx_queue_t::udpate_latest_confirmed_block(xblock_t * block, const xreceipt_state_cache_t & receiptid_state_cache) {
     xtxpool_dbg("xunconfirmed_tx_queue_t::udpate_latest_confirmed_block block:%s", block->dump().c_str());
     auto it_account = m_unconfirmed_accounts.find(block->get_account());

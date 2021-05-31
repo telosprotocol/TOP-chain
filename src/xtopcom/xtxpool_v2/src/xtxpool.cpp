@@ -136,7 +136,6 @@ void xtxpool_t::unsubscribe_tables(uint8_t zone, uint16_t front_table_id, uint16
             (*it)->unsubscribe();
             if ((*it)->get_sub_count() == 0) {
                 for (uint16_t i = front_table_id; i <= back_table_id; i++) {
-                    m_tables[zone][i]->clean();
                     m_tables[zone][i] = nullptr;
                 }
             }

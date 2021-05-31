@@ -102,7 +102,9 @@ class xunconfirmed_tx_queue_t {
 public:
     xunconfirmed_tx_queue_t(xtxpool_resources_face * para, xtxpool_table_info_t * table_info) : m_para(para), m_table_info(table_info) {
     }
+    ~xunconfirmed_tx_queue_t();
 
+public:
     void udpate_latest_confirmed_block(xblock_t * block, const xreceipt_state_cache_t & receiptid_state_cache);
     void recover(const xreceipt_state_cache_t & receiptid_state_cache);
     const xcons_transaction_ptr_t find(const std::string & account_addr, const uint256_t & hash) const;
