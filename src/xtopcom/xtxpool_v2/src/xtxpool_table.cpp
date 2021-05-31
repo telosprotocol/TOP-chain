@@ -323,7 +323,7 @@ void xtxpool_table_t::update_unconfirm_accounts() {
     m_unconfirmed_tx_queue.recover(m_receipt_state_cache);
     uint32_t tx_num_after = m_unconfirmed_tx_queue.size();
     m_unconfirmed_tx_num = m_unconfirmed_tx_queue.size();
-    XMETRICS_COUNTER_SET("table_unconfirm_txs_num" + m_xtable_info.get_table_addr(), m_unconfirmed_tx_num);
+    // XMETRICS_COUNTER_SET("table_unconfirm_txs_num" + m_xtable_info.get_table_addr(), m_unconfirmed_tx_num);
     if (tx_num_after > tx_num_before) {
         XMETRICS_COUNTER_INCREMENT("txpool_unconfirm_txs_num", tx_num_after - tx_num_before);
     } else if (tx_num_after < tx_num_before) {

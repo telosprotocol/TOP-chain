@@ -103,6 +103,11 @@ void xpeer_table_receipts_t::erase(uint64_t receipt_id) {
 }
 
 int32_t xreceipt_queue_new_t::push_tx(const std::shared_ptr<xtx_entry> & tx_ent) {
+    if ((tx_ent->get_tx()->is_recv_tx() && m_receipt_queue_internal.recv_tx_full()) || (tx_ent->get_tx()->is_confirm_tx() && m_receipt_queue_internal.confirm_tx_full())) {
+        // just warn, not return. for receipts should not be dropped.
+        xwarn("xreceipt_queue_new_t::push_tx receipt tx full,tx:%s", tx_ent->get_tx()->dump().c_str());
+    }
+
     auto & peer_table_map = get_peer_table_map(tx_ent->get_tx()->is_recv_tx());
     std::shared_ptr<xpeer_table_receipts_t> peer_table_receipts;
     auto & account_addr = (tx_ent->get_tx()->is_recv_tx()) ? tx_ent->get_tx()->get_source_addr() : tx_ent->get_tx()->get_target_addr();

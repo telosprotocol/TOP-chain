@@ -51,6 +51,12 @@ public:
     uint32_t size() const {
         return m_tx_queue.size();
     }
+    bool recv_tx_full() const {
+        return m_xtable_info->is_recv_tx_reached_upper_limit();
+    }
+    bool confirm_tx_full() const {
+        return m_xtable_info->is_confirm_tx_reached_upper_limit();
+    }
 
 private:
     xreceipt_set_t m_tx_queue;
