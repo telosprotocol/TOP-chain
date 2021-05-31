@@ -15,12 +15,12 @@ NS_BEG2(top, xunit_service)
 #define WORK_DISPATCH_WATCHER "table_dispatch_timer"
 xworkpool_dispatcher::xworkpool_dispatcher(observer_ptr<mbus::xmessage_bus_face_t> const &mb, std::shared_ptr<xcons_service_para_face> const & p_para, std::shared_ptr<xblock_maker_face> const & block_maker)
   : xcons_dispatcher(e_table), m_mbus(mb), m_para(p_para), m_blockmaker(block_maker) {
-    xinfo("xworkpool_dispatcher::xworkpool_dispatcher,create,this=%p", this);
+    xunit_info("xworkpool_dispatcher::xworkpool_dispatcher,create,this=%p", this);
 
 }
 
 xworkpool_dispatcher::~xworkpool_dispatcher() {
-    xinfo("xworkpool_dispatcher::~xworkpool_dispatcher,destroy,this=%p", this);
+    xunit_info("xworkpool_dispatcher::~xworkpool_dispatcher,destroy,this=%p", this);
     xassert(m_packers.empty());
 }
 
@@ -40,14 +40,14 @@ bool xworkpool_dispatcher::dispatch(base::xworkerpool_t * pool, base::xcspdu_t *
             packer = packer_iter->second.get();
         }
     }
-    // xdbg("[xunitservice] dispatch table id %d, packer %p", table_id, packer);
+    // xunit_dbg("[xunitservice] dispatch table id %d, packer %p", table_id, packer);
     if (packer != nullptr) {
         auto packer_xip = packer->get_xip2_addr();
         if (is_xip2_equal(packer_xip, xip_to) && packer->get_account() == pdu->get_block_account()) {
-            xdbg("xworkpool_dispatcher::dispatch succ.pdu=%s,at_node:%s,packer=%p", pdu->dump().c_str(), xcons_utl::xip_to_hex(packer_xip).c_str(), packer);
+            xunit_dbg("xworkpool_dispatcher::dispatch succ.pdu=%s,at_node:%s,packer=%p", pdu->dump().c_str(), xcons_utl::xip_to_hex(packer_xip).c_str(), packer);
             return async_dispatch(pdu, xip_from, xip_to, packer) == 0;
         } else {
-            xwarn("xworkpool_dispatcher::dispatch fail. pdu=%s,table id %d failed packer %p with invalid xip to: %s vs packer: %s, account %s",
+            xunit_warn("xworkpool_dispatcher::dispatch fail. pdu=%s,table id %d failed packer %p with invalid xip to: %s vs packer: %s, account %s",
                 pdu->dump().c_str(),
                 table_id,
                 packer,
@@ -65,7 +65,7 @@ void xworkpool_dispatcher::chain_timer(common::xlogic_time_t time) {
     auto * blkstore = m_para->get_resources()->get_vblockstore();
     auto timer_block = blkstore->get_latest_cert_block(base::xvaccount_t(sys_contract_beacon_timer_addr));
 
-    xdbg("xworkpool_dispatcher::chain_timer call on_clock, logic time %" PRIu64 " TC %" PRIu64, time, timer_block->get_height());
+    xunit_dbg("xworkpool_dispatcher::chain_timer call on_clock, logic time %" PRIu64 " TC %" PRIu64, time, timer_block->get_height());
     if (time <= timer_block->get_height()) {
         on_clock(timer_block.get());
     }
@@ -101,7 +101,7 @@ bool xworkpool_dispatcher::start(const xvip2_t & xip, const common::xlogic_time_
     // 1. get tableid from election by xip
     // 2. subscribe tableid
     // 3. reset xip
-    xinfo("xworkpool_dispatcher::start %s %p", xcons_utl::xip_to_hex(xip).c_str(), this);
+    xunit_info("xworkpool_dispatcher::start %s %p", xcons_utl::xip_to_hex(xip).c_str(), this);
     m_para->get_resources()->get_chain_timer()->watch(watcher_name(xip), 1, std::bind(&xworkpool_dispatcher::chain_timer, shared_from_this(), std::placeholders::_1));
     auto election_face = m_para->get_resources()->get_election();
     auto elect_face = election_face->get_election_cache_face();
@@ -115,7 +115,7 @@ bool xworkpool_dispatcher::start(const xvip2_t & xip, const common::xlogic_time_
 
 bool xworkpool_dispatcher::fade(const xvip2_t & xip) {
     // do nothing
-    xinfo("xworkpool_dispatcher::fade %s %p", xcons_utl::xip_to_hex(xip).c_str(), this);
+    xunit_info("xworkpool_dispatcher::fade %s %p", xcons_utl::xip_to_hex(xip).c_str(), this);
     m_para->get_resources()->get_chain_timer()->unwatch(watcher_name(xip));
     return false;
 }
@@ -123,7 +123,7 @@ bool xworkpool_dispatcher::fade(const xvip2_t & xip) {
 bool xworkpool_dispatcher::destroy(const xvip2_t & xip) {
     // 1. get tableid from election by xip
     // 2. erase all datas
-    xinfo("xworkpool_dispatcher::destroy %s %p", xcons_utl::xip_to_hex(xip).c_str(), this);
+    xunit_info("xworkpool_dispatcher::destroy %s %p", xcons_utl::xip_to_hex(xip).c_str(), this);
     std::lock_guard<std::mutex> lock(m_mutex);
     for (auto & packer : m_packers) {
         packer.second->close();
@@ -175,7 +175,7 @@ bool xworkpool_dispatcher::subscribe(const std::vector<uint16_t> & tables, const
                 // packer_ptr->reset_xip_addr(xip);
                 m_packers[table_id] = packer_ptr;
                 reset_packers.push_back(packer_ptr);
-                xdbg("[xunitservice] subscribe %s %d @ %s %p", account_id.c_str(), table_id, xcons_utl::xip_to_hex(xip).c_str(), this);
+                xunit_dbg("[xunitservice] subscribe %s %d @ %s %p", account_id.c_str(), table_id, xcons_utl::xip_to_hex(xip).c_str(), this);
             } else {
                 // iter->second->reset_xip_addr(xip);
                 reset_packers.push_back(iter->second);

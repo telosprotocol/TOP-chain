@@ -25,7 +25,7 @@ bool xnetwork_proxy::send_out(uint32_t msg_type, const xvip2_t & from_addr, cons
     auto pdu_type = packet.get_msg_type();
     common::xmessage_id_t id = static_cast<common::xmessage_id_t>(msg_type + pdu_type);
 
-    xdbg("[xunitservice] network sendout message.packet=%s,msg_size=%d,%" PRIx32 " from:%s to:%s",
+    xunit_dbg("[xunitservice] network sendout message.packet=%s,msg_size=%d,%" PRIx32 " from:%s to:%s",
          packet.dump().c_str(),
          stream.size(),
          static_cast<uint32_t>(id),
@@ -65,14 +65,14 @@ bool xnetwork_proxy::send_out(common::xmessage_id_t const & id, const xvip2_t & 
                     network->forward_broadcast_message(msg, to);
                     forward = true;
 #ifdef DEBUG
-                    xdbg("[xunitservice] network forward from %s to %#016" PRIx64 ".%016" PRIx64, network->address().to_string().c_str(), to_addr.low_addr, to_addr.high_addr);
+                    xunit_dbg("[xunitservice] network forward from %s to %#016" PRIx64 ".%016" PRIx64, network->address().to_string().c_str(), to_addr.low_addr, to_addr.high_addr);
 #endif
                 }
             }
         }
 
         if (!forward) {
-            xwarn("[xunitservice] network forward from %s to %s failed" PRIx64, network->address().to_string().c_str(), to.to_string().c_str());
+            xunit_warn("[xunitservice] network forward from %s to %s failed" PRIx64, network->address().to_string().c_str(), to.to_string().c_str());
         }
     }
 
@@ -88,7 +88,7 @@ bool xnetwork_proxy::send_out(common::xmessage_id_t const & id, const xvip2_t & 
             auto dest_to = xcons_utl::to_address(to, network->address().version());
             network->forward_broadcast_message(msg, dest_to);
 #ifdef DEBUG
-            xdbg("[xunitservice] network forward from %s to %#016" PRIx64 ".%016" PRIx64, network->address().to_string().c_str(), to_addr.low_addr, to_addr.high_addr);
+            xunit_dbg("[xunitservice] network forward from %s to %#016" PRIx64 ".%016" PRIx64, network->address().to_string().c_str(), to_addr.low_addr, to_addr.high_addr);
 #endif
         }
     }
@@ -98,7 +98,7 @@ bool xnetwork_proxy::send_out(common::xmessage_id_t const & id, const xvip2_t & 
         network->broadcast(dst, msg, ec);
         if (ec) {
 #ifdef DEBUG
-            xdbg("[xunitservice] network sendout broadcast failed: from %s to %#016" PRIx64 ".%016" PRIx64 " ec category: %s ec msg: %s",
+            xunit_dbg("[xunitservice] network sendout broadcast failed: from %s to %#016" PRIx64 ".%016" PRIx64 " ec category: %s ec msg: %s",
                  network->address().to_string().c_str(),
                  to_addr.low_addr,
                  to_addr.high_addr,
@@ -107,7 +107,7 @@ bool xnetwork_proxy::send_out(common::xmessage_id_t const & id, const xvip2_t & 
 #endif
         } else {
 #ifdef DEBUG
-            xdbg("[xunitservice] network sendout broadcast successful: from %s to %#016" PRIx64 ".%016" PRIx64 " ec category: %s ec msg: %s",
+            xunit_dbg("[xunitservice] network sendout broadcast successful: from %s to %#016" PRIx64 ".%016" PRIx64 " ec category: %s ec msg: %s",
                  network->address().to_string().c_str(),
                  to_addr.low_addr,
                  to_addr.high_addr,
@@ -119,7 +119,7 @@ bool xnetwork_proxy::send_out(common::xmessage_id_t const & id, const xvip2_t & 
         network->send_to(dst, msg, ec);
         if (ec) {
 #ifdef DEBUG
-            xdbg("[xunitservice] network sendout send_to failed: from %s to %#016" PRIx64 ".%016" PRIx64 " ec category: %s ec msg: %s",
+            xunit_dbg("[xunitservice] network sendout send_to failed: from %s to %#016" PRIx64 ".%016" PRIx64 " ec category: %s ec msg: %s",
                  network->address().to_string().c_str(),
                  to_addr.low_addr,
                  to_addr.high_addr,
@@ -128,7 +128,7 @@ bool xnetwork_proxy::send_out(common::xmessage_id_t const & id, const xvip2_t & 
 #endif
         } else {
 #ifdef DEBUG
-            xdbg("[xunitservice] network sendout send_to successful: from %s to %#016" PRIx64 ".%016" PRIx64 " ec category: %s ec msg: %s",
+            xunit_dbg("[xunitservice] network sendout send_to successful: from %s to %#016" PRIx64 ".%016" PRIx64 " ec category: %s ec msg: %s",
                  network->address().to_string().c_str(),
                  to_addr.low_addr,
                  to_addr.high_addr,
@@ -217,6 +217,7 @@ void xnetwork_proxy::on_message(top::vnetwork::xvnode_address_t const & sender, 
     auto to = xcons_utl::to_xip2(receiver);
     auto from = xcons_utl::to_xip2(sender);
     auto category = get_message_category(message.id());
+    XMETRICS_TIME_RECORD("xcons_network_message_dispatch");
     xpdu_reactor_ptr cb{nullptr};
     {
         std::lock_guard<std::mutex> lock(m_mutex);
@@ -236,10 +237,10 @@ void xnetwork_proxy::on_message(top::vnetwork::xvnode_address_t const & sender, 
         pdu->serialize_from(stream);
         auto xip_from = xcons_utl::to_xip2(sender);
         cb->on_pdu(xip_from, to, *pdu);
-        xinfo("xnetwork_proxy::on_message succ,category=%x,pdu=%s,at_node:%s %p", category, pdu->dump().c_str(), xcons_utl::xip_to_hex(to).c_str(), &cb);
+        xunit_info("xnetwork_proxy::on_message succ,category=%x,pdu=%s,at_node:%s %p", category, pdu->dump().c_str(), xcons_utl::xip_to_hex(to).c_str(), &cb);
         pdu->release_ref();
     } else {
-        xwarn("xnetwork_proxy::on_message fail-no reactor for %" PRIx64 " category %x from: %" PRIx64, to.low_addr, category, from.low_addr);
+        xunit_warn("xnetwork_proxy::on_message fail-no reactor for %" PRIx64 " category %x from: %" PRIx64, to.low_addr, category, from.low_addr);
     }
 }
 
@@ -251,10 +252,10 @@ bool xnetwork_proxy::add(const std::shared_ptr<vnetwork::xvnetwork_driver_face_t
         std::lock_guard<std::mutex> lock(m_mutex);
         auto iter = m_networks.find(xip);
         if (iter == m_networks.end()) {
-            xinfo("[xunitservice] network add %s %p", xcons_utl::xip_to_hex(xip).c_str(), network.get());
+            xunit_info("[xunitservice] network add %s %p", xcons_utl::xip_to_hex(xip).c_str(), network.get());
             m_networks.insert({xip, network});
         } else {
-            xinfo("[xunitservice] network exist %s %p", xcons_utl::xip_to_hex(xip).c_str(), &(iter->second));
+            xunit_info("[xunitservice] network exist %s %p", xcons_utl::xip_to_hex(xip).c_str(), &(iter->second));
         }
     }
     return true;
@@ -270,11 +271,11 @@ bool xnetwork_proxy::erase(const xvip2_t & addr) {
         // assert(listen_iter == m_reactors.end());
         auto iter = m_networks.find(addr);
         if (iter != m_networks.end()) {
-            xinfo("[xunitservice] network erase %s %p", xcons_utl::xip_to_hex(addr).c_str(), &(iter->second));
+            xunit_info("[xunitservice] network erase %s %p", xcons_utl::xip_to_hex(addr).c_str(), &(iter->second));
             m_networks.erase(iter);
             return true;
         } else {
-            xinfo("[xunitservice] network erase %s failed", xcons_utl::xip_to_hex(addr).c_str());
+            xunit_info("[xunitservice] network erase %s failed", xcons_utl::xip_to_hex(addr).c_str());
         }
     }
     return false;

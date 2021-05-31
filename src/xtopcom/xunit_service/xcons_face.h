@@ -13,6 +13,7 @@
 #include "xmbus/xmessage_bus.h"
 #include "xtxpool_v2/xtxpool_face.h"
 #include "xcommon/xlogic_time.h"
+#include "xunit_service/xunit_log.h"
 
 #include <string>
 #include <vector>
@@ -202,6 +203,7 @@ protected:
     template <typename T>
     int async_dispatch(base::xcspdu_t * pdu, const xvip2_t & xip_from, const xvip2_t & xip_to, T * picker) {
         if (picker->is_mailbox_over_limit(max_mailbox_num)) {
+            xunit_warn("xunit_service::async_dispatch unitservice mailbox limit,drop pdu");
             return -1;
         }
 
