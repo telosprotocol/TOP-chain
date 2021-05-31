@@ -25,7 +25,7 @@ xvip2_t xcons_utl::erase_version(const xvip2_t & xip) {
 }
 
 bool xcons_utl::xip_equals(const xvip2_t & left, const xvip2_t & right) {
-    return left.low_addr == right.low_addr;
+    return is_xip2_equal(left, right);
 }
 
 bool xcons_utl::is_broadcast_address(const xvip2_t & addr) {
