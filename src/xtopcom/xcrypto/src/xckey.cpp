@@ -10,6 +10,7 @@
 #include "xcrypto/xckey.h"
 #include "xutility/xhash.h"
 #include "xvledger/xvaccount.h"
+#include "xtopcl/include/user_info.h"
 
 extern "C"
 {
@@ -237,7 +238,25 @@ namespace top
             }
             return false;
         }
-
+        bool xkeyaddress_t::verify_eth_signature(xecdsasig_t & signature,const uint256_t & msg_digest)
+        {
+            uint8_t addr_type = 0;
+            uint16_t net_id = 0;
+            if (false == base::xvaccount_t::get_type_and_ledgerid_from_account(addr_type, net_id, m_account_address))
+                return false;
+            uint8_t out_publickey_data[65] = {0};
+            if (xsecp256k1_t::get_publickey_from_signature(signature, msg_digest, out_publickey_data)) //signature is valid
+            {
+                xecpubkey_t verify_key(out_publickey_data);
+                std::string account_address = m_account_address;
+                std::transform(account_address.begin() + 1, account_address.end(), account_address.begin() + 1, ::tolower);
+                if (verify_key.to_eth_address(addr_type, net_id) == account_address) //then check whether is from this address
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
         bool   xkeyaddress_t::verify_signature(xecdsasig_t & signature,const uint256_t & msg_digest,const std::string & parent_addr)
         {
             uint8_t  addr_type = 0;
@@ -247,9 +266,8 @@ namespace top
 
             if (addr_type == base::enum_vaccount_addr_type_eth_user_account) 
             {
-                return verify_eth_signature(signature, msg_digest);
+                return verify_eth_signature(signature, msg_digest, parent_addr);
             }
-            
             uint8_t out_publickey_data[65] = {0};
             if(xsecp256k1_t::get_publickey_from_signature(signature,msg_digest,out_publickey_data))//signature is valid
             {
@@ -261,17 +279,20 @@ namespace top
             }
             return false;
         }
-        bool xkeyaddress_t::verify_eth_signature(xecdsasig_t & signature,const uint256_t & msg_digest)
+        bool   xkeyaddress_t::verify_eth_signature(xecdsasig_t & signature,const uint256_t & msg_digest,const std::string & parent_addr)
         {
-            uint8_t addr_type = 0;
+            uint8_t  addr_type = 0;
             uint16_t net_id = 0;
-            if (false == base::xvaccount_t::get_type_and_ledgerid_from_account(addr_type, net_id, m_account_address))
+            if(false == get_type_and_netid(addr_type,net_id))
                 return false;
+
             uint8_t out_publickey_data[65] = {0};
-            if (xsecp256k1_t::get_publickey_from_signature(signature, msg_digest, out_publickey_data)) //signature is valid
+            if(xsecp256k1_t::get_publickey_from_signature(signature,msg_digest,out_publickey_data))//signature is valid
             {
                 xecpubkey_t verify_key(out_publickey_data);
-                if (verify_key.to_eth_address(addr_type, net_id) == m_account_address) //then check whether is from this address
+                std::string account_address = m_account_address;
+                std::transform(account_address.begin() + 1, account_address.end(), account_address.begin() + 1, ::tolower);                
+                if(verify_key.to_eth_address(parent_addr,addr_type, net_id) == account_address)//then check whether is from this address
                 {
                     return true;
                 }
@@ -287,6 +308,10 @@ namespace top
             uint16_t net_id = 0;
             if(false == get_type_and_netid(addr_type,net_id))
                 return false;
+            if (addr_type == base::enum_vaccount_addr_type_eth_user_account) 
+            {
+                return verify_eth_signature(signature, msg_digest, out_publickey_data);
+            }                
             if(xsecp256k1_t::verify_signature(signature,msg_digest,out_publickey_data))
             {
                 xecpubkey_t verify_key(out_publickey_data);
@@ -297,7 +322,25 @@ namespace top
             }
             return false;
         }
-
+        bool   xkeyaddress_t::verify_eth_signature(
+                    xecdsasig_t & signature,
+                    const uint256_t & msg_digest,
+                    uint8_t out_publickey_data[65])
+        {
+            uint8_t  addr_type = 0;
+            uint16_t net_id = 0;
+            if(xsecp256k1_t::verify_signature(signature,msg_digest,out_publickey_data))
+            {
+                xecpubkey_t verify_key(out_publickey_data);
+                std::string account_address = m_account_address;
+                std::transform(account_address.begin() + 1, account_address.end(), account_address.begin() + 1, ::tolower);                
+                if(verify_key.to_eth_address(addr_type, net_id) == account_address)//then check whether is from this address
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
         bool   xkeyaddress_t::verify_signature(
                     xecdsasig_t & signature,
                     const uint256_t & msg_digest,
@@ -308,6 +351,10 @@ namespace top
             uint16_t net_id = 0;
             if(false == get_type_and_netid(addr_type,net_id))
                 return false;
+            if (addr_type == base::enum_vaccount_addr_type_eth_user_account) 
+            {
+                return verify_eth_signature(signature, msg_digest, out_publickey_data);
+            }
             if(xsecp256k1_t::verify_signature(signature,msg_digest,out_publickey_data))
             {
                 xecpubkey_t verify_key(out_publickey_data);

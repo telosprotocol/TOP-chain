@@ -2,9 +2,9 @@
 #include "CLI11.hpp"
 #include "api_method_imp.h"
 #include "base/config_file.h"
-#include "client_http.hpp"
+#include "xtopcl/include/web/client_http.hpp"
 #include "task/task_info.h"
-#include "topchain_type.h"
+#include "xtopcl/include/xtop/topchain_type.h"
 #include "user_info.h"
 
 #include <functional>
@@ -161,7 +161,7 @@ public:
     int Config(const ParamList & param_list);
     int Key(const ParamList & param_list);
     int CreateAccount(const ParamList & param_list);
-    int CreateAccountKeystore(const ParamList & param_list);
+    //int CreateAccountKeystore(const ParamList & param_list);
     int attachCreateAccount(const ParamList & param_list, std::ostringstream & out_str);
     int CreateKey(const ParamList & param_list);
     int CreateKeypairKeystore(const ParamList & param_list);

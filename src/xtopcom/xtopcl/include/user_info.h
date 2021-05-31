@@ -10,6 +10,9 @@
 #include <iostream>
 #include <string>
 
+const std::string TOP_ACCOUNT_PREFIX = "T00000";
+const std::string ETH_ACCOUNT_PREFIX = "T80000";
+
 namespace xChainSDK {
 constexpr uint8_t PRI_KEY_LEN = 32;
 struct uinfo {

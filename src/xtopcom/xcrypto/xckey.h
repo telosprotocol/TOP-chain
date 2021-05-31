@@ -98,8 +98,13 @@ namespace top
             bool         verify_signature(xecdsasig_t & signature,const uint256_t & msg_digest); //for normal account address
             bool         verify_signature(xecdsasig_t & signature,const uint256_t & msg_digest,const std::string & parent_addr);//for child account address
             bool         verify_eth_signature(xecdsasig_t & signature,const uint256_t & msg_digest);
+            bool         verify_eth_signature(xecdsasig_t & signature,const uint256_t & msg_digest,const std::string & parent_addr);//for child account address
 
             bool         verify_signature(
+                            xecdsasig_t & signature,
+                            const uint256_t & msg_digest,
+                            uint8_t out_publickey_data[65]); //for normal account address
+            bool         verify_eth_signature(
                             xecdsasig_t & signature,
                             const uint256_t & msg_digest,
                             uint8_t out_publickey_data[65]); //for normal account address
