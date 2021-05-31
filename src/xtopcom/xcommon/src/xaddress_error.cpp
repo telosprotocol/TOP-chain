@@ -165,26 +165,26 @@ address_category() {
     return category;
 }
 
-xtop_address_error::xtop_address_error(xaddress_errc_t const errc,
-                                       std::size_t const line,
-                                       char const * file)
-    : xtop_address_error{std::string{}, make_error_code(errc), line, file }
-{
-}
-
-xtop_address_error::xtop_address_error(std::string msg,
-                                       xaddress_errc_t const errc,
-                                       std::size_t const line,
-                                       char const * file)
-    : xtop_address_error{ std::move(msg), make_error_code(errc), line, file }
-{
-}
-
-xtop_address_error::xtop_address_error(std::string msg,
-                                       std::error_code ec,
-                                       std::size_t const line,
-                                       std::string file)
-    : base_t{ ec, file + ":" + std::to_string(line) + (msg.empty() ? msg : (": extra info: " + msg)) } {
-}
+//xtop_address_error::xtop_address_error(xaddress_errc_t const errc,
+//                                       std::size_t const line,
+//                                       char const * file)
+//    : xtop_address_error{std::string{}, make_error_code(errc), line, file }
+//{
+//}
+//
+//xtop_address_error::xtop_address_error(std::string msg,
+//                                       xaddress_errc_t const errc,
+//                                       std::size_t const line,
+//                                       char const * file)
+//    : xtop_address_error{ std::move(msg), make_error_code(errc), line, file }
+//{
+//}
+//
+//xtop_address_error::xtop_address_error(std::string msg,
+//                                       std::error_code ec,
+//                                       std::size_t const line,
+//                                       std::string file)
+//    : base_t{ ec, file + ":" + std::to_string(line) + (msg.empty() ? msg : (": extra info: " + msg)) } {
+//}
 
 NS_END2

@@ -60,7 +60,7 @@ TEST_F(xvhost_fixture_t, broadcast_address_empty) {
 
     EXPECT_TRUE(dst_empty_account_address.account_address().empty());
     EXPECT_FALSE(dst_empty_account_address.empty());
-    EXPECT_THROW(vhost_test_ptr->send(test_msg, src_v1, dst_empty_account_address, transmission_propert), top::vnetwork::xvnetwork_error_t);
+    EXPECT_THROW(vhost_test_ptr->send(test_msg, src_v1, dst_empty_account_address, transmission_propert), top::error::xtop_error_t);
 }
 
 TEST_F(xvhost_fixture_t, func_msg) {

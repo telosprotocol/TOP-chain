@@ -12,7 +12,6 @@
 
 using top::common::xip2_t;
 using top::vnetwork::xvnetwork_errc2_t;
-using top::vnetwork::xvnetwork_error_t;
 using top::vnetwork::xvnode_address_t;
 NS_BEG3(top, tests, vnetwork)
 
@@ -102,10 +101,10 @@ TEST(test_vnetwork_driver, init_null_vhost) {
     top::vnetwork::xvhost_face_t *  nullptr_vhost = nullptr;
     common::xlogic_time_t const     start_time = 1;
     EXPECT_THROW(std::shared_ptr<top::vnetwork::xvnetwork_driver_t> vnetwork_driver_test_ptr1 = std::make_shared<top::vnetwork::xvnetwork_driver_t>(make_observer(nullptr_vhost), adr),
-                 xvnetwork_error_t);
+                 top::error::xtop_error_t);
     EXPECT_THROW(std::shared_ptr<top::vnetwork::xvnetwork_driver_t> vnetwork_driver_test_ptr2 =
                      std::make_shared<top::vnetwork::xvnetwork_driver_t>(make_observer(nullptr_vhost), adr),
-                 xvnetwork_error_t);
+                 top::error::xtop_error_t);
 }
 
 TEST(test_vnetwork_driver, test_m_value) {

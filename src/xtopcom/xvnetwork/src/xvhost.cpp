@@ -5,6 +5,7 @@
 #include "xvnetwork/xvhost.h"
 
 #include "xbase/xlog.h"
+#include "xbasic/xerror/xthrow_error.h"
 #include "xbasic/xmemory.hpp"
 #include "xbasic/xscope_executer.h"
 #include "xbasic/xthreading/xbackend_thread.hpp"
@@ -150,13 +151,13 @@ void xtop_vhost::send(xmessage_t const & message,
         } else {
             // crose broadcast is not correct by using send_to
             if (dst.cluster_address() != src.cluster_address()) {
-                XTHROW(xvnetwork_error_t, xvnetwork_errc_t::cluster_address_not_match, u8"src " + src.to_string() + u8" dst " + dst.to_string());
+                top::error::throw_error({ xvnetwork_errc_t::cluster_address_not_match }, "src " + src.to_string() + " dst " + dst.to_string());
             }
 
             broadcast(message, src);
         }
-    } catch (xvnetwork_error_t const & eh) {
-        xwarn("%s", eh.what());
+    } catch (top::error::xtop_error_t const & eh) {
+        xwarn("xtop_error_t caught. cateogry: %s; exception:%s; error code: %d; error msg: %s", eh.code().category().name(), eh.what(), eh.code().value(), eh.code().message().c_str());
         throw;
     }
 }
@@ -226,8 +227,8 @@ void xtop_vhost::forward_broadcast_message(xmessage_t const & message, common::x
         on_network_data_ready(host_node_id(), bytes_message);
 
         m_network_driver->forward_broadcast(dst.cluster_address().sharding_info(), dst.type(), bytes_message);
-    } catch (vnetwork::xvnetwork_error_t const & eh) {
-        xwarn("[vnetwork] forward_broadcast_message xvnetwork_error_t exception caught: %s; error code: %d", eh.what(), eh.code().value());
+    } catch (top::error::xtop_error_t const & eh) {
+        xwarn("[vnetwork] forward_broadcast_message xtop_error_t exception caught: cateogry:%s; msg:%s; error code:%d; error msg:%s", eh.code().category().name(), eh.what(), eh.code().value(), eh.code().message().c_str());
     } catch (std::exception const & eh) {
         xwarn("[vnetwork] forward_broadcast_message std::exception caught: %s", eh.what());
     }
@@ -277,8 +278,8 @@ void xtop_vhost::broadcast_to_all(xmessage_t const & message, common::xnode_addr
         #endif
         assert(m_network_driver);
         m_network_driver->spread_rumor(bytes_message);
-    } catch (xvnetwork_error_t const & eh) {
-        xerror("[vnetwork] xvnetwork_error_t exception caught: %s; error code: %d", eh.what(), eh.code().value());
+    } catch (top::error::xtop_error_t const & eh) {
+        xwarn("[vnetwork] xtop_error_t exception caught: cateogry:%s; msg:%s; error code:%d; error msg:%s", eh.code().category().name(), eh.what(), eh.code().value(), eh.code().message().c_str());
         throw;
     }
 }
@@ -618,9 +619,8 @@ void xtop_vhost::do_handle_network_data() {
                             xerror("[vnetwork] callback not registered");
                         }
                     }
-
-                } catch (xvnetwork_error_t const & eh) {
-                    xwarn("[vnetwork] catches vnetwork exception: %s", eh.what());
+                } catch (top::error::xtop_error_t const & eh) {
+                    xwarn("[vnetwork] catches top error. category %s; error code %d; eh msg: %s; ec msg: %s", eh.code().category().name(), eh.code().value(), eh.what(), eh.code().message().c_str());
                 } catch (std::exception const & eh) {
                     xwarn("[vnetwork] catches std::exception: %s", eh.what());
                 } catch (...) {

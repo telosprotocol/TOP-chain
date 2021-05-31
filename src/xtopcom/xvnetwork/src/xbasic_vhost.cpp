@@ -5,6 +5,7 @@
 #include "xvnetwork/xbasic_vhost.h"
 
 #include "xbasic/xcrypto_key.h"
+#include "xbasic/xerror/xthrow_error.h"
 #include "xbasic/xthreading/xutility.h"
 #include "xbasic/xutility.h"
 #include "xcodec/xmsgpack_codec.hpp"
@@ -80,7 +81,7 @@ std::map<xvnode_address_t, xcrypto_key_t<pub>> xtop_basic_vhost::crypto_keys(std
         for (auto const & node : nodes) {
             s += node.to_string() + "|";
         }
-        XTHROW(xvnetwork_error_t, xvnetwork_errc_t::missing_crypto_keys, u8"size:" + std::to_string(nodes.size()) + s);
+        top::error::throw_error({ xvnetwork_errc_t::missing_crypto_keys }, "size:" + std::to_string(nodes.size()) + s);
     }
 
     return result;

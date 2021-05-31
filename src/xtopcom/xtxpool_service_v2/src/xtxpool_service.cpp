@@ -360,7 +360,7 @@ void xtxpool_service::send_receipt_real(const data::xcons_transaction_ptr_t & co
                   receiver_cluster_addr.to_string().c_str());
             m_vnet_driver->forward_broadcast_message(msg, vnetwork::xvnode_address_t{std::move(receiver_cluster_addr)});
         }
-    } catch (vnetwork::xvnetwork_error_t const & eh) {
+    } catch (top::error::xtop_error_t const & eh) {
         xwarn("xtxpool_service::send_receipt_real xvnetwork_error_t exception caught: %s; error code: %d", eh.what(), eh.code().value());
     } catch (const std::exception & eh) {
         xwarn("xtxpool_service::send_receipt_real std exception caught: %s;", eh.what());
@@ -390,7 +390,7 @@ void xtxpool_service::auditor_forward_receipt_to_shard(const xcons_transaction_p
 void xtxpool_service::forward_broadcast_message(const vnetwork::xvnode_address_t & addr, const vnetwork::xmessage_t & message) {
     try {
         m_vnet_driver->forward_broadcast_message(message, addr);
-    } catch (vnetwork::xvnetwork_error_t const & eh) {
+    } catch (top::error::xtop_error_t const & eh) {
         xwarn("xtxpool_service::forward_broadcast_message xvnetwork_error_t exception caught: %s; error code: %d", eh.what(), eh.code().value());
     } catch (const std::exception & eh) {
         xwarn("xtxpool_service::forward_broadcast_message std exception caught: %s;", eh.what());

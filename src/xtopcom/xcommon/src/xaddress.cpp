@@ -3,6 +3,7 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "xbasic/xutility.h"
+#include "xbasic/xerror/xthrow_error.h"
 #include "xcodec/xmsgpack_codec.hpp"
 #include "xcommon/xaddress.h"
 #include "xcommon/xaddress_error.h"
@@ -460,15 +461,11 @@ xtop_node_address::xtop_node_address(xsharding_address_t const & sharding_addres
     : m_cluster_address{ sharding_address }, m_account_election_address{ account_election_address }
 {
     if (m_cluster_address.empty()) {
-        XTHROW(xaddress_error_t,
-               xaddress_errc_t::cluster_address_empty,
-               std::string{});
+        top::error::throw_error({ xaddress_errc_t::cluster_address_empty });
     }
 
     if (m_account_election_address.empty()) {
-        XTHROW(xaddress_error_t,
-               xaddress_errc_t::account_address_empty,
-               m_cluster_address.to_string());
+        top::error::throw_error({ xaddress_errc_t::account_address_empty }, m_cluster_address.to_string());
     }
 }
 
@@ -481,21 +478,15 @@ xtop_node_address::xtop_node_address(xsharding_address_t const & sharding_addres
     , m_logic_version{ version, sharding_size, associated_blk_size }
 {
     if (m_cluster_address.empty()) {
-        XTHROW(xaddress_error_t,
-               xaddress_errc_t::cluster_address_empty,
-               std::string{});
+        top::error::throw_error({ xaddress_errc_t::cluster_address_empty });
     }
 
     if (m_account_election_address.empty()) {
-        XTHROW(xaddress_error_t,
-               xaddress_errc_t::account_address_empty,
-               m_cluster_address.to_string());
+        top::error::throw_error({ xaddress_errc_t::account_address_empty }, m_cluster_address.to_string());
     }
 
     if (m_logic_version.empty()) {
-        XTHROW(xaddress_error_t,
-               xaddress_errc_t::version_empty,
-               m_cluster_address.to_string() + u8" " + m_account_election_address.to_string());
+        top::error::throw_error({ xaddress_errc_t::version_empty }, m_cluster_address.to_string() + " " + m_account_election_address.to_string());
     }
 }
 

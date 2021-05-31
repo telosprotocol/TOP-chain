@@ -81,7 +81,7 @@ vnetwork_category();
 //    xtop_vnetwork_error(std::string msg, std::error_code ec, std::size_t const line, std::string file);
 //};
 
-using xvnetwork_error_t = top::common::xaddress_error_t;
+// using xvnetwork_error_t = top::common::xaddress_error_t;
 
 NS_END2
 
