@@ -14,7 +14,7 @@ namespace top
     {
         //////////////////////////////////xvblock and related implementation /////////////////////////////
         xvheader_t::xvheader_t()  //just use when seralized from db/store
-        :xdataunit_t((enum_xdata_type)enum_xobject_type_vheader)
+            :xdataunit_t((enum_xdata_type)enum_xobject_type_vheader)
         {
             m_types     = 0;
             m_versions  = 1 << 8;//[8:features][8:major][8:minor][8:patch]
@@ -43,7 +43,7 @@ namespace top
         }
         
         xvheader_t::xvheader_t(const xvheader_t & other)
-        :xdataunit_t((enum_xdata_type)enum_xobject_type_vheader)
+            :xdataunit_t((enum_xdata_type)enum_xobject_type_vheader)
         {
             *this = other;
         }
@@ -174,25 +174,7 @@ namespace top
         {
             const int32_t begin_size = stream.size();
             
-            if(check_unit_flag(enum_xdata_flag_acompress) == false) //old version
-            {
-                stream << m_types;
-                stream << m_versions;
-                stream << m_chainid;
-                stream << m_height;
-                stream << m_weight;
-                stream << m_last_full_block_height;
-                
-                stream.write_tiny_string(m_account);
-                stream.write_tiny_string(m_comments);
-                stream.write_tiny_string(m_input_hash);
-                stream.write_tiny_string(m_output_hash);
-                stream.write_tiny_string(m_last_block_hash);
-                stream.write_tiny_string(m_last_full_block_hash);
-                
-                stream.write_short_string(m_extra_data);
-            }
-            else //new compact mode
+            //new compact mode
             {
                 stream << m_types;
                 stream << m_versions;
@@ -218,26 +200,7 @@ namespace top
         {
             const int32_t begin_size = stream.size();
             
-            if(check_unit_flag(enum_xdata_flag_acompress) == false) //old version
-            {
-                stream >> m_types;
-                stream >> m_versions;
-                stream >> m_chainid;
-                stream >> m_height;
-                stream >> m_weight;
-                stream >> m_last_full_block_height;
-                
-                stream.read_tiny_string(m_account);
-                stream.read_tiny_string(m_comments);
-                stream.read_tiny_string(m_input_hash);
-                stream.read_tiny_string(m_output_hash);
-                
-                stream.read_tiny_string(m_last_block_hash);
-                stream.read_tiny_string(m_last_full_block_hash);
-                
-                stream.read_short_string(m_extra_data);
-            }
-            else //new compact mode
+            //new compact mode
             {
                 stream >> m_types;
                 stream >> m_versions;
@@ -279,6 +242,8 @@ namespace top
             m_nonce      = (uint64_t)-1;
             m_view_token = xtime_utl::get_fast_randomu();
             set_gmtime(xtime_utl::gettimeofday());
+            
+            set_unit_flag(enum_xdata_flag_acompress);//default do copmression
         }
         
         xvqcert_t::xvqcert_t(const std::string header_hash,enum_xdata_type type)
@@ -303,6 +268,8 @@ namespace top
             m_nonce      = (uint64_t)-1;
             m_view_token = xtime_utl::get_fast_randomu();
             set_gmtime(xtime_utl::gettimeofday());
+            
+            set_unit_flag(enum_xdata_flag_acompress);//default do copmression
         }
         
         xvqcert_t::xvqcert_t(const xvqcert_t & other,enum_xdata_type type)
@@ -327,6 +294,8 @@ namespace top
             set_gmtime(xtime_utl::gettimeofday());
             
             *this = other;
+            
+            set_unit_flag(enum_xdata_flag_acompress);//default do copmression
         }
         xvqcert_t::~xvqcert_t()
         {
@@ -947,25 +916,28 @@ namespace top
         {
             base::xautostream_t<512> stream(base::xcontext_t::instance());
             
-            stream << m_nonce;
-            stream << m_parent_height;
-            stream << m_view_token;
-            stream << m_viewid;
-            stream << m_drand_height;
-            stream << m_clock;
-            stream << m_expired;
-            stream << m_validator.low_addr;
-            stream << m_validator.high_addr;
-            stream << m_auditor.low_addr;
-            stream << m_auditor.high_addr;
-            stream << m_consensus;
-            stream << m_cryptos;
-            
-            //255 bytes is big enough to hold any hash result
-            stream.write_tiny_string(m_header_hash);
-            stream.write_tiny_string(m_input_root_hash);
-            stream.write_tiny_string(m_output_root_hash);
-            stream.write_tiny_string(m_justify_cert_hash);
+            //new compact mode
+            {
+                stream.write_compact_var(m_nonce);
+                stream.write_compact_var(m_parent_height);
+                stream.write_compact_var(m_view_token);
+                stream.write_compact_var(m_viewid);
+                stream.write_compact_var(m_drand_height);
+                stream.write_compact_var(m_clock);
+                stream.write_compact_var(m_expired);
+                stream << m_validator.low_addr;
+                stream << m_validator.high_addr;
+                stream << m_auditor.low_addr;
+                stream << m_auditor.high_addr;
+                stream << m_consensus;
+                stream << m_cryptos;
+                
+                //255 bytes is big enough to hold any hash result
+                stream.write_tiny_string(m_header_hash);
+                stream.write_tiny_string(m_input_root_hash);
+                stream.write_tiny_string(m_output_root_hash);
+                stream.write_tiny_string(m_justify_cert_hash);
+            }
             
             const std::string data_to_sign((const char*)stream.data(),stream.size());
             return hash(data_to_sign);
@@ -1017,34 +989,7 @@ namespace top
         {
             const int32_t begin_size = stream.size();
             
-            if(check_unit_flag(enum_xdata_flag_acompress) == false) //old version
-            {
-                stream << m_nonce;
-                stream << m_parent_height;
-                stream << m_view_token;
-                stream << m_viewid;
-                stream << m_drand_height;
-                stream << m_clock;
-                stream << m_expired;
-                stream << m_validator.low_addr;
-                stream << m_validator.high_addr;
-                stream << m_auditor.low_addr;
-                stream << m_auditor.high_addr;
-                stream << m_consensus;
-                stream << m_cryptos;
-                
-                //255 bytes is big enough to hold any hash result
-                stream.write_tiny_string(m_header_hash);
-                stream.write_tiny_string(m_input_root_hash);
-                stream.write_tiny_string(m_output_root_hash);
-                stream.write_tiny_string(m_justify_cert_hash);
-                
-                stream.write_short_string(m_verify_signature);
-                stream.write_short_string(m_audit_signature);
-                stream.write_short_string(m_extend_cert);
-                stream.write_short_string(m_extend_data);
-            }
-            else //new compact mode
+            //new compact mode
             {
                 stream.write_compact_var(m_nonce);
                 stream.write_compact_var(m_parent_height);
@@ -1079,33 +1024,7 @@ namespace top
         {
             const int32_t begin_size = stream.size();
             
-            if(check_unit_flag(enum_xdata_flag_acompress) == false) //old version
-            {
-                stream >> m_nonce;
-                stream >> m_parent_height;
-                stream >> m_view_token;
-                stream >> m_viewid;
-                stream >> m_drand_height;
-                stream >> m_clock;
-                stream >> m_expired;
-                stream >> m_validator.low_addr;
-                stream >> m_validator.high_addr;
-                stream >> m_auditor.low_addr;
-                stream >> m_auditor.high_addr;
-                stream >> m_consensus;
-                stream >> m_cryptos;
-                
-                stream.read_tiny_string(m_header_hash);
-                stream.read_tiny_string(m_input_root_hash);
-                stream.read_tiny_string(m_output_root_hash);
-                stream.read_tiny_string(m_justify_cert_hash);
-                
-                stream.read_short_string(m_verify_signature);
-                stream.read_short_string(m_audit_signature);
-                stream.read_short_string(m_extend_cert);
-                stream.read_short_string(m_extend_data);
-            }
-            else //new compact mode
+            //new compact mode
             {
                 stream.read_compact_var(m_nonce);
                 stream.read_compact_var(m_parent_height);
@@ -1434,6 +1353,8 @@ namespace top
             m_voutput_ptr  = NULL;
             m_vbstate_ptr  = NULL;
             m_vboffdata_ptr = NULL;
+            
+            set_unit_flag(enum_xdata_flag_acompress);//default do copmression
         }
         
         xvblock_t::xvblock_t(enum_xdata_type type)
@@ -1449,6 +1370,8 @@ namespace top
             m_voutput_ptr  = NULL;
             m_vbstate_ptr  = NULL;
             m_vboffdata_ptr = NULL;
+            
+            set_unit_flag(enum_xdata_flag_acompress);//default do copmression
         }
 
         bool  xvblock_t::check_objects(xvqcert_t & _vcert,xvheader_t & _vheader,xvinput_t * _vinput,xvoutput_t * _voutput)
@@ -1552,6 +1475,7 @@ namespace top
             m_vbstate_ptr  = NULL;
             m_vboffdata_ptr = NULL;
             
+            set_unit_flag(enum_xdata_flag_acompress);//default do copmression
             if(xvblock_t::check_objects(_vcert,_vheader,_vinput,_voutput))
             {
                 _vheader.add_ref();
@@ -1583,18 +1507,7 @@ namespace top
                 
                 if(is_output_ready() == false)
                     xassert(0);//force quit at debug mode
-                
-                if(get_block_version_major() >= 1) //reach major version
-                {
-                    if(check_block_flag(enum_xvblock_flag_authenticated) == false)//new block
-                    {
-                        //ask compact moce for new created-block
-                        get_input()->set_unit_flag(enum_xdata_flag_acompress);
-                        get_output()->set_unit_flag(enum_xdata_flag_acompress);
-                        set_unit_flag(enum_xdata_flag_acompress);
-                    }
-                }
-                    
+                              
                 add_modified_count(); //mark changed
             }else {
                 xerror("xvblock_t::xvblock_t,check_objects failed with bad objects!");
@@ -1619,6 +1532,7 @@ namespace top
             m_vbstate_ptr  = NULL;
             m_vboffdata_ptr = NULL;
             *this = other;
+            set_unit_flag(enum_xdata_flag_acompress);//default do copmression
         }
         
         xvblock_t & xvblock_t::operator = (const xvblock_t & other)
@@ -2436,22 +2350,14 @@ namespace top
             stream.write_short_string(vqcert_bin);
             stream.write_short_string(vheader_bin);
             
-            if(get_header()->get_block_version_major() < 1)
-            {
-                std::string vinput_bin;
-                get_input()->serialize_to_string(vinput_bin);
-                std::string voutput_bin;
-                get_output()->serialize_to_string(voutput_bin);
-                
-                stream << vinput_bin;
-                stream << voutput_bin;
-            }
-            else //on-demand load input and output after version#1,and use compact mode to write
-            {
-                stream.write_compact_var(m_parent_account_id);
-                stream.write_compact_var(m_parent_viewid);
-                stream.write_compact_var(m_entityid_at_parent);
-            }
+            std::string vinput_bin;
+            get_input()->serialize_to_string(vinput_bin);
+            std::string voutput_bin;
+            get_output()->serialize_to_string(voutput_bin);
+            
+            stream.write_compact_var(vinput_bin);
+            stream.write_compact_var(voutput_bin);
+
             return (stream.size() - begin_size);
         }
         
@@ -2527,17 +2433,7 @@ namespace top
             if(NULL == m_vheader_ptr) {
                 return enum_xerror_code_bad_block;
             }
-            
-            if(get_header()->get_block_version_major() >= 1)//on-demand load input and output after version#1
-            {
-                stream.read_compact_var(m_parent_account_id);
-                stream.read_compact_var(m_parent_viewid);
-                stream.read_compact_var(m_entityid_at_parent);
-
-                xdbg("xvblock_t::do_read,block version is (%d)",get_header()->get_block_version());
-                return (begin_size - stream.size());
-            }
-
+        
             //reset first if have
             if(m_vinput_ptr != NULL){
                 m_vinput_ptr->release_ref();
@@ -2550,7 +2446,7 @@ namespace top
             
             //read data first from stream even for nil class
             std::string vinput_bin;
-            stream >> vinput_bin;
+            stream.read_compact_var(vinput_bin);
             xassert(vinput_bin.empty() == false);
             if(vinput_bin.empty() == false)
             {
@@ -2571,7 +2467,7 @@ namespace top
             }
             
             std::string voutput_bin;
-            stream >> voutput_bin;
+            stream.read_compact_var(voutput_bin);
             xassert(voutput_bin.empty() == false);
             if(voutput_bin.empty() == false)
             {
