@@ -4,12 +4,21 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include <cinttypes>
-#include "../xvtransaction.h"
+#include "../xvtransact.h"
 
 namespace top
 {
     namespace base
     {
+        xvtransact_t::xvtransact_t()
+            :xdataunit_t((enum_xdata_type)enum_xobject_type_vtransact)
+        {
+        }
+    
+        xvtransact_t::~xvtransact_t()
+        {
+        }
+    
         xvtransaction_store_t::xvtransaction_store_t()
         : xdataunit_t(xdataunit_t::enum_xdata_type_undefine) {
 

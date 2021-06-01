@@ -5,22 +5,16 @@
 #pragma once
 
 #include <string>
-#include <map>
 #include <vector>
 #include "xdata/xblock.h"
-#include "xdata/xtableblock.h"
-#include "xdata/xfull_tableblock.h"
-#include "xdata/xblockchain.h"
-#include "xstore/xstore_face.h"
 #include "xblockmaker/xblock_maker_para.h"
 #include "xblockmaker/xblockmaker_face.h"
-#include "xblockmaker/xblock_rules.h"
 
 NS_BEG2(top, blockmaker)
 
 class xunit_maker_t : public xblock_maker_t {
  public:
-    explicit xunit_maker_t(const std::string & account, const xblockmaker_resources_ptr_t & resources, const store::xindexstore_face_ptr_t & indexstore = nullptr);
+    explicit xunit_maker_t(const std::string & account, const xblockmaker_resources_ptr_t & resources);
     virtual ~xunit_maker_t();
 
  public:
@@ -48,12 +42,10 @@ class xunit_maker_t : public xblock_maker_t {
     static constexpr uint32_t                   m_keep_latest_blocks_max{3};  // only keep commit/lock/highqc block
     static constexpr uint32_t                   m_consecutive_empty_unit_max{2};
     uint32_t                                    m_fullunit_contain_of_unit_num_para;
-    xblock_rules_face_ptr_t                     m_block_rules;
     xblock_builder_face_ptr_t                   m_fullunit_builder;
     xblock_builder_face_ptr_t                   m_lightunit_builder;
     xblock_builder_face_ptr_t                   m_emptyunit_builder;
     xblock_builder_para_ptr_t                   m_default_builder_para;
-    store::xindexstore_face_ptr_t               m_indexstore;
     bool                                        m_check_state_success{false};
     base::xaccount_index_t                      m_latest_account_index;
 };

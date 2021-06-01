@@ -99,12 +99,18 @@ void xconfig_onchain_loader_t::update(mbus::xevent_ptr_t e) {
             return;
         }
 
-        auto proposal_detail = block->get_native_property().string_get(CURRENT_VOTED_PROPOSAL);
-        if (proposal_detail == nullptr) {
+        xdbg("xconfig_onchain_loader_t::update tcc update begin,height=%ld", block->get_height());
+        xaccount_ptr_t state = m_store_ptr->get_target_state(block.get());
+        if (nullptr == state) {
+            xwarn("xconfig_onchain_loader_t::update get target state fail.block=%s", block->dump().c_str());
             return;
         }
-        std::string voted_proposal = proposal_detail->get();
-
+        std::string voted_proposal;
+        state->string_get(CURRENT_VOTED_PROPOSAL, voted_proposal);
+        if (voted_proposal.empty()) {
+            xwarn("xconfig_onchain_loader_t::update get property fail.block=%s", block->dump().c_str());
+            return;
+        }
         tcc::proposal_info proposal{};
 
         top::base::xstream_t stream(base::xcontext_t::instance(), (uint8_t *)voted_proposal.data(), voted_proposal.size());

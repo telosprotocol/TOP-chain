@@ -17,6 +17,9 @@
 
 NS_BEG2(top, data)
 
+XINLINE_CONSTEXPR char const * XRESOURCE_BINLOG_KEY                     = "bl";  //binlog
+XINLINE_CONSTEXPR char const * XRESOURCE_BINLOG_HASH_KEY                = "bh";  //binlog hash
+
 template <typename T, int type_value>
 class xventity_face_t : public base::xventity_t {
  protected:
@@ -134,6 +137,8 @@ class xoutput_t final: public base::xvoutput_t {
     std::string                         get_binary_string() const;
     bool                                calc_merkle_path(const std::string & leaf, xmerkle_path_256_t& hash_path) const;
     virtual std::string                 body_dump() const {return "empty";}
+    virtual const std::string           get_binlog() override;
+    virtual const std::string           get_binlog_hash() override;
  private:
     std::vector<std::string>            get_merkle_leafs() const;
 };

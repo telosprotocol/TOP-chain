@@ -13,41 +13,23 @@ uint64_t xtgas_singleton::get_cache_total_lock_tgas_token() {
     return m_last_total_lock_tgas_token;
 }
 
-bool xtgas_singleton::get_latest_property(base::xvblockstore_t* blockstore, std::string & value, uint64_t & height) {
+bool xtgas_singleton::get_latest_property(base::xvblockstore_t* blockstore, store::xstore_face_t* store, std::string & value, uint64_t & height) {
     base::xvaccount_t _zec_workload_vaddress(sys_contract_zec_workload_addr);
-    auto latest_block = blockstore->get_latest_executed_block(_zec_workload_vaddress);
+    auto latest_block = blockstore->get_latest_committed_block(_zec_workload_vaddress);
     if (latest_block->is_genesis_block()) {
         return false;
     }
-
-    xblock_t* zec_workload_block_ptr = dynamic_cast<xblock_t*>(latest_block.get());
-    int32_t ret = zec_workload_block_ptr->get_native_property().native_string_get(xstake::XPORPERTY_CONTRACT_TGAS_KEY, value);
-    if (ret == xsuccess) {
-        height = zec_workload_block_ptr->get_height();
-        xdbg_info("xtgas_singleton::get_latest_property find property in latest_height=%ld", latest_block->get_height());
-        return true;
+    xaccount_ptr_t state = store->get_target_state(latest_block.get());
+    if (nullptr == state) {
+        xerror("xtgas_singleton::get_latest_property get target state fail.block=%s", latest_block->dump().c_str());
+        return false;
     }
-    uint64_t next_height = latest_block->get_height() - 1;
-    while (next_height >= 1) {
-        auto next_block = blockstore->load_block_object(_zec_workload_vaddress, next_height, base::enum_xvblock_flag_committed, true);
-        if (next_block == nullptr) {
-            xerror("xtgas_singleton::get_latest_property block not exist. height=%ld", next_height);
-            return false;
-        }
-        zec_workload_block_ptr = dynamic_cast<xblock_t*>(next_block.get());
-        ret = zec_workload_block_ptr->get_native_property().native_string_get(xstake::XPORPERTY_CONTRACT_TGAS_KEY, value);
-        if (ret == xsuccess) {
-            height = zec_workload_block_ptr->get_height();
-            xdbg_info("xtgas_singleton::get_latest_property find property in height=%ld, latest_height:%ld",
-                next_height, latest_block->get_height());
-            return true;
-        }
-        next_height = next_block->get_height() - 1;
-    }
-    return false;
+    state->string_get(xstake::XPORPERTY_CONTRACT_TGAS_KEY, value);
+    height = latest_block->get_height();
+    return true;
 }
 
-bool xtgas_singleton::leader_get_total_lock_tgas_token(base::xvblockstore_t* blockstore, uint64_t timer_height, uint64_t & total_lock_tgas_token, uint64_t & property_height) {
+bool xtgas_singleton::leader_get_total_lock_tgas_token(base::xvblockstore_t* blockstore, store::xstore_face_t* store, uint64_t timer_height, uint64_t & total_lock_tgas_token, uint64_t & property_height) {
     std::lock_guard<std::mutex> lock(m_mtx);
     total_lock_tgas_token = m_last_total_lock_tgas_token;
     property_height = m_last_property_height;
@@ -57,7 +39,7 @@ bool xtgas_singleton::leader_get_total_lock_tgas_token(base::xvblockstore_t* blo
 
     std::string value;
     uint64_t height;
-    if (get_latest_property(blockstore, value, height)) {
+    if (get_latest_property(blockstore, store, value, height)) {
         auto new_total_lock_tgas_token = base::xstring_utl::touint64(value);
         if ((m_last_property_height < height) && (m_last_total_lock_tgas_token != new_total_lock_tgas_token)) {
             m_last_total_lock_tgas_token = new_total_lock_tgas_token;
@@ -72,7 +54,7 @@ bool xtgas_singleton::leader_get_total_lock_tgas_token(base::xvblockstore_t* blo
     return true;
 }
 
-bool xtgas_singleton::backup_get_total_lock_tgas_token(base::xvblockstore_t* blockstore, uint64_t timer_height, uint64_t property_height, uint64_t & total_lock_tgas_token) {
+bool xtgas_singleton::backup_get_total_lock_tgas_token(base::xvblockstore_t* blockstore, store::xstore_face_t* store, uint64_t timer_height, uint64_t property_height, uint64_t & total_lock_tgas_token) {
     if (property_height == 0) {
         total_lock_tgas_token = 0;
         return true;
@@ -90,13 +72,14 @@ bool xtgas_singleton::backup_get_total_lock_tgas_token(base::xvblockstore_t* blo
         return false;
     }
 
-    xblock_t* zec_workload_block_ptr = dynamic_cast<xblock_t*>(zec_workload_block.get());
     std::string value;
-    int32_t ret = zec_workload_block_ptr->get_native_property().native_string_get(xstake::XPORPERTY_CONTRACT_TGAS_KEY, value);
-    if (ret) {
-        xerror("xtable_blockmaker_t::backup_get_total_lock_tgas_token can't read property. height=%ld", zec_workload_block->get_height());
+    xaccount_ptr_t state = store->get_target_state(zec_workload_block.get());
+    if (nullptr == state) {
+        xerror("xtgas_singleton::backup_get_total_lock_tgas_token get target state fail.block=%s", zec_workload_block->dump().c_str());
         return false;
     }
+    state->string_get(xstake::XPORPERTY_CONTRACT_TGAS_KEY, value);
+    xassert(!value.empty());
     total_lock_tgas_token = base::xstring_utl::touint64(value);
     property_height = zec_workload_block->get_height();
 

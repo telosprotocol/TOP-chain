@@ -51,7 +51,6 @@ xtop_chain_application::xtop_chain_application(observer_ptr<xapplication_t> cons
   , m_cons_mgr{xcons_mgr_builder::build(data::xuser_params::get_instance().account.value(),
                                         m_application->store(),
                                         m_application->blockstore(),
-                                        m_application->indexstore(),
                                         m_application->txpool(),
                                         m_application->logic_timer(),
                                         m_application->cert_serivce(),

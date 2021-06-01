@@ -9,6 +9,9 @@
 #include "xtxpool_v2/xtxpool_error.h"
 #include "xtxpool_v2/xtxpool_log.h"
 #include "xtxpool_v2/xreceipt_state_cache.h"
+#include "xvledger/xvledger.h"
+#include "xvledger/xvstate.h"
+#include "xdata/xtable_bstate.h"
 
 #include <unordered_set>
 
@@ -261,6 +264,15 @@ const xcons_transaction_ptr_t xunconfirmed_tx_queue_t::find(const std::string & 
     return nullptr;
 }
 
+uint64_t xunconfirmed_tx_queue_t::find_account_cache_height(const std::string & account_addr) const {
+    auto it_account = m_unconfirmed_accounts.find(account_addr);
+    if (it_account != m_unconfirmed_accounts.end()) {
+        auto & unconfirmed_account = it_account->second;
+        return unconfirmed_account->get_height();
+    }
+    return 0;
+}
+
 void xunconfirmed_tx_queue_t::recover(const xreceipt_state_cache_t & receiptid_state_cache) {
     xtxpool_info("xunconfirmed_tx_queue_t::recover table=%s", m_table_info->get_table_addr().c_str());
     // update table-table receipt id state, if all peer_tables were complate, no need to recover, or else, get unconfirmed accounts, and load their unconfirmed txs.
@@ -271,18 +283,26 @@ void xunconfirmed_tx_queue_t::recover(const xreceipt_state_cache_t & receiptid_s
     //     return;
     // }
 
-    base::xauto_ptr<xblockchain2_t> blockchain{m_para->get_store()->clone_account(m_table_info->get_table_addr())};
-    if (blockchain != nullptr) {
-        std::set<std::string> accounts = blockchain->get_unconfirmed_accounts();
+    // TODO(jimmy) performance
+    base::xvaccount_t _vaddr(m_table_info->get_table_addr());
+    auto _block = base::xvchain_t::instance().get_xblockstore()->get_latest_committed_block(_vaddr);
+    base::xauto_ptr<base::xvbstate_t> bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(_block.get());
+    if (bstate == nullptr) {
+        xwarn("xunconfirmed_tx_queue_t::recover fail-get bstate.table=%s,block=%s",m_table_info->get_table_addr().c_str(), _block->dump().c_str());
+        return;
+    }
+    xtablestate_ptr_t tablestate = std::make_shared<xtable_bstate_t>(bstate.get());
+    if (tablestate != nullptr) {
+        std::set<std::string> accounts = tablestate->get_unconfirmed_accounts();
         if (!accounts.empty()) {
-            xtxpool_info("xunconfirmed_tx_queue_t::recover unconfirmed accounts not empty size:%u", accounts.size());
+            xtxpool_info("xunconfirmed_tx_queue_t::recover has unconfirmed accounts.table=%s,height=%ld,size=%zu", m_table_info->get_table_addr().c_str(), _block->get_height(), accounts.size());
 
             // remove unconfirmed accounts which not found from accounts.
             for (auto it_unconfirmed_account = m_unconfirmed_accounts.begin(); it_unconfirmed_account != m_unconfirmed_accounts.end();) {
                 auto & account_addr = it_unconfirmed_account->first;
                 auto it_accounts = accounts.find(account_addr);
                 if (it_accounts == accounts.end()) {
-                    xtxpool_info("xunconfirmed_tx_queue_t::recover unconfirm pop account=%s", account_addr.c_str());
+                    xtxpool_info("xunconfirmed_tx_queue_t::recover pop confirmed account.table=%s,height=%ld,account=%s", m_table_info->get_table_addr().c_str(), _block->get_height(), account_addr.c_str());
                     it_unconfirmed_account = m_unconfirmed_accounts.erase(it_unconfirmed_account);
                 } else {
                     it_unconfirmed_account++;
@@ -291,11 +311,30 @@ void xunconfirmed_tx_queue_t::recover(const xreceipt_state_cache_t & receiptid_s
 
             // recover unconfirmed txs.
             for (auto & account : accounts) {
-                xtxpool_info("xunconfirmed_tx_queue_t::recover account:%s", account.c_str());
-                base::xauto_ptr<base::xvblock_t> unitblock = m_para->get_vblockstore()->get_latest_committed_block(account);
+                base::xaccount_index_t account_index;
+                tablestate->get_account_index(account, account_index);
+
+                uint64_t cache_height = find_account_cache_height(account);
+                if (cache_height >= account_index.get_latest_unit_height()) {
+                    continue;
+                }
+
+                xtxpool_info("xunconfirmed_tx_queue_t::recover update unconfirmed account.table=%s,height=%ld,account=%s,cache_height=%ld,index_height=%ld",
+                    m_table_info->get_table_addr().c_str(), _block->get_height(), account.c_str(), cache_height, account_index.get_latest_unit_height());
+                base::xauto_ptr<base::xvblock_t> unitblock = m_para->get_vblockstore()->load_block_object(base::xvaccount_t(account), account_index.get_latest_unit_height(), account_index.get_latest_unit_viewid(), true);
                 if (unitblock != nullptr) {
                     xblock_t * block = dynamic_cast<xblock_t *>(unitblock.get());
                     udpate_latest_confirmed_block(block, receiptid_state_cache);
+                } else {
+                    base::xauto_ptr<base::xvblock_t> _block_ptr = m_para->get_vblockstore()->get_latest_connected_block(account);
+                    uint64_t start_sync_height = _block_ptr->get_height() + 1;
+                    xtxpool_info("xunconfirmed_tx_queue_t::recover account:%s state fall behind,try sync unit from:%llu,end:%llu",
+                        account.c_str(), start_sync_height, account_index.get_latest_unit_height());
+                    if (account_index.get_latest_unit_height() > start_sync_height) {
+                        uint32_t sync_num = (uint32_t)(account_index.get_latest_unit_height() - start_sync_height);
+                        mbus::xevent_behind_ptr_t ev = make_object_ptr<mbus::xevent_behind_on_demand_t>(account, start_sync_height, sync_num, true, "unit_lack");
+                        m_para->get_bus()->push_event(ev);
+                    }
                 }
             }
         }

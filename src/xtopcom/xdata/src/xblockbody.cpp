@@ -128,6 +128,15 @@ const std::string xoutput_t::get_root_hash() {
     return root;
 }
 
+const std::string xoutput_t::get_binlog() {
+    std::string binlog = query_resource(XRESOURCE_BINLOG_KEY);
+    return binlog;
+}
+const std::string xoutput_t::get_binlog_hash() {
+    std::string binlog = query_resource(XRESOURCE_BINLOG_HASH_KEY);  // TODO(jimmy) put to output entity
+    return binlog;
+}
+
 bool xoutput_t::calc_merkle_path(const std::string & leaf, xmerkle_path_256_t& hash_path) const {
     std::vector<std::string> leafs = get_merkle_leafs();
     if (leafs.empty()) {

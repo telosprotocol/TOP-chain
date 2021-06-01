@@ -32,28 +32,25 @@ int32_t xfullunit_input_t::do_read(base::xstream_t &stream) {
     return CALC_LEN();
 }
 
-xfullunit_output_t::xfullunit_output_t(const xaccount_mstate2 & state, const std::map<std::string, std::string> & propertys)
-: m_account_state(state), m_account_propertys(propertys) {
+xfullunit_output_t::xfullunit_output_t(const std::string & property_snapshot)
+: m_property_snapshot(property_snapshot) {
 
 }
 
 int32_t xfullunit_output_t::do_write(base::xstream_t &stream) {
     KEEP_SIZE();
-    m_account_state.serialize_to(stream);
-    SERIALIZE_FIELD_BT(m_account_propertys);
+    stream << m_property_snapshot;
     return CALC_LEN();
 }
 int32_t xfullunit_output_t::do_read(base::xstream_t &stream) {
     KEEP_SIZE();
-    m_account_state.serialize_from(stream);
-    DESERIALIZE_FIELD_BT(m_account_propertys);
+    stream >> m_property_snapshot;
     return CALC_LEN();
 }
 
 // std::string xfullunit_output_t::body_dump() const {
 //     std::stringstream ss;
 //     ss << "{";
-//     ss << m_account_state.dump();
 //     ss << ",";
 //     if (!m_account_propertys.empty()) {
 //         ss << "prop_count=" << m_account_propertys.size() << ":";
@@ -69,9 +66,13 @@ int32_t xfullunit_output_t::do_read(base::xstream_t &stream) {
 xblockbody_para_t xfullunit_block_t::get_blockbody_from_para(const xfullunit_block_para_t & para) {
     xblockbody_para_t blockbody;
     xobject_ptr_t<xfullunit_input_t> input = make_object_ptr<xfullunit_input_t>(para.m_first_unit_height, para.m_first_unit_hash);
-    xobject_ptr_t<xfullunit_output_t> output = make_object_ptr<xfullunit_output_t>(para.m_account_state, para.m_account_propertys);
+    xobject_ptr_t<xfullunit_output_t> output = make_object_ptr<xfullunit_output_t>(para.m_property_snapshot);
     blockbody.add_input_entity(input);
     blockbody.add_output_entity(output);
+
+    // TODO(jimmy) delete output snapshot, output entity record snapshot root hash
+    blockbody.add_output_resource(XRESOURCE_BINLOG_KEY, para.m_property_snapshot);
+
     blockbody.create_default_input_output();
     return blockbody;
 }
@@ -114,15 +115,7 @@ base::xvblock_t* xfullunit_block_t::create_next_fullunit(const xfullunit_block_p
             prev_block->get_last_full_block_hash(), prev_block->get_last_full_block_height(), para);
     }
 }
-base::xvblock_t* xfullunit_block_t::create_next_fullunit(xblockchain2_t* chain) {
-    xfullunit_block_para_t para;
-    para.m_account_state = chain->get_account_mstate();
-    para.m_first_unit_hash = chain->get_last_full_unit_hash();
-    para.m_first_unit_height = chain->get_last_full_unit_height();
-    return create_fullunit(chain->get_account(), chain->get_chain_height() + 1,
-        chain->get_last_block_hash(), std::string(), 1, 1,
-        chain->get_last_full_unit_hash(), chain->get_last_full_unit_height(), para);
-}
+
 xfullunit_block_t::xfullunit_block_t(base::xvheader_t & header, xblockcert_t & cert)
 : xblock_t(header, cert, (enum_xdata_type)object_type_value) {
 

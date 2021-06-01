@@ -6,6 +6,8 @@
 
 #include "xbasic/xmodule_type.h"
 #include "xmbus/xevent_behind.h"
+#include "xvledger/xvledger.h"
+#include "xdata/xtable_bstate.h"
 #include "xtxpool_v2/xnon_ready_account.h"
 #include "xtxpool_v2/xtxpool_error.h"
 #include "xtxpool_v2/xtxpool_log.h"
@@ -15,6 +17,56 @@
 
 namespace top {
 namespace xtxpool_v2 {
+
+data::xtablestate_ptr_t xtxpool_table_t::get_target_tablestate(base::xvblock_t* block) const {
+    base::xauto_ptr<base::xvbstate_t> bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(block);
+    if (bstate == nullptr) {
+        return nullptr;
+    }
+    data::xtablestate_ptr_t tablestate = std::make_shared<data::xtable_bstate_t>(bstate.get());
+    return tablestate;
+}
+
+bool  xtxpool_table_t::get_account_basic_info(const std::string & account, xaccount_basic_info_t & account_index_info) const {
+    // TODO(jimmy) try sync behind account unit, make a new function
+    auto latest_table = m_para->get_vblockstore()->get_latest_committed_block(m_xtable_info);
+    xblock_ptr_t committed_block = xblock_t::raw_vblock_to_object_ptr(latest_table.get());
+    base::xauto_ptr<base::xvbstate_t> bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(committed_block.get());
+    if (bstate == nullptr) {
+        xwarn("xtxpool_table_t::get_account_basic_info fail-get tablestate. block=%s", committed_block->dump().c_str());
+        return false;
+    }
+
+    xtablestate_ptr_t tablestate = std::make_shared<xtable_bstate_t>(bstate.get());
+    base::xaccount_index_t account_index;
+    tablestate->get_account_index(account, account_index);
+    base::xvaccount_t _account_vaddress(account);
+    base::xauto_ptr<base::xvblock_t> _block_ptr = m_para->get_vblockstore()->get_latest_cert_block(_account_vaddress);
+    xblock_ptr_t latest_cert_unit = xblock_t::raw_vblock_to_object_ptr(_block_ptr.get());
+    if (latest_cert_unit->get_height() < account_index.get_latest_unit_height()) {
+        base::xauto_ptr<base::xvblock_t> _start_block_ptr = m_para->get_vblockstore()->get_latest_connected_block(_account_vaddress);
+        if (account_index.get_latest_unit_height() > _start_block_ptr->get_height()) {
+            account_index_info.set_sync_height_start(_start_block_ptr->get_height() + 1);
+            account_index_info.set_sync_num(account_index.get_latest_unit_height() - _start_block_ptr->get_height());
+        }
+        return false;
+    }
+
+    base::xauto_ptr<base::xvblock_t> _start_block_ptr = m_para->get_vblockstore()->get_latest_committed_block(_account_vaddress);
+    base::xauto_ptr<base::xvbstate_t> account_bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(_start_block_ptr.get());
+    if (account_bstate == nullptr) {
+        xwarn("xtxpool_table_t::get_account_basic_info fail-get unitstate. block=%s", _start_block_ptr->dump().c_str());
+        return false;
+    }
+
+    xaccount_ptr_t account_state = std::make_shared<xunit_bstate_t>(account_bstate.get());
+    // account_index_info.set_latest_block(latest_unit);
+    account_index_info.set_latest_state(account_state);
+    account_index_info.set_account_index(account_index);
+    return true;
+}
+
+
 int32_t xtxpool_table_t::push_send_tx(const std::shared_ptr<xtx_entry> & tx) {
     int32_t ret = verify_send_tx(tx->get_tx());
     if (ret != xsuccess) {
@@ -471,8 +523,8 @@ int32_t xtxpool_table_t::verify_receipt_tx(const xcons_transaction_ptr_t & tx) c
 }
 
 bool xtxpool_table_t::get_account_latest_nonce_hash(const std::string account_addr, uint64_t & latest_nonce, uint256_t & latest_hash) const {
-    store::xaccount_basic_info_t account_basic_info;
-    bool result = m_table_indexstore->get_account_basic_info(account_addr, account_basic_info);
+    xaccount_basic_info_t account_basic_info;
+    bool result = get_account_basic_info(account_addr, account_basic_info);
     if (!result) {
         if (account_basic_info.get_sync_num() > 0) {
             mbus::xevent_behind_ptr_t ev = make_object_ptr<mbus::xevent_behind_on_demand_t>(

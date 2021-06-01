@@ -54,7 +54,6 @@ xtop_application::xtop_application(common::xnode_id_t const & node_id, xpublic_k
     base::xvchain_t::instance().set_xdbstore(m_store.get());
     base::xvchain_t::instance().set_xevmbus(m_bus.get());
     m_blockstore.attach(store::get_vblockstore());
-    m_indexstore = store::xindexstore_factory_t::create_indexstorehub(make_observer(m_store), make_observer(m_blockstore));
 #ifdef ENABLE_METRICS
     m_datastat = make_unique<datastat::xdatastat_t>(make_observer(m_bus.get()));
 #endif
@@ -64,8 +63,22 @@ xtop_application::xtop_application(common::xnode_id_t const & node_id, xpublic_k
 #else
     m_cert_ptr.attach(&auth::xauthcontext_t::instance(*m_nodesvr_ptr.get()));
 #endif
+}
 
-    m_txpool = xtxpool_v2::xtxpool_instance::create_xtxpool_inst(make_observer(m_store), make_observer(m_blockstore.get()), make_observer(m_cert_ptr.get()), make_observer(m_indexstore.get()), make_observer(m_bus.get()));
+void xtop_application::start() {
+    if (!check_rootblock()) {
+        throw std::logic_error{"creating rootblock failed"};
+    }
+
+    if (!create_genesis_accounts()) {
+        throw std::logic_error{"creating genesis accounts failed"};
+    }
+
+    contract::xcontract_deploy_t::instance().deploy_sys_contracts();
+    contract::xcontract_manager_t::instance().instantiate_sys_contracts();
+    contract::xcontract_manager_t::instance().setup_blockchains(m_store.get(), m_blockstore.get());
+
+    m_txpool = xtxpool_v2::xtxpool_instance::create_xtxpool_inst(make_observer(m_store), make_observer(m_blockstore.get()), make_observer(m_cert_ptr.get()), make_observer(m_bus.get()));
 
     m_syncstore.attach(new store::xsyncvstore_t(*m_cert_ptr.get(), *m_blockstore.get()));
     contract::xcontract_manager_t::instance().init(make_observer(m_store), m_syncstore);
@@ -97,19 +110,6 @@ xtop_application::xtop_application(common::xnode_id_t const & node_id, xpublic_k
     m_chain_applications.push_back(
         top::make_unique<xbeacon_chain_application_t>(make_observer(this), m_blockstore, m_nodesvr_ptr, m_cert_ptr, make_observer(m_grpc_thread), make_observer(m_sync_thread), sync_account_thread_pool, sync_handler_thread_pool));
 
-    // m_chain_applications.push_back(top::make_unique<xtop_chain_application_t>(make_observer(this),
-    //                                                                             make_observer(m_sync_thread)));
-}
-
-void xtop_application::start() {
-    if (!check_rootblock()) {
-        throw std::logic_error{"creating rootblock failed"};
-    }
-
-    if (!create_genesis_accounts()) {
-        throw std::logic_error{"creating genesis accounts failed"};
-    }
-
     for (auto & io_context_pool_info : m_io_context_pools) {
         auto & io_context_pool = top::get<xio_context_pool_t>(io_context_pool_info);
         for (auto & io_context : io_context_pool) {
@@ -125,9 +125,9 @@ void xtop_application::start() {
         throw std::logic_error{"register node callback failed!"};
     }
 
-    contract::xcontract_deploy_t::instance().deploy_sys_contracts();
-    contract::xcontract_manager_t::instance().instantiate_sys_contracts();
-    contract::xcontract_manager_t::instance().setup_blockchains(m_store.get(), m_blockstore.get());
+    // contract::xcontract_deploy_t::instance().deploy_sys_contracts();
+    // contract::xcontract_manager_t::instance().instantiate_sys_contracts();
+    // contract::xcontract_manager_t::instance().setup_blockchains(m_store.get(), m_blockstore.get());
     contract::xcontract_manager_t::set_nodesrv_ptr(node_service());
 
     if (!is_beacon_account() || !is_genesis_node()) {
@@ -202,10 +202,6 @@ observer_ptr<store::xstore_face_t> xtop_application::store() const noexcept {
 
 observer_ptr<base::xvblockstore_t> xtop_application::blockstore() const noexcept {
     return make_observer(m_blockstore.get());
-}
-
-observer_ptr<store::xindexstorehub_t> xtop_application::indexstore() const noexcept {
-    return make_observer(m_indexstore.get());
 }
 
 observer_ptr<router::xrouter_face_t> xtop_application::router() const noexcept {
@@ -367,11 +363,17 @@ bool xtop_application::is_beacon_account() const noexcept {
 
     std::string result;
     auto latest_vblock = data::xblocktool_t::get_latest_committed_lightunit(m_blockstore.get(), sys_contract_rec_elect_rec_addr);
-    xblock_t* block = dynamic_cast<xblock_t*>(latest_vblock.get());
+    base::xauto_ptr<base::xvbstate_t> bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(latest_vblock.get());
+    if (bstate == nullptr) {
+        xerror("xtop_application::is_beacon_account fail-get state.");
+        return false;
+    }
+    xunit_bstate_t unitstate(bstate.get());
+
     auto property_names = data::election::get_property_name_by_addr(common::xaccount_address_t{sys_contract_rec_elect_rec_addr});
     common::xnetwork_id_t network_id{top::config::to_chainid(XGET_CONFIG(chain_name))};
     for (auto const & property : property_names) {
-        if (block->get_native_property().native_string_get(property, result) || result.empty()) {
+        if (false == unitstate.string_get(property, result) || result.empty()) {
             xwarn("xtop_application::is_beacon_account no property %s", property.c_str());
             continue;
         }

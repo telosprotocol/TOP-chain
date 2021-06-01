@@ -32,7 +32,7 @@ class xlightunit_builder_t : public xblock_builder_face_t {
  public:
     xlightunit_builder_t();
     virtual xblock_ptr_t        build_block(const xblock_ptr_t & prev_block,
-                                            const xaccount_ptr_t & prev_state,
+                                            const xobject_ptr_t<base::xvbstate_t> & prev_bstate,
                                             const data::xblock_consensus_para_t & cs_para,
                                             xblock_builder_para_ptr_t & build_para);
  private:
@@ -42,19 +42,23 @@ class xlightunit_builder_t : public xblock_builder_face_t {
 class xfullunit_builder_t : public xblock_builder_face_t {
  public:
     virtual xblock_ptr_t        build_block(const xblock_ptr_t & prev_block,
-                                            const xaccount_ptr_t & prev_state,
+                                            const xobject_ptr_t<base::xvbstate_t> & prev_bstate,
                                             const data::xblock_consensus_para_t & cs_para,
                                             xblock_builder_para_ptr_t & build_para);
+
+    std::string                 make_binlog(const xblock_ptr_t & prev_block,
+                                            const xobject_ptr_t<base::xvbstate_t> & prev_bstate);
 };
 
 class xemptyunit_builder_t : public xblock_builder_face_t {
  public:
     virtual xblock_ptr_t        build_block(const xblock_ptr_t & prev_block,
-                                            const xaccount_ptr_t & prev_state,
+                                            const xobject_ptr_t<base::xvbstate_t> & prev_bstate,
                                             const data::xblock_consensus_para_t & cs_para,
                                             xblock_builder_para_ptr_t & build_para);
 };
 
+#if 0// TODO(jimmy)
 class xtop_lightunit_builder2 : public xblock_builder_face_t {
 public:
     xblock_ptr_t build_block(xblock_ptr_t const & prev_block,
@@ -66,5 +70,5 @@ private:
     void alloc_tx_receiptid(const std::vector<xcons_transaction_ptr_t> & input_txs, const base::xreceiptid_state_ptr_t & receiptid_state);
 };
 using xlightunit_builder2_t = xtop_lightunit_builder2;
-
+#endif
 NS_END2

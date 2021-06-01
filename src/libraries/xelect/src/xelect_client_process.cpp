@@ -11,8 +11,11 @@
 #include "xdata/xelection/xelection_result_property.h"
 #include "xdata/xelection/xelection_result_store.h"
 #include "xdata/xgenesis_data.h"
+#include "xdata/xunit_bstate.h"
 #include "xmbus/xevent_store.h"
 #include "xmbus/xevent_timer.h"
+#include "xvledger/xvledger.h"
+#include "xvledger/xvstate.h"
 
 #include <cinttypes>
 
@@ -42,15 +45,13 @@ bool xelect_client_process::filter_event(const xevent_ptr_t & e) {
             auto bme = dynamic_xobject_ptr_cast<mbus::xevent_store_block_to_db_t>(e);
             const std::string & owner = bme->owner;
             if (!(owner == sys_contract_rec_elect_edge_addr || owner == sys_contract_rec_elect_archive_addr || owner == sys_contract_rec_elect_rec_addr ||
-                  owner == sys_contract_rec_elect_zec_addr || owner == sys_contract_beacon_timer_addr || owner == sys_contract_zec_elect_consensus_addr)) {
+                  owner == sys_contract_rec_elect_zec_addr || owner == sys_contract_zec_elect_consensus_addr)) {
                 return false;
             }
-            
-            if (bme->blk_level != top::base::enum_xvblock_level_unit  && bme->blk_height != 0 && owner != sys_contract_beacon_timer_addr) {
-                xdbg("fullunit seen %s at height %" PRIu64, owner.c_str(), bme->blk_height);
+            // only process light unit
+            if (bme->blk_class != base::enum_xvblock_class_light) {
                 return false;
             }
-
         } else {
             xdbg("xelect_client_process ignore event %d", static_cast<int>(e->minor_type));
         }
@@ -85,25 +86,35 @@ void xelect_client_process::process_timer(const mbus::xevent_ptr_t & e) {
 }
 
 void xelect_client_process::process_elect(const mbus::xevent_ptr_t & e) {
-    
+
     auto bme = dynamic_xobject_ptr_cast<mbus::xevent_store_block_to_db_t>(e);
     assert(bme);
     xblock_ptr_t const & block = mbus::extract_block_from(bme);
 
+    // only process light unit, others are filtered
+    xassert(block->get_block_class() == base::enum_xvblock_class_light);
     xinfo("xelect_client_process::process_event %s, %" PRIu64, block->get_block_owner().c_str(), block->get_height());
+    // TODO(jimmy) db event must stable and order
+    base::xauto_ptr<base::xvbstate_t> bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(block.get());
+    if (nullptr == bstate) {
+        xerror("xelect_client_process::process_event get target state fail.block=%s", block->dump().c_str());
+        return;
+    }
+    data::xunit_bstate_t unitstate(bstate.get());
+
     std::string result;
     auto property_names = data::election::get_property_name_by_addr(common::xaccount_address_t{block->get_block_owner()});
     for (auto const & property : property_names) {
-        block->get_native_property().native_string_get(property, result);
+        unitstate.string_get(property, result);
         if (result.empty()) {
-            xwarn("[zec election] zone elect finish with empty result");
+            xerror("[zec election] zone elect finish with empty result. property=%s,block=%s", property.c_str(), block->dump().c_str());
             continue;
         }
         xdbg("xelect_client_process::process_event %s, %" PRIu64 " done", block->get_block_owner().c_str(), block->get_height());
         using top::data::election::xelection_result_store_t;
         auto const & election_result_store = codec::msgpack_decode<xelection_result_store_t>({std::begin(result), std::end(result)});
         if (election_result_store.size() == 0) {
-            xdbg("xelect_client_process::process_event %s empty,", block->get_block_owner().c_str());
+            xerror("xelect_client_process::process_event decode property empty, block=%s", block->dump().c_str());
             return;
         }
 

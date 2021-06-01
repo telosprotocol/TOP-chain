@@ -77,6 +77,7 @@ public:
     uint32_t size() const {
         return m_unconfirmed_txs.size();
     }
+    uint64_t get_height() const {return m_highest_height;}
 
     // // for test only, should delete!!!!!
     // void set_test_receipt_id(uint64_t id) {
@@ -110,6 +111,7 @@ public:
     const xcons_transaction_ptr_t find(const std::string & account_addr, const uint256_t & hash) const;
     const std::vector<xcons_transaction_ptr_t> get_resend_txs(uint64_t now);
     uint32_t size() const;
+    uint64_t find_account_cache_height(const std::string & account_addr) const;
 
 private:
     xtxpool_resources_face * m_para;

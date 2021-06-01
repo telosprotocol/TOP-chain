@@ -11,7 +11,6 @@
 #include "xblockmaker/xblock_maker_para.h"
 #include "xblockmaker/xblockmaker_face.h"
 #include "xunit_service/xcons_face.h"
-#include "xindexstore/xindexstore_face.h"
 
 NS_BEG2(top, blockmaker)
 
@@ -42,9 +41,9 @@ class xproposal_maker_t : public xunit_service::xproposal_maker_face {
 
  private:
     void                        get_locked_txs(const xblock_ptr_t & block, std::vector<xtxpool_v2::tx_info_t> & locked_tx_vec) const;
+    xtablestate_ptr_t           get_target_tablestate(base::xvblock_t* block);
 
     xblockmaker_resources_ptr_t     m_resources{nullptr};
-    store::xindexstore_face_ptr_t   m_indexstore{nullptr};
     xtable_maker_ptr_t          m_table_maker{nullptr};
     int32_t                     m_tableblock_batch_tx_num_residue{0};
     int32_t                     m_max_account_num{0};

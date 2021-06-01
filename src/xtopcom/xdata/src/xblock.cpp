@@ -17,7 +17,6 @@
 NS_BEG2(top, data)
 
 std::map<std::string, std::string>      xblock_t::m_empty_map;
-xnative_property_t                      xblock_t::m_empty_native;
 std::vector<xlightunit_tx_info_ptr_t>   xblock_t::m_empty_txs;
 uint256_t                               xblock_t::m_empty_uint256;
 std::string                             xblock_t::m_empty_string;
@@ -427,11 +426,20 @@ void xblock_t::set_consensus_para(const xblock_consensus_para_t & para) {
 }
 
 bool xblock_t::is_full_state_block() const {
-    std::string offdata_hash = get_offdata_hash();
-    if (offdata_hash.empty()) {
-        return true;
+    // std::string offdata_hash = get_offdata_hash();
+    // if (offdata_hash.empty()) {
+    //     return true;
+    // }
+    // return get_offdata() != nullptr;
+
+    if (!get_output()->get_binlog_hash().empty()
+        && get_output()->get_binlog().empty()) {
+        if (get_state() != nullptr) {
+            return true;
+        }
+        return false;
     }
-    return get_offdata() != nullptr;
+    return true;
 }
 
 NS_END2

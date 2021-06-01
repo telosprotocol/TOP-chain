@@ -8,7 +8,7 @@
 #include <vector>
 #include "xblockmaker/xblockmaker_face.h"
 #include "xvledger/xaccountindex.h"
-#include "xdata/xtablestate.h"
+#include "xdata/xtable_bstate.h"
 #include "xdata/xblock_statistics_data.h"
 
 NS_BEG2(top, blockmaker)
@@ -43,17 +43,22 @@ class xfulltable_builder_para_t : public xblock_builder_para_face_t {
 class xlighttable_builder_t : public xblock_builder_face_t {
  public:
     virtual xblock_ptr_t        build_block(const xblock_ptr_t & prev_block,
-                                            const xaccount_ptr_t & prev_state,
+                                            const xobject_ptr_t<base::xvbstate_t> & prev_bstate,
                                             const data::xblock_consensus_para_t & cs_para,
                                             xblock_builder_para_ptr_t & build_para);
+    std::string                 make_light_table_binlog(const xblock_ptr_t & prev_block,
+                                                        const xobject_ptr_t<base::xvbstate_t> & prev_bstate,
+                                                        const std::vector<xblock_ptr_t> & units);
 };
 
 class xfulltable_builder_t : public xblock_builder_face_t {
  public:
     virtual xblock_ptr_t        build_block(const xblock_ptr_t & prev_block,
-                                            const xaccount_ptr_t & prev_state,
+                                            const xobject_ptr_t<base::xvbstate_t> & prev_bstate,
                                             const data::xblock_consensus_para_t & cs_para,
                                             xblock_builder_para_ptr_t & build_para);
+    std::string                 make_binlog(const xblock_ptr_t & prev_block,
+                                            const xobject_ptr_t<base::xvbstate_t> & prev_bstate);
 
  protected:
     xstatistics_data_t                 make_block_statistics(const std::vector<xblock_ptr_t> & blocks);

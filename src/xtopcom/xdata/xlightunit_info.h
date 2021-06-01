@@ -12,7 +12,6 @@
 #include "xvledger/xdataobj_base.hpp"
 #include "xvledger/xvaccount.h"
 #include "xdata/xtransaction.h"
-#include "xdata/xpropertylog.h"
 #include "xdata/xblock_paras.h"
 #include "xdata/xblockbody.h"
 namespace top { namespace data {

@@ -74,7 +74,7 @@ void xsync_on_demand_t::on_behind_event(const mbus::xevent_ptr_t &e) {
 
 void xsync_on_demand_t::handle_blocks_response(const std::vector<data::xblock_ptr_t> &blocks,
     const vnetwork::xvnode_address_t &to_address, const vnetwork::xvnode_address_t &network_self) {
-    
+
     xsync_dbg("xsync_on_demand_t::handle_blocks_response receive blocks(on_demand) %s, %s, count %d",
         network_self.to_string().c_str(), to_address.to_string().c_str(), blocks.size());
 
@@ -167,10 +167,10 @@ void xsync_on_demand_t::handle_blocks_request(const xsync_message_get_on_demand_
     }
 
     if (blocks.size() != 0){
-        xsync_info("xsync_on_demand_t::handle_blocks_request %s range[%llu,%llu]", address.c_str(), 
+        xsync_info("xsync_on_demand_t::handle_blocks_request %s range[%llu,%llu]", address.c_str(),
             blocks.front()->get_height(), blocks.back()->get_height());
     }
-    
+
     m_sync_sender->send_on_demand_blocks(blocks, xmessage_id_sync_on_demand_blocks, "on_demand_blocks", network_self, to_address);
 }
 
@@ -185,18 +185,26 @@ void xsync_on_demand_t::handle_chain_snapshot_meta(xsync_message_chain_snapshot_
     base::xauto_ptr<base::xvblock_t> blk = m_sync_store->load_block_object(account, chain_meta.m_height_of_fullblock);
     if (blk != nullptr) {
         xfull_tableblock_t* full_block_ptr = dynamic_cast<xfull_tableblock_t*>(xblock_t::raw_vblock_to_object_ptr(blk.get()).get());
-        if ((full_block_ptr != nullptr) && (full_block_ptr->is_full_state_block())) {
-            base::xvboffdata_t* _offdata = full_block_ptr->get_offdata();
-            xobject_ptr_t<base::xvboffdata_t> offdata_ptr;
-            offdata_ptr.attach(_offdata);
-            _offdata->add_ref();
-            xsync_message_chain_snapshot_t chain_snapshot(chain_meta.m_account_addr,
-                offdata_ptr, chain_meta.m_height_of_fullblock);
-            m_sync_sender->send_chain_snapshot(chain_snapshot, xmessage_id_sync_ondemand_chain_snapshot_response, network_self, to_address);
+        if (full_block_ptr != nullptr) {
+            // it must be full-table block now
+            base::xauto_ptr<base::xvbstate_t> bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(blk.get());
+            if (bstate != nullptr) {
+                std::string property_snapshot;
+                auto canvas = bstate->rebase_change_to_snapshot();
+                canvas->encode(property_snapshot);
+                xassert(!property_snapshot.empty());
+                xsync_message_chain_snapshot_t chain_snapshot(chain_meta.m_account_addr,
+                    property_snapshot, chain_meta.m_height_of_fullblock);
+                m_sync_sender->send_chain_snapshot(chain_snapshot, xmessage_id_sync_ondemand_chain_snapshot_response, network_self, to_address);
+            } else {
+                xsync_warn("xsync_handler receive ondemand_chain_snapshot_request, and the full block state is not exist,account:%s, height:%llu, block_type:%d",
+                    account.c_str(), chain_meta.m_height_of_fullblock, blk->get_block_class());
+            }
         } else {
-            xsync_info("xsync_handler receive ondemand_chain_snapshot_request, account:%s, height:%llu, block_type:%d",
-                account.c_str(), chain_meta.m_height_of_fullblock, blk->get_block_class());
+            xsync_error("xsync_handler receive ondemand_chain_snapshot_request, and it is not full table,account:%s, height:%llu",
+                    account.c_str(), chain_meta.m_height_of_fullblock);
         }
+
     } else {
         xsync_info("xsync_handler receive ondemand_chain_snapshot_request, and the full block is not exist,account:%s, height:%llu",
                 account.c_str(), chain_meta.m_height_of_fullblock);
@@ -226,7 +234,14 @@ void xsync_on_demand_t::handle_chain_snapshot(xsync_message_chain_snapshot_t &ch
     base::xauto_ptr<base::xvblock_t> current_vblock = m_sync_store->load_block_object(account, chain_snapshot.m_height_of_fullblock);
     data::xblock_ptr_t current_block = autoptr_to_blockptr(current_vblock);
     if (current_block->is_fullblock() && !current_block->is_full_state_block()) {
-        current_block->reset_block_offdata(chain_snapshot.m_chain_snapshot.get());
+        xassert(!chain_snapshot.m_chain_snapshot.empty());
+        base::xauto_ptr<base::xvbstate_t> bstate = new base::xvbstate_t(*current_vblock.get());
+        bstate->apply_changes_of_binlog(chain_snapshot.m_chain_snapshot);
+        if (false == current_block->reset_block_state(bstate.get())) {
+            xsync_error("xsync_on_demand_t::handle_chain_snapshot invalid snapshot. block=%s", current_vblock->dump().c_str());
+            return;
+        }
+        xsync_dbg("xsync_on_demand_t::handle_chain_snapshot valid snapshot. block=%s", current_vblock->dump().c_str());
         m_sync_store->store_block(current_block.get());
     }
 

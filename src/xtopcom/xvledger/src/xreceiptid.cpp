@@ -33,6 +33,22 @@ int32_t xreceiptid_pair_t::do_read(base::xstream_t & stream) {
     return (begin_size - stream.size());
 }
 
+int32_t xreceiptid_pair_t::serialize_to(std::string & bin_data) const {
+    base::xautostream_t<1024> _stream(base::xcontext_t::instance());
+    int32_t result = do_write(_stream);
+    if(result > 0)
+        bin_data.assign((const char*)_stream.data(),_stream.size());
+    xassert(result > 0);
+    return result;
+}
+
+int32_t xreceiptid_pair_t::serialize_from(const std::string & bin_data) {
+    base::xstream_t _stream(base::xcontext_t::instance(),(uint8_t*)bin_data.data(),(uint32_t)bin_data.size());
+    int32_t result = do_read(_stream);
+    xassert(result > 0);
+    return result;
+}
+
 // should set sendid before confirmid
 void xreceiptid_pair_t::set_sendid_max(uint64_t value) {
     if (value > m_send_id_max) {

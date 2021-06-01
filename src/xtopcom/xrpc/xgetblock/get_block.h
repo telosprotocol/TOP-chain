@@ -80,8 +80,7 @@ public:
         return rsp;
     }
     xJson::Value get_block_json(data::xblock_t * bp);
-    void set_single_property(xJson::Value & jph, const std::string & owner, const std::string & prop_name);
-    void set_single_native_property(xJson::Value & jph, std::string & owner, std::string & prop_name);
+    void query_account_property(xJson::Value & jph, const std::string & owner, const std::string & prop_name);
     void getLatestBlock();
     void getLatestFullBlock();
     void getBlockByHeight();
@@ -113,7 +112,6 @@ private:
     void set_header_info(xJson::Value & header, data::xblock_t * bp);
 
     void set_property_info(xJson::Value & jph, const std::map<std::string, std::string> & ph);
-    void set_native_property_info(xJson::Value & jp, const data::xnative_property_t & property);
     void set_table_info(xJson::Value & jv, data::xblock_t * bp);
     void set_lightunit_info(xJson::Value & j_txs, data::xblock_t * bp);
     void set_fullunit_info(xJson::Value & j_txs, data::xblock_t * bp);
@@ -152,8 +150,6 @@ private:
     void set_unlock_token_info(xJson::Value & j, const data::xaction_t & action);
     void set_create_sub_account_info(xJson::Value & j, const data::xaction_t & action);
     void set_alias_name_info(xJson::Value & j, const data::xaction_t & action);
-
-    void set_account_keys(xJson::Value & jph, std::string & owner, std::string & prop_name);
 
     void getSyncNeighbors();
     void get_sync_overview();

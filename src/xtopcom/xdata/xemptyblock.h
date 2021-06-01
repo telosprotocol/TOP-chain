@@ -11,7 +11,6 @@
 #include "xdata/xdata_common.h"
 #include "xdata/xdatautil.h"
 #include "xdata/xblock.h"
-#include "xdata/xblockchain.h"
 
 NS_BEG2(top, data)
 
@@ -36,7 +35,6 @@ public:
     static base::xvblock_t* create_genesis_emptyroot(const std::string & account);
 
     static base::xvblock_t* create_next_emptyblock(base::xvblock_t* prev_block, base::enum_xvblock_type blocktype = base::enum_xvblock_type_general);
-    static base::xvblock_t* create_next_emptyblock(xblockchain2_t* chain, base::enum_xvblock_type blocktype = base::enum_xvblock_type_general);
     static base::xvblock_t* create_emptyblock(const std::string & account,
                                               uint64_t height,
                                               base::enum_xvblock_level level,

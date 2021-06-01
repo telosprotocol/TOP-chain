@@ -33,18 +33,13 @@ enum enum_xblock_consensus_type {
 class xaccount_index_t {
  public:
     xaccount_index_t() = default;
-    xaccount_index_t(uint64_t height);
-    xaccount_index_t(uint64_t height,
-                     const std::string & block_hash,
-                     enum_xvblock_class block_class,
-                     enum_xvblock_type block_type,
-                     enum_xblock_consensus_type consensus_type,
+    xaccount_index_t(base::xvblock_t* unit,
                      bool has_unconfirm_tx,
                      bool is_account_destroy);
 
     bool operator == (const xaccount_index_t &other) const {
         if (m_latest_unit_height == other.m_latest_unit_height
-            && m_latest_unit_hash == other.m_latest_unit_hash
+            && m_latest_unit_viewid == other.m_latest_unit_viewid
             && m_account_flag == other.m_account_flag) {
             return true;
         }
@@ -53,12 +48,14 @@ class xaccount_index_t {
 
     int32_t do_write(base::xstream_t & stream) const;
     int32_t do_read(base::xstream_t & stream);
+    int32_t         serialize_to(std::string & bin_data) const;
+    int32_t         serialize_from(const std::string & bin_data);
     std::string     dump() const;
 
  public:
     uint64_t                get_latest_unit_height() const {return m_latest_unit_height;}
-    uint16_t                get_latest_unit_hash16() const {return m_latest_unit_hash;}
-    bool                    is_match_unit_hash(const std::string & unit_hash) const;
+    uint64_t                get_latest_unit_viewid() const {return m_latest_unit_viewid;}
+    bool                    is_match_unit(base::xvblock_t* unit) const;
     bool                    is_has_unconfirm_tx() const {return check_account_index_flag(enum_xaccount_index_flag_has_unconfirm_tx);}
     bool                    is_account_destroy() const {return check_account_index_flag(enum_xaccount_index_flag_account_destroy);}
 
@@ -75,12 +72,10 @@ class xaccount_index_t {
     void                    set_latest_unit_type(base::enum_xvblock_type _type);
     void                    set_account_index_flag(enum_xaccount_index_flag _flag);
     void                    set_latest_unit_consensus_type(enum_xblock_consensus_type _type);
-    void                    set_latest_unit_height(uint64_t _height) {m_latest_unit_height = _height;}
-    void                    set_latest_unit_hash(const std::string & hash);
 
  private:
     uint64_t        m_latest_unit_height{0};
-    uint16_t        m_latest_unit_hash{0};
+    uint64_t        m_latest_unit_viewid{0};
     uint16_t        m_account_flag{0};  // [enum_xvblock_class 3bit][enum_xvblock_type 7bit][enum_xaccount_index_flag 4bit][enum_xblock_consensus_type 2bit] = 16bits
 };
 
@@ -90,7 +85,7 @@ class xtable_mbt_binlog_t : public xbase_dataunit_t<xtable_mbt_binlog_t, xdata_t
     xtable_mbt_binlog_t();
     xtable_mbt_binlog_t(const std::map<std::string, xaccount_index_t> & changed_indexs);
  protected:
-    ~xtable_mbt_binlog_t();
+    ~xtable_mbt_binlog_t() = default;
 
     int32_t do_write(base::xstream_t & stream) override;
     int32_t do_read(base::xstream_t & stream) override;
@@ -189,7 +184,7 @@ class xtable_mbt_t : public xbase_dataunit_t<xtable_mbt_t, xdata_type_table_mbt>
     explicit xtable_mbt_t(const std::map<uint16_t, xtable_mbt_bucket_node_ptr_t> & bucket_nodes);
 
  protected:
-    ~xtable_mbt_t();
+    ~xtable_mbt_t() = default;
 
     int32_t do_write(base::xstream_t & stream) override;
     int32_t do_read(base::xstream_t & stream) override;
@@ -233,7 +228,7 @@ class xtable_mbt_new_state_t : public base::xdataunit_t {
     xtable_mbt_new_state_t(const xtable_mbt_ptr_t & last_mbt, const xtable_mbt_binlog_ptr_t & binlog);
 
  protected:
-    ~xtable_mbt_new_state_t();
+    ~xtable_mbt_new_state_t() {}
     int32_t         do_write(base::xstream_t & stream) override;
     int32_t         do_read(base::xstream_t & stream) override;
 

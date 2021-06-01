@@ -829,17 +829,24 @@ void xsync_handler_t::handle_chain_snapshot_request(
     base::xauto_ptr<base::xvblock_t> blk = m_sync_store->load_block_object(ptr->m_account_addr, ptr->m_height_of_fullblock);
     if (blk != nullptr) {
         xfull_tableblock_t* full_block_ptr = dynamic_cast<xfull_tableblock_t*>(xblock_t::raw_vblock_to_object_ptr(blk.get()).get());
-        if ((full_block_ptr != nullptr) && (full_block_ptr->is_full_state_block())) {
-            base::xvboffdata_t* _offdata = full_block_ptr->get_offdata();
-            xobject_ptr_t<base::xvboffdata_t> offdata_ptr;
-            offdata_ptr.attach(_offdata);
-            _offdata->add_ref();
-            xsync_message_chain_snapshot_t chain_snapshot(ptr->m_account_addr,
-                offdata_ptr, ptr->m_height_of_fullblock);
-            m_sync_sender->send_chain_snapshot(chain_snapshot, xmessage_id_sync_chain_snapshot_response, network_self, from_address);
+        if (full_block_ptr != nullptr) {
+            // it must be full-table block now
+            base::xauto_ptr<base::xvbstate_t> bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(blk.get());
+            if (bstate != nullptr) {
+                std::string property_snapshot;
+                auto canvas = bstate->rebase_change_to_snapshot();
+                canvas->encode(property_snapshot);
+                xassert(!property_snapshot.empty());
+                xsync_message_chain_snapshot_t chain_snapshot(ptr->m_account_addr,
+                    property_snapshot, ptr->m_height_of_fullblock);
+                m_sync_sender->send_chain_snapshot(chain_snapshot, xmessage_id_sync_chain_snapshot_response, network_self, from_address);
+            } else {
+                xsync_warn("xsync_handler receive chain_snapshot_request, and the full block state is not exist,account:%s, height:%llu, block_type:%d",
+                    ptr->m_account_addr.c_str(), ptr->m_height_of_fullblock, blk->get_block_class());
+            }
         } else {
-            xsync_info("xsync_handler receive chain_snapshot_request, account:%s, height:%llu, block_type:%d",
-                ptr->m_account_addr.c_str(), ptr->m_height_of_fullblock, blk->get_block_class());
+            xsync_error("xsync_handler receive chain_snapshot_request, and it is not full table,account:%s, height:%llu",
+                    ptr->m_account_addr.c_str(), ptr->m_height_of_fullblock);
         }
     } else {
         xsync_info("xsync_handler receive chain_snapshot_request, and the full block is not exist,account:%s, height:%llu",

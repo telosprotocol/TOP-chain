@@ -62,7 +62,21 @@ base::xauto_ptr<base::xvblock_t> xsync_store_t::query_block(const base::xvaccoun
 base::xauto_ptr<base::xvblock_t> xsync_store_t::get_latest_start_block(const std::string & account, enum_chain_sync_policy sync_policy) {
     base::xvaccount_t _vaddress(account);
     if (sync_policy == enum_chain_sync_pocliy_fast) {
-        return m_blockstore->get_latest_committed_full_block(account);
+        base::xauto_ptr<base::xvblock_t> _full_block = m_blockstore->get_latest_committed_full_block(account);
+        if (_full_block != nullptr && _full_block->get_block_level() == base::enum_xvblock_level_table) {
+            if (_full_block->get_state() == nullptr) {
+                base::xauto_ptr<base::xvbstate_t> bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(_full_block.get());
+                if (bstate != nullptr) {
+                    _full_block->reset_block_state(bstate.get());
+                    xassert(_full_block->get_state() != nullptr);
+                    xassert(_full_block->is_execute_ready());
+                } else {
+                    xassert(!_full_block->is_execute_ready());
+                    xdbg("jimmy xsync_store_t::get_latest_start_block fail-has no state.block=%s", _full_block->dump().c_str());
+                }
+            }
+        }
+        return _full_block;
     } else if (sync_policy == enum_chain_sync_pocliy_full) {
         return m_blockstore->get_genesis_block(account);;
     }

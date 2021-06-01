@@ -23,7 +23,6 @@ public:
     xtxpool_resources(const observer_ptr<store::xstore_face_t> & store,
                       const observer_ptr<base::xvblockstore_t> & blockstore,
                       const observer_ptr<base::xvcertauth_t> & certauth,
-                      const observer_ptr<store::xindexstorehub_t> & indexstorehub,
                       const observer_ptr<mbus::xmessage_bus_face_t> & bus);
     virtual ~xtxpool_resources();
 
@@ -31,14 +30,12 @@ public:
     virtual store::xstore_face_t * get_store() const override;
     virtual base::xvblockstore_t * get_vblockstore() const override;
     virtual base::xvcertauth_t * get_certauth() const override;
-    virtual store::xindexstorehub_t * get_indexstorehub() const override;
     virtual mbus::xmessage_bus_face_t * get_bus() const override;
 
 private:
     observer_ptr<store::xstore_face_t> m_store;
     observer_ptr<base::xvblockstore_t> m_blockstore;
     observer_ptr<base::xvcertauth_t> m_certauth;
-    observer_ptr<store::xindexstorehub_t> m_indexstorehub;
     observer_ptr<mbus::xmessage_bus_face_t> m_bus;
 };
 

@@ -4,7 +4,6 @@
 
 #include <string>
 #include "xblockmaker/xproposal_maker_mgr.h"
-#include "xindexstore/xindexstore_face.h"
 
 NS_BEG2(top, blockmaker)
 
@@ -17,9 +16,8 @@ std::shared_ptr<xunit_service::xproposal_maker_face>   xproposal_maker_mgr::get_
 std::shared_ptr<xunit_service::xblock_maker_face> xblockmaker_factory::create_table_proposal(const observer_ptr<store::xstore_face_t> & store,
                                                                                             const observer_ptr<base::xvblockstore_t> & blockstore,
                                                                                             const observer_ptr<xtxpool_v2::xtxpool_face_t> & txpool,
-                                                                                            const observer_ptr<store::xindexstorehub_t> & indexstorehub,
                                                                                             const observer_ptr<mbus::xmessage_bus_face_t> & bus) {
-    xblockmaker_resources_ptr_t resources = std::make_shared<xblockmaker_resources_impl_t>(store, blockstore, txpool, indexstorehub, bus);
+    xblockmaker_resources_ptr_t resources = std::make_shared<xblockmaker_resources_impl_t>(store, blockstore, txpool, bus);
     std::shared_ptr<xunit_service::xblock_maker_face> blockmaker = std::make_shared<xproposal_maker_mgr>(resources);
     return blockmaker;
 }

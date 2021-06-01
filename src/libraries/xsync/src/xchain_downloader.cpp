@@ -77,11 +77,11 @@ bool xchain_downloader_t::downloading(int64_t now) {
 }
 
 bool xchain_downloader_t::on_timer(int64_t now) {
-    std::pair<uint64_t, uint64_t> interval; 
-    vnetwork::xvnode_address_t self_addr; 
+    std::pair<uint64_t, uint64_t> interval;
+    vnetwork::xvnode_address_t self_addr;
     vnetwork::xvnode_address_t target_addr;
 
-    for (uint32_t index = (m_current_object_index + 1) % enum_chain_sync_pocliy_max, count = 0; count < enum_chain_sync_pocliy_max; 
+    for (uint32_t index = (m_current_object_index + 1) % enum_chain_sync_pocliy_max, count = 0; count < enum_chain_sync_pocliy_max;
             count++, index = (index + 1) % enum_chain_sync_pocliy_max){
         if (!m_chain_objects[index].pick(interval, self_addr, target_addr)){
             continue;
@@ -97,7 +97,7 @@ bool xchain_downloader_t::on_timer(int64_t now) {
         } else if (abort == result) {
             m_continuous_times++;
         }
-        
+
         if (m_continuous_times >= 5){
             for (uint32_t i = 0; i < enum_chain_sync_pocliy_max; i++) {
                 m_chain_objects[i].clear();
@@ -129,10 +129,10 @@ void xchain_downloader_t::on_response(std::vector<data::xblock_ptr_t> &blocks, c
              m_continuous_times = 0;
         }
     }
-}  
+}
 
 void xchain_downloader_t::on_chain_snapshot_response(
-        const xobject_ptr_t<base::xvboffdata_t> chain_snapshot, uint64_t height, const vnetwork::xvnode_address_t &self_addr, const vnetwork::xvnode_address_t &from_addr) {
+        const std::string & chain_snapshot, uint64_t height, const vnetwork::xvnode_address_t &self_addr, const vnetwork::xvnode_address_t &from_addr) {
     xsync_on_snapshot_response_command_t command(chain_snapshot, height, self_addr, from_addr);
     if ((!m_task.finished()) && (!m_task.expired())) {
         xsync_command_execute_result result = m_task.execute(command);
@@ -143,7 +143,7 @@ void xchain_downloader_t::on_chain_snapshot_response(
             m_continuous_times++;
         } else {
             m_continuous_times = 0;
-        }        
+        }
     }
 }
 
@@ -157,7 +157,7 @@ void xchain_downloader_t::on_behind(uint64_t start_height, uint64_t end_height, 
     height = m_chain_objects[sync_policy].height();
     picked_height = m_chain_objects[sync_policy].picked_height();
     m_chain_objects[sync_policy] = xchain_object_t{start_height, end_height, self_addr, target_addr};
-    m_chain_objects[sync_policy].set_height(height);  
+    m_chain_objects[sync_policy].set_height(height);
     m_chain_objects[sync_policy].set_picked_height(picked_height);
 
     xsync_dbg("chain_downloader on_behind expect start_height=%lu, end_height=%llu, target address %s, sync policy %d, chain is %s",
@@ -420,8 +420,8 @@ xsync_command_execute_result xchain_downloader_t::execute_download(uint64_t star
     current_block = autoptr_to_blockptr(end_vblock);
     if ((current_block->get_height() <= end_height) && (current_block->get_height() >= start_height)) {
         return handle_next(sync::derministic_height(current_block->get_height(), std::make_pair(start_height,end_height)));
-    } 
-    
+    }
+
     return handle_next(start_height - 1);
 }
 
@@ -513,7 +513,7 @@ xsync_command_execute_result xchain_downloader_t::execute_next_download(std::vec
         m_address.c_str(), current_vblock->get_height(), current_vblock->get_viewid(), to_hex_str(current_vblock->get_block_hash()).c_str(), m_sync_range_mgr.get_behind_height());
 
     // temporary defend code, need to remove in future
-    if ((m_sync_range_mgr.get_current_sync_start_height() >= current_block->get_height()) && 
+    if ((m_sync_range_mgr.get_current_sync_start_height() >= current_block->get_height()) &&
         (m_sync_range_mgr.get_current_sync_start_height() != m_sync_range_mgr.get_behind_height())){
         clear();
         xsync_info("chain_downloader on_response %s, failed to move to expect height, current(height=%lu,viewid=%lu,hash=%s) behind(height=%lu)",
@@ -548,7 +548,7 @@ xsync_command_execute_result xchain_downloader_t::execute_next_download(std::vec
     return handle_next(current_block->get_height());
 }
 
-xsync_command_execute_result xchain_downloader_t::execute_next_download(const xobject_ptr_t<base::xvboffdata_t> chain_snapshot, 
+xsync_command_execute_result xchain_downloader_t::execute_next_download(const std::string & chain_snapshot,
     uint64_t height, const vnetwork::xvnode_address_t &self_addr, const vnetwork::xvnode_address_t &from_addr) {
 
     int64_t now = get_time();
@@ -563,8 +563,16 @@ xsync_command_execute_result xchain_downloader_t::execute_next_download(const xo
 
     base::xauto_ptr<base::xvblock_t> current_vblock = m_sync_store->get_latest_start_block(m_address, enum_chain_sync_pocliy_fast);
     data::xblock_ptr_t current_block = autoptr_to_blockptr(current_vblock);
-    if (!current_block->is_full_state_block() && current_block->get_height() == height) {
-        current_block->reset_block_offdata(chain_snapshot.get());
+    if (current_block->is_fullblock() && !current_block->is_full_state_block() && current_block->get_height() == height) {
+        xassert(!chain_snapshot.empty());
+        base::xauto_ptr<base::xvbstate_t> bstate = new base::xvbstate_t(*current_vblock.get());
+        bstate->apply_changes_of_binlog(chain_snapshot);
+        if (false == current_block->reset_block_state(bstate.get())) {
+            xsync_error("chain_downloader on_snapshot_response invalid snapshot. block=%s", current_vblock->dump().c_str());
+            clear();
+            return abort;
+        }
+        xsync_dbg("chain_downloader on_snapshot_response valid snapshot. block=%s", current_vblock->dump().c_str());
         m_sync_store->store_block(current_block.get());
     }
 
@@ -604,7 +612,7 @@ bool xchain_object_t::pick(std::pair<uint64_t, uint64_t> &interval, vnetwork::xv
     }
 
     interval.first = m_start_height;
-    
+
     self_addr = m_self_addr;
     target_addr = m_target_addr;
     m_picked_height = interval.second;

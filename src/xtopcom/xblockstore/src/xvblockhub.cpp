@@ -9,6 +9,7 @@
 #include "xvblockhub.h"
 #include "xvgenesis.h"
 #include "xvledger/xvdbkey.h"
+#include "xvledger/xvboffdata.h"
 
 #ifdef ENABLE_METRICS
     #include "xmetrics/xmetrics.h"
@@ -806,7 +807,7 @@ namespace top
             {
                 if(latest_commit->get_height() > 0)
                 {
-                    base::xvbindex_t* result = load_index(latest_commit->get_last_fullblock_height(),0);
+                    base::xvbindex_t* result = load_index(latest_commit->get_last_full_block_height(),0);
                     if(result != NULL)//load_index has been return a added-reference ptr
                     {
                         m_meta->_highest_full_block_height = result->get_height();
@@ -1021,6 +1022,7 @@ namespace top
         }
         bool   xblockacct_t::load_index_offdata(base::xvbindex_t* index_ptr)
         {
+            xassert(false); // TODO(jimmy)
             if(NULL == index_ptr || !index_ptr->is_fulltable())
                 return false;
 
@@ -1772,7 +1774,7 @@ namespace top
             }
 
             //maybe this block carry data of offchain and need persisted store
-            write_block_offdata_to_db(index_ptr,block_ptr);
+            //write_block_offdata_to_db(index_ptr,block_ptr);
 
             const uint32_t everything_flags = base::enum_index_store_flag_mini_block | base::enum_index_store_flag_input_entity | base::enum_index_store_flag_input_resource | base::enum_index_store_flag_output_entity| base::enum_index_store_flag_output_resource;
             if(index_ptr->check_store_flags(everything_flags))
@@ -2068,6 +2070,7 @@ namespace top
 
         bool   xblockacct_t::write_block_offdata_to_db(base::xvbindex_t* index_ptr,base::xvblock_t * block_ptr)
         {
+            xassert(false); // TODO(jimmy)
             if(index_ptr->check_store_flag(base::enum_index_store_flag_offchain_data))
                 return true; //has been writed
 
@@ -2095,6 +2098,7 @@ namespace top
 
         bool   xblockacct_t::read_block_offdata_from_db(base::xvblock_t * block_ptr)
         {
+            xassert(false); // TODO(jimmy)
             if(NULL == block_ptr)
                 return false;
 
@@ -2236,14 +2240,45 @@ namespace top
             }
             return true;
         }
-        void      xblockacct_t::try_execute_all_block()
+        void      xblockacct_t::try_execute_all_block(base::xvblock_t * target_block)
         {
+            if (m_meta->_highest_execute_block_height >= m_meta->_highest_commit_block_height)
+            {
+                return;
+            }
+            xdbg("xblockacct_t::try_execute_all_block enter. %s", dump().c_str());
+            // try to execute from target block firstly, maybe target block include bstate by syncing
+            if (m_meta->_highest_execute_block_height < target_block->get_height()
+                && target_block->get_block_class() == base::enum_xvblock_class_full
+                && target_block->get_block_level() == base::enum_xvblock_level_table
+                && target_block->is_execute_ready())
+            {
+                base::xauto_ptr<base::xvbindex_t> _execute_index = load_index(target_block->get_height(), base::enum_xvblock_flag_committed);
+                if (_execute_index != nullptr
+                    &&  _execute_index->get_block_hash() == target_block->get_block_hash())
+                {
+                    xdbg("xblockacct_t::try_execute_all_block try execute full block. %s,block=%s", dump().c_str(), target_block->dump().c_str());
+                    if(false == execute_block(_execute_index.get(),target_block))
+                    {
+                        xerror("xblockacct_t::try_execute_all_block fail-execute full block,at block=%s",_execute_index->dump().c_str());
+                    }
+                    else
+                    {
+                        xassert(m_meta->_highest_execute_block_height >= target_block->get_height());
+                        xassert(m_meta->_highest_full_block_height >= target_block->get_height());
+                    }
+                }
+                else
+                {
+                    xwarn("xblockacct_t::try_execute_all_block fail-execute full block for not committed. %s,block=%s", dump().c_str(), target_block->dump().c_str());
+                }
+            }
+
+
             // TODO(jimmy)
             uint64_t max_count = 10000;
             do
             {
-                xdbg("xblockacct_t::try_execute_all_block round. %s", dump().c_str());
-
                 xobject_ptr_t<base::xvbindex_t> _execute_index = nullptr;
                 if (m_meta->_highest_execute_block_height < m_meta->_highest_full_block_height)
                 {
@@ -2253,10 +2288,7 @@ namespace top
                         xwarn("xblockacct_t::try_execute_all_block no load full index. %s", dump().c_str());
                         return;
                     }
-                    if (load_index_offdata(_full_bindex.get()))
-                    {
                     _execute_index = _full_bindex;
-                    }
                 }
 
                 if (_execute_index == nullptr)
@@ -2281,7 +2313,7 @@ namespace top
                     xerror("xblockacct_t::try_execute_all_block fail-read block,at account=%s,block=%s",get_account().c_str(),_execute_index->dump().c_str());
                     return;
                 }
-                load_index_input(_execute_index.get());
+                load_index_input(_execute_index.get());  // TODO(jimmy) execute no need load input
                 load_index_output(_execute_index.get());
                 if(false == execute_block(_execute_index.get(),_execute_index->get_this_block()))
                 {
@@ -2386,7 +2418,7 @@ namespace top
                 {
                     if(index_ptr->get_height() != 0)
                     {
-                        mbus::xevent_ptr_t event = mbus->create_event_for_store_index_to_db(get_account(), index_ptr);
+                        mbus::xevent_ptr_t event = mbus->create_event_for_store_index_to_db(index_ptr);
                         if (event != nullptr) {
                             mbus->push_event(event);
                         }
@@ -2401,9 +2433,9 @@ namespace top
         {
             if(NULL == index_ptr)
                 return false;
-            
-            xdbg("xblockacct_t::on_block_committed,at account=%s,index=%s",get_account().c_str(),index_ptr->dump().c_str());
-            if(index_ptr->get_block_flags() & base::enum_xvblock_flag_committed)
+             xdbg("xblockacct_t::on_block_committed,at account=%s,index=%s",get_account().c_str(),index_ptr->dump().c_str());
+            if(index_ptr->get_block_flags() & base::enum_xvblock_flag_committed
+                && index_ptr->get_height() != 0)
             {
                 store_txs_to_db(index_ptr); //extract and store txs now
             }
@@ -2701,7 +2733,7 @@ namespace top
             if(precheck_new_index(new_idx(),height_view_map) == false)
             {
                 xinfo("xblockacct_t::new_index,failed-precheck for block(%s) at store(%s)",new_idx->dump().c_str(),get_blockstore_path().c_str());
-                
+#if 0 // TODO(jimmy)
                 //remove below after merged jimmy'branch which nolonger need store offdata anymore
                 for(auto it = height_view_map.begin(); it != height_view_map.end();++it)
                 {
@@ -2714,9 +2746,10 @@ namespace top
                         break;
                     }
                 }
+#endif
                 return nullptr;
             }
-            
+
             //cached_index_ptr is a raw ptr that just valid at this moment
             base::xvbindex_t * cached_index_ptr = cache_index(new_idx(),height_view_map);
             if(cached_index_ptr != nullptr) //insert or updated successful
@@ -2727,6 +2760,7 @@ namespace top
                 //rebase forked blocks if have ,after connect_index
                 rebase_chain_at_height(height_view_map);
             }
+#if 0 // TODO(jimmy)
             else //remove below after merged jimmy'branch which nolonger need store offdata anymore
             {
                 //research to find target index after rebase that maybe remove it
@@ -2742,7 +2776,8 @@ namespace top
                     }
                 }
             }
-            
+#endif
+
             return cached_index_ptr;
         }
     
@@ -2776,7 +2811,7 @@ namespace top
                 prev_block->add_ref();//hold it to avoid be released by rebase_chain_at_height
                 {
                     prev_block->set_block_flag(base::enum_xvblock_flag_locked);
-                    
+
                     rebase_chain_at_height(prev_block->get_height()); //resolve other block of lower-weight thans this
                     if(prev_block->is_close() == false)//prev_block is still valid to use
                     {

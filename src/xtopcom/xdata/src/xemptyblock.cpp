@@ -64,11 +64,6 @@ base::xvblock_t* xemptyblock_t::create_next_emptyblock(base::xvblock_t* prev_blo
             prev_block->get_last_full_block_hash(), prev_block->get_last_full_block_height(), blocktype);
     }
 }
-base::xvblock_t* xemptyblock_t::create_next_emptyblock(xblockchain2_t* chain, base::enum_xvblock_type blocktype) {
-    return create_emptyblock(chain->get_account(), chain->get_chain_height() + 1,
-        chain->get_block_level(), chain->get_last_block_hash(), std::string(), 1, 1,
-        chain->get_last_full_unit_hash(), chain->get_last_full_unit_height(), blocktype);
-}
 
 base::xvblock_t* xemptyblock_t::create_emptyblock(const std::string & account, uint64_t height, base::enum_xvblock_level level, uint64_t viewid, uint64_t clock, base::enum_xvblock_type blocktype) {
     return create_emptyblock(account, height, level, xrootblock_t::get_rootblock_hash(), std::string(), viewid, clock, xrootblock_t::get_rootblock_hash(), clock - 1, blocktype);

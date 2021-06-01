@@ -13,23 +13,21 @@
 #include "xdata/xblock_paras.h"
 #include "xdata/xblock.h"
 #include "xvledger/xaccountindex.h"
-#include "xdata/xblockchain.h"
-#include "xdata/xtablestate.h"
 #include "xdata/xblock_statistics_data.h"
 
 NS_BEG2(top, data)
 
 class xfulltable_block_para_t {
  public:
-    xfulltable_block_para_t(const xtablestate_ptr_t & last_state, const xstatistics_data_t & statistics_data);
+    xfulltable_block_para_t(const std::string & snapshot_hash, const xstatistics_data_t & statistics_data);
     ~xfulltable_block_para_t() = default;
 
     const xstatistics_data_t &  get_block_statistics_data() const {return m_block_statistics_data;}
-    const xtablestate_ptr_t &   get_tablestate() const {return m_tablestate;}
+    const std::string &         get_snapshot_hash() const {return m_snapshot_hash;}
 
  private:
-    xtablestate_ptr_t       m_tablestate{nullptr};  // the binlog of latest light-tableblock from last full-tableblock
     xstatistics_data_t      m_block_statistics_data;
+    std::string             m_snapshot_hash;
 };
 
 class xfulltable_output_entity_t final : public xventity_face_t<xfulltable_output_entity_t, xdata_type_fulltable_output_entity> {

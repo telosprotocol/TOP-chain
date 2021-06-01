@@ -70,7 +70,7 @@ class xcons_transaction_t : public xbase_dataunit_t<xcons_transaction_t, xdata_t
     uint32_t                get_current_used_tgas() const {return m_execute_state.get_used_tgas();}
     void                    set_current_used_deposit(uint32_t deposit) {m_execute_state.set_used_deposit(deposit);}
     uint32_t                get_current_used_deposit() const {return m_execute_state.get_used_deposit();}
-    void                    set_current_beacon_service_fee(uint64_t to_burn) {m_execute_state.set_beacon_service_fee(to_burn);}
+    void                    set_current_beacon_service_fee(uint64_t to_burn) {m_execute_state.set_beacon_service_fee(to_burn);}//TODO(jimmy) delete
     void                    set_current_send_tx_lock_tgas(uint32_t tgas) {m_execute_state.set_send_tx_lock_tgas(tgas);}
     uint32_t                get_current_send_tx_lock_tgas() const {return m_execute_state.get_send_tx_lock_tgas();}
     void                    set_current_recv_tx_use_send_tx_tgas(uint32_t tgas) {m_execute_state.set_recv_tx_use_send_tx_tgas(tgas);}
