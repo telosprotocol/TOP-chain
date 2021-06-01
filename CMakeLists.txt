@@ -316,6 +316,13 @@ if (STATIC_CONSENSUS)
     add_definitions(-DSTATIC_CONSENSUS)
 endif()
 
+if (ELECT_WHEREAFTER)
+    if (NOT STATIC_CONSENSUS)
+        message(FATAL_ERROR "should define static_consensus before elect_whereafter")
+    endif()
+    add_definitions(-DELECT_WHEREAFTER)
+endif()
+
 if (NO_TX_BATCH)
     add_definitions(-DNO_TX_BATCH)
 endif()
