@@ -18,11 +18,11 @@ xcons_service_mgr::xcons_service_mgr(observer_ptr<mbus::xmessage_bus_face_t> con
                                      const xcons_dispatcher_builder_ptr &             dispatcher_builder,
                                      const std::shared_ptr<xcons_service_para_face> & para)
   : m_mbus(mb), m_dispachter_builder(dispatcher_builder), m_network_proxy(network_proxy), m_para(para) {
-    xdbg("xcons_service_mgr::xcons_service_mgr,create,this=%p", this);
+    xunit_dbg("xcons_service_mgr::xcons_service_mgr,create,this=%p", this);
 }
 
 xcons_service_mgr::~xcons_service_mgr() {
-    xdbg("xcons_service_mgr::~xcons_service_mgr,destroy,this=%p", this);
+    xunit_dbg("xcons_service_mgr::~xcons_service_mgr,destroy,this=%p", this);
 }
 
 // create consensus proxy by networkdriver
@@ -51,7 +51,7 @@ xcons_proxy_face_ptr xcons_service_mgr::create(const std::shared_ptr<vnetwork::x
     std::vector<std::shared_ptr<xcons_service_face>> services;
     if ((node_type & common::xnode_type_t::rec) == common::xnode_type_t::rec) {
         auto dispatcher = m_dispachter_builder->build(m_mbus, m_para, e_timer);
-        xdbg("[xcons_service_mgr::create] create timer service for rec, {%" PRIu64 ", %" PRIu64 "}, dispatcher obj %p", xip.high_addr, xip.low_addr, dispatcher.get());
+        xunit_dbg("[xcons_service_mgr::create] create timer service for rec, {%" PRIu64 ", %" PRIu64 "}, dispatcher obj %p", xip.high_addr, xip.low_addr, dispatcher.get());
         if (dispatcher != nullptr) {
             std::shared_ptr<xcons_service_face> timer_service = std::make_shared<xtimer_service_t>(m_para, dispatcher);
             services.push_back(timer_service);
@@ -79,7 +79,7 @@ xcons_proxy_face_ptr xcons_service_mgr::create(const std::shared_ptr<vnetwork::x
 // must call uninit before
 bool xcons_service_mgr::destroy(const xvip2_t & xip) {
     auto                                             key_ = xcons_utl::erase_version(xip);
-    xinfo("xcons_service_mgr::destroy %s %p", xcons_utl::xip_to_hex(xip).c_str(), this);
+    xunit_info("xcons_service_mgr::destroy %s %p", xcons_utl::xip_to_hex(xip).c_str(), this);
     std::vector<std::shared_ptr<xcons_service_face>> services;
     {
         // erase useless consensus service
@@ -94,7 +94,7 @@ bool xcons_service_mgr::destroy(const xvip2_t & xip) {
     // destroy all reference service
     if (!services.empty()) {
         for (auto service : services) {
-            xdbg("xcons_service_mgr::destroy destroy service %s", xcons_utl::xip_to_hex(xip).c_str());
+            xunit_dbg("xcons_service_mgr::destroy destroy service %s", xcons_utl::xip_to_hex(xip).c_str());
             service->fade(xip);
             service->destroy(xip);
         }

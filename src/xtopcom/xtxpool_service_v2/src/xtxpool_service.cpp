@@ -176,7 +176,7 @@ void xtxpool_service::on_message_receipt(vnetwork::xvnode_address_t const & send
             xwarn("xtxpool_service::on_message_receipt txpool mailbox limit,drop receipt");
             return;
         }
-
+        XMETRICS_TIME_RECORD("txpool_network_message_dispatch");
         auto handler = [this](base::xcall_t & call, const int32_t cur_thread_id, const uint64_t timenow_ms) -> bool {
             txpool_receipt_message_para_t * para = dynamic_cast<txpool_receipt_message_para_t *>(call.get_param1().get_object());
             this->on_message_unit_receipt(para->m_sender, para->m_message);

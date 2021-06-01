@@ -15,12 +15,12 @@ xtableblockservice::xtableblockservice(const std::shared_ptr<xcons_service_para_
     xassert(p_para != nullptr);
     xassert(dispatcher != nullptr);
     // vnode build
-    // xinfo("[tablelock] %p create address %s", this, p_para->get_resources()->get_network()->address().to_string().c_str());
-    xdbg("xtableblockservice::xtableblockservice,create,this=%p", this);
+    // xunit_info("[tablelock] %p create address %s", this, p_para->get_resources()->get_network()->address().to_string().c_str());
+    xunit_dbg("xtableblockservice::xtableblockservice,create,this=%p", this);
 }
 
 xtableblockservice::~xtableblockservice() {
-    xdbg("xtableblockservice::~xtableblockservice,destroy,this=%p", this);
+    xunit_dbg("xtableblockservice::~xtableblockservice,destroy,this=%p", this);
 }
 
 NS_END2

@@ -12,11 +12,11 @@ xtimer_service_t::xtimer_service_t(std::shared_ptr<xcons_service_para_face> cons
     xassert(p_para != nullptr);
     xassert(dispatcher != nullptr);
     // vnode build
-    xdbg("xtimer_service_t::xtimer_service_t,create,this=%p", this);
+    xunit_dbg("xtimer_service_t::xtimer_service_t,create,this=%p", this);
 }
 
 xtimer_service_t::~xtimer_service_t() {
-    xdbg("xtimer_service_t::~xtimer_service_t,detroy,this=%p", this);
+    xunit_dbg("xtimer_service_t::~xtimer_service_t,detroy,this=%p", this);
 }
 
 NS_END2
