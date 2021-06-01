@@ -33,9 +33,6 @@ bool SmallNetNodes::Init() {
     clear_timer_ = std::make_shared<base::TimerRepeated>(base::TimerManager::Instance(), "SmallNetNodes::Clear");
     clear_timer_->Start(500ll * 1000ll, kClearPeriod, std::bind(&SmallNetNodes::do_clear_and_reset, this));
 
-    clear_markexpired_timer_ = std::make_shared<base::TimerRepeated>(base::TimerManager::Instance(), "SmallNetNodes::ClearMarkExpired");
-    clear_markexpired_timer_->Start(500ll * 1000ll, kClearMarkExpiredPeriod, std::bind(&SmallNetNodes::do_clear_for_mark_expired, this));
-
     service_nodes_ = ServiceNodes::Instance();
 
     TOP_INFO("SmallNetNodes Init");
@@ -58,69 +55,6 @@ void SmallNetNodes::GetAllServiceType(std::set<uint64_t> & svec) {
     }
     TOP_DEBUG("getallservicetype size: %d", svec.size());
     return;
-}
-
-bool SmallNetNodes::HasServiceType(const uint64_t & service_type) {
-    std::unique_lock<std::mutex> lock(net_nodes_cache_map_mutex_);
-    auto ifind = net_nodes_cache_map_.find(service_type);
-    if (ifind == net_nodes_cache_map_.end()) {
-        TOP_WARN("service type: %llu not caching", service_type);
-        return false;
-    }
-    return true;
-}
-
-bool SmallNetNodes::AllowAdd(const std::string & node_id) {
-    base::KadmliaKeyPtr kad_key = base::GetKadmliaKey(node_id);
-    if (!kad_key) {
-        TOP_WARN("kad_key nullptr in AllowAdd, node_id:%s", HexEncode(node_id).c_str());
-        return false;
-    }
-    auto service_type = kad_key->GetServiceType();
-    // not found in cache elect data and mark expired in latest 10 min, then forbidden addnode
-    if (!CheckHasNode(node_id, service_type) && CheckMarkExpired(node_id)) {
-        TOP_WARN("no permission to addnode for node_id:%s", HexEncode(node_id).c_str());
-        return false;
-    }
-    TOP_DEBUG("allow to addnode for node_id:%s", HexEncode(node_id).c_str());
-    return true;
-}
-
-// latest 10 mins mark expired nodes
-bool SmallNetNodes::CheckMarkExpired(const std::string & node_id) {
-    std::vector<MarkExpiredNetNode> mark_expired_netnode_vec;
-    {
-        std::unique_lock<std::mutex> mlock(mark_expired_netnode_vec_mutex_);
-        // avoid dead lock for now TODO(smaug) better performance
-        mark_expired_netnode_vec = mark_expired_netnode_vec_;
-    }
-    for (auto & item : mark_expired_netnode_vec) {
-        if (item.node_id == node_id) {
-            TOP_DEBUG("check elect data mark_expired true of node_id:%s", HexEncode(node_id).c_str());
-            return true;
-        }
-    }
-    TOP_DEBUG("check elect data mark_expired false of node_id:%s", HexEncode(node_id).c_str());
-    return false;
-}
-
-// check has node id in cache
-bool SmallNetNodes::CheckHasNode(const std::string & node_id, uint64_t service_type) {
-    std::unique_lock<std::mutex> lock(net_nodes_cache_map_mutex_);
-    auto ifind = net_nodes_cache_map_.find(service_type);
-    if (ifind == net_nodes_cache_map_.end()) {
-        TOP_WARN("check elect data of node_id:%s failed", HexEncode(node_id).c_str());
-        return false;
-    }
-
-    for (auto & item : ifind->second->nodes) {
-        if (item.m_node_id == node_id) {
-            return true;
-        }
-    }
-
-    TOP_WARN("check elect data of node_id:%s failed", HexEncode(node_id).c_str());
-    return false;
 }
 
 bool SmallNetNodes::FindRandomNode(NetNode & Fnode, uint64_t service_type) {
@@ -196,11 +130,6 @@ uint32_t SmallNetNodes::AddNode(NetNode node) {
     base::KadmliaKeyPtr kad_key = base::GetKadmliaKey(node.m_xip, node.m_account);
     node.m_node_id = kad_key->Get();
     uint64_t service_type = kad_key->GetServiceType();
-    if (node.m_account == global_node_id) {
-        std::unique_lock<std::mutex> lockself(local_node_cache_map_mutex_);
-        local_node_cache_map_[service_type] = node;
-        TOP_DEBUG("self addnode account: %s service_type: %llu", node.m_account.c_str(), service_type);
-    }
 
     std::unique_lock<std::mutex> lock(net_nodes_cache_map_mutex_);
     auto ifind = net_nodes_cache_map_.find(service_type);
@@ -250,16 +179,7 @@ uint32_t SmallNetNodes::AddNode(NetNode node) {
 }
 
 void SmallNetNodes::HandleExpired(std::unordered_map<uint64_t, std::vector<std::string>> & expired_vec,
-                                  std::vector<uint64_t> & unreg_service_type_vec,
-                                  std::vector<MarkExpiredNetNode> & mark_expired_netnode_vec) {
-    // remove service expired node
-    TOP_DEBUG("call service_node handleexpired");
-    {
-        std::unique_lock<std::mutex> mlock(mark_expired_netnode_vec_mutex_);
-        mark_expired_netnode_vec_.insert(mark_expired_netnode_vec_.end(), mark_expired_netnode_vec.begin(), mark_expired_netnode_vec.end());
-        TOP_DEBUG("append %u nodes mark_expired", mark_expired_netnode_vec.size());
-    }
-
+                                  std::vector<uint64_t> & unreg_service_type_vec) {
     service_nodes_->RemoveExpired(expired_vec);
 
     // unregister routing table
@@ -286,7 +206,6 @@ void SmallNetNodes::do_clear_and_reset() {
     // clear old versions
     std::unordered_map<uint64_t, std::vector<std::string>> expired_nodeid_vec;
     std::vector<uint64_t> unreg_service_type_vec;
-    std::vector<MarkExpiredNetNode> mark_expired_netnode_vec;
     {
         std::unique_lock<std::mutex> lock(net_nodes_cache_map_mutex_);
         for (auto & mitem : net_nodes_cache_map_) {
@@ -307,8 +226,6 @@ void SmallNetNodes::do_clear_and_reset() {
                     // base::KadmliaKeyPtr tmp_kad_key = base::GetKadmliaKey(iter->m_xip, iter->m_account);
                     // expired_nodeid_vec[mitem.first].push_back(tmp_kad_key->Get());
                     expired_nodeid_vec[mitem.first].push_back(iter->m_node_id);
-                    MarkExpiredNetNode mnode{iter->m_node_id, std::chrono::steady_clock::now()};
-                    mark_expired_netnode_vec.push_back(mnode);
                     iter = (mitem.second)->nodes.erase(iter);
                 } else {
                     ++iter;
@@ -317,23 +234,7 @@ void SmallNetNodes::do_clear_and_reset() {
         }
     }
 
-    HandleExpired(expired_nodeid_vec, unreg_service_type_vec, mark_expired_netnode_vec);
-}
-
-void SmallNetNodes::do_clear_for_mark_expired() {
-    {
-        std::unique_lock<std::mutex> mlock(mark_expired_netnode_vec_mutex_);
-        auto tp_now = std::chrono::steady_clock::now();
-        for (auto it = mark_expired_netnode_vec_.begin(); it != mark_expired_netnode_vec_.end();) {
-            if (it->time_point + std::chrono::milliseconds(kKeepMarkExpiredMaxTime) < tp_now) {
-                // just keep latest 10 min
-                TOP_DEBUG("remove mark expired node:%s", HexEncode(it->node_id).c_str());
-                it = mark_expired_netnode_vec_.erase(it);
-            } else {
-                ++it;
-            }
-        }
-    }
+    HandleExpired(expired_nodeid_vec, unreg_service_type_vec);
 }
 
 }  // end namespace wrouter
