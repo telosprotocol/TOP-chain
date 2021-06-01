@@ -170,17 +170,13 @@ namespace top
                             uint64_t sendtx_clock = send_txindex->get_block_clock();
                             uint64_t delay_time = confirmtx_clock - sendtx_clock;
                             static std::atomic<uint64_t> max_time{0};
-                            if ( (confirmtx_clock > sendtx_clock) && (delay_time >= 10*6) )  // 10 minutes
+                            if ( (confirmtx_clock > sendtx_clock) && (delay_time >= 6) )  // 6 clock
                             {
                                 if (max_time < delay_time)
                                 {
                                     max_time = delay_time;
                                 }
                                 xwarn("xvtxstore_t::store_txs,confirm tx time long.max_time=%ld,time=%ld,tx=%s", (uint64_t)max_time, delay_time, base::xstring_utl::to_hex(v->get_tx_hash()).c_str());
-                            }
-                            else
-                            {
-                                xinfo("xvtxstore_t::store_txs,confirm tx time normal.confirm=%ld,send=%ld,time=%ld,tx=%s", confirmtx_clock, sendtx_clock, delay_time, base::xstring_utl::to_hex(v->get_tx_hash()).c_str());
                             }
                         }
                     }

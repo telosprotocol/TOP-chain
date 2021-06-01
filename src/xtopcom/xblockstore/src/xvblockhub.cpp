@@ -1826,7 +1826,7 @@ namespace top
                     if(index_ptr->check_store_flag(base::enum_index_store_flag_mini_block)) //has stored header and cert
                         xerror("xblockacct_t::read_block_object_from_db,fail to find item at DB for key(%s)",blockobj_key.c_str());
                     else
-                        xerror("xblockacct_t::read_block_object_from_db,NOT stored block-object yet,index(%s) ",index_ptr->dump().c_str());
+                        xwarn("xblockacct_t::read_block_object_from_db,NOT stored block-object yet,index(%s) ",index_ptr->dump().c_str());
 
                     return false;
                 }
