@@ -90,10 +90,8 @@ bool MultilayerNetworkChain::Init(const base::Config& config) {
         TOP_FATAL("ec_netcard empty");
         return false;
     }
-    // create elect_manager_chain
-    elect_manager_ = std::make_shared<ElectManager>(
-            GetCoreTransport(),
-            config);
+    // create elect_manager
+    elect_manager_ = std::make_shared<ElectManager>(GetCoreTransport(), config);
     if (!elect_manager_) {
         TOP_WARN("elect_manager create failed");
         return false;

@@ -12,7 +12,7 @@ namespace top {
 
 namespace elect {
 
-ElectManagerDemo::ElectManagerDemo(transport::TransportPtr transport, const base::Config & config) : ElectManagerMulNet(transport, config) {
+ElectManagerDemo::ElectManagerDemo(transport::TransportPtr transport, const base::Config & config) : ElectManager(transport, config) {
 }
 
 void ElectManagerDemo::OnElectUpdated(json all_info) {
@@ -49,7 +49,7 @@ void ElectManagerDemo::OnElectUpdated(json all_info) {
     }      // end for (json::iterator it = all_info.begin()
 
     TOP_INFO("elect_manager_demo onelectupdated end, size:%u", elect_data.size());
-    return ElectManagerMulNet::OnElectUpdated(elect_data);
+    return ElectManager::OnElectUpdated(elect_data);
 }
 
 }  // namespace elect

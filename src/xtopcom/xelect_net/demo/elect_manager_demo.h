@@ -1,7 +1,7 @@
 #pragma once
 
 #include "xdata/xelection/xelection_result_store.h"
-#include "xelect_net/include/elect_manager_multilayer_network.h"
+#include "xelect_net/include/elect_manager.h"
 #include "xelect_net/include/node_manager_base.h"
 #include "xpbase/base/top_config.h"
 #include "xtransport/proto/transport.pb.h"
@@ -16,7 +16,7 @@ namespace top {
 
 namespace elect {
 
-class ElectManagerDemo : public ElectManagerMulNet {
+class ElectManagerDemo : public ElectManager {
 public:
     ElectManagerDemo(ElectManagerDemo const &) = delete;
     ElectManagerDemo & operator=(ElectManagerDemo const &) = delete;
