@@ -357,4 +357,10 @@ uint32_t xunconfirmed_tx_queue_t::size() const {
     return m_peer_tables.get_all_txs().size();
 }
 
+xcons_transaction_ptr_t xunconfirmed_tx_queue_t::get_unconfirmed_tx(const std::string & to_table_addr, uint64_t receipt_id) const {
+    base::xvaccount_t vaccount(to_table_addr);
+    auto peer_table_sid = vaccount.get_short_table_id();
+    return m_peer_tables.find(peer_table_sid, receipt_id);
+}
+
 NS_END2

@@ -208,11 +208,13 @@ void xtxpool_service_mgr::start() {
     xinfo("xtxpool_service_mgr::start");
     m_bus_listen_id = m_mbus->add_listener(top::mbus::xevent_major_type_store, std::bind(&xtxpool_service_mgr::on_block_to_db_event, this, std::placeholders::_1));
     m_timer = new xtxpool_service_timer_t(top::base::xcontext_t::instance(), m_iothread_timer->get_thread_id(), this);
+    m_timer->create_mailbox(256, max_mailbox_num, max_mailbox_num);
     m_timer->start(0, 1000);
 
     m_dispatcher = new xtxpool_service_dispatcher_imp_t(top::base::xcontext_t::instance(), m_iothread_dispatcher->get_thread_id(), this);
     m_dispatcher->create_mailbox(256, max_mailbox_num, max_mailbox_num);  // create dedicated mailbox for txpool
-    m_para->set_dispatcher(make_observer(m_dispatcher));
+
+    m_para->set_dispatchers(make_observer(m_dispatcher), make_observer(m_timer));
 }
 
 void xtxpool_service_mgr::stop() {
@@ -290,6 +292,21 @@ void xtxpool_service_dispatcher_imp_t::dispatch(base::xcall_t & call) {
 }
 
 bool xtxpool_service_dispatcher_imp_t::is_mailbox_over_limit() {
+    int64_t in, out;
+    int32_t queue_size = count_calls(in, out);
+    bool discard = queue_size >= max_mailbox_num;
+    if (discard) {
+        xwarn("xtxpool_service_dispatcher_imp_t::is_mailbox_over_limit in=%ld,out=%ld", in, out);
+        return true;
+    }
+    return false;
+}
+
+void xtxpool_service_timer_t::dispatch(base::xcall_t & call) {
+    send_call(call);
+}
+
+bool xtxpool_service_timer_t::is_mailbox_over_limit() {
     int64_t in, out;
     int32_t queue_size = count_calls(in, out);
     bool discard = queue_size >= max_mailbox_num;
