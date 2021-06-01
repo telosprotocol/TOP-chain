@@ -83,6 +83,8 @@ private:
     void make_receipts_and_send(xblock_t * block);
     void send_receipt_retry(xcons_transaction_ptr_t & cons_tx);
     void send_receipt_first_time(data::xcons_transaction_ptr_t & cons_tx, xblock_t * cert_block);
+    xcons_transaction_ptr_t create_confirm_tx_by_hash(const uint256_t & hash);
+    xcons_transaction_ptr_t get_confirmed_tx(const uint256_t & hash);
 
 private:
     xvip2_t m_xip;

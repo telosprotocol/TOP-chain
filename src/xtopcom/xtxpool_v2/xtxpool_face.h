@@ -195,6 +195,7 @@ public:
     // virtual void update_non_ready_accounts(uint8_t zone, uint16_t subaddr) = 0;
     virtual void update_locked_txs(const std::string & table_addr, const std::vector<tx_info_t> & locked_tx_vec) = 0;
     virtual void update_receiptid_state(const std::string & table_addr, const base::xreceiptid_state_ptr_t & receiptid_state) = 0;
+    virtual xcons_transaction_ptr_t get_unconfirmed_tx(const std::string & from_table_addr, const std::string & to_table_addr, uint64_t receipt_id) const = 0;
 };
 
 class xtxpool_instance {

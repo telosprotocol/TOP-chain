@@ -167,12 +167,12 @@ bool xtxpool_service::table_boundary_equal_to(std::shared_ptr<xtxpool_service_fa
 }
 
 void xtxpool_service::on_message_receipt(vnetwork::xvnode_address_t const & sender, vnetwork::xmessage_t const & message) {
-    if (!m_running || m_para->get_dispatcher() == nullptr) {
+    if (!m_running || m_para->get_fast_dispatcher() == nullptr) {
         return;
     }
     (void)sender;
     if (message.id() == xtxpool_msg_send_receipt || message.id() == xtxpool_msg_recv_receipt) {
-        if (m_para->get_dispatcher()->is_mailbox_over_limit()) {
+        if (m_para->get_fast_dispatcher()->is_mailbox_over_limit()) {
             xwarn("xtxpool_service::on_message_receipt txpool mailbox limit,drop receipt");
             return;
         }
@@ -184,7 +184,7 @@ void xtxpool_service::on_message_receipt(vnetwork::xvnode_address_t const & send
         };
         base::xauto_ptr<txpool_receipt_message_para_t> para = new txpool_receipt_message_para_t(sender, message);
         base::xcall_t asyn_call(handler, para.get());
-        m_para->get_dispatcher()->dispatch(asyn_call);
+        m_para->get_fast_dispatcher()->dispatch(asyn_call);
     } else {
         xassert(0);
     }
@@ -231,23 +231,36 @@ void xtxpool_service::check_and_response_recv_receipt(const xcons_transaction_pt
     const xlightunit_output_entity_t * info = cons_tx->get_tx_info();
 
     xassert(info->is_send_tx());
-    
+
     // if tx subtype is recv and is resend, need not select by function has_receipt_right, because sender is already selected by gmtime before here.
-    
+
     uint32_t resend_time = xreceipt_strategy_t::calc_resend_time(cons_tx->get_unit_cert()->get_gmtime(), xverifier::xtx_utl::get_gmttime_s());
     if (xreceipt_strategy_t::is_selected_resender(cons_tx, resend_time, m_node_id, m_shard_size)) {
         return;
     }
 
-    xtransaction_t * tx = cons_tx->get_transaction();
-    base::xvtransaction_store_ptr_t tx_store = m_para->get_vblockstore()->query_tx(tx->get_digest_str(), base::enum_transaction_subtype_recv);
+
+    auto confirm_tx = create_confirm_tx_by_hash(cons_tx->get_transaction()->digest());
+    if (confirm_tx != nullptr) {
+        send_receipt_retry(confirm_tx);
+    } else {
+        mbus::xevent_ptr_t ev = make_object_ptr<mbus::xevent_behind_on_demand_by_hash_t>(cons_tx->get_target_addr(), cons_tx->get_transaction()->get_digest_str(), "lack of unit");
+        m_para->get_bus()->push_event(ev);
+        xwarn("xtxpool_service::check_and_response_recv_receipt unit of recv tx not found, try sync unit for tx:%s", cons_tx->dump().c_str());
+    }
+}
+
+xcons_transaction_ptr_t xtxpool_service::create_confirm_tx_by_hash(const uint256_t & hash) {
+    auto str_hash(std::string(reinterpret_cast<char *>(hash.data()), hash.size()));
+    base::xvtransaction_store_ptr_t tx_store = m_para->get_vblockstore()->query_tx(str_hash, base::enum_transaction_subtype_recv);
     // first time consensus transaction has been stored, so it can be found
     // in the second consensus, need check the m_recv_unit_height
 
     // build recv receipt and send out
-    if (tx_store != nullptr) {
+    if (tx_store != nullptr && tx_store->get_raw_tx() != nullptr) {
         xassert(tx_store->get_recv_unit_height() != 0);
-        xdbg("xtxpool_service::check_and_response_recv_receipt send tx receipt has been consensused, txhash:%s", tx->get_digest_hex_str().c_str());
+        xtransaction_t * tx = dynamic_cast<xtransaction_t *>(tx_store->get_raw_tx());
+        xdbg("xtxpool_service::get_confirm_tx_by_hash send tx receipt has been consensused, txhash:%s", tx->get_digest_hex_str().c_str());
         base::xauto_ptr<base::xvblock_t> blockobj =
             m_para->get_vblockstore()->load_block_object(base::xvaccount_t(tx->get_target_addr()), tx_store->get_recv_unit_height(), base::enum_xvblock_flag_committed, true);
         if (blockobj != nullptr) {
@@ -256,18 +269,12 @@ void xtxpool_service::check_and_response_recv_receipt(const xcons_transaction_pt
             xlightunit_block_t * lightunit = dynamic_cast<xlightunit_block_t *>(block);
             auto recv_tx_receipt = lightunit->create_one_txreceipt(tx);
             xassert(recv_tx_receipt->is_confirm_tx());
-
-            send_receipt_retry(recv_tx_receipt);
+            return recv_tx_receipt;
         } else {
-            xerror("xtxpool_service::check_and_response_recv_receipt recv tx unit not exist txhash:%s block_height:%ld",
-                   tx->get_digest_hex_str().c_str(),
-                   tx_store->get_recv_unit_height());
+            xerror("xtxpool_service::create_confirm_tx_by_hash recv tx unit not exist txhash:%s block_height:%ld", str_hash.c_str(), tx_store->get_recv_unit_height());
         }
-    } else {
-        mbus::xevent_ptr_t ev = make_object_ptr<mbus::xevent_behind_on_demand_by_hash_t>(tx->get_target_addr(), tx->get_digest_str(), "lack of unit");
-        m_para->get_bus()->push_event(ev);
-        xwarn("xtxpool_service::check_and_response_recv_receipt unit of recv tx not found, try sync unit for tx:%s", cons_tx->dump().c_str());
     }
+    return nullptr;
 }
 
 bool xtxpool_service::is_receipt_sender(const xtable_id_t & tableid) const {
@@ -484,6 +491,16 @@ void xtxpool_service::make_receipts_and_send(xblock_t * block) {
         xinfo("xtxpool_service::make_receipts_and_send tx=%s,block:%s", receipt->dump().c_str(), block->dump().c_str());
         send_receipt_first_time(receipt, raw_cert_block);
     }
+}
+
+xcons_transaction_ptr_t xtxpool_service::get_confirmed_tx(const uint256_t & hash) {
+    auto confirm_tx = create_confirm_tx_by_hash(hash);
+    if (confirm_tx != nullptr) {
+        if (set_commit_prove(confirm_tx)) {
+            return confirm_tx;
+        }
+    }
+    return nullptr;
 }
 
 int32_t xtxpool_confirm_receipt_msg_t::do_write(base::xstream_t & stream) {

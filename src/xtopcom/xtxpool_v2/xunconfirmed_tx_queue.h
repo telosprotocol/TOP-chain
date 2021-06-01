@@ -112,6 +112,7 @@ public:
     const std::vector<xcons_transaction_ptr_t> get_resend_txs(uint64_t now);
     uint32_t size() const;
     uint64_t find_account_cache_height(const std::string & account_addr) const;
+    xcons_transaction_ptr_t get_unconfirmed_tx(const std::string & to_table_addr, uint64_t receipt_id) const;
 
 private:
     xtxpool_resources_face * m_para;

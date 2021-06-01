@@ -227,6 +227,14 @@ void xtxpool_t::update_receiptid_state(const std::string & table_addr, const bas
     return table->update_receiptid_state(receiptid_state);
 }
 
+xcons_transaction_ptr_t xtxpool_t::get_unconfirmed_tx(const std::string & from_table_addr, const std::string & to_table_addr, uint64_t receipt_id) const {
+    auto table = get_txpool_table_by_addr(from_table_addr);
+    if (table == nullptr) {
+        return nullptr;
+    }
+    return table->get_unconfirmed_tx(to_table_addr, receipt_id);
+}
+
 bool xtxpool_t::is_table_subscribed(uint8_t zone, uint16_t table_id) const {
     xassert(table_id < enum_vbucket_has_tables_count);
     std::lock_guard<std::mutex> lck(m_mutex[zone]);

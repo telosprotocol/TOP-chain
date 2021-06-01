@@ -30,6 +30,7 @@ public:
     // void update_non_ready_accounts(uint8_t zone, uint16_t subaddr) override {}
     void update_locked_txs(const std::string & table_addr, const std::vector<tx_info_t> & locked_tx_vec) override {}
     void update_receiptid_state(const std::string & table_addr, const base::xreceiptid_state_ptr_t & receiptid_state) override {}
+    xcons_transaction_ptr_t get_unconfirmed_tx(const std::string & from_table_addr, const std::string & to_table_addr, uint64_t receipt_id) const override {return nullptr;}
 };
 
 using xdummy_txpool_t = xtop_dummy_txpool;

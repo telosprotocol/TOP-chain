@@ -455,6 +455,11 @@ void xtxpool_table_t::update_receiptid_state(const base::xreceiptid_state_ptr_t 
     m_txmgr_table.update_receiptid_state(receiptid_state);
 }
 
+xcons_transaction_ptr_t xtxpool_table_t::get_unconfirmed_tx(const std::string & to_table_addr, uint64_t receipt_id) const {
+    std::lock_guard<std::mutex> lck(m_unconfirm_mutex);
+    return m_unconfirmed_tx_queue.get_unconfirmed_tx(to_table_addr, receipt_id);
+}
+
 // enum_xtxpool_error_type xtxpool_table_t::update_reject_rule(const std::string & account, const data::xblock_t * unit_block) {
 //     std::lock_guard<std::mutex> lck(m_filter_mutex);
 //     return m_table_filter.update_reject_rule(account, unit_block);
