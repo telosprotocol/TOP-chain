@@ -12,73 +12,33 @@ NS_BEG2(top, blockmaker)
 
 // create the state matching latest block and cache it
 bool xblock_maker_t::update_account_state(const xblock_ptr_t & latest_block, uint64_t & lacked_block_height) {
-    if (m_latest_bstate != nullptr && m_latest_bstate->get_last_block_hash() == latest_block->get_block_hash()) {
+    if (m_latest_bstate != nullptr && m_latest_bstate->get_block_viewid() == latest_block->get_viewid()) {
         xdbg("xblock_maker_t::update_account_state find cache state. account=%s,height=%ld",
             get_account().c_str(), latest_block->get_height());
         return true;
     }
 
-    m_latest_bstate = get_store()->query_account(get_account());
-    if (m_latest_bstate == nullptr) {
-        m_latest_bstate = make_object_ptr<xblockchain2_t>(get_account());
-    }
-    if (m_latest_bstate->get_last_height() > latest_block->get_height()) {
-        xwarn("xblock_maker_t::update_account_state fail-block behind account. account=%s,actual_account_height=%ld,demand_account_height=%ld",
-            get_account().c_str(), m_latest_bstate->get_last_height(), latest_block->get_height());
-        return false;
-    } else if (m_latest_bstate->get_last_height() == latest_block->get_height()) {
-        if (m_latest_bstate->get_last_block_hash() == latest_block->get_block_hash() || latest_block->is_genesis_block()) {
-            return true;
-        }
-        xerror("xblock_maker_t::update_account_state fail-block hash not match commit account. account=%s,state_height=%ld,block=%s",
-            get_account().c_str(), m_latest_bstate->get_last_height(), latest_block->dump().c_str());
+    // check missing block before get target block state
+    base::xauto_ptr<base::xvblock_t> _latest_connected_block = get_blockstore()->get_latest_connected_block(get_account());
+    if (_latest_connected_block->get_height() + 2 < latest_block->get_height()) {
+        lacked_block_height = latest_block->get_height() - 1;
+        xwarn("xblock_maker_t::update_account_state fail-missing block. account=%s,height=%ld,viewid=%ld,connect_height=%ld",
+            get_account().c_str(), latest_block->get_height(), latest_block->get_viewid(), _latest_connected_block->get_height());
         return false;
     }
 
-    // load latest blocks and then apply to state
-    std::map<uint64_t, xblock_ptr_t> blocks;
-    xblock_ptr_t current_block = latest_block;
-    blocks[current_block->get_height()] = current_block;
-    while (1) {
-        if ( current_block->is_genesis_block() && m_latest_bstate->get_last_height() == 0 ) {
-            break;
-        }
-        if (current_block->get_last_block_hash() == m_latest_bstate->get_last_block_hash()) {
-            break;
-        }
-        if (current_block->is_fullblock()) {
-            break;
-        }
-        if (current_block->get_height() == 0) {
-            xerror("xblock_maker_t::update_account_state fail-not match account state. block=%s",
-                latest_block->dump().c_str());
-            return false;
-        }
-
-        xblock_ptr_t prev_block = get_prev_block(current_block);
-        if (prev_block == nullptr) {
-            auto _block = get_blockstore()->load_block_object(*this, current_block->get_height() - 1, current_block->get_last_block_hash(), true);
-            if (_block == nullptr) {
-                xwarn("xblock_maker_t::update_account_state fail-load block.account=%s,height=%ld", get_account().c_str(), current_block->get_height() - 1);
-                lacked_block_height = current_block->get_height() - 1;
-                return false;
-            }
-            prev_block = xblock_t::raw_vblock_to_object_ptr(_block.get());
-        }
-        current_block = prev_block;
-        blocks[current_block->get_height()] = current_block;
+    base::xauto_ptr<base::xvbstate_t> bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(latest_block.get());
+    if (bstate == nullptr) {
+        lacked_block_height = latest_block->get_height() - 1;
+        xwarn("xblock_maker_t::update_account_state fail-get target state. account=%s,height=%ld,viewid=%ld",
+            get_account().c_str(), latest_block->get_height(), latest_block->get_viewid());
+        return false;
     }
-
-    // make new state
-    xaccount_ptr_t new_state = m_latest_bstate->clone_state();
-    for (auto & v : blocks) {
-        xblock_ptr_t & block = v.second;
-        new_state->apply_block(block.get());
-    }
-    m_latest_bstate = new_state;
-
-    xdbg("xblock_maker_t::update_account_state succ cache new state. account=%s,height=%ld,blocks_count=%zu",
-        get_account().c_str(), m_latest_bstate->get_last_height(), blocks.size());
+    xaccount_ptr_t target_state = std::make_shared<xunit_bstate_t>(bstate.get());
+    m_latest_bstate = target_state;
+    xassert(m_latest_bstate->get_block_height() == latest_block->get_height() && m_latest_bstate->get_block_viewid() == latest_block->get_viewid());
+    xdbg("xblock_maker_t::update_account_state succ cache new state. account=%s,height=%ld,viewid=%ld",
+        get_account().c_str(), latest_block->get_height(), latest_block->get_viewid());
     return true;
 }
 
@@ -279,58 +239,5 @@ xblock_ptr_t xblock_maker_t::get_highest_non_empty_block() const {
     return nullptr;
 }
 
-xblock_ptr_t        xblock_builder_face_t::build_empty_block(const xblock_ptr_t & prev_block,
-                                                    const data::xblock_consensus_para_t & cs_para) {
-    base::xvblock_t* _proposal_block = data::xemptyblock_t::create_next_emptyblock(prev_block.get());
-    xblock_ptr_t proposal_unit;
-    proposal_unit.attach((data::xblock_t*)_proposal_block);
-    proposal_unit->set_consensus_para(cs_para);
-    return proposal_unit;
-}
-
-
-xblock_ptr_t    xblock_builder_face_t::build_genesis_block(const std::string & account, int64_t top_balance) {
-    base::enum_vaccount_addr_type addrtype = base::xvaccount_t::get_addrtype_from_account(account);
-    base::xvblock_t* _proposal_block = nullptr;
-    if (addrtype == base::enum_vaccount_addr_type_block_contract) {
-        _proposal_block = xemptyblock_t::create_genesis_emptyblock(account, base::enum_xvblock_level_table);
-    } else if (addrtype == base::enum_vaccount_addr_type_timer || addrtype == base::enum_vaccount_addr_type_drand) {
-        _proposal_block = xemptyblock_t::create_genesis_emptyblock(account, base::enum_xvblock_level_root);
-    } else if (addrtype == base::enum_vaccount_addr_type_secp256k1_user_account
-                || addrtype == base::enum_vaccount_addr_type_secp256k1_user_sub_account
-                || addrtype == base::enum_vaccount_addr_type_native_contract
-                || addrtype == base::enum_vaccount_addr_type_custom_contract) {
-        _proposal_block = build_genesis_unit(account, top_balance);
-    } else {
-        xassert(false);
-        return nullptr;
-    }
-    xblock_ptr_t _block;
-    _block.attach((data::xblock_t*)_proposal_block);
-    xassert(_block->get_refcount() == 1);
-    return _block;
-}
-
-base::xvblock_t*    xblock_builder_face_t::build_genesis_unit(const std::string & account, int64_t top_balance) {
-    base::xvblock_t* _proposal_block;
-    if (top_balance == 0) {
-        _proposal_block = xemptyblock_t::create_genesis_emptyblock(account, base::enum_xvblock_level_unit);
-    } else {
-        xtransaction_ptr_t tx = make_object_ptr<xtransaction_t>();
-        data::xproperty_asset asset(top_balance);
-        tx->make_tx_transfer(asset);
-        // genesis transfer tx is a special transaction
-        tx->set_same_source_target_address(account);
-        tx->set_fire_timestamp(0);
-        tx->set_expire_duration(0);
-        tx->set_deposit(0);
-        tx->set_digest();
-        tx->set_len();
-        xtransaction_result_t result;
-        result.m_balance_change = top_balance;
-        _proposal_block = xlightunit_block_t::create_genesis_lightunit(account, tx, result);
-    }
-    return _proposal_block;
-}
 
 NS_END2

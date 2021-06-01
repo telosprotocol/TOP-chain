@@ -77,7 +77,8 @@ public:
     xevent_queue_ptr_t get_queue(int major_type);
 
     //XTODO,add implmentation for below
-    virtual xevent_ptr_t  create_event_for_store_index_to_db(const std::string & account, base::xvbindex_t * target_index) override;
+    virtual xevent_ptr_t  create_event_for_store_index_to_db(base::xvbindex_t * target_index) override;
+    virtual xevent_ptr_t  create_event_for_revoke_index_to_db(base::xvbindex_t * target_index) override;
     virtual xevent_ptr_t  create_event_for_store_block_to_db(base::xvblock_t * target_block) override;
     
 private:

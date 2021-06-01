@@ -8,6 +8,7 @@
 #include "xdata/xnative_contract_address.h"
 #include "xdata/xgenesis_data.h"
 #include "xvledger/xvblockstore.h"
+#include "xvledger/xvstate.h"
 
 NS_BEG2(top, data)
 
@@ -40,8 +41,25 @@ base::xvblock_t*   xblocktool_t::create_genesis_lightunit(const std::string & ac
     tx->set_deposit(0);
     tx->set_digest();
     tx->set_len();
+
     xtransaction_result_t result;
-    result.m_balance_change = top_balance;
+    xobject_ptr_t<base::xvbstate_t> bstate = make_object_ptr<base::xvbstate_t>(account, (uint64_t)0, (uint64_t)0, std::string(), std::string(), (uint64_t)0, (uint32_t)0, (uint16_t)0);
+    xobject_ptr_t<base::xvcanvas_t> canvas = make_object_ptr<base::xvcanvas_t>();
+    {
+        auto propobj = bstate->new_uint64_var(XPROPERTY_ACCOUNT_CREATE_TIME, canvas.get());
+        propobj->set(base::TOP_BEGIN_GMTIME, canvas.get());
+    }
+    if (top_balance > 0) {
+        auto propobj = bstate->new_token_var(XPROPERTY_BALANCE_AVAILABLE, canvas.get());
+        auto balance = propobj->deposit(base::vtoken_t(top_balance), canvas.get());
+        xassert(balance == top_balance);
+    }
+    std::string property_binlog;
+    canvas->encode(property_binlog);
+    result.m_property_binlog = property_binlog;
+    // TODO(jimmy) block builder class
+    xinfo("xlightunit_builder_t::build_block account=%s,height=0,binlog_size=%zu",
+        account.c_str(), property_binlog.size());
     return xlightunit_block_t::create_genesis_lightunit(account, tx, result);
 }
 
@@ -85,16 +103,6 @@ base::xvblock_t*  xblocktool_t::create_next_tableblock(const xtable_block_para_t
 
 base::xvblock_t*   xblocktool_t::create_next_fulltable(const xfulltable_block_para_t & para, base::xvblock_t* prev_block) {
     return xfull_tableblock_t::create_next_block(para, prev_block);
-}
-
-base::xvblock_t*   xblocktool_t::create_next_emptyblock(xblockchain2_t* chain) {
-    return xemptyblock_t::create_next_emptyblock(chain);
-}
-base::xvblock_t*   xblocktool_t::create_next_lightunit(const xlightunit_block_para_t & para, xblockchain2_t* chain) {
-    return xlightunit_block_t::create_next_lightunit(para, chain);
-}
-base::xvblock_t*   xblocktool_t::create_next_fullunit(xblockchain2_t* chain) {
-    return xfullunit_block_t::create_next_fullunit(chain);
 }
 
 std::string xblocktool_t::make_address_table_account(base::enum_xchain_zone_index zone, uint16_t subaddr) {

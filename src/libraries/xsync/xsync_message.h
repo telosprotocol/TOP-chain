@@ -715,7 +715,7 @@ public:
     xsync_message_chain_snapshot_t() {
     }
     xsync_message_chain_snapshot_t(const std::string &tbl_account_addr,
-        const xobject_ptr_t<base::xvboffdata_t> chain_snapshot, uint64_t height_of_fullblock):
+        const std::string & chain_snapshot, uint64_t height_of_fullblock):
     m_tbl_account_addr(tbl_account_addr), m_chain_snapshot(chain_snapshot), m_height_of_fullblock(height_of_fullblock) {
     }
 protected:
@@ -723,20 +723,19 @@ protected:
         KEEP_SIZE();
         SERIALIZE_FIELD_BT(m_tbl_account_addr);
         SERIALIZE_FIELD_BT(m_height_of_fullblock);
-        m_chain_snapshot->serialize_to(stream);
+        SERIALIZE_FIELD_BT(m_chain_snapshot);
         return CALC_LEN();
     }
     int32_t do_read(base::xstream_t & stream) override {
         KEEP_SIZE();
         DESERIALIZE_FIELD_BT(m_tbl_account_addr);
         DESERIALIZE_FIELD_BT(m_height_of_fullblock);
-        m_chain_snapshot = make_object_ptr<base::xvboffdata_t>();
-        m_chain_snapshot->serialize_from(stream);
+        DESERIALIZE_FIELD_BT(m_chain_snapshot);
         return CALC_LEN();
     }
 public:
     std::string m_tbl_account_addr;
-    xobject_ptr_t<base::xvboffdata_t> m_chain_snapshot;
+    std::string m_chain_snapshot;
     uint64_t m_height_of_fullblock;
 };
 

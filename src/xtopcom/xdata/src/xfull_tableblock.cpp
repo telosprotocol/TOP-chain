@@ -14,8 +14,8 @@ NS_BEG2(top, data)
 REG_CLS(xfull_tableblock_t);
 REG_CLS(xfulltable_output_entity_t);
 
-xfulltable_block_para_t::xfulltable_block_para_t(const xtablestate_ptr_t & last_state, const xstatistics_data_t & statistics_data) {
-    m_tablestate = last_state;
+xfulltable_block_para_t::xfulltable_block_para_t(const std::string & snapshot_hash, const xstatistics_data_t & statistics_data) {
+    m_snapshot_hash = snapshot_hash;
     m_block_statistics_data = statistics_data;
 }
 
@@ -51,26 +51,15 @@ xblockbody_para_t xfull_tableblock_t::get_blockbody_from_para(const xfulltable_b
     xobject_ptr_t<xdummy_entity_t> input = make_object_ptr<xdummy_entity_t>();
     blockbody.add_input_entity(input);
 
-    const xtablestate_ptr_t & latest_state = para.get_tablestate();
-
-    // TODO(jimmy)
-    // std::string binlog_str = latest_state->serialize_to_binlog_data_string();
-    // xassert(!binlog_str.empty());
-    // blockbody.add_input_resource(RESOURCE_ACCOUNT_INDEX_BINLOG, binlog_str);
-
-    // const xreceiptid_pairs_ptr_t & receiptid_binlog = latest_offstate->get_receiptid_state()->get_binlog();
-    // std::string receiptid_binlog_str;
-    // receiptid_binlog->serialize_to_string(receiptid_binlog_str);
-    // blockbody.add_input_resource(RESOURCE_RECEIPTID_PAIRS_BINLOG, receiptid_binlog_str);
-
     const xstatistics_data_t & statistics_data = para.get_block_statistics_data();
     auto const & serialized_data = statistics_data.serialize_based_on<base::xstream_t>();
     blockbody.add_output_resource(RESOURCE_NODE_SIGN_STATISTICS, {std::begin(serialized_data), std::end(serialized_data) });
 
-    latest_state->merge_new_full();
-    std::string offdata_root = latest_state->build_root_hash();
-    xobject_ptr_t<xfulltable_output_entity_t> output = make_object_ptr<xfulltable_output_entity_t>(offdata_root);
+    std::string snapshot_hash = para.get_snapshot_hash();
+    xobject_ptr_t<xfulltable_output_entity_t> output = make_object_ptr<xfulltable_output_entity_t>(snapshot_hash);
     blockbody.add_output_entity(output);
+
+    blockbody.add_output_resource(XRESOURCE_BINLOG_HASH_KEY, snapshot_hash);  // TODO(jimmy) bl = binlog
 
     blockbody.create_default_input_output();
     return blockbody;

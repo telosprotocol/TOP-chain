@@ -12,8 +12,11 @@
 #include "xdata/xcodec/xmsgpack/xelection_result_store_codec.hpp"
 #include "xdata/xelection/xelection_group_result.h"
 #include "xdata/xelection/xelection_result_property.h"
+#include "xdata/xunit_bstate.h"
 #include "xbasic/xutility.h"
 #include "xvledger/xvblockstore.h"
+#include "xvledger/xvstate.h"
+#include "xvledger/xvledger.h"
 
 NS_BEG2(top, election)
 
@@ -171,26 +174,30 @@ void xvnode_house_t::load_group_from_store(const xvip2_t & target_node) {
     if (blk_ptr == nullptr)
         return;
 
-    xblock_t *blk = (xblock_t*) blk_ptr.get();
-    blk->add_ref();
-
-    xblock_ptr_t block{};
-    block.attach(blk);
+    base::xauto_ptr<base::xvbstate_t> bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(blk_ptr.get());
+    if (bstate == nullptr) {
+        xwarn("xvnode_house_t::load_group_from_store fail-load state.block=%s", blk_ptr->dump().c_str());
+        return;
+    }
+    xaccount_ptr_t state = std::make_shared<xunit_bstate_t>(bstate.get());
 
     std::string result;
-    const xnative_property_t & native_property = block->get_native_property();
-    auto property_names = data::election::get_property_name_by_addr(common::xaccount_address_t{block->get_block_owner()});
+    auto property_names = data::election::get_property_name_by_addr(common::xaccount_address_t{blk_ptr->get_account()});
     using top::data::election::xelection_result_store_t;
     for (auto const & property : property_names) {
-        native_property.native_string_get(property, result);
+        state->string_get(property, result);
         if (result.empty()) {
+            xwarn("[xvnode_house_t::load_group_from_store] string get null. %s, height=%" PRIu64 ",property=%s",
+                blk_ptr->get_account().c_str(), blk_ptr->get_height(), property.c_str());
             continue;
         }
         auto const & election_result_store = codec::msgpack_decode<xelection_result_store_t>({std::begin(result), std::end(result)});
         if (election_result_store.empty()) {
-            xwarn("[xvnode_house_t::load_group_from_store] elect result is empty! %s, %" PRIu64, block->get_block_owner().c_str(), block->get_height());
+            xwarn("[xvnode_house_t::load_group_from_store] elect result is empty! %s, %" PRIu64, blk_ptr->get_account().c_str(), blk_ptr->get_height());
             continue;
         }
+        xdbg("[xvnode_house_t::load_group_from_store] add_group succ. %s, %" PRIu64 ",property=%s,value_size=%zu",
+            elect_address.c_str(), elect_height, property.c_str(), result.size());
         common::xnetwork_id_t nid{uint32_t(get_network_id_from_xip2(target_node))};
         add_group(elect_address, elect_height, election_result_store, nid);
     }

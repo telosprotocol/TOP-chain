@@ -22,8 +22,8 @@ class xsync_command_t {
 
 class xsync_on_blocks_response_command_t : public xsync_command_t<xchain_downloader_t *> {
     public:
-        xsync_on_blocks_response_command_t(const std::vector<data::xblock_ptr_t>& blocks, const vnetwork::xvnode_address_t& self_addr, 
-            const vnetwork::xvnode_address_t& target_addr): 
+        xsync_on_blocks_response_command_t(const std::vector<data::xblock_ptr_t>& blocks, const vnetwork::xvnode_address_t& self_addr,
+            const vnetwork::xvnode_address_t& target_addr):
             m_blocks(blocks), m_self_addr(self_addr), m_target_addr(target_addr){
         };
 
@@ -37,10 +37,10 @@ class xsync_on_blocks_response_command_t : public xsync_command_t<xchain_downloa
 class xsync_on_snapshot_response_command_t : public xsync_command_t<xchain_downloader_t *> {
     public:
         xsync_on_snapshot_response_command_t(
-            xobject_ptr_t<base::xvboffdata_t> chain_snapshot, uint64_t height, 
-            const vnetwork::xvnode_address_t& self_addr, 
-            const vnetwork::xvnode_address_t& target_addr): 
-            m_height(height), m_snapshot(chain_snapshot),  m_self_addr(self_addr), 
+            const std::string & chain_snapshot, uint64_t height,
+            const vnetwork::xvnode_address_t& self_addr,
+            const vnetwork::xvnode_address_t& target_addr):
+            m_height(height), m_snapshot(chain_snapshot),  m_self_addr(self_addr),
             m_target_addr(target_addr){
         };
 
@@ -48,7 +48,7 @@ class xsync_on_snapshot_response_command_t : public xsync_command_t<xchain_downl
 
     private:
         uint64_t m_height;
-        xobject_ptr_t<base::xvboffdata_t> m_snapshot;
+        std::string m_snapshot;
         vnetwork::xvnode_address_t m_self_addr;
         vnetwork::xvnode_address_t m_target_addr;
 };
@@ -56,10 +56,10 @@ class xsync_on_snapshot_response_command_t : public xsync_command_t<xchain_downl
 class xsync_download_command_t : public xsync_command_t<xchain_downloader_t *> {
     public:
         xsync_download_command_t(
-            const std::pair<uint64_t, uint64_t> height_interval, const enum_chain_sync_policy sync_policy, 
-            const vnetwork::xvnode_address_t& self_addr, 
-            const vnetwork::xvnode_address_t& target_addr): 
-            m_expect_height_interval(height_interval), m_sync_policy(sync_policy), 
+            const std::pair<uint64_t, uint64_t> height_interval, const enum_chain_sync_policy sync_policy,
+            const vnetwork::xvnode_address_t& self_addr,
+            const vnetwork::xvnode_address_t& target_addr):
+            m_expect_height_interval(height_interval), m_sync_policy(sync_policy),
             m_self_addr(self_addr), m_target_addr(target_addr){
         };
 

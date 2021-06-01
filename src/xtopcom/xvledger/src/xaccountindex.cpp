@@ -13,22 +13,14 @@ NS_BEG2(top, base)
 REG_CLS(xtable_mbt_t);
 REG_CLS(xtable_mbt_binlog_t);
 
-xaccount_index_t::xaccount_index_t(uint64_t height) {
-    set_latest_unit_height(height);
-}
-
-xaccount_index_t::xaccount_index_t(uint64_t height,
-                                    const std::string & block_hash,
-                                    base::enum_xvblock_class block_class,
-                                    base::enum_xvblock_type block_type,
-                                    enum_xblock_consensus_type consensus_type,
+xaccount_index_t::xaccount_index_t(base::xvblock_t* unit,
                                     bool has_unconfirm_tx,
                                     bool is_account_destroy) {
-    set_latest_unit_height(height);
-    set_latest_unit_hash(block_hash);
-    set_latest_unit_class(block_class);
-    set_latest_unit_type(block_type);
-    set_latest_unit_consensus_type(consensus_type);
+    m_latest_unit_height = unit->get_height();
+    m_latest_unit_viewid = unit->get_viewid();
+    set_latest_unit_class(unit->get_block_class());
+    set_latest_unit_type(unit->get_block_type());
+    set_latest_unit_consensus_type(base::enum_xblock_consensus_flag_authenticated);  // TODO(jimmy) always use highqc
     if (has_unconfirm_tx) {
         set_account_index_flag(enum_xaccount_index_flag_has_unconfirm_tx);
     }
@@ -40,7 +32,7 @@ xaccount_index_t::xaccount_index_t(uint64_t height,
 int32_t xaccount_index_t::do_write(base::xstream_t & stream) const {
     const int32_t begin_size = stream.size();
     stream.write_compact_var(m_latest_unit_height);
-    stream.write_compact_var(m_latest_unit_hash);
+    stream.write_compact_var(m_latest_unit_viewid);
     stream.write_compact_var(m_account_flag);
     return (stream.size() - begin_size);
 }
@@ -48,9 +40,25 @@ int32_t xaccount_index_t::do_write(base::xstream_t & stream) const {
 int32_t xaccount_index_t::do_read(base::xstream_t & stream) {
     const int32_t begin_size = stream.size();
     stream.read_compact_var(m_latest_unit_height);
-    stream.read_compact_var(m_latest_unit_hash);
+    stream.read_compact_var(m_latest_unit_viewid);
     stream.read_compact_var(m_account_flag);
     return (begin_size - stream.size());
+}
+
+int32_t xaccount_index_t::serialize_to(std::string & bin_data) const {
+    base::xautostream_t<1024> _stream(base::xcontext_t::instance());
+    int32_t result = do_write(_stream);
+    if(result > 0)
+        bin_data.assign((const char*)_stream.data(),_stream.size());
+    xassert(result > 0);
+    return result;
+}
+
+int32_t xaccount_index_t::serialize_from(const std::string & bin_data) {
+    base::xstream_t _stream(base::xcontext_t::instance(),(uint8_t*)bin_data.data(),(uint32_t)bin_data.size());
+    int32_t result = do_read(_stream);
+    xassert(result > 0);
+    return result;
 }
 
 // [enum_xvblock_class 3bit][enum_xvblock_type 7bit][enum_xaccount_index_flag 4bit][enum_xblock_consensus_type 2bit] = 16bits
@@ -75,32 +83,26 @@ bool xaccount_index_t::check_account_index_flag(enum_xaccount_index_flag _flag) 
     return ((copy_flags & _flag) != 0);
 }
 
-void xaccount_index_t::set_latest_unit_hash(const std::string & hash) {
-    uint16_t hash16 = static_cast<uint16_t>(base::xhash32_t::digest(hash) & 0xFFFF);
-    m_latest_unit_hash = hash16;
-}
-
-bool xaccount_index_t::is_match_unit_hash(const std::string & hash) const {
-    uint16_t hash16 = static_cast<uint16_t>(base::xhash32_t::digest(hash) & 0xFFFF);
-    return hash16 == m_latest_unit_hash;
+bool xaccount_index_t::is_match_unit(base::xvblock_t* unit) const {
+    if ( (m_latest_unit_height == unit->get_height())
+        && (m_latest_unit_viewid == unit->get_viewid()) ) {
+        return true;
+    }
+    return false;
 }
 
 std::string xaccount_index_t::dump() const {
     char local_param_buf[128];
-    xprintf(local_param_buf,sizeof(local_param_buf),"{height=%" PRIu64 ",hash=%u,flag=0x%x}",
-        m_latest_unit_height, m_latest_unit_hash, m_account_flag);
+    xprintf(local_param_buf,sizeof(local_param_buf),"{height=%" PRIu64 ",viewid=%" PRIu64 ",flag=0x%x}",
+        m_latest_unit_height, m_latest_unit_viewid, m_account_flag);
     return std::string(local_param_buf);
 }
 
 xtable_mbt_binlog_t::xtable_mbt_binlog_t() {
-    xdbg("xtable_mbt_binlog_t::xtable_mbt_binlog_t create,this=%p", this);
+
 }
 xtable_mbt_binlog_t::xtable_mbt_binlog_t(const std::map<std::string, xaccount_index_t> & changed_indexs) {
-    xdbg("xtable_mbt_binlog_t::xtable_mbt_binlog_t create,this=%p", this);
     m_account_indexs = changed_indexs;
-}
-xtable_mbt_binlog_t::~xtable_mbt_binlog_t() {
-    xdbg("xtable_mbt_binlog_t::xtable_mbt_binlog_t destroy,this=%p", this);
 }
 
 int32_t xtable_mbt_binlog_t::do_write(base::xstream_t & stream) {
@@ -331,15 +333,13 @@ xobject_ptr_t<xtable_mbt_t> xtable_mbt_t::build_new_tree(const xobject_ptr_t<xta
 }
 
 xtable_mbt_t::xtable_mbt_t() {
-    xdbg("xtable_mbt_t::xtable_mbt_t create,this=%p", this);
+
 }
+
 xtable_mbt_t::xtable_mbt_t(const std::map<uint16_t, xtable_mbt_bucket_node_ptr_t> & bucket_nodes) {
-    xdbg("xtable_mbt_t::xtable_mbt_t create,this=%p", this);
     m_buckets = bucket_nodes;
 }
-xtable_mbt_t::~xtable_mbt_t() {
-    xdbg("xtable_mbt_t::xtable_mbt_t destroy,this=%p", this);
-}
+
 uint16_t xtable_mbt_t::account_to_index(const std::string & account) const {
     uint32_t account_hash = base::xhash32_t::digest(account);
     uint16_t account_index = account_hash % enum_tableindex_bucket_num;
@@ -447,14 +447,12 @@ size_t xtable_mbt_t::get_account_size() const {
 
 xtable_mbt_new_state_t::xtable_mbt_new_state_t()
 :base::xdataunit_t(base::xdataunit_t::enum_xdata_type_undefine) {
-    xdbg("xtable_mbt_new_state_t::xtable_mbt_new_state_t create,this=%p", this);
     m_last_full_state = make_object_ptr<xtable_mbt_t>();
     m_newest_binlog_state = make_object_ptr<xtable_mbt_binlog_t>();
 }
 
 xtable_mbt_new_state_t::xtable_mbt_new_state_t(const xtable_mbt_ptr_t & last_mbt, const xtable_mbt_binlog_ptr_t & binlog)
 :base::xdataunit_t(base::xdataunit_t::enum_xdata_type_undefine) {
-    xdbg("xtable_mbt_new_state_t::xtable_mbt_new_state_t create,this=%p", this);
     m_last_full_state = last_mbt;
     if (nullptr == m_last_full_state) {
         m_last_full_state = make_object_ptr<xtable_mbt_t>();
@@ -463,10 +461,6 @@ xtable_mbt_new_state_t::xtable_mbt_new_state_t(const xtable_mbt_ptr_t & last_mbt
     if (nullptr == m_newest_binlog_state) {
         m_newest_binlog_state = make_object_ptr<xtable_mbt_binlog_t>();
     }
-}
-
-xtable_mbt_new_state_t::~xtable_mbt_new_state_t() {
-    xdbg("xtable_mbt_new_state_t::xtable_mbt_new_state_t destroy,this=%p", this);
 }
 
 int32_t xtable_mbt_new_state_t::do_write(base::xstream_t & stream) {

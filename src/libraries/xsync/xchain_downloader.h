@@ -6,7 +6,6 @@
 
 #include "xmbus/xevent_account.h"
 #include "xsync/xchain_info.h"
-#include "xdata/xblockchain.h"
 #include "xsync/xsync_range_mgr.h"
 #include "xsync/xsync_store.h"
 #include "xsync/xsync_sender.h"
@@ -31,7 +30,7 @@ public:
 
     virtual void on_response(std::vector<data::xblock_ptr_t> &blocks, const vnetwork::xvnode_address_t &self_addr, const vnetwork::xvnode_address_t &from_addr) = 0;
     virtual void on_behind(uint64_t start_height, uint64_t end_height, enum_chain_sync_policy sync_policy, const vnetwork::xvnode_address_t &self_addr, const vnetwork::xvnode_address_t &target_addr, const std::string &reason) = 0;
-    virtual void on_chain_snapshot_response(const xobject_ptr_t<base::xvboffdata_t> chain_snapshot, uint64_t height, const vnetwork::xvnode_address_t &self_addr, const vnetwork::xvnode_address_t &from_addr) = 0;
+    virtual void on_chain_snapshot_response(const std::string & chain_snapshot, uint64_t height, const vnetwork::xvnode_address_t &self_addr, const vnetwork::xvnode_address_t &from_addr) = 0;
 };
 
 using xchain_downloader_face_ptr_t = std::shared_ptr<xchain_downloader_face_t>;
@@ -115,8 +114,8 @@ public:
     bool downloading(int64_t now) override;
     void on_response(std::vector<data::xblock_ptr_t> &blocks, const vnetwork::xvnode_address_t &self_addr, const vnetwork::xvnode_address_t &from_addr) override;
     void on_behind(uint64_t start_height, uint64_t end_height, enum_chain_sync_policy sync_policy, const vnetwork::xvnode_address_t &self_addr, const vnetwork::xvnode_address_t &target_addr, const std::string &reason) override;
-    void on_chain_snapshot_response(const xobject_ptr_t<base::xvboffdata_t> chain_snapshot, uint64_t height, const vnetwork::xvnode_address_t &self_addr, const vnetwork::xvnode_address_t &from_addr) override;
-    xsync_command_execute_result execute_next_download(const xobject_ptr_t<base::xvboffdata_t> chain_snapshot, uint64_t height, const vnetwork::xvnode_address_t &self_addr, const vnetwork::xvnode_address_t &from_addr);
+    void on_chain_snapshot_response(const std::string & chain_snapshot, uint64_t height, const vnetwork::xvnode_address_t &self_addr, const vnetwork::xvnode_address_t &from_addr) override;
+    xsync_command_execute_result execute_next_download(const std::string & chain_snapshot, uint64_t height, const vnetwork::xvnode_address_t &self_addr, const vnetwork::xvnode_address_t &from_addr);
     xsync_command_execute_result execute_next_download(std::vector<data::xblock_ptr_t> &blocks, const vnetwork::xvnode_address_t &self_addr, const vnetwork::xvnode_address_t &from_addr);
     xsync_command_execute_result execute_download(uint64_t start_height, uint64_t end_height, enum_chain_sync_policy sync_policy, const vnetwork::xvnode_address_t &self_addr, const vnetwork::xvnode_address_t &target_addr, const std::string &reason);
 
@@ -134,7 +133,7 @@ protected:
 
     bool send_request(int64_t now);
     bool send_request(int64_t now, const xsync_message_chain_snapshot_meta_t &chain_snapshot_meta);
-    xentire_block_request_ptr_t create_request(uint64_t start_height, uint32_t count);    
+    xentire_block_request_ptr_t create_request(uint64_t start_height, uint32_t count);
 protected:
     std::string m_vnode_id;
     xsync_store_face_t *m_sync_store;

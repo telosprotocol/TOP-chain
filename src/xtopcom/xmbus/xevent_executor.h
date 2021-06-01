@@ -56,7 +56,7 @@ class xevent_chain_snaphsot_t : public xevent_sync_executor_t {
 public:
     xevent_chain_snaphsot_t(
             const std::string tbl_account_addr,
-            const xobject_ptr_t<base::xvboffdata_t> _chain_snapshot,
+            const std::string & _chain_snapshot,
             uint64_t height,
             const vnetwork::xvnode_address_t& _self_address,
             const vnetwork::xvnode_address_t& _from_address,
@@ -70,7 +70,7 @@ public:
     from_address(_from_address) {
     }
     std::string m_tbl_account_addr;
-    xobject_ptr_t<base::xvboffdata_t> m_chain_snapshot;
+    std::string m_chain_snapshot;
     uint64_t m_height;
     vnetwork::xvnode_address_t self_address;
     vnetwork::xvnode_address_t from_address;

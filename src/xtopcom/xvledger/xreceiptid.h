@@ -23,6 +23,9 @@ class xreceiptid_pair_t {
  public:
     int32_t         do_write(base::xstream_t & stream) const;
     int32_t         do_read(base::xstream_t & stream);
+    int32_t         serialize_to(std::string & bin_data) const;
+    int32_t         serialize_from(const std::string & bin_data);
+
     std::string     dump() const;
     uint64_t        get_sendid_max() const {return m_send_id_max;}
     uint64_t        get_confirmid_max() const {return m_send_id_max - m_unconfirm_num;}

@@ -495,10 +495,13 @@ namespace top
             
             //build default stores
             xauto_ptr<xvstatestore_t> default_state_store(new xvstatestore_t());
-            set_xstatestore(default_state_store.get());
+            set_xstatestore(default_state_store());
             
             xauto_ptr<xvtxstore_t> default_txs_store(new xvtxstore_t());
-            set_xtxstore(default_txs_store.get());
+            set_xtxstore(default_txs_store());
+            
+            xauto_ptr<xvcontractstore_t> default_contract_store(new xvcontractstore_t());
+            set_xcontractstore(default_contract_store());
             
             xkinfo("xvchain_t::xvchain_t,chain_id(%d)",m_chain_id);
         }
@@ -615,6 +618,13 @@ namespace top
             return (xvstatestore_t*)target;
         }
     
+        xvcontractstore_t*  xvchain_t::get_xcontractstore()//global shared statestore instance
+        {
+            xobject_t* target = m_plugins[enum_xvchain_plugin_contract_store];
+            xassert(target != NULL);
+            return (xvcontractstore_t*)target;
+        }
+    
         xveventbus_t*    xvchain_t::get_xevmbus() //global mbus object
         {
             xobject_t* target = m_plugins[enum_xvchain_plugin_event_mbus];
@@ -655,6 +665,15 @@ namespace top
                 return false;
             
             return register_plugin(new_store,enum_xvchain_plugin_state_store);
+        }
+    
+        bool    xvchain_t::set_xcontractstore(xvcontractstore_t * new_store)
+        {
+            xassert(new_store != NULL);
+            if(NULL == new_store)
+                return false;
+            
+            return register_plugin(new_store,enum_xvchain_plugin_contract_store);
         }
     
         bool    xvchain_t::set_xevmbus(xveventbus_t * new_mbus)

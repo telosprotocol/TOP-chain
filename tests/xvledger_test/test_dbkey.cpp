@@ -1,6 +1,6 @@
 #include "gtest/gtest.h"
 #include "xvledger/xvdbkey.h"
-#include "xvledger/xvtransaction.h"
+#include "xvledger/xvtxindex.h"
 
 using namespace top;
 using namespace top::base;

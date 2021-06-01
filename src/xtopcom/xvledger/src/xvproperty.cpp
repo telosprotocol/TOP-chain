@@ -64,18 +64,21 @@ namespace top
     
         bool  xvproperty_t::take_snapshot_to(xvcanvas_t & target_canvas) //property create full-snapshot for it'value
         {
+            //using state object'locker,here ask parent unit must be set first
+            std::lock_guard<std::recursive_mutex> locker(((xvexegroup_t*)get_parent_unit())->get_mutex());
+            
             auto_reference<xvalueobj_t> ref_valu_obj(load_value_obj());//hold object so that not been release by clear_value();
             const xvalue_t& orginal_value = ref_valu_obj->get_value();//link the value
 
             xvmethod_t clear_value_instruction(get_execute_uri(),enum_xvinstruct_class_core_function, enum_xvinstruct_core_method_clear_value);
-            target_canvas.record(this, clear_value_instruction);
+            target_canvas.record(clear_value_instruction);
             
             xvmethod_t new_value_instruction(get_execute_uri(),enum_xvinstruct_class_core_function, enum_xvinstruct_core_method_reset_value,(xvalue_t&)orginal_value);
-            target_canvas.record(this, new_value_instruction);
+            target_canvas.record(new_value_instruction);
             
             return true;
         }
-        
+    
         xvalueobj_t*  xvproperty_t::load_value_obj() const
         {
             return m_value_ptr;
@@ -143,14 +146,20 @@ namespace top
             return true;
         }
     
-        bool  xvproperty_t::clear_value() //erase to empty string
+        bool  xvproperty_t::clear_value(xvcanvas_t * canvas) //erase to empty string
         {
+            //using state object'locker,here ask parent unit must be set first
+            std::lock_guard<std::recursive_mutex> locker(((xvexegroup_t*)get_parent_unit())->get_mutex());
+            
             xvmethod_t instruction(get_execute_uri(),enum_xvinstruct_class_core_function, enum_xvinstruct_core_method_clear_value);
-            return (execute(instruction,(xvcanvas_t*)get_canvas()).get_error() == enum_xcode_successful);
+            return (execute(instruction,canvas).get_error() == enum_xcode_successful);
         }
         
-        bool  xvproperty_t::reset_value(const xvalue_t & new_value) //erase_all and set all
+        bool  xvproperty_t::reset_value(const xvalue_t & new_value,xvcanvas_t * canvas) //erase_all and set all
         {
+            //using state object'locker,here ask parent unit must be set first
+            std::lock_guard<std::recursive_mutex> locker(((xvexegroup_t*)get_parent_unit())->get_mutex());
+            
             if(  (new_value.get_type()   != get_value().get_type()) //must be same type
                &&(get_value().get_type() != xvalue_t::enum_xvalue_type_null) ) //null value allow to replace by any other
             {
@@ -158,10 +167,10 @@ namespace top
                 return false;
             }
             xvmethod_t instruction(get_execute_uri(),enum_xvinstruct_class_core_function, enum_xvinstruct_core_method_reset_value,(xvalue_t &)new_value);
-            return (execute(instruction,(xvcanvas_t*)get_canvas()).get_error() == enum_xcode_successful);
+            return (execute(instruction,canvas).get_error() == enum_xcode_successful);
         }
         
-        const xvalue_t  xvproperty_t::do_clear_value(const xvmethod_t & op)
+        const xvalue_t  xvproperty_t::do_clear_value(const xvmethod_t & op,xvcanvas_t * canvas)
         {
             if(op.get_method_type() != enum_xvinstruct_class_core_function)
                 return xvalue_t(enum_xerror_code_bad_type);
@@ -179,7 +188,7 @@ namespace top
             return xvalue_t(enum_xcode_successful);
         }
     
-        const xvalue_t  xvproperty_t::do_reset_value(const xvmethod_t & op)
+        const xvalue_t  xvproperty_t::do_reset_value(const xvmethod_t & op,xvcanvas_t * canvas)
         {
             if(op.get_method_type() != enum_xvinstruct_class_core_function)
                 return xvalue_t(enum_xerror_code_bad_type);
@@ -200,12 +209,12 @@ namespace top
             
             //replace by new value_t
             xvalue_t & writable_value = (xvalue_t&)get_writable_value();
-            writable_value = std::move(new_value);
+            writable_value = new_value;
 
             return xvalue_t(enum_xcode_successful);
         }
     
-        const xvalue_t  xvproperty_t::do_clone_value(const xvmethod_t & op)
+        const xvalue_t  xvproperty_t::do_clone_value(const xvmethod_t & op,xvcanvas_t * canvas)
         {
             if(op.get_method_type() != enum_xvinstruct_class_core_function)
                 return xvalue_t(enum_xerror_code_bad_type);
@@ -314,23 +323,36 @@ namespace top
     
         const vtoken_t  xtokenvar_t::get_balance()
         {
+            //using state object'locker,here ask parent unit must be set first
+            std::lock_guard<std::recursive_mutex> locker(((xvexegroup_t*)get_parent_unit())->get_mutex());
+            
             return get_value().get_token();
         }
         
-        const xvalue_t xtokenvar_t::do_query(const xvmethod_t & op) //read-only
+        const xvalue_t xtokenvar_t::do_query(const xvmethod_t & op,xvcanvas_t * canvas) //read-only
         {
             return xvalue_t(get_balance());
         }
     
-        const vtoken_t xtokenvar_t::deposit(const vtoken_t add_token)
+        const vtoken_t xtokenvar_t::deposit(const vtoken_t add_token,xvcanvas_t * canvas)
         {
+            //using state object'locker,here ask parent unit must be set first
+            std::lock_guard<std::recursive_mutex> locker(((xvexegroup_t*)get_parent_unit())->get_mutex());
+            
+            xassert(add_token >= 0);
+            if((int64_t)add_token <= 0)
+                return get_balance();
+            
             xvalue_t param(add_token);
             xvmethod_t instruction(get_execute_uri(),enum_xvinstruct_class_state_function, enum_xvinstruct_state_method_deposit_token,param);
-            return (vtoken_t)execute(instruction,(xvcanvas_t*)get_canvas()).get_token();
+            return (vtoken_t)execute(instruction,canvas).get_token();
         }
         
-        const vtoken_t xtokenvar_t::withdraw(const vtoken_t sub_token)
+        const vtoken_t xtokenvar_t::withdraw(const vtoken_t sub_token,xvcanvas_t * canvas)
         {
+            //using state object'locker,here ask parent unit must be set first
+            std::lock_guard<std::recursive_mutex> locker(((xvexegroup_t*)get_parent_unit())->get_mutex());
+            
             xassert(sub_token >= 0);
             if((int64_t)sub_token <= 0)
                 return get_balance();
@@ -339,10 +361,10 @@ namespace top
             xvalue_t withdraw_value(sub_token);
             xvmethod_t instruction(get_execute_uri(),enum_xvinstruct_class_state_function,enum_xvinstruct_state_method_withdraw_token,current_balance,withdraw_value);
             
-            return (vtoken_t)execute(instruction,(xvcanvas_t*)get_canvas()).get_token();
+            return (vtoken_t)execute(instruction,canvas).get_token();
         }
         
-        const xvalue_t xtokenvar_t::do_deposit(const xvmethod_t & op)
+        const xvalue_t xtokenvar_t::do_deposit(const xvmethod_t & op,xvcanvas_t * canvas)
         {
             if(op.get_method_id() != enum_xvinstruct_state_method_deposit_token)
                 return xvalue_t(enum_xerror_code_bad_method);
@@ -361,7 +383,7 @@ namespace top
             return xvalue_t(new_balance);
         }
         
-        const xvalue_t xtokenvar_t::do_withdraw(const xvmethod_t & op)
+        const xvalue_t xtokenvar_t::do_withdraw(const xvmethod_t & op,xvcanvas_t * canvas)
         {
             if(op.get_method_id() != enum_xvinstruct_state_method_withdraw_token)
                 return xvalue_t(enum_xerror_code_bad_method);
@@ -434,17 +456,25 @@ namespace top
      
         const vnonce_t xnoncevar_t::get_nonce()
         {
+            //using state object'locker,here ask parent unit must be set first
+            std::lock_guard<std::recursive_mutex> locker(((xvexegroup_t*)get_parent_unit())->get_mutex());
             return get_value().get_nonce();
         }
         
-        const vnonce_t xnoncevar_t::alloc_nonce() //return the new available nonce
+        const vnonce_t xnoncevar_t::alloc_nonce(xvcanvas_t * canvas) //return the new available nonce
         {
+            //using state object'locker,here ask parent unit must be set first
+            std::lock_guard<std::recursive_mutex> locker(((xvexegroup_t*)get_parent_unit())->get_mutex());
+
             xvmethod_t instruction(get_execute_uri(),enum_xvinstruct_class_state_function, enum_xvinstruct_state_method_nonce_alloc);
-            return (vnonce_t)execute(instruction,(xvcanvas_t*)get_canvas()).get_nonce();
+            return (vnonce_t)execute(instruction,canvas).get_nonce();
         }
         
-        const xvalue_t  xnoncevar_t::do_alloc(const xvmethod_t & op)
+        const xvalue_t  xnoncevar_t::do_alloc(const xvmethod_t & op,xvcanvas_t * canvas)
         {
+            //using state object'locker,here ask parent unit must be set first
+            std::lock_guard<std::recursive_mutex> locker(((xvexegroup_t*)get_parent_unit())->get_mutex());
+
             if(op.get_method_id() != enum_xvinstruct_state_method_nonce_alloc)
                 return xvalue_t(enum_xerror_code_bad_method);
             
@@ -496,18 +526,20 @@ namespace top
      
         const std::string & xstringvar_t::query() const //return whole string
         {
+            //using state object'locker,here ask parent unit must be set first
+            std::lock_guard<std::recursive_mutex> locker(((xvexegroup_t*)get_parent_unit())->get_mutex());
             return get_value().get_string();
         }
     
-        bool  xstringvar_t::clear() //erase to empty string
+        bool  xstringvar_t::clear(xvcanvas_t * canvas) //erase to empty string
         {
-            return clear_value();
+            return clear_value(canvas);
         }
     
-        bool  xstringvar_t::reset(const std::string & value) //erase_all and set all
+        bool  xstringvar_t::reset(const std::string & value,xvcanvas_t * canvas) //erase_all and set all
         {
             xvalue_t new_val(value);
-            return reset_value(new_val);
+            return reset_value(new_val,canvas);
         }
         
         //---------------------------------xcodevar_t---------------------------------//
@@ -545,12 +577,12 @@ namespace top
             return xstringvar_t::query_interface(_enum_xobject_type_);
         }
     
-        bool  xcodevar_t::deploy_code(const std::string & values)//erase_all and set all
+        bool  xcodevar_t::deploy_code(const std::string & values,xvcanvas_t * canvas)//erase_all and set all
         {
             if(get_value().get_string().empty() == false) //once deploy, never allow to modify
                 return false;
             
-            return xstringvar_t::reset(values);
+            return xstringvar_t::reset(values,canvas);
         }
         
         //---------------------------------xhashmapvar_t---------------------------------//
@@ -597,6 +629,9 @@ namespace top
     
         bool   xhashmapvar_t::find(const std::string & key)//test whether key is existing or not
         {
+            //using state object'locker,here ask parent unit must be set first
+            std::lock_guard<std::recursive_mutex> locker(((xvexegroup_t*)get_parent_unit())->get_mutex());
+
             auto map_obj = get_value().get_hashmap();
             xassert(map_obj != nullptr);
             if(map_obj != nullptr)
@@ -610,6 +645,9 @@ namespace top
     
         const std::map<std::string,std::string> xhashmapvar_t::query(const std::string & key)
         {
+            //using state object'locker,here ask parent unit must be set first
+            std::lock_guard<std::recursive_mutex> locker(((xvexegroup_t*)get_parent_unit())->get_mutex());
+
             auto map_obj = get_value().get_hashmap();
             xassert(map_obj != nullptr);
             if(map_obj != nullptr)
@@ -623,6 +661,9 @@ namespace top
     
         const std::string   xhashmapvar_t::query(const std::string & key,const std::string & field) //key must be exist,otherwise return empty string
         {
+            //using state object'locker,here ask parent unit must be set first
+            std::lock_guard<std::recursive_mutex> locker(((xvexegroup_t*)get_parent_unit())->get_mutex());
+
             auto map_obj = get_value().get_hashmap();
             xassert(map_obj != nullptr);
             if(map_obj != nullptr)
@@ -640,42 +681,51 @@ namespace top
             return std::string();
         }
 
-        bool  xhashmapvar_t::erase(const std::string & key)//erase evey filed assocated with this key
+        bool  xhashmapvar_t::erase(const std::string & key,xvcanvas_t * canvas)//erase evey filed assocated with this key
         {
+            //using state object'locker,here ask parent unit must be set first
+            std::lock_guard<std::recursive_mutex> locker(((xvexegroup_t*)get_parent_unit())->get_mutex());
+
             xvalue_t target_key(key);
             xvmethod_t instruction(get_execute_uri(),enum_xvinstruct_class_state_function, enum_xvinstruct_state_method_hashmap_erase,target_key);
-            return (execute(instruction,(xvcanvas_t*)get_canvas()).get_error() == enum_xcode_successful);
+            return (execute(instruction,canvas).get_error() == enum_xcode_successful);
         }
     
-        bool  xhashmapvar_t::erase(const std::string & key,const std::string & field)//only successful when key already existing
+        bool  xhashmapvar_t::erase(const std::string & key,const std::string & field,xvcanvas_t * canvas)//only successful when key already existing
         {
+            //using state object'locker,here ask parent unit must be set first
+            std::lock_guard<std::recursive_mutex> locker(((xvexegroup_t*)get_parent_unit())->get_mutex());
+
             xvalue_t target_key(key);
             xvalue_t target_field(field);
             xvmethod_t instruction(get_execute_uri(),enum_xvinstruct_class_state_function, enum_xvinstruct_state_method_hashmap_erase,target_key,target_field);
-            return (execute(instruction,(xvcanvas_t*)get_canvas()).get_error() == enum_xcode_successful);
+            return (execute(instruction,canvas).get_error() == enum_xcode_successful);
         }
     
-        bool  xhashmapvar_t::insert(const std::string & key,const std::string & field,const std::string & value)//create key if not found key
+        bool  xhashmapvar_t::insert(const std::string & key,const std::string & field,const std::string & value,xvcanvas_t * canvas)//create key if not found key
         {
+            //using state object'locker,here ask parent unit must be set first
+            std::lock_guard<std::recursive_mutex> locker(((xvexegroup_t*)get_parent_unit())->get_mutex());
+
             xvalue_t new_key(key);
             xvalue_t new_field(field);
             xvalue_t new_value(value);
             xvmethod_t instruction(get_execute_uri(),enum_xvinstruct_class_state_function, enum_xvinstruct_state_method_hashmap_insert,new_key,new_field,new_value);
-            return (execute(instruction,(xvcanvas_t*)get_canvas()).get_error() == enum_xcode_successful);
+            return (execute(instruction,canvas).get_error() == enum_xcode_successful);
         }
         
-        bool  xhashmapvar_t::clear() //erase all key and values
+        bool  xhashmapvar_t::clear(xvcanvas_t * canvas) //erase all key and values
         {
-            return clear_value();
+            return clear_value(canvas);
         }
     
-        bool  xhashmapvar_t::reset(const std::map<std::string,std::map<std::string,std::string> > & key_values)//erase_all and set all
+        bool  xhashmapvar_t::reset(const std::map<std::string,std::map<std::string,std::string> > & key_values,xvcanvas_t * canvas)//erase_all and set all
         {
             xvalue_t new_val(key_values);
-            return reset_value(new_val);
+            return reset_value(new_val,canvas);
         }
     
-        const xvalue_t  xhashmapvar_t::do_insert(const xvmethod_t & op)  //create key if not found key
+        const xvalue_t  xhashmapvar_t::do_insert(const xvmethod_t & op,xvcanvas_t * canvas)  //create key if not found key
         {
             if(op.get_method_id() != enum_xvinstruct_state_method_hashmap_insert)
                 return xvalue_t(enum_xerror_code_bad_method);
@@ -706,7 +756,7 @@ namespace top
             return xvalue_t(enum_xerror_code_bad_vproperty);
         }
     
-        const xvalue_t  xhashmapvar_t::do_erase(const xvmethod_t & op)  //only successful when key already existing
+        const xvalue_t  xhashmapvar_t::do_erase(const xvmethod_t & op,xvcanvas_t * canvas)  //only successful when key already existing
         {
             if(op.get_method_id() != enum_xvinstruct_state_method_hashmap_erase)
                 return xvalue_t(enum_xerror_code_bad_method);
@@ -847,31 +897,59 @@ namespace top
         //read interface
         const int64_t  xmtokens_t::get_balance(const std::string & token_name)
         {
-            if(find(token_name) == false) //safety enhancement
+            if(base::find(token_name) == false) //safety enhancement
                 return 0;
             
             return base::query(token_name);
         }
+    
+        const bool  xmtokens_t::has_token(const std::string & token_name)
+        {
+            if(base::find(token_name)) //already existing
+                return true;
+            
+            return false;
+        }
         
         //write interface
-        bool  xmtokens_t::deposit(const std::string & token_name ,const int64_t add_token)//return the updated balance
+        bool     xmtokens_t::create(const std::string & token_name,xvcanvas_t * canvas)
         {
-            xassert(add_token > 0);
-            if(add_token <= 0)
+            if(base::find(token_name)) //already existing
                 return false;
             
-            const int64_t cur_balance = get_balance(token_name);
-            return base::insert(token_name, (cur_balance + add_token));
+            return deposit(token_name,0,canvas);
         }
     
-        bool  xmtokens_t::withdraw(const std::string & token_name,const int64_t sub_token)//return the updated balance
+        int64_t  xmtokens_t::deposit(const std::string & token_name ,const int64_t add_token,xvcanvas_t * canvas)//return the updated balance
         {
-            xassert(sub_token > 0);
-            if(sub_token <= 0)
-                return false;
-            
+            //using state object'locker,here ask parent unit must be set first
+            std::lock_guard<std::recursive_mutex> locker(((xvexegroup_t*)get_parent_unit())->get_mutex());
+
             const int64_t cur_balance = get_balance(token_name);
-            return base::insert(token_name, (cur_balance - sub_token));
+            xassert(add_token >= 0);
+            if(add_token <= 0)
+                return cur_balance;
+ 
+            if(base::insert(token_name, (cur_balance + add_token),canvas))
+                return (cur_balance + add_token);
+            else
+                return cur_balance;
+        }
+    
+        int64_t  xmtokens_t::withdraw(const std::string & token_name,const int64_t sub_token,xvcanvas_t * canvas)//return the updated balance
+        {
+            //using state object'locker,here ask parent unit must be set first
+            std::lock_guard<std::recursive_mutex> locker(((xvexegroup_t*)get_parent_unit())->get_mutex());
+
+            const int64_t cur_balance = get_balance(token_name);
+            xassert(sub_token >= 0);
+            if(sub_token <= 0)
+                return cur_balance;
+ 
+            if(base::insert(token_name, (cur_balance - sub_token),canvas))
+                return (cur_balance - sub_token);
+            else
+                return cur_balance;
         }
     
         //---------------------------------xmtokens_t---------------------------------//
@@ -922,7 +1000,7 @@ namespace top
         }
         
         //write interface
-        bool  xmkeys_t::deploy_key(const std::string & key_name ,const std::string & key_string)
+        bool  xmkeys_t::deploy_key(const std::string & key_name ,const std::string & key_string,xvcanvas_t * canvas)
         {
             xassert(key_string.empty() == false);
             if(key_string.empty())
@@ -931,7 +1009,7 @@ namespace top
             if(find(key_name) == false) //safety enhancement
                 return false;
             
-            return base::insert(key_name,key_string);
+            return base::insert(key_name,key_string,canvas);
         }
 
     };

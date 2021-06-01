@@ -90,8 +90,24 @@ static top::data::election::xelection_result_store_t load_election_data(observer
             break;
         }
 
-        auto error = block->get_native_property().native_string_get(property_name, result);
-        if (error == 0) {
+        base::xauto_ptr<base::xvbstate_t> bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(vblock.get());
+        if (bstate == nullptr) {
+            // TODO(jimmy)
+            ec = error::xerrc_t::load_election_data_missing_state;
+
+            xerror("load_election_data failed: category %s; msg: %s; contract address: %s; property %s; from height %" PRIu64,
+                   ec.category().name(),
+                   ec.message().c_str(),
+                   contract_address.c_str(),
+                   property_name.c_str(),
+                   block_height_upper_limit);
+            // shouldn't happen. if happens, something goes wrong and we don't known how to fix it. let it crash and perform a postmortem analysis is the best solution.
+            top::error::throw_error(ec);
+
+            break;
+        }
+        xunit_bstate_t unitstate(bstate.get());
+        if (true == unitstate.string_get(property_name, result)) {
             block_height = block->get_height();
             break;
         }

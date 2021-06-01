@@ -18,23 +18,23 @@ namespace top
         {
             m_mutex.lock();
         }
- 
+
         auto_xblockacct_ptr::~auto_xblockacct_ptr()
         {
             //first process all pending events at this moment
             if(m_raw_ptr != NULL)
                 m_raw_ptr->process_events();
-            
+
             //then release raw ptr
             xblockacct_t * old_ptr = m_raw_ptr;
             m_raw_ptr = NULL;
             if(old_ptr != NULL)
                 old_ptr->release_ref();
-            
+
             //finally unlock it
             m_mutex.unlock();
         }
-    
+
         //transfer owner to auto_xblockacct_ptr from raw_ptr
         void  auto_xblockacct_ptr::transfer_owner(xblockacct_t * raw_ptr)
         {
@@ -46,7 +46,7 @@ namespace top
                     old_ptr->release_ref();
             }
         }
-    
+
         #define LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account_vid) \
             if(is_close())\
             {\
@@ -147,7 +147,7 @@ namespace top
             {
                 target_account->load_index_input(target_index.get());
                 target_account->load_index_output(target_index.get());
-                target_account->load_index_offdata(target_index.get());
+                //target_account->load_index_offdata(target_index.get());
             }
             if(target_index->get_this_block() != NULL)
             {
@@ -207,7 +207,7 @@ namespace top
             LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
             return load_block_from_index(account_obj.get(),account_obj->load_latest_genesis_connected_index(ask_full_search),0,false);
         }
-    
+
         base::xauto_ptr<base::xvbindex_t> xvblockstore_impl::get_latest_genesis_connected_index(const base::xvaccount_t & account,bool ask_full_search) //block has connected to genesis
         {
             LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
@@ -381,7 +381,7 @@ namespace top
             LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
             return account_obj->load_block_offdata(block);//XTODO,add logic to extract from tabeblock
         }
-    
+
         bool                xvblockstore_impl::load_block_flags(const base::xvaccount_t & account,base::xvblock_t* block)//update block'flags
         {
             if( (nullptr == block) || (account.get_account() != block->get_account()) )
@@ -397,14 +397,15 @@ namespace top
         {
             xdbg("jimmy xvblockstore_impl::store_block enter,store block(%s)", container_block->dump().c_str());
             //store it first at anyway
-            if(!container_account->store_block(container_block))
+            bool ret = container_account->store_block(container_block);
+            if(!ret)
             {
                 xwarn("xvblockstore_impl::store_block,fail-store block(%s)", container_block->dump().c_str());
-                return false;
+                // return false;
             }
-            container_account->try_execute_all_block();
+
             //then try extract for container if that is
-            if(container_block->get_block_class() == base::enum_xvblock_class_light) //skip nil block
+            if(ret && container_block->get_block_class() == base::enum_xvblock_class_light) //skip nil block
             {
                 //add other container here if need
                 if(container_block->get_header()->get_block_level() == base::enum_xvblock_level_table)
@@ -442,6 +443,9 @@ namespace top
                     }
                 }
             }
+
+            container_account->try_execute_all_block(container_block);  // try to push execute block, ignore store result
+
             return true; //still return true since tableblock has been stored successful
         }
 
@@ -760,7 +764,7 @@ namespace top
             */
             return true;
         }
-        
+
         bool      xvblockstore_impl::exist_genesis_block(const base::xvaccount_t & account) {
             LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
             base::xvbindex_t* target_block = account_obj->query_index(0, 0);

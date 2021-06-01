@@ -32,7 +32,6 @@ class xrootblock_input_t : public xventity_face_t<xrootblock_input_t, xdata_type
     bool    set_genesis_funds_accounts(std::vector<std::string> const & accounts);
     bool    set_genesis_tcc_accounts(std::vector<std::string> const& accounts);
     bool    set_genesis_nodes(const std::vector<node_info_t> & nodes);
-    bool    set_native_property(const xnative_property_t& property);
 
  public:
     const uint64_t get_account_balance(const std::string& account_addr) const;
@@ -40,14 +39,12 @@ class xrootblock_input_t : public xventity_face_t<xrootblock_input_t, xdata_type
     const std::vector<std::string>& get_funds_accounts() const {return m_geneis_funds_accounts;}
     const std::vector<std::string>& get_tcc_accounts() const {return m_tcc_accounts;};
     const std::vector<node_info_t> & get_seed_nodes() const {return m_genesis_nodes;}
-    const xnative_property_t& get_native_property() const {return m_native_property;}
 
  private:
     std::map<std::string, uint64_t>           m_account_balances;
     std::vector<std::string>                  m_geneis_funds_accounts;
     std::vector<std::string>                  m_tcc_accounts;
     std::vector<node_info_t>                  m_genesis_nodes;
-    xnative_property_t                        m_native_property;
 };
 
 struct xrootblock_para_t {
@@ -55,7 +52,6 @@ struct xrootblock_para_t {
     std::vector<std::string>                  m_geneis_funds_accounts;
     std::vector<std::string>                  m_tcc_accounts;
     std::vector<node_info_t>                  m_genesis_nodes;
-    xnative_property_t                        m_native_property;
     uint64_t                                  m_genesis_time_stamp;
     uint64_t                                  m_genesis_clock;
 };
@@ -96,18 +92,6 @@ class xrootblock_t : public xblock_t {
     static bool is_seed_node(const std::string & account);
     static const std::string get_rootblock_hash();
     static base::enum_xchain_id get_rootblock_chainid();
-
-    static bool is_property_exist(const std::string& prop_name);
-
-    static int32_t native_string_get(const std::string& prop_name, std::string& value);
-
-    static int32_t native_map_get(const std::string& prop_name, const std::string& field, std::string & value);
-    static int32_t native_map_size(const std::string& prop_name, int32_t& size);
-
-    static bool native_deque_exist(const std::string& prop_name, const std::string& value);
-    static int32_t native_deque_size(const std::string& prop_name, int32_t& size);
-    static int32_t native_deque_get(const std::string& prop_name, std::vector<std::string>& prop_value);
-
     static void get_rootblock_data(xJson::Value & json);
 };
 

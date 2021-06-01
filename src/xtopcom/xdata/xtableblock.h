@@ -16,7 +16,6 @@
 #include "xdata/xcons_transaction.h"
 #include "xdata/xlightunit.h"
 #include "xdata/xfullunit.h"
-#include "xdata/xblockchain.h"
 
 NS_BEG2(top, data)
 
@@ -77,12 +76,16 @@ class xtable_block_para_t {
     }
     void    set_batch_units(const std::vector<xblock_ptr_t> & batch_units) {m_account_units = batch_units;}
     void    set_extra_data(const std::string & extra_data) {m_extra_data = extra_data;}
+    void    set_property_binlog(const std::string & binlog) {m_property_binlog = binlog;}
 
     const std::vector<xblock_ptr_t> & get_account_units() const {return m_account_units;}
     const std::string &             get_extra_data() const {return m_extra_data;}
+    const std::string &             get_property_binlog() const {return m_property_binlog;}
+
  private:
     std::vector<xblock_ptr_t>        m_account_units;
     std::string                      m_extra_data;
+    std::string                      m_property_binlog;
 };
 
 class xtable_block_t : public xblock_t {
@@ -131,7 +134,8 @@ class xtable_block_t : public xblock_t {
     int64_t         get_pledge_balance_change_tgas() const override;
     const std::vector<xblock_ptr_t> & get_tableblock_units(bool need_parent_cert = false) const override;
     std::map<std::string, xaccount_index_t> get_units_index() const override;
-    virtual bool  extract_sub_blocks(std::vector<xobject_ptr_t<base::xvblock_t>> & sub_blocks) override;
+    virtual bool    extract_sub_blocks(std::vector<xobject_ptr_t<base::xvblock_t>> & sub_blocks) override;
+    std::string     get_property_binlog() const override {return get_output()->query_resource("bl");}  // TODO(jimmy) binlog
 
  private:
     xblock_ptr_t    recreate_unit_from_unit_input_output_resource(uint16_t index) const;

@@ -7,11 +7,13 @@
 #include <string>
 #include <map>
 #include <vector>
+#include "xvledger/xvstate.h"
+#include "xvledger/xvstatestore.h"
+#include "xvledger/xvledger.h"
 #include "xdata/xblock.h"
-#include "xdata/xtablestate.h"
+#include "xdata/xtable_bstate.h"
 #include "xstore/xstore_face.h"
 #include "xblockstore/xblockstore_face.h"
-#include "xindexstore/xindexstore_face.h"
 #include "xtxpool_v2/xtxpool_face.h"
 #include "xblockmaker/xblock_maker_para.h"
 
@@ -25,8 +27,8 @@ class xblockmaker_resources_t {
     virtual store::xstore_face_t*       get_store() const = 0;
     virtual base::xvblockstore_t*       get_blockstore() const = 0;
     virtual xtxpool_v2::xtxpool_face_t* get_txpool() const = 0;
-    virtual store::xindexstorehub_t*    get_indexstorehub() const = 0;
     virtual mbus::xmessage_bus_face_t*  get_bus() const = 0;
+    virtual base::xvblkstatestore_t*    get_xblkstatestore() const = 0;
 };
 using xblockmaker_resources_ptr_t = std::shared_ptr<xblockmaker_resources_t>;
 
@@ -35,21 +37,19 @@ class xblockmaker_resources_impl_t : public xblockmaker_resources_t {
     xblockmaker_resources_impl_t(const observer_ptr<store::xstore_face_t> & store,
                                  const observer_ptr<base::xvblockstore_t> & blockstore,
                                  const observer_ptr<xtxpool_v2::xtxpool_face_t> & txpool,
-                                 const observer_ptr<store::xindexstorehub_t> & indexstorehub,
                                  const observer_ptr<mbus::xmessage_bus_face_t> & bus)
-    : m_store(store), m_blockstore(blockstore), m_txpool(txpool), m_indexstorehub(indexstorehub), m_bus(bus) {}
+    : m_store(store), m_blockstore(blockstore), m_txpool(txpool), m_bus(bus) {}
 
     virtual store::xstore_face_t*       get_store() const {return m_store.get();}
     virtual base::xvblockstore_t*       get_blockstore() const {return m_blockstore.get();}
     virtual xtxpool_v2::xtxpool_face_t* get_txpool() const {return m_txpool.get();}
-    virtual store::xindexstorehub_t*    get_indexstorehub() const {return m_indexstorehub.get();}
     virtual mbus::xmessage_bus_face_t*  get_bus() const {return m_bus.get();}
+    virtual base::xvblkstatestore_t*    get_xblkstatestore() const {return base::xvchain_t::instance().get_xstatestore()->get_blkstate_store();}
 
  private:
     observer_ptr<store::xstore_face_t>          m_store{nullptr};
     observer_ptr<base::xvblockstore_t>          m_blockstore{nullptr};
     observer_ptr<xtxpool_v2::xtxpool_face_t>    m_txpool{nullptr};
-    observer_ptr<store::xindexstorehub_t>       m_indexstorehub{nullptr};
     observer_ptr<mbus::xmessage_bus_face_t>     m_bus{nullptr};
 };
 
@@ -202,15 +202,9 @@ using xblock_builder_para_ptr_t = std::shared_ptr<xblock_builder_para_face_t>;
 class xblock_builder_face_t {
  public:
     virtual data::xblock_ptr_t          build_block(const data::xblock_ptr_t & prev_block,
-                                                  const data::xaccount_ptr_t & prev_state,
+                                                  const xobject_ptr_t<base::xvbstate_t> & prev_bstate,
                                                   const data::xblock_consensus_para_t & cs_para,
                                                   xblock_builder_para_ptr_t & build_para) = 0;
-    virtual xblock_ptr_t                build_empty_block(const xblock_ptr_t & prev_block,
-                                                        const data::xblock_consensus_para_t & cs_para);
-
-    xblock_ptr_t                        build_genesis_block(const std::string & account, int64_t top_balance = 0);
- protected:
-    base::xvblock_t*                    build_genesis_unit(const std::string & account, int64_t top_balance);
 };
 
 using xblock_builder_face_ptr_t = std::shared_ptr<xblock_builder_face_t>;

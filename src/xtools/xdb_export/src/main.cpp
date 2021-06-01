@@ -6,7 +6,6 @@
 #include "xdata/xnative_contract_address.h"
 #include "xdata/xrootblock.h"
 #include "xdb/xdb_factory.h"
-#include "xindexstore/xindexstore_face.h"
 #include "xstore/xstore_face.h"
 #include "xstake/xstake_algorithm.h"
 #include "xvledger/xvledger.h"
@@ -419,7 +418,7 @@ public:
         std::sort(confirmv.begin(), confirmv.end(), cmp1);
         std::sort(selfv.begin(), selfv.end(), cmp1);
         std::sort(confirmedv.begin(), confirmedv.end(), cmp2);
-        
+
         uint32_t count = 0;
         uint32_t total_confirm_time = 0;
         uint32_t max_confirm_time = 0;
@@ -583,6 +582,7 @@ public:
 
 private:
     void get_unit_native_property(xaccount_ptr_t const & account_ptr, json & j) {
+#if 0 // TODO(jimmy)
         auto property = account_ptr->get_native_property().get_properties();
         for (auto const & iter : property) {
             std::string value;
@@ -600,6 +600,7 @@ private:
             std::cout << base64_str <<std::endl;
 #endif
         }
+#endif
     }
 
     void get_unit_user_property(xaccount_ptr_t const & account_ptr, json & j) {
@@ -758,7 +759,7 @@ int main(int argc, char ** argv) {
                 usage();
                 return -1;
             }
-        } 
+        }
         std::ofstream out_json(file_name);
         out_json << std::setw(4) << result_json;
     } else if (function_name == "check_tx_info") {

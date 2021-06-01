@@ -18,7 +18,6 @@
 #include "xdatastat/xdatastat.h"
 #include "xelect/client/xelect_client.h"
 #include "xelect_net/include/elect_main.h"
-#include "xindexstore/xindexstore_face.h"
 #include "xmbus/xmessage_bus.h"
 #include "xnetwork/xnetwork_driver_face.h"
 #include "xrouter/xrouter_face.h"
@@ -82,7 +81,6 @@ private:
     xobject_ptr_t<mbus::xmessage_bus_face_t> m_bus;
     xobject_ptr_t<store::xstore_face_t> m_store;
     xobject_ptr_t<base::xvblockstore_t> m_blockstore;
-    xobject_ptr_t<store::xindexstorehub_t> m_indexstore;
     xobject_ptr_t<time::xchain_time_face_t> m_logic_timer;
     xobject_ptr_t<base::xiothread_t> m_grpc_thread{};
     xobject_ptr_t<base::xiothread_t> m_sync_thread{};
@@ -147,7 +145,6 @@ public:
     xobject_ptr_t<base::xvcertauth_t> cert_serivce() const noexcept;
 
     xobject_ptr_t<store::xsyncvstore_t> syncstore() const noexcept;
-    observer_ptr<store::xindexstorehub_t> indexstore() const noexcept;
 
 private:
     base::xauto_ptr<top::base::xvblock_t> last_logic_time() const;

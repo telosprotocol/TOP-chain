@@ -28,6 +28,9 @@ static char const * errc_to_message(int const errc) noexcept {
     case xerrc_t::load_election_data_missing_property:
         return "load election data failed due to property is missing";
 
+    case xerrc_t::load_election_data_missing_state:
+        return "load election data failed due to missing bstate";
+
     default:  // NOLINT(clang-diagnostic-covered-switch-default)
         return "unknown error";
     }

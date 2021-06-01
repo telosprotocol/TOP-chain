@@ -20,10 +20,12 @@ public:
     void push_event(top::mbus::xevent_ptr_t const &) override {
     }
 
-    top::mbus::xevent_ptr_t  create_event_for_store_index_to_db(const std::string &, base::xvbindex_t *) override {
+    top::mbus::xevent_ptr_t  create_event_for_store_index_to_db(base::xvbindex_t *) override {
         return nullptr;
     }
-
+    top::mbus::xevent_ptr_t  create_event_for_revoke_index_to_db(base::xvbindex_t *) override {
+        return nullptr;
+    }
     top::mbus::xevent_ptr_t  create_event_for_store_block_to_db(base::xvblock_t *) override {
         return nullptr;
     }

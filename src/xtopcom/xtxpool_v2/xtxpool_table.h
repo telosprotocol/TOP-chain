@@ -6,6 +6,7 @@
 
 #include "xbasic/xmemory.hpp"
 #include "xdata/xcons_transaction.h"
+#include "xdata/xtable_bstate.h"
 #include "xtxpool_v2/xnon_ready_account.h"
 #include "xtxpool_v2/xtx_table_filter.h"
 #include "xtxpool_v2/xtxmgr_table.h"
@@ -23,6 +24,35 @@
 namespace top {
 namespace xtxpool_v2 {
 
+// TODO(jimmy) should delete later
+class xaccount_basic_info_t {
+ public:
+    xaccount_basic_info_t() = default;
+   //  xaccount_basic_info_t(const xblock_ptr_t & block, const base::xaccount_index_t & index)
+   //  : m_latest_block(block), m_account_index(index) {}
+
+ public:
+   //  void    set_latest_block(const xblock_ptr_t & block) {m_latest_block = block;}
+    void    set_account_index(const base::xaccount_index_t & index) {m_account_index = index;}
+    void    set_latest_state(const xaccount_ptr_t & state) {m_latest_state = state;}
+    void    set_sync_height_start(uint64_t height) {m_sync_height_start = height;}
+    void    set_sync_num(uint32_t num) {m_sync_num = num;}
+
+   //  const xblock_ptr_t &            get_latest_block() const {return m_latest_block;}
+    const xaccount_ptr_t &          get_latest_state() const {return m_latest_state;}
+    const base::xaccount_index_t &  get_accout_index() const {return m_account_index;}
+    const uint64_t                  get_sync_height_start() const {return m_sync_height_start;}
+    const uint32_t                  get_sync_num() const {return m_sync_num;}
+
+ private:
+   //  xblock_ptr_t            m_latest_block{nullptr};
+    xaccount_ptr_t          m_latest_state{nullptr};
+    base::xaccount_index_t  m_account_index;
+    uint64_t                m_sync_height_start{0};
+    uint32_t                m_sync_num{0};
+};
+
+
 #define table_unconfirm_txs_num_max (100)
 
 class xtxpool_table_t {
@@ -34,7 +64,6 @@ public:
       // , m_table_filter(para->get_vblockstore())
       , m_unconfirmed_tx_queue(para, &m_xtable_info)
       // , m_non_ready_accounts(&m_xtable_info)
-      , m_table_indexstore(m_para->get_indexstorehub()->get_index_store(m_xtable_info.get_table_addr()))
       , m_locked_txs(&m_xtable_info) {
     }
     int32_t push_send_tx(const std::shared_ptr<xtx_entry> & tx);
@@ -66,13 +95,15 @@ private:
     int32_t verify_cons_tx(const xcons_transaction_ptr_t & tx) const;
     bool get_account_latest_nonce_hash(const std::string account_addr, uint64_t & latest_nonce, uint256_t & latest_hash) const;
     void unit_block_process(xblock_t * unit_block);
+    bool  get_account_basic_info(const std::string & account, xaccount_basic_info_t & account_index_info) const;
+    data::xtablestate_ptr_t get_target_tablestate(base::xvblock_t* block) const;
+
     xtxpool_resources_face * m_para;
     xtxpool_table_info_t m_xtable_info;
     xtxmgr_table_t m_txmgr_table;
     // xtx_table_filter m_table_filter;
     xunconfirmed_tx_queue_t m_unconfirmed_tx_queue;
     // xnon_ready_accounts_t m_non_ready_accounts;
-    store::xindexstore_face_ptr_t m_table_indexstore;
     xlocked_txs_t m_locked_txs;
     mutable std::mutex m_mgr_mutex;  // lock m_txmgr_table and m_locked_txs
     // mutable std::mutex m_filter_mutex;     // lock m_table_filter

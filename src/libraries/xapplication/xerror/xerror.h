@@ -18,6 +18,7 @@ enum class xenum_errc {
     load_election_data_block_type_mismatch,
     load_election_data_property_empty,
     load_election_data_missing_property,
+    load_election_data_missing_state,
 };
 using xerrc_t = xenum_errc;
 

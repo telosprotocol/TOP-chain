@@ -29,8 +29,8 @@ class xtransaction_executor {
         xbatch_txs_result_t & txs_result);
 
  private:
-    static int32_t exec_tx(xaccount_context_t * account_context, const xcons_transaction_ptr_t & tx, xtransaction_result_t & result);
-    static int32_t exec_one_tx(xaccount_context_t * account_context, const xcons_transaction_ptr_t & tx, xtransaction_result_t & result);
+    static int32_t exec_tx(xaccount_context_t * account_context, const xcons_transaction_ptr_t & tx);
+    static int32_t exec_one_tx(xaccount_context_t * account_context, const xcons_transaction_ptr_t & tx);
 };
 
 NS_END2

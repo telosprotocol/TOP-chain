@@ -7,7 +7,7 @@
 #include "xvaccount.h"
 #include "xvblock.h"
 #include "xvbindex.h"
-#include "xvtransaction.h"
+#include "xvtransact.h"
 
 namespace top
 {

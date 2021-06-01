@@ -90,6 +90,10 @@ xblockbody_para_t xtable_block_t::get_blockbody_from_para(const xtable_block_par
         // whileblock_res->serialize_to_string(res_value);
         // blockbody.add_input_resource(key, res_value);
     }
+
+    std::string property_binlog = para.get_property_binlog();
+    blockbody.add_output_resource(XRESOURCE_BINLOG_KEY, property_binlog);  // bl = binlog
+
     blockbody.create_default_input_output();
     return blockbody;
 }
@@ -203,17 +207,7 @@ std::map<std::string, xaccount_index_t> xtable_block_t::get_units_index() const 
     std::map<std::string, xaccount_index_t> changed_indexs;
     auto & units = get_tableblock_units(true);
     for (auto & unit : units) {
-        xaccount_index_t account_index(unit->get_height(),
-                                       unit->get_block_hash(),
-                                       unit->get_block_class(),
-                                       unit->get_block_type(),
-                                       base::enum_xblock_consensus_flag_authenticated,  // TODO(jimmy) always use highqc
-                                       unit->get_unconfirm_sendtx_num() != 0,
-                                       false);  // TODO(jimmy)
-        xassert(account_index.is_account_destroy() == false);
-        xassert(account_index.is_has_unconfirm_tx() == (unit->get_unconfirm_sendtx_num() != 0));
-        xassert(account_index.is_match_unit_hash(unit->get_block_hash()));
-        xassert(account_index.get_latest_unit_class() == unit->get_block_class());
+        xaccount_index_t account_index(unit.get(), unit->get_unconfirm_sendtx_num() != 0, false);  // TODO(jimmy)
         changed_indexs[unit->get_account()] = account_index;
     }
     xassert(!changed_indexs.empty());
@@ -306,7 +300,7 @@ void xtable_block_t::unpack_proposal_units(std::vector<xblock_ptr_t> & units) co
             //     _block_ptr->dump_header().c_str(), _block_ptr->dump_cert().c_str(),
             //     base::xstring_utl::to_hex(_block_ptr->get_cert()->get_hash_to_sign()).c_str(), base::xstring_utl::to_hex(output_unit->get_unit_sign_hash()).c_str());
         } else {
-            xdbg("xtable_block_t::unpack_proposal_units unpack unit succ. table=%s,unit=%s",
+            xinfo("xtable_block_t::unpack_proposal_units unpack unit succ. table=%s,unit=%s",
                 dump().c_str(), _block_ptr->dump().c_str());
         }
         units.push_back(_block_ptr);

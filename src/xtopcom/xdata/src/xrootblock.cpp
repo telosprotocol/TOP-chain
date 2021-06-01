@@ -27,7 +27,6 @@ int32_t xrootblock_input_t::do_write(base::xstream_t &stream) {
     SERIALIZE_CONTAINER(m_genesis_nodes) {
         item.serialize(stream);
     }
-    m_native_property.do_write(stream);
     return CALC_LEN();
 }
 int32_t xrootblock_input_t::do_read(base::xstream_t &stream) {
@@ -40,7 +39,6 @@ int32_t xrootblock_input_t::do_read(base::xstream_t &stream) {
         item.deserialize(stream);
         m_genesis_nodes.push_back(item);
     }
-    m_native_property.do_read(stream);
     return CALC_LEN();
 }
 
@@ -61,11 +59,6 @@ bool xrootblock_input_t::set_genesis_tcc_accounts(std::vector<std::string> const
 
 bool xrootblock_input_t::set_genesis_nodes(const std::vector<node_info_t> & nodes) {
     m_genesis_nodes = nodes;
-    return true;
-}
-
-bool xrootblock_input_t::set_native_property(const xnative_property_t& property) {
-    m_native_property = property;
     return true;
 }
 
@@ -102,7 +95,6 @@ xblockbody_para_t xrootblock_t::get_blockbody_from_para(const xrootblock_para_t 
     input->set_genesis_funds_accounts(para.m_geneis_funds_accounts);
     input->set_genesis_tcc_accounts(para.m_tcc_accounts);
     input->set_genesis_nodes(para.m_genesis_nodes);
-    input->set_native_property(para.m_native_property);
     blockbody.add_input_entity(input);
     xobject_ptr_t<xdummy_entity_t> output = make_object_ptr<xdummy_entity_t>();
     blockbody.add_output_entity(output);
@@ -112,7 +104,8 @@ xblockbody_para_t xrootblock_t::get_blockbody_from_para(const xrootblock_para_t 
 bool xrootblock_t::init(const xrootblock_para_t & para) {
     std::call_once(m_flag, [&] () {
         xblock_para_t block_para;
-        block_para.chainid     = top::config::to_chainid(XGET_CONFIG(chain_name));
+        std::string _chain_name = XGET_CONFIG(chain_name);
+        block_para.chainid     = top::config::to_chainid(_chain_name);
         block_para.block_level = base::enum_xvblock_level_chain;  // every chain has a root block
         block_para.block_class = base::enum_xvblock_class_light;
         block_para.block_type  = base::enum_xvblock_type_boot;
@@ -228,61 +221,6 @@ const std::string xrootblock_t::get_rootblock_hash() {
 base::enum_xchain_id xrootblock_t::get_rootblock_chainid() {
     xassert(m_instance != nullptr);
     return static_cast<base::enum_xchain_id>(m_instance->get_chainid());
-}
-
-bool xrootblock_t::is_property_exist(const std::string& prop_name) {
-    xassert(m_instance != nullptr);
-    if (m_instance != nullptr) {
-        return m_instance->get_rootblock_input()->get_native_property().is_property_exist(prop_name);
-    }
-    return false;
-}
-
-int32_t xrootblock_t::native_string_get(const std::string& prop_name, std::string& value) {
-    xassert(m_instance != nullptr);
-    if (m_instance != nullptr) {
-        return m_instance->get_rootblock_input()->get_native_property().native_string_get(prop_name, value);
-    }
-    return -1;
-}
-
-int32_t xrootblock_t::native_map_get(const std::string& prop_name, const std::string& field, std::string & value) {
-    xassert(m_instance != nullptr);
-    if (m_instance != nullptr) {
-        return m_instance->get_rootblock_input()->get_native_property().native_map_get(prop_name, field, value);
-    }
-    return -1;
-}
-int32_t xrootblock_t::native_map_size(const std::string& prop_name, int32_t& size) {
-    xassert(m_instance != nullptr);
-    if (m_instance != nullptr) {
-        return m_instance->get_rootblock_input()->get_native_property().native_map_size(prop_name, size);
-    }
-    return -1;
-}
-
-bool xrootblock_t::native_deque_exist(const std::string& prop_name, const std::string& value) {
-    xassert(m_instance != nullptr);
-    if (m_instance != nullptr) {
-        return m_instance->get_rootblock_input()->get_native_property().native_deque_exist(prop_name, value);
-    }
-    return -1;
-}
-
-int32_t xrootblock_t::native_deque_size(const std::string& prop_name, int32_t& size) {
-    xassert(m_instance != nullptr);
-    if (m_instance != nullptr) {
-        return m_instance->get_rootblock_input()->get_native_property().native_deque_size(prop_name, size);
-    }
-    return -1;
-}
-
-int32_t xrootblock_t::native_deque_get(const std::string& prop_name, std::vector<std::string>& prop_value) {
-    xassert(m_instance != nullptr);
-    if (m_instance != nullptr) {
-        return m_instance->get_rootblock_input()->get_native_property().native_deque_get(prop_name, prop_value);
-    }
-    return -1;
 }
 
 void xrootblock_t::get_rootblock_data(xJson::Value & json) {

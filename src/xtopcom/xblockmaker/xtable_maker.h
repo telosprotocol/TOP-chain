@@ -65,7 +65,6 @@ class xtable_maker_t : public xblock_maker_t {
     uint32_t                                    m_full_table_interval_num;
     xblock_builder_face_ptr_t                   m_fulltable_builder;
     xblock_builder_face_ptr_t                   m_lighttable_builder;
-    store::xindexstore_face_ptr_t               m_indexstore;
     bool                                        m_check_state_success{false};
     mutable std::mutex                          m_lock;
 };
