@@ -313,7 +313,11 @@ namespace top
                 std::vector<base::xvblock_t*> blks_ptr = blks.get_vector();
                 // if block not committed, return directly
                 if((i == 0 && blks_ptr.size() > 1) || (blks_ptr.size() == 0))
+                {
+                    xdbg("xvblockstore_impl::load_block_object tx=%s, type=%u, height=%u, i=%u, blk size: %zu",
+                         base::xstring_utl::to_hex(tx_hash).c_str(), type, height, i, blks_ptr.size());
                     return std::vector<base::xvblock_ptr_t>{};
+                }
 
                 std::vector<base::xvblock_ptr_t> blocks_v;
                 for (uint32_t j = 0; j < blks_ptr.size(); j++)
