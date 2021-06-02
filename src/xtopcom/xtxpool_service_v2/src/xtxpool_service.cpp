@@ -16,7 +16,7 @@
 #include "xverifier/xtx_verifier.h"
 #include "xvledger/xvblock.h"
 #include "xvnetwork/xvnetwork_error.h"
-
+#include "xutility/xhash.h"
 #include <cinttypes>
 
 NS_BEG2(top, xtxpool_service_v2)
@@ -171,20 +171,49 @@ void xtxpool_service::on_message_receipt(vnetwork::xvnode_address_t const & send
         return;
     }
     (void)sender;
-    if (message.id() == xtxpool_msg_send_receipt || message.id() == xtxpool_msg_recv_receipt) {
+
+    XMETRICS_TIME_RECORD("txpool_network_message_dispatch");
+    
+    if (message.id() == xtxpool_msg_send_receipt || message.id() == xtxpool_msg_recv_receipt || (message.id() == xtxpool_msg_push_receipt)) {
         if (m_para->get_fast_dispatcher()->is_mailbox_over_limit()) {
-            xwarn("xtxpool_service::on_message_receipt txpool mailbox limit,drop receipt");
+            xwarn("xtxpool_service::on_message_receipt fast txpool mailbox limit,drop receipt");
             return;
         }
-        XMETRICS_TIME_RECORD("txpool_network_message_dispatch");
+
+        base::xauto_ptr<txpool_receipt_message_para_t> para = new txpool_receipt_message_para_t(sender, message);
+        if (message.id() == xtxpool_msg_push_receipt) {
+            auto handler = [this](base::xcall_t & call, const int32_t cur_thread_id, const uint64_t timenow_ms) -> bool {
+                txpool_receipt_message_para_t * para = dynamic_cast<txpool_receipt_message_para_t *>(call.get_param1().get_object());
+                this->on_message_receipts_received(para->m_sender, para->m_message);
+                return true;
+            };
+
+            base::xcall_t asyn_call(handler, para.get());
+            m_para->get_fast_dispatcher()->dispatch(asyn_call);
+        } else {
+            auto handler = [this](base::xcall_t & call, const int32_t cur_thread_id, const uint64_t timenow_ms) -> bool {
+                txpool_receipt_message_para_t * para = dynamic_cast<txpool_receipt_message_para_t *>(call.get_param1().get_object());
+                this->on_message_unit_receipt(para->m_sender, para->m_message);
+                return true;
+            };
+            base::xcall_t asyn_call(handler, para.get());     
+            m_para->get_fast_dispatcher()->dispatch(asyn_call);      
+        }
+    } else if ((message.id() == xtxpool_msg_pull_recv_receipt) || (message.id() == xtxpool_msg_pull_confirm_receipt)) {
+        if (m_para->get_slow_dispatcher()->is_mailbox_over_limit()) {
+            xwarn("xtxpool_service::on_message_receipt slow txpool mailbox limit,drop receipt");
+            return;
+        }
+        
         auto handler = [this](base::xcall_t & call, const int32_t cur_thread_id, const uint64_t timenow_ms) -> bool {
             txpool_receipt_message_para_t * para = dynamic_cast<txpool_receipt_message_para_t *>(call.get_param1().get_object());
-            this->on_message_unit_receipt(para->m_sender, para->m_message);
+            this->on_message_receipts_received(para->m_sender, para->m_message);
             return true;
         };
+
         base::xauto_ptr<txpool_receipt_message_para_t> para = new txpool_receipt_message_para_t(sender, message);
         base::xcall_t asyn_call(handler, para.get());
-        m_para->get_fast_dispatcher()->dispatch(asyn_call);
+        m_para->get_slow_dispatcher()->dispatch(asyn_call);
     } else {
         xassert(0);
     }
@@ -515,6 +544,101 @@ int32_t xtxpool_confirm_receipt_msg_t::do_read(base::xstream_t & stream) {
     stream >> m_source_addr;
     DEFAULT_DESERIALIZE_PTR(m_receipt, xtx_receipt_t);
     return CALC_LEN();
+}
+
+void xtxpool_service::send_pull_receipts_of_recv(xreceipt_pull_recv_receipt_t pulled_receipt){
+    base::xstream_t stream(base::xcontext_t::instance());
+    vnetwork::xmessage_t msg;
+    pulled_receipt.serialize_to(stream);
+    msg = vnetwork::xmessage_t({stream.data(), stream.data() + stream.size()}, xtxpool_msg_pull_recv_receipt);
+    m_vnet_driver->broadcast(msg);
+}
+
+void xtxpool_service::send_pull_receipts_of_confirm(xreceipt_pull_confirm_receipt_t pulled_receipt){
+    base::xstream_t stream(base::xcontext_t::instance());
+    vnetwork::xmessage_t msg;
+    pulled_receipt.serialize_to(stream);
+    msg = vnetwork::xmessage_t({stream.data(), stream.data() + stream.size()}, xtxpool_msg_pull_confirm_receipt);
+    m_vnet_driver->broadcast(msg);
+}
+
+
+void xtxpool_service::send_push_receipts(xreceipt_push_t &pushed_receipt, vnetwork::xvnode_address_t const & target){
+    base::xstream_t stream(base::xcontext_t::instance());
+    vnetwork::xmessage_t msg;
+    pushed_receipt.serialize_to(stream);
+    msg = vnetwork::xmessage_t({stream.data(), stream.data() + stream.size()}, xtxpool_msg_push_receipt);
+    m_vnet_driver->send_to(target, msg);
+}
+
+void xtxpool_service::on_message_receipts_received(vnetwork::xvnode_address_t const & sender, vnetwork::xmessage_t const & message){
+    xdbg("xtxpool_service::on_message_receipts_received receipt, msg id is %x", message.id());
+    if (message.id() == xtxpool_msg_pull_recv_receipt){
+        if (!common::has<common::xnode_type_t::auditor>(m_vnet_driver->type())) {
+            return;
+        }
+        xreceipt_pull_recv_receipt_t pulled_receipt;
+        base::xstream_t stream(top::base::xcontext_t::instance(), (uint8_t *)message.payload().data(), (uint32_t)message.payload().size());
+        pulled_receipt.serialize_from(stream);
+
+        if (pulled_receipt.m_receipt_region.second < pulled_receipt.m_receipt_region.first) {
+            xinfo("xtxpool_service::on_message_receipts_received receipt=%s", pulled_receipt.dump().c_str());
+            return;    
+        }
+
+        auto cluster_addr = m_router->sharding_address_from_account(common::xaccount_address_t{pulled_receipt.m_tx_from_account}, 
+            m_vnet_driver->network_id(), common::xnode_type_t::consensus_validator);
+        if (cluster_addr != m_vnet_driver->address().cluster_address()) {  
+            xdbg("xtxpool_service::on_message_receipts_received forward broadcast message, cluster address is %s", cluster_addr.to_string().c_str());        
+            m_vnet_driver->forward_broadcast_message(message, vnetwork::xvnode_address_t{std::move(cluster_addr)});
+        } else {
+            xreceipt_push_t pushed_receipt;
+            pushed_receipt.m_receipt_type = enum_transaction_subtype_recv;
+            pushed_receipt.m_tx_from_account = pulled_receipt.m_tx_from_account;
+            pushed_receipt.m_tx_to_account = pulled_receipt.m_tx_to_account;
+            for (uint64_t id = pulled_receipt.m_receipt_region.first; id <= pulled_receipt.m_receipt_region.second; id++){
+                auto tranx = m_para->get_txpool()->get_unconfirmed_tx(pulled_receipt.m_tx_from_account, pulled_receipt.m_tx_to_account, id);
+                if (tranx != nullptr) {
+                    pushed_receipt.m_receipts.push_back(tranx);
+                }
+            }        
+            send_push_receipts(pushed_receipt, sender);    
+        }
+    } else if ( message.id() == xtxpool_msg_pull_confirm_receipt){
+        if (!common::has<common::xnode_type_t::auditor>(m_vnet_driver->type())) {
+            return;
+        }
+        xreceipt_pull_confirm_receipt_t pulled_receipt;
+        base::xstream_t stream(top::base::xcontext_t::instance(), (uint8_t *)message.payload().data(), (uint32_t)message.payload().size());
+        pulled_receipt.serialize_from(stream);
+        auto cluster_addr = m_router->sharding_address_from_account(common::xaccount_address_t{pulled_receipt.m_tx_to_account}, 
+            m_vnet_driver->network_id(), common::xnode_type_t::consensus_validator);
+        if (cluster_addr != m_vnet_driver->address().cluster_address()) {
+            xdbg("xtxpool_service::on_message_receipts_received forward broadcast message, cluster address is %s", cluster_addr.to_string().c_str());        
+            m_vnet_driver->forward_broadcast_message(message, vnetwork::xvnode_address_t{std::move(cluster_addr)});
+        } else {
+            xreceipt_push_t pushed_receipt;
+            pushed_receipt.m_receipt_type = enum_transaction_subtype_confirm;
+            pushed_receipt.m_tx_from_account = pulled_receipt.m_tx_from_account;
+            pushed_receipt.m_tx_to_account = pulled_receipt.m_tx_to_account;
+            for (auto it : pulled_receipt.m_hash_of_receipts){
+                auto tranx = get_confirmed_tx(utl::xsha2_256_t::digest(it));
+                if (tranx != nullptr) {
+                    pushed_receipt.m_receipts.push_back(tranx);
+                }
+            }
+            send_push_receipts(pushed_receipt, sender);    
+        }
+    } else if (message.id() == xtxpool_msg_push_receipt){            
+        xreceipt_push_t pushed_receipt;
+        base::xstream_t stream(top::base::xcontext_t::instance(), (uint8_t *)message.payload().data(), (uint32_t)message.payload().size());
+        pushed_receipt.serialize_from(stream);
+        for (auto tx:pushed_receipt.m_receipts) {
+            xtxpool_v2::xtx_para_t para;
+            std::shared_ptr<xtxpool_v2::xtx_entry> tx_ent = std::make_shared<xtxpool_v2::xtx_entry>(tx, para);
+            m_para->get_txpool()->push_receipt(tx_ent, false);
+        }
+    }
 }
 
 NS_END2
