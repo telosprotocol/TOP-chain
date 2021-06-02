@@ -165,7 +165,7 @@ namespace top
             }
             return true;
         }
-
+    
         //xBFTdriver_t guanrentee three factors for local block:
             //#1: guanrentee certificate,block'check has verified,and block'input ready as well, when block->is_deliver(false)
             //#2: any local block has been pass the test for xvblock_t::is_valid(true) before insert.but that not means finish cerficate verification
@@ -181,44 +181,7 @@ namespace top
                 xwarn("xBFTdriver_t::handle_proposal_msg,fail-safe_check_for_proposal_packet=%s vs driver=%s,at node=0x%llx",packet.dump().c_str(),dump().c_str(),get_xip2_low_addr());
                 return enum_xconsensus_error_bad_packet;
             }
-            //checking local first
-            xproposal_t * _local_block = find_proposal(packet.get_block_viewid());
-            if(NULL != _local_block)
-            {
-                if(_local_block->is_valid_packet(packet) == false)
-                {
-                    xwarn("xBFTdriver_t::handle_proposal_msg,fail-unmatched packet=%s vs local(%s),at node=0x%llx",packet.dump().c_str(),_local_block->dump().c_str(),get_xip2_low_addr());
-                    return enum_xconsensus_error_bad_packet;
-                }
-                if( (_local_block->is_input_ready(false)) && (_local_block->is_valid(false)) )  // local proposal may be non-full block
-                {
-                    xinfo("xBFTdriver_t::handle_proposal_msg,a duplicated packet=%s,at node=0x%llx",packet.dump().c_str(),get_xip2_low_addr());
-                    return enum_xconsensus_error_duplicated;
-                }
-                if(_local_block->is_deliver(false))//target has been  finish one round of consensus
-                {
-                    xinfo("xBFTdriver_t::handle_proposal_msg,target proposal has finished voted as _local_block=%s, at node=0x%llx",_local_block->dump().c_str(),get_xip2_low_addr());
-                    return enum_xconsensus_code_successful;
-                }
-            }
-            else
-            {
-                base::xvblock_t* _local_cert_block = find_cert_block(packet.get_block_viewid());
-                if(_local_cert_block)
-                {
-                    if(   (_local_cert_block->get_height()     != packet.get_block_height())
-                       || (_local_cert_block->get_chainid()    != packet.get_block_chainid())
-                       || (_local_cert_block->get_viewid()     != packet.get_block_viewid())
-                       || (_local_cert_block->get_account()    != packet.get_block_account())
-                       )
-                    {
-                        xwarn("xBFTdriver_t::handle_proposal_msg,fail-unmatched packet=%s vs local certified block=%s,at node=0x%llx",packet.dump().c_str(),_local_cert_block->dump().c_str(),get_xip2_low_addr());
-                        return enum_xconsensus_error_bad_packet;
-                    }
-                    xinfo("xBFTdriver_t::handle_proposal_msg,target proposal has finished and changed to certified _local_cert_block=%s, at node=0x%llx",_local_cert_block->dump().c_str(),get_xip2_low_addr());
-                    return enum_xconsensus_code_successful;//local proposal block has verified and ready,so it is duplicated commit msg
-                }
-            }
+     
             //then check carried cert of prev block
             base::xvqcert_t * _peer_prev_block_cert = NULL;
             if(event_obj->get_vblock_cert() != NULL) //has build and verification at pacemaker layer
@@ -280,6 +243,78 @@ namespace top
                 xerror("xBFTdriver_t::handle_proposal_msg,fail-invalid proposal=%s <!=> packet=%s,at node=0x%llx",_peer_block->dump().c_str(),packet.dump().c_str(),get_xip2_low_addr());
                 return enum_xconsensus_error_bad_proposal;
             }
+      
+            //step#3: load/sync the missed commit,lock and cert blocks
+            //first check whether need sync lock and cert blocks as well
+            if(_peer_block->get_height() > (get_lock_block()->get_height() + 1) )
+            {
+                base::xvblock_t * prev_block = find_cert_block(_peer_block->get_height() - 1, _peer_block->get_last_block_hash());
+                if(NULL == prev_block) //not voting but trigger sync prev-cert
+                {
+                    send_sync_request(to_addr,from_addr, (_peer_block->get_height() - 1),_peer_block->get_last_block_hash(),_peer_prev_block_cert,(_peer_block->get_height() - 1),event_obj->get_clock() + 1,_peer_block->get_chainid());
+                    //sync missed cert block
+                    return enum_xconsensus_code_need_data;//not voting but trigger sync missed block
+                }
+                else if(_peer_block->get_height() != (get_lock_block()->get_height() + 2))//if prev_prev NOT point to current locked block
+                {
+                    //xassert(NULL == prev_prev_block); //should be empty
+                    send_sync_request(to_addr,from_addr, (prev_block->get_height() - 1),prev_block->get_last_block_hash(),_peer_prev_block_cert,(_peer_block->get_height() - 1),event_obj->get_clock() + 1,_peer_block->get_chainid());
+                    //sync missed locked block
+                    return enum_xconsensus_code_need_data;//not voting but trigger sync missed block
+                }
+            }
+            //then sync latest commit if need
+            if(get_lock_block()->get_height() > 1)
+            {
+                base::xvblock_t* last_commit_block = get_commit_block();
+                if(   (last_commit_block == nullptr)//get_commit_block already include logic to load it from blockstore
+                   || (get_lock_block()->get_height() != (last_commit_block->get_height() + 1)) )
+                {
+                    send_sync_request(to_addr,from_addr, (get_lock_block()->get_height() - 1),get_lock_block()->get_last_block_hash(),_peer_prev_block_cert,(_peer_block->get_height() - 1),event_obj->get_clock() + 1,get_lock_block()->get_chainid());
+                    //sync missed committed block
+                    return enum_xconsensus_code_need_data;//not voting but trigger sync missed block
+                }
+            }
+            
+            //step#4: quick decide whether allow vote for this proposal
+            //checking local first
+            xproposal_t * _local_block = find_proposal(packet.get_block_viewid());
+            if(NULL != _local_block)
+            {
+                if(_local_block->is_valid_packet(packet) == false)
+                {
+                    xwarn("xBFTdriver_t::handle_proposal_msg,fail-unmatched packet=%s vs local(%s),at node=0x%llx",packet.dump().c_str(),_local_block->dump().c_str(),get_xip2_low_addr());
+                    return enum_xconsensus_error_bad_packet;
+                }
+                if( (_local_block->is_input_ready(false)) && (_local_block->is_valid(false)) )  // local proposal may be non-full block
+                {
+                    xinfo("xBFTdriver_t::handle_proposal_msg,a duplicated packet=%s,at node=0x%llx",packet.dump().c_str(),get_xip2_low_addr());
+                    return enum_xconsensus_error_duplicated;
+                }
+                if(_local_block->is_deliver(false))//target has been  finish one round of consensus
+                {
+                    xinfo("xBFTdriver_t::handle_proposal_msg,target proposal has finished voted as _local_block=%s, at node=0x%llx",_local_block->dump().c_str(),get_xip2_low_addr());
+                    return enum_xconsensus_code_successful;
+                }
+            }
+            else
+            {
+                base::xvblock_t* _local_cert_block = find_cert_block(packet.get_block_viewid());
+                if(_local_cert_block)
+                {
+                    if(   (_local_cert_block->get_height()     != packet.get_block_height())
+                       || (_local_cert_block->get_chainid()    != packet.get_block_chainid())
+                       || (_local_cert_block->get_viewid()     != packet.get_block_viewid())
+                       || (_local_cert_block->get_account()    != packet.get_block_account())
+                       )
+                    {
+                        xwarn("xBFTdriver_t::handle_proposal_msg,fail-unmatched packet=%s vs local certified block=%s,at node=0x%llx",packet.dump().c_str(),_local_cert_block->dump().c_str(),get_xip2_low_addr());
+                        return enum_xconsensus_error_bad_packet;
+                    }
+                    xinfo("xBFTdriver_t::handle_proposal_msg,target proposal has finished and changed to certified _local_cert_block=%s, at node=0x%llx",_local_cert_block->dump().c_str(),get_xip2_low_addr());
+                    return enum_xconsensus_code_successful;//local proposal block has verified and ready,so it is duplicated commit msg
+                }
+            }
             
             //precheck whether leader and backup both have the matched hq cert or not
             base::xvblock_t *  local_latest_cert_block = get_latest_cert_block();
@@ -302,62 +337,6 @@ namespace top
                 }
             }
 
-            //step#3: load/sync the missed commit,lock and cert blocks
-            //first check whether need sync lock and cert blocks as well
-            if(_peer_block->get_height() > (get_lock_block()->get_height() + 1) )
-            {
-                base::xvblock_t * prev_block = NULL;
-                //base::xvblock_t * prev_prev_block = NULL;
-                auto  cert_blocks = get_cert_blocks();
-                for(auto it = cert_blocks.rbegin(); it != cert_blocks.rend(); ++it)
-                {
-                    if(   (_peer_block->get_height() == (it->second->get_height() + 1)) //found parent qc cert
-                       && (_peer_block->get_last_block_hash() == it->second->get_block_hash()) )
-                    {
-                        //sync the pre-prev block now
-                        prev_block = it->second;
-                        //prev_prev_block = prev_block->get_prev_block();
-                        break;
-                    }
-                }
-                if(NULL == prev_block) //not voting but trigger sync prev-cert
-                {
-                    send_sync_request(to_addr,from_addr, (_peer_block->get_height() - 1),_peer_block->get_last_block_hash(),_peer_prev_block_cert,(_peer_block->get_height() - 1),event_obj->get_clock() + 2,_peer_block->get_chainid());
-                    return enum_xconsensus_code_need_data;
-                }
-                else if(_peer_block->get_height() != (get_lock_block()->get_height() + 2))//if prev_prev NOT point to current locked block
-                {
-                    //xassert(NULL == prev_prev_block); //should be empty
-                    send_sync_request(to_addr,from_addr, (prev_block->get_height() - 1),prev_block->get_last_block_hash(),_peer_prev_block_cert,(_peer_block->get_height() - 1),event_obj->get_clock() + 2,_peer_block->get_chainid());
-                    return enum_xconsensus_code_need_data;//not voting but trigger sync prev-prev-cert
-                }
-            }
-            //then sync latest commit if need
-            if(get_lock_block()->get_height() > 1)
-            {
-                base::xvblock_t* last_commit_block = get_commit_block();
-                if(last_commit_block == nullptr)//get_commit_block already include logic to load it from blockstore
-                {
-                    send_sync_request(to_addr,from_addr, (get_lock_block()->get_height() - 1),get_lock_block()->get_last_block_hash(),_peer_prev_block_cert,(_peer_block->get_height() - 1),event_obj->get_clock() + 2,get_lock_block()->get_chainid());
-                    return enum_xconsensus_code_need_data;//not voting but trigger sync missed commited block
-                }
-
-                #ifdef __xbft_enable_sync_unconneted_commit_block__
-                while(last_commit_block != NULL)
-                {
-                    if(last_commit_block->check_block_flag(base::enum_xvblock_flag_connected))//connect must be commit as well
-                        break; //all are fine
-
-                    if(NULL == last_commit_block->get_prev_block())
-                    {
-                        send_sync_request(to_addr,from_addr, (last_commit_block->get_height() - 1),last_commit_block->get_last_block_hash(),_peer_prev_block_cert,(_peer_block->get_height() - 1),event_obj->get_clock() + 2,last_commit_block->get_chainid());
-                        break; //only allow trigger one block ,and continue go let application do completely sync
-                    }
-                    last_commit_block = last_commit_block->get_prev_block();
-                }
-                #endif
-            }
-
             //apply safe rule for view-alignment,after sync check.note: event_obj->get_cookie() carry latest viewid at this node
             if(event_obj->get_cookie() != packet.get_block_viewid()) //a proposal not alignment with current view
             {
@@ -370,7 +349,7 @@ namespace top
                 return enum_xconsensus_error_outofdate;
             }
 
-            //step#4: //pre-create proposal wrap
+            //step#5: //pre-create proposal wrap
             base::xauto_ptr<xproposal_t> _final_proposal_block(new xproposal_t(*_peer_block,_peer_prev_block_cert));
             _final_proposal_block->set_expired_ms(get_time_now() + _proposal_msg.get_expired_ms());
             _final_proposal_block->set_bind_clock_cert(event_obj->get_xclock_cert());
@@ -539,6 +518,10 @@ namespace top
                         return enum_xconsensus_error_bad_packet;
                     }
                     xdbg("xBFTdriver_t::handle_commit_msg,target commit has finished and submit to certified _local_cert_block=%s,errcode=%d,at node=0x%llx",_local_cert_block->dump().c_str(),_commit_msg.get_commit_error_code(),get_xip2_low_addr());
+                    
+                    //allow sync additional blocks around the locked block
+                    resync_local_and_peer(_local_cert_block,from_addr,to_addr,event_obj->get_clock());
+                    
                     return enum_xconsensus_code_successful;//local proposal block has verified and ready,so it is duplicated commit msg
                 }
             }
@@ -624,7 +607,7 @@ namespace top
 
                     const uint64_t    sync_target_block_height = _commit_msg.get_proof_cert_height();
                     const std::string sync_target_block_hash   = _peer_commit_cert_hash;
-                    send_sync_request(to_addr,from_addr,sync_target_block_height,sync_target_block_hash,_peer_commit_cert.get(),sync_target_block_height,(event_obj->get_clock() + 2),packet.get_block_chainid());//download it
+                    send_sync_request(to_addr,from_addr,sync_target_block_height,sync_target_block_hash,_peer_commit_cert.get(),sync_target_block_height,(event_obj->get_clock() + 1),packet.get_block_chainid());//download it
                 }
             }
             else//fail case: _peer_commit_cert carry some certificaiton that might be parent block of proposal,or any other cert
@@ -647,7 +630,7 @@ namespace top
                         {
                             const uint64_t    sync_target_block_height = _commit_msg.get_proof_cert_height();
                             const std::string sync_target_block_hash   = _peer_commit_cert_hash;
-                            send_sync_request(to_addr,from_addr,sync_target_block_height,sync_target_block_hash,_peer_commit_cert.get(),_commit_msg.get_proof_cert_height(),(event_obj->get_clock() + 2),packet.get_block_chainid());//download it
+                            send_sync_request(to_addr,from_addr,sync_target_block_height,sync_target_block_hash,_peer_commit_cert.get(),_commit_msg.get_proof_cert_height(),(event_obj->get_clock() + 1),packet.get_block_chainid());//download it
                         }
                     }
                     xwarn("xBFTdriver_t::handle_commit_msg,leader notify err-code(%d) from packet=%s,at node=0x%llx",_commit_msg.get_commit_error_code(),packet.dump().c_str(),get_xip2_low_addr());
@@ -669,13 +652,13 @@ namespace top
                 {
                     const uint64_t    sync_target_block_height = _report_msg.get_latest_commit_height();
                     const std::string sync_target_block_hash   = _report_msg.get_latest_commit_hash();
-                    send_sync_request(to_addr,from_addr,sync_target_block_height,sync_target_block_hash,get_lock_block()->get_cert(),get_lock_block()->get_height(),(event_obj->get_clock() + 2),packet.get_block_chainid());//download peer 'commit block
+                    send_sync_request(to_addr,from_addr,sync_target_block_height,sync_target_block_hash,get_lock_block()->get_cert(),get_lock_block()->get_height(),(event_obj->get_clock() + 1),packet.get_block_chainid());//download peer 'commit block
                 }
                 if(get_lock_block()->get_height() < _report_msg.get_latest_lock_height())
                 {
                     const uint64_t    sync_target_block_height = _report_msg.get_latest_lock_height();
                     const std::string sync_target_block_hash   = _report_msg.get_latest_lock_hash();
-                    send_sync_request(to_addr,from_addr,sync_target_block_height,sync_target_block_hash,get_lock_block()->get_cert(),get_lock_block()->get_height(),(event_obj->get_clock() + 2),packet.get_block_chainid());//download peer 'locked block
+                    send_sync_request(to_addr,from_addr,sync_target_block_height,sync_target_block_hash,get_lock_block()->get_cert(),get_lock_block()->get_height(),(event_obj->get_clock() + 1),packet.get_block_chainid());//download peer 'locked block
                 }
                 base::xvblock_t * local_latest_cert = get_latest_cert_block();
                 if(_report_msg.get_latest_cert_viewid() > 0)
@@ -684,7 +667,7 @@ namespace top
                     {
                         const uint64_t    sync_target_block_height = _report_msg.get_latest_cert_height();
                         const std::string sync_target_block_hash   = _report_msg.get_latest_cert_hash();
-                        send_sync_request(to_addr,from_addr,sync_target_block_height,sync_target_block_hash,get_lock_block()->get_cert(),get_lock_block()->get_height(),(event_obj->get_clock() + 2),packet.get_block_chainid());//download peer 'latest cert block
+                        send_sync_request(to_addr,from_addr,sync_target_block_height,sync_target_block_hash,get_lock_block()->get_cert(),get_lock_block()->get_height(),(event_obj->get_clock() + 1),packet.get_block_chainid());//download peer 'latest cert block
                     }
                 }
             }
