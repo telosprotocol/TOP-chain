@@ -72,8 +72,8 @@ private:
     int KadKey_StoreInDb(
             base::KadmliaKeyPtr& kadkey,
             const std::string& db_field);
-    bool GetBootstrapCacheCallback(const uint64_t& service_type, VecBootstrapEndpoint& vec_bootstrap_endpoint);
-    bool SetBootstrapCacheCallback(const uint64_t& service_type, const VecBootstrapEndpoint& vec_bootstrap_endpoint);
+    // bool GetBootstrapCacheCallback(const uint64_t& service_type, VecBootstrapEndpoint& vec_bootstrap_endpoint);
+    // bool SetBootstrapCacheCallback(const uint64_t& service_type, const VecBootstrapEndpoint& vec_bootstrap_endpoint);
 
 private:
     std::shared_ptr<wrouter::RootRoutingManager> root_manager_ptr_{ nullptr };

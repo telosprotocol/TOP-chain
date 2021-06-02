@@ -30,15 +30,11 @@ public:
             const std::string& local_ip,
             uint16_t local_port,
             bool first_node,
-            const std::string& idtype,
-            base::KadmliaKeyPtr kadmlia_key,
-            uint64_t service_type,
-            uint32_t role);
+            base::KadmliaKeyPtr kadmlia_key);
     void Reset();
     bool IsPublicNode();
     std::string kad_key();
     std::string xid();
-    std::string xip();
     std::string id();
     base::XipParser& GetXipParser();
     std::string local_ip() { return local_ip_; }
@@ -52,7 +48,7 @@ public:
         std::unique_lock<std::mutex> lock(public_mutex_);
         return public_ip_;
     }
-    const std::string& idtype() { return idtype_; }
+
     uint16_t public_port() {
         std::unique_lock<std::mutex> lock(public_mutex_);
         return public_port_;
@@ -64,8 +60,7 @@ public:
     void set_service_type(uint64_t service_type) { service_type_ = service_type; }
     uint32_t routing_table_id() { return routing_table_id_; }
     void set_routing_table_id(uint32_t routing_table_id) { routing_table_id_ = routing_table_id; }
-    uint32_t role() { return role_; }
-    void set_role(int32_t role_type) { role_ = role_type; }
+
     base::KadmliaKeyPtr kadmlia_key() { 
         std::lock_guard<std::mutex> lock(kadkey_mutex_);
         return kadmlia_key_; 
@@ -74,17 +69,13 @@ public:
         std::lock_guard<std::mutex> lock(kadkey_mutex_);
         kadmlia_key_ = kadmlia_key; 
     }
-    uint32_t score() { return score_; }
-    void set_xip(const std::string& xip_str);
+
     inline bool use_kad_key() {
         if (kadmlia_key_) {
             return true;
         }
         return false;
     }
-    bool HasDynamicXip(const std::string& dxip);
-    void AddDxip(const std::string& node_id, const std::string& dxip);
-    void DropDxip(const std::string& node_id);
     uint16_t rpc_http_port() { return rpc_http_port_; }
     uint16_t rpc_ws_port() { return rpc_ws_port_; }
     void set_rpc_http_port(uint16_t http_port) { rpc_http_port_ = http_port; }
@@ -105,14 +96,12 @@ private:
     std::string public_ip_;
     uint16_t public_port_{ 0 };
     int32_t nat_type_{kNatTypeUnknown};
-    std::string idtype_;
     uint64_t service_type_{ kInvalidType };
     uint32_t routing_table_id_{0};
-    uint32_t role_{ kRoleInvalid };
-    base::XipParserPtr xip_{std::make_shared<base::XipParser>()};
+
     std::mutex kadkey_mutex_;
     base::KadmliaKeyPtr kadmlia_key_{ nullptr };
-    uint32_t score_;
+
     // key is node_id, value is dynamicxip distribute by node_id
     std::map<std::string, std::string> node_dxip_map_;
     std::mutex node_dxip_map_mutex_;

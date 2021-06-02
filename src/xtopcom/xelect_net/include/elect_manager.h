@@ -3,6 +3,8 @@
 #include "xdata/xelection/xelection_result_store.h"
 #include "xelect_net/include/elect_manager_base.h"
 #include "xelect_net/include/node_manager_base.h"
+#include "xwrouter/multi_routing/multi_routing.h"
+#include "xwrouter/multi_routing/net_node.h"
 #include "xpbase/base/top_config.h"
 #include "xtransport/proto/transport.pb.h"
 #include "xtransport/transport.h"
@@ -52,7 +54,11 @@ public:
      * @param xip2 xip of p2p network to destory
      * @return int
      */
+    void OnElectUpdated(std::vector<wrouter::WrouterTableNodes> const & elect_data);
+    void UpdateRoutingTable(std::vector<wrouter::WrouterTableNodes> const & elect_data, wrouter::WrouterTableNodes const & self_wrouter_nodes);
     int OnElectQuit(const common::xip2_t & xip2);
+
+private:
 
 private:
     transport::TransportPtr transport_{nullptr};

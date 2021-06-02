@@ -11,7 +11,7 @@
 #include "xkad/proto/kadmlia.pb.h"
 #include "xkad/routing_table/routing_utils.h"
 #include "xbase/xpacket.h"
-#include "xpbase/base/kad_key/get_kadmlia_key.h"
+#include "xpbase/base/kad_key/kadmlia_key.h"
 #include "xwrouter/root/root_routing.h"
 
 namespace top {
@@ -39,10 +39,10 @@ std::shared_ptr<kadmlia::RoutingTable> GetRoutingTable(const std::string& routin
 void GetAllRegisterType(std::vector<uint64_t>& vec_type);
 void GetAllRegisterRoutingTable(std::vector<std::shared_ptr<kadmlia::RoutingTable>>& vec_rt);
 
-bool SetCacheServiceType(uint64_t service_type);
-bool GetServiceBootstrapRootNetwork(
-        uint64_t service_type,
-        std::set<std::pair<std::string, uint16_t>>& boot_endpoints);
+// bool SetCacheServiceType(uint64_t service_type);
+// bool GetServiceBootstrapRootNetwork(
+//         uint64_t service_type,
+//         std::set<std::pair<std::string, uint16_t>>& boot_endpoints);
 
 int NetworkExists(
         base::KadmliaKeyPtr& kad_key_ptr,

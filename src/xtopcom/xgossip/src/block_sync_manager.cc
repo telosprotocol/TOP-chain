@@ -5,7 +5,7 @@
 #include "xgossip/include/block_sync_manager.h"
 
 #include "xpbase/base/top_log.h"
-#include "xpbase/base/kad_key/get_kadmlia_key.h"
+#include "xpbase/base/kad_key/kadmlia_key.h"
 #include "xkad/routing_table/callback_manager.h"
 #include "xkad/routing_table/routing_table.h"
 #include "xwrouter/register_routing_table.h"
@@ -276,7 +276,7 @@ void BlockSyncManager::CheckHeaderHashQueue() {
 }
 
 uint64_t BlockSyncManager::GetRoutingServiceType(const std::string& des_node_id) {
-    auto kad_key = base::GetKadmliaKey(des_node_id);
+    auto kad_key = base::GetRootKadmliaKey(des_node_id);
     return kad_key->GetServiceType();
 }
 

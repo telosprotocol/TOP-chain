@@ -1,3 +1,4 @@
+#if 0
 #pragma once
 
 #include "xpbase/base/kad_key/kadmlia_key.h"
@@ -16,3 +17,4 @@ base::KadmliaKeyPtr GetKadmliaKey();
 }
 
 }
+#endif

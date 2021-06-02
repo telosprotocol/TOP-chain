@@ -132,23 +132,25 @@ int EcNetcard::send(
         return kVhostSendDstInvalid;
     }
 
-    xdbg("send data chain_src: [%d][%d][%d][%d][%d][%d][%d]",
+    xdbg("send data chain_src: [%d][%d][%d][%d]",
             send_kad_key->xnetwork_id(),
             send_kad_key->zone_id(),
             send_kad_key->cluster_id(),
-            send_kad_key->group_id(),
-            send_kad_key->node_id(),
-            send_kad_key->xip_type(),
-            send_kad_key->process_id());
+            send_kad_key->group_id()
+            // send_kad_key->node_id(),
+            // send_kad_key->xip_type(),
+            // send_kad_key->process_id()
+            );
 
-    xdbg("send data chain_dst: [%d][%d][%d][%d][%d][%d][%d]",
+    xdbg("send data chain_dst: [%d][%d][%d][%d]",
             recv_kad_key->xnetwork_id(),
             recv_kad_key->zone_id(),
             recv_kad_key->cluster_id(),
-            recv_kad_key->group_id(),
-            recv_kad_key->node_id(),
-            recv_kad_key->xip_type(),
-            recv_kad_key->process_id());
+            recv_kad_key->group_id()
+            // recv_kad_key->node_id(),
+            // recv_kad_key->xip_type(),
+            // recv_kad_key->process_id()
+            );
 
     transport::protobuf::RoutingMessage pbft_message;
     pbft_message.set_broadcast(is_broadcast);

@@ -7,7 +7,7 @@
 
 #include "xelect_net/include/node_manager_base.h"
 
-#include "xpbase/base/kad_key/get_kadmlia_key.h"
+#include "xpbase/base/kad_key/kadmlia_key.h"
 #include "xtransport/transport.h"
 #include "xkad/routing_table/routing_utils.h"
 #include "xkad/routing_table/routing_table.h"

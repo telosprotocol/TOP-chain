@@ -341,7 +341,7 @@ std::shared_ptr<top::wrouter::RootRoutingManager> MultilayerNetwork::CreateRootM
     }
 
     // get kroot id
-    base::KadmliaKeyPtr kad_key_ptr = base::GetKadmliaKey(global_node_id, true);
+    base::KadmliaKeyPtr kad_key_ptr = base::GetRootKadmliaKey(global_node_id);
     if (KadKey_GetFromDb(kad_key_ptr, kKadmliaKeyField + "root" + global_node_id) != 0) {
         if (KadKey_StoreInDb(kad_key_ptr, kKadmliaKeyField + "root" + global_node_id) != 0) {
             TOP_FATAL("save root kad key to db failed!");
@@ -351,9 +351,9 @@ std::shared_ptr<top::wrouter::RootRoutingManager> MultilayerNetwork::CreateRootM
     }
     TOP_INFO("get root kad key: %s from db success", HexEncode(kad_key_ptr->Get()).c_str());
 
-    auto get_cache_callback = std::bind(&MultilayerNetwork::GetBootstrapCacheCallback, this, std::placeholders::_1, std::placeholders::_2);
-    auto set_cache_callback = std::bind(&MultilayerNetwork::SetBootstrapCacheCallback, this, std::placeholders::_1, std::placeholders::_2);
-    if (root_manager_ptr->InitRootRoutingTable(transport, new_config, kad_key_ptr, get_cache_callback, set_cache_callback) != top::kadmlia::kKadSuccess) {
+    // auto get_cache_callback = std::bind(&MultilayerNetwork::GetBootstrapCacheCallback, this, std::placeholders::_1, std::placeholders::_2);
+    // auto set_cache_callback = std::bind(&MultilayerNetwork::SetBootstrapCacheCallback, this, std::placeholders::_1, std::placeholders::_2);
+    if (root_manager_ptr->InitRootRoutingTable(transport, new_config, kad_key_ptr) != top::kadmlia::kKadSuccess) {
         TOP_ERROR("<blueshi> add root_table[root] failed!");
         return nullptr;
     }
@@ -463,44 +463,44 @@ static bool ToVecBootstrapEndpoint(const std::string& str, VecBootstrapEndpoint&
 }
 
 
-bool MultilayerNetwork::GetBootstrapCacheCallback(const uint64_t& service_type, VecBootstrapEndpoint& vec_bootstrap_endpoint) {
-    if (!net_db_) {
-        TOP_ERROR("network layer db invalid");
-        return false;
-    }
-    const std::string field = std::to_string(service_type);
-    std::string db_key(top::kadmlia::BOOTSTRAP_CACHE_DB_KEY);
-    db_key += field;
-    std::string value;
+// bool MultilayerNetwork::GetBootstrapCacheCallback(const uint64_t& service_type, VecBootstrapEndpoint& vec_bootstrap_endpoint) {
+//     if (!net_db_) {
+//         TOP_ERROR("network layer db invalid");
+//         return false;
+//     }
+//     const std::string field = std::to_string(service_type);
+//     std::string db_key(top::kadmlia::BOOTSTRAP_CACHE_DB_KEY);
+//     db_key += field;
+//     std::string value;
 
-    if (!net_db_->read(db_key, value)) {
-        TOP_WARN("read bootstrapcache of service_type:%llu from db failed", service_type);
-        return false;
-    }
+//     if (!net_db_->read(db_key, value)) {
+//         TOP_WARN("read bootstrapcache of service_type:%llu from db failed", service_type);
+//         return false;
+//     }
 
-    if (!ToVecBootstrapEndpoint(value, vec_bootstrap_endpoint)) {
-        TOP_ERROR("parse vec_bootstrap_endpoint from value failed");
-        return false;
-    }
+//     if (!ToVecBootstrapEndpoint(value, vec_bootstrap_endpoint)) {
+//         TOP_ERROR("parse vec_bootstrap_endpoint from value failed");
+//         return false;
+//     }
 
-    return true;
+//     return true;
 
-}
+// }
 
-bool MultilayerNetwork::SetBootstrapCacheCallback(const uint64_t& service_type, const VecBootstrapEndpoint& vec_bootstrap_endpoint) {
-    if (!net_db_) {
-        TOP_ERROR("network layer db invalid");
-        return false;
-    }
-    const std::string field = std::to_string(service_type);
-    const std::string value = ToString(vec_bootstrap_endpoint);
-    std::string db_key(top::kadmlia::BOOTSTRAP_CACHE_DB_KEY);
-    db_key += field;
-    net_db_->write(db_key, value);
-    TOP_DEBUG("dump service_type:%llu bootstrapcache to db", service_type);
-    return true;
+// bool MultilayerNetwork::SetBootstrapCacheCallback(const uint64_t& service_type, const VecBootstrapEndpoint& vec_bootstrap_endpoint) {
+//     if (!net_db_) {
+//         TOP_ERROR("network layer db invalid");
+//         return false;
+//     }
+//     const std::string field = std::to_string(service_type);
+//     const std::string value = ToString(vec_bootstrap_endpoint);
+//     std::string db_key(top::kadmlia::BOOTSTRAP_CACHE_DB_KEY);
+//     db_key += field;
+//     net_db_->write(db_key, value);
+//     TOP_DEBUG("dump service_type:%llu bootstrapcache to db", service_type);
+//     return true;
 
-}
+// }
 
 }  // namespace elect
 

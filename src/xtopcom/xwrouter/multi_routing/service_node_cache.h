@@ -5,7 +5,7 @@
 #pragma once
 
 #include "xkad/routing_table/node_info.h"
-#include "xpbase/base/kad_key/get_kadmlia_key.h"
+#include "xpbase/base/kad_key/kadmlia_key.h"
 #include "xpbase/base/kad_key/kadmlia_key.h"
 #include "xpbase/base/top_timer.h"
 #include "xpbase/base/xip_parser.h"

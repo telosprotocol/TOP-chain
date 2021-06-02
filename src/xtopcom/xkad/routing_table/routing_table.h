@@ -57,8 +57,8 @@ public:
     virtual int DropNode(NodeInfoPtr node);
     // usually for elect
     virtual int BulkDropNode(const std::vector<std::string>& drop_nodes);
-    virtual void GetPubEndpoints(std::vector<std::string>& public_endpoints);
-    virtual void GetBootstrapCache(std::set<std::pair<std::string, uint16_t>>& boot_endpoints);
+//     virtual void GetPubEndpoints(std::vector<std::string>& public_endpoints);
+//     virtual void GetBootstrapCache(std::set<std::pair<std::string, uint16_t>>& boot_endpoints);
     virtual bool IsDestination(const std::string& des_node_id, bool check_closest);
     virtual void SetFreqMessage(transport::protobuf::RoutingMessage& message);
     virtual uint64_t GetRoutingTableType() { return local_node_ptr_->service_type();}
@@ -165,10 +165,10 @@ public:
     void ClearHeartbeatInfo();
     void RegisterHeartbeatInfoCallback(on_heart_beat_info_receive_callback_t heart_beat_callback);
     void UnRegisterHeartbeatInfoCallback();
-    virtual void RegisterBootstrapCacheCallback(
-            on_bootstrap_cache_get_callback_t get_cache_callback,
-            on_bootstrap_cache_set_callback_t set_cache_callback);
-    virtual void UnRegisterBootstrapCacheCallback();
+//     virtual void RegisterBootstrapCacheCallback(
+//             on_bootstrap_cache_get_callback_t get_cache_callback,
+//             on_bootstrap_cache_set_callback_t set_cache_callback);
+//     virtual void UnRegisterBootstrapCacheCallback();
 
     std::string bootstrap_id() {
         return bootstrap_id_;
@@ -243,7 +243,7 @@ protected:
     void GetExistsNodesBloomfilter(
             const std::vector<NodeInfoPtr>& nodes,
             std::vector<uint64_t>& bloomfilter_vec);
-    virtual bool StartBootstrapCacheSaver();
+//     virtual bool StartBootstrapCacheSaver();
     void TellNeighborsDropAllNode();
     void SendDropNodeRequest(const std::string& id);
     void OnHeartbeatFailed(const std::string& ip, uint16_t port);
@@ -300,7 +300,7 @@ protected:
     std::mutex set_endpoints_mutex_;
     bool after_join_;
 
-    std::shared_ptr<kadmlia::BootstrapCacheHelper> bootstrap_cache_helper_;
+//     std::shared_ptr<kadmlia::BootstrapCacheHelper> bootstrap_cache_helper_;
     uint32_t kadmlia_key_len_;
     std::map<std::string, std::string> heart_beat_info_map_;
     std::mutex heart_beat_info_map_mutex_;

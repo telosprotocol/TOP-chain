@@ -31,29 +31,29 @@ public:
 
     void SetRootRoutingManager(std::shared_ptr<RootRoutingManager> root_manager_ptr);
 
-private:
-    friend std::shared_ptr<kadmlia::RoutingTable> GetRoutingTable(const uint64_t& type, bool root);
-    friend std::shared_ptr<kadmlia::RoutingTable> GetRoutingTable(const std::string& routing_id, bool root);
+    // friend std::shared_ptr<kadmlia::RoutingTable> GetRoutingTable(const uint64_t& type, bool root);
+    // friend std::shared_ptr<kadmlia::RoutingTable> GetRoutingTable(const std::string& routing_id, bool root);
 
-    friend void GetAllRegisterType(std::vector<uint64_t>& vec_type);
-    friend void GetAllRegisterRoutingTable(std::vector<std::shared_ptr<kadmlia::RoutingTable>>& vec_rt);
+    // friend void GetAllRegisterType(std::vector<uint64_t>& vec_type);
+    // friend void GetAllRegisterRoutingTable(std::vector<std::shared_ptr<kadmlia::RoutingTable>>& vec_rt);
 
 
-    friend bool GetServiceBootstrapRootNetwork(
-        uint64_t service_type,
-        std::set<std::pair<std::string, uint16_t>>& boot_endpoints);
-    friend bool SetCacheServiceType(uint64_t service_type);
+    // friend bool GetServiceBootstrapRootNetwork(
+    //     uint64_t service_type,
+    //     std::set<std::pair<std::string, uint16_t>>& boot_endpoints);
+    // friend bool SetCacheServiceType(uint64_t service_type);
     
     void GetAllRegisterType(std::vector<uint64_t>& vec_type);
     void GetAllRegisterRoutingTable(std::vector<std::shared_ptr<kadmlia::RoutingTable>>& vec_rt);
 
+
+    // bool GetServiceBootstrapRootNetwork(
+    //     uint64_t service_type,
+    //     std::set<std::pair<std::string, uint16_t>>& boot_endpoints);
+    // bool SetCacheServiceType(uint64_t service_type);
+private:
     kadmlia::RoutingTablePtr GetServiceRoutingTable(const uint64_t& type);
     kadmlia::RoutingTablePtr GetServiceRoutingTable(const std::string& routing_id);
-
-    bool GetServiceBootstrapRootNetwork(
-        uint64_t service_type,
-        std::set<std::pair<std::string, uint16_t>>& boot_endpoints);
-    bool SetCacheServiceType(uint64_t service_type);
 
     void CheckSingleNodeNetwork();
     void WaitCheckSignal();

@@ -4,7 +4,7 @@
 //  Created by Charlie Xie on 04/01/2019.
 //  Copyright (c) 2017-2019 Telos Foundation & contributors
 //
-
+#if 0
 #pragma once
 
 #include <iostream>
@@ -117,3 +117,4 @@ private:
 }  // namespase base
 
 }  // namespace top
+#endif

@@ -1,3 +1,4 @@
+#if 0
 #include "xpbase/base/kad_key/get_kadmlia_key.h"
 
 #include <assert.h>
@@ -84,3 +85,4 @@ base::KadmliaKeyPtr GetKadmliaKey() {
 } // namespace base
 
 } // namespace top
+#endif

@@ -21,7 +21,7 @@
 #include "xpbase/base/line_parser.h"
 #include "xpbase/base/xid/xid_parser.h"
 #include "xpbase/base/xip_parser.h"
-#include "xpbase/base/kad_key/get_kadmlia_key.h"
+#include "xpbase/base/kad_key/kadmlia_key.h"
 #include "xbase/xhash.h"
 
 namespace top {
@@ -74,27 +74,27 @@ std::string GenNodeIdType(const std::string& in_country, const std::string& in_b
     return GenNodeIdType(countrycode, businesscode);
 }
 
-std::string GenRandomID(const std::string& country, const std::string& business) {
-    std::string idtype(GenNodeIdType(country, business));
-    if (idtype.empty()) {
-        return std::string("");
-    }
-    return idtype + RandomString(kNodeIdSize - kNodeIdTypeSize);
-}
+// std::string GenRandomID(const std::string& country, const std::string& business) {
+//     std::string idtype(GenNodeIdType(country, business));
+//     if (idtype.empty()) {
+//         return std::string("");
+//     }
+//     return idtype + RandomString(kNodeIdSize - kNodeIdTypeSize);
+// }
 
-std::string GenRandomID(uint8_t country_code, uint8_t service_type) {
-    /*
-    std::string idtype(GenNodeIdType(country_code, service_type));
-    if (idtype.empty()) {
-        return std::string("");
-    }
-    return idtype + RandomString(kNodeIdSize - kNodeIdTypeSize);
-    */
-    base::KadmliaKeyPtr kad_key = base::GetKadmliaKey();
-    kad_key->set_xnetwork_id(service_type);
-    kad_key->set_zone_id(country_code);
-    return kad_key->Get();
-}
+// std::string GenRandomID(uint8_t country_code, uint8_t service_type) {
+//     /*
+//     std::string idtype(GenNodeIdType(country_code, service_type));
+//     if (idtype.empty()) {
+//         return std::string("");
+//     }
+//     return idtype + RandomString(kNodeIdSize - kNodeIdTypeSize);
+//     */
+//     base::KadmliaKeyPtr kad_key = base::GetKadmliaKey();
+//     kad_key->set_xnetwork_id(service_type);
+//     kad_key->set_zone_id(country_code);
+//     return kad_key->Get();
+// }
 
 bool GetNetworkId(const std::string& id, uint32_t& network_id) {
     if (id.size() != kNodeIdSize) {
@@ -173,7 +173,7 @@ uint8_t GetZoneID(const std::string& id) {
 bool CreateGlobalXid(const base::Config& config) try {
     assert(!global_node_id.empty());
     global_node_id_hash = GetStringSha128(global_node_id);  // NOLINT
-    global_xid = base::GetKadmliaKey(global_node_id, true);
+    global_xid = base::GetRootKadmliaKey(global_node_id);
     return true;
 } catch(...) {
     TOP_FATAL("catch ...");
@@ -188,14 +188,8 @@ LocalNodeInfoPtr CreateLocalInfoFromConfig(
         TOP_ERROR("get node zone id from config failed!");
         return nullptr;
     }
-    auto xip = std::make_shared<base::XipParser>(kad_key->Xip());
-    std::string idtype(top::kadmlia::GenNodeIdType(
-            check_cast<uint8_t>(((zone_id >> 24) & 0xFF)),
-            xip->xnetwork_id()));
-    if (idtype.empty()) {
-        TOP_ERROR("get node id is null!");
-        return nullptr;
-    }
+    // auto xip = std::make_shared<base::XipParser>(kad_key->Xip());
+
     bool first_node = false;
     config.Get("node", "first_node", first_node);
     std::string local_ip;
@@ -212,10 +206,7 @@ LocalNodeInfoPtr CreateLocalInfoFromConfig(
             local_ip,
             local_port,
             first_node,
-            idtype,
-            kad_key,
-            kad_key->xnetwork_id(),
-            kRoleInvalid)) {
+            kad_key)) {
         TOP_ERROR("init local node info failed!");
         return nullptr;
     }

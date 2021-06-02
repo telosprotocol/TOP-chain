@@ -10,7 +10,7 @@
 #include "xpbase/base/top_utils.h"
 #include "xpbase/base/uint64_bloomfilter.h"
 #include "xgossip/include/gossip_utils.h"
-#include "xpbase/base/kad_key/get_kadmlia_key.h"
+#include "xpbase/base/kad_key/kadmlia_key.h"
 
 namespace top {
 

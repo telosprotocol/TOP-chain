@@ -78,7 +78,7 @@ void ElectPerf::PrintRoutingTable(top::kadmlia::RoutingTablePtr & routing_table)
     std::cout << "self: " << HexSubstr(local_node->id()) << ", " << local_node->local_ip() << ":" << local_node->local_port() << ", " << local_node->public_ip() << ":"
               << local_node->public_port() << ", "
               << "[" << local_node->nat_type() << "]"
-              << ", " << HexEncode(local_node->xip()) << ", xid:" << HexSubstr(local_node->xid()) << std::endl;
+              << ", xid:" << HexSubstr(local_node->xid()) << std::endl;
     std::vector<top::kadmlia::NodeInfoPtr> nodes = routing_table->GetClosestNodes(local_node->id(), kRoutingMaxNodesSize);
     if (nodes.empty()) {
         return;

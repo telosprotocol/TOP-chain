@@ -9,7 +9,7 @@
 #include "xkad/routing_table/routing_table.h"
 #include "xwrouter/register_routing_table.h"
 #include "xkad/routing_table/node_detection_manager.h"
-#include "xpbase/base/kad_key/get_kadmlia_key.h"
+#include "xpbase/base/kad_key/kadmlia_key.h"
 #include "xpbase/base/sem.h"
 #include "xpbase/base/top_string_util.h"
 #include "xwrouter/wrouter_utils/wrouter_utils.h"
@@ -44,9 +44,9 @@ bool RootRouting::UnInit() {
             }
         }
     }
-    if (local_node_ptr_->service_type() == kRoot) {
-        UnRegisterBootstrapCacheCallback();
-    }
+    // if (local_node_ptr_->service_type() == kRoot) {
+    //     UnRegisterBootstrapCacheCallback();
+    // }
     return WrouterBaseRouting::UnInit();
 }
 
@@ -189,146 +189,146 @@ bool RootRouting::GetRootNodesFromLocal(const std::string& node_id, std::vector<
     return false;
 }
 
-int RootRouting::GetRootNodes(const std::string& node_id, std::vector<NodeInfoPtr>& nodes) {
-    if (GetRootNodesFromLocal(node_id, nodes)) {
-        // TOP_DEBUG("getrootnodes %d from local, des_node_id(%s)", nodes.size(), HexEncode(node_id).c_str());
-        // std::cout << "getrootnodes "<< nodes.size() <<" from local, continue sendto remote" << std::endl;
-    }
+// int RootRouting::GetRootNodes(const std::string& node_id, std::vector<NodeInfoPtr>& nodes) {
+//     if (GetRootNodesFromLocal(node_id, nodes)) {
+//         // TOP_DEBUG("getrootnodes %d from local, des_node_id(%s)", nodes.size(), HexEncode(node_id).c_str());
+//         // std::cout << "getrootnodes "<< nodes.size() <<" from local, continue sendto remote" << std::endl;
+//     }
 
-    transport::protobuf::RoutingMessage message;
-    SetFreqMessage(message);
-    message.set_des_service_type(kRoot);
-    message.set_des_node_id(node_id);
-    message.set_type(kRootMessage);
-    message.set_id(CallbackManager::MessageId());
-    message.set_xid(global_xid->Get());
-#ifndef NDEBUG
-    auto debug_info = base::StringUtil::str_fmt(
-            "root routing get nodes, [id: %u] [src: %s], [des: %s] ",
-            message.id(),
-            HexEncode(local_node_ptr_->id()).c_str(),
-            HexEncode(node_id).c_str());
-    message.set_debug(debug_info);
-    TOP_NETWORK_DEBUG_FOR_PROTOMESSAGE("root_get_nodes_begin", message);
-#endif
+//     transport::protobuf::RoutingMessage message;
+//     SetFreqMessage(message);
+//     message.set_des_service_type(kRoot);
+//     message.set_des_node_id(node_id);
+//     message.set_type(kRootMessage);
+//     message.set_id(CallbackManager::MessageId());
+//     message.set_xid(global_xid->Get());
+// #ifndef NDEBUG
+//     auto debug_info = base::StringUtil::str_fmt(
+//             "root routing get nodes, [id: %u] [src: %s], [des: %s] ",
+//             message.id(),
+//             HexEncode(local_node_ptr_->id()).c_str(),
+//             HexEncode(node_id).c_str());
+//     message.set_debug(debug_info);
+//     TOP_NETWORK_DEBUG_FOR_PROTOMESSAGE("root_get_nodes_begin", message);
+// #endif
 
-    protobuf::RootGetNodesRequest get_nodes_req;
-    get_nodes_req.set_id(node_id);
-    get_nodes_req.set_count(kGetNodesSize);
-    std::string data;
-    if (!get_nodes_req.SerializeToString(&data)) {
-        TOP_WARN("GetNearestNodesRequest SerializeToString failed!");
-        return kKadFailed;
-    }
+//     protobuf::RootGetNodesRequest get_nodes_req;
+//     get_nodes_req.set_id(node_id);
+//     get_nodes_req.set_count(kGetNodesSize);
+//     std::string data;
+//     if (!get_nodes_req.SerializeToString(&data)) {
+//         TOP_WARN("GetNearestNodesRequest SerializeToString failed!");
+//         return kKadFailed;
+//     }
 
-    protobuf::RootMessage root_message;
-    root_message.set_message_type(kGetNodesRequest);
-    root_message.set_data(data);
-    std::string root_data;
-    if (!root_message.SerializeToString(&root_data)) {
-        TOP_INFO("RootMessage SerializeToString failed!");
-        return kKadFailed;
-    }
+//     protobuf::RootMessage root_message;
+//     root_message.set_message_type(kGetNodesRequest);
+//     root_message.set_data(data);
+//     std::string root_data;
+//     if (!root_message.SerializeToString(&root_data)) {
+//         TOP_INFO("RootMessage SerializeToString failed!");
+//         return kKadFailed;
+//     }
 
-    message.set_data(root_data);
-    const int N = 3;
-    SendToNClosestNode(message, N);
-    using RoutingMessagePtr = std::shared_ptr<transport::protobuf::RoutingMessage>;
-    using PacketPtr = std::shared_ptr<base::xpacket_t>;
-    struct Item {
-        int status;
-        RoutingMessagePtr message;
-        PacketPtr packet;
-    };
-    struct Queue {
-        std::mutex msgs_mutex;
-        std::list<Item> msgs;
-        base::Sem sem;
-    };
-    auto q = std::make_shared<Queue>();
-    int res = kKadFailed;
-    auto callback = [q](
-            int status, transport::protobuf::RoutingMessage& message, base::xpacket_t& packet) {
-        // TOP_FATAL("[%d] recv response from %s:%d", (int)message.id(), packet.get_from_ip_addr().c_str(), (int)packet.get_from_ip_port());
-        auto message_ptr = std::make_shared<transport::protobuf::RoutingMessage>();
-        message_ptr->CopyFrom(message);
-        auto packet_ptr = std::make_shared<base::xpacket_t>();
-        packet_ptr->copy_from(packet);
-        {
-            std::unique_lock<std::mutex> lock(q->msgs_mutex);
-            q->msgs.push_back(Item{status, message_ptr, packet_ptr});
-        }
-        q->sem.Post();
-    };
+//     message.set_data(root_data);
+//     const int N = 3;
+//     SendToNClosestNode(message, N);
+//     using RoutingMessagePtr = std::shared_ptr<transport::protobuf::RoutingMessage>;
+//     using PacketPtr = std::shared_ptr<base::xpacket_t>;
+//     struct Item {
+//         int status;
+//         RoutingMessagePtr message;
+//         PacketPtr packet;
+//     };
+//     struct Queue {
+//         std::mutex msgs_mutex;
+//         std::list<Item> msgs;
+//         base::Sem sem;
+//     };
+//     auto q = std::make_shared<Queue>();
+//     int res = kKadFailed;
+//     auto callback = [q](
+//             int status, transport::protobuf::RoutingMessage& message, base::xpacket_t& packet) {
+//         // TOP_FATAL("[%d] recv response from %s:%d", (int)message.id(), packet.get_from_ip_addr().c_str(), (int)packet.get_from_ip_port());
+//         auto message_ptr = std::make_shared<transport::protobuf::RoutingMessage>();
+//         message_ptr->CopyFrom(message);
+//         auto packet_ptr = std::make_shared<base::xpacket_t>();
+//         packet_ptr->copy_from(packet);
+//         {
+//             std::unique_lock<std::mutex> lock(q->msgs_mutex);
+//             q->msgs.push_back(Item{status, message_ptr, packet_ptr});
+//         }
+//         q->sem.Post();
+//     };
 
-    // register timeout
-    CallbackManager::Instance()->Add(message.id(), kGetNodesTimeout, callback, N);
+//     // register timeout
+//     CallbackManager::Instance()->Add(message.id(), kGetNodesTimeout, callback, N);
 
-    // until success or timeout
-    int received_msg = 0;
-    for (;;) {
-        q->sem.Pend();
-        Item item;
-        {
-            std::unique_lock<std::mutex> lock(q->msgs_mutex);
-            assert(!q->msgs.empty());
-            item = q->msgs.front();
-            q->msgs.pop_front();
-        }
+//     // until success or timeout
+//     int received_msg = 0;
+//     for (;;) {
+//         q->sem.Pend();
+//         Item item;
+//         {
+//             std::unique_lock<std::mutex> lock(q->msgs_mutex);
+//             assert(!q->msgs.empty());
+//             item = q->msgs.front();
+//             q->msgs.pop_front();
+//         }
 
-        auto& status = item.status;
-        auto& message = *item.message;
-        // auto& packet = *item.packet;
-        if (status == kKadSuccess) {
-            received_msg += 1;
-            do {
-                if (!message.has_data() || message.data().empty()) {
-                    TOP_WARN("message has no data!");
-                    break;
-                }
-                protobuf::RootMessage get_nodes_res;
-                if (!get_nodes_res.ParseFromString(message.data())) {
-                    TOP_WARN("message ParseFromString failed!");
-                    break;
-                }
-                if (!get_nodes_res.has_data() && get_nodes_res.data().empty()) {
-                    TOP_WARN("message root message has no data!");
-                    break;
-                }
-                protobuf::RootGetNodesResponse nodes_res;
-                if (!nodes_res.ParseFromString(get_nodes_res.data())) {
-                    TOP_WARN("message root message ParseFromString!");
-                    break;
-                }
-                for (int i = 0; i < nodes_res.nodes_size(); ++i) {
-                    NodeInfoPtr node_ptr;
-                    node_ptr.reset(new NodeInfo(nodes_res.nodes(i).id()));
-                    node_ptr->public_ip = nodes_res.nodes(i).public_ip();
-                    node_ptr->public_port = nodes_res.nodes(i).public_port();
-                    node_ptr->local_ip = nodes_res.nodes(i).local_ip();
-                    node_ptr->local_port = nodes_res.nodes(i).local_port();
-                    nodes.push_back(node_ptr);
-                }
-                CallbackManager::Instance()->Remove(message.id());
-                return kKadSuccess;
-            } while (0);
+//         auto& status = item.status;
+//         auto& message = *item.message;
+//         // auto& packet = *item.packet;
+//         if (status == kKadSuccess) {
+//             received_msg += 1;
+//             do {
+//                 if (!message.has_data() || message.data().empty()) {
+//                     TOP_WARN("message has no data!");
+//                     break;
+//                 }
+//                 protobuf::RootMessage get_nodes_res;
+//                 if (!get_nodes_res.ParseFromString(message.data())) {
+//                     TOP_WARN("message ParseFromString failed!");
+//                     break;
+//                 }
+//                 if (!get_nodes_res.has_data() && get_nodes_res.data().empty()) {
+//                     TOP_WARN("message root message has no data!");
+//                     break;
+//                 }
+//                 protobuf::RootGetNodesResponse nodes_res;
+//                 if (!nodes_res.ParseFromString(get_nodes_res.data())) {
+//                     TOP_WARN("message root message ParseFromString!");
+//                     break;
+//                 }
+//                 for (int i = 0; i < nodes_res.nodes_size(); ++i) {
+//                     NodeInfoPtr node_ptr;
+//                     node_ptr.reset(new NodeInfo(nodes_res.nodes(i).id()));
+//                     node_ptr->public_ip = nodes_res.nodes(i).public_ip();
+//                     node_ptr->public_port = nodes_res.nodes(i).public_port();
+//                     node_ptr->local_ip = nodes_res.nodes(i).local_ip();
+//                     node_ptr->local_port = nodes_res.nodes(i).local_port();
+//                     nodes.push_back(node_ptr);
+//                 }
+//                 CallbackManager::Instance()->Remove(message.id());
+//                 return kKadSuccess;
+//             } while (0);
 
-            if (received_msg >= N) {
-                return kKadFailed;
-            }
-        } else if (status == kKadTimeout) {
-            return kKadFailed;
-        }
-    }
+//             if (received_msg >= N) {
+//                 return kKadFailed;
+//             }
+//         } else if (status == kKadTimeout) {
+//             return kKadFailed;
+//         }
+//     }
 
-    return kKadFailed;
-}
+//     return kKadFailed;
+// }
 
-int RootRouting::GetRootNodes(uint64_t service_type, std::vector<NodeInfoPtr>& nodes) {
-    std::vector<std::string> exclude;
-    base::KadmliaKeyPtr kad_key = base::GetKadmliaKey(service_type);
-    return GetRootNodes(kad_key->Get(), nodes);
-}
+// int RootRouting::GetRootNodes(uint64_t service_type, std::vector<NodeInfoPtr>& nodes) {
+//     std::vector<std::string> exclude;
+//     base::KadmliaKeyPtr kad_key = base::GetKadmliaKey(service_type);
+//     return GetRootNodes(kad_key->Get(), nodes);
+// }
 
 bool RootRouting::Init() {
     local_node_ptr_->set_is_root(true);
@@ -338,10 +338,10 @@ bool RootRouting::Init() {
     }
     assert(local_node_ptr_->kadmlia_key()->xnetwork_id() == kRoot);
     local_node_ptr_->set_kadmlia_key(global_xid);
-    if (!StartBootstrapCacheSaver()) {
-        TOP_ERROR("WrouterBaseRouting::StartBootstrapCacheSaver failed");
-        return false;
-    }
+    // if (!StartBootstrapCacheSaver()) {
+    //     TOP_ERROR("WrouterBaseRouting::StartBootstrapCacheSaver failed");
+    //     return false;
+    // }
     AddNetworkRootId(local_node_ptr_->id());
 
     TOP_INFO("root routing table Init success");
@@ -559,61 +559,61 @@ void RootRouting::HandleMessage(
     }
 }
 
-bool RootRouting::StartBootstrapCacheSaver() {
-    auto get_public_nodes = [this](std::vector<NodeInfoPtr>& nodes) {
-        {
-            NodesLock lock(nodes_mutex_);
-            for (auto& node_ptr : nodes_) {
-                if (node_ptr->IsPublicNode())
-                    nodes.push_back(node_ptr);
-            }
-        }
+// bool RootRouting::StartBootstrapCacheSaver() {
+//     auto get_public_nodes = [this](std::vector<NodeInfoPtr>& nodes) {
+//         {
+//             NodesLock lock(nodes_mutex_);
+//             for (auto& node_ptr : nodes_) {
+//                 if (node_ptr->IsPublicNode())
+//                     nodes.push_back(node_ptr);
+//             }
+//         }
 
-        if (!bootstrap_ip_.empty() && bootstrap_port_ >= 0) {
-            auto node_ptr = std::make_shared<NodeInfo>();
-            node_ptr->public_ip = bootstrap_ip_;
-            node_ptr->public_port = bootstrap_port_;
-            nodes.push_back(node_ptr);
-        }
-    };
+//         if (!bootstrap_ip_.empty() && bootstrap_port_ >= 0) {
+//             auto node_ptr = std::make_shared<NodeInfo>();
+//             node_ptr->public_ip = bootstrap_ip_;
+//             node_ptr->public_port = bootstrap_port_;
+//             nodes.push_back(node_ptr);
+//         }
+//     };
 
-    auto get_service_public_nodes = [this](uint64_t service_type, std::vector<NodeInfoPtr>& nodes) {
-        std::vector<NodeInfoPtr> tmp_nodes;
-        base::KadmliaKeyPtr kad_key = base::GetKadmliaKey(service_type);
-        if (GetRootNodes(kad_key->Get(), tmp_nodes) != kadmlia::kKadSuccess) {
-            TOP_WARN("<StartBootstrapCacheSaver:: get root nodes failed for %llu", service_type);
-            return;
-        }
-        // just keep public nodes of service_type
-        for (auto& node_ptr : tmp_nodes) {
-            if (node_ptr->IsPublicNode()) {
-                nodes.push_back(node_ptr);
-            }
-        }
-        return;
-    };
+//     auto get_service_public_nodes = [this](uint64_t service_type, std::vector<NodeInfoPtr>& nodes) {
+//         std::vector<NodeInfoPtr> tmp_nodes;
+//         base::KadmliaKeyPtr kad_key = base::GetKadmliaKey(service_type);
+//         if (GetRootNodes(kad_key->Get(), tmp_nodes) != kadmlia::kKadSuccess) {
+//             TOP_WARN("<StartBootstrapCacheSaver:: get root nodes failed for %llu", service_type);
+//             return;
+//         }
+//         // just keep public nodes of service_type
+//         for (auto& node_ptr : tmp_nodes) {
+//             if (node_ptr->IsPublicNode()) {
+//                 nodes.push_back(node_ptr);
+//             }
+//         }
+//         return;
+//     };
 
-    if (!bootstrap_cache_helper_->Start(
-            local_node_ptr_->kadmlia_key(),
-            get_public_nodes,
-            get_service_public_nodes)) {
-        TOP_ERROR("boostrap_cache_helper start failed");
-        return false;
-    }
+//     if (!bootstrap_cache_helper_->Start(
+//             local_node_ptr_->kadmlia_key(),
+//             get_public_nodes,
+//             get_service_public_nodes)) {
+//         TOP_ERROR("boostrap_cache_helper start failed");
+//         return false;
+//     }
 
-    TOP_INFO("bootstrap_cache_helper start success");
-    return true;
-}
+//     TOP_INFO("bootstrap_cache_helper start success");
+//     return true;
+// }
 
-bool RootRouting::GetCacheServicePublicNodes(
-        uint64_t service_type,
-        std::set<std::pair<std::string, uint16_t>>& boot_endpoints) {
-    return bootstrap_cache_helper_->GetCacheServicePublicNodes(service_type, boot_endpoints);
-}
+// bool RootRouting::GetCacheServicePublicNodes(
+//         uint64_t service_type,
+//         std::set<std::pair<std::string, uint16_t>>& boot_endpoints) {
+//     return bootstrap_cache_helper_->GetCacheServicePublicNodes(service_type, boot_endpoints);
+// }
 
-bool RootRouting::SetCacheServiceType(uint64_t service_type) {
-    return bootstrap_cache_helper_->SetCacheServiceType(service_type);
-}
+// bool RootRouting::SetCacheServiceType(uint64_t service_type) {
+//     return bootstrap_cache_helper_->SetCacheServiceType(service_type);
+// }
 
 // get elect nodes from root-network base elect-data
 int RootRouting::GetRootNodesV2(
@@ -949,17 +949,17 @@ void RootRouting::HandleGetElectNodesResponse(
     CallbackManager::Instance()->Callback(message.id(), message, packet);
 }
 
-void RootRouting::RegisterBootstrapCacheCallback(
-        on_bootstrap_cache_get_callback_t get_cache_callback,
-        on_bootstrap_cache_set_callback_t set_cache_callback) {
-    assert(get_cache_callback);
-    assert(set_cache_callback);
-    bootstrap_cache_helper_->RegisterBootstrapCacheCallback(get_cache_callback, set_cache_callback);
-}
+// void RootRouting::RegisterBootstrapCacheCallback(
+//         on_bootstrap_cache_get_callback_t get_cache_callback,
+//         on_bootstrap_cache_set_callback_t set_cache_callback) {
+//     assert(get_cache_callback);
+//     assert(set_cache_callback);
+//     bootstrap_cache_helper_->RegisterBootstrapCacheCallback(get_cache_callback, set_cache_callback);
+// }
 
-void RootRouting::UnRegisterBootstrapCacheCallback() {
-    bootstrap_cache_helper_->UnRegisterBootstrapCacheCallback();
-}
+// void RootRouting::UnRegisterBootstrapCacheCallback() {
+//     bootstrap_cache_helper_->UnRegisterBootstrapCacheCallback();
+// }
 
 
 

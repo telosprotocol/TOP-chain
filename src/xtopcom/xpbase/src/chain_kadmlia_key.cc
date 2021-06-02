@@ -4,6 +4,7 @@
 //  Created by Charlie Xie on 04/01/2019.
 //  Copyright (c) 2017-2019 Telos Foundation & contributors
 //
+#if 0
 
 #include "xpbase/base/kad_key/chain_kadmlia_key.h"
 
@@ -209,3 +210,4 @@ void base::ChainKadmliaKey::SetDefaultXipValue() {
 }  // namespase base
 
 }  // namespace top
+#endif

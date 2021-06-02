@@ -54,7 +54,7 @@ bool ServiceNodes::GetRootNodes(uint64_t service_type, std::vector<kadmlia::Node
 
     NetNode Fnode;
     if (small_net_nodes_->FindNewNode(Fnode, service_type)) {
-        base::KadmliaKeyPtr kad_key = base::GetKadmliaKey(Fnode.m_account, true);  // kRoot id
+        base::KadmliaKeyPtr kad_key = base::GetRootKadmliaKey(Fnode.m_account);  // kRoot id
         assert(kad_key);
         using namespace std::placeholders;
         auto cb = std::bind(&ServiceNodes::OnGetRootNodesAsync, this, _1, _2);
@@ -72,7 +72,7 @@ bool ServiceNodes::GetRootNodes(uint64_t service_type, const std::string & des_n
 
     NetNode Fnode;
     if (small_net_nodes_->FindNewNode(Fnode, service_type)) {
-        base::KadmliaKeyPtr kad_key = base::GetKadmliaKey(Fnode.m_account, true);  // kRoot id
+        base::KadmliaKeyPtr kad_key = base::GetRootKadmliaKey(Fnode.m_account);  // kRoot id
         assert(kad_key);
         using namespace std::placeholders;
         auto cb = std::bind(&ServiceNodes::OnGetRootNodesAsync, this, _1, _2);
@@ -238,31 +238,31 @@ void ServiceNodes::RemoveExpired(const std::unordered_map<uint64_t, std::vector<
 }
 
 void ServiceNodes::do_update() {
-    std::set<uint64_t> service_type_vec;
-    small_net_nodes_->GetAllServiceType(service_type_vec);
-    TOP_DEBUG("small net nodes getallservicetype size: %d", service_type_vec.size());
-    for (auto & item : service_type_vec) {
-        uint64_t service_type = item;
-        TOP_DEBUG("begin do_update service_type: %llu", service_type);
-        std::vector<NetNode> node_vec;
-        if (!small_net_nodes_->FindAllNode(node_vec, service_type) || node_vec.empty()) {
-            TOP_WARN("can't find nodes of service_type: %llu", service_type);
-            continue;
-        }
+    // std::set<uint64_t> service_type_vec;
+    // small_net_nodes_->GetAllServiceType(service_type_vec);
+    // TOP_DEBUG("small net nodes getallservicetype size: %d", service_type_vec.size());
+    // for (auto & item : service_type_vec) {
+    //     uint64_t service_type = item;
+    //     TOP_DEBUG("begin do_update service_type: %llu", service_type);
+    //     std::vector<NetNode> node_vec;
+    //     if (!small_net_nodes_->FindAllNode(node_vec, service_type) || node_vec.empty()) {
+    //         TOP_WARN("can't find nodes of service_type: %llu", service_type);
+    //         continue;
+    //     }
 
-        const auto rand_index = RandomUint32() % node_vec.size();
-        std::string account = node_vec[rand_index].m_account;
-        base::KadmliaKeyPtr kad_key = GetKadmliaKey(node_vec[rand_index].m_xip, account);
-        if (CheckHasNode(kad_key)) {
-            continue;
-        }
-        TOP_DEBUG("blueroot do update by account:%s, index:%u", account.c_str(), rand_index);
-        base::KadmliaKeyPtr root_kad_key = base::GetKadmliaKey(account, true);  // kRoot id
-        assert(root_kad_key);
-        using namespace std::placeholders;
-        auto cb = std::bind(&ServiceNodes::OnGetRootNodesAsync, this, _1, _2);
-        RootRoutingManager::Instance()->GetRootNodesV2Async(root_kad_key->Get(), service_type, cb);  // just call
-    }                                                                                                // end for (auto& item
+    //     const auto rand_index = RandomUint32() % node_vec.size();
+    //     std::string account = node_vec[rand_index].m_account;
+    //     base::KadmliaKeyPtr kad_key = GetKadmliaKey(node_vec[rand_index].m_xip, account);
+    //     if (CheckHasNode(kad_key)) {
+    //         continue;
+    //     }
+    //     TOP_DEBUG("blueroot do update by account:%s, index:%u", account.c_str(), rand_index);
+    //     base::KadmliaKeyPtr root_kad_key = base::GetKadmliaKey(account, true);  // kRoot id
+    //     assert(root_kad_key);
+    //     using namespace std::placeholders;
+    //     auto cb = std::bind(&ServiceNodes::OnGetRootNodesAsync, this, _1, _2);
+    //     RootRoutingManager::Instance()->GetRootNodesV2Async(root_kad_key->Get(), service_type, cb);  // just call
+    // }                                                                                                // end for (auto& item
 }
 
 }  // end namespace wrouter

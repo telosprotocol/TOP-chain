@@ -337,14 +337,14 @@ int MultilayerNetworkChain::RegisterNodeCallback(std::function<int32_t(std::stri
 
 std::vector<std::string> MultilayerNetworkChain::GetServiceNeighbours(const common::xip2_t& xip2) {
     std::vector<std::string> nodes_vec;
-    base::XipParser xip;
-    xip.set_xnetwork_id(static_cast<uint32_t>(xip2.network_id().value()));
-    xip.set_zone_id(static_cast<uint8_t>(xip2.zone_id().value()));
-    xip.set_cluster_id(static_cast<uint8_t>(xip2.cluster_id().value()));
-    xip.set_group_id(static_cast<uint8_t>(xip2.group_id().value()));
+    // base::XipParser xip;
+    // xip.set_xnetwork_id(static_cast<uint32_t>(xip2.network_id().value()));
+    // xip.set_zone_id(static_cast<uint8_t>(xip2.zone_id().value()));
+    // xip.set_cluster_id(static_cast<uint8_t>(xip2.cluster_id().value()));
+    // xip.set_group_id(static_cast<uint8_t>(xip2.group_id().value()));
     //xip.set_network_type((uint8_t)(address.cluster_address().type()));
 
-    auto kad_key = base::GetKadmliaKey(xip);
+    auto kad_key = base::GetKadmliaKey(xip2);
     auto rt = wrouter::GetRoutingTable(kad_key->GetServiceType(), false);
     if (!rt) {
         TOP_WARN("no routinng table:%llu registered, GetServiceNeighbours failed", kad_key->GetServiceType());

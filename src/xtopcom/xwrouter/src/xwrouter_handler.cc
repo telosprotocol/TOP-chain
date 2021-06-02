@@ -6,7 +6,7 @@
 
 #include <algorithm>
 
-#include "xpbase/base/kad_key/get_kadmlia_key.h"
+#include "xpbase/base/kad_key/kadmlia_key.h"
 #include "xpbase/base/xip_parser.h"
 #include "xpbase/base/kad_key/platform_kadmlia_key.h"
 #include "xkad/routing_table/routing_table.h"
@@ -16,7 +16,6 @@
 #include "xpbase/base/xip_parser.h"
 #include "xpbase/base/top_utils.h"
 #include "xtransport/utils/transport_utils.h"
-#include "xpbase/base/kad_key/get_kadmlia_key.h"
 #include "xpbase/base/uint64_bloomfilter.h"
 #include "xkad/gossip/rumor_filter.h"
 #include "xgossip/include/gossip_bloomfilter.h"

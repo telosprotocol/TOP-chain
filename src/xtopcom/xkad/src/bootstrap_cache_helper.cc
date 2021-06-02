@@ -1,7 +1,7 @@
 // Copyright (c) 2017-2019 Telos Foundation & contributors
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
-
+#if 0
 #include "xkad/routing_table/bootstrap_cache_helper.h"
 
 #include <assert.h>
@@ -337,3 +337,4 @@ void BootstrapCacheHelper::UnRegisterBootstrapCacheCallback() {
 
 }  // namespace kadmlia
 }  // namespace top
+#endif

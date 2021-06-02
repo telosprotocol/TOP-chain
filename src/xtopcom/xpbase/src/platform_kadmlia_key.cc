@@ -4,7 +4,7 @@
 //  Created by Charlie Xie on 04/01/2019.
 //  Copyright (c) 2017-2019 Telos Foundation & contributors
 //
-
+#if 0
 #include "xpbase/base/kad_key/platform_kadmlia_key.h"
 
 #include <limits>
@@ -238,3 +238,4 @@ bool PlatformKadmliaKey::CreatePrivateAndPublicKey() {
 }  // namespase base
 
 }  // namespace top
+#endif

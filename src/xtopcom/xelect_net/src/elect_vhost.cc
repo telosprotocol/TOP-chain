@@ -43,77 +43,100 @@ network::xnode_t EcVHost::host_node() const noexcept {
 }
 
 base::KadmliaKeyPtr adapt_address(const vnetwork::xvnode_address_t & address) {
-    // TODO(smaug) consider for kRoot
-    base::XipParser xip;
-    xip.set_xnetwork_id(static_cast<uint32_t>(address.network_id().value_or(common::xbroadcast_network_id_value)));
-    xip.set_zone_id(static_cast<uint8_t>(address.zone_id().value_or(common::xbroadcast_zone_id_value)));
-    xip.set_cluster_id(static_cast<uint8_t>(address.cluster_id().value_or(common::xbroadcast_cluster_id_value)));
-    xip.set_group_id(static_cast<uint8_t>(address.group_id().value_or(common::xbroadcast_group_id_value)));
-    // xip.set_node_id(static_cast<uint8_t>(address.slot_id().value_or(0)));
-    // xip.set_network_type((uint8_t)(address.cluster_address().type()));
-
+    common::xip2_t xip{address.network_id(), address.zone_id(), address.cluster_id(), address.group_id(), address.slot_id(), address.sharding_size(), address.version().value()};
+    
     base::KadmliaKeyPtr kad_key_ptr;
-    if (((xip.xnetwork_id() & common::xbroadcast_network_id_value) == common::xbroadcast_network_id_value) ||
-        ((xip.zone_id() & common::xbroadcast_zone_id_value) == common::xbroadcast_zone_id_value)) {
-        kad_key_ptr = base::GetKadmliaKey(global_node_id, true);
+    if (((xip.network_id().value_or(common::xbroadcast_network_id_value) & common::xbroadcast_network_id_value) == common::xbroadcast_network_id_value) ||
+        ((xip.zone_id().value_or(common::xbroadcast_zone_id_value) & common::xbroadcast_zone_id_value) == common::xbroadcast_zone_id_value)) {
+        kad_key_ptr = base::GetRootKadmliaKey(global_node_id);
     } else {
         kad_key_ptr = base::GetKadmliaKey(xip);
     }
 
-    xdbg("adapt raw p2p_addr: %s platform_addr: %s\n", address.to_string().c_str(), HexEncode(kad_key_ptr->Get()).c_str());
+    // // TODO(smaug) consider for kRoot
+    // base::XipParser xip;
+    // xip.set_xnetwork_id(static_cast<uint32_t>(address.network_id().value_or(common::xbroadcast_network_id_value)));
+    // xip.set_zone_id(static_cast<uint8_t>(address.zone_id().value_or(common::xbroadcast_zone_id_value)));
+    // xip.set_cluster_id(static_cast<uint8_t>(address.cluster_id().value_or(common::xbroadcast_cluster_id_value)));
+    // xip.set_group_id(static_cast<uint8_t>(address.group_id().value_or(common::xbroadcast_group_id_value)));
+    // // xip.set_node_id(static_cast<uint8_t>(address.slot_id().value_or(0)));
+    // // xip.set_network_type((uint8_t)(address.cluster_address().type()));
+
+    // base::KadmliaKeyPtr kad_key_ptr;
+    // if (((xip.xnetwork_id() & common::xbroadcast_network_id_value) == common::xbroadcast_network_id_value) ||
+    //     ((xip.zone_id() & common::xbroadcast_zone_id_value) == common::xbroadcast_zone_id_value)) {
+    //     kad_key_ptr = base::GetKadmliaKey(global_node_id, true);
+    // } else {
+    //     kad_key_ptr = base::GetKadmliaKey(xip);
+    // }
+
+    xdbg("adapt raw p2p_addr: %s platform_addr: %s\n", address.to_string().c_str(), kad_key_ptr->Get().c_str());
     return kad_key_ptr;
 }
 
-base::KadmliaKeyPtr adapt_address(const vnetwork::xvnode_address_t & address, const std::string & account) {
-    base::XipParser xip;
-    xip.set_xnetwork_id(static_cast<uint32_t>(address.network_id().value_or(common::xbroadcast_network_id_value)));
-    xip.set_zone_id(static_cast<uint8_t>(address.zone_id().value_or(common::xbroadcast_zone_id_value)));
-    xip.set_cluster_id(static_cast<uint8_t>(address.cluster_id().value_or(common::xbroadcast_cluster_id_value)));
-    xip.set_group_id(static_cast<uint8_t>(address.group_id().value_or(common::xbroadcast_group_id_value)));
-    // xip.set_node_id(static_cast<uint8_t>(address.slot_id().value_or(0)));
-    // xip.set_network_type((uint8_t)(address.cluster_address().type()));
+// base::KadmliaKeyPtr adapt_address(const vnetwork::xvnode_address_t & address, const std::string & account) {
+//     base::XipParser xip;
+//     xip.set_xnetwork_id(static_cast<uint32_t>(address.network_id().value_or(common::xbroadcast_network_id_value)));
+//     xip.set_zone_id(static_cast<uint8_t>(address.zone_id().value_or(common::xbroadcast_zone_id_value)));
+//     xip.set_cluster_id(static_cast<uint8_t>(address.cluster_id().value_or(common::xbroadcast_cluster_id_value)));
+//     xip.set_group_id(static_cast<uint8_t>(address.group_id().value_or(common::xbroadcast_group_id_value)));
+//     // xip.set_node_id(static_cast<uint8_t>(address.slot_id().value_or(0)));
+//     // xip.set_network_type((uint8_t)(address.cluster_address().type()));
 
-    auto kad_key_ptr = base::GetKadmliaKey(xip, account);
+//     auto kad_key_ptr = base::GetKadmliaKey(xip, account);
 
-    xdbg("adapt raw p2p_addr: %s platform_addr: %s\n", address.to_string().c_str(), HexEncode(kad_key_ptr->Get()).c_str());
-    return kad_key_ptr;
-}
+//     xdbg("adapt raw p2p_addr: %s platform_addr: %s\n", address.to_string().c_str(), HexEncode(kad_key_ptr->Get()).c_str());
+//     return kad_key_ptr;
+// }
 
-base::KadmliaKeyPtr adapt_address(const common::xsharding_info_t & address, common::xnode_type_t node_type) {
-    base::XipParser xip;
-    xip.set_xnetwork_id(static_cast<uint32_t>(address.network_id().value_or(common::xbroadcast_network_id_value)));
-    xip.set_zone_id(static_cast<uint8_t>(address.zone_id().value_or(common::xbroadcast_zone_id_value)));
-    xip.set_cluster_id(static_cast<uint8_t>(address.cluster_id().value_or(common::xbroadcast_cluster_id_value)));
-    xip.set_group_id(static_cast<uint8_t>(address.group_id().value_or(common::xbroadcast_group_id_value)));
-    // xip.set_node_id(static_cast<uint8_t>(address.slot_id().value_or(0)));
-    // xip.set_network_type((uint8_t)(node_type));
-
+base::KadmliaKeyPtr adapt_address(const common::xsharding_info_t & address) {
+    common::xip2_t xip{address.network_id(), address.zone_id(), address.cluster_id(), address.group_id()};
+    
     base::KadmliaKeyPtr kad_key_ptr;
-    if (((xip.xnetwork_id() & common::xbroadcast_network_id_value) == common::xbroadcast_network_id_value) ||
-        ((xip.zone_id() & common::xbroadcast_zone_id_value) == common::xbroadcast_zone_id_value)) {
-        kad_key_ptr = base::GetKadmliaKey(global_node_id, true);
+    if (((xip.network_id().value_or(common::xbroadcast_network_id_value) & common::xbroadcast_network_id_value) == common::xbroadcast_network_id_value) ||
+        ((xip.zone_id().value_or(common::xbroadcast_zone_id_value) & common::xbroadcast_zone_id_value) == common::xbroadcast_zone_id_value)) {
+        kad_key_ptr = base::GetRootKadmliaKey(global_node_id);
     } else {
         kad_key_ptr = base::GetKadmliaKey(xip);
     }
-
-    xdbg("adapt raw p2p_addr: %s platform_addr: %s\n", address.to_string().c_str(), HexEncode(kad_key_ptr->Get()).c_str());
+    
+    xdbg("adapt raw p2p_addr: %s platform_addr: %s\n", address.to_string().c_str(), kad_key_ptr->Get().c_str());
     return kad_key_ptr;
+
+    // base::XipParser xip;
+    // xip.set_xnetwork_id(static_cast<uint32_t>(address.network_id().value_or(common::xbroadcast_network_id_value)));
+    // xip.set_zone_id(static_cast<uint8_t>(address.zone_id().value_or(common::xbroadcast_zone_id_value)));
+    // xip.set_cluster_id(static_cast<uint8_t>(address.cluster_id().value_or(common::xbroadcast_cluster_id_value)));
+    // xip.set_group_id(static_cast<uint8_t>(address.group_id().value_or(common::xbroadcast_group_id_value)));
+    // // xip.set_node_id(static_cast<uint8_t>(address.slot_id().value_or(0)));
+
+
+    // base::KadmliaKeyPtr kad_key_ptr;
+    // if (((xip.xnetwork_id() & common::xbroadcast_network_id_value) == common::xbroadcast_network_id_value) ||
+    //     ((xip.zone_id() & common::xbroadcast_zone_id_value) == common::xbroadcast_zone_id_value)) {
+    //     kad_key_ptr = base::GetRootKadmliaKey(global_node_id);
+    // } else {
+    //     kad_key_ptr = base::GetKadmliaKey(xip);
+    // }
+
+    // xdbg("adapt raw p2p_addr: %s platform_addr: %s\n", address.to_string().c_str(), HexEncode(kad_key_ptr->Get()).c_str());
+    // return kad_key_ptr;
 }
 
-base::KadmliaKeyPtr adapt_address(const common::xsharding_info_t & address, common::xnode_type_t node_type, const std::string & account) {
-    base::XipParser xip;
-    xip.set_xnetwork_id(static_cast<uint32_t>(address.network_id().value_or(common::xbroadcast_network_id_value)));
-    xip.set_zone_id(static_cast<uint8_t>(address.zone_id().value_or(common::xbroadcast_zone_id_value)));
-    xip.set_cluster_id(static_cast<uint8_t>(address.cluster_id().value_or(common::xbroadcast_cluster_id_value)));
-    xip.set_group_id(static_cast<uint8_t>(address.group_id().value_or(common::xbroadcast_group_id_value)));
-    // xip.set_node_id(static_cast<uint8_t>(address.slot_id().value_or(0)));
-    // xip.set_network_type((uint8_t)(node_type));
+// base::KadmliaKeyPtr adapt_address(const common::xsharding_info_t & address, common::xnode_type_t node_type, const std::string & account) {
+//     base::XipParser xip;
+//     xip.set_xnetwork_id(static_cast<uint32_t>(address.network_id().value_or(common::xbroadcast_network_id_value)));
+//     xip.set_zone_id(static_cast<uint8_t>(address.zone_id().value_or(common::xbroadcast_zone_id_value)));
+//     xip.set_cluster_id(static_cast<uint8_t>(address.cluster_id().value_or(common::xbroadcast_cluster_id_value)));
+//     xip.set_group_id(static_cast<uint8_t>(address.group_id().value_or(common::xbroadcast_group_id_value)));
+//     // xip.set_node_id(static_cast<uint8_t>(address.slot_id().value_or(0)));
+//     // xip.set_network_type((uint8_t)(node_type));
 
-    auto kad_key_ptr = base::GetKadmliaKey(xip, account);
+//     auto kad_key_ptr = base::GetKadmliaKey(xip, account);
 
-    xdbg("adapt raw p2p_addr: %s platform_addr: %s\n", address.to_string().c_str(), HexEncode(kad_key_ptr->Get()).c_str());
-    return kad_key_ptr;
-}
+//     xdbg("adapt raw p2p_addr: %s platform_addr: %s\n", address.to_string().c_str(), HexEncode(kad_key_ptr->Get()).c_str());
+//     return kad_key_ptr;
+// }
 
 bool EcVHost::SyncMessageWhenStart(const vnetwork::xvnode_address_t & send_address,
                                    const vnetwork::xvnode_address_t & recv_address,
@@ -163,12 +186,12 @@ void EcVHost::send_to(common::xnode_id_t const & node_id, xbyte_buffer_t const &
             TOP_DEBUG("static xip request");
         } else {
             // usually sync response
-            recv_kad_key = base::GetKadmliaKey(node_id.to_string(), true);
+            recv_kad_key = base::GetRootKadmliaKey(node_id.to_string());
             TOP_DEBUG("static xip response");
         }
     } else {
-        send_kad_key = adapt_address(vnetwork_message.sender(), global_node_id);
-        recv_kad_key = adapt_address(vnetwork_message.receiver(), node_id.to_string());
+        send_kad_key = adapt_address(vnetwork_message.sender());
+        recv_kad_key = adapt_address(vnetwork_message.receiver());
     }
 
     auto msg = elect::xelect_message_t(bytes_message, vnetwork_message.message_id());
@@ -198,7 +221,7 @@ void EcVHost::spread_rumor(xbyte_buffer_t const & rumor) const {
     }
 
     auto recv_kad_key = adapt_address(vnetwork_message.receiver());
-    auto send_kad_key = adapt_address(vnetwork_message.sender(), global_node_id);
+    auto send_kad_key = adapt_address(vnetwork_message.sender());
     auto msg = elect::xelect_message_t(rumor, vnetwork_message.message_id());
     ec_netcard_->send(send_kad_key, recv_kad_key, msg, true);
 }
@@ -206,8 +229,8 @@ void EcVHost::spread_rumor(xbyte_buffer_t const & rumor) const {
 void EcVHost::forward_broadcast(const common::xsharding_info_t & shardInfo, common::xnode_type_t node_type, xbyte_buffer_t const & byte_msg) const {
     auto vnetwork_message = top::codec::msgpack_decode<vnetwork::xvnetwork_message_t>(byte_msg);
     auto new_hash_val = base::xhash32_t::digest(std::string((char *)byte_msg.data(), byte_msg.size()));
-    auto recv_kad_key = adapt_address(shardInfo, node_type);
-    auto send_kad_key = adapt_address(vnetwork_message.sender(), global_node_id);
+    auto recv_kad_key = adapt_address(shardInfo);
+    auto send_kad_key = adapt_address(vnetwork_message.sender());
     xdbg("[kadbridge] forward to:%s [hash:%u] [vnetwork hash:%" PRIx64 "] msgid:%x",
          (HexEncode(send_kad_key->Get())).c_str(),
          new_hash_val,
@@ -244,8 +267,8 @@ void EcVHost::spread_rumor(const common::xsharding_info_t & shardInfo, xbyte_buf
         return;
     }
 
-    auto recv_kad_key = adapt_address(shardInfo, common::xnode_type_t::cluster);
-    auto send_kad_key = adapt_address(vnetwork_message.sender(), global_node_id);
+    auto recv_kad_key = adapt_address(shardInfo);
+    auto send_kad_key = adapt_address(vnetwork_message.sender());
     auto msg = elect::xelect_message_t(rumor, vnetwork_message.message_id());
     ec_netcard_->send(send_kad_key, recv_kad_key, msg, true);
 }

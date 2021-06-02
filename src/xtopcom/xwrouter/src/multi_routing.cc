@@ -6,9 +6,7 @@
 
 #include "xkad/routing_table/local_node_info.h"
 #include "xkad/routing_table/routing_table.h"
-#include "xpbase/base/kad_key/chain_kadmlia_key.h"
-#include "xpbase/base/kad_key/get_kadmlia_key.h"
-#include "xpbase/base/kad_key/platform_kadmlia_key.h"
+#include "xpbase/base/kad_key/kadmlia_key.h"
 #include "xpbase/base/line_parser.h"
 #include "xpbase/base/top_log.h"
 #include "xpbase/base/top_utils.h"
@@ -149,21 +147,21 @@ void MultiRouting::GetAllRegisterRoutingTable(std::vector<std::shared_ptr<kadmli
 }
 
 
-bool MultiRouting::SetCacheServiceType(uint64_t service_type) {
-    if (!root_manager_ptr_) {
-        TOP_ERROR("MultiRouting:: root_manager_ptr is null");
-        return false;
-    }
-    return root_manager_ptr_->SetCacheServiceType(service_type);
-}
+// bool MultiRouting::SetCacheServiceType(uint64_t service_type) {
+//     if (!root_manager_ptr_) {
+//         TOP_ERROR("MultiRouting:: root_manager_ptr is null");
+//         return false;
+//     }
+//     return root_manager_ptr_->SetCacheServiceType(service_type);
+// }
 
-bool MultiRouting::GetServiceBootstrapRootNetwork(uint64_t service_type, std::set<std::pair<std::string, uint16_t>> & boot_endpoints) {
-    if (!root_manager_ptr_) {
-        TOP_ERROR("MultiRouting:: root_manager_ptr is null");
-        return false;
-    }
-    return root_manager_ptr_->GetServiceBootstrapRootNetwork(service_type, boot_endpoints);
-}
+// bool MultiRouting::GetServiceBootstrapRootNetwork(uint64_t service_type, std::set<std::pair<std::string, uint16_t>> & boot_endpoints) {
+//     if (!root_manager_ptr_) {
+//         TOP_ERROR("MultiRouting:: root_manager_ptr is null");
+//         return false;
+//     }
+//     return root_manager_ptr_->GetServiceBootstrapRootNetwork(service_type, boot_endpoints);
+// }
 
 void MultiRouting::WaitCheckSignal() {
     TOP_DEBUG("bluesig wait");
@@ -179,7 +177,8 @@ void MultiRouting::NotifyCheckSignal() {
 
 void MultiRouting::CheckSingleNodeNetwork() {
     WaitCheckSignal();
-
+    // todo charles add it back!
+    /*
     TOP_DEBUG("bluesig check");
     std::vector<kadmlia::RoutingTablePtr> routing_vec;
     {
@@ -227,21 +226,6 @@ void MultiRouting::CheckSingleNodeNetwork() {
             if (ret_nodes.empty()) {
                 continue;
             }
-            /*
-            std::set<std::pair<std::string, uint16_t>> join_endpoints;
-            for (auto& ptr : ret_nodes) {
-                join_endpoints.insert(std::make_pair(ptr->public_ip, ptr->public_port));
-                TOP_DEBUG("get same network node: %s:%d", (ptr->public_ip).c_str(), ptr->public_port);
-            }
-            (*iter)->MultiJoinAsync(join_endpoints);
-            TOP_DEBUG("find neighbors running ok, get same network and multijoinasync it[%d][%d][%d][%d][%d][%d]",
-                    kad_key->xnetwork_id(),
-                    kad_key->zone_id(),
-                    kad_key->cluster_id(),
-                    kad_key->group_id(),
-                    kad_key->xip_type(),
-                    kad_key->network_type());
-                    */
 
             auto node_ptr = ret_nodes[RandomUint32() % ret_nodes.size()];
             (*iter)->FindCloseNodesWithEndpoint(node_ptr->node_id, std::make_pair(node_ptr->public_ip, node_ptr->public_port));
@@ -257,6 +241,7 @@ void MultiRouting::CheckSingleNodeNetwork() {
                       node_ptr->public_port);
         }
     }
+    */
 }
 
 }  // namespace wrouter

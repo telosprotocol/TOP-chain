@@ -44,7 +44,7 @@ std::shared_ptr<top::kadmlia::RoutingTable> RoutingManager::CreateRoutingTable(b
     std::shared_ptr<top::kadmlia::RoutingTable> routing_table_ptr;
     kadmlia::LocalNodeInfoPtr local_node_ptr = kadmlia::CreateLocalInfoFromConfig(config, kad_key);
     std::cout << "ec create routing table: ";
-    PrintXip(kad_key->Xip());
+    // PrintXip(kad_key->Xip());
     if (!local_node_ptr) {
         TOP_WARN("local_node_ptr invalid");
         return nullptr;

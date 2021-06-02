@@ -41,13 +41,13 @@ public:
     virtual int AddNode(kadmlia::NodeInfoPtr node) override;
     virtual int DropNode(kadmlia::NodeInfoPtr node) override;
     virtual void SetFreqMessage(transport::protobuf::RoutingMessage& message) override;
-    int GetRootNodes(uint64_t sevice_type, std::vector<kadmlia::NodeInfoPtr>& root_nodes);
-    int GetRootNodes(const std::string& des_id, std::vector<kadmlia::NodeInfoPtr>& root_nodes);
+//     int GetRootNodes(uint64_t sevice_type, std::vector<kadmlia::NodeInfoPtr>& root_nodes);
+//     int GetRootNodes(const std::string& des_id, std::vector<kadmlia::NodeInfoPtr>& root_nodes);
     void AddNetworkRootId(const std::string& root_id);
     void RemoveNetworkRootId(const std::string& root_id);
     bool ContainRootId(const std::string& id);
     // add target service_type to be cached
-    bool SetCacheServiceType(uint64_t service_type);
+//     bool SetCacheServiceType(uint64_t service_type);
     // get cache nodes of service_type give
     bool GetCacheServicePublicNodes(
             uint64_t service_type,
@@ -69,10 +69,10 @@ public:
             const std::string& des_kroot_id,
             uint64_t des_service_type,
             GetRootNodesV2AsyncCallback cb);
-    void RegisterBootstrapCacheCallback(
-            on_bootstrap_cache_get_callback_t get_cache_callback,
-            on_bootstrap_cache_set_callback_t set_cache_callback) override;
-    void UnRegisterBootstrapCacheCallback() override;
+//     void RegisterBootstrapCacheCallback(
+//             on_bootstrap_cache_get_callback_t get_cache_callback,
+//             on_bootstrap_cache_set_callback_t set_cache_callback) override;
+//     void UnRegisterBootstrapCacheCallback() override;
 
 protected:
     virtual bool NewNodeReplaceOldNode(kadmlia::NodeInfoPtr node, bool remove);
@@ -86,7 +86,7 @@ private:
     void HandleRootGetNodesResponse(transport::protobuf::RoutingMessage& message, base::xpacket_t& packet);
     void HandleGetElectNodesRequest(transport::protobuf::RoutingMessage& message, base::xpacket_t& packet);
     void HandleGetElectNodesResponse(transport::protobuf::RoutingMessage& message, base::xpacket_t& packet);
-    virtual bool StartBootstrapCacheSaver() override;
+//     virtual bool StartBootstrapCacheSaver() override;
     void OnGetRootNodesV2Async(
             GetRootNodesV2AsyncCallback cb,
             std::string des_kroot_id,

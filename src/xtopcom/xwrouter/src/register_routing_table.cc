@@ -40,61 +40,63 @@ void GetAllRegisterRoutingTable(std::vector<std::shared_ptr<kadmlia::RoutingTabl
     return MultiRouting::Instance()->GetAllRegisterRoutingTable(vec_rt);
 }
 
-bool SetCacheServiceType(uint64_t service_type) {
-    return MultiRouting::Instance()->SetCacheServiceType(service_type);
-}
+// bool SetCacheServiceType(uint64_t service_type) {
+//     return MultiRouting::Instance()->SetCacheServiceType(service_type);
+// }
 
-bool GetServiceBootstrapRootNetwork(uint64_t service_type, std::set<std::pair<std::string, uint16_t>> & boot_endpoints) {
-    return MultiRouting::Instance()->GetServiceBootstrapRootNetwork(service_type, boot_endpoints);
-}
+// bool GetServiceBootstrapRootNetwork(uint64_t service_type, std::set<std::pair<std::string, uint16_t>> & boot_endpoints) {
+//     return MultiRouting::Instance()->GetServiceBootstrapRootNetwork(service_type, boot_endpoints);
+// }
 
 int NetworkExists(base::KadmliaKeyPtr & kad_key_ptr, std::set<std::pair<std::string, uint16_t>> & endpoints) {
-    auto service_type = kad_key_ptr->GetServiceType();
-    wrouter::NetNode ele_first_node;
-    if (!(SmallNetNodes::Instance()->FindNewNode(ele_first_node, service_type))) {
-        TOP_WARN("Findnode small_node_cache invalid for service_type:%llu", service_type);
-        return kadmlia::kKadFailed;
-    }
+    // auto service_type = kad_key_ptr->GetServiceType();
+    // wrouter::NetNode ele_first_node;
 
-    TOP_WARN("findnode small_node_cache account:%s, action NetworkExists for service_type:%llu", ele_first_node.m_account.c_str(), service_type);
-    auto tmp_service_type = base::CreateServiceType(ele_first_node.m_xip);
-    if (tmp_service_type != service_type) {
-        TOP_WARN("small_node_cache find service_type: %llu not equal elect_service_type: %llu", tmp_service_type, service_type);
-        return kadmlia::kKadFailed;
-    }
+    // if (!(SmallNetNodes::Instance()->FindNewNode(ele_first_node, service_type))) {
+    //     TOP_WARN("Findnode small_node_cache invalid for service_type:%llu", service_type);
+    //     return kadmlia::kKadFailed;
+    // }
 
-    base::KadmliaKeyPtr kad_key = base::GetKadmliaKey(ele_first_node.m_account, true);  // kRoot id
-    if (!kad_key) {
-        TOP_WARN("small_node_cache kad_key nullptr");
-        return kadmlia::kKadFailed;
-    }
+    // TOP_WARN("findnode small_node_cache account:%s, action NetworkExists for service_type:%llu", ele_first_node.m_account.c_str(), service_type);
+    // auto tmp_service_type = base::CreateServiceType(ele_first_node.m_xip);
+    // if (tmp_service_type != service_type) {
+    //     TOP_WARN("small_node_cache find service_type: %llu not equal elect_service_type: %llu", tmp_service_type, service_type);
+    //     return kadmlia::kKadFailed;
+    // }
 
-    std::vector<kadmlia::NodeInfoPtr> tmp_nodes;
-    int res = GetSameNetworkNodesV2(kad_key->Get(), service_type, tmp_nodes);
-    if (res == kadmlia::kKadSuccess) {
-        if (tmp_nodes.empty()) {
-            TOP_WARN("get root nodes failed for service_type:%llu", service_type);
-            return kadmlia::kKadFailed;
-        }
-    }
+    // base::KadmliaKeyPtr kad_key = base::GetKadmliaKey(ele_first_node.m_account, true);  // kRoot id
+    // if (!kad_key) {
+    //     TOP_WARN("small_node_cache kad_key nullptr");
+    //     return kadmlia::kKadFailed;
+    // }
 
-    TOP_INFO("GetRootNodes by root routing ok.");
+    // std::vector<kadmlia::NodeInfoPtr> tmp_nodes;
+    // int res = GetSameNetworkNodesV2(kad_key->Get(), service_type, tmp_nodes);
+    // if (res == kadmlia::kKadSuccess) {
+    //     if (tmp_nodes.empty()) {
+    //         TOP_WARN("get root nodes failed for service_type:%llu", service_type);
+    //         return kadmlia::kKadFailed;
+    //     }
+    // }
 
-    for (uint32_t i = 0; i < tmp_nodes.size(); ++i) {
-        auto tmp_kad_key = base::GetKadmliaKey(tmp_nodes[i]->node_id);
-        uint64_t node_service_type = tmp_kad_key->GetServiceType();
-        if (service_type != node_service_type) {
-            continue;
-        }
-        if (tmp_nodes[i]->IsPublicNode()) {
-            endpoints.insert(std::make_pair(tmp_nodes[i]->public_ip, tmp_nodes[i]->public_port));
-        }
-    }
-    if (!endpoints.empty()) {
-        TOP_INFO("GetRootNodes from remote ok, size:%d", endpoints.size());
-        return kadmlia::kKadSuccess;
-    }
-    return kadmlia::kKadFailed;
+    // TOP_INFO("GetRootNodes by root routing ok.");
+
+    // for (uint32_t i = 0; i < tmp_nodes.size(); ++i) {
+    //     auto tmp_kad_key = base::GetKadmliaKey(tmp_nodes[i]->node_id);
+    //     uint64_t node_service_type = tmp_kad_key->GetServiceType();
+    //     if (service_type != node_service_type) {
+    //         continue;
+    //     }
+    //     if (tmp_nodes[i]->IsPublicNode()) {
+    //         endpoints.insert(std::make_pair(tmp_nodes[i]->public_ip, tmp_nodes[i]->public_port));
+    //     }
+    // }
+    // if (!endpoints.empty()) {
+    //     TOP_INFO("GetRootNodes from remote ok, size:%d", endpoints.size());
+    //     return kadmlia::kKadSuccess;
+    // }
+    // return kadmlia::kKadFailed;
+    return kadmlia::kKadSuccess;
 }
 
 int GetSameNetworkNodesV2(const std::string & des_kroot_id, uint64_t des_service_type, std::vector<kadmlia::NodeInfoPtr> & ret_nodes) {

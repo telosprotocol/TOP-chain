@@ -4,7 +4,6 @@
 
 #include "xwrouter/multi_routing/small_net_cache.h"
 
-#include "xpbase/base/kad_key/get_kadmlia_key.h"
 #include "xpbase/base/kad_key/kadmlia_key.h"
 #include "xpbase/base/top_log.h"
 #include "xpbase/base/top_timer.h"
@@ -127,55 +126,55 @@ void SmallNetNodes::AddNodeLimit(uint64_t service_type, std::deque<NetNode> & no
 }
 
 uint32_t SmallNetNodes::AddNode(NetNode node) {
-    base::KadmliaKeyPtr kad_key = base::GetKadmliaKey(node.m_xip, node.m_account);
-    node.m_node_id = kad_key->Get();
-    uint64_t service_type = kad_key->GetServiceType();
+    // base::KadmliaKeyPtr kad_key = base::GetKadmliaKey(node.m_xip, node.m_account);
+    // node.m_node_id = kad_key->Get();
+    // uint64_t service_type = kad_key->GetServiceType();
 
-    std::unique_lock<std::mutex> lock(net_nodes_cache_map_mutex_);
-    auto ifind = net_nodes_cache_map_.find(service_type);
-    if (ifind == net_nodes_cache_map_.end()) {
-        auto net_nodes = std::make_shared<NetNodes>();
-        net_nodes->latest_version = node.m_version;
-        net_nodes->nodes.push_back(node);
-        net_nodes_cache_map_[service_type] = net_nodes;
-        TOP_DEBUG("bluever %ld add node(%s) version(%llu)", (long)service_type, node.m_account.c_str(), node.m_version);
-    } else {
-        // update latest version
-        auto & latest_version = ifind->second->latest_version;
-        if (node.m_version > latest_version) {
-            latest_version = node.m_version;
-            TOP_DEBUG("bluever %ld update version to %llu", (long)service_type, latest_version);
-        }
+    // std::unique_lock<std::mutex> lock(net_nodes_cache_map_mutex_);
+    // auto ifind = net_nodes_cache_map_.find(service_type);
+    // if (ifind == net_nodes_cache_map_.end()) {
+    //     auto net_nodes = std::make_shared<NetNodes>();
+    //     net_nodes->latest_version = node.m_version;
+    //     net_nodes->nodes.push_back(node);
+    //     net_nodes_cache_map_[service_type] = net_nodes;
+    //     TOP_DEBUG("bluever %ld add node(%s) version(%llu)", (long)service_type, node.m_account.c_str(), node.m_version);
+    // } else {
+    //     // update latest version
+    //     auto & latest_version = ifind->second->latest_version;
+    //     if (node.m_version > latest_version) {
+    //         latest_version = node.m_version;
+    //         TOP_DEBUG("bluever %ld update version to %llu", (long)service_type, latest_version);
+    //     }
 
-        // filter old version
-        if (node.m_version < latest_version) {
-            TOP_DEBUG("bluever %ld old version(%llu) node(%s) is ignore, latest version is %llu", (long)service_type, node.m_version, node.m_account.c_str(), latest_version);
-            return 0;
-        }
+    //     // filter old version
+    //     if (node.m_version < latest_version) {
+    //         TOP_DEBUG("bluever %ld old version(%llu) node(%s) is ignore, latest version is %llu", (long)service_type, node.m_version, node.m_account.c_str(), latest_version);
+    //         return 0;
+    //     }
 
-        for (auto & n : ifind->second->nodes) {
-            if (n.m_account == node.m_account) {
-                if (node.m_version > n.m_version) {
-                    TOP_INFO("bluever update node(%s) version(%llu) to %llu", n.m_account.c_str(), n.m_version, node.m_version);
-                    n.m_version = node.m_version;
-                }
-                return net_nodes_cache_map_[service_type]->nodes.size();
-            }
-        }
-        AddNodeLimit(service_type, net_nodes_cache_map_[service_type]->nodes, node);
-        TOP_DEBUG("bluever %ld add node(%s) version(%llu)", (long)service_type, node.m_account.c_str(), node.m_version);
-    }
-    auto size = net_nodes_cache_map_[service_type]->nodes.size();
-    TOP_DEBUG(
-        "addnode account:%s public_key:%s xip:%s service_type:%llu xnetwork_id:%u,"
-        "now size:%u",
-        node.m_account.c_str(),
-        HexEncode(node.m_public_key).c_str(),
-        HexEncode(node.m_xip.xip()).c_str(),
-        service_type,
-        node.m_xip.xnetwork_id(),
-        size);
-    return size;
+    //     for (auto & n : ifind->second->nodes) {
+    //         if (n.m_account == node.m_account) {
+    //             if (node.m_version > n.m_version) {
+    //                 TOP_INFO("bluever update node(%s) version(%llu) to %llu", n.m_account.c_str(), n.m_version, node.m_version);
+    //                 n.m_version = node.m_version;
+    //             }
+    //             return net_nodes_cache_map_[service_type]->nodes.size();
+    //         }
+    //     }
+    //     AddNodeLimit(service_type, net_nodes_cache_map_[service_type]->nodes, node);
+    //     TOP_DEBUG("bluever %ld add node(%s) version(%llu)", (long)service_type, node.m_account.c_str(), node.m_version);
+    // }
+    // auto size = net_nodes_cache_map_[service_type]->nodes.size();
+    // TOP_DEBUG(
+    //     "addnode account:%s public_key:%s service_type:%llu xnetwork_id:%u,"
+    //     "now size:%u",
+    //     node.m_account.c_str(),
+    //     HexEncode(node.m_public_key).c_str(),
+    //     service_type,
+    //     node.m_xip.xnetwork_id(),
+    //     size);
+    // return size;
+    return 0;
 }
 
 void SmallNetNodes::HandleExpired(std::unordered_map<uint64_t, std::vector<std::string>> & expired_vec,

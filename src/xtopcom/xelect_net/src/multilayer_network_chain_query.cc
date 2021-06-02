@@ -132,16 +132,17 @@ std::string MultilayerNetworkChainQuery::AllNodes() {
     std::string result;
     std::vector<wrouter::NetNode> node_vec;
     wrouter::SmallNetNodes::Instance()->GetAllNode(node_vec);
-    for (const auto& item : node_vec) {
-        std::string ninfo = base::StringUtil::str_fmt("account:%s public_key:%s xip:%s node_id:%s gid:%u version:%llu\n",
-                item.m_account.c_str(),
-                HexEncode(item.m_public_key).c_str(),
-                HexEncode(item.m_xip.xip()).c_str(),
-                HexEncode(item.m_node_id).c_str(),
-                item.m_associated_gid,
-                item.m_version);
-        result += ninfo;
-    }
+    // todo (charles) add it back if needed
+    // for (const auto& item : node_vec) {
+    //     std::string ninfo = base::StringUtil::str_fmt("account:%s public_key:%s xip:%s node_id:%s gid:%u version:%llu\n",
+    //             item.m_account.c_str(),
+    //             HexEncode(item.m_public_key).c_str(),
+    //             HexEncode(item.m_xip.xip()).c_str(),
+    //             HexEncode(item.m_node_id).c_str(),
+    //             item.m_associated_gid,
+    //             item.m_version);
+    //     result += ninfo;
+    // }
     result += "\n";
     return result;
 }

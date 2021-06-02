@@ -1,7 +1,7 @@
 // Copyright (c) 2017-2019 Telos Foundation & contributors
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
-
+#if 0
 #include "xkad/gossip/rumor_handler.h"
 
 #include "xpbase/base/uint64_bloomfilter.h"
@@ -238,3 +238,4 @@ std::shared_ptr<kadmlia::LocalNodeInfo> RumorHandler::LocalNodeInfo() const {
 }
 }
 }
+#endif

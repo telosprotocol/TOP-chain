@@ -153,9 +153,9 @@ static const std::string VERSION_KEY = "NODE_VERSION";
 static const std::string COPYRIGHT_KEY = "NODE_COPYRIGHT";
 
 std::string GenNodeIdType(const std::string& country, const std::string& business);
-std::string GenRandomID(const std::string& country, const std::string& business);
+// std::string GenRandomID(const std::string& country, const std::string& business);
 std::string GenNodeIdType(uint8_t country_code, uint8_t service_type);
-std::string GenRandomID(uint8_t country_code, uint8_t service_type);
+// std::string GenRandomID(uint8_t country_code, uint8_t service_type);
 bool GetNetworkId(const std::string& id, uint32_t& network_id);
 bool GetZoneIdFromConfig(const base::Config& config, uint32_t& zone_id);
 void GetPublicEndpointsConfig(

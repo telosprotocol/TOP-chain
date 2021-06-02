@@ -31,7 +31,7 @@
 #include "xpbase/base/line_parser.h"
 #include "xpbase/base/check_cast.h"
 #include "xpbase/base/endpoint_util.h"
-#include "xpbase/base/kad_key/get_kadmlia_key.h"
+#include "xpbase/base/kad_key/kadmlia_key.h"
 #include "xgossip/include/gossip_utils.h"
 #include "xkad/routing_table/node_detection_manager.h"
 #include "xkad/routing_table/callback_manager.h"
@@ -39,7 +39,6 @@
 #include "xkad/routing_table/local_node_info.h"
 #include "xpbase/base/top_string_util.h"
 //#include "xkad/top_main/top_commands.h"
-#include "xpbase/base/kad_key/chain_kadmlia_key.h"
 #include "xpbase/base/top_log_name.h"
 #include "xtransport/udp_transport/transport_util.h"
 
@@ -94,7 +93,7 @@ RoutingTable::~RoutingTable() {
 }
 
 bool RoutingTable::Init() {
-    bootstrap_cache_helper_ = std::make_shared<BootstrapCacheHelper>(timer_manager_);
+    // bootstrap_cache_helper_ = std::make_shared<BootstrapCacheHelper>(timer_manager_);
 
     if (!transport_ptr_) {
         TOP_ERROR_NAME("udp transport invalid!");
@@ -231,9 +230,9 @@ bool RoutingTable::UnInit() {
     timer_heartbeat_check_ = nullptr;
     timer_prt_ = nullptr;
 
-    if (bootstrap_cache_helper_) {
-        bootstrap_cache_helper_->Stop();
-    }
+    // if (bootstrap_cache_helper_) {
+    //     bootstrap_cache_helper_->Stop();
+    // }
 
     return true;
 }
@@ -614,74 +613,74 @@ void RoutingTable::HeartbeatCheckProc() {
 }
 
 void RoutingTable::Rejoin() {
-    if (destroy_) {
-        return;
-    }
+    // if (destroy_) {
+    //     return;
+    // }
 
-    // the first start-time  make sure go-to this if after calling Join
-    if (!local_node_ptr_ || !transport_ptr_) {
-        TOP_ERROR_NAME("local_node_ptr_ or transport_ptr null");
-        return;
-    }
-    if (local_node_ptr_->first_node()) {
-        TOP_INFO_NAME("this is the first node,doesn't need rejoin");
-        return;
-    }
+    // // the first start-time  make sure go-to this if after calling Join
+    // if (!local_node_ptr_ || !transport_ptr_) {
+    //     TOP_ERROR_NAME("local_node_ptr_ or transport_ptr null");
+    //     return;
+    // }
+    // if (local_node_ptr_->first_node()) {
+    //     TOP_INFO_NAME("this is the first node,doesn't need rejoin");
+    //     return;
+    // }
 
-    // make sure run rejoin after joined once
-    if (!after_join_) {
-        return;
-    }
+    // // make sure run rejoin after joined once
+    // if (!after_join_) {
+    //     return;
+    // }
 
-    do  {
-            {
-                NodesLock vec_lock(nodes_mutex_);
-                // hearbeat thread may be drop node, finnally nodes_ size become 0
-                if (nodes_.empty()) {
-                    // this is really import,than join will work
-                    SetUnJoin();
-                } else {
-                    // usually one real node will not create virtual-nodes beyond 5
-                    if (nodes_.size() <= 5) {
-                        bool offline = true;
-                        for (auto& item : nodes_) {
-                            if (item->public_ip != local_node_ptr_->public_ip()
-                                    || item->public_port != local_node_ptr_->public_port()
-                                    || item->local_ip != local_node_ptr_->local_ip()
-                                    || item->local_port != local_node_ptr_->local_port()) {
-                                offline = false;
-                            }
-                        }
-                        // all nodes in routing-table is virtual-nodes of local real node
-                        if (offline) {
-                            SetUnJoin();
-                        }
-                    } // end if (nodes_...
-                } // end else
-            }
+    // do  {
+    //         {
+    //             NodesLock vec_lock(nodes_mutex_);
+    //             // hearbeat thread may be drop node, finnally nodes_ size become 0
+    //             if (nodes_.empty()) {
+    //                 // this is really import,than join will work
+    //                 SetUnJoin();
+    //             } else {
+    //                 // usually one real node will not create virtual-nodes beyond 5
+    //                 if (nodes_.size() <= 5) {
+    //                     bool offline = true;
+    //                     for (auto& item : nodes_) {
+    //                         if (item->public_ip != local_node_ptr_->public_ip()
+    //                                 || item->public_port != local_node_ptr_->public_port()
+    //                                 || item->local_ip != local_node_ptr_->local_ip()
+    //                                 || item->local_port != local_node_ptr_->local_port()) {
+    //                             offline = false;
+    //                         }
+    //                     }
+    //                     // all nodes in routing-table is virtual-nodes of local real node
+    //                     if (offline) {
+    //                         SetUnJoin();
+    //                     }
+    //                 } // end if (nodes_...
+    //             } // end else
+    //         }
 
-            TOP_DEBUG_NAME("Rejoin alive for self_service_type(%llu), now size(%d)",
-                    local_node_ptr_->kadmlia_key()->GetServiceType(),
-                    nodes_size());
+    //         TOP_DEBUG_NAME("Rejoin alive for self_service_type(%llu), now size(%d)",
+    //                 local_node_ptr_->kadmlia_key()->GetServiceType(),
+    //                 nodes_size());
 
-            // do Join when haven't any neighbours(not Joined)
-            if (!joined_) {
-                TOP_INFO_NAME("there is no node ,will rejoin.");
-                std::set<std::pair<std::string, uint16_t>> cache_bootstrap_set;
-                GetBootstrapCache(cache_bootstrap_set);
-                {
-                    std::unique_lock<std::mutex> bootstrap_lock(bootstrap_nodes_mutex_);
-                    for (auto& node_ptr : bootstrap_nodes_) {
-                        cache_bootstrap_set.insert(std::make_pair(node_ptr->public_ip, node_ptr->public_port));
-                    }
-                }
-                if (MultiJoin(cache_bootstrap_set) != kKadSuccess) {
-                    TOP_WARN_NAME("Rejoin MultiJoin failed");
-                } else {
-                    TOP_INFO_NAME("Rejoin MultiJoin success");
-                }
-            } // end for if(!joined_...
-    } while (0);
+    //         // do Join when haven't any neighbours(not Joined)
+    //         if (!joined_) {
+    //             TOP_INFO_NAME("there is no node ,will rejoin.");
+    //             std::set<std::pair<std::string, uint16_t>> cache_bootstrap_set;
+    //             GetBootstrapCache(cache_bootstrap_set);
+    //             {
+    //                 std::unique_lock<std::mutex> bootstrap_lock(bootstrap_nodes_mutex_);
+    //                 for (auto& node_ptr : bootstrap_nodes_) {
+    //                     cache_bootstrap_set.insert(std::make_pair(node_ptr->public_ip, node_ptr->public_port));
+    //                 }
+    //             }
+    //             if (MultiJoin(cache_bootstrap_set) != kKadSuccess) {
+    //                 TOP_WARN_NAME("Rejoin MultiJoin failed");
+    //             } else {
+    //                 TOP_INFO_NAME("Rejoin MultiJoin success");
+    //             }
+    //         } // end for if(!joined_...
+    // } while (0);
 }
 
 uint32_t RoutingTable::GetFindNodesMaxSize() {
@@ -956,9 +955,6 @@ int RoutingTable::DropNode(NodeInfoPtr node) {
         }
     }
 
-    // drop dynamic xip distribute by node
-    local_node_ptr_->DropDxip(node->node_id);
-
     {
         std::unique_lock<std::mutex> lock(use_nodes_mutex_);
         no_lock_for_use_nodes_.reset();
@@ -1000,10 +996,6 @@ int RoutingTable::BulkDropNode(const std::vector<std::string>& drop_nodes) {
             }
         }
 
-        // drop dynamic xip distribute by node
-        TOP_DEBUG_NAME("update bulkdrop node[%s]",
-                HexSubstr(node_id).c_str());
-        local_node_ptr_->DropDxip(node_id);
     }
 
     {
@@ -1532,7 +1524,6 @@ void RoutingTable::FindCloseNodesWithEndpoint(
     src_nodeinfo_ptr->set_local_ip(local_node_ptr_->local_ip());
     src_nodeinfo_ptr->set_local_port(local_node_ptr_->local_port());
     src_nodeinfo_ptr->set_nat_type(local_node_ptr_->nat_type());
-    src_nodeinfo_ptr->set_xip(local_node_ptr_->xip());
     src_nodeinfo_ptr->set_xid(global_xid->Get());
 
     std::string data;
@@ -1576,7 +1567,6 @@ int RoutingTable::SendFindClosestNodes(
     src_nodeinfo_ptr->set_local_ip(local_node_ptr_->local_ip());
     src_nodeinfo_ptr->set_local_port(local_node_ptr_->local_port());
     src_nodeinfo_ptr->set_nat_type(local_node_ptr_->nat_type());
-    src_nodeinfo_ptr->set_xip(local_node_ptr_->xip());
     src_nodeinfo_ptr->set_xid(global_xid->Get());
 
     std::string data;
@@ -1694,7 +1684,6 @@ void RoutingTable::HandleFindNodesRequest(
     req_src_node_ptr->public_ip = src_nodeinfo.public_ip();
     req_src_node_ptr->public_port = src_nodeinfo.public_port();
     req_src_node_ptr->nat_type = src_nodeinfo.nat_type();
-    req_src_node_ptr->xip = src_nodeinfo.xip();
     req_src_node_ptr->xid = src_nodeinfo.xid();
     //req_src_node_ptr->hash64 = base::xhash64_t::digest(req_src_node_ptr->xid);
     req_src_node_ptr->hash64 = base::xhash64_t::digest(req_src_node_ptr->node_id);
@@ -1733,32 +1722,7 @@ void RoutingTable::HandleFindNodesRequest(
     TOP_DEBUG_NAME("bluefind closest_nodes.size=%d", (int)closest_nodes.size());
     std::string find_nodes;
     protobuf::FindClosestNodesResponse find_nodes_res;
-    // // local_node
-    // if (local_node_ptr_->first_node()) {
-    //     if (!new_bloomfilter->Contain(local_node_ptr_->id())) {
-    //         protobuf::NodeInfo* node_ptr = find_nodes_res.add_nodes();
-    //         node_ptr->set_id(local_node_ptr_->id());
-    //         node_ptr->set_public_ip(local_node_ptr_->local_ip());
-    //         node_ptr->set_public_port(local_node_ptr_->local_port());
-    //         node_ptr->set_nat_type(local_node_ptr_->nat_type());
-    //         node_ptr->set_xip(local_node_ptr_->xip());
-    //         node_ptr->set_xid(global_xid->Get());
-    //         find_nodes += local_node_ptr_->local_ip() + ", ";
-    //     }
-    // } else {
-    //     if (!local_node_ptr_->public_ip().empty() && local_node_ptr_->public_port() > 0) {  // public node?
-    //         if (!new_bloomfilter->Contain(local_node_ptr_->id())) {
-    //             protobuf::NodeInfo* node_ptr = find_nodes_res.add_nodes();
-    //             node_ptr->set_id(local_node_ptr_->id());
-    //             node_ptr->set_public_ip(local_node_ptr_->public_ip());
-    //             node_ptr->set_public_port(local_node_ptr_->public_port());
-    //             node_ptr->set_nat_type(local_node_ptr_->nat_type());
-    //             node_ptr->set_xip(local_node_ptr_->xip());
-    //             node_ptr->set_xid(global_xid->Get());
-    //             find_nodes += local_node_ptr_->public_ip() + ", ";
-    //         }
-    //     }
-    // }
+
 
     for (uint32_t i = 0; i < closest_nodes.size(); ++i) {
         if (closest_nodes[i]->node_id == find_nodes_req.target_id()) {
@@ -1869,7 +1833,6 @@ void RoutingTable::HandleFindNodesResponse(
         node_ptr->public_port = find_nodes_res.nodes(i).public_port();
         node_ptr->service_type = message.src_service_type(); // for RootRouting, is always kRoot
         node_ptr->nat_type = find_nodes_res.nodes(i).nat_type();
-        node_ptr->xip = find_nodes_res.nodes(i).xip();
         node_ptr->xid = find_nodes_res.nodes(i).xid();
         //node_ptr->hash64 = base::xhash64_t::digest(node_ptr->xid);
         node_ptr->hash64 = base::xhash64_t::digest(node_ptr->node_id);
@@ -2133,7 +2096,6 @@ void RoutingTable::HandleHandshake(
     node_ptr->xid = handshake.xid();
     //node_ptr->hash64 = base::xhash64_t::digest(node_ptr->xid);
     node_ptr->hash64 = base::xhash64_t::digest(node_ptr->node_id);
-    node_ptr->xip = handshake.xip();
     if (handshake.type() == kHandshakeResponse) {
         node_detection_ptr_->RemoveDetection(node_ptr->public_ip, node_ptr->public_port);
         if ((packet.get_from_ip_addr() == node_ptr->local_ip &&
@@ -2172,7 +2134,6 @@ void RoutingTable::HandleHandshake(
     handshake.set_public_port(local_node_ptr_->public_port());
     handshake.set_nat_type(local_node_ptr_->nat_type());
     handshake.set_xid(global_xid->Get());
-    handshake.set_xip(local_node_ptr_->xip());
     std::string data;
     if (!handshake.SerializeToString(&data)) {
         TOP_WARN_NAME("ConnectResponse SerializeToString failed!");
@@ -2224,7 +2185,6 @@ void RoutingTable::HandleBootstrapJoinRequest(
     node_ptr->xid = join_req.xid();
     //node_ptr->hash64 = base::xhash64_t::digest(node_ptr->xid);
     node_ptr->hash64 = base::xhash64_t::digest(node_ptr->node_id);
-    node_ptr->xip = join_req.xip();
     SendBootstrapJoinResponse(message, packet);
 
     if (!joined_) {
@@ -2273,7 +2233,6 @@ void RoutingTable::SendBootstrapJoinResponse(
     join_res.set_public_ip(packet.get_from_ip_addr());
     join_res.set_public_port(packet.get_from_ip_port());
     join_res.set_xid(global_xid->Get());
-    join_res.set_xip(local_node_ptr_->xip());
 
     // dispatch dynamic xip for bootstrap node TODO(smaug) may be just for client
     // if (message.has_client_msg() && message.client_msg()) {
@@ -2351,18 +2310,12 @@ void RoutingTable::HandleBootstrapJoinResponse(
     node_ptr->xid = join_res.xid();
     //node_ptr->hash64 = base::xhash64_t::digest(node_ptr->xid);
     node_ptr->hash64 = base::xhash64_t::digest(node_ptr->node_id);
-    node_ptr->xip = join_res.xip();
 
     {
         std::unique_lock<std::mutex> lock(joined_mutex_);
         local_node_ptr_->set_public_ip(join_res.public_ip());
         local_node_ptr_->set_public_port(join_res.public_port());
-        // TODO(smaug) just set dynamic xip for real client
-        // if (local_node_ptr_->client_mode()) {
-        //     local_node_ptr_->AddDxip(message.src_node_id(), join_res.dxip());
-        //     TOP_DEBUG_NAME("BootstrapJoinResponse client get dynamicxip %s",
-        //             HexEncode(join_res.dxip()).c_str());
-        // }
+
     }
     //int ret = AddNode(node_ptr);
 
@@ -2445,40 +2398,40 @@ void RoutingTable::HandleHeartbeatResponse(
     ResetNodeHeartbeat(message.src_node_id());
 }
 
-bool RoutingTable::StartBootstrapCacheSaver() {
-    auto get_public_nodes = [this](std::vector<NodeInfoPtr>& nodes) {
-        {
-            NodesLock lock(nodes_mutex_);
-            for (auto& node_ptr : nodes_) {
-                if (node_ptr->IsPublicNode())
-                    nodes.push_back(node_ptr);
-            }
-        }
+// bool RoutingTable::StartBootstrapCacheSaver() {
+//     auto get_public_nodes = [this](std::vector<NodeInfoPtr>& nodes) {
+//         {
+//             NodesLock lock(nodes_mutex_);
+//             for (auto& node_ptr : nodes_) {
+//                 if (node_ptr->IsPublicNode())
+//                     nodes.push_back(node_ptr);
+//             }
+//         }
 
-        if (!bootstrap_ip_.empty() && bootstrap_port_ >= 0) {
-            auto node_ptr = std::make_shared<NodeInfo>();
-            node_ptr->public_ip = bootstrap_ip_;
-            node_ptr->public_port = bootstrap_port_;
-            nodes.push_back(node_ptr);
-        }
-    };
+//         if (!bootstrap_ip_.empty() && bootstrap_port_ >= 0) {
+//             auto node_ptr = std::make_shared<NodeInfo>();
+//             node_ptr->public_ip = bootstrap_ip_;
+//             node_ptr->public_port = bootstrap_port_;
+//             nodes.push_back(node_ptr);
+//         }
+//     };
 
-    if (!bootstrap_cache_helper_->Start(local_node_ptr_->kadmlia_key(), get_public_nodes, nullptr)) {
-        TOP_ERROR_NAME("boostrap_cache_helper start failed");
-        return false;
-    }
+//     if (!bootstrap_cache_helper_->Start(local_node_ptr_->kadmlia_key(), get_public_nodes, nullptr)) {
+//         TOP_ERROR_NAME("boostrap_cache_helper start failed");
+//         return false;
+//     }
 
-    TOP_INFO_NAME("bootstrap_cache_helper start success");
-    return true;
-}
+//     TOP_INFO_NAME("bootstrap_cache_helper start success");
+//     return true;
+// }
 
-void RoutingTable::GetPubEndpoints(std::vector<std::string>& public_endpoints) {
-    bootstrap_cache_helper_->GetPublicEndpoints(public_endpoints);
-}
+// void RoutingTable::GetPubEndpoints(std::vector<std::string>& public_endpoints) {
+//     bootstrap_cache_helper_->GetPublicEndpoints(public_endpoints);
+// }
 
-void RoutingTable::GetBootstrapCache(std::set<std::pair<std::string, uint16_t>>& boot_endpoints) {
-    bootstrap_cache_helper_->GetPublicEndpoints(boot_endpoints);
-}
+// void RoutingTable::GetBootstrapCache(std::set<std::pair<std::string, uint16_t>>& boot_endpoints) {
+//     bootstrap_cache_helper_->GetPublicEndpoints(boot_endpoints);
+// }
 
 void RoutingTable::SetFreqMessage(transport::protobuf::RoutingMessage& message) {
     message.set_hop_num(0);
@@ -2524,15 +2477,15 @@ void RoutingTable::UnRegisterHeartbeatInfoCallback() {
     heart_beat_callback_ = nullptr;
 }
 
-void RoutingTable::RegisterBootstrapCacheCallback(
-        on_bootstrap_cache_get_callback_t get_cache_callback,
-        on_bootstrap_cache_set_callback_t set_cache_callback) {
-    return;
-}
+// void RoutingTable::RegisterBootstrapCacheCallback(
+//         on_bootstrap_cache_get_callback_t get_cache_callback,
+//         on_bootstrap_cache_set_callback_t set_cache_callback) {
+//     return;
+// }
 
-void RoutingTable::UnRegisterBootstrapCacheCallback() {
-    return;
-}
+// void RoutingTable::UnRegisterBootstrapCacheCallback() {
+//     return;
+// }
 
 std::shared_ptr<std::vector<kadmlia::NodeInfoPtr>> RoutingTable::GetUnLockNodes() {
     std::unique_lock<std::mutex> lock(use_nodes_mutex_);
