@@ -1273,14 +1273,6 @@ void get_block_handle::set_lightunit_info(xJson::Value & j_lu, xblock_t * bp) {
             ji["txs"].append(jtx);
         }
         j_lu["lightunit_input"] = ji;
-
-        xJson::Value jv;
-        // set_object_info(jv, state);
-        jv["balance_change"] = static_cast<xJson::Int64>(bp->get_balance_change());
-        jv["burned_amount_change"] = static_cast<xJson::Int64>(bp->get_burn_balance_change());
-        // auto hash = bp->get_property_log_hash();
-        // jv["property_log_hash"] = to_hex_str(hash);
-        j_lu["lightunit_state"] = jv;
     }
 }
 
@@ -1390,9 +1382,6 @@ void get_block_handle::set_fullunit_info(xJson::Value & j_fu, xblock_t * bp) {
         // j_fu["account_credit"] = 0;
         // j_fu["account_nonce"] = static_cast<unsigned int>(unitstate.get_account_nonce());
         j_fu["account_create_time"] = static_cast<unsigned int>(unitstate.get_account_create_time());
-        xJson::Value jph;
-        // set_property_info(jph, bp->get_property_hash_map());
-        j_fu["custom_property_key"].append(jph);
     }
 }
 
@@ -1428,9 +1417,6 @@ void get_block_handle::set_table_info(xJson::Value & jv, xblock_t * bp) {
             xJson::Value jv1;
             jv1["balance_change"] = static_cast<xJson::Int64>(unit->get_balance_change());
             jv1["burned_amount_change"] = static_cast<xJson::Int64>(unit->get_burn_balance_change());
-            xJson::Value jph;
-            // set_property_info(jph, unit->get_property_hash_map());
-            jv1["custom_property_key"] = jph;
             jui["lightunit_state"] = jv1;
 
             ju[unit->get_block_owner()] = jui;

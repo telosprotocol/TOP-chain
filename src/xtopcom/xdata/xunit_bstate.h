@@ -28,7 +28,7 @@ class xunit_bstate_t {
 
  public:  // for unit account
     inline uint64_t     balance()const {return token_get(XPROPERTY_BALANCE_AVAILABLE);}
-    inline uint64_t     burn_balance()const {return 0;}  // TODO(jimmy) should support or not ?
+    inline uint64_t     burn_balance()const {return token_get(XPROPERTY_BALANCE_BURN);}
     inline uint64_t     tgas_balance() const {return token_get(XPROPERTY_BALANCE_PLEDGE_TGAS);}
     inline uint64_t     disk_balance() const {return 0;}  // TODO(jimmy) not support
     inline uint64_t     vote_balance() const {return token_get(XPROPERTY_BALANCE_PLEDGE_VOTE);}
