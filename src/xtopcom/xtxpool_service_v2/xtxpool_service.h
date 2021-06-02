@@ -14,6 +14,7 @@
 #include "xtxpool_service_v2/xtxpool_service_face.h"
 #include "xtxpool_service_v2/xtxpool_svc_para.h"
 #include "xtxpool_v2/xtxpool_face.h"
+#include "xtxpool_service_v2/xreceipt_sync.h"
 
 #include <set>
 #include <string>
@@ -24,6 +25,9 @@ using xtxpool_service_v2::xcons_utl;
 
 XDEFINE_MSG_ID(xmessage_category_txpool, xtxpool_msg_send_receipt, 0x00000001);
 XDEFINE_MSG_ID(xmessage_category_txpool, xtxpool_msg_recv_receipt, 0x00000002);
+XDEFINE_MSG_ID(xmessage_category_txpool, xtxpool_msg_pull_recv_receipt, 0x00000003);
+XDEFINE_MSG_ID(xmessage_category_txpool, xtxpool_msg_pull_confirm_receipt, 0x00000004);
+XDEFINE_MSG_ID(xmessage_category_txpool, xtxpool_msg_push_receipt, 0x00000005);
 
 class xtxpool_confirm_receipt_msg_t : public top::basic::xserialize_face_t {
 public:
@@ -74,6 +78,7 @@ private:
     bool is_belong_to_service(xtable_id_t tableid) const;
     void on_message_receipt(vnetwork::xvnode_address_t const & sender, vnetwork::xmessage_t const & message);
     void on_message_unit_receipt(vnetwork::xvnode_address_t const & sender, vnetwork::xmessage_t const & message);
+    void on_message_receipts_received(vnetwork::xvnode_address_t const & sender, vnetwork::xmessage_t const & message);
     void check_and_response_recv_receipt(const xcons_transaction_ptr_t & cons_tx);
     void auditor_forward_receipt_to_shard(const xcons_transaction_ptr_t & cons_tx, vnetwork::xmessage_t const & message);
     bool set_commit_prove(data::xcons_transaction_ptr_t & cons_tx);
@@ -85,6 +90,9 @@ private:
     void send_receipt_first_time(data::xcons_transaction_ptr_t & cons_tx, xblock_t * cert_block);
     xcons_transaction_ptr_t create_confirm_tx_by_hash(const uint256_t & hash);
     xcons_transaction_ptr_t get_confirmed_tx(const uint256_t & hash);
+    void send_pull_receipts_of_confirm(xreceipt_pull_confirm_receipt_t pulled_receipt);
+    void send_pull_receipts_of_recv(xreceipt_pull_recv_receipt_t pulled_receipt);
+    void send_push_receipts(xreceipt_push_t &pushed_receipt, vnetwork::xvnode_address_t const & target);
 
 private:
     xvip2_t m_xip;
