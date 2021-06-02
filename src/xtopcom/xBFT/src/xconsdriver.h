@@ -123,7 +123,10 @@ namespace top
             bool                clean_cert_blocks();
             base::xvblock_t*    get_latest_cert_block() const;//caller need care to release reference once no-longer need
             base::xvblock_t*    find_cert_block(const uint64_t view_id) const;//caller need care to release reference once no-longer need
+            base::xvblock_t*    find_cert_block(const uint64_t block_height,const std::string & block_hash);
  
+            base::xauto_ptr<base::xvbindex_t> load_block_index(const uint64_t block_height,const std::string & block_hash);
+            
             uint64_t            get_latest_voted_viewid() const {return m_latest_voted_viewid;}
             uint64_t            get_latest_voted_height() const {return m_latest_voted_height;}
             
@@ -202,6 +205,7 @@ namespace top
             bool  send_sync_request(const xvip2_t & from_addr,const xvip2_t & to_addr,const uint64_t target_block_height,const std::string & target_block_hash,base::xvqcert_t* proof_cert,const uint64_t proof_cert_height,const uint64_t expired_at_clock,const uint64_t chainid);
             bool  send_sync_request(const xvip2_t & from_addr,const xvip2_t & to_addr,const uint64_t target_block_height,const std::string & target_block_hash,const uint64_t proof_block_viewid,const uint32_t proof_block_viewtoken,const uint64_t proof_block_height,const uint64_t expired_at_clock,const uint64_t chainid);
             
+            bool  resync_local_and_peer(base::xvblock_t* peer_block,const xvip2_t & peer_addr,const xvip2_t & my_addr,const uint64_t cur_clock);
         private:
             bool                fire_verify_syncblock_job(base::xvblock_t * target_block,base::xvqcert_t * paired_cert);
             

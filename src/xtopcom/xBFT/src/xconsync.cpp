@@ -96,7 +96,7 @@ namespace top
                 if(false == insert_result.second)//duplicated sync request
                 {
                     insert_result.first->second.sync_trycount += 1;
-                    if(insert_result.first->second.sync_trycount > 2) //allow retry 2 times
+                    if(insert_result.first->second.sync_trycount > 1) //allow retry 1 times
                     {
                         xdbg("xBFTSyncdrv::send_sync_request,duplicated request for block={height=%llu with proof of viewid=%llu,viewtoken=%u to node=0x%llx,at node=0x%llx",target_block_height,proof_block_viewid,proof_block_viewtoken,to_addr.low_addr,from_addr.low_addr);
                         return true;
@@ -126,6 +126,40 @@ namespace top
                 return true;
             }
             return  false;
+        }
+    
+        //return true if fired sync request
+        bool  xBFTSyncdrv::resync_local_and_peer(base::xvblock_t* peer_block,const xvip2_t & peer_addr,const xvip2_t & my_addr,const uint64_t cur_clock)
+        {
+            if( (NULL == peer_block) || (get_lock_block() == NULL) )
+                return false;
+            
+            //allow sync addtional blocks around the locked block
+            if( (peer_block->get_height() > 1) && (peer_block->get_height() >= get_lock_block()->get_height()) )
+            {
+                base::xauto_ptr<base::xvbindex_t> prev_index(load_block_index(peer_block->get_height() - 1, peer_block->get_last_block_hash()));
+                if(!prev_index) //fire sync request for prev block of _sync_block
+                {
+                    xinfo("xBFTSyncdrv::resync_local_and_peer,request prev one <- block(%s) from peer(0x%llx) at  node(0x%llx)",peer_block->dump().c_str(),peer_addr.low_addr,my_addr.low_addr);
+                    
+                    send_sync_request(my_addr,peer_addr, (peer_block->get_height() - 1),peer_block->get_last_block_hash(),peer_block->get_cert(),peer_block->get_height(),cur_clock + 1,peer_block->get_chainid());
+                    
+                    return true;
+                }
+                else
+                {
+                    base::xauto_ptr<base::xvbindex_t> prev_prev_index(load_block_index(prev_index->get_height() - 1, prev_index->get_last_block_hash()));
+                    if(!prev_prev_index)  //fire sync request for prev_prev block of _sync_block
+                    {
+                        xinfo("xBFTSyncdrv::resync_local_and_peer,request prev one <- block(%s) from peer(0x%llx) at  node(0x%llx)",prev_index->dump().c_str(),peer_addr.low_addr,my_addr.low_addr);
+                        
+                        send_sync_request(my_addr,peer_addr, (prev_index->get_height() - 1),prev_index->get_last_block_hash(),peer_block->get_cert(),peer_block->get_height(),cur_clock + 1,peer_block->get_chainid());
+                        
+                        return true;
+                    }
+                }
+            }
+            return false;
         }
 
         int   xBFTSyncdrv::handle_sync_request_msg(const xvip2_t & from_addr,const xvip2_t & to_addr,xcspdu_fire * event_obj,int32_t cur_thread_id,uint64_t timenow_ms,xcsobject_t * _parent)
@@ -350,9 +384,12 @@ namespace top
                     m_syncing_requests.erase(sync_request_it); //safe to remove local request now
                 //fire asyn job to verify signature & cert then
                 {
-                    xinfo("xBFTSyncdrv::handle_sync_respond_msg,pulled un-verified commit-block:%s at node=0x%llx from peer:0x%llx",_sync_block->dump().c_str(),get_xip2_addr().low_addr,from_addr.low_addr);
+                    xinfo("xBFTSyncdrv::handle_sync_respond_msg,pulled un-verified commit-block:%s at node=0x%llx from peer:0x%llx,local(%s)",_sync_block->dump().c_str(),get_xip2_addr().low_addr,from_addr.low_addr,dump().c_str());
                     fire_verify_syncblock_job(_sync_block.get(),NULL);
                 }
+                
+                //allow sync addtional blocks around the locked block
+                resync_local_and_peer(_sync_block(),from_addr,to_addr,event_obj->get_clock());
             }
             else
             {
