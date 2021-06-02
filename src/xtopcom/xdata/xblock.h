@@ -108,7 +108,7 @@ public:
 
  public:
     void            set_consensus_para(const xblock_consensus_para_t & para);
-    virtual bool    is_full_state_block() const;
+    virtual bool    is_full_state_block() const;  // TODO(jimmy) delete and use is_execute_ready directly
     bool            is_execute_ready() const override {return is_full_state_block();}  //check whether ready to execute bin-log
 
  public:

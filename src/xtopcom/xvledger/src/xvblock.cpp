@@ -1214,6 +1214,36 @@ namespace top
             
             return xvexemodule_t::query_interface(_enum_xobject_type_);
         }
+        
+        const std::string xvoutput_t::get_binlog()
+        {
+            if (!m_offblock_snapshot.empty())
+            {
+                return m_offblock_snapshot;
+            }
+            const std::string binlog = query_resource(xvoutput_t::res_binlog_key_name());
+            if (!binlog.empty())
+            {
+                return binlog;
+            }
+            return std::string();
+        }
+        
+        bool xvoutput_t::set_offblock_snapshot(const std::string & snapshot)
+        {
+            if (!m_offblock_snapshot.empty())
+            {
+                xassert(m_offblock_snapshot == snapshot);
+                return true;
+            }
+            if (snapshot.empty())
+            {
+                xassert(false);
+                return false;
+            }
+            m_offblock_snapshot = snapshot;
+            return true;
+        }
  
         //---------------------------------xvblock_t---------------------------------//
         const std::string  xvblock_t::create_block_path(const std::string & account,const uint64_t height) //path pointed to vblock at DB/disk

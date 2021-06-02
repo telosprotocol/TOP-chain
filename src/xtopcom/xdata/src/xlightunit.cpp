@@ -143,7 +143,7 @@ xblockbody_para_t xlightunit_block_t::get_blockbody_from_para(const xlightunit_b
     blockbody.add_output_resource(xlightunit_output_resource_t::name(), out_resource_str);
 
     // TODO(jimmy) delete property binlog from xlightunit_output_resource_t
-    blockbody.add_output_resource(XRESOURCE_BINLOG_KEY, para.get_property_binlog());
+    blockbody.add_output_resource(base::xvoutput_t::res_binlog_key_name(), para.get_property_binlog());
 
     blockbody.create_default_input_output();
     return blockbody;
