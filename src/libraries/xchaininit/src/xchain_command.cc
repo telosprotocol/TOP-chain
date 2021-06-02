@@ -790,7 +790,7 @@ int parse_execute_command(const char * config_file_extra, int argc, char * argv[
     chainInfo_app->callback(std::bind(&ApiMethod::chain_info, &topcl.api, std::ref(out_str)));
 
     // deploy contract
-    auto deployContract_app = chain_app->add_subcommand("deployContract", "Create a contract account and deploy a code to the contract.");
+  /*  auto deployContract_app = chain_app->add_subcommand("deployContract", "Create a contract account and deploy a code to the contract.");
     uint64_t deployContract_gas_limit = 0;
     std::string deployContract_amount("0");
     std::string deployContract_path;
@@ -831,7 +831,7 @@ int parse_execute_command(const char * config_file_extra, int argc, char * argv[
                                          std::ref(callContract_params),
                                          std::ref(callContract_tx_deposit),
                                          std::ref(out_str)));
-
+*/
     // syncStatus
     auto syncstatus_app = chain_app->add_subcommand("syncStatus", "Get block sync status of the node.");
     syncstatus_app->callback(std::bind(node_call, std::ref(admin_http_addr), std::ref(admin_http_port)));

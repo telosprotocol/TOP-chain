@@ -237,7 +237,7 @@ void writeKeystoreFile(std::ofstream & key_file, byte * iv, const string & ciphe
 
     xecprikey_t pri_key_obj(g_userinfo.private_key.data());
     xecpubkey_t pub_key_obj = pri_key_obj.get_public_key();
-    std::string str_pub = top::HexEncode(std::string((char*)pub_key_obj.data()+1, pub_key_obj.size()-1));
+    std::string str_pub = utility::base64_encode(pub_key_obj.data(), pub_key_obj.size()); //top::HexEncode(std::string((char*)pub_key_obj.data()+1, pub_key_obj.size()-1));
     key_info["public_key"] = str_pub;
 
     // cipher
@@ -286,8 +286,8 @@ void writeEthKeystoreFile(std::ofstream & key_file, byte * iv, const string & ci
 
     xecprikey_t pri_key_obj(g_userinfo.private_key.data());
     xecpubkey_t pub_key_obj = pri_key_obj.get_public_key();
-    std::string str_pub = top::HexEncode(std::string((char*)pub_key_obj.data()+1, pub_key_obj.size()-1));
-    key_info["public_key"] = str_pub;
+    //std::string str_pub = top::HexEncode(std::string((char*)pub_key_obj.data()+1, pub_key_obj.size()-1));
+    key_info["public_key"] = utility::base64_encode(pub_key_obj.data(), pub_key_obj.size()); //str_pub;
 
     // cipher
     key_info["crypto"]["cipher"] = "aes-128-ctr";
