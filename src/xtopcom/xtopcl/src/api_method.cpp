@@ -259,7 +259,7 @@ void ApiMethod::create_account(const int32_t & pf, const string & pw_path, std::
     out_str << "Successfully create an account locally!\n" << std::endl;
 
     out_str << "Account Address: " << g_userinfo.account << std::endl;
-    out_str << "Owner public-Key: " << top::utl::xcrypto_util::get_hex_public_key(g_userinfo.private_key) << "\n\n";
+    out_str << "Owner public-Key: " << top::utl::xcrypto_util::get_base64_public_key(g_userinfo.private_key) << "\n\n";
     out_str << "You can share your public key and account address with anyone.Others need them to interact with you!" << std::endl;
     out_str << "You must nerver share the private key or account keystore file with anyone!They control access to your funds!" << std::endl;
     out_str << "You must backup your account keystore file!Without the file, you will not be able to access the funds in your account!" << std::endl;
@@ -293,7 +293,7 @@ void ApiMethod::create_key(std::string & owner_account, const int32_t & pf, cons
     auto path = create_new_keystore(cache_pw, dir, true, owner_account);
     out_str << "Successfully create an worker keystore file!\n" << std::endl;
     out_str << "Account Address: " << owner_account << std::endl;
-    out_str << "Public Key: " << top::utl::xcrypto_util::get_hex_public_key(g_userinfo.private_key) << "\n\n";
+    out_str << "Public Key: " << top::utl::xcrypto_util::get_base64_public_key(g_userinfo.private_key) << "\n\n";
     out_str << "You can share your public key with anyone.Others need it to interact with you!" << std::endl;
     out_str << "You must nerver share the private key or keystore file with anyone!They can use them to make the node malicious." << std::endl;
     out_str << "You must backup your keystore file!Without the file,you may not be able to send transactions." << std::endl;
@@ -492,7 +492,7 @@ void ApiMethod::import_account(const int32_t & pf, std::ostringstream & out_str)
     
     out_str << "Import successfully.\n" << std::endl;
     out_str << "Account Address: " << g_userinfo.account << std::endl;
-    out_str << "Public-Key: " << top::utl::xcrypto_util::get_hex_public_key(g_userinfo.private_key) << "\n\n";
+    out_str << "Public-Key: " << top::utl::xcrypto_util::get_base64_public_key(g_userinfo.private_key) << "\n\n";
     return;
 }
 
@@ -680,7 +680,7 @@ void ApiMethod::import_key(std::string & base64_pri, std::ostringstream & out_st
     set_g_userinfo(base64_pri);
     string dir = "";
     auto path = create_new_keystore(empty_pw, dir, base64_pri, false);
-    std::cout << "Public Key: " << top::utl::xcrypto_util::get_hex_public_key(g_userinfo.private_key) << std::endl;
+    std::cout << "Public Key: " << top::utl::xcrypto_util::get_base64_public_key(g_userinfo.private_key) << std::endl;
     std::cout << "Keystore File Path: " << path << std::endl;
     auto ed_key = get_symmetric_ed_key(empty_pw, path);
     if (set_prikey_to_daemon(g_userinfo.account, ed_key, out_str) == 0) {
@@ -2116,7 +2116,7 @@ int ApiMethod::CreateAccount(const ParamList & param_list) {
     std::cout << "You must nerver share the private key or account keystore file with anyone!They control access to your funds!" << std::endl;
     std::cout << "You must backup your account keystore file!Without the file, you will not be able to access the funds in your account!" << std::endl;
     std::cout << "You must remember your password!Without the password,it’s impossible to use the keystore file!" << std::endl;
-    std::cout << "Public Key: " << top::utl::xcrypto_util::get_hex_public_key(g_userinfo.private_key) << std::endl;
+    std::cout << "Public Key: " << top::utl::xcrypto_util::get_base64_public_key(g_userinfo.private_key) << std::endl;
     std::cout << "Account Address: " << g_userinfo.account << std::endl;
     std::cout << "Account Keystore File Path: " << path << std::endl;
     if (copy_g_userinfo.account.size() != 0) {
@@ -2218,7 +2218,7 @@ int ApiMethod::CreateKey(const ParamList & param_list) {
     std::cout << "You must nerver share the private key or keystore file with anyone!They can use them to make the node malicious." << std::endl;
     std::cout << "You must backup your keystore file!Without the file,you may not be able to send transactions." << std::endl;
     std::cout << "You must remember your password!Without the password,it’s impossible to use the keystore file!" << std::endl;
-    std::cout << "Public Key: " << top::utl::xcrypto_util::get_hex_public_key(g_userinfo.private_key) << std::endl;
+    std::cout << "Public Key: " << top::utl::xcrypto_util::get_base64_public_key(g_userinfo.private_key) << std::endl;
     std::cout << "Keystore File Path: " << path << std::endl;
     g_userinfo = copy_g_userinfo;
     copy_g_userinfo.clear();
@@ -2269,10 +2269,7 @@ int ApiMethod::CreateKeypairKeystore(const ParamList & param_list) {
     std::cout << "You must nerver share the private key or account keystore file with anyone!They control access to your funds!" << std::endl;
     std::cout << "You must backup your account keystore file!Without the file, you will not be able to access the funds in your account!" << std::endl;
     std::cout << "You must remember your password!Without the password,it’s impossible to use the keystore file!" << std::endl;
-    if (str_pri.size() == BASE64_PRI_KEY_LEN)
-        std::cout << "Public Key: " << top::utl::xcrypto_util::get_base64_public_key(g_userinfo.private_key) << std::endl;
-    else
-        std::cout << "Public Key: " << top::utl::xcrypto_util::get_hex_public_key(g_userinfo.private_key) << std::endl;
+    std::cout << "Public Key: " << top::utl::xcrypto_util::get_base64_public_key(g_userinfo.private_key) << std::endl;
     std::cout << "Keystore File Path: " << path << std::endl;
     g_userinfo = copy_g_userinfo;
     copy_g_userinfo.clear();
@@ -2319,7 +2316,7 @@ int ApiMethod::attachCreateKey(const ParamList & param_list, std::ostringstream 
     out_str << "You must nerver share the private key or keystore file with anyone!They can use them to make the node malicious." << std::endl;
     out_str << "You must backup your keystore file!Without the file,you may not be able to send transactions." << std::endl;
     out_str << "You must remember your password!Without the password,it’s impossible to use the keystore file!" << std::endl;
-    out_str << "Public Key: " << top::utl::xcrypto_util::get_hex_public_key(g_userinfo.private_key) << std::endl;
+    out_str << "Public Key: " << top::utl::xcrypto_util::get_base64_public_key(g_userinfo.private_key) << std::endl;
     out_str << "Keystore File Path: " << path << std::endl;
     g_userinfo = copy_g_userinfo;
     copy_g_userinfo.clear();
@@ -2367,7 +2364,7 @@ int ApiMethod::attachCreateAccount(const ParamList & param_list, std::ostringstr
     out_str << "You must nerver share the private key or keystore file with anyone!They control access to your funds!" << std::endl;
     out_str << "You must backup your keystore file!Without the file, you will not be able to access the funds in your account!" << std::endl;
     out_str << "You must remember your password!Without the password,it’s impossible to use the keystore file!" << std::endl;
-    out_str << "Public Key: " << top::utl::xcrypto_util::get_hex_public_key(g_userinfo.private_key) << std::endl;
+    out_str << "Public Key: " << top::utl::xcrypto_util::get_base64_public_key(g_userinfo.private_key) << std::endl;
     out_str << "Account Address: " << g_userinfo.account << std::endl;
     out_str << "Account Keystore File Path: " << path << std::endl;
     if (copy_g_userinfo.account.size() != 0) {
