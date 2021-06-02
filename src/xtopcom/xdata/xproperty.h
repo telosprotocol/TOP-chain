@@ -21,7 +21,7 @@ XINLINE_CONSTEXPR char const * XPROPERTY_ASSET_TOP                       = "TOP"
 
 XINLINE_CONSTEXPR char const * XPROPERTY_BALANCE_AVAILABLE              = "@@1";  //available balance
 XINLINE_CONSTEXPR char const * XPROPERTY_BALANCE_BURN                   = "@@2";  //burn balance  TODO(jimmy) is need ?
-XINLINE_CONSTEXPR char const * XPROPERTY_BALANCE_LOCK                   = "@@3";  //lock balance
+XINLINE_CONSTEXPR char const * XPROPERTY_BALANCE_LOCK                   = "@5";  //lock balance
 XINLINE_CONSTEXPR char const * XPROPERTY_BALANCE_PLEDGE_TGAS            = "@@4";  //pledge balance for tgas
 XINLINE_CONSTEXPR char const * XPROPERTY_BALANCE_PLEDGE_VOTE            = "@@5";  //pledge balance for vote
 
