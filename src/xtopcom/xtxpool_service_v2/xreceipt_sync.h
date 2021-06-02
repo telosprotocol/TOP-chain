@@ -10,16 +10,15 @@
 
 NS_BEG2(top, xtxpool_service_v2)
 
+const uint32_t max_require_receipts = 15;
 class xreceipt_pull_recv_receipt_t : public top::basic::xserialize_face_t {
 protected:
     int32_t do_write(base::xstream_t & stream) override {
         KEEP_SIZE();
 
-        // SERIALIZE_FIELD_BT(m_self_vnode);
         SERIALIZE_FIELD_BT(m_tx_from_account);
         SERIALIZE_FIELD_BT(m_tx_to_account);
-        SERIALIZE_FIELD_BT(m_receipt_region.first);
-        SERIALIZE_FIELD_BT(m_receipt_region.second);
+        SERIALIZE_FIELD_BT(m_receipt_ids);
 
         return CALC_LEN();
     }
@@ -30,8 +29,7 @@ protected:
         // DESERIALIZE_FIELD_BT(m_self_vnode);
         DESERIALIZE_FIELD_BT(m_tx_from_account);
         DESERIALIZE_FIELD_BT(m_tx_to_account);
-        DESERIALIZE_FIELD_BT(m_receipt_region.first);
-        DESERIALIZE_FIELD_BT(m_receipt_region.second);
+        DESERIALIZE_FIELD_BT(m_receipt_ids);
         // restore padding
         return CALC_LEN();
     }
@@ -39,7 +37,7 @@ public:
     // vnetwork::xvnode_address_t m_self_vnode;
     std::string m_tx_from_account;
     std::string m_tx_to_account;
-    std::pair<uint64_t, uint64_t> m_receipt_region;
+    std::vector<uint64_t> m_receipt_ids;
 };
 
 class xreceipt_pull_confirm_receipt_t : public top::basic::xserialize_face_t {
@@ -50,7 +48,7 @@ protected:
         // SERIALIZE_FIELD_BT(m_self_vnode);
         SERIALIZE_FIELD_BT(m_tx_from_account);
         SERIALIZE_FIELD_BT(m_tx_to_account);
-        SERIALIZE_CONTAINER(m_hash_of_receipts);
+        SERIALIZE_FIELD_BT(m_hash_of_receipts);
 
         return CALC_LEN();
     }
@@ -61,7 +59,7 @@ protected:
         // DESERIALIZE_FIELD_BT(m_self_vnode);
         DESERIALIZE_FIELD_BT(m_tx_from_account);
         DESERIALIZE_FIELD_BT(m_tx_to_account);
-        DESERIALIZE_CONTAINER(m_hash_of_receipts);
+        DESERIALIZE_FIELD_BT(m_hash_of_receipts);
         // restore padding
         return CALC_LEN();
     }

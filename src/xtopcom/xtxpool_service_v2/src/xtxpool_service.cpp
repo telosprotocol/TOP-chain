@@ -587,9 +587,9 @@ void xtxpool_service::on_message_receipts_received(vnetwork::xvnode_address_t co
         base::xstream_t stream(top::base::xcontext_t::instance(), (uint8_t *)message.payload().data(), (uint32_t)message.payload().size());
         pulled_receipt.serialize_from(stream);
 
-        if (pulled_receipt.m_receipt_region.second < pulled_receipt.m_receipt_region.first) {
-            xinfo("xtxpool_service::on_message_receipts_received receipt=%s", pulled_receipt.dump().c_str());
-            return;    
+        if (pulled_receipt.m_receipt_ids.size() > max_require_receipts) {
+            xerror("xtxpool_service::on_message_receipts_received receipts in one request");
+            return;
         }
 
         auto cluster_addr = m_router->sharding_address_from_account(common::xaccount_address_t{pulled_receipt.m_tx_from_account}, 
@@ -602,8 +602,8 @@ void xtxpool_service::on_message_receipts_received(vnetwork::xvnode_address_t co
             pushed_receipt.m_receipt_type = enum_transaction_subtype_recv;
             pushed_receipt.m_tx_from_account = pulled_receipt.m_tx_from_account;
             pushed_receipt.m_tx_to_account = pulled_receipt.m_tx_to_account;
-            for (uint64_t id = pulled_receipt.m_receipt_region.first; id <= pulled_receipt.m_receipt_region.second; id++){
-                auto tranx = m_para->get_txpool()->get_unconfirmed_tx(pulled_receipt.m_tx_from_account, pulled_receipt.m_tx_to_account, id);
+            for (auto it : pulled_receipt.m_receipt_ids){
+                auto tranx = m_para->get_txpool()->get_unconfirmed_tx(pulled_receipt.m_tx_from_account, pulled_receipt.m_tx_to_account, it);
                 if (tranx != nullptr) {
                     pushed_receipt.m_receipts.push_back(tranx);
                 }
@@ -617,6 +617,10 @@ void xtxpool_service::on_message_receipts_received(vnetwork::xvnode_address_t co
         xreceipt_pull_confirm_receipt_t pulled_receipt;
         base::xstream_t stream(top::base::xcontext_t::instance(), (uint8_t *)message.payload().data(), (uint32_t)message.payload().size());
         pulled_receipt.serialize_from(stream);
+        if (pulled_receipt.m_hash_of_receipts.size() > max_require_receipts) {
+            xerror("xtxpool_service::on_message_receipts_received receipts in one request");
+            return;
+        }
         auto cluster_addr = m_router->sharding_address_from_account(common::xaccount_address_t{pulled_receipt.m_tx_to_account}, 
             m_vnet_driver->network_id(), common::xnode_type_t::consensus_validator);
         if (cluster_addr != m_vnet_driver->address().cluster_address()) {
