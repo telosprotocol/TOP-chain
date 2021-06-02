@@ -15,7 +15,7 @@ NS_BEG2(top, data)
 class xunit_bstate_t {
  public:
     xunit_bstate_t(base::xvbstate_t* bstate);
-    ~xunit_bstate_t() {}
+    ~xunit_bstate_t();
  private:
     xunit_bstate_t(const xunit_bstate_t &);
     xunit_bstate_t & operator = (const xunit_bstate_t &);

@@ -22,6 +22,11 @@ XINLINE_CONSTEXPR char const * XPROPERTY_TABLE_RECEIPTID            = "@T2";
 class xtable_bstate_t {
  public:
     xtable_bstate_t(base::xvbstate_t* bstate);
+    ~xtable_bstate_t();
+
+ public:
+    std::string             make_snapshot();
+    static bool             set_block_offsnapshot(base::xvblock_t* block, const std::string & snapshot);
 
  public:
     const xobject_ptr_t<base::xvbstate_t> &     get_bstate() const {return m_bstate;}

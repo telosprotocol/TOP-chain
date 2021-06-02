@@ -490,6 +490,7 @@ namespace top
             friend class xvblockstore_t;
         public:
             static  const std::string   name(){ return std::string("xvoutput");}
+            static  const std::string   res_binlog_key_name(){return std::string("bl");}
             virtual std::string         get_obj_name() const override {return name();}
             enum{enum_obj_type = enum_xobject_type_voutput};//allow xbase create xvoutput_t object from xdataobj_t::read_from()
 
@@ -511,11 +512,16 @@ namespace top
             //root of input which usally present a root of merkle tree for input
             virtual const std::string   get_root_hash() {return m_root_hash;}
 
-            virtual const std::string   get_binlog() {return std::string();}
+            const std::string           get_binlog();
             virtual const std::string   get_binlog_hash() {return std::string();}
+            
+        public:
+            bool set_offblock_snapshot(const std::string & snapshot);
+            
         protected:
             //just carry by object at memory,not included by serialized
             std::string  m_root_hash;  //root of merkle tree constructed by input
+            std::string  m_offblock_snapshot;
         };
 
         //virtual block at high leve abstractly define and present a chain "block" that could fill by any format

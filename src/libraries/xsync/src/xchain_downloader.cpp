@@ -13,6 +13,7 @@
 #include "xpbase/base/top_utils.h"
 #include "xsync/xsync_message.h"
 #include "xdata/xfull_tableblock.h"
+#include "xdata/xtable_bstate.h"
 
 NS_BEG2(top, sync)
 
@@ -564,10 +565,7 @@ xsync_command_execute_result xchain_downloader_t::execute_next_download(const st
     base::xauto_ptr<base::xvblock_t> current_vblock = m_sync_store->get_latest_start_block(m_address, enum_chain_sync_pocliy_fast);
     data::xblock_ptr_t current_block = autoptr_to_blockptr(current_vblock);
     if (current_block->is_fullblock() && !current_block->is_full_state_block() && current_block->get_height() == height) {
-        xassert(!chain_snapshot.empty());
-        base::xauto_ptr<base::xvbstate_t> bstate = new base::xvbstate_t(*current_vblock.get());
-        bstate->apply_changes_of_binlog(chain_snapshot);
-        if (false == current_block->reset_block_state(bstate.get())) {
+        if (false == xtable_bstate_t::set_block_offsnapshot(current_vblock.get(), chain_snapshot)) {
             xsync_error("chain_downloader on_snapshot_response invalid snapshot. block=%s", current_vblock->dump().c_str());
             clear();
             return abort;
@@ -580,6 +578,7 @@ xsync_command_execute_result xchain_downloader_t::execute_next_download(const st
     base::xauto_ptr<base::xvblock_t> current_vblock2 = m_sync_store->get_latest_start_block(m_address, enum_chain_sync_pocliy_fast);
     current_block = autoptr_to_blockptr(current_vblock2);
     if (!current_block->is_full_state_block() && current_block->get_height() == height) {
+        xsync_error("chain_downloader on_snapshot_response execute height not change. block=%s", current_vblock->dump().c_str());
         clear();
         return abort;
     }
