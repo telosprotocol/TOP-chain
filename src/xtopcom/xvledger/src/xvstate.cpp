@@ -80,6 +80,17 @@ namespace top
             return clone_units_from(source);
         }
     
+        bool    xvexestate_t::take_snapshot(std::string & to_full_state_bin)
+        {
+            auto canvas  = rebase_change_to_snapshot();
+            return (canvas->encode(to_full_state_bin) == enum_xcode_successful);
+        }
+    
+        xauto_ptr<xvcanvas_t>  xvexestate_t::take_snapshot()
+        {
+            return rebase_change_to_snapshot();
+        }
+    
         xauto_ptr<xvcanvas_t>  xvexestate_t::rebase_change_to_snapshot() //snapshot for whole xvbstate of every properties
         {
             std::lock_guard<std::recursive_mutex> locker(get_mutex());

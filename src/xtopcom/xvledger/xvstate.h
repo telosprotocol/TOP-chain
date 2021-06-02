@@ -33,6 +33,8 @@ namespace top
             bool                        find_property(const std::string & property_name);
             virtual xvproperty_t*       get_property_object(const std::string & name);
 
+            bool                        take_snapshot(std::string & to_full_state_bin);
+            xauto_ptr<xvcanvas_t>       take_snapshot();
             xauto_ptr<xvcanvas_t>       rebase_change_to_snapshot(); //snapshot for whole xvbstate of every properties
             
         public://note: only allow access by our kernel module. it means private for application'contract

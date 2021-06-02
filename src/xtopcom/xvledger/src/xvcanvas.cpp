@@ -239,7 +239,15 @@ namespace top
         xvcanvas_t::xvcanvas_t()
         {
         }
-
+    
+        xvcanvas_t::xvcanvas_t(const xvcanvas_t & obj)
+        {
+            for(auto & rec : obj.m_records)
+            {
+                m_records.emplace_back(rec);//directly copy
+            }
+        }
+        
         xvcanvas_t::xvcanvas_t(const std::string & bin_log)
         {
             xvcanvas_t::decode_from(bin_log,m_records);

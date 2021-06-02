@@ -40,7 +40,12 @@ namespace top
             inline const std::string   get_contract_uri()       const {return get_method_uri();}
             inline const xvmethod_t&   get_contract_function()  const {return *this;}
             inline const std::string   get_org_tx_hash()        const {return m_org_tx_hash;}
-
+ 
+            bool                       withdraw_tgas(const uint64_t tgas); //return false if not have enough tags left
+            inline const uint64_t      get_used_tgas() const {return m_used_tgas;}
+            inline const uint64_t      get_max_tgas()  const {return m_max_tgas;}
+            void                       set_max_tgas(const uint64_t max_tgas){ m_max_tgas = max_tgas;}
+            
         protected:
             //serialize header and object,return how many bytes is writed
             virtual int32_t do_write(xstream_t & stream) const override;
@@ -50,6 +55,8 @@ namespace top
         private:
             void            parse_uri();
             void            close();
+            uint64_t        m_max_tgas;          //max tgas allow used for this action
+            uint64_t        m_used_tgas;         //how many tgas(virtual cost) used
             std::string     m_org_tx_hash;       //which transaction generated this action
         };
 

@@ -35,12 +35,12 @@ namespace top
             
         public:
             xvcanvas_t();
+            xvcanvas_t(const xvcanvas_t & obj);
             xvcanvas_t(const std::string & bin_log);//de-compile bin-log to xvmethod_t instructions
         protected:
             virtual ~xvcanvas_t();
         private:
             xvcanvas_t(xvcanvas_t &&);
-            xvcanvas_t(const xvcanvas_t & obj);
             xvcanvas_t & operator = (const xvcanvas_t & obj);
             
         public:

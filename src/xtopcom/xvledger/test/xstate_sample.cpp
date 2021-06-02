@@ -291,7 +291,17 @@ int test_xstate(bool is_stress_test)
         std::string recorded_bin_log;
         //hq_block_state->rebase_change_to_snapshot(); //convert to full state
         hq_block_canvas->encode(recorded_bin_log);
-        top::base::xauto_ptr<top::base::xvbstate_t> confirm_block_state(create_xvbstate(account_addr,1,1));
+        
+        top::base::xauto_ptr<top::base::xvbstate_t> copy_block_state(create_xvbstate(account_addr,1,1));
+        copy_block_state->apply_changes_of_binlog(recorded_bin_log);
+        
+        
+        auto canvas = copy_block_state->rebase_change_to_snapshot();
+        canvas->encode(recorded_bin_log);
+        
+        std::string bstate_bin;
+        copy_block_state->serialize_to_string(bstate_bin);
+        top::base::xauto_ptr<top::base::xvbstate_t> confirm_block_state = top::base::xvblock_t::create_state_object(bstate_bin);
         confirm_block_state->apply_changes_of_binlog(recorded_bin_log);
         
         

@@ -104,8 +104,6 @@ namespace top
         //total 2bits = max 4 definition
         enum enum_xvblock_character // for future definition
         {
-            enum_xvblock_character_block_state      = 0x0, //block-based state management(default one)
-            enum_xvblock_character_account_state    = 0x1, //account-based state management
         };
 
         constexpr uint64_t TOP_BEGIN_GMTIME = 1573189200;
@@ -120,7 +118,7 @@ namespace top
         class xvheader_t : public xdataunit_t
         {
             friend class xvblock_t;
-            friend class xvbmaker_t;
+            friend class xvbbuild_t;
             friend class xvblockstore_t;
         public:
             static  const std::string   name(){ return std::string("xvheader");}
@@ -139,11 +137,13 @@ namespace top
             static enum_xvblock_class   cal_block_class(const int types){return (enum_xvblock_class)((types >> 9) & 0x07);}
             static enum_xvblock_type    cal_block_type(const int types){return (enum_xvblock_type) ((types >> 2) & 0x7F);}
 
+        public:
+            xvheader_t(const xvheader_t & other);
+            
         protected:
             xvheader_t();
             xvheader_t(const std::string & intput_hash,const std::string & output_hash);
             virtual ~xvheader_t();
-            xvheader_t(const xvheader_t & other);
             xvheader_t & operator = (const xvheader_t & other);
 
         public:
@@ -288,16 +288,17 @@ namespace top
         class xvqcert_t : public xdataunit_t
         {
             friend class xvblock_t;
-            friend class xvbmaker_t;
+            friend class xvbbuild_t;
             friend class xvblockstore_t;
         public:
             static  const std::string   name(){ return std::string("xvqcert");}
             virtual std::string         get_obj_name() const override {return name();}
             enum{enum_obj_type = enum_xobject_type_vqccert};//allow xbase create xvqcert_t object from xdataunit_t::read_from()
 
+        public:
+            xvqcert_t(const xvqcert_t & other,enum_xdata_type type = (enum_xdata_type)enum_xobject_type_vqccert);
         protected:
             xvqcert_t(const std::string vheader_hash,enum_xdata_type type = (enum_xdata_type)enum_xobject_type_vqccert);
-            xvqcert_t(const xvqcert_t & other,enum_xdata_type type = (enum_xdata_type)enum_xobject_type_vqccert);
             virtual ~xvqcert_t();
         private:
             xvqcert_t();
@@ -447,7 +448,7 @@ namespace top
         class xvinput_t : public xvexemodule_t
         {
             friend class xvblock_t;
-            friend class xvblockstore_t;
+            friend class xvbbuild_t;
         public:
             static  const std::string   name(){ return std::string("xvinput");}
             virtual std::string         get_obj_name() const override {return name();}
@@ -475,8 +476,9 @@ namespace top
             virtual bool                set_proposal(const std::string & proposal){m_proposal = proposal;return true;}
 
             //root of input which usally present a root of merkle tree for input
-            virtual const std::string   get_root_hash() {return m_root_hash;}
-
+            virtual const std::string   get_root_hash() const {return m_root_hash;}
+            virtual bool                set_root_hash(const std::string & root_hash){ m_root_hash = root_hash;return true;}
+ 
         protected: //proposal ==> input ==> output
             //just carry by object at memory,not included by serialized
             std::string  m_proposal;    //raw proposal
@@ -487,7 +489,7 @@ namespace top
         class xvoutput_t : public xvexemodule_t
         {
             friend class xvblock_t;
-            friend class xvblockstore_t;
+            friend class xvbbuild_t;
         public:
             static  const std::string   name(){ return std::string("xvoutput");}
             static  const std::string   res_binlog_key_name(){return std::string("bl");}
@@ -510,7 +512,8 @@ namespace top
             virtual void*   query_interface(const int32_t _enum_xobject_type_) override;
 
             //root of input which usally present a root of merkle tree for input
-            virtual const std::string   get_root_hash() {return m_root_hash;}
+            virtual const std::string   get_root_hash() const {return m_root_hash;}
+            virtual bool                set_root_hash(const std::string & root_hash){ m_root_hash = root_hash;return true;}
 
             const std::string           get_binlog();
             virtual const std::string   get_binlog_hash() {return std::string();}
@@ -561,7 +564,7 @@ namespace top
         //note: xvblock must have associated xvheader_t and xvqcert_t objects
         class xvblock_t : public xdataobj_t
         {
-            friend class xvbmaker_t;
+            friend class xvbbuild_t;
             friend class xvblockstore_t;
         public:
             static  const std::string  name(){return "xvblock";}
