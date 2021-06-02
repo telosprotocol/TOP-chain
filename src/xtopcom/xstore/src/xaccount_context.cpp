@@ -395,8 +395,8 @@ int32_t xaccount_context_t::lock_token(const uint256_t &tran_hash, uint64_t amou
     stream << tran_params;
     std::string record_str = std::string((char *)stream.data(), stream.size());
     ret = map_set(XPROPERTY_LOCK_TOKEN_KEY, hash_str, record_str);
-    if (xsuccess == ret) {
-        xerror("xaccount_context_t::lock_token failed, same tx hash %s", hash_str.c_str());
+    if (xsuccess != ret) {
+        xerror("xaccount_context_t::lock_token set failed tx hash %s", hash_str.c_str());
         return xaccount_property_lock_token_key_same;
     }
 

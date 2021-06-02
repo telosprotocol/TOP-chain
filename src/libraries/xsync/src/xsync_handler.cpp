@@ -24,6 +24,7 @@
 #include "xsyncbase/xmessage_ids.h"
 #include "xdata/xblock.h"
 #include "xdata/xfull_tableblock.h"
+#include "xdata/xtable_bstate.h"
 
 NS_BEG2(top, sync)
 
@@ -831,12 +832,8 @@ void xsync_handler_t::handle_chain_snapshot_request(
         xfull_tableblock_t* full_block_ptr = dynamic_cast<xfull_tableblock_t*>(xblock_t::raw_vblock_to_object_ptr(blk.get()).get());
         if (full_block_ptr != nullptr) {
             // it must be full-table block now
-            base::xauto_ptr<base::xvbstate_t> bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(blk.get());
-            if (bstate != nullptr) {
-                std::string property_snapshot;
-                auto canvas = bstate->rebase_change_to_snapshot();
-                canvas->encode(property_snapshot);
-                xassert(!property_snapshot.empty());
+            if (base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_full_block_offsnapshot(blk.get())) {
+                std::string property_snapshot = blk->get_output()->get_binlog();
                 xsync_message_chain_snapshot_t chain_snapshot(ptr->m_account_addr,
                     property_snapshot, ptr->m_height_of_fullblock);
                 m_sync_sender->send_chain_snapshot(chain_snapshot, xmessage_id_sync_chain_snapshot_response, network_self, from_address);

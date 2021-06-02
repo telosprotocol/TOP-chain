@@ -343,16 +343,8 @@ namespace top
 
         xobject_ptr_t<xvbstate_t> xvblkstatestore_t::make_state_from_current_block(xvblock_t * current_block) {
             xobject_ptr_t<xvbstate_t> current_state = nullptr;
-            // 1. try load from cache
 
-            if (current_block->get_state() != nullptr) {
-                current_block->get_state()->add_ref();
-                current_state.attach(current_block->get_state());
-                xdbg("xvblkstatestore_t::make_state_from_current_block succ-get state form bstate block cache.block=%s",current_block->dump().c_str());
-                return current_state;
-            }
-
-            // 2. try make state form block self
+            // try make state form block self
             if (current_block->get_height() == 0
                 || (current_block->get_block_class() == enum_xvblock_class_full && !current_block->get_output()->get_binlog().empty()) ) {
                 current_state = make_object_ptr<xvbstate_t>(*current_block);
@@ -616,6 +608,34 @@ namespace top
                 return nullptr;
             }
             return load_block_state(target_index());
+        }
+
+        bool xvblkstatestore_t::get_full_block_offsnapshot(xvblock_t * current_block)
+        {
+            if (current_block->is_execute_ready()) {
+                return true;
+            }
+
+            xobject_ptr_t<xvbstate_t> target_bstate = nullptr;
+            do {
+                target_bstate = get_lru_cache(current_block->get_block_hash());
+                if (target_bstate != nullptr) {
+                    break;
+                }
+                xvbstate_t* raw_state = read_state_from_db(base::xvaccount_t(current_block->get_account()), current_block->get_height(), current_block->get_block_hash());
+                if (raw_state != nullptr) {
+                    target_bstate.attach(raw_state);
+                    break;
+                }
+                xwarn("xvblkstatestore_t::get_full_block_offsnapshot fail-get state for block.block=%s",current_block->dump().c_str());
+                return false;
+            } while(0);
+
+            std::string property_snapshot;
+            auto canvas = target_bstate->rebase_change_to_snapshot();
+            canvas->encode(property_snapshot);
+            current_block->get_output()->set_offblock_snapshot(property_snapshot);
+            return true;
         }
 
         //----------------------------------------xvstatestore_t-------------------------------------//

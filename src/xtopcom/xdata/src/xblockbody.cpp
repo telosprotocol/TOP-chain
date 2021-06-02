@@ -128,10 +128,6 @@ const std::string xoutput_t::get_root_hash() {
     return root;
 }
 
-const std::string xoutput_t::get_binlog() {
-    std::string binlog = query_resource(XRESOURCE_BINLOG_KEY);
-    return binlog;
-}
 const std::string xoutput_t::get_binlog_hash() {
     std::string binlog = query_resource(XRESOURCE_BINLOG_HASH_KEY);  // TODO(jimmy) put to output entity
     return binlog;

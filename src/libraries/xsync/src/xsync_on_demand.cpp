@@ -8,6 +8,7 @@
 #include "xmbus/xevent_sync.h"
 #include "xsync/xsync_util.h"
 #include "xdata/xfull_tableblock.h"
+#include "xdata/xtable_bstate.h"
 
 NS_BEG2(top, sync)
 
@@ -186,13 +187,8 @@ void xsync_on_demand_t::handle_chain_snapshot_meta(xsync_message_chain_snapshot_
     if (blk != nullptr) {
         xfull_tableblock_t* full_block_ptr = dynamic_cast<xfull_tableblock_t*>(xblock_t::raw_vblock_to_object_ptr(blk.get()).get());
         if (full_block_ptr != nullptr) {
-            // it must be full-table block now
-            base::xauto_ptr<base::xvbstate_t> bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(blk.get());
-            if (bstate != nullptr) {
-                std::string property_snapshot;
-                auto canvas = bstate->rebase_change_to_snapshot();
-                canvas->encode(property_snapshot);
-                xassert(!property_snapshot.empty());
+            if (base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_full_block_offsnapshot(blk.get())) {
+                std::string property_snapshot = blk->get_output()->get_binlog();
                 xsync_message_chain_snapshot_t chain_snapshot(chain_meta.m_account_addr,
                     property_snapshot, chain_meta.m_height_of_fullblock);
                 m_sync_sender->send_chain_snapshot(chain_snapshot, xmessage_id_sync_ondemand_chain_snapshot_response, network_self, to_address);
@@ -234,10 +230,7 @@ void xsync_on_demand_t::handle_chain_snapshot(xsync_message_chain_snapshot_t &ch
     base::xauto_ptr<base::xvblock_t> current_vblock = m_sync_store->load_block_object(account, chain_snapshot.m_height_of_fullblock);
     data::xblock_ptr_t current_block = autoptr_to_blockptr(current_vblock);
     if (current_block->is_fullblock() && !current_block->is_full_state_block()) {
-        xassert(!chain_snapshot.m_chain_snapshot.empty());
-        base::xauto_ptr<base::xvbstate_t> bstate = new base::xvbstate_t(*current_vblock.get());
-        bstate->apply_changes_of_binlog(chain_snapshot.m_chain_snapshot);
-        if (false == current_block->reset_block_state(bstate.get())) {
+        if (false == xtable_bstate_t::set_block_offsnapshot(current_vblock.get(), chain_snapshot.m_chain_snapshot)) {
             xsync_error("xsync_on_demand_t::handle_chain_snapshot invalid snapshot. block=%s", current_vblock->dump().c_str());
             return;
         }

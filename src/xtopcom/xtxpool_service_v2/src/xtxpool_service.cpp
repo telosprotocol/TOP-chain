@@ -135,6 +135,12 @@ void xtxpool_service::resend_receipts(uint64_t now) {
             }
 
             std::vector<xcons_transaction_ptr_t> recv_txs = m_para->get_txpool()->get_resend_txs(m_zone_index, table_id, now);
+            if (recv_txs.size() >0) {
+                xinfo("xtxpool_service::resend_receipts zone=%d,table:%d,recv_txs_size=%zu",
+                    m_zone_index,
+                    table_id,
+                    recv_txs.size());
+            }
             for (auto recv_tx : recv_txs) {
                 xassert(recv_tx->is_recv_tx());
                 // filter out txs witch has already in txpool, just not consensused and committed.
@@ -231,9 +237,9 @@ void xtxpool_service::check_and_response_recv_receipt(const xcons_transaction_pt
     const xlightunit_output_entity_t * info = cons_tx->get_tx_info();
 
     xassert(info->is_send_tx());
-    
+
     // if tx subtype is recv and is resend, need not select by function has_receipt_right, because sender is already selected by gmtime before here.
-    
+
     uint32_t resend_time = xreceipt_strategy_t::calc_resend_time(cons_tx->get_unit_cert()->get_gmtime(), xverifier::xtx_utl::get_gmttime_s());
     if (xreceipt_strategy_t::is_selected_resender(cons_tx, resend_time, m_node_id, m_shard_size)) {
         return;

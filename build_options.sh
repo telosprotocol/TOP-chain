@@ -105,6 +105,10 @@ do
         CMAKE_EXTRA_OPTIONS+=" -DSTATIC_CONSENSUS=ON"
         echo "BUILD WITH STATIC CONSENSUS"
     ;;
+    elect_whereafter)
+        CMAKE_EXTRA_OPTIONS+=" -DELECT_WHEREAFTER=ON"
+        echo "BUILD WITH ELECT WHEREAFTER"
+    ;;
     no_tx_batch)
         CMAKE_EXTRA_OPTIONS+=" -DNO_TX_BATCH=ON"
         echo "BUILD WITH NO_TX_BATCH"

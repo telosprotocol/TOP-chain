@@ -14,6 +14,46 @@ xtable_bstate_t::xtable_bstate_t(base::xvbstate_t* bstate) {
     cache_receiptid();
 }
 
+xtable_bstate_t::~xtable_bstate_t() {
+    m_bstate->close();  // must do close firstly
+    m_bstate = nullptr;
+}
+
+std::string xtable_bstate_t::make_snapshot() {
+    std::string property_snapshot;
+    auto canvas = get_bstate()->rebase_change_to_snapshot();
+    canvas->encode(property_snapshot);
+    xassert(!property_snapshot.empty());
+    return property_snapshot;
+}
+
+bool xtable_bstate_t::set_block_offsnapshot(base::xvblock_t* block, const std::string & snapshot) {
+    if (block->get_block_level() != base::enum_xvblock_level_table || block->get_block_class() != base::enum_xvblock_class_full) {
+        xerror("xtable_bstate_t::set_block_offsnapshot fail-not fulltable block");
+        return false;
+    }
+    if (snapshot.empty()) {
+        xerror("xtable_bstate_t::set_block_offsnapshot fail-snapshot empty");
+        return false;
+    }
+
+    if (block->is_execute_ready()) {
+        xwarn("xtable_bstate_t::set_block_offsnapshot already has full state. block=%s", block->dump().c_str());
+        return true;
+    }
+
+    std::string binlog_hash = base::xcontext_t::instance().hash(snapshot, block->get_cert()->get_crypto_hash_type());
+    if (binlog_hash != block->get_output()->get_binlog_hash()) {
+        xwarn("xtable_bstate_t::set_block_offsnapshot fail-snapshot hash unmatch.block=%s", block->dump().c_str());
+        return false;
+    }
+    if (false == block->get_output()->set_offblock_snapshot(snapshot)) {
+        xerror("xtable_bstate_t::set_block_offsnapshot set offblock snapshot state. block=%s", block->dump().c_str());
+        return false;
+    }
+    return true;
+}
+
 bool xtable_bstate_t::set_account_index(const std::string & account, const base::xaccount_index_t & account_index, base::xvcanvas_t* canvas) {
     std::string value;
     account_index.serialize_to(value);

@@ -92,7 +92,7 @@ xblockbody_para_t xtable_block_t::get_blockbody_from_para(const xtable_block_par
     }
 
     std::string property_binlog = para.get_property_binlog();
-    blockbody.add_output_resource(XRESOURCE_BINLOG_KEY, property_binlog);  // bl = binlog
+    blockbody.add_output_resource(base::xvoutput_t::res_binlog_key_name(), property_binlog);  // bl = binlog
 
     blockbody.create_default_input_output();
     return blockbody;

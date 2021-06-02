@@ -35,6 +35,7 @@ namespace top
             virtual xauto_ptr<xvbstate_t> get_block_state(xvblock_t * target_block);
             virtual xauto_ptr<xvbstate_t> get_block_state(const xvaccount_t & account,const uint64_t block_height,const std::string& block_hash);
             virtual xauto_ptr<xvbstate_t> get_block_state(const xvaccount_t & account,const uint64_t block_height,const uint64_t block_view_id);
+            virtual bool                  get_full_block_offsnapshot(xvblock_t * target_block);
 
             virtual xauto_ptr<xvbstate_t> get_block_state_2(xvblock_t * target_block);
             virtual bool                  execute_block(xvblock_t * target_block);

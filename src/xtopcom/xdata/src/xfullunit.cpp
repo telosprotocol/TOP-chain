@@ -71,7 +71,7 @@ xblockbody_para_t xfullunit_block_t::get_blockbody_from_para(const xfullunit_blo
     blockbody.add_output_entity(output);
 
     // TODO(jimmy) delete output snapshot, output entity record snapshot root hash
-    blockbody.add_output_resource(XRESOURCE_BINLOG_KEY, para.m_property_snapshot);
+    blockbody.add_output_resource(base::xvoutput_t::res_binlog_key_name(), para.m_property_snapshot);
 
     blockbody.create_default_input_output();
     return blockbody;

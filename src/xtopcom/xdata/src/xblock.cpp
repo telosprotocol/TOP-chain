@@ -426,20 +426,13 @@ void xblock_t::set_consensus_para(const xblock_consensus_para_t & para) {
 }
 
 bool xblock_t::is_full_state_block() const {
-    // std::string offdata_hash = get_offdata_hash();
-    // if (offdata_hash.empty()) {
-    //     return true;
-    // }
-    // return get_offdata() != nullptr;
-
-    if (!get_output()->get_binlog_hash().empty()
-        && get_output()->get_binlog().empty()) {
-        if (get_state() != nullptr) {
-            return true;
-        }
-        return false;
+    if (get_block_class() == base::enum_xvblock_class_nil) {
+        return true;
     }
-    return true;
+    if (!get_output()->get_binlog().empty()) {
+        return true;
+    }
+    return false;
 }
 
 NS_END2
