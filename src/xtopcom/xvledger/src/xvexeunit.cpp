@@ -77,12 +77,16 @@ namespace top
         {
             if(xatomic_t::xload(m_parent_unit) != parent_ptr)// if anything changed
             {
+#if 1  // TODO(jimmy) parent_ptr not add ref, child not hold parent ptr
+                xatomic_t::xexchange(m_parent_unit, parent_ptr);
+#else
                 if(parent_ptr != nullptr)
                     parent_ptr->add_ref();
                 
                 xvexeunit_t * old_ptr = xatomic_t::xexchange(m_parent_unit, parent_ptr);
                 if(old_ptr != nullptr)
                     old_ptr->release_ref();
+#endif
             }
 
             //rebuild execution uri at everytime
@@ -222,6 +226,7 @@ namespace top
         bool  xvexegroup_t::close(bool force_async)
         {
             std::lock_guard<std::recursive_mutex> locker(m_lock);
+#if 0 // TODO(jimmy) no need call close to release object
             if(is_close() == false)
             {
                 for(auto & u : m_child_units)
@@ -229,6 +234,7 @@ namespace top
                     u.second->set_parent_unit(nullptr);//reset to parent ptr
                 }
             }
+#endif
             return xvexeunit_t::close(force_async);
         }
     
