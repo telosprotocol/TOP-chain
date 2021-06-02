@@ -381,6 +381,44 @@ namespace top
         {
             return find_block(view_id,m_certified_blocks);
         }
+    
+        base::xvblock_t*   xBFTRules::find_cert_block(const uint64_t block_height,const std::string & block_hash)
+        {
+            for(auto it = m_certified_blocks.rbegin(); it != m_certified_blocks.rend(); ++it)
+            {
+                if(   (block_height == it->second->get_height()) //found parent qc cert
+                   && (block_hash   == it->second->get_block_hash()) )
+                {
+                    return it->second;
+                }
+            }
+            
+            //lock block is also kind of cert block
+            if(   (m_latest_lock_block != NULL)
+               && (m_latest_lock_block->get_height() == block_height)
+               && (m_latest_lock_block->get_block_hash() == block_hash)  )
+            {
+                return m_latest_lock_block;
+            }
+            //commit block is also kind of cert block
+            if(   (m_latest_commit_block != NULL)
+               && (m_latest_commit_block->get_height() == block_height)
+               && (m_latest_commit_block->get_block_hash() == block_hash)  )
+            {
+                return m_latest_commit_block;
+            }
+            
+            return NULL;
+        }
+    
+        base::xauto_ptr<base::xvbindex_t> xBFTRules::load_block_index(const uint64_t block_height,const std::string & block_hash)
+        {
+            base::xvblock_t* cached_block = find_cert_block(block_height,block_hash);
+            if(cached_block != NULL)
+                return new base::xvbindex_t(*cached_block);
+            
+            return get_vblockstore()->load_block_index(*this, block_height,block_hash);
+        }
         
         ////////////////////////////////////minimal safe rules///////////////////////////////////////////////
         bool xBFTRules::safe_check_for_block(base::xvblock_t * _block)
@@ -457,9 +495,16 @@ namespace top
         
         bool xBFTRules::safe_check_for_commit_packet(base::xcspdu_t & packet,xcommit_msg_t & out_msg)
         {
-            if(safe_check_for_packet(packet) == false)
+            base::xvblock_t * lock_block = get_lock_block();
+            if( (NULL == lock_block)
+               || (packet.get_block_viewid()  < packet.get_block_height())   //view#id must >= block height
+               || (packet.get_block_chainid() != lock_block->get_chainid())
+               || (packet.get_block_account() != lock_block->get_account())
+               )
+            {
                 return false;
-            
+            }
+ 
             if(out_msg.serialize_from_string(packet.get_msg_body()) <= 0) //invalid packet
                 return false;
 
