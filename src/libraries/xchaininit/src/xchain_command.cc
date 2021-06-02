@@ -462,7 +462,7 @@ int parse_execute_command(const char * config_file_extra, int argc, char * argv[
     // import account
     auto importAccount_app = wallet_app->add_subcommand("importAccount", "Import private key into wallet.");
     importAccount_app->callback(std::bind(&ApiMethod::import_account, &topcl.api, std::ref(create_key_pf), std::ref(out_str)));
-    importAccount_app->add_flag("-p,--password", create_key_pf, "A worker key with password will be created if you add this option.");
+    importAccount_app->add_flag("-p,--password", create_key_pf, "Import an account with a password; If you do not add this option, your account will be used without password.");
 
     // export account
     auto exportAccount_app = wallet_app->add_subcommand("exportAccount", "Export private key and keystore json file.");

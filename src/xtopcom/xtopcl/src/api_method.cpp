@@ -155,7 +155,7 @@ bool ApiMethod::set_default_prikey(std::ostringstream & out_str) {
             }
             std::string str_pri = xChainSDK::xcrypto::import_existing_keystore(cache_pw, g_keystore_dir + "/" + accounts[0]);
             if (str_pri.empty()) {
-                cout << "Please set a default account by command `topio wallet setDefaultAccount`." << std::endl;
+                //cout << "Please set a default account by command `topio wallet setDefaultAccount`." << std::endl;
                 return false;
             }
             if (xChainSDK::xcrypto::set_g_userinfo(str_pri)) {
@@ -163,7 +163,7 @@ bool ApiMethod::set_default_prikey(std::ostringstream & out_str) {
                 cout << "[debug]" << g_userinfo.account << " has been set as the default account." << std::endl;
 #endif
             } else {
-                cout << "Please set a default account by command `topio wallet setDefaultAccount`." << std::endl;
+               // cout << "Please set a default account by command `topio wallet setDefaultAccount`." << std::endl;
                 return false;
             }
         }
@@ -498,12 +498,23 @@ void ApiMethod::import_account(const int32_t & pf, std::ostringstream & out_str)
 
 void ApiMethod::export_account(const std::string & account, std::ostringstream & out_str) {
     if (account.empty()) {
-        std::string account_temp = get_account_from_daemon();
+    /*    std::string account_temp = get_account_from_daemon();
         if (!account_temp.empty())
             g_userinfo.account = account_temp;
+        else { */
+            cache_pw = empty_pw;
+            if (!set_default_prikey(out_str))
+            {
+                std::cout << "Please Input Password." << std::endl;
+                cache_pw = input_hiding();
+                if (!set_default_prikey(out_str))
+                    return;
+            }
+     //   }
     } else {
         g_userinfo.account = account;
     }
+
     if (g_userinfo.account.empty())
     {
         out_str << "Please input account address." << std::endl;
@@ -517,7 +528,7 @@ void ApiMethod::export_account(const std::string & account, std::ostringstream &
     for (size_t i = 0; i < keys.size(); ++i) {
         if (keys[i] != g_userinfo.account)
             continue;
-        std::string pw = empty_pw;
+        std::string pw = cache_pw;
         std::string keystore_file = g_keystore_dir + "/" + keys[i];
         std::string str_pri = import_existing_keystore(pw, keystore_file, true);
         if (str_pri.empty())
@@ -533,11 +544,11 @@ void ApiMethod::export_account(const std::string & account, std::ostringstream &
         }
         out_str << "Export successfully.\n" << std::endl;
         out_str << "Keystore file: " << keystore_file << std::endl;
-        out_str << "Account Address: " << account << std::endl;
+        out_str << "Account Address: " << g_userinfo.account << std::endl;
         out_str << "Private-Key: " << str_pri << "\n\n";
         return;
     }
-    out_str << "Please input the correct account address." << std::endl;
+    out_str << "Account address error! The account does not exist." << std::endl;
     return;
 }
 
@@ -574,7 +585,7 @@ int ApiMethod::set_default_miner(const std::string & pub_key, const std::string 
                     target_kf = kf_path;
                 }
             }
-            if (name == "account address") {
+            if (name == "account address" || name == "account_address") {
                 target_node_id = key_info_js[name].asString();
             }
         }  // end for (const auto & name...
@@ -3943,6 +3954,7 @@ void ApiMethod::change_trans_mode(bool use_http) {
         // std::cout << "Using trans mode - WS: " << g_server_host_port  << std::endl;
     }
 #ifdef DEBUG
+    // std::cout << "[debug]edge_domain_name old: " << g_edge_domain << std::endl;
     auto edge_config_path = g_data_dir + "/.edge_config.json";
     std::ifstream edge_config_file(edge_config_path, std::ios::in);
     if (!edge_config_file) {
