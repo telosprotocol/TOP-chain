@@ -3,6 +3,7 @@
 #include "xbase/xlog.h"
 #include "xbase/xhash.h"
 #include "xbase/xutl.h"
+#include "xvledger/xvblock.h"
 
 using namespace std;
 using namespace top;
@@ -29,10 +30,11 @@ int main(int argc, char **argv) {
     cout << "xindexstore test main run" << endl;
     // printf("Running main() from gtest_main.cc\n");
     new xhashtest_t();
+    base::xvblock_t::register_object(base::xcontext_t::instance());
 
     testing::InitGoogleTest(&argc, argv);
 
-    xinit_log("./xindexstore_test.log", true, true);
+    xinit_log("./xvledger_test.log", true, true);
     xset_log_level(enum_xlog_level_debug);
     xdbg("------------------------------------------------------------------");
     xinfo("new log start here");
