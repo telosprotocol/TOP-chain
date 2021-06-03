@@ -322,9 +322,6 @@ const xvip2_t xrotate_leader_election::get_leader_xip(uint64_t viewId, const std
     uint64_t random = viewId + base::xvaccount_t::get_xid_from_account(account);
     xelection_cache_face::elect_set elect_set;
     bool leader = false;
-#if defined(DEBUG)  // TODO: jimmy fix release compiling error
-    uint64_t last_block_height = 0;
-#endif
     bool prev_is_validator = true;
 
     if (rotate_mode == enum_rotate_mode_no_rotate) {
@@ -333,14 +330,13 @@ const xvip2_t xrotate_leader_election::get_leader_xip(uint64_t viewId, const std
         bool rotate = is_rotate_xip(local);
         if (rotate) {
             // get prev block leader
-#if defined(DEBUG)
-            last_block_height = prev_block->get_height();
-#endif
             if (rotate_mode == enum_rotate_mode_rotate_by_last_block) {
+                #ifdef 0
                 auto validator = prev_block->get_cert()->get_validator();
                 if (get_node_id_from_xip2(validator) == 0x3FF) {  // 0x3FF is a group node xip
                     prev_is_validator = false;
                 }
+                #endif
             } else {
                 // viewid determine where leader is from
                 prev_is_validator = viewId & 0x1;
