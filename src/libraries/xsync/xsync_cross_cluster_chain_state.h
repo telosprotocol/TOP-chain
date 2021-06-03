@@ -37,7 +37,7 @@ private:
     xsync_sender_t *m_sync_sender;
     xdownloader_face_t *m_downloader;
     uint32_t m_counter{0};
-    xsync_time_rejecter_t m_time_rejecter{5000};
+    xsync_time_rejecter_t m_time_rejecter{900};
 };
 
 NS_END2

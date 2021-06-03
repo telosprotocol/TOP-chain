@@ -97,7 +97,7 @@ class xinput_t final: public base::xvinput_t {
         return new xinput_t;
     }
  public:  // implement virtual interface
-    virtual const std::string           get_root_hash() override;
+    virtual const std::string           get_root_hash() const override;
 
     static std::string                  get_key(const std::string & _base_path) {return _base_path + base::xvinput_t::name();}
 
@@ -129,7 +129,7 @@ class xoutput_t final: public base::xvoutput_t {
         return new xoutput_t;
     }
  public:
-    virtual const std::string           get_root_hash() override;
+    virtual const std::string           get_root_hash() const override;
 
     static std::string                  get_key(const std::string & _base_path) {return _base_path + base::xvoutput_t::name();}
 
