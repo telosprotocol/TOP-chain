@@ -72,11 +72,11 @@ int NodeDetectionManager::AddDetectionNode(std::shared_ptr<NodeInfo> node_ptr) {
         return kKadSuccess;
     }
 
-    if (node_ptr->nat_type == kNatTypeConeAbnormal) {
-        node_ptr->detection_delay_count = 3;
-    } else {
+    // if (node_ptr->nat_type == kNatTypeConeAbnormal) {
+    //     node_ptr->detection_delay_count = 3;
+    // } else {
         node_ptr->detection_delay_count = 0;
-    }
+    // }
 
     std::unique_lock<std::mutex> lock(detection_nodes_map_mutex_);
     std::string key = (node_ptr->public_ip + "_" +

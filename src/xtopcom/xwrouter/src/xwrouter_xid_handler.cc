@@ -135,7 +135,7 @@ int32_t WrouterXidHandler::SendGeneral(transport::protobuf::RoutingMessage & mes
         if (!routing_table) {
             TOP_DEBUG("FindRoutingTable failed of service_type: %llu, try crossing network", service_type);
 
-            TOP_DEBUG("crossing network from local_xid: %s to des: %llu", HexEncode(global_xid->Get()).c_str(), service_type);
+            TOP_DEBUG("crossing network from local_xid: %s to des: %llu", (global_xid->Get()).c_str(), service_type);
 
             std::vector<kadmlia::NodeInfoPtr> des_nodes;
             kadmlia::NodeInfoPtr des_node_ptr;
@@ -149,7 +149,7 @@ int32_t WrouterXidHandler::SendGeneral(transport::protobuf::RoutingMessage & mes
             return SendData(message, des_nodes, kBroadcastGeneral, false);
         }
     }
-    TOP_DEBUG("sendgeneral using routing_table: %s", HexEncode(routing_table->get_local_node_info()->id()).c_str());
+    TOP_DEBUG("sendgeneral using routing_table: %s", (routing_table->get_local_node_info()->id()).c_str());
 
     std::string des_xid = message.des_node_id();
     std::vector<kadmlia::NodeInfoPtr> nodes = GetClosestNodes(routing_table,
@@ -186,15 +186,16 @@ int32_t WrouterXidHandler::SendMulticast(transport::protobuf::RoutingMessage & m
     }
 
     uint64_t des_service_type = ParserServiceType(message.des_node_id());
+    xdbg("Charles Debug SendMulticast service_type: %lld",des_service_type);
     RoutingTablePtr routing_table = FindRoutingTable(false, des_service_type, false);
 
     // local does'nt have way to des, using root or find des-nodes first
     if (!routing_table || routing_table->nodes_size() == 0) {
-        TOP_DEBUG("crossing network from local_xid: %s to des: %llu %s", HexEncode(global_xid->Get()).c_str(), des_service_type, HexEncode(message.des_node_id()).c_str());
+        TOP_DEBUG("crossing network from local_xid: %s to des: %llu %s", global_xid->Get().c_str(), des_service_type, message.des_node_id().c_str());
 
         std::vector<kadmlia::NodeInfoPtr> des_nodes;
         if (!wrouter::ServiceNodes::Instance()->GetRootNodes(des_service_type, des_nodes) || des_nodes.empty()) {
-            TOP_WARN("crossing network failed, can't find des nodes of service_type: %llu %s", des_service_type, HexEncode(message.des_node_id()).c_str());
+            TOP_WARN("crossing network failed, can't find des nodes of service_type: %llu %s", des_service_type, message.des_node_id().c_str());
             return enum_xerror_code_fail;
         }
 
@@ -226,7 +227,7 @@ int32_t WrouterXidHandler::SendGossip(transport::protobuf::RoutingMessage & mess
     RoutingTablePtr routing_table;
     routing_table = FindRoutingTable(true, static_cast<uint64_t>(kRoot), true);
 
-    TOP_DEBUG("sendgossip routing_table: %s", HexEncode(routing_table->get_local_node_info()->id()).c_str());
+    TOP_DEBUG("sendgossip routing_table: %s", (routing_table->get_local_node_info()->id()).c_str());
 
     if (!routing_table) {
         TOP_WARN2("FindRoutingTable failed");
@@ -340,7 +341,7 @@ int32_t WrouterXidHandler::SendData(transport::protobuf::RoutingMessage & messag
     };
     TOP_DEBUG("finally get destnode size:%u", rest_neighbors.size());
     for (const auto & item : rest_neighbors) {
-        TOP_DEBUG("finally get %s %s:%u", HexEncode(item->node_id).c_str(), item->public_ip.c_str(), item->public_port);
+        TOP_DEBUG("finally get %s %s:%u", (item->node_id).c_str(), item->public_ip.c_str(), item->public_port);
     }
 
     if (message.broadcast()) {

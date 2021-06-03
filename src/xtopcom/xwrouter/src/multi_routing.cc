@@ -22,6 +22,7 @@ using namespace kadmlia;
 namespace wrouter {
 
 static const int32_t kCheckSingleNodeNetworkPeriod = 5 * 1000 * 1000;
+static const int32_t kCheckElectRoutingTableNodesPeriod = 5 * 1000 * 1000;
 static const uint32_t kCheckSingleNetworkNodesNum = 16;
 
 MultiRouting::MultiRouting() : routing_table_map_(), routing_table_map_mutex_(), root_manager_ptr_(nullptr) {
@@ -33,6 +34,9 @@ MultiRouting::MultiRouting() : routing_table_map_(), routing_table_map_mutex_(),
     check_single_network_thread_ = std::make_shared<std::thread>(thread_callback);
     check_single_network_thread_->detach();
     timer_.Start(kCheckSingleNodeNetworkPeriod, kCheckSingleNodeNetworkPeriod, std::bind(&MultiRouting::NotifyCheckSignal, this));
+
+    check_elect_routing_ = std::make_shared<base::TimerRepeated>(timer_manager_, "MultiRouting::CheckElectRoutingTable");
+    check_elect_routing_->Start(kCheckElectRoutingTableNodesPeriod, kCheckElectRoutingTableNodesPeriod, std::bind(&MultiRouting::CheckElectRoutingTable, this));
 }
 
 MultiRouting::~MultiRouting() {
@@ -244,6 +248,19 @@ void MultiRouting::CheckSingleNodeNetwork() {
     */
 }
 
+
+void MultiRouting::CheckElectRoutingTable(){
+    std::unique_lock<std::mutex> lock(routing_table_map_mutex_);
+    for (auto _p : routing_table_map_) {
+        kadmlia::RoutingTablePtr routing_table = _p.second;
+        auto kad_key_ptrs = routing_table->GetElectionNodesExpected();
+        if (!kad_key_ptrs.empty()) {
+            std::map<std::string, kadmlia::NodeInfoPtr>  res_nodes; // election_node_id, NodeInfoPtr
+            root_manager_ptr_->GetRoutingTable(kRoot)->FindElectionNodesInfo(kad_key_ptrs, res_nodes);
+            routing_table->HandleElectionNodesInfoFromRoot(res_nodes);
+        }
+    }
+}
 }  // namespace wrouter
 
 }  // namespace top

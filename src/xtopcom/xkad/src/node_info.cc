@@ -25,13 +25,13 @@ NodeInfo::NodeInfo(const NodeInfo& other)
             local_port(other.local_port),
             connection_id(other.connection_id),
             detection_count(other.detection_count),
-            nat_type(other.nat_type),
+            // nat_type(other.nat_type),
             detection_delay_count(other.detection_delay_count),
             heartbeat_count(other.heartbeat_count),
             service_type(other.service_type),
             same_vlan(other.same_vlan),
             xid(other.xid),
-            xip(other.xip),
+            // xip(other.xip),
             score(other.score) {
     //hash64 = base::xhash64_t::digest(xid);
     hash64 = base::xhash64_t::digest(node_id);
@@ -60,14 +60,14 @@ NodeInfo& NodeInfo::operator=(const NodeInfo& other) {
     local_port =  other.local_port;
     connection_id = other.connection_id;
     detection_count = other.detection_count;
-    nat_type = other.nat_type;
+    // nat_type = other.nat_type;
     detection_delay_count = other.detection_delay_count;
     heartbeat_count = other.heartbeat_count;  // count > 3
     service_type = other.service_type;
     tp_next_time_to_heartbeat = other.tp_next_time_to_heartbeat;
     same_vlan = other.same_vlan;
     xid = other.xid;
-    xip = other.xip;
+    // xip = other.xip;
     score = other.score;
     //hash64 = base::xhash64_t::digest(xid);
     hash64 = base::xhash64_t::digest(node_id);

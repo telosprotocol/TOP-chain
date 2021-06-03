@@ -158,6 +158,7 @@ std::vector<common::xip2_t> xtop_vnode_manager::handle_election_data(std::unorde
         if (vnode_outdated) {
             xwarn("[vnode mgr] vnode at address %s is outdated", cluster_address.to_string().c_str());
 
+            //todo charles add size && version from group_update_result
             common::xip2_t xip{cluster_address.network_id(), cluster_address.zone_id(), cluster_address.cluster_id(), cluster_address.group_id()};
 
             outdated_xips.push_back(std::move(xip));

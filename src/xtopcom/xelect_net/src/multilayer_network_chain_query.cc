@@ -93,13 +93,14 @@ std::string MultilayerNetworkChainQuery::AllPeers() {
                 continue;
             }
             node_set.insert(HexEncode(n->node_id));
-            std::string ninfo = base::StringUtil::str_fmt("endpoints:%s:%u nat_type:%u service_type:%llu nodeid:%s xip:%s\n",
+            std::string ninfo = base::StringUtil::str_fmt("endpoints:%s:%u service_type:%llu nodeid:%s xip:%s\n",
                     n->public_ip.c_str(),
                     n->public_port,
-                    n->nat_type,
+                    // n->nat_type,
                     n->service_type,
-                    HexEncode(n->node_id).c_str(),
-                    HexEncode(n->xip).c_str());
+                    HexEncode(n->node_id).c_str()
+                    // HexEncode(n->xip).c_str()
+                    );
             rt_result += ninfo;
         }
 
@@ -115,13 +116,14 @@ std::string MultilayerNetworkChainQuery::AllPeers() {
             continue;
         }
         node_set.insert(HexEncode(sn->node_id));
-        std::string ninfo = base::StringUtil::str_fmt("endpoints:%s:%u nat_type:%u service_type:%llu node_id:%s xip:%s\n",
+        std::string ninfo = base::StringUtil::str_fmt("endpoints:%s:%u service_type:%llu node_id:%s xip:%s\n",
                 sn->public_ip.c_str(),
                 sn->public_port,
-                sn->nat_type,
+                // sn->nat_type,
                 sn->service_type,
-                HexEncode(sn->node_id).c_str(),
-                HexEncode(sn->xip).c_str());
+                HexEncode(sn->node_id).c_str()
+                // HexEncode(sn->xip).c_str()
+                );
         result += ninfo;
     }
     result += "\n";

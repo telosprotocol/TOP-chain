@@ -127,6 +127,21 @@ int GetSameNetworkNodesV2(const std::string & des_kroot_id, uint64_t des_service
     return kadmlia::kKadSuccess;
 }
 
+int GetSameNetworkNodesV3(std::vector<base::KadmliaKeyPtr> kad_key_ptrs, std::vector<kadmlia::NodeInfoPtr> res_nodes) {
+    // auto root_routing = std::dynamic_pointer_cast<RootRouting>(GetRoutingTable(kRoot, true));
+    // if (!root_routing) {
+    //     TOP_WARN("create root manager failed!");
+    //     return kadmlia::kKadFailed;
+    // }
+    // root_routing->FindElectionNodesInfo(kad_key_ptrs,res_nodes);
+    // xdbg("Charles Debug GetSameNetworkNodesV3 %zu", res_nodes.size());
+    // for(auto _n:res_nodes){
+    //     xdbg("Charles Debug GetSameNetworkNodesV3 %zu %s:%d, %lld", _n->public_ip.c_str(), _n->public_port, _n->service_type);
+    // }
+
+    return kadmlia::kKadSuccess;
+}
+
 }  // namespace wrouter
 
 }  // namespace top

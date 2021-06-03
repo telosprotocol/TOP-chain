@@ -136,7 +136,7 @@ void xtop_chain_application::on_election_data_updated(data::election::xelection_
     if (!updated_election_data2.empty()) {
         auto outdated_xips = m_vnode_manager->handle_election_data(updated_election_data2);
         for (const auto & xip : outdated_xips) {
-            m_application->elect_manager()->OnElectQuit(xip);
+            // m_application->elect_manager()->OnElectQuit(xip);
             m_cons_mgr->destroy({xip.raw_low_part(), xip.raw_high_part()});
             m_txpool_service_mgr->destroy({xip.raw_low_part(), xip.raw_high_part()});
         }

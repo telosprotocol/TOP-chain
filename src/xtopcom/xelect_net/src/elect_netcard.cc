@@ -132,21 +132,23 @@ int EcNetcard::send(
         return kVhostSendDstInvalid;
     }
 
-    xdbg("send data chain_src: [%d][%d][%d][%d]",
+    xdbg("send data chain_src: [%d][%d][%d][%d][%d]",
             send_kad_key->xnetwork_id(),
             send_kad_key->zone_id(),
             send_kad_key->cluster_id(),
-            send_kad_key->group_id()
+            send_kad_key->group_id(),
+            recv_kad_key->slot_id()
             // send_kad_key->node_id(),
             // send_kad_key->xip_type(),
             // send_kad_key->process_id()
             );
 
-    xdbg("send data chain_dst: [%d][%d][%d][%d]",
+    xdbg("send data chain_dst: [%d][%d][%d][%d][%d]",
             recv_kad_key->xnetwork_id(),
             recv_kad_key->zone_id(),
             recv_kad_key->cluster_id(),
-            recv_kad_key->group_id()
+            recv_kad_key->group_id(),
+            recv_kad_key->slot_id()
             // recv_kad_key->node_id(),
             // recv_kad_key->xip_type(),
             // recv_kad_key->process_id()
@@ -313,7 +315,7 @@ int EcNetcard::GossipOldLayerBroadcast(transport::protobuf::RoutingMessage & pbf
 #define IS_BROADCAST(message) (message.broadcast())
 #define IS_RRS_GOSSIP_MESSAGE(message) (message.is_root() && message.broadcast() && message.gossip().gossip_type() == 8)
 #define IS_RRS_PULLED_MESSAGE(message) message.ack_id() == 181819
-#define MESSAGE_BASIC_INFO(message) "src_node_id", HexEncode(message.src_node_id()), "dst_node_id", HexEncode(message.des_node_id()), "hop_num", message.hop_num()
+#define MESSAGE_BASIC_INFO(message) "src_node_id", (message.src_node_id()), "dst_node_id", (message.des_node_id()), "hop_num", message.hop_num()
 #define MESSAGE_RRS_FEATURE(message) "gossip_header_hash", std::stol(message.gossip().header_hash()), "gossip_block_size", message.gossip().block().size()
 #define MESSAGE_FEATURE(message) "msg_hash", message.gossip().msg_hash(), "msg_size", message.gossip().block().size()
 #define IS_ROOT_BROADCAST(message) "is_root", message.is_root(), "is_broadcast", message.broadcast()
@@ -387,7 +389,6 @@ void EcNetcard::HandleRumorMessage(
     //         "dest_node_id", HexEncode(message.des_node_id()),
     //         "is_root", message.is_root(),
     //         "broadcast", message.broadcast());
-#ifdef XENABLE_P2P_BENDWIDTH
     if (IS_RRS_GOSSIP_MESSAGE(message)) {
         XMETRICS_PACKET_INFO("p2pperf_vhostrecv_info",
                              MESSAGE_BASIC_INFO(message),
@@ -398,11 +399,12 @@ void EcNetcard::HandleRumorMessage(
                              PACKET_SIZE(packet),
                              NOW_TIME);
     } else {
-        if (IS_BROADCAST(message)) {
+        // if (IS_BROADCAST(message)) {
             XMETRICS_PACKET_INFO(
                 "p2pnormal_vhostrecv_info", MESSAGE_BASIC_INFO(message), MESSAGE_FEATURE(message), IS_ROOT_BROADCAST(message), "is_pulled", 0, PACKET_SIZE(packet), NOW_TIME);
-        }
+        // }
     }
+#ifdef XENABLE_P2P_BENDWIDTH
 
 
     if (message.type() == kElectVhostRumorP2PMessage) {

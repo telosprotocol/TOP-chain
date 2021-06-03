@@ -156,7 +156,7 @@ protected:
     int SetNodeBucket(NodeInfoPtr node);
     bool ValidNode(NodeInfoPtr node);
     int SortNodesByTargetXid(const std::string & target_xid, int number);
-    int SortNodesByTargetXip(const std::string & target_xip, int number);
+    // int SortNodesByTargetXip(const std::string & target_xip, int number);
     // make sure nodes_ is sorted by kad algo
     virtual bool NewNodeReplaceOldNode(NodeInfoPtr node, bool remove);
     virtual uint32_t GetFindNodesMaxSize();
@@ -227,6 +227,20 @@ protected:
     std::mutex heart_beat_info_map_mutex_;
     on_heart_beat_info_receive_callback_t heart_beat_callback_;
     std::mutex heart_beat_callback_mutex_;
+
+
+private:
+    std::map<std::string,base::KadmliaKeyPtr> m_expected_kad_keys;
+
+public:
+    void init_election_result();
+    void SetElectionNodesExpected(std::map<std::string, base::KadmliaKeyPtr> const & elect_root_kad_keys_map);
+    void SetElectionNodesExpected(std::vector<base::KadmliaKeyPtr> const & kad_keys);
+    void EraseElectionNodesExpected(std::vector<base::KadmliaKeyPtr> const & kad_keys);
+    std::map<std::string, base::KadmliaKeyPtr> GetElectionNodesExpected();
+    // std::vector<base::KadmliaKeyPtr> GetElectionNodesExpected();
+    void HandleElectionNodesInfoFromRoot(std::map<std::string, kadmlia::NodeInfoPtr> const & nodes);
+    void FindElectionNodesInfo(std::map<std::string, base::KadmliaKeyPtr> const & kad_keys,std::map<std::string, kadmlia::NodeInfoPtr> & nodes);
 
 private:
     std::mutex use_nodes_mutex_;

@@ -53,11 +53,11 @@ public:
             uint64_t service_type,
             std::set<std::pair<std::string, uint16_t>>& boot_endpoints);
     kadmlia::RoutingTablePtr FindRoutingTable(const std::string& msg_des_node_id);
-    bool GetRootNodesFromLocalRootRouting(
-            kadmlia::RoutingTablePtr root_routing,
-            const std::string& node_id,
-            std::vector<kadmlia::NodeInfoPtr>& nodes);
-    bool GetRootNodesFromLocal(const std::string& node_id, std::vector<kadmlia::NodeInfoPtr>& nodes);
+    // bool GetRootNodesFromLocalRootRouting(
+    //         kadmlia::RoutingTablePtr root_routing,
+    //         const std::string& node_id,
+    //         std::vector<kadmlia::NodeInfoPtr>& nodes);
+    // bool GetRootNodesFromLocal(const std::string& node_id, std::vector<kadmlia::NodeInfoPtr>& nodes);
 
     // using elect data to search kroot-id
     int GetRootNodesV2(
@@ -82,8 +82,8 @@ private:
             const std::string& peer_ip,
             uint16_t peer_port,
             uint64_t des_service_type) override;
-    void HandleRootGetNodesRequest(transport::protobuf::RoutingMessage& message, base::xpacket_t& packet);
-    void HandleRootGetNodesResponse(transport::protobuf::RoutingMessage& message, base::xpacket_t& packet);
+    // void HandleRootGetNodesRequest(transport::protobuf::RoutingMessage& message, base::xpacket_t& packet);
+    // void HandleRootGetNodesResponse(transport::protobuf::RoutingMessage& message, base::xpacket_t& packet);
     void HandleGetElectNodesRequest(transport::protobuf::RoutingMessage& message, base::xpacket_t& packet);
     void HandleGetElectNodesResponse(transport::protobuf::RoutingMessage& message, base::xpacket_t& packet);
 //     virtual bool StartBootstrapCacheSaver() override;

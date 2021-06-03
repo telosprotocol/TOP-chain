@@ -9,6 +9,7 @@
 #include "xpbase/base/xip_parser.h"
 #include "xwrouter/multi_routing/small_net_cache.h"
 #include "xwrouter/register_message_handler.h"
+#include "xwrouter/register_routing_table.h"
 
 #include <chrono>
 #include <limits>
@@ -171,15 +172,33 @@ void ElectManager::UpdateRoutingTable(std::vector<wrouter::WrouterTableNodes> co
     // }
 
     // if (first_node) {
-        auto root_routing = wrouter::GetRoutingTable(kRoot, true);
-        local_node_ptr->set_public_ip(root_routing->get_local_node_info()->public_ip());
-        local_node_ptr->set_public_port(root_routing->get_local_node_info()->public_port());
-        local_node_ptr->set_first_node(true);
-        if (root_routing->get_local_node_info()->public_ip().empty()) {
-            TOP_ERROR("RoutingManagerBase local node public ip is empty.");
-            assert(false);
-        }
-        return ;
+    auto root_routing = wrouter::GetRoutingTable(kRoot, true);
+    // std::vector<kadmlia::NodeInfoPtr> res_nodes;
+    // std::vector<base::KadmliaKeyPtr> kad_key_ptrs;
+    std::map<std::string, base::KadmliaKeyPtr> elect_root_kad_key_ptrs;
+    for (auto _node : elect_data) {
+        
+        // kad_key_ptrs.push_back(base::GetRootKadmliaKey(_node.node_id));
+        elect_root_kad_key_ptrs.insert(std::make_pair(_node.m_xip2.to_string(),base::GetRootKadmliaKey(_node.node_id)));
+        // auto des_kad_key = base::GetRootKadmliaKey(_node.node_id);
+        // auto des_service_type = base::CreateServiceType(_node.m_xip2);
+        // xinfo("Charles Debug GetSameNetworkNodesV2 res_nodes.size(): %zu des_node_id:%s ,des_kad_key:%s ", res_nodes.size(), _node.node_id.c_str(), des_kad_key->Get().c_str());
+        // wrouter::GetSameNetworkNodesV2(des_kad_key->Get(), des_service_type, res_nodes);
+        // if(!res_nodes.empty()){
+        //     for(auto _v:res_nodes){
+        //         xinfo("Charles Debug GetSameNetworkNodesV2 node_id:%s ip:%s,port:%d",_v->node_id.c_str(),_v->public_ip.c_str(),_v->public_port);
+        //     }
+        // }
+    }
+    routing_table_ptr->SetElectionNodesExpected(elect_root_kad_key_ptrs);
+    local_node_ptr->set_public_ip(root_routing->get_local_node_info()->public_ip());
+    local_node_ptr->set_public_port(root_routing->get_local_node_info()->public_port());
+    // local_node_ptr->set_first_node(true);
+    if (root_routing->get_local_node_info()->public_ip().empty()) {
+        TOP_ERROR("RoutingManagerBase local node public ip is empty.");
+        assert(false);
+    }
+    return ;
     // }
 
     // routing_table_ptr->MultiJoinAsync(join_endpoints);
@@ -195,6 +214,9 @@ int ElectManager::OnElectQuit(const common::xip2_t & xip2) {
     xip.set_cluster_id(static_cast<uint8_t>(xip2.cluster_id().value()));
     xip.set_group_id(static_cast<uint8_t>(xip2.group_id().value()));
     // xip.set_network_type((uint8_t)(address.cluster_address().type()));
+
+    auto service_type = base::GetKadmliaKey(xip2)->GetServiceType();
+    wrouter::MultiRouting::Instance()->RemoveRoutingTable(service_type);
 
     TOP_INFO("electquit for xip:%s", HexEncode(xip.xip()).c_str());
     return node_manager_->Quit(xip);

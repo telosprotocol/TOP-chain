@@ -72,6 +72,11 @@ private:
     base::TimerRepeated timer_{base::TimerManager::Instance(), "MultiRouting"};
     std::shared_ptr<std::thread> check_single_network_thread_;
 
+    
+    base::TimerManager * timer_manager_{base::TimerManager::Instance()};
+    std::shared_ptr<base::TimerRepeated> check_elect_routing_;
+    void CheckElectRoutingTable();
+
     DISALLOW_COPY_AND_ASSIGN(MultiRouting);
 };
 

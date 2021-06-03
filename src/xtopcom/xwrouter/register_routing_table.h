@@ -48,11 +48,8 @@ int NetworkExists(
         base::KadmliaKeyPtr& kad_key_ptr,
         std::set<std::pair<std::string, uint16_t>>& endpoints);
 // using elect data to search elect nodes from root network
-int GetSameNetworkNodesV2(
-        const std::string& des_kroot_id,
-        uint64_t des_service_type,
-        std::vector<kadmlia::NodeInfoPtr>& ret_nodes);
- 
+int GetSameNetworkNodesV2(const std::string & des_kroot_id, uint64_t des_service_type, std::vector<kadmlia::NodeInfoPtr> & ret_nodes);
+int GetSameNetworkNodesV3(std::vector<base::KadmliaKeyPtr> kad_key_ptrs, std::vector<kadmlia::NodeInfoPtr> res_nodes);
 
 }  // namespace wrouter
 
