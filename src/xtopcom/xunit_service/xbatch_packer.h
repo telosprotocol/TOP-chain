@@ -9,7 +9,6 @@
 #include "xBFT/xconsaccount.h"
 #include "xbase/xobject_ptr.h"
 #include "xunit_service/xcons_face.h"
-#include "xunit_service/xcons_unorder_cache.h"
 #include "xmbus/xmessage_bus.h"
 #include "xtxpool_v2/xtxpool_face.h"
 #include "xbase/xtimer.h"
@@ -68,7 +67,9 @@ protected:
 
 private:
     bool    start_proposal(base::xblock_mptrs& latest_blocks);
+    bool    verify_proposal_packet(const xvip2_t & from_addr, const xvip2_t & local_addr, const base::xcspdu_t & packet);
 
+private:
     observer_ptr<mbus::xmessage_bus_face_t>  m_mbus;
     uint16_t                                 m_tableid;
     volatile uint64_t                        m_last_view_id;
@@ -76,7 +77,6 @@ private:
     std::shared_ptr<xblock_maker_face>       m_block_maker;
     std::shared_ptr<xproposal_maker_face>    m_proposal_maker;
     uint64_t                                 m_cons_start_time_ms;
-    xcons_unorder_cache                      m_unorder_cache;
     static constexpr uint32_t                m_empty_block_max_num{2};
     static constexpr uint32_t                m_timer_repeat_time_ms{3000};  // check account by every 3 seconds
     std::string                              m_account_id;

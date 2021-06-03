@@ -322,9 +322,6 @@ const xvip2_t xrotate_leader_election::get_leader_xip(uint64_t viewId, const std
     uint64_t random = viewId + base::xvaccount_t::get_xid_from_account(account);
     xelection_cache_face::elect_set elect_set;
     bool leader = false;
-#if defined(DEBUG)  // TODO: jimmy fix release compiling error
-    uint64_t last_block_height = 0;
-#endif
     bool prev_is_validator = true;
 
     if (rotate_mode == enum_rotate_mode_no_rotate) {
@@ -333,15 +330,15 @@ const xvip2_t xrotate_leader_election::get_leader_xip(uint64_t viewId, const std
         bool rotate = is_rotate_xip(local);
         if (rotate) {
             // get prev block leader
-#if defined(DEBUG)
-            last_block_height = prev_block->get_height();
-#endif
+            #if 0
             if (rotate_mode == enum_rotate_mode_rotate_by_last_block) {
                 auto validator = prev_block->get_cert()->get_validator();
                 if (get_node_id_from_xip2(validator) == 0x3FF) {  // 0x3FF is a group node xip
                     prev_is_validator = false;
                 }
-            } else {
+            } 
+            #endif
+            if (rotate_mode == enum_rotate_mode_rotate_by_view_id) {
                 // viewid determine where leader is from
                 prev_is_validator = viewId & 0x1;
             }
@@ -374,9 +371,9 @@ const xvip2_t xrotate_leader_election::get_leader_xip(uint64_t viewId, const std
     }
 
     xvip2_t leader_xip = get_leader(elect_set, version, random);
-    xunit_dbg_info("xrotate_leader_election::get_leader_xip account=%s,viewid=%ld,random=%ld,leader_xip=%s,local=%s,candidate=%s,height=%ld,prev_validator=%d,electsize:%d",
+    xunit_dbg_info("xrotate_leader_election::get_leader_xip account=%s,viewid=%ld,random=%ld,leader_xip=%s,local=%s,candidate=%s,prev_validator=%d,electsize:%d",
         account.c_str(), viewId, random, xcons_utl::xip_to_hex(leader_xip).c_str(),
-        xcons_utl::xip_to_hex(local).c_str(), xcons_utl::xip_to_hex(candidate).c_str(), last_block_height, prev_is_validator, elect_set.size());
+        xcons_utl::xip_to_hex(local).c_str(), xcons_utl::xip_to_hex(candidate).c_str(), prev_is_validator, elect_set.size());
     return leader_xip;
 }
 
