@@ -607,8 +607,7 @@ int32_t xaccount_context_t::update_pledge_vote_property(xaction_pledge_token_vot
 
 int32_t xaccount_context_t::redeem_pledge_vote_property(uint64_t num){
     if (num == 0) {
-        xassert(false);
-        return xtransaction_pledge_redeem_vote_err;
+        return 0;
     }
 
     int32_t ret = xsuccess;
