@@ -178,6 +178,21 @@ namespace top
             return not_impl(op);
         }
     
+        const xvalue_t   xvexeunit_t::not_impl(const xvmethod_t & op) const
+        {
+            if(op.is_name_method())
+            {
+                const std::string method_key = xstring_utl::tostring(op.get_method_type()) + "." + op.get_method_name();
+                xerror("xvexeunit_t::executenot_impl for name-method(%s) of uri(%s)",method_key.c_str(),op.get_method_uri().c_str());
+            }
+            else
+            {
+                const int method_key = (op.get_method_type() << 8) | op.get_method_id();
+                xerror("xvexeunit_t::executenot_impl for id-method(%d) of uri(%s)",method_key,op.get_method_uri().c_str());
+            }
+            return xvalue_t();
+        }
+    
         xvexegroup_t::xvexegroup_t(enum_xdata_type type)
             :xvexeunit_t(type)
         {

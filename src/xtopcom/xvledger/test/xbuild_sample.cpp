@@ -31,7 +31,7 @@ int test_block_builder(bool is_stress_test)
     top::base::xauto_ptr<top::base::xvblock_t> block_1( top::test::xunitblock_t::create_unitblock(account_addr,1,1,1,genesis_block->get_block_hash(),genesis_block->get_block_hash(),genesis_block->get_height()));
 
     
-    top::base::xvunitmaker_t * unit_maker = new top::base::xvunitmaker_t(*block_1);
+    top::base::xvbmaker_t * unit_maker = new top::base::xvbmaker_t(*block_1->get_header(),NULL);
     
     top::test::tep0_tx * deposit = new top::test::tep0_tx(account_addr,100);
     top::test::tep0_tx * withdraw = new top::test::tep0_tx(account_addr,-10);
@@ -39,10 +39,13 @@ int test_block_builder(bool is_stress_test)
     input_txs.push_back(deposit);
     input_txs.push_back(withdraw);
     
-    unit_maker->build_input(input_txs);
-    unit_maker->build_output();
-    top::base::xauto_ptr<top::base::xvblock_t> new_block(unit_maker->build_block());
+    xassert(unit_maker->build_entity(input_txs));
+    xassert(unit_maker->make_input());
+    xassert(unit_maker->make_output());
+    xassert(unit_maker->build_block(block_1->get_cert()));
  
+    delete unit_maker;
+    
     printf("/////////////////////////////// [test_block_builder] finish ///////////////////////////////  \n");
     return 0;
 }

@@ -12,13 +12,13 @@ namespace top
 {
     namespace base
     {
-        xvexecontxt_t::xvexecontxt_t(const uint64_t new_max_tags,xvcanvas_t * input_canvas,xvcanvas_t * output_canvas)
+        xvexecontxt_t::xvexecontxt_t(const uint64_t new_max_tags,const uint64_t new_used_tags,xvcanvas_t * input_canvas,xvcanvas_t * output_canvas)
             :xobject_t(enum_xobject_type_exe_contxt)
         {
             m_input_canvas = NULL;
             m_output_canvas= NULL;
             
-            m_used_tgas = 0;
+            m_used_tgas = new_used_tags;
             m_max_tgas = new_max_tags;
 
             if(input_canvas != NULL)
@@ -66,18 +66,41 @@ namespace top
         class xvblkcontext_t : public xvexecontxt_t
         {
         public:
+            xvblkcontext_t(const xvheader_t & target_header,const uint64_t new_max_tags);
             xvblkcontext_t(const xvblock_t & target_block,const uint64_t new_max_tags);
+            xvblkcontext_t(const xvblkcontext_t & obj);
         protected:
             ~xvblkcontext_t();
         public:
             virtual xauto_ptr<xvexestate_t> get_state(const xvaccount_t & account) override;
             virtual xauto_ptr<xvexestate_t> get_state(const std::string & account_addr) override;
+            
+            virtual bool                    snapshot() override; //clone first then do actual contract execution
+            virtual bool                    restore() override; //restore to last state if have snapshot
         private:
             xvbstate_t*     m_block_state; //block-based state object
         };
-
+    
+        xvblkcontext_t::xvblkcontext_t(const xvheader_t & target_header,const uint64_t new_max_tags)
+            :xvexecontxt_t(new_max_tags,0,NULL,NULL)
+        {
+            m_block_state = NULL;
+            
+            xvaccount_t target_account(target_header.get_account());
+            xauto_ptr<xvbstate_t> target_state(xvchain_t::instance().get_xstatestore()->get_block_state(target_account,target_header.get_height() - 1, target_header.get_last_block_hash()));
+            if(target_state)
+            {
+                m_block_state = target_state.get();
+                target_state->add_ref();
+            }
+            else
+            {
+                close(); //force to close and mark it is unavaiable
+            }
+        }
+    
         xvblkcontext_t::xvblkcontext_t(const xvblock_t & target_block,const uint64_t new_max_tags)
-            :xvexecontxt_t(new_max_tags,NULL,NULL)
+            :xvexecontxt_t(new_max_tags,0,NULL,NULL)
         {
             m_block_state = NULL;
             
@@ -86,6 +109,35 @@ namespace top
             {
                 m_block_state = target_state.get();
                 target_state->add_ref();
+            }
+            else
+            {
+                close(); //force to close and mark it is unavaiable
+            }
+        }
+    
+        xvblkcontext_t::xvblkcontext_t(const xvblkcontext_t & obj)
+            :xvexecontxt_t(obj.get_max_tgas(),obj.get_used_tgas(),NULL,NULL)
+        {
+            m_block_state = NULL;
+            if(obj.m_block_state != NULL)
+            {
+                m_block_state = (xvbstate_t*)obj.m_block_state->clone();
+                if(obj.get_input_canvas() != NULL)
+                {
+                    xauto_ptr<xvcanvas_t> new_input_canvas(new xvcanvas_t(*obj.get_input_canvas()));
+                    reset_input_canvas(new_input_canvas());
+                }
+                
+                if(obj.get_output_canvas() != NULL)
+                {
+                    xauto_ptr<xvcanvas_t> new_output_canvas(new xvcanvas_t(*obj.get_output_canvas()));
+                    reset_output_canvas(new_output_canvas());
+                }
+            }
+            else
+            {
+                close(); //force to close and mark it is unavaiable
             }
         }
         
@@ -119,6 +171,18 @@ namespace top
             return m_block_state;
         }
     
+        bool xvblkcontext_t::snapshot()
+        {
+            xauto_ptr<xvexecontxt_t> clone_context(new xvblkcontext_t(*this));
+            //reset_prev_context(clone_context());
+            return true;
+        }
+    
+        bool   xvblkcontext_t::restore() //restore to snapshot
+        {
+            return true;
+        }
+    
         
         //chain managed account 'state by a MPT tree(or likely) according state-hash,return xvactstate_t
         //traditional block that directly manage txs and change states of all account
@@ -126,7 +190,7 @@ namespace top
         {
         protected:
             xvactcontext_t(const std::string & root_state_hash,const uint64_t new_max_tags)
-                :xvexecontxt_t(new_max_tags,NULL,NULL)
+                :xvexecontxt_t(new_max_tags,0,NULL,NULL)
             {
                 m_root_state_hash = root_state_hash;
             };
@@ -158,6 +222,11 @@ namespace top
         xauto_ptr<xvexecontxt_t> create_block_context(const xvblock_t & target_block,const uint64_t new_max_tags)
         {
             return new xvblkcontext_t(target_block,new_max_tags);
+        }
+    
+        xauto_ptr<xvexecontxt_t> create_block_context(const xvheader_t & target_header,const uint64_t new_max_tags)
+        {
+            return new xvblkcontext_t(target_header,new_max_tags);
         }
     
     };//end of namespace of base

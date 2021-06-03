@@ -4,6 +4,7 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include <cinttypes>
+#include "../xvblock.h"
 #include "../xventity.h"
 #include "xbase/xcontext.h"
  
@@ -13,10 +14,17 @@ namespace top
     {
         //---------------------------------xventity_t---------------------------------//
         xventity_t::xventity_t(enum_xdata_type type)
-        :xdataunit_t(type)
+            :xdataunit_t(type)
         {
             m_exe_module = NULL;
             m_entity_index = uint16_t(-1);
+        }
+    
+        xventity_t::xventity_t(const xventity_t & other)
+            :xdataunit_t(other)
+        {
+            m_exe_module = NULL;
+            m_entity_index = other.m_entity_index;
         }
         
         xventity_t::~xventity_t()
@@ -157,11 +165,99 @@ namespace top
             return (begin_size - stream.size());
         }
     
+     
+        xvintable_ent::xvintable_ent(const xvheader_t & target,const std::vector<xvaction_t*> & actions)
+            :xvinentity_t(actions)
+        {
+            m_owner = NULL;
+            m_owner = new xvheader_t(target);
+        }
+    
+        xvintable_ent::xvintable_ent(const xvheader_t & target,const std::vector<xvaction_t> & actions)
+            :xvinentity_t(actions)
+        {
+            m_owner = NULL;
+            m_owner = new xvheader_t(target);
+        }
+    
+        xvintable_ent::xvintable_ent(const xvheader_t & target,std::vector<xvaction_t> && actions)
+            :xvinentity_t(actions)
+        {
+            m_owner = NULL;
+            m_owner = new xvheader_t(target);
+        }
+     
+        xvintable_ent::xvintable_ent()
+        {
+            m_owner = NULL;
+        }
+    
+        xvintable_ent::~xvintable_ent()
+        {
+            if(m_owner != NULL)
+                m_owner->release_ref();
+        }
+        
+        int32_t   xvintable_ent::do_write(xstream_t & stream)//not allow subclass change behavior
+        {
+            const int32_t begin_size = stream.size();
+            
+            std::string vheader_bin;
+            if(m_owner != NULL)
+            {
+                m_owner->serialize_to_string(vheader_bin);
+                stream.write_compact_var(vheader_bin);
+                //then write actions
+                xvinentity_t::do_write(stream);
+            }
+            else
+            {
+                stream.write_compact_var(vheader_bin); //write empty header
+                xerror("xvintable_ent::do_write,nil header ptr");
+            }
+            
+            return (stream.size() - begin_size);
+        }
+        
+        int32_t     xvintable_ent::do_read(xstream_t & stream) //not allow subclass change behavior
+        {
+            //clear it first
+            if(m_owner != NULL)
+            {
+                m_owner->release_ref();
+                m_owner = NULL;
+            }
+            const int32_t begin_size = stream.size();
+         
+            std::string vheader_bin;
+            stream.read_compact_var(vheader_bin);
+            xassert(vheader_bin.empty() == false);
+            if(vheader_bin.empty() == false)
+            {
+                xvheader_t*  vheader_ptr = xvblock_t::create_header_object(vheader_bin);
+                xassert(vheader_ptr != NULL); //should has value
+                if(vheader_ptr != NULL)
+                {
+                    m_owner = vheader_ptr; //create_header_object has added reference
+                    //then read actions
+                    xvinentity_t::do_read(stream);
+                }
+            }
+            
+            return (begin_size - stream.size());
+        }
+            
         //---------------------------------xvoutentity_t---------------------------------//
         xvoutentity_t::xvoutentity_t(const std::string & state_bin_log)
             :xventity_t(enum_xdata_type(enum_xobject_type_voutentity))
         {
             m_state_binlog = state_bin_log;
+        }
+    
+        xvoutentity_t::xvoutentity_t(const xvoutentity_t & obj)
+            :xventity_t(obj)
+        {
+            m_state_binlog = obj.m_state_binlog;
         }
     
         xvoutentity_t::xvoutentity_t()
@@ -264,6 +360,12 @@ namespace top
             
             m_entitys = entitys; //transfered owner of ptrs
             entitys.clear();
+            for(size_t i = 0; i < m_entitys.size(); ++i)//reset index of entity
+            {
+                xventity_t * v = m_entitys[i];
+                v->set_entity_index(i);
+                v->set_exe_module(this);
+            }
         }
         
         xvexemodule_t::xvexemodule_t(const std::vector<xventity_t*> & entitys, const std::string & raw_resource_data,enum_xdata_type type)
@@ -285,17 +387,30 @@ namespace top
         xvexemodule_t::xvexemodule_t(std::vector<xventity_t*> && entitys,xstrmap_t & resource_obj, enum_xdata_type type)
             :xdataunit_t(type)
         {
-            resource_obj.add_ref();
-            m_resources_obj = &resource_obj;
-            
+            m_resources_obj = NULL;
+            if(resource_obj.empty() == false)
+            {
+                resource_obj.add_ref();
+                m_resources_obj = &resource_obj;
+            }
             m_entitys = std::move(entitys);
+            for(size_t i = 0; i < m_entitys.size(); ++i)//reset index of entity
+            {
+                xventity_t * v = m_entitys[i];
+                v->set_entity_index(i);
+                v->set_exe_module(this);
+            }
         }
         
         xvexemodule_t::xvexemodule_t(const std::vector<xventity_t*> & entitys,xstrmap_t & resource_obj, enum_xdata_type type)
             :xdataunit_t(type)
         {
-            resource_obj.add_ref();
-            m_resources_obj = &resource_obj;
+            m_resources_obj = NULL;
+            if(resource_obj.empty() == false)
+            {
+                resource_obj.add_ref();
+                m_resources_obj = &resource_obj;
+            }
             
             for(size_t i = 0; i < entitys.size(); ++i)
             {

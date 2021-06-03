@@ -28,9 +28,10 @@ namespace top
             
         protected:
             xventity_t(enum_xdata_type type = (enum_xdata_type)enum_xobject_type_ventity);
+            xventity_t(const xventity_t & other);
             virtual ~xventity_t();
         private:
-            xventity_t(const xventity_t & other);
+            xventity_t(const xventity_t &&);
             xventity_t & operator = (const xventity_t & other);
             
         public:
@@ -82,7 +83,6 @@ namespace top
         private:
             xvinentity_t(xvinentity_t &&);
             xvinentity_t(const xvinentity_t &);
-            xvinentity_t & operator = (xvinentity_t &&);
             xvinentity_t & operator = (const xvinentity_t &);
             
         public:
@@ -101,6 +101,31 @@ namespace top
             std::vector<xvaction_t>   m_actions;
         };
     
+        class xvheader_t;
+        //table block may include multiple unit ,each unit occupy one xvtblentity_t as "input" of unit
+        class xvintable_ent : public xvinentity_t
+        {
+        public:
+            xvintable_ent(const xvheader_t & target,const std::vector<xvaction_t*> & actions);
+            xvintable_ent(const xvheader_t & target,const std::vector<xvaction_t> & actions);
+            xvintable_ent(const xvheader_t & target,std::vector<xvaction_t> && actions);
+        protected:
+            xvintable_ent();
+            virtual ~xvintable_ent();
+        private:
+            xvintable_ent(xvintable_ent &&);
+            xvintable_ent(const xvintable_ent &);
+            xvintable_ent & operator = (const xvintable_ent &);
+        public:
+            const xvheader_t*       get_owner() {return m_owner;}
+        protected:
+            //return how many bytes readout /writed in, return < 0(enum_xerror_code_type) when have error
+            virtual int32_t         do_write(xstream_t & stream) override; //allow subclass extend behavior
+            virtual int32_t         do_read(xstream_t & stream)  override; //allow subclass extend behavior
+        private:
+            xvheader_t *  m_owner;
+        };
+    
         //dedicated entity for output module
         class xvoutentity_t : public xventity_t
         {
@@ -112,13 +137,12 @@ namespace top
             enum{enum_obj_type = enum_xobject_type_voutentity};
         public:
             xvoutentity_t(const std::string & state_bin_log);
+            xvoutentity_t(const xvoutentity_t & obj);
         protected:
             xvoutentity_t();
             virtual ~xvoutentity_t();
         private:
             xvoutentity_t(xvoutentity_t &&);
-            xvoutentity_t(const xvoutentity_t &);
-            xvoutentity_t & operator = (xvoutentity_t &&);
             xvoutentity_t & operator = (const xvoutentity_t &);
             
         public:
@@ -199,14 +223,13 @@ namespace top
             
         public: //resource might be treat as key-value database,or data reference by instructions
             virtual const std::string query_resource(const std::string & key);//virtual key-value for query resource
+            const xstrmap_t     *     get_resources() const {return m_resources_obj;}
             
             virtual const std::string get_resources_data(); //combine whole extend resource into one single string
             const   std::string       get_resources_hash() const {return m_resources_hash;}//m_resource_hash for raw_resources
             bool                      has_resource_data()  const {return (m_resources_obj != NULL);}
             
         protected: //for subclass or friend class
-            const xstrmap_t     *     get_resources() const {return m_resources_obj;}
-            
             virtual int32_t     do_write(xstream_t & stream) override; //not allow subclass change behavior
             virtual int32_t     do_read(xstream_t & stream)  override; //not allow subclass change behavior
             

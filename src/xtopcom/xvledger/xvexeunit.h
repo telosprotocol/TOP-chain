@@ -41,7 +41,7 @@ namespace top
             //call instruction(operator) with related arguments
             virtual const xvalue_t      execute(const xvmethod_t & op,xvcanvas_t * canvas);//might throw exception for error
             inline  const xvalue_t      nil_impl(const xvmethod_t & op) const {return xvalue_t();}
-            inline  const xvalue_t      not_impl(const xvmethod_t & op) const {return xvalue_t();}
+            const xvalue_t              not_impl(const xvmethod_t & op) const;
             
         public:
             inline  const std::string&  get_unit_name()     const {return m_unit_name;}
