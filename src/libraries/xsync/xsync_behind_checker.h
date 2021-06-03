@@ -36,7 +36,7 @@ private:
     xrole_chains_mgr_t *m_role_chains_mgr;
     xsync_peerset_t *m_peerset;
     xdownloader_face_t *m_downloader;
-    xsync_time_rejecter_t m_time_rejecter{5000};
+    xsync_time_rejecter_t m_time_rejecter{900};
 
     int m_counter{0};
 };

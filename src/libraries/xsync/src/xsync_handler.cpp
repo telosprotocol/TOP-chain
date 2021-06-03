@@ -543,9 +543,15 @@ void xsync_handler_t::broadcast_chain_state(uint32_t msg_size, const vnetwork::x
         base::xauto_ptr<base::xvblock_t> latest_start_block = m_sync_store->get_latest_start_block(address, chain_info.sync_policy);
         base::xauto_ptr<base::xvblock_t> latest_end_block = m_sync_store->get_latest_end_block(address, chain_info.sync_policy);
         xchain_state_info_t info;
+        xblock_ptr_t block = autoptr_to_blockptr(latest_start_block);
         info.address = address;
-        info.start_height = latest_start_block->get_height();
-        info.end_height = latest_end_block->get_height();
+        if ((chain_info.sync_policy == enum_chain_sync_pocliy_fast) && !block->is_full_state_block()) {
+            info.start_height = 0;
+            info.end_height = 0;
+        } else {
+            info.start_height = latest_start_block->get_height();
+            info.end_height = latest_end_block->get_height();
+        }
         rsp_info_list.push_back(info);
     }
 
@@ -646,6 +652,11 @@ void xsync_handler_t::get_blocks_by_hashes(uint32_t msg_size,
         if (vblock != nullptr) {
             xblock_ptr_t block_ptr = autoptr_to_blockptr(vblock);
             vector_blocks.push_back(block_ptr);
+            xsync_info("xsync_handler receive get_blocks_by_hashes and success to query store, block hash is %s wait(%ldms), from address:%s",
+                data::to_hex_str(info.hash).c_str(), get_time()-recv_time, from_address.to_string().c_str());
+        } else {
+            xsync_info("xsync_handler receive get_blocks_by_hashes and fail to query store, block hash is %s wait(%ldms), from address:%s",
+                data::to_hex_str(info.hash).c_str(), get_time()-recv_time, from_address.to_string().c_str());
         }
     }
 

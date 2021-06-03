@@ -83,7 +83,7 @@ private:
     uint32_t m_behind_dump_count{0};
     std::mutex m_lock;
     std::map<std::string, xgossip_behind_info_t> m_chain_behind_info;
-    xsync_time_rejecter_t m_time_rejecter{5000};
+    xsync_time_rejecter_t m_time_rejecter{900};
 };
 
 using xsync_gossip_ptr_t = std::shared_ptr<xsync_gossip_t>;
