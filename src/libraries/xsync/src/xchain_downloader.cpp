@@ -110,6 +110,7 @@ bool xchain_downloader_t::on_timer(int64_t now) {
         if (abort_overflow == result){
             return false;
         }
+        break;
     }
 
     return true;
@@ -161,7 +162,7 @@ void xchain_downloader_t::on_behind(uint64_t start_height, uint64_t end_height, 
     m_chain_objects[sync_policy].set_height(height);
     m_chain_objects[sync_policy].set_picked_height(picked_height);
 
-    xsync_dbg("chain_downloader on_behind expect start_height=%lu, end_height=%llu, target address %s, sync policy %d, chain is %s",
+    xsync_info("chain_downloader on_behind expect start_height=%lu, end_height=%llu, target address %s, sync policy %d, chain is %s",
                 start_height, end_height, target_addr.to_string().c_str(), sync_policy, m_address.c_str());
 }
 
@@ -585,7 +586,7 @@ xsync_command_execute_result xchain_downloader_t::execute_next_download(const st
 
     m_sync_range_mgr.update_progress(current_block);
 
-    xsync_info("chain_downloader on_snapshot_reponse(total) %s,current(height=%lu,viewid=%lu,hash=%s) behind(height=%lu)",
+    xsync_info("chain_downloader on_snapshot_response(total) %s,current(height=%lu,viewid=%lu,hash=%s) behind(height=%lu)",
         m_address.c_str(), current_vblock->get_height(), current_vblock->get_viewid(), to_hex_str(current_vblock->get_block_hash()).c_str(), m_sync_range_mgr.get_behind_height());
 
     m_request = nullptr;

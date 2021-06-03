@@ -98,7 +98,7 @@ void xsync_behind_checker_t::check_one(const std::string &address, enum_chain_sy
             }
         }
 
-        xsync_dbg("behind_checker notify %s,local(start_height=%lu,end_height=%lu) peer(start_height=%lu,end_height=%lu) sync_policy(%d) reason=%s", 
+        xsync_info("behind_checker notify %s,local(start_height=%lu,end_height=%lu) peer(start_height=%lu,end_height=%lu) sync_policy(%d) reason=%s", 
             address.c_str(), latest_start_block->get_height(), local_end_height, peer_start_height, peer_end_height, (int32_t)sync_policy, reason.c_str());
 
         mbus::xevent_ptr_t ev = make_object_ptr<mbus::xevent_behind_download_t>(address, peer_start_height, peer_end_height, sync_policy, self_addr, peer_addr, reason);
