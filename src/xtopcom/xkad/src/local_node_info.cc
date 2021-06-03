@@ -38,10 +38,10 @@ bool LocalNodeInfo::Init(const std::string & local_ip, uint16_t local_port, bool
         kadmlia_key_->GetServiceType(),
         public_ip_.c_str(),
         public_port_);
-    if (!nat_manager_->GetLocalNatType(nat_type_) || nat_type_ == kNatTypeUnknown) {
-        TOP_ERROR("bluenat get local nat type(%d) failed", nat_type_);
-        return false;
-    }
+    // if (!nat_manager_->GetLocalNatType(nat_type_) || nat_type_ == kNatTypeUnknown) {
+    //     TOP_ERROR("bluenat get local nat type(%d) failed", nat_type_);
+    //     return false;
+    // }
     service_type_ = kadmlia_key_->GetServiceType();
 
     hash64_ = base::xhash64_t::digest(kadmlia_key_->Get());
@@ -57,7 +57,7 @@ void LocalNodeInfo::Reset() {
     public_key_ = "";
     public_ip_ = "";
     public_port_ = 0;
-    nat_type_ = kNatTypeUnknown;
+    // nat_type_ = kNatTypeUnknown;
 }
 
 void LocalNodeInfo::set_public_ip(const std::string& ip) {

@@ -38,11 +38,11 @@ void KadMessageHandler::set_routing_ptr(std::shared_ptr<RoutingTable> routing_pt
 }
 
 void KadMessageHandler::AddBaseHandlers() {
-    message_manager_->RegisterMessageProcessor(kKadConnectRequest, [this](
-            transport::protobuf::RoutingMessage& message,
-            base::xpacket_t& packet){
-        HandleConnectRequest(message, packet);
-    });
+    // message_manager_->RegisterMessageProcessor(kKadConnectRequest, [this](
+    //         transport::protobuf::RoutingMessage& message,
+    //         base::xpacket_t& packet){
+    //     HandleConnectRequest(message, packet);
+    // });
     message_manager_->RegisterMessageProcessor(kKadHandshake, [this](
             transport::protobuf::RoutingMessage& message,
             base::xpacket_t& packet){
@@ -68,58 +68,58 @@ void KadMessageHandler::AddBaseHandlers() {
             base::xpacket_t& packet){
         HandleFindNodesResponse(message, packet);
     });
-    message_manager_->RegisterMessageProcessor(kKadHeartbeatRequest, [this](
-            transport::protobuf::RoutingMessage& message,
-            base::xpacket_t& packet){
-        HandleHeartbeatRequest(message, packet);
-    });
-    message_manager_->RegisterMessageProcessor(kKadHeartbeatResponse, [this](
-            transport::protobuf::RoutingMessage& message,
-            base::xpacket_t& packet){
-        HandleHeartbeatResponse(message, packet);
-    });
+    // message_manager_->RegisterMessageProcessor(kKadHeartbeatRequest, [this](
+    //         transport::protobuf::RoutingMessage& message,
+    //         base::xpacket_t& packet){
+    //     HandleHeartbeatRequest(message, packet);
+    // });
+    // message_manager_->RegisterMessageProcessor(kKadHeartbeatResponse, [this](
+    //         transport::protobuf::RoutingMessage& message,
+    //         base::xpacket_t& packet){
+    //     HandleHeartbeatResponse(message, packet);
+    // });
     message_manager_->RegisterMessageProcessor(kKadAck, [](
             transport::protobuf::RoutingMessage& message,
             base::xpacket_t& packet){
     });
-    message_manager_->RegisterMessageProcessor(kKadNatDetectRequest, [this](
-            transport::protobuf::RoutingMessage& message,
-            base::xpacket_t& packet){
-        nat_manager_->PushMessage(message, packet);
-    });
-    message_manager_->RegisterMessageProcessor(kKadNatDetectResponse, [this](
-            transport::protobuf::RoutingMessage& message,
-            base::xpacket_t& packet){
-        nat_manager_->PushMessage(message, packet);
-    });
-    message_manager_->RegisterMessageProcessor(kKadNatDetectHandshake2Node, [this](
-            transport::protobuf::RoutingMessage& message,
-            base::xpacket_t& packet){
-        nat_manager_->PushMessage(message, packet);
-    });
-    message_manager_->RegisterMessageProcessor(kKadNatDetectHandshake2Boot, [this](
-            transport::protobuf::RoutingMessage& message,
-            base::xpacket_t& packet){
-        nat_manager_->PushMessage(message, packet);
-    });
-    message_manager_->RegisterMessageProcessor(kKadNatDetectFinish, [this](
-            transport::protobuf::RoutingMessage& message,
-            base::xpacket_t& packet){
-        nat_manager_->PushMessage(message, packet);
-    });
+    // message_manager_->RegisterMessageProcessor(kKadNatDetectRequest, [this](
+    //         transport::protobuf::RoutingMessage& message,
+    //         base::xpacket_t& packet){
+    //     nat_manager_->PushMessage(message, packet);
+    // });
+    // message_manager_->RegisterMessageProcessor(kKadNatDetectResponse, [this](
+    //         transport::protobuf::RoutingMessage& message,
+    //         base::xpacket_t& packet){
+    //     nat_manager_->PushMessage(message, packet);
+    // });
+    // message_manager_->RegisterMessageProcessor(kKadNatDetectHandshake2Node, [this](
+    //         transport::protobuf::RoutingMessage& message,
+    //         base::xpacket_t& packet){
+    //     nat_manager_->PushMessage(message, packet);
+    // });
+    // message_manager_->RegisterMessageProcessor(kKadNatDetectHandshake2Boot, [this](
+    //         transport::protobuf::RoutingMessage& message,
+    //         base::xpacket_t& packet){
+    //     nat_manager_->PushMessage(message, packet);
+    // });
+    // message_manager_->RegisterMessageProcessor(kKadNatDetectFinish, [this](
+    //         transport::protobuf::RoutingMessage& message,
+    //         base::xpacket_t& packet){
+    //     nat_manager_->PushMessage(message, packet);
+    // });
 }
 
-void KadMessageHandler::HandleHeartbeatRequest(
-        transport::protobuf::RoutingMessage& message,
-        base::xpacket_t& packet) {
-    routing_ptr_->HandleHeartbeatRequest(message, packet);
-}
+// void KadMessageHandler::HandleHeartbeatRequest(
+//         transport::protobuf::RoutingMessage& message,
+//         base::xpacket_t& packet) {
+//     routing_ptr_->HandleHeartbeatRequest(message, packet);
+// }
 
-void KadMessageHandler::HandleHeartbeatResponse(
-        transport::protobuf::RoutingMessage& message,
-        base::xpacket_t& packet) {
-    routing_ptr_->HandleHeartbeatResponse(message, packet);
-}
+// void KadMessageHandler::HandleHeartbeatResponse(
+//         transport::protobuf::RoutingMessage& message,
+//         base::xpacket_t& packet) {
+//     routing_ptr_->HandleHeartbeatResponse(message, packet);
+// }
 
 void KadMessageHandler::SendAck(
         transport::protobuf::RoutingMessage& message,
@@ -170,11 +170,11 @@ void KadMessageHandler::HandleHandshake(
     routing_ptr_->HandleHandshake(message, packet);
 }
 
-void KadMessageHandler::HandleConnectRequest(
-        transport::protobuf::RoutingMessage& message,
-        base::xpacket_t& packet) {
-    routing_ptr_->HandleConnectRequest(message, packet);
-}
+// void KadMessageHandler::HandleConnectRequest(
+//         transport::protobuf::RoutingMessage& message,
+//         base::xpacket_t& packet) {
+//     routing_ptr_->HandleConnectRequest(message, packet);
+// }
 
 }  // namespace kadmlia
 

@@ -71,11 +71,11 @@ private:
     ~WrouterMessageHandler();
     void AddBaseHandlers();
 
-    void CheckNatDetectMessage(transport::protobuf::RoutingMessage& message);
+//     void CheckNatDetectMessage(transport::protobuf::RoutingMessage& message);
 
-    void HandleConnectRequest(
-            transport::protobuf::RoutingMessage& message,
-            base::xpacket_t& packet);
+//     void HandleConnectRequest(
+//             transport::protobuf::RoutingMessage& message,
+//             base::xpacket_t& packet);
     void HandleHandshake(transport::protobuf::RoutingMessage& message, base::xpacket_t& packet);
     void HandleBootstrapJoinRequest(
             transport::protobuf::RoutingMessage& message,
@@ -89,12 +89,12 @@ private:
     void HandleFindNodesResponse(
             transport::protobuf::RoutingMessage& message,
             base::xpacket_t& packet);
-    void HandleHeartbeatRequest(
-            transport::protobuf::RoutingMessage& message,
-            base::xpacket_t& packet);
-    void HandleHeartbeatResponse(
-            transport::protobuf::RoutingMessage& message,
-            base::xpacket_t& packet);
+//     void HandleHeartbeatRequest(
+//             transport::protobuf::RoutingMessage& message,
+//             base::xpacket_t& packet);
+//     void HandleHeartbeatResponse(
+//             transport::protobuf::RoutingMessage& message,
+//             base::xpacket_t& packet);
     void HandleNodeQuit(
             transport::protobuf::RoutingMessage& message,
             base::xpacket_t& packet);
@@ -102,7 +102,7 @@ private:
     ArrayHandlers array_handlers_;
     std::mutex map_request_type_mutex_;
     std::map<int, int> map_request_type_;
-    kadmlia::NatManagerIntf* nat_manager_{kadmlia::NatManagerIntf::Instance()};
+//     kadmlia::NatManagerIntf* nat_manager_{kadmlia::NatManagerIntf::Instance()};
 };
 
 typedef std::shared_ptr<WrouterMessageHandler> MessageHandlerPtr;

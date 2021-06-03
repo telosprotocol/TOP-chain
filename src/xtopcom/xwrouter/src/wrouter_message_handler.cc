@@ -61,7 +61,7 @@ void WrouterMessageHandler::HandleMessage(
     }
 
     //TOP_NETWORK_DEBUG_FOR_PROTOMESSAGE("wrouter handle message", message);
-    CheckNatDetectMessage(message);
+    // CheckNatDetectMessage(message);
 
     if (message.type() >= MsgHandlerMaxSize) {
         TOP_WARN("invalid message.type(%d), beyond %d", message.type(), MsgHandlerMaxSize);
@@ -89,10 +89,10 @@ void WrouterMessageHandler::HandleSyncMessage(
 }
 
 void WrouterMessageHandler::AddBaseHandlers() {
-    AddHandler(kKadConnectRequest, [this](transport::protobuf::RoutingMessage& message,
-            base::xpacket_t& packet){
-        HandleConnectRequest(message, packet);
-    });
+    // AddHandler(kKadConnectRequest, [this](transport::protobuf::RoutingMessage& message,
+    //         base::xpacket_t& packet){
+    //     HandleConnectRequest(message, packet);
+    // });
     AddHandler(kKadDropNodeRequest, [this](
             transport::protobuf::RoutingMessage& message,
             base::xpacket_t& packet) {
@@ -118,37 +118,37 @@ void WrouterMessageHandler::AddBaseHandlers() {
             base::xpacket_t& packet){
         HandleFindNodesResponse(message, packet);
     });
-    AddHandler(kKadHeartbeatRequest, [this](transport::protobuf::RoutingMessage& message,
-            base::xpacket_t& packet){
-        HandleHeartbeatRequest(message, packet);
-    });
-    AddHandler(kKadHeartbeatResponse, [this](transport::protobuf::RoutingMessage& message,
-            base::xpacket_t& packet){
-        HandleHeartbeatResponse(message, packet);
-    });
+    // AddHandler(kKadHeartbeatRequest, [this](transport::protobuf::RoutingMessage& message,
+    //         base::xpacket_t& packet){
+    //     HandleHeartbeatRequest(message, packet);
+    // });
+    // AddHandler(kKadHeartbeatResponse, [this](transport::protobuf::RoutingMessage& message,
+    //         base::xpacket_t& packet){
+    //     HandleHeartbeatResponse(message, packet);
+    // });
     AddHandler(kKadAck, [](transport::protobuf::RoutingMessage& message,
             base::xpacket_t& packet){
     });
-    AddHandler(kKadNatDetectRequest, [this](transport::protobuf::RoutingMessage& message,
-            base::xpacket_t& packet){
-        nat_manager_->PushMessage(message, packet);
-    });
-    AddHandler(kKadNatDetectResponse, [this](transport::protobuf::RoutingMessage& message,
-            base::xpacket_t& packet){
-        nat_manager_->PushMessage(message, packet);
-    });
-    AddHandler(kKadNatDetectHandshake2Node, [this](transport::protobuf::RoutingMessage& message,
-            base::xpacket_t& packet){
-        nat_manager_->PushMessage(message, packet);
-    });
-    AddHandler(kKadNatDetectHandshake2Boot, [this](transport::protobuf::RoutingMessage& message,
-            base::xpacket_t& packet){
-        nat_manager_->PushMessage(message, packet);
-    });
-    AddHandler(kKadNatDetectFinish, [this](transport::protobuf::RoutingMessage& message,
-            base::xpacket_t& packet){
-        nat_manager_->PushMessage(message, packet);
-    });
+    // AddHandler(kKadNatDetectRequest, [this](transport::protobuf::RoutingMessage& message,
+    //         base::xpacket_t& packet){
+    //     nat_manager_->PushMessage(message, packet);
+    // });
+    // AddHandler(kKadNatDetectResponse, [this](transport::protobuf::RoutingMessage& message,
+    //         base::xpacket_t& packet){
+    //     nat_manager_->PushMessage(message, packet);
+    // });
+    // AddHandler(kKadNatDetectHandshake2Node, [this](transport::protobuf::RoutingMessage& message,
+    //         base::xpacket_t& packet){
+    //     nat_manager_->PushMessage(message, packet);
+    // });
+    // AddHandler(kKadNatDetectHandshake2Boot, [this](transport::protobuf::RoutingMessage& message,
+    //         base::xpacket_t& packet){
+    //     nat_manager_->PushMessage(message, packet);
+    // });
+    // AddHandler(kKadNatDetectFinish, [this](transport::protobuf::RoutingMessage& message,
+    //         base::xpacket_t& packet){
+    //     nat_manager_->PushMessage(message, packet);
+    // });
 }
 
 void WrouterMessageHandler::HandleNodeQuit(
@@ -206,47 +206,47 @@ void WrouterMessageHandler::RemoveRequestType(int msg_type) {
     }
 }
 
-void WrouterMessageHandler::CheckNatDetectMessage(transport::protobuf::RoutingMessage& message) {
-    switch (message.type()) {
-    case kKadNatDetectRequest:
-    case kKadNatDetectResponse:
-    case kKadNatDetectHandshake2Node:
-    case kKadNatDetectHandshake2Boot:
-    case kKadNatDetectFinish:
-        message.set_src_service_type(top::kRoot);
-        message.set_des_service_type(top::kRoot);
-        TOP_DEBUG("bluenat nat detect set to kRoot", top::kRoot);
-        break;
-    }
-}
+// void WrouterMessageHandler::CheckNatDetectMessage(transport::protobuf::RoutingMessage& message) {
+//     switch (message.type()) {
+//     case kKadNatDetectRequest:
+//     case kKadNatDetectResponse:
+//     case kKadNatDetectHandshake2Node:
+//     case kKadNatDetectHandshake2Boot:
+//     case kKadNatDetectFinish:
+//         message.set_src_service_type(top::kRoot);
+//         message.set_des_service_type(top::kRoot);
+//         TOP_DEBUG("bluenat nat detect set to kRoot", top::kRoot);
+//         break;
+//     }
+// }
 
-void WrouterMessageHandler::HandleHeartbeatRequest(
-        transport::protobuf::RoutingMessage& message,
-        base::xpacket_t& packet) {
-    RoutingTablePtr routing_table = GetRoutingTable(
-        message.des_node_id(),
-        message.has_is_root() && message.is_root());
-    if (!routing_table) {
-        TOP_WARN("heartbeat msg.des[%s], msg.is_root[%d] has not register routing table.",
-            HexEncode(message.des_node_id()).c_str(), message.is_root());
-        return;
-    }
-    routing_table->HandleHeartbeatRequest(message, packet);
-}
+// void WrouterMessageHandler::HandleHeartbeatRequest(
+//         transport::protobuf::RoutingMessage& message,
+//         base::xpacket_t& packet) {
+//     RoutingTablePtr routing_table = GetRoutingTable(
+//         message.des_node_id(),
+//         message.has_is_root() && message.is_root());
+//     if (!routing_table) {
+//         TOP_WARN("heartbeat msg.des[%s], msg.is_root[%d] has not register routing table.",
+//             HexEncode(message.des_node_id()).c_str(), message.is_root());
+//         return;
+//     }
+//     routing_table->HandleHeartbeatRequest(message, packet);
+// }
 
-void WrouterMessageHandler::HandleHeartbeatResponse(
-    transport::protobuf::RoutingMessage& message,
-    base::xpacket_t& packet) {
-    RoutingTablePtr routing_table = GetRoutingTable(
-        message.des_node_id(),
-        message.has_is_root() && message.is_root());
-    if (!routing_table) {
-        TOP_WARN("heartbeat msg.des[%s], msg.is_root[%d] has not register routing table.",
-            HexEncode(message.des_node_id()).c_str(), message.is_root());
-        return;
-    }
-    routing_table->HandleHeartbeatResponse(message, packet);
-}
+// void WrouterMessageHandler::HandleHeartbeatResponse(
+//     transport::protobuf::RoutingMessage& message,
+//     base::xpacket_t& packet) {
+//     RoutingTablePtr routing_table = GetRoutingTable(
+//         message.des_node_id(),
+//         message.has_is_root() && message.is_root());
+//     if (!routing_table) {
+//         TOP_WARN("heartbeat msg.des[%s], msg.is_root[%d] has not register routing table.",
+//             HexEncode(message.des_node_id()).c_str(), message.is_root());
+//         return;
+//     }
+//     routing_table->HandleHeartbeatResponse(message, packet);
+// }
 
 void WrouterMessageHandler::HandleFindNodesRequest(
         transport::protobuf::RoutingMessage& message,
@@ -354,37 +354,37 @@ void WrouterMessageHandler::HandleHandshake(
     routing_table->HandleHandshake(message, packet);
 }
 
-void WrouterMessageHandler::HandleConnectRequest(
-        transport::protobuf::RoutingMessage& message,
-        base::xpacket_t& packet) {
-    std::string relay_routing_id;
-    // from relay_routing
-    RoutingTablePtr routing_table = GetRoutingTable(
-            message.des_node_id(),
-            message.has_is_root() && message.is_root());
-    if (!routing_table) {
-        // mostly this is relay routing
-        protobuf::ConnectReq conn_req;
-        if (!conn_req.ParseFromString(message.data())) {
-            TOP_WARN2("ConnectRequest ParseFromString from string failed!");
-            return;
-        }
-        relay_routing_id = conn_req.relay_routing_id();
-        routing_table = GetRoutingTable(
-                relay_routing_id,
-                message.has_is_root() && message.is_root());
-    }
+// void WrouterMessageHandler::HandleConnectRequest(
+//         transport::protobuf::RoutingMessage& message,
+//         base::xpacket_t& packet) {
+//     std::string relay_routing_id;
+//     // from relay_routing
+//     RoutingTablePtr routing_table = GetRoutingTable(
+//             message.des_node_id(),
+//             message.has_is_root() && message.is_root());
+//     if (!routing_table) {
+//         // mostly this is relay routing
+//         protobuf::ConnectReq conn_req;
+//         if (!conn_req.ParseFromString(message.data())) {
+//             TOP_WARN2("ConnectRequest ParseFromString from string failed!");
+//             return;
+//         }
+//         relay_routing_id = conn_req.relay_routing_id();
+//         routing_table = GetRoutingTable(
+//                 relay_routing_id,
+//                 message.has_is_root() && message.is_root());
+//     }
 
-    if (!routing_table) {
-        TOP_WARN2("HandleConnectRequest msg.is_root(%d) msg.src_node_id(%s) msg.des_node_id(%s) msg.relay_routing_id(%s)",
-                message.is_root(),
-                HexEncode(message.src_node_id()).c_str(),
-                HexEncode(message.des_node_id()).c_str(),
-                HexEncode(relay_routing_id).c_str());
-        return;
-    }
-    routing_table->HandleConnectRequest(message, packet);
-}
+//     if (!routing_table) {
+//         TOP_WARN2("HandleConnectRequest msg.is_root(%d) msg.src_node_id(%s) msg.des_node_id(%s) msg.relay_routing_id(%s)",
+//                 message.is_root(),
+//                 HexEncode(message.src_node_id()).c_str(),
+//                 HexEncode(message.des_node_id()).c_str(),
+//                 HexEncode(relay_routing_id).c_str());
+//         return;
+//     }
+//     routing_table->HandleConnectRequest(message, packet);
+// }
 
 }  // namespace wrouter
 

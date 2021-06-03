@@ -357,10 +357,10 @@ bool WrouterXidHandler::HandleSystemMessage(transport::protobuf::RoutingMessage 
         kKadBootstrapJoinResponse,
         kKadFindNodesRequest,
         kKadFindNodesResponse,
-        kKadHeartbeatRequest,
-        kKadHeartbeatResponse,
+        // kKadHeartbeatRequest,
+        // kKadHeartbeatResponse,
         kKadHandshake,
-        kKadConnectRequest,
+        // kKadConnectRequest,
 
         kNatDetectRequest,
         kNatDetectResponse,

@@ -41,19 +41,19 @@ public:
 
 private:
     void AddBaseHandlers();
-    void HandleConnectRequest(transport::protobuf::RoutingMessage& message, base::xpacket_t& packet);
+    // void HandleConnectRequest(transport::protobuf::RoutingMessage& message, base::xpacket_t& packet);
     void HandleHandshake(transport::protobuf::RoutingMessage& message, base::xpacket_t& packet);
     void HandleBootstrapJoinRequest(transport::protobuf::RoutingMessage& message, base::xpacket_t& packet);
     void HandleBootstrapJoinResponse(transport::protobuf::RoutingMessage& message, base::xpacket_t& packet);
     void HandleFindNodesRequest(transport::protobuf::RoutingMessage& message, base::xpacket_t& packet);
     void HandleFindNodesResponse(transport::protobuf::RoutingMessage& message, base::xpacket_t& packet);
     void SendAck(transport::protobuf::RoutingMessage& message, base::xpacket_t& packet);
-    void HandleHeartbeatRequest(transport::protobuf::RoutingMessage& message, base::xpacket_t& packet);
-    void HandleHeartbeatResponse(transport::protobuf::RoutingMessage& message, base::xpacket_t& packet);
+    // void HandleHeartbeatRequest(transport::protobuf::RoutingMessage& message, base::xpacket_t& packet);
+    // void HandleHeartbeatResponse(transport::protobuf::RoutingMessage& message, base::xpacket_t& packet);
 
     std::shared_ptr<RoutingTable> routing_ptr_;
     transport::MessageManagerIntf* message_manager_{transport::MessageManagerIntf::Instance()};
-    kadmlia::NatManagerIntf* nat_manager_{kadmlia::NatManagerIntf::Instance()};
+    // kadmlia::NatManagerIntf* nat_manager_{kadmlia::NatManagerIntf::Instance()};
 };
 
 }  // namespace kadmlia

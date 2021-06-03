@@ -125,7 +125,7 @@ int NodeDetectionManager::Handshake(std::shared_ptr<NodeInfo> node_ptr) {
     handshake.set_local_port(local_node->local_port());
     handshake.set_public_ip(local_node->public_ip());
     handshake.set_public_port(local_node->public_port());
-    handshake.set_nat_type(local_node->nat_type());
+    // handshake.set_nat_type(local_node->nat_type());
     handshake.set_xid(global_xid->Get());
     std::string data;
     if (!handshake.SerializeToString(&data)) {
@@ -141,9 +141,6 @@ int NodeDetectionManager::Handshake(std::shared_ptr<NodeInfo> node_ptr) {
     }
     xbyte_buffer_t xdata{msg.begin(), msg.end()};
 
-    // try vlan connect 
-    //transport_ptr->SendPing(xdata, node_ptr->local_ip, node_ptr->local_port);
-    // try public connect 
     transport_ptr->SendPing(xdata, node_ptr->public_ip, node_ptr->public_port);
     TOP_DEBUG("sendping sendhandshake from:%s:%d to %s:%d size:%d",
             local_node->public_ip().c_str(),

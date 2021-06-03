@@ -53,7 +53,7 @@ public:
         std::unique_lock<std::mutex> lock(public_mutex_);
         return public_port_;
     }
-    int32_t nat_type() { return nat_type_; }
+    // int32_t nat_type() { return nat_type_; }
     void set_public_ip(const std::string& ip);
     void set_public_port(uint16_t port);
     uint64_t service_type() { return service_type_; }
@@ -95,7 +95,7 @@ private:
     std::mutex public_mutex_;
     std::string public_ip_;
     uint16_t public_port_{ 0 };
-    int32_t nat_type_{kNatTypeUnknown};
+    // int32_t nat_type_{kNatTypeUnknown};
     uint64_t service_type_{ kInvalidType };
     uint32_t routing_table_id_{0};
 
@@ -109,7 +109,7 @@ private:
     std::mutex dxip_node_map_mutex_;
     bool is_root_{ false };
     uint64_t hash64_{ 0 };
-    kadmlia::NatManagerIntf* nat_manager_{kadmlia::NatManagerIntf::Instance()};
+    // kadmlia::NatManagerIntf* nat_manager_{kadmlia::NatManagerIntf::Instance()};
 
 
     DISALLOW_COPY_AND_ASSIGN(LocalNodeInfo);
