@@ -229,7 +229,7 @@ bool xstore::set_vblock_header(const std::string & store_path, base::xvblock_t* 
 
 base::xvblock_t *xstore::get_vblock(const std::string & store_path, const std::string &account, uint64_t height) const {
     xassert(false);
-    return false;
+    return nullptr;
 }
 
 base::xvblock_t * xstore::get_vblock_header(const std::string & store_path, const std::string &account, uint64_t height) const {
