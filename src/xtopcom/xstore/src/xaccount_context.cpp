@@ -1162,27 +1162,29 @@ int32_t xaccount_context_t::token_deposit(const std::string& key, base::vtoken_t
 }
 
 int32_t xaccount_context_t::uint64_add(const std::string& key, uint64_t change) {
+    if (change == 0) {
+        return xsuccess;
+    }
     xdbg("xaccount_context_t::uint64_add,property_modify_enter.address=%s,height=%ld,propname=%s,change=%ld", get_address().c_str(), get_chain_height(), key.c_str(), change);
     auto & bstate = get_bstate();
     auto propobj = load_uin64_for_write(bstate.get(), key);
     CHECK_PROPERTY_NULL_RETURN(propobj, "xaccount_context_t::uint64_add", key);
     uint64_t oldvalue = propobj->get();
     uint64_t newvalue = oldvalue + change;  // TODO(jimmy) overflow ?
-    if (change == 0) {
-        xerror("xaccount_context_t::uint64_add fail-invalid para.change=%ld", change);
-        return xaccount_property_operate_fail;
-    }
     propobj->set(newvalue, m_canvas.get());
     xdbg("xaccount_context_t::uint64_add property=%s,old_value=%ld,new_value=%ld,change=%ld", key.c_str(), oldvalue, newvalue, change);
     return xsuccess;
 }
 int32_t xaccount_context_t::uint64_sub(const std::string& key, uint64_t change) {
+    if (change == 0) {
+        return xsuccess;
+    }
     xdbg("xaccount_context_t::uint64_sub,property_modify_enter.address=%s,height=%ld,propname=%s,change=%ld", get_address().c_str(), get_chain_height(), key.c_str(), change);
     auto & bstate = get_bstate();
     auto propobj = load_uin64_for_write(bstate.get(), key);
     CHECK_PROPERTY_NULL_RETURN(propobj, "xaccount_context_t::uint64_sub", key);
     uint64_t oldvalue = propobj->get();
-    if (change == 0 || oldvalue < change) {
+    if (oldvalue < change) {
         xerror("xaccount_context_t::uint64_sub fail-invalid para.value=%ld,change=%ld", oldvalue, change);
         return xaccount_property_operate_fail;
     }
