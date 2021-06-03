@@ -254,7 +254,7 @@ private:
     MethodFuncMap sendtransaction_methods_;
     MethodFuncMap wallet_methods_;
     MethodFuncMap debug_methods_;
-    std::string cache_pw{""};
+    std::string cache_pw{" "};
     std::map<std::string, std::string> cmd_name;
     const std::string empty_pw{" "};
     bool is_account{false};

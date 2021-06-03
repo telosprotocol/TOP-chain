@@ -103,10 +103,14 @@ int ApiMethod::set_prikey_to_daemon(const string & account, const string & pri_k
     if (safebox_endpoint != NULL) {
         daemon_host = safebox_endpoint;
     }
+    std::string account_temp(account);
+    if (account_temp.substr(0, ETH_ACCOUNT_PREFIX.size()) == ETH_ACCOUNT_PREFIX)
+        std::transform(account_temp.begin() + 1, account_temp.end(), account_temp.begin() + 1, ::tolower);
+
     HttpClient client(daemon_host);
     xJson::Value j;
     j["method"] = "set";
-    j["account"] = account;
+    j["account"] = account_temp;
     j["private_key"] = pri_key;
     j["expired_time"] = expired_time;
     std::string token_request = j.toStyledString();
@@ -587,6 +591,8 @@ int ApiMethod::set_default_miner(const std::string & pub_key, const std::string 
             }
             if (name == "account address" || name == "account_address") {
                 target_node_id = key_info_js[name].asString();
+                if (target_node_id.substr(0, ETH_ACCOUNT_PREFIX.size()) == ETH_ACCOUNT_PREFIX)
+                    std::transform(target_node_id.begin() + 1, target_node_id.end(), target_node_id.begin() + 1, ::tolower);
             }
         }  // end for (const auto & name...
         if (!target_kf.empty()) {
@@ -743,6 +749,8 @@ void ApiMethod::query_miner_info(std::string & account, std::ostringstream & out
     } else {
         g_userinfo.account = account;
     }
+    if (g_userinfo.account.substr(0, ETH_ACCOUNT_PREFIX.size()) == ETH_ACCOUNT_PREFIX)
+        std::transform(g_userinfo.account.begin() + 1, g_userinfo.account.end(), g_userinfo.account.begin() + 1, ::tolower);
     auto rtn = api_method_imp_.getStandbys(g_userinfo, g_userinfo.account);
     if (rtn) {
         api_method_imp_.getElectInfo(g_userinfo, g_userinfo.account);
@@ -829,7 +837,8 @@ void ApiMethod::register_node(const std::string & mortgage_d,
                 std::string account = key_info["account_address"].asString();
                 if (account.empty())
                     account = key_info["account address"].asString();
-
+                if (account.substr(0, ETH_ACCOUNT_PREFIX.size()) == ETH_ACCOUNT_PREFIX)
+                    std::transform(account.begin()+1, account.end(), account.begin()+1, ::tolower);
                 if (account == g_userinfo.account) {
                     break;
                 } else {

@@ -756,9 +756,7 @@ std::vector<std::string> scan_key_dir(const std::string & path) {
         struct ::stat fs;
         std::string file_path = path + "/" + filename->d_name;
         if (::stat(file_path.c_str(), &fs) == 0 && S_ISREG(fs.st_mode)) {
-            std::string account(filename->d_name);
-            //std::transform(account.begin() + 1, account.end(), account.begin() + 1, ::tolower);
-            keys.push_back(account);
+            keys.push_back(std::string(filename->d_name));
         }
     }
     return keys;
