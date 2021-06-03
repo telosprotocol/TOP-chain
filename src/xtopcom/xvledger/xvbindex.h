@@ -14,9 +14,9 @@ namespace top
         //manage index of single block
         enum enum_index_store_flag
         {
-            enum_index_store_flag_mini_block      = 0x01, //block header have been stored
-            enum_index_store_flag_input_entity    = 0x02, //input  entity has bedn stored
-            enum_index_store_flag_output_entity   = 0x04, //output entity has bedn stored
+            enum_index_store_flag_mini_block      = 0x01, //block  header & cert have been stored
+            enum_index_store_flag_input_entity    = 0x02, //input  entity has been stored
+            enum_index_store_flag_output_entity   = 0x04, //output entity has been stored
             enum_index_store_flag_input_resource  = 0x08, //input  resource has bedn stored
             enum_index_store_flag_output_resource = 0x10, //output resource has bedn stored
             enum_index_store_flag_offchain_data   = 0x20, //mark when offchain data  been persised on DB
