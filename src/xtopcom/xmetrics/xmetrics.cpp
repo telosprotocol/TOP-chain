@@ -19,6 +19,8 @@ metrics_variant_ptr e_metrics::s_metrics[e_simple_total] = {
     DECL_MTRICS(dataobject_cur_xbase_type_cons_transaction),  //txpool_cons_transaction
     DECL_MTRICS(cons_tableblock_start_leader), //cons_tableblock_start_leader
     DECL_MTRICS(txpool_new_receipt), //cons_tableblock_start_leader
+    DECL_MTRICS(vhost_recv_msg), // vhost_recv_msg,
+    DECL_MTRICS(vhost_recv_callback), // vhost_recv_callback, 
 };
 
 void e_metrics::start() {
