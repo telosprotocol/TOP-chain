@@ -311,8 +311,8 @@ bool xbatch_packer::recv_in(const xvip2_t & from_addr, const xvip2_t & to_addr, 
         valid = verify_proposal_packet(from_addr, to_addr, packet);
     }
     if (!valid) {
-        // xunit_warn("xbatch_packer::recv_in fail-invalid msg,viewid=%ld,pdu=%s,at_node:%s,this:%p",
-        //       m_last_view_id, packet.dump().c_str(), xcons_utl::xip_to_hex(to_addr).c_str(), this);
+        xunit_warn("xbatch_packer::recv_in fail-invalid msg,viewid=%ld,pdu=%s,at_node:%s,this:%p",
+              m_last_view_id, packet.dump().c_str(), xcons_utl::xip_to_hex(to_addr).c_str(), this);
         XMETRICS_PACKET_INFO("consensus_tableblock",
                             "fail_proposal_invalid", packet.dump(),
                             "node_xip", xcons_utl::xip_to_hex(get_xip2_addr()),
