@@ -540,7 +540,7 @@ void xtop_vhost::do_handle_network_data() {
                     }
 
                     auto vnetwork_message = top::codec::msgpack_decode<xvnetwork_message_t>(bytes);
-
+                    XMETRICS_GAUGE(metrics::vhost_recv_msg, 1);
                     auto const & message = vnetwork_message.message();
                     auto const & receiver = vnetwork_message.receiver();
                     auto const & sender = vnetwork_message.sender();
@@ -611,6 +611,7 @@ void xtop_vhost::do_handle_network_data() {
                                 snprintf(msg_info, 29, "%x|%" PRIx64, vnetwork_message.message().id(), message.hash());
                                 XMETRICS_TIME_RECORD_KEY_WITH_TIMEOUT("vhost_handle_data_callback", msg_info, uint32_t(100000));
 #endif
+                                XMETRICS_GAUGE(metrics::vhost_recv_callback, 1);
                                 callback(sender, message, msg_time);
                             } catch (std::exception const & eh) {
                                 xerror("[vnetwork] exception caught from callback: %s", eh.what());

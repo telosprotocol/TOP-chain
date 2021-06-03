@@ -24,6 +24,8 @@ enum E_SIMPLE_METRICS_TAG {
     dataobject_cur_xbase_type_cons_transaction,
     cons_tableblock_start_leader,
     txpool_new_receipt,
+    vhost_recv_msg,
+    vhost_recv_callback,
     e_simple_total,
 };
 
