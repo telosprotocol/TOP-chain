@@ -176,8 +176,6 @@ bool xbatch_packer::on_view_fire(const base::xvevent_t & event, xcsobject_t * fr
         return false;
     }
 
-    m_unorder_cache.on_view_fire(m_last_view_id);
-
     auto accessor = m_para->get_resources()->get_data_accessor();
     auto leader_election = m_para->get_resources()->get_election();
     auto node_account = m_para->get_resources()->get_account();
@@ -203,12 +201,6 @@ bool xbatch_packer::on_view_fire(const base::xvevent_t & event, xcsobject_t * fr
         xunit_info("xbatch_packer::on_view_fire backup_node this:%p node:%s xip:%s,leader:%s,rotate_mode:%d",
                 this, node_account.c_str(),
                 xcons_utl::xip_to_hex(local_xip).c_str(), xcons_utl::xip_to_hex(leader_xip).c_str(), rotate_mode);
-
-        xconsensus::xcspdu_fire* xcspdu_fire_event = m_unorder_cache.get_proposal_event(m_last_view_id);
-        if (xcspdu_fire_event != nullptr) {
-            recv_in(xcspdu_fire_event->get_from_xip(), xcspdu_fire_event->get_to_xip(), xcspdu_fire_event->_packet, cur_thread_id, timenow_ms);
-            xcspdu_fire_event->release_ref();
-        }
         return true;
     }
 
@@ -280,6 +272,29 @@ bool xbatch_packer::send_out(const xvip2_t & from_addr, const xvip2_t & to_addr,
     return false;
 }
 
+bool xbatch_packer::verify_proposal_packet(const xvip2_t & from_addr, const xvip2_t & local_addr, const base::xcspdu_t & packet) {
+    bool valid = false;
+    // step 1: verify viewid =》 [ local_viewid <= proposal_viewid < (local_viewid + 8)]
+    auto proposal_view_id = packet.get_block_viewid();
+    if (proposal_view_id >= m_last_view_id &&  proposal_view_id < (m_last_view_id + 8)) {
+        // step 2: verify leader
+        auto leader_election = m_para->get_resources()->get_election();
+        auto accessor = m_para->get_resources()->get_data_accessor();
+        std::error_code ec{election::xdata_accessor_errc_t::success};
+        auto version = accessor->version_from(common::xip2_t{from_addr.low_addr, from_addr.high_addr}, ec);
+        if (!ec) {
+            xvip2_t leader_xip = leader_election->get_leader_xip(packet.get_block_viewid(), get_account(), nullptr, local_addr, from_addr, version, enum_rotate_mode_rotate_by_view_id);
+            if (xcons_utl::xip_equals(leader_xip, from_addr)) {
+                valid = true;
+            }
+        } else {
+            // TODO here may happen when many elect blocks sync
+            xunit_warn("xbatch_packer::on_view_fire xip=%s version from error", xcons_utl::xip_to_hex(from_addr).c_str());
+        }
+    }
+    return valid;
+}
+
 bool xbatch_packer::recv_in(const xvip2_t & from_addr, const xvip2_t & to_addr, const base::xcspdu_t & packet, int32_t cur_thread_id, uint64_t timenow_ms) {
     XMETRICS_PACKET_INFO("consensus_tableblock",
                         "pdu_recv_in", packet.dump(),
@@ -289,35 +304,19 @@ bool xbatch_packer::recv_in(const xvip2_t & from_addr, const xvip2_t & to_addr, 
     XMETRICS_TIME_RECORD("cons_tableblock_recv_in_time_consuming");
 
     // proposal should pass to xbft, so xbft could realize local is beind in view/block and do sync
-    m_unorder_cache.filter_event(m_last_view_id, from_addr, to_addr, packet);
-
     bool is_leader = false;
     auto type = packet.get_msg_type();
     bool valid = true;
     if (type == xconsensus::enum_consensus_msg_type_proposal) {
-        auto latest_block = m_para->get_resources()->get_vblockstore()->get_latest_cert_block(get_account());
-        if (latest_block->get_height() + 1 == packet.get_block_height()) {
-            auto leader_election = m_para->get_resources()->get_election();
-            auto accessor = m_para->get_resources()->get_data_accessor();
-            std::error_code ec{election::xdata_accessor_errc_t::success};
-            auto version = accessor->version_from(common::xip2_t{from_addr.low_addr, from_addr.high_addr}, ec);
-            if (ec) {
-                // TODO here may happen when many elect blocks sync
-                xunit_warn("xbatch_packer::on_view_fire xip=%s version from error", xcons_utl::xip_to_hex(from_addr).c_str());
-                return false;
-            }
-            xvip2_t leader_xip = leader_election->get_leader_xip(packet.get_block_viewid(), get_account(), latest_block.get(), to_addr, from_addr, version, enum_rotate_mode_rotate_by_view_id);
-            if (!xcons_utl::xip_equals(leader_xip, from_addr)) {
-                valid = false;
-            }
-        }
+        valid = verify_proposal_packet(from_addr, to_addr, packet);
     }
     if (!valid) {
         // xunit_warn("xbatch_packer::recv_in fail-invalid msg,viewid=%ld,pdu=%s,at_node:%s,this:%p",
         //       m_last_view_id, packet.dump().c_str(), xcons_utl::xip_to_hex(to_addr).c_str(), this);
         XMETRICS_PACKET_INFO("consensus_tableblock",
                             "fail_proposal_invalid", packet.dump(),
-                            "node_xip", xcons_utl::xip_to_hex(get_xip2_addr()));
+                            "node_xip", xcons_utl::xip_to_hex(get_xip2_addr()),
+                            "local_view_id", m_last_view_id);
         return false;
     }
 
