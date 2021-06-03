@@ -44,6 +44,8 @@ namespace top
         bool  xBFTSyncdrv::on_view_fire(const base::xvevent_t & event,xcsobject_t* from_parent,const int32_t cur_thread_id,const uint64_t timenow_ms)
         {
             xcsview_fire * _ev_obj = (xcsview_fire*)&event;
+            m_latest_viewid = std::max(m_latest_viewid,_ev_obj->get_viewid());//record latest viewid
+            
             for(auto it = m_syncing_requests.begin(); it != m_syncing_requests.end();)
             {
                 auto old_it = it; //copy it first
@@ -67,6 +69,8 @@ namespace top
         bool  xBFTSyncdrv::on_clock_fire(const base::xvevent_t & event,xcsobject_t* from_parent,const int32_t cur_thread_id,const uint64_t timenow_ms)
         {
             xcsclock_fire* _ev_obj = (xcsclock_fire*)&event;
+            m_latest_clock = std::max(m_latest_clock,_ev_obj->get_clock_block()->get_height());
+            
             for(auto it = m_syncing_requests.begin(); it != m_syncing_requests.end();)
             {
                 auto old_it = it; //copy it first
@@ -425,6 +429,9 @@ namespace top
                         xinfo("xBFTSyncdrv::fire_verify_syncblock,deliver an replicated-and-authed block:%s at node=0x%llx",_full_block_->dump().c_str(),get_xip2_addr().low_addr);
                         fire_replicate_finish_event(_full_block_);//call on_replicate_finish(block) to driver context layer
                     }
+                    
+                    //now recheck any existing proposal and could push to voting again
+                    on_new_block_fire(_full_block_);
                 }
                 _full_block_->release_ref(); //release reference hold by _verify_function
             };
