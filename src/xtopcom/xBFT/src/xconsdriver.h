@@ -106,9 +106,7 @@ namespace top
             
             base::xvblock_t *   get_lock_block();
             virtual bool        set_lock_block(base::xvblock_t * lastst_lock_block);//update block of  locked one
-
-            bool                recheck_block(std::map<uint64_t,base::xvblock_t*> & stdmap);//recheck every block for safe_check_for_block ,and remove it if fail test
-            
+ 
             //block managed fro proposal
             xproposal_t*        add_proposal(base::xvblock_t * proposal,base::xvblock_t * parent_block,const uint32_t expired_ms);//add into local cache
             bool                add_proposal(xproposal_t & proposal_block);
@@ -129,8 +127,13 @@ namespace top
             
             uint64_t            get_latest_voted_viewid() const {return m_latest_voted_viewid;}
             uint64_t            get_latest_voted_height() const {return m_latest_voted_height;}
+
+            const uint64_t      get_latest_viewid() const {return m_latest_viewid;}
+            const uint64_t      get_lastest_clock() const {return m_latest_clock;}
             
+            void                update_voted_metric(base::xvblock_t * _block);
         protected: //safe rules
+            virtual bool       is_proposal_expire(xproposal_t * _proposal);
             virtual bool       safe_check_for_block(base::xvblock_t * _test_block);//the minimal rule for block,
             virtual bool       safe_check_for_packet(base::xcspdu_t & _test_packet);//the minimal rule for packet
             
@@ -176,6 +179,9 @@ namespace top
         private:
             uint64_t                             m_latest_voted_height; //height of latest proposal voted
             uint64_t                             m_latest_voted_viewid; //view# of latest proposal voted
+        protected:
+            uint64_t                             m_latest_viewid;
+            uint64_t                             m_latest_clock;
         };
 
         //sync function under xBFTRules
@@ -198,6 +204,8 @@ namespace top
             
             //clock block always pass by higher layer to lower layer
             virtual bool        on_clock_fire(const base::xvevent_t & event,xcsobject_t* from_parent,const int32_t cur_thread_id,const uint64_t timenow_ms) override;
+            
+            virtual bool        on_new_block_fire(base::xvblock_t * new_cert_block){return false;}
         protected:
             int   handle_sync_request_msg(const xvip2_t & from_addr,const xvip2_t & to_addr,xcspdu_fire * event_obj,int32_t cur_thread_id,uint64_t timenow_ms,xcsobject_t * _parent);
             int   handle_sync_respond_msg(const xvip2_t & from_addr,const xvip2_t & to_addr,xcspdu_fire * event_obj,int32_t cur_thread_id,uint64_t timenow_ms,xcsobject_t * _parent);
@@ -274,6 +282,8 @@ namespace top
             
             virtual bool  on_consensus_update(const base::xvevent_t & event,xcsobject_t* from_child,const int32_t cur_thread_id,const uint64_t timenow_ms) override;//call from lower layer to higher layer(parent)
             
+            virtual bool        on_new_block_fire(base::xvblock_t * new_cert_block) override;
+            
         protected: //event' help function
             bool                async_fire_consensus_update_event();
             bool                async_fire_proposal_finish_event(const int err_code,base::xvblock_t* proposal);
@@ -306,6 +316,11 @@ namespace top
             bool  on_sync_request_msg_recv(const xvip2_t & from_addr,const xvip2_t & to_addr,xcspdu_fire * event_obj,int32_t cur_thread_id,uint64_t timenow_ms,xcsobject_t * _parent);
             bool  on_sync_respond_msg_recv(const xvip2_t & from_addr,const xvip2_t & to_addr,xcspdu_fire * event_obj,int32_t cur_thread_id,uint64_t timenow_ms,xcsobject_t * _parent);
             bool  on_votereport_msg_recv(const xvip2_t & from_addr,const xvip2_t & to_addr,xcspdu_fire * event_obj,int32_t cur_thread_id,uint64_t timenow_ms,xcsobject_t * _parent);
+            
+        private:
+            int  sync_for_proposal(xproposal_t* _proposal);
+            int  vote_for_proposal(xproposal_t* _proposal);
+            virtual bool is_proposal_expire(xproposal_t * _proposal) override;
         };
         
     }; //end of namespace of xconsensus

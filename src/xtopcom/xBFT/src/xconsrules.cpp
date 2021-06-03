@@ -18,6 +18,8 @@ namespace top
             m_latest_lock_block   = NULL;
             m_latest_voted_height = 0;
             m_latest_voted_viewid = 0;
+            m_latest_viewid = 0;
+            m_latest_clock = 0;
             xinfo("xBFTRules::xBFTRules,create,this=%p,parent=%p,account=%s",this,&parent_object,parent_object.get_account().c_str());
         }
         
@@ -77,7 +79,8 @@ namespace top
                     }
                 }
             }
-            else
+            
+            if(NULL == m_latest_commit_block )
             {
                 base::xauto_ptr<base::xvblock_t>  latest_commit_block(get_vblockstore()->get_latest_committed_block(*this));
                 if(latest_commit_block)
@@ -221,7 +224,7 @@ namespace top
                 for(auto it = m_proposal_blocks.begin(); it != m_proposal_blocks.end();)
                 {
                     xproposal_t * _proposal = it->second;
-                    if(safe_check_for_block(_proposal->get_block()) == false)
+                    if(is_proposal_expire(_proposal))
                     {
                         removed_list.push_back(_proposal);
                         
@@ -274,25 +277,6 @@ namespace top
             }
             return true;
         }
-        
-        bool   xBFTRules::recheck_block(std::map<uint64_t,base::xvblock_t*> & stdmap)//recheck every block for safe_check_for_block ,and remove it if fail test
-        {
-            for(auto it = stdmap.begin(); it != stdmap.end();)
-            {
-                base::xvblock_t * _block = it->second;
-                if(safe_check_for_block(_block) == false)
-                {
-                    auto old_it = it; //copy it first
-                    ++it; //move forward
-                    
-                    old_it->second->release_ref();
-                    stdmap.erase(old_it);//erase old one
-                    continue;
-                }
-                ++it;
-            }
-            return true;
-        }
 
         xproposal_t*  xBFTRules::add_proposal(base::xvblock_t * proposal,base::xvblock_t * parent_block,const uint32_t expired_ms)
         {
@@ -310,11 +294,17 @@ namespace top
         
         bool  xBFTRules::add_proposal(xproposal_t & proposal_block)
         {
-            //m_latest_voted_height and m_latest_voted_viewid always increase
-            m_latest_voted_height = std::max(m_latest_voted_height,proposal_block.get_height());
-            m_latest_voted_viewid = std::max(m_latest_voted_viewid,proposal_block.get_viewid());
-            
             return add_block(&proposal_block,m_proposal_blocks);
+        }
+    
+        void  xBFTRules::update_voted_metric(base::xvblock_t * _block)
+        {
+            if(_block != NULL)
+            {
+                //m_latest_voted_height and m_latest_voted_viewid always increase
+                m_latest_voted_height = std::max(m_latest_voted_height,_block->get_height());
+                m_latest_voted_viewid = std::max(m_latest_voted_viewid,_block->get_viewid());
+            }
         }
         
         bool  xBFTRules::remove_proposal(const uint64_t view_id)
@@ -379,7 +369,27 @@ namespace top
         }
         base::xvblock_t*   xBFTRules::find_cert_block(const uint64_t view_id) const//caller need care to release reference once no-longer need
         {
-            return find_block(view_id,m_certified_blocks);
+            for(auto it = m_certified_blocks.rbegin(); it != m_certified_blocks.rend(); ++it)
+            {
+                if(view_id == it->second->get_viewid()) //found parent qc cert
+                {
+                    return it->second;
+                }
+            }
+            //lock block is also kind of cert block
+            if(   (m_latest_lock_block != NULL)
+               && (m_latest_lock_block->get_viewid() == view_id) )
+            {
+                return m_latest_lock_block;
+            }
+            //commit block is also kind of cert block
+            if(   (m_latest_commit_block != NULL)
+               && (m_latest_commit_block->get_viewid() == view_id) )
+            {
+                return m_latest_commit_block;
+            }
+            
+            return NULL;
         }
     
         base::xvblock_t*   xBFTRules::find_cert_block(const uint64_t block_height,const std::string & block_hash)
@@ -421,6 +431,23 @@ namespace top
         }
         
         ////////////////////////////////////minimal safe rules///////////////////////////////////////////////
+        bool xBFTRules::is_proposal_expire(xproposal_t * _proposal)
+        {
+            base::xvblock_t * commit_block = get_commit_block();
+            if( (NULL == _proposal) || (NULL == commit_block) )
+                return false;
+            
+            //now using commit as lower bound to clean ones
+            if(_proposal->get_height() <= commit_block->get_height())
+                return true;
+            
+            //using clock as upper bound to clean ones, 32 * 10 = 320secons = about 5 minutes
+            if(get_lastest_clock() > (_proposal->get_block()->get_clock() + 32) )
+                return true; //not allow cache too much proposal
+            
+            return false;
+        }
+    
         bool xBFTRules::safe_check_for_block(base::xvblock_t * _block)
         {
             base::xvblock_t * lock_block = get_lock_block();
@@ -620,6 +647,14 @@ namespace top
                         return -1;
                     }
                 }
+                else if(_test_for_block->get_height() == latest_commit_block->get_height())
+                {
+                    if(_test_for_block->get_block_hash() != latest_commit_block->get_block_hash())
+                    {
+                        xwarn("xBFTRules::safe_check_add_cert_fork,fail-cert try fork for the commited branch, cert(%s) vs commited(%s) at node=0x%llx",_test_for_block->dump().c_str(), latest_commit_block->dump().c_str(),get_xip2_addr().low_addr);
+                        return -1;
+                    }
+                }
             }
             
             //rule#2: not conflict with existing cert block
@@ -757,8 +792,8 @@ namespace top
             base::xvblock_t *  latest_proposal = get_latest_proposal_block();
             if(latest_proposal != NULL) //never vote behind proposal block
             {
-                if(  (_vote_block->get_viewid() <= latest_proposal->get_viewid())
-                   ||(_vote_block->get_height() <= latest_proposal->get_height()) )
+                if(  (_vote_block->get_viewid() < latest_proposal->get_viewid())
+                   ||(_vote_block->get_height() < latest_proposal->get_height()) )
                 {
                     xwarn("xBFTRules::safe_check_for_vote_block,warn-conflict existing proposal, proposal=%s <= latest_proposal=%s at node=0x%llx",_vote_block->dump().c_str(), latest_proposal->dump().c_str(),get_xip2_addr().low_addr);
                     return false;

@@ -348,12 +348,12 @@ namespace top
                     else
                     {
                         //note:to enahance sync function, we need let proposal pass first and then check view alignment at driver layer again
-                        if(_evt_obj->_packet.get_msg_type() != enum_consensus_msg_type_vote)
+                        //if(_evt_obj->_packet.get_msg_type() != enum_consensus_msg_type_vote)
                         {
                             //xinfo("xclockcert_view::_after_verify_cert_job,allow un-alignment-packet=%s,even expect viewid:%llu,at node=0x%llx",_evt_obj->_packet.dump().c_str(),get_latest_viewid(),get_xip2_low_addr());
                             get_child_node()->push_event_down(*_evt_obj,this,0,0);////view just need control proposal and vote messages
                         }
-                        xwarn("xclockcert_view::_after_verify_cert_job,drop NOT-alignment-packet=%s,since expect viewid:%llu,at node=0x%llx",_evt_obj->_packet.dump().c_str(),get_latest_viewid(),get_xip2_low_addr());
+                        xwarn("xclockcert_view::_after_verify_cert_job,NOT-alignment-packet=%s,since expect viewid:%llu,at node=0x%llx",_evt_obj->_packet.dump().c_str(),get_latest_viewid(),get_xip2_low_addr());
                     }
                 }
                 //TODO,send newer clock cert  to peer for optimization
@@ -488,8 +488,8 @@ namespace top
                         //xdbg("xclockcert_view::on_pdu_event_down,allow un-alignment-packet=%s,even expect viewid:%llu,at node=0x%llx",packet.dump().c_str(),get_latest_viewid(),get_xip2_low_addr());
                         return false;//view just need control proposal and vote messages
                     }
-                    xwarn("xclockcert_view::on_pdu_event_down,drop NOT-alignment-packet=%s,but expect viewid:%llu,at node=0x%llx",packet.dump().c_str(),get_latest_viewid(),get_xip2_low_addr());
-                    return true;//unmatched viewid, stop it
+                    xwarn("xclockcert_view::on_pdu_event_down,NOT-alignment-packet=%s,but expect viewid:%llu,at node=0x%llx",packet.dump().c_str(),get_latest_viewid(),get_xip2_low_addr());
+                    return false;//let every msg go driver layer now
                 }
             }
             return false;//let lower layer continue get notified

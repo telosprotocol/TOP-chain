@@ -97,6 +97,8 @@ namespace top
             bool                 is_auditors_finish_vote() const;
             bool                 is_vote_finish() const;
             int                  get_result_of_verify_proposal() const {return m_result_verify_proposal;}
+            const xvip2_t &      get_proposal_source_addr() const {return m_proposal_from_addr;}
+            const uint32_t       get_proposal_msg_nonce() const {return m_proposal_msg_nonce;}
             
             const std::map<xvip2_t,std::string,xvip2_compare> &  get_voted_validators()   const {return m_voted_validators;}
             const std::map<xvip2_t,std::string,xvip2_compare> &  get_voted_auditors()     const {return m_voted_auditors;}
@@ -106,12 +108,20 @@ namespace top
             bool                 is_leader() const {return m_is_leader;}
             bool                 is_voted()  const {return m_is_voted;}
             bool                 is_valid_packet(base::xcspdu_t & packet);
+            bool                 is_vote_enable() const {return (m_allow_vote > 0);}
+            bool                 is_vote_disable() const {return (m_allow_vote < 0);}
             
             const uint64_t       get_expired_ms() const {return m_expired_ms;}
             void                 set_expired_ms(const uint64_t unit_time_ms){ m_expired_ms = unit_time_ms;}
+            
             void                 mark_leader() { m_is_leader = true;} //indicate it is leader'original proposal
             void                 mark_voted()  { m_is_voted = true;}  //indicate whether node has voted for proposal
+            void                 enable_vote()  { m_allow_vote = 1;}  //allow vote
+            void                 disable_vote() { m_allow_vote = -1;} //disallow vote
+
             void                 set_result_of_verify_proposal(const int result){m_result_verify_proposal = result;}
+            void                 set_proposal_source_addr(const xvip2_t & from_addr){m_proposal_from_addr = from_addr;}
+            void                 set_proposal_msg_nonce(const uint32_t nonce){m_proposal_msg_nonce = nonce;}
         private:
             std::atomic<int32_t>           m_voted_validators_count;    //atomic for m_voted_validators' size
             std::atomic<int32_t>           m_voted_auditors_count;      //atomic for m_voted_auditors 'size
@@ -126,7 +136,11 @@ namespace top
             uint64_t                       m_expired_ms;                //when the proposal expired to clean up
             bool                           m_is_leader;                 //indicate whether it is generated from leader'proposal
             bool                           m_is_voted;                  //for node mark whether has voted or not
+            //some proposal that is behind locked/commit block is not allow vote anymore ,bu keep it and  waiting related commit-cert to reduce sync
+            int                            m_allow_vote;                //unknow for 0, false for < 0 and true for > 0
             int                            m_result_verify_proposal;    //indicated what is result of verify_proposal
+            xvip2_t                        m_proposal_from_addr;        //record the source addr,so that we may vote it async mode
+            uint32_t                       m_proposal_msg_nonce;        //record orginal message 'nonce
         };
         struct sort_proposal
         {

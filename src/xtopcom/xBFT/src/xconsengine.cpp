@@ -119,7 +119,11 @@ namespace top
             
             m_is_leader = false;
             m_is_voted  = false;
+            m_allow_vote = 0; //as default for unknow status
             m_result_verify_proposal = enum_xconsensus_error_fail;
+            m_proposal_from_addr.low_addr  = 0;
+            m_proposal_from_addr.high_addr = 0;
+            m_proposal_msg_nonce           = 0;
             
             m_expired_ms = -1;
             m_last_block_cert = NULL;
@@ -139,7 +143,11 @@ namespace top
             
             m_is_leader = false;
             m_is_voted  = false;
+            m_allow_vote = 0; //as default for unknow status
             m_result_verify_proposal = enum_xconsensus_error_fail;
+            m_proposal_from_addr.low_addr  = 0;
+            m_proposal_from_addr.high_addr = 0;
+            m_proposal_msg_nonce           = 0;
             
             m_expired_ms = -1;
             m_last_block_cert = NULL;
@@ -157,9 +165,12 @@ namespace top
             m_voted_validators_count = (int32_t)obj.m_voted_validators_count;
             m_voted_auditors_count   = (int32_t)obj.m_voted_auditors_count;
             
+            m_proposal_msg_nonce     = obj.m_proposal_msg_nonce;
+            m_proposal_from_addr     = obj.m_proposal_from_addr;
             m_result_verify_proposal = obj.m_result_verify_proposal;
             m_is_leader       = obj.m_is_leader;
             m_is_voted        = obj.m_is_voted;
+            m_allow_vote      = obj.m_allow_vote;
             m_expired_ms      = obj.m_expired_ms;
             m_last_block_cert = obj.m_last_block_cert;
             if(m_last_block_cert != NULL)
