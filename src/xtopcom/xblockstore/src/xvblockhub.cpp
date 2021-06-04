@@ -2759,6 +2759,11 @@ namespace top
                 connect_index(cached_index_ptr);//here may change index'status
                 //rebase forked blocks if have ,after connect_index
                 rebase_chain_at_height(height_view_map);
+                if(height_view_map.find(cached_index_ptr->get_viewid()) == height_view_map.end())
+                {
+                    xinfo("xblockacct_t::new_index,failed-new index (%s) erased after rebase at store(%s)",new_idx->dump().c_str(),get_blockstore_path().c_str());
+                    return nullptr;
+                }
             }
 #if 0 // TODO(jimmy)
             else //remove below after merged jimmy'branch which nolonger need store offdata anymore
