@@ -13,7 +13,7 @@ namespace top
     namespace base
     {
         //----------------------------------------xvblkstate_api-------------------------------------//
-        xvblkstatestore_t::xvblkstatestore_t() : m_state_cache(512)
+        xvblkstatestore_t::xvblkstatestore_t() : m_table_state_cache(512), m_unit_state_cache(1024)
         {
 
         }
@@ -310,8 +310,15 @@ namespace top
             uint32_t count = 0;
 
             while (count++ < max_count) {
-                // load prev block state
-                xvbstate_t* raw_state = read_state_from_db(target_account, cur_block->get_height(), cur_block->get_last_block_hash());
+                // load prev block state from cache
+                base_bstate = get_lru_cache(cur_block->get_block_level(), cur_block->get_last_block_hash());
+                if (base_bstate != nullptr) {
+                    xdbg("xvblkstatestore_t::load_latest_blocks_and_state succ-get prev state from cache.block=%s", target_block->dump().c_str());
+                    return true;
+                }
+
+                // load prev block state from db
+                xvbstate_t* raw_state = read_state_from_db(target_account, cur_block->get_height() - 1, cur_block->get_last_block_hash());
                 if (raw_state != nullptr)
                 {
                     base_bstate.attach(raw_state);
@@ -362,23 +369,6 @@ namespace top
             return nullptr;
         }
 
-        xobject_ptr_t<xvbstate_t> xvblkstatestore_t::get_current_block_state(xvblock_t * current_block) {
-            xobject_ptr_t<xvbstate_t> current_state = make_state_from_current_block(current_block);
-            if (current_state != nullptr) {
-                return current_state;
-            }
-
-            // try load from db
-            xvaccount_t target_account(current_block->get_account());
-            xvbstate_t* raw_state = read_state_from_db(target_account, current_block->get_height(), current_block->get_block_hash());
-            if (raw_state != nullptr) {
-                current_state.attach(raw_state);
-                xdbg("xvblkstatestore_t::get_current_block_state succ-get state form db.block=%s",current_block->dump().c_str());
-                return current_state;
-            }
-            return nullptr;
-        }
-
         // TODO(jimmy) how clear all old state
         void xvblkstatestore_t::clear_persisted_state(xvblock_t * target_block) {
             xvaccount_t target_account(target_block->get_account());
@@ -409,15 +399,8 @@ namespace top
 
         bool xvblkstatestore_t::execute_block(xvblock_t * target_block)
         {
-            // TODO(jimmy)
             xdbg_info("xvblkstatestore_t::execute_block enter,block=%s", target_block->dump().c_str());
-            if (target_block->get_block_level() != base::enum_xvblock_level_table && target_block->get_block_level() != base::enum_xvblock_level_unit)
-            {
-                xinfo("xstore::execute_block no need execute,block=%s", target_block->dump().c_str());
-                return true;
-            }
-
-            base::xauto_ptr<base::xvbstate_t> bstate = get_block_state(target_block);
+            base::xauto_ptr<base::xvbstate_t> bstate = execute_target_block(target_block);
             if (bstate == nullptr)
             {
                 xerror("xvblkstatestore_t::execute_block fail-get block state,block=%s", target_block->dump().c_str());
@@ -437,19 +420,14 @@ namespace top
         }
 
         // implement by load blocks and apply these blocks
-        xauto_ptr<xvbstate_t>  xvblkstatestore_t::get_block_state(xvblock_t * target_block)
+        xauto_ptr<xvbstate_t>  xvblkstatestore_t::execute_target_block(xvblock_t * target_block)
         {
             xvaccount_t target_account(target_block->get_account());
             xobject_ptr_t<xvbstate_t> target_bstate = nullptr;
 
-            target_bstate = get_lru_cache(target_block->get_block_hash());
-            if (target_bstate != nullptr) {
-                xdbg("xvblkstatestore_t::get_block_state succ-get from cache.block=%s", target_block->dump().c_str());
-                return target_bstate;
-            }
 
-            // 1.try to get target block state
-            target_bstate = get_current_block_state(target_block);
+            // 1.try to make state for target block directly, may it is a full block or genesis block
+            target_bstate = make_state_from_current_block(target_block);
             if (target_bstate != nullptr) {
                 return target_bstate;
             }
@@ -467,24 +445,67 @@ namespace top
                 xwarn("xvblkstatestore_t::get_block_state fail-rebuild_bstate.block=%s",target_block->dump().c_str());
                 return nullptr;
             }
-
             xassert(target_bstate->get_block_height() == target_block->get_height());
             xassert(target_bstate->get_block_viewid() == target_block->get_viewid());
+
+            set_lru_cache(target_block->get_block_level(), target_block->get_block_hash(), target_bstate);
             xdbg("xvblkstatestore_t::get_block_state succ.latest_blocks size=%zu,block=%s", latest_blocks.size(), target_block->dump().c_str());
-            if (target_block->get_block_level() == enum_xvblock_level_table) {
-                set_lru_cache(target_block->get_block_hash(), target_bstate);
-            }
             return target_bstate;
         }
 
-        xobject_ptr_t<xvbstate_t> xvblkstatestore_t::get_lru_cache(const std::string & hash) {
+        // implement by load blocks and apply these blocks
+        xauto_ptr<xvbstate_t>  xvblkstatestore_t::get_block_state(xvblock_t * target_block)
+        {
+            xdbg("xvblkstatestore_t::get_block_state enter.block=%s", target_block->dump().c_str());
+            xvaccount_t target_account(target_block->get_account());
+            xobject_ptr_t<xvbstate_t> target_bstate = nullptr;
+
+            // 1.try to make state for target block directly, may it is a full block or genesis block
+            target_bstate = make_state_from_current_block(target_block);
+            if (target_bstate != nullptr) {
+                return target_bstate;
+            }
+
+            // try load from cache
+            target_bstate = get_lru_cache(target_block->get_block_level(), target_block->get_block_hash());
+            if (target_bstate != nullptr) {
+                xdbg("xvblkstatestore_t::get_block_state succ-get from cache.block=%s", target_block->dump().c_str());
+                return target_bstate;
+            }
+
+            // try load from db
+            xvbstate_t* raw_state = read_state_from_db(target_account, target_block->get_height(), target_block->get_block_hash());
+            if (raw_state != nullptr) {
+                target_bstate.attach(raw_state);
+                xdbg("xvblkstatestore_t::get_block_state succ-get state form db.block=%s",target_block->dump().c_str());
+                return target_bstate;
+            }
+
+            // try execute target block state
+            target_bstate = execute_target_block(target_block);
+            if (target_bstate != nullptr) {
+                xdbg("xvblkstatestore_t::get_block_state succ-get state by execute.block=%s",target_block->dump().c_str());
+                return target_bstate;
+            }
+            return nullptr;
+        }
+
+        xobject_ptr_t<xvbstate_t> xvblkstatestore_t::get_lru_cache(base::enum_xvblock_level blocklevel, const std::string & hash) {
             xobject_ptr_t<xvbstate_t> state = nullptr;
-            m_state_cache.get(hash, state);
+            if (blocklevel == enum_xvblock_level_table) {
+                m_table_state_cache.get(hash, state);
+            } else if (blocklevel == enum_xvblock_level_unit) {
+                m_unit_state_cache.get(hash, state);
+            }
             return state;
         }
 
-        void xvblkstatestore_t::set_lru_cache(const std::string & hash, const xobject_ptr_t<xvbstate_t> & state) {
-            m_state_cache.put(hash, state);
+        void xvblkstatestore_t::set_lru_cache(base::enum_xvblock_level blocklevel, const std::string & hash, const xobject_ptr_t<xvbstate_t> & state) {
+            if (blocklevel == enum_xvblock_level_table) {
+                m_table_state_cache.put(hash, state);
+            } else if (blocklevel == enum_xvblock_level_unit) {
+                m_unit_state_cache.put(hash, state);
+            }
         }
 
         xauto_ptr<xvbstate_t>  xvblkstatestore_t::get_block_state_2(xvblock_t * current_block)
@@ -618,7 +639,7 @@ namespace top
 
             xobject_ptr_t<xvbstate_t> target_bstate = nullptr;
             do {
-                target_bstate = get_lru_cache(current_block->get_block_hash());
+                target_bstate = get_lru_cache(current_block->get_block_level(), current_block->get_block_hash());
                 if (target_bstate != nullptr) {
                     break;
                 }
