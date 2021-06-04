@@ -60,15 +60,16 @@ namespace top
 
             bool                      load_latest_blocks_and_state(xvblock_t * target_block, xobject_ptr_t<xvbstate_t> & base_bstate, std::map<uint64_t, xobject_ptr_t<xvblock_t>> & latest_blocks);
             xobject_ptr_t<xvbstate_t> rebuild_bstate(const xobject_ptr_t<xvbstate_t> & base_state, const std::map<uint64_t, xobject_ptr_t<xvblock_t>> & latest_blocks);
-            xobject_ptr_t<xvbstate_t> get_current_block_state(xvblock_t * current_block);
             xobject_ptr_t<xvbstate_t> make_state_from_current_block(xvblock_t * current_block);
             void                      clear_persisted_state(xvblock_t * target_block);
+            xauto_ptr<xvbstate_t>     execute_target_block(xvblock_t * target_block);
 
-            xobject_ptr_t<xvbstate_t> get_lru_cache(const std::string & hash);
-            void                      set_lru_cache(const std::string & hash, const xobject_ptr_t<xvbstate_t> & state);
+            xobject_ptr_t<xvbstate_t> get_lru_cache(base::enum_xvblock_level blocklevel, const std::string & hash);
+            void                      set_lru_cache(base::enum_xvblock_level blocklevel, const std::string & hash, const xobject_ptr_t<xvbstate_t> & state);
 
         private:
-            base::xlru_cache<std::string, xobject_ptr_t<xvbstate_t>> m_state_cache;
+            base::xlru_cache<std::string, xobject_ptr_t<xvbstate_t>> m_table_state_cache;  //tablestate cache
+            base::xlru_cache<std::string, xobject_ptr_t<xvbstate_t>> m_unit_state_cache;  //unitstate cache
         };
 
         //chain managed account 'state by a MPT tree(or likely) according state-hash,return xvactstate_t
