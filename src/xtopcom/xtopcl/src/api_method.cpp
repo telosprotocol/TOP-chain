@@ -371,8 +371,11 @@ void ApiMethod::list_accounts(std::ostringstream & out_str) {
         std::string account = key_info["account_address"].asString();
         if (account.empty())
             account = key_info["account address"].asString();
+        if (account.substr(0, ETH_ACCOUNT_PREFIX.size()) == ETH_ACCOUNT_PREFIX)
+            std::transform(account.begin() + 1, account.end(), account.begin() + 1, ::tolower);
 
-        if (std::find(av.begin(), av.end(), account) == av.end()) {
+        if (std::find(av.begin(), av.end(), account) == av.end())
+        {
             av.push_back(account);
         }
 
