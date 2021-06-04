@@ -134,7 +134,7 @@ void ElectManager::UpdateRoutingTable(std::vector<wrouter::WrouterTableNodes> co
 
     // todo charles if find this routing table don't add again?[done]
     if(wrouter::MultiRouting::Instance()->GetRoutingTable(service_type,false)!=nullptr){
-        xinfo("ElectManager::UpdateRoutingTable get repeated routing table info xip2: service_type:%s", self_wrouter_nodes.m_xip2.to_string(), service_type.info().c_str());
+        xinfo("ElectManager::UpdateRoutingTable get repeated routing table info xip2: service_type:%s", self_wrouter_nodes.m_xip2.to_string().c_str(), service_type.info().c_str());
         return;
     }
 

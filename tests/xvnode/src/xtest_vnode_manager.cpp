@@ -193,7 +193,7 @@ TEST_F(xvnode_manager_fixture, elected_in_rotation_status_outdated) {
         network_, common::build_committee_sharding_address(top::common::xbeacon_network_id), common::xversion_t{3}, common::xlogic_time_t{3}, common::xlogic_time_t{3}, 10, 3);
 
     outdated_xip = handle_election_data({datum});
-    ASSERT_FALSE(outdated_xip.empty());
+    ASSERT_FALSE(outdated_xip.second.empty());
     ASSERT_TRUE(m_all_nodes.size() == 1);
     ASSERT_TRUE(std::begin(m_all_nodes)->second->rotation_status(common::xlogic_time_t{3}) == common::xrotation_status_t::outdated);
 }
