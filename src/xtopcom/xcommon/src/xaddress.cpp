@@ -25,10 +25,8 @@ xtop_cluster_address::xtop_cluster_address(xip_t const & xip)
         m_type = xnode_type_t::cluster | node_type_from(m_xip.zone_id(), m_xip.cluster_id());
     } else if (m_xip.zone_id() != xbroadcast_id_t::zone) {
         m_type = xnode_type_t::zone | node_type_from(m_xip.zone_id());
-    } else if (m_xip.network_id() != xbroadcast_id_t::network) {
-        m_type = xnode_type_t::network;
     } else {
-        m_type = xnode_type_t::platform;
+        m_type = xnode_type_t::network;
     }
 }
 
@@ -77,12 +75,9 @@ xtop_cluster_address::xtop_cluster_address(xnetwork_id_t const & network_id,
         m_type = xnode_type_t::cluster | node_type_from(zone_id, cluster_id);
     } else if (zone_id.has_value() && zone_id != xbroadcast_id_t::zone) {
         m_type = xnode_type_t::zone | node_type_from(zone_id);
-    } else if (network_id.has_value() && network_id != xbroadcast_id_t::network) {
-        m_type = xnode_type_t::network;
     } else {
-        m_type = xnode_type_t::platform;
+        m_type = xnode_type_t::network;
     }
-
     assert(broadcast(m_xip.slot_id()));
     assert(m_xip.network_version() == xdefault_network_version);
 }

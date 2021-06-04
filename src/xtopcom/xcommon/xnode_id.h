@@ -5,19 +5,13 @@
 #pragma once
 
 #if defined(__clang__)
-
 #    pragma clang diagnostic push
 #    pragma clang diagnostic ignored "-Wpedantic"
-
 #elif defined(__GNUC__)
-
 #    pragma GCC diagnostic push
 #    pragma GCC diagnostic ignored "-Wpedantic"
-
 #elif defined(_MSC_VER)
-
 #    pragma warning(push, 0)
-
 #endif
 
 #include "xbase/xmem.h"
@@ -107,17 +101,15 @@ public:
 
     base::enum_vaccount_addr_type type() const noexcept;
 
-    friend
-    std::int32_t
-    operator <<(base::xstream_t & stream, xtop_node_id const & node_id);
-
-    friend
-    std::int32_t
-    operator >>(base::xstream_t & stream, xtop_node_id & node_id);
-
+    friend std::int32_t operator <<(base::xstream_t & stream, xtop_node_id const & node_id);
+    friend std::int32_t operator >>(base::xstream_t & stream, xtop_node_id & node_id);
     friend std::int32_t operator<<(base::xbuffer_t & stream, xtop_node_id const & node_id);
     friend std::int32_t operator>>(base::xbuffer_t & stream, xtop_node_id & node_id);
 
+    std::int32_t serialize_to(base::xstream_t & stream) const override;
+    std::int32_t serialize_from(base::xstream_t & stream) override;
+    std::int32_t serialize_to(base::xbuffer_t & buffer) const override;
+    std::int32_t serialize_from(base::xbuffer_t & buffer) override;
 private:
     std::int32_t
     do_read(base::xstream_t & stream) override;

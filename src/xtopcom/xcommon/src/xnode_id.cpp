@@ -69,6 +69,22 @@ base::enum_vaccount_addr_type xtop_node_id::type() const noexcept {
     return m_type;
 }
 
+int32_t xtop_node_id::serialize_to(base::xstream_t & stream) const {
+    return do_write(stream);
+}
+
+int32_t xtop_node_id::serialize_from(base::xstream_t & stream) {
+    return do_read(stream);
+}
+
+int32_t xtop_node_id::serialize_to(base::xbuffer_t & buffer) const {
+    return buffer << m_id;
+}
+
+int32_t xtop_node_id::serialize_from(base::xbuffer_t & buffer) {
+    return buffer >> m_id;
+}
+
 std::int32_t
 xtop_node_id::do_read(base::xstream_t & stream) {
     auto const begin_size = stream.size();
@@ -104,7 +120,7 @@ std::int32_t operator>>(top::base::xbuffer_t & buffer, top::common::xnode_id_t &
 std::ostream &
 operator<<(std::ostream & o, xnode_id_t const & node_id) {
     if (node_id.empty()) {
-        o << u8"(null)";
+        o << "(null)";
     } else {
         o << node_id.value();
     }
