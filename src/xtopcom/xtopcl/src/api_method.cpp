@@ -80,7 +80,20 @@ string ApiMethod::get_account_from_daemon() {
         return "";
     }
 }
-
+int ApiMethod::get_eth_file(std::string& account) {
+    std::vector<std::string> files = xChainSDK::xcrypto::scan_key_dir(g_keystore_dir);    
+    for (int i = 0; i < (int)files.size(); i++)
+    {
+        std::string file = files[i];
+        std::transform(file.begin() + 1, file.end(), file.begin() + 1, ::tolower);
+        if (file == account)
+        {
+            account = files[i];
+            break;
+        }
+    }
+    return 0;
+}
 string ApiMethod::get_prikey_from_daemon(std::ostringstream & out_str) {
     auto token_response_json = get_response_from_daemon();
     try {
@@ -88,7 +101,9 @@ string ApiMethod::get_prikey_from_daemon(std::ostringstream & out_str) {
         auto account = token_response_json["account"].asString();
         string base64_pri;
         if (!hex_ed_key.empty()) {
-            auto path = g_keystore_dir + '/' + account;
+            if (account.substr(0, ETH_ACCOUNT_PREFIX.size()) == ETH_ACCOUNT_PREFIX)
+                get_eth_file(account);
+            std::string path = g_keystore_dir + '/' + account;
             base64_pri = decrypt_keystore_by_key(hex_ed_key, path);
         }
         return base64_pri;
@@ -145,7 +160,6 @@ bool ApiMethod::set_default_prikey(std::ostringstream & out_str) {
             std::vector<std::string> files = xChainSDK::xcrypto::scan_key_dir(g_keystore_dir);
             std::vector<std::string> accounts;
             for (auto file : files) {
-                //if (file.substr(0, TOP_ACCOUNT_PREFIX.size()) == TOP_ACCOUNT_PREFIX || file.substr(0, ETH_ACCOUNT_PREFIX.size()) == ETH_ACCOUNT_PREFIX) {
                 if (check_account_address(file))
                     accounts.push_back(file);
             }
@@ -157,6 +171,7 @@ bool ApiMethod::set_default_prikey(std::ostringstream & out_str) {
                 cout << "There are multiple accounts in your wallet, please set a default account first." << std::endl;
                 return false;
             }
+            // cout << "set_default_prikey:" <<accounts[0] <<endl;
             std::string str_pri = xChainSDK::xcrypto::import_existing_keystore(cache_pw, g_keystore_dir + "/" + accounts[0]);
             if (str_pri.empty()) {
                 //cout << "Please set a default account by command `topio wallet setDefaultAccount`." << std::endl;
@@ -822,7 +837,6 @@ void ApiMethod::register_node(const std::string & mortgage_d,
     if (update_account(res, root) != 0) {
         return;
     }
-
     if (signing_key.empty()) {
         signing_key = top::utl::xcrypto_util::get_base64_public_key(g_userinfo.private_key);
     } else {

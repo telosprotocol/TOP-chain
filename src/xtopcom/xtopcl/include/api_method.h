@@ -245,6 +245,7 @@ private:
     std::string input_no_hiding();
     static int parse_top_double(const std::string &amount, const uint32_t unit, uint64_t &out);
     int input_pri_key(std::string& pri_str);
+    int get_eth_file(std::string& account);
 private:
     api_method_imp api_method_imp_;
     MethodFuncMap methods_;
