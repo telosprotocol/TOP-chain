@@ -312,12 +312,6 @@ void xtxpool_service::on_message_unit_receipt(vnetwork::xvnode_address_t const &
 
     xinfo("xtxpool_service::on_message_unit_receipt receipt=%s,from_vnode:%s,at_node:%s", receipt->dump().c_str(), sender.to_string().c_str(), m_vnetwork_str.c_str());
 
-    // nathan test!!!!nerver push to branch.
-    if (receipt->get_last_action_receipt_id() % 3 == 0) {
-        xwarn("nathan test drop receipt=%s", receipt->dump().c_str());
-        return;
-    }
-
     xtxpool_v2::xtx_para_t para;
     std::shared_ptr<xtxpool_v2::xtx_entry> tx_ent = std::make_shared<xtxpool_v2::xtx_entry>(receipt, para);
 
