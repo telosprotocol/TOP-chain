@@ -721,7 +721,7 @@ int32_t xaccount_context_t::available_balance_to_other_balance(const std::string
     int32_t ret;
     ret = token_withdraw(XPROPERTY_BALANCE_AVAILABLE, token);
     if (xsuccess != ret) {
-        xerror("xaccount_context_t::available_balance_to_other_balance fail-withdraw balance, amount=%ld", token);
+        xwarn("xaccount_context_t::available_balance_to_other_balance fail-withdraw balance, amount=%ld", token);
         return ret;
     }
     ret = token_deposit(property_name, token);
