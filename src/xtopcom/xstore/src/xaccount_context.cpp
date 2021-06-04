@@ -1289,7 +1289,13 @@ void xaccount_context_t::save_succ_result() {
     std::string property_binlog;
     m_canvas->encode(property_binlog);
     m_succ_property_binlog = property_binlog;
+    auto & bstate = m_account->get_bstate();
+    bstate->serialize_to_string(m_origin_state_bin);  // save last bstate
     xassert(!m_succ_property_binlog.empty());
+    if (nullptr != m_currect_transaction) {
+        xdbg_info("xaccount_context_t::save_succ_result this=%p,account=%s,height=%ld,succ_tx=%s,binlog_size=%zu,state_size=%zu",
+            this, get_address().c_str(), get_chain_height(), m_currect_transaction->dump().c_str(), property_binlog.size(), m_origin_state_bin.size());
+    }
 }
 void xaccount_context_t::revert_to_last_succ_result() {
     // roll back fail tx result
@@ -1297,9 +1303,12 @@ void xaccount_context_t::revert_to_last_succ_result() {
         m_contract_txs.clear();
     }
     // roll back to last succ result
-    auto & bstate = m_account->get_bstate();
-    bstate->apply_changes_of_binlog(m_succ_property_binlog);
+    base::xauto_ptr<base::xvbstate_t> state_ptr = xvblock_t::create_state_object(m_origin_state_bin);
+    xassert(state_ptr != nullptr);
+    m_account = std::make_shared<xunit_bstate_t>(state_ptr.get());
     m_canvas = make_object_ptr<base::xvcanvas_t>(m_succ_property_binlog);
+    xdbg_info("xaccount_context_t::revert_to_last_succ_result this=%p,account=%s,height=%ld,fail_tx=%s,binlog_size=%zu,state_size=%zu",
+        this, get_address().c_str(), get_chain_height(), m_currect_transaction->dump().c_str(), property_binlog.size(), m_origin_state_bin.size());
 }
 
 void xaccount_context_t::set_source_pay_info(const data::xaction_asset_out& source_pay_info) {
