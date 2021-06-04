@@ -178,6 +178,14 @@ bool xtxmgr_table_t::is_repeat_tx(const std::shared_ptr<xtx_entry> & tx) const {
     return false;
 }
 
+const std::vector<xtxpool_table_lacking_receipt_ids_t> xtxmgr_table_t::get_lacking_recv_tx_ids(uint32_t max_num) const {
+    return m_new_receipt_queue.get_lacking_recv_tx_ids(max_num);
+}
+
+const std::vector<xtxpool_table_lacking_receipt_ids_t> xtxmgr_table_t::get_lacking_confirm_tx_ids(uint32_t max_num) const {
+    return m_new_receipt_queue.get_lacking_confirm_tx_ids(max_num);
+}
+
 void xtxmgr_table_t::queue_to_pending() {
     std::vector<std::shared_ptr<xtx_entry>> expired_send_txs;
     std::vector<std::shared_ptr<xtx_entry>> push_succ_send_txs;

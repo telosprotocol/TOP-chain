@@ -6,12 +6,14 @@
 
 #include "xbasic/xmodule_type.h"
 #include "xtxpool_v2/xtxpool_log.h"
+#include "xverifier/xverifier_utl.h"
 
 namespace top {
 namespace xtxpool_v2 {
 void xreceipt_state_cache_t::update(const base::xreceiptid_state_ptr_t & receiptid_state) {
     std::lock_guard<std::mutex> lck(m_mutex);
     m_receiptid_state = receiptid_state;
+    m_update_time = xverifier::xtx_utl::get_gmttime_s();
 }
 uint64_t xreceipt_state_cache_t::get_tx_corresponding_latest_receipt_id(const std::shared_ptr<xtx_entry> & tx) const {
     base::xreceiptid_pair_t receiptid_pair;
@@ -34,6 +36,9 @@ uint64_t xreceipt_state_cache_t::get_recvid_max(base::xtable_shortid_t peer_tabl
     return receiptid_pair.get_recvid_max();
 }
 
+uint64_t xreceipt_state_cache_t::last_update_time() const {
+    return m_update_time;
+}
 
 }  // namespace xtxpool_v2
 }  // namespace top
