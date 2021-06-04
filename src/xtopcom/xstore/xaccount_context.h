@@ -191,6 +191,7 @@ class xaccount_context_t {
     xcons_transaction_ptr_t  m_currect_transaction;
     std::vector<xcons_transaction_ptr_t> m_contract_txs;
 
+    std::string         m_origin_state_bin;
     std::string         m_succ_property_binlog;
     std::vector<xcons_transaction_ptr_t> m_succ_contract_txs;
 
