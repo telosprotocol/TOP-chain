@@ -75,6 +75,7 @@ public:
     bool empty() const {
         return m_txs.empty();
     }
+    void get_lacking_ids(uint32_t max_num, std::vector<uint64_t> & lacking_ids) const;
 
 private:
     std::map<uint64_t, std::shared_ptr<xtx_entry>> m_txs;
@@ -93,6 +94,8 @@ public:
     const std::shared_ptr<xtx_entry> pop_tx(const tx_info_t & txinfo);
     const std::shared_ptr<xtx_entry> find(const std::string & account_addr, const uint256_t & hash) const;
     void update_receiptid_state(const base::xreceiptid_state_ptr_t & receiptid_state);
+    const std::vector<xtxpool_table_lacking_receipt_ids_t> get_lacking_recv_tx_ids(uint32_t max_num) const;
+    const std::vector<xtxpool_table_lacking_receipt_ids_t> get_lacking_confirm_tx_ids(uint32_t max_num) const;
 
 private:
     xtx_peer_table_map_t & get_peer_table_map(bool is_recv_tx) {
@@ -102,6 +105,7 @@ private:
             return m_confirm_tx_peer_table_map;
         }
     }
+    const std::vector<xtxpool_table_lacking_receipt_ids_t> get_lacking_receipt_ids(const xtx_peer_table_map_t & peer_table_map, uint32_t max_num) const;
     xreceipt_queue_internal_t m_receipt_queue_internal;
     xtx_peer_table_map_t m_recv_tx_peer_table_map;
     xtx_peer_table_map_t m_confirm_tx_peer_table_map;
