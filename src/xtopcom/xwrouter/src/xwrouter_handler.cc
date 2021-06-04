@@ -51,7 +51,7 @@ WrouterHandler::~WrouterHandler() {
 
 kadmlia::RoutingTablePtr WrouterHandler::FindRoutingTable(
         bool is_root,
-        uint64_t service_type,
+        base::ServiceType service_type,
         bool root_backup,
         const std::string msg_des_node_id) {
     RoutingTablePtr routing_table = GetRoutingTable(service_type, is_root);
@@ -63,10 +63,10 @@ kadmlia::RoutingTablePtr WrouterHandler::FindRoutingTable(
     }
     
     // using backup, should choose the right root-routing-table
-    std::vector<uint64_t> vec_type;
+    std::vector<base::ServiceType> vec_type;
     GetAllRegisterType(vec_type);
     TOP_DEBUG("getallregistertype size %d", vec_type.size());
-    auto tmp_routing_table1 = GetRoutingTable(kRoot, true);
+    auto tmp_routing_table1 = GetRoutingTable(base::ServiceType{kRoot}, true);
     auto target_routing_table = tmp_routing_table1;
     if (tmp_routing_table1) {
         std::string tmp_id1 = tmp_routing_table1->get_local_node_info()->id();

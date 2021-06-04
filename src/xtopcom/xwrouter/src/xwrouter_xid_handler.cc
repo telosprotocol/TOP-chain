@@ -60,7 +60,7 @@ int32_t WrouterXidHandler::SendPacket(transport::protobuf::RoutingMessage & mess
 
     if (message.src_node_id().empty()) {
         // choose one random(right) id for this message
-        uint64_t service_type = ParserServiceType(message.des_node_id());
+        base::ServiceType service_type = ParserServiceType(message.des_node_id());
         RoutingTablePtr routing_table = nullptr;
 
         if (!message.has_is_root() || !message.is_root()) {
@@ -68,7 +68,7 @@ int32_t WrouterXidHandler::SendPacket(transport::protobuf::RoutingMessage & mess
         }
 
         if (!routing_table || routing_table->nodes_size() == 0) {
-            routing_table = FindRoutingTable(true, static_cast<uint64_t>(kRoot), true, message.des_node_id());
+            routing_table = FindRoutingTable(true, base::ServiceType(kRoot), true, message.des_node_id());
         }
 
         if (!routing_table) {
@@ -112,7 +112,7 @@ int32_t WrouterXidHandler::RecvPacket(transport::protobuf::RoutingMessage & mess
     return kRecvOk;
 }
 
-uint64_t WrouterXidHandler::ParserServiceType(const std::string & kad_key) {
+base::ServiceType WrouterXidHandler::ParserServiceType(const std::string & kad_key) {
     auto kad_key_ptr = base::GetKadmliaKey(kad_key);
     return kad_key_ptr->GetServiceType();
 }
@@ -122,10 +122,10 @@ int32_t WrouterXidHandler::SendGeneral(transport::protobuf::RoutingMessage & mes
         assert(false);
     }
 
-    uint64_t service_type = ParserServiceType(message.des_node_id());
+    base::ServiceType service_type = ParserServiceType(message.des_node_id());
     RoutingTablePtr routing_table = nullptr;
     if (message.has_is_root() && message.is_root()) {
-        routing_table = FindRoutingTable(true, static_cast<uint64_t>(kRoot), true, message.des_node_id());
+        routing_table = FindRoutingTable(true, base::ServiceType(kRoot), true, message.des_node_id());
         if (!routing_table) {
             TOP_WARN("kroot routing_table not ready, send failed");
             return enum_xerror_code_fail;
@@ -185,7 +185,7 @@ int32_t WrouterXidHandler::SendMulticast(transport::protobuf::RoutingMessage & m
         gossip->set_msg_hash(msg_hash);
     }
 
-    uint64_t des_service_type = ParserServiceType(message.des_node_id());
+    base::ServiceType des_service_type = ParserServiceType(message.des_node_id());
     xdbg("Charles Debug SendMulticast service_type: %lld",des_service_type);
     RoutingTablePtr routing_table = FindRoutingTable(false, des_service_type, false);
 
@@ -225,7 +225,7 @@ int32_t WrouterXidHandler::SendGossip(transport::protobuf::RoutingMessage & mess
     }
 
     RoutingTablePtr routing_table;
-    routing_table = FindRoutingTable(true, static_cast<uint64_t>(kRoot), true);
+    routing_table = FindRoutingTable(true, base::ServiceType(kRoot), true);
 
     TOP_DEBUG("sendgossip routing_table: %s", (routing_table->get_local_node_info()->id()).c_str());
 
@@ -284,7 +284,7 @@ int32_t WrouterXidHandler::SendData(transport::protobuf::RoutingMessage & messag
         std::shared_ptr<base::Uint64BloomFilter> new_bloomfilter;
         if (new_bloomfilter_vec.empty()) {
             new_bloomfilter = std::make_shared<base::Uint64BloomFilter>(gossip::kGossipBloomfilterSize, gossip::kGossipBloomfilterHashNum);
-            auto tmp_routing_table = FindRoutingTable(true, static_cast<uint64_t>(kRoot), true, message.des_node_id());
+            auto tmp_routing_table = FindRoutingTable(true, base::ServiceType(kRoot), true, message.des_node_id());
             new_bloomfilter->Add(tmp_routing_table->get_local_node_info()->hash64());
         } else {
             new_bloomfilter = std::make_shared<base::Uint64BloomFilter>(new_bloomfilter_vec, gossip::kGossipBloomfilterHashNum);
@@ -401,7 +401,7 @@ int32_t WrouterXidHandler::JudgeOwnPacket(transport::protobuf::RoutingMessage & 
             assert(false);
         }
 
-        uint64_t des_service_type = ParserServiceType(message.des_node_id());
+        base::ServiceType des_service_type = ParserServiceType(message.des_node_id());
 
         RoutingTablePtr routing_table = FindRoutingTable(false, des_service_type, false);
         if (routing_table) {
@@ -426,10 +426,10 @@ int32_t WrouterXidHandler::JudgeOwnPacket(transport::protobuf::RoutingMessage & 
         return kJudgeOwnYes;
     }
 
-    uint64_t service_type = ParserServiceType(message.des_node_id());
+    base::ServiceType service_type = ParserServiceType(message.des_node_id());
     RoutingTablePtr routing_table = nullptr;
     if (message.is_root()) {
-        routing_table = FindRoutingTable(true, static_cast<uint64_t>(kRoot), true, message.des_node_id());
+        routing_table = FindRoutingTable(true, base::ServiceType(kRoot), true, message.des_node_id());
     } else {
         routing_table = FindRoutingTable(false, service_type, false);
     }

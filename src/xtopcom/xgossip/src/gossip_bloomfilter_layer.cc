@@ -51,7 +51,7 @@ void GossipBloomfilterLayer::Broadcast(
 
     //when super broadcast,if only use msg_hash different serivce on one point may increase stoptimes
     auto kad_key_ptr  = base::GetKadmliaKey(message.des_node_id());    
-    uint64_t service_type = kad_key_ptr->GetServiceType();
+    base::ServiceType service_type = kad_key_ptr->GetServiceType();
     MessageKey msg_key(0,message.gossip().msg_hash(),service_type);
     if (MessageWithBloomfilter::Instance()->StopGossip(msg_key, kGossipLayerStopTimes)) {
         TOP_DEBUG("stop gossip for msg_hash:%u msg_type:%d stop_times:%d", message.gossip().msg_hash(), message.type(), kGossipLayerStopTimes);

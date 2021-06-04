@@ -34,7 +34,7 @@ void GossipRRS::Broadcast(uint64_t local_hash64, transport::protobuf::RoutingMes
         return;
     }
 
-    MessageKey msg_key(0, message.gossip().msg_hash(), 0);
+    MessageKey msg_key(0, message.gossip().msg_hash(), base::ServiceType{0});
     if (MessageWithBloomfilter::Instance()->StopGossip(msg_key, kGossipRRSStopTimes)) {
         xkinfo("[GossipRRS]stop gossip for message.type(%d) stop_time(%d),hop_num(%d)", message.type(), kGossipRRSStopTimes, hop_num);
         return;

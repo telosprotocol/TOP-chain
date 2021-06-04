@@ -24,10 +24,10 @@ class RootRoutingManager;
 class MultiRouting {
 public:
     static MultiRouting* Instance();
-    kadmlia::RoutingTablePtr GetRoutingTable(const uint64_t& type, bool root = false);
+    kadmlia::RoutingTablePtr GetRoutingTable(const base::ServiceType& type, bool root = false);
     kadmlia::RoutingTablePtr GetRoutingTable(const std::string& routing_id, bool root = false);
-    void AddRoutingTable(uint64_t type, kadmlia::RoutingTablePtr routing_table);
-    void RemoveRoutingTable(uint64_t type);
+    void AddRoutingTable(base::ServiceType type, kadmlia::RoutingTablePtr routing_table);
+    void RemoveRoutingTable(base::ServiceType type);
 
     void SetRootRoutingManager(std::shared_ptr<RootRoutingManager> root_manager_ptr);
 
@@ -43,7 +43,7 @@ public:
     //     std::set<std::pair<std::string, uint16_t>>& boot_endpoints);
     // friend bool SetCacheServiceType(uint64_t service_type);
     
-    void GetAllRegisterType(std::vector<uint64_t>& vec_type);
+    void GetAllRegisterType(std::vector<base::ServiceType>& vec_type);
     void GetAllRegisterRoutingTable(std::vector<std::shared_ptr<kadmlia::RoutingTable>>& vec_rt);
 
 
@@ -52,7 +52,7 @@ public:
     //     std::set<std::pair<std::string, uint16_t>>& boot_endpoints);
     // bool SetCacheServiceType(uint64_t service_type);
 private:
-    kadmlia::RoutingTablePtr GetServiceRoutingTable(const uint64_t& type);
+    kadmlia::RoutingTablePtr GetServiceRoutingTable(const base::ServiceType& type);
     kadmlia::RoutingTablePtr GetServiceRoutingTable(const std::string& routing_id);
 
     void CheckSingleNodeNetwork();
@@ -62,7 +62,7 @@ private:
     MultiRouting();
     ~MultiRouting();
 
-    std::map<uint64_t, kadmlia::RoutingTablePtr> routing_table_map_;
+    std::map<base::ServiceType, kadmlia::RoutingTablePtr> routing_table_map_;
     std::mutex routing_table_map_mutex_;
     std::shared_ptr<RootRoutingManager> root_manager_ptr_;
 

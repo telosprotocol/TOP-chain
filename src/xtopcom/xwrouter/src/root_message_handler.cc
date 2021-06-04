@@ -30,7 +30,7 @@ void RootMessageHandler::HandleMessage(
         transport::protobuf::RoutingMessage& message,
         base::xpacket_t& packet) {
     auto routing_table = GetRoutingTable(
-            message.des_service_type(),
+            base::ServiceType{message.des_service_type()},
             message.has_is_root() && message.is_root());
     if (!routing_table) {
         TOP_WARN("service type[%llu] has not register routing table.",

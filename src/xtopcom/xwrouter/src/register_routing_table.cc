@@ -16,7 +16,7 @@ using namespace kadmlia;
 
 namespace wrouter {
 
-std::shared_ptr<kadmlia::RoutingTable> GetRoutingTable(const uint64_t & type, bool root) {
+std::shared_ptr<kadmlia::RoutingTable> GetRoutingTable(const base::ServiceType & type, bool root) {
     RoutingTablePtr routing_table = MultiRouting::Instance()->GetRoutingTable(type, root);
     if (routing_table) {
         return routing_table;
@@ -32,7 +32,7 @@ std::shared_ptr<kadmlia::RoutingTable> GetRoutingTable(const std::string & routi
     return nullptr;
 }
 
-void GetAllRegisterType(std::vector<uint64_t> & vec_type) {
+void GetAllRegisterType(std::vector<base::ServiceType> & vec_type) {
     return MultiRouting::Instance()->GetAllRegisterType(vec_type);
 }
 
@@ -99,8 +99,8 @@ int NetworkExists(base::KadmliaKeyPtr & kad_key_ptr, std::set<std::pair<std::str
     return kadmlia::kKadSuccess;
 }
 
-int GetSameNetworkNodesV2(const std::string & des_kroot_id, uint64_t des_service_type, std::vector<kadmlia::NodeInfoPtr> & ret_nodes) {
-    auto root_routing = std::dynamic_pointer_cast<RootRouting>(GetRoutingTable(kRoot, true));
+int GetSameNetworkNodesV2(const std::string & des_kroot_id, base::ServiceType des_service_type, std::vector<kadmlia::NodeInfoPtr> & ret_nodes) {
+    auto root_routing = std::dynamic_pointer_cast<RootRouting>(GetRoutingTable(base::ServiceType(kRoot), true));
     if (!root_routing) {
         TOP_WARN("create root manager failed!");
         return kadmlia::kKadFailed;
@@ -118,7 +118,7 @@ int GetSameNetworkNodesV2(const std::string & des_kroot_id, uint64_t des_service
 
     for (uint32_t i = 0; i < nodes.size(); ++i) {
         auto tmp_kad_key = base::GetKadmliaKey(nodes[i]->node_id);
-        uint64_t node_service_type = tmp_kad_key->GetServiceType();
+        base::ServiceType node_service_type = tmp_kad_key->GetServiceType();
         if (des_service_type != node_service_type) {
             continue;
         }

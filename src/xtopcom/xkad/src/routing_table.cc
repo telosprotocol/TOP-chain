@@ -544,7 +544,7 @@ void RoutingTable::HeartbeatProc() {
                          "local_nodeid",
                          local_node_ptr_->id(),
                          "service_type",
-                         local_node_ptr_->kadmlia_key()->GetServiceType(),
+                         local_node_ptr_->kadmlia_key()->GetServiceType().value(),
                          "xnetwork_id",
                          local_node_ptr_->kadmlia_key()->xnetwork_id(),
                          "zone_id",
@@ -1413,11 +1413,11 @@ void RoutingTable::FindClosestNodes(int count, const std::vector<NodeInfoPtr> & 
     }
 }
 
-int RoutingTable::Bootstrap(const std::string & peer_ip, uint16_t peer_port, uint64_t des_service_type) {
-    TOP_DEBUG_NAME("Bootstrap to (%s:%d_%ld)", peer_ip.c_str(), (int)peer_port, (long)des_service_type);
+int RoutingTable::Bootstrap(const std::string & peer_ip, uint16_t peer_port, base::ServiceType des_service_type) {
+    TOP_DEBUG_NAME("Bootstrap to (%s:%d_%ld)", peer_ip.c_str(), (int)peer_port, (long)des_service_type.value());
     transport::protobuf::RoutingMessage message;
     SetFreqMessage(message);
-    message.set_des_service_type(des_service_type);
+    message.set_des_service_type(des_service_type.value());
     message.set_priority(enum_xpacket_priority_type_flash);
     TOP_INFO_NAME("join with service type[%llu] ,src[%llu], des[%llu]", local_node_ptr_->service_type(), local_node_ptr_->service_type(), des_service_type);
     message.set_des_node_id("");
@@ -1441,7 +1441,7 @@ int RoutingTable::Bootstrap(const std::string & peer_ip, uint16_t peer_port, uin
 void RoutingTable::FindCloseNodesWithEndpoint(const std::string & des_node_id, const std::pair<std::string, uint16_t> & boot_endpoints) {
     transport::protobuf::RoutingMessage message;
     SetFreqMessage(message);
-    message.set_des_service_type(local_node_ptr_->service_type());
+    message.set_des_service_type(local_node_ptr_->service_type().value());
     message.set_des_node_id(des_node_id);
     message.set_type(kKadFindNodesRequest);
     message.set_priority(enum_xpacket_priority_type_flash);
@@ -1469,12 +1469,12 @@ void RoutingTable::FindCloseNodesWithEndpoint(const std::string & des_node_id, c
     SendData(message, boot_endpoints.first, boot_endpoints.second);
 }
 
-int RoutingTable::SendFindClosestNodes(const NodeInfoPtr & node_ptr, int count, const std::vector<NodeInfoPtr> & nodes, uint64_t des_service_type) {
+int RoutingTable::SendFindClosestNodes(const NodeInfoPtr & node_ptr, int count, const std::vector<NodeInfoPtr> & nodes, base::ServiceType des_service_type) {
     const auto node_id = node_ptr->node_id;
     TOP_DEBUG_NAME("bluefindnodes to %s %s:%d", HexSubstr(node_id).c_str(), node_ptr->public_ip.c_str(), node_ptr->public_port);
     transport::protobuf::RoutingMessage message;
     SetFreqMessage(message);
-    message.set_des_service_type(des_service_type);
+    message.set_des_service_type(des_service_type.value());
     message.set_des_node_id(node_id);
     message.set_type(kKadFindNodesRequest);
     message.set_priority(enum_xpacket_priority_type_flash);
@@ -1740,7 +1740,7 @@ void RoutingTable::HandleFindNodesResponse(transport::protobuf::RoutingMessage &
         node_ptr->local_port = find_nodes_res.nodes(i).local_port();
         node_ptr->public_ip = find_nodes_res.nodes(i).public_ip();
         node_ptr->public_port = find_nodes_res.nodes(i).public_port();
-        node_ptr->service_type = message.src_service_type();  // for RootRouting, is always kRoot
+        node_ptr->service_type = base::ServiceType(message.src_service_type());  // for RootRouting, is always kRoot
         // node_ptr->nat_type = find_nodes_res.nodes(i).nat_type();
         node_ptr->xid = find_nodes_res.nodes(i).xid();
         // node_ptr->hash64 = base::xhash64_t::digest(node_ptr->xid);
@@ -1866,7 +1866,7 @@ void RoutingTable::SendDropNodeRequest(const std::string & id) {
     transport::protobuf::RoutingMessage message;
     SetFreqMessage(message);
     message.set_des_node_id(id);
-    message.set_des_service_type(local_node_ptr_->service_type());
+    message.set_des_service_type(local_node_ptr_->service_type().value());
     message.set_type(kKadDropNodeRequest);
     message.set_priority(enum_xpacket_priority_type_flash);
     SendToClosestNode(message);
@@ -1992,7 +1992,7 @@ void RoutingTable::HandleHandshake(transport::protobuf::RoutingMessage & message
     node_ptr->public_port = pub_port;
     node_ptr->local_ip = handshake.local_ip();
     node_ptr->local_port = handshake.local_port();
-    node_ptr->service_type = message.src_service_type();
+    node_ptr->service_type = base::ServiceType(message.src_service_type());
     // node_ptr->nat_type = handshake.nat_type();
     node_ptr->xid = handshake.xid();
     // node_ptr->hash64 = base::xhash64_t::digest(node_ptr->xid);
@@ -2072,7 +2072,7 @@ void RoutingTable::HandleBootstrapJoinRequest(transport::protobuf::RoutingMessag
     node_ptr->local_port = join_req.local_port();
     node_ptr->public_ip = packet.get_from_ip_addr();
     node_ptr->public_port = packet.get_from_ip_port();
-    node_ptr->service_type = message.src_service_type();
+    node_ptr->service_type = base::ServiceType(message.src_service_type());
     // node_ptr->nat_type = join_req.nat_type();
     node_ptr->xid = join_req.xid();
     // node_ptr->hash64 = base::xhash64_t::digest(node_ptr->xid);
@@ -2186,7 +2186,7 @@ void RoutingTable::HandleBootstrapJoinResponse(transport::protobuf::RoutingMessa
     node_ptr->local_port = packet.get_from_ip_port();
     node_ptr->public_ip = packet.get_from_ip_addr();
     node_ptr->public_port = packet.get_from_ip_port();
-    node_ptr->service_type = message.src_service_type();
+    node_ptr->service_type = base::ServiceType(message.src_service_type());
     // node_ptr->nat_type = join_res.nat_type();
     node_ptr->xid = join_res.xid();
     // node_ptr->hash64 = base::xhash64_t::digest(node_ptr->xid);
@@ -2292,7 +2292,7 @@ void RoutingTable::HandleBootstrapJoinResponse(transport::protobuf::RoutingMessa
 
 void RoutingTable::SetFreqMessage(transport::protobuf::RoutingMessage & message) {
     message.set_hop_num(0);
-    message.set_src_service_type(local_node_ptr_->service_type());
+    message.set_src_service_type(local_node_ptr_->service_type().value());
     message.set_src_node_id(local_node_ptr_->id());
     message.set_xid(global_xid->Get());
     message.set_priority(enum_xpacket_priority_type_routine);

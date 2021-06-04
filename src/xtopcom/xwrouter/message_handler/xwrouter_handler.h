@@ -8,6 +8,7 @@
 
 #include "xbase/xbase.h"
 #include "xbase/xrouter.h"
+#include "xpbase/base/kad_key/kadmlia_key.h"
 
 namespace top {
 
@@ -76,7 +77,7 @@ public:
 protected:
     kadmlia::RoutingTablePtr FindRoutingTable(
             bool is_root,
-            uint64_t service_type,
+            base::ServiceType service_type,
             bool root_backup,
             const std::string msg_des_node_id = "");
     std::vector<kadmlia::NodeInfoPtr> GetClosestNodes(

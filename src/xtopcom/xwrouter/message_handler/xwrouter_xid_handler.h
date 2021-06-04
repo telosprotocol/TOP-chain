@@ -57,7 +57,7 @@ public:
     virtual int32_t RecvPacket(transport::protobuf::RoutingMessage & message, base::xpacket_t & packet);
 
 protected:
-    uint64_t ParserServiceType(const std::string & kad_key);
+    base::ServiceType ParserServiceType(const std::string & kad_key);
 
     bool MulticastPacketCheck(transport::protobuf::RoutingMessage & message);
     bool GossipPacketCheck(transport::protobuf::RoutingMessage & message);

@@ -87,33 +87,36 @@ void ElectManager::OnElectUpdated(const data::election::xelection_result_store_t
 }
 
 void ElectManager::OnElectUpdated(const std::vector<ElectNetNode> & elect_data) {
-    TOP_DEBUG("onelectupdated begin, size:%u", elect_data.size());
-    for (const auto & enode : elect_data) {
-        wrouter::NetNode snode{enode.m_account, enode.m_public_key, enode.m_xip, "", enode.m_associated_gid, enode.m_version};
-        wrouter::SmallNetNodes::Instance()->AddNode(snode);
+    // TOP_DEBUG("onelectupdated begin, size:%u", elect_data.size());
+    // for (const auto & enode : elect_data) {
+    //     wrouter::NetNode snode{enode.m_account, enode.m_public_key, enode.m_xip, "", enode.m_associated_gid, enode.m_version};
+    //     wrouter::SmallNetNodes::Instance()->AddNode(snode);
 
-        if (global_node_id != enode.m_account) {
-            TOP_DEBUG("account not match: self:%s iter:%s", global_node_id.c_str(), enode.m_account.c_str());
-            continue;
-        }
-        TOP_INFO("account match: self:%s iter:%s xip: %s xnetwork_id: %u zone_id: %u cluster_id: %u group_id: %u",
-                 global_node_id.c_str(),
-                 enode.m_account.c_str(),
-                 HexEncode(enode.m_xip.xip()).c_str(),
-                 enode.m_xip.xnetwork_id(),
-                 enode.m_xip.zone_id(),
-                 enode.m_xip.cluster_id(),
-                 enode.m_xip.group_id());
-        if (node_manager_->Join(enode.m_xip) != kadmlia::kKadSuccess) {
-            TOP_ERROR("node join failed!");
-        }
-    }
+    //     if (global_node_id != enode.m_account) {
+    //         TOP_DEBUG("account not match: self:%s iter:%s", global_node_id.c_str(), enode.m_account.c_str());
+    //         continue;
+    //     }
+    //     TOP_INFO("account match: self:%s iter:%s xip: %s xnetwork_id: %u zone_id: %u cluster_id: %u group_id: %u",
+    //              global_node_id.c_str(),
+    //              enode.m_account.c_str(),
+    //              HexEncode(enode.m_xip.xip()).c_str(),
+    //              enode.m_xip.xnetwork_id(),
+    //              enode.m_xip.zone_id(),
+    //              enode.m_xip.cluster_id(),
+    //              enode.m_xip.group_id());
+    //     if (node_manager_->Join(enode.m_xip) != kadmlia::kKadSuccess) {
+    //         TOP_ERROR("node join failed!");
+    //     }
+    // }
 
-    TOP_DEBUG("onelectupdated end");
+    // TOP_DEBUG("onelectupdated end");
     return;
 }
 
 void ElectManager::OnElectUpdated(std::vector<wrouter::WrouterTableNodes> const & elect_data){
+    for(auto const &wrouter_node:elect_data){
+        wrouter::SmallNetNodes::Instance()->AddNode(wrouter_node);
+    }
     for(auto const & wrouter_node:elect_data){
         if(global_node_id!=wrouter_node.node_id){
             xdbg("node id not match self:%s iter:%s",global_node_id.c_str(),wrouter_node.node_id.c_str());
@@ -154,7 +157,7 @@ void ElectManager::UpdateRoutingTable(std::vector<wrouter::WrouterTableNodes> co
         TOP_ERROR("init edge bitvpn routing table failed!");
         return;
     }
-    uint64_t service_type = kad_key->GetServiceType();
+    base::ServiceType service_type = kad_key->GetServiceType();
     // routing_table_ptr->get_local_node_info()->set_service_type(service_type);
     // // service_type_ = service_type;
     // // wrouter::RegisterRoutingTable(service_type, routing_table_ptr);
@@ -172,7 +175,7 @@ void ElectManager::UpdateRoutingTable(std::vector<wrouter::WrouterTableNodes> co
     // }
 
     // if (first_node) {
-    auto root_routing = wrouter::GetRoutingTable(kRoot, true);
+    auto root_routing = wrouter::GetRoutingTable(base::ServiceType{kRoot}, true);
     // std::vector<kadmlia::NodeInfoPtr> res_nodes;
     // std::vector<base::KadmliaKeyPtr> kad_key_ptrs;
     std::map<std::string, base::KadmliaKeyPtr> elect_root_kad_key_ptrs;

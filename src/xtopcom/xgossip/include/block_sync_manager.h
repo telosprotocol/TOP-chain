@@ -11,6 +11,7 @@
 #include "xbase/xpacket.h"
 #include "xtransport/proto/transport.pb.h"
 #include "xpbase/base/top_timer.h"
+#include "xpbase/base/kad_key/kadmlia_key.h"
 #include "xgossip/include/header_block_data.h"
 
 namespace top {
@@ -25,7 +26,7 @@ typedef std::shared_ptr<RoutingTable> RoutingTablePtr;
 namespace gossip {
 
 struct SyncBlockItem {
-    uint64_t routing_service_type;
+    base::ServiceType routing_service_type;
     std::string header_hash;
     std::chrono::steady_clock::time_point time_point;
 };
@@ -50,9 +51,9 @@ private:
     uint32_t GetBlockMsgType(const std::string& header_hash);
     void AddHeaderHashToQueue(
             const std::string& header_hash,
-            uint64_t service_type);
+            base::ServiceType service_type);
     void CheckHeaderHashQueue();
-    uint64_t GetRoutingServiceType(const std::string& des_node_id);
+    base::ServiceType GetRoutingServiceType(const std::string& des_node_id);
     void SendSyncAsk(std::shared_ptr<SyncBlockItem>& sync_item);
     void HandleSyncAsk(
             transport::protobuf::RoutingMessage& message,

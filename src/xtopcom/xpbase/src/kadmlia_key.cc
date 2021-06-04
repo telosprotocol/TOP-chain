@@ -37,7 +37,8 @@ namespace base {
     ((service_id |= ((uint64_t)(height)&0x1FFFFFULL)))
 // #define set_kad_root(service_id) ((service_id |= (0xFFFFFFULL)))
 
-uint64_t CreateServiceType(common::xip2_t const &xip) {
+
+ServiceType CreateServiceType(common::xip2_t const &xip) {
     uint64_t res{0};
     set_kad_network_id(res, xip.network_id().value());
     set_kad_zone_id(res, xip.zone_id().value());
@@ -45,7 +46,7 @@ uint64_t CreateServiceType(common::xip2_t const &xip) {
     set_kad_group_id(res, xip.group_id().value());
     // todo charles test no height in xip.
     set_kad_height(res, xip.height());
-    return res;
+    return ServiceType(res);
 }
 
 base::KadmliaKeyPtr GetKadmliaKey(common::xip2_t const &xip) {
@@ -115,7 +116,7 @@ std::string KadmliaKey::Get() {
     return xip_.to_string();
 }
 
-uint64_t KadmliaKey::GetServiceType() { return CreateServiceType(xip_); }
+ServiceType KadmliaKey::GetServiceType() { return CreateServiceType(xip_); }
 
 } // namespace base
 

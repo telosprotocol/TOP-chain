@@ -44,7 +44,7 @@ void GossipBloomfilter::Broadcast(
         return;
     }
 
-    MessageKey msg_key(0,message.gossip().msg_hash(),0);
+    MessageKey msg_key(0,message.gossip().msg_hash(),base::ServiceType{0});
     if (MessageWithBloomfilter::Instance()->StopGossip(msg_key, message.gossip().stop_times())) {
         TOP_DEBUG("stop gossip for message.type(%d) hop_num(%d)", message.type(), message.gossip().stop_times());
         return;

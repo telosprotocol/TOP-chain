@@ -47,7 +47,7 @@ SmallNetNodes::~SmallNetNodes() {
     TOP_INFO("SmallNetNodes destroy");
 }
 
-void SmallNetNodes::GetAllServiceType(std::set<uint64_t> & svec) {
+void SmallNetNodes::GetAllServiceType(std::set<base::ServiceType> & svec) {
     std::unique_lock<std::mutex> lock(net_nodes_cache_map_mutex_);
     for (auto & item : net_nodes_cache_map_) {
         svec.insert(item.first);
@@ -56,8 +56,21 @@ void SmallNetNodes::GetAllServiceType(std::set<uint64_t> & svec) {
     return;
 }
 
-bool SmallNetNodes::FindRandomNode(NetNode & Fnode, uint64_t service_type) {
+bool SmallNetNodes::FindRandomNode(WrouterTableNodes & Fnode, base::ServiceType service_type) {
     std::unique_lock<std::mutex> lock(net_nodes_cache_map_mutex_);
+
+    for(auto const & _p : net_nodes_cache_map_){
+        if(_p.first==service_type && _p.second->nodes.size()){
+            auto size = _p.second->nodes.size();
+            uint32_t index = RandomUint32() % size;
+            Fnode = _p.second->nodes[index];
+            TOP_DEBUG("findnode of index:%d account:%s", index, Fnode.node_id.c_str());
+            return true;
+        }
+    }
+    return false;
+
+
     auto ifind = net_nodes_cache_map_.find(service_type);
     if (ifind == net_nodes_cache_map_.end()) {
         return false;
@@ -69,29 +82,56 @@ bool SmallNetNodes::FindRandomNode(NetNode & Fnode, uint64_t service_type) {
     }
     uint32_t index = RandomUint32() % size;
     Fnode = ifind->second->nodes[index];
-    TOP_DEBUG("findnode of index:%d account:%s", index, Fnode.m_account.c_str());
+    TOP_DEBUG("findnode of index:%d account:%s", index, Fnode.node_id.c_str());
     return true;
 }
 
 // always find the last node of vector, usually this is the recent elect-node
-bool SmallNetNodes::FindNewNode(NetNode & Fnode, uint64_t service_type) {
+bool SmallNetNodes::FindNewNode(WrouterTableNodes & Fnode, base::ServiceType service_type) {
     std::unique_lock<std::mutex> lock(net_nodes_cache_map_mutex_);
-    auto ifind = net_nodes_cache_map_.find(service_type);
-    if (ifind == net_nodes_cache_map_.end()) {
-        return false;
-    }
+    // xdbg("Charles Debug SmallNetNodes::FindNewNode size: %zu",net_nodes_cache_map_.size());
+    // for(auto const & _p:net_nodes_cache_map_){
+    //     xdbg("Charles Debug service: %lld , queue size: %zu", _p.first.value(), _p.second->nodes.size());
+    // }
 
-    auto size = (ifind->second)->nodes.size();
-    if (size == 0) {
-        return false;
+    for(auto _p : net_nodes_cache_map_){
+        if(_p.first==service_type && _p.second->nodes.size()){
+            Fnode = _p.second->nodes.back();
+            xdbg("SmallNetNodes::FindNewNode ori service_type: %lld ,from service_type: %lld ,size: %zu", service_type.value(), _p.first.value(), _p.second->nodes.size());
+            return true;
+        }
     }
-    Fnode = ifind->second->nodes[size - 1];
-    TOP_DEBUG("findnode of index:%d account:%s", size - 1, Fnode.m_account.c_str());
-    return true;
+    return false;
+
+    // auto ifind = net_nodes_cache_map_.find(service_type);
+    // if (ifind == net_nodes_cache_map_.end()) {
+    //     return false;
+    // }
+
+    // auto size = (ifind->second)->nodes.size();
+    // if (size == 0) {
+    //     return false;
+    // }
+    // Fnode = ifind->second->nodes[size - 1];
+    // TOP_DEBUG("findnode of index:%d account:%s", size - 1, Fnode.node_id.c_str());
+    // return true;
 }
 
-bool SmallNetNodes::FindAllNode(std::vector<NetNode> & node_vec, uint64_t service_type) {
+bool SmallNetNodes::FindAllNode(std::vector<WrouterTableNodes> & node_vec, base::ServiceType service_type) {
     std::unique_lock<std::mutex> lock(net_nodes_cache_map_mutex_);
+    
+    for(auto const & _p : net_nodes_cache_map_){
+        if(_p.first==service_type && _p.second->nodes.size()){
+            node_vec.clear();
+            for (auto & node : _p.second->nodes) {
+                node_vec.push_back(node);
+            }
+            return true;
+        }
+    }
+    return false;
+    
+    
     auto ifind = net_nodes_cache_map_.find(service_type);
     if (ifind == net_nodes_cache_map_.end()) {
         return false;
@@ -105,7 +145,7 @@ bool SmallNetNodes::FindAllNode(std::vector<NetNode> & node_vec, uint64_t servic
     return true;
 }
 
-void SmallNetNodes::GetAllNode(std::vector<NetNode> & node_vec) {
+void SmallNetNodes::GetAllNode(std::vector<WrouterTableNodes> & node_vec) {
     std::unique_lock<std::mutex> lock(net_nodes_cache_map_mutex_);
     for (const auto & item : net_nodes_cache_map_) {
         for (auto & node : (item.second)->nodes) {
@@ -115,70 +155,69 @@ void SmallNetNodes::GetAllNode(std::vector<NetNode> & node_vec) {
     return;
 }
 
-void SmallNetNodes::AddNodeLimit(uint64_t service_type, std::deque<NetNode> & nodes, const NetNode & node) {
+void SmallNetNodes::AddNodeLimit(base::ServiceType service_type, std::deque<WrouterTableNodes> & nodes, const WrouterTableNodes & node) {
     nodes.push_back(node);
     // pop the old nodes
     while (nodes.size() > kMaxSizePerServiceType) {
         const auto & node = nodes.front();
-        TOP_INFO("bluever %ld limit drop node %s version(%u)", (long)service_type, node.m_account.c_str(), node.m_version);
+        TOP_INFO("bluever %ld limit drop node %s version(%u)", (long)service_type.value(), node.node_id.c_str());
         nodes.pop_front();
     }
 }
 
-uint32_t SmallNetNodes::AddNode(NetNode node) {
-    // base::KadmliaKeyPtr kad_key = base::GetKadmliaKey(node.m_xip, node.m_account);
+uint32_t SmallNetNodes::AddNode(WrouterTableNodes node) {
+    base::KadmliaKeyPtr kad_key = base::GetKadmliaKey(node.m_xip2);
     // node.m_node_id = kad_key->Get();
-    // uint64_t service_type = kad_key->GetServiceType();
+    base::ServiceType service_type = kad_key->GetServiceType();
 
-    // std::unique_lock<std::mutex> lock(net_nodes_cache_map_mutex_);
-    // auto ifind = net_nodes_cache_map_.find(service_type);
-    // if (ifind == net_nodes_cache_map_.end()) {
-    //     auto net_nodes = std::make_shared<NetNodes>();
-    //     net_nodes->latest_version = node.m_version;
-    //     net_nodes->nodes.push_back(node);
-    //     net_nodes_cache_map_[service_type] = net_nodes;
-    //     TOP_DEBUG("bluever %ld add node(%s) version(%llu)", (long)service_type, node.m_account.c_str(), node.m_version);
-    // } else {
-    //     // update latest version
-    //     auto & latest_version = ifind->second->latest_version;
-    //     if (node.m_version > latest_version) {
-    //         latest_version = node.m_version;
-    //         TOP_DEBUG("bluever %ld update version to %llu", (long)service_type, latest_version);
-    //     }
+    std::unique_lock<std::mutex> lock(net_nodes_cache_map_mutex_);
+    // for add_node find must be precise
+    auto ifind = net_nodes_cache_map_.find(service_type);
+    if (ifind == net_nodes_cache_map_.end()) {
+        auto net_nodes = std::make_shared<WrouterTableNodes_queue>();
+        net_nodes->latest_version = node.m_xip2.height();
+        net_nodes->nodes.push_back(node);
+        net_nodes_cache_map_[service_type] = net_nodes;
+        TOP_DEBUG("bluever %ld add node(%s) version(%llu)", (long)service_type.value(), node.node_id.c_str(), node.m_xip2.height());
+    } else {
+        // update latest version
+        auto & latest_version = ifind->second->latest_version;
+        if (node.m_xip2.height() > latest_version) {
+            latest_version = node.m_xip2.height();
+            TOP_DEBUG("bluever %ld update version to %llu", (long)service_type.value(), latest_version);
+        }
 
-    //     // filter old version
-    //     if (node.m_version < latest_version) {
-    //         TOP_DEBUG("bluever %ld old version(%llu) node(%s) is ignore, latest version is %llu", (long)service_type, node.m_version, node.m_account.c_str(), latest_version);
-    //         return 0;
-    //     }
+        // filter old version
+        if (node.m_xip2.height() < latest_version) {
+            TOP_DEBUG("bluever %ld old version(%llu) node(%s) is ignore, latest version is %llu", (long)service_type.value(), node.m_xip2.height(), node.node_id.c_str(), latest_version);
+            return 0;
+        }
 
-    //     for (auto & n : ifind->second->nodes) {
-    //         if (n.m_account == node.m_account) {
-    //             if (node.m_version > n.m_version) {
-    //                 TOP_INFO("bluever update node(%s) version(%llu) to %llu", n.m_account.c_str(), n.m_version, node.m_version);
-    //                 n.m_version = node.m_version;
-    //             }
-    //             return net_nodes_cache_map_[service_type]->nodes.size();
-    //         }
-    //     }
-    //     AddNodeLimit(service_type, net_nodes_cache_map_[service_type]->nodes, node);
-    //     TOP_DEBUG("bluever %ld add node(%s) version(%llu)", (long)service_type, node.m_account.c_str(), node.m_version);
-    // }
-    // auto size = net_nodes_cache_map_[service_type]->nodes.size();
-    // TOP_DEBUG(
-    //     "addnode account:%s public_key:%s service_type:%llu xnetwork_id:%u,"
-    //     "now size:%u",
-    //     node.m_account.c_str(),
-    //     HexEncode(node.m_public_key).c_str(),
-    //     service_type,
-    //     node.m_xip.xnetwork_id(),
-    //     size);
-    // return size;
-    return 0;
+        for (auto & n : ifind->second->nodes) {
+            if (n.node_id == node.node_id) {
+                if (node.m_xip2.height() > n.m_xip2.height()) {
+                    TOP_INFO("bluever update node(%s) version(%llu) to %llu", n.node_id.c_str(), n.m_xip2.height(), node.m_xip2.height());
+                    n.m_xip2 = node.m_xip2;
+                }
+                return net_nodes_cache_map_[service_type]->nodes.size();
+            }
+        }
+        AddNodeLimit(service_type, net_nodes_cache_map_[service_type]->nodes, node);
+        TOP_DEBUG("bluever %ld add node(%s) version(%llu)", (long)service_type.value(), node.node_id.c_str(), node.m_xip2.height());
+    }
+    auto size = net_nodes_cache_map_[service_type]->nodes.size();
+    TOP_DEBUG("addnode account:%s service_type:%llu xip2:%s,now size:%u",
+              node.node_id.c_str(),
+              // HexEncode(node.m_public_key).c_str(),
+              service_type,
+              node.m_xip2.to_string().c_str(),
+              size);
+    return size;
+    // return 0;
 }
 
-void SmallNetNodes::HandleExpired(std::unordered_map<uint64_t, std::vector<std::string>> & expired_vec,
-                                  std::vector<uint64_t> & unreg_service_type_vec) {
+void SmallNetNodes::HandleExpired(std::unordered_map<base::ServiceType, std::vector<std::string>> & expired_vec,
+                                  std::vector<base::ServiceType> & unreg_service_type_vec) {
     service_nodes_->RemoveExpired(expired_vec);
 
     // unregister routing table
@@ -203,8 +242,8 @@ void SmallNetNodes::HandleExpired(std::unordered_map<uint64_t, std::vector<std::
 
 void SmallNetNodes::do_clear_and_reset() {
     // clear old versions
-    std::unordered_map<uint64_t, std::vector<std::string>> expired_nodeid_vec;
-    std::vector<uint64_t> unreg_service_type_vec;
+    std::unordered_map<base::ServiceType, std::vector<std::string>> expired_nodeid_vec;
+    std::vector<base::ServiceType> unreg_service_type_vec;
     {
         std::unique_lock<std::mutex> lock(net_nodes_cache_map_mutex_);
         for (auto & mitem : net_nodes_cache_map_) {
@@ -212,19 +251,19 @@ void SmallNetNodes::do_clear_and_reset() {
             if (latest_version < 1) {
                 continue;
             }
-            TOP_DEBUG("%ld check version %u", (long)mitem.first, latest_version);
+            TOP_DEBUG("%ld check version %u", (long)mitem.first.value(), latest_version);
             for (auto iter = (mitem.second)->nodes.begin(); iter != (mitem.second)->nodes.end();) {
-                if (iter->m_version < latest_version - 1) {  // keep the latest 2 versions
+                if (iter->m_xip2.height() < latest_version - 1) {  // keep the latest 2 versions
                     // elect nodes expired
-                    TOP_DEBUG("bluever %ld remove expired node(%s) version(%llu)", (long)mitem.first, iter->m_account.c_str(), iter->m_version);
-                    if (iter->m_account == global_node_id) {
+                    TOP_DEBUG("bluever %ld remove expired node(%s) version(%llu)", (long)mitem.first.value(), iter->node_id.c_str(), iter->m_xip2.height());
+                    if (iter->node_id == global_node_id) {
                         TOP_DEBUG("add unreg service_type:%llu", mitem.first);
                         unreg_service_type_vec.push_back(mitem.first);
                     }
 
-                    // base::KadmliaKeyPtr tmp_kad_key = base::GetKadmliaKey(iter->m_xip, iter->m_account);
+                    // base::KadmliaKeyPtr tmp_kad_key = base::GetKadmliaKey(iter->m_xip, iter->node_id);
                     // expired_nodeid_vec[mitem.first].push_back(tmp_kad_key->Get());
-                    expired_nodeid_vec[mitem.first].push_back(iter->m_node_id);
+                    expired_nodeid_vec[mitem.first].push_back(iter->node_id);
                     iter = (mitem.second)->nodes.erase(iter);
                 } else {
                     ++iter;

@@ -10,6 +10,7 @@
 
 #include "xcommon/xip.h"
 #include "xpbase/base/xip_parser.h"
+#include "xpbase/base/kad_key/kadmlia_key.h"
 
 namespace top {
 

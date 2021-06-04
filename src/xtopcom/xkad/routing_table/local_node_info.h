@@ -56,8 +56,8 @@ public:
     // int32_t nat_type() { return nat_type_; }
     void set_public_ip(const std::string& ip);
     void set_public_port(uint16_t port);
-    uint64_t service_type() { return service_type_; }
-    void set_service_type(uint64_t service_type) { service_type_ = service_type; }
+    base::ServiceType service_type() { return service_type_; }
+    void set_service_type(base::ServiceType service_type) { service_type_ = service_type; }
     uint32_t routing_table_id() { return routing_table_id_; }
     void set_routing_table_id(uint32_t routing_table_id) { routing_table_id_ = routing_table_id; }
 
@@ -96,7 +96,7 @@ private:
     std::string public_ip_;
     uint16_t public_port_{ 0 };
     // int32_t nat_type_{kNatTypeUnknown};
-    uint64_t service_type_{ kInvalidType };
+    base::ServiceType service_type_{ kInvalidType };
     uint32_t routing_table_id_{0};
 
     std::mutex kadkey_mutex_;

@@ -103,7 +103,6 @@ int32_t Wrouter::recv(transport::protobuf::RoutingMessage & message, base::xpack
         return enum_xerror_code_fail;
     }
 
-    int32_t rcode = wxid_handler_->RecvPacket(message, packet);
     if (IS_RRS_GOSSIP_MESSAGE(message)) {
         XMETRICS_PACKET_INFO("p2pperf_wrouterrecv_info", MESSAGE_BASIC_INFO(message), MESSAGE_RRS_FEATURE(message), IS_ROOT_BROADCAST(message), PACKET_SIZE(packet), NOW_TIME);
     } else {
@@ -113,6 +112,7 @@ int32_t Wrouter::recv(transport::protobuf::RoutingMessage & message, base::xpack
     }
 #ifdef XENABLE_P2P_BENDWIDTH
 #endif
+    int32_t rcode = wxid_handler_->RecvPacket(message, packet);
     if (rcode == kRecvOwn) {
         return HandleOwnPacket(message, packet);
     }

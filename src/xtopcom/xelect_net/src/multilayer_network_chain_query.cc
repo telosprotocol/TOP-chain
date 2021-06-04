@@ -13,7 +13,7 @@ namespace top {
 namespace elect {
 
 bool MultilayerNetworkChainQuery::Joined() {
-    auto root_ptr = wrouter::GetRoutingTable(kRoot, true);
+    auto root_ptr = wrouter::GetRoutingTable(base::ServiceType{kRoot}, true);
     if (!root_ptr) {
         return false;
     }
@@ -21,7 +21,7 @@ bool MultilayerNetworkChainQuery::Joined() {
 }
 
 uint32_t MultilayerNetworkChainQuery::PeerCount() {
-    auto root_ptr = wrouter::GetRoutingTable(kRoot, true);
+    auto root_ptr = wrouter::GetRoutingTable(base::ServiceType{kRoot}, true);
     if (!root_ptr) {
         return 0;
     }
@@ -50,7 +50,7 @@ std::string MultilayerNetworkChainQuery::Peers() {
     std::string result;
 
 
-    auto rt = wrouter::GetRoutingTable(kRoot, true);
+    auto rt = wrouter::GetRoutingTable(base::ServiceType{kRoot}, true);
     if (!rt) {
         result = "peers number: max 256, now 0";
         return result;
@@ -133,8 +133,8 @@ std::string MultilayerNetworkChainQuery::AllPeers() {
 std::string MultilayerNetworkChainQuery::AllNodes() {
     std::string result;
     std::vector<wrouter::NetNode> node_vec;
-    wrouter::SmallNetNodes::Instance()->GetAllNode(node_vec);
     // todo (charles) add it back if needed
+    // wrouter::SmallNetNodes::Instance()->GetAllNode(node_vec);
     // for (const auto& item : node_vec) {
     //     std::string ninfo = base::StringUtil::str_fmt("account:%s public_key:%s xip:%s node_id:%s gid:%u version:%llu\n",
     //             item.m_account.c_str(),
@@ -176,7 +176,7 @@ uint32_t MultilayerNetworkChainQuery::Broadcast(uint32_t msg_size, uint32_t coun
     message.set_priority(enum_xpacket_priority_type_critical);
     message.set_is_root(true);
 
-    auto root_ptr = wrouter::GetRoutingTable(kRoot, true);
+    auto root_ptr = wrouter::GetRoutingTable(base::ServiceType{kRoot}, true);
     if (!root_ptr) {
         return 0;
     }
@@ -284,7 +284,7 @@ std::string MultilayerNetworkChainQuery::P2pAddr() {
     assert(global_xid);
     auto nodeid = HexEncode(global_xid->Get());
 
-    auto root_ptr = wrouter::GetRoutingTable(kRoot, true);
+    auto root_ptr = wrouter::GetRoutingTable(base::ServiceType{kRoot}, true);
     if (!root_ptr) {
         return "";
     }

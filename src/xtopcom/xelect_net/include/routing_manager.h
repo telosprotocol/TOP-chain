@@ -20,7 +20,7 @@ namespace elect {
 class RoutingManager {
 public:
     RoutingManager();
-    explicit RoutingManager(uint64_t service_type);
+    explicit RoutingManager(base::ServiceType service_type);
     ~RoutingManager();
     /**
      * @brief init RoutingManager
@@ -35,7 +35,7 @@ public:
 private:
     std::shared_ptr<top::kadmlia::RoutingTable> CreateRoutingTable(base::KadmliaKeyPtr kad_key, std::shared_ptr<transport::Transport> transport, const top::base::Config & config);
 
-    uint64_t service_type_;
+    base::ServiceType service_type_;
     std::shared_ptr<top::kadmlia::RoutingTable> routing_ptr_;
 
     DISALLOW_COPY_AND_ASSIGN(RoutingManager);

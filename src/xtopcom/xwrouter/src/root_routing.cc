@@ -35,8 +35,8 @@ RootRouting::RootRouting(
 RootRouting::~RootRouting() {}
 
 bool RootRouting::UnInit() {
-    if (local_node_ptr_->service_type() != kRoot) {
-        RoutingTablePtr root_routing_ptr = GetRoutingTable(kRoot, true);
+    if (local_node_ptr_->service_type() != base::ServiceType(kRoot)) {
+        RoutingTablePtr root_routing_ptr = GetRoutingTable(base::ServiceType(kRoot), true);
         if (root_routing_ptr) {
             RootRouting* root = dynamic_cast<RootRouting*>(root_routing_ptr.get());
             if (root != nullptr) {
@@ -69,7 +69,7 @@ void RootRouting::SetFreqMessage(transport::protobuf::RoutingMessage& message) {
 }
 
 bool RootRouting::ContainRootId(const std::string& id) {
-    assert(local_node_ptr_->service_type() == kRoot);
+    assert(local_node_ptr_->service_type() == base::ServiceType(kRoot));
     std::unique_lock<std::mutex> lock(root_id_set_mutex_);
     auto iter = root_id_set_.find(id);
     return iter != root_id_set_.end();
@@ -100,10 +100,10 @@ int RootRouting::DropNode(NodeInfoPtr node) {
 
 
 RoutingTablePtr RootRouting::FindRoutingTable(const std::string& msg_des_node_id) {
-    std::vector<uint64_t> vec_type;
+    std::vector<base::ServiceType> vec_type;
     GetAllRegisterType(vec_type);
     TOP_DEBUG("GetAllRegisterType size %d", vec_type.size());
-    auto tmp_routing_table1 = GetRoutingTable(kRoot, true);
+    auto tmp_routing_table1 = GetRoutingTable(base::ServiceType{kRoot}, true);
     auto target_routing_table = tmp_routing_table1;
     if (tmp_routing_table1) {
         std::string tmp_id1 = tmp_routing_table1->get_local_node_info()->id();
@@ -351,8 +351,8 @@ bool RootRouting::Init() {
 int RootRouting::Bootstrap(
         const std::string& peer_ip,
         uint16_t peer_port,
-        uint64_t des_service_type) {
-    return WrouterBaseRouting::Bootstrap(peer_ip, peer_port, kRoot);
+        base::ServiceType des_service_type) {
+    return WrouterBaseRouting::Bootstrap(peer_ip, peer_port, base::ServiceType(kRoot));
 }
 
 // void RootRouting::HandleRootGetNodesRequest(
@@ -618,7 +618,7 @@ void RootRouting::HandleMessage(
 // get elect nodes from root-network base elect-data
 int RootRouting::GetRootNodesV2(
         const std::string& des_kroot_id,
-        uint64_t des_service_type,
+        base::ServiceType des_service_type,
         std::vector<kadmlia::NodeInfoPtr>& nodes) {
     transport::protobuf::RoutingMessage message;
     SetFreqMessage(message);
@@ -638,7 +638,7 @@ int RootRouting::GetRootNodesV2(
 #endif
 
     protobuf::RootGetElectNodesRequest get_nodes_req;
-    get_nodes_req.set_des_service_type(des_service_type);
+    get_nodes_req.set_des_service_type(des_service_type.value());
     get_nodes_req.set_count(kGetNodesSize);
     std::string data;
     if (!get_nodes_req.SerializeToString(&data)) {
@@ -708,7 +708,7 @@ int RootRouting::GetRootNodesV2(
 // get elect nodes from root-network base elect-data
 int RootRouting::GetRootNodesV2Async(
         const std::string& des_kroot_id,
-        uint64_t des_service_type,
+        base::ServiceType des_service_type,
         GetRootNodesV2AsyncCallback cb) {
     TOP_DEBUG_NAME("bluerootasync routing start");
     transport::protobuf::RoutingMessage message;
@@ -729,7 +729,7 @@ int RootRouting::GetRootNodesV2Async(
 #endif
 
     protobuf::RootGetElectNodesRequest get_nodes_req;
-    get_nodes_req.set_des_service_type(des_service_type);
+    get_nodes_req.set_des_service_type(des_service_type.value());
     get_nodes_req.set_count(kGetNodesSize);
     std::string data;
     if (!get_nodes_req.SerializeToString(&data)) {
@@ -759,7 +759,7 @@ int RootRouting::GetRootNodesV2Async(
 void RootRouting::OnGetRootNodesV2Async(
         GetRootNodesV2AsyncCallback cb,
         std::string des_kroot_id,
-        uint64_t des_service_type,
+        base::ServiceType des_service_type,
         int status,
         transport::protobuf::RoutingMessage& message,
         base::xpacket_t& packet) {
@@ -842,7 +842,7 @@ void RootRouting::HandleGetElectNodesRequest(
         TOP_WARN("RootGetElectNodesRequest ParseFromString failed!");
         return;
     }
-    uint64_t des_service_type = get_nodes_req.des_service_type();
+    base::ServiceType des_service_type = base::ServiceType(get_nodes_req.des_service_type());
     auto routing_table = GetRoutingTable(des_service_type, false);
     std::vector<NodeInfoPtr> nodes;
     if (!routing_table) {

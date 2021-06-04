@@ -54,7 +54,7 @@ void RootRoutingManager::Destory() {
 //     return root_table->GetRootNodes(network_id, root_nodes);
 // }
 
-int RootRoutingManager::GetRootNodesV2(const std::string & des_id, uint64_t service_type, std::vector<NodeInfoPtr> & root_nodes) {
+int RootRoutingManager::GetRootNodesV2(const std::string & des_id, base::ServiceType service_type, std::vector<NodeInfoPtr> & root_nodes) {
     std::unique_lock<std::mutex> lock(root_routing_table_mutex_);
 
     if (!root_routing_table_) {
@@ -93,8 +93,8 @@ int RootRoutingManager::InitRootRoutingTable(std::shared_ptr<transport::Transpor
     return kKadSuccess;
 }
 
-std::shared_ptr<RoutingTable> RootRoutingManager::GetRoutingTable(uint64_t service_type) {
-    assert(service_type == kRoot);
+std::shared_ptr<RoutingTable> RootRoutingManager::GetRoutingTable(base::ServiceType service_type) {
+    assert(service_type == base::ServiceType{kRoot});
     std::unique_lock<std::mutex> lock(root_routing_table_mutex_);
     return root_routing_table_;
 }
@@ -103,7 +103,7 @@ int RootRoutingManager::CreateRoutingTable(std::shared_ptr<transport::Transport>
                                            const base::Config & config,
                                            base::KadmliaKeyPtr kad_key_ptr,
                                            bool wait_for_joined) {
-    uint64_t service_type = kRoot;
+    base::ServiceType service_type = base::ServiceType{kRoot};
     assert(kad_key_ptr->xnetwork_id() == kRoot);
     {
         std::unique_lock<std::mutex> lock(root_routing_table_mutex_);
@@ -118,7 +118,7 @@ int RootRoutingManager::CreateRoutingTable(std::shared_ptr<transport::Transport>
     TOP_INFO("enter CreateRoutingTable:%lu", service_type);
     kadmlia::LocalNodeInfoPtr local_node_ptr = kadmlia::CreateLocalInfoFromConfig(config, kad_key_ptr);
     if (!local_node_ptr) {
-        TOP_FATAL("create local_node_ptr for service_type(%ld) failed", (long)service_type);
+        TOP_FATAL("create local_node_ptr for service_type(%ld) failed", (long)service_type.value());
         return kKadFailed;
     }
     RoutingTablePtr routing_table_ptr;
@@ -223,9 +223,9 @@ int RootRoutingManager::CreateRoutingTable(std::shared_ptr<transport::Transport>
 //     return root_table->SetCacheServiceType(service_type);
 // }
 
-int RootRoutingManager::GetRootNodesV2Async(const std::string & des_kroot_id, uint64_t des_service_type, GetRootNodesV2AsyncCallback cb) {
+int RootRoutingManager::GetRootNodesV2Async(const std::string & des_kroot_id, base::ServiceType des_service_type, GetRootNodesV2AsyncCallback cb) {
     TOP_DEBUG("bluerootasync start");
-    auto root_routing = std::dynamic_pointer_cast<RootRouting>(GetRoutingTable(kRoot));
+    auto root_routing = std::dynamic_pointer_cast<RootRouting>(GetRoutingTable(base::ServiceType{kRoot}));
     if (!root_routing) {
         TOP_WARN("get routing table failed!");
         return kadmlia::kKadFailed;
@@ -246,12 +246,12 @@ int RootRoutingManager::GetRootNodesV2Async(const std::string & des_kroot_id, ui
     return kadmlia::kKadSuccess;
 }
 
-void RootRoutingManager::OnGetRootNodesV2Async(GetRootNodesV2AsyncCallback cb, uint64_t service_type, const std::vector<kadmlia::NodeInfoPtr> & nodes) {
+void RootRoutingManager::OnGetRootNodesV2Async(GetRootNodesV2AsyncCallback cb, base::ServiceType service_type, const std::vector<kadmlia::NodeInfoPtr> & nodes) {
     TOP_DEBUG("bluerootasync callback");
     std::vector<kadmlia::NodeInfoPtr> ret_nodes;
     for (uint32_t i = 0; i < nodes.size(); ++i) {
         auto tmp_kad_key = base::GetKadmliaKey(nodes[i]->node_id);
-        uint64_t node_service_type = tmp_kad_key->GetServiceType();
+        base::ServiceType node_service_type = tmp_kad_key->GetServiceType();
         if (service_type != node_service_type) {
             continue;
         }

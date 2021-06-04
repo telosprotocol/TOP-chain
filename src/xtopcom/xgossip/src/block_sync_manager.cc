@@ -96,9 +96,9 @@ void BlockSyncManager::NewBroadcastMessage(transport::protobuf::RoutingMessage& 
         xinfo("[BlockSyncManager] NewBroadcastMessage return 4 data head hash already add:%s", message.gossip().header_hash().c_str());
         return;
     }
-    uint64_t des_service_type;
+    base::ServiceType des_service_type;
     if (message.has_is_root() && message.is_root()) {
-        des_service_type = kRoot;
+        des_service_type = base::ServiceType(kRoot);
     } else {
         des_service_type = GetRoutingServiceType(message.des_node_id());
     }
@@ -124,7 +124,7 @@ bool BlockSyncManager::HeaderHashExists(const std::string& header_hash) {
 
 void BlockSyncManager::AddHeaderHashToQueue(
         const std::string& header_hash,
-        uint64_t service_type) {
+        base::ServiceType service_type) {
     xinfo("[BlockSyncManager] AddHeaderHashToQueue header block hash:%s", header_hash.c_str());
     std::unique_lock<std::mutex> lock(block_map_mutex_);
     block_map_.insert(std::make_pair(
@@ -144,7 +144,7 @@ void BlockSyncManager::SendSyncAsk(std::shared_ptr<SyncBlockItem>& sync_item) {
 	TOP_DEBUG("SendSyncAsk: %llu, header_hash:%s",sync_item->routing_service_type,HexEncode(sync_item->header_hash).c_str());
     auto routing = wrouter::GetRoutingTable(sync_item->routing_service_type);
     if (!routing) {
-		TOP_WARN("no routing table:%llu", sync_item->routing_service_type);
+		TOP_WARN("no routing table:%llu", sync_item->routing_service_type.value());
         return;
     }
     assert(routing);
@@ -153,7 +153,7 @@ void BlockSyncManager::SendSyncAsk(std::shared_ptr<SyncBlockItem>& sync_item) {
     pbft_message.set_type(kGossipBlockSyncAsk);
     pbft_message.set_id(kadmlia::CallbackManager::MessageId());
     pbft_message.set_data(sync_item->header_hash);
-	pbft_message.set_src_service_type(sync_item->routing_service_type);
+	pbft_message.set_src_service_type(sync_item->routing_service_type.value());
 	
 
     std::vector<kadmlia::NodeInfoPtr> select_nodes;
@@ -275,7 +275,7 @@ void BlockSyncManager::CheckHeaderHashQueue() {
     }
 }
 
-uint64_t BlockSyncManager::GetRoutingServiceType(const std::string& des_node_id) {
+base::ServiceType BlockSyncManager::GetRoutingServiceType(const std::string& des_node_id) {
     auto kad_key = base::GetRootKadmliaKey(des_node_id);
     return kad_key->GetServiceType();
 }
@@ -298,7 +298,7 @@ void BlockSyncManager::HandleSyncAsk(
         return;
     }
 
-    auto routing = wrouter::GetRoutingTable(message.src_service_type());
+    auto routing = wrouter::GetRoutingTable(base::ServiceType(message.src_service_type()));
     if (!routing) {
 		TOP_WARN("no routing table:%llu", message.src_service_type());
         return;
@@ -337,7 +337,7 @@ void BlockSyncManager::HandleSyncAck(
         return;
     }
 
-    auto routing = wrouter::GetRoutingTable(message.src_service_type());
+    auto routing = wrouter::GetRoutingTable(base::ServiceType(message.src_service_type()));
     if (!routing) {
 		TOP_WARN("no routing table:%d", message.src_service_type());
         return;
@@ -372,7 +372,7 @@ void BlockSyncManager::HandleSyncRequest(
         return;
     }
 
-    auto routing = wrouter::GetRoutingTable(message.src_service_type());
+    auto routing = wrouter::GetRoutingTable(base::ServiceType(message.src_service_type()));
     if (!routing) {
 		TOP_WARN("no routing table:%d", message.src_service_type());
         return;

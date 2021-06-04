@@ -21,7 +21,7 @@ namespace elect {
 RoutingManager::RoutingManager() {
 }
 
-RoutingManager::RoutingManager(uint64_t service_type) : service_type_(service_type) {
+RoutingManager::RoutingManager(base::ServiceType service_type) : service_type_(service_type) {
 }
 
 RoutingManager::~RoutingManager() {
@@ -30,7 +30,7 @@ RoutingManager::~RoutingManager() {
 int RoutingManager::Init(base::KadmliaKeyPtr kad_key, std::shared_ptr<transport::Transport> transport, const top::base::Config & config) {
     routing_ptr_ = CreateRoutingTable(kad_key, transport, config);
     if (!routing_ptr_) {
-        TOP_KINFO("unregister routing table %llu", kad_key->GetServiceType());
+        TOP_KINFO("unregister routing table %llu", kad_key->GetServiceType().value());
         wrouter::MultiRouting::Instance()->RemoveRoutingTable(kad_key->GetServiceType());
         return top::kadmlia::kKadFailed;
     }
@@ -54,7 +54,7 @@ std::shared_ptr<top::kadmlia::RoutingTable> RoutingManager::CreateRoutingTable(b
         TOP_ERROR("init edge bitvpn routing table failed!");
         return nullptr;
     }
-    uint64_t service_type = kad_key->GetServiceType();
+    base::ServiceType service_type = kad_key->GetServiceType();
     routing_table_ptr->get_local_node_info()->set_service_type(service_type);
     service_type_ = service_type;
     // wrouter::RegisterRoutingTable(service_type, routing_table_ptr);
@@ -69,7 +69,7 @@ std::shared_ptr<top::kadmlia::RoutingTable> RoutingManager::CreateRoutingTable(b
     }
 
     if (first_node) {
-        auto root_routing = wrouter::GetRoutingTable(kRoot, true);
+        auto root_routing = wrouter::GetRoutingTable(base::ServiceType{kRoot}, true);
         local_node_ptr->set_public_ip(root_routing->get_local_node_info()->public_ip());
         local_node_ptr->set_public_port(root_routing->get_local_node_info()->public_port());
         local_node_ptr->set_first_node(true);

@@ -188,7 +188,7 @@ void EcVHost::send_to(common::xnode_id_t const & node_id, xbyte_buffer_t const &
 
     // specially for sync module when node start
     if (SyncMessageWhenStart(vnetwork_message.sender(), vnetwork_message.receiver(), vnetwork_message.message_id())) {
-        auto kroot_rt = wrouter::GetRoutingTable(kRoot, true);
+        auto kroot_rt = wrouter::GetRoutingTable(base::ServiceType{kRoot}, true);
         if (!kroot_rt || kroot_rt->nodes_size() == 0) {
             TOP_WARN("network not joined, send failed, try again ...");
             return;
@@ -220,7 +220,7 @@ void EcVHost::spread_rumor(xbyte_buffer_t const & rumor) const {
 
     // specially for sync module when node start
     if (SyncMessageWhenStart(vnetwork_message.sender(), vnetwork_message.receiver(), vnetwork_message.message_id())) {
-        auto kroot_rt = wrouter::GetRoutingTable(kRoot, true);
+        auto kroot_rt = wrouter::GetRoutingTable(base::ServiceType{kRoot}, true);
         if (!kroot_rt || kroot_rt->nodes_size() == 0) {
             TOP_WARN("network not joined, send failed, try again ...");
             return;
@@ -267,7 +267,7 @@ void EcVHost::spread_rumor(const common::xsharding_info_t & shardInfo, xbyte_buf
 
     // specially for sync module when node start
     if (SyncMessageWhenStart(vnetwork_message.sender(), vnetwork_message.receiver(), vnetwork_message.message_id())) {
-        auto kroot_rt = wrouter::GetRoutingTable(kRoot, true);
+        auto kroot_rt = wrouter::GetRoutingTable(base::ServiceType{kRoot}, true);
         if (!kroot_rt || kroot_rt->nodes_size() == 0) {
             TOP_WARN("network not joined, send failed, try again ...");
             return;

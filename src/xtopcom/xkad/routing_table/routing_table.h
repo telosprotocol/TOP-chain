@@ -60,7 +60,7 @@ public:
 
     virtual bool IsDestination(const std::string & des_node_id, bool check_closest);
     virtual void SetFreqMessage(transport::protobuf::RoutingMessage & message);
-    virtual uint64_t GetRoutingTableType() {
+    virtual base::ServiceType GetRoutingTableType() {
         return local_node_ptr_->service_type();
     }
     virtual void PrintRoutingTable();
@@ -145,8 +145,8 @@ public:
     int SendPing(transport::protobuf::RoutingMessage & message, const std::string & peer_ip, uint16_t peer_port);
 
 protected:
-    virtual int Bootstrap(const std::string & peer_ip, uint16_t peer_port, uint64_t des_service_type);
-    virtual int SendFindClosestNodes(const NodeInfoPtr & node_ptr, int count, const std::vector<NodeInfoPtr> & nodes, uint64_t des_service_type);
+    virtual int Bootstrap(const std::string & peer_ip, uint16_t peer_port, base::ServiceType des_service_type);
+    virtual int SendFindClosestNodes(const NodeInfoPtr & node_ptr, int count, const std::vector<NodeInfoPtr> & nodes, base::ServiceType des_service_type);
 
     bool SetJoin(const std::string & boot_id, const std::string & boot_ip, int boot_port);
     // -1: all bits equal(and return kKadFailed)

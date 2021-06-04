@@ -155,7 +155,7 @@ void WrouterMessageHandler::HandleNodeQuit(
         transport::protobuf::RoutingMessage& message,
         base::xpacket_t& packet) {
     RoutingTablePtr routing_table = GetRoutingTable(
-            message.des_service_type(),
+            base::ServiceType{message.des_service_type()},
             message.has_is_root() && message.is_root());
     if (!routing_table) {
         TOP_WARN("service type[%llu] [%d] has not register routing table.",
@@ -287,7 +287,7 @@ int WrouterMessageHandler::SendData(
         const std::string& peer_ip,
         uint16_t peer_port) {
     RoutingTablePtr routing_table = GetRoutingTable(
-        message.des_service_type(),
+        base::ServiceType{message.des_service_type()},
         message.has_is_root() && message.is_root());
     if (!routing_table) {
         TOP_WARN("routing table not registered[%llu]", message.des_service_type());
@@ -314,7 +314,7 @@ void WrouterMessageHandler::HandleBootstrapJoinRequest(
         transport::protobuf::RoutingMessage& message,
         base::xpacket_t& packet) {
     RoutingTablePtr routing_table = GetRoutingTable(
-        message.des_service_type(),
+        base::ServiceType{message.des_service_type()},
         message.has_is_root() && message.is_root());
     if (!routing_table) {
         TOP_WARN("service type[%llu][%d] has not register routing table.",
@@ -329,7 +329,7 @@ void WrouterMessageHandler::HandleBootstrapJoinResponse(
         base::xpacket_t& packet) {
     TOP_DEBUG("join response coming,[%d]", message.is_root());
     RoutingTablePtr routing_table = GetRoutingTable(
-        message.des_service_type(),
+        base::ServiceType{message.des_service_type()},
         message.has_is_root() && message.is_root());
     if (!routing_table) {
         TOP_WARN("service type[%llu] has not register routing table.", message.des_service_type());

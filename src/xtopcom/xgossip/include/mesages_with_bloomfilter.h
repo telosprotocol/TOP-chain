@@ -10,6 +10,8 @@
 
 #include "xpbase/base/uint64_bloomfilter.h"
 #include "xpbase/base/top_timer.h"
+//todo charles might delete ServiceType in MessageKey here?
+#include "xpbase/base/kad_key/kadmlia_key.h"
 #include "xtransport/proto/transport.pb.h"
 
 namespace top {
@@ -19,7 +21,7 @@ namespace gossip {
 struct MessageKey{
 public:
     MessageKey() {}
-    MessageKey(uint8_t flag,uint32_t hash,uint64_t type)
+    MessageKey(uint8_t flag,uint32_t hash,base::ServiceType type)
                  :super_flag(flag),
                  msg_hash(hash),
                  service_type(type) { }
@@ -40,12 +42,12 @@ public:
     
     uint8_t  super_flag;
     uint32_t msg_hash;
-    uint64_t service_type;
+    base::ServiceType service_type;
 };
 
 struct MessageHash {
 	size_t operator()(const MessageKey& key)const {
-		return std::hash<uint64_t>()(key.msg_hash) ^ std::hash<uint64_t>()(key.service_type);
+		return std::hash<uint64_t>()(key.msg_hash) ^ std::hash<uint64_t>()(key.service_type.value());
     }
 };
 

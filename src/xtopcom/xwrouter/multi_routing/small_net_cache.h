@@ -30,28 +30,28 @@ public:
     static SmallNetNodes * Instance();
     bool Init();
 
-    void GetAllServiceType(std::set<uint64_t> & svec);
-    uint32_t AddNode(NetNode node);
-    bool FindNewNode(NetNode & Fnode, uint64_t service_type);
-    bool FindRandomNode(NetNode & Fnode, uint64_t service_type);
-    bool FindAllNode(std::vector<NetNode> & node_vec, uint64_t service_type);
-    void GetAllNode(std::vector<NetNode> & node_vec);
+    void GetAllServiceType(std::set<base::ServiceType> & svec);
+    uint32_t AddNode(WrouterTableNodes node);
+    bool FindNewNode(WrouterTableNodes & Fnode, base::ServiceType service_type);
+    bool FindRandomNode(WrouterTableNodes & Fnode, base::ServiceType service_type);
+    bool FindAllNode(std::vector<WrouterTableNodes> & node_vec, base::ServiceType service_type);
+    void GetAllNode(std::vector<WrouterTableNodes> & node_vec);
 
 private:
     SmallNetNodes();
     ~SmallNetNodes();
-    void AddNodeLimit(uint64_t service_type, std::deque<NetNode> & nodes, const NetNode & node);
-    void HandleExpired(std::unordered_map<uint64_t, std::vector<std::string>> & expired_vec, std::vector<uint64_t> & unreg_service_type_vec);
+    void AddNodeLimit(base::ServiceType service_type, std::deque<WrouterTableNodes> & nodes, const WrouterTableNodes & node);
+    void HandleExpired(std::unordered_map<base::ServiceType, std::vector<std::string>> & expired_vec, std::vector<base::ServiceType> & unreg_service_type_vec);
     void do_clear_and_reset();
 
 private:
     std::mutex net_nodes_cache_map_mutex_;
     // key is service_type, value is vector of accounts
-    struct NetNodes {
+    struct WrouterTableNodes_queue {
         uint32_t latest_version{0};
-        std::deque<NetNode> nodes;
+        std::deque<WrouterTableNodes> nodes;
     };
-    std::unordered_map<uint64_t, std::shared_ptr<NetNodes>> net_nodes_cache_map_;
+    std::unordered_map<base::ServiceType, std::shared_ptr<WrouterTableNodes_queue>> net_nodes_cache_map_;
 
     std::shared_ptr<base::TimerRepeated> clear_timer_{nullptr};
 
