@@ -7,6 +7,7 @@
 #include "xedge_local_method.hpp"
 #include "xedge_rpc_handler.h"
 #include "xmetrics/xmetrics.h"
+#include "xrpc/xcluster/xcluster_query_manager.h"
 #include "xrpc/xerror/xrpc_error.h"
 #include "xrpc/xjson_proc.h"
 #include "xrpc/xrpc_define.h"
@@ -57,6 +58,7 @@ protected:
     unique_ptr<T> m_edge_handler_ptr;
     unordered_map<pair<string, string>, tx_method_handler> m_edge_tx_method_map;
     unique_ptr<xedge_local_method<T>> m_edge_local_method_ptr;
+    std::shared_ptr<xcluster_query_manager> m_cluster_query_mgr;
     bool m_archive_flag{false};  // for local query
     bool m_enable_sign{true};
 };
@@ -114,7 +116,10 @@ xedge_method_base<T>::xedge_method_base(shared_ptr<xrpc_edge_vhost> edge_vhost,
                                         observer_ptr<base::xvblockstore_t> block_store,
                                         observer_ptr<elect::ElectMain> elect_main,
                                         observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor)
-  : m_edge_local_method_ptr(top::make_unique<xedge_local_method<T>>(elect_main, xip2)), m_archive_flag(archive_flag) {
+  : m_edge_local_method_ptr(top::make_unique<xedge_local_method<T>>(elect_main, xip2))
+  , m_cluster_query_mgr(std::make_shared<xcluster_query_manager>(store, block_store, nullptr))
+  , m_archive_flag(archive_flag)
+{
     m_edge_handler_ptr = top::make_unique<T>(edge_vhost, ioc, election_cache_data_accessor);
     m_edge_handler_ptr->init();
     EDGE_REGISTER_V1_ACTION(T, sendTransaction);
@@ -135,8 +140,17 @@ void xedge_method_base<T>::do_method(shared_ptr<conn_type> & response, xjson_pro
         json_proc.m_tx_type = enum_xrpc_tx_type::enum_xrpc_tx_type;
         iter->second(json_proc, ip);
     } else {
-        json_proc.m_tx_type = enum_xrpc_tx_type::enum_xrpc_query_type;
-        json_proc.m_account_set.emplace(json_proc.m_request_json["params"]["account_addr"].asString());
+        if (m_archive_flag) {
+            xdbg("local arc query method: %s", method.c_str());
+            m_cluster_query_mgr->call_method(json_proc);
+            json_proc.m_response_json[RPC_ERRNO] = RPC_OK_CODE;
+            json_proc.m_response_json[RPC_ERRMSG] = RPC_OK_MSG;
+            write_response(response, json_proc.get_response());
+            return;
+        } else {
+            json_proc.m_tx_type = enum_xrpc_tx_type::enum_xrpc_query_type;
+            json_proc.m_account_set.emplace(json_proc.m_request_json["params"]["account_addr"].asString());
+        }
     }
     assert(json_proc.m_account_set.size());
     forward_method(response, json_proc);
