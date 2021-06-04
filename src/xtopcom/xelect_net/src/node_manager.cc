@@ -64,7 +64,7 @@ int NodeManager::Join(const base::XipParser& xip) {
 }
 
 int NodeManager::Quit(const base::XipParser& xip) {
-    // todo charles add it!
+    // todo charles add it![done]
     // std::shared_ptr<RoutingManager> quit_ptr = nullptr;
     // base::KadmliaKeyPtr kad_key = GetKadmliaKey(xip);
     // {
@@ -83,7 +83,7 @@ int NodeManager::Quit(const base::XipParser& xip) {
 
 
 int NodeManager::DropNodes(const base::XipParser& xip, const std::vector<std::string>& drop_accounts) {
-    // todo charles add it!
+    // todo charles add it![done]
     // base::KadmliaKeyPtr kad_key = GetKadmliaKey(xip);
     // std::vector<std::string> drop_nodes;
     // drop_nodes.reserve(30);

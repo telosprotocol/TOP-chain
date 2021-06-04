@@ -129,7 +129,14 @@ void ElectManager::OnElectUpdated(std::vector<wrouter::WrouterTableNodes> const 
 }
 
 void ElectManager::UpdateRoutingTable(std::vector<wrouter::WrouterTableNodes> const & elect_data, wrouter::WrouterTableNodes const & self_wrouter_nodes) {
-    // todo charles if find this routing table don't add again?
+    base::KadmliaKeyPtr kad_key = base::GetKadmliaKey(self_wrouter_nodes.m_xip2);
+    base::ServiceType service_type = kad_key->GetServiceType();
+
+    // todo charles if find this routing table don't add again?[done]
+    if(wrouter::MultiRouting::Instance()->GetRoutingTable(service_type,false)!=nullptr){
+        xinfo("ElectManager::UpdateRoutingTable get repeated routing table info xip2: service_type:%s", self_wrouter_nodes.m_xip2.to_string(), service_type.info().c_str());
+        return;
+    }
 
     base::Config config = config_;
     if (!config.Set("node", "network_id", self_wrouter_nodes.m_xip2.network_id().value())) {
@@ -142,7 +149,6 @@ void ElectManager::UpdateRoutingTable(std::vector<wrouter::WrouterTableNodes> co
         return;
     }
 
-    base::KadmliaKeyPtr kad_key = base::GetKadmliaKey(self_wrouter_nodes.m_xip2);
 
     std::shared_ptr<top::kadmlia::RoutingTable> routing_table_ptr;
     kadmlia::LocalNodeInfoPtr local_node_ptr = kadmlia::CreateLocalInfoFromConfig(config, kad_key);
@@ -156,7 +162,6 @@ void ElectManager::UpdateRoutingTable(std::vector<wrouter::WrouterTableNodes> co
         TOP_ERROR("init edge bitvpn routing table failed!");
         return;
     }
-    base::ServiceType service_type = kad_key->GetServiceType();
     // routing_table_ptr->get_local_node_info()->set_service_type(service_type);
     // // service_type_ = service_type;
     // // wrouter::RegisterRoutingTable(service_type, routing_table_ptr);
