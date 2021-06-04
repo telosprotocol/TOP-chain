@@ -44,7 +44,7 @@ uint32_t xunit_bstate_t::get_token_price(uint64_t onchain_total_pledge_token) {
     uint64_t initial_total_pledge_token = XGET_ONCHAIN_GOVERNANCE_PARAMETER(initial_total_locked_token);
     xinfo("tgas_disk get total pledge token from beacon: %llu, %llu", initial_total_pledge_token, onchain_total_pledge_token);
     uint64_t total_pledge_token = onchain_total_pledge_token + initial_total_pledge_token;
-    return XGET_ONCHAIN_GOVERNANCE_PARAMETER(total_gas_shard) * XGET_ONCHAIN_GOVERNANCE_PARAMETER(validator_group_count) * TOP_UNIT / total_pledge_token;
+    return XGET_ONCHAIN_GOVERNANCE_PARAMETER(total_gas_shard) * XGET_CONFIG(validator_group_count) * TOP_UNIT / total_pledge_token;
 }
 
 uint64_t xunit_bstate_t::get_total_tgas(uint32_t token_price) const {

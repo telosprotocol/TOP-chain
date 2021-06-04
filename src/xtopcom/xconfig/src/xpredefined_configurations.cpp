@@ -26,8 +26,6 @@ XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(zone_election_trigger_interval);
 XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(edge_election_interval);
 XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(archive_election_interval);
 XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(cluster_election_interval);
-XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(auditor_group_count);
-XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(validator_group_count);
 XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(election_rotation_count_ratio);
 XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(cluster_election_minimum_rotation_ratio);
 XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(min_auditor_group_size);
@@ -142,6 +140,8 @@ XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(award_auditor_credit);
 XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(contract_call_contracts_num);
 
 /* begin of offchain parameters */
+XDEFINE_CONFIGURATION(auditor_group_count);
+XDEFINE_CONFIGURATION(validator_group_count);
 XDEFINE_CONFIGURATION(min_account_deposit);
 XDEFINE_CONFIGURATION(zone_count);
 XDEFINE_CONFIGURATION(cluster_count);

@@ -196,7 +196,7 @@ std::vector<std::uint16_t> xtop_vnetwork_driver::table_ids() const {
         uint32_t zone_count = XGET_CONFIG(zone_count);
         uint32_t cluster_count = XGET_CONFIG(cluster_count);
 
-        auto const auditor_group_count = XGET_ONCHAIN_GOVERNANCE_PARAMETER(auditor_group_count);
+        auto const auditor_group_count = XGET_CONFIG(auditor_group_count);
 
         auto const zone_range = data::book_ids_belonging_to_zone(m_address.zone_id(), zone_count, {0, static_cast<std::uint16_t>(enum_vbucket_has_books_count)});
         auto const cluster_range = data::book_ids_belonging_to_cluster(m_address.cluster_id(), cluster_count, zone_range);
@@ -213,9 +213,9 @@ std::vector<std::uint16_t> xtop_vnetwork_driver::table_ids() const {
             std::uint16_t zone_count = XGET_CONFIG(zone_count);
             std::uint16_t cluster_count = XGET_CONFIG(cluster_count);
 
-            auto const auditor_group_count = XGET_ONCHAIN_GOVERNANCE_PARAMETER(auditor_group_count);
+            auto const auditor_group_count = XGET_CONFIG(auditor_group_count);
 
-            auto const validator_group_count = XGET_ONCHAIN_GOVERNANCE_PARAMETER(validator_group_count);
+            auto const validator_group_count = XGET_CONFIG(validator_group_count);
 
             auto const zone_range = data::book_ids_belonging_to_zone(m_address.zone_id(), zone_count, {0, static_cast<std::uint16_t>(enum_vbucket_has_books_count)});
             auto const cluster_range = data::book_ids_belonging_to_cluster(m_address.cluster_id(), cluster_count, zone_range);

@@ -107,8 +107,8 @@ int32_t xcons_utl::get_groupid_by_table(const xvip2_t & local_xip, uint16_t tabl
     auto const zone_count = XGET_CONFIG(zone_count);
     auto const cluster_count = XGET_CONFIG(cluster_count);
 
-    auto const auditor_group_count = XGET_ONCHAIN_GOVERNANCE_PARAMETER(auditor_group_count);
-    auto const validator_group_count = XGET_ONCHAIN_GOVERNANCE_PARAMETER(validator_group_count);
+    auto const auditor_group_count = XGET_CONFIG(auditor_group_count);
+    auto const validator_group_count = XGET_CONFIG(validator_group_count);
 
     auto const zone_info = data::mapping_to_zone(book_id, zone_count, std::make_pair(static_cast<std::uint16_t>(0), static_cast<std::uint16_t>(enum_vbucket_has_books_count)));
     auto const cluster_info = data::mapping_to_cluster(book_id, cluster_count, top::get<std::pair<std::uint16_t, std::uint16_t>>(zone_info));

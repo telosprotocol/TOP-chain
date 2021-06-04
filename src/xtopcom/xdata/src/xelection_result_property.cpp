@@ -12,7 +12,7 @@
 NS_BEG3(top, data, election)
 
 using common::xaccount_address_t;
-std::vector<std::string> get_property_name_by_addr(common::xaccount_address_t const & sys_contract_addr) {
+std::vector<std::string> get_property_name_by_addr(common::xaccount_address_t const & sys_contract_addr, bool const read_offchain) {
     std::vector<common::xaccount_address_t> sys_addr{xaccount_address_t{sys_contract_rec_elect_rec_addr},
                                                      xaccount_address_t{sys_contract_rec_elect_zec_addr},
                                                      xaccount_address_t{sys_contract_zec_elect_consensus_addr},
@@ -25,9 +25,16 @@ std::vector<std::string> get_property_name_by_addr(common::xaccount_address_t co
         property_name.push_back(get_property_by_group_id(common::xcommittee_group_id));
 
     } else if (sys_contract_addr == sys_addr[2]) {
-        auto const auditor_group_count = XGET_ONCHAIN_GOVERNANCE_PARAMETER(auditor_group_count);
-        for (auto index = common::xauditor_group_id_value_begin; index <= auditor_group_count; ++index) {
-            property_name.push_back(get_property_by_group_id(common::xgroup_id_t{index}));
+        if (read_offchain) {
+            auto const auditor_group_count = XGET_CONFIG(auditor_group_count);
+            for (auto index = common::xauditor_group_id_value_begin; index <= auditor_group_count; ++index) {
+                property_name.push_back(get_property_by_group_id(common::xgroup_id_t{ index }));
+            }
+        } else {
+            auto const auditor_group_count = XGET_CONFIG(auditor_group_count);
+            for (auto index = common::xauditor_group_id_value_begin; index <= auditor_group_count; ++index) {
+                property_name.push_back(get_property_by_group_id(common::xgroup_id_t{ index }));
+            }
         }
     } else if (sys_contract_addr == sys_addr[3] || sys_contract_addr == sys_addr[4]) {
         property_name.push_back(get_property_by_group_id(common::xdefault_group_id));

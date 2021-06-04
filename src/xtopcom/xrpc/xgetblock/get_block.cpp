@@ -148,7 +148,7 @@ xJson::Value get_block_handle::parse_account(const std::string & account) {
 
 void get_block_handle::getGeneralInfos() {
     xJson::Value j;
-    j["shard_num"] = XGET_ONCHAIN_GOVERNANCE_PARAMETER(validator_group_count);
+    j["shard_num"] = XGET_CONFIG(validator_group_count);
     j["shard_gas"] = static_cast<xJson::UInt64>(XGET_ONCHAIN_GOVERNANCE_PARAMETER(total_gas_shard));
     j["init_pledge_token"] = static_cast<xJson::UInt64>(XGET_ONCHAIN_GOVERNANCE_PARAMETER(initial_total_locked_token));
     j["genesis_time"] = static_cast<xJson::UInt64>(xrootblock_t::get_rootblock()->get_cert()->get_gmtime());

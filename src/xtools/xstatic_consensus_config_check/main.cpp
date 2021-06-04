@@ -62,8 +62,8 @@ void check_consensus_str(std::string const & str) {
     std::vector<std::string> group_string_value;
     top::base::xstring_utl::split_string(str, '|', group_string_value);
 
-    auto const auditor_group_count = XGET_ONCHAIN_GOVERNANCE_PARAMETER(auditor_group_count);
-    auto const validator_group_count = XGET_ONCHAIN_GOVERNANCE_PARAMETER(validator_group_count);
+    auto const auditor_group_count = XGET_CONFIG(auditor_group_count);
+    auto const validator_group_count = XGET_CONFIG(validator_group_count);
 
     CHECK(group_string_value.size() == auditor_group_count + validator_group_count, "validator + auditor group num wrong.");
 

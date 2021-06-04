@@ -78,6 +78,11 @@ void xtop_application::start() {
     contract::xcontract_manager_t::instance().instantiate_sys_contracts();
     contract::xcontract_manager_t::instance().setup_blockchains(m_store.get(), m_blockstore.get());
 
+    // load configuration first
+    auto loader = std::make_shared<loader::xconfig_onchain_loader_t>(make_observer(m_store), make_observer(m_bus.get()), make_observer(m_logic_timer));
+    config::xconfig_register_t::get_instance().add_loader(loader);
+    config::xconfig_register_t::get_instance().load();
+
     m_txpool = xtxpool_v2::xtxpool_instance::create_xtxpool_inst(make_observer(m_store), make_observer(m_blockstore.get()), make_observer(m_cert_ptr.get()), make_observer(m_bus.get()));
 
     m_syncstore.attach(new store::xsyncvstore_t(*m_cert_ptr.get(), *m_blockstore.get()));
@@ -87,11 +92,6 @@ void xtop_application::start() {
     txpool_service_thp.push_back(make_object_ptr<base::xiothread_t>());
     txpool_service_thp.push_back(make_object_ptr<base::xiothread_t>());
     m_thread_pools[xtop_thread_pool_type::txpool_service] = txpool_service_thp;
-
-    // load configuration first
-    auto loader = std::make_shared<loader::xconfig_onchain_loader_t>(make_observer(m_store), make_observer(m_bus.get()), make_observer(m_logic_timer));
-    config::xconfig_register_t::get_instance().add_loader(loader);
-    config::xconfig_register_t::get_instance().load();
 
     std::vector<observer_ptr<base::xiothread_t>> sync_account_thread_pool;
     for (uint32_t i = 0; i < 2; i++) {
