@@ -1738,39 +1738,13 @@ namespace top
             //check stored input or not
             if(block_ptr->get_input() != NULL)
             {
-                bool ask_store_input  = false;
-                if(  (block_ptr->get_header()->get_block_class() == base::enum_xvblock_class_full)
-                   ||(block_ptr->get_header()->get_block_level() > base::enum_xvblock_level_unit)
-                   ||(block_ptr->get_block_version_major() < 1) ) //lower version of block keep old way
-                {
-                    //store everything for full block and any container block
-                    ask_store_input  = true;
-                }
-                //XTODO,ask xvunithub.cpp::load_block_from_index handle the case of "ask_store_input is false"
-
-                if(ask_store_input)
-                {
-                    write_block_input_to_db(index_ptr,block_ptr);
-                }
+                write_block_input_to_db(index_ptr,block_ptr);
             }
 
             //check stored output or not
             if(block_ptr->get_output() != NULL)
             {
-                bool ask_store_output = false;
-                if(  (block_ptr->get_header()->get_block_class() == base::enum_xvblock_class_full)
-                   ||(block_ptr->get_header()->get_block_level() > base::enum_xvblock_level_unit)
-                   ||(block_ptr->get_block_version_major() < 1) ) //lower version of block keep old way
-                {
-                    //store everything for full block and any container block
-                    ask_store_output = true;
-                }
-                //XTODO,ask xvunithub.cpp::load_block_from_index handle the case of "ask_store_input is false"
-
-                if(ask_store_output)
-                {
-                    write_block_output_to_db(index_ptr,block_ptr);
-                }
+                write_block_output_to_db(index_ptr,block_ptr);
             }
 
             //maybe this block carry data of offchain and need persisted store
@@ -1797,6 +1771,9 @@ namespace top
                 const std::string blockobj_key = base::xvdbkey_t::create_block_object_key(*this,block_ptr->get_block_hash());
                 if(base::xvchain_t::instance().get_xdbstore()->set_value(blockobj_key, blockobj_bin))
                 {
+                    //has stored entity of input/output inside of block
+                    index_ptr->set_store_flag(base::enum_index_store_flag_input_entity);
+                    index_ptr->set_store_flag(base::enum_index_store_flag_output_entity);
                     index_ptr->set_store_flag(base::enum_index_store_flag_mini_block);
                     xdbg("xblockacct_t::write_block_object_to_db,store object to DB for block(%s)",index_ptr->dump().c_str());
                 }
@@ -1804,12 +1781,6 @@ namespace top
                 {
                     xerror("xblockacct_t::write_block_object_to_db,fail to store header for block(%s)",index_ptr->dump().c_str());
                     return false;
-                }
-                if(block_ptr->get_block_version_major() < 1)
-                {
-                    //lower version has stored entity of input/output inside of block
-                    index_ptr->set_store_flag(base::enum_index_store_flag_input_entity);
-                    index_ptr->set_store_flag(base::enum_index_store_flag_output_entity);
                 }
             }
             return true;
@@ -2150,11 +2121,17 @@ namespace top
             {
                 const std::string block_input_key = base::xvdbkey_t::create_block_input_key(*this,index_ptr->get_block_hash());
                 base::xvchain_t::instance().get_xdbstore()->delete_value(block_input_key);
+                
+                const std::string input_resource_key = base::xvdbkey_t::create_block_input_resource_key(*this,index_ptr->get_block_hash());
+                base::xvchain_t::instance().get_xdbstore()->delete_value(input_resource_key);
             }
             //delete output
             {
                 const std::string block_output_key = base::xvdbkey_t::create_block_output_key(*this,index_ptr->get_block_hash());
                 base::xvchain_t::instance().get_xdbstore()->delete_value(block_output_key);
+                
+                const std::string output_resource_key = base::xvdbkey_t::create_block_output_resource_key(*this,index_ptr->get_block_hash());
+                base::xvchain_t::instance().get_xdbstore()->delete_value(output_resource_key);
             }
             
             //step#3: remove offdata
