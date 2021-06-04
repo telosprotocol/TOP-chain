@@ -6,8 +6,8 @@
 
 #include "xdata/xblocktool.h"
 #include "xtxpool_v2/xtxpool_error.h"
-#include "xtxpool_v2/xtxpool_para.h"
 #include "xtxpool_v2/xtxpool_log.h"
+#include "xtxpool_v2/xtxpool_para.h"
 
 namespace top {
 namespace xtxpool_v2 {
@@ -233,6 +233,33 @@ xcons_transaction_ptr_t xtxpool_t::get_unconfirmed_tx(const std::string & from_t
         return nullptr;
     }
     return table->get_unconfirmed_tx(to_table_addr, receipt_id);
+}
+
+const std::vector<xtxpool_table_lacking_receipt_ids_t> xtxpool_t::get_lacking_recv_tx_ids(uint8_t zone, uint16_t subaddr, uint32_t max_num) const {
+    xassert(is_table_subscribed(zone, subaddr));
+    xassert(m_tables[zone][subaddr] != nullptr);
+    if (m_tables[zone][subaddr] != nullptr) {
+        return m_tables[zone][subaddr]->get_lacking_recv_tx_ids(max_num);
+    }
+    return {};
+}
+
+const std::vector<xtxpool_table_lacking_confirm_tx_hashs_t> xtxpool_t::get_lacking_confirm_tx_hashs(uint8_t zone, uint16_t subaddr, uint32_t max_num) const {
+    xassert(is_table_subscribed(zone, subaddr));
+    xassert(m_tables[zone][subaddr] != nullptr);
+    if (m_tables[zone][subaddr] != nullptr) {
+        return m_tables[zone][subaddr]->get_lacking_confirm_tx_hashs(max_num);
+    }
+    return {};
+}
+
+bool xtxpool_t::need_sync_lacking_receipts(uint8_t zone, uint16_t subaddr) const {
+    xassert(is_table_subscribed(zone, subaddr));
+    xassert(m_tables[zone][subaddr] != nullptr);
+    if (m_tables[zone][subaddr] != nullptr) {
+        return m_tables[zone][subaddr]->need_sync_lacking_receipts();
+    }
+    return false;
 }
 
 bool xtxpool_t::is_table_subscribed(uint8_t zone, uint16_t table_id) const {

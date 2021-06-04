@@ -19,6 +19,7 @@
 #include <set>
 #include <string>
 #include <vector>
+#include <map>
 
 NS_BEG2(top, xtxpool_service_v2)
 using xtxpool_service_v2::xcons_utl;
@@ -73,6 +74,7 @@ public:
     xcons_transaction_ptr_t query_tx(const std::string & account, const uint256_t & hash) const override {
         return nullptr;
     };
+    void pull_lacking_receipts(uint64_t now, xcovered_tables_t & covered_tables) override;
 
 private:
     bool is_belong_to_service(xtable_id_t tableid) const;
@@ -90,9 +92,10 @@ private:
     void send_receipt_first_time(data::xcons_transaction_ptr_t & cons_tx, xblock_t * cert_block);
     xcons_transaction_ptr_t create_confirm_tx_by_hash(const uint256_t & hash);
     xcons_transaction_ptr_t get_confirmed_tx(const uint256_t & hash);
-    void send_pull_receipts_of_confirm(xreceipt_pull_confirm_receipt_t pulled_receipt);
-    void send_pull_receipts_of_recv(xreceipt_pull_recv_receipt_t pulled_receipt);
+    void send_pull_receipts_of_confirm(xreceipt_pull_confirm_receipt_t & pulled_receipt);
+    void send_pull_receipts_of_recv(xreceipt_pull_recv_receipt_t & pulled_receipt);
     void send_push_receipts(xreceipt_push_t &pushed_receipt, vnetwork::xvnode_address_t const & target);
+    void send_receipt_sync_msg(const vnetwork::xmessage_t & msg, const std::string & target_table_addr);
 
 private:
     xvip2_t m_xip;

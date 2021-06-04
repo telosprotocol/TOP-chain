@@ -38,6 +38,8 @@ public:
     bool is_account_need_update(const std::string & account_addr) const;
     void update_receiptid_state(const base::xreceiptid_state_ptr_t & receiptid_state);
     bool is_repeat_tx(const std::shared_ptr<xtx_entry> & tx) const;
+    const std::vector<xtxpool_table_lacking_receipt_ids_t> get_lacking_recv_tx_ids(uint32_t max_num) const;
+    const std::vector<xtxpool_table_lacking_receipt_ids_t> get_lacking_confirm_tx_ids(uint32_t max_num) const;
 
 private:
     void queue_to_pending();

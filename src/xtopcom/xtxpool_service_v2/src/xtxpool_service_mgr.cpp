@@ -228,14 +228,17 @@ void xtxpool_service_mgr::on_timer() {
     bool is_time_for_recover_unconfirmed_txs = xreceipt_strategy_t::is_time_for_recover_unconfirmed_txs(now);
     typedef std::tuple<base::enum_xchain_zone_index, uint32_t, uint32_t> table_boundary_t;
     std::vector<table_boundary_t> table_boundarys;
-    std::vector<std::shared_ptr<xtxpool_service_face>> service_vec;
+    std::vector<std::shared_ptr<xtxpool_service_face>> pull_lacking_receipts_service_vec;
+    std::vector<std::shared_ptr<xtxpool_service_face>> receipts_recender_service_vec;
+
     {
         std::lock_guard<std::mutex> lock(m_mutex);
         for (auto & iter : m_service_map) {
             auto service = iter.second;
             // only receipt sender need recover unconfirmed txs.
             if (service->is_send_receipt_role()) {
-                service_vec.push_back(service);
+                pull_lacking_receipts_service_vec.insert(pull_lacking_receipts_service_vec.begin(), service);
+                receipts_recender_service_vec.push_back(service);
                 if (is_time_for_recover_unconfirmed_txs) {
                     base::enum_xchain_zone_index zone_id;
                     uint32_t fount_table_id;
@@ -244,6 +247,8 @@ void xtxpool_service_mgr::on_timer() {
                     table_boundary_t table_boundary(zone_id, fount_table_id, back_table_id);
                     table_boundarys.push_back(table_boundary);
                 }
+            } else {
+                pull_lacking_receipts_service_vec.push_back(service);
             }
         }
     }
@@ -260,7 +265,12 @@ void xtxpool_service_mgr::on_timer() {
         }
     }
 
-    for (auto service : service_vec) {
+    xcovered_tables_t covered_tables;
+    for (auto service : pull_lacking_receipts_service_vec) {
+        service->pull_lacking_receipts(now, covered_tables);
+    }
+
+    for (auto service : receipts_recender_service_vec) {
         service->resend_receipts(now);
     }
 }

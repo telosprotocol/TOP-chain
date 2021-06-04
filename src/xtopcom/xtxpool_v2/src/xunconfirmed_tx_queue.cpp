@@ -363,4 +363,8 @@ xcons_transaction_ptr_t xunconfirmed_tx_queue_t::get_unconfirmed_tx(const std::s
     return m_peer_tables.find(peer_table_sid, receipt_id);
 }
 
+xcons_transaction_ptr_t xunconfirmed_tx_queue_t::get_unconfirmed_tx(base::xtable_shortid_t peer_table_sid, uint64_t receipt_id) const {
+    return m_peer_tables.find(peer_table_sid, receipt_id);
+}
+
 NS_END2

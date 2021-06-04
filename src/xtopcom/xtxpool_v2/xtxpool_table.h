@@ -85,6 +85,9 @@ public:
     void update_locked_txs(const std::vector<tx_info_t> & locked_tx_vec);
     void update_receiptid_state(const base::xreceiptid_state_ptr_t & receiptid_state);
     xcons_transaction_ptr_t get_unconfirmed_tx(const std::string & to_table_addr, uint64_t receipt_id) const;
+    const std::vector<xtxpool_table_lacking_receipt_ids_t> get_lacking_recv_tx_ids(uint32_t max_num) const;
+    const std::vector<xtxpool_table_lacking_confirm_tx_hashs_t> get_lacking_confirm_tx_hashs(uint32_t max_num) const;
+    bool need_sync_lacking_receipts() const;
 
 private:
     enum_xtxpool_error_type update_reject_rule(const std::string & account, const data::xblock_t * unit_block);
