@@ -322,6 +322,11 @@ int32_t xtransaction_create_contract_account::target_action_exec() {
 }
 
 int32_t xtransaction_run_contract::source_fee_exec() {
+#if defined(XENABLE_MOCK_ZEC_STAKE)
+    if (is_sys_contract_address(common::xaccount_address_t{ m_trans->get_target_addr() }) && (m_target_action.m_function_name == "nodeJoinNetwork")) {
+        m_account_ctx->token_deposit(XPROPERTY_BALANCE_AVAILABLE, base::vtoken_t(10000000000));
+    }
+#endif
     int32_t ret{0};
     if (m_fee.need_use_tgas_disk(m_trans->get_source_addr(), m_trans->get_target_addr(), m_target_action.m_function_name)) {
         ret = m_fee.update_tgas_disk_sender(m_source_action.m_asset_out.m_amount, true);

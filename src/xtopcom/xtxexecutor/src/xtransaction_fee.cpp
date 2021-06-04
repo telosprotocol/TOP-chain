@@ -78,11 +78,6 @@ int32_t xtransaction_fee_t::update_tgas_sender(uint64_t& used_deposit, bool is_c
 
 bool xtransaction_fee_t::need_use_tgas_disk(const std::string &source_addr, const std::string &target_addr, const std::string &func_name){
     xdbg("need_use_tgas_disk:%s, %s", target_addr.c_str(), func_name.c_str());
-#ifdef XENABLE_MOCK_ZEC_STAKE
-    if (is_sys_contract_address(common::xaccount_address_t{ target_addr }) && (func_name == "nodeJoinNetwork")){
-        return false;
-    }
-#endif
     return !is_sys_contract_address(common::xaccount_address_t{ source_addr });
 }
 
