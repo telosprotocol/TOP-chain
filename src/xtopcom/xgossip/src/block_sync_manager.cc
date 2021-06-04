@@ -141,7 +141,7 @@ void BlockSyncManager::SetRoutingTablePtr(kadmlia::RoutingTablePtr& routing_tabl
 }
 
 void BlockSyncManager::SendSyncAsk(std::shared_ptr<SyncBlockItem>& sync_item) {
-	TOP_DEBUG("SendSyncAsk: %llu, header_hash:%s",sync_item->routing_service_type,HexEncode(sync_item->header_hash).c_str());
+	TOP_DEBUG("SendSyncAsk: %llu, header_hash:%s",sync_item->routing_service_type.value(),HexEncode(sync_item->header_hash).c_str());
     auto routing = wrouter::GetRoutingTable(sync_item->routing_service_type);
     if (!routing) {
 		TOP_WARN("no routing table:%llu", sync_item->routing_service_type.value());

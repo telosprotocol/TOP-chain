@@ -110,7 +110,7 @@ RoutingTablePtr RootRouting::FindRoutingTable(const std::string& msg_des_node_id
         for (auto& tmp_service_type : vec_type) {
             auto tmp_routing_table2 = GetRoutingTable(tmp_service_type, true);
             if (!tmp_routing_table2) {
-                TOP_WARN2("GetRoutingTable %llu empty", tmp_service_type);
+                TOP_WARN2("GetRoutingTable %llu empty", tmp_service_type.value());
                 continue;
             }
             std::string tmp_id2 = tmp_routing_table2->get_local_node_info()->id();
@@ -846,7 +846,7 @@ void RootRouting::HandleGetElectNodesRequest(
     auto routing_table = GetRoutingTable(des_service_type, false);
     std::vector<NodeInfoPtr> nodes;
     if (!routing_table) {
-        TOP_WARN("GetRoutingTable failed for service_type:%llu", des_service_type);
+        TOP_WARN("GetRoutingTable failed for service_type:%llu", des_service_type.value());
         return;
     }
     auto local_node_ptr = routing_table->get_local_node_info();

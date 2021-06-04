@@ -22,29 +22,18 @@ namespace base {
 class ServiceType {
 public:
     ServiceType() {}
-    explicit ServiceType(uint64_t type) : m_type{type} {}
+    explicit ServiceType(uint64_t type);
 
-#define IS_BROADCAST_HEIGHT(service_type_value)                                \
-    ((service_type_value & 0x1FFFFF) == 0x1FFFFF)
-#define BROADCAST_HEIGHT(service_type_value) ((service_type_value | 0x1FFFFF))
-    bool operator==(ServiceType const &other) const {
-        if (IS_BROADCAST_HEIGHT(other.value()) || IS_BROADCAST_HEIGHT(m_type)) {
-            return BROADCAST_HEIGHT(other.value()) == BROADCAST_HEIGHT(m_type);
-        } else {
-            return other.value() == m_type;
-        }
-    }
-    bool operator!=(ServiceType const &other) const {
-        return !(*this == other);
-    }
-    bool operator<(ServiceType const &other) const {
-        return m_type < other.value();
-    }
+    bool operator==(ServiceType const &other) const;
+    bool operator!=(ServiceType const &other) const;
+    bool operator<(ServiceType const &other) const;
 
-    uint64_t value() const { return m_type; }
+    uint64_t value() const;
+    std::string info() const;
 
 private:
     uint64_t m_type{0};
+    std::string m_info{"uninitialized"};
 };
 
 class KadmliaKey {
@@ -95,6 +84,8 @@ base::KadmliaKeyPtr GetKadmliaKey(std::string const &node_id);
 
 namespace std {
 template <> struct hash<top::base::ServiceType> {
-    size_t operator()(const top::base::ServiceType &k) const { return static_cast<size_t>(k.value()); }
+    size_t operator()(const top::base::ServiceType &k) const {
+        return static_cast<size_t>(k.value());
+    }
 };
 } // namespace std

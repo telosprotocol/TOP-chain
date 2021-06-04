@@ -13,9 +13,9 @@
 #include "xbase/xutl.h"
 #include "xutility/xhash.h"
 
+#include <assert.h>
 #include <ostream>
 #include <sstream>
-#include <assert.h>
 // #include "xcrypto/xckey.h"
 // #include "xutility/xhash.h"
 namespace top {
@@ -37,6 +37,37 @@ namespace base {
     ((service_id |= ((uint64_t)(height)&0x1FFFFFULL)))
 // #define set_kad_root(service_id) ((service_id |= (0xFFFFFFULL)))
 
+ServiceType::ServiceType(uint64_t type) : m_type{type} {
+    std::string info{""};
+    info += " [network " + std::to_string((type >> 43)) + "]-";
+    info += "[zone " + std::to_string((type << 21) >> (21 + 36)) + "]-";
+    info += "[cluster " + std::to_string((type << 28) >> (28 + 29)) + "]-";
+    info += "[group " + std::to_string((type << 35) >> (35 + 21)) + "]-";
+    info += "[height " + std::to_string((type << 43) >> 43) + "]";
+    m_info = info;
+}
+
+#define IS_BROADCAST_HEIGHT(service_type_value)                                \
+    ((service_type_value & 0x1FFFFF) == 0x1FFFFF)
+#define BROADCAST_HEIGHT(service_type_value) ((service_type_value | 0x1FFFFF))
+
+bool ServiceType::operator==(ServiceType const &other) const {
+    if (IS_BROADCAST_HEIGHT(other.value()) || IS_BROADCAST_HEIGHT(m_type)) {
+        return BROADCAST_HEIGHT(other.value()) == BROADCAST_HEIGHT(m_type);
+    } else {
+        return other.value() == m_type;
+    }
+}
+bool ServiceType::operator!=(ServiceType const &other) const {
+    return !(*this == other);
+}
+bool ServiceType::operator<(ServiceType const &other) const {
+    return m_type < other.value();
+}
+
+uint64_t ServiceType::value() const { return m_type; }
+
+std::string ServiceType::info() const { return m_info; }
 
 ServiceType CreateServiceType(common::xip2_t const &xip) {
     uint64_t res{0};
@@ -78,7 +109,8 @@ base::KadmliaKeyPtr GetRootKadmliaKey(std::string const &node_id) {
     set_network_id_to_xip2(_xvip, kRootNetworkId);
     common::xip2_t xip(_xvip);
     assert(xip.network_id().value() == kRootNetworkId);
-    xdbg("Charles Debug get root kad key: xip:%s node_id: %s", xip.to_string().c_str(),node_id.c_str());
+    xdbg("Charles Debug get root kad key: xip:%s node_id: %s",
+         xip.to_string().c_str(), node_id.c_str());
     return GetKadmliaKey(xip);
 }
 
@@ -98,21 +130,22 @@ std::vector<uint64_t> split(std::string s, char sep) {
 }
 
 KadmliaKey::KadmliaKey(std::string const &from_str) {
-    xdbg("Charles Debug KadmliaKey %s",from_str.c_str());
+    xdbg("Charles Debug KadmliaKey %s", from_str.c_str());
     assert(from_str.size() == 33 && from_str[16] == '.');
-    auto low_str = from_str.substr(0,16);
-    auto high_str = from_str.substr(17,32);
+    auto low_str = from_str.substr(0, 16);
+    auto high_str = from_str.substr(17, 32);
     std::istringstream low_sstr(low_str);
     std::istringstream high_sstr(high_str);
-    uint64_t low_part,high_part; 
-    low_sstr>>std::hex>>low_part;
-    high_sstr>>std::hex>>high_part;
+    uint64_t low_part, high_part;
+    low_sstr >> std::hex >> low_part;
+    high_sstr >> std::hex >> high_part;
     xdbg("Charles Debug KadmliaKey %s,%s", low_str.c_str(), high_str.c_str());
-    xip_ = common::xip2_t{low_part,high_part};
+    xip_ = common::xip2_t{low_part, high_part};
 }
 
 std::string KadmliaKey::Get() {
-    xdbg("Charles Debug KadmliaKey size: 2 %zu : %s", xip_.to_string().size(), xip_.to_string().c_str());
+    xdbg("Charles Debug KadmliaKey size: 2 %zu : %s", xip_.to_string().size(),
+         xip_.to_string().c_str());
     return xip_.to_string();
 }
 

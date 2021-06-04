@@ -46,7 +46,7 @@ base::KadmliaKeyPtr directly_address(vnetwork::xvnode_address_t const & address)
     common::xip2_t xip{address.network_id(), address.zone_id(), address.cluster_id(), address.group_id(), address.slot_id(), address.sharding_size(), address.version().value()};
     base::KadmliaKeyPtr kad_key_ptr = base::GetKadmliaKey(xip);
     
-    xdbg("adapt raw p2p_addr: %s platform_addr: %s service_type: %lld", address.to_string().c_str(), kad_key_ptr->Get().c_str(), kad_key_ptr->GetServiceType());
+    xdbg("adapt raw p2p_addr: %s platform_addr: %s service_type: %lld", address.to_string().c_str(), kad_key_ptr->Get().c_str(), kad_key_ptr->GetServiceType().value());
     return kad_key_ptr;
 }
 
@@ -82,7 +82,7 @@ base::KadmliaKeyPtr adapt_address(const vnetwork::xvnode_address_t & address) {
     //     kad_key_ptr = base::GetKadmliaKey(xip);
     // }
 
-    xdbg("adapt raw p2p_addr: %s platform_addr: %s service_type: %lld", address.to_string().c_str(), kad_key_ptr->Get().c_str(), kad_key_ptr->GetServiceType());
+    xdbg("adapt raw p2p_addr: %s platform_addr: %s service_type: %lld", address.to_string().c_str(), kad_key_ptr->Get().c_str(), kad_key_ptr->GetServiceType().value());
     return kad_key_ptr;
 }
 
@@ -115,7 +115,7 @@ base::KadmliaKeyPtr adapt_address(const common::xsharding_info_t & address) {
         kad_key_ptr = base::GetKadmliaKey(xip);
     }
     
-    xdbg("adapt raw p2p_addr: %s platform_addr: %s service_type: %lld", address.to_string().c_str(), kad_key_ptr->Get().c_str(), kad_key_ptr->GetServiceType());
+    xdbg("adapt raw p2p_addr: %s platform_addr: %s service_type: %lld", address.to_string().c_str(), kad_key_ptr->Get().c_str(), kad_key_ptr->GetServiceType().value());
     return kad_key_ptr;
 
     // base::XipParser xip;

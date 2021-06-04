@@ -108,14 +108,14 @@ int RootRoutingManager::CreateRoutingTable(std::shared_ptr<transport::Transport>
     {
         std::unique_lock<std::mutex> lock(root_routing_table_mutex_);
         if (root_routing_table_ != nullptr) {
-            TOP_WARN("service type[%lu] has added!", service_type);
+            TOP_WARN("service type[%lu] has added!", service_type.value());
             return kKadSuccess;
         }
     }
 
     std::set<std::pair<std::string, uint16_t>> public_endpoints_config;
     GetPublicEndpointsConfig(config, public_endpoints_config);
-    TOP_INFO("enter CreateRoutingTable:%lu", service_type);
+    TOP_INFO("enter CreateRoutingTable:%lu", service_type.value());
     kadmlia::LocalNodeInfoPtr local_node_ptr = kadmlia::CreateLocalInfoFromConfig(config, kad_key_ptr);
     if (!local_node_ptr) {
         TOP_FATAL("create local_node_ptr for service_type(%ld) failed", (long)service_type.value());

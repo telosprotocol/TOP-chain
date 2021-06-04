@@ -50,7 +50,7 @@ bool MessageWithBloomfilter::StopGossip(const MessageKey&msg_key, uint32_t stop_
     auto iter = messsage_bloomfilter_map_.find(msg_key);
     if (iter != messsage_bloomfilter_map_.end()) {
         TOP_DEBUG("service_type:%llu msg_hash:%u stop_times:%d",
-                  msg_key.service_type,msg_key.msg_hash,iter->second);
+                  msg_key.service_type.value(),msg_key.msg_hash,iter->second);
         if (iter->second >= stop_times) {
             return true;
         }

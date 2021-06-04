@@ -71,10 +71,10 @@ kadmlia::RoutingTablePtr WrouterHandler::FindRoutingTable(
     if (tmp_routing_table1) {
         std::string tmp_id1 = tmp_routing_table1->get_local_node_info()->id();
         for (auto& tmp_service_type : vec_type) {
-            TOP_DEBUG("vec_type: %llu compare", tmp_service_type);
+            TOP_DEBUG("vec_type: %llu compare", tmp_service_type.value());
             auto tmp_routing_table2 = GetRoutingTable(tmp_service_type, true);
             if (!tmp_routing_table2) {
-                TOP_WARN2("GetRoutingTable %llu empty", tmp_service_type);
+                TOP_WARN2("GetRoutingTable %llu empty", tmp_service_type.value());
                 continue;
             }
             std::string tmp_id2 = tmp_routing_table2->get_local_node_info()->id();

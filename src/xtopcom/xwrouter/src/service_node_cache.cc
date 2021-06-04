@@ -48,7 +48,7 @@ bool ServiceNodes::GetRootNodes(base::ServiceType service_type, std::vector<kadm
         for (const auto & item : node_vec) {
             TOP_DEBUG("getrootnodes %s %s:%u %llu", HexEncode(item->node_id).c_str(), (item->public_ip).c_str(), item->public_port, item->hash64);
         }
-        TOP_DEBUG("getrootnodes of service_type: %llu ok, size: %d", service_type, node_vec.size());
+        TOP_DEBUG("getrootnodes of service_type: %llu ok, size: %d", service_type.value(), node_vec.size());
         return true;
     }
 
@@ -61,13 +61,13 @@ bool ServiceNodes::GetRootNodes(base::ServiceType service_type, std::vector<kadm
         auto cb = std::bind(&ServiceNodes::OnGetRootNodesAsync, this, _1, _2);
         RootRoutingManager::Instance()->GetRootNodesV2Async(kad_key->Get(), service_type, cb);  // just call
     }
-    TOP_WARN("getrootnodes of service_type: %llu failed", service_type);
+    TOP_WARN("getrootnodes of service_type: %llu failed", service_type.value());
     return false;
 }
 
 bool ServiceNodes::GetRootNodes(base::ServiceType service_type, const std::string & des_node_id, kadmlia::NodeInfoPtr & node_ptr) {
     if (FindNode(service_type, des_node_id, node_ptr)) {
-        TOP_DEBUG("getrootnodes of service_type: %llu ok", service_type);
+        TOP_DEBUG("getrootnodes of service_type: %llu ok", service_type.value());
         return true;
     }
 
@@ -80,7 +80,7 @@ bool ServiceNodes::GetRootNodes(base::ServiceType service_type, const std::strin
         auto cb = std::bind(&ServiceNodes::OnGetRootNodesAsync, this, _1, _2);
         RootRoutingManager::Instance()->GetRootNodesV2Async(kad_key->Get(), service_type, cb);  // just call
     }
-    TOP_WARN("getrootnodes of service_type: %llu failed", service_type);
+    TOP_WARN("getrootnodes of service_type: %llu failed", service_type.value());
     return false;
 }
 
@@ -124,7 +124,7 @@ bool ServiceNodes::FindNode(base::ServiceType service_type, const std::string & 
                 uint32_t index = RandomUint32() % size;
                 node = (_p.second)[index];  // random
             }
-            TOP_DEBUG("find node:(%s:%d) service_node of service_type: %llu", (node->public_ip).c_str(), node->public_port, service_type);
+            TOP_DEBUG("find node:(%s:%d) service_node of service_type: %llu", (node->public_ip).c_str(), node->public_port, service_type.value());
             return true;
         }
     }
@@ -132,17 +132,17 @@ bool ServiceNodes::FindNode(base::ServiceType service_type, const std::string & 
 
     auto ifind = service_nodes_cache_map_.find(service_type);
     if (ifind == service_nodes_cache_map_.end()) {
-        TOP_WARN("can't find service_node of service_type: %llu", service_type);
+        TOP_WARN("can't find service_node of service_type: %llu", service_type.value());
         return false;
     }
     if (ifind->second.empty()) {
-        TOP_WARN("can't find service_node of service_type: %llu", service_type);
+        TOP_WARN("can't find service_node of service_type: %llu", service_type.value());
         return false;
     }
     for (auto & node_ptr : ifind->second) {
         if (node_ptr->node_id == des_node_id) {
             node = node_ptr;
-            TOP_DEBUG("find node of des_node_id:%s directly ok", HexEncode(des_node_id).c_str());
+            TOP_DEBUG("find node of des_node_id:%s directly ok", des_node_id.c_str());
             break;
         }
     }
@@ -152,7 +152,7 @@ bool ServiceNodes::FindNode(base::ServiceType service_type, const std::string & 
         node = (ifind->second)[index];  // random
     }
 
-    TOP_DEBUG("find node:(%s:%d) service_node of service_type: %llu", (node->public_ip).c_str(), node->public_port, service_type);
+    TOP_DEBUG("find node:(%s:%d) service_node of service_type: %llu", (node->public_ip).c_str(), node->public_port, service_type.value());
     return true;
 }
 
@@ -173,7 +173,7 @@ bool ServiceNodes::FindNode(base::ServiceType service_type, std::vector<kadmlia:
                     node_vec.push_back((_p.second)[index + i]);
                 }
             }
-            TOP_DEBUG("find  %d service_node of service_type: %llu", size, service_type);
+            TOP_DEBUG("find  %d service_node of service_type: %llu", size, service_type.value());
             return true;
         }
     }
@@ -182,11 +182,11 @@ bool ServiceNodes::FindNode(base::ServiceType service_type, std::vector<kadmlia:
 
     auto ifind = service_nodes_cache_map_.find(service_type);
     if (ifind == service_nodes_cache_map_.end()) {
-        TOP_WARN("can't find service_node of service_type: %llu", service_type);
+        TOP_WARN("can't find service_node of service_type: %llu", service_type.value());
         return false;
     }
     if (ifind->second.empty()) {
-        TOP_WARN("can't find service_node of service_type: %llu", service_type);
+        TOP_WARN("can't find service_node of service_type: %llu", service_type.value());
         return false;
     }
 
@@ -204,7 +204,7 @@ bool ServiceNodes::FindNode(base::ServiceType service_type, std::vector<kadmlia:
             node_vec.push_back((ifind->second)[index + i]);
         }
     }
-    TOP_DEBUG("find  %d service_node of service_type: %llu", size, service_type);
+    TOP_DEBUG("find  %d service_node of service_type: %llu", size, service_type.value());
     return true;
 }
 
@@ -225,11 +225,11 @@ bool ServiceNodes::AddNode(base::ServiceType service_type, kadmlia::NodeInfoPtr 
     base::ServiceType node_service_type = kad_key->GetServiceType();
     if (node_service_type != service_type) {
         TOP_WARN("node[%s](%s:%d)node_service_type: %llu not equal service_type: %llu",
-                 HexEncode(node->node_id).c_str(),
+                 (node->node_id).c_str(),
                  (node->public_ip).c_str(),
                  node->public_port,
-                 node_service_type,
-                 service_type);
+                 node_service_type.value(),
+                 service_type.value());
         return false;
     }
 
@@ -244,15 +244,15 @@ bool ServiceNodes::AddNode(base::ServiceType service_type, kadmlia::NodeInfoPtr 
     } else {
         for (auto & nptr : ifind->second) {
             if (nptr->node_id == node->node_id) {
-                TOP_DEBUG("already has node:%s %s:%d for service_type: %llu", HexEncode(node->node_id).c_str(), (node->public_ip).c_str(), node->public_port, service_type);
+                TOP_DEBUG("already has node:%s %s:%d for service_type: %llu", node->node_id.c_str(), (node->public_ip).c_str(), node->public_port, service_type.value());
                 return false;
             }
         }
         (ifind->second).push_back(node);
     }
     TOP_DEBUG("addnode service_type: %llu, service_node:%s %s:%d  now size: %d",
-              service_type,
-              HexEncode(node->node_id).c_str(),
+              service_type.value(),
+              (node->node_id).c_str(),
               (node->public_ip).c_str(),
               node->public_port,
               service_nodes_cache_map_[service_type].size());
@@ -271,8 +271,8 @@ void ServiceNodes::RemoveExpired(const std::unordered_map<base::ServiceType, std
             if (tfind != exitem.second.end()) {
                 // find expired node
                 TOP_DEBUG("remove expired service node service_type:%llu id:%s %s:%d",
-                          exitem.first,
-                          HexEncode((*iter)->node_id).c_str(),
+                          exitem.first.value(),
+                          ((*iter)->node_id).c_str(),
                           ((*iter)->public_ip).c_str(),
                           (*iter)->public_port);
                 iter = service_nodes_cache_map_[exitem.first].erase(iter);
@@ -289,10 +289,10 @@ void ServiceNodes::do_update() {
     TOP_DEBUG("small net nodes getallservicetype size: %d", service_type_vec.size());
     for (auto & item : service_type_vec) {
         base::ServiceType service_type = item;
-        TOP_DEBUG("begin do_update service_type: %llu", service_type);
+        TOP_DEBUG("begin do_update service_type: %llu", service_type.value());
         std::vector<WrouterTableNodes> node_vec;
         if (!small_net_nodes_->FindAllNode(node_vec, service_type) || node_vec.empty()) {
-            TOP_WARN("can't find nodes of service_type: %llu", service_type);
+            TOP_WARN("can't find nodes of service_type: %llu", service_type.value());
             continue;
         }
 

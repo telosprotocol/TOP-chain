@@ -133,14 +133,14 @@ int32_t WrouterXidHandler::SendGeneral(transport::protobuf::RoutingMessage & mes
     } else {
         routing_table = FindRoutingTable(false, service_type, false);
         if (!routing_table) {
-            TOP_DEBUG("FindRoutingTable failed of service_type: %llu, try crossing network", service_type);
+            TOP_DEBUG("FindRoutingTable failed of service_type: %llu, try crossing network", service_type.value());
 
-            TOP_DEBUG("crossing network from local_xid: %s to des: %llu", (global_xid->Get()).c_str(), service_type);
+            TOP_DEBUG("crossing network from local_xid: %s to des: %llu", (global_xid->Get()).c_str(), service_type.value());
 
             std::vector<kadmlia::NodeInfoPtr> des_nodes;
             kadmlia::NodeInfoPtr des_node_ptr;
             if (!wrouter::ServiceNodes::Instance()->GetRootNodes(service_type, message.des_node_id(), des_node_ptr) || !des_node_ptr) {
-                TOP_WARN("crossing network failed, can't find des nodes of service_type: %llu", service_type);
+                TOP_WARN("crossing network failed, can't find des nodes of service_type: %llu", service_type.value());
                 return enum_xerror_code_fail;
             }
 
@@ -186,16 +186,16 @@ int32_t WrouterXidHandler::SendMulticast(transport::protobuf::RoutingMessage & m
     }
 
     base::ServiceType des_service_type = ParserServiceType(message.des_node_id());
-    xdbg("Charles Debug SendMulticast service_type: %lld",des_service_type);
+    xdbg("Charles Debug SendMulticast service_type: %lld",des_service_type.value());
     RoutingTablePtr routing_table = FindRoutingTable(false, des_service_type, false);
 
     // local does'nt have way to des, using root or find des-nodes first
     if (!routing_table || routing_table->nodes_size() == 0) {
-        TOP_DEBUG("crossing network from local_xid: %s to des: %llu %s", global_xid->Get().c_str(), des_service_type, message.des_node_id().c_str());
+        TOP_DEBUG("crossing network from local_xid: %s to des: %llu %s", global_xid->Get().c_str(), des_service_type.value(), message.des_node_id().c_str());
 
         std::vector<kadmlia::NodeInfoPtr> des_nodes;
         if (!wrouter::ServiceNodes::Instance()->GetRootNodes(des_service_type, des_nodes) || des_nodes.empty()) {
-            TOP_WARN("crossing network failed, can't find des nodes of service_type: %llu %s", des_service_type, message.des_node_id().c_str());
+            TOP_WARN("crossing network failed, can't find des nodes of service_type: %llu %s", des_service_type.value(), message.des_node_id().c_str());
             return enum_xerror_code_fail;
         }
 

@@ -70,7 +70,7 @@ void MultiRouting::AddRoutingTable(base::ServiceType type, RoutingTablePtr routi
 void MultiRouting::RemoveRoutingTable(base::ServiceType type) {
     if (type == base::ServiceType{kRoot} && root_manager_ptr_) {
         root_manager_ptr_->Destory();
-        TOP_KINFO("remove root routing table: %llu", type);
+        TOP_KINFO("remove root routing table: %llu", type.value());
     }
 
     RoutingTablePtr remove_routing_table = nullptr;
@@ -84,13 +84,13 @@ void MultiRouting::RemoveRoutingTable(base::ServiceType type) {
     }
     if (remove_routing_table) {
         remove_routing_table->UnInit();
-        TOP_KINFO("remove service routing table: %llu", type);
+        TOP_KINFO("remove service routing table: %llu", type.value());
     }
 
     std::vector<base::ServiceType> vec_type;
     GetAllRegisterType(vec_type);
     for (auto & v : vec_type) {
-        TOP_KINFO("after unregister routing table, still have %llu", v);
+        TOP_KINFO("after unregister routing table, still have %llu", v.value());
     }
 }
 

@@ -197,9 +197,9 @@ void RoutingTable::PrintRoutingTable() {
         fclose(fd);
     }
 
-    TOP_DEBUG_NAME("RoutingTable dump for xnetwork_id(%d) service_type(%llu), dump_size(%d)",
+    TOP_DEBUG_NAME("RoutingTable dump for xnetwork_id(%d) service_type(%s), dump_size(%d)",
                    local_node_ptr_->kadmlia_key()->xnetwork_id(),
-                   local_node_ptr_->kadmlia_key()->GetServiceType(),
+                   local_node_ptr_->kadmlia_key()->GetServiceType().info().c_str(),
                    size);
 }
 
@@ -306,8 +306,8 @@ int RoutingTable::MultiJoin(const std::set<std::pair<std::string, uint16_t>> & b
         }
 
         TOP_KINFO_NAME("%s [%llu] has nodes_ size: %d, set_size: %d, ip: %s, port: %d",
-                       HexSubstr(local_node_ptr_->id()).c_str(),
-                       local_node_ptr_->service_type(),
+                       local_node_ptr_->id().c_str(),
+                       local_node_ptr_->service_type().value(),
                        node_id_map_.size(),
                        nodes_size(),
                        local_node_ptr_->public_ip().c_str(),
@@ -652,7 +652,7 @@ void RoutingTable::FindNeighbours() {
         TOP_DEBUG_NAME(
             "FindNeighbours alive for self_service_type(%llu), now size(%d), find_neighbour_interval(%u),"
             "find_neighbour_interval_threshold(%u)",
-            local_node_ptr_->kadmlia_key()->GetServiceType(),
+            local_node_ptr_->kadmlia_key()->GetServiceType().value(),
             nodes_size(),
             find_neighbour_interval_,
             find_neighbour_interval_threshold_);
@@ -1349,7 +1349,7 @@ std::map<std::string, top::base::KadmliaKeyPtr> RoutingTable::GetElectionNodesEx
 // }
 
 void RoutingTable::HandleElectionNodesInfoFromRoot(std::map<std::string, kadmlia::NodeInfoPtr> const & nodes){
-    xdbg("Charles Debug GetSameNetworkNodesV3 %zu local_service_type:%lld", nodes.size() ,local_node_ptr_->service_type());
+    xdbg("Charles Debug GetSameNetworkNodesV3 %zu local_service_type:%lld", nodes.size() ,local_node_ptr_->service_type().value());
     std::vector<base::KadmliaKeyPtr> erase_keys;
     for(auto _p:nodes){
         NodeInfoPtr node_ptr;
@@ -1363,14 +1363,14 @@ void RoutingTable::HandleElectionNodesInfoFromRoot(std::map<std::string, kadmlia
         node_ptr->service_type = local_node_ptr_->service_type();  // for RootRouting, is always kRoot
         node_ptr->xid = _node->xid;
         node_ptr->hash64 = base::xhash64_t::digest(node_ptr->node_id);
-        xdbg("Charles Debug GetSameNetworkNodesV3 %s %s:%d, %lld", node_ptr->node_id.c_str(), node_ptr->public_ip.c_str(), node_ptr->public_port, node_ptr->service_type);
+        xdbg("Charles Debug GetSameNetworkNodesV3 %s %s:%d, %lld", node_ptr->node_id.c_str(), node_ptr->public_ip.c_str(), node_ptr->public_port, node_ptr->service_type.value());
         if (CanAddNode(node_ptr)) {
             if (node_ptr->node_id != local_node_ptr_->id()) {
                 TOP_DEBUG_NAME("HandleElectionNodesInfoFromRoot[%d] get node(%s:%d-%d)",
-                               local_node_ptr_->service_type(),
+                               local_node_ptr_->service_type().value(),
                                node_ptr->public_ip.c_str(),
                                node_ptr->public_port,
-                               node_ptr->service_type);
+                               node_ptr->service_type.value());
                 AddNode(node_ptr);
                 erase_keys.push_back(base::GetKadmliaKey(node_ptr->node_id));
                 continue;
@@ -1419,7 +1419,7 @@ int RoutingTable::Bootstrap(const std::string & peer_ip, uint16_t peer_port, bas
     SetFreqMessage(message);
     message.set_des_service_type(des_service_type.value());
     message.set_priority(enum_xpacket_priority_type_flash);
-    TOP_INFO_NAME("join with service type[%llu] ,src[%llu], des[%llu]", local_node_ptr_->service_type(), local_node_ptr_->service_type(), des_service_type);
+    TOP_INFO_NAME("join with service type[%llu] ,src[%llu], des[%llu]", local_node_ptr_->service_type().value(), local_node_ptr_->service_type().value(), des_service_type.value());
     message.set_des_node_id("");
     message.set_type(kKadBootstrapJoinRequest);
 
@@ -1504,12 +1504,10 @@ int RoutingTable::SendFindClosestNodes(const NodeInfoPtr & node_ptr, int count, 
     }
 
     message.set_data(data);
-    TOP_DEBUG_NAME(
-        "sendfindclosestnodes: message.is_root(%d),"
-        "message.des_service_type:(%llu), local_service_type:(%llu)",
-        message.is_root(),
-        message.des_service_type(),
-        local_node_ptr_->kadmlia_key()->GetServiceType());
+    TOP_DEBUG_NAME("sendfindclosestnodes: message.is_root(%d), message.des_service_type:(%llu), local_service_type:(%llu)",
+                   message.is_root(),
+                   message.des_service_type(),
+                   local_node_ptr_->kadmlia_key()->GetServiceType().value());
     TOP_DEBUG_NAME("bluefind send_find to node: %s", HexSubstr(node_ptr->node_id).c_str());
     SendData(message, node_ptr);
     return kKadSuccess;
@@ -1748,7 +1746,7 @@ void RoutingTable::HandleFindNodesResponse(transport::protobuf::RoutingMessage &
         if (CanAddNode(node_ptr)) {
             if (local_node_ptr_->public_ip() == node_ptr->public_ip && node_ptr->public_port == local_node_ptr_->public_port()) {
                 if (node_ptr->node_id != local_node_ptr_->id()) {
-                    TOP_DEBUG_NAME("bluenat[%d] get node(%s:%d-%d)", local_node_ptr_->service_type(), node_ptr->public_ip.c_str(), node_ptr->public_port, node_ptr->service_type);
+                    TOP_DEBUG_NAME("bluenat[%d] get node(%s:%d-%d)", local_node_ptr_->service_type().value(), node_ptr->public_ip.c_str(), node_ptr->public_port, node_ptr->service_type.value());
                     node_ptr->xid = global_xid->Get();
                     // node_ptr->hash64 = base::xhash64_t::digest(node_ptr->xid);
                     node_ptr->hash64 = base::xhash64_t::digest(node_ptr->node_id);
@@ -2088,7 +2086,7 @@ void RoutingTable::HandleBootstrapJoinRequest(transport::protobuf::RoutingMessag
     // if(!allow_add) {
     //     TOP_DEBUG_NAME("HandleBootstrapJoinRequest not allow put it in routingtable");
     // } else if(!message.has_client_msg() || !message.client_msg()) {
-    TOP_DEBUG_NAME("[%llu] get node(%s:%d-%llu)", local_node_ptr_->service_type(), node_ptr->public_ip.c_str(), node_ptr->public_port, node_ptr->service_type);
+    TOP_DEBUG_NAME("[%llu] get node(%s:%d-%llu)", local_node_ptr_->service_type().value(), node_ptr->public_ip.c_str(), node_ptr->public_port, node_ptr->service_type.value());
     if (AddNode(node_ptr) == kKadSuccess) {
         TOP_DEBUG_NAME("update add_node(%s) from bootstrap request(%s, %s:%d)",
                        HexSubstr(node_ptr->node_id).c_str(),

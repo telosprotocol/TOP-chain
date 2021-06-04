@@ -31,13 +31,11 @@ bool LocalNodeInfo::Init(const std::string & local_ip, uint16_t local_port, bool
         public_ip_ = local_ip_;
         public_port_ = local_port_;
     }
-    TOP_KINFO(
-        "local_node_start: kad_key[%s] service_type[%llu] "
-        "public_ip[%s] public_port[%d]",
-        HexEncode(kad_key()).c_str(),
-        kadmlia_key_->GetServiceType(),
-        public_ip_.c_str(),
-        public_port_);
+    TOP_KINFO("local_node_start: kad_key[%s] service_type[%s] public_ip[%s] public_port[%d]",
+              kad_key().c_str(),
+              kadmlia_key_->GetServiceType().info().c_str(),
+              public_ip_.c_str(),
+              public_port_);
     // if (!nat_manager_->GetLocalNatType(nat_type_) || nat_type_ == kNatTypeUnknown) {
     //     TOP_ERROR("bluenat get local nat type(%d) failed", nat_type_);
     //     return false;

@@ -347,7 +347,7 @@ std::vector<std::string> MultilayerNetworkChain::GetServiceNeighbours(const comm
     auto kad_key = base::GetKadmliaKey(xip2);
     auto rt = wrouter::GetRoutingTable(kad_key->GetServiceType(), false);
     if (!rt) {
-        TOP_WARN("no routinng table:%llu registered, GetServiceNeighbours failed", kad_key->GetServiceType());
+        TOP_WARN("no routinng table:%llu registered, GetServiceNeighbours failed", kad_key->GetServiceType().value());
         return {};
     }
 
@@ -357,10 +357,10 @@ std::vector<std::string> MultilayerNetworkChain::GetServiceNeighbours(const comm
         auto ifind = std::find(nodes_vec.begin(), nodes_vec.end(), item->public_ip);
         if (ifind == nodes_vec.end()) {
             nodes_vec.push_back(item->public_ip);
-            TOP_DEBUG("GetServiceNeighbours %llu add node:%s", kad_key->GetServiceType(), item->public_ip.c_str());
+            TOP_DEBUG("GetServiceNeighbours %llu add node:%s", kad_key->GetServiceType().value(), item->public_ip.c_str());
         }
     }
-    TOP_INFO("GetServiceNeighbours %u of service_type:%llu", nodes_vec.size(), kad_key->GetServiceType());
+    TOP_INFO("GetServiceNeighbours %u of service_type:%llu", nodes_vec.size(), kad_key->GetServiceType().value());
     return nodes_vec;
 }
 

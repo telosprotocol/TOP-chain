@@ -58,12 +58,12 @@ std::shared_ptr<top::kadmlia::RoutingTable> RoutingManager::CreateRoutingTable(b
     routing_table_ptr->get_local_node_info()->set_service_type(service_type);
     service_type_ = service_type;
     // wrouter::RegisterRoutingTable(service_type, routing_table_ptr);
-    TOP_KINFO("register routing table %llu", service_type);
+    TOP_KINFO("register routing table %llu", service_type.value());
     wrouter::MultiRouting::Instance()->AddRoutingTable(service_type, routing_table_ptr);
     bool first_node = false;
     std::set<std::pair<std::string, uint16_t>> join_endpoints;
     auto ret = wrouter::NetworkExists(kad_key, join_endpoints);
-    TOP_INFO("check routing exists:[%llu], ret: %d, endpoints_size: %d", service_type, ret, join_endpoints.size());
+    TOP_INFO("check routing exists:[%llu], ret: %d, endpoints_size: %d", service_type.value(), ret, join_endpoints.size());
     if (ret != kadmlia::kKadSuccess || join_endpoints.empty()) {
         first_node = true;
     }
@@ -81,7 +81,7 @@ std::shared_ptr<top::kadmlia::RoutingTable> RoutingManager::CreateRoutingTable(b
     }
 
     routing_table_ptr->MultiJoinAsync(join_endpoints);
-    TOP_INFO("multijoin of service_type: %llu ...", service_type_);
+    TOP_INFO("multijoin of service_type: %llu ...", service_type_.value());
     return routing_table_ptr;
 }
 

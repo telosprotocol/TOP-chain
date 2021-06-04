@@ -92,13 +92,13 @@ std::string MultilayerNetworkChainQuery::AllPeers() {
             if (sfind != node_set.end()) {
                 continue;
             }
-            node_set.insert(HexEncode(n->node_id));
+            node_set.insert((n->node_id));
             std::string ninfo = base::StringUtil::str_fmt("endpoints:%s:%u service_type:%llu nodeid:%s xip:%s\n",
                     n->public_ip.c_str(),
                     n->public_port,
                     // n->nat_type,
-                    n->service_type,
-                    HexEncode(n->node_id).c_str()
+                    n->service_type.value(),
+                    (n->node_id).c_str()
                     // HexEncode(n->xip).c_str()
                     );
             rt_result += ninfo;
@@ -120,8 +120,8 @@ std::string MultilayerNetworkChainQuery::AllPeers() {
                 sn->public_ip.c_str(),
                 sn->public_port,
                 // sn->nat_type,
-                sn->service_type,
-                HexEncode(sn->node_id).c_str()
+                sn->service_type.value(),
+                (sn->node_id).c_str()
                 // HexEncode(sn->xip).c_str()
                 );
         result += ninfo;

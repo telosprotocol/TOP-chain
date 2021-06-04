@@ -113,18 +113,18 @@ void ElectManager::OnElectUpdated(const std::vector<ElectNetNode> & elect_data) 
     return;
 }
 
-void ElectManager::OnElectUpdated(std::vector<wrouter::WrouterTableNodes> const & elect_data){
-    for(auto const &wrouter_node:elect_data){
+void ElectManager::OnElectUpdated(std::vector<wrouter::WrouterTableNodes> const & elect_data) {
+    // for(auto const &wrouter_node:elect_data){
+    // }
+    for (auto const & wrouter_node : elect_data) {
         wrouter::SmallNetNodes::Instance()->AddNode(wrouter_node);
-    }
-    for(auto const & wrouter_node:elect_data){
-        if(global_node_id!=wrouter_node.node_id){
-            xdbg("node id not match self:%s iter:%s",global_node_id.c_str(),wrouter_node.node_id.c_str());
+        if (global_node_id != wrouter_node.node_id) {
+            xdbg("node id not match self:%s iter:%s", global_node_id.c_str(), wrouter_node.node_id.c_str());
             continue;
         }
-        xinfo("account match: self:%s iter:%s ,xip:%s ",global_node_id.c_str(),wrouter_node.node_id.c_str(),wrouter_node.m_xip2.to_string().c_str());
-        UpdateRoutingTable(elect_data,wrouter_node);
-        break;
+        xinfo("account match: self:%s iter:%s ,xip:%s ", global_node_id.c_str(), wrouter_node.node_id.c_str(), wrouter_node.m_xip2.to_string().c_str());
+        UpdateRoutingTable(elect_data, wrouter_node);
+        // break;
     }
 }
 
@@ -146,7 +146,6 @@ void ElectManager::UpdateRoutingTable(std::vector<wrouter::WrouterTableNodes> co
 
     std::shared_ptr<top::kadmlia::RoutingTable> routing_table_ptr;
     kadmlia::LocalNodeInfoPtr local_node_ptr = kadmlia::CreateLocalInfoFromConfig(config, kad_key);
-    std::cout << "ec create routing table: ";
 
     if (!local_node_ptr) {
         TOP_WARN("local_node_ptr invalid");
@@ -163,6 +162,8 @@ void ElectManager::UpdateRoutingTable(std::vector<wrouter::WrouterTableNodes> co
     // // wrouter::RegisterRoutingTable(service_type, routing_table_ptr);
     // TOP_KINFO("register routing table %llu", service_type);
     wrouter::MultiRouting::Instance()->AddRoutingTable(service_type, routing_table_ptr);
+    // todo charles move it in multirouting.
+    std::cout << global_node_id << " create routing table: " << std::hex << service_type.value() << service_type.info() << std::endl;
 
     // bool first_node = false;
     // std::set<std::pair<std::string, uint16_t>> join_endpoints;
@@ -211,18 +212,20 @@ void ElectManager::UpdateRoutingTable(std::vector<wrouter::WrouterTableNodes> co
 
 // unregister routing table
 int ElectManager::OnElectQuit(const common::xip2_t & xip2) {
-    base::XipParser xip;
-    xip.set_xnetwork_id(static_cast<uint32_t>(xip2.network_id().value()));
-    xip.set_zone_id(static_cast<uint8_t>(xip2.zone_id().value()));
-    xip.set_cluster_id(static_cast<uint8_t>(xip2.cluster_id().value()));
-    xip.set_group_id(static_cast<uint8_t>(xip2.group_id().value()));
+    // base::XipParser xip;
+    // xip.set_xnetwork_id(static_cast<uint32_t>(xip2.network_id().value()));
+    // xip.set_zone_id(static_cast<uint8_t>(xip2.zone_id().value()));
+    // xip.set_cluster_id(static_cast<uint8_t>(xip2.cluster_id().value()));
+    // xip.set_group_id(static_cast<uint8_t>(xip2.group_id().value()));
     // xip.set_network_type((uint8_t)(address.cluster_address().type()));
 
     auto service_type = base::GetKadmliaKey(xip2)->GetServiceType();
     wrouter::MultiRouting::Instance()->RemoveRoutingTable(service_type);
+    // todo charles move it in multirouting.
+    std::cout << global_node_id << " delete routing table: " << std::hex << service_type.value() << service_type.info() << std::endl;
+    xdbg("OnElectQuit service_type:%lld xip2:%s",service_type.value(),xip2.to_string().c_str());
 
-    TOP_INFO("electquit for xip:%s", HexEncode(xip.xip()).c_str());
-    return node_manager_->Quit(xip);
+    return 0;
 }
 
 }  // namespace elect
