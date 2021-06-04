@@ -71,7 +71,7 @@ void xtop_vnode_manager::stop() {
     m_logic_timer->unwatch(chain_timer_watch_name);
 }
 
-std::vector<common::xip2_t> xtop_vnode_manager::handle_election_data(std::unordered_map<common::xcluster_address_t, election::cache::xgroup_update_result_t> const & election_data) {
+std::pair<std::vector<common::xip2_t>, std::vector<common::xip2_t>> xtop_vnode_manager::handle_election_data(std::unordered_map<common::xcluster_address_t, election::cache::xgroup_update_result_t> const & election_data) {
     // if (!running()) {
     //     xwarn("[vnode mgr] is not running");
     //     return {};
@@ -82,7 +82,8 @@ std::vector<common::xip2_t> xtop_vnode_manager::handle_election_data(std::unorde
     auto const & host_node_id = m_vhost->host_node_id();
     xdbg("[vnode mgr] host %s sees election data size %zu", host_node_id.value().c_str(), election_data.size());
 
-    std::vector<common::xip2_t> outdated_xips;
+    std::vector<common::xip2_t> purely_outdated_xips;
+    std::vector<common::xip2_t> logical_outdated_xips;
     XLOCK(m_nodes_mutex);
     for (auto const & group_info : election_data) {
         auto const & cluster_address = top::get<common::xcluster_address_t const>(group_info);
@@ -108,6 +109,16 @@ std::vector<common::xip2_t> xtop_vnode_manager::handle_election_data(std::unorde
 
                 xwarn("[vnode mgr] vnode (%p) at address %s will outdate at logic time %" PRIu64, vnode.get(), vnode->address().to_string().c_str(), vnode->outdate_time());
             }
+            
+            // todo charles add size && version from group_update_result[done]
+            xwarn("[vnode mgr] vnode at address %s is outdated", cluster_address.to_string().c_str());
+            common::xip2_t xip{cluster_address.network_id(),
+                               cluster_address.zone_id(),
+                               cluster_address.cluster_id(),
+                               cluster_address.group_id(),
+                               outdated_group->sharding_size(),
+                               outdated_group->version().value()};
+            purely_outdated_xips.push_back(std::move(xip));
         }
 
         if (faded_group != nullptr && faded_group->contains(host_node_id)) {
@@ -161,11 +172,11 @@ std::vector<common::xip2_t> xtop_vnode_manager::handle_election_data(std::unorde
             //todo charles add size && version from group_update_result
             common::xip2_t xip{cluster_address.network_id(), cluster_address.zone_id(), cluster_address.cluster_id(), cluster_address.group_id()};
 
-            outdated_xips.push_back(std::move(xip));
+            logical_outdated_xips.push_back(std::move(xip));
         }
     }
 
-    return outdated_xips;
+    return std::make_pair(purely_outdated_xips, logical_outdated_xips);
 }
 
 void xtop_vnode_manager::on_timer(common::xlogic_time_t time) {

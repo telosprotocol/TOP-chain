@@ -4,7 +4,7 @@
 //  Created by Charlie Xie on 04/01/2019.
 //  Copyright (c) 2017-2019 Telos Foundation & contributors
 //
-
+#if 0
 #include "xelect_net/include/node_manager_base.h"
 
 #include "xpbase/base/kad_key/kadmlia_key.h"
@@ -30,3 +30,4 @@ NodeManagerBase::~NodeManagerBase() {}
 }  // namespace elect
 
 }  // namespace top
+#endif

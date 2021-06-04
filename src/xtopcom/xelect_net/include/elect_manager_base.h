@@ -1,3 +1,4 @@
+#if 0
 #pragma once
 #include <vector>
 
@@ -37,3 +38,4 @@ public:
 }  // namespace elect
 
 }  // namespace top
+#endif

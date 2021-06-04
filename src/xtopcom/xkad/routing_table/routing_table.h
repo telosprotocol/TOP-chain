@@ -78,7 +78,7 @@ public:
 public:
     std::shared_ptr<std::vector<kadmlia::NodeInfoPtr>> GetUnLockNodes();
 
-    void HandleNodeQuit(transport::protobuf::RoutingMessage & message, base::xpacket_t & packet);
+    // void HandleNodeQuit(transport::protobuf::RoutingMessage & message, base::xpacket_t & packet);
     void SortNodesByTargetXid(const std::string & target_xid, std::vector<NodeInfoPtr> & nodes);
 
     bool CanAddNode(NodeInfoPtr node);
@@ -94,9 +94,9 @@ public:
     int32_t GetSelfIndex();
     uint32_t nodes_size();
     int MultiJoin(const std::set<std::pair<std::string, uint16_t>> & boot_endpoints);
-    void MultiJoinAsync(const std::set<std::pair<std::string, uint16_t>> & boot_endpoints);
+    // void MultiJoinAsync(const std::set<std::pair<std::string, uint16_t>> & boot_endpoints);
     bool IsJoined();
-    void SetUnJoin();
+    // void SetUnJoin();
     void WakeBootstrap();
     void FindClosestNodes(int count, const std::vector<NodeInfoPtr> & nodes);
     void GetQueryNodesFromKBucket(std::map<std::string, NodeInfoPtr> & query_nodes);
@@ -166,8 +166,8 @@ protected:
     void FindNeighbours();
     void GetExistsNodesBloomfilter(const std::vector<NodeInfoPtr> & nodes, std::vector<uint64_t> & bloomfilter_vec);
 
-    void TellNeighborsDropAllNode();
-    void SendDropNodeRequest(const std::string & id);
+    // void TellNeighborsDropAllNode();
+    // void SendDropNodeRequest(const std::string & id);
     void OnHeartbeatFailed(const std::string & ip, uint16_t port);
     void GetRandomAlphaNodes(std::map<std::string, NodeInfoPtr> & query_nodes);
     void GetClosestAlphaNodes(std::map<std::string, NodeInfoPtr> & query_nodes);

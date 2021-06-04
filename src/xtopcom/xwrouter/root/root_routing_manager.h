@@ -37,8 +37,7 @@ public:
     void Destory();
     int InitRootRoutingTable(std::shared_ptr<transport::Transport> transport,
                              const base::Config & config,
-                             base::KadmliaKeyPtr kad_key_ptr,
-                             bool wait_for_joined = true);
+                             base::KadmliaKeyPtr kad_key_ptr);
     std::shared_ptr<kadmlia::RoutingTable> GetRoutingTable(base::ServiceType service_type);
     // int GetRootNodes(uint32_t network_id, std::vector<kadmlia::NodeInfoPtr> & root_nodes);
     int GetRootNodesV2(const std::string & des_id, base::ServiceType service_type, std::vector<kadmlia::NodeInfoPtr> & root_nodes);
@@ -48,16 +47,15 @@ public:
     // bool GetServiceBootstrapRootNetwork(uint64_t service_type, std::set<std::pair<std::string, uint16_t>> & boot_endpoints);
     // bool SetCacheServiceType(uint64_t service_type);
 
-    using GetRootNodesV2AsyncCallback = std::function<void(base::ServiceType, const std::vector<kadmlia::NodeInfoPtr> &)>;
-    int GetRootNodesV2Async(const std::string & des_kroot_id, base::ServiceType des_service_type, GetRootNodesV2AsyncCallback cb);
+    // using GetRootNodesV2AsyncCallback = std::function<void(base::ServiceType, const std::vector<kadmlia::NodeInfoPtr> &)>;
+    // int GetRootNodesV2Async(const std::string & des_kroot_id, base::ServiceType des_service_type, GetRootNodesV2AsyncCallback cb);
 
 private:
     int CreateRoutingTable(std::shared_ptr<transport::Transport> transport,
                            const base::Config & config,
-                           base::KadmliaKeyPtr kad_key_ptr,
-                           bool wait_for_joined);
+                           base::KadmliaKeyPtr kad_key_ptr);
 
-    void OnGetRootNodesV2Async(GetRootNodesV2AsyncCallback cb, base::ServiceType service_type, const std::vector<kadmlia::NodeInfoPtr> & nodes);
+    // void OnGetRootNodesV2Async(GetRootNodesV2AsyncCallback cb, base::ServiceType service_type, const std::vector<kadmlia::NodeInfoPtr> & nodes);
 
     std::shared_ptr<kadmlia::RoutingTable> root_routing_table_;
     std::mutex root_routing_table_mutex_;

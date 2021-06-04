@@ -21,26 +21,26 @@ using namespace kadmlia;
 
 namespace wrouter {
 
-static const int32_t kCheckSingleNodeNetworkPeriod = 5 * 1000 * 1000;
+// static const int32_t kCheckSingleNodeNetworkPeriod = 5 * 1000 * 1000;
 static const int32_t kCheckElectRoutingTableNodesPeriod = 5 * 1000 * 1000;
-static const uint32_t kCheckSingleNetworkNodesNum = 16;
+// static const uint32_t kCheckSingleNetworkNodesNum = 16;
 
 MultiRouting::MultiRouting() : routing_table_map_(), routing_table_map_mutex_(), root_manager_ptr_(nullptr) {
-    auto thread_callback = [this] {
-        for (;;) {
-            CheckSingleNodeNetwork();
-        }
-    };
-    check_single_network_thread_ = std::make_shared<std::thread>(thread_callback);
-    check_single_network_thread_->detach();
-    timer_.Start(kCheckSingleNodeNetworkPeriod, kCheckSingleNodeNetworkPeriod, std::bind(&MultiRouting::NotifyCheckSignal, this));
+    // auto thread_callback = [this] {
+    //     for (;;) {
+    //         CheckSingleNodeNetwork();
+    //     }
+    // };
+    // check_single_network_thread_ = std::make_shared<std::thread>(thread_callback);
+    // check_single_network_thread_->detach();
+    // timer_.Start(kCheckSingleNodeNetworkPeriod, kCheckSingleNodeNetworkPeriod, std::bind(&MultiRouting::NotifyCheckSignal, this));
 
     check_elect_routing_ = std::make_shared<base::TimerRepeated>(timer_manager_, "MultiRouting::CheckElectRoutingTable");
     check_elect_routing_->Start(kCheckElectRoutingTableNodesPeriod, kCheckElectRoutingTableNodesPeriod, std::bind(&MultiRouting::CheckElectRoutingTable, this));
 }
 
 MultiRouting::~MultiRouting() {
-    timer_.Join();
+    // timer_.Join();
     TOP_KINFO("MultiRouting destroy");
 }
 
@@ -159,22 +159,23 @@ void MultiRouting::GetAllRegisterRoutingTable(std::vector<std::shared_ptr<kadmli
     }
 }
 
+/*
 
-// bool MultiRouting::SetCacheServiceType(uint64_t service_type) {
-//     if (!root_manager_ptr_) {
-//         TOP_ERROR("MultiRouting:: root_manager_ptr is null");
-//         return false;
-//     }
-//     return root_manager_ptr_->SetCacheServiceType(service_type);
-// }
+bool MultiRouting::SetCacheServiceType(uint64_t service_type) {
+    if (!root_manager_ptr_) {
+        TOP_ERROR("MultiRouting:: root_manager_ptr is null");
+        return false;
+    }
+    return root_manager_ptr_->SetCacheServiceType(service_type);
+}
 
-// bool MultiRouting::GetServiceBootstrapRootNetwork(uint64_t service_type, std::set<std::pair<std::string, uint16_t>> & boot_endpoints) {
-//     if (!root_manager_ptr_) {
-//         TOP_ERROR("MultiRouting:: root_manager_ptr is null");
-//         return false;
-//     }
-//     return root_manager_ptr_->GetServiceBootstrapRootNetwork(service_type, boot_endpoints);
-// }
+bool MultiRouting::GetServiceBootstrapRootNetwork(uint64_t service_type, std::set<std::pair<std::string, uint16_t>> & boot_endpoints) {
+    if (!root_manager_ptr_) {
+        TOP_ERROR("MultiRouting:: root_manager_ptr is null");
+        return false;
+    }
+    return root_manager_ptr_->GetServiceBootstrapRootNetwork(service_type, boot_endpoints);
+}
 
 void MultiRouting::WaitCheckSignal() {
     TOP_DEBUG("bluesig wait");
@@ -191,7 +192,6 @@ void MultiRouting::NotifyCheckSignal() {
 void MultiRouting::CheckSingleNodeNetwork() {
     WaitCheckSignal();
     // todo charles add it back!
-    /*
     TOP_DEBUG("bluesig check");
     std::vector<kadmlia::RoutingTablePtr> routing_vec;
     {
@@ -254,8 +254,8 @@ void MultiRouting::CheckSingleNodeNetwork() {
                       node_ptr->public_port);
         }
     }
-    */
 }
+    */
 
 
 void MultiRouting::CheckElectRoutingTable(){

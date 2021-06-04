@@ -421,10 +421,10 @@ bool MultilayerNetworkDemo::Run(const base::Config & config) {
         return false;
     }
 
-    if (!elect_manager_->Start()) {
-        std::cout << "elect network init failed!" << std::endl;
-        return false;
-    }
+    // if (!elect_manager_->Start()) {
+    //     std::cout << "elect network init failed!" << std::endl;
+    //     return false;
+    // }
 
     return true;
 }

@@ -1,7 +1,7 @@
 // Copyright (c) 2017-2018 Telos Foundation & contributors
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
-
+#if 0
 #include "xelect_net/include/routing_manager.h"
 
 #include "xkad/routing_table/nodeid_utils.h"
@@ -88,3 +88,4 @@ std::shared_ptr<top::kadmlia::RoutingTable> RoutingManager::CreateRoutingTable(b
 }  // namespace elect
 
 }  // namespace top
+#endif

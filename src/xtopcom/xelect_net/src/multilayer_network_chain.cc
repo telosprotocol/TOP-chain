@@ -114,10 +114,10 @@ bool MultilayerNetworkChain::Run(const base::Config& config) {
         return false;
     }
 
-    if (!elect_manager_->Start()) {
-        std::cout << "elect network init failed!" << std::endl;
-        return false;
-    }
+    // if (!elect_manager_->Start()) {
+    //     std::cout << "elect network init failed!" << std::endl;
+    //     return false;
+    // }
 
     for (const auto& xnetwork_id : xnetwork_id_set_) {
         auto ecvhost = GetEcVhost(xnetwork_id);

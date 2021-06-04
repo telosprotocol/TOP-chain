@@ -786,6 +786,12 @@ void RootRouting::OnGetRootNodesV2Async(
                 break;
             }
             for (int i = 0; i < nodes_res.nodes_size(); ++i) {
+                if(base::GetKadmliaKey(nodes_res.nodes(i).id())->GetServiceType()!=des_service_type){
+                    xdbg("Charles Debug not this service type? des:%s get:%s",
+                         des_service_type.info().c_str(),
+                         base::GetKadmliaKey(nodes_res.nodes(i).id())->GetServiceType().info().c_str());
+                    continue;
+                }
                 NodeInfoPtr node_ptr;
                 node_ptr.reset(new NodeInfo(nodes_res.nodes(i).id()));
                 node_ptr->public_ip = nodes_res.nodes(i).public_ip();
@@ -797,7 +803,7 @@ void RootRouting::OnGetRootNodesV2Async(
                 nodes.push_back(node_ptr);
             }
 
-            cb(nodes);
+            cb(des_service_type, nodes);
             return;
         } while (0);
     } else {

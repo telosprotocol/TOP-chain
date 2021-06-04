@@ -39,18 +39,18 @@ std::shared_ptr<kadmlia::RoutingTable> GetRoutingTable(const std::string& routin
 void GetAllRegisterType(std::vector<base::ServiceType>& vec_type);
 void GetAllRegisterRoutingTable(std::vector<std::shared_ptr<kadmlia::RoutingTable>>& vec_rt);
 
-// bool SetCacheServiceType(uint64_t service_type);
-// bool GetServiceBootstrapRootNetwork(
-//         uint64_t service_type,
-//         std::set<std::pair<std::string, uint16_t>>& boot_endpoints);
+#if 0
+bool SetCacheServiceType(uint64_t service_type);
+bool GetServiceBootstrapRootNetwork(
+        uint64_t service_type,
+        std::set<std::pair<std::string, uint16_t>>& boot_endpoints);
 
 int NetworkExists(
         base::KadmliaKeyPtr& kad_key_ptr,
         std::set<std::pair<std::string, uint16_t>>& endpoints);
 // using elect data to search elect nodes from root network
 int GetSameNetworkNodesV2(const std::string & des_kroot_id, base::ServiceType des_service_type, std::vector<kadmlia::NodeInfoPtr> & ret_nodes);
-int GetSameNetworkNodesV3(std::vector<base::KadmliaKeyPtr> kad_key_ptrs, std::vector<kadmlia::NodeInfoPtr> res_nodes);
-
+#endif
 }  // namespace wrouter
 
 }  // namespace top

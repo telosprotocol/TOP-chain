@@ -21,15 +21,15 @@ namespace elect {
 ElectManager::ElectManager(transport::TransportPtr transport, const base::Config & config) : transport_(transport), config_(config) {
 }
 
-bool ElectManager::Start() {
-    node_manager_ = std::make_shared<NodeManager>(transport_, config_);
-    if (node_manager_->Init() != top::kadmlia::kKadSuccess) {
-        TOP_ERROR("node_manager init fail.");
-        node_manager_ = nullptr;
-        return false;
-    }
-    return true;
-}
+// bool ElectManager::Start() {
+//     node_manager_ = std::make_shared<NodeManager>(transport_, config_);
+//     if (node_manager_->Init() != top::kadmlia::kKadSuccess) {
+//         TOP_ERROR("node_manager init fail.");
+//         node_manager_ = nullptr;
+//         return false;
+//     }
+//     return true;
+// }
 
 void ElectManager::OnElectUpdated(const data::election::xelection_result_store_t & election_result_store, common::xzone_id_t const & zid) {
     using top::data::election::xelection_cluster_result_t;
@@ -73,7 +73,7 @@ void ElectManager::OnElectUpdated(const data::election::xelection_result_store_t
                         common::xip2_t xip2_{network_id, zid, cluster_id, group_id, slot_id, size, height};
 
                         wrouter::WrouterTableNodes router_node{xip2_, node_id.to_string()};
-                        xinfo("[Charles DEBUG] %s %s", xip2_.to_string().c_str(),node_id.to_string().c_str());
+                        xinfo("[Charles DEBUG] %s %s", xip2_.to_string().c_str(), node_id.to_string().c_str());
 
                         // ElectNetNode enode{node_id.to_string(), election_info.consensus_public_key.to_string(), xip, "", associated_gid, version};
                         elect_data.push_back(router_node);
@@ -81,38 +81,38 @@ void ElectManager::OnElectUpdated(const data::election::xelection_result_store_t
                 }
             }
         }
-    } 
+    }
 
     return OnElectUpdated(elect_data);
 }
-
+#if 0
 void ElectManager::OnElectUpdated(const std::vector<ElectNetNode> & elect_data) {
-    // TOP_DEBUG("onelectupdated begin, size:%u", elect_data.size());
-    // for (const auto & enode : elect_data) {
-    //     wrouter::NetNode snode{enode.m_account, enode.m_public_key, enode.m_xip, "", enode.m_associated_gid, enode.m_version};
-    //     wrouter::SmallNetNodes::Instance()->AddNode(snode);
+    TOP_DEBUG("onelectupdated begin, size:%u", elect_data.size());
+    for (const auto & enode : elect_data) {
+        wrouter::NetNode snode{enode.m_account, enode.m_public_key, enode.m_xip, "", enode.m_associated_gid, enode.m_version};
+        wrouter::SmallNetNodes::Instance()->AddNode(snode);
 
-    //     if (global_node_id != enode.m_account) {
-    //         TOP_DEBUG("account not match: self:%s iter:%s", global_node_id.c_str(), enode.m_account.c_str());
-    //         continue;
-    //     }
-    //     TOP_INFO("account match: self:%s iter:%s xip: %s xnetwork_id: %u zone_id: %u cluster_id: %u group_id: %u",
-    //              global_node_id.c_str(),
-    //              enode.m_account.c_str(),
-    //              HexEncode(enode.m_xip.xip()).c_str(),
-    //              enode.m_xip.xnetwork_id(),
-    //              enode.m_xip.zone_id(),
-    //              enode.m_xip.cluster_id(),
-    //              enode.m_xip.group_id());
-    //     if (node_manager_->Join(enode.m_xip) != kadmlia::kKadSuccess) {
-    //         TOP_ERROR("node join failed!");
-    //     }
-    // }
+        if (global_node_id != enode.m_account) {
+            TOP_DEBUG("account not match: self:%s iter:%s", global_node_id.c_str(), enode.m_account.c_str());
+            continue;
+        }
+        TOP_INFO("account match: self:%s iter:%s xip: %s xnetwork_id: %u zone_id: %u cluster_id: %u group_id: %u",
+                 global_node_id.c_str(),
+                 enode.m_account.c_str(),
+                 HexEncode(enode.m_xip.xip()).c_str(),
+                 enode.m_xip.xnetwork_id(),
+                 enode.m_xip.zone_id(),
+                 enode.m_xip.cluster_id(),
+                 enode.m_xip.group_id());
+        if (node_manager_->Join(enode.m_xip) != kadmlia::kKadSuccess) {
+            TOP_ERROR("node join failed!");
+        }
+    }
 
-    // TOP_DEBUG("onelectupdated end");
+    TOP_DEBUG("onelectupdated end");
     return;
 }
-
+#endif
 void ElectManager::OnElectUpdated(std::vector<wrouter::WrouterTableNodes> const & elect_data) {
     // for(auto const &wrouter_node:elect_data){
     // }
@@ -128,9 +128,9 @@ void ElectManager::OnElectUpdated(std::vector<wrouter::WrouterTableNodes> const 
     }
 }
 
-void ElectManager::UpdateRoutingTable(std::vector<wrouter::WrouterTableNodes> const & elect_data,wrouter::WrouterTableNodes const & self_wrouter_nodes){
+void ElectManager::UpdateRoutingTable(std::vector<wrouter::WrouterTableNodes> const & elect_data, wrouter::WrouterTableNodes const & self_wrouter_nodes) {
     // todo charles if find this routing table don't add again?
-    
+
     base::Config config = config_;
     if (!config.Set("node", "network_id", self_wrouter_nodes.m_xip2.network_id().value())) {
         TOP_ERROR("set config node network_id [%d] failed!", self_wrouter_nodes.m_xip2.network_id().value());
@@ -167,8 +167,7 @@ void ElectManager::UpdateRoutingTable(std::vector<wrouter::WrouterTableNodes> co
 
     // bool first_node = false;
     // std::set<std::pair<std::string, uint16_t>> join_endpoints;
-    
-   
+
     // auto ret = wrouter::NetworkExists(kad_key, join_endpoints);
     // TOP_INFO("check routing exists:[%llu], ret: %d, endpoints_size: %d", service_type, ret, join_endpoints.size());
     // if (ret != kadmlia::kKadSuccess || join_endpoints.empty()) {
@@ -181,9 +180,8 @@ void ElectManager::UpdateRoutingTable(std::vector<wrouter::WrouterTableNodes> co
     // std::vector<base::KadmliaKeyPtr> kad_key_ptrs;
     std::map<std::string, base::KadmliaKeyPtr> elect_root_kad_key_ptrs;
     for (auto _node : elect_data) {
-        
         // kad_key_ptrs.push_back(base::GetRootKadmliaKey(_node.node_id));
-        elect_root_kad_key_ptrs.insert(std::make_pair(_node.m_xip2.to_string(),base::GetRootKadmliaKey(_node.node_id)));
+        elect_root_kad_key_ptrs.insert(std::make_pair(_node.m_xip2.to_string(), base::GetRootKadmliaKey(_node.node_id)));
         // auto des_kad_key = base::GetRootKadmliaKey(_node.node_id);
         // auto des_service_type = base::CreateServiceType(_node.m_xip2);
         // xinfo("Charles Debug GetSameNetworkNodesV2 res_nodes.size(): %zu des_node_id:%s ,des_kad_key:%s ", res_nodes.size(), _node.node_id.c_str(), des_kad_key->Get().c_str());
@@ -202,7 +200,7 @@ void ElectManager::UpdateRoutingTable(std::vector<wrouter::WrouterTableNodes> co
         TOP_ERROR("RoutingManagerBase local node public ip is empty.");
         assert(false);
     }
-    return ;
+    return;
     // }
 
     // routing_table_ptr->MultiJoinAsync(join_endpoints);
@@ -223,7 +221,7 @@ int ElectManager::OnElectQuit(const common::xip2_t & xip2) {
     wrouter::MultiRouting::Instance()->RemoveRoutingTable(service_type);
     // todo charles move it in multirouting.
     std::cout << global_node_id << " delete routing table: " << std::hex << service_type.value() << service_type.info() << std::endl;
-    xdbg("OnElectQuit service_type:%lld xip2:%s",service_type.value(),xip2.to_string().c_str());
+    xdbg("OnElectQuit service_type:%lld xip2:%s", service_type.value(), xip2.to_string().c_str());
 
     return 0;
 }

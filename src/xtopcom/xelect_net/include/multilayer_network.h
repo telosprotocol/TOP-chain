@@ -8,7 +8,6 @@
 #include "xtransport/message_manager/multi_message_handler.h"
 #include "xwrouter/xwrouter.h"
 #include "xwrouter/root/root_routing_manager.h"
-#include "xelect_net/include/elect_manager_base.h"
 #include "xelect_net/include/elect_vhost.h"
 #include "xelect_net/include/multilayer_network_base.h"
 #include "xdb/xdb.h"

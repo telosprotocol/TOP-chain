@@ -93,11 +93,11 @@ void WrouterMessageHandler::AddBaseHandlers() {
     //         base::xpacket_t& packet){
     //     HandleConnectRequest(message, packet);
     // });
-    AddHandler(kKadDropNodeRequest, [this](
-            transport::protobuf::RoutingMessage& message,
-            base::xpacket_t& packet) {
-        HandleNodeQuit(message, packet);
-    });
+    // AddHandler(kKadDropNodeRequest, [this](
+    //         transport::protobuf::RoutingMessage& message,
+    //         base::xpacket_t& packet) {
+    //     HandleNodeQuit(message, packet);
+    // });
     AddHandler(kKadHandshake, [this](transport::protobuf::RoutingMessage& message,
             base::xpacket_t& packet){
         HandleHandshake(message, packet);
@@ -151,19 +151,19 @@ void WrouterMessageHandler::AddBaseHandlers() {
     // });
 }
 
-void WrouterMessageHandler::HandleNodeQuit(
-        transport::protobuf::RoutingMessage& message,
-        base::xpacket_t& packet) {
-    RoutingTablePtr routing_table = GetRoutingTable(
-            base::ServiceType{message.des_service_type()},
-            message.has_is_root() && message.is_root());
-    if (!routing_table) {
-        TOP_WARN("service type[%llu] [%d] has not register routing table.",
-            message.des_service_type(), message.is_root());
-        return;
-    }
-    routing_table->HandleNodeQuit(message, packet);
-}
+// void WrouterMessageHandler::HandleNodeQuit(
+//         transport::protobuf::RoutingMessage& message,
+//         base::xpacket_t& packet) {
+//     RoutingTablePtr routing_table = GetRoutingTable(
+//             base::ServiceType{message.des_service_type()},
+//             message.has_is_root() && message.is_root());
+//     if (!routing_table) {
+//         TOP_WARN("service type[%llu] [%d] has not register routing table.",
+//             message.des_service_type(), message.is_root());
+//         return;
+//     }
+//     routing_table->HandleNodeQuit(message, packet);
+// }
 
 
 void WrouterMessageHandler::AddHandler(int msg_type, transport::HandlerProc handler_proc) {

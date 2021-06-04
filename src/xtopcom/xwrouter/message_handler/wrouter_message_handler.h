@@ -95,9 +95,9 @@ private:
 //     void HandleHeartbeatResponse(
 //             transport::protobuf::RoutingMessage& message,
 //             base::xpacket_t& packet);
-    void HandleNodeQuit(
-            transport::protobuf::RoutingMessage& message,
-            base::xpacket_t& packet);
+//     void HandleNodeQuit(
+//             transport::protobuf::RoutingMessage& message,
+//             base::xpacket_t& packet);
 
     ArrayHandlers array_handlers_;
     std::mutex map_request_type_mutex_;

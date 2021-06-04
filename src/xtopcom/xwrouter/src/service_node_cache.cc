@@ -9,7 +9,8 @@
 #include "xpbase/base/xip_parser.h"
 #include "xwrouter/multi_routing/small_net_cache.h"
 #include "xwrouter/register_routing_table.h"
-#include "xwrouter/root/root_routing_manager.h"
+// #include "xwrouter/root/root_routing_manager.h"
+#include "xwrouter/multi_routing/multi_routing.h"
 
 #include <cassert>
 
@@ -59,7 +60,9 @@ bool ServiceNodes::GetRootNodes(base::ServiceType service_type, std::vector<kadm
         assert(kad_key);
         using namespace std::placeholders;
         auto cb = std::bind(&ServiceNodes::OnGetRootNodesAsync, this, _1, _2);
-        RootRoutingManager::Instance()->GetRootNodesV2Async(kad_key->Get(), service_type, cb);  // just call
+        auto root_routing_table = std::dynamic_pointer_cast<RootRouting>(MultiRouting::Instance()->GetRoutingTable(base::ServiceType{kRoot}, true));
+        root_routing_table->GetRootNodesV2Async(kad_key->Get(), service_type, cb);
+        // RootRoutingManager::Instance()->GetRootNodesV2Async(kad_key->Get(), service_type, cb);  // just call
     }
     TOP_WARN("getrootnodes of service_type: %llu failed", service_type.value());
     return false;
@@ -78,7 +81,9 @@ bool ServiceNodes::GetRootNodes(base::ServiceType service_type, const std::strin
         assert(kad_key);
         using namespace std::placeholders;
         auto cb = std::bind(&ServiceNodes::OnGetRootNodesAsync, this, _1, _2);
-        RootRoutingManager::Instance()->GetRootNodesV2Async(kad_key->Get(), service_type, cb);  // just call
+        auto root_routing_table = std::dynamic_pointer_cast<RootRouting>(MultiRouting::Instance()->GetRoutingTable(base::ServiceType{kRoot}, true));
+        root_routing_table->GetRootNodesV2Async(kad_key->Get(), service_type, cb);
+        // RootRoutingManager::Instance()->GetRootNodesV2Async(kad_key->Get(), service_type, cb);  // just call
     }
     TOP_WARN("getrootnodes of service_type: %llu failed", service_type.value());
     return false;
@@ -307,7 +312,9 @@ void ServiceNodes::do_update() {
         assert(root_kad_key);
         using namespace std::placeholders;
         auto cb = std::bind(&ServiceNodes::OnGetRootNodesAsync, this, _1, _2);
-        RootRoutingManager::Instance()->GetRootNodesV2Async(root_kad_key->Get(), service_type, cb);  // just call
+        auto root_routing_table = std::dynamic_pointer_cast<RootRouting>(MultiRouting::Instance()->GetRoutingTable(base::ServiceType{kRoot}, true));
+        root_routing_table->GetRootNodesV2Async(kad_key->Get(), service_type, cb);
+        // RootRoutingManager::Instance()->GetRootNodesV2Async(root_kad_key->Get(), service_type, cb);  // just call
     }                                                                                                // end for (auto& item
 }
 

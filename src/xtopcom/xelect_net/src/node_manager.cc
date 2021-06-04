@@ -1,7 +1,7 @@
 // Copyright (c) 2017-2018 Telos Foundation & contributors
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
-
+#if 0
 #include "xelect_net/include/node_manager.h"
 
 #include "xelect_net/include/elect_manager.h"
@@ -162,3 +162,4 @@ int NodeManager::AddCommitteeRole(base::KadmliaKeyPtr& kad_key) {
 }  // namespace elect
 
 }  // namespace top
+#endif

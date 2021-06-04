@@ -77,7 +77,16 @@ public:
 
     void stop() override;
 
-    std::vector<common::xip2_t> handle_election_data(std::unordered_map<common::xsharding_address_t, election::cache::xgroup_update_result_t> const & election_data) override;
+    /**
+     * @return std::pair<vector<common::xip2_t>, vector<common::xip2_t>> 
+     * 
+     * Pair.first is purely outdated xip2, which contains nodes which should be outdated at this exact version.
+     * Pair.second is logical outdated xip2,which containes nodes which were not in group for two continuous versions.
+     * 
+     * Certainly pair.second is the subset of pair.first 
+     */
+    std::pair<std::vector<common::xip2_t>, std::vector<common::xip2_t>> handle_election_data(
+        std::unordered_map<common::xsharding_address_t, election::cache::xgroup_update_result_t> const & election_data) override;
 
 private:
     void on_timer(common::xlogic_time_t time);

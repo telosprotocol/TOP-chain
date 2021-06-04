@@ -204,7 +204,7 @@ void RoutingTable::PrintRoutingTable() {
 }
 
 bool RoutingTable::UnInit() {
-    TellNeighborsDropAllNode();
+    // TellNeighborsDropAllNode();
     destroy_ = true;
     // if (rumor_handler_) {
     //     if (!rumor_handler_->UnInit()) {
@@ -318,25 +318,25 @@ int RoutingTable::MultiJoin(const std::set<std::pair<std::string, uint16_t>> & b
     return kKadFailed;
 }
 
-void RoutingTable::MultiJoinAsync(const std::set<std::pair<std::string, uint16_t>> & boot_endpoints) {
-    TOP_INFO_NAME("MultiJoinAsync(%d) ...", (int)boot_endpoints.size());  // NOLINT
-    if (joined_) {
-        TOP_INFO_NAME("joined before");
-        return;
-    }
+// void RoutingTable::MultiJoinAsync(const std::set<std::pair<std::string, uint16_t>> & boot_endpoints) {
+//     TOP_INFO_NAME("MultiJoinAsync(%d) ...", (int)boot_endpoints.size());  // NOLINT
+//     if (joined_) {
+//         TOP_INFO_NAME("joined before");
+//         return;
+//     }
 
-    int retried_times = 0;
-    while (retried_times < kJoinRetryTimes) {
-        for (auto & kv : boot_endpoints) {
-            const auto peer_ip = kv.first;
-            const auto peer_port = kv.second;
-            Bootstrap(peer_ip, peer_port, local_node_ptr_->service_type());
-            TOP_INFO_NAME("  -> Bootstrap(%s:%d) ...", peer_ip.c_str(), peer_port);
-        }
+//     int retried_times = 0;
+//     while (retried_times < kJoinRetryTimes) {
+//         for (auto & kv : boot_endpoints) {
+//             const auto peer_ip = kv.first;
+//             const auto peer_port = kv.second;
+//             Bootstrap(peer_ip, peer_port, local_node_ptr_->service_type());
+//             TOP_INFO_NAME("  -> Bootstrap(%s:%d) ...", peer_ip.c_str(), peer_port);
+//         }
 
-        ++retried_times;
-    }
-}
+//         ++retried_times;
+//     }
+// }
 
 bool RoutingTable::IsJoined() {
     return joined_;
@@ -358,10 +358,10 @@ bool RoutingTable::SetJoin(const std::string & boot_id, const std::string & boot
     return true;
 }
 
-void RoutingTable::SetUnJoin() {
-    std::unique_lock<std::mutex> lock(joined_mutex_);
-    joined_ = false;
-}
+// void RoutingTable::SetUnJoin() {
+//     std::unique_lock<std::mutex> lock(joined_mutex_);
+//     joined_ = false;
+// }
 
 void RoutingTable::WakeBootstrap() {
     std::lock_guard<std::mutex> lock(bootstrap_mutex_);
@@ -1851,24 +1851,24 @@ void RoutingTable::HandleFindNodesResponse(transport::protobuf::RoutingMessage &
 //     SendData(message, ip, port);
 // }
 
-void RoutingTable::TellNeighborsDropAllNode() {
-    return;
-    auto tmp_nodes = nodes();
-    std::cout << "TellNeighborsDropAllNode: " << tmp_nodes.size() << std::endl;
-    for (auto iter = tmp_nodes.begin(); iter != tmp_nodes.end(); ++iter) {
-        SendDropNodeRequest((*iter)->node_id);
-    }
-}
+// void RoutingTable::TellNeighborsDropAllNode() {
+//     return;
+//     auto tmp_nodes = nodes();
+//     std::cout << "TellNeighborsDropAllNode: " << tmp_nodes.size() << std::endl;
+//     for (auto iter = tmp_nodes.begin(); iter != tmp_nodes.end(); ++iter) {
+//         SendDropNodeRequest((*iter)->node_id);
+//     }
+// }
 
-void RoutingTable::SendDropNodeRequest(const std::string & id) {
-    transport::protobuf::RoutingMessage message;
-    SetFreqMessage(message);
-    message.set_des_node_id(id);
-    message.set_des_service_type(local_node_ptr_->service_type().value());
-    message.set_type(kKadDropNodeRequest);
-    message.set_priority(enum_xpacket_priority_type_flash);
-    SendToClosestNode(message);
-}
+// void RoutingTable::SendDropNodeRequest(const std::string & id) {
+//     transport::protobuf::RoutingMessage message;
+//     SetFreqMessage(message);
+//     message.set_des_node_id(id);
+//     message.set_des_service_type(local_node_ptr_->service_type().value());
+//     message.set_type(kKadDropNodeRequest);
+//     message.set_priority(enum_xpacket_priority_type_flash);
+//     SendToClosestNode(message);
+// }
 
 void RoutingTable::OnHeartbeatFailed(const std::string & ip, uint16_t port) {
     std::vector<NodeInfoPtr> failed_nodes;
@@ -1911,17 +1911,17 @@ void RoutingTable::OnHeartbeatFailed(const std::string & ip, uint16_t port) {
     }
 }
 
-void RoutingTable::HandleNodeQuit(transport::protobuf::RoutingMessage & message, base::xpacket_t & packet) {
-    if (!IsDestination(message.des_node_id(), false)) {
-        return;
-    }
-    NodeInfoPtr node_ptr;
-    node_ptr.reset(new NodeInfo(message.src_node_id()));
-    node_ptr->xid = message.xid();
-    // node_ptr->hash64 = base::xhash64_t::digest(node_ptr->xid);
-    node_ptr->hash64 = base::xhash64_t::digest(node_ptr->node_id);
-    DropNode(node_ptr);
-}
+// void RoutingTable::HandleNodeQuit(transport::protobuf::RoutingMessage & message, base::xpacket_t & packet) {
+//     if (!IsDestination(message.des_node_id(), false)) {
+//         return;
+//     }
+//     NodeInfoPtr node_ptr;
+//     node_ptr.reset(new NodeInfo(message.src_node_id()));
+//     node_ptr->xid = message.xid();
+//     // node_ptr->hash64 = base::xhash64_t::digest(node_ptr->xid);
+//     node_ptr->hash64 = base::xhash64_t::digest(node_ptr->node_id);
+//     DropNode(node_ptr);
+// }
 
 // void RoutingTable::HandleConnectRequest(
 //         transport::protobuf::RoutingMessage& message,

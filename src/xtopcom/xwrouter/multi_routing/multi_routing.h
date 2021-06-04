@@ -66,11 +66,11 @@ private:
     std::mutex routing_table_map_mutex_;
     std::shared_ptr<RootRoutingManager> root_manager_ptr_;
 
-    // CheckSingleNodeNetwork is a block task, so use thread instead of timer
-    std::mutex check_single_network_mutex_;
-    std::condition_variable check_single_network_condv_;
-    base::TimerRepeated timer_{base::TimerManager::Instance(), "MultiRouting"};
-    std::shared_ptr<std::thread> check_single_network_thread_;
+    // // CheckSingleNodeNetwork is a block task, so use thread instead of timer
+    // std::mutex check_single_network_mutex_;
+    // std::condition_variable check_single_network_condv_;
+    // base::TimerRepeated timer_{base::TimerManager::Instance(), "MultiRouting"};
+    // std::shared_ptr<std::thread> check_single_network_thread_;
 
     
     base::TimerManager * timer_manager_{base::TimerManager::Instance()};

@@ -1,6 +1,7 @@
 // Copyright (c) 2017-2018 Telos Foundation & contributors
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
+#if 0
 #pragma once
 
 #include "xkad/routing_table/routing_table.h"
@@ -44,3 +45,4 @@ private:
 }  // namespace elect
 
 }  // namespace top
+#endif

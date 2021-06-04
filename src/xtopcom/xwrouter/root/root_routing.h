@@ -64,7 +64,7 @@ public:
             const std::string& des_kroot_id,
             base::ServiceType des_service_type,
             std::vector<kadmlia::NodeInfoPtr>& nodes);
-    using GetRootNodesV2AsyncCallback = std::function<void(const std::vector<kadmlia::NodeInfoPtr>&)>;
+    using GetRootNodesV2AsyncCallback = std::function<void(base::ServiceType, const std::vector<kadmlia::NodeInfoPtr>&)>;
     int GetRootNodesV2Async(
             const std::string& des_kroot_id,
             base::ServiceType des_service_type,
