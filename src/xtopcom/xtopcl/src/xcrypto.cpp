@@ -69,7 +69,21 @@ string create_new_keystore(const string & pw, string & dir, bool is_key, string 
     if (g_userinfo.account.size() != 0) {
         copy_g_userinfo = g_userinfo;
     }
+    if (!account.empty() && account.substr(0, TOP_ACCOUNT_PREFIX.size()) == TOP_ACCOUNT_PREFIX) {
+        xcrypto_util::make_private_key(g_userinfo.private_key);
+        g_userinfo.account = xcrypto_util::make_address_by_assigned_key(g_userinfo.private_key);
+        auto base64_pri = utility::base64_encode(g_userinfo.private_key.data(), PRI_KEY_LEN);
+        auto path = get_keystore_filepath(dir, g_userinfo.account);
+        std::ofstream key_file(path, std::ios::out | std::ios::trunc);
+        if (!key_file)
+        {
+            std::cout << "Open Key File: " << path << " Error" << std::endl;
+        }
 
+        aes256_cbc_encrypt(pw, base64_pri, key_file);
+        key_file.close();
+        return path;
+    }
     xcrypto_util::make_private_key(g_userinfo.private_key);
     g_userinfo.account = xcrypto_util::make_eth_address_by_assigned_key(g_userinfo.private_key);
 
