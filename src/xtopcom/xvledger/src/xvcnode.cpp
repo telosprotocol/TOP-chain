@@ -6,6 +6,10 @@
 #include <cinttypes>
 #include "../xvcnode.h"
 
+#ifdef DEBUG
+#include "xcrypto/xckey.h"
+#endif
+
 namespace top
 {
     namespace base
@@ -16,6 +20,11 @@ namespace top
             m_sign_pubkey             = sign_pub_key;
             m_node_address.high_addr  = xip2_addr.high_addr;
             m_node_address.low_addr   = xip2_addr.low_addr;
+            
+            #ifdef DEBUG  //double check whether public key matched the account addresss
+            utl::xecpubkey_t pub_key((uint8_t*)sign_pub_key.data(),(int)sign_pub_key.size());
+            xassert(account == pub_key.to_address(get_addr_type(), get_ledger_id()));
+            #endif
         }
         xvnode_t::xvnode_t(const std::string & account,const xvip2_t & xip2_addr,const std::string & sign_pub_key,const std::string & sign_pri_key)
             :xvaccount_t(account)
@@ -24,6 +33,19 @@ namespace top
             m_sign_prikey             = sign_pri_key;
             m_node_address.high_addr  = xip2_addr.high_addr;
             m_node_address.low_addr   = xip2_addr.low_addr;
+            
+            xassert(sign_pri_key.size() == 32);//force the private key of 32bytes
+            
+            #ifdef DEBUG  //double check whether public/private key matched the account addresss
+            utl::xecprikey_t raw_pri_key_obj((uint8_t*)sign_pri_key.data());
+            utl::xecpubkey_t raw_pub_kye_obj = raw_pri_key_obj.get_public_key();
+            xassert(account == raw_pub_kye_obj.to_address(get_addr_type(), get_ledger_id())); //check address again
+            
+            utl::xecpubkey_t passed_pub_key_obj((uint8_t*)sign_pub_key.data(),(int)sign_pub_key.size());
+            xassert(account == passed_pub_key_obj.to_address(get_addr_type(), get_ledger_id())); //check address again
+            //bits check by memcmp for tow public key
+            xassert(0 == memcmp(raw_pub_kye_obj.data(), passed_pub_key_obj.data(), raw_pub_kye_obj.size()));
+            #endif
         }
         
         xvnode_t::xvnode_t(const xvnode_t & obj)
