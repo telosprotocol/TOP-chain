@@ -13,6 +13,8 @@
 
 NS_BEG2(top, blockmaker)
 
+#define table_unconfirm_tx_num_max (20)
+
 xtable_maker_t::xtable_maker_t(const std::string & account, const xblockmaker_resources_ptr_t & resources)
 : xblock_maker_t(account, resources, m_keep_latest_blocks_max) {
     xdbg("xtable_maker_t::xtable_maker_t create,this=%p,account=%s", this, account.c_str());
@@ -177,6 +179,18 @@ bool xtable_maker_t::create_lightunit_makers(const xtablemaker_para_t & table_pa
             if (cur_receipt_id != last_receipt_id + 1) {
                 xwarn("xtable_maker_t::create_lightunit_makers fail-tx filtered for receiptid not contious. %s last_receipt_id=%ld, tx=%s",
                     cs_para.dump().c_str(), last_receipt_id, tx->dump(true).c_str());
+                continue;
+            }
+        }
+
+        if (tx->is_send_tx()) {
+            base::xvaccount_t vaccount(tx->get_target_addr());
+            auto peer_table_sid = vaccount.get_short_table_id();
+            base::xreceiptid_pair_t receiptid_pair;
+            tablestate->find_receiptid_pair(peer_table_sid, receiptid_pair);
+            if (receiptid_pair.get_unconfirm_num() >= table_unconfirm_tx_num_max) {
+                xwarn("xtable_maker_t::create_lightunit_makers fail-tx filtered for table unconfirm tx num too much. %s unconfirm_num=%u, tx=%s",
+                    cs_para.dump().c_str(), receiptid_pair.get_unconfirm_num(), tx->dump(true).c_str());
                 continue;
             }
         }
