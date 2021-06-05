@@ -1070,8 +1070,12 @@ namespace top
             // TODO(jimmy) should store and execute genesis block
             if(new_raw_block->get_height() == 1 && m_meta->_highest_connect_block_hash.empty())
             {
-                base::xauto_ptr<base::xvblock_t> generis_block(xgenesis_block::create_genesis_block(get_account()));
-                store_block(generis_block.get());
+                // meta is not 100% reliable, query to ensure the existence of genesis block
+                if(query_index(0, 0) == nullptr)
+                {
+                    base::xauto_ptr<base::xvblock_t> generis_block(xgenesis_block::create_genesis_block(get_account()));
+                    store_block(generis_block.get());
+                }
             }
 
             xdbg("xblockacct_t::store_block,prepare for block=%s,cache_size:%zu,dump=%s",new_raw_block->dump().c_str(), m_all_blocks.size(), dump().c_str());
