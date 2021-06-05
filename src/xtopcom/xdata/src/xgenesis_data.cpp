@@ -94,21 +94,6 @@ std::string account_address_to_block_address(common::xaccount_address_t const & 
     return xblocktool_t::make_address_table_account(tableid.get_zone_index(), tableid.get_subaddr());
 }
 
-common::xnode_type_t get_node_role_from_account(common::xaccount_address_t const & account, uint32_t& table_id) {
-    xtable_id_t tableid = account_map_to_table_id(account);
-    table_id = tableid.get_subaddr();
-    if (tableid.get_zone_index() == base::enum_chain_zone_beacon_index) {
-        return common::xnode_type_t::committee;
-    } else if (tableid.get_zone_index() == base::enum_chain_zone_zec_index) {
-        return common::xnode_type_t::zec;
-    } else if (tableid.get_zone_index() == base::enum_chain_zone_consensus_index) {
-        return common::xnode_type_t::consensus_validator;
-    } else {
-        xassert(0);
-        return common::xnode_type_t::consensus_validator;
-    }
-}
-
 bool is_table_address(common::xaccount_address_t const & addr) {
     return check_address_type(addr, base::enum_vaccount_addr_type_block_contract);
 }

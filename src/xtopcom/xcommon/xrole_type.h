@@ -22,10 +22,10 @@ enum class xenum_role_type : std::underlying_type<xnode_type_t>::type {
 };
 using xrole_type_t = xenum_role_type;
 
-XINLINE_CONSTEXPR char const * XNODE_TYPE_EDGE      = u8"edge";
-XINLINE_CONSTEXPR char const * XNODE_TYPE_ADVANCE   = u8"advance";
-XINLINE_CONSTEXPR char const * XNODE_TYPE_VALIDATOR = u8"validator";
-// XINLINE_CONSTEXPR char const * XNODE_TYPE_ARCHIVE   = u8"archive";
+XINLINE_CONSTEXPR char const * XNODE_TYPE_EDGE      = "edge";
+XINLINE_CONSTEXPR char const * XNODE_TYPE_ADVANCE   = "advance";
+XINLINE_CONSTEXPR char const * XNODE_TYPE_VALIDATOR = "validator";
+XINLINE_CONSTEXPR char const * XNODE_TYPE_ARCHIVE   = "archive";
 
 std::int32_t
 operator <<(top::base::xstream_t & stream, xrole_type_t const & role_type);

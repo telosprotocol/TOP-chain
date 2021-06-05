@@ -208,7 +208,7 @@ bool xtop_vnode::is_real_vnode_except_edge(common::xnode_type_t const type) {
 }
 
 void xtop_vnode::update_rpc_service() {
-    if (is_real_vnode(m_the_binding_driver->type(), common::xnode_type_t::archive | common::xnode_type_t::frozen)) {
+    if (is_real_vnode(m_the_binding_driver->type(), common::xnode_type_t::frozen)) {
         auto const http_port = XGET_CONFIG(http_port);
         auto const ws_port = XGET_CONFIG(ws_port);
         // TODO(justin): remove unit_services temp
