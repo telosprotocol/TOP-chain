@@ -13,7 +13,7 @@
 
 NS_BEG2(top, blockmaker)
 
-#define table_unconfirm_tx_num_max (20)
+#define table_unconfirm_tx_num_max (2048)
 
 xtable_maker_t::xtable_maker_t(const std::string & account, const xblockmaker_resources_ptr_t & resources)
 : xblock_maker_t(account, resources, m_keep_latest_blocks_max) {

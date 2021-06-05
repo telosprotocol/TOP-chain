@@ -7,7 +7,7 @@
 #include "xbasic/xmodule_type.h"
 #include "xtxpool_v2/xtxpool_log.h"
 
-#define table_unconfirm_tx_num_max (20)
+#define table_unconfirm_tx_num_max (2048)
 
 namespace top {
 namespace xtxpool_v2 {
