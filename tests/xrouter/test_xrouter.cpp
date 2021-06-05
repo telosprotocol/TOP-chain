@@ -21,8 +21,8 @@ TEST(xtop_router, address_of_book_id) {
     std::unique_ptr<xrouter_face_t> router{ top::make_unique<xrouter_t>() };
     auto const & config_register = top::config::xconfig_register_t::get_instance();
 
-    auto auditor_group_count = XGET_ONCHAIN_GOVERNANCE_PARAMETER(auditor_group_count);
-    auto validator_group_count = XGET_ONCHAIN_GOVERNANCE_PARAMETER(validator_group_count);
+    auto auditor_group_count = XGET_CONFIG(auditor_group_count);
+    auto validator_group_count = XGET_CONFIG(validator_group_count);
 
     for (auto i = 0u; i < 128u; ++i) {
         auto const empty_address = router->address_of_book_id(static_cast<std::uint16_t>(i), top::common::xnode_type_t::edge, top::common::xtopchain_network_id);

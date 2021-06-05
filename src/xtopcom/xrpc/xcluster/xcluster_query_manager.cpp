@@ -174,7 +174,7 @@ void xcluster_query_manager::getChainInfo(xjson_proc_t & json_proc) {
     }
     jv["init_total_locked_token"] = static_cast<xJson::UInt64>(XGET_ONCHAIN_GOVERNANCE_PARAMETER(initial_total_locked_token));
     jv["total_gas_shard"] = static_cast<xJson::UInt64>(XGET_ONCHAIN_GOVERNANCE_PARAMETER(total_gas_shard));
-    jv["validator_group_count"] = XGET_ONCHAIN_GOVERNANCE_PARAMETER(validator_group_count);
+    jv["validator_group_count"] = XGET_CONFIG(validator_group_count);
     auto onchain_total_lock_tgas_token = store::xtgas_singleton::get_instance().get_cache_total_lock_tgas_token();
     jv["token_price"] = xunit_bstate_t::get_token_price(onchain_total_lock_tgas_token);
 

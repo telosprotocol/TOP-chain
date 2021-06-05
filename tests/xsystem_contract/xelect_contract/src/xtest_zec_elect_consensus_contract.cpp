@@ -15,8 +15,8 @@ using top::xvm::system_contracts::zec::xzec_elect_consensus_group_contract_t;
 using top::xvm::xcontract_helper;
 
 void xtest_zec_elect_consensus_contract_t::set_association_result_store() {
-    auto const validator_group_count = XGET_ONCHAIN_GOVERNANCE_PARAMETER(validator_group_count);
-    auto const auditor_group_count = XGET_ONCHAIN_GOVERNANCE_PARAMETER(auditor_group_count);
+    auto const validator_group_count = XGET_CONFIG(validator_group_count);
+    auto const auditor_group_count = XGET_CONGIF(auditor_group_count);
 
     auto const validator_group_count_per_auditor_group = validator_group_count / auditor_group_count;
 
@@ -31,7 +31,7 @@ void xtest_zec_elect_consensus_contract_t::set_association_result_store() {
 
     all_election_result_store.clear();
     xelection_result_store_t empty_result_store;
-    for (auto gidv = common::xauditor_group_id_value_begin; gidv <= common::xauditor_group_id_value_begin + XGET_ONCHAIN_GOVERNANCE_PARAMETER(auditor_group_count); gidv++) {
+    for (auto gidv = common::xauditor_group_id_value_begin; gidv <= common::xauditor_group_id_value_begin + XGET_CONFIG(auditor_group_count); gidv++) {
         auto gid = common::xgroup_id_t{gidv};
         all_election_result_store.insert({gid, empty_result_store});
     }
@@ -300,8 +300,8 @@ bool xtest_zec_elect_consensus_contract_t::test_elect_non_genesis(common::xzone_
                                                                   std::uint64_t const random_seed,
                                                                   common::xlogic_time_t const election_timestamp) {
     bool result{false};
-    auto const validator_group_count = XGET_ONCHAIN_GOVERNANCE_PARAMETER(validator_group_count);
-    auto const auditor_group_count = XGET_ONCHAIN_GOVERNANCE_PARAMETER(auditor_group_count);
+    auto const validator_group_count = XGET_CONFIG(validator_group_count);
+    auto const auditor_group_count = XGET_CONFIG(auditor_group_count);
 
     auto cluster_election_interval = XGET_ONCHAIN_GOVERNANCE_PARAMETER(cluster_election_interval);
     XATTRIBUTE_MAYBE_UNUSED auto zone_election_trigger_interval = XGET_ONCHAIN_GOVERNANCE_PARAMETER(zone_election_trigger_interval);
@@ -493,8 +493,8 @@ TEST_F(xtest_zec_elect_consensus_contract_t, count_adv_node_election_times) {
 
     auto const min_auditor_group_size = XGET_ONCHAIN_GOVERNANCE_PARAMETER(min_auditor_group_size);
     auto const max_auditor_group_size = XGET_ONCHAIN_GOVERNANCE_PARAMETER(max_auditor_group_size);
-    auto const auditor_group_count = XGET_ONCHAIN_GOVERNANCE_PARAMETER(auditor_group_count);
-    auto const validator_group_count = XGET_ONCHAIN_GOVERNANCE_PARAMETER(validator_group_count);
+    auto const auditor_group_count = XGET_CONFIG(auditor_group_count);
+    auto const validator_group_count = XGET_CONFIG(validator_group_count);
     xrange_t<config::xgroup_size_t> group_size_range{min_auditor_group_size, max_auditor_group_size};
     std::mt19937_64 rng(std::chrono::high_resolution_clock::now().time_since_epoch().count());
     auto random_seed = static_cast<uint64_t>(rng());
