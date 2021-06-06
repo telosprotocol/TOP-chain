@@ -18,14 +18,11 @@ option(BUILD_METRICS "build metrics" ON)
 option(XDISABLE_RATELIMIT "Disable rate limit" OFF)
 option(XENABLE_CONFIG_CHECK, "Enable config check when node boot" OFF)
 option(XENABLE_MOCK_ZEC_STAKE, "Enable mocking stake for ZEC" OFF)
-option(XENABLE_ASSERTION_FAILURE, "Enable assertion failure. Most of the time set to OFF when running tests against invalid scenario" ON)
 
 if (XENABLE_TESTS)
-    set(XENABLE_ASSERTION_FAILURE OFF)
     set(XENABLE_BLOCK_VERIFY OFF)
     set(XSYNC_TEST ON)
 else()
-    set(XENABLE_ASSERTION_FAILURE ON)
     set(XENABLE_BLOCK_VERIFY OFF)
     set(XSYNC_TEST OFF)
 endif()
@@ -273,10 +270,6 @@ if (XENABLE_CONFIG_CHECK)
     add_definitions(-DCONFIG_CHECK)
 endif()
 
-if (XENABLE_ASSERTION_FAILURE)
-    add_definitions(-DXENABLE_ASSERTION_FAILURE)
-endif()
-
 # for slash test
 if (SLASH_TEST)
     add_definitions(-DSLASH_TEST)
@@ -360,7 +353,6 @@ message(STATUS "XENABLE_TESTS:" ${XENABLE_TESTS})
 message(STATUS "XENABLE_VERBOSE_DBG:" ${XENABLE_VERBOSE_DBG})
 message(STATUS "BUILD_METRICS:" ${BUILD_METRICS})
 message(STATUS "ADDRESS_SANITIZER:" ${ADDRESS_SANITIZER})
-message(STATUS "XENABLE_ASSERTION_FAILURE:" ${XENABLE_ASSERTION_FAILURE})
 
 find_package(Threads REQUIRED)
 

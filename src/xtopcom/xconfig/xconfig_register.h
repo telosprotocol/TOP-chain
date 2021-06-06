@@ -85,9 +85,6 @@ public:
             return value;
         }
         xwarn("[config register] %s read fail, use default value", key.c_str());
-#if defined XENABLE_ASSERTION_FAILURE
-        assert(false);
-#endif
         return default_value;
     }
 
@@ -98,9 +95,6 @@ public:
             return value;
         }
         xwarn("[config register] %s read fail, use default value", key.c_str());
-#if defined XENABLE_ASSERTION_FAILURE
-        assert(false);
-#endif
         return default_value;
     }
 

@@ -4,14 +4,11 @@
 
 NS_BEG2(top, config)
 
-xconfig_update_parameter_action_t::~xconfig_update_parameter_action_t() {}
-
 bool xconfig_update_parameter_action_t::do_update(const std::map<std::string, std::string>& params) {
     xconfig_register_t::get_instance().update_params(params);
     return true;
 }
 
-xconfig_incremental_add_update_parameter_action_t::~xconfig_incremental_add_update_parameter_action_t() {}
 bool xconfig_incremental_add_update_parameter_action_t::do_update(const std::map<std::string, std::string>& params) {
     // current only support black/whitelist
     std::map<std::string, std::string> target_param = params;
@@ -20,9 +17,6 @@ bool xconfig_incremental_add_update_parameter_action_t::do_update(const std::map
         auto res = xconfig_register_t::get_instance().get<std::string>(item.first, result);
         if (!res) {
             xwarn("[xconfig_incremental_add_update_parameter_action_t::do_update] %s read fail, use default value", item.first.c_str());
-            #if defined XENABLE_ASSERTION_FAILURE
-                assert(false);
-            #endif
         }
 
         target_param[item.first] = xtop_config_utility::incremental_add_bwlist(result, item.second);
@@ -34,7 +28,6 @@ bool xconfig_incremental_add_update_parameter_action_t::do_update(const std::map
     return true;
 }
 
-xconfig_incremental_delete_update_parameter_action_t::~xconfig_incremental_delete_update_parameter_action_t() {}
 bool xconfig_incremental_delete_update_parameter_action_t::do_update(const std::map<std::string, std::string>& params) {
     // current only support black/whitelist
     std::map<std::string, std::string> target_param = params;
@@ -43,9 +36,6 @@ bool xconfig_incremental_delete_update_parameter_action_t::do_update(const std::
         auto res = xconfig_register_t::get_instance().get<std::string>(item.first, result);
         if (!res) {
             xwarn("[xconfig_incremental_delete_update_parameter_action_t::do_update] %s read fail, use default value", item.first.c_str());
-            #if defined XENABLE_ASSERTION_FAILURE
-                assert(false);
-            #endif
         }
 
         target_param[item.first] = xtop_config_utility::incremental_delete_bwlist(result, item.second);
@@ -56,13 +46,11 @@ bool xconfig_incremental_delete_update_parameter_action_t::do_update(const std::
     return true;
 }
 
-xconfig_add_parameter_action_t::~xconfig_add_parameter_action_t() {}
 bool xconfig_add_parameter_action_t::do_update(const std::map<std::string, std::string>& params) {
     xconfig_register_t::get_instance().add_delete_params(params);
     return true;
 }
 
-xconfig_delete_parameter_action_t::~xconfig_delete_parameter_action_t() {}
 bool xconfig_delete_parameter_action_t::do_update(const std::map<std::string, std::string>& params) {
     xconfig_register_t::get_instance().add_delete_params(params, false);
     return true;
