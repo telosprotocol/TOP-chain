@@ -16,7 +16,7 @@ NS_BEG2(top, config)
 /**
  * configure register update listener.
  */
-class xconfig_register_listener_face_t 
+class xconfig_register_listener_face_t
 {
     public:
         virtual ~xconfig_register_listener_face_t() {}
@@ -48,7 +48,13 @@ using xconfig_register_listener_ptr_t = xconfig_register_listener_face_t*;
 class xconfig_update_action_face_t
 {
 public:
-    virtual ~xconfig_update_action_face_t() {}
+    xconfig_update_action_face_t() = default;
+    xconfig_update_action_face_t(xconfig_update_action_face_t const &) = delete;
+    xconfig_update_action_face_t & operator=(xconfig_update_action_face_t const &) = delete;
+    xconfig_update_action_face_t(xconfig_update_action_face_t &&) = default;
+    xconfig_update_action_face_t & operator=(xconfig_update_action_face_t &&) = delete;
+    virtual ~xconfig_update_action_face_t() = default;
+
     virtual bool do_update(const std::map<std::string, std::string>& params) = 0;
 };
 

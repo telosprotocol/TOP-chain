@@ -29,7 +29,7 @@ public:
      * @brief incremental delete onchain black/whitelist param
      *
      * @param bwlist the whitelist or blacklist
-     * @param valude the proposal target value
+     * @param value the proposal target value
      * @return the new white/black list
      *
      */
@@ -39,42 +39,31 @@ public:
 using xconfig_utl = xtop_config_utility;
 
 
-class xconfig_update_parameter_action_t : public  xconfig_update_action_face_t
+class xconfig_update_parameter_action_t final : public  xconfig_update_action_face_t
 {
 public:
-    xconfig_update_parameter_action_t() = default;
-    virtual ~xconfig_update_parameter_action_t();
-    virtual bool do_update(const std::map<std::string, std::string>& params);
+    bool do_update(const std::map<std::string, std::string>& params) override;
 };
 
-class xconfig_incremental_add_update_parameter_action_t: public xconfig_update_action_face_t {
+class xconfig_incremental_add_update_parameter_action_t final : public xconfig_update_action_face_t {
 public:
-    xconfig_incremental_add_update_parameter_action_t() = default;
-    virtual ~xconfig_incremental_add_update_parameter_action_t();
-    virtual bool do_update(const std::map<std::string, std::string>& params);
+    bool do_update(const std::map<std::string, std::string> & params) override;
 };
 
 
-class xconfig_incremental_delete_update_parameter_action_t: public xconfig_update_action_face_t {
+class xconfig_incremental_delete_update_parameter_action_t final : public xconfig_update_action_face_t {
 public:
-    xconfig_incremental_delete_update_parameter_action_t() = default;
-    virtual ~xconfig_incremental_delete_update_parameter_action_t();
-    virtual bool do_update(const std::map<std::string, std::string>& params);
+    bool do_update(const std::map<std::string, std::string>& params) override;
 };
 
-class xconfig_add_parameter_action_t: public xconfig_update_action_face_t {
+class xconfig_add_parameter_action_t final : public xconfig_update_action_face_t {
 public:
-    xconfig_add_parameter_action_t() = default;
-    virtual ~xconfig_add_parameter_action_t();
-    virtual bool do_update(const std::map<std::string, std::string>& params);
-
+    bool do_update(const std::map<std::string, std::string>& params) override;
 };
 
-class xconfig_delete_parameter_action_t: public xconfig_update_action_face_t {
+class xconfig_delete_parameter_action_t final : public xconfig_update_action_face_t {
 public:
-    xconfig_delete_parameter_action_t() = default;
-    virtual ~xconfig_delete_parameter_action_t();
-    virtual bool do_update(const std::map<std::string, std::string>& params);
+    bool do_update(const std::map<std::string, std::string>& params) override;
 };
 
 NS_END2
