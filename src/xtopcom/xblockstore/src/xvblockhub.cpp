@@ -1779,7 +1779,7 @@ namespace top
                     index_ptr->set_store_flag(base::enum_index_store_flag_input_entity);
                     index_ptr->set_store_flag(base::enum_index_store_flag_output_entity);
                     index_ptr->set_store_flag(base::enum_index_store_flag_mini_block);
-                    xdbg("xblockacct_t::write_block_object_to_db,store object to DB for block(%s)",index_ptr->dump().c_str());
+                    xdbg("xblockacct_t::write_block_object_to_db,store object to DB for block(%s),bin_size=%zu",index_ptr->dump().c_str(), blockobj_bin.size());
                 }
                 else
                 {
@@ -1832,7 +1832,7 @@ namespace top
                 if(base::xvchain_t::instance().get_xdbstore()->set_value(input_key, input_bin))
                 {
                     index_ptr->set_store_flag(base::enum_index_store_flag_input_entity);
-                    xdbg("xblockacct_t::write_block_input_to_db,store input entity to DB for block(%s)",index_ptr->dump().c_str());
+                    xdbg("xblockacct_t::write_block_input_to_db,store input entity to DB for block(%s),bin_size=%zu",index_ptr->dump().c_str(), input_bin.size());
                 }
                 else
                 {
@@ -1852,7 +1852,7 @@ namespace top
                         if(base::xvchain_t::instance().get_xdbstore()->set_value(input_res_key, input_res_bin))
                         {
                             index_ptr->set_store_flag(base::enum_index_store_flag_input_resource);
-                            xdbg("xblockacct_t::write_block_input_to_db,store input resource to DB for block(%s)",index_ptr->dump().c_str());
+                            xdbg("xblockacct_t::write_block_input_to_db,store input resource to DB for block(%s),bin_size=%zu",index_ptr->dump().c_str(), input_res_bin.size());
                         }
                         else
                         {
@@ -1944,7 +1944,7 @@ namespace top
                 if(base::xvchain_t::instance().get_xdbstore()->set_value(output_key, output_bin))
                 {
                     index_ptr->set_store_flag(base::enum_index_store_flag_output_entity);
-                    xdbg("xblockacct_t::write_block_output_to_db,store output entity to DB for block(%s)",index_ptr->dump().c_str());
+                    xdbg("xblockacct_t::write_block_output_to_db,store output entity to DB for block(%s),,bin_size=%zu",index_ptr->dump().c_str(), output_bin.size());
                 }
                 else
                 {
@@ -1964,7 +1964,7 @@ namespace top
                         if(base::xvchain_t::instance().get_xdbstore()->set_value(output_res_key, output_res_bin))
                         {
                             index_ptr->set_store_flag(base::enum_index_store_flag_output_resource);
-                            xdbg("xblockacct_t::write_block_output_to_db,store output resource to DB for block(%s)",index_ptr->dump().c_str());
+                            xdbg("xblockacct_t::write_block_output_to_db,store output resource to DB for block(%s),bin_size=%zu",index_ptr->dump().c_str(), output_res_bin.size());
                         }
                         else
                         {
@@ -2125,7 +2125,7 @@ namespace top
             {
                 const std::string block_input_key = base::xvdbkey_t::create_block_input_key(*this,index_ptr->get_block_hash());
                 base::xvchain_t::instance().get_xdbstore()->delete_value(block_input_key);
-                
+
                 const std::string input_resource_key = base::xvdbkey_t::create_block_input_resource_key(*this,index_ptr->get_block_hash());
                 base::xvchain_t::instance().get_xdbstore()->delete_value(input_resource_key);
             }
@@ -2133,7 +2133,7 @@ namespace top
             {
                 const std::string block_output_key = base::xvdbkey_t::create_block_output_key(*this,index_ptr->get_block_hash());
                 base::xvchain_t::instance().get_xdbstore()->delete_value(block_output_key);
-                
+
                 const std::string output_resource_key = base::xvdbkey_t::create_block_output_resource_key(*this,index_ptr->get_block_hash());
                 base::xvchain_t::instance().get_xdbstore()->delete_value(output_resource_key);
             }
