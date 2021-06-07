@@ -9,7 +9,7 @@
 #include "xsigndata.h"
 #include "xmutisig/xschnorr/xschnorr.h"
 #include "xmutisig/xmutisig.h"
-
+#include "xpbase/base/top_utils.h"
 
 namespace top
 {
@@ -54,6 +54,7 @@ namespace top
             }
             xmutisig::xecc_rand_t * onetime_rand = new xmutisig::xecc_rand_t();
             std::string schnorr_signature;
+            xinfo("sign_target_hash:%s,_singer_private_key:%s", top::HexEncode(sign_target_hash).c_str(), top::HexEncode(signer.get_sign_prikey()).c_str());
             xmutisig::xmutisig::sign(sign_target_hash,
                                      _singer_private_key,
                                      schnorr_signature,
