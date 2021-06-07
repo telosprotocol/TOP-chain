@@ -51,8 +51,6 @@ public:
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(cross_reading_rec_standby_pool_contract_logic_timeout_limitation);
 
         // slash related
-        XADD_ONCHAIN_GOVERNANCE_PARAMETER(tableslash_report_schedule_interval);  // 51m50s
-        XADD_ONCHAIN_GOVERNANCE_PARAMETER(min_table_block_report);
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(punish_interval_time_block);
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(punish_interval_table_block);
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(sign_block_publishment_threshold_value);
@@ -129,8 +127,6 @@ public:
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(task_num_per_round);
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(workload_per_tx);
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(workload_per_tableblock);
-        XADD_ONCHAIN_GOVERNANCE_PARAMETER(tableworkload_report_schedule_interval);
-        XADD_ONCHAIN_GOVERNANCE_PARAMETER(workload_report_min_table_block_num);
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(min_node_reward);
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(min_voter_dividend);
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(shard_zero_workload);
