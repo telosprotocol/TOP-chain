@@ -55,9 +55,7 @@ class xfulltable_output_entity_t final : public xventity_face_t<xfulltable_outpu
 // input: an array of newest units
 // output: the root of bucket merkle tree of all unit accounts index
 class xfull_tableblock_t : public xblock_t {
- protected:
-    static XINLINE_CONSTEXPR char const * RESOURCE_ACCOUNT_INDEX_BINLOG     = "0";
-    static XINLINE_CONSTEXPR char const * RESOURCE_RECEIPTID_PAIRS_BINLOG   = "1";
+ public:
     static XINLINE_CONSTEXPR char const * RESOURCE_NODE_SIGN_STATISTICS     = "2";
 
  protected:
@@ -68,6 +66,7 @@ class xfull_tableblock_t : public xblock_t {
 
  public:
     xfull_tableblock_t(base::xvheader_t & header, xblockcert_t & cert, const xinput_ptr_t & input, const xoutput_ptr_t & output);
+    xfull_tableblock_t(base::xvheader_t & header, base::xvqcert_t & cert, base::xvinput_t* input, base::xvoutput_t* output);
  protected:
     virtual ~xfull_tableblock_t();
  private:

@@ -156,24 +156,9 @@ void  xblock_t::batch_units_to_receiptids(const std::vector<xblock_ptr_t> & unit
     }
 }
 
-xblock_t::xblock_t(base::xvheader_t & header, xblockcert_t & cert, enum_xdata_type type)
+xblock_t::xblock_t(base::xvheader_t & header, base::xvqcert_t & cert, enum_xdata_type type)
     : base::xvblock_t(header, cert, nullptr, nullptr, type) {
     XMETRICS_XBASE_DATA_CATEGORY_NEW(type);
-    // genesis block always set consensused forcely
-    if (header.get_height() == 0) {
-        xassert(get_cert()->get_viewtoken() == (uint32_t)-1);
-        xassert(get_cert()->get_validator().low_addr == (uint64_t)-1);
-        xassert(get_cert()->get_validator().high_addr == (uint64_t)-1);
-        //xassert(get_cert()->get_validator_threshold() == (uint16_t)-1);
-
-        set_block_flag(base::enum_xvblock_flag_authenticated);
-        set_block_flag(base::enum_xvblock_flag_locked);
-        set_block_flag(base::enum_xvblock_flag_committed);
-        // set_block_flag(base::enum_xvblock_flag_executed);
-        set_block_flag(base::enum_xvblock_flag_confirmed);
-        set_block_flag(base::enum_xvblock_flag_connected);
-        reset_modified_count();
-    }
     MEMCHECK_ADD_TRACE(this, "block_create");
 }
 
@@ -185,21 +170,12 @@ xblock_t::xblock_t(enum_xdata_type type) : base::xvblock_t(type) {
 xblock_t::xblock_t(base::xvheader_t & header, xblockcert_t & cert, const xinput_ptr_t & input, const xoutput_ptr_t & output, enum_xdata_type type)
   : base::xvblock_t(header, cert, input.get(), output.get(), type) {
     XMETRICS_XBASE_DATA_CATEGORY_NEW(type);
-    xassert(header.get_block_class() != base::enum_xvblock_class_nil);
-    // genesis block always set consensused forcely
-    if (header.get_height() == 0) {
-        xassert(get_cert()->get_viewtoken() == (uint32_t)-1);
-        xassert(get_cert()->get_validator().low_addr == (uint64_t)-1);
-        xassert(get_cert()->get_validator().high_addr == (uint64_t)-1);
-        //xassert(get_cert()->get_validator_threshold() == (uint16_t)-1);
+    MEMCHECK_ADD_TRACE(this, "block_create");
+}
 
-        set_block_flag(base::enum_xvblock_flag_authenticated);
-        set_block_flag(base::enum_xvblock_flag_locked);
-        set_block_flag(base::enum_xvblock_flag_committed);
-        // set_block_flag(base::enum_xvblock_flag_executed);
-        set_block_flag(base::enum_xvblock_flag_connected);
-        reset_modified_count();
-    }
+xblock_t::xblock_t(base::xvheader_t & header, base::xvqcert_t & cert, base::xvinput_t* input, base::xvoutput_t* output, enum_xdata_type type)
+  : base::xvblock_t(header, cert, input, output, type) {
+    XMETRICS_XBASE_DATA_CATEGORY_NEW(type);
     MEMCHECK_ADD_TRACE(this, "block_create");
 }
 
@@ -265,17 +241,17 @@ std::string xblock_t::dump_header() const {
     ss << "{";
     ss << get_header()->get_account();
     ss << ",height=" << get_header()->get_height();
-    //ss << ",level:" << get_header()->get_block_level();
+    ss << ",level:" << get_header()->get_block_level();
     ss << ",class=" << get_header()->get_block_class();
-    //ss << ",type=" << get_header()->get_block_type();
-    //ss << ",features:" << get_header()->get_block_features();
-    //ss << ",version:" << get_header()->get_block_version();
-    //ss << ",weight:" << get_header()->get_weight();
-    // ss << ",comments:"  << get_header()->get_comments();
-    // ss << ",extra:"     << get_header()->get_extra_data();
-    //ss << ",last_h:" << base::xhash64_t::digest(get_header()->get_last_block_hash());
-    //ss << ",input_h=" << base::xhash64_t::digest(get_header()->get_input_hash());
-    //ss << ",output_h=" << base::xhash64_t::digest(get_header()->get_output_hash());
+    ss << ",type=" << get_header()->get_block_type();
+    ss << ",features:" << get_header()->get_block_features();
+    ss << ",version:" << get_header()->get_block_version();
+    ss << ",weight:" << get_header()->get_weight();
+    ss << ",comments:"  << get_header()->get_comments();
+    ss << ",extra:"     << get_header()->get_extra_data();
+    ss << ",last_h:" << base::xhash64_t::digest(get_header()->get_last_block_hash());
+    ss << ",input_h=" << base::xhash64_t::digest(get_header()->get_input_hash());
+    ss << ",output_h=" << base::xhash64_t::digest(get_header()->get_output_hash());
     ss << "}";
     return ss.str();
 }
@@ -283,29 +259,29 @@ std::string xblock_t::dump_header() const {
 std::string xblock_t::dump_cert(base::xvqcert_t * qcert) const {
     std::stringstream ss;
     ss << "{";
-    // ss << ",nonce="     << qcert->get_nonce();
-    // ss << ",expire="    << qcert->get_expired();
-    // ss << ",drand="     << qcert->get_drand_height();
-    // ss << ",parent_h="  << qcert->get_parent_block_height();
-    // ss << " validator=" << qcert->get_validator().low_addr;
-    // ss << " auditor="   << qcert->get_auditor().low_addr;
+    ss << ",nonce="     << qcert->get_nonce();
+    ss << ",expire="    << qcert->get_expired();
+    ss << ",drand="     << qcert->get_drand_height();
+    ss << ",parent_h="  << qcert->get_parent_block_height();
+    ss << " validator=" << qcert->get_validator().low_addr;
+    ss << " auditor="   << qcert->get_auditor().low_addr;
     ss << " sign_h="    << base::xhash64_t::digest(qcert->get_hash_to_sign());
-    // ss << " header_h="   << base::xhash64_t::digest(qcert->get_header_hash());
-    // ss << " input_r="   << base::xhash64_t::digest(qcert->get_input_root_hash());
-    // ss << " output_r="  << base::xhash64_t::digest(qcert->get_output_root_hash());
-    // ss << " justify_r="  << base::xhash64_t::digest(qcert->get_justify_cert_hash());
-    // ss << " verify_th=" << qcert->get_validator_threshold();
-    // ss << " audit_th="  << qcert->get_auditor_threshold();
-    // ss << " verify_sig="<< qcert->get_verify_signature().size();
-    // ss << " audit_sig=" << qcert->get_audit_signature().size();
-    // ss << " cons_type=" << qcert->get_consensus_type();
-    // ss << " cons_th=" << qcert->get_consensus_threshold();
-    // ss << " cons_flag=" << qcert->get_consensus_flags();
-    // ss << " key_type=" << qcert->get_crypto_key_type();
-    // ss << " sign_type=" << qcert->get_crypto_sign_type();
-    // ss << " hash_type=" << qcert->get_crypto_hash_type();
-    // ss << " extend=" << base::xhash64_t::digest(qcert->get_extend_data());
-    // ss << "," << base::xhash64_t::digest(qcert->get_extend_cert());
+    ss << " header_h="   << base::xhash64_t::digest(qcert->get_header_hash());
+    ss << " input_r="   << base::xhash64_t::digest(qcert->get_input_root_hash());
+    ss << " output_r="  << base::xhash64_t::digest(qcert->get_output_root_hash());
+    ss << " justify_r="  << base::xhash64_t::digest(qcert->get_justify_cert_hash());
+    ss << " verify_th=" << qcert->get_validator_threshold();
+    ss << " audit_th="  << qcert->get_auditor_threshold();
+    ss << " verify_sig="<< qcert->get_verify_signature().size();
+    ss << " audit_sig=" << qcert->get_audit_signature().size();
+    ss << " cons_type=" << qcert->get_consensus_type();
+    ss << " cons_th=" << qcert->get_consensus_threshold();
+    ss << " cons_flag=" << qcert->get_consensus_flags();
+    ss << " key_type=" << qcert->get_crypto_key_type();
+    ss << " sign_type=" << qcert->get_crypto_sign_type();
+    ss << " hash_type=" << qcert->get_crypto_hash_type();
+    ss << " extend=" << base::xhash64_t::digest(qcert->get_extend_data());
+    ss << "," << base::xhash64_t::digest(qcert->get_extend_cert());
 
     ss << "}";
 
@@ -315,9 +291,6 @@ std::string xblock_t::dump_cert(base::xvqcert_t * qcert) const {
 std::string xblock_t::dump_cert() const {
     std::stringstream ss;
     ss << "cert:" << dump_cert(get_cert());
-    // if (check_block_flag(base::enum_xvblock_flag_committed)) {
-    //     ss << ",pcert:" << dump_cert(get_blockcert()->get_parent_cert());
-    // }
     return ss.str();
 }
 
@@ -355,23 +328,8 @@ void xblock_t::set_parent_cert_and_path(base::xvqcert_t * parent_cert, const xme
     xassert(get_cert()->get_extend_data().empty());
     set_extend_data(extend_data);
 
-    get_blockcert()->set_parent_cert_and_path(parent_cert, path);
     set_block_flag(base::enum_xvblock_flag_authenticated);
-    // TODO(jimmy) highqc table will unpack unit
-    // set_block_flag(base::enum_xvblock_flag_locked);
-    // set_block_flag(base::enum_xvblock_flag_committed);
     xassert(!get_block_hash().empty());
-}
-
-bool xblock_t::check_block_hash() {
-    bool         ret;
-    ret = get_blockcert()->check_parent_cert_and_path();
-    if (!ret) {
-        xwarn("xblock_t::check_block_hash parent cert check fail");
-        return ret;
-    }
-
-    return true;
 }
 
 std::string xblock_t::get_block_hash_hex_str() const {
@@ -407,6 +365,8 @@ bool xblock_t::calc_output_merkle_path(const std::string & leaf, xmerkle_path_25
 }
 
 void xblock_t::set_consensus_para(const xblock_consensus_para_t & para) {
+    xassert(false);  // TODO(jimmy) delete api
+
     xassert(para.get_clock() != 0);
     get_cert()->set_clock(para.get_clock());
     xassert(para.get_viewid() != 0);
@@ -415,7 +375,7 @@ void xblock_t::set_consensus_para(const xblock_consensus_para_t & para) {
     get_cert()->set_validator(para.get_validator());
     if (!is_xip2_empty(para.get_auditor())) {  // optional
         get_cert()->set_auditor(para.get_auditor());
-        get_blockcert()->set_consensus_flag(base::enum_xconsensus_flag_audit_cert);
+        // get_blockcert()->set_consensus_flag(base::enum_xconsensus_flag_audit_cert);
     }
     if (para.get_viewtoken() != 0) {  // optional
         get_cert()->set_viewtoken(para.get_viewtoken());

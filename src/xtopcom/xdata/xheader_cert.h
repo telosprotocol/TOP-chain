@@ -79,13 +79,8 @@ class xblockcert_t : public base::xvqcert_t {
     void *query_interface(const int32_t _enum_xobject_type_) override;
 
  public:  // set block cert member
-    void                set_consensus_flag(base::enum_xconsensus_flag flag) {base::xvqcert_t::set_consensus_flag(flag);}
 
  public:
-    void                set_parent_cert_and_path(base::xvqcert_t* parent_cert, const xmerkle_path_256_t & path);
-    bool                check_parent_cert_and_path();
-    base::xvqcert_t*    get_parent_cert();
-    static bool         extend_data_serialize_from(const std::string & extend_data, xmerkle_path_256_t & path);
 
  private:
     base::xvqcert_t*    m_parent_cert{nullptr};

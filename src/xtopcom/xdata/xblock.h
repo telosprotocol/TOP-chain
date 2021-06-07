@@ -79,10 +79,10 @@ class xblock_t : public base::xvblock_t {
     static void  batch_units_to_receiptids(const std::vector<xobject_ptr_t<xblock_t>> & units, base::xreceiptid_check_t & receiptid_check);
 public:
     xblock_t(enum_xdata_type type);
-    xblock_t(base::xvheader_t & header, xblockcert_t & cert, enum_xdata_type type);
+    xblock_t(base::xvheader_t & header, base::xvqcert_t & cert, enum_xdata_type type);
     // xblock_t(base::xvheader_t & header, xblockcert_t & cert, const std::string & input, const std::string & output, enum_xdata_type type);
     xblock_t(base::xvheader_t & header, xblockcert_t & cert, const xinput_ptr_t & input, const xoutput_ptr_t & output, enum_xdata_type type);
-
+    xblock_t(base::xvheader_t & header, base::xvqcert_t & cert, base::xvinput_t* input, base::xvoutput_t* output, enum_xdata_type type);
 
 #ifdef XENABLE_PSTACK  // tracking memory
     virtual int32_t add_ref() override;
@@ -104,7 +104,6 @@ public:
     void        set_parent_cert_and_path(base::xvqcert_t* parent_cert, const xmerkle_path_256_t & path);
     bool        calc_input_merkle_path(const std::string & leaf, xmerkle_path_256_t& hash_path) const;
     bool        calc_output_merkle_path(const std::string & leaf, xmerkle_path_256_t& hash_path) const;
-    bool        check_block_hash();
 
  public:
     void            set_consensus_para(const xblock_consensus_para_t & para);
@@ -172,6 +171,7 @@ class xblock_consensus_para_t {
     void    set_drand_block(base::xvblock_t* _drand_block);
     void    set_latest_blocks(const base::xblock_mptrs & latest_blocks);
     void    update_latest_cert_block(const xblock_ptr_t & proposal_prev_block) {m_latest_cert_block = proposal_prev_block;}
+    void    set_validator(const xvip2_t & validator) {m_validator = validator;}
     void    set_common_consensus_para(uint64_t clock,
                                    const xvip2_t & validator,
                                    const xvip2_t & auditor,

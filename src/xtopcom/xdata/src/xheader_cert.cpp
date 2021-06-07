@@ -130,15 +130,17 @@ base::xauto_ptr<xblockcert_t> xblockcert_t::create_blockcert(const std::string &
                                               base::enum_xconsensus_flag flag,
                                               uint64_t                   viewid,
                                               uint64_t                   clock) {
-    xblockcert_t * _cert = new xblockcert_t(account, height);
-    if (height != 0) {
-        _cert->set_viewid(viewid);
-        _cert->set_clock(clock);
-        if (flag != (base::enum_xconsensus_flag)0) {
-            _cert->set_consensus_flag(flag);
-        }
-    }
-    return _cert;
+    // xblockcert_t * _cert = new xblockcert_t(account, height);
+    // if (height != 0) {
+    //     _cert->set_viewid(viewid);
+    //     _cert->set_clock(clock);
+    //     if (flag != (base::enum_xconsensus_flag)0) {
+    //         _cert->set_consensus_flag(flag);
+    //     }
+    // }
+    // return _cert;
+    xassert(false);  // TODO(jimmy) delete later
+    return nullptr;
 }
 
 base::enum_xvchain_key_curve xblockcert_t::get_key_curve_type_from_account(const std::string & account) {
@@ -213,61 +215,6 @@ void * xblockcert_t::query_interface(const int32_t _enum_xobject_type_) {
     if (object_type_value == _enum_xobject_type_)
         return this;
     return xvqcert_t::query_interface(_enum_xobject_type_);
-}
-
-void xblockcert_t::set_parent_cert_and_path(base::xvqcert_t * parent_cert, const xmerkle_path_256_t & path) {
-    m_parent_cert = parent_cert;
-    m_parent_cert->add_ref();
-    m_cert_path = path;
-}
-
-base::xvqcert_t * xblockcert_t::get_parent_cert() {
-    if (m_parent_cert != nullptr) {
-        return m_parent_cert;
-    }
-    check_parent_cert_and_path();
-    return m_parent_cert;
-}
-
-bool xblockcert_t::extend_data_serialize_from(const std::string & extend_data, xmerkle_path_256_t & path) {
-    xassert(!extend_data.empty());
-    base::xstream_t _stream2(base::xcontext_t::instance(), (uint8_t *)extend_data.data(), (uint32_t)extend_data.size());
-    int32_t ret = path.serialize_from(_stream2);
-    if (ret <= 0) {
-        xerror("xblockcert_t::extend_data_serialize_from deserialize fail. ret=%d", ret);
-        return false;
-    }
-    return true;
-}
-
-bool xblockcert_t::check_parent_cert_and_path() {
-    if (!(get_consensus_flags() & base::enum_xconsensus_flag_extend_cert)) {
-        return true;
-    }
-
-    if (get_extend_cert().empty() || get_extend_data().empty()) {
-        xerror("xblock_t::check_block_hash has none extend cert or data");
-        return false;
-    }
-
-    if (m_parent_cert == nullptr && !get_extend_cert().empty()) {
-        base::xstream_t _stream(base::xcontext_t::instance(), (uint8_t *)get_extend_cert().data(), (uint32_t)get_extend_cert().size());
-        m_parent_cert = (base::xvqcert_t *)xdataunit_t::read_from(_stream);
-        xassert(m_parent_cert != nullptr);
-
-        if (!get_extend_data().empty()) {
-            base::xstream_t _stream2(base::xcontext_t::instance(), (uint8_t *)get_extend_data().data(), (uint32_t)get_extend_data().size());
-            m_cert_path.serialize_from(_stream2);
-        }
-    }
-
-    if (m_parent_cert == nullptr) {
-        xassert(0);
-        return false;
-    }
-
-    const std::string leaf = get_hash_to_sign();
-    return check_merkle_path(leaf, m_cert_path, m_parent_cert->get_output_root_hash());
 }
 
 NS_END2

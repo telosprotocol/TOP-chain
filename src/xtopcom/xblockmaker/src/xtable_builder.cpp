@@ -101,10 +101,10 @@ xblock_ptr_t        xlighttable_builder_t::build_block(const xblock_ptr_t & prev
     lighttable_para.set_property_binlog(property_binlog);
     lighttable_para.set_batch_units(lighttable_build_para->get_batch_units());
     lighttable_para.set_extra_data(cs_para.get_extra_data());
-    base::xvblock_t* _proposal_block = data::xtable_block_t::create_next_tableblock(lighttable_para, prev_block.get());
+
+    base::xvblock_t* _proposal_block = data::xblocktool_t::create_next_tableblock(lighttable_para, prev_block.get(), cs_para);
     xblock_ptr_t proposal_table;
     proposal_table.attach((data::xblock_t*)_proposal_block);
-    proposal_table->set_consensus_para(cs_para);
 
     xdbg("xlighttable_builder_t::build_block %s,account=%s,height=%ld,binlog_size=%zu,binlog=%ld",
         cs_para.dump().c_str(), prev_block->get_account().c_str(), prev_block->get_height() + 1,
@@ -143,10 +143,9 @@ xblock_ptr_t        xfulltable_builder_t::build_block(const xblock_ptr_t & prev_
     std::string binlog_hash = base::xcontext_t::instance().hash(property_binlog, prev_block->get_cert()->get_crypto_hash_type());
 
     xfulltable_block_para_t fulltable_para(binlog_hash, block_statistics);
-    base::xvblock_t* _proposal_block = data::xfull_tableblock_t::create_next_block(fulltable_para, prev_block.get());
+    base::xvblock_t* _proposal_block = data::xblocktool_t::create_next_fulltable(fulltable_para, prev_block.get(), cs_para);
     xblock_ptr_t proposal_table;
     proposal_table.attach((data::xblock_t*)_proposal_block);
-    proposal_table->set_consensus_para(cs_para);
 
     xdbg("xfulltable_builder_t::build_block %s,account=%s,height=%ld,binlog_size=%zu,binlog=%ld",
         cs_para.dump().c_str(), prev_block->get_account().c_str(), prev_block->get_height() + 1,

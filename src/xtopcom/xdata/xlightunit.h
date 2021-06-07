@@ -119,6 +119,7 @@ class xlightunit_block_t : public xblock_t {
     static base::xvblock_t* create_next_lightunit(const xinput_ptr_t & input, const xoutput_ptr_t & output, base::xvblock_t* prev_block);
 
     xlightunit_block_t(base::xvheader_t & header, xblockcert_t & cert, const xinput_ptr_t & input, const xoutput_ptr_t & output);
+    xlightunit_block_t(base::xvheader_t & header, base::xvqcert_t & cert, base::xvinput_t* input, base::xvoutput_t* output);
 
  protected:
     xlightunit_block_t(base::xvheader_t & header, xblockcert_t & cert);
