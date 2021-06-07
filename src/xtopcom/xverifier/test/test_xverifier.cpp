@@ -216,11 +216,11 @@ TEST_F(test_xverifier, trx_verifier_validation_3_addr_type) {
     trx_ptr->set_digest();
     trx_ptr->set_len();
     ASSERT_NE(xtx_verifier::verify_send_tx_validation(trx_ptr.get()), xverifier_error::xverifier_success);
-    trx_ptr->set_different_source_target_address(sys_contract_sharding_vote_addr, sys_contract_sharding_slash_info_addr);
-    trx_ptr->set_tx_type(xtransaction_type_transfer);
-    trx_ptr->set_digest();
-    trx_ptr->set_len();
-    ASSERT_NE(xtx_verifier::verify_send_tx_validation(trx_ptr.get()), xverifier_error::xverifier_success);
+    // trx_ptr->set_different_source_target_address(sys_contract_sharding_vote_addr, sys_contract_sharding_slash_info_addr);
+    // trx_ptr->set_tx_type(xtransaction_type_transfer);
+    // trx_ptr->set_digest();
+    // trx_ptr->set_len();
+    // ASSERT_NE(xtx_verifier::verify_send_tx_validation(trx_ptr.get()), xverifier_error::xverifier_success);
     trx_ptr->set_different_source_target_address(src_addr, sys_contract_sharding_vote_addr);
     trx_ptr->set_tx_type(xtransaction_type_transfer);
     trx_ptr->set_digest();
