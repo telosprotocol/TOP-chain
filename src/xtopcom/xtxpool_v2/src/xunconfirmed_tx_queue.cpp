@@ -317,7 +317,7 @@ void xunconfirmed_tx_queue_t::recover(const xreceipt_state_cache_t & receiptid_s
 
         uint64_t cache_height = find_account_cache_height(account);
         if (cache_height >= account_index.get_latest_unit_height()) {
-            xtxpool_dbg("xunconfirmed_tx_queue_t::recover same height with index.table=%s,height=%ld,account=%s", m_table_info->get_table_addr().c_str(), _block->get_height(), account.c_str());
+            xtxpool_info("xunconfirmed_tx_queue_t::recover same height with index.table=%s,height=%ld,account=%s,cache h:%llu,account_index:%s", m_table_info->get_table_addr().c_str(), _block->get_height(), account.c_str(), cache_height, account_index.dump().c_str());
             continue;
         }
 
