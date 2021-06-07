@@ -1276,8 +1276,14 @@ void get_block_handle::set_lightunit_info(xJson::Value & j_lu, xblock_t * bp) {
     }
 }
 
-std::unordered_map<string, string> node_type_map =
-    {{"consensus.auditor.", "auditor"}, {"consensus.validator.", "validator"}, {"edge.", "edge"}, {"archive.", "archive"}, {"committee.", "root_beacon"}, {"zec.", "sub_beacon"}};
+static std::unordered_map<common::xnode_type_t, std::string> node_type_map{
+    { common::xnode_type_t::consensus_auditor, "auditor" },
+    { common::xnode_type_t::consensus_validator, "validator" },
+    { common::xnode_type_t::edge, "edge" },
+    { common::xnode_type_t::archive, "archive" },
+    { common::xnode_type_t::rec, "root_beacon" },
+    { common::xnode_type_t::zec, "sub_beacon"}
+};
 
 void get_block_handle::set_addition_info(xJson::Value & body, xblock_t * bp) {
     xaccount_ptr_t state = m_store->get_target_state(bp);
@@ -1345,7 +1351,7 @@ void get_block_handle::set_addition_info(xJson::Value & body, xblock_t * bp) {
                                 j["public_key"] = to_hex_str(election_info.consensus_public_key.to_string());
                                 j["group_id"] = xip2.group_id().value();
                                 j["stake"] = static_cast<unsigned long long>(election_info.stake);
-                                j["node_type"] = node_type_map[common::to_string(node_type)];
+                                j["node_type"] = node_type_map[node_type];
 
                                 if (group_result.group_version().has_value()) {
                                     j["version"] = static_cast<xJson::UInt64>(group_result.group_version().value());
