@@ -2508,6 +2508,7 @@ namespace top
             xcontext_t::register_xobject2(_context,(enum_xobject_type)xvbinentity_t::enum_obj_type,lambda_new_bin_entity);
             
             xvbstate_t::register_object(_context);
+            xkinfo("xvblock_t::register_object,finish");
         }
         
         //generated the unique path of vblock to store data to DB

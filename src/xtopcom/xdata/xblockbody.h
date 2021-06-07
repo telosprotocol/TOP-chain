@@ -17,8 +17,6 @@
 
 NS_BEG2(top, data)
 
-XINLINE_CONSTEXPR char const * XRESOURCE_BINLOG_HASH_KEY                = "bh";  //binlog hash
-
 template <typename T, int type_value>
 class xventity_face_t : public base::xventity_t {
  protected:

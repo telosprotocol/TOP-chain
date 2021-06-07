@@ -70,11 +70,6 @@ class xfullunit_block_t : public xblock_t {
     static int32_t get_object_type() {return object_type_value;}
     static xobject_t *create_object(int type);
     void *query_interface(const int32_t _enum_xobject_type_) override;
- protected:
-    xfullunit_output_t*    get_fullunit_output() const {return (xfullunit_output_t*)(get_output()->get_entitys()[0]);}
-
- public:
-    std::string     get_property_binlog() const override {return get_fullunit_output()->get_property_snapshot();}
 };
 
 

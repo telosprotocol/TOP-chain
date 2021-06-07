@@ -71,11 +71,9 @@ class xlightunit_output_resource_t : public xbase_dataunit_t<xlightunit_output_r
 
  public:
     uint32_t    get_unconfirm_sendtx_num() const {return m_unconfirm_sendtx_num;}
-    const std::string & get_property_binlog() const {return m_property_binlog;}
 
  private:
     uint32_t                            m_unconfirm_sendtx_num{0};
-    std::string                         m_property_binlog;
 };
 using xlightunit_output_resource_ptr_t = xobject_ptr_t<xlightunit_output_resource_t>;
 
@@ -124,9 +122,7 @@ class xlightunit_block_t : public xblock_t {
  public:  // override base block api
     bool                        extract_sub_txs(std::vector<base::xvtxindex_ptr> & sub_txs) override;
     const std::vector<xlightunit_tx_info_ptr_t> &   get_txs() const override;
-    std::string                 get_property_binlog() const override {return get_tx_output_resource()->get_property_binlog();}
     uint32_t                    get_txs_count() const override {return (uint32_t)get_input()->get_entitys().size();}
-    int64_t                     get_burn_balance_change() const override;
     uint16_t                    get_unconfirm_sendtx_num() const override {return get_tx_output_resource()->get_unconfirm_sendtx_num();}
 
  private:

@@ -117,17 +117,6 @@ const std::vector<xblock_ptr_t> & xtable_block_t::get_tableblock_units(bool need
     return unpack_and_get_units(need_parent_cert);
 }
 
-std::map<std::string, xaccount_index_t> xtable_block_t::get_units_index() const {
-    std::map<std::string, xaccount_index_t> changed_indexs;
-    auto & units = get_tableblock_units(true);
-    for (auto & unit : units) {
-        xaccount_index_t account_index(unit.get(), unit->get_unconfirm_sendtx_num() != 0, false);  // TODO(jimmy)
-        changed_indexs[unit->get_account()] = account_index;
-    }
-    xassert(!changed_indexs.empty());
-    return changed_indexs;
-}
-
 xblock_ptr_t xtable_block_t::create_whole_unit(const std::string & header,
                                                     const std::string & input,
                                                     const std::string & input_res,

@@ -103,7 +103,6 @@ xblock_ptr_t xproposal_maker_t::make_proposal(data::xblock_consensus_para_t & pr
     std::string proposal_input_str;
     proposal_input->serialize_to_string(proposal_input_str);
     proposal_block->get_input()->set_proposal(proposal_input_str);
-    xassert(!proposal_block->get_header()->get_extra_data().empty());
     bool bret = proposal_block->reset_prev_block(latest_cert_block.get());
     xassert(bret);
     xdbg("xproposal_maker_t::make_proposal succ.%s,proposal_block=%s", proposal_para.dump().c_str(), proposal_block->dump().c_str());
