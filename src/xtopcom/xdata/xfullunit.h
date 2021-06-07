@@ -72,9 +72,8 @@ class xfullunit_block_t : public xblock_t {
     static base::xvblock_t* create_next_fullunit(const xfullunit_block_para_t & para, base::xvblock_t* prev_block);
     static base::xvblock_t* create_next_fullunit(const xinput_ptr_t & input, const xoutput_ptr_t & output, base::xvblock_t* prev_block);
  public:
-    xfullunit_block_t(base::xvheader_t & header, xblockcert_t & cert);
     xfullunit_block_t(base::xvheader_t & header, xblockcert_t & cert, const xinput_ptr_t & input, const xoutput_ptr_t & output);
-    // xfullunit_block_t(base::xvheader_t & header, xblockcert_t & cert, const std::string & input, const std::string & output);
+    xfullunit_block_t(base::xvheader_t & header, base::xvqcert_t & cert, base::xvinput_t* input, base::xvoutput_t* output);
  protected:
     virtual ~xfullunit_block_t();
  private:

@@ -15,6 +15,7 @@
 #include "xvledger/xvledger.h"
 #include "xvledger/xvstatestore.h"
 // #include "xcontract_runtime/xaccount_vm.h"
+#include "xdata/xblockbuild.h"
 
 NS_BEG2(top, blockmaker)
 
@@ -79,10 +80,11 @@ xblock_ptr_t        xlightunit_builder_t::build_block(const xblock_ptr_t & prev_
     alloc_tx_receiptid(input_txs, receiptid_state);
     alloc_tx_receiptid(lightunit_para.get_contract_create_txs(), receiptid_state);
 
-    base::xvblock_t* _proposal_block = data::xlightunit_block_t::create_next_lightunit(lightunit_para, prev_block.get());
+
+    xlightunit_build_t bbuild(prev_block.get(), lightunit_para, cs_para);
+    base::xvblock_t* _proposal_block = data::xblocktool_t::create_next_lightunit(lightunit_para, prev_block.get(), cs_para);
     xblock_ptr_t proposal_unit;
     proposal_unit.attach((data::xblock_t*)_proposal_block);
-    proposal_unit->set_consensus_para(cs_para);
     return proposal_unit;
 }
 
@@ -115,11 +117,10 @@ xblock_ptr_t        xfullunit_builder_t::build_block(const xblock_ptr_t & prev_b
     xinfo("xfullunit_builder_t::build_block %s,account=%s,height=%ld,binlog_size=%zu,binlog=%ld",
         cs_para.dump().c_str(), prev_block->get_account().c_str(), prev_block->get_height() + 1,
         para.m_property_snapshot.size(), base::xhash64_t::digest(para.m_property_snapshot));
-    base::xvblock_t* _proposal_block = data::xfullunit_block_t::create_next_fullunit(para, prev_block.get());
+
+    base::xvblock_t* _proposal_block = data::xblocktool_t::create_next_fullunit(para, prev_block.get(), cs_para);
     xblock_ptr_t proposal_unit;
     proposal_unit.attach((data::xblock_t*)_proposal_block);
-    proposal_unit->set_consensus_para(cs_para);
-
     return proposal_unit;
 }
 
@@ -127,10 +128,9 @@ xblock_ptr_t        xemptyunit_builder_t::build_block(const xblock_ptr_t & prev_
                                                     const xobject_ptr_t<base::xvbstate_t> & prev_bstate,
                                                     const data::xblock_consensus_para_t & cs_para,
                                                     xblock_builder_para_ptr_t & build_para) {
-    base::xvblock_t* _proposal_block = data::xemptyblock_t::create_next_emptyblock(prev_block.get());
+    base::xvblock_t* _proposal_block = data::xblocktool_t::create_next_emptyblock(prev_block.get(), cs_para);
     xblock_ptr_t proposal_unit;
     proposal_unit.attach((data::xblock_t*)_proposal_block);
-    proposal_unit->set_consensus_para(cs_para);
     return proposal_unit;
 }
 #if 0

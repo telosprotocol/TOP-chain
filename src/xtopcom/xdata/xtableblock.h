@@ -16,6 +16,7 @@
 #include "xdata/xcons_transaction.h"
 #include "xdata/xlightunit.h"
 #include "xdata/xfullunit.h"
+#include "xvledger/xvblockbuild.h"
 
 NS_BEG2(top, data)
 
@@ -105,12 +106,14 @@ class xtable_block_t : public xblock_t {
                                                 const std::string & input,
                                                 const std::string & input_res,
                                                 const std::string & output,
-                                                const std::string & output_res);
+                                                const std::string & output_res,
+                                                const base::xbbuild_para_t & build_para);
  public:
     static base::xvblock_t* create_next_tableblock(const xtable_block_para_t & para, base::xvblock_t* prev_block);
- protected:
+ public:
     xtable_block_t();
     xtable_block_t(base::xvheader_t & header, xblockcert_t & cert, const xinput_ptr_t & input, const xoutput_ptr_t & output);
+    xtable_block_t(base::xvheader_t & header, base::xvqcert_t & cert, base::xvinput_t* input, base::xvoutput_t* output);
     virtual ~xtable_block_t();
  private:
     xtable_block_t(const xtable_block_t &);

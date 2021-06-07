@@ -99,7 +99,7 @@ class xinput_t final: public base::xvinput_t {
  public:  // implement virtual interface
     virtual const std::string           get_root_hash() const override;
 
-    static std::string                  get_key(const std::string & _base_path) {return _base_path + base::xvinput_t::name();}
+    // static std::string                  get_key(const std::string & _base_path) {return _base_path + base::xvinput_t::name();}
 
  public:
     std::string                         get_binary_string() const;
@@ -131,7 +131,7 @@ class xoutput_t final: public base::xvoutput_t {
  public:
     virtual const std::string           get_root_hash() const override;
 
-    static std::string                  get_key(const std::string & _base_path) {return _base_path + base::xvoutput_t::name();}
+    // static std::string                  get_key(const std::string & _base_path) {return _base_path + base::xvoutput_t::name();}
 
     std::string                         get_binary_string() const;
     bool                                calc_merkle_path(const std::string & leaf, xmerkle_path_256_t& hash_path) const;

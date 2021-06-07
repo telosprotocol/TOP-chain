@@ -43,7 +43,7 @@ public:
                                               base::enum_xvblock_type blocktype);
 
     xemptyblock_t();
-    xemptyblock_t(base::xvheader_t & header, xblockcert_t & cert);
+    xemptyblock_t(base::xvheader_t & header, base::xvqcert_t & cert);
     virtual ~xemptyblock_t();
  private:
     xemptyblock_t(const xemptyblock_t &);

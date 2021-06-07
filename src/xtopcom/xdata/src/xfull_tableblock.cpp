@@ -99,7 +99,9 @@ base::xvblock_t* xfull_tableblock_t::create_next_block(const xfulltable_block_pa
 xfull_tableblock_t::xfull_tableblock_t(base::xvheader_t & header, xblockcert_t & cert, const xinput_ptr_t & input, const xoutput_ptr_t & output)
 : xblock_t(header, cert, input, output, (enum_xdata_type)object_type_value) {
 }
-
+xfull_tableblock_t::xfull_tableblock_t(base::xvheader_t & header, base::xvqcert_t & cert, base::xvinput_t* input, base::xvoutput_t* output)
+: xblock_t(header, cert, input, output, (enum_xdata_type)object_type_value) {
+}
 xfull_tableblock_t::xfull_tableblock_t()
 : xblock_t((enum_xdata_type)object_type_value) {
 

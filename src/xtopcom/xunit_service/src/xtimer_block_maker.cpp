@@ -4,6 +4,8 @@
 
 #include "xvledger/xvblock.h"
 #include "xdata/xrootblock.h"
+#include "xdata/xblock.h"
+#include "xdata/xblocktool.h"
 #include "xunit_service/xtimer_block_maker.h"
 
 NS_BEG2(top, xunit_service)
@@ -23,10 +25,12 @@ base::xvblock_t *xtimer_block_maker_t::make_block(const std::string &account, ui
         xunit_warn("xtimer_block_maker_t::make_block fail-clock cur=%ull,prev=%ull", clock, prev_block->get_clock());
         return nullptr;
     }
-    base::xvblock_t *              block = data::xemptyblock_t::create_next_emptyblock(prev_block.get(), base::enum_xvblock_type_clock);
-    block->get_cert()->set_clock(clock);
-    block->get_cert()->set_viewid(viewid);
-    block->get_cert()->set_validator(leader_xip);
+
+    uint32_t viewtoken = base::xtime_utl::get_fast_randomu();
+    xblock_consensus_para_t cs_para(account, clock, viewid, viewtoken, prev_block->get_height() + 1);
+    cs_para.set_validator(leader_xip);
+
+    base::xvblock_t *              block = data::xblocktool_t::create_next_emptyblock(prev_block.get(), cs_para);
     block->reset_prev_block(prev_block.get());
     return block;
 }
