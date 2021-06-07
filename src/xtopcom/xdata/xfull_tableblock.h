@@ -60,12 +60,7 @@ class xfull_tableblock_t : public xblock_t {
 
  protected:
     enum { object_type_value = enum_xdata_type::enum_xdata_type_max - xdata_type_fulltable_block };
-    static xblockbody_para_t get_blockbody_from_para(const xfulltable_block_para_t & para);
  public:
-    static base::xvblock_t* create_next_block(const xfulltable_block_para_t & para, base::xvblock_t* prev_block);
-
- public:
-    xfull_tableblock_t(base::xvheader_t & header, xblockcert_t & cert, const xinput_ptr_t & input, const xoutput_ptr_t & output);
     xfull_tableblock_t(base::xvheader_t & header, base::xvqcert_t & cert, base::xvinput_t* input, base::xvoutput_t* output);
  protected:
     virtual ~xfull_tableblock_t();
