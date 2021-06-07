@@ -11,6 +11,7 @@
 // TODO(jimmy) #include "xbase/xvledger.h"
 #include "xmetrics/xmetrics.h"
 #include "xbasic/xdbg.h"
+#include "xvledger/xvblockbuild.h"
 
 #include <cinttypes>
 #include <string>
@@ -299,7 +300,7 @@ std::string xblock_t::dump_body() const {
     return ss.str();
 }
 
-void xblock_t::set_parent_cert_and_path(base::xvqcert_t * parent_cert, const xmerkle_path_256_t & path) {
+void xblock_t::set_parent_cert_and_path(base::xvqcert_t * parent_cert, const base::xmerkle_path_256_t & path) {
     if (!(get_cert()->get_consensus_flags() & base::enum_xconsensus_flag_extend_cert)) {
         xassert(0);
         return;
@@ -340,22 +341,20 @@ xlightunit_tx_info_ptr_t xblock_t::get_tx_info(const std::string & txhash) const
     return nullptr;
 }
 
-bool xblock_t::calc_input_merkle_path(const std::string & leaf, xmerkle_path_256_t & hash_path) const {
+bool xblock_t::calc_input_merkle_path(const std::string & leaf, base::xmerkle_path_256_t & hash_path) const {
     if (get_input_root_hash().empty()) {
         xassert(0);
         return false;
     }
-    xinput_t* input = dynamic_cast<xinput_t*>(get_input());
-    return input->calc_merkle_path(leaf, hash_path);
+    return base::xvblockbuild_t::calc_input_merkle_path(get_input(), leaf, hash_path);
 }
-bool xblock_t::calc_output_merkle_path(const std::string & leaf, xmerkle_path_256_t & hash_path) const {
+bool xblock_t::calc_output_merkle_path(const std::string & leaf, base::xmerkle_path_256_t & hash_path) const {
     if (get_output_root_hash().empty()) {
         xassert(0);
         return false;
     }
 
-    xoutput_t* output = dynamic_cast<xoutput_t*>(get_output());
-    return output->calc_merkle_path(leaf, hash_path);
+    return base::xvblockbuild_t::calc_output_merkle_path(get_output(), leaf, hash_path);
 }
 
 bool xblock_t::is_full_state_block() const {

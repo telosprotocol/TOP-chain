@@ -1141,11 +1141,13 @@ namespace top
                 return m_offblock_snapshot;
             }
             const std::string binlog = query_resource(xvoutput_t::res_binlog_key_name());
-            if (!binlog.empty())
-            {
-                return binlog;
-            }
-            return std::string();
+            return binlog;
+        }
+        
+        const std::string xvoutput_t::get_binlog_hash()
+        {
+            const std::string binlog_hash = query_resource(xvoutput_t::res_binlog_hash_key_name());
+            return binlog_hash;
         }
         
         bool xvoutput_t::set_offblock_snapshot(const std::string & snapshot)
