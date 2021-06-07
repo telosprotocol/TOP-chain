@@ -68,19 +68,16 @@ void xlightunit_block_para_t::set_contract_txs(const std::vector<xcons_transacti
 
 xlightunit_output_resource_t::xlightunit_output_resource_t(const xlightunit_block_para_t & para) {
     m_unconfirm_sendtx_num = para.get_account_unconfirm_sendtx_num();
-    m_property_binlog = para.get_property_binlog();
 }
 
 int32_t xlightunit_output_resource_t::do_write(base::xstream_t & stream) {
     KEEP_SIZE();
     SERIALIZE_FIELD_BT(m_unconfirm_sendtx_num);
-    stream << m_property_binlog;  // TODO(jimmy)
     return CALC_LEN();
 }
 int32_t xlightunit_output_resource_t::do_read(base::xstream_t & stream) {
     KEEP_SIZE();
     DESERIALIZE_FIELD_BT(m_unconfirm_sendtx_num);
-    stream >> m_property_binlog;  // TODO(jimmy)
     return CALC_LEN();
 }
 
@@ -107,21 +104,6 @@ void * xlightunit_block_t::query_interface(const int32_t _enum_xobject_type_) {
     if (object_type_value == _enum_xobject_type_)
         return this;
     return xvblock_t::query_interface(_enum_xobject_type_);
-}
-
-int64_t xlightunit_block_t::get_burn_balance_change() const {
-    int64_t burn_balance = 0;
-    const auto & output_entitys = get_output()->get_entitys();
-    for (const auto & entity : output_entitys) {
-        xlightunit_output_entity_t* output_tx = dynamic_cast<xlightunit_output_entity_t*>(entity);
-        if (output_tx->is_self_tx() || output_tx->is_confirm_tx()) {
-            burn_balance += output_tx->get_tx_exec_state().get_used_deposit();
-        }
-
-        burn_balance += output_tx->get_tx_exec_state().get_beacon_service_fee();
-        burn_balance += output_tx->get_tx_exec_state().get_self_burn_balance();
-    }
-    return burn_balance;
 }
 
 std::string xlightunit_block_t::dump_body() const {

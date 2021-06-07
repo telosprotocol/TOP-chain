@@ -16,6 +16,8 @@
 
 NS_BEG2(top, data)
 
+REG_CLS(xdummy_entity_t);
+
 xlightunit_build_t::xlightunit_build_t(const std::string & account, const xlightunit_block_para_t & bodypara) {
     base::xbbuild_para_t build_para(xrootblock_t::get_rootblock_chainid(), account, base::enum_xvblock_level_unit, base::enum_xvblock_class_light, xrootblock_t::get_rootblock_hash());
     init_header_qcert(build_para);
