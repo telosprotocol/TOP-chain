@@ -495,6 +495,7 @@ namespace top
         public:
             static  const std::string   name(){ return std::string("xvoutput");}
             static  const std::string   res_binlog_key_name(){return std::string("bl");}
+            static  const std::string   res_binlog_hash_key_name(){return std::string("bh");}  // TODO(jimmy) put to voutentity
             virtual std::string         get_obj_name() const override {return name();}
             enum{enum_obj_type = enum_xobject_type_voutput};//allow xbase create xvoutput_t object from xdataobj_t::read_from()
 
@@ -518,7 +519,7 @@ namespace top
             virtual bool                set_root_hash(const std::string & root_hash){ m_root_hash = root_hash;return true;}
 
             const std::string           get_binlog();
-            virtual const std::string   get_binlog_hash() {return std::string();}
+            const std::string           get_binlog_hash();
 
         public:
             bool set_offblock_snapshot(const std::string & snapshot);

@@ -10,15 +10,15 @@
 #include "xvledger/xdataobj_base.hpp"
 #include "xdata/xlightunit_info.h"
 #include "xdata/xprovecert.h"
-#include "xutility/xmerkle.hpp"
+#include "xvledger/xmerkle.hpp"
 #include "xbasic/xbyte_buffer.h"
 namespace top { namespace data {
 
 class xtx_receipt_t : public xbase_dataunit_t<xtx_receipt_t, xdata_type_tx_receipt> {
  public:
     xtx_receipt_t() = default;
-    xtx_receipt_t(const xlightunit_output_entity_t* txinfo, const xmerkle_path_256_t & path, base::xvqcert_t* cert);
-    xtx_receipt_t(const xlightunit_output_entity_t * txinfo, std::map<std::string, xbyte_buffer_t> data, const xmerkle_path_256_t & path, base::xvqcert_t * cert);
+    xtx_receipt_t(const xlightunit_output_entity_t* txinfo, const base::xmerkle_path_256_t & path, base::xvqcert_t* cert);
+    xtx_receipt_t(const xlightunit_output_entity_t * txinfo, std::map<std::string, xbyte_buffer_t> data, const base::xmerkle_path_256_t & path, base::xvqcert_t * cert);
  protected:
     virtual ~xtx_receipt_t();
  private:
@@ -29,7 +29,7 @@ class xtx_receipt_t : public xbase_dataunit_t<xtx_receipt_t, xdata_type_tx_recei
     int32_t do_read(base::xstream_t & stream) override;
 
  public:
-    void                            set_tx_prove(base::xvqcert_t* prove_cert, xprove_cert_class_t _class, xprove_cert_type_t _type, const xmerkle_path_256_t & path);
+    void                            set_tx_prove(base::xvqcert_t* prove_cert, xprove_cert_class_t _class, xprove_cert_type_t _type, const base::xmerkle_path_256_t & path);
     void                            set_commit_prove_cert(base::xvqcert_t* prove_cert, xprove_cert_class_t _class, xprove_cert_type_t _type, const std::string & _path);
     bool                            is_commit_prove_cert_set() const {return m_commit_prove != nullptr;}
     bool                            is_valid();

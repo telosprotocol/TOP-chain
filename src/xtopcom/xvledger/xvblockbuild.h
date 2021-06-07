@@ -9,6 +9,7 @@
 #include "xbase/xobject_ptr.h"
 #include "xbase/xbase.h"
 #include "xvledger/xvblock.h"
+#include "xvledger/xmerkle.hpp"
 
 namespace top
 {
@@ -72,6 +73,11 @@ namespace top
 
         class xvblockbuild_t {
         public:
+            static bool calc_output_merkle_path(xvoutput_t* output, const std::string & leaf, xmerkle_path_256_t& hash_path);
+            static bool calc_input_merkle_path(xvinput_t* output, const std::string & leaf, xmerkle_path_256_t& hash_path);
+            static std::vector<std::string>    get_input_merkle_leafs(const std::vector<xventity_t*> & _entitys);
+            static std::vector<std::string>    get_output_merkle_leafs(const std::vector<xventity_t*> & _entitys);
+        public:
             xvblockbuild_t();  // genesis genesis construct
             xvblockbuild_t(base::xvheader_t* header, base::xvqcert_t* cert, base::xvinput_t* input, base::xvoutput_t* output);
             xvblockbuild_t(base::xvheader_t* header, base::xvinput_t* input, base::xvoutput_t* output);
@@ -79,7 +85,8 @@ namespace top
             virtual ~xvblockbuild_t();
 
         public:
-            virtual base::xauto_ptr<base::xvblock_t> build_new_block() = 0;
+            base::xauto_ptr<base::xvblock_t> build_new_block();
+            virtual base::xauto_ptr<base::xvblock_t> create_new_block() = 0;
             void    init_qcert(const xbbuild_para_t & _para);
             void    init_header(const xbbuild_para_t & _para);
 
@@ -90,23 +97,21 @@ namespace top
             xvoutput_t*     get_output() const {return m_output_ptr;}
 
         protected:
-            void    init_header_qcert(const xbbuild_para_t & _para);
-            void    init_input(xvinput_t* input);
-            void    init_output(xvoutput_t* output);
-            void    set_block_flags(xvblock_t* block);
-
-            void    init_input(const std::vector<base::xventity_t*> & entitys, xstrmap_t & resource_obj);
-            void    init_output(const std::vector<base::xventity_t*> & entitys, xstrmap_t & resource_obj);
-
-            void    add_input_entity(base::xventity_t* entity);
-            void    add_output_entity(base::xventity_t* entity);
-            void    add_input_resource(const std::string & key, const std::string & value);
-            void    add_output_resource(const std::string & key, const std::string & value);
-            void    create_default_input_output();
-
-            base::enum_xvchain_key_curve    get_key_curve_type_from_account(const std::string & account);
+            void            init_header_qcert(const xbbuild_para_t & _para);
+            bool            init_input(const std::vector<xventity_t*> & entitys, xstrmap_t* resource_obj);
+            bool            init_output(const std::vector<xventity_t*> & entitys, xstrmap_t* resource_obj);
             base::enum_xvblock_level        get_block_level_from_account(const std::string & account);
             base::enum_xvblock_type         get_block_type_from_empty_block(const std::string & account);
+
+        private:
+            bool            make_input(const std::vector<xventity_t*> & entitys, xstrmap_t* resource_obj);
+            bool            make_output(const std::vector<xventity_t*> & entitys, xstrmap_t* resource_obj);
+            void            set_block_flags(xvblock_t* block);
+            base::enum_xvchain_key_curve    get_key_curve_type_from_account(const std::string & account);
+            const std::vector<base::xventity_t*> &  get_input_entitys() const {return m_input_entitys;}
+            const std::vector<base::xventity_t*> &  get_output_entitys() const {return m_output_entitys;}
+            base::xstrmap_t*                        get_input_res() const {return m_input_res;}
+            base::xstrmap_t*                        get_output_res() const {return m_output_res;}
 
         private:
             xvheader_t*                     m_header{nullptr};

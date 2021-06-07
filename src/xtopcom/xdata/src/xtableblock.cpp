@@ -93,7 +93,7 @@ void xtable_block_t::cache_units_set_parent_cert(std::vector<xblock_ptr_t> & uni
             return;
         }
         const std::string & unit_hash = cache_unit->get_cert()->get_hash_to_sign();
-        xmerkle_path_256_t path;
+        base::xmerkle_path_256_t path;
         bool ret = calc_output_merkle_path(unit_hash, path);
         if (!ret) {
             xerror("xtable_block_t::cache_units_set_parent_cert calc_output_merkle_path fail");
@@ -143,8 +143,8 @@ xblock_ptr_t xtable_block_t::create_whole_unit(const std::string & header,
     xassert(_output != nullptr);
 
     // TODO(jimmy)
-    xinput_ptr_t _new_input = make_object_ptr<xinput_t>(_input->get_entitys(), input_res);
-    xoutput_ptr_t _new_output = make_object_ptr<xoutput_t>(_output->get_entitys(), output_res);
+    xobject_ptr_t<base::xvinput_t> _new_input = make_object_ptr<base::xvinput_t>(_input->get_entitys(), input_res);
+    xobject_ptr_t<base::xvoutput_t> _new_output = make_object_ptr<base::xvoutput_t>(_output->get_entitys(), output_res);
 
     std::shared_ptr<base::xvblockbuild_t> vbbuild = nullptr;
 

@@ -94,19 +94,14 @@ bool xlightunit_build_t::build_block_body(const xlightunit_block_para_t & para) 
     // TODO(jimmy) delete property binlog from xlightunit_output_resource_t
     blockbody.add_output_resource(base::xvoutput_t::res_binlog_key_name(), para.get_property_binlog());
 
-    blockbody.create_default_input_output();
-
-    init_input(blockbody.get_input().get());
-    init_output(blockbody.get_output().get());
+    init_input(blockbody.get_input_entitys(), blockbody.get_input_resource());
+    init_output(blockbody.get_output_entitys(), blockbody.get_output_resource());
 
     return true;
 }
 
-base::xauto_ptr<base::xvblock_t> xlightunit_build_t::build_new_block() {
-    // TODO(jimmy) use xvblock_t directly
-    base::xauto_ptr<base::xvblock_t> new_block = new xlightunit_block_t(*get_header(), *get_qcert(), get_input(), get_output());
-    set_block_flags(new_block.get());
-    return new_block;
+base::xauto_ptr<base::xvblock_t> xlightunit_build_t::create_new_block() {
+    return new xlightunit_block_t(*get_header(), *get_qcert(), get_input(), get_output());
 }
 
 
@@ -151,11 +146,8 @@ xemptyblock_build_t::xemptyblock_build_t(base::xvheader_t* header)
 : xvblockbuild_t(header) {
 }
 
-base::xauto_ptr<base::xvblock_t> xemptyblock_build_t::build_new_block() {
-    // TODO(jimmy) use xvblock_t directly
-    base::xauto_ptr<base::xvblock_t> new_block = new xemptyblock_t(*get_header(), *get_qcert());
-    set_block_flags(new_block.get());
-    return new_block;
+base::xauto_ptr<base::xvblock_t> xemptyblock_build_t::create_new_block() {
+    return new xemptyblock_t(*get_header(), *get_qcert());
 }
 
 xfullunit_build_t::xfullunit_build_t(base::xvblock_t* prev_block, const xfullunit_block_para_t & bodypara, const xblock_consensus_para_t & para) {
@@ -179,19 +171,13 @@ bool xfullunit_build_t::build_block_body(const xfullunit_block_para_t & para) {
     // TODO(jimmy) delete output snapshot, output entity record snapshot root hash
     blockbody.add_output_resource(base::xvoutput_t::res_binlog_key_name(), para.m_property_snapshot);
 
-    blockbody.create_default_input_output();
-
-
-    init_input(blockbody.get_input().get());
-    init_output(blockbody.get_output().get());
+    init_input(blockbody.get_input_entitys(), blockbody.get_input_resource());
+    init_output(blockbody.get_output_entitys(), blockbody.get_output_resource());
     return true;
 }
 
-base::xauto_ptr<base::xvblock_t> xfullunit_build_t::build_new_block() {
-    // TODO(jimmy) use xvblock_t directly
-    base::xauto_ptr<base::xvblock_t> new_block = new xfullunit_block_t(*get_header(), *get_qcert(), get_input(), get_output());
-    set_block_flags(new_block.get());
-    return new_block;
+base::xauto_ptr<base::xvblock_t> xfullunit_build_t::create_new_block() {
+    return new xfullunit_block_t(*get_header(), *get_qcert(), get_input(), get_output());
 }
 
 
@@ -239,18 +225,14 @@ bool xlighttable_build_t::build_block_body(const xtable_block_para_t & para) {
     std::string property_binlog = para.get_property_binlog();
     blockbody.add_output_resource(base::xvoutput_t::res_binlog_key_name(), property_binlog);  // bl = binlog
 
-    blockbody.create_default_input_output();
-
-    init_input(blockbody.get_input().get());
-    init_output(blockbody.get_output().get());
+    init_input(blockbody.get_input_entitys(), blockbody.get_input_resource());
+    init_output(blockbody.get_output_entitys(), blockbody.get_output_resource());
     return true;
 }
 
-base::xauto_ptr<base::xvblock_t> xlighttable_build_t::build_new_block() {
+base::xauto_ptr<base::xvblock_t> xlighttable_build_t::create_new_block() {
     // TODO(jimmy) use xvblock_t directly
-    base::xauto_ptr<base::xvblock_t> new_block = new xtable_block_t(*get_header(), *get_qcert(), get_input(), get_output());
-    set_block_flags(new_block.get());
-    return new_block;
+    return new xtable_block_t(*get_header(), *get_qcert(), get_input(), get_output());
 }
 
 xfulltable_build_t::xfulltable_build_t(base::xvblock_t* prev_block, const xfulltable_block_para_t & bodypara, const xblock_consensus_para_t & para) {
@@ -277,20 +259,15 @@ bool xfulltable_build_t::build_block_body(const xfulltable_block_para_t & para) 
     blockbody.add_output_entity(output);
 
     // TODO(jimmy) should put to primary entity
-    blockbody.add_output_resource(XRESOURCE_BINLOG_HASH_KEY, snapshot_hash);  // TODO(jimmy) bl = binlog
+    blockbody.add_output_resource(base::xvoutput_t::res_binlog_hash_key_name(), snapshot_hash);  // TODO(jimmy) bl = binlog
 
-    blockbody.create_default_input_output();
-
-    init_input(blockbody.get_input().get());
-    init_output(blockbody.get_output().get());
+    init_input(blockbody.get_input_entitys(), blockbody.get_input_resource());
+    init_output(blockbody.get_output_entitys(), blockbody.get_output_resource());
     return true;
 }
 
-base::xauto_ptr<base::xvblock_t> xfulltable_build_t::build_new_block() {
-    // TODO(jimmy) use xvblock_t directly
-    base::xauto_ptr<base::xvblock_t> new_block = new xfull_tableblock_t(*get_header(), *get_qcert(), get_input(), get_output());
-    set_block_flags(new_block.get());
-    return new_block;
+base::xauto_ptr<base::xvblock_t> xfulltable_build_t::create_new_block() {
+    return new xfull_tableblock_t(*get_header(), *get_qcert(), get_input(), get_output());
 }
 
 
@@ -311,18 +288,14 @@ bool xrootblock_build_t::build_block_body(const xrootblock_para_t & para) {
     blockbody.add_input_entity(input);
     xobject_ptr_t<xdummy_entity_t> output = make_object_ptr<xdummy_entity_t>();
     blockbody.add_output_entity(output);
-    blockbody.create_default_input_output();
 
-    init_input(blockbody.get_input().get());
-    init_output(blockbody.get_output().get());
+    init_input(blockbody.get_input_entitys(), blockbody.get_input_resource());
+    init_output(blockbody.get_output_entitys(), blockbody.get_output_resource());
     return true;
 }
 
-base::xauto_ptr<base::xvblock_t> xrootblock_build_t::build_new_block() {
-    // TODO(jimmy) use xvblock_t directly
-    base::xauto_ptr<base::xvblock_t> new_block = new xrootblock_t(*get_header(), *get_qcert(), get_input(), get_output());
-    set_block_flags(new_block.get());
-    return new_block;
+base::xauto_ptr<base::xvblock_t> xrootblock_build_t::create_new_block() {
+    return new xrootblock_t(*get_header(), *get_qcert(), get_input(), get_output());
 }
 
 NS_END2

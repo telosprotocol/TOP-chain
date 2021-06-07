@@ -30,6 +30,7 @@
 #include "xvledger/xvboffdata.h"
 #include "xvledger/xaccountindex.h"
 #include "xvledger/xreceiptid.h"
+#include "xvledger/xmerkle.hpp"
 
 #if defined(__clang__)
 #    pragma clang diagnostic pop
@@ -72,7 +73,6 @@ class xblockheader_extra_data_t : public xserializable_based_on<void> {
 
 class xblock_t : public base::xvblock_t {
  public:
-    static bool check_merkle_path(const std::string &leaf, const xmerkle_path_256_t &hash_path, const std::string & root);
     static std::string get_block_base_path(base::xvblock_t* block) {return block->get_account() + ':' + std::to_string(block->get_height());}
     static xobject_ptr_t<xblock_t> raw_vblock_to_object_ptr(base::xvblock_t* block);
     static void  batch_units_to_receiptids(const std::vector<xobject_ptr_t<xblock_t>> & units, base::xreceiptid_check_t & receiptid_check);
@@ -95,9 +95,9 @@ public:
  public:
     virtual int32_t     full_block_serialize_to(base::xstream_t & stream);  // for block sync
     static  base::xvblock_t*    full_block_read_from(base::xstream_t & stream);  // for block sync
-    void        set_parent_cert_and_path(base::xvqcert_t* parent_cert, const xmerkle_path_256_t & path);
-    bool        calc_input_merkle_path(const std::string & leaf, xmerkle_path_256_t& hash_path) const;
-    bool        calc_output_merkle_path(const std::string & leaf, xmerkle_path_256_t& hash_path) const;
+    void        set_parent_cert_and_path(base::xvqcert_t* parent_cert, const base::xmerkle_path_256_t & path);
+    bool        calc_input_merkle_path(const std::string & leaf, base::xmerkle_path_256_t& hash_path) const;
+    bool        calc_output_merkle_path(const std::string & leaf, base::xmerkle_path_256_t& hash_path) const;
 
  public:
     virtual bool    is_full_state_block() const;  // TODO(jimmy) delete and use is_execute_ready directly
