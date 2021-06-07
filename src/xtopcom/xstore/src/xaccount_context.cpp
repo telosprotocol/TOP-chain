@@ -706,12 +706,12 @@ int32_t xaccount_context_t::other_balance_to_available_balance(const std::string
     int32_t ret;
     ret = token_withdraw(property_name, token);
     if (xsuccess != ret) {
-        xerror("xaccount_context_t::other_balance_to_available_balance fail-withdraw balance, amount=%ld", token);
+        xwarn("xaccount_context_t::other_balance_to_available_balance fail-withdraw balance, amount=%ld", token);
         return ret;
     }
     ret = token_deposit(XPROPERTY_BALANCE_AVAILABLE, token);
     if (xsuccess != ret) {
-        xerror("xaccount_context_t::other_balance_to_available_balance fail-deposit balance, amount=%ld", token);
+        xwarn("xaccount_context_t::other_balance_to_available_balance fail-deposit balance, amount=%ld", token);
         return ret;
     }
     xdbg("xaccount_context_t::other_balance_to_available_balance property=%s,amount=%ld", property_name.c_str(), token);
@@ -726,7 +726,7 @@ int32_t xaccount_context_t::available_balance_to_other_balance(const std::string
     }
     ret = token_deposit(property_name, token);
     if (xsuccess != ret) {
-        xerror("xaccount_context_t::available_balance_to_other_balance fail-deposit balance, amount=%ld", token);
+        xwarn("xaccount_context_t::available_balance_to_other_balance fail-deposit balance, amount=%ld", token);
         return ret;
     }
     xdbg("xaccount_context_t::available_balance_to_other_balance property=%s,amount=%ld", property_name.c_str(), token);
