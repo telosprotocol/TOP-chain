@@ -18,7 +18,7 @@
 namespace top {
 
 namespace kadmlia {
-class RoutingTable;
+class RootRoutingTable;
 }
 
 namespace transport {
@@ -38,9 +38,9 @@ public:
     int InitRootRoutingTable(std::shared_ptr<transport::Transport> transport,
                              const base::Config & config,
                              base::KadmliaKeyPtr kad_key_ptr);
-    std::shared_ptr<kadmlia::RoutingTable> GetRoutingTable(base::ServiceType service_type);
+    std::shared_ptr<kadmlia::RootRoutingTable> GetRoutingTable(base::ServiceType service_type);
     // int GetRootNodes(uint32_t network_id, std::vector<kadmlia::NodeInfoPtr> & root_nodes);
-    int GetRootNodesV2(const std::string & des_id, base::ServiceType service_type, std::vector<kadmlia::NodeInfoPtr> & root_nodes);
+    // int GetRootNodesV2(const std::string & des_id, base::ServiceType service_type, std::vector<kadmlia::NodeInfoPtr> & root_nodes);
     // int GetRootBootstrapCache(std::set<std::pair<std::string, uint16_t>> & boot_endpoints);
     // int GetBootstrapRootNetwork(uint64_t service_type, std::set<std::pair<std::string, uint16_t>> & boot_endpoints);
 
@@ -57,7 +57,7 @@ private:
 
     // void OnGetRootNodesV2Async(GetRootNodesV2AsyncCallback cb, base::ServiceType service_type, const std::vector<kadmlia::NodeInfoPtr> & nodes);
 
-    std::shared_ptr<kadmlia::RoutingTable> root_routing_table_;
+    std::shared_ptr<kadmlia::RootRoutingTable> root_routing_table_;
     std::mutex root_routing_table_mutex_;
 
     DISALLOW_COPY_AND_ASSIGN(RootRoutingManager);

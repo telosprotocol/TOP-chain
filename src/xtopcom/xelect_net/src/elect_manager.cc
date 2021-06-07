@@ -40,7 +40,6 @@ void ElectManager::OnElectUpdated(const data::election::xelection_result_store_t
     using top::data::election::xelection_result_t;
 
     // std::vector<ElectNetNode> elect_data;
-    std::vector<wrouter::WrouterTableNodes> elect_data;
 
     for (auto const & election_result_info : election_result_store) {
         auto const network_id = top::get<common::xnetwork_id_t const>(election_result_info);
@@ -62,10 +61,12 @@ void ElectManager::OnElectUpdated(const data::election::xelection_result_store_t
                     auto const & size = static_cast<uint16_t>(group_result.size());
                     auto const & height = group_result.group_version().value();  // use group_version as xip height;
 
+                    std::vector<wrouter::WrouterTableNodes> elect_data;
                     for (auto const & node_info : group_result) {
                         auto const & node_id = top::get<xelection_info_bundle_t>(node_info).node_id();
                         auto const & election_info = top::get<xelection_info_bundle_t>(node_info).election_info();
                         auto const & slot_id = top::get<const common::xslot_id_t>(node_info);
+                        // here the slot_id is strict increasing. Start with 0.
                         if (node_id.empty()) {
                             continue;
                         }
@@ -78,12 +79,11 @@ void ElectManager::OnElectUpdated(const data::election::xelection_result_store_t
                         // ElectNetNode enode{node_id.to_string(), election_info.consensus_public_key.to_string(), xip, "", associated_gid, version};
                         elect_data.push_back(router_node);
                     }
+                    OnElectUpdated(elect_data);
                 }
             }
         }
     }
-
-    return OnElectUpdated(elect_data);
 }
 #if 0
 void ElectManager::OnElectUpdated(const std::vector<ElectNetNode> & elect_data) {
@@ -133,7 +133,7 @@ void ElectManager::UpdateRoutingTable(std::vector<wrouter::WrouterTableNodes> co
     base::ServiceType service_type = kad_key->GetServiceType();
 
     // todo charles if find this routing table don't add again?[done]
-    if(wrouter::MultiRouting::Instance()->GetRoutingTable(service_type,false)!=nullptr){
+    if (wrouter::MultiRouting::Instance()->GetElectRoutingTable(service_type) != nullptr) {
         xinfo("ElectManager::UpdateRoutingTable get repeated routing table info xip2: service_type:%s", self_wrouter_nodes.m_xip2.to_string().c_str(), service_type.info().c_str());
         return;
     }
@@ -150,14 +150,14 @@ void ElectManager::UpdateRoutingTable(std::vector<wrouter::WrouterTableNodes> co
     }
 
 
-    std::shared_ptr<top::kadmlia::RoutingTable> routing_table_ptr;
+    std::shared_ptr<top::kadmlia::ElectRoutingTable> routing_table_ptr;
     kadmlia::LocalNodeInfoPtr local_node_ptr = kadmlia::CreateLocalInfoFromConfig(config, kad_key);
 
     if (!local_node_ptr) {
         TOP_WARN("local_node_ptr invalid");
         return;
     }
-    routing_table_ptr = std::make_shared<kadmlia::RoutingTable>(transport_, kNodeIdSize, local_node_ptr);
+    routing_table_ptr = std::make_shared<kadmlia::ElectRoutingTable>(transport_, local_node_ptr);
     if (!routing_table_ptr->Init()) {
         TOP_ERROR("init edge bitvpn routing table failed!");
         return;
@@ -166,7 +166,7 @@ void ElectManager::UpdateRoutingTable(std::vector<wrouter::WrouterTableNodes> co
     // // service_type_ = service_type;
     // // wrouter::RegisterRoutingTable(service_type, routing_table_ptr);
     // TOP_KINFO("register routing table %llu", service_type);
-    wrouter::MultiRouting::Instance()->AddRoutingTable(service_type, routing_table_ptr);
+    wrouter::MultiRouting::Instance()->AddElectRoutingTable(service_type, routing_table_ptr);
     // todo charles move it in multirouting.
     std::cout << global_node_id << " create routing table: " << std::hex << service_type.value() << service_type.info() << std::endl;
 
@@ -180,7 +180,7 @@ void ElectManager::UpdateRoutingTable(std::vector<wrouter::WrouterTableNodes> co
     // }
 
     // if (first_node) {
-    auto root_routing = wrouter::GetRoutingTable(base::ServiceType{kRoot}, true);
+    auto root_routing = wrouter::MultiRouting::Instance()->GetRoutingTable(base::ServiceType{kRoot}, true);
     // std::vector<kadmlia::NodeInfoPtr> res_nodes;
     // std::vector<base::KadmliaKeyPtr> kad_key_ptrs;
     std::map<std::string, base::KadmliaKeyPtr> elect_root_kad_key_ptrs;
@@ -201,10 +201,11 @@ void ElectManager::UpdateRoutingTable(std::vector<wrouter::WrouterTableNodes> co
     local_node_ptr->set_public_ip(root_routing->get_local_node_info()->public_ip());
     local_node_ptr->set_public_port(root_routing->get_local_node_info()->public_port());
     // local_node_ptr->set_first_node(true);
-    if (root_routing->get_local_node_info()->public_ip().empty()) {
-        TOP_ERROR("RoutingManagerBase local node public ip is empty.");
-        assert(false);
-    }
+    // if (root_routing->get_local_node_info()->public_ip().empty()) {
+    //     TOP_ERROR("RoutingManagerBase local node public ip is empty.");
+    //     assert(false);
+    // }
+    wrouter::MultiRouting::Instance()->CheckElectRoutingTable(service_type);
     return;
     // }
 
@@ -223,7 +224,7 @@ int ElectManager::OnElectQuit(const common::xip2_t & xip2) {
     // xip.set_network_type((uint8_t)(address.cluster_address().type()));
 
     auto service_type = base::GetKadmliaKey(xip2)->GetServiceType();
-    wrouter::MultiRouting::Instance()->RemoveRoutingTable(service_type);
+    wrouter::MultiRouting::Instance()->RemoveElectRoutingTable(service_type);
     // todo charles move it in multirouting.
     std::cout << global_node_id << " delete routing table: " << std::hex << service_type.value() << service_type.info() << std::endl;
     xdbg("OnElectQuit service_type:%lld xip2:%s", service_type.value(), xip2.to_string().c_str());

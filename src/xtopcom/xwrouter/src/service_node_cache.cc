@@ -60,7 +60,7 @@ bool ServiceNodes::GetRootNodes(base::ServiceType service_type, std::vector<kadm
         assert(kad_key);
         using namespace std::placeholders;
         auto cb = std::bind(&ServiceNodes::OnGetRootNodesAsync, this, _1, _2);
-        auto root_routing_table = std::dynamic_pointer_cast<RootRouting>(MultiRouting::Instance()->GetRoutingTable(base::ServiceType{kRoot}, true));
+        auto root_routing_table = std::dynamic_pointer_cast<RootRouting>(MultiRouting::Instance()->GetRootRoutingTable());
         root_routing_table->GetRootNodesV2Async(kad_key->Get(), service_type, cb);
         // RootRoutingManager::Instance()->GetRootNodesV2Async(kad_key->Get(), service_type, cb);  // just call
     }
@@ -81,7 +81,7 @@ bool ServiceNodes::GetRootNodes(base::ServiceType service_type, const std::strin
         assert(kad_key);
         using namespace std::placeholders;
         auto cb = std::bind(&ServiceNodes::OnGetRootNodesAsync, this, _1, _2);
-        auto root_routing_table = std::dynamic_pointer_cast<RootRouting>(MultiRouting::Instance()->GetRoutingTable(base::ServiceType{kRoot}, true));
+        auto root_routing_table = std::dynamic_pointer_cast<RootRouting>(MultiRouting::Instance()->GetRootRoutingTable());
         root_routing_table->GetRootNodesV2Async(kad_key->Get(), service_type, cb);
         // RootRoutingManager::Instance()->GetRootNodesV2Async(kad_key->Get(), service_type, cb);  // just call
     }
@@ -312,7 +312,8 @@ void ServiceNodes::do_update() {
         assert(root_kad_key);
         using namespace std::placeholders;
         auto cb = std::bind(&ServiceNodes::OnGetRootNodesAsync, this, _1, _2);
-        auto root_routing_table = std::dynamic_pointer_cast<RootRouting>(MultiRouting::Instance()->GetRoutingTable(base::ServiceType{kRoot}, true));
+        auto root_routing_table = std::dynamic_pointer_cast<RootRouting>(MultiRouting::Instance()->GetRootRoutingTable());
+        // auto root_routing_table = std::dynamic_pointer_cast<RootRouting>(MultiRouting::Instance()->GetRoutingTable(base::ServiceType{kRoot}, true));
         root_routing_table->GetRootNodesV2Async(kad_key->Get(), service_type, cb);
         // RootRoutingManager::Instance()->GetRootNodesV2Async(root_kad_key->Get(), service_type, cb);  // just call
     }                                                                                                // end for (auto& item

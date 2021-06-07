@@ -7,8 +7,9 @@
 #include "xpbase/base/top_log.h"
 #include "xpbase/base/kad_key/kadmlia_key.h"
 #include "xkad/routing_table/callback_manager.h"
-#include "xkad/routing_table/routing_table.h"
-#include "xwrouter/register_routing_table.h"
+#include "xkad/routing_table/routing_table_base.h"
+// #include "xwrouter/register_routing_table.h"
+#include "xwrouter/multi_routing/multi_routing.h"
 #include "xwrouter/message_handler/wrouter_message_handler.h"
 #include "xgossip/include/gossip_utils.h"
 #include "xutility/xhash.h"
@@ -97,11 +98,13 @@ void BlockSyncManager::NewBroadcastMessage(transport::protobuf::RoutingMessage& 
         return;
     }
     base::ServiceType des_service_type;
-    if (message.has_is_root() && message.is_root()) {
+    // todo charles since this module only servers for root broadcast .make this service_type defaultly.
+    assert(message.has_is_root() && message.is_root());
+    // if (message.has_is_root() && message.is_root()) {
         des_service_type = base::ServiceType(kRoot);
-    } else {
-        des_service_type = GetRoutingServiceType(message.des_node_id());
-    }
+    // } else {
+    //     des_service_type = GetRoutingServiceType(message.des_node_id());
+    // }
 
     AddHeaderHashToQueue(
             message.gossip().header_hash(),
@@ -142,7 +145,8 @@ void BlockSyncManager::SetRoutingTablePtr(kadmlia::RoutingTablePtr& routing_tabl
 
 void BlockSyncManager::SendSyncAsk(std::shared_ptr<SyncBlockItem>& sync_item) {
 	TOP_DEBUG("SendSyncAsk: %llu, header_hash:%s",sync_item->routing_service_type.value(),HexEncode(sync_item->header_hash).c_str());
-    auto routing = wrouter::GetRoutingTable(sync_item->routing_service_type);
+    // auto routing = wrouter::GetRoutingTable(sync_item->routing_service_type);
+    auto routing = wrouter::MultiRouting::Instance()->GetRootRoutingTable();
     if (!routing) {
 		TOP_WARN("no routing table:%llu", sync_item->routing_service_type.value());
         return;
@@ -298,7 +302,8 @@ void BlockSyncManager::HandleSyncAsk(
         return;
     }
 
-    auto routing = wrouter::GetRoutingTable(base::ServiceType(message.src_service_type()));
+    // auto routing = wrouter::GetRoutingTable(base::ServiceType(message.src_service_type()));
+    auto routing = wrouter::MultiRouting::Instance()->GetRootRoutingTable();
     if (!routing) {
 		TOP_WARN("no routing table:%llu", message.src_service_type());
         return;
@@ -337,7 +342,8 @@ void BlockSyncManager::HandleSyncAck(
         return;
     }
 
-    auto routing = wrouter::GetRoutingTable(base::ServiceType(message.src_service_type()));
+    // auto routing = wrouter::GetRoutingTable(base::ServiceType(message.src_service_type()));
+    auto routing = wrouter::MultiRouting::Instance()->GetRootRoutingTable();
     if (!routing) {
 		TOP_WARN("no routing table:%d", message.src_service_type());
         return;
@@ -372,7 +378,8 @@ void BlockSyncManager::HandleSyncRequest(
         return;
     }
 
-    auto routing = wrouter::GetRoutingTable(base::ServiceType(message.src_service_type()));
+    // auto routing = wrouter::GetRoutingTable(base::ServiceType(message.src_service_type()));
+    auto routing = wrouter::MultiRouting::Instance()->GetRootRoutingTable();
     if (!routing) {
 		TOP_WARN("no routing table:%d", message.src_service_type());
         return;

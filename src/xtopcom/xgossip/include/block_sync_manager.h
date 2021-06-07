@@ -9,6 +9,7 @@
 #include <mutex>
 
 #include "xbase/xpacket.h"
+#include "xkad/routing_table/routing_table_base.h"
 #include "xtransport/proto/transport.pb.h"
 #include "xpbase/base/top_timer.h"
 #include "xpbase/base/kad_key/kadmlia_key.h"
@@ -16,12 +17,12 @@
 
 namespace top {
 
-namespace kadmlia {
+// namespace kadmlia {
 
-class RoutingTable;
-typedef std::shared_ptr<RoutingTable> RoutingTablePtr;
+// class RoutingTableBase;
+// typedef std::shared_ptr<RoutingTableBase> RoutingTablePtr;
 
-}
+// }
 
 namespace gossip {
 

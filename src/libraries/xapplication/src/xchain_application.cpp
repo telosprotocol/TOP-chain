@@ -169,10 +169,10 @@ void xtop_chain_application::top_grpc_init(uint16_t const grpc_port) {
 }
 
 void xtop_chain_application::top_console_init() {
-    top::elect::MultilayerNetworkInterfacePtr net_module = std::make_shared<elect::MultilayerNetworkChainQuery>();
-    ChainCommandsPtr chain_cmd {nullptr};
-    chain_cmd = std::make_shared<ChainCommands>(net_module, m_sync_obj.get());
-    top::ChainInfo::Instance()->SetChainCmd(chain_cmd);
+    // top::elect::MultilayerNetworkInterfacePtr net_module = std::make_shared<elect::MultilayerNetworkChainQuery>();
+    // ChainCommandsPtr chain_cmd {nullptr};
+    // chain_cmd = std::make_shared<ChainCommands>(net_module, m_sync_obj.get());
+    // top::ChainInfo::Instance()->SetChainCmd(chain_cmd);
     std::cout << "==== start chaininfo center ===\n";
     xinfo("==== start chaininfo center ===");
 }

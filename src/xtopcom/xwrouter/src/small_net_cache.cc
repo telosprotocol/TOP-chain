@@ -224,20 +224,21 @@ void SmallNetNodes::HandleExpired(std::unordered_map<base::ServiceType, std::vec
     for (auto & service_type : unreg_service_type_vec) {
         // TODO(smaug)
         TOP_KINFO("unregister routing table %llu", service_type.value());
-        MultiRouting::Instance()->RemoveRoutingTable(service_type);
+        MultiRouting::Instance()->RemoveElectRoutingTable(service_type);
         TOP_INFO("smaug quit routing table for service_type:%llu", service_type.value());
     }
 
     // drop node of routing table
-    for (auto & item : expired_vec) {
-        auto service_routing = wrouter::GetRoutingTable(item.first, false);
-        if (!service_routing) {
-            TOP_WARN("no routing table of service_type:%llu found", item.first.value());
-            continue;
-        }
-        service_routing->BulkDropNode(item.second);
-        TOP_INFO("service_node_cache bulkdropnode %u nodes of service_type:%llu", (item.second).size(), item.first.value());
-    }
+    // todo charles check here
+    // for (auto & item : expired_vec) {
+    //     auto service_routing = wrouter::GetRoutingTable(item.first, false);
+    //     if (!service_routing) {
+    //         TOP_WARN("no routing table of service_type:%llu found", item.first.value());
+    //         continue;
+    //     }
+    //     service_routing->BulkDropNode(item.second);
+    //     TOP_INFO("service_node_cache bulkdropnode %u nodes of service_type:%llu", (item.second).size(), item.first.value());
+    // }
 }
 
 void SmallNetNodes::do_clear_and_reset() {
@@ -258,6 +259,7 @@ void SmallNetNodes::do_clear_and_reset() {
                     TOP_DEBUG("bluever %ld remove expired node(%s) version(%llu)", (long)mitem.first.value(), iter->node_id.c_str(), iter->m_xip2.height());
                     if (iter->node_id == global_node_id) {
                         TOP_DEBUG("add unreg service_type:%llu", mitem.first.value());
+                        // todo charles check unreg_service_type_vec here is necessary ?
                         unreg_service_type_vec.push_back(mitem.first);
                     }
 

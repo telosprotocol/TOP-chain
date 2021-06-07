@@ -5,7 +5,7 @@
 #include "xwrouter/multi_routing/multi_routing.h"
 
 #include "xkad/routing_table/local_node_info.h"
-#include "xkad/routing_table/routing_table.h"
+#include "xkad/routing_table/routing_table_base.h"
 #include "xpbase/base/kad_key/kadmlia_key.h"
 #include "xpbase/base/line_parser.h"
 #include "xpbase/base/top_log.h"
@@ -25,7 +25,7 @@ namespace wrouter {
 static const int32_t kCheckElectRoutingTableNodesPeriod = 5 * 1000 * 1000;
 // static const uint32_t kCheckSingleNetworkNodesNum = 16;
 
-MultiRouting::MultiRouting() : routing_table_map_(), routing_table_map_mutex_(), root_manager_ptr_(nullptr) {
+MultiRouting::MultiRouting() : elect_routing_table_map_(), elect_routing_table_map_mutex_(), root_manager_ptr_(nullptr) {
     // auto thread_callback = [this] {
     //     for (;;) {
     //         CheckSingleNodeNetwork();
@@ -35,8 +35,8 @@ MultiRouting::MultiRouting() : routing_table_map_(), routing_table_map_mutex_(),
     // check_single_network_thread_->detach();
     // timer_.Start(kCheckSingleNodeNetworkPeriod, kCheckSingleNodeNetworkPeriod, std::bind(&MultiRouting::NotifyCheckSignal, this));
 
-    check_elect_routing_ = std::make_shared<base::TimerRepeated>(timer_manager_, "MultiRouting::CheckElectRoutingTable");
-    check_elect_routing_->Start(kCheckElectRoutingTableNodesPeriod, kCheckElectRoutingTableNodesPeriod, std::bind(&MultiRouting::CheckElectRoutingTable, this));
+    check_elect_routing_ = std::make_shared<base::TimerRepeated>(timer_manager_, "MultiRouting::CheckElectRoutingTableTimer");
+    check_elect_routing_->Start(kCheckElectRoutingTableNodesPeriod, kCheckElectRoutingTableNodesPeriod, std::bind(&MultiRouting::CompleteElectRoutingTable, this));
 }
 
 MultiRouting::~MultiRouting() {
@@ -53,38 +53,71 @@ void MultiRouting::SetRootRoutingManager(std::shared_ptr<RootRoutingManager> roo
     root_manager_ptr_ = root_manager_ptr;
 }
 
-void MultiRouting::AddRoutingTable(base::ServiceType type, RoutingTablePtr routing_table) {
-    std::unique_lock<std::mutex> lock(routing_table_map_mutex_);
+kadmlia::RoutingTablePtr MultiRouting::GetRoutingTable(base::ServiceType const &service_type,bool is_root){
+    if(is_root){
+        if (!root_manager_ptr_) {
+            return nullptr;
+        }
+        return root_manager_ptr_->GetRoutingTable(base::ServiceType{kRoot});
+    }else{
+        for (auto const & _p : elect_routing_table_map_) {
+            if (_p.first == service_type) {
+                return _p.second;
+            }
+        }
+        return nullptr;
+    }
+}
+
+kadmlia::ElectRoutingTablePtr MultiRouting::GetElectRoutingTable(base::ServiceType const & service_type) {
+    std::unique_lock<std::mutex> lock(elect_routing_table_map_mutex_);
+    for (auto const & _p : elect_routing_table_map_) {
+        if (_p.first == service_type) {
+            return _p.second;
+        }
+    }
+    return nullptr;
+}
+
+kadmlia::RootRoutingTablePtr MultiRouting::GetRootRoutingTable() {
+    if (!root_manager_ptr_) {
+        return nullptr;
+    }
+    return root_manager_ptr_->GetRoutingTable(base::ServiceType{kRoot});
+}
+
+void MultiRouting::AddElectRoutingTable(base::ServiceType service_type, kadmlia::ElectRoutingTablePtr routing_table) {
+    std::unique_lock<std::mutex> lock(elect_routing_table_map_mutex_);
     if (!routing_table) {
         return;
     }
-    auto iter = routing_table_map_.find(type);
-    if (iter != routing_table_map_.end()) {
+    auto iter = elect_routing_table_map_.find(service_type);
+    if (iter != elect_routing_table_map_.end()) {
         assert(false);
         return;
     }
 
-    routing_table_map_[type] = routing_table;
+    elect_routing_table_map_[service_type] = routing_table;
 }
 
-void MultiRouting::RemoveRoutingTable(base::ServiceType type) {
-    if (type == base::ServiceType{kRoot} && root_manager_ptr_) {
+void MultiRouting::RemoveElectRoutingTable(base::ServiceType service_type) {
+    if (service_type == base::ServiceType{kRoot} && root_manager_ptr_) {
         root_manager_ptr_->Destory();
-        TOP_KINFO("remove root routing table: %llu", type.value());
+        TOP_KINFO("remove root routing table: %llu", service_type.value());
     }
 
-    RoutingTablePtr remove_routing_table = nullptr;
+    ElectRoutingTablePtr remove_routing_table = nullptr;
     {
-        std::unique_lock<std::mutex> lock(routing_table_map_mutex_);
-        auto iter = routing_table_map_.find(type);
-        if (iter != routing_table_map_.end()) {
+        std::unique_lock<std::mutex> lock(elect_routing_table_map_mutex_);
+        auto iter = elect_routing_table_map_.find(service_type);
+        if (iter != elect_routing_table_map_.end()) {
             remove_routing_table = iter->second;
-            routing_table_map_.erase(iter);
+            elect_routing_table_map_.erase(iter);
         }
     }
     if (remove_routing_table) {
         remove_routing_table->UnInit();
-        TOP_KINFO("remove service routing table: %llu", type.value());
+        TOP_KINFO("remove service routing table: %llu", service_type.value());
     }
 
     std::vector<base::ServiceType> vec_type;
@@ -94,67 +127,67 @@ void MultiRouting::RemoveRoutingTable(base::ServiceType type) {
     }
 }
 
-RoutingTablePtr MultiRouting::GetRoutingTable(const base::ServiceType & type, bool root) {
-    if (root || type.value() == kRoot) {
-        if (!root_manager_ptr_) {
-            return nullptr;
-        }
-        return root_manager_ptr_->GetRoutingTable(type);
-    }
-    return GetServiceRoutingTable(type);
-}
+// RoutingTablePtr MultiRouting::GetRoutingTable(const base::ServiceType & type, bool root) {
+//     if (root || type.value() == kRoot) {
+//         if (!root_manager_ptr_) {
+//             return nullptr;
+//         }
+//         return root_manager_ptr_->GetRoutingTable(type);
+//     }
+//     return GetServiceRoutingTable(type);
+// }
 
-RoutingTablePtr MultiRouting::GetRoutingTable(const std::string & routing_id, bool root) {
-    if (root) {
-        if (!root_manager_ptr_) {
-            return nullptr;
-        }
-        return root_manager_ptr_->GetRoutingTable(base::ServiceType{kRoot});
-    }
-    return GetServiceRoutingTable(routing_id);
-}
+// RoutingTablePtr MultiRouting::GetRoutingTable(const std::string & routing_id, bool root) {
+//     if (root) {
+//         if (!root_manager_ptr_) {
+//             return nullptr;
+//         }
+//         return root_manager_ptr_->GetRoutingTable(base::ServiceType{kRoot});
+//     }
+//     return GetServiceRoutingTable(routing_id);
+// }
 
-RoutingTablePtr MultiRouting::GetServiceRoutingTable(const base::ServiceType & type) {
-    std::unique_lock<std::mutex> lock(routing_table_map_mutex_);
+// RoutingTablePtr MultiRouting::GetServiceRoutingTable(const base::ServiceType & type) {
+//     std::unique_lock<std::mutex> lock(elect_routing_table_map_mutex_);
 
-    for (auto const & _p : routing_table_map_) {
-        if (_p.first == type) {
-            return _p.second;
-        }
-    }
-    return nullptr;
+//     for (auto const & _p : elect_routing_table_map_) {
+//         if (_p.first == type) {
+//             return _p.second;
+//         }
+//     }
+//     return nullptr;
 
-    // auto iter = routing_table_map_.find(type);
-    
-    // if (iter == routing_table_map_.end()) {
-    //     return nullptr;
-    // }
-    // return iter->second;
-}
+//     // auto iter = elect_routing_table_map_.find(type);
 
-RoutingTablePtr MultiRouting::GetServiceRoutingTable(const std::string & routing_id) {
-    std::unique_lock<std::mutex> lock(routing_table_map_mutex_);
-    for (auto & item : routing_table_map_) {
-        auto routing_ptr = item.second;
-        if (routing_ptr->get_local_node_info()->id() == routing_id) {
-            return routing_ptr;
-        }
-    }
-    return nullptr;
-}
+//     // if (iter == elect_routing_table_map_.end()) {
+//     //     return nullptr;
+//     // }
+//     // return iter->second;
+// }
+
+// RoutingTablePtr MultiRouting::GetServiceRoutingTable(const std::string & routing_id) {
+//     std::unique_lock<std::mutex> lock(elect_routing_table_map_mutex_);
+//     for (auto & item : elect_routing_table_map_) {
+//         auto routing_ptr = item.second;
+//         if (routing_ptr->get_local_node_info()->id() == routing_id) {
+//             return routing_ptr;
+//         }
+//     }
+//     return nullptr;
+// }
 
 void MultiRouting::GetAllRegisterType(std::vector<base::ServiceType> & vec_type) {
     vec_type.clear();
-    std::unique_lock<std::mutex> lock(routing_table_map_mutex_);
-    for (auto & it : routing_table_map_) {
+    std::unique_lock<std::mutex> lock(elect_routing_table_map_mutex_);
+    for (auto & it : elect_routing_table_map_) {
         vec_type.push_back(it.first);
     }
 }
 
-void MultiRouting::GetAllRegisterRoutingTable(std::vector<std::shared_ptr<kadmlia::RoutingTable>> & vec_rt) {
+void MultiRouting::GetAllRegisterRoutingTable(std::vector<std::shared_ptr<kadmlia::ElectRoutingTable>> & vec_rt) {
     vec_rt.clear();
-    std::unique_lock<std::mutex> lock(routing_table_map_mutex_);
-    for (auto & it : routing_table_map_) {
+    std::unique_lock<std::mutex> lock(elect_routing_table_map_mutex_);
+    for (auto & it : elect_routing_table_map_) {
         vec_rt.push_back(it.second);
     }
 }
@@ -195,8 +228,8 @@ void MultiRouting::CheckSingleNodeNetwork() {
     TOP_DEBUG("bluesig check");
     std::vector<kadmlia::RoutingTablePtr> routing_vec;
     {
-        std::unique_lock<std::mutex> lock(routing_table_map_mutex_);
-        for (auto iter = routing_table_map_.begin(); iter != routing_table_map_.end(); ++iter) {
+        std::unique_lock<std::mutex> lock(elect_routing_table_map_mutex_);
+        for (auto iter = elect_routing_table_map_.begin(); iter != elect_routing_table_map_.end(); ++iter) {
             if (iter->second->nodes_size() <= kCheckSingleNetworkNodesNum) {
                 routing_vec.push_back(iter->second);
             }
@@ -257,19 +290,79 @@ void MultiRouting::CheckSingleNodeNetwork() {
 }
     */
 
+void MultiRouting::CheckElectRoutingTable(base::ServiceType service_type) {
+    kadmlia::ElectRoutingTablePtr routing_table;
+    {
+        std::unique_lock<std::mutex> lock(elect_routing_table_map_mutex_);
+        assert(elect_routing_table_map_.find(service_type) != elect_routing_table_map_.end());
+        routing_table = elect_routing_table_map_[service_type];
+    }
+    auto kad_key_ptrs = routing_table->GetElectionNodesExpected();
+    if (!kad_key_ptrs.empty()) {
+        std::map<std::string, kadmlia::NodeInfoPtr> res_nodes;  // election_node_id, NodeInfoPtr
+        root_manager_ptr_->GetRoutingTable(base::ServiceType{kRoot})->FindElectionNodesInfo(kad_key_ptrs, res_nodes);
+        routing_table->HandleElectionNodesInfoFromRoot(res_nodes);
+    }
+}
 
-void MultiRouting::CheckElectRoutingTable(){
-    std::unique_lock<std::mutex> lock(routing_table_map_mutex_);
-    for (auto _p : routing_table_map_) {
-        kadmlia::RoutingTablePtr routing_table = _p.second;
+void MultiRouting::CheckElectRoutingTableTimer() {
+    std::unique_lock<std::mutex> lock(elect_routing_table_map_mutex_);
+    for (auto _p : elect_routing_table_map_) {
+        kadmlia::ElectRoutingTablePtr routing_table = _p.second;
         auto kad_key_ptrs = routing_table->GetElectionNodesExpected();
         if (!kad_key_ptrs.empty()) {
-            std::map<std::string, kadmlia::NodeInfoPtr>  res_nodes; // election_node_id, NodeInfoPtr
+            std::map<std::string, kadmlia::NodeInfoPtr> res_nodes;  // election_node_id, NodeInfoPtr
             root_manager_ptr_->GetRoutingTable(base::ServiceType{kRoot})->FindElectionNodesInfo(kad_key_ptrs, res_nodes);
             routing_table->HandleElectionNodesInfoFromRoot(res_nodes);
         }
     }
 }
+
+void MultiRouting::CompleteElectRoutingTable() {
+    bool flag{false};
+    {
+        std::unique_lock<std::mutex> lock(elect_routing_table_map_mutex_);
+
+        for (auto const & routing_table_pair : elect_routing_table_map_) {
+            kadmlia::ElectRoutingTablePtr routing_table = routing_table_pair.second;
+            // map<election_xip2_str,node_id_root_kad_key>
+            auto kad_key_ptrs = routing_table->GetElectionNodesExpected();
+            if (!kad_key_ptrs.empty()) {
+                for (auto const & _p : kad_key_ptrs) {
+                    OnCompleteElectRoutingTableCallback cb =
+                        std::bind(&MultiRouting::OnCompleteElectRoutingTable, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
+                    // OnCompleteElectRoutingTableCallback cb = std::bind(&MultiRouting::OnCompleteElectRoutingTable, this, routing_table_pair.first, _p.first,
+                    // std::placeholders::_1);
+                    if (std::dynamic_pointer_cast<RootRouting>(root_manager_ptr_->GetRoutingTable(base::ServiceType{kRoot}))
+                            ->FindNodesFromOthers(routing_table_pair.first, _p.first, cb, _p.second) == false) {
+                        flag = true;
+                        break;
+                    }
+                }
+            }
+            if (flag)
+                break;
+        }
+    }
+    if (flag) {
+        CheckElectRoutingTableTimer();
+    }
+}
+
+void MultiRouting::OnCompleteElectRoutingTable(base::ServiceType const service_type, std::string const election_xip2, kadmlia::NodeInfoPtr const & node_info) {
+    xdbg("Charles Debug MultiRouting::OnCompleteElectRoutingTable %s", election_xip2.c_str());
+    kadmlia::ElectRoutingTablePtr routing_table;
+    {
+        std::unique_lock<std::mutex> lock(elect_routing_table_map_mutex_);
+        if (elect_routing_table_map_.find(service_type) == elect_routing_table_map_.end()) {
+            return;
+        }
+        assert(elect_routing_table_map_.find(service_type) != elect_routing_table_map_.end());
+        routing_table = elect_routing_table_map_[service_type];
+    }
+    routing_table->OnFindNodesFromRootRouting(election_xip2, node_info);
+}
+
 }  // namespace wrouter
 
 }  // namespace top

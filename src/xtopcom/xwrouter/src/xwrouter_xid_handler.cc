@@ -10,7 +10,7 @@
 #include "xgossip/include/gossip_filter.h"
 #include "xgossip/include/gossip_utils.h"
 #include "xkad/gossip/rumor_filter.h"
-#include "xkad/routing_table/routing_table.h"
+#include "xkad/routing_table/routing_table_base.h"
 #include "xkad/routing_table/routing_utils.h"
 #include "xpbase/base/kad_key/kadmlia_key.h"
 #include "xpbase/base/top_utils.h"
@@ -242,11 +242,13 @@ int32_t WrouterXidHandler::GossipBroadcast(transport::protobuf::RoutingMessage &
     if (gossip_type == 0) {
         gossip_type = kGossipBloomfilter;
     }
-
-    auto neighbors = routing_table->GetUnLockNodes();
-    if (!neighbors) {
-        TOP_WARN2("GetUnLockNodes empty");
-        return enum_xerror_code_fail;
+    std::shared_ptr<std::vector<top::kadmlia::NodeInfoPtr>> neighbors;
+    if (gossip_type == kGossipBloomfilter || kGossipRRS) {
+        neighbors = std::dynamic_pointer_cast<kadmlia::RootRoutingTable>(routing_table)->GetUnLockNodes();
+        if (!neighbors) {
+            TOP_WARN2("GetUnLockNodes empty");
+            return enum_xerror_code_fail;
+        }
     }
     switch (gossip_type) {
     case kGossipBloomfilter:
@@ -352,7 +354,7 @@ int32_t WrouterXidHandler::SendData(transport::protobuf::RoutingMessage & messag
     return enum_xcode_successful;
 }
 
-bool WrouterXidHandler::HandleSystemMessage(transport::protobuf::RoutingMessage & message, kadmlia::RoutingTablePtr & routing_table) {
+bool WrouterXidHandler::HandleSystemMessage(transport::protobuf::RoutingMessage & message) {
     static std::vector<int32_t> direct_vec = {
         kKadBootstrapJoinRequest,
         kKadBootstrapJoinResponse,
@@ -440,7 +442,7 @@ int32_t WrouterXidHandler::JudgeOwnPacket(transport::protobuf::RoutingMessage & 
         return kJudgeOwnNoAndContinue;
     }
 
-    if (HandleSystemMessage(message, routing_table)) {
+    if (HandleSystemMessage(message)) {
         TOP_NETWORK_DEBUG_FOR_PROTOMESSAGE("wrouter kJudgeOwnYes", message);
         return kJudgeOwnYes;
     }
@@ -451,16 +453,17 @@ int32_t WrouterXidHandler::JudgeOwnPacket(transport::protobuf::RoutingMessage & 
         return kJudgeOwnYes;
     }
 
-    bool closest = false;
-    if (routing_table->ClosestToTarget(message.des_node_id(), closest) != kadmlia::kKadSuccess) {
-        TOP_WARN2("ClosestToTarget goes wrong");
-        TOP_NETWORK_DEBUG_FOR_PROTOMESSAGE("wrouter kJudgeOwnError", message);
-        return kJudgeOwnError;
-    }
-    if (closest) {
-        TOP_NETWORK_DEBUG_FOR_PROTOMESSAGE("wrouter kJudgeOwnYes", message);
-        return kJudgeOwnYes;
-    }
+    // todo charles make it up and ref this function.!
+    // bool closest = false;
+    // if (routing_table->ClosestToTarget(message.des_node_id(), closest) != kadmlia::kKadSuccess) {
+    //     TOP_WARN2("ClosestToTarget goes wrong");
+    //     TOP_NETWORK_DEBUG_FOR_PROTOMESSAGE("wrouter kJudgeOwnError", message);
+    //     return kJudgeOwnError;
+    // }
+    // if (closest) {
+    //     TOP_NETWORK_DEBUG_FOR_PROTOMESSAGE("wrouter kJudgeOwnYes", message);
+    //     return kJudgeOwnYes;
+    // }
 
     TOP_NETWORK_DEBUG_FOR_PROTOMESSAGE("wrouter kJudgeOwnNoAndContinue", message);
     return kJudgeOwnNoAndContinue;

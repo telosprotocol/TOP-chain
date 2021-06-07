@@ -7,7 +7,9 @@
 #include <memory>
 
 #include "xbase/xbase.h"
-#include "xbase/xrouter.h"
+// #include "xbase/xrouter.h"
+#include "xkad/routing_table/elect_routing_table.h"
+#include "xkad/routing_table/routing_table_base.h"
 #include "xpbase/base/kad_key/kadmlia_key.h"
 
 namespace top {
@@ -29,7 +31,6 @@ class XipParser;
 namespace kadmlia {
 class RoutingTable;
 struct NodeInfo;
-typedef std::shared_ptr<RoutingTable> RoutingTablePtr;
 typedef std::shared_ptr<NodeInfo> NodeInfoPtr;
 };
 

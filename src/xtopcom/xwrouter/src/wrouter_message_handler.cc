@@ -15,7 +15,7 @@
 #include "xkad/routing_table/routing_utils.h"
 #include "xkad/routing_table/callback_manager.h"
 #include "xkad/routing_table/node_info.h"
-#include "xkad/routing_table/routing_table.h"
+#include "xkad/routing_table/routing_table_base.h"
 #include "xkad/routing_table/node_detection_manager.h"
 #include "xkad/routing_table/local_node_info.h"
 #include "xwrouter/register_routing_table.h"
@@ -98,26 +98,26 @@ void WrouterMessageHandler::AddBaseHandlers() {
     //         base::xpacket_t& packet) {
     //     HandleNodeQuit(message, packet);
     // });
-    AddHandler(kKadHandshake, [this](transport::protobuf::RoutingMessage& message,
-            base::xpacket_t& packet){
-        HandleHandshake(message, packet);
-    });
-    AddHandler(kKadBootstrapJoinRequest, [this](transport::protobuf::RoutingMessage& message,
-            base::xpacket_t& packet){
-        HandleBootstrapJoinRequest(message, packet);
-    });
-    AddHandler(kKadBootstrapJoinResponse, [this](transport::protobuf::RoutingMessage& message,
-            base::xpacket_t& packet){
-        HandleBootstrapJoinResponse(message, packet);
-    });
-    AddHandler(kKadFindNodesRequest, [this](transport::protobuf::RoutingMessage& message,
-            base::xpacket_t& packet){
-        HandleFindNodesRequest(message, packet);
-    });
-    AddHandler(kKadFindNodesResponse, [this](transport::protobuf::RoutingMessage& message,
-            base::xpacket_t& packet){
-        HandleFindNodesResponse(message, packet);
-    });
+    // AddHandler(kKadHandshake, [this](transport::protobuf::RoutingMessage& message,
+    //         base::xpacket_t& packet){
+    //     HandleHandshake(message, packet);
+    // });
+    // AddHandler(kKadBootstrapJoinRequest, [this](transport::protobuf::RoutingMessage& message,
+    //         base::xpacket_t& packet){
+    //     HandleBootstrapJoinRequest(message, packet);
+    // });
+    // AddHandler(kKadBootstrapJoinResponse, [this](transport::protobuf::RoutingMessage& message,
+    //         base::xpacket_t& packet){
+    //     HandleBootstrapJoinResponse(message, packet);
+    // });
+    // AddHandler(kKadFindNodesRequest, [this](transport::protobuf::RoutingMessage& message,
+    //         base::xpacket_t& packet){
+    //     HandleFindNodesRequest(message, packet);
+    // });
+    // AddHandler(kKadFindNodesResponse, [this](transport::protobuf::RoutingMessage& message,
+    //         base::xpacket_t& packet){
+    //     HandleFindNodesResponse(message, packet);
+    // });
     // AddHandler(kKadHeartbeatRequest, [this](transport::protobuf::RoutingMessage& message,
     //         base::xpacket_t& packet){
     //     HandleHeartbeatRequest(message, packet);
@@ -126,9 +126,9 @@ void WrouterMessageHandler::AddBaseHandlers() {
     //         base::xpacket_t& packet){
     //     HandleHeartbeatResponse(message, packet);
     // });
-    AddHandler(kKadAck, [](transport::protobuf::RoutingMessage& message,
-            base::xpacket_t& packet){
-    });
+    // AddHandler(kKadAck, [](transport::protobuf::RoutingMessage& message,
+    //         base::xpacket_t& packet){
+    // });
     // AddHandler(kKadNatDetectRequest, [this](transport::protobuf::RoutingMessage& message,
     //         base::xpacket_t& packet){
     //     nat_manager_->PushMessage(message, packet);
@@ -248,111 +248,111 @@ void WrouterMessageHandler::RemoveRequestType(int msg_type) {
 //     routing_table->HandleHeartbeatResponse(message, packet);
 // }
 
-void WrouterMessageHandler::HandleFindNodesRequest(
-        transport::protobuf::RoutingMessage& message,
-        base::xpacket_t& packet) {
-    // TODO(smaug) handle kRoot parse
-    RoutingTablePtr routing_table = GetRoutingTable(
-        message.des_node_id(),
-        message.has_is_root() && message.is_root());
-    if (!routing_table) {
-        TOP_WARN2("HandleFindNodesRequest msg.is_root(%d) msg.src_node_id(%s) msg.des_node_id(%s)",
-                message.is_root(),
-                HexEncode(message.src_node_id()).c_str(),
-                HexEncode(message.des_node_id()).c_str());
-        return;
-    }
-    routing_table->HandleFindNodesRequest(message, packet);
-}
+// void WrouterMessageHandler::HandleFindNodesRequest(
+//         transport::protobuf::RoutingMessage& message,
+//         base::xpacket_t& packet) {
+//     // TODO(smaug) handle kRoot parse
+//     RoutingTablePtr routing_table = GetRoutingTable(
+//         message.des_node_id(),
+//         message.has_is_root() && message.is_root());
+//     if (!routing_table) {
+//         TOP_WARN2("HandleFindNodesRequest msg.is_root(%d) msg.src_node_id(%s) msg.des_node_id(%s)",
+//                 message.is_root(),
+//                 HexEncode(message.src_node_id()).c_str(),
+//                 HexEncode(message.des_node_id()).c_str());
+//         return;
+//     }
+//     routing_table->HandleFindNodesRequest(message, packet);
+// }
 
-void WrouterMessageHandler::HandleFindNodesResponse(
-        transport::protobuf::RoutingMessage& message,
-        base::xpacket_t& packet) {
-    RoutingTablePtr routing_table = GetRoutingTable(
-        message.des_node_id(),
-        message.has_is_root() && message.is_root());
-    if (!routing_table) {
-        TOP_WARN2("HandleFindNodesResponse msg.is_root(%d) msg.src_node_id(%s) msg.des_node_id(%s)",
-                message.is_root(),
-                HexEncode(message.src_node_id()).c_str(),
-                HexEncode(message.des_node_id()).c_str());
+// void WrouterMessageHandler::HandleFindNodesResponse(
+//         transport::protobuf::RoutingMessage& message,
+//         base::xpacket_t& packet) {
+//     RoutingTablePtr routing_table = GetRoutingTable(
+//         message.des_node_id(),
+//         message.has_is_root() && message.is_root());
+//     if (!routing_table) {
+//         TOP_WARN2("HandleFindNodesResponse msg.is_root(%d) msg.src_node_id(%s) msg.des_node_id(%s)",
+//                 message.is_root(),
+//                 HexEncode(message.src_node_id()).c_str(),
+//                 HexEncode(message.des_node_id()).c_str());
 
-        return;
-    }
-    routing_table->HandleFindNodesResponse(message, packet);
-}
+//         return;
+//     }
+//     routing_table->HandleFindNodesResponse(message, packet);
+// }
 
-int WrouterMessageHandler::SendData(
-        const transport::protobuf::RoutingMessage& message,
-        const std::string& peer_ip,
-        uint16_t peer_port) {
-    RoutingTablePtr routing_table = GetRoutingTable(
-        base::ServiceType{message.des_service_type()},
-        message.has_is_root() && message.is_root());
-    if (!routing_table) {
-        TOP_WARN("routing table not registered[%llu]", message.des_service_type());
-        return kKadFailed;
-    }
+// int WrouterMessageHandler::SendData(
+//         const transport::protobuf::RoutingMessage& message,
+//         const std::string& peer_ip,
+//         uint16_t peer_port) {
+//     RoutingTablePtr routing_table = GetRoutingTable(
+//         base::ServiceType{message.des_service_type()},
+//         message.has_is_root() && message.is_root());
+//     if (!routing_table) {
+//         TOP_WARN("routing table not registered[%llu]", message.des_service_type());
+//         return kKadFailed;
+//     }
 
-    auto transport_ptr = routing_table->get_transport();
-    if (!transport_ptr) {
-        TOP_WARN("service type[%llu] has not register udp transport.", message.des_service_type());
-        return kKadFailed;
-    }
+//     auto transport_ptr = routing_table->get_transport();
+//     if (!transport_ptr) {
+//         TOP_WARN("service type[%llu] has not register udp transport.", message.des_service_type());
+//         return kKadFailed;
+//     }
 
-    std::string msg;
-    if (!message.SerializeToString(&msg)) {
-        TOP_INFO("RoutingMessage SerializeToString failed!");
-        return kKadFailed;
-    }
-    xbyte_buffer_t xdata{msg.begin(), msg.end()};
+//     std::string msg;
+//     if (!message.SerializeToString(&msg)) {
+//         TOP_INFO("RoutingMessage SerializeToString failed!");
+//         return kKadFailed;
+//     }
+//     xbyte_buffer_t xdata{msg.begin(), msg.end()};
 
-    return transport_ptr->SendData(xdata, peer_ip, peer_port);
-}
+//     return transport_ptr->SendData(xdata, peer_ip, peer_port);
+// }
 
-void WrouterMessageHandler::HandleBootstrapJoinRequest(
-        transport::protobuf::RoutingMessage& message,
-        base::xpacket_t& packet) {
-    RoutingTablePtr routing_table = GetRoutingTable(
-        base::ServiceType{message.des_service_type()},
-        message.has_is_root() && message.is_root());
-    if (!routing_table) {
-        TOP_WARN("service type[%llu][%d] has not register routing table.",
-                message.des_service_type(), message.is_root());
-        return;
-    }
-    routing_table->HandleBootstrapJoinRequest(message, packet);
-}
+// void WrouterMessageHandler::HandleBootstrapJoinRequest(
+//         transport::protobuf::RoutingMessage& message,
+//         base::xpacket_t& packet) {
+//     RoutingTablePtr routing_table = GetRoutingTable(
+//         base::ServiceType{message.des_service_type()},
+//         message.has_is_root() && message.is_root());
+//     if (!routing_table) {
+//         TOP_WARN("service type[%llu][%d] has not register routing table.",
+//                 message.des_service_type(), message.is_root());
+//         return;
+//     }
+//     routing_table->HandleBootstrapJoinRequest(message, packet);
+// }
 
-void WrouterMessageHandler::HandleBootstrapJoinResponse(
-        transport::protobuf::RoutingMessage& message,
-        base::xpacket_t& packet) {
-    TOP_DEBUG("join response coming,[%d]", message.is_root());
-    RoutingTablePtr routing_table = GetRoutingTable(
-        base::ServiceType{message.des_service_type()},
-        message.has_is_root() && message.is_root());
-    if (!routing_table) {
-        TOP_WARN("service type[%llu] has not register routing table.", message.des_service_type());
-        return;
-    }
-    routing_table->HandleBootstrapJoinResponse(message, packet);
-}
+// void WrouterMessageHandler::HandleBootstrapJoinResponse(
+//         transport::protobuf::RoutingMessage& message,
+//         base::xpacket_t& packet) {
+//     TOP_DEBUG("join response coming,[%d]", message.is_root());
+//     RoutingTablePtr routing_table = GetRoutingTable(
+//         base::ServiceType{message.des_service_type()},
+//         message.has_is_root() && message.is_root());
+//     if (!routing_table) {
+//         TOP_WARN("service type[%llu] has not register routing table.", message.des_service_type());
+//         return;
+//     }
+//     routing_table->HandleBootstrapJoinResponse(message, packet);
+// }
 
-void WrouterMessageHandler::HandleHandshake(
-        transport::protobuf::RoutingMessage& message,
-        base::xpacket_t& packet) {
-    RoutingTablePtr routing_table = GetRoutingTable(
-        message.des_node_id(),
-        message.has_is_root() && message.is_root());
-    if (!routing_table) {
-        TOP_WARN2("HandleHandshake msg.is_root(%d) msg.src_node_id(%s) msg.des_node_id(%s)",
-                message.is_root(),
-                HexEncode(message.src_node_id()).c_str(),
-                HexEncode(message.des_node_id()).c_str());
-        return;
-    }
-    routing_table->HandleHandshake(message, packet);
-}
+// void WrouterMessageHandler::HandleHandshake(
+//         transport::protobuf::RoutingMessage& message,
+//         base::xpacket_t& packet) {
+//     RoutingTablePtr routing_table = GetRoutingTable(
+//         message.des_node_id(),
+//         message.has_is_root() && message.is_root());
+//     if (!routing_table) {
+//         TOP_WARN2("HandleHandshake msg.is_root(%d) msg.src_node_id(%s) msg.des_node_id(%s)",
+//                 message.is_root(),
+//                 HexEncode(message.src_node_id()).c_str(),
+//                 HexEncode(message.des_node_id()).c_str());
+//         return;
+//     }
+//     routing_table->HandleHandshake(message, packet);
+// }
 
 // void WrouterMessageHandler::HandleConnectRequest(
 //         transport::protobuf::RoutingMessage& message,

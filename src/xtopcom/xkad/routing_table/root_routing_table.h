@@ -3,11 +3,12 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #pragma once
-#if 0
+
 #include "xkad/proto/kadmlia.pb.h"
 #include "xkad/routing_table/bootstrap_cache_helper.h"
 #include "xkad/routing_table/callback_manager.h"
 #include "xkad/routing_table/node_info.h"
+#include "xkad/routing_table/routing_table_base.h"
 #include "xkad/routing_table/routing_utils.h"
 #include "xpbase/base/top_config.h"
 #include "xpbase/base/top_timer.h"
@@ -33,45 +34,42 @@ namespace top {
 
 namespace kadmlia {
 
-typedef std::function<void(int /*network_health*/)> NetworkStatusFunctor;
-
-struct Functors {
-    Functors() : network_status() {
-    }
-
-    NetworkStatusFunctor network_status;
-};
-
 class NodeDetectionManager;
 class LocalNodeInfo;
 
-class RoutingTable : public std::enable_shared_from_this<RoutingTable> {
+class RootRoutingTable
+  : public RoutingTableBase
+  , public std::enable_shared_from_this<RootRoutingTable> {
 public:
-    RoutingTable(std::shared_ptr<transport::Transport>, uint32_t, std::shared_ptr<LocalNodeInfo>, bool is_elect_routing_table = false);
-    virtual ~RoutingTable();
-    virtual bool Init();
-    virtual bool UnInit();
-    virtual int AddNode(NodeInfoPtr node);
-    virtual int DropNode(NodeInfoPtr node);
+    RootRoutingTable(std::shared_ptr<transport::Transport>, std::shared_ptr<LocalNodeInfo>);
+    ~RootRoutingTable() override = default;
+    bool Init() override;
+    bool UnInit() override;
+    int AddNode(NodeInfoPtr node) override;
+    int DropNode(NodeInfoPtr node) override;
 
-    virtual int BulkDropNode(const std::vector<std::string> & drop_nodes);
+    std::size_t nodes_size() override;    
+    std::vector<NodeInfoPtr> GetClosestNodes(const std::string & target_id, uint32_t number_to_get) override;
 
-    virtual bool IsDestination(const std::string & des_node_id, bool check_closest);
+    NodeInfoPtr GetRandomNode() override;
+    bool GetRandomNodes(std::vector<NodeInfoPtr> & vec, size_t size) override;
+
+     int BulkDropNode(const std::vector<std::string> & drop_nodes);
+
+     bool IsDestination(const std::string & des_node_id, bool check_closest);
     virtual void SetFreqMessage(transport::protobuf::RoutingMessage & message);
-    virtual base::ServiceType GetRoutingTableType() {
-        return local_node_ptr_->service_type();
-    }
-    virtual void PrintRoutingTable();
+
+     void PrintRoutingTable();
 
     // message handler
     virtual void HandleMessage(transport::protobuf::RoutingMessage & message, base::xpacket_t & packet);
-    virtual void HandleFindNodesRequest(transport::protobuf::RoutingMessage & message, base::xpacket_t & packet);
-    virtual void HandleFindNodesResponse(transport::protobuf::RoutingMessage & message, base::xpacket_t & packet);
+     void HandleFindNodesRequest(transport::protobuf::RoutingMessage & message, base::xpacket_t & packet);
+     void HandleFindNodesResponse(transport::protobuf::RoutingMessage & message, base::xpacket_t & packet);
 
-    virtual void HandleHandshake(transport::protobuf::RoutingMessage & message, base::xpacket_t & packet);
-    virtual void SendBootstrapJoinResponse(transport::protobuf::RoutingMessage & message, base::xpacket_t & packet);
-    virtual void HandleBootstrapJoinRequest(transport::protobuf::RoutingMessage & message, base::xpacket_t & packet);
-    virtual void HandleBootstrapJoinResponse(transport::protobuf::RoutingMessage & message, base::xpacket_t & packet);
+     void HandleHandshake(transport::protobuf::RoutingMessage & message, base::xpacket_t & packet);
+     void SendBootstrapJoinResponse(transport::protobuf::RoutingMessage & message, base::xpacket_t & packet);
+     void HandleBootstrapJoinRequest(transport::protobuf::RoutingMessage & message, base::xpacket_t & packet);
+     void HandleBootstrapJoinResponse(transport::protobuf::RoutingMessage & message, base::xpacket_t & packet);
 
 public:
     std::shared_ptr<std::vector<kadmlia::NodeInfoPtr>> GetUnLockNodes();
@@ -80,28 +78,24 @@ public:
     void SortNodesByTargetXid(const std::string & target_xid, std::vector<NodeInfoPtr> & nodes);
 
     bool CanAddNode(NodeInfoPtr node);
-    NodeInfoPtr GetRandomNode();
-    bool GetRandomNodes(std::vector<NodeInfoPtr> & vec, size_t size);
     int ClosestToTarget(const std::string & target, bool & closest);
 
+    void FindClosestNodes(int count, const std::vector<NodeInfoPtr> & nodes);
     std::vector<NodeInfoPtr> nodes();
     void GetRangeNodes(const uint64_t & min, const uint64_t & max, std::vector<NodeInfoPtr> & vec);
     void GetRangeNodes(uint32_t min_index,
                        uint32_t max_index,  // [,]
                        std::vector<NodeInfoPtr> & vec);
     int32_t GetSelfIndex();
-    uint32_t nodes_size();
     int MultiJoin(const std::set<std::pair<std::string, uint16_t>> & boot_endpoints);
     // void MultiJoinAsync(const std::set<std::pair<std::string, uint16_t>> & boot_endpoints);
     bool IsJoined();
     // void SetUnJoin();
     void WakeBootstrap();
-    void FindClosestNodes(int count, const std::vector<NodeInfoPtr> & nodes);
     void GetQueryNodesFromKBucket(std::map<std::string, NodeInfoPtr> & query_nodes);
     std::vector<NodeInfoPtr> GetRandomLocalNodes(const std::vector<NodeInfoPtr> & nodes, size_t n);
     NodeInfoPtr GetNode(const std::string & id);
     NodeInfoPtr GetClosestNode(const std::string & target_id, bool not_self, const std::set<std::string> & exclude, bool base_xip = false);
-    std::vector<NodeInfoPtr> GetClosestNodes(const std::string & target_id, uint32_t number_to_get, bool base_xip = false);
     void SendToClosestNode(transport::protobuf::RoutingMessage & message);
     void SendToClosestNode(transport::protobuf::RoutingMessage & message, bool add_hop);
     void SendToNClosestNode(transport::protobuf::RoutingMessage & message, int n);
@@ -129,22 +123,22 @@ public:
     void set_bootstrap_port(uint16_t port) {
         bootstrap_port_ = port;
     }
-    std::shared_ptr<transport::Transport> get_transport() {
-        return transport_ptr_;
-    }
-    std::shared_ptr<LocalNodeInfo> get_local_node_info() {
-        return local_node_ptr_;
-    }
+    // std::shared_ptr<transport::Transport> get_transport() {
+    //     return transport_ptr_;
+    // }
+    // std::shared_ptr<LocalNodeInfo> get_local_node_info() {
+    //     return local_node_ptr_;
+    // }
 
-    int SendData(const xbyte_buffer_t & data, const std::string & peer_ip, uint16_t peer_port, uint16_t priority = enum_xpacket_priority_type_priority);
+    // int SendData(const xbyte_buffer_t & data, const std::string & peer_ip, uint16_t peer_port, uint16_t priority = enum_xpacket_priority_type_priority);
 
-    int SendData(transport::protobuf::RoutingMessage & message, const std::string & peer_ip, uint16_t peer_port);
-    int SendData(transport::protobuf::RoutingMessage & message, NodeInfoPtr node_ptr);
-    int SendPing(transport::protobuf::RoutingMessage & message, const std::string & peer_ip, uint16_t peer_port);
+    // int SendData(transport::protobuf::RoutingMessage & message, const std::string & peer_ip, uint16_t peer_port);
+    // int SendData(transport::protobuf::RoutingMessage & message, NodeInfoPtr node_ptr);
+    // int SendPing(transport::protobuf::RoutingMessage & message, const std::string & peer_ip, uint16_t peer_port);
 
 protected:
     virtual int Bootstrap(const std::string & peer_ip, uint16_t peer_port, base::ServiceType des_service_type);
-    virtual int SendFindClosestNodes(const NodeInfoPtr & node_ptr, int count, const std::vector<NodeInfoPtr> & nodes, base::ServiceType des_service_type);
+     int SendFindClosestNodes(const NodeInfoPtr & node_ptr, int count, const std::vector<NodeInfoPtr> & nodes, base::ServiceType des_service_type);
 
     bool SetJoin(const std::string & boot_id, const std::string & boot_ip, int boot_port);
     // -1: all bits equal(and return kKadFailed)
@@ -156,8 +150,8 @@ protected:
     int SortNodesByTargetXid(const std::string & target_xid, int number);
     // int SortNodesByTargetXip(const std::string & target_xip, int number);
     // make sure nodes_ is sorted by kad algo
-    virtual bool NewNodeReplaceOldNode(NodeInfoPtr node, bool remove);
-    virtual uint32_t GetFindNodesMaxSize();
+     bool NewNodeReplaceOldNode(NodeInfoPtr node, bool remove);
+     uint32_t GetFindNodesMaxSize();
     void RecursiveSend(transport::protobuf::RoutingMessage & message, int retry_times);
     void HeartbeatProc();
 
@@ -181,8 +175,8 @@ protected:
     bool is_elect_routing_table_;
 
     uint32_t RoutingMaxNodesSize_;
-    std::shared_ptr<transport::Transport> transport_ptr_;
-    std::shared_ptr<LocalNodeInfo> local_node_ptr_;
+    // std::shared_ptr<transport::Transport> transport_ptr_;
+    // std::shared_ptr<LocalNodeInfo> local_node_ptr_;
 
     std::string name_;
     std::vector<NodeInfoPtr> nodes_;
@@ -242,8 +236,7 @@ public:
     // std::vector<base::KadmliaKeyPtr> GetElectionNodesExpected();
     void HandleElectionNodesInfoFromRoot(std::map<std::string, kadmlia::NodeInfoPtr> const & nodes);
 #endif
-    void FindElectionNodesInfo(std::map<std::string, base::KadmliaKeyPtr> const & kad_keys,std::map<std::string, kadmlia::NodeInfoPtr> & nodes);
-
+    void FindElectionNodesInfo(std::map<std::string, base::KadmliaKeyPtr> const & kad_keys, std::map<std::string, kadmlia::NodeInfoPtr> & nodes);
 
     // void OnFindNodesFromRootRouting(std::string const & election_xip2, kadmlia::NodeInfoPtr const & node_info);
 
@@ -251,12 +244,11 @@ private:
     std::mutex use_nodes_mutex_;
     std::shared_ptr<std::vector<NodeInfoPtr>> no_lock_for_use_nodes_{nullptr};
 
-    DISALLOW_COPY_AND_ASSIGN(RoutingTable);
-};  // class RoutingTable
+    DISALLOW_COPY_AND_ASSIGN(RootRoutingTable);
+};  // class RootRoutingTable
 
-typedef std::shared_ptr<RoutingTable> RoutingTablePtr;
+typedef std::shared_ptr<RootRoutingTable> RootRoutingTablePtr;
 
 }  // namespace kadmlia
 
 }  // namespace top
-#endif

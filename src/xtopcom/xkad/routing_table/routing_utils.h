@@ -169,8 +169,8 @@ void GetAllPublicServiceEndpointsConfig(
         const top::base::Config& config,
         const std::string& service_list,
         std::set<std::pair<std::string, uint16_t>>& boot_endpoints);
-uint32_t GetXNetworkID(const std::string& id);
-uint8_t  GetZoneID(const std::string& id);
+// uint32_t GetXNetworkID(const std::string& id);
+// uint8_t  GetZoneID(const std::string& id);
 void toupper(std::string &str);
 void tolower(std::string &str);
 

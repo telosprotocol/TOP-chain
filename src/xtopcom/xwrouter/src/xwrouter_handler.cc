@@ -9,9 +9,10 @@
 #include "xpbase/base/kad_key/kadmlia_key.h"
 #include "xpbase/base/xip_parser.h"
 #include "xpbase/base/kad_key/platform_kadmlia_key.h"
-#include "xkad/routing_table/routing_table.h"
+#include "xkad/routing_table/routing_table_base.h"
 #include "xkad/routing_table/routing_utils.h"
 #include "xwrouter/register_routing_table.h"
+#include "xwrouter/multi_routing/multi_routing.h"
 #include "xwrouter/message_handler/wrouter_message_handler.h"
 #include "xpbase/base/xip_parser.h"
 #include "xpbase/base/top_utils.h"
@@ -54,49 +55,50 @@ kadmlia::RoutingTablePtr WrouterHandler::FindRoutingTable(
         base::ServiceType service_type,
         bool root_backup,
         const std::string msg_des_node_id) {
-    RoutingTablePtr routing_table = GetRoutingTable(service_type, is_root);
-    if (routing_table) {
-        return routing_table;
-    }
-    if (!root_backup) {
-        return nullptr;
-    }
+    return MultiRouting::Instance()->GetRoutingTable(service_type, is_root);
+    // RoutingTablePtr routing_table = GetRoutingTable(service_type, is_root);
+    // if (routing_table) {
+    //     return routing_table;
+    // }
+    // if (!root_backup) {
+    //     return nullptr;
+    // }
     
-    // using backup, should choose the right root-routing-table
-    std::vector<base::ServiceType> vec_type;
-    GetAllRegisterType(vec_type);
-    TOP_DEBUG("getallregistertype size %d", vec_type.size());
-    auto tmp_routing_table1 = GetRoutingTable(base::ServiceType{kRoot}, true);
-    auto target_routing_table = tmp_routing_table1;
-    if (tmp_routing_table1) {
-        std::string tmp_id1 = tmp_routing_table1->get_local_node_info()->id();
-        for (auto& tmp_service_type : vec_type) {
-            TOP_DEBUG("vec_type: %llu compare", tmp_service_type.value());
-            auto tmp_routing_table2 = GetRoutingTable(tmp_service_type, true);
-            if (!tmp_routing_table2) {
-                TOP_WARN2("GetRoutingTable %llu empty", tmp_service_type.value());
-                continue;
-            }
-            std::string tmp_id2 = tmp_routing_table2->get_local_node_info()->id();
-            if (!CloserToTarget(tmp_id1, tmp_id2, msg_des_node_id)) {
-                tmp_id1 = tmp_id2;
-                tmp_routing_table1 = tmp_routing_table2;
-                TOP_DEBUG("find closer routing table: %s",
-                        HexEncode(tmp_routing_table1->get_local_node_info()->id()).c_str());
-            }
-        } // end for
-        target_routing_table = tmp_routing_table1;
-    }
+    // // using backup, should choose the right root-routing-table
+    // std::vector<base::ServiceType> vec_type;
+    // GetAllRegisterType(vec_type);
+    // TOP_DEBUG("getallregistertype size %d", vec_type.size());
+    // auto tmp_routing_table1 = GetRoutingTable(base::ServiceType{kRoot}, true);
+    // auto target_routing_table = tmp_routing_table1;
+    // if (tmp_routing_table1) {
+    //     std::string tmp_id1 = tmp_routing_table1->get_local_node_info()->id();
+    //     for (auto& tmp_service_type : vec_type) {
+    //         TOP_DEBUG("vec_type: %llu compare", tmp_service_type.value());
+    //         auto tmp_routing_table2 = GetRoutingTable(tmp_service_type, true);
+    //         if (!tmp_routing_table2) {
+    //             TOP_WARN2("GetRoutingTable %llu empty", tmp_service_type.value());
+    //             continue;
+    //         }
+    //         std::string tmp_id2 = tmp_routing_table2->get_local_node_info()->id();
+    //         if (!CloserToTarget(tmp_id1, tmp_id2, msg_des_node_id)) {
+    //             tmp_id1 = tmp_id2;
+    //             tmp_routing_table1 = tmp_routing_table2;
+    //             TOP_DEBUG("find closer routing table: %s",
+    //                     HexEncode(tmp_routing_table1->get_local_node_info()->id()).c_str());
+    //         }
+    //     } // end for
+    //     target_routing_table = tmp_routing_table1;
+    // }
 
-    if (target_routing_table) {
-        return target_routing_table;
-    }
+    // if (target_routing_table) {
+    //     return target_routing_table;
+    // }
 
-    if (vec_type.empty()) {
-        return nullptr;
-    }
-    // no dest routing_table and no root routing_table, choose anyone(usually this is client)
-    return GetRoutingTable(vec_type[0], false);
+    // if (vec_type.empty()) {
+    //     return nullptr;
+    // }
+    // // no dest routing_table and no root routing_table, choose anyone(usually this is client)
+    // return GetRoutingTable(vec_type[0], false);
 }
 
 std::vector<kadmlia::NodeInfoPtr> WrouterHandler::GetClosestNodes(
@@ -108,7 +110,7 @@ std::vector<kadmlia::NodeInfoPtr> WrouterHandler::GetClosestNodes(
         return {};
     }
     // TODO(smaug) judge node quality good or not good 
-    return routing_table->GetClosestNodes(target_id, number_to_get, base_xip);
+    return routing_table->GetClosestNodes(target_id, number_to_get);
 }
 
 std::vector<kadmlia::NodeInfoPtr> WrouterHandler::GetRandomNodes (

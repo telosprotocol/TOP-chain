@@ -16,7 +16,7 @@
 #include "xpbase/base/top_log.h"
 #include "xpbase/base/top_utils.h"
 #include "xpbase/base/endpoint_util.h"
-#include "xkad/routing_table/routing_table.h"
+#include "xkad/routing_table/routing_table_base.h"
 #include "xkad/routing_table/nodeid_utils.h"
 #include "xpbase/base/line_parser.h"
 #include "xpbase/base/xid/xid_parser.h"
@@ -152,23 +152,23 @@ void GetAllPublicServiceEndpointsConfig(
     }
 }
 
-uint32_t GetXNetworkID(const std::string& id) {
-    base::XIDParser xid_parse;
-    xid_parse.ParserFromString(id);
-    std::shared_ptr<base::XID> xid_ptr = xid_parse.GetXID();
-    uint32_t xnetwork_id = xid_ptr->GetXNetworkID();
-    //uint8_t zone_id = xid_ptr->GetZoneID();
-    return xnetwork_id;
-}
+// uint32_t GetXNetworkID(const std::string& id) {
+//     base::XIDParser xid_parse;
+//     xid_parse.ParserFromString(id);
+//     std::shared_ptr<base::XID> xid_ptr = xid_parse.GetXID();
+//     uint32_t xnetwork_id = xid_ptr->GetXNetworkID();
+//     //uint8_t zone_id = xid_ptr->GetZoneID();
+//     return xnetwork_id;
+// }
 
-uint8_t GetZoneID(const std::string& id) {
-    base::XIDParser xid_parse;
-    xid_parse.ParserFromString(id);
-    std::shared_ptr<base::XID> xid_ptr = xid_parse.GetXID();
-    //uint32_t xnetwork_id = xid_ptr->GetXNetworkID();
-    uint8_t zone_id = xid_ptr->GetZoneID();
-    return zone_id;
-}
+// uint8_t GetZoneID(const std::string& id) {
+//     base::XIDParser xid_parse;
+//     xid_parse.ParserFromString(id);
+//     std::shared_ptr<base::XID> xid_ptr = xid_parse.GetXID();
+//     //uint32_t xnetwork_id = xid_ptr->GetXNetworkID();
+//     uint8_t zone_id = xid_ptr->GetZoneID();
+//     return zone_id;
+// }
 
 bool CreateGlobalXid(const base::Config& config) try {
     assert(!global_node_id.empty());

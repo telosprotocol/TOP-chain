@@ -62,10 +62,10 @@ private:
     int GetRequestType(int msg_type);
     void RemoveHandler(int msg_type);
     void RemoveRequestType(int msg_type);
-    int SendData(
-            const transport::protobuf::RoutingMessage& message,
-            const std::string& peer_ip,
-            uint16_t peer_port);
+//     int SendData(
+//             const transport::protobuf::RoutingMessage& message,
+//             const std::string& peer_ip,
+//             uint16_t peer_port);
 
     WrouterMessageHandler();
     ~WrouterMessageHandler();

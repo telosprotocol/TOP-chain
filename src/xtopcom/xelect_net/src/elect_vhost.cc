@@ -6,7 +6,7 @@
 #include "xelect_net/include/elect_uitils.h"
 #include "xelect_net/proto/elect_net.pb.h"
 #include "xgossip/include/gossip_utils.h"
-#include "xkad/routing_table/routing_table.h"
+#include "xkad/routing_table/routing_table_base.h"
 #include "xmetrics/xmetrics.h"
 #include "xpbase/base/top_log.h"
 #include "xpbase/base/top_utils.h"
@@ -17,6 +17,7 @@
 #include "xwrouter/register_message_handler.h"
 #include "xwrouter/register_routing_table.h"
 #include "xwrouter/xwrouter.h"
+#include "xwrouter/multi_routing/multi_routing.h"
 
 #include <cinttypes>
 #include <memory>
@@ -188,7 +189,7 @@ void EcVHost::send_to(common::xnode_id_t const & node_id, xbyte_buffer_t const &
 
     // specially for sync module when node start
     if (SyncMessageWhenStart(vnetwork_message.sender(), vnetwork_message.receiver(), vnetwork_message.message_id())) {
-        auto kroot_rt = wrouter::GetRoutingTable(base::ServiceType{kRoot}, true);
+        auto kroot_rt = wrouter::MultiRouting::Instance()->GetRoutingTable(base::ServiceType{kRoot}, true);
         if (!kroot_rt || kroot_rt->nodes_size() == 0) {
             TOP_WARN("network not joined, send failed, try again ...");
             return;
@@ -220,7 +221,7 @@ void EcVHost::spread_rumor(xbyte_buffer_t const & rumor) const {
 
     // specially for sync module when node start
     if (SyncMessageWhenStart(vnetwork_message.sender(), vnetwork_message.receiver(), vnetwork_message.message_id())) {
-        auto kroot_rt = wrouter::GetRoutingTable(base::ServiceType{kRoot}, true);
+        auto kroot_rt = wrouter::MultiRouting::Instance()->GetRoutingTable(base::ServiceType{kRoot}, true);
         if (!kroot_rt || kroot_rt->nodes_size() == 0) {
             TOP_WARN("network not joined, send failed, try again ...");
             return;
@@ -267,7 +268,7 @@ void EcVHost::spread_rumor(const common::xsharding_info_t & shardInfo, xbyte_buf
 
     // specially for sync module when node start
     if (SyncMessageWhenStart(vnetwork_message.sender(), vnetwork_message.receiver(), vnetwork_message.message_id())) {
-        auto kroot_rt = wrouter::GetRoutingTable(base::ServiceType{kRoot}, true);
+        auto kroot_rt = wrouter::MultiRouting::Instance()->GetRoutingTable(base::ServiceType{kRoot}, true);
         if (!kroot_rt || kroot_rt->nodes_size() == 0) {
             TOP_WARN("network not joined, send failed, try again ...");
             return;

@@ -11,7 +11,8 @@
 #include "xpbase/base/top_config.h"
 #include "xpbase/base/top_timer.h"
 #include "xkad/routing_table/routing_utils.h"
-#include "xkad/routing_table/routing_table.h"
+#include "xkad/routing_table/routing_table_base.h"
+#include "xkad/routing_table/elect_routing_table.h"
 #include "xwrouter/register_routing_table.h"
 #include "xkad/proto/kadmlia.pb.h"
 
@@ -24,10 +25,14 @@ class RootRoutingManager;
 class MultiRouting {
 public:
     static MultiRouting* Instance();
-    kadmlia::RoutingTablePtr GetRoutingTable(const base::ServiceType& type, bool root = false);
-    kadmlia::RoutingTablePtr GetRoutingTable(const std::string& routing_id, bool root = false);
-    void AddRoutingTable(base::ServiceType type, kadmlia::RoutingTablePtr routing_table);
-    void RemoveRoutingTable(base::ServiceType type);
+    kadmlia::RoutingTablePtr GetRoutingTable(base::ServiceType const &service_type,bool is_root);
+    kadmlia::ElectRoutingTablePtr GetElectRoutingTable(base::ServiceType const & service_type);
+    kadmlia::RootRoutingTablePtr GetRootRoutingTable();
+    void AddElectRoutingTable(base::ServiceType service_type, kadmlia::ElectRoutingTablePtr routing_table);
+    void RemoveElectRoutingTable(base::ServiceType service_type);
+
+    // kadmlia::RoutingTablePtr GetRoutingTable(const base::ServiceType& type, bool root = false);
+    // kadmlia::RoutingTablePtr GetRoutingTable(const std::string& routing_id, bool root = false);
 
     void SetRootRoutingManager(std::shared_ptr<RootRoutingManager> root_manager_ptr);
 
@@ -44,7 +49,9 @@ public:
     // friend bool SetCacheServiceType(uint64_t service_type);
     
     void GetAllRegisterType(std::vector<base::ServiceType>& vec_type);
-    void GetAllRegisterRoutingTable(std::vector<std::shared_ptr<kadmlia::RoutingTable>>& vec_rt);
+    void GetAllRegisterRoutingTable(std::vector<std::shared_ptr<kadmlia::ElectRoutingTable>>& vec_rt);
+
+    void CheckElectRoutingTable(base::ServiceType service_type);
 
 
     // bool GetServiceBootstrapRootNetwork(
@@ -52,18 +59,18 @@ public:
     //     std::set<std::pair<std::string, uint16_t>>& boot_endpoints);
     // bool SetCacheServiceType(uint64_t service_type);
 private:
-    kadmlia::RoutingTablePtr GetServiceRoutingTable(const base::ServiceType& type);
-    kadmlia::RoutingTablePtr GetServiceRoutingTable(const std::string& routing_id);
+    // kadmlia::RoutingTablePtr GetServiceRoutingTable(const base::ServiceType& type);
+    // kadmlia::RoutingTablePtr GetServiceRoutingTable(const std::string& routing_id);
 
-    void CheckSingleNodeNetwork();
-    void WaitCheckSignal();
-    void NotifyCheckSignal();
+    // void CheckSingleNodeNetwork();
+    // void WaitCheckSignal();
+    // void NotifyCheckSignal();
 
     MultiRouting();
     ~MultiRouting();
 
-    std::map<base::ServiceType, kadmlia::RoutingTablePtr> routing_table_map_;
-    std::mutex routing_table_map_mutex_;
+    std::map<base::ServiceType, kadmlia::ElectRoutingTablePtr> elect_routing_table_map_;
+    std::mutex elect_routing_table_map_mutex_;
     std::shared_ptr<RootRoutingManager> root_manager_ptr_;
 
     // // CheckSingleNodeNetwork is a block task, so use thread instead of timer
@@ -75,7 +82,11 @@ private:
     
     base::TimerManager * timer_manager_{base::TimerManager::Instance()};
     std::shared_ptr<base::TimerRepeated> check_elect_routing_;
-    void CheckElectRoutingTable();
+    void CheckElectRoutingTableTimer();
+
+    using OnCompleteElectRoutingTableCallback = std::function<void(base::ServiceType const, std::string const, kadmlia::NodeInfoPtr const &)>;
+    void CompleteElectRoutingTable();
+    void OnCompleteElectRoutingTable(base::ServiceType const service_type, std::string const election_xip2, kadmlia::NodeInfoPtr const & node_info);
 
     DISALLOW_COPY_AND_ASSIGN(MultiRouting);
 };

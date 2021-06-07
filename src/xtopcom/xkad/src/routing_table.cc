@@ -1,7 +1,7 @@
 // Copyright (c) 2017-2019 Telos Foundation & contributors
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
-
+#if 0
 #include "xkad/routing_table/routing_table.h"
 
 #include "xbase/xpacket.h"
@@ -53,8 +53,12 @@ static const int32_t kRejoinPeriod = 10 * 1000 * 1000;                // 10s
 static const int32_t kFindNeighboursPeriod = 3 * 1000 * 1000;         // 3s
 static const int32_t kDumpRoutingTablePeriod = 1 * 60 * 1000 * 1000;  // 5min
 
-RoutingTable::RoutingTable(std::shared_ptr<transport::Transport> transport_ptr, uint32_t kadmlia_key_len, std::shared_ptr<LocalNodeInfo> local_node_ptr)
+RoutingTable::RoutingTable(std::shared_ptr<transport::Transport> transport_ptr,
+                           uint32_t kadmlia_key_len,
+                           std::shared_ptr<LocalNodeInfo> local_node_ptr,
+                           bool is_elect_routing_table)
   : RoutingMaxNodesSize_(kRoutingMaxNodesSize)
+  //   , is_elect_routing_table_(is_elect_routing_table)
   , transport_ptr_(transport_ptr)
   , local_node_ptr_(local_node_ptr)
   , nodes_()
@@ -75,11 +79,7 @@ RoutingTable::RoutingTable(std::shared_ptr<transport::Transport> transport_ptr, 
   , find_nodes_period_(0)
   , set_endpoints_mutex_()
   , after_join_(false)
-  , kadmlia_key_len_(kadmlia_key_len)
-  , heart_beat_info_map_()
-  , heart_beat_info_map_mutex_()
-  , heart_beat_callback_(nullptr)
-  , heart_beat_callback_mutex_() {
+  , kadmlia_key_len_(kadmlia_key_len) {
     // TOP_FATAL_NAME("new RoutingTable(%p)", this);
 }
 
@@ -544,7 +544,7 @@ void RoutingTable::HeartbeatProc() {
                          "local_nodeid",
                          local_node_ptr_->id(),
                          "service_type",
-                         local_node_ptr_->kadmlia_key()->GetServiceType().value(),
+                         local_node_ptr_->kadmlia_key()->GetServiceType().info().c_str(),
                          "xnetwork_id",
                          local_node_ptr_->kadmlia_key()->xnetwork_id(),
                          "zone_id",
@@ -734,15 +734,8 @@ int RoutingTable::AddNode(NodeInfoPtr node) {
         //     TOP_DEBUG_NAME("kHandshake: HasNode");
         //     return kKadNodeHasAdded;
         // }
-        XMETRICS_PACKET_INFO("p2p_kad_addnode",
-                             "local_nodeid",
-                             local_node_ptr_->id(),
-                             "nodeid",
-                             HexSubstr(node->node_id),
-                             "public_ip",
-                             node->public_ip,
-                             "public_port",
-                             node->public_port);
+        XMETRICS_PACKET_INFO(
+            "p2p_kad_addnode", "local_nodeid", local_node_ptr_->id(), "nodeid", HexSubstr(node->node_id), "public_ip", node->public_ip, "public_port", node->public_port);
         nodes_.push_back(node);
         nodes_delta_ += 1;
     }
@@ -1115,7 +1108,7 @@ std::vector<NodeInfoPtr> RoutingTable::GetClosestNodes(const std::string & targe
     // if (base_xip) {
     //     sorted_count = SortNodesByTargetXip(target_id, number_to_get);
     // } else {
-        sorted_count = SortNodesByTargetXid(target_id, number_to_get);
+    sorted_count = SortNodesByTargetXid(target_id, number_to_get);
     // }
 
     if (sorted_count == 0) {
@@ -1224,7 +1217,7 @@ bool RoutingTable::NewNodeReplaceOldNode(NodeInfoPtr node, bool remove) {
     }
 
     // the k-bucket is full
-    if (sum >= kKadParamK * 64) {
+    if (sum >= kKadParamK) {
         TOP_DEBUG_NAME("k-bucket(%d) is full", node->bucket_index);
         return false;
     }
@@ -1305,30 +1298,32 @@ std::vector<NodeInfoPtr> RoutingTable::GetRandomLocalNodes(const std::vector<Nod
 
         index_set.insert(rand_index);
         ret.push_back(nodes[rand_index]);
-
     }
     return ret;
 }
-
-void RoutingTable::SetElectionNodesExpected(std::map<std::string, base::KadmliaKeyPtr> const & elect_root_kad_keys_map){
+#if 0
+// map<election_xip2_str,node_id_root_kad_key>
+void RoutingTable::SetElectionNodesExpected(std::map<std::string, base::KadmliaKeyPtr> const & elect_root_kad_keys_map) {
     m_expected_kad_keys = elect_root_kad_keys_map;
-    for(auto _p : m_expected_kad_keys){
+    std::size_t index = 0;
+    for (auto _p : elect_root_kad_keys_map) {
+        NodeInfoPtr node_ptr;
+        node_ptr.reset(new NodeInfo(_p.first));
+        if (_p.second->Get() == base::GetRootKadmliaKey(global_node_id)->Get()) {
+            m_self_index = index;
+            xdbg("Charles Debug Set self infos.");
+            m_expected_kad_keys.erase(_p.first);
+        }
+        m_nodes.insert(std::make_pair(_p.first, node_ptr));
+        index++;
         xdbg("Charles Debug GetSameNetworkNodesV3 SET %s %s", _p.first.c_str(), _p.second->Get().c_str());
-    }
-}
-
-
-//deleted
-void RoutingTable::SetElectionNodesExpected(std::vector<base::KadmliaKeyPtr> const & kad_keys) {
-    for(auto _k:kad_keys){
-        m_expected_kad_keys.insert(std::make_pair(_k->Get(), _k));
     }
 }
 
 void RoutingTable::EraseElectionNodesExpected(std::vector<base::KadmliaKeyPtr> const & kad_keys) {
     for (auto _kad_key : kad_keys) {
         auto node_id = _kad_key->Get();
-        xdbg("Charles Debug GetSameNetworkNodesV3 Already find node %s",node_id.c_str());
+        xdbg("Charles Debug GetSameNetworkNodesV3 Already find node %s", node_id.c_str());
         if (m_expected_kad_keys.find(node_id) != m_expected_kad_keys.end()) {
             xdbg("Charles Debug GetSameNetworkNodesV3 Erase node %s", node_id.c_str());
             m_expected_kad_keys.erase(node_id);
@@ -1336,32 +1331,24 @@ void RoutingTable::EraseElectionNodesExpected(std::vector<base::KadmliaKeyPtr> c
     }
 }
 
-std::map<std::string, top::base::KadmliaKeyPtr> RoutingTable::GetElectionNodesExpected(){
+std::map<std::string, top::base::KadmliaKeyPtr> RoutingTable::GetElectionNodesExpected() {
     return m_expected_kad_keys;
 }
 
-// std::vector<base::KadmliaKeyPtr> RoutingTable::GetElectionNodesExpected(){
-//     std::vector<base::KadmliaKeyPtr> res_nodes;
-//     for(auto _p:m_expected_kad_keys){
-//         res_nodes.push_back(_p.second);
-//     }
-//     return res_nodes;
-// }
-
-void RoutingTable::HandleElectionNodesInfoFromRoot(std::map<std::string, kadmlia::NodeInfoPtr> const & nodes){
-    xdbg("Charles Debug GetSameNetworkNodesV3 %zu local_service_type:%lld", nodes.size() ,local_node_ptr_->service_type().value());
+void RoutingTable::HandleElectionNodesInfoFromRoot(std::map<std::string, kadmlia::NodeInfoPtr> const & nodes) {
+    xdbg("Charles Debug GetSameNetworkNodesV3 %zu local_service_type:%lld", nodes.size(), local_node_ptr_->service_type().value());
     std::vector<base::KadmliaKeyPtr> erase_keys;
-    for(auto _p:nodes){
-        NodeInfoPtr node_ptr;
-        node_ptr.reset(new NodeInfo(_p.first));
-        auto & _node = _p.second;
+    for (auto _p : nodes) {
+        NodeInfoPtr node_ptr = m_nodes[_p.first];
+        // node_ptr.reset(new NodeInfo(_p.first));
+        auto & root_node_info = _p.second;
         xdbg("Charles Debug GetSameNetworkNodesV3 %s ", _p.first.c_str());
-        node_ptr->local_ip = _node->local_ip;
-        node_ptr->local_port = _node->local_port;
-        node_ptr->public_ip = _node->public_ip;
-        node_ptr->public_port = _node->public_port;
-        node_ptr->service_type = local_node_ptr_->service_type();  // for RootRouting, is always kRoot
-        node_ptr->xid = _node->xid;
+        node_ptr->local_ip = root_node_info->local_ip;
+        node_ptr->local_port = root_node_info->local_port;
+        node_ptr->public_ip = root_node_info->public_ip;
+        node_ptr->public_port = root_node_info->public_port;
+        node_ptr->service_type = local_node_ptr_->service_type();
+        node_ptr->xid = root_node_info->xid;
         node_ptr->hash64 = base::xhash64_t::digest(node_ptr->node_id);
         xdbg("Charles Debug GetSameNetworkNodesV3 %s %s:%d, %lld", node_ptr->node_id.c_str(), node_ptr->public_ip.c_str(), node_ptr->public_port, node_ptr->service_type.value());
         if (CanAddNode(node_ptr)) {
@@ -1380,18 +1367,35 @@ void RoutingTable::HandleElectionNodesInfoFromRoot(std::map<std::string, kadmlia
         }
     }
     EraseElectionNodesExpected(erase_keys);
-
 }
-
-// root routing table used only 
+#endif
+// root routing table used only
 void RoutingTable::FindElectionNodesInfo(std::map<std::string, top::base::KadmliaKeyPtr> const & kad_keys, std::map<std::string, kadmlia::NodeInfoPtr> & nodes) {
     for (auto & _p : kad_keys) {
         std::string root_kad_key = _p.second->Get();
         if (node_id_map_.find(root_kad_key) != node_id_map_.end()) {
-            nodes.insert(std::make_pair(_p.first,node_id_map_[root_kad_key]));
+            nodes.insert(std::make_pair(_p.first, node_id_map_[root_kad_key]));
         }
     }
 }
+// // root routing table used only
+// enum RootMessageType {
+//     kGetNodesRequest = 1,
+//     kGetNodesResponse = 2,
+//     kGetElectNodesRequest = 3,
+//     kGetElectNodesResponse = 4,
+// };
+
+// void RoutingTable::OnFindNodesFromRootRouting(std::string const & election_xip2, kadmlia::NodeInfoPtr const & node_info) {
+//     if (m_nodes.find(election_xip2) != m_nodes.end()) {
+//         NodeInfoPtr node_ptr = m_nodes[election_xip2];
+//         node_ptr->local_ip = node_info->local_ip;
+//         node_ptr->local_port = node_info->local_port;
+//         node_ptr->public_ip = node_info->public_ip;
+//         node_ptr->public_port = node_info->public_port;
+//         xdbg("Charles Debug RoutingTable::OnFindNodesFromRootRouting get election_xip2: %s %s:%d", election_xip2.c_str(), node_ptr->local_ip.c_str(), node_ptr->local_port);
+//     }
+// }
 
 void RoutingTable::FindClosestNodes(int count, const std::vector<NodeInfoPtr> & nodes) {
     TOP_DEBUG_NAME("<bluefind> FindClosestNodes(count=%d, nodes.size=%d)", count, (int)nodes.size());
@@ -1746,7 +1750,11 @@ void RoutingTable::HandleFindNodesResponse(transport::protobuf::RoutingMessage &
         if (CanAddNode(node_ptr)) {
             if (local_node_ptr_->public_ip() == node_ptr->public_ip && node_ptr->public_port == local_node_ptr_->public_port()) {
                 if (node_ptr->node_id != local_node_ptr_->id()) {
-                    TOP_DEBUG_NAME("bluenat[%d] get node(%s:%d-%d)", local_node_ptr_->service_type().value(), node_ptr->public_ip.c_str(), node_ptr->public_port, node_ptr->service_type.value());
+                    TOP_DEBUG_NAME("bluenat[%d] get node(%s:%d-%d)",
+                                   local_node_ptr_->service_type().value(),
+                                   node_ptr->public_ip.c_str(),
+                                   node_ptr->public_port,
+                                   node_ptr->service_type.value());
                     node_ptr->xid = global_xid->Get();
                     // node_ptr->hash64 = base::xhash64_t::digest(node_ptr->xid);
                     node_ptr->hash64 = base::xhash64_t::digest(node_ptr->node_id);
@@ -2338,3 +2346,4 @@ std::vector<NodeInfoPtr>::iterator RoutingTable::EraseNode(std::vector<NodeInfoP
 }  // namespace kadmlia
 
 }  // namespace top
+#endif

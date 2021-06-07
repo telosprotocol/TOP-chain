@@ -5,7 +5,7 @@
 #include "xwrouter/root/root_routing_manager.h"
 
 #include "xkad/routing_table/local_node_info.h"
-#include "xkad/routing_table/routing_table.h"
+#include "xkad/routing_table/root_routing_table.h"
 #include "xkad/routing_table/routing_utils.h"
 #include "xpbase/base/check_cast.h"
 #include "xpbase/base/endpoint_util.h"
@@ -54,16 +54,16 @@ void RootRoutingManager::Destory() {
 //     return root_table->GetRootNodes(network_id, root_nodes);
 // }
 
-int RootRoutingManager::GetRootNodesV2(const std::string & des_id, base::ServiceType service_type, std::vector<NodeInfoPtr> & root_nodes) {
-    std::unique_lock<std::mutex> lock(root_routing_table_mutex_);
+// int RootRoutingManager::GetRootNodesV2(const std::string & des_id, base::ServiceType service_type, std::vector<NodeInfoPtr> & root_nodes) {
+//     std::unique_lock<std::mutex> lock(root_routing_table_mutex_);
 
-    if (!root_routing_table_) {
-        TOP_WARN("get routing table failed!");
-        return kKadFailed;
-    }
-    RootRouting * root_table = static_cast<RootRouting *>(root_routing_table_.get());
-    return root_table->GetRootNodesV2(des_id, service_type, root_nodes);
-}
+//     if (!root_routing_table_) {
+//         TOP_WARN("get routing table failed!");
+//         return kKadFailed;
+//     }
+//     RootRouting * root_table = static_cast<RootRouting *>(root_routing_table_.get());
+//     return root_table->GetRootNodesV2(des_id, service_type, root_nodes);
+// }
 
 // int RootRoutingManager::GetRootBootstrapCache(std::set<std::pair<std::string, uint16_t>> & boot_endpoints) {
 //     auto routing_table_ptr = GetRoutingTable(kRoot);
@@ -92,7 +92,7 @@ int RootRoutingManager::InitRootRoutingTable(std::shared_ptr<transport::Transpor
     return kKadSuccess;
 }
 
-std::shared_ptr<RoutingTable> RootRoutingManager::GetRoutingTable(base::ServiceType service_type) {
+std::shared_ptr<RootRoutingTable> RootRoutingManager::GetRoutingTable(base::ServiceType service_type) {
     assert(service_type == base::ServiceType{kRoot});
     std::unique_lock<std::mutex> lock(root_routing_table_mutex_);
     return root_routing_table_;
@@ -119,8 +119,8 @@ int RootRoutingManager::CreateRoutingTable(std::shared_ptr<transport::Transport>
         TOP_FATAL("create local_node_ptr for service_type(%ld) failed", (long)service_type.value());
         return kKadFailed;
     }
-    RoutingTablePtr routing_table_ptr;
-    routing_table_ptr.reset(new RootRouting(transport, local_node_ptr));
+    RootRoutingTablePtr routing_table_ptr;
+    routing_table_ptr.reset(new RootRoutingTable(transport, local_node_ptr));
 
     if (!routing_table_ptr->Init()) { // RootRouting::Init()
         TOP_FATAL("init edge bitvpn routing table failed!");

@@ -12,7 +12,7 @@
 #include "xtransport/transport.h"
 #include "xtransport/udp_transport/transport_util.h"
 #include "xkad/routing_table/node_info.h"
-#include "xkad/routing_table/routing_table.h"
+#include "xkad/routing_table/routing_table_base.h"
 
 namespace top {
 

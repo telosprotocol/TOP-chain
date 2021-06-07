@@ -17,7 +17,7 @@
 namespace top {
 
 namespace kadmlia {
-class RoutingTable;
+// class RoutingTableBase;
 class LocalNodeInfo;
 class CallbackManager;
 struct NodeInfo;
@@ -33,11 +33,11 @@ namespace wrouter {
 
 class RootRoutingManager;
 
-std::shared_ptr<kadmlia::RoutingTable> GetRoutingTable(const base::ServiceType& type, bool root = false);
-std::shared_ptr<kadmlia::RoutingTable> GetRoutingTable(const std::string& routing_id, bool root = false);
+// std::shared_ptr<kadmlia::RoutingTableBase> GetRoutingTable(const base::ServiceType& type, bool root = false);
+// std::shared_ptr<kadmlia::RoutingTable> GetRoutingTable(const std::string& routing_id, bool root = false);
 
-void GetAllRegisterType(std::vector<base::ServiceType>& vec_type);
-void GetAllRegisterRoutingTable(std::vector<std::shared_ptr<kadmlia::RoutingTable>>& vec_rt);
+// void GetAllRegisterType(std::vector<base::ServiceType>& vec_type);
+// void GetAllRegisterRoutingTable(std::vector<std::shared_ptr<kadmlia::RoutingTable>>& vec_rt);
 
 #if 0
 bool SetCacheServiceType(uint64_t service_type);

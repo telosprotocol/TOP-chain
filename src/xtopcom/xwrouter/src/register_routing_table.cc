@@ -16,29 +16,29 @@ using namespace kadmlia;
 
 namespace wrouter {
 
-std::shared_ptr<kadmlia::RoutingTable> GetRoutingTable(const base::ServiceType & type, bool root) {
-    RoutingTablePtr routing_table = MultiRouting::Instance()->GetRoutingTable(type, root);
-    if (routing_table) {
-        return routing_table;
-    }
-    return nullptr;
-}
+// std::shared_ptr<kadmlia::RoutingTableBase> GetRoutingTable(const base::ServiceType & type, bool root) {
+//     RoutingTablePtr routing_table = MultiRouting::Instance()->GetRoutingTable(type, root);
+//     if (routing_table) {
+//         return routing_table;
+//     }
+//     return nullptr;
+// }
 
-std::shared_ptr<kadmlia::RoutingTable> GetRoutingTable(const std::string & routing_id, bool root) {
-    RoutingTablePtr routing_table = MultiRouting::Instance()->GetRoutingTable(routing_id, root);
-    if (routing_table) {
-        return routing_table;
-    }
-    return nullptr;
-}
+// std::shared_ptr<kadmlia::RoutingTableBase> GetRoutingTable(const std::string & routing_id, bool root) {
+//     RoutingTablePtr routing_table = MultiRouting::Instance()->GetRoutingTable(routing_id, root);
+//     if (routing_table) {
+//         return routing_table;
+//     }
+//     return nullptr;
+// }
 
-void GetAllRegisterType(std::vector<base::ServiceType> & vec_type) {
-    return MultiRouting::Instance()->GetAllRegisterType(vec_type);
-}
+// void GetAllRegisterType(std::vector<base::ServiceType> & vec_type) {
+//     return MultiRouting::Instance()->GetAllRegisterType(vec_type);
+// }
 
-void GetAllRegisterRoutingTable(std::vector<std::shared_ptr<kadmlia::RoutingTable>> & vec_rt) {
-    return MultiRouting::Instance()->GetAllRegisterRoutingTable(vec_rt);
-}
+// void GetAllRegisterRoutingTable(std::vector<std::shared_ptr<kadmlia::ElectRoutingTable>> & vec_rt) {
+//     return MultiRouting::Instance()->GetAllRegisterRoutingTable(vec_rt);
+// }
 
 #if 0
 bool SetCacheServiceType(uint64_t service_type) {

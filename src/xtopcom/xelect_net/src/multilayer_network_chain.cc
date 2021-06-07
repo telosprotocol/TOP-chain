@@ -17,6 +17,7 @@
 #include "xgossip/include/block_sync_manager.h"
 #include "xwrouter/multi_routing/small_net_cache.h"
 #include "xwrouter/multi_routing/service_node_cache.h"
+#include "xwrouter/multi_routing/multi_routing.h"
 #include "https_client/cJSON.h"
 #include "https_client/u_https_client.h"
 #include "xelect_net/include/https_client.h"
@@ -345,7 +346,7 @@ std::vector<std::string> MultilayerNetworkChain::GetServiceNeighbours(const comm
     //xip.set_network_type((uint8_t)(address.cluster_address().type()));
 
     auto kad_key = base::GetKadmliaKey(xip2);
-    auto rt = wrouter::GetRoutingTable(kad_key->GetServiceType(), false);
+    auto rt = wrouter::MultiRouting::Instance()->GetRoutingTable(kad_key->GetServiceType(), false);
     if (!rt) {
         TOP_WARN("no routinng table:%llu registered, GetServiceNeighbours failed", kad_key->GetServiceType().value());
         return {};

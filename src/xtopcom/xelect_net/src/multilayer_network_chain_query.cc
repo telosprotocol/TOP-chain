@@ -11,7 +11,7 @@
 namespace top {
 
 namespace elect {
-
+#if 0
 bool MultilayerNetworkChainQuery::Joined() {
     auto root_ptr = wrouter::GetRoutingTable(base::ServiceType{kRoot}, true);
     if (!root_ptr) {
@@ -318,7 +318,7 @@ COMMANDS:\n\
 
     return help;
 }
-
+#endif
 } // end namespace elect
 
 } // end namespace top

@@ -6,18 +6,18 @@
 
 #include "xpbase/base/top_config.h"
 #include "xpbase/base/top_utils.h"
-#include "xkad/routing_table/routing_table.h"
+#include "xkad/routing_table/root_routing_table.h"
 #include "xtransport/transport.h"
 #include "xwrouter/root/root_message_handler.h"
 #include "xwrouter/wrouter_utils/wrouter_utils.h"
-#include "xwrouter/wrouter_utils/wrouter_base_routing.h"
+// #include "xwrouter/wrouter_utils/wrouter_base_routing.h"
 
 namespace top {
 
-namespace kadmlia {
-class RoutingTable;
-typedef std::shared_ptr<RoutingTable> RoutingTablePtr;
-};
+// namespace kadmlia {
+// class RoutingTableBase;
+// typedef std::shared_ptr<RoutingTableBase> RoutingTablePtr;
+// };
 
 namespace wrouter {
 
@@ -29,10 +29,10 @@ enum RootMessageType {
 };
 
 
-class RootRouting : public wrouter::WrouterBaseRouting {
+class RootRouting : public kadmlia::RootRoutingTable {
 public:
     RootRouting(std::shared_ptr<transport::Transport>, kadmlia::LocalNodeInfoPtr);
-    virtual ~RootRouting() override;
+    ~RootRouting() override;
     virtual bool Init() override;
     virtual bool UnInit() override;
     virtual void HandleMessage(
@@ -52,7 +52,7 @@ public:
     bool GetCacheServicePublicNodes(
             base::ServiceType service_type,
             std::set<std::pair<std::string, uint16_t>>& boot_endpoints);
-    kadmlia::RoutingTablePtr FindRoutingTable(const std::string& msg_des_node_id);
+    // kadmlia::RoutingTablePtr FindRoutingTable(const std::string& msg_des_node_id);
     // bool GetRootNodesFromLocalRootRouting(
     //         kadmlia::RoutingTablePtr root_routing,
     //         const std::string& node_id,
@@ -60,10 +60,10 @@ public:
     // bool GetRootNodesFromLocal(const std::string& node_id, std::vector<kadmlia::NodeInfoPtr>& nodes);
 
     // using elect data to search kroot-id
-    int GetRootNodesV2(
-            const std::string& des_kroot_id,
-            base::ServiceType des_service_type,
-            std::vector<kadmlia::NodeInfoPtr>& nodes);
+    // int GetRootNodesV2(
+    //         const std::string& des_kroot_id,
+    //         base::ServiceType des_service_type,
+    //         std::vector<kadmlia::NodeInfoPtr>& nodes);
     using GetRootNodesV2AsyncCallback = std::function<void(base::ServiceType, const std::vector<kadmlia::NodeInfoPtr>&)>;
     int GetRootNodesV2Async(
             const std::string& des_kroot_id,
@@ -78,6 +78,7 @@ protected:
     virtual bool NewNodeReplaceOldNode(kadmlia::NodeInfoPtr node, bool remove);
 
 private:
+
     virtual int Bootstrap(
             const std::string& peer_ip,
             uint16_t peer_port,
@@ -95,11 +96,27 @@ private:
             transport::protobuf::RoutingMessage& message,
             base::xpacket_t& packet);
 
-    static RootMessageHandler root_message_handler_;
     std::set<std::string> root_id_set_;
     std::mutex root_id_set_mutex_;
 
     DISALLOW_COPY_AND_ASSIGN(RootRouting);
+
+public:
+    using OnCompleteElectRoutingTableCallback = std::function<void(base::ServiceType const, std::string const, kadmlia::NodeInfoPtr const &)>;
+    // void FindNodesFromOthers(OnCompleteElectRoutingTableCallback cb, base::KadmliaKeyPtr const & root_kad_key);
+    bool FindNodesFromOthers(base::ServiceType const & service_type,
+                             std::string const & election_xip2,
+                             OnCompleteElectRoutingTableCallback cb,
+                             base::KadmliaKeyPtr const & root_kad_key);
+    void OnFindNodesFromOthers(base::ServiceType const & service_type,
+                               std::string const & election_xip2,
+                               OnCompleteElectRoutingTableCallback cb,
+                               int status,
+                               transport::protobuf::RoutingMessage & message,
+                               base::xpacket_t & packet);
+
+    void HandleFindNodesFromOthersRequest(transport::protobuf::RoutingMessage & message, base::xpacket_t & packet);
+    void HandleFindNodesFromOthersResponse(transport::protobuf::RoutingMessage & message, base::xpacket_t & packet);
 };
 
 }  // namespace wrouter

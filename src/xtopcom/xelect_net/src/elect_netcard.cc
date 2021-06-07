@@ -5,7 +5,7 @@
 
 #include "xpbase/base/top_log.h"
 #include "xpbase/base/top_utils.h"
-#include "xkad/routing_table/routing_table.h"
+#include "xkad/routing_table/routing_table_base.h"
 #include "xwrouter/register_routing_table.h"
 #include "xwrouter/register_message_handler.h"
 #include "xwrouter/xwrouter.h"

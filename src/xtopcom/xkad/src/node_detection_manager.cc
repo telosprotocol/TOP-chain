@@ -14,7 +14,7 @@
 #include "xtransport/proto/transport.pb.h"
 #include "xkad/proto/kadmlia.pb.h"
 #include "xkad/routing_table/local_node_info.h"
-#include "xkad/routing_table/routing_table.h"
+#include "xkad/routing_table/root_routing_table.h"
 
 namespace top {
 
@@ -23,12 +23,12 @@ namespace kadmlia {
 // static const int kDetectedMapClearCount = 100 * 1024;
 static const int32_t kDoDetectionPeriod = 600 * 1000;  // 600ms
 
-NodeDetectionManager::NodeDetectionManager(base::TimerManager* timer_manager, RoutingTable& routing_table)
+NodeDetectionManager::NodeDetectionManager(base::TimerManager* timer_manager, RootRoutingTable& routing_table)
         : detection_nodes_map_(),
           detection_nodes_map_mutex_(),
           detected_nodes_map_(),
           detected_nodes_map_mutex_(),
-          routing_table_(routing_table) {
+          root_routing_table_(routing_table) {
     timer_manager_ = timer_manager;
     timer_ = std::make_shared<base::TimerRepeated>(timer_manager_, "NodeDetectionManager");
     timer_->Start(
@@ -104,8 +104,8 @@ int NodeDetectionManager::Handshake(std::shared_ptr<NodeInfo> node_ptr) {
     }
 
     transport::protobuf::RoutingMessage message;
-    routing_table_.SetFreqMessage(message);
-    LocalNodeInfoPtr local_node = routing_table_.get_local_node_info();
+    root_routing_table_.SetFreqMessage(message);
+    LocalNodeInfoPtr local_node = root_routing_table_.get_local_node_info();
     if (!local_node) {
         return kKadFailed;
     }
@@ -113,7 +113,7 @@ int NodeDetectionManager::Handshake(std::shared_ptr<NodeInfo> node_ptr) {
     message.set_des_node_id(node_ptr->node_id);
     message.set_type(kKadHandshake);
 
-    std::shared_ptr<transport::Transport> transport_ptr = routing_table_.get_transport();
+    std::shared_ptr<transport::Transport> transport_ptr = root_routing_table_.get_transport();
     if (!transport_ptr) {
         TOP_ERROR("service type[%llu] has not register transport.", message.des_service_type());
         return kKadFailed;

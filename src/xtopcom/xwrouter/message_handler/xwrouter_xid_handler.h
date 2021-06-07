@@ -29,9 +29,9 @@ class XipParser;
 };
 
 namespace kadmlia {
-class RoutingTable;
+// class RoutingTableBase;
+// typedef std::shared_ptr<RoutingTableBase> RoutingTablePtr;
 struct NodeInfo;
-typedef std::shared_ptr<RoutingTable> RoutingTablePtr;
 typedef std::shared_ptr<NodeInfo> NodeInfoPtr;
 };  // namespace kadmlia
 
@@ -71,7 +71,7 @@ protected:
 
     int32_t GossipBroadcast(transport::protobuf::RoutingMessage & message, kadmlia::RoutingTablePtr & routing_table);
     int32_t SendData(transport::protobuf::RoutingMessage & message, const std::vector<kadmlia::NodeInfoPtr> & neighbors, uint32_t next_size, bool broadcast_stride);
-    bool HandleSystemMessage(transport::protobuf::RoutingMessage & message, kadmlia::RoutingTablePtr & routing_table);
+    bool HandleSystemMessage(transport::protobuf::RoutingMessage & message);
 
 private:
     DISALLOW_COPY_AND_ASSIGN(WrouterXidHandler);
