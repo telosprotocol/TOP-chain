@@ -101,28 +101,10 @@ class xlightunit_body_t {
 class xlightunit_block_t : public xblock_t {
  protected:
     enum { object_type_value = enum_xdata_type::enum_xdata_type_max - xdata_type_lightunit_block };
-    static base::xvblock_t* create_lightunit(const std::string & account,
-                                                uint64_t height,
-                                                std::string last_block_hash,
-                                                std::string justify_block_hash,
-                                                uint64_t viewid,
-                                                uint64_t clock,
-                                                const std::string & last_full_block_hash,
-                                                uint64_t last_full_block_height,
-                                                const xlightunit_block_para_t & para);
-    static xblockbody_para_t get_blockbody_from_para(const xlightunit_block_para_t & para);
  public:
-    static base::xvblock_t* create_genesis_lightunit(const std::string & account,
-                                                     const xtransaction_ptr_t & genesis_tx,
-                                                     const xtransaction_result_t & result);
-    static base::xvblock_t* create_next_lightunit(const xlightunit_block_para_t & para, base::xvblock_t* prev_block);
-    static base::xvblock_t* create_next_lightunit(const xinput_ptr_t & input, const xoutput_ptr_t & output, base::xvblock_t* prev_block);
-
-    xlightunit_block_t(base::xvheader_t & header, xblockcert_t & cert, const xinput_ptr_t & input, const xoutput_ptr_t & output);
     xlightunit_block_t(base::xvheader_t & header, base::xvqcert_t & cert, base::xvinput_t* input, base::xvoutput_t* output);
 
  protected:
-    xlightunit_block_t(base::xvheader_t & header, xblockcert_t & cert);
     virtual ~xlightunit_block_t();
  private:
     xlightunit_block_t();
