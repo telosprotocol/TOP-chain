@@ -2,6 +2,14 @@
 for option in $options
 do
     case $option in
+    build_ci)
+        CMAKE_EXTRA_OPTIONS+=" -DXBUILD_CI"
+        echo "Build CI testnet"
+    ;;
+    build_dev)
+        CMAKE_EXTRA_OPTIONS+=" -DXBUILD_DEV"
+        echo "Build Dev testnet"
+    ;;
     build_galileo)
         CMAKE_EXTRA_OPTIONS+=" -DXBUILD_GALILEO=ON"
         echo "Build Galileo testnet"
