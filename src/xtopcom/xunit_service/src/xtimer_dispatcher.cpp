@@ -28,11 +28,11 @@ bool xtimer_dispatcher_t::dispatch(base::xworkerpool_t * pool, base::xcspdu_t * 
 }
 
 bool xtimer_dispatcher_t::start(const xvip2_t & xip, const common::xlogic_time_t& start_time) {
-    xunit_info("xtimer_dispatcher_t::start %s %p", xcons_utl::xip_to_hex(xip).c_str(), this);
+    xunit_info("xtimer_dispatcher_t::start %s %p start", xcons_utl::xip_to_hex(xip).c_str(), this);
     auto async_reset = [xip](base::xcall_t & call, const int32_t cur_thread_id, const uint64_t timenow_ms) -> bool {
         auto packer = dynamic_cast<xtimer_picker_t *>(call.get_param1().get_object());
         packer->reset_xip_addr(xip);
-        xunit_dbg("[xtimer_dispatcher_t::start] with xip {%" PRIx64 ", %" PRIx64 "}", xip.high_addr, xip.low_addr);
+        xunit_info("[xtimer_dispatcher_t::start] with xip {%" PRIx64 ", %" PRIx64 "} done", xip.high_addr, xip.low_addr);
         return true;
     };
     base::xcall_t asyn_call(async_reset, (xconsensus::xcsaccount_t *)m_picker);
