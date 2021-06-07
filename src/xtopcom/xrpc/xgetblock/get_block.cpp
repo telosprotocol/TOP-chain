@@ -1371,7 +1371,6 @@ void get_block_handle::set_fullunit_info(xJson::Value & j_fu, xblock_t * bp) {
         base::xauto_ptr<base::xvbstate_t> bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(bp);
         xassert(bstate != nullptr);
         data::xunit_bstate_t unitstate(bstate.get());
-        // set_object_info(j_fu, full);
         j_fu["latest_full_unit_number"] = static_cast<unsigned int>(bp->get_height());
         j_fu["latest_full_unit_hash"] = to_hex_str(bp->get_block_hash());
         j_fu["latest_send_trans_number"] = static_cast<unsigned int>(unitstate.account_send_trans_number());
@@ -1413,12 +1412,6 @@ void get_block_handle::set_table_info(xJson::Value & jv, xblock_t * bp) {
                 jv["0x" + tx->get_tx_hex_hash()] = juj;
             }
             jui["lightunit_input"] = jv;
-
-            xJson::Value jv1;
-            jv1["balance_change"] = static_cast<xJson::Int64>(unit->get_balance_change());
-            jv1["burned_amount_change"] = static_cast<xJson::Int64>(unit->get_burn_balance_change());
-            jui["lightunit_state"] = jv1;
-
             ju[unit->get_block_owner()] = jui;
         }
         jv["units"] = ju;
