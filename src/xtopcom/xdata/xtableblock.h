@@ -92,16 +92,6 @@ class xtable_block_para_t {
 class xtable_block_t : public xblock_t {
  protected:
     enum { object_type_value = enum_xdata_type::enum_xdata_type_max - xdata_type_table_block };
-    static base::xvblock_t* create_tableblock(const std::string & account,
-                                                uint64_t height,
-                                                std::string last_block_hash,
-                                                std::string justify_block_hash,
-                                                uint64_t viewid,
-                                                uint64_t clock,
-                                                const std::string & last_full_block_hash,
-                                                uint64_t last_full_block_height,
-                                                const xtable_block_para_t & para);
-    static xblockbody_para_t get_blockbody_from_para(const xtable_block_para_t & para);
     static xblock_ptr_t create_whole_unit(const std::string & header,
                                                 const std::string & input,
                                                 const std::string & input_res,
@@ -109,10 +99,7 @@ class xtable_block_t : public xblock_t {
                                                 const std::string & output_res,
                                                 const base::xbbuild_para_t & build_para);
  public:
-    static base::xvblock_t* create_next_tableblock(const xtable_block_para_t & para, base::xvblock_t* prev_block);
- public:
     xtable_block_t();
-    xtable_block_t(base::xvheader_t & header, xblockcert_t & cert, const xinput_ptr_t & input, const xoutput_ptr_t & output);
     xtable_block_t(base::xvheader_t & header, base::xvqcert_t & cert, base::xvinput_t* input, base::xvoutput_t* output);
     virtual ~xtable_block_t();
  private:

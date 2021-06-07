@@ -63,64 +63,6 @@ int32_t xfullunit_output_t::do_read(base::xstream_t &stream) {
 //     return ss.str();
 // }
 
-xblockbody_para_t xfullunit_block_t::get_blockbody_from_para(const xfullunit_block_para_t & para) {
-    xblockbody_para_t blockbody;
-    xobject_ptr_t<xfullunit_input_t> input = make_object_ptr<xfullunit_input_t>(para.m_first_unit_height, para.m_first_unit_hash);
-    xobject_ptr_t<xfullunit_output_t> output = make_object_ptr<xfullunit_output_t>(para.m_property_snapshot);
-    blockbody.add_input_entity(input);
-    blockbody.add_output_entity(output);
-
-    // TODO(jimmy) delete output snapshot, output entity record snapshot root hash
-    blockbody.add_output_resource(base::xvoutput_t::res_binlog_key_name(), para.m_property_snapshot);
-
-    blockbody.create_default_input_output();
-    return blockbody;
-}
-
-base::xvblock_t* xfullunit_block_t::create_fullunit(const std::string & account,
-                                            uint64_t height,
-                                            std::string last_block_hash,
-                                            std::string justify_block_hash,
-                                            uint64_t viewid,
-                                            uint64_t clock,
-                                            const std::string & last_full_block_hash,
-                                            uint64_t last_full_block_height,
-                                            const xfullunit_block_para_t & para) {
-    xblockbody_para_t blockbody = xfullunit_block_t::get_blockbody_from_para(para);
-    base::xauto_ptr<base::xvheader_t> _blockheader = xblockheader_t::create_fullunit_header(account, height, last_block_hash, last_full_block_hash,
-            justify_block_hash, last_full_block_height);
-    base::xauto_ptr<xblockcert_t> _blockcert = xblockcert_t::create_blockcert(account, height, base::enum_xconsensus_flag_extend_cert, viewid, clock);
-    xfullunit_block_t* fullunit = new xfullunit_block_t(*_blockheader, *_blockcert, blockbody.get_input(), blockbody.get_output());
-    return fullunit;
-}
-
-base::xvblock_t* xfullunit_block_t::create_next_fullunit(const xinput_ptr_t & input, const xoutput_ptr_t & output, base::xvblock_t* prev_block) {
-    base::xauto_ptr<base::xvheader_t> _blockheader = xblockheader_t::create_fullunit_header(prev_block->get_account(), prev_block->get_height() + 1,
-                                                            prev_block->get_block_hash(), prev_block->get_last_full_block_hash(), std::string(),
-                                                            prev_block->get_last_full_block_height());
-    base::xauto_ptr<xblockcert_t> _blockcert = xblockcert_t::create_blockcert(prev_block->get_account(), _blockheader->get_height(),
-        base::enum_xconsensus_flag_extend_cert, prev_block->get_viewid() + 1, prev_block->get_clock() + 1);
-    xfullunit_block_t* fullunit = new xfullunit_block_t(*_blockheader, *_blockcert, input, output);
-    return fullunit;
-}
-
-base::xvblock_t* xfullunit_block_t::create_next_fullunit(const xfullunit_block_para_t & para, base::xvblock_t* prev_block) {
-    if (prev_block->is_genesis_block() || prev_block->get_block_class() == base::enum_xvblock_class_full) {
-        return create_fullunit(prev_block->get_account(), prev_block->get_height() + 1,
-            prev_block->get_block_hash(), std::string(), prev_block->get_viewid() + 1, prev_block->get_clock() + 1,
-            prev_block->get_block_hash(), prev_block->get_height(), para);
-    } else {
-        return create_fullunit(prev_block->get_account(), prev_block->get_height() + 1,
-            prev_block->get_block_hash(), std::string(), prev_block->get_viewid() + 1, prev_block->get_clock() + 1,
-            prev_block->get_last_full_block_hash(), prev_block->get_last_full_block_height(), para);
-    }
-}
-
-xfullunit_block_t::xfullunit_block_t(base::xvheader_t & header, xblockcert_t & cert, const xinput_ptr_t & input, const xoutput_ptr_t & output)
-: xblock_t(header, cert, input, output, (enum_xdata_type)object_type_value) {
-
-}
-
 xfullunit_block_t::xfullunit_block_t(base::xvheader_t & header, base::xvqcert_t & cert, base::xvinput_t* input, base::xvoutput_t* output)
 : xblock_t(header, cert, input, output, (enum_xdata_type)object_type_value) {
 

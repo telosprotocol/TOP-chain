@@ -58,7 +58,6 @@ struct xrootblock_para_t {
 class xrootblock_t : public xblock_t {
  protected:
     enum { object_type_value = enum_xdata_type::enum_xdata_type_max - xdata_type_rootblock };
-    static xblockbody_para_t get_blockbody_from_para(const xrootblock_para_t & para);
  public:
     static bool init(const xrootblock_para_t & para);
  public:

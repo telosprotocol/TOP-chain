@@ -167,12 +167,6 @@ xblock_t::xblock_t(enum_xdata_type type) : base::xvblock_t(type) {
     MEMCHECK_ADD_TRACE(this, "block_create");
 }
 
-xblock_t::xblock_t(base::xvheader_t & header, xblockcert_t & cert, const xinput_ptr_t & input, const xoutput_ptr_t & output, enum_xdata_type type)
-  : base::xvblock_t(header, cert, input.get(), output.get(), type) {
-    XMETRICS_XBASE_DATA_CATEGORY_NEW(type);
-    MEMCHECK_ADD_TRACE(this, "block_create");
-}
-
 xblock_t::xblock_t(base::xvheader_t & header, base::xvqcert_t & cert, base::xvinput_t* input, base::xvoutput_t* output, enum_xdata_type type)
   : base::xvblock_t(header, cert, input, output, type) {
     XMETRICS_XBASE_DATA_CATEGORY_NEW(type);
@@ -362,27 +356,6 @@ bool xblock_t::calc_output_merkle_path(const std::string & leaf, xmerkle_path_25
 
     xoutput_t* output = dynamic_cast<xoutput_t*>(get_output());
     return output->calc_merkle_path(leaf, hash_path);
-}
-
-void xblock_t::set_consensus_para(const xblock_consensus_para_t & para) {
-    xassert(false);  // TODO(jimmy) delete api
-
-    xassert(para.get_clock() != 0);
-    get_cert()->set_clock(para.get_clock());
-    xassert(para.get_viewid() != 0);
-    get_cert()->set_viewid(para.get_viewid());
-    xassert(!is_xip2_empty(para.get_validator()));
-    get_cert()->set_validator(para.get_validator());
-    if (!is_xip2_empty(para.get_auditor())) {  // optional
-        get_cert()->set_auditor(para.get_auditor());
-        // get_blockcert()->set_consensus_flag(base::enum_xconsensus_flag_audit_cert);
-    }
-    if (para.get_viewtoken() != 0) {  // optional
-        get_cert()->set_viewtoken(para.get_viewtoken());
-    }
-    get_cert()->set_drand(para.get_drand_height());
-    get_cert()->set_justify_cert_hash(para.get_justify_cert_hash());
-    get_cert()->set_parent_height(para.get_parent_height());
 }
 
 bool xblock_t::is_full_state_block() const {

@@ -42,7 +42,6 @@
 #include "xbase/xobject_ptr.h"
 #include "xdata/xcons_transaction.h"
 #include "xdata/xdata_common.h"
-#include "xdata/xheader_cert.h"
 #include "xdata/xlightunit_info.h"
 
 NS_BEG2(top, data)
@@ -80,8 +79,6 @@ class xblock_t : public base::xvblock_t {
 public:
     xblock_t(enum_xdata_type type);
     xblock_t(base::xvheader_t & header, base::xvqcert_t & cert, enum_xdata_type type);
-    // xblock_t(base::xvheader_t & header, xblockcert_t & cert, const std::string & input, const std::string & output, enum_xdata_type type);
-    xblock_t(base::xvheader_t & header, xblockcert_t & cert, const xinput_ptr_t & input, const xoutput_ptr_t & output, enum_xdata_type type);
     xblock_t(base::xvheader_t & header, base::xvqcert_t & cert, base::xvinput_t* input, base::xvoutput_t* output, enum_xdata_type type);
 
 #ifdef XENABLE_PSTACK  // tracking memory
@@ -95,9 +92,6 @@ public:
     xblock_t(const xblock_t &);
     xblock_t & operator = (const xblock_t &);
 
- protected:
-    xblockcert_t*       get_blockcert() const {return (xblockcert_t*)get_cert();}
-
  public:
     virtual int32_t     full_block_serialize_to(base::xstream_t & stream);  // for block sync
     static  base::xvblock_t*    full_block_read_from(base::xstream_t & stream);  // for block sync
@@ -106,7 +100,6 @@ public:
     bool        calc_output_merkle_path(const std::string & leaf, xmerkle_path_256_t& hash_path) const;
 
  public:
-    void            set_consensus_para(const xblock_consensus_para_t & para);
     virtual bool    is_full_state_block() const;  // TODO(jimmy) delete and use is_execute_ready directly
     bool            is_execute_ready() const override {return is_full_state_block();}  //check whether ready to execute bin-log
 
