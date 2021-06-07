@@ -3,11 +3,11 @@ for option in $options
 do
     case $option in
     build_ci)
-        CMAKE_EXTRA_OPTIONS+=" -DXBUILD_CI"
+        CMAKE_EXTRA_OPTIONS+=" -DXBUILD_CI=ON"
         echo "Build CI testnet"
     ;;
     build_dev)
-        CMAKE_EXTRA_OPTIONS+=" -DXBUILD_DEV"
+        CMAKE_EXTRA_OPTIONS+=" -DXBUILD_DEV=ON"
         echo "Build Dev testnet"
     ;;
     build_galileo)
