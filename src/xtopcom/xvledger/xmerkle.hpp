@@ -11,7 +11,7 @@
 #include <cmath>
 #include "xbase/xmem.h"
 #include "xbase/xcontext.h"
- 
+
 namespace top
 {
     namespace base
@@ -37,7 +37,7 @@ namespace top
             xmerkle_path_node_t(xmerkle_path_node_t &&)                  = default;
             xmerkle_path_node_t & operator=(xmerkle_path_node_t const &) = default;
             xmerkle_path_node_t & operator=(xmerkle_path_node_t &&)      = default;
-            
+
         public:
         #define XMERKLE_PATH_NODE_SIZE() \
                 (sizeof(uint32_t) + sizeof(uint32_t) + sizeof(_Tv))
@@ -49,29 +49,29 @@ namespace top
         public:
             int32_t serialize_to(base::xstream_t & stream) const {
                 const int32_t begin_size = stream.size();
-                
+
                 stream.write_compact_var(level);
                 stream.write_compact_var(pos);
                 stream << signature;
-                
+
                 return (stream.size() - begin_size);
             }
 
             int32_t serialize_from(base::xstream_t & stream) {
                 const int32_t begin_size = stream.size();
-                
+
                 stream.read_compact_var(level);
                 stream.read_compact_var(pos);
                 stream >> signature;
-                
+
                 return (begin_size - stream.size());
             }
-            
+
             bool operator == (const xmerkle_path_node_t & other) const
             {
                 if( (other.level == level) && (other.pos == pos) && (other.signature == signature) )
                     return true;
-                
+
                 return false;
             }
         };
@@ -336,18 +336,18 @@ namespace top
             xmerkle_path_t(const xmerkle_path_t && obj);
             xmerkle_path_t & operator = (xmerkle_path_t && obj);
             xmerkle_path_t & operator = (const xmerkle_path_t & obj);
-            
+
         public:
             int32_t   serialize_to(xstream_t & stream) const
             {
                 return do_write(stream);
             }
-            
+
             int32_t   serialize_from(xstream_t & stream)
             {
                 return do_read(stream);
             }
-            
+
          protected:
             int32_t do_write(base::xstream_t & stream) const {
                 const int32_t begin_size = stream.size();
@@ -372,7 +372,8 @@ namespace top
                 return (begin_size - stream.size());
             }
         public:
-            const std::vector<xmerkle_path_node_t<_Tv>> &  get_levels() const {return m_levels;}
+            std::vector<xmerkle_path_node_t<_Tv>> &  get_levels_for_write() {return m_levels;}  // TODO(jimmy)
+            const std::vector<xmerkle_path_node_t<_Tv>> &  get_levels() {return m_levels;}  // TODO(jimmy)
             size_t size() const {return m_levels.size();}
             size_t get_serialize_size() const {
                 base::xstream_t stream(base::xcontext_t::instance());

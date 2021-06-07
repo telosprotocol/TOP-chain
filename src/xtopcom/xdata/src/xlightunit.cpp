@@ -140,7 +140,7 @@ xcons_transaction_ptr_t xlightunit_block_t::create_txreceipt(const xtransaction_
     }
 
     const std::string leaf = txinfo->query_value("merkle-tree-leaf");
-    xmerkle_path_256_t path;
+    base::xmerkle_path_256_t path;
     bool ret = calc_output_merkle_path(leaf, path);
     if (!ret) {
         xwarn("xtable_block_t::create_txreceipt calc_output_merkle_path fail, tx=%s", tx->dump().c_str());
