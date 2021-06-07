@@ -120,6 +120,7 @@ namespace top
             friend class xvblock_t;
             friend class xvbbuild_t;
             friend class xvblockstore_t;
+            friend class xvblockbuild_t;
         public:
             static  const std::string   name(){ return std::string("xvheader");}
             virtual std::string         get_obj_name() const override {return name();}
@@ -139,7 +140,7 @@ namespace top
 
         public:
             xvheader_t(const xvheader_t & other);
-            
+
         protected:
             xvheader_t();
             xvheader_t(const std::string & intput_hash,const std::string & output_hash);
@@ -290,6 +291,7 @@ namespace top
             friend class xvblock_t;
             friend class xvbbuild_t;
             friend class xvblockstore_t;
+            friend class xvblockbuild_t;
         public:
             static  const std::string   name(){ return std::string("xvqcert");}
             virtual std::string         get_obj_name() const override {return name();}
@@ -478,7 +480,7 @@ namespace top
             //root of input which usally present a root of merkle tree for input
             virtual const std::string   get_root_hash() const {return m_root_hash;}
             virtual bool                set_root_hash(const std::string & root_hash){ m_root_hash = root_hash;return true;}
- 
+
         protected: //proposal ==> input ==> output
             //just carry by object at memory,not included by serialized
             std::string  m_proposal;    //raw proposal
@@ -517,10 +519,10 @@ namespace top
 
             const std::string           get_binlog();
             virtual const std::string   get_binlog_hash() {return std::string();}
-            
+
         public:
             bool set_offblock_snapshot(const std::string & snapshot);
-            
+
         protected:
             //just carry by object at memory,not included by serialized
             std::string  m_root_hash;  //root of merkle tree constructed by input

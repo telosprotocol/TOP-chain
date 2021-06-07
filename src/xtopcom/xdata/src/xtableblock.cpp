@@ -10,6 +10,7 @@
 #include "xdata/xrootblock.h"
 #include "xdata/xemptyblock.h"
 #include "xdata/xblock_resources.h"
+#include "xdata/xblockbuild.h"
 
 NS_BEG2(top, data)
 
@@ -120,13 +121,15 @@ base::xvblock_t* xtable_block_t::create_tableblock(const std::string & account,
     block_para.last_full_block_height = last_full_block_height;
     block_para.extra_data = para.get_extra_data();
 
+    xassert(false);
+#if 0
     // update unit cert member by tableblock cert
     for (auto & unit : para.get_account_units()) {
         unit->get_cert()->set_parent_height(height);
         xblockcert_t* qcert = reinterpret_cast<xblockcert_t*>(unit->get_cert());
         qcert->set_consensus_flag(base::enum_xconsensus_flag_extend_cert);
     }
-
+#endif
     xblockbody_para_t blockbody = xtable_block_t::get_blockbody_from_para(para);
     base::xauto_ptr<base::xvheader_t> _blockheader = xblockheader_t::create_blockheader(block_para);
     base::xauto_ptr<xblockcert_t> _blockcert = xblockcert_t::create_blockcert(account, height, (base::enum_xconsensus_flag)0, viewid, clock);
@@ -148,6 +151,10 @@ base::xvblock_t* xtable_block_t::create_next_tableblock(const xtable_block_para_
 }
 
 xtable_block_t::xtable_block_t(base::xvheader_t & header, xblockcert_t & cert, const xinput_ptr_t & input, const xoutput_ptr_t & output)
+: xblock_t(header, cert, input, output, (enum_xdata_type)object_type_value) {
+
+}
+xtable_block_t::xtable_block_t(base::xvheader_t & header, base::xvqcert_t & cert, base::xvinput_t* input, base::xvoutput_t* output)
 : xblock_t(header, cert, input, output, (enum_xdata_type)object_type_value) {
 
 }
@@ -218,7 +225,8 @@ xblock_ptr_t xtable_block_t::create_whole_unit(const std::string & header,
                                                     const std::string & input,
                                                     const std::string & input_res,
                                                     const std::string & output,
-                                                    const std::string & output_res) {
+                                                    const std::string & output_res,
+                                                    const base::xbbuild_para_t & build_para) {
     // recreate whole block
     base::xauto_ptr<base::xvheader_t> _header = base::xvblock_t::create_header_object(header);
     xassert(_header != nullptr);
@@ -226,24 +234,24 @@ xblock_ptr_t xtable_block_t::create_whole_unit(const std::string & header,
     xassert(_input != nullptr);
     base::xauto_ptr<base::xvoutput_t> _output = base::xvblock_t::create_output_object(output);
     xassert(_output != nullptr);
-    base::xauto_ptr<xblockcert_t> qcert = new xblockcert_t(_header->get_account(), _header->get_height());
-    qcert->set_consensus_flag(base::enum_xconsensus_flag_extend_cert);
 
+    // TODO(jimmy)
     xinput_ptr_t _new_input = make_object_ptr<xinput_t>(_input->get_entitys(), input_res);
     xoutput_ptr_t _new_output = make_object_ptr<xoutput_t>(_output->get_entitys(), output_res);
 
-    xblock_t* _new_block = nullptr;
+    std::shared_ptr<base::xvblockbuild_t> vbbuild = nullptr;
+
     if (_header->get_block_class() == base::enum_xvblock_class_light) {
-        _new_block = new xlightunit_block_t(*_header, *qcert, _new_input, _new_output);
+        vbbuild = std::make_shared<xlightunit_build_t>(_header.get(), _new_input.get(), _new_output.get());
     } else if (_header->get_block_class() == base::enum_xvblock_class_full) {
-        _new_block = new xfullunit_block_t(*_header, *qcert, _new_input, _new_output);
+        vbbuild = std::make_shared<xfullunit_build_t>(_header.get(), _new_input.get(), _new_output.get());
     } else if (_header->get_block_class() == base::enum_xvblock_class_nil) {
-        _new_block = new xemptyblock_t(*_header, *qcert);
+        vbbuild = std::make_shared<xemptyblock_build_t>(_header.get());
     }
-    xassert(_new_block != nullptr);
-    xblock_ptr_t auto_block_ptr;
-    auto_block_ptr.attach(_new_block);
-    return auto_block_ptr;
+    vbbuild->init_qcert(build_para);
+    base::xauto_ptr<base::xvblock_t> _vblock = vbbuild->build_new_block();
+    xblock_ptr_t _block = xblock_t::raw_vblock_to_object_ptr(_vblock());
+    return _block;
 }
 
 xblock_ptr_t xtable_block_t::recreate_unit_from_unit_input_output_resource(uint16_t index) const {
@@ -261,21 +269,18 @@ xblock_ptr_t xtable_block_t::recreate_unit_from_unit_input_output_resource(uint1
     base::xauto_ptr<xresource_unit_output_t> output_resource = dynamic_cast<xresource_unit_output_t*>(base::xdataunit_t::read_from(_output_stream));
     xassert(output_resource != nullptr);
 
+    base::xbbuild_para_t build_para;
+    build_para.set_unit_cert_para(get_cert()->get_clock(), get_cert()->get_viewtoken(), get_cert()->get_viewid(), get_cert()->get_validator(),
+                                 get_cert()->get_auditor(), get_cert()->get_drand_height(), get_height(), output_resource->get_unit_justify_hash());
     xblock_ptr_t _unit_block = xtable_block_t::create_whole_unit(input_resource->get_unit_header(),
-                                                                    input_resource->get_unit_input(),
-                                                                    input_resource->get_unit_input_resources(),
-                                                                    output_resource->get_unit_output(),
-                                                                    output_resource->get_unit_output_resources());
+                                                                                    input_resource->get_unit_input(),
+                                                                                    input_resource->get_unit_input_resources(),
+                                                                                    output_resource->get_unit_output(),
+                                                                                    output_resource->get_unit_output_resources(),
+                                                                                    build_para);
     xassert(_unit_block != nullptr);
     _unit_block->reset_block_flags();
     xassert(_unit_block->get_block_hash().empty());
-
-    xblock_consensus_para_t cs_para;
-    cs_para.set_common_consensus_para(get_cert()->get_clock(), get_cert()->get_validator(), get_cert()->get_auditor(),
-                                    get_cert()->get_viewid(), get_cert()->get_viewtoken(), get_cert()->get_drand_height());
-    cs_para.set_justify_cert_hash(output_resource->get_unit_justify_hash());
-    cs_para.set_parent_height(get_height());
-    _unit_block->set_consensus_para(cs_para);
     return _unit_block;
 }
 
@@ -294,13 +299,10 @@ void xtable_block_t::unpack_proposal_units(std::vector<xblock_ptr_t> & units) co
         // recreate whole block
         xblock_ptr_t _block_ptr = recreate_unit_from_unit_input_output_resource(index);
         if (_block_ptr->get_cert()->get_hash_to_sign() != output_unit->get_unit_sign_hash()) {
-            xerror("unpack_proposal_units fail match. block=%s,cert=%s",
+            xerror("xtable_block_t::unpack_proposal_units not match.block=%s,cert:%s",
                 _block_ptr->dump().c_str(), _block_ptr->dump_cert().c_str());
-            // xerror("xtable_block_t::unpack_proposal_units not match. header:%s, cert:%s,signhash=%s <-> %s",
-            //     _block_ptr->dump_header().c_str(), _block_ptr->dump_cert().c_str(),
-            //     base::xstring_utl::to_hex(_block_ptr->get_cert()->get_hash_to_sign()).c_str(), base::xstring_utl::to_hex(output_unit->get_unit_sign_hash()).c_str());
         } else {
-            xinfo("xtable_block_t::unpack_proposal_units unpack unit succ. table=%s,unit=%s",
+            xdbg("xtable_block_t::unpack_proposal_units unpack unit succ. table=%s,unit=%s",
                 dump().c_str(), _block_ptr->dump().c_str());
         }
         units.push_back(_block_ptr);

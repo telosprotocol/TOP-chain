@@ -222,6 +222,10 @@ xlightunit_block_t::xlightunit_block_t(base::xvheader_t & header, xblockcert_t &
 : xblock_t(header, cert, input, output, (enum_xdata_type)object_type_value) {
 
 }
+xlightunit_block_t::xlightunit_block_t(base::xvheader_t & header, base::xvqcert_t & cert, base::xvinput_t* input, base::xvoutput_t* output)
+: xblock_t(header, cert, input, output, (enum_xdata_type)object_type_value) {
+
+}
 
 xlightunit_block_t::~xlightunit_block_t() {
 

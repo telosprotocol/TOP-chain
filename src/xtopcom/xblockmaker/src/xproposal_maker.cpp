@@ -103,6 +103,7 @@ xblock_ptr_t xproposal_maker_t::make_proposal(data::xblock_consensus_para_t & pr
     std::string proposal_input_str;
     proposal_input->serialize_to_string(proposal_input_str);
     proposal_block->get_input()->set_proposal(proposal_input_str);
+    xassert(!proposal_block->get_header()->get_extra_data().empty());
     bool bret = proposal_block->reset_prev_block(latest_cert_block.get());
     xassert(bret);
     xdbg("xproposal_maker_t::make_proposal succ.%s,proposal_block=%s", proposal_para.dump().c_str(), proposal_block->dump().c_str());
@@ -334,6 +335,7 @@ bool xproposal_maker_t::leader_set_consensus_para(base::xvblock_t* latest_cert_b
     blockheader_extradata.serialize_to_string(extra_data);
     xassert(cs_para.get_drand_block() != nullptr);
     std::string random_seed = calc_random_seed(latest_cert_block, cs_para.get_drand_block()->get_cert(), cs_para.get_viewtoken());
+    cs_para.set_parent_height(latest_cert_block->get_height() + 1);
     cs_para.set_tableblock_consensus_para(cs_para.get_drand_block()->get_height(),
                                             random_seed,
                                             total_lock_tgas_token,
@@ -344,6 +346,7 @@ bool xproposal_maker_t::leader_set_consensus_para(base::xvblock_t* latest_cert_b
 }
 
 bool xproposal_maker_t::backup_set_consensus_para(base::xvblock_t* latest_cert_block, base::xvblock_t* proposal, base::xvqcert_t * bind_drand_cert, xblock_consensus_para_t & cs_para) {
+    cs_para.set_parent_height(latest_cert_block->get_height() + 1);
     cs_para.set_common_consensus_para(proposal->get_cert()->get_clock(),
                                       proposal->get_cert()->get_validator(),
                                       proposal->get_cert()->get_auditor(),

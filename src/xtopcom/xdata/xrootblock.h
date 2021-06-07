@@ -61,8 +61,9 @@ class xrootblock_t : public xblock_t {
     static xblockbody_para_t get_blockbody_from_para(const xrootblock_para_t & para);
  public:
     static bool init(const xrootblock_para_t & para);
+ public:
+    xrootblock_t(base::xvheader_t & header, base::xvqcert_t & cert, base::xvinput_t* input, base::xvoutput_t* output);
  protected:
-    xrootblock_t(base::xvheader_t & header, xblockcert_t & cert, const xinput_ptr_t & input = nullptr, const xoutput_ptr_t & output = nullptr);
     virtual ~xrootblock_t();
  private:
     xrootblock_t();

@@ -69,7 +69,7 @@ base::xvblock_t* xemptyblock_t::create_emptyblock(const std::string & account, u
     return create_emptyblock(account, height, level, xrootblock_t::get_rootblock_hash(), std::string(), viewid, clock, xrootblock_t::get_rootblock_hash(), clock - 1, blocktype);
 }
 
-xemptyblock_t::xemptyblock_t(base::xvheader_t & header, xblockcert_t & cert)
+xemptyblock_t::xemptyblock_t(base::xvheader_t & header, base::xvqcert_t & cert)
 : xblock_t(header, cert, (enum_xdata_type)object_type_value) {
 
 }

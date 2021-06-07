@@ -9,6 +9,7 @@
 #include "xdata/xdata_common.h"
 #include "xdata/xdatautil.h"
 #include "xdata/xnative_contract_address.h"
+#include "xdata/xblocktool.h"
 #include "xconfig/xpredefined_configurations.h"
 
 #include <stdexcept>
@@ -116,10 +117,8 @@ bool xrootblock_t::init(const xrootblock_para_t & para) {
         block_para.last_full_block_hash = "";
         block_para.last_full_block_height = 0;
 
-        xblockbody_para_t blockbody = xrootblock_t::get_blockbody_from_para(para);
-        base::xauto_ptr<base::xvheader_t> _blockheader = xblockheader_t::create_blockheader(block_para);
-        base::xauto_ptr<xblockcert_t> _blockcert = xblockcert_t::create_blockcert(block_para.account, 0, base::enum_xconsensus_flag_commit_cert, 0, 0);
-        m_instance = new xrootblock_t(*_blockheader, *_blockcert, blockbody.get_input(), blockbody.get_output());
+        base::xvblock_t* _rootblock = xblocktool_t::create_genesis_root_block(block_para.chainid, get_rootblock_address(), para);
+        m_instance = dynamic_cast<xrootblock_t*>(_rootblock);
         xkinfo("root-block info. block=%s", m_instance->dump().c_str());
         return true;
     });
@@ -127,7 +126,7 @@ bool xrootblock_t::init(const xrootblock_para_t & para) {
     return true;
 }
 
-xrootblock_t::xrootblock_t(base::xvheader_t & header, xblockcert_t & cert, const xinput_ptr_t & input, const xoutput_ptr_t & output)
+xrootblock_t::xrootblock_t(base::xvheader_t & header, base::xvqcert_t & cert, base::xvinput_t* input, base::xvoutput_t* output)
 : xblock_t(header, cert, input, output, (enum_xdata_type)object_type_value) {
 
 }
