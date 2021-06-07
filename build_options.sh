@@ -37,10 +37,6 @@ do
         CMAKE_EXTRA_OPTIONS+=" -DTCMALLOC=ON"
         echo "BUILD TCMALLOC mode"
     ;;
-    rec_elect)
-        CMAKE_EXTRA_OPTIONS+=" -DBUILD_REC_ELECT=ON"
-        echo "DBUILD_REC_ELECT ON"
-    ;;
     xmutisign_close)
         CMAKE_EXTRA_OPTIONS+=" -DMUTI_SIGN_CLOSE=ON"
         echo "MUTI_SIGN_CLOSE ON"

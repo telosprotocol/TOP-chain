@@ -35,7 +35,7 @@ fi
 command_line_option_include_item "$options" "install"
 if [ $? -eq 1 ]; then
     echo "no install found, compile mode"
-    CMAKE_EXTRA_OPTIONS="-DCMAKE_BUILD_TYPE=Debug -DXENABLE_TESTS=OFF -DBUILD_REC_ELECT=ON"
+    CMAKE_EXTRA_OPTIONS="-DCMAKE_BUILD_TYPE=Debug -DXENABLE_TESTS=OFF"
     CBUILD_DIR="cbuild"
     
     source ./build_options.sh
