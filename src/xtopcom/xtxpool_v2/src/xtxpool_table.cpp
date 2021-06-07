@@ -120,7 +120,7 @@ int32_t xtxpool_table_t::push_receipt(const std::shared_ptr<xtx_entry> & tx, boo
     uint64_t latest_receipt_id = m_receipt_state_cache.get_tx_corresponding_latest_receipt_id(tx);
     uint64_t tx_receipt_id = tx->get_tx()->get_last_action_receipt_id();
     if (tx_receipt_id < latest_receipt_id) {
-        xtxpool_warn("xpeer_table_receipts_t::push_tx duplicate receipt:%s,id:%llu:%llu", tx->get_tx()->dump().c_str(), tx_receipt_id, latest_receipt_id);
+        xtxpool_warn("xtxpool_table_t::push_receipt duplicate receipt:%s,id:%llu:%llu", tx->get_tx()->dump().c_str(), tx_receipt_id, latest_receipt_id);
         XMETRICS_COUNTER_INCREMENT("txpool_receipt_duplicate", 1);
         return xtxpool_error_tx_duplicate;
     }
@@ -130,7 +130,7 @@ int32_t xtxpool_table_t::push_receipt(const std::shared_ptr<xtx_entry> & tx, boo
         std::lock_guard<std::mutex> lck(m_mgr_mutex);
         bool is_repeat = m_txmgr_table.is_repeat_tx(tx);
         if (is_repeat) {
-            xtxpool_warn("xpeer_table_receipts_t::push_tx repeat receipt:%s", tx->get_tx()->dump().c_str());
+            xtxpool_warn("xtxpool_table_t::push_receipt repeat receipt:%s", tx->get_tx()->dump().c_str());
             XMETRICS_COUNTER_INCREMENT("txpool_receipt_repeat", 1);
             return xtxpool_error_request_tx_repeat;
         }

@@ -75,6 +75,7 @@ namespace top
             virtual mbus::xevent_ptr_t  create_event_for_store_index_to_db(base::xvbindex_t * target_block) override;
             virtual mbus::xevent_ptr_t  create_event_for_revoke_index_to_db(base::xvbindex_t * target_index) override;
             virtual mbus::xevent_ptr_t  create_event_for_store_block_to_db(base::xvblock_t * target_block) override;
+            virtual mbus::xevent_ptr_t  create_event_for_store_committed_block(base::xvbindex_t * target_index) override;
         };
     };
 };
