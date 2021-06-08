@@ -3,7 +3,7 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #pragma once
-
+#if 0
 #include "xbase/xbase.h"
 #include "xkad/proto/kadmlia.pb.h"
 #include "xkad/routing_table/local_node_info.h"
@@ -36,13 +36,13 @@ public:
     }
 
 public:
-    virtual base::ServiceType GetRoutingTableType() {
+    base::ServiceType GetRoutingTableType() {
         return local_node_ptr_->service_type();
     }
-    virtual std::shared_ptr<transport::Transport> get_transport() {
+    std::shared_ptr<transport::Transport> get_transport() {
         return transport_ptr_;
     }
-    virtual std::shared_ptr<LocalNodeInfo> get_local_node_info() {
+    std::shared_ptr<LocalNodeInfo> get_local_node_info() {
         return local_node_ptr_;
     }
 
@@ -70,7 +70,7 @@ public:
     virtual NodeInfoPtr GetRandomNode() = 0;
     virtual bool GetRandomNodes(std::vector<NodeInfoPtr> & vec, size_t size) = 0;
 
-protected:
+private:
     std::shared_ptr<transport::Transport> transport_ptr_;
     std::shared_ptr<LocalNodeInfo> local_node_ptr_;
 };
@@ -80,3 +80,4 @@ typedef std::shared_ptr<RoutingTableBase> RoutingTablePtr;
 }  // namespace kadmlia
 
 }  // namespace top
+#endif

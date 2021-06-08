@@ -12,6 +12,8 @@
 #include "xgossip/include/gossip_utils.h"
 #include "xpbase/base/kad_key/kadmlia_key.h"
 
+#include <cinttypes>
+
 namespace top {
 
 namespace gossip {
@@ -453,6 +455,53 @@ void GossipInterface::SendLayered(
             TOP_WARN2("SendData to  endpoint(%s:%d) failed",
                     nodes[i]->public_ip.c_str(),
                     nodes[i]->public_port);
+            continue;
+        }
+
+    };
+}
+
+
+void GossipInterface::SendDispatch(transport::protobuf::RoutingMessage & message, const std::vector<gossip::DispatchInfos> & dispatch_nodes){
+    // uint64_t min_dis = message.gossip().min_dis();
+    // uint64_t max_dis = message.gossip().max_dis();
+    // if (max_dis <= 0) {
+    //     max_dis = std::numeric_limits<uint64_t>::max();
+    // }
+
+    uint8_t local_buf[kUdpPacketBufferSize];
+    base::xpacket_t packet(base::xcontext_t::instance(), local_buf, sizeof(local_buf), 0, false);
+    _xip2_header xip2_header;
+    memset(&xip2_header, 0, sizeof(xip2_header));
+    xip2_header.ver_protocol = kSerializeProtocolProtobuf;
+    std::string header((const char*)&xip2_header, sizeof(xip2_header));
+    std::string xdata;
+
+    for (uint32_t i = 0; i < dispatch_nodes.size(); ++i) {
+        auto nodes = dispatch_nodes[i].nodes;
+        auto gossip = message.mutable_gossip();
+       
+        gossip->set_min_dis(dispatch_nodes[i].sit1);
+        gossip->set_max_dis(dispatch_nodes[i].sit2);
+        xkinfo("[debug] send to %s:%d % " PRIu64 " % " PRIu64 , nodes->public_ip.c_str(), nodes->public_port, dispatch_nodes[i].sit1, dispatch_nodes[i].sit2);
+
+
+        std::string body;
+        if (!message.SerializeToString(&body)) {
+            TOP_WARN2("wrouter message SerializeToString failed");
+            return;
+        }
+
+        xdata = header + body;
+        packet.reset();
+        packet.get_body().push_back((uint8_t*)xdata.data(), xdata.size());
+        packet.set_to_ip_addr(nodes->public_ip);
+        packet.set_to_ip_port(nodes->public_port);
+
+        if (kadmlia::kKadSuccess != transport_ptr_->SendDataWithProp(packet, nodes->udp_property)) {
+            TOP_WARN2("SendData to  endpoint(%s:%d) failed",
+                    nodes->public_ip.c_str(),
+                    nodes->public_port);
             continue;
         }
 

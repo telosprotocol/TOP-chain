@@ -1,3 +1,4 @@
+#if 0
 // Copyright (c) 2017-2019 Telos Foundation & contributors
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
@@ -56,3 +57,4 @@ using BootstrapCachePtr = std::shared_ptr<BootstrapCache>;
 
 }  // namespace kadmlia
 }  // namespace top
+#endif

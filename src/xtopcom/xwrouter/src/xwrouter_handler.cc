@@ -9,7 +9,7 @@
 #include "xpbase/base/kad_key/kadmlia_key.h"
 #include "xpbase/base/xip_parser.h"
 #include "xpbase/base/kad_key/platform_kadmlia_key.h"
-#include "xkad/routing_table/routing_table_base.h"
+// #include "xkad/routing_table/routing_table_base.h"
 #include "xkad/routing_table/routing_utils.h"
 #include "xwrouter/register_routing_table.h"
 #include "xwrouter/multi_routing/multi_routing.h"
@@ -36,11 +36,13 @@ namespace wrouter {
 WrouterHandler::WrouterHandler(transport::TransportPtr transport_ptr,
                                std::shared_ptr<gossip::GossipInterface> bloom_gossip_ptr,
                                std::shared_ptr<gossip::GossipInterface> bloom_layer_gossip_ptr,
-                               std::shared_ptr<gossip::GossipInterface> gossip_rrs_ptr)
+                               std::shared_ptr<gossip::GossipInterface> gossip_rrs_ptr,
+                               std::shared_ptr<gossip::GossipInterface> gossip_dispatcher_ptr)
   : transport_ptr_(transport_ptr)
   , bloom_gossip_ptr_(bloom_gossip_ptr)
   , bloom_layer_gossip_ptr_(bloom_layer_gossip_ptr)
-  , gossip_rrs_ptr_(gossip_rrs_ptr) {
+  , gossip_rrs_ptr_(gossip_rrs_ptr)
+  , gossip_dispatcher_ptr_(gossip_dispatcher_ptr) {
 }
 
 WrouterHandler::~WrouterHandler() {
@@ -50,12 +52,19 @@ WrouterHandler::~WrouterHandler() {
     gossip_rrs_ptr_ = nullptr;
 }
 
-kadmlia::RoutingTablePtr WrouterHandler::FindRoutingTable(
-        bool is_root,
-        base::ServiceType service_type,
-        bool root_backup,
-        const std::string msg_des_node_id) {
-    return MultiRouting::Instance()->GetRoutingTable(service_type, is_root);
+kadmlia::ElectRoutingTablePtr WrouterHandler::FindElectRoutingTable(base::ServiceType service_type){
+    return MultiRouting::Instance()->GetElectRoutingTable(service_type);
+}
+kadmlia::RootRoutingTablePtr WrouterHandler::FindRootRoutingTable(){
+    return MultiRouting::Instance()->GetRootRoutingTable();
+}
+
+// kadmlia::RoutingTablePtr WrouterHandler::FindRoutingTable(
+//         bool is_root,
+//         base::ServiceType service_type,
+//         bool root_backup,
+//         const std::string msg_des_node_id) {
+//     return MultiRouting::Instance()->GetRoutingTable(service_type, is_root);
     // RoutingTablePtr routing_table = GetRoutingTable(service_type, is_root);
     // if (routing_table) {
     //     return routing_table;
@@ -99,19 +108,19 @@ kadmlia::RoutingTablePtr WrouterHandler::FindRoutingTable(
     // }
     // // no dest routing_table and no root routing_table, choose anyone(usually this is client)
     // return GetRoutingTable(vec_type[0], false);
-}
+// }
 
-std::vector<kadmlia::NodeInfoPtr> WrouterHandler::GetClosestNodes(
-        kadmlia::RoutingTablePtr routing_table,
-        const std::string& target_id,
-        uint32_t number_to_get,
-        bool base_xip) {
-    if (!routing_table) {
-        return {};
-    }
-    // TODO(smaug) judge node quality good or not good 
-    return routing_table->GetClosestNodes(target_id, number_to_get);
-}
+// std::vector<kadmlia::NodeInfoPtr> WrouterHandler::GetClosestNodes(
+//         kadmlia::RoutingTablePtr routing_table,
+//         const std::string& target_id,
+//         uint32_t number_to_get,
+//         bool base_xip) {
+//     if (!routing_table) {
+//         return {};
+//     }
+//     // TODO(smaug) judge node quality good or not good 
+//     return routing_table->GetClosestNodes(target_id, number_to_get);
+// }
 
 std::vector<kadmlia::NodeInfoPtr> WrouterHandler::GetRandomNodes (
     std::vector<kadmlia::NodeInfoPtr>& neighbors,

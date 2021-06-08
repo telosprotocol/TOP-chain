@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2018 Telos Foundation & contributors
+// Copyright (c) 2017-2019 Telos Foundation & contributors
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -11,15 +11,17 @@ namespace top {
 
 namespace gossip {
 
-class GossipRRS : public GossipInterface {
+class GossipDispatcher : public GossipInterface {
 public:
-    explicit GossipRRS(transport::TransportPtr transport_ptr);
-    virtual ~GossipRRS();
+    explicit GossipDispatcher(transport::TransportPtr transport_ptr);
+    virtual ~GossipDispatcher();
     virtual void Broadcast(uint64_t local_hash64, transport::protobuf::RoutingMessage & message, std::shared_ptr<std::vector<kadmlia::NodeInfoPtr>> neighbors);
     virtual void Broadcast(transport::protobuf::RoutingMessage & message, kadmlia::ElectRoutingTablePtr & routing_table);
 
-    void BroadcastHash(transport::protobuf::RoutingMessage & message, std::vector<kadmlia::NodeInfoPtr> & neighbors);
+private:
+    void GenerateDispatchInfos(transport::protobuf::RoutingMessage & message, kadmlia::ElectRoutingTablePtr & routing_table, std::vector<DispatchInfos> & select_nodes);
 };
 
 }  // namespace gossip
+
 }  // namespace top

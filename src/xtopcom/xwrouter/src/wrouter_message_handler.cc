@@ -15,7 +15,7 @@
 #include "xkad/routing_table/routing_utils.h"
 #include "xkad/routing_table/callback_manager.h"
 #include "xkad/routing_table/node_info.h"
-#include "xkad/routing_table/routing_table_base.h"
+// #include "xkad/routing_table/routing_table_base.h"
 #include "xkad/routing_table/node_detection_manager.h"
 #include "xkad/routing_table/local_node_info.h"
 #include "xwrouter/register_routing_table.h"

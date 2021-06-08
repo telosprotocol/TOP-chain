@@ -65,6 +65,16 @@ bool ServiceType::operator<(ServiceType const &other) const {
     return m_type < other.value();
 }
 
+bool ServiceType::IsNewer(ServiceType const &other) const {
+    if (IS_BROADCAST_HEIGHT(other.value()) || IS_BROADCAST_HEIGHT(m_type))
+        return false;
+    if (BROADCAST_HEIGHT(other.value()) == BROADCAST_HEIGHT(m_type)) {
+        if ((other.value() | 0x1FFFFF) < (m_type | 0x1FFFFF))
+            return true;
+    }
+    return false;
+}
+
 uint64_t ServiceType::value() const { return m_type; }
 
 std::string ServiceType::info() const { return m_info; }
@@ -144,8 +154,8 @@ KadmliaKey::KadmliaKey(std::string const &from_str) {
 }
 
 std::string KadmliaKey::Get() {
-    xdbg("Charles Debug KadmliaKey size: 2 %zu : %s", xip_.to_string().size(),
-         xip_.to_string().c_str());
+    // xdbg("Charles Debug KadmliaKey size: 2 %zu : %s", xip_.to_string().size(),
+    //      xip_.to_string().c_str());
     return xip_.to_string();
 }
 

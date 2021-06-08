@@ -33,25 +33,23 @@ class RootRouting : public kadmlia::RootRoutingTable {
 public:
     RootRouting(std::shared_ptr<transport::Transport>, kadmlia::LocalNodeInfoPtr);
     ~RootRouting() override;
-    virtual bool Init() override;
-    virtual bool UnInit() override;
-    virtual void HandleMessage(
-            transport::protobuf::RoutingMessage& message,
-            base::xpacket_t& packet) override;
-    virtual int AddNode(kadmlia::NodeInfoPtr node) override;
-    virtual int DropNode(kadmlia::NodeInfoPtr node) override;
-    virtual void SetFreqMessage(transport::protobuf::RoutingMessage& message) override;
+    bool Init() ;
+    // virtual bool UnInit() override;
+    void HandleMessage(transport::protobuf::RoutingMessage & message, base::xpacket_t & packet);
+    // virtual int AddNode(kadmlia::NodeInfoPtr node) override;
+    // virtual int DropNode(kadmlia::NodeInfoPtr node) override;
+    // virtual void SetFreqMessage(transport::protobuf::RoutingMessage& message) override;
 //     int GetRootNodes(uint64_t sevice_type, std::vector<kadmlia::NodeInfoPtr>& root_nodes);
 //     int GetRootNodes(const std::string& des_id, std::vector<kadmlia::NodeInfoPtr>& root_nodes);
-    void AddNetworkRootId(const std::string& root_id);
-    void RemoveNetworkRootId(const std::string& root_id);
-    bool ContainRootId(const std::string& id);
+    // void AddNetworkRootId(const std::string& root_id);
+    // void RemoveNetworkRootId(const std::string& root_id);
+    // bool ContainRootId(const std::string& id);
     // add target service_type to be cached
 //     bool SetCacheServiceType(uint64_t service_type);
     // get cache nodes of service_type give
-    bool GetCacheServicePublicNodes(
-            base::ServiceType service_type,
-            std::set<std::pair<std::string, uint16_t>>& boot_endpoints);
+    // bool GetCacheServicePublicNodes(
+    //         base::ServiceType service_type,
+    //         std::set<std::pair<std::string, uint16_t>>& boot_endpoints);
     // kadmlia::RoutingTablePtr FindRoutingTable(const std::string& msg_des_node_id);
     // bool GetRootNodesFromLocalRootRouting(
     //         kadmlia::RoutingTablePtr root_routing,
@@ -75,14 +73,14 @@ public:
 //     void UnRegisterBootstrapCacheCallback() override;
 
 protected:
-    virtual bool NewNodeReplaceOldNode(kadmlia::NodeInfoPtr node, bool remove);
+    // virtual bool NewNodeReplaceOldNode(kadmlia::NodeInfoPtr node, bool remove);
 
 private:
 
-    virtual int Bootstrap(
-            const std::string& peer_ip,
-            uint16_t peer_port,
-            base::ServiceType des_service_type) override;
+    // virtual int Bootstrap(
+    //         const std::string& peer_ip,
+    //         uint16_t peer_port,
+    //         base::ServiceType des_service_type) ;
     // void HandleRootGetNodesRequest(transport::protobuf::RoutingMessage& message, base::xpacket_t& packet);
     // void HandleRootGetNodesResponse(transport::protobuf::RoutingMessage& message, base::xpacket_t& packet);
     void HandleGetElectNodesRequest(transport::protobuf::RoutingMessage& message, base::xpacket_t& packet);
@@ -96,7 +94,7 @@ private:
             transport::protobuf::RoutingMessage& message,
             base::xpacket_t& packet);
 
-    std::set<std::string> root_id_set_;
+    // std::set<std::string> root_id_set_;
     std::mutex root_id_set_mutex_;
 
     DISALLOW_COPY_AND_ASSIGN(RootRouting);

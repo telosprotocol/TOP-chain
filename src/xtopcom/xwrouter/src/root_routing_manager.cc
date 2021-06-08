@@ -1,3 +1,4 @@
+#if 0
 // Copyright (c) 2017-2019 Telos Foundation & contributors
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
@@ -92,8 +93,8 @@ int RootRoutingManager::InitRootRoutingTable(std::shared_ptr<transport::Transpor
     return kKadSuccess;
 }
 
-std::shared_ptr<RootRoutingTable> RootRoutingManager::GetRoutingTable(base::ServiceType service_type) {
-    assert(service_type == base::ServiceType{kRoot});
+std::shared_ptr<RootRouting> RootRoutingManager::GetRootRoutingTable() {
+    // assert(service_type == base::ServiceType{kRoot});
     std::unique_lock<std::mutex> lock(root_routing_table_mutex_);
     return root_routing_table_;
 }
@@ -119,8 +120,8 @@ int RootRoutingManager::CreateRoutingTable(std::shared_ptr<transport::Transport>
         TOP_FATAL("create local_node_ptr for service_type(%ld) failed", (long)service_type.value());
         return kKadFailed;
     }
-    RootRoutingTablePtr routing_table_ptr;
-    routing_table_ptr.reset(new RootRoutingTable(transport, local_node_ptr));
+    auto routing_table_ptr = std::make_shared<RootRouting>(transport,local_node_ptr);
+    // routing_table_ptr.reset(new RootRoutingTable(transport, local_node_ptr));
 
     if (!routing_table_ptr->Init()) { // RootRouting::Init()
         TOP_FATAL("init edge bitvpn routing table failed!");
@@ -262,3 +263,4 @@ void RootRoutingManager::OnGetRootNodesV2Async(GetRootNodesV2AsyncCallback cb, b
 }  // namespace wrouter
 
 }  // namespace top
+#endif

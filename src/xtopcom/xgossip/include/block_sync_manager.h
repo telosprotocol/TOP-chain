@@ -9,7 +9,7 @@
 #include <mutex>
 
 #include "xbase/xpacket.h"
-#include "xkad/routing_table/routing_table_base.h"
+// #include "xkad/routing_table/routing_table_base.h"
 #include "xtransport/proto/transport.pb.h"
 #include "xpbase/base/top_timer.h"
 #include "xpbase/base/kad_key/kadmlia_key.h"
@@ -17,12 +17,12 @@
 
 namespace top {
 
-// namespace kadmlia {
+namespace kadmlia {
 
-// class RoutingTableBase;
-// typedef std::shared_ptr<RoutingTableBase> RoutingTablePtr;
+class RootRoutingTable;
+typedef std::shared_ptr<RootRoutingTable> RootRoutingTablePtr;
 
-// }
+}
 
 namespace gossip {
 
@@ -41,7 +41,7 @@ typedef std::shared_ptr<SyncAskFilter> SyncAskFilterPtr;
 class BlockSyncManager {
 public:
     static BlockSyncManager* Instance();
-    void SetRoutingTablePtr(kadmlia::RoutingTablePtr& routing_table);
+    void SetRoutingTablePtr(kadmlia::RootRoutingTablePtr& routing_table);
     void NewBroadcastMessage(transport::protobuf::RoutingMessage& message);
 
 private:
@@ -80,7 +80,7 @@ private:
     std::map<std::string, std::chrono::steady_clock::time_point> requested_headers_;
     std::mutex requested_headers_mutex_;
     std::shared_ptr<HeaderBlockData> header_block_data_{ nullptr };
-    kadmlia::RoutingTablePtr routing_table_;
+    kadmlia::RootRoutingTablePtr routing_table_;
 
     std::mutex sync_ask_filter_map_mutex_;
     std::unordered_map<std::string, std::vector<SyncAskFilterPtr> > sync_ask_filter_map_;

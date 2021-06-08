@@ -2,8 +2,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#pragma once
 #if 0
+#pragma once
 #include "xkad/proto/kadmlia.pb.h"
 #include "xkad/routing_table/bootstrap_cache_helper.h"
 #include "xkad/routing_table/callback_manager.h"
@@ -231,7 +231,7 @@ private:
     // std::unordered_map<std::string, NodeInfoPtr> m_nodes; // map<election_xip2_str,nodeinfoptr>
 
 public:
-#if 0
+// #if 0
     void init_election_result();
 
     // map<election_xip2_str,node_id_root_kad_key>
@@ -241,7 +241,7 @@ public:
     std::map<std::string, base::KadmliaKeyPtr> GetElectionNodesExpected();
     // std::vector<base::KadmliaKeyPtr> GetElectionNodesExpected();
     void HandleElectionNodesInfoFromRoot(std::map<std::string, kadmlia::NodeInfoPtr> const & nodes);
-#endif
+// #endif
     void FindElectionNodesInfo(std::map<std::string, base::KadmliaKeyPtr> const & kad_keys,std::map<std::string, kadmlia::NodeInfoPtr> & nodes);
 
 

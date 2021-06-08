@@ -491,6 +491,26 @@ void ElectCommands::AddBaseCommands() try {
             right_overlap = check_cast<uint32_t, const char *>(args[12].c_str());
         }
 
+        if (test_num > 1000) {
+            std::size_t cnt = test_num / 100;
+            for (std::size_t index = 0; index < cnt; ++index) {
+                elect_perf_.TestChainTradeServiceNet(src_node_id,
+                                                     des_node_id,
+                                                     100,
+                                                     test_len,
+                                                     gossip_type,
+                                                     backup,
+                                                     neighbors_num,
+                                                     stop_times,
+                                                     max_hop_num,
+                                                     evil_rate,
+                                                     layer_switch_hop_num,
+                                                     left_overlap,
+                                                     right_overlap);
+                std::this_thread::sleep_for(std::chrono::seconds(1));
+            }
+            return;
+        }
         elect_perf_.TestChainTradeServiceNet(src_node_id,
                                              des_node_id,
                                              test_num,

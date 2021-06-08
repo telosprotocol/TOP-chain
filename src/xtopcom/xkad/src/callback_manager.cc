@@ -11,7 +11,7 @@
 #include "xbase/xpacket.h"
 #include "xpbase/base/top_utils.h"
 #include "xpbase/base/top_log.h"
-#include "xkad/routing_table/routing_table_base.h"
+// #include "xkad/routing_table/routing_table_base.h"
 
 namespace top {
 

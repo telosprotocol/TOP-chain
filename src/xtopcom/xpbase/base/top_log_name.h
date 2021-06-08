@@ -6,7 +6,7 @@
 //
 
 #pragma once
-
+#if 0
 #include "top_log.h"
 
 #define TOP_DEBUG_NAME(fmt, ...) TOP_DEBUG("%s " fmt, name_.c_str(), ## __VA_ARGS__)
@@ -15,3 +15,4 @@
 #define TOP_WARN_NAME(fmt, ...) TOP_WARN("%s " fmt, name_.c_str(), ## __VA_ARGS__)
 #define TOP_ERROR_NAME(fmt, ...) TOP_ERROR("%s " fmt, name_.c_str(), ## __VA_ARGS__)
 #define TOP_FATAL_NAME(fmt, ...) TOP_FATAL("%s " fmt, name_.c_str(), ## __VA_ARGS__)
+#endif

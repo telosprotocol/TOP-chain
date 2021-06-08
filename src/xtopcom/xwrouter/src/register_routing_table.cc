@@ -1,14 +1,14 @@
 // Copyright (c) 2017-2019 Telos Foundation & contributors
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
-
+#if 0
 #include "xwrouter/register_routing_table.h"
 
 #include "xkad/routing_table/local_node_info.h"
 #include "xwrouter/multi_routing/multi_routing.h"
 #include "xwrouter/multi_routing/small_net_cache.h"
 #include "xwrouter/root/root_routing.h"
-#include "xwrouter/root/root_routing_manager.h"
+// #include "xwrouter/root/root_routing_manager.h"
 
 namespace top {
 
@@ -40,7 +40,7 @@ namespace wrouter {
 //     return MultiRouting::Instance()->GetAllRegisterRoutingTable(vec_rt);
 // }
 
-#if 0
+
 bool SetCacheServiceType(uint64_t service_type) {
     return MultiRouting::Instance()->SetCacheServiceType(service_type);
 }
@@ -126,8 +126,9 @@ int GetSameNetworkNodesV2(const std::string & des_kroot_id, base::ServiceType de
     return kadmlia::kKadSuccess;
 }
 
-#endif
+
 
 }  // namespace wrouter
 
 }  // namespace top
+#endif

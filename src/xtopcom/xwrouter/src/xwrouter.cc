@@ -8,10 +8,11 @@
 #include "xgossip/include/gossip_bloomfilter.h"
 #include "xgossip/include/gossip_bloomfilter_layer.h"
 #include "xgossip/include/gossip_rrs.h"
+#include "xgossip/include/gossip_dispatcher.h"
 #include "xgossip/include/gossip_filter.h"
 #include "xgossip/include/gossip_utils.h"
 #include "xkad/gossip/rumor_filter.h"
-#include "xkad/routing_table/routing_table_base.h"
+// #include "xkad/routing_table/routing_table_base.h"
 #include "xkad/routing_table/routing_utils.h"
 #include "xpbase/base/kad_key/kadmlia_key.h"
 #include "xpbase/base/uint64_bloomfilter.h"
@@ -46,10 +47,11 @@ Wrouter * Wrouter::Instance() {
 void Wrouter::Init(base::xcontext_t & context, const uint32_t thread_id, transport::TransportPtr transport_ptr) {
     assert(transport_ptr);
     auto bloom_gossip_ptr = std::make_shared<GossipBloomfilter>(transport_ptr);
-    auto bloom_layer_gossip_ptr = std::make_shared<GossipBloomfilterLayer>(transport_ptr);
+    auto bloom_layer_gossip_ptr = nullptr;
     auto gossip_rrs_ptr = std::make_shared<GossipRRS>(transport_ptr);
+    auto gossip_dispatcher_ptr = std::make_shared<GossipDispatcher>(transport_ptr);
     wxid_handler_ = std::make_shared<WrouterXidHandler>(
-        transport_ptr, bloom_gossip_ptr, bloom_layer_gossip_ptr, gossip_rrs_ptr);
+        transport_ptr, bloom_gossip_ptr, bloom_layer_gossip_ptr, gossip_rrs_ptr, gossip_dispatcher_ptr);
 
     // GossipFilter for global
     gossip::GossipFilter::Instance()->Init();
@@ -84,6 +86,9 @@ int32_t Wrouter::send(transport::protobuf::RoutingMessage & message) {
     } else {
         // if (IS_BROADCAST(message)) {
             XMETRICS_PACKET_INFO("p2pnormal_wroutersend_info", MESSAGE_BASIC_INFO(message), MESSAGE_FEATURE(message), IS_ROOT_BROADCAST(message), NOW_TIME);
+        // }
+        // else{
+        //     XMETRICS_PACKET_INFO("p2pnormal_wroutersend_info",MESSAGE_BASIC_INFO(message),)
         // }
     }
 #ifdef XENABLE_P2P_BENDWIDTH

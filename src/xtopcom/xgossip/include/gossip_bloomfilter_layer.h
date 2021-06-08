@@ -3,7 +3,7 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #pragma once
-
+#if 0
 #include "xtransport/transport.h"
 #include "xgossip/gossip_interface.h"
 
@@ -34,3 +34,4 @@ private:
 }  // namespace gossip
 
 }  // namespace top
+#endif

@@ -1,7 +1,7 @@
 // Copyright (c) 2017-2019 Telos Foundation & contributors
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
-
+#if 0
 #include "xbase/xpacket.h"
 #include "xbase/xutl.h"
 #include "xgossip/include/gossip_utils.h"
@@ -41,7 +41,7 @@ namespace kadmlia {
 static const int32_t kHeartbeatPeriod = 30 * 1000 * 1000;  // 2s
 
 RoutingTableBase::RoutingTableBase(std::shared_ptr<transport::Transport> transport_ptr, std::shared_ptr<LocalNodeInfo> local_node_ptr)
-  : transport_ptr_{transport_ptr,},local_node_ptr_{ local_node_ptr} {
+  : transport_ptr_{transport_ptr},local_node_ptr_{ local_node_ptr} {
 }
 
 void RoutingTableBase::GetRangeNodes(uint32_t min_index, uint32_t max_index, std::vector<NodeInfoPtr> & vec) {
@@ -112,3 +112,4 @@ int RoutingTableBase::SendData(transport::protobuf::RoutingMessage & message, No
 }  // namespace kadmlia
 
 }  // namespace top
+#endif

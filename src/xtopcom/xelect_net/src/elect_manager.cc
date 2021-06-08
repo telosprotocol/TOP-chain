@@ -180,7 +180,7 @@ void ElectManager::UpdateRoutingTable(std::vector<wrouter::WrouterTableNodes> co
     // }
 
     // if (first_node) {
-    auto root_routing = wrouter::MultiRouting::Instance()->GetRoutingTable(base::ServiceType{kRoot}, true);
+    auto root_routing = wrouter::MultiRouting::Instance()->GetRootRoutingTable();
     // std::vector<kadmlia::NodeInfoPtr> res_nodes;
     // std::vector<base::KadmliaKeyPtr> kad_key_ptrs;
     std::map<std::string, base::KadmliaKeyPtr> elect_root_kad_key_ptrs;

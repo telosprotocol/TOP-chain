@@ -4,7 +4,11 @@
 #include "xelect_net/demo/multilayer_network_demo.h"
 
 #include "xelect_net/demo/elect_manager_demo.h"
-
+#include "xcommon/xip.h"
+#include "xcrypto/xckey.h"
+#include "xcrypto/xcrypto_util.h"
+#include "xdata/xgenesis_data.h"
+#include "xpbase/base/kad_key/get_kadmlia_key.h"
 #include <fstream>
 
 namespace top {
@@ -158,10 +162,18 @@ bool MultilayerNetworkDemo::GenerateXelectNetDemoNodes(const top::base::Config &
         all_info[val_key] = json::array();
     }
     std::vector<std::string> node_id_vec;                               // all node accounts
-    node_id_vec.push_back("DEMOFULLNODEACCOUNT!DEMOFULLNODEACCOUNT!");  // fix the first node  id
+    node_id_vec.push_back("T00000ThisIsTheFirstNodeForALLat20210526");  // fix the first node  id
+
+    top::common::xnetwork_id_t network_id{top::common::xtopchain_network_id};
+    top::base::enum_vaccount_addr_type account_address_type = static_cast<top::base::enum_vaccount_addr_type>('0');
+    top::base::enum_xchain_zone_index zone_index{top::base::enum_chain_zone_consensus_index};
+    uint16_t ledger_id = top::base::xvaccount_t::make_ledger_id(static_cast<top::base::enum_xchain_id>(network_id.value()), zone_index);
     for (int i = 1; i < total_node; ++i) {
-        std::string node_id = HexEncode(RandomString(20));
-        node_id_vec.push_back(node_id);
+        auto hash = top::utl::xsha2_512_t::digest(std::to_string(std::time(nullptr) + i));
+        auto prefix_account = top::utl::xcrypto_util::make_address_by_assigned_key(hash.data(), account_address_type, ledger_id);
+        std::cout << prefix_account << " hash" << base::xhash64_t::digest(prefix_account) << std::endl;
+        // std::string node_id = HexEncode(RandomString(20));
+        node_id_vec.push_back(prefix_account);
     }
 
     all_info["fullnode"] = node_id_vec[0];  // the 0 index node is full node
@@ -206,6 +218,11 @@ bool MultilayerNetworkDemo::GenerateXelectNetDemoNodes(const top::base::Config &
         node["xip"] = HexEncode(platform_xip.xip());
         node["pubkey"] = random_node_id_vec[i];  // using node_id as pubkey
         node["gid"] = 0;                         // associated_gid
+        node["hash"] = base::xhash64_t::digest(random_node_id_vec[i]);
+        base::XipParser _xip(platform_xip.xip());
+        base::KadmliaKeyPtr kad_key = base::GetKadmliaKey(_xip, random_node_id_vec[i]);
+        auto another_id = kad_key->Get();
+        node["hash2"] = base::xhash64_t::digest(another_id);
         all_info["rec"].push_back(node);
     }
 
@@ -227,6 +244,11 @@ bool MultilayerNetworkDemo::GenerateXelectNetDemoNodes(const top::base::Config &
         node["xip"] = HexEncode(platform_xip.xip());
         node["pubkey"] = random_node_id_vec[i];  // using node_id as pubkey
         node["gid"] = 0;                         // associated_gid
+        node["hash"] = base::xhash64_t::digest(random_node_id_vec[i]);
+        base::XipParser _xip(platform_xip.xip());
+        base::KadmliaKeyPtr kad_key = base::GetKadmliaKey(_xip, random_node_id_vec[i]);
+        auto another_id = kad_key->Get();
+        node["hash2"] = base::xhash64_t::digest(another_id);
         all_info["zec"].push_back(node);
     }
 
@@ -248,6 +270,11 @@ bool MultilayerNetworkDemo::GenerateXelectNetDemoNodes(const top::base::Config &
         node["xip"] = HexEncode(platform_xip.xip());
         node["pubkey"] = random_node_id_vec[i];  // using node_id as pubkey
         node["gid"] = 0;                         // associated_gid
+        node["hash"] = base::xhash64_t::digest(random_node_id_vec[i]);
+        base::XipParser _xip(platform_xip.xip());
+        base::KadmliaKeyPtr kad_key = base::GetKadmliaKey(_xip, random_node_id_vec[i]);
+        auto another_id = kad_key->Get();
+        node["hash2"] = base::xhash64_t::digest(another_id);
         all_info["edg"].push_back(node);
     }
 
@@ -269,6 +296,11 @@ bool MultilayerNetworkDemo::GenerateXelectNetDemoNodes(const top::base::Config &
         node["xip"] = HexEncode(platform_xip.xip());
         node["pubkey"] = random_node_id_vec[i];  // using node_id as pubkey
         node["gid"] = 0;                         // associated_gid
+        node["hash"] = base::xhash64_t::digest(random_node_id_vec[i]);
+        base::XipParser _xip(platform_xip.xip());
+        base::KadmliaKeyPtr kad_key = base::GetKadmliaKey(_xip, random_node_id_vec[i]);
+        auto another_id = kad_key->Get();
+        node["hash2"] = base::xhash64_t::digest(another_id);
         all_info["arc"].push_back(node);
     }
 
@@ -294,6 +326,11 @@ bool MultilayerNetworkDemo::GenerateXelectNetDemoNodes(const top::base::Config &
             node["xip"] = HexEncode(platform_xip.xip());
             node["pubkey"] = random_node_id_vec[i];  // using node_id as pubkey
             node["gid"] = 0;                         // associated_gid
+            node["hash"] = base::xhash64_t::digest(random_node_id_vec[i]);
+            base::XipParser _xip(platform_xip.xip());
+            base::KadmliaKeyPtr kad_key = base::GetKadmliaKey(_xip, random_node_id_vec[i]);
+            auto another_id = kad_key->Get();
+            node["hash2"] = base::xhash64_t::digest(another_id);
             all_info[adv_key].push_back(node);
         }
     }
@@ -324,6 +361,11 @@ bool MultilayerNetworkDemo::GenerateXelectNetDemoNodes(const top::base::Config &
             node["xip"] = HexEncode(platform_xip.xip());
             node["pubkey"] = random_node_id_vec[i];  // using node_id as pubkey
             node["gid"] = adv_group;                 // associated_gid
+            node["hash"] = base::xhash64_t::digest(random_node_id_vec[i]);
+            base::XipParser _xip(platform_xip.xip());
+            base::KadmliaKeyPtr kad_key = base::GetKadmliaKey(_xip, random_node_id_vec[i]);
+            auto another_id = kad_key->Get();
+            node["hash2"] = base::xhash64_t::digest(another_id);
             all_info[val_key].push_back(node);
         }
     }

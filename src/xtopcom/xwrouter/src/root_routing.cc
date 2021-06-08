@@ -15,7 +15,7 @@
 #include "xwrouter/wrouter_utils/wrouter_utils.h"
 #include "xwrouter/register_message_handler.h"
 #include "xtransport/udp_transport/transport_util.h"
-#include "xpbase/base/top_log_name.h"
+// #include "xpbase/base/top_log_name.h"
 
 namespace top {
 
@@ -27,9 +27,9 @@ static const int32_t kGetNodesTimeout = 3;
 static const uint32_t kGetNodesSize = 8;
 
 RootRouting::RootRouting(std::shared_ptr<transport::Transport> transport, kadmlia::LocalNodeInfoPtr local_node_ptr)
-  : RootRoutingTable(transport, local_node_ptr), root_id_set_(), root_id_set_mutex_() {
-    WrouterRegisterMessageHandler(kRootMessage, 
-                                  [this](transport::protobuf::RoutingMessage & message, base::xpacket_t & packet) { HandleMessage(message, packet); });
+  : RootRoutingTable(transport, local_node_ptr), root_id_set_mutex_() {
+    // WrouterRegisterMessageHandler(kRootMessage, 
+    //                               [this](transport::protobuf::RoutingMessage & message, base::xpacket_t & packet) { HandleMessage(message, packet); });
     WrouterRegisterMessageHandler(kKadFindNodesRequest,
                                   [this](transport::protobuf::RoutingMessage & message, base::xpacket_t & packet) { HandleFindNodesRequest(message, packet); });
     WrouterRegisterMessageHandler(kKadFindNodesResponse,
@@ -43,74 +43,79 @@ RootRouting::RootRouting(std::shared_ptr<transport::Transport> transport, kadmli
 }
 
 RootRouting::~RootRouting() {
-    WrouterUnregisterMessageHandler(kRootMessage);
+    // WrouterUnregisterMessageHandler(kRootMessage);
+    WrouterUnregisterMessageHandler(kKadFindNodesRequest);
+    WrouterUnregisterMessageHandler(kKadFindNodesResponse);
+    WrouterUnregisterMessageHandler(kKadHandshake);
+    WrouterUnregisterMessageHandler(kKadBootstrapJoinRequest);
+    WrouterUnregisterMessageHandler(kKadBootstrapJoinResponse);
 }
 
-bool RootRouting::UnInit() {
-    // if (local_node_ptr_->service_type() != base::ServiceType(kRoot)) {
-    //     RoutingTablePtr root_routing_ptr = GetRoutingTable(base::ServiceType(kRoot), true);
-    //     if (root_routing_ptr) {
-    //         RootRouting* root = dynamic_cast<RootRouting*>(root_routing_ptr.get());
-    //         if (root != nullptr) {
-    //             root->RemoveNetworkRootId(local_node_ptr_->id());
-    //         }
-    //     }
-    // }
-    // if (local_node_ptr_->service_type() == kRoot) {
-    //     UnRegisterBootstrapCacheCallback();
-    // }
-    return RootRoutingTable::UnInit();
-}
+// bool RootRouting::UnInit() {
+//     // if (get_local_node_info()->service_type() != base::ServiceType(kRoot)) {
+//     //     RoutingTablePtr root_routing_ptr = GetRoutingTable(base::ServiceType(kRoot), true);
+//     //     if (root_routing_ptr) {
+//     //         RootRouting* root = dynamic_cast<RootRouting*>(root_routing_ptr.get());
+//     //         if (root != nullptr) {
+//     //             root->RemoveNetworkRootId(get_local_node_info()->id());
+//     //         }
+//     //     }
+//     // }
+//     // if (get_local_node_info()->service_type() == kRoot) {
+//     //     UnRegisterBootstrapCacheCallback();
+//     // }
+//     return RootRoutingTable::UnInit();
+// }
 
-void RootRouting::RemoveNetworkRootId(const std::string& root_id) {
-    std::unique_lock<std::mutex> lock(root_id_set_mutex_);
-    auto iter = root_id_set_.find(root_id);
-    if (iter != root_id_set_.end()) {
-        root_id_set_.erase(iter);
-    }
-}
+// void RootRouting::RemoveNetworkRootId(const std::string& root_id) {
+//     std::unique_lock<std::mutex> lock(root_id_set_mutex_);
+//     auto iter = root_id_set_.find(root_id);
+//     if (iter != root_id_set_.end()) {
+//         root_id_set_.erase(iter);
+//     }
+// }
 
-void RootRouting::AddNetworkRootId(const std::string& root_id) {
-    std::unique_lock<std::mutex> lock(root_id_set_mutex_);
-    root_id_set_.insert(root_id);
-}
+// void RootRouting::AddNetworkRootId(const std::string& root_id) {
+//     std::unique_lock<std::mutex> lock(root_id_set_mutex_);
+//     root_id_set_.insert(root_id);
+// }
 
-void RootRouting::SetFreqMessage(transport::protobuf::RoutingMessage& message) {
-    RootRoutingTable::SetFreqMessage(message);
-    message.set_is_root(true);
-}
+// void RootRouting::SetFreqMessage(transport::protobuf::RoutingMessage& message) {
+//     RootRoutingTable::SetFreqMessage(message);
+//     message.set_is_root(true);
+// }
 
-bool RootRouting::ContainRootId(const std::string& id) {
-    assert(local_node_ptr_->service_type() == base::ServiceType(kRoot));
-    std::unique_lock<std::mutex> lock(root_id_set_mutex_);
-    auto iter = root_id_set_.find(id);
-    return iter != root_id_set_.end();
-}
+// bool RootRouting::ContainRootId(const std::string& id) {
+//     assert(get_local_node_info()->service_type() == base::ServiceType(kRoot));
+//     std::unique_lock<std::mutex> lock(root_id_set_mutex_);
+//     auto iter = root_id_set_.find(id);
+//     return iter != root_id_set_.end();
+// }
 
-bool RootRouting::NewNodeReplaceOldNode(NodeInfoPtr node, bool remove) {
-    return RootRoutingTable::NewNodeReplaceOldNode(node, remove);
-}
-
-
-int RootRouting::AddNode(NodeInfoPtr node) {
-    int res = RootRoutingTable::AddNode(node);
-    if (res != kKadSuccess) {
-        return res;
-    }
-
-    return res;
-}
-
-int RootRouting::DropNode(NodeInfoPtr node) {
-    int res = RootRoutingTable::DropNode(node);
-    if (res != kKadSuccess) {
-        return res;
-    }
-
-    return res;
-}
+// bool RootRouting::NewNodeReplaceOldNode(NodeInfoPtr node, bool remove) {
+//     return RootRoutingTable::NewNodeReplaceOldNode(node, remove);
+// }
 
 
+// int RootRouting::AddNode(NodeInfoPtr node) {
+//     int res = RootRoutingTable::AddNode(node);
+//     if (res != kKadSuccess) {
+//         return res;
+//     }
+
+//     return res;
+// }
+
+// int RootRouting::DropNode(NodeInfoPtr node) {
+//     int res = RootRoutingTable::DropNode(node);
+//     if (res != kKadSuccess) {
+//         return res;
+//     }
+
+//     return res;
+// }
+
+#if 0
 // RoutingTablePtr RootRouting::FindRoutingTable(const std::string& msg_des_node_id) {
 //     std::vector<base::ServiceType> vec_type;
 //     GetAllRegisterType(vec_type);
@@ -218,7 +223,7 @@ int RootRouting::DropNode(NodeInfoPtr node) {
 //     auto debug_info = base::StringUtil::str_fmt(
 //             "root routing get nodes, [id: %u] [src: %s], [des: %s] ",
 //             message.id(),
-//             HexEncode(local_node_ptr_->id()).c_str(),
+//             HexEncode(get_local_node_info()->id()).c_str(),
 //             HexEncode(node_id).c_str());
 //     message.set_debug(debug_info);
 //     TOP_NETWORK_DEBUG_FOR_PROTOMESSAGE("root_get_nodes_begin", message);
@@ -341,28 +346,28 @@ int RootRouting::DropNode(NodeInfoPtr node) {
 //     base::KadmliaKeyPtr kad_key = base::GetKadmliaKey(service_type);
 //     return GetRootNodes(kad_key->Get(), nodes);
 // }
-
+#endif
 bool RootRouting::Init() {
-    local_node_ptr_->set_is_root(true);
+    get_local_node_info()->set_is_root(true);
     if (!RootRoutingTable::Init()) {
         TOP_ERROR("RootRoutingTable::Init failed");
         return false;
     }
-    assert(local_node_ptr_->kadmlia_key()->xnetwork_id() == kRoot);
-    local_node_ptr_->set_kadmlia_key(global_xid);
+    assert(get_local_node_info()->kadmlia_key()->xnetwork_id() == kRoot);
+    get_local_node_info()->set_kadmlia_key(global_xid);
 
-    AddNetworkRootId(local_node_ptr_->id());
+    // AddNetworkRootId(get_local_node_info()->id());
 
     TOP_INFO("root routing table Init success");
     return true;
 }
 
-int RootRouting::Bootstrap(
-        const std::string& peer_ip,
-        uint16_t peer_port,
-        base::ServiceType des_service_type) {
-    return RootRoutingTable::Bootstrap(peer_ip, peer_port, base::ServiceType(kRoot));
-}
+// int RootRouting::Bootstrap(
+//         const std::string& peer_ip,
+//         uint16_t peer_port,
+//         base::ServiceType des_service_type) {
+//     return RootRoutingTable::Bootstrap(peer_ip, peer_port, base::ServiceType(kRoot));
+// }
 
 // void RootRouting::HandleRootGetNodesRequest(
 //         transport::protobuf::RoutingMessage& message,
@@ -370,7 +375,7 @@ int RootRouting::Bootstrap(
 //     TOP_NETWORK_DEBUG_FOR_PROTOMESSAGE("handle request", message);
 //     base::KadmliaKeyPtr kad_key = base::GetKadmliaKey(message.des_node_id());
 //     uint64_t node_service_type = kad_key->GetServiceType();
-//     if (message.des_node_id() != local_node_ptr_->id()) {
+//     if (message.des_node_id() != get_local_node_info()->id()) {
 //         bool closest = false;
 //         std::set<std::string> exclude;
 //         exclude.insert(message.src_node_id());
@@ -432,7 +437,7 @@ int RootRouting::Bootstrap(
 //     nodes = routing_table->GetClosestNodes(get_nodes_req.id(), get_nodes_req.count() - 1);
 //     auto local_node_ptr = routing_table->get_local_node_info();
 //     if (!local_node_ptr) {
-//         local_node_ptr = local_node_ptr_;
+//         local_node_ptr = get_local_node_info();
 //     }
 //     if (local_node_ptr->kadmlia_key()->GetServiceType() != node_service_type) {
 //         return;
@@ -523,7 +528,7 @@ int RootRouting::Bootstrap(
 // void RootRouting::HandleRootGetNodesResponse(
 //         transport::protobuf::RoutingMessage& message,
 //         base::xpacket_t& packet) {
-//     if (message.des_node_id() != local_node_ptr_->id()) {
+//     if (message.des_node_id() != get_local_node_info()->id()) {
 //         RoutingTablePtr target_routing = FindRoutingTable(message.des_node_id());
 //         if (!target_routing) {
 //             TOP_WARN("FindRoutingTable failed");
@@ -605,7 +610,7 @@ void RootRouting::HandleMessage(
 //     };
 
 //     if (!bootstrap_cache_helper_->Start(
-//             local_node_ptr_->kadmlia_key(),
+//             get_local_node_info()->kadmlia_key(),
 //             get_public_nodes,
 //             get_service_public_nodes)) {
 //         TOP_ERROR("boostrap_cache_helper start failed");
@@ -642,7 +647,7 @@ void RootRouting::HandleMessage(
 //     auto debug_info = base::StringUtil::str_fmt(
 //             "root routing get nodes, [id: %u] [src: %s], [des: %s] ",
 //             message.id(),
-//             local_node_ptr_->id().c_str(),
+//             get_local_node_info()->id().c_str(),
 //             des_kroot_id.c_str());
 //     message.set_debug(debug_info);
 //     TOP_NETWORK_DEBUG_FOR_PROTOMESSAGE("root_get_nodes_begin", message);
@@ -721,9 +726,10 @@ int RootRouting::GetRootNodesV2Async(
         const std::string& des_kroot_id,
         base::ServiceType des_service_type,
         GetRootNodesV2AsyncCallback cb) {
-    TOP_DEBUG_NAME("bluerootasync routing start");
+    xdbg("bluerootasync routing start");
     transport::protobuf::RoutingMessage message;
     SetFreqMessage(message);
+    message.set_is_root(true);
     message.set_des_service_type(kRoot);
     message.set_des_node_id(des_kroot_id);
     message.set_type(kRootMessage);
@@ -733,7 +739,7 @@ int RootRouting::GetRootNodesV2Async(
     auto debug_info = base::StringUtil::str_fmt(
             "root routing get nodes, [id: %u] [src: %s], [des: %s] ",
             message.id(),
-            HexEncode(local_node_ptr_->id()).c_str(),
+            HexEncode(get_local_node_info()->id()).c_str(),
             HexEncode(des_kroot_id).c_str());
     message.set_debug(debug_info);
     TOP_NETWORK_DEBUG_FOR_PROTOMESSAGE("root_get_nodes_begin", message);
@@ -757,7 +763,7 @@ int RootRouting::GetRootNodesV2Async(
         return kKadFailed;
     }
     message.set_data(root_data);
-    TOP_DEBUG_NAME("%s bluerootasync sending message", transport::FormatMsgid(message).c_str());
+    xdbg("%s bluerootasync sending message", transport::FormatMsgid(message).c_str());
     SendToClosestNode(message, false);
 
     using namespace std::placeholders;
@@ -774,7 +780,7 @@ void RootRouting::OnGetRootNodesV2Async(
         int status,
         transport::protobuf::RoutingMessage& message,
         base::xpacket_t& packet) {
-    TOP_DEBUG_NAME("%s bluerootasync routing callback", transport::FormatMsgid(message).c_str());
+    xdbg("%s bluerootasync routing callback", transport::FormatMsgid(message).c_str());
     if (status == kKadSuccess) {
         std::vector<kadmlia::NodeInfoPtr> nodes;
         do {
@@ -825,8 +831,9 @@ void RootRouting::OnGetRootNodesV2Async(
 void RootRouting::HandleGetElectNodesRequest(
         transport::protobuf::RoutingMessage& message,
         base::xpacket_t& packet) {
+    assert(false);
     TOP_NETWORK_DEBUG_FOR_PROTOMESSAGE("handle request", message);
-    if (message.des_node_id() != local_node_ptr_->id()) {
+    if (message.des_node_id() != get_local_node_info()->id()) {
         bool closest = false;
         if (ClosestToTarget(message.des_node_id(), closest) != kKadSuccess) {
             TOP_WARN("root routing closesttotarget goes wrong");
@@ -963,7 +970,8 @@ void RootRouting::HandleGetElectNodesRequest(
 void RootRouting::HandleGetElectNodesResponse(
         transport::protobuf::RoutingMessage& message,
         base::xpacket_t& packet) {
-    if (message.des_node_id() != local_node_ptr_->id()) {
+    assert(false);
+    if (message.des_node_id() != get_local_node_info()->id()) {
         return SendToClosestNode(message);
     }
 
@@ -1000,6 +1008,7 @@ bool RootRouting::FindNodesFromOthers(base::ServiceType const & service_type,
     }
     transport::protobuf::RoutingMessage message;
     SetFreqMessage(message);
+    message.set_is_root(true);
     message.set_des_service_type(kRoot);
     message.set_des_node_id(root_kad_key->Get());
     message.set_type(kRootMessage);
@@ -1032,7 +1041,7 @@ void RootRouting::OnFindNodesFromOthers(base::ServiceType const & service_type,
                                          int status,
                                          transport::protobuf::RoutingMessage & message,
                                          base::xpacket_t & packet) {
-    if (message.des_node_id() != local_node_ptr_->id()) {
+    if (message.des_node_id() != get_local_node_info()->id()) {
         return;
     }
 
@@ -1080,6 +1089,7 @@ void RootRouting::HandleFindNodesFromOthersRequest(transport::protobuf::RoutingM
     if (node_id_map_.find(message.des_node_id()) != node_id_map_.end()) {
         auto target_node_info = node_id_map_.at(message.des_node_id());
         transport::protobuf::RoutingMessage res_message;
+        res_message.set_is_root(true);
         res_message.set_des_node_id(message.src_node_id());
         res_message.set_type(kRootMessage);
         res_message.set_id(message.id());
@@ -1111,7 +1121,7 @@ void RootRouting::HandleFindNodesFromOthersRequest(transport::protobuf::RoutingM
 }
 // root routing table used_only
 void RootRouting::HandleFindNodesFromOthersResponse(transport::protobuf::RoutingMessage & message, base::xpacket_t & packet) {
-    if (message.des_node_id() != local_node_ptr_->id()) {
+    if (message.des_node_id() != get_local_node_info()->id()) {
         return SendToClosestNode(message);
     }
     CallbackManager::Instance()->Callback(message.id(), message, packet);

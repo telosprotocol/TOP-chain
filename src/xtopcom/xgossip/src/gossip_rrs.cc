@@ -17,7 +17,8 @@ GossipRRS::GossipRRS(transport::TransportPtr transport_ptr) : GossipInterface{tr
 GossipRRS::~GossipRRS() {
 }
 
-void GossipRRS::Broadcast(transport::protobuf::RoutingMessage & message, kadmlia::RoutingTablePtr & routing_table) {
+void GossipRRS::Broadcast(transport::protobuf::RoutingMessage & message, kadmlia::ElectRoutingTablePtr & routing_table) {
+    assert(false);
     return;
 }
 

@@ -9,7 +9,7 @@
 #include "xkad/proto/kadmlia.pb.h"
 #include "xkad/routing_table/local_node_info.h"
 #include "xkad/routing_table/node_info.h"
-#include "xkad/routing_table/routing_table_base.h"
+// #include "xkad/routing_table/routing_table_base.h"
 #include "xkad/routing_table/routing_utils.h"
 #include "xpbase/base/top_config.h"
 #include "xpbase/base/top_timer.h"
@@ -32,30 +32,44 @@ namespace kadmlia {
 
 class LocalNodeInfo;
 
-class ElectRoutingTable
-  : public RoutingTableBase
-  , public std::enable_shared_from_this<ElectRoutingTable> {
+class ElectRoutingTable : public std::enable_shared_from_this<ElectRoutingTable> {
 public:
     ElectRoutingTable(std::shared_ptr<transport::Transport>, std::shared_ptr<LocalNodeInfo>);
     ElectRoutingTable(ElectRoutingTable const &) = delete;
     ElectRoutingTable & operator=(ElectRoutingTable const &) = delete;
     ElectRoutingTable(ElectRoutingTable &&) = default;
     ElectRoutingTable & operator=(ElectRoutingTable &&) = default;
-    ~ElectRoutingTable() override = default;
-    bool Init() override;
-    bool UnInit() override;
-
-    
-    std::size_t nodes_size() override;
-    std::vector<NodeInfoPtr> GetClosestNodes(const std::string & target_id, uint32_t number_to_get) override;
+    ~ElectRoutingTable()  = default;
+    bool Init() ;
+    bool UnInit() ;
 
 public:
-    int AddNode(NodeInfoPtr node) override;
-    int DropNode(NodeInfoPtr node) override;
+    base::ServiceType GetRoutingTableType() {
+        return local_node_ptr_->service_type();
+    }
+    std::shared_ptr<transport::Transport> get_transport() {
+        return transport_ptr_;
+    }
+    std::shared_ptr<LocalNodeInfo> get_local_node_info() {
+        return local_node_ptr_;
+    }
+
+    int SendData(const xbyte_buffer_t & data, const std::string & peer_ip, uint16_t peer_port, uint16_t priority = enum_xpacket_priority_type_priority);
+    int SendData(transport::protobuf::RoutingMessage & message, const std::string & peer_ip, uint16_t peer_port);
+    int SendData(transport::protobuf::RoutingMessage & message, NodeInfoPtr node_ptr);
+    int SendPing(transport::protobuf::RoutingMessage & message, const std::string & peer_ip, uint16_t peer_port);
+
+    std::size_t nodes_size() ;
+    std::vector<std::string> const & get_shuffled_xip2();
+    std::vector<NodeInfoPtr> GetClosestNodes(const std::string & target_id, uint32_t number_to_get) ;
+
+public:
+    int AddNode(NodeInfoPtr node) ;
+    int DropNode(NodeInfoPtr node) ;
     bool CanAddNode(NodeInfoPtr node);
 
-    NodeInfoPtr GetRandomNode() override;
-    bool GetRandomNodes(std::vector<NodeInfoPtr> & vec, size_t size) override;
+    NodeInfoPtr GetRandomNode() ;
+    bool GetRandomNodes(std::vector<NodeInfoPtr> & vec, size_t size) ;
     std::unordered_map<std::string, NodeInfoPtr> nodes();
     NodeInfoPtr GetNode(const std::string & id);
 
@@ -78,6 +92,9 @@ private:
     void PrintRoutingTable();
     void OnHeartbeatFailed(const std::string & ip, uint16_t port);
     void SetFreqMessage(transport::protobuf::RoutingMessage & message);
+private:
+    std::shared_ptr<transport::Transport> transport_ptr_;
+    std::shared_ptr<LocalNodeInfo> local_node_ptr_;
 
 private:
     base::TimerManager * timer_manager_{base::TimerManager::Instance()};
@@ -87,8 +104,12 @@ private:
     bool destroy_;
 
 private:
+    std::size_t m_self_index;
     std::map<std::string, base::KadmliaKeyPtr> m_expected_kad_keys;  // map<election_xip2_str,node_id_root_kad_key>
     std::unordered_map<std::string, NodeInfoPtr> m_nodes;            // map<election_xip2_str,nodeinfoptr>
+    // std::vector<NodeInfoPtr> m_ordered_nodes;
+    std::unordered_map<std::string, std::size_t> m_index_map; // map<election_xip2_str,index>
+    std::vector<std::string> m_xip2_for_shuffle; // random shuffled everytime used.
 };
 
 typedef std::shared_ptr<ElectRoutingTable> ElectRoutingTablePtr;

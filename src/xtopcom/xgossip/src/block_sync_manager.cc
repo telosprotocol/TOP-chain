@@ -7,7 +7,7 @@
 #include "xpbase/base/top_log.h"
 #include "xpbase/base/kad_key/kadmlia_key.h"
 #include "xkad/routing_table/callback_manager.h"
-#include "xkad/routing_table/routing_table_base.h"
+// #include "xkad/routing_table/routing_table_base.h"
 // #include "xwrouter/register_routing_table.h"
 #include "xwrouter/multi_routing/multi_routing.h"
 #include "xwrouter/message_handler/wrouter_message_handler.h"
@@ -139,7 +139,7 @@ void BlockSyncManager::AddHeaderHashToQueue(
             std::chrono::milliseconds(kHeaderSavePeriod) })));
 }
 
-void BlockSyncManager::SetRoutingTablePtr(kadmlia::RoutingTablePtr& routing_table) {
+void BlockSyncManager::SetRoutingTablePtr(kadmlia::RootRoutingTablePtr& routing_table) {
     routing_table_ = routing_table;
 }
 

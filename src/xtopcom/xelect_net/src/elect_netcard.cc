@@ -5,7 +5,7 @@
 
 #include "xpbase/base/top_log.h"
 #include "xpbase/base/top_utils.h"
-#include "xkad/routing_table/routing_table_base.h"
+// #include "xkad/routing_table/routing_table_base.h"
 #include "xwrouter/register_routing_table.h"
 #include "xwrouter/register_message_handler.h"
 #include "xwrouter/xwrouter.h"
@@ -203,7 +203,7 @@ int EcNetcard::send(
         return GossipOldRootBroadcast(pbft_message, gossip::kGossipBloomfilter, chain_data_hash, static_cast<uint32_t>(message.id()));
     }
 
-    return GossipOldLayerBroadcast(pbft_message, gossip::kGossipBloomfilterAndLayered, chain_data_hash, static_cast<uint32_t>(message.id()));
+    return GossipOldLayerBroadcast(pbft_message, gossip::kGossipDispatcher, chain_data_hash, static_cast<uint32_t>(message.id()));
 }
 
 int EcNetcard::GossipWithHeaderBlock(transport::protobuf::RoutingMessage & pbft_message, uint32_t block_gossip_type, uint32_t chain_data_hash, uint32_t chain_msgid) const {

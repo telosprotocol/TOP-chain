@@ -1,6 +1,7 @@
 // Copyright (c) 2017-2018 Telos Foundation & contributors
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
+#if 0
 #include "xelect_net/include/multilayer_network_chain.h"
 
 #include <stdlib.h>
@@ -148,9 +149,7 @@ void MultilayerNetworkChain::Stop() {
     MultilayerNetwork::Stop();
 }
 
-int MultilayerNetworkChain::HandleParamsAndConfig(
-        const top::data::xplatform_params& platform_param,
-        top::base::Config& edge_config) {
+int MultilayerNetworkChain::HandleParamsAndConfig(const top::data::xplatform_params & platform_param, top::base::Config & edge_config) {
     if (!edge_config.Set("db", "path", platform_param.db_path)) {
         TOP_ERROR("set config failed [db][path][%s]", platform_param.db_path.c_str());
         return 1;
@@ -346,7 +345,7 @@ std::vector<std::string> MultilayerNetworkChain::GetServiceNeighbours(const comm
     //xip.set_network_type((uint8_t)(address.cluster_address().type()));
 
     auto kad_key = base::GetKadmliaKey(xip2);
-    auto rt = wrouter::MultiRouting::Instance()->GetRoutingTable(kad_key->GetServiceType(), false);
+    auto rt = wrouter::MultiRouting::Instance()->GetElectRoutingTable(kad_key->GetServiceType());
     if (!rt) {
         TOP_WARN("no routinng table:%llu registered, GetServiceNeighbours failed", kad_key->GetServiceType().value());
         return {};
@@ -368,3 +367,4 @@ std::vector<std::string> MultilayerNetworkChain::GetServiceNeighbours(const comm
 }  // namespace elect
 
 }  // namespace top
+#endif

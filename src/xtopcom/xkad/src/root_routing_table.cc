@@ -38,7 +38,7 @@
 #include <sstream>
 #include <unordered_map>
 //#include "xkad/top_main/top_commands.h"
-#include "xpbase/base/top_log_name.h"
+// #include "xpbase/base/top_log_name.h"
 #include "xtransport/udp_transport/transport_util.h"
 
 namespace top {
@@ -53,8 +53,9 @@ static const int32_t kRejoinPeriod = 10 * 1000 * 1000;                // 10s
 static const int32_t kFindNeighboursPeriod = 3 * 1000 * 1000;         // 3s
 static const int32_t kDumpRoutingTablePeriod = 1 * 60 * 1000 * 1000;  // 5min
 
-RootRoutingTable::RootRoutingTable(std::shared_ptr<transport::Transport> transport_ptr,  std::shared_ptr<LocalNodeInfo> local_node_ptr)
-  : RoutingTableBase{transport_ptr_, local_node_ptr}
+RootRoutingTable::RootRoutingTable(std::shared_ptr<transport::Transport> transport_ptr, std::shared_ptr<LocalNodeInfo> local_node_ptr)
+  : transport_ptr_{transport_ptr}
+  , local_node_ptr_{local_node_ptr}
   , RoutingMaxNodesSize_(kRoutingMaxNodesSize)
   , nodes_()
   , nodes_mutex_()
@@ -70,40 +71,42 @@ RootRoutingTable::RootRoutingTable(std::shared_ptr<transport::Transport> transpo
   , bootstrap_port_(0)
   , bootstrap_nodes_mutex_()
   , node_detection_ptr_(nullptr)
-  , destroy_(false)
-  , find_nodes_period_(0)
-  , set_endpoints_mutex_()
-  , after_join_(false) {
+  , destroy_(false) {
 }
 
 // RootRoutingTable::~RootRoutingTable() {
 // }
 
 bool RootRoutingTable::Init() {
-    uint16_t local_port = transport_ptr_->local_port();
-    local_node_ptr_->set_local_port(local_port);
+    uint16_t local_port = get_transport()->local_port();
+    get_local_node_info()->set_local_port(local_port);
 
-    if (local_node_ptr_->first_node()) {
-        local_node_ptr_->set_public_ip(local_node_ptr_->local_ip());
-        local_node_ptr_->set_public_port(local_node_ptr_->local_port());
+    if (get_local_node_info()->first_node()) {
+        get_local_node_info()->set_public_ip(get_local_node_info()->local_ip());
+        get_local_node_info()->set_public_port(get_local_node_info()->local_port());
     }
 
     {
         std::unique_lock<std::mutex> lock_hash(node_hash_map_mutex_);
         NodeInfoPtr node_ptr;
-        node_ptr.reset(new NodeInfo(local_node_ptr_->id()));
-        node_ptr->local_ip = local_node_ptr_->local_ip();
-        node_ptr->local_port = local_node_ptr_->local_port();
-        node_ptr->public_ip = local_node_ptr_->public_ip();
-        node_ptr->public_port = local_node_ptr_->public_port();
-        node_ptr->xid = local_node_ptr_->xid();
-        node_ptr->hash64 = local_node_ptr_->hash64();
+        node_ptr.reset(new NodeInfo(get_local_node_info()->id()));
+        node_ptr->local_ip = get_local_node_info()->local_ip();
+        node_ptr->local_port = get_local_node_info()->local_port();
+        node_ptr->public_ip = get_local_node_info()->public_ip();
+        node_ptr->public_port = get_local_node_info()->public_port();
+        node_ptr->xid = get_local_node_info()->xid();
+        node_ptr->hash64 = get_local_node_info()->hash64();
         TOP_DEBUG("add node_hash_map node_id:%s hash64:%llu public_endpoint:%s:%u",
-                  HexEncode(node_ptr->node_id).c_str(),
+                  (node_ptr->node_id).c_str(),
                   node_ptr->hash64,
                   node_ptr->public_ip.c_str(),
                   node_ptr->public_port);
         node_hash_map_->insert(std::make_pair(node_ptr->hash64, node_ptr));
+    }
+    {
+        std::unique_lock<std::mutex> lock(use_nodes_mutex_);
+        no_lock_for_use_nodes_.reset();
+        no_lock_for_use_nodes_ = std::make_shared<std::vector<NodeInfoPtr>>(nodes());
     }
 
     node_detection_ptr_.reset(new NodeDetectionManager(timer_manager_, *this));
@@ -132,16 +135,16 @@ void RootRoutingTable::PrintRoutingTable() {
     {
         NodesLock lock(nodes_mutex_);
         uint32_t tmp_index = ++index;
-        std::string file_name = "/tmp/all_node_id_" + HexSubstr(local_node_ptr_->id()) + "_" + std::to_string(tmp_index);
+        std::string file_name = "/tmp/all_node_id_" + HexSubstr(get_local_node_info()->id()) + "_" + std::to_string(tmp_index);
         FILE * fd = fopen(file_name.c_str(), "w");
         if (fd == NULL) {
             return;
         }
 
-        SortNodesByTargetXid(local_node_ptr_->id(), nodes_.size());
+        SortNodesByTargetXid(get_local_node_info()->id(), nodes_.size());
         size = nodes_.size();
         fprintf(fd, "size: %d\n", size);
-        fprintf(fd, "local: %s\t%s:%d\n", HexEncode(local_node_ptr_->id()).c_str(), local_node_ptr_->public_ip().c_str(), local_node_ptr_->public_port());
+        fprintf(fd, "local: %s\t%s:%d\n", HexEncode(get_local_node_info()->id()).c_str(), get_local_node_info()->public_ip().c_str(), get_local_node_info()->public_port());
         std::map<uint32_t, unsigned int> bucket_rank_map;
         for (auto & node_ptr : nodes_) {
             bucket_rank_map[node_ptr->bucket_index] += 1;
@@ -155,9 +158,9 @@ void RootRoutingTable::PrintRoutingTable() {
         fclose(fd);
     }
 
-    TOP_DEBUG_NAME("RootRoutingTable dump for xnetwork_id(%d) service_type(%s), dump_size(%d)",
-                   local_node_ptr_->kadmlia_key()->xnetwork_id(),
-                   local_node_ptr_->kadmlia_key()->GetServiceType().info().c_str(),
+    xdbg("RootRoutingTable dump for xnetwork_id(%d) service_type(%s), dump_size(%d)",
+                   get_local_node_info()->kadmlia_key()->xnetwork_id(),
+                   get_local_node_info()->kadmlia_key()->GetServiceType().info().c_str(),
                    size);
 }
 
@@ -177,12 +180,74 @@ bool RootRoutingTable::UnInit() {
     return true;
 }
 
+
+
+int RootRoutingTable::SendData(const xbyte_buffer_t & data, const std::string & peer_ip, uint16_t peer_port, uint16_t priority) {
+    uint8_t local_buf[kUdpPacketBufferSize];
+    base::xpacket_t packet(base::xcontext_t::instance(), local_buf, sizeof(local_buf), 0, 0, false);
+    _xip2_header header;
+    memset(&header, 0, sizeof(header));
+    header.flags |= priority;
+    packet.get_body().push_back((uint8_t *)&header, enum_xip2_header_len);
+    packet.get_body().push_back((uint8_t *)data.data(), data.size());  // NOLINT
+    packet.set_to_ip_addr(peer_ip);
+    packet.set_to_ip_port(peer_port);
+    return transport_ptr_->SendData(packet);
+}
+
+int RootRoutingTable::SendData(transport::protobuf::RoutingMessage & message, const std::string & peer_ip, uint16_t peer_port) {
+    std::string msg;
+    if (!message.SerializeToString(&msg)) {
+        xdbg("RoutingMessage SerializeToString failed!");
+        return kKadFailed;
+    }
+    xbyte_buffer_t data{msg.begin(), msg.end()};
+    return SendData(data, peer_ip, peer_port, message.priority());
+}
+
+int RootRoutingTable::SendPing(transport::protobuf::RoutingMessage & message, const std::string & peer_ip, uint16_t peer_port) {
+    std::string msg;
+    if (!message.SerializeToString(&msg)) {
+        xdbg("RoutingMessage SerializeToString failed!");
+        return kKadFailed;
+    }
+    xbyte_buffer_t data{msg.begin(), msg.end()};
+    return get_transport()->SendPing(data, peer_ip, peer_port);
+}
+
+int RootRoutingTable::SendData(transport::protobuf::RoutingMessage & message, NodeInfoPtr node) {
+    if (node->same_vlan) {
+        return SendData(message, node->local_ip, node->local_port);
+    }
+
+    std::string msg;
+    if (!message.SerializeToString(&msg)) {
+        xdbg("RoutingMessage SerializeToString failed!");
+        return kKadFailed;
+    }
+    xbyte_buffer_t data{msg.begin(), msg.end()};
+    //	return SendData(data, peer_ip, peer_port, message.priority());
+
+    uint8_t local_buf[kUdpPacketBufferSize];
+    base::xpacket_t packet(base::xcontext_t::instance(), local_buf, sizeof(local_buf), 0, 0, false);
+    _xip2_header header;
+    memset(&header, 0, sizeof(header));
+    header.flags |= message.priority();
+    packet.get_body().push_back((uint8_t *)&header, enum_xip2_header_len);
+    packet.get_body().push_back((uint8_t *)data.data(), data.size());  // NOLINT
+    packet.set_to_ip_addr(node->public_ip);
+    packet.set_to_ip_port(node->public_port);
+    xdbg("xkad send message.type:%d size:%d", message.type(), packet.get_size());
+    return transport_ptr_->SendDataWithProp(packet, node->udp_property);
+}
+
+
 int RootRoutingTable::MultiJoin(const std::set<std::pair<std::string, uint16_t>> & boot_endpoints) {
     std::cout << "join p2p network..." << std::endl;
-    TOP_INFO_NAME("MultiJoin(%d) ...", (int)boot_endpoints.size());  // NOLINT
+    xinfo("MultiJoin(%d) ...", (int)boot_endpoints.size());  // NOLINT
     // std::string boot_nodes;
     // for (const auto& kv : boot_endpoints) boot_nodes += kv.first + ":" + std::to_string(kv.second) + ", ";
-    // TOP_INFO_NAME("MultiJoin(%s) ...", boot_nodes.c_str());  // NOLINT
+    // xinfo("MultiJoin(%s) ...", boot_nodes.c_str());  // NOLINT
 
     if (joined_) {
         return kKadFailed;
@@ -195,14 +260,14 @@ int RootRoutingTable::MultiJoin(const std::set<std::pair<std::string, uint16_t>>
         for (auto & kv : boot_endpoints) {
             const auto peer_ip = kv.first;
             const auto peer_port = kv.second;
-            Bootstrap(peer_ip, peer_port, local_node_ptr_->service_type());
-            TOP_INFO_NAME("  -> Bootstrap(%s:%d) ...", peer_ip.c_str(), peer_port);
+            Bootstrap(peer_ip, peer_port, get_local_node_info()->service_type());
+            xinfo("  -> Bootstrap(%s:%d) ...", peer_ip.c_str(), peer_port);
         }
 
         std::unique_lock<std::mutex> lock(bootstrap_mutex_);
         if (bootstrap_cond_.wait_for(lock, std::chrono::seconds(wait_time), [this]() -> bool { return this->joined_; })) {
             if (joined_) {
-                TOP_INFO_NAME("  node join(%s:%d) success", bootstrap_ip_.c_str(), (int)bootstrap_port_);  // NOLINT
+                xinfo("  node join(%s:%d) success", bootstrap_ip_.c_str(), (int)bootstrap_port_);  // NOLINT
                 std::cout << "join p2p network ok" << std::endl;
 
                 return kKadSuccess;
@@ -217,16 +282,16 @@ int RootRoutingTable::MultiJoin(const std::set<std::pair<std::string, uint16_t>>
             }
         }
 
-        TOP_KINFO_NAME("%s [%llu] has nodes_ size: %d, set_size: %d, ip: %s, port: %d",
-                       local_node_ptr_->id().c_str(),
-                       local_node_ptr_->service_type().value(),
+        xkinfo("%s [%llu] has nodes_ size: %d, set_size: %d, ip: %s, port: %d",
+                       get_local_node_info()->id().c_str(),
+                       get_local_node_info()->service_type().value(),
                        node_id_map_.size(),
                        nodes_size(),
-                       local_node_ptr_->public_ip().c_str(),
-                       local_node_ptr_->public_port());
+                       get_local_node_info()->public_ip().c_str(),
+                       get_local_node_info()->public_port());
     }
 
-    TOP_ERROR_NAME("node join failed after retried: %d times!", retried_times);
+    xwarn("node join failed after retried: %d times!", retried_times);
     return kKadFailed;
 }
 
@@ -237,16 +302,15 @@ bool RootRoutingTable::IsJoined() {
 bool RootRoutingTable::SetJoin(const std::string & boot_id, const std::string & boot_ip, int boot_port) {
     std::unique_lock<std::mutex> lock(joined_mutex_);
     if (joined_) {
-        TOP_INFO_NAME("SetJoin(%s:%d-%s) ignore", boot_ip.c_str(), boot_port, HexEncode(boot_id).c_str());
+        xinfo("SetJoin(%s:%d-%s) ignore", boot_ip.c_str(), boot_port, HexEncode(boot_id).c_str());
         return false;
     }
 
     joined_ = true;
-    after_join_ = true;
     set_bootstrap_id(boot_id);
     set_bootstrap_ip(boot_ip);
     set_bootstrap_port(boot_port);
-    TOP_INFO_NAME("SetJoin(%s:%d-%s) success", boot_ip.c_str(), boot_port, HexEncode(boot_id).c_str());
+    xinfo("SetJoin(%s:%d-%s) success", boot_ip.c_str(), boot_port, HexEncode(boot_id).c_str());
     return true;
 }
 
@@ -256,13 +320,13 @@ void RootRoutingTable::WakeBootstrap() {
 }
 
 void RootRoutingTable::SendToClosestNode(transport::protobuf::RoutingMessage & message, bool add_hop) {
-    if (message.des_node_id() == local_node_ptr_->id()) {
+    if (message.des_node_id() == get_local_node_info()->id()) {
         return;
     }
 
     if (add_hop) {
         transport::protobuf::HopInfo * hop_info = message.add_hop_nodes();
-        hop_info->set_node_id(local_node_ptr_->id());
+        hop_info->set_node_id(get_local_node_info()->id());
     }
     RecursiveSend(message, 0);
 }
@@ -272,11 +336,11 @@ void RootRoutingTable::SendToClosestNode(transport::protobuf::RoutingMessage & m
 }
 
 void RootRoutingTable::SendToNClosestNode(transport::protobuf::RoutingMessage & message, int n) {
-    if (message.des_node_id() == local_node_ptr_->id()) {
+    if (message.des_node_id() == get_local_node_info()->id()) {
         return;
     }
 
-    if (!local_node_ptr_->first_node() && !joined_) {
+    if (!get_local_node_info()->first_node() && !joined_) {
         return;
     }
 
@@ -284,17 +348,17 @@ void RootRoutingTable::SendToNClosestNode(transport::protobuf::RoutingMessage & 
         std::vector<NodeInfoPtr> ready_nodes;
         std::vector<NodeInfoPtr> next_nodes_vec = GetClosestNodes(message.des_node_id(), RoutingMaxNodesSize_);
         for (auto & nptr : next_nodes_vec) {
-            if (nptr->node_id == local_node_ptr_->id()) {
+            if (nptr->node_id == get_local_node_info()->id()) {
                 continue;
             }
-            if (nptr->public_ip == local_node_ptr_->public_ip() && nptr->public_port == local_node_ptr_->public_port()) {
+            if (nptr->public_ip == get_local_node_info()->public_ip() && nptr->public_port == get_local_node_info()->public_port()) {
                 continue;
             }
             ready_nodes.push_back(nptr);
         }
 
         if (ready_nodes.empty()) {
-            TOP_WARN_NAME("SendToNClosestNode get empty nodes, send failed");
+            xwarn("SendToNClosestNode get empty nodes, send failed");
             return;
         }
 
@@ -325,10 +389,10 @@ void RootRoutingTable::RecursiveSend(transport::protobuf::RoutingMessage & messa
     std::vector<NodeInfoPtr> ready_nodes;
     std::vector<NodeInfoPtr> next_nodes_vec = GetClosestNodes(message.des_node_id(), RoutingMaxNodesSize_);
     for (auto & nptr : next_nodes_vec) {
-        if (nptr->node_id == local_node_ptr_->id()) {
+        if (nptr->node_id == get_local_node_info()->id()) {
             continue;
         }
-        if (nptr->public_ip == local_node_ptr_->public_ip() && nptr->public_port == local_node_ptr_->public_port()) {
+        if (nptr->public_ip == get_local_node_info()->public_ip() && nptr->public_port == get_local_node_info()->public_port()) {
             continue;
         }
         auto iter = exclude.find(nptr->node_id);
@@ -338,7 +402,7 @@ void RootRoutingTable::RecursiveSend(transport::protobuf::RoutingMessage & messa
         ready_nodes.push_back(nptr);
     }
     if (ready_nodes.empty()) {
-        TOP_WARN_NAME("%s SendToClosestNode get empty nodes, send failed", transport::FormatMsgid(message).c_str());
+        xwarn("%s SendToClosestNode get empty nodes, send failed", transport::FormatMsgid(message).c_str());
         return;
     }
 
@@ -355,23 +419,23 @@ void RootRoutingTable::HeartbeatProc() {
     }
     XMETRICS_PACKET_INFO("p2p_kad_info",
                          "local_nodeid",
-                         local_node_ptr_->id(),
+                         get_local_node_info()->id(),
                          "service_type",
-                         local_node_ptr_->kadmlia_key()->GetServiceType().info().c_str(),
+                         get_local_node_info()->kadmlia_key()->GetServiceType().info().c_str(),
                          "xnetwork_id",
-                         local_node_ptr_->kadmlia_key()->xnetwork_id(),
+                         get_local_node_info()->kadmlia_key()->xnetwork_id(),
                          "zone_id",
-                         local_node_ptr_->kadmlia_key()->zone_id(),
+                         get_local_node_info()->kadmlia_key()->zone_id(),
                          "cluster_id",
-                         local_node_ptr_->kadmlia_key()->cluster_id(),
+                         get_local_node_info()->kadmlia_key()->cluster_id(),
                          "group_id",
-                         local_node_ptr_->kadmlia_key()->group_id(),
+                         get_local_node_info()->kadmlia_key()->group_id(),
                          "neighbours",
                          nodes_size(),
                          "public_ip",
-                         local_node_ptr_->public_ip(),
+                         get_local_node_info()->public_ip(),
                          "public_port",
-                         local_node_ptr_->public_port());
+                         get_local_node_info()->public_port());
 }
 
 uint32_t RootRoutingTable::GetFindNodesMaxSize() {
@@ -381,7 +445,7 @@ uint32_t RootRoutingTable::GetFindNodesMaxSize() {
 void RootRoutingTable::SetFindNeighbourIntervalIncr() {
     if (find_neighbour_interval_threshold_ < 16) {
         find_neighbour_interval_threshold_ *= 2;
-        TOP_DEBUG_NAME("incr find interval to %d", find_neighbour_interval_threshold_);
+        xdbg("incr find interval to %d", find_neighbour_interval_threshold_);
     }
 }
 
@@ -392,25 +456,25 @@ void RootRoutingTable::SetFindNeighbourIntervalDecr() {
         find_neighbour_interval_threshold_ = 1;
     }
 
-    TOP_DEBUG_NAME("decr find interval to %d", find_neighbour_interval_threshold_);
+    xdbg("decr find interval to %d", find_neighbour_interval_threshold_);
 }
 
 void RootRoutingTable::SetFindNeighbourIntervalMin() {
     find_neighbour_interval_threshold_ = 1;
-    TOP_DEBUG_NAME("min find interval to %d", find_neighbour_interval_threshold_);
+    xdbg("min find interval to %d", find_neighbour_interval_threshold_);
 }
 
 void RootRoutingTable::SetFindNeighbourIntervalMax() {
     find_neighbour_interval_threshold_ = 16;
-    TOP_DEBUG_NAME("max find interval to %d", find_neighbour_interval_threshold_);
+    xdbg("max find interval to %d", find_neighbour_interval_threshold_);
 }
 
 void RootRoutingTable::SetFindNeighbourIntervalKeepOrMid() {
     if (find_neighbour_interval_threshold_ > 4) {
         find_neighbour_interval_threshold_ = 4;
-        TOP_DEBUG_NAME("mid find interval to %d", find_neighbour_interval_threshold_);
+        xdbg("mid find interval to %d", find_neighbour_interval_threshold_);
     } else {
-        TOP_DEBUG_NAME("keep find interval to %d", find_neighbour_interval_threshold_);
+        xdbg("keep find interval to %d", find_neighbour_interval_threshold_);
     }
 }
 
@@ -420,21 +484,21 @@ void RootRoutingTable::FindNeighbours() {
     }
 
     // the first start-time  make sure go-to this if after calling Join
-    if (local_node_ptr_ && transport_ptr_) {
+    if (get_local_node_info() && get_transport()) {
         std::vector<NodeInfoPtr> tmp_vec;
         {
             NodesLock lock(nodes_mutex_);
-            int sort_num = SortNodesByTargetXid(local_node_ptr_->id(), RoutingMaxNodesSize_);
+            int sort_num = SortNodesByTargetXid(get_local_node_info()->id(), RoutingMaxNodesSize_);
             for (int i = 0; i < sort_num; ++i) {
                 tmp_vec.push_back(nodes_[i]);
             }
         }
 
         find_neighbour_interval_ += 1;
-        TOP_DEBUG_NAME(
+        xdbg(
             "FindNeighbours alive for self_service_type(%llu), now size(%d), find_neighbour_interval(%u),"
             "find_neighbour_interval_threshold(%u)",
-            local_node_ptr_->kadmlia_key()->GetServiceType().value(),
+            get_local_node_info()->kadmlia_key()->GetServiceType().value(),
             nodes_size(),
             find_neighbour_interval_,
             find_neighbour_interval_threshold_);
@@ -466,16 +530,16 @@ void RootRoutingTable::FindNeighbours() {
 }
 
 int RootRoutingTable::AddNode(NodeInfoPtr node) {
-    if (transport_ptr_->CheckRatelimitMap(node->public_ip + ":" + std::to_string(node->public_port)) != 0) {
+    if (get_transport()->CheckRatelimitMap(node->public_ip + ":" + std::to_string(node->public_port)) != 0) {
         TOP_WARN("socket ratelimit, disable addnode");
         return kKadFailed;
     }
-    TOP_DEBUG_NAME("node_id(%s), pub(%s:%d)", HexSubstr(node->node_id).c_str(), node->public_ip.c_str(), node->public_port);
+    xdbg("node_id(%s), pub(%s:%d)", HexSubstr(node->node_id).c_str(), node->public_ip.c_str(), node->public_port);
 
-    if (node->node_id == local_node_ptr_->id()) {
-        TOP_DEBUG_NAME("kHandshake: local_node_ptr_->id()[%s][%s][%s][%d][%s][%s]",
+    if (node->node_id == get_local_node_info()->id()) {
+        xdbg("kHandshake: get_local_node_info()->id()[%s][%s][%s][%d][%s][%s]",
                        HexEncode(node->node_id).c_str(),
-                       HexEncode(local_node_ptr_->id()).c_str(),
+                       HexEncode(get_local_node_info()->id()).c_str(),
                        node->public_ip.c_str(),
                        node->public_port,
                        HexEncode(node->xid).c_str(),
@@ -484,40 +548,42 @@ int RootRoutingTable::AddNode(NodeInfoPtr node) {
     }
 
     if (!ValidNode(node)) {
-        TOP_WARN_NAME("node invalid.");
+        xwarn("node invalid.");
         return kKadFailed;
     }
 
     if (HasNode(node)) {
-        TOP_DEBUG_NAME("kHandshake: HasNode: %s", HexEncode(node->node_id).c_str());
+        xdbg("kHandshake: HasNode: %s", HexEncode(node->node_id).c_str());
         return kKadNodeHasAdded;
     }
 
     if (SetNodeBucket(node) != kKadSuccess) {
-        TOP_WARN_NAME("set node bucket index failed![%s]", node->node_id.c_str());
+        xwarn("set node bucket index failed![%s]", node->node_id.c_str());
         return kKadFailed;
     }
 
     {
         NodesLock lock(nodes_mutex_);
-        SortNodesByTargetXid(local_node_ptr_->id(), nodes_.size());
+        SortNodesByTargetXid(get_local_node_info()->id(), nodes_.size());
         if (!NewNodeReplaceOldNode(node, true)) {
-            TOP_INFO_NAME("newnodereplaceoldnode failed. node_id:%s, node_bucket:%d, local:%s",
+            xinfo("newnodereplaceoldnode failed. node_id:%s, node_bucket:%d, local:%s",
                           HexEncode(node->node_id).c_str(),
                           node->bucket_index,
-                          HexEncode(local_node_ptr_->id()).c_str());
+                          HexEncode(get_local_node_info()->id()).c_str());
             return kKadFailed;
         }
 
-        TOP_DEBUG_NAME(
-            "newnodereplaceoldnode success. node_id:%s, node_bucket:%d, local:%s", HexEncode(node->node_id).c_str(), node->bucket_index, HexEncode(local_node_ptr_->id()).c_str());
+        xdbg("newnodereplaceoldnode success. node_id:%s, node_bucket:%d, local:%s",
+                       HexEncode(node->node_id).c_str(),
+                       node->bucket_index,
+                       HexEncode(get_local_node_info()->id()).c_str());
 
         // if (HasNode(node)) {
-        //     TOP_DEBUG_NAME("kHandshake: HasNode");
+        //     xdbg("kHandshake: HasNode");
         //     return kKadNodeHasAdded;
         // }
         XMETRICS_PACKET_INFO(
-            "p2p_kad_addnode", "local_nodeid", local_node_ptr_->id(), "nodeid", HexSubstr(node->node_id), "public_ip", node->public_ip, "public_port", node->public_port);
+            "p2p_kad_addnode", "local_nodeid", get_local_node_info()->id(), "nodeid", HexSubstr(node->node_id), "public_ip", node->public_ip, "public_port", node->public_port);
         nodes_.push_back(node);
         nodes_delta_ += 1;
     }
@@ -550,10 +616,12 @@ void RootRoutingTable::DumpNodes() {
     // dump all nodes
     {
         std::string fmt("all nodes:\n");
-        TOP_DEBUG_NAME("%s", fmt.c_str());
-        fmt = base::StringUtil::str_fmt(
-            "self]: %s, dis(0), pub(%s:%d)\n", HexSubstr(local_node_ptr_->id()).c_str(), local_node_ptr_->public_ip().c_str(), (int)local_node_ptr_->public_port());
-        TOP_DEBUG_NAME("%s", fmt.c_str());
+        xdbg("%s", fmt.c_str());
+        fmt = base::StringUtil::str_fmt("self]: %s, dis(0), pub(%s:%d)\n",
+                                        HexSubstr(get_local_node_info()->id()).c_str(),
+                                        get_local_node_info()->public_ip().c_str(),
+                                        (int)get_local_node_info()->public_port());
+        xdbg("%s", fmt.c_str());
         for (int i = 0; i < (int)nodes_.size(); ++i) {
             // fmt += base::StringUtil::str_fmt("%d: count(%d)\n", kv.first, kv.second);
             fmt = base::StringUtil::str_fmt("%4d]: %s, dis(%d), pub(%s:%d)\n",
@@ -562,48 +630,48 @@ void RootRoutingTable::DumpNodes() {
                                             nodes_[i]->bucket_index,
                                             nodes_[i]->public_ip.c_str(),
                                             (int)nodes_[i]->public_port);
-            TOP_DEBUG_NAME("%s", fmt.c_str());
+            xdbg("%s", fmt.c_str());
         }
     }
 }
 
 bool RootRoutingTable::CanAddNode(NodeInfoPtr node) {
-    TOP_DEBUG_NAME("node_id(%s), pub(%s:%d)", HexSubstr(node->node_id).c_str(), node->public_ip.c_str(), node->public_port);
+    xdbg("node_id(%s), pub(%s:%d)", HexSubstr(node->node_id).c_str(), node->public_ip.c_str(), node->public_port);
     // if (node->nat_type == kNatTypeUnknown) {
-    //     TOP_WARN_NAME("bluenat[%llu] CanAddNode: node(%s:%d-%d) nat_type is unknown",
-    //         local_node_ptr_->service_type(),
+    //     xwarn("bluenat[%llu] CanAddNode: node(%s:%d-%d) nat_type is unknown",
+    //         get_local_node_info()->service_type(),
     //         node->public_ip.c_str(), (int)node->public_port, node->service_type);
     //     return false;
     // }
 
-    if (node->node_id == local_node_ptr_->id()) {
-        TOP_DEBUG_NAME("local node");
+    if (node->node_id == get_local_node_info()->id()) {
+        xdbg("local node");
         return false;
     }
 
     if (!ValidNode(node)) {
-        TOP_WARN_NAME("node invalid.");
+        xwarn("node invalid.");
         return false;
     }
 
     if (HasNode(node)) {
-        TOP_DEBUG_NAME("has node");
+        xdbg("has node");
         return false;
     }
 
     if (SetNodeBucket(node) != kKadSuccess) {
-        TOP_WARN_NAME("set node bucket index failed![%s]", HexSubstr(node->node_id).c_str());
+        xwarn("set node bucket index failed![%s]", HexSubstr(node->node_id).c_str());
         return false;
     }
 
     NodesLock lock(nodes_mutex_);
-    SortNodesByTargetXid(local_node_ptr_->id(), nodes_.size());
+    SortNodesByTargetXid(get_local_node_info()->id(), nodes_.size());
     NodeInfoPtr remove_node;
     if (!NewNodeReplaceOldNode(node, false)) {
         return false;
     }
 
-    TOP_DEBUG_NAME("node_id(%s) replace success, dis(%d)", HexSubstr(node->node_id).c_str(), node->bucket_index);
+    xdbg("node_id(%s) replace success, dis(%d)", HexSubstr(node->node_id).c_str(), node->bucket_index);
     return true;
 }
 
@@ -781,7 +849,7 @@ void RootRoutingTable::GetRangeNodes(uint32_t min_index, uint32_t max_index, std
 
 int32_t RootRoutingTable::GetSelfIndex() {
     std::unique_lock<std::mutex> lock(node_hash_map_mutex_);
-    auto ifind = node_hash_map_->find(local_node_ptr_->hash64());
+    auto ifind = node_hash_map_->find(get_local_node_info()->hash64());
     if (ifind == node_hash_map_->end()) {
         // std::cout << "not found" << std::endl;
         return -1;
@@ -807,8 +875,8 @@ NodeInfoPtr RootRoutingTable::GetNode(const std::string & id) {
 }
 
 int RootRoutingTable::ClosestToTarget(const std::string & target, bool & closest) {
-    if (target == local_node_ptr_->id()) {
-        TOP_WARN_NAME("target equal local nodeid, CloserToTarget goes wrong");
+    if (target == get_local_node_info()->id()) {
+        xwarn("target equal local nodeid, CloserToTarget goes wrong");
         return kKadFailed;
     }
 
@@ -818,7 +886,7 @@ int RootRoutingTable::ClosestToTarget(const std::string & target, bool & closest
     }
 
     if (target.size() != kNodeIdSize) {
-        TOP_INFO_NAME("Invalid target_id passed. node id size[%d]", target.size());
+        xinfo("Invalid target_id passed. node id size[%d]", target.size());
         return kKadFailed;
     }
 
@@ -828,7 +896,7 @@ int RootRoutingTable::ClosestToTarget(const std::string & target, bool & closest
         closest = true;
         return kKadSuccess;
     }
-    closest = (closest_node->bucket_index == kSelfBucketIndex) || CloserToTarget(local_node_ptr_->id(), closest_node->node_id, target);
+    closest = (closest_node->bucket_index == kSelfBucketIndex) || CloserToTarget(get_local_node_info()->id(), closest_node->node_id, target);
     return kKadSuccess;
 }
 
@@ -837,7 +905,7 @@ NodeInfoPtr RootRoutingTable::GetClosestNode(const std::string & target_id, bool
     auto closest_nodes(GetClosestNodes(target_id, number_to_get));
     for (const auto & node_info : closest_nodes) {
         if (not_self) {
-            if (node_info->node_id == local_node_ptr_->id()) {
+            if (node_info->node_id == get_local_node_info()->id()) {
                 assert(0);
             }
         }
@@ -889,12 +957,12 @@ NodeInfoPtr RootRoutingTable::FindLocalNode(const std::string node_id) {
 
 bool RootRoutingTable::ValidNode(NodeInfoPtr node) {
     if (node->node_id.size() != kNodeIdSize) {
-        TOP_WARN_NAME("node id size is invalid![%d] should[%d]", node->node_id.size(), kNodeIdSize);
+        xwarn("node id size is invalid![%d] should[%d]", node->node_id.size(), kNodeIdSize);
         return false;
     }
 
     if (node->public_ip.empty() || node->public_port <= 0) {
-        TOP_WARN_NAME("node[%s] public ip or public port invalid!", HexEncode(node->node_id).c_str());
+        xwarn("node[%s] public ip or public port invalid!", HexEncode(node->node_id).c_str());
         return false;
     }
     return true;
@@ -903,8 +971,8 @@ bool RootRoutingTable::ValidNode(NodeInfoPtr node) {
 int RootRoutingTable::SetNodeBucket(NodeInfoPtr node) {
     int id_bit_index(0);
     while (id_bit_index != kNodeIdSize) {
-        if (local_node_ptr_->id()[id_bit_index] != node->node_id[id_bit_index]) {
-            std::bitset<8> holder_byte(static_cast<int>(local_node_ptr_->id()[id_bit_index]));
+        if (get_local_node_info()->id()[id_bit_index] != node->node_id[id_bit_index]) {
+            std::bitset<8> holder_byte(static_cast<int>(get_local_node_info()->id()[id_bit_index]));
             std::bitset<8> node_byte(static_cast<int>(node->node_id[id_bit_index]));
             int bit_index(0);
             while (bit_index != 8U) {
@@ -960,7 +1028,7 @@ bool RootRoutingTable::NewNodeReplaceOldNode(NodeInfoPtr node, bool remove) {
 
     // the k-bucket is full
     if (sum >= kKadParamK) {
-        TOP_DEBUG_NAME("k-bucket(%d) is full", node->bucket_index);
+        xdbg("k-bucket(%d) is full", node->bucket_index);
         return false;
     }
 
@@ -999,7 +1067,7 @@ void RootRoutingTable::GetClosestAlphaNodes(std::map<std::string, NodeInfoPtr> &
         }
 
         // add alpha closest nodes
-        const auto count = SortNodesByTargetXid(local_node_ptr_->id(), kKadParamAlpha);
+        const auto count = SortNodesByTargetXid(get_local_node_info()->id(), kKadParamAlpha);
         for (int i = 0; i < count; ++i) {
             query_nodes[nodes_[i]->node_id] = nodes_[i];
         }
@@ -1078,7 +1146,7 @@ std::map<std::string, top::base::KadmliaKeyPtr> RootRoutingTable::GetElectionNod
 }
 
 void RootRoutingTable::HandleElectionNodesInfoFromRoot(std::map<std::string, kadmlia::NodeInfoPtr> const & nodes) {
-    xdbg("Charles Debug GetSameNetworkNodesV3 %zu local_service_type:%lld", nodes.size(), local_node_ptr_->service_type().value());
+    xdbg("Charles Debug GetSameNetworkNodesV3 %zu local_service_type:%lld", nodes.size(), get_local_node_info()->service_type().value());
     std::vector<base::KadmliaKeyPtr> erase_keys;
     for (auto _p : nodes) {
         NodeInfoPtr node_ptr = m_nodes[_p.first];
@@ -1089,14 +1157,14 @@ void RootRoutingTable::HandleElectionNodesInfoFromRoot(std::map<std::string, kad
         node_ptr->local_port = root_node_info->local_port;
         node_ptr->public_ip = root_node_info->public_ip;
         node_ptr->public_port = root_node_info->public_port;
-        node_ptr->service_type = local_node_ptr_->service_type();
+        node_ptr->service_type = get_local_node_info()->service_type();
         node_ptr->xid = root_node_info->xid;
         node_ptr->hash64 = base::xhash64_t::digest(node_ptr->node_id);
         xdbg("Charles Debug GetSameNetworkNodesV3 %s %s:%d, %lld", node_ptr->node_id.c_str(), node_ptr->public_ip.c_str(), node_ptr->public_port, node_ptr->service_type.value());
         if (CanAddNode(node_ptr)) {
-            if (node_ptr->node_id != local_node_ptr_->id()) {
-                TOP_DEBUG_NAME("HandleElectionNodesInfoFromRoot[%d] get node(%s:%d-%d)",
-                               local_node_ptr_->service_type().value(),
+            if (node_ptr->node_id != get_local_node_info()->id()) {
+                xdbg("HandleElectionNodesInfoFromRoot[%d] get node(%s:%d-%d)",
+                               get_local_node_info()->service_type().value(),
                                node_ptr->public_ip.c_str(),
                                node_ptr->public_port,
                                node_ptr->service_type.value());
@@ -1123,7 +1191,7 @@ void RootRoutingTable::FindElectionNodesInfo(std::map<std::string, top::base::Ka
 }
 
 void RootRoutingTable::FindClosestNodes(int count, const std::vector<NodeInfoPtr> & nodes) {
-    TOP_DEBUG_NAME("<bluefind> FindClosestNodes(count=%d, nodes.size=%d)", count, (int)nodes.size());
+    xdbg("<bluefind> FindClosestNodes(count=%d, nodes.size=%d)", count, (int)nodes.size());
 
     std::map<std::string, NodeInfoPtr> query_nodes;
     const size_t need_nodes_size = kKadParamAlpha + kKadParamAlphaRandom;
@@ -1136,30 +1204,33 @@ void RootRoutingTable::FindClosestNodes(int count, const std::vector<NodeInfoPtr
         }
     }
 
-    TOP_DEBUG_NAME("findnodes count: %d", (int)query_nodes.size());
+    xdbg("findnodes count: %d", (int)query_nodes.size());
     for (auto & kv : query_nodes) {
-        SendFindClosestNodes(kv.second, count, nodes, local_node_ptr_->service_type());
+        SendFindClosestNodes(kv.second, count, nodes, get_local_node_info()->service_type());
     }
 }
 
 int RootRoutingTable::Bootstrap(const std::string & peer_ip, uint16_t peer_port, base::ServiceType des_service_type) {
-    TOP_DEBUG_NAME("Bootstrap to (%s:%d_%ld)", peer_ip.c_str(), (int)peer_port, (long)des_service_type.value());
+    xdbg("Bootstrap to (%s:%d_%ld)", peer_ip.c_str(), (int)peer_port, (long)des_service_type.value());
     transport::protobuf::RoutingMessage message;
     SetFreqMessage(message);
     message.set_des_service_type(des_service_type.value());
     message.set_priority(enum_xpacket_priority_type_flash);
-    TOP_INFO_NAME("join with service type[%llu] ,src[%llu], des[%llu]", local_node_ptr_->service_type().value(), local_node_ptr_->service_type().value(), des_service_type.value());
+    xinfo("join with service type[%llu] ,src[%llu], des[%llu]",
+                  get_local_node_info()->service_type().value(),
+                  get_local_node_info()->service_type().value(),
+                  des_service_type.value());
     message.set_des_node_id("");
     message.set_type(kKadBootstrapJoinRequest);
 
     protobuf::BootstrapJoinRequest join_req;
-    join_req.set_local_ip(local_node_ptr_->local_ip());
-    join_req.set_local_port(local_node_ptr_->local_port());
-    // join_req.set_nat_type(local_node_ptr_->nat_type());
+    join_req.set_local_ip(get_local_node_info()->local_ip());
+    join_req.set_local_port(get_local_node_info()->local_port());
+    // join_req.set_nat_type(get_local_node_info()->nat_type());
     join_req.set_xid(global_xid->Get());
     std::string data;
     if (!join_req.SerializeToString(&data)) {
-        TOP_INFO_NAME("ConnectReq SerializeToString failed!");
+        xinfo("ConnectReq SerializeToString failed!");
         return kKadFailed;
     }
 
@@ -1170,27 +1241,27 @@ int RootRoutingTable::Bootstrap(const std::string & peer_ip, uint16_t peer_port,
 void RootRoutingTable::FindCloseNodesWithEndpoint(const std::string & des_node_id, const std::pair<std::string, uint16_t> & boot_endpoints) {
     transport::protobuf::RoutingMessage message;
     SetFreqMessage(message);
-    message.set_des_service_type(local_node_ptr_->service_type().value());
+    message.set_des_service_type(get_local_node_info()->service_type().value());
     message.set_des_node_id(des_node_id);
     message.set_type(kKadFindNodesRequest);
     message.set_priority(enum_xpacket_priority_type_flash);
 
     protobuf::FindClosestNodesRequest find_nodes_req;
     find_nodes_req.set_count(GetFindNodesMaxSize());
-    find_nodes_req.set_target_id(local_node_ptr_->id());
+    find_nodes_req.set_target_id(get_local_node_info()->id());
 
     auto src_nodeinfo_ptr = find_nodes_req.mutable_src_nodeinfo();
-    src_nodeinfo_ptr->set_id(local_node_ptr_->id());
-    src_nodeinfo_ptr->set_public_ip(local_node_ptr_->public_ip());
-    src_nodeinfo_ptr->set_public_port(local_node_ptr_->public_port());
-    src_nodeinfo_ptr->set_local_ip(local_node_ptr_->local_ip());
-    src_nodeinfo_ptr->set_local_port(local_node_ptr_->local_port());
-    // src_nodeinfo_ptr->set_nat_type(local_node_ptr_->nat_type());
+    src_nodeinfo_ptr->set_id(get_local_node_info()->id());
+    src_nodeinfo_ptr->set_public_ip(get_local_node_info()->public_ip());
+    src_nodeinfo_ptr->set_public_port(get_local_node_info()->public_port());
+    src_nodeinfo_ptr->set_local_ip(get_local_node_info()->local_ip());
+    src_nodeinfo_ptr->set_local_port(get_local_node_info()->local_port());
+    // src_nodeinfo_ptr->set_nat_type(get_local_node_info()->nat_type());
     src_nodeinfo_ptr->set_xid(global_xid->Get());
 
     std::string data;
     if (!find_nodes_req.SerializeToString(&data)) {
-        TOP_INFO_NAME("ConnectReq SerializeToString failed!");
+        xinfo("ConnectReq SerializeToString failed!");
         return;
     }
 
@@ -1200,7 +1271,7 @@ void RootRoutingTable::FindCloseNodesWithEndpoint(const std::string & des_node_i
 
 int RootRoutingTable::SendFindClosestNodes(const NodeInfoPtr & node_ptr, int count, const std::vector<NodeInfoPtr> & nodes, base::ServiceType des_service_type) {
     const auto node_id = node_ptr->node_id;
-    TOP_DEBUG_NAME("bluefindnodes to %s %s:%d", HexSubstr(node_id).c_str(), node_ptr->public_ip.c_str(), node_ptr->public_port);
+    xdbg("bluefindnodes to %s %s:%d", HexSubstr(node_id).c_str(), node_ptr->public_ip.c_str(), node_ptr->public_port);
     transport::protobuf::RoutingMessage message;
     SetFreqMessage(message);
     message.set_des_service_type(des_service_type.value());
@@ -1210,7 +1281,7 @@ int RootRoutingTable::SendFindClosestNodes(const NodeInfoPtr & node_ptr, int cou
 
     protobuf::FindClosestNodesRequest find_nodes_req;
     find_nodes_req.set_count(count);
-    find_nodes_req.set_target_id(local_node_ptr_->id());
+    find_nodes_req.set_target_id(get_local_node_info()->id());
     std::vector<uint64_t> bloomfilter_vec;
     GetExistsNodesBloomfilter(nodes, bloomfilter_vec);
     for (uint32_t i = 0; i < bloomfilter_vec.size(); ++i) {
@@ -1218,26 +1289,26 @@ int RootRoutingTable::SendFindClosestNodes(const NodeInfoPtr & node_ptr, int cou
     }
 
     auto src_nodeinfo_ptr = find_nodes_req.mutable_src_nodeinfo();
-    src_nodeinfo_ptr->set_id(local_node_ptr_->id());
-    src_nodeinfo_ptr->set_public_ip(local_node_ptr_->public_ip());
-    src_nodeinfo_ptr->set_public_port(local_node_ptr_->public_port());
-    src_nodeinfo_ptr->set_local_ip(local_node_ptr_->local_ip());
-    src_nodeinfo_ptr->set_local_port(local_node_ptr_->local_port());
-    // src_nodeinfo_ptr->set_nat_type(local_node_ptr_->nat_type());
+    src_nodeinfo_ptr->set_id(get_local_node_info()->id());
+    src_nodeinfo_ptr->set_public_ip(get_local_node_info()->public_ip());
+    src_nodeinfo_ptr->set_public_port(get_local_node_info()->public_port());
+    src_nodeinfo_ptr->set_local_ip(get_local_node_info()->local_ip());
+    src_nodeinfo_ptr->set_local_port(get_local_node_info()->local_port());
+    // src_nodeinfo_ptr->set_nat_type(get_local_node_info()->nat_type());
     src_nodeinfo_ptr->set_xid(global_xid->Get());
 
     std::string data;
     if (!find_nodes_req.SerializeToString(&data)) {
-        TOP_INFO_NAME("ConnectReq SerializeToString failed!");
+        xinfo("ConnectReq SerializeToString failed!");
         return kKadFailed;
     }
 
     message.set_data(data);
-    TOP_DEBUG_NAME("sendfindclosestnodes: message.is_root(%d), message.des_service_type:(%llu), local_service_type:(%llu)",
+    xdbg("sendfindclosestnodes: message.is_root(%d), message.des_service_type:(%llu), local_service_type:(%llu)",
                    message.is_root(),
                    message.des_service_type(),
-                   local_node_ptr_->kadmlia_key()->GetServiceType().value());
-    TOP_DEBUG_NAME("bluefind send_find to node: %s", HexSubstr(node_ptr->node_id).c_str());
+                   get_local_node_info()->kadmlia_key()->GetServiceType().value());
+    xdbg("bluefind send_find to node: %s", HexSubstr(node_ptr->node_id).c_str());
     SendData(message, node_ptr);
     return kKadSuccess;
 }
@@ -1250,11 +1321,11 @@ void RootRoutingTable::GetExistsNodesBloomfilter(const std::vector<NodeInfoPtr> 
     bloomfilter_vec = bloomfilter.Uint64Vector();
 }
 
-void RootRoutingTable::HandleMessage(transport::protobuf::RoutingMessage & message, base::xpacket_t & packet) {
-}
+// void RootRoutingTable::HandleMessage(transport::protobuf::RoutingMessage & message, base::xpacket_t & packet) {
+// }
 
 bool RootRoutingTable::IsDestination(const std::string & des_node_id, bool check_closest) {
-    if (des_node_id == local_node_ptr_->id()) {
+    if (des_node_id == get_local_node_info()->id()) {
         return true;
     }
 
@@ -1264,10 +1335,10 @@ bool RootRoutingTable::IsDestination(const std::string & des_node_id, bool check
 
     bool closest = false;
     if (ClosestToTarget(des_node_id, closest) != kKadSuccess) {
-        TOP_WARN_NAME(
+        xwarn(
             "this message must drop! this node is not des "
             "but nearest node is this node![%s] to [%s]",
-            HexSubstr(local_node_ptr_->id()).c_str(),
+            HexSubstr(get_local_node_info()->id()).c_str(),
             HexSubstr(des_node_id).c_str());
         return false;
     }
@@ -1276,24 +1347,24 @@ bool RootRoutingTable::IsDestination(const std::string & des_node_id, bool check
 }
 
 void RootRoutingTable::HandleFindNodesRequest(transport::protobuf::RoutingMessage & message, base::xpacket_t & packet) {
-    TOP_DEBUG_NAME("bluefindnodes from %s %s:%d", HexSubstr(message.src_node_id()).c_str(), packet.get_from_ip_addr().c_str(), packet.get_from_ip_port());
-    if (message.des_node_id() != local_node_ptr_->id()) {
-        TOP_WARN_NAME("find nodes must direct![des: %s] [local: %s] [msg.src: %s] [msg.is_root: %d]",
+    xdbg("bluefindnodes from %s %s:%d", HexSubstr(message.src_node_id()).c_str(), packet.get_from_ip_addr().c_str(), packet.get_from_ip_port());
+    if (message.des_node_id() != get_local_node_info()->id()) {
+        xwarn("find nodes must direct![des: %s] [local: %s] [msg.src: %s] [msg.is_root: %d]",
                       HexEncode(message.des_node_id()).c_str(),
-                      HexEncode(local_node_ptr_->id()).c_str(),
+                      HexEncode(get_local_node_info()->id()).c_str(),
                       HexEncode(message.src_node_id()).c_str(),
                       message.is_root());
         return;
     }
 
     if (!message.has_data() || message.data().empty()) {
-        TOP_INFO_NAME("HandleFindNodesRequest request in data is empty.");
+        xinfo("HandleFindNodesRequest request in data is empty.");
         return;
     }
 
     protobuf::FindClosestNodesRequest find_nodes_req;
     if (!find_nodes_req.ParseFromString(message.data())) {
-        TOP_INFO_NAME("FindClosestNodesRequest ParseFromString from string failed!");
+        xinfo("FindClosestNodesRequest ParseFromString from string failed!");
         return;
     }
 
@@ -1335,7 +1406,7 @@ void RootRoutingTable::HandleFindNodesRequest(transport::protobuf::RoutingMessag
     }
 
     std::vector<NodeInfoPtr> closest_nodes = GetClosestNodes(find_nodes_req.target_id(), find_nodes_req.count() + 1);
-    TOP_DEBUG_NAME("bluefind closest_nodes.size=%d", (int)closest_nodes.size());
+    xdbg("bluefind closest_nodes.size=%d", (int)closest_nodes.size());
     std::string find_nodes;
     protobuf::FindClosestNodesResponse find_nodes_res;
 
@@ -1363,8 +1434,8 @@ void RootRoutingTable::HandleFindNodesRequest(transport::protobuf::RoutingMessag
     if (find_nodes_res.nodes_size() <= 0) {
         return;
     }
-    TOP_DEBUG_NAME("HandleFindNodesRequest: get %d nodes", find_nodes_res.nodes_size());
-    TOP_DEBUG_NAME("<bluefind> recv_find: %d nodes from node %s", find_nodes_res.nodes_size(), HexSubstr(message.src_node_id()).c_str());
+    xdbg("HandleFindNodesRequest: get %d nodes", find_nodes_res.nodes_size());
+    xdbg("<bluefind> recv_find: %d nodes from node %s", find_nodes_res.nodes_size(), HexSubstr(message.src_node_id()).c_str());
 
     // separate nodes into multiple udp packets
     std::vector<std::string> datas;
@@ -1398,30 +1469,30 @@ void RootRoutingTable::HandleFindNodesRequest(transport::protobuf::RoutingMessag
 }
 
 void RootRoutingTable::HandleFindNodesResponse(transport::protobuf::RoutingMessage & message, base::xpacket_t & packet) {
-    TOP_DEBUG_NAME("bluefindnodes from %s %s:%d", HexSubstr(message.src_node_id()).c_str(), packet.get_from_ip_addr().c_str(), packet.get_from_ip_port());
-    if (message.des_node_id() != local_node_ptr_->id()) {
-        TOP_WARN_NAME("find nodes response error. must direct receive!");
+    xdbg("bluefindnodes from %s %s:%d", HexSubstr(message.src_node_id()).c_str(), packet.get_from_ip_addr().c_str(), packet.get_from_ip_port());
+    if (message.des_node_id() != get_local_node_info()->id()) {
+        xwarn("find nodes response error. must direct receive!");
         return;
     }
 
     if (!message.has_data() || message.data().empty()) {
-        TOP_INFO_NAME("HandleFindNodesResponse data is empty.");
+        xinfo("HandleFindNodesResponse data is empty.");
         return;
     }
 
     protobuf::FindClosestNodesResponse find_nodes_res;
     if (!find_nodes_res.ParseFromString(message.data())) {
-        TOP_INFO_NAME("FindClosestNodesResponse ParseFromString from string failed!");
+        xinfo("FindClosestNodesResponse ParseFromString from string failed!");
         return;
     }
 
     if (find_nodes_res.has_public_port() && find_nodes_res.public_port() > 0) {
-        local_node_ptr_->set_public_ip(find_nodes_res.public_ip());
-        local_node_ptr_->set_public_port(find_nodes_res.public_port());
-        TOP_INFO_NAME("set public_endpoints %s:%u", find_nodes_res.public_ip().c_str(), find_nodes_res.public_port());
+        get_local_node_info()->set_public_ip(find_nodes_res.public_ip());
+        get_local_node_info()->set_public_port(find_nodes_res.public_port());
+        xinfo("set public_endpoints %s:%u", find_nodes_res.public_ip().c_str(), find_nodes_res.public_port());
     }
 
-    TOP_DEBUG_NAME("HandleFindNodesResponse get %d nodes", find_nodes_res.nodes_size());
+    xdbg("HandleFindNodesResponse get %d nodes", find_nodes_res.nodes_size());
     for (int i = 0; i < find_nodes_res.nodes_size(); ++i) {
         NodeInfoPtr node_ptr;
         node_ptr.reset(new NodeInfo(find_nodes_res.nodes(i).id()));
@@ -1433,10 +1504,10 @@ void RootRoutingTable::HandleFindNodesResponse(transport::protobuf::RoutingMessa
         node_ptr->xid = find_nodes_res.nodes(i).xid();
         node_ptr->hash64 = base::xhash64_t::digest(node_ptr->node_id);
         if (CanAddNode(node_ptr)) {
-            if (local_node_ptr_->public_ip() == node_ptr->public_ip && node_ptr->public_port == local_node_ptr_->public_port()) {
-                if (node_ptr->node_id != local_node_ptr_->id()) {
-                    TOP_DEBUG_NAME("bluenat[%d] get node(%s:%d-%d)",
-                                   local_node_ptr_->service_type().value(),
+            if (get_local_node_info()->public_ip() == node_ptr->public_ip && node_ptr->public_port == get_local_node_info()->public_port()) {
+                if (node_ptr->node_id != get_local_node_info()->id()) {
+                    xdbg("bluenat[%d] get node(%s:%d-%d)",
+                                   get_local_node_info()->service_type().value(),
                                    node_ptr->public_ip.c_str(),
                                    node_ptr->public_port,
                                    node_ptr->service_type.value());
@@ -1444,7 +1515,7 @@ void RootRoutingTable::HandleFindNodesResponse(transport::protobuf::RoutingMessa
                     // node_ptr->hash64 = base::xhash64_t::digest(node_ptr->xid);
                     node_ptr->hash64 = base::xhash64_t::digest(node_ptr->node_id);
                     if (AddNode(node_ptr) == kKadSuccess) {
-                        TOP_DEBUG_NAME("update add_node(%s) from find node response(%s, %s:%d)",
+                        xdbg("update add_node(%s) from find node response(%s, %s:%d)",
                                        HexSubstr(node_ptr->node_id).c_str(),
                                        HexSubstr(message.src_node_id()).c_str(),
                                        packet.get_from_ip_addr().c_str(),
@@ -1454,7 +1525,7 @@ void RootRoutingTable::HandleFindNodesResponse(transport::protobuf::RoutingMessa
                 continue;
             }
 
-            TOP_DEBUG_NAME("find node: %s:%d ", node_ptr->public_ip.c_str(), node_ptr->public_port);
+            xdbg("find node: %s:%d ", node_ptr->public_ip.c_str(), node_ptr->public_port);
             node_detection_ptr_->AddDetectionNode(node_ptr);
         }
     }
@@ -1480,14 +1551,14 @@ void RootRoutingTable::OnHeartbeatFailed(const std::string & ip, uint16_t port) 
 
     for (auto & node : failed_nodes) {
         DropNode(node);
-        TOP_WARN_NAME(
+        xwarn(
             "[%ld] node heartbeat error after tried: %d times.ID:[%s],"
             "IP:[%s],Port[%d] to ID:[%s],IP[%s],Port[%d] drop it.",
             (long)this,
             node->heartbeat_count,
-            HexSubstr(local_node_ptr_->id()).c_str(),
-            local_node_ptr_->local_ip().c_str(),
-            local_node_ptr_->local_port(),
+            HexSubstr(get_local_node_info()->id()).c_str(),
+            get_local_node_info()->local_ip().c_str(),
+            get_local_node_info()->local_port(),
             HexSubstr(node->node_id).c_str(),
             node->local_ip.c_str(),
             node->local_port);
@@ -1496,21 +1567,21 @@ void RootRoutingTable::OnHeartbeatFailed(const std::string & ip, uint16_t port) 
 
 void RootRoutingTable::HandleHandshake(transport::protobuf::RoutingMessage & message, base::xpacket_t & packet) {
     if (!IsDestination(message.des_node_id(), false)) {
-        TOP_WARN_NAME("handshake message destination id error![%s][%s][%s]",
+        xwarn("handshake message destination id error![%s][%s][%s]",
                       HexSubstr(message.src_node_id()).c_str(),
                       HexSubstr(message.des_node_id()).c_str(),
-                      HexSubstr(local_node_ptr_->id()).c_str());
+                      HexSubstr(get_local_node_info()->id()).c_str());
         return;
     }
 
     if (!message.has_data() || message.data().empty()) {
-        TOP_WARN_NAME("connect request in data is empty.");
+        xwarn("connect request in data is empty.");
         return;
     }
 
     protobuf::Handshake handshake;
     if (!handshake.ParseFromString(message.data())) {
-        TOP_WARN_NAME("ConnectRequest ParseFromString from string failed!");
+        xwarn("ConnectRequest ParseFromString from string failed!");
         return;
     }
 
@@ -1540,7 +1611,7 @@ void RootRoutingTable::HandleHandshake(transport::protobuf::RoutingMessage & mes
 
         if (!message.has_client_msg() || !message.client_msg()) {
             if (AddNode(node_ptr) == kKadSuccess) {
-                TOP_DEBUG_NAME("update add_node(%s) from handshake(%s, %s:%d)",
+                xdbg("update add_node(%s) from handshake(%s, %s:%d)",
                                HexSubstr(node_ptr->node_id).c_str(),
                                HexSubstr(message.src_node_id()).c_str(),
                                packet.get_from_ip_addr().c_str(),
@@ -1550,7 +1621,7 @@ void RootRoutingTable::HandleHandshake(transport::protobuf::RoutingMessage & mes
 
         if (!joined_) {
             if (!SetJoin(message.src_node_id(), handshake.public_ip(), handshake.public_port())) {
-                TOP_INFO_NAME("ignore BootstrapJoinResponse because this node already joined");
+                xinfo("ignore BootstrapJoinResponse because this node already joined");
             }
         }
         return;
@@ -1561,15 +1632,15 @@ void RootRoutingTable::HandleHandshake(transport::protobuf::RoutingMessage & mes
         AddNode(node_ptr);
     }
     handshake.set_type(kHandshakeResponse);
-    handshake.set_local_ip(local_node_ptr_->local_ip());
-    handshake.set_local_port(local_node_ptr_->local_port());
-    handshake.set_public_ip(local_node_ptr_->public_ip());
-    handshake.set_public_port(local_node_ptr_->public_port());
-    // handshake.set_nat_type(local_node_ptr_->nat_type());
+    handshake.set_local_ip(get_local_node_info()->local_ip());
+    handshake.set_local_port(get_local_node_info()->local_port());
+    handshake.set_public_ip(get_local_node_info()->public_ip());
+    handshake.set_public_port(get_local_node_info()->public_port());
+    // handshake.set_nat_type(get_local_node_info()->nat_type());
     handshake.set_xid(global_xid->Get());
     std::string data;
     if (!handshake.SerializeToString(&data)) {
-        TOP_WARN_NAME("ConnectResponse SerializeToString failed!");
+        xwarn("ConnectResponse SerializeToString failed!");
         return;
     }
 
@@ -1588,16 +1659,16 @@ void RootRoutingTable::HandleHandshake(transport::protobuf::RoutingMessage & mes
 }
 
 void RootRoutingTable::HandleBootstrapJoinRequest(transport::protobuf::RoutingMessage & message, base::xpacket_t & packet) {
-    TOP_DEBUG_NAME("HandleBootstrapJoinRequest from %s:%d", packet.get_from_ip_addr().c_str(), (int)packet.get_from_ip_port());
+    xdbg("HandleBootstrapJoinRequest from %s:%d", packet.get_from_ip_addr().c_str(), (int)packet.get_from_ip_port());
     bool allow_add = true;
     if (!message.has_data() || message.data().empty()) {
-        TOP_INFO_NAME("HandleBootstrapJoinRequest request in data is empty.");
+        xinfo("HandleBootstrapJoinRequest request in data is empty.");
         return;
     }
 
     protobuf::BootstrapJoinRequest join_req;
     if (!join_req.ParseFromString(message.data())) {
-        TOP_INFO_NAME("BootstrapJoinRequest ParseFromString from string failed!");
+        xinfo("BootstrapJoinRequest ParseFromString from string failed!");
         return;
     }
 
@@ -1620,9 +1691,10 @@ void RootRoutingTable::HandleBootstrapJoinRequest(transport::protobuf::RoutingMe
         return;
     }
 
-    TOP_DEBUG_NAME("[%llu] get node(%s:%d-%llu)", local_node_ptr_->service_type().value(), node_ptr->public_ip.c_str(), node_ptr->public_port, node_ptr->service_type.value());
+    xdbg(
+        "[%llu] get node(%s:%d-%llu)", get_local_node_info()->service_type().value(), node_ptr->public_ip.c_str(), node_ptr->public_port, node_ptr->service_type.value());
     if (AddNode(node_ptr) == kKadSuccess) {
-        TOP_DEBUG_NAME("update add_node(%s) from bootstrap request(%s, %s:%d)",
+        xdbg("update add_node(%s) from bootstrap request(%s, %s:%d)",
                        HexSubstr(node_ptr->node_id).c_str(),
                        HexSubstr(message.src_node_id()).c_str(),
                        packet.get_from_ip_addr().c_str(),
@@ -1631,7 +1703,7 @@ void RootRoutingTable::HandleBootstrapJoinRequest(transport::protobuf::RoutingMe
 }
 
 void RootRoutingTable::SendBootstrapJoinResponse(transport::protobuf::RoutingMessage & message, base::xpacket_t & packet) {
-    TOP_DEBUG_NAME("SendBootstrapJoinResponse to (%s:%d)", packet.get_from_ip_addr().c_str(), (int)packet.get_from_ip_port());
+    xdbg("SendBootstrapJoinResponse to (%s:%d)", packet.get_from_ip_addr().c_str(), (int)packet.get_from_ip_port());
     transport::protobuf::RoutingMessage res_message;
     // TODO(smaug) message.des_service_type maybe not equal the service_type of this routing table
     SetFreqMessage(res_message);
@@ -1650,15 +1722,15 @@ void RootRoutingTable::SendBootstrapJoinResponse(transport::protobuf::RoutingMes
     join_res.set_xid(global_xid->Get());
 
     if (join_res.public_ip().empty() || join_res.public_port() <= 0) {
-        TOP_WARN_NAME("join node [%s] get public ip or public port failed!", HexSubstr(message.src_node_id()).c_str());
+        xwarn("join node [%s] get public ip or public port failed!", HexSubstr(message.src_node_id()).c_str());
         return;
     }
 
-    join_res.set_bootstrap_id(local_node_ptr_->id());
-    // join_res.set_nat_type(local_node_ptr_->nat_type());
+    join_res.set_bootstrap_id(get_local_node_info()->id());
+    // join_res.set_nat_type(get_local_node_info()->nat_type());
     std::string data;
     if (!join_res.SerializeToString(&data)) {
-        TOP_INFO_NAME("ConnectResponse SerializeToString failed!");
+        xinfo("ConnectResponse SerializeToString failed!");
         return;
     }
 
@@ -1667,28 +1739,28 @@ void RootRoutingTable::SendBootstrapJoinResponse(transport::protobuf::RoutingMes
 }
 
 void RootRoutingTable::HandleBootstrapJoinResponse(transport::protobuf::RoutingMessage & message, base::xpacket_t & packet) {
-    TOP_DEBUG_NAME("HandleBootstrapJoinResponse from %s:%d", packet.get_from_ip_addr().c_str(), (int)packet.get_from_ip_port());
+    xdbg("HandleBootstrapJoinResponse from %s:%d", packet.get_from_ip_addr().c_str(), (int)packet.get_from_ip_port());
     if (!IsDestination(message.des_node_id(), false)) {
-        TOP_WARN_NAME("HandleBootstrapJoinResponse message destination id error![%s][%s][%s]",
+        xwarn("HandleBootstrapJoinResponse message destination id error![%s][%s][%s]",
                       HexSubstr(message.src_node_id()).c_str(),
                       HexSubstr(message.des_node_id()).c_str(),
-                      HexSubstr(local_node_ptr_->id()).c_str());
+                      HexSubstr(get_local_node_info()->id()).c_str());
         return;
     }
 
     if (!message.has_data() || message.data().empty()) {
-        TOP_INFO_NAME("ConnectResponse data is empty.");
+        xinfo("ConnectResponse data is empty.");
         return;
     }
 
     protobuf::BootstrapJoinResponse join_res;
     if (!join_res.ParseFromString(message.data())) {
-        TOP_INFO_NAME("ConnectResponse ParseFromString failed!");
+        xinfo("ConnectResponse ParseFromString failed!");
         return;
     }
 
     if (kadmlia::kKadForbidden == message.status()) {
-        TOP_INFO_NAME("BootstrapJoin Request Is Forbidden.");
+        xinfo("BootstrapJoin Request Is Forbidden.");
         return;
     }
 
@@ -1706,17 +1778,17 @@ void RootRoutingTable::HandleBootstrapJoinResponse(transport::protobuf::RoutingM
 
     {
         std::unique_lock<std::mutex> lock(joined_mutex_);
-        local_node_ptr_->set_public_ip(join_res.public_ip());
-        local_node_ptr_->set_public_port(join_res.public_port());
+        get_local_node_info()->set_public_ip(join_res.public_ip());
+        get_local_node_info()->set_public_port(join_res.public_port());
     }
 
     {
         std::unique_lock<std::mutex> bootstrap_lock(bootstrap_nodes_mutex_);
         bootstrap_nodes_.push_back(node_ptr);
-        TOP_INFO_NAME("add bootstrap node success. id:%s ip:%s port:%d", HexEncode(node_ptr->node_id).c_str(), (node_ptr->public_ip).c_str(), node_ptr->public_port);
+        xinfo("add bootstrap node success. id:%s ip:%s port:%d", HexEncode(node_ptr->node_id).c_str(), (node_ptr->public_ip).c_str(), node_ptr->public_port);
     }
     if (!SetJoin(join_res.bootstrap_id(), packet.get_from_ip_addr(), packet.get_from_ip_port())) {
-        TOP_INFO_NAME("ignore BootstrapJoinResponse because this node already joined");
+        xinfo("ignore BootstrapJoinResponse because this node already joined");
         return;
     }
 
@@ -1728,8 +1800,8 @@ void RootRoutingTable::HandleBootstrapJoinResponse(transport::protobuf::RoutingM
 
 void RootRoutingTable::SetFreqMessage(transport::protobuf::RoutingMessage & message) {
     message.set_hop_num(0);
-    message.set_src_service_type(local_node_ptr_->service_type().value());
-    message.set_src_node_id(local_node_ptr_->id());
+    message.set_src_service_type(get_local_node_info()->service_type().value());
+    message.set_src_node_id(get_local_node_info()->id());
     message.set_xid(global_xid->Get());
     message.set_priority(enum_xpacket_priority_type_routine);
     message.set_id(CallbackManager::MessageId());
@@ -1756,7 +1828,7 @@ std::shared_ptr<std::vector<kadmlia::NodeInfoPtr>> RootRoutingTable::GetUnLockNo
 std::vector<NodeInfoPtr>::iterator RootRoutingTable::EraseNode(std::vector<NodeInfoPtr>::iterator it) {
     XMETRICS_PACKET_INFO("p2p_kad_dropnode",
                          "local_nodeid",
-                         HexEncode(local_node_ptr_->id()),
+                         HexEncode(get_local_node_info()->id()),
                          "nodeid",
                          HexSubstr((*it)->node_id),
                          "public_ip",

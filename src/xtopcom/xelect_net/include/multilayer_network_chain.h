@@ -1,3 +1,4 @@
+#if 0
 #pragma once
 
 #include "xelect_net/include/multilayer_network.h"
@@ -79,17 +80,14 @@ public:
      * @param edge_config after parse store config
      * @return int 
      */
-    int HandleParamsAndConfig(
-        const top::data::xplatform_params& platform_param,
-        top::base::Config& edge_config);
+    int HandleParamsAndConfig(const top::data::xplatform_params & platform_param, top::base::Config & edge_config);
     /**
      * @brief register callback to multilayernetworkchain
      * 
      * @param cb callback to register
      * @return int 
      */
-    int RegisterNodeCallback(
-            std::function<int32_t(std::string const& node_addr, std::string const& node_sign)> cb);
+    int RegisterNodeCallback(std::function<int32_t(std::string const & node_addr, std::string const & node_sign)> cb);
     /**
      * @brief add elect vhost instance and manage
      * 
@@ -103,8 +101,8 @@ public:
      * @param xnetwork_id network id of the target elect vhost
      * @return std::shared_ptr<network::xnetwork_driver_face_t> 
      */
-    std::shared_ptr<network::xnetwork_driver_face_t> GetEcVhost(
-            const uint32_t& xnetwork_id) const noexcept;
+    std::shared_ptr<network::xnetwork_driver_face_t> GetEcVhost(const uint32_t & xnetwork_id) const noexcept;
+
 private:
     int JsonParseSeeds(const std::string& return_https, std::vector<seeds_info_t>& seeds_info);
 private:
@@ -118,3 +116,4 @@ private:
 }  // namespace elect
 
 }  // namespace top
+#endif

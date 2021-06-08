@@ -12,7 +12,9 @@
 #include "xtransport/transport.h"
 #include "xtransport/udp_transport/transport_util.h"
 #include "xkad/routing_table/node_info.h"
-#include "xkad/routing_table/routing_table_base.h"
+// #include "xkad/routing_table/routing_table_base.h"
+#include "xkad/routing_table/root_routing_table.h"
+#include "xkad/routing_table/elect_routing_table.h"
 
 namespace top {
 
@@ -22,6 +24,21 @@ class Uint64BloomFilter;
 
 namespace gossip {
 
+struct DispatchInfos {
+    kadmlia::NodeInfoPtr nodes;
+    uint64_t sit1;
+    uint64_t sit2;
+
+    DispatchInfos(kadmlia::NodeInfoPtr _nodes, uint64_t _sit1, uint64_t _sit2) : nodes{_nodes}, sit1{_sit1}, sit2{_sit2} {
+    }
+    uint64_t & get_sit1() {
+        return sit1;
+    }
+    uint64_t & get_sit2() {
+        return sit2;
+    }
+};
+
 class GossipInterface {
 public:
     virtual void Broadcast(
@@ -30,7 +47,7 @@ public:
             std::shared_ptr<std::vector<kadmlia::NodeInfoPtr>> neighbors) = 0;
     virtual void Broadcast(
             transport::protobuf::RoutingMessage& message,
-            kadmlia::RoutingTablePtr& routing_table) {
+            kadmlia::ElectRoutingTablePtr& routing_table) {
         return ;
     }
 
@@ -59,6 +76,7 @@ protected:
     void SendLayered(
             transport::protobuf::RoutingMessage& message,
             const std::vector<kadmlia::NodeInfoPtr>& nodes);
+    void SendDispatch(transport::protobuf::RoutingMessage & message, const std::vector<gossip::DispatchInfos> & dispatch_nodes);
     void CheckDiffNetwork(transport::protobuf::RoutingMessage& message);
 
     // TODO(Charlie): for test evil

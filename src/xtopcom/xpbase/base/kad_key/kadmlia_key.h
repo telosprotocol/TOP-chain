@@ -28,6 +28,8 @@ public:
     bool operator!=(ServiceType const &other) const;
     bool operator<(ServiceType const &other) const;
 
+    bool IsNewer(ServiceType const & other) const;
+
     uint64_t value() const;
     std::string info() const;
 
