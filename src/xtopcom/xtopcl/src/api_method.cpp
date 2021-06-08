@@ -3988,12 +3988,15 @@ void ApiMethod::change_trans_mode(bool use_http) {
     }
 #ifdef DEBUG
     // std::cout << "[debug]edge_domain_name old: " << g_edge_domain << std::endl;
+<<<<<<< HEAD
     char* topio_home = getenv("TOPIO_HOME");
 //    std::cout <<"data_dir:" << topio_home << std::endl;
     if (topio_home) {
         g_data_dir = topio_home;
 //        std::cout <<"data_dir:" << g_data_dir << std::endl;
     }
+=======
+>>>>>>> f13a914 (support T8000 address)
     auto edge_config_path = g_data_dir + "/.edge_config.json";
     std::ifstream edge_config_file(edge_config_path, std::ios::in);
     if (!edge_config_file) {

@@ -223,7 +223,11 @@ namespace top
             if(false == get_type_and_netid(addr_type,net_id))
                 return false;
 
+<<<<<<< HEAD
             if (addr_type == base::enum_vaccount_addr_type_secp256k1_eth_user_account)
+=======
+            if (addr_type == base::enum_vaccount_addr_type_eth_user_account)
+>>>>>>> f13a914 (support T8000 address)
             {
                 return verify_eth_signature(signature, msg_digest);
             }
@@ -264,7 +268,11 @@ namespace top
             if(false == get_type_and_netid(addr_type,net_id))
                 return false;
 
+<<<<<<< HEAD
             if (addr_type == base::enum_vaccount_addr_type_secp256k1_eth_user_account) 
+=======
+            if (addr_type == base::enum_vaccount_addr_type_eth_user_account) 
+>>>>>>> f13a914 (support T8000 address)
             {
                 return verify_eth_signature(signature, msg_digest, parent_addr);
             }
@@ -308,7 +316,11 @@ namespace top
             uint16_t net_id = 0;
             if(false == get_type_and_netid(addr_type,net_id))
                 return false;
+<<<<<<< HEAD
             if (addr_type == base::enum_vaccount_addr_type_secp256k1_eth_user_account) 
+=======
+            if (addr_type == base::enum_vaccount_addr_type_eth_user_account) 
+>>>>>>> f13a914 (support T8000 address)
             {
                 return verify_eth_signature(signature, msg_digest, out_publickey_data);
             }                
@@ -351,7 +363,11 @@ namespace top
             uint16_t net_id = 0;
             if(false == get_type_and_netid(addr_type,net_id))
                 return false;
+<<<<<<< HEAD
             if (addr_type == base::enum_vaccount_addr_type_secp256k1_eth_user_account) 
+=======
+            if (addr_type == base::enum_vaccount_addr_type_eth_user_account) 
+>>>>>>> f13a914 (support T8000 address)
             {
                 return verify_eth_signature(signature, msg_digest, out_publickey_data);
             }
@@ -465,9 +481,15 @@ namespace top
             std::string eth_address((char *)&hash_value + 12, sizeof(hash_value) - 12);
             eth_address = top::HexEncode(eth_address);
 
+<<<<<<< HEAD
             return base::xvaccount_t::make_account_address((base::enum_vaccount_addr_type)base::enum_vaccount_addr_type_secp256k1_eth_user_account, ledger_id, eth_address,-1);
         }        
         std::string      xecpubkey_t::to_eth_address(const std::string & parent_addr,const char addr_type,const uint16_t ledger_id)
+=======
+            return base::xvaccount_t::make_account_address((base::enum_vaccount_addr_type)base::enum_vaccount_addr_type_eth_user_account, ledger_id, eth_address,-1);
+        }        
+       std::string      xecpubkey_t::to_eth_address(const std::string & parent_addr,const char addr_type,const uint16_t ledger_id)
+>>>>>>> f13a914 (support T8000 address)
         {
             if(parent_addr.empty())
                 return to_address(addr_type,ledger_id);
@@ -490,6 +512,7 @@ namespace top
             std::string eth_address((char *)&hash_value + 12, sizeof(hash_value) - 12);
             eth_address = top::HexEncode(eth_address);
 
+<<<<<<< HEAD
             return base::xvaccount_t::make_account_address((base::enum_vaccount_addr_type)base::enum_vaccount_addr_type_secp256k1_eth_user_account, ledger_id, eth_address,-1);
         }
 
@@ -502,6 +525,9 @@ namespace top
             const std::string hex_eth_address = base::xstring_utl::to_hex(raw_eth_address);//convert to Hex codec
             
             return base::xvaccount_t::make_account_address((base::enum_vaccount_addr_type)addr_type, ledger_id, hex_eth_address,-1);
+=======
+            return base::xvaccount_t::make_account_address((base::enum_vaccount_addr_type)base::enum_vaccount_addr_type_eth_user_account, ledger_id, eth_address,-1);
+>>>>>>> f13a914 (support T8000 address)
         }
 
         bool     xecpubkey_t::verify_signature(xecdsasig_t & signature,const uint256_t & msg_digest, bool compress)
