@@ -11,6 +11,7 @@
 #include "xBFT/src/xtimercertview.h"
 #include "xmbus/xevent_timer.h"
 #include "xmetrics/xmetrics.h"
+#include "xdata/xblockbuild.h"
 
 #include <inttypes.h>
 
@@ -68,6 +69,8 @@ bool xtimer_picker_t::on_view_fire(const base::xvevent_t & event, xconsensus::xc
                 proposal_block->get_viewid(),
                 proposal_block->get_height(),
                 m_cur_view);
+            xunit_info("[xtimer_picker_t::on_timer_fire] newview(leader) proposal node=%" PRIx64 ",proposal=%s",
+                get_xip2_low_addr(), proposal_block->dump().c_str());
 
             base::xauto_ptr<xconsensus::xproposal_start> _event_obj(new xconsensus::xproposal_start(proposal_block.get()));
             push_event_down(*_event_obj, this, 0, 0);
@@ -101,10 +104,14 @@ bool xtimer_picker_t::on_create_block_event(const base::xvevent_t & event,xcsobj
     auto clock = e.get_clock();
     auto context_id = e.get_context_id();
 
-    base::xauto_ptr<base::xvblock_t> _block = data::xemptyblock_t::create_emptyblock(sys_contract_beacon_timer_addr, clock, base::enum_xvblock_level_root, clock, clock, base::enum_xvblock_type_clock);
-    _block->get_cert()->set_viewtoken(-1);
-    _block->get_cert()->set_drand(-1);
-    _block->get_cert()->set_nonce(-1);
+    // TODO(jimmy) move to tc pacemaker directly
+    xemptyblock_build_t bbuild(sys_contract_beacon_timer_addr, clock);
+    base::xauto_ptr<base::xvblock_t> _block = bbuild.build_new_block();
+
+    // base::xauto_ptr<base::xvblock_t> _block = data::xemptyblock_t::create_emptyblock(sys_contract_beacon_timer_addr, clock, base::enum_xvblock_level_root, clock, clock, base::enum_xvblock_type_clock);
+    // _block->get_cert()->set_viewtoken(-1);
+    // _block->get_cert()->set_drand(-1);
+    // _block->get_cert()->set_nonce(-1);
 
     base::xauto_ptr<xconsensus::xcscreate_block_evt> _event_obj(new xconsensus::xcscreate_block_evt(e.get_xip(), e.get_vote(), _block.get(), context_id));
     get_child_node()->push_event_down(*_event_obj, this, 0, 0);

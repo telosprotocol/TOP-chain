@@ -7,10 +7,11 @@
 #include "xbasic/xversion.h"
 #include "xvledger/xvblock.h"
 #include "xdata/xprovecert.h"
+#include "xutility/xhash.h"
 
 namespace top { namespace data {
 
-xprove_cert_t::xprove_cert_t(base::xvqcert_t* prove_cert, xprove_cert_class_t _class, xprove_cert_type_t _type, const xmerkle_path_256_t & _path) {
+xprove_cert_t::xprove_cert_t(base::xvqcert_t* prove_cert, xprove_cert_class_t _class, xprove_cert_type_t _type, const base::xmerkle_path_256_t & _path) {
     m_prove_cert = prove_cert;
     m_prove_cert->add_ref();
     set_prove_class(_class);
@@ -57,7 +58,7 @@ int32_t xprove_cert_t::do_read(base::xstream_t & stream) {
     return CALC_LEN();
 }
 
-void xprove_cert_t::set_prove_path(const xmerkle_path_256_t & path) {
+void xprove_cert_t::set_prove_path(const base::xmerkle_path_256_t & path) {
     base::xstream_t stream2(base::xcontext_t::instance());
     path.serialize_to(stream2);
     m_prove_path = std::string((char *)stream2.data(), stream2.size());
@@ -94,15 +95,15 @@ bool xprove_cert_t::is_valid(const std::string & prove_object) {
     }
 
     if (!m_prove_path.empty()) {
-        xmerkle_path_256_t path;
+        base::xmerkle_path_256_t path;
         base::xstream_t _stream(base::xcontext_t::instance(), (uint8_t *)m_prove_path.data(), (uint32_t)m_prove_path.size());
         int32_t ret = path.serialize_from(_stream);
         if (ret <= 0) {
             xerror("xprove_cert_t::is_valid deserialize merkle path fail. ret=%d", ret);
             return false;
         }
-        xmerkle_t<utl::xsha2_256_t, uint256_t> merkle;
-        if (!merkle.validate_path(prove_object, root_hash, path.m_levels)) {
+        base::xmerkle_t<utl::xsha2_256_t, uint256_t> merkle;
+        if (!merkle.validate_path(prove_object, root_hash, path.get_levels())) {
             xerror("xprove_cert_t::is_valid check merkle path fail.");
             return false;
         }

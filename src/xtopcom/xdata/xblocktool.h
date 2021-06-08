@@ -14,6 +14,7 @@
 #include "xdata/xlightunit.h"
 #include "xdata/xfullunit.h"
 #include "xdata/xcons_transaction.h"
+#include "xdata/xrootblock.h"
 
 NS_BEG2(top, data)
 
@@ -23,17 +24,15 @@ class xblocktool_t {
     static base::xvblock_t*   create_genesis_empty_unit(const std::string & account);
     static base::xvblock_t*   create_genesis_empty_table(const std::string & account);
     static base::xvblock_t*   create_genesis_lightunit(const std::string & account, int64_t top_balance);
-    static base::xvblock_t*   create_genesis_lightunit(const std::string & account,
-                                                       const xtransaction_ptr_t & genesis_tx,
-                                                       const xtransaction_result_t & result);
+    static base::xvblock_t*   create_genesis_lightunit(const std::string & account, const xtransaction_ptr_t & genesis_tx, const xtransaction_result_t & result);
+    static base::xvblock_t*   create_genesis_root_block(base::enum_xchain_id chainid, const std::string & account, const xrootblock_para_t & bodypara);
 
+    static base::xvblock_t*   create_next_emptyblock(base::xvblock_t* prev_block, const xblock_consensus_para_t & cs_para);
     static base::xvblock_t*   create_next_emptyblock(base::xvblock_t* prev_block);
-    static base::xvblock_t*   create_next_emptyblock(base::xvblock_t* prev_block, base::enum_xvblock_type blocktype);
-    static base::xvblock_t*   create_next_lightunit(const xlightunit_block_para_t & para, base::xvblock_t* prev_block);
-    static base::xvblock_t*   create_next_fullunit(const xfullunit_block_para_t & para, base::xvblock_t* prev_block);
-    static base::xvblock_t*   create_next_tableblock(const xtable_block_para_t & para, base::xvblock_t* prev_block);
-    static base::xvblock_t*   create_next_tableblock(const xtable_block_para_t & para, const xblock_consensus_para_t & cs_para, base::xvblock_t* prev_block);
-    static base::xvblock_t*   create_next_fulltable(const xfulltable_block_para_t & para, base::xvblock_t* prev_block);
+    static base::xvblock_t*   create_next_lightunit(const xlightunit_block_para_t & bodypara, base::xvblock_t* prev_block, const xblock_consensus_para_t & cs_para);
+    static base::xvblock_t*   create_next_fullunit(const xfullunit_block_para_t & bodypara, base::xvblock_t* prev_block, const xblock_consensus_para_t & cs_para);
+    static base::xvblock_t*   create_next_tableblock(const xtable_block_para_t & bodypara, base::xvblock_t* prev_block, const xblock_consensus_para_t & cs_para);
+    static base::xvblock_t*   create_next_fulltable(const xfulltable_block_para_t & bodypara, base::xvblock_t* prev_block, const xblock_consensus_para_t & cs_para);
 
  public:
    //  static uint16_t         get_chain_id_from_account(const std::string & account);

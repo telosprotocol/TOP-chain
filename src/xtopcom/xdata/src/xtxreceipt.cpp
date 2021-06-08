@@ -13,10 +13,10 @@ namespace data {
 
 REG_CLS(xtx_receipt_t);
 
-xtx_receipt_t::xtx_receipt_t(const xlightunit_output_entity_t* txinfo, const xmerkle_path_256_t & path, base::xvqcert_t* cert) : xtx_receipt_t{txinfo, {}, path, cert} {
+xtx_receipt_t::xtx_receipt_t(const xlightunit_output_entity_t* txinfo, const base::xmerkle_path_256_t & path, base::xvqcert_t* cert) : xtx_receipt_t{txinfo, {}, path, cert} {
 }
 
-xtx_receipt_t::xtx_receipt_t(const xlightunit_output_entity_t * txinfo, std::map<std::string, xbyte_buffer_t> data, const xmerkle_path_256_t & path, base::xvqcert_t * cert)
+xtx_receipt_t::xtx_receipt_t(const xlightunit_output_entity_t * txinfo, std::map<std::string, xbyte_buffer_t> data, const base::xmerkle_path_256_t & path, base::xvqcert_t * cert)
   : m_receipt_data{std::move(data)} {
     m_tx_info = (xlightunit_output_entity_t *)txinfo;
     m_tx_info->add_ref();
@@ -72,7 +72,7 @@ int32_t xtx_receipt_t::do_read(base::xstream_t & stream) {
     return CALC_LEN();
 }
 
-void xtx_receipt_t::set_tx_prove(base::xvqcert_t* prove_cert, xprove_cert_class_t _class, xprove_cert_type_t _type, const xmerkle_path_256_t & _path) {
+void xtx_receipt_t::set_tx_prove(base::xvqcert_t* prove_cert, xprove_cert_class_t _class, xprove_cert_type_t _type, const base::xmerkle_path_256_t & _path) {
     xassert(m_tx_info_prove == nullptr);
     m_tx_info_prove = new xprove_cert_t(prove_cert, _class, _type, _path);
 }

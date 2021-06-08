@@ -30,6 +30,7 @@
 #include "xvledger/xvboffdata.h"
 #include "xvledger/xaccountindex.h"
 #include "xvledger/xreceiptid.h"
+#include "xvledger/xmerkle.hpp"
 
 #if defined(__clang__)
 #    pragma clang diagnostic pop
@@ -42,7 +43,6 @@
 #include "xbase/xobject_ptr.h"
 #include "xdata/xcons_transaction.h"
 #include "xdata/xdata_common.h"
-#include "xdata/xheader_cert.h"
 #include "xdata/xlightunit_info.h"
 
 NS_BEG2(top, data)
@@ -73,16 +73,13 @@ class xblockheader_extra_data_t : public xserializable_based_on<void> {
 
 class xblock_t : public base::xvblock_t {
  public:
-    static bool check_merkle_path(const std::string &leaf, const xmerkle_path_256_t &hash_path, const std::string & root);
     static std::string get_block_base_path(base::xvblock_t* block) {return block->get_account() + ':' + std::to_string(block->get_height());}
     static xobject_ptr_t<xblock_t> raw_vblock_to_object_ptr(base::xvblock_t* block);
     static void  batch_units_to_receiptids(const std::vector<xobject_ptr_t<xblock_t>> & units, base::xreceiptid_check_t & receiptid_check);
 public:
     xblock_t(enum_xdata_type type);
-    xblock_t(base::xvheader_t & header, xblockcert_t & cert, enum_xdata_type type);
-    // xblock_t(base::xvheader_t & header, xblockcert_t & cert, const std::string & input, const std::string & output, enum_xdata_type type);
-    xblock_t(base::xvheader_t & header, xblockcert_t & cert, const xinput_ptr_t & input, const xoutput_ptr_t & output, enum_xdata_type type);
-
+    xblock_t(base::xvheader_t & header, base::xvqcert_t & cert, enum_xdata_type type);
+    xblock_t(base::xvheader_t & header, base::xvqcert_t & cert, base::xvinput_t* input, base::xvoutput_t* output, enum_xdata_type type);
 
 #ifdef XENABLE_PSTACK  // tracking memory
     virtual int32_t add_ref() override;
@@ -95,19 +92,14 @@ public:
     xblock_t(const xblock_t &);
     xblock_t & operator = (const xblock_t &);
 
- protected:
-    xblockcert_t*       get_blockcert() const {return (xblockcert_t*)get_cert();}
-
  public:
     virtual int32_t     full_block_serialize_to(base::xstream_t & stream);  // for block sync
     static  base::xvblock_t*    full_block_read_from(base::xstream_t & stream);  // for block sync
-    void        set_parent_cert_and_path(base::xvqcert_t* parent_cert, const xmerkle_path_256_t & path);
-    bool        calc_input_merkle_path(const std::string & leaf, xmerkle_path_256_t& hash_path) const;
-    bool        calc_output_merkle_path(const std::string & leaf, xmerkle_path_256_t& hash_path) const;
-    bool        check_block_hash();
+    void        set_parent_cert_and_path(base::xvqcert_t* parent_cert, const base::xmerkle_path_256_t & path);
+    bool        calc_input_merkle_path(const std::string & leaf, base::xmerkle_path_256_t& hash_path) const;
+    bool        calc_output_merkle_path(const std::string & leaf, base::xmerkle_path_256_t& hash_path) const;
 
  public:
-    void            set_consensus_para(const xblock_consensus_para_t & para);
     virtual bool    is_full_state_block() const;  // TODO(jimmy) delete and use is_execute_ready directly
     bool            is_execute_ready() const override {return is_full_state_block();}  //check whether ready to execute bin-log
 
@@ -135,13 +127,9 @@ public:
     virtual xlightunit_tx_info_ptr_t    get_tx_info(const std::string & txhash) const;
     virtual int64_t                     get_pledge_balance_change_tgas() const {return 0;}
     virtual uint32_t                    get_txs_count() const {return 0;}
-    virtual int64_t                     get_balance_change() const {return 0;}
-    virtual int64_t                     get_burn_balance_change() const {return 0;}
-    virtual const std::map<std::string, std::string> * get_fullunit_propertys() const {return nullptr;}
     virtual const std::vector<xobject_ptr_t<xblock_t>> & get_tableblock_units(bool need_parent_cert) const {return m_empty_blocks;}
     virtual void                        dump_block_data(xJson::Value & json) const {return;}
     virtual uint16_t                    get_unconfirm_sendtx_num() const {return 0;}
-    virtual std::map<std::string, xaccount_index_t> get_units_index() const {return {};}
 
  public:
     uint64_t    get_timerblock_height() const {return get_clock();}
@@ -172,6 +160,7 @@ class xblock_consensus_para_t {
     void    set_drand_block(base::xvblock_t* _drand_block);
     void    set_latest_blocks(const base::xblock_mptrs & latest_blocks);
     void    update_latest_cert_block(const xblock_ptr_t & proposal_prev_block) {m_latest_cert_block = proposal_prev_block;}
+    void    set_validator(const xvip2_t & validator) {m_validator = validator;}
     void    set_common_consensus_para(uint64_t clock,
                                    const xvip2_t & validator,
                                    const xvip2_t & auditor,
