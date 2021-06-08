@@ -119,7 +119,11 @@ void xpeer_table_receipts_t::get_lacking_ids(uint32_t max_num, std::vector<uint6
     }
 
     auto iter = m_txs.rbegin();
-    last_receipt_id = iter->first;
+    if (iter != m_txs.rend()) {
+        last_receipt_id = iter->first;
+    } else {
+        last_receipt_id = m_latest_receipt_id;
+    }
     for (uint64_t id = last_receipt_id + 1; id <= m_latest_send_id; id++) {
         lacking_ids.push_back(id);
         if (lacking_ids.size() >= max_num) {
