@@ -140,7 +140,9 @@ bool xtopcl::do_command(ParamList & param_list, std::string & res) {
         std::vector<std::string> files = xChainSDK::xcrypto::scan_key_dir(g_keystore_dir);
         std::vector<std::string> accounts;
         for (auto file : files) {
-            if (file.substr(0, 2) == "T-") {
+            //if (file.substr(0, 2) == "T-") {
+            if (file.substr(0, ETH_ACCOUNT_PREFIX.size()) == ETH_ACCOUNT_PREFIX || file.substr(0, TOP_ACCOUNT_PREFIX.size()) == TOP_ACCOUNT_PREFIX)
+            {
                 accounts.push_back(file);
             }
         }

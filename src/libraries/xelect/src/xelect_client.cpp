@@ -23,6 +23,8 @@
 #include "xrpc/xerror/xrpc_error_code.h"
 #include "xrpc/xrpc_method.h"
 #include "xrpc/xuint_format.h"
+#include "xpbase/base/top_utils.h"
+#include "xtopcl/include/api_method.h"
 
 #include <cinttypes>
 
@@ -53,7 +55,7 @@ void xelect_client_imp::bootstrap_node_join() {
     size_t try_count{60};
     size_t loop_count{0};
     size_t success_count{0};
-    std::cout << "send join chain network transaction..." << std::endl;
+    xinfo("enter bootstrap_node_join");
     for (auto i = 0u; i < try_count; ++i) {
         for (auto& item : seed_edge_host_set) {
             std::string seed_edge_host = item + ":" + http_port;
@@ -111,7 +113,12 @@ void xelect_client_imp::bootstrap_node_join() {
                 tx->add_modified_count();
 
                 // get private key and sign
-                auto sign_key =  base::xstring_utl::base64_decode(user_params.signkey);
+                std::string sign_key;
+                // xinfo("xelect_client_imp::bootstrap_node_join,user_params.signkey: %s", user_params.signkey.c_str());
+                if (user_params.signkey.size() != HEX_PRI_KEY_LEN)
+                    sign_key =  base::xstring_utl::base64_decode(user_params.signkey);
+                else
+                    sign_key =  top::HexDecode(user_params.signkey);
                 utl::xecprikey_t pri_key_obj((uint8_t*)sign_key.data());
                 utl::xecdsasig_t signature_obj = pri_key_obj.sign(tx->digest());
                 auto signature = std::string(reinterpret_cast<char *>(signature_obj.get_compact_signature()), signature_obj.get_compact_signature_size());
