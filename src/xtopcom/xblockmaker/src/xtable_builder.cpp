@@ -26,7 +26,18 @@ std::string xlighttable_builder_t::make_light_table_binlog(const xblock_ptr_t & 
 
     // make account index property binlog
     for (auto & unit : units) {
-        xaccount_index_t _aindex(unit.get(), unit->get_unconfirm_sendtx_num() != 0, false);  // TODO(jimmy)
+        bool has_unconfirm_sendtx = false;
+        if (unit->get_block_class() == base::enum_xvblock_class_nil) {  // nil unit should read last unconfirm state
+            xaccount_index_t _old_aindex;
+            bool ret = proposal_tbstate.get_account_index(unit->get_account(), _old_aindex);
+            xassert(ret == true);  // must can read success
+            has_unconfirm_sendtx = _old_aindex.is_has_unconfirm_tx();
+        } else if (unit->get_block_class() == base::enum_xvblock_class_full) {
+            has_unconfirm_sendtx = false;
+        } else {
+            has_unconfirm_sendtx = unit->get_unconfirm_sendtx_num() != 0;
+        }
+        xaccount_index_t _aindex(unit.get(), has_unconfirm_sendtx, false);
         proposal_tbstate.set_account_index(unit->get_account(), _aindex, canvas.get());
     }
 
