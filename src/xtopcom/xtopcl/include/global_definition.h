@@ -27,7 +27,6 @@ constexpr uint64_t MinDeposit = 1;
 constexpr uint64_t MinTxDeposit = 100000;
 //constexpr uint64_t TOP_UNIT = 1e6;  // 1TOP = 1e6 uTOP
 //#define ASSET_TOP(num) ((uint64_t)((num)*TOP_UNIT))
-const std::string TOP_ACCOUNT_PREFIX = "T00000";
 
 extern xChainSDK::user_info g_userinfo;
 extern xChainSDK::user_info copy_g_userinfo;

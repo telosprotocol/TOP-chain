@@ -2,9 +2,9 @@
 #include "CLI11.hpp"
 #include "api_method_imp.h"
 #include "base/config_file.h"
-#include "client_http.hpp"
+#include "xtopcl/include/web/client_http.hpp"
 #include "task/task_info.h"
-#include "topchain_type.h"
+#include "xtopcl/include/xtop/topchain_type.h"
 #include "user_info.h"
 
 #include <functional>
@@ -19,7 +19,6 @@ std::vector<std::string> const COMMAND_LEVEL_FILTER = {"get", "system", "sendtx"
 std::vector<std::string> const COMMAND_HELP_STRING = {"-h", "--help"};
 constexpr int INDENT_WIDTH = 4;
 constexpr int HELP_WIDTH = 36;
-constexpr int BASE64_PRI_KEY_LEN = 44;
 static const uint32_t kExpirePeriod = 2 * 60 * 60 * 1000;  // expire  after 2 * 60 * 60 s92h)
 
 enum class Command_type : uint8_t { toplevel, get, system, sendtransaction, wallet, subcommands, debug };
@@ -58,7 +57,8 @@ public:
     void import_keystore(const std::string & keystore, std::ostringstream & out_str);
     void reset_keystore_password(std::string & path, std::ostringstream & out_str);
     int set_default_miner(const std::string & pub_key, const std::string & pw_path, std::ostringstream & out_str);
-
+    void import_account(const int32_t & pf, std::ostringstream & out_str);
+    void export_account(const std::string & account, std::ostringstream & out_str);
     /*
      * debug
      */
@@ -158,7 +158,7 @@ public:
     int Config(const ParamList & param_list);
     int Key(const ParamList & param_list);
     int CreateAccount(const ParamList & param_list);
-    int CreateAccountKeystore(const ParamList & param_list);
+    //int CreateAccountKeystore(const ParamList & param_list);
     int attachCreateAccount(const ParamList & param_list, std::ostringstream & out_str);
     int CreateKey(const ParamList & param_list);
     int CreateKeypairKeystore(const ParamList & param_list);
@@ -241,7 +241,8 @@ private:
     std::string input_hiding();
     std::string input_no_hiding();
     static int parse_top_double(const std::string &amount, const uint32_t unit, uint64_t &out);
-
+    int input_pri_key(std::string& pri_str);
+    int get_eth_file(std::string& account);
 private:
     api_method_imp api_method_imp_;
     MethodFuncMap methods_;
@@ -251,7 +252,7 @@ private:
     MethodFuncMap sendtransaction_methods_;
     MethodFuncMap wallet_methods_;
     MethodFuncMap debug_methods_;
-    std::string cache_pw{""};
+    std::string cache_pw{" "};
     std::map<std::string, std::string> cmd_name;
     const std::string empty_pw{" "};
     bool is_account{false};
