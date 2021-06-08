@@ -64,7 +64,7 @@ int32_t xpeer_table_receipts_t::push_tx(const std::shared_ptr<xtx_entry> & tx_en
     return xsuccess;
 }
 
-void xpeer_table_receipts_t::update_latest_id(uint64_t latest_receipt_id) {
+void xpeer_table_receipts_t::update_latest_id(uint64_t latest_receipt_id, uint64_t latest_send_id) {
     if (latest_receipt_id <= m_latest_receipt_id) {
         return;
     }
@@ -77,6 +77,7 @@ void xpeer_table_receipts_t::update_latest_id(uint64_t latest_receipt_id) {
         }
     }
     m_latest_receipt_id = latest_receipt_id;
+    m_latest_send_id = latest_send_id;
 }
 
 const std::vector<xcons_transaction_ptr_t> xpeer_table_receipts_t::get_txs(uint64_t upper_receipt_id, uint32_t max_num) const {
@@ -104,9 +105,9 @@ void xpeer_table_receipts_t::erase(uint64_t receipt_id) {
 
 void xpeer_table_receipts_t::get_lacking_ids(uint32_t max_num, std::vector<uint64_t> & lacking_ids) const {
     uint64_t last_receipt_id = m_latest_receipt_id;
-    for(auto & tx_pair : m_txs) {
+    for (auto & tx_pair : m_txs) {
         auto & receipt_id = tx_pair.first;
-        if (receipt_id !=  last_receipt_id + 1) {
+        if (receipt_id != last_receipt_id + 1) {
             for (auto id = last_receipt_id + 1; id < receipt_id; id++) {
                 lacking_ids.push_back(id);
                 if (lacking_ids.size() >= max_num) {
@@ -115,6 +116,15 @@ void xpeer_table_receipts_t::get_lacking_ids(uint32_t max_num, std::vector<uint6
             }
         }
         last_receipt_id = receipt_id;
+    }
+
+    auto iter = m_txs.rbegin();
+    last_receipt_id = iter->first;
+    for (uint64_t id = last_receipt_id + 1; id <= m_latest_send_id; id++) {
+        lacking_ids.push_back(id);
+        if (lacking_ids.size() >= max_num) {
+            return;
+        }
     }
 }
 
@@ -284,7 +294,7 @@ void xreceipt_queue_new_t::update_receiptid_state(const base::xreceiptid_state_p
         auto & peer_table_tx_queue = it.second;
         base::xreceiptid_pair_t receiptid_pair;
         receiptid_state->find_pair(peer_table_sid, receiptid_pair);
-        peer_table_tx_queue->update_latest_id(receiptid_pair.get_confirmid_max());
+        peer_table_tx_queue->update_latest_id(receiptid_pair.get_confirmid_max(), receiptid_pair.get_sendid_max());
     }
 }
 
