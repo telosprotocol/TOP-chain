@@ -1,6 +1,7 @@
 #include "../xdb_tool.h"
 
 #include "xbase/xbase.h"
+#include "xblockstore/xblockstore_face.h"
 #include "xcodec/xmsgpack_codec.hpp"
 #include "xcommon/xip.h"
 #include "xdb/xdb_factory.h"
@@ -9,14 +10,17 @@
 #include "xdata/xelection/xelection_result_store.h"
 #include "xdata/xcodec/xmsgpack/xelection_result_store_codec.hpp"
 
+#include "xvledger/xvledger.h"
+#include "xvledger/xvblock.h"
+
 
 #include <fstream>
 #include <sstream>
 #include <string>
 
 
-#define CONS_AUDITOR_COUNT 2
-#define CONS_VALIDATOR_COUNT 4
+#define CONS_AUDITOR_COUNT 1
+#define CONS_VALIDATOR_COUNT 1
 
 void xdb_tool::init_xdb_tool(std::string const& db_path) {
     db_path_ = db_path;
@@ -24,6 +28,8 @@ void xdb_tool::init_xdb_tool(std::string const& db_path) {
         std::cout << "[xdb_tool::init_xdb_tool] init db_path: " << db_path_ << "\n";
     #endif
     store_ = top::store::xstore_factory::create_store_with_kvdb(db_path_);
+    top::base::xvchain_t::instance().set_xdbstore(store_.get());
+    blockstore_.attach(top::store::get_vblockstore());
 }
 
 uint64_t xdb_tool::get_blockheight(std::string const& tableblock_addr) const {
@@ -31,7 +37,8 @@ uint64_t xdb_tool::get_blockheight(std::string const& tableblock_addr) const {
         std::cout << "[xdb_tool::get_blockheight] current db_path: " << db_path_ << "\n";
         std::cout << "[xdb_tool::get_blockheight] tableblock address: " << tableblock_addr << "\n";
     #endif
-    auto height = store_->get_blockchain_height(tableblock_addr);
+    // auto height = store_->get_blockchain_height(tableblock_addr);
+    auto height = blockstore_->get_latest_committed_block(tableblock_addr);
     std::cout << height << "\n";
     return height;
 }
@@ -45,7 +52,8 @@ void xdb_tool::get_voteinfo_from_block(std::string const& tableblock_addr, uint6
     std::string filename = tableblock_addr + "-" + std::to_string(start) + "-" + std::to_string(end);
     std::fstream file_out(filename, std::ios_base::out | std::ios_base::trunc );
     for (uint64_t i = start; i <= end; ++i) {
-        top::base::xauto_ptr<xblock_t> block = store_->get_block_by_height(tableblock_addr, i);
+        auto vblock = blockstore_->load_block_object(tableblock_addr, i, 0, false);
+        top::base::xauto_ptr<xblock_t> block = dynamic_cast<xblock_t*>(vblock.get());
         std::stringstream outstr;
         outstr << block->get_height();
 
@@ -90,23 +98,32 @@ void xdb_tool::get_voteinfo_from_block(std::string const& tableblock_addr, uint6
 }
 
 
-std::string xdb_tool::cons_electinfo_by_height(uint64_t height) const {
+std::string xdb_tool::cons_electinfo_by_height(uint64_t height, bool print) const {
     std::stringstream outstr;
     outstr << height;
 
-    top::base::xauto_ptr<xblock_t> block = store_->get_block_by_height(top::sys_contract_zec_elect_consensus_addr, height);
-    xnative_property_t const& native_property = block->get_native_property();
+    auto vblock = blockstore_->load_block_object((std::string)top::sys_contract_zec_elect_consensus_addr, height, 0, false);
+    outstr << " " << vblock->get_clock();
+    top::base::xauto_ptr<top::base::xvbstate_t> bstate = top::base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(vblock.get());
+    if (bstate == nullptr) {
+        std::cout << "[ xdb_tool::cons_electinfo_by_height]" << " cannot get cons elect info at height: " << height << ", state is null. \n";
+        return "";
+    }
+    xunit_bstate_t unitstate(bstate.get());
+
     // process auditor&validator
     for (auto i = 0; i < CONS_AUDITOR_COUNT; ++i) {
         uint8_t auditor_group_id = top::common::xauditor_group_id_value_begin + i;
-        outstr << " auditor_" << (uint16_t)auditor_group_id << ":";
-        std::string result;
-        std::string property_name = std::string(top::data::XPROPERTY_CONTRACT_ELECTION_RESULT_KEY) + "_" + std::to_string(auditor_group_id);
+        outstr << " auditor_" << std::dec << (uint16_t)auditor_group_id << ":";
 
-        if (native_property.native_string_get(property_name, result) || result.empty()) {
+        std::string property_name = std::string(top::data::XPROPERTY_CONTRACT_ELECTION_RESULT_KEY) + "_" + std::to_string(auditor_group_id);
+        std::string result = unitstate.native_string_get(property_name);
+
+        if (result.empty()) {
             std::cout << "[ xdb_tool::cons_electinfo_by_height] auditor groupid " << std::dec << (uint16_t)auditor_group_id << " cannot get native property at height: " << height << "," "\n";
             continue;
         }
+
         using top::data::election::xelection_result_store_t;
         auto const & election_result_store = top::codec::msgpack_decode<xelection_result_store_t>({std::begin(result), std::end(result)});
 
@@ -118,10 +135,20 @@ std::string xdb_tool::cons_electinfo_by_height(uint64_t height) const {
 
         for (auto const& node_by_slotid: auditor_current_group_nodes.results()) {
             outstr << " " << node_by_slotid.second.node_id().value();
+            top::common::xip2_t xip{
+                top::common::xnetwork_id_t{0},
+                top::common::xconsensus_zone_id,
+                top::common::xdefault_cluster_id,
+                top::common::xgroup_id_t{auditor_group_id},
+                node_by_slotid.first,
+                (uint16_t)auditor_current_group_nodes.size(),
+                height
+            };
+            outstr << "(" << std::hex << xip.raw_high_part() << ":" << xip.raw_low_part() << ")";
         }
 
         // validator
-        for (auto count = 0; count < 2; ++count) {
+        for (auto count = 0; count < CONS_VALIDATOR_COUNT; ++count) {
             uint8_t validator_group_id ;
             if (auditor_group_id == 1) {
                 validator_group_id = top::common::xvalidator_group_id_value_begin;
@@ -131,7 +158,7 @@ std::string xdb_tool::cons_electinfo_by_height(uint64_t height) const {
 
             validator_group_id += count;
 
-            outstr << " validator_" << (uint16_t)validator_group_id << ":";
+            outstr << " validator_" << std::dec << (uint16_t)validator_group_id << ":";
             auto & validator_current_group_nodes = election_result_store.result_of(top::common::xnetwork_id_t{0})
                                                 .result_of(top::common::xnode_type_t::consensus_validator)
                                                 .result_of(top::common::xdefault_cluster_id)
@@ -139,7 +166,17 @@ std::string xdb_tool::cons_electinfo_by_height(uint64_t height) const {
 
             for (auto const& node_by_slotid: validator_current_group_nodes.results()) {
                 outstr << " " << node_by_slotid.second.node_id().value();
-            }
+                top::common::xip2_t xip{
+                    top::common::xnetwork_id_t{0},
+                    top::common::xconsensus_zone_id,
+                    top::common::xdefault_cluster_id,
+                    top::common::xgroup_id_t{validator_group_id},
+                    node_by_slotid.first,
+                    (uint16_t)validator_current_group_nodes.size(),
+                    height
+                };
+                outstr << "(" << std::hex << xip.raw_high_part() << ":" << xip.raw_low_part() << ")";
+                }
         }
 
 
@@ -148,16 +185,21 @@ std::string xdb_tool::cons_electinfo_by_height(uint64_t height) const {
     }
 
 
-    // std::cout << outstr.str() << "\n";
+    if (print)  std::cout << outstr.str() << "\n";
     return outstr.str();
 
 
 }
 
-// void xdb_tool::get_electinfo_by_height(std::string const& elect_addr, uint64_t height) const {
-
-
-// }
+void xdb_tool::all_cons_electinfo() const {
+    std::string filename = "all_consensus_elect_info";
+    std::fstream file_out(filename, std::ios_base::out | std::ios_base::trunc );
+    auto block_height = get_blockheight(top::sys_contract_zec_elect_consensus_addr);
+    for (uint64_t i = 1; i <= block_height; ++i) {
+        auto res = cons_electinfo_by_height(i);
+        file_out << res << "\n";
+    }
+}
 
 
 std::string xdb_tool::get_multisig_votestr(top::auth::xmutisigdata_t const& aggregated_sig_obj) const {
@@ -222,7 +264,8 @@ void xdb_tool::specific_clockheight(uint64_t start_gmttime, uint64_t end_gmttime
         std::string filename = specific_tableblock_addr + "-" + std::to_string(start_gmttime) + "-" + std::to_string(end_gmttime);
         std::fstream file_out(filename, std::ios_base::out | std::ios_base::trunc );
         for (uint64_t i = 1; i <= block_height; ++i) {
-            top::base::xauto_ptr<xblock_t> block = store_->get_block_by_height(specific_tableblock_addr, i);
+            auto vblock = blockstore_->load_block_object((std::string)top::sys_contract_zec_elect_consensus_addr, i, 0, false);
+            top::base::xauto_ptr<xblock_t> block = dynamic_cast<xblock_t*>(vblock.get());
             std::stringstream outstr;
             auto gmt_time = block->get_timestamp();
             if (gmt_time >= start_gmttime && gmt_time <= end_gmttime) {

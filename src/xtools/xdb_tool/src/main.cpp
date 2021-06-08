@@ -57,11 +57,16 @@ int main(int argc, char** argv) {
     blockVoteInfo_cmd->add_option("end_height", end_height, "the end height.")->required();
     blockVoteInfo_cmd->callback(std::bind(&xdb_tool::get_voteinfo_from_block, &tool_instance, std::ref(block_addr), std::ref(start_height), std::ref(end_height)));
 
-    // get electInfo
-    auto electInfo_cmd = dbtool_app.add_subcommand("consElectInfo", "get consenesus elect info by height");
+    // get electInfo by height
+    auto conselectInfo_cmd = dbtool_app.add_subcommand("consElectInfoByHeight", "get consenesus elect info by height");
     uint64_t elect_height;
-    electInfo_cmd->add_option("elect_height", elect_height, "the height of elcet block");
-    electInfo_cmd->callback(std::bind(&xdb_tool::cons_electinfo_by_height, &tool_instance, std::ref(elect_height)));
+    bool print = true;
+    conselectInfo_cmd->add_option("elect_height", elect_height, "the height of elcet block")->required();
+    conselectInfo_cmd->callback(std::bind(&xdb_tool::cons_electinfo_by_height, &tool_instance, std::ref(elect_height), std::ref(print)));
+
+    // get all electInfo
+    auto all_conselectInfo_cmd = dbtool_app.add_subcommand("allConsElectInfo", "get all consenesus elect info");
+    all_conselectInfo_cmd->callback(std::bind(&xdb_tool::all_cons_electinfo, &tool_instance));
 
 
     // get all need info for credit problem
