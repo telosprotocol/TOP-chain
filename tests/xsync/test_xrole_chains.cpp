@@ -75,7 +75,7 @@ TEST(xrole_chains, archive) {
     }
 
     // sharding system contract
-    std::vector<std::string> sharding_contract = {sys_contract_sharding_vote_addr, sys_contract_sharding_slash_info_addr, sys_contract_sharding_workload_addr};
+    std::vector<std::string> sharding_contract = {sys_contract_sharding_vote_addr};
 
     for (auto & contract : sharding_contract) {
         for (auto table_id : table_ids) {
@@ -341,7 +341,7 @@ TEST(xrole_chains, auditor) {
     }
 
     // sharding system contract
-    std::vector<std::string> sharding_contract = {sys_contract_sharding_vote_addr, sys_contract_sharding_slash_info_addr, sys_contract_sharding_workload_addr};
+    std::vector<std::string> sharding_contract = {sys_contract_sharding_vote_addr};
 
     for (auto & contract : sharding_contract) {
         for (auto table_id : table_ids) {
@@ -436,7 +436,7 @@ TEST(xrole_chains, validator) {
     }
 
     // sharding system contract
-    std::vector<std::string> sharding_contract = {sys_contract_sharding_vote_addr, sys_contract_sharding_slash_info_addr, sys_contract_sharding_workload_addr};
+    std::vector<std::string> sharding_contract = {sys_contract_sharding_vote_addr};
 
     for (auto & contract : sharding_contract) {
         for (auto table_id : table_ids) {

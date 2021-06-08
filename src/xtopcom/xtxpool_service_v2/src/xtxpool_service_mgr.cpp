@@ -39,11 +39,11 @@ xtxpool_service_mgr::xtxpool_service_mgr(const observer_ptr<store::xstore_face_t
 }
 
 void xtxpool_service_mgr::on_block_to_db_event(mbus::xevent_ptr_t e) {
-    if (e->minor_type != mbus::xevent_store_t::type_block_to_db) {
+    if (e->minor_type != mbus::xevent_store_t::type_block_committed) {
         return;
     }
 
-    mbus::xevent_store_block_to_db_ptr_t block_event = dynamic_xobject_ptr_cast<mbus::xevent_store_block_to_db_t>(e);
+    mbus::xevent_store_block_committed_ptr_t block_event = dynamic_xobject_ptr_cast<mbus::xevent_store_block_committed_t>(e);
 
     if (block_event->blk_level != base::enum_xvblock_level_table) {
         return;
@@ -55,7 +55,7 @@ void xtxpool_service_mgr::on_block_to_db_event(mbus::xevent_ptr_t e) {
     }
 
     auto event_handler = [this, e](base::xcall_t & call, const int32_t cur_thread_id, const uint64_t timenow_ms) -> bool {
-        mbus::xevent_store_block_to_db_ptr_t block_event = dynamic_xobject_ptr_cast<mbus::xevent_store_block_to_db_t>(e);
+        mbus::xevent_store_block_committed_ptr_t block_event = dynamic_xobject_ptr_cast<mbus::xevent_store_block_committed_t>(e);
         const xblock_ptr_t & block = mbus::extract_block_from(block_event);
         xassert(block->check_block_flag(base::enum_xvblock_flag_committed));
         on_block_confirmed(block.get());

@@ -29,6 +29,9 @@ public:
     top::mbus::xevent_ptr_t  create_event_for_store_block_to_db(base::xvblock_t *) override {
         return nullptr;
     }
+    top::mbus::xevent_ptr_t  create_event_for_store_committed_block(base::xvbindex_t *) override {
+        return nullptr;
+    }
 
     uint32_t add_sourcer(int, top::mbus::xevent_queue_cb_t) override {
         return 0;

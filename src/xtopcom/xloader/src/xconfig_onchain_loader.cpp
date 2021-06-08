@@ -67,6 +67,9 @@ void xconfig_onchain_loader_t::xconfig_bus_monitor::uninit() {
 }
 
 bool xconfig_onchain_loader_t::xconfig_bus_monitor::filter_event(const mbus::xevent_ptr_t & e) {
+    if (e->minor_type != mbus::xevent_store_t::type_block_to_db) {
+        return false;
+    }
     mbus::xevent_store_block_to_db_ptr_t block_event = dynamic_xobject_ptr_cast<mbus::xevent_store_block_to_db_t>(e);
     std::string & owner = block_event->owner;
     return owner == sys_contract_rec_tcc_addr;

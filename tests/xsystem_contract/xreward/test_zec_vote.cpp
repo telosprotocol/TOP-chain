@@ -294,17 +294,17 @@ public:
         tx->set_tx_type(xtransaction_type_run_contract);
         tx->set_deposit(100000);
 
-        std::string table_workload_contract_addr = std::string(sys_contract_sharding_workload_addr) + "@0";
-        tx->get_source_action().set_account_addr(table_workload_contract_addr);
-        tx->get_source_action().set_action_type(xaction_type_asset_out);
-        tx->get_source_action().set_action_param(std::string((char *)sstream.data(), sstream.size()));
+        // std::string table_workload_contract_addr = std::string(sys_contract_sharding_workload_addr) + "@0";
+        // tx->get_source_action().set_account_addr(table_workload_contract_addr);
+        // tx->get_source_action().set_action_type(xaction_type_asset_out);
+        // tx->get_source_action().set_action_param(std::string((char *)sstream.data(), sstream.size()));
 
-        tx->get_target_action().set_account_addr(sys_contract_zec_workload_addr);
-        tx->get_target_action().set_action_type(xaction_type_run_contract);
-        tx->get_target_action().set_action_name("on_receive_workload2");
-        tx->get_target_action().set_action_param(std::string((char *)tstream.data(), tstream.size()));
+        // tx->get_target_action().set_account_addr(sys_contract_zec_workload_addr);
+        // tx->get_target_action().set_action_type(xaction_type_run_contract);
+        // tx->get_target_action().set_action_name("on_receive_workload2");
+        // tx->get_target_action().set_action_param(std::string((char *)tstream.data(), tstream.size()));
 
-        tx->set_tx_subtype(data::enum_transaction_subtype_recv);
+        // tx->set_tx_subtype(data::enum_transaction_subtype_recv);
 
         return make_block(sys_contract_zec_workload_addr, tx);
     }
