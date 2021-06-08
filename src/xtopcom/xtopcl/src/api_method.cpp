@@ -1284,8 +1284,11 @@ void ApiMethod::vote_miner(std::vector<std::pair<std::string, int64_t>> & vote_i
     }
     std::map<std::string, int64_t> votes;
     for (auto p : vote_infos) {
-        votes[p.first] = p.second;
-        cout << p.first << " " << p.second << endl;
+        std::string account = p.first;
+        if (account.substr(0, ETH_ACCOUNT_PREFIX.size()) == ETH_ACCOUNT_PREFIX)
+            std::transform(account.begin()+1, account.end(), account.begin()+1, ::tolower);
+        votes[account] = p.second;
+        cout << account << " " << p.second << endl;
     }
     api_method_imp_.voteNode(g_userinfo, votes, out_str);
     tackle_send_tx_request(out_str);
