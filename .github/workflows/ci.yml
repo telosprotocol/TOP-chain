@@ -10,8 +10,8 @@ on:
 
 jobs:
   build:
-    # if: github.repository_owner == 'telosprotocol' && (github.event.action == 'opened' || github.event.action == 'reopened' || github.event.action == 'synchronize' || github.event_name == 'pushed')
-    if: github.event.action == 'opened' || github.event.action == 'reopened' || github.event_name == 'push'
+    if: github.repository_owner == 'telosprotocol' && (github.event.action == 'opened' || github.event.action == 'reopened' || github.event.action == 'synchronize' || github.event_name == 'pushed')
+    # if: github.event.action == 'opened' || github.event.action == 'reopened' || github.event_name == 'push'
     runs-on: [self-hosted, Linux, X64]
     
     # for ci telos only
@@ -32,7 +32,6 @@ jobs:
           bash .github/scripts/build_xtop.sh "test build_ci"
 
       - name: TEST XTOP AllInOne
-        # if: github.event.sender.id == ''
         env:
           RUN_NUM: ${{ github.run_number }}
         run: |
