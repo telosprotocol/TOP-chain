@@ -36,6 +36,9 @@ class xtop_dummy_message_bus : public top::mbus::xmessage_bus_face_t {
     xevent_ptr_t  create_event_for_store_block_to_db(base::xvblock_t *) override {
         return nullptr;
     }
+    xevent_ptr_t  create_event_for_store_committed_block(base::xvbindex_t * target_index) override {
+        return nullptr;
+    }
 };
 
 using xdummy_message_bus_t = xtop_dummy_message_bus;

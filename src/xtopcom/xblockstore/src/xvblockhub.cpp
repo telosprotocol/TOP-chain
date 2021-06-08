@@ -2424,6 +2424,20 @@ namespace top
                 && index_ptr->get_height() != 0)
             {
                 store_txs_to_db(index_ptr); //extract and store txs now
+
+                base::xveventbus_t * mbus = base::xvchain_t::instance().get_xevmbus();
+                xassert(mbus != NULL);
+                if(mbus != NULL)
+                {
+                    if(index_ptr->get_height() != 0)
+                    {
+                        mbus::xevent_ptr_t event = mbus->create_event_for_store_committed_block(index_ptr);
+                        if (event != nullptr) {
+                            mbus->push_event(event);
+                        }
+                    }
+                    xdbg_info("xblockacct_t::on_block_committed,done at store(%s)-> block=%s",get_blockstore_path().c_str(),index_ptr->dump().c_str());
+                }
             }
             //fully connect to geneis block or last full-block here
             full_connect_to(index_ptr);
