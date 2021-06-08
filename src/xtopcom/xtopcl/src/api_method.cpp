@@ -725,6 +725,8 @@ void ApiMethod::transfer1(std::string & to, std::string & amount_d, std::string 
         return;
     }
     std::string from = g_userinfo.account;
+    if (to.substr(0, ETH_ACCOUNT_PREFIX.size()) == ETH_ACCOUNT_PREFIX)
+        std::transform(to.begin() + 1, to.end(), to.begin() + 1, ::tolower);
 
     if (note.size() > 128) {
         std::cout << "note size: " << note.size() << " > maximum size 128" << endl;
