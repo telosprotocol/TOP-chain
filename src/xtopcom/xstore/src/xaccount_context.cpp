@@ -1185,7 +1185,7 @@ int32_t xaccount_context_t::uint64_sub(const std::string& key, uint64_t change) 
     CHECK_PROPERTY_NULL_RETURN(propobj, "xaccount_context_t::uint64_sub", key);
     uint64_t oldvalue = propobj->get();
     if (oldvalue < change) {
-        xerror("xaccount_context_t::uint64_sub fail-invalid para.value=%ld,change=%ld", oldvalue, change);
+        xwarn("xaccount_context_t::uint64_sub fail-invalid para.value=%ld,change=%ld", oldvalue, change);
         return xaccount_property_operate_fail;
     }
     uint64_t newvalue = oldvalue - change;
