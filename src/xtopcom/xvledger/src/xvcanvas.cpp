@@ -8,6 +8,10 @@
 #include "xbase/xcontext.h"
 #include "../xvcanvas.h"
 
+#ifdef DEBUG
+    #define _DEBUG_STATE_BINARY_
+#endif
+
 namespace top
 {
     namespace base
@@ -159,6 +163,15 @@ namespace top
 
                 base::xautostream_t<1024> _raw_stream(xcontext_t::instance());
                 compile(input_records,encode_options,_raw_stream);
+                
+                #ifdef _DEBUG_STATE_BINARY_
+                {
+                    const std::string raw_content_bin((const char*)_raw_stream.data(),_raw_stream.size());
+                    const std::string raw_content_bin_hash = xstring_utl::tostring(xhash64_t::digest(raw_content_bin));
+                    xinfo("xvcanvas_t::encode_toto,hash(rawcontent)=%s",raw_content_bin_hash.c_str());
+                }
+                #endif //endif _DEBUG_STATE_BINARY_
+                
                 return xstream_t::compress_to_stream(_raw_stream, _raw_stream.size(),output_bin);
 
             } catch (int error_code){
@@ -175,6 +188,15 @@ namespace top
 
                 base::xautostream_t<1024> _raw_stream(xcontext_t::instance());
                 compile(input_records,encode_options,_raw_stream);
+                
+                #ifdef _DEBUG_STATE_BINARY_
+                {
+                    const std::string raw_content_bin((const char*)_raw_stream.data(),_raw_stream.size());
+                    const std::string raw_content_bin_hash = xstring_utl::tostring(xhash64_t::digest(raw_content_bin));
+                    xinfo("xvcanvas_t::encode_toto,hash(rawcontent)=%s",raw_content_bin_hash.c_str());
+                }
+                #endif //endif _DEBUG_STATE_BINARY_
+                
                 return xstream_t::compress_to_string(_raw_stream,_raw_stream.size(),output_bin);
 
             } catch (int error_code){
@@ -198,7 +220,17 @@ namespace top
                 xautostream_t<1024> uncompressed_stream(xcontext_t::instance()); //1K is big enough for most packet
                 const int decompress_result = xstream_t::decompress_from_stream(input_bin,bin_size,uncompressed_stream);
                 if(decompress_result > 0)
+                {
+                    #ifdef _DEBUG_STATE_BINARY_
+                    {
+                        const std::string raw_content_bin((const char*)uncompressed_stream.data(),uncompressed_stream.size());
+                        const std::string raw_content_bin_hash = xstring_utl::tostring(xhash64_t::digest(raw_content_bin));
+                        xinfo("xvcanvas_t::decode_from,hash(rawcontent)=%s",raw_content_bin_hash.c_str());
+                    }
+                    #endif //endif _DEBUG_STATE_BINARY_
+
                     return decompile(uncompressed_stream,output_records);
+                }
 
                 xerror("xvcanvas_t::decode_from,decompress_from_stream failed as err(%d)",decompress_result);
                 return decompress_result;
@@ -223,7 +255,17 @@ namespace top
                 xautostream_t<1024> uncompressed_stream(xcontext_t::instance()); //1K is big enough for most packet
                 const int decompress_result = xstream_t::decompress_from_string(input_bin,uncompressed_stream);
                 if(decompress_result > 0)
+                {
+                    #ifdef _DEBUG_STATE_BINARY_
+                    {
+                        const std::string raw_content_bin((const char*)uncompressed_stream.data(),uncompressed_stream.size());
+                        const std::string raw_content_bin_hash = xstring_utl::tostring(xhash64_t::digest(raw_content_bin));
+                        xinfo("xvcanvas_t::decode_from,hash(rawcontent)=%s",raw_content_bin_hash.c_str());
+                    }
+                    #endif //endif _DEBUG_STATE_BINARY_
+                    
                     return decompile(uncompressed_stream,output_records);
+                }
 
                 xerror("xvcanvas_t::decode_from,decompress_from_string failed as err(%d)",decompress_result);
                 return decompress_result;
@@ -277,6 +319,38 @@ namespace top
         {
             std::lock_guard<std::recursive_mutex> locker(m_lock);
             return encode_to(m_records,compile_options,output_bin);
+        }
+    
+        void xvcanvas_t::log()
+        {
+            std::string full_content;
+            dump(full_content);
+            xdbg("xvcanvas=>\n%s",full_content.c_str());
+        }
+    
+        void xvcanvas_t::print()
+        {
+            std::string full_content;
+            dump(full_content);
+            printf("xvcanvas=>\n%s",full_content.c_str());
+        }
+    
+        const std::string xvcanvas_t::dump()
+        {
+            std::string full_content;
+            dump(full_content);
+            return full_content;
+        }
+
+        void xvcanvas_t::dump(std::string & full_content)
+        {
+            std::lock_guard<std::recursive_mutex> locker(m_lock);
+            full_content.reserve(m_records.size() * 100); //reserved enough memory first
+            for(auto & rd : m_records)
+            {
+                full_content += rd.dump();
+                full_content += "\n";
+            }
         }
 
     };//end of namespace of base

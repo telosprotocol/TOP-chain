@@ -40,6 +40,7 @@ namespace top
             {
                 m_raw_action = new base::xvaction_t( base::xvcontract_TEP0::new_withdraw(m_raw_tx_hash,target_account,(base::vtoken_t)(-change_balance),0,target_account));
             }
+            m_raw_action->set_max_tgas(1000);
         }
     
         tep0_tx::~tep0_tx()

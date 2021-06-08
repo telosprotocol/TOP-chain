@@ -11,6 +11,10 @@
 #include "../xvstatestore.h"
 #include "../xvledger.h"
 
+#ifdef DEBUG
+    #define _DEBUG_STATE_BINARY_
+#endif
+
 namespace top
 {
     namespace base
@@ -109,6 +113,11 @@ namespace top
                     new_canvas->release_ref();
                     return nullptr;
                 }
+                
+                #ifdef _DEBUG_STATE_BINARY_
+                xinfo("xvexestate_t::rebase,property(%s)->renew(%s)",property_ptr->get_name().c_str(), instruction.dump().c_str());
+                #endif
+                
             }
             return new_canvas;
         }
@@ -823,6 +832,10 @@ namespace top
             const xvalue_t & property_name  = op.get_method_params().at(1);
             const xvalue_t & property_value = op.get_method_params().at(2);
             
+            #ifdef _DEBUG_STATE_BINARY_
+            xinfo("xvexestate_t::do_renew,name(%s)<->value(%s)",property_name.get_string().c_str(),property_value.dump().c_str());
+            #endif //end of _DEBUG_STATE_BINARY_
+            
             xvproperty_t * target_property = get_property_object(property_name.get_string());
             if(target_property == nullptr)
             {
@@ -1092,6 +1105,9 @@ namespace top
             {
                 for(auto & op : out_records)
                 {
+                    #ifdef _DEBUG_STATE_BINARY_
+                    xinfo("xvbstate_t::apply,execute %s",op.dump().c_str());
+                    #endif
                     execute(op,nullptr);
                 }
                 return true;
@@ -1111,6 +1127,9 @@ namespace top
             {
                 for(auto & op : out_records)
                 {
+                    #ifdef _DEBUG_STATE_BINARY_
+                    xinfo("xvbstate_t::apply,execute %s",op.dump().c_str());
+                    #endif
                     execute(op,nullptr);
                 }
                 return true;

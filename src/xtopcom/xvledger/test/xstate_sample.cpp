@@ -27,6 +27,101 @@ int test_xstate(bool is_stress_test)
 {
     top::base::xvblock_t::register_object(top::base::xcontext_t::instance());
     
+    
+    {
+        {
+            std::vector<int8_t> vect;
+            for(int i = 0; i < 9; ++i)
+            {
+                vect.push_back(i);
+            }
+            top::base::xvalue_t val(vect);
+            printf("value=%s\n",val.dump().c_str());
+        }
+        
+        {
+            std::vector<int16_t> vect;
+            for(int i = 0; i < 9; ++i)
+            {
+                vect.push_back(i);
+            }
+            top::base::xvalue_t val(vect);
+            printf("value=%s\n",val.dump().c_str());
+        }
+        
+        {
+            std::vector<int32_t> vect;
+            for(int i = 0; i < 9; ++i)
+            {
+                vect.push_back(i);
+            }
+            top::base::xvalue_t val(vect);
+            printf("value=%s\n",val.dump().c_str());
+        }
+        
+        
+        {
+            std::vector<int64_t> vect;
+            for(int i = 0; i < 9; ++i)
+            {
+                vect.push_back(i);
+            }
+            top::base::xvalue_t val(vect);
+            printf("value=%s\n",val.dump().c_str());
+        }
+        
+        {
+            std::vector<uint64_t> vect;
+            for(int i = 0; i < 9; ++i)
+            {
+                vect.push_back(i);
+            }
+            top::base::xvalue_t val(vect);
+            printf("value=%s\n",val.dump().c_str());
+        }
+        
+        {
+            std::vector<std::string> vect;
+            for(int i = 0; i < 9; ++i)
+            {
+                vect.push_back(top::base::xstring_utl::tostring(i));
+            }
+            top::base::xvalue_t val(vect);
+            printf("value=%s\n",val.dump().c_str());
+        }
+ 
+        top::base::xauto_ptr<top::base::xvbstate_t> block_state_from_topchain(create_xvbstate("Ta00013T7BKn5pP8Zi3K5z2Z5BQuSXTf5u37Se79x@0",32,1));
+        
+        const std::string binlog_hex_str_from_topchain("ac20dc03f133020000005b2e546130303031335437424b6e357050385a69334b357a325a354251755358546635753337536537397840302f33320905c1010f034054303f062b54323a00f51c38416f346a6a597472586f4e77667a62366764704432584e4270715576343670384240300603878b6500203300f012435177797a467862575a35396d4e6a6b7133655a3365483431743762356d69646d330028fd8a3300fe124b633957796e647571784a76583356435537586a4843523959794b75424c3166783300ff124e58623336476b6f6642554d717843415a71644552693633687444564338597a74330000f9165a6a764e4a6a524e4735694571564b7964707141716f654e6a4275466d4e626a40300618aacc00f5124e70527859434651784d4876656454785270676b623842376f48743233354e32576600141b3e01f200323f0c033131330300000103313136080022323808001333180022343710002035350800410432303421000009001039120030023231070040033232340800e00232390300000102343103000001");
+        
+        const std::string binlog_raw_str = top::base::xstring_utl::from_hex(binlog_hex_str_from_topchain);
+        block_state_from_topchain->apply_changes_of_binlog(binlog_raw_str);
+        
+        std::string full_state_bin;
+        block_state_from_topchain->take_snapshot(full_state_bin);
+        
+        
+        top::base::xauto_ptr<top::base::xvbstate_t> full_block_state(create_xvbstate("Ta00013T7BKn5pP8Zi3K5z2Z5BQuSXTf5u37Se79x@0",32,1));
+        full_block_state->apply_changes_of_binlog(full_state_bin);
+        
+        //xassert(full_state_bin == binlog_raw_str);
+    }
+    
+    {
+        top::base::xauto_ptr<top::base::xvbstate_t> block_state_from_topio(create_xvbstate("Ta00013T7BKn5pP8Zi3K5z2Z5BQuSXTf5u37Se79x@0",32,1));
+        
+        const std::string binlog_hex_str_from_topio( "d58ddc03f133020000005b2e546130303031335437424b6e357050385a69334b357a325a354251755358546635753337536537397840302f33320905c1010f034054303f062b54323a00f51c38416f346a6a597472586f4e77667a62366764704432584e4270715576343670384240300603878b6500203300f012435177797a467862575a35396d4e6a6b7133655a3365483431743762356d69646d330028fd8a3300fe124b633957796e647571784a76583356435537586a4843523959794b75424c3166783300ff124e58623336476b6f6642554d717843415a71644552693633687444564338597a74330000f9165a6a764e4a6a524e4735694571564b7964707141716f654e6a4275466d4e626a40300618aacc00f5124e70527859434651784d4876656454785270676b623842376f48743233354e32576600141b3e01f200323f0c033131330300000103313136080022323808001333180022343710002035350800410432303421000009001039120030023231070040033232340800220232160060343103000001");
+        
+        const std::string binlog_raw_str = top::base::xstring_utl::from_hex(binlog_hex_str_from_topio);
+        
+        block_state_from_topio->apply_changes_of_binlog(binlog_raw_str);
+        
+        std::string full_state_bin;
+        block_state_from_topio->take_snapshot(full_state_bin);
+        xassert(full_state_bin == binlog_raw_str);
+    }
+    
+    
     //test system account
     {
         const std::string account_addr = top::base::xvaccount_t::make_account_address(top::base::enum_vaccount_addr_type_native_contract, top::base::enum_test_chain_id, top::base::enum_chain_zone_beacon_index, 127, 7, std::string("1234567890abcdef"));
@@ -147,6 +242,7 @@ int test_xstate(bool is_stress_test)
         top::base::xauto_ptr<top::base::xvbstate_t> hq_block_state(create_xvbstate(account_addr,1,1));
         if(hq_block_state) //build state of a hq block
         {
+            
             top::base::xauto_ptr<top::base::xtokenvar_t> token_property(hq_block_state->new_token_var(std::string("@token"),hq_block_canvas()));
             if(token_property)
             {
@@ -291,7 +387,9 @@ int test_xstate(bool is_stress_test)
         std::string recorded_bin_log;
         //hq_block_state->rebase_change_to_snapshot(); //convert to full state
         hq_block_canvas->encode(recorded_bin_log);
-        
+        hq_block_canvas->log();
+        hq_block_canvas->print();
+   
         top::base::xauto_ptr<top::base::xvbstate_t> copy_block_state(create_xvbstate(account_addr,1,1));
         copy_block_state->apply_changes_of_binlog(recorded_bin_log);
         
