@@ -170,5 +170,10 @@ namespace top
             //return mbus::xevent_ptr_t(new mbus::xevent_t(0));
             return nullptr;
         }
+        
+        mbus::xevent_ptr_t  xveventbus_impl::create_event_for_store_committed_block(base::xvbindex_t * target_index)
+        {
+            return nullptr;
+        }
     };
 };

@@ -71,11 +71,9 @@ class xlightunit_output_resource_t : public xbase_dataunit_t<xlightunit_output_r
 
  public:
     uint32_t    get_unconfirm_sendtx_num() const {return m_unconfirm_sendtx_num;}
-    const std::string & get_property_binlog() const {return m_property_binlog;}
 
  private:
     uint32_t                            m_unconfirm_sendtx_num{0};
-    std::string                         m_property_binlog;
 };
 using xlightunit_output_resource_ptr_t = xobject_ptr_t<xlightunit_output_resource_t>;
 
@@ -101,27 +99,10 @@ class xlightunit_body_t {
 class xlightunit_block_t : public xblock_t {
  protected:
     enum { object_type_value = enum_xdata_type::enum_xdata_type_max - xdata_type_lightunit_block };
-    static base::xvblock_t* create_lightunit(const std::string & account,
-                                                uint64_t height,
-                                                std::string last_block_hash,
-                                                std::string justify_block_hash,
-                                                uint64_t viewid,
-                                                uint64_t clock,
-                                                const std::string & last_full_block_hash,
-                                                uint64_t last_full_block_height,
-                                                const xlightunit_block_para_t & para);
-    static xblockbody_para_t get_blockbody_from_para(const xlightunit_block_para_t & para);
  public:
-    static base::xvblock_t* create_genesis_lightunit(const std::string & account,
-                                                     const xtransaction_ptr_t & genesis_tx,
-                                                     const xtransaction_result_t & result);
-    static base::xvblock_t* create_next_lightunit(const xlightunit_block_para_t & para, base::xvblock_t* prev_block);
-    static base::xvblock_t* create_next_lightunit(const xinput_ptr_t & input, const xoutput_ptr_t & output, base::xvblock_t* prev_block);
-
-    xlightunit_block_t(base::xvheader_t & header, xblockcert_t & cert, const xinput_ptr_t & input, const xoutput_ptr_t & output);
+    xlightunit_block_t(base::xvheader_t & header, base::xvqcert_t & cert, base::xvinput_t* input, base::xvoutput_t* output);
 
  protected:
-    xlightunit_block_t(base::xvheader_t & header, xblockcert_t & cert);
     virtual ~xlightunit_block_t();
  private:
     xlightunit_block_t();
@@ -141,9 +122,7 @@ class xlightunit_block_t : public xblock_t {
  public:  // override base block api
     bool                        extract_sub_txs(std::vector<base::xvtxindex_ptr> & sub_txs) override;
     const std::vector<xlightunit_tx_info_ptr_t> &   get_txs() const override;
-    std::string                 get_property_binlog() const override {return get_tx_output_resource()->get_property_binlog();}
     uint32_t                    get_txs_count() const override {return (uint32_t)get_input()->get_entitys().size();}
-    int64_t                     get_burn_balance_change() const override;
     uint16_t                    get_unconfirm_sendtx_num() const override {return get_tx_output_resource()->get_unconfirm_sendtx_num();}
 
  private:

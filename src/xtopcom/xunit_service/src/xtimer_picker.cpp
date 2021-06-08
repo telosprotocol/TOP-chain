@@ -11,6 +11,7 @@
 #include "xBFT/src/xtimercertview.h"
 #include "xmbus/xevent_timer.h"
 #include "xmetrics/xmetrics.h"
+#include "xdata/xblockbuild.h"
 
 #include <inttypes.h>
 
@@ -68,6 +69,8 @@ bool xtimer_picker_t::on_view_fire(const base::xvevent_t & event, xconsensus::xc
                 proposal_block->get_viewid(),
                 proposal_block->get_height(),
                 m_cur_view);
+            xunit_info("[xtimer_picker_t::on_timer_fire] newview(leader) proposal node=%" PRIx64 ",proposal=%s",
+                get_xip2_low_addr(), proposal_block->dump().c_str());
 
             base::xauto_ptr<xconsensus::xproposal_start> _event_obj(new xconsensus::xproposal_start(proposal_block.get()));
             push_event_down(*_event_obj, this, 0, 0);
@@ -101,10 +104,14 @@ bool xtimer_picker_t::on_create_block_event(const base::xvevent_t & event,xcsobj
     auto clock = e.get_clock();
     auto context_id = e.get_context_id();
 
-    base::xauto_ptr<base::xvblock_t> _block = data::xemptyblock_t::create_emptyblock(sys_contract_beacon_timer_addr, clock, base::enum_xvblock_level_root, clock, clock, base::enum_xvblock_type_clock);
-    _block->get_cert()->set_viewtoken(-1);
-    _block->get_cert()->set_drand(-1);
-    _block->get_cert()->set_nonce(-1);
+    // TODO(jimmy) move to tc pacemaker directly
+    xemptyblock_build_t bbuild(sys_contract_beacon_timer_addr, clock);
+    base::xauto_ptr<base::xvblock_t> _block = bbuild.build_new_block();
+
+    // base::xauto_ptr<base::xvblock_t> _block = data::xemptyblock_t::create_emptyblock(sys_contract_beacon_timer_addr, clock, base::enum_xvblock_level_root, clock, clock, base::enum_xvblock_type_clock);
+    // _block->get_cert()->set_viewtoken(-1);
+    // _block->get_cert()->set_drand(-1);
+    // _block->get_cert()->set_nonce(-1);
 
     base::xauto_ptr<xconsensus::xcscreate_block_evt> _event_obj(new xconsensus::xcscreate_block_evt(e.get_xip(), e.get_vote(), _block.get(), context_id));
     get_child_node()->push_event_down(*_event_obj, this, 0, 0);
@@ -144,28 +151,27 @@ bool xtimer_picker_t::send_out(const xvip2_t & from_addr, const xvip2_t & to_add
 }
 
 bool xtimer_picker_t::recv_in(const xvip2_t & from_addr, const xvip2_t & to_addr, const base::xcspdu_t & packet, int32_t cur_thread_id, uint64_t timenow_ms) {
-    if (xcons_utl::xip_equals(from_addr, get_xip2_addr())) {
+    auto local_xip = get_xip2_addr();
+    auto type = packet.get_msg_type();
+    // reject for local msg && mismatch dest xip
+    // fix TOP-3720 & TOP-3743. 
+    // XIP's network version is deprecated now and will be used for other purpose in the future.
+    // so for consensusing logic time, only epoch matched msg can be processed.
+    // Epoch is defined in XIP's high part.
+    if (xcons_utl::xip_equals(from_addr, local_xip) 
+        || !xcons_utl::xip_equals(to_addr, local_xip)
+        || (from_addr.high_addr != to_addr.high_addr)) {
+        xunit_warn("[xtimer_picker_t::recv_in] recv invalid msg %x from:%s to:%s at node=%s",
+              type,
+              xcons_utl::xip_to_hex(from_addr).c_str(),
+              xcons_utl::xip_to_hex(to_addr).c_str(),
+              xcons_utl::xip_to_hex(local_xip).c_str());
         return true;
     }
 
     bool valid = true;
-    auto type = packet.get_msg_type();
     common::xversion_t version{0};
     xvip2_t leader_xip;
-
-    if (from_addr.high_addr != to_addr.high_addr) {
-        // fix TOP-3720. XIP's network version is deprecated now and will be used for other purpose in the future.
-        // so for consensusing logic time, only epoch matched msg can be processed.
-        // Epoch is defined in XIP's high part.
-        xunit_warn("[xtimer_picker_t::recv_in] recv invalid msg %x from %" PRIx64 ":%" PRIx64 " to %" PRIx64 ":%" PRIx64,
-              type,
-              from_addr.high_addr,
-              from_addr.low_addr,
-              to_addr.high_addr,
-              to_addr.low_addr);
-        return false;
-    }
-
     if (type == xconsensus::enum_consensus_msg_type_proposal ||
         type == xconsensus::enum_consensus_msg_type_commit) {
         // check if sender is leader
@@ -173,7 +179,6 @@ bool xtimer_picker_t::recv_in(const xvip2_t & from_addr, const xvip2_t & to_addr
         valid = xcons_utl::xip_equals(leader_xip, from_addr);
     } else if(type == xconsensus::enum_consensus_msg_type_vote) {
         // check if I am leader
-        auto local_xip = get_xip2_addr();
         leader_xip = m_leader_selector->get_leader_xip(packet.get_block_viewid(), get_account(), nullptr, local_xip, local_xip, version, enum_rotate_mode_no_rotate);
         valid = xcons_utl::xip_equals(leader_xip, local_xip);
     } else if (type == xconsensus::enum_consensus_msg_type_timeout) {

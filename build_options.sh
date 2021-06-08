@@ -2,6 +2,14 @@
 for option in $options
 do
     case $option in
+    build_ci)
+        CMAKE_EXTRA_OPTIONS+=" -DXBUILD_CI=ON"
+        echo "Build CI testnet"
+    ;;
+    build_dev)
+        CMAKE_EXTRA_OPTIONS+=" -DXBUILD_DEV=ON"
+        echo "Build Dev testnet"
+    ;;
     build_galileo)
         CMAKE_EXTRA_OPTIONS+=" -DXBUILD_GALILEO=ON"
         echo "Build Galileo testnet"
@@ -28,10 +36,6 @@ do
     tcmalloc)
         CMAKE_EXTRA_OPTIONS+=" -DTCMALLOC=ON"
         echo "BUILD TCMALLOC mode"
-    ;;
-    rec_elect)
-        CMAKE_EXTRA_OPTIONS+=" -DBUILD_REC_ELECT=ON"
-        echo "DBUILD_REC_ELECT ON"
     ;;
     xmutisign_close)
         CMAKE_EXTRA_OPTIONS+=" -DMUTI_SIGN_CLOSE=ON"

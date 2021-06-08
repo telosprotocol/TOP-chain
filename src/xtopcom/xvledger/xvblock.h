@@ -120,6 +120,7 @@ namespace top
             friend class xvblock_t;
             friend class xvbbuild_t;
             friend class xvblockstore_t;
+            friend class xvblockbuild_t;
         public:
             static  const std::string   name(){ return std::string("xvheader");}
             virtual std::string         get_obj_name() const override {return name();}
@@ -139,7 +140,7 @@ namespace top
 
         public:
             xvheader_t(const xvheader_t & other);
-            
+
         protected:
             xvheader_t();
             xvheader_t(const std::string & intput_hash,const std::string & output_hash);
@@ -290,6 +291,7 @@ namespace top
             friend class xvblock_t;
             friend class xvbbuild_t;
             friend class xvblockstore_t;
+            friend class xvblockbuild_t;
         public:
             static  const std::string   name(){ return std::string("xvqcert");}
             virtual std::string         get_obj_name() const override {return name();}
@@ -478,7 +480,7 @@ namespace top
             //root of input which usally present a root of merkle tree for input
             virtual const std::string   get_root_hash() const {return m_root_hash;}
             virtual bool                set_root_hash(const std::string & root_hash){ m_root_hash = root_hash;return true;}
- 
+
         protected: //proposal ==> input ==> output
             //just carry by object at memory,not included by serialized
             std::string  m_proposal;    //raw proposal
@@ -493,6 +495,7 @@ namespace top
         public:
             static  const std::string   name(){ return std::string("xvoutput");}
             static  const std::string   res_binlog_key_name(){return std::string("bl");}
+            static  const std::string   res_binlog_hash_key_name(){return std::string("bh");}  // TODO(jimmy) put to voutentity
             virtual std::string         get_obj_name() const override {return name();}
             enum{enum_obj_type = enum_xobject_type_voutput};//allow xbase create xvoutput_t object from xdataobj_t::read_from()
 
@@ -516,11 +519,11 @@ namespace top
             virtual bool                set_root_hash(const std::string & root_hash){ m_root_hash = root_hash;return true;}
 
             const std::string           get_binlog();
-            virtual const std::string   get_binlog_hash() {return std::string();}
-            
+            const std::string           get_binlog_hash();
+
         public:
             bool set_offblock_snapshot(const std::string & snapshot);
-            
+
         protected:
             //just carry by object at memory,not included by serialized
             std::string  m_root_hash;  //root of merkle tree constructed by input
@@ -662,7 +665,6 @@ namespace top
             //note:container(e.g. Lightunit etc) need implement this function as they have mutiple sub txs inside them,
             virtual bool                extract_sub_txs(std::vector<xvtxindex_ptr> & sub_txs) {return false;}//as default it is none
             virtual std::string         get_offdata_hash() const {return std::string();}//as default has none offdata
-            virtual std::string         get_property_binlog() const {return std::string();} // TODO(jimmy) use output property binlog later
 
             virtual bool                close(bool force_async = true) override; //close and release this node only
             virtual std::string         dump() const override;  //just for debug purpose

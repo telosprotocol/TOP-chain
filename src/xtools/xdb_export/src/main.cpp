@@ -90,8 +90,8 @@ static std::vector<std::pair<std::string, std::string>> stake_string_pair_list =
 };
 
 static std::vector<std::pair<std::string, std::string>> table_stake_string_pair_list = {
-    std::make_pair(sys_contract_sharding_slash_info_addr, XPORPERTY_CONTRACT_TABLEBLOCK_HEIGHT_KEY),
-    std::make_pair(sys_contract_sharding_workload_addr, XPORPERTY_CONTRACT_TABLEBLOCK_HEIGHT_KEY),
+    // std::make_pair(sys_contract_sharding_slash_info_addr, XPORPERTY_CONTRACT_TABLEBLOCK_HEIGHT_KEY),
+    // std::make_pair(sys_contract_sharding_workload_addr, XPORPERTY_CONTRACT_TABLEBLOCK_HEIGHT_KEY),
     // std::make_pair(sys_contract_sharding_vote_addr, XPORPERTY_CONTRACT_TIME_KEY),
 };
 

@@ -78,15 +78,15 @@ TEST_F(test_account_address, sys_contract_addr) {
     }
 
     {
-        auto address    = make_address_by_prefix_and_subaddr(sys_contract_sharding_slash_info_addr, 100);
-        auto              xid = base::xvaccount_t::get_xid_from_account(address.value());
-        uint8_t           zone = get_vledger_zone_index(xid);
-        uint16_t          subaddr = get_vledger_subaddr(xid);
-        xassert(zone == base::enum_chain_zone_consensus_index);
-        xassert(subaddr == 100);
-        xassert(!is_beacon_contract_address(address));
-        xassert(is_sys_contract_address(address));
-        xassert(is_sys_sharding_contract_address(address));
+        // auto address    = make_address_by_prefix_and_subaddr(sys_contract_sharding_slash_info_addr, 100);
+        // auto              xid = base::xvaccount_t::get_xid_from_account(address.value());
+        // uint8_t           zone = get_vledger_zone_index(xid);
+        // uint16_t          subaddr = get_vledger_subaddr(xid);
+        // xassert(zone == base::enum_chain_zone_consensus_index);
+        // xassert(subaddr == 100);
+        // xassert(!is_beacon_contract_address(address));
+        // xassert(is_sys_contract_address(address));
+        // xassert(is_sys_sharding_contract_address(address));
     }
 }
 

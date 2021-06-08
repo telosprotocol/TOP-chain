@@ -10,14 +10,18 @@
 
 #include <string>
 
-#if defined XBUILD_GALILEO
-#    define SEED_URL "http://galileo.edge.topnetwork.org"
-#    define SERVER_HOST_PORT_HTTP "206.189.201.14:19081"
-#    define SERVER_HOST_PORT_WS "206.189.201.14:19085"
+#if defined(XBUILD_DEV) || defined(XBUILD_CI)
+#   define SEED_URL "http://unreachable.org/"
+#   define SERVER_HOST_PORT_HTTP "127.0.0.1:19081"
+#   define SERVER_HOST_PORT_WS "127.0.0.1:19085"
+#elif defined(XBUILD_GALILEO)
+#   define SEED_URL "http://galileo.edge.topnetwork.org"
+#   define SERVER_HOST_PORT_HTTP "206.189.201.14:19081"
+#   define SERVER_HOST_PORT_WS "206.189.201.14:19085"
 #else
-#    define SEED_URL "http://mainnet.edge.topnetwork.org/"
-#    define SERVER_HOST_PORT_HTTP "206.189.227.204:19081"
-#    define SERVER_HOST_PORT_WS "206.189.227.204:19085"
+#   define SEED_URL "http://mainnet.edge.topnetwork.org/"
+#   define SERVER_HOST_PORT_HTTP "206.189.227.204:19081"
+#   define SERVER_HOST_PORT_WS "206.189.227.204:19085"
 #endif
 
 #define SDK_VERSION "1.0"

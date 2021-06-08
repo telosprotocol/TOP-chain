@@ -25,6 +25,7 @@ public:
     uint64_t get_confirmid_max(base::xtable_shortid_t peer_table_sid) const;
     uint64_t get_recvid_max(base::xtable_shortid_t peer_table_sid) const;
     uint64_t last_update_time() const;
+    bool is_unconfirmed_num_reach_limmit(base::xtable_shortid_t peer_table_sid) const;
 
 private:
     base::xreceiptid_state_ptr_t m_receiptid_state;

@@ -1276,8 +1276,14 @@ void get_block_handle::set_lightunit_info(xJson::Value & j_lu, xblock_t * bp) {
     }
 }
 
-std::unordered_map<string, string> node_type_map =
-    {{"consensus.auditor.", "auditor"}, {"consensus.validator.", "validator"}, {"edge.", "edge"}, {"archive.", "archive"}, {"committee.", "root_beacon"}, {"zec.", "sub_beacon"}};
+static std::unordered_map<common::xnode_type_t, std::string> node_type_map{
+    { common::xnode_type_t::consensus_auditor, "auditor" },
+    { common::xnode_type_t::consensus_validator, "validator" },
+    { common::xnode_type_t::edge, "edge" },
+    { common::xnode_type_t::archive, "archive" },
+    { common::xnode_type_t::rec, "root_beacon" },
+    { common::xnode_type_t::zec, "sub_beacon"}
+};
 
 void get_block_handle::set_addition_info(xJson::Value & body, xblock_t * bp) {
     xaccount_ptr_t state = m_store->get_target_state(bp);
@@ -1345,7 +1351,7 @@ void get_block_handle::set_addition_info(xJson::Value & body, xblock_t * bp) {
                                 j["public_key"] = to_hex_str(election_info.consensus_public_key.to_string());
                                 j["group_id"] = xip2.group_id().value();
                                 j["stake"] = static_cast<unsigned long long>(election_info.stake);
-                                j["node_type"] = node_type_map[common::to_string(node_type)];
+                                j["node_type"] = node_type_map[node_type];
 
                                 if (group_result.group_version().has_value()) {
                                     j["version"] = static_cast<xJson::UInt64>(group_result.group_version().value());
@@ -1371,7 +1377,6 @@ void get_block_handle::set_fullunit_info(xJson::Value & j_fu, xblock_t * bp) {
         base::xauto_ptr<base::xvbstate_t> bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(bp);
         xassert(bstate != nullptr);
         data::xunit_bstate_t unitstate(bstate.get());
-        // set_object_info(j_fu, full);
         j_fu["latest_full_unit_number"] = static_cast<unsigned int>(bp->get_height());
         j_fu["latest_full_unit_hash"] = to_hex_str(bp->get_block_hash());
         j_fu["latest_send_trans_number"] = static_cast<unsigned int>(unitstate.account_send_trans_number());
@@ -1413,12 +1418,6 @@ void get_block_handle::set_table_info(xJson::Value & jv, xblock_t * bp) {
                 jv["0x" + tx->get_tx_hex_hash()] = juj;
             }
             jui["lightunit_input"] = jv;
-
-            xJson::Value jv1;
-            jv1["balance_change"] = static_cast<xJson::Int64>(unit->get_balance_change());
-            jv1["burned_amount_change"] = static_cast<xJson::Int64>(unit->get_burn_balance_change());
-            jui["lightunit_state"] = jv1;
-
             ju[unit->get_block_owner()] = jui;
         }
         jv["units"] = ju;
