@@ -1337,14 +1337,13 @@ void get_block_handle::set_addition_info(xJson::Value & body, xblock_t * bp) {
                             auto const & group_id = top::get<common::xgroup_id_t const>(group_result_info);
                             auto const & group_result = top::get<xelection_group_result_t>(group_result_info);
 
-                            common::xip2_t xip2{network_id, zid, cluster_id, group_id};
-
                             for (auto const & node_info : group_result) {
                                 auto const & node_id = top::get<xelection_info_bundle_t>(node_info).node_id();
                                 if (node_id.empty()) {
                                     continue;
                                 }
                                 auto const & election_info = top::get<xelection_info_bundle_t>(node_info).election_info();
+                                common::xip2_t xip2{network_id, zid, cluster_id, group_id, top::get<common::xslot_id_t const>(node_info), (uint16_t)group_result.size(), bp->get_height()};
 
                                 xJson::Value j;
                                 j["account"] = node_id.to_string();
@@ -1359,6 +1358,7 @@ void get_block_handle::set_addition_info(xJson::Value & body, xblock_t * bp) {
                                 j["start_timer_height"] = static_cast<xJson::UInt64>(group_result.start_time());
                                 j["timestamp"] = static_cast<xJson::UInt64>(group_result.timestamp());
                                 j["slot_id"] = top::get<common::xslot_id_t const>(node_info).value();
+                                j["xip"] = xstring_utl::uint642hex(xip2.raw_high_part()) + ":" + xstring_utl::uint642hex(xip2.raw_low_part());
 
                                 jv["elect_nodes"].append(j);
                             }
