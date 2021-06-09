@@ -82,7 +82,68 @@ int test_ckey(const char addr_type,const uint16_t ledger_id,const int test_round
             xassert(compressed_pub_key_obj.verify_signature(signature_obj, msg_digest));
         }
  
-  
+    }
+    
+    //test bad/modified private key
+    {
+        utl::xecprikey_t  random_data; //using xecprikey_t generate random data
+        uint256_t msg_digest((uint8_t*)random_data.data());
+        
+        utl::xecprikey_t good_pri_key_obj;
+        utl::xecpubkey_t good_pub_key_obj = good_pri_key_obj.get_public_key();
+        const std::string account_addr_from_raw_pri_key = good_pri_key_obj.to_account_address(addr_type, ledger_id);
+        
+        uint8_t bad_priv_key[32];
+        memcpy(bad_priv_key, good_pri_key_obj.data(), good_pri_key_obj.size());
+        bad_priv_key[3] = 0;
+        bad_priv_key[9] = 0x3f; //random value
+        utl::xecprikey_t bad_pri_key_obj(bad_priv_key);
+        
+        utl::xecdsasig_t signature_obj = bad_pri_key_obj.sign(msg_digest);
+        xassert(good_pub_key_obj.verify_signature(signature_obj, msg_digest) == false);
+        
+        const std::string bad_signature((char*)(signature_obj.get_compact_signature()), signature_obj.get_compact_signature_size());
+        xassert(utl::xcrypto_util::verify_sign(msg_digest,bad_signature,account_addr_from_raw_pri_key) == false);
+        
+    }
+    
+    //test bad public key
+    {
+        utl::xecprikey_t  random_data; //using xecprikey_t generate random data
+        uint256_t msg_digest((uint8_t*)random_data.data());
+        
+        utl::xecprikey_t good_pri_key_obj;
+        utl::xecpubkey_t good_pub_key_obj = good_pri_key_obj.get_public_key();
+        
+        utl::xecdsasig_t signature_obj = good_pri_key_obj.sign(msg_digest);
+        const std::string signature((char*)(signature_obj.get_compact_signature()), signature_obj.get_compact_signature_size());
+        
+        uint8_t bad_pub_key[65];
+        memcpy(bad_pub_key, good_pub_key_obj.data(), good_pub_key_obj.size());
+        bad_pub_key[base::xtime_utl::get_fast_randomu() % 65] = base::xtime_utl::get_fast_randomu() % 255;
+        bad_pub_key[base::xtime_utl::get_fast_randomu() % 65] = base::xtime_utl::get_fast_randomu() % 255;
+        utl::xecpubkey_t  bad_pub_key_obj(bad_pub_key);
+        const std::string bad_account_addr = bad_pub_key_obj.to_address(addr_type, ledger_id);
+        
+        xassert(bad_pub_key_obj.verify_signature(signature_obj, msg_digest) == false);
+        xassert(utl::xcrypto_util::verify_sign(msg_digest,signature,bad_account_addr) == false);
+    }
+    
+    //bad account address
+    {
+        utl::xecprikey_t  random_data; //using xecprikey_t generate random data
+        uint256_t msg_digest((uint8_t*)random_data.data());
+        
+        utl::xecprikey_t good_pri_key_obj;
+        utl::xecpubkey_t good_pub_key_obj = good_pri_key_obj.get_public_key();
+        
+        utl::xecdsasig_t signature_obj = good_pri_key_obj.sign(msg_digest);
+        const std::string signature((char*)(signature_obj.get_compact_signature()), signature_obj.get_compact_signature_size());
+        
+        std::string bad_account_addr = good_pub_key_obj.to_address(addr_type, ledger_id);
+        bad_account_addr[bad_account_addr.size() - 3] = '0' + (const char) (base::xtime_utl::get_fast_randomu() % 32);
+        
+        xassert(utl::xcrypto_util::verify_sign(msg_digest,signature,bad_account_addr) == false);
     }
     return 0;
 }
