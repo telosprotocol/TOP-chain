@@ -49,8 +49,7 @@ bool MessageWithBloomfilter::StopGossip(const MessageKey&msg_key, uint32_t stop_
     std::unique_lock<std::mutex> lock(messsage_bloomfilter_map_mutex_);
     auto iter = messsage_bloomfilter_map_.find(msg_key);
     if (iter != messsage_bloomfilter_map_.end()) {
-        TOP_DEBUG("service_type:%llu msg_hash:%u stop_times:%d",
-                  msg_key.service_type.value(),msg_key.msg_hash,iter->second);
+        TOP_DEBUG("msg_hash:%u stop_times:%d", msg_key.msg_hash, iter->second);
         if (iter->second >= stop_times) {
             return true;
         }

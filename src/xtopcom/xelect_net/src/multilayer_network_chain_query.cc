@@ -1,25 +1,130 @@
 #include "xelect_net/include/multilayer_network_chain_query.h"
 
-#include <sys/utsname.h>
-
+#include "xgossip/include/gossip_utils.h"
+#include "xwrouter/multi_routing/multi_routing.h"
+#include "xwrouter/multi_routing/service_node_cache.h"
+#include "xwrouter/multi_routing/small_net_cache.h"
 #include "xwrouter/register_routing_table.h"
 #include "xwrouter/xwrouter.h"
-#include "xgossip/include/gossip_utils.h"
-#include "xwrouter/multi_routing/small_net_cache.h"
-#include "xwrouter/multi_routing/service_node_cache.h"
+
+#include <sys/utsname.h>
 
 namespace top {
 
 namespace elect {
-#if 0
+
 bool MultilayerNetworkChainQuery::Joined() {
-    auto root_ptr = wrouter::GetRoutingTable(base::ServiceType{kRoot}, true);
+    auto root_ptr = wrouter::MultiRouting::Instance()->GetRootRoutingTable();
+    // auto root_ptr = wrouter::GetRoutingTable(base::ServiceType{kRoot}, true);
     if (!root_ptr) {
         return false;
     }
     return root_ptr->IsJoined();
 }
 
+std::string MultilayerNetworkChainQuery::Peers() {
+    std::string result;
+
+    // auto rt = wrouter::GetRoutingTable(base::ServiceType{kRoot}, true);
+    auto rt = wrouter::MultiRouting::Instance()->GetRootRoutingTable();
+    if (!rt) {
+        result = "peers number: max 256, now 0";
+        return result;
+    }
+
+    auto nodes = rt->nodes();
+    if (nodes.empty()) {
+        result = "peers number: max 256, now 0";
+        return result;
+    }
+
+    result = "peers number: max 256, now:" + std::to_string(nodes.size()) + "\n";
+    for (uint32_t i = 0; i < nodes.size(); ++i) {
+        auto n = nodes[i];
+        std::string ninfo = base::StringUtil::str_fmt("Peer#%3d: endpoints %s:%u; Connection quality good\n", i + 1, n->public_ip.c_str(), n->public_port);
+        result += ninfo;
+    }
+
+    result += "\n";
+    return result;
+}
+
+std::string MultilayerNetworkChainQuery::P2pAddr() {
+    assert(global_xid);
+    auto nodeid = global_xid->Get();
+
+    // auto root_ptr = wrouter::GetRoutingTable(base::ServiceType{kRoot}, true);
+    auto root_ptr = wrouter::MultiRouting::Instance()->GetRootRoutingTable();
+    if (!root_ptr) {
+        return "";
+    }
+
+    auto ip = root_ptr->get_local_node_info()->public_ip();
+    auto port = root_ptr->get_local_node_info()->public_port();
+    if (port == 0) {
+        port = root_ptr->get_local_node_info()->local_port();
+        ip = root_ptr->get_local_node_info()->local_ip();
+    }
+
+    // such as tnode://b4062cb0463fb6cf6576337cebff8414387ed445739e458d23bb037f2aadc6c41205147f92@127.0.0.1:30303
+    auto tnode = "tnode://" + nodeid + "@" + ip + ":" + std::to_string(port);
+    return tnode;
+}
+
+#ifdef DEBUG
+uint32_t MultilayerNetworkChainQuery::Broadcast(uint32_t msg_size, uint32_t count) {
+    transport::protobuf::RoutingMessage message;
+    message.set_broadcast(true);
+    message.set_priority(enum_xpacket_priority_type_critical);
+    message.set_is_root(true);
+
+    // auto root_ptr = wrouter::GetRoutingTable(base::ServiceType{kRoot}, true);
+    auto root_ptr = wrouter::MultiRouting::Instance()->GetRootRoutingTable();
+    if (!root_ptr) {
+        return 0;
+    }
+    message.set_src_node_id(root_ptr->get_local_node_info()->id());
+    message.set_des_node_id(root_ptr->get_local_node_info()->id());
+    message.set_type(kElectVhostRumorGossipMessage);
+    message.set_id(kadmlia::CallbackManager::MessageId());
+    message.set_data(RandomString(msg_size));
+
+    auto gossip_block = message.mutable_gossip();
+    gossip_block->set_neighber_count(4);
+    gossip_block->set_stop_times(gossip::kGossipBloomfilter);
+    gossip_block->set_max_hop_num(20);
+    // next version delete all `set_evil_rate`
+    gossip_block->set_evil_rate(0);
+    if (message.is_root()) {
+        gossip_block->set_ign_bloomfilter_level(gossip::kGossipBloomfilterIgnoreLevel);
+    } else {
+        gossip_block->set_ign_bloomfilter_level(0);
+    }
+    gossip_block->set_left_overlap(10);
+    gossip_block->set_right_overlap(10);
+    gossip_block->set_block(message.data());
+    uint32_t vhash = base::xhash32_t::digest(message.data());
+    std::string header_hash = std::to_string(vhash);
+    gossip_block->set_header_hash(header_hash);
+
+    uint32_t sus = 0;
+    for (uint32_t i = 0; i < count; ++i) {
+        transport::protobuf::RoutingMessage tmp_message(message);
+        tmp_message.set_data(RandomString(msg_size));
+        auto gossip_block = tmp_message.mutable_gossip();
+        uint32_t vhash = base::xhash32_t::digest(tmp_message.data());
+        std::string header_hash = std::to_string(vhash);
+        gossip_block->set_header_hash(header_hash);
+        tmp_message.set_id(kadmlia::CallbackManager::MessageId());
+
+        if (wrouter::Wrouter::Instance()->send(tmp_message) == 0) {
+            ++sus;
+        }
+    }
+    return sus;
+}
+#endif
+#if 0
 uint32_t MultilayerNetworkChainQuery::PeerCount() {
     auto root_ptr = wrouter::GetRoutingTable(base::ServiceType{kRoot}, true);
     if (!root_ptr) {
@@ -46,35 +151,6 @@ uint32_t MultilayerNetworkChainQuery::MaxPeers() {
     return 256;
 }
 
-std::string MultilayerNetworkChainQuery::Peers() {
-    std::string result;
-
-
-    auto rt = wrouter::GetRoutingTable(base::ServiceType{kRoot}, true);
-    if (!rt) {
-        result = "peers number: max 256, now 0";
-        return result;
-    }
-
-    auto nodes = rt->nodes();
-    if (nodes.empty()) {
-        result = "peers number: max 256, now 0";
-        return result;
-    }
-
-    result = "peers number: max 256, now:" + std::to_string(nodes.size()) + "\n";
-    for (uint32_t i = 0; i < nodes.size(); ++i) {
-        auto n = nodes[i];
-        std::string ninfo = base::StringUtil::str_fmt("Peer#%3d: endpoints %s:%u; Connection quality good\n",
-                i + 1,
-                n->public_ip.c_str(),
-                n->public_port);
-        result += ninfo;
-    }
-
-    result += "\n";
-    return result;
-}
 
 
 std::string MultilayerNetworkChainQuery::AllPeers() {
@@ -170,57 +246,6 @@ std::string MultilayerNetworkChainQuery::OsInfo() {
     return result;
 }
 
-uint32_t MultilayerNetworkChainQuery::Broadcast(uint32_t msg_size, uint32_t count) {
-    transport::protobuf::RoutingMessage message;
-    message.set_broadcast(true);
-    message.set_priority(enum_xpacket_priority_type_critical);
-    message.set_is_root(true);
-
-    auto root_ptr = wrouter::GetRoutingTable(base::ServiceType{kRoot}, true);
-    if (!root_ptr) {
-        return 0;
-    }
-    message.set_src_node_id(root_ptr->get_local_node_info()->id());
-    message.set_des_node_id(root_ptr->get_local_node_info()->id());
-    message.set_type(kElectVhostRumorGossipMessage);
-    message.set_id(kadmlia::CallbackManager::MessageId());
-    message.set_data(RandomString(msg_size));
-
-    auto gossip_block = message.mutable_gossip();
-    gossip_block->set_neighber_count(4);
-    gossip_block->set_stop_times(gossip::kGossipBloomfilter);
-    gossip_block->set_max_hop_num(20);
-    // next version delete all `set_evil_rate`
-    gossip_block->set_evil_rate(0);
-    if (message.is_root()) {
-        gossip_block->set_ign_bloomfilter_level(gossip::kGossipBloomfilterIgnoreLevel);
-    } else {
-        gossip_block->set_ign_bloomfilter_level(0);
-    }
-    gossip_block->set_left_overlap(10);
-    gossip_block->set_right_overlap(10);
-    gossip_block->set_block(message.data());
-    uint32_t vhash = base::xhash32_t::digest(message.data());
-    std::string header_hash = std::to_string(vhash);
-    gossip_block->set_header_hash(header_hash);
-
-    uint32_t sus = 0;
-    for (uint32_t i = 0; i < count; ++i) {
-        transport::protobuf::RoutingMessage tmp_message(message);
-        tmp_message.set_data(RandomString(msg_size));
-        auto gossip_block = tmp_message.mutable_gossip();
-        uint32_t vhash = base::xhash32_t::digest(tmp_message.data());
-        std::string header_hash = std::to_string(vhash);
-        gossip_block->set_header_hash(header_hash);
-        tmp_message.set_id(kadmlia::CallbackManager::MessageId());
-
-        if (wrouter::Wrouter::Instance()->send(tmp_message) == 0) {
-            ++ sus;
-        }
-    }
-    return sus;
-}
-
 std::string MultilayerNetworkChainQuery::NetInfo() {
     std::string result;
     std::vector<kadmlia::RoutingTablePtr> vec_rt;
@@ -280,26 +305,6 @@ std::string MultilayerNetworkChainQuery::Account() {
     return global_node_id;
 }
 
-std::string MultilayerNetworkChainQuery::P2pAddr() {
-    assert(global_xid);
-    auto nodeid = HexEncode(global_xid->Get());
-
-    auto root_ptr = wrouter::GetRoutingTable(base::ServiceType{kRoot}, true);
-    if (!root_ptr) {
-        return "";
-    }
-
-    auto ip   = root_ptr->get_local_node_info()->public_ip();
-    auto port = root_ptr->get_local_node_info()->public_port();
-    if (port == 0) {
-        port = root_ptr->get_local_node_info()->local_port();
-        ip   = root_ptr->get_local_node_info()->local_ip();
-    }
-
-    // such as tnode://b4062cb0463fb6cf6576337cebff8414387ed445739e458d23bb037f2aadc6c41205147f92@127.0.0.1:30303
-    auto tnode = "tnode://" + nodeid + "@" + ip + ":" + std::to_string(port);
-    return tnode;
-}
 
 std::string MultilayerNetworkChainQuery::HelpInfo() {
     std::string help = "\
@@ -319,6 +324,6 @@ COMMANDS:\n\
     return help;
 }
 #endif
-} // end namespace elect
+}  // end namespace elect
 
-} // end namespace top
+}  // end namespace top

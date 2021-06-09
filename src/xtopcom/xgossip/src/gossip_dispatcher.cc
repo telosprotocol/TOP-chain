@@ -51,11 +51,10 @@ void GossipDispatcher::Broadcast(transport::protobuf::RoutingMessage & message, 
     }
 
     auto kad_key_ptr = base::GetKadmliaKey(message.des_node_id());
-    base::ServiceType service_type = kad_key_ptr->GetServiceType();
-    MessageKey msg_key(0, message.gossip().msg_hash(), service_type);
+    // base::ServiceType service_type = kad_key_ptr->GetServiceType();
+    MessageKey msg_key(message.gossip().msg_hash());
     if (MessageWithBloomfilter::Instance()->StopGossip(msg_key, 1)) {
         xkinfo("[debug] stop gossip but got % " PRIu64 " % " PRIu64 ":", message.gossip().min_dis(), message.gossip().max_dis());
-        xdbg("stop gossip for msg_hash:%u msg_type:%d stop_times:%d", message.gossip().msg_hash(), message.type(), 1);
         return;
     }
 
@@ -74,37 +73,45 @@ void GossipDispatcher::Broadcast(transport::protobuf::RoutingMessage & message, 
 void GossipDispatcher::GenerateDispatchInfos(transport::protobuf::RoutingMessage & message, kadmlia::ElectRoutingTablePtr & routing_table, std::vector<DispatchInfos> & select_nodes) {
     uint64_t sit1 = message.gossip().min_dis();
     uint64_t sit2 = message.gossip().max_dis();
-    xkinfo("[debug] got % " PRIu64 " % " PRIu64 ":", sit1, sit2);
+    xdbg("[GossipDispatcher::GenerateDispatchInfos] got % " PRIu64 " % " PRIu64 ":", sit1, sit2);
 
     uint32_t overlap = message.gossip().left_overlap();
 
     static std::random_device rd;
     static std::mt19937 g(rd());
 
-    auto const & nodes_map = routing_table->nodes();
-    std::map<std::string, std::size_t> index_map;
-    std::vector<std::string> xip2_for_shuffle;
-    std::size_t index = 0;
-    for (auto _p : nodes_map) {
-        xip2_for_shuffle.push_back(_p.first);
-        index_map.insert(std::make_pair(_p.first, index));
-        index++;
-    }
+    std::unordered_map<std::string, kadmlia::NodeInfoPtr> const nodes_map = routing_table->nodes();
+    std::unordered_map<std::string, std::size_t> const index_map = routing_table->index_map();
+    std::vector<std::string> const xip2_for_shuffle = routing_table->get_shuffled_xip2();
+    //! here index_map might still be uncomplete.
 
-    if (message.hop_num() == 0) {
-        SET_INDEX_SENT(index_map.at(routing_table->get_local_node_info()->id()), sit1, sit2);
-    }
-    std::shuffle(xip2_for_shuffle.begin(), xip2_for_shuffle.end(), g);
-    std::size_t shuffle_i;
+    // std::map<std::string, std::size_t> index_map;
+    // std::vector<std::string> xip2_for_shuffle;
+    // std::size_t index = 0;
+    // for (auto _p : nodes_map) {
+    //     xip2_for_shuffle.push_back(_p.first);
+    //     index_map.insert(std::make_pair(_p.first, index));
+    //     index++;
+    // }
+    // if (message.hop_num() == 0) {
+    //     SET_INDEX_SENT(index_map.at(routing_table->get_local_node_info()->id()), sit1, sit2);
+    // }
+    SET_INDEX_SENT(routing_table->get_self_index(), sit1, sit2);
+    // std::shuffle(xip2_for_shuffle.begin(), xip2_for_shuffle.end(), g);
+    std::size_t index_i;
     std::vector<std::string> select_xip2;
-    for (shuffle_i = 0; shuffle_i < xip2_for_shuffle.size(); ++shuffle_i) {
-        std::size_t node_index = index_map[xip2_for_shuffle[shuffle_i]];
-        if (IS_INDEX_SENT(node_index, sit1, sit2))
-            continue;
-        SET_INDEX_SENT(node_index, sit1, sit2);
-        select_xip2.push_back(xip2_for_shuffle[shuffle_i]);
-        if (select_xip2.size() > kGossipLayerNeighborNum)
-            break;
+    for (index_i = 0; index_i < xip2_for_shuffle.size(); ++index_i) {
+        if (index_map.find(xip2_for_shuffle[index_i]) != index_map.end()) {
+            std::size_t node_index = index_map.at(xip2_for_shuffle[index_i]);
+            if (IS_INDEX_SENT(node_index, sit1, sit2))
+                continue;
+            SET_INDEX_SENT(node_index, sit1, sit2);
+            select_xip2.push_back(xip2_for_shuffle[index_i]);
+            if (select_xip2.size() > kGossipLayerNeighborNum)
+                break;
+        } else {
+            xwarn("[GossipDispatcher::GenerateDispatchInfos] routing table still uncomplete , missing: %s", xip2_for_shuffle[index_i].c_str());
+        }
     }
     for (auto _xip2 : select_xip2) {
         select_nodes.push_back(DispatchInfos(nodes_map.at(_xip2), sit1, sit2));
@@ -113,86 +120,32 @@ void GossipDispatcher::GenerateDispatchInfos(transport::protobuf::RoutingMessage
         return;
 
     for (std::size_t _index = 0; _index < select_nodes.size(); ++_index) {
-        xkinfo("[debug] tmp_before % " PRIu64 " % " PRIu64 ":", select_nodes[_index].sit1, select_nodes[_index].sit2);
+        xdbg("[GossipDispatcher::GenerateDispatchInfos] before % " PRIu64 " % " PRIu64 ":", select_nodes[_index].sit1, select_nodes[_index].sit2);
     }
 
-    for (; shuffle_i < xip2_for_shuffle.size(); ++shuffle_i) {
-        std::size_t node_index = index_map[xip2_for_shuffle[shuffle_i]];
-        if (IS_INDEX_SENT(node_index, sit1, sit2))
-            continue;
-        static uint32_t seed = std::chrono::high_resolution_clock::now().time_since_epoch().count();
-        static std::mt19937 rng(seed);
-        std::size_t send_node_index = rng() % select_nodes.size();
-        // std::size_t overlap_flag = rng() % 3;
-        for (std::size_t _index = 0; _index < select_nodes.size(); ++_index) {
-            if (_index != send_node_index /*&& overlap_flag*/) {
-                SET_INDEX_SENT(node_index, select_nodes[_index].get_sit1(), select_nodes[_index].get_sit2());
+    for (; index_i < xip2_for_shuffle.size(); ++index_i) {
+        if (index_map.find(xip2_for_shuffle[index_i]) != index_map.end()) {
+            std::size_t node_index = index_map.at(xip2_for_shuffle[index_i]);
+            if (IS_INDEX_SENT(node_index, sit1, sit2))
+                continue;
+            static uint32_t seed = std::chrono::high_resolution_clock::now().time_since_epoch().count();
+            static std::mt19937 rng(seed);
+            std::size_t send_node_index = rng() % select_nodes.size();
+            // std::size_t overlap_flag = rng() % 3;
+            for (std::size_t _index = 0; _index < select_nodes.size(); ++_index) {
+                if (_index != send_node_index /*&& overlap_flag*/) {
+                    SET_INDEX_SENT(node_index, select_nodes[_index].get_sit1(), select_nodes[_index].get_sit2());
+                }
             }
+        } else {
+            xwarn("[GossipDispatcher::GenerateDispatchInfos] routing table still uncomplete , missing: %s", xip2_for_shuffle[index_i].c_str());
         }
     }
 
     for (std::size_t _index = 0; _index < select_nodes.size(); ++_index) {
-        xkinfo("[debug] tmp_after % " PRIu64 " % " PRIu64 ":", select_nodes[_index].sit1, select_nodes[_index].sit2);
+        xdbg("[GossipDispatcher::GenerateDispatchInfos] after % " PRIu64 " % " PRIu64 ":", select_nodes[_index].sit1, select_nodes[_index].sit2);
     }
 
-#if 0
-
-    std::vector<kadmlia::NodeInfoPtr> nodes_for_shuffle;
-    for (auto _p : nodes_map) {
-        nodes_for_shuffle.push_back(_p.second);
-    }
-    //  std::vector<kadmlia::NodeInfoPtr> nodes_for_shuffle = routing_table->nodes();
-    // static std::vector<uint64_t> sorted_nodes = routing_table->get_all_sorted_nodes();
-     std::map<uint64_t, std::size_t> hash2index = routing_table->get_all_sorted_nodes();
-
-    if (message.hop_num() == 0) {
-        SET_INDEX_SENT(hash2index.at(routing_table->get_local_node_info()->hash64()), sit1, sit2);
-    }
-
-    std::shuffle(nodes_for_shuffle.begin(), nodes_for_shuffle.end(), g);
-
-    std::size_t shuffle_i;
-    std::vector<std::size_t> selected_shuffle_index;
-    for (shuffle_i = 0; shuffle_i < nodes_for_shuffle.size(); ++shuffle_i) {
-        auto node_index = hash2index[nodes_for_shuffle[shuffle_i]->hash64];
-        // if(nodes_for_shuffle[i].recv_flag) continue;
-        if (IS_INDEX_SENT(node_index, sit1, sit2))
-            continue;
-        SET_INDEX_SENT(node_index, sit1, sit2);
-        selected_shuffle_index.push_back(shuffle_i);
-        if (selected_shuffle_index.size() >= kGossipLayerNeighborNum)
-            break;
-    }
-
-    for (auto _index : selected_shuffle_index) {
-        select_nodes.push_back(DispatchInfos(nodes_for_shuffle[_index], sit1, sit2));
-    }
-    if (select_nodes.empty())
-        return;
-
-    for(std::size_t _index = 0;_index <select_nodes.size();++_index){
-        xkinfo("[debug] tmp_before % " PRIu64 " % " PRIu64 ":", select_nodes[_index].sit1, select_nodes[_index].sit2);
-    }
-
-    for (; shuffle_i < nodes_for_shuffle.size(); ++shuffle_i) {
-        auto node_index = hash2index[nodes_for_shuffle[shuffle_i]->hash64];
-        if (IS_INDEX_SENT(node_index, sit1, sit2))
-            continue;
-        static uint32_t seed = std::chrono::high_resolution_clock::now().time_since_epoch().count();
-        static std::mt19937 rng(seed);
-        std::size_t send_node_index = rng() % select_nodes.size();
-        // std::size_t overlap_flag = rng() % 3;
-        for (std::size_t _index = 0; _index < select_nodes.size(); ++_index) {
-            if (_index != send_node_index /*&& overlap_flag*/) {
-                SET_INDEX_SENT(node_index, select_nodes[_index].get_sit1(), select_nodes[_index].get_sit2());
-            }
-        }
-    }
-    
-    for(std::size_t _index = 0;_index <select_nodes.size();++_index){
-        xkinfo("[debug] tmp_after % " PRIu64 " % " PRIu64 ":", select_nodes[_index].sit1, select_nodes[_index].sit2);
-    }
-#endif
     return;
 }
 

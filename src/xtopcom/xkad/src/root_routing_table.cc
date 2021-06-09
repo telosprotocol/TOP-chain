@@ -216,9 +216,9 @@ int RootRoutingTable::SendPing(transport::protobuf::RoutingMessage & message, co
 }
 
 int RootRoutingTable::SendData(transport::protobuf::RoutingMessage & message, NodeInfoPtr node) {
-    if (node->same_vlan) {
-        return SendData(message, node->local_ip, node->local_port);
-    }
+    // if (node->same_vlan) {
+    //     return SendData(message, node->local_ip, node->local_port);
+    // }
 
     std::string msg;
     if (!message.SerializeToString(&msg)) {
@@ -1551,17 +1551,15 @@ void RootRoutingTable::OnHeartbeatFailed(const std::string & ip, uint16_t port) 
 
     for (auto & node : failed_nodes) {
         DropNode(node);
-        xwarn(
-            "[%ld] node heartbeat error after tried: %d times.ID:[%s],"
-            "IP:[%s],Port[%d] to ID:[%s],IP[%s],Port[%d] drop it.",
-            (long)this,
-            node->heartbeat_count,
-            HexSubstr(get_local_node_info()->id()).c_str(),
-            get_local_node_info()->local_ip().c_str(),
-            get_local_node_info()->local_port(),
-            HexSubstr(node->node_id).c_str(),
-            node->local_ip.c_str(),
-            node->local_port);
+        xwarn("[%ld] node heartbeat error .ID:[%s],IP:[%s],Port[%d] to ID:[%s],IP[%s],Port[%d] drop it.",
+              (long)this,
+              // node->heartbeat_count,
+              (get_local_node_info()->id()).c_str(),
+              get_local_node_info()->local_ip().c_str(),
+              get_local_node_info()->local_port(),
+              HexSubstr(node->node_id).c_str(),
+              node->local_ip.c_str(),
+              node->local_port);
     }
 }
 
@@ -1605,11 +1603,11 @@ void RootRoutingTable::HandleHandshake(transport::protobuf::RoutingMessage & mes
     node_ptr->hash64 = base::xhash64_t::digest(node_ptr->node_id);
     if (handshake.type() == kHandshakeResponse) {
         node_detection_ptr_->RemoveDetection(node_ptr->public_ip, node_ptr->public_port);
-        if ((packet.get_from_ip_addr() == node_ptr->local_ip && packet.get_from_ip_port() == node_ptr->local_port) && node_ptr->public_ip != node_ptr->local_ip) {
-            node_ptr->same_vlan = true;
-        }
+        // if ((packet.get_from_ip_addr() == node_ptr->local_ip && packet.get_from_ip_port() == node_ptr->local_port) && node_ptr->public_ip != node_ptr->local_ip) {
+        //     node_ptr->same_vlan = true;
+        // }
 
-        if (!message.has_client_msg() || !message.client_msg()) {
+        // if (!message.has_client_msg() || !message.client_msg()) {
             if (AddNode(node_ptr) == kKadSuccess) {
                 xdbg("update add_node(%s) from handshake(%s, %s:%d)",
                                HexSubstr(node_ptr->node_id).c_str(),
@@ -1617,7 +1615,7 @@ void RootRoutingTable::HandleHandshake(transport::protobuf::RoutingMessage & mes
                                packet.get_from_ip_addr().c_str(),
                                packet.get_from_ip_port());
             }
-        }
+        // }
 
         if (!joined_) {
             if (!SetJoin(message.src_node_id(), handshake.public_ip(), handshake.public_port())) {

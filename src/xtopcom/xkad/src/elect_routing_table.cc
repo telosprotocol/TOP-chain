@@ -119,9 +119,9 @@ int ElectRoutingTable::SendPing(transport::protobuf::RoutingMessage & message, c
 }
 
 int ElectRoutingTable::SendData(transport::protobuf::RoutingMessage & message, NodeInfoPtr node) {
-    if (node->same_vlan) {
-        return SendData(message, node->local_ip, node->local_port);
-    }
+    // if (node->same_vlan) {
+    //     return SendData(message, node->local_ip, node->local_port);
+    // }
 
     std::string msg;
     if (!message.SerializeToString(&msg)) {
@@ -145,25 +145,19 @@ int ElectRoutingTable::SendData(transport::protobuf::RoutingMessage & message, N
 }
 
 std::size_t ElectRoutingTable::nodes_size() {
+    std::unique_lock<std::mutex> lock(m_nodes_mutex);
     return m_nodes.size();
 }
 
-std::vector<std::string> const & ElectRoutingTable::get_shuffled_xip2() {
-    static std::random_device rd;
-    static std::mt19937 g(rd());
-
-    std::shuffle(m_xip2_for_shuffle.begin(),m_xip2_for_shuffle.end(),g);
-    return m_xip2_for_shuffle;
-}
-
-std::vector<NodeInfoPtr> ElectRoutingTable::GetClosestNodes(const std::string & target_id, uint32_t number_to_get) {
-    if(m_nodes.find(target_id)!=m_nodes.end()){
-        return std::vector<NodeInfoPtr>{m_nodes.at(target_id)};
-    }
-    std::vector<NodeInfoPtr> res_nodes;
-    GetRandomNodes(res_nodes, number_to_get);
-    return res_nodes;
-}
+// std::vector<NodeInfoPtr> ElectRoutingTable::GetClosestNodes(const std::string & target_id, uint32_t number_to_get) {
+//     std::vector<NodeInfoPtr> res_nodes;
+//     if (m_nodes.find(target_id) != m_nodes.end()) {
+//         res_nodes.push_back(m_nodes.at(target_id));
+//     }
+//     std::vector<NodeInfoPtr> res_nodes;
+//     GetRandomNodes(res_nodes, number_to_get);
+//     return res_nodes;
+// }
 
 void ElectRoutingTable::PrintRoutingTable() {
     if (destroy_) {
@@ -248,33 +242,33 @@ void ElectRoutingTable::SetFreqMessage(transport::protobuf::RoutingMessage & mes
     }
 }
 
-int ElectRoutingTable::AddNode(NodeInfoPtr node) {
-    assert(false);
-    return kKadSuccess;
-}
+// int ElectRoutingTable::AddNode(NodeInfoPtr node) {
+//     assert(false);
+//     return kKadSuccess;
+// }
 
-bool ElectRoutingTable::CanAddNode(NodeInfoPtr node) {
-    xdbg("node_id(%s), pub(%s:%d)", HexSubstr(node->node_id).c_str(), node->public_ip.c_str(), node->public_port);
-    if (node->node_id == get_local_node_info()->id()) {
-        xdbg("local node");
-        return false;
-    }
+// bool ElectRoutingTable::CanAddNode(NodeInfoPtr node) {
+//     xdbg("node_id(%s), pub(%s:%d)", HexSubstr(node->node_id).c_str(), node->public_ip.c_str(), node->public_port);
+//     if (node->node_id == get_local_node_info()->id()) {
+//         xdbg("local node");
+//         return false;
+//     }
 
-    if (node->node_id.size() != kNodeIdSize) {
-        xdbg("node id size is invalid![%d] should[%d]", node->node_id.size(), kNodeIdSize);
-        return false;
-    }
+//     if (node->node_id.size() != kNodeIdSize) {
+//         xdbg("node id size is invalid![%d] should[%d]", node->node_id.size(), kNodeIdSize);
+//         return false;
+//     }
 
-    if (node->public_ip.empty() || node->public_port <= 0) {
-        xdbg("node[%s] public ip or public port invalid!", HexEncode(node->node_id).c_str());
-        return false;
-    }
+//     if (node->public_ip.empty() || node->public_port <= 0) {
+//         xdbg("node[%s] public ip or public port invalid!", HexEncode(node->node_id).c_str());
+//         return false;
+//     }
 
-    return true;
-}
+//     return true;
+// }
 
-int ElectRoutingTable::DropNode(NodeInfoPtr node) {
-    assert(false);
+// int ElectRoutingTable::DropNode(NodeInfoPtr node) {
+//     assert(false);
     // {
     //     NodesLock vec_lock(nodes_mutex_);
     //     for (auto iter = nodes_.begin(); iter != nodes_.end(); ++iter) {
@@ -307,31 +301,43 @@ int ElectRoutingTable::DropNode(NodeInfoPtr node) {
     //     no_lock_for_use_nodes_ = std::make_shared<std::vector<NodeInfoPtr>>(nodes());
     // }
 
-    return kKadSuccess;
-}
+//     return kKadSuccess;
+// }
 
-NodeInfoPtr ElectRoutingTable::GetRandomNode() {
+// NodeInfoPtr ElectRoutingTable::GetRandomNode() {
     // if (nodes_.empty()) {
     //     return nullptr;
     // }
     // return nodes_[RandomUint32() % nodes_.size()];
-    assert(false);
-    return nullptr;
-}
+//     assert(false);
+//     return nullptr;
+// }
 
-bool ElectRoutingTable::GetRandomNodes(std::vector<NodeInfoPtr> & vec, size_t size) {
-    auto const & shuffled_xip2 = get_shuffled_xip2();
-
-    std::size_t min_size = std::min(shuffled_xip2.size(), size);
+void ElectRoutingTable::GetRandomNodes(std::vector<NodeInfoPtr> & vec, size_t size) {
+    std::size_t min_size = std::min(m_xip2_for_shuffle.size(), size);
     for (std::size_t _i = 0; _i < min_size; ++_i)
-        vec.push_back(m_nodes[shuffled_xip2[_i]]);
-    return true;
-    // assert(false);
-    // return false;
+        vec.push_back(m_nodes[m_xip2_for_shuffle[_i]]);
 }
 
 std::unordered_map<std::string, NodeInfoPtr> ElectRoutingTable::nodes() {
+    std::unique_lock<std::mutex> lock(m_nodes_mutex);
     return m_nodes;
+}
+
+std::unordered_map<std::string, std::size_t> ElectRoutingTable::index_map() {
+    return m_index_map;
+}
+
+std::vector<std::string> ElectRoutingTable::get_shuffled_xip2() {
+    static std::random_device rd;
+    static std::mt19937 g(rd());
+
+    std::shuffle(m_xip2_for_shuffle.begin(),m_xip2_for_shuffle.end(),g);
+    return m_xip2_for_shuffle;
+}
+
+std::size_t ElectRoutingTable::get_self_index(){
+    return m_self_index;
 }
 
 // void ElectRoutingTable::GetRangeNodes(const uint64_t & min, const uint64_t & max, std::vector<NodeInfoPtr> & vec) {
@@ -416,6 +422,7 @@ bool ElectRoutingTable::CloserToTarget(const std::string & id1, const std::strin
 
 // map<election_xip2_str,node_id_root_kad_key>
 void ElectRoutingTable::SetElectionNodesExpected(std::map<std::string, base::KadmliaKeyPtr> const & elect_root_kad_keys_map) {
+    std::unique_lock<std::mutex> lock(m_nodes_mutex);
     m_expected_kad_keys = elect_root_kad_keys_map;
     std::size_t index = 0;
     for (auto _p : elect_root_kad_keys_map) {
@@ -451,13 +458,14 @@ std::map<std::string, top::base::KadmliaKeyPtr> ElectRoutingTable::GetElectionNo
 void ElectRoutingTable::HandleElectionNodesInfoFromRoot(std::map<std::string, kadmlia::NodeInfoPtr> const & nodes) {
     xdbg("Charles Debug GetSameNetworkNodesV3 %zu local_service_type:%lld", nodes.size(), get_local_node_info()->service_type().value());
     std::vector<base::KadmliaKeyPtr> erase_keys;
+    std::unique_lock<std::mutex> lock(m_nodes_mutex);
     for (auto _p : nodes) {
         NodeInfoPtr node_ptr = m_nodes[_p.first];
         // node_ptr.reset(new NodeInfo(_p.first));
         auto & root_node_info = _p.second;
         xdbg("Charles Debug GetSameNetworkNodesV3 %s ", _p.first.c_str());
-        node_ptr->local_ip = root_node_info->local_ip;
-        node_ptr->local_port = root_node_info->local_port;
+        // node_ptr->local_ip = root_node_info->local_ip;
+        // node_ptr->local_port = root_node_info->local_port;
         node_ptr->public_ip = root_node_info->public_ip;
         node_ptr->public_port = root_node_info->public_port;
         node_ptr->service_type = get_local_node_info()->service_type();
@@ -483,6 +491,7 @@ void ElectRoutingTable::HandleElectionNodesInfoFromRoot(std::map<std::string, ka
 }
 
 void ElectRoutingTable::OnFindNodesFromRootRouting(std::string const & election_xip2, kadmlia::NodeInfoPtr const & node_info) {
+    std::unique_lock<std::mutex> lock(m_nodes_mutex);
     if (m_nodes.find(election_xip2) != m_nodes.end()) {
         NodeInfoPtr node_ptr = m_nodes[election_xip2];
         // node_ptr->local_ip = node_info->local_ip;

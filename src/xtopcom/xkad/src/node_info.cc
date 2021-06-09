@@ -13,7 +13,7 @@ static const int kHeartbeatSecondTimeout = 2;  // seconds
 static const int kHeartbeatErrorMaxCount = 12;
 
 NodeInfo::NodeInfo() {
-    ResetHeartbeat();
+    // ResetHeartbeat();
 }
 
 NodeInfo::NodeInfo(const NodeInfo& other)
@@ -27,20 +27,21 @@ NodeInfo::NodeInfo(const NodeInfo& other)
             detection_count(other.detection_count),
             // nat_type(other.nat_type),
             detection_delay_count(other.detection_delay_count),
-            heartbeat_count(other.heartbeat_count),
+            // heartbeat_count(other.heartbeat_count),
             service_type(other.service_type),
-            same_vlan(other.same_vlan),
-            xid(other.xid),
+            // same_vlan(other.same_vlan),
+            xid(other.xid)
             // xip(other.xip),
-            score(other.score) {
+            // score(other.score) 
+            {
     //hash64 = base::xhash64_t::digest(xid);
     hash64 = base::xhash64_t::digest(node_id);
-    ResetHeartbeat();
+    // ResetHeartbeat();
 	udp_property.reset(new top::transport::UdpProperty());	
 }
 
 NodeInfo::NodeInfo(const std::string& id) : node_id(id) {
-    ResetHeartbeat();
+    // ResetHeartbeat();
 	udp_property.reset(new top::transport::UdpProperty());	
 }
 
@@ -62,13 +63,13 @@ NodeInfo& NodeInfo::operator=(const NodeInfo& other) {
     detection_count = other.detection_count;
     // nat_type = other.nat_type;
     detection_delay_count = other.detection_delay_count;
-    heartbeat_count = other.heartbeat_count;  // count > 3
+    // heartbeat_count = other.heartbeat_count;  // count > 3
     service_type = other.service_type;
-    tp_next_time_to_heartbeat = other.tp_next_time_to_heartbeat;
-    same_vlan = other.same_vlan;
+    // tp_next_time_to_heartbeat = other.tp_next_time_to_heartbeat;
+    // same_vlan = other.same_vlan;
     xid = other.xid;
     // xip = other.xip;
-    score = other.score;
+    // score = other.score;
     //hash64 = base::xhash64_t::digest(xid);
     hash64 = base::xhash64_t::digest(node_id);
     return *this;
@@ -86,25 +87,25 @@ std::string NodeInfo::string() {
     return node_id;
 }
 
-bool NodeInfo::IsTimeout(std::chrono::steady_clock::time_point tp_now) {
-    return heartbeat_count >= kHeartbeatErrorMaxCount;
-}
+// bool NodeInfo::IsTimeout(std::chrono::steady_clock::time_point tp_now) {
+//     return heartbeat_count >= kHeartbeatErrorMaxCount;
+// }
 
-bool NodeInfo::IsTimeToHeartbeat(std::chrono::steady_clock::time_point tp_now) {
-    return tp_now > tp_next_time_to_heartbeat;
-}
+// bool NodeInfo::IsTimeToHeartbeat(std::chrono::steady_clock::time_point tp_now) {
+//     return tp_now > tp_next_time_to_heartbeat;
+// }
 
-void NodeInfo::Heartbeat() {
-    ++heartbeat_count;
-    tp_next_time_to_heartbeat = std::chrono::steady_clock::now() +
-        std::chrono::seconds(kHeartbeatSecondTimeout);
-}
+// void NodeInfo::Heartbeat() {
+//     ++heartbeat_count;
+//     tp_next_time_to_heartbeat = std::chrono::steady_clock::now() +
+//         std::chrono::seconds(kHeartbeatSecondTimeout);
+// }
 
-void NodeInfo::ResetHeartbeat() {
-    heartbeat_count = 0;
-    tp_next_time_to_heartbeat = std::chrono::steady_clock::now() +
-        std::chrono::seconds(kHeartbeatFirstTimeout);
-}
+// void NodeInfo::ResetHeartbeat() {
+//     heartbeat_count = 0;
+//     tp_next_time_to_heartbeat = std::chrono::steady_clock::now() +
+//         std::chrono::seconds(kHeartbeatFirstTimeout);
+// }
 
 }  // namespace kadmlia
 }  // namespace top

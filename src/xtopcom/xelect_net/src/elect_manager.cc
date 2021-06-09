@@ -116,8 +116,8 @@ void ElectManager::OnElectUpdated(const std::vector<ElectNetNode> & elect_data) 
 void ElectManager::OnElectUpdated(std::vector<wrouter::WrouterTableNodes> const & elect_data) {
     // for(auto const &wrouter_node:elect_data){
     // }
+    wrouter::SmallNetNodes::Instance()->AddNode(elect_data);
     for (auto const & wrouter_node : elect_data) {
-        wrouter::SmallNetNodes::Instance()->AddNode(wrouter_node);
         if (global_node_id != wrouter_node.node_id) {
             xdbg("node id not match self:%s iter:%s", global_node_id.c_str(), wrouter_node.node_id.c_str());
             continue;

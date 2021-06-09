@@ -22,11 +22,34 @@ public:
 public:
     /**
      * @brief Get the result of whether the node has joined the network
-     * 
+     *
      * @return true joined the network successfully
      * @return false not joined the network
      */
-    bool         Joined()           override;
+    bool Joined() override;
+    /**
+     * @brief get root routing table peers info
+     *
+     * @return std::string all peers info
+     */
+    std::string Peers() override;
+    /**
+     * @brief id and ip:port, such as tnode://b4062cb0463fb6cf6576337cebff8414387ed445739e458d23bb037f2aadc6c41205147f92@127.0.0.1:30303
+     *
+     * @return std::string p2p addresss
+     */
+    std::string P2pAddr() override;
+#ifdef DEBUG
+    /**
+     * @brief broadcast
+     *
+     * @param msg_size msg size
+     * @param count count
+     * @return uint32_t
+     */
+    uint32_t Broadcast(uint32_t msg_size, uint32_t count) override;
+#endif
+#if 0
     /**
      * @brief Get the count of max connect peers
      * 
@@ -45,16 +68,6 @@ public:
      * @return uint32_t network id
      */
     uint32_t     ChainId()          override;
-    /**
-     * @brief broadcast
-     * 
-     * @param msg_size msg size
-     * @param count count
-     * @return uint32_t 
-     */
-    uint32_t     Broadcast(
-            uint32_t msg_size,
-            uint32_t count)         override;
     /**
      * @brief Print OS information
      * 
@@ -80,12 +93,6 @@ public:
      */
     std::string  Account()          override;
     /**
-     * @brief id and ip:port, such as tnode://b4062cb0463fb6cf6576337cebff8414387ed445739e458d23bb037f2aadc6c41205147f92@127.0.0.1:30303
-     * 
-     * @return std::string p2p addresss
-     */
-    std::string  P2pAddr()          override;
-    /**
      * @brief get all peers info
      * 
      * @return std::string all peers info
@@ -103,13 +110,7 @@ public:
      * @return std::string help info
      */
     std::string HelpInfo() override;
-    /**
-     * @brief get root routing table peers info
-     * 
-     * @return std::string all peers info
-     */
-    std::string  Peers()         override;
-
+#endif
 };
 
 typedef std::shared_ptr<MultilayerNetworkChainQuery> MultilayerNetworkChainQueryPtr;

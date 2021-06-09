@@ -193,7 +193,8 @@ void MultiRouting::HandleGetElectNodesRequest(transport::protobuf::RoutingMessag
     if (!local_node_ptr) {
         assert(false);
     }
-    nodes = routing_table->GetClosestNodes(local_node_ptr->id(), get_nodes_req.count() - 1);
+    routing_table->GetRandomNodes(nodes, get_nodes_req.count());
+    // nodes = routing_table->GetClosestNodes(local_node_ptr->id(), get_nodes_req.count() - 1);
 
     transport::protobuf::RoutingMessage res_message;
 #ifndef NDEBUG

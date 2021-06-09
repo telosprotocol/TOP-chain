@@ -29,8 +29,8 @@ SmallNetNodes * SmallNetNodes::Instance() {
 }
 
 bool SmallNetNodes::Init() {
-    clear_timer_ = std::make_shared<base::TimerRepeated>(base::TimerManager::Instance(), "SmallNetNodes::Clear");
-    clear_timer_->Start(500ll * 1000ll, kClearPeriod, std::bind(&SmallNetNodes::do_clear_and_reset, this));
+    // clear_timer_ = std::make_shared<base::TimerRepeated>(base::TimerManager::Instance(), "SmallNetNodes::Clear");
+    // clear_timer_->Start(500ll * 1000ll, kClearPeriod, std::bind(&SmallNetNodes::do_clear_and_reset, this));
 
     service_nodes_ = ServiceNodes::Instance();
 
@@ -43,7 +43,7 @@ SmallNetNodes::SmallNetNodes() {
 
 SmallNetNodes::~SmallNetNodes() {
     // clear_timer_->Join();
-    clear_timer_ = nullptr;
+    // clear_timer_ = nullptr;
     TOP_INFO("SmallNetNodes destroy");
 }
 
@@ -60,10 +60,10 @@ bool SmallNetNodes::FindRandomNode(WrouterTableNodes & Fnode, base::ServiceType 
     std::unique_lock<std::mutex> lock(net_nodes_cache_map_mutex_);
 
     for(auto const & _p : net_nodes_cache_map_){
-        if(_p.first==service_type && _p.second->nodes.size()){
-            auto size = _p.second->nodes.size();
+        if(_p.first==service_type && _p.second.size()){
+            auto size = _p.second.size();
             uint32_t index = RandomUint32() % size;
-            Fnode = _p.second->nodes[index];
+            Fnode = _p.second[index];
             TOP_DEBUG("findnode of index:%d account:%s", index, Fnode.node_id.c_str());
             return true;
         }
@@ -71,21 +71,21 @@ bool SmallNetNodes::FindRandomNode(WrouterTableNodes & Fnode, base::ServiceType 
     return false;
 
 
-    auto ifind = net_nodes_cache_map_.find(service_type);
-    if (ifind == net_nodes_cache_map_.end()) {
-        return false;
-    }
+    // auto ifind = net_nodes_cache_map_.find(service_type);
+    // if (ifind == net_nodes_cache_map_.end()) {
+    //     return false;
+    // }
 
-    auto size = (ifind->second)->nodes.size();
-    if (size == 0) {
-        return false;
-    }
-    uint32_t index = RandomUint32() % size;
-    Fnode = ifind->second->nodes[index];
-    TOP_DEBUG("findnode of index:%d account:%s", index, Fnode.node_id.c_str());
-    return true;
+    // auto size = (ifind->second).size();
+    // if (size == 0) {
+    //     return false;
+    // }
+    // uint32_t index = RandomUint32() % size;
+    // Fnode = ifind->second[index];
+    // TOP_DEBUG("findnode of index:%d account:%s", index, Fnode.node_id.c_str());
+    // return true;
 }
-
+#if 0
 // always find the last node of vector, usually this is the recent elect-node
 bool SmallNetNodes::FindNewNode(WrouterTableNodes & Fnode, base::ServiceType service_type) {
     std::unique_lock<std::mutex> lock(net_nodes_cache_map_mutex_);
@@ -95,9 +95,9 @@ bool SmallNetNodes::FindNewNode(WrouterTableNodes & Fnode, base::ServiceType ser
     // }
 
     for(auto _p : net_nodes_cache_map_){
-        if(_p.first==service_type && _p.second->nodes.size()){
-            Fnode = _p.second->nodes.back();
-            xdbg("SmallNetNodes::FindNewNode ori service_type: %lld ,from service_type: %lld ,size: %zu", service_type.value(), _p.first.value(), _p.second->nodes.size());
+        if(_p.first==service_type && _p.second.size()){
+            Fnode = _p.second.back();
+            xdbg("SmallNetNodes::FindNewNode ori service_type: %lld ,from service_type: %lld ,size: %zu", service_type.value(), _p.first.value(), _p.second.size());
             return true;
         }
     }
@@ -116,14 +116,14 @@ bool SmallNetNodes::FindNewNode(WrouterTableNodes & Fnode, base::ServiceType ser
     // TOP_DEBUG("findnode of index:%d account:%s", size - 1, Fnode.node_id.c_str());
     // return true;
 }
-
+#endif
 bool SmallNetNodes::FindAllNode(std::vector<WrouterTableNodes> & node_vec, base::ServiceType service_type) {
     std::unique_lock<std::mutex> lock(net_nodes_cache_map_mutex_);
     
     for(auto const & _p : net_nodes_cache_map_){
-        if(_p.first==service_type && _p.second->nodes.size()){
+        if(_p.first==service_type && _p.second.size()){
             node_vec.clear();
-            for (auto & node : _p.second->nodes) {
+            for (auto & node : _p.second) {
                 node_vec.push_back(node);
             }
             return true;
@@ -132,40 +132,58 @@ bool SmallNetNodes::FindAllNode(std::vector<WrouterTableNodes> & node_vec, base:
     return false;
     
     
-    auto ifind = net_nodes_cache_map_.find(service_type);
-    if (ifind == net_nodes_cache_map_.end()) {
-        return false;
-    }
+    // auto ifind = net_nodes_cache_map_.find(service_type);
+    // if (ifind == net_nodes_cache_map_.end()) {
+    //     return false;
+    // }
 
-    node_vec.clear();
-    for (auto & node : ifind->second->nodes) {
-        node_vec.push_back(node);
-    }
+    // node_vec.clear();
+    // for (auto & node : ifind->second) {
+    //     node_vec.push_back(node);
+    // }
 
-    return true;
+    // return true;
 }
 
 void SmallNetNodes::GetAllNode(std::vector<WrouterTableNodes> & node_vec) {
     std::unique_lock<std::mutex> lock(net_nodes_cache_map_mutex_);
     for (const auto & item : net_nodes_cache_map_) {
-        for (auto & node : (item.second)->nodes) {
+        for (auto & node : item.second) {
             node_vec.push_back(node);
         }
     }
     return;
 }
 
-void SmallNetNodes::AddNodeLimit(base::ServiceType service_type, std::deque<WrouterTableNodes> & nodes, const WrouterTableNodes & node) {
-    nodes.push_back(node);
-    // pop the old nodes
-    while (nodes.size() > kMaxSizePerServiceType) {
-        const auto & node = nodes.front();
-        TOP_INFO("bluever %ld limit drop node %s version(%u)", (long)service_type.value(), node.node_id.c_str());
-        nodes.pop_front();
-    }
-}
+// void SmallNetNodes::AddNodeLimit(base::ServiceType service_type, std::deque<WrouterTableNodes> & nodes, const WrouterTableNodes & node) {
+//     nodes.push_back(node);
+//     // pop the old nodes
+//     while (nodes.size() > kMaxSizePerServiceType) {
+//         const auto & node = nodes.front();
+//         TOP_INFO("bluever %ld limit drop node %s version(%u)", (long)service_type.value(), node.node_id.c_str());
+//         nodes.pop_front();
+//     }
+// }
 
-uint32_t SmallNetNodes::AddNode(WrouterTableNodes node) {
+void SmallNetNodes::AddNode(std::vector<wrouter::WrouterTableNodes> node) {
+    if (node.empty())
+        return;
+    base::ServiceType comming_service_type = base::GetKadmliaKey(node[0].m_xip2)->GetServiceType();
+    std::unique_lock<std::mutex> lock(net_nodes_cache_map_mutex_);
+
+    for (auto _p : net_nodes_cache_map_) {
+        base::ServiceType service_type = _p.first;
+        if (comming_service_type.IsNewer(service_type, 2)) {
+            xdbg("ElectNetNodes::AddNode get new election result %s", comming_service_type.info().c_str());
+            service_nodes_->RemoveExpired(service_type);
+            net_nodes_cache_map_.erase(service_type);
+            break;
+        }
+    }
+    net_nodes_cache_map_.insert(std::make_pair(comming_service_type, node));
+
+#if 0
+
     base::KadmliaKeyPtr kad_key = base::GetKadmliaKey(node.m_xip2);
     // node.m_node_id = kad_key->Get();
     base::ServiceType service_type = kad_key->GetServiceType();
@@ -214,8 +232,10 @@ uint32_t SmallNetNodes::AddNode(WrouterTableNodes node) {
               size);
     return size;
     // return 0;
+#endif
 }
 
+#if 0
 void SmallNetNodes::HandleExpired(std::unordered_map<base::ServiceType, std::vector<std::string>> & expired_vec,
                                   std::vector<base::ServiceType> & unreg_service_type_vec) {
     service_nodes_->RemoveExpired(expired_vec);
@@ -240,7 +260,6 @@ void SmallNetNodes::HandleExpired(std::unordered_map<base::ServiceType, std::vec
     //     TOP_INFO("service_node_cache bulkdropnode %u nodes of service_type:%llu", (item.second).size(), item.first.value());
     // }
 }
-
 void SmallNetNodes::do_clear_and_reset() {
     // clear old versions
     std::unordered_map<base::ServiceType, std::vector<std::string>> expired_nodeid_vec;
@@ -276,7 +295,7 @@ void SmallNetNodes::do_clear_and_reset() {
 
     HandleExpired(expired_nodeid_vec, unreg_service_type_vec);
 }
-
+#endif
 }  // end namespace wrouter
 
 }  // end namespace top

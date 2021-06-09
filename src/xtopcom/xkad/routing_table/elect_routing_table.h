@@ -60,17 +60,20 @@ public:
     int SendPing(transport::protobuf::RoutingMessage & message, const std::string & peer_ip, uint16_t peer_port);
 
     std::size_t nodes_size() ;
-    std::vector<std::string> const & get_shuffled_xip2();
-    std::vector<NodeInfoPtr> GetClosestNodes(const std::string & target_id, uint32_t number_to_get) ;
+    // std::vector<NodeInfoPtr> GetClosestNodes(const std::string & target_id, uint32_t number_to_get) ;
 
 public:
-    int AddNode(NodeInfoPtr node) ;
-    int DropNode(NodeInfoPtr node) ;
-    bool CanAddNode(NodeInfoPtr node);
+    // int AddNode(NodeInfoPtr node) ;
+    // int DropNode(NodeInfoPtr node) ;
+    // bool CanAddNode(NodeInfoPtr node);
 
-    NodeInfoPtr GetRandomNode() ;
-    bool GetRandomNodes(std::vector<NodeInfoPtr> & vec, size_t size) ;
+    // NodeInfoPtr GetRandomNode() ;
+    void GetRandomNodes(std::vector<NodeInfoPtr> & vec, size_t size) ;
     std::unordered_map<std::string, NodeInfoPtr> nodes();
+    std::unordered_map<std::string,std::size_t> index_map();
+    std::vector<std::string> get_shuffled_xip2();
+    std::size_t get_self_index();
+
     NodeInfoPtr GetNode(const std::string & id);
 
     bool HasNode(NodeInfoPtr node);
@@ -105,8 +108,9 @@ private:
 
 private:
     std::size_t m_self_index;
-    std::map<std::string, base::KadmliaKeyPtr> m_expected_kad_keys;  // map<election_xip2_str,node_id_root_kad_key>
+    std::mutex m_nodes_mutex;
     std::unordered_map<std::string, NodeInfoPtr> m_nodes;            // map<election_xip2_str,nodeinfoptr>
+    std::map<std::string, base::KadmliaKeyPtr> m_expected_kad_keys;  // map<election_xip2_str,node_id_root_kad_key>
     // std::vector<NodeInfoPtr> m_ordered_nodes;
     std::unordered_map<std::string, std::size_t> m_index_map; // map<election_xip2_str,index>
     std::vector<std::string> m_xip2_for_shuffle; // random shuffled everytime used.

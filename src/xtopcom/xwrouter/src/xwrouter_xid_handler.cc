@@ -215,7 +215,7 @@ int32_t WrouterXidHandler::SendMulticast(transport::protobuf::RoutingMessage & m
     }
 
     base::ServiceType des_service_type = ParserServiceType(message.des_node_id());
-    xdbg("Charles Debug SendMulticast service_type: %lld",des_service_type.value());
+    xdbg("Charles Debug SendMulticast service_type: %lld %s", des_service_type.value(), des_service_type.info().c_str());
     ElectRoutingTablePtr routing_table = FindElectRoutingTable(des_service_type);
 
     // local does'nt have way to des, using root or find des-nodes first

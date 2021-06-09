@@ -36,7 +36,8 @@ public:
     bool FindNode(base::ServiceType service_type, std::vector<kadmlia::NodeInfoPtr> & node_vec);
     bool FindNode(base::ServiceType service_type, const std::string & des_node_id, kadmlia::NodeInfoPtr & node_ptr);
     bool CheckHasNode(base::KadmliaKeyPtr kad_key);
-    void RemoveExpired(const std::unordered_map<base::ServiceType, std::vector<std::string>> & expired_node_vec);
+    void RemoveExpired(base::ServiceType const & service_type);
+    // void RemoveExpired(const std::unordered_map<base::ServiceType, std::vector<std::string>> & expired_node_vec);
 
     void GetAllServicesNodes(std::vector<kadmlia::NodeInfoPtr> & node_vec);
 

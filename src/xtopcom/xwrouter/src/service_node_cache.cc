@@ -55,7 +55,7 @@ bool ServiceNodes::GetRootNodes(base::ServiceType service_type, std::vector<kadm
 
     // NetNode Fnode;
     WrouterTableNodes Fnode;
-    if (small_net_nodes_->FindNewNode(Fnode, service_type)) {
+    if (small_net_nodes_->FindRandomNode(Fnode, service_type)) {
         base::KadmliaKeyPtr kad_key = base::GetRootKadmliaKey(Fnode.node_id);  // kRoot id
         assert(kad_key);
         using namespace std::placeholders;
@@ -76,7 +76,7 @@ bool ServiceNodes::GetRootNodes(base::ServiceType service_type, const std::strin
 
     // NetNode Fnode;
     WrouterTableNodes Fnode;
-    if (small_net_nodes_->FindNewNode(Fnode, service_type)) {
+    if (small_net_nodes_->FindRandomNode(Fnode, service_type)) {
         base::KadmliaKeyPtr kad_key = base::GetRootKadmliaKey(Fnode.node_id);  // kRoot id
         assert(kad_key);
         using namespace std::placeholders;
@@ -264,29 +264,37 @@ bool ServiceNodes::AddNode(base::ServiceType service_type, kadmlia::NodeInfoPtr 
     return true;
 }
 
-void ServiceNodes::RemoveExpired(const std::unordered_map<base::ServiceType, std::vector<std::string>> & expired_node_vec) {
+void ServiceNodes::RemoveExpired(base::ServiceType const & service_type) {
     std::unique_lock<std::mutex> lock(service_nodes_cache_map_mutex_);
-    for (const auto & exitem : expired_node_vec) {
-        auto ifind = service_nodes_cache_map_.find(exitem.first);
-        if (ifind == service_nodes_cache_map_.end()) {
-            continue;
-        }
-        for (auto iter = service_nodes_cache_map_[exitem.first].begin(); iter != service_nodes_cache_map_[exitem.first].end();) {
-            auto tfind = std::find(exitem.second.begin(), exitem.second.end(), (*iter)->node_id);
-            if (tfind != exitem.second.end()) {
-                // find expired node
-                TOP_DEBUG("remove expired service node service_type:%llu id:%s %s:%d",
-                          exitem.first.value(),
-                          ((*iter)->node_id).c_str(),
-                          ((*iter)->public_ip).c_str(),
-                          (*iter)->public_port);
-                iter = service_nodes_cache_map_[exitem.first].erase(iter);
-            } else {
-                ++iter;
-            }
-        }
+    auto ifind = service_nodes_cache_map_.find(service_type);
+    if (ifind != service_nodes_cache_map_.end()) {
+        service_nodes_cache_map_.erase(ifind);
     }
 }
+
+// void ServiceNodes::RemoveExpired(const std::unordered_map<base::ServiceType, std::vector<std::string>> & expired_node_vec) {
+//     std::unique_lock<std::mutex> lock(service_nodes_cache_map_mutex_);
+//     for (const auto & exitem : expired_node_vec) {
+//         auto ifind = service_nodes_cache_map_.find(exitem.first);
+//         if (ifind == service_nodes_cache_map_.end()) {
+//             continue;
+//         }
+//         for (auto iter = service_nodes_cache_map_[exitem.first].begin(); iter != service_nodes_cache_map_[exitem.first].end();) {
+//             auto tfind = std::find(exitem.second.begin(), exitem.second.end(), (*iter)->node_id);
+//             if (tfind != exitem.second.end()) {
+//                 // find expired node
+//                 TOP_DEBUG("remove expired service node service_type:%llu id:%s %s:%d",
+//                           exitem.first.value(),
+//                           ((*iter)->node_id).c_str(),
+//                           ((*iter)->public_ip).c_str(),
+//                           (*iter)->public_port);
+//                 iter = service_nodes_cache_map_[exitem.first].erase(iter);
+//             } else {
+//                 ++iter;
+//             }
+//         }
+//     }
+// }
 
 void ServiceNodes::do_update() {
     std::set<base::ServiceType> service_type_vec;
@@ -316,7 +324,7 @@ void ServiceNodes::do_update() {
         // auto root_routing_table = std::dynamic_pointer_cast<RootRouting>(MultiRouting::Instance()->GetRoutingTable(base::ServiceType{kRoot}, true));
         if (!root_routing_table)
             return;
-        root_routing_table->GetRootNodesV2Async(kad_key->Get(), service_type, cb);
+        root_routing_table->GetRootNodesV2Async(root_kad_key->Get(), service_type, cb);
         // RootRoutingManager::Instance()->GetRootNodesV2Async(root_kad_key->Get(), service_type, cb);  // just call
     }                                                                                                // end for (auto& item
 }

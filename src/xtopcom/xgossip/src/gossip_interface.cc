@@ -461,8 +461,7 @@ void GossipInterface::SendLayered(
     };
 }
 
-
-void GossipInterface::SendDispatch(transport::protobuf::RoutingMessage & message, const std::vector<gossip::DispatchInfos> & dispatch_nodes){
+void GossipInterface::SendDispatch(transport::protobuf::RoutingMessage & message, const std::vector<gossip::DispatchInfos> & dispatch_nodes) {
     // uint64_t min_dis = message.gossip().min_dis();
     // uint64_t max_dis = message.gossip().max_dis();
     // if (max_dis <= 0) {
@@ -474,58 +473,35 @@ void GossipInterface::SendDispatch(transport::protobuf::RoutingMessage & message
     _xip2_header xip2_header;
     memset(&xip2_header, 0, sizeof(xip2_header));
     xip2_header.ver_protocol = kSerializeProtocolProtobuf;
-    std::string header((const char*)&xip2_header, sizeof(xip2_header));
+    std::string header((const char *)&xip2_header, sizeof(xip2_header));
     std::string xdata;
 
     for (uint32_t i = 0; i < dispatch_nodes.size(); ++i) {
         auto nodes = dispatch_nodes[i].nodes;
         auto gossip = message.mutable_gossip();
-       
+
         gossip->set_min_dis(dispatch_nodes[i].sit1);
         gossip->set_max_dis(dispatch_nodes[i].sit2);
-        xkinfo("[debug] send to %s:%d % " PRIu64 " % " PRIu64 , nodes->public_ip.c_str(), nodes->public_port, dispatch_nodes[i].sit1, dispatch_nodes[i].sit2);
-
+        xdbg("[debug] send to %s:%d % " PRIu64 " % " PRIu64, nodes->public_ip.c_str(), nodes->public_port, dispatch_nodes[i].sit1, dispatch_nodes[i].sit2);
 
         std::string body;
         if (!message.SerializeToString(&body)) {
-            TOP_WARN2("wrouter message SerializeToString failed");
+            xwarn("wrouter message SerializeToString failed");
             return;
         }
 
         xdata = header + body;
         packet.reset();
-        packet.get_body().push_back((uint8_t*)xdata.data(), xdata.size());
+        packet.get_body().push_back((uint8_t *)xdata.data(), xdata.size());
         packet.set_to_ip_addr(nodes->public_ip);
         packet.set_to_ip_port(nodes->public_port);
 
         if (kadmlia::kKadSuccess != transport_ptr_->SendDataWithProp(packet, nodes->udp_property)) {
-            TOP_WARN2("SendData to  endpoint(%s:%d) failed",
-                    nodes->public_ip.c_str(),
-                    nodes->public_port);
+            xinfo("SendDispatch send to (%s:%d) failed % " PRIu64 " % " PRIu64, nodes->public_ip.c_str(), nodes->public_port, dispatch_nodes[i].sit1, dispatch_nodes[i].sit2);
             continue;
         }
-
     };
 }
-
-// #define OUT_NETWORK_IPS
-// #ifdef OUT_NETWORK_IPS
-// static const std::unordered_set<std::string> test_for_valid_ip_set{
-//     "192.168.50.0"
-// };
-// #else
-// static const std::unordered_set<std::string> test_for_valid_ip_set{
-//     "192.168.50.1"
-// };
-// #endif
-
-// bool GossipInterface::IsIpValid(const std::string& ip) {
-// #ifdef TOP_TESTING_PERFORMANCE_IP_TEST
-//     return test_for_valid_ip_set.find(ip) != test_for_valid_ip_set.end();
-// #else
-//     return true;
-// #endif
-// }
 
 }  // namespace gossip
 

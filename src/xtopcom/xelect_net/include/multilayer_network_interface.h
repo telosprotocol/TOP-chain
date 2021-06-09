@@ -30,6 +30,29 @@ public:
      */
     virtual bool     Joined()        = 0;
     /**
+     * @brief get all peers info of root routing table
+     * 
+     * @return std::string all peers info
+     */
+    virtual std::string Peers()   = 0;
+    /**
+     * @brief id and ip:port, such as tnode://b4062cb0463fb6cf6576337cebff8414387ed445739e458d23bb037f2aadc6c41205147f92@127.0.0.1:30303
+     * 
+     * @return std::string p2p addresss
+     */
+    virtual std::string P2pAddr()    = 0; 
+#ifdef DEBUG
+    /**
+     * @brief broadcast
+     *
+     * @param msg_size msg size
+     * @param count count
+     * @return uint32_t
+     */
+    virtual uint32_t Broadcast(uint32_t msg_size, uint32_t count) = 0;
+#endif
+#if 0
+    /**
      * @brief Get the count of max connect peers
      * 
      * @return uint32_t count of mac connect peers
@@ -66,27 +89,11 @@ public:
      */
     virtual std::string AllPeers()   = 0;
     /**
-     * @brief get all peers info of root routing table
-     * 
-     * @return std::string all peers info
-     */
-    virtual std::string Peers()   = 0;
-    /**
      * @brief get all nodes info
      * 
      * @return std::string all nodes info
      */
     virtual std::string AllNodes()   = 0;
-    /**
-     * @brief broadcast
-     * 
-     * @param msg_size msg size
-     * @param count count
-     * @return uint32_t 
-     */
-    virtual uint32_t Broadcast(
-            uint32_t msg_size,
-            uint32_t count)          = 0;
     /**
      * @brief global kademlia id
      * 
@@ -100,17 +107,13 @@ public:
      */
     virtual std::string Account()    = 0; 
     /**
-     * @brief id and ip:port, such as tnode://b4062cb0463fb6cf6576337cebff8414387ed445739e458d23bb037f2aadc6c41205147f92@127.0.0.1:30303
-     * 
-     * @return std::string p2p addresss
-     */
-    virtual std::string P2pAddr()    = 0; 
-    /**
      * @brief print usage or help info
      * 
      * @return std::string help info
      */
     virtual std::string HelpInfo()   = 0; 
+
+#endif
 };
 
 typedef std::shared_ptr<MultilayerNetworkInterface> MultilayerNetworkInterfacePtr;

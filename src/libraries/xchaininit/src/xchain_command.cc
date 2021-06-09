@@ -122,7 +122,7 @@ void ChainCommands::AddNetModuleCommands() try {
         }
         // std::cout << result << std::endl;
     });
-
+#if 0
     AddCommand(module_name, "xnetworkid", [this](const XchainArguments & args, const std::string & cmdline, std::string & result) {
         auto ret = net_module_->ChainId();
         result = std::to_string(ret);
@@ -145,7 +145,8 @@ void ChainCommands::AddNetModuleCommands() try {
         result = net_module_->NetInfo();
         // std::cout << result << std::endl;
     });
-
+#endif
+#ifdef DEBUG
     AddCommand(module_name, "broadcast", [this](const XchainArguments & args, const std::string & cmdline, std::string & result) {
         uint32_t msg_size = 300;
         if (args.size() >= 1) {
@@ -159,12 +160,13 @@ void ChainCommands::AddNetModuleCommands() try {
         result = std::to_string(sus);
         // std::cout << result << std::endl;
     });
-
+#endif
     AddCommand(module_name, "peers", [this](const XchainArguments & args, const std::string & cmdline, std::string & result) {
         result = net_module_->Peers();
         // std::cout << result << std::endl;
     });
 
+#if 0
     AddCommand(module_name, "allpeers", [this](const XchainArguments & args, const std::string & cmdline, std::string & result) {
         result = net_module_->AllPeers();
         // std::cout << result << std::endl;
@@ -189,7 +191,7 @@ void ChainCommands::AddNetModuleCommands() try {
         result = net_module_->Account();
         // std::cout << result << std::endl;
     });
-
+#endif
     AddCommand(module_name, "nodep2paddr", [this](const XchainArguments & args, const std::string & cmdline, std::string & result) {
         result = net_module_->P2pAddr();
         // std::cout << result << std::endl;

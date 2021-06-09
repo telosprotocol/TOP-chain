@@ -203,7 +203,8 @@ int EcNetcard::send(
         return GossipOldRootBroadcast(pbft_message, gossip::kGossipBloomfilter, chain_data_hash, static_cast<uint32_t>(message.id()));
     }
 
-    return GossipOldLayerBroadcast(pbft_message, gossip::kGossipDispatcher, chain_data_hash, static_cast<uint32_t>(message.id()));
+    // return GossipOldLayerBroadcast(pbft_message, gossip::kGossipBloomfilterAndLayered, chain_data_hash, static_cast<uint32_t>(message.id()));
+    return GossipDispatchBroadcast(pbft_message, gossip::kGossipDispatcher, chain_data_hash, static_cast<uint32_t>(message.id()));
 }
 
 int EcNetcard::GossipWithHeaderBlock(transport::protobuf::RoutingMessage & pbft_message, uint32_t block_gossip_type, uint32_t chain_data_hash, uint32_t chain_msgid) const {
@@ -297,6 +298,34 @@ int EcNetcard::GossipOldLayerBroadcast(transport::protobuf::RoutingMessage & pbf
     // gossip_block->set_switch_layer_hop_num(0);
     gossip_block->set_ign_bloomfilter_level(0);
     // todo end next version delete.
+
+    gossip_block->set_left_overlap(0);   // must smaller than 20
+    gossip_block->set_right_overlap(0);  // must smaller than 20
+    gossip_block->set_block(pbft_message.data());
+    gossip_block->set_header_hash(header_hash);
+    pbft_message.clear_data();
+
+    if (wrouter::Wrouter::Instance()->send(pbft_message) != 0) {
+        TOP_WARN("chain message block [is_root: %d] broadcast failed", pbft_message.is_root());
+        return kVHostSendWrouterFailed;
+    }
+
+    return kVhostSendSuccess;
+}
+
+int EcNetcard::GossipDispatchBroadcast(transport::protobuf::RoutingMessage & pbft_message, uint32_t block_gossip_type, uint32_t chain_data_hash, uint32_t chain_msgid) const{
+    xdbg("elect_vhost broadcast using broadcast_type:%u", block_gossip_type);
+
+    uint32_t vhash = base::xhash32_t::digest(pbft_message.data());
+    std::string header_hash = std::to_string(vhash);
+
+    // broadcast block
+    auto gossip_block = pbft_message.mutable_gossip();
+    // gossip_block->set_stop_times(gossip::kGossipSendoutMaxTimes);
+    gossip_block->set_gossip_type(block_gossip_type);
+    gossip_block->set_max_hop_num(20);
+
+    gossip_block->set_neighber_count(3);
 
     gossip_block->set_left_overlap(0);   // must smaller than 20
     gossip_block->set_right_overlap(0);  // must smaller than 20
