@@ -346,14 +346,14 @@ namespace top
         }
 
         //---------------------------------xvexemodule_t---------------------------------//
-        xvexemodule_t::xvexemodule_t(enum_xdata_type type)
-            :xdataunit_t(type)
+        xvexemodule_t::xvexemodule_t(enum_xobject_type type)
+            :xobject_t(type)
         {
             m_resources_obj = NULL;
         }
     
-        xvexemodule_t::xvexemodule_t(std::vector<xventity_t*> && entitys,const std::string & raw_resource_data,enum_xdata_type type)
-            :xdataunit_t(type)
+        xvexemodule_t::xvexemodule_t(std::vector<xventity_t*> && entitys,const std::string & raw_resource_data,enum_xobject_type type)
+            :xobject_t(type)
         {
             m_resources_obj = NULL;
             set_resources_data(raw_resource_data);
@@ -368,8 +368,8 @@ namespace top
             }
         }
         
-        xvexemodule_t::xvexemodule_t(const std::vector<xventity_t*> & entitys, const std::string & raw_resource_data,enum_xdata_type type)
-            :xdataunit_t(type)
+        xvexemodule_t::xvexemodule_t(const std::vector<xventity_t*> & entitys, const std::string & raw_resource_data,enum_xobject_type type)
+            :xobject_t(type)
         {
             m_resources_obj = NULL;
             set_resources_data(raw_resource_data);
@@ -384,8 +384,8 @@ namespace top
             }
         }
     
-        xvexemodule_t::xvexemodule_t(std::vector<xventity_t*> && entitys,xstrmap_t & resource_obj, enum_xdata_type type)
-            :xdataunit_t(type)
+        xvexemodule_t::xvexemodule_t(std::vector<xventity_t*> && entitys,xstrmap_t & resource_obj, enum_xobject_type type)
+            :xobject_t(type)
         {
             m_resources_obj = NULL;
             if(resource_obj.empty() == false)
@@ -402,8 +402,8 @@ namespace top
             }
         }
         
-        xvexemodule_t::xvexemodule_t(const std::vector<xventity_t*> & entitys,xstrmap_t & resource_obj, enum_xdata_type type)
-            :xdataunit_t(type)
+        xvexemodule_t::xvexemodule_t(const std::vector<xventity_t*> & entitys,xstrmap_t & resource_obj, enum_xobject_type type)
+            :xobject_t(type)
         {
             m_resources_obj = NULL;
             if(resource_obj.empty() == false)
@@ -445,7 +445,7 @@ namespace top
             if(m_resources_obj != NULL)
                 m_resources_obj->close();
             
-            return xdataunit_t::close(force_async);
+            return xobject_t::close(force_async);
         }
         
         //note:not safe for multiple thread at this layer
@@ -493,7 +493,7 @@ namespace top
                 if(NULL == _data_obj_ptr)
                     return false;
                 
-                xstrmap_t*  map_ptr = (xstrmap_t*)_data_obj_ptr->query_interface(enum_xdata_type_string_map);
+                xstrmap_t*  map_ptr = (xstrmap_t*)_data_obj_ptr->query_interface(xdataobj_t:: enum_xdata_type_string_map);
                 xassert(map_ptr != NULL);
                 if(map_ptr == NULL)
                 {
@@ -508,6 +508,33 @@ namespace top
                 }
             }
             return true;
+        }
+    
+        int32_t   xvexemodule_t::serialize_to_string(std::string & bin_data)
+        {
+            base::xautostream_t<1024> _stream(base::xcontext_t::instance());
+            const int result = serialize_to(_stream);
+            if(result > 0)
+                bin_data.assign((const char*)_stream.data(),_stream.size());
+            
+            return result;
+        }
+        
+        int32_t   xvexemodule_t::serialize_to(xstream_t & stream)
+        {
+            return do_write(stream);
+        }
+        
+        int32_t   xvexemodule_t::serialize_from_string(const std::string & bin_data) //wrap function fo serialize_from(stream)
+        {
+            base::xstream_t _stream(base::xcontext_t::instance(),(uint8_t*)bin_data.data(),(uint32_t)bin_data.size());
+            const int result = serialize_from(_stream);
+            return result;
+        }
+        
+        int32_t   xvexemodule_t::serialize_from(xstream_t & stream)//not allow subclass change behavior
+        {
+            return do_read(stream);
         }
         
         int32_t     xvexemodule_t::do_write(xstream_t & stream)//not allow subclass change behavior
