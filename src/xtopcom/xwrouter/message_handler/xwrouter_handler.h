@@ -74,10 +74,10 @@ public:
             const std::string& ip,
             uint16_t port) { return 0; }
 
-    virtual bool CloserToTarget(
-            const std::string& id1,
-            const std::string& id2,
-            const std::string& target_id);
+    // virtual bool CloserToTarget(
+    //         const std::string& id1,
+    //         const std::string& id2,
+    //         const std::string& target_id);
 
 protected:
     kadmlia::RootRoutingTablePtr FindRootRoutingTable();
@@ -94,7 +94,7 @@ protected:
     //         const std::string& target_id,
     //         uint32_t number_to_get,
     //         bool base_xip);
-    std::vector<kadmlia::NodeInfoPtr> GetRandomNodes(std::vector<kadmlia::NodeInfoPtr>& neighbors,uint32_t number_to_get) const;
+    // std::vector<kadmlia::NodeInfoPtr> GetRandomNodes(std::vector<kadmlia::NodeInfoPtr>& neighbors,uint32_t number_to_get) const;
 
 protected:
     transport::TransportPtr transport_ptr_;

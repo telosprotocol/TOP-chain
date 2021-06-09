@@ -122,29 +122,29 @@ kadmlia::RootRoutingTablePtr WrouterHandler::FindRootRoutingTable(){
 //     return routing_table->GetClosestNodes(target_id, number_to_get);
 // }
 
-std::vector<kadmlia::NodeInfoPtr> WrouterHandler::GetRandomNodes (
-    std::vector<kadmlia::NodeInfoPtr>& neighbors,
-    uint32_t number_to_get) const {
-    if(neighbors.size() <= number_to_get) {
-        return neighbors;
-    }
-    std::random_shuffle(neighbors.begin(),neighbors.end());
-    return std::vector<kadmlia::NodeInfoPtr> {neighbors.begin(),neighbors.begin() + number_to_get};
-}
+// std::vector<kadmlia::NodeInfoPtr> WrouterHandler::GetRandomNodes (
+//     std::vector<kadmlia::NodeInfoPtr>& neighbors,
+//     uint32_t number_to_get) const {
+//     if(neighbors.size() <= number_to_get) {
+//         return neighbors;
+//     }
+//     std::random_shuffle(neighbors.begin(),neighbors.end());
+//     return std::vector<kadmlia::NodeInfoPtr> {neighbors.begin(),neighbors.begin() + number_to_get};
+// }
 
-bool WrouterHandler::CloserToTarget(
-    const std::string& id1,
-    const std::string& id2,
-    const std::string& target_id) {
-    for (int i = 0; i < top::kNodeIdSize; ++i) {
-        unsigned char result1 = id1[i] ^ target_id[i];
-        unsigned char result2 = id2[i] ^ target_id[i];
-        if (result1 != result2) {
-            return result1 < result2;
-        }
-    }
-    return false;
-}
+// bool WrouterHandler::CloserToTarget(
+//     const std::string& id1,
+//     const std::string& id2,
+//     const std::string& target_id) {
+//     for (int i = 0; i < top::kNodeIdSize; ++i) {
+//         unsigned char result1 = id1[i] ^ target_id[i];
+//         unsigned char result2 = id2[i] ^ target_id[i];
+//         if (result1 != result2) {
+//             return result1 < result2;
+//         }
+//     }
+//     return false;
+// }
 
 } // namespace wrouter 
 

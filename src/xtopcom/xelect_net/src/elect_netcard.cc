@@ -399,10 +399,10 @@ void EcNetcard::HandleRumorMessage(
                              PACKET_SIZE(packet),
                              NOW_TIME);
     } else {
-        // if (IS_BROADCAST(message)) {
+        if (IS_BROADCAST(message)) {
             XMETRICS_PACKET_INFO(
                 "p2pnormal_vhostrecv_info", MESSAGE_BASIC_INFO(message), MESSAGE_FEATURE(message), IS_ROOT_BROADCAST(message), "is_pulled", 0, PACKET_SIZE(packet), NOW_TIME);
-        // }
+        }
     }
 #ifdef XENABLE_P2P_BENDWIDTH
 

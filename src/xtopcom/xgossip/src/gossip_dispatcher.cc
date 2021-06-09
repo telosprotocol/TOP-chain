@@ -81,7 +81,7 @@ void GossipDispatcher::GenerateDispatchInfos(transport::protobuf::RoutingMessage
     static std::random_device rd;
     static std::mt19937 g(rd());
 
-    auto nodes_map = routing_table->nodes();
+    auto const & nodes_map = routing_table->nodes();
     std::map<std::string, std::size_t> index_map;
     std::vector<std::string> xip2_for_shuffle;
     std::size_t index = 0;
