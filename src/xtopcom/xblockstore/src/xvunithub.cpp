@@ -400,19 +400,12 @@ namespace top
         bool    xvblockstore_impl::store_block(base::xauto_ptr<xblockacct_t> & container_account,base::xvblock_t * container_block) //store table/book blocks if they are
         {
             xdbg("jimmy xvblockstore_impl::store_block enter,store block(%s)", container_block->dump().c_str());
-            //store it first at anyway
-            bool ret = container_account->store_block(container_block);
-            if(!ret)
-            {
-                xwarn("xvblockstore_impl::store_block,fail-store block(%s)", container_block->dump().c_str());
-                // return false;
-            }
 
             //then try extract for container if that is
-            if(ret && container_block->get_block_class() == base::enum_xvblock_class_light) //skip nil block
+            if(  (container_block->get_block_class() == base::enum_xvblock_class_light) //skip nil block
+               &&(container_block->get_block_level() == base::enum_xvblock_level_table) )
             {
-                //add other container here if need
-                if(container_block->get_header()->get_block_level() == base::enum_xvblock_level_table)
+                if((container_block->get_block_flags() & base::enum_xvblock_flag_unpacked) == 0) //unpacked yet
                 {
                     //XTODO index add flag to avoiding repeat unpack unit
                     xassert(container_block->is_input_ready(true));
@@ -423,6 +416,7 @@ namespace top
                     {
                         xinfo("xvblockstore_impl::store_block,table block(%s) carry unit num=%d", container_block->dump().c_str(), (int)sub_blocks.size());
 
+                        bool table_extract_all_unit_successful = true;
                         for (auto & unit_block : sub_blocks)
                         {
                             base::xvaccount_t  unit_account(unit_block->get_account());
@@ -431,6 +425,7 @@ namespace top
 
                             if(false == store_block(unit_account,unit_block.get())) //any fail resultin  re-unpack whole table again
                             {
+                                table_extract_all_unit_successful = false;//reset to false for any failure of unit
                                 xwarn("xvblockstore_impl::store_block,fail-store unit-block=%s from tableblock=%s",unit_block->dump().c_str(),container_block->dump().c_str());
                             }
                             else
@@ -440,12 +435,26 @@ namespace top
                                 on_block_stored(unit_block.get());//throw event for sub blocks
                             }
                         }
+
+                        //update to block'flag acccording table_extract_all_unit_successful
+                        if(table_extract_all_unit_successful)
+                        {
+                            container_block->set_block_flag(base::enum_xvblock_flag_unpacked);
+                            xinfo("xvblockstore_impl::store_block,extract_sub_blocks done for talbe block(%s)", container_block->dump().c_str());
+                        }
                     }
                     else
                     {
                         xerror("xvblockstore_impl::store_block,fail-extract_sub_blocks for table block(%s)", container_block->dump().c_str(), (int)sub_blocks.size());
                     }
                 }
+            }
+            
+            bool ret = container_account->store_block(container_block);
+            if(!ret)
+            {
+                xwarn("xvblockstore_impl::store_block,fail-store block(%s)", container_block->dump().c_str());
+                // return false;
             }
 
             container_account->try_execute_all_block(container_block);  // try to push execute block, ignore store result
