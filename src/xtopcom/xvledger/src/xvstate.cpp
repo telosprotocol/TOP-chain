@@ -55,7 +55,6 @@ namespace top
             :xvexegroup_t(type),
              xvaccount_t()
         {
-            XMETRICS_GAUGE(metrics::dataobject_xvtxindex, 1);
             //then register execution methods
             REGISTER_XVIFUNC_ID_API(enum_xvinstruct_class_state_function);
         }
