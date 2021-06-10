@@ -37,6 +37,8 @@ namespace top
         xacctmeta_t::xacctmeta_t()
             :base::xdataobj_t(base::xdataunit_t::enum_xdata_type_vaccountmeta)
         {
+            _reserved_u16 = 0;
+            _block_level  = (uint8_t)-1; //init to 255(that ensure is not allocated)
             _meta_spec_version = 1;     //version #1 now
             _highest_cert_block_height     = 0;
             _highest_lock_block_height     = 0;
@@ -84,9 +86,12 @@ namespace top
             stream << _highest_genesis_connect_height;
             stream.write_tiny_string(_highest_genesis_connect_hash);
             stream << _highest_sync_height;
+            
             //from here we introduce version control for meta
             stream << _meta_spec_version;
-            stream.write_compact_var(_lowest_genesis_connect_height);
+            stream << _block_level;
+            stream << _reserved_u16;
+            stream << _lowest_genesis_connect_height;
 
             return (stream.size() - begin_size);
         }
@@ -106,15 +111,14 @@ namespace top
             stream >> _highest_genesis_connect_height;
             stream.read_tiny_string(_highest_genesis_connect_hash);
             stream >> _highest_sync_height;
-
+            
+            stream >> _meta_spec_version;
+            stream >> _block_level;
+            stream >> _reserved_u16;
+            stream >> _lowest_genesis_connect_height;
+            
             if(stream.size() > 0) //still have data to read
             {
-                stream >> _meta_spec_version;
-                stream.read_compact_var(_lowest_genesis_connect_height);
-                if(_meta_spec_version > 1) //read control
-                {
-                    //add your code here
-                }
             }
 
             return (begin_size - stream.size());
@@ -420,7 +424,11 @@ namespace top
 
         bool xblockacct_t::is_live(const uint64_t timenow_ms)
         {
-            if( timenow_ms > (m_idle_timeout_ms + m_last_access_time_ms) )
+            uint64_t _idle_timeout_ms = m_idle_timeout_ms;
+            if(m_meta->_block_level > base::enum_xvblock_level_unit)
+                _idle_timeout_ms = _idle_timeout_ms << 4; //scale 16 times * m_idle_timeout_ms for table ,book etc
+            
+            if( timenow_ms > (_idle_timeout_ms + m_last_access_time_ms) )
                 return false;
             return true;
         }
@@ -789,10 +797,8 @@ namespace top
             base::xvbindex_t* result = query_index(m_meta->_highest_genesis_connect_height,base::enum_xvblock_flag_committed);
             if(result != nullptr)
             {
-                clean_blocks(enum_max_cached_blocks, false);
                 return result;
             }
-            clean_blocks(enum_max_cached_blocks, false);
             return load_genesis_index();
         }
 
@@ -1090,8 +1096,6 @@ namespace top
             //#2:connect_block() ->process_block()
             //#3:save_index_to_db() -->save index-entry to db
             //#4:save_block_to_db() -->save raw-block to db
-            //#5:clean_blocks() ->release memory usage
-            clean_blocks(enum_max_cached_blocks,true); //as limited cached memory, clean the oldest one if need
 
             base::xvbindex_t * final_cached_index = new_index(new_raw_block);//final_cached_ptr is a raw ptr that just valid at this moment
             if(final_cached_index != nullptr) //insert/update successful,or find duplicated one
@@ -1105,6 +1109,12 @@ namespace top
                 if(final_cached_index->check_modified_flag()) //if has anything changed
                 {
                     write_index_to_db(final_cached_index); //save index then
+                }
+                
+                //update block_level for first block
+                if(m_meta->_block_level == (uint8_t)-1)
+                {
+                    m_meta->_block_level = new_raw_block->get_block_level();
                 }
 
                 xinfo("xblockacct_t::store_block,done for block,cache_size:%zu,new_raw_block=%s,dump=%s",m_all_blocks.size(), new_raw_block->dump().c_str(), dump().c_str());
@@ -1621,7 +1631,6 @@ namespace top
                         }
                     }
                 }
-                clean_blocks(enum_max_cached_blocks,false);
             }
 
             //finally send out all events.
@@ -2274,6 +2283,8 @@ namespace top
                 }
                 // load_index_input(_execute_index.get());  // execute no need load input
                 load_index_output(_execute_index.get());
+                //note:to avoid block ptr is release by reentery from execute_block,here have to hold ptr first
+                base::auto_reference<base::xvblock_t> auto_hold_block_ptr(_execute_index->get_this_block());
                 if(false == execute_block(_execute_index.get(),_execute_index->get_this_block()))
                 {
                     xwarn("xblockacct_t::try_execute_all_block fail-execute block,at block=%s",_execute_index->dump().c_str());
