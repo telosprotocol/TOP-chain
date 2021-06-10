@@ -194,7 +194,7 @@ namespace top
             uint16_t ledger_id;
             bool ret = base::xvaccount_t::get_type_and_ledgerid_from_account(addr_type, ledger_id, m_account_address);
             if (ret) {
-                if (addr_type == base::enum_vaccount_addr_type_eth_user_account)
+                if (addr_type == base::enum_vaccount_addr_type_secp256k1_eth_user_account)
                     return true;
                 std::string public_address;
                 ret =  base::xvaccount_t::get_public_address_from_account(m_account_address, public_address);
@@ -223,7 +223,7 @@ namespace top
             if(false == get_type_and_netid(addr_type,net_id))
                 return false;
 
-            if (addr_type == base::enum_vaccount_addr_type_eth_user_account)
+            if (addr_type == base::enum_vaccount_addr_type_secp256k1_eth_user_account)
             {
                 return verify_eth_signature(signature, msg_digest);
             }
@@ -264,7 +264,7 @@ namespace top
             if(false == get_type_and_netid(addr_type,net_id))
                 return false;
 
-            if (addr_type == base::enum_vaccount_addr_type_eth_user_account) 
+            if (addr_type == base::enum_vaccount_addr_type_secp256k1_eth_user_account) 
             {
                 return verify_eth_signature(signature, msg_digest, parent_addr);
             }
@@ -308,7 +308,7 @@ namespace top
             uint16_t net_id = 0;
             if(false == get_type_and_netid(addr_type,net_id))
                 return false;
-            if (addr_type == base::enum_vaccount_addr_type_eth_user_account) 
+            if (addr_type == base::enum_vaccount_addr_type_secp256k1_eth_user_account) 
             {
                 return verify_eth_signature(signature, msg_digest, out_publickey_data);
             }                
@@ -351,7 +351,7 @@ namespace top
             uint16_t net_id = 0;
             if(false == get_type_and_netid(addr_type,net_id))
                 return false;
-            if (addr_type == base::enum_vaccount_addr_type_eth_user_account) 
+            if (addr_type == base::enum_vaccount_addr_type_secp256k1_eth_user_account) 
             {
                 return verify_eth_signature(signature, msg_digest, out_publickey_data);
             }
@@ -413,9 +413,9 @@ namespace top
             std::string eth_address((char *)&hash_value + 12, sizeof(hash_value) - 12);
             eth_address = top::HexEncode(eth_address);
 
-            return base::xvaccount_t::make_account_address((base::enum_vaccount_addr_type)base::enum_vaccount_addr_type_eth_user_account, ledger_id, eth_address,-1);
+            return base::xvaccount_t::make_account_address((base::enum_vaccount_addr_type)base::enum_vaccount_addr_type_secp256k1_eth_user_account, ledger_id, eth_address,-1);
         }        
-       std::string      xecpubkey_t::to_eth_address(const std::string & parent_addr,const char addr_type,const uint16_t ledger_id)
+        std::string      xecpubkey_t::to_eth_address(const std::string & parent_addr,const char addr_type,const uint16_t ledger_id)
         {
             if(parent_addr.empty())
                 return to_address(addr_type,ledger_id);
@@ -438,7 +438,7 @@ namespace top
             std::string eth_address((char *)&hash_value + 12, sizeof(hash_value) - 12);
             eth_address = top::HexEncode(eth_address);
 
-            return base::xvaccount_t::make_account_address((base::enum_vaccount_addr_type)base::enum_vaccount_addr_type_eth_user_account, ledger_id, eth_address,-1);
+            return base::xvaccount_t::make_account_address((base::enum_vaccount_addr_type)base::enum_vaccount_addr_type_secp256k1_eth_user_account, ledger_id, eth_address,-1);
         }
 
         bool     xecpubkey_t::verify_signature(xecdsasig_t & signature,const uint256_t & msg_digest, bool compress)
