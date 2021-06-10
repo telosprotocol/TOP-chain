@@ -317,7 +317,7 @@ void xunconfirmed_tx_queue_t::recover(const xreceipt_state_cache_t & receiptid_s
 
         uint64_t cache_height = find_account_cache_height(account);
         if (cache_height >= account_index.get_latest_unit_height()) {
-            xtxpool_dbg("xunconfirmed_tx_queue_t::recover same height with index.table=%s,height=%ld,account=%s", m_table_info->get_table_addr().c_str(), _block->get_height(), account.c_str());
+            xtxpool_info("xunconfirmed_tx_queue_t::recover same height with index.table=%s,height=%ld,account=%s,cache h:%llu,account_index:%s", m_table_info->get_table_addr().c_str(), _block->get_height(), account.c_str(), cache_height, account_index.dump().c_str());
             continue;
         }
 
@@ -355,6 +355,16 @@ const std::vector<xcons_transaction_ptr_t> xunconfirmed_tx_queue_t::get_resend_t
 
 uint32_t xunconfirmed_tx_queue_t::size() const {
     return m_peer_tables.get_all_txs().size();
+}
+
+xcons_transaction_ptr_t xunconfirmed_tx_queue_t::get_unconfirmed_tx(const std::string & to_table_addr, uint64_t receipt_id) const {
+    base::xvaccount_t vaccount(to_table_addr);
+    auto peer_table_sid = vaccount.get_short_table_id();
+    return m_peer_tables.find(peer_table_sid, receipt_id);
+}
+
+xcons_transaction_ptr_t xunconfirmed_tx_queue_t::get_unconfirmed_tx(base::xtable_shortid_t peer_table_sid, uint64_t receipt_id) const {
+    return m_peer_tables.find(peer_table_sid, receipt_id);
 }
 
 NS_END2

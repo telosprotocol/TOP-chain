@@ -56,7 +56,13 @@ namespace top
             virtual std::string         get_store_path() const  override {return m_store_path;}
         private:
             std::string                         m_store_path;
+            std::map<std::string,std::string >  m_clock_store;
+            std::map<std::string,std::string >  m_clock_store2;
+            int                                 m_cur_clock_store;
             std::map<std::string,std::string >  m_dumy_store;
+            std::map<std::string,std::string >  m_dumy_store2;
+            int                                 m_total_keys;
+            int                                 m_cur_data_store;
         };
         
         class xveventbus_impl : public base::xveventbus_t
@@ -77,6 +83,7 @@ namespace top
             virtual mbus::xevent_ptr_t  create_event_for_store_index_to_db(base::xvbindex_t * target_block) override;
             virtual mbus::xevent_ptr_t  create_event_for_revoke_index_to_db(base::xvbindex_t * target_index) override;
             virtual mbus::xevent_ptr_t  create_event_for_store_block_to_db(base::xvblock_t * target_block) override;
+            virtual mbus::xevent_ptr_t  create_event_for_store_committed_block(base::xvbindex_t * target_index) override;
         };
     };
 };

@@ -82,7 +82,7 @@ namespace top
             
                 //std::pair<std::string, std::string> pri_pub_keys = ((auth::xauthcontext_t*)get_vcertauth())->create_secp256k1_keypair();
                 utl::xecprikey_t node_prv_key;
-                const std::string node_account     = node_prv_key.to_account_address('0', 0);
+                const std::string node_account     = node_prv_key.to_account_address(base::enum_vaccount_addr_type_secp256k1_eth_user_account, 0);
                 
                 std::string _node_prv_key_str((const char*)node_prv_key.data(),node_prv_key.size());
                 std::string _node_pub_key_str = node_prv_key.get_compress_public_key();

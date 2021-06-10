@@ -199,16 +199,16 @@ namespace top
         //rule#2: table use xventity_t(index than #1) to present the included units
         //rule#3: each unit in table has one(only one) linked xventity
         //rule#4: each block of account get final state by combining the xvbstate of prev-block and current entity of output
-        class xvexemodule_t : public xdataunit_t
+        class xvexemodule_t : public xobject_t
         {
             friend class xvblock_t;
         protected:
-            xvexemodule_t(enum_xdata_type type);
-            xvexemodule_t(std::vector<xventity_t*> && entitys,const std::string & raw_resource_data,enum_xdata_type type);
-            xvexemodule_t(const std::vector<xventity_t*> & entitys,const std::string & raw_resource_data,enum_xdata_type type);
+            xvexemodule_t(enum_xobject_type type);
+            xvexemodule_t(std::vector<xventity_t*> && entitys,const std::string & raw_resource_data,enum_xobject_type type);
+            xvexemodule_t(const std::vector<xventity_t*> & entitys,const std::string & raw_resource_data,enum_xobject_type type);
             
-            xvexemodule_t(std::vector<xventity_t*> && entitys,xstrmap_t & resource, enum_xdata_type type);
-            xvexemodule_t(const std::vector<xventity_t*> & entitys,xstrmap_t & resource, enum_xdata_type type);
+            xvexemodule_t(std::vector<xventity_t*> && entitys,xstrmap_t & resource, enum_xobject_type type);
+            xvexemodule_t(const std::vector<xventity_t*> & entitys,xstrmap_t & resource, enum_xobject_type type);
             virtual ~xvexemodule_t();
         private:
             xvexemodule_t();
@@ -229,9 +229,17 @@ namespace top
             const   std::string       get_resources_hash() const {return m_resources_hash;}//m_resource_hash for raw_resources
             bool                      has_resource_data()  const {return (m_resources_obj != NULL);}
             
+        public:
+            int32_t     serialize_to(xstream_t & stream);        //serialize header and object,return how many bytes is writed
+            int32_t     serialize_from(xstream_t & stream);      //serialize header and object,return how many bytes is readed
+            
+            //just wrap function for serialize_to(),but assign data to string and return
+            int32_t     serialize_to_string(std::string & bin_data);
+            int32_t     serialize_from_string(const std::string & bin_data);
+            
         protected: //for subclass or friend class
-            virtual int32_t     do_write(xstream_t & stream) override; //not allow subclass change behavior
-            virtual int32_t     do_read(xstream_t & stream)  override; //not allow subclass change behavior
+            virtual int32_t     do_write(xstream_t & stream); //not allow subclass change behavior
+            virtual int32_t     do_read(xstream_t & stream); //not allow subclass change behavior
             
         private:  //not allow override any more
             //set_resources_data only open to xvblock where may verify hash first

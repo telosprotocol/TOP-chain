@@ -17,8 +17,6 @@
 
 NS_BEG2(top, data)
 
-XINLINE_CONSTEXPR char const * XRESOURCE_BINLOG_HASH_KEY                = "bh";  //binlog hash
-
 template <typename T, int type_value>
 class xventity_face_t : public base::xventity_t {
  protected:
@@ -78,94 +76,17 @@ class xdummy_entity_t : public xventity_face_t<xdummy_entity_t, xdata_type_dummy
     std::string m_dummy;
 };
 
-class xinput_t final: public base::xvinput_t {
- protected:
-    enum { object_type_value = enum_xdata_type_max - xdata_type_input };
- public:
-    xinput_t();
-    xinput_t(const std::vector<base::xventity_t*> & entitys, const std::string & resource_data);
-    xinput_t(const std::vector<base::xventity_t*> & entitys, base::xstrmap_t & resource_obj);
- protected:
-    ~xinput_t();
- private:
-    xinput_t(const xinput_t &);
-    xinput_t & operator = (const xinput_t &);
- public:
-    static int32_t get_object_type() {return object_type_value;}
-    static xobject_t *create_object(int type) {
-        (void)type;
-        return new xinput_t;
-    }
- public:  // implement virtual interface
-    virtual const std::string           get_root_hash() const override;
 
-    static std::string                  get_key(const std::string & _base_path) {return _base_path + base::xvinput_t::name();}
-
- public:
-    std::string                         get_binary_string() const;
-    bool                                calc_merkle_path(const std::string & leaf, xmerkle_path_256_t& hash_path) const;
-    virtual std::string                 body_dump() const {return "empty";}
-
- private:
-    std::vector<std::string>            get_merkle_leafs() const;
-};
-
-class xoutput_t final: public base::xvoutput_t {
- protected:
-    enum { object_type_value = enum_xdata_type_max - xdata_type_output };
- public:
-    xoutput_t();
-    xoutput_t(const std::vector<base::xventity_t*> & entitys, const std::string & resource_data);
-    xoutput_t(const std::vector<base::xventity_t*> & entitys, base::xstrmap_t & resource_obj);
- protected:
-    ~xoutput_t();
- private:
-    xoutput_t(const xoutput_t &);
-    xoutput_t & operator = (const xoutput_t &);
- public:
-    static int32_t get_object_type() {return object_type_value;}
-    static xobject_t *create_object(int type) {
-        (void)type;
-        return new xoutput_t;
-    }
- public:
-    virtual const std::string           get_root_hash() const override;
-
-    static std::string                  get_key(const std::string & _base_path) {return _base_path + base::xvoutput_t::name();}
-
-    std::string                         get_binary_string() const;
-    bool                                calc_merkle_path(const std::string & leaf, xmerkle_path_256_t& hash_path) const;
-    virtual std::string                 body_dump() const {return "empty";}
-    virtual const std::string           get_binlog_hash() override;
- private:
-    std::vector<std::string>            get_merkle_leafs() const;
-};
 
 using xentity_ptr_t = xobject_ptr_t<base::xventity_t>;
-using xinput_ptr_t = xobject_ptr_t<xinput_t>;
-using xoutput_ptr_t = xobject_ptr_t<xoutput_t>;
-
-
-
-class xblock_resource_t {
- public:
-    xblock_resource_t() {
-        m_resource = make_object_ptr<base::xstrmap_t>();
-    }
-    void add_resource(const std::string & key, const std::string & value) {
-        m_resource->set(key, value);
-    }
-    const xstrmap_ptr_t & get_resource() const {return m_resource;}
-
- private:
-    xstrmap_ptr_t    m_resource{nullptr};
-};
-
 
 // unify all blockbody para
 class xblockbody_para_t {
  public:
-    xblockbody_para_t() = default;
+    xblockbody_para_t() {
+        input_resource = make_object_ptr<base::xstrmap_t>();
+        output_resource = make_object_ptr<base::xstrmap_t>();
+    }
     ~xblockbody_para_t() {
         for (auto & v : input_entitys) {
             v->release_ref();
@@ -176,7 +97,6 @@ class xblockbody_para_t {
         }
         output_entitys.clear();
     }
-    void create_default_input_output();
     bool add_input_entity(const xentity_ptr_t & entity) {
         base::xventity_t* _entity = entity.get();
         _entity->add_ref();
@@ -184,7 +104,7 @@ class xblockbody_para_t {
         return true;
     }
     bool add_input_resource(const std::string & key, const std::string & value) {
-        input_resource.add_resource(key, value);
+        input_resource->set(key, value);
         return true;
     }
     bool add_output_entity(const xentity_ptr_t & entity) {
@@ -194,25 +114,19 @@ class xblockbody_para_t {
         return true;
     }
     bool add_output_resource(const std::string & key, const std::string & value) {
-        output_resource.add_resource(key, value);
+        output_resource->set(key, value);
         return true;
     }
-    const xinput_ptr_t &    get_input() const {
-        xassert(m_input != nullptr);
-        return m_input;
-    }
-    const xoutput_ptr_t &   get_output() const {
-        xassert(m_output != nullptr);
-        return m_output;
-    }
+    const std::vector<base::xventity_t*> &  get_input_entitys() const {return input_entitys;}
+    const std::vector<base::xventity_t*> &  get_output_entitys() const {return output_entitys;}
+    base::xstrmap_t*                        get_input_resource() const {return input_resource.get();}
+    base::xstrmap_t*                        get_output_resource() const {return output_resource.get();}
 
  private:
     std::vector<base::xventity_t*>  input_entitys;
     std::vector<base::xventity_t*>  output_entitys;
-    xblock_resource_t               input_resource;
-    xblock_resource_t               output_resource;
-    xinput_ptr_t                    m_input{nullptr};
-    xoutput_ptr_t                   m_output{nullptr};
+    xobject_ptr_t<base::xstrmap_t>  input_resource{nullptr};
+    xobject_ptr_t<base::xstrmap_t>  output_resource{nullptr};
 };
 
 

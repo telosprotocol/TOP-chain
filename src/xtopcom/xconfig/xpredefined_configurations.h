@@ -60,6 +60,23 @@ using xgroup_size_t = std::uint16_t;
 XDECLARE_CONFIGURATION(global_timer_interval, std::chrono::milliseconds, 10000);  // global timer interval 10
 
 // election onchain:
+#if defined(XBUILD_DEV) || defined(XBUILD_CI)   // for local test, election interval should be small for enabling REC/ZEC/EDGE/ARCHIVE election in testing logic
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(rec_election_interval,
+                                      xinterval_t,
+                                      normal,
+                                      191,  // time interval in logic clock unit
+                                      1,
+                                      std::numeric_limits<xinterval_t>::max());
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(zec_election_interval,
+                                      xinterval_t,
+                                      normal,
+                                      111,  // time interval in logic clock unit
+                                      1,
+                                      std::numeric_limits<xinterval_t>::max());
+
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(edge_election_interval, xinterval_t, normal, 13, 1, std::numeric_limits<xinterval_t>::max());
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(archive_election_interval, xinterval_t, normal, 17, 1, std::numeric_limits<xinterval_t>::max());
+#else
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(rec_election_interval,
                                       xinterval_t,
                                       normal,
@@ -75,11 +92,17 @@ XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(zec_election_interval,
 
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(edge_election_interval, xinterval_t, normal, 360, 1, std::numeric_limits<xinterval_t>::max());
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(archive_election_interval, xinterval_t, normal, 360, 1, std::numeric_limits<xinterval_t>::max());
+#endif
 
-#if defined XBUILD_GALILEO
+#if defined(XBUILD_DEV) || defined(XBUILD_CI)
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(zone_election_trigger_interval, xinterval_t, normal, 5, 1, std::numeric_limits<xinterval_t>::max());
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(cluster_election_interval, xinterval_t, normal, 41, 1, std::numeric_limits<xinterval_t>::max());
+#elif defined(XBUILD_GALILEO)
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(zone_election_trigger_interval, xinterval_t, normal, 181, 1, std::numeric_limits<xinterval_t>::max());
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(cluster_election_interval, xinterval_t, normal, 360, 1, std::numeric_limits<xinterval_t>::max());
 #else
+// for mainnet, the followed two intervals will be updated some time by TCC proposal. We want the genesis stage run a little faster
+// to fill the group with less time.
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(zone_election_trigger_interval, xinterval_t, normal, 31, 1, std::numeric_limits<xinterval_t>::max());
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(cluster_election_interval, xinterval_t, normal, 60, 1, std::numeric_limits<xinterval_t>::max());
 #endif
@@ -89,7 +112,12 @@ XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(cluster_election_minimum_rotation_ratio, s
                                                                                                                         // effective_standby_size < 66% of current_group_size. Then
                                                                                                                         // needs to elects out
 
-#if defined XBUILD_GALILEO
+#if defined(XBUILD_CI)
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(min_auditor_group_size, xgroup_size_t, normal, 3, 3, 32);
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(max_auditor_group_size, xgroup_size_t, normal, 4, 4, 256);
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(min_validator_group_size, xgroup_size_t, normal, 3, 3, 32);
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(max_validator_group_size, xgroup_size_t, normal, 4, 4, 512);
+#elif defined(XBUILD_GALILEO) || defined(XBUILD_DEV)
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(min_auditor_group_size, xgroup_size_t, normal, 6, 6, 16);
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(max_auditor_group_size, xgroup_size_t, normal, 16, 16, 256);
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(min_validator_group_size, xgroup_size_t, normal, 6, 6, 16);
@@ -101,8 +129,13 @@ XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(min_validator_group_size, xgroup_size_t, n
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(max_validator_group_size, xgroup_size_t, normal, 128, 64, 512);
 #endif
 
+#if defined(XBUILD_DEV) || defined(XBULLD_CI)
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(min_election_committee_size, xgroup_size_t, normal, 6, 6, 32);
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(max_election_committee_size, xgroup_size_t, normal, 8, 8, 512);
+#else
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(min_election_committee_size, xgroup_size_t, normal, 32, 8, 32);
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(max_election_committee_size, xgroup_size_t, normal, 256, 128, 512);
+#endif
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(max_auditor_rotation_count, std::uint16_t, normal, 2, 1, 62);
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(max_edge_group_size, std::uint16_t, normal, 512, 64, 1022);
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(max_archive_group_size, std::uint16_t, normal, 512, 64, 1022);
@@ -186,8 +219,6 @@ XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(task_num_per_round, uint16_t, normal, 16, 
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(workload_per_tx, uint32_t, normal, 1, 1, std::numeric_limits<uint32_t>::max());
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(workload_per_tableblock, uint32_t, normal, 2, 0, std::numeric_limits<uint32_t>::max());
 
-XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(workload_report_min_table_block_num, uint32_t, important, 32, 0, std::numeric_limits<uint32_t>::max());
-
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(shard_zero_workload, uint32_t, normal, 0, 0, std::numeric_limits<uint32_t>::max());
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(cluster_zero_workload, uint32_t, normal, 0, 0, std::numeric_limits<uint32_t>::max());
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(cross_reading_rec_reg_contract_height_step_limitation, uint64_t, normal, 12, 1, std::numeric_limits<uint64_t>::max());
@@ -199,7 +230,6 @@ XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(cross_reading_rec_reg_contract_logic_timeo
                                       std::numeric_limits<common::xlogic_time_t>::max());
 
 // credit & slash
-XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(tableslash_report_schedule_interval, xinterval_t, normal, 1, 0, std::numeric_limits<xinterval_t>::max());
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(min_credit, std::uint64_t, normal, 100000, 100000, 1000000);                      // default minimun 0.1
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(backward_validator_slash_credit, std::uint64_t, normal, 1 * 100000, 0, 1000000);  // validator credit score 0.1;
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(backward_auditor_slash_credit, std::uint64_t, normal, 1 * 100000, 0, 1000000);    // auditor credit score 0.1
@@ -207,7 +237,6 @@ XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(sign_block_reward_threshold_value, std::ui
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(sign_block_ranking_reward_threshold_value, std::uint32_t, normal, 0, 0, 100);     // award node vote
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(sign_block_publishment_threshold_value, std::uint32_t, normal, 0, 0, 100);
 #ifdef SLASH_TEST
-XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(min_table_block_report, std::uint32_t, normal, 16, 0, std::numeric_limits<uint32_t>::max());
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(punish_interval_time_block, xinterval_t, normal, 30, 0, std::numeric_limits<xinterval_t>::max());
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(punish_interval_table_block, std::uint32_t, normal, 16, 0, std::numeric_limits<uint32_t>::max());
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(sign_block_ranking_publishment_threshold_value, std::uint32_t, normal, 30, 0, 100);
@@ -216,7 +245,6 @@ XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(award_auditor_credit, std::uint64_t, norma
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(backward_node_lock_duration_increment, std::uint64_t, normal, 30, 0, std::numeric_limits<uint64_t>::max());
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(max_nodedeposit_lock_duration, std::uint64_t, normal, 1200, 0, std::numeric_limits<uint64_t>::max());
 #else
-XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(min_table_block_report, std::uint32_t, normal, 32, 0, std::numeric_limits<uint32_t>::max());
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(punish_interval_time_block, xinterval_t, normal, 8640, 0, std::numeric_limits<xinterval_t>::max());
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(punish_interval_table_block, std::uint32_t, normal, 368640, 0, std::numeric_limits<uint32_t>::max());
 
@@ -272,8 +300,16 @@ XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(application_contract_code_max_len, std::ui
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(contract_call_contracts_num, std::uint32_t, critical, 25, 1, std::numeric_limits<uint32_t>::max());
 
 /* begin of offchain parameters */
+#if defined(XBUILD_CI)
+XDECLARE_CONFIGURATION(auditor_group_count, std::uint16_t, 1);
+XDECLARE_CONFIGURATION(validator_group_count, std::uint16_t, 1);
+#elif defined(XBUILD_DEV)
+XDECLARE_CONFIGURATION(auditor_group_count, std::uint16_t, 1);
+XDECLARE_CONFIGURATION(validator_group_count, std::uint16_t, 2);
+#else
 XDECLARE_CONFIGURATION(auditor_group_count, std::uint16_t, 2);
 XDECLARE_CONFIGURATION(validator_group_count, std::uint16_t, 4);
+#endif
 
 XDECLARE_CONFIGURATION(min_account_deposit, std::uint64_t, ASSET_TOP(0));  // min account activation deposit unnecessary
 XDECLARE_CONFIGURATION(recv_tx_cache_window, std::uint32_t, 30);
@@ -298,7 +334,11 @@ XDECLARE_CONFIGURATION(unitblock_send_transfer_tx_batch_num, std::uint32_t, 3);
 XDECLARE_CONFIGURATION(tableblock_batch_unitblock_max_num, std::uint32_t, 64);
 XDECLARE_CONFIGURATION(tableblock_batch_tx_max_num, std::int32_t, 64);
 #endif
+#if defined(XBUILD_DEV) || defined(XBUILD_CI)
+XDECLARE_CONFIGURATION(fulltable_interval_block_num, std::uint32_t, 16);
+#else
 XDECLARE_CONFIGURATION(fulltable_interval_block_num, std::uint32_t, 128);  // TODO(jimmy) 512
+#endif
 XDECLARE_CONFIGURATION(local_blacklist, const char *, "");
 XDECLARE_CONFIGURATION(local_whitelist, const char *, "");
 // slash fulltable interval
@@ -321,7 +361,19 @@ XDECLARE_CONFIGURATION(ip, const char *, "0.0.0.0");
 
 /* end of offchain parameters */
 
-#if defined XBUILD_GALILEO
+#if defined(XBUILD_CI)
+XDECLARE_CONFIGURATION(chain_name, char const *, chain_name_testnet);
+XDECLARE_CONFIGURATION(platform_public_endpoints,
+                       char const *,
+                       "192.168.50.155:9921,192.168.50.156:9921,192.168.50.157:9921,192.168.50.158:9921,192.168.50.159:9921,192.168.50.160:9921,192.168.50.121:9921,192.168.50.119:9921");
+XDECLARE_CONFIGURATION(platform_url_endpoints, char const *, "http://mainnetwork.org/");
+#elif defined(XBUILD_DEV)
+XDECLARE_CONFIGURATION(chain_name, char const *, chain_name_testnet);
+XDECLARE_CONFIGURATION(platform_public_endpoints,
+                       char const *,
+                       "127.0.0.1:9000");
+XDECLARE_CONFIGURATION(platform_url_endpoints, char const *, "http://unreachable.org/");
+#elif defined(XBUILD_GALILEO)
 XDECLARE_CONFIGURATION(chain_name, char const *, chain_name_testnet);
 XDECLARE_CONFIGURATION(platform_public_endpoints,
                        char const *,

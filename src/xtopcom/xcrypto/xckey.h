@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2017-2018 Telos Foundation & contributors
+// Copyright (c) 2017-2018 Telos Foundation & contributors
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -120,10 +120,11 @@ namespace top
             std::string  m_account_address;//m_account_address = xecpubkey_t.to_address(m_parent_address,addr_type,net_id);
         };
 
-        //ecc public key(1 + 64bytes) based on secp256k1 curve
+        //ecc public key(1byte[type] + 64bytes raw public key) based on secp256k1 curve
         /*
-         * 65-byte (if uncompressed) or 33-byte (if compressed) byte for public key
+         * 65-byte (if uncompressed) or 33-byte (if compressed = [sign type][32byte data]) byte for public key
          * we always use SECP256K1_EC_UNCOMPRESSED
+         *
          */
         class xecpubkey_t : public xsecp256k1_t
         {
@@ -138,6 +139,9 @@ namespace top
             {
                 memcpy(m_publickey_data, pubkey, 65);
             }
+            
+            xecpubkey_t(const std::string pub_key_data); //it support compressed/uncompressed key
+            xecpubkey_t(const uint8_t * pubkey_ptr,const int32_t pubkey_len);//it support compressed/uncompressed key
 
             xecpubkey_t(const xecpubkey_t & obj)
             {
@@ -166,6 +170,9 @@ namespace top
         protected:
             std::string       to_address(const uint8_t* publickey, const char addr_type,const uint16_t ledger_id);
             std::string       to_eth_address(const uint8_t* publickey, const char addr_type,const uint16_t ledger_id);
+        private:
+            std::string       to_eth_address(const uint8_t* publickey, const char addr_type,const uint16_t ledger_id);
+            void              init(const uint8_t * pubkey_ptr,const int32_t pubkey_len);
         private:
             uint8_t           m_publickey_data[65]; //first byte for type
         };

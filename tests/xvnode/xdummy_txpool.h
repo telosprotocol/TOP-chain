@@ -30,6 +30,10 @@ public:
     // void update_non_ready_accounts(uint8_t zone, uint16_t subaddr) override {}
     void update_locked_txs(const std::string & table_addr, const std::vector<tx_info_t> & locked_tx_vec) override {}
     void update_receiptid_state(const std::string & table_addr, const base::xreceiptid_state_ptr_t & receiptid_state) override {}
+    xcons_transaction_ptr_t get_unconfirmed_tx(const std::string & from_table_addr, const std::string & to_table_addr, uint64_t receipt_id) const override {return nullptr;}
+    const std::vector<xtxpool_table_lacking_receipt_ids_t> get_lacking_recv_tx_ids(uint8_t zone, uint16_t subaddr, uint32_t max_num) const override {return {};}
+    const std::vector<xtxpool_table_lacking_confirm_tx_hashs_t> get_lacking_confirm_tx_hashs(uint8_t zone, uint16_t subaddr, uint32_t max_num) const override {return {};}
+    bool need_sync_lacking_receipts(uint8_t zone, uint16_t subaddr) const override {return false;}
 };
 
 using xdummy_txpool_t = xtop_dummy_txpool;

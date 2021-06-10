@@ -940,21 +940,33 @@ void get_block_handle::getBlock() {
             top::contract::xcontract_manager_t::instance().get_contract_data(top::common::xaccount_address_t{ owner }, height, top::contract::xjson_format_t::detail, slash_prop, ec);
             value["property_info"] = slash_prop;
         }
-
-
     } else if (type == "last") {
         auto vblock = m_block_store->get_latest_committed_block(_owner_vaddress);
         data::xblock_t * bp = dynamic_cast<data::xblock_t *>(vblock.get());
         value = get_block_json(bp);
-    } else if (type == "prop") {
-        std::string prop_name = m_js_req["prop"].asString();
-        xJson::Value jv;
-        query_account_property(jv, owner, prop_name);
-        m_js_rsp["value"] = jv;
-        return;
     }
 
     m_js_rsp["value"] = value;
+}
+
+void get_block_handle::getProperty() {
+    std::string type = m_js_req["type"].asString();
+    std::string owner = m_js_req["account_addr"].asString();
+    base::xvaccount_t _owner_vaddress(owner);
+
+    xJson::Value value;
+    uint64_t height = 0;
+    if (type == "last") {
+        auto vblock = m_block_store->get_latest_committed_block(_owner_vaddress);
+        height = vblock->get_height();
+    } else if (type == "height") {
+        height = m_js_req["height"].asUInt64();
+    }
+
+    std::string prop_name = m_js_req["prop"].asString();
+    xJson::Value jv;
+    query_account_property(jv, owner, prop_name, height);
+    m_js_rsp["value"] = jv;
 }
 
 void get_block_handle::set_redeem_token_num(xaccount_ptr_t ac, xJson::Value & value) {
@@ -1111,10 +1123,7 @@ bool query_special_property(xJson::Value & jph, const std::string & owner, const
     return false;
 }
 
-void get_block_handle::query_account_property(xJson::Value & jph, const std::string & owner, const std::string & prop_name) {
-    xdbg("get_block_handle::query_account_property account=%s,prop_name=%s", owner.c_str(), prop_name.c_str());
-    // load newest account state
-    xaccount_ptr_t unitstate = m_store->query_account(owner);
+void get_block_handle::query_account_property_base(xJson::Value & jph, const std::string & owner, const std::string & prop_name, xaccount_ptr_t unitstate) {
     if (unitstate == nullptr) {
         xwarn("get_block_handle::query_account_property fail-query unit state.account=%s", owner.c_str());
         return;
@@ -1154,6 +1163,37 @@ void get_block_handle::query_account_property(xJson::Value & jph, const std::str
         uint64_t value = propobj->get();
         jph[prop_name] = std::to_string(value);
     }
+}
+
+void get_block_handle::query_account_property(xJson::Value & jph, const std::string & owner, const std::string & prop_name) {
+    xdbg("get_block_handle::query_account_property account=%s,prop_name=%s", owner.c_str(), prop_name.c_str());
+    // load newest account state
+    xaccount_ptr_t unitstate = m_store->query_account(owner);
+    query_account_property_base(jph, owner, prop_name, unitstate);
+}
+
+void get_block_handle::query_account_property(xJson::Value & jph, const std::string & owner, const std::string & prop_name, const uint64_t height) {
+    xdbg("get_block_handle::query_account_property account=%s,prop_name=%s,height=%llu", owner.c_str(), prop_name.c_str(),height);
+    // load newest account state
+    base::xvaccount_t _vaddr(owner);
+    auto _block = base::xvchain_t::instance().get_xblockstore()->load_block_object(_vaddr, height, 0, true);
+    if (_block == nullptr) {
+        xdbg("get_block_handle::query_account_property block %s, height %llu, not exist", owner.c_str(), height);
+        return;
+    }
+
+    if (_block->is_genesis_block() && _block->get_block_class() == base::enum_xvblock_class_nil) {
+        xdbg("get_block_handle::query_account_property %s, height %llu, genesis or nil block", owner.c_str(), height);
+        return;
+    }
+
+    base::xauto_ptr<base::xvbstate_t> bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(_block.get());
+    xaccount_ptr_t unitstate = nullptr;
+    if (bstate != nullptr) {
+        unitstate = std::make_shared<xunit_bstate_t>(bstate.get());
+    }
+    
+    query_account_property_base(jph, owner, prop_name, unitstate);
 }
 
 void get_block_handle::set_accumulated_issuance_yearly(xJson::Value & j, const std::string & value) {
@@ -1276,8 +1316,14 @@ void get_block_handle::set_lightunit_info(xJson::Value & j_lu, xblock_t * bp) {
     }
 }
 
-std::unordered_map<string, string> node_type_map =
-    {{"consensus.auditor.", "auditor"}, {"consensus.validator.", "validator"}, {"edge.", "edge"}, {"archive.", "archive"}, {"committee.", "root_beacon"}, {"zec.", "sub_beacon"}};
+static std::unordered_map<common::xnode_type_t, std::string> node_type_map{
+    { common::xnode_type_t::consensus_auditor, "auditor" },
+    { common::xnode_type_t::consensus_validator, "validator" },
+    { common::xnode_type_t::edge, "edge" },
+    { common::xnode_type_t::archive, "archive" },
+    { common::xnode_type_t::rec, "root_beacon" },
+    { common::xnode_type_t::zec, "sub_beacon"}
+};
 
 void get_block_handle::set_addition_info(xJson::Value & body, xblock_t * bp) {
     xaccount_ptr_t state = m_store->get_target_state(bp);
@@ -1331,21 +1377,20 @@ void get_block_handle::set_addition_info(xJson::Value & body, xblock_t * bp) {
                             auto const & group_id = top::get<common::xgroup_id_t const>(group_result_info);
                             auto const & group_result = top::get<xelection_group_result_t>(group_result_info);
 
-                            common::xip2_t xip2{network_id, zid, cluster_id, group_id};
-
                             for (auto const & node_info : group_result) {
                                 auto const & node_id = top::get<xelection_info_bundle_t>(node_info).node_id();
                                 if (node_id.empty()) {
                                     continue;
                                 }
                                 auto const & election_info = top::get<xelection_info_bundle_t>(node_info).election_info();
+                                common::xip2_t xip2{network_id, zid, cluster_id, group_id, top::get<common::xslot_id_t const>(node_info), (uint16_t)group_result.size(), bp->get_height()};
 
                                 xJson::Value j;
                                 j["account"] = node_id.to_string();
                                 j["public_key"] = to_hex_str(election_info.consensus_public_key.to_string());
                                 j["group_id"] = xip2.group_id().value();
                                 j["stake"] = static_cast<unsigned long long>(election_info.stake);
-                                j["node_type"] = node_type_map[common::to_string(node_type)];
+                                j["node_type"] = node_type_map[node_type];
 
                                 if (group_result.group_version().has_value()) {
                                     j["version"] = static_cast<xJson::UInt64>(group_result.group_version().value());
@@ -1353,6 +1398,7 @@ void get_block_handle::set_addition_info(xJson::Value & body, xblock_t * bp) {
                                 j["start_timer_height"] = static_cast<xJson::UInt64>(group_result.start_time());
                                 j["timestamp"] = static_cast<xJson::UInt64>(group_result.timestamp());
                                 j["slot_id"] = top::get<common::xslot_id_t const>(node_info).value();
+                                j["xip"] = xstring_utl::uint642hex(xip2.raw_high_part()) + ":" + xstring_utl::uint642hex(xip2.raw_low_part());
 
                                 jv["elect_nodes"].append(j);
                             }
@@ -1371,7 +1417,6 @@ void get_block_handle::set_fullunit_info(xJson::Value & j_fu, xblock_t * bp) {
         base::xauto_ptr<base::xvbstate_t> bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(bp);
         xassert(bstate != nullptr);
         data::xunit_bstate_t unitstate(bstate.get());
-        // set_object_info(j_fu, full);
         j_fu["latest_full_unit_number"] = static_cast<unsigned int>(bp->get_height());
         j_fu["latest_full_unit_hash"] = to_hex_str(bp->get_block_hash());
         j_fu["latest_send_trans_number"] = static_cast<unsigned int>(unitstate.account_send_trans_number());
@@ -1413,12 +1458,6 @@ void get_block_handle::set_table_info(xJson::Value & jv, xblock_t * bp) {
                 jv["0x" + tx->get_tx_hex_hash()] = juj;
             }
             jui["lightunit_input"] = jv;
-
-            xJson::Value jv1;
-            jv1["balance_change"] = static_cast<xJson::Int64>(unit->get_balance_change());
-            jv1["burned_amount_change"] = static_cast<xJson::Int64>(unit->get_burn_balance_change());
-            jui["lightunit_state"] = jv1;
-
             ju[unit->get_block_owner()] = jui;
         }
         jv["units"] = ju;

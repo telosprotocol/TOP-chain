@@ -9,6 +9,7 @@
 #include "xdata/xdata_common.h"
 #include "xdata/xdatautil.h"
 #include "xdata/xnative_contract_address.h"
+#include "xdata/xblocktool.h"
 #include "xconfig/xpredefined_configurations.h"
 
 #include <stdexcept>
@@ -88,38 +89,13 @@ const uint64_t xrootblock_input_t::get_account_balance(const std::string& accoun
 std::once_flag xrootblock_t::m_flag;
 xrootblock_t* xrootblock_t::m_instance = nullptr;
 
-xblockbody_para_t xrootblock_t::get_blockbody_from_para(const xrootblock_para_t & para) {
-    xblockbody_para_t blockbody;
-    xobject_ptr_t<xrootblock_input_t> input = make_object_ptr<xrootblock_input_t>();
-    input->set_account_balances(para.m_account_balances);
-    input->set_genesis_funds_accounts(para.m_geneis_funds_accounts);
-    input->set_genesis_tcc_accounts(para.m_tcc_accounts);
-    input->set_genesis_nodes(para.m_genesis_nodes);
-    blockbody.add_input_entity(input);
-    xobject_ptr_t<xdummy_entity_t> output = make_object_ptr<xdummy_entity_t>();
-    blockbody.add_output_entity(output);
-    blockbody.create_default_input_output();
-    return blockbody;
-}
 bool xrootblock_t::init(const xrootblock_para_t & para) {
     std::call_once(m_flag, [&] () {
-        xblock_para_t block_para;
         std::string _chain_name = XGET_CONFIG(chain_name);
-        block_para.chainid     = top::config::to_chainid(_chain_name);
-        block_para.block_level = base::enum_xvblock_level_chain;  // every chain has a root block
-        block_para.block_class = base::enum_xvblock_class_light;
-        block_para.block_type  = base::enum_xvblock_type_boot;
-        block_para.account     = get_rootblock_address();
-        block_para.height      = 0;
-        block_para.last_block_hash = "";
-        block_para.justify_block_hash = "";
-        block_para.last_full_block_hash = "";
-        block_para.last_full_block_height = 0;
+        base::enum_xchain_id chainid = top::config::to_chainid(_chain_name);
 
-        xblockbody_para_t blockbody = xrootblock_t::get_blockbody_from_para(para);
-        base::xauto_ptr<base::xvheader_t> _blockheader = xblockheader_t::create_blockheader(block_para);
-        base::xauto_ptr<xblockcert_t> _blockcert = xblockcert_t::create_blockcert(block_para.account, 0, base::enum_xconsensus_flag_commit_cert, 0, 0);
-        m_instance = new xrootblock_t(*_blockheader, *_blockcert, blockbody.get_input(), blockbody.get_output());
+        base::xvblock_t* _rootblock = xblocktool_t::create_genesis_root_block(chainid, get_rootblock_address(), para);
+        m_instance = dynamic_cast<xrootblock_t*>(_rootblock);
         xkinfo("root-block info. block=%s", m_instance->dump().c_str());
         return true;
     });
@@ -127,7 +103,7 @@ bool xrootblock_t::init(const xrootblock_para_t & para) {
     return true;
 }
 
-xrootblock_t::xrootblock_t(base::xvheader_t & header, xblockcert_t & cert, const xinput_ptr_t & input, const xoutput_ptr_t & output)
+xrootblock_t::xrootblock_t(base::xvheader_t & header, base::xvqcert_t & cert, base::xvinput_t* input, base::xvoutput_t* output)
 : xblock_t(header, cert, input, output, (enum_xdata_type)object_type_value) {
 
 }

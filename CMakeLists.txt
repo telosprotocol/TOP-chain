@@ -328,6 +328,14 @@ if (XENABLE_TESTS)
     add_definitions(-DXENABLE_TESTS)
 endif()
 
+if (XBUILD_CI)
+    add_definitions(-DXBUILD_CI)
+endif()
+
+if (XBUILD_DEV)
+    add_definitions(-DXBUILD_DEV)
+endif()
+
 if (XBUILD_GALILEO)
     add_definitions(-DXBUILD_GALILEO)
 endif()

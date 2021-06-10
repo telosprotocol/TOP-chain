@@ -104,6 +104,11 @@ namespace top
         //total 2bits = max 4 definition
         enum enum_xvblock_character // for future definition
         {
+            //once enum_xvblock_character_certify_header_only enable it ,which ask:
+                //ask xvqcert.m_header_hash = hash(xvheader)
+                //xvheader.input_hash/output_hash must be valid
+            //but it disabled as default,which mean xvqcert.m_header_hash = hash(xvheader+xvinput+xvoutput)
+            enum_xvblock_character_certify_header_only = 0x01,
         };
 
         constexpr uint64_t TOP_BEGIN_GMTIME = 1573189200;
@@ -115,11 +120,12 @@ namespace top
             //PATCH： version when make backwards compatible bug fixes.
         //virual header of virtual-block
         //note:once xvheader_t is created or serialized_from,not allow change it'data anymore
-        class xvheader_t : public xdataunit_t
+        class xvheader_t : public xobject_t
         {
             friend class xvblock_t;
             friend class xvbbuild_t;
             friend class xvblockstore_t;
+            friend class xvblockbuild_t;
         public:
             static  const std::string   name(){ return std::string("xvheader");}
             virtual std::string         get_obj_name() const override {return name();}
@@ -139,7 +145,7 @@ namespace top
 
         public:
             xvheader_t(const xvheader_t & other);
-            
+
         protected:
             xvheader_t();
             xvheader_t(const std::string & intput_hash,const std::string & output_hash);
@@ -156,7 +162,7 @@ namespace top
             inline enum_xvblock_level          get_block_level()  const {return (enum_xvblock_level)((m_types >> 12) & 0x07);}
             inline enum_xvblock_class          get_block_class()  const {return (enum_xvblock_class)((m_types >> 9) & 0x07);}
             inline enum_xvblock_type           get_block_type()   const {return (enum_xvblock_type) ((m_types >> 2) & 0x7F);}
-            inline enum_xvblock_character      get_block_character() const {return (enum_xvblock_character)(m_types & 0x03);}
+            inline int                         get_block_characters()const {return (m_types & 0x03);}
             inline const uint16_t              get_block_raw_types() const {return m_types;}
 
             //common information for this block
@@ -189,6 +195,7 @@ namespace top
             inline void                 set_block_class(enum_xvblock_class _class)  {m_types = ( (m_types & 0xF1FF) | (_class << 9 ));}
             inline void                 set_block_type(enum_xvblock_type  _type)    {m_types = ( (m_types & 0xFE03) | (_type  << 2));}
 
+            inline void                 set_block_character(enum_xvblock_character it){m_types |= (it & 0x03);}
             inline void                 set_block_features(const uint32_t functions_list){m_versions = ((m_versions & 0x00FFFFFF) | (functions_list << 24));}
             inline void                 set_block_version(const uint32_t version)   {m_versions = ((m_versions & 0xFF000000) | (version & 0x00FFFFFF));}
 
@@ -203,13 +210,19 @@ namespace top
             inline void                 set_last_full_block(const std::string & hash,const uint64_t height) {m_last_full_block_hash = hash;m_last_full_block_height = height;}
 
             inline void                 set_extra_data(const std::string& extradata){m_extra_data = extradata;}
+            
+        public:
+            int32_t             serialize_to(xstream_t & stream); //serialize header and object,return how many bytes is writed
+            //just wrap function for serialize_to(),but assign data to string and return
+            int32_t             serialize_to_string(std::string & bin_data);
         private:
             //return how many bytes readout /writed in, return < 0(enum_xerror_code_type) when have error
-            virtual int32_t             do_write(xstream_t & stream) override final; //not allow subclass change behavior
-            virtual int32_t             do_read(xstream_t & stream)  override final; //not allow subclass change behavior
+            int32_t             do_write(xstream_t & stream); //not allow subclass change behavior
+            int32_t             do_read(xstream_t & stream); //not allow subclass change behavior
 
-            virtual int32_t             serialize_from(xstream_t & stream) override final;//not allow subclass change behavior
-
+            int32_t             serialize_from(xstream_t & stream);//not allow subclass change behavior
+            int32_t             serialize_from_string(const std::string & bin_data);
+            
             //just open for xvblock_t object to access
             inline void                 set_input_hash(const std::string& input_hash)   {m_input_hash = input_hash;}
             inline void                 set_output_hash(const std::string& output_hash) {m_output_hash = output_hash;}
@@ -222,10 +235,10 @@ namespace top
             uint64_t            m_weight;       //accumulative weight of the PoW or PoS until this block
             std::string         m_account;      //block is generated under specific account
             std::string         m_comments;     //reserved to put comments,may fill any data you want
-            std::string         m_input_hash;   //just hash(binary data of input)
-            std::string         m_output_hash;  //just hash(binary data of output)
+            std::string         m_input_hash;   //just hash(binary data of input),reserved for future
+            std::string         m_output_hash;  //just hash(binary data of output),reserved for future
 
-            //note: Block Hash = hash(vheader'hash + xvqcert_t)
+            //note: Block Hash = hash(xvqcert_t)
             //information about previouse blocks
             std::string         m_last_block_hash;       //block hash of parent block,it must have valid
             std::string         m_last_full_block_hash;  //any block need carry the m_last_full_block_hash
@@ -290,6 +303,7 @@ namespace top
             friend class xvblock_t;
             friend class xvbbuild_t;
             friend class xvblockstore_t;
+            friend class xvblockbuild_t;
         public:
             static  const std::string   name(){ return std::string("xvqcert");}
             virtual std::string         get_obj_name() const override {return name();}
@@ -429,8 +443,10 @@ namespace top
             uint16_t            __alignment_use_only__; //alignment as 8 bytes
 
 
-            //each block has [header] [input] [output] those are linked by vqcert
-            std::string         m_header_hash;      //hash of xvheader_t ' bindata
+            //each block has [header]+[input]+[output]+[input resource]+[output resource] are linked
+            //when enum_xvblock_character_certify_header_only enable ,m_header_hash = hash(xvheader)
+            //otherwise m_header_hash = hash(xvheader+xvinput+xvoutput) <---default mode
+            std::string         m_header_hash;      //hash of to be proof for block
             std::string         m_input_root_hash;  //merkle tree' root of commands(or txs),it might be nil
             std::string         m_output_root_hash; //merkle tree' root of the executed result of cmds/txs,it might be nil
             std::string         m_justify_cert_hash;//point the block hash of locked block for unit-block,or point to m_output_root_hash of locked block for other cases depend on enum_xvblock_level
@@ -455,12 +471,12 @@ namespace top
             enum{enum_obj_type = enum_xobject_type_vinput};//allow xbase create xvinput_t object from xdataobj_t::read_from()
 
         public:
-            xvinput_t(const std::vector<xventity_t*> & entitys,const std::string & raw_resource_data,enum_xdata_type type = (enum_xdata_type)enum_xobject_type_vinput);
+            xvinput_t(const std::vector<xventity_t*> & entitys,const std::string & raw_resource_data,enum_xobject_type type = enum_xobject_type_vinput);
 
-            xvinput_t(std::vector<xventity_t*> && entitys,xstrmap_t & resource_obj,enum_xdata_type type = (enum_xdata_type)enum_xobject_type_vinput);
-            xvinput_t(const std::vector<xventity_t*> & entitys,xstrmap_t & resource_obj,enum_xdata_type type = (enum_xdata_type)enum_xobject_type_vinput);
+            xvinput_t(std::vector<xventity_t*> && entitys,xstrmap_t & resource_obj,enum_xobject_type type = enum_xobject_type_vinput);
+            xvinput_t(const std::vector<xventity_t*> & entitys,xstrmap_t & resource_obj,enum_xobject_type type = enum_xobject_type_vinput);
         protected:
-            xvinput_t(enum_xdata_type type = (enum_xdata_type)enum_xobject_type_vinput);
+            xvinput_t(enum_xobject_type type = enum_xobject_type_vinput);
             virtual ~xvinput_t();
         private:
             xvinput_t(const xvinput_t & other);
@@ -478,7 +494,7 @@ namespace top
             //root of input which usally present a root of merkle tree for input
             virtual const std::string   get_root_hash() const {return m_root_hash;}
             virtual bool                set_root_hash(const std::string & root_hash){ m_root_hash = root_hash;return true;}
- 
+
         protected: //proposal ==> input ==> output
             //just carry by object at memory,not included by serialized
             std::string  m_proposal;    //raw proposal
@@ -493,15 +509,16 @@ namespace top
         public:
             static  const std::string   name(){ return std::string("xvoutput");}
             static  const std::string   res_binlog_key_name(){return std::string("bl");}
+            static  const std::string   res_binlog_hash_key_name(){return std::string("bh");}  // TODO(jimmy) put to voutentity
             virtual std::string         get_obj_name() const override {return name();}
             enum{enum_obj_type = enum_xobject_type_voutput};//allow xbase create xvoutput_t object from xdataobj_t::read_from()
 
         public:
-            xvoutput_t(std::vector<xventity_t*> && entitys,enum_xdata_type type = (enum_xdata_type)enum_xobject_type_voutput);
-            xvoutput_t(const std::vector<xventity_t*> & entitys,const std::string & raw_resource_data, enum_xdata_type type = (enum_xdata_type)enum_xobject_type_voutput);
-            xvoutput_t(const std::vector<xventity_t*> & entitys,xstrmap_t & resource,enum_xdata_type type = (enum_xdata_type)enum_xobject_type_voutput);//xvqcert_t used for genreate hash for resource
+            xvoutput_t(std::vector<xventity_t*> && entitys,enum_xobject_type type = enum_xobject_type_voutput);
+            xvoutput_t(const std::vector<xventity_t*> & entitys,const std::string & raw_resource_data, enum_xobject_type type = enum_xobject_type_voutput);
+            xvoutput_t(const std::vector<xventity_t*> & entitys,xstrmap_t & resource,enum_xobject_type type = enum_xobject_type_voutput);//xvqcert_t used for genreate hash for resource
         protected:
-            xvoutput_t(enum_xdata_type type = (enum_xdata_type)enum_xobject_type_voutput);
+            xvoutput_t(enum_xobject_type type = enum_xobject_type_voutput);
             virtual ~xvoutput_t();
         private:
             xvoutput_t(const xvoutput_t & other);
@@ -516,11 +533,11 @@ namespace top
             virtual bool                set_root_hash(const std::string & root_hash){ m_root_hash = root_hash;return true;}
 
             const std::string           get_binlog();
-            virtual const std::string   get_binlog_hash() {return std::string();}
-            
+            const std::string           get_binlog_hash();
+
         public:
             bool set_offblock_snapshot(const std::string & snapshot);
-            
+
         protected:
             //just carry by object at memory,not included by serialized
             std::string  m_root_hash;  //root of merkle tree constructed by input
@@ -588,7 +605,7 @@ namespace top
             virtual std::string        get_obj_name() const override {return name();}
             enum{enum_obj_type = enum_xobject_type_vblock};//allow xbase create xvblock_t object from xdataobj_t::read_from()
             //check whether those qcert,header,input,output etc are constist and pass test of hash
-            static  bool  check_objects(xvqcert_t & _vcert,xvheader_t & _vheader,xvinput_t * _vinput,xvoutput_t * _voutput);
+            static  bool  prepare_block(xvqcert_t & _vcert,xvheader_t & _vheader,xvinput_t * _vinput,xvoutput_t * _voutput);
             static  void                register_object(xcontext_t & _context); //internal use only
         public:
             xvblock_t(const xvblock_t & obj,enum_xdata_type type = (enum_xdata_type)enum_xobject_type_vblock);
@@ -662,20 +679,13 @@ namespace top
             //note:container(e.g. Lightunit etc) need implement this function as they have mutiple sub txs inside them,
             virtual bool                extract_sub_txs(std::vector<xvtxindex_ptr> & sub_txs) {return false;}//as default it is none
             virtual std::string         get_offdata_hash() const {return std::string();}//as default has none offdata
-            virtual std::string         get_property_binlog() const {return std::string();} // TODO(jimmy) use output property binlog later
 
             virtual bool                close(bool force_async = true) override; //close and release this node only
             virtual std::string         dump() const override;  //just for debug purpose
             const   std::string&        dump2();  //just for debug and trace purpose with better performance
         public:
-            xvinput_t *                 get_input(bool force_load_from_db = false) const;//raw ptr of xvinput_t,might be nullptr
-            xvoutput_t*                 get_output(bool force_load_from_db = false) const;//raw ptr of xvoutput_t,might be nullptr
-            //check whether match hash first
-            bool                        set_input(const std::string & raw_input_data);
-            bool                        set_output(const std::string & raw_input_data);
-            //return false if not match the existing hash
-            bool                        check_input_hash(const std::string& input_binary_data);
-            bool                        check_output_hash(const std::string& output_binary_data);
+            xvinput_t *                 get_input()  const;//raw ptr of xvinput_t
+            xvoutput_t*                 get_output() const;//raw ptr of xvoutput_t
 
             //check whether match hash of resource first
             bool                        set_input_resources(const std::string & raw_resource_data);

@@ -788,8 +788,11 @@ namespace top
             //connected block must be committed as well
             base::xvbindex_t* result = query_index(m_meta->_highest_genesis_connect_height,base::enum_xvblock_flag_committed);
             if(result != nullptr)
+            {
+                clean_blocks(enum_max_cached_blocks, false);
                 return result;
-
+            }
+            clean_blocks(enum_max_cached_blocks, false);
             return load_genesis_index();
         }
 
@@ -1384,6 +1387,9 @@ namespace top
                     //apply rule#3. not allow overwrite block with newer/more latest block at same height and same stage
                     const int existing_block_flags = existing_block->get_block_flags();
                     const int new_block_flags      = this_block->get_block_flags();
+                    if( (new_block_flags & base::enum_xvblock_flag_unpacked) != 0)//merge unpacket flag into existing one
+                        existing_block->set_block_flag(base::enum_xvblock_flag_unpacked);
+                        
                     if(  (existing_block_flags == new_block_flags)
                        ||(existing_block_flags & base::enum_xvblock_flags_high4bit_mask) >= (new_block_flags & base::enum_xvblock_flags_high4bit_mask)
                        ) //outdated one try to overwrite newer one,abort it
@@ -1615,6 +1621,7 @@ namespace top
                         }
                     }
                 }
+                clean_blocks(enum_max_cached_blocks,false);
             }
 
             //finally send out all events.
@@ -1779,7 +1786,7 @@ namespace top
                     index_ptr->set_store_flag(base::enum_index_store_flag_input_entity);
                     index_ptr->set_store_flag(base::enum_index_store_flag_output_entity);
                     index_ptr->set_store_flag(base::enum_index_store_flag_mini_block);
-                    xdbg("xblockacct_t::write_block_object_to_db,store object to DB for block(%s)",index_ptr->dump().c_str());
+                    xdbg("xblockacct_t::write_block_object_to_db,store object to DB for block(%s),bin_size=%zu",index_ptr->dump().c_str(), blockobj_bin.size());
                 }
                 else
                 {
@@ -1832,7 +1839,7 @@ namespace top
                 if(base::xvchain_t::instance().get_xdbstore()->set_value(input_key, input_bin))
                 {
                     index_ptr->set_store_flag(base::enum_index_store_flag_input_entity);
-                    xdbg("xblockacct_t::write_block_input_to_db,store input entity to DB for block(%s)",index_ptr->dump().c_str());
+                    xdbg("xblockacct_t::write_block_input_to_db,store input entity to DB for block(%s),bin_size=%zu",index_ptr->dump().c_str(), input_bin.size());
                 }
                 else
                 {
@@ -1852,7 +1859,7 @@ namespace top
                         if(base::xvchain_t::instance().get_xdbstore()->set_value(input_res_key, input_res_bin))
                         {
                             index_ptr->set_store_flag(base::enum_index_store_flag_input_resource);
-                            xdbg("xblockacct_t::write_block_input_to_db,store input resource to DB for block(%s)",index_ptr->dump().c_str());
+                            xdbg("xblockacct_t::write_block_input_to_db,store input resource to DB for block(%s),bin_size=%zu",index_ptr->dump().c_str(), input_res_bin.size());
                         }
                         else
                         {
@@ -1888,23 +1895,6 @@ namespace top
         {
             if(block_ptr == NULL)
                 return false;
-
-            if(block_ptr->get_input() == NULL)
-            {
-                const std::string input_key = base::xvdbkey_t::create_block_input_key(*this,block_ptr->get_block_hash());
-                const std::string input_bin = base::xvchain_t::instance().get_xdbstore()->get_value(input_key);
-                if(input_bin.empty())
-                {
-                    xwarn_err("xblockacct_t::read_block_input_from_db,fail to read input from db for path(%s)",input_key.c_str());
-                    return false;
-                }
-                if(block_ptr->set_input(input_bin) == false)
-                {
-                    xerror("xblockacct_t::read_block_input_from_db,read bad input-entity for key(%s)",input_key.c_str());
-                    return false;
-                }
-                xdbg("xblockacct_t::read_block_input_from_db,read block-input,block(%s) ",block_ptr->dump().c_str());
-            }
 
             if(block_ptr->get_input() != NULL) //now has valid input
             {
@@ -1944,7 +1934,7 @@ namespace top
                 if(base::xvchain_t::instance().get_xdbstore()->set_value(output_key, output_bin))
                 {
                     index_ptr->set_store_flag(base::enum_index_store_flag_output_entity);
-                    xdbg("xblockacct_t::write_block_output_to_db,store output entity to DB for block(%s)",index_ptr->dump().c_str());
+                    xdbg("xblockacct_t::write_block_output_to_db,store output entity to DB for block(%s),,bin_size=%zu",index_ptr->dump().c_str(), output_bin.size());
                 }
                 else
                 {
@@ -1964,7 +1954,7 @@ namespace top
                         if(base::xvchain_t::instance().get_xdbstore()->set_value(output_res_key, output_res_bin))
                         {
                             index_ptr->set_store_flag(base::enum_index_store_flag_output_resource);
-                            xdbg("xblockacct_t::write_block_output_to_db,store output resource to DB for block(%s)",index_ptr->dump().c_str());
+                            xdbg("xblockacct_t::write_block_output_to_db,store output resource to DB for block(%s),bin_size=%zu",index_ptr->dump().c_str(), output_res_bin.size());
                         }
                         else
                         {
@@ -2000,23 +1990,6 @@ namespace top
         {
             if(NULL == block_ptr)
                 return false;
-
-            if(block_ptr->get_output() == NULL)
-            {
-                const std::string output_key = base::xvdbkey_t::create_block_output_key(*this, block_ptr->get_block_hash());
-                const std::string output_bin = base::xvchain_t::instance().get_xdbstore()->get_value(output_key);
-                if(output_bin.empty())
-                {
-                    xwarn_err("xblockacct_t::read_block_output_from_db,fail to read output from db for path(%s)",output_key.c_str());
-                    return false;
-                }
-                if(block_ptr->set_output(output_bin) == false)
-                {
-                    xerror("xblockacct_t::read_block_output_from_db,load bad output-entity form key(%s)",output_key.c_str());
-                    return false;
-                }
-                xdbg("xblockacct_t::read_block_output_from_db,read block-output,block(%s) ",block_ptr->dump().c_str());
-            }
 
             if(block_ptr->get_output() != NULL) //now has valid output
             {
@@ -2125,7 +2098,7 @@ namespace top
             {
                 const std::string block_input_key = base::xvdbkey_t::create_block_input_key(*this,index_ptr->get_block_hash());
                 base::xvchain_t::instance().get_xdbstore()->delete_value(block_input_key);
-                
+
                 const std::string input_resource_key = base::xvdbkey_t::create_block_input_resource_key(*this,index_ptr->get_block_hash());
                 base::xvchain_t::instance().get_xdbstore()->delete_value(input_resource_key);
             }
@@ -2133,7 +2106,7 @@ namespace top
             {
                 const std::string block_output_key = base::xvdbkey_t::create_block_output_key(*this,index_ptr->get_block_hash());
                 base::xvchain_t::instance().get_xdbstore()->delete_value(block_output_key);
-                
+
                 const std::string output_resource_key = base::xvdbkey_t::create_block_output_resource_key(*this,index_ptr->get_block_hash());
                 base::xvchain_t::instance().get_xdbstore()->delete_value(output_resource_key);
             }
@@ -2424,6 +2397,20 @@ namespace top
                 && index_ptr->get_height() != 0)
             {
                 store_txs_to_db(index_ptr); //extract and store txs now
+
+                base::xveventbus_t * mbus = base::xvchain_t::instance().get_xevmbus();
+                xassert(mbus != NULL);
+                if(mbus != NULL)
+                {
+                    if(index_ptr->get_height() != 0)
+                    {
+                        mbus::xevent_ptr_t event = mbus->create_event_for_store_committed_block(index_ptr);
+                        if (event != nullptr) {
+                            mbus->push_event(event);
+                        }
+                    }
+                    xdbg_info("xblockacct_t::on_block_committed,done at store(%s)-> block=%s",get_blockstore_path().c_str(),index_ptr->dump().c_str());
+                }
             }
             //fully connect to geneis block or last full-block here
             full_connect_to(index_ptr);
@@ -2704,7 +2691,8 @@ namespace top
             base::xauto_ptr<base::xvbindex_t > new_idx(new base::xvbindex_t(*new_raw_block));
             if(0 != new_idx->get_height())
             {
-                new_idx->reset_block_flags(0);//reset all flags and redo it from authenticated status
+                //just keep low 4bit flags about unpack/store/connect etc
+                new_idx->reset_block_flags(new_idx->get_block_flags() & base::enum_xvblock_flags_low4bit_mask);//reset all status flags and redo it from authenticated status
                 new_idx->set_block_flag(base::enum_xvblock_flag_authenticated);//init it as  authenticated
                 new_idx->reset_modify_flag(); //remove modified flag to avoid double saving
 
@@ -2719,20 +2707,19 @@ namespace top
             if(precheck_new_index(new_idx(),height_view_map) == false)
             {
                 xinfo("xblockacct_t::new_index,failed-precheck for block(%s) at store(%s)",new_idx->dump().c_str(),get_blockstore_path().c_str());
-#if 0 // TODO(jimmy)
-                //remove below after merged jimmy'branch which nolonger need store offdata anymore
-                for(auto it = height_view_map.begin(); it != height_view_map.end();++it)
+
+                if( (new_idx->get_block_flags() & base::enum_xvblock_flag_unpacked) != 0)//still need merge flags of block
                 {
-                    if(   (it->second->get_height() == new_raw_block->get_height())
-                       && (it->second->get_block_hash() == new_raw_block->get_block_hash())  )
+                    for(auto it = height_view_map.begin(); it != height_view_map.end();++it)
                     {
-                        //since every block reset as cert-only,so it is impossible to update the existing index by block with higher flag
-                        //the only way to trigger write offdata is here
-                        write_block_offdata_to_db(it->second, new_raw_block);
-                        break;
+                        if(   (it->second->get_height() == new_raw_block->get_height())
+                           && (it->second->get_block_hash() == new_raw_block->get_block_hash())  )
+                        {
+                            it->second->set_block_flag(base::enum_xvblock_flag_unpacked);
+                            break;
+                        }
                     }
                 }
-#endif
                 return nullptr;
             }
 
@@ -2751,23 +2738,6 @@ namespace top
                     return nullptr;
                 }
             }
-#if 0 // TODO(jimmy)
-            else //remove below after merged jimmy'branch which nolonger need store offdata anymore
-            {
-                //research to find target index after rebase that maybe remove it
-                for(auto it = height_view_map.begin(); it != height_view_map.end();++it)
-                {
-                    if(   (it->second->get_height() == new_raw_block->get_height())
-                       && (it->second->get_block_hash() == new_raw_block->get_block_hash())  )
-                    {
-                        //since every block reset as cert-only,so it is impossible to update the existing index by block with higher flag
-                        //the only way to trigger write offdata is here
-                        write_block_offdata_to_db(it->second, new_raw_block);
-                        break;
-                    }
-                }
-            }
-#endif
 
             return cached_index_ptr;
         }

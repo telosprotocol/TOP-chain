@@ -55,6 +55,8 @@ namespace top
         xvaction_t::xvaction_t()
             :xvmethod_t()
         {
+            m_used_tgas   = 0;
+            m_max_tgas    = 0;
         }
     
         xvaction_t::~xvaction_t()
@@ -69,6 +71,8 @@ namespace top
         xvaction_t::xvaction_t(const xvaction_t & obj)
             :xvmethod_t(obj)
         {
+            m_used_tgas   = obj.m_used_tgas;
+            m_max_tgas    = obj.m_max_tgas;
             m_org_tx_hash = obj.m_org_tx_hash;
             parse_uri();
         }
@@ -76,6 +80,8 @@ namespace top
         xvaction_t::xvaction_t(xvaction_t && moved)
             :xvmethod_t(moved)
         {
+            m_used_tgas   = moved.m_used_tgas;
+            m_max_tgas    = moved.m_max_tgas;
             m_org_tx_hash = moved.m_org_tx_hash;
             parse_uri();
         }
@@ -85,6 +91,8 @@ namespace top
             close(); //close first
             
             xvmethod_t::operator=(obj);
+            m_used_tgas   = obj.m_used_tgas;
+            m_max_tgas    = obj.m_max_tgas;
             m_org_tx_hash = obj.m_org_tx_hash;
             parse_uri();
             return *this;
