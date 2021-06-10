@@ -3996,7 +3996,6 @@ void ApiMethod::change_trans_mode(bool use_http) {
     std::cout <<"data_dir:" << topio_home << std::endl;
     if (topio_home) {
         g_data_dir = topio_home;
-        std::cout <<"data_dir:" << g_data_dir << std::endl;
     }
     auto edge_config_path = g_data_dir + "/.edge_config.json";
     std::ifstream edge_config_file(edge_config_path, std::ios::in);
