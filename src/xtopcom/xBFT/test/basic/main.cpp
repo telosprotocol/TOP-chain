@@ -42,8 +42,8 @@ namespace top
 
 }
 
-//#define __network_simulator_test__
-#define __network_outoforder_test__
+#define __network_simulator_test__
+//#define __network_outoforder_test__
 int main(int argc, const char * argv[])
 {
 #ifdef __WIN_PLATFORM__
