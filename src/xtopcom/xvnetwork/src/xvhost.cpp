@@ -418,7 +418,7 @@ void xtop_vhost::broadcast(common::xnode_address_t const & src, common::xip2_t c
                                        std::to_string(static_cast<std::uint32_t>(message.id())),
                                    bytes.size());
         #endif
-        m_network_driver->spread_rumor(src.sharding_address().sharding_info(), bytes);
+        m_network_driver->spread_rumor(/*src.sharding_address().sharding_info(),*/ bytes);
         // } else if (common::broadcast(dst.network_id())) {
         //     ec = xvnetwork_errc2_t::not_supported;
         //     xwarn("%s %s", ec.category().name(), ec.message().c_str());
@@ -447,7 +447,7 @@ void xtop_vhost::broadcast(common::xnode_address_t const & src, common::xip2_t c
         assert(m_network_driver);
         m_network_driver->spread_rumor(bytes_message);
     } else if (common::broadcast(dst.slot_id())) {
-        // broadcast between different shradings
+        // broadcast between different shardings
 
         common::xnode_address_t to{common::xsharding_address_t{dst.network_id(), dst.zone_id(), dst.cluster_id(), dst.group_id()}, common::xversion_t{}, dst.size(), dst.height()};
 

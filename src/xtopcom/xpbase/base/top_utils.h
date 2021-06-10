@@ -39,7 +39,7 @@ extern std::string global_node_id;
 extern std::string global_node_id_hash;
 extern std::string global_node_signkey;
 //static const uint32_t kRoot = std::numeric_limits<uint32_t>::max(); // avoid confilict with xip
-static const uint32_t kRoot = 0xFFFFFF; // avoid confilict with xip
+static const uint32_t kRoot = 0xFFFFF; // avoid confilict with xip
 
 enum RoutingTableType {
     kInvalidType = 0,
@@ -78,7 +78,7 @@ enum PlatformType {
     kPlatform = 1,
 };
 
-static const int kNodeIdSize = 36;
+static const int kNodeIdSize = 33;
 static const uint32_t kMessageMaxPriority = 5;
 static const uint32_t kMaxChannelSize = 3;
 static const uint32_t kEnoughSuccessAckNum = 1;

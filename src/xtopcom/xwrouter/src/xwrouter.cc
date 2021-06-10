@@ -8,13 +8,12 @@
 #include "xgossip/include/gossip_bloomfilter.h"
 #include "xgossip/include/gossip_bloomfilter_layer.h"
 #include "xgossip/include/gossip_rrs.h"
+#include "xgossip/include/gossip_dispatcher.h"
 #include "xgossip/include/gossip_filter.h"
 #include "xgossip/include/gossip_utils.h"
 #include "xkad/gossip/rumor_filter.h"
-#include "xkad/routing_table/routing_table.h"
 #include "xkad/routing_table/routing_utils.h"
-#include "xpbase/base/kad_key/get_kadmlia_key.h"
-#include "xpbase/base/kad_key/platform_kadmlia_key.h"
+#include "xpbase/base/kad_key/kadmlia_key.h"
 #include "xpbase/base/uint64_bloomfilter.h"
 #include "xpbase/base/xip_parser.h"
 #include "xtransport/udp_transport/transport_util.h"
@@ -47,10 +46,11 @@ Wrouter * Wrouter::Instance() {
 void Wrouter::Init(base::xcontext_t & context, const uint32_t thread_id, transport::TransportPtr transport_ptr) {
     assert(transport_ptr);
     auto bloom_gossip_ptr = std::make_shared<GossipBloomfilter>(transport_ptr);
-    auto bloom_layer_gossip_ptr = std::make_shared<GossipBloomfilterLayer>(transport_ptr);
+    auto bloom_layer_gossip_ptr = nullptr;
     auto gossip_rrs_ptr = std::make_shared<GossipRRS>(transport_ptr);
+    auto gossip_dispatcher_ptr = std::make_shared<GossipDispatcher>(transport_ptr);
     wxid_handler_ = std::make_shared<WrouterXidHandler>(
-        transport_ptr, bloom_gossip_ptr, bloom_layer_gossip_ptr, gossip_rrs_ptr);
+        transport_ptr, bloom_gossip_ptr, bloom_layer_gossip_ptr, gossip_rrs_ptr, gossip_dispatcher_ptr);
 
     // GossipFilter for global
     gossip::GossipFilter::Instance()->Init();
@@ -58,7 +58,7 @@ void Wrouter::Init(base::xcontext_t & context, const uint32_t thread_id, transpo
 
 #define IS_BROADCAST(message) (message.broadcast())
 #define IS_RRS_GOSSIP_MESSAGE(message) (message.is_root() && message.broadcast() && message.gossip().gossip_type() == 8)
-#define MESSAGE_BASIC_INFO(message) "src_node_id", HexEncode(message.src_node_id()), "dst_node_id", HexEncode(message.des_node_id()), "hop_num", message.hop_num()
+#define MESSAGE_BASIC_INFO(message) "src_node_id", (message.src_node_id()), "dst_node_id", (message.des_node_id()), "hop_num", message.hop_num()
 #define MESSAGE_RRS_FEATURE(message) "gossip_header_hash", std::stol(message.gossip().header_hash()), "gossip_block_size", message.gossip().block().size()
 #define MESSAGE_FEATURE(message) "msg_hash", message.gossip().msg_hash(), "msg_size", message.gossip().block().size()
 #define IS_ROOT_BROADCAST(message) "is_root", message.is_root(), "is_broadcast", message.broadcast()
@@ -80,14 +80,17 @@ int32_t Wrouter::send(transport::protobuf::RoutingMessage & message) {
             gossip->set_msg_hash(msg_hash);
         }
     }
-#ifdef XENABLE_P2P_BENDWIDTH
     if (IS_RRS_GOSSIP_MESSAGE(message)) {
         XMETRICS_PACKET_INFO("p2pperf_wroutersend_info", MESSAGE_BASIC_INFO(message), MESSAGE_RRS_FEATURE(message), IS_ROOT_BROADCAST(message), NOW_TIME);
     } else {
         if (IS_BROADCAST(message)) {
             XMETRICS_PACKET_INFO("p2pnormal_wroutersend_info", MESSAGE_BASIC_INFO(message), MESSAGE_FEATURE(message), IS_ROOT_BROADCAST(message), NOW_TIME);
         }
+        // else{
+            // XMETRICS_PACKET_INFO("p2pnormal_wroutersend_info",MESSAGE_BASIC_INFO(message),)
+        // }
     }
+#ifdef XENABLE_P2P_BENDWIDTH
 #endif
     return wxid_handler_->SendPacket(message);
 }
@@ -104,8 +107,6 @@ int32_t Wrouter::recv(transport::protobuf::RoutingMessage & message, base::xpack
         return enum_xerror_code_fail;
     }
 
-    int32_t rcode = wxid_handler_->RecvPacket(message, packet);
-#ifdef XENABLE_P2P_BENDWIDTH
     if (IS_RRS_GOSSIP_MESSAGE(message)) {
         XMETRICS_PACKET_INFO("p2pperf_wrouterrecv_info", MESSAGE_BASIC_INFO(message), MESSAGE_RRS_FEATURE(message), IS_ROOT_BROADCAST(message), PACKET_SIZE(packet), NOW_TIME);
     } else {
@@ -113,7 +114,9 @@ int32_t Wrouter::recv(transport::protobuf::RoutingMessage & message, base::xpack
             XMETRICS_PACKET_INFO("p2pnormal_wrouterrecv_info", MESSAGE_BASIC_INFO(message), MESSAGE_FEATURE(message), IS_ROOT_BROADCAST(message), PACKET_SIZE(packet), NOW_TIME);
         }
     }
+#ifdef XENABLE_P2P_BENDWIDTH
 #endif
+    int32_t rcode = wxid_handler_->RecvPacket(message, packet);
     if (rcode == kRecvOwn) {
         return HandleOwnPacket(message, packet);
     }

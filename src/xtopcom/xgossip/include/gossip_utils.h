@@ -30,6 +30,7 @@ enum GossipType {
     kGossipBloomfilterZone = 6,
     kGossipBloomfilterSuperNode = 7,
     kGossipRRS = 8,
+    kGossipDispatcher = 9,
 };
 
 /*

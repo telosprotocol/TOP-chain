@@ -29,6 +29,7 @@
 #include "xpbase/base/xip_parser.h"
 #include "xwrouter/register_routing_table.h"
 #include "xwrouter/root/root_routing.h"
+#include "xwrouter/multi_routing/multi_routing.h"
 
 #include <string.h>
 
@@ -62,7 +63,7 @@ bool ElectCommands::Init(bool first_node, bool show_cmd) {
 void ElectCommands::set_netcard(elect::EcNetcardPtr ec_netcard) {
     ec_netcard_ = ec_netcard;
 }
-
+#if 0
 using query_method_handler = std::function<void(void)>;
 
 #define REGISTER_NET_CMD_METHOD(func_name)                                                                                                                                         \
@@ -131,10 +132,11 @@ void ElectCommands::get_rpc_instruction() {
     grpc_srv->register_handle(handle);
     grpc_srv->start();
 }
+#endif
 void ElectCommands::Run() {
     PrintUsage();
 
-    get_rpc_instruction();
+    // get_rpc_instruction();
 
     while (!destroy_) {
         if (!show_cmd_) {
@@ -270,124 +272,124 @@ void ElectCommands::AddBaseCommands() try {
         const auto gid = global_xid->Get();
         std::cout << "global_xid: " << HexEncode(gid) << std::endl;
     });
-    AddCommand("getnode", [this](const Arguments & args) {
-        uint64_t service_type = 1;
-        if (args.size() >= 1) {
-            service_type = check_cast<uint64_t, const char *>(args[0].c_str());
-        }
-        std::vector<kadmlia::NodeInfoPtr> nodes;
-        GetRootNodes(service_type, nodes);
-        for (auto & n : nodes) {
-            std::cout << "getnode:" << HexEncode(n->node_id) << " ip:" << n->public_ip << " port:" << n->public_port << std::endl;
-        }
-    });
+    // AddCommand("getnode", [this](const Arguments & args) {
+    //     uint64_t service_type = 1;
+    //     if (args.size() >= 1) {
+    //         service_type = check_cast<uint64_t, const char *>(args[0].c_str());
+    //     }
+    //     std::vector<kadmlia::NodeInfoPtr> nodes;
+    //     GetRootNodes(service_type, nodes);
+    //     for (auto & n : nodes) {
+    //         std::cout << "getnode:" << HexEncode(n->node_id) << " ip:" << n->public_ip << " port:" << n->public_port << std::endl;
+    //     }
+    // });
 
-    AddCommand("vsend", [this](const Arguments & args) {
-        if (args.size() < 1) {
-            std::cout << "param invaid, useage: vsend [hex_des_node_id] true false" << std::endl;
-            return;
-        }
-        std::string des_node_id = args[0];
-        bool broadcast = true;
-        bool root = false;
-        if (args.size() >= 2) {
-            broadcast = check_cast<bool, const char *>(args[1].c_str());
-        }
-        if (args.size() >= 3) {
-            root = check_cast<bool, const char *>(args[2].c_str());
-        }
-        vhost_send(des_node_id, broadcast, root);
-    });
+    // AddCommand("vsend", [this](const Arguments & args) {
+    //     if (args.size() < 1) {
+    //         std::cout << "param invaid, useage: vsend [hex_des_node_id] true false" << std::endl;
+    //         return;
+    //     }
+    //     std::string des_node_id = args[0];
+    //     bool broadcast = true;
+    //     bool root = false;
+    //     if (args.size() >= 2) {
+    //         broadcast = check_cast<bool, const char *>(args[1].c_str());
+    //     }
+    //     if (args.size() >= 3) {
+    //         root = check_cast<bool, const char *>(args[2].c_str());
+    //     }
+    //     vhost_send(des_node_id, broadcast, root);
+    // });
 
     AddCommand("prt", [this](const Arguments & args) {
-        std::vector<uint64_t> vec_type;
-        wrouter::GetAllRegisterType(vec_type);
+        std::vector<base::ServiceType> vec_type;
+        wrouter::MultiRouting::Instance()->GetAllRegisterType(vec_type);
         std::cout << "GetAllRegisterType size:" << vec_type.size() << std::endl;
-        bool kroot_flag = false;
-        for (const auto & type : vec_type) {
-            if (type == kRoot) {
-                kroot_flag = true;
-                break;
-            }
-        }
-        if (!kroot_flag) {
-            vec_type.push_back(kRoot);
-        }
+        // bool kroot_flag = false;
+        // for (const auto & type : vec_type) {
+        //     if (type == kRoot) {
+        //         kroot_flag = true;
+        //         break;
+        //     }
+        // }
+        // if (!kroot_flag) {
+        // vec_type.push_back(base::ServiceType{kRoot});
+        // }
 
         for (const auto & type : vec_type) {
-            auto routing_table = wrouter::GetRoutingTable(type, false);
+            auto routing_table = wrouter::MultiRouting::Instance()->GetElectRoutingTable(type);
             if (!routing_table) {
-                std::cout << "warning: " << type << " routing table invalid" << std::endl;
+                std::cout << "warning: " << type.value() << " routing table invalid" << std::endl;
                 continue;
             }
             LocalNodeInfoPtr local_node = routing_table->get_local_node_info();
             if (!local_node) {
-                std::cout << "warning: " << type << " routing table invalid" << std::endl;
+                std::cout << "warning: " << type.value() << " routing table invalid" << std::endl;
                 continue;
             }
-            std::cout << "local_nodeid: " << HexEncode(local_node->id()) << std::endl
-                      << "service_type: " << local_node->kadmlia_key()->GetServiceType() << std::endl
-                      << "xnetwork_id: " << local_node->kadmlia_key()->xnetwork_id() << std::endl
-                      << "zone_id: " << static_cast<uint32_t>(local_node->kadmlia_key()->zone_id()) << std::endl
-                      << "cluster_id: " << static_cast<uint32_t>(local_node->kadmlia_key()->cluster_id()) << std::endl
-                      << "group_id: " << static_cast<uint32_t>(local_node->kadmlia_key()->group_id()) << std::endl
+            std::cout << "local_nodeid: " << (local_node->id()) << std::endl
+                      << "service_type: " << type.info() << std::endl
+                    //   << "xnetwork_id: " << local_node->kadmlia_key()->xnetwork_id() << std::endl
+                    //   << "zone_id: " << static_cast<uint32_t>(local_node->kadmlia_key()->zone_id()) << std::endl
+                    //   << "cluster_id: " << static_cast<uint32_t>(local_node->kadmlia_key()->cluster_id()) << std::endl
+                    //   << "group_id: " << static_cast<uint32_t>(local_node->kadmlia_key()->group_id()) << std::endl
                       << "neighbours: " << routing_table->nodes_size() << std::endl
                       << std::endl;
         }
     });
-    AddCommand("root", [this](const Arguments & args) {
-        uint32_t xnetwork_id = kRoot;
-        uint32_t xnetwork_type = 0;
-        if (args.size() >= 1) {
-            xnetwork_id = check_cast<uint32_t, const char *>(args[0].c_str());
-        }
-        if (xnetwork_id == kRoot) {
-            auto routing_table = wrouter::GetRoutingTable(kRoot, true);
-            if (!routing_table) {
-                std::cout << "kRoot routing_table not registered" << std::endl;
-                return;
-            }
-            elect_perf_.PrintRoutingTable(routing_table);
-            return;
-        }
+    // AddCommand("root", [this](const Arguments & args) {
+    //     uint32_t xnetwork_id = kRoot;
+    //     uint32_t xnetwork_type = 0;
+    //     if (args.size() >= 1) {
+    //         xnetwork_id = check_cast<uint32_t, const char *>(args[0].c_str());
+    //     }
+    //     if (xnetwork_id == kRoot) {
+    //         auto routing_table = wrouter::GetRoutingTable(kRoot, true);
+    //         if (!routing_table) {
+    //             std::cout << "kRoot routing_table not registered" << std::endl;
+    //             return;
+    //         }
+    //         elect_perf_.PrintRoutingTable(routing_table);
+    //         return;
+    //     }
 
-        if (args.size() >= 2) {
-            xnetwork_type = check_cast<uint8_t, const char *>(args[1].c_str());
-        }
-        std::vector<uint64_t> vec_type;
-        wrouter::GetAllRegisterType(vec_type);
-        std::cout << "found " << vec_type.size() << " routing table registered" << std::endl;
-        for (auto & type : vec_type) {
-            auto routing_table = wrouter::GetRoutingTable(type, true);
-            if (!routing_table) {
-                continue;
-            }
-            auto r_xnetwork_id = routing_table->get_local_node_info()->kadmlia_key()->xnetwork_id();
-            auto r_xnetwork_type = routing_table->get_local_node_info()->kadmlia_key()->xip_type();
-            std::cout << "r_xnetwork_id:" << r_xnetwork_id << " r_xnetwork_type:" << r_xnetwork_type << std::endl;
-            if (r_xnetwork_id == xnetwork_id && r_xnetwork_type == xnetwork_type) {
-                elect_perf_.PrintRoutingTable(routing_table);
-                break;
-            }
-        }
-    });
-    AddCommand("xm", [this](const Arguments & args) {
-        base::XipParser xip;
-        GetEcXip(args, xip);
-        uint64_t service_type = base::CreateServiceType(xip);
-        auto routing_table = wrouter::GetRoutingTable(service_type);
-        if (!routing_table) {
-            return;
-        }
+    //     if (args.size() >= 2) {
+    //         xnetwork_type = check_cast<uint8_t, const char *>(args[1].c_str());
+    //     }
+    //     std::vector<uint64_t> vec_type;
+    //     wrouter::GetAllRegisterType(vec_type);
+    //     std::cout << "found " << vec_type.size() << " routing table registered" << std::endl;
+    //     for (auto & type : vec_type) {
+    //         auto routing_table = wrouter::GetRoutingTable(type, true);
+    //         if (!routing_table) {
+    //             continue;
+    //         }
+    //         auto r_xnetwork_id = routing_table->get_local_node_info()->kadmlia_key()->xnetwork_id();
+    //         auto r_xnetwork_type = routing_table->get_local_node_info()->kadmlia_key()->xip_type();
+    //         std::cout << "r_xnetwork_id:" << r_xnetwork_id << " r_xnetwork_type:" << r_xnetwork_type << std::endl;
+    //         if (r_xnetwork_id == xnetwork_id && r_xnetwork_type == xnetwork_type) {
+    //             elect_perf_.PrintRoutingTable(routing_table);
+    //             break;
+    //         }
+    //     }
+    // });
+    // AddCommand("xm", [this](const Arguments & args) {
+    //     base::XipParser xip;
+    //     GetEcXip(args, xip);
+    //     uint64_t service_type = base::CreateServiceType(xip);
+    //     auto routing_table = wrouter::GetRoutingTable(service_type);
+    //     if (!routing_table) {
+    //         return;
+    //     }
 
-        auto nodes = routing_table->nodes();
-        auto local_node = routing_table->get_local_node_info();
-        TOP_FATAL(
-            "self: [%s - %s] [%s:%d]", HexSubstr(global_xid->Get()).c_str(), HexSubstr(local_node->id()).c_str(), local_node->public_ip().c_str(), (int)local_node->public_port());
-        for (auto & node : nodes) {
-            TOP_FATAL("node: [%s - %s] [%s:%d]", HexSubstr(node->xid).c_str(), HexSubstr(node->node_id).c_str(), node->public_ip.c_str(), (int)node->public_port);
-        }
-    });
+    //     auto nodes = routing_table->nodes();
+    //     auto local_node = routing_table->get_local_node_info();
+    //     TOP_FATAL(
+    //         "self: [%s - %s] [%s:%d]", HexSubstr(global_xid->Get()).c_str(), HexSubstr(local_node->id()).c_str(), local_node->public_ip().c_str(), (int)local_node->public_port());
+    //     for (auto & node : nodes) {
+    //         TOP_FATAL("node: [%s - %s] [%s:%d]", HexSubstr(node->xid).c_str(), HexSubstr(node->node_id).c_str(), node->public_ip.c_str(), (int)node->public_port);
+    //     }
+    // });
 
     AddCommand("crt", [this](const Arguments & args) {
         uint32_t test_num = 1;
@@ -443,8 +445,8 @@ void ElectCommands::AddBaseCommands() try {
             return;
         }
 
-        std::string src_node_id = HexDecode(args[0]);
-        std::string des_node_id = HexDecode(args[1]);
+        std::string src_node_id = args[0];
+        std::string des_node_id = args[1];
 
         uint32_t test_num = 1;
         if (args.size() >= 3) {
@@ -491,6 +493,26 @@ void ElectCommands::AddBaseCommands() try {
             right_overlap = check_cast<uint32_t, const char *>(args[12].c_str());
         }
 
+        if (test_num > 1000) {
+            std::size_t cnt = test_num / 100;
+            for (std::size_t index = 0; index < cnt; ++index) {
+                elect_perf_.TestChainTradeServiceNet(src_node_id,
+                                                     des_node_id,
+                                                     100,
+                                                     test_len,
+                                                     gossip_type,
+                                                     backup,
+                                                     neighbors_num,
+                                                     stop_times,
+                                                     max_hop_num,
+                                                     evil_rate,
+                                                     layer_switch_hop_num,
+                                                     left_overlap,
+                                                     right_overlap);
+                std::this_thread::sleep_for(std::chrono::seconds(1));
+            }
+            return;
+        }
         elect_perf_.TestChainTradeServiceNet(src_node_id,
                                              des_node_id,
                                              test_num,
@@ -506,6 +528,7 @@ void ElectCommands::AddBaseCommands() try {
                                              right_overlap);
     });
 
+    #if 0
     auto get_net_type = [this](uint32_t nid, uint32_t zid, uint32_t cid, uint32_t gid) -> std::string {
         if (nid == 16777215)
             return "root";
@@ -749,6 +772,7 @@ void ElectCommands::AddBaseCommands() try {
                                                         right_overlap);
         return ret;
     });
+    #endif
 
 } catch (std::exception & e) {
     std::cout << "catch error: (" << e.what() << ") check_cast failed" << std::endl;
@@ -779,23 +803,23 @@ void ElectCommands::AddCommand(const std::string & cmd_name, CommandProc cmd_pro
     TOP_INFO("add command(%s)", cmd_name.c_str());
 }
 
-void ElectCommands::GetRootNodes(uint64_t service_type, std::vector<kadmlia::NodeInfoPtr> & nodes) {
-    auto routing = wrouter::GetRoutingTable(kRoot, true);
-    auto root = dynamic_cast<wrouter::RootRouting *>(routing.get());
-    if (!root) {
-        std::cout << "get kRoot failedl" << std::endl;
-        return;
-    }
-    root->GetRootNodes(service_type, nodes);
-}
+// void ElectCommands::GetRootNodes(uint64_t service_type, std::vector<kadmlia::NodeInfoPtr> & nodes) {
+//     auto routing = wrouter::GetRoutingTable(kRoot, true);
+//     auto root = dynamic_cast<wrouter::RootRouting *>(routing.get());
+//     if (!root) {
+//         std::cout << "get kRoot failedl" << std::endl;
+//         return;
+//     }
+//     root->GetRootNodes(service_type, nodes);
+// }
 
-void ElectCommands::vhost_send(const std::string & des_node_id, bool broadcast, bool root) {
-    if (des_node_id.empty()) {
-        std::cout << "please input (Hex)des_node_id" << std::endl;
-        return;
-    }
-    // TODO(smaug) write some codes
-    return;
-}
+// void ElectCommands::vhost_send(const std::string & des_node_id, bool broadcast, bool root) {
+//     if (des_node_id.empty()) {
+//         std::cout << "please input (Hex)des_node_id" << std::endl;
+//         return;
+//     }
+//     // TODO(smaug) write some codes
+//     return;
+// }
 
 }  //  namespace top

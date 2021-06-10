@@ -17,7 +17,8 @@ GossipRRS::GossipRRS(transport::TransportPtr transport_ptr) : GossipInterface{tr
 GossipRRS::~GossipRRS() {
 }
 
-void GossipRRS::Broadcast(transport::protobuf::RoutingMessage & message, kadmlia::RoutingTablePtr & routing_table) {
+void GossipRRS::Broadcast(transport::protobuf::RoutingMessage & message, kadmlia::ElectRoutingTablePtr & routing_table) {
+    assert(false);
     return;
 }
 
@@ -34,7 +35,7 @@ void GossipRRS::Broadcast(uint64_t local_hash64, transport::protobuf::RoutingMes
         return;
     }
 
-    MessageKey msg_key(0, message.gossip().msg_hash(), 0);
+    MessageKey msg_key(message.gossip().msg_hash());
     if (MessageWithBloomfilter::Instance()->StopGossip(msg_key, kGossipRRSStopTimes)) {
         xkinfo("[GossipRRS]stop gossip for message.type(%d) stop_time(%d),hop_num(%d)", message.type(), kGossipRRSStopTimes, hop_num);
         return;

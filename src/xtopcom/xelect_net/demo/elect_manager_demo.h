@@ -1,5 +1,5 @@
 #pragma once
-
+#define private public
 #include "xdata/xelection/xelection_result_store.h"
 #include "xelect_net/include/elect_manager.h"
 #include "xelect_net/include/node_manager_base.h"
@@ -25,7 +25,7 @@ public:
 
     ElectManagerDemo(transport::TransportPtr transport, const base::Config & config);
 
-    ~ElectManagerDemo() override = default;
+    ~ElectManagerDemo() = default;
 
 public:
     void OnElectUpdated(json all_info);

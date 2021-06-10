@@ -29,10 +29,6 @@ public:
     bool operator < (const NodeInfo& other) const;
     bool IsPublicNode();
     std::string string();
-    bool IsTimeout(std::chrono::steady_clock::time_point tp_now);
-    bool IsTimeToHeartbeat(std::chrono::steady_clock::time_point tp_now);
-    void Heartbeat();
-    void ResetHeartbeat();
 
 public:
     std::string node_id;
@@ -43,15 +39,9 @@ public:
     uint16_t local_port{ 0 };
     int32_t connection_id{ 0 };
     int32_t detection_count{ 0 };
-    int32_t nat_type{ 0 };
     int32_t detection_delay_count{ 0 };
-    int32_t heartbeat_count{ 0 };  // count > 3
-    uint64_t service_type{ 0 };
-    std::chrono::steady_clock::time_point tp_next_time_to_heartbeat;
-    bool same_vlan{ false };
+    base::ServiceType service_type{ 0 };
     std::string xid;
-    std::string xip;
-    uint32_t score{ 0 };
     uint64_t hash64{ 0 };
 	transport::UdpPropertyPtr udp_property;
 };

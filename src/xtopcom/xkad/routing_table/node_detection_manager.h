@@ -18,11 +18,11 @@ namespace top {
 namespace kadmlia {
 
 struct NodeInfo;
-class RoutingTable;
+class RootRoutingTable;
 
 class NodeDetectionManager {
 public:
-    explicit NodeDetectionManager(base::TimerManager* timer_manager, RoutingTable& routing_table);
+    explicit NodeDetectionManager(base::TimerManager* timer_manager, RootRoutingTable& routing_table);
     ~NodeDetectionManager();
     void Join();
     int AddDetectionNode(std::shared_ptr<NodeInfo> node_ptr);
@@ -37,7 +37,7 @@ private:
     std::mutex detection_nodes_map_mutex_;
     std::map<std::string, std::shared_ptr<NodeInfo>> detected_nodes_map_;
     std::mutex detected_nodes_map_mutex_;
-    RoutingTable& routing_table_;
+    RootRoutingTable& root_routing_table_;
     base::TimerManager* timer_manager_{nullptr};
     std::shared_ptr<base::TimerRepeated> timer_;
     bool destroy_{ false };

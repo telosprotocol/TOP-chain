@@ -6,12 +6,20 @@
 
 #include <string>
 #include <chrono>
+#include <vector>
 
+#include "xcommon/xip.h"
 #include "xpbase/base/xip_parser.h"
+#include "xpbase/base/kad_key/kadmlia_key.h"
 
 namespace top {
 
 namespace wrouter {
+
+typedef struct WrouterTableNodes{
+    common::xip2_t m_xip2;
+    std::string node_id;
+} WrouterTableNodes;
 
 typedef struct NetNode {
     std::string m_account;
