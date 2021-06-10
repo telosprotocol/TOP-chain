@@ -509,7 +509,7 @@ int XudpSocket::SendDataWithProp(
             TOP_ERROR("Message ParseFromString from string failed!");
             return kTransportFailed;
         }
-        TOP_INFO("SendData error:%d,%s,%d", pro_message.type(), HexEncode(pro_message.des_node_id()).c_str(), pro_message.id());
+        TOP_INFO("SendData error:%d,%s,%d", pro_message.type(), pro_message.des_node_id().c_str(), pro_message.id());
         return kTransportFailed;
     }
 

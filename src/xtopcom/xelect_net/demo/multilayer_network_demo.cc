@@ -4,7 +4,10 @@
 #include "xelect_net/demo/multilayer_network_demo.h"
 
 #include "xelect_net/demo/elect_manager_demo.h"
-
+#include "xcommon/xip.h"
+#include "xcrypto/xckey.h"
+#include "xcrypto/xcrypto_util.h"
+#include "xdata/xgenesis_data.h"
 #include <fstream>
 
 namespace top {
@@ -15,7 +18,7 @@ static const std::string kConfigFile("config/config.json");
 int MultilayerNetworkDemo::HandleParamsAndConfig(int argc, char ** argv, top::base::Config & edge_config) {
     top::ArgsParser args_parser;
     if (ParseParams(argc, argv, args_parser) != top::kadmlia::kKadSuccess) {
-        TOP_FATAL("parse params failed!");
+        xerror("parse params failed!");
         return 1;
     }
 
@@ -60,17 +63,17 @@ int MultilayerNetworkDemo::HandleParamsAndConfig(int argc, char ** argv, top::ba
         config_path = kConfigFile;
     }
     if (!edge_config.Init(config_path.c_str())) {
-        TOP_FATAL("init config file failed: %s", config_path.c_str());
+        xerror("init config file failed: %s", config_path.c_str());
         return 1;
     }
 
     if (!ResetEdgeConfig(args_parser, edge_config)) {
-        TOP_FATAL("reset edge config with arg parser failed!");
+        xerror("reset edge config with arg parser failed!");
         return 1;
     }
 
     if (args_parser.HasParam("x")) {
-        TOP_INFO("will generate xelectnetdemo nodes");
+        xinfo("will generate xelectnetdemo nodes");
         GenerateXelectNetDemoNodes(edge_config);
         ::_Exit(0);
     }
@@ -81,20 +84,20 @@ int MultilayerNetworkDemo::HandleParamsAndConfig(int argc, char ** argv, top::ba
 bool MultilayerNetworkDemo::GenerateXelectNetDemoNodes(const top::base::Config & edge_config) {
     int total_node = 100;
     if (!edge_config.Get("xelect_net_demo", "total", total_node)) {
-        TOP_FATAL("you must set [xelect_net_demo][total] for your test net");
+        xerror("you must set [xelect_net_demo][total] for your test net");
         return false;
     }
-    int rec = 4;
-    int zec = 4;
-    int edg = 2;
+    uint16_t rec = 4;
+    uint16_t zec = 4;
+    uint16_t edg = 2;
 
     int adv_net = 2;  // adv network number
-    int adv = 60;     // adv network node number
+    uint16_t adv = 60;     // adv network node number
 
     int val_net = 4;
-    int val = 60;
+    uint16_t val = 60;
 
-    int arc = 60;
+    uint16_t arc = 60;
 
     edge_config.Get("xelect_net_demo", "rec", rec);
     edge_config.Get("xelect_net_demo", "zec", zec);
@@ -116,31 +119,31 @@ bool MultilayerNetworkDemo::GenerateXelectNetDemoNodes(const top::base::Config &
     std::cout << "\tval:        " << val << std::endl;
 
     if (rec > total_node) {
-        TOP_FATAL("rec:%d larger than total:%d", rec, total_node);
+        xerror("rec:%d larger than total:%d", rec, total_node);
         return false;
     }
     if (zec > total_node) {
-        TOP_FATAL("zec:%d larger than total:%d", zec, total_node);
+        xerror("zec:%d larger than total:%d", zec, total_node);
         return false;
     }
     if (edg > total_node) {
-        TOP_FATAL("edg:%d larger than total:%d", edg, total_node);
+        xerror("edg:%d larger than total:%d", edg, total_node);
         return false;
     }
     if (adv > total_node) {
-        TOP_FATAL("adv:%d larger than total:%d", adv, total_node);
+        xerror("adv:%d larger than total:%d", adv, total_node);
         return false;
     }
     if (val > total_node) {
-        TOP_FATAL("val:%d larger than total:%d", val, total_node);
+        xerror("val:%d larger than total:%d", val, total_node);
         return false;
     }
     if (arc > total_node) {
-        TOP_FATAL("arc:%d larger than total:%d", arc, total_node);
+        xerror("arc:%d larger than total:%d", arc, total_node);
         return false;
     }
     if (val_net < adv_net or (val_net % adv_net != 0)) {
-        TOP_FATAL("val_net:%d smaller than adv_net:%d or size not match", val_net, adv_net);
+        xerror("val_net:%d smaller than adv_net:%d or size not match", val_net, adv_net);
         return false;
     }
 
@@ -158,10 +161,18 @@ bool MultilayerNetworkDemo::GenerateXelectNetDemoNodes(const top::base::Config &
         all_info[val_key] = json::array();
     }
     std::vector<std::string> node_id_vec;                               // all node accounts
-    node_id_vec.push_back("DEMOFULLNODEACCOUNT!DEMOFULLNODEACCOUNT!");  // fix the first node  id
+    node_id_vec.push_back("T00000ThisIsTheFirstNodeForALLat20210526");  // fix the first node  id
+
+    top::common::xnetwork_id_t network_id{top::common::xtopchain_network_id};
+    top::base::enum_vaccount_addr_type account_address_type = static_cast<top::base::enum_vaccount_addr_type>('0');
+    top::base::enum_xchain_zone_index zone_index{top::base::enum_chain_zone_consensus_index};
+    uint16_t ledger_id = top::base::xvaccount_t::make_ledger_id(static_cast<top::base::enum_xchain_id>(network_id.value()), zone_index);
     for (int i = 1; i < total_node; ++i) {
-        std::string node_id = HexEncode(RandomString(20));
-        node_id_vec.push_back(node_id);
+        auto hash = top::utl::xsha2_512_t::digest(std::to_string(std::time(nullptr) + i));
+        auto prefix_account = top::utl::xcrypto_util::make_address_by_assigned_key(hash.data(), account_address_type, ledger_id);
+        std::cout << prefix_account << " hash" << base::xhash64_t::digest(prefix_account) << std::endl;
+        // std::string node_id = HexEncode(RandomString(20));
+        node_id_vec.push_back(prefix_account);
     }
 
     all_info["fullnode"] = node_id_vec[0];  // the 0 index node is full node
@@ -191,84 +202,111 @@ bool MultilayerNetworkDemo::GenerateXelectNetDemoNodes(const top::base::Config &
     random_node_id_vec.clear();
     callback(random_node_id_vec, static_cast<uint32_t>(rec));
     if (random_node_id_vec.size() != static_cast<uint32_t>(rec)) {
-        TOP_FATAL("random_node_id:%lu choose failed for rec:%u", random_node_id_vec.size(), static_cast<uint32_t>(rec));
+        xerror("random_node_id:%lu choose failed for rec:%u", random_node_id_vec.size(), static_cast<uint32_t>(rec));
         return false;
     }
-    for (int i = 0; i < rec; ++i) {
-        base::XipParser platform_xip;
-        platform_xip.set_xnetwork_id(0);
-        platform_xip.set_zone_id(1);
-        platform_xip.set_cluster_id(0);
-        platform_xip.set_group_id(0);
+    for (uint16_t i = 0; i < rec; ++i) {
+        // /common::xip2_t xip2_{network_id, zid, cluster_id, group_id, slot_id, size, height};
+        common::xip2_t xip2{common::xnetwork_id_t{0}, common::xzone_id_t{1}, common::xcluster_id_t{0}, common::xgroup_id_t{0}, common::xslot_id_t{i}, rec, 0};
+        // base::XipParser platform_xip;
+        // platform_xip.set_xnetwork_id(0);
+        // platform_xip.set_zone_id(1);
+        // platform_xip.set_cluster_id(0);
+        // platform_xip.set_group_id(0);
 
         json node;
         node["node_id"] = random_node_id_vec[i];
-        node["xip"] = HexEncode(platform_xip.xip());
-        node["pubkey"] = random_node_id_vec[i];  // using node_id as pubkey
-        node["gid"] = 0;                         // associated_gid
+        node["xip"] = xip2.to_string();
+        // node["pubkey"] = random_node_id_vec[i];  // using node_id as pubkey
+        // node["gid"] = 0;                         // associated_gid
+        // node["hash"] = base::xhash64_t::digest(random_node_id_vec[i]);
+        // base::XipParser _xip(platform_xip.xip());
+        base::KadmliaKeyPtr kad_key = base::GetKadmliaKey(xip2);
+        // base::KadmliaKeyPtr kad_key = base::GetKadmliaKey(_xip, random_node_id_vec[i]);
+        // auto another_id = kad_key->Get();
+        // node["hash2"] = base::xhash64_t::digest(another_id);
         all_info["rec"].push_back(node);
     }
 
     random_node_id_vec.clear();
     callback(random_node_id_vec, static_cast<uint32_t>(zec));
     if (random_node_id_vec.size() != static_cast<uint32_t>(zec)) {
-        TOP_FATAL("random_node_id:%lu choose failed for zec:%u", random_node_id_vec.size(), static_cast<uint32_t>(zec));
+        xerror("random_node_id:%lu choose failed for zec:%u", random_node_id_vec.size(), static_cast<uint32_t>(zec));
         return false;
     }
-    for (int i = 0; i < zec; ++i) {
-        base::XipParser platform_xip;
-        platform_xip.set_xnetwork_id(0);
-        platform_xip.set_zone_id(2);
-        platform_xip.set_cluster_id(0);
-        platform_xip.set_group_id(0);
+    for (uint16_t i = 0; i < zec; ++i) {
+        common::xip2_t xip2{common::xnetwork_id_t{0}, common::xzone_id_t{2}, common::xcluster_id_t{0}, common::xgroup_id_t{0}, common::xslot_id_t{i}, zec, 0};
+        
+        // base::XipParser platform_xip;
+        // platform_xip.set_xnetwork_id(0);
+        // platform_xip.set_zone_id(2);
+        // platform_xip.set_cluster_id(0);
+        // platform_xip.set_group_id(0);
 
         json node;
         node["node_id"] = random_node_id_vec[i];
-        node["xip"] = HexEncode(platform_xip.xip());
-        node["pubkey"] = random_node_id_vec[i];  // using node_id as pubkey
-        node["gid"] = 0;                         // associated_gid
+        node["xip"] = xip2.to_string();
+        // node["pubkey"] = random_node_id_vec[i];  // using node_id as pubkey
+        // node["gid"] = 0;                         // associated_gid
+        // node["hash"] = base::xhash64_t::digest(random_node_id_vec[i]);
+        // base::XipParser _xip(platform_xip.xip());
+        // base::KadmliaKeyPtr kad_key = base::GetKadmliaKey(_xip, random_node_id_vec[i]);
+        // auto another_id = kad_key->Get();
+        // node["hash2"] = base::xhash64_t::digest(another_id);
         all_info["zec"].push_back(node);
     }
 
     random_node_id_vec.clear();
     callback(random_node_id_vec, static_cast<uint32_t>(edg));
     if (random_node_id_vec.size() != static_cast<uint32_t>(edg)) {
-        TOP_FATAL("random_node_id:%lu choose failed for edg:%u", random_node_id_vec.size(), static_cast<uint32_t>(edg));
+        xerror("random_node_id:%lu choose failed for edg:%u", random_node_id_vec.size(), static_cast<uint32_t>(edg));
         return false;
     }
-    for (int i = 0; i < edg; ++i) {
-        base::XipParser platform_xip;
-        platform_xip.set_xnetwork_id(0);
-        platform_xip.set_zone_id(15);
-        platform_xip.set_cluster_id(1);
-        platform_xip.set_group_id(1);
+    for (uint16_t i = 0; i < edg; ++i) {
+        common::xip2_t xip2{common::xnetwork_id_t{0}, common::xzone_id_t{15}, common::xcluster_id_t{1}, common::xgroup_id_t{1}, common::xslot_id_t{i}, edg, 0};
+        // base::XipParser platform_xip;
+        // platform_xip.set_xnetwork_id(0);
+        // platform_xip.set_zone_id(15);
+        // platform_xip.set_cluster_id(1);
+        // platform_xip.set_group_id(1);
 
         json node;
         node["node_id"] = random_node_id_vec[i];
-        node["xip"] = HexEncode(platform_xip.xip());
-        node["pubkey"] = random_node_id_vec[i];  // using node_id as pubkey
-        node["gid"] = 0;                         // associated_gid
+        node["xip"] = xip2.to_string();
+        // node["pubkey"] = random_node_id_vec[i];  // using node_id as pubkey
+        // node["gid"] = 0;                         // associated_gid
+        // node["hash"] = base::xhash64_t::digest(random_node_id_vec[i]);
+        // base::XipParser _xip(platform_xip.xip());
+        // base::KadmliaKeyPtr kad_key = base::GetKadmliaKey(_xip, random_node_id_vec[i]);
+        // auto another_id = kad_key->Get();
+        // node["hash2"] = base::xhash64_t::digest(another_id);
         all_info["edg"].push_back(node);
     }
 
     random_node_id_vec.clear();
     callback(random_node_id_vec, static_cast<uint32_t>(arc));
     if (random_node_id_vec.size() != static_cast<uint32_t>(arc)) {
-        TOP_FATAL("random_node_id:%lu choose failed for arc:%u", random_node_id_vec.size(), static_cast<uint32_t>(arc));
+        xerror("random_node_id:%lu choose failed for arc:%u", random_node_id_vec.size(), static_cast<uint32_t>(arc));
         return false;
     }
-    for (int i = 0; i < arc; ++i) {
-        base::XipParser platform_xip;
-        platform_xip.set_xnetwork_id(0);
-        platform_xip.set_zone_id(14);
-        platform_xip.set_cluster_id(1);
-        platform_xip.set_group_id(1);
+    for (uint16_t i = 0; i < arc; ++i) {
+        common::xip2_t xip2{common::xnetwork_id_t{0}, common::xzone_id_t{14}, common::xcluster_id_t{1}, common::xgroup_id_t{1}, common::xslot_id_t{i}, arc, 0};
+        // base::XipParser platform_xip;
+        // platform_xip.set_xnetwork_id(0);
+        // platform_xip.set_zone_id(14);
+        // platform_xip.set_cluster_id(1);
+        // platform_xip.set_group_id(1);
 
         json node;
         node["node_id"] = random_node_id_vec[i];
-        node["xip"] = HexEncode(platform_xip.xip());
-        node["pubkey"] = random_node_id_vec[i];  // using node_id as pubkey
-        node["gid"] = 0;                         // associated_gid
+        node["xip"] = xip2.to_string();
+        // node["pubkey"] = random_node_id_vec[i];  // using node_id as pubkey
+        // node["gid"] = 0;                         // associated_gid
+        // node["hash"] = base::xhash64_t::digest(random_node_id_vec[i]);
+        // base::XipParser _xip(platform_xip.xip());
+        // base::KadmliaKeyPtr kad_key = base::GetKadmliaKey(_xip, random_node_id_vec[i]);
+        // auto another_id = kad_key->Get();
+        // node["hash2"] = base::xhash64_t::digest(another_id);
         all_info["arc"].push_back(node);
     }
 
@@ -279,21 +317,30 @@ bool MultilayerNetworkDemo::GenerateXelectNetDemoNodes(const top::base::Config &
         random_node_id_vec.clear();
         callback(random_node_id_vec, static_cast<uint32_t>(adv));
         if (random_node_id_vec.size() != static_cast<uint32_t>(adv)) {
-            TOP_FATAL("random_node_id:%lu choose failed for %s:%u", random_node_id_vec.size(), adv_key.c_str(), static_cast<uint32_t>(adv));
+            xerror("random_node_id:%lu choose failed for %s:%u", random_node_id_vec.size(), adv_key.c_str(), static_cast<uint32_t>(adv));
             return false;
         }
-        for (int i = 0; i < adv; ++i) {
-            base::XipParser platform_xip;
-            platform_xip.set_xnetwork_id(0);
-            platform_xip.set_zone_id(0);
-            platform_xip.set_cluster_id(1);
-            platform_xip.set_group_id(n + 0);
+        for (uint16_t i = 0; i < adv; ++i) {
+            common::xip2_t xip2{common::xnetwork_id_t{0}, common::xzone_id_t{0}, common::xcluster_id_t{1}, common::xgroup_id_t{static_cast<uint8_t>(n)}, common::xslot_id_t{i}, adv, 0};
+            // base::XipParser platform_xip;
+            // platform_xip.set_xnetwork_id(0);
+            // platform_xip.set_zone_id(0);
+            // platform_xip.set_cluster_id(1);
+            // platform_xip.set_group_id(n + 0);
 
             json node;
             node["node_id"] = random_node_id_vec[i];
-            node["xip"] = HexEncode(platform_xip.xip());
-            node["pubkey"] = random_node_id_vec[i];  // using node_id as pubkey
-            node["gid"] = 0;                         // associated_gid
+            node["xip"] = xip2.to_string();
+        
+            // node["node_id"] = random_node_id_vec[i];
+            // node["xip"] = HexEncode(platform_xip.xip());
+            // node["pubkey"] = random_node_id_vec[i];  // using node_id as pubkey
+            // node["gid"] = 0;                         // associated_gid
+            // node["hash"] = base::xhash64_t::digest(random_node_id_vec[i]);
+            // base::XipParser _xip(platform_xip.xip());
+            // base::KadmliaKeyPtr kad_key = base::GetKadmliaKey(_xip, random_node_id_vec[i]);
+            // auto another_id = kad_key->Get();
+            // node["hash2"] = base::xhash64_t::digest(another_id);
             all_info[adv_key].push_back(node);
         }
     }
@@ -309,21 +356,28 @@ bool MultilayerNetworkDemo::GenerateXelectNetDemoNodes(const top::base::Config &
         random_node_id_vec.clear();
         callback(random_node_id_vec, static_cast<uint32_t>(val));
         if (random_node_id_vec.size() != static_cast<uint32_t>(val)) {
-            TOP_FATAL("random_node_id:%lu choose failed for %s:%d", random_node_id_vec.size(), val_key.c_str(), static_cast<uint32_t>(val));
+            xerror("random_node_id:%lu choose failed for %s:%d", random_node_id_vec.size(), val_key.c_str(), static_cast<uint32_t>(val));
             return false;
         }
-        for (int i = 0; i < val; ++i) {
-            base::XipParser platform_xip;
-            platform_xip.set_xnetwork_id(0);
-            platform_xip.set_zone_id(0);
-            platform_xip.set_cluster_id(1);
-            platform_xip.set_group_id(v + 64);
+        for (uint16_t i = 0; i < val; ++i) {
+            common::xip2_t xip2{common::xnetwork_id_t{0}, common::xzone_id_t{0}, common::xcluster_id_t{1}, common::xgroup_id_t{static_cast<uint8_t>(v+64)}, common::xslot_id_t{i}, val, 0};
+            // base::XipParser platform_xip;
+            // platform_xip.set_xnetwork_id(0);
+            // platform_xip.set_zone_id(0);
+            // platform_xip.set_cluster_id(1);
+            // platform_xip.set_group_id(v + 64);
 
             json node;
             node["node_id"] = random_node_id_vec[i];
-            node["xip"] = HexEncode(platform_xip.xip());
-            node["pubkey"] = random_node_id_vec[i];  // using node_id as pubkey
-            node["gid"] = adv_group;                 // associated_gid
+            node["xip"] = xip2.to_string();
+            
+            // node["pubkey"] = random_node_id_vec[i];  // using node_id as pubkey
+            // node["gid"] = adv_group;                 // associated_gid
+            // node["hash"] = base::xhash64_t::digest(random_node_id_vec[i]);
+            // base::XipParser _xip(platform_xip.xip());
+            // base::KadmliaKeyPtr kad_key = base::GetKadmliaKey(_xip, random_node_id_vec[i]);
+            // auto another_id = kad_key->Get();
+            // node["hash2"] = base::xhash64_t::digest(another_id);
             all_info[val_key].push_back(node);
         }
     }
@@ -340,7 +394,7 @@ bool MultilayerNetworkDemo::BuildXelectNetDemoNetwork() {
     // read a JSON file
     std::ifstream in("./config/all_node_info.json");
     if (!in) {
-        TOP_FATAL("open file:./config/all_node_info.json error");
+        xerror("open file:./config/all_node_info.json error");
         return false;
     }
 
@@ -397,18 +451,18 @@ bool MultilayerNetworkDemo::Init(const base::Config & config) {
     config.Get("node", "first_node", first_node);
     elect_cmd_.Init(first_node, show_cmd);
     if (!MultilayerNetwork::Init(config)) {
-        TOP_WARN("MultilayerNetwork:Init failed");
+        xwarn("MultilayerNetwork:Init failed");
         return false;
     }
     if (!GetEcNetcard()) {
-        TOP_FATAL("ec_netcard empty");
+        xerror("ec_netcard empty");
         return false;
     }
     elect_cmd_.set_netcard(GetEcNetcard());
     // create elect_manager_chain
     elect_manager_ = std::make_shared<ElectManagerDemo>(GetCoreTransport(), config);
     if (!elect_manager_) {
-        TOP_WARN("demo elect_manager  create failed");
+        xwarn("demo elect_manager  create failed");
         return false;
     }
 
@@ -417,14 +471,14 @@ bool MultilayerNetworkDemo::Init(const base::Config & config) {
 
 bool MultilayerNetworkDemo::Run(const base::Config & config) {
     if (ResetRootRouting(GetCoreTransport(), config) == top::kadmlia::kKadFailed) {
-        TOP_WARN("kRoot join network failed");
+        xwarn("kRoot join network failed");
         return false;
     }
 
-    if (!elect_manager_->Start()) {
-        std::cout << "elect network init failed!" << std::endl;
-        return false;
-    }
+    // if (!elect_manager_->Start()) {
+    //     std::cout << "elect network init failed!" << std::endl;
+    //     return false;
+    // }
 
     return true;
 }
@@ -432,7 +486,7 @@ bool MultilayerNetworkDemo::Run(const base::Config & config) {
 void MultilayerNetworkDemo::Stop() {
     elect_manager_.reset();
 
-    MultilayerNetwork::Stop();
+    // MultilayerNetwork::Stop();
 }
 
 }  // namespace elect

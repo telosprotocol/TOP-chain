@@ -121,8 +121,6 @@ int main(int argc, char ** argv)
 {
 
     global_node_id = RandomString(256);
-    global_node_id_hash = std::string("");
-    global_platform_type = kPlatform;
 
     if (signal(SIGTERM, top::SignalCatch) == SIG_ERR ||
             signal(SIGINT, top::SignalCatch) == SIG_ERR) {

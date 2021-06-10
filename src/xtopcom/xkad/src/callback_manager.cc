@@ -11,7 +11,6 @@
 #include "xbase/xpacket.h"
 #include "xpbase/base/top_utils.h"
 #include "xpbase/base/top_log.h"
-#include "xkad/routing_table/routing_table.h"
 
 namespace top {
 
@@ -30,7 +29,6 @@ uint32_t CallbackManager::MessageId() {
 CallbackManager::CallbackManager()
         : callback_map_(),
           callback_map_mutex_() {
-    // timer_.CallAfter(kTimeCheckoutPeriod, std::bind(&CallbackManager::TimeoutCheck, this));
     timer_ = std::make_shared<base::TimerRepeated>(timer_manager_, "CallbackManager::TimeoutCheck");
     timer_->Start(
             kTimeCheckoutPeriod,

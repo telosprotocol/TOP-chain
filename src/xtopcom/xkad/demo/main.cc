@@ -319,7 +319,6 @@ void TestGossipMessageHandler(
 }  // namespace top
 
 int main(int argc,char** argv) {
-    global_platform_type = kPlatform;
     global_node_id = RandomString(256);
 
     kad_message_handler.Init();

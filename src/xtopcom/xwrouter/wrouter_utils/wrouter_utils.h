@@ -10,29 +10,6 @@ namespace top {
 
 namespace wrouter {
 
-enum RoutingMessageRequestType {
-    kNone = 0,
-    kRequestMsg,
-    kResponseMsg,
-};
-
-enum ClientRelayMessageCode {
-    kErrorReturn = 1,
-    kContinueReturn,
-    kFirstRelayRetrun,
-};
-
-enum enum_platform_xpacket_flag {
-    kPlatformXpacketInvalid = 100,
-    kPlatformXpacketRoot,
-    kPlatformXpacketKadControl,
-    kPlatformXpacketNatDetect,
-};
-
-enum enum_platform_xpacket_p2p_factor {
-    kP2pRandomNumGeneral = 4,
-};
-
 // get closest node from routing table factor
 enum enum_platform_xpacket_broadcast_factor {
     kBroadcastGeneral = 1,

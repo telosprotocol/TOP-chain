@@ -23,7 +23,7 @@
 #include "xbase/xutl.h"
 
 #include "xtransport/transport.h"
-#include "xpbase/base/xbyte_buffer.h"
+#include "xbasic/xbyte_buffer.h"
 #include "xpbase/base/top_utils.h"
 #include "socket_intf.h"
 

@@ -7,8 +7,4 @@ add_library(xwrouter STATIC ${xwrouter_src})
 
 target_link_libraries(xwrouter PRIVATE xkad xgossip)
 
-# add_subdirectory(demo)
 
-# if(XENABLE_TESTS)
-#     add_subdirectory(tests)
-# endif()

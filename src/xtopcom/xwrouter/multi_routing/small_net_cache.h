@@ -30,30 +30,20 @@ public:
     static SmallNetNodes * Instance();
     bool Init();
 
-    void GetAllServiceType(std::set<uint64_t> & svec);
-    uint32_t AddNode(NetNode node);
-    bool FindNewNode(NetNode & Fnode, uint64_t service_type);
-    bool FindRandomNode(NetNode & Fnode, uint64_t service_type);
-    bool FindAllNode(std::vector<NetNode> & node_vec, uint64_t service_type);
-    void GetAllNode(std::vector<NetNode> & node_vec);
+    void GetAllServiceType(std::set<base::ServiceType> & svec);
+    void AddNode(std::vector<wrouter::WrouterTableNodes> node);
+    bool FindRandomNode(WrouterTableNodes & Fnode, base::ServiceType service_type);
+    bool FindAllNode(std::vector<WrouterTableNodes> & node_vec, base::ServiceType service_type);
+    void GetAllNode(std::vector<WrouterTableNodes> & node_vec);
 
 private:
     SmallNetNodes();
     ~SmallNetNodes();
-    void AddNodeLimit(uint64_t service_type, std::deque<NetNode> & nodes, const NetNode & node);
-    void HandleExpired(std::unordered_map<uint64_t, std::vector<std::string>> & expired_vec, std::vector<uint64_t> & unreg_service_type_vec);
-    void do_clear_and_reset();
 
 private:
     std::mutex net_nodes_cache_map_mutex_;
     // key is service_type, value is vector of accounts
-    struct NetNodes {
-        uint32_t latest_version{0};
-        std::deque<NetNode> nodes;
-    };
-    std::unordered_map<uint64_t, std::shared_ptr<NetNodes>> net_nodes_cache_map_;
-
-    std::shared_ptr<base::TimerRepeated> clear_timer_{nullptr};
+    std::unordered_map<base::ServiceType, std::vector<wrouter::WrouterTableNodes>> net_nodes_cache_map_;
 
     ServiceNodes * service_nodes_{nullptr};
 };

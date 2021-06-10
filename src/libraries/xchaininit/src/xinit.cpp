@@ -155,7 +155,7 @@ int topchain_init(const std::string& config_file, const std::string& config_extr
     auto& user_params = data::xuser_params::get_instance();
     global_node_id = user_params.account.value();
     global_node_signkey = base::xstring_utl::base64_decode(user_params.signkey);
-    global_platform_type = kChain;
+    // global_platform_type = kChain;
 #ifdef CONFIG_CHECK
     // config check
     if (!user_params.is_valid()) return 1;
@@ -436,7 +436,7 @@ int topchain_noparams_init(const std::string& pub_key, const std::string& pri_ke
     auto& user_params = data::xuser_params::get_instance();
     global_node_id = user_params.account.value();
     global_node_signkey = base::xstring_utl::base64_decode(user_params.signkey);
-    global_platform_type = kChain;
+    // global_platform_type = kChain;
 #ifdef CONFIG_CHECK
     // config check
     if (!user_params.is_valid()) {
