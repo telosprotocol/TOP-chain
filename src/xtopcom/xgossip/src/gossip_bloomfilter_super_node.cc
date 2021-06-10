@@ -16,7 +16,6 @@
 #include "xgossip/include/block_sync_manager.h"
 #include "xpbase/base/redis_utils.h"
 #include "xgossip/include/gossip_bloomfilter.h"
-#include "xwrouter/register_routing_table.h"
 
 
 namespace top {

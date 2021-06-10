@@ -5,7 +5,6 @@
 #pragma once
 
 #include "xkad/proto/kadmlia.pb.h"
-#include "xkad/routing_table/bootstrap_cache_helper.h"
 #include "xkad/routing_table/callback_manager.h"
 #include "xkad/routing_table/node_info.h"
 #include "xkad/routing_table/routing_utils.h"

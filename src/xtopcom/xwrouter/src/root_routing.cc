@@ -13,7 +13,6 @@
 #include "xpbase/base/top_string_util.h"
 #include "xtransport/udp_transport/transport_util.h"
 #include "xwrouter/register_message_handler.h"
-#include "xwrouter/register_routing_table.h"
 #include "xwrouter/wrouter_utils/wrouter_utils.h"
 
 namespace top {

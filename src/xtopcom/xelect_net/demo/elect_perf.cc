@@ -3,13 +3,10 @@
 #include "xbase/xutl.h"
 #include "xwrouter/wrouter_utils/wrouter_utils.h"
 #include "xkad/routing_table/local_node_info.h"
-#include "xkad/routing_table/routing_table.h"
 #include "xmetrics/xmetrics.h"
-#include "xpbase/base/kad_key/chain_kadmlia_key.h"
 #include "xpbase/base/top_log.h"
 #include "xutility/xhash.h"
 #include "xwrouter/register_message_handler.h"
-#include "xwrouter/register_routing_table.h"
 #include "xwrouter/multi_routing/multi_routing.h"
 #include "xwrouter/xwrouter.h"
 

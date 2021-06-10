@@ -8,7 +8,6 @@
 #include "xcrypto/xckey.h"
 #include "xcrypto/xcrypto_util.h"
 #include "xdata/xgenesis_data.h"
-#include "xpbase/base/kad_key/get_kadmlia_key.h"
 #include <fstream>
 
 namespace top {

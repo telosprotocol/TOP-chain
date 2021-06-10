@@ -6,7 +6,7 @@
 
 #include "xgossip/include/gossip_utils.h"
 #include "xgossip/include/mesages_with_bloomfilter.h"
-#include "xpbase/base/kad_key/get_kadmlia_key.h"
+#include "xpbase/base/kad_key/kadmlia_key.h"
 
 #include <cinttypes>
 

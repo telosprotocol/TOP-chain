@@ -4,12 +4,10 @@
 #include "xbasic/xutility.h"
 #include "xchain_timer/xchain_timer.h"
 #include "xelect_net/include/elect_uitils.h"
-#include "xelect_net/include/node_manager.h"
 #include "xpbase/base/top_log.h"
 #include "xpbase/base/xip_parser.h"
 #include "xwrouter/multi_routing/small_net_cache.h"
 #include "xwrouter/register_message_handler.h"
-#include "xwrouter/register_routing_table.h"
 
 #include <chrono>
 #include <limits>

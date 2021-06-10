@@ -8,7 +8,6 @@
 #include "xpbase/base/top_config.h"
 #include "xpbase/base/top_utils.h"
 #include "xtransport/transport.h"
-#include "xwrouter/root/root_message_handler.h"
 #include "xwrouter/wrouter_utils/wrouter_utils.h"
 
 namespace top {

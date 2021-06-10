@@ -10,7 +10,6 @@
 #include "xkad/routing_table/routing_utils.h"
 #include "xpbase/base/top_config.h"
 #include "xpbase/base/top_timer.h"
-#include "xwrouter/register_routing_table.h"
 #include "xwrouter/root/root_routing.h"
 
 #include <map>

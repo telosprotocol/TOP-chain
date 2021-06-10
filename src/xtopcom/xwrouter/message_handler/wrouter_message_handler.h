@@ -20,7 +20,6 @@
 #include "xkad/proto/kadmlia.pb.h"
 #include "xwrouter/wrouter_utils/wrouter_utils.h"
 #include "xwrouter/register_message_handler.h"
-#include "xkad/nat_detect/nat_manager_intf.h"
 
 namespace top {
 

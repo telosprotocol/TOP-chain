@@ -14,10 +14,8 @@
 #include "xgrpcservice/xgrpc_service.h"
 #include "xkad/routing_table/callback_manager.h"
 #include "xkad/routing_table/local_node_info.h"
-#include "xkad/routing_table/routing_table.h"
 #include "xpbase/base/check_cast.h"
 #include "xpbase/base/kad_key/kadmlia_key.h"
-#include "xpbase/base/kad_key/platform_kadmlia_key.h"
 #include "xpbase/base/line_parser.h"
 #include "xpbase/base/sem.h"
 #include "xpbase/base/top_log.h"
@@ -27,9 +25,9 @@
 #include "xpbase/base/xid/xid_def.h"
 #include "xpbase/base/xid/xid_parser.h"
 #include "xpbase/base/xip_parser.h"
-#include "xwrouter/register_routing_table.h"
 #include "xwrouter/root/root_routing.h"
 #include "xwrouter/multi_routing/multi_routing.h"
+#include "xwrouter/root/root_routing.h"
 
 #include <string.h>
 

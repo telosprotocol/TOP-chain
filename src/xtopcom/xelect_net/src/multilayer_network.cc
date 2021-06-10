@@ -6,14 +6,12 @@
 #include "xdb/xdb_factory.h"
 #include "xelect_net/include/http_client.h"
 #include "xelect_net/include/https_client.h"
-#include "xkad/nat_detect/nat_manager_intf.h"
 #include "xkad/proto/ledger.pb.h"
 #include "xkad/routing_table/routing_utils.h"
 #include "xtransport/udp_transport/udp_transport.h"
 #include "xwrouter/multi_routing/multi_routing.h"
 #include "xwrouter/multi_routing/service_node_cache.h"
 #include "xwrouter/multi_routing/small_net_cache.h"
-#include "xwrouter/register_routing_table.h"
 
 #include <stdlib.h>
 #include <time.h>

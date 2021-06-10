@@ -9,7 +9,6 @@
 #include "xpbase/base/xip_parser.h"
 #include "xwrouter/multi_routing/multi_routing.h"
 #include "xwrouter/multi_routing/small_net_cache.h"
-#include "xwrouter/register_routing_table.h"
 
 #include <cassert>
 

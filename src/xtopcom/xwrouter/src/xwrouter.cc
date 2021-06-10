@@ -6,7 +6,6 @@
 
 #include "xbase/xutl.h"
 #include "xgossip/include/gossip_bloomfilter.h"
-#include "xgossip/include/gossip_bloomfilter_layer.h"
 #include "xgossip/include/gossip_rrs.h"
 #include "xgossip/include/gossip_dispatcher.h"
 #include "xgossip/include/gossip_filter.h"
@@ -20,7 +19,6 @@
 #include "xtransport/utils/transport_utils.h"
 #include "xwrouter/message_handler/wrouter_message_handler.h"
 #include "xwrouter/message_handler/xwrouter_xid_handler.h"
-#include "xwrouter/register_routing_table.h"
 #include "xmetrics/xmetrics.h"
 
 #include <algorithm>
