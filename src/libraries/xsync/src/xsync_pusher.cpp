@@ -132,11 +132,7 @@ void xsync_pusher_t::push_newblock_to_archive(const xblock_ptr_t &block) {
 
     for (auto &dst_idx: push_arcs) {
         vnetwork::xvnode_address_t &target_addr = archive_list[dst_idx];
-        if (push_block_arcs.find(dst_idx) != push_block_arcs.end()) {
-            m_sync_sender->push_newblock(block, self_addr, target_addr);
-        } else {
-            m_sync_sender->push_newblockhash(block, self_addr, target_addr);
-        }
+        m_sync_sender->push_newblock(block, self_addr, target_addr);
     }
 }
 

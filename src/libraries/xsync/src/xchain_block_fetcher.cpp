@@ -221,8 +221,9 @@ void xchain_block_fetcher_t::import_block(xblock_ptr_t &block) {
         return;
     }
 
-    if (m_sync_broadcast != nullptr)
-        m_sync_broadcast->broadcast_newblockhash_to_archive_neighbors(block);
+    // disable broadcast newblockhash to archive neighbors
+    // if (m_sync_broadcast != nullptr)
+    //     m_sync_broadcast->broadcast_newblockhash_to_archive_neighbors(block);
 }
 
 // need vector?
