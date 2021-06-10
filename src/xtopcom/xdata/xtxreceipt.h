@@ -16,7 +16,7 @@ namespace top { namespace data {
 
 class xtx_receipt_t : public xbase_dataunit_t<xtx_receipt_t, xdata_type_tx_receipt> {
  public:
-    xtx_receipt_t() = default;
+    xtx_receipt_t();
     xtx_receipt_t(const xlightunit_output_entity_t* txinfo, const base::xmerkle_path_256_t & path, base::xvqcert_t* cert);
     xtx_receipt_t(const xlightunit_output_entity_t * txinfo, std::map<std::string, xbyte_buffer_t> data, const base::xmerkle_path_256_t & path, base::xvqcert_t * cert);
  protected:
