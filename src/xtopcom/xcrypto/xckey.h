@@ -171,7 +171,6 @@ namespace top
             std::string       to_address(const uint8_t* publickey, const char addr_type,const uint16_t ledger_id);
             std::string       to_eth_address(const uint8_t* publickey, const char addr_type,const uint16_t ledger_id);
         private:
-            std::string       to_eth_address(const uint8_t* publickey, const char addr_type,const uint16_t ledger_id);
             void              init(const uint8_t * pubkey_ptr,const int32_t pubkey_len);
         private:
             uint8_t           m_publickey_data[65]; //first byte for type
