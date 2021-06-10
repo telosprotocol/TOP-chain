@@ -79,14 +79,15 @@ bool xreceipt_strategy_t::is_selected_resender(const data::xcons_transaction_ptr
     return ret;
 }
 
-bool xreceipt_strategy_t::is_selected_sender(uint64_t block_height, uint16_t node_id, uint16_t shard_size) {
+bool xreceipt_strategy_t::is_selected_sender(const std::string & addr, uint64_t block_height, uint16_t node_id, uint16_t shard_size) {
     // select 2 auditor to send the receipt
     uint32_t select_num = receipt_sender_select_num;
     // calculate a random position that means which node is selected to send the receipt
     uint64_t rand_pos = block_height % (uint64_t)shard_size;
     bool ret = is_selected_pos(node_id, (uint32_t)rand_pos, select_num, shard_size);
-    xinfo("xreceipt_strategy_t::is_selected_sender ret:%d block_height:%llu rand_pos:%llu select_num:%u node_id:%u shard_size:%u",
+    xinfo("xreceipt_strategy_t::is_selected_sender ret:%d addr:%s block_height:%llu rand_pos:%llu select_num:%u node_id:%u shard_size:%u",
           ret,
+          addr.c_str(),
           block_height,
           rand_pos,
           select_num,
