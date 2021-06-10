@@ -3,7 +3,7 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "../xvboffdata.h"
-
+#include "xmetrics/xmetrics.h"
 namespace top
 {
     namespace base
@@ -12,10 +12,12 @@ namespace top
             :base::xdataunit_t((enum_xdata_type)enum_obj_type)
         {
             // TODO(jimmy)
+            XMETRICS_GAUGE(metrics::dataobject_xvboffdata_t, 1);
         }
 
         xvboffdata_t::~xvboffdata_t()
         {
+            XMETRICS_GAUGE(metrics::dataobject_xvboffdata_t, -1);
         }
 
         //caller respond to cast (void*) to related  interface ptr
