@@ -77,8 +77,11 @@ bool xsync_event_dispatcher_t::filter_event(const mbus::xevent_ptr_t& e) {
     return ret;
 }
 
-void xsync_event_dispatcher_t::before_event_pushed(const mbus::xevent_ptr_t &e, bool discard) {
+void xsync_event_dispatcher_t::before_event_pushed(const mbus::xevent_ptr_t &e, bool &discard) {
     XMETRICS_COUNTER_INCREMENT("sync_event_total", 1);
+    if (e->get_type() == mbus::xevent_major_type_role) {
+        discard = false;
+    }
 #ifdef DEBUG
     if(discard) {
         XMETRICS_COUNTER_INCREMENT("sync_total_discard", 1);
