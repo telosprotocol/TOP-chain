@@ -65,7 +65,6 @@ namespace top
         {
             if(m_value_ptr != nullptr) {
                 m_value_ptr->release_ref();
-                m_value_ptr = nullptr;
             }
             XMETRICS_GAUGE(metrics::dataobject_xvproperty, -1);
         }
