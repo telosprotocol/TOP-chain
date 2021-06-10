@@ -1387,6 +1387,9 @@ namespace top
                     //apply rule#3. not allow overwrite block with newer/more latest block at same height and same stage
                     const int existing_block_flags = existing_block->get_block_flags();
                     const int new_block_flags      = this_block->get_block_flags();
+                    if( (new_block_flags & base::enum_xvblock_flag_unpacked) != 0)//merge unpacket flag into existing one
+                        existing_block->set_block_flag(base::enum_xvblock_flag_unpacked);
+                        
                     if(  (existing_block_flags == new_block_flags)
                        ||(existing_block_flags & base::enum_xvblock_flags_high4bit_mask) >= (new_block_flags & base::enum_xvblock_flags_high4bit_mask)
                        ) //outdated one try to overwrite newer one,abort it
@@ -2688,7 +2691,8 @@ namespace top
             base::xauto_ptr<base::xvbindex_t > new_idx(new base::xvbindex_t(*new_raw_block));
             if(0 != new_idx->get_height())
             {
-                new_idx->reset_block_flags(0);//reset all flags and redo it from authenticated status
+                //just keep low 4bit flags about unpack/store/connect etc
+                new_idx->reset_block_flags(new_idx->get_block_flags() & base::enum_xvblock_flags_low4bit_mask);//reset all status flags and redo it from authenticated status
                 new_idx->set_block_flag(base::enum_xvblock_flag_authenticated);//init it as  authenticated
                 new_idx->reset_modify_flag(); //remove modified flag to avoid double saving
 
@@ -2703,20 +2707,19 @@ namespace top
             if(precheck_new_index(new_idx(),height_view_map) == false)
             {
                 xinfo("xblockacct_t::new_index,failed-precheck for block(%s) at store(%s)",new_idx->dump().c_str(),get_blockstore_path().c_str());
-#if 0 // TODO(jimmy)
-                //remove below after merged jimmy'branch which nolonger need store offdata anymore
-                for(auto it = height_view_map.begin(); it != height_view_map.end();++it)
+
+                if( (new_idx->get_block_flags() & base::enum_xvblock_flag_unpacked) != 0)//still need merge flags of block
                 {
-                    if(   (it->second->get_height() == new_raw_block->get_height())
-                       && (it->second->get_block_hash() == new_raw_block->get_block_hash())  )
+                    for(auto it = height_view_map.begin(); it != height_view_map.end();++it)
                     {
-                        //since every block reset as cert-only,so it is impossible to update the existing index by block with higher flag
-                        //the only way to trigger write offdata is here
-                        write_block_offdata_to_db(it->second, new_raw_block);
-                        break;
+                        if(   (it->second->get_height() == new_raw_block->get_height())
+                           && (it->second->get_block_hash() == new_raw_block->get_block_hash())  )
+                        {
+                            it->second->set_block_flag(base::enum_xvblock_flag_unpacked);
+                            break;
+                        }
                     }
                 }
-#endif
                 return nullptr;
             }
 
@@ -2735,23 +2738,6 @@ namespace top
                     return nullptr;
                 }
             }
-#if 0 // TODO(jimmy)
-            else //remove below after merged jimmy'branch which nolonger need store offdata anymore
-            {
-                //research to find target index after rebase that maybe remove it
-                for(auto it = height_view_map.begin(); it != height_view_map.end();++it)
-                {
-                    if(   (it->second->get_height() == new_raw_block->get_height())
-                       && (it->second->get_block_hash() == new_raw_block->get_block_hash())  )
-                    {
-                        //since every block reset as cert-only,so it is impossible to update the existing index by block with higher flag
-                        //the only way to trigger write offdata is here
-                        write_block_offdata_to_db(it->second, new_raw_block);
-                        break;
-                    }
-                }
-            }
-#endif
 
             return cached_index_ptr;
         }
