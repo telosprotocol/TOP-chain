@@ -556,7 +556,7 @@ void xtxpool_service::deal_table_block(xblock_t * block, uint64_t now_clock) {
                                       (block->get_height() - load_blocks_for_missing_block_event_max) :
                                       (table_height_pair->second + 1);
             for (uint64_t height = block->get_height() - 1; height >= min_height; height--) {
-                if (!xreceipt_strategy_t::is_selected_sender(height, m_node_id, m_shard_size)) {
+                if (!xreceipt_strategy_t::is_selected_sender(account_addr, height, m_node_id, m_shard_size)) {
                     continue;
                 }
                 base::xauto_ptr<base::xvblock_t> blockobj =
@@ -572,7 +572,7 @@ void xtxpool_service::deal_table_block(xblock_t * block, uint64_t now_clock) {
             }
         }
 
-        if (xreceipt_strategy_t::is_selected_sender(block->get_height(), m_node_id, m_shard_size)) {
+        if (xreceipt_strategy_t::is_selected_sender(account_addr, block->get_height(), m_node_id, m_shard_size)) {
             make_receipts_and_send(block);
         }
     }

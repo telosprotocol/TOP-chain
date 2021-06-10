@@ -32,11 +32,12 @@ enum enum_xblock_consensus_type {
 // account index info is the index info of account unit blockchain
 class xaccount_index_t {
  public:
-    xaccount_index_t() = default;
+    xaccount_index_t();
     xaccount_index_t(base::xvblock_t* unit,
                      bool has_unconfirm_tx,
                      bool is_account_destroy);
-
+    ~xaccount_index_t();
+    xaccount_index_t(const xaccount_index_t& left);
     bool operator == (const xaccount_index_t &other) const {
         if (m_latest_unit_height == other.m_latest_unit_height
             && m_latest_unit_viewid == other.m_latest_unit_viewid
