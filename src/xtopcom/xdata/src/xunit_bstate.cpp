@@ -12,7 +12,7 @@
 #include "xdata/xfullunit.h"
 #include "xdata/xgenesis_data.h"
 #include "xconfig/xpredefined_configurations.h"
-
+#include "xmetrics/xmetrics.h"
 #include <assert.h>
 #include <string>
 #include <vector>
@@ -21,11 +21,13 @@ namespace top {
 namespace data {
 
 xunit_bstate_t::xunit_bstate_t(base::xvbstate_t* bstate) {
+    XMETRICS_GAUGE(metrics::dataobject_unit_state, 1);
     bstate->add_ref();
     m_bstate.attach(bstate);
 }
 
 xunit_bstate_t::~xunit_bstate_t() {
+    XMETRICS_GAUGE(metrics::dataobject_unit_state, -1);
     m_bstate->close();  // must do close firstly
     m_bstate = nullptr;
 }

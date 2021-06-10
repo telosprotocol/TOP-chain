@@ -7,17 +7,24 @@
 #include "xdata/xdata_common.h"
 // TODO(jimmy) #include "xbase/xvledger.h"
 #include "xdata/xlightunit.h"
+#include "xmetrics/xmetrics.h"
 
 namespace top {
 namespace data {
 
 REG_CLS(xtx_receipt_t);
 
+xtx_receipt_t::xtx_receipt_t() {
+    XMETRICS_GAUGE(metrics::dataobject_tx_receipt_t, 1);
+}
+
 xtx_receipt_t::xtx_receipt_t(const xlightunit_output_entity_t* txinfo, const base::xmerkle_path_256_t & path, base::xvqcert_t* cert) : xtx_receipt_t{txinfo, {}, path, cert} {
+    XMETRICS_GAUGE(metrics::dataobject_tx_receipt_t, 1);
 }
 
 xtx_receipt_t::xtx_receipt_t(const xlightunit_output_entity_t * txinfo, std::map<std::string, xbyte_buffer_t> data, const base::xmerkle_path_256_t & path, base::xvqcert_t * cert)
   : m_receipt_data{std::move(data)} {
+    XMETRICS_GAUGE(metrics::dataobject_tx_receipt_t, 1);
     m_tx_info = (xlightunit_output_entity_t *)txinfo;
     m_tx_info->add_ref();
 
@@ -40,6 +47,7 @@ xtx_receipt_t::~xtx_receipt_t() {
     if (m_commit_prove != nullptr) {
         m_commit_prove->release_ref();
     }
+    XMETRICS_GAUGE(metrics::dataobject_tx_receipt_t, -1);
 }
 
 int32_t xtx_receipt_t::do_write(base::xstream_t & stream) {

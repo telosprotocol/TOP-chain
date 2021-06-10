@@ -17,7 +17,7 @@
 #include "xdata/xmemcheck_dbg.h"
 #include "xvm/manager/xcontract_address_map.h"
 // TODO(jimmy) #include "xbase/xvledger.h"
-
+#include "xmetrics/xmetrics.h"
 #include "xbasic/xversion.h"
 #include "xdata/xdata_defines.h"
 #include <cinttypes>
@@ -74,10 +74,12 @@ int32_t xtransaction_header::serialize_read(base::xstream_t & stream) {
 
 xtransaction_t::xtransaction_t() {
     MEMCHECK_ADD_TRACE(this, "tx_create");
+    XMETRICS_GAUGE(metrics::dataobject_xtransaction_t, 1);
 }
 
 xtransaction_t::~xtransaction_t() {
     MEMCHECK_REMOVE_TRACE(this);
+    XMETRICS_GAUGE(metrics::dataobject_xtransaction_t, -1);
 }
 
 int32_t xtransaction_t::do_write_without_hash_signature(base::xstream_t & stream, bool is_write_without_len) const {

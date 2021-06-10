@@ -7,11 +7,27 @@
 #include "xbase/xcontext.h"
 #include "xbase/xobject.h"
 #include "xvledger/xaccountindex.h"
+#include "xmetrics/xmetrics.h"
 
 NS_BEG2(top, base)
 
 REG_CLS(xtable_mbt_t);
 REG_CLS(xtable_mbt_binlog_t);
+
+xaccount_index_t::xaccount_index_t() {
+    XMETRICS_GAUGE(metrics::dataobject_xaccount_index, 1);
+}
+
+xaccount_index_t::~xaccount_index_t() {
+    XMETRICS_GAUGE(metrics::dataobject_xaccount_index, -1);
+}
+
+xaccount_index_t::xaccount_index_t(const xaccount_index_t& left) {
+    m_latest_unit_height = left.m_latest_unit_height;
+    m_latest_unit_viewid = left.m_latest_unit_viewid;
+    m_account_flag = left.m_account_flag;
+    XMETRICS_GAUGE(metrics::dataobject_xaccount_index, 1);
+}
 
 xaccount_index_t::xaccount_index_t(base::xvblock_t* unit,
                                     bool has_unconfirm_tx,
@@ -27,6 +43,7 @@ xaccount_index_t::xaccount_index_t(base::xvblock_t* unit,
     if (is_account_destroy) {
         set_account_index_flag(enum_xaccount_index_flag_account_destroy);
     }
+    XMETRICS_GAUGE(metrics::dataobject_xaccount_index, 1);
 }
 
 int32_t xaccount_index_t::do_write(base::xstream_t & stream) const {

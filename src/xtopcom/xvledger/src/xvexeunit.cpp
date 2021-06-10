@@ -6,6 +6,7 @@
 #include "xbase/xcontext.h"
 #include "xbase/xutl.h"
 #include "../xvexeunit.h"
+#include "xmetrics/xmetrics.h"
 
 namespace top
 {
@@ -16,6 +17,7 @@ namespace top
             :xdataunit_t(type)
         {
             m_parent_unit = nullptr;
+            XMETRICS_GAUGE(metrics::dataobject_exeunit, 1);
         }
     
         xvexeunit_t::xvexeunit_t(xvexeunit_t * parent_unit,const std::string & unit_name,enum_xdata_type type)
@@ -34,6 +36,7 @@ namespace top
                 m_execute_uri = parent_unit->get_execute_uri() + "/" + get_unit_name();
             else
                 m_execute_uri = get_unit_name();
+            XMETRICS_GAUGE(metrics::dataobject_exeunit, 1);
         }
     
         xvexeunit_t::xvexeunit_t(const xvexeunit_t & obj)
@@ -42,6 +45,7 @@ namespace top
             m_parent_unit = nullptr;
             m_unit_name = obj.m_unit_name;
             m_execute_uri = m_unit_name; //init
+            XMETRICS_GAUGE(metrics::dataobject_exeunit, 1);
         }
 
         xvexeunit_t::~xvexeunit_t()
@@ -49,6 +53,7 @@ namespace top
             set_parent_unit(nullptr);
             m_name_methods.clear();
             m_id_methods.clear();
+            XMETRICS_GAUGE(metrics::dataobject_exeunit, -1);
         }
         
         bool  xvexeunit_t::close(bool force_async)
@@ -196,17 +201,20 @@ namespace top
         xvexegroup_t::xvexegroup_t(enum_xdata_type type)
             :xvexeunit_t(type)
         {
+            XMETRICS_GAUGE(metrics::dataobject_exegroup, 1);
         }
     
         xvexegroup_t::xvexegroup_t(xvexeunit_t * parent_unit,const std::string unit_name,enum_xdata_type type)
             :xvexeunit_t(parent_unit,unit_name,type)
         {
+            XMETRICS_GAUGE(metrics::dataobject_exegroup, 1);
         }
     
         xvexegroup_t::xvexegroup_t(const xvexegroup_t & obj)
             :xvexeunit_t(obj)
         {
             clone_units_from(obj);
+            XMETRICS_GAUGE(metrics::dataobject_exegroup, 1);
         }
 
         xvexegroup_t::~xvexegroup_t()
@@ -219,6 +227,7 @@ namespace top
             }
             m_child_units.clear();
             m_lock.unlock();
+            XMETRICS_GAUGE(metrics::dataobject_exegroup, -1);
         }
         
         bool  xvexegroup_t::clone_units_from(const xvexegroup_t & source)
