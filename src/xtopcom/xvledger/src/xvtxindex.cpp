@@ -108,7 +108,6 @@ namespace top
         {
             if(m_raw_tx_obj != NULL) {
                 m_raw_tx_obj->release_ref();
-                m_raw_tx_obj = nullptr;
             }
             XMETRICS_GAUGE(metrics::dataobject_xvtxindex, -1);
         }
