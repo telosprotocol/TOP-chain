@@ -24,7 +24,8 @@ jobs:
 
       - name: Checkout repository
         uses: actions/checkout@v2
-        - run: git submodule update --init --recursive
+        with:
+          submodules: recursive
 
       - name: Build XTOP DEBUG
         run: |
