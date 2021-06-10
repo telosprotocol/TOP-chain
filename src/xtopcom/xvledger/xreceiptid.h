@@ -17,9 +17,9 @@ NS_BEG2(top, base)
 // receipt id relations between the two table pair
 class xreceiptid_pair_t {
  public:
-    xreceiptid_pair_t() = default;
+    xreceiptid_pair_t();
     xreceiptid_pair_t(uint64_t sendid, uint64_t confirmid, uint64_t recvid);
-
+    ~xreceiptid_pair_t();
  public:
     int32_t         do_write(base::xstream_t & stream) const;
     int32_t         do_read(base::xstream_t & stream);

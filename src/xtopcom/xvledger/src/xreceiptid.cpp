@@ -6,15 +6,25 @@
 #include <cinttypes>
 #include <sstream>
 #include "xvledger/xreceiptid.h"
+#include "xmetrics/xmetrics.h"
 
 NS_BEG2(top, base)
 
 REG_CLS(xreceiptid_pairs_t);
 
+xreceiptid_pair_t::xreceiptid_pair_t() {
+    XMETRICS_GAUGE(metrics::dataobject_xreceiptid_pair_t, 1);
+}
+
+xreceiptid_pair_t::~xreceiptid_pair_t() {
+    XMETRICS_GAUGE(metrics::dataobject_xreceiptid_pair_t, -1);
+}
+
 xreceiptid_pair_t::xreceiptid_pair_t(uint64_t sendid, uint64_t confirmid, uint64_t recvid) {
     set_sendid_max(sendid);
     set_confirmid_max(confirmid);
     set_recvid_max(recvid);
+    XMETRICS_GAUGE(metrics::dataobject_xreceiptid_pair_t, 1);
 }
 
 int32_t xreceiptid_pair_t::do_write(base::xstream_t & stream) const {
