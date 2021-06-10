@@ -81,6 +81,8 @@ string ApiMethod::get_account_from_daemon() {
     }
 }
 int ApiMethod::get_eth_file(std::string& account) {
+    if (account.substr(0, ETH_ACCOUNT_PREFIX.size()) == ETH_ACCOUNT_PREFIX)
+        std::transform(account.begin() + 1, account.end(), account.begin() + 1, ::tolower);
     std::vector<std::string> files = xChainSDK::xcrypto::scan_key_dir(g_keystore_dir);    
     for (int i = 0; i < (int)files.size(); i++)
     {
@@ -426,7 +428,10 @@ void ApiMethod::list_accounts(std::ostringstream & out_str) {
 }
 
 void ApiMethod::set_default_account(const std::string & account, const string & pw_path, std::ostringstream & out_str) {
-    const std::string store_path = g_keystore_dir + "/" + account;
+    std::string account_file(account);
+    if (account_file.substr(0, ETH_ACCOUNT_PREFIX.size()) == ETH_ACCOUNT_PREFIX)
+        get_eth_file(account_file);
+    const std::string store_path = g_keystore_dir + "/" + account_file;
     std::fstream store_file;
     store_file.open(store_path, std::ios::in);
     if (!store_file) {
@@ -3984,10 +3989,10 @@ void ApiMethod::change_trans_mode(bool use_http) {
 #ifdef DEBUG
     // std::cout << "[debug]edge_domain_name old: " << g_edge_domain << std::endl;
     char* topio_home = getenv("TOPIO_HOME");
-    std::cout <<"data_dir:" << topio_home << std::endl;
+//    std::cout <<"data_dir:" << topio_home << std::endl;
     if (topio_home) {
         g_data_dir = topio_home;
-        std::cout <<"data_dir:" << g_data_dir << std::endl;
+//        std::cout <<"data_dir:" << g_data_dir << std::endl;
     }
     auto edge_config_path = g_data_dir + "/.edge_config.json";
     std::ifstream edge_config_file(edge_config_path, std::ios::in);
