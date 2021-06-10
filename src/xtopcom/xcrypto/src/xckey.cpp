@@ -482,16 +482,6 @@ namespace top
 
             return to_eth_address(temp_publickey_data, addr_type, ledger_id);
         }
-        std::string       xecpubkey_t::to_eth_address(const uint8_t* publickey, const char addr_type,const uint16_t ledger_id)
-        {
-            char address[128] = {0};
-
-            uint256_t hash_value = xkeccak256_t::digest(publickey + 1, size() - 1);
-            std::string eth_address((char *)&hash_value + 12, sizeof(hash_value) - 12);
-            eth_address = top::HexEncode(eth_address);
-
-            return base::xvaccount_t::make_account_address((base::enum_vaccount_addr_type)base::enum_vaccount_addr_type_secp256k1_eth_user_account, ledger_id, eth_address,-1);
-        }
 
         std::string       xecpubkey_t::to_eth_address(const uint8_t* publickey, const char addr_type,const uint16_t ledger_id)
         {
