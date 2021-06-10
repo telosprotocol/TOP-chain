@@ -46,6 +46,12 @@ enum class xenum_node_type : std::uint32_t {
     /// @brief Edge zone type or edge node type.
     edge = 0x00008000,
 
+
+    /*
+     * @brief archive of edge.
+     */
+    edge_archive = 0x00010000,
+
     /// @brief Frozen zone type or frozen node type. It is used for synchronizing data.
     frozen = 0x00000100,
 

@@ -150,7 +150,7 @@ common::xnode_type_t xtop_vnetwork_driver::type() const noexcept {
     return real_part_type(m_address.cluster_address().type());
 }
 
-std::vector<common::xnode_address_t> xtop_vnetwork_driver::archive_addresses() const {
+std::vector<common::xnode_address_t> xtop_vnetwork_driver::archive_addresses(common::xenum_node_type node_type) const {
     assert(m_vhost != nullptr);
     auto const tmp = m_vhost->members_info_of_group2(common::build_archive_sharding_address(network_id()), common::xversion_t::max());
     std::vector<common::xnode_address_t> result;

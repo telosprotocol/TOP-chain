@@ -733,8 +733,9 @@ void xsync_handler_t::handle_role_change(const mbus::xevent_ptr_t& e) {
         for (auto &id: table_ids)
             set_table_ids.insert(id);
 
-        m_role_xips_mgr->add_role(addr, neighbor_addresses, parent_addresses, vnetwork_driver->archive_addresses(), set_table_ids);
-
+        m_role_xips_mgr->add_role(addr, neighbor_addresses, parent_addresses, 
+            vnetwork_driver->archive_addresses(common::xnode_type_t::archive), 
+            vnetwork_driver->archive_addresses(common::xnode_type_t::edge_archive), set_table_ids);
 
         XMETRICS_COUNTER_INCREMENT("sync_cost_role_add_event", 1);
 

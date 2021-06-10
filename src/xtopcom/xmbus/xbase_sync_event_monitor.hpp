@@ -128,7 +128,7 @@ public:
 protected:
     virtual bool filter_event(const xevent_ptr_t &e) = 0;
     virtual void process_event(const xevent_ptr_t &e) = 0;
-    virtual void before_event_pushed(const xevent_ptr_t &e, bool discard) {}
+    virtual void before_event_pushed(const xevent_ptr_t &e, bool &discard) {}
     virtual void after_event_pushed(const xevent_ptr_t& e) {}
     virtual void dump_queue_info(const xevent_object_t *e_obj) {}
 
