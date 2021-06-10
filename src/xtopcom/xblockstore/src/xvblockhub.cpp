@@ -788,8 +788,11 @@ namespace top
             //connected block must be committed as well
             base::xvbindex_t* result = query_index(m_meta->_highest_genesis_connect_height,base::enum_xvblock_flag_committed);
             if(result != nullptr)
+            {
+                clean_blocks(enum_max_cached_blocks, false);
                 return result;
-
+            }
+            clean_blocks(enum_max_cached_blocks, false);
             return load_genesis_index();
         }
 
@@ -1615,6 +1618,7 @@ namespace top
                         }
                     }
                 }
+                clean_blocks(enum_max_cached_blocks,false);
             }
 
             //finally send out all events.
@@ -1889,23 +1893,6 @@ namespace top
             if(block_ptr == NULL)
                 return false;
 
-            if(block_ptr->get_input() == NULL)
-            {
-                const std::string input_key = base::xvdbkey_t::create_block_input_key(*this,block_ptr->get_block_hash());
-                const std::string input_bin = base::xvchain_t::instance().get_xdbstore()->get_value(input_key);
-                if(input_bin.empty())
-                {
-                    xwarn_err("xblockacct_t::read_block_input_from_db,fail to read input from db for path(%s)",input_key.c_str());
-                    return false;
-                }
-                if(block_ptr->set_input(input_bin) == false)
-                {
-                    xerror("xblockacct_t::read_block_input_from_db,read bad input-entity for key(%s)",input_key.c_str());
-                    return false;
-                }
-                xdbg("xblockacct_t::read_block_input_from_db,read block-input,block(%s) ",block_ptr->dump().c_str());
-            }
-
             if(block_ptr->get_input() != NULL) //now has valid input
             {
                 if(  (block_ptr->get_input()->get_resources_hash().empty() == false) //link resoure data
@@ -2000,23 +1987,6 @@ namespace top
         {
             if(NULL == block_ptr)
                 return false;
-
-            if(block_ptr->get_output() == NULL)
-            {
-                const std::string output_key = base::xvdbkey_t::create_block_output_key(*this, block_ptr->get_block_hash());
-                const std::string output_bin = base::xvchain_t::instance().get_xdbstore()->get_value(output_key);
-                if(output_bin.empty())
-                {
-                    xwarn_err("xblockacct_t::read_block_output_from_db,fail to read output from db for path(%s)",output_key.c_str());
-                    return false;
-                }
-                if(block_ptr->set_output(output_bin) == false)
-                {
-                    xerror("xblockacct_t::read_block_output_from_db,load bad output-entity form key(%s)",output_key.c_str());
-                    return false;
-                }
-                xdbg("xblockacct_t::read_block_output_from_db,read block-output,block(%s) ",block_ptr->dump().c_str());
-            }
 
             if(block_ptr->get_output() != NULL) //now has valid output
             {

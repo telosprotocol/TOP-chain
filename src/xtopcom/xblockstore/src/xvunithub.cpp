@@ -166,7 +166,7 @@ namespace top
             }
             //XTODO, add code to rebuild block from table block
 
-            xassert(0);
+            xerror("xvblockstore_impl load_block_from_index() fail load block object(%s) at store(%s)",target_index->dump().c_str(),m_store_path.c_str());
             return nullptr;
         }
 
