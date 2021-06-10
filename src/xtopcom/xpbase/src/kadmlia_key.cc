@@ -68,6 +68,10 @@ bool ServiceType::IsNewer(ServiceType const &other, int _value) const {
     return false;
 }
 
+bool ServiceType::IsBroadcastService() const {
+    return IS_BROADCAST_HEIGHT(m_type);
+}
+
 uint64_t ServiceType::value() const { return m_type; }
 
 std::string ServiceType::info() const { return m_info; }

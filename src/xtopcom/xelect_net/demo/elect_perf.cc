@@ -108,7 +108,7 @@ void ElectPerf::TestChainTrade(uint32_t test_num,
     //     TOP_WARN("kRoot routing table not exists.");
     //     return;
     // }
-    std::cout << "num:" << test_num << ",len:" << test_len << ",type:" << gossip_type << std::endl;
+    std::cout << std::dec << "num:" << test_num << ",len:" << test_len << ",type:" << gossip_type << std::endl;
 
     static std::atomic<uint32_t> total_send_count(0);
     uint32_t send_count = 0;
@@ -180,7 +180,7 @@ void ElectPerf::TestChainTradeServiceNet(const std::string & src_node_id,
                                          uint32_t layer_switch_hop_num,
                                          uint32_t left_overlap,
                                          uint32_t right_overlap) {
-    std::cout << "src_node_id" << src_node_id << "des_node_id" << des_node_id << std::endl << "num:" << test_num << ",len:" << test_len << ",type:" << gossip_type << std::endl;
+    std::cout << std::dec << "src_node_id" << src_node_id << "des_node_id" << des_node_id << std::endl << "num:" << test_num << ",len:" << test_len << ",type:" << gossip_type << std::endl;
     uint32_t looop = test_num * backup;
 
     uint64_t start2 = GetCurrentTimeMsec();

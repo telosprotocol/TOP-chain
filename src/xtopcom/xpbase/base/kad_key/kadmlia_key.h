@@ -27,6 +27,11 @@ public:
 
     bool IsNewer(ServiceType const &other, int _value = 1) const;
 
+    // for edge && archive node routing table. The height is always the same. 
+    // The P2P net should have only one round of working node.
+    // Thus have no choose but trust the upper layer updating the routing table with election result.
+    bool IsBroadcastService() const;
+
     uint64_t value() const;
     std::string info() const;
 

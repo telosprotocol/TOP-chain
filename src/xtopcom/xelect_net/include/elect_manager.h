@@ -27,7 +27,7 @@ public:
 public:
     void OnElectUpdated(const data::election::xelection_result_store_t & election_result_store, common::xzone_id_t const & zid);
 
-    int OnElectQuit(const common::xip2_t & xip2);
+    void OnElectQuit(const common::xip2_t & xip2);
 
 private:
     void OnElectUpdated(std::vector<wrouter::WrouterTableNodes> const & elect_data);

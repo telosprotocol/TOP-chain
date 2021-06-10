@@ -91,7 +91,9 @@ void ElectManager::UpdateRoutingTable(std::vector<wrouter::WrouterTableNodes> co
     base::KadmliaKeyPtr kad_key = base::GetKadmliaKey(self_wrouter_nodes.m_xip2);
     base::ServiceType service_type = kad_key->GetServiceType();
 
-    if (wrouter::MultiRouting::Instance()->GetElectRoutingTable(service_type) != nullptr) {
+    if (service_type.IsBroadcastService()) {
+        wrouter::MultiRouting::Instance()->RemoveElectRoutingTable(service_type);
+    } else if (wrouter::MultiRouting::Instance()->GetElectRoutingTable(service_type) != nullptr) {
         xinfo("ElectManager::UpdateRoutingTable get repeated routing table info xip2: service_type:%s", self_wrouter_nodes.m_xip2.to_string().c_str(), service_type.info().c_str());
         return;
     }
@@ -116,12 +118,10 @@ void ElectManager::UpdateRoutingTable(std::vector<wrouter::WrouterTableNodes> co
     }
     routing_table_ptr = std::make_shared<kadmlia::ElectRoutingTable>(transport_, local_node_ptr);
     if (!routing_table_ptr->Init()) {
-        TOP_ERROR("init edge bitvpn routing table failed!");
+        xerror("init election routing table failed!");
         return;
     }
     wrouter::MultiRouting::Instance()->AddElectRoutingTable(service_type, routing_table_ptr);
-    // todo charles move it in multirouting.
-    std::cout << global_node_id << " create routing table: " << std::hex << service_type.value() << service_type.info() << std::endl;
 
     auto root_routing = wrouter::MultiRouting::Instance()->GetRootRoutingTable();
 
@@ -137,14 +137,10 @@ void ElectManager::UpdateRoutingTable(std::vector<wrouter::WrouterTableNodes> co
     return;
 }
 
-int ElectManager::OnElectQuit(const common::xip2_t & xip2) {
+void ElectManager::OnElectQuit(const common::xip2_t & xip2) {
     auto service_type = base::GetKadmliaKey(xip2)->GetServiceType();
     wrouter::MultiRouting::Instance()->RemoveElectRoutingTable(service_type);
-    // todo charles move it in multirouting.
-    std::cout << global_node_id << " delete routing table: " << std::hex << service_type.value() << service_type.info() << std::endl;
     xdbg("OnElectQuit service_type:%lld xip2:%s", service_type.value(), xip2.to_string().c_str());
-
-    return 0;
 }
 
 }  // namespace elect

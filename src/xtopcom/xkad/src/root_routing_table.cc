@@ -583,7 +583,7 @@ int RootRoutingTable::AddNode(NodeInfoPtr node) {
         //     return kKadNodeHasAdded;
         // }
         XMETRICS_PACKET_INFO(
-            "p2p_kad_addnode", "local_nodeid", get_local_node_info()->id(), "nodeid", HexSubstr(node->node_id), "public_ip", node->public_ip, "public_port", node->public_port);
+            "p2p_kad_addnode", "local_nodeid", get_local_node_info()->id(), "nodeid", (node->node_id), "public_ip", node->public_ip, "public_port", node->public_port);
         nodes_.push_back(node);
         nodes_delta_ += 1;
     }

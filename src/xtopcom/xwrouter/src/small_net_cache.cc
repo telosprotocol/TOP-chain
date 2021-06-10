@@ -98,15 +98,22 @@ void SmallNetNodes::AddNode(std::vector<wrouter::WrouterTableNodes> node) {
     base::ServiceType comming_service_type = base::GetKadmliaKey(node[0].m_xip2)->GetServiceType();
     std::unique_lock<std::mutex> lock(net_nodes_cache_map_mutex_);
 
-    for (auto _p : net_nodes_cache_map_) {
-        base::ServiceType service_type = _p.first;
-        if (comming_service_type.IsNewer(service_type, 2)) {
-            xdbg("ElectNetNodes::AddNode get new election result %s", comming_service_type.info().c_str());
-            service_nodes_->RemoveExpired(service_type);
-            net_nodes_cache_map_.erase(service_type);
-            break;
+    if (comming_service_type.IsBroadcastService()) {
+        if (net_nodes_cache_map_.find(comming_service_type) != net_nodes_cache_map_.end()) {
+            xdbg("ElectNetNodes::AddNode update broadcast service election result %s", comming_service_type.info().c_str());
+            net_nodes_cache_map_.erase(comming_service_type);
+        }
+    } else {
+        for (auto _p : net_nodes_cache_map_) {
+            base::ServiceType service_type = _p.first;
+            if (comming_service_type.IsNewer(service_type, 2)) {
+                xdbg("ElectNetNodes::AddNode get new election result %s erase old %s", comming_service_type.info().c_str(), service_type.info().c_str());
+                service_nodes_->RemoveExpired(service_type);
+                net_nodes_cache_map_.erase(service_type);
+            }
         }
     }
+
     net_nodes_cache_map_.insert(std::make_pair(comming_service_type, node));
 }
 

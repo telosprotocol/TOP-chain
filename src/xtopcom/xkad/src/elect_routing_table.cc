@@ -271,13 +271,13 @@ bool ElectRoutingTable::CloserToTarget(const std::string & id1, const std::strin
 void ElectRoutingTable::SetElectionNodesExpected(std::map<std::string, base::KadmliaKeyPtr> const & elect_root_kad_keys_map) {
     std::unique_lock<std::mutex> lock(m_nodes_mutex);
     m_expected_kad_keys = elect_root_kad_keys_map;
-    std::size_t index = 0;
+    std::size_t index = 1;
     for (auto _p : elect_root_kad_keys_map) {
         NodeInfoPtr node_ptr;
         node_ptr.reset(new NodeInfo(_p.first));
         if (_p.second->Get() == base::GetRootKadmliaKey(global_node_id)->Get()) {
             m_self_index = index;
-            xdbg("Charles Debug Set self infos.");
+            xdbg("Charles Debug Set self index %zu.", m_self_index);
             m_expected_kad_keys.erase(_p.first);
         }
         m_nodes.insert(std::make_pair(_p.first, node_ptr));
