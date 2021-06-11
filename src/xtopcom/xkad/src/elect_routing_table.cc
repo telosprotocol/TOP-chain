@@ -45,10 +45,6 @@ ElectRoutingTable::ElectRoutingTable(std::shared_ptr<transport::Transport> trans
 }
 
 bool ElectRoutingTable::Init() {
-    // todo charles local port && local ip might be unused? try delete it .
-    uint16_t local_port = get_transport()->local_port();
-    get_local_node_info()->set_local_port(local_port);
-
     timer_heartbeat_ = std::make_shared<base::TimerRepeated>(timer_manager_, "ElectRoutingTable::PrintRoutingTable");
     timer_heartbeat_->Start(kHeartbeatPeriod, kHeartbeatPeriod, std::bind(&ElectRoutingTable::PrintRoutingTable, this));
 
@@ -135,7 +131,7 @@ void ElectRoutingTable::PrintRoutingTable() {
     }
     XMETRICS_PACKET_INFO("p2p_kad_info",
                          "local_nodeid",
-                         get_local_node_info()->id(),
+                         get_local_node_info()->kad_key(),
                          "service_type",
                          get_local_node_info()->kadmlia_key()->GetServiceType().info().c_str(),
                          "node_size",
@@ -173,7 +169,7 @@ void ElectRoutingTable::OnHeartbeatFailed(const std::string & ip, uint16_t port)
     //         "IP:[%s],Port[%d] to ID:[%s],IP[%s],Port[%d] drop it.",
     //         (long)this,
     //         node->heartbeat_count,
-    //         HexSubstr(get_local_node_info()->id()).c_str(),
+    //         HexSubstr(get_local_node_info()->kad_key()).c_str(),
     //         get_local_node_info()->local_ip().c_str(),
     //         get_local_node_info()->local_port(),
     //         HexSubstr(node->node_id).c_str(),
@@ -185,7 +181,7 @@ void ElectRoutingTable::OnHeartbeatFailed(const std::string & ip, uint16_t port)
 void ElectRoutingTable::SetFreqMessage(transport::protobuf::RoutingMessage & message) {
     message.set_hop_num(0);
     message.set_src_service_type(get_local_node_info()->service_type().value());
-    message.set_src_node_id(get_local_node_info()->id());
+    message.set_src_node_id(get_local_node_info()->kad_key());
     message.set_xid(global_xid->Get());
     message.set_priority(enum_xpacket_priority_type_routine);
     message.set_id(CallbackManager::MessageId());

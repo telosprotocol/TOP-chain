@@ -84,27 +84,12 @@ void GossipDispatcher::GenerateDispatchInfos(transport::protobuf::RoutingMessage
 
     uint32_t overlap = message.gossip().left_overlap();
 
-    // static std::random_device rd;
-    // static std::mt19937 g(rd());
-
     std::unordered_map<std::string, kadmlia::NodeInfoPtr> const nodes_map = routing_table->nodes();
     std::unordered_map<std::string, std::size_t> const index_map = routing_table->index_map();
     std::vector<std::string> const xip2_for_shuffle = routing_table->get_shuffled_xip2();
     //! here index_map might still be uncomplete.
 
-    // std::map<std::string, std::size_t> index_map;
-    // std::vector<std::string> xip2_for_shuffle;
-    // std::size_t index = 0;
-    // for (auto _p : nodes_map) {
-    //     xip2_for_shuffle.push_back(_p.first);
-    //     index_map.insert(std::make_pair(_p.first, index));
-    //     index++;
-    // }
-    // if (message.hop_num() == 0) {
-    //     SET_INDEX_SENT(index_map.at(routing_table->get_local_node_info()->id()), sit1, sit2);
-    // }
     SET_INDEX_SENT(routing_table->get_self_index(), sit1, sit2);
-    // std::shuffle(xip2_for_shuffle.begin(), xip2_for_shuffle.end(), g);
     std::size_t index_i;
     std::vector<std::string> select_xip2;
     for (index_i = 0; index_i < xip2_for_shuffle.size(); ++index_i) {

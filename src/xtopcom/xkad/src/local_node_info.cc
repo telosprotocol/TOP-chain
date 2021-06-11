@@ -48,12 +48,16 @@ void LocalNodeInfo::Reset() {
     local_ip_ = "";
     local_port_ = 0;
     first_node_ = false;
-    private_key_ = "";
-    public_key_ = "";
     public_ip_ = "";
     public_port_ = 0;
 }
 
+std::string LocalNodeInfo::kad_key() {
+    return kadmlia_key_->Get();
+}
+std::string LocalNodeInfo::root_kad_key() {
+    return global_xid->Get();
+}
 void LocalNodeInfo::set_public_ip(const std::string & ip) {
     std::unique_lock<std::mutex> lock(public_mutex_);
     public_ip_ = ip;
@@ -64,23 +68,6 @@ void LocalNodeInfo::set_public_port(uint16_t port) {
     std::unique_lock<std::mutex> lock(public_mutex_);
     public_port_ = port;
     TOP_KINFO("kad_key[%s] set public_port %u", HexEncode(kad_key()).c_str(), public_port_);
-}
-
-bool LocalNodeInfo::IsPublicNode() {
-    std::unique_lock<std::mutex> lock(public_mutex_);
-    return local_ip_ == public_ip_ && local_port_ == public_port_;
-}
-std::string LocalNodeInfo::kad_key() {
-    return id();
-}
-std::string LocalNodeInfo::xid() {
-    return global_xid->Get();
-}
-
-std::string LocalNodeInfo::id() {
-    assert(kadmlia_key_);
-    std::lock_guard<std::mutex> lock(kadkey_mutex_);
-    return kadmlia_key_->Get();
 }
 
 }  // namespace kadmlia

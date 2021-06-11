@@ -325,7 +325,7 @@ void ElectCommands::AddBaseCommands() try {
                 std::cout << "warning: " << type.value() << " routing table invalid" << std::endl;
                 continue;
             }
-            std::cout << "local_nodeid: " << (local_node->id()) << std::endl
+            std::cout << "local_nodeid: " << (local_node->kad_key()) << std::endl
                       << "service_type: " << type.info() << std::endl
                     //   << "xnetwork_id: " << local_node->kadmlia_key()->xnetwork_id() << std::endl
                     //   << "zone_id: " << static_cast<uint32_t>(local_node->kadmlia_key()->zone_id()) << std::endl

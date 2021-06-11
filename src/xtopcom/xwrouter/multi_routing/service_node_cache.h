@@ -45,7 +45,7 @@ private:
     ServiceNodes();
     ~ServiceNodes();
     bool AddNode(base::ServiceType service_type, kadmlia::NodeInfoPtr node);
-    void OnGetRootNodesAsync(base::ServiceType service_type, const std::vector<kadmlia::NodeInfoPtr> & node_vec);
+    void OnCacheElectNodesAsync(base::ServiceType service_type, const std::vector<kadmlia::NodeInfoPtr> & node_vec);
 
     void do_update();
 

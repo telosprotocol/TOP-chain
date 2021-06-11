@@ -77,8 +77,8 @@ uint32_t MultilayerNetworkChainQuery::Broadcast(uint32_t msg_size, uint32_t coun
     if (!root_ptr) {
         return 0;
     }
-    message.set_src_node_id(root_ptr->get_local_node_info()->id());
-    message.set_des_node_id(root_ptr->get_local_node_info()->id());
+    message.set_src_node_id(root_ptr->get_local_node_info()->kad_key());
+    message.set_des_node_id(root_ptr->get_local_node_info()->kad_key());
     message.set_type(kElectVhostRumorGossipMessage);
     message.set_id(kadmlia::CallbackManager::MessageId());
     message.set_data(RandomString(msg_size));

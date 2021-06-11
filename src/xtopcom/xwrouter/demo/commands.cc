@@ -570,7 +570,7 @@ void TopCommands::TestChainTrade(
 
     backup = 1;
     message.set_broadcast(true);
-    message.set_src_node_id(src_routing_table->get_local_node_info()->id());
+    message.set_src_node_id(src_routing_table->get_local_node_info()->kad_key());
     auto des_kad_key = std::make_shared<base::PlatformKadmliaKey>(des_network_id, 1);
     if (des_network_id == 1) {
         message.set_is_root(true);
@@ -815,8 +815,6 @@ void TopCommands::PrintRoutingTable(uint64_t service_type, bool root) {
     std::cout << "self: " << HexEncode(local_node->id()) << ", " <<
         local_node->local_ip() << ":" << local_node->local_port() << ", " <<
         local_node->public_ip() << ":" << local_node->public_port() <<  ", " << std::endl;
-//        "[" << local_node->nat_type() << "]" <<
-//        ", " << HexEncode(local_node->xip()) << ", xid:" << HexEncode(local_node->xid()) << std::endl;
     std::vector<NodeInfoPtr> nodes = routing_table->GetClosestNodes(
         local_node->id(),
         kRoutingMaxNodesSize);
@@ -828,8 +826,6 @@ void TopCommands::PrintRoutingTable(uint64_t service_type, bool root) {
         std::cout << HexEncode(nodes[i]->node_id) << ", " <<
             nodes[i]->local_ip << ":" << nodes[i]->local_port << ", " <<
             nodes[i]->public_ip << ":" << nodes[i]->public_port <<  ", "
-//            << "[" << nodes[i]->nat_type << "]" << ", " << HexEncode(nodes[i]->xip)
-//            << ", xid:" << HexEncode(nodes[i]->xid)
             << "bucket_index:" << nodes[i]->bucket_index <<  std::endl;
     }
     std::cout << "all node size(include self) " << nodes.size() + 1  << std::endl;
@@ -874,7 +870,7 @@ void TopCommands::test_send(
         pbft_message.set_is_root(false);
     }
 
-    pbft_message.set_src_node_id(routing_table->get_local_node_info()->id());
+    pbft_message.set_src_node_id(routing_table->get_local_node_info()->kad_key());
     pbft_message.set_des_node_id(des_node_id);
     pbft_message.set_type(kTestChainTrade);
     pbft_message.set_id(CallbackManager::MessageId());

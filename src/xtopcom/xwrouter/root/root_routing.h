@@ -15,10 +15,10 @@ namespace top {
 namespace wrouter {
 
 enum RootMessageType {
-    kGetNodesRequest = 1,
-    kGetNodesResponse = 2,
-    kGetElectNodesRequest = 3,
-    kGetElectNodesResponse = 4,
+    kCompleteNodeRequest = 1,
+    kCompleteNodeResponse = 2,
+    kCacheElectNodesRequest = 3,
+    kCacheElectNodesResponse = 4,
 };
 
 class RootRouting : public kadmlia::RootRoutingTable {
@@ -28,10 +28,10 @@ public:
     bool Init();
     void HandleMessage(transport::protobuf::RoutingMessage & message, base::xpacket_t & packet);
     using GetRootNodesV2AsyncCallback = std::function<void(base::ServiceType, const std::vector<kadmlia::NodeInfoPtr> &)>;
-    int GetRootNodesV2Async(const std::string & des_kroot_id, base::ServiceType des_service_type, GetRootNodesV2AsyncCallback cb);
+    int CacheElectNodesAsync(const std::string & des_kroot_id, base::ServiceType des_service_type, GetRootNodesV2AsyncCallback cb);
 
 private:
-    void OnGetRootNodesV2Async(GetRootNodesV2AsyncCallback cb,
+    void OnCacheElectNodesAsync(GetRootNodesV2AsyncCallback cb,
                                std::string des_kroot_id,
                                base::ServiceType des_service_type,
                                int status,

@@ -56,10 +56,9 @@ bool ServiceNodes::GetRootNodes(base::ServiceType service_type, std::vector<kadm
         base::KadmliaKeyPtr kad_key = base::GetRootKadmliaKey(Fnode.node_id);  // kRoot id
         assert(kad_key);
         using namespace std::placeholders;
-        auto cb = std::bind(&ServiceNodes::OnGetRootNodesAsync, this, _1, _2);
+        auto cb = std::bind(&ServiceNodes::OnCacheElectNodesAsync, this, _1, _2);
         auto root_routing_table = std::dynamic_pointer_cast<RootRouting>(MultiRouting::Instance()->GetRootRoutingTable());
-        root_routing_table->GetRootNodesV2Async(kad_key->Get(), service_type, cb);
-        // RootRoutingManager::Instance()->GetRootNodesV2Async(kad_key->Get(), service_type, cb);  // just call
+        root_routing_table->CacheElectNodesAsync(kad_key->Get(), service_type, cb);
     }
     TOP_WARN("getrootnodes of service_type: %llu failed", service_type.value());
     return false;
@@ -76,16 +75,15 @@ bool ServiceNodes::GetRootNodes(base::ServiceType service_type, const std::strin
         base::KadmliaKeyPtr kad_key = base::GetRootKadmliaKey(Fnode.node_id);  // kRoot id
         assert(kad_key);
         using namespace std::placeholders;
-        auto cb = std::bind(&ServiceNodes::OnGetRootNodesAsync, this, _1, _2);
+        auto cb = std::bind(&ServiceNodes::OnCacheElectNodesAsync, this, _1, _2);
         auto root_routing_table = std::dynamic_pointer_cast<RootRouting>(MultiRouting::Instance()->GetRootRoutingTable());
-        root_routing_table->GetRootNodesV2Async(kad_key->Get(), service_type, cb);
-        // RootRoutingManager::Instance()->GetRootNodesV2Async(kad_key->Get(), service_type, cb);  // just call
+        root_routing_table->CacheElectNodesAsync(kad_key->Get(), service_type, cb);
     }
     TOP_WARN("getrootnodes of service_type: %llu failed", service_type.value());
     return false;
 }
 
-void ServiceNodes::OnGetRootNodesAsync(base::ServiceType service_type, const std::vector<kadmlia::NodeInfoPtr> & node_vec) {
+void ServiceNodes::OnCacheElectNodesAsync(base::ServiceType service_type, const std::vector<kadmlia::NodeInfoPtr> & node_vec) {
     for (auto & n : node_vec) {
         AddNode(service_type, n);
     }
@@ -290,14 +288,12 @@ void ServiceNodes::do_update() {
         base::KadmliaKeyPtr root_kad_key = base::GetRootKadmliaKey(account);  // kRoot id
         assert(root_kad_key);
         using namespace std::placeholders;
-        auto cb = std::bind(&ServiceNodes::OnGetRootNodesAsync, this, _1, _2);
+        auto cb = std::bind(&ServiceNodes::OnCacheElectNodesAsync, this, _1, _2);
         auto root_routing_table = std::dynamic_pointer_cast<RootRouting>(MultiRouting::Instance()->GetRootRoutingTable());
-        // auto root_routing_table = std::dynamic_pointer_cast<RootRouting>(MultiRouting::Instance()->GetRoutingTable(base::ServiceType{kRoot}, true));
         if (!root_routing_table)
             return;
-        root_routing_table->GetRootNodesV2Async(root_kad_key->Get(), service_type, cb);
-        // RootRoutingManager::Instance()->GetRootNodesV2Async(root_kad_key->Get(), service_type, cb);  // just call
-    }  // end for (auto& item
+        root_routing_table->CacheElectNodesAsync(root_kad_key->Get(), service_type, cb);
+    }
 }
 
 }  // end namespace wrouter

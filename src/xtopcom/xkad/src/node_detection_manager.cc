@@ -117,11 +117,8 @@ int NodeDetectionManager::Handshake(std::shared_ptr<NodeInfo> node_ptr) {
 
     protobuf::Handshake handshake;
     handshake.set_type(kHandshakeRequest);
-    handshake.set_local_ip(local_node->local_ip());
-    handshake.set_local_port(local_node->local_port());
     handshake.set_public_ip(local_node->public_ip());
     handshake.set_public_port(local_node->public_port());
-    // handshake.set_nat_type(local_node->nat_type());
     handshake.set_xid(global_xid->Get());
     std::string data;
     if (!handshake.SerializeToString(&data)) {

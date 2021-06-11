@@ -110,23 +110,23 @@ void MultiRouting::HandleRootMessage(transport::protobuf::RoutingMessage & messa
     }
 
     switch (root_message.message_type()) {
-    case kGetNodesRequest:
+    case kCompleteNodeRequest:
         XATTRIBUTE_FALLTHROUGH
-    case kGetNodesResponse:
+    case kCompleteNodeResponse:
         return root_routing_table_->HandleMessage(message, packet);
-    case kGetElectNodesRequest:
-        return HandleGetElectNodesRequest(message, packet);
-    case kGetElectNodesResponse:
-        return HandleGetElectNodesResponse(message, packet);
+    case kCacheElectNodesRequest:
+        return HandleCacheElectNodesRequest(message, packet);
+    case kCacheElectNodesResponse:
+        return HandleCacheElectNodesResponse(message, packet);
     default:
         TOP_WARN("invalid root message type[%d].", root_message.message_type());
         break;
     }
 }
 
-void MultiRouting::HandleGetElectNodesRequest(transport::protobuf::RoutingMessage & message, base::xpacket_t & packet) {
+void MultiRouting::HandleCacheElectNodesRequest(transport::protobuf::RoutingMessage & message, base::xpacket_t & packet) {
     std::unique_lock<std::mutex> lock(root_routing_table_mutex_);
-    if (message.des_node_id() != root_routing_table_->get_local_node_info()->id()) {
+    if (message.des_node_id() != root_routing_table_->get_local_node_info()->kad_key()) {
         bool closest = false;
         if (root_routing_table_->ClosestToTarget(message.des_node_id(), closest) != kKadSuccess) {
             TOP_WARN("root routing closesttotarget goes wrong");
@@ -136,13 +136,13 @@ void MultiRouting::HandleGetElectNodesRequest(transport::protobuf::RoutingMessag
             TOP_DEBUG("root routing continue sendtoclosest");
             return root_routing_table_->SendToClosestNode(message);
         }
-        TOP_INFO("this is the closest node(%s) of msg.des_node_id(%s)", (root_routing_table_->get_local_node_info()->id()).c_str(), (message.des_node_id()).c_str());
+        TOP_INFO("this is the closest node(%s) of msg.des_node_id(%s)", (root_routing_table_->get_local_node_info()->kad_key()).c_str(), (message.des_node_id()).c_str());
     } else {
-        TOP_DEBUG("this is the des node(%s)", (root_routing_table_->get_local_node_info()->id()).c_str());
+        TOP_DEBUG("this is the des node(%s)", (root_routing_table_->get_local_node_info()->kad_key()).c_str());
     }
 
     if (!message.has_data() || message.data().empty()) {
-        TOP_WARN("HandleGetElectNodesRequest has no data!");
+        TOP_WARN("HandleCacheElectNodesRequest has no data!");
         return;
     }
 
@@ -152,9 +152,9 @@ void MultiRouting::HandleGetElectNodesRequest(transport::protobuf::RoutingMessag
         return;
     }
 
-    protobuf::RootGetElectNodesRequest get_nodes_req;
+    protobuf::RootCacheElectNodesRequest get_nodes_req;
     if (!get_nodes_req.ParseFromString(root_message.data())) {
-        TOP_WARN("RootGetElectNodesRequest ParseFromString failed!");
+        TOP_WARN("RootCacheElectNodesRequest ParseFromString failed!");
         return;
     }
     base::ServiceType des_service_type = base::ServiceType(get_nodes_req.des_service_type());
@@ -171,32 +171,15 @@ void MultiRouting::HandleGetElectNodesRequest(transport::protobuf::RoutingMessag
         assert(false);
     }
     routing_table->GetRandomNodes(nodes, get_nodes_req.count());
-    // nodes = routing_table->GetClosestNodes(local_node_ptr->id(), get_nodes_req.count() - 1);
 
-    transport::protobuf::RoutingMessage res_message;
-#ifndef NDEBUG
-    if (message.has_debug()) {
-        res_message.set_debug(message.debug());
-    }
-#endif
-
-    root_routing_table_->SetFreqMessage(res_message);
-    res_message.set_is_root(true);
-    res_message.set_src_service_type(message.des_service_type());
-    res_message.set_des_service_type(kRoot);
-    res_message.set_des_node_id(message.src_node_id());
-    res_message.set_type(kRootMessage);
-    res_message.set_id(message.id());
-    protobuf::RootGetElectNodesResponse get_nodes_res;
+    protobuf::RootCacheElectNodesResponse get_nodes_res;
     if (local_node_ptr->public_port() > 0) {
         protobuf::NodeInfo * node_info = get_nodes_res.add_nodes();
-        node_info->set_id(local_node_ptr->id());
+        node_info->set_id(local_node_ptr->kad_key());
         node_info->set_public_ip(local_node_ptr->public_ip());
         node_info->set_public_port(local_node_ptr->public_port());
-        node_info->set_local_ip(local_node_ptr->local_ip());
-        node_info->set_local_port(local_node_ptr->local_port());
     } else {
-        TOP_WARN("public_port invalid: %d of this node:%s", local_node_ptr->public_port(), (local_node_ptr->id()).c_str());
+        TOP_WARN("public_port invalid: %d of this node:%s", local_node_ptr->public_port(), (local_node_ptr->kad_key()).c_str());
     }
 
     auto tmp_ready_nodes = 0;
@@ -222,26 +205,38 @@ void MultiRouting::HandleGetElectNodesRequest(transport::protobuf::RoutingMessag
         node_info->set_id(nodes[i]->node_id);
         node_info->set_public_ip(nodes[i]->public_ip);
         node_info->set_public_port(nodes[i]->public_port);
-        node_info->set_local_ip(nodes[i]->local_ip);
-        node_info->set_local_port(nodes[i]->local_port);
         ++tmp_ready_nodes;
     }
     TOP_DEBUG("nodes:%d ready_nodes:%d filtered:%d", nodes.size(), tmp_ready_nodes, nodes.size() - tmp_ready_nodes);
 
     std::string data;
     if (!get_nodes_res.SerializeToString(&data)) {
-        TOP_WARN("RootGetElectNodesResponse SerializeToString failed!");
+        TOP_WARN("RootCacheElectNodesResponse SerializeToString failed!");
         return;
     }
 
     protobuf::RootMessage root_res_message;
-    root_res_message.set_message_type(kGetElectNodesResponse);
+    root_res_message.set_message_type(kCacheElectNodesResponse);
     root_res_message.set_data(data);
     std::string root_data;
     if (!root_res_message.SerializeToString(&root_data)) {
         TOP_WARN("RootMessage SerializeToString failed!");
         return;
     }
+
+    transport::protobuf::RoutingMessage res_message;
+#ifndef NDEBUG
+    if (message.has_debug()) {
+        res_message.set_debug(message.debug());
+    }
+#endif
+    root_routing_table_->SetFreqMessage(res_message);
+    res_message.set_is_root(true);
+    res_message.set_src_service_type(message.des_service_type());
+    res_message.set_des_service_type(kRoot);
+    res_message.set_des_node_id(message.src_node_id());
+    res_message.set_type(kRootMessage);
+    res_message.set_id(message.id());
 
     res_message.set_data(root_data);
 
@@ -250,9 +245,9 @@ void MultiRouting::HandleGetElectNodesRequest(transport::protobuf::RoutingMessag
     return;
 }
 
-void MultiRouting::HandleGetElectNodesResponse(transport::protobuf::RoutingMessage & message, base::xpacket_t & packet) {
+void MultiRouting::HandleCacheElectNodesResponse(transport::protobuf::RoutingMessage & message, base::xpacket_t & packet) {
     std::unique_lock<std::mutex> lock(root_routing_table_mutex_);
-    if (message.des_node_id() != root_routing_table_->get_local_node_info()->id()) {
+    if (message.des_node_id() != root_routing_table_->get_local_node_info()->kad_key()) {
         return root_routing_table_->SendToClosestNode(message);
     }
 

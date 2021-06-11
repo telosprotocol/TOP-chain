@@ -6,7 +6,6 @@
 #include "xdb/xdb_factory.h"
 #include "xelect_net/include/http_client.h"
 #include "xelect_net/include/https_client.h"
-#include "xkad/proto/ledger.pb.h"
 #include "xkad/routing_table/routing_utils.h"
 #include "xtransport/udp_transport/udp_transport.h"
 #include "xwrouter/multi_routing/multi_routing.h"

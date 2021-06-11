@@ -42,8 +42,8 @@ public:
 public:
     void HandleRootMessage(transport::protobuf::RoutingMessage & message, base::xpacket_t & packet);
 
-    void HandleGetElectNodesRequest(transport::protobuf::RoutingMessage & message, base::xpacket_t & packet);
-    void HandleGetElectNodesResponse(transport::protobuf::RoutingMessage & message, base::xpacket_t & packet);
+    void HandleCacheElectNodesRequest(transport::protobuf::RoutingMessage & message, base::xpacket_t & packet);
+    void HandleCacheElectNodesResponse(transport::protobuf::RoutingMessage & message, base::xpacket_t & packet);
 
 private:
     std::shared_ptr<wrouter::RootRouting> root_routing_table_;

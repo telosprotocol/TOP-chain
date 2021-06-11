@@ -61,14 +61,14 @@ int32_t WrouterXidHandler::SendPacket(transport::protobuf::RoutingMessage & mess
         base::ServiceType service_type = ParserServiceType(message.des_node_id());
         if (service_type == base::ServiceType{kRoot} && message.has_is_root() && message.is_root()) {
             auto root_routing_table = FindRootRoutingTable();
-            message.set_src_node_id(root_routing_table->get_local_node_info()->id());
+            message.set_src_node_id(root_routing_table->get_local_node_info()->kad_key());
         } else {
             auto elect_routing_table = FindElectRoutingTable(service_type);
             if (!elect_routing_table) {
                 TOP_WARN2("FindRoutingTable failed");
                 return enum_xerror_code_fail;
             }
-            message.set_src_node_id(elect_routing_table->get_local_node_info()->id());
+            message.set_src_node_id(elect_routing_table->get_local_node_info()->kad_key());
         }
         // RoutingTablePtr routing_table = nullptr;
 
@@ -84,7 +84,7 @@ int32_t WrouterXidHandler::SendPacket(transport::protobuf::RoutingMessage & mess
         //     TOP_WARN2("FindRoutingTable failed");
         //     return enum_xerror_code_fail;
         // }
-        // message.set_src_node_id(routing_table->get_local_node_info()->id());
+        // message.set_src_node_id(routing_table->get_local_node_info()->kad_key());
     }
 
     if (MulticastPacketCheck(message)) {
@@ -140,7 +140,7 @@ int32_t WrouterXidHandler::SendGeneral(transport::protobuf::RoutingMessage & mes
             return enum_xerror_code_fail;
         }
 
-        TOP_DEBUG("sendgeneral using routing_table: %s", (routing_table->get_local_node_info()->id()).c_str());
+        TOP_DEBUG("sendgeneral using routing_table: %s", (routing_table->get_local_node_info()->kad_key()).c_str());
 
         std::string des_xid = message.des_node_id();
         routing_table->GetClosestNodes(des_xid,8);
@@ -171,7 +171,7 @@ int32_t WrouterXidHandler::SendGeneral(transport::protobuf::RoutingMessage & mes
             return SendData(message, des_nodes, kBroadcastGeneral, false);
         }
 
-        TOP_DEBUG("sendgeneral using routing_table: %s", (routing_table->get_local_node_info()->id()).c_str());
+        TOP_DEBUG("sendgeneral using routing_table: %s", (routing_table->get_local_node_info()->kad_key()).c_str());
 
         // no root ,no broadcast p2p 1159
         std::string des_xid = message.des_node_id();
@@ -274,7 +274,7 @@ int32_t WrouterXidHandler::SendGossip(transport::protobuf::RoutingMessage & mess
     RootRoutingTablePtr routing_table;
     routing_table = FindRootRoutingTable();
 
-    TOP_DEBUG("sendgossip routing_table: %s", (routing_table->get_local_node_info()->id()).c_str());
+    TOP_DEBUG("sendgossip routing_table: %s", (routing_table->get_local_node_info()->kad_key()).c_str());
 
     if (!routing_table) {
         TOP_WARN2("FindRoutingTable failed");
@@ -519,7 +519,7 @@ int32_t WrouterXidHandler::JudgeOwnPacket(transport::protobuf::RoutingMessage & 
             TOP_NETWORK_DEBUG_FOR_PROTOMESSAGE("wrouter kJudgeOwnNoAndContinue", message);
             return kJudgeOwnNoAndContinue;
         }
-        std::string match_kad_id = routing_table->get_local_node_info()->id();
+        std::string match_kad_id = routing_table->get_local_node_info()->kad_key();
 
         if (message.des_node_id().compare(match_kad_id) == 0) {
             TOP_NETWORK_DEBUG_FOR_PROTOMESSAGE("wrouter kJudgeOwnYes", message);
@@ -532,7 +532,7 @@ int32_t WrouterXidHandler::JudgeOwnPacket(transport::protobuf::RoutingMessage & 
             TOP_NETWORK_DEBUG_FOR_PROTOMESSAGE("wrouter kJudgeOwnNoAndContinue", message);
             return kJudgeOwnNoAndContinue;
         }
-        std::string match_kad_id = routing_table->get_local_node_info()->id();
+        std::string match_kad_id = routing_table->get_local_node_info()->kad_key();
         if (message.des_node_id().compare(match_kad_id) == 0) {
             TOP_NETWORK_DEBUG_FOR_PROTOMESSAGE("wrouter kJudgeOwnYes", message);
             return kJudgeOwnYes;

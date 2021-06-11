@@ -64,16 +64,6 @@ void GossipInterface::Send(transport::protobuf::RoutingMessage & message, const 
             return false;
         }
 
-        /*
-        if (node_info_ptr->xid.empty()) {
-            TOP_ERROR("node xid is empty.");
-            return false;
-        }
-        if ((node_info_ptr->xid).compare(global_xid->Get()) == 0) {
-            TOP_ERROR("node xid equal self.");
-            return false;
-        }
-        */
         packet.reset_process_flags(0);
         packet.set_to_ip_addr(node_info_ptr->public_ip);
         packet.set_to_ip_port(node_info_ptr->public_port);
@@ -106,17 +96,6 @@ void GossipInterface::MutableSend(transport::protobuf::RoutingMessage & message,
             TOP_WARN2("kadmlia::NodeInfoPtr null");
             return false;
         }
-
-        /*
-        if (node_info_ptr->xid.empty()) {
-            TOP_WARN("node xid is empty.");
-            return false;
-        }
-        if ((node_info_ptr->xid).compare(global_xid->Get()) == 0) {
-            TOP_WARN("node xid equal self.");
-            return false;
-        }
-        */
 
         message.set_des_node_id(node_info_ptr->node_id);
         std::string body;
