@@ -60,9 +60,6 @@ public:
         const base::KadmliaKeyPtr& recv_kad_key,
         const elect::xelect_message_t& message,
         bool is_broadcast) const;
-#ifdef DEBUG
-    int  test_send(const std::string& des_node_id, bool broadcast = true, bool root = false);
-#endif
     /**
      * @brief register message callback for networkid
      * 

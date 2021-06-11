@@ -10,7 +10,6 @@
 
 #include "xbasic/xhash.hpp"
 #include "xkad/routing_table/routing_utils.h"
-#include "xkad/nat_detect/nat_defines.h"
 #include "xtransport/transport_fwd.h"
 
 namespace top {

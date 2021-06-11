@@ -4,7 +4,6 @@
 
 #pragma once
 
-#include "xkad/nat_detect/nat_defines.h"
 #include "xkad/routing_table/routing_utils.h"
 #include "xpbase/base/kad_key/kadmlia_key.h"
 #include "xpbase/base/xid/xid_def.h"

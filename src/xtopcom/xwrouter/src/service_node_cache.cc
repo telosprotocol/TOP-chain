@@ -51,7 +51,6 @@ bool ServiceNodes::GetRootNodes(base::ServiceType service_type, std::vector<kadm
         return true;
     }
 
-    // NetNode Fnode;
     WrouterTableNodes Fnode;
     if (small_net_nodes_->FindRandomNode(Fnode, service_type)) {
         base::KadmliaKeyPtr kad_key = base::GetRootKadmliaKey(Fnode.node_id);  // kRoot id
@@ -72,7 +71,6 @@ bool ServiceNodes::GetRootNodes(base::ServiceType service_type, const std::strin
         return true;
     }
 
-    // NetNode Fnode;
     WrouterTableNodes Fnode;
     if (small_net_nodes_->FindRandomNode(Fnode, service_type)) {
         base::KadmliaKeyPtr kad_key = base::GetRootKadmliaKey(Fnode.node_id);  // kRoot id

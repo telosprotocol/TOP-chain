@@ -13,13 +13,6 @@ namespace top {
 
 namespace gossip {
 
-enum ReliableLevel {
-    kGossipReliableInvalid = 0,
-    kGossipReliableHigh = 1,
-    kGossipReliableMiddle = 2,
-    kGossipReliableLow = 3,
-};
-
 enum GossipType {
     kGossipInvalid = 0,
     kGossipBloomfilter = 1,
@@ -32,17 +25,6 @@ enum GossipType {
     kGossipRRS = 8,
     kGossipDispatcher = 9,
 };
-
-/*
-enum GossipBlockSyncType {
-    kGossipBlockSyncInvalid = kadmlia::kKadMessageTypeMax + 1,
-    kGossipBlockSyncAsk,
-    kGossipBlockSyncAck,
-    kGossipBlockSyncRequest,
-    kGossipBlockSyncResponse,
-    kGossipMaxMessageType,
-};
-*/
 
 static const uint32_t kGossipSendoutMaxTimes = 3u;
 static const uint32_t kGossipSendoutMaxNeighbors = 3u;

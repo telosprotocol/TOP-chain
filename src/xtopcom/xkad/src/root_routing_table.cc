@@ -10,7 +10,6 @@
 #include "xkad/routing_table/callback_manager.h"
 #include "xkad/routing_table/local_node_info.h"
 #include "xkad/routing_table/node_detection_manager.h"
-#include "xkad/routing_table/nodeid_utils.h"
 #include "xmetrics/xmetrics.h"
 #include "xpbase/base/check_cast.h"
 #include "xpbase/base/endpoint_util.h"

@@ -104,13 +104,6 @@ std::vector<network::xnetwork_message_ready_callback_t> EcNetcard::getall_rumor_
     return cb_vec;
 }
 
-#ifdef DEBUG
-int EcNetcard::test_send(const std::string& des_node_id, bool broadcast, bool root) {
-    // TODO(smaug)
-    return kVhostSendSuccess;
-}
-#endif
-
 int EcNetcard::send(
         const base::KadmliaKeyPtr& send_kad_key,
         const base::KadmliaKeyPtr& recv_kad_key,

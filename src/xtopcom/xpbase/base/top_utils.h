@@ -87,19 +87,6 @@ static const int64_t kRecursiveCount = 4;
 static const uint32_t kUdpPacketBufferSize = 8000U;
 
 
-static const std::string LOCAL_VPN_SERVER_DB_KEY = "local_vpn_server";
-static const std::string LOCAL_EDGE_DB_KEY = "local_edge";
-static const std::string LOCAL_COUNTRY_DB_KEY = "local_country_code";
-static const std::string kLocalDbGlobalXidField = "global_xid";
-static const std::string BLOCK_DB_KEY = "block_chain";
-static const std::string BLOCK_DB_LAST_KEY = "block_chain_last_hash";
-static const std::string BLOCK_DB_HEADER_KEY = "block_chain_head";
-static const std::string BLOCK_DB_BODY_KEY = "block_chain_body";
-
-static const char KEY_FIELD_SPLIT_STR = '\x01';
-typedef std::function<void(const int&, const std::string&)> ReceiveCallbackFunctor;
-static ReceiveCallbackFunctor GlobalVpnCallback;
-
 uint64_t GetCurrentTimeMsec();
 uint64_t GetCurrentTimeMicSec();
 void TrimString(std::string& in_str);

@@ -111,9 +111,8 @@ void MultiRouting::HandleRootMessage(transport::protobuf::RoutingMessage & messa
 
     switch (root_message.message_type()) {
     case kGetNodesRequest:
-        // return HandleFindNodesFromOthersRequest(message, packet);
+        XATTRIBUTE_FALLTHROUGH
     case kGetNodesResponse:
-        // return HandleFindNodesFromOthersResponse(message, packet);
         return root_routing_table_->HandleMessage(message, packet);
     case kGetElectNodesRequest:
         return HandleGetElectNodesRequest(message, packet);

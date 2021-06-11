@@ -46,13 +46,6 @@ static const int kJoinRetryTimes = 5;
 static const uint32_t kFindNodesBloomfilterBitSize = 2048;  // for 256 nodes, error_rate = 4%
 static const uint32_t kFindNodesBloomfilterHashNum = 11;
 
-static const std::string kUdpNatDetectMagic = "UdpNatDetectMagic";
-static const std::string LOCAL_COUNTRY_DB_KEY = "local_country_code";
-static const std::string LOCAL_EDGE_DB_KEY = "local_edge";
-static const std::string TCP_RELAY_PORT_DB_KEY = "tcp_relay_ports";
-static const std::string BOOTSTRAP_CACHE_DB_KEY = "bootstrap_cache";
-static const std::string VERSION_KEY = "NODE_VERSION";
-static const std::string COPYRIGHT_KEY = "NODE_COPYRIGHT";
 
 void GetPublicEndpointsConfig(const top::base::Config & config, std::set<std::pair<std::string, uint16_t>> & boot_endpoints);
 

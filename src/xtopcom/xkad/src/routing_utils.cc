@@ -11,7 +11,6 @@
 
 #include "xbase/xhash.h"
 #include "xkad/routing_table/local_node_info.h"
-#include "xkad/routing_table/nodeid_utils.h"
 #include "xpbase/base/endpoint_util.h"
 #include "xpbase/base/kad_key/kadmlia_key.h"
 #include "xpbase/base/line_parser.h"
