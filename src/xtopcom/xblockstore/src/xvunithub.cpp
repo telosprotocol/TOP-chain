@@ -435,7 +435,7 @@ namespace top
                             //XTODO,move set_parent_block into extract_sub_blocks
                             //unit_block->set_parent_block(container_block->get_account(),container_block->get_viewid(),xxx);
 
-                            if(false == store_block_but_not_execute(unit_account,unit_block.get())) //any fail resultin  re-unpack whole table again
+                            if(false == store_block(unit_account,unit_block.get())) //any fail resultin  re-unpack whole table again
                             {
                                 table_extract_all_unit_successful = false;//reset to false for any failure of unit
                                 xwarn("xvblockstore_impl::store_block,fail-store unit-block=%s",unit_block->dump().c_str());
