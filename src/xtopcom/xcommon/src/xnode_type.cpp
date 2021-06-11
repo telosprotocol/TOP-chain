@@ -49,12 +49,12 @@ to_string(xnode_type_t const type) {
         string += "validator.";
     }
 
-    if (has<xnode_type_t::full>(type)) {
-        string += "full.";
+    if (has<xnode_type_t::archive>(type)) {
+        string += "archive.";
     }
 
-    if (has<xnode_type_t::light>(type)) {
-        string += "light.";
+    if (has<xnode_type_t::full_node>(type)) {
+        string += "full_node.";
     }
 
     if (has<xnode_type_t::group>(type)) {

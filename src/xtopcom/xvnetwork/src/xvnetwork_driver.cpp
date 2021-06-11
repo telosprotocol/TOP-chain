@@ -154,7 +154,7 @@ std::vector<common::xnode_address_t> xtop_vnetwork_driver::archive_addresses(com
     assert(m_vhost != nullptr);
     std::vector<common::xnode_address_t> result;
     switch (node_type) {
-    case common::xnode_type_t::full_archive:
+    case common::xnode_type_t::storage_archive:
     {
         auto const & tmp = m_vhost->members_info_of_group2(common::build_archive_sharding_address(common::xarchive_group_id, network_id()), common::xversion_t::max());
         result.reserve(tmp.size());
@@ -166,7 +166,7 @@ std::vector<common::xnode_address_t> xtop_vnetwork_driver::archive_addresses(com
         break;
     }
 
-    case common::xnode_type_t::light_archive:
+    case common::xnode_type_t::storage_full_node:
     {
         auto const & tmp = m_vhost->members_info_of_group2(common::build_archive_sharding_address(common::xedge_archive_group_id, network_id()), common::xversion_t::max());
         result.reserve(tmp.size());
@@ -193,9 +193,9 @@ std::vector<std::uint16_t> xtop_vnetwork_driver::table_ids() const {
     book_ids.reserve(enum_vbucket_has_books_count);
 
     switch (type()) {
-    case common::xnode_type_t::full_archive:
+    case common::xnode_type_t::storage_archive:
         XATTRIBUTE_FALLTHROUGH;
-    case common::xnode_type_t::light_archive:
+    case common::xnode_type_t::storage_full_node:
         XATTRIBUTE_FALLTHROUGH;
     case common::xnode_type_t::committee: {
         auto const zone_range = data::book_ids_belonging_to_zone(common::xcommittee_zone_id, 1, {0, static_cast<std::uint16_t>(enum_vbucket_has_books_count)});
