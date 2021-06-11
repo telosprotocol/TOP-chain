@@ -24,8 +24,9 @@ jobs:
 
       - name: Checkout repository
         uses: actions/checkout@v2
-        - run: git submodule update --remote
-        
+      - name: Checkout submodules
+        run: git submodule update --init --recursive
+
       - name: Build XTOP DEBUG
         run: |
           bash .github/scripts/build_xtop.sh "test build_ci"
