@@ -6,6 +6,8 @@
 #include <cinttypes>
 #include "xbase/xutl.h"
 #include "xbase/xcontext.h"
+#include "xconfig/xconfig_register.h"
+#include "xconfig/xpredefined_configurations.h"
 #include "xvblockhub.h"
 #include "xvgenesis.h"
 #include "xvledger/xvdbkey.h"
@@ -177,6 +179,14 @@ namespace top
 
         std::string xblockacct_t::dump() const  //just for debug purpose
         {
+            if(get_addr_type() == base::enum_vaccount_addr_type_block_contract)
+            {
+                auto full_table_interval_num = XGET_CONFIG(fulltable_interval_block_num);
+                if(m_meta->_highest_execute_block_height + full_table_interval_num < m_meta->_highest_full_block_height)
+                {
+                    xwarn("xblockacct_t execute behind latest height for full=%llu by %llu", m_meta->_highest_full_block_height, m_meta->_highest_full_block_height - m_meta->_highest_execute_block_height);
+                }
+            }
             char local_param_buf[256];
             xprintf(local_param_buf,sizeof(local_param_buf),"{account_id(%" PRIu64 "),account_addr=%s ->latest height for full=%" PRId64 ",geneis_connect=%" PRId64 ", connect=%" PRId64 ",commit=%" PRId64 ",execute=%" PRId64 " < lock=%" PRId64 " < cert=%" PRId64 "; at store(%s)}",get_xvid(), get_address().c_str(),m_meta->_highest_full_block_height,m_meta->_highest_genesis_connect_height,m_meta->_highest_connect_block_height,m_meta->_highest_commit_block_height,m_meta->_highest_execute_block_height,m_meta->_highest_lock_block_height,m_meta->_highest_cert_block_height,get_blockstore_path().c_str());
 
