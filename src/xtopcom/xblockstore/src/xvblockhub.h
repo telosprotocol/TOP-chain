@@ -111,9 +111,12 @@ namespace top
             uint64_t  _lowest_genesis_connect_height;  //[_lowest_genesis_connect_height,_highest_genesis_connect_height]
             uint64_t  _highest_genesis_connect_height;//indicated the last block who is connected to genesis block
             std::string _highest_genesis_connect_hash;
-            uint64_t _highest_sync_height;          // higest continous block started from highest full table block
+            uint64_t _highest_sync_height;           // higest continous block started from highest full table block
+            
+            uint16_t  _reserved_u16;      //reserved for future
+            uint8_t   _block_level;       //set per block 'enum_xvblock_level,each account has unique level
         private:
-             uint8_t   _meta_spec_version; //add version control for compatible case
+            uint8_t   _meta_spec_version; //add version control for compatible case
         };
 
         //each account has own virtual store
@@ -147,7 +150,7 @@ namespace top
             //clean all cached blocks after reach max idle duration(as default it is 60 seconds)
             bool                   reset_cache_timeout(const uint32_t max_idle_time_ms);
             const int              get_cache_size();
-
+            inline int             get_block_level() const {return m_meta->_block_level;}
             inline const std::string &   get_blockstore_path()   const {return m_blockstore_path;};
 
             bool                   process_events();

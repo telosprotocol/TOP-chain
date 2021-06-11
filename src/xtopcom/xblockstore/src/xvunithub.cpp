@@ -401,6 +401,18 @@ namespace top
         {
             xdbg("jimmy xvblockstore_impl::store_block enter,store block(%s)", container_block->dump().c_str());
 
+            if(container_block->get_height() != 0) //to avoid regenerate genesis block
+            {
+                base::xauto_ptr<base::xvbindex_t> existing_index(container_account->load_index(container_block->get_height(), container_block->get_block_hash()));
+                if(existing_index) //double check the existign index to cover some exception cases
+                {
+                    if((existing_index->get_block_flags() & base::enum_xvblock_flag_unpacked) != 0) //did unpacked
+                    {
+                        container_block->set_block_flag(base::enum_xvblock_flag_unpacked);//merge flag of unpack
+                    }
+                }
+            }
+            
             //then try extract for container if that is
             if(  (container_block->get_block_class() == base::enum_xvblock_class_light) //skip nil block
                &&(container_block->get_block_level() == base::enum_xvblock_level_table) )
@@ -450,6 +462,9 @@ namespace top
                 }
             }
             
+            //move clean logic here to reduce risk of reenter process that might clean up some index too early
+            container_account->clean_caches(false);
+            //then do sotre block
             bool ret = container_account->store_block(container_block);
             if(!ret)
             {
@@ -457,6 +472,8 @@ namespace top
                 // return false;
             }
 
+            //may optimization later: let U.S module manualy call execute for unit block, so here just filter case of unit while store_block
+            //if(container_block->get_block_level() != base::enum_xvblock_level_unit)
             container_account->try_execute_all_block(container_block);  // try to push execute block, ignore store result
 
             return true; //still return true since tableblock has been stored successful
@@ -692,7 +709,18 @@ namespace top
                 xblockacct_t* _test_for_plugin = expire_it->second;
                 if(_test_for_plugin != nullptr)
                 {
-                    if( (false == _test_for_plugin->is_live(current_time_ms)) || (total_active_acounts > enum_max_active_acconts) ) //force to remove most less-active account while too much caches
+                    bool  fore_close = false;//init as false
+                    if(   (total_active_acounts > enum_max_active_acconts)
+                       && (_test_for_plugin->get_block_level() == base::enum_xvblock_level_unit) )
+                    {
+                        fore_close = true; //only force close unit when hold too many accounts
+                    }
+                    else if(false == _test_for_plugin->is_live(current_time_ms))//idle too long
+                    {
+                        fore_close = true;
+                    }
+                    
+                    if(fore_close) //force to remove most less-active account while too much caches
                     {
                         base::xauto_ptr<base::xvaccountobj_t> target_account_container = base::xvchain_t::instance().get_account(*_test_for_plugin);
                         //always use same lock for same account

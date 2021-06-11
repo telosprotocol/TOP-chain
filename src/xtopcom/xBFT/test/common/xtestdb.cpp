@@ -146,9 +146,9 @@ namespace top
                 else
                 {
                     m_clock_store2[key] = value;
-                    if(m_clock_store2.size() >= 32)
+                    if(m_clock_store2.size() >= 128)
                         m_clock_store.clear();
-                    if(m_clock_store2.size() >= 64)
+                    if(m_clock_store2.size() >= 256)
                         m_cur_clock_store += 1;
                     
                     xdbg("xstoredb_t::store clock key(%s) at store#2",key.c_str());
