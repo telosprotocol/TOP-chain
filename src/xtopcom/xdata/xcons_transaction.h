@@ -6,9 +6,10 @@
 
 #include <string>
 
+#include "xvledger/xtxreceipt.h"
+#include "xvledger/xvaccount.h"
 #include "xdata/xtransaction.h"
-#include "xdata/xtxreceipt.h"
-#include "xdata/xblockbody.h"
+#include "xdata/xlightunit_info.h"
 
 namespace top { namespace data {
 
@@ -16,7 +17,7 @@ class xcons_transaction_t : public xbase_dataunit_t<xcons_transaction_t, xdata_t
  public:
     xcons_transaction_t();
     xcons_transaction_t(xtransaction_t* raw_tx);
-    xcons_transaction_t(xtransaction_t* tx, xtx_receipt_ptr_t receipt);
+    xcons_transaction_t(xtransaction_t* tx, const base::xtx_receipt_ptr_t & receipt);
  protected:
     virtual ~xcons_transaction_t();
  private:
@@ -29,8 +30,9 @@ class xcons_transaction_t : public xbase_dataunit_t<xcons_transaction_t, xdata_t
  public:
     std::string                     dump(bool detail = false) const;
     std::string                     dump_execute_state() const {return m_execute_state.dump();}
-    inline xtransaction_t*          get_transaction() const {return m_tx;}
-    const xlightunit_output_entity_t*     get_tx_info() const {return m_receipt->get_tx_info();}
+    inline xtransaction_t*          get_transaction() const {return m_tx.get();}
+    std::string                     get_tx_hash() const {return m_tx->get_digest_str();}
+    uint256_t                       get_tx_hash_256() const {return m_tx->digest();}
     bool                            verify_cons_transaction();
     void                            set_commit_prove_with_parent_cert(base::xvqcert_t* prove_cert);
     void                            set_commit_prove_with_self_cert(base::xvqcert_t* prove_cert);
@@ -55,7 +57,6 @@ class xcons_transaction_t : public xbase_dataunit_t<xcons_transaction_t, xdata_t
     std::string             get_digest_hex_str() const {return m_tx->get_digest_hex_str();}
     uint32_t                get_last_action_used_tgas() const;
     uint32_t                get_last_action_used_deposit() const;
-    uint32_t                get_last_action_used_disk() const;
     uint32_t                get_last_action_send_tx_lock_tgas() const;
     uint32_t                get_last_action_recv_tx_use_send_tx_tgas() const;
     enum_xunit_tx_exec_status   get_last_action_exec_status() const;
@@ -70,13 +71,11 @@ class xcons_transaction_t : public xbase_dataunit_t<xcons_transaction_t, xdata_t
     uint32_t                get_current_used_tgas() const {return m_execute_state.get_used_tgas();}
     void                    set_current_used_deposit(uint32_t deposit) {m_execute_state.set_used_deposit(deposit);}
     uint32_t                get_current_used_deposit() const {return m_execute_state.get_used_deposit();}
-    void                    set_current_beacon_service_fee(uint64_t to_burn) {m_execute_state.set_beacon_service_fee(to_burn);}//TODO(jimmy) delete
     void                    set_current_send_tx_lock_tgas(uint32_t tgas) {m_execute_state.set_send_tx_lock_tgas(tgas);}
     uint32_t                get_current_send_tx_lock_tgas() const {return m_execute_state.get_send_tx_lock_tgas();}
     void                    set_current_recv_tx_use_send_tx_tgas(uint32_t tgas) {m_execute_state.set_recv_tx_use_send_tx_tgas(tgas);}
     uint32_t                get_current_recv_tx_use_send_tx_tgas() const {return m_execute_state.get_recv_tx_use_send_tx_tgas();}
     void                    set_current_exec_status(enum_xunit_tx_exec_status status) {m_execute_state.set_tx_exec_status(status);}
-    void                    set_self_burn_balance(uint64_t value) {m_execute_state.set_self_burn_balance(value);}
     uint32_t                get_current_receipt_id() const {return m_execute_state.get_receipt_id();}
     void                    set_current_receipt_id(base::xtable_shortid_t tableid, uint64_t value) {m_execute_state.set_receipt_id(tableid, value);}
 
@@ -86,7 +85,7 @@ class xcons_transaction_t : public xbase_dataunit_t<xcons_transaction_t, xdata_t
 
     // enum_xunit_tx_exec_status   get_current_exec_status() const {return m_execute_state.get_exec_status();}
     const base::xvqcert_t*  get_unit_cert() const {return m_receipt->get_unit_cert();}
-    xtx_receipt_ptr_t       get_receipt() const {return m_receipt;}
+    bool                    is_receipt_valid() const {return m_receipt->is_valid();}
 
  public:
     bool                    get_tx_info_prove_cert_and_account(base::xvqcert_t* & cert, std::string & account) const;
@@ -97,8 +96,8 @@ class xcons_transaction_t : public xbase_dataunit_t<xcons_transaction_t, xdata_t
     uint64_t                get_dump_receipt_id() const;
 
  private:
-    xtransaction_t*     m_tx{nullptr};
-    xtx_receipt_ptr_t   m_receipt{nullptr};
+    xtransaction_ptr_t          m_tx{nullptr};
+    base::xtx_receipt_ptr_t     m_receipt{nullptr};
 
  private:  // local member, should not serialize
     xtransaction_exec_state_t    m_execute_state;

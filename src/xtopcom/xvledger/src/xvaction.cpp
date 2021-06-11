@@ -74,6 +74,7 @@ namespace top
             m_used_tgas   = obj.m_used_tgas;
             m_max_tgas    = obj.m_max_tgas;
             m_org_tx_hash = obj.m_org_tx_hash;
+            m_org_tx_action_id = obj.m_org_tx_action_id;
             parse_uri();
         }
     
@@ -83,6 +84,7 @@ namespace top
             m_used_tgas   = moved.m_used_tgas;
             m_max_tgas    = moved.m_max_tgas;
             m_org_tx_hash = moved.m_org_tx_hash;
+            m_org_tx_action_id = moved.m_org_tx_action_id;
             parse_uri();
         }
     
@@ -116,6 +118,7 @@ namespace top
             const int32_t begin_size = stream.size();
             
             stream.write_tiny_string(m_org_tx_hash);
+            stream << m_org_tx_action_id;
             xvmethod_t::do_write(stream);
             
             if(get_method_result() != nullptr)
@@ -137,6 +140,7 @@ namespace top
             const int32_t begin_size = stream.size();
             
             stream.read_tiny_string(m_org_tx_hash);
+            stream >> m_org_tx_action_id;
             const int result = xvmethod_t::do_read(stream);
             xassert(result > 0);
             

@@ -242,11 +242,23 @@ std::string xblock_t::dump_header() const {
     ss << ",features:" << get_header()->get_block_features();
     ss << ",version:" << get_header()->get_block_version();
     ss << ",weight:" << get_header()->get_weight();
-    ss << ",comments:"  << get_header()->get_comments();
-    ss << ",extra:"     << get_header()->get_extra_data();
+    if (!get_header()->get_comments().empty()) {
+        ss << ",comments:"  << get_header()->get_comments();
+    }
+    ss << ",extra:"     << base::xhash64_t::digest(get_header()->get_extra_data());
     ss << ",last_h:" << base::xhash64_t::digest(get_header()->get_last_block_hash());
     ss << ",input_h=" << base::xhash64_t::digest(get_header()->get_input_hash());
     ss << ",output_h=" << base::xhash64_t::digest(get_header()->get_output_hash());
+    if (get_block_class() != base::enum_xvblock_class_nil) {
+        std::string     _input_bin;
+        std::string     _output_bin;
+        get_input()->serialize_to_string(_input_bin);
+        get_output()->serialize_to_string(_output_bin);
+        ss << ",i_=" << base::xhash64_t::digest(_input_bin);
+        ss << ",ic_=" << get_input()->get_entitys().size();
+        ss << ",o_=" << base::xhash64_t::digest(_output_bin);
+        ss << ",oc_=" << get_output()->get_entitys().size();
+    }
     ss << "}";
     return ss.str();
 }
@@ -300,33 +312,6 @@ std::string xblock_t::dump_body() const {
     return ss.str();
 }
 
-void xblock_t::set_parent_cert_and_path(base::xvqcert_t * parent_cert, const base::xmerkle_path_256_t & path) {
-    if (!(get_cert()->get_consensus_flags() & base::enum_xconsensus_flag_extend_cert)) {
-        xassert(0);
-        return;
-    }
-    if (check_block_flag(base::enum_xvblock_flag_authenticated)) {
-        xassert(0);
-        return;
-    }
-    xassert(get_block_hash().empty());
-
-    std::string parent_cert_bin;
-    parent_cert->serialize_to_string(parent_cert_bin);
-    xassert(!parent_cert_bin.empty());
-    xassert(get_cert()->get_extend_cert().empty());
-    set_extend_cert(parent_cert_bin);
-
-    base::xstream_t stream2(base::xcontext_t::instance());
-    path.serialize_to(stream2);
-    std::string extend_data = std::string((char *)stream2.data(), stream2.size());
-    xassert(get_cert()->get_extend_data().empty());
-    set_extend_data(extend_data);
-
-    set_block_flag(base::enum_xvblock_flag_authenticated);
-    xassert(!get_block_hash().empty());
-}
-
 std::string xblock_t::get_block_hash_hex_str() const {
     return to_hex_str(get_block_hash());
 }
@@ -339,22 +324,6 @@ xlightunit_tx_info_ptr_t xblock_t::get_tx_info(const std::string & txhash) const
         }
     }
     return nullptr;
-}
-
-bool xblock_t::calc_input_merkle_path(const std::string & leaf, base::xmerkle_path_256_t & hash_path) const {
-    if (get_input_root_hash().empty()) {
-        xassert(0);
-        return false;
-    }
-    return base::xvblockbuild_t::calc_input_merkle_path(get_input(), leaf, hash_path);
-}
-bool xblock_t::calc_output_merkle_path(const std::string & leaf, base::xmerkle_path_256_t & hash_path) const {
-    if (get_output_root_hash().empty()) {
-        xassert(0);
-        return false;
-    }
-
-    return base::xvblockbuild_t::calc_output_merkle_path(get_output(), leaf, hash_path);
 }
 
 bool xblock_t::is_full_state_block() const {

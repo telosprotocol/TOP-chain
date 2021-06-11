@@ -334,10 +334,6 @@ void xtxpool_service::check_and_response_recv_receipt(const xcons_transaction_pt
     }
     XMETRICS_TIME_RECORD("txpool_message_unit_receipt_check_receipt");
     xdbg("xtxpool_service::check_and_response_recv_receipt receipt=%s at_node:%ld", cons_tx->dump().c_str(), m_xip.low_addr);
-    const xlightunit_output_entity_t * info = cons_tx->get_tx_info();
-
-    xassert(info->is_send_tx());
-
     // if tx subtype is recv and is resend, need not select by function has_receipt_right, because sender is already selected by gmtime before here.
 
     uint32_t resend_time = xreceipt_strategy_t::calc_resend_time(cons_tx->get_unit_cert()->get_gmtime(), xverifier::xtx_utl::get_gmttime_s());
@@ -421,7 +417,7 @@ bool xtxpool_service::set_commit_prove(data::xcons_transaction_ptr_t & cons_tx) 
             }
             cons_tx->set_commit_prove_with_self_cert(justify_unit_block->get_cert());
         }
-        xassert(cons_tx->get_receipt()->is_valid());
+        xassert(cons_tx->is_receipt_valid());
     } else {
         xdbg("xtxpool_service::set_commit_prove receipt already set commit prove. tx=%s", cons_tx->dump().c_str());
     }
@@ -439,7 +435,7 @@ void xtxpool_service::send_receipt_retry(data::xcons_transaction_ptr_t & cons_tx
 
 void xtxpool_service::send_receipt_first_time(data::xcons_transaction_ptr_t & cons_tx, xblock_t * cert_block) {
     cons_tx->set_commit_prove_with_parent_cert(cert_block->get_cert());
-    xassert(cons_tx->get_receipt()->is_valid());
+    xassert(cons_tx->is_receipt_valid());
     send_receipt_real(cons_tx);
     XMETRICS_COUNTER_INCREMENT("txpool_receipt_first_send", 1);
 }
@@ -606,20 +602,6 @@ xcons_transaction_ptr_t xtxpool_service::get_confirmed_tx(const uint256_t & hash
         }
     }
     return nullptr;
-}
-
-int32_t xtxpool_confirm_receipt_msg_t::do_write(base::xstream_t & stream) {
-    KEEP_SIZE();
-    stream << m_source_addr;
-    DEFAULT_SERIALIZE_PTR(m_receipt);
-    return CALC_LEN();
-}
-
-int32_t xtxpool_confirm_receipt_msg_t::do_read(base::xstream_t & stream) {
-    KEEP_SIZE();
-    stream >> m_source_addr;
-    DEFAULT_DESERIALIZE_PTR(m_receipt, xtx_receipt_t);
-    return CALC_LEN();
 }
 
 void xtxpool_service::send_pull_receipts_of_recv(xreceipt_pull_recv_receipt_t & pulled_receipt) {

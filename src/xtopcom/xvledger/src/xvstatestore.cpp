@@ -282,15 +282,15 @@ namespace top
                     }
                 } else if (_block->get_block_class() == enum_xvblock_class_full) {
                     xassert(_block->get_output()->get_binlog().empty());
-                    xassert(!_block->get_output()->get_binlog_hash().empty());
+                    xassert(!_block->get_output()->get_state_hash().empty());
 
                     std::string binlog;
                     auto canvas = current_state->rebase_change_to_snapshot();
                     canvas->encode(binlog);
                     xassert(!binlog.empty());
-                    if (!_block->get_output()->get_binlog_hash().empty()) {
+                    if (!_block->get_output()->get_state_hash().empty()) {
                         std::string binlog_hash = base::xcontext_t::instance().hash(binlog, _block->get_cert()->get_crypto_hash_type());
-                        if (binlog_hash != _block->get_output()->get_binlog_hash()) {
+                        if (binlog_hash != _block->get_output()->get_state_hash()) {
                             xerror("xvblkstatestore_t::rebuild_bstate,unmatch binlog hash and abort it for block(%s)",_block->dump().c_str());
                             return nullptr;
                         }

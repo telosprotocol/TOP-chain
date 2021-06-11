@@ -133,10 +133,13 @@ namespace top
             friend class xvblockstore_t;
         public:
             static  const std::string   name(){ return std::string("xvoutentity");}
+            static  const std::string   key_name_state_hash(){ return std::string("0");}
+            static  const std::string   key_name_binlog_hash(){ return std::string("1");}
             virtual std::string         get_obj_name() const override {return name();}
             enum{enum_obj_type = enum_xobject_type_voutentity};
         public:
             xvoutentity_t(const std::string & state_bin_log);
+            xvoutentity_t(const std::string & state_hash, const std::string & binlog_hash);
             xvoutentity_t(const xvoutentity_t & obj);
         protected:
             xvoutentity_t();
@@ -148,17 +151,19 @@ namespace top
         public:
             //caller need to cast (void*) to related ptr
             virtual void*             query_interface(const int32_t _enum_xobject_type_) override;
+            void                      set_value(const std::string & key, const std::string & value);
             //general key-value query, e.g. query leaf of merkle tree by query_data("merkle-tree-leaf")
-            virtual const std::string query_value(const std::string & key) override;//virtual key-value for entity
+            const std::string         query_value(const std::string & key) const;//key-value for entity
             
-            const std::string &       get_state_binlog() const {return m_state_binlog;}
+            const std::string         get_state_hash() const {return query_value(key_name_state_hash());}
+            const std::string         get_binlog_hash() const {return query_value(key_name_binlog_hash());}
             
         protected:
             //return how many bytes readout /writed in, return < 0(enum_xerror_code_type) when have error
             virtual int32_t           do_write(xstream_t & stream) override; //allow subclass extend behavior
             virtual int32_t           do_read(xstream_t & stream)  override; //allow subclass extend behavior
         private:
-            std::string     m_state_binlog;
+            std::map<std::string, std::string>  m_values;
         };
     
         //xvbinentity_t present binary or unknow entity

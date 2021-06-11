@@ -12,37 +12,10 @@
 NS_BEG2(top, data)
 
 REG_CLS(xfull_tableblock_t);
-REG_CLS(xfulltable_output_entity_t);
 
-xfulltable_block_para_t::xfulltable_block_para_t(const std::string & snapshot_hash, const xstatistics_data_t & statistics_data) {
-    m_snapshot_hash = snapshot_hash;
+xfulltable_block_para_t::xfulltable_block_para_t(const std::string & snapshot, const xstatistics_data_t & statistics_data) {
+    m_snapshot = snapshot;
     m_block_statistics_data = statistics_data;
-}
-
-xfulltable_output_entity_t::xfulltable_output_entity_t(const std::string & offdata_root) {
-    set_offdata_root(offdata_root);
-}
-
-int32_t xfulltable_output_entity_t::do_write(base::xstream_t & stream) {
-    KEEP_SIZE();
-    stream.write_compact_map(m_paras);
-    return CALC_LEN();
-}
-int32_t xfulltable_output_entity_t::do_read(base::xstream_t & stream) {
-    KEEP_SIZE();
-    stream.read_compact_map(m_paras);
-    return CALC_LEN();
-}
-
-void xfulltable_output_entity_t::set_offdata_root(const std::string & root) {
-    m_paras[PARA_OFFDATA_ROOT] = root;
-}
-std::string xfulltable_output_entity_t::get_offdata_root() const {
-    auto iter = m_paras.find(PARA_OFFDATA_ROOT);
-    if (iter != m_paras.end()) {
-        return iter->second;
-    }
-    return {};
 }
 
 xfull_tableblock_t::xfull_tableblock_t(base::xvheader_t & header, base::xvqcert_t & cert, base::xvinput_t* input, base::xvoutput_t* output)
@@ -54,12 +27,6 @@ xfull_tableblock_t::xfull_tableblock_t()
 }
 xfull_tableblock_t::~xfull_tableblock_t() {
 
-}
-
-std::string     xfull_tableblock_t::get_offdata_hash() const {
-    xfulltable_output_entity_t* entity = dynamic_cast<xfulltable_output_entity_t*>(get_output()->get_entitys()[0]);
-    xassert(entity != nullptr);
-    return entity->get_offdata_root();
 }
 
 base::xobject_t * xfull_tableblock_t::create_object(int type) {
@@ -74,7 +41,7 @@ void * xfull_tableblock_t::query_interface(const int32_t _enum_xobject_type_) {
 }
 
 xstatistics_data_t xfull_tableblock_t::get_table_statistics() const {
-    std::string resource_str = get_output()->query_resource(RESOURCE_NODE_SIGN_STATISTICS);
+    std::string resource_str = get_input()->query_resource(RESOURCE_NODE_SIGN_STATISTICS);
     xassert(!resource_str.empty());
     xstatistics_data_t statistics_data;
     statistics_data.deserialize_based_on<base::xstream_t>({ std::begin(resource_str), std::end(resource_str) });

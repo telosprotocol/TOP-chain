@@ -145,6 +145,19 @@ std::string xrootblock_t::get_rootblock_address() {
     return genesis_root_addr_main_chain;
 }
 
+xobject_ptr_t<xrootblock_input_t> xrootblock_t::get_rootblock_input() const {
+    static xobject_ptr_t<xrootblock_input_t> m_rootblock_input = nullptr;
+    if (m_rootblock_input != nullptr) {
+        return m_rootblock_input;
+    }
+    std::string resource_bin = get_input()->query_resource(xrootblock_t::root_resource_name);
+    xassert(!resource_bin.empty());
+    xobject_ptr_t<xrootblock_input_t> input = make_object_ptr<xrootblock_input_t>();
+    input->serialize_from_string(resource_bin);
+    m_rootblock_input = input;
+    return m_rootblock_input;
+}
+
 uint64_t xrootblock_t::get_initial_balance(const std::string& account_addr) {
     xassert(m_instance != nullptr);
     if (m_instance != nullptr) {

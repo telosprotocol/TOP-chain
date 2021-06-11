@@ -121,7 +121,7 @@ private:
     std::string       m_memo{};
 };
 
-class xtransaction_t : public xbase_dataobj_t<xtransaction_t, xdata_type_transaction>, public xtransaction_header {
+class xtransaction_t : public xbase_dataunit_t<xtransaction_t, xdata_type_transaction>, public xtransaction_header {
  public:
     xtransaction_t();
  protected:
@@ -206,55 +206,6 @@ class xtransaction_t : public xbase_dataobj_t<xtransaction_t, xdata_type_transac
 };
 
 using xtransaction_ptr_t = xobject_ptr_t<xtransaction_t>;
-
-class xtransaction_store_t : public xbase_dataobj_t<xtransaction_store_t, xdata_type_transaction_store> {
- public:
-    xtransaction_store_t() = default;
- protected:
-    ~xtransaction_store_t() {}
-
- public:
-    virtual int32_t    do_write(base::xstream_t & stream) override;
-    virtual int32_t    do_read(base::xstream_t & stream) override;
-
-    void set_raw_tx(xtransaction_t* tx) {
-        if (m_raw_tx == nullptr && tx != nullptr) {
-            tx->add_ref();
-            m_raw_tx.attach(tx);
-        }
-    }
-
-    void set_send_unit_height(uint64_t height) {
-        if (m_send_unit_height < height) {
-            m_send_unit_height = height;
-            add_modified_count();
-        }
-    }
-
-    void set_recv_unit_height(uint64_t height) {
-        if (m_recv_unit_height < height) {
-            m_recv_unit_height = height;
-            add_modified_count();
-        }
-    }
-
-    void set_recv_ack_unit_height(uint64_t height) {
-        if (m_confirm_unit_height < height) {
-            m_confirm_unit_height = height;
-            add_modified_count();
-        }
-    }
-
- public:
-    xtransaction_ptr_t  m_raw_tx{nullptr};  // may be null
-    uint64_t            m_send_unit_height{0};
-    uint64_t            m_recv_unit_height{0};
-    uint64_t            m_confirm_unit_height{0};
-    uint32_t            m_flag{0};
-    std::string         m_ext;
-
-};
-using xtransaction_store_ptr_t = xobject_ptr_t<xtransaction_store_t>;
 
 }  // namespace data
 }  // namespace top

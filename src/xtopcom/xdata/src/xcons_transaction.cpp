@@ -24,12 +24,13 @@ xcons_transaction_t::xcons_transaction_t(xtransaction_t* tx) {
     update_transation();
 }
 
-xcons_transaction_t::xcons_transaction_t(xtransaction_t* tx, xtx_receipt_ptr_t receipt) {
+xcons_transaction_t::xcons_transaction_t(xtransaction_t* tx, const base::xtx_receipt_ptr_t & receipt) {
     xassert(!tx->digest().empty());
-    xassert(tx->get_digest_str() == receipt->get_tx_info()->get_tx_hash());
+    xassert(tx->get_digest_str() == receipt->get_tx_hash());
     base::xstream_t stream(base::xcontext_t::instance());
     tx->serialize_to(stream);
-    m_tx = (xtransaction_t*)base::xdataobj_t::read_from(stream);
+    xtransaction_t* _tx = (xtransaction_t*)base::xdataunit_t::read_from(stream);  // TODO(jimmy) not copy
+    m_tx.attach(_tx);
     xassert(receipt != nullptr);
     m_receipt = receipt;
     XMETRICS_GAUGE(metrics::dataobject_cur_xbase_type_cons_transaction, 1);
@@ -37,9 +38,6 @@ xcons_transaction_t::xcons_transaction_t(xtransaction_t* tx, xtx_receipt_ptr_t r
 }
 
 xcons_transaction_t::~xcons_transaction_t() {
-    if (m_tx != nullptr) {
-        m_tx->release_ref();
-    }
     XMETRICS_GAUGE(metrics::dataobject_cur_xbase_type_cons_transaction, -1);
 }
 
@@ -62,11 +60,11 @@ const std::string & xcons_transaction_t::get_receipt_target_account()const {
 }
 
 void xcons_transaction_t::set_commit_prove_with_parent_cert(base::xvqcert_t* prove_cert) {
-    m_receipt->set_commit_prove_cert(prove_cert, xprove_cert_class_parent_cert, xprove_cert_type_justify_cert, get_unit_cert()->get_extend_data());
+    m_receipt->set_commit_prove_with_parent_cert(prove_cert, get_unit_cert()->get_extend_data());
 }
 
 void xcons_transaction_t::set_commit_prove_with_self_cert(base::xvqcert_t* prove_cert) {
-    m_receipt->set_commit_prove_cert(prove_cert, xprove_cert_class_self_cert, xprove_cert_type_justify_cert, {});
+    m_receipt->set_commit_prove_with_self_cert(prove_cert);
 }
 
 bool xcons_transaction_t::is_commit_prove_cert_set() const {
@@ -99,7 +97,7 @@ bool xcons_transaction_t::get_commit_prove_cert_and_account(base::xvqcert_t* & c
     }
 
     account = get_receipt_source_account();
-    if (m_receipt->get_tx_info_prove()->get_prove_class() == xprove_cert_class_parent_cert) {
+    if (m_receipt->get_tx_info_prove()->get_prove_class() == base::xprove_cert_class_parent_cert) {
         // change to parent account
         account = account_address_to_block_address(common::xaccount_address_t(account));
     }
@@ -115,9 +113,9 @@ void xcons_transaction_t::update_transation() {
             m_tx->set_tx_subtype(enum_transaction_subtype_send);
         }
     } else {
-        if (m_receipt->get_tx_info()->get_tx_subtype() == enum_transaction_subtype_send) {
+        if (m_receipt->get_tx_subtype() == enum_transaction_subtype_send) {
             m_tx->set_tx_subtype(enum_transaction_subtype_recv);
-        } else if (m_receipt->get_tx_info()->get_tx_subtype() == enum_transaction_subtype_recv) {
+        } else if (m_receipt->get_tx_subtype() == enum_transaction_subtype_recv) {
             m_tx->set_tx_subtype(enum_transaction_subtype_confirm);
         } else {
             xassert(0);
@@ -127,16 +125,35 @@ void xcons_transaction_t::update_transation() {
 
 int32_t xcons_transaction_t::do_write(base::xstream_t & stream) {
     KEEP_SIZE();
-    m_tx->serialize_to(stream);
-    DEFAULT_SERIALIZE_PTR(m_receipt)
+    uint8_t has_tx = m_tx != nullptr;
+    stream << has_tx;
+    if (m_tx != nullptr) {
+        m_tx->serialize_to(stream);
+    }
+    uint8_t has_receipt = m_receipt != nullptr;
+    stream << has_receipt;
+    if (m_receipt != nullptr) {
+        m_receipt->serialize_to(stream);
+    }
     return CALC_LEN();
 }
 
 int32_t xcons_transaction_t::do_read(base::xstream_t & stream) {
     KEEP_SIZE();
-    m_tx = new xtransaction_t();
-    m_tx->serialize_from(stream);
-    DEFAULT_DESERIALIZE_PTR(m_receipt, xtx_receipt_t);
+    uint8_t has_tx;
+    stream >> has_tx;
+    if (has_tx) {
+        xtransaction_t* _tx = (xtransaction_t*)base::xdataunit_t::read_from(stream);
+        xassert(_tx != nullptr);
+        m_tx.attach(_tx);
+    }
+    uint8_t has_receipt;
+    stream >> has_receipt;
+    if (has_receipt) {
+        base::xtx_receipt_t* _receipt = (base::xtx_receipt_t*)base::xdataunit_t::read_from(stream);
+        xassert(_receipt != nullptr);
+        m_receipt.attach(_receipt);
+    }
 
     update_transation();
 
@@ -150,7 +167,7 @@ bool xcons_transaction_t::verify_cons_transaction() {
             xerror("xcons_transaction_t::verify_cons_transaction should has receipt");
             return false;
         }
-        if (m_tx->get_digest_str() != m_receipt->get_tx_info()->get_tx_hash()) {
+        if (m_tx->get_digest_str() != m_receipt->get_tx_hash()) {
             xerror("xcons_transaction_t::verify_cons_transaction tx digest not match");
             return false;
         }
@@ -190,9 +207,9 @@ std::string xcons_transaction_t::dump(bool detail) const {
         if (get_transaction()->get_source_addr() != get_transaction()->get_target_addr()) {
             ss << "->" << get_transaction()->get_target_addr();
         }
-        if (m_receipt != nullptr) {
-            ss << ",txout:" << m_receipt->get_tx_info()->get_tx_exec_state().dump();
-        }
+        // if (m_receipt != nullptr) {
+        //     ss << ",txout:" << m_receipt->get_tx_info()->get_tx_exec_state().dump();
+        // }
     }
     ss << "}";
     return ss.str();
@@ -200,60 +217,69 @@ std::string xcons_transaction_t::dump(bool detail) const {
 
 uint32_t xcons_transaction_t::get_last_action_used_tgas() const {
     if (m_receipt != nullptr) {
-        return m_receipt->get_tx_info()->get_tx_exec_state().get_used_tgas();
+        std::string value = m_receipt->get_tx_result_property(xtransaction_exec_state_t::XPROPERTY_FEE_TX_USED_TGAS);
+        if (!value.empty()) {
+            return base::xstring_utl::touint32(value);
+        }
     }
-    xassert(0);
     return 0;
 }
 uint32_t xcons_transaction_t::get_last_action_used_deposit() const {
     if (m_receipt != nullptr) {
-        return m_receipt->get_tx_info()->get_tx_exec_state().get_used_deposit();
+        std::string value = m_receipt->get_tx_result_property(xtransaction_exec_state_t::XPROPERTY_FEE_TX_USED_DEPOSIT);
+        if (!value.empty()) {
+            return base::xstring_utl::touint32(value);
+        }
     }
-    //xassert(0);
     return 0;
 }
-uint32_t xcons_transaction_t::get_last_action_used_disk() const {
-    if (m_receipt != nullptr) {
-        return m_receipt->get_tx_info()->get_tx_exec_state().get_used_disk();
-    }
-    xassert(0);
-    return 0;
-}
+
 uint32_t xcons_transaction_t::get_last_action_send_tx_lock_tgas() const {
     if (m_receipt != nullptr) {
-        return m_receipt->get_tx_info()->get_tx_exec_state().get_send_tx_lock_tgas();
+        std::string value = m_receipt->get_tx_result_property(xtransaction_exec_state_t::XPROPERTY_FEE_SEND_TX_LOCK_TGAS);
+        if (!value.empty()) {
+            return base::xstring_utl::touint32(value);
+        }
     }
-    //xassert(0);
     return 0;
 }
 enum_xunit_tx_exec_status xcons_transaction_t::get_last_action_exec_status() const {
     if (m_receipt != nullptr) {
-        return (enum_xunit_tx_exec_status)m_receipt->get_tx_info()->get_tx_exec_state().get_tx_exec_status();
+        std::string value = m_receipt->get_tx_result_property(xtransaction_exec_state_t::XTX_STATE_TX_EXEC_STATUS);
+        if (!value.empty()) {
+            return (enum_xunit_tx_exec_status)base::xstring_utl::touint32(value);
+        }
     }
-    xassert(0);
     return (enum_xunit_tx_exec_status)0;
 }
 
 uint32_t xcons_transaction_t::get_last_action_recv_tx_use_send_tx_tgas() const {
     if (m_receipt != nullptr) {
-        xassert(m_receipt->get_tx_info()->is_recv_tx());
-        return m_receipt->get_tx_info()->get_tx_exec_state().get_recv_tx_use_send_tx_tgas();
+        xassert(m_receipt->is_recv_tx());
+        std::string value = m_receipt->get_tx_result_property(xtransaction_exec_state_t::XPROPERTY_FEE_RECV_TX_USE_SEND_TX_TGAS);
+        if (!value.empty()) {
+            return base::xstring_utl::touint32(value);
+        }
     }
-    xassert(0);
     return 0;
 }
 uint64_t xcons_transaction_t::get_last_action_receipt_id() const {
     if (m_receipt != nullptr) {
-        return m_receipt->get_tx_info()->get_tx_exec_state().get_receipt_id();
+        std::string value = m_receipt->get_tx_result_property(xtransaction_exec_state_t::XTX_RECEIPT_ID);
+        if (!value.empty()) {
+            return base::xstring_utl::touint64(value);
+        }
     }
-    xassert(0);
     return 0;
 }
 base::xtable_shortid_t xcons_transaction_t::get_last_action_receipt_id_tableid() const {
     if (m_receipt != nullptr) {
-        return m_receipt->get_tx_info()->get_tx_exec_state().get_receipt_id_tableid();
+        // TODO(jimmy) need this property ??
+        std::string value = m_receipt->get_tx_result_property(xtransaction_exec_state_t::XTX_RECEIPT_ID_TABLE_ID);
+        if (!value.empty()) {
+            return (base::xtable_shortid_t)base::xstring_utl::touint32(value);
+        }
     }
-    xassert(0);
     return 0;
 }
 
