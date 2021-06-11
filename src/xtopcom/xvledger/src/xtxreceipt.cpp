@@ -4,6 +4,7 @@
 
 #include <string>
 #include "xvledger/xtxreceipt.h"
+#include "xmetrics/xmetrics.h"
 
 namespace top
 {
@@ -13,11 +14,12 @@ namespace top
 
         xtx_receipt_t::xtx_receipt_t()
         : m_tx_action({},{},{},"invalid") {  // TODO(jimmy)
-
+            XMETRICS_GAUGE(metrics::dataobject_tx_receipt_t, 1);
         }
         xtx_receipt_t::xtx_receipt_t(const base::xvaction_t & txaction, const base::xmerkle_path_256_t & path, base::xvqcert_t * cert)
         : m_tx_action(txaction) {
             set_tx_prove(cert, xprove_cert_class_self_cert, xprove_cert_type_input_root, path);
+            XMETRICS_GAUGE(metrics::dataobject_tx_receipt_t, 1);
         }
 
         xtx_receipt_t::~xtx_receipt_t() {
@@ -27,6 +29,7 @@ namespace top
             if (m_commit_prove != nullptr) {
                 m_commit_prove->release_ref();
             }
+            XMETRICS_GAUGE(metrics::dataobject_tx_receipt_t, -1);
         }
 
         int32_t xtx_receipt_t::do_write(base::xstream_t & stream) {

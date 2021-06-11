@@ -86,7 +86,7 @@ namespace top
             stream << _highest_genesis_connect_height;
             stream.write_tiny_string(_highest_genesis_connect_hash);
             stream << _highest_sync_height;
-            
+
             //from here we introduce version control for meta
             stream << _meta_spec_version;
             stream << _block_level;
@@ -111,12 +111,12 @@ namespace top
             stream >> _highest_genesis_connect_height;
             stream.read_tiny_string(_highest_genesis_connect_hash);
             stream >> _highest_sync_height;
-            
+
             stream >> _meta_spec_version;
             stream >> _block_level;
             stream >> _reserved_u16;
             stream >> _lowest_genesis_connect_height;
-            
+
             if(stream.size() > 0) //still have data to read
             {
             }
@@ -187,7 +187,7 @@ namespace top
                 const uint32_t fall_num = 128;
                 if(m_meta->_highest_execute_block_height + fall_num < m_meta->_highest_full_block_height)
                 {
-                    xwarn("xblockacct_t execute behind latest height for full=%llu by %llu", m_meta->_highest_full_block_height, m_meta->_highest_full_block_height - m_meta->_highest_execute_block_height);
+                    xwarn("xblockacct_t execute behind latest height account_addr=%s for full=%llu by %llu", get_address().c_str(), m_meta->_highest_full_block_height, m_meta->_highest_full_block_height - m_meta->_highest_execute_block_height);
                 }
             }
             char local_param_buf[256];
@@ -436,7 +436,7 @@ namespace top
             uint64_t _idle_timeout_ms = m_idle_timeout_ms;
             if(m_meta->_block_level > base::enum_xvblock_level_unit)
                 _idle_timeout_ms = _idle_timeout_ms << 4; //scale 16 times * m_idle_timeout_ms for table ,book etc
-            
+
             if( timenow_ms > (_idle_timeout_ms + m_last_access_time_ms) )
                 return false;
             return true;
@@ -1119,7 +1119,7 @@ namespace top
                 {
                     write_index_to_db(final_cached_index); //save index then
                 }
-                
+
                 //update block_level for first block
                 if(m_meta->_block_level == (uint8_t)-1)
                 {
@@ -1408,7 +1408,7 @@ namespace top
                     const int new_block_flags      = this_block->get_block_flags();
                     if( (new_block_flags & base::enum_xvblock_flag_unpacked) != 0)//merge unpacket flag into existing one
                         existing_block->set_block_flag(base::enum_xvblock_flag_unpacked);
-                        
+
                     if(  (existing_block_flags == new_block_flags)
                        ||(existing_block_flags & base::enum_xvblock_flags_high4bit_mask) >= (new_block_flags & base::enum_xvblock_flags_high4bit_mask)
                        ) //outdated one try to overwrite newer one,abort it
