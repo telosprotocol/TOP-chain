@@ -66,7 +66,7 @@ void xrole_chains_t::add_tables(common::xnode_type_t allow_types,
         if (m_type == nt::frozen) {
             add_rec_or_zec(allow_types, address, sync_policy);
             return;
-        } else if (m_type == nt::storage) {
+        } else if (common::has<common::xnode_type_t::storage>(m_type)) {
             if (address == sys_contract_beacon_table_block_addr || address == sys_contract_zec_table_block_addr) {
                 add_rec_or_zec(allow_types, address, sync_policy);
                 return;
