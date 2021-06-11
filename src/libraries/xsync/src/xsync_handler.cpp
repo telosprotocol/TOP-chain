@@ -214,7 +214,7 @@ void xsync_handler_t::push_newblock(uint32_t msg_size,
 
     xblock_ptr_t &block = ptr->block;
 
-    if (!common::has<common::xnode_type_t::full_archive>(network_self.type())) {
+    if (!common::has<common::xnode_type_t::storage>(network_self.type())) {
         xsync_warn("xsync_handler receive push_newblock(target must be archive) %" PRIx64 " %s %s %s",
             msg_hash, block->dump().c_str(), network_self.to_string().c_str(), from_address.to_string().c_str());
         return;
@@ -306,7 +306,7 @@ void xsync_handler_t::push_newblockhash(uint32_t msg_size,
     if (address == "" || height == 0 || view_id == 0 || hash == "")
         return;
 
-    if (!common::has<common::xnode_type_t::full_archive>(network_self.type())) {
+    if (!common::has<common::xnode_type_t::storage>(network_self.type())) {
         xsync_warn("xsync_handler receive push_newblockhash(target must be archive) %" PRIx64 " %s,height=%lu,viewid=%lu, %s %s",
             msg_hash, address.c_str(), height, view_id, network_self.to_string().c_str(), from_address.to_string().c_str());
         return;
