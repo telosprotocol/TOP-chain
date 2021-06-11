@@ -149,7 +149,7 @@ int xproposal_maker_t::verify_proposal(base::xvblock_t * proposal_block, base::x
     xblock_ptr_t commit_block = xblock_t::raw_vblock_to_object_ptr(latest_blocks.get_latest_committed_block());
     xtablestate_ptr_t commit_tablestate = get_target_tablestate(commit_block.get());
     if (commit_tablestate != nullptr) {
-        get_txpool()->update_receiptid_state(proposal_block->get_account(), commit_tablestate->get_receiptid_state());
+        get_txpool()->update_table_state(commit_tablestate);
     }
 
     // get tablestate related to latest cert block
@@ -283,7 +283,7 @@ bool xproposal_maker_t::update_txpool_txs(const xblock_consensus_para_t & propos
                 proposal_para.dump().c_str(), proposal_para.get_latest_committed_block()->dump().c_str());
             return false;
         }
-        get_txpool()->update_receiptid_state(proposal_para.get_table_account(), tablestate_commit->get_receiptid_state());
+        get_txpool()->update_table_state(tablestate_commit);
 
         // update locked txs for txpool, locked txs come from two latest tableblock
         std::vector<xtxpool_v2::tx_info_t> locked_tx_vec;

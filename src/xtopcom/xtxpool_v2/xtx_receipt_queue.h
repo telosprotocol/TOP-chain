@@ -57,6 +57,9 @@ public:
     bool confirm_tx_full() const {
         return m_xtable_info->is_confirm_tx_reached_upper_limit();
     }
+    const std::string & get_table_addr() const {
+        return m_xtable_info->get_table_addr();
+    }
 
 private:
     xreceipt_set_t m_tx_queue;
@@ -70,6 +73,8 @@ public:
     }
     int32_t push_tx(const std::shared_ptr<xtx_entry> & tx_ent);
     void update_latest_id(uint64_t latest_receipt_id, uint64_t latest_send_id = 0);
+    void update_latest_receipt_id(uint64_t latest_receipt_id);
+    void update_latest_send_id(uint64_t latest_send_id);
     const std::vector<xcons_transaction_ptr_t> get_txs(uint64_t upper_receipt_id, uint32_t max_num) const;
     void erase(uint64_t receipt_id);
     bool empty() const {
@@ -97,6 +102,7 @@ public:
     void update_receiptid_state(const base::xreceiptid_state_ptr_t & receiptid_state);
     const std::vector<xtxpool_table_lacking_receipt_ids_t> get_lacking_recv_tx_ids(uint32_t max_num) const;
     const std::vector<xtxpool_table_lacking_receipt_ids_t> get_lacking_confirm_tx_ids(uint32_t max_num) const;
+    void update_receipt_id_by_confirmed_tx(const tx_info_t & txinfo, base::xtable_shortid_t peer_table_sid, uint64_t receiptid);
 
 private:
     xtx_peer_table_map_t & get_peer_table_map(bool is_recv_tx) {

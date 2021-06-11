@@ -94,14 +94,6 @@ TEST_F(test_txmgr_table, sigle_account_multi_send_tx) {
         int32_t ret = txmgr_table.push_send_tx(tx_ent, 0, last_tx_hash);
         ASSERT_EQ(0, ret);
     }
-
-    auto accounts1 = txmgr_table.pop_ready_accounts(10);
-    ASSERT_EQ(accounts1.size(), 1);
-    auto txs_ents = accounts1[0]->get_txs();
-    ASSERT_EQ(txs_ents.size(), 3);
-
-    auto accounts2 = txmgr_table.pop_ready_accounts(10);
-    ASSERT_EQ(accounts2.size(), 0);
 }
 
 TEST_F(test_txmgr_table, duplicate_send_tx_to_pending) {

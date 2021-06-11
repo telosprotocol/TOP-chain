@@ -177,20 +177,5 @@ private:
     std::map<std::string, std::shared_ptr<xsend_tx_account_t>> m_send_tx_accounts;
 };
 
-class xreceipt_queue_t {
-public:
-    xreceipt_queue_t(xtxpool_table_info_t * xtable_info) : m_xtable_info_ptr(xtable_info) {
-    }
-    int32_t push_tx(const std::shared_ptr<xtx_entry> & tx_ent);
-    const std::vector<std::shared_ptr<xtx_entry>> get_txs(uint32_t max_num) const;
-    const std::shared_ptr<xtx_entry> pop_tx(const tx_info_t & txinfo);
-    const std::shared_ptr<xtx_entry> find(const std::string & account_addr, const uint256_t & hash) const;
-
-private:
-    xready_receipt_queue_t m_ready_receipt_queue;
-    xready_receipt_map_t m_ready_receipt_map;  // be easy to find receipt by hash
-    xtxpool_table_info_t * m_xtable_info_ptr;
-};
-
 }  // namespace xtxpool_v2
 }  // namespace top

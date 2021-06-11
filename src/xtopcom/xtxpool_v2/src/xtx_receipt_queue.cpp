@@ -17,10 +17,6 @@ namespace xtxpool_v2 {
 
 using namespace top::data;
 
-xreceipt_set_t m_tx_queue;
-xreceipt_map_t m_tx_map;
-xtxpool_table_info_t * m_xtable_info;
-
 void xreceipt_queue_internal_t::insert_tx(const std::shared_ptr<xtx_entry> & tx_ent) {
     uint64_t now = xverifier::xtx_utl::get_gmttime_s();
     tx_ent->get_tx()->get_transaction()->set_push_pool_timestamp(now);
@@ -65,6 +61,11 @@ int32_t xpeer_table_receipts_t::push_tx(const std::shared_ptr<xtx_entry> & tx_en
 }
 
 void xpeer_table_receipts_t::update_latest_id(uint64_t latest_receipt_id, uint64_t latest_send_id) {
+    update_latest_receipt_id(latest_receipt_id);
+    update_latest_send_id(latest_send_id);
+}
+
+void xpeer_table_receipts_t::update_latest_receipt_id(uint64_t latest_receipt_id) {
     if (latest_receipt_id <= m_latest_receipt_id) {
         return;
     }
@@ -77,6 +78,12 @@ void xpeer_table_receipts_t::update_latest_id(uint64_t latest_receipt_id, uint64
         }
     }
     m_latest_receipt_id = latest_receipt_id;
+}
+
+void xpeer_table_receipts_t::update_latest_send_id(uint64_t latest_send_id) {
+    if (latest_send_id <= m_latest_send_id) {
+        return;
+    }
     m_latest_send_id = latest_send_id;
 }
 
@@ -299,6 +306,44 @@ void xreceipt_queue_new_t::update_receiptid_state(const base::xreceiptid_state_p
         base::xreceiptid_pair_t receiptid_pair;
         receiptid_state->find_pair(peer_table_sid, receiptid_pair);
         peer_table_tx_queue->update_latest_id(receiptid_pair.get_confirmid_max(), receiptid_pair.get_sendid_max());
+    }
+}
+
+void xreceipt_queue_new_t::update_receipt_id_by_confirmed_tx(const tx_info_t & txinfo, base::xtable_shortid_t peer_table_sid, uint64_t receiptid) {
+    if (txinfo.get_subtype() == enum_transaction_subtype_self) {
+        return;
+    }
+
+    xdbg("xreceipt_queue_new_t::update_receipt_id_by_confirmed_tx table:%s peer table sid:%d subtype:%d receiptid:%llu",
+         m_receipt_queue_internal.get_table_addr().c_str(),
+         peer_table_sid,
+         txinfo.get_subtype(),
+         receiptid);
+
+    std::shared_ptr<xpeer_table_receipts_t> peer_table_receipts;
+    if (txinfo.get_subtype() == enum_transaction_subtype_recv) {
+        auto it = m_recv_tx_peer_table_map.find(peer_table_sid);
+        if (it == m_recv_tx_peer_table_map.end()) {
+            peer_table_receipts = std::make_shared<xpeer_table_receipts_t>(&m_receipt_queue_internal);
+            m_recv_tx_peer_table_map[peer_table_sid] = peer_table_receipts;
+        } else {
+            peer_table_receipts = it->second;
+        }
+        peer_table_receipts->update_latest_receipt_id(receiptid);
+    } else {
+        auto it = m_confirm_tx_peer_table_map.find(peer_table_sid);
+        if (it == m_confirm_tx_peer_table_map.end()) {
+            peer_table_receipts = std::make_shared<xpeer_table_receipts_t>(&m_receipt_queue_internal);
+            m_confirm_tx_peer_table_map[peer_table_sid] = peer_table_receipts;
+        } else {
+            peer_table_receipts = it->second;
+        }
+
+        if (txinfo.get_subtype() == enum_transaction_subtype_confirm) {
+            peer_table_receipts->update_latest_receipt_id(receiptid);
+        } else {
+            peer_table_receipts->update_latest_send_id(receiptid);
+        }
     }
 }
 
