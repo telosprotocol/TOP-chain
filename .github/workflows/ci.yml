@@ -29,7 +29,7 @@ jobs:
       - name: Sync submodules
         run: git submodule sync
       - name: Checkout submodules
-        run: git submodule foreach "(git checkout master; git pull)"
+        run: git submodule foreach "(git checkout dev/fast_sync_develop; git pull)"
       - name: Build XTOP DEBUG
         run: |
           bash .github/scripts/build_xtop.sh "test build_ci"
