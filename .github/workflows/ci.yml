@@ -24,10 +24,10 @@ jobs:
 
       - name: Checkout repository
         uses: actions/checkout@v2
-        - name: Checkout submodules
-        uses: textbook/git-checkout-submodule-action@master
-        with:
-            remote: true
+      - name: Update remote submodules
+        run: git submodule update --remote
+      - name: Checkout submodules
+        run: git submodule update --init --recursive
 
       - name: Build XTOP DEBUG
         run: |
