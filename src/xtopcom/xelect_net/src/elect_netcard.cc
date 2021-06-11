@@ -238,12 +238,9 @@ int EcNetcard::GossipOldRootBroadcast(transport::protobuf::RoutingMessage & pbft
     // gossip_block->set_stop_times(gossip::kGossipSendoutMaxTimes);
     gossip_block->set_gossip_type(block_gossip_type);
     gossip_block->set_max_hop_num(20);
-    // next version delete all `set_evil_rate`
-    gossip_block->set_evil_rate(0);
+
     gossip_block->set_ign_bloomfilter_level(gossip::kGossipBloomfilterIgnoreLevel);
 
-    gossip_block->set_left_overlap(2);   // must smaller than 20
-    gossip_block->set_right_overlap(2);  // must smaller than 20
     gossip_block->set_block(pbft_message.data());
     gossip_block->set_header_hash(header_hash);
     pbft_message.clear_data();
@@ -260,7 +257,7 @@ int EcNetcard::GossipOldRootBroadcast(transport::protobuf::RoutingMessage & pbft
 
     return kVhostSendSuccess;
 }
-
+#if 0
 int EcNetcard::GossipOldLayerBroadcast(transport::protobuf::RoutingMessage & pbft_message, uint32_t block_gossip_type, uint32_t chain_data_hash, uint32_t chain_msgid) const {
     xdbg("elect_vhost broadcast using broadcast_type:%u", block_gossip_type);
 
@@ -273,17 +270,13 @@ int EcNetcard::GossipOldLayerBroadcast(transport::protobuf::RoutingMessage & pbf
     gossip_block->set_gossip_type(block_gossip_type);
     gossip_block->set_max_hop_num(20);
 
-    // todo next version delete these params
-    // next version delete all `set_evil_rate`
-    gossip_block->set_evil_rate(0);
-
     gossip_block->set_neighber_count(3);
     // gossip_block->set_switch_layer_hop_num(0);
     gossip_block->set_ign_bloomfilter_level(0);
     // todo end next version delete.
 
-    gossip_block->set_left_overlap(0);   // must smaller than 20
-    gossip_block->set_right_overlap(0);  // must smaller than 20
+    // gossip_block->set_left_overlap(0);   // must smaller than 20
+    // gossip_block->set_right_overlap(0);  // must smaller than 20
     gossip_block->set_block(pbft_message.data());
     gossip_block->set_header_hash(header_hash);
     pbft_message.clear_data();
@@ -295,8 +288,8 @@ int EcNetcard::GossipOldLayerBroadcast(transport::protobuf::RoutingMessage & pbf
 
     return kVhostSendSuccess;
 }
-
-int EcNetcard::GossipDispatchBroadcast(transport::protobuf::RoutingMessage & pbft_message, uint32_t block_gossip_type, uint32_t chain_data_hash, uint32_t chain_msgid) const{
+#endif
+int EcNetcard::GossipDispatchBroadcast(transport::protobuf::RoutingMessage & pbft_message, uint32_t block_gossip_type, uint32_t chain_data_hash, uint32_t chain_msgid) const {
     xdbg("elect_vhost broadcast using broadcast_type:%u", block_gossip_type);
 
     uint32_t vhash = base::xhash32_t::digest(pbft_message.data());
@@ -310,8 +303,9 @@ int EcNetcard::GossipDispatchBroadcast(transport::protobuf::RoutingMessage & pbf
 
     gossip_block->set_neighber_count(3);
 
-    gossip_block->set_left_overlap(0);   // must smaller than 20
-    gossip_block->set_right_overlap(0);  // must smaller than 20
+    gossip_block->set_sit1(0);
+    gossip_block->set_sit2(0);
+    gossip_block->set_overlap_rate(3);
     gossip_block->set_block(pbft_message.data());
     gossip_block->set_header_hash(header_hash);
     pbft_message.clear_data();

@@ -138,10 +138,7 @@ void ElectPerf::TestChainTrade(uint32_t test_num,
         gossip->set_stop_times(stop_times);
         gossip->set_gossip_type(gossip_type);
         gossip->set_max_hop_num(max_hop_num);
-        gossip->set_evil_rate(evil_rate);
         gossip->set_switch_layer_hop_num(layer_switch_hop_num);
-        gossip->set_left_overlap(left_overlap);
-        gossip->set_right_overlap(right_overlap);
         gossip->set_ign_bloomfilter_level(1);
         gossip->set_block(test_raw_data);
         gossip->set_header_hash(header_hash);
@@ -204,10 +201,7 @@ void ElectPerf::TestChainTradeServiceNet(const std::string & src_node_id,
         gossip->set_stop_times(stop_times);
         gossip->set_gossip_type(gossip_type);
         gossip->set_max_hop_num(max_hop_num);
-        gossip->set_evil_rate(evil_rate);
         gossip->set_switch_layer_hop_num(layer_switch_hop_num);
-        gossip->set_left_overlap(left_overlap);
-        gossip->set_right_overlap(right_overlap);
         gossip->set_ign_bloomfilter_level(0);
 
         std::string data;
@@ -277,10 +271,7 @@ xJson::Value ElectPerf::rpc_broadcast_all(uint32_t test_num,
         gossip->set_stop_times(stop_times);
         gossip->set_gossip_type(gossip_type);
         gossip->set_max_hop_num(max_hop_num);
-        gossip->set_evil_rate(evil_rate);
         gossip->set_switch_layer_hop_num(layer_switch_hop_num);
-        gossip->set_left_overlap(left_overlap);
-        gossip->set_right_overlap(right_overlap);
         gossip->set_ign_bloomfilter_level(1);
 
         gossip->set_header_hash(header_hash);
@@ -366,10 +357,7 @@ xJson::Value ElectPerf::rpc_broadcast_all_new(uint32_t test_num,
         gossip->set_stop_times(stop_times);
         gossip->set_gossip_type(gossip_type);
         gossip->set_max_hop_num(max_hop_num);
-        // gossip->set_evil_rate(evil_rate);
         gossip->set_switch_layer_hop_num(layer_switch_hop_num);
-        // gossip->set_left_overlap(left_overlap);
-        // gossip->set_right_overlap(right_overlap);
         gossip->set_ign_bloomfilter_level(1);
 
         gossip->set_block(test_raw_data);
@@ -450,10 +438,7 @@ xJson::Value ElectPerf::rpc_broadcast_to_cluster(const std::string & src_node_id
         gossip->set_stop_times(stop_times);
         gossip->set_gossip_type(gossip_type);
         gossip->set_max_hop_num(max_hop_num);
-        gossip->set_evil_rate(evil_rate);
         gossip->set_switch_layer_hop_num(layer_switch_hop_num);
-        gossip->set_left_overlap(left_overlap);
-        gossip->set_right_overlap(right_overlap);
         gossip->set_ign_bloomfilter_level(0);
 
         gossip->set_block(test_raw_data);

@@ -1575,7 +1575,6 @@ void RootRoutingTable::SendBootstrapJoinResponse(transport::protobuf::RoutingMes
     res_message.set_id(message.id());
     message.set_priority(enum_xpacket_priority_type_flash);
     res_message.set_debug("join res");
-    res_message.set_status(message.status());
 
     protobuf::BootstrapJoinResponse join_res;
     join_res.set_public_ip(packet.get_from_ip_addr());
@@ -1616,11 +1615,6 @@ void RootRoutingTable::HandleBootstrapJoinResponse(transport::protobuf::RoutingM
     protobuf::BootstrapJoinResponse join_res;
     if (!join_res.ParseFromString(message.data())) {
         xinfo("ConnectResponse ParseFromString failed!");
-        return;
-    }
-
-    if (kadmlia::kKadForbidden == message.status()) {
-        xinfo("BootstrapJoin Request Is Forbidden.");
         return;
     }
 
@@ -1672,7 +1666,6 @@ void RootRoutingTable::SetFreqMessage(transport::protobuf::RoutingMessage & mess
         gossip->set_gossip_type(gossip::kGossipBloomfilter);
         // gossip->set_max_hop_num(kHopToLive);
         gossip->set_max_hop_num(10);
-        gossip->set_evil_rate(0);
         gossip->set_switch_layer_hop_num(gossip::kGossipSwitchLayerCount);
         gossip->set_ign_bloomfilter_level(gossip::kGossipBloomfilterIgnoreLevel);
     }

@@ -183,7 +183,7 @@ std::vector<kadmlia::NodeInfoPtr> GossipInterface::GetRandomNodes(std::vector<ka
     std::random_shuffle(neighbors.begin(), neighbors.end());
     return std::vector<kadmlia::NodeInfoPtr>{neighbors.begin(), neighbors.begin() + number_to_get};
 }
-
+#if 0
 void GossipInterface::SendLayered(transport::protobuf::RoutingMessage & message, const std::vector<kadmlia::NodeInfoPtr> & nodes) {
     uint64_t min_dis = message.gossip().min_dis();
     uint64_t max_dis = message.gossip().max_dis();
@@ -255,7 +255,7 @@ void GossipInterface::SendLayered(transport::protobuf::RoutingMessage & message,
         }
     };
 }
-
+#endif
 void GossipInterface::SendDispatch(transport::protobuf::RoutingMessage & message, const std::vector<gossip::DispatchInfos> & dispatch_nodes) {
     // uint64_t min_dis = message.gossip().min_dis();
     // uint64_t max_dis = message.gossip().max_dis();
@@ -275,8 +275,8 @@ void GossipInterface::SendDispatch(transport::protobuf::RoutingMessage & message
         auto nodes = dispatch_nodes[i].nodes;
         auto gossip = message.mutable_gossip();
 
-        gossip->set_min_dis(dispatch_nodes[i].sit1);
-        gossip->set_max_dis(dispatch_nodes[i].sit2);
+        gossip->set_sit1(dispatch_nodes[i].sit1);
+        gossip->set_sit2(dispatch_nodes[i].sit2);
         xdbg("[debug] send to %s:%d % " PRIu64 " % " PRIu64, nodes->public_ip.c_str(), nodes->public_port, dispatch_nodes[i].sit1, dispatch_nodes[i].sit2);
 
         std::string body;

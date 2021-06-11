@@ -60,7 +60,7 @@ protected:
     uint32_t GetNeighborCount(transport::protobuf::RoutingMessage & message);
     std::vector<kadmlia::NodeInfoPtr> GetRandomNodes(std::vector<kadmlia::NodeInfoPtr> & neighbors, uint32_t number_to_get) const;
 
-    void SendLayered(transport::protobuf::RoutingMessage & message, const std::vector<kadmlia::NodeInfoPtr> & nodes);
+    // void SendLayered(transport::protobuf::RoutingMessage & message, const std::vector<kadmlia::NodeInfoPtr> & nodes);
     void SendDispatch(transport::protobuf::RoutingMessage & message, const std::vector<gossip::DispatchInfos> & dispatch_nodes);
     void CheckDiffNetwork(transport::protobuf::RoutingMessage & message);
 

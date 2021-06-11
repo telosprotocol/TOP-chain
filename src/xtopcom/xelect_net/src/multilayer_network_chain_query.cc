@@ -93,8 +93,6 @@ uint32_t MultilayerNetworkChainQuery::Broadcast(uint32_t msg_size, uint32_t coun
     } else {
         gossip_block->set_ign_bloomfilter_level(0);
     }
-    gossip_block->set_left_overlap(10);
-    gossip_block->set_right_overlap(10);
     gossip_block->set_block(message.data());
     uint32_t vhash = base::xhash32_t::digest(message.data());
     std::string header_hash = std::to_string(vhash);

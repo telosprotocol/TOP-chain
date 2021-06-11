@@ -194,7 +194,6 @@ void ElectRoutingTable::SetFreqMessage(transport::protobuf::RoutingMessage & mes
         gossip->set_gossip_type(gossip::kGossipBloomfilter);
         // gossip->set_max_hop_num(kHopToLive);
         gossip->set_max_hop_num(10);
-        gossip->set_evil_rate(0);
         gossip->set_switch_layer_hop_num(gossip::kGossipSwitchLayerCount);
         gossip->set_ign_bloomfilter_level(gossip::kGossipBloomfilterIgnoreLevel);
     }

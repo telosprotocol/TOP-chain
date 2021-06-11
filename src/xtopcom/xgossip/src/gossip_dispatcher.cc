@@ -54,7 +54,7 @@ void GossipDispatcher::Broadcast(transport::protobuf::RoutingMessage & message, 
     // base::ServiceType service_type = kad_key_ptr->GetServiceType();
     MessageKey msg_key(message.gossip().msg_hash());
     if (MessageWithBloomfilter::Instance()->StopGossip(msg_key, 3)) {
-        xkinfo("[debug] stop gossip but got % " PRIu64 " % " PRIu64 ":", message.gossip().min_dis(), message.gossip().max_dis());
+        xkinfo("[debug] stop gossip but got % " PRIu64 " % " PRIu64 ":", message.gossip().sit1(), message.gossip().sit2());
         return;
     }
 
@@ -73,8 +73,8 @@ void GossipDispatcher::Broadcast(transport::protobuf::RoutingMessage & message, 
 void GossipDispatcher::GenerateDispatchInfos(transport::protobuf::RoutingMessage & message,
                                              kadmlia::ElectRoutingTablePtr & routing_table,
                                              std::vector<DispatchInfos> & select_nodes) {
-    uint64_t sit1 = message.gossip().min_dis();
-    uint64_t sit2 = message.gossip().max_dis();
+    uint64_t sit1 = message.gossip().sit1();
+    uint64_t sit2 = message.gossip().sit2();
     xdbg("[GossipDispatcher::GenerateDispatchInfos] got % " PRIu64 " % " PRIu64 ":", sit1, sit2);
 
     MessageKey msg_key(message.gossip().msg_hash());
@@ -82,7 +82,7 @@ void GossipDispatcher::GenerateDispatchInfos(transport::protobuf::RoutingMessage
 
     xdbg("[GossipDispatcher::GenerateDispatchInfos] after update % " PRIu64 " % " PRIu64 ":", sit1, sit2);
 
-    uint32_t overlap = message.gossip().left_overlap();
+    uint32_t overlap = message.gossip().overlap_rate();
 
     std::unordered_map<std::string, kadmlia::NodeInfoPtr> const nodes_map = routing_table->nodes();
     std::unordered_map<std::string, std::size_t> const index_map = routing_table->index_map();
