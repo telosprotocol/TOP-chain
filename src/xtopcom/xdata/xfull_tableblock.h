@@ -19,36 +19,15 @@ NS_BEG2(top, data)
 
 class xfulltable_block_para_t {
  public:
-    xfulltable_block_para_t(const std::string & snapshot_hash, const xstatistics_data_t & statistics_data);
+    xfulltable_block_para_t(const std::string & snapshot, const xstatistics_data_t & statistics_data);
     ~xfulltable_block_para_t() = default;
 
     const xstatistics_data_t &  get_block_statistics_data() const {return m_block_statistics_data;}
-    const std::string &         get_snapshot_hash() const {return m_snapshot_hash;}
+    const std::string &         get_snapshot() const {return m_snapshot;}
 
  private:
     xstatistics_data_t      m_block_statistics_data;
-    std::string             m_snapshot_hash;
-};
-
-class xfulltable_output_entity_t final : public xventity_face_t<xfulltable_output_entity_t, xdata_type_fulltable_output_entity> {
- protected:
-    static XINLINE_CONSTEXPR char const * PARA_OFFDATA_ROOT           = "0";
- public:
-    xfulltable_output_entity_t() = default;
-    explicit xfulltable_output_entity_t(const std::string & offdata_root);
- protected:
-    ~xfulltable_output_entity_t() = default;
-    int32_t do_write(base::xstream_t & stream) override;
-    int32_t do_read(base::xstream_t & stream) override;
- private:
-    xfulltable_output_entity_t & operator = (const xfulltable_output_entity_t & other);
- public:
-    virtual const std::string query_value(const std::string & key) override {return std::string();}
- public:
-    void            set_offdata_root(const std::string & root);
-    std::string     get_offdata_root() const;
- private:
-    std::map<std::string, std::string>  m_paras;
+    std::string             m_snapshot;
 };
 
 // tableindex block chain
@@ -75,9 +54,6 @@ class xfull_tableblock_t : public xblock_t {
 
  public:
     xstatistics_data_t get_table_statistics() const;
-
- public:  // override base block api
-    std::string get_offdata_hash() const override;
 };
 
 NS_END2

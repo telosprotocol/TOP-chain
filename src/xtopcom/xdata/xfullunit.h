@@ -13,43 +13,6 @@
 
 NS_BEG2(top, data)
 
-class xfullunit_input_t : public xventity_face_t<xfullunit_input_t, xdata_type_fullunit_input_entity> {
- public:
-    xfullunit_input_t() = default;
-    xfullunit_input_t(uint64_t first_unit_height, const std::string & first_unit_hash);
- protected:
-    virtual ~xfullunit_input_t() {}
-    int32_t do_write(base::xstream_t &stream) override;
-    int32_t do_read(base::xstream_t &stream) override;
- public:
-    virtual const std::string query_value(const std::string & key) override {return std::string();}//virtual key-value for entity
- public:
-    uint64_t    get_first_unit_height() const {return m_first_unit_height;}
-    std::string get_first_unit_hash() const {return m_first_unit_hash;}
-
- private:
-    uint64_t        m_first_unit_height;
-    std::string     m_first_unit_hash;
-};
-
-class xfullunit_output_t : public xventity_face_t<xfullunit_output_t, xdata_type_fullunit_output_entity> {
- public:
-    xfullunit_output_t() = default;
-    explicit xfullunit_output_t(const std::string & property_snapshot);
- protected:
-    virtual ~xfullunit_output_t() {}
-
-    int32_t do_write(base::xstream_t &stream) override;
-    int32_t do_read(base::xstream_t &stream) override;
- public:
-    virtual const std::string query_value(const std::string & key) override {return std::string();}//virtual key-value for entity
- public:
-    const std::string &         get_property_snapshot() const {return m_property_snapshot;}
-
- private:
-    std::string                         m_property_snapshot;
-};
-
 struct xfullunit_block_para_t {
     std::string                         m_property_snapshot;
     uint64_t                            m_first_unit_height{0};

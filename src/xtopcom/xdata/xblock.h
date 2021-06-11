@@ -95,9 +95,6 @@ public:
  public:
     virtual int32_t     full_block_serialize_to(base::xstream_t & stream);  // for block sync
     static  base::xvblock_t*    full_block_read_from(base::xstream_t & stream);  // for block sync
-    void        set_parent_cert_and_path(base::xvqcert_t* parent_cert, const base::xmerkle_path_256_t & path);
-    bool        calc_input_merkle_path(const std::string & leaf, base::xmerkle_path_256_t& hash_path) const;
-    bool        calc_output_merkle_path(const std::string & leaf, base::xmerkle_path_256_t& hash_path) const;
 
  public:
     virtual bool    is_full_state_block() const;  // TODO(jimmy) delete and use is_execute_ready directly
@@ -129,7 +126,7 @@ public:
     virtual uint32_t                    get_txs_count() const {return 0;}
     virtual const std::vector<xobject_ptr_t<xblock_t>> & get_tableblock_units(bool need_parent_cert) const {return m_empty_blocks;}
     virtual void                        dump_block_data(xJson::Value & json) const {return;}
-    virtual uint16_t                    get_unconfirm_sendtx_num() const {return 0;}
+    virtual uint32_t                    get_unconfirm_sendtx_num() const {return 0;}
 
  public:
     uint64_t    get_timerblock_height() const {return get_clock();}

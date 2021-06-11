@@ -495,6 +495,8 @@ namespace top
             virtual const std::string   get_root_hash() const {return m_root_hash;}
             virtual bool                set_root_hash(const std::string & root_hash){ m_root_hash = root_hash;return true;}
 
+            base::xvinentity_t*         get_primary_entity() const;
+
         protected: //proposal ==> input ==> output
             //just carry by object at memory,not included by serialized
             std::string  m_proposal;    //raw proposal
@@ -534,6 +536,9 @@ namespace top
 
             const std::string           get_binlog();
             const std::string           get_binlog_hash();
+            const std::string           get_state_hash();
+            
+            base::xvoutentity_t*        get_primary_entity() const;
 
         public:
             bool set_offblock_snapshot(const std::string & snapshot);

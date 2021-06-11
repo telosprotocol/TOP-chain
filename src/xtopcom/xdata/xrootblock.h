@@ -15,7 +15,7 @@
 
 NS_BEG2(top, data)
 
-class xrootblock_input_t : public xventity_face_t<xrootblock_input_t, xdata_type_rootblock_input_entity> {
+class xrootblock_input_t : public xbase_dataunit_t<xrootblock_input_t, xdata_type_rootblock_input_entity> {
  public:
     xrootblock_input_t() = default;
 
@@ -23,9 +23,6 @@ class xrootblock_input_t : public xventity_face_t<xrootblock_input_t, xdata_type
     virtual ~xrootblock_input_t() {}
     int32_t do_write(base::xstream_t &stream) override;
     int32_t do_read(base::xstream_t &stream) override;
-
- public:
-    virtual const std::string query_value(const std::string & key) override {return std::string();}//virtual key-value for entity
 
  public:
     bool    set_account_balances(std::map<std::string, uint64_t> const& balances);
@@ -56,6 +53,8 @@ struct xrootblock_para_t {
     uint64_t                                  m_genesis_clock;
 };
 class xrootblock_t : public xblock_t {
+ public:
+    static XINLINE_CONSTEXPR char const * root_resource_name     = "0";
  protected:
     enum { object_type_value = enum_xdata_type::enum_xdata_type_max - xdata_type_rootblock };
  public:
@@ -79,7 +78,7 @@ class xrootblock_t : public xblock_t {
     void dump_block_data(xJson::Value & json) const override;
 
  protected:
-    xrootblock_input_t*    get_rootblock_input() const {return (xrootblock_input_t*)(get_input()->get_entitys()[0]);}
+    xobject_ptr_t<xrootblock_input_t>    get_rootblock_input() const;
 
  public:
     static base::xvblock_t* get_rootblock();

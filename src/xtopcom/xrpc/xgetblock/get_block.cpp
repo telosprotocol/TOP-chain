@@ -453,7 +453,7 @@ std::string tx_exec_status_to_str(uint8_t exec_status) {
     }
 }
 
-xJson::Value get_block_handle::get_unit_json(const std::string & account, uint64_t unit_height, xtransaction_ptr_t tx_ptr) {
+xJson::Value get_block_handle::get_unit_json(const std::string & account, uint64_t unit_height, xtransaction_ptr_t tx_ptr, xlightunit_tx_info_ptr_t & recv_txinfo) {
     base::xvaccount_t _account_vaddress(account);
     auto vb = m_block_store->load_block_object(_account_vaddress, unit_height, 0, true);
     auto block_ptr = dynamic_cast<xblock_t *>(vb.get());
@@ -475,8 +475,14 @@ xJson::Value get_block_handle::get_unit_json(const std::string & account, uint64
         }
         if (tx_info->is_confirm_tx()) {
             jv["tx_exec_status"] = tx_exec_status_to_str(tx_info->get_tx_exec_status());
-            jv["recv_tx_exec_status"] = tx_exec_status_to_str(tx_info->get_last_action_exec_status());
-            jv["exec_status"] = tx_exec_status_to_str(tx_info->get_tx_exec_status() | tx_info->get_last_action_exec_status());
+            // TODO(jimmy) should read recv tx exec status from recv tx unit
+            if (recv_txinfo != nullptr) {
+                jv["recv_tx_exec_status"] = tx_exec_status_to_str(recv_txinfo->get_tx_exec_status());
+                jv["exec_status"] = tx_exec_status_to_str(tx_info->get_tx_exec_status() | recv_txinfo->get_tx_exec_status());
+            }
+        }
+        if (tx_info->is_recv_tx()) {
+            recv_txinfo = tx_info;  // TODO(jimmy) refactor here future
         }
     }
     return jv;
@@ -553,14 +559,15 @@ xJson::Value get_block_handle::parse_tx(const uint256_t & tx_hash, xtransaction_
         xtransaction_ptr_t tx_ptr;
         tx_ptr.attach(tx);
 
+        xlightunit_tx_info_ptr_t recv_txinfo = nullptr;
         // burn tx & self tx only 1 consensus
         if (tx_ptr->get_target_addr() != black_hole_addr && (tx_ptr->get_source_addr() != tx_ptr->get_target_addr())) {
-            cons["send_unit_info"] = get_unit_json(tx_ptr->get_source_addr(), tx_store_ptr->get_send_unit_height(), tx_ptr);
+            cons["send_unit_info"] = get_unit_json(tx_ptr->get_source_addr(), tx_store_ptr->get_send_unit_height(), tx_ptr, recv_txinfo);
             auto beacon_tx_fee = txexecutor::xtransaction_fee_t::cal_service_fee(tx_ptr->get_source_addr(), tx_ptr->get_target_addr());
             cons["send_unit_info"]["tx_fee"] = static_cast<xJson::UInt64>(beacon_tx_fee);
-            cons["recv_unit_info"] = get_unit_json(tx_ptr->get_target_addr(), tx_store_ptr->get_recv_unit_height(), tx_ptr);
+            cons["recv_unit_info"] = get_unit_json(tx_ptr->get_target_addr(), tx_store_ptr->get_recv_unit_height(), tx_ptr, recv_txinfo);
         }
-        cons["confirm_unit_info"] = get_unit_json(tx_ptr->get_source_addr(), tx_store_ptr->get_confirm_unit_height(), tx_ptr);
+        cons["confirm_unit_info"] = get_unit_json(tx_ptr->get_source_addr(), tx_store_ptr->get_confirm_unit_height(), tx_ptr, recv_txinfo);
         result_json["tx_consensus_state"] = cons;
 
         update_tx_state(result_json, cons);
@@ -1192,7 +1199,7 @@ void get_block_handle::query_account_property(xJson::Value & jph, const std::str
     if (bstate != nullptr) {
         unitstate = std::make_shared<xunit_bstate_t>(bstate.get());
     }
-    
+
     query_account_property_base(jph, owner, prop_name, unitstate);
 }
 
@@ -1305,9 +1312,9 @@ void get_block_handle::set_lightunit_info(xJson::Value & j_lu, xblock_t * bp) {
             jv["used_tx_deposit"] = tx->get_used_deposit();
             jv["used_disk"] = tx->get_used_disk();
             jv["tx_exec_status"] = tx_exec_status_to_str(tx->get_tx_exec_status());  // 1: success, 2: fail
-            if (tx->is_confirm_tx()) {
-                jv["recv_tx_exec_status"] = tx_exec_status_to_str(tx->get_last_action_exec_status());
-            }
+            // if (tx->is_confirm_tx()) {
+            //     jv["recv_tx_exec_status"] = tx_exec_status_to_str(tx->get_last_action_exec_status());
+            // }
             xJson::Value jtx;
             jtx["0x" + tx->get_tx_hex_hash()] = jv;
             ji["txs"].append(jtx);
@@ -1443,7 +1450,7 @@ void get_block_handle::set_table_info(xJson::Value & jv, xblock_t * bp) {
             for (auto tx : txs) {
                 xJson::Value juj;
                 juj["tx_consensus_phase"] = tx->get_tx_subtype_str();
-                juj["is_contract_create"] = static_cast<unsigned int>(tx->is_contract_create());
+                // juj["is_contract_create"] = static_cast<unsigned int>(tx->is_contract_create());
                 if (tx->is_self_tx() || tx->is_send_tx()) {
                     juj["last_tx_nonce"] = static_cast<unsigned int>(tx->get_last_trans_nonce());
                 }

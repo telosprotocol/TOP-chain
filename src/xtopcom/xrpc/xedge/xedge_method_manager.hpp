@@ -215,7 +215,6 @@ void xedge_method_base<T>::sendTransaction_method(xjson_proc_t & json_proc, cons
     tx->set_ext(ext);
 
     tx->set_digest(std::move(hex_to_uint256(request["tx_hash"].asString())));
-    tx->add_modified_count();
 
     if (m_enable_sign && !request.isMember("authorization")) {
         tx->set_digest();

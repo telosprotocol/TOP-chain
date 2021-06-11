@@ -51,6 +51,7 @@ base::xvblock_t*   xblocktool_t::create_genesis_lightunit(const std::string & ac
         auto balance = propobj->deposit(base::vtoken_t(top_balance), canvas.get());
         xassert(balance == top_balance);
     }
+    
     std::string property_binlog;
     canvas->encode(property_binlog);
     result.m_property_binlog = property_binlog;
