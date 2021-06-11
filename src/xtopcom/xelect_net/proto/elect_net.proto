@@ -2,31 +2,9 @@ syntax = "proto2";
 
 package top.elect.protobuf;
 
-message PbftMessage {
+message VhostMessage {
 	optional uint32 type = 1;
 	optional bytes data = 2;
 	optional uint32 cb_type = 3;
 	optional bytes node_id = 4;
 }
-
-message ConsensusMessage {
-    optional uint32 message_type = 1;
-    optional bytes data = 2;
-    optional uint32 pbft_type = 3;
-    optional uint32 ec_version = 4;
-}
-
-// for blocks
-message PbftItem {
-    optional uint32 type = 1;
-    repeated bytes datas = 2;
-}
-
-message BlockInfo {
-	optional bytes prev_hash = 1;
-	repeated PbftItem pbfts = 2;
-	optional uint64 rand = 3;
-	optional uint64 timestamp = 4;
-	optional bytes block_hash = 5;
-}
-

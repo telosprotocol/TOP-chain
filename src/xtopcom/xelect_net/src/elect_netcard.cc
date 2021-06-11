@@ -150,7 +150,7 @@ int EcNetcard::send(
     pbft_message.set_type(kElectVhostRumorGossipMessage);
     pbft_message.set_id(CallbackManager::MessageId());
 
-    elect::protobuf::PbftMessage vhost_msg;
+    elect::protobuf::VhostMessage vhost_msg;
     vhost_msg.set_cb_type(static_cast<uint32_t>(message.id()));
     vhost_msg.set_data((char*)message.payload().data(), message.payload().size());
     std::string vdata = vhost_msg.SerializeAsString();
@@ -359,9 +359,9 @@ void EcNetcard::HandleRumorMessage(
     }
 
     xdbg("%s HandleRumorMessage", transport::FormatMsgid(message).c_str());
-    elect::protobuf::PbftMessage vhost_msg;
+    elect::protobuf::VhostMessage vhost_msg;
     if (!vhost_msg.ParseFromString(data)) {
-        TOP_ERROR("%s elect::protobuf::PbftMessage ParseFromString failed!", transport::FormatMsgid(message).c_str());
+        TOP_ERROR("%s elect::protobuf::VhostMessage ParseFromString failed!", transport::FormatMsgid(message).c_str());
         return;
     }
 
