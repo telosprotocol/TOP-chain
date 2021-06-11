@@ -1138,6 +1138,15 @@ namespace top
             
             return xvexemodule_t::query_interface(_enum_xobject_type_);
         }
+        
+        base::xvinentity_t* xvinput_t::get_primary_entity() const
+        {
+            if (get_entitys().empty())
+            {
+                return nullptr;
+            }
+            return (base::xvinentity_t*)get_entitys()[0];
+        }
 
         //---------------------------------xvoutput_t---------------------------------//
         xvoutput_t::xvoutput_t(enum_xobject_type type)
@@ -1182,10 +1191,40 @@ namespace top
             return binlog;
         }
         
+        base::xvoutentity_t* xvoutput_t::get_primary_entity() const
+        {
+            if (get_entitys().empty())
+            {
+                return nullptr;
+            }
+            return (base::xvoutentity_t*)get_entitys()[0];
+        }
         const std::string xvoutput_t::get_binlog_hash()
         {
-            const std::string binlog_hash = query_resource(xvoutput_t::res_binlog_hash_key_name());
-            return binlog_hash;
+            if (get_entitys().empty())
+            {
+                return std::string();
+            }
+            base::xvoutentity_t* outentity = get_primary_entity();
+            if (outentity == nullptr)
+            {
+                return std::string();
+            }
+            return outentity->get_binlog_hash();
+        }
+        
+        const std::string xvoutput_t::get_state_hash()
+        {
+            if (get_entitys().empty())
+            {
+                return std::string();
+            }
+            base::xvoutentity_t* outentity = get_primary_entity();
+            if (outentity == nullptr)
+            {
+                return std::string();
+            }
+            return outentity->get_state_hash();
         }
         
         bool xvoutput_t::set_offblock_snapshot(const std::string & snapshot)

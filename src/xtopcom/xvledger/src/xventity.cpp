@@ -251,13 +251,21 @@ namespace top
         xvoutentity_t::xvoutentity_t(const std::string & state_bin_log)
             :xventity_t(enum_xdata_type(enum_xobject_type_voutentity))
         {
-            m_state_binlog = state_bin_log;
+            set_value(key_name_state_hash(), state_bin_log);
         }
     
+        xvoutentity_t::xvoutentity_t(const std::string & state_hash, const std::string & binlog_hash)
+        :xventity_t(enum_xdata_type(enum_xobject_type_voutentity))
+        {
+            set_value(key_name_state_hash(), state_hash);
+            set_value(key_name_binlog_hash(), binlog_hash);
+        }
+        
+        
         xvoutentity_t::xvoutentity_t(const xvoutentity_t & obj)
             :xventity_t(obj)
         {
-            m_state_binlog = obj.m_state_binlog;
+            m_values = obj.m_values;
         }
     
         xvoutentity_t::xvoutentity_t()
@@ -267,7 +275,7 @@ namespace top
     
         xvoutentity_t::~xvoutentity_t()
         {
-            m_state_binlog.clear();
+            m_values.clear();
         }
     
         //caller need to cast (void*) to related ptr
@@ -279,8 +287,19 @@ namespace top
             return xventity_t::query_interface(_enum_xobject_type_);
         }
         
-        const std::string xvoutentity_t::query_value(const std::string & key)//virtual key-value for entity
+        void  xvoutentity_t::set_value(const std::string & key, const std::string & value)
         {
+            if (!value.empty())
+            {
+                m_values[key] = value;
+            }
+        }
+        const std::string xvoutentity_t::query_value(const std::string & key) const //virtual key-value for entity
+        {
+            auto iter = m_values.find(key);
+            if (iter != m_values.end()) {
+                return iter->second;
+            }
             return std::string();
         }
         
@@ -288,16 +307,31 @@ namespace top
         {
             const int32_t begin_size = stream.size();
             xventity_t::do_write(stream);
-            stream.write_compact_var(m_state_binlog);
+            uint16_t count = (uint16_t)m_values.size();
+            stream.write_compact_var(count);
+            for (auto & v : m_values)
+            {
+                stream.write_compact_var(v.first);
+                stream.write_compact_var(v.second);
+            }
             return (stream.size() - begin_size);
         }
         
         int32_t     xvoutentity_t::do_read(xstream_t & stream) //not allow subclass change behavior
         {
-            m_state_binlog.clear();
+            m_values.clear();
             const int32_t begin_size = stream.size();
             xventity_t::do_read(stream);
-            stream.read_compact_var(m_state_binlog);
+            uint16_t count = 0;
+            stream.read_compact_var(count);
+            for (uint16_t i = 0; i < count; i++)
+            {
+                std::string key;
+                std::string value;
+                stream.read_compact_var(key);
+                stream.read_compact_var(value);
+                m_values[key] = value;
+            }
             return (begin_size - stream.size());
         }
         

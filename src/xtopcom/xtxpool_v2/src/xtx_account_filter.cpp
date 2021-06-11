@@ -28,8 +28,7 @@ enum_xtxpool_error_type xaccount_recvtx_filter::reject(const xcons_transaction_p
         return sync_reject_rules_and_reject(tx, unit_block->get_height(), deny);
     }
 
-    uint256_t hash = tx->get_tx_info()->get_tx_hash_256();
-    std::string hash_str = std::string(reinterpret_cast<char *>(hash.data()), hash.size());
+    std::string hash_str = tx->get_tx_hash();
 
     if (m_reject_rules.find(hash_str) != m_reject_rules.end()) {
         deny = true;
@@ -74,8 +73,7 @@ enum_xtxpool_error_type xaccount_recvtx_filter::sync_reject_rules(uint64_t unitb
 enum_xtxpool_error_type xaccount_recvtx_filter::sync_reject_rules_and_reject(const xcons_transaction_ptr_t & tx, uint64_t unitblock_height, bool & deny) {
     deny = false;
 
-    uint256_t hash = tx->get_tx_info()->get_tx_hash_256();
-    std::string hash_str = std::string(reinterpret_cast<char *>(hash.data()), hash.size());
+    std::string hash_str = tx->get_tx_hash();
     if (m_reject_rules.find(hash_str) != m_reject_rules.end()) {
         deny = true;
         return xtxpool_success;
@@ -318,7 +316,7 @@ enum_xtxpool_error_type xaccount_confirmtx_filter::sync_reject_rules(uint64_t un
         auto it_unconfirm_txs = m_unconfirm_txs.insert(it_s.second);
         m_permit_rules[it_s.first] = it_unconfirm_txs;
     }
-    
+
     return xtxpool_success;
 }
 

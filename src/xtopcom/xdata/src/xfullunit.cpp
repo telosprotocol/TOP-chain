@@ -10,58 +10,7 @@
 
 NS_BEG2(top, data)
 
-REG_CLS(xfullunit_input_t);
-REG_CLS(xfullunit_output_t);
 REG_CLS(xfullunit_block_t);
-
-xfullunit_input_t::xfullunit_input_t(uint64_t first_unit_height, const std::string & first_unit_hash)
-: m_first_unit_height(first_unit_height), m_first_unit_hash(first_unit_hash) {
-
-}
-
-int32_t xfullunit_input_t::do_write(base::xstream_t &stream) {
-    KEEP_SIZE();
-    stream << m_first_unit_height;
-    stream << m_first_unit_hash;
-    return CALC_LEN();
-}
-int32_t xfullunit_input_t::do_read(base::xstream_t &stream) {
-    KEEP_SIZE();
-    stream >> m_first_unit_height;
-    stream >> m_first_unit_hash;
-    return CALC_LEN();
-}
-
-xfullunit_output_t::xfullunit_output_t(const std::string & property_snapshot)
-: m_property_snapshot(property_snapshot) {
-
-}
-
-int32_t xfullunit_output_t::do_write(base::xstream_t &stream) {
-    KEEP_SIZE();
-    stream << m_property_snapshot;
-    return CALC_LEN();
-}
-int32_t xfullunit_output_t::do_read(base::xstream_t &stream) {
-    KEEP_SIZE();
-    stream >> m_property_snapshot;
-    return CALC_LEN();
-}
-
-// std::string xfullunit_output_t::body_dump() const {
-//     std::stringstream ss;
-//     ss << "{";
-//     ss << ",";
-//     if (!m_account_propertys.empty()) {
-//         ss << "prop_count=" << m_account_propertys.size() << ":";
-//         for (auto & v : m_account_propertys) {
-//             ss << v.first << " ";
-//             ss << v.second.size() << ";";
-//         }
-//     }
-//     ss << "}";
-//     return ss.str();
-// }
 
 xfullunit_block_t::xfullunit_block_t(base::xvheader_t & header, base::xvqcert_t & cert, base::xvinput_t* input, base::xvoutput_t* output)
 : xblock_t(header, cert, input, output, (enum_xdata_type)object_type_value) {

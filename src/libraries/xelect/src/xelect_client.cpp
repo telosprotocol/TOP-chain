@@ -59,7 +59,7 @@ void xelect_client_imp::bootstrap_node_join() {
             std::string seed_edge_host = item + ":" + http_port;
             HttpClient client(seed_edge_host);
             xdbg("boostrap to %s", seed_edge_host.c_str());
-            
+
 
             try {
                 std::string token_request = "version=1.0&target_account_addr=" + user_params.account.value() + "&method=requestToken&sequence_id=1";
@@ -108,7 +108,6 @@ void xelect_client_imp::bootstrap_node_join() {
                     tx->set_last_hash(xrpc::hex_to_uint64(last_trans_hash));
                 }
                 tx->set_digest();
-                tx->add_modified_count();
 
                 // get private key and sign
                 auto sign_key =  base::xstring_utl::base64_decode(user_params.signkey);

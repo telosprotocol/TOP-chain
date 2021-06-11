@@ -30,29 +30,6 @@ XDEFINE_MSG_ID(xmessage_category_txpool, xtxpool_msg_pull_recv_receipt, 0x000000
 XDEFINE_MSG_ID(xmessage_category_txpool, xtxpool_msg_pull_confirm_receipt, 0x00000004);
 XDEFINE_MSG_ID(xmessage_category_txpool, xtxpool_msg_push_receipt, 0x00000005);
 
-class xtxpool_confirm_receipt_msg_t : public top::basic::xserialize_face_t {
-public:
-    xtxpool_confirm_receipt_msg_t() = default;
-    xtxpool_confirm_receipt_msg_t(std::string source_addr, xtx_receipt_ptr_t receipt) : m_source_addr(source_addr), m_receipt(receipt) {
-    }
-    const std::string get_source_addr() const {
-        return m_source_addr;
-    }
-    xtx_receipt_ptr_t get_receipt() const {
-        return m_receipt;
-    }
-    virtual ~xtxpool_confirm_receipt_msg_t() {
-    }
-
-protected:
-    int32_t do_write(base::xstream_t & stream) override;
-    int32_t do_read(base::xstream_t & stream) override;
-
-private:
-    std::string m_source_addr{};
-    xtx_receipt_ptr_t m_receipt{nullptr};
-};
-
 class xtxpool_service final
   : public xtxpool_service_face
   , public std::enable_shared_from_this<xtxpool_service> {
