@@ -24,12 +24,8 @@ jobs:
 
       - name: Checkout repository
         uses: actions/checkout@v2
-      - name: Update init submodules
-        run: git submodule init
-      - name: Sync submodules
-        run: git submodule sync
       - name: Checkout submodules
-        run: git submodule foreach "(git checkout dev/fast_sync_develop; git pull)"
+        run: git submodule foreach "(git reset --hard; git submodule sync; git submodule update --init --recursive)"
       - name: Build XTOP DEBUG
         run: |
           bash .github/scripts/build_xtop.sh "test build_ci"
