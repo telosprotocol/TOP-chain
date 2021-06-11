@@ -60,7 +60,7 @@ void ElectManager::OnElectUpdated(const data::election::xelection_result_store_t
                         common::xip2_t xip2_{network_id, zid, cluster_id, group_id, slot_id, size, height};
 
                         wrouter::WrouterTableNodes router_node{xip2_, node_id.to_string()};
-                        xinfo("[Charles DEBUG] %s %s", xip2_.to_string().c_str(), node_id.to_string().c_str());
+                        xdbg("[ElectManager::OnElectUpdated] %s %s", xip2_.to_string().c_str(), node_id.to_string().c_str());
 
                         // ElectNetNode enode{node_id.to_string(), election_info.consensus_public_key.to_string(), xip, "", associated_gid, version};
                         elect_data.push_back(router_node);

@@ -125,8 +125,6 @@ void MultiRouting::HandleRootMessage(transport::protobuf::RoutingMessage & messa
     }
 }
 
-// ----------
-
 void MultiRouting::HandleGetElectNodesRequest(transport::protobuf::RoutingMessage & message, base::xpacket_t & packet) {
     std::unique_lock<std::mutex> lock(root_routing_table_mutex_);
     if (message.des_node_id() != root_routing_table_->get_local_node_info()->id()) {
@@ -162,8 +160,6 @@ void MultiRouting::HandleGetElectNodesRequest(transport::protobuf::RoutingMessag
     }
     base::ServiceType des_service_type = base::ServiceType(get_nodes_req.des_service_type());
 
-    // todo charles check this .
-    // #if 0
     auto routing_table = GetElectRoutingTable(des_service_type);
 
     std::vector<NodeInfoPtr> nodes;
@@ -252,7 +248,6 @@ void MultiRouting::HandleGetElectNodesRequest(transport::protobuf::RoutingMessag
 
     TOP_DEBUG("send response of msg.des: %s size: %d", HexEncode(message.des_node_id()).c_str(), tmp_ready_nodes);
     root_routing_table_->SendToClosestNode(res_message);
-    // #endif
     return;
 }
 
@@ -265,24 +260,6 @@ void MultiRouting::HandleGetElectNodesResponse(transport::protobuf::RoutingMessa
     TOP_DEBUG("response arrive");
     CallbackManager::Instance()->Callback(message.id(), message, packet);
 }
-
-// ----------
-
-// kadmlia::RoutingTablePtr MultiRouting::GetRoutingTable(base::ServiceType const &service_type,bool is_root){
-//     if(is_root){
-//         if (!root_manager_ptr_) {
-//             return nullptr;
-//         }
-//         return root_manager_ptr_->GetRoutingTable(base::ServiceType{kRoot});
-//     }else{
-//         for (auto const & _p : elect_routing_table_map_) {
-//             if (_p.first == service_type) {
-//                 return _p.second;
-//             }
-//         }
-//         return nullptr;
-//     }
-// }
 
 kadmlia::ElectRoutingTablePtr MultiRouting::GetElectRoutingTable(base::ServiceType const & service_type) {
     std::unique_lock<std::mutex> lock(elect_routing_table_map_mutex_);
@@ -338,7 +315,7 @@ void MultiRouting::RemoveElectRoutingTable(base::ServiceType service_type) {
     std::vector<base::ServiceType> vec_type;
     GetAllRegisterType(vec_type);
     for (auto & v : vec_type) {
-        xinfo("[ElectRoutingTable]after unregister routing table, still have %llu %s", v.value(), v.info().c_str());
+        xdbg("[ElectRoutingTable]after unregister routing table, still have %llu %s", v.value(), v.info().c_str());
     }
 }
 
@@ -424,7 +401,7 @@ void MultiRouting::CompleteElectRoutingTable() {
 }
 
 void MultiRouting::OnCompleteElectRoutingTable(base::ServiceType const service_type, std::string const election_xip2, kadmlia::NodeInfoPtr const & node_info) {
-    xdbg("Charles Debug MultiRouting::OnCompleteElectRoutingTable %s", election_xip2.c_str());
+    xdbg("[MultiRouting::OnCompleteElectRoutingTable] %s", election_xip2.c_str());
     kadmlia::ElectRoutingTablePtr routing_table;
     {
         std::unique_lock<std::mutex> lock(elect_routing_table_map_mutex_);

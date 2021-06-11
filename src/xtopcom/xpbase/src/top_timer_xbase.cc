@@ -1,5 +1,5 @@
 #include "top_timer_xbase.h"
-#include "xpbase/base/top_log.h"
+// #include "xpbase/base/top_log.h"
 #include "xpbase/base/top_utils.h"
 #include "xpbase/base/top_string_util.h"
 #include <assert.h>
@@ -20,7 +20,7 @@ bool TimerSink::on_timer_start(
         const int64_t cur_time_ms,
         const int32_t timeout_ms,
         const int32_t timer_repeat_ms) {
-    TOP_INFO("on_timer_start(%s)", name_.c_str());
+    xdbg("on_timer_start(%s)", name_.c_str());
     return true;
 }
 
@@ -31,11 +31,11 @@ bool TimerSink::on_timer_stop(
             const int64_t cur_time_ms,
             const int32_t timeout_ms,
             const int32_t timer_repeat_ms) {
-    TOP_INFO("on_timer_stop(%s)", name_.c_str());
+    xdbg("on_timer_stop(%s)", name_.c_str());
     OnTimerProc proc = proc_;
     proc_ = nullptr;
     proc(true);
-    TOP_INFO("on_timer_stop(%s) over", name_.c_str());
+    xdbg("on_timer_stop(%s) over", name_.c_str());
     return true;
 }
 
@@ -45,7 +45,7 @@ bool TimerSink::on_timer_fire(
             const int64_t current_time_ms,
             const int32_t start_timeout_ms,
             int32_t& in_out_cur_interval_ms) {
-    // TOP_INFO("on_timer_fire");
+    // xdbg("on_timer_fire");
     proc_(false);
     return true;
 }
@@ -66,30 +66,30 @@ TimerXbase::TimerXbase(TimerManagerXbase* timer_manager, int delay, int repeat, 
     repeat_ = repeat;
     func_ = func;
     timer_manager_ = timer_manager;
-    TOP_INFO("timer_xbase(%s) ctor", name_.c_str());
+    xdbg("timer_xbase(%s) ctor", name_.c_str());
 }
 
 TimerXbase::~TimerXbase() {
-    TOP_INFO("timer_xbase(%s) dtor", name_.c_str());
+    xdbg("timer_xbase(%s) dtor", name_.c_str());
 }
 
 void TimerXbase::Stop(bool wait) {
-    TOP_INFO("timer_xbase(%s) stopping", name_.c_str());
+    xdbg("timer_xbase(%s) stopping", name_.c_str());
     bool first_time_to_stop = false;
     {
         Lock lock(mutex_);
         if (!started_ || stopped_) {
-            TOP_INFO("timer_xbase(%s) not started or stopped", name_.c_str());
+            xdbg("timer_xbase(%s) not started or stopped", name_.c_str());
             return;
         }
 
         if (!request_stop_) {
-            TOP_INFO("timer_xbase(%s) request stop", name_.c_str());
+            xdbg("timer_xbase(%s) request stop", name_.c_str());
             func_ = nullptr;
             request_stop_ = true;
             first_time_to_stop = true;
         } else {
-            TOP_INFO("timer_xbase(%s) no need stop again internally", name_.c_str());
+            xdbg("timer_xbase(%s) no need stop again internally", name_.c_str());
             return;  // no need stop again internally
         }
     }
@@ -99,11 +99,11 @@ void TimerXbase::Stop(bool wait) {
     }
 
     if (wait && first_time_to_stop) {
-        TOP_INFO("timer_xbase(%s) waiting for stoping", name_.c_str());
+        xdbg("timer_xbase(%s) waiting for stoping", name_.c_str());
         future_.get();
     }
 
-    TOP_INFO("timer_xbase(%s) stopped", name_.c_str());
+    xdbg("timer_xbase(%s) stopped", name_.c_str());
 }
 
 bool TimerXbase::IsStopped() {
@@ -124,7 +124,7 @@ void TimerXbase::Start() {
 
     future_ = promise_.get_future();
     started_ = true;
-    TOP_INFO("timer_xbase(%s) started", name_.c_str());
+    xdbg("timer_xbase(%s) started", name_.c_str());
 }
 
 void TimerXbase::Release() {
@@ -138,7 +138,7 @@ void TimerXbase::TimerProc(bool stop) {
     {
         Lock lock(mutex_);
         if (stop) {
-            TOP_INFO("timer_xbase(%s) stopping internally", name_.c_str());
+            xdbg("timer_xbase(%s) stopping internally", name_.c_str());
             func_ = nullptr;
             stopped_ = true;
             Release();
@@ -156,7 +156,7 @@ void TimerXbase::TimerProc(bool stop) {
 
 // --------------------------------------------------------------------------------
 TimerManagerXbase::TimerManagerXbase() {
-    TOP_INFO("timer_manager_xbase inited");
+    xdbg("timer_manager_xbase inited");
 }
 
 TimerManagerXbase::~TimerManagerXbase() {
@@ -176,10 +176,10 @@ Timer2Ptr TimerManagerXbase::CreateTimer(int delay, int repeat, TimerFunc func, 
 }
 
 void TimerManagerXbase::Start(int thread_count) {
-    TOP_INFO("timer_manager_xbase Start(thread_count=%d)", thread_count);
+    xdbg("timer_manager_xbase Start(thread_count=%d)", thread_count);
     Lock lock(mutex_);
     if (started_) {
-        TOP_INFO("timer_manager_xbase started before, ignore the action");
+        xdbg("timer_manager_xbase started before, ignore the action");
         return;
     }
 
@@ -203,7 +203,7 @@ void TimerManagerXbase::Start(int thread_count) {
 
     // SleepMs(1100);  // xbase need about 1000ms to start thread!
     started_ = true;
-    TOP_INFO("timer_manager_xbase started");
+    xdbg("timer_manager_xbase started");
 }
 
 void TimerManagerXbase::Stop() {
@@ -221,7 +221,7 @@ void TimerManagerXbase::Stop() {
     // TODO: how to stop threads?
     timers_.clear();
     stopped_ = true;
-    TOP_INFO("timer_manager_xbase stopped");
+    xdbg("timer_manager_xbase stopped");
 }
 
 base::xtimer_t* TimerManagerXbase::CreateTimer(TimerSink* timer_sink) {

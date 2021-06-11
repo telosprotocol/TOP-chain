@@ -31,9 +31,6 @@ public:
     int GetRootNodesV2Async(const std::string & des_kroot_id, base::ServiceType des_service_type, GetRootNodesV2AsyncCallback cb);
 
 private:
-    void HandleGetElectNodesRequest(transport::protobuf::RoutingMessage & message, base::xpacket_t & packet);
-    void HandleGetElectNodesResponse(transport::protobuf::RoutingMessage & message, base::xpacket_t & packet);
-
     void OnGetRootNodesV2Async(GetRootNodesV2AsyncCallback cb,
                                std::string des_kroot_id,
                                base::ServiceType des_service_type,
