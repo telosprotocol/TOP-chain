@@ -324,7 +324,7 @@ public:
      * @return false
      */
     bool is_validator_node() const noexcept {
-        return common::has<common::xrole_type_t::consensus>(m_registered_role) || common::has<common::xrole_type_t::advance>(m_registered_role);
+        return common::has<common::xrole_type_t::validator>(m_registered_role) || common::has<common::xrole_type_t::advance>(m_registered_role);
     }
 
     /**
@@ -421,6 +421,10 @@ public:
      */
     bool archive() const noexcept;
 
+    /// @brief Check if self is an edge archive node.
+    ///        Edge archive is also called full-edge.
+    bool edge_archive() const noexcept;
+
     /**
      * @brief get rec stake
      *
@@ -457,6 +461,8 @@ public:
      * @return uint64_t
      */
     uint64_t archive_stake() const noexcept;
+
+    uint64_t edge_archive_stake() const noexcept;
 
     /**
      * @brief Get role type

@@ -41,8 +41,7 @@ std::vector<vnetwork::xvnode_address_t> xsync_peer_keeper_t::get_random_neighbor
     std::vector<vnetwork::xvnode_address_t> all_neighbors;
     // rec,zec,consensus,archive
     if (common::has<common::xnode_type_t::rec>(addr.type()) || common::has<common::xnode_type_t::zec>(addr.type()) ||
-        common::has<common::xnode_type_t::consensus>(addr.type()) || common::has<common::xnode_type_t::archive>(addr.type()) ||
-        (common::has<common::xnode_type_t::edge_archive>(addr.type()))) {
+        common::has<common::xnode_type_t::consensus>(addr.type()) || common::has<common::xnode_type_t::storage>(addr.type())) {
         all_neighbors = m_role_xips_mgr->get_all_neighbors(addr);
     }
 

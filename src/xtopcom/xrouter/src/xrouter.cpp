@@ -17,7 +17,7 @@ NS_BEG2(top, router)
 
 common::xsharding_address_t xtop_router::sharding_address_from_account(common::xaccount_address_t const & target_account,
                                                                        common::xnetwork_id_t const & nid,
-                                                                       common::xnode_type_t type) {
+                                                                       common::xnode_type_t type) const {
     assert(target_account.has_value());
     assert(common::has<common::xnode_type_t::consensus_validator>(type) || common::has<common::xnode_type_t::consensus_auditor>(type));
 
@@ -37,13 +37,19 @@ common::xsharding_address_t xtop_router::sharding_address_from_account(common::x
     }
 }
 
-common::xsharding_address_t xtop_router::address_of_table_id(std::uint16_t const table_id, common::xnode_type_t type, common::xnetwork_id_t const & nid) {
+common::xsharding_address_t xtop_router::address_of_table_id(std::uint16_t const table_id,
+                                                             common::xnode_type_t type,
+                                                             common::xnetwork_id_t const & nid) const {
     if (common::has<common::xnode_type_t::edge>(type)) {
         return {};
     }
 
-    if (common::has<common::xnode_type_t::archive>(type)) {
-        return common::build_archive_sharding_address(nid);
+    if (common::has<common::xnode_type_t::full_archive>(type)) {
+        return common::build_archive_sharding_address(common::xarchive_group_id, nid);
+    }
+
+    if (common::has<common::xnode_type_t::light_archive>(type)) {
+        return common::build_archive_sharding_address(common::xedge_archive_group_id, nid);
     }
 
     if (common::has<common::xnode_type_t::committee>(type)) {
@@ -57,13 +63,19 @@ common::xsharding_address_t xtop_router::address_of_table_id(std::uint16_t const
     return do_address_of_table_id(table_id, type, nid);
 }
 
-common::xsharding_address_t xtop_router::address_of_book_id(std::uint16_t const book_id, common::xnode_type_t type, common::xnetwork_id_t const & nid) {
+common::xsharding_address_t xtop_router::address_of_book_id(std::uint16_t const book_id,
+                                                            common::xnode_type_t type,
+                                                            common::xnetwork_id_t const & nid) const {
     if (common::has<common::xnode_type_t::edge>(type)) {
         return {};
     }
 
-    if (common::has<common::xnode_type_t::archive>(type)) {
-        return common::build_archive_sharding_address(nid);
+    if (common::has<common::xnode_type_t::full_archive>(type)) {
+        return common::build_archive_sharding_address(common::xarchive_group_id, nid);
+    }
+
+    if (common::has<common::xnode_type_t::light_archive>(type)) {
+        return common::build_archive_sharding_address(common::xedge_archive_group_id, nid);
     }
 
     if (common::has<common::xnode_type_t::committee>(type)) {
@@ -77,7 +89,9 @@ common::xsharding_address_t xtop_router::address_of_book_id(std::uint16_t const 
     return do_address_of_book_id(book_id, type, nid);
 }
 
-common::xsharding_address_t xtop_router::do_address_of_book_id(std::uint16_t const book_id, common::xnode_type_t type, common::xnetwork_id_t const & nid) {
+common::xsharding_address_t xtop_router::do_address_of_book_id(std::uint16_t const book_id,
+                                                               common::xnode_type_t type,
+                                                               common::xnetwork_id_t const & nid) const {
     assert(common::has<common::xnode_type_t::consensus_validator>(type) || common::has<common::xnode_type_t::consensus_auditor>(type));
 
     auto const & config_register = top::config::xconfig_register_t::get_instance();
@@ -101,7 +115,9 @@ common::xsharding_address_t xtop_router::do_address_of_book_id(std::uint16_t con
             common::has<common::xnode_type_t::consensus_validator>(type) ? top::get<common::xgroup_id_t>(validator_group_info) : top::get<common::xgroup_id_t>(auditor_group_info)};
 }
 
-common::xsharding_address_t xtop_router::do_address_of_table_id(std::uint16_t const table_id, common::xnode_type_t type, common::xnetwork_id_t const & nid) {
+common::xsharding_address_t xtop_router::do_address_of_table_id(std::uint16_t const table_id,
+                                                                common::xnode_type_t type,
+                                                                common::xnetwork_id_t const & nid) const {
     assert(common::has<common::xnode_type_t::consensus_validator>(type) || common::has<common::xnode_type_t::consensus_auditor>(type));
 
     auto const & config_register = top::config::xconfig_register_t::get_instance();

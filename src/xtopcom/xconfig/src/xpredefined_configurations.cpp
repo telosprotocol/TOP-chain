@@ -138,6 +138,8 @@ XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(contract_call_contracts_num);
 /* begin of offchain parameters */
 XDEFINE_CONFIGURATION(auditor_group_count);
 XDEFINE_CONFIGURATION(validator_group_count);
+XDEFINE_CONFIGURATION(archive_group_count);
+XDEFINE_CONFIGURATION(min_edge_archive_deposit);
 XDEFINE_CONFIGURATION(min_account_deposit);
 XDEFINE_CONFIGURATION(zone_count);
 XDEFINE_CONFIGURATION(cluster_count);

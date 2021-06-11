@@ -399,7 +399,7 @@ xsharding_address_t
 build_edge_sharding_address(xnetwork_id_t const & network_id);
 
 xsharding_address_t
-build_archive_sharding_address(xnetwork_id_t const & network_id);
+build_archive_sharding_address(xgroup_id_t const & group_id, xnetwork_id_t const & network_id);
 
 xsharding_address_t
 build_consensus_sharding_address(xgroup_id_t const & group_id, xnetwork_id_t const & network_id = xtopchain_network_id);
@@ -412,6 +412,9 @@ build_platform_broadcast_sharding_address();
 
 xsharding_address_t
 build_frozen_sharding_address(xnetwork_id_t const & network_id = xtopchain_network_id, xcluster_id_t const & cluster_id = xdefault_cluster_id, xgroup_id_t const & group_id = xdefault_group_id);
+
+xgroup_address_t
+build_group_address(xnetwork_id_t const & network_id, xnode_type_t const node_type);
 
 NS_END2
 

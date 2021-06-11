@@ -84,7 +84,7 @@ private:
                                                                                              std::uint64_t const associated_blk_height,
                                                                                              std::error_code & ec);
 
-    std::unordered_map<common::xsharding_address_t, xgroup_update_result_t> update_archive_zone(std::shared_ptr<xzone_element_t> const & zone_element,
+    std::unordered_map<common::xsharding_address_t, xgroup_update_result_t> update_storage_zone(std::shared_ptr<xzone_element_t> const & zone_element,
                                                                                                 data::election::xelection_result_store_t const & election_result_store,
                                                                                                 std::uint64_t const associated_blk_height,
                                                                                                 std::error_code & ec);
