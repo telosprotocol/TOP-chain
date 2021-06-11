@@ -75,6 +75,9 @@ xblock_ptr_t        xlightunit_builder_t::build_block(const xblock_ptr_t & prev_
     lightunit_para.set_transaction_result(exec_result.succ_txs_result);
     uint32_t unconfirm_num = _account_context->get_blockchain()->get_unconfirm_sendtx_num();
     lightunit_para.set_account_unconfirm_sendtx_num(unconfirm_num);
+    std::string fullstate_bin;
+    proposal_bstate->take_snapshot(fullstate_bin);
+    lightunit_para.set_fullstate_bin(fullstate_bin);
 
     base::xreceiptid_state_ptr_t receiptid_state = lightunit_build_para->get_receiptid_state();
     alloc_tx_receiptid(input_txs, receiptid_state);
@@ -85,6 +88,9 @@ xblock_ptr_t        xlightunit_builder_t::build_block(const xblock_ptr_t & prev_
     base::xvblock_t* _proposal_block = data::xblocktool_t::create_next_lightunit(lightunit_para, prev_block.get(), cs_para);
     xblock_ptr_t proposal_unit;
     proposal_unit.attach((data::xblock_t*)_proposal_block);
+    xdbg("xlightunit_builder_t::build_block %s,account=%s,height=%ld,binlog_size=%zu,binlog=%ld,state_size=%zu",
+        cs_para.dump().c_str(), prev_block->get_account().c_str(), prev_block->get_height() + 1,
+        exec_result.succ_txs_result.m_property_binlog.size(), base::xhash64_t::digest(exec_result.succ_txs_result.m_property_binlog), fullstate_bin.size());
     return proposal_unit;
 }
 

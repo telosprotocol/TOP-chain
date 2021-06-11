@@ -40,12 +40,14 @@ class xlightunit_block_para_t {
     void    set_input_txs(const std::vector<xcons_transaction_ptr_t> & input_txs);
 
     void    set_contract_txs(const std::vector<xcons_transaction_ptr_t> & contract_txs);
+    void    set_fullstate_bin(const std::string & fullstate) {m_fullstate_bin = fullstate;}
 
  public:
     const   std::vector<xcons_transaction_ptr_t> & get_input_txs() const {return m_raw_txs;}
     const   std::vector<xcons_transaction_ptr_t> & get_contract_create_txs() const {return m_tx_result.m_contract_txs;}
     uint32_t get_account_unconfirm_sendtx_num() const {return m_account_unconfirm_sendtx_num;}
     const std::string &     get_property_binlog() const {return m_tx_result.get_property_binlog();}
+    const std::string &     get_fullstate_bin() const {return m_fullstate_bin;}
 
  private:
     uint32_t                                m_account_unconfirm_sendtx_num{0};
@@ -53,29 +55,8 @@ class xlightunit_block_para_t {
     std::vector<xcons_transaction_ptr_t>    m_raw_txs;
     // output
     xtransaction_result_t                   m_tx_result;
+    std::string                             m_fullstate_bin;
 };
-
-class xlightunit_output_resource_t : public xbase_dataunit_t<xlightunit_output_resource_t, xdata_type_lightunit_output_resource> {
- public:
-    static  const std::string   name() { return std::string("o0");}  // common output resource version#0
-    std::string         get_obj_name() const override {return name();}
-
- public:
-    xlightunit_output_resource_t() = default;
-    explicit xlightunit_output_resource_t(const xlightunit_block_para_t & para);
- protected:
-    virtual ~xlightunit_output_resource_t() {}
-
-    int32_t do_write(base::xstream_t & stream) override;
-    int32_t do_read(base::xstream_t & stream) override;
-
- public:
-    uint32_t    get_unconfirm_sendtx_num() const {return m_unconfirm_sendtx_num;}
-
- private:
-    uint32_t                            m_unconfirm_sendtx_num{0};
-};
-using xlightunit_output_resource_ptr_t = xobject_ptr_t<xlightunit_output_resource_t>;
 
 class xlightunit_body_t {
  public:
@@ -83,20 +64,16 @@ class xlightunit_body_t {
     void add_tx_info(const xlightunit_tx_info_ptr_t & txinfo) {
         m_tx_infos.push_back(txinfo);
     }
-    void add_lightunit_output_resource(const xlightunit_output_resource_ptr_t & txoutput_resource) {
-        m_tx_output_resource = txoutput_resource;
-    }
-
     const std::vector<xlightunit_tx_info_ptr_t> & get_txs() const {return m_tx_infos;}
     bool is_empty() const {return m_tx_infos.empty();}
-    const xlightunit_output_resource_ptr_t & get_txout_resource() const {return m_tx_output_resource;}
 
  private:
     std::vector<xlightunit_tx_info_ptr_t>   m_tx_infos;
-    xlightunit_output_resource_ptr_t    m_tx_output_resource{nullptr};
 };
 
 class xlightunit_block_t : public xblock_t {
+ public:
+    static  const std::string   unconfirm_tx_num_name() { return std::string("i0");}  // input resource #0
  protected:
     enum { object_type_value = enum_xdata_type::enum_xdata_type_max - xdata_type_lightunit_block };
  public:
@@ -123,14 +100,14 @@ class xlightunit_block_t : public xblock_t {
     bool                        extract_sub_txs(std::vector<base::xvtxindex_ptr> & sub_txs) override;
     const std::vector<xlightunit_tx_info_ptr_t> &   get_txs() const override;
     uint32_t                    get_txs_count() const override {return (uint32_t)get_input()->get_entitys().size();}
-    uint16_t                    get_unconfirm_sendtx_num() const override {return get_tx_output_resource()->get_unconfirm_sendtx_num();}
+    uint32_t                    get_unconfirm_sendtx_num() const override;
 
  private:
-    const xlightunit_output_resource_ptr_t &     get_tx_output_resource() const;
     void                        try_load_body() const;
     void                        load_body() const;
     const xlightunit_body_t &   get_lightunit_body() const;
-    xcons_transaction_ptr_t     create_txreceipt(const xtransaction_t* tx, xlightunit_output_entity_t* txinfo);
+    xcons_transaction_ptr_t     create_txreceipt(const xtransaction_t* tx, const base::xvaction_t & txinfo);
+    xtransaction_ptr_t          query_raw_transaction(const std::string & txhash) const;
 
  private:
     mutable std::once_flag      m_once_load_flag;  // cache body delay init

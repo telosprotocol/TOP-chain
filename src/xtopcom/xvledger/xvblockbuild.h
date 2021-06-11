@@ -8,6 +8,7 @@
 #include <vector>
 #include "xbase/xobject_ptr.h"
 #include "xbase/xbase.h"
+#include "xvledger/xdataobj_base.hpp"
 #include "xvledger/xvblock.h"
 #include "xvledger/xmerkle.hpp"
 
@@ -73,55 +74,135 @@ namespace top
 
         class xvblockbuild_t {
         public:
-            static bool calc_output_merkle_path(xvoutput_t* output, const std::string & leaf, xmerkle_path_256_t& hash_path);
-            static bool calc_input_merkle_path(xvinput_t* output, const std::string & leaf, xmerkle_path_256_t& hash_path);
-            static std::vector<std::string>    get_input_merkle_leafs(const std::vector<xventity_t*> & _entitys);
-            static std::vector<std::string>    get_output_merkle_leafs(const std::vector<xventity_t*> & _entitys);
-        public:
             xvblockbuild_t();  // genesis genesis construct
-            xvblockbuild_t(base::xvheader_t* header, base::xvqcert_t* cert, base::xvinput_t* input, base::xvoutput_t* output);
-            xvblockbuild_t(base::xvheader_t* header, base::xvinput_t* input, base::xvoutput_t* output);
+            xvblockbuild_t(base::xvheader_t* header, base::xvqcert_t* cert);
             xvblockbuild_t(base::xvheader_t* header);
             virtual ~xvblockbuild_t();
 
         public:
-            base::xauto_ptr<base::xvblock_t> build_new_block();
             virtual base::xauto_ptr<base::xvblock_t> create_new_block() = 0;
             void    init_qcert(const xbbuild_para_t & _para);
             void    init_header(const xbbuild_para_t & _para);
 
-        protected:
-            xvheader_t*     get_header() const {return m_header;}
-            xvqcert_t*      get_qcert() const {return m_qcert;}
+        public:
+            xvheader_t*     get_header() const {return m_header_ptr;}
+            xvqcert_t*      get_qcert() const {return m_qcert_ptr;}
             xvinput_t*      get_input() const {return m_input_ptr;}
             xvoutput_t*     get_output() const {return m_output_ptr;}
+            xvblock_t*      get_block() const {return m_block_ptr;}
 
         protected:
             void            init_header_qcert(const xbbuild_para_t & _para);
-            bool            init_input(const std::vector<xventity_t*> & entitys, xstrmap_t* resource_obj);
-            bool            init_output(const std::vector<xventity_t*> & entitys, xstrmap_t* resource_obj);
+            void            set_header(xvheader_t* _header);
+            void            set_qcert(xvqcert_t* _qcert);
+            void            set_input(xvinput_t* _input);
+            void            set_output(xvoutput_t* _output);
+            void            set_block(xvblock_t* _block);
+            std::string     build_mpt_root(const std::vector<std::string> & elements);
+            void            set_block_flags(xvblock_t* block);
+
             base::enum_xvblock_level        get_block_level_from_account(const std::string & account);
             base::enum_xvblock_type         get_block_type_from_empty_block(const std::string & account);
-
         private:
-            bool            make_input(const std::vector<xventity_t*> & entitys, xstrmap_t* resource_obj);
-            bool            make_output(const std::vector<xventity_t*> & entitys, xstrmap_t* resource_obj);
-            void            set_block_flags(xvblock_t* block);
+
             base::enum_xvchain_key_curve    get_key_curve_type_from_account(const std::string & account);
-            const std::vector<base::xventity_t*> &  get_input_entitys() const {return m_input_entitys;}
-            const std::vector<base::xventity_t*> &  get_output_entitys() const {return m_output_entitys;}
-            base::xstrmap_t*                        get_input_res() const {return m_input_res;}
-            base::xstrmap_t*                        get_output_res() const {return m_output_res;}
 
         private:
-            xvheader_t*                     m_header{nullptr};
-            xvqcert_t*                      m_qcert{nullptr};
+            xvblock_t*                      m_block_ptr{nullptr};     //new block
+            xvheader_t*                     m_header_ptr{nullptr};
+            xvqcert_t*                      m_qcert_ptr{nullptr};
             xvinput_t*                      m_input_ptr{nullptr};
             xvoutput_t*                     m_output_ptr{nullptr};
-            std::vector<base::xventity_t*>  m_input_entitys;
-            std::vector<base::xventity_t*>  m_output_entitys;
-            base::xstrmap_t*                m_input_res{nullptr};
-            base::xstrmap_t*                m_output_res{nullptr};
+        };
+
+
+        class xvblockmaker_t : public xvblockbuild_t {
+        public:
+            static bool calc_merkle_path(const std::vector<std::string> & leafs, const std::string & leaf, xmerkle_path_256_t& hash_path);
+            static bool calc_input_merkle_path(xvinput_t* input, const std::string & leaf, xmerkle_path_256_t& hash_path);
+            static std::vector<std::string>    get_input_merkle_leafs(xvinput_t* input);
+        public:
+            xvblockmaker_t();
+            xvblockmaker_t(base::xvheader_t* header);
+            virtual ~xvblockmaker_t();
+        public:
+            bool    set_input_entity(const std::vector<xvaction_t> & actions);
+            bool    set_output_entity(const std::string & state_bin, const std::string & binlog_bin);
+            bool    set_input_resource(const std::string & key, const std::string & value);
+            bool    set_output_resource_state(const std::string & value);
+            bool    set_output_resource_binlog(const std::string & value);
+            bool    make_input(xvinput_t* input_obj);
+            bool    make_output(xvoutput_t* output_obj);
+
+            virtual base::xauto_ptr<base::xvblock_t> build_new_block();
+            virtual base::xauto_ptr<base::xvblock_t> create_new_block() = 0;
+        protected:
+            virtual bool    build_input();
+            virtual bool    build_output();
+
+        protected://internal use only
+            inline xstrmap_t*           get_input_resource()  const {return m_input_resource;}
+            inline xstrmap_t*           get_output_resource() const {return m_output_resource;}
+            inline xvinentity_t*        get_input_entity()    const {return m_primary_input_entity;}
+            inline xvoutentity_t*       get_output_entity()   const {return m_primary_output_entity;}
+
+        private:
+            bool    set_output_resource(const std::string & key, const std::string & value);
+        private:
+            xstrmap_t*                  m_input_resource{nullptr}; //resource to hold input 'big data
+            xstrmap_t*                  m_output_resource{nullptr};//resource to hold output ' big data
+
+            xvinentity_t*               m_primary_input_entity{nullptr}; //#0 is primary input entity
+            xvoutentity_t*              m_primary_output_entity{nullptr};//#0 is primary output entity
+        };
+
+
+        class xtable_unit_resource_t : public xbase_dataunit_t<xtable_unit_resource_t, xdata_type_tableblock_unit_res> {
+        public:
+            xtable_unit_resource_t() = default;
+            xtable_unit_resource_t(xvblock_t* _block);
+        protected:
+            int32_t do_write(base::xstream_t & stream) override;
+            int32_t do_read(base::xstream_t & stream) override;
+
+        public:
+            const std::string & get_unit_header() const {return m_unit_header;}
+            const std::string & get_unit_input() const {return m_unit_input;}
+            const std::string & get_unit_input_resources() const {return m_unit_input_resources;}
+            const std::string & get_unit_output() const {return m_unit_output;}
+            const std::string & get_unit_output_resources() const {return m_unit_output_resources;}
+            const std::string & get_unit_justify_hash() const {return m_unit_justify_hash;}
+        private:
+            std::string     m_unit_header;
+            std::string     m_unit_input;
+            std::string     m_unit_output;
+            std::string     m_unit_input_resources;
+            std::string     m_unit_output_resources;
+            std::string     m_unit_justify_hash;
+        };
+
+        // xvtablemaker is just for batch units maker
+        class xvtableblock_maker_t : public xvblockmaker_t {
+        public:
+            static std::vector<std::string> get_table_out_merkle_leafs(const std::vector<xobject_ptr_t<xvblock_t>> & _batch_units);
+            static std::string              get_table_out_merkle_leaf(base::xvblock_t* _unit);
+            static std::vector<std::string> get_table_in_merkle_leafs(const std::vector<xobject_ptr_t<xvblock_t>> & _batch_units);
+            static std::string              get_table_in_merkle_leaf(base::xvblock_t* _unit);
+            static bool                     units_set_parent_cert(std::vector<xobject_ptr_t<xvblock_t>> & units, base::xvqcert_t* parent_cert);
+            static xauto_ptr<xtable_unit_resource_t> query_unit_resource(const base::xvblock_t* _tableblock, uint32_t index);
+        public:
+            xvtableblock_maker_t();
+            virtual ~xvtableblock_maker_t();
+        public:
+            bool    set_batch_units(const std::vector<xobject_ptr_t<xvblock_t>> & _batch_units);
+
+            virtual bool    build_input() override;
+            virtual bool    build_output() override;
+
+        protected:
+            const std::vector<xobject_ptr_t<xvblock_t>> & get_batch_units() const {return m_batch_units;}
+        private:
+            std::vector<xobject_ptr_t<xvblock_t>>   m_batch_units;
         };
 
     }//end of namespace of base

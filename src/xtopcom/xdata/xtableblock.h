@@ -20,50 +20,6 @@
 
 NS_BEG2(top, data)
 
-class xtableblock_input_entity_t final : public xventity_face_t<xtableblock_input_entity_t, xdata_type_tableblock_input_entity> {
- public:
-    xtableblock_input_entity_t() = default;
-    explicit xtableblock_input_entity_t(const xblock_t* unit);
- protected:
-    ~xtableblock_input_entity_t() = default;
-    int32_t do_write(base::xstream_t & stream) override;
-    int32_t do_read(base::xstream_t & stream) override;
- private:
-    xtableblock_input_entity_t & operator = (const xtableblock_input_entity_t & other);
- public:
-    virtual const std::string query_value(const std::string & key) override {return std::string();}
- public:
-    const std::string &     get_unit_account() const {return m_unit_account;}
-    uint64_t                get_unit_height() const {return m_unit_height;}
-    const std::string &     get_unit_header_hash() const {return m_unit_header_hash;}
-
- private:
-    std::string         m_unit_account;
-    uint64_t            m_unit_height{0};
-    std::string         m_unit_header_hash;
-};
-
-class xtableblock_output_entity_t final: public xventity_face_t<xtableblock_output_entity_t, xdata_type_tableblock_output_entity> {
- public:
-    xtableblock_output_entity_t() = default;
-    explicit xtableblock_output_entity_t(const xblock_t* unit);
-
- protected:
-    ~xtableblock_output_entity_t();
-    int32_t do_write(base::xstream_t & stream) override;
-    int32_t do_read(base::xstream_t & stream) override;
-
- public:
-    virtual const std::string query_value(const std::string & key) override {return get_merkle_leaf();}
-
- public:
-    const std::string   get_merkle_leaf() const;
-    const std::string & get_unit_sign_hash() const {return m_unit_sign_hash;}
-
- private:
-    std::string     m_unit_sign_hash;
-};
-
 class xtable_block_para_t {
  public:
     xtable_block_para_t() = default;
@@ -78,15 +34,18 @@ class xtable_block_para_t {
     void    set_batch_units(const std::vector<xblock_ptr_t> & batch_units) {m_account_units = batch_units;}
     void    set_extra_data(const std::string & extra_data) {m_extra_data = extra_data;}
     void    set_property_binlog(const std::string & binlog) {m_property_binlog = binlog;}
+    void    set_fullstate_bin(const std::string & fullstate) {m_fullstate_bin = fullstate;}
 
     const std::vector<xblock_ptr_t> & get_account_units() const {return m_account_units;}
     const std::string &             get_extra_data() const {return m_extra_data;}
     const std::string &             get_property_binlog() const {return m_property_binlog;}
+    const std::string &             get_fullstate_bin() const {return m_fullstate_bin;}
 
  private:
     std::vector<xblock_ptr_t>        m_account_units;
     std::string                      m_extra_data;
     std::string                      m_property_binlog;
+    std::string                      m_fullstate_bin;
 };
 
 class xtable_block_t : public xblock_t {
@@ -126,7 +85,7 @@ class xtable_block_t : public xblock_t {
     virtual bool    extract_sub_blocks(std::vector<xobject_ptr_t<base::xvblock_t>> & sub_blocks) override;
 
  private:
-    xblock_ptr_t    recreate_unit_from_unit_input_output_resource(uint16_t index) const;
+    xblock_ptr_t    recreate_unit_from_unit_input_output_resource(uint32_t index) const;
  private:
     mutable std::once_flag              m_once_unpack_flag;
     mutable std::once_flag              m_once_set_parent_cert_flag;

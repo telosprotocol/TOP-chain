@@ -5,18 +5,16 @@
 #include <string>
 #include "xdata/xblockbuild.h"
 #include "xdata/xrootblock.h"
-#include "xdata/xblockbody.h"
 #include "xdata/xemptyblock.h"
 #include "xdata/xlightunit.h"
 #include "xdata/xfullunit.h"
 #include "xdata/xtableblock.h"
 #include "xdata/xfull_tableblock.h"
-#include "xdata/xblock_resources.h"
 #include "xdata/xnative_contract_address.h"
+#include "xvledger/xventity.h"
+#include "xvledger/xvaction.h"
 
 NS_BEG2(top, data)
-
-REG_CLS(xdummy_entity_t);
 
 xlightunit_build_t::xlightunit_build_t(const std::string & account, const xlightunit_block_para_t & bodypara) {
     base::xbbuild_para_t build_para(xrootblock_t::get_rootblock_chainid(), account, base::enum_xvblock_level_unit, base::enum_xvblock_class_light, xrootblock_t::get_rootblock_hash());
@@ -32,73 +30,70 @@ xlightunit_build_t::xlightunit_build_t(base::xvblock_t* prev_block, const xlight
     build_block_body(bodypara);
 }
 xlightunit_build_t::xlightunit_build_t(base::xvheader_t* header, base::xvinput_t* input, base::xvoutput_t* output)
-: xvblockbuild_t(header, input, output) {
+: base::xvblockmaker_t(header) {
+    make_input(input);
+    make_output(output);
+}
+
+base::xvaction_t xlightunit_build_t::make_action(const xcons_transaction_ptr_t & tx) {
+    std::string caller_addr;  // TODO(jimmy)
+    std::string target_uri;  // TODO(jimmy)
+    std::string method_uri = "v1";  // TODO(jimmy)
+
+    if (tx->is_self_tx() || tx->is_send_tx() || tx->is_confirm_tx()) {
+        caller_addr = tx->get_source_addr();
+        target_uri = tx->get_target_addr();
+    } else {
+        caller_addr = tx->get_target_addr();
+        target_uri = tx->get_source_addr();
+    }
+    base::xvalue_t _action_result(tx->get_tx_execute_state().get_map_para());  // how to set result
+    base::xvaction_t _tx_action(tx->get_tx_hash(), caller_addr, target_uri, method_uri);
+    xassert(tx->get_tx_subtype() > base::enum_transaction_subtype_invalid);
+    _tx_action.set_org_tx_action_id(tx->get_tx_subtype());
+    _tx_action.copy_result(_action_result);
+    return _tx_action;
 }
 
 bool xlightunit_build_t::build_block_body(const xlightunit_block_para_t & para) {
-    xblockbody_para_t blockbody;
+    // #1 set input entitys with actions
+    std::vector<base::xvaction_t> input_actions;
     for (auto & tx : para.get_input_txs()) {
-        enum_xunit_tx_exec_status last_action_status = enum_xunit_tx_exec_status_success;
-        uint64_t last_tx_clock = 0;
-        if (tx->is_recv_tx() || tx->is_confirm_tx()) {
-            last_action_status = tx->get_receipt()->get_tx_info()->get_tx_exec_state().get_tx_exec_status();
-            last_tx_clock = tx->get_clock();
+        base::xvaction_t _action = make_action(tx);
+        input_actions.push_back(_action);
+        xassert(_action.get_org_tx_action_id() > 0);
+    }
+    for (auto & tx : para.get_contract_create_txs()) {
+        base::xvaction_t _action = make_action(tx);
+        input_actions.push_back(_action);
+    }
+    set_input_entity(input_actions);
+
+    // #2 set input resources
+    for (auto & tx : para.get_input_txs()) {
+        // TODO(jimmy) confirm tx no need take origintx
+        if (tx->is_self_tx() || tx->is_send_tx() || tx->is_recv_tx()) {
+            std::string origintx_bin;
+            tx->get_transaction()->serialize_to_string(origintx_bin);
+            std::string origintx_hash = tx->get_transaction()->get_digest_str();
+            set_input_resource(origintx_hash, origintx_bin);
         }
-        xlightunit_input_entity_ptr_t ientity = make_object_ptr<xlightunit_input_entity_t>(tx->get_tx_subtype(),
-                                                                                        tx->get_transaction(),
-                                                                                        false,
-                                                                                        last_action_status,
-                                                                                        last_tx_clock);
-
-
-        blockbody.add_input_entity(ientity);
-        // if (tx->is_self_tx() || tx->is_send_tx()) {  // send tx save origin tx in lightunit
-        //     xobject_ptr_t<xresource_origintx_t> origintx = make_object_ptr<xresource_origintx_t>(tx->get_transaction());
-        //     std::string reskey = ientity->get_origintx_resource_key();
-        //     std::string resvalue;
-        //     origintx->serialize_to_string(resvalue);
-        //     blockbody.add_input_resource(reskey, resvalue);
-        // }
     }
     for (auto & tx : para.get_contract_create_txs()) {
-        xassert(tx->get_tx_subtype() == enum_transaction_subtype_send);
-        enum_xunit_tx_exec_status last_action_status = enum_xunit_tx_exec_status_success;
-        uint64_t last_tx_clock = 0;
-        xlightunit_input_entity_ptr_t ientity = make_object_ptr<xlightunit_input_entity_t>(tx->get_tx_subtype(),
-                                                                                           tx->get_transaction(),
-                                                                                           true,
-                                                                                           last_action_status,
-                                                                                           last_tx_clock);
-        blockbody.add_input_entity(ientity);
-        // if (tx->is_self_tx() || tx->is_send_tx()) {  // send tx save origin tx in lightunit
-        //     xobject_ptr_t<xresource_origintx_t> origintx = make_object_ptr<xresource_origintx_t>(tx->get_transaction());
-        //     std::string reskey = ientity->get_origintx_resource_key();
-        //     std::string resvalue;
-        //     origintx->serialize_to_string(resvalue);
-        //     blockbody.add_input_resource(reskey, resvalue);
-        // }
+        std::string origintx_bin;
+        tx->get_transaction()->serialize_to_string(origintx_bin);
+        std::string origintx_hash = tx->get_transaction()->get_digest_str();
+        set_input_resource(origintx_hash, origintx_bin);
     }
+    uint32_t unconfirm_tx_num = para.get_account_unconfirm_sendtx_num();
+    std::string unconfirm_tx_num_str = base::xstring_utl::tostring(unconfirm_tx_num);
+    set_input_resource(xlightunit_block_t::unconfirm_tx_num_name(), unconfirm_tx_num_str); // TODO(jimmy) put unconfirm tx flag into input resource
 
-    for (auto & tx : para.get_input_txs()) {
-        xobject_ptr_t<xlightunit_output_entity_t> tx_info = make_object_ptr<xlightunit_output_entity_t>(tx->get_tx_subtype(), tx->get_transaction(), tx->get_tx_execute_state());
-        blockbody.add_output_entity(tx_info);
-    }
-    for (auto & tx : para.get_contract_create_txs()) {
-        xobject_ptr_t<xlightunit_output_entity_t> tx_info = make_object_ptr<xlightunit_output_entity_t>(tx->get_tx_subtype(), tx->get_transaction(), tx->get_tx_execute_state());
-        blockbody.add_output_entity(tx_info);
-    }
+    // #3 set output entitys with state bin and binlog bin
+    set_output_entity(para.get_fullstate_bin(), para.get_property_binlog());
 
-    xlightunit_output_resource_ptr_t txout_resource = make_object_ptr<xlightunit_output_resource_t>(para);
-    std::string out_resource_str;
-    txout_resource->serialize_to_string(out_resource_str);
-    blockbody.add_output_resource(xlightunit_output_resource_t::name(), out_resource_str);
-
-    // TODO(jimmy) delete property binlog from xlightunit_output_resource_t
-    blockbody.add_output_resource(base::xvoutput_t::res_binlog_key_name(), para.get_property_binlog());
-
-    init_input(blockbody.get_input_entitys(), blockbody.get_input_resource());
-    init_output(blockbody.get_output_entitys(), blockbody.get_output_resource());
-
+    // #4 set output resources with binlog_bin
+    set_output_resource_binlog(para.get_property_binlog());
     return true;
 }
 
@@ -145,7 +140,7 @@ xemptyblock_build_t::xemptyblock_build_t(base::xvblock_t* prev_block) {
     init_header_qcert(build_para);
 }
 xemptyblock_build_t::xemptyblock_build_t(base::xvheader_t* header)
-: xvblockbuild_t(header) {
+: base::xvblockmaker_t(header) {
 }
 
 base::xauto_ptr<base::xvblock_t> xemptyblock_build_t::create_new_block() {
@@ -160,26 +155,29 @@ xfullunit_build_t::xfullunit_build_t(base::xvblock_t* prev_block, const xfulluni
     build_block_body(bodypara);
 }
 xfullunit_build_t::xfullunit_build_t(base::xvheader_t* header, base::xvinput_t* input, base::xvoutput_t* output)
-: xvblockbuild_t(header, input, output) {
+: base::xvblockmaker_t(header) {
+    make_input(input);
+    make_output(output);
 }
 
 bool xfullunit_build_t::build_block_body(const xfullunit_block_para_t & para) {
-    xblockbody_para_t blockbody;
-    xobject_ptr_t<xfullunit_input_t> input = make_object_ptr<xfullunit_input_t>(para.m_first_unit_height, para.m_first_unit_hash);
-    xobject_ptr_t<xfullunit_output_t> output = make_object_ptr<xfullunit_output_t>(para.m_property_snapshot);
-    blockbody.add_input_entity(input);
-    blockbody.add_output_entity(output);
-
-    // TODO(jimmy) delete output snapshot, output entity record snapshot root hash
-    blockbody.add_output_resource(base::xvoutput_t::res_binlog_key_name(), para.m_property_snapshot);
-
-    init_input(blockbody.get_input_entitys(), blockbody.get_input_resource());
-    init_output(blockbody.get_output_entitys(), blockbody.get_output_resource());
+    // #1 set input entitys with actions
+    set_input_entity({});
+    // #2 set input resources
+    // #3 set output entitys with state bin and binlog bin
+    std::string full_state_bin = para.m_property_snapshot;
+    std::string binlog_bin;  //fullunit has empty binlog
+    set_output_entity(full_state_bin, binlog_bin);
+    // #4 set output resources
+    set_output_resource_state(para.m_property_snapshot);
     return true;
 }
 
 base::xauto_ptr<base::xvblock_t> xfullunit_build_t::create_new_block() {
-    return new xfullunit_block_t(*get_header(), *get_qcert(), get_input(), get_output());
+    base::xauto_ptr<base::xvblock_t> _block = new xfullunit_block_t(*get_header(), *get_qcert(), get_input(), get_output());
+    xassert(_block->get_output()->get_binlog_hash().empty());
+    xassert(!_block->get_output()->get_state_hash().empty());
+    return _block;
 }
 
 
@@ -193,42 +191,46 @@ xlighttable_build_t::xlighttable_build_t(base::xvblock_t* prev_block, const xtab
     build_block_body(bodypara);
 }
 
-bool xlighttable_build_t::build_block_body(const xtable_block_para_t & para) {
-    xblockbody_para_t blockbody;
-    uint16_t index = 0;
-    uint16_t count = (uint16_t)para.get_account_units().size();
-    for (uint16_t index = 0; index < count; index++) {
-        const auto & unit = para.get_account_units()[index];
-        xobject_ptr_t<xtableblock_input_entity_t> input_entity = make_object_ptr<xtableblock_input_entity_t>(unit.get());
-        xobject_ptr_t<xtableblock_output_entity_t> output_entity = make_object_ptr<xtableblock_output_entity_t>(unit.get());
-        blockbody.add_input_entity(input_entity);
-        blockbody.add_output_entity(output_entity);
+base::xvaction_t xlighttable_build_t::make_action(const std::vector<xobject_ptr_t<base::xvblock_t>> & batch_units) {
+    std::string caller_addr;  // TODO(jimmy)
+    std::string target_uri;  // TODO(jimmy)
+    std::string method_uri = "v1";  // TODO(jimmy)
 
-        xassert(unit->get_block_hash().empty());
-        base::xauto_ptr<xresource_unit_input_t> input_res = new xresource_unit_input_t(unit.get());
-        std::string input_res_key = std::to_string(index);
-        std::string input_res_value;
-        input_res->serialize_to_string(input_res_value);
-        blockbody.add_input_resource(input_res_key, input_res_value);
-
-        base::xauto_ptr<xresource_unit_output_t> output_res = new xresource_unit_output_t(unit.get());
-        std::string output_res_key = std::to_string(index);
-        std::string output_res_value;
-        output_res->serialize_to_string(output_res_value);
-        blockbody.add_output_resource(output_res_key, output_res_value);
-
-        // base::xauto_ptr<xresource_wholeblock_t> whileblock_res = new xresource_wholeblock_t(unit.get());
-        // std::string key = input_entity->get_unit_resource_key();
-        // std::string res_value;
-        // whileblock_res->serialize_to_string(res_value);
-        // blockbody.add_input_resource(key, res_value);
+    std::map<std::string, std::string> values;
+    uint32_t unit_count = (uint32_t)batch_units.size();
+    uint32_t tx_count = 0; // TODO(jimmy)
+    for (auto & unit : batch_units) {
+        if (unit->get_block_class() == base::enum_xvblock_class_light) {
+            tx_count += (uint32_t)unit->get_input()->get_primary_entity()->get_actions().size();
+        }
     }
 
-    std::string property_binlog = para.get_property_binlog();
-    blockbody.add_output_resource(base::xvoutput_t::res_binlog_key_name(), property_binlog);  // bl = binlog
+    xlighttable_action_t _lighttable_action({}, caller_addr, target_uri, method_uri);
+    base::xvalue_t _action_result = xlighttable_action_t::create_result(unit_count, tx_count);
+    _lighttable_action.copy_result(_action_result);
+    return _lighttable_action;
+}
 
-    init_input(blockbody.get_input_entitys(), blockbody.get_input_resource());
-    init_output(blockbody.get_output_entitys(), blockbody.get_output_resource());
+bool xlighttable_build_t::build_block_body(const xtable_block_para_t & para) {
+    std::vector<xobject_ptr_t<base::xvblock_t>> batch_units;
+    for (auto & v : para.get_account_units()) {
+        batch_units.push_back(v);
+    }
+    // #1 set input entitys with actions
+    base::xvaction_t _vaction = xlighttable_build_t::make_action(batch_units);
+    std::vector<base::xvaction_t> _vactions;
+    _vactions.push_back(_vaction);
+    set_input_entity(_vactions);
+
+    // #2 set input resources
+    set_batch_units(batch_units);
+
+    // #3 set output entitys with state bin and binlog bin
+    std::string full_state_bin = "111";  // TODO(jimmy)
+    std::string binlog_bin = para.get_property_binlog();
+    set_output_entity(full_state_bin, binlog_bin);
+    // #4 set output resources
+    set_output_resource_binlog(binlog_bin);
     return true;
 }
 
@@ -246,25 +248,21 @@ xfulltable_build_t::xfulltable_build_t(base::xvblock_t* prev_block, const xfullt
 }
 
 bool xfulltable_build_t::build_block_body(const xfulltable_block_para_t & para) {
-    xblockbody_para_t blockbody;
-
-    xobject_ptr_t<xdummy_entity_t> input = make_object_ptr<xdummy_entity_t>();
-    blockbody.add_input_entity(input);
+    // #1 set input entitys with actions
+    set_input_entity({});
+    // #2 set input resources
+    // #3 set output entitys with state bin and binlog bin
+    std::string full_state_bin = para.get_snapshot();
+    std::string binlog_bin;  //fullunit has empty binlog
+    set_output_entity(full_state_bin, binlog_bin);
+    // #4 set output resources
+    set_output_resource_state(full_state_bin);
 
     const xstatistics_data_t & statistics_data = para.get_block_statistics_data();
     auto const & serialized_data = statistics_data.serialize_based_on<base::xstream_t>();
     // TODO(jimmy) where define all resouces key name
-    blockbody.add_output_resource(xfull_tableblock_t::RESOURCE_NODE_SIGN_STATISTICS, {std::begin(serialized_data), std::end(serialized_data) });
+    set_input_resource(xfull_tableblock_t::RESOURCE_NODE_SIGN_STATISTICS, {std::begin(serialized_data), std::end(serialized_data) });
 
-    std::string snapshot_hash = para.get_snapshot_hash();
-    xobject_ptr_t<xfulltable_output_entity_t> output = make_object_ptr<xfulltable_output_entity_t>(snapshot_hash);
-    blockbody.add_output_entity(output);
-
-    // TODO(jimmy) should put to primary entity
-    blockbody.add_output_resource(base::xvoutput_t::res_binlog_hash_key_name(), snapshot_hash);  // TODO(jimmy) bl = binlog
-
-    init_input(blockbody.get_input_entitys(), blockbody.get_input_resource());
-    init_output(blockbody.get_output_entitys(), blockbody.get_output_resource());
     return true;
 }
 
@@ -281,18 +279,24 @@ xrootblock_build_t::xrootblock_build_t(base::enum_xchain_id chainid, const std::
 }
 
 bool xrootblock_build_t::build_block_body(const xrootblock_para_t & para) {
-    xblockbody_para_t blockbody;
+    // #1 set input entitys with actions
+    set_input_entity({});
+    // #2 set input resources
     xobject_ptr_t<xrootblock_input_t> input = make_object_ptr<xrootblock_input_t>();
     input->set_account_balances(para.m_account_balances);
     input->set_genesis_funds_accounts(para.m_geneis_funds_accounts);
     input->set_genesis_tcc_accounts(para.m_tcc_accounts);
     input->set_genesis_nodes(para.m_genesis_nodes);
-    blockbody.add_input_entity(input);
-    xobject_ptr_t<xdummy_entity_t> output = make_object_ptr<xdummy_entity_t>();
-    blockbody.add_output_entity(output);
 
-    init_input(blockbody.get_input_entitys(), blockbody.get_input_resource());
-    init_output(blockbody.get_output_entitys(), blockbody.get_output_resource());
+    std::string resource_bin;
+    input->serialize_to_string(resource_bin);
+    set_input_resource(xrootblock_t::root_resource_name, resource_bin);
+    // #3 set output entitys with state bin and binlog bin
+    std::string full_state_bin;
+    std::string binlog_bin;  //fullunit has empty binlog
+    set_output_entity(full_state_bin, binlog_bin);
+    // #4 set output resources
+
     return true;
 }
 

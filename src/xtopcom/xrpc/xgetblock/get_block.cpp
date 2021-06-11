@@ -475,8 +475,9 @@ xJson::Value get_block_handle::get_unit_json(const std::string & account, uint64
         }
         if (tx_info->is_confirm_tx()) {
             jv["tx_exec_status"] = tx_exec_status_to_str(tx_info->get_tx_exec_status());
-            jv["recv_tx_exec_status"] = tx_exec_status_to_str(tx_info->get_last_action_exec_status());
-            jv["exec_status"] = tx_exec_status_to_str(tx_info->get_tx_exec_status() | tx_info->get_last_action_exec_status());
+            // TODO(jimmy) should read recv tx exec status from recv tx unit
+            // jv["recv_tx_exec_status"] = tx_exec_status_to_str(tx_info->get_last_action_exec_status());
+            // jv["exec_status"] = tx_exec_status_to_str(tx_info->get_tx_exec_status() | tx_info->get_last_action_exec_status());
         }
     }
     return jv;
@@ -1305,9 +1306,9 @@ void get_block_handle::set_lightunit_info(xJson::Value & j_lu, xblock_t * bp) {
             jv["used_tx_deposit"] = tx->get_used_deposit();
             jv["used_disk"] = tx->get_used_disk();
             jv["tx_exec_status"] = tx_exec_status_to_str(tx->get_tx_exec_status());  // 1: success, 2: fail
-            if (tx->is_confirm_tx()) {
-                jv["recv_tx_exec_status"] = tx_exec_status_to_str(tx->get_last_action_exec_status());
-            }
+            // if (tx->is_confirm_tx()) {
+            //     jv["recv_tx_exec_status"] = tx_exec_status_to_str(tx->get_last_action_exec_status());
+            // }
             xJson::Value jtx;
             jtx["0x" + tx->get_tx_hex_hash()] = jv;
             ji["txs"].append(jtx);
@@ -1443,7 +1444,7 @@ void get_block_handle::set_table_info(xJson::Value & jv, xblock_t * bp) {
             for (auto tx : txs) {
                 xJson::Value juj;
                 juj["tx_consensus_phase"] = tx->get_tx_subtype_str();
-                juj["is_contract_create"] = static_cast<unsigned int>(tx->is_contract_create());
+                // juj["is_contract_create"] = static_cast<unsigned int>(tx->is_contract_create());
                 if (tx->is_self_tx() || tx->is_send_tx()) {
                     juj["last_tx_nonce"] = static_cast<unsigned int>(tx->get_last_trans_nonce());
                 }

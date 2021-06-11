@@ -300,33 +300,6 @@ std::string xblock_t::dump_body() const {
     return ss.str();
 }
 
-void xblock_t::set_parent_cert_and_path(base::xvqcert_t * parent_cert, const base::xmerkle_path_256_t & path) {
-    if (!(get_cert()->get_consensus_flags() & base::enum_xconsensus_flag_extend_cert)) {
-        xassert(0);
-        return;
-    }
-    if (check_block_flag(base::enum_xvblock_flag_authenticated)) {
-        xassert(0);
-        return;
-    }
-    xassert(get_block_hash().empty());
-
-    std::string parent_cert_bin;
-    parent_cert->serialize_to_string(parent_cert_bin);
-    xassert(!parent_cert_bin.empty());
-    xassert(get_cert()->get_extend_cert().empty());
-    set_extend_cert(parent_cert_bin);
-
-    base::xstream_t stream2(base::xcontext_t::instance());
-    path.serialize_to(stream2);
-    std::string extend_data = std::string((char *)stream2.data(), stream2.size());
-    xassert(get_cert()->get_extend_data().empty());
-    set_extend_data(extend_data);
-
-    set_block_flag(base::enum_xvblock_flag_authenticated);
-    xassert(!get_block_hash().empty());
-}
-
 std::string xblock_t::get_block_hash_hex_str() const {
     return to_hex_str(get_block_hash());
 }
@@ -339,22 +312,6 @@ xlightunit_tx_info_ptr_t xblock_t::get_tx_info(const std::string & txhash) const
         }
     }
     return nullptr;
-}
-
-bool xblock_t::calc_input_merkle_path(const std::string & leaf, base::xmerkle_path_256_t & hash_path) const {
-    if (get_input_root_hash().empty()) {
-        xassert(0);
-        return false;
-    }
-    return base::xvblockbuild_t::calc_input_merkle_path(get_input(), leaf, hash_path);
-}
-bool xblock_t::calc_output_merkle_path(const std::string & leaf, base::xmerkle_path_256_t & hash_path) const {
-    if (get_output_root_hash().empty()) {
-        xassert(0);
-        return false;
-    }
-
-    return base::xvblockbuild_t::calc_output_merkle_path(get_output(), leaf, hash_path);
 }
 
 bool xblock_t::is_full_state_block() const {
