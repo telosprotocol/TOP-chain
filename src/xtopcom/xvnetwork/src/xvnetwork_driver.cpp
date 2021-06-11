@@ -192,7 +192,6 @@ std::vector<std::uint16_t> xtop_vnetwork_driver::table_ids() const {
     std::vector<std::uint16_t> book_ids;
     book_ids.reserve(enum_vbucket_has_books_count);
 
-    auto & config_register = top::config::xconfig_register_t::get_instance();
     switch (type()) {
     case common::xnode_type_t::full_archive:
         XATTRIBUTE_FALLTHROUGH;
