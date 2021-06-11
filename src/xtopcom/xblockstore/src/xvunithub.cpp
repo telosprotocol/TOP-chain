@@ -401,12 +401,15 @@ namespace top
         {
             xdbg("jimmy xvblockstore_impl::store_block enter,store block(%s)", container_block->dump().c_str());
 
-            base::xauto_ptr<base::xvbindex_t> existing_index(container_account->load_index(container_block->get_height(), container_block->get_block_hash()));
-            if(existing_index) //double check the existign index to cover some exception cases
+            if(container_block->get_height() != 0) //to avoid regenerate genesis block
             {
-                if((existing_index->get_block_flags() & base::enum_xvblock_flag_unpacked) != 0) //did unpacked
+                base::xauto_ptr<base::xvbindex_t> existing_index(container_account->load_index(container_block->get_height(), container_block->get_block_hash()));
+                if(existing_index) //double check the existign index to cover some exception cases
                 {
-                    container_block->set_block_flag(base::enum_xvblock_flag_unpacked);//merge flag of unpack
+                    if((existing_index->get_block_flags() & base::enum_xvblock_flag_unpacked) != 0) //did unpacked
+                    {
+                        container_block->set_block_flag(base::enum_xvblock_flag_unpacked);//merge flag of unpack
+                    }
                 }
             }
             
