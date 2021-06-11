@@ -181,6 +181,15 @@ namespace top
 
         std::string xblockacct_t::dump() const  //just for debug purpose
         {
+            // execute height fall behind check, should be deleted eventually
+            if(get_addr_type() == base::enum_vaccount_addr_type_block_contract)
+            {
+                const uint32_t fall_num = 128;
+                if(m_meta->_highest_execute_block_height + fall_num < m_meta->_highest_full_block_height)
+                {
+                    xwarn("xblockacct_t execute behind latest height for full=%llu by %llu", m_meta->_highest_full_block_height, m_meta->_highest_full_block_height - m_meta->_highest_execute_block_height);
+                }
+            }
             char local_param_buf[256];
             xprintf(local_param_buf,sizeof(local_param_buf),"{account_id(%" PRIu64 "),account_addr=%s ->latest height for full=%" PRId64 ",geneis_connect=%" PRId64 ", connect=%" PRId64 ",commit=%" PRId64 ",execute=%" PRId64 " < lock=%" PRId64 " < cert=%" PRId64 "; at store(%s)}",get_xvid(), get_address().c_str(),m_meta->_highest_full_block_height,m_meta->_highest_genesis_connect_height,m_meta->_highest_connect_block_height,m_meta->_highest_commit_block_height,m_meta->_highest_execute_block_height,m_meta->_highest_lock_block_height,m_meta->_highest_cert_block_height,get_blockstore_path().c_str());
 
