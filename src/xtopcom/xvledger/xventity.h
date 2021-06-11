@@ -39,7 +39,7 @@ namespace top
             
             virtual void*   query_interface(const int32_t _enum_xobject_type_) override;//caller need to cast (void*) to related ptr
             //general key-value query, e.g. query leaf of merkle tree by query_data("merkle-tree-leaf")
-            virtual const std::string query_value(const std::string & key) {return std::string();}//virtual key-value for entity
+            virtual const std::string query_value(const std::string & key) const {return std::string();}//virtual key-value for entity
             
             const int          get_entity_index() const {return m_entity_index;}
             
@@ -89,7 +89,7 @@ namespace top
             //caller need to cast (void*) to related ptr
             virtual void*             query_interface(const int32_t _enum_xobject_type_) override;
             //general key-value query, e.g. query leaf of merkle tree by query_data("merkle-tree-leaf")
-            virtual const std::string query_value(const std::string & key) override;//virtual key-value for entity
+            virtual const std::string query_value(const std::string & key) const override;//virtual key-value for entity
             
             const std::vector<xvaction_t> & get_actions() const {return m_actions;}
             
@@ -153,7 +153,7 @@ namespace top
             virtual void*             query_interface(const int32_t _enum_xobject_type_) override;
             void                      set_value(const std::string & key, const std::string & value);
             //general key-value query, e.g. query leaf of merkle tree by query_data("merkle-tree-leaf")
-            const std::string         query_value(const std::string & key) const;//key-value for entity
+            virtual const std::string query_value(const std::string & key) const override;//key-value for entity
             
             const std::string         get_state_hash() const {return query_value(key_name_state_hash());}
             const std::string         get_binlog_hash() const {return query_value(key_name_binlog_hash());}
@@ -188,7 +188,7 @@ namespace top
         public:
             virtual void*   query_interface(const int32_t _enum_xobject_type_) override;//caller need to cast (void*) to related ptr
             //general key-value query, e.g. query leaf of merkle tree by query_data("merkle-tree-leaf")
-            virtual const std::string query_value(const std::string & key) override {return std::string();}//virtual key-value for entity
+            virtual const std::string query_value(const std::string & key) const override {return std::string();}//virtual key-value for entity
             
         protected: //subclass extend behavior and load more information instead of a raw one
             //return how many bytes readout /writed in, return < 0(enum_xerror_code_type) when have error

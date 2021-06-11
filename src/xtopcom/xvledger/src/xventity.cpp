@@ -122,7 +122,7 @@ namespace top
             return xventity_t::query_interface(_enum_xobject_type_);
         }
     
-        const std::string xvinentity_t::query_value(const std::string & key)//virtual key-value for entity
+        const std::string xvinentity_t::query_value(const std::string & key) const //virtual key-value for entity
         {
             return std::string();
         }

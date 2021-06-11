@@ -130,8 +130,10 @@ namespace top
             base::xvblock_t *            load_block_from_index(xblockacct_t* target_account, base::xauto_ptr<base::xvbindex_t> target_index,const uint64_t target_height,bool ask_full_load);
 
             //store table/book blocks if they are
-            bool                        store_block(base::xauto_ptr<xblockacct_t> & container_account,base::xvblock_t * container_block);
+            bool                        store_block(base::xauto_ptr<xblockacct_t> & container_account,base::xvblock_t * container_block,bool execute_block = true);
 
+            bool                        store_block_but_not_execute(const base::xvaccount_t & account,base::xvblock_t* block);
+            
             //a full path to load vblock could be  get_store_path()/create_object_path()/xvblock_t::name()
             virtual std::string          get_store_path() const override {return m_store_path;}//each store may has own space at DB/disk
 
