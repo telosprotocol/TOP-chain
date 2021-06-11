@@ -64,12 +64,7 @@ void BlockSyncManager::NewBroadcastMessage(transport::protobuf::RoutingMessage &
         xinfo("[BlockSyncManager] NewBroadcastMessage return 1:%s", message.gossip().header_hash().c_str());
         return;
     }
-    /*
-    TOP_DEBUG("blockmessage: msg_id(%u) has_block(%d),head_hash:%s",
-            message.id(),
-            message.gossip().has_block(),
-            HexEncode(message.gossip().header_hash()).c_str());
-            */
+
     if (DataExists(message.gossip().header_hash())) {
         xinfo("[BlockSyncManager] NewBroadcastMessage return 2 data already exists:%s", message.gossip().header_hash().c_str());
         return;

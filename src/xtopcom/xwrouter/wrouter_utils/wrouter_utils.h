@@ -10,18 +10,6 @@ namespace top {
 
 namespace wrouter {
 
-enum RoutingMessageRequestType {
-    kNone = 0,
-    kRequestMsg,
-    kResponseMsg,
-};
-
-enum ClientRelayMessageCode {
-    kErrorReturn = 1,
-    kContinueReturn,
-    kFirstRelayRetrun,
-};
-
 enum enum_platform_xpacket_flag {
     kPlatformXpacketInvalid = 100,
     kPlatformXpacketRoot,

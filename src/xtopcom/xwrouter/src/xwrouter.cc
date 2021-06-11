@@ -10,7 +10,6 @@
 #include "xgossip/include/gossip_dispatcher.h"
 #include "xgossip/include/gossip_filter.h"
 #include "xgossip/include/gossip_utils.h"
-#include "xkad/gossip/rumor_filter.h"
 #include "xkad/routing_table/routing_utils.h"
 #include "xpbase/base/kad_key/kadmlia_key.h"
 #include "xpbase/base/uint64_bloomfilter.h"
@@ -93,6 +92,7 @@ int32_t Wrouter::send(transport::protobuf::RoutingMessage & message) {
     return wxid_handler_->SendPacket(message);
 }
 
+// called by MultilayerNetwork::RegisterCallbackForMultiThreadHandler
 int32_t Wrouter::recv(transport::protobuf::RoutingMessage & message, base::xpacket_t & packet) {
     if (message.hop_num() >= kHopToLive) {
         TOP_WARN(

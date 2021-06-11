@@ -416,11 +416,11 @@ int MultilayerNetwork::CreateRootManager(std::shared_ptr<transport::Transport> t
         return top::kadmlia::kKadFailed;
     }
 
-    uint32_t zone_id = 0;
-    if (!kadmlia::GetZoneIdFromConfig(config, zone_id)) {
-        TOP_ERROR("get zone id from config failed!");
-        return top::kadmlia::kKadFailed;
-    }
+    // uint32_t zone_id = 0;
+    // if (!kadmlia::GetZoneIdFromConfig(config, zone_id)) {
+    //     TOP_ERROR("get zone id from config failed!");
+    //     return top::kadmlia::kKadFailed;
+    // }
 
     // get kroot id
     base::KadmliaKeyPtr kad_key_ptr = base::GetRootKadmliaKey(global_node_id);
@@ -429,9 +429,9 @@ int MultilayerNetwork::CreateRootManager(std::shared_ptr<transport::Transport> t
             TOP_FATAL("save root kad key to db failed!");
             return top::kadmlia::kKadFailed;
         }
-        TOP_INFO("save root kad key: %s to db success", HexEncode(kad_key_ptr->Get()).c_str());
+        TOP_INFO("save root kad key: %s to db success", kad_key_ptr->Get().c_str());
     }
-    TOP_INFO("get root kad key: %s from db success", HexEncode(kad_key_ptr->Get()).c_str());
+    TOP_INFO("get root kad key: %s from db success", kad_key_ptr->Get().c_str());
 
     if (wrouter::MultiRouting::Instance()->CreateRootRouting(transport, new_config, kad_key_ptr) != top::kadmlia::kKadSuccess) {
         // if (root_manager_ptr->InitRootRoutingTable(transport, new_config, kad_key_ptr) != top::kadmlia::kKadSuccess) {

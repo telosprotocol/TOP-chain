@@ -8,7 +8,6 @@
 #include "xgossip/include/gossip_bloomfilter.h"
 #include "xgossip/include/gossip_filter.h"
 #include "xgossip/include/gossip_utils.h"
-#include "xkad/gossip/rumor_filter.h"
 #include "xkad/routing_table/routing_utils.h"
 #include "xpbase/base/kad_key/kadmlia_key.h"
 #include "xpbase/base/top_utils.h"
