@@ -284,7 +284,7 @@ void MultiRouting::AddElectRoutingTable(base::ServiceType service_type, kadmlia:
         assert(false);
         return;
     }
-    std::cout << global_node_id << " create routing table: " << std::hex << service_type.value() << service_type.info() << std::endl;
+    std::cout << global_node_id << " create routing table: " << service_type.info() << std::endl;
     xkinfo("[ElectRoutingTable]create service routing table: %llu %s", service_type.value(), service_type.info().c_str());
 
     elect_routing_table_map_[service_type] = routing_table;
@@ -302,7 +302,7 @@ void MultiRouting::RemoveElectRoutingTable(base::ServiceType service_type) {
     }
     if (remove_routing_table) {
         remove_routing_table->UnInit();
-        std::cout << global_node_id << " delete routing table: " << std::hex << service_type.value() << service_type.info() << std::endl;
+        std::cout << global_node_id << " delete routing table: " << service_type.info() << std::endl;
         xkinfo("[ElectRoutingTable]remove service routing table: %llu %s", service_type.value(), service_type.info().c_str());
     }
 

@@ -51,12 +51,6 @@ void GossipDispatcher::Broadcast(transport::protobuf::RoutingMessage & message, 
     }
 
     auto kad_key_ptr = base::GetKadmliaKey(message.des_node_id());
-    // base::ServiceType service_type = kad_key_ptr->GetServiceType();
-    MessageKey msg_key(message.gossip().msg_hash());
-    if (MessageWithBloomfilter::Instance()->StopGossip(msg_key, 3)) {
-        xkinfo("[debug] stop gossip but got % " PRIu64 " % " PRIu64 ":", message.gossip().sit1(), message.gossip().sit2());
-        return;
-    }
 
     std::vector<gossip::DispatchInfos> select_nodes;
     GenerateDispatchInfos(message, routing_table, select_nodes);
@@ -64,8 +58,6 @@ void GossipDispatcher::Broadcast(transport::protobuf::RoutingMessage & message, 
         xdbg("stop broadcast, select_nodes empty,msg_hash:%u msg_type:%d hop_num:%d", message.gossip().msg_hash(), message.type(), message.hop_num());
         return;
     }
-
-    // auto gossip_switch_layer_hop_num = kGossipLayerSwitchLayerHopNum;
 
     SendDispatch(message, select_nodes);
 }
@@ -123,9 +115,8 @@ void GossipDispatcher::GenerateDispatchInfos(transport::protobuf::RoutingMessage
             static uint32_t seed = std::chrono::high_resolution_clock::now().time_since_epoch().count();
             static std::mt19937 rng(seed);
             std::size_t send_node_index = rng() % select_nodes.size();
-            std::size_t overlap_flag = rng() % 3;
             for (std::size_t _index = 0; _index < select_nodes.size(); ++_index) {
-                if ((_index != send_node_index) && overlap_flag) {
+                if ((_index != send_node_index && (rng() % overlap))) {
                     SET_INDEX_SENT(node_index, select_nodes[_index].get_sit1(), select_nodes[_index].get_sit2());
                 }
             }

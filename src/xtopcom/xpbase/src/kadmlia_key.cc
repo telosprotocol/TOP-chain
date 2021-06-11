@@ -122,19 +122,6 @@ base::KadmliaKeyPtr GetRootKadmliaKey(std::string const &node_id) {
 
 KadmliaKey::KadmliaKey(common::xip2_t const &xip) : xip_(xip) {}
 
-std::vector<uint64_t> split(std::string s, char sep) {
-    std::istringstream iss(s);
-    std::vector<uint64_t> res;
-    std::string buffer;
-    while (getline(iss, buffer, sep)) {
-        uint64_t tmp;
-        std::istringstream b(buffer);
-        b >> std::hex >> tmp;
-        res.push_back(tmp);
-    }
-    return res;
-}
-
 KadmliaKey::KadmliaKey(std::string const &from_str) {
     // xdbg("KadmliaKey from_str %s", from_str.c_str());
     assert(from_str.size() == 33 && from_str[16] == '.');
