@@ -107,7 +107,7 @@ void xtop_vhost::send(xmessage_t const & message,
     if (dst.account_address().has_value() && common::has<common::xnode_type_t::storage>(dst.type())) {
         assert(dst.zone_id() == common::xarchive_zone_id);
         assert(dst.cluster_id() == common::xdefault_cluster_id);
-        assert(dst.group_id() == common::xarchive_group_id || src.group_id() == common::xedge_archive_group_id);
+        assert(dst.group_id() == common::xarchive_group_id || dst.group_id() == common::xedge_archive_group_id);
     }
 #endif
 
