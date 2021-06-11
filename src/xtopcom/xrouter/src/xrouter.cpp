@@ -44,11 +44,11 @@ common::xsharding_address_t xtop_router::address_of_table_id(std::uint16_t const
         return {};
     }
 
-    if (common::has<common::xnode_type_t::full_archive>(type)) {
+    if (common::has<common::xnode_type_t::storage_archive>(type)) {
         return common::build_archive_sharding_address(common::xarchive_group_id, nid);
     }
 
-    if (common::has<common::xnode_type_t::light_archive>(type)) {
+    if (common::has<common::xnode_type_t::storage_full_node>(type)) {
         return common::build_archive_sharding_address(common::xedge_archive_group_id, nid);
     }
 
@@ -70,11 +70,11 @@ common::xsharding_address_t xtop_router::address_of_book_id(std::uint16_t const 
         return {};
     }
 
-    if (common::has<common::xnode_type_t::full_archive>(type)) {
+    if (common::has<common::xnode_type_t::storage_archive>(type)) {
         return common::build_archive_sharding_address(common::xarchive_group_id, nid);
     }
 
-    if (common::has<common::xnode_type_t::light_archive>(type)) {
+    if (common::has<common::xnode_type_t::storage_full_node>(type)) {
         return common::build_archive_sharding_address(common::xedge_archive_group_id, nid);
     }
 

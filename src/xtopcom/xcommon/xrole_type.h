@@ -26,14 +26,14 @@ enum class xenum_role_type : uint32_t {
     /// @brief special case for full-edge. such account will be elected as a special'archive'
     ///        but its business behavour is untrustable (since no deposit is required)
     ///        which means sync module won't pull data from such 'archive'
-    edge_archive = 0x00000010,
+    full_node = 0x00000010,
 };
 using xrole_type_t = xenum_role_type;
 
-XINLINE_CONSTEXPR char const * XNODE_TYPE_EDGE         = "light_edge";
-XINLINE_CONSTEXPR char const * XNODE_TYPE_ADVANCE      = "advance";
-XINLINE_CONSTEXPR char const * XNODE_TYPE_VALIDATOR    = "validator";
-XINLINE_CONSTEXPR char const * XNODE_TYPE_EDGE_ARCHIVE = "full_edge";
+XINLINE_CONSTEXPR char const * XNODE_TYPE_EDGE      = "edge";
+XINLINE_CONSTEXPR char const * XNODE_TYPE_ADVANCE   = "advance";
+XINLINE_CONSTEXPR char const * XNODE_TYPE_VALIDATOR = "validator";
+XINLINE_CONSTEXPR char const * XNODE_TYPE_FULL_NODE = "full_node";
 
 std::int32_t
 operator <<(top::base::xstream_t & stream, xrole_type_t const & role_type);

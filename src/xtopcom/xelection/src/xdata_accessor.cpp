@@ -459,7 +459,7 @@ std::unordered_map<common::xsharding_address_t, xgroup_update_result_t> xtop_dat
     std::unordered_map<common::xsharding_address_t, xgroup_update_result_t> ret;
 
     assert(common::node_type_from(zone_element->zone_id()) == common::xnode_type_t::storage);
-    std::array<common::xnode_type_t, 2> node_types{ common::xnode_type_t::full_archive, common::xnode_type_t::light_archive };
+    std::array<common::xnode_type_t, 2> node_types{ common::xnode_type_t::storage_archive, common::xnode_type_t::storage_full_node };
 
     if (election_result_store.empty()) {
         ec = xdata_accessor_errc_t::election_data_empty;

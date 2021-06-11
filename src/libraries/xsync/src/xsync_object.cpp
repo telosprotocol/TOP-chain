@@ -144,14 +144,14 @@ std::string xtop_sync_object::status() const {
             common::has<common::xnode_type_t::edge>(self_addr.type()) ||
             common::has<common::xnode_type_t::consensus_auditor>(self_addr.type()) ||
             common::has<common::xnode_type_t::consensus_validator>(self_addr.type()) ||
-            common::has<common::xnode_type_t::full_archive>(self_addr.type())
+            common::has<common::xnode_type_t::storage_archive>(self_addr.type())
         ) {
             display_zec = true;
         }
 
         if (common::has<common::xnode_type_t::consensus_auditor>(self_addr.type()) ||
             common::has<common::xnode_type_t::consensus_validator>(self_addr.type()) ||
-            common::has<common::xnode_type_t::full_archive>(self_addr.type())
+            common::has<common::xnode_type_t::storage_archive>(self_addr.type())
         ) {
             display_shard = true;
         }

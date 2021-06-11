@@ -801,9 +801,9 @@ xnode_type_t node_type_from(common::xzone_id_t const & zone_id, common::xcluster
         }
     } else if (node_type == xnode_type_t::storage) {
         if (xarchive_group_id == group_id) {
-            node_type |= xnode_type_t::full;
+            node_type |= xnode_type_t::archive;
         } else if (xedge_archive_group_id == group_id) {
-            node_type |= xnode_type_t::light;
+            node_type |= xnode_type_t::full_node;
         } else {
             assert(false);
             node_type = xnode_type_t::invalid;

@@ -178,7 +178,7 @@ bool xreg_node_info::validator() const noexcept { return is_validator_node(); }
 bool xreg_node_info::edge() const noexcept { return is_edge_node(); }
 bool xreg_node_info::archive() const noexcept { return is_valid_archive_node(); }
 bool xreg_node_info::edge_archive() const noexcept {
-    return common::has<common::xrole_type_t::edge_archive>(m_registered_role);
+    return common::has<common::xrole_type_t::full_node>(m_registered_role);
 }
 
 uint64_t xreg_node_info::rec_stake() const noexcept {

@@ -27,8 +27,8 @@ std::string to_string(xrole_type_t const role) {
     case xrole_type_t::advance:
         return XNODE_TYPE_ADVANCE;
 
-    case xrole_type_t::edge_archive:
-        return XNODE_TYPE_EDGE_ARCHIVE;
+    case xrole_type_t::full_node:
+        return XNODE_TYPE_FULL_NODE;
 
     case xrole_type_t::validator:
         return XNODE_TYPE_VALIDATOR;
@@ -65,8 +65,8 @@ common::xrole_type_t to_role_type(std::string const & node_type) {
         role_type = common::xrole_type_t::advance;
     } else if (node_type == XNODE_TYPE_VALIDATOR) {
         role_type = common::xrole_type_t::validator;
-    } else if (node_type == XNODE_TYPE_EDGE_ARCHIVE) {
-        role_type = common::xrole_type_t::edge_archive;
+    } else if (node_type == XNODE_TYPE_FULL_NODE) {
+        role_type = common::xrole_type_t::full_node;
     }
 
     return role_type;

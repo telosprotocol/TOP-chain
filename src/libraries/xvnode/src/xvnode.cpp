@@ -120,7 +120,7 @@ void xtop_vnode::start() {
     assert(m_vhost != nullptr);
 
     new_driver_added();
-    m_grpc_mgr->try_add_listener(common::has<common::xnode_type_t::full_archive>(vnetwork_driver()->type()));
+    m_grpc_mgr->try_add_listener(common::has<common::xnode_type_t::storage_archive>(vnetwork_driver()->type()));
     if (m_cons_face != nullptr) {
         m_cons_face->start(this->start_time());
     }
@@ -151,7 +151,7 @@ void xtop_vnode::fade() {
 void xtop_vnode::stop() {
     // any component can stop should
     // control multi-times stop
-    m_grpc_mgr->try_remove_listener(common::has<common::xnode_type_t::full_archive>(vnetwork_driver()->type()));
+    m_grpc_mgr->try_remove_listener(common::has<common::xnode_type_t::storage_archive>(vnetwork_driver()->type()));
     running(false);
     m_the_binding_driver->stop();
     driver_removed();
@@ -193,28 +193,9 @@ void xtop_vnode::driver_removed() {
     sync_remove_vnet();
 }
 
-bool xtop_vnode::is_real_vnode(common::xnode_type_t const type, common::xnode_type_t const except_types) {
-    if (common::has<common::xnode_type_t::consensus_auditor>(type)   ||
-        common::has<common::xnode_type_t::full_archive>(type)        ||
-        common::has<common::xnode_type_t::light_archive>(type)       ||
-        common::has<common::xnode_type_t::consensus_validator>(type) ||
-        common::has<common::xnode_type_t::committee>(type)           ||
-        common::has<common::xnode_type_t::zec>(type)                 ||
-        common::has<common::xnode_type_t::edge>(type)) {
-        return (type & except_types) == common::xnode_type_t::invalid;
-    }
-
-    return false;
-}
-
-bool xtop_vnode::is_real_vnode_except_edge(common::xnode_type_t const type) {
-    return is_real_vnode(type, common::xnode_type_t::edge);
-}
-
 void xtop_vnode::update_rpc_service() {
     xdbg("try update rpc service. node type %s", common::to_string(m_the_binding_driver->type()).c_str());
-    // if (is_real_vnode(m_the_binding_driver->type(), common::xnode_type_t::full_archive | common::xnode_type_t::frozen)) {
-    if (!common::has<common::xnode_type_t::full_archive>(m_the_binding_driver->type()) &&
+    if (!common::has<common::xnode_type_t::storage_archive>(m_the_binding_driver->type()) &&
         !common::has<common::xnode_type_t::frozen>(m_the_binding_driver->type())) {
         auto const http_port = XGET_CONFIG(http_port);
         auto const ws_port = XGET_CONFIG(ws_port);

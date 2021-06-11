@@ -115,8 +115,6 @@ public:
 private:
     void new_driver_added();
     void driver_removed();
-    bool is_real_vnode(common::xnode_type_t const type, common::xnode_type_t const except_types);
-    bool is_real_vnode_except_edge(common::xnode_type_t const type);
     void update_rpc_service();
     void update_contract_manager(bool destory);
     void sync_add_vnet();
