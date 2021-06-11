@@ -80,8 +80,8 @@ std::unordered_map<common::xsharding_address_t, xgroup_update_result_t> xtop_dat
     case common::xnode_type_t::edge:
         return update_edge_zone(zone_element, election_result_store, associated_blk_height, ec);
 
-    case common::xnode_type_t::archive:
-        return update_archive_zone(zone_element, election_result_store, associated_blk_height, ec);
+    case common::xnode_type_t::storage:
+        return update_storage_zone(zone_element, election_result_store, associated_blk_height, ec);
 
     case common::xnode_type_t::zec:
         return update_zec_zone(zone_element, election_result_store, associated_blk_height, ec);
@@ -356,20 +356,18 @@ std::unordered_map<common::xsharding_address_t, xgroup_update_result_t> xtop_dat
     return ret;
 }
 
-std::unordered_map<common::xsharding_address_t, xgroup_update_result_t> xtop_data_accessor::update_committee_zone(
-    std::shared_ptr<xzone_element_t> const & zone_element,
-    data::election::xelection_result_store_t const & election_result_store,
-    std::uint64_t const associated_blk_height,
-    std::error_code & ec) {
+std::unordered_map<common::xsharding_address_t, xgroup_update_result_t> xtop_data_accessor::update_committee_zone(std::shared_ptr<xzone_element_t> const & zone_element,
+                                                                                                                  data::election::xelection_result_store_t const & election_result_store,
+                                                                                                                  std::uint64_t const associated_blk_height,
+                                                                                                                  std::error_code & ec) {
     assert(!ec);
     return update_zone(zone_element, election_result_store, associated_blk_height, ec);
 }
 
-std::unordered_map<common::xsharding_address_t, xgroup_update_result_t> xtop_data_accessor::update_consensus_zone(
-    std::shared_ptr<xzone_element_t> const & zone_element,
-    data::election::xelection_result_store_t const & election_result_store,
-    std::uint64_t const associated_blk_height,
-    std::error_code & ec) {
+std::unordered_map<common::xsharding_address_t, xgroup_update_result_t> xtop_data_accessor::update_consensus_zone(std::shared_ptr<xzone_element_t> const & zone_element,
+                                                                                                                  data::election::xelection_result_store_t const & election_result_store,
+                                                                                                                  std::uint64_t const associated_blk_height,
+                                                                                                                  std::error_code & ec) {
     assert(!ec);
     std::unordered_map<common::xsharding_address_t, xgroup_update_result_t> ret;
 
@@ -453,13 +451,83 @@ std::unordered_map<common::xsharding_address_t, xgroup_update_result_t> xtop_dat
     return update_zone(zone_element, election_result_store, associated_blk_height, ec);
 }
 
-std::unordered_map<common::xsharding_address_t, xgroup_update_result_t> xtop_data_accessor::update_archive_zone(
-    std::shared_ptr<xzone_element_t> const & zone_element,
-    data::election::xelection_result_store_t const & election_result_store,
-    std::uint64_t const associated_blk_height,
-    std::error_code & ec) {
+std::unordered_map<common::xsharding_address_t, xgroup_update_result_t> xtop_data_accessor::update_storage_zone(std::shared_ptr<xzone_element_t> const & zone_element,
+                                                                                                                data::election::xelection_result_store_t const & election_result_store,
+                                                                                                                std::uint64_t const associated_blk_height,
+                                                                                                                std::error_code & ec) {
     assert(!ec);
-    return update_zone(zone_element, election_result_store, associated_blk_height, ec);
+    std::unordered_map<common::xsharding_address_t, xgroup_update_result_t> ret;
+
+    assert(common::node_type_from(zone_element->zone_id()) == common::xnode_type_t::storage);
+    std::array<common::xnode_type_t, 2> node_types{ common::xnode_type_t::full_archive, common::xnode_type_t::light_archive };
+
+    if (election_result_store.empty()) {
+        ec = xdata_accessor_errc_t::election_data_empty;
+
+        xwarn("%s network %" PRIu32 " zone %" PRIu16 " empty xelection_result_store_t",
+              ec.category().name(),
+              static_cast<std::uint32_t>(m_network_element->network_id().value()),
+              static_cast<std::uint16_t>(zone_element->zone_id().value()));
+
+        return {};
+    }
+
+    for (auto node_type : node_types) {
+        try {
+            auto const & zone_result = election_result_store.result_of(m_network_element->network_id()).result_of(node_type);
+
+            for (auto const & zone_data : zone_result.results()) {
+                std::error_code ec1{ xdata_accessor_errc_t::success };
+
+                auto const & cluster_id = top::get<common::xcluster_id_t const>(zone_data);
+                auto const & cluster_result = top::get<data::election::xelection_cluster_result_t>(zone_data);
+
+                auto const & cluster_element = zone_element->add_cluster_element(cluster_id, ec1);
+                if (ec1 && ec1 != xdata_accessor_errc_t::cluster_already_exist) {
+                    ec = xdata_accessor_errc_t::election_data_partially_updated;
+
+                    xwarn("%s network %" PRIu32 " zone %" PRIu16 ": failed to update election data at cluster %" PRIu16,
+                          ec.category().name(),
+                          static_cast<std::uint32_t>(m_network_element->network_id().value()),
+                          static_cast<std::uint16_t>(zone_element->zone_id().value()),
+                          static_cast<std::uint16_t>(cluster_id.value()));
+
+                    continue;
+                }
+                ec1 = xdata_accessor_errc_t::success;  // clear xdata_accessor_errc_t::cluster_already_exist if any
+
+                auto r = update_cluster(zone_element, cluster_element, cluster_result, associated_blk_height, ec1);
+                // should skip checking ec1?
+                ret.insert(std::begin(r), std::end(r));
+            }
+        } catch (std::out_of_range const &) {
+            ec = xdata_accessor_errc_t::election_data_empty;
+
+            xwarn("%s network %" PRIu32 " zone %" PRIu16 ": updating election data failed due to empty input",
+                  ec.category().name(),
+                  static_cast<std::uint32_t>(m_network_element->network_id().value()),
+                  static_cast<std::uint16_t>(zone_element->zone_id().value()));
+
+        } catch (std::exception const & eh) {
+            ec = xdata_accessor_errc_t::unknown_std_exception;
+
+            xwarn("%s network %" PRIu32 " zone %" PRIu16 ": update election data failed due to std::exception: %s",
+                  ec.category().name(),
+                  static_cast<std::uint32_t>(m_network_element->network_id().value()),
+                  static_cast<std::uint16_t>(zone_element->zone_id().value()),
+                  eh.what());
+
+        } catch (...) {
+            ec = xdata_accessor_errc_t::unknown_error;
+
+            xwarn("%s network %" PRIu32 " zone %" PRIu16 ": update election data failed due to unknown error",
+                  ec.category().name(),
+                  static_cast<std::uint32_t>(m_network_element->network_id().value()),
+                  static_cast<std::uint16_t>(zone_element->zone_id().value()));
+        }
+    }
+
+    return ret;
 }
 
 std::unordered_map<common::xsharding_address_t, xgroup_update_result_t> xtop_data_accessor::update_zec_zone(std::shared_ptr<xzone_element_t> const & zone_element,

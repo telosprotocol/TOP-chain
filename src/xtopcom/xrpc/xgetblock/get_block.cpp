@@ -769,9 +769,13 @@ void get_block_handle::getEdges() {
 
 void get_block_handle::getArcs() {
     xJson::Value j;
-    std::string addr = sys_contract_rec_elect_archive_addr;
-    std::string prop_name = std::string(XPROPERTY_CONTRACT_ELECTION_RESULT_KEY) + "_1";
-    query_account_property(j, addr, prop_name);
+    std::string const addr = sys_contract_rec_elect_archive_addr;
+    auto property_names = top::data::election::get_property_name_by_addr(common::xaccount_address_t{ addr });
+    for (auto const & prop_name : property_names) {
+        query_account_property(j, addr, prop_name);
+    }
+    // std::string prop_name = std::string(XPROPERTY_CONTRACT_ELECTION_RESULT_KEY) + "_1";
+    // query_account_property(j, addr, prop_name);
     m_js_rsp["value"] = j["archive"];
     m_js_rsp["chain_id"] = j["chain_id"];
 }
@@ -779,7 +783,7 @@ void get_block_handle::getArcs() {
 void get_block_handle::getConsensus() {
     std::string addr = sys_contract_zec_elect_consensus_addr;
     auto property_names = top::data::election::get_property_name_by_addr(common::xaccount_address_t{addr});
-    for (auto property : property_names) {
+    for (auto const & property : property_names) {
         xJson::Value j;
         query_account_property(j, addr, property);
         std::string cluster_name = "cluster" + property.substr(property.find('_') + 1);
@@ -1326,10 +1330,11 @@ void get_block_handle::set_lightunit_info(xJson::Value & j_lu, xblock_t * bp) {
 static std::unordered_map<common::xnode_type_t, std::string> node_type_map{
     { common::xnode_type_t::consensus_auditor, "auditor" },
     { common::xnode_type_t::consensus_validator, "validator" },
-    { common::xnode_type_t::edge, "edge" },
-    { common::xnode_type_t::archive, "archive" },
+    { common::xnode_type_t::edge, "light_edge" },
+    { common::xnode_type_t::full_archive, "archive" },
     { common::xnode_type_t::rec, "root_beacon" },
-    { common::xnode_type_t::zec, "sub_beacon"}
+    { common::xnode_type_t::zec, "sub_beacon" },
+    { common::xnode_type_t::light_archive, "full_edge" }
 };
 
 void get_block_handle::set_addition_info(xJson::Value & body, xblock_t * bp) {

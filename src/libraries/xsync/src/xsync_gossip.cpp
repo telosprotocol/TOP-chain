@@ -79,7 +79,7 @@ void xsync_gossip_t::on_chain_timer(const mbus::xevent_ptr_t& e) {
         const std::shared_ptr<xrole_chains_t> &role_chains = role_it.second;
 
         common::xnode_type_t role_type = real_part_type(self_addr.type());
-        if (role_type==common::xnode_type_t::archive || role_type==common::xnode_type_t::frozen || role_type == common::xnode_type_t::edge_archive)
+        if (common::has<common::xnode_type_t::storage>(role_type) || role_type==common::xnode_type_t::frozen)
             continue;
 
         if (!m_role_xips_mgr->vrf_gossip_with_archive(time_block, role_type))

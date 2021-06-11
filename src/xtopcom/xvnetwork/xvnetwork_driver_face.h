@@ -174,7 +174,7 @@ public:
      * 
      * @return std::vector<xvnode_address_t> 
      */
-    virtual std::vector<xvnode_address_t> archive_addresses(common::xenum_node_type node_type) const = 0;
+    virtual std::vector<xvnode_address_t> archive_addresses(common::xnode_type_t node_type) const = 0;
 
     /**
      * @brief Get table ids belonging to this zone

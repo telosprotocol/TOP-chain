@@ -29,7 +29,12 @@ std::vector<std::string> get_property_name_by_addr(common::xaccount_address_t co
         for (auto index = common::xauditor_group_id_value_begin; index <= auditor_group_count; ++index) {
             property_name.push_back(get_property_by_group_id(common::xgroup_id_t{ index }));
         }
-    } else if (sys_contract_addr == sys_addr[3] || sys_contract_addr == sys_addr[4]) {
+    } else if (sys_contract_addr == sys_addr[3]) {
+        auto const archive_group_count = XGET_CONFIG(archive_group_count);
+        for (auto index = common::xarchive_group_id_value_begin; index <= archive_group_count; ++index) {
+            property_name.push_back(get_property_by_group_id(common::xgroup_id_t{ index }));
+        }
+    } else if (sys_contract_addr == sys_addr[4]) {
         property_name.push_back(get_property_by_group_id(common::xdefault_group_id));
     }
     assert(!property_name.empty());

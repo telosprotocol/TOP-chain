@@ -98,16 +98,16 @@ void xtop_vhost::send(xmessage_t const & message,
     assert(!src.account_address().empty());
 
 #if defined DEBUG
-    if (common::has<common::xnode_type_t::archive>(src.type())) {
+    if (common::has<common::xnode_type_t::storage>(src.type())) {
         assert(src.zone_id() == common::xarchive_zone_id);
         assert(src.cluster_id() == common::xdefault_cluster_id);
-        assert(src.group_id() == common::xdefault_group_id);
+        assert(src.group_id() == common::xarchive_group_id || src.group_id() == common::xedge_archive_group_id);
     }
 
-    if (dst.account_address().has_value() && common::has<common::xnode_type_t::archive>(dst.type())) {
+    if (dst.account_address().has_value() && common::has<common::xnode_type_t::storage>(dst.type())) {
         assert(dst.zone_id() == common::xarchive_zone_id);
         assert(dst.cluster_id() == common::xdefault_cluster_id);
-        assert(dst.group_id() == common::xdefault_group_id);
+        assert(dst.group_id() == common::xarchive_group_id || src.group_id() == common::xedge_archive_group_id);
     }
 #endif
 
@@ -175,16 +175,16 @@ void xtop_vhost::forward_broadcast_message(xmessage_t const & message, common::x
     assert(message.id() != common::xmessage_id_t::invalid);
 
 #if defined DEBUG
-    if (common::has<common::xnode_type_t::archive>(src.type())) {
+    if (common::has<common::xnode_type_t::storage>(src.type())) {
         assert(src.zone_id() == common::xarchive_zone_id);
         assert(src.cluster_id() == common::xdefault_cluster_id);
-        assert(src.group_id() == common::xdefault_group_id);
+        assert(src.group_id() == common::xarchive_group_id || src.group_id() == common::xedge_archive_group_id);
     }
 
-    if (common::has<common::xnode_type_t::archive>(dst.type())) {
+    if (common::has<common::xnode_type_t::storage>(dst.type())) {
         assert(dst.zone_id() == common::xarchive_zone_id);
         assert(dst.cluster_id() == common::xdefault_cluster_id);
-        assert(dst.group_id() == common::xdefault_group_id);
+        assert(dst.group_id() == common::xarchive_group_id || dst.group_id() == common::xedge_archive_group_id);
     }
 #endif
 
@@ -244,16 +244,16 @@ void xtop_vhost::broadcast_to_all(xmessage_t const & message, common::xnode_addr
     assert(!src.account_address().empty());
 
 #if defined DEBUG
-    if (common::has<common::xnode_type_t::archive>(src.type())) {
+    if (common::has<common::xnode_type_t::storage>(src.type())) {
         assert(src.zone_id() == common::xarchive_zone_id);
         assert(src.cluster_id() == common::xdefault_cluster_id);
-        assert(src.group_id() == common::xdefault_group_id);
+        assert(src.group_id() == common::xarchive_group_id || src.group_id() == common::xedge_archive_group_id);
     }
 
-    if (common::has<common::xnode_type_t::archive>(dst.type())) {
+    if (common::has<common::xnode_type_t::storage>(dst.type())) {
         assert(dst.zone_id() == common::xarchive_zone_id);
         assert(dst.cluster_id() == common::xdefault_cluster_id);
-        assert(dst.group_id() == common::xdefault_group_id);
+        assert(dst.group_id() == common::xarchive_group_id || dst.group_id() == common::xedge_archive_group_id);
     }
 #endif
 
@@ -297,16 +297,16 @@ void xtop_vhost::broadcast(xmessage_t const & message, common::xnode_address_t c
     assert(src.version() == dst.version());
 
 #if defined DEBUG
-    if (common::has<common::xnode_type_t::archive>(src.type())) {
+    if (common::has<common::xnode_type_t::storage>(src.type())) {
         assert(src.zone_id() == common::xarchive_zone_id);
         assert(src.cluster_id() == common::xdefault_cluster_id);
-        assert(src.group_id() == common::xdefault_group_id);
+        assert(src.group_id() == common::xarchive_group_id || src.group_id() == common::xedge_archive_group_id);
     }
 
-    if (common::has<common::xnode_type_t::archive>(dst.type())) {
+    if (common::has<common::xnode_type_t::storage>(dst.type())) {
         assert(dst.zone_id() == common::xarchive_zone_id);
         assert(dst.cluster_id() == common::xdefault_cluster_id);
-        assert(dst.group_id() == common::xdefault_group_id);
+        assert(dst.group_id() == common::xarchive_group_id || dst.group_id() == common::xedge_archive_group_id);
     }
 #endif
 

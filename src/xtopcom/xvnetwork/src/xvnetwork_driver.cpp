@@ -150,14 +150,37 @@ common::xnode_type_t xtop_vnetwork_driver::type() const noexcept {
     return real_part_type(m_address.cluster_address().type());
 }
 
-std::vector<common::xnode_address_t> xtop_vnetwork_driver::archive_addresses(common::xenum_node_type node_type) const {
+std::vector<common::xnode_address_t> xtop_vnetwork_driver::archive_addresses(common::xnode_type_t node_type) const {
     assert(m_vhost != nullptr);
-    auto const tmp = m_vhost->members_info_of_group2(common::build_archive_sharding_address(network_id()), common::xversion_t::max());
     std::vector<common::xnode_address_t> result;
-    result.reserve(tmp.size());
+    switch (node_type) {
+    case common::xnode_type_t::full_archive:
+    {
+        auto const & tmp = m_vhost->members_info_of_group2(common::build_archive_sharding_address(common::xarchive_group_id, network_id()), common::xversion_t::max());
+        result.reserve(tmp.size());
 
-    for (auto const & n : tmp) {
-        result.push_back(top::get<data::xnode_info_t>(n).address);
+        for (auto const & n : tmp) {
+            result.push_back(top::get<data::xnode_info_t>(n).address);
+        }
+
+        break;
+    }
+
+    case common::xnode_type_t::light_archive:
+    {
+        auto const & tmp = m_vhost->members_info_of_group2(common::build_archive_sharding_address(common::xedge_archive_group_id, network_id()), common::xversion_t::max());
+        result.reserve(tmp.size());
+
+        for (auto const & n : tmp) {
+            result.push_back(top::get<data::xnode_info_t>(n).address);
+        }
+
+        break;
+    }
+
+    default:
+        assert(false);
+        break;
     }
 
     return result;
@@ -171,7 +194,9 @@ std::vector<std::uint16_t> xtop_vnetwork_driver::table_ids() const {
 
     auto & config_register = top::config::xconfig_register_t::get_instance();
     switch (type()) {
-    case common::xnode_type_t::archive:
+    case common::xnode_type_t::full_archive:
+        XATTRIBUTE_FALLTHROUGH;
+    case common::xnode_type_t::light_archive:
         XATTRIBUTE_FALLTHROUGH;
     case common::xnode_type_t::committee: {
         auto const zone_range = data::book_ids_belonging_to_zone(common::xcommittee_zone_id, 1, {0, static_cast<std::uint16_t>(enum_vbucket_has_books_count)});

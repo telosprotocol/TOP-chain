@@ -23,7 +23,7 @@ TEST_F(xtest_elect_consensus_group_contract_fixture_t, test_stake) {
     auto const min_auditor_group_size = XGET_ONCHAIN_GOVERNANCE_PARAMETER(min_auditor_group_size);
     auto const max_auditor_group_size = XGET_ONCHAIN_GOVERNANCE_PARAMETER(max_auditor_group_size);
     xrange_t<config::xgroup_size_t> group_size_range{min_auditor_group_size, max_auditor_group_size};
-    
+
 
     std::size_t node_count{900};
     for (std::size_t index = 1; index <= node_count; ++index) {
@@ -32,7 +32,7 @@ TEST_F(xtest_elect_consensus_group_contract_fixture_t, test_stake) {
         standby_node_info.consensus_public_key = top::xpublic_key_t{std::string{"test_publick_key_"} + std::to_string(index)};
         standby_node_info.stake_container = (100 + index) * 10000;
 #if defined XENABLE_MOCK_ZEC_STAKE
-        standby_node_info.user_request_role = (node_type == common::xnode_type_t::validator) ? common::xrole_type_t::consensus : common::xrole_type_t::advance;
+        standby_node_info.user_request_role = (node_type == common::xnode_type_t::validator) ? common::xrole_type_t::validator : common::xrole_type_t::advance;
 #endif
         add_standby_node(node_type, node_id, standby_node_info);
     }

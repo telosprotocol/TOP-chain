@@ -738,12 +738,12 @@ build_edge_sharding_address(xnetwork_id_t const & network_id) {
 }
 
 xsharding_address_t
-build_archive_sharding_address(xnetwork_id_t const & network_id) {
+build_archive_sharding_address(xgroup_id_t const & group_id, xnetwork_id_t const & network_id) {
     return xsharding_address_t{
         network_id,
         xarchive_zone_id,
         xdefault_cluster_id,
-        xdefault_group_id
+        group_id
     };
 }
 
@@ -779,6 +779,32 @@ build_frozen_sharding_address(xnetwork_id_t const & network_id, xcluster_id_t co
         cluster_id,
         group_id
     };
+}
+
+xgroup_address_t build_edge_archive_group_address(xnetwork_id_t const & network_id) {
+    return xgroup_address_t{
+        network_id,
+        xarchive_zone_id,
+        xdefault_cluster_id,
+        xgroup_id_t{xdefault_group_id_value + 1}
+    };
+}
+
+xgroup_address_t build_group_address(xnetwork_id_t const & network_id, xnode_type_t const node_type) {
+    switch (node_type) {
+    case xnode_type_t::rec:
+        return build_committee_sharding_address(network_id);
+
+    case xnode_type_t::zec:
+        return build_zec_sharding_address(network_id);
+
+    case xnode_type_t::edge:
+        return build_edge_sharding_address(network_id);
+
+    default:
+        assert(false);
+        return {};
+    }
 }
 
 NS_END2
