@@ -212,7 +212,10 @@ bool xtop_vnode::is_real_vnode_except_edge(common::xnode_type_t const type) {
 }
 
 void xtop_vnode::update_rpc_service() {
-    if (is_real_vnode(m_the_binding_driver->type(), common::xnode_type_t::full_archive | common::xnode_type_t::frozen)) {
+    xdbg("try update rpc service. node type %s", common::to_string(m_the_binding_driver->type()).c_str());
+    // if (is_real_vnode(m_the_binding_driver->type(), common::xnode_type_t::full_archive | common::xnode_type_t::frozen)) {
+    if (!common::has<common::xnode_type_t::full_archive>(m_the_binding_driver->type()) &&
+        !common::has<common::xnode_type_t::frozen>(m_the_binding_driver->type())) {
         auto const http_port = XGET_CONFIG(http_port);
         auto const ws_port = XGET_CONFIG(ws_port);
         // TODO(justin): remove unit_services temp

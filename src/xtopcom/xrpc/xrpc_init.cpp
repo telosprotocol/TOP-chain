@@ -66,6 +66,7 @@ xrpc_init::xrpc_init(std::shared_ptr<xvnetwork_driver_face_t> vhost,
         break;
     }
     default:
+        assert(false);
         break;
     }
 }
