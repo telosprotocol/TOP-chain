@@ -523,7 +523,6 @@ int32_t xtable_maker_t::verify_proposal(base::xvblock_t* proposal_block, const x
 
 bool xtable_maker_t::verify_proposal_with_local(base::xvblock_t *proposal_block, base::xvblock_t *local_block) const {
     XMETRICS_TIME_RECORD("cons_tableblock_verfiy_proposal_imp_with_local");
-    // TODO(jimmy) input hash not match may happen when use different property
     if (local_block->get_input_hash() != proposal_block->get_input_hash()) {
         xwarn("xtable_maker_t::verify_proposal_with_local fail-input hash not match. %s %s",
             proposal_block->dump().c_str(),
@@ -537,7 +536,7 @@ bool xtable_maker_t::verify_proposal_with_local(base::xvblock_t *proposal_block,
         return false;
     }
     if (local_block->get_header_hash() != proposal_block->get_header_hash()) {
-        xerror("xtable_maker_t::verify_proposal_with_local fail-header hash not match. %s proposal:%s local:%s",
+        xwarn("xtable_maker_t::verify_proposal_with_local fail-header hash not match. %s proposal:%s local:%s",
             proposal_block->dump().c_str(),
             ((data::xblock_t*)proposal_block)->dump_header().c_str(),
             ((data::xblock_t*)local_block)->dump_header().c_str());
