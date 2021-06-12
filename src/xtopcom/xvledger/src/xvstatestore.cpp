@@ -501,7 +501,7 @@ namespace top
         }
 
         void xvblkstatestore_t::set_lru_cache(base::enum_xvblock_level blocklevel, const std::string & hash, const xobject_ptr_t<xvbstate_t> & state) {
-#ifdef  DISABLE_LRU_CACHE
+#if 0  // TODO(jimmy) for memory test
             if (blocklevel == enum_xvblock_level_table) {
                 m_table_state_cache.put(hash, state);
             } else if (blocklevel == enum_xvblock_level_unit) {
