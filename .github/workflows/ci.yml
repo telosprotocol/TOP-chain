@@ -23,8 +23,9 @@ jobs:
           echo "$GITHUB_CONTEXT"
       - name: Checkout repository
         uses: actions/checkout@v2
-      - name: Update submodule
-        run: git submodule update --init --recursive
+        with:
+          fetch-depth: 0
+          submodules: recursive
 
       - name: Build XTOP DEBUG
         run: |
