@@ -9,18 +9,40 @@ NS_BEG2(top, metrics)
 // simple metrics counters
 e_metrics::simple_counter e_metrics::s_counters[e_simple_total];
 
-#ifndef DECL_MTRICS
-#define DECL_MTRICS(tag)  std::make_shared<metrics_counter_unit>(#tag, 0)
+#ifndef DECL_METRICS
+#define DECL_METRICS(tag)  std::make_shared<metrics_counter_unit>(#tag, 0)
 #endif
 
 // simple metrics description array
 metrics_variant_ptr e_metrics::s_metrics[e_simple_total] = {
-    DECL_MTRICS(blockstore_cache_block_total),  //blockstore_cache_block_total
-    DECL_MTRICS(dataobject_cur_xbase_type_cons_transaction),  //txpool_cons_transaction
-    DECL_MTRICS(cons_tableblock_start_leader), //cons_tableblock_start_leader
-    DECL_MTRICS(txpool_new_receipt), //cons_tableblock_start_leader
-    DECL_MTRICS(vhost_recv_msg), // vhost_recv_msg,
-    DECL_MTRICS(vhost_recv_callback), // vhost_recv_callback, 
+    DECL_METRICS(blockstore_cache_block_total),  //blockstore_cache_block_total
+    DECL_METRICS(dataobject_cur_xbase_type_cons_transaction),  //txpool_cons_transaction
+    DECL_METRICS(cons_tableblock_start_leader), //cons_tableblock_start_leader
+    DECL_METRICS(vhost_recv_msg), // vhost_recv_msg,
+    DECL_METRICS(vhost_recv_callback), // vhost_recv_callback,
+    DECL_METRICS(dataobject_tx_receipt_t), // tx_receipt
+    DECL_METRICS(dataobject_unit_state), // unit_state
+    DECL_METRICS(dataobject_xvtxindex), // xvtxindex
+    DECL_METRICS(dataobject_xvbstate), // xvbstate
+    DECL_METRICS(dataobject_xvproperty), // xvproperty
+    DECL_METRICS(dataobject_account), // account
+    DECL_METRICS(dataobject_exeunit), // exeunit
+    DECL_METRICS(dataobject_exegroup), // exegroup
+    DECL_METRICS(dataobject_xvexecontxt), // xvexecontxt
+    DECL_METRICS(dataobject_xaccount_index), // xvexecontxt
+    DECL_METRICS(dataobject_xreceiptid_pair_t), // xreceiptid_pair_t
+    DECL_METRICS(dataobject_xvboffdata_t), // dataobject_xvboffdata_t
+    DECL_METRICS(dataobject_xvbindex_t), // dataobject_xvbindex_t
+    DECL_METRICS(dataobject_xtransaction_t), // dataobject_xtransaction_t
+    DECL_METRICS(dataobject_provcert),
+    DECL_METRICS(dataobject_xvaccount),
+    DECL_METRICS(dataobject_xvaction),
+    DECL_METRICS(dataobject_xvheader),
+    DECL_METRICS(dataobject_xvqcert),
+    DECL_METRICS(dataobject_xvblock),
+    DECL_METRICS(dataobject_xvinput),
+    DECL_METRICS(dataobject_xvoutput),
+    DECL_METRICS(dataobject_xventity),
 };
 
 void e_metrics::start() {

@@ -39,7 +39,7 @@ namespace top
             
             virtual void*   query_interface(const int32_t _enum_xobject_type_) override;//caller need to cast (void*) to related ptr
             //general key-value query, e.g. query leaf of merkle tree by query_data("merkle-tree-leaf")
-            virtual const std::string query_value(const std::string & key) {return std::string();}//virtual key-value for entity
+            virtual const std::string query_value(const std::string & key) const {return std::string();}//virtual key-value for entity
             
             const int          get_entity_index() const {return m_entity_index;}
             
@@ -89,7 +89,7 @@ namespace top
             //caller need to cast (void*) to related ptr
             virtual void*             query_interface(const int32_t _enum_xobject_type_) override;
             //general key-value query, e.g. query leaf of merkle tree by query_data("merkle-tree-leaf")
-            virtual const std::string query_value(const std::string & key) override;//virtual key-value for entity
+            virtual const std::string query_value(const std::string & key) const override;//virtual key-value for entity
             
             const std::vector<xvaction_t> & get_actions() const {return m_actions;}
             
@@ -133,10 +133,13 @@ namespace top
             friend class xvblockstore_t;
         public:
             static  const std::string   name(){ return std::string("xvoutentity");}
+            static  const std::string   key_name_state_hash(){ return std::string("0");}
+            static  const std::string   key_name_binlog_hash(){ return std::string("1");}
             virtual std::string         get_obj_name() const override {return name();}
             enum{enum_obj_type = enum_xobject_type_voutentity};
         public:
             xvoutentity_t(const std::string & state_bin_log);
+            xvoutentity_t(const std::string & state_hash, const std::string & binlog_hash);
             xvoutentity_t(const xvoutentity_t & obj);
         protected:
             xvoutentity_t();
@@ -148,17 +151,19 @@ namespace top
         public:
             //caller need to cast (void*) to related ptr
             virtual void*             query_interface(const int32_t _enum_xobject_type_) override;
+            void                      set_value(const std::string & key, const std::string & value);
             //general key-value query, e.g. query leaf of merkle tree by query_data("merkle-tree-leaf")
-            virtual const std::string query_value(const std::string & key) override;//virtual key-value for entity
+            virtual const std::string query_value(const std::string & key) const override;//key-value for entity
             
-            const std::string &       get_state_binlog() const {return m_state_binlog;}
+            const std::string         get_state_hash() const {return query_value(key_name_state_hash());}
+            const std::string         get_binlog_hash() const {return query_value(key_name_binlog_hash());}
             
         protected:
             //return how many bytes readout /writed in, return < 0(enum_xerror_code_type) when have error
             virtual int32_t           do_write(xstream_t & stream) override; //allow subclass extend behavior
             virtual int32_t           do_read(xstream_t & stream)  override; //allow subclass extend behavior
         private:
-            std::string     m_state_binlog;
+            std::map<std::string, std::string>  m_values;
         };
     
         //xvbinentity_t present binary or unknow entity
@@ -183,7 +188,7 @@ namespace top
         public:
             virtual void*   query_interface(const int32_t _enum_xobject_type_) override;//caller need to cast (void*) to related ptr
             //general key-value query, e.g. query leaf of merkle tree by query_data("merkle-tree-leaf")
-            virtual const std::string query_value(const std::string & key) override {return std::string();}//virtual key-value for entity
+            virtual const std::string query_value(const std::string & key) const override {return std::string();}//virtual key-value for entity
             
         protected: //subclass extend behavior and load more information instead of a raw one
             //return how many bytes readout /writed in, return < 0(enum_xerror_code_type) when have error
@@ -199,16 +204,16 @@ namespace top
         //rule#2: table use xventity_t(index than #1) to present the included units
         //rule#3: each unit in table has one(only one) linked xventity
         //rule#4: each block of account get final state by combining the xvbstate of prev-block and current entity of output
-        class xvexemodule_t : public xdataunit_t
+        class xvexemodule_t : public xobject_t
         {
             friend class xvblock_t;
         protected:
-            xvexemodule_t(enum_xdata_type type);
-            xvexemodule_t(std::vector<xventity_t*> && entitys,const std::string & raw_resource_data,enum_xdata_type type);
-            xvexemodule_t(const std::vector<xventity_t*> & entitys,const std::string & raw_resource_data,enum_xdata_type type);
+            xvexemodule_t(enum_xobject_type type);
+            xvexemodule_t(std::vector<xventity_t*> && entitys,const std::string & raw_resource_data,enum_xobject_type type);
+            xvexemodule_t(const std::vector<xventity_t*> & entitys,const std::string & raw_resource_data,enum_xobject_type type);
             
-            xvexemodule_t(std::vector<xventity_t*> && entitys,xstrmap_t & resource, enum_xdata_type type);
-            xvexemodule_t(const std::vector<xventity_t*> & entitys,xstrmap_t & resource, enum_xdata_type type);
+            xvexemodule_t(std::vector<xventity_t*> && entitys,xstrmap_t & resource, enum_xobject_type type);
+            xvexemodule_t(const std::vector<xventity_t*> & entitys,xstrmap_t & resource, enum_xobject_type type);
             virtual ~xvexemodule_t();
         private:
             xvexemodule_t();
@@ -229,9 +234,17 @@ namespace top
             const   std::string       get_resources_hash() const {return m_resources_hash;}//m_resource_hash for raw_resources
             bool                      has_resource_data()  const {return (m_resources_obj != NULL);}
             
+        public:
+            int32_t     serialize_to(xstream_t & stream);        //serialize header and object,return how many bytes is writed
+            int32_t     serialize_from(xstream_t & stream);      //serialize header and object,return how many bytes is readed
+            
+            //just wrap function for serialize_to(),but assign data to string and return
+            int32_t     serialize_to_string(std::string & bin_data);
+            int32_t     serialize_from_string(const std::string & bin_data);
+            
         protected: //for subclass or friend class
-            virtual int32_t     do_write(xstream_t & stream) override; //not allow subclass change behavior
-            virtual int32_t     do_read(xstream_t & stream)  override; //not allow subclass change behavior
+            virtual int32_t     do_write(xstream_t & stream); //not allow subclass change behavior
+            virtual int32_t     do_read(xstream_t & stream); //not allow subclass change behavior
             
         private:  //not allow override any more
             //set_resources_data only open to xvblock where may verify hash first

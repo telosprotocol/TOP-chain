@@ -13,7 +13,7 @@
 
 NS_BEG2(top, blockmaker)
 
-#define table_unconfirm_tx_num_max (2048)
+#define table_unconfirm_tx_num_max (128)
 
 xtable_maker_t::xtable_maker_t(const std::string & account, const xblockmaker_resources_ptr_t & resources)
 : xblock_maker_t(account, resources, m_keep_latest_blocks_max) {
@@ -377,7 +377,6 @@ xblock_ptr_t xtable_maker_t::make_light_table(bool is_leader, const xtablemaker_
     xblock_builder_para_ptr_t build_para = std::make_shared<xlighttable_builder_para_t>(batch_units, get_resources());
     xblock_ptr_t proposal_block = m_lighttable_builder->build_block(get_highest_height_block(), table_para.get_tablestate()->get_bstate(), cs_para, build_para);
     return proposal_block;
-
 }
 
 xblock_ptr_t xtable_maker_t::leader_make_light_table(const xtablemaker_para_t & table_para, const data::xblock_consensus_para_t & cs_para, xtablemaker_result_t & table_result) {
@@ -524,7 +523,6 @@ int32_t xtable_maker_t::verify_proposal(base::xvblock_t* proposal_block, const x
 
 bool xtable_maker_t::verify_proposal_with_local(base::xvblock_t *proposal_block, base::xvblock_t *local_block) const {
     XMETRICS_TIME_RECORD("cons_tableblock_verfiy_proposal_imp_with_local");
-    // TODO(jimmy) input hash not match may happen when use different property
     if (local_block->get_input_hash() != proposal_block->get_input_hash()) {
         xwarn("xtable_maker_t::verify_proposal_with_local fail-input hash not match. %s %s",
             proposal_block->dump().c_str(),
@@ -538,7 +536,7 @@ bool xtable_maker_t::verify_proposal_with_local(base::xvblock_t *proposal_block,
         return false;
     }
     if (local_block->get_header_hash() != proposal_block->get_header_hash()) {
-        xerror("xtable_maker_t::verify_proposal_with_local fail-header hash not match. %s proposal:%s local:%s",
+        xwarn("xtable_maker_t::verify_proposal_with_local fail-header hash not match. %s proposal:%s local:%s",
             proposal_block->dump().c_str(),
             ((data::xblock_t*)proposal_block)->dump_header().c_str(),
             ((data::xblock_t*)local_block)->dump_header().c_str());

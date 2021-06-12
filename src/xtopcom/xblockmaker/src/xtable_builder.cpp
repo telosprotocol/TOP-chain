@@ -15,18 +15,26 @@
 
 NS_BEG2(top, blockmaker)
 
-std::string xlighttable_builder_t::make_light_table_binlog(const xblock_ptr_t & prev_block,
-                                                           const xobject_ptr_t<base::xvbstate_t> & prev_bstate,
+std::string xlighttable_builder_t::make_light_table_binlog(const xobject_ptr_t<base::xvbstate_t> & proposal_bstate,
                                                            const std::vector<xblock_ptr_t> & units) {
-    base::xauto_ptr<base::xvblock_t> _temp_block = data::xblocktool_t::create_next_emptyblock(prev_block.get());
-    xobject_ptr_t<base::xvbstate_t> proposal_bstate = make_object_ptr<base::xvbstate_t>(*_temp_block.get(), *prev_bstate.get());
     xobject_ptr_t<base::xvcanvas_t> canvas = make_object_ptr<base::xvcanvas_t>();
 
     data::xtable_bstate_t proposal_tbstate(proposal_bstate.get());
 
     // make account index property binlog
     for (auto & unit : units) {
-        xaccount_index_t _aindex(unit.get(), unit->get_unconfirm_sendtx_num() != 0, false);  // TODO(jimmy)
+        bool has_unconfirm_sendtx = false;
+        if (unit->get_block_class() == base::enum_xvblock_class_nil) {  // nil unit should read last unconfirm state
+            xaccount_index_t _old_aindex;
+            bool ret = proposal_tbstate.get_account_index(unit->get_account(), _old_aindex);
+            xassert(ret == true);  // must can read success
+            has_unconfirm_sendtx = _old_aindex.is_has_unconfirm_tx();
+        } else if (unit->get_block_class() == base::enum_xvblock_class_full) {
+            has_unconfirm_sendtx = false;
+        } else {
+            has_unconfirm_sendtx = unit->get_unconfirm_sendtx_num() != 0;
+        }
+        xaccount_index_t _aindex(unit.get(), has_unconfirm_sendtx, false);
         proposal_tbstate.set_account_index(unit->get_account(), _aindex, canvas.get());
     }
 
@@ -81,8 +89,8 @@ std::string xlighttable_builder_t::make_light_table_binlog(const xblock_ptr_t & 
     canvas->encode(property_binlog);
     xassert(!property_binlog.empty());
 
-    xdbg("jimmy xlighttable_builder_t::make_light_table_binlog prev_block=%s,units_size=%zu,sendids=%zu,recvids=%zu,confirmids=%zu,all=%zu,binlog_size=%zu",
-        prev_block->dump().c_str(), units.size(), sendids.size(), recvids.size(), confirmids.size(), all_pairs.size(), property_binlog.size());
+    xdbg("jimmy xlighttable_builder_t::make_light_table_binlog units_size=%zu,sendids=%zu,recvids=%zu,confirmids=%zu,all=%zu,binlog_size=%zu",
+        units.size(), sendids.size(), recvids.size(), confirmids.size(), all_pairs.size(), property_binlog.size());
 
     return property_binlog;
 }
@@ -96,19 +104,25 @@ xblock_ptr_t        xlighttable_builder_t::build_block(const xblock_ptr_t & prev
     std::shared_ptr<xlighttable_builder_para_t> lighttable_build_para = std::dynamic_pointer_cast<xlighttable_builder_para_t>(build_para);
     xassert(lighttable_build_para != nullptr);
 
-    std::string property_binlog = make_light_table_binlog(prev_block, prev_bstate, lighttable_build_para->get_batch_units());
+    base::xauto_ptr<base::xvblock_t> _temp_block = data::xblocktool_t::create_next_emptyblock(prev_block.get());
+    xobject_ptr_t<base::xvbstate_t> proposal_bstate = make_object_ptr<base::xvbstate_t>(*_temp_block.get(), *prev_bstate.get());
+
+    std::string property_binlog = make_light_table_binlog(proposal_bstate, lighttable_build_para->get_batch_units());
     xtable_block_para_t lighttable_para;
     lighttable_para.set_property_binlog(property_binlog);
     lighttable_para.set_batch_units(lighttable_build_para->get_batch_units());
     lighttable_para.set_extra_data(cs_para.get_extra_data());
-    base::xvblock_t* _proposal_block = data::xtable_block_t::create_next_tableblock(lighttable_para, prev_block.get());
+    std::string fullstate_bin;
+    proposal_bstate->take_snapshot(fullstate_bin);
+    lighttable_para.set_fullstate_bin(fullstate_bin);
+
+    base::xvblock_t* _proposal_block = data::xblocktool_t::create_next_tableblock(lighttable_para, prev_block.get(), cs_para);
     xblock_ptr_t proposal_table;
     proposal_table.attach((data::xblock_t*)_proposal_block);
-    proposal_table->set_consensus_para(cs_para);
 
-    xdbg("xlighttable_builder_t::build_block %s,account=%s,height=%ld,binlog_size=%zu,binlog=%ld",
+    xdbg("xlighttable_builder_t::build_block %s,account=%s,height=%ld,binlog_size=%zu,binlog=%ld,state_size=%zu",
         cs_para.dump().c_str(), prev_block->get_account().c_str(), prev_block->get_height() + 1,
-        property_binlog.size(), base::xhash64_t::digest(property_binlog));
+        property_binlog.size(), base::xhash64_t::digest(property_binlog), fullstate_bin.size());
     return proposal_table;
 }
 
@@ -140,13 +154,11 @@ xblock_ptr_t        xfulltable_builder_t::build_block(const xblock_ptr_t & prev_
 
     xstatistics_data_t block_statistics = make_block_statistics(fulltable_build_para->get_blocks_from_last_full());
     std::string property_binlog = make_binlog(prev_block, prev_bstate);
-    std::string binlog_hash = base::xcontext_t::instance().hash(property_binlog, prev_block->get_cert()->get_crypto_hash_type());
 
-    xfulltable_block_para_t fulltable_para(binlog_hash, block_statistics);
-    base::xvblock_t* _proposal_block = data::xfull_tableblock_t::create_next_block(fulltable_para, prev_block.get());
+    xfulltable_block_para_t fulltable_para(property_binlog, block_statistics);
+    base::xvblock_t* _proposal_block = data::xblocktool_t::create_next_fulltable(fulltable_para, prev_block.get(), cs_para);
     xblock_ptr_t proposal_table;
     proposal_table.attach((data::xblock_t*)_proposal_block);
-    proposal_table->set_consensus_para(cs_para);
 
     xdbg("xfulltable_builder_t::build_block %s,account=%s,height=%ld,binlog_size=%zu,binlog=%ld",
         cs_para.dump().c_str(), prev_block->get_account().c_str(), prev_block->get_height() + 1,

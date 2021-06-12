@@ -10,6 +10,9 @@ namespace top
     {
         xstoredb_t::xstoredb_t(const std::string & store_path)
         {
+            m_total_keys = 0;
+            m_cur_clock_store = 0;
+            m_cur_data_store  = 0;
             m_store_path = store_path;
         }
         xstoredb_t::~xstoredb_t()
@@ -125,22 +128,125 @@ namespace top
         
         bool             xstoredb_t::set_value(const std::string & key, const std::string& value)
         {
-            m_dumy_store[key] = value;
+            ++m_total_keys;
+        
+            if( (key.find("Tt00013axZ3Gy8nzi7oNYhTBDb9XMb8KHdqYhw4Kx") != std::string::npos)
+               || (key.find("71c216d000013404") != std::string::npos) )
+            {
+                if(0 == (m_cur_clock_store % 2))
+                {
+                    m_clock_store[key] = value;
+                    if(m_clock_store.size() >= 32)
+                        m_clock_store2.clear();
+                    if(m_clock_store.size() >= 64)
+                        m_cur_clock_store += 1;
+                    
+                    xdbg("xstoredb_t::store clock key(%s) at store#1",key.c_str());
+                }
+                else
+                {
+                    m_clock_store2[key] = value;
+                    if(m_clock_store2.size() >= 128)
+                        m_clock_store.clear();
+                    if(m_clock_store2.size() >= 256)
+                        m_cur_clock_store += 1;
+                    
+                    xdbg("xstoredb_t::store clock key(%s) at store#2",key.c_str());
+                }
+            }
+            else
+            {
+                //xdbg("xstoredb_t::store block key(%s)",key.c_str());
+                
+                if(0 == (m_cur_data_store % 2))
+                {
+                    m_dumy_store[key] = value;
+                    if(m_dumy_store.size() >= 128)
+                        m_dumy_store2.clear();
+                    if(m_dumy_store.size() >= 256)
+                        m_cur_data_store += 1;
+                }
+                else
+                {
+                    m_dumy_store2[key] = value;
+                    if(m_dumy_store2.size() >= 128)
+                        m_dumy_store.clear();
+                    if(m_dumy_store2.size() >= 256)
+                        m_cur_data_store += 1;
+                }
+            }
+            
             return true;
         }
         bool             xstoredb_t::delete_value(const std::string & key)
         {
-            auto it = m_dumy_store.find(key);
-            if(it != m_dumy_store.end())
-                m_dumy_store.erase(it);
+            if( (key.find("Tt00013axZ3Gy8nzi7oNYhTBDb9XMb8KHdqYhw4Kx") != std::string::npos)
+               || (key.find("71c216d000013404") != std::string::npos) )
+            {
+                auto it = m_clock_store.find(key);
+                if(it != m_clock_store.end())
+                {
+                    m_clock_store.erase(it);
+                    xdbg("xstoredb_t::delete clock key(%s) at store#1",key.c_str());
+                    return true;
+                }
+                
+                auto it2 = m_clock_store2.find(key);
+                if(it2 != m_clock_store2.end())
+                {
+                    m_clock_store2.erase(it2);
+                    xdbg("xstoredb_t::delete clock key(%s) at store#2",key.c_str());
+                    return true;
+                }
+            }
+            else
+            {
+                auto it = m_dumy_store.find(key);
+                if(it != m_dumy_store.end())
+                {
+                    m_dumy_store.erase(it);
+                    return true;
+                }
+                
+                auto it2 = m_dumy_store2.find(key);
+                if(it2 != m_dumy_store2.end())
+                    m_dumy_store2.erase(it2);
+            }
+
             
             return true;
         }
         const std::string  xstoredb_t::get_value(const std::string & key) const
         {
-            auto it = m_dumy_store.find(key);
-            if(it != m_dumy_store.end())
-                return it->second;
+            if( (key.find("Tt00013axZ3Gy8nzi7oNYhTBDb9XMb8KHdqYhw4Kx") != std::string::npos)
+               || (key.find("71c216d000013404") != std::string::npos) )
+            {
+                auto it = m_clock_store.find(key);
+                if(it != m_clock_store.end())
+                {
+                    xdbg("xstoredb_t::get_value clock key(%s) at store#1",key.c_str());
+                    return it->second;
+                }
+                
+                auto it2 = m_clock_store2.find(key);
+                if(it2 != m_clock_store2.end())
+                {
+                    xdbg("xstoredb_t::get_value clock key(%s) at store#2",key.c_str());
+                    return it2->second;
+                }
+                
+                xdbg("xstoredb_t::get_value faild to find clock key(%s)",key.c_str());
+            }
+            else
+            {
+                auto it = m_dumy_store.find(key);
+                if(it != m_dumy_store.end())
+                    return it->second;
+                
+                auto it2 = m_dumy_store2.find(key);
+                if(it2 != m_dumy_store2.end())
+                    return it2->second;
+            }
             
             return std::string();
         }

@@ -10,6 +10,11 @@
 #include "../xvstate.h"
 #include "../xvstatestore.h"
 #include "../xvledger.h"
+#include "xmetrics/xmetrics.h"
+
+#ifdef DEBUG
+    #define _DEBUG_STATE_BINARY_
+#endif
 
 namespace top
 {
@@ -109,6 +114,11 @@ namespace top
                     new_canvas->release_ref();
                     return nullptr;
                 }
+                
+                #ifdef _DEBUG_STATE_BINARY_
+                xinfo("xvexestate_t::rebase,property(%s)->renew(%s)",property_ptr->get_name().c_str(), instruction.dump().c_str());
+                #endif
+                
             }
             return new_canvas;
         }
@@ -823,6 +833,10 @@ namespace top
             const xvalue_t & property_name  = op.get_method_params().at(1);
             const xvalue_t & property_value = op.get_method_params().at(2);
             
+            #ifdef _DEBUG_STATE_BINARY_
+            xinfo("xvexestate_t::do_renew,name(%s)<->value(%s)",property_name.get_string().c_str(),property_value.dump().c_str());
+            #endif //end of _DEBUG_STATE_BINARY_
+            
             xvproperty_t * target_property = get_property_object(property_name.get_string());
             if(target_property == nullptr)
             {
@@ -893,6 +907,7 @@ namespace top
         xvbstate_t::xvbstate_t(enum_xdata_type type)
             :xvexestate_t(type)
         {
+            XMETRICS_GAUGE(metrics::dataobject_xvbstate, 1);
             //init unit name and block height first
             m_block_height = 0;
             m_block_viewid = 0;
@@ -909,6 +924,7 @@ namespace top
         xvbstate_t::xvbstate_t(const xvblock_t& for_block,xvexeunit_t * parent_unit,enum_xdata_type type)
             :xvexestate_t(for_block.get_account(),type)
         {
+            XMETRICS_GAUGE(metrics::dataobject_xvbstate, 1);
             //init unit name and block height first
             m_block_types    = for_block.get_header()->get_block_raw_types();
             m_block_versions = for_block.get_header()->get_block_raw_versions();
@@ -932,6 +948,7 @@ namespace top
         xvbstate_t::xvbstate_t(const xvblock_t& for_block,xvbstate_t & clone_from,xvexeunit_t * parent_unit,enum_xdata_type type)
             :xvexestate_t(for_block.get_account(),type)
         {
+            XMETRICS_GAUGE(metrics::dataobject_xvbstate, 1);
             //init unit name and block height first
             m_block_types    = for_block.get_header()->get_block_raw_types();
             m_block_versions = for_block.get_header()->get_block_raw_versions();
@@ -958,6 +975,7 @@ namespace top
         xvbstate_t::xvbstate_t(const std::string & account,const uint64_t block_height,const uint64_t block_viewid,const std::string & last_block_hash,const std::string &last_full_block_hash,const uint64_t last_full_block_height, const uint32_t raw_block_versions,const uint16_t raw_block_types, xvexeunit_t * parent_unit)
             :xvexestate_t(account,(enum_xdata_type)enum_xobject_type_vbstate)
         {
+            XMETRICS_GAUGE(metrics::dataobject_xvbstate, 1);
             //init unit name and block height first
             m_block_types    = raw_block_types;
             m_block_versions = raw_block_versions;
@@ -997,10 +1015,12 @@ namespace top
 
             //finally set parent ptr
             set_parent_unit(obj.get_parent_unit());
+            XMETRICS_GAUGE(metrics::dataobject_xvbstate, 1);
         }
         
         xvbstate_t::~xvbstate_t()
         {
+            XMETRICS_GAUGE(metrics::dataobject_xvbstate, -1);
         }
         
         xvexeunit_t* xvbstate_t::clone() //each property is readonly after clone
@@ -1092,6 +1112,9 @@ namespace top
             {
                 for(auto & op : out_records)
                 {
+                    #ifdef _DEBUG_STATE_BINARY_
+                    xinfo("xvbstate_t::apply,execute %s",op.dump().c_str());
+                    #endif
                     execute(op,nullptr);
                 }
                 return true;
@@ -1111,6 +1134,9 @@ namespace top
             {
                 for(auto & op : out_records)
                 {
+                    #ifdef _DEBUG_STATE_BINARY_
+                    xinfo("xvbstate_t::apply,execute %s",op.dump().c_str());
+                    #endif
                     execute(op,nullptr);
                 }
                 return true;

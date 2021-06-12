@@ -1,6 +1,5 @@
 #include "xdata/xblock_statistics_data.h"
 #include "xcertauth/xcertauth_face.h"
-#include "xvm/manager/xcontract_manager.h"
 
 #include "xvledger/xvblock.h"
 // TODO(jimmy) #include "xbase/xvledger.h"

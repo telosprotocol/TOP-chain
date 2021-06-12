@@ -64,6 +64,8 @@ protected: //guanrentee be called  at object'thread,triggered by push_event_up o
     //note: to return false may call parent'push_event_up,or stop further routing when return true
     virtual bool    on_event_up(const base::xvevent_t & event,xionode_t* from_child,const int32_t cur_thread_id,const uint64_t timenow_ms) override;
     
+    bool    fire_proposal();
+    
 private:
     uint32_t                                       m_node_types;
     uint32_t                                       m_total_nodes;

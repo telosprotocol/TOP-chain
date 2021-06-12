@@ -7,20 +7,17 @@
 #include "xdata/xlightunit.h"
 #include "xdata/xnative_contract_address.h"
 #include "xdata/xgenesis_data.h"
+#include "xdata/xblockbuild.h"
 #include "xvledger/xvblockstore.h"
 #include "xvledger/xvstate.h"
 
 NS_BEG2(top, data)
 
 base::xvblock_t* xblocktool_t::create_genesis_empty_block(const std::string & account) {
-    base::enum_vaccount_addr_type addrtype = base::xvaccount_t::get_addrtype_from_account(account);
-    if (addrtype == base::enum_vaccount_addr_type_block_contract) {
-        return xemptyblock_t::create_genesis_emptytable(account);
-    } else if (account == sys_contract_beacon_timer_addr || account == sys_drand_addr) {
-        return xemptyblock_t::create_genesis_emptyroot(account);
-    } else {
-        return xemptyblock_t::create_genesis_emptyunit(account);
-    }
+    xemptyblock_build_t bbuild(account);
+    base::xauto_ptr<base::xvblock_t> _new_block = bbuild.build_new_block();
+    _new_block->add_ref();
+    return _new_block.get();  // TODO(jimmy) xblocktool_t return auto ptr
 }
 
 base::xvblock_t*  xblocktool_t::create_genesis_empty_unit(const std::string & account) {
@@ -54,55 +51,84 @@ base::xvblock_t*   xblocktool_t::create_genesis_lightunit(const std::string & ac
         auto balance = propobj->deposit(base::vtoken_t(top_balance), canvas.get());
         xassert(balance == top_balance);
     }
+
     std::string property_binlog;
     canvas->encode(property_binlog);
-    result.m_property_binlog = property_binlog;
+
     // TODO(jimmy) block builder class
     xinfo("xlightunit_builder_t::build_block account=%s,height=0,binlog_size=%zu",
         account.c_str(), property_binlog.size());
-    return xlightunit_block_t::create_genesis_lightunit(account, tx, result);
+
+    xcons_transaction_ptr_t cons_tx = make_object_ptr<xcons_transaction_t>(tx.get());
+    xlightunit_block_para_t bodypara;
+    bodypara.set_one_input_tx(cons_tx);
+    bodypara.set_binlog(property_binlog);
+    xlightunit_build_t bbuild(account, bodypara);
+    base::xauto_ptr<base::xvblock_t> _new_block = bbuild.build_new_block();
+    _new_block->add_ref();
+    return _new_block.get();  // TODO(jimmy) xblocktool_t return auto ptr
 }
 
 base::xvblock_t * xblocktool_t::create_genesis_lightunit(const std::string & account,
                                                          const xtransaction_ptr_t & genesis_tx,
                                                          const xtransaction_result_t & result) {
-    return xlightunit_block_t::create_genesis_lightunit(account, genesis_tx, result);
+    xcons_transaction_ptr_t cons_tx = make_object_ptr<xcons_transaction_t>(genesis_tx.get());
+    xlightunit_block_para_t bodypara;
+    bodypara.set_one_input_tx(cons_tx);
+    bodypara.set_binlog(result.get_property_binlog());
+    xlightunit_build_t bbuild(account, bodypara);
+    base::xauto_ptr<base::xvblock_t> _new_block = bbuild.build_new_block();
+    _new_block->add_ref();
+    return _new_block.get();  // TODO(jimmy) xblocktool_t return auto ptr
+}
+
+base::xvblock_t* xblocktool_t::create_genesis_root_block(base::enum_xchain_id chainid, const std::string & account, const xrootblock_para_t & bodypara) {
+    xrootblock_build_t bbuild(chainid, account, bodypara);
+    base::xauto_ptr<base::xvblock_t> _new_block = bbuild.build_new_block();
+    _new_block->add_ref();
+    return _new_block.get();  // TODO(jimmy) xblocktool_t return auto ptr
+}
+
+base::xvblock_t*  xblocktool_t::create_next_emptyblock(base::xvblock_t* prev_block, const xblock_consensus_para_t & cs_para) {
+    xemptyblock_build_t bbuild(prev_block, cs_para);
+    base::xauto_ptr<base::xvblock_t> _new_block = bbuild.build_new_block();
+    _new_block->add_ref();
+    return _new_block.get();  // TODO(jimmy) xblocktool_t return auto ptr
 }
 
 base::xvblock_t*  xblocktool_t::create_next_emptyblock(base::xvblock_t* prev_block) {
-    return xemptyblock_t::create_next_emptyblock(prev_block);
+    xemptyblock_build_t bbuild(prev_block);
+    base::xauto_ptr<base::xvblock_t> _new_block = bbuild.build_new_block();
+    _new_block->add_ref();
+    return _new_block.get();  // TODO(jimmy) xblocktool_t return auto ptr
 }
 
-base::xvblock_t*   xblocktool_t::create_next_emptyblock(base::xvblock_t* prev_block, base::enum_xvblock_type blocktype) {
-    return xemptyblock_t::create_next_emptyblock(prev_block, blocktype);
+base::xvblock_t* xblocktool_t::create_next_lightunit(const xlightunit_block_para_t & bodypara, base::xvblock_t* prev_block, const xblock_consensus_para_t & cs_para) {
+    xlightunit_build_t bbuild(prev_block, bodypara, cs_para);
+    base::xauto_ptr<base::xvblock_t> _new_block = bbuild.build_new_block();
+    _new_block->add_ref();
+    return _new_block.get();  // TODO(jimmy) xblocktool_t return auto ptr
 }
 
-base::xvblock_t*  xblocktool_t::create_next_lightunit(const xlightunit_block_para_t & para, base::xvblock_t* prev_block) {
-    return xlightunit_block_t::create_next_lightunit(para, prev_block);
+base::xvblock_t*  xblocktool_t::create_next_fullunit(const xfullunit_block_para_t & bodypara, base::xvblock_t* prev_block, const xblock_consensus_para_t & cs_para) {
+    xfullunit_build_t bbuild(prev_block, bodypara, cs_para);
+    base::xauto_ptr<base::xvblock_t> _new_block = bbuild.build_new_block();
+    _new_block->add_ref();
+    return _new_block.get();  // TODO(jimmy) xblocktool_t return auto ptr
 }
 
-base::xvblock_t*  xblocktool_t::create_next_fullunit(const xfullunit_block_para_t & para, base::xvblock_t* prev_block) {
-    return xfullunit_block_t::create_next_fullunit(para, prev_block);
+base::xvblock_t*  xblocktool_t::create_next_tableblock(const xtable_block_para_t & bodypara, base::xvblock_t* prev_block, const xblock_consensus_para_t & cs_para) {
+    xlighttable_build_t bbuild(prev_block, bodypara, cs_para);
+    base::xauto_ptr<base::xvblock_t> _new_block = bbuild.build_new_block();
+    _new_block->add_ref();
+    return _new_block.get();  // TODO(jimmy) xblocktool_t return auto ptr
 }
 
-base::xvblock_t*  xblocktool_t::create_next_tableblock(const xtable_block_para_t & para, base::xvblock_t* prev_block) {
-    return xtable_block_t::create_next_tableblock(para, prev_block);
-}
-
-base::xvblock_t*  xblocktool_t::create_next_tableblock(const xtable_block_para_t & para, const xblock_consensus_para_t & cs_para, base::xvblock_t* prev_block) {
-    // unit should set the same consensus pare with parent tableblock
-    for (auto & unit : para.get_account_units()) {
-        unit->set_consensus_para(cs_para);
-    }
-
-    base::xvblock_t* proposal_block = xtable_block_t::create_next_tableblock(para, prev_block);
-    data::xblock_t* block = (data::xblock_t*)proposal_block;
-    block->set_consensus_para(cs_para);
-    return proposal_block;
-}
-
-base::xvblock_t*   xblocktool_t::create_next_fulltable(const xfulltable_block_para_t & para, base::xvblock_t* prev_block) {
-    return xfull_tableblock_t::create_next_block(para, prev_block);
+base::xvblock_t*   xblocktool_t::create_next_fulltable(const xfulltable_block_para_t & bodypara, base::xvblock_t* prev_block, const xblock_consensus_para_t & cs_para) {
+    xfulltable_build_t bbuild(prev_block, bodypara, cs_para);
+    base::xauto_ptr<base::xvblock_t> _new_block = bbuild.build_new_block();
+    _new_block->add_ref();
+    return _new_block.get();  // TODO(jimmy) xblocktool_t return auto ptr
 }
 
 std::string xblocktool_t::make_address_table_account(base::enum_xchain_zone_index zone, uint16_t subaddr) {

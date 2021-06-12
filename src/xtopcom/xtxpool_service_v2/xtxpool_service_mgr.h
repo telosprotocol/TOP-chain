@@ -61,14 +61,17 @@ private:
     xtxpool_service_dispatcher_imp_t * m_dispatcher{nullptr};
 };
 
-class xtxpool_service_timer_t : public top::base::xxtimer_t {
+class xtxpool_service_timer_t
+  : public xtxpool_service_dispatcher_t
+  , public top::base::xxtimer_t {
 public:
-    enum {
-        enum_max_mailbox_num = 8192,
-    };
     xtxpool_service_timer_t(base::xcontext_t & _context, int32_t timer_thread_id, xtxpool_service_mgr * txpool_service_mgr)
       : base::xxtimer_t(_context, timer_thread_id), m_txpool_service_mgr(txpool_service_mgr) {
     }
+
+    void dispatch(base::xcall_t & call) override;
+
+    bool is_mailbox_over_limit() override;
 
 protected:
     ~xtxpool_service_timer_t() override {

@@ -24,14 +24,16 @@ jobs:
 
       - name: Checkout repository
         uses: actions/checkout@v2
+      - name: Checkout submodules
+        run: git submodule foreach "(git clean -xfd; git reset --hard;git fetch)"
+      - name: Update submodule
+        run: git submodule update --init --recursive
 
       - name: Build XTOP DEBUG
         run: |
-          bash .github/scripts/fix_submodule.sh dev/fast_sync_develop
           bash .github/scripts/build_xtop.sh "test build_ci"
 
       - name: TEST XTOP AllInOne
-        # if: github.event.sender.id == ''
         env:
           RUN_NUM: ${{ github.run_number }}
         run: |

@@ -11,7 +11,7 @@
 
 NS_BEG3(top, data, election)
 
-std::vector<std::string> get_property_name_by_addr(common::xaccount_address_t const & sys_contract_addr, bool const read_offchain = false);
+std::vector<std::string> get_property_name_by_addr(common::xaccount_address_t const & sys_contract_addr);
 
 std::string get_property_by_group_id(common::xgroup_id_t const & group_id);
 

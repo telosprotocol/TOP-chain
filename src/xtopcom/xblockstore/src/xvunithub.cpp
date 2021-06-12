@@ -166,7 +166,7 @@ namespace top
             }
             //XTODO, add code to rebuild block from table block
 
-            xassert(0);
+            xerror("xvblockstore_impl load_block_from_index() fail load block object(%s) at store(%s)",target_index->dump().c_str(),m_store_path.c_str());
             return nullptr;
         }
 
@@ -397,22 +397,27 @@ namespace top
             return account_obj->load_block_flags(block);
         }
 
-        bool    xvblockstore_impl::store_block(base::xauto_ptr<xblockacct_t> & container_account,base::xvblock_t * container_block) //store table/book blocks if they are
+        bool    xvblockstore_impl::store_block(base::xauto_ptr<xblockacct_t> & container_account,base::xvblock_t * container_block,bool execute_block) //store table/book blocks if they are
         {
             xdbg("jimmy xvblockstore_impl::store_block enter,store block(%s)", container_block->dump().c_str());
-            //store it first at anyway
-            bool ret = container_account->store_block(container_block);
-            if(!ret)
-            {
-                xwarn("xvblockstore_impl::store_block,fail-store block(%s)", container_block->dump().c_str());
-                // return false;
-            }
-
+            
             //then try extract for container if that is
-            if(ret && container_block->get_block_class() == base::enum_xvblock_class_light) //skip nil block
+            if(  (container_block->get_block_class() == base::enum_xvblock_class_light) //skip nil block
+               &&(container_block->get_block_level() == base::enum_xvblock_level_table) )
             {
-                //add other container here if need
-                if(container_block->get_header()->get_block_level() == base::enum_xvblock_level_table)
+                if(container_block->get_height() != 0) //to avoid regenerate genesis block
+                {
+                    base::xauto_ptr<base::xvbindex_t> existing_index(container_account->load_index(container_block->get_height(), container_block->get_block_hash()));
+                    if(existing_index) //double check the existign index to cover some exception cases
+                    {
+                        if((existing_index->get_block_flags() & base::enum_xvblock_flag_unpacked) != 0) //did unpacked
+                        {
+                            container_block->set_block_flag(base::enum_xvblock_flag_unpacked);//merge flag of unpack
+                        }
+                    }
+                }
+                
+                if((container_block->get_block_flags() & base::enum_xvblock_flag_unpacked) == 0) //unpacked yet
                 {
                     //XTODO index add flag to avoiding repeat unpack unit
                     xassert(container_block->is_input_ready(true));
@@ -423,6 +428,7 @@ namespace top
                     {
                         xinfo("xvblockstore_impl::store_block,table block(%s) carry unit num=%d", container_block->dump().c_str(), (int)sub_blocks.size());
 
+                        bool table_extract_all_unit_successful = true;
                         for (auto & unit_block : sub_blocks)
                         {
                             base::xvaccount_t  unit_account(unit_block->get_account());
@@ -431,14 +437,22 @@ namespace top
 
                             if(false == store_block(unit_account,unit_block.get())) //any fail resultin  re-unpack whole table again
                             {
-                                xwarn("xvblockstore_impl::store_block,fail-store unit-block=%s from tableblock=%s",unit_block->dump().c_str(),container_block->dump().c_str());
+                                table_extract_all_unit_successful = false;//reset to false for any failure of unit
+                                xwarn("xvblockstore_impl::store_block,fail-store unit-block=%s",unit_block->dump().c_str());
                             }
                             else
                             {
-                                xinfo("xvblockstore_impl::store_block,stored unit-block=%s from tableblock=%s",unit_block->dump().c_str(),container_block->dump().c_str());
+                                xdbg_info("xvblockstore_impl::store_block,stored unit-block=%s",unit_block->dump().c_str());
 
                                 on_block_stored(unit_block.get());//throw event for sub blocks
                             }
+                        }
+
+                        //update to block'flag acccording table_extract_all_unit_successful
+                        if(table_extract_all_unit_successful)
+                        {
+                            container_block->set_block_flag(base::enum_xvblock_flag_unpacked);
+                            xinfo("xvblockstore_impl::store_block,extract_sub_blocks done for talbe block");
                         }
                     }
                     else
@@ -447,9 +461,22 @@ namespace top
                     }
                 }
             }
+            
+            //move clean logic here to reduce risk of reenter process that might clean up some index too early
+            container_account->clean_caches(false);
+            //then do sotre block
+            bool ret = container_account->store_block(container_block);
+            if(!ret)
+            {
+                xwarn("xvblockstore_impl::store_block,fail-store block(%s)", container_block->dump().c_str());
+                // return false;
+            }
 
-            container_account->try_execute_all_block(container_block);  // try to push execute block, ignore store result
-
+            if(execute_block)
+            {
+                container_account->try_execute_all_block(container_block);  // try to push execute block, ignore store result
+            }
+            
             return true; //still return true since tableblock has been stored successful
         }
 
@@ -469,6 +496,22 @@ namespace top
             return false;
         }
 
+        bool                xvblockstore_impl::store_block_but_not_execute(const base::xvaccount_t & account,base::xvblock_t* block)
+        {
+            if( (nullptr == block) || (account.get_account() != block->get_account()) )
+            {
+                xerror("xvblockstore_impl::store_block_but_not_execute,block NOT match account:%",account.get_account().c_str());
+                return false;
+            }
+            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
+            if(store_block(account_obj,block,false))//force to not execute anymore
+            {
+                on_block_stored(block);
+                return true;
+            }
+            return false;
+        }
+    
         bool                xvblockstore_impl::store_blocks(const base::xvaccount_t & account,std::vector<base::xvblock_t*> & batch_store_blocks)
         {
             if(batch_store_blocks.empty())
@@ -683,7 +726,18 @@ namespace top
                 xblockacct_t* _test_for_plugin = expire_it->second;
                 if(_test_for_plugin != nullptr)
                 {
-                    if( (false == _test_for_plugin->is_live(current_time_ms)) || (total_active_acounts > enum_max_active_acconts) ) //force to remove most less-active account while too much caches
+                    bool  fore_close = false;//init as false
+                    if(   (total_active_acounts > enum_max_active_acconts)
+                       && (_test_for_plugin->get_block_level() == base::enum_xvblock_level_unit) )
+                    {
+                        fore_close = true; //only force close unit when hold too many accounts
+                    }
+                    else if(false == _test_for_plugin->is_live(current_time_ms))//idle too long
+                    {
+                        fore_close = true;
+                    }
+                    
+                    if(fore_close) //force to remove most less-active account while too much caches
                     {
                         base::xauto_ptr<base::xvaccountobj_t> target_account_container = base::xvchain_t::instance().get_account(*_test_for_plugin);
                         //always use same lock for same account

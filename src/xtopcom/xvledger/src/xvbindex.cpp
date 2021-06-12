@@ -6,7 +6,7 @@
 #include <cinttypes>
 #include "../xvbindex.h"
 #include "../xvaccount.h"
- 
+ #include "xmetrics/xmetrics.h"
 namespace top
 {
     namespace base
@@ -14,6 +14,7 @@ namespace top
         xvbindex_t::xvbindex_t()
         {
             init();
+            XMETRICS_GAUGE(metrics::dataobject_xvbindex_t, 1);
         }
 
         xvbindex_t::xvbindex_t(xvblock_t & obj)
@@ -37,6 +38,7 @@ namespace top
             //[8bit:block-flags][8bit:index-bits]
             m_combineflags      = obj.get_block_flags();
             m_block_types       = obj.get_header()->get_block_raw_types();
+            XMETRICS_GAUGE(metrics::dataobject_xvbindex_t, 1);
         }
     
         xvbindex_t::xvbindex_t(xvbindex_t && obj)
@@ -64,6 +66,7 @@ namespace top
             m_prev_index = obj.m_prev_index;
             m_next_index = obj.m_next_index;
             m_linked_block = obj.m_linked_block;
+            XMETRICS_GAUGE(metrics::dataobject_xvbindex_t, 1);
         }
     
         xvbindex_t::xvbindex_t(const xvbindex_t & obj)
@@ -71,6 +74,7 @@ namespace top
         {
             init();
             *this = obj;
+            XMETRICS_GAUGE(metrics::dataobject_xvbindex_t, 1);
         }
 
         xvbindex_t & xvbindex_t::operator = (const xvbindex_t & obj)
@@ -138,6 +142,7 @@ namespace top
                 
             if(m_linked_block != NULL)
                 m_linked_block->release_ref();
+            XMETRICS_GAUGE(metrics::dataobject_xvbindex_t, -1);
         }
  
         void xvbindex_t::init()

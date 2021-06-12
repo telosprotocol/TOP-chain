@@ -7,6 +7,7 @@
 #include "../xvblock.h"
 #include "../xventity.h"
 #include "xbase/xcontext.h"
+#include "xmetrics/xmetrics.h"
  
 namespace top
 {
@@ -16,6 +17,7 @@ namespace top
         xventity_t::xventity_t(enum_xdata_type type)
             :xdataunit_t(type)
         {
+            XMETRICS_GAUGE(metrics::dataobject_xventity, 1);
             m_exe_module = NULL;
             m_entity_index = uint16_t(-1);
         }
@@ -23,12 +25,14 @@ namespace top
         xventity_t::xventity_t(const xventity_t & other)
             :xdataunit_t(other)
         {
+            XMETRICS_GAUGE(metrics::dataobject_xventity, 1);
             m_exe_module = NULL;
             m_entity_index = other.m_entity_index;
         }
         
         xventity_t::~xventity_t()
         {
+            XMETRICS_GAUGE(metrics::dataobject_xventity, -1);
             if(m_exe_module != NULL)
                 m_exe_module->release_ref();
         }
@@ -122,7 +126,7 @@ namespace top
             return xventity_t::query_interface(_enum_xobject_type_);
         }
     
-        const std::string xvinentity_t::query_value(const std::string & key)//virtual key-value for entity
+        const std::string xvinentity_t::query_value(const std::string & key) const //virtual key-value for entity
         {
             return std::string();
         }
@@ -251,13 +255,21 @@ namespace top
         xvoutentity_t::xvoutentity_t(const std::string & state_bin_log)
             :xventity_t(enum_xdata_type(enum_xobject_type_voutentity))
         {
-            m_state_binlog = state_bin_log;
+            set_value(key_name_state_hash(), state_bin_log);
         }
     
+        xvoutentity_t::xvoutentity_t(const std::string & state_hash, const std::string & binlog_hash)
+        :xventity_t(enum_xdata_type(enum_xobject_type_voutentity))
+        {
+            set_value(key_name_state_hash(), state_hash);
+            set_value(key_name_binlog_hash(), binlog_hash);
+        }
+        
+        
         xvoutentity_t::xvoutentity_t(const xvoutentity_t & obj)
             :xventity_t(obj)
         {
-            m_state_binlog = obj.m_state_binlog;
+            m_values = obj.m_values;
         }
     
         xvoutentity_t::xvoutentity_t()
@@ -267,7 +279,7 @@ namespace top
     
         xvoutentity_t::~xvoutentity_t()
         {
-            m_state_binlog.clear();
+            m_values.clear();
         }
     
         //caller need to cast (void*) to related ptr
@@ -279,8 +291,19 @@ namespace top
             return xventity_t::query_interface(_enum_xobject_type_);
         }
         
-        const std::string xvoutentity_t::query_value(const std::string & key)//virtual key-value for entity
+        void  xvoutentity_t::set_value(const std::string & key, const std::string & value)
         {
+            if (!value.empty())
+            {
+                m_values[key] = value;
+            }
+        }
+        const std::string xvoutentity_t::query_value(const std::string & key) const //virtual key-value for entity
+        {
+            auto iter = m_values.find(key);
+            if (iter != m_values.end()) {
+                return iter->second;
+            }
             return std::string();
         }
         
@@ -288,16 +311,31 @@ namespace top
         {
             const int32_t begin_size = stream.size();
             xventity_t::do_write(stream);
-            stream.write_compact_var(m_state_binlog);
+            uint16_t count = (uint16_t)m_values.size();
+            stream.write_compact_var(count);
+            for (auto & v : m_values)
+            {
+                stream.write_compact_var(v.first);
+                stream.write_compact_var(v.second);
+            }
             return (stream.size() - begin_size);
         }
         
         int32_t     xvoutentity_t::do_read(xstream_t & stream) //not allow subclass change behavior
         {
-            m_state_binlog.clear();
+            m_values.clear();
             const int32_t begin_size = stream.size();
             xventity_t::do_read(stream);
-            stream.read_compact_var(m_state_binlog);
+            uint16_t count = 0;
+            stream.read_compact_var(count);
+            for (uint16_t i = 0; i < count; i++)
+            {
+                std::string key;
+                std::string value;
+                stream.read_compact_var(key);
+                stream.read_compact_var(value);
+                m_values[key] = value;
+            }
             return (begin_size - stream.size());
         }
         
@@ -346,14 +384,14 @@ namespace top
         }
 
         //---------------------------------xvexemodule_t---------------------------------//
-        xvexemodule_t::xvexemodule_t(enum_xdata_type type)
-            :xdataunit_t(type)
+        xvexemodule_t::xvexemodule_t(enum_xobject_type type)
+            :xobject_t(type)
         {
             m_resources_obj = NULL;
         }
     
-        xvexemodule_t::xvexemodule_t(std::vector<xventity_t*> && entitys,const std::string & raw_resource_data,enum_xdata_type type)
-            :xdataunit_t(type)
+        xvexemodule_t::xvexemodule_t(std::vector<xventity_t*> && entitys,const std::string & raw_resource_data,enum_xobject_type type)
+            :xobject_t(type)
         {
             m_resources_obj = NULL;
             set_resources_data(raw_resource_data);
@@ -368,8 +406,8 @@ namespace top
             }
         }
         
-        xvexemodule_t::xvexemodule_t(const std::vector<xventity_t*> & entitys, const std::string & raw_resource_data,enum_xdata_type type)
-            :xdataunit_t(type)
+        xvexemodule_t::xvexemodule_t(const std::vector<xventity_t*> & entitys, const std::string & raw_resource_data,enum_xobject_type type)
+            :xobject_t(type)
         {
             m_resources_obj = NULL;
             set_resources_data(raw_resource_data);
@@ -384,8 +422,8 @@ namespace top
             }
         }
     
-        xvexemodule_t::xvexemodule_t(std::vector<xventity_t*> && entitys,xstrmap_t & resource_obj, enum_xdata_type type)
-            :xdataunit_t(type)
+        xvexemodule_t::xvexemodule_t(std::vector<xventity_t*> && entitys,xstrmap_t & resource_obj, enum_xobject_type type)
+            :xobject_t(type)
         {
             m_resources_obj = NULL;
             if(resource_obj.empty() == false)
@@ -402,8 +440,8 @@ namespace top
             }
         }
         
-        xvexemodule_t::xvexemodule_t(const std::vector<xventity_t*> & entitys,xstrmap_t & resource_obj, enum_xdata_type type)
-            :xdataunit_t(type)
+        xvexemodule_t::xvexemodule_t(const std::vector<xventity_t*> & entitys,xstrmap_t & resource_obj, enum_xobject_type type)
+            :xobject_t(type)
         {
             m_resources_obj = NULL;
             if(resource_obj.empty() == false)
@@ -445,7 +483,7 @@ namespace top
             if(m_resources_obj != NULL)
                 m_resources_obj->close();
             
-            return xdataunit_t::close(force_async);
+            return xobject_t::close(force_async);
         }
         
         //note:not safe for multiple thread at this layer
@@ -493,7 +531,7 @@ namespace top
                 if(NULL == _data_obj_ptr)
                     return false;
                 
-                xstrmap_t*  map_ptr = (xstrmap_t*)_data_obj_ptr->query_interface(enum_xdata_type_string_map);
+                xstrmap_t*  map_ptr = (xstrmap_t*)_data_obj_ptr->query_interface(xdataobj_t:: enum_xdata_type_string_map);
                 xassert(map_ptr != NULL);
                 if(map_ptr == NULL)
                 {
@@ -508,6 +546,33 @@ namespace top
                 }
             }
             return true;
+        }
+    
+        int32_t   xvexemodule_t::serialize_to_string(std::string & bin_data)
+        {
+            base::xautostream_t<1024> _stream(base::xcontext_t::instance());
+            const int result = serialize_to(_stream);
+            if(result > 0)
+                bin_data.assign((const char*)_stream.data(),_stream.size());
+            
+            return result;
+        }
+        
+        int32_t   xvexemodule_t::serialize_to(xstream_t & stream)
+        {
+            return do_write(stream);
+        }
+        
+        int32_t   xvexemodule_t::serialize_from_string(const std::string & bin_data) //wrap function fo serialize_from(stream)
+        {
+            base::xstream_t _stream(base::xcontext_t::instance(),(uint8_t*)bin_data.data(),(uint32_t)bin_data.size());
+            const int result = serialize_from(_stream);
+            return result;
+        }
+        
+        int32_t   xvexemodule_t::serialize_from(xstream_t & stream)//not allow subclass change behavior
+        {
+            return do_read(stream);
         }
         
         int32_t     xvexemodule_t::do_write(xstream_t & stream)//not allow subclass change behavior

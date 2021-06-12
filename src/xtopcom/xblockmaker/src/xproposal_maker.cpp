@@ -149,7 +149,7 @@ int xproposal_maker_t::verify_proposal(base::xvblock_t * proposal_block, base::x
     xblock_ptr_t commit_block = xblock_t::raw_vblock_to_object_ptr(latest_blocks.get_latest_committed_block());
     xtablestate_ptr_t commit_tablestate = get_target_tablestate(commit_block.get());
     if (commit_tablestate != nullptr) {
-        get_txpool()->update_receiptid_state(proposal_block->get_account(), commit_tablestate->get_receiptid_state());
+        get_txpool()->update_table_state(commit_tablestate);
     }
 
     // get tablestate related to latest cert block
@@ -283,7 +283,7 @@ bool xproposal_maker_t::update_txpool_txs(const xblock_consensus_para_t & propos
                 proposal_para.dump().c_str(), proposal_para.get_latest_committed_block()->dump().c_str());
             return false;
         }
-        get_txpool()->update_receiptid_state(proposal_para.get_table_account(), tablestate_commit->get_receiptid_state());
+        get_txpool()->update_table_state(tablestate_commit);
 
         // update locked txs for txpool, locked txs come from two latest tableblock
         std::vector<xtxpool_v2::tx_info_t> locked_tx_vec;
@@ -334,6 +334,7 @@ bool xproposal_maker_t::leader_set_consensus_para(base::xvblock_t* latest_cert_b
     blockheader_extradata.serialize_to_string(extra_data);
     xassert(cs_para.get_drand_block() != nullptr);
     std::string random_seed = calc_random_seed(latest_cert_block, cs_para.get_drand_block()->get_cert(), cs_para.get_viewtoken());
+    cs_para.set_parent_height(latest_cert_block->get_height() + 1);
     cs_para.set_tableblock_consensus_para(cs_para.get_drand_block()->get_height(),
                                             random_seed,
                                             total_lock_tgas_token,
@@ -344,6 +345,7 @@ bool xproposal_maker_t::leader_set_consensus_para(base::xvblock_t* latest_cert_b
 }
 
 bool xproposal_maker_t::backup_set_consensus_para(base::xvblock_t* latest_cert_block, base::xvblock_t* proposal, base::xvqcert_t * bind_drand_cert, xblock_consensus_para_t & cs_para) {
+    cs_para.set_parent_height(latest_cert_block->get_height() + 1);
     cs_para.set_common_consensus_para(proposal->get_cert()->get_clock(),
                                       proposal->get_cert()->get_validator(),
                                       proposal->get_cert()->get_auditor(),

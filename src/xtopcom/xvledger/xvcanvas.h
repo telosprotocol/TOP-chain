@@ -50,6 +50,12 @@ namespace top
             const int  encode(std::string & output_bin,const int compile_options = xvcanvas_t::enum_compile_optimization_all);
  
             size_t     get_op_records_size() const {return m_records.size();}
+            
+        public://debug purpose only
+            void              log();
+            void              print();
+            const std::string dump();
+            void              dump(std::string & full_content);
         protected:
             const std::deque<xvmethod_t> & get_op_records() const {return m_records;}
         private:

@@ -15,6 +15,7 @@
 #include "xvledger/xvledger.h"
 #include "xvledger/xvstatestore.h"
 // #include "xcontract_runtime/xaccount_vm.h"
+#include "xdata/xblockbuild.h"
 
 NS_BEG2(top, blockmaker)
 
@@ -44,21 +45,13 @@ xblock_ptr_t        xlightunit_builder_t::build_block(const xblock_ptr_t & prev_
     xobject_ptr_t<base::xvbstate_t> proposal_bstate = make_object_ptr<base::xvbstate_t>(*_temp_proposal_block.get(), *prev_bstate.get());
     xaccount_ptr_t proposal_state = std::make_shared<xunit_bstate_t>(proposal_bstate.get());
 
-    std::shared_ptr<store::xaccount_context_t> _account_context = std::make_shared<store::xaccount_context_t>(proposal_state, build_para->get_store());
-    _account_context->set_context_para(cs_para.get_clock(), cs_para.get_random_seed(), cs_para.get_timestamp(), cs_para.get_total_lock_tgas_token());
-    xassert(!cs_para.get_table_account().empty());
-    xassert(cs_para.get_table_proposal_height() > 0);
-    uint64_t table_committed_height = cs_para.get_table_proposal_height() >= 3 ? cs_para.get_table_proposal_height() - 3 : 0;
-    _account_context->set_context_pare_current_table(cs_para.get_table_account(), table_committed_height);
-
     const std::vector<xcons_transaction_ptr_t> & input_txs = lightunit_build_para->get_origin_txs();
     txexecutor::xbatch_txs_result_t exec_result;
-    int exec_ret = txexecutor::xtransaction_executor::exec_batch_txs(_account_context.get(), input_txs, exec_result);
-    xinfo("xlightunit_builder_t::build_block %s,account=%s,height=%ld,exec_ret=%d,succtxs_count=%zu,failtxs_count=%zu,createtxs_count=%zu,unconfirm_count=%d,binlog_size=%zu,binlog=%ld",
+    int exec_ret = txexecutor::xtransaction_executor::exec_batch_txs(_temp_proposal_block.get(), prev_bstate, cs_para, input_txs, build_para->get_store(), exec_result);
+    xinfo("xlightunit_builder_t::build_block %s,account=%s,height=%ld,exec_ret=%d,succtxs_count=%zu,failtxs_count=%zu,unconfirm_count=%d,binlog_size=%zu,binlog=%ld,state_size=%zu",
         cs_para.dump().c_str(), prev_block->get_account().c_str(), prev_block->get_height() + 1,
         exec_ret, exec_result.m_exec_succ_txs.size(), exec_result.m_exec_fail_txs.size(),
-        exec_result.succ_txs_result.m_contract_txs.size(), _account_context->get_blockchain()->get_unconfirm_sendtx_num(),
-        exec_result.succ_txs_result.m_property_binlog.size(), base::xhash64_t::digest(exec_result.succ_txs_result.m_property_binlog));
+        exec_result.m_unconfirm_tx_num, exec_result.m_property_binlog.size(), base::xhash64_t::digest(exec_result.m_property_binlog), exec_result.m_full_state.size());
     // some send txs may execute fail but some recv/confirm txs may execute successfully
     if (!exec_result.m_exec_fail_txs.empty()) {
         lightunit_build_para->set_fail_txs(exec_result.m_exec_fail_txs);
@@ -70,19 +63,18 @@ xblock_ptr_t        xlightunit_builder_t::build_block(const xblock_ptr_t & prev_
 
     xlightunit_block_para_t lightunit_para;
     // set lightunit para by tx result
-    lightunit_para.set_input_txs(input_txs);
-    lightunit_para.set_transaction_result(exec_result.succ_txs_result);
-    uint32_t unconfirm_num = _account_context->get_blockchain()->get_unconfirm_sendtx_num();
-    lightunit_para.set_account_unconfirm_sendtx_num(unconfirm_num);
+    lightunit_para.set_input_txs(exec_result.m_exec_succ_txs);
+    lightunit_para.set_account_unconfirm_sendtx_num(exec_result.m_unconfirm_tx_num);
+    lightunit_para.set_fullstate_bin(exec_result.m_full_state);
+    lightunit_para.set_binlog(exec_result.m_property_binlog);
 
     base::xreceiptid_state_ptr_t receiptid_state = lightunit_build_para->get_receiptid_state();
-    alloc_tx_receiptid(input_txs, receiptid_state);
-    alloc_tx_receiptid(lightunit_para.get_contract_create_txs(), receiptid_state);
+    alloc_tx_receiptid(exec_result.m_exec_succ_txs, receiptid_state);
 
-    base::xvblock_t* _proposal_block = data::xlightunit_block_t::create_next_lightunit(lightunit_para, prev_block.get());
+    xlightunit_build_t bbuild(prev_block.get(), lightunit_para, cs_para);
+    base::xvblock_t* _proposal_block = data::xblocktool_t::create_next_lightunit(lightunit_para, prev_block.get(), cs_para);
     xblock_ptr_t proposal_unit;
     proposal_unit.attach((data::xblock_t*)_proposal_block);
-    proposal_unit->set_consensus_para(cs_para);
     return proposal_unit;
 }
 
@@ -115,11 +107,10 @@ xblock_ptr_t        xfullunit_builder_t::build_block(const xblock_ptr_t & prev_b
     xinfo("xfullunit_builder_t::build_block %s,account=%s,height=%ld,binlog_size=%zu,binlog=%ld",
         cs_para.dump().c_str(), prev_block->get_account().c_str(), prev_block->get_height() + 1,
         para.m_property_snapshot.size(), base::xhash64_t::digest(para.m_property_snapshot));
-    base::xvblock_t* _proposal_block = data::xfullunit_block_t::create_next_fullunit(para, prev_block.get());
+
+    base::xvblock_t* _proposal_block = data::xblocktool_t::create_next_fullunit(para, prev_block.get(), cs_para);
     xblock_ptr_t proposal_unit;
     proposal_unit.attach((data::xblock_t*)_proposal_block);
-    proposal_unit->set_consensus_para(cs_para);
-
     return proposal_unit;
 }
 
@@ -127,10 +118,9 @@ xblock_ptr_t        xemptyunit_builder_t::build_block(const xblock_ptr_t & prev_
                                                     const xobject_ptr_t<base::xvbstate_t> & prev_bstate,
                                                     const data::xblock_consensus_para_t & cs_para,
                                                     xblock_builder_para_ptr_t & build_para) {
-    base::xvblock_t* _proposal_block = data::xemptyblock_t::create_next_emptyblock(prev_block.get());
+    base::xvblock_t* _proposal_block = data::xblocktool_t::create_next_emptyblock(prev_block.get(), cs_para);
     xblock_ptr_t proposal_unit;
     proposal_unit.attach((data::xblock_t*)_proposal_block);
-    proposal_unit->set_consensus_para(cs_para);
     return proposal_unit;
 }
 #if 0

@@ -40,6 +40,7 @@ public:
     get_block_handle(store::xstore_face_t * store, base::xvblockstore_t * block_store, sync::xsync_face_t * sync)
       : m_store(store), m_block_store(block_store), m_sync(sync), m_edge_start_height(1), m_arc_start_height(1) {
         REGISTER_QUERY_METHOD(getBlock);
+        REGISTER_QUERY_METHOD(getProperty);
         REGISTER_QUERY_METHOD(getAccount);
         REGISTER_QUERY_METHOD(getTransaction);
         REGISTER_QUERY_METHOD(getGeneralInfos);
@@ -80,7 +81,9 @@ public:
         return rsp;
     }
     xJson::Value get_block_json(data::xblock_t * bp);
+    void query_account_property_base(xJson::Value & jph, const std::string & owner, const std::string & prop_name, xaccount_ptr_t unitstate);
     void query_account_property(xJson::Value & jph, const std::string & owner, const std::string & prop_name);
+    void query_account_property(xJson::Value & jph, const std::string & owner, const std::string & prop_name, const uint64_t height);
     void getLatestBlock();
     void getLatestFullBlock();
     void getBlockByHeight();
@@ -95,7 +98,7 @@ public:
     xJson::Value parse_tx(const uint256_t & tx_hash, xtransaction_t * cons_tx_ptr = nullptr);
     xJson::Value parse_tx(xtransaction_t * tx_ptr);
     xJson::Value parse_action(const xaction_t & action);
-    xJson::Value get_unit_json(const std::string & account, uint64_t unit_height, xtransaction_ptr_t tx_ptr);
+    xJson::Value get_unit_json(const std::string & account, uint64_t unit_height, xtransaction_ptr_t tx_ptr, xlightunit_tx_info_ptr_t & recv_txinfo);
     void getRecs();
     void getZecs();
     void getEdges();
@@ -108,6 +111,7 @@ public:
 
 private:
     void getBlock();
+    void getProperty();
     void set_shared_info(xJson::Value & root, data::xblock_t * bp);
     void set_header_info(xJson::Value & header, data::xblock_t * bp);
 

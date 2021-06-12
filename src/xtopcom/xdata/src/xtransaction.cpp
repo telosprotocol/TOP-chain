@@ -17,14 +17,13 @@
 #include "xdata/xmemcheck_dbg.h"
 #include "xvm/manager/xcontract_address_map.h"
 // TODO(jimmy) #include "xbase/xvledger.h"
-
+#include "xmetrics/xmetrics.h"
 #include "xbasic/xversion.h"
 #include "xdata/xdata_defines.h"
 #include <cinttypes>
 namespace top { namespace data {
 
 REG_CLS(xtransaction_t);
-REG_CLS(xtransaction_store_t);
 
 int32_t xtransaction_header::serialize_write(base::xstream_t & stream, bool is_write_without_len) const {
     const int32_t begin_pos = stream.size();
@@ -74,10 +73,12 @@ int32_t xtransaction_header::serialize_read(base::xstream_t & stream) {
 
 xtransaction_t::xtransaction_t() {
     MEMCHECK_ADD_TRACE(this, "tx_create");
+    XMETRICS_GAUGE(metrics::dataobject_xtransaction_t, 1);
 }
 
 xtransaction_t::~xtransaction_t() {
     MEMCHECK_REMOVE_TRACE(this);
+    XMETRICS_GAUGE(metrics::dataobject_xtransaction_t, -1);
 }
 
 int32_t xtransaction_t::do_write_without_hash_signature(base::xstream_t & stream, bool is_write_without_len) const {
@@ -134,7 +135,6 @@ int32_t xtransaction_t::release_ref() {
 void xtransaction_t::adjust_target_address(uint32_t table_id) {
     if (m_target_addr.empty()) {
         m_target_addr = make_address_by_prefix_and_subaddr(m_target_action.get_account_addr(), table_id).value();
-        add_modified_count();
     }
 }
 
@@ -142,7 +142,6 @@ void xtransaction_t::set_digest() {
     base::xstream_t stream(base::xcontext_t::instance());
     do_write_without_hash_signature(stream, true);
     m_transaction_hash = utl::xsha2_256_t::digest((const char*)stream.data(), stream.size());
-    add_modified_count();
 }
 
 void xtransaction_t::set_signature(const std::string & signature) {
@@ -407,28 +406,6 @@ std::string xtransaction_t::dump() const {
     get_digest_hex_str().c_str(), (uint32_t)get_tx_type(), (uint32_t)get_tx_subtype(), get_source_addr().c_str(), get_target_addr().c_str(),
     get_tx_nonce(), get_refcount(), this);
     return std::string(local_param_buf);
-}
-
-int32_t xtransaction_store_t::do_write(base::xstream_t & stream) {
-    KEEP_SIZE();
-    DEFAULT_SERIALIZE_PTR(m_raw_tx);
-    SERIALIZE_FIELD_BT(m_send_unit_height);
-    SERIALIZE_FIELD_BT(m_recv_unit_height);
-    SERIALIZE_FIELD_BT(m_confirm_unit_height);
-    SERIALIZE_FIELD_BT(m_flag);
-    SERIALIZE_FIELD_BT(m_ext);
-    return CALC_LEN();
-}
-
-int32_t xtransaction_store_t::do_read(base::xstream_t & stream) {
-    KEEP_SIZE();
-    DEFAULT_DESERIALIZE_PTR(m_raw_tx, xtransaction_t);
-    DESERIALIZE_FIELD_BT(m_send_unit_height);
-    DESERIALIZE_FIELD_BT(m_recv_unit_height);
-    DESERIALIZE_FIELD_BT(m_confirm_unit_height);
-    DESERIALIZE_FIELD_BT(m_flag);
-    DESERIALIZE_FIELD_BT(m_ext);
-    return CALC_LEN();
 }
 
 }  // namespace data

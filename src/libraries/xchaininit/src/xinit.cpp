@@ -168,8 +168,11 @@ int topchain_init(const std::string& config_file, const std::string& config_extr
     std::cout << "account: " << global_node_id << std::endl;
     xinit_log(log_path.c_str(), true, true);
     xset_log_level((enum_xlog_level)log_level);
-    xinfo("=== xtopchain start here ===");
+    auto xbase_info = base::xcontext_t::get_xbase_info();
+    xwarn("=== xtopchain start here ===");
+    xwarn("=== xbase info: %s ===", xbase_info.c_str());
     std::cout << "=== xtopchain start here ===" << std::endl;
+    std::cout << "=== xbase info:" << xbase_info << " ===" << std::endl;
 
     MEMCHECK_INIT();
     if (false == create_rootblock(config_file)) {

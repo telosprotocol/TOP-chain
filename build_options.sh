@@ -37,10 +37,6 @@ do
         CMAKE_EXTRA_OPTIONS+=" -DTCMALLOC=ON"
         echo "BUILD TCMALLOC mode"
     ;;
-    rec_elect)
-        CMAKE_EXTRA_OPTIONS+=" -DBUILD_REC_ELECT=ON"
-        echo "DBUILD_REC_ELECT ON"
-    ;;
     xmutisign_close)
         CMAKE_EXTRA_OPTIONS+=" -DMUTI_SIGN_CLOSE=ON"
         echo "MUTI_SIGN_CLOSE ON"
@@ -124,6 +120,10 @@ do
     db_cache)
         CMAKE_EXTRA_OPTIONS+=" -DDB_CACHE=ON"
         echo "BUILD WITH DB_CACHE"
+    ;;
+    db_tool)
+        CMAKE_EXTRA_OPTIONS+=" -DDB_TOOL=ON"
+        echo "BUILD WITH DB_TOOL"
     ;;
     rustvm)
         CMAKE_EXTRA_OPTIONS+=" -DBUILD_RUSTVM=ON"

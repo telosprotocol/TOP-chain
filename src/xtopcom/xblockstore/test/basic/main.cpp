@@ -63,7 +63,9 @@ int test_sync_vstore(store::xsyncvstore_t* sync_store)
         
         new_block->get_cert()->set_validator(any_xip);
         new_block->set_verify_signature(std::string("fake-signature"));
+        new_block->set_block_flag(base::enum_xvblock_flag_unpacked);
         new_block->set_block_flag(base::enum_xvblock_flag_authenticated);
+
         
         last_view_id += 1;
         generated_blocks.push_back(new_block);
@@ -83,6 +85,7 @@ int test_sync_vstore(store::xsyncvstore_t* sync_store)
         
         new_block->get_cert()->set_validator(any_xip);
         new_block->set_verify_signature(std::string("fake-signature"));
+        new_block->set_block_flag(base::enum_xvblock_flag_unpacked);
         new_block->set_block_flag(base::enum_xvblock_flag_authenticated);
         
         last_view_id += 1;
@@ -124,6 +127,7 @@ int test_sync_vstore(store::xsyncvstore_t* sync_store)
         {
             if(test_block->get_height() != 0)
             {
+                //sync_store->get_vblockstore()->store_block(test_account_obj,test_block);//push block as random order
                 sync_store->store_block(test_block);//push block as random order
             }
         }
@@ -222,6 +226,6 @@ int main(int argc, const char * argv[]) {
     }
     
     printf("test over, quit now! \n");
-    sleep(60);
+    sleep(80);
     return 0;
 }
