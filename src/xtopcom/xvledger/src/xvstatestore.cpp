@@ -12,6 +12,7 @@ namespace top
 {
     namespace base
     {
+        #define DISABLE_LRU_CACHE  // TODO(jimmy) for memory test
         //----------------------------------------xvblkstate_api-------------------------------------//
         xvblkstatestore_t::xvblkstatestore_t() : m_table_state_cache(512), m_unit_state_cache(1024)
         {
