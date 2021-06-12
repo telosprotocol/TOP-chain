@@ -781,6 +781,8 @@ namespace top
             //note:when ask_full_search is true ,here may do heavy job to search all blocks until highest one
             if(ask_full_search)
             {
+                xinfo("xblockacct_t::load_latest_genesis_connected_index,start search as genesis_height(%" PRIu64 ") vs commit-height(%" PRIu64 ") ",m_meta->_highest_genesis_connect_height,m_meta->_highest_commit_block_height);
+                
                 for(uint64_t h = m_meta->_highest_genesis_connect_height + 1; h <= m_meta->_highest_commit_block_height; ++h)
                 {
                     const uint64_t try_height = m_meta->_highest_genesis_connect_height + 1;
@@ -1386,12 +1388,12 @@ namespace top
             if(nullptr == this_block)
                 return nullptr;
 
-            xdbg("xblockacct_t::cache_index,prepare for block=%s,cache_size:%zu",this_block->dump().c_str(), m_all_blocks.size());
+            xdbg("xblockacct_t::cache_index,prepare for block,cache_size:%zu",m_all_blocks.size());
 
             auto existing_view_iterator = target_height_map.find(this_block->get_viewid());
             if(existing_view_iterator != target_height_map.end())//apple rule#4 by reuse existing iterator and replace by new value
             {
-                xdbg("xblockacct_t::cache_index, find same viewid block, block=%s",this_block->dump().c_str());
+                xdbg("xblockacct_t::cache_index, find same viewid block(%s)",this_block->dump().c_str());
                 base::xvbindex_t* existing_block = existing_view_iterator->second;
                 if(this_block != existing_block) //found same one but modified
                 {
@@ -1413,7 +1415,7 @@ namespace top
                        ) //outdated one try to overwrite newer one,abort it
                     {
                         if(existing_block_flags != new_block_flags)
-                            xwarn("xblockacct_t::cache_index,warn-try to overwrite newer block with flags(0x%x) by outdated block=%s",existing_block->get_block_flags(),this_block->dump().c_str());
+                            xdbg_info("xblockacct_t::cache_index,warn-try to overwrite newer block with flags(0x%x) by outdated block=%s",existing_block->get_block_flags(),this_block->dump().c_str());
 
                         //since found the duplicated one, we need let caller know this fact,so tranfer flag of stored to new index
                         *this_block = *existing_block; //transfer all existing info into new one
@@ -1639,6 +1641,8 @@ namespace top
                         }
                     }
                 }
+                
+                xinfo("xblockacct_t::full_connect_to done search");
             }
 
             //finally send out all events.
@@ -2218,7 +2222,13 @@ namespace top
             {
                 return;
             }
-            xdbg("xblockacct_t::try_execute_all_block enter. %s", dump().c_str());
+            
+            #ifdef DEBUG
+                xdbg("xblockacct_t::try_execute_all_block enter. %s", dump().c_str());
+            #else
+                xinfo("xblockacct_t::try_execute_all_block enter");
+            #endif
+            
             // try to check and execute from target block firstly, maybe target block include snapshot by syncing
             if (m_meta->_highest_execute_block_height < target_block->get_height()  // target height not executed
                 && target_block->get_block_class() == base::enum_xvblock_class_full  // must be full block
@@ -2272,7 +2282,7 @@ namespace top
                     uint64_t _query_height = (m_meta->_highest_execute_block_height == 0 && m_meta->_highest_execute_block_hash.empty()) ? 0 : m_meta->_highest_execute_block_height + 1;
                     if (_query_height > m_meta->_highest_commit_block_height)
                     {
-                        xdbg("xblockacct_t::try_execute_all_block no next committed block to execute. %s", dump().c_str());
+                        xinfo("xblockacct_t::try_execute_all_block no next committed block to execute. %s", dump().c_str());
                         return;
                     }
                     base::xauto_ptr<base::xvbindex_t> _query_bindex(load_index(_query_height, base::enum_xvblock_flag_committed));
@@ -2300,6 +2310,12 @@ namespace top
                 }
             }
             while(max_count-- > 0);
+            
+            #ifdef DEBUG
+                xdbg("xblockacct_t::try_execute_all_block finish, %s", dump().c_str());
+            #else
+                xinfo("xblockacct_t::try_execute_all_block finish");
+            #endif
         }
 
         //return map sorted by viewid from lower to high,caller respond to release ptr later
@@ -2774,11 +2790,11 @@ namespace top
         //XTODO,set next_next_cert at outside
         bool  xchainacct_t::process_index(base::xvbindex_t* this_block)
         {
-            xdbg("jimmy xchainacct_t::process_index enter account=%s,index=%s", get_account().c_str(), this_block->dump().c_str());
+            //xdbg("jimmy xchainacct_t::process_index enter account=%s,index=%s", get_account().c_str(), this_block->dump().c_str());
             base::xvbindex_t* prev_block = this_block->get_prev_block();
             if(nullptr == prev_block)
             {
-                xwarn("xchainacct_t::process_index no prev block. block=%s", this_block->dump().c_str());
+                xdbg_info("xchainacct_t::process_index no prev block. block=%s", this_block->dump().c_str());
                 return false;
             }
 
@@ -2806,7 +2822,7 @@ namespace top
             if(nullptr == prev_prev_block)
             {
                 if (this_block->get_height() > 1) {
-                    xwarn("xchainacct_t::process_index no prev prev block. block=%s", this_block->dump().c_str());
+                    xdbg_info("xchainacct_t::process_index no prev prev block. block=%s", this_block->dump().c_str());
                 }
                 return true;
             }
@@ -2834,7 +2850,7 @@ namespace top
 
         bool    xchainacct_t::connect_index(base::xvbindex_t* this_block)
         {
-            xdbg("jimmy xchainacct_t::connect_index enter account=%s,index=%s", get_account().c_str(), this_block->dump().c_str());
+            //xdbg("jimmy xchainacct_t::connect_index enter account=%s,index=%s", get_account().c_str(), this_block->dump().c_str());
             if(NULL == this_block)
                 return false;
 

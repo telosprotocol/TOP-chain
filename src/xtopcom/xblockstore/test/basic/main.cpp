@@ -226,6 +226,6 @@ int main(int argc, const char * argv[]) {
     }
     
     printf("test over, quit now! \n");
-    sleep(60);
+    sleep(80);
     return 0;
 }
