@@ -63,10 +63,6 @@ bool xlightunit_build_t::build_block_body(const xlightunit_block_para_t & para) 
         input_actions.push_back(_action);
         xassert(_action.get_org_tx_action_id() > 0);
     }
-    for (auto & tx : para.get_contract_create_txs()) {
-        base::xvaction_t _action = make_action(tx);
-        input_actions.push_back(_action);
-    }
     set_input_entity(input_actions);
 
     // #2 set input resources
@@ -79,15 +75,9 @@ bool xlightunit_build_t::build_block_body(const xlightunit_block_para_t & para) 
             set_input_resource(origintx_hash, origintx_bin);
         }
     }
-    for (auto & tx : para.get_contract_create_txs()) {
-        std::string origintx_bin;
-        tx->get_transaction()->serialize_to_string(origintx_bin);
-        std::string origintx_hash = tx->get_transaction()->get_digest_str();
-        set_input_resource(origintx_hash, origintx_bin);
-    }
     uint32_t unconfirm_tx_num = para.get_account_unconfirm_sendtx_num();
     std::string unconfirm_tx_num_str = base::xstring_utl::tostring(unconfirm_tx_num);
-    set_input_resource(xlightunit_block_t::unconfirm_tx_num_name(), unconfirm_tx_num_str); // TODO(jimmy) put unconfirm tx flag into input resource
+    set_input_resource(xlightunit_block_t::unconfirm_tx_num_name(), unconfirm_tx_num_str); // TODO(jimmy) put unconfirm tx flag into out entity
 
     // #3 set output entitys with state bin and binlog bin
     set_output_entity(para.get_fullstate_bin(), para.get_property_binlog());

@@ -40,9 +40,7 @@ class xaccount_context_t {
     std::string const & get_address() const noexcept {return m_account->get_account();}
     xstore_face_t* get_store() const noexcept {return m_store;}
     bool    get_transaction_result(xtransaction_result_t& result);
-    void    update_succ_tx_info();
-    void    save_succ_result();
-    void    revert_to_last_succ_result();
+    bool    finish_exec_all_txs(const std::vector<xcons_transaction_ptr_t> & txs);
     size_t  get_op_records_size() const;
     const std::vector<xcons_transaction_ptr_t> & get_create_txs() const {return m_contract_txs;}
 
@@ -175,7 +173,8 @@ class xaccount_context_t {
     void    set_tx_info_latest_sendtx_num(uint64_t num);
     void    set_tx_info_latest_sendtx_hash(const std::string & hash);
     void    set_tx_info_recvtx_num(uint64_t num);
-    void    get_latest_sendtx_nonce_hash(uint64_t & nonce, uint256_t & hash);
+    void    get_latest_create_nonce_hash(uint64_t & nonce, uint256_t & hash);
+    void    set_latest_create_nonce_hash(uint64_t nonce, const uint256_t & hash);
     void    set_account_create_time();
 
  public:
@@ -187,8 +186,13 @@ class xaccount_context_t {
  private:
     xstore_face_t*      m_store;
     xaccount_ptr_t      m_account{nullptr};
+    uint64_t            m_latest_exec_sendtx_nonce{0};  // for exec tx
+    uint256_t           m_latest_exec_sendtx_hash;
+    uint64_t            m_latest_create_sendtx_nonce{0};  // for contract create tx
+    uint256_t           m_latest_create_sendtx_hash;
+
     xobject_ptr_t<base::xvcanvas_t>     m_canvas{nullptr};
-    xcons_transaction_ptr_t  m_currect_transaction;
+    xcons_transaction_ptr_t             m_currect_transaction{nullptr};
     std::vector<xcons_transaction_ptr_t> m_contract_txs;
 
     std::string         m_origin_state_bin;

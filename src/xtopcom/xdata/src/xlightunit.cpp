@@ -18,32 +18,8 @@ NS_BEG2(top, data)
 
 REG_CLS(xlightunit_block_t);
 
-
-std::string xtransaction_result_t::dump() const {
-    std::stringstream ss;
-    ss << "{";
-    if (!m_contract_txs.empty()) {
-        ss << ",ctxs:" << m_contract_txs.size();
-        for (auto & v : m_contract_txs) {
-            ss << ",tx:" << base::xhash32_t::digest(v->get_digest_hex_str());
-        }
-    }
-    ss << "}";
-    return ss.str();
-}
-
 xlightunit_block_para_t::~xlightunit_block_para_t() {
-    m_raw_txs.clear();
-    m_tx_result.m_contract_txs.clear();
-}
 
-void xlightunit_block_para_t::set_transaction_result(const xtransaction_result_t & result) {
-    m_tx_result = result;
-    // set_balance_change(result.m_balance_change);
-    // const xpledge_balance_change & pledge_change = result.m_pledge_balance_change;
-    // set_pledge_balance_change(pledge_change.tgas, pledge_change.disk, pledge_change.vote);
-    // set_unvote_num_change(result.m_unvote_num_change);
-    // set_contract_txs(result.m_contract_txs);
 }
 
 void xlightunit_block_para_t::set_one_input_tx(const xtransaction_ptr_t & tx) {
@@ -58,11 +34,6 @@ void xlightunit_block_para_t::set_one_input_tx(const xcons_transaction_ptr_t & i
 void xlightunit_block_para_t::set_input_txs(const std::vector<xcons_transaction_ptr_t> & input_txs) {
     xassert(m_raw_txs.empty());
     m_raw_txs = input_txs;
-}
-
-void xlightunit_block_para_t::set_contract_txs(const std::vector<xcons_transaction_ptr_t> & contract_txs) {
-    xassert(m_tx_result.m_contract_txs.empty());
-    m_tx_result.m_contract_txs = contract_txs;
 }
 
 xlightunit_block_t::xlightunit_block_t()

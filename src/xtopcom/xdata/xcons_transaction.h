@@ -41,6 +41,7 @@ class xcons_transaction_t : public xbase_dataunit_t<xcons_transaction_t, xdata_t
     const std::string &     get_source_addr()const {return m_tx->get_source_addr();}
     const std::string &     get_account_addr() const {return is_recv_tx()? m_tx->get_target_addr() : m_tx->get_source_addr();}
     const std::string &     get_target_addr()const {return m_tx->get_target_addr();}
+    uint64_t                get_tx_nonce()const {return m_tx->get_tx_nonce();}
     const std::string &     get_receipt_source_account()const;
     const std::string &     get_receipt_target_account()const;
     const xaction_t &       get_source_action()const {return m_tx->get_source_action();}
@@ -76,14 +77,13 @@ class xcons_transaction_t : public xbase_dataunit_t<xcons_transaction_t, xdata_t
     void                    set_current_recv_tx_use_send_tx_tgas(uint32_t tgas) {m_execute_state.set_recv_tx_use_send_tx_tgas(tgas);}
     uint32_t                get_current_recv_tx_use_send_tx_tgas() const {return m_execute_state.get_recv_tx_use_send_tx_tgas();}
     void                    set_current_exec_status(enum_xunit_tx_exec_status status) {m_execute_state.set_tx_exec_status(status);}
+    enum_xunit_tx_exec_status   get_current_exec_status() const {return m_execute_state.get_tx_exec_status();}
     uint32_t                get_current_receipt_id() const {return m_execute_state.get_receipt_id();}
     void                    set_current_receipt_id(base::xtable_shortid_t tableid, uint64_t value) {m_execute_state.set_receipt_id(tableid, value);}
 
     void                    set_unit_height(uint64_t unit_height) {m_unit_height = unit_height;}
     uint64_t                get_unit_height() const noexcept {return m_unit_height;}
 
-
-    // enum_xunit_tx_exec_status   get_current_exec_status() const {return m_execute_state.get_exec_status();}
     const base::xvqcert_t*  get_unit_cert() const {return m_receipt->get_unit_cert();}
     bool                    is_receipt_valid() const {return m_receipt->is_valid();}
 

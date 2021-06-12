@@ -16,14 +16,11 @@ NS_BEG2(top, data)
 
 class xtransaction_result_t {
  public:
-    const   std::vector<xcons_transaction_ptr_t> & get_contract_create_txs() const {return m_contract_txs;}
     const std::string &     get_property_binlog() const {return m_property_binlog;}
-
-    std::string dump() const;
-
  public:
-    std::vector<xcons_transaction_ptr_t> m_contract_txs{};
+    std::vector<xcons_transaction_ptr_t> m_contract_txs{};  // no use now
     std::string                         m_property_binlog;
+    std::string                         m_full_state;
 };
 
 class xlightunit_block_para_t {
@@ -32,30 +29,27 @@ class xlightunit_block_para_t {
     ~xlightunit_block_para_t();
 
  public:
-    void    set_transaction_result(const xtransaction_result_t & result);
     void    set_account_unconfirm_sendtx_num(uint32_t num) {m_account_unconfirm_sendtx_num = num;}
 
     void    set_one_input_tx(const xtransaction_ptr_t & tx);
     void    set_one_input_tx(const xcons_transaction_ptr_t & input_tx);
     void    set_input_txs(const std::vector<xcons_transaction_ptr_t> & input_txs);
 
-    void    set_contract_txs(const std::vector<xcons_transaction_ptr_t> & contract_txs);
     void    set_fullstate_bin(const std::string & fullstate) {m_fullstate_bin = fullstate;}
+    void    set_binlog(const std::string & binlog) {m_property_binlog = binlog;}
 
  public:
     const   std::vector<xcons_transaction_ptr_t> & get_input_txs() const {return m_raw_txs;}
-    const   std::vector<xcons_transaction_ptr_t> & get_contract_create_txs() const {return m_tx_result.m_contract_txs;}
     uint32_t get_account_unconfirm_sendtx_num() const {return m_account_unconfirm_sendtx_num;}
-    const std::string &     get_property_binlog() const {return m_tx_result.get_property_binlog();}
+    const std::string &     get_property_binlog() const {return m_property_binlog;}
     const std::string &     get_fullstate_bin() const {return m_fullstate_bin;}
 
  private:
     uint32_t                                m_account_unconfirm_sendtx_num{0};
     // input
     std::vector<xcons_transaction_ptr_t>    m_raw_txs;
-    // output
-    xtransaction_result_t                   m_tx_result;
     std::string                             m_fullstate_bin;
+    std::string                             m_property_binlog;
 };
 
 class xlightunit_body_t {
