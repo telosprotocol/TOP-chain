@@ -39,6 +39,15 @@ enum E_SIMPLE_METRICS_TAG {
     dataobject_xvboffdata_t,
     dataobject_xvbindex_t,
     dataobject_xtransaction_t,
+    dataobject_provcert,
+    dataobject_xvaccount,
+    dataobject_xvaction,
+    dataobject_xvheader,
+    dataobject_xvqcert,
+    dataobject_xvblock,
+    dataobject_xvinput,
+    dataobject_xvoutput,
+    dataobject_xventity,
     e_simple_total,
 };
 

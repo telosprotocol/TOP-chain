@@ -51,10 +51,10 @@ base::xvblock_t*   xblocktool_t::create_genesis_lightunit(const std::string & ac
         auto balance = propobj->deposit(base::vtoken_t(top_balance), canvas.get());
         xassert(balance == top_balance);
     }
-    
+
     std::string property_binlog;
     canvas->encode(property_binlog);
-    result.m_property_binlog = property_binlog;
+
     // TODO(jimmy) block builder class
     xinfo("xlightunit_builder_t::build_block account=%s,height=0,binlog_size=%zu",
         account.c_str(), property_binlog.size());
@@ -62,7 +62,7 @@ base::xvblock_t*   xblocktool_t::create_genesis_lightunit(const std::string & ac
     xcons_transaction_ptr_t cons_tx = make_object_ptr<xcons_transaction_t>(tx.get());
     xlightunit_block_para_t bodypara;
     bodypara.set_one_input_tx(cons_tx);
-    bodypara.set_transaction_result(result);
+    bodypara.set_binlog(property_binlog);
     xlightunit_build_t bbuild(account, bodypara);
     base::xauto_ptr<base::xvblock_t> _new_block = bbuild.build_new_block();
     _new_block->add_ref();
@@ -75,7 +75,7 @@ base::xvblock_t * xblocktool_t::create_genesis_lightunit(const std::string & acc
     xcons_transaction_ptr_t cons_tx = make_object_ptr<xcons_transaction_t>(genesis_tx.get());
     xlightunit_block_para_t bodypara;
     bodypara.set_one_input_tx(cons_tx);
-    bodypara.set_transaction_result(result);
+    bodypara.set_binlog(result.get_property_binlog());
     xlightunit_build_t bbuild(account, bodypara);
     base::xauto_ptr<base::xvblock_t> _new_block = bbuild.build_new_block();
     _new_block->add_ref();

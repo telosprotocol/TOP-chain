@@ -18,18 +18,24 @@ using store::xtransaction_result_t;
 using data::xcons_transaction_ptr_t;
 
 struct xbatch_txs_result_t {
-    xtransaction_result_t                   succ_txs_result;
     std::vector<xcons_transaction_ptr_t>    m_exec_succ_txs;
     std::vector<xcons_transaction_ptr_t>    m_exec_fail_txs;
+    uint32_t                                m_unconfirm_tx_num{0};
+    std::string                             m_property_binlog;
+    std::string                             m_full_state;
 };
 
 class xtransaction_executor {
  public:
-    static int32_t exec_batch_txs(xaccount_context_t * account_context, const std::vector<xcons_transaction_ptr_t> & txs,
-        xbatch_txs_result_t & txs_result);
+    static int32_t exec_batch_txs(base::xvblock_t* proposal_block,
+                                    const xobject_ptr_t<base::xvbstate_t> & prev_bstate,
+                                    const data::xblock_consensus_para_t & cs_para,
+                                    const std::vector<xcons_transaction_ptr_t> & txs,
+                                    store::xstore_face_t* store,
+                                    xbatch_txs_result_t & txs_result);
 
  private:
-    static int32_t exec_tx(xaccount_context_t * account_context, const xcons_transaction_ptr_t & tx);
+    static int32_t exec_tx(xaccount_context_t * account_context, const xcons_transaction_ptr_t & tx, std::vector<xcons_transaction_ptr_t> & contract_create_txs);
     static int32_t exec_one_tx(xaccount_context_t * account_context, const xcons_transaction_ptr_t & tx);
 };
 

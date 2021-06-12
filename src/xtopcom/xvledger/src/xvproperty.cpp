@@ -63,6 +63,7 @@ namespace top
 
         xvproperty_t::~xvproperty_t()
         {
+            xdbg("xvproperty_t::~xvproperty_t this=%p",this);
             if(m_value_ptr != nullptr) {
                 m_value_ptr->release_ref();
             }

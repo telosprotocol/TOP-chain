@@ -19,7 +19,7 @@ metrics_variant_ptr e_metrics::s_metrics[e_simple_total] = {
     DECL_METRICS(dataobject_cur_xbase_type_cons_transaction),  //txpool_cons_transaction
     DECL_METRICS(cons_tableblock_start_leader), //cons_tableblock_start_leader
     DECL_METRICS(vhost_recv_msg), // vhost_recv_msg,
-    DECL_METRICS(vhost_recv_callback), // vhost_recv_callback, 
+    DECL_METRICS(vhost_recv_callback), // vhost_recv_callback,
     DECL_METRICS(dataobject_tx_receipt_t), // tx_receipt
     DECL_METRICS(dataobject_unit_state), // unit_state
     DECL_METRICS(dataobject_xvtxindex), // xvtxindex
@@ -34,6 +34,15 @@ metrics_variant_ptr e_metrics::s_metrics[e_simple_total] = {
     DECL_METRICS(dataobject_xvboffdata_t), // dataobject_xvboffdata_t
     DECL_METRICS(dataobject_xvbindex_t), // dataobject_xvbindex_t
     DECL_METRICS(dataobject_xtransaction_t), // dataobject_xtransaction_t
+    DECL_METRICS(dataobject_provcert),
+    DECL_METRICS(dataobject_xvaccount),
+    DECL_METRICS(dataobject_xvaction),
+    DECL_METRICS(dataobject_xvheader),
+    DECL_METRICS(dataobject_xvqcert),
+    DECL_METRICS(dataobject_xvblock),
+    DECL_METRICS(dataobject_xvinput),
+    DECL_METRICS(dataobject_xvoutput),
+    DECL_METRICS(dataobject_xventity),
 };
 
 void e_metrics::start() {
