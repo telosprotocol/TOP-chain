@@ -55,7 +55,8 @@ int32_t xtransaction_executor::exec_tx(xaccount_context_t * account_context, con
         return ret;
     }
 
-    auto & create_txs = account_context->get_create_txs();
+    // copy create txs from account context
+    std::vector<xcons_transaction_ptr_t> create_txs = account_context->get_create_txs();
     // exec txs created by origin tx secondly, this tx must be a run contract transaction
     if (!create_txs.empty()) {
         for (auto & new_tx : create_txs) {
@@ -68,7 +69,7 @@ int32_t xtransaction_executor::exec_tx(xaccount_context_t * account_context, con
                 return ret;
             }
 
-            contract_create_txs.push_back(new_tx);
+            contract_create_txs.push_back(new_tx);  // return create tx for unit pack
         }
     }
 
@@ -109,21 +110,21 @@ int32_t xtransaction_executor::exec_batch_txs(base::xvblock_t* proposal_block,
         // try to execute all txs
         bool all_txs_succ = true;
         for (auto iter = exec_txs.begin(); iter != exec_txs.end(); iter++) {
-            auto cur_tx = *iter;
+            auto cur_tx = *iter;  // copy cur tx
             // execute input tx,
             int32_t action_ret = xtransaction_executor::exec_tx(_account_context.get(), cur_tx, contract_create_txs);
             if (action_ret) {
                 error_code = action_ret;
                 all_txs_succ = false;
-                iter = exec_txs.erase(iter);
+                auto next_iter = exec_txs.erase(iter);  // erase fail iter and get next iter
 
-                if (cur_tx->is_send_tx() || cur_tx->is_self_tx()) {  // erase other send tx for nonce unmatching
+                if (cur_tx->is_send_tx() || cur_tx->is_self_tx()) {  // erase next other send txs for nonce unmatching
                     failure_send_txs.push_back(cur_tx);
-                    for (;iter != exec_txs.end();) {
-                        auto other_tx = *iter;
-                        if ( (other_tx->is_send_tx() || other_tx->is_self_tx()) && (other_tx->get_tx_nonce() >= cur_tx->get_tx_nonce()) ) {
-                            failure_send_txs.push_back(other_tx);
-                            iter = exec_txs.erase(iter);
+                    for (;next_iter != exec_txs.end();) {
+                        auto next_tx = *next_iter;  // copy next tx
+                        if ( (next_tx->is_send_tx() || next_tx->is_self_tx()) && (next_tx->get_tx_nonce() >= cur_tx->get_tx_nonce()) ) {
+                            failure_send_txs.push_back(next_tx);
+                            next_iter = exec_txs.erase(next_iter);  // get next next tx to compare
                             xdbg("xtransaction_executor::exec_batch_txs drop other sendtxs");
                         } else {
                             break;  // break when no other send txs
