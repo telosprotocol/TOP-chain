@@ -9,6 +9,7 @@
 #include "../xvstate.h"
 #include "../xvboffdata.h"
 #include "../xvblock.h"
+#include "xmetrics/xmetrics.h"
 
 #ifdef DEBUG
     #define __DEBUG_BLOCK_CONTENT__
@@ -22,6 +23,7 @@ namespace top
         xvheader_t::xvheader_t()  //just use when seralized from db/store
             :xobject_t(enum_xobject_type_vheader)
         {
+            XMETRICS_GAUGE(metrics::dataobject_xvheader, 1);
             m_types     = 0;
             m_versions  = 1 << 8;//[8:features][8:major][8:minor][8:patch]
             m_chainid   = 0;
@@ -33,6 +35,7 @@ namespace top
         xvheader_t::xvheader_t(const std::string & intput_hash,const std::string & output_hash)
             :xobject_t(enum_xobject_type_vheader)
         {
+            XMETRICS_GAUGE(metrics::dataobject_xvheader, 1);
             m_types     = 0;
             m_versions  = 1 << 8;//[8:features][8:major][8:minor][8:patch]
             m_chainid   = 0;
@@ -46,6 +49,7 @@ namespace top
         
         xvheader_t::~xvheader_t()
         {
+            XMETRICS_GAUGE(metrics::dataobject_xvheader, -1);
         }
         
         xvheader_t::xvheader_t(const xvheader_t & other)
@@ -271,6 +275,7 @@ namespace top
         xvqcert_t::xvqcert_t()
         : xdataunit_t((enum_xdata_type)enum_xobject_type_vqccert)
         {
+            XMETRICS_GAUGE(metrics::dataobject_xvqcert, 1);
             m_viewid    = 0;
             m_view_token= 0;
             m_clock     = 0;
@@ -295,6 +300,7 @@ namespace top
         xvqcert_t::xvqcert_t(const std::string header_hash,enum_xdata_type type)
         : xdataunit_t(type)
         {
+            XMETRICS_GAUGE(metrics::dataobject_xvqcert, 1);
             m_viewid    = 0;
             m_view_token= 0;
             m_clock     = 0;
@@ -321,6 +327,7 @@ namespace top
         xvqcert_t::xvqcert_t(const xvqcert_t & other,enum_xdata_type type)
         : xdataunit_t(type)
         {
+            XMETRICS_GAUGE(metrics::dataobject_xvqcert, 1);
             m_viewid    = 0;
             m_view_token= 0;
             m_clock     = 0;
@@ -345,6 +352,7 @@ namespace top
         }
         xvqcert_t::~xvqcert_t()
         {
+            XMETRICS_GAUGE(metrics::dataobject_xvqcert, -1);
         }
         
         xvqcert_t & xvqcert_t::operator = (const xvqcert_t & other)
@@ -1110,25 +1118,30 @@ namespace top
         xvinput_t::xvinput_t(enum_xobject_type type)
             :xvexemodule_t(type)
         {
+            XMETRICS_GAUGE(metrics::dataobject_xvinput, 1);
         }
         
         xvinput_t::xvinput_t(const std::vector<xventity_t*> & entitys,const std::string & raw_resource_data,enum_xobject_type type)
             :xvexemodule_t(entitys,raw_resource_data,type)
         {
+            XMETRICS_GAUGE(metrics::dataobject_xvinput, 1);
         }
     
         xvinput_t::xvinput_t(std::vector<xventity_t*> && entitys,xstrmap_t & resource_obj,enum_xobject_type type)
             :xvexemodule_t(entitys,resource_obj,type)
         {
+            XMETRICS_GAUGE(metrics::dataobject_xvinput, 1);
         }
     
         xvinput_t::xvinput_t(const std::vector<xventity_t*> & entitys,xstrmap_t & resource_obj, enum_xobject_type type)
             :xvexemodule_t(entitys,resource_obj,type)
         {
+            XMETRICS_GAUGE(metrics::dataobject_xvinput, 1);
         }
     
         xvinput_t::~xvinput_t()
         {
+            XMETRICS_GAUGE(metrics::dataobject_xvinput, -1);
         }
     
         void*   xvinput_t::query_interface(const int32_t _enum_xobject_type_)//caller need to cast (void*) to related ptr
@@ -1152,25 +1165,30 @@ namespace top
         xvoutput_t::xvoutput_t(enum_xobject_type type)
             :xvexemodule_t(type)
         {
+            XMETRICS_GAUGE(metrics::dataobject_xvoutput, 1);
         }
     
         xvoutput_t::xvoutput_t(std::vector<xventity_t*> && entitys,enum_xobject_type type)
             :xvexemodule_t(entitys, std::string(),type)
         {
+            XMETRICS_GAUGE(metrics::dataobject_xvoutput, 1);
         }
        
         xvoutput_t::xvoutput_t(const std::vector<xventity_t*> & entitys,const std::string & raw_resource_data, enum_xobject_type type)
             :xvexemodule_t(entitys, raw_resource_data,type)
         {
+            XMETRICS_GAUGE(metrics::dataobject_xvoutput, 1);
         }
     
         xvoutput_t::xvoutput_t(const std::vector<xventity_t*> & entitys,xstrmap_t & resource_obj, enum_xobject_type type)//xvqcert_t used for genreate hash for resource
             :xvexemodule_t(entitys,resource_obj,type)
         {
+            XMETRICS_GAUGE(metrics::dataobject_xvoutput, 1);
         }
     
         xvoutput_t::~xvoutput_t()
         {
+            XMETRICS_GAUGE(metrics::dataobject_xvoutput, -1);
         }
         
         void*   xvoutput_t::query_interface(const int32_t _enum_xobject_type_)//caller need to cast (void*) to related ptr
@@ -1260,6 +1278,7 @@ namespace top
         xvblock_t::xvblock_t()
         : xdataobj_t((enum_xdata_type)enum_xobject_type_vblock)
         {
+            XMETRICS_GAUGE(metrics::dataobject_xvblock, 1);
             m_next_next_viewid = 0;
             m_next_next_qcert  = NULL;
             m_prev_block   = NULL;
@@ -1277,6 +1296,7 @@ namespace top
         xvblock_t::xvblock_t(enum_xdata_type type)
         : xdataobj_t(type)
         {
+            XMETRICS_GAUGE(metrics::dataobject_xvblock, 1);
             m_next_next_viewid = 0;
             m_next_next_qcert  = NULL;
             m_prev_block   = NULL;
@@ -1432,6 +1452,7 @@ namespace top
         xvblock_t::xvblock_t(xvheader_t & _vheader,xvqcert_t & _vcert,xvinput_t * _vinput,xvoutput_t * _voutput,enum_xdata_type type)
         : xdataobj_t(type)
         {
+            XMETRICS_GAUGE(metrics::dataobject_xvblock, 1);
             m_next_next_viewid = 0;
             m_next_next_qcert  = NULL;
             m_prev_block   = NULL;
@@ -1488,6 +1509,7 @@ namespace top
         xvblock_t::xvblock_t(const xvblock_t & other,enum_xdata_type type)
         : xdataobj_t(type)
         {
+            XMETRICS_GAUGE(metrics::dataobject_xvblock, 1);
             m_parent_account_id = 0;
             m_parent_viewid     = 0;
             m_entityid_at_parent= 0;
@@ -1563,6 +1585,7 @@ namespace top
         
         xvblock_t::~xvblock_t()
         {
+            XMETRICS_GAUGE(metrics::dataobject_xvblock, -1);
             if(m_vheader_ptr != NULL){
                 m_vheader_ptr->close();
                 m_vheader_ptr->release_ref();

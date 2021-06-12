@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2017-2018 Telos Foundation & contributors
+// Copyright (c) 2017-2018 Telos Foundation & contributors
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -28,7 +28,7 @@ namespace top
 
         class xprove_cert_t : public xbase_dataunit_t<xprove_cert_t, xdata_type_prove_cert> {
         public:
-            xprove_cert_t() = default;
+            xprove_cert_t();
             xprove_cert_t(base::xvqcert_t* prove_cert, xprove_cert_class_t _class, xprove_cert_type_t _type, const base::xmerkle_path_256_t & _path);
             xprove_cert_t(base::xvqcert_t* prove_cert, xprove_cert_class_t _class, xprove_cert_type_t _type, const std::string & _path);
         protected:

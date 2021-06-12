@@ -4,6 +4,7 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "../xvaccount.h"
+#include "xmetrics/xmetrics.h"
 
 namespace top
 {
@@ -11,11 +12,13 @@ namespace top
     {
         xvaccount_t::xvaccount_t()
         {
+            XMETRICS_GAUGE(metrics::dataobject_xvaccount, 1);
             m_account_xid = 0;
         }
     
         xvaccount_t::xvaccount_t(const std::string & account_address)
         {
+            XMETRICS_GAUGE(metrics::dataobject_xvaccount, 1);
             m_account_addr  = account_address;
             m_account_xid   = get_xid_from_account(account_address);
             m_account_xid_str = xstring_utl::uint642hex(m_account_xid);
@@ -23,6 +26,7 @@ namespace top
         
         xvaccount_t::xvaccount_t(const xvaccount_t & obj)
         {
+            XMETRICS_GAUGE(metrics::dataobject_xvaccount, 1);
             m_account_addr = obj.m_account_addr;
             m_account_xid  = obj.m_account_xid;
             m_account_xid_str = obj.m_account_xid_str;
@@ -46,6 +50,7 @@ namespace top
     
         xvaccount_t::~xvaccount_t()
         {
+            XMETRICS_GAUGE(metrics::dataobject_xvaccount, -1);
         }
     
     };//end of namespace of base

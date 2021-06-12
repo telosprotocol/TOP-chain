@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2017-2018 Telos Foundation & contributors
+// Copyright (c) 2017-2018 Telos Foundation & contributors
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -7,13 +7,17 @@
 #include "xvledger/xvblock.h"
 #include "xvledger/xprovecert.h"
 #include "xutility/xhash.h"
+#include "xmetrics/xmetrics.h"
 
 namespace top
 {
     namespace base
     {
-
+        xprove_cert_t::xprove_cert_t() {
+            XMETRICS_GAUGE(metrics::dataobject_provcert, 1);
+        }
         xprove_cert_t::xprove_cert_t(base::xvqcert_t* prove_cert, xprove_cert_class_t _class, xprove_cert_type_t _type, const base::xmerkle_path_256_t & _path) {
+            XMETRICS_GAUGE(metrics::dataobject_provcert, 1);
             m_prove_cert = prove_cert;
             m_prove_cert->add_ref();
             set_prove_class(_class);
@@ -22,6 +26,7 @@ namespace top
         }
 
         xprove_cert_t::xprove_cert_t(base::xvqcert_t* prove_cert, xprove_cert_class_t _class, xprove_cert_type_t _type, const std::string & _path) {
+            XMETRICS_GAUGE(metrics::dataobject_provcert, 1);
             m_prove_cert = prove_cert;
             m_prove_cert->add_ref();
             set_prove_class(_class);
@@ -30,6 +35,7 @@ namespace top
         }
 
         xprove_cert_t::~xprove_cert_t() {
+            XMETRICS_GAUGE(metrics::dataobject_provcert, -1);
             if (m_prove_cert != nullptr) {
                 m_prove_cert->release_ref();
             }
