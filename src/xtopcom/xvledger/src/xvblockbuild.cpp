@@ -346,6 +346,12 @@ namespace top
             if (m_output_resource != nullptr) {
                 m_output_resource->release_ref();
             }
+            if (m_primary_input_entity != nullptr) {
+                m_primary_input_entity->release_ref();
+            }
+            if (m_primary_output_entity != nullptr) {
+                m_primary_output_entity->release_ref();
+            }
         }
 
         bool xvblockmaker_t::set_input_entity(const std::vector<xvaction_t> & actions) {
