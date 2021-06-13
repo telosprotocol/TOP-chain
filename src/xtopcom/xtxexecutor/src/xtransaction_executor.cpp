@@ -24,7 +24,6 @@ int32_t xtransaction_executor::exec_one_tx(xaccount_context_t * account_context,
     xtransaction_context_t tx_context(account_context, tx);
     int32_t action_ret = tx_context.exec();
     if (action_ret) {
-        tx->set_current_exec_status(enum_xunit_tx_exec_status_fail);
         xwarn("xtransaction_executor::exec_one_tx fail-tx exec abnormal, tx=%s,error:%s",
             tx->dump(true).c_str(), chainbase::xmodule_error_to_str(action_ret).c_str());
         return action_ret;
@@ -33,15 +32,12 @@ int32_t xtransaction_executor::exec_one_tx(xaccount_context_t * account_context,
     size_t after_op_records_size = account_context->get_op_records_size();
     if (tx->is_self_tx() || tx->is_send_tx()) {
         if (after_op_records_size == before_op_records_size) {
-            tx->set_current_exec_status(enum_xunit_tx_exec_status_fail);
-            xassert(data::is_sys_contract_address(common::xaccount_address_t{tx->get_source_addr()}));
             xinfo("xtransaction_executor::exec_one_tx fail-tx exec no property change, tx=%s",
                 tx->dump(true).c_str());
             return xunit_contract_exec_no_property_change;
         }
     }
 
-    tx->set_current_exec_status(enum_xunit_tx_exec_status_success);
     xkinfo("xtransaction_executor::exec_one_tx succ, tx=%s,tx_state=%s",
         tx->dump(true).c_str(), tx->dump_execute_state().c_str());
     return xsuccess;
@@ -55,20 +51,21 @@ int32_t xtransaction_executor::exec_tx(xaccount_context_t * account_context, con
         return ret;
     }
 
-    auto & create_txs = account_context->get_create_txs();
+    // copy create txs from account context
+    std::vector<xcons_transaction_ptr_t> create_txs = account_context->get_create_txs();
     // exec txs created by origin tx secondly, this tx must be a run contract transaction
     if (!create_txs.empty()) {
         for (auto & new_tx : create_txs) {
             xinfo("xtransaction_executor::exec_tx contract create tx. account_txnonce=%ld,input_tx:%s new_tx:%s",
                 account_context->get_blockchain()->get_latest_send_trans_number(), tx->dump(true).c_str(), new_tx->dump(true).c_str());
             ret = exec_one_tx(account_context, new_tx);
-            if (ret != xsuccess && ret != xunit_contract_exec_no_property_change) {  // TODO(jimmy)
+            if (ret != xsuccess && ret != xunit_contract_exec_no_property_change) {  // contract create tx send action may not change property, it's ok
                 xwarn("xtransaction_executor::exec_tx contract create tx fail. %s error:%s",
                     new_tx->dump().c_str(), chainbase::xmodule_error_to_str(ret).c_str());
                 return ret;
             }
 
-            contract_create_txs.push_back(new_tx);
+            contract_create_txs.push_back(new_tx);  // return create tx for unit pack
         }
     }
 
@@ -109,21 +106,21 @@ int32_t xtransaction_executor::exec_batch_txs(base::xvblock_t* proposal_block,
         // try to execute all txs
         bool all_txs_succ = true;
         for (auto iter = exec_txs.begin(); iter != exec_txs.end(); iter++) {
-            auto cur_tx = *iter;
+            auto cur_tx = *iter;  // copy cur tx
             // execute input tx,
             int32_t action_ret = xtransaction_executor::exec_tx(_account_context.get(), cur_tx, contract_create_txs);
             if (action_ret) {
                 error_code = action_ret;
                 all_txs_succ = false;
-                iter = exec_txs.erase(iter);
+                auto next_iter = exec_txs.erase(iter);  // erase fail iter and get next iter
 
-                if (cur_tx->is_send_tx() || cur_tx->is_self_tx()) {  // erase other send tx for nonce unmatching
+                if (cur_tx->is_send_tx() || cur_tx->is_self_tx()) {  // erase next other send txs for nonce unmatching
                     failure_send_txs.push_back(cur_tx);
-                    for (;iter != exec_txs.end();) {
-                        auto other_tx = *iter;
-                        if ( (other_tx->is_send_tx() || other_tx->is_self_tx()) && (other_tx->get_tx_nonce() >= cur_tx->get_tx_nonce()) ) {
-                            failure_send_txs.push_back(other_tx);
-                            iter = exec_txs.erase(iter);
+                    for (;next_iter != exec_txs.end();) {
+                        auto next_tx = *next_iter;  // copy next tx
+                        if ( (next_tx->is_send_tx() || next_tx->is_self_tx()) && (next_tx->get_tx_nonce() >= cur_tx->get_tx_nonce()) ) {
+                            failure_send_txs.push_back(next_tx);
+                            next_iter = exec_txs.erase(next_iter);  // get next next tx to compare
                             xdbg("xtransaction_executor::exec_batch_txs drop other sendtxs");
                         } else {
                             break;  // break when no other send txs
@@ -150,19 +147,19 @@ int32_t xtransaction_executor::exec_batch_txs(base::xvblock_t* proposal_block,
 
     txs_result.m_exec_fail_txs = failure_send_txs;  // failure send txs need delete from txpool
 
-    // merge all pack txs
+    // merge all pack txs and set exec status
     std::vector<xcons_transaction_ptr_t> all_pack_txs;
     for (auto & tx : exec_txs) {
-        xassert(tx->get_current_exec_status() == enum_xunit_tx_exec_status_success);
+        tx->set_current_exec_status(enum_xunit_tx_exec_status_success);
         all_pack_txs.push_back(tx);
     }
     for (auto & tx : contract_create_txs) {
-        xassert(tx->get_current_exec_status() == enum_xunit_tx_exec_status_success);
+        tx->set_current_exec_status(enum_xunit_tx_exec_status_success);
         all_pack_txs.push_back(tx);
     }
     for (auto & tx : failure_receipt_txs) {
-        xassert(tx->get_current_exec_status() == enum_xunit_tx_exec_status_fail);
-        xassert(tx->is_recv_tx());
+        tx->set_current_exec_status(enum_xunit_tx_exec_status_fail);
+        xassert(tx->is_recv_tx());  // confirm tx should not fail
         all_pack_txs.push_back(tx);
     }
 
