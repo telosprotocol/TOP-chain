@@ -496,6 +496,7 @@ namespace top
             virtual bool                set_root_hash(const std::string & root_hash){ m_root_hash = root_hash;return true;}
 
             base::xvinentity_t*         get_primary_entity() const;
+            size_t                      get_action_count() const;
 
         protected: //proposal ==> input ==> output
             //just carry by object at memory,not included by serialized
@@ -537,7 +538,7 @@ namespace top
             const std::string           get_binlog();
             const std::string           get_binlog_hash();
             const std::string           get_state_hash();
-            
+
             base::xvoutentity_t*        get_primary_entity() const;
 
         public:
@@ -587,6 +588,7 @@ namespace top
         class xvblock_t : public xdataobj_t
         {
             friend class xvbbuild_t;
+            friend class xvblockbuild_t;
             friend class xvblockstore_t;
         public:
             static  const std::string  name(){return "xvblock";}
@@ -688,6 +690,7 @@ namespace top
             virtual bool                close(bool force_async = true) override; //close and release this node only
             virtual std::string         dump() const override;  //just for debug purpose
             const   std::string&        dump2();  //just for debug and trace purpose with better performance
+            std::string                 detail_dump() const;  //just for debug purpose
         public:
             xvinput_t *                 get_input()  const;//raw ptr of xvinput_t
             xvoutput_t*                 get_output() const;//raw ptr of xvoutput_t

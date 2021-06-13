@@ -1160,6 +1160,17 @@ namespace top
             }
             return (base::xvinentity_t*)get_entitys()[0];
         }
+        
+        size_t xvinput_t::get_action_count() const {
+            size_t total_count = 0;
+            auto & entitys = get_entitys();
+            for (auto & entity : entitys) {
+                xvinentity_t* inentity = dynamic_cast<xvinentity_t*>(entity);  // it must be inentity
+                xassert(inentity != nullptr);
+                total_count += inentity->get_actions().size();
+            }
+            return total_count;
+        }
 
         //---------------------------------xvoutput_t---------------------------------//
         xvoutput_t::xvoutput_t(enum_xobject_type type)
@@ -1648,6 +1659,31 @@ namespace top
             
             m_dump_info = dump();
             return m_dump_info;
+        }
+        
+        std::string xvblock_t::detail_dump() const //just for debug purpose
+        {
+#ifdef DEBUG  // only for debug
+            std::string input_bin;
+            std::string output_bin;
+            std::string header_bin;
+            get_input()->serialize_to_string(input_bin);
+            get_output()->serialize_to_string(output_bin);
+            get_header()->serialize_to_string(header_bin);
+            uint64_t header_64 = base::xhash64_t::digest(header_bin);
+            uint64_t input_64 = base::xhash64_t::digest(input_bin);
+            uint64_t output_64 = base::xhash64_t::digest(output_bin);
+            uint64_t input_root_64 = base::xhash64_t::digest(get_input_root_hash());
+            uint64_t output_root_64 = base::xhash64_t::digest(get_output_root_hash());
+            uint64_t sign_hash_64 = base::xhash64_t::digest(get_cert()->get_hash_to_sign());
+            uint64_t justify_hash_64 = base::xhash64_t::digest(get_cert()->get_justify_cert_hash());
+            char local_param_buf[512];
+            xprintf(local_param_buf,sizeof(local_param_buf),"{header=%ld,input=%ld,output=%ld,inroot=%ld,outroot=%ld,sign=%ld,justify=%ld",
+                    header_64,input_64,output_64,input_root_64,output_root_64,sign_hash_64,justify_hash_64);
+            return std::string(local_param_buf);
+#else
+            return {};
+#endif
         }
         
         bool  xvblock_t::close(bool force_async)  //close and release this node only

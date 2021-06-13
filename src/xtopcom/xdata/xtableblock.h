@@ -51,12 +51,6 @@ class xtable_block_para_t {
 class xtable_block_t : public xblock_t {
  protected:
     enum { object_type_value = enum_xdata_type::enum_xdata_type_max - xdata_type_table_block };
-    static xblock_ptr_t create_whole_unit(const std::string & header,
-                                                const std::string & input,
-                                                const std::string & input_res,
-                                                const std::string & output,
-                                                const std::string & output_res,
-                                                const base::xbbuild_para_t & build_para);
  public:
     xtable_block_t();
     xtable_block_t(base::xvheader_t & header, base::xvqcert_t & cert, base::xvinput_t* input, base::xvoutput_t* output);
@@ -75,7 +69,6 @@ class xtable_block_t : public xblock_t {
 
  public:  // tableblock api
     std::string     tableblock_dump() const;
-    void            cache_units_set_parent_cert(std::vector<xblock_ptr_t> & units, base::xvqcert_t* parent_cert) const;  // should set unit parent cert when table-block consensused
     void            create_txreceipts(std::vector<xcons_transaction_ptr_t> & sendtx_receipts, std::vector<xcons_transaction_ptr_t> & recvtx_receipts);
 
  public:  // implement block common api
@@ -84,8 +77,6 @@ class xtable_block_t : public xblock_t {
     const std::vector<xblock_ptr_t> & get_tableblock_units(bool need_parent_cert = false) const override;
     virtual bool    extract_sub_blocks(std::vector<xobject_ptr_t<base::xvblock_t>> & sub_blocks) override;
 
- private:
-    xblock_ptr_t    recreate_unit_from_unit_input_output_resource(uint32_t index) const;
  private:
     mutable std::once_flag              m_once_unpack_flag;
     mutable std::once_flag              m_once_set_parent_cert_flag;
