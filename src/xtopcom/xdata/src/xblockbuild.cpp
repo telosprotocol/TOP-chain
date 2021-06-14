@@ -30,9 +30,8 @@ xlightunit_build_t::xlightunit_build_t(base::xvblock_t* prev_block, const xlight
     build_block_body(bodypara);
 }
 xlightunit_build_t::xlightunit_build_t(base::xvheader_t* header, base::xvinput_t* input, base::xvoutput_t* output)
-: base::xvblockmaker_t(header) {
-    make_input(input);
-    make_output(output);
+: base::xvblockmaker_t(header, input, output) {
+
 }
 
 base::xvaction_t xlightunit_build_t::make_action(const xcons_transaction_ptr_t & tx) {
@@ -145,9 +144,8 @@ xfullunit_build_t::xfullunit_build_t(base::xvblock_t* prev_block, const xfulluni
     build_block_body(bodypara);
 }
 xfullunit_build_t::xfullunit_build_t(base::xvheader_t* header, base::xvinput_t* input, base::xvoutput_t* output)
-: base::xvblockmaker_t(header) {
-    make_input(input);
-    make_output(output);
+: base::xvblockmaker_t(header, input, output) {
+
 }
 
 bool xfullunit_build_t::build_block_body(const xfullunit_block_para_t & para) {
@@ -181,47 +179,84 @@ xlighttable_build_t::xlighttable_build_t(base::xvblock_t* prev_block, const xtab
     build_block_body(bodypara);
 }
 
-base::xvaction_t xlighttable_build_t::make_action(const std::vector<xobject_ptr_t<base::xvblock_t>> & batch_units) {
-    std::string caller_addr;  // TODO(jimmy)
-    std::string target_uri;  // TODO(jimmy)
-    std::string method_uri = "v1";  // TODO(jimmy)
-
-    std::map<std::string, std::string> values;
-    uint32_t unit_count = (uint32_t)batch_units.size();
-    uint32_t tx_count = 0; // TODO(jimmy)
-    for (auto & unit : batch_units) {
-        if (unit->get_block_class() == base::enum_xvblock_class_light) {
-            tx_count += (uint32_t)unit->get_input()->get_primary_entity()->get_actions().size();
-        }
-    }
-
-    xlighttable_action_t _lighttable_action({}, caller_addr, target_uri, method_uri);
-    base::xvalue_t _action_result = xlighttable_action_t::create_result(unit_count, tx_count);
-    _lighttable_action.copy_result(_action_result);
-    return _lighttable_action;
-}
-
 bool xlighttable_build_t::build_block_body(const xtable_block_para_t & para) {
     std::vector<xobject_ptr_t<base::xvblock_t>> batch_units;
     for (auto & v : para.get_account_units()) {
         batch_units.push_back(v);
     }
-    // #1 set input entitys with actions
-    base::xvaction_t _vaction = xlighttable_build_t::make_action(batch_units);
+    // #1 set input entitys with actions,lighttable has no actions
     std::vector<base::xvaction_t> _vactions;
-    _vactions.push_back(_vaction);
     set_input_entity(_vactions);
 
     // #2 set input resources
     set_batch_units(batch_units);
 
     // #3 set output entitys with state bin and binlog bin
-    std::string full_state_bin = "111";  // TODO(jimmy)
+    std::string full_state_bin;  // TODO(jimmy) lighttable has no fullstate hash
     std::string binlog_bin = para.get_property_binlog();
     set_output_entity(full_state_bin, binlog_bin);
     // #4 set output resources
     set_output_resource_binlog(binlog_bin);
     return true;
+}
+
+// TODO(jimmy) move to xvblockbuild
+std::vector<xobject_ptr_t<base::xvblock_t>> xlighttable_build_t::unpack_units_from_table(const base::xvblock_t* _tableblock) {
+    std::vector<xobject_ptr_t<base::xvblock_t>> _batch_units;
+
+    const std::vector<base::xventity_t*> & _table_inentitys = _tableblock->get_input()->get_entitys();
+    const std::vector<base::xventity_t*> & _table_outentitys = _tableblock->get_output()->get_entitys();
+    xassert(_table_inentitys.size() > 1);
+    xassert(_table_inentitys.size() == _table_outentitys.size());
+    uint32_t entitys_count = _table_inentitys.size();
+    for (uint32_t index = 1; index < entitys_count; index++) {  // unit entity from index#1
+        base::xvinentity_t* _table_unit_inentity = dynamic_cast<base::xvinentity_t*>(_table_inentitys[index]);
+        xassert(_table_unit_inentity != nullptr);
+        base::xvoutentity_t* _table_unit_outentity = dynamic_cast<base::xvoutentity_t*>(_table_outentitys[index]);
+        xassert(_table_unit_outentity != nullptr);
+
+        base::xtable_inentity_extend_t extend;
+        extend.serialize_from_string(_table_unit_inentity->get_extend_data());
+
+        base::xtable_unit_resource_ptr_t _unit_res = base::xvtableblock_maker_t::query_unit_resource(_tableblock, index);
+        xassert(_unit_res != nullptr);
+        const xobject_ptr_t<base::xvheader_t> & _unit_header = extend.get_unit_header();
+
+        std::shared_ptr<base::xvblockmaker_t> vbmaker = nullptr;
+        if (_unit_header->get_block_class() == base::enum_xvblock_class_nil) {
+            vbmaker = std::make_shared<xemptyblock_build_t>(_unit_header.get());
+        } else {
+            // unit input entity can be created by the actions of table unit input entity
+            base::xauto_ptr<base::xvinentity_t> _unit_inentity = new base::xvinentity_t(_table_unit_inentity->get_actions());
+            std::vector<base::xventity_t*> _unit_inentitys;
+            _unit_inentitys.push_back(_unit_inentity.get());
+            xobject_ptr_t<base::xvinput_t> _unit_input = make_object_ptr<base::xvinput_t>(_unit_inentitys, _unit_res->get_unit_input_resources());
+
+            // unit output entity is same with table unit output entity
+            base::xauto_ptr<base::xventity_t> _unit_outentity = new base::xvoutentity_t(*_table_unit_outentity);
+            std::vector<base::xventity_t*> _unit_outentitys;
+            _unit_outentitys.push_back(_unit_outentity.get());
+            xobject_ptr_t<base::xvoutput_t> _unit_output = make_object_ptr<base::xvoutput_t>(_unit_outentitys, _unit_res->get_unit_output_resources());
+
+            if (_unit_header->get_block_class() == base::enum_xvblock_class_light) {
+                vbmaker = std::make_shared<xlightunit_build_t>(_unit_header.get(), _unit_input.get(), _unit_output.get());
+            } else if (_unit_header->get_block_class() == base::enum_xvblock_class_full) {
+                vbmaker = std::make_shared<xfullunit_build_t>(_unit_header.get(), _unit_input.get(), _unit_output.get());
+            }
+        }
+
+        base::xbbuild_para_t build_para;
+        base::xvqcert_t* tablecert = _tableblock->get_cert();
+        build_para.set_unit_cert_para(tablecert->get_clock(), tablecert->get_viewtoken(), tablecert->get_viewid(), tablecert->get_validator(),
+                                    tablecert->get_auditor(), tablecert->get_drand_height(), _tableblock->get_height(), extend.get_unit_justify_hash());
+        vbmaker->init_qcert(build_para);
+        xobject_ptr_t<base::xvblock_t> _unit = vbmaker->build_new_block();
+        xassert(_unit != nullptr);
+        _batch_units.push_back(_unit);
+    }
+
+    base::xvtableblock_maker_t::units_set_parent_cert(_batch_units, _tableblock);
+    return _batch_units;
 }
 
 base::xauto_ptr<base::xvblock_t> xlighttable_build_t::create_new_block() {

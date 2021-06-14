@@ -53,6 +53,8 @@ class xfullunit_build_t : public base::xvblockmaker_t {
 
 class xlighttable_build_t : public base::xvtableblock_maker_t {
  public:
+    static std::vector<xobject_ptr_t<base::xvblock_t>> unpack_units_from_table(const base::xvblock_t* _tableblock);
+ public:
     xlighttable_build_t(base::xvblock_t* prev_block, const xtable_block_para_t & bodypara, const xblock_consensus_para_t & para);
 
     base::xauto_ptr<base::xvblock_t> create_new_block() override;

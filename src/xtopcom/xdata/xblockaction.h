@@ -51,28 +51,5 @@ class xlightunit_action_t : public base::xvaction_t {
     std::string                 get_action_result_property(const std::string & key) const;
 };
 
-
-class xlighttable_action_t : public base::xvaction_t {
- protected:
-    static XINLINE_CONSTEXPR char const * KEY_UNIT_NUMBER       = "0";
-    static XINLINE_CONSTEXPR char const * KEY_TX_NUMBER         = "1";
-
- public:
-    xlighttable_action_t(const base::xvaction_t & _action);
-    xlighttable_action_t(const std::string & tx_hash, const std::string & caller_addr,const std::string & target_uri,const std::string & method_name);
-    ~xlighttable_action_t() = default;
-
- public:
-    static base::xvalue_t       create_result(uint32_t unit_number, uint32_t tx_num);
-
- public:
-    uint32_t                    get_unit_number() const;
-    uint32_t                    get_tx_number() const;
-
- private:
-    std::string                 get_action_result_property(const std::string & key) const;
-};
-
-
 }  // namespace data
 }  // namespace top

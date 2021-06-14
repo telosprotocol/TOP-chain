@@ -100,6 +100,16 @@ namespace top
                 m_actions.emplace_back(item);
             }
         }
+
+        xvinentity_t::xvinentity_t(const std::string & extend, const std::vector<xvaction_t> & actions)
+        :xventity_t(enum_xdata_type(enum_xobject_type_vinentity))
+        {
+            m_extend_data = extend;
+            for(auto & item : actions)
+            {
+                m_actions.emplace_back(item);
+            }
+        }
         
         xvinentity_t::xvinentity_t(std::vector<xvaction_t> && actions)
             :xventity_t(enum_xdata_type(enum_xobject_type_vinentity))
@@ -136,6 +146,7 @@ namespace top
             const int32_t begin_size = stream.size();
             xventity_t::do_write(stream);
             
+            stream.write_compact_var(m_extend_data);
             const uint16_t count = (uint16_t)m_actions.size();
             stream << count;
             for (auto & v : m_actions)
@@ -152,6 +163,7 @@ namespace top
             const int32_t begin_size = stream.size();
             xventity_t::do_read(stream);
             
+            stream.read_compact_var(m_extend_data);
             uint16_t count = 0;
             stream >> count;
             for (uint32_t i = 0; i < count; i++)
