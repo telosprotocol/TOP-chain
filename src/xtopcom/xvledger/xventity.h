@@ -76,6 +76,7 @@ namespace top
         public:
             xvinentity_t(const std::vector<xvaction_t*> & actions);
             xvinentity_t(const std::vector<xvaction_t> & actions);
+            xvinentity_t(const std::string & extend, const std::vector<xvaction_t> & actions);
             xvinentity_t(std::vector<xvaction_t> && actions);
         protected:
             xvinentity_t();
@@ -92,12 +93,14 @@ namespace top
             virtual const std::string query_value(const std::string & key) const override;//virtual key-value for entity
             
             const std::vector<xvaction_t> & get_actions() const {return m_actions;}
+            const std::string &             get_extend_data() const {return m_extend_data;}
             
         protected:
             //return how many bytes readout /writed in, return < 0(enum_xerror_code_type) when have error
             virtual int32_t           do_write(xstream_t & stream) override; //allow subclass extend behavior
             virtual int32_t           do_read(xstream_t & stream)  override; //allow subclass extend behavior
         private:
+            std::string               m_extend_data;
             std::vector<xvaction_t>   m_actions;
         };
     
@@ -138,11 +141,11 @@ namespace top
             virtual std::string         get_obj_name() const override {return name();}
             enum{enum_obj_type = enum_xobject_type_voutentity};
         public:
+            xvoutentity_t();
             xvoutentity_t(const std::string & state_bin_log);
             xvoutentity_t(const std::string & state_hash, const std::string & binlog_hash);
             xvoutentity_t(const xvoutentity_t & obj);
         protected:
-            xvoutentity_t();
             virtual ~xvoutentity_t();
         private:
             xvoutentity_t(xvoutentity_t &&);

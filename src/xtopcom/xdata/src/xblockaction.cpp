@@ -84,57 +84,5 @@ std::string xlightunit_action_t::get_action_result_property(const std::string & 
     return {};
 }
 
-
-//----------------------------------------xlighttable_action_t-------------------------------------//
-xlighttable_action_t::xlighttable_action_t(const base::xvaction_t & _action)
-: base::xvaction_t(_action) {
-}
-
-xlighttable_action_t::xlighttable_action_t(const std::string & tx_hash, const std::string & caller_addr,const std::string & target_uri,const std::string & method_name)
-: base::xvaction_t(tx_hash, caller_addr, target_uri, method_name) {
-
-}
-
-base::xvalue_t xlighttable_action_t::create_result(uint32_t unit_number, uint32_t tx_num) {
-    // TODO(jimmy)
-    std::map<std::string, std::string> values;
-    xassert(unit_number > 0);
-    values[KEY_UNIT_NUMBER] = base::xstring_utl::tostring(unit_number);
-    values[KEY_TX_NUMBER] = base::xstring_utl::tostring(tx_num);
-    base::xvalue_t _action_result(values);
-    return _action_result;
-}
-
-uint32_t xlighttable_action_t::get_unit_number() const {
-    std::string value = get_action_result_property(KEY_UNIT_NUMBER);
-    if (!value.empty()) {
-        return base::xstring_utl::touint32(value);
-    }
-    xassert(false);
-    return 0;
-}
-
-uint32_t xlighttable_action_t::get_tx_number() const {
-    std::string value = get_action_result_property(KEY_TX_NUMBER);
-    if (!value.empty()) {
-        return base::xstring_utl::touint32(value);
-    }
-    xassert(false);
-    return 0;
-}
-
-std::string xlighttable_action_t::get_action_result_property(const std::string & key) const {
-    const std::map<std::string,std::string>* map_ptr = get_method_result()->get_map<std::string>();
-    if (map_ptr != nullptr) {
-        auto iter = map_ptr->find(key);
-        if (iter != map_ptr->end()) {
-            return iter->second;
-        }
-        return {};
-    }
-    xassert(false);
-    return {};
-}
-
 }  // namespace data
 }  // namespace top
