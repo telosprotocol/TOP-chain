@@ -416,9 +416,8 @@ public:
      */
     bool archive() const noexcept;
 
-    /// @brief Check if self is an edge archive node.
-    ///        Edge archive is also called full-edge.
-    bool edge_archive() const noexcept;
+    /// @brief Check if self is a full node. Full node is another kind of archive.
+    bool full_node() const noexcept;
 
     /**
      * @brief get rec stake
@@ -457,7 +456,7 @@ public:
      */
     uint64_t archive_stake() const noexcept;
 
-    uint64_t edge_archive_stake() const noexcept;
+    uint64_t full_node_stake() const noexcept;
 
     /**
      * @brief Get role type

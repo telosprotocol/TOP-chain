@@ -177,7 +177,7 @@ bool xreg_node_info::auditor() const noexcept { return is_valid_auditor_node(); 
 bool xreg_node_info::validator() const noexcept { return is_validator_node(); }
 bool xreg_node_info::edge() const noexcept { return is_edge_node(); }
 bool xreg_node_info::archive() const noexcept { return is_valid_archive_node(); }
-bool xreg_node_info::edge_archive() const noexcept {
+bool xreg_node_info::full_node() const noexcept {
     return common::has<common::xrole_type_t::full_node>(m_registered_role);
 }
 
@@ -200,7 +200,7 @@ uint64_t xreg_node_info::auditor_stake() const noexcept { return get_auditor_sta
 uint64_t xreg_node_info::validator_stake() const noexcept { return get_validator_stake(); };
 uint64_t xreg_node_info::edge_stake() const noexcept { return 0; }
 uint64_t xreg_node_info::archive_stake() const noexcept { return 0; }
-uint64_t xreg_node_info::edge_archive_stake() const noexcept { return 0; }
+uint64_t xreg_node_info::full_node_stake() const noexcept { return 0; }
 
 int32_t xreg_node_info::do_write(base::xstream_t & stream) const {
     const int32_t begin_pos = stream.size();

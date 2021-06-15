@@ -114,7 +114,7 @@ void xelect_client_process::process_elect(const mbus::xevent_ptr_t & e) {
         using top::data::election::xelection_result_store_t;
         auto const & election_result_store = codec::msgpack_decode<xelection_result_store_t>({std::begin(result), std::end(result)});
         if (election_result_store.size() == 0) {
-            if (!(contract_address == common::xaccount_address_t{ sys_contract_rec_elect_archive_addr } && property == data::election::get_property_by_group_id(common::xedge_archive_group_id))) {
+            if (!(contract_address == common::xaccount_address_t{ sys_contract_rec_elect_archive_addr } && property == data::election::get_property_by_group_id(common::xfull_node_group_id))) {
                 xerror("xelect_client_process::process_elect decode property empty, block=%s", block->dump().c_str());
                 return;
             }

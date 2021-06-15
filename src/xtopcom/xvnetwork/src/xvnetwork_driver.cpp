@@ -168,7 +168,7 @@ std::vector<common::xnode_address_t> xtop_vnetwork_driver::archive_addresses(com
 
     case common::xnode_type_t::storage_full_node:
     {
-        auto const & tmp = m_vhost->members_info_of_group2(common::build_archive_sharding_address(common::xedge_archive_group_id, network_id()), common::xversion_t::max());
+        auto const & tmp = m_vhost->members_info_of_group2(common::build_archive_sharding_address(common::xfull_node_group_id, network_id()), common::xversion_t::max());
         result.reserve(tmp.size());
 
         for (auto const & n : tmp) {
