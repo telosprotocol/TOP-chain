@@ -165,7 +165,6 @@ int32_t xtransaction_executor::exec_batch_txs(base::xvblock_t* proposal_block,
 
     if (exec_txs.empty()) {
         xassert(error_code != xsuccess);
-        xassert(!txs_result.m_exec_fail_txs.empty());
         return error_code;
     }
 
