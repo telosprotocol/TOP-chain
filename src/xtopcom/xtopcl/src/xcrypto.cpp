@@ -69,7 +69,7 @@ string create_new_keystore(const string & pw, string & dir, bool is_key, string 
     if (g_userinfo.account.size() != 0) {
         copy_g_userinfo = g_userinfo;
     }
-    if (!account.empty() && account.substr(0, TOP_ACCOUNT_PREFIX.size()) == TOP_ACCOUNT_PREFIX) {
+    if (!account.empty() && top::base::xvaccount_t::get_addrtype_from_account(account) == top::base::enum_vaccount_addr_type_secp256k1_user_account) {
         xcrypto_util::make_private_key(g_userinfo.private_key);
         g_userinfo.account = xcrypto_util::make_address_by_assigned_key(g_userinfo.private_key);
         auto base64_pri = utility::base64_encode(g_userinfo.private_key.data(), PRI_KEY_LEN);
@@ -346,7 +346,7 @@ void update_keystore_file(const std::string & pw, const string & raw_text, std::
     if (account.empty())
         account = key_info["account address"].asString();
 
-    if (account.substr(0,6) == TOP_ACCOUNT_PREFIX)
+    if (top::base::xvaccount_t::get_addrtype_from_account(account) == top::base::enum_vaccount_addr_type_secp256k1_user_account)
     {
         fill_aes_info(pw, raw_text, aes_info);
         key_info["crypto"]["cipherparams"]["iv"] = uint_to_str(aes_info.iv, aes_iv_len);
@@ -410,7 +410,7 @@ string import_existing_keystore(const string & cache_pw, const string & path, bo
     if (account.empty())
         account = key_info["account address"].asString();
 
-    if (account.substr(0,6) == TOP_ACCOUNT_PREFIX)
+    if (top::base::xvaccount_t::get_addrtype_from_account(account) == top::base::enum_vaccount_addr_type_secp256k1_user_account)
         decrypttext = aes256_cbc_decrypt(cache_pw, key_info);
     else 
         decrypttext = eth_aes_decrypt(cache_pw, key_info);
@@ -433,12 +433,12 @@ string get_symmetric_ed_key(const string & pw, const string & path) {
     if (account.empty())
         account = key_info["account address"].asString();
 
-    if (account.substr(0,6) == ETH_ACCOUNT_PREFIX)
+    if (top::base::xvaccount_t::get_addrtype_from_account(account) == top::base::enum_vaccount_addr_type_secp256k1_eth_user_account)
     {
         if (get_eth_ed_key(pw, key_info, key) != 0)
             return "";
         return uint_to_str((char*)key, aes_key_len);
-    } else if (account.substr(0,6) == TOP_ACCOUNT_PREFIX)
+    } else if (top::base::xvaccount_t::get_addrtype_from_account(account) == top::base::enum_vaccount_addr_type_secp256k1_user_account)
     {
         if (get_top_ed_key(pw, key_info, key) != 0)
             return "";
@@ -516,9 +516,9 @@ string decrypt_keystore_by_key(const string & ed_key, const string & path) {
     if (account.empty())
         account = key_info["account address"].asString();
 
-    if (account.substr(0,6) == ETH_ACCOUNT_PREFIX)
+    if (top::base::xvaccount_t::get_addrtype_from_account(account) == top::base::enum_vaccount_addr_type_secp256k1_eth_user_account)
         return top::HexEncode(get_eth_key(ed_key, key_info));
-    else if (account.substr(0,6) == TOP_ACCOUNT_PREFIX)
+    else if (top::base::xvaccount_t::get_addrtype_from_account(account) == top::base::enum_vaccount_addr_type_secp256k1_user_account)
         return get_top_key(ed_key, key_info);
     else
         return "";
@@ -700,9 +700,9 @@ string reset_keystore_pw(const string & old_pw, const string & key_path) {
     if (account.empty())
         account = key_info["account address"].asString();
 
-    if (account.substr(0,6) == TOP_ACCOUNT_PREFIX)
+    if (top::base::xvaccount_t::get_addrtype_from_account(account) == top::base::enum_vaccount_addr_type_secp256k1_user_account)
         decrypttext = aes256_cbc_decrypt(old_pw, key_info);
-    else if (account.substr(0,6) == ETH_ACCOUNT_PREFIX)
+    else if (top::base::xvaccount_t::get_addrtype_from_account(account) == top::base::enum_vaccount_addr_type_secp256k1_eth_user_account)
         decrypttext = eth_aes_decrypt(old_pw, key_info);    
     else
         return "";

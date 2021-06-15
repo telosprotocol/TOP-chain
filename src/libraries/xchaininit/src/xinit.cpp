@@ -305,7 +305,7 @@ bool load_bwlist_content(std::string const& config_file, std::map<std::string, s
 
 bool check_miner_info(const std::string &pub_key, const std::string &node_id) {
     g_userinfo.account = node_id;
-    if (g_userinfo.account.substr(0, ETH_ACCOUNT_PREFIX.size()) == ETH_ACCOUNT_PREFIX)
+    if (top::base::xvaccount_t::get_addrtype_from_account(g_userinfo.account) == top::base::enum_vaccount_addr_type_secp256k1_eth_user_account)
         std::transform(g_userinfo.account.begin() + 1, g_userinfo.account.end(), g_userinfo.account.begin() + 1, ::tolower);    
     top::xtopcl::xtopcl xtop_cl;
     std::string result;
