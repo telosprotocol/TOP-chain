@@ -366,7 +366,11 @@ class xtransaction_pledge_token_tgas : public xtransaction_pledge_token{
     : xtransaction_pledge_token(account_ctx, trans) {
     }
     int32_t set_pledge_token_resource(uint64_t amount) override {
-        return m_account_ctx->available_balance_to_other_balance(XPROPERTY_BALANCE_PLEDGE_TGAS, base::vtoken_t(amount));
+        auto ret = m_account_ctx->available_balance_to_other_balance(XPROPERTY_BALANCE_PLEDGE_TGAS, base::vtoken_t(amount));
+        if (ret == xsuccess) {
+            m_account_ctx->add_tgas_balance_change(amount);
+        }
+        return ret;
     }
 };
 
@@ -376,7 +380,11 @@ class xtransaction_redeem_token_tgas : public xtransaction_redeem_token{
     : xtransaction_redeem_token(account_ctx, trans) {
     }
     int32_t redeem_pledge_token_resource(uint64_t amount) override {
-        return m_account_ctx->other_balance_to_available_balance(XPROPERTY_BALANCE_PLEDGE_TGAS, base::vtoken_t(amount));
+        auto ret = m_account_ctx->other_balance_to_available_balance(XPROPERTY_BALANCE_PLEDGE_TGAS, base::vtoken_t(amount));
+        if (ret == xsuccess) {
+            m_account_ctx->sub_tgas_balance_change(amount);
+        }
+        return ret;
     }
     uint32_t redeem_type() { return 0; }
 };

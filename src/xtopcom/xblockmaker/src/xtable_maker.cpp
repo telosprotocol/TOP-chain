@@ -326,6 +326,7 @@ xblock_ptr_t xtable_maker_t::make_light_table(bool is_leader, const xtablemaker_
     auto & receiptid_state = table_para.get_tablestate()->get_receiptid_state();
     receiptid_state->clear_pair_modified();
 
+    int64_t tgas_balance_change = 0;
     std::vector<xblock_ptr_t> batch_units;
     // try to make unit for unitmakers
     for (auto & v : unitmakers) {
@@ -334,6 +335,8 @@ xblock_ptr_t xtable_maker_t::make_light_table(bool is_leader, const xtablemaker_
         xunitmaker_para_t unit_para(table_para.get_tablestate(), is_leader);
         xblock_ptr_t proposal_unit = unitmaker->make_proposal(unit_para, cs_para, unit_result);
         table_result.m_unit_results.push_back(unit_result);
+        tgas_balance_change += unit_result.m_tgas_balance_change;
+        xdbg("total_tgas_balance_change=%llu, change=%llu", tgas_balance_change, unit_result.m_tgas_balance_change);
         if (false == table_para.delete_fail_tx_from_proposal(unit_result.m_fail_txs) ) {
             xerror("xtable_maker_t::make_light_table fail-delete_fail_tx_from_proposal.is_leader=%d,%s,account=%s",
                 is_leader, cs_para.dump().c_str(), unitmaker->get_account().c_str());
@@ -375,6 +378,7 @@ xblock_ptr_t xtable_maker_t::make_light_table(bool is_leader, const xtablemaker_
     cs_para.set_justify_cert_hash(get_lock_block_input_root_hash());
     cs_para.set_parent_height(0);
     xblock_builder_para_ptr_t build_para = std::make_shared<xlighttable_builder_para_t>(batch_units, get_resources());
+    build_para->set_tgas_balance_change(tgas_balance_change);
     xblock_ptr_t proposal_block = m_lighttable_builder->build_block(get_highest_height_block(), table_para.get_tablestate()->get_bstate(), cs_para, build_para);
     return proposal_block;
 }

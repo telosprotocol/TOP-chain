@@ -112,6 +112,7 @@ xblock_ptr_t        xlighttable_builder_t::build_block(const xblock_ptr_t & prev
     lighttable_para.set_property_binlog(property_binlog);
     lighttable_para.set_batch_units(lighttable_build_para->get_batch_units());
     lighttable_para.set_extra_data(cs_para.get_extra_data());
+    lighttable_para.set_tgas_balance_change(lighttable_build_para->get_tgas_balance_change());
     std::string fullstate_bin;
     proposal_bstate->take_snapshot(fullstate_bin);
     lighttable_para.set_fullstate_bin(fullstate_bin);
@@ -120,9 +121,9 @@ xblock_ptr_t        xlighttable_builder_t::build_block(const xblock_ptr_t & prev
     xblock_ptr_t proposal_table;
     proposal_table.attach((data::xblock_t*)_proposal_block);
 
-    xdbg("xlighttable_builder_t::build_block %s,account=%s,height=%ld,binlog_size=%zu,binlog=%ld,state_size=%zu",
+    xdbg("xlighttable_builder_t::build_block %s,account=%s,height=%ld,binlog_size=%zu,binlog=%ld,state_size=%zu,tgas_balance_change=%lld",
         cs_para.dump().c_str(), prev_block->get_account().c_str(), prev_block->get_height() + 1,
-        property_binlog.size(), base::xhash64_t::digest(property_binlog), fullstate_bin.size());
+        property_binlog.size(), base::xhash64_t::digest(property_binlog), fullstate_bin.size(), lighttable_build_para->get_tgas_balance_change());
     return proposal_table;
 }
 
@@ -152,10 +153,21 @@ xblock_ptr_t        xfulltable_builder_t::build_block(const xblock_ptr_t & prev_
     std::shared_ptr<xfulltable_builder_para_t> fulltable_build_para = std::dynamic_pointer_cast<xfulltable_builder_para_t>(build_para);
     xassert(fulltable_build_para != nullptr);
 
-    xstatistics_data_t block_statistics = make_block_statistics(fulltable_build_para->get_blocks_from_last_full());
+    auto & blocks = fulltable_build_para->get_blocks_from_last_full();
+    xstatistics_data_t block_statistics = make_block_statistics(blocks);
     std::string property_binlog = make_binlog(prev_block, prev_bstate);
 
-    xfulltable_block_para_t fulltable_para(property_binlog, block_statistics);
+    int64_t tgas_balance_change_total = 0;
+    for(auto & block : blocks) {
+        auto out_entity = block->get_output()->get_primary_entity();
+        if (out_entity != nullptr) {
+            int64_t tgas_balance_change = base::xstring_utl::toint64(out_entity->query_value(base::xvoutentity_t::key_name_tgas_pledge_change()));
+            tgas_balance_change_total += tgas_balance_change;
+            xdbg("tgas_balance_change_total=%lld, cur=%lld, account=%s", tgas_balance_change_total, tgas_balance_change, block->dump().c_str());
+        }
+    }
+
+    xfulltable_block_para_t fulltable_para(property_binlog, block_statistics, tgas_balance_change_total);
     base::xvblock_t* _proposal_block = data::xblocktool_t::create_next_fulltable(fulltable_para, prev_block.get(), cs_para);
     xblock_ptr_t proposal_table;
     proposal_table.attach((data::xblock_t*)_proposal_block);
