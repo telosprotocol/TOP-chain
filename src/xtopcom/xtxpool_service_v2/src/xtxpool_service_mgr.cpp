@@ -24,6 +24,8 @@ NS_BEG2(top, xtxpool_service_v2)
 
 #define max_mailbox_num (8192)
 
+#define print_txpool_statistic_values_freq (300) // print txpool statistic values every 5 minites
+
 xtxpool_service_mgr::xtxpool_service_mgr(const observer_ptr<store::xstore_face_t> & store,
                                          const observer_ptr<base::xvblockstore_t> & blockstore,
                                          const observer_ptr<xtxpool_v2::xtxpool_face_t> & txpool,
@@ -272,6 +274,10 @@ void xtxpool_service_mgr::on_timer() {
 
     for (auto service : receipts_recender_service_vec) {
         service->resend_receipts(now);
+    }
+
+    if ((now % print_txpool_statistic_values_freq) == 0) {
+        m_para->get_txpool()->print_statistic_values();
     }
 }
 

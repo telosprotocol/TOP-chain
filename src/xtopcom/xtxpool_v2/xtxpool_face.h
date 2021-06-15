@@ -215,7 +215,7 @@ private:
 class xtxpool_face_t : public base::xobject_t {
 public:
     virtual int32_t push_send_tx(const std::shared_ptr<xtx_entry> & tx) = 0;
-    virtual int32_t push_receipt(const std::shared_ptr<xtx_entry> & tx, bool is_self_send) = 0;
+    virtual int32_t push_receipt(const std::shared_ptr<xtx_entry> & tx, bool is_self_send, bool is_pulled) = 0;
     virtual const xcons_transaction_ptr_t pop_tx(const tx_info_t & txinfo) = 0;
     virtual ready_accounts_t get_ready_accounts(const xtxs_pack_para_t & pack_para) = 0;
     virtual std::vector<xcons_transaction_ptr_t> get_ready_txs(const xtxs_pack_para_t & pack_para) = 0;
@@ -236,6 +236,7 @@ public:
     virtual const std::vector<xtxpool_table_lacking_receipt_ids_t> get_lacking_recv_tx_ids(uint8_t zone, uint16_t subaddr, uint32_t max_num) const = 0;
     virtual const std::vector<xtxpool_table_lacking_confirm_tx_hashs_t> get_lacking_confirm_tx_hashs(uint8_t zone, uint16_t subaddr, uint32_t max_num) const = 0;
     virtual bool need_sync_lacking_receipts(uint8_t zone, uint16_t subaddr) const = 0;
+    virtual void print_statistic_values() const = 0;
 };
 
 class xtxpool_instance {

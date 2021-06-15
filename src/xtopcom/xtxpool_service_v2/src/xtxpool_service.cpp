@@ -318,7 +318,7 @@ void xtxpool_service::on_message_unit_receipt(vnetwork::xvnode_address_t const &
     } else {
         XMETRICS_COUNTER_INCREMENT("txpool_received_other_send_receipt_num", 1);
     }
-    ret = m_para->get_txpool()->push_receipt(tx_ent, is_self_send);
+    ret = m_para->get_txpool()->push_receipt(tx_ent, is_self_send, false);
     // push success means may be not consensused. duplicate means already committed, and need response recv receipt
     if (ret == xtxpool_v2::xtxpool_error_tx_duplicate) {
         check_and_response_recv_receipt(receipt);
@@ -394,13 +394,21 @@ bool xtxpool_service::is_receipt_sender(const xtable_id_t & tableid) const {
 void xtxpool_service::send_receipt_retry(data::xcons_transaction_ptr_t & cons_tx) {
     send_receipt_real(cons_tx);
 
-    XMETRICS_COUNTER_INCREMENT("txpool_receipt_retry_send", 1);
+    if (cons_tx->is_recv_tx()) {
+        XMETRICS_COUNTER_INCREMENT("txpool_recv_tx_retry_send", 1);
+    } else {
+        XMETRICS_COUNTER_INCREMENT("txpool_confirm_tx_retry_send", 1);
+    }
 }
 
 void xtxpool_service::send_receipt_first_time(data::xcons_transaction_ptr_t & cons_tx, xblock_t * cert_block) {
     xassert(cons_tx->is_receipt_valid());
     send_receipt_real(cons_tx);
-    XMETRICS_COUNTER_INCREMENT("txpool_receipt_first_send", 1);
+    if (cons_tx->is_recv_tx()) {
+        XMETRICS_COUNTER_INCREMENT("txpool_recv_tx_first_send", 1);
+    } else {
+        XMETRICS_COUNTER_INCREMENT("txpool_confirm_tx_first_send", 1);
+    }
 }
 
 void xtxpool_service::send_receipt_real(const data::xcons_transaction_ptr_t & cons_tx) {
@@ -747,7 +755,7 @@ void xtxpool_service::on_message_receipts_received(vnetwork::xvnode_address_t co
                  tx->dump().c_str());
             xtxpool_v2::xtx_para_t para;
             std::shared_ptr<xtxpool_v2::xtx_entry> tx_ent = std::make_shared<xtxpool_v2::xtx_entry>(tx, para);
-            m_para->get_txpool()->push_receipt(tx_ent, false);
+            m_para->get_txpool()->push_receipt(tx_ent, false, true);
         }
     }
 }
