@@ -220,14 +220,9 @@ xblock_ptr_t xblock_maker_t::get_highest_commit_block() const {
     return nullptr;
 }
 
-std::string xblock_maker_t::get_lock_block_sign_hash() const {
+std::string xblock_maker_t::get_lock_block_input_root_hash() const {
     xblock_ptr_t lock_block = get_highest_lock_block();
-    return lock_block->get_cert()->get_hash_to_sign();
-}
-
-std::string xblock_maker_t::get_lock_output_root_hash() const {
-    xblock_ptr_t lock_block = get_highest_lock_block();
-    return lock_block->get_cert()->get_output_root_hash();
+    return lock_block->get_input_root_hash();
 }
 
 xblock_ptr_t xblock_maker_t::get_highest_non_empty_block() const {

@@ -730,21 +730,10 @@ namespace top
             }
             else if(_test_for_block->get_height() == (locked_block_height + 2) )
             {
-                if(_test_for_block->get_header()->get_block_level() == base::enum_xvblock_level_unit)
+                if(_test_for_block->get_justify_cert_hash() != get_lock_block()->get_input_root_hash())
                 {
-                    if(_test_for_block->get_justify_cert_hash() != get_lock_block()->get_block_hash())
-                    {
-                        xwarn("xBFTRules::safe_check_follow_locked_branch,fail-proposal try to fork at locked block of prev->prev, proposal=%s vs locked=%s at node=0x%llx",_test_for_block->dump().c_str(), get_lock_block()->dump().c_str(),get_xip2_addr().low_addr);
-                        return -1;
-                    }
-                }
-                else //any cases for non-unit block
-                {
-                    if(_test_for_block->get_justify_cert_hash() != get_lock_block()->get_cert()->get_output_root_hash())
-                    {
-                        xwarn("xBFTRules::safe_check_follow_locked_branch,fail-proposal try to fork at locked block of prev->prev, proposal=%s vs locked=%s at node=0x%llx",_test_for_block->dump().c_str(), get_lock_block()->dump().c_str(),get_xip2_addr().low_addr);
-                        return -1;
-                    }
+                    xerror("xBFTRules::safe_check_follow_locked_branch,fail-proposal justify cert hash unmatch of prev->prev, proposal=%s vs locked=%s at node=0x%llx",_test_for_block->dump().c_str(), get_lock_block()->dump().c_str(),get_xip2_addr().low_addr);
+                    return -1;
                 }
                 return 1;
             }
