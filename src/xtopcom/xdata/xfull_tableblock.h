@@ -14,20 +14,23 @@
 #include "xdata/xblock.h"
 #include "xvledger/xaccountindex.h"
 #include "xdata/xblock_statistics_data.h"
+#include "xdata/xunit_bstate.h"
 
 NS_BEG2(top, data)
 
 class xfulltable_block_para_t {
  public:
-    xfulltable_block_para_t(const std::string & snapshot, const xstatistics_data_t & statistics_data);
+    xfulltable_block_para_t(const std::string & snapshot, const xstatistics_data_t & statistics_data, const int64_t tgas_balance_change);
     ~xfulltable_block_para_t() = default;
 
     const xstatistics_data_t &  get_block_statistics_data() const {return m_block_statistics_data;}
     const std::string &         get_snapshot() const {return m_snapshot;}
+    int64_t                     get_tgas_balance_change() const {return m_tgas_balance_change;}
 
  private:
     xstatistics_data_t      m_block_statistics_data;
     std::string             m_snapshot;
+    int64_t                 m_tgas_balance_change{0};
 };
 
 // tableindex block chain
@@ -51,6 +54,17 @@ class xfull_tableblock_t : public xblock_t {
     static int32_t get_object_type() {return object_type_value;}
     static xobject_t *create_object(int type);
     void *query_interface(const int32_t _enum_xobject_type_) override;
+
+    virtual int64_t get_pledge_balance_change_tgas() const override {
+        auto out_entity = get_output()->get_primary_entity();
+        int64_t tgas_balance_change = 0;
+        if (out_entity != nullptr) {
+            tgas_balance_change = base::xstring_utl::toint64(out_entity->query_value(base::xvoutentity_t::key_name_tgas_pledge_change()));
+            xdbg("total_tgas_balance_change=%lld,account=%s", tgas_balance_change, dump().c_str());
+        }
+
+        return tgas_balance_change;                
+    }
 
  public:
     xstatistics_data_t get_table_statistics() const;

@@ -23,6 +23,7 @@ struct xbatch_txs_result_t {
     uint32_t                                m_unconfirm_tx_num{0};
     std::string                             m_property_binlog;
     std::string                             m_full_state;
+    int64_t                                 m_tgas_balance_change{0};
 };
 
 class xtransaction_executor {

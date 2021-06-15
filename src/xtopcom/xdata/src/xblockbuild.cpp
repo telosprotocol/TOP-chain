@@ -193,6 +193,8 @@ bool xlighttable_build_t::build_block_body(const xtable_block_para_t & para) {
     // #3 set output entitys with state bin and binlog bin // TODO(jimmy) lighttable has no fullstate hash
     std::string binlog_bin = para.get_property_binlog();
     set_output_entity_binlog_hash(binlog_bin);
+    std::string tgas_balance_change = base::xstring_utl::tostring(para.get_tgas_balance_change());
+    set_output_entity(base::xvoutentity_t::key_name_tgas_pledge_change(), tgas_balance_change);
     // #4 set output resources
     set_output_resource_binlog(binlog_bin);
     return true;
@@ -327,6 +329,10 @@ bool xfulltable_build_t::build_block_body(const xfulltable_block_para_t & para) 
     set_output_entity_state_hash(full_state_bin);
     // #4 set output resources
     set_output_resource_state(full_state_bin);
+
+    std::string tgas_balance_change = base::xstring_utl::tostring(para.get_tgas_balance_change());
+    xdbg("tgas_balance_change=%lld", para.get_tgas_balance_change());
+    set_output_entity(base::xvoutentity_t::key_name_tgas_pledge_change(), tgas_balance_change);
 
     const xstatistics_data_t & statistics_data = para.get_block_statistics_data();
     auto const & serialized_data = statistics_data.serialize_based_on<base::xstream_t>();

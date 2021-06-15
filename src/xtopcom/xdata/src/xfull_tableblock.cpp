@@ -13,9 +13,10 @@ NS_BEG2(top, data)
 
 REG_CLS(xfull_tableblock_t);
 
-xfulltable_block_para_t::xfulltable_block_para_t(const std::string & snapshot, const xstatistics_data_t & statistics_data) {
+xfulltable_block_para_t::xfulltable_block_para_t(const std::string & snapshot, const xstatistics_data_t & statistics_data, const int64_t tgas_balance_change) {
     m_snapshot = snapshot;
     m_block_statistics_data = statistics_data;
+    m_tgas_balance_change = tgas_balance_change;
 }
 
 xfull_tableblock_t::xfull_tableblock_t(base::xvheader_t & header, base::xvqcert_t & cert, base::xvinput_t* input, base::xvoutput_t* output)

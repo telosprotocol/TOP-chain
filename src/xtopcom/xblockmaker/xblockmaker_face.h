@@ -58,6 +58,7 @@ struct xunitmaker_result_t {
     int32_t                                 m_make_block_error_code{0};
     std::vector<xcons_transaction_ptr_t>    m_success_txs;
     std::vector<xcons_transaction_ptr_t>    m_fail_txs;
+    int64_t                                 m_tgas_balance_change{0};
 };
 
 struct xunitmaker_para_t {
@@ -191,10 +192,13 @@ class xblock_builder_para_face_t {
     virtual xtxpool_v2::xtxpool_face_t* get_txpool() const {return m_resources->get_txpool();}
     virtual int32_t                     get_error_code() const {return m_error_code;}
     virtual void                        set_error_code(int32_t error_code) {m_error_code = error_code;}
+    int64_t get_tgas_balance_change() const { return m_tgas_balance_change; }
+    void set_tgas_balance_change(const int64_t amount) { m_tgas_balance_change = amount; }
 
  private:
     xblockmaker_resources_ptr_t m_resources{nullptr};
     int32_t                     m_error_code{0};
+    int64_t                     m_tgas_balance_change{0};
 };
 using xblock_builder_para_ptr_t = std::shared_ptr<xblock_builder_para_face_t>;
 
