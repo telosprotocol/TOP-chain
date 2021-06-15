@@ -25,6 +25,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
         with:
+          ssh-key: ${{ secrets.XVM }}
           fetch-depth: 0
           submodules: recursive
 
