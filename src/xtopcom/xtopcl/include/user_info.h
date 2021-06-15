@@ -11,7 +11,6 @@
 #include <string>
 
 const std::string TOP_ACCOUNT_PREFIX = "T00000";
-const std::string ETH_ACCOUNT_PREFIX = "T80000";
 constexpr int BASE64_PRI_KEY_LEN = 44;
 constexpr int HEX_PRI_KEY_LEN = 64;
 constexpr int HEX_PUB_KEY_LEN = 128;
