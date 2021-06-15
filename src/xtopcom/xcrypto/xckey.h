@@ -12,7 +12,6 @@ namespace top
     {
         constexpr int UNCOMPRESSED_PUBLICKEY_SIZE = 65;
         constexpr int COMPRESSED_PUBLICKEY_SIZE = 33;
-        constexpr uint32_t ETH_ADDRESS_FLAG = 1 << 7;
 
         class xecdsasig_t; //forward declare
         class xecpubkey_t; //forward declare
@@ -115,6 +114,7 @@ namespace top
                             uint8_t out_publickey_data[65]);//for child account address
             bool         get_type_and_netid(uint8_t & addr_type,uint16_t & net_id);
             bool         is_valid();
+            bool         is_eth_valid();
             bool         get_type(uint8_t& addr_type);
         private:
             std::string  m_account_address;//m_account_address = xecpubkey_t.to_address(m_parent_address,addr_type,net_id);
