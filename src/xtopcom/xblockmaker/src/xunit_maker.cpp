@@ -241,7 +241,7 @@ xblock_ptr_t xunit_maker_t::make_next_block(const xunitmaker_para_t & unit_para,
     xblock_ptr_t proposal_unit = nullptr;
 
     // reset justify cert hash para
-    std::string justify_cert_hash = get_lock_block_sign_hash();
+    std::string justify_cert_hash = get_lock_block_input_root_hash();
     cs_para.set_justify_cert_hash(justify_cert_hash);
     m_default_builder_para->set_error_code(xsuccess);
 

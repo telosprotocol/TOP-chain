@@ -372,7 +372,7 @@ xblock_ptr_t xtable_maker_t::make_light_table(bool is_leader, const xtablemaker_
         return nullptr;
     }
 
-    cs_para.set_justify_cert_hash(get_lock_output_root_hash());
+    cs_para.set_justify_cert_hash(get_lock_block_input_root_hash());
     cs_para.set_parent_height(0);
     xblock_builder_para_ptr_t build_para = std::make_shared<xlighttable_builder_para_t>(batch_units, get_resources());
     xblock_ptr_t proposal_block = m_lighttable_builder->build_block(get_highest_height_block(), table_para.get_tablestate()->get_bstate(), cs_para, build_para);
@@ -396,7 +396,7 @@ xblock_ptr_t xtable_maker_t::make_full_table(const xtablemaker_para_t & table_pa
         return nullptr;
     }
 
-    cs_para.set_justify_cert_hash(get_lock_output_root_hash());
+    cs_para.set_justify_cert_hash(get_lock_block_input_root_hash());
     cs_para.set_parent_height(0);
     data::xtablestate_ptr_t tablestate = table_para.get_tablestate();
     xassert(nullptr != tablestate);
@@ -487,11 +487,11 @@ int32_t xtable_maker_t::verify_proposal(base::xvblock_t* proposal_block, const x
         return xblockmaker_error_proposal_table_not_match_prev_block;
     }
 
-    if (proposal_block->get_cert()->get_justify_cert_hash() != get_lock_output_root_hash()) {
+    if (proposal_block->get_cert()->get_justify_cert_hash() != get_lock_block_input_root_hash()) {
         xerror("xtable_maker_t::verify_proposal fail-proposal unmatch justify hash.proposal=%s, last_height=%" PRIu64 ",justify=%s,%s",
             proposal_block->dump().c_str(), highest_block->get_height(),
             base::xstring_utl::to_hex(proposal_block->get_cert()->get_justify_cert_hash()).c_str(),
-            base::xstring_utl::to_hex(get_lock_output_root_hash()).c_str());
+            base::xstring_utl::to_hex(get_lock_block_input_root_hash()).c_str());
         return xblockmaker_error_proposal_table_not_match_prev_block;
     }
 

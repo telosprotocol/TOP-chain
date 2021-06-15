@@ -24,15 +24,23 @@ xcons_transaction_t::xcons_transaction_t(xtransaction_t* tx) {
     update_transation();
 }
 
-xcons_transaction_t::xcons_transaction_t(xtransaction_t* tx, const base::xtx_receipt_ptr_t & receipt) {
-    xassert(!tx->digest().empty());
-    xassert(tx->get_digest_str() == receipt->get_tx_hash());
-    base::xstream_t stream(base::xcontext_t::instance());
-    tx->serialize_to(stream);
-    xtransaction_t* _tx = (xtransaction_t*)base::xdataunit_t::read_from(stream);  // TODO(jimmy) not copy
-    m_tx.attach(_tx);
-    xassert(receipt != nullptr);
-    m_receipt = receipt;
+// xcons_transaction_t::xcons_transaction_t(xtransaction_t* tx, const base::xtx_receipt_ptr_t & receipt) {
+//     xassert(!tx->digest().empty());
+//     xassert(tx->get_digest_str() == receipt->get_tx_hash());
+//     base::xstream_t stream(base::xcontext_t::instance());
+//     tx->serialize_to(stream);
+//     xtransaction_t* _tx = (xtransaction_t*)base::xdataunit_t::read_from(stream);  // TODO(jimmy) not copy
+//     m_tx.attach(_tx);
+//     xassert(receipt != nullptr);
+//     m_receipt = receipt;
+//     XMETRICS_GAUGE(metrics::dataobject_cur_xbase_type_cons_transaction, 1);
+//     update_transation();
+// }
+
+xcons_transaction_t::xcons_transaction_t(const base::xfull_txreceipt_t & full_txreceipt) {
+    m_tx = make_object_ptr<data::xtransaction_t>();
+    m_tx->serialize_from_string(full_txreceipt.get_tx_org_bin());
+    m_receipt = full_txreceipt.get_txreceipt();
     XMETRICS_GAUGE(metrics::dataobject_cur_xbase_type_cons_transaction, 1);
     update_transation();
 }
@@ -59,49 +67,22 @@ const std::string & xcons_transaction_t::get_receipt_target_account()const {
     }
 }
 
-void xcons_transaction_t::set_commit_prove_with_parent_cert(base::xvqcert_t* prove_cert) {
-    m_receipt->set_commit_prove_with_parent_cert(prove_cert, get_unit_cert()->get_extend_data());
-}
-
-void xcons_transaction_t::set_commit_prove_with_self_cert(base::xvqcert_t* prove_cert) {
-    m_receipt->set_commit_prove_with_self_cert(prove_cert);
-}
-
-bool xcons_transaction_t::is_commit_prove_cert_set() const {
-    return m_receipt->is_commit_prove_cert_set();
-}
-
-bool xcons_transaction_t::get_tx_info_prove_cert_and_account(base::xvqcert_t* & cert, std::string & account) const {
+bool xcons_transaction_t::get_receipt_prove_cert_and_account(const base::xvqcert_t* & cert, std::string & account) const {
     if (m_receipt == nullptr) {
         xerror("no receipt");
         return false;
     }
-    if (m_receipt->get_tx_info_prove() == nullptr) {
-        xerror("tx info prove null");
-        return false;
-    }
-
-    account = get_receipt_source_account();
-    cert = m_receipt->get_tx_info_prove()->get_prove_cert();
-    return true;
-}
-
-bool xcons_transaction_t::get_commit_prove_cert_and_account(base::xvqcert_t* & cert, std::string & account) const {
-    if (m_receipt == nullptr) {
-        xerror("no receipt");
-        return false;
-    }
-    if (m_receipt->get_commit_prove() == nullptr) {
+    if (m_receipt->get_prove_cert() == nullptr) {
         xerror("commit prove null");
         return false;
     }
 
     account = get_receipt_source_account();
-    if (m_receipt->get_tx_info_prove()->get_prove_class() == base::xprove_cert_class_parent_cert) {
+    if (m_receipt->get_prove_type() == base::enum_xprove_cert_type_table_justify) {
         // change to parent account
         account = account_address_to_block_address(common::xaccount_address_t(account));
     }
-    cert = m_receipt->get_commit_prove()->get_prove_cert();
+    cert = m_receipt->get_prove_cert();
     return true;
 }
 

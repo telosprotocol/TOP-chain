@@ -138,6 +138,8 @@ namespace top
             static  const std::string   name(){ return std::string("xvoutentity");}
             static  const std::string   key_name_state_hash(){ return std::string("0");}
             static  const std::string   key_name_binlog_hash(){ return std::string("1");}
+            static  const std::string   key_name_unconfirm_tx_count(){ return std::string("2");}
+            static  const std::string   key_name_tgas_pledge_change(){ return std::string("3");}
             virtual std::string         get_obj_name() const override {return name();}
             enum{enum_obj_type = enum_xobject_type_voutentity};
         public:

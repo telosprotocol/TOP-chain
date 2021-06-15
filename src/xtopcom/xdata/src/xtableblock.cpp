@@ -40,16 +40,6 @@ void * xtable_block_t::query_interface(const int32_t _enum_xobject_type_) {
     return xvblock_t::query_interface(_enum_xobject_type_);
 }
 
-void xtable_block_t::create_txreceipts(std::vector<xcons_transaction_ptr_t> & sendtx_receipts,
-    std::vector<xcons_transaction_ptr_t> & recvtx_receipts) {
-    auto & units = get_tableblock_units(true);
-    for (auto & cache_unit : units) {
-        if (cache_unit->is_lightunit()) {
-            (dynamic_cast<xlightunit_block_t*>(cache_unit.get()))->create_txreceipts(sendtx_receipts, recvtx_receipts);
-        }
-    }
-}
-
 const std::vector<xblock_ptr_t> & xtable_block_t::get_tableblock_units(bool need_parent_cert) const {
     return unpack_and_get_units(need_parent_cert);
 }

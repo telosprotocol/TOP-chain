@@ -35,7 +35,7 @@ void xconfig_onchain_loader_t::start() {
         m_monitor = new xconfig_bus_monitor(this);
         m_monitor->init();
     }
-    
+
     m_logic_timer->watch("xconfig_onchain_parameter_loader", 1, std::bind(&xconfig_onchain_loader_t::chain_timer, shared_from_this(), std::placeholders::_1));
 }
 
@@ -85,7 +85,7 @@ void xconfig_onchain_loader_t::update(mbus::xevent_ptr_t e) {
     if (e->minor_type != mbus::xevent_store_t::type_block_to_db) {
         return;
     }
-    
+
     mbus::xevent_store_block_to_db_ptr_t block_event = dynamic_xobject_ptr_cast<mbus::xevent_store_block_to_db_t>(e);
 
     if (block_event == nullptr) {
@@ -250,13 +250,18 @@ bool xconfig_onchain_loader_t::fetch_all(std::map<std::string, std::string> & pa
         std::map<std::string, std::string> initial_values;
         auto                               status = m_store_ptr->map_copy_get(sys_contract_rec_tcc_addr, ONCHAIN_PARAMS, initial_values);
         if (status == 0) {
-            xinfo("[tcc] second time get onchain parameters");
+            xinfo("xconfig_onchain_loader_t::fetch_all[tcc] second time get onchain parameters");
             params_map.insert(initial_values.begin(), initial_values.end());
         } else {
-            xinfo("[tcc] first time get onchain parameters");
+            xinfo("xconfig_onchain_loader_t::fetch_all[tcc] first time get onchain parameters");
             auto tx = std::make_shared<data::xtcc_transaction_t>();
             params_map.insert(tx->m_initial_values.begin(), tx->m_initial_values.end());
         }
+#ifdef DEBUG
+        for (auto & v : params_map) {
+            xdbg("xconfig_onchain_loader_t::fetch_all k=%s,v=%s", v.first.c_str(), v.second.c_str());
+        }
+#endif
     }
     return true;
 }

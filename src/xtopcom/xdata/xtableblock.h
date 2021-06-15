@@ -69,7 +69,6 @@ class xtable_block_t : public xblock_t {
 
  public:  // tableblock api
     std::string     tableblock_dump() const;
-    void            create_txreceipts(std::vector<xcons_transaction_ptr_t> & sendtx_receipts, std::vector<xcons_transaction_ptr_t> & recvtx_receipts);
 
  public:  // implement block common api
     uint32_t        get_txs_count() const override;

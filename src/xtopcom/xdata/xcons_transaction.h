@@ -17,7 +17,8 @@ class xcons_transaction_t : public xbase_dataunit_t<xcons_transaction_t, xdata_t
  public:
     xcons_transaction_t();
     xcons_transaction_t(xtransaction_t* raw_tx);
-    xcons_transaction_t(xtransaction_t* tx, const base::xtx_receipt_ptr_t & receipt);
+    // xcons_transaction_t(xtransaction_t* tx, const base::xtx_receipt_ptr_t & receipt);
+    xcons_transaction_t(const base::xfull_txreceipt_t & full_txreceipt);
  protected:
     virtual ~xcons_transaction_t();
  private:
@@ -34,9 +35,6 @@ class xcons_transaction_t : public xbase_dataunit_t<xcons_transaction_t, xdata_t
     std::string                     get_tx_hash() const {return m_tx->get_digest_str();}
     uint256_t                       get_tx_hash_256() const {return m_tx->digest();}
     bool                            verify_cons_transaction();
-    void                            set_commit_prove_with_parent_cert(base::xvqcert_t* prove_cert);
-    void                            set_commit_prove_with_self_cert(base::xvqcert_t* prove_cert);
-    bool                            is_commit_prove_cert_set() const;
 
     const std::string &     get_source_addr()const {return m_tx->get_source_addr();}
     const std::string &     get_account_addr() const {return is_recv_tx()? m_tx->get_target_addr() : m_tx->get_source_addr();}
@@ -54,7 +52,6 @@ class xcons_transaction_t : public xbase_dataunit_t<xcons_transaction_t, xdata_t
     bool                    is_send_tx() const {return m_tx->get_tx_subtype() == enum_transaction_subtype_send;}
     bool                    is_recv_tx() const {return m_tx->get_tx_subtype() == enum_transaction_subtype_recv;}
     bool                    is_confirm_tx() const {return m_tx->get_tx_subtype() == enum_transaction_subtype_confirm;}
-    uint64_t                get_clock() const {return m_receipt->get_unit_cert()->get_clock();}
     std::string             get_digest_hex_str() const {return m_tx->get_digest_hex_str();}
     uint32_t                get_last_action_used_tgas() const;
     uint32_t                get_last_action_used_deposit() const;
@@ -84,16 +81,17 @@ class xcons_transaction_t : public xbase_dataunit_t<xcons_transaction_t, xdata_t
     void                    set_unit_height(uint64_t unit_height) {m_unit_height = unit_height;}
     uint64_t                get_unit_height() const noexcept {return m_unit_height;}
 
-    const base::xvqcert_t*  get_unit_cert() const {return m_receipt->get_unit_cert();}
+    uint64_t                get_receipt_clock() const {return get_prove_cert()->get_clock();}
+    uint64_t                get_receipt_gmtime() const {return get_prove_cert()->get_gmtime();}
     bool                    is_receipt_valid() const {return m_receipt->is_valid();}
 
  public:
-    bool                    get_tx_info_prove_cert_and_account(base::xvqcert_t* & cert, std::string & account) const;
-    bool                    get_commit_prove_cert_and_account(base::xvqcert_t* & cert, std::string & account) const;
+    bool                    get_receipt_prove_cert_and_account(const base::xvqcert_t* & cert, std::string & account) const;
 
  private:
     void                    update_transation();
     uint64_t                get_dump_receipt_id() const;
+    const base::xvqcert_t*  get_prove_cert() const {return m_receipt->get_prove_cert();}
 
  private:
     xtransaction_ptr_t          m_tx{nullptr};

@@ -536,6 +536,7 @@ namespace top
             virtual bool                set_root_hash(const std::string & root_hash){ m_root_hash = root_hash;return true;}
 
             const std::string           get_binlog();
+            const std::string           get_full_state();
             const std::string           get_binlog_hash();
             const std::string           get_state_hash();
 

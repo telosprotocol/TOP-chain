@@ -147,8 +147,7 @@ class xblock_maker_t : public base::xvaccount_t {
     uint64_t                    get_keep_latest_blocks_max() const {return m_keep_latest_blocks_max;}
     const xaccount_ptr_t &      get_latest_bstate() const {return m_latest_bstate;}
     xaccount_ptr_t              get_latest_committed_state() const;
-    std::string                 get_lock_block_sign_hash() const;
-    std::string                 get_lock_output_root_hash() const;
+    std::string                 get_lock_block_input_root_hash() const;
     const std::map<uint64_t, xblock_ptr_t> & get_latest_blocks() const {return m_latest_blocks;}
     const xblock_ptr_t &        get_highest_height_block() const;
     const xblock_ptr_t &        get_lowest_height_block() const;

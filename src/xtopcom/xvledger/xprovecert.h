@@ -8,29 +8,22 @@
 
 #include "xvledger/xdataobj_base.hpp"
 #include "xvledger/xvblock.h"
-#include "xvledger/xmerkle.hpp"
 
 namespace top
 {
     namespace base
     {
+        enum enum_xprove_cert_type {
+            enum_xprove_cert_type_unit_justify  = 0,  // unit cert with justify hash
+            enum_xprove_cert_type_table_justify = 1,  // table cert with justify hash
 
-        enum xprove_cert_class_t {
-            xprove_cert_class_self_cert = 0,
-            xprove_cert_class_parent_cert = 1,
-        };
-
-        enum xprove_cert_type_t {
-            xprove_cert_type_output_root = 0,
-            xprove_cert_type_justify_cert = 1,
-            xprove_cert_type_input_root = 2,
+            enum_xprove_cert_type_max
         };
 
         class xprove_cert_t : public xbase_dataunit_t<xprove_cert_t, xdata_type_prove_cert> {
         public:
             xprove_cert_t();
-            xprove_cert_t(base::xvqcert_t* prove_cert, xprove_cert_class_t _class, xprove_cert_type_t _type, const base::xmerkle_path_256_t & _path);
-            xprove_cert_t(base::xvqcert_t* prove_cert, xprove_cert_class_t _class, xprove_cert_type_t _type, const std::string & _path);
+            xprove_cert_t(base::xvqcert_t* prove_cert, enum_xprove_cert_type prove_type, const std::string & _path);
         protected:
             virtual ~xprove_cert_t();
         private:
@@ -41,13 +34,11 @@ namespace top
             int32_t do_read(base::xstream_t & stream) override;
 
         public:
-            xprove_cert_class_t get_prove_class() const {return (xprove_cert_class_t)((m_prove_type >> 4) & 0x0F);}
-            xprove_cert_type_t  get_prove_type() const {return (xprove_cert_type_t)(m_prove_type & 0x0F);}
-            base::xvqcert_t*    get_prove_cert() const {return m_prove_cert;}
-            void    set_prove_class(xprove_cert_class_t _class) {m_prove_type = (m_prove_type & 0x0F) | (_class << 4);}
-            void    set_prove_type(xprove_cert_type_t _type) {m_prove_type = (m_prove_type & 0xF0) | (_type & 0x0F);}
-            void    set_prove_path(const base::xmerkle_path_256_t & path);
-            bool    is_valid(const std::string & prove_object);
+            enum_xprove_cert_type   get_prove_type() const {return (enum_xprove_cert_type)(m_prove_type);}
+            base::xvqcert_t*        get_prove_cert() const {return m_prove_cert;}
+            const std::string &     get_prove_path() const {return m_prove_path;}
+            std::string             get_prove_root_hash() const;
+            bool                    is_valid() const;
         private:
             base::xvqcert_t*    m_prove_cert{nullptr};
             uint8_t             m_prove_type{0};

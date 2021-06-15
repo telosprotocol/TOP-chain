@@ -99,10 +99,10 @@ namespace top
                 }
 
                 //justify -> current locked block,so once this proposal is certified ->proof that locked-block is at commit status.
-                if(proposal->get_header()->get_block_level() == base::enum_xvblock_level_unit)
-                    proposal->get_cert()->set_justify_cert_hash(get_lock_block()->get_block_hash());
-                else //for non-unit block justify_cert_hash always point to locked block' output_root_hash
-                    proposal->get_cert()->set_justify_cert_hash(get_lock_block()->get_cert()->get_output_root_hash());
+                if (proposal->get_cert()->get_justify_cert_hash().empty())
+                {
+                    proposal->get_cert()->set_justify_cert_hash(get_lock_block()->get_input_root_hash());
+                }
 
                 if(   (false == proposal->is_input_ready(true))  //leader should has full block
                    || (false == proposal->is_output_ready(true))

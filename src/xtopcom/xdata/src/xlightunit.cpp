@@ -70,40 +70,6 @@ std::string xlightunit_block_t::dump_body() const {
     return ss.str();
 }
 
-xcons_transaction_ptr_t xlightunit_block_t::create_txreceipt(const xtransaction_t* tx, const base::xvaction_t & action) {
-    if (get_cert()->get_extend_cert().empty() || get_cert()->get_extend_data().empty()) {
-        xerror("xlightunit_block_t::create_txreceipts failed for create receipt without parent cert. unit=%s, tx=", dump().c_str(), tx->dump().c_str());
-        return nullptr;
-    }
-
-    std::string leaf;
-    action.serialize_to(leaf);
-    base::xmerkle_path_256_t path;
-    bool ret = base::xvblockmaker_t::calc_input_merkle_path(get_input(), leaf, path);
-    if (!ret) {
-        xwarn("xtable_block_t::create_txreceipt fail-calc merkle path, tx=%s", tx->dump().c_str());
-        return nullptr;
-    }
-    base::xtx_receipt_ptr_t txreceipt = make_object_ptr<base::xtx_receipt_t>(action, path, get_cert());
-    xcons_transaction_ptr_t contx = make_object_ptr<xcons_transaction_t>((xtransaction_t*)tx, txreceipt);
-    contx->set_unit_height(get_height());
-    return contx;
-}
-
-
-
-xcons_transaction_ptr_t xlightunit_block_t::create_one_txreceipt(const xtransaction_t* tx) {
-    base::xvinentity_t* primary_input_entity = get_input()->get_primary_entity();
-    const std::vector<base::xvaction_t> & actions = primary_input_entity->get_actions();
-    for (auto & action : actions) {
-        if (action.get_org_tx_hash() == tx->get_digest_str()) {
-            return create_txreceipt(tx, action);
-        }
-    }
-    xerror("xlightunit_block_t::create_one_txreceipt fail find tx in unit.tx=%s,unit=%s", base::xstring_utl::to_hex(tx->get_digest_str()).c_str(), dump().c_str());
-    return nullptr;
-}
-
 xtransaction_ptr_t  xlightunit_block_t::query_raw_transaction(const std::string & txhash) const {
     std::string value = get_input()->query_resource(txhash);
     if (!value.empty()) {
@@ -112,37 +78,6 @@ xtransaction_ptr_t  xlightunit_block_t::query_raw_transaction(const std::string 
         return raw_tx;
     }
     return nullptr;
-}
-
-void xlightunit_block_t::create_send_txreceipts(std::vector<xcons_transaction_ptr_t> & sendtx_receipts) {
-    base::xvinentity_t* primary_input_entity = get_input()->get_primary_entity();
-    const std::vector<base::xvaction_t> & actions = primary_input_entity->get_actions();
-    for (auto & action : actions) {
-        // TODO(jimmy) sendtx need create txreceipt
-        if ( (base::enum_transaction_subtype)action.get_org_tx_action_id() == base::enum_transaction_subtype_send ) {
-            xtransaction_ptr_t raw_tx = query_raw_transaction(action.get_org_tx_hash());
-            xassert(raw_tx != nullptr);
-            xcons_transaction_ptr_t cons_tx = create_txreceipt(raw_tx.get(), action);
-            sendtx_receipts.push_back(cons_tx);
-        }
-    }
-}
-void xlightunit_block_t::create_txreceipts(std::vector<xcons_transaction_ptr_t> & sendtx_receipts, std::vector<xcons_transaction_ptr_t> & recvtx_receipts) {
-    base::xvinentity_t* primary_input_entity = get_input()->get_primary_entity();
-    const std::vector<base::xvaction_t> & actions = primary_input_entity->get_actions();
-    for (auto & action : actions) {
-        if ((base::enum_transaction_subtype)action.get_org_tx_action_id() == base::enum_transaction_subtype_send) {
-            xtransaction_ptr_t raw_tx = query_raw_transaction(action.get_org_tx_hash());
-            xassert(raw_tx != nullptr);
-            xcons_transaction_ptr_t cons_tx = create_txreceipt(raw_tx.get(), action);
-            sendtx_receipts.push_back(cons_tx);
-        } else if ((base::enum_transaction_subtype)action.get_org_tx_action_id() == base::enum_transaction_subtype_recv) {
-            xtransaction_ptr_t raw_tx = query_raw_transaction(action.get_org_tx_hash());
-            xassert(raw_tx != nullptr);
-            xcons_transaction_ptr_t cons_tx = create_txreceipt(raw_tx.get(), action);
-            recvtx_receipts.push_back(cons_tx);
-        }
-    }
 }
 
 const std::vector<xlightunit_tx_info_ptr_t> & xlightunit_block_t::get_txs() const {
@@ -182,10 +117,12 @@ void xlightunit_block_t::try_load_body() const {
 }
 
 uint32_t xlightunit_block_t::get_unconfirm_sendtx_num() const {
-    // TODO(jimmy)
-    std::string unconfirm_tx_num_str = get_input()->query_resource(xlightunit_block_t::unconfirm_tx_num_name());
-    if (!unconfirm_tx_num_str.empty()) {
-        return base::xstring_utl::touint32(unconfirm_tx_num_str);
+    base::xvoutentity_t* outentity = get_output()->get_primary_entity();
+    if (outentity != nullptr) {
+        std::string unconfirm_tx_num_str = outentity->query_value(base::xvoutentity_t::key_name_unconfirm_tx_count());
+        if (!unconfirm_tx_num_str.empty()) {
+            return base::xstring_utl::touint32(unconfirm_tx_num_str);
+        }
     }
     xassert(false);
     return 0;

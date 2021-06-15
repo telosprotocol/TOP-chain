@@ -1212,12 +1212,20 @@ namespace top
         
         const std::string xvoutput_t::get_binlog()
         {
+            std::string binlog_hash = get_binlog_hash();
+            const std::string binlog = query_resource(binlog_hash);
+            return binlog;
+        }
+        
+        const std::string xvoutput_t::get_full_state()
+        {
             if (!m_offblock_snapshot.empty())
             {
                 return m_offblock_snapshot;
             }
-            const std::string binlog = query_resource(xvoutput_t::res_binlog_key_name());
-            return binlog;
+            std::string state_hash = get_state_hash();
+            const std::string full_state = query_resource(state_hash);
+            return full_state;
         }
         
         base::xvoutentity_t* xvoutput_t::get_primary_entity() const

@@ -342,11 +342,13 @@ namespace top
             //create it first
             m_input_resource  = new xstrmap_t();
             m_output_resource = new xstrmap_t();
+            m_primary_output_entity = new base::xvoutentity_t();
         }
         xvblockmaker_t::xvblockmaker_t(base::xvheader_t* header) {
             set_header(header);
             m_input_resource  = new xstrmap_t();
             m_output_resource = new xstrmap_t();
+            m_primary_output_entity = new base::xvoutentity_t();
         }
         xvblockmaker_t::xvblockmaker_t(base::xvheader_t* header, base::xvinput_t* input, base::xvoutput_t* output) {
             set_header(header);
@@ -354,6 +356,7 @@ namespace top
             set_output(output);
             m_input_resource  = new xstrmap_t();
             m_output_resource = new xstrmap_t();
+            m_primary_output_entity = new base::xvoutentity_t();
         }
         xvblockmaker_t::~xvblockmaker_t() {
             if (m_input_resource != nullptr) {
@@ -383,26 +386,24 @@ namespace top
             m_primary_input_entity = new base::xvinentity_t(actions);
             return true;
         }
-        bool xvblockmaker_t::set_output_entity(const std::string & state_bin, const std::string & binlog_bin) {
-            if (m_primary_output_entity != nullptr) {  // only allow init once
+        bool xvblockmaker_t::set_output_entity_state_hash(const std::string & state_bin) {
+            if (get_header()->get_block_class() == base::enum_xvblock_class_nil || state_bin.empty()) {
                 xassert(false);
                 return false;
             }
-            if (get_header()->get_block_class() == base::enum_xvblock_class_nil) {
+            std::string state_hash = base::xcontext_t::instance().hash(state_bin, get_qcert()->get_crypto_hash_type());
+            return set_output_entity(xvoutentity_t::key_name_state_hash(), state_hash);
+        }
+        bool xvblockmaker_t::set_output_entity_binlog_hash(const std::string & binlog_bin) {
+            if (get_header()->get_block_class() == base::enum_xvblock_class_nil || binlog_bin.empty()) {
                 xassert(false);
                 return false;
             }
-
-            std::string state_hash;
-            if (!state_bin.empty()) {
-                state_hash = base::xcontext_t::instance().hash(state_bin, get_qcert()->get_crypto_hash_type());
-            }
-            std::string binlog_hash;
-            if (!binlog_bin.empty()) {
-                binlog_hash = base::xcontext_t::instance().hash(binlog_bin, get_qcert()->get_crypto_hash_type());
-            }
-
-            m_primary_output_entity = new base::xvoutentity_t(state_hash, binlog_hash);
+            std::string binlog_hash = base::xcontext_t::instance().hash(binlog_bin, get_qcert()->get_crypto_hash_type());
+            return set_output_entity(xvoutentity_t::key_name_binlog_hash(), binlog_hash);
+        }
+        bool    xvblockmaker_t::set_output_entity(const std::string & key, const std::string & value) {
+            m_primary_output_entity->set_value(key, value);
             return true;
         }
 
@@ -416,25 +417,63 @@ namespace top
             return true;
         }
         bool    xvblockmaker_t::set_output_resource_state(const std::string & value) {
-            return set_output_resource(xvoutput_t::res_binlog_key_name(), value);  // TODO(jimmy) state key same with binlog key
+            if (value.empty()) {
+                xassert(false);
+                return false;
+            }
+            std::string state_hash = base::xcontext_t::instance().hash(value, get_qcert()->get_crypto_hash_type());
+            xassert(state_hash == get_output_entity()->get_state_hash());  // should set state hash firstly
+            return set_output_resource(state_hash, value);
         }
         bool    xvblockmaker_t::set_output_resource_binlog(const std::string & value) {
-            return set_output_resource(xvoutput_t::res_binlog_key_name(), value);
+            if (value.empty()) {
+                xassert(false);
+                return false;
+            }
+            std::string binlog_hash = base::xcontext_t::instance().hash(value, get_qcert()->get_crypto_hash_type());
+            xassert(binlog_hash == get_output_entity()->get_binlog_hash());  // should set binlog hash firstly
+            return set_output_resource(binlog_hash, value);
+        }
+
+        bool  xvblockmaker_t::merge_input_resource(const xstrmap_t * src_map) {
+            if(NULL == src_map)
+                return false;
+
+            //combine resource of input
+            get_input_resource()->merge(*src_map);
+            return true;
+        }
+
+        bool  xvblockmaker_t::merge_output_resource(const xstrmap_t * src_map) {
+            if(NULL == src_map)
+                return false;
+
+            //combine resource of output
+            get_output_resource()->merge(*src_map);
+            return true;
         }
 
         std::vector<std::string> xvblockmaker_t::get_input_merkle_leafs(xvinput_t* input) {
-            const std::vector<xvaction_t> & actions = input->get_primary_entity()->get_actions();
-            if (actions.empty()) {
-                return {};
-            }
+            // input root = merkle(all input actions of all entitys)
             std::vector<std::string> leafs;
-            for (auto & it : actions) {
-                std::string action_bin;
-                it.serialize_to(action_bin);
-                xassert(!action_bin.empty());
-                leafs.push_back(action_bin);
-                // TODO(jimmy) need calc hash as leaf
+            auto & all_entitys = input->get_entitys();
+            for (auto & entity : all_entitys) {
+                // it must be xinentitys
+                xvinentity_t* _inentity = dynamic_cast<xvinentity_t*>(entity);
+                if (_inentity == nullptr) {
+                    xassert(false);
+                    return {};
+                }
+                auto & all_actions = _inentity->get_actions();
+                for (auto & action : all_actions) {
+                    std::string action_bin;
+                    action.serialize_to(action_bin);
+                    if (!action_bin.empty()) {
+                        leafs.push_back(action_bin);  // TODO(jimmy) need calc hash as leaf
+                    }
+                }
             }
+
             return leafs;
         }
 
@@ -448,6 +487,12 @@ namespace top
             int index = static_cast<int>(std::distance(leafs.begin(), iter));
             xmerkle_t<utl::xsha2_256_t, uint256_t> merkle;
             return merkle.calc_path(leafs, index, hash_path.get_levels_for_write());
+        }
+
+        bool xvblockmaker_t::calc_merkle_path(const std::vector<std::string> & leafs, const xvaction_t & leaf, xmerkle_path_256_t& hash_path) {
+            std::string action_bin;
+            leaf.serialize_to(action_bin);
+            return calc_merkle_path(leafs, action_bin, hash_path);
         }
 
         bool xvblockmaker_t::calc_input_merkle_path(xvinput_t* input, const std::string & leaf, xmerkle_path_256_t& hash_path) {
@@ -579,9 +624,17 @@ namespace top
                 get_block()->dump().c_str(),get_block()->detail_dump().c_str());
 #endif
 
-            xdbg_info("xvblockmaker_t::build_new_block,done for block=%s,input={entitys=%zu,actions=%zu},output={entitys=%zu}",
+            xdbg_info("xvblockmaker_t::build_new_block,done for block=%s,input={entitys=%zu,actions=%zu,res=%zu},output={entitys=%zu,res=%zu,binlog=%zu,%zu,state=%zu,%zu}",
                 get_block()->dump().c_str(), get_block()->get_input()->get_entitys().size(),
-                get_block()->get_input()->get_action_count(), get_block()->get_output()->get_entitys().size());
+                get_block()->get_input()->get_action_count(), get_block()->get_input()->get_resources_data().size(),
+                get_block()->get_output()->get_entitys().size(), get_block()->get_output()->get_resources_data().size(),
+                get_block()->get_output()->get_binlog_hash().size(), get_block()->get_output()->get_binlog().size(),
+                get_block()->get_output()->get_state_hash().size(), get_block()->get_output()->get_full_state().size());
+            if (get_header()->get_block_class() == base::enum_xvblock_class_light
+                && get_header()->get_block_level() == base::enum_xvblock_level_unit) {
+                xassert(get_output()->get_binlog().size() > 0);
+                xassert(get_block()->get_output()->get_binlog().size() > 0);
+            }
             return _block_ptr;
         }
 
@@ -685,12 +738,8 @@ namespace top
             uint32_t count = (uint32_t)_batch_units.size();
             for (uint32_t index = 0; index < count; index++) {
                 auto & _unit = _batch_units[index];
-
-                xtable_unit_resource_t _unit_res(_unit.get());
-                std::string _res_key = "u" + base::xstring_utl::tostring(index + 1);  // unit index should from 1
-                std::string _res_value;
-                _unit_res.serialize_to_string(_res_value);
-                set_input_resource(_res_key, _res_value);
+                merge_input_resource(_unit->get_input()->get_resources());
+                merge_output_resource(_unit->get_output()->get_resources());
             }
             return true;
         }
@@ -707,20 +756,6 @@ namespace top
         }
         std::string xvtableblock_maker_t::get_table_out_merkle_leaf(base::xvblock_t* _unit) {
             return _unit->get_cert()->get_hash_to_sign();
-        }
-        std::vector<std::string> xvtableblock_maker_t::get_table_in_merkle_leafs(const std::vector<xobject_ptr_t<xvblock_t>> & _batch_units) {
-            // build merkle root. table input root = merkle(all units input root)
-            std::vector<std::string> input_leafs;
-            for (auto & _unit : _batch_units) {
-                std::string leaf = get_table_in_merkle_leaf(_unit.get());
-                if (!leaf.empty()) {
-                    input_leafs.push_back(leaf);
-                }
-            }
-            return input_leafs;
-        }
-        std::string xvtableblock_maker_t::get_table_in_merkle_leaf(base::xvblock_t* _unit) {
-            return _unit->get_input_root_hash();
         }
 
         bool xvtableblock_maker_t::units_set_parent_cert(std::vector<xobject_ptr_t<xvblock_t>> & units, const xvblock_t* parent) {
@@ -807,20 +842,6 @@ namespace top
                 v->release_ref();
             }
             return input_obj;
-        }
-
-        bool xvtableblock_maker_t::make_input_root(xvinput_t* input_obj) {
-            // table input root = merkle(all units input root)
-            std::vector<std::string> input_leafs = get_table_in_merkle_leafs(get_batch_units());
-            if (!input_leafs.empty()) {
-                std::string root_hash = build_mpt_root(input_leafs);
-                if (root_hash.empty()) {
-                    xassert(false);
-                    return false;
-                }
-                input_obj->set_root_hash(root_hash);
-            }
-            return true;
         }
 
         xauto_ptr<xvoutput_t> xvtableblock_maker_t::make_output() {

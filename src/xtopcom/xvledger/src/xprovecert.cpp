@@ -4,9 +4,7 @@
 
 #include <string>
 
-#include "xvledger/xvblock.h"
 #include "xvledger/xprovecert.h"
-#include "xutility/xhash.h"
 #include "xmetrics/xmetrics.h"
 
 namespace top
@@ -16,21 +14,11 @@ namespace top
         xprove_cert_t::xprove_cert_t() {
             XMETRICS_GAUGE(metrics::dataobject_provcert, 1);
         }
-        xprove_cert_t::xprove_cert_t(base::xvqcert_t* prove_cert, xprove_cert_class_t _class, xprove_cert_type_t _type, const base::xmerkle_path_256_t & _path) {
+        xprove_cert_t::xprove_cert_t(base::xvqcert_t* prove_cert, enum_xprove_cert_type prove_type, const std::string & _path) {
             XMETRICS_GAUGE(metrics::dataobject_provcert, 1);
             m_prove_cert = prove_cert;
             m_prove_cert->add_ref();
-            set_prove_class(_class);
-            set_prove_type(_type);
-            set_prove_path(_path);
-        }
-
-        xprove_cert_t::xprove_cert_t(base::xvqcert_t* prove_cert, xprove_cert_class_t _class, xprove_cert_type_t _type, const std::string & _path) {
-            XMETRICS_GAUGE(metrics::dataobject_provcert, 1);
-            m_prove_cert = prove_cert;
-            m_prove_cert->add_ref();
-            set_prove_class(_class);
-            set_prove_type(_type);
+            m_prove_type =  prove_type;
             m_prove_path = _path;
         }
 
@@ -45,8 +33,9 @@ namespace top
             const int32_t begin_size = stream.size();
             std::string prove_cert_bin;
             xassert(m_prove_cert != nullptr);
-            m_prove_cert->serialize_to_string(prove_cert_bin);
-            xassert(!prove_cert_bin.empty());
+            if (m_prove_cert != nullptr) {
+                m_prove_cert->serialize_to_string(prove_cert_bin);
+            }
             stream << prove_cert_bin;
             stream << m_prove_type;
             stream << m_prove_path;
@@ -66,61 +55,29 @@ namespace top
             return (begin_size - stream.size());
         }
 
-        void xprove_cert_t::set_prove_path(const base::xmerkle_path_256_t & path) {
-            base::xstream_t stream2(base::xcontext_t::instance());
-            path.serialize_to(stream2);
-            m_prove_path = std::string((char *)stream2.data(), stream2.size());
-            xassert(!m_prove_path.empty());
-        }
-
-        bool xprove_cert_t::is_valid(const std::string & prove_object) {
+        bool xprove_cert_t::is_valid() const {
             if (m_prove_cert == nullptr) {
                 xerror("xprove_cert_t::is_valid prove cert null.");
                 return false;
             }
 
-            xprove_cert_class_t cert_class = get_prove_class();
-            if (cert_class != xprove_cert_class_self_cert
-                && cert_class != xprove_cert_class_parent_cert) {
-                xerror("xprove_cert_t::is_valid prove class not valid. class=%d", cert_class);
+            enum_xprove_cert_type _cert_type = get_prove_type();
+            if (_cert_type >=  enum_xprove_cert_type_max) {
+                xerror("xprove_cert_t::is_valid invalid cert type %d.", _cert_type);
                 return false;
             }
+            return true;
+        }
 
+        std::string xprove_cert_t::get_prove_root_hash() const {
             std::string root_hash;
-            xprove_cert_type_t cert_type = get_prove_type();
-            if (cert_type == xprove_cert_type_output_root) {
-                root_hash = m_prove_cert->get_output_root_hash();
-            } else if (cert_type == xprove_cert_type_input_root) {
-                root_hash = m_prove_cert->get_input_root_hash();
-            } else if (cert_type == xprove_cert_type_justify_cert) {
+            enum_xprove_cert_type cert_type = get_prove_type();
+            if (cert_type == enum_xprove_cert_type_unit_justify || cert_type == enum_xprove_cert_type_table_justify) {
                 root_hash = m_prove_cert->get_justify_cert_hash();
             } else {
                 xerror("xprove_cert_t::is_valid prove type not valid. type=%d", cert_type);
-                return false;
             }
-            xassert(!root_hash.empty());
-
-            if (!m_prove_path.empty()) {
-                base::xmerkle_path_256_t path;
-                base::xstream_t _stream(base::xcontext_t::instance(), (uint8_t *)m_prove_path.data(), (uint32_t)m_prove_path.size());
-                int32_t ret = path.serialize_from(_stream);
-                if (ret <= 0) {
-                    xerror("xprove_cert_t::is_valid deserialize merkle path fail. ret=%d", ret);
-                    return false;
-                }
-                base::xmerkle_t<utl::xsha2_256_t, uint256_t> merkle;
-                if (!merkle.validate_path(prove_object, root_hash, path.get_levels())) {
-                    xerror("xprove_cert_t::is_valid check merkle path fail.");
-                    return false;
-                }
-            } else {
-                if (prove_object != root_hash) {
-                    xerror("xprove_cert_t::is_valid check prove object not equal with root fail");
-                    return false;
-                }
-            }
-
-            return true;
+            return root_hash;
         }
 
     }  // namespace base
