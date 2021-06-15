@@ -19,18 +19,22 @@ bool xreceipt_strategy_t::is_time_for_recover_unconfirmed_txs(uint64_t now) {
     return (now % recover_unconfirmed_txs_interval) == 0;
 }
 
-std::vector<data::xcons_transaction_ptr_t> xreceipt_strategy_t::make_receipts(data::xblock_t * block) {
-    if (!block->is_lighttable() || !block->check_block_flag(base::enum_xvblock_flag_committed)) {
-        xinfo("xreceipt_strategy_t::make_receipts block:%s", block->dump().c_str());
+std::vector<data::xcons_transaction_ptr_t> xreceipt_strategy_t::make_receipts(base::xvblock_t* commit_block, base::xvblock_t* cert_block) {
+    if (!commit_block->check_block_flag(base::enum_xvblock_flag_committed)) {
+        xerror("xreceipt_strategy_t::make_receipts block:%s", commit_block->dump().c_str());
         return {};
     }
 
-    data::xtable_block_t * tableblock = dynamic_cast<data::xtable_block_t *>(block);
-    std::vector<data::xcons_transaction_ptr_t> sendtx_receipts;
-    std::vector<data::xcons_transaction_ptr_t> recvtx_receipts;
-    tableblock->create_txreceipts(sendtx_receipts, recvtx_receipts);
-    sendtx_receipts.insert(sendtx_receipts.end(), recvtx_receipts.begin(), recvtx_receipts.end());
-    return sendtx_receipts;
+    std::vector<data::xcons_transaction_ptr_t> all_cons_txs;
+    std::vector<base::xfull_txreceipt_t> all_receipts = base::xtxreceipt_build_t::create_all_txreceipts(commit_block, cert_block);
+    for (auto & receipt : all_receipts) {
+        data::xcons_transaction_ptr_t constx = make_object_ptr<data::xcons_transaction_t>(receipt);
+        all_cons_txs.push_back(constx);
+        xassert(constx->is_recv_tx() || constx->is_confirm_tx());
+    }
+
+    xdbg("xreceipt_strategy_t::make_receipts,block=%s,receipts=%zu", commit_block->dump().c_str(), all_cons_txs.size());
+    return all_cons_txs;
 }
 
 bool xreceipt_strategy_t::is_resend_node_for_talbe(uint64_t now, uint32_t table_id, uint16_t shard_size, uint16_t self_node_id) {

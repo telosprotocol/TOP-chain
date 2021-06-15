@@ -86,10 +86,6 @@ class xlightunit_block_t : public xblock_t {
 
  public:  // lightunit special apis
     virtual     std::string     dump_body() const;
-    void                        create_txreceipts(std::vector<xcons_transaction_ptr_t> & sendtx_receipts, std::vector<xcons_transaction_ptr_t> & recvtx_receipts);
-    void                        create_send_txreceipts(std::vector<xcons_transaction_ptr_t> & sendtx_receipts);
-    xcons_transaction_ptr_t     create_one_txreceipt(const xtransaction_t* tx);
-
  public:  // override base block api
     bool                        extract_sub_txs(std::vector<base::xvtxindex_ptr> & sub_txs) override;
     const std::vector<xlightunit_tx_info_ptr_t> &   get_txs() const override;
@@ -100,7 +96,6 @@ class xlightunit_block_t : public xblock_t {
     void                        try_load_body() const;
     void                        load_body() const;
     const xlightunit_body_t &   get_lightunit_body() const;
-    xcons_transaction_ptr_t     create_txreceipt(const xtransaction_t* tx, const base::xvaction_t & txinfo);
     xtransaction_ptr_t          query_raw_transaction(const std::string & txhash) const;
 
  private:

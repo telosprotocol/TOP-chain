@@ -60,7 +60,6 @@ private:
     void on_message_receipts_received(vnetwork::xvnode_address_t const & sender, vnetwork::xmessage_t const & message);
     void check_and_response_recv_receipt(const xcons_transaction_ptr_t & cons_tx);
     void auditor_forward_receipt_to_shard(const xcons_transaction_ptr_t & cons_tx, vnetwork::xmessage_t const & message);
-    bool set_commit_prove(data::xcons_transaction_ptr_t & cons_tx);
     void send_receipt_real(const data::xcons_transaction_ptr_t & cons_tx);
     bool has_receipt_right(const xcons_transaction_ptr_t & cons_tx, uint32_t resend_time) const;
     void forward_broadcast_message(const vnetwork::xvnode_address_t & addr, const vnetwork::xmessage_t & message);

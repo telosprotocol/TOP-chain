@@ -54,7 +54,8 @@ base::xvblock_t*   xblocktool_t::create_genesis_lightunit(const std::string & ac
 
     std::string property_binlog;
     canvas->encode(property_binlog);
-
+    std::string fullstate_bin;
+    bstate->take_snapshot(fullstate_bin);
     // TODO(jimmy) block builder class
     xinfo("xlightunit_builder_t::build_block account=%s,height=0,binlog_size=%zu",
         account.c_str(), property_binlog.size());
@@ -63,6 +64,7 @@ base::xvblock_t*   xblocktool_t::create_genesis_lightunit(const std::string & ac
     xlightunit_block_para_t bodypara;
     bodypara.set_one_input_tx(cons_tx);
     bodypara.set_binlog(property_binlog);
+    bodypara.set_fullstate_bin(fullstate_bin);
     xlightunit_build_t bbuild(account, bodypara);
     base::xauto_ptr<base::xvblock_t> _new_block = bbuild.build_new_block();
     _new_block->add_ref();
@@ -76,6 +78,7 @@ base::xvblock_t * xblocktool_t::create_genesis_lightunit(const std::string & acc
     xlightunit_block_para_t bodypara;
     bodypara.set_one_input_tx(cons_tx);
     bodypara.set_binlog(result.get_property_binlog());
+    bodypara.set_fullstate_bin(result.m_full_state);
     xlightunit_build_t bbuild(account, bodypara);
     base::xauto_ptr<base::xvblock_t> _new_block = bbuild.build_new_block();
     _new_block->add_ref();

@@ -844,7 +844,7 @@ void xsync_handler_t::handle_chain_snapshot_request(
         if (full_block_ptr != nullptr) {
             // it must be full-table block now
             if (base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_full_block_offsnapshot(blk.get())) {
-                std::string property_snapshot = blk->get_output()->get_binlog();
+                std::string property_snapshot = blk->get_output()->get_full_state();
                 xsync_message_chain_snapshot_t chain_snapshot(ptr->m_account_addr,
                     property_snapshot, ptr->m_height_of_fullblock);
                 m_sync_sender->send_chain_snapshot(chain_snapshot, xmessage_id_sync_chain_snapshot_response, network_self, from_address);

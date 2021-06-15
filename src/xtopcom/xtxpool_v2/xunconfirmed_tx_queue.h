@@ -19,7 +19,7 @@ NS_BEG2(top, xtxpool_v2)
 class xunconfirmed_tx_comp {
 public:
     bool operator()(const xcons_transaction_ptr_t left, const xcons_transaction_ptr_t right) const {
-        return left->get_unit_cert()->get_gmtime() < right->get_unit_cert()->get_gmtime();
+        return left->get_receipt_gmtime() < right->get_receipt_gmtime();
     }
 };
 
