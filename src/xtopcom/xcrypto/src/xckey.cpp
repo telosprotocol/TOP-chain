@@ -195,7 +195,7 @@ namespace top
             bool ret = base::xvaccount_t::get_type_and_ledgerid_from_account(addr_type, ledger_id, m_account_address);
             if (ret) {
                 if (addr_type == base::enum_vaccount_addr_type_secp256k1_eth_user_account)
-                    return true;
+                    return is_eth_valid();
                 std::string public_address;
                 ret =  base::xvaccount_t::get_public_address_from_account(m_account_address, public_address);
                 if (ret) {
@@ -210,7 +210,19 @@ namespace top
             }
             return ret;
         }
-
+        bool  xkeyaddress_t::is_eth_valid()
+        {
+            std::string public_address;
+            bool ret = base::xvaccount_t::get_public_address_from_account(m_account_address, public_address);
+            if (ret)
+            {
+                if (public_address.size() == 40)
+                    return true;
+                else
+                    return false;
+            }
+            return ret;
+        }
         bool   xkeyaddress_t::get_type(uint8_t& addr_type) {
             uint16_t net_id;
             return get_type_and_netid(addr_type, net_id);
