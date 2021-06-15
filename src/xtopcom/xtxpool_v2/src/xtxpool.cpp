@@ -30,13 +30,69 @@ int32_t xtxpool_t::push_send_tx(const std::shared_ptr<xtx_entry> & tx) {
     return table->push_send_tx(tx);
 }
 
-int32_t xtxpool_t::push_receipt(const std::shared_ptr<xtx_entry> & tx, bool is_self_send) {
+int32_t xtxpool_t::push_receipt(const std::shared_ptr<xtx_entry> & tx, bool is_self_send, bool is_pulled) {
     XMETRICS_TIME_RECORD("txpool_message_unit_receipt_push_receipt");
     auto table = get_txpool_table_by_addr(tx->get_tx()->get_account_addr());
     if (table == nullptr) {
         return xtxpool_error_account_not_in_charge;
     }
-    return table->push_receipt(tx, is_self_send);
+    auto ret = table->push_receipt(tx, is_self_send);
+
+    if (ret == xsuccess) {
+        if (tx->get_tx()->is_recv_tx()) {
+            if (is_pulled) {
+                m_pulled_recv_tx_num++;
+            } else {
+                m_received_recv_tx_num++;
+            }
+        } else {
+            if (is_pulled) {
+                m_pulled_confirm_tx_num++;
+            } else {
+                m_received_confirm_tx_num++;
+            }
+        }
+    }
+
+    uint64_t now = xverifier::xtx_utl::get_gmttime_s();
+    uint64_t tx_time = tx->get_tx()->get_receipt_gmtime();
+    xtxpool_dbg("xtxpool_t::push_receipt now:%llu tx_time:%llu tx:%s", now, tx_time, tx->get_tx()->dump(true).c_str());
+    if (now < tx_time) {
+        xtxpool_warn("xtxpool_t::push_receipt time not fit with other nodes,now:%llu tx_time:%llu", now, tx_time);
+        m_receipt_recv_num_by_1_clock++;
+    } else if (now - tx_time < 10) {
+        m_receipt_recv_num_by_1_clock++;
+    } else if (now - tx_time < 20) {
+        m_receipt_recv_num_by_2_clock++;
+    } else if (now - tx_time < 30) {
+        m_receipt_recv_num_by_3_clock++;
+    } else if (now - tx_time < 40) {
+        m_receipt_recv_num_by_4_clock++;
+    } else if (now - tx_time < 50) {
+        m_receipt_recv_num_by_5_clock++;
+    } else if (now - tx_time < 60) {
+        m_receipt_recv_num_by_6_clock++;
+    } else {
+        m_receipt_recv_num_exceed_6_clock++;
+    }
+    return ret;
+}
+
+void xtxpool_t::print_statistic_values() const {
+    xtxpool_info("xtxpool_t::print_statistic_values table num:%u unconfirm num:%d received recv:%u conf:%u pulled recv:%u conf:%u num by clock:%u:%u:%u:%u:%u:%u:%u",
+                 m_table_num.load(),
+                 m_unconfirm_tx_num.load(),
+                 m_received_recv_tx_num.load(),
+                 m_received_confirm_tx_num.load(),
+                 m_pulled_recv_tx_num.load(),
+                 m_pulled_confirm_tx_num.load(),
+                 m_receipt_recv_num_by_1_clock.load(),
+                 m_receipt_recv_num_by_2_clock.load(),
+                 m_receipt_recv_num_by_3_clock.load(),
+                 m_receipt_recv_num_by_4_clock.load(),
+                 m_receipt_recv_num_by_5_clock.load(),
+                 m_receipt_recv_num_by_6_clock.load(),
+                 m_receipt_recv_num_exceed_6_clock.load());
 }
 
 const xcons_transaction_ptr_t xtxpool_t::pop_tx(const tx_info_t & txinfo) {
@@ -106,6 +162,7 @@ void xtxpool_t::subscribe_tables(uint8_t zone, uint16_t front_table_id, uint16_t
         std::string table_addr = data::xblocktool_t::make_address_table_account((base::enum_xchain_zone_index)zone, i);
         m_tables[zone][i] = std::make_shared<xtxpool_table_t>(m_para.get(), table_addr, shard.get());
     }
+    m_table_num += (back_table_id - front_table_id + 1);
     shard->subscribe();
 }
 
@@ -122,6 +179,7 @@ void xtxpool_t::unsubscribe_tables(uint8_t zone, uint16_t front_table_id, uint16
                 for (uint16_t i = front_table_id; i <= back_table_id; i++) {
                     m_tables[zone][i] = nullptr;
                 }
+                m_table_num -= (back_table_id - front_table_id + 1);
             }
             m_shards.erase(it);
             break;
@@ -208,7 +266,9 @@ void xtxpool_t::update_table_state(const data::xtablestate_ptr_t & table_state) 
     if (table == nullptr) {
         return;
     }
-    return table->update_receiptid_state(table_state->get_receiptid_state());
+    int32_t increase_unconfirm_tx_num = table->update_receiptid_state(table_state->get_receiptid_state());
+
+    m_unconfirm_tx_num += increase_unconfirm_tx_num;
 }
 
 xcons_transaction_ptr_t xtxpool_t::get_unconfirmed_tx(const std::string & from_table_addr, const std::string & to_table_addr, uint64_t receipt_id) const {

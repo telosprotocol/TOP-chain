@@ -253,7 +253,7 @@ const xcons_transaction_ptr_t xunconfirmed_account_t::find(const uint256_t & has
 
 xunconfirmed_tx_queue_t::~xunconfirmed_tx_queue_t() {
     uint32_t num = size();
-    XMETRICS_COUNTER_DECREMENT("txpool_unconfirm_txs_num", num);
+    XMETRICS_COUNTER_DECREMENT("txpool_unconfirm_txs_cache_num", num);
     // XMETRICS_COUNTER_SET("table_unconfirm_txs_num" + m_xtable_info.get_table_addr(), num);
 }
 

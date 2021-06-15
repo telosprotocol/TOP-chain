@@ -34,20 +34,31 @@ public:
         xassert(m_conf_tx_count >= 0);
         m_conf_tx_count += count;
     }
-    uint32_t get_send_tx_count() const {
+    void unconfirm_tx_inc(int32_t count) {
+        xassert(m_unconfirm_tx_count >= 0);
+        m_unconfirm_tx_count += count;
+    }
+    void set_unconfirm_tx_num(uint32_t num) {
+        m_unconfirm_tx_count = num;
+    }
+    int32_t get_send_tx_count() const {
         return m_send_tx_count;
     }
-    uint32_t get_recv_tx_count() const {
+    int32_t get_recv_tx_count() const {
         return m_recv_tx_count;
     }
-    uint32_t get_conf_tx_count() const {
+    int32_t get_conf_tx_count() const {
         return m_conf_tx_count;
+    }
+    int32_t get_unconfirm_tx_count() const {
+        return m_unconfirm_tx_count;
     }
 
 private:
-    std::atomic<uint32_t> m_send_tx_count{0};
-    std::atomic<uint32_t> m_recv_tx_count{0};
-    std::atomic<uint32_t> m_conf_tx_count{0};
+    std::atomic<int32_t> m_send_tx_count{0};
+    std::atomic<int32_t> m_recv_tx_count{0};
+    std::atomic<int32_t> m_conf_tx_count{0};
+    std::atomic<int32_t> m_unconfirm_tx_count{0};
 };
 
 class xtxpool_shard_info_t : public xtx_counter_t {
@@ -193,6 +204,16 @@ public:
             return true;
         }
         return false;
+    }
+
+    void set_unconfirm_tx_num(int32_t num) {
+        int32_t old_num = m_counter.get_unconfirm_tx_count();
+        m_shard->unconfirm_tx_inc(num - old_num);
+        m_counter.set_unconfirm_tx_num(num);
+    }
+
+    int32_t get_unconfirm_tx_num() const {
+        return m_counter.get_unconfirm_tx_count();
     }
 
 private:

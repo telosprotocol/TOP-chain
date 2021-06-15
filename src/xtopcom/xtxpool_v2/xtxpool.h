@@ -24,7 +24,7 @@ public:
     xtxpool_t(const std::shared_ptr<xtxpool_resources_face> & para);
 
     int32_t push_send_tx(const std::shared_ptr<xtx_entry> & tx) override;
-    int32_t push_receipt(const std::shared_ptr<xtx_entry> & tx, bool is_self_send) override;
+    int32_t push_receipt(const std::shared_ptr<xtx_entry> & tx, bool is_self_send, bool is_pulled) override;
     const xcons_transaction_ptr_t pop_tx(const tx_info_t & txinfo) override;
     ready_accounts_t get_ready_accounts(const xtxs_pack_para_t & pack_para) override;
     std::vector<xcons_transaction_ptr_t> get_ready_txs(const xtxs_pack_para_t & pack_para) override;
@@ -45,6 +45,7 @@ public:
     const std::vector<xtxpool_table_lacking_receipt_ids_t> get_lacking_recv_tx_ids(uint8_t zone, uint16_t subaddr, uint32_t max_num) const override;
     const std::vector<xtxpool_table_lacking_confirm_tx_hashs_t> get_lacking_confirm_tx_hashs(uint8_t zone, uint16_t subaddr, uint32_t max_num) const override;
     bool need_sync_lacking_receipts(uint8_t zone, uint16_t subaddr) const override;
+    void print_statistic_values() const override;
 
 private:
     bool is_table_subscribed(uint8_t zone, uint16_t table_id) const;
@@ -55,6 +56,20 @@ private:
     std::vector<std::shared_ptr<xtxpool_shard_info_t>> m_shards;
     std::shared_ptr<xtxpool_resources_face> m_para;
     mutable std::mutex m_mutex[enum_xtxpool_table_type_max];
+    std::atomic<uint32_t> m_table_num{0};
+    std::atomic<int32_t> m_unconfirm_tx_num{0};
+    std::atomic<uint32_t> m_received_recv_tx_num{0};
+    std::atomic<uint32_t> m_received_confirm_tx_num{0};
+    std::atomic<uint32_t> m_pulled_recv_tx_num{0};
+    std::atomic<uint32_t> m_pulled_confirm_tx_num{0};
+    std::atomic<uint32_t> m_receipt_recv_num_by_1_clock{0};
+    std::atomic<uint32_t> m_receipt_recv_num_by_2_clock{0};
+    std::atomic<uint32_t> m_receipt_recv_num_by_3_clock{0};
+    std::atomic<uint32_t> m_receipt_recv_num_by_4_clock{0};
+    std::atomic<uint32_t> m_receipt_recv_num_by_5_clock{0};
+    std::atomic<uint32_t> m_receipt_recv_num_by_6_clock{0};
+    std::atomic<uint32_t> m_receipt_recv_num_exceed_6_clock{0};
+    
 };
 
 }  // namespace xtxpool_v2
