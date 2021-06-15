@@ -32,7 +32,7 @@ namespace top
         private:
             std::recursive_mutex &  m_mutex;
         };
-    
+
         //note: layers for store :  [xvblock-store] --> [xstore] -->[xdb]
         class xvblockstore_impl : public base::xvblockstore_t,public base::xtimersink_t
         {
@@ -85,8 +85,6 @@ namespace top
 
             virtual bool                load_block_input(const base::xvaccount_t & account,base::xvblock_t* block) override;
             virtual bool                load_block_output(const base::xvaccount_t & account,base::xvblock_t* block) override;
-            //load xvboffdata_t and set into xvblock_t
-            virtual bool                load_block_offdata(const base::xvaccount_t & account,base::xvblock_t* block) override;
             virtual bool                load_block_flags(const base::xvaccount_t & account,base::xvblock_t* block) override;//update block'flags
 
             virtual bool                store_block(const base::xvaccount_t & account,base::xvblock_t* block) override;
@@ -126,14 +124,14 @@ namespace top
 
         protected:
             bool    get_block_account(base::xvtable_t * target_table,const std::string & account_address,auto_xblockacct_ptr & inout_account_obj);
-            
+
             base::xvblock_t *            load_block_from_index(xblockacct_t* target_account, base::xauto_ptr<base::xvbindex_t> target_index,const uint64_t target_height,bool ask_full_load);
 
             //store table/book blocks if they are
             bool                        store_block(base::xauto_ptr<xblockacct_t> & container_account,base::xvblock_t * container_block,bool execute_block = true);
 
             bool                        store_block_but_not_execute(const base::xvaccount_t & account,base::xvblock_t* block);
-            
+
             //a full path to load vblock could be  get_store_path()/create_object_path()/xvblock_t::name()
             virtual std::string          get_store_path() const override {return m_store_path;}//each store may has own space at DB/disk
 

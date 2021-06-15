@@ -147,7 +147,6 @@ namespace top
             {
                 target_account->load_index_input(target_index.get());
                 target_account->load_index_output(target_index.get());
-                //target_account->load_index_offdata(target_index.get());
             }
             if(target_index->get_this_block() != NULL)
             {
@@ -374,18 +373,6 @@ namespace top
             return account_obj->load_block_output(block);//XTODO,add logic to extract from tabeblock
         }
 
-        //load xvboffdata_t and set into xvblock_t
-        bool                xvblockstore_impl::load_block_offdata(const base::xvaccount_t & account,base::xvblock_t* block)
-        {
-            if( (nullptr == block) || (account.get_account() != block->get_account()) )
-            {
-                xerror("xvblockstore_impl::load_block_offdata,block NOT match account:%",account.get_account().c_str());
-                return false;
-            }
-            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
-            return account_obj->load_block_offdata(block);//XTODO,add logic to extract from tabeblock
-        }
-
         bool                xvblockstore_impl::load_block_flags(const base::xvaccount_t & account,base::xvblock_t* block)//update block'flags
         {
             if( (nullptr == block) || (account.get_account() != block->get_account()) )
@@ -400,7 +387,7 @@ namespace top
         bool    xvblockstore_impl::store_block(base::xauto_ptr<xblockacct_t> & container_account,base::xvblock_t * container_block,bool execute_block) //store table/book blocks if they are
         {
             xdbg("jimmy xvblockstore_impl::store_block enter,store block(%s)", container_block->dump().c_str());
-            
+
             //then try extract for container if that is
             if(  (container_block->get_block_class() == base::enum_xvblock_class_light) //skip nil block
                &&(container_block->get_block_level() == base::enum_xvblock_level_table) )
@@ -416,7 +403,7 @@ namespace top
                         }
                     }
                 }
-                
+
                 if((container_block->get_block_flags() & base::enum_xvblock_flag_unpacked) == 0) //unpacked yet
                 {
                     //XTODO index add flag to avoiding repeat unpack unit
@@ -461,7 +448,7 @@ namespace top
                     }
                 }
             }
-            
+
             //move clean logic here to reduce risk of reenter process that might clean up some index too early
             container_account->clean_caches(false);
             //then do sotre block
@@ -476,7 +463,7 @@ namespace top
             {
                 container_account->try_execute_all_block(container_block);  // try to push execute block, ignore store result
             }
-            
+
             return true; //still return true since tableblock has been stored successful
         }
 
@@ -511,7 +498,7 @@ namespace top
             }
             return false;
         }
-    
+
         bool                xvblockstore_impl::store_blocks(const base::xvaccount_t & account,std::vector<base::xvblock_t*> & batch_store_blocks)
         {
             if(batch_store_blocks.empty())
@@ -736,7 +723,7 @@ namespace top
                     {
                         fore_close = true;
                     }
-                    
+
                     if(fore_close) //force to remove most less-active account while too much caches
                     {
                         base::xauto_ptr<base::xvaccountobj_t> target_account_container = base::xvchain_t::instance().get_account(*_test_for_plugin);

@@ -36,7 +36,6 @@ enum E_SIMPLE_METRICS_TAG {
     dataobject_xvexecontxt,
     dataobject_xaccount_index,
     dataobject_xreceiptid_pair_t,
-    dataobject_xvboffdata_t,
     dataobject_xvbindex_t,
     dataobject_xtransaction_t,
     dataobject_provcert,

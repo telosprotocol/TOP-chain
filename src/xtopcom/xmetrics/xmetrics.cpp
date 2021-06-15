@@ -31,7 +31,6 @@ metrics_variant_ptr e_metrics::s_metrics[e_simple_total] = {
     DECL_METRICS(dataobject_xvexecontxt), // xvexecontxt
     DECL_METRICS(dataobject_xaccount_index), // xvexecontxt
     DECL_METRICS(dataobject_xreceiptid_pair_t), // xreceiptid_pair_t
-    DECL_METRICS(dataobject_xvboffdata_t), // dataobject_xvboffdata_t
     DECL_METRICS(dataobject_xvbindex_t), // dataobject_xvbindex_t
     DECL_METRICS(dataobject_xtransaction_t), // dataobject_xtransaction_t
     DECL_METRICS(dataobject_provcert),

@@ -894,14 +894,10 @@ void get_block_handle::getLatestFullBlock() {
             xfull_tableblock_t* ftp = dynamic_cast<xfull_tableblock_t*>(bp);
             auto root_hash = ftp->get_output()->get_binlog_hash();
             jv["root_hash"] = to_hex_str(root_hash);
-            auto od = ftp->get_offdata();
-            if (od) {
-                std::string empty_binlog;
-                base::xauto_ptr<base::xvbstate_t> bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(bp);
-                data::xtablestate_ptr_t tablestate = bstate != nullptr ? std::make_shared<data::xtable_bstate_t>(bstate.get()) : nullptr;
-                if (tablestate != nullptr) {
-                    jv["account_size"] = static_cast<xJson::UInt64>(tablestate->get_account_size());
-                }
+            base::xauto_ptr<base::xvbstate_t> bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(bp);
+            data::xtablestate_ptr_t tablestate = bstate != nullptr ? std::make_shared<data::xtable_bstate_t>(bstate.get()) : nullptr;
+            if (tablestate != nullptr) {
+                jv["account_size"] = static_cast<xJson::UInt64>(tablestate->get_account_size());
             }
         }
         m_js_rsp["value"] = jv;

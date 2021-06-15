@@ -18,7 +18,7 @@ NS_BEG2(top, xtxpool_v2)
 
 class xreceipt_state_cache_t {
 public:
-    xreceipt_state_cache_t() : m_receiptid_state(make_object_ptr<base::xreceiptid_state_t>()){
+    xreceipt_state_cache_t() : m_receiptid_state(std::make_shared<base::xreceiptid_state_t>()){
     }
     void update(const base::xreceiptid_state_ptr_t & receiptid_state);
     uint64_t get_tx_corresponding_latest_receipt_id(const std::shared_ptr<xtx_entry> & tx) const;

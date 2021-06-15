@@ -27,7 +27,6 @@
 
 #include "xvledger/xvblock.h"
 #include "xvledger/xvblockstore.h"
-#include "xvledger/xvboffdata.h"
 #include "xvledger/xaccountindex.h"
 #include "xvledger/xreceiptid.h"
 #include "xvledger/xmerkle.hpp"
