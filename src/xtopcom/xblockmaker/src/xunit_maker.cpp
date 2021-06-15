@@ -257,6 +257,7 @@ xblock_ptr_t xunit_maker_t::make_next_block(const xunitmaker_para_t & unit_para,
         std::shared_ptr<xlightunit_builder_para_t> lightunit_build_para = std::dynamic_pointer_cast<xlightunit_builder_para_t>(build_para);
         result.m_success_txs = lightunit_build_para->get_origin_txs();
         result.m_fail_txs = lightunit_build_para->get_fail_txs();
+        result.m_tgas_balance_change = lightunit_build_para->get_tgas_balance_change();
         for (auto & tx : lightunit_build_para->get_fail_txs()) {
             xassert(tx->is_self_tx() || tx->is_send_tx());
             xwarn("xunit_maker_t::make_next_block fail-pop send tx. account=%s,tx=%s", get_account().c_str(), tx->dump().c_str());

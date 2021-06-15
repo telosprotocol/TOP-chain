@@ -72,11 +72,6 @@ XINLINE_CONSTEXPR const char * XPROPERTY_LAST_READ_REC_REG_CONTRACT_LOGIC_TIME =
 XINLINE_CONSTEXPR const char * XPORPERTY_CONTRACT_VOTE_REPORT_TIME_KEY = "#145";
 XINLINE_CONSTEXPR const char * XPROPERTY_REWARD_DETAIL = "#146";
 
-// workload related
-XINLINE_CONSTEXPR const char * XPROPERTY_CONTRACT_LAST_READ_TABLE_BLOCK_HEIGHT = "#147";
-XINLINE_CONSTEXPR const char * XPROPERTY_CONTRACT_LAST_READ_TABLE_BLOCK_TIME = "#148";
-XINLINE_CONSTEXPR const char * XPROPERTY_CONTRACT_WORKLOAD_DATA_MIGRATION_FLAG = "#149";
-
 constexpr char const * XTRANSFER_ACTION{"transfer"};
 constexpr char const * XZEC_WORKLOAD_CLEAR_WORKLOAD_ACTION{"clear_workload"};
 constexpr char const * XREWARD_CLAIMING_ADD_NODE_REWARD{"recv_node_reward"};
@@ -324,7 +319,7 @@ public:
      * @return false
      */
     bool is_validator_node() const noexcept {
-        return common::has<common::xrole_type_t::consensus>(m_registered_role) || common::has<common::xrole_type_t::advance>(m_registered_role);
+        return common::has<common::xrole_type_t::validator>(m_registered_role) || common::has<common::xrole_type_t::advance>(m_registered_role);
     }
 
     /**
@@ -421,6 +416,9 @@ public:
      */
     bool archive() const noexcept;
 
+    /// @brief Check if self is a full node. Full node is another kind of archive.
+    bool full_node() const noexcept;
+
     /**
      * @brief get rec stake
      *
@@ -457,6 +455,8 @@ public:
      * @return uint64_t
      */
     uint64_t archive_stake() const noexcept;
+
+    uint64_t full_node_stake() const noexcept;
 
     /**
      * @brief Get role type

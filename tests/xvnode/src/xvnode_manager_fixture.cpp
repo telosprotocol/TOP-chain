@@ -26,8 +26,8 @@ std::shared_ptr<top::vnode::xvnode_face_t> xvnode_factory::create_vnode_at(std::
     case top::common::xnode_type_t::zec:
         return std::make_shared<xdummy_vnode<top::common::xnode_type_t::zec>>(std::move(address));
 
-    case top::common::xnode_type_t::archive:
-        return std::make_shared<xdummy_vnode<top::common::xnode_type_t::archive>>(std::move(address));
+    case top::common::xnode_type_t::storage_archive:
+        return std::make_shared<xdummy_vnode<top::common::xnode_type_t::storage_archive>>(std::move(address));
 
     case top::common::xnode_type_t::edge:
         return std::make_shared<xdummy_vnode<top::common::xnode_type_t::edge>>(std::move(address));

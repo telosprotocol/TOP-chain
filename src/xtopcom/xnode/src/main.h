@@ -37,6 +37,7 @@ struct config_t {
     std::string  node_id;
     uint16_t     cpu_net_interval { 10 }; // monitor cpu and net, default 10s
     std::string  pid_file;
+    std::string  safebox_pid;
     std::string  com_log_path;
     std::string  db_target_path;
     std::string  admin_http_addr   { "127.0.0.1" }; // admin http server
@@ -97,4 +98,4 @@ int StartNodeWithConfig(config_t& config);
 int StartNode(config_t& config);
 int StopNode(config_t& config);
 int ReloadNode(config_t& config);
-int StartNodeSafeBox(const std::string& safebox_addr, uint16_t safebox_port);
+int StartNodeSafeBox(const std::string& safebox_addr, uint16_t safebox_port, std::string const& pid_file);

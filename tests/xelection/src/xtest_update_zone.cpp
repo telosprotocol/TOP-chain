@@ -219,7 +219,7 @@ TEST(xtest_update_archive_zone, _) {
 
     xelection_result_store_t election_result_store;
     auto & group_result = election_result_store.result_of(network_id)
-                                               .result_of(xnode_type_t::archive)
+                                               .result_of(xnode_type_t::storage_archive)
                                                .result_of(cluster_id)
                                                .result_of(group_id);
     group_result.group_version(xversion_t{ 0 });
@@ -231,12 +231,12 @@ TEST(xtest_update_archive_zone, _) {
         xstandby_node_info_t standby_node_info{};
         // standby_node_info.joined_time = 0;
 #if defined XENABLE_TESTS
-        standby_node_info.stake(xnode_type_t::archive, i);
+        standby_node_info.stake(xnode_type_t::storage_archive, i);
 #endif
 #if defined XENABLE_MOCK_ZEC_STAKE
         standby_node_info.user_request_role = top::common::xrole_type_t::advance;
 #endif
-        standby_node_info.consensus_public_key = top::xpublic_key_t{ u8"fake public key" };
+        standby_node_info.consensus_public_key = top::xpublic_key_t{ "fake public key" };
 
         xelection_info_t new_election_info{};
         // new_election_info.standby_info = std::move(standby_node_info);
@@ -329,9 +329,9 @@ TEST(xtest_update_consensus_zone, _) {
         standby_node_info.stake(xnode_type_t::consensus_validator, i);
 #endif
 #if defined XENABLE_MOCK_ZEC_STAKE
-        standby_node_info.user_request_role = top::common::xrole_type_t::consensus;
+        standby_node_info.user_request_role = top::common::xrole_type_t::validator;
 #endif
-        standby_node_info.consensus_public_key = top::xpublic_key_t{ u8"fake public key" };
+        standby_node_info.consensus_public_key = top::xpublic_key_t{ "fake public key" };
 
         xelection_info_t new_election_info{};
         // new_election_info.standby_info = std::move(standby_node_info);

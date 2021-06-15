@@ -125,7 +125,7 @@ bool xtest_zec_elect_consensus_contract_t::check_election_result_XOR() {
 void xtest_zec_elect_consensus_contract_t::cal_group_stake(std::size_t consensus_cluster_size, std::size_t per_validator_group_cnt) {
     std::size_t validator_group_index = common::xvalidator_group_id_value_begin;
     std::size_t auditor_group_index = common::xauditor_group_id_value_begin;
-    
+
     for (std::size_t index = 0; index < consensus_cluster_size; index++) {
         auto auditor_group_id = common::xgroup_id_t{auditor_group_index};
         auto const & auditor_election_group_result = all_election_result_store.at(auditor_group_id)
@@ -313,7 +313,7 @@ bool xtest_zec_elect_consensus_contract_t::test_elect_non_genesis(common::xzone_
     auto const total_group_count = auditor_group_count + validator_group_count;
 
     uint16_t auditor_rotation_num{0};
-    
+
     for (uint16_t index = 0u; (index < auditor_group_count) && (auditor_rotation_num < max_advance_rotation_num); ++index) {
         common::xgroup_id_t auditor_group_id{static_cast<common::xgroup_id_t::value_type>(common::xauditor_group_id_value_begin + index % auditor_group_count)};
         assert(auditor_group_id >= common::xauditor_group_id_begin && auditor_group_id < common::xauditor_group_id_end);
@@ -398,7 +398,7 @@ TEST_F(xtest_zec_elect_consensus_contract_t, count_election_in_times) {
         standby_node_info.comprehensive_stake = 1;
         standby_node_info.stake_container = (200 + index) * 10000;
 #if defined XENABLE_MOCK_ZEC_STAKE
-        standby_node_info.user_request_role = common::xrole_type_t::consensus;
+        standby_node_info.user_request_role = common::xrole_type_t::validator;
 #endif
         add_standby_node(common::xnode_type_t::consensus_validator, node_id, standby_node_info);
     }
@@ -409,7 +409,7 @@ TEST_F(xtest_zec_elect_consensus_contract_t, count_election_in_times) {
         standby_node_info.comprehensive_stake = 1;
         standby_node_info.stake_container = (200 + index) * 10000;
 #if defined XENABLE_MOCK_ZEC_STAKE
-        standby_node_info.user_request_role = common::xrole_type_t::consensus;
+        standby_node_info.user_request_role = common::xrole_type_t::validator;
 #endif
         add_standby_node(common::xnode_type_t::consensus_validator, node_id, standby_node_info);
     }
@@ -423,7 +423,7 @@ TEST_F(xtest_zec_elect_consensus_contract_t, count_election_in_times) {
     common::xgroup_id_t gid1{common::xauditor_group_id_value_begin};
     common::xgroup_id_t gid2{common::xauditor_group_id_value_begin + 1};
     for (std::size_t index = 1; index <= elect_count; ++index) {
-        
+
         std::mt19937_64 rng2(std::chrono::high_resolution_clock::now().time_since_epoch().count());
         auto random_seed2 = static_cast<uint64_t>(rng2());
         common::xlogic_time_t time2{index};
@@ -468,7 +468,7 @@ TEST_F(xtest_zec_elect_consensus_contract_t, count_election_in_times) {
     }
 }
 
-#endif 
+#endif
 
 #if 0
 // this test is to build advance&&validator node in&&out count
@@ -517,7 +517,7 @@ TEST_F(xtest_zec_elect_consensus_contract_t, count_adv_node_election_times) {
         standby_node_info.consensus_public_key = top::xpublic_key_t{std::string{"test_publick_key_"} + std::to_string(index)};
         standby_node_info.stake_container[common::xnode_type_t::consensus_validator] = (begin_stake + index * stake_offset) * stake_mul;
 #if defined XENABLE_MOCK_ZEC_STAKE
-        standby_node_info.user_request_role = common::xrole_type_t::consensus;
+        standby_node_info.user_request_role = common::xrole_type_t::validator;
 #endif
         add_standby_node(common::xnode_type_t::consensus_validator, node_id, standby_node_info);
     }
@@ -527,7 +527,7 @@ TEST_F(xtest_zec_elect_consensus_contract_t, count_adv_node_election_times) {
         standby_node_info.consensus_public_key = top::xpublic_key_t{std::string{"test_publick_key_"} + std::to_string(index)};
         standby_node_info.stake_container[common::xnode_type_t::consensus_validator] = (begin_stake + index * stake_offset) * stake_mul;
 #if defined XENABLE_MOCK_ZEC_STAKE
-        standby_node_info.user_request_role = common::xrole_type_t::consensus;
+        standby_node_info.user_request_role = common::xrole_type_t::validator;
 #endif
         add_standby_node(common::xnode_type_t::consensus_validator, node_id, standby_node_info);
     }

@@ -11,7 +11,7 @@ NS_BEG3(top, tests, vnode)
 class xtop_dummy_txpool : public top::xtxpool_v2::xtxpool_face_t {
 public:
     int32_t push_send_tx(const std::shared_ptr<xtx_entry> & tx) override {return 0;}
-    int32_t push_receipt(const std::shared_ptr<xtx_entry> & tx, bool is_self_send) override {return 0;}
+    int32_t push_receipt(const std::shared_ptr<xtx_entry> & tx, bool is_self_send, bool is_pulled) override {return 0;}
     const xcons_transaction_ptr_t pop_tx(const tx_info_t & txinfo) override {return nullptr;}
     ready_accounts_t get_ready_accounts(const xtxs_pack_para_t & pack_para) override {return {};}
     std::vector<xcons_transaction_ptr_t> get_ready_txs(const xtxs_pack_para_t & pack_para) override {return {};}
@@ -32,6 +32,7 @@ public:
     const std::vector<xtxpool_table_lacking_receipt_ids_t> get_lacking_recv_tx_ids(uint8_t zone, uint16_t subaddr, uint32_t max_num) const override {return {};}
     const std::vector<xtxpool_table_lacking_confirm_tx_hashs_t> get_lacking_confirm_tx_hashs(uint8_t zone, uint16_t subaddr, uint32_t max_num) const override {return {};}
     bool need_sync_lacking_receipts(uint8_t zone, uint16_t subaddr) const override {return false;}
+    void print_statistic_values() const override {};
 };
 
 using xdummy_txpool_t = xtop_dummy_txpool;

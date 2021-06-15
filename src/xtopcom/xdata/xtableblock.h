@@ -35,17 +35,20 @@ class xtable_block_para_t {
     void    set_extra_data(const std::string & extra_data) {m_extra_data = extra_data;}
     void    set_property_binlog(const std::string & binlog) {m_property_binlog = binlog;}
     void    set_fullstate_bin(const std::string & fullstate) {m_fullstate_bin = fullstate;}
+    void    set_tgas_balance_change(const int64_t amount) {m_tgas_balance_change = amount;}
 
     const std::vector<xblock_ptr_t> & get_account_units() const {return m_account_units;}
     const std::string &             get_extra_data() const {return m_extra_data;}
     const std::string &             get_property_binlog() const {return m_property_binlog;}
     const std::string &             get_fullstate_bin() const {return m_fullstate_bin;}
+    int64_t                         get_tgas_balance_change() const {return m_tgas_balance_change;}
 
  private:
     std::vector<xblock_ptr_t>        m_account_units;
     std::string                      m_extra_data;
     std::string                      m_property_binlog;
     std::string                      m_fullstate_bin;
+    int64_t                          m_tgas_balance_change{0};
 };
 
 class xtable_block_t : public xblock_t {

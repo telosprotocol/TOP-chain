@@ -22,16 +22,16 @@ enum class xenum_node_type : std::uint32_t {
     invalid = 0x00000000,
 
     ///@brief Network node.  Representing whole network.
-    network = 0x00020000,
+    network = 0x01000000,
 
     /// @brief Zone node manages cluster nodes.
-    zone = 0x00040000,
+    zone = 0x02000000,
 
     /// @brief Cluster node manages group nodes
-    cluster = 0x00080000,
+    cluster = 0x04000000,
 
     /// @brief Group node manages advance nodes & consensus nodes
-    group = 0x00100000,
+    group = 0x08000000,
 
     /// @brief REC zone type or REC node type.
     rec = 0x00001000,
@@ -41,7 +41,7 @@ enum class xenum_node_type : std::uint32_t {
     zec = 0x00002000,
 
     /// @brief Archive zone type or archive node type.
-    archive = 0x00004000,
+    storage = 0x00004000,
 
     /// @brief Edge zone type or edge node type.
     edge = 0x00008000,
@@ -58,8 +58,13 @@ enum class xenum_node_type : std::uint32_t {
     /// @brief Validator node.
     validator = 0x00000002,
 
+    archive = 0x00000004,
+    full_node = 0x00000008,
+
     consensus_auditor = consensus | auditor,
     consensus_validator = consensus | validator,
+    storage_archive = storage | archive,
+    storage_full_node = storage | full_node,
 
     /// @brief all type
     all = 0x0000FFFF,

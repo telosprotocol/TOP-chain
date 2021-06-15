@@ -29,8 +29,8 @@ to_string(xnode_type_t const type) {
         string += "edge.";
     }
 
-    if (has<xnode_type_t::archive>(type)) {
-        string += "archive.";
+    if (has<xnode_type_t::storage>(type)) {
+        string += "storage.";
     }
 
     if (has<xnode_type_t::frozen>(type)) {
@@ -47,6 +47,14 @@ to_string(xnode_type_t const type) {
 
     if (has<xnode_type_t::validator>(type)) {
         string += "validator.";
+    }
+
+    if (has<xnode_type_t::archive>(type)) {
+        string += "archive.";
+    }
+
+    if (has<xnode_type_t::full_node>(type)) {
+        string += "full_node.";
     }
 
     if (has<xnode_type_t::group>(type)) {

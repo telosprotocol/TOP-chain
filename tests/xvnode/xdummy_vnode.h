@@ -82,7 +82,7 @@ class xdummy_vnode; /* : public top::vnode::xvnode_face_t {
 
 XDUMMY_VNODE(committee);
 XDUMMY_VNODE(zec);
-XDUMMY_VNODE(archive);
+XDUMMY_VNODE(storage_archive);
 XDUMMY_VNODE(edge);
 XDUMMY_VNODE(consensus_auditor);
 XDUMMY_VNODE(consensus_validator);

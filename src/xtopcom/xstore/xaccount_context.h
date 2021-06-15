@@ -160,6 +160,10 @@ class xaccount_context_t {
     get_block_by_height(const std::string & owner, uint64_t height) const;
 
     uint64_t get_blockchain_height(const std::string & owner) const;
+    
+    int64_t get_tgas_balance_change() const { return m_tgas_balance_change; }
+    void add_tgas_balance_change(uint64_t amount) { m_tgas_balance_change += amount; }
+    void sub_tgas_balance_change(uint64_t amount) { m_tgas_balance_change -= amount; }
 
  private:
     const xobject_ptr_t<base::xvbstate_t> & get_bstate() const;
@@ -203,6 +207,7 @@ class xaccount_context_t {
     uint64_t            m_timestamp{0};
     uint64_t            m_timer_height{0};
     uint64_t            m_tgas_limit{0};
+    int64_t             m_tgas_balance_change{0};
     std::string         m_random_seed;
     uint64_t            m_sys_total_lock_tgas_token{0};
 

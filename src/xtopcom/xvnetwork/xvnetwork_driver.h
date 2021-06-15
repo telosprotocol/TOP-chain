@@ -79,7 +79,7 @@ public:
 
     common::xnode_type_t type() const noexcept override;
 
-    std::vector<common::xnode_address_t> archive_addresses() const override;
+    std::vector<common::xnode_address_t> archive_addresses(common::xenum_node_type node_type) const override;
 
     std::vector<std::uint16_t> table_ids() const override final;
 

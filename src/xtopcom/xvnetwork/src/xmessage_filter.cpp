@@ -190,7 +190,7 @@ void xmsg_filter_validator_from_auditor::filt(xvnetwork_message_t & vnetwork_mes
         return;
     }
 
-    if (common::has<common::xnode_type_t::archive>(vnetwork_message.sender().type())) {
+    if (common::has<common::xnode_type_t::storage>(vnetwork_message.sender().type())) {
         return;
     }
 
@@ -201,7 +201,7 @@ void xmsg_filter_validator_from_auditor::filt(xvnetwork_message_t & vnetwork_mes
     auto const msg_time = vnetwork_message.logic_time();
     xvnetwork_message_t empty_message{};
 
-    if (!common::has<common::xnode_type_t::consensus_auditor>(src_type) && !common::has<common::xnode_type_t::archive>(src_type)) {
+    if (!common::has<common::xnode_type_t::consensus_auditor>(src_type) && !common::has<common::xnode_type_t::storage>(src_type)) {
         #if VHOST_METRICS
         XMETRICS_COUNTER_INCREMENT("vhost_discard_validation_failure", 1);
         #endif
@@ -324,7 +324,7 @@ void xmsg_filter_validator_from_archive::filt(xvnetwork_message_t & vnetwork_mes
     auto const msg_time = vnetwork_message.logic_time();
     xvnetwork_message_t empty_message{};
 
-    assert(common::has<common::xnode_type_t::archive>(sender.type()));
+    assert(common::has<common::xnode_type_t::storage>(sender.type()));
 
     if (receiver.version().empty()) {
         std::error_code ec{election::xdata_accessor_errc_t::success};

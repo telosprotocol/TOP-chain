@@ -63,7 +63,7 @@ TEST_F(xtest_msgpack, msgpack_big_size) {
 
         common::xnode_id_t xnode_id3{"T-00000000000000000000000000002" + std::to_string(i)};
 #if defined(XENABLE_MOCK_ZEC_STAKE)
-        new_node_info.user_request_role = common::xrole_type_t::consensus;
+        new_node_info.user_request_role = common::xrole_type_t::validator;
 #endif
         standby_result_store.result_of(common::xtopchain_network_id).insert({xnode_id3, new_node_info});
     }

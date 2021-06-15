@@ -231,7 +231,7 @@ public:
     }
 
     virtual std::vector<top::common::xnode_address_t>
-    archive_addresses() const {
+    archive_addresses(top::common::xnode_type_t) const {
         std::vector<top::common::xnode_address_t> archive_addresses;
         return archive_addresses;
     }

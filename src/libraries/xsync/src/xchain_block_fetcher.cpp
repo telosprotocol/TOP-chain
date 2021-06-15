@@ -120,7 +120,7 @@ void xchain_block_fetcher_t::on_newblockhash(uint64_t height, uint64_t view_id, 
     // if is push_newblockhash, process it immediately
     common::xnode_type_t self_node_type = network_self.type();
     common::xnode_type_t from_node_type = from_address.type();
-    if (common::has<common::xnode_type_t::archive>(self_node_type) &&
+    if (common::has<common::xnode_type_t::storage>(self_node_type) &&
         (
             common::has<common::xnode_type_t::rec>(from_node_type) ||
             common::has<common::xnode_type_t::zec>(from_node_type) ||

@@ -26,8 +26,7 @@ XINLINE_CONSTEXPR char const * sys_contract_rec_elect_zec_addr{ "T2000138Kc9Wynd
 XINLINE_CONSTEXPR char const * sys_contract_rec_tcc_addr{ "T2000138Ao4jjYtrXoNwfzb6gdpD2XNBpqUv46p8B@0" };
 XINLINE_CONSTEXPR char const * sys_contract_rec_standby_pool_addr{ "T2000138CQwyzFxbWZ59mNjkq3eZ3eH41t7b5midm@0" };
 
-XINLINE_CONSTEXPR char const * sys_contract_zec_workload_addr{ "T200024uAt8Na2U1GUtWSHXJSqaJJBXunUX9WU9kB@0" };
-XINLINE_CONSTEXPR char const * sys_contract_zec_workload_addr2{ "T200024uMvLFmyttx6Nccv4jKP3VfRq9NJ2mxcNxh@0" };
+XINLINE_CONSTEXPR char const * sys_contract_zec_workload_addr{ "T200024uMvLFmyttx6Nccv4jKP3VfRq9NJ2mxcNxh@0" };
 XINLINE_CONSTEXPR char const * sys_contract_zec_vote_addr{ "T200024uPV1k6XjTm9No5yB2mxBPK9o2XqJKyhDUn@0" };
 XINLINE_CONSTEXPR char const * sys_contract_zec_reward_addr{ "T200024uV5yB1ZCnXe7SbViA86ufhouFjpDKNRd3X@0" };
 XINLINE_CONSTEXPR char const * sys_contract_zec_slash_info_addr{ "T200024uDhihoPJ24LQL4znxrugPM4eWk8rY42ceS@1" };

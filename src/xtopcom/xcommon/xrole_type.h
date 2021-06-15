@@ -13,19 +13,27 @@
 
 NS_BEG2(top, common)
 
-enum class xenum_role_type : std::underlying_type<xnode_type_t>::type {
-    invalid   = static_cast<std::underlying_type<xnode_type_t>::type>(xnode_type_t::invalid),
-    edge      = static_cast<std::underlying_type<xnode_type_t>::type>(xnode_type_t::edge),
-    advance   = static_cast<std::underlying_type<xnode_type_t>::type>(common::xnode_type_t::consensus_auditor),
-    consensus = static_cast<std::underlying_type<xnode_type_t>::type>(common::xnode_type_t::consensus_validator),
-    archive   = static_cast<std::underlying_type<xnode_type_t>::type>(xnode_type_t::archive)
+enum class xenum_role_type : uint32_t {
+    invalid      = 0x00000000,
+    /// @brief edge role which will be elected as 'edge'.
+    edge         = 0x00000001,
+    /// @brief advance role which will be elected as 'auditor', 'validator' or 'archive'.
+    advance      = 0x00000002,
+    /// @brief validator role which will be elected as 'validator' only.
+    validator    = 0x00000004,
+    /// @brief archive role which will be elected as 'archive' only.
+    archive      = 0x00000008,
+    /// @brief special case for full-edge. such account will be elected as a special'archive'
+    ///        but its business behavour is untrustable (since no deposit is required)
+    ///        which means sync module won't pull data from such 'archive'
+    full_node = 0x00000010,
 };
 using xrole_type_t = xenum_role_type;
 
 XINLINE_CONSTEXPR char const * XNODE_TYPE_EDGE      = "edge";
 XINLINE_CONSTEXPR char const * XNODE_TYPE_ADVANCE   = "advance";
 XINLINE_CONSTEXPR char const * XNODE_TYPE_VALIDATOR = "validator";
-XINLINE_CONSTEXPR char const * XNODE_TYPE_ARCHIVE   = "archive";
+XINLINE_CONSTEXPR char const * XNODE_TYPE_FULL_NODE = "full_node";
 
 std::int32_t
 operator <<(top::base::xstream_t & stream, xrole_type_t const & role_type);
