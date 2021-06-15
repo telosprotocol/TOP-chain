@@ -21,6 +21,7 @@
 
 #define CONS_AUDITOR_COUNT 1
 #define CONS_VALIDATOR_COUNT 1
+#define NETWORK_ID 0
 
 void xdb_tool::init_xdb_tool(std::string const& db_path) {
     db_path_ = db_path;
@@ -38,7 +39,8 @@ uint64_t xdb_tool::get_blockheight(std::string const& tableblock_addr) const {
         std::cout << "[xdb_tool::get_blockheight] tableblock address: " << tableblock_addr << "\n";
     #endif
     // auto height = store_->get_blockchain_height(tableblock_addr);
-    auto height = blockstore_->get_latest_committed_block(tableblock_addr);
+    auto block = blockstore_->get_latest_committed_block(tableblock_addr);
+    auto height = block->get_height();
     std::cout << height << "\n";
     return height;
 }
@@ -49,11 +51,15 @@ void xdb_tool::get_voteinfo_from_block(std::string const& tableblock_addr, uint6
         std::cout << "[xdb_tool::get_voteinfo_from_block] tableblock address: " << tableblock_addr << ", start height: " << start << ", end height: " << end << "\n";
     #endif
 
+    // this table has no block
+    if (end < start) return;
+
     std::string filename = tableblock_addr + "-" + std::to_string(start) + "-" + std::to_string(end);
     std::fstream file_out(filename, std::ios_base::out | std::ios_base::trunc );
     for (uint64_t i = start; i <= end; ++i) {
         auto vblock = blockstore_->load_block_object(tableblock_addr, i, 0, false);
-        top::base::xauto_ptr<xblock_t> block = dynamic_cast<xblock_t*>(vblock.get());
+        xblock_t* block = dynamic_cast<xblock_t*>(vblock.get());
+        assert(block != nullptr);
         std::stringstream outstr;
         outstr << block->get_height();
 
@@ -93,6 +99,7 @@ void xdb_tool::get_voteinfo_from_block(std::string const& tableblock_addr, uint6
         }
 
         file_out << outstr.str() << "\n";
+        file_out.flush();
 
     }
 }
@@ -128,7 +135,7 @@ std::string xdb_tool::cons_electinfo_by_height(uint64_t height, bool print) cons
         auto const & election_result_store = top::codec::msgpack_decode<xelection_result_store_t>({std::begin(result), std::end(result)});
 
         // auditor
-        auto & auditor_current_group_nodes = election_result_store.result_of(top::common::xnetwork_id_t{0})
+        auto & auditor_current_group_nodes = election_result_store.result_of(top::common::xnetwork_id_t{NETWORK_ID})
                                          .result_of(top::common::xnode_type_t::consensus_auditor)
                                          .result_of(top::common::xdefault_cluster_id)
                                          .result_of(top::common::xgroup_id_t{auditor_group_id});
@@ -136,7 +143,7 @@ std::string xdb_tool::cons_electinfo_by_height(uint64_t height, bool print) cons
         for (auto const& node_by_slotid: auditor_current_group_nodes.results()) {
             outstr << " " << node_by_slotid.second.node_id().value();
             top::common::xip2_t xip{
-                top::common::xnetwork_id_t{0},
+                top::common::xnetwork_id_t{NETWORK_ID},
                 top::common::xconsensus_zone_id,
                 top::common::xdefault_cluster_id,
                 top::common::xgroup_id_t{auditor_group_id},
@@ -159,7 +166,7 @@ std::string xdb_tool::cons_electinfo_by_height(uint64_t height, bool print) cons
             validator_group_id += count;
 
             outstr << " validator_" << std::dec << (uint16_t)validator_group_id << ":";
-            auto & validator_current_group_nodes = election_result_store.result_of(top::common::xnetwork_id_t{0})
+            auto & validator_current_group_nodes = election_result_store.result_of(top::common::xnetwork_id_t{NETWORK_ID})
                                                 .result_of(top::common::xnode_type_t::consensus_validator)
                                                 .result_of(top::common::xdefault_cluster_id)
                                                 .result_of(top::common::xgroup_id_t{validator_group_id});
@@ -167,7 +174,7 @@ std::string xdb_tool::cons_electinfo_by_height(uint64_t height, bool print) cons
             for (auto const& node_by_slotid: validator_current_group_nodes.results()) {
                 outstr << " " << node_by_slotid.second.node_id().value();
                 top::common::xip2_t xip{
-                    top::common::xnetwork_id_t{0},
+                    top::common::xnetwork_id_t{NETWORK_ID},
                     top::common::xconsensus_zone_id,
                     top::common::xdefault_cluster_id,
                     top::common::xgroup_id_t{validator_group_id},
@@ -265,7 +272,7 @@ void xdb_tool::specific_clockheight(uint64_t start_gmttime, uint64_t end_gmttime
         std::fstream file_out(filename, std::ios_base::out | std::ios_base::trunc );
         for (uint64_t i = 1; i <= block_height; ++i) {
             auto vblock = blockstore_->load_block_object((std::string)top::sys_contract_zec_elect_consensus_addr, i, 0, false);
-            top::base::xauto_ptr<xblock_t> block = dynamic_cast<xblock_t*>(vblock.get());
+            xblock_t* block = dynamic_cast<xblock_t*>(vblock.get());
             std::stringstream outstr;
             auto gmt_time = block->get_timestamp();
             if (gmt_time >= start_gmttime && gmt_time <= end_gmttime) {
