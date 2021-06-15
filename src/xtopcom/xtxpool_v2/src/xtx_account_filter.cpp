@@ -118,8 +118,8 @@ enum_xtxpool_error_type xaccount_recvtx_filter::sync_reject_rules_and_reject(con
             }
         }
 
-        if ((xvunit_block->get_timerblock_height() + xtxpool_more_clock_height) < tx->get_clock()) {
-            xtxpool_info("the clockblock height of send tx is %llu, older than %llu", tx->get_clock(), xvunit_block->get_timerblock_height() + xtxpool_more_clock_height);
+        if ((xvunit_block->get_timerblock_height() + xtxpool_more_clock_height) < tx->get_receipt_clock()) {
+            xtxpool_info("the clockblock height of send tx is %llu, older than %llu", tx->get_receipt_clock(), xvunit_block->get_timerblock_height() + xtxpool_more_clock_height);
             break;
         }
     }
@@ -236,6 +236,8 @@ enum_xtxpool_error_type xaccount_confirmtx_filter::initialize() {
 }
 
 enum_xtxpool_error_type xaccount_confirmtx_filter::sync_reject_rules(uint64_t unitblock_height) {
+    xassert(false);
+#if 0 // TODO(jimmy) delete later
     std::unordered_set<xtx_hash_t> confirm_txs;
 
     std::map<xtx_hash_t, xtx_unconfirm_tx_entry> send_txs;
@@ -316,7 +318,7 @@ enum_xtxpool_error_type xaccount_confirmtx_filter::sync_reject_rules(uint64_t un
         auto it_unconfirm_txs = m_unconfirm_txs.insert(it_s.second);
         m_permit_rules[it_s.first] = it_unconfirm_txs;
     }
-
+#endif
     return xtxpool_success;
 }
 

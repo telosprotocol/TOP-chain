@@ -93,7 +93,7 @@ int32_t xtxpool_table_t::push_send_tx(const std::shared_ptr<xtx_entry> & tx) {
         if (m_receipt_state_cache.is_unconfirmed_num_reach_limmit(peer_table_sid)) {
             xtxpool_warn("xtxpool_table_t::push_send_tx table-table unconfirm txs reached upper limmit tx:%s,peer_sid:%d", tx->get_tx()->dump().c_str(), peer_table_sid);
             return xtxpool_error_account_unconfirm_txs_reached_upper_limit;
-        }        
+        }
     }
 
     uint64_t latest_nonce;
@@ -565,9 +565,9 @@ int32_t xtxpool_table_t::verify_receipt_tx(const xcons_transaction_ptr_t & tx) c
         return xtxpool_error_receipt_invalid;
     }
 
-    base::xvqcert_t * prove_cert;
+    const base::xvqcert_t * prove_cert;
     std::string prove_account;
-    if (!tx->get_commit_prove_cert_and_account(prove_cert, prove_account)) {
+    if (!tx->get_receipt_prove_cert_and_account(prove_cert, prove_account)) {
         return xtxpool_error_tx_multi_sign_error;
     }
 

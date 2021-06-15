@@ -118,6 +118,7 @@ namespace top
 
         class xvblockmaker_t : public xvblockbuild_t {
         public:
+            static bool calc_merkle_path(const std::vector<std::string> & leafs, const xvaction_t & leaf, xmerkle_path_256_t& hash_path);
             static bool calc_merkle_path(const std::vector<std::string> & leafs, const std::string & leaf, xmerkle_path_256_t& hash_path);
             static bool calc_input_merkle_path(xvinput_t* input, const std::string & leaf, xmerkle_path_256_t& hash_path);
             static std::vector<std::string>    get_input_merkle_leafs(xvinput_t* input);
@@ -128,10 +129,14 @@ namespace top
             virtual ~xvblockmaker_t();
         public:
             bool    set_input_entity(const std::vector<xvaction_t> & actions);
-            bool    set_output_entity(const std::string & state_bin, const std::string & binlog_bin);
+            bool    set_output_entity_state_hash(const std::string & state_bin);
+            bool    set_output_entity_binlog_hash(const std::string & binlog_bin);
+            bool    set_output_entity(const std::string & key, const std::string & value);
             bool    set_input_resource(const std::string & key, const std::string & value);
             bool    set_output_resource_state(const std::string & value);
             bool    set_output_resource_binlog(const std::string & value);
+            bool    merge_input_resource(const xstrmap_t * src_map);
+            bool    merge_output_resource(const xstrmap_t * src_map);
 
             base::xauto_ptr<base::xvblock_t> build_new_block();
         protected:
@@ -147,7 +152,6 @@ namespace top
             inline xstrmap_t*           get_output_resource() const {return m_output_resource;}
             inline xvinentity_t*        get_input_entity()    const {return m_primary_input_entity;}
             inline xvoutentity_t*       get_output_entity()   const {return m_primary_output_entity;}
-
         private:
             bool    set_output_resource(const std::string & key, const std::string & value);
 
@@ -203,8 +207,6 @@ namespace top
         public:
             static std::vector<std::string> get_table_out_merkle_leafs(const std::vector<xobject_ptr_t<xvblock_t>> & _batch_units);
             static std::string              get_table_out_merkle_leaf(base::xvblock_t* _unit);
-            static std::vector<std::string> get_table_in_merkle_leafs(const std::vector<xobject_ptr_t<xvblock_t>> & _batch_units);
-            static std::string              get_table_in_merkle_leaf(base::xvblock_t* _unit);
             static bool                     units_set_parent_cert(std::vector<xobject_ptr_t<xvblock_t>> & units, const xvblock_t* parent);
             static xtable_unit_resource_ptr_t   query_unit_resource(const base::xvblock_t* _tableblock, uint32_t index);
         public:
@@ -217,7 +219,6 @@ namespace top
             const std::vector<xobject_ptr_t<xvblock_t>> & get_batch_units() const {return m_batch_units;}
             virtual xauto_ptr<xvinput_t>    make_input() override;
             virtual xauto_ptr<xvoutput_t>   make_output() override;
-            virtual bool                    make_input_root(xvinput_t* input_obj) override;
             virtual bool                    make_output_root(xvoutput_t* output_obj) override;
         private:
             std::vector<xobject_ptr_t<xvblock_t>>   m_batch_units;

@@ -160,7 +160,7 @@ namespace top
                     }
                 }
 
-                const std::string binlog(target_block.get_output()->get_binlog());
+                const std::string binlog = target_block.get_block_class() == enum_xvblock_class_light ? target_block.get_output()->get_binlog() : target_block.get_output()->get_full_state();
                 if(binlog.empty() == false)
                 {
                     if(false == base_state.apply_changes_of_binlog(binlog))
@@ -274,6 +274,7 @@ namespace top
                 xassert(_block->get_height() == current_state->get_block_height() + 1);
                 current_state = make_object_ptr<xvbstate_t>(*_block.get(), *current_state.get());
                 if (_block->get_block_class() == enum_xvblock_class_light) {
+                    xassert(!_block->get_output()->get_binlog_hash().empty());
                     std::string binlog = _block->get_output()->get_binlog();
                     xassert(!binlog.empty());
                     if(false == current_state->apply_changes_of_binlog(binlog)) {
@@ -353,10 +354,10 @@ namespace top
 
             // try make state form block self
             if (current_block->get_height() == 0
-                || (current_block->get_block_class() == enum_xvblock_class_full && !current_block->get_output()->get_binlog().empty()) ) {
+                || (current_block->get_block_class() == enum_xvblock_class_full && !current_block->get_output()->get_full_state().empty()) ) {
                 current_state = make_object_ptr<xvbstate_t>(*current_block);
                 if (current_block->get_block_class() != enum_xvblock_class_nil) {
-                    std::string binlog = current_block->get_output()->get_binlog();
+                    std::string binlog = current_block->get_block_class() == enum_xvblock_class_light ? current_block->get_output()->get_binlog() : current_block->get_output()->get_full_state();
                     xassert(!binlog.empty());
                     if(false == current_state->apply_changes_of_binlog(binlog)) {
                         xerror("xvblkstatestore_t::make_state_from_current_block,invalid binlog and abort it for block(%s)",current_block->dump().c_str());

@@ -48,12 +48,12 @@ class xtx_unconfirm_tx_entry : public xtx_commited_meta_entry {
 public:
     xtx_unconfirm_tx_entry() = default;
     xtx_unconfirm_tx_entry(uint64_t unitblock_height, std::string hash, uint64_t clockblock_height, xcons_transaction_ptr_t tx)
-      : xtx_commited_meta_entry(unitblock_height, hash, clockblock_height), m_tx(tx), m_resend_time(get_next_resend_time(tx->get_unit_cert()->get_gmtime(), xverifier::xtx_utl::get_gmttime_s())) {
+      : xtx_commited_meta_entry(unitblock_height, hash, clockblock_height), m_tx(tx), m_resend_time(get_next_resend_time(tx->get_receipt_gmtime(), xverifier::xtx_utl::get_gmttime_s())) {
     }
 
     const xcons_transaction_ptr_t & get_raw_tx() const;
     void update_resend_time(uint64_t now) {
-        m_resend_time = get_next_resend_time(m_tx->get_unit_cert()->get_gmtime(), now);
+        m_resend_time = get_next_resend_time(m_tx->get_receipt_gmtime(), now);
     }
     uint64_t get_resend_time() const {
         return m_resend_time;

@@ -188,7 +188,7 @@ void xsync_on_demand_t::handle_chain_snapshot_meta(xsync_message_chain_snapshot_
         xfull_tableblock_t* full_block_ptr = dynamic_cast<xfull_tableblock_t*>(xblock_t::raw_vblock_to_object_ptr(blk.get()).get());
         if (full_block_ptr != nullptr) {
             if (base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_full_block_offsnapshot(blk.get())) {
-                std::string property_snapshot = blk->get_output()->get_binlog();
+                std::string property_snapshot = blk->get_output()->get_full_state();
                 xsync_message_chain_snapshot_t chain_snapshot(chain_meta.m_account_addr,
                     property_snapshot, chain_meta.m_height_of_fullblock);
                 m_sync_sender->send_chain_snapshot(chain_snapshot, xmessage_id_sync_ondemand_chain_snapshot_response, network_self, to_address);

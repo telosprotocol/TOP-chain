@@ -330,7 +330,7 @@ bool xblock_t::is_full_state_block() const {
     if (get_block_class() == base::enum_xvblock_class_nil) {
         return true;
     }
-    if (!get_output()->get_binlog().empty()) {
+    if (!get_output()->get_full_state().empty()) {
         return true;
     }
     return false;

@@ -163,9 +163,6 @@ int32_t xtransaction_executor::exec_batch_txs(base::xvblock_t* proposal_block,
         all_pack_txs.push_back(tx);
     }
 
-    xinfo("xtransaction_executor::exec_batch_txs %s,account=%s,height=%ld,origin=%zu,succ=%zu,fail_send=%zu,fail_recv=%zu,contract_txs=%zu,all_pack=%zu",
-        cs_para.dump().c_str(), proposal_block->get_account().c_str(), proposal_block->get_height(),
-        txs.size(), exec_txs.size(), failure_send_txs.size(), failure_receipt_txs.size(), contract_create_txs.size(), all_pack_txs.size());
     if (exec_txs.empty()) {
         xassert(error_code != xsuccess);
         xassert(!txs_result.m_exec_fail_txs.empty());
@@ -186,7 +183,10 @@ int32_t xtransaction_executor::exec_batch_txs(base::xvblock_t* proposal_block,
     txs_result.m_unconfirm_tx_num = proposal_state->get_unconfirm_sendtx_num();
     txs_result.m_full_state = result.m_full_state;
     txs_result.m_property_binlog = result.m_property_binlog;
-
+    xdbg_info("xtransaction_executor::exec_batch_txs %s,account=%s,height=%ld,origin=%zu,succ=%zu,fail_send=%zu,fail_recv=%zu,contract_txs=%zu,all_pack=%zu,binlog=%zu,state=%zu",
+        cs_para.dump().c_str(), proposal_block->get_account().c_str(), proposal_block->get_height(),
+        txs.size(), exec_txs.size(), failure_send_txs.size(), failure_receipt_txs.size(), contract_create_txs.size(), all_pack_txs.size(),
+        result.m_property_binlog.size(), result.m_full_state.size());
     return xsuccess;
 }
 
