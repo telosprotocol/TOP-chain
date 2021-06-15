@@ -128,7 +128,7 @@ bool xtable_bstate_t::find_receiptid_pair(base::xtable_shortid_t sid, base::xrec
 }
 
 void xtable_bstate_t::cache_receiptid() {
-    m_cache_receiptid = make_object_ptr<base::xreceiptid_state_t>();
+    m_cache_receiptid = std::make_shared<base::xreceiptid_state_t>();
     if (false == get_bstate()->find_property(XPROPERTY_TABLE_RECEIPTID)) {
         return;
     }

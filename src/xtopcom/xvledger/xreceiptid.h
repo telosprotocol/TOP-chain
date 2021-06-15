@@ -10,7 +10,6 @@
 #include "xbase/xobject_ptr.h"
 #include "xbase/xns_macro.h"
 #include "xvledger/xvaccount.h"
-#include "xvledger/xdataobj_base.hpp"
 
 NS_BEG2(top, base)
 
@@ -45,22 +44,17 @@ class xreceiptid_pair_t {
 };
 
 // the receiptid of the current table with all other tables
-class xreceiptid_pairs_t :  public xbase_dataunit_t<xreceiptid_pairs_t, xdata_type_receiptid> {
+class xreceiptid_pairs_t {
  public:
     xreceiptid_pairs_t();
- protected:
     ~xreceiptid_pairs_t() {}
-    int32_t         do_write(base::xstream_t & stream) override;
-    int32_t         do_read(base::xstream_t & stream) override;
  public:
     void            add_pair(xtable_shortid_t sid, const xreceiptid_pair_t & pair);
-    void            add_pairs(const std::map<xtable_shortid_t, xreceiptid_pair_t> & pairs);
-    void            add_binlog(const xobject_ptr_t<xreceiptid_pairs_t> & binlog);
     void            clear_binlog();
     void            set_sendid_max(xtable_shortid_t sid, uint64_t value);
     void            set_confirmid_max(xtable_shortid_t sid, uint64_t value);
     void            set_recvid_max(xtable_shortid_t sid, uint64_t value);
-    virtual std::string     dump() const override;
+    std::string     dump() const;
 
  public:
     bool            find_pair(xtable_shortid_t sid, xreceiptid_pair_t & pair);
@@ -70,47 +64,29 @@ class xreceiptid_pairs_t :  public xbase_dataunit_t<xreceiptid_pairs_t, xdata_ty
  private:
     std::map<xtable_shortid_t, xreceiptid_pair_t>   m_all_pairs;
 };
-using xreceiptid_pairs_ptr_t = xobject_ptr_t<xreceiptid_pairs_t>;
+using xreceiptid_pairs_ptr_t = std::shared_ptr<xreceiptid_pairs_t>;
 
 // the state of receiptid pairs include last full state and newest binlog
-class xreceiptid_state_t : public base::xdataunit_t {
+class xreceiptid_state_t {
  public:
     xreceiptid_state_t();
-    xreceiptid_state_t(const xreceiptid_pairs_ptr_t & last_full, const xreceiptid_pairs_ptr_t & binlog);
- protected:
     ~xreceiptid_state_t() {}
-    int32_t         do_write(base::xstream_t & stream) override;
-    int32_t         do_read(base::xstream_t & stream) override;
 
  public:
-    void            set_last_full_state(const xreceiptid_pairs_ptr_t & last_full) {m_last_full = last_full;}
-    void            add_pair(xtable_shortid_t sid, const xreceiptid_pair_t & pair);
-    void            add_pairs(const std::map<xtable_shortid_t, xreceiptid_pair_t> & pairs);
-    void            merge_new_full();
-    std::string     build_root_hash(enum_xhash_type hashtype);
-    void            set_binlog(const xreceiptid_pairs_ptr_t & binlog) {m_binlog = binlog;}
-    void            clear_binlog() {m_binlog = make_object_ptr<xreceiptid_pairs_t>();}
+    void        add_pair(xtable_shortid_t sid, const xreceiptid_pair_t & pair);
+    bool        find_pair(xtable_shortid_t sid, xreceiptid_pair_t & pair);
 
  public:
-    bool                            find_pair(xtable_shortid_t sid, xreceiptid_pair_t & pair);
-    const xreceiptid_pairs_ptr_t &  get_last_full_state() const {return m_last_full;}
-    const xreceiptid_pairs_ptr_t &  get_binlog() const {return m_binlog;}
-    size_t                          get_full_size() const{return m_last_full->get_size();}
-    size_t                          get_binlog_size() const{return m_binlog->get_size();}
-
- public:
-    void                            clear_pair_modified();
-    bool                            find_pair_modified(xtable_shortid_t sid, xreceiptid_pair_t & pair);
-    void                            add_pair_modified(xtable_shortid_t sid, const xreceiptid_pair_t & pair);
+    void        clear_pair_modified();
+    bool        find_pair_modified(xtable_shortid_t sid, xreceiptid_pair_t & pair);
+    void        add_pair_modified(xtable_shortid_t sid, const xreceiptid_pair_t & pair);
 
  private:
-    xreceiptid_pairs_ptr_t  m_last_full{nullptr};
     xreceiptid_pairs_ptr_t  m_binlog{nullptr};
-
  private:
     xreceiptid_pairs_ptr_t  m_modified_binlog{nullptr};  // for block maker cache
 };
-using xreceiptid_state_ptr_t = xobject_ptr_t<xreceiptid_state_t>;
+using xreceiptid_state_ptr_t = std::shared_ptr<xreceiptid_state_t>;
 
 
 class xreceiptid_check_t {

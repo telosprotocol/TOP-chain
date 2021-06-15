@@ -114,10 +114,6 @@ public:
         return false;
     }
 
-    bool load_block_offdata(const base::xvaccount_t & account, base::xvblock_t * block) override {
-        return false;
-    }
-
     bool load_block_flags(const base::xvaccount_t & account, base::xvblock_t* block) override {
         return false;
     }

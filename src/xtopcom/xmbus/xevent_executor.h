@@ -6,7 +6,6 @@
 
 #include "xmbus/xevent.h"
 #include "xdata/xblock.h"
-#include "xvledger/xvboffdata.h"
 #include "xvnetwork/xaddress.h"
 
 NS_BEG2(top, mbus)

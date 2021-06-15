@@ -42,7 +42,7 @@ std::string xlighttable_builder_t::make_light_table_binlog(const xobject_ptr_t<b
     base::xreceiptid_check_t receiptid_check;
     xblock_t::batch_units_to_receiptids(units, receiptid_check);  // units make changed receiptids
 
-    base::xreceiptid_pairs_ptr_t modified_pairs = make_object_ptr<base::xreceiptid_pairs_t>();
+    base::xreceiptid_pairs_ptr_t modified_pairs = std::make_shared<base::xreceiptid_pairs_t>();
 
     const std::map<base::xtable_shortid_t, std::set<uint64_t>> & sendids = receiptid_check.get_sendids();
     for (auto & v : sendids) {

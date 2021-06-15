@@ -112,7 +112,7 @@ namespace top
             uint64_t  _highest_genesis_connect_height;//indicated the last block who is connected to genesis block
             std::string _highest_genesis_connect_hash;
             uint64_t _highest_sync_height;           // higest continous block started from highest full table block
-            
+
             uint16_t  _reserved_u16;      //reserved for future
             uint8_t   _block_level;       //set per block 'enum_xvblock_level,each account has unique level
         private:
@@ -190,7 +190,6 @@ namespace top
             bool                   load_block_object(base::xvbindex_t* index_ptr);
             bool                   load_index_input(base::xvbindex_t* target_block);
             bool                   load_index_output(base::xvbindex_t* target_block);
-            bool                   load_index_offdata(base::xvbindex_t* target_block);
             size_t                 load_index_by_height(const uint64_t target_height);
             bool                   delete_block_from_db(base::xvbindex_t* index_ptr);
 
@@ -201,7 +200,6 @@ namespace top
             bool                   delete_block(const uint64_t target_height);//return error code indicate what is result
             bool                   load_block_input(base::xvblock_t* target_block);
             bool                   load_block_output(base::xvblock_t* target_block);
-            bool                   load_block_offdata(base::xvblock_t* target_block);
             bool                   load_block_flags(base::xvblock_t* target_block);//update block'flags
 
             bool                   execute_block(base::xvblock_t* block_ptr); //execute block and update state of acccount
@@ -242,10 +240,6 @@ namespace top
             bool                write_block_output_to_db(base::xvbindex_t* index_ptr,base::xvblock_t * block_ptr);
             bool                read_block_output_from_db(base::xvbindex_t* index_ptr);
             bool                read_block_output_from_db(base::xvblock_t * block_ptr);
-
-            //manage data related xvboffdata_t
-            bool                write_block_offdata_to_db(base::xvbindex_t* index_ptr,base::xvblock_t * block_ptr);
-            bool                read_block_offdata_from_db(base::xvblock_t * block_ptr);
 
             bool                write_index_to_db(const uint64_t target_height);
             bool                write_index_to_db(std::map<uint64_t,base::xvbindex_t*> & indexes);

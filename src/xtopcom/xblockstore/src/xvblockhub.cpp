@@ -9,7 +9,6 @@
 #include "xvblockhub.h"
 #include "xvgenesis.h"
 #include "xvledger/xvdbkey.h"
-#include "xvledger/xvboffdata.h"
 
 #ifdef ENABLE_METRICS
     #include "xmetrics/xmetrics.h"
@@ -782,7 +781,7 @@ namespace top
             if(ask_full_search)
             {
                 xinfo("xblockacct_t::load_latest_genesis_connected_index,start search as genesis_height(%" PRIu64 ") vs commit-height(%" PRIu64 ") ",m_meta->_highest_genesis_connect_height,m_meta->_highest_commit_block_height);
-                
+
                 for(uint64_t h = m_meta->_highest_genesis_connect_height + 1; h <= m_meta->_highest_commit_block_height; ++h)
                 {
                     const uint64_t try_height = m_meta->_highest_genesis_connect_height + 1;
@@ -1039,21 +1038,6 @@ namespace top
 
             return  read_block_output_from_db(index_ptr);
         }
-        bool   xblockacct_t::load_index_offdata(base::xvbindex_t* index_ptr)
-        {
-            xassert(false); // TODO(jimmy)
-            if(NULL == index_ptr || !index_ptr->is_fulltable())
-                return false;
-
-            xdbg("xblockacct_t::load_index_offdata,target index(%s)",index_ptr->dump().c_str());
-            if(index_ptr->get_this_block() == NULL)
-                read_block_object_from_db(index_ptr);
-
-            if(index_ptr->get_this_block() == NULL) //check again
-                return false;
-
-            return  load_block_offdata(index_ptr->get_this_block());
-        }
 
         bool   xblockacct_t::store_blocks(std::vector<base::xvblock_t*> & batch_store_blocks) //better performance
         {
@@ -1113,7 +1097,7 @@ namespace top
                 update_meta_metric(final_cached_index); //update other meta and connect info
 
                 //write_block_to_db may do double-check whether raw block not stored yet
-                write_block_to_db(final_cached_index,new_raw_block); //has included write_block_offdata_to_db
+                write_block_to_db(final_cached_index,new_raw_block);
 
                 //try save index finally
                 if(final_cached_index->check_modified_flag()) //if has anything changed
@@ -1235,18 +1219,6 @@ namespace top
 
             xdbg("xblockacct_t::load_block_output,target block(%s)",target_block->dump().c_str());
             return read_block_output_from_db(target_block);
-        }
-
-        bool   xblockacct_t::load_block_offdata(base::xvblock_t* target_block)
-        {
-            if(NULL == target_block)
-                return false;
-
-            if(target_block->get_block_class() == base::enum_xvblock_class_nil)
-                return true;
-
-            xdbg("xblockacct_t::load_block_offdata,target block(%s)",target_block->dump().c_str());
-            return read_block_offdata_from_db(target_block);
         }
 
         bool   xblockacct_t::load_block_flags(base::xvblock_t* block_ptr)//update block'flags
@@ -1641,7 +1613,7 @@ namespace top
                         }
                     }
                 }
-                
+
                 xinfo("xblockacct_t::full_connect_to done search");
             }
 
@@ -1778,9 +1750,6 @@ namespace top
             {
                 write_block_output_to_db(index_ptr,block_ptr);
             }
-
-            //maybe this block carry data of offchain and need persisted store
-            //write_block_offdata_to_db(index_ptr,block_ptr);
 
             const uint32_t everything_flags = base::enum_index_store_flag_mini_block | base::enum_index_store_flag_input_entity | base::enum_index_store_flag_input_resource | base::enum_index_store_flag_output_entity| base::enum_index_store_flag_output_resource;
             if(index_ptr->check_store_flags(everything_flags))
@@ -2037,61 +2006,6 @@ namespace top
             return (block_ptr->get_output() != NULL);
         }
 
-        bool   xblockacct_t::write_block_offdata_to_db(base::xvbindex_t* index_ptr,base::xvblock_t * block_ptr)
-        {
-            xassert(false); // TODO(jimmy)
-            if(index_ptr->check_store_flag(base::enum_index_store_flag_offchain_data))
-                return true; //has been writed
-
-            if(NULL == block_ptr)
-                return false;
-
-            if(block_ptr->get_offdata() == NULL) //dont have offdata assocated with this block
-                return true;
-
-            std::string offdata_bin;
-            block_ptr->get_offdata()->serialize_to_string(offdata_bin);
-            const std::string offdata_key = base::xvdbkey_t::create_block_offdata_key(*this, block_ptr->get_block_hash());
-            if(base::xvchain_t::instance().get_xdbstore()->set_value(offdata_key, offdata_bin))
-            {
-                index_ptr->set_store_flag(base::enum_index_store_flag_offchain_data);
-                xdbg_info("xblockacct_t::write_block_offdata_to_db,store data to DB for block(%s) at offdata_key(%s)",block_ptr->dump().c_str(),base::xstring_utl::to_hex(offdata_key).c_str());
-                return true;
-            }
-            else
-            {
-                xerror("xblockacct_t::write_block_offdata_to_db,fail to store data for block(%s) at offdata_key(%s)",block_ptr->dump().c_str(),base::xstring_utl::to_hex(offdata_key).c_str());
-                return false;
-            }
-        }
-
-        bool   xblockacct_t::read_block_offdata_from_db(base::xvblock_t * block_ptr)
-        {
-            xassert(false); // TODO(jimmy)
-            if(NULL == block_ptr)
-                return false;
-
-            if(block_ptr->get_offdata() != NULL)
-                return true;
-
-            const std::string offdata_key = base::xvdbkey_t::create_block_offdata_key(*this, block_ptr->get_block_hash());
-            const std::string offdata_bin = base::xvchain_t::instance().get_xdbstore()->get_value(offdata_key);
-            if(offdata_bin.empty())
-            {
-                xwarn("xblockacct_t::read_block_offdata_from_db,fail to read from db for path(%s)",base::xstring_utl::to_hex(offdata_key).c_str());
-                return false;
-            }
-
-            base::xauto_ptr<base::xvboffdata_t> vboffdata_ptr(base::xvblock_t::create_offdata_object(offdata_bin));
-            if(vboffdata_ptr)
-            {
-                block_ptr->reset_block_offdata(vboffdata_ptr.get());
-                return true;
-            }
-            xerror("xblockacct_t::read_block_offdata_from_db,bad data to create xvboffdata_t object from db-path(%s)",base::xstring_utl::to_hex(offdata_key).c_str());
-            return false;
-        }
-
         bool    xblockacct_t::delete_block_from_db(base::xvbindex_t* index_ptr)
         {
             if(NULL == index_ptr)
@@ -2222,13 +2136,13 @@ namespace top
             {
                 return;
             }
-            
+
             #ifdef DEBUG
                 xdbg("xblockacct_t::try_execute_all_block enter. %s", dump().c_str());
             #else
                 xinfo("xblockacct_t::try_execute_all_block enter");
             #endif
-            
+
             // try to check and execute from target block firstly, maybe target block include snapshot by syncing
             if (m_meta->_highest_execute_block_height < target_block->get_height()  // target height not executed
                 && target_block->get_block_class() == base::enum_xvblock_class_full  // must be full block
@@ -2310,7 +2224,7 @@ namespace top
                 }
             }
             while(max_count-- > 0);
-            
+
             #ifdef DEBUG
                 xdbg("xblockacct_t::try_execute_all_block finish, %s", dump().c_str());
             #else

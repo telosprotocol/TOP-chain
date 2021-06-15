@@ -7,7 +7,6 @@
 #include <cinttypes>
 #include "xbase/xutl.h"
 #include "../xvstate.h"
-#include "../xvboffdata.h"
 #include "../xvblock.h"
 #include "xmetrics/xmetrics.h"
 
@@ -1307,7 +1306,6 @@ namespace top
             m_vinput_ptr   = NULL;
             m_voutput_ptr  = NULL;
             m_vbstate_ptr  = NULL;
-            m_vboffdata_ptr = NULL;
             
             set_unit_flag(enum_xdata_flag_acompress);//default do copmression
         }
@@ -1325,7 +1323,6 @@ namespace top
             m_vinput_ptr   = NULL;
             m_voutput_ptr  = NULL;
             m_vbstate_ptr  = NULL;
-            m_vboffdata_ptr = NULL;
             
             set_unit_flag(enum_xdata_flag_acompress);//default do copmression
         }
@@ -1481,7 +1478,6 @@ namespace top
             m_vinput_ptr   = NULL;
             m_voutput_ptr  = NULL;
             m_vbstate_ptr  = NULL;
-            m_vboffdata_ptr = NULL;
 
             set_unit_flag(enum_xdata_flag_acompress);//default do copmression
          
@@ -1542,7 +1538,6 @@ namespace top
             m_vinput_ptr   = NULL;
             m_voutput_ptr  = NULL;
             m_vbstate_ptr  = NULL;
-            m_vboffdata_ptr = NULL;
             *this = other;
             set_unit_flag(enum_xdata_flag_acompress);//default do copmression
         }
@@ -1559,8 +1554,6 @@ namespace top
                 m_voutput_ptr->release_ref();
             if(m_vbstate_ptr != NULL)
                 m_vbstate_ptr->release_ref();
-            if(m_vboffdata_ptr != NULL)
-                m_vboffdata_ptr->release_ref();
             
             m_cert_hash         = other.m_cert_hash;
             m_vheader_ptr       = other.m_vheader_ptr;
@@ -1570,7 +1563,6 @@ namespace top
             m_vinput_ptr        = other.m_vinput_ptr;
             m_voutput_ptr       = other.m_voutput_ptr;
             m_vbstate_ptr       = other.m_vbstate_ptr;
-            m_vboffdata_ptr     = other.m_vboffdata_ptr;
             m_parent_account_id = other.m_parent_account_id;
             m_parent_viewid     = other.m_parent_viewid;
             m_entityid_at_parent= other.m_entityid_at_parent;
@@ -1590,8 +1582,6 @@ namespace top
                 m_voutput_ptr->add_ref();
             if(m_vbstate_ptr != NULL)
                 m_vbstate_ptr->add_ref();
-            if(m_vboffdata_ptr != NULL)
-                m_vboffdata_ptr->add_ref();
             
             if(m_prev_block != NULL)
                 m_prev_block->add_ref();
@@ -1624,10 +1614,6 @@ namespace top
             if(m_vbstate_ptr != NULL){
                 m_vbstate_ptr->close();
                 m_vbstate_ptr->release_ref();
-            }
-            if(m_vboffdata_ptr != NULL){
-                m_vboffdata_ptr->close();
-                m_vboffdata_ptr->release_ref();
             }
 
             if(m_prev_block != NULL)
@@ -1711,9 +1697,6 @@ namespace top
                 
                 if(m_vbstate_ptr != NULL)
                     m_vbstate_ptr->close();
-                
-                if(m_vboffdata_ptr != NULL)
-                    m_vboffdata_ptr->close();
             }
             return true;
         }
@@ -1833,34 +1816,6 @@ namespace top
             }
         }
      
-        bool  xvblock_t::reset_block_offdata(xvboffdata_t * _new_offdata_ptr)//return false if hash or height not match
-        {
-            if(_new_offdata_ptr == m_vboffdata_ptr) //same one
-                return true;
-            
-            if(_new_offdata_ptr != NULL)
-            {
-                std::string offdata_hash = get_offdata_hash();
-                std::string input_offdata_hash = _new_offdata_ptr->build_root_hash(get_cert()->get_crypto_hash_type());
-                if( offdata_hash != input_offdata_hash)
-                {
-                    xerror("xvblock_t::reset_block_offdata,this block'info(%s) not match offdata",dump().c_str());
-                    return false;
-                }
-                _new_offdata_ptr->add_ref();
-                xvboffdata_t * old_ptr =  xatomic_t::xexchange(m_vboffdata_ptr, _new_offdata_ptr);
-                if(old_ptr != NULL)
-                    old_ptr->release_ref();
-            }
-            else
-            {
-                xvboffdata_t * old_ptr =  xatomic_t::xexchange(m_vboffdata_ptr, (xvboffdata_t*)NULL);
-                if(old_ptr != NULL)
-                    old_ptr->release_ref();
-            }
-            return true;
-        }
-
         void    xvblock_t::set_next_next_cert(xvqcert_t * next_next_vqcert_ptr)
         { 
             if(next_next_vqcert_ptr != NULL)
@@ -2458,10 +2413,7 @@ namespace top
             auto lambda_new_block = [](const int type)->xobject_t*{
                 return new xvblock_t();
             };
-            auto lambda_new_offdata = [](const int type)->xobject_t*{
-                return new xvboffdata_t();
-            };
-            
+
             auto lambda_new_input_entity = [](const int type)->xobject_t*{
                 return new xvinentity_t();
             };
@@ -2477,8 +2429,6 @@ namespace top
             xcontext_t::register_xobject2(_context,(enum_xobject_type)xvinput_t::enum_obj_type,lambda_new_input);
             xcontext_t::register_xobject2(_context,(enum_xobject_type)xvoutput_t::enum_obj_type,lambda_new_output);
             xcontext_t::register_xobject2(_context,(enum_xobject_type)xvblock_t::enum_obj_type,lambda_new_block);
-            
-            xcontext_t::register_xobject2(_context,(enum_xobject_type)xvboffdata_t::enum_obj_type,lambda_new_offdata);
             
             xcontext_t::register_xobject2(_context,(enum_xobject_type)xvinentity_t::enum_obj_type,lambda_new_input_entity);
             xcontext_t::register_xobject2(_context,(enum_xobject_type)xvoutentity_t::enum_obj_type,lambda_new_output_entity);
@@ -2619,28 +2569,6 @@ namespace top
                 return NULL;
             }
             return state_ptr;
-        }
-        
-        xvboffdata_t*     xvblock_t::create_offdata_object(const std::string & serialized_data)
-        {
-            if(serialized_data.empty())
-                return NULL;
-            
-            xdataunit_t * _data_obj_ptr = xdataunit_t::read_from(serialized_data);
-            if(NULL == _data_obj_ptr)
-            {
-                xerror("xvblock_t::create_offdata_object,bad serialized_data that not follow spec");
-                return NULL;
-            }
-            xvboffdata_t* offdata_ptr = (xvboffdata_t*)_data_obj_ptr->query_interface(enum_xobject_type_voffdata);
-            if(NULL == offdata_ptr)
-            {
-                xerror("xvblock_t::create_offdata_object,bad serialized_data is not for xvboffdata_t,but for type:%d",_data_obj_ptr->get_obj_type());
-                
-                _data_obj_ptr->release_ref();
-                return NULL;
-            }
-            return offdata_ptr;
         }
     
         //create a  xvheader_t from bin data(could be from DB or from network)
