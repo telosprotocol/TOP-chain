@@ -173,7 +173,7 @@ void xtop_beacon_chain_application::load_last_election_data() {
             } };
 
             // only use lightunit
-            xobject_ptr_t<base::xvblock_t> latest_vblock = data::xblocktool_t::get_latest_committed_lightunit(m_application->blockstore().get(), addr);
+            xobject_ptr_t<base::xvblock_t> latest_vblock = data::xblocktool_t::get_latest_genesis_connectted_lightunit(m_application->blockstore().get(), addr);
             if (latest_vblock == nullptr) {
                 xerror("xtop_beacon_chain_application::load_last_election_data has no latest lightunit. addr=%s", addr.c_str());
                 continue;
