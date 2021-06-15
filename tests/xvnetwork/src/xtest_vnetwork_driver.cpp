@@ -136,7 +136,7 @@ TEST(test_vnetwork_driver, test_m_value) {
     EXPECT_TRUE(vnetwork_driver_test_ptr->type() == common::real_part_type(adr.type()));
     std::vector<xvnode_address_t> res(2, adr);
     EXPECT_EQ(res.size(), 2);
-    res = vnetwork_driver_test_ptr->archive_addresses();
+    res = vnetwork_driver_test_ptr->archive_addresses(common::xnode_type_t::storage_archive);
     EXPECT_EQ(res.size(), 1);
     vnetwork_driver_test_ptr->stop();
 }

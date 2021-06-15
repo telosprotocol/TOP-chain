@@ -29,7 +29,7 @@ protected:
 protected:
     void dump_queue_info(const mbus::xevent_object_t *e_obj) override;
     bool filter_event(const mbus::xevent_ptr_t& e) override;
-    void before_event_pushed(const mbus::xevent_ptr_t &e, bool discard) override;
+    void before_event_pushed(const mbus::xevent_ptr_t &e, bool &discard) override;
     void check_queue_info(int64_t wait_cost, int32_t queue_size);
     void process_event(const mbus::xevent_ptr_t& e) override;
 

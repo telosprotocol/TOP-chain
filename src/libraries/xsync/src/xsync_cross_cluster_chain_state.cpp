@@ -39,34 +39,42 @@ void xsync_cross_cluster_chain_state_t::on_timer() {
         const std::shared_ptr<xrole_chains_t> &role_chains = role_it.second;
 
         common::xnode_type_t node_type = self_addr.type();
+        std::map<enum_chain_sync_policy, std::vector<vnetwork::xvnode_address_t>> archives;
 
-        if (!common::has<common::xnode_type_t::rec>(node_type) && !common::has<common::xnode_type_t::zec>(node_type) &&
-            !common::has<common::xnode_type_t::consensus>(node_type)) {
+        enum_chain_sync_policy sync_policy = enum_chain_sync_pocliy_fast;
+        std::vector<vnetwork::xvnode_address_t> archive_list;
+
+        if (common::has<common::xnode_type_t::rec>(node_type) || common::has<common::xnode_type_t::zec>(node_type) ||
+            common::has<common::xnode_type_t::consensus>(node_type)) {
+            archives[enum_chain_sync_pocliy_fast] = m_role_xips_mgr->get_rand_archives(1);
+            archives[enum_chain_sync_pocliy_full] = m_role_xips_mgr->get_edge_archive_list();
+        } else {
             continue;
         }
 
-        std::vector<xchain_state_info_t> info_list;
+        for (auto archive : archives) {
+            std::vector<xchain_state_info_t> info_list;
+            const map_chain_info_t &chains = role_chains->get_chains_wrapper().get_chains();
+            for (const auto &it: chains) {
 
-        const map_chain_info_t &chains = role_chains->get_chains_wrapper().get_chains();
-        for (const auto &it: chains) {
+                const std::string &address = it.first;
+                const xchain_info_t &chain_info = it.second;
 
-            const std::string &address = it.first;
-            const xchain_info_t &chain_info = it.second;
+                base::xauto_ptr<base::xvblock_t> latest_start_block = m_sync_store->get_latest_start_block(address, archive.first);
+                base::xauto_ptr<base::xvblock_t> latest_end_block = m_sync_store->get_latest_end_block(address, archive.first);
+                xchain_state_info_t info;
+                info.address = address;
+                info.start_height = latest_start_block->get_height();
+                info.end_height = latest_end_block->get_height();
+                info_list.push_back(info);
+            }
 
-            base::xauto_ptr<base::xvblock_t> latest_start_block = m_sync_store->get_latest_start_block(address, chain_info.sync_policy);
-            base::xauto_ptr<base::xvblock_t> latest_end_block = m_sync_store->get_latest_end_block(address, chain_info.sync_policy);
-            xchain_state_info_t info;
-            info.address = address;
-            info.start_height = latest_start_block->get_height();
-            info.end_height = latest_end_block->get_height();
-            info_list.push_back(info);
-        }
+            xsync_info("xsync_cross_cluster_chain_state_t on_timer send info exchange %s count(%d)", self_addr.to_string().c_str(), info_list.size());
+            if (info_list.empty()) {
+                continue;
+            }
 
-        xsync_info("xsync_cross_cluster_chain_state_t on_timer send info exchange %s count(%d)", self_addr.to_string().c_str(), info_list.size());
-
-        if (!info_list.empty()) {
-            std::vector<vnetwork::xvnode_address_t> archive_list = m_role_xips_mgr->get_rand_archives(1);
-            for (auto &it: archive_list)
+            for (auto &it: archive.second)
                 m_sync_sender->send_cross_cluster_chain_state(info_list, self_addr, it);
         }
     }
@@ -90,8 +98,13 @@ void xsync_cross_cluster_chain_state_t::handle_message(const vnetwork::xvnode_ad
             continue;
         }
 
-        base::xauto_ptr<base::xvblock_t> latest_start_block = m_sync_store->get_latest_start_block(address, enum_chain_sync_pocliy_fast);
-        base::xauto_ptr<base::xvblock_t> latest_end_block = m_sync_store->get_latest_end_block(address, enum_chain_sync_pocliy_fast);
+        enum_chain_sync_policy sync_policy = enum_chain_sync_pocliy_fast;
+        if (common::has<common::xnode_type_t::storage_full_node>(network_self.type())) {
+            sync_policy = enum_chain_sync_pocliy_full;
+        }
+
+        base::xauto_ptr<base::xvblock_t> latest_start_block = m_sync_store->get_latest_start_block(address, sync_policy);
+        base::xauto_ptr<base::xvblock_t> latest_end_block = m_sync_store->get_latest_end_block(address, sync_policy);
 
         uint64_t local_end_height = latest_end_block->get_height();
         if (peer_end_height > local_end_height) {
@@ -99,7 +112,7 @@ void xsync_cross_cluster_chain_state_t::handle_message(const vnetwork::xvnode_ad
                         address.c_str(), latest_start_block->get_height(), local_end_height, peer_start_height, peer_end_height);
 
             mbus::xevent_ptr_t ev = make_object_ptr<mbus::xevent_behind_download_t>(address, 
-                    peer_start_height, peer_end_height, enum_chain_sync_pocliy_fast, network_self, from_address, reason);
+                    peer_start_height, peer_end_height, sync_policy, network_self, from_address, reason);
             m_downloader->push_event(ev);
         }
     }

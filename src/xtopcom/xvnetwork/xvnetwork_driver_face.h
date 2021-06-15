@@ -19,6 +19,7 @@
 #include "xcommon/xnode_info.h"
 #include "xcommon/xrole_type.h"
 #include "xdata/xnode_info.h"
+#include "xcommon/xnode_type.h"
 #include "xnetwork/xmessage_transmission_property.h"
 #include "xvnetwork/xmessage_ready_callback.h"
 #include "xvnetwork/xvhost_face_fwd.h"
@@ -173,7 +174,7 @@ public:
      * 
      * @return std::vector<xvnode_address_t> 
      */
-    virtual std::vector<xvnode_address_t> archive_addresses() const = 0;
+    virtual std::vector<xvnode_address_t> archive_addresses(common::xnode_type_t node_type) const = 0;
 
     /**
      * @brief Get table ids belonging to this zone

@@ -28,8 +28,8 @@ TEST(xtop_router, address_of_book_id) {
         auto const empty_address = router->address_of_book_id(static_cast<std::uint16_t>(i), top::common::xnode_type_t::edge, top::common::xtopchain_network_id);
         EXPECT_TRUE(empty_address.empty());
 
-        auto const archive_address = router->address_of_book_id(static_cast<std::uint16_t>(i), top::common::xnode_type_t::archive, top::common::xtopchain_network_id);
-        EXPECT_EQ(top::common::build_archive_sharding_address(top::common::xtopchain_network_id), archive_address);
+        auto const archive_address = router->address_of_book_id(static_cast<std::uint16_t>(i), top::common::xnode_type_t::storage_archive, top::common::xtopchain_network_id);
+        EXPECT_EQ(top::common::build_archive_sharding_address(top::common::xarchive_group_id, top::common::xtopchain_network_id), archive_address);
 
         auto const rec_address = router->address_of_book_id(static_cast<std::uint16_t>(i), top::common::xnode_type_t::committee, top::common::xbeacon_network_id);
         EXPECT_EQ(top::common::build_committee_sharding_address(top::common::xbeacon_network_id), rec_address);

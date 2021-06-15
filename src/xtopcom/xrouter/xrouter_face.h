@@ -13,21 +13,6 @@
 NS_BEG2(top, router)
 
 /**
- * @brief @deprecated by xrouter_face_t
- *
- */
-class xrouter_face {
- public:
-    virtual ~xrouter_face() {}
-
-    virtual common::xnode_address_t get_shard(uint64_t round_no, const std::string & account) const = 0;
-    virtual common::xnode_address_t get_zone(uint64_t round_no, const std::string & account) const = 0;
-
-    virtual bool is_account_in_local_shard(uint64_t round_no, const std::string & account) const = 0;
-    virtual bool is_account_in_local_cluster(uint64_t round_no, const std::string & account) const = 0;
-};
-
-/**
  * @brief Map account address, table id or book id to its corresponding sharding address
  *
  */
@@ -42,7 +27,7 @@ struct xtop_router_face {
      */
     virtual common::xsharding_address_t sharding_address_from_account(common::xaccount_address_t const & target_account,
                                                                       common::xnetwork_id_t const & nid,
-                                                                      common::xnode_type_t type) = 0;
+                                                                      common::xnode_type_t type) const = 0;
 
     /**
      * @brief Map table id to its corresponding sharding address.
@@ -52,7 +37,9 @@ struct xtop_router_face {
      * @param nid                           The network id.
      * @return common::xsharding_address_t  The sharding address the table id belongs to.
      */
-    virtual common::xsharding_address_t address_of_table_id(std::uint16_t const table_id, common::xnode_type_t type, common::xnetwork_id_t const & nid) = 0;
+    virtual common::xsharding_address_t address_of_table_id(std::uint16_t const table_id,
+                                                            common::xnode_type_t type,
+                                                            common::xnetwork_id_t const & nid) const = 0;
 
     /**
      * @brief Map book id to its corresponding sharding address.
@@ -62,7 +49,9 @@ struct xtop_router_face {
      * @param nid                           The network id.
      * @return common::xsharding_address_t  The sharding address the book id belongs to.
      */
-    virtual common::xsharding_address_t address_of_book_id(std::uint16_t const book_id, common::xnode_type_t type, common::xnetwork_id_t const & nid) = 0;
+    virtual common::xsharding_address_t address_of_book_id(std::uint16_t const book_id,
+                                                           common::xnode_type_t type,
+                                                           common::xnetwork_id_t const & nid) const = 0;
 };
 using xrouter_face_t = xtop_router_face;
 

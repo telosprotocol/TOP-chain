@@ -214,7 +214,7 @@ void xsync_handler_t::push_newblock(uint32_t msg_size,
 
     xblock_ptr_t &block = ptr->block;
 
-    if (!common::has<common::xnode_type_t::archive>(network_self.type())) {
+    if (!common::has<common::xnode_type_t::storage>(network_self.type())) {
         xsync_warn("xsync_handler receive push_newblock(target must be archive) %" PRIx64 " %s %s %s",
             msg_hash, block->dump().c_str(), network_self.to_string().c_str(), from_address.to_string().c_str());
         return;
@@ -266,13 +266,13 @@ void xsync_handler_t::v1_newblockhash(
     if (address == "" || height == 0 || view_id == 0)
         return;
 
-    if (!common::has<common::xnode_type_t::archive>(network_self.type())) {
+    if (!common::has<common::xnode_type_t::storage_archive>(network_self.type())) {
         xsync_warn("xsync_handler receive receive v1_newblockhash(target must be archive) %" PRIx64 " %s %s %s",
             msg_hash, address.c_str(), network_self.to_string().c_str(), from_address.to_string().c_str());
         return;
     }
 
-    if (!common::has<common::xnode_type_t::archive>(from_address.type())) {
+    if (!common::has<common::xnode_type_t::storage_archive>(from_address.type())) {
         xsync_warn("xsync_handler receive receive v1_newblockhash(sender must be archive) %" PRIx64 " %s %s %s",
             msg_hash, address.c_str(), network_self.to_string().c_str(), from_address.to_string().c_str());
         return;
@@ -306,7 +306,7 @@ void xsync_handler_t::push_newblockhash(uint32_t msg_size,
     if (address == "" || height == 0 || view_id == 0 || hash == "")
         return;
 
-    if (!common::has<common::xnode_type_t::archive>(network_self.type())) {
+    if (!common::has<common::xnode_type_t::storage>(network_self.type())) {
         xsync_warn("xsync_handler receive push_newblockhash(target must be archive) %" PRIx64 " %s,height=%lu,viewid=%lu, %s %s",
             msg_hash, address.c_str(), height, view_id, network_self.to_string().c_str(), from_address.to_string().c_str());
         return;
@@ -348,13 +348,13 @@ void xsync_handler_t::broadcast_newblockhash(uint32_t msg_size,
     if (address == "" || height == 0 || view_id == 0 || hash == "")
         return;
 
-    if (!common::has<common::xnode_type_t::archive>(network_self.type())) {
+    if (!common::has<common::xnode_type_t::storage_archive>(network_self.type())) {
         xsync_warn("xsync_handler receive broadcast_newblockhash(target must be archive) %" PRIx64 " %s,height=%lu,viewid=%lu, %s %s",
             msg_hash, address.c_str(), height, view_id, network_self.to_string().c_str(), from_address.to_string().c_str());
         return;
     }
 
-    if (!common::has<common::xnode_type_t::archive>(from_address.type())) {
+    if (!common::has<common::xnode_type_t::storage_archive>(from_address.type())) {
         xsync_warn("xsync_handler receive broadcast_newblockhash(source must be archive) %" PRIx64 " %s,height=%lu,viewid=%lu, %s %s",
             msg_hash, address.c_str(), height, view_id, network_self.to_string().c_str(), from_address.to_string().c_str());
         return;
@@ -600,7 +600,7 @@ void xsync_handler_t::cross_cluster_chain_state(uint32_t msg_size, const vnetwor
     ptr->serialize_from(stream);
     std::vector<xchain_state_info_t> &info_list = ptr->info_list;
 
-    if (!common::has<common::xnode_type_t::archive>(network_self.type())) {
+    if (!common::has<common::xnode_type_t::storage_archive>(network_self.type())) {
         xsync_warn("xsync_handler receive cross_cluster_chain_state(target must be archive) %" PRIx64 " count(%u), %s %s",
             msg_hash, info_list.size(), network_self.to_string().c_str(), from_address.to_string().c_str());
         return;
@@ -733,8 +733,9 @@ void xsync_handler_t::handle_role_change(const mbus::xevent_ptr_t& e) {
         for (auto &id: table_ids)
             set_table_ids.insert(id);
 
-        m_role_xips_mgr->add_role(addr, neighbor_addresses, parent_addresses, vnetwork_driver->archive_addresses(), set_table_ids);
-
+        m_role_xips_mgr->add_role(addr, neighbor_addresses, parent_addresses, 
+            vnetwork_driver->archive_addresses(common::xnode_type_t::storage_archive), 
+            vnetwork_driver->archive_addresses(common::xnode_type_t::storage_full_node), set_table_ids);
 
         XMETRICS_COUNTER_INCREMENT("sync_cost_role_add_event", 1);
 
@@ -892,7 +893,7 @@ void xsync_handler_t::handle_ondemand_chain_snapshot_request(
     auto ptr = make_object_ptr<xsync_message_chain_snapshot_meta_t>();
     ptr->serialize_from(stream);
 
-	XMETRICS_COUNTER_INCREMENT("sync_handle_ondemand_chain_snapshot_request", 1);
+    XMETRICS_COUNTER_INCREMENT("sync_handle_ondemand_chain_snapshot_request", 1);
     xsync_info("xsync_handler receive ondemand_chain_snapshot_request %" PRIx64 " wait(%ldms) %s, account %s, height %llu",
         msg_hash, get_time()-recv_time, from_address.to_string().c_str(), ptr->m_account_addr.c_str(), ptr->m_height_of_fullblock);
     m_sync_on_demand->handle_chain_snapshot_meta(*(ptr.get()), network_self, from_address);

@@ -171,28 +171,15 @@ int32_t xrefund_info::do_read(base::xstream_t & stream) {
     return (begin_pos - end_pos);
 }
 
-/*int32_t stake_info::do_write(base::xstream_t& stream) const {
-    const int32_t begin_pos = stream.size();
-    stream << m_audit_vote_stake;
-    stream << m_validate_vote_stake;
-    const int32_t end_pos = stream.size();
-    return (end_pos - begin_pos);
-}
-
-int32_t stake_info::do_read(base::xstream_t& stream) {
-    const int32_t begin_pos = stream.size();
-    stream >> m_audit_vote_stake;
-    stream >> m_validate_vote_stake;
-    const int32_t end_pos = stream.size();
-    return (begin_pos - end_pos);
-}*/
-
 bool xreg_node_info::rec() const noexcept { return is_rec_node(); }
 bool xreg_node_info::zec() const noexcept { return is_zec_node(); }
 bool xreg_node_info::auditor() const noexcept { return is_valid_auditor_node(); }
 bool xreg_node_info::validator() const noexcept { return is_validator_node(); }
 bool xreg_node_info::edge() const noexcept { return is_edge_node(); }
 bool xreg_node_info::archive() const noexcept { return is_valid_archive_node(); }
+bool xreg_node_info::full_node() const noexcept {
+    return common::has<common::xrole_type_t::full_node>(m_registered_role);
+}
 
 uint64_t xreg_node_info::rec_stake() const noexcept {
     uint64_t stake = 0;
@@ -213,6 +200,7 @@ uint64_t xreg_node_info::auditor_stake() const noexcept { return get_auditor_sta
 uint64_t xreg_node_info::validator_stake() const noexcept { return get_validator_stake(); };
 uint64_t xreg_node_info::edge_stake() const noexcept { return 0; }
 uint64_t xreg_node_info::archive_stake() const noexcept { return 0; }
+uint64_t xreg_node_info::full_node_stake() const noexcept { return 0; }
 
 int32_t xreg_node_info::do_write(base::xstream_t & stream) const {
     const int32_t begin_pos = stream.size();
