@@ -90,6 +90,10 @@ xreceiptid_pairs_t::xreceiptid_pairs_t() {
 
 }
 
+xreceiptid_pairs_t::~xreceiptid_pairs_t() {
+    
+}
+
 bool xreceiptid_pairs_t::find_pair(xtable_shortid_t sid, xreceiptid_pair_t & pair) {
     auto iter = m_all_pairs.find(sid);
     if (iter != m_all_pairs.end()) {
