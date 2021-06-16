@@ -679,6 +679,7 @@ namespace top
         
         void    xvqcert_t::set_justify_cert_hash(const std::string & hash)
         {
+            xinfo("jimmy xvqcert_t::set_justify_cert_hash set justify,hash=%s",base::xstring_utl::to_hex(hash).c_str());
             if(is_allow_modify())
             {
                 m_justify_cert_hash = hash;

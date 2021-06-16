@@ -102,6 +102,12 @@ namespace top
                 if (proposal->get_cert()->get_justify_cert_hash().empty())
                 {
                     proposal->get_cert()->set_justify_cert_hash(get_lock_block()->get_input_root_hash());
+                    xinfo("jimmy xBFTdriver_t::start_consensus set justify,proposal=%s",proposal->dump().c_str());
+                    xinfo("jimmy xBFTdriver_t::start_consensus set justify,lock=%s",get_lock_block()->dump().c_str());
+                    if (proposal->get_height() > 2 && proposal->get_height() != get_lock_block()->get_height() + 2)
+                    {
+                        xerror("jimmy xBFTdriver_t::start_consensus set justify,lock=%s",get_lock_block()->dump().c_str());
+                    }
                 }
 
                 if(   (false == proposal->is_input_ready(true))  //leader should has full block
