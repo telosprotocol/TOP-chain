@@ -104,8 +104,8 @@ xblock_ptr_t        xlighttable_builder_t::build_block(const xblock_ptr_t & prev
     std::shared_ptr<xlighttable_builder_para_t> lighttable_build_para = std::dynamic_pointer_cast<xlighttable_builder_para_t>(build_para);
     xassert(lighttable_build_para != nullptr);
 
-    base::xauto_ptr<base::xvblock_t> _temp_block = data::xblocktool_t::create_next_emptyblock(prev_block.get());
-    xobject_ptr_t<base::xvbstate_t> proposal_bstate = make_object_ptr<base::xvbstate_t>(*_temp_block.get(), *prev_bstate.get());
+    base::xauto_ptr<base::xvheader_t> _temp_header = base::xvblockbuild_t::build_proposal_header(prev_block.get());
+    xobject_ptr_t<base::xvbstate_t> proposal_bstate = make_object_ptr<base::xvbstate_t>(*_temp_header.get(), *prev_bstate.get());
 
     std::string property_binlog = make_light_table_binlog(proposal_bstate, lighttable_build_para->get_batch_units());
     xtable_block_para_t lighttable_para;
@@ -129,17 +129,12 @@ xblock_ptr_t        xlighttable_builder_t::build_block(const xblock_ptr_t & prev
 
 std::string xfulltable_builder_t::make_binlog(const xblock_ptr_t & prev_block,
                                                 const xobject_ptr_t<base::xvbstate_t> & prev_bstate) {
-    base::xauto_ptr<base::xvblock_t> _temp_block = data::xblocktool_t::create_next_emptyblock(prev_block.get());
-    xobject_ptr_t<base::xvbstate_t> proposal_bstate = make_object_ptr<base::xvbstate_t>(*_temp_block.get(), *prev_bstate.get());
+    base::xauto_ptr<base::xvheader_t> _temp_header = base::xvblockbuild_t::build_proposal_header(prev_block.get());
+    xobject_ptr_t<base::xvbstate_t> proposal_bstate = make_object_ptr<base::xvbstate_t>(*_temp_header.get(), *prev_bstate.get());
 
     std::string property_snapshot;
     auto canvas = proposal_bstate->rebase_change_to_snapshot();  // TODO(jimmy)
     canvas->encode(property_snapshot);
-#if 1 //test
-xobject_ptr_t<base::xvbstate_t> test_bstate = make_object_ptr<base::xvbstate_t>(*_temp_block.get());
-bool ret_apply = test_bstate->apply_changes_of_binlog(property_snapshot);
-xassert(ret_apply == true);
-#endif
     return property_snapshot;
 }
 
