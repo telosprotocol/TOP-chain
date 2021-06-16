@@ -1672,7 +1672,7 @@ namespace top
             uint64_t sign_hash_64 = base::xhash64_t::digest(get_cert()->get_hash_to_sign());
             uint64_t justify_hash_64 = base::xhash64_t::digest(get_cert()->get_justify_cert_hash());
             char local_param_buf[512];
-            xprintf(local_param_buf,sizeof(local_param_buf),"{header=%ld,input=%ld,output=%ld,inroot=%ld,outroot=%ld,sign=%ld,justify=%ld",
+            printf(local_param_buf,sizeof(local_param_buf),"{header=%" PRIu64 ",input=%" PRIu64 ",output=%" PRIu64 ",inroot=%" PRIu64 ",outroot=%" PRIu64 ",sign=%" PRIu64 ",justify=%" PRIu64 "",
                     header_64,input_64,output_64,input_root_64,output_root_64,sign_hash_64,justify_hash_64);
             return std::string(local_param_buf);
 #else
