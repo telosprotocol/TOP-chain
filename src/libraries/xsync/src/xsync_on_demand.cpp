@@ -101,11 +101,11 @@ void xsync_on_demand_t::handle_blocks_response(const std::vector<data::xblock_pt
         return;
     }
 
-    base::xauto_ptr<base::xvblock_t> table_block = m_sync_store->get_latest_start_block(account, enum_chain_sync_pocliy_fast);
-    if (table_block != nullptr){
-        data::xblock_ptr_t current_block = autoptr_to_blockptr(table_block);
-        xsync_message_chain_snapshot_meta_t chain_snapshot_meta{account, table_block->get_height()};
-        if(!current_block->is_full_state_block()){
+    base::xauto_ptr<base::xvblock_t> current_vblock = m_sync_store->get_latest_start_block(account, enum_chain_sync_pocliy_fast);
+    if (current_vblock != nullptr){
+        data::xblock_ptr_t current_block = autoptr_to_blockptr(current_vblock);
+        xsync_message_chain_snapshot_meta_t chain_snapshot_meta{account, current_vblock->get_height()};
+        if(current_block->is_tableblock() && !current_block->is_full_state_block()){
             xsync_warn("xsync_handler::on_demand_blocks request account(%s)'s snapshot, height is %llu",
                 current_block->get_account().c_str(), current_block->get_height());
             m_sync_sender->send_chain_snapshot_meta(chain_snapshot_meta, xmessage_id_sync_ondemand_chain_snapshot_request, network_self, to_address);
@@ -184,7 +184,8 @@ void xsync_on_demand_t::handle_chain_snapshot_meta(xsync_message_chain_snapshot_
         account.c_str(), chain_meta.m_height_of_fullblock);
 
     base::xauto_ptr<base::xvblock_t> blk = m_sync_store->load_block_object(account, chain_meta.m_height_of_fullblock);
-    if (blk != nullptr) {
+    data::xblock_ptr_t current_block = autoptr_to_blockptr(blk);
+    if ((blk != nullptr) && (current_block->is_tableblock())) {
         xfull_tableblock_t* full_block_ptr = dynamic_cast<xfull_tableblock_t*>(xblock_t::raw_vblock_to_object_ptr(blk.get()).get());
         if (full_block_ptr != nullptr) {
             if (base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_full_block_offsnapshot(blk.get())) {
@@ -200,7 +201,6 @@ void xsync_on_demand_t::handle_chain_snapshot_meta(xsync_message_chain_snapshot_
             xsync_error("xsync_handler receive ondemand_chain_snapshot_request, and it is not full table,account:%s, height:%llu",
                     account.c_str(), chain_meta.m_height_of_fullblock);
         }
-
     } else {
         xsync_info("xsync_handler receive ondemand_chain_snapshot_request, and the full block is not exist,account:%s, height:%llu",
                 account.c_str(), chain_meta.m_height_of_fullblock);
@@ -229,7 +229,7 @@ void xsync_on_demand_t::handle_chain_snapshot(xsync_message_chain_snapshot_t &ch
 
     base::xauto_ptr<base::xvblock_t> current_vblock = m_sync_store->load_block_object(account, chain_snapshot.m_height_of_fullblock);
     data::xblock_ptr_t current_block = autoptr_to_blockptr(current_vblock);
-    if (current_block->is_fullblock() && !current_block->is_full_state_block()) {
+    if (current_block->is_tableblock() && current_block->is_fullblock() && !current_block->is_full_state_block()) {
         if (false == xtable_bstate_t::set_block_offsnapshot(current_vblock.get(), chain_snapshot.m_chain_snapshot)) {
             xsync_error("xsync_on_demand_t::handle_chain_snapshot invalid snapshot. block=%s", current_vblock->dump().c_str());
             return;
