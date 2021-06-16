@@ -75,8 +75,9 @@ class xreceiptid_state_t {
  public:
     void        add_pair(xtable_shortid_t sid, const xreceiptid_pair_t & pair);
     bool        find_pair(xtable_shortid_t sid, xreceiptid_pair_t & pair);
+    uint32_t    get_unconfirm_tx_num() const;  // just for debug
 
- public:
+ public: // just for block build
     void        clear_pair_modified();
     bool        find_pair_modified(xtable_shortid_t sid, xreceiptid_pair_t & pair);
     void        add_pair_modified(xtable_shortid_t sid, const xreceiptid_pair_t & pair);
