@@ -23,6 +23,8 @@
 #include "xrpc/xerror/xrpc_error_code.h"
 #include "xrpc/xrpc_method.h"
 #include "xrpc/xuint_format.h"
+#include "xpbase/base/top_utils.h"
+#include "xtopcl/include/api_method.h"
 
 #include <cinttypes>
 
@@ -53,7 +55,7 @@ void xelect_client_imp::bootstrap_node_join() {
     size_t try_count{60};
     size_t loop_count{0};
     size_t success_count{0};
-    std::cout << "send join chain network transaction..." << std::endl;
+    xinfo("enter bootstrap_node_join");
     for (auto i = 0u; i < try_count; ++i) {
         for (auto& item : seed_edge_host_set) {
             std::string seed_edge_host = item + ":" + http_port;
@@ -63,6 +65,7 @@ void xelect_client_imp::bootstrap_node_join() {
 
             try {
                 std::string token_request = "version=1.0&target_account_addr=" + user_params.account.value() + "&method=requestToken&sequence_id=1";
+                xdbg("token_request:%s", token_request.c_str());
                 auto token_response = client.request("POST", "/", token_request);
                 const auto& token_response_str = token_response->content.string();
                 xdbg("token_response:%s", token_response_str.c_str());
@@ -78,6 +81,7 @@ void xelect_client_imp::bootstrap_node_join() {
                 //get last hash and nonce
                 std::string account_info_request = "version=1.0&target_account_addr=" + user_params.account.value() + "&method=getAccount&sequence_id=2&identity_token=" + token
                     + "&body=" + SimpleWeb::Percent::encode("{\"params\": {\"account_addr\": \"" + user_params.account.value() + "\"}}");
+                xdbg("account_info_request:%s", account_info_request.c_str());
                 auto account_info_response = client.request("POST", "/", account_info_request);
                 const auto& account_info_response_str = account_info_response->content.string();
                 xdbg("account_info_response:%s", account_info_response_str.c_str());
@@ -99,7 +103,7 @@ void xelect_client_imp::bootstrap_node_join() {
                 tx->set_deposit(XGET_ONCHAIN_GOVERNANCE_PARAMETER(min_tx_deposit));
 
                 xJson::Value account_info_response_json;
-                if (!reader.parse(account_info_response_str, account_info_response_json) || account_info_response_json[xrpc::RPC_ERRNO].asUInt() != xrpc::RPC_OK_CODE) {
+                if (!reader.parse(account_info_response_str, account_info_response_json) || account_info_response_json[xrpc::RPC_ERRNO].asInt() != xrpc::RPC_OK_CODE) {
                     xwarn("account_info_response_json error");
                     tx->set_last_trans_hash_and_nonce({}, 0);
                 } else {
@@ -110,7 +114,9 @@ void xelect_client_imp::bootstrap_node_join() {
                 tx->set_digest();
 
                 // get private key and sign
-                auto sign_key =  base::xstring_utl::base64_decode(user_params.signkey);
+                std::string sign_key;
+                // xinfo("xelect_client_imp::bootstrap_node_join,user_params.signkey: %s", user_params.signkey.c_str());
+                sign_key = DecodePrivateString(user_params.signkey);    
                 utl::xecprikey_t pri_key_obj((uint8_t*)sign_key.data());
                 utl::xecdsasig_t signature_obj = pri_key_obj.sign(tx->digest());
                 auto signature = std::string(reinterpret_cast<char *>(signature_obj.get_compact_signature()), signature_obj.get_compact_signature_size());

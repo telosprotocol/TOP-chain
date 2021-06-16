@@ -408,6 +408,13 @@ std::string GetStringSha256(const std::string& str) {
     return std::string((char*)(sha256.c_str), sizeof(sha256.c_str));  // NOLINT
 }
 
-
+std::string DecodePrivateString(const std::string & pri_key)
+{
+    constexpr int HEX_PRI_KEY_LEN = 64;
+    if (pri_key.size() != HEX_PRI_KEY_LEN)
+        return Base64Decode(pri_key);
+    else
+        return top::HexDecode(pri_key);
+}
 
 }  // namespace top

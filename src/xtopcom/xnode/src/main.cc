@@ -330,7 +330,7 @@ bool scan_keystore_dir(
         };
 
         for (const auto& el : reader.items()) {
-            if (el.key() == "account address") {
+            if (el.key() == "account address" || el.key() == "account_address") {
                 key_info_map["account"] = el.value().get<std::string>();
             }
             if (el.key() == "public_key") {
