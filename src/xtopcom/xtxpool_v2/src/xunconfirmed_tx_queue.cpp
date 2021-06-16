@@ -201,7 +201,7 @@ int32_t xunconfirmed_account_t::update(xblock_t * latest_committed_block, const 
         if (!unconfirm_sendtx_actions.empty()) {
             auto _cert_block = m_para->get_vblockstore()->load_block_object(account_addr, cur_height + 2, 0, false);  // only need cert mini-block
             if (_cert_block == nullptr) {
-                xtxpool_error("xunconfirmed_account_t::update fail-load cert block.account=%s,height=%ld", account_addr.c_str(), cur_height + 2);
+                xtxpool_warn("xunconfirmed_account_t::update fail-load cert block.account=%s,height=%ld", account_addr.c_str(), cur_height + 2);
                 return xtxpool_error_unitblock_lack;
             }
             std::vector<base::xfull_txreceipt_t> txreceipts = base::xtxreceipt_build_t::create_all_txreceipts(unit_block.get(), _cert_block.get(), unconfirm_sendtx_actions);
