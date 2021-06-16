@@ -117,10 +117,7 @@ void xelect_client_imp::bootstrap_node_join() {
                 // get private key and sign
                 std::string sign_key;
                 // xinfo("xelect_client_imp::bootstrap_node_join,user_params.signkey: %s", user_params.signkey.c_str());
-                if (user_params.signkey.size() != HEX_PRI_KEY_LEN)
-                    sign_key =  base::xstring_utl::base64_decode(user_params.signkey);
-                else
-                    sign_key =  top::HexDecode(user_params.signkey);
+                sign_key = DecodePrivateString(user_params.signkey);    
                 utl::xecprikey_t pri_key_obj((uint8_t*)sign_key.data());
                 utl::xecdsasig_t signature_obj = pri_key_obj.sign(tx->digest());
                 auto signature = std::string(reinterpret_cast<char *>(signature_obj.get_compact_signature()), signature_obj.get_compact_signature_size());
