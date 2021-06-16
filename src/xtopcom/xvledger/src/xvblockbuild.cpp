@@ -5,6 +5,7 @@
 #include <string>
 #include "xvledger/xvblockbuild.h"
 #include "xvledger/xmerkle.hpp"
+#include "xvledger/xvledger.h"
 #include "xutility/xhash.h"
 
 namespace top
@@ -210,6 +211,25 @@ namespace top
             _header->set_last_full_block(_para.m_last_full_block_hash, _para.m_last_full_block_height);
             _header->set_extra_data(_para.m_extra_data);
             set_header(_header.get());
+        }
+
+        xauto_ptr<xvheader_t> xvblockbuild_t::build_proposal_header(xvblock_t* block) {
+            xauto_ptr<xvheader_t> _header = new xvheader_t();
+            _header->set_chainid(block->get_chainid());
+            _header->set_account(block->get_account());
+            _header->set_height(block->get_height() + 1);
+            _header->set_block_level(block->get_block_level());
+            _header->set_weight(1);
+            _header->set_last_block_hash(block->get_block_hash());
+            _header->set_block_class(block->get_block_class());
+            _header->set_block_type(block->get_block_type());
+            if (block->get_block_class() == enum_xvblock_class_full) {
+                _header->set_last_full_block(block->get_block_hash(), block->get_height());
+            } else {
+                _header->set_last_full_block(block->get_last_full_block_hash(), block->get_last_full_block_height());
+            }
+            _header->set_extra_data(std::string());
+            return _header;
         }
 
         void xvblockbuild_t::init_header_qcert(const xbbuild_para_t & _para) {
@@ -624,12 +644,34 @@ namespace top
                 get_block()->dump().c_str(),get_block()->detail_dump().c_str());
 #endif
 
-            xdbg_info("xvblockmaker_t::build_new_block,done for block=%s,input={entitys=%zu,actions=%zu,res=%zu},output={entitys=%zu,res=%zu,binlog=%zu,%zu,state=%zu,%zu}",
-                get_block()->dump().c_str(), get_block()->get_input()->get_entitys().size(),
-                get_block()->get_input()->get_action_count(), get_block()->get_input()->get_resources_data().size(),
+            xdbg_info("xvblockmaker_t::build_new_block,done for block=%s,justify=%s,input={entitys=%zu,actions=%zu,res=%zu},output={entitys=%zu,res=%zu,binlog=%zu,%zu,state=%zu,%zu}",
+                get_block()->dump().c_str(), base::xstring_utl::to_hex(get_block()->get_justify_cert_hash()).c_str(),
+                get_block()->get_input()->get_entitys().size(), get_block()->get_input()->get_action_count(), get_block()->get_input()->get_resources_data().size(),
                 get_block()->get_output()->get_entitys().size(), get_block()->get_output()->get_resources_data().size(),
                 get_block()->get_output()->get_binlog_hash().size(), get_block()->get_output()->get_binlog().size(),
                 get_block()->get_output()->get_state_hash().size(), get_block()->get_output()->get_full_state().size());
+
+#ifdef DEBUG  // TODO(jimmy) debug for check crash issue
+            if ( (get_block()->get_height() > 2)
+                && (get_block()->get_block_level() == enum_xvblock_level_table || get_block()->get_block_level() == enum_xvblock_level_unit) ) {
+                base::xauto_ptr<base::xvblock_t> _prev_block = base::xvchain_t::instance().get_xblockstore()->load_block_object(xvaccount_t(get_block()->get_account()), get_block()->get_height()-1, get_block()->get_last_block_hash(), false);
+                if (_prev_block != nullptr) {
+                    base::xauto_ptr<base::xvblock_t> _prev_prev_block = base::xvchain_t::instance().get_xblockstore()->load_block_object(xvaccount_t(_prev_block->get_account()), _prev_block->get_height()-1, _prev_block->get_last_block_hash(), false);
+                    if (_prev_prev_block != nullptr) {
+                        if (_prev_prev_block->get_input_root_hash() != get_block()->get_justify_cert_hash()) {
+                            xerror("xvblockmaker_t::build_new_block,fail-check justify cert hash,%s,%s,block=%s",
+                                base::xstring_utl::to_hex(_prev_prev_block->get_input_root_hash()).c_str(),
+                                base::xstring_utl::to_hex(get_block()->get_justify_cert_hash()).c_str(),
+                                get_block()->dump().c_str());
+                            return nullptr;
+                        } else {
+                            xdbg("xvblockmaker_t::build_new_block succ-check justify cert hash,block=%s", get_block()->dump().c_str());
+                        }
+                    }
+                }
+            }
+#endif
+
             if (get_header()->get_block_class() == base::enum_xvblock_class_light
                 && get_header()->get_block_level() == base::enum_xvblock_level_unit) {
                 xassert(get_output()->get_binlog().size() > 0);
