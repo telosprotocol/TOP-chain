@@ -7,7 +7,7 @@ do
         echo "Build CI testnet"
     ;;
     build_dev)
-        CMAKE_EXTRA_OPTIONS+=" -DXBUILD_DEV=ON"
+        CMAKE_EXTRA_OPTIONS+=" -DXBUILD_DEV=ON -DADDRESS_SANITIZER=ON"
         echo "Build Dev testnet"
     ;;
     build_galileo)
