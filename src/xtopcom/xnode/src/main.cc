@@ -1093,6 +1093,12 @@ std::string get_working_path()
 
 // start http server for password cache.
 int StartNodeSafeBox(const std::string& safebox_addr, uint16_t safebox_port, std::string const& pid_file) {
+    // register signal
+    if (register_signals(false) != 0) {
+        std::cerr << "StartNodeSafeBox register signals failed" << std::endl;
+        return -1;
+    }
+
     if (!daemon()) {
         std::cout << "create daemon process failed" << std::endl;
         return -1;
