@@ -90,6 +90,8 @@ namespace top
                     async_fire_proposal_finish_event(enum_xconsensus_error_bad_proposal,proposal);
                     return true;
                 }
+                // leader should always make proposal based on cert-block
+                
                 if(proposal->get_height() > (get_lock_block()->get_height() + 2))
                 {
                     xwarn("xBFTdriver_t::start_consensus,warn-proposal out of control by locked block=%s vs proposal=%s at node=0x%llx",get_lock_block()->dump().c_str(),proposal->dump().c_str(),get_xip2_addr().low_addr);
@@ -97,7 +99,14 @@ namespace top
                     async_fire_proposal_finish_event(enum_xconsensus_error_bad_proposal,proposal);
                     return true;
                 }
-
+                if(proposal->get_height() > 1 && proposal->get_height() != (get_lock_block()->get_height() + 2))
+                {
+                    xwarn("xBFTdriver_t::start_consensus,warn-proposal not maked base on cert block=%s vs proposal=%s at node=0x%llx",get_lock_block()->dump().c_str(),proposal->dump().c_str(),get_xip2_addr().low_addr);
+                    
+                    async_fire_proposal_finish_event(enum_xconsensus_error_bad_proposal,proposal);
+                    return true;
+                }
+                
                 //justify -> current locked block,so once this proposal is certified ->proof that locked-block is at commit status.
                 if (proposal->get_cert()->get_justify_cert_hash().empty())
                 {
