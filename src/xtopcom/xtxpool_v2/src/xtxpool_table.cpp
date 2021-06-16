@@ -443,12 +443,7 @@ void xtxpool_table_t::update_locked_txs(const std::vector<tx_info_t> & locked_tx
 int32_t xtxpool_table_t::update_receiptid_state(const base::xreceiptid_state_ptr_t & receiptid_state) {
     m_receipt_state_cache.update(receiptid_state);
 
-    int32_t unconfirm_tx_num = 0;
-    auto receiptid_pairs = receiptid_state->get_binlog()->get_all_pairs();
-    for (auto & iter : receiptid_pairs) {
-        unconfirm_tx_num += iter.second.get_unconfirm_num();
-    }
-
+    int32_t unconfirm_tx_num = (int32_t)receiptid_state->get_unconfirm_tx_num();
     std::lock_guard<std::mutex> lck(m_mgr_mutex);
     m_txmgr_table.update_receiptid_state(receiptid_state);
     int32_t old_unconfirm_tx_num = m_xtable_info.get_unconfirm_tx_num();

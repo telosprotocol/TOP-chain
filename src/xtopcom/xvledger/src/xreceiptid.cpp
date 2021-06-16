@@ -172,6 +172,15 @@ bool xreceiptid_state_t::find_pair(xtable_shortid_t sid, xreceiptid_pair_t & pai
     return m_binlog->find_pair(sid, pair);
 }
 
+uint32_t xreceiptid_state_t::get_unconfirm_tx_num() const {
+    uint32_t unconfirm_tx_num = 0;
+    const auto & receiptid_pairs = m_binlog->get_all_pairs();
+    for (auto & iter : receiptid_pairs) {
+        unconfirm_tx_num += iter.second.get_unconfirm_num();
+    }
+    return unconfirm_tx_num;
+}
+
 bool xreceiptid_state_t::find_pair_modified(xtable_shortid_t sid, xreceiptid_pair_t & pair) {
     // firstly find in binlog, secondly find in last full
     bool ret = m_modified_binlog->find_pair(sid, pair);
