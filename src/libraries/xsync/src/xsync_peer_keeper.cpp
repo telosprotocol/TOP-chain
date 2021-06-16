@@ -69,8 +69,8 @@ void xsync_peer_keeper_t::add_role(const vnetwork::xvnode_address_t& addr) {
         for (auto &it: m_maps) {
             // remove old
             if (it.first.cluster_address() == addr.cluster_address()) {
-                m_maps.erase(it.first);
                 m_peerset->remove_group(it.first);
+                m_maps.erase(it.first);
                 break;
             }
         }
