@@ -9,6 +9,7 @@
 #ifdef DEBUG
 #include "xcrypto/xckey.h"
 #endif
+#include "xpbase/base/top_utils.h"
 
 namespace top
 {
@@ -38,16 +39,19 @@ namespace top
                 //election result contains public key, private key for self node only
                 xassert(sign_pri_key.size() == 32);//force the private key of 32bytes
 
-                #ifdef DEBUG  //double check whether public/private key matched the account addresss
+/*                #ifdef DEBUG  //double check whether public/private key matched the account addresss
                 utl::xecprikey_t raw_pri_key_obj((uint8_t*)sign_pri_key.data());
                 utl::xecpubkey_t raw_pub_kye_obj = raw_pri_key_obj.get_public_key();
+                xinfo("pub:%s,%s,pri:%s", top::HexEncode(sign_pub_key).c_str(), top::HexEncode(std::string((char*)raw_pub_kye_obj.data(), 65)).c_str(), top::HexEncode(sign_pri_key).c_str() );
+                xinfo("account:%s,%s", account.c_str(), raw_pub_kye_obj.to_address(get_addr_type(), get_ledger_id()).c_str());
+                xinfo("get_addr_type:%d, get_ledger_id:%d", get_addr_type(), get_ledger_id());
                 xassert(account == raw_pub_kye_obj.to_address(get_addr_type(), get_ledger_id())); //check address again
                 
                 utl::xecpubkey_t passed_pub_key_obj((uint8_t*)sign_pub_key.data(),(int)sign_pub_key.size());
                 xassert(account == passed_pub_key_obj.to_address(get_addr_type(), get_ledger_id())); //check address again
                 //bits check by memcmp for tow public key
                 xassert(0 == memcmp(raw_pub_kye_obj.data(), passed_pub_key_obj.data(), raw_pub_kye_obj.size()));
-                #endif
+                #endif  */
             }
         }
         
