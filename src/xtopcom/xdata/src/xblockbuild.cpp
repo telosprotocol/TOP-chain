@@ -328,7 +328,6 @@ bool xfulltable_build_t::build_block_body(const xfulltable_block_para_t & para) 
     std::string full_state_bin = para.get_snapshot();
     set_output_entity_state_hash(full_state_bin);
     // #4 set output resources
-    set_output_resource_state(full_state_bin);
 
     std::string tgas_balance_change = base::xstring_utl::tostring(para.get_tgas_balance_change());
     xdbg("tgas_balance_change=%lld", para.get_tgas_balance_change());
