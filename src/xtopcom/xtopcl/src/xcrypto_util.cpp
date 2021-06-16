@@ -41,25 +41,24 @@ std::string xcrypto_util::make_address_by_random_key(uint8_t addr_type, uint16_t
     return pub_key_obj.to_address(addr_type, ledger_id);
 }
 
-std::string xcrypto_util::make_eth_address_by_assigned_key(std::array<uint8_t, PRI_KEY_LEN> & private_key, uint8_t addr_type, uint16_t ledger_id) {
+std::string xcrypto_util::make_eth_address_by_assigned_key(std::array<uint8_t, PRI_KEY_LEN> & private_key, uint16_t ledger_id) {
     xecprikey_t pri_key_obj(private_key.data());
     xecpubkey_t pub_key_obj = pri_key_obj.get_public_key();
-    return pub_key_obj.to_eth_address(addr_type, ledger_id);
+    return pub_key_obj.to_eth_address(ledger_id);
 }
 
 std::string xcrypto_util::make_child_eth_address_by_assigned_key(const std::string & parent_addr,
                                                              std::array<uint8_t, PRI_KEY_LEN> & private_key,
-                                                             uint8_t addr_type,
                                                              uint16_t ledger_id) {
     xecprikey_t pri_key_obj(private_key.data());
     xecpubkey_t pub_key_obj = pri_key_obj.get_public_key();
-    return pub_key_obj.to_eth_address(parent_addr, addr_type, ledger_id);
+    return pub_key_obj.to_eth_address(parent_addr, ledger_id);
 }
 
-std::string xcrypto_util::make_eth_address_by_random_key(uint8_t addr_type, uint16_t ledger_id) {
+std::string xcrypto_util::make_eth_address_by_random_key(uint16_t ledger_id) {
     xecprikey_t pri_key_obj;
     xecpubkey_t pub_key_obj = pri_key_obj.get_public_key();
-    return pub_key_obj.to_eth_address(addr_type, ledger_id);
+    return pub_key_obj.to_eth_address(ledger_id);
 }
 
 std::string xcrypto_util::get_base64_public_key(const std::array<uint8_t, PRI_KEY_LEN> & private_key) {
@@ -80,27 +79,10 @@ std::string xcrypto_util::digest_sign(const top::uint256_t & hash, const std::ar
 }
 
 bool xcrypto_util::verify_sign(const top::uint256_t & hash, const std::string & signature) {
-    /*        xecdsasig_t signature_obj((uint8_t*)signature.c_str());
-
-            if (false == xsecp256k1_t::verify_sign(signature_obj, hash)) {
-                return false;
-            }
-    */
     return true;
 }
 
 bool xcrypto_util::verify_sign(const top::uint256_t & hash, const std::string & signature, const std::string & address) {
-    /*    xecdsasig_t signature_obj((uint8_t*)signature.c_str());
-        uint8_t pubkey[65]={0};
-        xecpubkey_t pubk(pubkey);
-        if (false == xsecp256k1_t::verify_sign(signature_obj, hash, pubk)) {
-            return false;
-        }
-
-        std::string accountstr = pubk.to_address();
-        if (accountstr != address) {
-            return false;
-        }*/
     return true;
 }
 }  // namespace utl

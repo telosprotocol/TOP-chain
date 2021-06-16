@@ -383,17 +383,14 @@ bool set_g_userinfo(const string & str_pri) {
     if (str_pri.empty()) {
         return false;
     }
+    std::string sign_key = top::DecodePrivateString(str_pri);  
+    xecprikey_t pri_key_obj((uint8_t *)sign_key.data());
+    memcpy(g_userinfo.private_key.data(), pri_key_obj.data(), pri_key_obj.size());
     if (str_pri.size() != HEX_PRI_KEY_LEN)
     {
-        auto sign_key = utility::base64_decode(str_pri);
-        xecprikey_t pri_key_obj((uint8_t *)sign_key.data());
-        memcpy(g_userinfo.private_key.data(), pri_key_obj.data(), pri_key_obj.size());
         g_userinfo.account = xcrypto_util::make_address_by_assigned_key(g_userinfo.private_key);
     } else 
     {
-        std::string sign_key = top::HexDecode(str_pri);
-        xecprikey_t pri_key_obj((uint8_t *)sign_key.data());
-        memcpy(g_userinfo.private_key.data(), pri_key_obj.data(), pri_key_obj.size());
         g_userinfo.account = xcrypto_util::make_eth_address_by_assigned_key(g_userinfo.private_key);
     }
 

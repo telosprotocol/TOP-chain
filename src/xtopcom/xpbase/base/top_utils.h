@@ -142,6 +142,7 @@ std::string Base64Decode(const std::string& str);
 std::string HexSubstr(const std::string& str);
 std::string Base64Substr(const std::string& str);
 std::string GetGlobalXidWithNodeId(const std::string& node_id);
+std::string DecodePrivateString(const std::string & pri_key);
 
 enum CountryCode {
     kCountry_AQ = 0,
