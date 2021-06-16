@@ -132,13 +132,14 @@ int32_t xunconfirmed_account_t::update(xblock_t * latest_committed_block, const 
     std::map<std::string, xcons_transaction_ptr_t> unconfirmed_txs;
     auto account_addr = latest_committed_block->get_account();
     uint64_t latest_height = latest_committed_block->get_height();
+    std::string last_block_hash;
 
     for (uint64_t cur_height = latest_height; cur_height > m_highest_height; cur_height--) {
-        data::xblock_t * unit_block = nullptr;
+        xblock_ptr_t unit_block = nullptr;
         if (cur_height == latest_height) {
-            unit_block = latest_committed_block;
+            unit_block = xblock_t::raw_vblock_to_object_ptr(latest_committed_block);
         } else {
-            auto _commit_block = m_para->get_vblockstore()->load_block_object(account_addr, cur_height, 0, true);
+            auto _commit_block = m_para->get_vblockstore()->load_block_object(account_addr, cur_height, last_block_hash, true);
             if (_commit_block == nullptr) {
                 base::xauto_ptr<base::xvblock_t> _block_ptr = m_para->get_vblockstore()->get_latest_connected_block(account_addr);
                 uint64_t start_sync_height = _block_ptr->get_height() + 1;
@@ -150,7 +151,10 @@ int32_t xunconfirmed_account_t::update(xblock_t * latest_committed_block, const 
                 }
                 return xtxpool_error_unitblock_lack;
             }
+
+            unit_block = xblock_t::raw_vblock_to_object_ptr(_commit_block.get());
         }
+        last_block_hash = unit_block->get_last_block_hash();
 
         // check if finish load block
         if (unit_block->is_genesis_block() || (unit_block->get_block_class() == base::enum_xvblock_class_full) ||
@@ -171,7 +175,7 @@ int32_t xunconfirmed_account_t::update(xblock_t * latest_committed_block, const 
         }
 
         // only light unit and has unconfirm sendtx, should update unconfirm cache
-        data::xlightunit_block_t * lightunit = dynamic_cast<data::xlightunit_block_t *>(unit_block);
+        data::xlightunit_block_t * lightunit = dynamic_cast<data::xlightunit_block_t *>(unit_block.get());
         std::vector<base::xvaction_t> unconfirm_sendtx_actions;
         for (auto & tx : lightunit->get_txs()) {
             std::string hash_str = tx->get_tx_hash();
@@ -200,7 +204,7 @@ int32_t xunconfirmed_account_t::update(xblock_t * latest_committed_block, const 
                 xtxpool_error("xunconfirmed_account_t::update fail-load cert block.account=%s,height=%ld", account_addr.c_str(), cur_height + 2);
                 return xtxpool_error_unitblock_lack;
             }
-            std::vector<base::xfull_txreceipt_t> txreceipts = base::xtxreceipt_build_t::create_all_txreceipts(unit_block, _cert_block.get(), unconfirm_sendtx_actions);
+            std::vector<base::xfull_txreceipt_t> txreceipts = base::xtxreceipt_build_t::create_all_txreceipts(unit_block.get(), _cert_block.get(), unconfirm_sendtx_actions);
             if (unconfirm_sendtx_actions.size() != txreceipts.size()) {
                 xtxpool_error("xunconfirmed_account_t::update fail-create txreceipts.account=%s,height=%ld", account_addr.c_str(), cur_height + 2);
                 return xtxpool_error_unitblock_lack;
