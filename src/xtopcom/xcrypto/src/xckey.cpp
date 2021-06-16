@@ -477,7 +477,6 @@ namespace top
             std::string eth_address((char *)&hash_value + 12, sizeof(hash_value) - 12);
             eth_address = top::HexEncode(eth_address);
 
-
             return base::xvaccount_t::make_account_address((base::enum_vaccount_addr_type)base::enum_vaccount_addr_type_secp256k1_eth_user_account, ledger_id, eth_address,-1);
         }        
         std::string      xecpubkey_t::to_eth_address(const std::string & parent_addr,const uint16_t ledger_id)
