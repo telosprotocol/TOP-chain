@@ -279,10 +279,7 @@ void xvnode_house_t::add_group(const std::string &elect_address, uint64_t elect_
                         };
                         std::string pri_key{""};
                         if (m_node_id == bundle.node_id()) {
-                            if (m_sign_key.size() != HEX_PRI_KEY_LEN)
-                                pri_key = base::xstring_utl::base64_decode(m_sign_key);
-                            else
-                                pri_key = top::HexDecode(m_sign_key);
+                            pri_key = DecodePrivateString(m_sign_key);
                         }
                         auto pub_key = base::xstring_utl::base64_decode(bundle.election_info().consensus_public_key.to_string());
 #if 0

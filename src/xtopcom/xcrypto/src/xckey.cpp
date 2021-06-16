@@ -262,7 +262,7 @@ namespace top
                 xecpubkey_t verify_key(out_publickey_data);
                 std::string account_address = m_account_address;
                 std::transform(account_address.begin() + 1, account_address.end(), account_address.begin() + 1, ::tolower);
-                if (verify_key.to_eth_address(addr_type, net_id) == account_address) //then check whether is from this address
+                if (verify_key.to_eth_address(net_id) == account_address) //then check whether is from this address
                 {
                     return true;
                 }
@@ -304,7 +304,7 @@ namespace top
                 xecpubkey_t verify_key(out_publickey_data);
                 std::string account_address = m_account_address;
                 std::transform(account_address.begin() + 1, account_address.end(), account_address.begin() + 1, ::tolower);                
-                if(verify_key.to_eth_address(parent_addr,addr_type, net_id) == account_address)//then check whether is from this address
+                if(verify_key.to_eth_address(parent_addr, net_id) == account_address)//then check whether is from this address
                 {
                     return true;
                 }
@@ -346,7 +346,7 @@ namespace top
                 xecpubkey_t verify_key(out_publickey_data);
                 std::string account_address = m_account_address;
                 std::transform(account_address.begin() + 1, account_address.end(), account_address.begin() + 1, ::tolower);                
-                if(verify_key.to_eth_address(addr_type, net_id) == account_address)//then check whether is from this address
+                if(verify_key.to_eth_address(net_id) == account_address)//then check whether is from this address
                 {
                     return true;
                 }
@@ -459,7 +459,7 @@ namespace top
         std::string       xecpubkey_t::to_address(const uint8_t* publickey, const char addr_type,const uint16_t ledger_id)
         {
             if(addr_type == base::enum_vaccount_addr_type_secp256k1_eth_user_account)
-                return to_eth_address(publickey,addr_type,ledger_id);
+                return to_eth_address(publickey,ledger_id);
                 
             char address[128] = {0};
             const uint32_t version_uint32 = (((uint32_t)ledger_id) << 8) | ((uint32_t)addr_type);
@@ -469,7 +469,7 @@ namespace top
             return base::xvaccount_t::make_account_address((base::enum_vaccount_addr_type)((uint32_t)addr_type ), ledger_id, pubkey_sub_addr,-1);
         }
 
-        std::string       xecpubkey_t::to_eth_address(const char addr_type,const uint16_t ledger_id)
+        std::string       xecpubkey_t::to_eth_address(const uint16_t ledger_id)
         {
             char address[128] = {0};
  
@@ -479,10 +479,10 @@ namespace top
 
             return base::xvaccount_t::make_account_address((base::enum_vaccount_addr_type)base::enum_vaccount_addr_type_secp256k1_eth_user_account, ledger_id, eth_address,-1);
         }        
-        std::string      xecpubkey_t::to_eth_address(const std::string & parent_addr,const char addr_type,const uint16_t ledger_id)
+        std::string      xecpubkey_t::to_eth_address(const std::string & parent_addr,const uint16_t ledger_id)
         {
             if(parent_addr.empty())
-                return to_address(addr_type,ledger_id);
+                return to_address(base::enum_vaccount_addr_type_secp256k1_eth_user_account,ledger_id);
 
             uint8_t     temp_publickey_data[65];
             memcpy(temp_publickey_data, m_publickey_data, sizeof(temp_publickey_data));
@@ -492,18 +492,17 @@ namespace top
                 temp_publickey_data[i] += parent_addr[i];
             }
 
-            return to_eth_address(temp_publickey_data, addr_type, ledger_id);
+            return to_eth_address(temp_publickey_data, ledger_id);
         }
 
-        std::string       xecpubkey_t::to_eth_address(const uint8_t* publickey, const char addr_type,const uint16_t ledger_id)
+        std::string       xecpubkey_t::to_eth_address(const uint8_t* publickey, const uint16_t ledger_id)
         {
-            xassert(addr_type == base::enum_vaccount_addr_type_secp256k1_eth_user_account);
-            
+            //xassert(addr_type == base::enum_vaccount_addr_type_secp256k1_eth_user_account);
             const uint256_t hash_value = xkeccak256_t::digest(publickey + 1, size() - 1);//remove frist byte of type from public key
             const std::string raw_eth_address((const char *)hash_value.data() + 12, hash_value.size() - 12);//drop first 12 bytes of total 32,as Ethereum just use the last 20 bytes of hash(keccak256)
             const std::string hex_eth_address = base::xstring_utl::to_hex(raw_eth_address);//convert to Hex codec
             
-            return base::xvaccount_t::make_account_address((base::enum_vaccount_addr_type)addr_type, ledger_id, hex_eth_address,-1);
+            return base::xvaccount_t::make_account_address((base::enum_vaccount_addr_type)base::enum_vaccount_addr_type_secp256k1_eth_user_account, ledger_id, hex_eth_address,-1);
         }
 
         bool     xecpubkey_t::verify_signature(xecdsasig_t & signature,const uint256_t & msg_digest, bool compress)
