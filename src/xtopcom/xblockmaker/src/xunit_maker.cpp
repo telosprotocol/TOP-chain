@@ -217,10 +217,10 @@ xblock_ptr_t xunit_maker_t::make_proposal(const xunitmaker_para_t & unit_para, c
     if (proposal_block == nullptr) {
         if (xblockmaker_error_no_need_make_unit != result.m_make_block_error_code) {
             xwarn("xunit_maker_t::make_proposal fail-make proposal.%s,account=%s,height=%" PRIu64 ",ret=%s",
-                cs_para.dump().c_str(), get_account().c_str(), get_lowest_height_block()->get_height(), chainbase::xmodule_error_to_str(result.m_make_block_error_code).c_str());
+                cs_para.dump().c_str(), get_account().c_str(), get_highest_height_block()->get_height(), chainbase::xmodule_error_to_str(result.m_make_block_error_code).c_str());
         } else {
             xwarn("xunit_maker_t::make_proposal no need make proposal.%s,account=%s,height=%" PRIu64 "",
-                cs_para.dump().c_str(), get_account().c_str(), get_lowest_height_block()->get_height());
+                cs_para.dump().c_str(), get_account().c_str(), get_highest_height_block()->get_height());
         }
         return nullptr;
     }
@@ -240,16 +240,30 @@ xblock_ptr_t xunit_maker_t::make_proposal(const xunitmaker_para_t & unit_para, c
 xblock_ptr_t xunit_maker_t::make_next_block(const xunitmaker_para_t & unit_para, const data::xblock_consensus_para_t & cs_para, xunitmaker_result_t & result) {
     xblock_ptr_t proposal_unit = nullptr;
 
+    // TODO(jimmy) check cache blocks again
+    base::xaccount_index_t accountindex;
+    unit_para.m_tablestate->get_account_index(get_account(), accountindex);
+    int32_t ret = check_latest_state(accountindex);
+    if (ret != xsuccess) {
+        xerror("xunit_maker_t::make_next_block,fail-check latest state. %s,account=%s", cs_para.dump().c_str(), get_account().c_str());
+        return nullptr;
+    }
+
     // reset justify cert hash para
-    std::string justify_cert_hash = get_lock_block_input_root_hash();
-    cs_para.set_justify_cert_hash(justify_cert_hash);
+    const xblock_ptr_t & cert_block = get_highest_height_block();
+    xblock_ptr_t lock_block = get_prev_block_from_cache(cert_block);
+    if (lock_block == nullptr) {
+        xerror("xunit_maker_t::make_next_block,fail-get lock block. %s,cert_block=%s", cs_para.dump().c_str(), cert_block->dump().c_str());
+        return nullptr;
+    }
+    cs_para.set_justify_cert_hash(lock_block->get_input_root_hash());
     m_default_builder_para->set_error_code(xsuccess);
 
     // firstly should process txs and try to make lightunit
     if (can_make_next_light_block()) {
         base::xreceiptid_state_ptr_t receiptid_state = unit_para.m_tablestate->get_receiptid_state();
         xblock_builder_para_ptr_t build_para = std::make_shared<xlightunit_builder_para_t>(m_pending_txs, receiptid_state, get_resources());
-        proposal_unit = m_lightunit_builder->build_block(get_highest_height_block(),
+        proposal_unit = m_lightunit_builder->build_block(cert_block,
                                                         get_latest_bstate()->get_bstate(),
                                                         cs_para,
                                                         build_para);
@@ -268,7 +282,7 @@ xblock_ptr_t xunit_maker_t::make_next_block(const xunitmaker_para_t & unit_para,
 
     // secondly try to make full unit
     if (nullptr == proposal_unit && can_make_next_full_block()) {
-        proposal_unit = m_fullunit_builder->build_block(get_highest_height_block(),
+        proposal_unit = m_fullunit_builder->build_block(cert_block,
                                                         get_latest_bstate()->get_bstate(),
                                                         cs_para,
                                                         m_default_builder_para);
@@ -277,7 +291,7 @@ xblock_ptr_t xunit_maker_t::make_next_block(const xunitmaker_para_t & unit_para,
 
     // thirdly try to make full unit
     if (nullptr == proposal_unit && can_make_next_empty_block()) {
-        proposal_unit = m_emptyunit_builder->build_block(get_highest_height_block(),
+        proposal_unit = m_emptyunit_builder->build_block(cert_block,
                                                         nullptr,
                                                         cs_para,
                                                         m_default_builder_para);
@@ -303,7 +317,7 @@ bool xunit_maker_t::can_make_next_empty_block() const {
     if (current_block->get_block_class() == base::enum_xvblock_class_light) {
         return true;
     }
-    xblock_ptr_t prev_block = get_prev_block(current_block);
+    xblock_ptr_t prev_block = get_prev_block_from_cache(current_block);
     if (prev_block == nullptr) {
         return false;
     }
@@ -367,12 +381,11 @@ bool xunit_maker_t::can_make_next_light_block() const {
 std::string xunit_maker_t::dump() const {
     char local_param_buf[128];
     uint64_t highest_height = get_highest_height_block()->get_height();
-    uint64_t lowest_height = get_lowest_height_block()->get_height();
     uint64_t state_height = get_latest_bstate()->get_block_height();
 
     xprintf(local_param_buf,sizeof(local_param_buf),
-        "{highest=%" PRIu64 ",lowest=%" PRIu64 ",state=%" PRIu64 ",nonce=%" PRIu64 ",parent=%" PRIu64 "}",
-        highest_height, lowest_height, state_height,
+        "{highest=%" PRIu64 ",state=%" PRIu64 ",nonce=%" PRIu64 ",parent=%" PRIu64 "}",
+        highest_height, state_height,
         get_latest_bstate()->get_latest_send_trans_number(),
         get_highest_height_block()->get_cert()->get_parent_block_height());
     return std::string(local_param_buf);

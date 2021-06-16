@@ -375,7 +375,14 @@ xblock_ptr_t xtable_maker_t::make_light_table(bool is_leader, const xtablemaker_
         return nullptr;
     }
 
-    cs_para.set_justify_cert_hash(get_lock_block_input_root_hash());
+    // reset justify cert hash para
+    const xblock_ptr_t & cert_block = cs_para.get_latest_cert_block();
+    xblock_ptr_t lock_block = get_prev_block_from_cache(cert_block);
+    if (lock_block == nullptr) {
+        xerror("xtable_maker_t::make_light_table fail-get block block.is_leader=%d,%s", is_leader, cs_para.dump().c_str());
+        return nullptr;
+    }
+    cs_para.set_justify_cert_hash(lock_block->get_input_root_hash());
     cs_para.set_parent_height(0);
     xblock_builder_para_ptr_t build_para = std::make_shared<xlighttable_builder_para_t>(batch_units, get_resources());
     build_para->set_tgas_balance_change(tgas_balance_change);
@@ -400,14 +407,20 @@ xblock_ptr_t xtable_maker_t::make_full_table(const xtablemaker_para_t & table_pa
         return nullptr;
     }
 
-    cs_para.set_justify_cert_hash(get_lock_block_input_root_hash());
+    // reset justify cert hash para
+    const xblock_ptr_t & cert_block = cs_para.get_latest_cert_block();
+    xblock_ptr_t lock_block = get_prev_block_from_cache(cert_block);
+    if (lock_block == nullptr) {
+        xerror("xtable_maker_t::make_full_table fail-get block block.%s", cs_para.dump().c_str());
+        return nullptr;
+    }
+    cs_para.set_justify_cert_hash(lock_block->get_input_root_hash());
     cs_para.set_parent_height(0);
     data::xtablestate_ptr_t tablestate = table_para.get_tablestate();
     xassert(nullptr != tablestate);
-    xassert(get_highest_height_block()->get_height() == tablestate->get_block_height());
 
     xblock_builder_para_ptr_t build_para = std::make_shared<xfulltable_builder_para_t>(tablestate, blocks_from_last_full, get_resources());
-    xblock_ptr_t proposal_block = m_fulltable_builder->build_block(get_highest_height_block(), table_para.get_tablestate()->get_bstate(), cs_para, build_para);
+    xblock_ptr_t proposal_block = m_fulltable_builder->build_block(cert_block, table_para.get_tablestate()->get_bstate(), cs_para, build_para);
     return proposal_block;
 }
 
@@ -491,11 +504,17 @@ int32_t xtable_maker_t::verify_proposal(base::xvblock_t* proposal_block, const x
         return xblockmaker_error_proposal_table_not_match_prev_block;
     }
 
-    if (proposal_block->get_cert()->get_justify_cert_hash() != get_lock_block_input_root_hash()) {
+    auto lock_block = get_prev_block_from_cache(highest_block);
+    if (lock_block == nullptr) {
+        xerror("xtable_maker_t::verify_proposal fail-get lock block.proposal=%s, last_height=%" PRIu64 "",
+            proposal_block->dump().c_str(), highest_block->get_height());
+        return xblockmaker_error_proposal_table_not_match_prev_block;
+    }
+    if (proposal_block->get_cert()->get_justify_cert_hash() != lock_block->get_input_root_hash()) {
         xerror("xtable_maker_t::verify_proposal fail-proposal unmatch justify hash.proposal=%s, last_height=%" PRIu64 ",justify=%s,%s",
             proposal_block->dump().c_str(), highest_block->get_height(),
             base::xstring_utl::to_hex(proposal_block->get_cert()->get_justify_cert_hash()).c_str(),
-            base::xstring_utl::to_hex(get_lock_block_input_root_hash()).c_str());
+            base::xstring_utl::to_hex(lock_block->get_input_root_hash()).c_str());
         return xblockmaker_error_proposal_table_not_match_prev_block;
     }
 
@@ -578,14 +597,13 @@ bool xtable_maker_t::verify_proposal_class(base::xvblock_t *proposal_block) cons
 std::string xtable_maker_t::dump() const {
     char local_param_buf[256];
     uint64_t highest_height = get_highest_height_block()->get_height();
-    uint64_t lowest_height = get_lowest_height_block()->get_height();
     uint32_t unitmaker_size = m_unit_makers.size();
     uint32_t total_units_size = 0;
     for (auto & v : m_unit_makers) {
         total_units_size += v.second->get_latest_blocks().size();
     }
-    xprintf(local_param_buf,sizeof(local_param_buf),"{highest=%" PRIu64 ",lowest=%" PRIu64 ",unitmakers=%d,total_units=%d}",
-        highest_height, lowest_height, unitmaker_size, total_units_size);
+    xprintf(local_param_buf,sizeof(local_param_buf),"{highest=%" PRIu64 ",unitmakers=%d,total_units=%d}",
+        highest_height, unitmaker_size, total_units_size);
     return std::string(local_param_buf);
 }
 
