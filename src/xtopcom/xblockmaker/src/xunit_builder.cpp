@@ -38,16 +38,9 @@ xblock_ptr_t        xlightunit_builder_t::build_block(const xblock_ptr_t & prev_
     std::shared_ptr<xlightunit_builder_para_t> lightunit_build_para = std::dynamic_pointer_cast<xlightunit_builder_para_t>(build_para);
     xassert(lightunit_build_para != nullptr);
 
-    // TODO(jimmy) create proposal block and proposal state, execute txs with proposal state
-    base::xauto_ptr<base::xvblock_t> _temp_proposal_block = data::xblocktool_t::create_next_emptyblock(prev_block.get());
-    xassert(_temp_proposal_block != nullptr);
-    xassert(prev_bstate->get_block_height() == _temp_proposal_block->get_height() - 1);
-    xobject_ptr_t<base::xvbstate_t> proposal_bstate = make_object_ptr<base::xvbstate_t>(*_temp_proposal_block.get(), *prev_bstate.get());
-    xaccount_ptr_t proposal_state = std::make_shared<xunit_bstate_t>(proposal_bstate.get());
-
     const std::vector<xcons_transaction_ptr_t> & input_txs = lightunit_build_para->get_origin_txs();
     txexecutor::xbatch_txs_result_t exec_result;
-    int exec_ret = txexecutor::xtransaction_executor::exec_batch_txs(_temp_proposal_block.get(), prev_bstate, cs_para, input_txs, build_para->get_store(), exec_result);
+    int exec_ret = txexecutor::xtransaction_executor::exec_batch_txs(prev_block.get(), prev_bstate, cs_para, input_txs, build_para->get_store(), exec_result);
     xinfo("xlightunit_builder_t::build_block %s,account=%s,height=%ld,exec_ret=%d,succtxs_count=%zu,failtxs_count=%zu,unconfirm_count=%d,binlog_size=%zu,binlog=%ld,state_size=%zu",
         cs_para.dump().c_str(), prev_block->get_account().c_str(), prev_block->get_height() + 1,
         exec_ret, exec_result.m_exec_succ_txs.size(), exec_result.m_exec_fail_txs.size(),
@@ -82,18 +75,13 @@ xblock_ptr_t        xlightunit_builder_t::build_block(const xblock_ptr_t & prev_
 
 std::string     xfullunit_builder_t::make_binlog(const xblock_ptr_t & prev_block,
                                                 const xobject_ptr_t<base::xvbstate_t> & prev_bstate) {
-    base::xauto_ptr<base::xvblock_t> _temp_block = data::xblocktool_t::create_next_emptyblock(prev_block.get());
-    xobject_ptr_t<base::xvbstate_t> proposal_bstate = make_object_ptr<base::xvbstate_t>(*_temp_block.get(), *prev_bstate.get());
+    base::xauto_ptr<base::xvheader_t> _temp_header = base::xvblockbuild_t::build_proposal_header(prev_block.get());
+    xobject_ptr_t<base::xvbstate_t> proposal_bstate = make_object_ptr<base::xvbstate_t>(*_temp_header.get(), *prev_bstate.get());
 
     std::string property_snapshot;
     auto canvas = proposal_bstate->rebase_change_to_snapshot();
     canvas->encode(property_snapshot);
     xassert(!property_snapshot.empty());
-#if 0 //test
-xobject_ptr_t<base::xvbstate_t> test_bstate = make_object_ptr<base::xvbstate_t>(*_temp_block.get());
-bool ret_apply = test_bstate->apply_changes_of_binlog(property_snapshot);
-xassert(ret_apply == true);
-#endif
     return property_snapshot;
 }
 

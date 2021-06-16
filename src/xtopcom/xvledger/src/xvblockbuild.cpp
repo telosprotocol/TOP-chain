@@ -212,6 +212,25 @@ namespace top
             set_header(_header.get());
         }
 
+        xauto_ptr<xvheader_t> xvblockbuild_t::build_proposal_header(xvblock_t* block) {
+            xauto_ptr<xvheader_t> _header = new xvheader_t();
+            _header->set_chainid(block->get_chainid());
+            _header->set_account(block->get_account());
+            _header->set_height(block->get_height() + 1);
+            _header->set_block_level(block->get_block_level());
+            _header->set_weight(1);
+            _header->set_last_block_hash(block->get_block_hash());
+            _header->set_block_class(block->get_block_class());
+            _header->set_block_type(block->get_block_type());
+            if (block->get_block_class() == enum_xvblock_class_full) {
+                _header->set_last_full_block(block->get_block_hash(), block->get_height());
+            } else {
+                _header->set_last_full_block(block->get_last_full_block_hash(), block->get_last_full_block_height());
+            }
+            _header->set_extra_data(std::string());
+            return _header;
+        }
+
         void xvblockbuild_t::init_header_qcert(const xbbuild_para_t & _para) {
             init_header(_para);
             init_qcert(_para);
@@ -623,18 +642,12 @@ namespace top
             xdbg_info("xvblockmaker_t::build_new_block,done for block=%s,detail=%s",
                 get_block()->dump().c_str(),get_block()->detail_dump().c_str());
 #endif
-
-            xdbg_info("xvblockmaker_t::build_new_block,done for block=%s,input={entitys=%zu,actions=%zu,res=%zu},output={entitys=%zu,res=%zu,binlog=%zu,%zu,state=%zu,%zu}",
-                get_block()->dump().c_str(), get_block()->get_input()->get_entitys().size(),
-                get_block()->get_input()->get_action_count(), get_block()->get_input()->get_resources_data().size(),
+            xinfo("xvblockmaker_t::build_new_block,done,%s,ir=%s,jc=%s,input={entitys=%zu,actions=%zu,res=%zu},output={entitys=%zu,res=%zu,binlog=%zu,%zu,state=%zu,%zu}",
+                get_block()->dump().c_str(), base::xstring_utl::to_hex(get_block()->get_input_root_hash()).c_str(), base::xstring_utl::to_hex(get_block()->get_justify_cert_hash()).c_str(),
+                get_block()->get_input()->get_entitys().size(), get_block()->get_input()->get_action_count(), get_block()->get_input()->get_resources_data().size(),
                 get_block()->get_output()->get_entitys().size(), get_block()->get_output()->get_resources_data().size(),
                 get_block()->get_output()->get_binlog_hash().size(), get_block()->get_output()->get_binlog().size(),
                 get_block()->get_output()->get_state_hash().size(), get_block()->get_output()->get_full_state().size());
-            if (get_header()->get_block_class() == base::enum_xvblock_class_light
-                && get_header()->get_block_level() == base::enum_xvblock_level_unit) {
-                xassert(get_output()->get_binlog().size() > 0);
-                xassert(get_block()->get_output()->get_binlog().size() > 0);
-            }
             return _block_ptr;
         }
 

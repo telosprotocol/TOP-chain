@@ -90,7 +90,8 @@ namespace top
                     async_fire_proposal_finish_event(enum_xconsensus_error_bad_proposal,proposal);
                     return true;
                 }
-                if(proposal->get_height() > (get_lock_block()->get_height() + 2))
+                // leader should always make proposal based on cert-block
+                if(proposal->get_height() != (get_lock_block()->get_height() + 2))
                 {
                     xwarn("xBFTdriver_t::start_consensus,warn-proposal out of control by locked block=%s vs proposal=%s at node=0x%llx",get_lock_block()->dump().c_str(),proposal->dump().c_str(),get_xip2_addr().low_addr);
 
