@@ -43,13 +43,6 @@ void xsync_sender_t::send_gossip(const std::vector<xgossip_chain_info_ptr_t> &in
         lists = m_role_xips_mgr->get_rand_archives(max_peers);
     }
 
-    if (lists.empty()) {
-        xsync_warn("xsync_sender_t can't send gossip message due to get 0 peers for self xip : %s target_type:%d", self_xip.to_string().c_str(), target_type);
-        return;
-    }
-
-    //xsync_dbg("xsync_sender_t get gossip peers %d", lists.size());
-
     for (auto& addr : lists) {
         xsync_dbg("xsync_sender_t send gossip %s -> %s", self_xip.to_string().c_str(), addr.to_string().c_str());
         XMETRICS_COUNTER_INCREMENT("sync_pkgs_gossip_send", 1);
