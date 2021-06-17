@@ -997,7 +997,7 @@ bool load_keystore(config_t& config) {
     int libret = load_lib(config);
     if (libret != 0) {
         if (default_key_flag) {
-            std::cout << "Please set a miner key by command 'topio miner setMinerKey'" << std::endl;
+            std::cout << "Please set a miner key by command 'topio mining setMinerKey'" << std::endl;
         } else {
             std::cout << "decrypt keystore:" << config.keystore_path << " failed" << std::endl;
         }
