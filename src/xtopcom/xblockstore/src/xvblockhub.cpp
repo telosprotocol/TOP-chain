@@ -1062,9 +1062,9 @@ namespace top
             if(nullptr == new_raw_block)
                 return false;
 
-            if(   (false == new_raw_block->is_input_ready(false))
-               || (false == new_raw_block->is_output_ready(false))
-               || (false == new_raw_block->is_deliver(false)) )//must have full valid data and has mark as enum_xvblock_flag_authenticated
+            if(   (false == new_raw_block->is_input_ready(true))
+               || (false == new_raw_block->is_output_ready(true))
+               || (false == new_raw_block->is_deliver(true)) )//must have full valid data and has mark as enum_xvblock_flag_authenticated
             {
                 xerror("xblockacct_t::store_block,undevlier block=%s,input_ready=%d and output_ready=%d",new_raw_block->dump().c_str(),new_raw_block->is_input_ready(true),new_raw_block->is_output_ready(true));
                 return false;

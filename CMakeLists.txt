@@ -320,6 +320,10 @@ if (NO_TX_BATCH)
     add_definitions(-DNO_TX_BATCH)
 endif()
 
+if (ENABLE_CREATE_USER)
+    add_definitions(-DENABLE_CREATE_USER)
+endif()
+
 if (DB_CACHE)
     add_definitions(-DDB_CACHE)
 endif()
