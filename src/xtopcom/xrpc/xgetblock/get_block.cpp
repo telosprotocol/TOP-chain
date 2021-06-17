@@ -770,13 +770,18 @@ void get_block_handle::getEdges() {
 void get_block_handle::getArcs() {
     xJson::Value j;
     std::string const addr = sys_contract_rec_elect_archive_addr;
-    auto property_names = top::data::election::get_property_name_by_addr(common::xaccount_address_t{ addr });
-    for (auto const & prop_name : property_names) {
-        query_account_property(j, addr, prop_name);
-    }
-    // std::string prop_name = std::string(XPROPERTY_CONTRACT_ELECTION_RESULT_KEY) + "_1";
-    // query_account_property(j, addr, prop_name);
+    auto property_name = top::data::election::get_property_by_group_id(common::xarchive_group_id);
+    query_account_property(j, addr, property_name);
     m_js_rsp["value"] = j["archive"];
+    m_js_rsp["chain_id"] = j["chain_id"];
+}
+
+void get_block_handle::getFullNodes() {
+    xJson::Value j;
+    std::string const addr = sys_contract_rec_elect_archive_addr;
+    auto property_name = top::data::election::get_property_by_group_id(common::xfull_node_group_id);
+    query_account_property(j, addr, property_name);
+    m_js_rsp["value"] = j["full_node"];
     m_js_rsp["chain_id"] = j["chain_id"];
 }
 

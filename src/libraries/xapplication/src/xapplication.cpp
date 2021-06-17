@@ -76,7 +76,7 @@ void xtop_application::start() {
 
     contract::xcontract_deploy_t::instance().deploy_sys_contracts();
     contract::xcontract_manager_t::instance().instantiate_sys_contracts();
-    contract::xcontract_manager_t::instance().setup_blockchains(m_store.get(), m_blockstore.get());
+    contract::xcontract_manager_t::instance().setup_blockchains(m_blockstore.get());
 
     // load configuration first
     auto loader = std::make_shared<loader::xconfig_onchain_loader_t>(make_observer(m_store), make_observer(m_bus.get()), make_observer(m_logic_timer));
@@ -125,9 +125,6 @@ void xtop_application::start() {
         throw std::logic_error{"register node callback failed!"};
     }
 
-    // contract::xcontract_deploy_t::instance().deploy_sys_contracts();
-    // contract::xcontract_manager_t::instance().instantiate_sys_contracts();
-    // contract::xcontract_manager_t::instance().setup_blockchains(m_store.get(), m_blockstore.get());
     contract::xcontract_manager_t::set_nodesrv_ptr(node_service());
 
     if (!is_beacon_account() || !is_genesis_node()) {
