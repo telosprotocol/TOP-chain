@@ -25,8 +25,8 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
         with:
-          ssh-key: ${{ secrets.XVM }}
-          fetch-depth: 5
+          token: ${{ secrets.PAT }}
+          fetch-depth: 0
           submodules: recursive
 
       - name: Build XTOP DEBUG
