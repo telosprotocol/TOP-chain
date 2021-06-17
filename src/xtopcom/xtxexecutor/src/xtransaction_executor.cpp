@@ -165,7 +165,7 @@ int32_t xtransaction_executor::exec_batch_txs(base::xvblock_t* prev_block,
         all_pack_txs.push_back(tx);
     }
 
-    if (exec_txs.empty()) {
+    if (all_pack_txs.empty()) {
         xassert(error_code != xsuccess);
         return error_code;
     }
