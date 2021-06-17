@@ -16,7 +16,7 @@ using top::xvm::xcontract_helper;
 
 void xtest_zec_elect_consensus_contract_t::set_association_result_store() {
     auto const validator_group_count = XGET_CONFIG(validator_group_count);
-    auto const auditor_group_count = XGET_CONGIF(auditor_group_count);
+    auto const auditor_group_count = XGET_CONFIG(auditor_group_count);
 
     auto const validator_group_count_per_auditor_group = validator_group_count / auditor_group_count;
 
