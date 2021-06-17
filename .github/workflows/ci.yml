@@ -24,15 +24,11 @@ jobs:
 
       - name: Checkout repository
         uses: actions/checkout@v2.3.4
-
-      - name: clone submodule
-        uses: actions/checkout@v2
         with:
-          repository: telosprotocol/xvm
-          path: src/xtopcom/xvm
-          ref: v2
           ssh-key: ${{ secrets.XVM }}
-          persist-credentials: true
+          fetch-depth: 5
+          submodules: recursive
+        
 
       - name: Build XTOP DEBUG
         run: |
