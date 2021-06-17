@@ -19,7 +19,7 @@ using namespace top::data;
 
 void xreceipt_queue_internal_t::insert_tx(const std::shared_ptr<xtx_entry> & tx_ent) {
     uint64_t now = xverifier::xtx_utl::get_gmttime_s();
-    tx_ent->get_tx()->get_transaction()->set_push_pool_timestamp(now);
+    tx_ent->get_tx()->set_push_pool_timestamp(now);
     auto it = m_tx_queue.insert(tx_ent);
     m_tx_map[tx_ent->get_tx()->get_transaction()->get_digest_str()] = it;
     m_xtable_info->tx_inc(tx_ent->get_tx()->get_tx_subtype(), 1);

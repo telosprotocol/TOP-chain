@@ -486,13 +486,14 @@ int32_t xtxpool_table_t::verify_receipt_tx(const xcons_transaction_ptr_t & tx) c
         return xtxpool_error_receipt_invalid;
     }
 
-    const base::xvqcert_t * prove_cert;
     std::string prove_account;
-    if (!tx->get_receipt_prove_cert_and_account(prove_cert, prove_account)) {
+    xobject_ptr_t<base::xvqcert_t> prove_cert = tx->get_receipt_prove_cert_and_account(prove_account);
+    if (nullptr == prove_cert) {
+        xtxpool_error("xtxpool_table_t::verify_receipt_tx fail get prove cert, tx:%s", tx->dump(true).c_str());
         return xtxpool_error_tx_multi_sign_error;
     }
 
-    base::enum_vcert_auth_result auth_result = m_para->get_certauth()->verify_muti_sign(prove_cert, prove_account);
+    base::enum_vcert_auth_result auth_result = m_para->get_certauth()->verify_muti_sign(prove_cert.get(), prove_account);
     if (auth_result != base::enum_vcert_auth_result::enum_successful) {
         int32_t ret = xtxpool_error_tx_multi_sign_error;
         xtxpool_warn("xtxpool_table_t::verify_receipt_tx fail. account=%s,tx=%s,auth_result:%d,fail-%u", prove_account.c_str(), tx->dump(true).c_str(), auth_result, ret);

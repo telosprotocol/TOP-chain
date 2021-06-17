@@ -23,7 +23,7 @@ using namespace top::data;
 
 void xsend_tx_queue_internal_t::insert_ready_tx(const std::shared_ptr<xtx_entry> & tx_ent) {
     uint64_t now = xverifier::xtx_utl::get_gmttime_s();
-    tx_ent->get_tx()->get_transaction()->set_push_pool_timestamp(now);
+    tx_ent->get_tx()->set_push_pool_timestamp(now);
     auto it = m_ready_tx_queue.insert(tx_ent);
     m_ready_tx_map[tx_ent->get_tx()->get_transaction()->get_digest_str()] = it;
     m_xtable_info->send_tx_inc(1);
@@ -32,7 +32,7 @@ void xsend_tx_queue_internal_t::insert_ready_tx(const std::shared_ptr<xtx_entry>
 
 void xsend_tx_queue_internal_t::insert_non_ready_tx(const std::shared_ptr<xtx_entry> & tx_ent) {
     uint64_t now = xverifier::xtx_utl::get_gmttime_s();
-    tx_ent->get_tx()->get_transaction()->set_push_pool_timestamp(now);
+    tx_ent->get_tx()->set_push_pool_timestamp(now);
     auto it = m_non_ready_tx_queue.insert(tx_ent);
     m_non_ready_tx_map[tx_ent->get_tx()->get_transaction()->get_digest_str()] = it;
     m_xtable_info->send_tx_inc(1);
@@ -44,7 +44,7 @@ void xsend_tx_queue_internal_t::erase_ready_tx(const uint256_t & hash) {
     auto it_ready = m_ready_tx_map.find(hash_str);
     if (it_ready != m_ready_tx_map.end()) {
         auto & tx_ent = *it_ready->second;
-        uint64_t delay = xverifier::xtx_utl::get_gmttime_s() - tx_ent->get_tx()->get_transaction()->get_push_pool_timestamp();
+        uint64_t delay = xverifier::xtx_utl::get_gmttime_s() - tx_ent->get_tx()->get_push_pool_timestamp();
         xtxpool_info("xsend_tx_queue_internal_t::erase_ready_tx from ready txs,table:%s,tx:%s,delay:%llu",
                      m_xtable_info->get_table_addr().c_str(),
                      tx_ent->get_tx()->dump(true).c_str(),
@@ -61,7 +61,7 @@ void xsend_tx_queue_internal_t::erase_non_ready_tx(const uint256_t & hash) {
     auto it_non_ready = m_non_ready_tx_map.find(hash_str);
     if (it_non_ready != m_non_ready_tx_map.end()) {
         auto & tx_ent = *it_non_ready->second;
-        uint64_t delay = xverifier::xtx_utl::get_gmttime_s() - tx_ent->get_tx()->get_transaction()->get_push_pool_timestamp();
+        uint64_t delay = xverifier::xtx_utl::get_gmttime_s() - tx_ent->get_tx()->get_push_pool_timestamp();
         xtxpool_info("xsend_tx_queue_internal_t::erase_non_ready_tx from non-ready txs,table:%s,tx:%s,delay:%llu",
                      m_xtable_info->get_table_addr().c_str(),
                      (*it_non_ready->second)->get_tx()->dump(true).c_str(),

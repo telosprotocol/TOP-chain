@@ -17,25 +17,11 @@ xcons_transaction_t::xcons_transaction_t() {
 }
 
 xcons_transaction_t::xcons_transaction_t(xtransaction_t* tx) {
-    m_tx = tx;
-    m_tx->add_ref();
-    xassert(!tx->digest().empty());
+    tx->add_ref();
+    m_tx.attach(tx);
     XMETRICS_GAUGE(metrics::dataobject_cur_xbase_type_cons_transaction, 1);
     update_transation();
 }
-
-// xcons_transaction_t::xcons_transaction_t(xtransaction_t* tx, const base::xtx_receipt_ptr_t & receipt) {
-//     xassert(!tx->digest().empty());
-//     xassert(tx->get_digest_str() == receipt->get_tx_hash());
-//     base::xstream_t stream(base::xcontext_t::instance());
-//     tx->serialize_to(stream);
-//     xtransaction_t* _tx = (xtransaction_t*)base::xdataunit_t::read_from(stream);  // TODO(jimmy) not copy
-//     m_tx.attach(_tx);
-//     xassert(receipt != nullptr);
-//     m_receipt = receipt;
-//     XMETRICS_GAUGE(metrics::dataobject_cur_xbase_type_cons_transaction, 1);
-//     update_transation();
-// }
 
 xcons_transaction_t::xcons_transaction_t(const base::xfull_txreceipt_t & full_txreceipt) {
     m_tx = make_object_ptr<data::xtransaction_t>();
@@ -67,14 +53,14 @@ const std::string & xcons_transaction_t::get_receipt_target_account()const {
     }
 }
 
-bool xcons_transaction_t::get_receipt_prove_cert_and_account(const base::xvqcert_t* & cert, std::string & account) const {
+xobject_ptr_t<base::xvqcert_t> xcons_transaction_t::get_receipt_prove_cert_and_account(std::string & account) const {
     if (m_receipt == nullptr) {
         xerror("no receipt");
-        return false;
+        return nullptr;
     }
     if (m_receipt->get_prove_cert() == nullptr) {
         xerror("commit prove null");
-        return false;
+        return nullptr;
     }
 
     account = get_receipt_source_account();
@@ -82,22 +68,25 @@ bool xcons_transaction_t::get_receipt_prove_cert_and_account(const base::xvqcert
         // change to parent account
         account = account_address_to_block_address(common::xaccount_address_t(account));
     }
-    cert = m_receipt->get_prove_cert();
-    return true;
+    return m_receipt->get_prove_cert();
+}
+
+void xcons_transaction_t::set_tx_subtype(enum_transaction_subtype _subtype) {
+    m_subtype = _subtype;
 }
 
 void xcons_transaction_t::update_transation() {
     if (m_receipt == nullptr) {
         if (m_tx->get_source_addr() == m_tx->get_target_addr() || data::is_black_hole_address(common::xaccount_address_t{m_tx->get_target_addr()})) {
-            m_tx->set_tx_subtype(enum_transaction_subtype_self);
+            set_tx_subtype(enum_transaction_subtype_self);
         } else {
-            m_tx->set_tx_subtype(enum_transaction_subtype_send);
+            set_tx_subtype(enum_transaction_subtype_send);
         }
     } else {
         if (m_receipt->get_tx_subtype() == enum_transaction_subtype_send) {
-            m_tx->set_tx_subtype(enum_transaction_subtype_recv);
+            set_tx_subtype(enum_transaction_subtype_recv);
         } else if (m_receipt->get_tx_subtype() == enum_transaction_subtype_recv) {
-            m_tx->set_tx_subtype(enum_transaction_subtype_confirm);
+            set_tx_subtype(enum_transaction_subtype_confirm);
         } else {
             xassert(0);
         }
@@ -143,7 +132,7 @@ int32_t xcons_transaction_t::do_read(base::xstream_t & stream) {
 
 bool xcons_transaction_t::verify_cons_transaction() {
     bool ret = true;
-    if (m_tx->get_tx_subtype() == data::enum_transaction_subtype_recv || m_tx->get_tx_subtype() == data::enum_transaction_subtype_confirm) {
+    if (get_tx_subtype() == data::enum_transaction_subtype_recv || get_tx_subtype() == data::enum_transaction_subtype_confirm) {
         if (m_receipt == nullptr) {
             xerror("xcons_transaction_t::verify_cons_transaction should has receipt");
             return false;
