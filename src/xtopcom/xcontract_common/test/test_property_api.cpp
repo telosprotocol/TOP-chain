@@ -29,9 +29,9 @@ protected:
 TEST_F(test_property_api, map_prop_api) {
     // map apis
     xaccount_address_t addr{address};
-    xproperty_identifier_t  id{"test_create", xproperty_type_t::map, xproperty_category_t::sys_kernel};
+    xproperty_identifier_t  id{"test_create", xproperty_type_t::map, xproperty_category_t::system};
     api_->map_prop_create<std::string, std::string>(addr, id);
-    EXPECT_TRUE(api_->prop_exist(addr, id));
+    EXPECT_TRUE(api_->property_exist(addr, id));
 
     api_->map_prop_add<std::string, std::string>(addr, id, "first", "first");
     auto res_value = api_->map_prop_query<std::string, std::string>(addr, id, "first");
@@ -54,55 +54,3 @@ TEST_F(test_property_api, map_prop_api) {
     res_map = api_->map_prop_query<std::string, std::string>(addr, id);
     EXPECT_EQ(res_map, target_map);
 }
-
-
-// TEST_F(test_property_api, queue_prop_test) {
-//     // queue apis
-//     std::string prop_name = "test_create";
-//     api_->QUEUE_PROP_CREATE<std::string>(prop_name);
-//     EXPECT_TRUE(api_->QUEUE_PROP_EXIST(prop_name));
-
-//     api_->QUEUE_PROP_PUSHBACK<std::string>(prop_name, "first");
-//     EXPECT_EQ(api_->QUEUE_PROP_QUERY<std::string>(prop_name, 0), "first");
-//     api_->QUEUE_PROP_PUSHBACK<std::string>(prop_name, "second");
-//     EXPECT_EQ(api_->QUEUE_PROP_QUERY<std::string>(prop_name, 0), "first");
-//     EXPECT_EQ(api_->QUEUE_PROP_QUERY<std::string>(prop_name, 1), "second");
-
-//     // api_->QUEUE_PROP_UPDATE(prop_name, 0, "0");
-//     // EXPECT_EQ(api_->QUEUE_PROP_QUERY(prop_name, 0), "0");
-//     // api_->QUEUE_PROP_UPDATE(prop_name, 1, "1");
-//     // EXPECT_EQ(api_->QUEUE_PROP_QUERY(prop_name, 1), "1");
-//     api_->QUEUE_PROP_CLEAR<std::string>(prop_name);
-//     EXPECT_EQ(api_->QUEUE_PROP_QUERY<std::string>(prop_name).size(), 0);
-
-//     std::deque<std::string> new_queue{"first", "second", "third"};
-//     api_->QUEUE_PROP_UPDATE<std::string>(prop_name, new_queue);
-//     EXPECT_EQ(api_->QUEUE_PROP_QUERY<std::string>(prop_name), new_queue);
-
-//     // current not support queue erase
-//     // api_->QUEUE_PROP_ERASE(prop_name, 0);
-//     // std::map<std::string, std::string> target_map{"second", "third"};
-//     // EXPECT_EQ(api_->QUEUE_PROP_QUERY(prop_name), target_map);
-//     // api_->QUEUE_PROP_ERASE(prop_name, 1);
-//     // target_map = {"second"};
-//     // EXPECT_EQ(api_->QUEUE_PROP_QUERY(prop_name), target_map);
-//     // api_->QUEUE_PROP_ERASE(prop_name, 0);
-//     // target_map = {};
-//     // EXPECT_EQ(api_->QUEUE_PROP_QUERY(prop_name), target_map);
-// }
-
-// TEST_F(test_property_api, str_prop_test) {
-//     // str apis
-//     std::string prop_name = "test_create";
-//     api_->STR_PROP_CREATE(prop_name);
-//     EXPECT_TRUE(api_->STR_PROP_EXIST(prop_name));
-//     EXPECT_EQ(api_->STR_PROP_QUERY(prop_name), "");
-
-//     api_->STR_PROP_UPDATE(prop_name, "0");
-//     EXPECT_EQ(api_->STR_PROP_QUERY(prop_name), "0");
-//     api_->STR_PROP_UPDATE(prop_name, "1");
-//     EXPECT_EQ(api_->STR_PROP_QUERY(prop_name), "1");
-//     api_->STR_PROP_CLEAR(prop_name);
-//     EXPECT_EQ(api_->STR_PROP_QUERY(prop_name), "");
-
-// }
