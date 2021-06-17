@@ -20,6 +20,10 @@
 
 namespace top { namespace data {
 
+#ifdef DEBUG
+#define ENABLE_CREATE_USER
+#endif
+
 using base::enum_transaction_subtype;
 using base::enum_transaction_subtype_self;
 using base::enum_transaction_subtype_send;

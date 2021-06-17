@@ -22,7 +22,7 @@ int32_t xtransaction_face_t::source_confirm_action_exec() {  // only for across 
 
 int32_t xtransaction_context_t::parse() {
     switch (m_trans->get_transaction()->get_tx_type()) {
-#ifdef DEBUG  // debug use
+#ifdef ENABLE_CREATE_USER  // debug use
         case xtransaction_type_create_user_account:
             m_trans_obj = std::make_shared<xtransaction_create_user_account>(m_account_ctx, m_trans);
             break;

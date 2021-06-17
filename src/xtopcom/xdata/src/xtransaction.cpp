@@ -175,7 +175,7 @@ bool xtransaction_t::digest_check() const {
 
 bool xtransaction_t::transaction_type_check() const {
     switch (get_tx_type()) {
-#ifdef DEBUG  // debug use
+#ifdef ENABLE_CREATE_USER  // debug use
         case xtransaction_type_create_user_account:
 #endif
         case xtransaction_type_create_contract_account:

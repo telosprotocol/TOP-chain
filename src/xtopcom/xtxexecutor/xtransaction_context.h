@@ -90,11 +90,7 @@ class xtransaction_create_user_account : public xtransaction_face_t{
     }
 
     int32_t source_fee_exec() override {
-#ifdef DEBUG
         return 0;
-#else
-        return m_fee.update_tgas_disk_sender(0, false);
-#endif
     }
 
     int32_t source_action_exec() override {

@@ -193,9 +193,12 @@ int32_t xblock_t::release_ref() {
 #endif
 
 int32_t xblock_t::full_block_serialize_to(base::xstream_t & stream) {
+    if (!is_input_ready(true) || !is_output_ready(true)) {
+        xerror("xblock_t::full_block_serialize_to not valid block.%s", dump().c_str());
+        return -1;
+    }
+
     KEEP_SIZE();
-    xassert(is_input_ready(true));
-    xassert(is_output_ready(true));
     std::string block_object_bin;
     this->serialize_to_string(block_object_bin);
     stream << block_object_bin;
@@ -203,6 +206,9 @@ int32_t xblock_t::full_block_serialize_to(base::xstream_t & stream) {
         stream << get_input()->get_resources_data();
         stream << get_output()->get_resources_data();
     }
+
+    xdbg("xblock_t::full_block_serialize_to,succ.block=%s,object_bin=%ld,ir=%ld,or=%ld",
+        dump().c_str(), base::xhash64_t::digest(block_object_bin), base::xhash64_t::digest(get_input()->get_resources_data()), base::xhash64_t::digest(get_output()->get_resources_data()));
     return CALC_LEN();
 }
 
@@ -211,6 +217,10 @@ base::xvblock_t* xblock_t::full_block_read_from(base::xstream_t & stream) {
     std::string block_object_bin;
     stream >> block_object_bin;
     base::xvblock_t* new_block = base::xvblock_t::create_block_object(block_object_bin);
+    if (new_block == nullptr) {
+        xerror("xblock_t::full_block_read_from not valid block.object_bin=%ld", base::xhash64_t::digest(block_object_bin));
+        return nullptr;
+    }
     xassert(new_block != nullptr);
     if (new_block != nullptr && new_block->get_header()->get_block_class() != base::enum_xvblock_class_nil) {
         std::string _input_content;
@@ -218,12 +228,12 @@ base::xvblock_t* xblock_t::full_block_read_from(base::xstream_t & stream) {
         stream >> _input_content;
         stream >> _output_content;
         if (false == new_block->set_input_resources(_input_content)) {
-            xerror("xblock_t::full_block_read_from set_input_resources fail");
+            xerror("xblock_t::full_block_read_from set_input_resources fail.block=%s,ir=%ld",new_block->dump().c_str(),base::xhash64_t::digest(_input_content));
             new_block->release_ref();
             return nullptr;
         }
         if (false == new_block->set_output_resources(_output_content)) {
-            xerror("xblock_t::full_block_read_from set_output_resources fail");
+            xerror("xblock_t::full_block_read_from set_output_resources failblock=%s,or=%ld",new_block->dump().c_str(),base::xhash64_t::digest(_output_content));
             new_block->release_ref();
             return nullptr;
         }

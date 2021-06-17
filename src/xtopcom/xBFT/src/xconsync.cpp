@@ -301,10 +301,28 @@ namespace top
                 respond_msg.set_block_object(block_object_bin);
 
                 if(sync_targets & enum_xsync_target_block_input)
+                {
+                    if(  (_local_block->get_input()->get_resources_hash().empty() == false) //link resoure data
+                       &&(_local_block->get_input()->has_resource_data() == false) ) //but dont have resource avaiable now
+                    {
+                        //_local_block need reload input resource
+                        get_vblockstore()->load_block_input(*this, _local_block);
+                        xassert(_local_block->get_input()->has_resource_data());
+                    }
                     respond_msg.set_input_resource(_local_block->get_input()->get_resources_data());
-
+                }
+                
                 if(sync_targets & enum_xsync_target_block_output)
+                {
+                    if(  (_local_block->get_output()->get_resources_hash().empty() == false) //link resoure data
+                       &&(_local_block->get_output()->has_resource_data() == false) ) //but dont have resource avaiable now
+                    {
+                        //_local_block need reload output resource
+                        get_vblockstore()->load_block_output(*this, _local_block);
+                        xassert(_local_block->get_output()->has_resource_data());
+                    }
                     respond_msg.set_output_resource(_local_block->get_output()->get_resources_data());
+                }
 
                 std::string msg_stream;
                 respond_msg.serialize_to_string(msg_stream);
