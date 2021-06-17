@@ -8,7 +8,6 @@
 #include "xdata/xcons_transaction.h"
 #include "xdata/xtable_bstate.h"
 #include "xtxpool_v2/xnon_ready_account.h"
-#include "xtxpool_v2/xtx_table_filter.h"
 #include "xtxpool_v2/xtxmgr_table.h"
 #include "xtxpool_v2/xtxpool_info.h"
 #include "xtxpool_v2/xtxpool_resources_face.h"
@@ -73,8 +72,6 @@ public:
     std::vector<xcons_transaction_ptr_t> get_ready_txs(const xtxs_pack_para_t & pack_para);
     const std::shared_ptr<xtx_entry> query_tx(const std::string & account, const uint256_t & hash);
     void updata_latest_nonce(const std::string & account_addr, uint64_t latest_nonce, const uint256_t & latest_hash);
-    enum_xtxpool_error_type reject(const std::string & account, const xcons_transaction_ptr_t & tx, uint64_t pre_unitblock_height, bool & deny);
-    // xcons_transaction_ptr_t get_unconfirm_tx(const std::string & account, const uint256_t & hash);
     const std::vector<xcons_transaction_ptr_t> get_resend_txs(uint64_t now);
     void on_block_confirmed(xblock_t * table_block);
     int32_t verify_txs(const std::string & account, const std::vector<xcons_transaction_ptr_t> & txs, uint64_t latest_commit_unit_height);
@@ -88,7 +85,6 @@ public:
     bool need_sync_lacking_receipts() const;
 
 private:
-    enum_xtxpool_error_type update_reject_rule(const std::string & account, const data::xblock_t * unit_block);
     bool is_account_need_update(const std::string & account_addr) const;
     // bool is_unconfirm_txs_reached_upper_limmit() const;
     int32_t verify_tx_common(const xcons_transaction_ptr_t & tx) const;
@@ -104,12 +100,10 @@ private:
     xtxpool_resources_face * m_para;
     xtxpool_table_info_t m_xtable_info;
     xtxmgr_table_t m_txmgr_table;
-    // xtx_table_filter m_table_filter;
     xunconfirmed_tx_queue_t m_unconfirmed_tx_queue;
     // xnon_ready_accounts_t m_non_ready_accounts;
     xlocked_txs_t m_locked_txs;
     mutable std::mutex m_mgr_mutex;  // lock m_txmgr_table and m_locked_txs
-    // mutable std::mutex m_filter_mutex;     // lock m_table_filter
     mutable std::mutex m_unconfirm_mutex;  // lock m_unconfirmed_tx_queue
     // mutable std::mutex m_non_ready_mutex;  // lock m_non_ready_accounts
     xreceipt_state_cache_t m_receipt_state_cache;

@@ -5,6 +5,7 @@
 #include "xtxpool_v2/xtxpool_table.h"
 
 #include "xbasic/xmodule_type.h"
+#include "xdata/xlightunit.h"
 #include "xdata/xtable_bstate.h"
 #include "xmbus/xevent_behind.h"
 #include "xtxpool_v2/xnon_ready_account.h"
@@ -165,15 +166,6 @@ int32_t xtxpool_table_t::push_receipt(const std::shared_ptr<xtx_entry> & tx, boo
     //     xtxpool_warn("xtxpool_table_t::push_receipt account state fall behind tx:%s", tx->get_tx()->dump(true).c_str());
     //     return xtxpool_error_account_state_fall_behind;
     // }
-    // auto latest_unit_block = m_para->get_vblockstore()->get_latest_committed_block(account_addr);
-
-    // bool deny = false;
-    // enum_xtxpool_error_type ret_r = reject(account_addr, tx->get_tx(), account_basic_info.get_latest_block()->get_height(), deny);
-    // if (deny) {
-    //     XMETRICS_COUNTER_INCREMENT("txpool_push_tx_receipt_fail", 1);
-    //     xtxpool_warn("xtxpool_table_t::push_receipt reject tx:%s,ret:%u", tx->get_tx()->dump(true).c_str(), ret_r);
-    //     return xtxpool_error_tx_duplicate;
-    // }
 
     if (data::is_sys_contract_address(common::xaccount_address_t{tx->get_tx()->get_account_addr()})) {
         tx->get_para().set_tx_type_score(enum_xtx_type_socre_system);
@@ -260,44 +252,7 @@ bool xtxpool_table_t::is_account_need_update(const std::string & account_addr) c
     return m_txmgr_table.is_account_need_update(account_addr);
 }
 
-enum_xtxpool_error_type xtxpool_table_t::reject(const std::string & account_addr, const xcons_transaction_ptr_t & tx, uint64_t pre_unitblock_height, bool & deny) {
-    enum_xtxpool_error_type reject_ret = xtxpool_success;
-    // {
-    //     std::lock_guard<std::mutex> lck(m_filter_mutex);
-    //     reject_ret = m_table_filter.reject(account_addr, tx, pre_unitblock_height, deny);
-    // }
-
-    // if (reject_ret != xtxpool_success || deny) {
-    //     xtxpool_info("xtxpool_table_t::reject reject tx:%s,ret:%u,deny:%d", tx->dump(true).c_str(), reject_ret, deny);
-    // }
-    return reject_ret;
-}
-
-// xcons_transaction_ptr_t xtxpool_table_t::get_unconfirm_tx(const std::string & account_addr, const uint256_t & hash) {
-//     std::lock_guard<std::mutex> lck(m_unconfirm_mutex);
-//     return m_unconfirmed_tx_queue.find(account_addr, hash);
-// xcons_transaction_ptr_t unconfirm_tx = nullptr;
-// std::string hash_str = std::string(reinterpret_cast<char *>(hash.data()), hash.size());
-// {
-//     std::lock_guard<std::mutex> lck(m_filter_mutex);
-//     unconfirm_tx = m_table_filter.get_tx(account_addr, hash_str);
-// }
-
-// if (unconfirm_tx == nullptr) {
-//     auto latest_unit_block = m_para->get_vblockstore()->get_latest_committed_block(account_addr);
-//     if (latest_unit_block != nullptr) {
-//         std::lock_guard<std::mutex> lck(m_filter_mutex);
-//         m_table_filter.update_reject_rule(account_addr, dynamic_cast<xblock_t *>(latest_unit_block.get()));
-//         unconfirm_tx = m_table_filter.get_tx(account_addr, hash_str);
-//     }
-// }
-// return unconfirm_tx;
-// }
-
 const std::vector<xcons_transaction_ptr_t> xtxpool_table_t::get_resend_txs(uint64_t now) {
-    // todo:compatibility for old version without receipt id.
-    // std::lock_guard<std::mutex> lck(m_filter_mutex);
-    // return m_table_filter.get_resend_txs(now);
     std::lock_guard<std::mutex> lck(m_unconfirm_mutex);
     return m_unconfirmed_tx_queue.get_resend_txs(now);
 }
@@ -344,32 +299,11 @@ int32_t xtxpool_table_t::verify_txs(const std::string & account, const std::vect
             xtxpool_warn("xtxpool_table_t::verify_txs verify fail,tx:%s,err:%u", it->dump(true).c_str(), ret);
             return ret;
         }
-        // enum_xtxpool_error_type reject_ret = reject(account, it, latest_commit_unit_height, deny);
-        // reject_ret = deny ? xtxpool_error_tx_duplicate : reject_ret;
-        // if (reject_ret != xsuccess) {
-        //     xtxpool_warn("xtxpool_table_t::verify_txs reject tx:%s,ret:%u,deny:%d", it->dump(true).c_str(), reject_ret, deny);
-        //     return reject_ret;
-        // }
     }
     return xsuccess;
 }
 
 void xtxpool_table_t::update_unconfirm_accounts() {
-    // base::xauto_ptr<xblockchain2_t> blockchain{m_para->get_store()->clone_account(m_xtable_info.get_table_addr())};
-    // if (blockchain != nullptr) {
-    //     std::set<std::string> accounts = blockchain->get_unconfirmed_accounts();
-    //     if (!accounts.empty()) {
-    //         xtxpool_dbg("xtxpool_table_t::update_unconfirm_accounts unconfirmed accounts not empty size:%u", accounts.size());
-
-    //         for (auto & account : accounts) {
-    //             base::xauto_ptr<base::xvblock_t> unitblock = m_para->get_vblockstore()->get_latest_committed_block(account);
-    //             if (unitblock != nullptr) {
-    //                 xblock_t * block = dynamic_cast<xblock_t *>(unitblock.get());
-    //                 update_reject_rule(account, block);
-    //             }
-    //         }
-    //     }
-    // }
     std::lock_guard<std::mutex> lck(m_unconfirm_mutex);
     uint32_t tx_num_before = m_unconfirmed_tx_queue.size();
     m_unconfirmed_tx_queue.recover(m_receipt_state_cache);
@@ -416,7 +350,7 @@ void xtxpool_table_t::update_locked_txs(const std::vector<tx_info_t> & locked_tx
         for (auto & txinfo : locked_tx_vec) {
             // only send txs move to m_locked_txs, receipts need not move, because they canbe deduplicate by receipt id.
             if (txinfo.get_subtype() == enum_transaction_subtype_self || txinfo.get_subtype() == enum_transaction_subtype_send) {
-                auto tx_ent = m_txmgr_table.pop_tx(txinfo,false);
+                auto tx_ent = m_txmgr_table.pop_tx(txinfo, false);
                 std::shared_ptr<locked_tx_t> locked_tx = std::make_shared<locked_tx_t>(txinfo, tx_ent);
                 locked_tx_map[txinfo.get_hash_str()] = locked_tx;
             }
@@ -504,11 +438,6 @@ const std::vector<xtxpool_table_lacking_confirm_tx_hashs_t> xtxpool_table_t::get
     }
     return lacking_hashs;
 }
-
-// enum_xtxpool_error_type xtxpool_table_t::update_reject_rule(const std::string & account, const data::xblock_t * unit_block) {
-//     std::lock_guard<std::mutex> lck(m_filter_mutex);
-//     return m_table_filter.update_reject_rule(account, unit_block);
-// }
 
 int32_t xtxpool_table_t::verify_cons_tx(const xcons_transaction_ptr_t & tx) const {
     int32_t ret;
