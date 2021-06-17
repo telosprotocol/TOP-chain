@@ -25,7 +25,7 @@ namespace top { namespace data {
 
 enum enum_xtransaction_type {
     xtransaction_type_create_user_account        = 0,    // create user account
-    xtransaction_type_create_contract_account    = 1,    // create contract account
+
     xtransaction_type_run_contract2 = 2,                      // run contract in new mode
     xtransaction_type_run_contract               = 3,    // run contract
     xtransaction_type_transfer                   = 4,    // transfer asset

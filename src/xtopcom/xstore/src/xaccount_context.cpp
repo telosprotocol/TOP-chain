@@ -12,6 +12,7 @@
 #include "xbase/xlog.h"
 #include "xbase/xobject_ptr.h"
 #include "xvledger/xvledger.h"
+#include "xvledger/xvpropertyrules.h"
 #include "xcrypto/xckey.h"
 #include "xdata/xaction_parse.h"
 #include "xdata/xproperty.h"
@@ -109,42 +110,6 @@ int32_t xaccount_context_t::create_user_account(const std::string& address) {
     return token_deposit(XPROPERTY_BALANCE_AVAILABLE, add_token);
 }
 
-int32_t xaccount_context_t::sub_contract_sub_account_check(const std::string& value) {
-    std::deque<std::string> values;
-    list_copy_get(XPORPERTY_CONTRACT_SUB_ACCOUNT_KEY, values);
-    for (auto & v : values) {
-        if (v == value) {
-            xwarn("xaccount_context_t::sub_contract_sub_account_check fail-repeat create contract. account=%s,contract=%s", get_address().c_str(), value.c_str());
-            return xaccount_property_sub_account_exist;
-        }
-    }
-    if (values.size() >= MAX_NORMAL_CONTRACT_ACCOUNT) {
-        xwarn("xaccount_context_t::sub_contract_sub_account_check fail-max contract count limit. account=%s,size=%zu", get_address().c_str(), values.size());
-        return xaccount_property_sub_account_overflow;
-    }
-    return xstore_success;
-}
-int32_t xaccount_context_t::set_contract_sub_account(const std::string& value) {
-    return list_push_back(XPORPERTY_CONTRACT_SUB_ACCOUNT_KEY, value);
-}
-
-int32_t xaccount_context_t::set_contract_parent_account(const uint64_t amount, const std::string& value) {
-    std::string _value;
-    if (!string_get(XPORPERTY_CONTRACT_PARENT_ACCOUNT_KEY, _value)) {
-        return xaccount_property_parent_account_exist;
-    }
-    uint64_t balance = amount;
-    top_token_transfer_in(balance);
-    return string_set(XPORPERTY_CONTRACT_PARENT_ACCOUNT_KEY, value);
-}
-
-int32_t xaccount_context_t::get_parent_account(std::string &value){
-    if (!string_get(XPORPERTY_CONTRACT_PARENT_ACCOUNT_KEY, value)) {
-        return xaccount_property_parent_account_exist;
-    }
-    return xaccount_property_parent_account_not_exist;
-}
-
 int32_t xaccount_context_t::token_transfer_out(const data::xproperty_asset& asset, uint64_t gas_fee, uint64_t service_fee) {
     if (asset.is_top_token()) {
         return top_token_transfer_out(asset.m_amount, gas_fee, service_fee);
@@ -238,16 +203,6 @@ uint64_t xaccount_context_t::calc_decayed_tgas(){
         used_tgas = (decay_time - (m_timer_height - last_hour)) * get_used_tgas() / decay_time;
     }
     return used_tgas;
-}
-
-uint64_t xaccount_context_t::get_tgas_limit(){
-    int32_t ret = 0;
-    std::string v;
-    ret = string_get(XPROPERTY_CONTRACT_TGAS_LIMIT_KEY, v);
-    if (0 == ret) {
-        return (uint64_t)std::stoull(v);
-    }
-    return 0;
 }
 
 int32_t xaccount_context_t::check_used_tgas(uint64_t &cur_tgas_usage, uint64_t deposit, uint64_t& deposit_usage){
@@ -682,30 +637,6 @@ uint64_t xaccount_context_t::get_top_by_vote(uint64_t vote_num, uint16_t duratio
     return top_num;
 }
 
-int32_t xaccount_context_t::set_contract_code(const std::string &code) {
-    auto& config_register = top::config::xconfig_register_t::get_instance();
-    uint32_t application_contract_code_max_len = XGET_ONCHAIN_GOVERNANCE_PARAMETER(application_contract_code_max_len);
-    if (code.size() == 0 || code.size() > application_contract_code_max_len) {
-        return xaccount_property_contract_code_size_invalid;
-    }
-
-    std::string old_code;
-    get_contract_code(old_code);
-    if (!old_code.empty()) {
-        xerror("xaccount_context_t::set_contract_code fail-already set code");
-        return xaccount_property_operate_fail;
-    }
-    // contract code is a native property, but store with user property
-    return string_set(data::XPROPERTY_CONTRACT_CODE, code);
-}
-
-int32_t xaccount_context_t::get_contract_code(std::string &code) {
-    // check account type
-    return string_get(data::XPROPERTY_CONTRACT_CODE, code);
-}
-
-
-
 int32_t xaccount_context_t::other_balance_to_available_balance(const std::string & property_name, base::vtoken_t token) {
     int32_t ret;
     ret = token_withdraw(property_name, token);
@@ -796,7 +727,7 @@ xobject_ptr_t<base::xvbstate_t> xaccount_context_t::load_bstate(const std::strin
 
 base::xauto_ptr<base::xstringvar_t> xaccount_context_t::load_string_for_write(base::xvbstate_t* bstate, const std::string & key) {
     if (false == bstate->find_property(key)) {
-        if (xnative_property_name_t::is_native_property(key)) {
+        if (base::xvpropertyrules_t::is_valid_native_property(key)) {
             return bstate->new_string_var(key, m_canvas.get());
         }
     }
@@ -808,7 +739,7 @@ base::xauto_ptr<base::xstringvar_t> xaccount_context_t::load_string_for_write(ba
 }
 base::xauto_ptr<base::xdequevar_t<std::string>> xaccount_context_t::load_deque_for_write(base::xvbstate_t* bstate, const std::string & key) {
     if (false == bstate->find_property(key)) {
-        if (xnative_property_name_t::is_native_property(key)) {
+        if (base::xvpropertyrules_t::is_valid_native_property(key)) {
             return bstate->new_string_deque_var(key, m_canvas.get());
         }
     }
@@ -820,7 +751,7 @@ base::xauto_ptr<base::xdequevar_t<std::string>> xaccount_context_t::load_deque_f
 }
 base::xauto_ptr<base::xmapvar_t<std::string>> xaccount_context_t::load_map_for_write(base::xvbstate_t* bstate, const std::string & key) {
     if (false == bstate->find_property(key)) {
-        if (xnative_property_name_t::is_native_property(key)) {
+        if (base::xvpropertyrules_t::is_valid_native_property(key)) {
             return bstate->new_string_map_var(key, m_canvas.get());
         }
     }
@@ -832,7 +763,7 @@ base::xauto_ptr<base::xmapvar_t<std::string>> xaccount_context_t::load_map_for_w
 }
 base::xauto_ptr<base::xtokenvar_t> xaccount_context_t::load_token_for_write(base::xvbstate_t* bstate, const std::string & key) {
     if (false == bstate->find_property(key)) {
-        if (xnative_property_name_t::is_native_property(key)) {
+        if (base::xvpropertyrules_t::is_valid_native_property(key)) {
             return bstate->new_token_var(key, m_canvas.get());
         }
     }
@@ -845,7 +776,7 @@ base::xauto_ptr<base::xtokenvar_t> xaccount_context_t::load_token_for_write(base
 }
 base::xauto_ptr<base::xvintvar_t<uint64_t>> xaccount_context_t::load_uin64_for_write(base::xvbstate_t* bstate, const std::string & key) {
     if (false == bstate->find_property(key)) {
-        if (xnative_property_name_t::is_native_property(key)) {
+        if (base::xvpropertyrules_t::is_valid_native_property(key)) {
             return bstate->new_uint64_var(key, m_canvas.get());
         }
     }
@@ -858,9 +789,10 @@ base::xauto_ptr<base::xvintvar_t<uint64_t>> xaccount_context_t::load_uin64_for_w
 }
 
 int32_t xaccount_context_t::check_create_property(const std::string& key) {
-    // TODO(jimmy) property rules offchain parameter
-    // CHECK_PROPERTY_NAME_LEN_MAX_NUM(key);
-    // CHECK_PROPERTY_MAX_NUM();
+    if (false == base::xvpropertyrules_t::is_valid_sys_contract_property(key)) {
+        xerror("xaccount_context_t::check_create_property,property name not valid.key=%s", key.c_str());
+        return xaccount_property_create_fail;
+    }
     if (get_bstate()->find_property(key)) {
         xerror("xaccount_context_t::check_create_property fail-already exist.propname=%s", key.c_str());
         return xaccount_property_create_fail;

@@ -94,11 +94,6 @@ xJson::Value get_block_handle::parse_account(const std::string & account) {
         result_json["latest_unit_height"] = static_cast<xJson::UInt64>(account_ptr->get_chain_height());
         result_json["unconfirm_sendtx_num"] = static_cast<xJson::UInt64>(account_ptr->get_unconfirm_sendtx_num());
         result_json["recv_tx_num"] = static_cast<xJson::UInt64>(account_ptr->account_recv_trans_number());
-        std::deque<std::string> contract_address_list;  // TODO(jimmy)
-        account_ptr->deque_get(XPORPERTY_CONTRACT_SUB_ACCOUNT_KEY, contract_address_list);
-        for (auto & addr : contract_address_list) {
-            result_json["contract_address"].append(addr);
-        }
 
         auto timer_height = get_timer_height();
         auto onchain_total_lock_tgas_token = xtgas_singleton::get_instance().get_cache_total_lock_tgas_token();
@@ -123,15 +118,6 @@ xJson::Value get_block_handle::parse_account(const std::string & account) {
         result_json["total_stake_gas"] = static_cast<xJson::UInt64>(total_gas - free_gas);
 
         set_redeem_token_num(account_ptr, result_json);
-
-        if (is_user_contract_address(common::xaccount_address_t{account})) {
-            std::string code;
-            m_store->string_get(account, data::XPROPERTY_CONTRACT_CODE, code);
-            result_json["contract_code"] = code;
-            std::string owner;
-            m_store->string_get(account, data::XPORPERTY_CONTRACT_PARENT_ACCOUNT_KEY, owner);
-            result_json["contract_parent_account"] = owner;
-        }
 
         result_json["table_id"] = account_map_to_table_id(common::xaccount_address_t{account}).get_subaddr();
         common::xnetwork_id_t nid{0};
