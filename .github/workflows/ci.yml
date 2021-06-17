@@ -21,7 +21,10 @@ jobs:
           GITHUB_CONTEXT: ${{ toJson(github) }}
         run: |
           echo "$GITHUB_CONTEXT"
-
+      
+      - name: Fix submodules
+        run: echo -e '[url "https://github.com/"]\n  insteadOf = "git@github.com:"' >> ~/.gitconfig
+      
       - name: Checkout repository
         uses: actions/checkout@v2
         with:
