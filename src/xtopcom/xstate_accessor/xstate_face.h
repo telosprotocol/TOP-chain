@@ -4,10 +4,10 @@
 
 #pragma once
 
-#include "xstate/xstate_accessor.h"
+#include "xstate_accessor/xstate_accessor.h"
 
 namespace top {
-namespace state {
+namespace state_accessor {
 
 enum class xenum_state_type {
     invalid,

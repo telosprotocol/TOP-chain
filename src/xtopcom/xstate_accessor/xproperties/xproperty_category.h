@@ -8,7 +8,7 @@
 
 #include <functional>
 
-NS_BEG3(top, state, properties)
+NS_BEG3(top, state_accessor, properties)
 
 enum class xenum_property_category: std::uint8_t {
     invalid,
@@ -25,8 +25,8 @@ NS_END3
 NS_BEG1(std)
 
 template <>
-struct hash<top::state::properties::xproperty_category_t> {
-    size_t operator()(top::state::properties::xproperty_category_t const property_category) const noexcept;
+struct hash<top::state_accessor::properties::xproperty_category_t> {
+    size_t operator()(top::state_accessor::properties::xproperty_category_t const property_category) const noexcept;
 };
 
 NS_END1

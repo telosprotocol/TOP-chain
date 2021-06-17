@@ -32,7 +32,7 @@
 #include <cstdint>
 
 namespace top {
-namespace state {
+namespace state_accessor {
 namespace properties {
 
 enum class xenum_property_type {
@@ -216,8 +216,8 @@ struct xtop_type_of<xproperty_type_t::token> {
 NS_BEG1(std)
 
 template <>
-struct hash<top::state::properties::xproperty_type_t> {
-    size_t operator()(top::state::properties::xproperty_type_t const property_type) const noexcept;
+struct hash<top::state_accessor::properties::xproperty_type_t> {
+    size_t operator()(top::state_accessor::properties::xproperty_type_t const property_type) const noexcept;
 };
 
 NS_END1

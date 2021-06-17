@@ -2,10 +2,10 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "xstate/xunitstate_face.h"
+#include "xstate_accessor/xunitstate_face.h"
 
 namespace top {
-namespace state {
+namespace state_accessor {
 
 xtop_unit_state_face::xtop_unit_state_face(top::observer_ptr<xstate_accessor_t> const & state_accessor) noexcept : state_accessor_{ state_accessor } {
 }

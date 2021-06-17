@@ -4,13 +4,13 @@
 
 #pragma once
 
-#include "xstate/xerror/xerror.h"
+#include "xstate_accessor/xerror/xerror.h"
 
 #include <cstdint>
 #include <system_error>
 
 namespace top {
-namespace state {
+namespace state_accessor {
 
 enum class xenum_token_type {
     invalid,
@@ -58,8 +58,8 @@ using xtoken_t = xtop_token;
 namespace std {
 
 template <>
-struct hash<top::state::xtoken_t> {
-    size_t operator()(top::state::xtoken_t const & amount) const noexcept;
+struct hash<top::state_accessor::xtoken_t> {
+    size_t operator()(top::state_accessor::xtoken_t const & amount) const noexcept;
 };
 
 }

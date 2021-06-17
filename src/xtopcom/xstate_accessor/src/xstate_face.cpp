@@ -2,12 +2,12 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "xstate/xstate_face.h"
+#include "xstate_accessor/xstate_face.h"
 
 #include <cassert>
 
 namespace top {
-namespace state {
+namespace state_accessor {
 
 xtop_state_face::xtop_state_face(std::unique_ptr<xstate_accessor_t> state_accessor, xstate_type_t const type) noexcept
     : m_state_accessor{ std::move(state_accessor) }, m_state_type{ type } {

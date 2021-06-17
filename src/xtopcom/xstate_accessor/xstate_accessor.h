@@ -7,10 +7,10 @@
 #include "xbasic/xbyte_buffer.h"
 #include "xbasic/xmemory.hpp"
 #include "xcommon/xaddress.h"
-#include "xstate/xaccess_control_data.h"
-#include "xstate/xerror/xerror.h"
-#include "xstate/xproperties/xproperty_identifier.h"
-#include "xstate/xtoken.h"
+#include "xstate_accessor/xaccess_control_data.h"
+#include "xstate_accessor/xerror/xerror.h"
+#include "xstate_accessor/xproperties/xproperty_identifier.h"
+#include "xstate_accessor/xtoken.h"
 #include "xvledger/xvcanvas.h"
 #include "xvledger/xvstate.h"
 
@@ -20,7 +20,7 @@
 #include <type_traits>
 
 namespace top {
-namespace state {
+namespace state_accessor {
 
 class xtop_state_accessor {
 public:
@@ -193,4 +193,4 @@ using xstate_accessor_t = xtop_state_accessor;
 }
 }
 
-#include "xstate/xstate_accessor_impl.h"
+#include "xstate_accessor/xstate_accessor_impl.h"

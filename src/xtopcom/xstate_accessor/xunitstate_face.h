@@ -5,13 +5,13 @@
 #pragma once
 
 #include "xbasic/xmemory.hpp"
-#include "xstate/xstate_accessor.h"
-#include "xstate/xstate_face.h"
+#include "xstate_accessor/xstate_accessor.h"
+#include "xstate_accessor/xstate_face.h"
 
 #include <system_error>
 
 namespace top {
-namespace state {
+namespace state_accessor {
 
 class xtop_unit_state_face : public xstate_face_t {
 protected:

@@ -6,14 +6,14 @@
 
 #include "xcommon/xaddress.h"
 #include "xbase/xobject_ptr.h"
-#include "xstate/xunitstate_face.h"
+#include "xstate_accessor/xunitstate_face.h"
 #include "xstore/xstore_face.h"
 #include "xvledger/xvstate.h"
 
 #include <cstdint>
 
 namespace top {
-namespace state {
+namespace state_accessor {
 
 class xtop_unit_state : public xunit_state_face_t {
 private:

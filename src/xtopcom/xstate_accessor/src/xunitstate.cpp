@@ -2,13 +2,12 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "xstate/xunitstate.h"
+#include "xstate_accessor/xunitstate.h"
 
 #include <cstdint>
 
 namespace top {
-namespace state {
-
+namespace state_accessor {
 
 uint64_t xtop_unit_state::balance() const noexcept {
     return 0;

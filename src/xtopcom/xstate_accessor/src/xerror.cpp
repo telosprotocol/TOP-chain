@@ -2,10 +2,10 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "xstate/xerror/xerror.h"
+#include "xstate_accessor/xerror/xerror.h"
 
 namespace top {
-namespace state {
+namespace state_accessor {
 namespace error {
 
 static char const * errc_to_message(int const errc) noexcept {
@@ -97,8 +97,8 @@ namespace std {
 
 #if !defined(XCXX14_OR_ABOVE)
 
-size_t hash<top::state::error::xerrc_t>::operator()(top::state::error::xerrc_t errc) const noexcept {
-    return static_cast<size_t>(static_cast<std::underlying_type<top::state::error::xerrc_t>::type>(errc));
+size_t hash<top::state_accessor::error::xerrc_t>::operator()(top::state_accessor::error::xerrc_t errc) const noexcept {
+    return static_cast<size_t>(static_cast<std::underlying_type<top::state_accessor::error::xerrc_t>::type>(errc));
 }
 
 #endif

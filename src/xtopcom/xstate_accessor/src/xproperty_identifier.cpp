@@ -2,11 +2,11 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "xstate/xproperties/xproperty_identifier.h"
+#include "xstate_accessor/xproperties/xproperty_identifier.h"
 
 #include <cassert>
 
-NS_BEG3(top, state, properties)
+NS_BEG3(top, state_accessor, properties)
 
 xtop_typeless_property_identifier::xtop_typeless_property_identifier(std::string name, xproperty_category_t category) noexcept
     : m_name{ std::move(name) }, m_category{ category } {
@@ -79,7 +79,7 @@ NS_END3
 
 namespace std {
 
-size_t hash<top::state::properties::xproperty_identifier_t>::operator()(top::state::properties::xproperty_identifier_t const & property_id) const noexcept {
+size_t hash<top::state_accessor::properties::xproperty_identifier_t>::operator()(top::state_accessor::properties::xproperty_identifier_t const & property_id) const noexcept {
     return std::hash<std::string>{}(property_id.full_name());
 }
 

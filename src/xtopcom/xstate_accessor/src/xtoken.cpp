@@ -3,17 +3,17 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 
-#include "xstate/xtoken.h"
+#include "xstate_accessor/xtoken.h"
 
 #include "xbasic/xerror/xthrow_error.h"
-#include "xstate/xerror/xerror.h"
+#include "xstate_accessor/xerror/xerror.h"
 #include "xutility/xhash.h"
 
 #include <cassert>
 #include <memory>
 
 namespace top {
-namespace state {
+namespace state_accessor {
 
 xtop_token::xtop_token(xtop_token && other) noexcept : value_{ other.value_ }, symbol_{ std::move(other.symbol_) } {
     other.value_ = 0;
@@ -118,7 +118,7 @@ void xtop_token::clear() noexcept {
 
 namespace std {
 
-size_t hash<top::state::xtoken_t>::operator()(top::state::xtoken_t const & amount) const noexcept {
+size_t hash<top::state_accessor::xtoken_t>::operator()(top::state_accessor::xtoken_t const & amount) const noexcept {
     top::utl::xxh64_t xxhash;
     auto const value = amount.value();
 

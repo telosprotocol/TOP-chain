@@ -5,12 +5,12 @@
 #pragma once
 
 #include "xcommon/xaddress.h"
-#include "xstate/xproperties/xproperty_identifier.h"
+#include "xstate_accessor/xproperties/xproperty_identifier.h"
 
 #include <unordered_map>
 #include <unordered_set>
 
-NS_BEG2(top, state)
+NS_BEG2(top, state_accessor)
 
 class xtop_state_access_control_data {
 public:

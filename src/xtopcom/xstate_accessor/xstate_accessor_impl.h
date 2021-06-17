@@ -5,7 +5,7 @@
 #pragma once
 
 namespace top {
-namespace state {
+namespace state_accessor {
 
 template <>
 properties::xtype_of_t<properties::xproperty_type_t::int64>::type xstate_accessor_t::get_property<properties::xproperty_type_t::int64>(properties::xtypeless_property_identifier_t const & property_id, std::error_code & ec) const;

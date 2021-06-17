@@ -5,15 +5,15 @@
 #pragma once
 
 #include "xbasic/xerror/xthrow_error.h"
-#include "xstate/xerror/xerror.h"
-#include "xstate/xproperties/xproperty_category.h"
-#include "xstate/xproperties/xproperty_identifier_fwd.h"
-#include "xstate/xproperties/xproperty_type.h"
+#include "xstate_accessor/xerror/xerror.h"
+#include "xstate_accessor/xproperties/xproperty_category.h"
+#include "xstate_accessor/xproperties/xproperty_identifier_fwd.h"
+#include "xstate_accessor/xproperties/xproperty_type.h"
 
 #include <string>
 #include <type_traits>
 
-NS_BEG3(top, state, properties)
+NS_BEG3(top, state_accessor, properties)
 
 class xtop_typeless_property_identifier {
 private:
@@ -93,8 +93,8 @@ NS_END3
 namespace std {
 
 template <>
-struct hash<top::state::properties::xproperty_identifier_t> {
-    size_t operator()(top::state::properties::xproperty_identifier_t const & property_id) const noexcept;
+struct hash<top::state_accessor::properties::xproperty_identifier_t> {
+    size_t operator()(top::state_accessor::properties::xproperty_identifier_t const & property_id) const noexcept;
 };
 
 

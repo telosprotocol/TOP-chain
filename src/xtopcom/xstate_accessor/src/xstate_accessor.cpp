@@ -2,16 +2,16 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "xstate/xstate_accessor.h"
+#include "xstate_accessor/xstate_accessor.h"
 
 #include "xconfig/xconfig_register.h"
 #include "xconfig/xpredefined_configurations.h"
-#include "xstate/xerror/xerror.h"
+#include "xstate_accessor/xerror/xerror.h"
 
 #include <cassert>
 
 namespace top {
-namespace state {
+namespace state_accessor {
 
 constexpr size_t xtop_state_accessor::property_name_max_length;
 constexpr size_t xtop_state_accessor::property_name_min_length;
