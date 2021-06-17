@@ -2011,7 +2011,7 @@ namespace top
                 const std::string _resources_hash = get_cert()->hash(get_input()->get_resources_data());
                 if(_resources_hash != get_input()->get_resources_hash()){
                     if(_resources_hash.empty())
-                        xwarn("xvblock_t::xvblock_t,empty input_resources vs existing get_resources_hash(%v)",get_input()->get_resources_hash().c_str());
+                        xwarn("xvblock_t::xvblock_t,empty input_resources vs existing get_resources_hash(%s)",get_input()->get_resources_hash().c_str());
                     else
                         xerror("xvblock_t::xvblock_t,bad input_resources with wrong hash,existing-hash(%s) vs new_hash(%s)",get_input()->get_resources_hash().c_str(),_resources_hash.c_str());
                     return false;

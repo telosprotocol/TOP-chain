@@ -4,6 +4,7 @@
 
 #include <string>
 
+#include "xvledger/xvblockbuild.h"
 #include "xtxexecutor/xtransaction_executor.h"
 #include "xtxexecutor/xtransaction_context.h"
 #include "xdata/xgenesis_data.h"
@@ -72,7 +73,7 @@ int32_t xtransaction_executor::exec_tx(xaccount_context_t * account_context, con
     return xsuccess;
 }
 
-int32_t xtransaction_executor::exec_batch_txs(base::xvblock_t* proposal_block,
+int32_t xtransaction_executor::exec_batch_txs(base::xvblock_t* prev_block,
                                               const xobject_ptr_t<base::xvbstate_t> & prev_bstate,
                                               const data::xblock_consensus_para_t & cs_para,
                                               const std::vector<xcons_transaction_ptr_t> & txs,
@@ -87,9 +88,10 @@ int32_t xtransaction_executor::exec_batch_txs(base::xvblock_t* proposal_block,
     std::shared_ptr<store::xaccount_context_t> _account_context = nullptr;
     xaccount_ptr_t proposal_state = nullptr;
     xobject_ptr_t<base::xvbstate_t> proposal_bstate = nullptr;
+    base::xauto_ptr<base::xvheader_t> _temp_header = base::xvblockbuild_t::build_proposal_header(prev_block);
     do {
         // clone new bstate firstly
-        proposal_bstate = make_object_ptr<base::xvbstate_t>(*proposal_block, *prev_bstate.get());
+        proposal_bstate = make_object_ptr<base::xvbstate_t>(*_temp_header.get(), *prev_bstate.get());
         proposal_state = std::make_shared<xunit_bstate_t>(proposal_bstate.get());
 
         // create tx execute context
@@ -139,7 +141,7 @@ int32_t xtransaction_executor::exec_batch_txs(base::xvblock_t* proposal_block,
                 break; // break when all txs fail
             } else {
                 xwarn("xtransaction_executor::exec_batch_txs retry exec again. %s,account=%s,height=%ld,origin_txs=%zu",
-                    cs_para.dump().c_str(), proposal_block->get_account().c_str(), proposal_block->get_height(), txs.size());
+                    cs_para.dump().c_str(), _temp_header->get_account().c_str(), _temp_header->get_height(), txs.size());
                 continue;  // retry execute left txs again
             }
         }
@@ -163,7 +165,7 @@ int32_t xtransaction_executor::exec_batch_txs(base::xvblock_t* proposal_block,
         all_pack_txs.push_back(tx);
     }
 
-    if (exec_txs.empty()) {
+    if (all_pack_txs.empty()) {
         xassert(error_code != xsuccess);
         return error_code;
     }
@@ -171,7 +173,7 @@ int32_t xtransaction_executor::exec_batch_txs(base::xvblock_t* proposal_block,
     // update tx related propertys and other default propertys
     if (false == _account_context->finish_exec_all_txs(all_pack_txs)) {
         xerror("xtransaction_executor::exec_batch_txs fail-update tx info. %s,account=%s,height=%ld,origin_txs=%zu,all_txs=%zu",
-            cs_para.dump().c_str(), proposal_block->get_account().c_str(), proposal_block->get_height(), txs.size(), all_pack_txs.size());
+            cs_para.dump().c_str(), _temp_header->get_account().c_str(), _temp_header->get_height(), txs.size(), all_pack_txs.size());
         return -1;
     }
 
@@ -184,7 +186,7 @@ int32_t xtransaction_executor::exec_batch_txs(base::xvblock_t* proposal_block,
     txs_result.m_property_binlog = result.m_property_binlog;
     txs_result.m_tgas_balance_change = _account_context->get_tgas_balance_change();
     xdbg_info("xtransaction_executor::exec_batch_txs %s,account=%s,height=%ld,origin=%zu,succ=%zu,fail_send=%zu,fail_recv=%zu,contract_txs=%zu,all_pack=%zu,binlog=%zu,state=%zu,tgas_balance_change=%lld",
-        cs_para.dump().c_str(), proposal_block->get_account().c_str(), proposal_block->get_height(),
+        cs_para.dump().c_str(), _temp_header->get_account().c_str(), _temp_header->get_height(),
         txs.size(), exec_txs.size(), failure_send_txs.size(), failure_receipt_txs.size(), contract_create_txs.size(), all_pack_txs.size(),
         result.m_property_binlog.size(), result.m_full_state.size(), txs_result.m_tgas_balance_change);
     return xsuccess;

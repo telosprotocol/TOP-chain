@@ -34,6 +34,8 @@
 #include "xcontract_common/xerror/xerror.h"
 #include "xcontract_common/xproperties/xaccess_control_data.h"
 #include "xcontract_common/xproperties/xproperty_identifier.h"
+#include "xvledger/xvcanvas.h"
+#include "xvledger/xvstate.h"
 
 #include <map>
 #include <memory>
@@ -46,11 +48,15 @@ NS_BEG3(top, contract_common, properties)
 class xtop_property_utl {
 public:
     static void property_assert(bool condition, error::xerrc_t error_enum, std::string const& exception_msg);
-    static std::string property_category_str(xproperty_category_t const& category);
 };
 using xproperty_utl_t = xtop_property_utl;
 
-class xtop_property_access_control: public std::enable_shared_from_this<xtop_property_access_control> {
+class xtop_property_access_control {
+private:
+    top::observer_ptr<top::base::xvbstate_t> bstate_;
+    top::xobject_ptr_t<top::base::xvcanvas_t> canvas_;
+    xproperty_access_control_data_t ac_data_;
+
 public:
     xtop_property_access_control(xtop_property_access_control const&) = delete;
     xtop_property_access_control& operator=(xtop_property_access_control const&) = delete;
@@ -59,8 +65,6 @@ public:
     ~xtop_property_access_control() =  default;
 
     explicit xtop_property_access_control(top::observer_ptr<top::base::xvbstate_t> bstate, xproperty_access_control_data_t ac_data);
-
-
 
     /***********************************************************************/
     /*****************        attribute related apis       *****************/
@@ -297,133 +301,6 @@ public:
         return ret;
     }
 
-    // queue apis
-    /**
-     * @brief create a queue property
-     *
-     * @param prop_name the property name
-     */
-    template<typename VALUET, typename = typename std::enable_if<std::is_same<VALUET, std::string>::value ||
-                                                                    std::is_same<VALUET, std::int8_t>::value ||
-                                                                    std::is_same<VALUET, std::int16_t>::value ||
-                                                                    std::is_same<VALUET, std::int32_t>::value ||
-                                                                    std::is_same<VALUET, std::int64_t>::value ||
-                                                                    std::is_same<VALUET, std::uint64_t>::value
-                                                                    >::type>
-    void QUEUE_PROP_CREATE(std::string const& prop_name);
-    /**
-     * @brief check if a queue property exist
-     *
-     * @param prop_name the property name
-     * @return true the property exists
-     * @return false
-     */
-    bool QUEUE_PROP_EXIST(std::string const& prop_name);
-    /**
-     * @brief push back a item to queue property
-     *
-     * @param prop_name the property name
-     * @param prop_value the item value
-     */
-    template<typename VALUET, typename = typename std::enable_if<std::is_same<VALUET, std::string>::value ||
-                                                                    std::is_same<VALUET, std::int8_t>::value ||
-                                                                    std::is_same<VALUET, std::int16_t>::value ||
-                                                                    std::is_same<VALUET, std::int32_t>::value ||
-                                                                    std::is_same<VALUET, std::int64_t>::value ||
-                                                                    std::is_same<VALUET, std::uint64_t>::value
-                                                                    >::type>
-    void QUEUE_PROP_PUSHBACK(std::string const& prop_name, VALUET const& prop_value);
-
-    /**
-     * @brief update the item of the queue property
-     *
-     * @param prop_name the property name
-     * @param pos the position of item
-     * @param prop_value  the item value
-     */
-    template<typename VALUET, typename = typename std::enable_if<std::is_same<VALUET, std::string>::value ||
-                                                                    std::is_same<VALUET, std::int8_t>::value ||
-                                                                    std::is_same<VALUET, std::int16_t>::value ||
-                                                                    std::is_same<VALUET, std::int32_t>::value ||
-                                                                    std::is_same<VALUET, std::int64_t>::value ||
-                                                                    std::is_same<VALUET, std::uint64_t>::value
-                                                                    >::type>
-    void QUEUE_PROP_UPDATE(std::string const& prop_name, std::uint32_t pos, VALUET const& prop_value);
-    /**
-     * @brief update the entire queue property
-     *
-     * @param prop_name the property name
-     * @param prop_value the value of the entire queue property
-     */
-    template<typename VALUET, typename = typename std::enable_if<std::is_same<VALUET, std::string>::value ||
-                                                                    std::is_same<VALUET, std::int8_t>::value ||
-                                                                    std::is_same<VALUET, std::int16_t>::value ||
-                                                                    std::is_same<VALUET, std::int32_t>::value ||
-                                                                    std::is_same<VALUET, std::int64_t>::value ||
-                                                                    std::is_same<VALUET, std::uint64_t>::value
-                                                                    >::type>
-    void QUEUE_PROP_UPDATE(std::string const& prop_name, std::deque<VALUET> const& prop_value);
-
-    // /**
-    //  * @brief erase a item of the queue property
-    //  *
-    //  * @param prop_name the property name
-    //  * @param pos the position of item
-    //  */
-    // virtual void QUEUE_PROP_ERASE(std::string const& prop_name, std::uint32_t pos);
-    // // /**
-    //  * @brief remove the queue property
-    //  *
-    //  * @param prop_name the property name
-    //  */
-    // virtual void QUEUE_PROP_REMOVE(std::string const& prop_name);
-    /**
-     * @brief clear/reset the queue property
-     *
-     * @param prop_name the property name
-     */
-    template<typename VALUET, typename = typename std::enable_if<std::is_same<VALUET, std::string>::value ||
-                                                                    std::is_same<VALUET, std::int8_t>::value ||
-                                                                    std::is_same<VALUET, std::int16_t>::value ||
-                                                                    std::is_same<VALUET, std::int32_t>::value ||
-                                                                    std::is_same<VALUET, std::int64_t>::value ||
-                                                                    std::is_same<VALUET, std::uint64_t>::value
-                                                                    >::type>
-    void QUEUE_PROP_CLEAR(std::string const& prop_name);
-
-    /**
-     * @brief query a item of the queue property
-     *
-     * @param prop_name the property name
-     * @param pos the position of item
-     * @return std::string the item value
-     */
-    template<typename VALUET, typename = typename std::enable_if<std::is_same<VALUET, std::string>::value ||
-                                                                    std::is_same<VALUET, std::int8_t>::value ||
-                                                                    std::is_same<VALUET, std::int16_t>::value ||
-                                                                    std::is_same<VALUET, std::int32_t>::value ||
-                                                                    std::is_same<VALUET, std::int64_t>::value ||
-                                                                    std::is_same<VALUET, std::uint64_t>::value
-                                                                    >::type>
-    std::string QUEUE_PROP_QUERY(std::string const& prop_name, std::uint32_t pos);
-    /**
-     * @brief query the entire queue property
-     *
-     * @param prop_name the property name
-     * @return std::deque<std::string> the entire queue property
-     */
-    template<typename VALUET, typename = typename std::enable_if<std::is_same<VALUET, std::string>::value ||
-                                                                    std::is_same<VALUET, std::int8_t>::value ||
-                                                                    std::is_same<VALUET, std::int16_t>::value ||
-                                                                    std::is_same<VALUET, std::int32_t>::value ||
-                                                                    std::is_same<VALUET, std::int64_t>::value ||
-                                                                    std::is_same<VALUET, std::uint64_t>::value
-                                                                    >::type>
-    std::deque<std::string> QUEUE_PROP_QUERY(std::string const& prop_name);
-
-
-
-
     // STRING apis
     /**
      * @brief create a string property
@@ -432,14 +309,6 @@ public:
      *
      */
     virtual void STR_PROP_CREATE(std::string const& prop_name);
-    /**
-     * @brief check if a string property exist
-     *
-     * @param prop_name the property name
-     * @return true the property exists
-     * @return false
-     */
-    virtual bool STR_PROP_EXIST(std::string const& prop_name);
 
     /**
      * @brief update the string property
@@ -448,19 +317,6 @@ public:
      * @param prop_value the property value
      */
     virtual void STR_PROP_UPDATE(std::string const& prop_name, std::string const& prop_value);
-
-    // /**
-    //  * @brief remove the string property
-    //  *
-    //  * @param prop_name the property name
-    //  */
-    // virtual void STR_PROP_REMOVE(std::string const& prop_name);
-    /**
-     * @brief clear/reset the string property
-     *
-     * @param prop_name the property name
-     */
-    virtual void STR_PROP_CLEAR(std::string const& prop_name);
 
     /**
      * @brief query the string property
@@ -478,7 +334,7 @@ public:
      * @param user the user addr
      * @param prop_id the property identifier
      */
-    virtual void token_prop_create(common::xaccount_address_t const & user, xproperty_identifier_t const & prop_id);
+    void token_prop_create(common::xaccount_address_t const & user, xproperty_identifier_t const & prop_id);
 
     /**
      * @brief withdraw balance from current env account
@@ -488,7 +344,7 @@ public:
      * @param amount the amount of the token
      * @return uint64_t  the amount to withdraw
      */
-    virtual uint64_t withdraw(common::xaccount_address_t const & user, xproperty_identifier_t const & prop_id, uint64_t amount);
+    uint64_t withdraw(common::xaccount_address_t const & user, xproperty_identifier_t const & prop_id, uint64_t amount);
 
     /**
      * @brief deposit balance to current env account
@@ -497,7 +353,7 @@ public:
      * @param token_prop the type of the token
      * @return uint64_t the amount to deposti
      */
-    virtual uint64_t deposit(common::xaccount_address_t const & user, xproperty_identifier_t const & prop_id, uint64_t amount);
+    uint64_t deposit(common::xaccount_address_t const & user, xproperty_identifier_t const & prop_id, uint64_t amount);
 
     /**
      * @brief balance of the current execute environment account address
@@ -506,9 +362,7 @@ public:
      * @param prop_id  the property identifier
      * @return uint64_t
      */
-    virtual uint64_t balance(common::xaccount_address_t const & user, xproperty_identifier_t const & prop_id);
-
-
+    uint64_t balance(common::xaccount_address_t const & user, xproperty_identifier_t const & prop_id);
 
     // CODE apis
     /**
@@ -516,25 +370,25 @@ public:
      *
      * @param prop_name the name of code property
      */
-    virtual void code_prop_create(common::xaccount_address_t const & user, xproperty_identifier_t const & prop_ide);
+    void code_prop_create(common::xaccount_address_t const & user, xproperty_identifier_t const & prop_ide);
 
     /**
      * @brief query code property
      * @param prop_name the name of code property
      * @return std::string
      */
-    virtual std::string code_prop_query(common::xaccount_address_t const & user, xproperty_identifier_t const & prop_id);
+    std::string code_prop_query(common::xaccount_address_t const & user, xproperty_identifier_t const & prop_id);
 
     /**
      * @brief set code property
      * @param prop_name the name of code property
      * @return std::string
      */
-    virtual bool code_prop_update(common::xaccount_address_t const & user, xproperty_identifier_t const & prop_id, std::string const& code);
+    bool code_prop_update(common::xaccount_address_t const & user, xproperty_identifier_t const & prop_id, std::string const& code);
 
 
     std::string src_code(xproperty_identifier_t const & prop_id, std::error_code & ec) const;
-    virtual std::string src_code(xproperty_identifier_t const & prop_id) const;
+    std::string src_code(xproperty_identifier_t const & prop_id) const;
 
     void deploy_src_code(xproperty_identifier_t const & prop_id, std::string src_code, std::error_code & ec);
     void deploy_src_code(xproperty_identifier_t const & prop_id, std::string src_code);
@@ -545,24 +399,16 @@ public:
     void deploy_bin_code(xproperty_identifier_t const & prop_id, xbyte_buffer_t bin_code, std::error_code & ec);
     void deploy_bin_code(xproperty_identifier_t const & prop_id, xbyte_buffer_t bin_code);
 
-    /**
-     * @brief query if property exists
-     *
-     * @param user the user addr
-     * @param prop_id  the property identifier
-     * @return true
-     * @return false
-     */
-    bool prop_exist(common::xaccount_address_t const & user, xproperty_identifier_t const & prop_id);
+    bool property_exist(common::xaccount_address_t const & user, xproperty_identifier_t const & prop_id, std::error_code & ec) const;
+    bool property_exist(common::xaccount_address_t const & user, xproperty_identifier_t const & prop_id) const;
 
+    bool system_property(xproperty_identifier_t const & property_id) const;
 
 public:
     /***********************************************************************/
     /*****************               utl apis              *****************/
     /***********************************************************************/
     void property_assert(bool condition,  std::string const& exception_msg, error::xerrc_t error_enum = error::xerrc_t::property_internal_error) const;
-    bool prop_exist(std::string const& prop_name);
-
 
 public:
     /***********************************************************************/
@@ -573,15 +419,9 @@ public:
      *
      * @return common::xaccount_address_t
      */
-    virtual common::xaccount_address_t address() const;
+    common::xaccount_address_t address() const;
 
-
-    /**
-     * @brief get the blockchain height of current environment account
-     *
-     * @return uint64_t
-     */
-    virtual uint64_t blockchain_height();
+    uint64_t blockchain_height() const;
 
 
     virtual void load_access_control_data(std::string const & json);
@@ -591,11 +431,6 @@ public:
     virtual bool write_permitted(common::xaccount_address_t const & writer, xproperty_identifier_t const & property_id) const noexcept;
 
     bool read_permitted(common::xaccount_address_t const & reader, std::string const & property_full_name) const noexcept;
-
-private:
-    top::observer_ptr<top::base::xvbstate_t> bstate_;
-    xproperty_access_control_data_t ac_data_;
-
 };
 using xproperty_access_control_t = xtop_property_access_control;
 
