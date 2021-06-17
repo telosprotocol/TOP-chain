@@ -33,9 +33,7 @@ public:
     void subscribe_tables(uint8_t zone, uint16_t front_table_id, uint16_t back_table_id) override;
     void unsubscribe_tables(uint8_t zone, uint16_t front_table_id, uint16_t back_table_id) override;
     void on_block_confirmed(xblock_t * block) override;
-    // xcons_transaction_ptr_t get_unconfirm_tx(const std::string source_addr, const uint256_t & hash) const override;
     int32_t verify_txs(const std::string & account, const std::vector<xcons_transaction_ptr_t> & txs, uint64_t latest_commit_unit_height) override;
-    int32_t reject(const xcons_transaction_ptr_t & tx, uint64_t latest_commit_unit_height, bool & deny) override;
     const std::vector<xcons_transaction_ptr_t> get_resend_txs(uint8_t zone, uint16_t subaddr, uint64_t now) override;
     void update_unconfirm_accounts(uint8_t zone, uint16_t subaddr) override;
     // void update_non_ready_accounts(uint8_t zone, uint16_t subaddr) override;

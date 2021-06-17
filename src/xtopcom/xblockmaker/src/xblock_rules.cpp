@@ -67,31 +67,6 @@ bool xblock_rules::check_rule_sendtx_duplication(const xaccount_ptr_t & rules_en
     return true;
 }
 
-bool xblock_rules::check_rule_receipts_duplication(const xblock_ptr_t & rules_end_block,
-                                                    const std::vector<xcons_transaction_ptr_t> & txs,
-                                                    std::vector<xcons_transaction_ptr_t> & valid_txs,
-                                                    std::vector<xcons_transaction_ptr_t> & pop_txs) const {
-    for (auto & tx : txs) {
-        xassert(tx->is_recv_tx() || tx->is_confirm_tx());
-        bool deny;
-        int32_t ret = m_resources->get_txpool()->reject(tx, rules_end_block->get_height(), deny);
-        if (ret == xsuccess) {
-            if (deny) {
-                xwarn("xunit_maker_t::check_rule_receipts_duplication fail-duplication check deny.tx=%s",
-                    tx->dump().c_str());
-                pop_txs.push_back(tx);
-            } else {
-                valid_txs.push_back(tx);
-            }
-        } else {
-            xwarn("xunit_maker_t::check_rule_receipts_duplication fail-duplication check has no enough data.tx=%s,ret=%s",
-                tx->dump().c_str(), chainbase::xmodule_error_to_str(ret).c_str());
-            return false;
-        }
-    }
-    return true;
-}
-
 void xblock_rules::check_rule_batch_txs(const std::vector<xcons_transaction_ptr_t> & txs,
                                             std::vector<xcons_transaction_ptr_t> & valid_txs,
                                             std::vector<xcons_transaction_ptr_t> & pop_txs) const {
