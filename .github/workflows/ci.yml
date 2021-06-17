@@ -21,12 +21,15 @@ jobs:
           GITHUB_CONTEXT: ${{ toJson(github) }}
         run: |
           echo "$GITHUB_CONTEXT"
-
+      
+      - name: Fix submodules
+        run: echo -e '[url "https://github.com/"]\n  insteadOf = "git@github.com:"' >> ~/.gitconfig
+      
       - name: Checkout repository
         uses: actions/checkout@v2
         with:
-          token: ${{ secrets.PAT }}
-          fetch-depth: 0
+          ssh-key: ${{ secrets.XVM }}
+          fetch-depth: 5
           submodules: recursive
 
       - name: Build XTOP DEBUG
