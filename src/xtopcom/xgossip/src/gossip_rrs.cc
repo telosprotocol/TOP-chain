@@ -17,10 +17,6 @@ GossipRRS::GossipRRS(transport::TransportPtr transport_ptr) : GossipInterface{tr
 GossipRRS::~GossipRRS() {
 }
 
-void GossipRRS::Broadcast(transport::protobuf::RoutingMessage & message, kadmlia::RoutingTablePtr & routing_table) {
-    return;
-}
-
 void GossipRRS::Broadcast(uint64_t local_hash64, transport::protobuf::RoutingMessage & message, std::shared_ptr<std::vector<kadmlia::NodeInfoPtr>> prt_neighbor) {
     auto neighbors = *prt_neighbor;
     auto const hop_num = message.hop_num();
@@ -34,7 +30,7 @@ void GossipRRS::Broadcast(uint64_t local_hash64, transport::protobuf::RoutingMes
         return;
     }
 
-    MessageKey msg_key(0, message.gossip().msg_hash(), 0);
+    MessageKey msg_key(message.msg_hash());
     if (MessageWithBloomfilter::Instance()->StopGossip(msg_key, kGossipRRSStopTimes)) {
         xkinfo("[GossipRRS]stop gossip for message.type(%d) stop_time(%d),hop_num(%d)", message.type(), kGossipRRSStopTimes, hop_num);
         return;
@@ -99,8 +95,8 @@ void GossipRRS::BroadcastHash(transport::protobuf::RoutingMessage & message, std
     if (header_message.has_data() || header_message.gossip().has_block()) {
         // have not been cleared yet.
         auto gossip_header = header_message.mutable_gossip();
-        gossip_header->clear_msg_hash();
         gossip_header->clear_block();
+        header_message.clear_msg_hash();
         header_message.clear_data();
         header_message.clear_bloomfilter();
     }

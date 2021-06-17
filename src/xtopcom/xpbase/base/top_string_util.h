@@ -14,7 +14,6 @@
 #include <limits>
 #include <memory>
 
-#include "xpbase/base/rand_util.h"
 #include "xpbase/base/check_cast.h"
 
 namespace top {

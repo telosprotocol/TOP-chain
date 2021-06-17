@@ -24,14 +24,10 @@ class RoutingMessage;
 };
 };  // namespace transport
 
-namespace base {
-class XipParser;
-};
-
 namespace kadmlia {
-class RoutingTable;
+class ElectRoutingTable;
+typedef std::shared_ptr<ElectRoutingTable> ElectRoutingTablePtr;
 struct NodeInfo;
-typedef std::shared_ptr<RoutingTable> RoutingTablePtr;
 typedef std::shared_ptr<NodeInfo> NodeInfoPtr;
 };  // namespace kadmlia
 
@@ -48,7 +44,8 @@ public:
     WrouterXidHandler(transport::TransportPtr transport_ptr,
                       std::shared_ptr<gossip::GossipInterface> bloom_gossip_ptr,
                       std::shared_ptr<gossip::GossipInterface> bloom_layer_gossip_ptr,
-                      std::shared_ptr<gossip::GossipInterface> gossip_rrs_ptr);
+                      std::shared_ptr<gossip::GossipInterface> gossip_rrs_ptr,
+                      std::shared_ptr<gossip::GossipInterface> gossip_dispatcher_ptr);
 
     ~WrouterXidHandler();
 
@@ -57,7 +54,7 @@ public:
     virtual int32_t RecvPacket(transport::protobuf::RoutingMessage & message, base::xpacket_t & packet);
 
 protected:
-    uint64_t ParserServiceType(const std::string & kad_key);
+    base::ServiceType ParserServiceType(const std::string & kad_key);
 
     bool MulticastPacketCheck(transport::protobuf::RoutingMessage & message);
     bool GossipPacketCheck(transport::protobuf::RoutingMessage & message);
@@ -69,9 +66,9 @@ protected:
     // judge packet arrive the dest or not
     int32_t JudgeOwnPacket(transport::protobuf::RoutingMessage & message, base::xpacket_t & packet);
 
-    int32_t GossipBroadcast(transport::protobuf::RoutingMessage & message, kadmlia::RoutingTablePtr & routing_table);
+    // int32_t GossipBroadcast(transport::protobuf::RoutingMessage & message, kadmlia::RoutingTablePtr & routing_table);
     int32_t SendData(transport::protobuf::RoutingMessage & message, const std::vector<kadmlia::NodeInfoPtr> & neighbors, uint32_t next_size, bool broadcast_stride);
-    bool HandleSystemMessage(transport::protobuf::RoutingMessage & message, kadmlia::RoutingTablePtr & routing_table);
+    bool HandleSystemMessage(transport::protobuf::RoutingMessage & message);
 
 private:
     DISALLOW_COPY_AND_ASSIGN(WrouterXidHandler);

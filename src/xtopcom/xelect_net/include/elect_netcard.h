@@ -60,9 +60,6 @@ public:
         const base::KadmliaKeyPtr& recv_kad_key,
         const elect::xelect_message_t& message,
         bool is_broadcast) const;
-#ifdef DEBUG
-    int  test_send(const std::string& des_node_id, bool broadcast = true, bool root = false);
-#endif
     /**
      * @brief register message callback for networkid
      * 
@@ -79,7 +76,8 @@ public:
 protected:
     int GossipWithHeaderBlock(transport::protobuf::RoutingMessage & pbft_message, uint32_t block_gossip_type, uint32_t chain_data_hash, uint32_t chain_msgid) const;
     int GossipOldRootBroadcast(transport::protobuf::RoutingMessage & pbft_message, uint32_t block_gossip_type, uint32_t chain_data_hash, uint32_t chain_msgid) const;
-    int GossipOldLayerBroadcast(transport::protobuf::RoutingMessage & pbft_message, uint32_t block_gossip_type, uint32_t chain_data_hash, uint32_t chain_msgid) const;
+    // int GossipOldLayerBroadcast(transport::protobuf::RoutingMessage & pbft_message, uint32_t block_gossip_type, uint32_t chain_data_hash, uint32_t chain_msgid) const;
+    int GossipDispatchBroadcast(transport::protobuf::RoutingMessage & pbft_message, uint32_t block_gossip_type, uint32_t chain_data_hash, uint32_t chain_msgid) const;
 
 private:
     void HandleRumorMessage(

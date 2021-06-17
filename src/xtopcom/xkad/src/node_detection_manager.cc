@@ -14,7 +14,7 @@
 #include "xtransport/proto/transport.pb.h"
 #include "xkad/proto/kadmlia.pb.h"
 #include "xkad/routing_table/local_node_info.h"
-#include "xkad/routing_table/routing_table.h"
+#include "xkad/routing_table/root_routing_table.h"
 
 namespace top {
 
@@ -23,12 +23,12 @@ namespace kadmlia {
 // static const int kDetectedMapClearCount = 100 * 1024;
 static const int32_t kDoDetectionPeriod = 600 * 1000;  // 600ms
 
-NodeDetectionManager::NodeDetectionManager(base::TimerManager* timer_manager, RoutingTable& routing_table)
+NodeDetectionManager::NodeDetectionManager(base::TimerManager* timer_manager, RootRoutingTable& routing_table)
         : detection_nodes_map_(),
           detection_nodes_map_mutex_(),
           detected_nodes_map_(),
           detected_nodes_map_mutex_(),
-          routing_table_(routing_table) {
+          root_routing_table_(routing_table) {
     timer_manager_ = timer_manager;
     timer_ = std::make_shared<base::TimerRepeated>(timer_manager_, "NodeDetectionManager");
     timer_->Start(
@@ -72,11 +72,7 @@ int NodeDetectionManager::AddDetectionNode(std::shared_ptr<NodeInfo> node_ptr) {
         return kKadSuccess;
     }
 
-    if (node_ptr->nat_type == kNatTypeConeAbnormal) {
-        node_ptr->detection_delay_count = 3;
-    } else {
-        node_ptr->detection_delay_count = 0;
-    }
+    node_ptr->detection_delay_count = 0;
 
     std::unique_lock<std::mutex> lock(detection_nodes_map_mutex_);
     std::string key = (node_ptr->public_ip + "_" +
@@ -104,16 +100,16 @@ int NodeDetectionManager::Handshake(std::shared_ptr<NodeInfo> node_ptr) {
     }
 
     transport::protobuf::RoutingMessage message;
-    routing_table_.SetFreqMessage(message);
-    LocalNodeInfoPtr local_node = routing_table_.get_local_node_info();
+    root_routing_table_.SetFreqMessage(message);
+    LocalNodeInfoPtr local_node = root_routing_table_.get_local_node_info();
     if (!local_node) {
         return kKadFailed;
     }
-    message.set_des_service_type(node_ptr->service_type);
+    message.set_des_service_type(node_ptr->service_type.value());
     message.set_des_node_id(node_ptr->node_id);
     message.set_type(kKadHandshake);
 
-    std::shared_ptr<transport::Transport> transport_ptr = routing_table_.get_transport();
+    std::shared_ptr<transport::Transport> transport_ptr = root_routing_table_.get_transport();
     if (!transport_ptr) {
         TOP_ERROR("service type[%llu] has not register transport.", message.des_service_type());
         return kKadFailed;
@@ -121,11 +117,8 @@ int NodeDetectionManager::Handshake(std::shared_ptr<NodeInfo> node_ptr) {
 
     protobuf::Handshake handshake;
     handshake.set_type(kHandshakeRequest);
-    handshake.set_local_ip(local_node->local_ip());
-    handshake.set_local_port(local_node->local_port());
     handshake.set_public_ip(local_node->public_ip());
     handshake.set_public_port(local_node->public_port());
-    handshake.set_nat_type(local_node->nat_type());
     handshake.set_xid(global_xid->Get());
     std::string data;
     if (!handshake.SerializeToString(&data)) {
@@ -141,9 +134,6 @@ int NodeDetectionManager::Handshake(std::shared_ptr<NodeInfo> node_ptr) {
     }
     xbyte_buffer_t xdata{msg.begin(), msg.end()};
 
-    // try vlan connect 
-    //transport_ptr->SendPing(xdata, node_ptr->local_ip, node_ptr->local_port);
-    // try public connect 
     transport_ptr->SendPing(xdata, node_ptr->public_ip, node_ptr->public_port);
     TOP_DEBUG("sendping sendhandshake from:%s:%d to %s:%d size:%d",
             local_node->public_ip().c_str(),

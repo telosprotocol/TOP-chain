@@ -8,7 +8,6 @@
 #include <atomic>
 
 #include "xbase/xutl.h"
-#include "xpbase/base/rand_util.h"
 #include "xpbase/base/top_log.h"
 #include "xpbase/base/top_string_util.h"
 #include "xmetrics/xmetrics.h"

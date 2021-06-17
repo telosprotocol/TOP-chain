@@ -13,7 +13,6 @@
 #include "xelect_net/include/elect_netcard.h"
 #include "xkad/routing_table/node_info.h"
 #include "xkad/routing_table/routing_utils.h"
-#include "xpbase/base/xip_parser.h"
 
 #include <atomic>
 #include <condition_variable>
@@ -93,7 +92,7 @@ private:
     virtual void AddExtraCommands() {
     }
     void PrintUsage();
-    int GetEcXip(const Arguments & args, base::XipParser & xip);
+    // int GetEcXip(const Arguments & args, base::XipParser & xip);
     void GetRootNodes(uint64_t service_type, std::vector<kadmlia::NodeInfoPtr> & nodes);
     void vhost_send(const std::string & des_node_id, bool broadcast = true, bool root = false);
 

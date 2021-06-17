@@ -22,8 +22,6 @@
 namespace protobuf_transport_2eproto {
 extern PROTOBUF_INTERNAL_EXPORT_protobuf_transport_2eproto ::google::protobuf::internal::SCCInfo<0> scc_info_GossipParams;
 extern PROTOBUF_INTERNAL_EXPORT_protobuf_transport_2eproto ::google::protobuf::internal::SCCInfo<0> scc_info_HopInfo;
-extern PROTOBUF_INTERNAL_EXPORT_protobuf_transport_2eproto ::google::protobuf::internal::SCCInfo<0> scc_info_RelayHopInfo;
-extern PROTOBUF_INTERNAL_EXPORT_protobuf_transport_2eproto ::google::protobuf::internal::SCCInfo<0> scc_info_VersionTag;
 }  // namespace protobuf_transport_2eproto
 namespace top {
 namespace transport {
@@ -33,16 +31,6 @@ class HopInfoDefaultTypeInternal {
   ::google::protobuf::internal::ExplicitlyConstructed<HopInfo>
       _instance;
 } _HopInfo_default_instance_;
-class VersionTagDefaultTypeInternal {
- public:
-  ::google::protobuf::internal::ExplicitlyConstructed<VersionTag>
-      _instance;
-} _VersionTag_default_instance_;
-class RelayHopInfoDefaultTypeInternal {
- public:
-  ::google::protobuf::internal::ExplicitlyConstructed<RelayHopInfo>
-      _instance;
-} _RelayHopInfo_default_instance_;
 class GossipParamsDefaultTypeInternal {
  public:
   ::google::protobuf::internal::ExplicitlyConstructed<GossipParams>
@@ -75,34 +63,6 @@ static void InitDefaultsHopInfo() {
 
 ::google::protobuf::internal::SCCInfo<0> scc_info_HopInfo =
     {{ATOMIC_VAR_INIT(::google::protobuf::internal::SCCInfoBase::kUninitialized), 0, InitDefaultsHopInfo}, {}};
-
-static void InitDefaultsVersionTag() {
-  GOOGLE_PROTOBUF_VERIFY_VERSION;
-
-  {
-    void* ptr = &::top::transport::protobuf::_VersionTag_default_instance_;
-    new (ptr) ::top::transport::protobuf::VersionTag();
-    ::google::protobuf::internal::OnShutdownDestroyMessage(ptr);
-  }
-  ::top::transport::protobuf::VersionTag::InitAsDefaultInstance();
-}
-
-::google::protobuf::internal::SCCInfo<0> scc_info_VersionTag =
-    {{ATOMIC_VAR_INIT(::google::protobuf::internal::SCCInfoBase::kUninitialized), 0, InitDefaultsVersionTag}, {}};
-
-static void InitDefaultsRelayHopInfo() {
-  GOOGLE_PROTOBUF_VERIFY_VERSION;
-
-  {
-    void* ptr = &::top::transport::protobuf::_RelayHopInfo_default_instance_;
-    new (ptr) ::top::transport::protobuf::RelayHopInfo();
-    ::google::protobuf::internal::OnShutdownDestroyMessage(ptr);
-  }
-  ::top::transport::protobuf::RelayHopInfo::InitAsDefaultInstance();
-}
-
-::google::protobuf::internal::SCCInfo<0> scc_info_RelayHopInfo =
-    {{ATOMIC_VAR_INIT(::google::protobuf::internal::SCCInfoBase::kUninitialized), 0, InitDefaultsRelayHopInfo}, {}};
 
 static void InitDefaultsGossipParams() {
   GOOGLE_PROTOBUF_VERIFY_VERSION;
@@ -143,23 +103,19 @@ static void InitDefaultsRoutingMessage() {
   ::top::transport::protobuf::RoutingMessage::InitAsDefaultInstance();
 }
 
-::google::protobuf::internal::SCCInfo<4> scc_info_RoutingMessage =
-    {{ATOMIC_VAR_INIT(::google::protobuf::internal::SCCInfoBase::kUninitialized), 4, InitDefaultsRoutingMessage}, {
+::google::protobuf::internal::SCCInfo<2> scc_info_RoutingMessage =
+    {{ATOMIC_VAR_INIT(::google::protobuf::internal::SCCInfoBase::kUninitialized), 2, InitDefaultsRoutingMessage}, {
       &protobuf_transport_2eproto::scc_info_HopInfo.base,
-      &protobuf_transport_2eproto::scc_info_VersionTag.base,
-      &protobuf_transport_2eproto::scc_info_RelayHopInfo.base,
       &protobuf_transport_2eproto::scc_info_GossipParams.base,}};
 
 void InitDefaults() {
   ::google::protobuf::internal::InitSCC(&scc_info_HopInfo.base);
-  ::google::protobuf::internal::InitSCC(&scc_info_VersionTag.base);
-  ::google::protobuf::internal::InitSCC(&scc_info_RelayHopInfo.base);
   ::google::protobuf::internal::InitSCC(&scc_info_GossipParams.base);
   ::google::protobuf::internal::InitSCC(&scc_info_GossipSyncBlockData.base);
   ::google::protobuf::internal::InitSCC(&scc_info_RoutingMessage.base);
 }
 
-::google::protobuf::Metadata file_level_metadata[6];
+::google::protobuf::Metadata file_level_metadata[4];
 
 const ::google::protobuf::uint32 TableStruct::offsets[] GOOGLE_PROTOBUF_ATTRIBUTE_SECTION_VARIABLE(protodesc_cold) = {
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::top::transport::protobuf::HopInfo, _has_bits_),
@@ -173,54 +129,24 @@ const ::google::protobuf::uint32 TableStruct::offsets[] GOOGLE_PROTOBUF_ATTRIBUT
   0,
   1,
   2,
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::top::transport::protobuf::VersionTag, _has_bits_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::top::transport::protobuf::VersionTag, _internal_metadata_),
-  ~0u,  // no _extensions_
-  ~0u,  // no _oneof_case_
-  ~0u,  // no _weak_field_map_
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::top::transport::protobuf::VersionTag, version_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::top::transport::protobuf::VersionTag, copyright_),
-  0,
-  1,
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::top::transport::protobuf::RelayHopInfo, _has_bits_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::top::transport::protobuf::RelayHopInfo, _internal_metadata_),
-  ~0u,  // no _extensions_
-  ~0u,  // no _oneof_case_
-  ~0u,  // no _weak_field_map_
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::top::transport::protobuf::RelayHopInfo, relay_entry_id_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::top::transport::protobuf::RelayHopInfo, service_type_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::top::transport::protobuf::RelayHopInfo, relay_flag_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::top::transport::protobuf::RelayHopInfo, relay_exit_id_),
-  0,
-  2,
-  3,
-  1,
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::top::transport::protobuf::GossipParams, _has_bits_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::top::transport::protobuf::GossipParams, _internal_metadata_),
   ~0u,  // no _extensions_
   ~0u,  // no _oneof_case_
   ~0u,  // no _weak_field_map_
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::top::transport::protobuf::GossipParams, reliable_level_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::top::transport::protobuf::GossipParams, neighber_count_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::top::transport::protobuf::GossipParams, stop_times_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::top::transport::protobuf::GossipParams, gossip_type_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::top::transport::protobuf::GossipParams, evil_rate_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::top::transport::protobuf::GossipParams, max_hop_num_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::top::transport::protobuf::GossipParams, min_dis_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::top::transport::protobuf::GossipParams, max_dis_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::top::transport::protobuf::GossipParams, left_min_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::top::transport::protobuf::GossipParams, right_max_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::top::transport::protobuf::GossipParams, left_overlap_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::top::transport::protobuf::GossipParams, right_overlap_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::top::transport::protobuf::GossipParams, switch_layer_hop_num_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::top::transport::protobuf::GossipParams, sit1_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::top::transport::protobuf::GossipParams, sit2_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::top::transport::protobuf::GossipParams, sit3_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::top::transport::protobuf::GossipParams, sit4_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::top::transport::protobuf::GossipParams, overlap_rate_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::top::transport::protobuf::GossipParams, header_hash_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::top::transport::protobuf::GossipParams, block_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::top::transport::protobuf::GossipParams, ign_bloomfilter_level_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::top::transport::protobuf::GossipParams, diff_net_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::top::transport::protobuf::GossipParams, pass_node_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::top::transport::protobuf::GossipParams, msg_hash_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::top::transport::protobuf::GossipParams, pre_ip_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::top::transport::protobuf::GossipParams, pre_port_),
+  2,
   3,
   4,
   5,
@@ -229,19 +155,9 @@ const ::google::protobuf::uint32 TableStruct::offsets[] GOOGLE_PROTOBUF_ATTRIBUT
   8,
   9,
   10,
-  11,
-  12,
-  13,
-  14,
-  15,
   0,
   1,
-  16,
-  17,
-  ~0u,
-  18,
-  2,
-  19,
+  11,
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::top::transport::protobuf::GossipSyncBlockData, _has_bits_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::top::transport::protobuf::GossipSyncBlockData, _internal_metadata_),
   ~0u,  // no _extensions_
@@ -264,74 +180,44 @@ const ::google::protobuf::uint32 TableStruct::offsets[] GOOGLE_PROTOBUF_ATTRIBUT
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::top::transport::protobuf::RoutingMessage, ack_id_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::top::transport::protobuf::RoutingMessage, hop_num_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::top::transport::protobuf::RoutingMessage, hop_nodes_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::top::transport::protobuf::RoutingMessage, retry_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::top::transport::protobuf::RoutingMessage, client_msg_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::top::transport::protobuf::RoutingMessage, relay_flag_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::top::transport::protobuf::RoutingMessage, request_type_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::top::transport::protobuf::RoutingMessage, client_id_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::top::transport::protobuf::RoutingMessage, direct_mode_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::top::transport::protobuf::RoutingMessage, src_service_type_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::top::transport::protobuf::RoutingMessage, des_service_type_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::top::transport::protobuf::RoutingMessage, status_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::top::transport::protobuf::RoutingMessage, version_tag_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::top::transport::protobuf::RoutingMessage, msg_hash_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::top::transport::protobuf::RoutingMessage, is_root_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::top::transport::protobuf::RoutingMessage, bloomfilter_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::top::transport::protobuf::RoutingMessage, relay_hop_info_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::top::transport::protobuf::RoutingMessage, multi_relay_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::top::transport::protobuf::RoutingMessage, seq_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::top::transport::protobuf::RoutingMessage, xrequest_id_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::top::transport::protobuf::RoutingMessage, trace_route_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::top::transport::protobuf::RoutingMessage, xid_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::top::transport::protobuf::RoutingMessage, broadcast_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::top::transport::protobuf::RoutingMessage, bloomfilter_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::top::transport::protobuf::RoutingMessage, xid_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::top::transport::protobuf::RoutingMessage, priority_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::top::transport::protobuf::RoutingMessage, gossip_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::top::transport::protobuf::RoutingMessage, enable_ack_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::top::transport::protobuf::RoutingMessage, debug_),
   0,
   1,
-  9,
+  6,
   2,
+  7,
+  8,
+  9,
+  ~0u,
   10,
   11,
   12,
-  ~0u,
   13,
   14,
-  15,
-  16,
+  ~0u,
   3,
-  17,
-  18,
-  19,
-  20,
-  7,
-  22,
-  ~0u,
-  ~0u,
-  23,
-  21,
-  4,
-  ~0u,
+  15,
   5,
-  24,
-  26,
-  8,
-  25,
-  6,
+  4,
 };
 static const ::google::protobuf::internal::MigrationSchema schemas[] GOOGLE_PROTOBUF_ATTRIBUTE_SECTION_VARIABLE(protodesc_cold) = {
   { 0, 8, sizeof(::top::transport::protobuf::HopInfo)},
-  { 11, 18, sizeof(::top::transport::protobuf::VersionTag)},
-  { 20, 29, sizeof(::top::transport::protobuf::RelayHopInfo)},
-  { 33, 59, sizeof(::top::transport::protobuf::GossipParams)},
-  { 80, 87, sizeof(::top::transport::protobuf::GossipSyncBlockData)},
-  { 89, 125, sizeof(::top::transport::protobuf::RoutingMessage)},
+  { 11, 28, sizeof(::top::transport::protobuf::GossipParams)},
+  { 40, 47, sizeof(::top::transport::protobuf::GossipSyncBlockData)},
+  { 49, 72, sizeof(::top::transport::protobuf::RoutingMessage)},
 };
 
 static ::google::protobuf::Message const * const file_default_instances[] = {
   reinterpret_cast<const ::google::protobuf::Message*>(&::top::transport::protobuf::_HopInfo_default_instance_),
-  reinterpret_cast<const ::google::protobuf::Message*>(&::top::transport::protobuf::_VersionTag_default_instance_),
-  reinterpret_cast<const ::google::protobuf::Message*>(&::top::transport::protobuf::_RelayHopInfo_default_instance_),
   reinterpret_cast<const ::google::protobuf::Message*>(&::top::transport::protobuf::_GossipParams_default_instance_),
   reinterpret_cast<const ::google::protobuf::Message*>(&::top::transport::protobuf::_GossipSyncBlockData_default_instance_),
   reinterpret_cast<const ::google::protobuf::Message*>(&::top::transport::protobuf::_RoutingMessage_default_instance_),
@@ -352,7 +238,7 @@ void protobuf_AssignDescriptorsOnce() {
 void protobuf_RegisterTypes(const ::std::string&) GOOGLE_PROTOBUF_ATTRIBUTE_COLD;
 void protobuf_RegisterTypes(const ::std::string&) {
   protobuf_AssignDescriptorsOnce();
-  ::google::protobuf::internal::RegisterAllTypes(file_level_metadata, 6);
+  ::google::protobuf::internal::RegisterAllTypes(file_level_metadata, 4);
 }
 
 void AddDescriptorsImpl() {
@@ -360,45 +246,28 @@ void AddDescriptorsImpl() {
   static const char descriptor[] GOOGLE_PROTOBUF_ATTRIBUTE_SECTION_VARIABLE(protodesc_cold) = {
       "\n\017transport.proto\022\026top.transport.protobu"
       "f\"4\n\007HopInfo\022\017\n\007node_id\030\001 \001(\014\022\n\n\002ip\030\002 \001("
-      "\014\022\014\n\004port\030\003 \001(\005\"0\n\nVersionTag\022\017\n\007version"
-      "\030\001 \001(\014\022\021\n\tcopyright\030\002 \001(\014\"g\n\014RelayHopInf"
-      "o\022\026\n\016relay_entry_id\030\001 \001(\014\022\024\n\014service_typ"
-      "e\030\002 \001(\004\022\022\n\nrelay_flag\030\003 \001(\010\022\025\n\rrelay_exi"
-      "t_id\030\004 \001(\014\"\275\003\n\014GossipParams\022\026\n\016reliable_"
-      "level\030\001 \001(\005\022\026\n\016neighber_count\030\002 \001(\r\022\022\n\ns"
-      "top_times\030\003 \001(\r\022\023\n\013gossip_type\030\004 \001(\005\022\021\n\t"
-      "evil_rate\030\005 \001(\005\022\023\n\013max_hop_num\030\006 \001(\r\022\017\n\007"
-      "min_dis\030\007 \001(\004\022\017\n\007max_dis\030\010 \001(\004\022\020\n\010left_m"
-      "in\030\t \001(\004\022\021\n\tright_max\030\n \001(\004\022\024\n\014left_over"
-      "lap\030\013 \001(\r\022\025\n\rright_overlap\030\014 \001(\r\022\034\n\024swit"
-      "ch_layer_hop_num\030\r \001(\r\022\023\n\013header_hash\030\016 "
-      "\001(\014\022\r\n\005block\030\017 \001(\014\022\035\n\025ign_bloomfilter_le"
-      "vel\030\020 \001(\r\022\020\n\010diff_net\030\021 \001(\010\022\021\n\tpass_node"
-      "\030\022 \003(\r\022\020\n\010msg_hash\030\023 \001(\r\022\016\n\006pre_ip\030\024 \001(\014"
-      "\022\020\n\010pre_port\030\025 \001(\005\"9\n\023GossipSyncBlockDat"
-      "a\022\023\n\013header_hash\030\001 \001(\014\022\r\n\005block\030\002 \001(\014\"\344\005"
-      "\n\016RoutingMessage\022\023\n\013src_node_id\030\001 \001(\014\022\023\n"
-      "\013des_node_id\030\002 \001(\014\022\014\n\004type\030\003 \001(\005\022\014\n\004data"
-      "\030\004 \001(\014\022\n\n\002id\030\005 \001(\r\022\016\n\006ack_id\030\006 \001(\r\022\017\n\007ho"
-      "p_num\030\007 \001(\r\0222\n\thop_nodes\030\010 \003(\0132\037.top.tra"
-      "nsport.protobuf.HopInfo\022\r\n\005retry\030\t \001(\005\022\022"
-      "\n\nclient_msg\030\n \001(\010\022\022\n\nrelay_flag\030\013 \001(\010\022\024"
-      "\n\014request_type\030\014 \001(\010\022\021\n\tclient_id\030\r \001(\014\022"
-      "\023\n\013direct_mode\030\016 \001(\010\022\030\n\020src_service_type"
-      "\030\017 \001(\004\022\030\n\020des_service_type\030\020 \001(\004\022\016\n\006stat"
-      "us\030\021 \001(\r\0227\n\013version_tag\030\022 \001(\0132\".top.tran"
-      "sport.protobuf.VersionTag\022\017\n\007is_root\030\023 \001"
-      "(\010\022\023\n\013bloomfilter\030\024 \003(\004\022<\n\016relay_hop_inf"
-      "o\030\025 \003(\0132$.top.transport.protobuf.RelayHo"
-      "pInfo\022\023\n\013multi_relay\030\026 \001(\010\022\013\n\003seq\030\027 \001(\r\022"
-      "\023\n\013xrequest_id\030\030 \001(\014\022\023\n\013trace_route\030\031 \003("
-      "\014\022\013\n\003xid\030\032 \001(\014\022\021\n\tbroadcast\030\033 \001(\010\022\020\n\010pri"
-      "ority\030\034 \001(\r\0224\n\006gossip\030\035 \001(\0132$.top.transp"
-      "ort.protobuf.GossipParams\022\022\n\nenable_ack\030"
-      "\036 \001(\010\022\r\n\005debug\030\037 \001(\t"
+      "\014\022\014\n\004port\030\003 \001(\005\"\350\001\n\014GossipParams\022\026\n\016neig"
+      "hber_count\030\001 \001(\r\022\022\n\nstop_times\030\002 \001(\r\022\023\n\013"
+      "gossip_type\030\003 \001(\005\022\023\n\013max_hop_num\030\004 \001(\r\022\014"
+      "\n\004sit1\030\005 \001(\004\022\014\n\004sit2\030\006 \001(\004\022\014\n\004sit3\030\007 \001(\004"
+      "\022\014\n\004sit4\030\010 \001(\004\022\024\n\014overlap_rate\030\t \001(\r\022\023\n\013"
+      "header_hash\030\n \001(\014\022\r\n\005block\030\013 \001(\014\022\020\n\010diff"
+      "_net\030\014 \001(\010\"9\n\023GossipSyncBlockData\022\023\n\013hea"
+      "der_hash\030\001 \001(\014\022\r\n\005block\030\002 \001(\014\"\232\003\n\016Routin"
+      "gMessage\022\023\n\013src_node_id\030\001 \001(\014\022\023\n\013des_nod"
+      "e_id\030\002 \001(\014\022\014\n\004type\030\003 \001(\005\022\014\n\004data\030\004 \001(\014\022\n"
+      "\n\002id\030\005 \001(\r\022\016\n\006ack_id\030\006 \001(\r\022\017\n\007hop_num\030\007 "
+      "\001(\r\0222\n\thop_nodes\030\010 \003(\0132\037.top.transport.p"
+      "rotobuf.HopInfo\022\030\n\020src_service_type\030\t \001("
+      "\004\022\030\n\020des_service_type\030\n \001(\004\022\020\n\010msg_hash\030"
+      "\013 \001(\r\022\017\n\007is_root\030\014 \001(\010\022\021\n\tbroadcast\030\r \001("
+      "\010\022\023\n\013bloomfilter\030\016 \003(\004\022\013\n\003xid\030\017 \001(\014\022\020\n\010p"
+      "riority\030\020 \001(\r\0224\n\006gossip\030\021 \001(\0132$.top.tran"
+      "sport.protobuf.GossipParams\022\r\n\005debug\030\022 \001"
+      "(\t"
   };
   ::google::protobuf::DescriptorPool::InternalAddGeneratedFile(
-      descriptor, 1500);
+      descriptor, 802);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "transport.proto", &protobuf_RegisterTypes);
 }
@@ -753,698 +622,21 @@ void HopInfo::InternalSwap(HopInfo* other) {
 
 // ===================================================================
 
-void VersionTag::InitAsDefaultInstance() {
-}
-#if !defined(_MSC_VER) || _MSC_VER >= 1900
-const int VersionTag::kVersionFieldNumber;
-const int VersionTag::kCopyrightFieldNumber;
-#endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
-
-VersionTag::VersionTag()
-  : ::google::protobuf::Message(), _internal_metadata_(NULL) {
-  ::google::protobuf::internal::InitSCC(
-      &protobuf_transport_2eproto::scc_info_VersionTag.base);
-  SharedCtor();
-  // @@protoc_insertion_point(constructor:top.transport.protobuf.VersionTag)
-}
-VersionTag::VersionTag(const VersionTag& from)
-  : ::google::protobuf::Message(),
-      _internal_metadata_(NULL),
-      _has_bits_(from._has_bits_) {
-  _internal_metadata_.MergeFrom(from._internal_metadata_);
-  version_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  if (from.has_version()) {
-    version_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.version_);
-  }
-  copyright_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  if (from.has_copyright()) {
-    copyright_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.copyright_);
-  }
-  // @@protoc_insertion_point(copy_constructor:top.transport.protobuf.VersionTag)
-}
-
-void VersionTag::SharedCtor() {
-  version_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  copyright_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-}
-
-VersionTag::~VersionTag() {
-  // @@protoc_insertion_point(destructor:top.transport.protobuf.VersionTag)
-  SharedDtor();
-}
-
-void VersionTag::SharedDtor() {
-  version_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  copyright_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-}
-
-void VersionTag::SetCachedSize(int size) const {
-  _cached_size_.Set(size);
-}
-const ::google::protobuf::Descriptor* VersionTag::descriptor() {
-  ::protobuf_transport_2eproto::protobuf_AssignDescriptorsOnce();
-  return ::protobuf_transport_2eproto::file_level_metadata[kIndexInFileMessages].descriptor;
-}
-
-const VersionTag& VersionTag::default_instance() {
-  ::google::protobuf::internal::InitSCC(&protobuf_transport_2eproto::scc_info_VersionTag.base);
-  return *internal_default_instance();
-}
-
-
-void VersionTag::Clear() {
-// @@protoc_insertion_point(message_clear_start:top.transport.protobuf.VersionTag)
-  ::google::protobuf::uint32 cached_has_bits = 0;
-  // Prevent compiler warnings about cached_has_bits being unused
-  (void) cached_has_bits;
-
-  cached_has_bits = _has_bits_[0];
-  if (cached_has_bits & 3u) {
-    if (cached_has_bits & 0x00000001u) {
-      version_.ClearNonDefaultToEmptyNoArena();
-    }
-    if (cached_has_bits & 0x00000002u) {
-      copyright_.ClearNonDefaultToEmptyNoArena();
-    }
-  }
-  _has_bits_.Clear();
-  _internal_metadata_.Clear();
-}
-
-bool VersionTag::MergePartialFromCodedStream(
-    ::google::protobuf::io::CodedInputStream* input) {
-#define DO_(EXPRESSION) if (!GOOGLE_PREDICT_TRUE(EXPRESSION)) goto failure
-  ::google::protobuf::uint32 tag;
-  // @@protoc_insertion_point(parse_start:top.transport.protobuf.VersionTag)
-  for (;;) {
-    ::std::pair<::google::protobuf::uint32, bool> p = input->ReadTagWithCutoffNoLastTag(127u);
-    tag = p.first;
-    if (!p.second) goto handle_unusual;
-    switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
-      // optional bytes version = 1;
-      case 1: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(10u /* 10 & 0xFF */)) {
-          DO_(::google::protobuf::internal::WireFormatLite::ReadBytes(
-                input, this->mutable_version()));
-        } else {
-          goto handle_unusual;
-        }
-        break;
-      }
-
-      // optional bytes copyright = 2;
-      case 2: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(18u /* 18 & 0xFF */)) {
-          DO_(::google::protobuf::internal::WireFormatLite::ReadBytes(
-                input, this->mutable_copyright()));
-        } else {
-          goto handle_unusual;
-        }
-        break;
-      }
-
-      default: {
-      handle_unusual:
-        if (tag == 0) {
-          goto success;
-        }
-        DO_(::google::protobuf::internal::WireFormat::SkipField(
-              input, tag, _internal_metadata_.mutable_unknown_fields()));
-        break;
-      }
-    }
-  }
-success:
-  // @@protoc_insertion_point(parse_success:top.transport.protobuf.VersionTag)
-  return true;
-failure:
-  // @@protoc_insertion_point(parse_failure:top.transport.protobuf.VersionTag)
-  return false;
-#undef DO_
-}
-
-void VersionTag::SerializeWithCachedSizes(
-    ::google::protobuf::io::CodedOutputStream* output) const {
-  // @@protoc_insertion_point(serialize_start:top.transport.protobuf.VersionTag)
-  ::google::protobuf::uint32 cached_has_bits = 0;
-  (void) cached_has_bits;
-
-  cached_has_bits = _has_bits_[0];
-  // optional bytes version = 1;
-  if (cached_has_bits & 0x00000001u) {
-    ::google::protobuf::internal::WireFormatLite::WriteBytesMaybeAliased(
-      1, this->version(), output);
-  }
-
-  // optional bytes copyright = 2;
-  if (cached_has_bits & 0x00000002u) {
-    ::google::protobuf::internal::WireFormatLite::WriteBytesMaybeAliased(
-      2, this->copyright(), output);
-  }
-
-  if (_internal_metadata_.have_unknown_fields()) {
-    ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
-        _internal_metadata_.unknown_fields(), output);
-  }
-  // @@protoc_insertion_point(serialize_end:top.transport.protobuf.VersionTag)
-}
-
-::google::protobuf::uint8* VersionTag::InternalSerializeWithCachedSizesToArray(
-    bool deterministic, ::google::protobuf::uint8* target) const {
-  (void)deterministic; // Unused
-  // @@protoc_insertion_point(serialize_to_array_start:top.transport.protobuf.VersionTag)
-  ::google::protobuf::uint32 cached_has_bits = 0;
-  (void) cached_has_bits;
-
-  cached_has_bits = _has_bits_[0];
-  // optional bytes version = 1;
-  if (cached_has_bits & 0x00000001u) {
-    target =
-      ::google::protobuf::internal::WireFormatLite::WriteBytesToArray(
-        1, this->version(), target);
-  }
-
-  // optional bytes copyright = 2;
-  if (cached_has_bits & 0x00000002u) {
-    target =
-      ::google::protobuf::internal::WireFormatLite::WriteBytesToArray(
-        2, this->copyright(), target);
-  }
-
-  if (_internal_metadata_.have_unknown_fields()) {
-    target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
-        _internal_metadata_.unknown_fields(), target);
-  }
-  // @@protoc_insertion_point(serialize_to_array_end:top.transport.protobuf.VersionTag)
-  return target;
-}
-
-size_t VersionTag::ByteSizeLong() const {
-// @@protoc_insertion_point(message_byte_size_start:top.transport.protobuf.VersionTag)
-  size_t total_size = 0;
-
-  if (_internal_metadata_.have_unknown_fields()) {
-    total_size +=
-      ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
-        _internal_metadata_.unknown_fields());
-  }
-  if (_has_bits_[0 / 32] & 3u) {
-    // optional bytes version = 1;
-    if (has_version()) {
-      total_size += 1 +
-        ::google::protobuf::internal::WireFormatLite::BytesSize(
-          this->version());
-    }
-
-    // optional bytes copyright = 2;
-    if (has_copyright()) {
-      total_size += 1 +
-        ::google::protobuf::internal::WireFormatLite::BytesSize(
-          this->copyright());
-    }
-
-  }
-  int cached_size = ::google::protobuf::internal::ToCachedSize(total_size);
-  SetCachedSize(cached_size);
-  return total_size;
-}
-
-void VersionTag::MergeFrom(const ::google::protobuf::Message& from) {
-// @@protoc_insertion_point(generalized_merge_from_start:top.transport.protobuf.VersionTag)
-  GOOGLE_DCHECK_NE(&from, this);
-  const VersionTag* source =
-      ::google::protobuf::internal::DynamicCastToGenerated<const VersionTag>(
-          &from);
-  if (source == NULL) {
-  // @@protoc_insertion_point(generalized_merge_from_cast_fail:top.transport.protobuf.VersionTag)
-    ::google::protobuf::internal::ReflectionOps::Merge(from, this);
-  } else {
-  // @@protoc_insertion_point(generalized_merge_from_cast_success:top.transport.protobuf.VersionTag)
-    MergeFrom(*source);
-  }
-}
-
-void VersionTag::MergeFrom(const VersionTag& from) {
-// @@protoc_insertion_point(class_specific_merge_from_start:top.transport.protobuf.VersionTag)
-  GOOGLE_DCHECK_NE(&from, this);
-  _internal_metadata_.MergeFrom(from._internal_metadata_);
-  ::google::protobuf::uint32 cached_has_bits = 0;
-  (void) cached_has_bits;
-
-  cached_has_bits = from._has_bits_[0];
-  if (cached_has_bits & 3u) {
-    if (cached_has_bits & 0x00000001u) {
-      set_has_version();
-      version_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.version_);
-    }
-    if (cached_has_bits & 0x00000002u) {
-      set_has_copyright();
-      copyright_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.copyright_);
-    }
-  }
-}
-
-void VersionTag::CopyFrom(const ::google::protobuf::Message& from) {
-// @@protoc_insertion_point(generalized_copy_from_start:top.transport.protobuf.VersionTag)
-  if (&from == this) return;
-  Clear();
-  MergeFrom(from);
-}
-
-void VersionTag::CopyFrom(const VersionTag& from) {
-// @@protoc_insertion_point(class_specific_copy_from_start:top.transport.protobuf.VersionTag)
-  if (&from == this) return;
-  Clear();
-  MergeFrom(from);
-}
-
-bool VersionTag::IsInitialized() const {
-  return true;
-}
-
-void VersionTag::Swap(VersionTag* other) {
-  if (other == this) return;
-  InternalSwap(other);
-}
-void VersionTag::InternalSwap(VersionTag* other) {
-  using std::swap;
-  version_.Swap(&other->version_, &::google::protobuf::internal::GetEmptyStringAlreadyInited(),
-    GetArenaNoVirtual());
-  copyright_.Swap(&other->copyright_, &::google::protobuf::internal::GetEmptyStringAlreadyInited(),
-    GetArenaNoVirtual());
-  swap(_has_bits_[0], other->_has_bits_[0]);
-  _internal_metadata_.Swap(&other->_internal_metadata_);
-}
-
-::google::protobuf::Metadata VersionTag::GetMetadata() const {
-  protobuf_transport_2eproto::protobuf_AssignDescriptorsOnce();
-  return ::protobuf_transport_2eproto::file_level_metadata[kIndexInFileMessages];
-}
-
-
-// ===================================================================
-
-void RelayHopInfo::InitAsDefaultInstance() {
-}
-#if !defined(_MSC_VER) || _MSC_VER >= 1900
-const int RelayHopInfo::kRelayEntryIdFieldNumber;
-const int RelayHopInfo::kServiceTypeFieldNumber;
-const int RelayHopInfo::kRelayFlagFieldNumber;
-const int RelayHopInfo::kRelayExitIdFieldNumber;
-#endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
-
-RelayHopInfo::RelayHopInfo()
-  : ::google::protobuf::Message(), _internal_metadata_(NULL) {
-  ::google::protobuf::internal::InitSCC(
-      &protobuf_transport_2eproto::scc_info_RelayHopInfo.base);
-  SharedCtor();
-  // @@protoc_insertion_point(constructor:top.transport.protobuf.RelayHopInfo)
-}
-RelayHopInfo::RelayHopInfo(const RelayHopInfo& from)
-  : ::google::protobuf::Message(),
-      _internal_metadata_(NULL),
-      _has_bits_(from._has_bits_) {
-  _internal_metadata_.MergeFrom(from._internal_metadata_);
-  relay_entry_id_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  if (from.has_relay_entry_id()) {
-    relay_entry_id_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.relay_entry_id_);
-  }
-  relay_exit_id_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  if (from.has_relay_exit_id()) {
-    relay_exit_id_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.relay_exit_id_);
-  }
-  ::memcpy(&service_type_, &from.service_type_,
-    static_cast<size_t>(reinterpret_cast<char*>(&relay_flag_) -
-    reinterpret_cast<char*>(&service_type_)) + sizeof(relay_flag_));
-  // @@protoc_insertion_point(copy_constructor:top.transport.protobuf.RelayHopInfo)
-}
-
-void RelayHopInfo::SharedCtor() {
-  relay_entry_id_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  relay_exit_id_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  ::memset(&service_type_, 0, static_cast<size_t>(
-      reinterpret_cast<char*>(&relay_flag_) -
-      reinterpret_cast<char*>(&service_type_)) + sizeof(relay_flag_));
-}
-
-RelayHopInfo::~RelayHopInfo() {
-  // @@protoc_insertion_point(destructor:top.transport.protobuf.RelayHopInfo)
-  SharedDtor();
-}
-
-void RelayHopInfo::SharedDtor() {
-  relay_entry_id_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  relay_exit_id_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-}
-
-void RelayHopInfo::SetCachedSize(int size) const {
-  _cached_size_.Set(size);
-}
-const ::google::protobuf::Descriptor* RelayHopInfo::descriptor() {
-  ::protobuf_transport_2eproto::protobuf_AssignDescriptorsOnce();
-  return ::protobuf_transport_2eproto::file_level_metadata[kIndexInFileMessages].descriptor;
-}
-
-const RelayHopInfo& RelayHopInfo::default_instance() {
-  ::google::protobuf::internal::InitSCC(&protobuf_transport_2eproto::scc_info_RelayHopInfo.base);
-  return *internal_default_instance();
-}
-
-
-void RelayHopInfo::Clear() {
-// @@protoc_insertion_point(message_clear_start:top.transport.protobuf.RelayHopInfo)
-  ::google::protobuf::uint32 cached_has_bits = 0;
-  // Prevent compiler warnings about cached_has_bits being unused
-  (void) cached_has_bits;
-
-  cached_has_bits = _has_bits_[0];
-  if (cached_has_bits & 3u) {
-    if (cached_has_bits & 0x00000001u) {
-      relay_entry_id_.ClearNonDefaultToEmptyNoArena();
-    }
-    if (cached_has_bits & 0x00000002u) {
-      relay_exit_id_.ClearNonDefaultToEmptyNoArena();
-    }
-  }
-  if (cached_has_bits & 12u) {
-    ::memset(&service_type_, 0, static_cast<size_t>(
-        reinterpret_cast<char*>(&relay_flag_) -
-        reinterpret_cast<char*>(&service_type_)) + sizeof(relay_flag_));
-  }
-  _has_bits_.Clear();
-  _internal_metadata_.Clear();
-}
-
-bool RelayHopInfo::MergePartialFromCodedStream(
-    ::google::protobuf::io::CodedInputStream* input) {
-#define DO_(EXPRESSION) if (!GOOGLE_PREDICT_TRUE(EXPRESSION)) goto failure
-  ::google::protobuf::uint32 tag;
-  // @@protoc_insertion_point(parse_start:top.transport.protobuf.RelayHopInfo)
-  for (;;) {
-    ::std::pair<::google::protobuf::uint32, bool> p = input->ReadTagWithCutoffNoLastTag(127u);
-    tag = p.first;
-    if (!p.second) goto handle_unusual;
-    switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
-      // optional bytes relay_entry_id = 1;
-      case 1: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(10u /* 10 & 0xFF */)) {
-          DO_(::google::protobuf::internal::WireFormatLite::ReadBytes(
-                input, this->mutable_relay_entry_id()));
-        } else {
-          goto handle_unusual;
-        }
-        break;
-      }
-
-      // optional uint64 service_type = 2;
-      case 2: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(16u /* 16 & 0xFF */)) {
-          set_has_service_type();
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   ::google::protobuf::uint64, ::google::protobuf::internal::WireFormatLite::TYPE_UINT64>(
-                 input, &service_type_)));
-        } else {
-          goto handle_unusual;
-        }
-        break;
-      }
-
-      // optional bool relay_flag = 3;
-      case 3: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(24u /* 24 & 0xFF */)) {
-          set_has_relay_flag();
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   bool, ::google::protobuf::internal::WireFormatLite::TYPE_BOOL>(
-                 input, &relay_flag_)));
-        } else {
-          goto handle_unusual;
-        }
-        break;
-      }
-
-      // optional bytes relay_exit_id = 4;
-      case 4: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(34u /* 34 & 0xFF */)) {
-          DO_(::google::protobuf::internal::WireFormatLite::ReadBytes(
-                input, this->mutable_relay_exit_id()));
-        } else {
-          goto handle_unusual;
-        }
-        break;
-      }
-
-      default: {
-      handle_unusual:
-        if (tag == 0) {
-          goto success;
-        }
-        DO_(::google::protobuf::internal::WireFormat::SkipField(
-              input, tag, _internal_metadata_.mutable_unknown_fields()));
-        break;
-      }
-    }
-  }
-success:
-  // @@protoc_insertion_point(parse_success:top.transport.protobuf.RelayHopInfo)
-  return true;
-failure:
-  // @@protoc_insertion_point(parse_failure:top.transport.protobuf.RelayHopInfo)
-  return false;
-#undef DO_
-}
-
-void RelayHopInfo::SerializeWithCachedSizes(
-    ::google::protobuf::io::CodedOutputStream* output) const {
-  // @@protoc_insertion_point(serialize_start:top.transport.protobuf.RelayHopInfo)
-  ::google::protobuf::uint32 cached_has_bits = 0;
-  (void) cached_has_bits;
-
-  cached_has_bits = _has_bits_[0];
-  // optional bytes relay_entry_id = 1;
-  if (cached_has_bits & 0x00000001u) {
-    ::google::protobuf::internal::WireFormatLite::WriteBytesMaybeAliased(
-      1, this->relay_entry_id(), output);
-  }
-
-  // optional uint64 service_type = 2;
-  if (cached_has_bits & 0x00000004u) {
-    ::google::protobuf::internal::WireFormatLite::WriteUInt64(2, this->service_type(), output);
-  }
-
-  // optional bool relay_flag = 3;
-  if (cached_has_bits & 0x00000008u) {
-    ::google::protobuf::internal::WireFormatLite::WriteBool(3, this->relay_flag(), output);
-  }
-
-  // optional bytes relay_exit_id = 4;
-  if (cached_has_bits & 0x00000002u) {
-    ::google::protobuf::internal::WireFormatLite::WriteBytesMaybeAliased(
-      4, this->relay_exit_id(), output);
-  }
-
-  if (_internal_metadata_.have_unknown_fields()) {
-    ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
-        _internal_metadata_.unknown_fields(), output);
-  }
-  // @@protoc_insertion_point(serialize_end:top.transport.protobuf.RelayHopInfo)
-}
-
-::google::protobuf::uint8* RelayHopInfo::InternalSerializeWithCachedSizesToArray(
-    bool deterministic, ::google::protobuf::uint8* target) const {
-  (void)deterministic; // Unused
-  // @@protoc_insertion_point(serialize_to_array_start:top.transport.protobuf.RelayHopInfo)
-  ::google::protobuf::uint32 cached_has_bits = 0;
-  (void) cached_has_bits;
-
-  cached_has_bits = _has_bits_[0];
-  // optional bytes relay_entry_id = 1;
-  if (cached_has_bits & 0x00000001u) {
-    target =
-      ::google::protobuf::internal::WireFormatLite::WriteBytesToArray(
-        1, this->relay_entry_id(), target);
-  }
-
-  // optional uint64 service_type = 2;
-  if (cached_has_bits & 0x00000004u) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteUInt64ToArray(2, this->service_type(), target);
-  }
-
-  // optional bool relay_flag = 3;
-  if (cached_has_bits & 0x00000008u) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteBoolToArray(3, this->relay_flag(), target);
-  }
-
-  // optional bytes relay_exit_id = 4;
-  if (cached_has_bits & 0x00000002u) {
-    target =
-      ::google::protobuf::internal::WireFormatLite::WriteBytesToArray(
-        4, this->relay_exit_id(), target);
-  }
-
-  if (_internal_metadata_.have_unknown_fields()) {
-    target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
-        _internal_metadata_.unknown_fields(), target);
-  }
-  // @@protoc_insertion_point(serialize_to_array_end:top.transport.protobuf.RelayHopInfo)
-  return target;
-}
-
-size_t RelayHopInfo::ByteSizeLong() const {
-// @@protoc_insertion_point(message_byte_size_start:top.transport.protobuf.RelayHopInfo)
-  size_t total_size = 0;
-
-  if (_internal_metadata_.have_unknown_fields()) {
-    total_size +=
-      ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
-        _internal_metadata_.unknown_fields());
-  }
-  if (_has_bits_[0 / 32] & 15u) {
-    // optional bytes relay_entry_id = 1;
-    if (has_relay_entry_id()) {
-      total_size += 1 +
-        ::google::protobuf::internal::WireFormatLite::BytesSize(
-          this->relay_entry_id());
-    }
-
-    // optional bytes relay_exit_id = 4;
-    if (has_relay_exit_id()) {
-      total_size += 1 +
-        ::google::protobuf::internal::WireFormatLite::BytesSize(
-          this->relay_exit_id());
-    }
-
-    // optional uint64 service_type = 2;
-    if (has_service_type()) {
-      total_size += 1 +
-        ::google::protobuf::internal::WireFormatLite::UInt64Size(
-          this->service_type());
-    }
-
-    // optional bool relay_flag = 3;
-    if (has_relay_flag()) {
-      total_size += 1 + 1;
-    }
-
-  }
-  int cached_size = ::google::protobuf::internal::ToCachedSize(total_size);
-  SetCachedSize(cached_size);
-  return total_size;
-}
-
-void RelayHopInfo::MergeFrom(const ::google::protobuf::Message& from) {
-// @@protoc_insertion_point(generalized_merge_from_start:top.transport.protobuf.RelayHopInfo)
-  GOOGLE_DCHECK_NE(&from, this);
-  const RelayHopInfo* source =
-      ::google::protobuf::internal::DynamicCastToGenerated<const RelayHopInfo>(
-          &from);
-  if (source == NULL) {
-  // @@protoc_insertion_point(generalized_merge_from_cast_fail:top.transport.protobuf.RelayHopInfo)
-    ::google::protobuf::internal::ReflectionOps::Merge(from, this);
-  } else {
-  // @@protoc_insertion_point(generalized_merge_from_cast_success:top.transport.protobuf.RelayHopInfo)
-    MergeFrom(*source);
-  }
-}
-
-void RelayHopInfo::MergeFrom(const RelayHopInfo& from) {
-// @@protoc_insertion_point(class_specific_merge_from_start:top.transport.protobuf.RelayHopInfo)
-  GOOGLE_DCHECK_NE(&from, this);
-  _internal_metadata_.MergeFrom(from._internal_metadata_);
-  ::google::protobuf::uint32 cached_has_bits = 0;
-  (void) cached_has_bits;
-
-  cached_has_bits = from._has_bits_[0];
-  if (cached_has_bits & 15u) {
-    if (cached_has_bits & 0x00000001u) {
-      set_has_relay_entry_id();
-      relay_entry_id_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.relay_entry_id_);
-    }
-    if (cached_has_bits & 0x00000002u) {
-      set_has_relay_exit_id();
-      relay_exit_id_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.relay_exit_id_);
-    }
-    if (cached_has_bits & 0x00000004u) {
-      service_type_ = from.service_type_;
-    }
-    if (cached_has_bits & 0x00000008u) {
-      relay_flag_ = from.relay_flag_;
-    }
-    _has_bits_[0] |= cached_has_bits;
-  }
-}
-
-void RelayHopInfo::CopyFrom(const ::google::protobuf::Message& from) {
-// @@protoc_insertion_point(generalized_copy_from_start:top.transport.protobuf.RelayHopInfo)
-  if (&from == this) return;
-  Clear();
-  MergeFrom(from);
-}
-
-void RelayHopInfo::CopyFrom(const RelayHopInfo& from) {
-// @@protoc_insertion_point(class_specific_copy_from_start:top.transport.protobuf.RelayHopInfo)
-  if (&from == this) return;
-  Clear();
-  MergeFrom(from);
-}
-
-bool RelayHopInfo::IsInitialized() const {
-  return true;
-}
-
-void RelayHopInfo::Swap(RelayHopInfo* other) {
-  if (other == this) return;
-  InternalSwap(other);
-}
-void RelayHopInfo::InternalSwap(RelayHopInfo* other) {
-  using std::swap;
-  relay_entry_id_.Swap(&other->relay_entry_id_, &::google::protobuf::internal::GetEmptyStringAlreadyInited(),
-    GetArenaNoVirtual());
-  relay_exit_id_.Swap(&other->relay_exit_id_, &::google::protobuf::internal::GetEmptyStringAlreadyInited(),
-    GetArenaNoVirtual());
-  swap(service_type_, other->service_type_);
-  swap(relay_flag_, other->relay_flag_);
-  swap(_has_bits_[0], other->_has_bits_[0]);
-  _internal_metadata_.Swap(&other->_internal_metadata_);
-}
-
-::google::protobuf::Metadata RelayHopInfo::GetMetadata() const {
-  protobuf_transport_2eproto::protobuf_AssignDescriptorsOnce();
-  return ::protobuf_transport_2eproto::file_level_metadata[kIndexInFileMessages];
-}
-
-
-// ===================================================================
-
 void GossipParams::InitAsDefaultInstance() {
 }
 #if !defined(_MSC_VER) || _MSC_VER >= 1900
-const int GossipParams::kReliableLevelFieldNumber;
 const int GossipParams::kNeighberCountFieldNumber;
 const int GossipParams::kStopTimesFieldNumber;
 const int GossipParams::kGossipTypeFieldNumber;
-const int GossipParams::kEvilRateFieldNumber;
 const int GossipParams::kMaxHopNumFieldNumber;
-const int GossipParams::kMinDisFieldNumber;
-const int GossipParams::kMaxDisFieldNumber;
-const int GossipParams::kLeftMinFieldNumber;
-const int GossipParams::kRightMaxFieldNumber;
-const int GossipParams::kLeftOverlapFieldNumber;
-const int GossipParams::kRightOverlapFieldNumber;
-const int GossipParams::kSwitchLayerHopNumFieldNumber;
+const int GossipParams::kSit1FieldNumber;
+const int GossipParams::kSit2FieldNumber;
+const int GossipParams::kSit3FieldNumber;
+const int GossipParams::kSit4FieldNumber;
+const int GossipParams::kOverlapRateFieldNumber;
 const int GossipParams::kHeaderHashFieldNumber;
 const int GossipParams::kBlockFieldNumber;
-const int GossipParams::kIgnBloomfilterLevelFieldNumber;
 const int GossipParams::kDiffNetFieldNumber;
-const int GossipParams::kPassNodeFieldNumber;
-const int GossipParams::kMsgHashFieldNumber;
-const int GossipParams::kPreIpFieldNumber;
-const int GossipParams::kPrePortFieldNumber;
 #endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
 
 GossipParams::GossipParams()
@@ -1457,8 +649,7 @@ GossipParams::GossipParams()
 GossipParams::GossipParams(const GossipParams& from)
   : ::google::protobuf::Message(),
       _internal_metadata_(NULL),
-      _has_bits_(from._has_bits_),
-      pass_node_(from.pass_node_) {
+      _has_bits_(from._has_bits_) {
   _internal_metadata_.MergeFrom(from._internal_metadata_);
   header_hash_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   if (from.has_header_hash()) {
@@ -1468,23 +659,18 @@ GossipParams::GossipParams(const GossipParams& from)
   if (from.has_block()) {
     block_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.block_);
   }
-  pre_ip_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  if (from.has_pre_ip()) {
-    pre_ip_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.pre_ip_);
-  }
-  ::memcpy(&reliable_level_, &from.reliable_level_,
-    static_cast<size_t>(reinterpret_cast<char*>(&pre_port_) -
-    reinterpret_cast<char*>(&reliable_level_)) + sizeof(pre_port_));
+  ::memcpy(&neighber_count_, &from.neighber_count_,
+    static_cast<size_t>(reinterpret_cast<char*>(&diff_net_) -
+    reinterpret_cast<char*>(&neighber_count_)) + sizeof(diff_net_));
   // @@protoc_insertion_point(copy_constructor:top.transport.protobuf.GossipParams)
 }
 
 void GossipParams::SharedCtor() {
   header_hash_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   block_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  pre_ip_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  ::memset(&reliable_level_, 0, static_cast<size_t>(
-      reinterpret_cast<char*>(&pre_port_) -
-      reinterpret_cast<char*>(&reliable_level_)) + sizeof(pre_port_));
+  ::memset(&neighber_count_, 0, static_cast<size_t>(
+      reinterpret_cast<char*>(&diff_net_) -
+      reinterpret_cast<char*>(&neighber_count_)) + sizeof(diff_net_));
 }
 
 GossipParams::~GossipParams() {
@@ -1495,7 +681,6 @@ GossipParams::~GossipParams() {
 void GossipParams::SharedDtor() {
   header_hash_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   block_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  pre_ip_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 
 void GossipParams::SetCachedSize(int size) const {
@@ -1518,33 +703,24 @@ void GossipParams::Clear() {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
-  pass_node_.Clear();
   cached_has_bits = _has_bits_[0];
-  if (cached_has_bits & 7u) {
+  if (cached_has_bits & 3u) {
     if (cached_has_bits & 0x00000001u) {
       header_hash_.ClearNonDefaultToEmptyNoArena();
     }
     if (cached_has_bits & 0x00000002u) {
       block_.ClearNonDefaultToEmptyNoArena();
     }
-    if (cached_has_bits & 0x00000004u) {
-      pre_ip_.ClearNonDefaultToEmptyNoArena();
-    }
   }
-  if (cached_has_bits & 248u) {
-    ::memset(&reliable_level_, 0, static_cast<size_t>(
-        reinterpret_cast<char*>(&evil_rate_) -
-        reinterpret_cast<char*>(&reliable_level_)) + sizeof(evil_rate_));
+  if (cached_has_bits & 252u) {
+    ::memset(&neighber_count_, 0, static_cast<size_t>(
+        reinterpret_cast<char*>(&sit2_) -
+        reinterpret_cast<char*>(&neighber_count_)) + sizeof(sit2_));
   }
-  if (cached_has_bits & 65280u) {
-    ::memset(&max_hop_num_, 0, static_cast<size_t>(
-        reinterpret_cast<char*>(&switch_layer_hop_num_) -
-        reinterpret_cast<char*>(&max_hop_num_)) + sizeof(switch_layer_hop_num_));
-  }
-  if (cached_has_bits & 983040u) {
-    ::memset(&ign_bloomfilter_level_, 0, static_cast<size_t>(
-        reinterpret_cast<char*>(&pre_port_) -
-        reinterpret_cast<char*>(&ign_bloomfilter_level_)) + sizeof(pre_port_));
+  if (cached_has_bits & 3840u) {
+    ::memset(&sit3_, 0, static_cast<size_t>(
+        reinterpret_cast<char*>(&diff_net_) -
+        reinterpret_cast<char*>(&sit3_)) + sizeof(diff_net_));
   }
   _has_bits_.Clear();
   _internal_metadata_.Clear();
@@ -1556,28 +732,14 @@ bool GossipParams::MergePartialFromCodedStream(
   ::google::protobuf::uint32 tag;
   // @@protoc_insertion_point(parse_start:top.transport.protobuf.GossipParams)
   for (;;) {
-    ::std::pair<::google::protobuf::uint32, bool> p = input->ReadTagWithCutoffNoLastTag(16383u);
+    ::std::pair<::google::protobuf::uint32, bool> p = input->ReadTagWithCutoffNoLastTag(127u);
     tag = p.first;
     if (!p.second) goto handle_unusual;
     switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
-      // optional int32 reliable_level = 1;
+      // optional uint32 neighber_count = 1;
       case 1: {
         if (static_cast< ::google::protobuf::uint8>(tag) ==
             static_cast< ::google::protobuf::uint8>(8u /* 8 & 0xFF */)) {
-          set_has_reliable_level();
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
-                 input, &reliable_level_)));
-        } else {
-          goto handle_unusual;
-        }
-        break;
-      }
-
-      // optional uint32 neighber_count = 2;
-      case 2: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(16u /* 16 & 0xFF */)) {
           set_has_neighber_count();
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    ::google::protobuf::uint32, ::google::protobuf::internal::WireFormatLite::TYPE_UINT32>(
@@ -1588,10 +750,10 @@ bool GossipParams::MergePartialFromCodedStream(
         break;
       }
 
-      // optional uint32 stop_times = 3;
-      case 3: {
+      // optional uint32 stop_times = 2;
+      case 2: {
         if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(24u /* 24 & 0xFF */)) {
+            static_cast< ::google::protobuf::uint8>(16u /* 16 & 0xFF */)) {
           set_has_stop_times();
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    ::google::protobuf::uint32, ::google::protobuf::internal::WireFormatLite::TYPE_UINT32>(
@@ -1602,10 +764,10 @@ bool GossipParams::MergePartialFromCodedStream(
         break;
       }
 
-      // optional int32 gossip_type = 4;
-      case 4: {
+      // optional int32 gossip_type = 3;
+      case 3: {
         if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(32u /* 32 & 0xFF */)) {
+            static_cast< ::google::protobuf::uint8>(24u /* 24 & 0xFF */)) {
           set_has_gossip_type();
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
@@ -1616,24 +778,10 @@ bool GossipParams::MergePartialFromCodedStream(
         break;
       }
 
-      // optional int32 evil_rate = 5;
-      case 5: {
+      // optional uint32 max_hop_num = 4;
+      case 4: {
         if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(40u /* 40 & 0xFF */)) {
-          set_has_evil_rate();
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
-                 input, &evil_rate_)));
-        } else {
-          goto handle_unusual;
-        }
-        break;
-      }
-
-      // optional uint32 max_hop_num = 6;
-      case 6: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(48u /* 48 & 0xFF */)) {
+            static_cast< ::google::protobuf::uint8>(32u /* 32 & 0xFF */)) {
           set_has_max_hop_num();
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    ::google::protobuf::uint32, ::google::protobuf::internal::WireFormatLite::TYPE_UINT32>(
@@ -1644,108 +792,80 @@ bool GossipParams::MergePartialFromCodedStream(
         break;
       }
 
-      // optional uint64 min_dis = 7;
+      // optional uint64 sit1 = 5;
+      case 5: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(40u /* 40 & 0xFF */)) {
+          set_has_sit1();
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   ::google::protobuf::uint64, ::google::protobuf::internal::WireFormatLite::TYPE_UINT64>(
+                 input, &sit1_)));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      // optional uint64 sit2 = 6;
+      case 6: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(48u /* 48 & 0xFF */)) {
+          set_has_sit2();
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   ::google::protobuf::uint64, ::google::protobuf::internal::WireFormatLite::TYPE_UINT64>(
+                 input, &sit2_)));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      // optional uint64 sit3 = 7;
       case 7: {
         if (static_cast< ::google::protobuf::uint8>(tag) ==
             static_cast< ::google::protobuf::uint8>(56u /* 56 & 0xFF */)) {
-          set_has_min_dis();
+          set_has_sit3();
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    ::google::protobuf::uint64, ::google::protobuf::internal::WireFormatLite::TYPE_UINT64>(
-                 input, &min_dis_)));
+                 input, &sit3_)));
         } else {
           goto handle_unusual;
         }
         break;
       }
 
-      // optional uint64 max_dis = 8;
+      // optional uint64 sit4 = 8;
       case 8: {
         if (static_cast< ::google::protobuf::uint8>(tag) ==
             static_cast< ::google::protobuf::uint8>(64u /* 64 & 0xFF */)) {
-          set_has_max_dis();
+          set_has_sit4();
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    ::google::protobuf::uint64, ::google::protobuf::internal::WireFormatLite::TYPE_UINT64>(
-                 input, &max_dis_)));
+                 input, &sit4_)));
         } else {
           goto handle_unusual;
         }
         break;
       }
 
-      // optional uint64 left_min = 9;
+      // optional uint32 overlap_rate = 9;
       case 9: {
         if (static_cast< ::google::protobuf::uint8>(tag) ==
             static_cast< ::google::protobuf::uint8>(72u /* 72 & 0xFF */)) {
-          set_has_left_min();
+          set_has_overlap_rate();
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   ::google::protobuf::uint64, ::google::protobuf::internal::WireFormatLite::TYPE_UINT64>(
-                 input, &left_min_)));
+                   ::google::protobuf::uint32, ::google::protobuf::internal::WireFormatLite::TYPE_UINT32>(
+                 input, &overlap_rate_)));
         } else {
           goto handle_unusual;
         }
         break;
       }
 
-      // optional uint64 right_max = 10;
+      // optional bytes header_hash = 10;
       case 10: {
         if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(80u /* 80 & 0xFF */)) {
-          set_has_right_max();
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   ::google::protobuf::uint64, ::google::protobuf::internal::WireFormatLite::TYPE_UINT64>(
-                 input, &right_max_)));
-        } else {
-          goto handle_unusual;
-        }
-        break;
-      }
-
-      // optional uint32 left_overlap = 11;
-      case 11: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(88u /* 88 & 0xFF */)) {
-          set_has_left_overlap();
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   ::google::protobuf::uint32, ::google::protobuf::internal::WireFormatLite::TYPE_UINT32>(
-                 input, &left_overlap_)));
-        } else {
-          goto handle_unusual;
-        }
-        break;
-      }
-
-      // optional uint32 right_overlap = 12;
-      case 12: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(96u /* 96 & 0xFF */)) {
-          set_has_right_overlap();
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   ::google::protobuf::uint32, ::google::protobuf::internal::WireFormatLite::TYPE_UINT32>(
-                 input, &right_overlap_)));
-        } else {
-          goto handle_unusual;
-        }
-        break;
-      }
-
-      // optional uint32 switch_layer_hop_num = 13;
-      case 13: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(104u /* 104 & 0xFF */)) {
-          set_has_switch_layer_hop_num();
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   ::google::protobuf::uint32, ::google::protobuf::internal::WireFormatLite::TYPE_UINT32>(
-                 input, &switch_layer_hop_num_)));
-        } else {
-          goto handle_unusual;
-        }
-        break;
-      }
-
-      // optional bytes header_hash = 14;
-      case 14: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(114u /* 114 & 0xFF */)) {
+            static_cast< ::google::protobuf::uint8>(82u /* 82 & 0xFF */)) {
           DO_(::google::protobuf::internal::WireFormatLite::ReadBytes(
                 input, this->mutable_header_hash()));
         } else {
@@ -1754,10 +874,10 @@ bool GossipParams::MergePartialFromCodedStream(
         break;
       }
 
-      // optional bytes block = 15;
-      case 15: {
+      // optional bytes block = 11;
+      case 11: {
         if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(122u /* 122 & 0xFF */)) {
+            static_cast< ::google::protobuf::uint8>(90u /* 90 & 0xFF */)) {
           DO_(::google::protobuf::internal::WireFormatLite::ReadBytes(
                 input, this->mutable_block()));
         } else {
@@ -1766,87 +886,14 @@ bool GossipParams::MergePartialFromCodedStream(
         break;
       }
 
-      // optional uint32 ign_bloomfilter_level = 16;
-      case 16: {
+      // optional bool diff_net = 12;
+      case 12: {
         if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(128u /* 128 & 0xFF */)) {
-          set_has_ign_bloomfilter_level();
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   ::google::protobuf::uint32, ::google::protobuf::internal::WireFormatLite::TYPE_UINT32>(
-                 input, &ign_bloomfilter_level_)));
-        } else {
-          goto handle_unusual;
-        }
-        break;
-      }
-
-      // optional bool diff_net = 17;
-      case 17: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(136u /* 136 & 0xFF */)) {
+            static_cast< ::google::protobuf::uint8>(96u /* 96 & 0xFF */)) {
           set_has_diff_net();
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    bool, ::google::protobuf::internal::WireFormatLite::TYPE_BOOL>(
                  input, &diff_net_)));
-        } else {
-          goto handle_unusual;
-        }
-        break;
-      }
-
-      // repeated uint32 pass_node = 18;
-      case 18: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(144u /* 144 & 0xFF */)) {
-          DO_((::google::protobuf::internal::WireFormatLite::ReadRepeatedPrimitive<
-                   ::google::protobuf::uint32, ::google::protobuf::internal::WireFormatLite::TYPE_UINT32>(
-                 2, 144u, input, this->mutable_pass_node())));
-        } else if (
-            static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(146u /* 146 & 0xFF */)) {
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPackedPrimitiveNoInline<
-                   ::google::protobuf::uint32, ::google::protobuf::internal::WireFormatLite::TYPE_UINT32>(
-                 input, this->mutable_pass_node())));
-        } else {
-          goto handle_unusual;
-        }
-        break;
-      }
-
-      // optional uint32 msg_hash = 19;
-      case 19: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(152u /* 152 & 0xFF */)) {
-          set_has_msg_hash();
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   ::google::protobuf::uint32, ::google::protobuf::internal::WireFormatLite::TYPE_UINT32>(
-                 input, &msg_hash_)));
-        } else {
-          goto handle_unusual;
-        }
-        break;
-      }
-
-      // optional bytes pre_ip = 20;
-      case 20: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(162u /* 162 & 0xFF */)) {
-          DO_(::google::protobuf::internal::WireFormatLite::ReadBytes(
-                input, this->mutable_pre_ip()));
-        } else {
-          goto handle_unusual;
-        }
-        break;
-      }
-
-      // optional int32 pre_port = 21;
-      case 21: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(168u /* 168 & 0xFF */)) {
-          set_has_pre_port();
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
-                 input, &pre_port_)));
         } else {
           goto handle_unusual;
         }
@@ -1880,113 +927,66 @@ void GossipParams::SerializeWithCachedSizes(
   (void) cached_has_bits;
 
   cached_has_bits = _has_bits_[0];
-  // optional int32 reliable_level = 1;
+  // optional uint32 neighber_count = 1;
+  if (cached_has_bits & 0x00000004u) {
+    ::google::protobuf::internal::WireFormatLite::WriteUInt32(1, this->neighber_count(), output);
+  }
+
+  // optional uint32 stop_times = 2;
   if (cached_has_bits & 0x00000008u) {
-    ::google::protobuf::internal::WireFormatLite::WriteInt32(1, this->reliable_level(), output);
+    ::google::protobuf::internal::WireFormatLite::WriteUInt32(2, this->stop_times(), output);
   }
 
-  // optional uint32 neighber_count = 2;
+  // optional int32 gossip_type = 3;
   if (cached_has_bits & 0x00000010u) {
-    ::google::protobuf::internal::WireFormatLite::WriteUInt32(2, this->neighber_count(), output);
+    ::google::protobuf::internal::WireFormatLite::WriteInt32(3, this->gossip_type(), output);
   }
 
-  // optional uint32 stop_times = 3;
+  // optional uint32 max_hop_num = 4;
   if (cached_has_bits & 0x00000020u) {
-    ::google::protobuf::internal::WireFormatLite::WriteUInt32(3, this->stop_times(), output);
+    ::google::protobuf::internal::WireFormatLite::WriteUInt32(4, this->max_hop_num(), output);
   }
 
-  // optional int32 gossip_type = 4;
+  // optional uint64 sit1 = 5;
   if (cached_has_bits & 0x00000040u) {
-    ::google::protobuf::internal::WireFormatLite::WriteInt32(4, this->gossip_type(), output);
+    ::google::protobuf::internal::WireFormatLite::WriteUInt64(5, this->sit1(), output);
   }
 
-  // optional int32 evil_rate = 5;
+  // optional uint64 sit2 = 6;
   if (cached_has_bits & 0x00000080u) {
-    ::google::protobuf::internal::WireFormatLite::WriteInt32(5, this->evil_rate(), output);
+    ::google::protobuf::internal::WireFormatLite::WriteUInt64(6, this->sit2(), output);
   }
 
-  // optional uint32 max_hop_num = 6;
+  // optional uint64 sit3 = 7;
   if (cached_has_bits & 0x00000100u) {
-    ::google::protobuf::internal::WireFormatLite::WriteUInt32(6, this->max_hop_num(), output);
+    ::google::protobuf::internal::WireFormatLite::WriteUInt64(7, this->sit3(), output);
   }
 
-  // optional uint64 min_dis = 7;
+  // optional uint64 sit4 = 8;
   if (cached_has_bits & 0x00000200u) {
-    ::google::protobuf::internal::WireFormatLite::WriteUInt64(7, this->min_dis(), output);
+    ::google::protobuf::internal::WireFormatLite::WriteUInt64(8, this->sit4(), output);
   }
 
-  // optional uint64 max_dis = 8;
+  // optional uint32 overlap_rate = 9;
   if (cached_has_bits & 0x00000400u) {
-    ::google::protobuf::internal::WireFormatLite::WriteUInt64(8, this->max_dis(), output);
+    ::google::protobuf::internal::WireFormatLite::WriteUInt32(9, this->overlap_rate(), output);
   }
 
-  // optional uint64 left_min = 9;
-  if (cached_has_bits & 0x00000800u) {
-    ::google::protobuf::internal::WireFormatLite::WriteUInt64(9, this->left_min(), output);
-  }
-
-  // optional uint64 right_max = 10;
-  if (cached_has_bits & 0x00001000u) {
-    ::google::protobuf::internal::WireFormatLite::WriteUInt64(10, this->right_max(), output);
-  }
-
-  // optional uint32 left_overlap = 11;
-  if (cached_has_bits & 0x00002000u) {
-    ::google::protobuf::internal::WireFormatLite::WriteUInt32(11, this->left_overlap(), output);
-  }
-
-  // optional uint32 right_overlap = 12;
-  if (cached_has_bits & 0x00004000u) {
-    ::google::protobuf::internal::WireFormatLite::WriteUInt32(12, this->right_overlap(), output);
-  }
-
-  // optional uint32 switch_layer_hop_num = 13;
-  if (cached_has_bits & 0x00008000u) {
-    ::google::protobuf::internal::WireFormatLite::WriteUInt32(13, this->switch_layer_hop_num(), output);
-  }
-
-  // optional bytes header_hash = 14;
+  // optional bytes header_hash = 10;
   if (cached_has_bits & 0x00000001u) {
     ::google::protobuf::internal::WireFormatLite::WriteBytesMaybeAliased(
-      14, this->header_hash(), output);
+      10, this->header_hash(), output);
   }
 
-  // optional bytes block = 15;
+  // optional bytes block = 11;
   if (cached_has_bits & 0x00000002u) {
     ::google::protobuf::internal::WireFormatLite::WriteBytesMaybeAliased(
-      15, this->block(), output);
+      11, this->block(), output);
   }
 
-  // optional uint32 ign_bloomfilter_level = 16;
-  if (cached_has_bits & 0x00010000u) {
-    ::google::protobuf::internal::WireFormatLite::WriteUInt32(16, this->ign_bloomfilter_level(), output);
-  }
-
-  // optional bool diff_net = 17;
-  if (cached_has_bits & 0x00020000u) {
-    ::google::protobuf::internal::WireFormatLite::WriteBool(17, this->diff_net(), output);
-  }
-
-  // repeated uint32 pass_node = 18;
-  for (int i = 0, n = this->pass_node_size(); i < n; i++) {
-    ::google::protobuf::internal::WireFormatLite::WriteUInt32(
-      18, this->pass_node(i), output);
-  }
-
-  // optional uint32 msg_hash = 19;
-  if (cached_has_bits & 0x00040000u) {
-    ::google::protobuf::internal::WireFormatLite::WriteUInt32(19, this->msg_hash(), output);
-  }
-
-  // optional bytes pre_ip = 20;
-  if (cached_has_bits & 0x00000004u) {
-    ::google::protobuf::internal::WireFormatLite::WriteBytesMaybeAliased(
-      20, this->pre_ip(), output);
-  }
-
-  // optional int32 pre_port = 21;
-  if (cached_has_bits & 0x00080000u) {
-    ::google::protobuf::internal::WireFormatLite::WriteInt32(21, this->pre_port(), output);
+  // optional bool diff_net = 12;
+  if (cached_has_bits & 0x00000800u) {
+    ::google::protobuf::internal::WireFormatLite::WriteBool(12, this->diff_net(), output);
   }
 
   if (_internal_metadata_.have_unknown_fields()) {
@@ -2004,114 +1004,68 @@ void GossipParams::SerializeWithCachedSizes(
   (void) cached_has_bits;
 
   cached_has_bits = _has_bits_[0];
-  // optional int32 reliable_level = 1;
+  // optional uint32 neighber_count = 1;
+  if (cached_has_bits & 0x00000004u) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteUInt32ToArray(1, this->neighber_count(), target);
+  }
+
+  // optional uint32 stop_times = 2;
   if (cached_has_bits & 0x00000008u) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(1, this->reliable_level(), target);
+    target = ::google::protobuf::internal::WireFormatLite::WriteUInt32ToArray(2, this->stop_times(), target);
   }
 
-  // optional uint32 neighber_count = 2;
+  // optional int32 gossip_type = 3;
   if (cached_has_bits & 0x00000010u) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteUInt32ToArray(2, this->neighber_count(), target);
+    target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(3, this->gossip_type(), target);
   }
 
-  // optional uint32 stop_times = 3;
+  // optional uint32 max_hop_num = 4;
   if (cached_has_bits & 0x00000020u) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteUInt32ToArray(3, this->stop_times(), target);
+    target = ::google::protobuf::internal::WireFormatLite::WriteUInt32ToArray(4, this->max_hop_num(), target);
   }
 
-  // optional int32 gossip_type = 4;
+  // optional uint64 sit1 = 5;
   if (cached_has_bits & 0x00000040u) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(4, this->gossip_type(), target);
+    target = ::google::protobuf::internal::WireFormatLite::WriteUInt64ToArray(5, this->sit1(), target);
   }
 
-  // optional int32 evil_rate = 5;
+  // optional uint64 sit2 = 6;
   if (cached_has_bits & 0x00000080u) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(5, this->evil_rate(), target);
+    target = ::google::protobuf::internal::WireFormatLite::WriteUInt64ToArray(6, this->sit2(), target);
   }
 
-  // optional uint32 max_hop_num = 6;
+  // optional uint64 sit3 = 7;
   if (cached_has_bits & 0x00000100u) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteUInt32ToArray(6, this->max_hop_num(), target);
+    target = ::google::protobuf::internal::WireFormatLite::WriteUInt64ToArray(7, this->sit3(), target);
   }
 
-  // optional uint64 min_dis = 7;
+  // optional uint64 sit4 = 8;
   if (cached_has_bits & 0x00000200u) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteUInt64ToArray(7, this->min_dis(), target);
+    target = ::google::protobuf::internal::WireFormatLite::WriteUInt64ToArray(8, this->sit4(), target);
   }
 
-  // optional uint64 max_dis = 8;
+  // optional uint32 overlap_rate = 9;
   if (cached_has_bits & 0x00000400u) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteUInt64ToArray(8, this->max_dis(), target);
+    target = ::google::protobuf::internal::WireFormatLite::WriteUInt32ToArray(9, this->overlap_rate(), target);
   }
 
-  // optional uint64 left_min = 9;
-  if (cached_has_bits & 0x00000800u) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteUInt64ToArray(9, this->left_min(), target);
-  }
-
-  // optional uint64 right_max = 10;
-  if (cached_has_bits & 0x00001000u) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteUInt64ToArray(10, this->right_max(), target);
-  }
-
-  // optional uint32 left_overlap = 11;
-  if (cached_has_bits & 0x00002000u) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteUInt32ToArray(11, this->left_overlap(), target);
-  }
-
-  // optional uint32 right_overlap = 12;
-  if (cached_has_bits & 0x00004000u) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteUInt32ToArray(12, this->right_overlap(), target);
-  }
-
-  // optional uint32 switch_layer_hop_num = 13;
-  if (cached_has_bits & 0x00008000u) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteUInt32ToArray(13, this->switch_layer_hop_num(), target);
-  }
-
-  // optional bytes header_hash = 14;
+  // optional bytes header_hash = 10;
   if (cached_has_bits & 0x00000001u) {
     target =
       ::google::protobuf::internal::WireFormatLite::WriteBytesToArray(
-        14, this->header_hash(), target);
+        10, this->header_hash(), target);
   }
 
-  // optional bytes block = 15;
+  // optional bytes block = 11;
   if (cached_has_bits & 0x00000002u) {
     target =
       ::google::protobuf::internal::WireFormatLite::WriteBytesToArray(
-        15, this->block(), target);
+        11, this->block(), target);
   }
 
-  // optional uint32 ign_bloomfilter_level = 16;
-  if (cached_has_bits & 0x00010000u) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteUInt32ToArray(16, this->ign_bloomfilter_level(), target);
-  }
-
-  // optional bool diff_net = 17;
-  if (cached_has_bits & 0x00020000u) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteBoolToArray(17, this->diff_net(), target);
-  }
-
-  // repeated uint32 pass_node = 18;
-  target = ::google::protobuf::internal::WireFormatLite::
-    WriteUInt32ToArray(18, this->pass_node_, target);
-
-  // optional uint32 msg_hash = 19;
-  if (cached_has_bits & 0x00040000u) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteUInt32ToArray(19, this->msg_hash(), target);
-  }
-
-  // optional bytes pre_ip = 20;
-  if (cached_has_bits & 0x00000004u) {
-    target =
-      ::google::protobuf::internal::WireFormatLite::WriteBytesToArray(
-        20, this->pre_ip(), target);
-  }
-
-  // optional int32 pre_port = 21;
-  if (cached_has_bits & 0x00080000u) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(21, this->pre_port(), target);
+  // optional bool diff_net = 12;
+  if (cached_has_bits & 0x00000800u) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteBoolToArray(12, this->diff_net(), target);
   }
 
   if (_internal_metadata_.have_unknown_fields()) {
@@ -2131,156 +1085,89 @@ size_t GossipParams::ByteSizeLong() const {
       ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
         _internal_metadata_.unknown_fields());
   }
-  // repeated uint32 pass_node = 18;
-  {
-    size_t data_size = ::google::protobuf::internal::WireFormatLite::
-      UInt32Size(this->pass_node_);
-    total_size += 2 *
-                  ::google::protobuf::internal::FromIntSize(this->pass_node_size());
-    total_size += data_size;
-  }
-
   if (_has_bits_[0 / 32] & 255u) {
-    // optional bytes header_hash = 14;
+    // optional bytes header_hash = 10;
     if (has_header_hash()) {
       total_size += 1 +
         ::google::protobuf::internal::WireFormatLite::BytesSize(
           this->header_hash());
     }
 
-    // optional bytes block = 15;
+    // optional bytes block = 11;
     if (has_block()) {
       total_size += 1 +
         ::google::protobuf::internal::WireFormatLite::BytesSize(
           this->block());
     }
 
-    // optional bytes pre_ip = 20;
-    if (has_pre_ip()) {
-      total_size += 2 +
-        ::google::protobuf::internal::WireFormatLite::BytesSize(
-          this->pre_ip());
-    }
-
-    // optional int32 reliable_level = 1;
-    if (has_reliable_level()) {
-      total_size += 1 +
-        ::google::protobuf::internal::WireFormatLite::Int32Size(
-          this->reliable_level());
-    }
-
-    // optional uint32 neighber_count = 2;
+    // optional uint32 neighber_count = 1;
     if (has_neighber_count()) {
       total_size += 1 +
         ::google::protobuf::internal::WireFormatLite::UInt32Size(
           this->neighber_count());
     }
 
-    // optional uint32 stop_times = 3;
+    // optional uint32 stop_times = 2;
     if (has_stop_times()) {
       total_size += 1 +
         ::google::protobuf::internal::WireFormatLite::UInt32Size(
           this->stop_times());
     }
 
-    // optional int32 gossip_type = 4;
+    // optional int32 gossip_type = 3;
     if (has_gossip_type()) {
       total_size += 1 +
         ::google::protobuf::internal::WireFormatLite::Int32Size(
           this->gossip_type());
     }
 
-    // optional int32 evil_rate = 5;
-    if (has_evil_rate()) {
-      total_size += 1 +
-        ::google::protobuf::internal::WireFormatLite::Int32Size(
-          this->evil_rate());
-    }
-
-  }
-  if (_has_bits_[8 / 32] & 65280u) {
-    // optional uint32 max_hop_num = 6;
+    // optional uint32 max_hop_num = 4;
     if (has_max_hop_num()) {
       total_size += 1 +
         ::google::protobuf::internal::WireFormatLite::UInt32Size(
           this->max_hop_num());
     }
 
-    // optional uint64 min_dis = 7;
-    if (has_min_dis()) {
+    // optional uint64 sit1 = 5;
+    if (has_sit1()) {
       total_size += 1 +
         ::google::protobuf::internal::WireFormatLite::UInt64Size(
-          this->min_dis());
+          this->sit1());
     }
 
-    // optional uint64 max_dis = 8;
-    if (has_max_dis()) {
+    // optional uint64 sit2 = 6;
+    if (has_sit2()) {
       total_size += 1 +
         ::google::protobuf::internal::WireFormatLite::UInt64Size(
-          this->max_dis());
-    }
-
-    // optional uint64 left_min = 9;
-    if (has_left_min()) {
-      total_size += 1 +
-        ::google::protobuf::internal::WireFormatLite::UInt64Size(
-          this->left_min());
-    }
-
-    // optional uint64 right_max = 10;
-    if (has_right_max()) {
-      total_size += 1 +
-        ::google::protobuf::internal::WireFormatLite::UInt64Size(
-          this->right_max());
-    }
-
-    // optional uint32 left_overlap = 11;
-    if (has_left_overlap()) {
-      total_size += 1 +
-        ::google::protobuf::internal::WireFormatLite::UInt32Size(
-          this->left_overlap());
-    }
-
-    // optional uint32 right_overlap = 12;
-    if (has_right_overlap()) {
-      total_size += 1 +
-        ::google::protobuf::internal::WireFormatLite::UInt32Size(
-          this->right_overlap());
-    }
-
-    // optional uint32 switch_layer_hop_num = 13;
-    if (has_switch_layer_hop_num()) {
-      total_size += 1 +
-        ::google::protobuf::internal::WireFormatLite::UInt32Size(
-          this->switch_layer_hop_num());
+          this->sit2());
     }
 
   }
-  if (_has_bits_[16 / 32] & 983040u) {
-    // optional uint32 ign_bloomfilter_level = 16;
-    if (has_ign_bloomfilter_level()) {
-      total_size += 2 +
-        ::google::protobuf::internal::WireFormatLite::UInt32Size(
-          this->ign_bloomfilter_level());
+  if (_has_bits_[8 / 32] & 3840u) {
+    // optional uint64 sit3 = 7;
+    if (has_sit3()) {
+      total_size += 1 +
+        ::google::protobuf::internal::WireFormatLite::UInt64Size(
+          this->sit3());
     }
 
-    // optional bool diff_net = 17;
+    // optional uint64 sit4 = 8;
+    if (has_sit4()) {
+      total_size += 1 +
+        ::google::protobuf::internal::WireFormatLite::UInt64Size(
+          this->sit4());
+    }
+
+    // optional uint32 overlap_rate = 9;
+    if (has_overlap_rate()) {
+      total_size += 1 +
+        ::google::protobuf::internal::WireFormatLite::UInt32Size(
+          this->overlap_rate());
+    }
+
+    // optional bool diff_net = 12;
     if (has_diff_net()) {
-      total_size += 2 + 1;
-    }
-
-    // optional uint32 msg_hash = 19;
-    if (has_msg_hash()) {
-      total_size += 2 +
-        ::google::protobuf::internal::WireFormatLite::UInt32Size(
-          this->msg_hash());
-    }
-
-    // optional int32 pre_port = 21;
-    if (has_pre_port()) {
-      total_size += 2 +
-        ::google::protobuf::internal::WireFormatLite::Int32Size(
-          this->pre_port());
+      total_size += 1 + 1;
     }
 
   }
@@ -2311,7 +1198,6 @@ void GossipParams::MergeFrom(const GossipParams& from) {
   ::google::protobuf::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
-  pass_node_.MergeFrom(from.pass_node_);
   cached_has_bits = from._has_bits_[0];
   if (cached_has_bits & 255u) {
     if (cached_has_bits & 0x00000001u) {
@@ -2323,65 +1209,37 @@ void GossipParams::MergeFrom(const GossipParams& from) {
       block_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.block_);
     }
     if (cached_has_bits & 0x00000004u) {
-      set_has_pre_ip();
-      pre_ip_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.pre_ip_);
-    }
-    if (cached_has_bits & 0x00000008u) {
-      reliable_level_ = from.reliable_level_;
-    }
-    if (cached_has_bits & 0x00000010u) {
       neighber_count_ = from.neighber_count_;
     }
-    if (cached_has_bits & 0x00000020u) {
+    if (cached_has_bits & 0x00000008u) {
       stop_times_ = from.stop_times_;
     }
-    if (cached_has_bits & 0x00000040u) {
+    if (cached_has_bits & 0x00000010u) {
       gossip_type_ = from.gossip_type_;
     }
-    if (cached_has_bits & 0x00000080u) {
-      evil_rate_ = from.evil_rate_;
-    }
-    _has_bits_[0] |= cached_has_bits;
-  }
-  if (cached_has_bits & 65280u) {
-    if (cached_has_bits & 0x00000100u) {
+    if (cached_has_bits & 0x00000020u) {
       max_hop_num_ = from.max_hop_num_;
     }
-    if (cached_has_bits & 0x00000200u) {
-      min_dis_ = from.min_dis_;
+    if (cached_has_bits & 0x00000040u) {
+      sit1_ = from.sit1_;
     }
-    if (cached_has_bits & 0x00000400u) {
-      max_dis_ = from.max_dis_;
-    }
-    if (cached_has_bits & 0x00000800u) {
-      left_min_ = from.left_min_;
-    }
-    if (cached_has_bits & 0x00001000u) {
-      right_max_ = from.right_max_;
-    }
-    if (cached_has_bits & 0x00002000u) {
-      left_overlap_ = from.left_overlap_;
-    }
-    if (cached_has_bits & 0x00004000u) {
-      right_overlap_ = from.right_overlap_;
-    }
-    if (cached_has_bits & 0x00008000u) {
-      switch_layer_hop_num_ = from.switch_layer_hop_num_;
+    if (cached_has_bits & 0x00000080u) {
+      sit2_ = from.sit2_;
     }
     _has_bits_[0] |= cached_has_bits;
   }
-  if (cached_has_bits & 983040u) {
-    if (cached_has_bits & 0x00010000u) {
-      ign_bloomfilter_level_ = from.ign_bloomfilter_level_;
+  if (cached_has_bits & 3840u) {
+    if (cached_has_bits & 0x00000100u) {
+      sit3_ = from.sit3_;
     }
-    if (cached_has_bits & 0x00020000u) {
+    if (cached_has_bits & 0x00000200u) {
+      sit4_ = from.sit4_;
+    }
+    if (cached_has_bits & 0x00000400u) {
+      overlap_rate_ = from.overlap_rate_;
+    }
+    if (cached_has_bits & 0x00000800u) {
       diff_net_ = from.diff_net_;
-    }
-    if (cached_has_bits & 0x00040000u) {
-      msg_hash_ = from.msg_hash_;
-    }
-    if (cached_has_bits & 0x00080000u) {
-      pre_port_ = from.pre_port_;
     }
     _has_bits_[0] |= cached_has_bits;
   }
@@ -2411,30 +1269,20 @@ void GossipParams::Swap(GossipParams* other) {
 }
 void GossipParams::InternalSwap(GossipParams* other) {
   using std::swap;
-  pass_node_.InternalSwap(&other->pass_node_);
   header_hash_.Swap(&other->header_hash_, &::google::protobuf::internal::GetEmptyStringAlreadyInited(),
     GetArenaNoVirtual());
   block_.Swap(&other->block_, &::google::protobuf::internal::GetEmptyStringAlreadyInited(),
     GetArenaNoVirtual());
-  pre_ip_.Swap(&other->pre_ip_, &::google::protobuf::internal::GetEmptyStringAlreadyInited(),
-    GetArenaNoVirtual());
-  swap(reliable_level_, other->reliable_level_);
   swap(neighber_count_, other->neighber_count_);
   swap(stop_times_, other->stop_times_);
   swap(gossip_type_, other->gossip_type_);
-  swap(evil_rate_, other->evil_rate_);
   swap(max_hop_num_, other->max_hop_num_);
-  swap(min_dis_, other->min_dis_);
-  swap(max_dis_, other->max_dis_);
-  swap(left_min_, other->left_min_);
-  swap(right_max_, other->right_max_);
-  swap(left_overlap_, other->left_overlap_);
-  swap(right_overlap_, other->right_overlap_);
-  swap(switch_layer_hop_num_, other->switch_layer_hop_num_);
-  swap(ign_bloomfilter_level_, other->ign_bloomfilter_level_);
+  swap(sit1_, other->sit1_);
+  swap(sit2_, other->sit2_);
+  swap(sit3_, other->sit3_);
+  swap(sit4_, other->sit4_);
+  swap(overlap_rate_, other->overlap_rate_);
   swap(diff_net_, other->diff_net_);
-  swap(msg_hash_, other->msg_hash_);
-  swap(pre_port_, other->pre_port_);
   swap(_has_bits_[0], other->_has_bits_[0]);
   _internal_metadata_.Swap(&other->_internal_metadata_);
 }
@@ -2741,8 +1589,6 @@ void GossipSyncBlockData::InternalSwap(GossipSyncBlockData* other) {
 // ===================================================================
 
 void RoutingMessage::InitAsDefaultInstance() {
-  ::top::transport::protobuf::_RoutingMessage_default_instance_._instance.get_mutable()->version_tag_ = const_cast< ::top::transport::protobuf::VersionTag*>(
-      ::top::transport::protobuf::VersionTag::internal_default_instance());
   ::top::transport::protobuf::_RoutingMessage_default_instance_._instance.get_mutable()->gossip_ = const_cast< ::top::transport::protobuf::GossipParams*>(
       ::top::transport::protobuf::GossipParams::internal_default_instance());
 }
@@ -2755,28 +1601,15 @@ const int RoutingMessage::kIdFieldNumber;
 const int RoutingMessage::kAckIdFieldNumber;
 const int RoutingMessage::kHopNumFieldNumber;
 const int RoutingMessage::kHopNodesFieldNumber;
-const int RoutingMessage::kRetryFieldNumber;
-const int RoutingMessage::kClientMsgFieldNumber;
-const int RoutingMessage::kRelayFlagFieldNumber;
-const int RoutingMessage::kRequestTypeFieldNumber;
-const int RoutingMessage::kClientIdFieldNumber;
-const int RoutingMessage::kDirectModeFieldNumber;
 const int RoutingMessage::kSrcServiceTypeFieldNumber;
 const int RoutingMessage::kDesServiceTypeFieldNumber;
-const int RoutingMessage::kStatusFieldNumber;
-const int RoutingMessage::kVersionTagFieldNumber;
+const int RoutingMessage::kMsgHashFieldNumber;
 const int RoutingMessage::kIsRootFieldNumber;
-const int RoutingMessage::kBloomfilterFieldNumber;
-const int RoutingMessage::kRelayHopInfoFieldNumber;
-const int RoutingMessage::kMultiRelayFieldNumber;
-const int RoutingMessage::kSeqFieldNumber;
-const int RoutingMessage::kXrequestIdFieldNumber;
-const int RoutingMessage::kTraceRouteFieldNumber;
-const int RoutingMessage::kXidFieldNumber;
 const int RoutingMessage::kBroadcastFieldNumber;
+const int RoutingMessage::kBloomfilterFieldNumber;
+const int RoutingMessage::kXidFieldNumber;
 const int RoutingMessage::kPriorityFieldNumber;
 const int RoutingMessage::kGossipFieldNumber;
-const int RoutingMessage::kEnableAckFieldNumber;
 const int RoutingMessage::kDebugFieldNumber;
 #endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
 
@@ -2792,9 +1625,7 @@ RoutingMessage::RoutingMessage(const RoutingMessage& from)
       _internal_metadata_(NULL),
       _has_bits_(from._has_bits_),
       hop_nodes_(from.hop_nodes_),
-      bloomfilter_(from.bloomfilter_),
-      relay_hop_info_(from.relay_hop_info_),
-      trace_route_(from.trace_route_) {
+      bloomfilter_(from.bloomfilter_) {
   _internal_metadata_.MergeFrom(from._internal_metadata_);
   src_node_id_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   if (from.has_src_node_id()) {
@@ -2808,14 +1639,6 @@ RoutingMessage::RoutingMessage(const RoutingMessage& from)
   if (from.has_data()) {
     data_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.data_);
   }
-  client_id_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  if (from.has_client_id()) {
-    client_id_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.client_id_);
-  }
-  xrequest_id_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  if (from.has_xrequest_id()) {
-    xrequest_id_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.xrequest_id_);
-  }
   xid_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   if (from.has_xid()) {
     xid_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.xid_);
@@ -2823,11 +1646,6 @@ RoutingMessage::RoutingMessage(const RoutingMessage& from)
   debug_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   if (from.has_debug()) {
     debug_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.debug_);
-  }
-  if (from.has_version_tag()) {
-    version_tag_ = new ::top::transport::protobuf::VersionTag(*from.version_tag_);
-  } else {
-    version_tag_ = NULL;
   }
   if (from.has_gossip()) {
     gossip_ = new ::top::transport::protobuf::GossipParams(*from.gossip_);
@@ -2844,13 +1662,11 @@ void RoutingMessage::SharedCtor() {
   src_node_id_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   des_node_id_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   data_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  client_id_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  xrequest_id_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   xid_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   debug_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  ::memset(&version_tag_, 0, static_cast<size_t>(
+  ::memset(&gossip_, 0, static_cast<size_t>(
       reinterpret_cast<char*>(&priority_) -
-      reinterpret_cast<char*>(&version_tag_)) + sizeof(priority_));
+      reinterpret_cast<char*>(&gossip_)) + sizeof(priority_));
 }
 
 RoutingMessage::~RoutingMessage() {
@@ -2862,11 +1678,8 @@ void RoutingMessage::SharedDtor() {
   src_node_id_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   des_node_id_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   data_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  client_id_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  xrequest_id_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   xid_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   debug_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  if (this != internal_default_instance()) delete version_tag_;
   if (this != internal_default_instance()) delete gossip_;
 }
 
@@ -2892,10 +1705,8 @@ void RoutingMessage::Clear() {
 
   hop_nodes_.Clear();
   bloomfilter_.Clear();
-  relay_hop_info_.Clear();
-  trace_route_.Clear();
   cached_has_bits = _has_bits_[0];
-  if (cached_has_bits & 255u) {
+  if (cached_has_bits & 63u) {
     if (cached_has_bits & 0x00000001u) {
       src_node_id_.ClearNonDefaultToEmptyNoArena();
     }
@@ -2906,40 +1717,25 @@ void RoutingMessage::Clear() {
       data_.ClearNonDefaultToEmptyNoArena();
     }
     if (cached_has_bits & 0x00000008u) {
-      client_id_.ClearNonDefaultToEmptyNoArena();
-    }
-    if (cached_has_bits & 0x00000010u) {
-      xrequest_id_.ClearNonDefaultToEmptyNoArena();
-    }
-    if (cached_has_bits & 0x00000020u) {
       xid_.ClearNonDefaultToEmptyNoArena();
     }
-    if (cached_has_bits & 0x00000040u) {
+    if (cached_has_bits & 0x00000010u) {
       debug_.ClearNonDefaultToEmptyNoArena();
     }
-    if (cached_has_bits & 0x00000080u) {
-      GOOGLE_DCHECK(version_tag_ != NULL);
-      version_tag_->Clear();
+    if (cached_has_bits & 0x00000020u) {
+      GOOGLE_DCHECK(gossip_ != NULL);
+      gossip_->Clear();
     }
   }
-  if (cached_has_bits & 0x00000100u) {
-    GOOGLE_DCHECK(gossip_ != NULL);
-    gossip_->Clear();
-  }
-  if (cached_has_bits & 65024u) {
+  if (cached_has_bits & 192u) {
     ::memset(&type_, 0, static_cast<size_t>(
-        reinterpret_cast<char*>(&relay_flag_) -
-        reinterpret_cast<char*>(&type_)) + sizeof(relay_flag_));
+        reinterpret_cast<char*>(&id_) -
+        reinterpret_cast<char*>(&type_)) + sizeof(id_));
   }
-  if (cached_has_bits & 16711680u) {
-    ::memset(&request_type_, 0, static_cast<size_t>(
-        reinterpret_cast<char*>(&multi_relay_) -
-        reinterpret_cast<char*>(&request_type_)) + sizeof(multi_relay_));
-  }
-  if (cached_has_bits & 117440512u) {
-    ::memset(&broadcast_, 0, static_cast<size_t>(
+  if (cached_has_bits & 65280u) {
+    ::memset(&ack_id_, 0, static_cast<size_t>(
         reinterpret_cast<char*>(&priority_) -
-        reinterpret_cast<char*>(&broadcast_)) + sizeof(priority_));
+        reinterpret_cast<char*>(&ack_id_)) + sizeof(priority_));
   }
   _has_bits_.Clear();
   _internal_metadata_.Clear();
@@ -3059,92 +1855,10 @@ bool RoutingMessage::MergePartialFromCodedStream(
         break;
       }
 
-      // optional int32 retry = 9;
+      // optional uint64 src_service_type = 9;
       case 9: {
         if (static_cast< ::google::protobuf::uint8>(tag) ==
             static_cast< ::google::protobuf::uint8>(72u /* 72 & 0xFF */)) {
-          set_has_retry();
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   ::google::protobuf::int32, ::google::protobuf::internal::WireFormatLite::TYPE_INT32>(
-                 input, &retry_)));
-        } else {
-          goto handle_unusual;
-        }
-        break;
-      }
-
-      // optional bool client_msg = 10;
-      case 10: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(80u /* 80 & 0xFF */)) {
-          set_has_client_msg();
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   bool, ::google::protobuf::internal::WireFormatLite::TYPE_BOOL>(
-                 input, &client_msg_)));
-        } else {
-          goto handle_unusual;
-        }
-        break;
-      }
-
-      // optional bool relay_flag = 11;
-      case 11: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(88u /* 88 & 0xFF */)) {
-          set_has_relay_flag();
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   bool, ::google::protobuf::internal::WireFormatLite::TYPE_BOOL>(
-                 input, &relay_flag_)));
-        } else {
-          goto handle_unusual;
-        }
-        break;
-      }
-
-      // optional bool request_type = 12;
-      case 12: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(96u /* 96 & 0xFF */)) {
-          set_has_request_type();
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   bool, ::google::protobuf::internal::WireFormatLite::TYPE_BOOL>(
-                 input, &request_type_)));
-        } else {
-          goto handle_unusual;
-        }
-        break;
-      }
-
-      // optional bytes client_id = 13;
-      case 13: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(106u /* 106 & 0xFF */)) {
-          DO_(::google::protobuf::internal::WireFormatLite::ReadBytes(
-                input, this->mutable_client_id()));
-        } else {
-          goto handle_unusual;
-        }
-        break;
-      }
-
-      // optional bool direct_mode = 14;
-      case 14: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(112u /* 112 & 0xFF */)) {
-          set_has_direct_mode();
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   bool, ::google::protobuf::internal::WireFormatLite::TYPE_BOOL>(
-                 input, &direct_mode_)));
-        } else {
-          goto handle_unusual;
-        }
-        break;
-      }
-
-      // optional uint64 src_service_type = 15;
-      case 15: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(120u /* 120 & 0xFF */)) {
           set_has_src_service_type();
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    ::google::protobuf::uint64, ::google::protobuf::internal::WireFormatLite::TYPE_UINT64>(
@@ -3155,10 +1869,10 @@ bool RoutingMessage::MergePartialFromCodedStream(
         break;
       }
 
-      // optional uint64 des_service_type = 16;
-      case 16: {
+      // optional uint64 des_service_type = 10;
+      case 10: {
         if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(128u /* 128 & 0xFF */)) {
+            static_cast< ::google::protobuf::uint8>(80u /* 80 & 0xFF */)) {
           set_has_des_service_type();
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    ::google::protobuf::uint64, ::google::protobuf::internal::WireFormatLite::TYPE_UINT64>(
@@ -3169,36 +1883,24 @@ bool RoutingMessage::MergePartialFromCodedStream(
         break;
       }
 
-      // optional uint32 status = 17;
-      case 17: {
+      // optional uint32 msg_hash = 11;
+      case 11: {
         if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(136u /* 136 & 0xFF */)) {
-          set_has_status();
+            static_cast< ::google::protobuf::uint8>(88u /* 88 & 0xFF */)) {
+          set_has_msg_hash();
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    ::google::protobuf::uint32, ::google::protobuf::internal::WireFormatLite::TYPE_UINT32>(
-                 input, &status_)));
+                 input, &msg_hash_)));
         } else {
           goto handle_unusual;
         }
         break;
       }
 
-      // optional .top.transport.protobuf.VersionTag version_tag = 18;
-      case 18: {
+      // optional bool is_root = 12;
+      case 12: {
         if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(146u /* 146 & 0xFF */)) {
-          DO_(::google::protobuf::internal::WireFormatLite::ReadMessage(
-               input, mutable_version_tag()));
-        } else {
-          goto handle_unusual;
-        }
-        break;
-      }
-
-      // optional bool is_root = 19;
-      case 19: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(152u /* 152 & 0xFF */)) {
+            static_cast< ::google::protobuf::uint8>(96u /* 96 & 0xFF */)) {
           set_has_is_root();
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    bool, ::google::protobuf::internal::WireFormatLite::TYPE_BOOL>(
@@ -3209,105 +1911,10 @@ bool RoutingMessage::MergePartialFromCodedStream(
         break;
       }
 
-      // repeated uint64 bloomfilter = 20;
-      case 20: {
+      // optional bool broadcast = 13;
+      case 13: {
         if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(160u /* 160 & 0xFF */)) {
-          DO_((::google::protobuf::internal::WireFormatLite::ReadRepeatedPrimitive<
-                   ::google::protobuf::uint64, ::google::protobuf::internal::WireFormatLite::TYPE_UINT64>(
-                 2, 160u, input, this->mutable_bloomfilter())));
-        } else if (
-            static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(162u /* 162 & 0xFF */)) {
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPackedPrimitiveNoInline<
-                   ::google::protobuf::uint64, ::google::protobuf::internal::WireFormatLite::TYPE_UINT64>(
-                 input, this->mutable_bloomfilter())));
-        } else {
-          goto handle_unusual;
-        }
-        break;
-      }
-
-      // repeated .top.transport.protobuf.RelayHopInfo relay_hop_info = 21;
-      case 21: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(170u /* 170 & 0xFF */)) {
-          DO_(::google::protobuf::internal::WireFormatLite::ReadMessage(
-                input, add_relay_hop_info()));
-        } else {
-          goto handle_unusual;
-        }
-        break;
-      }
-
-      // optional bool multi_relay = 22;
-      case 22: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(176u /* 176 & 0xFF */)) {
-          set_has_multi_relay();
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   bool, ::google::protobuf::internal::WireFormatLite::TYPE_BOOL>(
-                 input, &multi_relay_)));
-        } else {
-          goto handle_unusual;
-        }
-        break;
-      }
-
-      // optional uint32 seq = 23;
-      case 23: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(184u /* 184 & 0xFF */)) {
-          set_has_seq();
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   ::google::protobuf::uint32, ::google::protobuf::internal::WireFormatLite::TYPE_UINT32>(
-                 input, &seq_)));
-        } else {
-          goto handle_unusual;
-        }
-        break;
-      }
-
-      // optional bytes xrequest_id = 24;
-      case 24: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(194u /* 194 & 0xFF */)) {
-          DO_(::google::protobuf::internal::WireFormatLite::ReadBytes(
-                input, this->mutable_xrequest_id()));
-        } else {
-          goto handle_unusual;
-        }
-        break;
-      }
-
-      // repeated bytes trace_route = 25;
-      case 25: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(202u /* 202 & 0xFF */)) {
-          DO_(::google::protobuf::internal::WireFormatLite::ReadBytes(
-                input, this->add_trace_route()));
-        } else {
-          goto handle_unusual;
-        }
-        break;
-      }
-
-      // optional bytes xid = 26;
-      case 26: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(210u /* 210 & 0xFF */)) {
-          DO_(::google::protobuf::internal::WireFormatLite::ReadBytes(
-                input, this->mutable_xid()));
-        } else {
-          goto handle_unusual;
-        }
-        break;
-      }
-
-      // optional bool broadcast = 27;
-      case 27: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(216u /* 216 & 0xFF */)) {
+            static_cast< ::google::protobuf::uint8>(104u /* 104 & 0xFF */)) {
           set_has_broadcast();
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    bool, ::google::protobuf::internal::WireFormatLite::TYPE_BOOL>(
@@ -3318,10 +1925,41 @@ bool RoutingMessage::MergePartialFromCodedStream(
         break;
       }
 
-      // optional uint32 priority = 28;
-      case 28: {
+      // repeated uint64 bloomfilter = 14;
+      case 14: {
         if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(224u /* 224 & 0xFF */)) {
+            static_cast< ::google::protobuf::uint8>(112u /* 112 & 0xFF */)) {
+          DO_((::google::protobuf::internal::WireFormatLite::ReadRepeatedPrimitive<
+                   ::google::protobuf::uint64, ::google::protobuf::internal::WireFormatLite::TYPE_UINT64>(
+                 1, 112u, input, this->mutable_bloomfilter())));
+        } else if (
+            static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(114u /* 114 & 0xFF */)) {
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPackedPrimitiveNoInline<
+                   ::google::protobuf::uint64, ::google::protobuf::internal::WireFormatLite::TYPE_UINT64>(
+                 input, this->mutable_bloomfilter())));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      // optional bytes xid = 15;
+      case 15: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(122u /* 122 & 0xFF */)) {
+          DO_(::google::protobuf::internal::WireFormatLite::ReadBytes(
+                input, this->mutable_xid()));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      // optional uint32 priority = 16;
+      case 16: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(128u /* 128 & 0xFF */)) {
           set_has_priority();
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    ::google::protobuf::uint32, ::google::protobuf::internal::WireFormatLite::TYPE_UINT32>(
@@ -3332,10 +1970,10 @@ bool RoutingMessage::MergePartialFromCodedStream(
         break;
       }
 
-      // optional .top.transport.protobuf.GossipParams gossip = 29;
-      case 29: {
+      // optional .top.transport.protobuf.GossipParams gossip = 17;
+      case 17: {
         if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(234u /* 234 & 0xFF */)) {
+            static_cast< ::google::protobuf::uint8>(138u /* 138 & 0xFF */)) {
           DO_(::google::protobuf::internal::WireFormatLite::ReadMessage(
                input, mutable_gossip()));
         } else {
@@ -3344,24 +1982,10 @@ bool RoutingMessage::MergePartialFromCodedStream(
         break;
       }
 
-      // optional bool enable_ack = 30;
-      case 30: {
+      // optional string debug = 18;
+      case 18: {
         if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(240u /* 240 & 0xFF */)) {
-          set_has_enable_ack();
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   bool, ::google::protobuf::internal::WireFormatLite::TYPE_BOOL>(
-                 input, &enable_ack_)));
-        } else {
-          goto handle_unusual;
-        }
-        break;
-      }
-
-      // optional string debug = 31;
-      case 31: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(250u /* 250 & 0xFF */)) {
+            static_cast< ::google::protobuf::uint8>(146u /* 146 & 0xFF */)) {
           DO_(::google::protobuf::internal::WireFormatLite::ReadString(
                 input, this->mutable_debug()));
           ::google::protobuf::internal::WireFormat::VerifyUTF8StringNamedField(
@@ -3414,7 +2038,7 @@ void RoutingMessage::SerializeWithCachedSizes(
   }
 
   // optional int32 type = 3;
-  if (cached_has_bits & 0x00000200u) {
+  if (cached_has_bits & 0x00000040u) {
     ::google::protobuf::internal::WireFormatLite::WriteInt32(3, this->type(), output);
   }
 
@@ -3425,17 +2049,17 @@ void RoutingMessage::SerializeWithCachedSizes(
   }
 
   // optional uint32 id = 5;
-  if (cached_has_bits & 0x00000400u) {
+  if (cached_has_bits & 0x00000080u) {
     ::google::protobuf::internal::WireFormatLite::WriteUInt32(5, this->id(), output);
   }
 
   // optional uint32 ack_id = 6;
-  if (cached_has_bits & 0x00000800u) {
+  if (cached_has_bits & 0x00000100u) {
     ::google::protobuf::internal::WireFormatLite::WriteUInt32(6, this->ack_id(), output);
   }
 
   // optional uint32 hop_num = 7;
-  if (cached_has_bits & 0x00001000u) {
+  if (cached_has_bits & 0x00000200u) {
     ::google::protobuf::internal::WireFormatLite::WriteUInt32(7, this->hop_num(), output);
   }
 
@@ -3448,135 +2072,62 @@ void RoutingMessage::SerializeWithCachedSizes(
       output);
   }
 
-  // optional int32 retry = 9;
+  // optional uint64 src_service_type = 9;
+  if (cached_has_bits & 0x00000400u) {
+    ::google::protobuf::internal::WireFormatLite::WriteUInt64(9, this->src_service_type(), output);
+  }
+
+  // optional uint64 des_service_type = 10;
+  if (cached_has_bits & 0x00000800u) {
+    ::google::protobuf::internal::WireFormatLite::WriteUInt64(10, this->des_service_type(), output);
+  }
+
+  // optional uint32 msg_hash = 11;
+  if (cached_has_bits & 0x00001000u) {
+    ::google::protobuf::internal::WireFormatLite::WriteUInt32(11, this->msg_hash(), output);
+  }
+
+  // optional bool is_root = 12;
   if (cached_has_bits & 0x00002000u) {
-    ::google::protobuf::internal::WireFormatLite::WriteInt32(9, this->retry(), output);
+    ::google::protobuf::internal::WireFormatLite::WriteBool(12, this->is_root(), output);
   }
 
-  // optional bool client_msg = 10;
+  // optional bool broadcast = 13;
   if (cached_has_bits & 0x00004000u) {
-    ::google::protobuf::internal::WireFormatLite::WriteBool(10, this->client_msg(), output);
+    ::google::protobuf::internal::WireFormatLite::WriteBool(13, this->broadcast(), output);
   }
 
-  // optional bool relay_flag = 11;
-  if (cached_has_bits & 0x00008000u) {
-    ::google::protobuf::internal::WireFormatLite::WriteBool(11, this->relay_flag(), output);
-  }
-
-  // optional bool request_type = 12;
-  if (cached_has_bits & 0x00010000u) {
-    ::google::protobuf::internal::WireFormatLite::WriteBool(12, this->request_type(), output);
-  }
-
-  // optional bytes client_id = 13;
-  if (cached_has_bits & 0x00000008u) {
-    ::google::protobuf::internal::WireFormatLite::WriteBytesMaybeAliased(
-      13, this->client_id(), output);
-  }
-
-  // optional bool direct_mode = 14;
-  if (cached_has_bits & 0x00020000u) {
-    ::google::protobuf::internal::WireFormatLite::WriteBool(14, this->direct_mode(), output);
-  }
-
-  // optional uint64 src_service_type = 15;
-  if (cached_has_bits & 0x00040000u) {
-    ::google::protobuf::internal::WireFormatLite::WriteUInt64(15, this->src_service_type(), output);
-  }
-
-  // optional uint64 des_service_type = 16;
-  if (cached_has_bits & 0x00080000u) {
-    ::google::protobuf::internal::WireFormatLite::WriteUInt64(16, this->des_service_type(), output);
-  }
-
-  // optional uint32 status = 17;
-  if (cached_has_bits & 0x00100000u) {
-    ::google::protobuf::internal::WireFormatLite::WriteUInt32(17, this->status(), output);
-  }
-
-  // optional .top.transport.protobuf.VersionTag version_tag = 18;
-  if (cached_has_bits & 0x00000080u) {
-    ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
-      18, this->_internal_version_tag(), output);
-  }
-
-  // optional bool is_root = 19;
-  if (cached_has_bits & 0x00400000u) {
-    ::google::protobuf::internal::WireFormatLite::WriteBool(19, this->is_root(), output);
-  }
-
-  // repeated uint64 bloomfilter = 20;
+  // repeated uint64 bloomfilter = 14;
   for (int i = 0, n = this->bloomfilter_size(); i < n; i++) {
     ::google::protobuf::internal::WireFormatLite::WriteUInt64(
-      20, this->bloomfilter(i), output);
+      14, this->bloomfilter(i), output);
   }
 
-  // repeated .top.transport.protobuf.RelayHopInfo relay_hop_info = 21;
-  for (unsigned int i = 0,
-      n = static_cast<unsigned int>(this->relay_hop_info_size()); i < n; i++) {
-    ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
-      21,
-      this->relay_hop_info(static_cast<int>(i)),
-      output);
-  }
-
-  // optional bool multi_relay = 22;
-  if (cached_has_bits & 0x00800000u) {
-    ::google::protobuf::internal::WireFormatLite::WriteBool(22, this->multi_relay(), output);
-  }
-
-  // optional uint32 seq = 23;
-  if (cached_has_bits & 0x00200000u) {
-    ::google::protobuf::internal::WireFormatLite::WriteUInt32(23, this->seq(), output);
-  }
-
-  // optional bytes xrequest_id = 24;
-  if (cached_has_bits & 0x00000010u) {
+  // optional bytes xid = 15;
+  if (cached_has_bits & 0x00000008u) {
     ::google::protobuf::internal::WireFormatLite::WriteBytesMaybeAliased(
-      24, this->xrequest_id(), output);
+      15, this->xid(), output);
   }
 
-  // repeated bytes trace_route = 25;
-  for (int i = 0, n = this->trace_route_size(); i < n; i++) {
-    ::google::protobuf::internal::WireFormatLite::WriteBytes(
-      25, this->trace_route(i), output);
+  // optional uint32 priority = 16;
+  if (cached_has_bits & 0x00008000u) {
+    ::google::protobuf::internal::WireFormatLite::WriteUInt32(16, this->priority(), output);
   }
 
-  // optional bytes xid = 26;
+  // optional .top.transport.protobuf.GossipParams gossip = 17;
   if (cached_has_bits & 0x00000020u) {
-    ::google::protobuf::internal::WireFormatLite::WriteBytesMaybeAliased(
-      26, this->xid(), output);
-  }
-
-  // optional bool broadcast = 27;
-  if (cached_has_bits & 0x01000000u) {
-    ::google::protobuf::internal::WireFormatLite::WriteBool(27, this->broadcast(), output);
-  }
-
-  // optional uint32 priority = 28;
-  if (cached_has_bits & 0x04000000u) {
-    ::google::protobuf::internal::WireFormatLite::WriteUInt32(28, this->priority(), output);
-  }
-
-  // optional .top.transport.protobuf.GossipParams gossip = 29;
-  if (cached_has_bits & 0x00000100u) {
     ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
-      29, this->_internal_gossip(), output);
+      17, this->_internal_gossip(), output);
   }
 
-  // optional bool enable_ack = 30;
-  if (cached_has_bits & 0x02000000u) {
-    ::google::protobuf::internal::WireFormatLite::WriteBool(30, this->enable_ack(), output);
-  }
-
-  // optional string debug = 31;
-  if (cached_has_bits & 0x00000040u) {
+  // optional string debug = 18;
+  if (cached_has_bits & 0x00000010u) {
     ::google::protobuf::internal::WireFormat::VerifyUTF8StringNamedField(
       this->debug().data(), static_cast<int>(this->debug().length()),
       ::google::protobuf::internal::WireFormat::SERIALIZE,
       "top.transport.protobuf.RoutingMessage.debug");
     ::google::protobuf::internal::WireFormatLite::WriteStringMaybeAliased(
-      31, this->debug(), output);
+      18, this->debug(), output);
   }
 
   if (_internal_metadata_.have_unknown_fields()) {
@@ -3609,7 +2160,7 @@ void RoutingMessage::SerializeWithCachedSizes(
   }
 
   // optional int32 type = 3;
-  if (cached_has_bits & 0x00000200u) {
+  if (cached_has_bits & 0x00000040u) {
     target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(3, this->type(), target);
   }
 
@@ -3621,17 +2172,17 @@ void RoutingMessage::SerializeWithCachedSizes(
   }
 
   // optional uint32 id = 5;
-  if (cached_has_bits & 0x00000400u) {
+  if (cached_has_bits & 0x00000080u) {
     target = ::google::protobuf::internal::WireFormatLite::WriteUInt32ToArray(5, this->id(), target);
   }
 
   // optional uint32 ack_id = 6;
-  if (cached_has_bits & 0x00000800u) {
+  if (cached_has_bits & 0x00000100u) {
     target = ::google::protobuf::internal::WireFormatLite::WriteUInt32ToArray(6, this->ack_id(), target);
   }
 
   // optional uint32 hop_num = 7;
-  if (cached_has_bits & 0x00001000u) {
+  if (cached_has_bits & 0x00000200u) {
     target = ::google::protobuf::internal::WireFormatLite::WriteUInt32ToArray(7, this->hop_num(), target);
   }
 
@@ -3643,138 +2194,63 @@ void RoutingMessage::SerializeWithCachedSizes(
         8, this->hop_nodes(static_cast<int>(i)), deterministic, target);
   }
 
-  // optional int32 retry = 9;
+  // optional uint64 src_service_type = 9;
+  if (cached_has_bits & 0x00000400u) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteUInt64ToArray(9, this->src_service_type(), target);
+  }
+
+  // optional uint64 des_service_type = 10;
+  if (cached_has_bits & 0x00000800u) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteUInt64ToArray(10, this->des_service_type(), target);
+  }
+
+  // optional uint32 msg_hash = 11;
+  if (cached_has_bits & 0x00001000u) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteUInt32ToArray(11, this->msg_hash(), target);
+  }
+
+  // optional bool is_root = 12;
   if (cached_has_bits & 0x00002000u) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteInt32ToArray(9, this->retry(), target);
+    target = ::google::protobuf::internal::WireFormatLite::WriteBoolToArray(12, this->is_root(), target);
   }
 
-  // optional bool client_msg = 10;
+  // optional bool broadcast = 13;
   if (cached_has_bits & 0x00004000u) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteBoolToArray(10, this->client_msg(), target);
+    target = ::google::protobuf::internal::WireFormatLite::WriteBoolToArray(13, this->broadcast(), target);
   }
 
-  // optional bool relay_flag = 11;
-  if (cached_has_bits & 0x00008000u) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteBoolToArray(11, this->relay_flag(), target);
-  }
+  // repeated uint64 bloomfilter = 14;
+  target = ::google::protobuf::internal::WireFormatLite::
+    WriteUInt64ToArray(14, this->bloomfilter_, target);
 
-  // optional bool request_type = 12;
-  if (cached_has_bits & 0x00010000u) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteBoolToArray(12, this->request_type(), target);
-  }
-
-  // optional bytes client_id = 13;
+  // optional bytes xid = 15;
   if (cached_has_bits & 0x00000008u) {
     target =
       ::google::protobuf::internal::WireFormatLite::WriteBytesToArray(
-        13, this->client_id(), target);
+        15, this->xid(), target);
   }
 
-  // optional bool direct_mode = 14;
-  if (cached_has_bits & 0x00020000u) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteBoolToArray(14, this->direct_mode(), target);
+  // optional uint32 priority = 16;
+  if (cached_has_bits & 0x00008000u) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteUInt32ToArray(16, this->priority(), target);
   }
 
-  // optional uint64 src_service_type = 15;
-  if (cached_has_bits & 0x00040000u) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteUInt64ToArray(15, this->src_service_type(), target);
-  }
-
-  // optional uint64 des_service_type = 16;
-  if (cached_has_bits & 0x00080000u) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteUInt64ToArray(16, this->des_service_type(), target);
-  }
-
-  // optional uint32 status = 17;
-  if (cached_has_bits & 0x00100000u) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteUInt32ToArray(17, this->status(), target);
-  }
-
-  // optional .top.transport.protobuf.VersionTag version_tag = 18;
-  if (cached_has_bits & 0x00000080u) {
-    target = ::google::protobuf::internal::WireFormatLite::
-      InternalWriteMessageToArray(
-        18, this->_internal_version_tag(), deterministic, target);
-  }
-
-  // optional bool is_root = 19;
-  if (cached_has_bits & 0x00400000u) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteBoolToArray(19, this->is_root(), target);
-  }
-
-  // repeated uint64 bloomfilter = 20;
-  target = ::google::protobuf::internal::WireFormatLite::
-    WriteUInt64ToArray(20, this->bloomfilter_, target);
-
-  // repeated .top.transport.protobuf.RelayHopInfo relay_hop_info = 21;
-  for (unsigned int i = 0,
-      n = static_cast<unsigned int>(this->relay_hop_info_size()); i < n; i++) {
-    target = ::google::protobuf::internal::WireFormatLite::
-      InternalWriteMessageToArray(
-        21, this->relay_hop_info(static_cast<int>(i)), deterministic, target);
-  }
-
-  // optional bool multi_relay = 22;
-  if (cached_has_bits & 0x00800000u) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteBoolToArray(22, this->multi_relay(), target);
-  }
-
-  // optional uint32 seq = 23;
-  if (cached_has_bits & 0x00200000u) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteUInt32ToArray(23, this->seq(), target);
-  }
-
-  // optional bytes xrequest_id = 24;
-  if (cached_has_bits & 0x00000010u) {
-    target =
-      ::google::protobuf::internal::WireFormatLite::WriteBytesToArray(
-        24, this->xrequest_id(), target);
-  }
-
-  // repeated bytes trace_route = 25;
-  for (int i = 0, n = this->trace_route_size(); i < n; i++) {
-    target = ::google::protobuf::internal::WireFormatLite::
-      WriteBytesToArray(25, this->trace_route(i), target);
-  }
-
-  // optional bytes xid = 26;
+  // optional .top.transport.protobuf.GossipParams gossip = 17;
   if (cached_has_bits & 0x00000020u) {
-    target =
-      ::google::protobuf::internal::WireFormatLite::WriteBytesToArray(
-        26, this->xid(), target);
-  }
-
-  // optional bool broadcast = 27;
-  if (cached_has_bits & 0x01000000u) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteBoolToArray(27, this->broadcast(), target);
-  }
-
-  // optional uint32 priority = 28;
-  if (cached_has_bits & 0x04000000u) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteUInt32ToArray(28, this->priority(), target);
-  }
-
-  // optional .top.transport.protobuf.GossipParams gossip = 29;
-  if (cached_has_bits & 0x00000100u) {
     target = ::google::protobuf::internal::WireFormatLite::
       InternalWriteMessageToArray(
-        29, this->_internal_gossip(), deterministic, target);
+        17, this->_internal_gossip(), deterministic, target);
   }
 
-  // optional bool enable_ack = 30;
-  if (cached_has_bits & 0x02000000u) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteBoolToArray(30, this->enable_ack(), target);
-  }
-
-  // optional string debug = 31;
-  if (cached_has_bits & 0x00000040u) {
+  // optional string debug = 18;
+  if (cached_has_bits & 0x00000010u) {
     ::google::protobuf::internal::WireFormat::VerifyUTF8StringNamedField(
       this->debug().data(), static_cast<int>(this->debug().length()),
       ::google::protobuf::internal::WireFormat::SERIALIZE,
       "top.transport.protobuf.RoutingMessage.debug");
     target =
       ::google::protobuf::internal::WireFormatLite::WriteStringToArray(
-        31, this->debug(), target);
+        18, this->debug(), target);
   }
 
   if (_internal_metadata_.have_unknown_fields()) {
@@ -3805,32 +2281,13 @@ size_t RoutingMessage::ByteSizeLong() const {
     }
   }
 
-  // repeated uint64 bloomfilter = 20;
+  // repeated uint64 bloomfilter = 14;
   {
     size_t data_size = ::google::protobuf::internal::WireFormatLite::
       UInt64Size(this->bloomfilter_);
-    total_size += 2 *
+    total_size += 1 *
                   ::google::protobuf::internal::FromIntSize(this->bloomfilter_size());
     total_size += data_size;
-  }
-
-  // repeated .top.transport.protobuf.RelayHopInfo relay_hop_info = 21;
-  {
-    unsigned int count = static_cast<unsigned int>(this->relay_hop_info_size());
-    total_size += 2UL * count;
-    for (unsigned int i = 0; i < count; i++) {
-      total_size +=
-        ::google::protobuf::internal::WireFormatLite::MessageSize(
-          this->relay_hop_info(static_cast<int>(i)));
-    }
-  }
-
-  // repeated bytes trace_route = 25;
-  total_size += 2 *
-      ::google::protobuf::internal::FromIntSize(this->trace_route_size());
-  for (int i = 0, n = this->trace_route_size(); i < n; i++) {
-    total_size += ::google::protobuf::internal::WireFormatLite::BytesSize(
-      this->trace_route(i));
   }
 
   if (_has_bits_[0 / 32] & 255u) {
@@ -3855,44 +2312,21 @@ size_t RoutingMessage::ByteSizeLong() const {
           this->data());
     }
 
-    // optional bytes client_id = 13;
-    if (has_client_id()) {
-      total_size += 1 +
-        ::google::protobuf::internal::WireFormatLite::BytesSize(
-          this->client_id());
-    }
-
-    // optional bytes xrequest_id = 24;
-    if (has_xrequest_id()) {
-      total_size += 2 +
-        ::google::protobuf::internal::WireFormatLite::BytesSize(
-          this->xrequest_id());
-    }
-
-    // optional bytes xid = 26;
+    // optional bytes xid = 15;
     if (has_xid()) {
-      total_size += 2 +
+      total_size += 1 +
         ::google::protobuf::internal::WireFormatLite::BytesSize(
           this->xid());
     }
 
-    // optional string debug = 31;
+    // optional string debug = 18;
     if (has_debug()) {
       total_size += 2 +
         ::google::protobuf::internal::WireFormatLite::StringSize(
           this->debug());
     }
 
-    // optional .top.transport.protobuf.VersionTag version_tag = 18;
-    if (has_version_tag()) {
-      total_size += 2 +
-        ::google::protobuf::internal::WireFormatLite::MessageSize(
-          *version_tag_);
-    }
-
-  }
-  if (_has_bits_[8 / 32] & 65280u) {
-    // optional .top.transport.protobuf.GossipParams gossip = 29;
+    // optional .top.transport.protobuf.GossipParams gossip = 17;
     if (has_gossip()) {
       total_size += 2 +
         ::google::protobuf::internal::WireFormatLite::MessageSize(
@@ -3913,6 +2347,8 @@ size_t RoutingMessage::ByteSizeLong() const {
           this->id());
     }
 
+  }
+  if (_has_bits_[8 / 32] & 65280u) {
     // optional uint32 ack_id = 6;
     if (has_ack_id()) {
       total_size += 1 +
@@ -3927,86 +2363,38 @@ size_t RoutingMessage::ByteSizeLong() const {
           this->hop_num());
     }
 
-    // optional int32 retry = 9;
-    if (has_retry()) {
-      total_size += 1 +
-        ::google::protobuf::internal::WireFormatLite::Int32Size(
-          this->retry());
-    }
-
-    // optional bool client_msg = 10;
-    if (has_client_msg()) {
-      total_size += 1 + 1;
-    }
-
-    // optional bool relay_flag = 11;
-    if (has_relay_flag()) {
-      total_size += 1 + 1;
-    }
-
-  }
-  if (_has_bits_[16 / 32] & 16711680u) {
-    // optional bool request_type = 12;
-    if (has_request_type()) {
-      total_size += 1 + 1;
-    }
-
-    // optional bool direct_mode = 14;
-    if (has_direct_mode()) {
-      total_size += 1 + 1;
-    }
-
-    // optional uint64 src_service_type = 15;
+    // optional uint64 src_service_type = 9;
     if (has_src_service_type()) {
       total_size += 1 +
         ::google::protobuf::internal::WireFormatLite::UInt64Size(
           this->src_service_type());
     }
 
-    // optional uint64 des_service_type = 16;
+    // optional uint64 des_service_type = 10;
     if (has_des_service_type()) {
-      total_size += 2 +
+      total_size += 1 +
         ::google::protobuf::internal::WireFormatLite::UInt64Size(
           this->des_service_type());
     }
 
-    // optional uint32 status = 17;
-    if (has_status()) {
-      total_size += 2 +
+    // optional uint32 msg_hash = 11;
+    if (has_msg_hash()) {
+      total_size += 1 +
         ::google::protobuf::internal::WireFormatLite::UInt32Size(
-          this->status());
+          this->msg_hash());
     }
 
-    // optional uint32 seq = 23;
-    if (has_seq()) {
-      total_size += 2 +
-        ::google::protobuf::internal::WireFormatLite::UInt32Size(
-          this->seq());
-    }
-
-    // optional bool is_root = 19;
+    // optional bool is_root = 12;
     if (has_is_root()) {
-      total_size += 2 + 1;
+      total_size += 1 + 1;
     }
 
-    // optional bool multi_relay = 22;
-    if (has_multi_relay()) {
-      total_size += 2 + 1;
-    }
-
-  }
-  if (_has_bits_[24 / 32] & 117440512u) {
-    // optional bool broadcast = 27;
+    // optional bool broadcast = 13;
     if (has_broadcast()) {
-      total_size += 2 + 1;
+      total_size += 1 + 1;
     }
 
-    // optional bool enable_ack = 30;
-    if (has_enable_ack()) {
-      total_size += 2 + 1;
-    }
-
-    // optional uint32 priority = 28;
+    // optional uint32 priority = 16;
     if (has_priority()) {
       total_size += 2 +
         ::google::protobuf::internal::WireFormatLite::UInt32Size(
@@ -4043,8 +2431,6 @@ void RoutingMessage::MergeFrom(const RoutingMessage& from) {
 
   hop_nodes_.MergeFrom(from.hop_nodes_);
   bloomfilter_.MergeFrom(from.bloomfilter_);
-  relay_hop_info_.MergeFrom(from.relay_hop_info_);
-  trace_route_.MergeFrom(from.trace_route_);
   cached_has_bits = from._has_bits_[0];
   if (cached_has_bits & 255u) {
     if (cached_has_bits & 0x00000001u) {
@@ -4060,87 +2446,47 @@ void RoutingMessage::MergeFrom(const RoutingMessage& from) {
       data_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.data_);
     }
     if (cached_has_bits & 0x00000008u) {
-      set_has_client_id();
-      client_id_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.client_id_);
-    }
-    if (cached_has_bits & 0x00000010u) {
-      set_has_xrequest_id();
-      xrequest_id_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.xrequest_id_);
-    }
-    if (cached_has_bits & 0x00000020u) {
       set_has_xid();
       xid_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.xid_);
     }
-    if (cached_has_bits & 0x00000040u) {
+    if (cached_has_bits & 0x00000010u) {
       set_has_debug();
       debug_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.debug_);
     }
-    if (cached_has_bits & 0x00000080u) {
-      mutable_version_tag()->::top::transport::protobuf::VersionTag::MergeFrom(from.version_tag());
+    if (cached_has_bits & 0x00000020u) {
+      mutable_gossip()->::top::transport::protobuf::GossipParams::MergeFrom(from.gossip());
     }
+    if (cached_has_bits & 0x00000040u) {
+      type_ = from.type_;
+    }
+    if (cached_has_bits & 0x00000080u) {
+      id_ = from.id_;
+    }
+    _has_bits_[0] |= cached_has_bits;
   }
   if (cached_has_bits & 65280u) {
     if (cached_has_bits & 0x00000100u) {
-      mutable_gossip()->::top::transport::protobuf::GossipParams::MergeFrom(from.gossip());
-    }
-    if (cached_has_bits & 0x00000200u) {
-      type_ = from.type_;
-    }
-    if (cached_has_bits & 0x00000400u) {
-      id_ = from.id_;
-    }
-    if (cached_has_bits & 0x00000800u) {
       ack_id_ = from.ack_id_;
     }
-    if (cached_has_bits & 0x00001000u) {
+    if (cached_has_bits & 0x00000200u) {
       hop_num_ = from.hop_num_;
     }
-    if (cached_has_bits & 0x00002000u) {
-      retry_ = from.retry_;
-    }
-    if (cached_has_bits & 0x00004000u) {
-      client_msg_ = from.client_msg_;
-    }
-    if (cached_has_bits & 0x00008000u) {
-      relay_flag_ = from.relay_flag_;
-    }
-    _has_bits_[0] |= cached_has_bits;
-  }
-  if (cached_has_bits & 16711680u) {
-    if (cached_has_bits & 0x00010000u) {
-      request_type_ = from.request_type_;
-    }
-    if (cached_has_bits & 0x00020000u) {
-      direct_mode_ = from.direct_mode_;
-    }
-    if (cached_has_bits & 0x00040000u) {
+    if (cached_has_bits & 0x00000400u) {
       src_service_type_ = from.src_service_type_;
     }
-    if (cached_has_bits & 0x00080000u) {
+    if (cached_has_bits & 0x00000800u) {
       des_service_type_ = from.des_service_type_;
     }
-    if (cached_has_bits & 0x00100000u) {
-      status_ = from.status_;
+    if (cached_has_bits & 0x00001000u) {
+      msg_hash_ = from.msg_hash_;
     }
-    if (cached_has_bits & 0x00200000u) {
-      seq_ = from.seq_;
-    }
-    if (cached_has_bits & 0x00400000u) {
+    if (cached_has_bits & 0x00002000u) {
       is_root_ = from.is_root_;
     }
-    if (cached_has_bits & 0x00800000u) {
-      multi_relay_ = from.multi_relay_;
-    }
-    _has_bits_[0] |= cached_has_bits;
-  }
-  if (cached_has_bits & 117440512u) {
-    if (cached_has_bits & 0x01000000u) {
+    if (cached_has_bits & 0x00004000u) {
       broadcast_ = from.broadcast_;
     }
-    if (cached_has_bits & 0x02000000u) {
-      enable_ack_ = from.enable_ack_;
-    }
-    if (cached_has_bits & 0x04000000u) {
+    if (cached_has_bits & 0x00008000u) {
       priority_ = from.priority_;
     }
     _has_bits_[0] |= cached_has_bits;
@@ -4173,41 +2519,26 @@ void RoutingMessage::InternalSwap(RoutingMessage* other) {
   using std::swap;
   CastToBase(&hop_nodes_)->InternalSwap(CastToBase(&other->hop_nodes_));
   bloomfilter_.InternalSwap(&other->bloomfilter_);
-  CastToBase(&relay_hop_info_)->InternalSwap(CastToBase(&other->relay_hop_info_));
-  trace_route_.InternalSwap(CastToBase(&other->trace_route_));
   src_node_id_.Swap(&other->src_node_id_, &::google::protobuf::internal::GetEmptyStringAlreadyInited(),
     GetArenaNoVirtual());
   des_node_id_.Swap(&other->des_node_id_, &::google::protobuf::internal::GetEmptyStringAlreadyInited(),
     GetArenaNoVirtual());
   data_.Swap(&other->data_, &::google::protobuf::internal::GetEmptyStringAlreadyInited(),
     GetArenaNoVirtual());
-  client_id_.Swap(&other->client_id_, &::google::protobuf::internal::GetEmptyStringAlreadyInited(),
-    GetArenaNoVirtual());
-  xrequest_id_.Swap(&other->xrequest_id_, &::google::protobuf::internal::GetEmptyStringAlreadyInited(),
-    GetArenaNoVirtual());
   xid_.Swap(&other->xid_, &::google::protobuf::internal::GetEmptyStringAlreadyInited(),
     GetArenaNoVirtual());
   debug_.Swap(&other->debug_, &::google::protobuf::internal::GetEmptyStringAlreadyInited(),
     GetArenaNoVirtual());
-  swap(version_tag_, other->version_tag_);
   swap(gossip_, other->gossip_);
   swap(type_, other->type_);
   swap(id_, other->id_);
   swap(ack_id_, other->ack_id_);
   swap(hop_num_, other->hop_num_);
-  swap(retry_, other->retry_);
-  swap(client_msg_, other->client_msg_);
-  swap(relay_flag_, other->relay_flag_);
-  swap(request_type_, other->request_type_);
-  swap(direct_mode_, other->direct_mode_);
   swap(src_service_type_, other->src_service_type_);
   swap(des_service_type_, other->des_service_type_);
-  swap(status_, other->status_);
-  swap(seq_, other->seq_);
+  swap(msg_hash_, other->msg_hash_);
   swap(is_root_, other->is_root_);
-  swap(multi_relay_, other->multi_relay_);
   swap(broadcast_, other->broadcast_);
-  swap(enable_ack_, other->enable_ack_);
   swap(priority_, other->priority_);
   swap(_has_bits_[0], other->_has_bits_[0]);
   _internal_metadata_.Swap(&other->_internal_metadata_);
@@ -4227,12 +2558,6 @@ namespace google {
 namespace protobuf {
 template<> GOOGLE_PROTOBUF_ATTRIBUTE_NOINLINE ::top::transport::protobuf::HopInfo* Arena::CreateMaybeMessage< ::top::transport::protobuf::HopInfo >(Arena* arena) {
   return Arena::CreateInternal< ::top::transport::protobuf::HopInfo >(arena);
-}
-template<> GOOGLE_PROTOBUF_ATTRIBUTE_NOINLINE ::top::transport::protobuf::VersionTag* Arena::CreateMaybeMessage< ::top::transport::protobuf::VersionTag >(Arena* arena) {
-  return Arena::CreateInternal< ::top::transport::protobuf::VersionTag >(arena);
-}
-template<> GOOGLE_PROTOBUF_ATTRIBUTE_NOINLINE ::top::transport::protobuf::RelayHopInfo* Arena::CreateMaybeMessage< ::top::transport::protobuf::RelayHopInfo >(Arena* arena) {
-  return Arena::CreateInternal< ::top::transport::protobuf::RelayHopInfo >(arena);
 }
 template<> GOOGLE_PROTOBUF_ATTRIBUTE_NOINLINE ::top::transport::protobuf::GossipParams* Arena::CreateMaybeMessage< ::top::transport::protobuf::GossipParams >(Arena* arena) {
   return Arena::CreateInternal< ::top::transport::protobuf::GossipParams >(arena);
