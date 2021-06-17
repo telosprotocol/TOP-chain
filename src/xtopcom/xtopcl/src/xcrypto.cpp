@@ -483,7 +483,6 @@ string get_eth_key(const string & ed_key, const xJson::Value & key_info)
     std::string mac_hex = top::HexEncode(std::string((char*)mac, mac_len));
     if (mac_hex != key_info["crypto"]["mac"].asString()) {
         //cout << "Invalid eth key - MAC mismatch:" << mac_hex<<","<< key_info["crypto"]["mac"].asString() << endl;
-        cout << "Invalid eth key - MAC mismatch" << endl;
         return "";
     }
 
