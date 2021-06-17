@@ -29,9 +29,9 @@ protected:
 TEST_F(test_property_api, map_prop_api) {
     // map apis
     xaccount_address_t addr{address};
-    xproperty_identifier_t  id{"test_create", xproperty_type_t::map, xproperty_category_t::sys_kernel};
+    xproperty_identifier_t  id{"test_create", xproperty_type_t::map, xproperty_category_t::system};
     api_->map_prop_create<std::string, std::string>(addr, id);
-    EXPECT_TRUE(api_->prop_exist(addr, id));
+    EXPECT_TRUE(api_->property_exist(addr, id));
 
     api_->map_prop_add<std::string, std::string>(addr, id, "first", "first");
     auto res_value = api_->map_prop_query<std::string, std::string>(addr, id, "first");

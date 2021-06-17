@@ -4,8 +4,6 @@
 
 #include "xstate/xunitstate.h"
 
-#include "xdata/xblockchain.h"
-
 #include <cstdint>
 
 namespace top {
