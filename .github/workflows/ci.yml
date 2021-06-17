@@ -26,9 +26,13 @@ jobs:
         uses: actions/checkout@v2
         with:
           ssh-key: ${{ secrets.XVM }}
-          fetch-depth: 5
-          submodules: recursive
-
+      
+      - name: Sync submodule
+        run: git submodule sync --recursive
+        
+      - name: Update submodule
+        run: git submodule update --init --force --recursive
+  
       - name: Build XTOP DEBUG
         run: |
           bash .github/scripts/build_xtop.sh "test build_ci"
