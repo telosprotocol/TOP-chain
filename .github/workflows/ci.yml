@@ -23,12 +23,12 @@ jobs:
           echo "$GITHUB_CONTEXT"
 
       - name: Checkout repository
-        uses: actions/checkout@v2
-      
-      - name: Update submodule
-        uses: jwsi/submodule-checkout@v1
+        uses: actions/checkout@v2.3.4
         with:
-          ssh-key: '${{ secrets.XVM }}'
+          token: ${{ secrets.CI_TOKEN }}
+          fetch-depth: 5
+          submodules: recursive
+        
 
       - name: Build XTOP DEBUG
         run: |
