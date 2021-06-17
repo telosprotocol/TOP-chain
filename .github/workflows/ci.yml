@@ -24,10 +24,11 @@ jobs:
 
       - name: Checkout repository
         uses: actions/checkout@v2
+      
+      - name: Update submodule
+        uses: jwsi/submodule-checkout@v1
         with:
-          ssh-key: ${{ secrets.CI_TOKEN }}
-          fetch-depth: 5
-          submodules: recursive
+          ssh-key: '${{ secrets.XVM }}'
 
       - name: Build XTOP DEBUG
         run: |
