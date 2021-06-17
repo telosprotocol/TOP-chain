@@ -16,17 +16,14 @@ namespace top
         }
         xprove_cert_t::xprove_cert_t(base::xvqcert_t* prove_cert, enum_xprove_cert_type prove_type, const std::string & _path) {
             XMETRICS_GAUGE(metrics::dataobject_provcert, 1);
-            m_prove_cert = prove_cert;
-            m_prove_cert->add_ref();
+            prove_cert->add_ref();
+            m_prove_cert.attach(prove_cert);
             m_prove_type =  prove_type;
             m_prove_path = _path;
         }
 
         xprove_cert_t::~xprove_cert_t() {
             XMETRICS_GAUGE(metrics::dataobject_provcert, -1);
-            if (m_prove_cert != nullptr) {
-                m_prove_cert->release_ref();
-            }
         }
 
         int32_t xprove_cert_t::do_write(base::xstream_t & stream) {
@@ -45,11 +42,12 @@ namespace top
             const int32_t begin_size = stream.size();
             std::string cert_bin;
             stream >> cert_bin;
-            m_prove_cert = base::xvblock_t::create_qcert_object(cert_bin);
-            if (m_prove_cert == nullptr) {
+            xvqcert_t* _qcert = base::xvblock_t::create_qcert_object(cert_bin);
+            if (_qcert == nullptr) {
                 xassert(0);
                 return -1;
             }
+            m_prove_cert.attach(_qcert);
             stream >> m_prove_type;
             stream >> m_prove_path;
             return (begin_size - stream.size());

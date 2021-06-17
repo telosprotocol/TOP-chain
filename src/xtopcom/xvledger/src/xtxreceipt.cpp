@@ -20,14 +20,11 @@ namespace top
         }
         xtx_receipt_t::xtx_receipt_t(const base::xvaction_t & txaction, base::xvqcert_t* prove_cert, const std::string & path, enum_xprove_cert_type type)
         : m_tx_action(txaction) {
-            m_tx_action_prove = new xprove_cert_t(prove_cert, type, path);
+            m_tx_action_prove = make_object_ptr<xprove_cert_t>(prove_cert, type, path);
             XMETRICS_GAUGE(metrics::dataobject_tx_receipt_t, 1);
         }
 
         xtx_receipt_t::~xtx_receipt_t() {
-            if (m_tx_action_prove != nullptr) {
-                m_tx_action_prove->release_ref();
-            }
             XMETRICS_GAUGE(metrics::dataobject_tx_receipt_t, -1);
         }
 
@@ -44,11 +41,7 @@ namespace top
             std::string action_bin;
             stream.read_compact_var(action_bin);
             m_tx_action.serialize_from(action_bin);
-            if (m_tx_action_prove != nullptr) {
-                xassert(false);
-                m_tx_action_prove->release_ref();
-            }
-            m_tx_action_prove = new xprove_cert_t();
+            m_tx_action_prove = make_object_ptr<xprove_cert_t>();
             m_tx_action_prove->serialize_from(stream);
             return (begin_size - stream.size());
         }

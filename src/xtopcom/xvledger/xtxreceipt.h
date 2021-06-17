@@ -36,15 +36,15 @@ namespace top
         public:
             bool                            is_valid() const;
             enum_xprove_cert_type           get_prove_type() const {return m_tx_action_prove->get_prove_type();}
-            const base::xvqcert_t*          get_prove_cert() const {return m_tx_action_prove->get_prove_cert();}
+            const xobject_ptr_t<base::xvqcert_t> &  get_prove_cert() const {return m_tx_action_prove->get_prove_cert();}
             const std::string &             get_tx_hash() const {return m_tx_action.get_org_tx_hash();}
             enum_transaction_subtype        get_tx_subtype() const {return (base::enum_transaction_subtype)m_tx_action.get_org_tx_action_id();}
             bool                            is_recv_tx() const {return get_tx_subtype() == base::enum_transaction_subtype_recv;}
             bool                            is_confirm_tx() const {return get_tx_subtype() == base::enum_transaction_subtype_confirm;}
             std::string                     get_tx_result_property(const std::string & key) const;
         private:
-            base::xvaction_t        m_tx_action;
-            xprove_cert_t*          m_tx_action_prove{nullptr};
+            base::xvaction_t                m_tx_action;
+            xobject_ptr_t<xprove_cert_t>    m_tx_action_prove{nullptr};
         };
 
         using xtx_receipt_ptr_t = xobject_ptr_t<xtx_receipt_t>;
