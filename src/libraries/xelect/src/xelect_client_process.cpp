@@ -141,7 +141,8 @@ void xelect_client_process::process_elect(const mbus::xevent_ptr_t & e) {
                     m_update_handler2(election_result_store, common::xcommittee_zone_id, block->get_height(), false);
                 } else if (common::has<common::xnode_type_t::edge>(node_type)) {
                     m_update_handler2(election_result_store, common::xedge_zone_id, block->get_height(), false);
-                } else if (common::has<common::xnode_type_t::storage>(node_type)) {
+                } else if (common::has<common::xnode_type_t::storage>(node_type) ||
+                           common::has<common::xnode_type_t::archive>(node_type)) {
                     m_update_handler2(election_result_store, common::xarchive_zone_id, block->get_height(), false);
                 } else {
                     assert(false);

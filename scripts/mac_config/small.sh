@@ -41,18 +41,12 @@ sleep 1
 ./xtopchain ./config.rec2.json &
 sleep 1
 ./xtopchain ./config.rec3.json &
-sleep 30
+sleep 1
 ./xtopchain ./config.zec1.json &
 sleep 1
 ./xtopchain ./config.zec2.json &
 sleep 1
 ./xtopchain ./config.zec3.json &
-sleep 1
-./xtopchain ./config.adv1.json &
-sleep 1
-./xtopchain ./config.adv2.json &
-sleep 1
-#./xtopchain ./config.adv3.json &
 sleep 1
 ./xtopchain ./config.con1.json &
 sleep 1
@@ -63,4 +57,9 @@ sleep 1
 ./xtopchain ./config.con4.json &
 sleep 1
 ./xtopchain ./config.edge.json &
+sleep 60
+# ./xtopchain ./config.adv1.json &
 sleep 1
+./xtopchain ./config.adv2.json &
+sleep 1
+./xtopchain ./config.adv3.json &
