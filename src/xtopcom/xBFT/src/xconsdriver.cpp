@@ -611,7 +611,11 @@ namespace top
                     xwarn("xBFTdriver_t::handle_commit_msg,warn-unmatched packet=%s against the existing proposal=%s,at node=0x%llx",packet.dump().c_str(),_local_proposal_block->dump().c_str(),get_xip2_low_addr());
                     is_match_local_proposal = false;
                 }
-
+                if (!_local_proposal_block->get_block()->is_input_ready(true)) //proposal have no input, that means verify proposal fail
+                {
+                    xwarn("xBFTdriver_t::handle_commit_msg, empty input for this proposal=%s,at node=0x%llx", _local_proposal_block->dump().c_str(), get_xip2_low_addr());
+                    is_match_local_proposal = false;
+                }
                 if (!_local_proposal_block->get_block()->is_output_ready(true)) //proposal have no output, that means verify proposal fail
                 {
                     xwarn("xBFTdriver_t::handle_commit_msg, empty output for this proposal=%s,at node=0x%llx", _local_proposal_block->dump().c_str(), get_xip2_low_addr());
