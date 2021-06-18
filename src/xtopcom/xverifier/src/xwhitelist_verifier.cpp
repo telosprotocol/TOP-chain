@@ -36,7 +36,6 @@ namespace top {
             switch (trx_ptr->get_tx_type())
             {
             case data::xtransaction_type_transfer:
-            case data::xtransaction_type_create_contract_account:
                 is_limit_tx = true;
                 break;
 

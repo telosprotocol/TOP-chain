@@ -178,7 +178,6 @@ bool xtransaction_t::transaction_type_check() const {
 #ifdef ENABLE_CREATE_USER  // debug use
         case xtransaction_type_create_user_account:
 #endif
-        case xtransaction_type_create_contract_account:
         case xtransaction_type_run_contract:
         case xtransaction_type_transfer:
         case xtransaction_type_vote:
@@ -255,16 +254,6 @@ int32_t xtransaction_t::make_tx_create_user_account(const std::string & addr) {
     int32_t ret = xaction_source_null::serialze_to(m_source_action);
     if (ret) { return ret; }
     ret = xaction_create_user_account::serialze_to(m_target_action, addr);
-    if (ret) { return ret; }
-
-    return xsuccess;
-}
-
-int32_t xtransaction_t::make_tx_create_contract_account(const data::xproperty_asset & asset_out, uint64_t tgas_limit, const std::string& code) {
-    set_tx_type(xtransaction_type_create_contract_account);
-    int32_t ret = xaction_asset_out::serialze_to(m_source_action, asset_out);
-    if (ret) { return ret; }
-    ret = xaction_deploy_contract::serialze_to(m_target_action, tgas_limit, code);
     if (ret) { return ret; }
 
     return xsuccess;

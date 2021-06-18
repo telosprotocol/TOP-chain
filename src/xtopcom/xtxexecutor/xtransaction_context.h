@@ -55,19 +55,6 @@ class xtransaction_face_t{
 
     std::string assemble_lock_token_param(const uint64_t amount, const uint32_t version) const ;
 
-    int32_t check_parent(){
-        std::string parent;
-        auto ret = m_account_ctx->get_parent_account(parent);
-        if(ret != store::xaccount_property_parent_account_exist){
-            return store::xaccount_property_parent_account_not_exist;
-        }
-        if(m_trans->get_source_addr() != parent){
-            // source is not the owner of target
-            return xtransaction_contract_pledge_token_source_target_mismatch;
-        }
-        return 0;
-    }
-
     uint64_t parse_vote_info(const std::string& para);
 
  protected:
@@ -108,42 +95,6 @@ class xtransaction_create_user_account : public xtransaction_face_t{
  private:
     data::xaction_source_null m_source_action;
     data::xaction_create_user_account m_target_action;
-};
-
-class xtransaction_create_contract_account : public xtransaction_face_t{
- public:
-    xtransaction_create_contract_account(xaccount_context_t* account_ctx, const xcons_transaction_ptr_t & trans)
-    : xtransaction_face_t(account_ctx, trans) {
-    }
-    int32_t parse() override {
-        int32_t ret = m_source_action.parse(m_trans->get_source_action());
-        if (ret == xsuccess) {
-            ret = m_target_action.parse(m_trans->get_target_action());
-        }
-        return ret;
-    }
-
-    int32_t check() override ;
-    int32_t source_fee_exec() override ;
-    int32_t source_action_exec() override ;
-    int32_t target_action_exec() override ;
-    int32_t target_fee_exec() override {
-        return 0;
-    };
-    int32_t source_confirm_fee_exec() override {
-        if (m_trans->is_self_tx()) {
-            return 0;
-        }
-        if (data::is_sys_contract_address(common::xaccount_address_t{ m_trans->get_source_addr() })) {
-            return 0;
-        }
-        return m_fee.update_contract_fee_confirm(m_source_action.m_asset_out.m_amount);
-    };
-
- private:
-    data::xaction_asset_out m_source_action;
-    data::xaction_deploy_contract m_target_action;
-    xvm::xvm_service m_vm_service;
 };
 
 class xtransaction_run_contract : public xtransaction_face_t{
@@ -292,10 +243,8 @@ class xtransaction_pledge_token : public xtransaction_face_t{
     int32_t target_action_exec() override {
         int32_t ret{0};
         if(m_trans->get_source_addr() != m_trans->get_target_addr()){
-            ret = check_parent();
-            if(ret != 0){
-                return ret;
-            }
+            xassert(false);  // must self tx, not support parent pledge now
+            return -1;
         }
         return set_pledge_token_resource(m_target_action.m_asset.m_amount);
     }
@@ -337,10 +286,8 @@ class xtransaction_redeem_token : public xtransaction_face_t{
     int32_t target_action_exec() override {
         int32_t ret{0};
         if(m_trans->get_source_addr() != m_trans->get_target_addr()){
-            ret = check_parent();
-            if(ret != 0){
-                return ret;
-            }
+            xassert(false);  // must self tx, not support parent pledge now
+            return -1;
         }
         ret = redeem_pledge_token_resource(m_target_action.m_asset.m_amount);
         if(ret != 0){

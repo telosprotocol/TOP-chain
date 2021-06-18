@@ -41,11 +41,9 @@ common::xaccount_address_t xcontract_helper::get_source_account() const {
 
 std::string xcontract_helper::get_parent_account() const {
     std::string parent{""};
-    if (store::xaccount_property_parent_account_exist != m_account_context->get_parent_account(parent)) {
-        std::error_code ec{ error::xerrc_t::enum_vm_exception };
-        top::error::throw_error(ec, "get contract parent account error");
-    }
-
+    // TODO(jimmy) not support lua now
+    std::error_code ec{ error::xerrc_t::enum_vm_exception };
+    top::error::throw_error(ec, "get contract parent account error");
     return parent;
 }
 

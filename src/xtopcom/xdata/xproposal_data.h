@@ -15,13 +15,13 @@ NS_BEG2(top, tcc)
 // for TCC (TOP CHAIN Comittee)
 
 // caution: property name can't exceed 16 bytes
-#define ONCHAIN_PARAMS            "onchain_params" // map of <string, string>
-#define SYSTEM_GENERATED_ID       "system_id" // string
-#define PROPOSAL_MAP_ID           "proposal_map" // map of <string, string(proposal details)>
-#define COSIGN_MAP_ID             "cosigning_map" // map of <string, map<std::string, bool> >
-#define VOTE_MAP_ID               "voting_map" // map of <string, map<std::string, bool> >
-#define INITIAL_COMITTEE_VOTERS   "gen_comittee"
-#define CURRENT_VOTED_PROPOSAL    "@current_voted"
+#define ONCHAIN_PARAMS            "@150"  //"onchain_params" // map of <string, string>
+#define SYSTEM_GENERATED_ID       "@151"  //"system_id" // string
+#define PROPOSAL_MAP_ID           "@152"  //"proposal_map" // map of <string, string(proposal details)>
+//#define COSIGN_MAP_ID           "cosigning_map" // map of <string, map<std::string, bool> >
+#define VOTE_MAP_ID               "@154"  //"voting_map" // map of <string, map<std::string, bool> >
+
+#define CURRENT_VOTED_PROPOSAL    "@155"  //"@current_voted"
 
 #define UPDATE_ACTION_PARAMETER   "update_action_parameter" // parameter update
 #define UPDATE_ACTION_PLUGIN      "update_action_plugin"  // plug-in update (to be implemented)
