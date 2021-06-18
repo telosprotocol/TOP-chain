@@ -355,40 +355,50 @@ bool xtop_application::is_genesis_node() const noexcept {
 }
 
 bool xtop_application::is_beacon_account() const noexcept {
-    auto const & user_params = data::xuser_params::get_instance();
-    top::common::xnode_id_t node_id = top::common::xnode_id_t{user_params.account};
+    try {
+        auto const & user_params = data::xuser_params::get_instance();
+        top::common::xnode_id_t node_id = top::common::xnode_id_t{ user_params.account };
 
-    std::string result;
-    auto latest_vblock = data::xblocktool_t::get_latest_committed_lightunit(m_blockstore.get(), sys_contract_rec_elect_rec_addr);
-    base::xauto_ptr<base::xvbstate_t> bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(latest_vblock.get());
-    if (bstate == nullptr) {
-        xerror("xtop_application::is_beacon_account fail-get state.");
+        std::string result;
+        auto latest_vblock = data::xblocktool_t::get_latest_committed_lightunit(m_blockstore.get(), sys_contract_rec_elect_rec_addr);
+        base::xauto_ptr<base::xvbstate_t> bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(latest_vblock.get());
+        if (bstate == nullptr) {
+            xerror("xtop_application::is_beacon_account fail-get state.");
+            return false;
+        }
+        xunit_bstate_t unitstate(bstate.get());
+
+        auto property_names = data::election::get_property_name_by_addr(common::xaccount_address_t{ sys_contract_rec_elect_rec_addr });
+        common::xnetwork_id_t network_id{ top::config::to_chainid(XGET_CONFIG(chain_name)) };
+        for (auto const & property : property_names) {
+            if (false == unitstate.string_get(property, result) || result.empty()) {
+                xwarn("xtop_application::is_beacon_account no property %s", property.c_str());
+                continue;
+            }
+            using top::data::election::xelection_result_store_t;
+            auto const & election_result_store = codec::msgpack_decode<xelection_result_store_t>({ std::begin(result), std::end(result) });
+            auto & current_group_nodes = election_result_store.result_of(network_id)
+                                                              .result_of(common::xnode_type_t::committee)
+                                                              .result_of(common::xcommittee_cluster_id)
+                                                              .result_of(common::xcommittee_group_id);
+
+            if (top::get<bool>(current_group_nodes.find(node_id))) {
+                xinfo("xtop_application::is_beacon_account is genesis node. %s", node_id.c_str());
+                return true;
+            }
+        }
+
+        xwarn("xtop_application::is_beacon_account not genesis %s", node_id.c_str());
+        return false;
+    } catch (top::error::xtop_error_t const & eh) {
+        std::cerr << "application start failed. exception: " << eh.what() << "; error: " << eh.code().message() << "; category: " << eh.code().category().name() << std::endl;
+        xerror("xapplication_t::is_beacon_account failed with exception: %s; error: %s; category: %s", eh.what(), eh.code().message().c_str(), eh.code().category().name());
+        return false;
+    } catch (std::exception & eh) {
+        std::cerr << "application start failed. exception: " << eh.what() << std::endl;
+        xerror("xapplication_t::is_beacon_account failed with exception: %s", eh.what());
         return false;
     }
-    xunit_bstate_t unitstate(bstate.get());
-
-    auto property_names = data::election::get_property_name_by_addr(common::xaccount_address_t{sys_contract_rec_elect_rec_addr});
-    common::xnetwork_id_t network_id{top::config::to_chainid(XGET_CONFIG(chain_name))};
-    for (auto const & property : property_names) {
-        if (false == unitstate.string_get(property, result) || result.empty()) {
-            xwarn("xtop_application::is_beacon_account no property %s", property.c_str());
-            continue;
-        }
-        using top::data::election::xelection_result_store_t;
-        auto const & election_result_store = codec::msgpack_decode<xelection_result_store_t>({std::begin(result), std::end(result)});
-        auto & current_group_nodes = election_result_store.result_of(network_id)
-                                         .result_of(common::xnode_type_t::committee)
-                                         .result_of(common::xcommittee_cluster_id)
-                                         .result_of(common::xcommittee_group_id);
-
-        if (top::get<bool>(current_group_nodes.find(node_id))) {
-            xinfo("xtop_application::is_beacon_account is genesis node. %s", node_id.c_str());
-            return true;
-        }
-    }
-
-    xwarn("xtop_application::is_beacon_account not genesis %s", node_id.c_str());
-    return false;
 }
 
 NS_END2
