@@ -146,7 +146,7 @@ class xaccount_context_t {
     get_block_by_height(const std::string & owner, uint64_t height) const;
 
     uint64_t get_blockchain_height(const std::string & owner) const;
-    
+
     int64_t get_tgas_balance_change() const { return m_tgas_balance_change; }
     void add_tgas_balance_change(uint64_t amount) { m_tgas_balance_change += amount; }
     void sub_tgas_balance_change(uint64_t amount) { m_tgas_balance_change -= amount; }
@@ -164,7 +164,7 @@ class xaccount_context_t {
     void    set_tx_info_latest_sendtx_hash(const std::string & hash);
     void    set_tx_info_recvtx_num(uint64_t num);
     void    get_latest_create_nonce_hash(uint64_t & nonce, uint256_t & hash);
-    void    set_latest_create_nonce_hash(uint64_t nonce, const uint256_t & hash);
+    void    update_latest_create_nonce_hash(const xcons_transaction_ptr_t & tx);
     void    set_account_create_time();
 
  public:

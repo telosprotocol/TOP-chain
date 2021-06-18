@@ -47,6 +47,7 @@ class xcons_transaction_t : public xbase_dataunit_t<xcons_transaction_t, xdata_t
     const std::string &     get_account_addr() const {return is_recv_tx()? m_tx->get_target_addr() : m_tx->get_source_addr();}
     const std::string &     get_target_addr()const {return m_tx->get_target_addr();}
     uint64_t                get_tx_nonce()const {return m_tx->get_tx_nonce();}
+    uint64_t                get_tx_last_nonce()const {return m_tx->get_last_nonce();}
     const std::string &     get_receipt_source_account()const;
     const std::string &     get_receipt_target_account()const;
     const xaction_t &       get_source_action()const {return m_tx->get_source_action();}

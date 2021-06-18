@@ -15,7 +15,7 @@ REG_XMODULE_LOG(chainbase::enum_xmodule_type::xmodule_type_xtxexecutor, xunit_er
 
 int32_t xtransaction_executor::exec_one_tx(xaccount_context_t * account_context, const xcons_transaction_ptr_t & tx) {
     if (false == account_context->add_transaction(tx)) {
-        xwarn("xtransaction_executor::exec_one_tx fail-add transaction, tx=%s",
+        xerror("xtransaction_executor::exec_one_tx fail-add transaction, tx=%s",
             tx->dump().c_str());
         return enum_xtxexecutor_error_tx_nonce_not_match;  // may happen when failure tx is deleted
     }
