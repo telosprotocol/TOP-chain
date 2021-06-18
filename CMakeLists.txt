@@ -240,6 +240,10 @@ if (BUILD_GPERF)
     add_definitions(-DENABLE_GPERF)
 endif()
 
+if (BUILD_GHPERF)
+    add_definitions(-DENABLE_GHPERF)
+endif()
+
 if (TCMALLOC)
     add_definitions(-DENABLE_TCMALLOC)
 endif()
@@ -439,6 +443,10 @@ elseif (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
     # for xg
     find_library(CFLIB CoreFoundation)
     add_definitions(-DGUID_CFUUID)
+    add_definitions(-DXDISABLE_RATELIMIT)
+    add_definitions(-DENABLE_METRICS)
+    add_definitions(-DXENABLE_MOCK_ZEC_STAKE)
+    add_definitions(-DMAINNET_ACTIVATED)
     # message("CFLIB: ${CFLIB}")
 
     # link_directories(src/externals/libs/${CMAKE_SYSTEM_NAME}/)

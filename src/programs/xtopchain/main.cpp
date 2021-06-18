@@ -11,7 +11,7 @@
 #include "xdata/xoperation_config.h"
 
 #include "xmetrics/xmetrics.h"
-#include "tcmalloc_options.h"
+// #include "tcmalloc_options.h"
 
 using namespace top;
 
@@ -60,7 +60,6 @@ int start_monitor_thread() {
 }
 
 int main(int argc, char * argv[]) {
-    StartCheckHeap();
 
     // use this to join or quit network, config show_cmd = false will come here
     // auto elect_mgr = elect_main.elect_manager();

@@ -33,3 +33,8 @@ topiolib/tlib/Linux/*.a
 topiolib/tlib/Linux/debug/*.a
 topiolib/tlib/Linux/release/*.a
 */.DS_Store
+xtopchain
+macos/XTOPCHAIN.build
+macos/src
+src/xtopcom/xvledger/test/xvledger-test.xcodeproj
+macos

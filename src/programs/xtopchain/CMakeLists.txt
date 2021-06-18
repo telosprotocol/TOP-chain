@@ -42,13 +42,8 @@ add_executable(xtopchain_bin main.cpp)
 set_target_properties(xtopchain_bin
     PROPERTIES OUTPUT_NAME "xtopchain"
 )
-if (BUILD_GPERF)
-    target_link_libraries(xtopchain_bin PRIVATE xchaininit tcmalloc_and_profiler)
-elseif(TCMALLOC)
-    target_link_libraries(xtopchain_bin PRIVATE xchaininit tcmalloc_minimal)
-else()
-    target_link_libraries(xtopchain_bin PRIVATE xchaininit)
-endif()
+target_link_libraries(xtopchain_bin PRIVATE xchaininit)
+
 add_library(xtopchain SHARED so.cpp)
 set_target_properties(xtopchain PROPERTIES
     VERSION   "${PROGRAM_VERSION}"

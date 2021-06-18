@@ -31,12 +31,14 @@ set(LINK_ARGS secp256k1 trezor-crypto ssl crypto)
 if(NOT MSVC)
     set(LINK_ARGS ${LINK_ARGS} hiredis pthread)
 endif()
-#add_dependencies(xchaininit xapplication xdata xconfig xvnode xelect xstore xvnetwork xrpc xrouter xelect_common xtopcl xxbase)
 
-#if (BUILD_VIRTUAL_NODE)
-#    #add_dependencies(xchaininit xservices)
-#    target_link_libraries(xchaininit PRIVATE xservices)
-#endif()
+if (BUILD_GPERF)
+    target_link_libraries(xchaininit PRIVATE tcmalloc_and_profiler)
+elseif (BUILD_GHPERF)
+    target_link_libraries(xchaininit PRIVATE tcmalloc_and_profiler)
+elseif(TCMALLOC)
+    target_link_libraries(xchaininit PRIVATE tcmalloc_minimal)
+endif()
 
 target_link_libraries(xchaininit PRIVATE ${LINK_ARGS}
     xapplication

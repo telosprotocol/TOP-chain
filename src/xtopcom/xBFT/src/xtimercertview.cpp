@@ -195,11 +195,14 @@ bool xconspacemaker_t::on_receive_timeout(xvip2_t const & from_addr, base::xcspd
 
     base::xauto_ptr<xtimeout_msg_t> msg = new xtimeout_msg_t{};
     msg->serialize_from_string(packet.get_msg_body());
-
-    if (msg->block==nullptr || msg->block->get_cert()==nullptr ||
-        msg->block->get_clock()!=clock || msg->block->get_viewid()!=clock || msg->block->get_height()!=clock) {
-        xwarn("[xconspacemaker_t::on_receive_timeout] from {%" PRIx64 ",%" PRIx64 "} content error clock %" PRIu64" block:%s",
-            from_addr.high_addr, from_addr.low_addr, clock, msg->block->dump().c_str());
+    if (msg->block != nullptr) {
+        if (msg->block->get_cert()==nullptr ||
+            msg->block->get_clock()!=clock || msg->block->get_viewid()!=clock || msg->block->get_height()!=clock) {
+            xwarn("[xconspacemaker_t::on_receive_timeout] from {%" PRIx64 ",%" PRIx64 "} content error clock %" PRIu64" block:%s",
+                from_addr.high_addr, from_addr.low_addr, clock, msg->block->dump().c_str());
+            return true;
+        }
+    } else {
         return true;
     }
 
