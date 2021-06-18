@@ -600,8 +600,8 @@ void xsync_handler_t::cross_cluster_chain_state(uint32_t msg_size, const vnetwor
     ptr->serialize_from(stream);
     std::vector<xchain_state_info_t> &info_list = ptr->info_list;
 
-    if (!common::has<common::xnode_type_t::storage_archive>(network_self.type())) {
-        xsync_warn("xsync_handler receive cross_cluster_chain_state(target must be archive) %" PRIx64 " count(%u), %s %s",
+    if (!common::has<common::xnode_type_t::storage>(network_self.type())) {
+        xsync_warn("xsync_handler receive cross_cluster_chain_state(target must be archive or full node) %" PRIx64 " count(%u), %s %s",
             msg_hash, info_list.size(), network_self.to_string().c_str(), from_address.to_string().c_str());
         return;
     }

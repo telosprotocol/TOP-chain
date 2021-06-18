@@ -335,60 +335,7 @@ bool api_method_imp::deployContract(user_info & uinfo,
                                     const std::string & contract_code,
                                     std::ostringstream & out_str,
                                     std::function<void(PublishContractResult *)> func) {
-    if (uinfo.account.empty() || uinfo.identity_token.empty() || uinfo.last_hash.empty()) {
-        LOG("uinfo.account.empty()=", uinfo.account.empty(), " uinfo.identity_token.empty()=", uinfo.identity_token.empty(), " uinfo.last_hash.empty()=", uinfo.last_hash.empty());
-        return false;
-    }
-
-    auto info = new task_info_callback<PublishContractResult>();
-    set_user_info(info, uinfo, CMD_PUBLISH_CONTRACT, func);
-
-    make_private_key(uinfo.contract.private_key);
-    contract_account = make_account_address(uinfo.contract.private_key, top::base::enum_vaccount_addr_type_custom_contract, uinfo.account);
-
-    info->trans_action->set_deposit(m_deposit);
-    info->trans_action->set_tx_type(xtransaction_type_create_contract_account);
-    info->trans_action->set_last_nonce(uinfo.nonce);
-    info->trans_action->set_fire_timestamp(get_timestamp());
-    info->trans_action->set_expire_duration(100);
-    info->trans_action->set_last_hash(uinfo.last_hash_xxhash64);
-
-    info->trans_action->get_source_action().set_action_type(xaction_type_asset_out);
-    info->trans_action->get_source_action().set_account_addr(uinfo.account);
-    xaction_asset_param asset_param(this, "", amount);
-    info->trans_action->get_source_action().set_action_param(asset_param.create());
-
-    info->trans_action->get_target_action().set_action_type(xaction_type_create_contract_account);
-    info->trans_action->get_target_action().set_account_addr(contract_account);
-
-    top::base::xstream_t stream(top::base::xcontext_t::instance());
-    stream << tgas_limit;
-    stream << contract_code;
-    std::string code_stream((char *)stream.data(), stream.size());
-    info->trans_action->get_target_action().set_action_param(code_stream);
-
-    auto pub_key = get_public_key(uinfo.contract.private_key);
-    auto pub_vec = hex_to_uint(pub_key);
-
-    std::string auth = uint_to_str((char *)pub_vec.data(), pub_vec.size());
-    std::string action_auth = std::string("{\"authorization\":\"") + auth + std::string("\"}");
-    ;
-    info->trans_action->get_target_action().set_action_authorization(action_auth);
-    // printf("the m_action_authorization is %s\n", pub_key.c_str());
-    // if (hash_signature_action(&info->trans_action->get_target_action(), uinfo.contract.private_key).empty()) {
-    //     delete info;
-    //     return false;
-    // }
-
-    if (!hash_signature(info->trans_action.get(), uinfo.private_key)) {
-        delete info;
-        return false;
-    }
-
-    task_dispatcher::get_instance()->post_message(msgAddTask, (uint32_t *)info, 0);
-
-    auto rpc_response = task_dispatcher::get_instance()->get_result();
-    out_str << rpc_response;
+    xassert(false);
     return true;
 }
 

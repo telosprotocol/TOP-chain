@@ -22,6 +22,24 @@ bool xtop_test_elect_consensus_group_algorithm::test_elect(common::xzone_id_t co
     return elect_group(zid, cid, gid, election_timestamp, start_time, random_seed, group_size_range, standby_network_result, election_network_result);
 }
 
+common::xnode_type_t xtop_test_elect_nonconsensus_group_algorithm::standby_type(common::xzone_id_t const & zid,
+                                                                             common::xcluster_id_t const & cid,
+                                                                             common::xgroup_id_t const & gid) const {
+    if (zid == common::xedge_zone_id) {
+        return common::xnode_type_t::edge;
+    }
+
+    if (gid == common::xarchive_group_id) {
+        return common::xnode_type_t::storage_archive;
+    }
+
+    if (gid == common::xfull_node_group_id) {
+        return common::xnode_type_t::storage_full_node;
+    }
+
+    return common::xnode_type_t::invalid;
+}
+
 xtop_test_elect_nonconsensus_group_algorithm::xtop_test_elect_nonconsensus_group_algorithm(common::xnetwork_id_t const & network_id) : xbase_t{network_id} {}
 
 bool xtop_test_elect_nonconsensus_group_algorithm::test_elect(common::xzone_id_t const & zid,

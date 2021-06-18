@@ -15,8 +15,7 @@ class GossipRRS : public GossipInterface {
 public:
     explicit GossipRRS(transport::TransportPtr transport_ptr);
     virtual ~GossipRRS();
-    virtual void Broadcast(uint64_t local_hash64, transport::protobuf::RoutingMessage & message, std::shared_ptr<std::vector<kadmlia::NodeInfoPtr>> neighbors);
-    virtual void Broadcast(transport::protobuf::RoutingMessage & message, kadmlia::RoutingTablePtr & routing_table);
+    void Broadcast(uint64_t local_hash64, transport::protobuf::RoutingMessage & message, std::shared_ptr<std::vector<kadmlia::NodeInfoPtr>> neighbors) override;
 
     void BroadcastHash(transport::protobuf::RoutingMessage & message, std::vector<kadmlia::NodeInfoPtr> & neighbors);
 };

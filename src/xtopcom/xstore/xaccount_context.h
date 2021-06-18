@@ -23,8 +23,6 @@ namespace top { namespace store {
 
 using data::xtransaction_result_t;
 
-#define HASH_POINTERS_KEY   "_haskpt_key_"
-
 const uint16_t MIN_VOTE_LOCK_DAYS = 30;
 const uint16_t MAX_VOTE_LOCK_DAYS = 570;
 const uint64_t AMPLIFY_FACTOR = 1e6;
@@ -81,9 +79,6 @@ class xaccount_context_t {
 
     int32_t  update_disk(uint64_t);
 
-    uint64_t get_tgas_limit();
-    void     set_tgas_limit(uint64_t tgas_limit) { m_tgas_limit = tgas_limit;}
-
     int32_t other_balance_to_available_balance(const std::string & property_name, base::vtoken_t token);
     int32_t available_balance_to_other_balance(const std::string & property_name, base::vtoken_t token);
 
@@ -99,9 +94,6 @@ class xaccount_context_t {
 
     void deserilize_vote(const std::string& str, uint64_t& vote_num, uint16_t& duration, uint64_t& lock_time);
     std::string serilize_vote(uint64_t vote_num, uint16_t duration, uint64_t lock_time);
-
-    int32_t set_contract_code(const std::string &code);
-    int32_t get_contract_code(std::string &code);
 
     xstring_ptr_t string_read_get(const std::string& prop_name, int32_t & error_code);
     xstrdeque_ptr_t deque_read_get(const std::string& prop_name, int32_t & error_code);
@@ -146,12 +138,6 @@ class xaccount_context_t {
     int32_t create_transfer_tx(const std::string & receiver, uint64_t amount);
     int32_t generate_tx(const std::string& target_addr, const std::string& func_name, const std::string& func_param);
     int32_t check_create_property(const std::string& key);
-
-    int32_t set_contract_sub_account(const std::string& value);
-    int32_t set_contract_parent_account(const uint64_t amount, const std::string& value);
-    int32_t sub_contract_sub_account_check(const std::string& value);
-
-    int32_t get_parent_account(std::string &value);
 
     void set_source_pay_info(const data::xaction_asset_out& source_pay_info);
     const data::xaction_asset_out& get_source_pay_info();

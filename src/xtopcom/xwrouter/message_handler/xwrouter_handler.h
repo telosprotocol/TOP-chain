@@ -7,7 +7,10 @@
 #include <memory>
 
 #include "xbase/xbase.h"
-#include "xbase/xrouter.h"
+// #include "xbase/xrouter.h"
+// #include "xkad/routing_table/elect_routing_table.h"
+// #include "xkad/routing_table/routing_table_base.h"
+#include "xpbase/base/kad_key/kadmlia_key.h"
 
 namespace top {
 
@@ -21,14 +24,12 @@ class RoutingMessage;
 };
 };
 
-namespace base {
-class XipParser;
-};
-
 namespace kadmlia {
-class RoutingTable;
+class ElectRoutingTable;
+typedef std::shared_ptr<ElectRoutingTable> ElectRoutingTablePtr;
+class RootRoutingTable;
+typedef std::shared_ptr<RootRoutingTable> RootRoutingTablePtr;
 struct NodeInfo;
-typedef std::shared_ptr<RoutingTable> RoutingTablePtr;
 typedef std::shared_ptr<NodeInfo> NodeInfoPtr;
 };
 
@@ -45,7 +46,8 @@ public:
     WrouterHandler(transport::TransportPtr transport_ptr,
                    std::shared_ptr<gossip::GossipInterface> bloom_gossip_ptr,
                    std::shared_ptr<gossip::GossipInterface> bloom_layer_gossip_ptr,
-                   std::shared_ptr<gossip::GossipInterface> gossip_rrs_ptr);
+                   std::shared_ptr<gossip::GossipInterface> gossip_rrs_ptr,
+                   std::shared_ptr<gossip::GossipInterface> gossip_dispatcher_ptr);
     virtual ~WrouterHandler();
 
     // xip
@@ -68,29 +70,34 @@ public:
             const std::string& ip,
             uint16_t port) { return 0; }
 
-    virtual bool CloserToTarget(
-            const std::string& id1,
-            const std::string& id2,
-            const std::string& target_id);
+    // virtual bool CloserToTarget(
+    //         const std::string& id1,
+    //         const std::string& id2,
+    //         const std::string& target_id);
 
 protected:
-    kadmlia::RoutingTablePtr FindRoutingTable(
-            bool is_root,
-            uint64_t service_type,
-            bool root_backup,
-            const std::string msg_des_node_id = "");
-    std::vector<kadmlia::NodeInfoPtr> GetClosestNodes(
-            kadmlia::RoutingTablePtr routing_table,
-            const std::string& target_id,
-            uint32_t number_to_get,
-            bool base_xip);
-    std::vector<kadmlia::NodeInfoPtr> GetRandomNodes(std::vector<kadmlia::NodeInfoPtr>& neighbors,uint32_t number_to_get) const;
+    kadmlia::RootRoutingTablePtr FindRootRoutingTable();
+
+    kadmlia::ElectRoutingTablePtr FindElectRoutingTable(base::ServiceType service_type);
+
+//     kadmlia::RoutingTablePtr FindRoutingTable(
+//             bool is_root,
+//             base::ServiceType service_type,
+//             bool root_backup,
+//             const std::string msg_des_node_id = "");
+    // std::vector<kadmlia::NodeInfoPtr> GetClosestNodes(
+    //         kadmlia::RoutingTablePtr routing_table,
+    //         const std::string& target_id,
+    //         uint32_t number_to_get,
+    //         bool base_xip);
+    // std::vector<kadmlia::NodeInfoPtr> GetRandomNodes(std::vector<kadmlia::NodeInfoPtr>& neighbors,uint32_t number_to_get) const;
 
 protected:
     transport::TransportPtr transport_ptr_;
     std::shared_ptr<gossip::GossipInterface> bloom_gossip_ptr_;
     std::shared_ptr<gossip::GossipInterface> bloom_layer_gossip_ptr_;
     std::shared_ptr<gossip::GossipInterface> gossip_rrs_ptr_;
+    std::shared_ptr<gossip::GossipInterface> gossip_dispatcher_ptr_;
 };
 
 } // namespace wrouter 

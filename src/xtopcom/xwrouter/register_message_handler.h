@@ -4,10 +4,11 @@
 
 #pragma once
 
-#include <functional>
-#include "xtransport/transport_fwd.h"
-#include "xkad/proto/kadmlia.pb.h"
 #include "xbase/xpacket.h"
+#include "xkad/proto/kadmlia.pb.h"
+#include "xtransport/transport_fwd.h"
+
+#include <functional>
 
 namespace top {
 namespace transport {
@@ -17,9 +18,6 @@ namespace wrouter {
 
 void WrouterRegisterMessageHandler(int msg_type, transport::HandlerProc handler_proc);
 void WrouterUnregisterMessageHandler(int msg_type);
-void WrouterRegisterMessageRequestType(int msg_type, int request_type);
-void WrouterUnregisterMessageRequestType(int msg_type);
-int WrouterGetRequestType(int msg_type);
 
 }  // namespace wrouter
 

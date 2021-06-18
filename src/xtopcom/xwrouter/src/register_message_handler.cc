@@ -18,18 +18,6 @@ void WrouterUnregisterMessageHandler(int msg_type) {
     WrouterMessageHandler::Instance()->RemoveHandler(msg_type);
 }
 
-void WrouterRegisterMessageRequestType(int msg_type, int request_type) {
-    WrouterMessageHandler::Instance()->AddRequestType(msg_type, request_type);
-}
-
-void WrouterUnregisterMessageRequestType(int msg_type) {
-    WrouterMessageHandler::Instance()->RemoveRequestType(msg_type);
-}
-
-int WrouterGetRequestType(int msg_type) {
-    return WrouterMessageHandler::Instance()->GetRequestType(msg_type);
-}
-
 }  // namespace wrouter
 
 }  // namespace top

@@ -94,11 +94,6 @@ xJson::Value get_block_handle::parse_account(const std::string & account) {
         result_json["latest_unit_height"] = static_cast<xJson::UInt64>(account_ptr->get_chain_height());
         result_json["unconfirm_sendtx_num"] = static_cast<xJson::UInt64>(account_ptr->get_unconfirm_sendtx_num());
         result_json["recv_tx_num"] = static_cast<xJson::UInt64>(account_ptr->account_recv_trans_number());
-        std::deque<std::string> contract_address_list;  // TODO(jimmy)
-        account_ptr->deque_get(XPORPERTY_CONTRACT_SUB_ACCOUNT_KEY, contract_address_list);
-        for (auto & addr : contract_address_list) {
-            result_json["contract_address"].append(addr);
-        }
 
         auto timer_height = get_timer_height();
         auto onchain_total_lock_tgas_token = xtgas_singleton::get_instance().get_cache_total_lock_tgas_token();
@@ -123,15 +118,6 @@ xJson::Value get_block_handle::parse_account(const std::string & account) {
         result_json["total_stake_gas"] = static_cast<xJson::UInt64>(total_gas - free_gas);
 
         set_redeem_token_num(account_ptr, result_json);
-
-        if (is_user_contract_address(common::xaccount_address_t{account})) {
-            std::string code;
-            m_store->string_get(account, data::XPROPERTY_CONTRACT_CODE, code);
-            result_json["contract_code"] = code;
-            std::string owner;
-            m_store->string_get(account, data::XPORPERTY_CONTRACT_PARENT_ACCOUNT_KEY, owner);
-            result_json["contract_parent_account"] = owner;
-        }
 
         result_json["table_id"] = account_map_to_table_id(common::xaccount_address_t{account}).get_subaddr();
         common::xnetwork_id_t nid{0};
@@ -770,13 +756,18 @@ void get_block_handle::getEdges() {
 void get_block_handle::getArcs() {
     xJson::Value j;
     std::string const addr = sys_contract_rec_elect_archive_addr;
-    auto property_names = top::data::election::get_property_name_by_addr(common::xaccount_address_t{ addr });
-    for (auto const & prop_name : property_names) {
-        query_account_property(j, addr, prop_name);
-    }
-    // std::string prop_name = std::string(XPROPERTY_CONTRACT_ELECTION_RESULT_KEY) + "_1";
-    // query_account_property(j, addr, prop_name);
+    auto property_name = top::data::election::get_property_by_group_id(common::xarchive_group_id);
+    query_account_property(j, addr, property_name);
     m_js_rsp["value"] = j["archive"];
+    m_js_rsp["chain_id"] = j["chain_id"];
+}
+
+void get_block_handle::getFullNodes() {
+    xJson::Value j;
+    std::string const addr = sys_contract_rec_elect_archive_addr;
+    auto property_name = top::data::election::get_property_by_group_id(common::xfull_node_group_id);
+    query_account_property(j, addr, property_name);
+    m_js_rsp["value"] = j["full_node"];
     m_js_rsp["chain_id"] = j["chain_id"];
 }
 

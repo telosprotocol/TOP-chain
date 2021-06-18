@@ -77,6 +77,10 @@ public:
                     xrange_t<config::xgroup_size_t> const & group_size_range,
                     data::election::xstandby_network_result_t & standby_network_result,
                     data::election::xelection_network_result_t & election_network_result);
+
+    common::xnode_type_t standby_type(common::xzone_id_t const & zid,
+                                      common::xcluster_id_t const & cid,
+                                      common::xgroup_id_t const & gid) const override;
 };
 using xtest_elect_nonconsensus_group_algorithm_t = xtop_test_elect_nonconsensus_group_algorithm;
 

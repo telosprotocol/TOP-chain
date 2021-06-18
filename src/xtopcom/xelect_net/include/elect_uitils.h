@@ -12,12 +12,6 @@ enum ElectVhostSendErrorCode {
     kVHostSendWrouterFailed = 4,
 };
 
-enum SubNetworkType {
-    kInvalid = 0,
-    kElectionCommittee = 1,
-    kBackupNetwork = 2,
-};
-
 }  // namespace elect
 
 }  // namespace top

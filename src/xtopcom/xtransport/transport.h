@@ -21,7 +21,7 @@
 #include "xbase/xsocket.h"
 #include "xbase/xutl.h"
 
-#include "xpbase/base/xbyte_buffer.h"
+#include "xbasic/xbyte_buffer.h"
 #include "transport_fwd.h"
 
 namespace top {

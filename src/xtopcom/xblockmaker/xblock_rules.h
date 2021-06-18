@@ -28,10 +28,6 @@ class xblock_rules final : public xblock_rules_face_t{
                                                  const std::vector<xcons_transaction_ptr_t> & txs,
                                                           std::vector<xcons_transaction_ptr_t> & valid_txs,
                                                           std::vector<xcons_transaction_ptr_t> & pop_txs) const;
-    bool            check_rule_receipts_duplication(const xblock_ptr_t & rules_end_block,
-                                                    const std::vector<xcons_transaction_ptr_t> & txs,
-                                                    std::vector<xcons_transaction_ptr_t> & valid_txs,
-                                                    std::vector<xcons_transaction_ptr_t> & pop_txs) const;
     void            check_rule_batch_txs(const std::vector<xcons_transaction_ptr_t> & txs,
                                             std::vector<xcons_transaction_ptr_t> & valid_txs,
                                             std::vector<xcons_transaction_ptr_t> & pop_txs) const;

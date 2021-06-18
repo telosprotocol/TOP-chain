@@ -15,7 +15,7 @@ void SignalCatch(int sig_no) {
         printf(" click [Enter] to exit.");
         fflush(stdout);
         ::_Exit(0);
-        TOP_INFO("node now existing!");
+        xinfo("node now existing!");
         // do not delete ,just for debug can be quick when terminate
     }
 }
@@ -25,17 +25,16 @@ using namespace top;
 int main(int argc, char ** argv) {
     // register signal
     if (signal(SIGPIPE, SIG_IGN) == SIG_ERR || signal(SIGTERM, top::SignalCatch) == SIG_ERR || signal(SIGINT, top::SignalCatch) == SIG_ERR) {
-        TOP_FATAL("signal failed");
+        xerror("signal failed");
         return 1;
     }
 
-    global_platform_type = kChain;
     global_node_signkey = RandomString(256);
 
     elect::MulNetDemo demo;
     top::base::Config config;
     if (demo.HandleParamsAndConfig(argc, argv, config) != 0) {
-        TOP_FATAL("handle params failed");
+        xerror("handle params failed");
         return 1;
     }
 
@@ -58,17 +57,17 @@ int main(int argc, char ** argv) {
     }
 
     if (!config.Get("node", "node_id", global_node_id)) {
-        TOP_FATAL("no node_id found in config");
+        xerror("no node_id found in config");
         return 1;
     }
 
     if (!demo.Init(config)) {
-        TOP_FATAL("start elect main init failed!");
+        xerror("start elect main init failed!");
         return 1;
     }
 
     if (!demo.Run(config)) {
-        TOP_FATAL("start elect main failed!");
+        xerror("start elect main failed!");
         return 1;
     }
 
@@ -80,6 +79,6 @@ int main(int argc, char ** argv) {
 
     demo.Stop();
 
-    TOP_FATAL("demo main exit");
+    xerror("demo main exit");
     return 0;
 }

@@ -35,14 +35,14 @@ namespace top
 
         public:
             enum_xprove_cert_type   get_prove_type() const {return (enum_xprove_cert_type)(m_prove_type);}
-            base::xvqcert_t*        get_prove_cert() const {return m_prove_cert;}
+            const xobject_ptr_t<base::xvqcert_t> &  get_prove_cert() const {return m_prove_cert;}
             const std::string &     get_prove_path() const {return m_prove_path;}
             std::string             get_prove_root_hash() const;
             bool                    is_valid() const;
         private:
-            base::xvqcert_t*    m_prove_cert{nullptr};
-            uint8_t             m_prove_type{0};
-            std::string         m_prove_path;
+            xobject_ptr_t<base::xvqcert_t>  m_prove_cert{nullptr};
+            uint8_t                         m_prove_type{0};
+            std::string                     m_prove_path;
         };
 
     }  // namespace base

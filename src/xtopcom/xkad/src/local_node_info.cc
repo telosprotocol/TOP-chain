@@ -4,157 +4,69 @@
 
 #include "xkad/routing_table/local_node_info.h"
 
-#include <limits>
-
-#include "xbase/xhash.h"
-#include "common/xdfcurve.h"
-#include "common/xaes.h"
 #include "common/secp256k1.h"
 #include "common/sha2.h"
-
-#include "xpbase/base/rand_util.h"
+#include "common/xaes.h"
+#include "common/xdfcurve.h"
+#include "xbase/xhash.h"
 #include "xpbase/base/top_log.h"
+
+#include <limits>
 
 namespace top {
 
 namespace kadmlia {
 
-LocalNodeInfo::LocalNodeInfo() {}
-LocalNodeInfo::~LocalNodeInfo() {}
+LocalNodeInfo::LocalNodeInfo() {
+}
+LocalNodeInfo::~LocalNodeInfo() {
+}
 
-bool LocalNodeInfo::Init(
-        const std::string& local_ip,
-        uint16_t local_port,
-        bool first_node,
-        const std::string& idtype,
-        base::KadmliaKeyPtr kadmlia_key,
-        uint64_t service_type,
-        uint32_t role) {
+bool LocalNodeInfo::Init(const std::string & local_ip, uint16_t local_port, bool first_node, base::KadmliaKeyPtr kadmlia_key) {
     local_ip_ = local_ip;
     local_port_ = local_port;
     first_node_ = first_node;
-    idtype_ = idtype;
     kadmlia_key_ = kadmlia_key;
-    xip_ = std::make_shared<base::XipParser>(kadmlia_key->Xip());
     if (true) {
         public_ip_ = local_ip_;
         public_port_ = local_port_;
     }
-    TOP_KINFO("local_node_start: kad_key[%s] xip[%s] service_type[%llu] "
-            "public_ip[%s] public_port[%d]",
-            HexEncode(kad_key()).c_str(),
-            HexEncode(xip_->xip()).c_str(),
-            kadmlia_key_->GetServiceType(),
-            public_ip_.c_str(),
-            public_port_);
-    if (!nat_manager_->GetLocalNatType(nat_type_)
-            || nat_type_ == kNatTypeUnknown) {
-        TOP_ERROR("bluenat get local nat type(%d) failed", nat_type_);
-        return false;
-    }
+    TOP_KINFO("local_node_start: kad_key[%s] service_type[%s] public_ip[%s] public_port[%d]",
+              kad_key().c_str(),
+              kadmlia_key_->GetServiceType().info().c_str(),
+              public_ip_.c_str(),
+              public_port_);
     service_type_ = kadmlia_key_->GetServiceType();
-    role_ = role;
-    score_ = RandomUint32() % 100;
-    //hash64_ = base::xhash64_t::digest(global_xid->Get());
+
     hash64_ = base::xhash64_t::digest(kadmlia_key_->Get());
     return true;
 }
 
 void LocalNodeInfo::Reset() {
-    xip_ = nullptr;
     kadmlia_key_ = nullptr;
     local_ip_ = "";
     local_port_ = 0;
     first_node_ = false;
-    private_key_ = "";
-    public_key_ = "";
     public_ip_ = "";
     public_port_ = 0;
-    nat_type_ = kNatTypeUnknown;
-    idtype_ = "";
-    role_ = kRoleInvalid;
 }
 
-void LocalNodeInfo::set_public_ip(const std::string& ip) {
+std::string LocalNodeInfo::kad_key() {
+    return kadmlia_key_->Get();
+}
+std::string LocalNodeInfo::root_kad_key() {
+    return global_xid->Get();
+}
+void LocalNodeInfo::set_public_ip(const std::string & ip) {
     std::unique_lock<std::mutex> lock(public_mutex_);
     public_ip_ = ip;
-    TOP_KINFO("kad_key[%s] set public_ip %s", HexEncode(kad_key()).c_str(), public_ip_.c_str());
+    TOP_KINFO("kad_key[%s] set public_ip %s", kad_key().c_str(), public_ip_.c_str());
 }
 
 void LocalNodeInfo::set_public_port(uint16_t port) {
     std::unique_lock<std::mutex> lock(public_mutex_);
     public_port_ = port;
-    TOP_KINFO("kad_key[%s] set public_port %u", HexEncode(kad_key()).c_str(), public_port_);
-}
-
-bool LocalNodeInfo::IsPublicNode() {
-    std::unique_lock<std::mutex> lock(public_mutex_);
-    return local_ip_ == public_ip_ && local_port_ == public_port_;
-}
-std::string LocalNodeInfo::kad_key() {
-    return id();
-}
-std::string LocalNodeInfo::xid() { return global_xid->Get(); }
-std::string LocalNodeInfo::xip() { return GetXipParser().xip(); }
-
-void LocalNodeInfo::set_xip(const std::string& xip_str) {
-    base::XipParser xip(xip_str);
-    *xip_ = xip;
-}
-
-std::string LocalNodeInfo::id() {
-    assert(kadmlia_key_);
-    std::lock_guard<std::mutex> lock(kadkey_mutex_);
-    return kadmlia_key_->Get();
-}
-
-base::XipParser& LocalNodeInfo::GetXipParser() {
-    return *xip_;
-};
-
-void LocalNodeInfo::AddDxip(const std::string& node_id, const std::string& dxip) {
-    {
-        std::unique_lock<std::mutex> lock(node_dxip_map_mutex_);
-        node_dxip_map_[node_id] = dxip;
-    }
-    {
-        std::unique_lock<std::mutex> lock(dxip_node_map_mutex_);
-        dxip_node_map_[dxip] = node_id;
-    }
-}
-
-void LocalNodeInfo::DropDxip(const std::string& node_id) {
-    std::string tmp_dxip;
-    {
-        std::unique_lock<std::mutex> lock(node_dxip_map_mutex_);
-        auto ifind = node_dxip_map_.find(node_id);
-        if (ifind == node_dxip_map_.end()) {
-            return;
-        }
-        tmp_dxip = ifind->second;
-        node_dxip_map_.erase(ifind);
-        TOP_DEBUG("dropdxip1: node(%s) dxip(%s)",
-                HexSubstr(node_id).c_str(),
-                HexEncode(tmp_dxip).c_str());
-    }
-    {
-        std::unique_lock<std::mutex> lock(dxip_node_map_mutex_);
-        auto ifind = dxip_node_map_.find(tmp_dxip);
-        if (ifind != dxip_node_map_.end()) {
-            dxip_node_map_.erase(ifind);
-            TOP_DEBUG("dropdxip2: node(%s)", HexSubstr(node_id).c_str());
-        }
-    }
-}
-
-
-bool LocalNodeInfo::HasDynamicXip(const std::string& dxip) {
-    std::unique_lock<std::mutex> lock(dxip_node_map_mutex_);
-    auto ifind = dxip_node_map_.find(dxip);
-    if (ifind != dxip_node_map_.end()) {
-        return true;
-    }
-    return false;
+    TOP_KINFO("kad_key[%s] set public_port %u", kad_key().c_str(), public_port_);
 }
 
 }  // namespace kadmlia

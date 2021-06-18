@@ -117,6 +117,10 @@ do
         CMAKE_EXTRA_OPTIONS+=" -DNO_TX_BATCH=ON"
         echo "BUILD WITH NO_TX_BATCH"
     ;;
+    create_user)
+        CMAKE_EXTRA_OPTIONS+=" -DENABLE_CREATE_USER=ON"
+        echo "BUILD WITH ENABLE_CREATE_USER"
+    ;;
     db_cache)
         CMAKE_EXTRA_OPTIONS+=" -DDB_CACHE=ON"
         echo "BUILD WITH DB_CACHE"

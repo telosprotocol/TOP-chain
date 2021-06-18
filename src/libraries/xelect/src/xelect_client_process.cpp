@@ -22,7 +22,6 @@
 NS_BEG2(top, elect)
 using base::xstring_utl;
 using data::xblock_ptr_t;
-using data::XPORPERTY_CONTRACT_BLOCK_CONTENT_KEY;
 using mbus::xevent_ptr_t;
 using mbus::xevent_store_t;
 

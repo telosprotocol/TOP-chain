@@ -8,10 +8,17 @@
 
 #include "xvledger/xtxreceipt.h"
 #include "xvledger/xvaccount.h"
+#include "xvledger/xvtxindex.h"
 #include "xdata/xtransaction.h"
 #include "xdata/xlightunit_info.h"
 
 namespace top { namespace data {
+
+using base::enum_transaction_subtype;
+using base::enum_transaction_subtype_self;
+using base::enum_transaction_subtype_send;
+using base::enum_transaction_subtype_recv;
+using base::enum_transaction_subtype_confirm;
 
 class xcons_transaction_t : public xbase_dataunit_t<xcons_transaction_t, xdata_type_cons_transaction> {
  public:
@@ -45,13 +52,13 @@ class xcons_transaction_t : public xbase_dataunit_t<xcons_transaction_t, xdata_t
     const xaction_t &       get_source_action()const {return m_tx->get_source_action();}
     const xaction_t &       get_target_action()const {return m_tx->get_target_action();}
 
-    enum_transaction_subtype  get_tx_subtype() const {return (enum_transaction_subtype)m_tx->get_tx_subtype();}
-    std::string             get_tx_subtype_str() const {return m_tx->get_tx_subtype_str();}
+    enum_transaction_subtype  get_tx_subtype() const {return m_subtype;}
+    std::string             get_tx_subtype_str() const {return base::xvtxkey_t::transaction_subtype_to_string(m_subtype);}
     std::string             get_tx_dump_key() const {return base::xvtxkey_t::transaction_hash_subtype_to_string(m_tx->get_digest_str(), get_tx_subtype());}
-    bool                    is_self_tx() const {return m_tx->get_tx_subtype() == enum_transaction_subtype_self;}
-    bool                    is_send_tx() const {return m_tx->get_tx_subtype() == enum_transaction_subtype_send;}
-    bool                    is_recv_tx() const {return m_tx->get_tx_subtype() == enum_transaction_subtype_recv;}
-    bool                    is_confirm_tx() const {return m_tx->get_tx_subtype() == enum_transaction_subtype_confirm;}
+    bool                    is_self_tx() const {return get_tx_subtype() == enum_transaction_subtype_self;}
+    bool                    is_send_tx() const {return get_tx_subtype() == enum_transaction_subtype_send;}
+    bool                    is_recv_tx() const {return get_tx_subtype() == enum_transaction_subtype_recv;}
+    bool                    is_confirm_tx() const {return get_tx_subtype() == enum_transaction_subtype_confirm;}
     std::string             get_digest_hex_str() const {return m_tx->get_digest_hex_str();}
     uint32_t                get_last_action_used_tgas() const;
     uint32_t                get_last_action_used_deposit() const;
@@ -78,28 +85,31 @@ class xcons_transaction_t : public xbase_dataunit_t<xcons_transaction_t, xdata_t
     uint32_t                get_current_receipt_id() const {return m_execute_state.get_receipt_id();}
     void                    set_current_receipt_id(base::xtable_shortid_t tableid, uint64_t value) {m_execute_state.set_receipt_id(tableid, value);}
 
-    void                    set_unit_height(uint64_t unit_height) {m_unit_height = unit_height;}
-    uint64_t                get_unit_height() const noexcept {return m_unit_height;}
-
     uint64_t                get_receipt_clock() const {return get_prove_cert()->get_clock();}
     uint64_t                get_receipt_gmtime() const {return get_prove_cert()->get_gmtime();}
     bool                    is_receipt_valid() const {return m_receipt->is_valid();}
 
+ public:  // for debug use
+    void                    set_push_pool_timestamp(uint64_t push_pool_timestamp) {m_push_pool_timestamp = push_pool_timestamp;};
+    uint64_t                get_push_pool_timestamp() const {return m_push_pool_timestamp;}
+
  public:
-    bool                    get_receipt_prove_cert_and_account(const base::xvqcert_t* & cert, std::string & account) const;
+    xobject_ptr_t<base::xvqcert_t> get_receipt_prove_cert_and_account(std::string & account) const;
 
  private:
+    void                    set_tx_subtype(enum_transaction_subtype _subtype);
     void                    update_transation();
     uint64_t                get_dump_receipt_id() const;
-    const base::xvqcert_t*  get_prove_cert() const {return m_receipt->get_prove_cert();}
+    const xobject_ptr_t<base::xvqcert_t> &  get_prove_cert() const {return m_receipt->get_prove_cert();}
 
  private:
     xtransaction_ptr_t          m_tx{nullptr};
     base::xtx_receipt_ptr_t     m_receipt{nullptr};
 
  private:  // local member, should not serialize
-    xtransaction_exec_state_t    m_execute_state;
-    uint64_t                     m_unit_height{0};
+    enum_transaction_subtype    m_subtype{base::enum_transaction_subtype_invalid};
+    uint64_t                    m_push_pool_timestamp{0};
+    xtransaction_exec_state_t   m_execute_state;
 };
 
 using xcons_transaction_ptr_t = xobject_ptr_t<xcons_transaction_t>;

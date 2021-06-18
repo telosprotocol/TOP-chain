@@ -57,7 +57,9 @@ private:
     bool is_belong_to_service(xtable_id_t tableid) const;
     void on_message_receipt(vnetwork::xvnode_address_t const & sender, vnetwork::xmessage_t const & message);
     void on_message_unit_receipt(vnetwork::xvnode_address_t const & sender, vnetwork::xmessage_t const & message);
-    void on_message_receipts_received(vnetwork::xvnode_address_t const & sender, vnetwork::xmessage_t const & message);
+    void on_message_push_receipt_received(vnetwork::xvnode_address_t const & sender, vnetwork::xmessage_t const & message);
+    void on_message_pull_recv_receipt_received(vnetwork::xvnode_address_t const & sender, vnetwork::xmessage_t const & message);
+    void on_message_pull_confirm_receipt_received(vnetwork::xvnode_address_t const & sender, vnetwork::xmessage_t const & message);
     void check_and_response_recv_receipt(const xcons_transaction_ptr_t & cons_tx);
     void auditor_forward_receipt_to_shard(const xcons_transaction_ptr_t & cons_tx, vnetwork::xmessage_t const & message);
     void send_receipt_real(const data::xcons_transaction_ptr_t & cons_tx);

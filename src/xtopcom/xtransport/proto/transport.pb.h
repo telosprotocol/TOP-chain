@@ -38,7 +38,7 @@ namespace protobuf_transport_2eproto {
 struct TableStruct {
   static const ::google::protobuf::internal::ParseTableField entries[];
   static const ::google::protobuf::internal::AuxillaryParseTableField aux[];
-  static const ::google::protobuf::internal::ParseTable schema[6];
+  static const ::google::protobuf::internal::ParseTable schema[4];
   static const ::google::protobuf::internal::FieldMetadata field_metadata[];
   static const ::google::protobuf::internal::SerializationTable serialization_table[];
   static const ::google::protobuf::uint32 offsets[];
@@ -57,15 +57,9 @@ extern GossipSyncBlockDataDefaultTypeInternal _GossipSyncBlockData_default_insta
 class HopInfo;
 class HopInfoDefaultTypeInternal;
 extern HopInfoDefaultTypeInternal _HopInfo_default_instance_;
-class RelayHopInfo;
-class RelayHopInfoDefaultTypeInternal;
-extern RelayHopInfoDefaultTypeInternal _RelayHopInfo_default_instance_;
 class RoutingMessage;
 class RoutingMessageDefaultTypeInternal;
 extern RoutingMessageDefaultTypeInternal _RoutingMessage_default_instance_;
-class VersionTag;
-class VersionTagDefaultTypeInternal;
-extern VersionTagDefaultTypeInternal _VersionTag_default_instance_;
 }  // namespace protobuf
 }  // namespace transport
 }  // namespace top
@@ -74,9 +68,7 @@ namespace protobuf {
 template<> ::top::transport::protobuf::GossipParams* Arena::CreateMaybeMessage<::top::transport::protobuf::GossipParams>(Arena*);
 template<> ::top::transport::protobuf::GossipSyncBlockData* Arena::CreateMaybeMessage<::top::transport::protobuf::GossipSyncBlockData>(Arena*);
 template<> ::top::transport::protobuf::HopInfo* Arena::CreateMaybeMessage<::top::transport::protobuf::HopInfo>(Arena*);
-template<> ::top::transport::protobuf::RelayHopInfo* Arena::CreateMaybeMessage<::top::transport::protobuf::RelayHopInfo>(Arena*);
 template<> ::top::transport::protobuf::RoutingMessage* Arena::CreateMaybeMessage<::top::transport::protobuf::RoutingMessage>(Arena*);
-template<> ::top::transport::protobuf::VersionTag* Arena::CreateMaybeMessage<::top::transport::protobuf::VersionTag>(Arena*);
 }  // namespace protobuf
 }  // namespace google
 namespace top {
@@ -235,306 +227,6 @@ class HopInfo : public ::google::protobuf::Message /* @@protoc_insertion_point(c
 };
 // -------------------------------------------------------------------
 
-class VersionTag : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:top.transport.protobuf.VersionTag) */ {
- public:
-  VersionTag();
-  virtual ~VersionTag();
-
-  VersionTag(const VersionTag& from);
-
-  inline VersionTag& operator=(const VersionTag& from) {
-    CopyFrom(from);
-    return *this;
-  }
-  #if LANG_CXX11
-  VersionTag(VersionTag&& from) noexcept
-    : VersionTag() {
-    *this = ::std::move(from);
-  }
-
-  inline VersionTag& operator=(VersionTag&& from) noexcept {
-    if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
-      if (this != &from) InternalSwap(&from);
-    } else {
-      CopyFrom(from);
-    }
-    return *this;
-  }
-  #endif
-  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
-    return _internal_metadata_.unknown_fields();
-  }
-  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
-    return _internal_metadata_.mutable_unknown_fields();
-  }
-
-  static const ::google::protobuf::Descriptor* descriptor();
-  static const VersionTag& default_instance();
-
-  static void InitAsDefaultInstance();  // FOR INTERNAL USE ONLY
-  static inline const VersionTag* internal_default_instance() {
-    return reinterpret_cast<const VersionTag*>(
-               &_VersionTag_default_instance_);
-  }
-  static constexpr int kIndexInFileMessages =
-    1;
-
-  void Swap(VersionTag* other);
-  friend void swap(VersionTag& a, VersionTag& b) {
-    a.Swap(&b);
-  }
-
-  // implements Message ----------------------------------------------
-
-  inline VersionTag* New() const final {
-    return CreateMaybeMessage<VersionTag>(NULL);
-  }
-
-  VersionTag* New(::google::protobuf::Arena* arena) const final {
-    return CreateMaybeMessage<VersionTag>(arena);
-  }
-  void CopyFrom(const ::google::protobuf::Message& from) final;
-  void MergeFrom(const ::google::protobuf::Message& from) final;
-  void CopyFrom(const VersionTag& from);
-  void MergeFrom(const VersionTag& from);
-  void Clear() final;
-  bool IsInitialized() const final;
-
-  size_t ByteSizeLong() const final;
-  bool MergePartialFromCodedStream(
-      ::google::protobuf::io::CodedInputStream* input) final;
-  void SerializeWithCachedSizes(
-      ::google::protobuf::io::CodedOutputStream* output) const final;
-  ::google::protobuf::uint8* InternalSerializeWithCachedSizesToArray(
-      bool deterministic, ::google::protobuf::uint8* target) const final;
-  int GetCachedSize() const final { return _cached_size_.Get(); }
-
-  private:
-  void SharedCtor();
-  void SharedDtor();
-  void SetCachedSize(int size) const final;
-  void InternalSwap(VersionTag* other);
-  private:
-  inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
-    return NULL;
-  }
-  inline void* MaybeArenaPtr() const {
-    return NULL;
-  }
-  public:
-
-  ::google::protobuf::Metadata GetMetadata() const final;
-
-  // nested types ----------------------------------------------------
-
-  // accessors -------------------------------------------------------
-
-  // optional bytes version = 1;
-  bool has_version() const;
-  void clear_version();
-  static const int kVersionFieldNumber = 1;
-  const ::std::string& version() const;
-  void set_version(const ::std::string& value);
-  #if LANG_CXX11
-  void set_version(::std::string&& value);
-  #endif
-  void set_version(const char* value);
-  void set_version(const void* value, size_t size);
-  ::std::string* mutable_version();
-  ::std::string* release_version();
-  void set_allocated_version(::std::string* version);
-
-  // optional bytes copyright = 2;
-  bool has_copyright() const;
-  void clear_copyright();
-  static const int kCopyrightFieldNumber = 2;
-  const ::std::string& copyright() const;
-  void set_copyright(const ::std::string& value);
-  #if LANG_CXX11
-  void set_copyright(::std::string&& value);
-  #endif
-  void set_copyright(const char* value);
-  void set_copyright(const void* value, size_t size);
-  ::std::string* mutable_copyright();
-  ::std::string* release_copyright();
-  void set_allocated_copyright(::std::string* copyright);
-
-  // @@protoc_insertion_point(class_scope:top.transport.protobuf.VersionTag)
- private:
-  void set_has_version();
-  void clear_has_version();
-  void set_has_copyright();
-  void clear_has_copyright();
-
-  ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
-  ::google::protobuf::internal::HasBits<1> _has_bits_;
-  mutable ::google::protobuf::internal::CachedSize _cached_size_;
-  ::google::protobuf::internal::ArenaStringPtr version_;
-  ::google::protobuf::internal::ArenaStringPtr copyright_;
-  friend struct ::protobuf_transport_2eproto::TableStruct;
-};
-// -------------------------------------------------------------------
-
-class RelayHopInfo : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:top.transport.protobuf.RelayHopInfo) */ {
- public:
-  RelayHopInfo();
-  virtual ~RelayHopInfo();
-
-  RelayHopInfo(const RelayHopInfo& from);
-
-  inline RelayHopInfo& operator=(const RelayHopInfo& from) {
-    CopyFrom(from);
-    return *this;
-  }
-  #if LANG_CXX11
-  RelayHopInfo(RelayHopInfo&& from) noexcept
-    : RelayHopInfo() {
-    *this = ::std::move(from);
-  }
-
-  inline RelayHopInfo& operator=(RelayHopInfo&& from) noexcept {
-    if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
-      if (this != &from) InternalSwap(&from);
-    } else {
-      CopyFrom(from);
-    }
-    return *this;
-  }
-  #endif
-  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
-    return _internal_metadata_.unknown_fields();
-  }
-  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
-    return _internal_metadata_.mutable_unknown_fields();
-  }
-
-  static const ::google::protobuf::Descriptor* descriptor();
-  static const RelayHopInfo& default_instance();
-
-  static void InitAsDefaultInstance();  // FOR INTERNAL USE ONLY
-  static inline const RelayHopInfo* internal_default_instance() {
-    return reinterpret_cast<const RelayHopInfo*>(
-               &_RelayHopInfo_default_instance_);
-  }
-  static constexpr int kIndexInFileMessages =
-    2;
-
-  void Swap(RelayHopInfo* other);
-  friend void swap(RelayHopInfo& a, RelayHopInfo& b) {
-    a.Swap(&b);
-  }
-
-  // implements Message ----------------------------------------------
-
-  inline RelayHopInfo* New() const final {
-    return CreateMaybeMessage<RelayHopInfo>(NULL);
-  }
-
-  RelayHopInfo* New(::google::protobuf::Arena* arena) const final {
-    return CreateMaybeMessage<RelayHopInfo>(arena);
-  }
-  void CopyFrom(const ::google::protobuf::Message& from) final;
-  void MergeFrom(const ::google::protobuf::Message& from) final;
-  void CopyFrom(const RelayHopInfo& from);
-  void MergeFrom(const RelayHopInfo& from);
-  void Clear() final;
-  bool IsInitialized() const final;
-
-  size_t ByteSizeLong() const final;
-  bool MergePartialFromCodedStream(
-      ::google::protobuf::io::CodedInputStream* input) final;
-  void SerializeWithCachedSizes(
-      ::google::protobuf::io::CodedOutputStream* output) const final;
-  ::google::protobuf::uint8* InternalSerializeWithCachedSizesToArray(
-      bool deterministic, ::google::protobuf::uint8* target) const final;
-  int GetCachedSize() const final { return _cached_size_.Get(); }
-
-  private:
-  void SharedCtor();
-  void SharedDtor();
-  void SetCachedSize(int size) const final;
-  void InternalSwap(RelayHopInfo* other);
-  private:
-  inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
-    return NULL;
-  }
-  inline void* MaybeArenaPtr() const {
-    return NULL;
-  }
-  public:
-
-  ::google::protobuf::Metadata GetMetadata() const final;
-
-  // nested types ----------------------------------------------------
-
-  // accessors -------------------------------------------------------
-
-  // optional bytes relay_entry_id = 1;
-  bool has_relay_entry_id() const;
-  void clear_relay_entry_id();
-  static const int kRelayEntryIdFieldNumber = 1;
-  const ::std::string& relay_entry_id() const;
-  void set_relay_entry_id(const ::std::string& value);
-  #if LANG_CXX11
-  void set_relay_entry_id(::std::string&& value);
-  #endif
-  void set_relay_entry_id(const char* value);
-  void set_relay_entry_id(const void* value, size_t size);
-  ::std::string* mutable_relay_entry_id();
-  ::std::string* release_relay_entry_id();
-  void set_allocated_relay_entry_id(::std::string* relay_entry_id);
-
-  // optional bytes relay_exit_id = 4;
-  bool has_relay_exit_id() const;
-  void clear_relay_exit_id();
-  static const int kRelayExitIdFieldNumber = 4;
-  const ::std::string& relay_exit_id() const;
-  void set_relay_exit_id(const ::std::string& value);
-  #if LANG_CXX11
-  void set_relay_exit_id(::std::string&& value);
-  #endif
-  void set_relay_exit_id(const char* value);
-  void set_relay_exit_id(const void* value, size_t size);
-  ::std::string* mutable_relay_exit_id();
-  ::std::string* release_relay_exit_id();
-  void set_allocated_relay_exit_id(::std::string* relay_exit_id);
-
-  // optional uint64 service_type = 2;
-  bool has_service_type() const;
-  void clear_service_type();
-  static const int kServiceTypeFieldNumber = 2;
-  ::google::protobuf::uint64 service_type() const;
-  void set_service_type(::google::protobuf::uint64 value);
-
-  // optional bool relay_flag = 3;
-  bool has_relay_flag() const;
-  void clear_relay_flag();
-  static const int kRelayFlagFieldNumber = 3;
-  bool relay_flag() const;
-  void set_relay_flag(bool value);
-
-  // @@protoc_insertion_point(class_scope:top.transport.protobuf.RelayHopInfo)
- private:
-  void set_has_relay_entry_id();
-  void clear_has_relay_entry_id();
-  void set_has_service_type();
-  void clear_has_service_type();
-  void set_has_relay_flag();
-  void clear_has_relay_flag();
-  void set_has_relay_exit_id();
-  void clear_has_relay_exit_id();
-
-  ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
-  ::google::protobuf::internal::HasBits<1> _has_bits_;
-  mutable ::google::protobuf::internal::CachedSize _cached_size_;
-  ::google::protobuf::internal::ArenaStringPtr relay_entry_id_;
-  ::google::protobuf::internal::ArenaStringPtr relay_exit_id_;
-  ::google::protobuf::uint64 service_type_;
-  bool relay_flag_;
-  friend struct ::protobuf_transport_2eproto::TableStruct;
-};
-// -------------------------------------------------------------------
-
 class GossipParams : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:top.transport.protobuf.GossipParams) */ {
  public:
   GossipParams();
@@ -577,7 +269,7 @@ class GossipParams : public ::google::protobuf::Message /* @@protoc_insertion_po
                &_GossipParams_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    3;
+    1;
 
   void Swap(GossipParams* other);
   friend void swap(GossipParams& a, GossipParams& b) {
@@ -629,22 +321,10 @@ class GossipParams : public ::google::protobuf::Message /* @@protoc_insertion_po
 
   // accessors -------------------------------------------------------
 
-  // repeated uint32 pass_node = 18;
-  int pass_node_size() const;
-  void clear_pass_node();
-  static const int kPassNodeFieldNumber = 18;
-  ::google::protobuf::uint32 pass_node(int index) const;
-  void set_pass_node(int index, ::google::protobuf::uint32 value);
-  void add_pass_node(::google::protobuf::uint32 value);
-  const ::google::protobuf::RepeatedField< ::google::protobuf::uint32 >&
-      pass_node() const;
-  ::google::protobuf::RepeatedField< ::google::protobuf::uint32 >*
-      mutable_pass_node();
-
-  // optional bytes header_hash = 14;
+  // optional bytes header_hash = 10;
   bool has_header_hash() const;
   void clear_header_hash();
-  static const int kHeaderHashFieldNumber = 14;
+  static const int kHeaderHashFieldNumber = 10;
   const ::std::string& header_hash() const;
   void set_header_hash(const ::std::string& value);
   #if LANG_CXX11
@@ -656,10 +336,10 @@ class GossipParams : public ::google::protobuf::Message /* @@protoc_insertion_po
   ::std::string* release_header_hash();
   void set_allocated_header_hash(::std::string* header_hash);
 
-  // optional bytes block = 15;
+  // optional bytes block = 11;
   bool has_block() const;
   void clear_block();
-  static const int kBlockFieldNumber = 15;
+  static const int kBlockFieldNumber = 11;
   const ::std::string& block() const;
   void set_block(const ::std::string& value);
   #if LANG_CXX11
@@ -671,207 +351,118 @@ class GossipParams : public ::google::protobuf::Message /* @@protoc_insertion_po
   ::std::string* release_block();
   void set_allocated_block(::std::string* block);
 
-  // optional bytes pre_ip = 20;
-  bool has_pre_ip() const;
-  void clear_pre_ip();
-  static const int kPreIpFieldNumber = 20;
-  const ::std::string& pre_ip() const;
-  void set_pre_ip(const ::std::string& value);
-  #if LANG_CXX11
-  void set_pre_ip(::std::string&& value);
-  #endif
-  void set_pre_ip(const char* value);
-  void set_pre_ip(const void* value, size_t size);
-  ::std::string* mutable_pre_ip();
-  ::std::string* release_pre_ip();
-  void set_allocated_pre_ip(::std::string* pre_ip);
-
-  // optional int32 reliable_level = 1;
-  bool has_reliable_level() const;
-  void clear_reliable_level();
-  static const int kReliableLevelFieldNumber = 1;
-  ::google::protobuf::int32 reliable_level() const;
-  void set_reliable_level(::google::protobuf::int32 value);
-
-  // optional uint32 neighber_count = 2;
+  // optional uint32 neighber_count = 1;
   bool has_neighber_count() const;
   void clear_neighber_count();
-  static const int kNeighberCountFieldNumber = 2;
+  static const int kNeighberCountFieldNumber = 1;
   ::google::protobuf::uint32 neighber_count() const;
   void set_neighber_count(::google::protobuf::uint32 value);
 
-  // optional uint32 stop_times = 3;
+  // optional uint32 stop_times = 2;
   bool has_stop_times() const;
   void clear_stop_times();
-  static const int kStopTimesFieldNumber = 3;
+  static const int kStopTimesFieldNumber = 2;
   ::google::protobuf::uint32 stop_times() const;
   void set_stop_times(::google::protobuf::uint32 value);
 
-  // optional int32 gossip_type = 4;
+  // optional int32 gossip_type = 3;
   bool has_gossip_type() const;
   void clear_gossip_type();
-  static const int kGossipTypeFieldNumber = 4;
+  static const int kGossipTypeFieldNumber = 3;
   ::google::protobuf::int32 gossip_type() const;
   void set_gossip_type(::google::protobuf::int32 value);
 
-  // optional int32 evil_rate = 5;
-  bool has_evil_rate() const;
-  void clear_evil_rate();
-  static const int kEvilRateFieldNumber = 5;
-  ::google::protobuf::int32 evil_rate() const;
-  void set_evil_rate(::google::protobuf::int32 value);
-
-  // optional uint32 max_hop_num = 6;
+  // optional uint32 max_hop_num = 4;
   bool has_max_hop_num() const;
   void clear_max_hop_num();
-  static const int kMaxHopNumFieldNumber = 6;
+  static const int kMaxHopNumFieldNumber = 4;
   ::google::protobuf::uint32 max_hop_num() const;
   void set_max_hop_num(::google::protobuf::uint32 value);
 
-  // optional uint64 min_dis = 7;
-  bool has_min_dis() const;
-  void clear_min_dis();
-  static const int kMinDisFieldNumber = 7;
-  ::google::protobuf::uint64 min_dis() const;
-  void set_min_dis(::google::protobuf::uint64 value);
+  // optional uint64 sit1 = 5;
+  bool has_sit1() const;
+  void clear_sit1();
+  static const int kSit1FieldNumber = 5;
+  ::google::protobuf::uint64 sit1() const;
+  void set_sit1(::google::protobuf::uint64 value);
 
-  // optional uint64 max_dis = 8;
-  bool has_max_dis() const;
-  void clear_max_dis();
-  static const int kMaxDisFieldNumber = 8;
-  ::google::protobuf::uint64 max_dis() const;
-  void set_max_dis(::google::protobuf::uint64 value);
+  // optional uint64 sit2 = 6;
+  bool has_sit2() const;
+  void clear_sit2();
+  static const int kSit2FieldNumber = 6;
+  ::google::protobuf::uint64 sit2() const;
+  void set_sit2(::google::protobuf::uint64 value);
 
-  // optional uint64 left_min = 9;
-  bool has_left_min() const;
-  void clear_left_min();
-  static const int kLeftMinFieldNumber = 9;
-  ::google::protobuf::uint64 left_min() const;
-  void set_left_min(::google::protobuf::uint64 value);
+  // optional uint64 sit3 = 7;
+  bool has_sit3() const;
+  void clear_sit3();
+  static const int kSit3FieldNumber = 7;
+  ::google::protobuf::uint64 sit3() const;
+  void set_sit3(::google::protobuf::uint64 value);
 
-  // optional uint64 right_max = 10;
-  bool has_right_max() const;
-  void clear_right_max();
-  static const int kRightMaxFieldNumber = 10;
-  ::google::protobuf::uint64 right_max() const;
-  void set_right_max(::google::protobuf::uint64 value);
+  // optional uint64 sit4 = 8;
+  bool has_sit4() const;
+  void clear_sit4();
+  static const int kSit4FieldNumber = 8;
+  ::google::protobuf::uint64 sit4() const;
+  void set_sit4(::google::protobuf::uint64 value);
 
-  // optional uint32 left_overlap = 11;
-  bool has_left_overlap() const;
-  void clear_left_overlap();
-  static const int kLeftOverlapFieldNumber = 11;
-  ::google::protobuf::uint32 left_overlap() const;
-  void set_left_overlap(::google::protobuf::uint32 value);
+  // optional uint32 overlap_rate = 9;
+  bool has_overlap_rate() const;
+  void clear_overlap_rate();
+  static const int kOverlapRateFieldNumber = 9;
+  ::google::protobuf::uint32 overlap_rate() const;
+  void set_overlap_rate(::google::protobuf::uint32 value);
 
-  // optional uint32 right_overlap = 12;
-  bool has_right_overlap() const;
-  void clear_right_overlap();
-  static const int kRightOverlapFieldNumber = 12;
-  ::google::protobuf::uint32 right_overlap() const;
-  void set_right_overlap(::google::protobuf::uint32 value);
-
-  // optional uint32 switch_layer_hop_num = 13;
-  bool has_switch_layer_hop_num() const;
-  void clear_switch_layer_hop_num();
-  static const int kSwitchLayerHopNumFieldNumber = 13;
-  ::google::protobuf::uint32 switch_layer_hop_num() const;
-  void set_switch_layer_hop_num(::google::protobuf::uint32 value);
-
-  // optional uint32 ign_bloomfilter_level = 16;
-  bool has_ign_bloomfilter_level() const;
-  void clear_ign_bloomfilter_level();
-  static const int kIgnBloomfilterLevelFieldNumber = 16;
-  ::google::protobuf::uint32 ign_bloomfilter_level() const;
-  void set_ign_bloomfilter_level(::google::protobuf::uint32 value);
-
-  // optional bool diff_net = 17;
+  // optional bool diff_net = 12;
   bool has_diff_net() const;
   void clear_diff_net();
-  static const int kDiffNetFieldNumber = 17;
+  static const int kDiffNetFieldNumber = 12;
   bool diff_net() const;
   void set_diff_net(bool value);
 
-  // optional uint32 msg_hash = 19;
-  bool has_msg_hash() const;
-  void clear_msg_hash();
-  static const int kMsgHashFieldNumber = 19;
-  ::google::protobuf::uint32 msg_hash() const;
-  void set_msg_hash(::google::protobuf::uint32 value);
-
-  // optional int32 pre_port = 21;
-  bool has_pre_port() const;
-  void clear_pre_port();
-  static const int kPrePortFieldNumber = 21;
-  ::google::protobuf::int32 pre_port() const;
-  void set_pre_port(::google::protobuf::int32 value);
-
   // @@protoc_insertion_point(class_scope:top.transport.protobuf.GossipParams)
  private:
-  void set_has_reliable_level();
-  void clear_has_reliable_level();
   void set_has_neighber_count();
   void clear_has_neighber_count();
   void set_has_stop_times();
   void clear_has_stop_times();
   void set_has_gossip_type();
   void clear_has_gossip_type();
-  void set_has_evil_rate();
-  void clear_has_evil_rate();
   void set_has_max_hop_num();
   void clear_has_max_hop_num();
-  void set_has_min_dis();
-  void clear_has_min_dis();
-  void set_has_max_dis();
-  void clear_has_max_dis();
-  void set_has_left_min();
-  void clear_has_left_min();
-  void set_has_right_max();
-  void clear_has_right_max();
-  void set_has_left_overlap();
-  void clear_has_left_overlap();
-  void set_has_right_overlap();
-  void clear_has_right_overlap();
-  void set_has_switch_layer_hop_num();
-  void clear_has_switch_layer_hop_num();
+  void set_has_sit1();
+  void clear_has_sit1();
+  void set_has_sit2();
+  void clear_has_sit2();
+  void set_has_sit3();
+  void clear_has_sit3();
+  void set_has_sit4();
+  void clear_has_sit4();
+  void set_has_overlap_rate();
+  void clear_has_overlap_rate();
   void set_has_header_hash();
   void clear_has_header_hash();
   void set_has_block();
   void clear_has_block();
-  void set_has_ign_bloomfilter_level();
-  void clear_has_ign_bloomfilter_level();
   void set_has_diff_net();
   void clear_has_diff_net();
-  void set_has_msg_hash();
-  void clear_has_msg_hash();
-  void set_has_pre_ip();
-  void clear_has_pre_ip();
-  void set_has_pre_port();
-  void clear_has_pre_port();
 
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
   ::google::protobuf::internal::HasBits<1> _has_bits_;
   mutable ::google::protobuf::internal::CachedSize _cached_size_;
-  ::google::protobuf::RepeatedField< ::google::protobuf::uint32 > pass_node_;
   ::google::protobuf::internal::ArenaStringPtr header_hash_;
   ::google::protobuf::internal::ArenaStringPtr block_;
-  ::google::protobuf::internal::ArenaStringPtr pre_ip_;
-  ::google::protobuf::int32 reliable_level_;
   ::google::protobuf::uint32 neighber_count_;
   ::google::protobuf::uint32 stop_times_;
   ::google::protobuf::int32 gossip_type_;
-  ::google::protobuf::int32 evil_rate_;
   ::google::protobuf::uint32 max_hop_num_;
-  ::google::protobuf::uint64 min_dis_;
-  ::google::protobuf::uint64 max_dis_;
-  ::google::protobuf::uint64 left_min_;
-  ::google::protobuf::uint64 right_max_;
-  ::google::protobuf::uint32 left_overlap_;
-  ::google::protobuf::uint32 right_overlap_;
-  ::google::protobuf::uint32 switch_layer_hop_num_;
-  ::google::protobuf::uint32 ign_bloomfilter_level_;
+  ::google::protobuf::uint64 sit1_;
+  ::google::protobuf::uint64 sit2_;
+  ::google::protobuf::uint64 sit3_;
+  ::google::protobuf::uint64 sit4_;
+  ::google::protobuf::uint32 overlap_rate_;
   bool diff_net_;
-  ::google::protobuf::uint32 msg_hash_;
-  ::google::protobuf::int32 pre_port_;
   friend struct ::protobuf_transport_2eproto::TableStruct;
 };
 // -------------------------------------------------------------------
@@ -918,7 +509,7 @@ class GossipSyncBlockData : public ::google::protobuf::Message /* @@protoc_inser
                &_GossipSyncBlockData_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    4;
+    2;
 
   void Swap(GossipSyncBlockData* other);
   friend void swap(GossipSyncBlockData& a, GossipSyncBlockData& b) {
@@ -1058,7 +649,7 @@ class RoutingMessage : public ::google::protobuf::Message /* @@protoc_insertion_
                &_RoutingMessage_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    5;
+    3;
 
   void Swap(RoutingMessage* other);
   friend void swap(RoutingMessage& a, RoutingMessage& b) {
@@ -1122,10 +713,10 @@ class RoutingMessage : public ::google::protobuf::Message /* @@protoc_insertion_
   const ::google::protobuf::RepeatedPtrField< ::top::transport::protobuf::HopInfo >&
       hop_nodes() const;
 
-  // repeated uint64 bloomfilter = 20;
+  // repeated uint64 bloomfilter = 14;
   int bloomfilter_size() const;
   void clear_bloomfilter();
-  static const int kBloomfilterFieldNumber = 20;
+  static const int kBloomfilterFieldNumber = 14;
   ::google::protobuf::uint64 bloomfilter(int index) const;
   void set_bloomfilter(int index, ::google::protobuf::uint64 value);
   void add_bloomfilter(::google::protobuf::uint64 value);
@@ -1133,40 +724,6 @@ class RoutingMessage : public ::google::protobuf::Message /* @@protoc_insertion_
       bloomfilter() const;
   ::google::protobuf::RepeatedField< ::google::protobuf::uint64 >*
       mutable_bloomfilter();
-
-  // repeated .top.transport.protobuf.RelayHopInfo relay_hop_info = 21;
-  int relay_hop_info_size() const;
-  void clear_relay_hop_info();
-  static const int kRelayHopInfoFieldNumber = 21;
-  ::top::transport::protobuf::RelayHopInfo* mutable_relay_hop_info(int index);
-  ::google::protobuf::RepeatedPtrField< ::top::transport::protobuf::RelayHopInfo >*
-      mutable_relay_hop_info();
-  const ::top::transport::protobuf::RelayHopInfo& relay_hop_info(int index) const;
-  ::top::transport::protobuf::RelayHopInfo* add_relay_hop_info();
-  const ::google::protobuf::RepeatedPtrField< ::top::transport::protobuf::RelayHopInfo >&
-      relay_hop_info() const;
-
-  // repeated bytes trace_route = 25;
-  int trace_route_size() const;
-  void clear_trace_route();
-  static const int kTraceRouteFieldNumber = 25;
-  const ::std::string& trace_route(int index) const;
-  ::std::string* mutable_trace_route(int index);
-  void set_trace_route(int index, const ::std::string& value);
-  #if LANG_CXX11
-  void set_trace_route(int index, ::std::string&& value);
-  #endif
-  void set_trace_route(int index, const char* value);
-  void set_trace_route(int index, const void* value, size_t size);
-  ::std::string* add_trace_route();
-  void add_trace_route(const ::std::string& value);
-  #if LANG_CXX11
-  void add_trace_route(::std::string&& value);
-  #endif
-  void add_trace_route(const char* value);
-  void add_trace_route(const void* value, size_t size);
-  const ::google::protobuf::RepeatedPtrField< ::std::string>& trace_route() const;
-  ::google::protobuf::RepeatedPtrField< ::std::string>* mutable_trace_route();
 
   // optional bytes src_node_id = 1;
   bool has_src_node_id() const;
@@ -1213,40 +770,10 @@ class RoutingMessage : public ::google::protobuf::Message /* @@protoc_insertion_
   ::std::string* release_data();
   void set_allocated_data(::std::string* data);
 
-  // optional bytes client_id = 13;
-  bool has_client_id() const;
-  void clear_client_id();
-  static const int kClientIdFieldNumber = 13;
-  const ::std::string& client_id() const;
-  void set_client_id(const ::std::string& value);
-  #if LANG_CXX11
-  void set_client_id(::std::string&& value);
-  #endif
-  void set_client_id(const char* value);
-  void set_client_id(const void* value, size_t size);
-  ::std::string* mutable_client_id();
-  ::std::string* release_client_id();
-  void set_allocated_client_id(::std::string* client_id);
-
-  // optional bytes xrequest_id = 24;
-  bool has_xrequest_id() const;
-  void clear_xrequest_id();
-  static const int kXrequestIdFieldNumber = 24;
-  const ::std::string& xrequest_id() const;
-  void set_xrequest_id(const ::std::string& value);
-  #if LANG_CXX11
-  void set_xrequest_id(::std::string&& value);
-  #endif
-  void set_xrequest_id(const char* value);
-  void set_xrequest_id(const void* value, size_t size);
-  ::std::string* mutable_xrequest_id();
-  ::std::string* release_xrequest_id();
-  void set_allocated_xrequest_id(::std::string* xrequest_id);
-
-  // optional bytes xid = 26;
+  // optional bytes xid = 15;
   bool has_xid() const;
   void clear_xid();
-  static const int kXidFieldNumber = 26;
+  static const int kXidFieldNumber = 15;
   const ::std::string& xid() const;
   void set_xid(const ::std::string& value);
   #if LANG_CXX11
@@ -1258,10 +785,10 @@ class RoutingMessage : public ::google::protobuf::Message /* @@protoc_insertion_
   ::std::string* release_xid();
   void set_allocated_xid(::std::string* xid);
 
-  // optional string debug = 31;
+  // optional string debug = 18;
   bool has_debug() const;
   void clear_debug();
-  static const int kDebugFieldNumber = 31;
+  static const int kDebugFieldNumber = 18;
   const ::std::string& debug() const;
   void set_debug(const ::std::string& value);
   #if LANG_CXX11
@@ -1273,22 +800,10 @@ class RoutingMessage : public ::google::protobuf::Message /* @@protoc_insertion_
   ::std::string* release_debug();
   void set_allocated_debug(::std::string* debug);
 
-  // optional .top.transport.protobuf.VersionTag version_tag = 18;
-  bool has_version_tag() const;
-  void clear_version_tag();
-  static const int kVersionTagFieldNumber = 18;
-  private:
-  const ::top::transport::protobuf::VersionTag& _internal_version_tag() const;
-  public:
-  const ::top::transport::protobuf::VersionTag& version_tag() const;
-  ::top::transport::protobuf::VersionTag* release_version_tag();
-  ::top::transport::protobuf::VersionTag* mutable_version_tag();
-  void set_allocated_version_tag(::top::transport::protobuf::VersionTag* version_tag);
-
-  // optional .top.transport.protobuf.GossipParams gossip = 29;
+  // optional .top.transport.protobuf.GossipParams gossip = 17;
   bool has_gossip() const;
   void clear_gossip();
-  static const int kGossipFieldNumber = 29;
+  static const int kGossipFieldNumber = 17;
   private:
   const ::top::transport::protobuf::GossipParams& _internal_gossip() const;
   public:
@@ -1325,101 +840,45 @@ class RoutingMessage : public ::google::protobuf::Message /* @@protoc_insertion_
   ::google::protobuf::uint32 hop_num() const;
   void set_hop_num(::google::protobuf::uint32 value);
 
-  // optional int32 retry = 9;
-  bool has_retry() const;
-  void clear_retry();
-  static const int kRetryFieldNumber = 9;
-  ::google::protobuf::int32 retry() const;
-  void set_retry(::google::protobuf::int32 value);
-
-  // optional bool client_msg = 10;
-  bool has_client_msg() const;
-  void clear_client_msg();
-  static const int kClientMsgFieldNumber = 10;
-  bool client_msg() const;
-  void set_client_msg(bool value);
-
-  // optional bool relay_flag = 11;
-  bool has_relay_flag() const;
-  void clear_relay_flag();
-  static const int kRelayFlagFieldNumber = 11;
-  bool relay_flag() const;
-  void set_relay_flag(bool value);
-
-  // optional bool request_type = 12;
-  bool has_request_type() const;
-  void clear_request_type();
-  static const int kRequestTypeFieldNumber = 12;
-  bool request_type() const;
-  void set_request_type(bool value);
-
-  // optional bool direct_mode = 14;
-  bool has_direct_mode() const;
-  void clear_direct_mode();
-  static const int kDirectModeFieldNumber = 14;
-  bool direct_mode() const;
-  void set_direct_mode(bool value);
-
-  // optional uint64 src_service_type = 15;
+  // optional uint64 src_service_type = 9;
   bool has_src_service_type() const;
   void clear_src_service_type();
-  static const int kSrcServiceTypeFieldNumber = 15;
+  static const int kSrcServiceTypeFieldNumber = 9;
   ::google::protobuf::uint64 src_service_type() const;
   void set_src_service_type(::google::protobuf::uint64 value);
 
-  // optional uint64 des_service_type = 16;
+  // optional uint64 des_service_type = 10;
   bool has_des_service_type() const;
   void clear_des_service_type();
-  static const int kDesServiceTypeFieldNumber = 16;
+  static const int kDesServiceTypeFieldNumber = 10;
   ::google::protobuf::uint64 des_service_type() const;
   void set_des_service_type(::google::protobuf::uint64 value);
 
-  // optional uint32 status = 17;
-  bool has_status() const;
-  void clear_status();
-  static const int kStatusFieldNumber = 17;
-  ::google::protobuf::uint32 status() const;
-  void set_status(::google::protobuf::uint32 value);
+  // optional uint32 msg_hash = 11;
+  bool has_msg_hash() const;
+  void clear_msg_hash();
+  static const int kMsgHashFieldNumber = 11;
+  ::google::protobuf::uint32 msg_hash() const;
+  void set_msg_hash(::google::protobuf::uint32 value);
 
-  // optional uint32 seq = 23;
-  bool has_seq() const;
-  void clear_seq();
-  static const int kSeqFieldNumber = 23;
-  ::google::protobuf::uint32 seq() const;
-  void set_seq(::google::protobuf::uint32 value);
-
-  // optional bool is_root = 19;
+  // optional bool is_root = 12;
   bool has_is_root() const;
   void clear_is_root();
-  static const int kIsRootFieldNumber = 19;
+  static const int kIsRootFieldNumber = 12;
   bool is_root() const;
   void set_is_root(bool value);
 
-  // optional bool multi_relay = 22;
-  bool has_multi_relay() const;
-  void clear_multi_relay();
-  static const int kMultiRelayFieldNumber = 22;
-  bool multi_relay() const;
-  void set_multi_relay(bool value);
-
-  // optional bool broadcast = 27;
+  // optional bool broadcast = 13;
   bool has_broadcast() const;
   void clear_broadcast();
-  static const int kBroadcastFieldNumber = 27;
+  static const int kBroadcastFieldNumber = 13;
   bool broadcast() const;
   void set_broadcast(bool value);
 
-  // optional bool enable_ack = 30;
-  bool has_enable_ack() const;
-  void clear_enable_ack();
-  static const int kEnableAckFieldNumber = 30;
-  bool enable_ack() const;
-  void set_enable_ack(bool value);
-
-  // optional uint32 priority = 28;
+  // optional uint32 priority = 16;
   bool has_priority() const;
   void clear_priority();
-  static const int kPriorityFieldNumber = 28;
+  static const int kPriorityFieldNumber = 16;
   ::google::protobuf::uint32 priority() const;
   void set_priority(::google::protobuf::uint32 value);
 
@@ -1439,44 +898,22 @@ class RoutingMessage : public ::google::protobuf::Message /* @@protoc_insertion_
   void clear_has_ack_id();
   void set_has_hop_num();
   void clear_has_hop_num();
-  void set_has_retry();
-  void clear_has_retry();
-  void set_has_client_msg();
-  void clear_has_client_msg();
-  void set_has_relay_flag();
-  void clear_has_relay_flag();
-  void set_has_request_type();
-  void clear_has_request_type();
-  void set_has_client_id();
-  void clear_has_client_id();
-  void set_has_direct_mode();
-  void clear_has_direct_mode();
   void set_has_src_service_type();
   void clear_has_src_service_type();
   void set_has_des_service_type();
   void clear_has_des_service_type();
-  void set_has_status();
-  void clear_has_status();
-  void set_has_version_tag();
-  void clear_has_version_tag();
+  void set_has_msg_hash();
+  void clear_has_msg_hash();
   void set_has_is_root();
   void clear_has_is_root();
-  void set_has_multi_relay();
-  void clear_has_multi_relay();
-  void set_has_seq();
-  void clear_has_seq();
-  void set_has_xrequest_id();
-  void clear_has_xrequest_id();
-  void set_has_xid();
-  void clear_has_xid();
   void set_has_broadcast();
   void clear_has_broadcast();
+  void set_has_xid();
+  void clear_has_xid();
   void set_has_priority();
   void clear_has_priority();
   void set_has_gossip();
   void clear_has_gossip();
-  void set_has_enable_ack();
-  void clear_has_enable_ack();
   void set_has_debug();
   void clear_has_debug();
 
@@ -1485,34 +922,21 @@ class RoutingMessage : public ::google::protobuf::Message /* @@protoc_insertion_
   mutable ::google::protobuf::internal::CachedSize _cached_size_;
   ::google::protobuf::RepeatedPtrField< ::top::transport::protobuf::HopInfo > hop_nodes_;
   ::google::protobuf::RepeatedField< ::google::protobuf::uint64 > bloomfilter_;
-  ::google::protobuf::RepeatedPtrField< ::top::transport::protobuf::RelayHopInfo > relay_hop_info_;
-  ::google::protobuf::RepeatedPtrField< ::std::string> trace_route_;
   ::google::protobuf::internal::ArenaStringPtr src_node_id_;
   ::google::protobuf::internal::ArenaStringPtr des_node_id_;
   ::google::protobuf::internal::ArenaStringPtr data_;
-  ::google::protobuf::internal::ArenaStringPtr client_id_;
-  ::google::protobuf::internal::ArenaStringPtr xrequest_id_;
   ::google::protobuf::internal::ArenaStringPtr xid_;
   ::google::protobuf::internal::ArenaStringPtr debug_;
-  ::top::transport::protobuf::VersionTag* version_tag_;
   ::top::transport::protobuf::GossipParams* gossip_;
   ::google::protobuf::int32 type_;
   ::google::protobuf::uint32 id_;
   ::google::protobuf::uint32 ack_id_;
   ::google::protobuf::uint32 hop_num_;
-  ::google::protobuf::int32 retry_;
-  bool client_msg_;
-  bool relay_flag_;
-  bool request_type_;
-  bool direct_mode_;
   ::google::protobuf::uint64 src_service_type_;
   ::google::protobuf::uint64 des_service_type_;
-  ::google::protobuf::uint32 status_;
-  ::google::protobuf::uint32 seq_;
+  ::google::protobuf::uint32 msg_hash_;
   bool is_root_;
-  bool multi_relay_;
   bool broadcast_;
-  bool enable_ack_;
   ::google::protobuf::uint32 priority_;
   friend struct ::protobuf_transport_2eproto::TableStruct;
 };
@@ -1685,361 +1109,17 @@ inline void HopInfo::set_port(::google::protobuf::int32 value) {
 
 // -------------------------------------------------------------------
 
-// VersionTag
-
-// optional bytes version = 1;
-inline bool VersionTag::has_version() const {
-  return (_has_bits_[0] & 0x00000001u) != 0;
-}
-inline void VersionTag::set_has_version() {
-  _has_bits_[0] |= 0x00000001u;
-}
-inline void VersionTag::clear_has_version() {
-  _has_bits_[0] &= ~0x00000001u;
-}
-inline void VersionTag::clear_version() {
-  version_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  clear_has_version();
-}
-inline const ::std::string& VersionTag::version() const {
-  // @@protoc_insertion_point(field_get:top.transport.protobuf.VersionTag.version)
-  return version_.GetNoArena();
-}
-inline void VersionTag::set_version(const ::std::string& value) {
-  set_has_version();
-  version_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:top.transport.protobuf.VersionTag.version)
-}
-#if LANG_CXX11
-inline void VersionTag::set_version(::std::string&& value) {
-  set_has_version();
-  version_.SetNoArena(
-    &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
-  // @@protoc_insertion_point(field_set_rvalue:top.transport.protobuf.VersionTag.version)
-}
-#endif
-inline void VersionTag::set_version(const char* value) {
-  GOOGLE_DCHECK(value != NULL);
-  set_has_version();
-  version_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:top.transport.protobuf.VersionTag.version)
-}
-inline void VersionTag::set_version(const void* value, size_t size) {
-  set_has_version();
-  version_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
-      ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:top.transport.protobuf.VersionTag.version)
-}
-inline ::std::string* VersionTag::mutable_version() {
-  set_has_version();
-  // @@protoc_insertion_point(field_mutable:top.transport.protobuf.VersionTag.version)
-  return version_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-}
-inline ::std::string* VersionTag::release_version() {
-  // @@protoc_insertion_point(field_release:top.transport.protobuf.VersionTag.version)
-  if (!has_version()) {
-    return NULL;
-  }
-  clear_has_version();
-  return version_.ReleaseNonDefaultNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-}
-inline void VersionTag::set_allocated_version(::std::string* version) {
-  if (version != NULL) {
-    set_has_version();
-  } else {
-    clear_has_version();
-  }
-  version_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), version);
-  // @@protoc_insertion_point(field_set_allocated:top.transport.protobuf.VersionTag.version)
-}
-
-// optional bytes copyright = 2;
-inline bool VersionTag::has_copyright() const {
-  return (_has_bits_[0] & 0x00000002u) != 0;
-}
-inline void VersionTag::set_has_copyright() {
-  _has_bits_[0] |= 0x00000002u;
-}
-inline void VersionTag::clear_has_copyright() {
-  _has_bits_[0] &= ~0x00000002u;
-}
-inline void VersionTag::clear_copyright() {
-  copyright_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  clear_has_copyright();
-}
-inline const ::std::string& VersionTag::copyright() const {
-  // @@protoc_insertion_point(field_get:top.transport.protobuf.VersionTag.copyright)
-  return copyright_.GetNoArena();
-}
-inline void VersionTag::set_copyright(const ::std::string& value) {
-  set_has_copyright();
-  copyright_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:top.transport.protobuf.VersionTag.copyright)
-}
-#if LANG_CXX11
-inline void VersionTag::set_copyright(::std::string&& value) {
-  set_has_copyright();
-  copyright_.SetNoArena(
-    &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
-  // @@protoc_insertion_point(field_set_rvalue:top.transport.protobuf.VersionTag.copyright)
-}
-#endif
-inline void VersionTag::set_copyright(const char* value) {
-  GOOGLE_DCHECK(value != NULL);
-  set_has_copyright();
-  copyright_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:top.transport.protobuf.VersionTag.copyright)
-}
-inline void VersionTag::set_copyright(const void* value, size_t size) {
-  set_has_copyright();
-  copyright_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
-      ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:top.transport.protobuf.VersionTag.copyright)
-}
-inline ::std::string* VersionTag::mutable_copyright() {
-  set_has_copyright();
-  // @@protoc_insertion_point(field_mutable:top.transport.protobuf.VersionTag.copyright)
-  return copyright_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-}
-inline ::std::string* VersionTag::release_copyright() {
-  // @@protoc_insertion_point(field_release:top.transport.protobuf.VersionTag.copyright)
-  if (!has_copyright()) {
-    return NULL;
-  }
-  clear_has_copyright();
-  return copyright_.ReleaseNonDefaultNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-}
-inline void VersionTag::set_allocated_copyright(::std::string* copyright) {
-  if (copyright != NULL) {
-    set_has_copyright();
-  } else {
-    clear_has_copyright();
-  }
-  copyright_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), copyright);
-  // @@protoc_insertion_point(field_set_allocated:top.transport.protobuf.VersionTag.copyright)
-}
-
-// -------------------------------------------------------------------
-
-// RelayHopInfo
-
-// optional bytes relay_entry_id = 1;
-inline bool RelayHopInfo::has_relay_entry_id() const {
-  return (_has_bits_[0] & 0x00000001u) != 0;
-}
-inline void RelayHopInfo::set_has_relay_entry_id() {
-  _has_bits_[0] |= 0x00000001u;
-}
-inline void RelayHopInfo::clear_has_relay_entry_id() {
-  _has_bits_[0] &= ~0x00000001u;
-}
-inline void RelayHopInfo::clear_relay_entry_id() {
-  relay_entry_id_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  clear_has_relay_entry_id();
-}
-inline const ::std::string& RelayHopInfo::relay_entry_id() const {
-  // @@protoc_insertion_point(field_get:top.transport.protobuf.RelayHopInfo.relay_entry_id)
-  return relay_entry_id_.GetNoArena();
-}
-inline void RelayHopInfo::set_relay_entry_id(const ::std::string& value) {
-  set_has_relay_entry_id();
-  relay_entry_id_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:top.transport.protobuf.RelayHopInfo.relay_entry_id)
-}
-#if LANG_CXX11
-inline void RelayHopInfo::set_relay_entry_id(::std::string&& value) {
-  set_has_relay_entry_id();
-  relay_entry_id_.SetNoArena(
-    &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
-  // @@protoc_insertion_point(field_set_rvalue:top.transport.protobuf.RelayHopInfo.relay_entry_id)
-}
-#endif
-inline void RelayHopInfo::set_relay_entry_id(const char* value) {
-  GOOGLE_DCHECK(value != NULL);
-  set_has_relay_entry_id();
-  relay_entry_id_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:top.transport.protobuf.RelayHopInfo.relay_entry_id)
-}
-inline void RelayHopInfo::set_relay_entry_id(const void* value, size_t size) {
-  set_has_relay_entry_id();
-  relay_entry_id_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
-      ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:top.transport.protobuf.RelayHopInfo.relay_entry_id)
-}
-inline ::std::string* RelayHopInfo::mutable_relay_entry_id() {
-  set_has_relay_entry_id();
-  // @@protoc_insertion_point(field_mutable:top.transport.protobuf.RelayHopInfo.relay_entry_id)
-  return relay_entry_id_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-}
-inline ::std::string* RelayHopInfo::release_relay_entry_id() {
-  // @@protoc_insertion_point(field_release:top.transport.protobuf.RelayHopInfo.relay_entry_id)
-  if (!has_relay_entry_id()) {
-    return NULL;
-  }
-  clear_has_relay_entry_id();
-  return relay_entry_id_.ReleaseNonDefaultNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-}
-inline void RelayHopInfo::set_allocated_relay_entry_id(::std::string* relay_entry_id) {
-  if (relay_entry_id != NULL) {
-    set_has_relay_entry_id();
-  } else {
-    clear_has_relay_entry_id();
-  }
-  relay_entry_id_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), relay_entry_id);
-  // @@protoc_insertion_point(field_set_allocated:top.transport.protobuf.RelayHopInfo.relay_entry_id)
-}
-
-// optional uint64 service_type = 2;
-inline bool RelayHopInfo::has_service_type() const {
-  return (_has_bits_[0] & 0x00000004u) != 0;
-}
-inline void RelayHopInfo::set_has_service_type() {
-  _has_bits_[0] |= 0x00000004u;
-}
-inline void RelayHopInfo::clear_has_service_type() {
-  _has_bits_[0] &= ~0x00000004u;
-}
-inline void RelayHopInfo::clear_service_type() {
-  service_type_ = GOOGLE_ULONGLONG(0);
-  clear_has_service_type();
-}
-inline ::google::protobuf::uint64 RelayHopInfo::service_type() const {
-  // @@protoc_insertion_point(field_get:top.transport.protobuf.RelayHopInfo.service_type)
-  return service_type_;
-}
-inline void RelayHopInfo::set_service_type(::google::protobuf::uint64 value) {
-  set_has_service_type();
-  service_type_ = value;
-  // @@protoc_insertion_point(field_set:top.transport.protobuf.RelayHopInfo.service_type)
-}
-
-// optional bool relay_flag = 3;
-inline bool RelayHopInfo::has_relay_flag() const {
-  return (_has_bits_[0] & 0x00000008u) != 0;
-}
-inline void RelayHopInfo::set_has_relay_flag() {
-  _has_bits_[0] |= 0x00000008u;
-}
-inline void RelayHopInfo::clear_has_relay_flag() {
-  _has_bits_[0] &= ~0x00000008u;
-}
-inline void RelayHopInfo::clear_relay_flag() {
-  relay_flag_ = false;
-  clear_has_relay_flag();
-}
-inline bool RelayHopInfo::relay_flag() const {
-  // @@protoc_insertion_point(field_get:top.transport.protobuf.RelayHopInfo.relay_flag)
-  return relay_flag_;
-}
-inline void RelayHopInfo::set_relay_flag(bool value) {
-  set_has_relay_flag();
-  relay_flag_ = value;
-  // @@protoc_insertion_point(field_set:top.transport.protobuf.RelayHopInfo.relay_flag)
-}
-
-// optional bytes relay_exit_id = 4;
-inline bool RelayHopInfo::has_relay_exit_id() const {
-  return (_has_bits_[0] & 0x00000002u) != 0;
-}
-inline void RelayHopInfo::set_has_relay_exit_id() {
-  _has_bits_[0] |= 0x00000002u;
-}
-inline void RelayHopInfo::clear_has_relay_exit_id() {
-  _has_bits_[0] &= ~0x00000002u;
-}
-inline void RelayHopInfo::clear_relay_exit_id() {
-  relay_exit_id_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  clear_has_relay_exit_id();
-}
-inline const ::std::string& RelayHopInfo::relay_exit_id() const {
-  // @@protoc_insertion_point(field_get:top.transport.protobuf.RelayHopInfo.relay_exit_id)
-  return relay_exit_id_.GetNoArena();
-}
-inline void RelayHopInfo::set_relay_exit_id(const ::std::string& value) {
-  set_has_relay_exit_id();
-  relay_exit_id_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:top.transport.protobuf.RelayHopInfo.relay_exit_id)
-}
-#if LANG_CXX11
-inline void RelayHopInfo::set_relay_exit_id(::std::string&& value) {
-  set_has_relay_exit_id();
-  relay_exit_id_.SetNoArena(
-    &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
-  // @@protoc_insertion_point(field_set_rvalue:top.transport.protobuf.RelayHopInfo.relay_exit_id)
-}
-#endif
-inline void RelayHopInfo::set_relay_exit_id(const char* value) {
-  GOOGLE_DCHECK(value != NULL);
-  set_has_relay_exit_id();
-  relay_exit_id_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:top.transport.protobuf.RelayHopInfo.relay_exit_id)
-}
-inline void RelayHopInfo::set_relay_exit_id(const void* value, size_t size) {
-  set_has_relay_exit_id();
-  relay_exit_id_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
-      ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:top.transport.protobuf.RelayHopInfo.relay_exit_id)
-}
-inline ::std::string* RelayHopInfo::mutable_relay_exit_id() {
-  set_has_relay_exit_id();
-  // @@protoc_insertion_point(field_mutable:top.transport.protobuf.RelayHopInfo.relay_exit_id)
-  return relay_exit_id_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-}
-inline ::std::string* RelayHopInfo::release_relay_exit_id() {
-  // @@protoc_insertion_point(field_release:top.transport.protobuf.RelayHopInfo.relay_exit_id)
-  if (!has_relay_exit_id()) {
-    return NULL;
-  }
-  clear_has_relay_exit_id();
-  return relay_exit_id_.ReleaseNonDefaultNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-}
-inline void RelayHopInfo::set_allocated_relay_exit_id(::std::string* relay_exit_id) {
-  if (relay_exit_id != NULL) {
-    set_has_relay_exit_id();
-  } else {
-    clear_has_relay_exit_id();
-  }
-  relay_exit_id_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), relay_exit_id);
-  // @@protoc_insertion_point(field_set_allocated:top.transport.protobuf.RelayHopInfo.relay_exit_id)
-}
-
-// -------------------------------------------------------------------
-
 // GossipParams
 
-// optional int32 reliable_level = 1;
-inline bool GossipParams::has_reliable_level() const {
-  return (_has_bits_[0] & 0x00000008u) != 0;
-}
-inline void GossipParams::set_has_reliable_level() {
-  _has_bits_[0] |= 0x00000008u;
-}
-inline void GossipParams::clear_has_reliable_level() {
-  _has_bits_[0] &= ~0x00000008u;
-}
-inline void GossipParams::clear_reliable_level() {
-  reliable_level_ = 0;
-  clear_has_reliable_level();
-}
-inline ::google::protobuf::int32 GossipParams::reliable_level() const {
-  // @@protoc_insertion_point(field_get:top.transport.protobuf.GossipParams.reliable_level)
-  return reliable_level_;
-}
-inline void GossipParams::set_reliable_level(::google::protobuf::int32 value) {
-  set_has_reliable_level();
-  reliable_level_ = value;
-  // @@protoc_insertion_point(field_set:top.transport.protobuf.GossipParams.reliable_level)
-}
-
-// optional uint32 neighber_count = 2;
+// optional uint32 neighber_count = 1;
 inline bool GossipParams::has_neighber_count() const {
-  return (_has_bits_[0] & 0x00000010u) != 0;
+  return (_has_bits_[0] & 0x00000004u) != 0;
 }
 inline void GossipParams::set_has_neighber_count() {
-  _has_bits_[0] |= 0x00000010u;
+  _has_bits_[0] |= 0x00000004u;
 }
 inline void GossipParams::clear_has_neighber_count() {
-  _has_bits_[0] &= ~0x00000010u;
+  _has_bits_[0] &= ~0x00000004u;
 }
 inline void GossipParams::clear_neighber_count() {
   neighber_count_ = 0u;
@@ -2055,15 +1135,15 @@ inline void GossipParams::set_neighber_count(::google::protobuf::uint32 value) {
   // @@protoc_insertion_point(field_set:top.transport.protobuf.GossipParams.neighber_count)
 }
 
-// optional uint32 stop_times = 3;
+// optional uint32 stop_times = 2;
 inline bool GossipParams::has_stop_times() const {
-  return (_has_bits_[0] & 0x00000020u) != 0;
+  return (_has_bits_[0] & 0x00000008u) != 0;
 }
 inline void GossipParams::set_has_stop_times() {
-  _has_bits_[0] |= 0x00000020u;
+  _has_bits_[0] |= 0x00000008u;
 }
 inline void GossipParams::clear_has_stop_times() {
-  _has_bits_[0] &= ~0x00000020u;
+  _has_bits_[0] &= ~0x00000008u;
 }
 inline void GossipParams::clear_stop_times() {
   stop_times_ = 0u;
@@ -2079,15 +1159,15 @@ inline void GossipParams::set_stop_times(::google::protobuf::uint32 value) {
   // @@protoc_insertion_point(field_set:top.transport.protobuf.GossipParams.stop_times)
 }
 
-// optional int32 gossip_type = 4;
+// optional int32 gossip_type = 3;
 inline bool GossipParams::has_gossip_type() const {
-  return (_has_bits_[0] & 0x00000040u) != 0;
+  return (_has_bits_[0] & 0x00000010u) != 0;
 }
 inline void GossipParams::set_has_gossip_type() {
-  _has_bits_[0] |= 0x00000040u;
+  _has_bits_[0] |= 0x00000010u;
 }
 inline void GossipParams::clear_has_gossip_type() {
-  _has_bits_[0] &= ~0x00000040u;
+  _has_bits_[0] &= ~0x00000010u;
 }
 inline void GossipParams::clear_gossip_type() {
   gossip_type_ = 0;
@@ -2103,39 +1183,15 @@ inline void GossipParams::set_gossip_type(::google::protobuf::int32 value) {
   // @@protoc_insertion_point(field_set:top.transport.protobuf.GossipParams.gossip_type)
 }
 
-// optional int32 evil_rate = 5;
-inline bool GossipParams::has_evil_rate() const {
-  return (_has_bits_[0] & 0x00000080u) != 0;
-}
-inline void GossipParams::set_has_evil_rate() {
-  _has_bits_[0] |= 0x00000080u;
-}
-inline void GossipParams::clear_has_evil_rate() {
-  _has_bits_[0] &= ~0x00000080u;
-}
-inline void GossipParams::clear_evil_rate() {
-  evil_rate_ = 0;
-  clear_has_evil_rate();
-}
-inline ::google::protobuf::int32 GossipParams::evil_rate() const {
-  // @@protoc_insertion_point(field_get:top.transport.protobuf.GossipParams.evil_rate)
-  return evil_rate_;
-}
-inline void GossipParams::set_evil_rate(::google::protobuf::int32 value) {
-  set_has_evil_rate();
-  evil_rate_ = value;
-  // @@protoc_insertion_point(field_set:top.transport.protobuf.GossipParams.evil_rate)
-}
-
-// optional uint32 max_hop_num = 6;
+// optional uint32 max_hop_num = 4;
 inline bool GossipParams::has_max_hop_num() const {
-  return (_has_bits_[0] & 0x00000100u) != 0;
+  return (_has_bits_[0] & 0x00000020u) != 0;
 }
 inline void GossipParams::set_has_max_hop_num() {
-  _has_bits_[0] |= 0x00000100u;
+  _has_bits_[0] |= 0x00000020u;
 }
 inline void GossipParams::clear_has_max_hop_num() {
-  _has_bits_[0] &= ~0x00000100u;
+  _has_bits_[0] &= ~0x00000020u;
 }
 inline void GossipParams::clear_max_hop_num() {
   max_hop_num_ = 0u;
@@ -2151,175 +1207,127 @@ inline void GossipParams::set_max_hop_num(::google::protobuf::uint32 value) {
   // @@protoc_insertion_point(field_set:top.transport.protobuf.GossipParams.max_hop_num)
 }
 
-// optional uint64 min_dis = 7;
-inline bool GossipParams::has_min_dis() const {
+// optional uint64 sit1 = 5;
+inline bool GossipParams::has_sit1() const {
+  return (_has_bits_[0] & 0x00000040u) != 0;
+}
+inline void GossipParams::set_has_sit1() {
+  _has_bits_[0] |= 0x00000040u;
+}
+inline void GossipParams::clear_has_sit1() {
+  _has_bits_[0] &= ~0x00000040u;
+}
+inline void GossipParams::clear_sit1() {
+  sit1_ = GOOGLE_ULONGLONG(0);
+  clear_has_sit1();
+}
+inline ::google::protobuf::uint64 GossipParams::sit1() const {
+  // @@protoc_insertion_point(field_get:top.transport.protobuf.GossipParams.sit1)
+  return sit1_;
+}
+inline void GossipParams::set_sit1(::google::protobuf::uint64 value) {
+  set_has_sit1();
+  sit1_ = value;
+  // @@protoc_insertion_point(field_set:top.transport.protobuf.GossipParams.sit1)
+}
+
+// optional uint64 sit2 = 6;
+inline bool GossipParams::has_sit2() const {
+  return (_has_bits_[0] & 0x00000080u) != 0;
+}
+inline void GossipParams::set_has_sit2() {
+  _has_bits_[0] |= 0x00000080u;
+}
+inline void GossipParams::clear_has_sit2() {
+  _has_bits_[0] &= ~0x00000080u;
+}
+inline void GossipParams::clear_sit2() {
+  sit2_ = GOOGLE_ULONGLONG(0);
+  clear_has_sit2();
+}
+inline ::google::protobuf::uint64 GossipParams::sit2() const {
+  // @@protoc_insertion_point(field_get:top.transport.protobuf.GossipParams.sit2)
+  return sit2_;
+}
+inline void GossipParams::set_sit2(::google::protobuf::uint64 value) {
+  set_has_sit2();
+  sit2_ = value;
+  // @@protoc_insertion_point(field_set:top.transport.protobuf.GossipParams.sit2)
+}
+
+// optional uint64 sit3 = 7;
+inline bool GossipParams::has_sit3() const {
+  return (_has_bits_[0] & 0x00000100u) != 0;
+}
+inline void GossipParams::set_has_sit3() {
+  _has_bits_[0] |= 0x00000100u;
+}
+inline void GossipParams::clear_has_sit3() {
+  _has_bits_[0] &= ~0x00000100u;
+}
+inline void GossipParams::clear_sit3() {
+  sit3_ = GOOGLE_ULONGLONG(0);
+  clear_has_sit3();
+}
+inline ::google::protobuf::uint64 GossipParams::sit3() const {
+  // @@protoc_insertion_point(field_get:top.transport.protobuf.GossipParams.sit3)
+  return sit3_;
+}
+inline void GossipParams::set_sit3(::google::protobuf::uint64 value) {
+  set_has_sit3();
+  sit3_ = value;
+  // @@protoc_insertion_point(field_set:top.transport.protobuf.GossipParams.sit3)
+}
+
+// optional uint64 sit4 = 8;
+inline bool GossipParams::has_sit4() const {
   return (_has_bits_[0] & 0x00000200u) != 0;
 }
-inline void GossipParams::set_has_min_dis() {
+inline void GossipParams::set_has_sit4() {
   _has_bits_[0] |= 0x00000200u;
 }
-inline void GossipParams::clear_has_min_dis() {
+inline void GossipParams::clear_has_sit4() {
   _has_bits_[0] &= ~0x00000200u;
 }
-inline void GossipParams::clear_min_dis() {
-  min_dis_ = GOOGLE_ULONGLONG(0);
-  clear_has_min_dis();
+inline void GossipParams::clear_sit4() {
+  sit4_ = GOOGLE_ULONGLONG(0);
+  clear_has_sit4();
 }
-inline ::google::protobuf::uint64 GossipParams::min_dis() const {
-  // @@protoc_insertion_point(field_get:top.transport.protobuf.GossipParams.min_dis)
-  return min_dis_;
+inline ::google::protobuf::uint64 GossipParams::sit4() const {
+  // @@protoc_insertion_point(field_get:top.transport.protobuf.GossipParams.sit4)
+  return sit4_;
 }
-inline void GossipParams::set_min_dis(::google::protobuf::uint64 value) {
-  set_has_min_dis();
-  min_dis_ = value;
-  // @@protoc_insertion_point(field_set:top.transport.protobuf.GossipParams.min_dis)
+inline void GossipParams::set_sit4(::google::protobuf::uint64 value) {
+  set_has_sit4();
+  sit4_ = value;
+  // @@protoc_insertion_point(field_set:top.transport.protobuf.GossipParams.sit4)
 }
 
-// optional uint64 max_dis = 8;
-inline bool GossipParams::has_max_dis() const {
+// optional uint32 overlap_rate = 9;
+inline bool GossipParams::has_overlap_rate() const {
   return (_has_bits_[0] & 0x00000400u) != 0;
 }
-inline void GossipParams::set_has_max_dis() {
+inline void GossipParams::set_has_overlap_rate() {
   _has_bits_[0] |= 0x00000400u;
 }
-inline void GossipParams::clear_has_max_dis() {
+inline void GossipParams::clear_has_overlap_rate() {
   _has_bits_[0] &= ~0x00000400u;
 }
-inline void GossipParams::clear_max_dis() {
-  max_dis_ = GOOGLE_ULONGLONG(0);
-  clear_has_max_dis();
+inline void GossipParams::clear_overlap_rate() {
+  overlap_rate_ = 0u;
+  clear_has_overlap_rate();
 }
-inline ::google::protobuf::uint64 GossipParams::max_dis() const {
-  // @@protoc_insertion_point(field_get:top.transport.protobuf.GossipParams.max_dis)
-  return max_dis_;
+inline ::google::protobuf::uint32 GossipParams::overlap_rate() const {
+  // @@protoc_insertion_point(field_get:top.transport.protobuf.GossipParams.overlap_rate)
+  return overlap_rate_;
 }
-inline void GossipParams::set_max_dis(::google::protobuf::uint64 value) {
-  set_has_max_dis();
-  max_dis_ = value;
-  // @@protoc_insertion_point(field_set:top.transport.protobuf.GossipParams.max_dis)
-}
-
-// optional uint64 left_min = 9;
-inline bool GossipParams::has_left_min() const {
-  return (_has_bits_[0] & 0x00000800u) != 0;
-}
-inline void GossipParams::set_has_left_min() {
-  _has_bits_[0] |= 0x00000800u;
-}
-inline void GossipParams::clear_has_left_min() {
-  _has_bits_[0] &= ~0x00000800u;
-}
-inline void GossipParams::clear_left_min() {
-  left_min_ = GOOGLE_ULONGLONG(0);
-  clear_has_left_min();
-}
-inline ::google::protobuf::uint64 GossipParams::left_min() const {
-  // @@protoc_insertion_point(field_get:top.transport.protobuf.GossipParams.left_min)
-  return left_min_;
-}
-inline void GossipParams::set_left_min(::google::protobuf::uint64 value) {
-  set_has_left_min();
-  left_min_ = value;
-  // @@protoc_insertion_point(field_set:top.transport.protobuf.GossipParams.left_min)
+inline void GossipParams::set_overlap_rate(::google::protobuf::uint32 value) {
+  set_has_overlap_rate();
+  overlap_rate_ = value;
+  // @@protoc_insertion_point(field_set:top.transport.protobuf.GossipParams.overlap_rate)
 }
 
-// optional uint64 right_max = 10;
-inline bool GossipParams::has_right_max() const {
-  return (_has_bits_[0] & 0x00001000u) != 0;
-}
-inline void GossipParams::set_has_right_max() {
-  _has_bits_[0] |= 0x00001000u;
-}
-inline void GossipParams::clear_has_right_max() {
-  _has_bits_[0] &= ~0x00001000u;
-}
-inline void GossipParams::clear_right_max() {
-  right_max_ = GOOGLE_ULONGLONG(0);
-  clear_has_right_max();
-}
-inline ::google::protobuf::uint64 GossipParams::right_max() const {
-  // @@protoc_insertion_point(field_get:top.transport.protobuf.GossipParams.right_max)
-  return right_max_;
-}
-inline void GossipParams::set_right_max(::google::protobuf::uint64 value) {
-  set_has_right_max();
-  right_max_ = value;
-  // @@protoc_insertion_point(field_set:top.transport.protobuf.GossipParams.right_max)
-}
-
-// optional uint32 left_overlap = 11;
-inline bool GossipParams::has_left_overlap() const {
-  return (_has_bits_[0] & 0x00002000u) != 0;
-}
-inline void GossipParams::set_has_left_overlap() {
-  _has_bits_[0] |= 0x00002000u;
-}
-inline void GossipParams::clear_has_left_overlap() {
-  _has_bits_[0] &= ~0x00002000u;
-}
-inline void GossipParams::clear_left_overlap() {
-  left_overlap_ = 0u;
-  clear_has_left_overlap();
-}
-inline ::google::protobuf::uint32 GossipParams::left_overlap() const {
-  // @@protoc_insertion_point(field_get:top.transport.protobuf.GossipParams.left_overlap)
-  return left_overlap_;
-}
-inline void GossipParams::set_left_overlap(::google::protobuf::uint32 value) {
-  set_has_left_overlap();
-  left_overlap_ = value;
-  // @@protoc_insertion_point(field_set:top.transport.protobuf.GossipParams.left_overlap)
-}
-
-// optional uint32 right_overlap = 12;
-inline bool GossipParams::has_right_overlap() const {
-  return (_has_bits_[0] & 0x00004000u) != 0;
-}
-inline void GossipParams::set_has_right_overlap() {
-  _has_bits_[0] |= 0x00004000u;
-}
-inline void GossipParams::clear_has_right_overlap() {
-  _has_bits_[0] &= ~0x00004000u;
-}
-inline void GossipParams::clear_right_overlap() {
-  right_overlap_ = 0u;
-  clear_has_right_overlap();
-}
-inline ::google::protobuf::uint32 GossipParams::right_overlap() const {
-  // @@protoc_insertion_point(field_get:top.transport.protobuf.GossipParams.right_overlap)
-  return right_overlap_;
-}
-inline void GossipParams::set_right_overlap(::google::protobuf::uint32 value) {
-  set_has_right_overlap();
-  right_overlap_ = value;
-  // @@protoc_insertion_point(field_set:top.transport.protobuf.GossipParams.right_overlap)
-}
-
-// optional uint32 switch_layer_hop_num = 13;
-inline bool GossipParams::has_switch_layer_hop_num() const {
-  return (_has_bits_[0] & 0x00008000u) != 0;
-}
-inline void GossipParams::set_has_switch_layer_hop_num() {
-  _has_bits_[0] |= 0x00008000u;
-}
-inline void GossipParams::clear_has_switch_layer_hop_num() {
-  _has_bits_[0] &= ~0x00008000u;
-}
-inline void GossipParams::clear_switch_layer_hop_num() {
-  switch_layer_hop_num_ = 0u;
-  clear_has_switch_layer_hop_num();
-}
-inline ::google::protobuf::uint32 GossipParams::switch_layer_hop_num() const {
-  // @@protoc_insertion_point(field_get:top.transport.protobuf.GossipParams.switch_layer_hop_num)
-  return switch_layer_hop_num_;
-}
-inline void GossipParams::set_switch_layer_hop_num(::google::protobuf::uint32 value) {
-  set_has_switch_layer_hop_num();
-  switch_layer_hop_num_ = value;
-  // @@protoc_insertion_point(field_set:top.transport.protobuf.GossipParams.switch_layer_hop_num)
-}
-
-// optional bytes header_hash = 14;
+// optional bytes header_hash = 10;
 inline bool GossipParams::has_header_hash() const {
   return (_has_bits_[0] & 0x00000001u) != 0;
 }
@@ -2385,7 +1393,7 @@ inline void GossipParams::set_allocated_header_hash(::std::string* header_hash) 
   // @@protoc_insertion_point(field_set_allocated:top.transport.protobuf.GossipParams.header_hash)
 }
 
-// optional bytes block = 15;
+// optional bytes block = 11;
 inline bool GossipParams::has_block() const {
   return (_has_bits_[0] & 0x00000002u) != 0;
 }
@@ -2451,39 +1459,15 @@ inline void GossipParams::set_allocated_block(::std::string* block) {
   // @@protoc_insertion_point(field_set_allocated:top.transport.protobuf.GossipParams.block)
 }
 
-// optional uint32 ign_bloomfilter_level = 16;
-inline bool GossipParams::has_ign_bloomfilter_level() const {
-  return (_has_bits_[0] & 0x00010000u) != 0;
-}
-inline void GossipParams::set_has_ign_bloomfilter_level() {
-  _has_bits_[0] |= 0x00010000u;
-}
-inline void GossipParams::clear_has_ign_bloomfilter_level() {
-  _has_bits_[0] &= ~0x00010000u;
-}
-inline void GossipParams::clear_ign_bloomfilter_level() {
-  ign_bloomfilter_level_ = 0u;
-  clear_has_ign_bloomfilter_level();
-}
-inline ::google::protobuf::uint32 GossipParams::ign_bloomfilter_level() const {
-  // @@protoc_insertion_point(field_get:top.transport.protobuf.GossipParams.ign_bloomfilter_level)
-  return ign_bloomfilter_level_;
-}
-inline void GossipParams::set_ign_bloomfilter_level(::google::protobuf::uint32 value) {
-  set_has_ign_bloomfilter_level();
-  ign_bloomfilter_level_ = value;
-  // @@protoc_insertion_point(field_set:top.transport.protobuf.GossipParams.ign_bloomfilter_level)
-}
-
-// optional bool diff_net = 17;
+// optional bool diff_net = 12;
 inline bool GossipParams::has_diff_net() const {
-  return (_has_bits_[0] & 0x00020000u) != 0;
+  return (_has_bits_[0] & 0x00000800u) != 0;
 }
 inline void GossipParams::set_has_diff_net() {
-  _has_bits_[0] |= 0x00020000u;
+  _has_bits_[0] |= 0x00000800u;
 }
 inline void GossipParams::clear_has_diff_net() {
-  _has_bits_[0] &= ~0x00020000u;
+  _has_bits_[0] &= ~0x00000800u;
 }
 inline void GossipParams::clear_diff_net() {
   diff_net_ = false;
@@ -2497,150 +1481,6 @@ inline void GossipParams::set_diff_net(bool value) {
   set_has_diff_net();
   diff_net_ = value;
   // @@protoc_insertion_point(field_set:top.transport.protobuf.GossipParams.diff_net)
-}
-
-// repeated uint32 pass_node = 18;
-inline int GossipParams::pass_node_size() const {
-  return pass_node_.size();
-}
-inline void GossipParams::clear_pass_node() {
-  pass_node_.Clear();
-}
-inline ::google::protobuf::uint32 GossipParams::pass_node(int index) const {
-  // @@protoc_insertion_point(field_get:top.transport.protobuf.GossipParams.pass_node)
-  return pass_node_.Get(index);
-}
-inline void GossipParams::set_pass_node(int index, ::google::protobuf::uint32 value) {
-  pass_node_.Set(index, value);
-  // @@protoc_insertion_point(field_set:top.transport.protobuf.GossipParams.pass_node)
-}
-inline void GossipParams::add_pass_node(::google::protobuf::uint32 value) {
-  pass_node_.Add(value);
-  // @@protoc_insertion_point(field_add:top.transport.protobuf.GossipParams.pass_node)
-}
-inline const ::google::protobuf::RepeatedField< ::google::protobuf::uint32 >&
-GossipParams::pass_node() const {
-  // @@protoc_insertion_point(field_list:top.transport.protobuf.GossipParams.pass_node)
-  return pass_node_;
-}
-inline ::google::protobuf::RepeatedField< ::google::protobuf::uint32 >*
-GossipParams::mutable_pass_node() {
-  // @@protoc_insertion_point(field_mutable_list:top.transport.protobuf.GossipParams.pass_node)
-  return &pass_node_;
-}
-
-// optional uint32 msg_hash = 19;
-inline bool GossipParams::has_msg_hash() const {
-  return (_has_bits_[0] & 0x00040000u) != 0;
-}
-inline void GossipParams::set_has_msg_hash() {
-  _has_bits_[0] |= 0x00040000u;
-}
-inline void GossipParams::clear_has_msg_hash() {
-  _has_bits_[0] &= ~0x00040000u;
-}
-inline void GossipParams::clear_msg_hash() {
-  msg_hash_ = 0u;
-  clear_has_msg_hash();
-}
-inline ::google::protobuf::uint32 GossipParams::msg_hash() const {
-  // @@protoc_insertion_point(field_get:top.transport.protobuf.GossipParams.msg_hash)
-  return msg_hash_;
-}
-inline void GossipParams::set_msg_hash(::google::protobuf::uint32 value) {
-  set_has_msg_hash();
-  msg_hash_ = value;
-  // @@protoc_insertion_point(field_set:top.transport.protobuf.GossipParams.msg_hash)
-}
-
-// optional bytes pre_ip = 20;
-inline bool GossipParams::has_pre_ip() const {
-  return (_has_bits_[0] & 0x00000004u) != 0;
-}
-inline void GossipParams::set_has_pre_ip() {
-  _has_bits_[0] |= 0x00000004u;
-}
-inline void GossipParams::clear_has_pre_ip() {
-  _has_bits_[0] &= ~0x00000004u;
-}
-inline void GossipParams::clear_pre_ip() {
-  pre_ip_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  clear_has_pre_ip();
-}
-inline const ::std::string& GossipParams::pre_ip() const {
-  // @@protoc_insertion_point(field_get:top.transport.protobuf.GossipParams.pre_ip)
-  return pre_ip_.GetNoArena();
-}
-inline void GossipParams::set_pre_ip(const ::std::string& value) {
-  set_has_pre_ip();
-  pre_ip_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:top.transport.protobuf.GossipParams.pre_ip)
-}
-#if LANG_CXX11
-inline void GossipParams::set_pre_ip(::std::string&& value) {
-  set_has_pre_ip();
-  pre_ip_.SetNoArena(
-    &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
-  // @@protoc_insertion_point(field_set_rvalue:top.transport.protobuf.GossipParams.pre_ip)
-}
-#endif
-inline void GossipParams::set_pre_ip(const char* value) {
-  GOOGLE_DCHECK(value != NULL);
-  set_has_pre_ip();
-  pre_ip_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:top.transport.protobuf.GossipParams.pre_ip)
-}
-inline void GossipParams::set_pre_ip(const void* value, size_t size) {
-  set_has_pre_ip();
-  pre_ip_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
-      ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:top.transport.protobuf.GossipParams.pre_ip)
-}
-inline ::std::string* GossipParams::mutable_pre_ip() {
-  set_has_pre_ip();
-  // @@protoc_insertion_point(field_mutable:top.transport.protobuf.GossipParams.pre_ip)
-  return pre_ip_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-}
-inline ::std::string* GossipParams::release_pre_ip() {
-  // @@protoc_insertion_point(field_release:top.transport.protobuf.GossipParams.pre_ip)
-  if (!has_pre_ip()) {
-    return NULL;
-  }
-  clear_has_pre_ip();
-  return pre_ip_.ReleaseNonDefaultNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-}
-inline void GossipParams::set_allocated_pre_ip(::std::string* pre_ip) {
-  if (pre_ip != NULL) {
-    set_has_pre_ip();
-  } else {
-    clear_has_pre_ip();
-  }
-  pre_ip_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), pre_ip);
-  // @@protoc_insertion_point(field_set_allocated:top.transport.protobuf.GossipParams.pre_ip)
-}
-
-// optional int32 pre_port = 21;
-inline bool GossipParams::has_pre_port() const {
-  return (_has_bits_[0] & 0x00080000u) != 0;
-}
-inline void GossipParams::set_has_pre_port() {
-  _has_bits_[0] |= 0x00080000u;
-}
-inline void GossipParams::clear_has_pre_port() {
-  _has_bits_[0] &= ~0x00080000u;
-}
-inline void GossipParams::clear_pre_port() {
-  pre_port_ = 0;
-  clear_has_pre_port();
-}
-inline ::google::protobuf::int32 GossipParams::pre_port() const {
-  // @@protoc_insertion_point(field_get:top.transport.protobuf.GossipParams.pre_port)
-  return pre_port_;
-}
-inline void GossipParams::set_pre_port(::google::protobuf::int32 value) {
-  set_has_pre_port();
-  pre_port_ = value;
-  // @@protoc_insertion_point(field_set:top.transport.protobuf.GossipParams.pre_port)
 }
 
 // -------------------------------------------------------------------
@@ -2917,13 +1757,13 @@ inline void RoutingMessage::set_allocated_des_node_id(::std::string* des_node_id
 
 // optional int32 type = 3;
 inline bool RoutingMessage::has_type() const {
-  return (_has_bits_[0] & 0x00000200u) != 0;
+  return (_has_bits_[0] & 0x00000040u) != 0;
 }
 inline void RoutingMessage::set_has_type() {
-  _has_bits_[0] |= 0x00000200u;
+  _has_bits_[0] |= 0x00000040u;
 }
 inline void RoutingMessage::clear_has_type() {
-  _has_bits_[0] &= ~0x00000200u;
+  _has_bits_[0] &= ~0x00000040u;
 }
 inline void RoutingMessage::clear_type() {
   type_ = 0;
@@ -3007,13 +1847,13 @@ inline void RoutingMessage::set_allocated_data(::std::string* data) {
 
 // optional uint32 id = 5;
 inline bool RoutingMessage::has_id() const {
-  return (_has_bits_[0] & 0x00000400u) != 0;
+  return (_has_bits_[0] & 0x00000080u) != 0;
 }
 inline void RoutingMessage::set_has_id() {
-  _has_bits_[0] |= 0x00000400u;
+  _has_bits_[0] |= 0x00000080u;
 }
 inline void RoutingMessage::clear_has_id() {
-  _has_bits_[0] &= ~0x00000400u;
+  _has_bits_[0] &= ~0x00000080u;
 }
 inline void RoutingMessage::clear_id() {
   id_ = 0u;
@@ -3031,13 +1871,13 @@ inline void RoutingMessage::set_id(::google::protobuf::uint32 value) {
 
 // optional uint32 ack_id = 6;
 inline bool RoutingMessage::has_ack_id() const {
-  return (_has_bits_[0] & 0x00000800u) != 0;
+  return (_has_bits_[0] & 0x00000100u) != 0;
 }
 inline void RoutingMessage::set_has_ack_id() {
-  _has_bits_[0] |= 0x00000800u;
+  _has_bits_[0] |= 0x00000100u;
 }
 inline void RoutingMessage::clear_has_ack_id() {
-  _has_bits_[0] &= ~0x00000800u;
+  _has_bits_[0] &= ~0x00000100u;
 }
 inline void RoutingMessage::clear_ack_id() {
   ack_id_ = 0u;
@@ -3055,13 +1895,13 @@ inline void RoutingMessage::set_ack_id(::google::protobuf::uint32 value) {
 
 // optional uint32 hop_num = 7;
 inline bool RoutingMessage::has_hop_num() const {
-  return (_has_bits_[0] & 0x00001000u) != 0;
+  return (_has_bits_[0] & 0x00000200u) != 0;
 }
 inline void RoutingMessage::set_has_hop_num() {
-  _has_bits_[0] |= 0x00001000u;
+  _has_bits_[0] |= 0x00000200u;
 }
 inline void RoutingMessage::clear_has_hop_num() {
-  _has_bits_[0] &= ~0x00001000u;
+  _has_bits_[0] &= ~0x00000200u;
 }
 inline void RoutingMessage::clear_hop_num() {
   hop_num_ = 0u;
@@ -3107,201 +1947,15 @@ RoutingMessage::hop_nodes() const {
   return hop_nodes_;
 }
 
-// optional int32 retry = 9;
-inline bool RoutingMessage::has_retry() const {
-  return (_has_bits_[0] & 0x00002000u) != 0;
-}
-inline void RoutingMessage::set_has_retry() {
-  _has_bits_[0] |= 0x00002000u;
-}
-inline void RoutingMessage::clear_has_retry() {
-  _has_bits_[0] &= ~0x00002000u;
-}
-inline void RoutingMessage::clear_retry() {
-  retry_ = 0;
-  clear_has_retry();
-}
-inline ::google::protobuf::int32 RoutingMessage::retry() const {
-  // @@protoc_insertion_point(field_get:top.transport.protobuf.RoutingMessage.retry)
-  return retry_;
-}
-inline void RoutingMessage::set_retry(::google::protobuf::int32 value) {
-  set_has_retry();
-  retry_ = value;
-  // @@protoc_insertion_point(field_set:top.transport.protobuf.RoutingMessage.retry)
-}
-
-// optional bool client_msg = 10;
-inline bool RoutingMessage::has_client_msg() const {
-  return (_has_bits_[0] & 0x00004000u) != 0;
-}
-inline void RoutingMessage::set_has_client_msg() {
-  _has_bits_[0] |= 0x00004000u;
-}
-inline void RoutingMessage::clear_has_client_msg() {
-  _has_bits_[0] &= ~0x00004000u;
-}
-inline void RoutingMessage::clear_client_msg() {
-  client_msg_ = false;
-  clear_has_client_msg();
-}
-inline bool RoutingMessage::client_msg() const {
-  // @@protoc_insertion_point(field_get:top.transport.protobuf.RoutingMessage.client_msg)
-  return client_msg_;
-}
-inline void RoutingMessage::set_client_msg(bool value) {
-  set_has_client_msg();
-  client_msg_ = value;
-  // @@protoc_insertion_point(field_set:top.transport.protobuf.RoutingMessage.client_msg)
-}
-
-// optional bool relay_flag = 11;
-inline bool RoutingMessage::has_relay_flag() const {
-  return (_has_bits_[0] & 0x00008000u) != 0;
-}
-inline void RoutingMessage::set_has_relay_flag() {
-  _has_bits_[0] |= 0x00008000u;
-}
-inline void RoutingMessage::clear_has_relay_flag() {
-  _has_bits_[0] &= ~0x00008000u;
-}
-inline void RoutingMessage::clear_relay_flag() {
-  relay_flag_ = false;
-  clear_has_relay_flag();
-}
-inline bool RoutingMessage::relay_flag() const {
-  // @@protoc_insertion_point(field_get:top.transport.protobuf.RoutingMessage.relay_flag)
-  return relay_flag_;
-}
-inline void RoutingMessage::set_relay_flag(bool value) {
-  set_has_relay_flag();
-  relay_flag_ = value;
-  // @@protoc_insertion_point(field_set:top.transport.protobuf.RoutingMessage.relay_flag)
-}
-
-// optional bool request_type = 12;
-inline bool RoutingMessage::has_request_type() const {
-  return (_has_bits_[0] & 0x00010000u) != 0;
-}
-inline void RoutingMessage::set_has_request_type() {
-  _has_bits_[0] |= 0x00010000u;
-}
-inline void RoutingMessage::clear_has_request_type() {
-  _has_bits_[0] &= ~0x00010000u;
-}
-inline void RoutingMessage::clear_request_type() {
-  request_type_ = false;
-  clear_has_request_type();
-}
-inline bool RoutingMessage::request_type() const {
-  // @@protoc_insertion_point(field_get:top.transport.protobuf.RoutingMessage.request_type)
-  return request_type_;
-}
-inline void RoutingMessage::set_request_type(bool value) {
-  set_has_request_type();
-  request_type_ = value;
-  // @@protoc_insertion_point(field_set:top.transport.protobuf.RoutingMessage.request_type)
-}
-
-// optional bytes client_id = 13;
-inline bool RoutingMessage::has_client_id() const {
-  return (_has_bits_[0] & 0x00000008u) != 0;
-}
-inline void RoutingMessage::set_has_client_id() {
-  _has_bits_[0] |= 0x00000008u;
-}
-inline void RoutingMessage::clear_has_client_id() {
-  _has_bits_[0] &= ~0x00000008u;
-}
-inline void RoutingMessage::clear_client_id() {
-  client_id_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  clear_has_client_id();
-}
-inline const ::std::string& RoutingMessage::client_id() const {
-  // @@protoc_insertion_point(field_get:top.transport.protobuf.RoutingMessage.client_id)
-  return client_id_.GetNoArena();
-}
-inline void RoutingMessage::set_client_id(const ::std::string& value) {
-  set_has_client_id();
-  client_id_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:top.transport.protobuf.RoutingMessage.client_id)
-}
-#if LANG_CXX11
-inline void RoutingMessage::set_client_id(::std::string&& value) {
-  set_has_client_id();
-  client_id_.SetNoArena(
-    &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
-  // @@protoc_insertion_point(field_set_rvalue:top.transport.protobuf.RoutingMessage.client_id)
-}
-#endif
-inline void RoutingMessage::set_client_id(const char* value) {
-  GOOGLE_DCHECK(value != NULL);
-  set_has_client_id();
-  client_id_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:top.transport.protobuf.RoutingMessage.client_id)
-}
-inline void RoutingMessage::set_client_id(const void* value, size_t size) {
-  set_has_client_id();
-  client_id_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
-      ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:top.transport.protobuf.RoutingMessage.client_id)
-}
-inline ::std::string* RoutingMessage::mutable_client_id() {
-  set_has_client_id();
-  // @@protoc_insertion_point(field_mutable:top.transport.protobuf.RoutingMessage.client_id)
-  return client_id_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-}
-inline ::std::string* RoutingMessage::release_client_id() {
-  // @@protoc_insertion_point(field_release:top.transport.protobuf.RoutingMessage.client_id)
-  if (!has_client_id()) {
-    return NULL;
-  }
-  clear_has_client_id();
-  return client_id_.ReleaseNonDefaultNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-}
-inline void RoutingMessage::set_allocated_client_id(::std::string* client_id) {
-  if (client_id != NULL) {
-    set_has_client_id();
-  } else {
-    clear_has_client_id();
-  }
-  client_id_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), client_id);
-  // @@protoc_insertion_point(field_set_allocated:top.transport.protobuf.RoutingMessage.client_id)
-}
-
-// optional bool direct_mode = 14;
-inline bool RoutingMessage::has_direct_mode() const {
-  return (_has_bits_[0] & 0x00020000u) != 0;
-}
-inline void RoutingMessage::set_has_direct_mode() {
-  _has_bits_[0] |= 0x00020000u;
-}
-inline void RoutingMessage::clear_has_direct_mode() {
-  _has_bits_[0] &= ~0x00020000u;
-}
-inline void RoutingMessage::clear_direct_mode() {
-  direct_mode_ = false;
-  clear_has_direct_mode();
-}
-inline bool RoutingMessage::direct_mode() const {
-  // @@protoc_insertion_point(field_get:top.transport.protobuf.RoutingMessage.direct_mode)
-  return direct_mode_;
-}
-inline void RoutingMessage::set_direct_mode(bool value) {
-  set_has_direct_mode();
-  direct_mode_ = value;
-  // @@protoc_insertion_point(field_set:top.transport.protobuf.RoutingMessage.direct_mode)
-}
-
-// optional uint64 src_service_type = 15;
+// optional uint64 src_service_type = 9;
 inline bool RoutingMessage::has_src_service_type() const {
-  return (_has_bits_[0] & 0x00040000u) != 0;
+  return (_has_bits_[0] & 0x00000400u) != 0;
 }
 inline void RoutingMessage::set_has_src_service_type() {
-  _has_bits_[0] |= 0x00040000u;
+  _has_bits_[0] |= 0x00000400u;
 }
 inline void RoutingMessage::clear_has_src_service_type() {
-  _has_bits_[0] &= ~0x00040000u;
+  _has_bits_[0] &= ~0x00000400u;
 }
 inline void RoutingMessage::clear_src_service_type() {
   src_service_type_ = GOOGLE_ULONGLONG(0);
@@ -3317,15 +1971,15 @@ inline void RoutingMessage::set_src_service_type(::google::protobuf::uint64 valu
   // @@protoc_insertion_point(field_set:top.transport.protobuf.RoutingMessage.src_service_type)
 }
 
-// optional uint64 des_service_type = 16;
+// optional uint64 des_service_type = 10;
 inline bool RoutingMessage::has_des_service_type() const {
-  return (_has_bits_[0] & 0x00080000u) != 0;
+  return (_has_bits_[0] & 0x00000800u) != 0;
 }
 inline void RoutingMessage::set_has_des_service_type() {
-  _has_bits_[0] |= 0x00080000u;
+  _has_bits_[0] |= 0x00000800u;
 }
 inline void RoutingMessage::clear_has_des_service_type() {
-  _has_bits_[0] &= ~0x00080000u;
+  _has_bits_[0] &= ~0x00000800u;
 }
 inline void RoutingMessage::clear_des_service_type() {
   des_service_type_ = GOOGLE_ULONGLONG(0);
@@ -3341,97 +1995,39 @@ inline void RoutingMessage::set_des_service_type(::google::protobuf::uint64 valu
   // @@protoc_insertion_point(field_set:top.transport.protobuf.RoutingMessage.des_service_type)
 }
 
-// optional uint32 status = 17;
-inline bool RoutingMessage::has_status() const {
-  return (_has_bits_[0] & 0x00100000u) != 0;
+// optional uint32 msg_hash = 11;
+inline bool RoutingMessage::has_msg_hash() const {
+  return (_has_bits_[0] & 0x00001000u) != 0;
 }
-inline void RoutingMessage::set_has_status() {
-  _has_bits_[0] |= 0x00100000u;
+inline void RoutingMessage::set_has_msg_hash() {
+  _has_bits_[0] |= 0x00001000u;
 }
-inline void RoutingMessage::clear_has_status() {
-  _has_bits_[0] &= ~0x00100000u;
+inline void RoutingMessage::clear_has_msg_hash() {
+  _has_bits_[0] &= ~0x00001000u;
 }
-inline void RoutingMessage::clear_status() {
-  status_ = 0u;
-  clear_has_status();
+inline void RoutingMessage::clear_msg_hash() {
+  msg_hash_ = 0u;
+  clear_has_msg_hash();
 }
-inline ::google::protobuf::uint32 RoutingMessage::status() const {
-  // @@protoc_insertion_point(field_get:top.transport.protobuf.RoutingMessage.status)
-  return status_;
+inline ::google::protobuf::uint32 RoutingMessage::msg_hash() const {
+  // @@protoc_insertion_point(field_get:top.transport.protobuf.RoutingMessage.msg_hash)
+  return msg_hash_;
 }
-inline void RoutingMessage::set_status(::google::protobuf::uint32 value) {
-  set_has_status();
-  status_ = value;
-  // @@protoc_insertion_point(field_set:top.transport.protobuf.RoutingMessage.status)
-}
-
-// optional .top.transport.protobuf.VersionTag version_tag = 18;
-inline bool RoutingMessage::has_version_tag() const {
-  return (_has_bits_[0] & 0x00000080u) != 0;
-}
-inline void RoutingMessage::set_has_version_tag() {
-  _has_bits_[0] |= 0x00000080u;
-}
-inline void RoutingMessage::clear_has_version_tag() {
-  _has_bits_[0] &= ~0x00000080u;
-}
-inline void RoutingMessage::clear_version_tag() {
-  if (version_tag_ != NULL) version_tag_->Clear();
-  clear_has_version_tag();
-}
-inline const ::top::transport::protobuf::VersionTag& RoutingMessage::_internal_version_tag() const {
-  return *version_tag_;
-}
-inline const ::top::transport::protobuf::VersionTag& RoutingMessage::version_tag() const {
-  const ::top::transport::protobuf::VersionTag* p = version_tag_;
-  // @@protoc_insertion_point(field_get:top.transport.protobuf.RoutingMessage.version_tag)
-  return p != NULL ? *p : *reinterpret_cast<const ::top::transport::protobuf::VersionTag*>(
-      &::top::transport::protobuf::_VersionTag_default_instance_);
-}
-inline ::top::transport::protobuf::VersionTag* RoutingMessage::release_version_tag() {
-  // @@protoc_insertion_point(field_release:top.transport.protobuf.RoutingMessage.version_tag)
-  clear_has_version_tag();
-  ::top::transport::protobuf::VersionTag* temp = version_tag_;
-  version_tag_ = NULL;
-  return temp;
-}
-inline ::top::transport::protobuf::VersionTag* RoutingMessage::mutable_version_tag() {
-  set_has_version_tag();
-  if (version_tag_ == NULL) {
-    auto* p = CreateMaybeMessage<::top::transport::protobuf::VersionTag>(GetArenaNoVirtual());
-    version_tag_ = p;
-  }
-  // @@protoc_insertion_point(field_mutable:top.transport.protobuf.RoutingMessage.version_tag)
-  return version_tag_;
-}
-inline void RoutingMessage::set_allocated_version_tag(::top::transport::protobuf::VersionTag* version_tag) {
-  ::google::protobuf::Arena* message_arena = GetArenaNoVirtual();
-  if (message_arena == NULL) {
-    delete version_tag_;
-  }
-  if (version_tag) {
-    ::google::protobuf::Arena* submessage_arena = NULL;
-    if (message_arena != submessage_arena) {
-      version_tag = ::google::protobuf::internal::GetOwnedMessage(
-          message_arena, version_tag, submessage_arena);
-    }
-    set_has_version_tag();
-  } else {
-    clear_has_version_tag();
-  }
-  version_tag_ = version_tag;
-  // @@protoc_insertion_point(field_set_allocated:top.transport.protobuf.RoutingMessage.version_tag)
+inline void RoutingMessage::set_msg_hash(::google::protobuf::uint32 value) {
+  set_has_msg_hash();
+  msg_hash_ = value;
+  // @@protoc_insertion_point(field_set:top.transport.protobuf.RoutingMessage.msg_hash)
 }
 
-// optional bool is_root = 19;
+// optional bool is_root = 12;
 inline bool RoutingMessage::has_is_root() const {
-  return (_has_bits_[0] & 0x00400000u) != 0;
+  return (_has_bits_[0] & 0x00002000u) != 0;
 }
 inline void RoutingMessage::set_has_is_root() {
-  _has_bits_[0] |= 0x00400000u;
+  _has_bits_[0] |= 0x00002000u;
 }
 inline void RoutingMessage::clear_has_is_root() {
-  _has_bits_[0] &= ~0x00400000u;
+  _has_bits_[0] &= ~0x00002000u;
 }
 inline void RoutingMessage::clear_is_root() {
   is_root_ = false;
@@ -3447,7 +2043,31 @@ inline void RoutingMessage::set_is_root(bool value) {
   // @@protoc_insertion_point(field_set:top.transport.protobuf.RoutingMessage.is_root)
 }
 
-// repeated uint64 bloomfilter = 20;
+// optional bool broadcast = 13;
+inline bool RoutingMessage::has_broadcast() const {
+  return (_has_bits_[0] & 0x00004000u) != 0;
+}
+inline void RoutingMessage::set_has_broadcast() {
+  _has_bits_[0] |= 0x00004000u;
+}
+inline void RoutingMessage::clear_has_broadcast() {
+  _has_bits_[0] &= ~0x00004000u;
+}
+inline void RoutingMessage::clear_broadcast() {
+  broadcast_ = false;
+  clear_has_broadcast();
+}
+inline bool RoutingMessage::broadcast() const {
+  // @@protoc_insertion_point(field_get:top.transport.protobuf.RoutingMessage.broadcast)
+  return broadcast_;
+}
+inline void RoutingMessage::set_broadcast(bool value) {
+  set_has_broadcast();
+  broadcast_ = value;
+  // @@protoc_insertion_point(field_set:top.transport.protobuf.RoutingMessage.broadcast)
+}
+
+// repeated uint64 bloomfilter = 14;
 inline int RoutingMessage::bloomfilter_size() const {
   return bloomfilter_.size();
 }
@@ -3477,228 +2097,15 @@ RoutingMessage::mutable_bloomfilter() {
   return &bloomfilter_;
 }
 
-// repeated .top.transport.protobuf.RelayHopInfo relay_hop_info = 21;
-inline int RoutingMessage::relay_hop_info_size() const {
-  return relay_hop_info_.size();
-}
-inline void RoutingMessage::clear_relay_hop_info() {
-  relay_hop_info_.Clear();
-}
-inline ::top::transport::protobuf::RelayHopInfo* RoutingMessage::mutable_relay_hop_info(int index) {
-  // @@protoc_insertion_point(field_mutable:top.transport.protobuf.RoutingMessage.relay_hop_info)
-  return relay_hop_info_.Mutable(index);
-}
-inline ::google::protobuf::RepeatedPtrField< ::top::transport::protobuf::RelayHopInfo >*
-RoutingMessage::mutable_relay_hop_info() {
-  // @@protoc_insertion_point(field_mutable_list:top.transport.protobuf.RoutingMessage.relay_hop_info)
-  return &relay_hop_info_;
-}
-inline const ::top::transport::protobuf::RelayHopInfo& RoutingMessage::relay_hop_info(int index) const {
-  // @@protoc_insertion_point(field_get:top.transport.protobuf.RoutingMessage.relay_hop_info)
-  return relay_hop_info_.Get(index);
-}
-inline ::top::transport::protobuf::RelayHopInfo* RoutingMessage::add_relay_hop_info() {
-  // @@protoc_insertion_point(field_add:top.transport.protobuf.RoutingMessage.relay_hop_info)
-  return relay_hop_info_.Add();
-}
-inline const ::google::protobuf::RepeatedPtrField< ::top::transport::protobuf::RelayHopInfo >&
-RoutingMessage::relay_hop_info() const {
-  // @@protoc_insertion_point(field_list:top.transport.protobuf.RoutingMessage.relay_hop_info)
-  return relay_hop_info_;
-}
-
-// optional bool multi_relay = 22;
-inline bool RoutingMessage::has_multi_relay() const {
-  return (_has_bits_[0] & 0x00800000u) != 0;
-}
-inline void RoutingMessage::set_has_multi_relay() {
-  _has_bits_[0] |= 0x00800000u;
-}
-inline void RoutingMessage::clear_has_multi_relay() {
-  _has_bits_[0] &= ~0x00800000u;
-}
-inline void RoutingMessage::clear_multi_relay() {
-  multi_relay_ = false;
-  clear_has_multi_relay();
-}
-inline bool RoutingMessage::multi_relay() const {
-  // @@protoc_insertion_point(field_get:top.transport.protobuf.RoutingMessage.multi_relay)
-  return multi_relay_;
-}
-inline void RoutingMessage::set_multi_relay(bool value) {
-  set_has_multi_relay();
-  multi_relay_ = value;
-  // @@protoc_insertion_point(field_set:top.transport.protobuf.RoutingMessage.multi_relay)
-}
-
-// optional uint32 seq = 23;
-inline bool RoutingMessage::has_seq() const {
-  return (_has_bits_[0] & 0x00200000u) != 0;
-}
-inline void RoutingMessage::set_has_seq() {
-  _has_bits_[0] |= 0x00200000u;
-}
-inline void RoutingMessage::clear_has_seq() {
-  _has_bits_[0] &= ~0x00200000u;
-}
-inline void RoutingMessage::clear_seq() {
-  seq_ = 0u;
-  clear_has_seq();
-}
-inline ::google::protobuf::uint32 RoutingMessage::seq() const {
-  // @@protoc_insertion_point(field_get:top.transport.protobuf.RoutingMessage.seq)
-  return seq_;
-}
-inline void RoutingMessage::set_seq(::google::protobuf::uint32 value) {
-  set_has_seq();
-  seq_ = value;
-  // @@protoc_insertion_point(field_set:top.transport.protobuf.RoutingMessage.seq)
-}
-
-// optional bytes xrequest_id = 24;
-inline bool RoutingMessage::has_xrequest_id() const {
-  return (_has_bits_[0] & 0x00000010u) != 0;
-}
-inline void RoutingMessage::set_has_xrequest_id() {
-  _has_bits_[0] |= 0x00000010u;
-}
-inline void RoutingMessage::clear_has_xrequest_id() {
-  _has_bits_[0] &= ~0x00000010u;
-}
-inline void RoutingMessage::clear_xrequest_id() {
-  xrequest_id_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  clear_has_xrequest_id();
-}
-inline const ::std::string& RoutingMessage::xrequest_id() const {
-  // @@protoc_insertion_point(field_get:top.transport.protobuf.RoutingMessage.xrequest_id)
-  return xrequest_id_.GetNoArena();
-}
-inline void RoutingMessage::set_xrequest_id(const ::std::string& value) {
-  set_has_xrequest_id();
-  xrequest_id_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:top.transport.protobuf.RoutingMessage.xrequest_id)
-}
-#if LANG_CXX11
-inline void RoutingMessage::set_xrequest_id(::std::string&& value) {
-  set_has_xrequest_id();
-  xrequest_id_.SetNoArena(
-    &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
-  // @@protoc_insertion_point(field_set_rvalue:top.transport.protobuf.RoutingMessage.xrequest_id)
-}
-#endif
-inline void RoutingMessage::set_xrequest_id(const char* value) {
-  GOOGLE_DCHECK(value != NULL);
-  set_has_xrequest_id();
-  xrequest_id_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:top.transport.protobuf.RoutingMessage.xrequest_id)
-}
-inline void RoutingMessage::set_xrequest_id(const void* value, size_t size) {
-  set_has_xrequest_id();
-  xrequest_id_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
-      ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:top.transport.protobuf.RoutingMessage.xrequest_id)
-}
-inline ::std::string* RoutingMessage::mutable_xrequest_id() {
-  set_has_xrequest_id();
-  // @@protoc_insertion_point(field_mutable:top.transport.protobuf.RoutingMessage.xrequest_id)
-  return xrequest_id_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-}
-inline ::std::string* RoutingMessage::release_xrequest_id() {
-  // @@protoc_insertion_point(field_release:top.transport.protobuf.RoutingMessage.xrequest_id)
-  if (!has_xrequest_id()) {
-    return NULL;
-  }
-  clear_has_xrequest_id();
-  return xrequest_id_.ReleaseNonDefaultNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-}
-inline void RoutingMessage::set_allocated_xrequest_id(::std::string* xrequest_id) {
-  if (xrequest_id != NULL) {
-    set_has_xrequest_id();
-  } else {
-    clear_has_xrequest_id();
-  }
-  xrequest_id_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), xrequest_id);
-  // @@protoc_insertion_point(field_set_allocated:top.transport.protobuf.RoutingMessage.xrequest_id)
-}
-
-// repeated bytes trace_route = 25;
-inline int RoutingMessage::trace_route_size() const {
-  return trace_route_.size();
-}
-inline void RoutingMessage::clear_trace_route() {
-  trace_route_.Clear();
-}
-inline const ::std::string& RoutingMessage::trace_route(int index) const {
-  // @@protoc_insertion_point(field_get:top.transport.protobuf.RoutingMessage.trace_route)
-  return trace_route_.Get(index);
-}
-inline ::std::string* RoutingMessage::mutable_trace_route(int index) {
-  // @@protoc_insertion_point(field_mutable:top.transport.protobuf.RoutingMessage.trace_route)
-  return trace_route_.Mutable(index);
-}
-inline void RoutingMessage::set_trace_route(int index, const ::std::string& value) {
-  // @@protoc_insertion_point(field_set:top.transport.protobuf.RoutingMessage.trace_route)
-  trace_route_.Mutable(index)->assign(value);
-}
-#if LANG_CXX11
-inline void RoutingMessage::set_trace_route(int index, ::std::string&& value) {
-  // @@protoc_insertion_point(field_set:top.transport.protobuf.RoutingMessage.trace_route)
-  trace_route_.Mutable(index)->assign(std::move(value));
-}
-#endif
-inline void RoutingMessage::set_trace_route(int index, const char* value) {
-  GOOGLE_DCHECK(value != NULL);
-  trace_route_.Mutable(index)->assign(value);
-  // @@protoc_insertion_point(field_set_char:top.transport.protobuf.RoutingMessage.trace_route)
-}
-inline void RoutingMessage::set_trace_route(int index, const void* value, size_t size) {
-  trace_route_.Mutable(index)->assign(
-    reinterpret_cast<const char*>(value), size);
-  // @@protoc_insertion_point(field_set_pointer:top.transport.protobuf.RoutingMessage.trace_route)
-}
-inline ::std::string* RoutingMessage::add_trace_route() {
-  // @@protoc_insertion_point(field_add_mutable:top.transport.protobuf.RoutingMessage.trace_route)
-  return trace_route_.Add();
-}
-inline void RoutingMessage::add_trace_route(const ::std::string& value) {
-  trace_route_.Add()->assign(value);
-  // @@protoc_insertion_point(field_add:top.transport.protobuf.RoutingMessage.trace_route)
-}
-#if LANG_CXX11
-inline void RoutingMessage::add_trace_route(::std::string&& value) {
-  trace_route_.Add(std::move(value));
-  // @@protoc_insertion_point(field_add:top.transport.protobuf.RoutingMessage.trace_route)
-}
-#endif
-inline void RoutingMessage::add_trace_route(const char* value) {
-  GOOGLE_DCHECK(value != NULL);
-  trace_route_.Add()->assign(value);
-  // @@protoc_insertion_point(field_add_char:top.transport.protobuf.RoutingMessage.trace_route)
-}
-inline void RoutingMessage::add_trace_route(const void* value, size_t size) {
-  trace_route_.Add()->assign(reinterpret_cast<const char*>(value), size);
-  // @@protoc_insertion_point(field_add_pointer:top.transport.protobuf.RoutingMessage.trace_route)
-}
-inline const ::google::protobuf::RepeatedPtrField< ::std::string>&
-RoutingMessage::trace_route() const {
-  // @@protoc_insertion_point(field_list:top.transport.protobuf.RoutingMessage.trace_route)
-  return trace_route_;
-}
-inline ::google::protobuf::RepeatedPtrField< ::std::string>*
-RoutingMessage::mutable_trace_route() {
-  // @@protoc_insertion_point(field_mutable_list:top.transport.protobuf.RoutingMessage.trace_route)
-  return &trace_route_;
-}
-
-// optional bytes xid = 26;
+// optional bytes xid = 15;
 inline bool RoutingMessage::has_xid() const {
-  return (_has_bits_[0] & 0x00000020u) != 0;
+  return (_has_bits_[0] & 0x00000008u) != 0;
 }
 inline void RoutingMessage::set_has_xid() {
-  _has_bits_[0] |= 0x00000020u;
+  _has_bits_[0] |= 0x00000008u;
 }
 inline void RoutingMessage::clear_has_xid() {
-  _has_bits_[0] &= ~0x00000020u;
+  _has_bits_[0] &= ~0x00000008u;
 }
 inline void RoutingMessage::clear_xid() {
   xid_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
@@ -3756,39 +2163,15 @@ inline void RoutingMessage::set_allocated_xid(::std::string* xid) {
   // @@protoc_insertion_point(field_set_allocated:top.transport.protobuf.RoutingMessage.xid)
 }
 
-// optional bool broadcast = 27;
-inline bool RoutingMessage::has_broadcast() const {
-  return (_has_bits_[0] & 0x01000000u) != 0;
-}
-inline void RoutingMessage::set_has_broadcast() {
-  _has_bits_[0] |= 0x01000000u;
-}
-inline void RoutingMessage::clear_has_broadcast() {
-  _has_bits_[0] &= ~0x01000000u;
-}
-inline void RoutingMessage::clear_broadcast() {
-  broadcast_ = false;
-  clear_has_broadcast();
-}
-inline bool RoutingMessage::broadcast() const {
-  // @@protoc_insertion_point(field_get:top.transport.protobuf.RoutingMessage.broadcast)
-  return broadcast_;
-}
-inline void RoutingMessage::set_broadcast(bool value) {
-  set_has_broadcast();
-  broadcast_ = value;
-  // @@protoc_insertion_point(field_set:top.transport.protobuf.RoutingMessage.broadcast)
-}
-
-// optional uint32 priority = 28;
+// optional uint32 priority = 16;
 inline bool RoutingMessage::has_priority() const {
-  return (_has_bits_[0] & 0x04000000u) != 0;
+  return (_has_bits_[0] & 0x00008000u) != 0;
 }
 inline void RoutingMessage::set_has_priority() {
-  _has_bits_[0] |= 0x04000000u;
+  _has_bits_[0] |= 0x00008000u;
 }
 inline void RoutingMessage::clear_has_priority() {
-  _has_bits_[0] &= ~0x04000000u;
+  _has_bits_[0] &= ~0x00008000u;
 }
 inline void RoutingMessage::clear_priority() {
   priority_ = 0u;
@@ -3804,15 +2187,15 @@ inline void RoutingMessage::set_priority(::google::protobuf::uint32 value) {
   // @@protoc_insertion_point(field_set:top.transport.protobuf.RoutingMessage.priority)
 }
 
-// optional .top.transport.protobuf.GossipParams gossip = 29;
+// optional .top.transport.protobuf.GossipParams gossip = 17;
 inline bool RoutingMessage::has_gossip() const {
-  return (_has_bits_[0] & 0x00000100u) != 0;
+  return (_has_bits_[0] & 0x00000020u) != 0;
 }
 inline void RoutingMessage::set_has_gossip() {
-  _has_bits_[0] |= 0x00000100u;
+  _has_bits_[0] |= 0x00000020u;
 }
 inline void RoutingMessage::clear_has_gossip() {
-  _has_bits_[0] &= ~0x00000100u;
+  _has_bits_[0] &= ~0x00000020u;
 }
 inline void RoutingMessage::clear_gossip() {
   if (gossip_ != NULL) gossip_->Clear();
@@ -3862,39 +2245,15 @@ inline void RoutingMessage::set_allocated_gossip(::top::transport::protobuf::Gos
   // @@protoc_insertion_point(field_set_allocated:top.transport.protobuf.RoutingMessage.gossip)
 }
 
-// optional bool enable_ack = 30;
-inline bool RoutingMessage::has_enable_ack() const {
-  return (_has_bits_[0] & 0x02000000u) != 0;
-}
-inline void RoutingMessage::set_has_enable_ack() {
-  _has_bits_[0] |= 0x02000000u;
-}
-inline void RoutingMessage::clear_has_enable_ack() {
-  _has_bits_[0] &= ~0x02000000u;
-}
-inline void RoutingMessage::clear_enable_ack() {
-  enable_ack_ = false;
-  clear_has_enable_ack();
-}
-inline bool RoutingMessage::enable_ack() const {
-  // @@protoc_insertion_point(field_get:top.transport.protobuf.RoutingMessage.enable_ack)
-  return enable_ack_;
-}
-inline void RoutingMessage::set_enable_ack(bool value) {
-  set_has_enable_ack();
-  enable_ack_ = value;
-  // @@protoc_insertion_point(field_set:top.transport.protobuf.RoutingMessage.enable_ack)
-}
-
-// optional string debug = 31;
+// optional string debug = 18;
 inline bool RoutingMessage::has_debug() const {
-  return (_has_bits_[0] & 0x00000040u) != 0;
+  return (_has_bits_[0] & 0x00000010u) != 0;
 }
 inline void RoutingMessage::set_has_debug() {
-  _has_bits_[0] |= 0x00000040u;
+  _has_bits_[0] |= 0x00000010u;
 }
 inline void RoutingMessage::clear_has_debug() {
-  _has_bits_[0] &= ~0x00000040u;
+  _has_bits_[0] &= ~0x00000010u;
 }
 inline void RoutingMessage::clear_debug() {
   debug_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
@@ -3955,10 +2314,6 @@ inline void RoutingMessage::set_allocated_debug(::std::string* debug) {
 #ifdef __GNUC__
   #pragma GCC diagnostic pop
 #endif  // __GNUC__
-// -------------------------------------------------------------------
-
-// -------------------------------------------------------------------
-
 // -------------------------------------------------------------------
 
 // -------------------------------------------------------------------
