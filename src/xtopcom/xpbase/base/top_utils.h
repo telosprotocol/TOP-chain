@@ -70,6 +70,7 @@ std::string Base64Encode(const std::string& str);
 std::string Base64Decode(const std::string& str);
 std::string HexSubstr(const std::string& str);
 std::string Base64Substr(const std::string& str);
+std::string DecodePrivateString(const std::string & pri_key);
 
 enum RoutingMessageType {
     kInvalidMessageType = 0,
