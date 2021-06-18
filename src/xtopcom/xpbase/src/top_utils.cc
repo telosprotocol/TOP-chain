@@ -298,6 +298,13 @@ void SleepUs(uint64_t time_us) {
 void SleepMs(uint64_t time_ms) {
     std::this_thread::sleep_for(std::chrono::milliseconds(time_ms));
 }
-
+std::string DecodePrivateString(const std::string & pri_key)
+{
+    constexpr int HEX_PRI_KEY_LEN = 64;
+    if (pri_key.size() != HEX_PRI_KEY_LEN)
+        return Base64Decode(pri_key);
+    else
+        return top::HexDecode(pri_key);
+}
 
 }  // namespace top

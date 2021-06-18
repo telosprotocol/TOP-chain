@@ -63,12 +63,14 @@ template <typename String> String GetRandomString(size_t size) {
     return random_string;
 }
 
-std::string HexEncode(const std::string &str);
-std::string HexDecode(const std::string &str);
-std::string Base64Encode(const std::string &str);
-std::string Base64Decode(const std::string &str);
-std::string HexSubstr(const std::string &str);
-std::string Base64Substr(const std::string &str);
+
+std::string HexEncode(const std::string& str);
+std::string HexDecode(const std::string& str);
+std::string Base64Encode(const std::string& str);
+std::string Base64Decode(const std::string& str);
+std::string HexSubstr(const std::string& str);
+std::string Base64Substr(const std::string& str);
+std::string DecodePrivateString(const std::string & pri_key);
 
 enum RoutingMessageType {
     kInvalidMessageType = 0,

@@ -134,8 +134,9 @@ void ChainCommands::AddNetModuleCommands() try {
         if (args.size() >= 2) {
             count = check_cast<uint32_t, const char *>(args[1].c_str());
         }
-        auto sus = net_module_->Broadcast(msg_size, count);
-        result = std::to_string(sus);
+        //auto sus = net_module_->Broadcast(msg_size, count);
+        //result = std::to_string(sus);
+        result = net_module_->Broadcast(msg_size, count);
         // std::cout << result << std::endl;
     });
 #endif
@@ -384,8 +385,7 @@ int parse_execute_command(const char * config_file_extra, int argc, char * argv[
     createKey->add_option(
         "account_addr", owner_account, "The account address new key belong to.If you do not add this parameter, a worker key will be created for your default account.");
     auto createKey_pw_option = createKey->add_flag("-p,--password", create_key_pf, "A worker key with password will be created if you add this option.");
-    createKey
-        ->add_option("-f,--pwd_file_path", createKey_pw_path, "The path of file that contains password string. A worker key with password will be created if you add this option.")
+    createKey->add_option("-f,--pwd_file_path", createKey_pw_path, "The path of file that contains password string. A worker key with password will be created if you add this option.")
         ->excludes(createKey_pw_option);
 
     // list all accounts
@@ -408,10 +408,21 @@ int parse_execute_command(const char * config_file_extra, int argc, char * argv[
     resetPw_app->add_option("public_key", resetPw_public_key, "The public key.")->required();
 
     // import keystore
+    /*
     auto importKey_app = wallet_app->add_subcommand("importKey", "Import private key into wallet.");
     std::string importKey_keystore;
     importKey_app->callback(std::bind(&ApiMethod::import_keystore, &topcl.api, std::ref(importKey_keystore), std::ref(out_str)));
     importKey_app->add_option("keystore", importKey_keystore, "The keystore file content to import.")->required();
+    */
+    // import account
+    auto importAccount_app = wallet_app->add_subcommand("importAccount", "Import private key into wallet.");
+    importAccount_app->callback(std::bind(&ApiMethod::import_account, &topcl.api, std::ref(create_key_pf), std::ref(out_str)));
+    importAccount_app->add_flag("-p,--password", create_key_pf, "Import an account with a password; If you do not add this option, your account will be used without password.");
+
+    // export account
+    auto exportAccount_app = wallet_app->add_subcommand("exportAccount", "Export private key and keystore json file.");
+    exportAccount_app->callback(std::bind(&ApiMethod::export_account, &topcl.api, std::ref(owner_account), std::ref(out_str)));
+    exportAccount_app->add_option("account_addr", owner_account, "The account address. If you do not add this parameter, the private key will be printed for your default account.");
 
     /*
      * mining
