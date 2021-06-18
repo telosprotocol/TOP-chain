@@ -9,10 +9,11 @@ NS_BEG2(top, xtxpool_service_v2)
 
 #define recover_unconfirmed_txs_interval (64)  // every 64 seconds recover once.
 
-#define receipt_resend_interval (1200)        // every 1200 seconds resend once
+#define receipt_resend_interval (64)        // every 64 seconds resend once
 #define pull_missing_receipt_interval (64)  // every 64 seconds pull missing receipts once
 
-#define receipt_sender_select_num (1)    // select 1 nodes to send receipt at the first time
+#define receipt_sender_select_num (2)    // select 2 nodes to send receipt at the first time
+#define receipt_pull_msg_sender_select_num (1) // select 1 node to send recept pull msg
 #define receipt_resender_select_num (1)  // select 1 nodes to resend receipt
 
 bool xreceipt_strategy_t::is_time_for_recover_unconfirmed_txs(uint64_t now) {
@@ -102,7 +103,7 @@ bool xreceipt_strategy_t::is_selected_sender(const std::string & addr, uint64_t 
 
 bool xreceipt_strategy_t::is_selected_receipt_pull_msg_sender(const std::string & table_addr, uint64_t now, uint16_t node_id, uint16_t shard_size) {
     // select 2 auditor to send the receipt
-    uint32_t select_num = receipt_sender_select_num;
+    uint32_t select_num = receipt_pull_msg_sender_select_num;
     // calculate a random position that means which node is selected to send the receipt
     // the random position change by resend_time for rotate the selected node, to avoid same node is selected continuously.
 

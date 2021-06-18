@@ -56,16 +56,23 @@ const xcons_transaction_ptr_t xpeer_table_unconfirmed_txs_t::find(uint64_t recei
     return nullptr;
 }
 
-void xpeer_table_unconfirmed_txs_t::update_receipt_id(uint64_t latest_id, xall_unconfirm_tx_set_t & all_unconfirm_tx_set) {
-    if (m_latest_receipt_id >= latest_id) {
+void xpeer_table_unconfirmed_txs_t::update_receipt_id(uint64_t max_confirm_id, xall_unconfirm_tx_set_t & all_unconfirm_tx_set) {
+    if (m_max_confirm_id >= max_confirm_id) {
         return;
     }
 
     uint64_t front_receipt_id = m_unconfirmed_txs.begin()->first;
-    for (uint64_t id = front_receipt_id; id <= latest_id; id++) {
+    for (uint64_t id = front_receipt_id; id <= max_confirm_id; id++) {
         erase(id, all_unconfirm_tx_set);
     }
-    m_latest_receipt_id = latest_id;
+    m_max_confirm_id = max_confirm_id;
+}
+
+const xcons_transaction_ptr_t xpeer_table_unconfirmed_txs_t::get_latest_receipt() const {
+    if (!m_unconfirmed_txs.empty()) {
+        return m_unconfirmed_txs.rbegin()->second;
+    }
+    return nullptr;
 }
 
 void xpeer_tables_t::push_tx(const xcons_transaction_ptr_t & tx) {
@@ -105,26 +112,17 @@ void xpeer_tables_t::update_receiptid_state(const xreceipt_state_cache_t & recei
         auto & peer_table_txs = peer_table.second;
         peer_table_txs->update_receipt_id(receiptid_state_cache.get_confirmid_max(peer_table_sid), m_all_unconfirm_txs);
     }
+}
 
-    // update latest and max receipt id of peer tables, if not found, create one, if anyone have no unconfirmed tx, remove it.
-    // auto & id_state_map = id_state.get_map();
-    // for (auto & peer_table_id_state_pair : id_state_map) {
-    //     auto & peer_table_sid = peer_table_id_state_pair.first;
-    //     auto & peer_table_id_state = peer_table_id_state_pair.second;
-    //     auto it_peer_table_unconfirmed_txs = m_peer_tables.find(peer_table_sid);
-    //     if (it_peer_table_unconfirmed_txs != m_peer_tables.end()) {
-    //         it_peer_table_unconfirmed_txs->second->update_receipt_id(peer_table_id_state->get_latest_commit_out_id(), peer_table_id_state->get_max_out_id(),
-    //         m_all_unconfirm_txs); if (it_peer_table_unconfirmed_txs->second->is_all_txs_confirmed()) {
-    //             m_peer_tables.erase(it_peer_table_unconfirmed_txs);
-    //         }
-    //     } else {
-    //         if (!peer_table_id_state->all_confirmed()) {
-    //             auto peer_table = std::make_shared<xpeer_table_unconfirmed_txs_t>();
-    //             peer_table->update_receipt_id(peer_table_id_state->get_latest_commit_out_id(), peer_table_id_state->get_max_out_id(), m_all_unconfirm_txs);
-    //             m_peer_tables[peer_table_sid] = peer_table;
-    //         }
-    //     }
-    // }
+const std::vector<xcons_transaction_ptr_t> xpeer_tables_t::get_latest_receipts_for_resend(uint64_t now) const {
+    std::vector<xcons_transaction_ptr_t> latest_receipts;
+    for (auto & peer_table : m_peer_tables) {
+        auto receipt = peer_table.second->get_latest_receipt();
+        if (receipt != nullptr && receipt->get_receipt_gmtime() + resend_time_threshold < now) {
+            latest_receipts.push_back(receipt);
+        }
+    }
+    return latest_receipts;
 }
 
 int32_t xunconfirmed_account_t::update(xblock_t * latest_committed_block, const xreceipt_state_cache_t & receiptid_state_cache) {
@@ -372,15 +370,7 @@ void xunconfirmed_tx_queue_t::recover(const xreceipt_state_cache_t & receiptid_s
 }
 
 const std::vector<xcons_transaction_ptr_t> xunconfirmed_tx_queue_t::get_resend_txs(uint64_t now) {
-    std::vector<xcons_transaction_ptr_t> resend_txs;
-    auto & all_txs = m_peer_tables.get_all_txs();
-    for (auto tx : all_txs) {
-        if (tx->get_receipt_gmtime() + resend_time_threshold > now) {
-            break;
-        }
-        resend_txs.push_back(tx);
-    }
-    return resend_txs;
+    return m_peer_tables.get_latest_receipts_for_resend(now);
 }
 
 uint32_t xunconfirmed_tx_queue_t::size() const {
