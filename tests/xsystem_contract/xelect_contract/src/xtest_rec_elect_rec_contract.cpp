@@ -6,7 +6,10 @@
 
 #define private public
 
+#include "xblockstore/src/xvunithub.h"
 #include "xbase/xobject_ptr.h"
+#include "xbasic/xasio_io_context_wrapper.h"
+#include "xbasic/xtimer_driver.h"
 #include "xchain_timer/xchain_timer.h"
 #include "xdata/xblocktool.h"
 #include "xdata/xcodec/xmsgpack/xstandby_result_store_codec.hpp"
@@ -17,6 +20,7 @@
 #include "xloader/xconfig_onchain_loader.h"
 #include "xstore/xstore_face.h"
 #include "xtxexecutor/xtransaction_context.h"
+#include "xvledger/xvledger.h"
 #include "xvm/manager/xcontract_manager.h"
 #include "xvm/xserialization/xserialization.h"
 #include "xvm/xsystem_contracts/xelection/xrec/xrec_elect_archive_contract.h"
@@ -79,7 +83,14 @@ static bool create_rootblock(const std::string & config_file) {
 class test_contract_on_timer : public testing::Test {
 public:
     void SetUp() {
+        m_dummy_thread = make_object_ptr<base::xiothread_t>();
+
         m_store = store::xstore_factory::create_store_with_memdb();
+        base::xvchain_t::instance().set_xdbstore(m_store.get());
+
+        m_blockstore = make_object_ptr<store::xvblockstore_impl>(std::string("/"), *m_dummy_thread->get_context(), m_dummy_thread->get_thread_id());
+        base::xvchain_t::instance().set_xblockstore(m_blockstore.get());
+
         auto mbus = std::make_shared<top::mbus::xmessage_bus_t>(true, 1000);
         std::shared_ptr<top::xbase_io_context_wrapper_t> io_object = std::make_shared<top::xbase_io_context_wrapper_t>();
         std::shared_ptr<top::xbase_timer_driver_t> timer_driver = std::make_shared<top::xbase_timer_driver_t>(io_object);
@@ -100,14 +111,14 @@ public:
         if (false == create_rootblock(config_file)) {
             xassert(0);
         }
-        config::xconfig_loader_ptr_t loader = std::make_shared<loader::xconfig_onchain_loader_t>(make_observer(m_store), make_observer(mbus), make_observer(chain_timer.get()));
-        config_center.add_loader(loader);
-        config_center.load();
+        // config::xconfig_loader_ptr_t loader = std::make_shared<loader::xconfig_onchain_loader_t>(make_observer(m_store), make_observer(mbus), make_observer(chain_timer.get()));
+        // config_center.add_loader(loader);
+        // config_center.load();
 
 #define contract_init(class, sys_address)                                                                                                                                          \
     xcontract_manager_t::instance().register_contract<class>(common::xaccount_address_t{sys_address}, common::xtopchain_network_id);                                               \
     xcontract_manager_t::instance().register_contract_cluster_address(common::xaccount_address_t{sys_address}, common::xaccount_address_t{sys_address});                           \
-    xcontract_manager_t::instance().setup_chain(common::xaccount_address_t{sys_address}, m_store.get());
+    xcontract_manager_t::instance().setup_chain(common::xaccount_address_t{sys_address}, m_blockstore.get())
         contract_init(xrec_registration_contract, sys_contract_rec_registration_addr);
         contract_init(xrec_standby_pool_contract_t, sys_contract_rec_standby_pool_addr);
         contract_init(xrec_elect_rec_contract_t, sys_contract_rec_elect_rec_addr);
@@ -123,35 +134,37 @@ public:
     void TearDown() {}
 
     void update_standby_pool(const std::string & address) {
-        auto account = m_store->clone_account(address);
+        auto account = m_store->query_account(address);
         xassert(account != NULL);
 
-        xaccount_context_t account_context(address, m_store.get());
+        xaccount_context_t account_context(account, m_store.get());
 
         xstandby_result_store_t standby_result_store;
 
         auto bytes = codec::msgpack_encode(standby_result_store);
         std::string obj_str{std::begin(bytes), std::end(bytes)};
-        account_context.string_set(XPROPERTY_CONTRACT_STANDBYS_KEY, obj_str, true);
+        account_context.string_set(XPROPERTY_CONTRACT_STANDBYS_KEY, obj_str);
     }
 
     void set_genesis_string() {
-        auto account = m_store->clone_account(sys_contract_zec_elect_consensus_addr);
+        auto account = m_store->query_account(sys_contract_zec_elect_consensus_addr);
         xassert(account != NULL);
 
-        xaccount_context_t account_context(sys_contract_zec_elect_consensus_addr, m_store.get());
+        xaccount_context_t account_context(account, m_store.get());
 
-        account_context.string_set(XPROPERTY_CONTRACT_ELECTION_EXECUTED_KEY, "1", true);
+        account_context.string_set(XPROPERTY_CONTRACT_ELECTION_EXECUTED_KEY, "1");
     }
 
     void exec_on_timer(const std::string & address, const xtransaction_ptr_t & tx) {
-        auto account = m_store->clone_account(address);
+        auto account = m_store->query_account(address);
         xassert(account != NULL);
 
         tx->set_last_nonce(account->account_send_trans_number() + 1);
         tx->set_digest();
 
-        xaccount_context_t account_context(address, m_store.get());
+        xobject_ptr_t<base::xvbstate_t> unit_bstate = make_object_ptr<base::xvbstate_t>(address, 0, 0, "", "", 0, 0, 0);
+        std::shared_ptr<data::xunit_bstate_t> unitstate = std::make_shared<data::xunit_bstate_t>(unit_bstate.get());
+        xaccount_context_t account_context(unitstate, m_store.get());
         account_context.m_random_seed = "12345";
 
         xvm::xvm_service s;
@@ -180,15 +193,17 @@ public:
         tx->get_target_action().set_action_name("on_timer");
         tx->get_target_action().set_action_param(std::string((char *)tstream.data(), tstream.size()));
 
-        tx->set_tx_subtype(data::enum_transaction_subtype_recv);
-
         exec_on_timer(contract_address, tx);
         return 0;
     }
-    static xobject_ptr_t<store::xstore_face_t> m_store;
+     xobject_ptr_t<base::xiothread_t> m_dummy_thread;
+     xobject_ptr_t<store::xstore_face_t> m_store;
+     xobject_ptr_t<base::xvblockstore_t> m_blockstore;
 };
 
-xobject_ptr_t<store::xstore_face_t> test_contract_on_timer::m_store;
+///xobject_ptr_t<base::xiothread_t> test_contract_on_timer::m_dummy_thread;
+///xobject_ptr_t<store::xstore_face_t> test_contract_on_timer::m_store;
+///xobject_ptr_t<base::xvblockstore_t> test_contract_on_timer::m_blockstore;
 
 TEST_F(test_contract_on_timer, on_timer) {
     update_standby_pool(sys_contract_rec_standby_pool_addr);

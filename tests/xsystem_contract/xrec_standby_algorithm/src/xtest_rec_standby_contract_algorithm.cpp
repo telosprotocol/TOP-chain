@@ -42,18 +42,18 @@ TEST_F(xtest_rec_standby_contract_algorithm, test_TOP_3495) {
     add_reg_info(node_info);
 
     auto & standby_node_info = standby_result_store.result_of(common::xnetwork_id_t{255}).result_of(xnode_id);
-    EXPECT_TRUE(standby_node_info.program_version == program_version_1);
-    EXPECT_TRUE(standby_node_info.consensus_public_key == pub_key_1);
+    EXPECT_TRUE(standby_node_info.program_version.empty());
+    EXPECT_TRUE(standby_node_info.consensus_public_key.empty());
     EXPECT_TRUE(standby_node_info.is_genesis_node == false);
 
     std::string program_version_2{"version_2"};
-    EXPECT_TRUE(rec_standby_contract.nodeJoinNetworkImpl(node_id, program_version_2, node_info, standby_result_store));
+    EXPECT_TRUE(rec_standby_contract.nodeJoinNetworkImpl(program_version_2, node_info, standby_result_store));
     EXPECT_TRUE(standby_node_info.program_version == program_version_2);
-    EXPECT_FALSE(rec_standby_contract.nodeJoinNetworkImpl(node_id, program_version_2, node_info, standby_result_store));  // rejoin shouldn't changed the result.
+    EXPECT_FALSE(rec_standby_contract.nodeJoinNetworkImpl(program_version_2, node_info, standby_result_store));  // rejoin shouldn't changed the result.
 
     top::xpublic_key_t pub_key_2{"test_pub_key_2"};
     node_info.consensus_public_key = pub_key_2;
-    EXPECT_TRUE(rec_standby_contract.nodeJoinNetworkImpl(node_id, program_version_2, node_info, standby_result_store));
+    EXPECT_TRUE(rec_standby_contract.nodeJoinNetworkImpl(program_version_2, node_info, standby_result_store));
     EXPECT_TRUE(standby_node_info.consensus_public_key == pub_key_2);
 }
 
@@ -73,7 +73,7 @@ TEST_F(xtest_rec_standby_contract_algorithm, test_on_timer_update_pubkey_and_rol
     node_info.m_network_ids = std::set<uint32_t>({255});
     add_reg_info(node_info);
 
-    EXPECT_TRUE(rec_standby_contract.nodeJoinNetworkImpl(node_id, program_version_1, node_info, standby_result_store));
+    EXPECT_TRUE(rec_standby_contract.nodeJoinNetworkImpl(program_version_1, node_info, standby_result_store));
 
     auto & standby_node_info = standby_result_store.result_of(common::xnetwork_id_t{255}).result_of(xnode_id);
     EXPECT_TRUE(standby_node_info.program_version == program_version_1);
@@ -96,41 +96,63 @@ TEST_F(xtest_rec_standby_contract_algorithm, test_on_timer_update_pubkey_and_rol
 #define EXPECT_HAS_NOT(node_type) EXPECT_TRUE(standby_node_info.stake_container.find(node_type) == standby_node_info.stake_container.end())
 
     EXPECT_HAS(common::xnode_type_t::consensus_auditor);
-    EXPECT_HAS(common::xnode_type_t::archive);
+    EXPECT_HAS(common::xnode_type_t::storage_archive);
     EXPECT_HAS(common::xnode_type_t::rec);
     EXPECT_HAS(common::xnode_type_t::zec);
     EXPECT_HAS(common::xnode_type_t::consensus_validator);
     EXPECT_HAS_NOT(common::xnode_type_t::edge);
+    EXPECT_HAS_NOT(common::xnode_type_t::storage_full_node);
 
     change_role_type(xnode_id, common::xrole_type_t::validator);
     EXPECT_HAS(common::xnode_type_t::consensus_auditor);
-    EXPECT_HAS(common::xnode_type_t::archive);
+    EXPECT_HAS(common::xnode_type_t::storage_archive);
     EXPECT_HAS(common::xnode_type_t::rec);
     EXPECT_HAS(common::xnode_type_t::zec);
     EXPECT_HAS(common::xnode_type_t::consensus_validator);
     EXPECT_HAS_NOT(common::xnode_type_t::edge);
+    EXPECT_HAS_NOT(common::xnode_type_t::storage_full_node);
     EXPECT_TRUE(rec_standby_on_timer_update);
     EXPECT_HAS_NOT(common::xnode_type_t::consensus_auditor);
-    EXPECT_HAS_NOT(common::xnode_type_t::archive);
+    EXPECT_HAS_NOT(common::xnode_type_t::storage_archive);
     EXPECT_HAS_NOT(common::xnode_type_t::rec);
     EXPECT_HAS_NOT(common::xnode_type_t::zec);
     EXPECT_HAS(common::xnode_type_t::consensus_validator);
     EXPECT_HAS_NOT(common::xnode_type_t::edge);
+    EXPECT_HAS_NOT(common::xnode_type_t::storage_full_node);
 
     change_role_type(xnode_id, common::xrole_type_t::edge);
     EXPECT_HAS_NOT(common::xnode_type_t::consensus_auditor);
-    EXPECT_HAS_NOT(common::xnode_type_t::archive);
+    EXPECT_HAS_NOT(common::xnode_type_t::storage_archive);
     EXPECT_HAS_NOT(common::xnode_type_t::rec);
     EXPECT_HAS_NOT(common::xnode_type_t::zec);
     EXPECT_HAS(common::xnode_type_t::consensus_validator);
     EXPECT_HAS_NOT(common::xnode_type_t::edge);
+    EXPECT_HAS_NOT(common::xnode_type_t::storage_full_node);
     EXPECT_TRUE(rec_standby_on_timer_update);
     EXPECT_HAS_NOT(common::xnode_type_t::consensus_auditor);
-    EXPECT_HAS_NOT(common::xnode_type_t::archive);
+    EXPECT_HAS_NOT(common::xnode_type_t::storage_archive);
     EXPECT_HAS_NOT(common::xnode_type_t::rec);
     EXPECT_HAS_NOT(common::xnode_type_t::zec);
     EXPECT_HAS_NOT(common::xnode_type_t::consensus_validator);
     EXPECT_HAS(common::xnode_type_t::edge);
+    EXPECT_HAS_NOT(common::xnode_type_t::storage_full_node);
+
+    change_role_type(xnode_id, common::xrole_type_t::full_node);
+    EXPECT_HAS_NOT(common::xnode_type_t::consensus_auditor);
+    EXPECT_HAS_NOT(common::xnode_type_t::storage_archive);
+    EXPECT_HAS_NOT(common::xnode_type_t::rec);
+    EXPECT_HAS_NOT(common::xnode_type_t::zec);
+    EXPECT_HAS_NOT(common::xnode_type_t::consensus_validator);
+    EXPECT_HAS(common::xnode_type_t::edge);
+    EXPECT_HAS_NOT(common::xnode_type_t::storage_full_node);
+    EXPECT_TRUE(rec_standby_on_timer_update);
+    EXPECT_HAS_NOT(common::xnode_type_t::consensus_auditor);
+    EXPECT_HAS_NOT(common::xnode_type_t::storage_archive);
+    EXPECT_HAS_NOT(common::xnode_type_t::rec);
+    EXPECT_HAS_NOT(common::xnode_type_t::zec);
+    EXPECT_HAS_NOT(common::xnode_type_t::consensus_validator);
+    EXPECT_HAS_NOT(common::xnode_type_t::edge);
+    EXPECT_HAS(common::xnode_type_t::storage_full_node);
 
 #undef rec_standby_on_timer_update
 #undef EXPECT_HAS
@@ -153,7 +175,7 @@ TEST_F(xtest_rec_standby_contract_algorithm, test_on_timer_update_stake) {
     node_info.m_network_ids = std::set<uint32_t>({255});
     EXPECT_TRUE(add_reg_info(node_info));
 
-    EXPECT_TRUE(rec_standby_contract.nodeJoinNetworkImpl(node_id, program_version_1, node_info, standby_result_store));
+    EXPECT_TRUE(rec_standby_contract.nodeJoinNetworkImpl(program_version_1, node_info, standby_result_store));
 
     auto & standby_node_info = standby_result_store.result_of(common::xnetwork_id_t{255}).result_of(xnode_id);
     EXPECT_TRUE(standby_node_info.program_version == program_version_1);
@@ -165,7 +187,7 @@ TEST_F(xtest_rec_standby_contract_algorithm, test_on_timer_update_stake) {
 #define EXPECT_HAS_NOT(node_type) EXPECT_TRUE(standby_node_info.stake_container.find(node_type) == standby_node_info.stake_container.end())
     EXPECT_FALSE(node_info.auditor());
     EXPECT_HAS_NOT(common::xnode_type_t::consensus_auditor);
-    EXPECT_HAS_NOT(common::xnode_type_t::archive);
+    EXPECT_HAS_NOT(common::xnode_type_t::storage_archive);
     EXPECT_HAS(common::xnode_type_t::consensus_validator);
     EXPECT_HAS(common::xnode_type_t::rec);
     EXPECT_HAS(common::xnode_type_t::zec);
@@ -177,7 +199,7 @@ TEST_F(xtest_rec_standby_contract_algorithm, test_on_timer_update_stake) {
     EXPECT_TRUE(rec_standby_on_timer_update);
 
     EXPECT_HAS(common::xnode_type_t::consensus_auditor);
-    EXPECT_HAS(common::xnode_type_t::archive);
+    EXPECT_HAS(common::xnode_type_t::storage_archive);
     EXPECT_HAS(common::xnode_type_t::consensus_validator);
     EXPECT_HAS(common::xnode_type_t::rec);
     EXPECT_HAS(common::xnode_type_t::zec);
