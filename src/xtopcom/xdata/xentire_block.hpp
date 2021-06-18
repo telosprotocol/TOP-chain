@@ -32,10 +32,10 @@ public:
         KEEP_SIZE();
 
         xblock_t* _data_obj = dynamic_cast<xblock_t*>(xblock_t::full_block_read_from(stream));
-        block_ptr.attach(_data_obj);
-
-        block_ptr->reset_block_flags();
-
+        if (_data_obj != nullptr) {
+            block_ptr.attach(_data_obj);
+            block_ptr->reset_block_flags();
+        }
         return CALC_LEN();
     }
 
