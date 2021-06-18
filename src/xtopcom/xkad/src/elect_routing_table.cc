@@ -196,10 +196,14 @@ void ElectRoutingTable::OnHeartbeatFailed(const std::string & ip, uint16_t port)
 }
 
 void ElectRoutingTable::GetRandomNodes(std::vector<NodeInfoPtr> & vec, size_t size) {
-    // std::unique_lock<std::mutex> lock(m_nodes_mutex);
-    std::size_t min_size = std::min(m_xip2_for_shuffle.size(), size);
-    for (std::size_t _i = 0; _i < min_size; ++_i)
-        vec.push_back(m_nodes[m_xip2_for_shuffle[_i]]);
+    auto shuffled_xip2 = get_shuffled_xip2();
+    auto all_nodes = nodes();
+    std::size_t min_size = std::min(shuffled_xip2.size(), size);
+    for (std::size_t _i = 0; _i < min_size; ++_i) {
+        if (all_nodes[shuffled_xip2[_i]] != nullptr) {
+            vec.push_back(all_nodes[shuffled_xip2[_i]]);
+        }
+    }
 }
 
 std::unordered_map<std::string, NodeInfoPtr> ElectRoutingTable::nodes() {
