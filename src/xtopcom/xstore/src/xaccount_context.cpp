@@ -1171,6 +1171,9 @@ bool xaccount_context_t::add_transaction(const xcons_transaction_ptr_t& trans) {
         }
         m_latest_exec_sendtx_nonce = trans->get_transaction()->get_tx_nonce();
         m_latest_exec_sendtx_hash = trans->get_transaction()->digest();
+
+        // try update latest create nonce
+        update_latest_create_nonce_hash(trans);  // self tx may create contract tx
     }
     xdbg("xaccount_context_t::add_transaction account=%s,height=%ld,tx=%s", get_address().c_str(), get_chain_height(), trans->dump(true).c_str());
     m_currect_transaction = trans;
@@ -1263,10 +1266,19 @@ void xaccount_context_t::get_latest_create_nonce_hash(uint64_t & nonce, uint256_
     nonce = m_latest_create_sendtx_nonce;
     hash = m_latest_create_sendtx_hash;
 }
-void xaccount_context_t::set_latest_create_nonce_hash(uint64_t nonce, const uint256_t & hash) {
-    xassert(m_latest_create_sendtx_nonce + 1 == nonce);
-    m_latest_create_sendtx_nonce = nonce;
-    m_latest_create_sendtx_hash = hash;
+
+void xaccount_context_t::update_latest_create_nonce_hash(const xcons_transaction_ptr_t & tx) {
+    xassert(tx->is_self_tx() || tx->is_send_tx());
+    // maybe not need update, it's ok
+    if (m_latest_create_sendtx_nonce == tx->get_tx_last_nonce()) {
+        if (true == tx->get_transaction()->check_last_trans_hash(m_latest_create_sendtx_hash)) {
+            m_latest_create_sendtx_nonce = tx->get_tx_nonce();
+            m_latest_create_sendtx_hash = tx->get_tx_hash_256();
+            return;
+        }
+        xerror("xaccount_context_t::update_latest_create_nonce_hash fail-sendtx hash unmatch. account=%s,last_nonce=%ld,tx=%s",
+            get_address().c_str(), m_latest_create_sendtx_nonce, tx->dump().c_str());
+    }
 }
 
 int32_t xaccount_context_t::create_transfer_tx(const std::string & receiver, uint64_t amount) {
@@ -1302,7 +1314,7 @@ int32_t xaccount_context_t::create_transfer_tx(const std::string & receiver, uin
         return xaccount_contract_number_exceed_max;
     }
     m_contract_txs.push_back(constx);
-    set_latest_create_nonce_hash(tx->get_tx_nonce(), tx->digest());
+    update_latest_create_nonce_hash(constx);
     xdbg_info("xaccount_context_t::create_transfer_tx tx:%s,from:%s,to:%s,amount:%ld,nonce:%ld,deposit:%d",
         tx->get_digest_hex_str().c_str(), get_address().c_str(), receiver.c_str(), amount, tx->get_tx_nonce(), deposit);
     return xstore_success;
@@ -1337,7 +1349,7 @@ int32_t xaccount_context_t::generate_tx(const std::string& target_addr, const st
         return xaccount_contract_number_exceed_max;
     }
     m_contract_txs.push_back(constx);
-    set_latest_create_nonce_hash(tx->get_tx_nonce(), tx->digest());
+    update_latest_create_nonce_hash(constx);
     xdbg_info("xaccount_context_t::generate_tx tx:%s,from:%s,to:%s,func_name:%s,nonce:%ld,lasthash:%ld,func_param:%ld",
         tx->get_digest_hex_str().c_str(), get_address().c_str(), target_addr.c_str(), func_name.c_str(), tx->get_tx_nonce(), tx->get_last_hash(), base::xhash64_t::digest(func_param));
     return xstore_success;
