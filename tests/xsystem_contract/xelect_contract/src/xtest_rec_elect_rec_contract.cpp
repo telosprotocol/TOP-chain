@@ -162,9 +162,7 @@ public:
         tx->set_last_nonce(account->account_send_trans_number() + 1);
         tx->set_digest();
 
-        xobject_ptr_t<base::xvbstate_t> unit_bstate = make_object_ptr<base::xvbstate_t>(address, 0, 0, "", "", 0, 0, 0);
-        std::shared_ptr<data::xunit_bstate_t> unitstate = std::make_shared<data::xunit_bstate_t>(unit_bstate.get());
-        xaccount_context_t account_context(unitstate, m_store.get());
+        xaccount_context_t account_context(account, m_store.get());
         account_context.m_random_seed = "12345";
 
         xvm::xvm_service s;
