@@ -494,8 +494,8 @@ std::unordered_map<common::xsharding_address_t, xgroup_update_result_t> xtop_dat
 
                     continue;
                 }
-                ec1 = xdata_accessor_errc_t::success;  // clear xdata_accessor_errc_t::cluster_already_exist if any
 
+                ec1 = xdata_accessor_errc_t::success;  // clear xdata_accessor_errc_t::cluster_already_exist if any
                 auto r = update_cluster(zone_element, cluster_element, cluster_result, associated_blk_height, ec1);
                 // should skip checking ec1?
                 ret.insert(std::begin(r), std::end(r));
@@ -524,6 +524,11 @@ std::unordered_map<common::xsharding_address_t, xgroup_update_result_t> xtop_dat
                   ec.category().name(),
                   static_cast<std::uint32_t>(m_network_element->network_id().value()),
                   static_cast<std::uint16_t>(zone_element->zone_id().value()));
+        }
+
+        // special case for full node, since the result can be empty.
+        if (node_type == common::xnode_type_t::storage_full_node && ec == xdata_accessor_errc_t::election_data_empty) {
+            ec = xdata_accessor_errc_t::success;
         }
     }
 
