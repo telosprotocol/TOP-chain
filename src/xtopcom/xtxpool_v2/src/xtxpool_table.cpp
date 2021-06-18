@@ -202,7 +202,7 @@ std::shared_ptr<xtx_entry> xtxpool_table_t::pop_tx(const tx_info_t & txinfo, boo
     return nullptr;
 }
 
-void xtxpool_table_t::pop_tx(const tx_info_t & txinfo, base::xtable_shortid_t peer_table_sid, uint64_t receiptid) {
+void xtxpool_table_t::update_id_state(const tx_info_t & txinfo, base::xtable_shortid_t peer_table_sid, uint64_t receiptid, uint64_t nonce) {
     {
         std::lock_guard<std::mutex> lck(m_mgr_mutex);
         bool exist = false;
@@ -210,7 +210,7 @@ void xtxpool_table_t::pop_tx(const tx_info_t & txinfo, base::xtable_shortid_t pe
             m_locked_txs.pop_tx(txinfo, exist);
         }
 
-        m_txmgr_table.pop_tx(txinfo, peer_table_sid, receiptid);
+        m_txmgr_table.update_id_state(txinfo, peer_table_sid, receiptid, nonce);
         return;
     }
 
@@ -271,7 +271,7 @@ void xtxpool_table_t::unit_block_process(xblock_t * unit_block) {
         const std::vector<xlightunit_tx_info_ptr_t> & txs = lightunit->get_txs();
         for (auto & tx : txs) {
             tx_info_t txinfo(unit_block->get_account(), tx->get_tx_hash_256(), tx->get_tx_subtype());
-            pop_tx(txinfo, tx->get_receipt_id_tableid(), tx->get_receipt_id());
+            update_id_state(txinfo, tx->get_receipt_id_tableid(), tx->get_receipt_id(), tx->get_last_trans_nonce() + 1);
         }
     }
 

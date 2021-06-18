@@ -90,13 +90,12 @@ std::shared_ptr<xtx_entry> xtxmgr_table_t::pop_tx(const tx_info_t & txinfo, bool
     return tx_ent;
 }
 
-void xtxmgr_table_t::pop_tx(const tx_info_t & txinfo, base::xtable_shortid_t table_sid, uint64_t receiptid) {
+void xtxmgr_table_t::update_id_state(const tx_info_t & txinfo, base::xtable_shortid_t table_sid, uint64_t receiptid, uint64_t nonce) {
     if (txinfo.get_subtype() == enum_transaction_subtype_self || txinfo.get_subtype() == enum_transaction_subtype_send) {
-        m_send_tx_queue.pop_tx(txinfo, false);
-        //only send and self tx push to pending accounts queue.so as pop.
-        m_pending_accounts.pop_tx(txinfo, false);
+        updata_latest_nonce(txinfo.get_addr(), nonce, txinfo.get_hash());
     }
 
+    //only send and self tx push to pending accounts queue.so as pop.
     m_new_receipt_queue.update_receipt_id_by_confirmed_tx(txinfo, table_sid, receiptid);
 }
 
