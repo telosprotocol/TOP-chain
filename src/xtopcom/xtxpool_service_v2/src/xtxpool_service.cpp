@@ -139,9 +139,6 @@ void xtxpool_service::resend_receipts(uint64_t now) {
             }
 
             std::vector<xcons_transaction_ptr_t> recv_txs = m_para->get_txpool()->get_resend_txs(m_zone_index, table_id, now);
-            if (recv_txs.size() > 0) {
-                xinfo("xtxpool_service::resend_receipts zone=%d,table:%d,recv_txs_size=%zu", m_zone_index, table_id, recv_txs.size());
-            }
             for (auto recv_tx : recv_txs) {
                 xassert(recv_tx->is_recv_tx());
                 // filter out txs witch has already in txpool, just not consensused and committed.
@@ -149,6 +146,7 @@ void xtxpool_service::resend_receipts(uint64_t now) {
                 if (tx != nullptr && tx->get_tx()->is_confirm_tx()) {
                     continue;
                 }
+                xinfo("xtxpool_service::resend_receipts recv_tx:%s", recv_tx->dump().c_str());
                 send_receipt_retry(recv_tx);
             }
         }
