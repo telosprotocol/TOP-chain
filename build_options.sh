@@ -33,6 +33,10 @@ do
         CMAKE_EXTRA_OPTIONS+=" -DBUILD_GPERF=ON"
         echo "BUILD GPERF mode"
     ;;
+    ghperf)
+        CMAKE_EXTRA_OPTIONS+=" -DBUILD_GHPERF=ON"
+        echo "BUILD GHPERF mode"
+    ;;
     tcmalloc)
         CMAKE_EXTRA_OPTIONS+=" -DTCMALLOC=ON"
         echo "BUILD TCMALLOC mode"

@@ -19,6 +19,7 @@ class xreceiptid_pair_t {
     xreceiptid_pair_t();
     xreceiptid_pair_t(uint64_t sendid, uint64_t confirmid, uint64_t recvid);
     ~xreceiptid_pair_t();
+    xreceiptid_pair_t(const xreceiptid_pair_t& copy) = delete;
  public:
     int32_t         do_write(base::xstream_t & stream) const;
     int32_t         do_read(base::xstream_t & stream);
@@ -47,7 +48,7 @@ class xreceiptid_pair_t {
 class xreceiptid_pairs_t {
  public:
     xreceiptid_pairs_t();
-    ~xreceiptid_pairs_t() {}
+    ~xreceiptid_pairs_t();
  public:
     void            add_pair(xtable_shortid_t sid, const xreceiptid_pair_t & pair);
     void            clear_binlog();
