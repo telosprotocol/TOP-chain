@@ -10,6 +10,7 @@
 #include "xrpc/xrpc_init.h"
 #include "xchaininit/xinit.h"
 #include "xchaininit/xconfig.h"
+#include "xchaininit/xchain_options.h"
 #include "xchaininit/xchain_params.h"
 #include "xbase/xutl.h"
 #include "xbase/xhash.h"
@@ -31,15 +32,7 @@
 #include <nlohmann/json.hpp>
 using json = nlohmann::json;
 
-#ifdef LEAK_TRACER
-#include "leaktracer/MemoryTrace.hpp"
-#include <csignal>
-#endif
 
-#ifdef ENABLE_GPERF
-#include "gperftools/profiler.h"
-#include <csignal>
-#endif
 namespace top{
 
 bool g_topchain_init_finish_flag = false;
@@ -80,43 +73,9 @@ static bool create_rootblock(const std::string & config_file) {
     xinfo("create_rootblock success");
     return true;
 }
-#ifdef LEAK_TRACER
-void export_mem_trace(int signal)
-{
-    leaktracer::MemoryTrace::GetInstance().stopMonitoringAllocations();
-    leaktracer::MemoryTrace::GetInstance().stopAllMonitoring();
 
-    std::ofstream oleaks;
 
-    oleaks.open(global_node_id + std::to_string(std::chrono::system_clock::now().time_since_epoch().count()) + "leaks.out", std::ios_base::out);
-    if (oleaks.is_open())
-        leaktracer::MemoryTrace::GetInstance().writeLeaks(oleaks);
-    else
-        std::cerr << "Failed to write to \"leaks.out\"\n";
 
-    oleaks.close();
-}
-#endif
-
-#ifdef ENABLE_GPERF
-void setGperfStatus(int signum) {
-    static bool is_open = false;
-    if (signum != SIGUSR2) {
-        return ;
-    }
-    if (!is_open) {  // start
-        is_open = true;
-        ProfilerStart(std::string{"gperf_" + global_node_id + std::to_string(std::chrono::system_clock::now().time_since_epoch().count()) + ".prof"}.c_str());
-        xkinfo("ProfilerStart success");
-        std::cout << "ProfilerStart success" << std::endl;
-    } else {  // stop
-        is_open = false;
-        ProfilerStop();
-        xkinfo("ProfilerStop success");
-        std::cout << "ProfilerStop success" << std::endl;
-    }
-}
-#endif
 
 int topchain_init(const std::string& config_file, const std::string& config_extra) {
     using namespace std;
@@ -126,15 +85,8 @@ int topchain_init(const std::string& config_file, const std::string& config_extr
     using namespace store;
     using namespace rpc;
 
-#ifdef LEAK_TRACER
-    std::signal(SIGUSR1, export_mem_trace);
-    leaktracer::MemoryTrace::GetInstance().startMonitoringAllThreads();
-#endif
-
-#ifdef ENABLE_GPERF
-    std::signal(SIGUSR2, setGperfStatus);
-    std::cout << "———— ENABLE_GPERF ————" << std::endl;
-#endif
+    // init up
+    setup_options();
 
     //using top::elect::xbeacon_xelect_imp;
     auto hash_plugin = new xtop_hash_t();
