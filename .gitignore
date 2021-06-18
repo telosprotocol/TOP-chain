@@ -37,3 +37,4 @@ xtopchain
 macos/XTOPCHAIN.build
 macos/src
 src/xtopcom/xvledger/test/xvledger-test.xcodeproj
+macos
