@@ -95,7 +95,7 @@ private:
     void unit_block_process(xblock_t * unit_block);
     bool  get_account_basic_info(const std::string & account, xaccount_basic_info_t & account_index_info) const;
     data::xtablestate_ptr_t get_target_tablestate(base::xvblock_t* block) const;
-    void pop_tx(const tx_info_t & txinfo, base::xtable_shortid_t peer_table_sid, uint64_t receiptid);
+    void update_id_state(const tx_info_t & txinfo, base::xtable_shortid_t peer_table_sid, uint64_t receiptid, uint64_t nonce);
 
     xtxpool_resources_face * m_para;
     xtxpool_table_info_t m_xtable_info;
