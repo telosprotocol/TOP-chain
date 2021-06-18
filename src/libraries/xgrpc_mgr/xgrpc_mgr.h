@@ -56,7 +56,6 @@ public:
     }
 
 private:
-    std::recursive_mutex m_lock;
     std::string m_response;
     std::vector<std::shared_ptr<xrpc_handle_face_t>> m_handles;
 };

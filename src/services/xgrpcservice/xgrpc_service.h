@@ -61,9 +61,7 @@ private:
                 ServerWriter<xrpc_reply> *replys) override;
 
     std::shared_ptr<xrpc_handle_face_t> m_handle;
-    // uint32_t m_call_num;
-    // uint64_t m_last_timestamp;
-    // bool debug;
+    mutable std::mutex m_call_mtx;
 };
 
 }}
