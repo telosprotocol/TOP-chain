@@ -37,6 +37,7 @@ void xrpc_serviceimpl::register_handle(const std::shared_ptr<xrpc_handle_face_t>
 }
 
 Status xrpc_serviceimpl::call(ServerContext * context, const xrpc_request * request, xrpc_reply * reply) {
+    std::lock_guard<std::mutex> lock(m_call_mtx);
     string req = request->body();
     m_handle->handle(req);
     string rsp = m_handle->get_response();

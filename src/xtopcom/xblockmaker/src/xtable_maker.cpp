@@ -336,7 +336,7 @@ xblock_ptr_t xtable_maker_t::make_light_table(bool is_leader, const xtablemaker_
         xblock_ptr_t proposal_unit = unitmaker->make_proposal(unit_para, cs_para, unit_result);
         table_result.m_unit_results.push_back(unit_result);
         tgas_balance_change += unit_result.m_tgas_balance_change;
-        xdbg("total_tgas_balance_change=%llu, change=%llu", tgas_balance_change, unit_result.m_tgas_balance_change);
+        xdbg("total_tgas_balance_change=%lld, change=%lld", tgas_balance_change, unit_result.m_tgas_balance_change);
         if (false == table_para.delete_fail_tx_from_proposal(unit_result.m_fail_txs) ) {
             xerror("xtable_maker_t::make_light_table fail-delete_fail_tx_from_proposal.is_leader=%d,%s,account=%s",
                 is_leader, cs_para.dump().c_str(), unitmaker->get_account().c_str());

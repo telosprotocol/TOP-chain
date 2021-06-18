@@ -105,8 +105,6 @@ void handler_mgr::add_handler(std::shared_ptr<xrpc_handle_face_t> handle) {
 }
 
 bool handler_mgr::handle(std::string request) {
-    // lock for parallel safety
-    std::lock_guard<std::recursive_mutex> lock(m_lock);
     for (auto v : m_handles) {
         auto ret = v->handle(request);
         if (ret) {
