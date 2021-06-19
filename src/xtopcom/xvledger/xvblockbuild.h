@@ -18,7 +18,6 @@ namespace top
     {
         class xvblockbuild_t;
 
-
         class xbbuild_para_t {
             friend xvblockbuild_t;
         public:
@@ -75,7 +74,6 @@ namespace top
         class xvblockbuild_t {
         public:
             static xauto_ptr<xvheader_t>    build_proposal_header(xvblock_t* block);
-            // static xauto_ptr<xvheader_t>    build_proposal_genesis_header(const std::string & account);
         public:
             xvblockbuild_t();  // genesis genesis construct
             xvblockbuild_t(base::xvheader_t* header, base::xvqcert_t* cert);
@@ -119,6 +117,12 @@ namespace top
         };
 
 
+        // some rules abount block
+        // non-empty block must has input root hash. block input root hash = merkle(all input actions' hash)
+        // non-empty block must has output root hash. block output root hash = full-state hash; light-table output root hash = merkle(all units sign hash), used for unit extend cert;
+        //
+
+
         class xvblockmaker_t : public xvblockbuild_t {
         public:
             static bool calc_merkle_path(const std::vector<std::string> & leafs, const xvaction_t & leaf, xmerkle_path_256_t& hash_path);
@@ -131,13 +135,12 @@ namespace top
             xvblockmaker_t(base::xvheader_t* header, base::xvinput_t* input, base::xvoutput_t* output);
             virtual ~xvblockmaker_t();
         public:
+            bool    set_input_entity(const xvaction_t & action);
             bool    set_input_entity(const std::vector<xvaction_t> & actions);
-            bool    set_output_entity_state_hash(const std::string & state_bin);
-            bool    set_output_entity_binlog_hash(const std::string & binlog_bin);
             bool    set_output_entity(const std::string & key, const std::string & value);
             bool    set_input_resource(const std::string & key, const std::string & value);
-            bool    set_output_resource_state(const std::string & value);
-            bool    set_output_resource_binlog(const std::string & value);
+            bool    set_output_full_state(const std::string & value);
+            bool    set_output_binlog(const std::string & value);
             bool    merge_input_resource(const xstrmap_t * src_map);
             bool    merge_output_resource(const xstrmap_t * src_map);
 
@@ -155,15 +158,19 @@ namespace top
             inline xstrmap_t*           get_output_resource() const {return m_output_resource;}
             inline xvinentity_t*        get_input_entity()    const {return m_primary_input_entity;}
             inline xvoutentity_t*       get_output_entity()   const {return m_primary_output_entity;}
+            inline const std::string &  get_full_state()      const {return m_full_state;}
+            inline const std::string &  get_full_state_hash() const {return m_full_state_hash;}
         private:
             bool    set_output_resource(const std::string & key, const std::string & value);
-
+            bool    check_block_rules(base::xvblock_t* target_block);
         private:
             xstrmap_t*                  m_input_resource{nullptr}; //resource to hold input 'big data
             xstrmap_t*                  m_output_resource{nullptr};//resource to hold output ' big data
 
             xvinentity_t*               m_primary_input_entity{nullptr}; //#0 is primary input entity
             xvoutentity_t*              m_primary_output_entity{nullptr};//#0 is primary output entity
+            std::string                 m_full_state;
+            std::string                 m_full_state_hash;
         };
 
 
@@ -189,11 +196,12 @@ namespace top
         class xtable_inentity_extend_t {
         public:
             xtable_inentity_extend_t();
-            xtable_inentity_extend_t(xvheader_t* header, const std::string & justify_hash);
+            xtable_inentity_extend_t(xvheader_t* header, xvqcert_t* qcert);
             ~xtable_inentity_extend_t();
         public:
-            const xobject_ptr_t<xvheader_t> &       get_unit_header() {return m_unit_header;}
+            const xobject_ptr_t<xvheader_t> &       get_unit_header() const {return m_unit_header;}
             const std::string &                     get_unit_justify_hash() const {return m_unit_justify_hash;}
+            const std::string &                     get_unit_output_root_hash() const {return m_unit_output_root_hash;}
             int32_t    serialize_to_string(std::string & _str);
             int32_t    serialize_from_string(const std::string & _str);
 
@@ -203,6 +211,8 @@ namespace top
         private:
             xobject_ptr_t<xvheader_t>   m_unit_header{nullptr};
             std::string                 m_unit_justify_hash;
+            std::string                 m_unit_output_root_hash;
+            std::string                 m_unit_input_root_hash;  // not set now, may be used future
         };
 
         // xvtablemaker is just for batch units maker

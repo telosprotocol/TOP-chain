@@ -162,8 +162,8 @@ bool xunit_maker_t::push_tx(const data::xblock_consensus_para_t & cs_para, const
                 uint256_t account_latest_hash = committed_state->account_send_trans_hash();
                 get_txpool()->updata_latest_nonce(get_account(), account_latest_nonce, account_latest_hash);
             }
-            xwarn("xunit_maker_t::push_tx fail-tx filtered for send nonce hash not match,%s,latest_nonce=%ld,tx=%s",
-                cs_para.dump().c_str(), latest_nonce, tx->dump().c_str());
+            xwarn("xunit_maker_t::push_tx fail-tx filtered for send nonce hash not match,%s,bstate=%s,latest_nonce=%ld,tx=%s",
+                cs_para.dump().c_str(), get_latest_bstate()->get_bstate()->dump().c_str(), latest_nonce, tx->dump().c_str());
             return false;
         }
     }

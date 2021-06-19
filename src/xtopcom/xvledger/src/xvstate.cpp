@@ -997,6 +997,31 @@ namespace top
             clone_properties_from(clone_from);
         }
         
+        xvbstate_t::xvbstate_t(const xvheader_t& proposal_header,xvexeunit_t * parent_unit,enum_xdata_type type)
+        :xvexestate_t(proposal_header.get_account(),type)
+        {
+            XMETRICS_GAUGE(metrics::dataobject_xvbstate, 1);
+            //init unit name and block height first
+            m_block_types    = proposal_header.get_block_raw_types();
+            m_block_versions = proposal_header.get_block_raw_versions();
+            
+            m_block_height = proposal_header.get_height();
+            xassert(m_block_height == 0); // it must be genesis block
+            m_block_viewid = 0;
+            
+            m_last_block_hash = proposal_header.get_last_block_hash();
+            m_last_full_block_hash = proposal_header.get_last_full_block_hash();
+            m_last_full_block_height = proposal_header.get_last_full_block_height();
+            
+            //then set unit name
+            set_unit_name(make_unit_name(get_address(),m_block_height));
+            //ask compressed data while serialization
+            set_unit_flag(enum_xdata_flag_acompress);
+            
+            if(parent_unit != NULL)
+                set_parent_unit(parent_unit);
+        }
+        
         //debug & ut-test only
         xvbstate_t::xvbstate_t(const std::string & account,const uint64_t block_height,const uint64_t block_viewid,const std::string & last_block_hash,const std::string &last_full_block_hash,const uint64_t last_full_block_height, const uint32_t raw_block_versions,const uint16_t raw_block_types, xvexeunit_t * parent_unit)
             :xvexestate_t(account,(enum_xdata_type)enum_xobject_type_vbstate)

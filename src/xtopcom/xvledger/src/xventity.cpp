@@ -267,17 +267,9 @@ namespace top
         xvoutentity_t::xvoutentity_t(const std::string & state_bin_log)
             :xventity_t(enum_xdata_type(enum_xobject_type_voutentity))
         {
-            set_value(key_name_state_hash(), state_bin_log);
+            xassert(false);  // should not use
         }
     
-        xvoutentity_t::xvoutentity_t(const std::string & state_hash, const std::string & binlog_hash)
-        :xventity_t(enum_xdata_type(enum_xobject_type_voutentity))
-        {
-            set_value(key_name_state_hash(), state_hash);
-            set_value(key_name_binlog_hash(), binlog_hash);
-        }
-        
-        
         xvoutentity_t::xvoutentity_t(const xvoutentity_t & obj)
             :xventity_t(obj)
         {

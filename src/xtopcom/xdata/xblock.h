@@ -96,10 +96,6 @@ public:
     static  base::xvblock_t*    full_block_read_from(base::xstream_t & stream);  // for block sync
 
  public:
-    virtual bool    is_full_state_block() const;  // TODO(jimmy) delete and use is_execute_ready directly
-    bool            is_execute_ready() const override {return is_full_state_block();}  //check whether ready to execute bin-log
-
- public:
     inline base::enum_xvblock_level get_block_level() const {return get_header()->get_block_level();}
     inline base::enum_xvblock_class get_block_class() const {return get_header()->get_block_class();}
     inline bool     is_unitblock() const {return get_block_level() == base::enum_xvblock_level_unit;}

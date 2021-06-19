@@ -180,16 +180,12 @@ namespace top
 
         std::string xblockacct_t::dump() const  //just for debug purpose
         {
-            bool is_warn = false;
             // execute height fall behind check, should be deleted eventually
-            const uint32_t fall_num = 128;
-            if(m_meta->_highest_execute_block_height + fall_num < m_meta->_highest_full_block_height)
-            {
-                is_warn = true;
-            }
+            int64_t distance = m_meta->_highest_full_block_height - m_meta->_highest_execute_block_height;
+            uint32_t warn_level = distance >> 7;  // fall_num = 128;
             char local_param_buf[256];
-            xprintf(local_param_buf,sizeof(local_param_buf),"{warn_meta=%d,account_id(%" PRIu64 "),account_addr=%s ->latest height for full=%" PRId64 ",geneis_connect=%" PRId64 ", connect=%" PRId64 ",commit=%" PRId64 ",execute=%" PRId64 " < lock=%" PRId64 " < cert=%" PRId64 "; at store(%s)}",
-                is_warn, get_xvid(), get_address().c_str(),m_meta->_highest_full_block_height,m_meta->_highest_genesis_connect_height,m_meta->_highest_connect_block_height,m_meta->_highest_commit_block_height,m_meta->_highest_execute_block_height,m_meta->_highest_lock_block_height,m_meta->_highest_cert_block_height,get_blockstore_path().c_str());
+            xprintf(local_param_buf,sizeof(local_param_buf),"{warn_meta=%d,distance=%ld,account_id(%" PRIu64 "),account_addr=%s ->latest height for full=%" PRId64 ",geneis_connect=%" PRId64 ", connect=%" PRId64 ",commit=%" PRId64 ",execute=%" PRId64 " < lock=%" PRId64 " < cert=%" PRId64 "; at store(%s)}",
+                warn_level, distance, get_xvid(), get_address().c_str(),m_meta->_highest_full_block_height,m_meta->_highest_genesis_connect_height,m_meta->_highest_connect_block_height,m_meta->_highest_commit_block_height,m_meta->_highest_execute_block_height,m_meta->_highest_lock_block_height,m_meta->_highest_cert_block_height,get_blockstore_path().c_str());
 
             return std::string(local_param_buf);
         }
@@ -1312,7 +1308,7 @@ namespace top
                     && (index_ptr->get_block_class() == base::enum_xvblock_class_full) ) //any full block is eligibal to executed
             {
                 //full-block need check whether state of offchain ready or not
-                is_ready_to_executed = block_ptr->is_execute_ready();
+                is_ready_to_executed = block_ptr->is_full_state_block();
             }
 
             if(is_ready_to_executed)
@@ -2146,7 +2142,7 @@ namespace top
             // try to check and execute from target block firstly, maybe target block include snapshot by syncing
             if (m_meta->_highest_execute_block_height < target_block->get_height()  // target height not executed
                 && target_block->get_block_class() == base::enum_xvblock_class_full  // must be full block
-                && target_block->is_execute_ready()  // must meet execute ready condition
+                && target_block->is_full_state_block()  // must meet execute ready condition
                 && m_meta->_highest_commit_block_height >= target_block->get_height())  // must be commit block
             {
                 // double check if committed block same with target block

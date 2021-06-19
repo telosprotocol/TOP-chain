@@ -37,17 +37,17 @@ bool xtable_bstate_t::set_block_offsnapshot(base::xvblock_t* block, const std::s
         return false;
     }
 
-    if (block->is_execute_ready()) {
+    if (block->is_full_state_block()) {
         xwarn("xtable_bstate_t::set_block_offsnapshot already has full state. block=%s", block->dump().c_str());
         return true;
     }
 
     std::string binlog_hash = base::xcontext_t::instance().hash(snapshot, block->get_cert()->get_crypto_hash_type());
-    if (binlog_hash != block->get_output()->get_state_hash()) {
+    if (binlog_hash != block->get_fullstate_hash()) {
         xerror("xtable_bstate_t::set_block_offsnapshot fail-snapshot hash unmatch.block=%s", block->dump().c_str());
         return false;
     }
-    if (false == block->get_output()->set_offblock_snapshot(snapshot)) {
+    if (false == block->set_offblock_snapshot(snapshot)) {
         xerror("xtable_bstate_t::set_block_offsnapshot set offblock snapshot state. block=%s", block->dump().c_str());
         return false;
     }

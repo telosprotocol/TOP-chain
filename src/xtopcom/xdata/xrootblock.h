@@ -15,14 +15,14 @@
 
 NS_BEG2(top, data)
 
-class xrootblock_input_t : public xbase_dataunit_t<xrootblock_input_t, xdata_type_rootblock_input_entity> {
+class xrootblock_input_t : public base::xdataunit_t {
  public:
-    xrootblock_input_t() = default;
+    xrootblock_input_t();
 
  protected:
-    virtual ~xrootblock_input_t() {}
-    int32_t do_write(base::xstream_t &stream) override;
-    int32_t do_read(base::xstream_t &stream) override;
+    virtual ~xrootblock_input_t();
+    int32_t do_write(base::xstream_t &stream);
+    int32_t do_read(base::xstream_t &stream);
 
  public:
     bool    set_account_balances(std::map<std::string, uint64_t> const& balances);
@@ -49,12 +49,12 @@ struct xrootblock_para_t {
     std::vector<std::string>                  m_geneis_funds_accounts;
     std::vector<std::string>                  m_tcc_accounts;
     std::vector<node_info_t>                  m_genesis_nodes;
-    uint64_t                                  m_genesis_time_stamp;
-    uint64_t                                  m_genesis_clock;
+    uint64_t                                  m_genesis_time_stamp{0};
 };
 class xrootblock_t : public xblock_t {
  public:
     static XINLINE_CONSTEXPR char const * root_resource_name     = "0";
+    static XINLINE_CONSTEXPR char const * ROOT_BLOCK_PROPERTY_NAME  = "$R";
  protected:
     enum { object_type_value = enum_xdata_type::enum_xdata_type_max - xdata_type_rootblock };
  public:
@@ -78,7 +78,7 @@ class xrootblock_t : public xblock_t {
     void dump_block_data(xJson::Value & json) const override;
 
  protected:
-    xobject_ptr_t<xrootblock_input_t>    get_rootblock_input() const;
+    xrootblock_input_t*    get_rootblock_input() const;
 
  public:
     static base::xvblock_t* get_rootblock();
