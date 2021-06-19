@@ -120,6 +120,8 @@ private:
 
 class xtransaction_t : public xbase_dataunit_t<xtransaction_t, xdata_type_transaction>, public xtransaction_header {
  public:
+    static std::string transaction_type_to_string(uint16_t type);
+ public:
     xtransaction_t();
  protected:
     ~xtransaction_t() override;

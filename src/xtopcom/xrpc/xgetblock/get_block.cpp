@@ -887,7 +887,7 @@ void get_block_handle::getLatestFullBlock() {
         jv["height"] = static_cast<xJson::UInt64>(bp->get_height());
         if (bp->is_fulltable()) {
             xfull_tableblock_t* ftp = dynamic_cast<xfull_tableblock_t*>(bp);
-            auto root_hash = ftp->get_output()->get_binlog_hash();
+            auto root_hash = ftp->get_fullstate_hash();
             jv["root_hash"] = to_hex_str(root_hash);
             base::xauto_ptr<base::xvbstate_t> bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(bp);
             data::xtablestate_ptr_t tablestate = bstate != nullptr ? std::make_shared<data::xtable_bstate_t>(bstate.get()) : nullptr;

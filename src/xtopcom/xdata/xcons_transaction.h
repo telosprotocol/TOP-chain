@@ -41,6 +41,7 @@ class xcons_transaction_t : public xbase_dataunit_t<xcons_transaction_t, xdata_t
     inline xtransaction_t*          get_transaction() const {return m_tx.get();}
     std::string                     get_tx_hash() const {return m_tx->get_digest_str();}
     uint256_t                       get_tx_hash_256() const {return m_tx->digest();}
+    uint16_t                        get_tx_type() const {return m_tx->get_tx_type();}
     bool                            verify_cons_transaction();
 
     const std::string &     get_source_addr()const {return m_tx->get_source_addr();}

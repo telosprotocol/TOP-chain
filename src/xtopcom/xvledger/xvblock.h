@@ -496,6 +496,7 @@ namespace top
 
             base::xvinentity_t*         get_primary_entity() const;
             size_t                      get_action_count() const;
+            virtual std::string         dump();
 
         protected: //proposal ==> input ==> output
             //just carry by object at memory,not included by serialized
@@ -510,8 +511,6 @@ namespace top
             friend class xvbbuild_t;
         public:
             static  const std::string   name(){ return std::string("xvoutput");}
-            static  const std::string   res_binlog_key_name(){return std::string("bl");}
-            static  const std::string   res_binlog_hash_key_name(){return std::string("bh");}  // TODO(jimmy) put to voutentity
             virtual std::string         get_obj_name() const override {return name();}
             enum{enum_obj_type = enum_xobject_type_voutput};//allow xbase create xvoutput_t object from xdataobj_t::read_from()
 
@@ -533,21 +532,16 @@ namespace top
             //root of input which usally present a root of merkle tree for input
             virtual const std::string   get_root_hash() const {return m_root_hash;}
             virtual bool                set_root_hash(const std::string & root_hash){ m_root_hash = root_hash;return true;}
-
-            const std::string           get_binlog();
-            const std::string           get_full_state();
-            const std::string           get_binlog_hash();
-            const std::string           get_state_hash();
-
             base::xvoutentity_t*        get_primary_entity() const;
+            virtual std::string         dump();
 
-        public:
-            bool set_offblock_snapshot(const std::string & snapshot);
-
+        protected:
+            const std::string           get_binlog_hash();
+            const std::string           get_state_hash();  // only can be used by xvblock_t, only light-table store state hash in output entity
+            const std::string           get_binlog();
         protected:
             //just carry by object at memory,not included by serialized
             std::string  m_root_hash;  //root of merkle tree constructed by input
-            std::string  m_offblock_snapshot;
         };
 
         //virtual block at high leve abstractly define and present a chain "block" that could fill by any format
@@ -692,6 +686,13 @@ namespace top
         public:
             xvinput_t *                 get_input()  const;//raw ptr of xvinput_t
             xvoutput_t*                 get_output() const;//raw ptr of xvoutput_t
+            
+            const std::string           get_fullstate_hash();
+            const std::string           get_binlog_hash() {return get_output()->get_binlog_hash();}
+            const std::string           get_full_state();
+            const std::string           get_binlog() {return get_output()->get_binlog();}
+            bool                        set_offblock_snapshot(const std::string & snapshot);
+            bool                        is_full_state_block();  // used for full-block sync
 
             //check whether match hash of resource first
             bool                        set_input_resources(const std::string & raw_resource_data);
@@ -764,6 +765,7 @@ namespace top
 
         private://just using them at running and stored in sepereated place than xvblock_t.
             std::string                 m_dump_info;        //pre-print debug inforatmion and just for performance
+            std::string                 m_offblock_snapshot;  // for sync set and cache
         };
         using xvblock_ptr_t = xobject_ptr_t<base::xvblock_t>;
 

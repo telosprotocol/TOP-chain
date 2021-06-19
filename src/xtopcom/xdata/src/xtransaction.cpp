@@ -192,6 +192,23 @@ bool xtransaction_t::transaction_type_check() const {
     }
 }
 
+std::string xtransaction_t::transaction_type_to_string(uint16_t type) {
+    switch (type) {
+        case xtransaction_type_create_user_account: return "create_user";
+        case xtransaction_type_run_contract:        return "run_contract";
+        case xtransaction_type_transfer:            return "transfer";
+        case xtransaction_type_vote:                return "vote";
+        case xtransaction_type_abolish_vote:        return "abolist_vote";
+        case xtransaction_type_pledge_token_tgas:   return "pldge_tgas";
+        case xtransaction_type_redeem_token_tgas:   return "redeem_tgas";
+        case xtransaction_type_pledge_token_vote:   return "pledge_vote";
+        case xtransaction_type_redeem_token_vote:   return "redeem_vote";
+        default:
+            xassert(false);
+            return "invalid";
+    }
+}
+
 bool xtransaction_t::unuse_member_check() const {
     if (get_tx_version() != 0) {
         return false;

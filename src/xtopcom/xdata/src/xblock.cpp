@@ -336,14 +336,4 @@ xlightunit_tx_info_ptr_t xblock_t::get_tx_info(const std::string & txhash) const
     return nullptr;
 }
 
-bool xblock_t::is_full_state_block() const {
-    if (get_block_class() == base::enum_xvblock_class_nil) {
-        return true;
-    }
-    if (!get_output()->get_full_state().empty()) {
-        return true;
-    }
-    return false;
-}
-
 NS_END2

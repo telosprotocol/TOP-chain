@@ -145,7 +145,6 @@ namespace top
         public:
             xvoutentity_t();
             xvoutentity_t(const std::string & state_bin_log);
-            xvoutentity_t(const std::string & state_hash, const std::string & binlog_hash);
             xvoutentity_t(const xvoutentity_t & obj);
         protected:
             virtual ~xvoutentity_t();

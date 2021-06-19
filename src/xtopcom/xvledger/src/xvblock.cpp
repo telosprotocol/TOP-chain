@@ -1170,6 +1170,15 @@ namespace top
             }
             return total_count;
         }
+        
+        std::string xvinput_t::dump()
+        {
+            char local_param_buf[128];
+
+            xprintf(local_param_buf,sizeof(local_param_buf),"{entitys=%zu,actions=%zu,res=%zu}",
+                    get_entitys().size(),get_action_count(),get_resources_data().size());
+            return std::string(local_param_buf);
+        }
 
         //---------------------------------xvoutput_t---------------------------------//
         xvoutput_t::xvoutput_t(enum_xobject_type type)
@@ -1212,19 +1221,11 @@ namespace top
         const std::string xvoutput_t::get_binlog()
         {
             std::string binlog_hash = get_binlog_hash();
-            const std::string binlog = query_resource(binlog_hash);
-            return binlog;
-        }
-        
-        const std::string xvoutput_t::get_full_state()
-        {
-            if (!m_offblock_snapshot.empty())
+            if (!binlog_hash.empty())
             {
-                return m_offblock_snapshot;
+                return query_resource(binlog_hash);
             }
-            std::string state_hash = get_state_hash();
-            const std::string full_state = query_resource(state_hash);
-            return full_state;
+            return std::string();
         }
         
         base::xvoutentity_t* xvoutput_t::get_primary_entity() const
@@ -1263,20 +1264,13 @@ namespace top
             return outentity->get_state_hash();
         }
         
-        bool xvoutput_t::set_offblock_snapshot(const std::string & snapshot)
+        std::string xvoutput_t::dump()
         {
-            if (!m_offblock_snapshot.empty())
-            {
-                xassert(m_offblock_snapshot == snapshot);
-                return true;
-            }
-            if (snapshot.empty())
-            {
-                xassert(false);
-                return false;
-            }
-            m_offblock_snapshot = snapshot;
-            return true;
+            char local_param_buf[128];
+            
+            xprintf(local_param_buf,sizeof(local_param_buf),"{entitys=%zu,res=%zu}",
+                    get_entitys().size(),get_resources_data().size());
+            return std::string(local_param_buf);
         }
  
         //---------------------------------xvblock_t---------------------------------//
@@ -1860,6 +1854,72 @@ namespace top
         xvoutput_t*  xvblock_t::get_output() const
         {
             return m_voutput_ptr;
+        }
+        
+        const std::string xvblock_t::get_fullstate_hash()
+        {
+            if (get_block_class() == enum_xvblock_class_full)
+            {
+                // full-block always output root hash = fullstate hash
+                return get_output_root_hash();
+            }
+            else if (get_block_class() == enum_xvblock_class_light)
+            {
+                // light-block may has full-state has in output entity, eg.light-table
+                std::string _hash = get_output()->get_state_hash();
+                if (_hash.empty())
+                {
+                    _hash = get_output_root_hash();
+                }
+                xassert(!_hash.empty());
+                return _hash;
+            }
+            else
+            {
+                // nil-block has null fullstate hash
+                return std::string();
+            }
+        }
+        
+        const std::string xvblock_t::get_full_state()
+        {
+            if (!m_offblock_snapshot.empty())
+            {
+                return m_offblock_snapshot;
+            }
+            std::string state_hash = get_fullstate_hash();
+            if (!state_hash.empty())
+            {
+                const std::string full_state = get_output()->query_resource(state_hash);
+                return full_state;
+            }
+            return std::string();
+        }
+        
+        bool xvblock_t::is_full_state_block() {
+            if (get_block_class() == base::enum_xvblock_class_nil) {
+                return true;
+            }
+            if (!get_full_state().empty()) {
+                return true;
+            }
+            return false;
+        }
+        
+        bool xvblock_t::set_offblock_snapshot(const std::string & snapshot)
+        {
+            if (!m_offblock_snapshot.empty())
+            {
+                xassert(m_offblock_snapshot == snapshot);
+                return true;
+            }
+            if (snapshot.empty())
+            {
+                xassert(false);
+                return false;
+            }
+            m_offblock_snapshot = snapshot;
+            return true;
         }
     
         //only open for xvblock_t object to set them after verify singature by CA(xvcertauth_t)

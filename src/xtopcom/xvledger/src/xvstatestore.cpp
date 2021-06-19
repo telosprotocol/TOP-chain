@@ -160,7 +160,7 @@ namespace top
                     }
                 }
 
-                const std::string binlog = target_block.get_block_class() == enum_xvblock_class_light ? target_block.get_output()->get_binlog() : target_block.get_output()->get_full_state();
+                const std::string binlog = target_block.get_block_class() == enum_xvblock_class_light ? target_block.get_binlog() : target_block.get_full_state();
                 if(binlog.empty() == false)
                 {
                     if(false == base_state.apply_changes_of_binlog(binlog))
@@ -274,24 +274,24 @@ namespace top
                 xassert(_block->get_height() == current_state->get_block_height() + 1);
                 current_state = make_object_ptr<xvbstate_t>(*_block.get(), *current_state.get());
                 if (_block->get_block_class() == enum_xvblock_class_light) {
-                    xassert(!_block->get_output()->get_binlog_hash().empty());
-                    std::string binlog = _block->get_output()->get_binlog();
+                    xassert(!_block->get_binlog_hash().empty());
+                    std::string binlog = _block->get_binlog();
                     xassert(!binlog.empty());
                     if(false == current_state->apply_changes_of_binlog(binlog)) {
                         xerror("xvblkstatestore_t::rebuild_bstate,invalid binlog and abort it for block(%s)",_block->dump().c_str());
                         return nullptr;
                     }
                 } else if (_block->get_block_class() == enum_xvblock_class_full) {
-                    xassert(_block->get_output()->get_binlog().empty());
-                    xassert(!_block->get_output()->get_state_hash().empty());
+                    xassert(_block->get_binlog().empty());
+                    xassert(!_block->get_fullstate_hash().empty());
 
                     std::string binlog;
                     auto canvas = current_state->rebase_change_to_snapshot();
                     canvas->encode(binlog);
                     xassert(!binlog.empty());
-                    if (!_block->get_output()->get_state_hash().empty()) {
+                    if (!_block->get_fullstate_hash().empty()) {
                         std::string binlog_hash = base::xcontext_t::instance().hash(binlog, _block->get_cert()->get_crypto_hash_type());
-                        if (binlog_hash != _block->get_output()->get_state_hash()) {
+                        if (binlog_hash != _block->get_fullstate_hash()) {
                             xerror("xvblkstatestore_t::rebuild_bstate,unmatch binlog hash and abort it for block(%s)",_block->dump().c_str());
                             return nullptr;
                         }
@@ -354,10 +354,10 @@ namespace top
 
             // try make state form block self
             if (current_block->get_height() == 0
-                || (current_block->get_block_class() == enum_xvblock_class_full && !current_block->get_output()->get_full_state().empty()) ) {
+                || (current_block->get_block_class() == enum_xvblock_class_full && !current_block->get_full_state().empty()) ) {
                 current_state = make_object_ptr<xvbstate_t>(*current_block);
                 if (current_block->get_block_class() != enum_xvblock_class_nil) {
-                    std::string binlog = current_block->get_block_class() == enum_xvblock_class_light ? current_block->get_output()->get_binlog() : current_block->get_output()->get_full_state();
+                    std::string binlog = current_block->get_block_class() == enum_xvblock_class_light ? current_block->get_binlog() : current_block->get_full_state();
                     xassert(!binlog.empty());
                     if(false == current_state->apply_changes_of_binlog(binlog)) {
                         xerror("xvblkstatestore_t::make_state_from_current_block,invalid binlog and abort it for block(%s)",current_block->dump().c_str());
@@ -636,7 +636,7 @@ namespace top
 
         bool xvblkstatestore_t::get_full_block_offsnapshot(xvblock_t * current_block)
         {
-            if (current_block->is_execute_ready()) {
+            if (current_block->is_full_state_block()) {
                 return true;
             }
 
@@ -658,7 +658,7 @@ namespace top
             std::string property_snapshot;
             auto canvas = target_bstate->rebase_change_to_snapshot();
             canvas->encode(property_snapshot);
-            current_block->get_output()->set_offblock_snapshot(property_snapshot);
+            current_block->set_offblock_snapshot(property_snapshot);
             return true;
         }
 

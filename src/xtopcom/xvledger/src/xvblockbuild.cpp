@@ -392,6 +392,21 @@ namespace top
             }
         }
 
+        bool xvblockmaker_t::set_input_entity(const xvaction_t & action) {
+            if (m_primary_input_entity != nullptr) {  // only allow init once
+                xassert(false);
+                return false;
+            }
+            if (get_header()->get_block_class() == base::enum_xvblock_class_nil) {
+                xassert(false);
+                return false;
+            }
+
+            std::vector<xvaction_t> actions;
+            actions.push_back(action);
+            m_primary_input_entity = new base::xvinentity_t(actions);
+            return true;
+        }
         bool xvblockmaker_t::set_input_entity(const std::vector<xvaction_t> & actions) {
             if (m_primary_input_entity != nullptr) {  // only allow init once
                 xassert(false);
@@ -405,53 +420,48 @@ namespace top
             m_primary_input_entity = new base::xvinentity_t(actions);
             return true;
         }
-        bool xvblockmaker_t::set_output_entity_state_hash(const std::string & state_bin) {
-            if (get_header()->get_block_class() == base::enum_xvblock_class_nil || state_bin.empty()) {
-                xassert(false);
-                return false;
-            }
-            std::string state_hash = base::xcontext_t::instance().hash(state_bin, get_qcert()->get_crypto_hash_type());
-            return set_output_entity(xvoutentity_t::key_name_state_hash(), state_hash);
-        }
-        bool xvblockmaker_t::set_output_entity_binlog_hash(const std::string & binlog_bin) {
-            if (get_header()->get_block_class() == base::enum_xvblock_class_nil || binlog_bin.empty()) {
-                xassert(false);
-                return false;
-            }
-            std::string binlog_hash = base::xcontext_t::instance().hash(binlog_bin, get_qcert()->get_crypto_hash_type());
-            return set_output_entity(xvoutentity_t::key_name_binlog_hash(), binlog_hash);
-        }
         bool    xvblockmaker_t::set_output_entity(const std::string & key, const std::string & value) {
             m_primary_output_entity->set_value(key, value);
             return true;
         }
 
         bool    xvblockmaker_t::set_input_resource(const std::string & key, const std::string & value) {
+            if (key.empty() || value.empty()) {
+                xassert(false);
+                return false;
+            }
             m_input_resource->set(key, value);
             return true;
         }
 
         bool    xvblockmaker_t::set_output_resource(const std::string & key, const std::string & value) {
+            if (key.empty() || value.empty()) {
+                xassert(false);
+                return false;
+            }
             m_output_resource->set(key, value);
             return true;
         }
-        bool    xvblockmaker_t::set_output_resource_state(const std::string & value) {
-            if (value.empty()) {
+
+        bool xvblockmaker_t::set_output_full_state(const std::string & value) {
+            if (value.empty() || get_header()->get_block_class() == enum_xvblock_class_nil) {
                 xassert(false);
                 return false;
             }
-            std::string state_hash = base::xcontext_t::instance().hash(value, get_qcert()->get_crypto_hash_type());
-            xassert(state_hash == get_output_entity()->get_state_hash());  // should set state hash firstly
-            return set_output_resource(state_hash, value);
+            m_full_state = value;
+            m_full_state_hash = base::xcontext_t::instance().hash(value, get_qcert()->get_crypto_hash_type());
+            return true;
         }
-        bool    xvblockmaker_t::set_output_resource_binlog(const std::string & value) {
-            if (value.empty()) {
+        bool xvblockmaker_t::set_output_binlog(const std::string & value) {
+            if (value.empty() || get_header()->get_block_class() != enum_xvblock_class_light) {
                 xassert(false);
                 return false;
             }
+
             std::string binlog_hash = base::xcontext_t::instance().hash(value, get_qcert()->get_crypto_hash_type());
-            xassert(binlog_hash == get_output_entity()->get_binlog_hash());  // should set binlog hash firstly
-            return set_output_resource(binlog_hash, value);
+            set_output_entity(xvoutentity_t::key_name_binlog_hash(), binlog_hash);
+            set_output_resource(binlog_hash, value);
+            return true;
         }
 
         bool  xvblockmaker_t::merge_input_resource(const xstrmap_t * src_map) {
@@ -488,7 +498,7 @@ namespace top
                     std::string action_bin;
                     action.serialize_to(action_bin);
                     if (!action_bin.empty()) {
-                        leafs.push_back(action_bin);  // TODO(jimmy) need calc hash as leaf
+                        leafs.push_back(action_bin);
                     }
                 }
             }
@@ -526,18 +536,19 @@ namespace top
             return calc_merkle_path(leafs, leaf, hash_path);
         }
 
+        // input root = merkle (all input actions)
         bool xvblockmaker_t::make_input_root(xvinput_t* input_obj) {
             //build action' mpt tree,and assign mpt root as input root hash
             std::vector<std::string> leafs = get_input_merkle_leafs(input_obj);
             if (!leafs.empty()) {
                 std::string root_hash = build_mpt_root(leafs);
-                if (root_hash.empty()) {
-                    xassert(false);
-                    return false;
+                if (!root_hash.empty()) {
+                    input_obj->set_root_hash(root_hash);
+                    return true;
                 }
-                input_obj->set_root_hash(root_hash);
             }
-            return true;
+            xerror("xvblockmaker_t::make_input_root non-nil block must has input root");
+            return false;
         }
 
         xauto_ptr<xvinput_t> xvblockmaker_t::make_input() {
@@ -569,10 +580,12 @@ namespace top
         }
 
         bool    xvblockmaker_t::make_output_root(xvoutput_t* output_obj) {
-            // basic block qcert rooot is state hash
-            // output_obj->get_primary_entity()->get_state_hash();
-            std::string state_hash;  // TODO(jimmy)
-            output_obj->set_root_hash(state_hash);
+            if (get_full_state_hash().empty()) {
+                xassert(false);
+                return false;
+            }
+            // basic block qcert output root is state hash
+            output_obj->set_root_hash(get_full_state_hash());
             return true;
         }
 
@@ -581,6 +594,14 @@ namespace top
             //basic block has only one entity
             std::vector<xventity_t*> _entities;
             _entities.emplace_back(get_output_entity());
+            //full-unit should has full-state in output resource
+            if (get_header()->get_block_class() == enum_xvblock_class_full && get_header()->get_block_level() != enum_xvblock_level_table) {
+                if (get_full_state().empty()) {
+                    xassert(false);
+                    return nullptr;
+                }
+                set_output_resource(get_full_state_hash(), get_full_state());
+            }
             xauto_ptr<xvoutput_t>output_obj(new xvoutput_t(_entities,*get_output_resource()));
             return output_obj;
         }
@@ -601,6 +622,85 @@ namespace top
             }
             if (get_output()->get_root_hash().empty()) {
                 if (false == make_output_root(get_output())) {
+                    xassert(false);
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        bool xvblockmaker_t::check_block_rules(base::xvblock_t* target_block) {
+            enum_xvblock_class _class = target_block->get_block_class();
+            if (_class == enum_xvblock_class_nil) {
+                if (!target_block->get_fullstate_hash().empty()
+                    || !target_block->get_binlog_hash().empty()
+                    || !target_block->get_input_root_hash().empty()
+                    || !target_block->get_output_root_hash().empty()) {
+                    xassert(false);
+                    return false;
+                }
+            }
+
+            if (_class != enum_xvblock_class_nil) {
+                // all non-nilblock has actions and input/output root
+                if (target_block->get_input()->get_action_count() == 0) {
+                    xassert(false);
+                    return false;
+                }
+                if (target_block->get_input_root_hash().empty()) {
+                    xassert(false);
+                    return false;
+                }
+                if (target_block->get_output_root_hash().empty()) {
+                    xassert(false);
+                    return false;
+                }
+            }
+
+            if (_class == enum_xvblock_class_full) {
+                // full-block has state hash, not has binlog hash
+                if (target_block->get_fullstate_hash().empty()) {
+                    xassert(false);
+                    return false;
+                }
+                if (!target_block->get_binlog_hash().empty()) {
+                    xassert(false);
+                    return false;
+                }
+                // full-table not has state
+                if (target_block->get_block_level() == enum_xvblock_level_table && !target_block->get_full_state().empty()) {
+                    xassert(false);
+                    return false;
+                }
+                //full-unit has state
+                if (target_block->get_block_level() != enum_xvblock_level_table && target_block->get_full_state().empty()) {
+                    xassert(false);
+                    return false;
+                }
+                // full-blcok not has binlog
+                if (!target_block->get_binlog().empty()) {
+                    xassert(false);
+                    return false;
+                }
+            }
+            if (_class == enum_xvblock_class_light) {
+                // light-block has state hash and binlog hash
+                if (target_block->get_fullstate_hash().empty() || target_block->get_binlog_hash().empty()) {
+                    xassert(false);
+                    return false;
+                }
+                // fullstate hash should not same with binlog hash
+                if (target_block->get_fullstate_hash() == target_block->get_binlog_hash()) {
+                    xassert(false);
+                    return false;
+                }
+                // light-block not has state
+                if (!target_block->get_full_state().empty()) {
+                    xassert(false);
+                    return false;
+                }
+                // light-block has binlog
+                if (target_block->get_binlog().empty()) {
                     xassert(false);
                     return false;
                 }
@@ -642,12 +742,17 @@ namespace top
             xdbg_info("xvblockmaker_t::build_new_block,done for block=%s,detail=%s",
                 get_block()->dump().c_str(),get_block()->detail_dump().c_str());
 #endif
-            xinfo("xvblockmaker_t::build_new_block,done,%s,ir=%s,jc=%s,input={entitys=%zu,actions=%zu,res=%zu},output={entitys=%zu,res=%zu,binlog=%zu,%zu,state=%zu,%zu}",
+
+            if (false == check_block_rules(_block_ptr.get())) {
+                xerror("xvblockmaker_t::build_new_block,done,%s,ir=%s,jc=%s,input=%s,output=%s",
+                    get_block()->dump().c_str(), base::xstring_utl::to_hex(get_block()->get_input_root_hash()).c_str(), base::xstring_utl::to_hex(get_block()->get_justify_cert_hash()).c_str(),
+                    get_block()->get_input()->dump().c_str(), get_block()->get_output()->dump().c_str());
+                return nullptr;
+            }
+
+            xinfo("xvblockmaker_t::build_new_block,done,%s,ir=%s,jc=%s,input=%s,output=%s,binlog=%zu,fullstate=%zu",
                 get_block()->dump().c_str(), base::xstring_utl::to_hex(get_block()->get_input_root_hash()).c_str(), base::xstring_utl::to_hex(get_block()->get_justify_cert_hash()).c_str(),
-                get_block()->get_input()->get_entitys().size(), get_block()->get_input()->get_action_count(), get_block()->get_input()->get_resources_data().size(),
-                get_block()->get_output()->get_entitys().size(), get_block()->get_output()->get_resources_data().size(),
-                get_block()->get_output()->get_binlog_hash().size(), get_block()->get_output()->get_binlog().size(),
-                get_block()->get_output()->get_state_hash().size(), get_block()->get_output()->get_full_state().size());
+                get_block()->get_input()->dump().c_str(), get_block()->get_output()->dump().c_str(), get_block()->get_binlog().size(), get_block()->get_full_state().size());
             return _block_ptr;
         }
 
@@ -688,10 +793,12 @@ namespace top
         xtable_inentity_extend_t::xtable_inentity_extend_t() {
 
         }
-        xtable_inentity_extend_t::xtable_inentity_extend_t(xvheader_t* header, const std::string & justify_hash) {
+        xtable_inentity_extend_t::xtable_inentity_extend_t(xvheader_t* header, xvqcert_t* qcert) {
             header->add_ref();
             m_unit_header = header;
-            m_unit_justify_hash = justify_hash;
+            m_unit_justify_hash = qcert->get_justify_cert_hash();
+            m_unit_output_root_hash = qcert->get_output_root_hash();
+            m_unit_input_root_hash = std::string();  // not set now, may be used future
         }
         xtable_inentity_extend_t::~xtable_inentity_extend_t() {
         }
@@ -705,6 +812,8 @@ namespace top
             }
             stream.write_compact_var(vheader_bin);
             stream.write_compact_var(m_unit_justify_hash);
+            stream.write_compact_var(m_unit_output_root_hash);
+            stream.write_compact_var(m_unit_input_root_hash);
             return (stream.size() - begin_size);
         }
 
@@ -720,6 +829,8 @@ namespace top
                 }
             }
             stream.read_compact_var(m_unit_justify_hash);
+            stream.read_compact_var(m_unit_output_root_hash);
+            stream.read_compact_var(m_unit_input_root_hash);
             return (begin_size - stream.size());
         }
         int32_t xtable_inentity_extend_t::serialize_to_string(std::string & _str) {
@@ -838,7 +949,7 @@ namespace top
             for (auto & _unit : _batch_units) {
                 auto & unit_input_entitys = _unit->get_input()->get_entitys();
                 std::string extend_bin;
-                xtable_inentity_extend_t extend(_unit->get_header(), _unit->get_cert()->get_justify_cert_hash());
+                xtable_inentity_extend_t extend(_unit->get_header(), _unit->get_cert());
                 extend.serialize_to_string(extend_bin);
 
                 xvinentity_t* new_entity = nullptr;
@@ -858,6 +969,14 @@ namespace top
         }
 
         xauto_ptr<xvoutput_t> xvtableblock_maker_t::make_output() {
+            // light-table set full-state hash to primary output entity, other block set full-state hash to output root hash
+            if (!get_full_state_hash().empty()) {
+                set_output_entity(xvoutentity_t::key_name_state_hash(), get_full_state_hash());
+            } else {
+                xassert(false);
+                return nullptr;
+            }
+
             std::vector<xventity_t*> all_output_entities;
             get_output_entity()->add_ref();
             all_output_entities.push_back(get_output_entity());
@@ -867,7 +986,7 @@ namespace top
                 auto & unit_output_entitys = _unit->get_output()->get_entitys();
                 xvoutentity_t* new_entity = nullptr;
                 if (unit_output_entitys.empty()) {
-                    new_entity = new xvoutentity_t();  // TODO(jimmy) empty entity, must has related output entity with input entity
+                    new_entity = new xvoutentity_t();  // must has related output entity with input entity
                 } else {
                     xassert(unit_output_entitys.size() == 1);
                     new_entity = new xvoutentity_t(*((xvoutentity_t*)unit_output_entitys[0]));  // table entity is same with unit entity

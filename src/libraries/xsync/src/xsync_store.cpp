@@ -64,7 +64,7 @@ base::xauto_ptr<base::xvblock_t> xsync_store_t::get_latest_start_block(const std
     if (sync_policy == enum_chain_sync_pocliy_fast) {
         base::xauto_ptr<base::xvblock_t> _full_block = m_blockstore->get_latest_committed_full_block(account);
         if (_full_block != nullptr && _full_block->get_block_level() == base::enum_xvblock_level_table) {
-            if (!_full_block->is_execute_ready()) {
+            if (!_full_block->is_full_state_block()) {
                 base::xauto_ptr<base::xvblock_t> _executed_block = m_blockstore->get_latest_executed_block(account);
                 if (_full_block->get_height() <= _executed_block->get_height()) {
                     if (false == base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_full_block_offsnapshot(_full_block.get())) {

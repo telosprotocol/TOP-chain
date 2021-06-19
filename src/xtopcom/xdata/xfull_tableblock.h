@@ -63,7 +63,7 @@ class xfull_tableblock_t : public xblock_t {
             xdbg("total_tgas_balance_change=%lld,account=%s", tgas_balance_change, dump().c_str());
         }
 
-        return tgas_balance_change;                
+        return tgas_balance_change;
     }
 
  public:

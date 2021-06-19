@@ -733,8 +733,8 @@ void xsync_handler_t::handle_role_change(const mbus::xevent_ptr_t& e) {
         for (auto &id: table_ids)
             set_table_ids.insert(id);
 
-        m_role_xips_mgr->add_role(addr, neighbor_addresses, parent_addresses, 
-            vnetwork_driver->archive_addresses(common::xnode_type_t::storage_archive), 
+        m_role_xips_mgr->add_role(addr, neighbor_addresses, parent_addresses,
+            vnetwork_driver->archive_addresses(common::xnode_type_t::storage_archive),
             vnetwork_driver->archive_addresses(common::xnode_type_t::storage_full_node), set_table_ids);
 
         XMETRICS_COUNTER_INCREMENT("sync_cost_role_add_event", 1);
@@ -845,7 +845,7 @@ void xsync_handler_t::handle_chain_snapshot_request(
         if (full_block_ptr != nullptr) {
             // it must be full-table block now
             if (base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_full_block_offsnapshot(blk.get())) {
-                std::string property_snapshot = blk->get_output()->get_full_state();
+                std::string property_snapshot = blk->get_full_state();
                 xsync_message_chain_snapshot_t chain_snapshot(ptr->m_account_addr,
                     property_snapshot, ptr->m_height_of_fullblock);
                 m_sync_sender->send_chain_snapshot(chain_snapshot, xmessage_id_sync_chain_snapshot_response, network_self, from_address);
