@@ -147,8 +147,10 @@ namespace top
             bool    safe_check_for_proposal_block(base::xvblock_t * _proposal_block);//safe rule for proposal block
             bool    safe_check_for_sync_block(base::xvblock_t * _commit_block);//safe rule for commit block
             
+            bool    safe_precheck_for_voting(xproposal_t* new_proposal);
             bool    safe_precheck_for_voting(base::xvblock_t * _voting_block);//safe rule for voting block
             //check again before send voting msg and after verified signature
+            bool    safe_finalcheck_for_voting(xproposal_t* new_proposal);
             bool    safe_finalcheck_for_voting(base::xvblock_t * _vote_block);//safe rule for voting block;
             
             //sanity check and verify for packet
@@ -161,6 +163,7 @@ namespace top
         protected:
             inline std::map<uint64_t,xproposal_t*> &    get_proposals()  {return m_proposal_blocks;}
             inline std::map<uint64_t,base::xvblock_t*>& get_cert_blocks(){return m_certified_blocks;}
+            bool    safe_align_with_blockstore(xproposal_t* new_proposal);
         private:
             /*
              Term: "Proposal-block"    = has full data(header,input,basic cert) of block but not finish verification and certificate

@@ -1301,6 +1301,10 @@ namespace top
             m_voutput_ptr  = NULL;
             m_vbstate_ptr  = NULL;
             
+            m_parent_account_id = 0;
+            m_parent_viewid     = 0;
+            m_entityid_at_parent= 0;
+            
             set_unit_flag(enum_xdata_flag_acompress);//default do copmression
         }
         
@@ -1317,6 +1321,10 @@ namespace top
             m_vinput_ptr   = NULL;
             m_voutput_ptr  = NULL;
             m_vbstate_ptr  = NULL;
+            
+            m_parent_account_id = 0;
+            m_parent_viewid     = 0;
+            m_entityid_at_parent= 0;
             
             set_unit_flag(enum_xdata_flag_acompress);//default do copmression
         }
@@ -1472,7 +1480,11 @@ namespace top
             m_vinput_ptr   = NULL;
             m_voutput_ptr  = NULL;
             m_vbstate_ptr  = NULL;
-
+            
+            m_parent_account_id = 0;
+            m_parent_viewid     = 0;
+            m_entityid_at_parent= 0;
+            
             set_unit_flag(enum_xdata_flag_acompress);//default do copmression
          
             if(xvblock_t::prepare_block(_vcert,_vheader,_vinput,_voutput))
@@ -1666,7 +1678,7 @@ namespace top
             uint64_t sign_hash_64 = base::xhash64_t::digest(get_cert()->get_hash_to_sign());
             uint64_t justify_hash_64 = base::xhash64_t::digest(get_cert()->get_justify_cert_hash());
             char local_param_buf[512];
-            printf(local_param_buf,sizeof(local_param_buf),"{header=%" PRIu64 ",input=%" PRIu64 ",output=%" PRIu64 ",inroot=%" PRIu64 ",outroot=%" PRIu64 ",sign=%" PRIu64 ",justify=%" PRIu64 "",
+            xprintf(local_param_buf,sizeof(local_param_buf),"{header=%" PRIx64 ",input=%" PRIx64 ",output=%" PRIx64 ",inroot=%" PRIx64 ",outroot=%" PRIx64 ",sign=%" PRIx64 ",justify=%" PRIx64 "",
                     header_64,input_64,output_64,input_root_64,output_root_64,sign_hash_64,justify_hash_64);
             return std::string(local_param_buf);
 #else
