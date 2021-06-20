@@ -140,6 +140,7 @@ void xtable_bstate_t::cache_receiptid() {
         pair.serialize_from(v.second);
         m_cache_receiptid->add_pair(sid, pair);
     }
+    m_cache_receiptid->update_unconfirm_tx_num();  // calc and cache unconfirm tx for get performance
 }
 
 bool xtable_bstate_t::set_receiptid_pair(base::xtable_shortid_t sid, const base::xreceiptid_pair_t & pair, base::xvcanvas_t* canvas) {

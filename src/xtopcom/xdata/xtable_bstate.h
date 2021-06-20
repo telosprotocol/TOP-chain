@@ -37,6 +37,7 @@ class xtable_bstate_t {
     std::set<std::string>   get_unconfirmed_accounts() const;
     int32_t                 get_account_size() const;
     bool                    find_receiptid_pair(base::xtable_shortid_t sid, base::xreceiptid_pair_t & pair) const;
+    uint32_t                get_unconfirm_tx_num() const {return m_cache_receiptid->get_unconfirm_tx_num();}
     const base::xreceiptid_state_ptr_t & get_receiptid_state() const {return m_cache_receiptid;}
 
  public:
