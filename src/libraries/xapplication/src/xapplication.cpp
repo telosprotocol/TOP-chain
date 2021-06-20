@@ -127,7 +127,8 @@ void xtop_application::start() {
 
     contract::xcontract_manager_t::set_nodesrv_ptr(node_service());
 
-    if (!is_beacon_account() || !is_genesis_node()) {
+    // genesis node is always need start self
+    if (!is_genesis_node() || !is_beacon_account()) {
         m_elect_client->bootstrap_node_join();
     }
 
@@ -251,17 +252,19 @@ bool xtop_application::create_genesis_accounts() {
     std::map<std::string, uint64_t> genesis_accounts = xrootblock_t::get_all_genesis_accounts();
     for (auto const & pair : genesis_accounts) {
         common::xaccount_address_t account_address{pair.first};
+        xinfo("xtop_application::genesis %s", pair.first.c_str());
         if (m_blockstore->exist_genesis_block(account_address.value())) {
             xdbg("xtop_contract_manager::setup_chain blockchain account %s genesis block exist", account_address.c_str());
             continue;
         }
+//        xinfo("xtop_application::create_genesis_accounts %s", pair.first.c_str());
         if (!create_genesis_account(pair.first, pair.second)) {
             xassert(0);
             return false;
         }
     }
 
-    xinfo("xtop_application::create_genesis_accounts success");
+    xinfo("xtop_application::create_genesis_accounts success %d", genesis_accounts.size());
     return true;
 }
 

@@ -446,6 +446,7 @@ elseif (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
     add_definitions(-DXDISABLE_RATELIMIT)
     add_definitions(-DENABLE_METRICS)
     add_definitions(-DXENABLE_MOCK_ZEC_STAKE)
+    add_definitions(-DXBUILD_DEV)
     add_definitions(-DMAINNET_ACTIVATED)
     # message("CFLIB: ${CFLIB}")
 
