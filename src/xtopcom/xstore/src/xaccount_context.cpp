@@ -7,7 +7,6 @@
 
 #include "xstore/xstore_error.h"
 #include "xstore/xaccount_context.h"
-#include "xstore/xstore_property.h"
 
 #include "xbase/xlog.h"
 #include "xbase/xobject_ptr.h"
@@ -32,27 +31,6 @@
 using namespace top::base;
 
 namespace top { namespace store {
-
-#if 0
-#define CHECK_PROPERTY_MAX_NUM()
-do {\
-    TODO(jimmy) bstate get all propertys number
-    auto& config_register = top::config::xconfig_register_t::get_instance(); \
-    uint32_t custom_property_max_number =XGET_ONCHAIN_GOVERNANCE_PARAMETER(custom_property_max_number); \
-    if ((uint32_t)m_account->get_property_hash_map().size() >= custom_property_max_number) {\
-        return xaccount_property_number_exceed_max;\
-    }\
-}while(0)
-#endif
-
-#define CHECK_PROPERTY_NAME_LEN_MAX_NUM(key) \
-do {\
-    auto& config_register = top::config::xconfig_register_t::get_instance(); \
-    uint32_t custom_property_name_max_len = XGET_ONCHAIN_GOVERNANCE_PARAMETER(custom_property_name_max_len); \
-    if ((key).length() >= custom_property_name_max_len) {\
-        return xaccount_property_name_length_exceed_max;\
-    }\
-}while(0)
 
 #define CHECK_BSTATE_NULL_RETURN(bstate, funcname) \
 do {\
