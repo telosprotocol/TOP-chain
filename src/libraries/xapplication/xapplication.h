@@ -15,7 +15,6 @@
 #include "xcommon/xlogic_time.h"
 #include "xcommon/xnode_info.h"
 #include "xconfig/xconfig_register.h"
-#include "xdatastat/xdatastat.h"
 #include "xelect/client/xelect_client.h"
 #include "xelect_net/include/elect_main.h"
 #include "xmbus/xmessage_bus.h"
@@ -92,9 +91,6 @@ private:
     xobject_ptr_t<base::xvnodesrv_t> m_nodesvr_ptr;
     xobject_ptr_t<base::xvcertauth_t> m_cert_ptr;
     xobject_ptr_t<store::xsyncvstore_t> m_syncstore;
-#ifdef ENABLE_METRICS
-    std::unique_ptr<datastat::xdatastat_t> m_datastat;
-#endif
     std::vector<std::unique_ptr<xchain_application_t>> m_chain_applications{};
 
 public:
