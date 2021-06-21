@@ -28,7 +28,6 @@ class xstore_face_t : public base::xvdbstore_t {
     virtual ~xstore_face_t() {}
  public:
     virtual xaccount_ptr_t query_account(const std::string& address) const = 0;
-    virtual xaccount_ptr_t get_target_state(base::xvblock_t* block) const = 0;
     virtual bool           string_property_get(base::xvblock_t* block, const std::string& prop, std::string& value) const = 0;
 
     virtual uint64_t get_blockchain_height(const std::string& account) = 0;

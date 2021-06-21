@@ -31,12 +31,12 @@ const uint64_t EXP_BASE = 104 * 1e4;
 
 class xaccount_context_t {
  public:
+    xaccount_context_t(const xaccount_ptr_t & unitstate);
     xaccount_context_t(const xaccount_ptr_t & unitstate, xstore_face_t* store);
     virtual ~xaccount_context_t();
 
     const xaccount_ptr_t & get_blockchain() const {return m_account; }
     std::string const & get_address() const noexcept {return m_account->get_account();}
-    xstore_face_t* get_store() const noexcept {return m_store;}
     bool    get_transaction_result(xtransaction_result_t& result);
     bool    finish_exec_all_txs(const std::vector<xcons_transaction_ptr_t> & txs);
     size_t  get_op_records_size() const;

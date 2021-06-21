@@ -2,6 +2,7 @@
 
 #include "xbase/xlog.h"
 #include "xbase/xutl.h"
+#include "xvledger/xvledger.h"
 #include "xbasic/xmap_utl.hpp"
 #include "xconfig/xconfig_update_parameter_action.h"
 #include "xdata/xgenesis_data.h"
@@ -9,8 +10,6 @@
 #include "xdata/xelect_transaction.hpp"
 #include "xmbus/xevent.h"
 #include "xmbus/xevent_store.h"
-#include "xstore/xstore.h"
-#include "xstore/xstore_error.h"
 
 #include <inttypes.h>
 
@@ -87,90 +86,88 @@ void xconfig_onchain_loader_t::update(mbus::xevent_ptr_t e) {
     }
 
     mbus::xevent_store_block_to_db_ptr_t block_event = dynamic_xobject_ptr_cast<mbus::xevent_store_block_to_db_t>(e);
-
     if (block_event == nullptr) {
         xassert(0);
         return;
     }
+
+    std::string & owner = block_event->owner;
+    if (owner != sys_contract_rec_tcc_addr) {
+        return;
+    }
+
     auto block = mbus::extract_block_from(block_event);
     xassert(block != nullptr);
 
-    if (block->is_unitblock()) {
-        std::string & owner = block_event->owner;
+    xdbg("xconfig_onchain_loader_t::update tcc update begin,height=%ld", block->get_height());
+    base::xauto_ptr<base::xvbstate_t> _bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(block.get());
+    if (nullptr == _bstate) {
+        xwarn("xconfig_onchain_loader_t::update get target state fail.block=%s", block->dump().c_str());
+        return;
+    }
+    data::xunit_bstate_t state(_bstate.get());
+    std::string voted_proposal;
+    state.string_get(CURRENT_VOTED_PROPOSAL, voted_proposal);
+    if (voted_proposal.empty()) {
+        xwarn("xconfig_onchain_loader_t::update get property fail.block=%s", block->dump().c_str());
+        return;
+    }
+    tcc::proposal_info proposal{};
 
-        if (owner != sys_contract_rec_tcc_addr) {
-            return;
-        }
+    top::base::xstream_t stream(base::xcontext_t::instance(), (uint8_t *)voted_proposal.data(), voted_proposal.size());
+    if (stream.size() <= 0) {
+        xwarn("[CONFIG] failed to get stream for block height: %" PRIu64, block->get_height());
+        return;
+    }
+    proposal.deserialize(stream);
+    xdbg("[CONFIG] in update, receiving voting done proposal: %s, effective height: %" PRIu64, proposal.proposal_id.c_str(), proposal.effective_timer_height);
 
-        xdbg("xconfig_onchain_loader_t::update tcc update begin,height=%ld", block->get_height());
-        xaccount_ptr_t state = m_store_ptr->get_target_state(block.get());
-        if (nullptr == state) {
-            xwarn("xconfig_onchain_loader_t::update get target state fail.block=%s", block->dump().c_str());
-            return;
-        }
-        std::string voted_proposal;
-        state->string_get(CURRENT_VOTED_PROPOSAL, voted_proposal);
-        if (voted_proposal.empty()) {
-            xwarn("xconfig_onchain_loader_t::update get property fail.block=%s", block->dump().c_str());
-            return;
-        }
-        tcc::proposal_info proposal{};
+    uint64_t chain_timer = m_logic_timer->logic_time();
+    if (proposal.effective_timer_height > chain_timer) {
+        // store for later invoke
+        std::lock_guard<std::mutex> lock(m_action_param_mutex);
+        m_pending_proposed_parameters.insert({proposal.effective_timer_height, proposal});
+        xkinfo("[CONFIG] proposal id: %s, current chain timer: %" PRIu64 ", effective height: %" PRIu64 ", future parameter size(): %zu",
+                proposal.proposal_id.c_str(),
+                chain_timer,
+                proposal.effective_timer_height,
+                m_pending_proposed_parameters.size());
+        return;
+    }
 
-        top::base::xstream_t stream(base::xcontext_t::instance(), (uint8_t *)voted_proposal.data(), voted_proposal.size());
-        if (stream.size() <= 0) {
-            xwarn("[CONFIG] failed to get stream for block height: %" PRIu64, block->get_height());
-            return;
-        }
-        proposal.deserialize(stream);
-        xdbg("[CONFIG] in update, receiving voting done proposal: %s, effective height: %" PRIu64, proposal.proposal_id.c_str(), proposal.effective_timer_height);
+    std::string action_type;
+    switch (proposal.type) {
+        case tcc::proposal_type::proposal_update_parameter:
+            action_type = UPDATE_ACTION_PARAMETER;
+            break;
+        case tcc::proposal_type::proposal_add_parameter:
+            action_type = XPROPOSAL_TYPE_TO_STR(tcc::proposal_type::proposal_add_parameter);
+            break;
+        case tcc::proposal_type::proposal_delete_parameter:
+            action_type = XPROPOSAL_TYPE_TO_STR(tcc::proposal_type::proposal_delete_parameter);
+            break;
+        case tcc::proposal_type::proposal_update_parameter_incremental_add:
+            action_type = XPROPOSAL_TYPE_TO_STR(tcc::proposal_type::proposal_update_parameter_incremental_add);
+            break;
+        case tcc::proposal_type::proposal_update_parameter_incremental_delete:
+            action_type = XPROPOSAL_TYPE_TO_STR(tcc::proposal_type::proposal_update_parameter_incremental_delete);
+            break;
 
-        uint64_t chain_timer = m_logic_timer->logic_time();
-        if (proposal.effective_timer_height > chain_timer) {
-            // store for later invoke
-            std::lock_guard<std::mutex> lock(m_action_param_mutex);
-            m_pending_proposed_parameters.insert({proposal.effective_timer_height, proposal});
-            xkinfo("[CONFIG] proposal id: %s, current chain timer: %" PRIu64 ", effective height: %" PRIu64 ", future parameter size(): %zu",
-                 proposal.proposal_id.c_str(),
-                 chain_timer,
-                 proposal.effective_timer_height,
-                 m_pending_proposed_parameters.size());
-            return;
-        }
+        default:
+            break;
+    }
 
-        std::string action_type;
-        switch (proposal.type) {
-            case tcc::proposal_type::proposal_update_parameter:
-                action_type = UPDATE_ACTION_PARAMETER;
-                break;
-            case tcc::proposal_type::proposal_add_parameter:
-                action_type = XPROPOSAL_TYPE_TO_STR(tcc::proposal_type::proposal_add_parameter);
-                break;
-            case tcc::proposal_type::proposal_delete_parameter:
-                action_type = XPROPOSAL_TYPE_TO_STR(tcc::proposal_type::proposal_delete_parameter);
-                break;
-            case tcc::proposal_type::proposal_update_parameter_incremental_add:
-                action_type = XPROPOSAL_TYPE_TO_STR(tcc::proposal_type::proposal_update_parameter_incremental_add);
-                break;
-            case tcc::proposal_type::proposal_update_parameter_incremental_delete:
-                action_type = XPROPOSAL_TYPE_TO_STR(tcc::proposal_type::proposal_update_parameter_incremental_delete);
-                break;
-
-            default:
-                break;
-        }
-
-        if (!action_type.empty()) {
-            config::xconfig_update_action_ptr_t action_ptr = find(action_type);
-            if (action_ptr != nullptr) {
-                std::map<std::string, std::string> m;
-                m.insert({proposal.parameter, proposal.new_value});
-                m_action_map[action_type]->do_update(m);
-                xkinfo("[CONFIG] current chain timer: %" PRIu64 ", proposal: %s, parameter: %s value: %s applied successfully",
-                     chain_timer,
-                     proposal.proposal_id.c_str(),
-                     proposal.parameter.c_str(),
-                     proposal.new_value.c_str());
-            }
+    if (!action_type.empty()) {
+        config::xconfig_update_action_ptr_t action_ptr = find(action_type);
+        if (action_ptr != nullptr) {
+            std::map<std::string, std::string> m;
+            m.insert({proposal.parameter, proposal.new_value});
+            m_action_map[action_type]->do_update(m);
+            xkinfo("[CONFIG] current chain timer: %" PRIu64 ", proposal: %s, parameter: %s value: %s applied successfully",
+                    chain_timer,
+                    proposal.proposal_id.c_str(),
+                    proposal.parameter.c_str(),
+                    proposal.new_value.c_str());
         }
     }
 }

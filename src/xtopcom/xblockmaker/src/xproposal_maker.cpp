@@ -322,8 +322,7 @@ std::string xproposal_maker_t::calc_random_seed(base::xvblock_t* latest_cert_blo
 bool xproposal_maker_t::leader_set_consensus_para(base::xvblock_t* latest_cert_block, xblock_consensus_para_t & cs_para) {
     uint64_t total_lock_tgas_token = 0;
     uint64_t property_height = 0;
-    bool ret = store::xtgas_singleton::get_instance().leader_get_total_lock_tgas_token(get_blockstore(), get_store(),
-        cs_para.get_clock(), total_lock_tgas_token, property_height);
+    bool ret = store::xtgas_singleton::get_instance().leader_get_total_lock_tgas_token(cs_para.get_clock(), total_lock_tgas_token, property_height);
     if (!ret) {
         xwarn("xproposal_maker_t::leader_set_consensus_para fail-leader_get_total_lock_tgas_token. %s", cs_para.dump().c_str());
         return ret;
@@ -366,7 +365,7 @@ bool xproposal_maker_t::backup_set_consensus_para(base::xvblock_t* latest_cert_b
             }
 
             property_height = blockheader_extradata.get_tgas_total_lock_amount_property_height();
-            bool bret = store::xtgas_singleton::get_instance().backup_get_total_lock_tgas_token(get_blockstore(), get_store(), proposal->get_cert()->get_clock(), property_height, total_lock_tgas_token);
+            bool bret = store::xtgas_singleton::get_instance().backup_get_total_lock_tgas_token(proposal->get_cert()->get_clock(), property_height, total_lock_tgas_token);
             if (!bret) {
                 xwarn("xtable_blockmaker_t::verify_block fail-backup_set_consensus_para.proposal=%s", proposal->dump().c_str());
                 return bret;

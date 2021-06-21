@@ -634,6 +634,31 @@ namespace top
             return load_block_state(target_index());
         }
 
+        xauto_ptr<xvbstate_t> xvblkstatestore_t::get_latest_connectted_block_state(const xvaccount_t & account)
+        {
+            auto _block = base::xvchain_t::instance().get_xblockstore()->get_latest_connected_block(account);
+            if (_block == nullptr) {
+                xerror("xvblkstatestore_t::get_latest_connectted_block_state fail-load latest connectted block. account=%s", account.get_account().c_str());
+                return nullptr;
+            }
+
+            if (_block->is_genesis_block() && _block->get_block_class() == base::enum_xvblock_class_nil) {
+                xwarn("xvblkstatestore_t::get_latest_connectted_block_state  fail-invalid state for empty genesis block. account=%s", account.get_account().c_str());
+                return nullptr;
+            }
+            return get_block_state(_block.get());
+        }
+
+        xauto_ptr<xvbstate_t> xvblkstatestore_t::get_committed_block_state(const xvaccount_t & account,const uint64_t block_height)
+        {
+            auto _block = base::xvchain_t::instance().get_xblockstore()->load_block_object(account, block_height, enum_xvblock_flag_committed, false);
+            if (_block == nullptr) {
+                xwarn("xvblkstatestore_t::get_committed_block_state fail-load committed block. account=%s,height=%ld", account.get_account().c_str(), block_height);
+                return nullptr;
+            }
+            return get_block_state(_block.get());
+        }
+
         bool xvblkstatestore_t::get_full_block_offsnapshot(xvblock_t * current_block)
         {
             if (current_block->is_full_state_block()) {
