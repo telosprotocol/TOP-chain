@@ -52,10 +52,13 @@ LocalNodeInfoPtr CreateLocalInfoFromConfig(const base::Config & config, base::Ka
         TOP_ERROR("get node local_ip from config failed!");
         return nullptr;
     }
-    kadmlia::LocalNodeInfoPtr local_node_ptr = nullptr;
-    // uint16_t local_port = transport_ptr_->local_port();
-    // reset real local port in routing_table init
     uint16_t local_port = 0;
+    if (!config.Get("node", "local_port", local_port)) {
+        TOP_ERROR("get node local_port from config failed!");
+        return nullptr;
+    }
+
+    kadmlia::LocalNodeInfoPtr local_node_ptr = nullptr;
     local_node_ptr.reset(new top::kadmlia::LocalNodeInfo());
     if (!local_node_ptr->Init(local_ip, local_port, first_node, kad_key)) {
         TOP_ERROR("init local node info failed!");
