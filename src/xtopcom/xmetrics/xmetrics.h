@@ -47,8 +47,22 @@ enum E_SIMPLE_METRICS_TAG {
     dataobject_xvinput,
     dataobject_xvoutput,
     dataobject_xventity,
+    // db bock key, see xvdbkey for specific info
+    // 't/', 'i/', 'b/'
+    // 'b/.../h', 'b/.../i', 'b/.../ir', 'b/.../o', 'b/.../or', 'b/.../s', 'b/.../d'
+    db_key_tx,
+    db_key_block_index,
+    db_key_block,
+    db_key_block_object,
+    db_key_block_input,
+    db_key_block_input_resource,
+    db_key_block_output,
+    db_key_block_output_resource,
+    db_key_block_state,
+    db_key_block_offdata,
     e_simple_total,
 };
+using xmetircs_tag_t = E_SIMPLE_METRICS_TAG;
 
 class e_metrics : public top::xbasic_runnable_t<e_metrics> {
 public:
