@@ -42,6 +42,18 @@ metrics_variant_ptr e_metrics::s_metrics[e_simple_total] = {
     DECL_METRICS(dataobject_xvinput),
     DECL_METRICS(dataobject_xvoutput),
     DECL_METRICS(dataobject_xventity),
+
+    //db key value metrics (see declare)
+    DECL_METRICS(db_key_tx),
+    DECL_METRICS(db_key_block_index),
+    DECL_METRICS(db_key_block),
+    DECL_METRICS(db_key_block_object),
+    DECL_METRICS(db_key_block_input),
+    DECL_METRICS(db_key_block_input_resource),
+    DECL_METRICS(db_key_block_output),
+    DECL_METRICS(db_key_block_output_resource),
+    DECL_METRICS(db_key_block_state),
+    DECL_METRICS(db_key_block_offdata),
 };
 
 void e_metrics::start() {

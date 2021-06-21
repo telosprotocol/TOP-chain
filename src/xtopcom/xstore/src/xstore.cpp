@@ -34,6 +34,7 @@
 #include "xstore/xaccount_context.h"
 #include "xstore/xstore.h"
 #include "xstore/xstore_error.h"
+#include "xstore/xstore_util.h"
 
 #include "xdata/xgenesis_data.h"
 
@@ -261,10 +262,12 @@ bool xstore::delete_block_by_path(const std::string & store_path,const std::stri
 }
 
 bool xstore::set_value(const std::string &key, const std::string &value) {
+    xstore_util::metirc_key_value(key, value, true);
     return m_db->write(key, value);
 }
 
 bool xstore::delete_value(const std::string &key) {
+    xstore_util::metirc_key_value(key, get_value(key), false);
     return m_db->erase(key);
 }
 
