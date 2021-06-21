@@ -328,6 +328,10 @@ if (ENABLE_CREATE_USER)
     add_definitions(-DENABLE_CREATE_USER)
 endif()
 
+if (DEBUG_LONG_CONFIRM_TX_ENABLE)
+    add_definitions(-DEBUG_LONG_CONFIRM_TX_ENABLE)
+endif()
+
 if (DB_CACHE)
     add_definitions(-DDB_CACHE)
 endif()
