@@ -31,7 +31,7 @@ namespace top
 
         enum_txindex_type xvtxkey_t::transaction_subtype_to_txindex_type(enum_transaction_subtype type) {
             switch (type) {
-                case enum_transaction_subtype_self: return enum_txindex_type_send;
+                case enum_transaction_subtype_self: return enum_txindex_type_self;
                 case enum_transaction_subtype_send: return enum_txindex_type_send;
                 case enum_transaction_subtype_recv: return enum_txindex_type_receive;
                 case enum_transaction_subtype_confirm: return enum_txindex_type_confirm;

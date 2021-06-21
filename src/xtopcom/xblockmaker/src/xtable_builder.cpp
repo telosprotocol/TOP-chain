@@ -23,19 +23,32 @@ std::string xlighttable_builder_t::make_light_table_binlog(const xobject_ptr_t<b
 
     // make account index property binlog
     for (auto & unit : units) {
-        bool has_unconfirm_sendtx = false;
-        if (unit->get_block_class() == base::enum_xvblock_class_nil) {  // nil unit should read last unconfirm state
-            xaccount_index_t _old_aindex;
-            bool ret = proposal_tbstate.get_account_index(unit->get_account(), _old_aindex);
-            xassert(ret == true);  // must can read success
-            has_unconfirm_sendtx = _old_aindex.is_has_unconfirm_tx();
-        } else if (unit->get_block_class() == base::enum_xvblock_class_full) {
+        // read old index
+        xaccount_index_t _old_aindex;
+        proposal_tbstate.get_account_index(unit->get_account(), _old_aindex);
+        // update unconfirm sendtx flag
+        bool has_unconfirm_sendtx = _old_aindex.is_has_unconfirm_tx();
+        if (unit->get_block_class() == base::enum_xvblock_class_full) {
             has_unconfirm_sendtx = false;
-        } else {
+        } else if (unit->get_block_class() == base::enum_xvblock_class_light) {
             has_unconfirm_sendtx = unit->get_unconfirm_sendtx_num() != 0;
         }
-        xaccount_index_t _aindex(unit.get(), has_unconfirm_sendtx, false);
-        proposal_tbstate.set_account_index(unit->get_account(), _aindex, canvas.get());
+        // update light-unit consensus flag, light-unit must push to committed status for receipt make
+        base::enum_xblock_consensus_type _cs_type = _old_aindex.get_latest_unit_consensus_type();
+        if (unit->get_block_class() == base::enum_xvblock_class_light) {
+            _cs_type = base::enum_xblock_consensus_flag_authenticated;
+        } else {
+            if (_cs_type == base::enum_xblock_consensus_flag_authenticated) {
+                _cs_type = base::enum_xblock_consensus_flag_locked;
+            } else if (_cs_type == base::enum_xblock_consensus_flag_locked) {
+                _cs_type = base::enum_xblock_consensus_flag_committed;
+            } else {
+                xassert(false);  // should not happen
+            }
+        }
+
+        xaccount_index_t _new_aindex(unit.get(), has_unconfirm_sendtx, _cs_type, false);
+        proposal_tbstate.set_account_index(unit->get_account(), _new_aindex, canvas.get());
     }
 
     // make receiptid property binlog

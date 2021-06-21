@@ -20,7 +20,7 @@ enum enum_xaccount_index_flag {
     enum_xaccount_index_flag_res1             = 0x04,  // reserved
     enum_xaccount_index_flag_res2             = 0x08,  // reserved
 };
-// the latest block consensus flag 2bit
+// the latest non-empty block consensus flag 2bit
 enum enum_xblock_consensus_type {
     enum_xblock_consensus_flag_authenticated  = 0,
     enum_xblock_consensus_flag_locked         = 1,
@@ -34,6 +34,7 @@ class xaccount_index_t {
     xaccount_index_t();
     xaccount_index_t(base::xvblock_t* unit,
                      bool has_unconfirm_tx,
+                     enum_xblock_consensus_type _cs_type,
                      bool is_account_destroy);
     ~xaccount_index_t();
     xaccount_index_t(const xaccount_index_t& left);
@@ -66,7 +67,7 @@ class xaccount_index_t {
     enum_xblock_consensus_type  get_latest_unit_consensus_type() const {return (enum_xblock_consensus_type)((m_account_flag) & 0x03);}
     bool                        check_account_index_flag(enum_xaccount_index_flag _flag) const;
 
- public:
+ private:  // only can be set by constructor function
     // [enum_xvblock_class 3bit][enum_xvblock_type 7bit][enum_xaccount_index_flag 4bit][enum_xblock_consensus_type 2bit] = 16bits
     void                    set_latest_unit_class(base::enum_xvblock_class _class);
     void                    set_latest_unit_type(base::enum_xvblock_type _type);
