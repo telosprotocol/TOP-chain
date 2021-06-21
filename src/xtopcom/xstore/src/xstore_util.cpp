@@ -55,6 +55,6 @@ void xstore_util::metirc_key_value(std::string const& key, std::string const& va
 }
 
 bool xstore_util::endwith(std::string const& str, std::string const& suffix) {
-    return str.size() >= suffix.size() &&
-           str.compare(str.size() - suffix.size(), suffix.size(), suffix) == 0;
+    if (str.size() < suffix.size()) return false;
+    return str.substr(str.size() - suffix.size(), suffix.size()) == suffix;
 }
