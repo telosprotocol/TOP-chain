@@ -50,7 +50,7 @@ class xstore final: public xstore_face_t {
  public://other old api
 
     xaccount_ptr_t query_account(const std::string& address) const override;
-    xaccount_ptr_t get_target_state(base::xvblock_t* block) const override;
+    xaccount_ptr_t get_target_state(base::xvblock_t* block) const;
     xaccount_ptr_t get_target_state(const std::string &address, uint64_t height) const;
     bool           string_property_get(base::xvblock_t* block, const std::string& prop, std::string& value) const override;
 

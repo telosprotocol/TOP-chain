@@ -23,11 +23,11 @@ class xtgas_singleton {
     }
 
     uint64_t get_cache_total_lock_tgas_token();
-    bool    leader_get_total_lock_tgas_token(base::xvblockstore_t* blockstore, store::xstore_face_t* store, uint64_t timer_height, uint64_t & total_lock_tgas_token, uint64_t & property_height);
-    bool    backup_get_total_lock_tgas_token(base::xvblockstore_t* blockstore, store::xstore_face_t* store, uint64_t timer_height, uint64_t property_height, uint64_t & total_lock_tgas_token);
+    bool    leader_get_total_lock_tgas_token(uint64_t timer_height, uint64_t & total_lock_tgas_token, uint64_t & property_height);
+    bool    backup_get_total_lock_tgas_token(uint64_t timer_height, uint64_t property_height, uint64_t & total_lock_tgas_token);
 
  private:
-    bool    get_latest_property(base::xvblockstore_t* blockstore, store::xstore_face_t* store, std::string & value, uint64_t & height);
+    bool    get_latest_property(std::string & value, uint64_t & height);
 
     uint64_t m_last_update_time{0};
     uint64_t m_last_total_lock_tgas_token{0};

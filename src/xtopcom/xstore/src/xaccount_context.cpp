@@ -57,8 +57,20 @@ do {\
     }\
 }while(0)
 
-xaccount_context_t::xaccount_context_t(const xaccount_ptr_t & unitstate, xstore_face_t* store)
-: m_store(store) {
+xaccount_context_t::xaccount_context_t(const xaccount_ptr_t & unitstate) {
+    m_account = unitstate;
+
+    m_latest_exec_sendtx_nonce = m_account->get_latest_send_trans_number();
+    m_latest_exec_sendtx_hash = m_account->account_send_trans_hash();
+    m_latest_create_sendtx_nonce = m_latest_exec_sendtx_nonce;
+    m_latest_create_sendtx_hash = m_latest_exec_sendtx_hash;
+    m_canvas = make_object_ptr<base::xvcanvas_t>();
+    xinfo("create context, address:%s,height:%ld,uri=%s",
+        unitstate->get_account().c_str(), unitstate->get_block_height(), m_account->get_bstate()->get_execute_uri().c_str());
+}
+
+// TODO(jimmy) this constructor api will be deleted later
+xaccount_context_t::xaccount_context_t(const xaccount_ptr_t & unitstate, xstore_face_t* store) {
     m_account = unitstate;
 
     m_latest_exec_sendtx_nonce = m_account->get_latest_send_trans_number();
@@ -679,28 +691,27 @@ xobject_ptr_t<base::xvbstate_t> xaccount_context_t::load_bstate(const std::strin
     if (other_addr.empty()) {
         return m_account->get_bstate();
     }
-    xaccount_ptr_t other_account = m_store->query_account(other_addr);
-    if (nullptr == other_account) {
-        xerror("xaccount_context_t::load_bstate fail-query other account.addr=%s", other_addr.c_str());
+
+    // if not assign height, then get latest connect block and state
+    base::xvaccount_t _vaddr(other_addr);
+    base::xauto_ptr<base::xvbstate_t> _bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_latest_connectted_block_state(_vaddr);
+    if (_bstate == nullptr) {
+        xerror("xaccount_context_t::load_bstate,fail-get latest connectted state.account=%s", other_addr.c_str());
         return nullptr;
     }
-    return other_account->get_bstate();
+    xdbg("xaccount_context_t::load_bstate,succ-get latest connectted state.account=%s,height=%ld", other_addr.c_str(), _bstate->get_block_height());
+    return _bstate;
 }
 xobject_ptr_t<base::xvbstate_t> xaccount_context_t::load_bstate(const std::string& other_addr, uint64_t height) {
     std::string query_addr = other_addr.empty() ? get_address() : other_addr;
     base::xvaccount_t _vaddr(query_addr);
-    base::xauto_ptr<base::xvblock_t> _block = base::xvchain_t::instance().get_xblockstore()->load_block_object(_vaddr, height, base::enum_xvblock_flag_committed, true);
-    if (_block == nullptr) {
-        xwarn("xaccount_context_t::load_bstate,fail-load block.account=%s,height=%ld", query_addr.c_str(), height);
-        return nullptr;
-    }
-    // TODO(jimmy) use statestore
-    xaccount_ptr_t account = m_store->get_target_state(_block.get());
-    if (account == nullptr) {
+    base::xauto_ptr<base::xvbstate_t> _bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_committed_block_state(_vaddr, height);
+    if (_bstate == nullptr) {
         xwarn("xaccount_context_t::load_bstate,fail-get target state fail.account=%s,height=%ld", query_addr.c_str(), height);
         return nullptr;
     }
-    return account->get_bstate();
+    xdbg("xaccount_context_t::load_bstate,succ-get latest committed state.account=%s,height=%ld", query_addr.c_str(),height);
+    return _bstate;
 }
 
 base::xauto_ptr<base::xstringvar_t> xaccount_context_t::load_string_for_write(base::xvbstate_t* bstate, const std::string & key) {

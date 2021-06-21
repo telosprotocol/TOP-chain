@@ -32,7 +32,6 @@ class xtransaction_executor {
                                     const xobject_ptr_t<base::xvbstate_t> & prev_bstate,
                                     const data::xblock_consensus_para_t & cs_para,
                                     const std::vector<xcons_transaction_ptr_t> & txs,
-                                    store::xstore_face_t* store,
                                     xbatch_txs_result_t & txs_result);
 
  private:

@@ -156,10 +156,11 @@ bool xunit_maker_t::push_tx(const data::xblock_consensus_para_t & cs_para, const
         uint256_t latest_hash;
         find_highest_send_tx(latest_nonce, latest_hash);
         if (tx->get_transaction()->get_last_nonce() != latest_nonce || !tx->get_transaction()->check_last_trans_hash(latest_hash)) {
-            xaccount_ptr_t committed_state = get_store()->query_account(get_account());
-            if (committed_state != nullptr) {
-                uint64_t account_latest_nonce = committed_state->get_latest_send_trans_number();
-                uint256_t account_latest_hash = committed_state->account_send_trans_hash();
+            auto commit_bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_latest_connectted_block_state(*this);
+            if (commit_bstate != nullptr) {
+                xunit_bstate_t committed_state(commit_bstate.get());
+                uint64_t account_latest_nonce = committed_state.get_latest_send_trans_number();
+                uint256_t account_latest_hash = committed_state.account_send_trans_hash();
                 get_txpool()->updata_latest_nonce(get_account(), account_latest_nonce, account_latest_hash);
             }
             xwarn("xunit_maker_t::push_tx fail-tx filtered for send nonce hash not match,%s,bstate=%s,latest_nonce=%ld,tx=%s",

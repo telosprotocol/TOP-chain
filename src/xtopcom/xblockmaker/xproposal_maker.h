@@ -27,7 +27,6 @@ class xproposal_maker_t : public xunit_service::xproposal_maker_face {
  protected:
     const std::string &         get_account() const {return m_table_maker->get_account();}
     base::xvblockstore_t*       get_blockstore() const {return m_table_maker->get_blockstore();}
-    store::xstore_face_t*       get_store() const {return m_table_maker->get_store();}
     xtxpool_v2::xtxpool_face_t* get_txpool() const {return m_table_maker->get_txpool();}
 
     std::string                 calc_random_seed(base::xvblock_t* latest_cert_block, base::xvqcert_t* drand_cert, uint64_t viewtoken);

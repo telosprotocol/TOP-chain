@@ -24,7 +24,6 @@ using data::xaccount_ptr_t;
 
 class xblockmaker_resources_t {
  public:
-    virtual store::xstore_face_t*       get_store() const = 0;
     virtual base::xvblockstore_t*       get_blockstore() const = 0;
     virtual xtxpool_v2::xtxpool_face_t* get_txpool() const = 0;
     virtual mbus::xmessage_bus_face_t*  get_bus() const = 0;
@@ -38,16 +37,14 @@ class xblockmaker_resources_impl_t : public xblockmaker_resources_t {
                                  const observer_ptr<base::xvblockstore_t> & blockstore,
                                  const observer_ptr<xtxpool_v2::xtxpool_face_t> & txpool,
                                  const observer_ptr<mbus::xmessage_bus_face_t> & bus)
-    : m_store(store), m_blockstore(blockstore), m_txpool(txpool), m_bus(bus) {}
+    : m_blockstore(blockstore), m_txpool(txpool), m_bus(bus) {}
 
-    virtual store::xstore_face_t*       get_store() const {return m_store.get();}
     virtual base::xvblockstore_t*       get_blockstore() const {return m_blockstore.get();}
     virtual xtxpool_v2::xtxpool_face_t* get_txpool() const {return m_txpool.get();}
     virtual mbus::xmessage_bus_face_t*  get_bus() const {return m_bus.get();}
     virtual base::xvblkstatestore_t*    get_xblkstatestore() const {return base::xvchain_t::instance().get_xstatestore()->get_blkstate_store();}
 
  private:
-    observer_ptr<store::xstore_face_t>          m_store{nullptr};
     observer_ptr<base::xvblockstore_t>          m_blockstore{nullptr};
     observer_ptr<xtxpool_v2::xtxpool_face_t>    m_txpool{nullptr};
     observer_ptr<mbus::xmessage_bus_face_t>     m_bus{nullptr};
@@ -139,7 +136,6 @@ class xblock_maker_t : public base::xvaccount_t {
     bool                        check_latest_blocks() const;
 
  public:
-    store::xstore_face_t*       get_store() const {return m_resources->get_store();}
     base::xvblockstore_t*       get_blockstore() const {return m_resources->get_blockstore();}
     xtxpool_v2::xtxpool_face_t*    get_txpool() const {return m_resources->get_txpool();}
     mbus::xmessage_bus_face_t*  get_bus() const {return m_resources->get_bus();}
@@ -180,7 +176,6 @@ class xblock_builder_para_face_t {
     : m_resources(resources) {}
 
  public:
-    virtual store::xstore_face_t*       get_store() const {return m_resources->get_store();}
     virtual base::xvblockstore_t*       get_blockstore() const {return m_resources->get_blockstore();}
     virtual xtxpool_v2::xtxpool_face_t* get_txpool() const {return m_resources->get_txpool();}
     virtual int32_t                     get_error_code() const {return m_error_code;}

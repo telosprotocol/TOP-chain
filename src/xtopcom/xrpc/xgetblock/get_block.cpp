@@ -1325,12 +1325,12 @@ static std::unordered_map<common::xnode_type_t, std::string> node_type_map{
 };
 
 void get_block_handle::set_addition_info(xJson::Value & body, xblock_t * bp) {
-    xaccount_ptr_t state = m_store->get_target_state(bp);
-    if (nullptr == state) {
+    auto _bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(bp);
+    if (nullptr == _bstate) {
         xwarn("get_block_handle::set_addition_info get target state fail.block=%s", bp->dump().c_str());
         return;
     }
-
+    data::xunit_bstate_t state(_bstate.get());
     std::string elect_data;
     auto block_owner = bp->get_block_owner();
 
@@ -1346,7 +1346,7 @@ void get_block_handle::set_addition_info(xJson::Value & body, xblock_t * bp) {
         jv["round_no"] = static_cast<xJson::UInt64>(bp->get_height());
         jv["zone_id"] = common::xdefault_zone_id_value;
         for (auto const & property : property_names) {
-            if (false == state->string_get(property, elect_data) || elect_data.empty()) {
+            if (false == state.string_get(property, elect_data) || elect_data.empty()) {
                 continue;
             }
             auto const & election_result_store = codec::msgpack_decode<xelection_result_store_t>({std::begin(elect_data), std::end(elect_data)});

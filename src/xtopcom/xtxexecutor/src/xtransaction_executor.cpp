@@ -77,7 +77,6 @@ int32_t xtransaction_executor::exec_batch_txs(base::xvblock_t* prev_block,
                                               const xobject_ptr_t<base::xvbstate_t> & prev_bstate,
                                               const data::xblock_consensus_para_t & cs_para,
                                               const std::vector<xcons_transaction_ptr_t> & txs,
-                                              store::xstore_face_t* store,
                                               xbatch_txs_result_t & txs_result) {
 
     std::vector<xcons_transaction_ptr_t> exec_txs = txs;
@@ -95,7 +94,7 @@ int32_t xtransaction_executor::exec_batch_txs(base::xvblock_t* prev_block,
         proposal_state = std::make_shared<xunit_bstate_t>(proposal_bstate.get());
 
         // create tx execute context
-        _account_context = std::make_shared<store::xaccount_context_t>(proposal_state, store);
+        _account_context = std::make_shared<store::xaccount_context_t>(proposal_state);
         _account_context->set_context_para(cs_para.get_clock(), cs_para.get_random_seed(), cs_para.get_timestamp(), cs_para.get_total_lock_tgas_token());
         xassert(!cs_para.get_table_account().empty());
         xassert(cs_para.get_table_proposal_height() > 0);
