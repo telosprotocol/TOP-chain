@@ -184,7 +184,7 @@ namespace top
             int64_t distance = m_meta->_highest_full_block_height - m_meta->_highest_execute_block_height;
             uint32_t warn_level = distance >> 7;  // fall_num = 128;
             char local_param_buf[256];
-            xprintf(local_param_buf,sizeof(local_param_buf),"{warn_meta=%d,distance=%lld,account_id(%" PRIu64 "),account_addr=%s ->latest height for full=%" PRId64 ",geneis_connect=%" PRId64 ", connect=%" PRId64 ",commit=%" PRId64 ",execute=%" PRId64 " < lock=%" PRId64 " < cert=%" PRId64 "; at store(%s)}",
+            xprintf(local_param_buf,sizeof(local_param_buf),"{warn_meta=%d,distance=%ld,account_id(%" PRIu64 "),account_addr=%s ->latest height for full=%" PRId64 ",geneis_connect=%" PRId64 ", connect=%" PRId64 ",commit=%" PRId64 ",execute=%" PRId64 " < lock=%" PRId64 " < cert=%" PRId64 "; at store(%s)}",
                 warn_level, distance, get_xvid(), get_address().c_str(),m_meta->_highest_full_block_height,m_meta->_highest_genesis_connect_height,m_meta->_highest_connect_block_height,m_meta->_highest_commit_block_height,m_meta->_highest_execute_block_height,m_meta->_highest_lock_block_height,m_meta->_highest_cert_block_height,get_blockstore_path().c_str());
 
             return std::string(local_param_buf);
