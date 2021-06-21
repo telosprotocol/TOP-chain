@@ -621,7 +621,7 @@ bool api_method_imp::getStandbys(const user_info & uinfo, const std::string & ac
             cout << "The miner has not joined in node-standby-pool, please start node by command 'topio node startnode'." << endl;
             return false;
         } else {
-            cout << "The miner has joined in node-standby-pool. ";
+            // cout << "The miner has joined in node-standby-pool. ";
         }
     }
 
