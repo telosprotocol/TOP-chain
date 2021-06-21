@@ -14,9 +14,9 @@ namespace top
        enum enum_txindex_type
        {
            enum_txindex_type_main     = 0x00,  //main entry if need(optional)
-           enum_txindex_type_send     = 0x01,
-           enum_txindex_type_receive  = 0x02,
-           enum_txindex_type_confirm  = 0x04,
+           enum_txindex_type_send     = 0x01,  // send or self tx
+           enum_txindex_type_receive  = 0x02,  // recv tx
+           enum_txindex_type_confirm  = 0x04,  // confirm tx
        };
 
        class xvdbkey_t

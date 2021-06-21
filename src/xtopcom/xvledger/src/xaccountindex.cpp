@@ -28,12 +28,13 @@ xaccount_index_t::xaccount_index_t(const xaccount_index_t& left) {
 
 xaccount_index_t::xaccount_index_t(base::xvblock_t* unit,
                                     bool has_unconfirm_tx,
+                                    enum_xblock_consensus_type _cs_type,
                                     bool is_account_destroy) {
     m_latest_unit_height = unit->get_height();
     m_latest_unit_viewid = unit->get_viewid();
     set_latest_unit_class(unit->get_block_class());
     set_latest_unit_type(unit->get_block_type());
-    set_latest_unit_consensus_type(base::enum_xblock_consensus_flag_authenticated);  // TODO(jimmy) always use highqc
+    set_latest_unit_consensus_type(_cs_type);
     if (has_unconfirm_tx) {
         set_account_index_flag(enum_xaccount_index_flag_has_unconfirm_tx);
     }

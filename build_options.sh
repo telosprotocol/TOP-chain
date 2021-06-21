@@ -125,6 +125,10 @@ do
         CMAKE_EXTRA_OPTIONS+=" -DENABLE_CREATE_USER=ON"
         echo "BUILD WITH ENABLE_CREATE_USER"
     ;;
+    long_confirm_check)
+        CMAKE_EXTRA_OPTIONS+=" -DDEBUG_LONG_CONFIRM_TX_ENABLE=ON"
+        echo "BUILD WITH DEBUG_LONG_CONFIRM_TX_ENABLE"
+    ;;
     db_cache)
         CMAKE_EXTRA_OPTIONS+=" -DDB_CACHE=ON"
         echo "BUILD WITH DB_CACHE"

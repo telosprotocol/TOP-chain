@@ -12,6 +12,7 @@
 #include "../xvledger.h"
 #include "../xvdbkey.h"
 #include "../xvcontract.h"
+#include "xmetrics/xmetrics.h"
 
 namespace top
 {
@@ -156,9 +157,14 @@ namespace top
                     }
 
 #ifdef  DEBUG_LONG_CONFIRM_TX_ENABLE  // TODO(jimmy)
-
-                    if (txindex_type == base::enum_txindex_type_confirm)
-                    {
+                    if (v->get_tx_phase_type() == enum_transaction_subtype_send) {
+                        XMETRICS_COUNTER_INCREMENT("store_tx_count_send", 1);
+                    } else if (v->get_tx_phase_type() == enum_transaction_subtype_recv) {
+                        XMETRICS_COUNTER_INCREMENT("store_tx_count_recv", 1);
+                    } else if (v->get_tx_phase_type() == enum_transaction_subtype_self) {
+                        XMETRICS_COUNTER_INCREMENT("store_tx_count_self", 1);
+                    } else if (v->get_tx_phase_type() == enum_transaction_subtype_confirm) {
+                        XMETRICS_COUNTER_INCREMENT("store_tx_count_confirm", 1);
                         base::xauto_ptr<base::xvtxindex_t> send_txindex = base::xvchain_t::instance().get_xtxstore()->load_tx_idx(v->get_tx_hash(), base::enum_transaction_subtype_send);
                         if (send_txindex == nullptr)
                         {
@@ -168,19 +174,26 @@ namespace top
                         {
                             uint64_t confirmtx_clock = block_ptr->get_clock();
                             uint64_t sendtx_clock = send_txindex->get_block_clock();
-                            uint64_t delay_time = confirmtx_clock - sendtx_clock;
+                            uint64_t delay_time = confirmtx_clock > sendtx_clock ? confirmtx_clock - sendtx_clock : 0;
                             static std::atomic<uint64_t> max_time{0};
-                            if ( (confirmtx_clock > sendtx_clock) && (delay_time >= 6) )  // 6 clock
+                            if (max_time < delay_time)
                             {
-                                if (max_time < delay_time)
-                                {
-                                    max_time = delay_time;
-                                }
+                                max_time = delay_time;
+                            }
+
+                            if (delay_time >= 9) {
+                                XMETRICS_COUNTER_INCREMENT("store_confirmtx_long_time_9clock", 1);
+                            } else if (delay_time >= 6) {
+                                XMETRICS_COUNTER_INCREMENT("store_confirmtx_long_time_6clock", 1);
+                            } else if (delay_time >= 3) {
+                                XMETRICS_COUNTER_INCREMENT("store_confirmtx_long_time_3clock", 1);
+                            }
+                            if (delay_time >= 4)  // 4 clock
+                            {
                                 xwarn("xvtxstore_t::store_txs,confirm tx time long.max_time=%ld,time=%ld,tx=%s", (uint64_t)max_time, delay_time, base::xstring_utl::to_hex(v->get_tx_hash()).c_str());
                             }
                         }
                     }
-
 #endif
                 }
                 if(has_error)
@@ -238,26 +251,26 @@ namespace top
             if(to_block != NULL)
                 to_block->remove_block_flag(flag);
         }
-    
+
         //----------------------------------------xvcontractstore_t----------------------------------------//
         xvcontractstore_t::xvcontractstore_t()
             :xobject_t((enum_xobject_type)enum_xobject_type_vcontractstore)
         {
         }
-        
+
         xvcontractstore_t::~xvcontractstore_t()
         {
         }
-        
+
         //caller need to cast (void*) to related ptr
         void*   xvcontractstore_t::query_interface(const int32_t _enum_xobject_type_)
         {
             if(_enum_xobject_type_ == enum_xobject_type_vcontractstore)
                 return this;
-            
+
             return xobject_t::query_interface(_enum_xobject_type_);
         }
-    
+
         const std::string        xvcontractstore_t::get_sys_tep0_contract_uri(const std::string & contract_addr,const uint32_t contract_version)
         {
             return xvcontract_t::create_contract_uri(contract_addr,const_TEP0_contract_name, contract_version);
@@ -267,27 +280,27 @@ namespace top
         {
             return xvcontract_t::create_contract_uri(contract_addr,const_TEP1_contract_name, contract_version);
         }
-    
+
         const std::string        xvcontractstore_t::get_sys_tep2_contract_uri(const std::string & contract_addr,const uint32_t contract_version)
         {
             return xvcontract_t::create_contract_uri(contract_addr,const_TEP2_contract_name, contract_version);
         }
-    
+
         xauto_ptr<xvcontract_t>  xvcontractstore_t::get_sys_tep0_contract(const std::string & contract_addr,const uint32_t contract_version)
         {
             return new xvcontract_TEP0(contract_addr,contract_version);
         }
-    
+
         xauto_ptr<xvcontract_t>  xvcontractstore_t::get_sys_tep1_contract(const std::string & contract_addr,const uint32_t contract_version)
         {
             return new xvcontract_TEP1(contract_addr,contract_version);
         }
-    
+
         xauto_ptr<xvcontract_t>  xvcontractstore_t::get_sys_tep2_contract(const std::string & contract_addr,const uint32_t contract_version)
         {
             return new xvcontract_TEP2(contract_addr,contract_version);
         }
-    
+
         xauto_ptr<xvcontract_t>  xvcontractstore_t::get_sys_contract(const std::string & contract_uri)
         {
             std::string contract_addr;
@@ -300,7 +313,7 @@ namespace top
             }
             return get_sys_contract(contract_addr,contract_name,contract_ver);
         }
-        
+
         xauto_ptr<xvcontract_t>  xvcontractstore_t::get_sys_contract(const std::string & contract_addr,const std::string & contract_name,const uint32_t version)
         {
             if(contract_name.empty() == false)
@@ -311,7 +324,7 @@ namespace top
                     return get_sys_tep1_contract(contract_addr,version);
                 else if(contract_name == const_TEP2_contract_name)
                     return get_sys_tep2_contract(contract_addr,version);
-                
+
                 xerror("xvcontractstore_t::get_sys_contract,fail to load system contract for contract_addr(%s)/contract_name(%s)/version(%u)",contract_addr.c_str(),contract_name.c_str(),version);
                 return nullptr;
             }
@@ -344,7 +357,7 @@ namespace top
             else
                 return get_usr_contract(contract_addr);
         }
-    
+
         //----------------------------------------xveventbus_t----------------------------------------//
         xveventbus_t::xveventbus_t()
             :xobject_t(enum_xevent_route_path_by_mbus)
