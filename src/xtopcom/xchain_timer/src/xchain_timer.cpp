@@ -92,12 +92,19 @@ void xchain_timer_t::update_time(common::xlogic_time_t time, xlogic_timer_update
         std::lock_guard<std::mutex> lock{m_update_mutex};
         curr_time_update_time_point = m_curr_time_update_time_point;
     }
-    xinfo("logic_timer: update timer: input: %" PRIu64 "; current: %" PRIu64 "; last update time %" PRIi64 " current steady time %" PRIi64 " timer object: %p",
+
+    // for debug purpose
+    bool is_discontinuity = false;
+    if ((current_time + 1) < time) {
+        is_discontinuity = true;
+    }
+    xinfo("logic_timer: update timer: input: %" PRIu64 "; current: %" PRIu64 "; last update time %" PRIi64 " current steady time %" PRIi64 " timer object: %p; is_discontinuity=%d",
           time,
           current_time,
           static_cast<int64_t>(curr_time_update_time_point.time_since_epoch().count()),
           static_cast<int64_t>(std::chrono::steady_clock::now().time_since_epoch().count()),
-          static_cast<void *>(this));
+          static_cast<void *>(this),
+          is_discontinuity);
 
     if (update_strategy == xlogic_timer_update_strategy_t::discard_old_value && current_time >= time) {
         return;
