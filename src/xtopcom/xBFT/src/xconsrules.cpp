@@ -745,6 +745,28 @@ namespace top
             }
         }
         
+        bool  xBFTRules::safe_align_with_blockstore(xproposal_t* new_proposal)
+        {
+            base::xvblock_t * _peer_block = new_proposal->get_block();
+            base::xvqcert_t * _peer_prev_block_cert = new_proposal->get_last_block_cert();
+            //add more specific rule:proposal must point the lowest viewid of prev_height
+            if(_peer_block->get_height() > 1)
+            {
+                base::xauto_ptr<base::xvbindex_t> local_prev_block_cert(get_vblockstore()->load_block_index(*this, _peer_block->get_height() - 1, base::enum_xvblock_flag_authenticated));//find most early cert block
+                if(!local_prev_block_cert)
+                {
+                    xwarn("xBFTRules::safe_align_with_blockstore,fail-dont found prev block for proposal(%s) vs dump=%s at node=0x%llx", _peer_block->dump().c_str(),dump().c_str(),get_xip2_low_addr());
+                    return false; //ask leader sync cert/hq block from this backup
+                }
+                else if(local_prev_block_cert->get_viewid() != _peer_prev_block_cert->get_viewid())//must alignment with blockstore
+                {
+                    xwarn("xBFTRules::safe_align_with_blockstore,fail-unmatch prev-block(%s) for proposal(%s) vs dump=%s at node=0x%llx",local_prev_block_cert->dump().c_str(), _peer_block->dump().c_str(),dump().c_str(),get_xip2_low_addr());
+                    return false; //ask leader sync cert/hq block from this backup
+                }
+            }
+            return true;
+        }
+    
         /*safe rule for any voting block
          1. first it must be a valid proposal block  and pass the locked block,both done  at safe_check_for_proposal_block
          2. never voted at same view#,and never voted passed and voted-view#; and never voted passed height
@@ -752,6 +774,18 @@ namespace top
          4. never fork from locked block
          */
         //bool  xBFTRules::safe_check_for_vote_block(base::xvblock_t * _vote_block)//safe rule for voting block
+        bool  xBFTRules::safe_precheck_for_voting(xproposal_t* new_proposal)
+        {
+            base::xvblock_t * _peer_block = new_proposal->get_block();
+            const bool result = safe_precheck_for_voting(_peer_block);
+            if(result)
+            {
+                if(false == safe_align_with_blockstore(new_proposal))
+                    return false;
+            }
+            return result;
+        }
+    
         bool  xBFTRules::safe_precheck_for_voting(base::xvblock_t * _vote_block)//safe rule for voting block
         {
             //safe-rule#1: a valid proposal block  and pass the locked block
@@ -797,6 +831,18 @@ namespace top
         }
         
         //check again before send voting msg and after verified signature
+        bool  xBFTRules::safe_finalcheck_for_voting(xproposal_t* new_proposal)
+        {
+            base::xvblock_t * _peer_block = new_proposal->get_block();
+            const bool result = safe_finalcheck_for_voting(_peer_block);
+            if(result)
+            {
+                if(false == safe_align_with_blockstore(new_proposal))
+                    return false;
+            }
+            return result;
+        }
+    
         bool  xBFTRules::safe_finalcheck_for_voting(base::xvblock_t * _vote_block)//safe rule for voting block
         {
             base::xvblock_t * lock_block = get_lock_block();

@@ -276,8 +276,10 @@ namespace top
             }
             //proposal ==> input ==> output
             _peer_block->get_input()->set_proposal(_proposal_msg.get_input_proposal());  //copy proposal
-//            _peer_block->set_input_resources(_proposal_msg.get_input_resource());//copy proposal
-//            _peer_block->set_output_resources(_proposal_msg.get_ouput_resource());//copy proposal
+            if(_proposal_msg.get_input_resource().empty() == false)//carry input resource
+                _peer_block->set_input_resources(_proposal_msg.get_input_resource());//copy proposal
+            if(_proposal_msg.get_ouput_resource().empty() == false)//carry output resource
+                _peer_block->set_output_resources(_proposal_msg.get_ouput_resource());//copy proposal
 
             //sanity check the proposal block
             if(   (_peer_block->get_height()  != packet.get_block_height())
@@ -377,38 +379,14 @@ namespace top
             const xvip2_t replica_xip = get_xip2_addr();
             const xvip2_t peer_addr   = new_proposal->get_proposal_source_addr();
             base::xvblock_t * _peer_block = new_proposal->get_block();
-            base::xvqcert_t * _peer_prev_block_cert = new_proposal->get_last_block_cert();
-            
+                      
             if(new_proposal->is_vote_disable())
             {
                 xwarn("xBFTdriver_t::vote_for_proposal,disabled proposal(%s) at  node=0x%llx",_peer_block->dump().c_str(),get_xip2_low_addr());
                 return enum_xconsensus_error_not_authorized;
             }
             
-            //precheck whether leader and backup both have the matched hq cert or not
-            base::xvblock_t *  local_latest_cert_block = get_latest_cert_block();
-            if(local_latest_cert_block != NULL)
-            {
-                //_peer_block is peer proposal
-                if(_peer_block->get_height() <= local_latest_cert_block->get_height()) //never vote outofdated proposal
-                {
-                    xwarn("xBFTdriver_t::vote_for_proposal,fail-outofdate proposal(%s) vs dump=%s at node=0x%llx",_peer_block->dump().c_str(),dump().c_str(),get_xip2_low_addr());
-                    new_proposal->disable_vote(); //disable vote
-                    return enum_xconsensus_error_bad_proposal;
-                }
-                else if(_peer_block->get_height() == local_latest_cert_block->get_height() + 1)
-                {
-                    //_peer_prev_block_cert carry peer-proposal->prev cert, so check
-                    if(_peer_prev_block_cert->get_viewid() < local_latest_cert_block->get_viewid())
-                    {
-                        xwarn("xBFTdriver_t::vote_for_proposal,fail-outofdate hqcert(%s) of proposal(%s) vs dump=%s at node=0x%llx",_peer_prev_block_cert->dump().c_str(), _peer_block->dump().c_str(),dump().c_str(),get_xip2_low_addr());
-                        new_proposal->disable_vote(); //disable vote
-                        return enum_xconsensus_error_outofdate; //ask leader sync cert/hq block from this backup
-                    }
-                }
-            }
-            
-            if(safe_precheck_for_voting(_peer_block) == false) //apply the basic safe-rule for block
+            if(safe_precheck_for_voting(new_proposal) == false) //apply the basic safe-rule for block
             {
                 xwarn("xBFTdriver_t::vote_for_proposal,fail-an outofdate proposal=%s,at node=0x%llx",_peer_block->dump().c_str(),get_xip2_low_addr());
                 new_proposal->disable_vote(); //disable vote
@@ -420,7 +398,7 @@ namespace top
                 xproposal_t* _proposal = ((xproposal_t*)_block_ptr); //callback running at thread of xBFTdriver_t
                 if(_proposal->get_result_of_verify_proposal() == enum_xconsensus_code_successful)
                 {
-                    if(safe_finalcheck_for_voting(_proposal->get_block())) //apply safe rule again,in case mutiple-thread' race
+                    if(safe_finalcheck_for_voting(_proposal)) //apply safe rule again,in case mutiple-thread' race
                     {
                         xinfo("xBFTdriver_t::vote_for_proposal, suffix process for proposal=%s,at node=0x%llx",_proposal->dump().c_str(),get_xip2_low_addr());
                         

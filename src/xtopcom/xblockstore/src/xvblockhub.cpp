@@ -181,10 +181,10 @@ namespace top
         std::string xblockacct_t::dump() const  //just for debug purpose
         {
             // execute height fall behind check, should be deleted eventually
-            int64_t distance = m_meta->_highest_full_block_height - m_meta->_highest_execute_block_height;
-            uint32_t warn_level = distance >> 7;  // fall_num = 128;
+            const int64_t distance = m_meta->_highest_full_block_height - m_meta->_highest_execute_block_height;
+            uint32_t warn_level = (uint32_t)(distance >> 7);  // fall_num = 128;
             char local_param_buf[256];
-            xprintf(local_param_buf,sizeof(local_param_buf),"{warn_meta=%d,distance=%ld,account_id(%" PRIu64 "),account_addr=%s ->latest height for full=%" PRId64 ",geneis_connect=%" PRId64 ", connect=%" PRId64 ",commit=%" PRId64 ",execute=%" PRId64 " < lock=%" PRId64 " < cert=%" PRId64 "; at store(%s)}",
+            xprintf(local_param_buf,sizeof(local_param_buf),"{warn_meta=%d,distance=%" PRId64 ",account_id(%" PRIu64 "),account_addr=%s ->latest height for full=%" PRId64 ",geneis_connect=%" PRId64 ", connect=%" PRId64 ",commit=%" PRId64 ",execute=%" PRId64 " < lock=%" PRId64 " < cert=%" PRId64 "; at store(%s)}",
                 warn_level, distance, get_xvid(), get_address().c_str(),m_meta->_highest_full_block_height,m_meta->_highest_genesis_connect_height,m_meta->_highest_connect_block_height,m_meta->_highest_commit_block_height,m_meta->_highest_execute_block_height,m_meta->_highest_lock_block_height,m_meta->_highest_cert_block_height,get_blockstore_path().c_str());
 
             return std::string(local_param_buf);
@@ -448,7 +448,7 @@ namespace top
                 for(auto height_it = m_all_blocks.rbegin(); height_it != m_all_blocks.rend(); ++height_it)//search from highest height
                 {
                     auto & view_map  = height_it->second;
-                    for(auto view_it = view_map.rbegin(); view_it != view_map.rend(); ++view_it) //search from highest view#
+                    for(auto view_it = view_map.begin(); view_it != view_map.end(); ++view_it) //search from highest view#
                     {
                         if( (cert_block == nullptr) && (view_it->second->check_block_flag(base::enum_xvblock_flag_authenticated)) )
                         {
@@ -532,7 +532,7 @@ namespace top
                         base::xvbindex_t* highest_commit = NULL;
                         base::xvbindex_t* highest_lock = NULL;
                         base::xvbindex_t* highest_cert = NULL;
-                        for(auto view_it = view_map.rbegin(); view_it != view_map.rend(); ++view_it) //search from highest view#
+                        for(auto view_it = view_map.begin(); view_it != view_map.end(); ++view_it) //search from highest view#
                         {
                             if( (highest_commit == NULL) && (view_it->second->check_block_flag(base::enum_xvblock_flag_committed)) )
                             {
@@ -600,7 +600,7 @@ namespace top
                 if(height_it != m_all_blocks.end())
                 {
                     auto & view_map  = height_it->second;
-                    for(auto view_it = view_map.rbegin(); view_it != view_map.rend(); ++view_it) //search from highest view#
+                    for(auto view_it = view_map.begin(); view_it != view_map.end(); ++view_it) //search from highest view#
                     {
                         if(view_it->second->check_block_flag(request_flag))
                         {
@@ -622,7 +622,7 @@ namespace top
                 for(auto height_it = m_all_blocks.rbegin(); height_it != m_all_blocks.rend(); ++height_it)//search from highest height
                 {
                     auto & view_map  = height_it->second;
-                    for(auto view_it = view_map.rbegin(); view_it != view_map.rend(); ++view_it) //search from highest view#
+                    for(auto view_it = view_map.begin(); view_it != view_map.end(); ++view_it) //search from highest view#
                     {
                         if(view_it->second->check_block_flag(request_flag))
                         {
@@ -643,7 +643,7 @@ namespace top
                 for(auto height_it = m_all_blocks.rbegin(); height_it != m_all_blocks.rend(); ++height_it)//search from highest height
                 {
                     auto & view_map  = height_it->second;
-                    for(auto view_it = view_map.rbegin(); view_it != view_map.rend(); ++view_it) //search from highest view#
+                    for(auto view_it = view_map.begin(); view_it != view_map.end(); ++view_it) //search from highest view#
                     {
                         if(view_it->second->get_block_class() == request_class)
                         {

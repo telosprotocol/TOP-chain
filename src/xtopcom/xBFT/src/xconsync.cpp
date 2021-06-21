@@ -265,7 +265,7 @@ namespace top
             }
             else if( (get_lock_block()->get_height() - target_block_height) < 128 )//search from blockstore at nearby locked block
             {
-                bool full_load = (sync_targets & enum_xsync_target_block_input) | (sync_targets & enum_xsync_target_block_output);
+                bool full_load = (sync_targets & enum_xsync_target_block_input) || (sync_targets & enum_xsync_target_block_output);
                 base::xauto_ptr<base::xvblock_t> target_block = get_vblockstore()->load_block_object(*this, target_block_height,target_block_hash,full_load);//specific load target block
                 if(target_block == nullptr)
                 {
