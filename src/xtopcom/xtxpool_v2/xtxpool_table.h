@@ -56,9 +56,9 @@ class xaccount_basic_info_t {
 
 class xtxpool_table_t {
 public:
-    xtxpool_table_t(xtxpool_resources_face * para, std::string table_addr, xtxpool_shard_info_t * shard)
+    xtxpool_table_t(xtxpool_resources_face * para, std::string table_addr, xtxpool_shard_info_t * shard, xtxpool_statistic_t * statistic)
       : m_para(para)
-      , m_xtable_info(table_addr, shard)
+      , m_xtable_info(table_addr, shard, statistic)
       , m_txmgr_table(&m_xtable_info)
       // , m_table_filter(para->get_vblockstore())
       , m_unconfirmed_tx_queue(para, &m_xtable_info)
@@ -78,7 +78,7 @@ public:
     void update_unconfirm_accounts();
     // void update_non_ready_accounts();
     void update_locked_txs(const std::vector<tx_info_t> & locked_tx_vec);
-    int32_t update_receiptid_state(const base::xreceiptid_state_ptr_t & receiptid_state);
+    void update_receiptid_state(const base::xreceiptid_state_ptr_t & receiptid_state);
     xcons_transaction_ptr_t get_unconfirmed_tx(const std::string & to_table_addr, uint64_t receipt_id) const;
     const std::vector<xtxpool_table_lacking_receipt_ids_t> get_lacking_recv_tx_ids(uint32_t max_num) const;
     const std::vector<xtxpool_table_lacking_confirm_tx_hashs_t> get_lacking_confirm_tx_hashs(uint32_t max_num) const;
