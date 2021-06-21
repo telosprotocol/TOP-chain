@@ -54,20 +54,7 @@ private:
     std::vector<std::shared_ptr<xtxpool_shard_info_t>> m_shards;
     std::shared_ptr<xtxpool_resources_face> m_para;
     mutable std::mutex m_mutex[enum_xtxpool_table_type_max];
-    std::atomic<uint32_t> m_table_num{0};
-    std::atomic<int32_t> m_unconfirm_tx_num{0};
-    std::atomic<uint32_t> m_received_recv_tx_num{0};
-    std::atomic<uint32_t> m_received_confirm_tx_num{0};
-    std::atomic<uint32_t> m_pulled_recv_tx_num{0};
-    std::atomic<uint32_t> m_pulled_confirm_tx_num{0};
-    std::atomic<uint32_t> m_receipt_recv_num_by_1_clock{0};
-    std::atomic<uint32_t> m_receipt_recv_num_by_2_clock{0};
-    std::atomic<uint32_t> m_receipt_recv_num_by_3_clock{0};
-    std::atomic<uint32_t> m_receipt_recv_num_by_4_clock{0};
-    std::atomic<uint32_t> m_receipt_recv_num_by_5_clock{0};
-    std::atomic<uint32_t> m_receipt_recv_num_by_6_clock{0};
-    std::atomic<uint32_t> m_receipt_recv_num_exceed_6_clock{0};
-    
+    xtxpool_statistic_t m_statistic;
 };
 
 }  // namespace xtxpool_v2

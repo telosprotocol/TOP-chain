@@ -122,7 +122,8 @@ int32_t xtxpool_table_t::push_send_tx(const std::shared_ptr<xtx_entry> & tx) {
         ret = m_txmgr_table.push_send_tx(tx, latest_nonce, latest_hash);
     }
     if (ret != xsuccess) {
-        XMETRICS_COUNTER_INCREMENT("txpool_push_tx_send_fail", 1);
+        // XMETRICS_COUNTER_INCREMENT("txpool_push_tx_send_fail", 1);
+        m_xtable_info.get_statistic()->inc_push_tx_send_fail_num(1);
     }
     return ret;
 }
@@ -132,7 +133,8 @@ int32_t xtxpool_table_t::push_receipt(const std::shared_ptr<xtx_entry> & tx, boo
     uint64_t tx_receipt_id = tx->get_tx()->get_last_action_receipt_id();
     if (tx_receipt_id < latest_receipt_id) {
         xtxpool_warn("xtxpool_table_t::push_receipt duplicate receipt:%s,id:%llu:%llu", tx->get_tx()->dump().c_str(), tx_receipt_id, latest_receipt_id);
-        XMETRICS_COUNTER_INCREMENT("txpool_receipt_duplicate", 1);
+        // XMETRICS_COUNTER_INCREMENT("txpool_receipt_duplicate", 1);
+        m_xtable_info.get_statistic()->inc_receipt_duplicate_num(1);
         return xtxpool_error_tx_duplicate;
     }
 
@@ -142,7 +144,8 @@ int32_t xtxpool_table_t::push_receipt(const std::shared_ptr<xtx_entry> & tx, boo
         bool is_repeat = m_txmgr_table.is_repeat_tx(tx);
         if (is_repeat) {
             xtxpool_warn("xtxpool_table_t::push_receipt repeat receipt:%s", tx->get_tx()->dump().c_str());
-            XMETRICS_COUNTER_INCREMENT("txpool_receipt_repeat", 1);
+            // XMETRICS_COUNTER_INCREMENT("txpool_receipt_repeat", 1);
+            m_xtable_info.get_statistic()->inc_receipt_repeat_num(1);
             return xtxpool_error_request_tx_repeat;
         }
     }
@@ -178,7 +181,8 @@ int32_t xtxpool_table_t::push_receipt(const std::shared_ptr<xtx_entry> & tx, boo
         ret = m_txmgr_table.push_receipt(tx);
     }
     if (ret != xsuccess) {
-        XMETRICS_COUNTER_INCREMENT("txpool_push_tx_receipt_fail", 1);
+        // XMETRICS_COUNTER_INCREMENT("txpool_push_tx_receipt_fail", 1);
+        m_xtable_info.get_statistic()->inc_push_tx_receipt_fail_num(1);
     }
     return ret;
 }
@@ -311,9 +315,11 @@ void xtxpool_table_t::update_unconfirm_accounts() {
     m_unconfirmed_tx_num = m_unconfirmed_tx_queue.size();
     // XMETRICS_COUNTER_SET("table_unconfirm_txs_num" + m_xtable_info.get_table_addr(), m_unconfirmed_tx_num);
     if (tx_num_after > tx_num_before) {
-        XMETRICS_COUNTER_INCREMENT("txpool_unconfirm_txs_cache_num", tx_num_after - tx_num_before);
+        // XMETRICS_COUNTER_INCREMENT("txpool_unconfirm_txs_cache_num", tx_num_after - tx_num_before);
+        m_xtable_info.get_statistic()->inc_unconfirm_tx_cache_num(tx_num_after - tx_num_before);
     } else if (tx_num_after < tx_num_before) {
-        XMETRICS_COUNTER_DECREMENT("txpool_unconfirm_txs_cache_num", tx_num_before - tx_num_after);
+        // XMETRICS_COUNTER_DECREMENT("txpool_unconfirm_txs_cache_num", tx_num_before - tx_num_after);
+        m_xtable_info.get_statistic()->dec_unconfirm_tx_cache_num(tx_num_before - tx_num_after);
     }
 }
 
@@ -374,16 +380,12 @@ void xtxpool_table_t::update_locked_txs(const std::vector<tx_info_t> & locked_tx
     }
 }
 
-int32_t xtxpool_table_t::update_receiptid_state(const base::xreceiptid_state_ptr_t & receiptid_state) {
+void xtxpool_table_t::update_receiptid_state(const base::xreceiptid_state_ptr_t & receiptid_state) {
     m_receipt_state_cache.update(receiptid_state);
 
     int32_t unconfirm_tx_num = (int32_t)receiptid_state->get_unconfirm_tx_num();
     std::lock_guard<std::mutex> lck(m_mgr_mutex);
-    m_txmgr_table.update_receiptid_state(receiptid_state);
-    int32_t old_unconfirm_tx_num = m_xtable_info.get_unconfirm_tx_num();
     m_xtable_info.set_unconfirm_tx_num(unconfirm_tx_num);
-
-    return unconfirm_tx_num - old_unconfirm_tx_num;
 }
 
 xcons_transaction_ptr_t xtxpool_table_t::get_unconfirmed_tx(const std::string & to_table_addr, uint64_t receipt_id) const {

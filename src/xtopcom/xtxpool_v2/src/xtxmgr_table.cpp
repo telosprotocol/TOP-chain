@@ -58,7 +58,8 @@ int32_t xtxmgr_table_t::push_receipt(const std::shared_ptr<xtx_entry> & tx) {
             pop_tx(txinfo, false);
         } else {
             xtxpool_warn("xtxmgr_table_t::push_receipt tx repeat tx:%s", tx->get_tx()->dump().c_str());
-            XMETRICS_COUNTER_INCREMENT("txpool_receipt_repeat", 1);
+            // XMETRICS_COUNTER_INCREMENT("txpool_receipt_repeat", 1);
+            m_xtable_info->get_statistic()->inc_receipt_repeat_num(1);
             return xtxpool_error_request_tx_repeat;
         }
     }

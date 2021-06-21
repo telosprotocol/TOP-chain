@@ -138,6 +138,7 @@ bool xbatch_packer::start_proposal(base::xblock_mptrs& latest_blocks) {
     if (m_last_view_id != proposal_block->get_viewid()) {
         xunit_warn("xbatch_packer::start_proposal fail-finally viewid changed. %s latest_viewid=%" PRIu64 "",
             proposal_para.dump().c_str(), proposal_block->get_viewid());
+        XMETRICS_COUNTER_INCREMENT("cons_start_proposal_view_changed", 1);
         return false;
     }
 
@@ -163,6 +164,7 @@ bool xbatch_packer::on_view_fire(const base::xvevent_t & event, xcsobject_t * fr
 
     if (view_ev->get_clock() + 2 < m_para->get_resources()->get_chain_timer()->logic_time()) {
         xunit_info("xbatch_packer::on_view_fire clock delay:%llu:%llu", view_ev->get_clock(), m_para->get_resources()->get_chain_timer()->logic_time());
+        XMETRICS_COUNTER_INCREMENT("cons_view_fire_clock_delay", 1);
         return false;
     }
 
@@ -291,6 +293,8 @@ bool xbatch_packer::verify_proposal_packet(const xvip2_t & from_addr, const xvip
             // TODO here may happen when many elect blocks sync
             xunit_warn("xbatch_packer::on_view_fire xip=%s version from error", xcons_utl::xip_to_hex(from_addr).c_str());
         }
+    } else {
+        XMETRICS_COUNTER_INCREMENT("cons_fail_backup_view_not_match", 1);
     }
     return valid;
 }

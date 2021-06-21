@@ -73,6 +73,7 @@ xblock_ptr_t xproposal_maker_t::make_proposal(data::xblock_consensus_para_t & pr
     xtablestate_ptr_t tablestate = get_target_tablestate(latest_cert_block.get());
     if (nullptr == tablestate) {
         xwarn("xproposal_maker_t::make_proposal fail clone tablestate. %s,cert_height=%" PRIu64 "", proposal_para.dump().c_str(), latest_cert_block->get_height());
+        XMETRICS_COUNTER_INCREMENT("cons_fail_table_state_clone_fail", 1);
         return nullptr;
     }
 
