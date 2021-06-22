@@ -119,8 +119,9 @@ namespace top
             bool                add_cert_block(base::xvblock_t* _target_block);
             bool                remove_cert_block(const uint64_t view_id);
             bool                clean_cert_blocks();
-            base::xvblock_t*    get_latest_cert_block() const;//caller need care to release reference once no-longer need
-            base::xvblock_t*    find_cert_block(const uint64_t view_id) const;//caller need care to release reference once no-longer need
+            base::xvblock_t*    get_latest_cert_block() const;
+            base::xvblock_t*    find_first_cert_block(const uint64_t block_height) const;
+            base::xvblock_t*    find_cert_block(const uint64_t view_id) const;
             base::xvblock_t*    find_cert_block(const uint64_t block_height,const std::string & block_hash);
  
             base::xauto_ptr<base::xvbindex_t> load_block_index(const uint64_t block_height,const std::string & block_hash);

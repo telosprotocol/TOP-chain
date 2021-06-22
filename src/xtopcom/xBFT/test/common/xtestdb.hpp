@@ -56,6 +56,7 @@ namespace top
             virtual std::string         get_store_path() const  override {return m_store_path;}
         private:
             std::string                         m_store_path;
+            std::map<std::string,std::string >  m_meta_store;
             std::map<std::string,std::string >  m_clock_store;
             std::map<std::string,std::string >  m_clock_store2;
             int                                 m_cur_clock_store;

@@ -130,15 +130,22 @@ namespace top
         {
             ++m_total_keys;
         
-            if( (key.find("Tt00013axZ3Gy8nzi7oNYhTBDb9XMb8KHdqYhw4Kx") != std::string::npos)
+            if(key.find("/meta") != std::string::npos)
+            {
+                m_meta_store[key] = value;
+            }
+            else if( (key.find("Tt00013axZ3Gy8nzi7oNYhTBDb9XMb8KHdqYhw4Kx") != std::string::npos)
                || (key.find("71c216d000013404") != std::string::npos) )
             {
                 if(0 == (m_cur_clock_store % 2))
                 {
                     m_clock_store[key] = value;
-                    if(m_clock_store.size() >= 32)
-                        m_clock_store2.clear();
-                    if(m_clock_store.size() >= 64)
+                    if(m_clock_store.size() >= 128)
+                    {
+                        if(m_clock_store2.empty() == false)
+                            m_clock_store2.clear();
+                    }
+                    if(m_clock_store.size() >= 256)
                         m_cur_clock_store += 1;
                     
                     xdbg("xstoredb_t::store clock key(%s) at store#1",key.c_str());
@@ -147,7 +154,10 @@ namespace top
                 {
                     m_clock_store2[key] = value;
                     if(m_clock_store2.size() >= 128)
-                        m_clock_store.clear();
+                    {
+                        if(m_clock_store.empty() == false)
+                            m_clock_store.clear();
+                    }
                     if(m_clock_store2.size() >= 256)
                         m_cur_clock_store += 1;
                     
@@ -218,34 +228,73 @@ namespace top
         }
         const std::string  xstoredb_t::get_value(const std::string & key) const
         {
-            if( (key.find("Tt00013axZ3Gy8nzi7oNYhTBDb9XMb8KHdqYhw4Kx") != std::string::npos)
+            if(key.find("/meta") != std::string::npos)
+            {
+                auto it = m_meta_store.find(key);
+                if(it != m_meta_store.end())
+                    return it->second;
+            }
+            else if( (key.find("Tt00013axZ3Gy8nzi7oNYhTBDb9XMb8KHdqYhw4Kx") != std::string::npos)
                || (key.find("71c216d000013404") != std::string::npos) )
             {
-                auto it = m_clock_store.find(key);
-                if(it != m_clock_store.end())
+                if(0 == (m_cur_clock_store % 2))//search from store#1 first
                 {
-                    xdbg("xstoredb_t::get_value clock key(%s) at store#1",key.c_str());
-                    return it->second;
+                    auto it = m_clock_store.find(key);
+                    if(it != m_clock_store.end())
+                    {
+                        xdbg("xstoredb_t::get_value clock key(%s) at store#1",key.c_str());
+                        return it->second;
+                    }
+                    
+                    auto it2 = m_clock_store2.find(key);
+                    if(it2 != m_clock_store2.end())
+                    {
+                        xdbg("xstoredb_t::get_value clock key(%s) at store#2",key.c_str());
+                        return it2->second;
+                    }
                 }
-                
-                auto it2 = m_clock_store2.find(key);
-                if(it2 != m_clock_store2.end())
+                else //search from store#2 first
                 {
-                    xdbg("xstoredb_t::get_value clock key(%s) at store#2",key.c_str());
-                    return it2->second;
+                    auto it2 = m_clock_store2.find(key);
+                    if(it2 != m_clock_store2.end())
+                    {
+                        xdbg("xstoredb_t::get_value clock key(%s) at store#2",key.c_str());
+                        return it2->second;
+                    }
+                    
+                    auto it = m_clock_store.find(key);
+                    if(it != m_clock_store.end())
+                    {
+                        xdbg("xstoredb_t::get_value clock key(%s) at store#1",key.c_str());
+                        return it->second;
+                    }
                 }
-                
+             
                 xdbg("xstoredb_t::get_value faild to find clock key(%s)",key.c_str());
             }
             else
             {
-                auto it = m_dumy_store.find(key);
-                if(it != m_dumy_store.end())
-                    return it->second;
-                
-                auto it2 = m_dumy_store2.find(key);
-                if(it2 != m_dumy_store2.end())
-                    return it2->second;
+                if(0 == (m_cur_data_store % 2)) //search from store#1 first
+                {
+                    auto it = m_dumy_store.find(key);
+                    if(it != m_dumy_store.end())
+                        return it->second;
+                    
+                    auto it2 = m_dumy_store2.find(key);
+                    if(it2 != m_dumy_store2.end())
+                        return it2->second;
+                }
+                else //search from store#2 first
+                {
+                    auto it2 = m_dumy_store2.find(key);
+                    if(it2 != m_dumy_store2.end())
+                        return it2->second;
+                    
+                    auto it = m_dumy_store.find(key);
+                    if(it != m_dumy_store.end())
+                        return it->second;
+                }
+
             }
             
             return std::string();

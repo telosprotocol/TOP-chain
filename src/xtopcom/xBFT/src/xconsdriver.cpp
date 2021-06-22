@@ -711,10 +711,11 @@ namespace top
                     const std::string sync_target_block_hash   = _report_msg.get_latest_lock_hash();
                     send_sync_request(to_addr,from_addr,sync_target_block_height,sync_target_block_hash,get_lock_block()->get_cert(),get_lock_block()->get_height(),(event_obj->get_clock() + 1),packet.get_block_chainid());//download peer 'locked block
                 }
-                base::xvblock_t * local_latest_cert = get_latest_cert_block();
+
                 if(_report_msg.get_latest_cert_viewid() > 0)
                 {
-                    if( (NULL == local_latest_cert) || (local_latest_cert->get_viewid() < _report_msg.get_latest_cert_viewid()) )
+                    base::xvblock_t * local_latest_cert = find_cert_block(_report_msg.get_latest_cert_viewid());
+                    if(NULL == local_latest_cert)//sync any unexist cert block
                     {
                         const uint64_t    sync_target_block_height = _report_msg.get_latest_cert_height();
                         const std::string sync_target_block_hash   = _report_msg.get_latest_cert_hash();
@@ -1214,7 +1215,7 @@ namespace top
 
                 std::string msg_stream;
                 xvote_report_t _vote_msg(result,dump());
-                _vote_msg.set_latest_cert_block(get_latest_cert_block());
+                _vote_msg.set_latest_cert_block(find_first_cert_block(get_lock_block()->get_height() + 1));
                 _vote_msg.set_latest_lock_block(get_lock_block());
                 _vote_msg.set_latest_commit_block(get_commit_block());
                 _vote_msg.serialize_to_string(msg_stream);
