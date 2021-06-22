@@ -141,13 +141,13 @@ class xtxs_pack_para_t {
 public:
     xtxs_pack_para_t(const std::string & table_addr,
                      const base::xreceiptid_state_ptr_t receiptid_state_highqc,
-                     uint16_t send_txs_max_num,
-                     uint16_t recv_txs_max_num,
+                     uint16_t all_txs_max_num,
+                     uint16_t confirm_and_recv_txs_max_num,
                      uint16_t confirm_txs_max_num)
       : m_table_addr(table_addr)
       , m_receiptid_state_highqc(receiptid_state_highqc)
-      , m_send_txs_max_num(send_txs_max_num)
-      , m_recv_txs_max_num(recv_txs_max_num)
+      , m_all_txs_max_num(all_txs_max_num)
+      , m_confirm_and_recv_txs_max_num(confirm_and_recv_txs_max_num)
       , m_confirm_txs_max_num(confirm_txs_max_num) {
     }
     const std::string & get_table_addr() const {
@@ -156,11 +156,11 @@ public:
     const base::xreceiptid_state_ptr_t & get_receiptid_state_highqc() const {
         return m_receiptid_state_highqc;
     }
-    uint16_t get_send_txs_max_num() const {
-        return m_send_txs_max_num;
+    uint16_t get_all_txs_max_num() const {
+        return m_all_txs_max_num;
     }
-    uint16_t get_recv_txs_max_num() const {
-        return m_recv_txs_max_num;
+    uint16_t get_confirm_and_recv_txs_max_num() const {
+        return m_confirm_and_recv_txs_max_num;
     }
     uint16_t get_confirm_txs_max_num() const {
         return m_confirm_txs_max_num;
@@ -169,8 +169,8 @@ public:
 private:
     std::string m_table_addr;
     base::xreceiptid_state_ptr_t m_receiptid_state_highqc;
-    uint16_t m_send_txs_max_num;
-    uint16_t m_recv_txs_max_num;
+    uint16_t m_all_txs_max_num;
+    uint16_t m_confirm_and_recv_txs_max_num;
     uint16_t m_confirm_txs_max_num;
 };
 
