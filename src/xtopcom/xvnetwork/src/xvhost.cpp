@@ -225,8 +225,12 @@ void xtop_vhost::forward_broadcast_message(xmessage_t const & message, common::x
         #endif
 
         on_network_data_ready(host_node_id(), bytes_message);
-
-        m_network_driver->forward_broadcast(dst.cluster_address().sharding_info(), dst.type(), bytes_message);
+        if (dst.version().empty()) {
+            m_network_driver->forward_broadcast(dst.cluster_address().sharding_info(), dst.type(), bytes_message);
+        } else {
+            m_network_driver->spread_rumor(bytes_message);
+        }
+        // m_network_driver->forward_broadcast(dst.cluster_address().sharding_info(), dst.type(), bytes_message);
     } catch (top::error::xtop_error_t const & eh) {
         xwarn("[vnetwork] forward_broadcast_message xtop_error_t exception caught: cateogry:%s; msg:%s; error code:%d; error msg:%s", eh.code().category().name(), eh.what(), eh.code().value(), eh.code().message().c_str());
     } catch (std::exception const & eh) {
@@ -331,7 +335,8 @@ void xtop_vhost::broadcast(xmessage_t const & message, common::xnode_address_t c
                                packet_msg.size());
     #endif
 
-    m_network_driver->spread_rumor(src.cluster_address().sharding_info(), packet_msg);
+    // m_network_driver->spread_rumor(src.cluster_address().sharding_info(), packet_msg);
+    m_network_driver->spread_rumor(packet_msg);
 }
 
 void xtop_vhost::send(common::xnode_address_t const & src, common::xip2_t const & dst, xmessage_t const & message, std::error_code & ec) {
@@ -477,7 +482,8 @@ void xtop_vhost::broadcast(common::xnode_address_t const & src, common::xip2_t c
         #endif
         on_network_data_ready(host_node_id(), bytes_message);
 
-        m_network_driver->forward_broadcast(to.cluster_address().sharding_info(), to.type(), bytes_message);
+        // m_network_driver->forward_broadcast(to.cluster_address().sharding_info(), to.type(), bytes_message);
+        m_network_driver->spread_rumor(bytes_message);
     } else {
         ec = xvnetwork_errc2_t::not_supported, xwarn("%s %s", ec.category().name(), ec.message().c_str());
     }
