@@ -474,10 +474,10 @@ namespace top
             char address[128] = {0};
  
             uint256_t hash_value = xkeccak256_t::digest(m_publickey_data + 1, size() - 1);
-            std::string eth_address((char *)&hash_value + 12, sizeof(hash_value) - 12);
-            eth_address = top::HexEncode(eth_address);
+            const std::string raw_eth_address((const char *)hash_value.data() + 12, hash_value.size() - 12);//drop first 12 bytes of total 32,as Ethereum just use the last 20 bytes of hash(keccak256)
+            const std::string hex_eth_address = base::xstring_utl::to_hex(raw_eth_address);//convert to Hex codec
 
-            return base::xvaccount_t::make_account_address((base::enum_vaccount_addr_type)base::enum_vaccount_addr_type_secp256k1_eth_user_account, ledger_id, eth_address,-1);
+            return base::xvaccount_t::make_account_address((base::enum_vaccount_addr_type)base::enum_vaccount_addr_type_secp256k1_eth_user_account, ledger_id, raw_eth_address,-1);
         }        
         std::string      xecpubkey_t::to_eth_address(const std::string & parent_addr,const uint16_t ledger_id)
         {
