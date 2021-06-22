@@ -41,26 +41,6 @@ std::string xcrypto_util::make_address_by_random_key(uint8_t addr_type, uint16_t
     return pub_key_obj.to_address(addr_type, ledger_id);
 }
 
-std::string xcrypto_util::make_eth_address_by_assigned_key(std::array<uint8_t, PRI_KEY_LEN> & private_key, uint16_t ledger_id) {
-    xecprikey_t pri_key_obj(private_key.data());
-    xecpubkey_t pub_key_obj = pri_key_obj.get_public_key();
-    return pub_key_obj.to_eth_address(ledger_id);
-}
-
-std::string xcrypto_util::make_child_eth_address_by_assigned_key(const std::string & parent_addr,
-                                                             std::array<uint8_t, PRI_KEY_LEN> & private_key,
-                                                             uint16_t ledger_id) {
-    xecprikey_t pri_key_obj(private_key.data());
-    xecpubkey_t pub_key_obj = pri_key_obj.get_public_key();
-    return pub_key_obj.to_eth_address(parent_addr, ledger_id);
-}
-
-std::string xcrypto_util::make_eth_address_by_random_key(uint16_t ledger_id) {
-    xecprikey_t pri_key_obj;
-    xecpubkey_t pub_key_obj = pri_key_obj.get_public_key();
-    return pub_key_obj.to_eth_address(ledger_id);
-}
-
 std::string xcrypto_util::get_base64_public_key(const std::array<uint8_t, PRI_KEY_LEN> & private_key) {
     xecprikey_t pri_key_obj((uint8_t *)private_key.data());
     xecpubkey_t pub_key_obj = pri_key_obj.get_public_key();

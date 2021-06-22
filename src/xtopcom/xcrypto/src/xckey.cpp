@@ -6,11 +6,9 @@
 #include <time.h>
 #include <chrono>
 #include "xbase/xutl.h"
-#include "xpbase/base/top_utils.h"
 #include "xcrypto/xckey.h"
 #include "xutility/xhash.h"
 #include "xvledger/xvaccount.h"
-#include "xtopcl/include/user_info.h"
 
 extern "C"
 {
@@ -195,7 +193,7 @@ namespace top
             bool ret = base::xvaccount_t::get_type_and_ledgerid_from_account(addr_type, ledger_id, m_account_address);
             if (ret) {
                 if (addr_type == base::enum_vaccount_addr_type_secp256k1_eth_user_account)
-                    return is_eth_valid();
+                    return is_eth_valid();                
                 std::string public_address;
                 ret =  base::xvaccount_t::get_public_address_from_account(m_account_address, public_address);
                 if (ret) {
@@ -235,10 +233,6 @@ namespace top
             if(false == get_type_and_netid(addr_type,net_id))
                 return false;
 
-            if (addr_type == base::enum_vaccount_addr_type_secp256k1_eth_user_account)
-            {
-                return verify_eth_signature(signature, msg_digest);
-            }
             uint8_t out_publickey_data[65] = {0};
             if(xsecp256k1_t::get_publickey_from_signature(signature,msg_digest,out_publickey_data))//signature is valid
             {
@@ -250,25 +244,7 @@ namespace top
             }
             return false;
         }
-        bool xkeyaddress_t::verify_eth_signature(xecdsasig_t & signature,const uint256_t & msg_digest)
-        {
-            uint8_t addr_type = 0;
-            uint16_t net_id = 0;
-            if (false == base::xvaccount_t::get_type_and_ledgerid_from_account(addr_type, net_id, m_account_address))
-                return false;
-            uint8_t out_publickey_data[65] = {0};
-            if (xsecp256k1_t::get_publickey_from_signature(signature, msg_digest, out_publickey_data)) //signature is valid
-            {
-                xecpubkey_t verify_key(out_publickey_data);
-                std::string account_address = m_account_address;
-                std::transform(account_address.begin() + 1, account_address.end(), account_address.begin() + 1, ::tolower);
-                if (verify_key.to_eth_address(net_id) == account_address) //then check whether is from this address
-                {
-                    return true;
-                }
-            }
-            return false;
-        }
+
         bool   xkeyaddress_t::verify_signature(xecdsasig_t & signature,const uint256_t & msg_digest,const std::string & parent_addr)
         {
             uint8_t  addr_type = 0;
@@ -276,10 +252,6 @@ namespace top
             if(false == get_type_and_netid(addr_type,net_id))
                 return false;
 
-            if (addr_type == base::enum_vaccount_addr_type_secp256k1_eth_user_account) 
-            {
-                return verify_eth_signature(signature, msg_digest, parent_addr);
-            }
             uint8_t out_publickey_data[65] = {0};
             if(xsecp256k1_t::get_publickey_from_signature(signature,msg_digest,out_publickey_data))//signature is valid
             {
@@ -291,26 +263,7 @@ namespace top
             }
             return false;
         }
-        bool   xkeyaddress_t::verify_eth_signature(xecdsasig_t & signature,const uint256_t & msg_digest,const std::string & parent_addr)
-        {
-            uint8_t  addr_type = 0;
-            uint16_t net_id = 0;
-            if(false == get_type_and_netid(addr_type,net_id))
-                return false;
 
-            uint8_t out_publickey_data[65] = {0};
-            if(xsecp256k1_t::get_publickey_from_signature(signature,msg_digest,out_publickey_data))//signature is valid
-            {
-                xecpubkey_t verify_key(out_publickey_data);
-                std::string account_address = m_account_address;
-                std::transform(account_address.begin() + 1, account_address.end(), account_address.begin() + 1, ::tolower);                
-                if(verify_key.to_eth_address(parent_addr, net_id) == account_address)//then check whether is from this address
-                {
-                    return true;
-                }
-            }
-            return false;
-        }
         bool   xkeyaddress_t::verify_signature(
                     xecdsasig_t & signature,
                     const uint256_t & msg_digest,
@@ -320,10 +273,6 @@ namespace top
             uint16_t net_id = 0;
             if(false == get_type_and_netid(addr_type,net_id))
                 return false;
-            if (addr_type == base::enum_vaccount_addr_type_secp256k1_eth_user_account) 
-            {
-                return verify_eth_signature(signature, msg_digest, out_publickey_data);
-            }                
             if(xsecp256k1_t::verify_signature(signature,msg_digest,out_publickey_data))
             {
                 xecpubkey_t verify_key(out_publickey_data);
@@ -334,25 +283,7 @@ namespace top
             }
             return false;
         }
-        bool   xkeyaddress_t::verify_eth_signature(
-                    xecdsasig_t & signature,
-                    const uint256_t & msg_digest,
-                    uint8_t out_publickey_data[65])
-        {
-            uint8_t  addr_type = 0;
-            uint16_t net_id = 0;
-            if(xsecp256k1_t::verify_signature(signature,msg_digest,out_publickey_data))
-            {
-                xecpubkey_t verify_key(out_publickey_data);
-                std::string account_address = m_account_address;
-                std::transform(account_address.begin() + 1, account_address.end(), account_address.begin() + 1, ::tolower);                
-                if(verify_key.to_eth_address(net_id) == account_address)//then check whether is from this address
-                {
-                    return true;
-                }
-            }
-            return false;
-        }
+
         bool   xkeyaddress_t::verify_signature(
                     xecdsasig_t & signature,
                     const uint256_t & msg_digest,
@@ -363,10 +294,6 @@ namespace top
             uint16_t net_id = 0;
             if(false == get_type_and_netid(addr_type,net_id))
                 return false;
-            if (addr_type == base::enum_vaccount_addr_type_secp256k1_eth_user_account) 
-            {
-                return verify_eth_signature(signature, msg_digest, out_publickey_data);
-            }
             if(xsecp256k1_t::verify_signature(signature,msg_digest,out_publickey_data))
             {
                 xecpubkey_t verify_key(out_publickey_data);
@@ -459,50 +386,25 @@ namespace top
         std::string       xecpubkey_t::to_address(const uint8_t* publickey, const char addr_type,const uint16_t ledger_id)
         {
             if(addr_type == base::enum_vaccount_addr_type_secp256k1_eth_user_account)
-                return to_eth_address(publickey,ledger_id);
+                return to_eth_address(publickey,addr_type,ledger_id);
                 
             char address[128] = {0};
             const uint32_t version_uint32 = (((uint32_t)ledger_id) << 8) | ((uint32_t)addr_type);
             ecdsa_get_address(publickey, version_uint32, HASHER_SHA2_RIPEMD, HASHER_SHA2D, address, sizeof(address));
             const std::string pubkey_sub_addr(address);
 
-            return base::xvaccount_t::make_account_address((base::enum_vaccount_addr_type)((uint32_t)addr_type ), ledger_id, pubkey_sub_addr,-1);
+            return base::xvaccount_t::make_account_address((base::enum_vaccount_addr_type)addr_type, ledger_id, pubkey_sub_addr,-1);
         }
 
-        std::string       xecpubkey_t::to_eth_address(const uint16_t ledger_id)
+        std::string       xecpubkey_t::to_eth_address(const uint8_t* publickey, const char addr_type,const uint16_t ledger_id)
         {
-            char address[128] = {0};
- 
-            uint256_t hash_value = xkeccak256_t::digest(m_publickey_data + 1, size() - 1);
-            std::string eth_address((char *)&hash_value + 12, sizeof(hash_value) - 12);
-            eth_address = top::HexEncode(eth_address);
-
-            return base::xvaccount_t::make_account_address((base::enum_vaccount_addr_type)base::enum_vaccount_addr_type_secp256k1_eth_user_account, ledger_id, eth_address,-1);
-        }        
-        std::string      xecpubkey_t::to_eth_address(const std::string & parent_addr,const uint16_t ledger_id)
-        {
-            if(parent_addr.empty())
-                return to_address(base::enum_vaccount_addr_type_secp256k1_eth_user_account,ledger_id);
-
-            uint8_t     temp_publickey_data[65];
-            memcpy(temp_publickey_data, m_publickey_data, sizeof(temp_publickey_data));
-            const int parent_addr_size = std::min((int)parent_addr.size(),65);
-            for(int i = 0; i < parent_addr_size; ++i)
-            {
-                temp_publickey_data[i] += parent_addr[i];
-            }
-
-            return to_eth_address(temp_publickey_data, ledger_id);
-        }
-
-        std::string       xecpubkey_t::to_eth_address(const uint8_t* publickey, const uint16_t ledger_id)
-        {
-            //xassert(addr_type == base::enum_vaccount_addr_type_secp256k1_eth_user_account);
+            xassert(addr_type == base::enum_vaccount_addr_type_secp256k1_eth_user_account);
+            
             const uint256_t hash_value = xkeccak256_t::digest(publickey + 1, size() - 1);//remove frist byte of type from public key
             const std::string raw_eth_address((const char *)hash_value.data() + 12, hash_value.size() - 12);//drop first 12 bytes of total 32,as Ethereum just use the last 20 bytes of hash(keccak256)
             const std::string hex_eth_address = base::xstring_utl::to_hex(raw_eth_address);//convert to Hex codec
             
-            return base::xvaccount_t::make_account_address((base::enum_vaccount_addr_type)base::enum_vaccount_addr_type_secp256k1_eth_user_account, ledger_id, hex_eth_address,-1);
+            return base::xvaccount_t::make_account_address((base::enum_vaccount_addr_type)addr_type, ledger_id, hex_eth_address,-1);
         }
 
         bool     xecpubkey_t::verify_signature(xecdsasig_t & signature,const uint256_t & msg_digest, bool compress)

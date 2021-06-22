@@ -85,7 +85,7 @@ string create_new_keystore(const string & pw, string & dir, bool is_key, string 
         return path;
     }
     xcrypto_util::make_private_key(g_userinfo.private_key);
-    g_userinfo.account = xcrypto_util::make_eth_address_by_assigned_key(g_userinfo.private_key);
+    g_userinfo.account = xcrypto_util::make_address_by_assigned_key(g_userinfo.private_key, top::base::enum_vaccount_addr_type_secp256k1_eth_user_account);
 
     std::string hex_pri((char*)g_userinfo.private_key.data(), PRI_KEY_LEN);
     hex_pri = top::HexEncode(hex_pri);
@@ -391,7 +391,7 @@ bool set_g_userinfo(const string & str_pri) {
         g_userinfo.account = xcrypto_util::make_address_by_assigned_key(g_userinfo.private_key);
     } else 
     {
-        g_userinfo.account = xcrypto_util::make_eth_address_by_assigned_key(g_userinfo.private_key);
+        g_userinfo.account = xcrypto_util::make_address_by_assigned_key(g_userinfo.private_key, top::base::enum_vaccount_addr_type_secp256k1_eth_user_account);
     }
 
     return g_userinfo.account.size() > 0;
