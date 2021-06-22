@@ -15,7 +15,7 @@ NS_BEG2(top, time)
 
 using xchain_time_watcher = std::function<void(common::xlogic_time_t)>;
 
-enum class xenum_logic_timer_update_strategy : uint8_t { discard_old_value, force };
+enum class xenum_logic_timer_update_strategy { discard_old_value, force };
 using xlogic_timer_update_strategy_t = xenum_logic_timer_update_strategy;
 
 /**
@@ -57,7 +57,7 @@ public:
      * @return true     Watch successful.
      * @return false    Watch fails.
      */
-    virtual bool watch_one(uint64_t interval, xchain_time_watcher cb) = 0;
+    // virtual bool watch_one(uint64_t interval, xchain_time_watcher cb) = 0;
 
     /**
      * @brief Unsubscribe the watch.

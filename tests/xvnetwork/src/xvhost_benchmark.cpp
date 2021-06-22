@@ -144,9 +144,9 @@ public:
         return true;
     }
 
-    bool watch_one(uint64_t, time::xchain_time_watcher) override {
-        return true;
-    }
+    //bool watch_one(uint64_t, time::xchain_time_watcher) override {
+    //    return true;
+    //}
 
     bool unwatch(const std::string &) override {
         return true;

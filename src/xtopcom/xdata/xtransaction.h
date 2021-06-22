@@ -20,7 +20,9 @@
 namespace top { namespace data {
 
 #ifdef DEBUG
+#if !defined(ENABLE_CREATE_USER)
 #define ENABLE_CREATE_USER
+#endif
 #endif
 
 enum enum_xtransaction_type {
