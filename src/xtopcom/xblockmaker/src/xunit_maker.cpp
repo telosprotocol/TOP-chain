@@ -60,12 +60,6 @@ int32_t    xunit_maker_t::check_latest_state(const base::xaccount_index_t & acco
     }
 
     do {
-        if (account_index.get_latest_unit_height() < m_latest_account_index.get_latest_unit_height()) {
-            xwarn("xunit_maker_t::check_latest_state fail-account index behind, account=%s,cache_height=%ld,index_height=%ld",
-                get_account().c_str(), m_latest_account_index.get_latest_unit_height(), account_index.get_latest_unit_height());
-            break;
-        }
-
         // find the latest cert block which matching account_index
         xblock_ptr_t latest_block = get_latest_block(account_index);
         if (nullptr == latest_block) {
