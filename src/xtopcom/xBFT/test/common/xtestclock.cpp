@@ -23,7 +23,8 @@ namespace top
  
 #ifdef __MAC_PLATFORM__
             const std::string  default_path = std::string("/");
-            m_blockstore = store::get_vblockstore();
+            //m_blockstore = store::get_vblockstore();
+            m_blockstore = store::create_vblockstore();
 #else
             m_blockstore = new xunitblockstore_t();
 #endif
@@ -58,6 +59,7 @@ namespace top
             clock_block->set_block_flag(base::enum_xvblock_flag_locked);
             clock_block->set_block_flag(base::enum_xvblock_flag_committed);
             
+            xdbg("xtestclocker_t::on_clock_fire,new clock(%s)",clock_block->dump().c_str());
             base::xvaccount_t account(clock_block->get_account());
             m_blockstore->store_block(account,clock_block);
             return clock_block;

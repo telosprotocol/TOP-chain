@@ -363,10 +363,23 @@ namespace top
         {
             return clean_blocks(m_certified_blocks);
         }
-        base::xvblock_t*   xBFTRules::get_latest_cert_block() const //caller need care to release reference once no-longer need
+        base::xvblock_t*   xBFTRules::get_latest_cert_block() const
         {
             return get_latest_block(m_certified_blocks);
         }
+    
+        base::xvblock_t*   xBFTRules::find_first_cert_block(const uint64_t block_height) const
+        {
+            for(auto it = m_certified_blocks.begin(); it != m_certified_blocks.end(); ++it)
+            {
+                if(block_height == it->second->get_height())
+                {
+                    return it->second;
+                }
+            }
+            return NULL;
+        }
+    
         base::xvblock_t*   xBFTRules::find_cert_block(const uint64_t view_id) const//caller need care to release reference once no-longer need
         {
             for(auto it = m_certified_blocks.rbegin(); it != m_certified_blocks.rend(); ++it)
@@ -894,7 +907,7 @@ namespace top
         bool  xBFTRules::safe_check_for_sync_block(base::xvblock_t * _commit_block)//safe rule for commit block
         {
             //step#2: never fork from locked block
-            if(safe_check_follow_locked_branch(_commit_block) < 0)//allow unknow case continue
+            if(safe_check_add_cert_fork(_commit_block) < 0)//allow unknow case continue
             {
                 xwarn("xBFTRules::safe_check_for_sync_block,fail-as safe_check_follow_locked_branch");
                 return false;
