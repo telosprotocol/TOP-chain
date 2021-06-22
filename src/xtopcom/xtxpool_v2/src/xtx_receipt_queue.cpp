@@ -161,14 +161,14 @@ int32_t xreceipt_queue_new_t::push_tx(const std::shared_ptr<xtx_entry> & tx_ent)
     return peer_table_receipts->push_tx(tx_ent);
 }
 
-const std::vector<xcons_transaction_ptr_t> xreceipt_queue_new_t::get_txs(uint32_t recv_txs_max_num,
+const std::vector<xcons_transaction_ptr_t> xreceipt_queue_new_t::get_txs(uint32_t confirm_and_recv_txs_max_num,
                                                                          uint32_t confirm_txs_max_num,
                                                                          const base::xreceiptid_state_ptr_t & receiptid_state) const {
     std::map<base::xtable_shortid_t, std::vector<xcons_transaction_ptr_t>> recv_peer_table_map;
     std::map<base::xtable_shortid_t, std::vector<xcons_transaction_ptr_t>> confirm_peer_table_map;
-    // uint32_t max_num, const base::xreceiptid_state_ptr_t & receiptid_state
     uint32_t txs_count = 0;
-    uint32_t max_num = (recv_txs_max_num + confirm_txs_max_num) * 2;
+    // get more recv and confirm txs from ordered receipt queue first, because we don't know if there is enough continuous confirm txs or recv txs in top max num of the queue
+    uint32_t max_num = confirm_and_recv_txs_max_num * 2;
     auto & ready_txs = m_receipt_queue_internal.get_queue();
     for (auto it_tx_map_tx = ready_txs.begin(); (txs_count < max_num) && (it_tx_map_tx != ready_txs.end()); it_tx_map_tx++) {
         // use receipt id ascending order peculiarity to deduplicate, if tx's peer table is found from map and receipt id is bigger, update it in map.
@@ -246,7 +246,7 @@ const std::vector<xcons_transaction_ptr_t> xreceipt_queue_new_t::get_txs(uint32_
         auto min_receipt_id = receiptid_pair.get_recvid_max();
         auto & recv_txs = it_recv_peer_table_map.second;
         for (auto recv_tx : recv_txs) {
-            if (ret_txs.size() >= confirm_txs_num + recv_txs_max_num) {
+            if (ret_txs.size() >= confirm_and_recv_txs_max_num) {
                 break;
             }
             if (recv_tx->get_last_action_receipt_id() <= min_receipt_id) {
@@ -261,7 +261,7 @@ const std::vector<xcons_transaction_ptr_t> xreceipt_queue_new_t::get_txs(uint32_
                 break;
             }
         }
-        if (ret_txs.size() >= confirm_txs_num + recv_txs_max_num) {
+        if (ret_txs.size() >= confirm_and_recv_txs_max_num) {
             break;
         }
     }
