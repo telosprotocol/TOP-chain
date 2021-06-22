@@ -14,6 +14,7 @@
 #include "xtxpool_v2/xtxpool_face.h"
 #include "xcommon/xlogic_time.h"
 #include "xunit_service/xunit_log.h"
+#include "xunit_service/xcons_utl.h"
 
 #include <string>
 #include <vector>
@@ -202,9 +203,15 @@ public:
 protected:
     template <typename T>
     int async_dispatch(base::xcspdu_t * pdu, const xvip2_t & xip_from, const xvip2_t & xip_to, T * picker) {
-        if (picker->is_mailbox_over_limit(max_mailbox_num)) {
-            xunit_warn("xunit_service::async_dispatch unitservice mailbox limit,drop pdu");
+        // TODO(jimmy) for debug
+        int64_t in, out;
+        int32_t queue_size = picker->count_calls(in, out);
+        bool discard = queue_size >= max_mailbox_num;
+        if (discard) {
+            xunit_warn("xnetwork_proxy::async_dispatch,recv_in is_mailbox_over_limit pdu=%s,in=%lld,out=%lld,queue_size=%d,at_node:%s %p", pdu->dump().c_str(), in, out, queue_size, xcons_utl::xip_to_hex(xip_to).c_str(), picker);
             return -1;
+        } else {
+            xunit_info("xnetwork_proxy::async_dispatch,recv_in pdu=%s,in=%lld,out=%lld,queue_size=%d,at_node:%s %p", pdu->dump().c_str(), in, out, queue_size, xcons_utl::xip_to_hex(xip_to).c_str(), picker);
         }
 
         auto handler = [xip_from, xip_to](base::xcall_t & call, const int32_t cur_thread_id, const uint64_t timenow_ms) -> bool {
