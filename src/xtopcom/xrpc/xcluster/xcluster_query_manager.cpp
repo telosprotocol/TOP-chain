@@ -393,9 +393,9 @@ void xcluster_query_manager::getElectInfo(xjson_proc_t & json_proc) {
 
     std::string elect_info;
     if (ev.empty()) {
-        elect_info = "Now it is not elected as any node role.";
+        elect_info = "Not elected to any node role.";
     } else {
-        elect_info = "Now it is elected as ";
+        elect_info = "Elected as ";
         for (size_t i = 0; i < ev.size(); ++i) {
             elect_info = elect_info + ev[i];
             if (i == ev.size() - 1) {
