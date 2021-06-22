@@ -8,6 +8,7 @@
 #include "xbase/xobject.h"
 #include "xbase/xthread.h"
 #include "xbase/xutl.h"
+#include "xmetrics/xmetrics.h"
 #include "xvledger/xvblock.h"
 
 #include "xbasic/xtimer_driver.h"
@@ -96,6 +97,7 @@ void xchain_timer_t::update_time(common::xlogic_time_t time, xlogic_timer_update
     // for debug purpose
     bool is_discontinuity = false;
     if ((current_time + 1) < time) {
+        XMETRICS_COUNTER_INCREMENT("chaintimer_clock_discontinuity", 1);
         is_discontinuity = true;
     }
     xinfo("logic_timer: update timer: input: %" PRIu64 "; current: %" PRIu64 "; last update time %" PRIi64 " current steady time %" PRIi64 " timer object: %p; is_discontinuity=%d",
