@@ -27,9 +27,7 @@ private:
         xchain_time_watcher watcher;
     };
     std::mutex m_mutex{};
-    std::mutex m_one_timer_mutex{};
     std::map<std::string, time_watcher_item> m_watch_map{};
-    std::map<std::uint64_t, time_watcher_item> m_watch_one_map{};  // only run one time
     base::xiothread_t * m_timer_thread{nullptr};
     std::atomic<common::xlogic_time_t> m_curr_time{0};
     std::mutex m_update_mutex{};
@@ -50,19 +48,18 @@ public:
     void start() override;
     void stop() override;
 
-    virtual void                init() override;
-    virtual void update_time(common::xlogic_time_t time, xlogic_timer_update_strategy_t update_strategy) override;
-    virtual uint64_t            logic_time() const noexcept override;
+    void init() override;
+    void update_time(common::xlogic_time_t time, xlogic_timer_update_strategy_t update_strategy) override;
+    uint64_t logic_time() const noexcept override;
 
     // note: interval is 10s/round, not second!!
-    virtual bool                watch(const std::string & key, uint64_t interval, xchain_time_watcher cb) override;
-    virtual bool                unwatch(const std::string & key) override;
-    virtual bool                watch_one(uint64_t interval, xchain_time_watcher cb) override;
-    virtual void                close() override;
-    virtual base::xiothread_t * get_iothread() const noexcept override;
+    bool watch(const std::string & key, uint64_t interval, xchain_time_watcher cb) override;
+    bool unwatch(const std::string & key) override;
+    void close() override;
+    base::xiothread_t * get_iothread() const noexcept override;
 
 protected:
-    void process(common::xlogic_time_t time);
+    void process(common::xlogic_time_t const old_time, common::xlogic_time_t const new_time, xlogic_timer_update_strategy_t update_strategy);
     void do_check_logic_time();
 };
 
