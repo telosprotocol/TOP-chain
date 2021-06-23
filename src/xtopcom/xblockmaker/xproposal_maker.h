@@ -33,10 +33,10 @@ class xproposal_maker_t : public xunit_service::xproposal_maker_face {
     bool                        leader_set_consensus_para(base::xvblock_t* latest_cert_block, xblock_consensus_para_t & cs_para);
     bool                        backup_set_consensus_para(base::xvblock_t* latest_cert_block, base::xvblock_t* proposal, base::xvqcert_t * bind_drand_cert, xblock_consensus_para_t & cs_para);
 
-    xblock_ptr_t                verify_proposal_prev_block(base::xvblock_t* proposal, base::xvblock_t* default_latest_cert) const;
+    xblock_ptr_t                verify_proposal_prev_block(base::xvblock_t* proposal, const base::xblock_mptrs & latest_blocks) const;
     bool                        verify_proposal_drand_block(base::xvblock_t *proposal_block, xblock_ptr_t & drand_block) const;
     bool                        verify_proposal_class(base::xvblock_t *proposal_block) const;
-    bool                        verify_proposal_input(base::xvblock_t *proposal_block, const xblock_ptr_t & committed_block, xtablemaker_para_t & table_para);
+    bool                        verify_proposal_input(base::xvblock_t *proposal_block, xtablemaker_para_t & table_para);
 
  private:
     void                        get_locked_txs(const xblock_ptr_t & block, std::vector<xtxpool_v2::tx_info_t> & locked_tx_vec) const;

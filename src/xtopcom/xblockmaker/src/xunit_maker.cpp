@@ -91,7 +91,7 @@ int32_t    xunit_maker_t::check_latest_state(const base::xaccount_index_t & acco
             break;
         }
 
-        if (false == check_latest_blocks()) {
+        if (false == check_latest_blocks(latest_block)) {
             xerror("xunit_maker_t::check_latest_state fail-check_latest_blocks.latest_block=%s",
                 latest_block->dump().c_str());
             break;
@@ -101,7 +101,7 @@ int32_t    xunit_maker_t::check_latest_state(const base::xaccount_index_t & acco
         return xsuccess;
     } while(0);
 
-    XMETRICS_COUNTER_INCREMENT("cons_fail_account_state_invalid", 1);
+    XMETRICS_COUNTER_INCREMENT("cons_fail_make_proposal_unit_check_state", 1);
     return xblockmaker_error_latest_unit_blocks_invalid;
 }
 
@@ -224,8 +224,9 @@ xblock_ptr_t xunit_maker_t::make_proposal(const xunitmaker_para_t & unit_para, c
         }
         return nullptr;
     }
-    xinfo("xunit_maker_t::make_proposal succ unit.is_leader=%d,%s,unit=%s,cert=%s,class=%d,unconfirm=%d,tx_count=%d,latest_state=%s",
-        unit_para.m_is_leader, cs_para.dump().c_str(), proposal_block->dump().c_str(), proposal_block->dump_cert().c_str(), proposal_block->get_block_class(),
+    xinfo("xunit_maker_t::make_proposal succ unit.is_leader=%d,%s,unit=%s,ir=%s,or=%s,ufm=%d,tx=%d,state=%s",
+        unit_para.m_is_leader, cs_para.dump().c_str(), proposal_block->dump().c_str(),
+        base::xstring_utl::to_hex(proposal_block->get_input_root_hash()).c_str(), base::xstring_utl::to_hex(proposal_block->get_output_root_hash()).c_str(),
         proposal_block->get_unconfirm_sendtx_num(),
         result.m_success_txs.size(), dump().c_str());
     uint64_t now = xverifier::xtx_utl::get_gmttime_s();
@@ -240,22 +241,22 @@ xblock_ptr_t xunit_maker_t::make_proposal(const xunitmaker_para_t & unit_para, c
 xblock_ptr_t xunit_maker_t::make_next_block(const xunitmaker_para_t & unit_para, const data::xblock_consensus_para_t & cs_para, xunitmaker_result_t & result) {
     xblock_ptr_t proposal_unit = nullptr;
 
+    const xblock_ptr_t & cert_block = get_highest_height_block();
     // TODO(jimmy) check cache blocks again
     base::xaccount_index_t accountindex;
     unit_para.m_tablestate->get_account_index(get_account(), accountindex);
-    int32_t ret = check_latest_state(accountindex);
-    if (ret != xsuccess) {
-        xerror("xunit_maker_t::make_next_block,fail-check latest state. %s,account=%s", cs_para.dump().c_str(), get_account().c_str());
+    if (cert_block->get_height() != accountindex.get_latest_unit_height()
+        || cert_block->get_viewid() != accountindex.get_latest_unit_viewid()) {
+        xerror("xunit_maker_t::make_next_block,fail-check highest cert block. %s,account=%s", cs_para.dump().c_str(), get_account().c_str());
         return nullptr;
     }
 
-    // reset justify cert hash para
-    const xblock_ptr_t & cert_block = get_highest_height_block();
     xblock_ptr_t lock_block = get_prev_block_from_cache(cert_block);
     if (lock_block == nullptr) {
         xerror("xunit_maker_t::make_next_block,fail-get lock block. %s,cert_block=%s", cs_para.dump().c_str(), cert_block->dump().c_str());
         return nullptr;
     }
+    // reset justify cert hash para
     cs_para.set_justify_cert_hash(lock_block->get_input_root_hash());
     m_default_builder_para->set_error_code(xsuccess);
 
@@ -384,8 +385,8 @@ std::string xunit_maker_t::dump() const {
     uint64_t state_height = get_latest_bstate()->get_block_height();
 
     xprintf(local_param_buf,sizeof(local_param_buf),
-        "{highest=%" PRIu64 ",state=%" PRIu64 ",nonce=%" PRIu64 ",parent=%" PRIu64 "}",
-        highest_height, state_height,
+        "{highest=%" PRIu64 ",index=%s,state=%" PRIu64 ",nonce=%" PRIu64 ",parent=%" PRIu64 "}",
+        highest_height, m_latest_account_index.dump().c_str(),state_height,
         get_latest_bstate()->get_latest_send_trans_number(),
         get_highest_height_block()->get_cert()->get_parent_block_height());
     return std::string(local_param_buf);
