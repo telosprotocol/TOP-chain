@@ -96,7 +96,7 @@ void xchain_timer_t::update_time(common::xlogic_time_t new_time, xlogic_timer_up
         std::lock_guard<std::mutex> lock{ m_update_mutex };
         curr_time_update_time_point = m_curr_time_update_time_point;
     }
-    xinfo("logic_timer: update timer: input: %" PRIu64 "; current: %" PRIu64 "; last update time %" PRIi64 " current steady time %" PRIi64 " timer object: %p; not_continuous=%d",
+    xinfo("logic_timer: update timer: input: %" PRIu64 "; current: %" PRIu64 "; last update time %" PRIi64 " current steady time %" PRIi64 " timer object: %p; discontinuity=%d",
           new_time,
           current_time,
           static_cast<int64_t>(curr_time_update_time_point.time_since_epoch().count()),

@@ -17,7 +17,6 @@ e_metrics::simple_counter e_metrics::s_counters[e_simple_total];
 metrics_variant_ptr e_metrics::s_metrics[e_simple_total] = {
     DECL_METRICS(blockstore_cache_block_total),  //blockstore_cache_block_total
     DECL_METRICS(dataobject_cur_xbase_type_cons_transaction),  //txpool_cons_transaction
-    DECL_METRICS(cons_tableblock_start_leader), //cons_tableblock_start_leader
     DECL_METRICS(vhost_recv_msg), // vhost_recv_msg,
     DECL_METRICS(vhost_recv_callback), // vhost_recv_callback,
     DECL_METRICS(dataobject_tx_receipt_t), // tx_receipt
@@ -54,6 +53,16 @@ metrics_variant_ptr e_metrics::s_metrics[e_simple_total] = {
     DECL_METRICS(db_key_block_output_resource),
     DECL_METRICS(db_key_block_state),
     DECL_METRICS(db_key_block_offdata),
+
+    // consensus
+    DECL_METRICS(cons_drand_leader_finish_succ),
+    DECL_METRICS(cons_drand_backup_finish_succ),
+    DECL_METRICS(cons_drand_leader_finish_fail),
+    DECL_METRICS(cons_drand_backup_finish_fail),
+    DECL_METRICS(cons_tableblock_leader_finish_succ),
+    DECL_METRICS(cons_tableblock_backup_finish_succ),
+    DECL_METRICS(cons_tableblock_leader_finish_fail),
+    DECL_METRICS(cons_tableblock_backup_finish_fail),
 };
 
 void e_metrics::start() {
