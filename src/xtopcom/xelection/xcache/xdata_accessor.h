@@ -48,6 +48,9 @@ public:
     common::xnode_id_t node_id_from(common::xip2_t const & xip2, std::error_code & ec) const override;
 
     std::shared_ptr<xgroup_element_t> group_element(common::xsharding_address_t const & sharding_address, common::xversion_t const & version, std::error_code & ec) const override;
+    std::shared_ptr<xgroup_element_t> group_element(common::xgroup_address_t const & group_address,
+                                                    common::xlogic_epoch_t const & logic_epoch,
+                                                    std::error_code & ec) const override;
 
     std::shared_ptr<xgroup_element_t> group_element_by_height(common::xgroup_address_t const & group_address,
                                                               uint64_t const election_blk_height,
@@ -59,6 +62,10 @@ public:
 
     std::shared_ptr<xgroup_element_t> parent_group_element(common::xsharding_address_t const & child_sharding_address,
                                                            common::xversion_t const & child_sharding_version,
+                                                           std::error_code & ec) const override;
+
+    std::shared_ptr<xgroup_element_t> parent_group_element(common::xgroup_address_t const & child_group_address,
+                                                           common::xlogical_version_t const & child_logical_version,
                                                            std::error_code & ec) const override;
 
     common::xversion_t version_from(common::xip2_t const & xip2, std::error_code & ec) const override;
@@ -116,6 +123,13 @@ private:
                                                     common::xcluster_id_t const & cluster_id,
                                                     common::xgroup_id_t const & group_id,
                                                     common::xversion_t const & version,
+                                                    std::error_code & ec) const;
+
+    std::shared_ptr<xgroup_element_t> group_element(common::xnetwork_id_t const & network_id,
+                                                    common::xzone_id_t const & zone_id,
+                                                    common::xcluster_id_t const & cluster_id,
+                                                    common::xgroup_id_t const & group_id,
+                                                    common::xlogic_epoch_t const & logic_epoch,
                                                     std::error_code & ec) const;
 
     std::shared_ptr<xgroup_element_t> group_element_by_height(common::xnetwork_id_t const & network_id,

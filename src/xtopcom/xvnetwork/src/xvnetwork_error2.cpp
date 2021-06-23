@@ -12,21 +12,31 @@ xvnetwork_errc_map(int const errc) noexcept {
     auto const ec = static_cast<xvnetwork_errc2_t>(errc);
     switch (ec) {
     case xvnetwork_errc2_t::success:
-        return u8"success";
+        return "success";
     case xvnetwork_errc2_t::vhost_not_run:
-        return u8"vhost not run";
+        return "vhost not run";
     case xvnetwork_errc2_t::cluster_address_not_match:
-        return u8"cluster address not match";
+        return "cluster address not match";
     case xvnetwork_errc2_t::invalid_src_address:
-        return u8"invalid src address";
+        return "invalid src address";
     case xvnetwork_errc2_t::invalid_dst_address:
-        return u8"invalid dst address";
+        return "invalid dst address";
     case xvnetwork_errc2_t::version_mismatch:
-        return u8"version mismatch";
+        return "epoch mismatch";
+    case xvnetwork_errc2_t::invalid_epoch:
+        return "invalid epoch";
+    case xvnetwork_errc2_t::empty_message:
+        return "empty message";
+    case xvnetwork_errc2_t::future_message:
+        return "future message";
+    case xvnetwork_errc2_t::expired_message:
+        return "expired message";
+    case xvnetwork_errc2_t::invalid_account_address:
+        return "invalid account address";
     case xvnetwork_errc2_t::not_supported:
-        return u8"not supported";
+        return "not supported";
     default:
-        return u8"unknown error";
+        return "unknown error";
     }
 };
 
@@ -34,7 +44,7 @@ class xtop_vnetwork_category2 final : public std::error_category {
 public:
     const char *
     name() const noexcept override {
-        return u8"[vnetwork]";
+        return "vnetwork";
     }
 
     std::string
@@ -45,12 +55,12 @@ public:
 using xvnetwork_category2_t = xtop_vnetwork_category2;
 
 std::error_code
-make_error_code(xvnetwork_errc2_t const errc) {
+make_error_code(xvnetwork_errc2_t const errc) noexcept {
     return std::error_code{static_cast<int>(errc), vnetwork_category2()};
 }
 
 std::error_condition
-make_error_condition(xvnetwork_errc2_t const errc) {
+make_error_condition(xvnetwork_errc2_t const errc) noexcept {
     return std::error_condition{static_cast<int>(errc), vnetwork_category2()};
 }
 
