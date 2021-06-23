@@ -128,11 +128,6 @@ common::xaccount_address_t xtop_action_execution_context<ActionT>::contract_addr
 }
 
 template <typename ActionT>
-data::enum_xtransaction_type xtop_action_execution_context<ActionT>::transaction_type() const noexcept {
-    return data::enum_xtransaction_type::xtransaction_type_run_contract2;
-}
-
-template <typename ActionT>
 std::string xtop_action_execution_context<ActionT>::action_name() const {
     return m_action.action_name();
 }
