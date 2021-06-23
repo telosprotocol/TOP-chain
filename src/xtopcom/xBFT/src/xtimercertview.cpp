@@ -259,7 +259,7 @@ void xconspacemaker_t::add_vote(const xvip2_t & xip_addr, base::xvblock_t *model
         // for debug purpose
         if ((m_latest_cert->get_clock() + 1) != model_block->get_clock()) {
             XMETRICS_COUNTER_INCREMENT("conspacemaker_tc_discontinuity", 1);
-            xwarn("[xconspacemaker_t::add_vote] clock discontinuity latest=%llu,cur=%llu", m_latest_cert->get_clock(), model_block->get_clock());
+            xwarn("[xconspacemaker_t::add_vote] tc discontinuity latest=%llu,cur=%llu", m_latest_cert->get_clock(), model_block->get_clock());
         }
         m_latest_cert->release_ref();
     }
