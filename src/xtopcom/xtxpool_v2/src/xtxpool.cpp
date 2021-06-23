@@ -45,9 +45,7 @@ int32_t xtxpool_t::push_receipt(const std::shared_ptr<xtx_entry> & tx, bool is_s
 }
 
 void xtxpool_t::print_statistic_values() const {
-    xtxpool_info("txpool statistic(state):%s", m_statistic.state_dump().c_str());
-    xtxpool_info("txpool statistic(receipt delay):%s", m_statistic.receipt_delay_dump().c_str());
-    xtxpool_info("txpool statistic(cache):%s", m_statistic.cache_dump().c_str());
+    m_statistic.print();
 }
 
 const xcons_transaction_ptr_t xtxpool_t::pop_tx(const tx_info_t & txinfo) {
