@@ -29,7 +29,7 @@ xblock_consensus_para_t::xblock_consensus_para_t(const std::string & _account, u
     set_empty_xip2(m_auditor);
     char local_param_buf[128];
     xprintf(local_param_buf,sizeof(local_param_buf),
-        "{cons_table:account=%s,height=%" PRIu64 ",viewid=%" PRIu64 ",viewtoken=%u,clock=%" PRIu64 "}",
+        "{%s,height=%" PRIu64 ",viewid=%" PRIu64 ",viewtoken=%u,clock=%" PRIu64 "}",
         _account.c_str(), _proposal_height, _viewid, _viewtoken, _clock);
     m_dump_str = std::string(local_param_buf);
 }
@@ -239,6 +239,30 @@ base::xvblock_t* xblock_t::full_block_read_from(base::xstream_t & stream) {
         }
     }
     return new_block;
+}
+
+std::string xblock_t::dump_header(base::xvheader_t* header) {
+    std::stringstream ss;
+    ss << "{";
+    ss << header->get_account();
+    ss << ",height=" << header->get_height();
+    ss << ",level:" << header->get_block_level();
+    ss << ",class=" << header->get_block_class();
+    ss << ",type=" << header->get_block_type();
+    ss << ",features:" << header->get_block_features();
+    ss << ",version:" << header->get_block_version();
+    ss << ",weight:" << header->get_weight();
+    if (!header->get_comments().empty()) {
+        ss << ",comments:"  << header->get_comments();
+    }
+    if (!header->get_extra_data().empty()) {
+        ss << ",extra:"     << base::xhash64_t::digest(header->get_extra_data());
+    }
+    ss << ",last_h:" << base::xhash64_t::digest(header->get_last_block_hash());
+    ss << ",input_h=" << base::xhash64_t::digest(header->get_input_hash());
+    ss << ",output_h=" << base::xhash64_t::digest(header->get_output_hash());
+    ss << "}";
+    return ss.str();
 }
 
 std::string xblock_t::dump_header() const {

@@ -138,7 +138,7 @@ bool xbatch_packer::start_proposal(base::xblock_mptrs& latest_blocks) {
     if (m_last_view_id != proposal_block->get_viewid()) {
         xunit_warn("xbatch_packer::start_proposal fail-finally viewid changed. %s latest_viewid=%" PRIu64 "",
             proposal_para.dump().c_str(), proposal_block->get_viewid());
-        XMETRICS_COUNTER_INCREMENT("cons_start_proposal_view_changed", 1);
+        XMETRICS_COUNTER_INCREMENT("cons_fail_make_proposal_view_changed", 1);
         return false;
     }
 

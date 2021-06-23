@@ -11,9 +11,6 @@ namespace top
 {
     namespace base
     {
-#ifdef DEBUG
-        #define DEBUG_LONG_CONFIRM_TX_ENABLE  1  // TODO(jimmy)
-#endif
         enum enum_transaction_subtype
         {
             enum_transaction_subtype_invalid   = 0,

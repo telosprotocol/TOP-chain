@@ -132,8 +132,9 @@ class xblock_maker_t : public base::xvaccount_t {
 
  public:
     void                        set_latest_block(const xblock_ptr_t & block);
+    void                        reset_latest_cert_block(const xblock_ptr_t & block);
     bool                        load_and_cache_enough_blocks(const xblock_ptr_t & latest_block, uint64_t & from_height, uint64_t & lacked_block_height);
-    bool                        check_latest_blocks() const;
+    bool                        check_latest_blocks(const xblock_ptr_t & latest_block) const;
 
  public:
     base::xvblockstore_t*       get_blockstore() const {return m_resources->get_blockstore();}
