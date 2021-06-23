@@ -238,7 +238,7 @@ bool xtimer_picker_t::on_proposal_finish(const base::xvevent_t & event, xcsobjec
             XMETRICS_COUNTER_INCREMENT("cons_drand_backup_finish_fail", 1);
         }
 #endif
-        xunit_warn("xbatch_packer::on_proposal_finish fail. leader:%d,error_code:%d,proposal=%s",
+        xunit_warn("xtimer_picker_t::on_proposal_finish fail. leader:%d,error_code:%d,proposal=%s",
             is_leader,
             _evt_obj->get_error_code(),
             _evt_obj->get_target_proposal()->dump().c_str());
