@@ -156,7 +156,7 @@ namespace top
                         xinfo("xvtxstore_t::store_txs_index,store tx to DB for tx=%s", base::xvtxkey_t::transaction_hash_subtype_to_string(v->get_tx_hash(), v->get_tx_phase_type()).c_str());
                     }
 
-#ifdef  DEBUG_LONG_CONFIRM_TX_ENABLE  // TODO(jimmy)
+#ifdef  LONG_CONFIRM_CHECK
                     if (v->get_tx_phase_type() == enum_transaction_subtype_send) {
                         XMETRICS_COUNTER_INCREMENT("store_tx_count_send", 1);
                     } else if (v->get_tx_phase_type() == enum_transaction_subtype_recv) {
@@ -181,14 +181,14 @@ namespace top
                                 max_time = delay_time;
                             }
 
-                            if (delay_time >= 9) {
-                                XMETRICS_COUNTER_INCREMENT("store_confirmtx_long_time_9clock", 1);
+                            if (delay_time >= 12) {
+                                XMETRICS_COUNTER_INCREMENT("store_confirmtx_long_time_12clock", 1);
                             } else if (delay_time >= 6) {
                                 XMETRICS_COUNTER_INCREMENT("store_confirmtx_long_time_6clock", 1);
-                            } else if (delay_time >= 3) {
-                                XMETRICS_COUNTER_INCREMENT("store_confirmtx_long_time_3clock", 1);
-                            }
-                            if (delay_time >= 4)  // 4 clock
+                            } // else if (delay_time >= 3) {
+                                // XMETRICS_COUNTER_INCREMENT("store_confirmtx_long_time_3clock", 1);
+                            //}
+                            if (delay_time >= 6)  // 6 clock
                             {
                                 xwarn("xvtxstore_t::store_txs,confirm tx time long.max_time=%ld,time=%ld,tx=%s", (uint64_t)max_time, delay_time, base::xstring_utl::to_hex(v->get_tx_hash()).c_str());
                             }
