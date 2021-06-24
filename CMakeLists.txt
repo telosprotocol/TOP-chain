@@ -332,6 +332,10 @@ if (LONG_CONFIRM_CHECK)
     add_definitions(-DLONG_CONFIRM_CHECK)
 endif()
 
+if (DB_KV_STATISTIC)
+    add_definitions(-DDB_KV_STATISTIC)
+endif()
+
 if (DB_CACHE)
     add_definitions(-DDB_CACHE)
 endif()
