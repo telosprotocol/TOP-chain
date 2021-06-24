@@ -7,6 +7,7 @@
 #include "../xvstatestore.h"
 #include "../xvledger.h"
 #include "../xvdbkey.h"
+#include "xmetrics/xmetrics.h"
 
 namespace top
 {
@@ -25,6 +26,7 @@ namespace top
                 xerror("xvblkstatestore_t::write_state_to_db,nil block hash for state(%s)",target_state.dump().c_str());
                 return false;
             }
+            XMETRICS_GAUGE(metrics::store_state_write, 1);
             xvaccount_t target_account(target_state.get_address());
             const std::string state_db_key = xvdbkey_t::create_block_state_key(target_account,target_block_hash);
 
@@ -59,6 +61,7 @@ namespace top
         }
         xvbstate_t*     xvblkstatestore_t::read_state_from_db(const xvaccount_t & target_account, uint64_t block_height, const std::string & block_hash)
         {
+            XMETRICS_GAUGE(metrics::store_state_read, 1);
             const std::string state_db_key = xvdbkey_t::create_block_state_key(target_account,block_hash);
             const std::string state_db_bin = xvchain_t::instance().get_xdbstore()->get_value(state_db_key);
             if(state_db_bin.empty())
@@ -86,17 +89,20 @@ namespace top
 
         bool   xvblkstatestore_t::delete_state_of_db(const xvbindex_t & target_index)
         {
+            XMETRICS_GAUGE(metrics::store_state_delete, 1);
             const std::string state_db_key = xvdbkey_t::create_block_state_key(target_index,target_index.get_block_hash());
             return xvchain_t::instance().get_xdbstore()->delete_value(state_db_key);
         }
         bool   xvblkstatestore_t::delete_state_of_db(const xvblock_t & target_block)
         {
+            XMETRICS_GAUGE(metrics::store_state_delete, 1);
             xvaccount_t target_account(target_block.get_account());
             const std::string state_db_key = xvdbkey_t::create_block_state_key(target_account,target_block.get_block_hash());
             return xvchain_t::instance().get_xdbstore()->delete_value(state_db_key);
         }
         bool   xvblkstatestore_t::delete_state_of_db(const xvaccount_t & target_account,const std::string & block_hash)
         {
+            XMETRICS_GAUGE(metrics::store_state_delete, 1);
             const std::string state_db_key = xvdbkey_t::create_block_state_key(target_account,block_hash);
             return xvchain_t::instance().get_xdbstore()->delete_value(state_db_key);
         }

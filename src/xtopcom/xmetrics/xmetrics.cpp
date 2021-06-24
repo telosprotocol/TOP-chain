@@ -63,6 +63,21 @@ metrics_variant_ptr e_metrics::s_metrics[e_simple_total] = {
     DECL_METRICS(cons_tableblock_backup_finish_succ),
     DECL_METRICS(cons_tableblock_leader_finish_fail),
     DECL_METRICS(cons_tableblock_backup_finish_fail),
+
+    // store
+    DECL_METRICS(store_db_read),
+    DECL_METRICS(store_db_write),
+    DECL_METRICS(store_db_delete),
+    DECL_METRICS(store_state_read),
+    DECL_METRICS(store_state_write),
+    DECL_METRICS(store_state_delete),
+    DECL_METRICS(store_block_read),
+    DECL_METRICS(store_block_index_read),
+    DECL_METRICS(store_block_input_read),
+    DECL_METRICS(store_block_output_read),
+    DECL_METRICS(store_block_write_call),
+    DECL_METRICS(store_block_write),
+    DECL_METRICS(store_block_delete),
 };
 
 void e_metrics::start() {
