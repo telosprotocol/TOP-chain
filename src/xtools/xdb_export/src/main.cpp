@@ -166,7 +166,7 @@ public:
 
                 std::set<std::string> tmp_set;
                 for (uint64_t h = 0; h <= block_height; ++h) {
-                    auto vblock = m_blockstore->load_block_object(address,h,0,false);
+                    auto vblock = m_blockstore->load_block_object(address,h,0,true);
                     data::xblock_t * block = dynamic_cast<data::xblock_t *>(vblock.get());
                     if (block != nullptr) {
                         assert(block->get_block_level() == base::enum_xvblock_level_table);
@@ -276,7 +276,7 @@ public:
         std::set<std::string> multi_tx;
         std::vector<tx_ext_t> multi;
         for (uint64_t h = 0; h <= block_height; h++) {
-            auto const & vblock = m_blockstore->load_block_object(account,h,0,false);
+            auto const & vblock = m_blockstore->load_block_object(account,h,0,true);
             const data::xblock_t * block = dynamic_cast<data::xblock_t *>(vblock.get());
             if (block == nullptr) {
                 std::cout << " table " << account << " height " << h << " block null" << std::endl;

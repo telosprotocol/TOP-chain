@@ -35,7 +35,7 @@ class xtransaction_executor {
                                     xbatch_txs_result_t & txs_result);
 
  private:
-    static int32_t exec_tx(xaccount_context_t * account_context, const xcons_transaction_ptr_t & tx, std::vector<xcons_transaction_ptr_t> & contract_create_txs);
+    static int32_t exec_tx(xaccount_context_t * account_context, const data::xblock_consensus_para_t & cs_para, const xcons_transaction_ptr_t & tx, std::vector<xcons_transaction_ptr_t> & contract_create_txs);
     static int32_t exec_one_tx(xaccount_context_t * account_context, const xcons_transaction_ptr_t & tx);
 };
 

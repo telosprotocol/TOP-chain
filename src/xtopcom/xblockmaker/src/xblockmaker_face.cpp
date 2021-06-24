@@ -116,7 +116,8 @@ bool xblock_maker_t::load_and_cache_enough_blocks(const xblock_ptr_t & latest_bl
         }
         xblock_ptr_t prev_block = get_prev_block_from_cache(current_block);
         if (prev_block == nullptr) {
-            auto _block = get_blockstore()->load_block_object(*this, current_block->get_height() - 1, current_block->get_last_block_hash(), true);
+            // only mini-block is enough
+            auto _block = get_blockstore()->load_block_object(*this, current_block->get_height() - 1, current_block->get_last_block_hash(), false);
             if (_block == nullptr) {
                 xwarn("xblock_maker_t::load_and_cache_enough_blocks fail-load block.account=%s,height=%ld", get_account().c_str(), current_block->get_height() - 1);
                 from_height = (latest_block->get_height() >= m_keep_latest_blocks_max) ? (latest_block->get_height() + 1 - m_keep_latest_blocks_max) : 0;

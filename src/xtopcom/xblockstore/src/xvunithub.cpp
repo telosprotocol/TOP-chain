@@ -139,7 +139,6 @@ namespace top
         /////////////////////////////////new api with better performance by passing base::xvaccount_t
         base::xvblock_t * xvblockstore_impl::load_block_from_index(xblockacct_t* target_account, base::xauto_ptr<base::xvbindex_t> target_index,const uint64_t target_height,bool ask_full_load)
         {
-            ask_full_load = true;  // TODO(jimmy)
             if(!target_index)
             {
                 if(target_height != 0)
@@ -233,7 +232,7 @@ namespace top
                     return connect_block;
                 }
                 auto latest_committed_full_height = connect_block->get_last_full_block_height();
-                return load_block_object(account, latest_committed_full_height, 0, true);
+                return load_block_object(account, latest_committed_full_height, 0, false);
             }
 
             return nullptr;
@@ -386,6 +385,12 @@ namespace top
                 xerror("xvblockstore_impl::load_block_input,block NOT match account:%",account.get_account().c_str());
                 return false;
             }
+            if( block->get_block_class() == base::enum_xvblock_class_nil  // nil block has no input
+               || block->get_input()->get_resources_hash().empty() //resources hash empty means has no resoure data
+               || block->get_input()->has_resource_data() )  //already has resource data
+            {
+                return true;
+            }
             LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
             return account_obj->load_block_input(block);//XTODO,add logic to extract from tabeblock
         }
@@ -396,6 +401,12 @@ namespace top
             {
                 xerror("xvblockstore_impl::load_block_output,block NOT match account:%",account.get_account().c_str());
                 return false;
+            }
+            if( block->get_block_class() == base::enum_xvblock_class_nil  // nil block has no input
+               || block->get_output()->get_resources_hash().empty() //resources hash empty means has no resoure data
+               || block->get_output()->has_resource_data() )  //already has resource data
+            {
+                return true;
             }
             LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
             return account_obj->load_block_output(block);//XTODO,add logic to extract from tabeblock

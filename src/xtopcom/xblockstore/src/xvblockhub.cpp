@@ -1071,11 +1071,19 @@ namespace top
                 return false;
 
             XMETRICS_GAUGE(metrics::store_block_write_call, 1);
+
+            // xbft will store repeat block, check it firstly
+            if(query_index(new_raw_block->get_height(), new_raw_block->get_viewid()) != nullptr)
+            {
+                xwarn("xblockacct_t::store_block,repeat block=%s",new_raw_block->dump().c_str());
+                return true;
+            }
+
             if(   (false == new_raw_block->is_input_ready(true))
                || (false == new_raw_block->is_output_ready(true))
                || (false == new_raw_block->is_deliver(true)) )//must have full valid data and has mark as enum_xvblock_flag_authenticated
             {
-                xerror("xblockacct_t::store_block,undevlier block=%s,input_ready=%d and output_ready=%d",new_raw_block->dump().c_str(),new_raw_block->is_input_ready(true),new_raw_block->is_output_ready(true));
+                xwarn("xblockacct_t::store_block,undevlier block=%s",new_raw_block->dump().c_str());
                 return false;
             }
 
