@@ -781,14 +781,29 @@ namespace top
                 for(uint64_t h = m_meta->_highest_genesis_connect_height + 1; h <= m_meta->_highest_commit_block_height; ++h)
                 {
                     const uint64_t try_height = m_meta->_highest_genesis_connect_height + 1;
-                    if(load_index(try_height) == 0)//block of this height are not present
+                    if(load_index(try_height) == 0) //missed block
                         break;
-
-                    if(try_height == (m_meta->_highest_genesis_connect_height + 1))//if nothing changed
-                        break;//which means blocks of 'try_height' is not connected prevs
-
-                    if(try_height >= m_meta->_highest_commit_block_height)//done all
+                
+                    base::xauto_ptr<base::xvbindex_t> next_commit(query_index(try_height, base::enum_xvblock_flag_committed));
+                    if(!next_commit) //dont have commited block
                         break;
+                    
+                    if( (0 == m_meta->_highest_genesis_connect_height) && m_meta->_highest_genesis_connect_hash.empty())
+                    {
+                        //could be exception case that not event inited yet,so makeup
+                        m_meta->_highest_genesis_connect_height = next_commit->get_height();
+                        m_meta->_highest_genesis_connect_hash   = next_commit->get_block_hash();
+                    }
+                    else if(   (next_commit->get_height() == (m_meta->_highest_genesis_connect_height + 1))
+                       && (next_commit->get_last_block_hash() == m_meta->_highest_genesis_connect_hash) )
+                    {
+                        m_meta->_highest_genesis_connect_height = next_commit->get_height();
+                        m_meta->_highest_genesis_connect_hash   = next_commit->get_block_hash();
+                    }
+                    else
+                    {
+                        break;
+                    }
                 }
 
                 xinfo("xblockacct_t::load_latest_genesis_connected_index,navigate to new height(%" PRIu64 ") vs commit-height(%" PRIu64 ")  of account(%s)",m_meta->_highest_genesis_connect_height,m_meta->_highest_commit_block_height,get_address().c_str());
