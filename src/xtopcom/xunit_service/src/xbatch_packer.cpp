@@ -22,7 +22,7 @@ NS_BEG2(top, xunit_service)
 #define CONFIRM_DELAY_TOO_MUCH_TIME (20)
 
 xbatch_packer::xbatch_packer(observer_ptr<mbus::xmessage_bus_face_t> const   &mb,
-                             uint16_t                                         tableid,
+                             table_index                                      &tableid,
                              const std::string &                              account_id,
                              std::shared_ptr<xcons_service_para_face> const & para,
                              std::shared_ptr<xblock_maker_face> const &       block_maker,
@@ -38,7 +38,7 @@ xbatch_packer::xbatch_packer(observer_ptr<mbus::xmessage_bus_face_t> const   &mb
     m_proposal_maker = block_maker->get_proposal_maker(account_id);
     m_raw_timer = get_thread()->create_timer((base::xtimersink_t*)this);
     m_raw_timer->start(m_timer_repeat_time_ms, m_timer_repeat_time_ms);
-    xunit_dbg("xbatch_packer::xbatch_packer,create,this=%p,account=%s,tableid=%d", this, account_id.c_str(), tableid);
+    xunit_dbg("xbatch_packer::xbatch_packer,create,this=%p,account=%s,tableid=%d", this, account_id.c_str(), tableid.table_id);
 }
 
 xbatch_packer::~xbatch_packer() {
@@ -63,7 +63,7 @@ bool xbatch_packer::on_object_close() {
     return xcsaccount_t::on_object_close();
 }
 
-uint16_t xbatch_packer::get_tableid() {
+table_index xbatch_packer::get_tableid() {
     return m_tableid;
 }
 

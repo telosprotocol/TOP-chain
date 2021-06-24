@@ -455,7 +455,7 @@ namespace top
             }
             if(get_group_nodes_count_from_xip2(test_for_cert->get_validator()) != verify_group->get_size())
             {
-                xerror("xauthcontext_t_impl::verify_validator_mutisig,fail-modified group size(%u) for validator(%" PRIx64 " : %" PRIx64 ")",verify_group->get_size(),test_for_cert->get_validator().high_addr,test_for_cert->get_validator().low_addr);
+               xerror("xauthcontext_t_impl::verify_validator_mutisig,fail-modified group size(%u) for validator(%" PRIx64 " : %" PRIx64 ")",verify_group->get_size(),test_for_cert->get_validator().high_addr,test_for_cert->get_validator().low_addr);
                 return base::enum_vcert_auth_result::enum_bad_address;
             }
             #ifdef __check_mini_nodes_count__
