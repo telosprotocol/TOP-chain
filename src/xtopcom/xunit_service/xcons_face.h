@@ -181,7 +181,7 @@ public:
 };
 
 using xcons_proxy_face_ptr = std::shared_ptr<xcons_proxy_face>;
-const int32_t max_mailbox_num = 8192;
+const int32_t max_mailbox_num = 512;
 // block dispatcher
 class xcons_dispatcher {
 public:
@@ -201,12 +201,20 @@ public:
     virtual bool destroy(const xvip2_t & xip) = 0;
 
 protected:
+    bool is_discardable_pdu(base::xcspdu_t * pdu) {
+        if(pdu->get_msg_type() == xconsensus::enum_consensus_msg_type_proposal 
+            || pdu->get_msg_type() == xconsensus::enum_consensus_msg_type_vote) {
+            return true;
+        }
+        return false;
+    }
+
     template <typename T>
     int async_dispatch(base::xcspdu_t * pdu, const xvip2_t & xip_from, const xvip2_t & xip_to, T * picker) {
         // TODO(jimmy) for debug
         int64_t in, out;
         int32_t queue_size = picker->count_calls(in, out);
-        bool discard = queue_size >= max_mailbox_num;
+        bool discard = queue_size >= max_mailbox_num && is_discardable_pdu(pdu);
         if (discard) {
             xunit_warn("xnetwork_proxy::async_dispatch,recv_in is_mailbox_over_limit pdu=%s,in=%lld,out=%lld,queue_size=%d,at_node:%s %p", pdu->dump().c_str(), in, out, queue_size, xcons_utl::xip_to_hex(xip_to).c_str(), picker);
             return -1;
