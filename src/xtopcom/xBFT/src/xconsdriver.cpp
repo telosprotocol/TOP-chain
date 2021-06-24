@@ -891,7 +891,7 @@ namespace top
 
                     _to_remove->release_ref();
                 }
-                timeout_list.clear();
+                outofdate_list.clear();
             }
             return true;
         }
