@@ -281,9 +281,14 @@ bool xtable_maker_t::create_other_makers(const xtablemaker_para_t & table_para, 
 
 void xtable_maker_t::get_unit_accounts(const xblock_ptr_t & block, std::set<std::string> & accounts) const {
     if (block->get_block_class() == base::enum_xvblock_class_light) {
-        const auto & units = block->get_tableblock_units(false);
-        for (auto unit : units) {
-            accounts.insert(unit->get_account());
+        const std::vector<base::xventity_t*> & _table_inentitys = block->get_input()->get_entitys();
+        uint32_t entitys_count = _table_inentitys.size();
+        for (uint32_t index = 1; index < entitys_count; index++) {  // unit entity from index#1
+            base::xvinentity_t* _table_unit_inentity = dynamic_cast<base::xvinentity_t*>(_table_inentitys[index]);
+            base::xtable_inentity_extend_t extend;
+            extend.serialize_from_string(_table_unit_inentity->get_extend_data());
+            const xobject_ptr_t<base::xvheader_t> & _unit_header = extend.get_unit_header();
+            accounts.insert(_unit_header->get_account());
         }
     }
 }
@@ -434,7 +439,8 @@ bool    xtable_maker_t::load_table_blocks_from_last_full(const xblock_ptr_t & pr
     _form_highest_blocks.push_back(current_block);
 
     while (current_block->get_block_class() != base::enum_xvblock_class_full && current_block->get_height() > 1) {
-        base::xauto_ptr<base::xvblock_t> _block = get_blockstore()->load_block_object(*this, current_block->get_height() - 1, current_block->get_last_block_hash(), true);
+        // only mini-block is enough
+        base::xauto_ptr<base::xvblock_t> _block = get_blockstore()->load_block_object(*this, current_block->get_height() - 1, current_block->get_last_block_hash(), false);
         if (_block == nullptr) {
             xerror("xfulltable_builder_t::load_table_blocks_from_last_full fail-load block.account=%s,height=%ld", get_account().c_str(), current_block->get_height() - 1);
             return false;
@@ -585,17 +591,18 @@ bool xtable_maker_t::verify_proposal_with_local(base::xvblock_t *proposal_block,
         const xobject_ptr_t<base::xvheader_t> & _local_unit_header = _local_extend.get_unit_header();
         if (_proposal_unit_header->get_account() != _local_unit_header->get_account()
             || _proposal_unit_header->get_height() != _local_unit_header->get_height()
-            || _proposal_unit_header->get_block_class() != _local_unit_header->get_block_class()
-            || _proposal_inentity->get_actions().size() != _local_inentity->get_actions().size()) {
+            || _proposal_unit_header->get_block_class() != _local_unit_header->get_block_class()) {
             xerror("xtable_maker_t::verify_proposal_with_local fail-unit entity not match. %s,leader=%s,local=%s",
                 proposal_block->dump().c_str(),
                 data::xblock_t::dump_header(_proposal_unit_header.get()).c_str(), data::xblock_t::dump_header(_local_unit_header.get()).c_str());
             return false;
         }
-        if (_proposal_inentity->get_extend_data() != _local_inentity->get_extend_data()) {
-            xwarn("xtable_maker_t::verify_proposal_with_local fail-extend data not match. %s,leader=%s,local=%s",
+        if (_proposal_inentity->get_extend_data() != _local_inentity->get_extend_data()
+         || _proposal_inentity->get_actions().size() != _local_inentity->get_actions().size()) {
+            xwarn("xtable_maker_t::verify_proposal_with_local fail-extend data not match. %s,leader=%s,local=%s,action_size=%zu,%zu",
                 proposal_block->dump().c_str(),
-                data::xblock_t::dump_header(_proposal_unit_header.get()).c_str(), data::xblock_t::dump_header(_local_unit_header.get()).c_str());
+                data::xblock_t::dump_header(_proposal_unit_header.get()).c_str(), data::xblock_t::dump_header(_local_unit_header.get()).c_str(),
+                _proposal_inentity->get_actions().size(), _local_inentity->get_actions().size());
             return false;
         }
     }

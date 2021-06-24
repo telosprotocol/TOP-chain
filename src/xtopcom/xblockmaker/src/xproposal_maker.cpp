@@ -94,6 +94,10 @@ xblock_ptr_t xproposal_maker_t::make_proposal(data::xblock_consensus_para_t & pr
         return nullptr;
     }
 
+    // need full cert block
+    //get_blockstore()->load_block_input(*m_table_maker.get(), latest_cert_block.get());
+    //get_blockstore()->load_block_output(*m_table_maker.get(), latest_cert_block.get());
+
     auto & proposal_input = table_para.get_proposal();
     std::string proposal_input_str;
     proposal_input->serialize_to_string(proposal_input_str);
@@ -411,17 +415,24 @@ bool xproposal_maker_t::backup_set_consensus_para(base::xvblock_t* latest_cert_b
 }
 
 void xproposal_maker_t::get_locked_txs(const xblock_ptr_t & block, std::vector<xtxpool_v2::tx_info_t> & locked_tx_vec) const {
-    const auto & units = block->get_tableblock_units(false);
-    for (auto unit : units) {
-        if (unit->get_block_class() != base::enum_xvblock_class_light) {
-            continue;
-        }
-        data::xlightunit_block_t * lightunit = dynamic_cast<data::xlightunit_block_t *>(unit.get());
-        const std::vector<xlightunit_tx_info_ptr_t> & txs = lightunit->get_txs();
+    if (block->get_block_class() == base::enum_xvblock_class_light) {
+        const std::vector<base::xventity_t*> & _table_inentitys = block->get_input()->get_entitys();
+        uint32_t entitys_count = _table_inentitys.size();
+        for (uint32_t index = 1; index < entitys_count; index++) {  // unit entity from index#1
+            base::xvinentity_t* _table_unit_inentity = dynamic_cast<base::xvinentity_t*>(_table_inentitys[index]);
+            base::xtable_inentity_extend_t extend;
+            extend.serialize_from_string(_table_unit_inentity->get_extend_data());
+            const xobject_ptr_t<base::xvheader_t> & _unit_header = extend.get_unit_header();
 
-        for (auto & tx : txs) {
-            xtxpool_v2::tx_info_t txinfo(lightunit->get_account(), tx->get_tx_hash_256(), tx->get_tx_subtype());
-            locked_tx_vec.push_back(txinfo);
+            const std::vector<base::xvaction_t> &  input_actions = _table_unit_inentity->get_actions();
+            for (auto & action : input_actions) {
+                if (!action.get_org_tx_hash().empty()) {
+                    base::enum_transaction_subtype _subtype = (base::enum_transaction_subtype)action.get_org_tx_action_id();
+                    uint256_t _hash256((uint8_t*)action.get_org_tx_hash().data());
+                    xtxpool_v2::tx_info_t txinfo(_unit_header->get_account(), _hash256, _subtype);
+                    locked_tx_vec.push_back(txinfo);
+                }
+            }
         }
     }
 }
