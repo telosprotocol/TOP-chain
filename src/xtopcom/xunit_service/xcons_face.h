@@ -47,6 +47,37 @@ public:
     virtual bool erase(const xvip2_t & addr) = 0;
 };
 
+// table index data
+struct table_index {
+    base::enum_xchain_zone_index zone_index;
+    uint16_t table_id;
+
+    table_index() {
+
+    }
+
+    table_index(base::enum_xchain_zone_index z_index, uint16_t t_id) {
+        zone_index = z_index;
+        table_id = t_id;
+    }
+
+    table_index(const table_index & rhs) {
+        zone_index = rhs.zone_index;
+        table_id = rhs.table_id;
+    }
+
+    uint32_t get_value() const {
+        return zone_index << 16 | table_id;
+    }
+};
+//compare function for table index data map
+struct table_index_compare 
+{
+    bool operator()(const table_index& ti_lhs, const table_index& ti_rhs) const
+    {
+        return ti_lhs.get_value() < ti_rhs.get_value();
+    };
+};
 // system election face
 class xelection_cache_face {
 public:
@@ -70,7 +101,7 @@ public:
 
 public:
     // load manager tables
-    virtual int32_t get_tables(const xvip2_t & xip, std::vector<uint16_t> * tables) = 0;
+    virtual int32_t get_tables(const xvip2_t & xip, std::vector<table_index> * tables) = 0;
     // load election data from db
     virtual int32_t get_election(const xvip2_t & xip, elect_set * elect_data, bool bself = true) = 0;
     // load group election data
@@ -181,7 +212,7 @@ public:
 };
 
 using xcons_proxy_face_ptr = std::shared_ptr<xcons_proxy_face>;
-const int32_t max_mailbox_num = 512;
+const int32_t max_mailbox_num = 8192;
 // block dispatcher
 class xcons_dispatcher {
 public:
@@ -201,20 +232,13 @@ public:
     virtual bool destroy(const xvip2_t & xip) = 0;
 
 protected:
-    bool is_discardable_pdu(base::xcspdu_t * pdu) {
-        if(pdu->get_msg_type() == xconsensus::enum_consensus_msg_type_proposal 
-            || pdu->get_msg_type() == xconsensus::enum_consensus_msg_type_vote) {
-            return true;
-        }
-        return false;
-    }
 
     template <typename T>
     int async_dispatch(base::xcspdu_t * pdu, const xvip2_t & xip_from, const xvip2_t & xip_to, T * picker) {
         // TODO(jimmy) for debug
         int64_t in, out;
         int32_t queue_size = picker->count_calls(in, out);
-        bool discard = queue_size >= max_mailbox_num && is_discardable_pdu(pdu);
+        bool discard = queue_size >= max_mailbox_num;
         if (discard) {
             xunit_warn("xnetwork_proxy::async_dispatch,recv_in is_mailbox_over_limit pdu=%s,in=%lld,out=%lld,queue_size=%d,at_node:%s %p", pdu->dump().c_str(), in, out, queue_size, xcons_utl::xip_to_hex(xip_to).c_str(), picker);
             return -1;

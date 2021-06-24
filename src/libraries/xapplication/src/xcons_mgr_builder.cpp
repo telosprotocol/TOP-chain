@@ -106,7 +106,7 @@ xunit_service::xcons_service_mgr_ptr xcons_mgr_builder::build(std::string const 
     // certauth.attach(&auth::xauthcontext_t::instance(*node_service.get()));
     // TODO(justin): remove mock
     // auto certauth = make_object_ptr<xschnorrcert_t>((uint32_t)1);
-    auto work_pool = make_object_ptr<base::xworkerpool_t_impl<4>>(top::base::xcontext_t::instance());
+    auto work_pool = make_object_ptr<base::xworkerpool_t_impl<5>>(top::base::xcontext_t::instance());
 
     auto face = std::make_shared<xunit_service::xelection_cache_imp>();
     std::shared_ptr<xunit_service::xleader_election_face> pelection = std::make_shared<xunit_service::xrotate_leader_election>(blockstore, face);
