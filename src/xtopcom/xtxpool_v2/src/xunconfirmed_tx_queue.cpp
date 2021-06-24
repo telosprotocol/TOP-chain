@@ -302,7 +302,7 @@ uint64_t xunconfirmed_tx_queue_t::find_account_cache_height(const std::string & 
     return 0;
 }
 
-void xunconfirmed_tx_queue_t::recover(const xreceipt_state_cache_t & receiptid_state_cache) {
+void xunconfirmed_tx_queue_t::recover(const xreceipt_state_cache_t & receiptid_state_cache, const xtablestate_ptr_t & tablestate) {
     // update table-table receipt id state, if all peer_tables were complate, no need to recover, or else, get unconfirmed accounts, and load their unconfirmed txs.
     m_peer_tables.update_receiptid_state(receiptid_state_cache);
     // receiptid_state may not be consistance with account state!
@@ -311,20 +311,11 @@ void xunconfirmed_tx_queue_t::recover(const xreceipt_state_cache_t & receiptid_s
     //     return;
     // }
 
-    // TODO(jimmy) performance
-    base::xvaccount_t _vaddr(m_table_info->get_table_addr());
-    auto _block = base::xvchain_t::instance().get_xblockstore()->get_latest_committed_block(_vaddr);
-    base::xauto_ptr<base::xvbstate_t> bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(_block.get());
-    if (bstate == nullptr) {
-        xwarn("xunconfirmed_tx_queue_t::recover fail-get bstate.table=%s,block=%s",m_table_info->get_table_addr().c_str(), _block->dump().c_str());
-        return;
-    }
-    xtablestate_ptr_t tablestate = std::make_shared<xtable_bstate_t>(bstate.get());
     std::set<std::string> accounts = tablestate->get_unconfirmed_accounts();
 
     if (m_unconfirmed_accounts.size() != 0 || accounts.size() != 0) {
         xtxpool_info("xunconfirmed_tx_queue_t::recover table=%s,height=%ld,old_unconfirm_size=%zu,new_unconfirm_size=%zu",
-            m_table_info->get_table_addr().c_str(), _block->get_height(), m_unconfirmed_accounts.size(), accounts.size());
+            m_table_info->get_table_addr().c_str(), tablestate->get_block_height(), m_unconfirmed_accounts.size(), accounts.size());
     }
 
     // remove unconfirmed accounts which not found from accounts.
@@ -332,7 +323,7 @@ void xunconfirmed_tx_queue_t::recover(const xreceipt_state_cache_t & receiptid_s
         auto & account_addr = it_unconfirmed_account->first;
         auto it_accounts = accounts.find(account_addr);
         if (it_accounts == accounts.end()) {
-            xtxpool_info("xunconfirmed_tx_queue_t::recover pop confirmed account.table=%s,height=%ld,account=%s", m_table_info->get_table_addr().c_str(), _block->get_height(), account_addr.c_str());
+            xtxpool_info("xunconfirmed_tx_queue_t::recover pop confirmed account.table=%s,height=%ld,account=%s", m_table_info->get_table_addr().c_str(), tablestate->get_block_height(), account_addr.c_str());
             it_unconfirmed_account = m_unconfirmed_accounts.erase(it_unconfirmed_account);
         } else {
             it_unconfirmed_account++;
@@ -346,12 +337,12 @@ void xunconfirmed_tx_queue_t::recover(const xreceipt_state_cache_t & receiptid_s
 
         uint64_t cache_height = find_account_cache_height(account);
         if (cache_height >= account_index.get_latest_unit_height()) {
-            xtxpool_info("xunconfirmed_tx_queue_t::recover same height with index.table=%s,height=%ld,account=%s,cache h:%llu,account_index:%s", m_table_info->get_table_addr().c_str(), _block->get_height(), account.c_str(), cache_height, account_index.dump().c_str());
+            xtxpool_info("xunconfirmed_tx_queue_t::recover same height with index.table=%s,height=%ld,account=%s,cache h:%llu,account_index:%s", m_table_info->get_table_addr().c_str(), tablestate->get_block_height(), account.c_str(), cache_height, account_index.dump().c_str());
             continue;
         }
 
         xtxpool_info("xunconfirmed_tx_queue_t::recover update unconfirmed account.table=%s,height=%ld,account=%s,cache_height=%ld,index_height=%ld",
-            m_table_info->get_table_addr().c_str(), _block->get_height(), account.c_str(), cache_height, account_index.get_latest_unit_height());
+            m_table_info->get_table_addr().c_str(), tablestate->get_block_height(), account.c_str(), cache_height, account_index.get_latest_unit_height());
         base::xauto_ptr<base::xvblock_t> unitblock = m_para->get_vblockstore()->load_block_object(base::xvaccount_t(account), account_index.get_latest_unit_height(), account_index.get_latest_unit_viewid(), true);
         if (unitblock != nullptr) {
             xblock_t * block = dynamic_cast<xblock_t *>(unitblock.get());

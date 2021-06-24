@@ -175,6 +175,11 @@ const std::vector<xtxpool_table_lacking_receipt_ids_t> xtxmgr_table_t::get_lacki
     return m_new_receipt_queue.get_lacking_confirm_tx_ids(max_num);
 }
 
+void xtxmgr_table_t::clear_expired_txs() {
+    m_send_tx_queue.clear_expired_txs();
+    m_pending_accounts.clear_expired_txs();
+}
+
 void xtxmgr_table_t::send_tx_queue_to_pending() {
     std::vector<std::shared_ptr<xtx_entry>> expired_send_txs;
     std::vector<std::shared_ptr<xtx_entry>> push_succ_send_txs;

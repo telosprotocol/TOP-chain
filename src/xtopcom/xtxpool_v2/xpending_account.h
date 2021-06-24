@@ -31,13 +31,14 @@ public:
     void set_select_count(uint32_t count);
     void set_select_count_inc(uint32_t count);
     const std::string & get_addr() const;
-    int32_t push_tx(std::shared_ptr<xtx_entry> tx_ent);
-    std::shared_ptr<xtx_entry> pop_tx(const uint256_t & hash, enum_transaction_subtype subtype, bool clear_follower);
+    int32_t push_tx(std::shared_ptr<xtx_entry> tx_ent, const std::string & table_addr);
+    std::shared_ptr<xtx_entry> pop_tx(const uint256_t & hash, enum_transaction_subtype subtype, bool clear_follower, const std::string & table_addr);
     const std::shared_ptr<xtx_entry> find(const uint256_t & hash) const;
-    void updata_latest_nonce(uint64_t latest_nonce, const uint256_t & latest_hash);
+    void updata_latest_nonce(uint64_t latest_nonce, const uint256_t & latest_hash, const std::string & table_addr);
     uint32_t get_select_count() const;
     bool empty();
     uint8_t get_subtype() const {return m_subtype;}
+    void clear_expired_txs(const std::string & table_addr);
 
 private:
     std::vector<std::shared_ptr<xtx_entry>>::iterator find_tx_ent_by_hash(std::vector<std::shared_ptr<xtx_entry>> & txs, const uint256_t & hash) const;
@@ -74,6 +75,7 @@ public:
     ready_accounts_t get_ready_accounts(uint32_t txs_max_num);
     const std::shared_ptr<xtx_entry> find(const std::string & account_addr, const uint256_t & hash) const;
     void updata_latest_nonce(const std::string & account_addr, uint64_t latest_nonce, const uint256_t & latest_hash);
+    void clear_expired_txs();
 
 private:
     xtxpool_table_info_t * m_xtable_info;

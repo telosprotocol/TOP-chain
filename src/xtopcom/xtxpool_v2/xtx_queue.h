@@ -170,9 +170,9 @@ public:
     const std::shared_ptr<xtx_entry> find(const std::string & account_addr, const uint256_t & hash) const;
     void updata_latest_nonce(const std::string & account_addr, uint64_t latest_nonce, const uint256_t & latest_hash);
     bool is_account_need_update(const std::string & account_addr) const;
+    void clear_expired_txs();
 
 private:
-    void clear_expired_txs();
     xsend_tx_queue_internal_t m_send_tx_queue_internal;
     std::map<std::string, std::shared_ptr<xsend_tx_account_t>> m_send_tx_accounts;
 };

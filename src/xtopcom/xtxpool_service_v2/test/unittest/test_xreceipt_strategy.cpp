@@ -22,7 +22,7 @@ TEST_F(test_receipt_strategy, is_time_for_recover) {
     uint32_t select_count = 0;
     uint64_t now = xverifier::xtx_utl::get_gmttime_s();
     for (uint64_t i = 0; i < 256; i ++) {
-        auto ret = xreceipt_strategy_t::is_time_for_recover_unconfirmed_txs(now + i);
+        auto ret = xreceipt_strategy_t::is_time_for_refresh_table(now + i);
         if (ret) {
             select_count++;
         }

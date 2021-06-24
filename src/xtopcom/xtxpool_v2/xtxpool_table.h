@@ -75,7 +75,7 @@ public:
     const std::vector<xcons_transaction_ptr_t> get_resend_txs(uint64_t now);
     void on_block_confirmed(xblock_t * table_block);
     int32_t verify_txs(const std::string & account, const std::vector<xcons_transaction_ptr_t> & txs, uint64_t latest_commit_unit_height);
-    void update_unconfirm_accounts();
+    void refresh_table(bool refresh_unconfirm_txs);
     // void update_non_ready_accounts();
     void update_locked_txs(const std::vector<tx_info_t> & locked_tx_vec);
     void update_receiptid_state(const base::xreceiptid_state_ptr_t & receiptid_state);
@@ -83,6 +83,9 @@ public:
     const std::vector<xtxpool_table_lacking_receipt_ids_t> get_lacking_recv_tx_ids(uint32_t max_num) const;
     const std::vector<xtxpool_table_lacking_confirm_tx_hashs_t> get_lacking_confirm_tx_hashs(uint32_t max_num) const;
     bool need_sync_lacking_receipts() const;
+    void add_shard(xtxpool_shard_info_t * shard);
+    void remove_shard(xtxpool_shard_info_t * shard);
+    bool no_shard() const;
 
 private:
     bool is_account_need_update(const std::string & account_addr) const;
