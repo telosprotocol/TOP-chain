@@ -50,6 +50,11 @@ const std::shared_ptr<xtx_entry> xreceipt_queue_internal_t::find(const uint256_t
 
 int32_t xpeer_table_receipts_t::push_tx(const std::shared_ptr<xtx_entry> & tx_ent) {
     uint64_t new_receipt_id = tx_ent->get_tx()->get_last_action_receipt_id();
+
+    if (new_receipt_id <= m_latest_receipt_id) {
+        return xtxpool_error_tx_duplicate;
+    }
+
     auto it = m_txs.find(new_receipt_id);
     if (it != m_txs.end()) {
         return xtxpool_error_request_tx_repeat;

@@ -7,20 +7,18 @@
 #include "xdata/xtableblock.h"
 NS_BEG2(top, xtxpool_service_v2)
 
-#define recover_unconfirmed_txs_interval (64)  // every 64 seconds recover once.
+#define refresh_table_interval (64)             // every 64 seconds refresh table.
+#define receipt_resend_interval (64)            // every 64 seconds resend once
+#define pull_missing_receipt_interval (64)      // every 64 seconds pull missing receipts once
+#define receipt_sender_select_num (2)           // select 2 nodes to send receipt at the first time
+#define receipt_pull_msg_sender_select_num (1)  // select 1 node to send recept pull msg
+#define receipt_resender_select_num (1)         // select 1 nodes to resend receipt
 
-#define receipt_resend_interval (64)        // every 64 seconds resend once
-#define pull_missing_receipt_interval (64)  // every 64 seconds pull missing receipts once
-
-#define receipt_sender_select_num (2)    // select 2 nodes to send receipt at the first time
-#define receipt_pull_msg_sender_select_num (1) // select 1 node to send recept pull msg
-#define receipt_resender_select_num (1)  // select 1 nodes to resend receipt
-
-bool xreceipt_strategy_t::is_time_for_recover_unconfirmed_txs(uint64_t now) {
-    return (now % recover_unconfirmed_txs_interval) == 0;
+bool xreceipt_strategy_t::is_time_for_refresh_table(uint64_t now) {
+    return (now % refresh_table_interval) == 0;
 }
 
-std::vector<data::xcons_transaction_ptr_t> xreceipt_strategy_t::make_receipts(base::xvblock_t* commit_block, base::xvblock_t* cert_block) {
+std::vector<data::xcons_transaction_ptr_t> xreceipt_strategy_t::make_receipts(base::xvblock_t * commit_block, base::xvblock_t * cert_block) {
     if (!commit_block->check_block_flag(base::enum_xvblock_flag_committed)) {
         xerror("xreceipt_strategy_t::make_receipts block:%s", commit_block->dump().c_str());
         return {};
@@ -107,7 +105,7 @@ bool xreceipt_strategy_t::is_selected_receipt_pull_msg_sender(const std::string 
     // calculate a random position that means which node is selected to send the receipt
     // the random position change by resend_time for rotate the selected node, to avoid same node is selected continuously.
 
-    uint32_t time_pos = now/pull_missing_receipt_interval;
+    uint32_t time_pos = now / pull_missing_receipt_interval;
     uint32_t rand_pos = (base::xhash32_t::digest(table_addr) + time_pos) % shard_size;
     bool ret = is_selected_pos(node_id, rand_pos, select_num, shard_size);
     xinfo("xreceipt_strategy_t::is_selected_receipt_pull_msg_sender ret:%d table:%s rand_pos:%u select_num:%u node_id:%u shard_size:%u now:%llu time_pos:%u",
