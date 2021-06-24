@@ -138,11 +138,10 @@ bool xbatch_packer::start_proposal(base::xblock_mptrs& latest_blocks) {
     if (m_last_view_id != proposal_block->get_viewid()) {
         xunit_warn("xbatch_packer::start_proposal fail-finally viewid changed. %s latest_viewid=%" PRIu64 "",
             proposal_para.dump().c_str(), proposal_block->get_viewid());
-        XMETRICS_COUNTER_INCREMENT("cons_start_proposal_view_changed", 1);
+        XMETRICS_COUNTER_INCREMENT("cons_fail_make_proposal_view_changed", 1);
         return false;
     }
 
-    XMETRICS_COUNTER_INCREMENT("cons_tableblock_start_leader", 1);
     xunit_info("xbatch_packer::start_proposal succ-leader start consensus. block=%s this:%p node:%s xip:%s",
             proposal_block->dump().c_str(), this, m_para->get_resources()->get_account().c_str(), xcons_utl::xip_to_hex(local_xip).c_str());
     return true;
@@ -386,9 +385,9 @@ bool xbatch_packer::on_proposal_finish(const base::xvevent_t & event, xcsobject_
                   || xcons_utl::xip_equals(xip, _evt_obj->get_target_proposal()->get_cert()->get_auditor());
     if (_evt_obj->get_error_code() != xconsensus::enum_xconsensus_code_successful) {
         if (is_leader) {
-            XMETRICS_COUNTER_INCREMENT("cons_tableblock_leader_finish_fail", 1);
+            XMETRICS_GAUGE(metrics::cons_tableblock_leader_finish_fail, 1);
         } else {
-            XMETRICS_COUNTER_INCREMENT("cons_tableblock_backup_finish_fail", 1);
+            XMETRICS_GAUGE(metrics::cons_tableblock_backup_finish_fail, 1);
         }
         // xunit_warn("xbatch_packer::on_proposal_finish fail. leader:%d,error_code:%d,proposal=%s,at_node:%s",
         //     is_leader,
@@ -402,9 +401,9 @@ bool xbatch_packer::on_proposal_finish(const base::xvevent_t & event, xcsobject_
                             "node_xip", xcons_utl::xip_to_hex(get_xip2_addr()));
     } else {
         if (is_leader) {
-            XMETRICS_COUNTER_INCREMENT("cons_tableblock_leader_finish_succ", 1);
+            XMETRICS_GAUGE(metrics::cons_tableblock_leader_finish_succ, 1);
         } else {
-            XMETRICS_COUNTER_INCREMENT("cons_tableblock_backup_finish_succ", 1);
+            XMETRICS_GAUGE(metrics::cons_tableblock_backup_finish_succ, 1);
         }
         // xunit_info("xbatch_packer::on_proposal_finish succ. leader:%d,proposal=%s,at_node:%s",
         //     is_leader,

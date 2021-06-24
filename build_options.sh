@@ -126,8 +126,8 @@ do
         echo "BUILD WITH ENABLE_CREATE_USER"
     ;;
     long_confirm_check)
-        CMAKE_EXTRA_OPTIONS+=" -DDEBUG_LONG_CONFIRM_TX_ENABLE=ON"
-        echo "BUILD WITH DEBUG_LONG_CONFIRM_TX_ENABLE"
+        CMAKE_EXTRA_OPTIONS+=" -DLONG_CONFIRM_CHECK=ON"
+        echo "BUILD WITH LONG_CONFIRM_CHECK"
     ;;
     db_cache)
         CMAKE_EXTRA_OPTIONS+=" -DDB_CACHE=ON"

@@ -110,12 +110,6 @@ int32_t xtable_proposal_input_t::do_write(base::xstream_t & stream) {
     for (uint32_t i = 0; i < count; i++) {
         m_input_txs[i]->serialize_to(stream);
     }
-
-    uint32_t account_count = m_other_accounts.size();
-    stream.write_compact_var(account_count);
-    for (uint32_t i = 0; i < account_count; i++) {
-        stream.write_compact_var(m_other_accounts[i]);
-    }
     return (stream.size() - begin_size);
 }
 
@@ -127,14 +121,6 @@ int32_t xtable_proposal_input_t::do_read(base::xstream_t & stream) {
         xcons_transaction_ptr_t tx = make_object_ptr<xcons_transaction_t>();
         tx->serialize_from(stream);
         m_input_txs.push_back(tx);
-    }
-
-    uint32_t account_count;
-    stream.read_compact_var(account_count);
-    for (uint32_t i = 0; i < account_count; i++) {
-        std::string address;
-        stream.read_compact_var(address);
-        m_other_accounts.push_back(address);
     }
     return (begin_size - stream.size());
 }

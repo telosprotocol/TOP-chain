@@ -22,7 +22,6 @@ enum E_SIMPLE_METRICS_TAG {
     e_simple_begin = 0,
     blockstore_cache_block_total = e_simple_begin,
     dataobject_cur_xbase_type_cons_transaction,
-    cons_tableblock_start_leader,
     vhost_recv_msg,
     vhost_recv_callback,
     dataobject_tx_receipt_t,
@@ -60,6 +59,17 @@ enum E_SIMPLE_METRICS_TAG {
     db_key_block_output_resource,
     db_key_block_state,
     db_key_block_offdata,
+
+    // consensus
+    cons_drand_leader_finish_succ,
+    cons_drand_backup_finish_succ,
+    cons_drand_leader_finish_fail,
+    cons_drand_backup_finish_fail,
+    cons_tableblock_leader_finish_succ,
+    cons_tableblock_backup_finish_succ,
+    cons_tableblock_leader_finish_fail,
+    cons_tableblock_backup_finish_fail,
+
     e_simple_total,
 };
 using xmetircs_tag_t = E_SIMPLE_METRICS_TAG;

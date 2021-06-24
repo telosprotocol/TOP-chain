@@ -20,16 +20,16 @@
 namespace top { namespace data {
 
 #ifdef DEBUG
+#if !defined(ENABLE_CREATE_USER)
 #define ENABLE_CREATE_USER
+#endif
 #endif
 
 enum enum_xtransaction_type {
     xtransaction_type_create_user_account        = 0,    // create user account
 
-    xtransaction_type_run_contract2 = 2,                      // run contract in new mode
     xtransaction_type_run_contract               = 3,    // run contract
     xtransaction_type_transfer                   = 4,    // transfer asset
-    xtransaction_type_clickonce_create_contract_account = 5,// deploy clickonce contract
 
     xtransaction_type_vote                       = 20,
     xtransaction_type_abolish_vote               = 21,
@@ -38,8 +38,6 @@ enum enum_xtransaction_type {
     xtransaction_type_redeem_token_tgas          = 23,   // redeem token
     xtransaction_type_pledge_token_vote          = 27,   // pledge token for disk
     xtransaction_type_redeem_token_vote          = 28,   // redeem token
-
-    xtransaction_type_deploy_wasm_contract       = 29,   // deploy wasm contract
 
     xtransaction_type_max
 };
@@ -166,9 +164,7 @@ class xtransaction_t : public xbase_dataunit_t<xtransaction_t, xdata_type_transa
     int32_t     make_tx_create_contract_account(const data::xproperty_asset & asset_out, uint64_t tgas_limit, const std::string& code);
     int32_t     make_tx_transfer(const data::xproperty_asset & asset);
     int32_t     make_tx_run_contract(const data::xproperty_asset & asset_out, const std::string& function_name, const std::string& para);
-    int32_t make_tx_run_contract2(const data::xproperty_asset & asset_out, const std::string & function_name, const std::string & para);
     int32_t     make_tx_run_contract(std::string const & function_name, std::string const & param);
-    int32_t make_tx_run_contract2(std::string const & function_name, std::string const & param);
 
  public:  // get apis
     uint256_t           digest()const {return m_transaction_hash; }

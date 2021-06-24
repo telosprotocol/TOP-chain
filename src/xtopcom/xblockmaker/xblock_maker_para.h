@@ -105,6 +105,7 @@ class xtable_proposal_input_t : public xbase_dataunit_t<xtable_proposal_input_t,
 
  private:
     std::vector<xcons_transaction_ptr_t>    m_input_txs;
+ private: // local cache
     std::vector<std::string>                m_other_accounts;  // for empty or full unit accounts
 };
 

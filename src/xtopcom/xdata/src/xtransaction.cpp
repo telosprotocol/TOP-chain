@@ -294,27 +294,9 @@ int32_t xtransaction_t::make_tx_run_contract(const data::xproperty_asset & asset
     return xsuccess;
 }
 
-int32_t xtransaction_t::make_tx_run_contract2(const data::xproperty_asset & asset_out, const std::string & function_name, const std::string & para) {
-    set_tx_type(xtransaction_type_run_contract2);
-    int32_t ret = xaction_asset_out::serialze_to(m_source_action, asset_out);
-    if (ret) {
-        return ret;
-    }
-    ret = xaction_run_contract::serialze_to(m_target_action, function_name, para);
-    if (ret) {
-        return ret;
-    }
-    return xsuccess;
-}
-
 int32_t xtransaction_t::make_tx_run_contract(std::string const & function_name, std::string const & param) {
     data::xproperty_asset asset_out{0};
     return make_tx_run_contract(asset_out, function_name, param);
-}
-
-int32_t xtransaction_t::make_tx_run_contract2(std::string const & function_name, std::string const & param) {
-    data::xproperty_asset asset_out{0};
-    return make_tx_run_contract2(asset_out, function_name, param);
 }
 
 int32_t xtransaction_t::set_different_source_target_address(const std::string & src_addr, const std::string & dst_addr) {

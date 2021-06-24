@@ -91,10 +91,24 @@ void xblock_maker_t::set_latest_block(const xblock_ptr_t & block) {
     m_latest_blocks[block->get_height()] = block;
 }
 
+void xblock_maker_t::reset_latest_cert_block(const xblock_ptr_t & block) {
+    // reset new latest cert block and delete any higher block
+    uint64_t highest_height = block->get_height();
+    for (auto iter = m_latest_blocks.begin(); iter != m_latest_blocks.end();) {
+        if (iter->first > highest_height) {
+            iter = m_latest_blocks.erase(iter);
+        } else {
+            iter++;
+        }
+    }
+    set_latest_block(block);
+}
+
+
 bool xblock_maker_t::load_and_cache_enough_blocks(const xblock_ptr_t & latest_block, uint64_t & from_height, uint64_t & lacked_block_height) {
     XMETRICS_TIME_RECORD("cons_tableblock_verfiy_proposal_load_and_cache_enough_blocks");
     xblock_ptr_t current_block = latest_block;
-    set_latest_block(current_block);
+    reset_latest_cert_block(latest_block);
     uint32_t count = 1;
     while (current_block->get_height() > 0) {
         if (count >= m_keep_latest_blocks_max) {
@@ -138,10 +152,17 @@ const xblock_ptr_t & xblock_maker_t::get_highest_height_block() const {
     return m_latest_blocks.rbegin()->second;
 }
 
-bool xblock_maker_t::check_latest_blocks() const {
+bool xblock_maker_t::check_latest_blocks(const xblock_ptr_t & latest_block) const {
     uint32_t count = m_latest_blocks.size();
     if (count == 0) {
         xassert(0);
+        return false;
+    }
+
+    if (get_highest_height_block()->get_block_hash() != latest_block->get_block_hash()
+        || get_highest_height_block()->get_height() != latest_block->get_height()) {
+        xerror("xblock_maker_t::check_latest_blocks fail-check latest cert block.latest_block=%s,highest=%s",
+            latest_block->dump().c_str(), get_highest_height_block()->dump().c_str());
         return false;
     }
 

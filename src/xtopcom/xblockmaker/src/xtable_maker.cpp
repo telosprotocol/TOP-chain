@@ -50,12 +50,6 @@ int32_t xtable_maker_t::check_latest_state(const xblock_ptr_t & latest_block) {
         return xsuccess;
     }
 
-    if (!get_latest_blocks().empty() && get_highest_height_block()->get_height() > latest_block->get_height()) {
-        xwarn("xtable_maker_t::check_latest_state fail-latest block too old, account=%s,cache_height=%ld,para_height=%ld",
-            get_account().c_str(), get_highest_height_block()->get_height(), latest_block->get_height());
-        return xblockmaker_error_latest_table_blocks_invalid;
-    }
-
     m_check_state_success = false;
     uint64_t from_height = 0;
     uint64_t lacked_block_height = 0;
@@ -65,7 +59,7 @@ int32_t xtable_maker_t::check_latest_state(const xblock_ptr_t & latest_block) {
         return xblockmaker_error_latest_table_blocks_invalid;
     }
 
-    if (false == check_latest_blocks()) {
+    if (false == check_latest_blocks(latest_block)) {
         xerror("xtable_maker_t::check_latest_state fail-check_latest_blocks.latest_block=%s",
             latest_block->dump().c_str());
         return xblockmaker_error_latest_table_blocks_invalid;
@@ -277,7 +271,7 @@ bool xtable_maker_t::create_other_makers(const xtablemaker_para_t & table_para, 
             unitmakers[unit_account] = unitmaker;
         } else {
             // other unit maker must create success
-            xwarn("xtable_maker_t::create_non_lightunit_makers fail-check_latest_state,%s,account=%s,error_code=%s",
+            xwarn("xtable_maker_t::create_non_lightunit_makers fail-can not make next block,%s,account=%s,error_code=%s",
                 cs_para.dump().c_str(), unit_account.c_str(), chainbase::xmodule_error_to_str(ret).c_str());
             return false;
         }
@@ -365,7 +359,7 @@ xblock_ptr_t xtable_maker_t::make_light_table(bool is_leader, const xtablemaker_
         xwarn("xtable_maker_t::make_light_table fail-verify_proposal other accounts.proposal=%s,leader_size=%zu,actual_size=%zu",
             cs_para.dump().c_str(), table_para.get_other_accounts().size(), table_para.get_proposal()->get_other_accounts().size());
         table_result.m_make_block_error_code = xblockmaker_error_tx_check;
-        XMETRICS_COUNTER_INCREMENT("cons_fail_backup_tx_check_invalid", 1);
+        XMETRICS_COUNTER_INCREMENT("cons_fail_verify_proposal_unit_count", 1);
         return nullptr;
     }
 
@@ -467,7 +461,7 @@ xblock_ptr_t xtable_maker_t::make_proposal(xtablemaker_para_t & table_para,
     int32_t ret = check_latest_state(latest_cert_block);
     if (ret != xsuccess) {
         xwarn("xtable_maker_t::make_proposal fail-check_latest_state. %s", cs_para.dump().c_str());
-        XMETRICS_COUNTER_INCREMENT("cons_fail_table_state_invalid", 1);
+        XMETRICS_COUNTER_INCREMENT("cons_fail_make_proposal_table_check_latest_state", 1);
         return nullptr;
     }
 
@@ -496,14 +490,14 @@ int32_t xtable_maker_t::verify_proposal(base::xvblock_t* proposal_block, const x
     std::lock_guard<std::mutex> l(m_lock);
 
     // check table maker state
-    const xblock_ptr_t & latest_cert_block = cs_para.get_latest_cert_block();
+    const xblock_ptr_t & latest_cert_block = cs_para.get_latest_cert_block();  // should update to this new table cert block
     xassert(table_para.get_tablestate() != nullptr);
 
     int32_t ret = check_latest_state(latest_cert_block);
     if (ret != xsuccess) {
         xwarn("xtable_maker_t::verify_proposal fail-check_latest_state.proposal=%s",
             proposal_block->dump().c_str());
-        XMETRICS_COUNTER_INCREMENT("cons_fail_table_state_invalid", 1);
+        XMETRICS_COUNTER_INCREMENT("cons_fail_verify_proposal_table_check_latest_state", 1);
         return ret;
     }
 
@@ -547,6 +541,7 @@ int32_t xtable_maker_t::verify_proposal(base::xvblock_t* proposal_block, const x
     if (false == verify_proposal_with_local(proposal_block, local_block.get())) {
         xwarn("xtable_maker_t::verify_proposal fail-verify_proposal_with_local. proposal=%s",
             proposal_block->dump().c_str());
+        XMETRICS_COUNTER_INCREMENT("cons_fail_verify_proposal_table_with_local", 1);
         return xblockmaker_error_proposal_not_match_local;
     }
 
@@ -557,6 +552,54 @@ int32_t xtable_maker_t::verify_proposal(base::xvblock_t* proposal_block, const x
 
 bool xtable_maker_t::verify_proposal_with_local(base::xvblock_t *proposal_block, base::xvblock_t *local_block) const {
     XMETRICS_TIME_RECORD("cons_tableblock_verfiy_proposal_imp_with_local");
+
+    const std::vector<base::xventity_t*> & _proposal_table_inentitys = proposal_block->get_input()->get_entitys();
+    const std::vector<base::xventity_t*> & _local_table_inentitys = local_block->get_input()->get_entitys();
+    if (_proposal_table_inentitys.size() != _local_table_inentitys.size()) {
+        xerror("xtable_maker_t::verify_proposal_with_local fail-entity size not same. %s %s",
+            proposal_block->dump().c_str(),
+            local_block->dump().c_str());
+        return false;
+    }
+    size_t entity_count = _proposal_table_inentitys.size();
+    for (size_t i = 0; i < entity_count; i++) {
+        base::xvinentity_t* _proposal_inentity = dynamic_cast<base::xvinentity_t*>(_proposal_table_inentitys[i]);
+        base::xvinentity_t* _local_inentity = dynamic_cast<base::xvinentity_t*>(_local_table_inentitys[i]);
+        if (_proposal_inentity == nullptr || _local_inentity == nullptr) {
+            xerror("xproposal_maker_t::verify_proposal_input fail-get inentity. %s", proposal_block->dump().c_str());  // should never happen
+            return false;
+        }
+        if (i == 0) {  // entity#0 used for table self
+            if (_proposal_inentity->get_extend_data() != _local_inentity->get_extend_data()) {
+                xerror("xproposal_maker_t::verify_proposal_input fail-get inentity. %s", proposal_block->dump().c_str());  // should never happen
+                return false;
+            }
+            continue;
+        }
+
+        base::xtable_inentity_extend_t _proposal_extend;
+        _proposal_extend.serialize_from_string(_proposal_inentity->get_extend_data());
+        const xobject_ptr_t<base::xvheader_t> & _proposal_unit_header = _proposal_extend.get_unit_header();
+        base::xtable_inentity_extend_t _local_extend;
+        _local_extend.serialize_from_string(_local_inentity->get_extend_data());
+        const xobject_ptr_t<base::xvheader_t> & _local_unit_header = _local_extend.get_unit_header();
+        if (_proposal_unit_header->get_account() != _local_unit_header->get_account()
+            || _proposal_unit_header->get_height() != _local_unit_header->get_height()
+            || _proposal_unit_header->get_block_class() != _local_unit_header->get_block_class()
+            || _proposal_inentity->get_actions().size() != _local_inentity->get_actions().size()) {
+            xerror("xtable_maker_t::verify_proposal_with_local fail-unit entity not match. %s,leader=%s,local=%s",
+                proposal_block->dump().c_str(),
+                data::xblock_t::dump_header(_proposal_unit_header.get()).c_str(), data::xblock_t::dump_header(_local_unit_header.get()).c_str());
+            return false;
+        }
+        if (_proposal_inentity->get_extend_data() != _local_inentity->get_extend_data()) {
+            xwarn("xtable_maker_t::verify_proposal_with_local fail-extend data not match. %s,leader=%s,local=%s",
+                proposal_block->dump().c_str(),
+                data::xblock_t::dump_header(_proposal_unit_header.get()).c_str(), data::xblock_t::dump_header(_local_unit_header.get()).c_str());
+            return false;
+        }
+    }
+
     if (local_block->get_input_hash() != proposal_block->get_input_hash()) {
         xwarn("xtable_maker_t::verify_proposal_with_local fail-input hash not match. %s %s",
             proposal_block->dump().c_str(),

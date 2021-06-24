@@ -114,13 +114,13 @@ public:
         } else if (now - tx_time < 60) {
             m_receipt_recv_num_by_6_clock++;
         } else if (now - tx_time < 120) {
-            m_receipt_recv_num_6to12_clock++;
+            m_receipt_recv_num_7to12_clock++;
         } else if (now - tx_time < 300) {
             m_receipt_recv_num_13to30_clock++;
-            xtxpool_info("xtxpool_t::update_receipt_recv_num too late,now:%llu tx_time:%llu,tx:%s", now, tx_time, tx->dump().c_str());
+            xtxpool_info("xtxpool_t::update_receipt_recv_num receipt came too late,delay:%llu,tx:%s", now - tx_time, tx->dump().c_str());
         } else {
             m_receipt_recv_num_exceed_30_clock++;
-            xtxpool_warn("xtxpool_t::update_receipt_recv_num too late,now:%llu tx_time:%llu,tx:%s", now, tx_time, tx->dump().c_str());
+            xtxpool_warn("xtxpool_t::update_receipt_recv_num receipt came delay exceed 300s,delay:%llu,tx:%s", now - tx_time, tx->dump().c_str());
         }
     }
     void inc_push_tx_send_cur_num(uint32_t num) {
@@ -154,52 +154,106 @@ public:
         m_receipt_repeat_num += num;
     }
 
-    std::string state_dump() const {
-        char local_param_buf[256];
-        xprintf(local_param_buf,
-                sizeof(local_param_buf),
-                "table num:%u unconfirm num:%d received recv:%u conf:%u pulled recv:%u conf:%u",
-                m_table_num.load(),
-                m_unconfirm_tx_num.load(),
-                m_received_recv_tx_num.load(),
-                m_received_confirm_tx_num.load(),
-                m_pulled_recv_tx_num.load(),
-                m_pulled_confirm_tx_num.load());
-        return std::string(local_param_buf);
+    void print() const {
+        XMETRICS_PACKET_INFO("txpool_state",
+                             "table_num",
+                             m_table_num.load(),
+                             "unconfirm",
+                             m_unconfirm_tx_num.load(),
+                             "received_recv",
+                             m_received_recv_tx_num.load(),
+                             "received_confirm",
+                             m_received_recv_tx_num.load(),
+                             "pulled_recv",
+                             m_pulled_recv_tx_num.load(),
+                             "pulled_confirm",
+                             m_pulled_confirm_tx_num.load());
+
+        XMETRICS_PACKET_INFO("txpool_receipt_delay",
+                             "1clk",
+                             m_receipt_recv_num_by_1_clock.load(),
+                             "2clk",
+                             m_receipt_recv_num_by_2_clock.load(),
+                             "3clk",
+                             m_receipt_recv_num_by_3_clock.load(),
+                             "4clk",
+                             m_receipt_recv_num_by_4_clock.load(),
+                             "5clk",
+                             m_receipt_recv_num_by_5_clock.load(),
+                             "6clk",
+                             m_receipt_recv_num_by_6_clock.load(),
+                             "7to12clk",
+                             m_receipt_recv_num_7to12_clock.load(),
+                             "13to30clk",
+                             m_receipt_recv_num_13to30_clock.load(),
+                             "ex30clk",
+                             m_receipt_recv_num_exceed_30_clock.load());
+
+        XMETRICS_PACKET_INFO("txpool_cache",
+                             "send_cur",
+                             m_push_tx_send_cur_num.load(),
+                             "recv_cur",
+                             m_push_tx_recv_cur_num.load(),
+                             "confirm_cur",
+                             m_push_tx_confirm_cur_num.load(),
+                             "unconfirm_cur",
+                             m_unconfirm_tx_cache_num.load(),
+                             "push_send_fail",
+                             m_push_tx_send_fail_num.load(),
+                             "push_receipt_fail",
+                             m_push_tx_receipt_fail_num.load(),
+                             "duplicate",
+                             m_receipt_duplicate_num.load(),
+                             "repeat",
+                             m_receipt_repeat_num.load());
     }
 
-    std::string receipt_delay_dump() const {
-        char local_param_buf[256];
-        xprintf(local_param_buf,
-                sizeof(local_param_buf),
-                "receipt recv num by clock:%u:%u:%u:%u:%u:%u:%u:%u:%u",
-                m_receipt_recv_num_by_1_clock.load(),
-                m_receipt_recv_num_by_2_clock.load(),
-                m_receipt_recv_num_by_3_clock.load(),
-                m_receipt_recv_num_by_4_clock.load(),
-                m_receipt_recv_num_by_5_clock.load(),
-                m_receipt_recv_num_by_6_clock.load(),
-                m_receipt_recv_num_6to12_clock.load(),
-                m_receipt_recv_num_13to30_clock.load(),
-                m_receipt_recv_num_exceed_30_clock.load());
-        return std::string(local_param_buf);
-    }
+    // std::string state_dump() const {
+    //     char local_param_buf[256];
+    //     xprintf(local_param_buf,
+    //             sizeof(local_param_buf),
+    //             "table num:%u unconfirm num:%d received recv:%u conf:%u pulled recv:%u conf:%u",
+    //             m_table_num.load(),
+    //             m_unconfirm_tx_num.load(),
+    //             m_received_recv_tx_num.load(),
+    //             m_received_confirm_tx_num.load(),
+    //             m_pulled_recv_tx_num.load(),
+    //             m_pulled_confirm_tx_num.load());
+    //     return std::string(local_param_buf);
+    // }
 
-    std::string cache_dump() const {
-        char local_param_buf[256];
-        xprintf(local_param_buf,
-                sizeof(local_param_buf),
-                "tx cur cache:%u:%u:%u unconfirm cache:%u push fail:%u:%u dupulicate:%u repeat:%u",
-                m_push_tx_send_cur_num.load(),
-                m_push_tx_recv_cur_num.load(),
-                m_push_tx_confirm_cur_num.load(),
-                m_unconfirm_tx_cache_num.load(),
-                m_push_tx_send_fail_num.load(),
-                m_push_tx_receipt_fail_num.load(),
-                m_receipt_duplicate_num.load(),
-                m_receipt_repeat_num.load());
-        return std::string(local_param_buf);
-    }
+    // std::string receipt_delay_dump() const {
+    //     char local_param_buf[256];
+    //     xprintf(local_param_buf,
+    //             sizeof(local_param_buf),
+    //             "receipt recv num by clock:%u:%u:%u:%u:%u:%u:%u:%u:%u",
+    //             m_receipt_recv_num_by_1_clock.load(),
+    //             m_receipt_recv_num_by_2_clock.load(),
+    //             m_receipt_recv_num_by_3_clock.load(),
+    //             m_receipt_recv_num_by_4_clock.load(),
+    //             m_receipt_recv_num_by_5_clock.load(),
+    //             m_receipt_recv_num_by_6_clock.load(),
+    //             m_receipt_recv_num_7to12_clock.load(),
+    //             m_receipt_recv_num_13to30_clock.load(),
+    //             m_receipt_recv_num_exceed_30_clock.load());
+    //     return std::string(local_param_buf);
+    // }
+
+    // std::string cache_dump() const {
+    //     char local_param_buf[256];
+    //     xprintf(local_param_buf,
+    //             sizeof(local_param_buf),
+    //             "tx cur cache:%u:%u:%u unconfirm cache:%u push fail:%u:%u dupulicate:%u repeat:%u",
+    //             m_push_tx_send_cur_num.load(),
+    //             m_push_tx_recv_cur_num.load(),
+    //             m_push_tx_confirm_cur_num.load(),
+    //             m_unconfirm_tx_cache_num.load(),
+    //             m_push_tx_send_fail_num.load(),
+    //             m_push_tx_receipt_fail_num.load(),
+    //             m_receipt_duplicate_num.load(),
+    //             m_receipt_repeat_num.load());
+    //     return std::string(local_param_buf);
+    // }
 
 private:
     std::atomic<uint32_t> m_table_num{0};
@@ -215,7 +269,7 @@ private:
     std::atomic<uint32_t> m_receipt_recv_num_by_4_clock{0};
     std::atomic<uint32_t> m_receipt_recv_num_by_5_clock{0};
     std::atomic<uint32_t> m_receipt_recv_num_by_6_clock{0};
-    std::atomic<uint32_t> m_receipt_recv_num_6to12_clock{0};
+    std::atomic<uint32_t> m_receipt_recv_num_7to12_clock{0};
     std::atomic<uint32_t> m_receipt_recv_num_13to30_clock{0};
     std::atomic<uint32_t> m_receipt_recv_num_exceed_30_clock{0};
     std::atomic<uint32_t> m_push_tx_send_cur_num{0};
@@ -277,7 +331,6 @@ public:
         // XMETRICS_COUNTER_SET("table_send_tx_cur" + get_address(), 0);
         // XMETRICS_COUNTER_SET("table_recv_tx_cur" + get_address(), 0);
         // XMETRICS_COUNTER_SET("table_confirm_tx_cur" + get_address(), 0);
-
     }
     const std::string & get_table_addr() const {
         return get_address();
