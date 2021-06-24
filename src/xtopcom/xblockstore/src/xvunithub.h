@@ -76,6 +76,10 @@ namespace top
             virtual base::xauto_ptr<base::xvbindex_t> get_latest_genesis_connected_index(const base::xvaccount_t & account,bool ask_full_search) override; //block has connected to genesis
             virtual base::xauto_ptr<base::xvblock_t>  get_latest_committed_full_block(const base::xvaccount_t & account) override;
 
+            virtual uint64_t get_latest_connected_block_height(const base::xvaccount_t & account) override;
+            virtual uint64_t get_latest_genesis_connected_block_height(const base::xvaccount_t & account) override;
+            virtual uint64_t get_latest_executed_block_height(const base::xvaccount_t & account) override;
+
             //ask_full_load decide load header only or include input/output(that can be loaded seperately by load_block_input/output)
             virtual base::xblock_vector               load_block_object(const base::xvaccount_t & account,const uint64_t height) override;
             virtual base::xauto_ptr<base::xvblock_t>  load_block_object(const base::xvaccount_t & account,const uint64_t height,const uint64_t viewid,bool ask_full_load) override;

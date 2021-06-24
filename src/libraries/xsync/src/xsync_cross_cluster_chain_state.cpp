@@ -60,12 +60,10 @@ void xsync_cross_cluster_chain_state_t::on_timer() {
                 const std::string &address = it.first;
                 const xchain_info_t &chain_info = it.second;
 
-                base::xauto_ptr<base::xvblock_t> latest_start_block = m_sync_store->get_latest_start_block(address, archive.first);
-                base::xauto_ptr<base::xvblock_t> latest_end_block = m_sync_store->get_latest_end_block(address, archive.first);
                 xchain_state_info_t info;
                 info.address = address;
-                info.start_height = latest_start_block->get_height();
-                info.end_height = latest_end_block->get_height();
+                info.start_height = m_sync_store->get_latest_start_block_height(address, archive.first);
+                info.end_height = m_sync_store->get_latest_end_block_height(address, archive.first);
                 info_list.push_back(info);
             }
 
@@ -103,13 +101,10 @@ void xsync_cross_cluster_chain_state_t::handle_message(const vnetwork::xvnode_ad
             sync_policy = enum_chain_sync_pocliy_full;
         }
 
-        base::xauto_ptr<base::xvblock_t> latest_start_block = m_sync_store->get_latest_start_block(address, sync_policy);
-        base::xauto_ptr<base::xvblock_t> latest_end_block = m_sync_store->get_latest_end_block(address, sync_policy);
-
-        uint64_t local_end_height = latest_end_block->get_height();
-        if (peer_end_height > local_end_height) {
+        uint64_t latest_end_block_height = m_sync_store->get_latest_end_block_height(address, sync_policy);
+        if (peer_end_height > latest_end_block_height) {
             xsync_dbg("cross_cluster_chain_state notify %s,local(start_height=%lu,end_height=%lu) peer(start_height=%lu,end_height=%lu)", 
-                        address.c_str(), latest_start_block->get_height(), local_end_height, peer_start_height, peer_end_height);
+                        address.c_str(), m_sync_store->get_latest_start_block_height(address, sync_policy), latest_end_block_height, peer_start_height, peer_end_height);
 
             mbus::xevent_ptr_t ev = make_object_ptr<mbus::xevent_behind_download_t>(address, 
                     peer_start_height, peer_end_height, sync_policy, network_self, from_address, reason);

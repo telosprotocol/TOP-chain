@@ -66,6 +66,18 @@ public:
         return nullptr;
     }
 
+    uint64_t get_latest_connected_block_height(const base::xvaccount_t & account) override {
+        return 0;
+    }
+
+    uint64_t get_latest_genesis_connected_block_height(const base::xvaccount_t & account) override {
+        return 0;
+    }
+    
+    uint64_t get_latest_executed_block_height(const base::xvaccount_t & account) override {
+        return 0;
+    }
+
     base::xblock_mptrs get_latest_blocks(const base::xvaccount_t &) override {
         return {};
     }

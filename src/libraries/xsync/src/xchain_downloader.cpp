@@ -381,7 +381,6 @@ xsync_command_execute_result xchain_downloader_t::execute_download(uint64_t star
     }
 
     xauto_ptr<xvblock_t> end_vblock = m_sync_store->get_latest_end_block(m_address, sync_policy);
-    xblock_ptr_t end_block = autoptr_to_blockptr(end_vblock);
 
     int ret = 0;
     if (sync_policy == enum_chain_sync_pocliy_fast) {
@@ -590,14 +589,13 @@ xsync_command_execute_result xchain_downloader_t::execute_next_download(const st
         m_address.c_str(), current_vblock->get_height(), current_vblock->get_viewid(), to_hex_str(current_vblock->get_block_hash()).c_str(), m_sync_range_mgr.get_behind_height());
 
     m_request = nullptr;
-    base::xauto_ptr<base::xvblock_t> vblock = m_sync_store->get_latest_end_block(m_address,enum_chain_sync_pocliy_fast);
-    current_block = autoptr_to_blockptr(vblock);
-    if (current_block->get_height() >= m_sync_range_mgr.get_behind_height()){
+    auto current_block_height = m_sync_store->get_latest_end_block_height(m_address,enum_chain_sync_pocliy_fast);
+    if (current_block_height >= m_sync_range_mgr.get_behind_height()){
         clear();
         return finish;
     }
 
-    return handle_next(current_block->get_height());
+    return handle_next(current_block_height);
 }
 
 bool xchain_object_t::pick(std::pair<uint64_t, uint64_t> &interval, vnetwork::xvnode_address_t &self_addr, vnetwork::xvnode_address_t &target_addr){

@@ -57,6 +57,16 @@ namespace top
             auto_xblockacct_ptr account_obj(target_table->get_lock()); \
             get_block_account(target_table,account_vid.get_address(),account_obj); \
 
+        #define LOAD_BLOCKACCOUNT_PLUGIN2(account_obj,account_vid) \
+            if(is_close())\
+            {\
+                xwarn_err("xvblockstore has closed at store_path=%s",m_store_path.c_str());\
+                return 0;\
+            }\
+            base::xvtable_t * target_table = base::xvchain_t::instance().get_table(account_vid.get_xvid()); \
+            auto_xblockacct_ptr account_obj(target_table->get_lock()); \
+            get_block_account(target_table,account_vid.get_address(),account_obj); \
+
         xvblockstore_impl::xvblockstore_impl(const std::string & blockstore_path,base::xcontext_t & _context,const int32_t target_thread_id)
             :base::xvblockstore_t(_context,target_thread_id)
         {
@@ -227,6 +237,24 @@ namespace top
             }
 
             return nullptr;
+        }
+
+        uint64_t xvblockstore_impl::get_latest_connected_block_height(const base::xvaccount_t & account)
+        {
+            LOAD_BLOCKACCOUNT_PLUGIN2(account_obj,account);
+            return account_obj->get_latest_connected_block_height();
+        }
+
+        uint64_t xvblockstore_impl::get_latest_genesis_connected_block_height(const base::xvaccount_t & account)
+        {
+            LOAD_BLOCKACCOUNT_PLUGIN2(account_obj,account);
+            return account_obj->get_latest_genesis_connected_block_height();
+        }
+
+        uint64_t xvblockstore_impl::get_latest_executed_block_height(const base::xvaccount_t & account)
+        {
+            LOAD_BLOCKACCOUNT_PLUGIN2(account_obj,account);
+            return account_obj->get_latest_executed_block_height();
         }
 
         //one api to get latest_commit/latest_lock/latest_cert for better performance
