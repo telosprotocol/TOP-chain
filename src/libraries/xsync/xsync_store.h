@@ -33,6 +33,13 @@ public:
 
     virtual void update_latest_genesis_connected_block(const std::string & account) = 0;
 
+    virtual uint64_t get_genesis_block_height(const std::string & account) = 0;
+    virtual uint64_t get_latest_connected_block_height(const std::string & account) = 0;
+    virtual uint64_t get_latest_genesis_connected_block_height(const std::string & account) = 0;
+    virtual uint64_t get_latest_executed_block_height(const std::string & account) = 0;
+    virtual uint64_t get_latest_start_block_height(const std::string & account, enum_chain_sync_policy sync_policy) = 0;
+    virtual uint64_t get_latest_end_block_height(const std::string & account, enum_chain_sync_policy sync_policy) = 0;
+
     const static uint64_t m_undeterministic_heights = 2;
 };
 
@@ -53,6 +60,13 @@ public:
     virtual std::vector<data::xvblock_ptr_t> load_block_objects(const std::string & tx_hash, const base::enum_transaction_subtype type) {return std::vector<data::xvblock_ptr_t>{};}
 
     virtual void update_latest_genesis_connected_block(const std::string & account) override;
+
+    virtual uint64_t get_genesis_block_height(const std::string & account) override;
+    virtual uint64_t get_latest_connected_block_height(const std::string & account) override;
+    virtual uint64_t get_latest_genesis_connected_block_height(const std::string & account) override;
+    virtual uint64_t get_latest_executed_block_height(const std::string & account) override;
+    virtual uint64_t get_latest_start_block_height(const std::string & account, enum_chain_sync_policy sync_policy) override;
+    virtual uint64_t get_latest_end_block_height(const std::string & account, enum_chain_sync_policy sync_policy) override;
 };
 
 class xsync_store_t : public xsync_store_face_t {
@@ -73,6 +87,13 @@ public:
     std::vector<data::xvblock_ptr_t> load_block_objects(const std::string & tx_hash, const base::enum_transaction_subtype type) override;
 
     virtual void update_latest_genesis_connected_block(const std::string & account) override;
+
+    virtual uint64_t get_genesis_block_height(const std::string & account) override;
+    virtual uint64_t get_latest_connected_block_height(const std::string & account) override;
+    virtual uint64_t get_latest_genesis_connected_block_height(const std::string & account) override;
+    virtual uint64_t get_latest_executed_block_height(const std::string & account) override;
+    virtual uint64_t get_latest_start_block_height(const std::string & account, enum_chain_sync_policy sync_policy) override;
+    virtual uint64_t get_latest_end_block_height(const std::string & account, enum_chain_sync_policy sync_policy) override;
 
 private:
     std::string m_vnode_id;

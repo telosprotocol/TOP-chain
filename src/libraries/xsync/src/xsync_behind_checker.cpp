@@ -78,8 +78,7 @@ void xsync_behind_checker_t::on_behind_check_event(const mbus::xevent_ptr_t &e) 
 void xsync_behind_checker_t::check_one(const std::string &address, enum_chain_sync_policy sync_policy, const vnetwork::xvnode_address_t &self_addr, const std::string &reason) {
 
     base::xauto_ptr<base::xvblock_t> latest_start_block = m_sync_store->get_latest_start_block(address, sync_policy);
-    base::xauto_ptr<base::xvblock_t> latest_end_block = m_sync_store->get_latest_end_block(address, sync_policy);
-    uint64_t local_end_height = latest_end_block->get_height();
+    uint64_t latest_end_block_height = m_sync_store->get_latest_end_block_height(address, sync_policy);
 
     uint64_t peer_start_height = 0;
     uint64_t peer_end_height = 0;
@@ -91,7 +90,7 @@ void xsync_behind_checker_t::check_one(const std::string &address, enum_chain_sy
         if (peer_end_height == 0)
             return;
 
-        if (local_end_height >= peer_end_height) {
+        if (latest_end_block_height >= peer_end_height) {
             xblock_ptr_t block = autoptr_to_blockptr(latest_start_block);
             if (!((sync_policy == enum_chain_sync_pocliy_fast) && !block->is_full_state_block())) {
                 return;
@@ -99,7 +98,7 @@ void xsync_behind_checker_t::check_one(const std::string &address, enum_chain_sy
         }
 
         xsync_info("behind_checker notify %s,local(start_height=%lu,end_height=%lu) peer(start_height=%lu,end_height=%lu) sync_policy(%d) reason=%s", 
-            address.c_str(), latest_start_block->get_height(), local_end_height, peer_start_height, peer_end_height, (int32_t)sync_policy, reason.c_str());
+            address.c_str(), latest_start_block->get_height(), latest_end_block_height, peer_start_height, peer_end_height, (int32_t)sync_policy, reason.c_str());
 
         mbus::xevent_ptr_t ev = make_object_ptr<mbus::xevent_behind_download_t>(address, peer_start_height, peer_end_height, sync_policy, self_addr, peer_addr, reason);
         m_downloader->push_event(ev);

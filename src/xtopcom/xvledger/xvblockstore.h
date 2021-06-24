@@ -166,6 +166,10 @@ namespace top
             virtual xauto_ptr<xvblock_t>  get_latest_committed_full_block(const xvaccount_t & account)  = 0; // full block with committed status, genesis is a full block
             virtual xblock_mptrs          get_latest_blocks(const xvaccount_t & account)      = 0; //better performance for batch operations
 
+            virtual uint64_t get_latest_connected_block_height(const xvaccount_t & account) = 0;
+            virtual uint64_t get_latest_genesis_connected_block_height(const xvaccount_t & account) = 0;
+            virtual uint64_t get_latest_executed_block_height(const xvaccount_t & account) = 0;
+
             //mostly used for query cert-only block,note:return any block at target height if viewid is 0
             virtual xblock_vector         query_block(const xvaccount_t & account,const uint64_t height) = 0;//might mutiple certs at same height
             virtual xauto_ptr<xvblock_t>  query_block(const xvaccount_t & account,const uint64_t height,const uint64_t viewid) = 0;

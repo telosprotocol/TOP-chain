@@ -38,6 +38,25 @@ base::xauto_ptr<base::xvblock_t> xsync_store_t::get_latest_cert_block(const std:
     return m_blockstore->get_latest_cert_block(_vaddress);
 }
 
+uint64_t xsync_store_t::get_genesis_block_height(const std::string & account) {
+    return 0;
+}
+
+uint64_t xsync_store_t::get_latest_connected_block_height(const std::string & account) {
+    base::xvaccount_t _vaddress(account);
+    return m_blockstore->get_latest_connected_block_height(_vaddress);
+}
+
+uint64_t xsync_store_t::get_latest_genesis_connected_block_height(const std::string & account) {
+    base::xvaccount_t _vaddress(account);
+    return m_blockstore->get_latest_genesis_connected_block_height(_vaddress);    
+}
+
+uint64_t xsync_store_t::get_latest_executed_block_height(const std::string & account) {
+    base::xvaccount_t _vaddress(account);
+    return m_blockstore->get_latest_executed_block_height(_vaddress);    
+}
+
 base::xauto_ptr<base::xvblock_t> xsync_store_t::load_block_object(const std::string & account, const uint64_t height, bool ask_full_load) {
     base::xvaccount_t _vaddress(account);
     // TODO(jimmy) need changed
@@ -57,6 +76,50 @@ base::xauto_ptr<base::xvblock_t> xsync_store_t::get_latest_full_block(const std:
 
 base::xauto_ptr<base::xvblock_t> xsync_store_t::query_block(const base::xvaccount_t &account, uint64_t height, const std::string &hash) {
     return m_blockstore->load_block_object(account, height, hash, true);
+}
+
+uint64_t xsync_store_t::get_latest_start_block_height(const std::string & account, enum_chain_sync_policy sync_policy) {
+    base::xvaccount_t _vaddress(account);
+    if (sync_policy == enum_chain_sync_pocliy_fast) {
+        base::xauto_ptr<base::xvblock_t> _full_block = m_blockstore->get_latest_committed_full_block(account);
+        if (_full_block != nullptr && _full_block->get_block_level() == base::enum_xvblock_level_table) {
+            if (!_full_block->is_full_state_block()) {
+                auto _executed_block_height = m_blockstore->get_latest_executed_block_height(account);
+                if (_full_block->get_height() <= _executed_block_height) {
+                    if (false == base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_full_block_offsnapshot(_full_block.get())) {
+                        xwarn("xsync_store_t::get_latest_start_block_height fail-get off snapshot.block=%s", _full_block->dump().c_str());
+                    }
+                } else {
+                    xwarn("xsync_store_t::get_latest_start_block_height fail-full height less than execute height.block=%s", _full_block->dump().c_str());
+                }
+            }
+        }
+        return _full_block->get_height();
+    } else if (sync_policy == enum_chain_sync_pocliy_full) {
+        return get_genesis_block_height(account);
+    }
+
+    return 0;
+}
+
+uint64_t xsync_store_t::get_latest_end_block_height(const std::string & account, enum_chain_sync_policy sync_policy) {
+    base::xvaccount_t _vaddress(account);
+    uint64_t connect_height = 0;
+    if (sync_policy == enum_chain_sync_pocliy_fast) {
+        connect_height = m_blockstore->get_latest_connected_block_height(account);
+    } else if (sync_policy == enum_chain_sync_pocliy_full) {
+        connect_height = m_blockstore->get_latest_genesis_connected_block_height(account);
+    }
+
+    if (connect_height == 0) {
+        if (load_block_object(account, connect_height + 1, false) == nullptr) {
+            return 0;
+        }
+        if (load_block_object(account, connect_height + 2, false) == nullptr) {
+            return 1;
+        }
+    }
+    return connect_height + 2;
 }
 
 base::xauto_ptr<base::xvblock_t> xsync_store_t::get_latest_start_block(const std::string & account, enum_chain_sync_policy sync_policy) {

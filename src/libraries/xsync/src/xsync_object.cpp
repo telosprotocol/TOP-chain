@@ -165,10 +165,9 @@ std::string xtop_sync_object::status() const {
         if (!data::xdatautil::extract_parts(address, table_prefix, table_id))
             continue;
 
-        base::xauto_ptr<base::xvblock_t> current_block = m_sync_store->get_latest_end_block(address, enum_chain_sync_pocliy_full);
         base::xauto_ptr<base::xvblock_t> latest_block = m_sync_store->get_latest_cert_block(address);
         xsync_progress_t info;
-        info.cur_height = current_block->get_height();
+        info.cur_height = m_sync_store->get_latest_end_block_height(address, enum_chain_sync_pocliy_full);
         info.max_height = latest_block->get_height();
 
         uint64_t height = 0;
