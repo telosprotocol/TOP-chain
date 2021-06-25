@@ -8,6 +8,7 @@
 #include "xtxpool_v2/xtxpool_error.h"
 #include "xtxpool_v2/xtxpool_log.h"
 #include "xtxpool_v2/xtxpool_para.h"
+#include "xvledger/xvledger.h"
 
 namespace top {
 namespace xtxpool_v2 {
@@ -111,11 +112,17 @@ void xtxpool_t::subscribe_tables(uint8_t zone, uint16_t front_table_id, uint16_t
         m_shards.push_back(shard);
     }
 
+    uint32_t add_table_num = 0;
     for (uint16_t i = front_table_id; i <= back_table_id; i++) {
         std::string table_addr = data::xblocktool_t::make_address_table_account((base::enum_xchain_zone_index)zone, i);
-        m_tables[zone][i] = std::make_shared<xtxpool_table_t>(m_para.get(), table_addr, shard.get(), &m_statistic);
+        if (m_tables[zone][i] == nullptr) {
+            m_tables[zone][i] = std::make_shared<xtxpool_table_t>(m_para.get(), table_addr, shard.get(), &m_statistic);
+            add_table_num++;
+        } else {
+            m_tables[zone][i]->add_shard(shard.get());
+        }
     }
-    m_statistic.inc_table_num(back_table_id - front_table_id + 1);
+    m_statistic.inc_table_num(add_table_num);
     shard->subscribe();
 }
 
@@ -125,19 +132,24 @@ void xtxpool_t::unsubscribe_tables(uint8_t zone, uint16_t front_table_id, uint16
     xassert(front_table_id <= back_table_id);
     xassert(back_table_id < enum_vbucket_has_tables_count);
     std::lock_guard<std::mutex> lck(m_mutex[zone]);
+    uint32_t remove_table_num = 0;
     for (auto it = m_shards.begin(); it != m_shards.end(); it++) {
         if ((*it)->is_ids_match(zone, front_table_id, back_table_id)) {
             (*it)->unsubscribe();
             if ((*it)->get_sub_count() == 0) {
                 for (uint16_t i = front_table_id; i <= back_table_id; i++) {
-                    m_tables[zone][i] = nullptr;
+                    m_tables[zone][i]->remove_shard((*it).get());
+                    if (m_tables[zone][i]->no_shard()) {
+                        m_tables[zone][i] = nullptr;
+                        remove_table_num++;
+                    }
                 }
-                m_statistic.dec_table_num(back_table_id - front_table_id + 1);
             }
             m_shards.erase(it);
             break;
         }
     }
+    m_statistic.dec_table_num(remove_table_num);
 }
 
 void xtxpool_t::on_block_confirmed(xblock_t * block) {
@@ -171,11 +183,11 @@ const std::vector<xcons_transaction_ptr_t> xtxpool_t::get_resend_txs(uint8_t zon
     return {};
 }
 
-void xtxpool_t::update_unconfirm_accounts(uint8_t zone, uint16_t subaddr) {
+void xtxpool_t::refresh_table(uint8_t zone, uint16_t subaddr, bool refresh_unconfirm_txs) {
     xassert(is_table_subscribed(zone, subaddr));
     xassert(m_tables[zone][subaddr] != nullptr);
     if (m_tables[zone][subaddr] != nullptr) {
-        m_tables[zone][subaddr]->update_unconfirm_accounts();
+        m_tables[zone][subaddr]->refresh_table(refresh_unconfirm_txs);
     }
 }
 

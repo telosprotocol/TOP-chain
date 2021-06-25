@@ -1348,8 +1348,10 @@ data::xblock_t*
 xaccount_context_t::get_block_by_height(const std::string & owner, uint64_t height) const {
     // TODO(jimmy)
     base::xvaccount_t _vaddr(owner);
-    base::xauto_ptr<base::xvblock_t> _block = base::xvchain_t::instance().get_xblockstore()->load_block_object(_vaddr, height, base::enum_xvblock_flag_committed, true);
+    base::xauto_ptr<base::xvblock_t> _block = base::xvchain_t::instance().get_xblockstore()->load_block_object(_vaddr, height, base::enum_xvblock_flag_committed, false);
     if (_block != nullptr) {
+        // system contract only need input for full-table
+        base::xvchain_t::instance().get_xblockstore()->load_block_input(_vaddr, _block.get());
         _block->add_ref();
         return dynamic_cast<data::xblock_t*>(_block.get());
     }

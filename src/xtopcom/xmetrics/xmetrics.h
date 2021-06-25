@@ -70,6 +70,20 @@ enum E_SIMPLE_METRICS_TAG {
     cons_tableblock_leader_finish_fail,
     cons_tableblock_backup_finish_fail,
 
+    // store
+    store_db_read,
+    store_db_write,
+    store_db_delete,
+    store_state_read,
+    store_state_write,
+    store_state_delete,
+    store_block_read,
+    store_block_index_read,
+    store_block_input_read,
+    store_block_output_read,
+    store_block_write_call,
+    store_block_write,
+    store_block_delete,
     e_simple_total,
 };
 using xmetircs_tag_t = E_SIMPLE_METRICS_TAG;

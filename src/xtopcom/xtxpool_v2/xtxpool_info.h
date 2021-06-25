@@ -25,19 +25,19 @@ using namespace top::data;
 class xtx_counter_t {
 public:
     void send_tx_inc(int32_t count) {
-        xassert(m_send_tx_count >= 0);
+        xassert(m_send_tx_count + count >= 0);
         m_send_tx_count += count;
     }
     void recv_tx_inc(int32_t count) {
-        xassert(m_recv_tx_count >= 0);
+        xassert(m_recv_tx_count + count >= 0);
         m_recv_tx_count += count;
     }
     void conf_tx_inc(int32_t count) {
-        xassert(m_conf_tx_count >= 0);
+        xassert(m_conf_tx_count + count >= 0);
         m_conf_tx_count += count;
     }
     void unconfirm_tx_inc(int32_t count) {
-        xassert(m_unconfirm_tx_count >= 0);
+        xassert(m_unconfirm_tx_count + count >= 0);
         m_unconfirm_tx_count += count;
     }
     void set_unconfirm_tx_num(uint32_t num) {
@@ -306,6 +306,15 @@ public:
     uint8_t get_sub_count() const {
         return m_sub_count;
     }
+    uint8_t get_zone() const {
+        return m_zone;
+    }
+    uint16_t get_front_table_id() const {
+        return m_front_table_id;
+    }
+    uint16_t get_back_table_id() const {
+        return m_back_table_id;
+    }
 
 private:
     uint8_t m_sub_count{0};
@@ -316,8 +325,8 @@ private:
 
 class xtxpool_table_info_t : public base::xvaccount_t {
 public:
-    xtxpool_table_info_t(const std::string & address, xtxpool_shard_info_t * shard, xtxpool_statistic_t * statistic)
-      : base::xvaccount_t(address), m_shard(shard), m_statistic(statistic) {
+    xtxpool_table_info_t(const std::string & address, xtxpool_shard_info_t * shard, xtxpool_statistic_t * statistic) : base::xvaccount_t(address), m_statistic(statistic) {
+        m_shards.push_back(shard);
     }
     ~xtxpool_table_info_t() {
         m_statistic->dec_push_tx_send_cur_num(m_counter.get_send_tx_count());
@@ -337,51 +346,70 @@ public:
     }
     void send_tx_inc(int32_t count) {
         m_counter.send_tx_inc(count);
-        m_shard->send_tx_inc(count);
+        for (auto & shard : m_shards) {
+            xtxpool_dbg("send_tx_inc shard(%p) table:%s old send num:%d inc num:%d", shard, get_address().c_str(), shard->get_send_tx_count(), count);
+            shard->send_tx_inc(count);
+        }
+
         m_statistic->inc_push_tx_send_cur_num(count);
         // XMETRICS_COUNTER_INCREMENT("txpool_push_tx_send_cur", count);
         // XMETRICS_COUNTER_INCREMENT("table_send_tx_cur" + get_address(), count);
-        xdbg("send_tx_inc table %s send queue size:%u,shard send queue:%u", get_address().c_str(), m_counter.get_send_tx_count(), m_shard->get_send_tx_count());
+        xdbg("send_tx_inc table %s send queue size:%u", get_address().c_str(), m_counter.get_send_tx_count());
     }
     void send_tx_dec(int32_t count) {
         m_counter.send_tx_inc(-count);
-        m_shard->send_tx_inc(-count);
+        for (auto & shard : m_shards) {
+            xtxpool_dbg("send_tx_inc shard(%p) table:%s old send num:%d dec num:%d", shard, get_address().c_str(), shard->get_send_tx_count(), count);
+            shard->send_tx_inc(-count);
+        }
         m_statistic->dec_push_tx_send_cur_num(count);
         // XMETRICS_COUNTER_DECREMENT("txpool_push_tx_send_cur", count);
         // XMETRICS_COUNTER_DECREMENT("table_send_tx_cur" + get_address(), count);
-        xdbg("send_tx_dec table %s send queue size:%u,shard send queue:%u", get_address().c_str(), m_counter.get_send_tx_count(), m_shard->get_send_tx_count());
+        xdbg("send_tx_dec table %s send queue size:%u", get_address().c_str(), m_counter.get_send_tx_count());
     }
     void recv_tx_inc(int32_t count) {
         m_counter.recv_tx_inc(count);
-        m_shard->recv_tx_inc(count);
+        for (auto & shard : m_shards) {
+            xtxpool_dbg("send_tx_inc shard(%p) table:%s old recv num:%d inc num:%d", shard, get_address().c_str(), shard->get_recv_tx_count(), count);
+            shard->recv_tx_inc(count);
+        }
         m_statistic->inc_push_tx_recv_cur_num(count);
         // XMETRICS_COUNTER_INCREMENT("txpool_push_tx_recv_cur", count);
         // XMETRICS_COUNTER_INCREMENT("table_recv_tx_cur" + get_address(), count);
-        xdbg("recv_tx_inc table %s recv queue size:%u,shard recv queue:%u", get_address().c_str(), m_counter.get_recv_tx_count(), m_shard->get_recv_tx_count());
+        xdbg("recv_tx_inc table %s recv queue size:%u", get_address().c_str(), m_counter.get_recv_tx_count());
     }
     void recv_tx_dec(int32_t count) {
         m_counter.recv_tx_inc(-count);
-        m_shard->recv_tx_inc(-count);
+        for (auto & shard : m_shards) {
+            xtxpool_dbg("send_tx_inc shard(%p) table:%s old recv num:%d dec num:%d", shard, get_address().c_str(), shard->get_recv_tx_count(), count);
+            shard->recv_tx_inc(-count);
+        }
         m_statistic->dec_push_tx_recv_cur_num(count);
         // XMETRICS_COUNTER_DECREMENT("txpool_push_tx_recv_cur", count);
         // XMETRICS_COUNTER_DECREMENT("table_recv_tx_cur" + get_address(), count);
-        xdbg("recv_tx_dec table %s recv queue size:%u,shard recv queue:%u", get_address().c_str(), m_counter.get_recv_tx_count(), m_shard->get_recv_tx_count());
+        xdbg("recv_tx_dec table %s recv queue size:%u", get_address().c_str(), m_counter.get_recv_tx_count());
     }
     void conf_tx_inc(int32_t count) {
         m_counter.conf_tx_inc(count);
-        m_shard->conf_tx_inc(count);
+        for (auto & shard : m_shards) {
+            xtxpool_dbg("send_tx_inc shard(%p) table:%s old confirm num:%d inc num:%d", shard, get_address().c_str(), shard->get_conf_tx_count(), count);
+            shard->conf_tx_inc(count);
+        }
         m_statistic->inc_push_tx_confirm_cur_num(count);
         // XMETRICS_COUNTER_INCREMENT("txpool_push_tx_confirm_cur", count);
         // XMETRICS_COUNTER_INCREMENT("table_confirm_tx_cur" + get_address(), count);
-        xdbg("conf_tx_inc table %s confirm queue size:%u,shard confirm queue:%u", get_address().c_str(), m_counter.get_conf_tx_count(), m_shard->get_conf_tx_count());
+        xdbg("conf_tx_inc table %s confirm queue size:%u", get_address().c_str(), m_counter.get_conf_tx_count());
     }
     void conf_tx_dec(int32_t count) {
         m_counter.conf_tx_inc(-count);
-        m_shard->conf_tx_inc(-count);
+        for (auto & shard : m_shards) {
+            xtxpool_dbg("send_tx_inc shard(%p) table:%s old confirm num:%d dec num:%d", shard, get_address().c_str(), shard->get_conf_tx_count(), count);
+            shard->conf_tx_inc(-count);
+        }
         m_statistic->dec_push_tx_confirm_cur_num(count);
         // XMETRICS_COUNTER_DECREMENT("txpool_push_tx_confirm_cur", count);
         // XMETRICS_COUNTER_DECREMENT("table_confirm_tx_cur" + get_address(), count);
-        xdbg("conf_tx_dec table %s confirm queue size:%u,shard confirm queue:%u", get_address().c_str(), m_counter.get_conf_tx_count(), m_shard->get_conf_tx_count());
+        xdbg("conf_tx_dec table %s confirm queue size:%u", get_address().c_str(), m_counter.get_conf_tx_count());
     }
 
     void tx_inc(enum_transaction_subtype subtype, int32_t count) {
@@ -406,34 +434,27 @@ public:
 
     bool is_send_tx_reached_upper_limit() {
         if (m_counter.get_send_tx_count() >= table_send_tx_queue_size_max || m_counter.get_conf_tx_count() >= table_conf_tx_queue_size_max ||
-            m_shard->get_send_tx_count() >= shard_send_tx_queue_size_max) {
-            xwarn("is_send_tx_reached_upper_limit table %s send queue size:%u,confirm queue size:%u,shard send queue:%u",
+            any_shard_send_tx_reached_upper_limit()) {
+            xwarn("is_send_tx_reached_upper_limit table %s send queue size:%u,confirm queue size:%u",
                   get_address().c_str(),
                   m_counter.get_send_tx_count(),
-                  m_counter.get_conf_tx_count(),
-                  m_shard->get_send_tx_count());
+                  m_counter.get_conf_tx_count());
             return true;
         }
         return false;
     }
 
     bool is_recv_tx_reached_upper_limit() {
-        if (m_counter.get_recv_tx_count() >= table_recv_tx_queue_size_max || m_shard->get_recv_tx_count() >= shard_recv_tx_queue_size_max) {
-            xwarn("is_recv_tx_reached_upper_limit table %s recv queue size:%u,shard recv queue:%u",
-                  get_address().c_str(),
-                  m_counter.get_recv_tx_count(),
-                  m_shard->get_recv_tx_count());
+        if (m_counter.get_recv_tx_count() >= table_recv_tx_queue_size_max || any_shard_recv_tx_reached_upper_limit()) {
+            xwarn("is_recv_tx_reached_upper_limit table %s recv queue size:%u", get_address().c_str(), m_counter.get_recv_tx_count());
             return true;
         }
         return false;
     }
 
     bool is_confirm_tx_reached_upper_limit() {
-        if (m_counter.get_conf_tx_count() >= table_conf_tx_queue_size_max || m_shard->get_conf_tx_count() >= shard_conf_tx_queue_size_max) {
-            xwarn("is_confirm_tx_reached_upper_limit table %s confirm queue size:%u,shard confirm queue:%u",
-                  get_address().c_str(),
-                  m_counter.get_conf_tx_count(),
-                  m_shard->get_conf_tx_count());
+        if (m_counter.get_conf_tx_count() >= table_conf_tx_queue_size_max || any_shard_confirm_tx_reached_upper_limit()) {
+            xwarn("is_confirm_tx_reached_upper_limit table %s confirm queue size:%u", get_address().c_str(), m_counter.get_conf_tx_count());
             return true;
         }
         return false;
@@ -441,7 +462,13 @@ public:
 
     void set_unconfirm_tx_num(int32_t num) {
         int32_t old_num = m_counter.get_unconfirm_tx_count();
-        m_shard->unconfirm_tx_inc(num - old_num);
+        if (num == old_num) {
+            return;
+        }
+        for (auto & shard : m_shards) {
+            xtxpool_dbg("set_unconfirm_tx_num shard(%p) table:%s old unconfirm num:%d inc num:%d", shard, get_address().c_str(), shard->get_unconfirm_tx_count(), num - old_num);
+            shard->unconfirm_tx_inc(num - old_num);
+        }
         m_statistic->inc_unconfirm_tx_num(num - old_num);
         m_counter.set_unconfirm_tx_num(num);
     }
@@ -454,8 +481,59 @@ public:
         return m_statistic;
     }
 
+    bool any_shard_send_tx_reached_upper_limit() {
+        for (auto & shard : m_shards) {
+            if (shard->get_send_tx_count() >= shard_send_tx_queue_size_max) {
+                xwarn("any_shard_send_tx_reached_upper_limit table %s shard send queue size:%u", get_address().c_str(), shard->get_send_tx_count());
+                return true;
+            }
+        }
+        return false;
+    }
+
+    bool any_shard_recv_tx_reached_upper_limit() {
+        for (auto & shard : m_shards) {
+            if (shard->get_recv_tx_count() >= shard_recv_tx_queue_size_max) {
+                xwarn("any_shard_recv_tx_reached_upper_limit table %s shard recv queue size:%u", get_address().c_str(), shard->get_recv_tx_count());
+                return true;
+            }
+        }
+        return false;
+    }
+
+    bool any_shard_confirm_tx_reached_upper_limit() {
+        for (auto & shard : m_shards) {
+            if (shard->get_conf_tx_count() >= shard_conf_tx_queue_size_max) {
+                xwarn("any_shard_confirm_tx_reached_upper_limit table %s shard confirm queue size:%u", get_address().c_str(), shard->get_conf_tx_count());
+                return true;
+            }
+        }
+        return false;
+    }
+
+    void add_shard(xtxpool_shard_info_t * shard) {
+        shard->send_tx_inc(m_counter.get_send_tx_count());
+        shard->recv_tx_inc(m_counter.get_recv_tx_count());
+        shard->conf_tx_inc(m_counter.get_conf_tx_count());
+        shard->unconfirm_tx_inc(m_counter.get_unconfirm_tx_count());
+        m_shards.push_back(shard);
+    }
+
+    void remove_shard(xtxpool_shard_info_t * shard) {
+        for (auto it = m_shards.begin(); it != m_shards.end(); it++) {
+            if ((*it)->is_ids_match(shard->get_zone(), shard->get_front_table_id(), shard->get_back_table_id())) {
+                m_shards.erase(it);
+                return;
+            }
+        }
+    }
+
+    bool no_shard() const {
+        return m_shards.empty();
+    }
+
 private:
-    xtxpool_shard_info_t * m_shard{nullptr};
+    std::vector<xtxpool_shard_info_t *> m_shards;
     xtx_counter_t m_counter{};
     xtxpool_statistic_t * m_statistic{nullptr};
 };

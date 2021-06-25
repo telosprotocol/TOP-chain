@@ -781,14 +781,29 @@ namespace top
                 for(uint64_t h = m_meta->_highest_genesis_connect_height + 1; h <= m_meta->_highest_commit_block_height; ++h)
                 {
                     const uint64_t try_height = m_meta->_highest_genesis_connect_height + 1;
-                    if(load_index(try_height) == 0)//block of this height are not present
+                    if(load_index(try_height) == 0) //missed block
                         break;
-
-                    if(try_height == (m_meta->_highest_genesis_connect_height + 1))//if nothing changed
-                        break;//which means blocks of 'try_height' is not connected prevs
-
-                    if(try_height >= m_meta->_highest_commit_block_height)//done all
+                
+                    base::xauto_ptr<base::xvbindex_t> next_commit(query_index(try_height, base::enum_xvblock_flag_committed));
+                    if(!next_commit) //dont have commited block
                         break;
+                    
+                    if( (0 == m_meta->_highest_genesis_connect_height) && m_meta->_highest_genesis_connect_hash.empty())
+                    {
+                        //could be exception case that not event inited yet,so makeup
+                        m_meta->_highest_genesis_connect_height = next_commit->get_height();
+                        m_meta->_highest_genesis_connect_hash   = next_commit->get_block_hash();
+                    }
+                    else if(   (next_commit->get_height() == (m_meta->_highest_genesis_connect_height + 1))
+                       && (next_commit->get_last_block_hash() == m_meta->_highest_genesis_connect_hash) )
+                    {
+                        m_meta->_highest_genesis_connect_height = next_commit->get_height();
+                        m_meta->_highest_genesis_connect_hash   = next_commit->get_block_hash();
+                    }
+                    else
+                    {
+                        break;
+                    }
                 }
 
                 xinfo("xblockacct_t::load_latest_genesis_connected_index,navigate to new height(%" PRIu64 ") vs commit-height(%" PRIu64 ")  of account(%s)",m_meta->_highest_genesis_connect_height,m_meta->_highest_commit_block_height,get_address().c_str());
@@ -991,7 +1006,6 @@ namespace top
         {
             if(NULL == index_ptr)
                 return false;
-
             xdbg("xblockacct_t::load_block_object,target index(%s)",index_ptr->dump().c_str());
             if(index_ptr->get_this_block() != NULL)
                 return true;
@@ -1006,7 +1020,6 @@ namespace top
 
             if(index_ptr->get_block_class() == base::enum_xvblock_class_nil)
                 return true;
-
             xdbg("xblockacct_t::load_index_input,target index(%s)",index_ptr->dump().c_str());
             if(index_ptr->get_this_block() == NULL)
                 read_block_object_from_db(index_ptr);
@@ -1024,7 +1037,6 @@ namespace top
 
             if(index_ptr->get_block_class() == base::enum_xvblock_class_nil)
                 return true;
-
             xdbg("xblockacct_t::load_index_output,target index(%s)",index_ptr->dump().c_str());
             if(index_ptr->get_this_block() == NULL)
                 read_block_object_from_db(index_ptr);
@@ -1058,11 +1070,20 @@ namespace top
             if(nullptr == new_raw_block)
                 return false;
 
+            XMETRICS_GAUGE(metrics::store_block_write_call, 1);
+
+            // xbft will store repeat block, check it firstly
+            if(query_index(new_raw_block->get_height(), new_raw_block->get_viewid()) != nullptr)
+            {
+                xwarn("xblockacct_t::store_block,repeat block=%s",new_raw_block->dump().c_str());
+                return true;
+            }
+
             if(   (false == new_raw_block->is_input_ready(true))
                || (false == new_raw_block->is_output_ready(true))
                || (false == new_raw_block->is_deliver(true)) )//must have full valid data and has mark as enum_xvblock_flag_authenticated
             {
-                xerror("xblockacct_t::store_block,undevlier block=%s,input_ready=%d and output_ready=%d",new_raw_block->dump().c_str(),new_raw_block->is_input_ready(true),new_raw_block->is_output_ready(true));
+                xwarn("xblockacct_t::store_block,undevlier block=%s",new_raw_block->dump().c_str());
                 return false;
             }
 
@@ -1122,7 +1143,7 @@ namespace top
 
             if(block_ptr->get_height() == 0)
                 return false; //not allow delete genesis block
-
+            XMETRICS_GAUGE(metrics::store_block_delete, 1);
             xkinfo("xblockacct_t::delete_block,delete block:[chainid:%u->account(%s)->height(%" PRIu64 ")->viewid(%" PRIu64 ") at store(%s)",block_ptr->get_chainid(),block_ptr->get_account().c_str(),block_ptr->get_height(),block_ptr->get_viewid(),get_blockstore_path().c_str());
 
             if(false == m_all_blocks.empty())
@@ -1724,7 +1745,7 @@ namespace top
         {
             if( (NULL == index_ptr) || (NULL == block_ptr) )
                 return false;
-
+            XMETRICS_GAUGE(metrics::store_block_write, 1);
             if(write_block_object_to_db(index_ptr,block_ptr) == false)
                 return false;
 
@@ -1787,6 +1808,7 @@ namespace top
         {
             if(index_ptr->get_this_block() == NULL)
             {
+                XMETRICS_GAUGE(metrics::store_block_read, 1);
                 const std::string blockobj_key = base::xvdbkey_t::create_block_object_key(*this,index_ptr->get_block_hash());
                 const std::string blockobj_bin = base::xvchain_t::instance().get_xdbstore()->get_value(blockobj_key);
                 if(blockobj_bin.empty())
@@ -1887,6 +1909,7 @@ namespace top
                 if(  (block_ptr->get_input()->get_resources_hash().empty() == false) //link resoure data
                    &&(block_ptr->get_input()->has_resource_data() == false) ) //but dont have resource avaiable now
                 {
+                    XMETRICS_GAUGE(metrics::store_block_input_read, 1);
                     //which means resource are stored at seperatedly
                     const std::string input_resource_key = base::xvdbkey_t::create_block_input_resource_key(*this,block_ptr->get_block_hash());
 
@@ -1982,6 +2005,7 @@ namespace top
                 if(  (block_ptr->get_output()->get_resources_hash().empty() == false) //link resoure data
                    &&(block_ptr->get_output()->has_resource_data() == false) ) //but dont have resource avaiable now
                 {
+                    XMETRICS_GAUGE(metrics::store_block_output_read, 1);
                     //which means resource are stored at seperatedly
                     const std::string output_resource_key = base::xvdbkey_t::create_block_output_resource_key(*this,block_ptr->get_block_hash());
 
@@ -2264,6 +2288,7 @@ namespace top
 
         base::xvbindex_t*   xblockacct_t::read_index_from_db(const std::string & index_db_key_path)
         {
+            XMETRICS_GAUGE(metrics::store_block_index_read, 1);
             const std::string index_bin = base::xvchain_t::instance().get_xdbstore()->get_value(index_db_key_path);
             if(index_bin.empty())
             {

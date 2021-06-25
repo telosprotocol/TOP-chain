@@ -62,22 +62,25 @@ const std::vector<xblock_ptr_t> & xtable_block_t::unpack_and_get_units(bool need
 }
 
 uint32_t xtable_block_t::get_txs_count() const {
-    // TODO(jimmy) tx count == actions count ?
+    // txs count is equal to actions count, mini-block is enough
     uint32_t tx_count = 0;
-    auto & units = get_tableblock_units();
-    for (auto & unit : units) {
-        tx_count += unit->get_txs_count();
+    const std::vector<base::xventity_t*> & _table_inentitys = get_input()->get_entitys();
+    uint32_t entitys_count = _table_inentitys.size();
+    for (uint32_t index = 1; index < entitys_count; index++) {  // unit entity from index#1
+        base::xvinentity_t* _table_unit_inentity = dynamic_cast<base::xvinentity_t*>(_table_inentitys[index]);
+        tx_count += (uint32_t)_table_unit_inentity->get_actions().size();
     }
     return tx_count;
 }
 
 int64_t xtable_block_t::get_pledge_balance_change_tgas() const {
-    int64_t pledge_tgas_change = 0;
-    auto & units = get_tableblock_units();
-    for (auto & unit : units) {
-        pledge_tgas_change += unit->get_pledge_balance_change_tgas();
+    auto out_entity = get_output()->get_primary_entity();
+    xassert(out_entity != nullptr);
+    int64_t tgas_balance_change = 0;
+    if (out_entity != nullptr) {
+        tgas_balance_change = base::xstring_utl::toint64(out_entity->query_value(base::xvoutentity_t::key_name_tgas_pledge_change()));
     }
-    return pledge_tgas_change;
+    return tgas_balance_change;
 }
 
 bool  xtable_block_t::extract_sub_blocks(std::vector<xobject_ptr_t<base::xvblock_t>> & sub_blocks) {

@@ -227,8 +227,8 @@ void xtxpool_service_mgr::stop() {
 
 void xtxpool_service_mgr::on_timer() {
     uint64_t now = xverifier::xtx_utl::get_gmttime_s();
-    bool is_time_for_recover_unconfirmed_txs = xreceipt_strategy_t::is_time_for_recover_unconfirmed_txs(now);
-    typedef std::tuple<base::enum_xchain_zone_index, uint32_t, uint32_t> table_boundary_t;
+    bool is_time_for_refresh_table = xreceipt_strategy_t::is_time_for_refresh_table(now);
+    typedef std::tuple<base::enum_xchain_zone_index, uint32_t, uint32_t, bool> table_boundary_t;
     std::vector<table_boundary_t> table_boundarys;
     std::vector<std::shared_ptr<xtxpool_service_face>> pull_lacking_receipts_service_vec;
     std::vector<std::shared_ptr<xtxpool_service_face>> receipts_recender_service_vec;
@@ -241,16 +241,17 @@ void xtxpool_service_mgr::on_timer() {
             if (service->is_send_receipt_role()) {
                 pull_lacking_receipts_service_vec.insert(pull_lacking_receipts_service_vec.begin(), service);
                 receipts_recender_service_vec.push_back(service);
-                if (is_time_for_recover_unconfirmed_txs) {
-                    base::enum_xchain_zone_index zone_id;
-                    uint32_t fount_table_id;
-                    uint32_t back_table_id;
-                    service->get_service_table_boundary(zone_id, fount_table_id, back_table_id);
-                    table_boundary_t table_boundary(zone_id, fount_table_id, back_table_id);
-                    table_boundarys.push_back(table_boundary);
-                }
             } else {
                 pull_lacking_receipts_service_vec.push_back(service);
+            }
+
+            if (is_time_for_refresh_table) {
+                base::enum_xchain_zone_index zone_id;
+                uint32_t fount_table_id;
+                uint32_t back_table_id;
+                service->get_service_table_boundary(zone_id, fount_table_id, back_table_id);
+                table_boundary_t table_boundary(zone_id, fount_table_id, back_table_id, service->is_send_receipt_role());
+                table_boundarys.push_back(table_boundary);
             }
         }
     }
@@ -260,9 +261,10 @@ void xtxpool_service_mgr::on_timer() {
         base::enum_xchain_zone_index zone_id = std::get<0>(table_boundary);
         uint32_t fount_table_id = std::get<1>(table_boundary);
         uint32_t back_table_id = std::get<2>(table_boundary);
-        xinfo("xtxpool_service_mgr::on_timer, recover unconfirmed txs for zone:%d table:%d:%d", zone_id, fount_table_id, back_table_id);
+        bool refresh_unconfirm_txs = std::get<3>(table_boundary);
+        xinfo("xtxpool_service_mgr::on_timer, refresh table zone:%d table:%d:%d refresh_unconfirm_txs:%d", zone_id, fount_table_id, back_table_id, refresh_unconfirm_txs);
         for (uint32_t table_id = fount_table_id; table_id <= back_table_id; table_id++) {
-            m_para->get_txpool()->update_unconfirm_accounts(zone_id, table_id);
+            m_para->get_txpool()->refresh_table(zone_id, table_id, refresh_unconfirm_txs);
             // m_para->get_txpool()->update_non_ready_accounts(zone_id, table_id);
         }
     }

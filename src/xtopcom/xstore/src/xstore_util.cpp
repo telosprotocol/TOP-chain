@@ -26,6 +26,7 @@ std::map<std::string, xmetircs_tag_t> key_end = {
 };
 
 void xstore_util::metirc_key_value(std::string const& key, std::string const& value, bool add_or_minus) {
+#ifdef DB_KV_STATISTIC
     assert(key.size() > 3);
 
     for (auto const& start_item: key_start) {
@@ -52,6 +53,7 @@ void xstore_util::metirc_key_value(std::string const& key, std::string const& va
            break;
         }
     }
+#endif
 }
 
 bool xstore_util::endwith(std::string const& str, std::string const& suffix) {

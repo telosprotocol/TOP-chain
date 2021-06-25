@@ -7,6 +7,7 @@
 #include "../xvstatestore.h"
 #include "../xvledger.h"
 #include "../xvdbkey.h"
+#include "xmetrics/xmetrics.h"
 
 namespace top
 {
@@ -25,6 +26,7 @@ namespace top
                 xerror("xvblkstatestore_t::write_state_to_db,nil block hash for state(%s)",target_state.dump().c_str());
                 return false;
             }
+            XMETRICS_GAUGE(metrics::store_state_write, 1);
             xvaccount_t target_account(target_state.get_address());
             const std::string state_db_key = xvdbkey_t::create_block_state_key(target_account,target_block_hash);
 
@@ -59,6 +61,7 @@ namespace top
         }
         xvbstate_t*     xvblkstatestore_t::read_state_from_db(const xvaccount_t & target_account, uint64_t block_height, const std::string & block_hash)
         {
+            XMETRICS_GAUGE(metrics::store_state_read, 1);
             const std::string state_db_key = xvdbkey_t::create_block_state_key(target_account,block_hash);
             const std::string state_db_bin = xvchain_t::instance().get_xdbstore()->get_value(state_db_key);
             if(state_db_bin.empty())
@@ -86,17 +89,20 @@ namespace top
 
         bool   xvblkstatestore_t::delete_state_of_db(const xvbindex_t & target_index)
         {
+            XMETRICS_GAUGE(metrics::store_state_delete, 1);
             const std::string state_db_key = xvdbkey_t::create_block_state_key(target_index,target_index.get_block_hash());
             return xvchain_t::instance().get_xdbstore()->delete_value(state_db_key);
         }
         bool   xvblkstatestore_t::delete_state_of_db(const xvblock_t & target_block)
         {
+            XMETRICS_GAUGE(metrics::store_state_delete, 1);
             xvaccount_t target_account(target_block.get_account());
             const std::string state_db_key = xvdbkey_t::create_block_state_key(target_account,target_block.get_block_hash());
             return xvchain_t::instance().get_xdbstore()->delete_value(state_db_key);
         }
         bool   xvblkstatestore_t::delete_state_of_db(const xvaccount_t & target_account,const std::string & block_hash)
         {
+            XMETRICS_GAUGE(metrics::store_state_delete, 1);
             const std::string state_db_key = xvdbkey_t::create_block_state_key(target_account,block_hash);
             return xvchain_t::instance().get_xdbstore()->delete_value(state_db_key);
         }
@@ -267,13 +273,17 @@ namespace top
 
 
 
-        xobject_ptr_t<xvbstate_t> xvblkstatestore_t::rebuild_bstate(const xobject_ptr_t<xvbstate_t> & base_state, const std::map<uint64_t, xobject_ptr_t<xvblock_t>> & latest_blocks) {
+        xobject_ptr_t<xvbstate_t> xvblkstatestore_t::rebuild_bstate(const xvaccount_t & target_account, const xobject_ptr_t<xvbstate_t> & base_state, const std::map<uint64_t, xobject_ptr_t<xvblock_t>> & latest_blocks) {
             xobject_ptr_t<xvbstate_t> current_state = base_state;
             for (auto & v : latest_blocks) {
                 auto & _block = v.second;
                 xassert(_block->get_height() == current_state->get_block_height() + 1);
                 current_state = make_object_ptr<xvbstate_t>(*_block.get(), *current_state.get());
                 if (_block->get_block_class() == enum_xvblock_class_light) {
+                    if (false == xvchain_t::instance().get_xblockstore()->load_block_output(target_account, _block.get())) {
+                        xerror("xvblkstatestore_t::rebuild_bstate,fail-load block output for block(%s)",_block->dump().c_str());
+                        return nullptr;
+                    }
                     xassert(!_block->get_binlog_hash().empty());
                     std::string binlog = _block->get_binlog();
                     xassert(!binlog.empty());
@@ -282,9 +292,6 @@ namespace top
                         return nullptr;
                     }
                 } else if (_block->get_block_class() == enum_xvblock_class_full) {
-                    xassert(_block->get_binlog().empty());
-                    xassert(!_block->get_fullstate_hash().empty());
-
                     std::string binlog;
                     auto canvas = current_state->rebase_change_to_snapshot();
                     canvas->encode(binlog);
@@ -336,7 +343,7 @@ namespace top
                 }
 
                 // try make prev block state
-                base_bstate = make_state_from_current_block(prev_block.get());
+                base_bstate = make_state_from_current_block(target_account, prev_block.get());
                 if (base_bstate != nullptr) {
                     return true;
                 }
@@ -349,7 +356,7 @@ namespace top
             return false;
         }
 
-        xobject_ptr_t<xvbstate_t> xvblkstatestore_t::make_state_from_current_block(xvblock_t * current_block) {
+        xobject_ptr_t<xvbstate_t> xvblkstatestore_t::make_state_from_current_block(const xvaccount_t & target_account, xvblock_t * current_block) {
             xobject_ptr_t<xvbstate_t> current_state = nullptr;
 
             // try make state form block self
@@ -357,6 +364,11 @@ namespace top
                 || (current_block->get_block_class() == enum_xvblock_class_full && !current_block->get_full_state().empty()) ) {
                 current_state = make_object_ptr<xvbstate_t>(*current_block);
                 if (current_block->get_block_class() != enum_xvblock_class_nil) {
+                    if (false == xvchain_t::instance().get_xblockstore()->load_block_output(target_account, current_block)) {
+                        xerror("xvblkstatestore_t::make_state_from_current_block,fail-load block output for block(%s)",current_block->dump().c_str());
+                        return nullptr;
+                    }
+
                     std::string binlog = current_block->get_block_class() == enum_xvblock_class_light ? current_block->get_binlog() : current_block->get_full_state();
                     xassert(!binlog.empty());
                     if(false == current_state->apply_changes_of_binlog(binlog)) {
@@ -400,8 +412,9 @@ namespace top
 
         bool xvblkstatestore_t::execute_block(xvblock_t * target_block)
         {
+            xvaccount_t target_account(target_block->get_account());
             xdbg_info("xvblkstatestore_t::execute_block enter,block=%s", target_block->dump().c_str());
-            base::xauto_ptr<base::xvbstate_t> bstate = execute_target_block(target_block);
+            base::xauto_ptr<base::xvbstate_t> bstate = execute_target_block(target_account, target_block);
             if (bstate == nullptr)
             {
                 xerror("xvblkstatestore_t::execute_block fail-get block state,block=%s", target_block->dump().c_str());
@@ -421,14 +434,13 @@ namespace top
         }
 
         // implement by load blocks and apply these blocks
-        xauto_ptr<xvbstate_t>  xvblkstatestore_t::execute_target_block(xvblock_t * target_block)
+        xauto_ptr<xvbstate_t>  xvblkstatestore_t::execute_target_block(const xvaccount_t & target_account, xvblock_t * target_block)
         {
-            xvaccount_t target_account(target_block->get_account());
             xobject_ptr_t<xvbstate_t> target_bstate = nullptr;
 
 
             // 1.try to make state for target block directly, may it is a full block or genesis block
-            target_bstate = make_state_from_current_block(target_block);
+            target_bstate = make_state_from_current_block(target_account, target_block);
             if (target_bstate != nullptr) {
                 return target_bstate;
             }
@@ -441,7 +453,7 @@ namespace top
                 return nullptr;
             }
 
-            target_bstate = rebuild_bstate(base_bstate, latest_blocks);
+            target_bstate = rebuild_bstate(target_account, base_bstate, latest_blocks);
             if (target_bstate == nullptr) {
                 xwarn("xvblkstatestore_t::get_block_state fail-rebuild_bstate.block=%s",target_block->dump().c_str());
                 return nullptr;
@@ -462,7 +474,7 @@ namespace top
             xobject_ptr_t<xvbstate_t> target_bstate = nullptr;
 
             // 1.try to make state for target block directly, may it is a full block or genesis block
-            target_bstate = make_state_from_current_block(target_block);
+            target_bstate = make_state_from_current_block(target_account, target_block);
             if (target_bstate != nullptr) {
                 return target_bstate;
             }
@@ -483,7 +495,7 @@ namespace top
             }
 
             // try execute target block state
-            target_bstate = execute_target_block(target_block);
+            target_bstate = execute_target_block(target_account, target_block);
             if (target_bstate != nullptr) {
                 xdbg("xvblkstatestore_t::get_block_state succ-get state by execute.block=%s",target_block->dump().c_str());
                 return target_bstate;

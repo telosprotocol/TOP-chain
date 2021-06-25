@@ -126,6 +126,9 @@ namespace top
             enum{enum_max_cached_blocks = 32};
         public:
             static std::string  get_meta_path(base::xvaccount_t & _account);
+            uint64_t            get_latest_connected_block_height() const { return m_meta->_highest_connect_block_height; }
+            uint64_t            get_latest_genesis_connected_block_height() const { return m_meta->_highest_genesis_connect_height; }
+            uint64_t            get_latest_executed_block_height() const { return m_meta->_highest_execute_block_height; }
         public:
             xblockacct_t(const std::string & account_addr,const uint64_t timeout_ms,const std::string & blockstore_path);
         protected:

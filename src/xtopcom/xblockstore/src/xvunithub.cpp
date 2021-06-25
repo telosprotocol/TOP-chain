@@ -57,6 +57,16 @@ namespace top
             auto_xblockacct_ptr account_obj(target_table->get_lock()); \
             get_block_account(target_table,account_vid.get_address(),account_obj); \
 
+        #define LOAD_BLOCKACCOUNT_PLUGIN2(account_obj,account_vid) \
+            if(is_close())\
+            {\
+                xwarn_err("xvblockstore has closed at store_path=%s",m_store_path.c_str());\
+                return 0;\
+            }\
+            base::xvtable_t * target_table = base::xvchain_t::instance().get_table(account_vid.get_xvid()); \
+            auto_xblockacct_ptr account_obj(target_table->get_lock()); \
+            get_block_account(target_table,account_vid.get_address(),account_obj); \
+
         xvblockstore_impl::xvblockstore_impl(const std::string & blockstore_path,base::xcontext_t & _context,const int32_t target_thread_id)
             :base::xvblockstore_t(_context,target_thread_id)
         {
@@ -129,7 +139,6 @@ namespace top
         /////////////////////////////////new api with better performance by passing base::xvaccount_t
         base::xvblock_t * xvblockstore_impl::load_block_from_index(xblockacct_t* target_account, base::xauto_ptr<base::xvbindex_t> target_index,const uint64_t target_height,bool ask_full_load)
         {
-            ask_full_load = true;  // TODO(jimmy)
             if(!target_index)
             {
                 if(target_height != 0)
@@ -223,10 +232,28 @@ namespace top
                     return connect_block;
                 }
                 auto latest_committed_full_height = connect_block->get_last_full_block_height();
-                return load_block_object(account, latest_committed_full_height, 0, true);
+                return load_block_object(account, latest_committed_full_height, 0, false);
             }
 
             return nullptr;
+        }
+
+        uint64_t xvblockstore_impl::get_latest_connected_block_height(const base::xvaccount_t & account)
+        {
+            LOAD_BLOCKACCOUNT_PLUGIN2(account_obj,account);
+            return account_obj->get_latest_connected_block_height();
+        }
+
+        uint64_t xvblockstore_impl::get_latest_genesis_connected_block_height(const base::xvaccount_t & account)
+        {
+            LOAD_BLOCKACCOUNT_PLUGIN2(account_obj,account);
+            return account_obj->get_latest_genesis_connected_block_height();
+        }
+
+        uint64_t xvblockstore_impl::get_latest_executed_block_height(const base::xvaccount_t & account)
+        {
+            LOAD_BLOCKACCOUNT_PLUGIN2(account_obj,account);
+            return account_obj->get_latest_executed_block_height();
         }
 
         //one api to get latest_commit/latest_lock/latest_cert for better performance
@@ -358,6 +385,12 @@ namespace top
                 xerror("xvblockstore_impl::load_block_input,block NOT match account:%",account.get_account().c_str());
                 return false;
             }
+            if( block->get_block_class() == base::enum_xvblock_class_nil  // nil block has no input
+               || block->get_input()->get_resources_hash().empty() //resources hash empty means has no resoure data
+               || block->get_input()->has_resource_data() )  //already has resource data
+            {
+                return true;
+            }
             LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
             return account_obj->load_block_input(block);//XTODO,add logic to extract from tabeblock
         }
@@ -368,6 +401,12 @@ namespace top
             {
                 xerror("xvblockstore_impl::load_block_output,block NOT match account:%",account.get_account().c_str());
                 return false;
+            }
+            if( block->get_block_class() == base::enum_xvblock_class_nil  // nil block has no input
+               || block->get_output()->get_resources_hash().empty() //resources hash empty means has no resoure data
+               || block->get_output()->has_resource_data() )  //already has resource data
+            {
+                return true;
             }
             LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
             return account_obj->load_block_output(block);//XTODO,add logic to extract from tabeblock
