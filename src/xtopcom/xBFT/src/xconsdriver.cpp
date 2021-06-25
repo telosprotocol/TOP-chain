@@ -301,11 +301,16 @@ namespace top
             _final_proposal_block->set_bind_clock_cert(event_obj->get_xclock_cert());
             _final_proposal_block->set_proposal_source_addr(from_addr);
             _final_proposal_block->set_proposal_msg_nonce(packet.get_msg_nonce());
-            add_proposal(*_final_proposal_block); //add proposal block first
+
             //apply safe rule for view-alignment,after sync check.note: event_obj->get_cookie() carry latest viewid at this node
             if(event_obj->get_cookie() != packet.get_block_viewid()) //a proposal not alignment with current view
             {
+                _final_proposal_block->disable_vote(); //disable vote first
                 xwarn("xBFTdriver_t::handle_proposal_msg,fail-unalignment viewid=%llu vs packet=%s.dump=%s at node=0x%llx",event_obj->get_cookie(),packet.dump().c_str(),dump().c_str(),get_xip2_low_addr());
+            }
+            else
+            {
+                 add_proposal(*_final_proposal_block); //add proposal block then
             }
  
             //step#4: load/sync the missed commit,lock and cert blocks
@@ -317,6 +322,10 @@ namespace top
                     return result_sync_check;
                 }
             }
+            
+            if(_final_proposal_block->is_vote_disable()) //here throw error of wrong view after trigger sync
+                return enum_xconsensus_error_wrong_view;
+                
             //step#5: vote_for_proposal
             {
                 const int result_vote_check = vote_for_proposal(_final_proposal_block());
