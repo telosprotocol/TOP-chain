@@ -1070,7 +1070,9 @@ namespace top
             if(nullptr == new_raw_block)
                 return false;
 
+            #ifdef ENABLE_METRICS
             XMETRICS_GAUGE(metrics::store_block_write_call, 1);
+            #endif
 
             // xbft will store repeat block, check it firstly
             if(query_index(new_raw_block->get_height(), new_raw_block->get_viewid()) != nullptr)
@@ -1143,7 +1145,10 @@ namespace top
 
             if(block_ptr->get_height() == 0)
                 return false; //not allow delete genesis block
+            
+            #ifdef ENABLE_METRICS
             XMETRICS_GAUGE(metrics::store_block_delete, 1);
+            #endif
             xkinfo("xblockacct_t::delete_block,delete block:[chainid:%u->account(%s)->height(%" PRIu64 ")->viewid(%" PRIu64 ") at store(%s)",block_ptr->get_chainid(),block_ptr->get_account().c_str(),block_ptr->get_height(),block_ptr->get_viewid(),get_blockstore_path().c_str());
 
             if(false == m_all_blocks.empty())
@@ -1745,7 +1750,11 @@ namespace top
         {
             if( (NULL == index_ptr) || (NULL == block_ptr) )
                 return false;
+            
+            #ifdef ENABLE_METRICS
             XMETRICS_GAUGE(metrics::store_block_write, 1);
+            #endif
+            
             if(write_block_object_to_db(index_ptr,block_ptr) == false)
                 return false;
 
@@ -1808,7 +1817,10 @@ namespace top
         {
             if(index_ptr->get_this_block() == NULL)
             {
+                #ifdef ENABLE_METRICS
                 XMETRICS_GAUGE(metrics::store_block_read, 1);
+                #endif
+                
                 const std::string blockobj_key = base::xvdbkey_t::create_block_object_key(*this,index_ptr->get_block_hash());
                 const std::string blockobj_bin = base::xvchain_t::instance().get_xdbstore()->get_value(blockobj_key);
                 if(blockobj_bin.empty())
@@ -1909,7 +1921,10 @@ namespace top
                 if(  (block_ptr->get_input()->get_resources_hash().empty() == false) //link resoure data
                    &&(block_ptr->get_input()->has_resource_data() == false) ) //but dont have resource avaiable now
                 {
+                    #ifdef ENABLE_METRICS
                     XMETRICS_GAUGE(metrics::store_block_input_read, 1);
+                    #endif
+                    
                     //which means resource are stored at seperatedly
                     const std::string input_resource_key = base::xvdbkey_t::create_block_input_resource_key(*this,block_ptr->get_block_hash());
 
@@ -2005,7 +2020,9 @@ namespace top
                 if(  (block_ptr->get_output()->get_resources_hash().empty() == false) //link resoure data
                    &&(block_ptr->get_output()->has_resource_data() == false) ) //but dont have resource avaiable now
                 {
+                    #ifdef ENABLE_METRICS
                     XMETRICS_GAUGE(metrics::store_block_output_read, 1);
+                    #endif
                     //which means resource are stored at seperatedly
                     const std::string output_resource_key = base::xvdbkey_t::create_block_output_resource_key(*this,block_ptr->get_block_hash());
 
@@ -2288,7 +2305,10 @@ namespace top
 
         base::xvbindex_t*   xblockacct_t::read_index_from_db(const std::string & index_db_key_path)
         {
+            #ifdef ENABLE_METRICS
             XMETRICS_GAUGE(metrics::store_block_index_read, 1);
+            #endif
+            
             const std::string index_bin = base::xvchain_t::instance().get_xdbstore()->get_value(index_db_key_path);
             if(index_bin.empty())
             {
@@ -2544,7 +2564,11 @@ namespace top
                     auto cur_it = it;
                     ++it;
 
+                    #ifdef __ALLOW_FORK_LOCK__ //just clean candidates at commited height or un-connected block
+                    uint64_t weight = ((cur_it->second->check_block_flag(base::enum_xvblock_flag_committed)) ? base::enum_xvblock_flag_committed : 0) + ((cur_it->second->get_prev_block() != NULL) ? 1 : 0);
+                    #else
                     uint64_t weight = cal_index_base_weight(cur_it->second) + ((cur_it->second->get_prev_block() != NULL) ? 1 : 0);
+                    #endif
                     if(cur_it->second->check_block_flag(base::enum_xvblock_flag_committed))
                     {
                         if(false == has_commit_already)
@@ -2578,7 +2602,12 @@ namespace top
                     auto cur_it = it;
                     ++it;
 
+                    #ifdef __ALLOW_FORK_LOCK__
+                    const uint64_t weight = ((cur_it->second->check_block_flag(base::enum_xvblock_flag_committed)) ? base::enum_xvblock_flag_committed : 0) + ((cur_it->second->get_prev_block() != NULL) ? 1 : 0);
+                    #else
                     const uint64_t weight = cal_index_base_weight(cur_it->second) + ((cur_it->second->get_prev_block() != NULL) ? 1 : 0);
+                    #endif
+                    
                     if(weight < cur_max_weight) //remove lower one
                     {
                         xinfo("xblockacct_t::rebase_chain_at_height,remove existing lower-weight' block(%s) < cur_max_weight(%" PRIu64 ") at store(%s)",cur_it->second->dump().c_str(),cur_max_weight,get_blockstore_path().c_str());
