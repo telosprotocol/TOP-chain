@@ -6,6 +6,8 @@
 #include <inttypes.h>
 #include "xconsdriver.h"
 
+#define __FAST_CLEAN_PROPOSAL__
+
 namespace top
 {
     namespace xconsensus
@@ -173,7 +175,7 @@ namespace top
                 latest_lock_block->add_ref();
                 if(m_latest_lock_block != NULL)
                 {
-                    xdbg("xBFTRules::set_lock_block, old-lock=%s -> new-lock=%s,at node=0x%llx,this=%llx",m_latest_lock_block->dump().c_str(),latest_lock_block->dump().c_str(),get_xip2_addr().low_addr,(int64_t)this);
+                    xkinfo("xBFTRules::set_lock_block, old-lock=%s -> new-lock=%s,at node=0x%llx,this=%llx",m_latest_lock_block->dump().c_str(),latest_lock_block->dump().c_str(),get_xip2_addr().low_addr,(int64_t)this);
                     
                     m_latest_lock_block->release_ref();
                     m_latest_lock_block = NULL;
