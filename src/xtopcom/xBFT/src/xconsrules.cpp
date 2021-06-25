@@ -6,6 +6,8 @@
 #include <inttypes.h>
 #include "xconsdriver.h"
 
+#define __FAST_CLEAN_PROPOSAL__
+
 namespace top
 {
     namespace xconsensus
@@ -173,7 +175,7 @@ namespace top
                 latest_lock_block->add_ref();
                 if(m_latest_lock_block != NULL)
                 {
-                    xdbg("xBFTRules::set_lock_block, old-lock=%s -> new-lock=%s,at node=0x%llx,this=%llx",m_latest_lock_block->dump().c_str(),latest_lock_block->dump().c_str(),get_xip2_addr().low_addr,(int64_t)this);
+                    xkinfo("xBFTRules::set_lock_block, old-lock=%s -> new-lock=%s,at node=0x%llx,this=%llx",m_latest_lock_block->dump().c_str(),latest_lock_block->dump().c_str(),get_xip2_addr().low_addr,(int64_t)this);
                     
                     m_latest_lock_block->release_ref();
                     m_latest_lock_block = NULL;
@@ -447,18 +449,45 @@ namespace top
         bool xBFTRules::is_proposal_expire(xproposal_t * _proposal)
         {
             base::xvblock_t * commit_block = get_commit_block();
-            if( (NULL == _proposal) || (NULL == commit_block) )
+            base::xvblock_t * lock_block   = get_lock_block();
+            if( (NULL == _proposal) || (NULL == commit_block) || (NULL == lock_block) )
                 return false;
             
             //now using commit as lower bound to clean ones
-            if(_proposal->get_height() <= commit_block->get_height())
-                return true;
+            if(   (_proposal->get_height() <= commit_block->get_height())
+               || (_proposal->get_viewid() <= commit_block->get_viewid()) )
+            {
+                return true;//expired
+            }
+            
+            if(   (_proposal->get_height() <= lock_block->get_height())
+               || (_proposal->get_viewid() <= lock_block->get_viewid()) )
+            {
+                return true;//expired
+            }
+            
+            #ifdef __FAST_CLEAN_PROPOSAL__
+            if(get_latest_viewid() > _proposal->get_viewid())
+            {
+                _proposal->disable_vote();//not allow vote anymore
+                return true; //once viewid update, the proposal is logically expired
+            }
+            #else
+            if(get_latest_viewid() > _proposal->get_viewid())
+            {
+                _proposal->disable_vote();//not allow vote anymore
+                if(_proposal->is_leader()) //for leader, must clean proposal quickly
+                    return true;//expired for leader
+                
+                //for replicate,allow proposal keep more longer
+            }
+            #endif
             
             //using clock as upper bound to clean ones, 32 * 10 = 320secons = about 5 minutes
             if(get_lastest_clock() > (_proposal->get_block()->get_clock() + 32) )
                 return true; //not allow cache too much proposal
             
-            return false;
+            return false;//still valid
         }
     
         bool xBFTRules::safe_check_for_block(base::xvblock_t * _block)
@@ -668,22 +697,27 @@ namespace top
                         return -1;
                     }
                 }
+                else if(_test_for_block->get_height() == (latest_commit_block->get_height() + 2))
+                {
+                    if(_test_for_block->get_justify_cert_hash() != latest_commit_block->get_input_root_hash())
+                    {
+                        xerror("xBFTRules::safe_check_add_cert_fork,fail-justify cert hash unmatch,cert(%s) vs commited(%s) at node=0x%llx",_test_for_block->dump().c_str(), latest_commit_block->dump().c_str(),get_xip2_addr().low_addr);
+                        return -1;
+                    }
+                }
             }
             
             //rule#2: not conflict with existing cert block
-            base::xvblock_t *  latest_cert_block = get_latest_cert_block();
+            base::xvblock_t *  latest_cert_block = find_cert_block(_test_for_block->get_viewid());
             if(latest_cert_block != NULL)
             {
                 if(_test_for_block->get_height() == latest_cert_block->get_height())
                 {
-                    if(_test_for_block->get_viewid() == latest_cert_block->get_viewid())
+                    if(_test_for_block->get_block_hash() != latest_cert_block->get_block_hash())
                     {
-                        if(_test_for_block->get_block_hash() != latest_cert_block->get_block_hash())
-                        {
-                            xerror("xBFTRules::safe_check_add_cert_fork,error-invalid test cert(=%s) != latest_cert_block(%s) at node=0x%llx",_test_for_block->dump().c_str(), latest_cert_block->dump().c_str(),get_xip2_addr().low_addr);
-                            
-                            return -1;
-                        }
+                        xerror("xBFTRules::safe_check_add_cert_fork,error-invalid test cert(=%s) != latest_cert_block(%s) at node=0x%llx",_test_for_block->dump().c_str(), latest_cert_block->dump().c_str(),get_xip2_addr().low_addr);
+                        
+                        return -1;
                     }
                 }
             }
@@ -834,6 +868,18 @@ namespace top
                     xwarn("xBFTRules::safe_check_for_vote_block,warn-conflict existing proposal, proposal=%s <= latest_proposal=%s at node=0x%llx",_vote_block->dump().c_str(), latest_proposal->dump().c_str(),get_xip2_addr().low_addr);
                     return false;
                 }
+                
+                #ifdef __FAST_CLEAN_PROPOSAL__  //ask to meet enhanced rule
+                if(latest_proposal->get_block_hash() != _vote_block->get_block_hash()) //different proposal
+                {
+                    if(  (_vote_block->get_viewid() <= latest_proposal->get_viewid())
+                       ||(_vote_block->get_height() <= latest_proposal->get_height()) )
+                    {
+                        xwarn("xBFTRules::safe_check_for_vote_block,warn-conflict existing proposal at fast mode, proposal=%s <= latest_proposal=%s at node=0x%llx",_vote_block->dump().c_str(), latest_proposal->dump().c_str(),get_xip2_addr().low_addr);
+                        return false;
+                    }
+                }
+                #endif //end of __FAST_CLEAN_PROPOSAL__
             }
             
             //safe-rule#4: never fork from locked block

@@ -757,17 +757,9 @@ namespace top
                 ++it; //move forward
 
                 xproposal_t * _proposal = old_it->second;
-                if(_proposal->is_leader()) //for leader, must clean proposal quickly
+                if(is_proposal_expire(_proposal))
                 {
-                    if(safe_check_for_block(_proposal->get_block()) == false)
-                    {
-                        outofdate_list.push_back(_proposal);
-                        proposal_blocks.erase(old_it);//erase old one
-                    }
-                }
-                else if(is_proposal_expire(_proposal))//for replicate,allow proposal keep more longer
-                {
-                    outofdate_list.push_back(_proposal);
+                    timeout_list.push_back(_proposal);
                     proposal_blocks.erase(old_it);//erase old one
                 }
             }
@@ -779,7 +771,7 @@ namespace top
         bool  xBFTdriver_t::on_view_fire(const base::xvevent_t & event,xcsobject_t* from_parent,const int32_t cur_thread_id,const uint64_t timenow_ms)
         {
             xBFTSyncdrv::on_view_fire(event,from_parent,cur_thread_id,timenow_ms);//let sync clean first
-            xcsview_fire * _ev_obj = (xcsview_fire*)&event;
+            //xcsview_fire * _ev_obj = (xcsview_fire*)&event;
             
             //filter too old proposal and put into removed_list
             std::vector<xproposal_t*> timeout_list;
@@ -792,25 +784,11 @@ namespace top
                 ++it; //move forward
 
                 xproposal_t * _proposal = old_it->second;
-                if(_proposal->is_leader()) //for leader, must clean proposal quickly
+                if(is_proposal_expire(_proposal))
                 {
-                    if(_ev_obj->get_viewid() > _proposal->get_viewid()) //clean all unfinished proposoal as viewid upgraded
-                    {
-                        timeout_list.push_back(_proposal);
-                        proposal_blocks.erase(old_it);//erase old one
-                    }
-                    else if(safe_check_for_block(_proposal->get_block()) == false)
-                    {
-                        outofdate_list.push_back(_proposal);
-                        proposal_blocks.erase(old_it);//erase old one
-                    }
-                }
-                else if(is_proposal_expire(_proposal))//for replicate,allow proposal keep more longer
-                {
-                    outofdate_list.push_back(_proposal);
+                    timeout_list.push_back(_proposal);
                     proposal_blocks.erase(old_it);//erase old one
                 }
-
             }
             notify_proposal_fail(timeout_list,outofdate_list);
             return true;
@@ -839,6 +817,16 @@ namespace top
                             }
                         }
                     }
+                }
+                else if(_proposal->get_height() == new_cert_block->get_height()) //clean proposal of same height of cert
+                {
+                    _proposal->close();
+                    _proposal->release_ref();
+                    proposal_blocks.erase(old_it);
+                }
+                else if(_proposal->get_height() < new_cert_block->get_height())//for older proposal than cert
+                {
+                    _proposal->disable_vote(); //not allow vote anymore
                 }
             }
 
@@ -903,7 +891,7 @@ namespace top
 
                     _to_remove->release_ref();
                 }
-                timeout_list.clear();
+                outofdate_list.clear();
             }
             return true;
         }
