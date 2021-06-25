@@ -265,9 +265,16 @@ namespace top
             if(m_latest_lock_block != NULL)
             {
                 //sanity test first, check view#id of proposal,that must over > last voted one
-                if(safe_check_for_block(_lock_block) == false)
+                if(_lock_block->get_height()  <  m_latest_lock_block->get_height())
                 {
-                    xdbg("xBFTRules::safe_check_for_lock_block,false for safe_check_for_block,driver=%s,at node=0x%llx",dump().c_str(),get_xip2_low_addr());
+                    xwarn("xBFTRules::safe_check_for_lock_block,lower _lock_block(%s) < driver=%s,at node=0x%llx",_lock_block->dump().c_str(),dump().c_str(),get_xip2_low_addr());
+                    return false;
+                }
+                
+                if(   (_lock_block->get_height() == m_latest_lock_block->get_height())
+                   && (_lock_block->get_viewid() >  m_latest_lock_block->get_viewid()) )//perfer small viewid
+                {
+                    xinfo("xBFTRules::safe_check_for_lock_block,false for _lock_block(%s) vs driver=%s,at node=0x%llx",_lock_block->dump().c_str(),dump().c_str(),get_xip2_low_addr());
                     return false;
                 }
             }

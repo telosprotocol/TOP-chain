@@ -75,20 +75,36 @@ namespace top
                 xkinfo("xBFTcontext_t::update_lock_block at node=0x%llx,nil-lock -> new_lock=%s,this=%llx",get_xip2_addr().low_addr,_new_lock->dump().c_str(),(int64_t)this);
                 return true;
             }
-            else if( (m_latest_lock_block->get_viewid() < _new_lock->get_viewid()) && (m_latest_lock_block->get_height() < _new_lock->get_height()) )
+            else
             {
-                if(   (_new_lock->get_chainid() == m_latest_lock_block->get_chainid())
-                   && (_new_lock->get_account() == m_latest_lock_block->get_account()))
+                bool allow_update = false;
+                if(   (m_latest_lock_block->get_viewid() < _new_lock->get_viewid())
+                   && (m_latest_lock_block->get_height() < _new_lock->get_height()) )
                 {
-                    xdbg("xBFTcontext_t::update_lock_block at node=0x%llx,old_lock=%s --> new_lock=%s,this=%llx",get_xip2_addr().low_addr,m_latest_lock_block->dump().c_str(),_new_lock->dump().c_str(),(int64_t)this);
-                    
-                    _new_lock->add_ref();
-                    base::xvblock_t* old_ptr = base::xatomic_t::xexchange(m_latest_lock_block, _new_lock);
-                    old_ptr->release_ref();
-                    
-                    return true;
+                    allow_update = true;
                 }
-                xerror("xBFTcontext_t::update_lock_block,fail-unmatched account of block=%s vs this=%s, at node=0x%llx",_new_lock->dump().c_str(),m_latest_lock_block->get_account().c_str(),get_xip2_low_addr());
+                else if(   (_new_lock->get_height() == m_latest_lock_block->get_height())
+                        && (_new_lock->get_viewid() <= m_latest_lock_block->get_viewid()) )//perfer small viewid
+                {
+                    allow_update = true;
+                }
+                
+                if(allow_update)
+                {
+                    if(   (_new_lock->get_chainid() == m_latest_lock_block->get_chainid())
+                       && (_new_lock->get_account() == m_latest_lock_block->get_account()))
+                    {
+                        xdbg("xBFTcontext_t::update_lock_block at node=0x%llx,old_lock=%s --> new_lock=%s,this=%llx",get_xip2_addr().low_addr,m_latest_lock_block->dump().c_str(),_new_lock->dump().c_str(),(int64_t)this);
+                        
+                        _new_lock->add_ref();
+                        base::xvblock_t* old_ptr = base::xatomic_t::xexchange(m_latest_lock_block, _new_lock);
+                        old_ptr->release_ref();
+                        
+                        return true;
+                    }
+                    xerror("xBFTcontext_t::update_lock_block,fail-unmatched account of block=%s vs this=%s, at node=0x%llx",_new_lock->dump().c_str(),m_latest_lock_block->get_account().c_str(),get_xip2_low_addr());
+                }
+
             }
             return false;
         }
