@@ -96,7 +96,6 @@ class xlightunit_block_t : public xblock_t {
     void                        try_load_body() const;
     void                        load_body() const;
     const xlightunit_body_t &   get_lightunit_body() const;
-    xtransaction_ptr_t          query_raw_transaction(const std::string & txhash) const;
 
  private:
     mutable std::once_flag      m_once_load_flag;  // cache body delay init

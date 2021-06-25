@@ -68,7 +68,13 @@ uint32_t xtable_block_t::get_txs_count() const {
     uint32_t entitys_count = _table_inentitys.size();
     for (uint32_t index = 1; index < entitys_count; index++) {  // unit entity from index#1
         base::xvinentity_t* _table_unit_inentity = dynamic_cast<base::xvinentity_t*>(_table_inentitys[index]);
-        tx_count += (uint32_t)_table_unit_inentity->get_actions().size();
+        const std::vector<base::xvaction_t> &  input_actions = _table_unit_inentity->get_actions();
+        for (auto & action : input_actions) {
+            if (action.get_org_tx_hash().empty()) {  // not txaction
+                continue;
+            }
+            tx_count++;
+        }
     }
     return tx_count;
 }

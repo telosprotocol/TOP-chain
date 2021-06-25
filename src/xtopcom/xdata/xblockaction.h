@@ -51,5 +51,7 @@ class xlightunit_action_t : public base::xvaction_t {
     std::string                 get_action_result_property(const std::string & key) const;
 };
 
+using xlightunit_action_ptr_t = std::shared_ptr<xlightunit_action_t>;
+
 }  // namespace data
 }  // namespace top

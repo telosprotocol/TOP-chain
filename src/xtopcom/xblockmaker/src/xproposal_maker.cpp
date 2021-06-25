@@ -426,12 +426,13 @@ void xproposal_maker_t::get_locked_txs(const xblock_ptr_t & block, std::vector<x
 
             const std::vector<base::xvaction_t> &  input_actions = _table_unit_inentity->get_actions();
             for (auto & action : input_actions) {
-                if (!action.get_org_tx_hash().empty()) {
-                    base::enum_transaction_subtype _subtype = (base::enum_transaction_subtype)action.get_org_tx_action_id();
-                    uint256_t _hash256((uint8_t*)action.get_org_tx_hash().data());
-                    xtxpool_v2::tx_info_t txinfo(_unit_header->get_account(), _hash256, _subtype);
-                    locked_tx_vec.push_back(txinfo);
+                if (action.get_org_tx_hash().empty()) {  // not txaction
+                    continue;
                 }
+                base::enum_transaction_subtype _subtype = (base::enum_transaction_subtype)action.get_org_tx_action_id();
+                uint256_t _hash256((uint8_t*)action.get_org_tx_hash().data());
+                xtxpool_v2::tx_info_t txinfo(_unit_header->get_account(), _hash256, _subtype);
+                locked_tx_vec.push_back(txinfo);
             }
         }
     }
