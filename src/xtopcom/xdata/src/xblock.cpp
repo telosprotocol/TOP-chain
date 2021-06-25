@@ -360,4 +360,37 @@ xlightunit_tx_info_ptr_t xblock_t::get_tx_info(const std::string & txhash) const
     return nullptr;
 }
 
+xtransaction_ptr_t  xblock_t::query_raw_transaction(const std::string & txhash) const {
+    std::string value = get_input()->query_resource(txhash);
+    if (!value.empty()) {
+        xtransaction_ptr_t raw_tx = make_object_ptr<xtransaction_t>();
+        raw_tx->serialize_from_string(value);
+        return raw_tx;
+    }
+    return nullptr;
+}
+
+std::vector<xlightunit_action_ptr_t> xblock_t::get_lighttable_tx_actions() const {
+    if (get_block_class() != base::enum_xvblock_class_light
+        || get_block_level() != base::enum_xvblock_level_table) {
+        xassert(false);
+        return {};
+    }
+
+    std::vector<xlightunit_action_ptr_t> txactions;
+
+    const std::vector<base::xventity_t*> & _table_inentitys = get_input()->get_entitys();
+    uint32_t entitys_count = _table_inentitys.size();
+    xassert(entitys_count > 1);
+    for (uint32_t index = 1; index < entitys_count; index++) {  // unit entity from index#1
+        base::xvinentity_t* _table_unit_inentity = dynamic_cast<base::xvinentity_t*>(_table_inentitys[index]);
+        const std::vector<base::xvaction_t> &  input_actions = _table_unit_inentity->get_actions();
+        for (auto & action : input_actions) {
+            xlightunit_action_ptr_t txaction = std::make_shared<xlightunit_action_t>(action);
+            txactions.push_back(txaction);
+        }
+    }
+    return txactions;
+}
+
 NS_END2

@@ -5,6 +5,7 @@
 #include "xbase/xint.h"
 #include "xbase/xutl.h"
 #include "xvledger/xvblock.h"
+#include "xvledger/xvledger.h"
 #include "xbasic/xutility.h"
 #include "xcommon/xip.h"
 #include "xconfig/xconfig_register.h"
@@ -1430,37 +1431,52 @@ void get_block_handle::set_fullunit_info(xJson::Value & j_fu, xblock_t * bp) {
 }
 
 void get_block_handle::set_table_info(xJson::Value & jv, xblock_t * bp) {
-    const auto & units = bp->get_tableblock_units(false);
-    if (!units.empty()) {
-        xJson::Value ju;
-        for (auto & unit : units) {
-            xJson::Value jui;
-            jui["unit_height"] = static_cast<xJson::UInt64>(unit->get_height());
+    // need input
+    base::xvaccount_t _vaccount(bp->get_account());
+    base::xvchain_t::instance().get_xblockstore()->load_block_input(_vaccount, bp);
 
-            xJson::Value jv;
-            auto txs = unit->get_txs();
-            for (auto tx : txs) {
-                xJson::Value juj;
-                juj["tx_consensus_phase"] = tx->get_tx_subtype_str();
-                // juj["is_contract_create"] = static_cast<unsigned int>(tx->is_contract_create());
-                if (tx->is_self_tx() || tx->is_send_tx()) {
-                    juj["last_tx_nonce"] = static_cast<unsigned int>(tx->get_last_trans_nonce());
-                }
-                juj["sender_tx_locked_gas"] = static_cast<unsigned int>(tx->get_send_tx_lock_tgas());
-                auto tx_ptr = tx->get_raw_tx();
-                if (tx_ptr != nullptr) {
-                    juj["sender"] = tx_ptr->get_source_addr();
-                    juj["receiver"] = tx_ptr->get_target_addr();
-                    juj["action_name"] = tx_ptr->get_target_action_name();
-                    juj["action_param"] = parse_action(tx_ptr->get_target_action());
-                }
-                jv["0x" + tx->get_tx_hex_hash()] = juj;
+    xJson::Value ju;
+
+    const std::vector<base::xventity_t*> & _table_inentitys = bp->get_input()->get_entitys();
+    uint32_t entitys_count = _table_inentitys.size();
+    for (uint32_t index = 1; index < entitys_count; index++) {  // unit entity from index#1
+        base::xvinentity_t* _table_unit_inentity = dynamic_cast<base::xvinentity_t*>(_table_inentitys[index]);
+        base::xtable_inentity_extend_t extend;
+        extend.serialize_from_string(_table_unit_inentity->get_extend_data());
+        const xobject_ptr_t<base::xvheader_t> & _unit_header = extend.get_unit_header();
+
+        xJson::Value jui;
+        jui["unit_height"] = static_cast<xJson::UInt64>(_unit_header->get_height());
+
+        xJson::Value jv;
+
+        const std::vector<base::xvaction_t> &  input_actions = _table_unit_inentity->get_actions();
+        for (auto & action : input_actions) {
+            xlightunit_action_t txaction(action);
+            xtransaction_ptr_t _rawtx = bp->query_raw_transaction(txaction.get_tx_hash());
+            uint64_t last_tx_nonce = 0;
+            if (_rawtx != nullptr) {
+                last_tx_nonce = _rawtx->get_last_nonce();
             }
-            jui["lightunit_input"] = jv;
-            ju[unit->get_block_owner()] = jui;
+
+            xJson::Value juj;
+            juj["tx_consensus_phase"] = txaction.get_tx_subtype_str();
+            if (txaction.is_self_tx() || txaction.is_send_tx()) {
+                juj["last_tx_nonce"] = static_cast<unsigned int>(last_tx_nonce);
+            }
+            juj["sender_tx_locked_gas"] = static_cast<unsigned int>(txaction.get_send_tx_lock_tgas());
+            if (_rawtx != nullptr) {
+                juj["sender"] = _rawtx->get_source_addr();
+                juj["receiver"] = _rawtx->get_target_addr();
+                juj["action_name"] = _rawtx->get_target_action_name();
+                juj["action_param"] = parse_action(_rawtx->get_target_action());
+            }
+            jv["0x" + txaction.get_tx_hex_hash()] = juj;
         }
-        jv["units"] = ju;
+        jui["lightunit_input"] = jv;
+        ju[_unit_header->get_account()] = jui;
     }
+    jv["units"] = ju;
 }
 
 void get_block_handle::set_body_info(xJson::Value & body, xblock_t * bp) {
@@ -1505,6 +1521,12 @@ xJson::Value get_block_handle::get_block_json(xblock_t * bp) {
 
     if (bp->is_genesis_block() && bp->get_block_class() == base::enum_xvblock_class_nil && false == bp->check_block_flag(base::enum_xvblock_flag_stored)) {
         // genesis empty non-stored block, should not return
+        return root;
+    }
+
+    // load input for raw tx get
+    if (false == base::xvchain_t::instance().get_xblockstore()->load_block_input(base::xvaccount_t(bp->get_account()) ,bp)) {
+        xassert(false);  // db block should always load input success
         return root;
     }
 
