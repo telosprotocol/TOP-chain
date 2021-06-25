@@ -381,7 +381,7 @@ namespace top
             {
                 if(NULL == tx)
                 {
-                    xerror("xvbmaker_t::verify_input_txs(),found nil transaction for block(%s)",tx->dump().c_str(),target.dump().c_str());
+                    xerror("xvbmaker_t::verify_input_txs(),found nil transaction for block(%s)",target.dump().c_str());
                     return false;
                 }
                 if(tx->is_valid() == false)
