@@ -242,8 +242,6 @@ const std::vector<xcons_transaction_ptr_t> xreceipt_queue_new_t::get_txs(uint32_
         }
     }
 
-    auto confirm_txs_num = ret_txs.size();
-
     for (auto & it_recv_peer_table_map : recv_peer_table_map) {
         auto peer_table_sid = it_recv_peer_table_map.first;
         base::xreceiptid_pair_t receiptid_pair;

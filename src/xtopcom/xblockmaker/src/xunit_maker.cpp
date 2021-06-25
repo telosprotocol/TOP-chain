@@ -187,7 +187,6 @@ bool xunit_maker_t::push_tx(const data::xblock_consensus_para_t & cs_para, const
 
     // TODO(jimmy) non-transfer tx only include one tx limit
     if (!m_pending_txs.empty()) {
-        base::enum_transaction_subtype first_tx_subtype = m_pending_txs[0]->get_tx_subtype();
         data::enum_xtransaction_type first_tx_type = (data::enum_xtransaction_type)m_pending_txs[0]->get_transaction()->get_tx_type();
         if ( (first_tx_type != xtransaction_type_transfer) || ((data::enum_xtransaction_type)tx->get_transaction()->get_tx_type() != data::xtransaction_type_transfer) ) {
             xwarn("xunit_maker_t::push_tx fail-tx filtered for non-transfer txs.%s,tx=%s", cs_para.dump().c_str(), tx->dump(true).c_str());

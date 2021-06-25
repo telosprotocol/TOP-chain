@@ -1271,10 +1271,8 @@ void xaccount_context_t::update_latest_create_nonce_hash(const xcons_transaction
 }
 
 int32_t xaccount_context_t::create_transfer_tx(const std::string & receiver, uint64_t amount) {
-    uint32_t deposit = 0;
     xassert(data::is_contract_address(common::xaccount_address_t{ get_address() }));
     if (data::is_user_contract_address(common::xaccount_address_t{ get_address() })) {
-        deposit = XGET_ONCHAIN_GOVERNANCE_PARAMETER(min_tx_deposit);
         xwarn("xaccount_context_t::create_transfer_tx fail to create user contract transaction from:%s,to:%s,amount:%" PRIu64,
                 get_address().c_str(), receiver.c_str(), amount);
         return xstore_user_contract_can_not_initiate_transaction;
@@ -1291,6 +1289,7 @@ int32_t xaccount_context_t::create_transfer_tx(const std::string & receiver, uin
     tx->set_different_source_target_address(get_address(), receiver);
     tx->set_fire_timestamp(m_timestamp);
     tx->set_expire_duration(0);
+    uint32_t deposit = 0;
     tx->set_deposit(deposit);
     tx->set_digest();
     tx->set_len();

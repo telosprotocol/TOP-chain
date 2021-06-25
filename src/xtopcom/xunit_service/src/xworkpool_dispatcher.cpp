@@ -139,7 +139,6 @@ bool xworkpool_dispatcher::destroy(const xvip2_t & xip) {
 
 bool xworkpool_dispatcher::subscribe(const std::vector<table_index> & tables, const xvip2_t & xip, const common::xlogic_time_t& start_time) {
     auto           pool = m_para->get_resources()->get_workpool();
-    auto           pool_size = pool->get_count();
     auto           pool_thread_ids = pool->get_thread_ids();
     xbatch_packers reset_packers;
     {

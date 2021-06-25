@@ -558,7 +558,6 @@ void xtxpool_service::make_receipts_and_send(xblock_t * block) {
     }
     xblock_t * raw_cert_block = dynamic_cast<xblock_t *>(cert_block.get());
     auto receipts = xreceipt_strategy_t::make_receipts(block, cert_block.get());
-    uint64_t now = xverifier::xtx_utl::get_gmttime_s();
     for (auto & receipt : receipts) {
         xinfo("xtxpool_service::make_receipts_and_send tx=%s,block:%s", receipt->dump().c_str(), block->dump().c_str());
         send_receipt_first_time(receipt, raw_cert_block);

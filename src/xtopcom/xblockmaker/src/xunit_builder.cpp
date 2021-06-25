@@ -34,7 +34,6 @@ xblock_ptr_t        xlightunit_builder_t::build_block(const xblock_ptr_t & prev_
                                                     const data::xblock_consensus_para_t & cs_para,
                                                     xblock_builder_para_ptr_t & build_para) {
     const std::string & account = prev_block->get_account();
-    uint64_t prev_height = prev_block->get_height();
     std::shared_ptr<xlightunit_builder_para_t> lightunit_build_para = std::dynamic_pointer_cast<xlightunit_builder_para_t>(build_para);
     xassert(lightunit_build_para != nullptr);
 
