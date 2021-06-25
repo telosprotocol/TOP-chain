@@ -15,6 +15,7 @@
 #include "xverifier/xverifier_utl.h"
 #include "xverifier/xwhitelist_verifier.h"
 #include "xvledger/xvledger.h"
+#include "xvledger/xvblockbuild.h"
 
 namespace top {
 namespace xtxpool_v2 {
@@ -287,10 +288,29 @@ void xtxpool_table_t::unit_block_process(xblock_t * unit_block) {
 }
 
 void xtxpool_table_t::on_block_confirmed(xblock_t * table_block) {
-    const auto & units = table_block->get_tableblock_units(false);
-    if (!units.empty()) {
-        for (auto & unit : units) {
-            unit_block_process(unit.get());
+    // TODO(jimmy)
+    const std::vector<base::xventity_t*> & _table_inentitys = table_block->get_input()->get_entitys();
+    uint32_t entitys_count = _table_inentitys.size();
+    for (uint32_t index = 1; index < entitys_count; index++) {  // unit entity from index#1
+        base::xvinentity_t* _table_unit_inentity = dynamic_cast<base::xvinentity_t*>(_table_inentitys[index]);
+        base::xtable_inentity_extend_t extend;
+        extend.serialize_from_string(_table_unit_inentity->get_extend_data());
+        const xobject_ptr_t<base::xvheader_t> & _unit_header = extend.get_unit_header();
+
+        const std::vector<base::xvaction_t> &  input_actions = _table_unit_inentity->get_actions();
+        for (auto & action : input_actions) {
+            if (action.get_org_tx_hash().empty()) {  // not txaction
+                continue;
+            }
+
+            xlightunit_action_t txaction(action);
+            tx_info_t txinfo(_unit_header->get_account(), txaction.get_tx_hash_256(), txaction.get_tx_subtype());
+            uint64_t txnonce = 0;
+            xtransaction_ptr_t _rawtx = table_block->query_raw_transaction(txaction.get_tx_hash());
+            if (_rawtx != nullptr) {
+                txnonce = _rawtx->get_tx_nonce();
+            }
+            update_id_state(txinfo, txaction.get_receipt_id_tableid(), txaction.get_receipt_id(), txnonce);
         }
     }
 }

@@ -70,16 +70,6 @@ std::string xlightunit_block_t::dump_body() const {
     return ss.str();
 }
 
-xtransaction_ptr_t  xlightunit_block_t::query_raw_transaction(const std::string & txhash) const {
-    std::string value = get_input()->query_resource(txhash);
-    if (!value.empty()) {
-        xtransaction_ptr_t raw_tx = make_object_ptr<xtransaction_t>();
-        raw_tx->serialize_from_string(value);
-        return raw_tx;
-    }
-    return nullptr;
-}
-
 const std::vector<xlightunit_tx_info_ptr_t> & xlightunit_block_t::get_txs() const {
     return get_lightunit_body().get_txs();
 }

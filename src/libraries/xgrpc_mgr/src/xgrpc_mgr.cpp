@@ -54,6 +54,12 @@ void xgrpc_mgr_t::process_event(const mbus::xevent_ptr_t & e) {
         return;
 
     mbus::xevent_store_block_to_db_ptr_t block_event = dynamic_xobject_ptr_cast<mbus::xevent_store_block_to_db_t>(e);
+    // only process light-table
+    if (block_event->blk_class != base::enum_xvblock_class_light
+        || block_event->blk_level != base::enum_xvblock_level_table) {
+        return;
+    }
+
     auto block = mbus::extract_block_from(block_event);
     xdbg("grpc stream get_block_type %d, minor_type %d \n", block->get_block_type(), e->minor_type);
     if (!block->is_tableblock()) {
@@ -69,12 +75,9 @@ void xgrpc_mgr_t::process_event(const mbus::xevent_ptr_t & e) {
 
 #ifdef DEBUG
     // adding push tx log info
-    const std::vector<xobject_ptr_t<xblock_t>> & units = bp->get_tableblock_units(false);
-    for (auto & unit : units) {
-        auto & txs = unit->get_txs();
-        for (auto & tx : txs) {
-            xdbg("grpc stream tx hash: 0x%s, type: %s", tx->get_tx_hex_hash().c_str(), tx->get_tx_subtype_str().c_str());
-        }
+    std::vector<xlightunit_action_ptr_t> txactions = bp->get_lighttable_tx_actions();
+    for (auto & action : txactions) {
+        xdbg("grpc stream tx hash: tx_key=%s", action->get_tx_dump_key().c_str());
     }
 #endif
 
