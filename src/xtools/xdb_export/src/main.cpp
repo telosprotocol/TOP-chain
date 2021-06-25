@@ -3,18 +3,22 @@
 #include "xblockstore/xblockstore_face.h"
 #include "xconfig/xconfig_register.h"
 #include "xconfig/xpredefined_configurations.h"
+#include "xdata/xfull_tableblock.h"
 #include "xdata/xnative_contract_address.h"
 #include "xdata/xrootblock.h"
+#include "xdata/xtable_bstate.h"
 #include "xdb/xdb_factory.h"
-#include "xstore/xstore_face.h"
 #include "xstake/xstake_algorithm.h"
-#include "xvledger/xvledger.h"
+#include "xstore/xstore_face.h"
 #include "xvledger/xvblock.h"
+#include "xvledger/xvledger.h"
+
+#include <signal.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+
 #include <fstream>
 #include <iostream>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <signal.h>
 
 #define ALWAYS_OVERWRITE false
 
@@ -57,9 +61,10 @@ void usage() {
     std::cout << "        - all_account" << std::endl;
     std::cout << "        - all_property" << std::endl;
     std::cout << "        - stake_property" << std::endl;
-    std::cout << "        - check_fast_sync [table | unit] [account address]" << std::endl;
+    std::cout << "        - check_fast_sync [table|unit] [account address]" << std::endl;
     std::cout << "        - check_block_exist <account address> <height>" << std::endl;
     std::cout << "        - check_tx_info [table]" << std::endl;
+    std::cout << "        - check_latest_fullblock [table]" << std::endl;
     std::cout << "        - query <account address>" << std::endl;
     std::cout << "-------  end  -------" << std::endl;
 }
@@ -187,6 +192,22 @@ public:
         }
     }
 
+    std::vector<std::string> get_all_table_address() {
+        std::vector<std::string> all_address;
+        const std::map<std::pair<std::string, std::string>, int> addr2name = {
+            std::make_pair(std::make_pair(std::string{sys_contract_sharding_table_block_addr}, "sharding"), 256),
+            std::make_pair(std::make_pair(std::string{sys_contract_zec_table_block_addr}, "zec"), MAIN_CHAIN_ZEC_TABLE_USED_NUM),
+            std::make_pair(std::make_pair(std::string{sys_contract_beacon_table_block_addr}, "beacon"), MAIN_CHAIN_REC_TABLE_USED_NUM),
+        };
+        for (auto const & _p : addr2name) {
+            for (auto index = 0; index < _p.second; ++index) {
+                std::string address = _p.first.first + "@" + std::to_string(index);
+                all_address.emplace_back(address);
+            }
+        }
+        return all_address;
+    }
+
     void query_all_table_sync_result(json & result_json) {
         const std::map<std::pair<std::string, std::string>, int> addr2name = {
             std::make_pair(std::make_pair(std::string{sys_contract_sharding_table_block_addr}, "sharding"), 256),
@@ -245,6 +266,26 @@ public:
             }
         }
         result_json[account] = result;
+    }
+
+    void query_vec_table_latest_fullblock(std::vector<std::string> address_vec) {
+        if (address_vec.size() == 0) {
+            return;
+        }
+        json result_json;
+        for (auto const & _p : address_vec) {
+            query_table_latest_fullblock(_p, result_json[_p]);
+        }
+        std::string filename;
+        if (address_vec.size() == 1) {
+            filename = address_vec[0] + "_latest_fullblock_info.json";
+        } else {
+            filename = "all_latest_fullblock_info.json";
+        }
+
+        std::ofstream out_json(filename);
+        out_json << std::setw(4) << result_json;
+        std::cout << "===> " << filename << " generated success!" << std::endl;
     }
 
     void query_all_table_tx_info() {
@@ -619,6 +660,33 @@ private:
     }
 
 private:
+    void query_table_latest_fullblock(std::string const & account, json & result_json) {
+        auto vblock = m_blockstore->get_latest_committed_full_block(account);
+        data::xblock_t * block = dynamic_cast<data::xblock_t *>(vblock.get());
+        if (block == nullptr) {
+            std::cout << " table " << account << " get_latest_committed_full_block null" << std::endl;
+            return;
+        }
+        if (block->get_height() == 0) {
+            return;
+        }
+        if (!block->is_fulltable()) {
+            std::cout << " table " << account << " latest_committed_full_block is not full table" << std::endl;
+            return;
+        }
+        result_json["height"] = block->get_height();
+        auto root_hash = block->get_fullstate_hash();
+        result_json["hash"] = to_hex_str(root_hash);
+        base::xauto_ptr<base::xvbstate_t> bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(block);
+        data::xtablestate_ptr_t tablestate = bstate != nullptr ? std::make_shared<data::xtable_bstate_t>(bstate.get()) : nullptr;
+        if (bstate == nullptr) {
+            result_json["bstate"] = "null";
+            return;
+        } else {
+            data::xtablestate_ptr_t tablestate = std::make_shared<data::xtable_bstate_t>(bstate.get());
+            result_json["account_size"] = tablestate->get_account_size();
+        }
+    }
     // std::unique_ptr<mbus::xmessage_bus_face_t> m_bus;
     // std::shared_ptr<top::db::xdb_face_t> m_db;
     top::xobject_ptr_t<top::store::xstore_face_t> m_store;
@@ -760,21 +828,20 @@ int main(int argc, char ** argv) {
         std::ofstream out_json(file_name);
         out_json << std::setw(4) << result_json;
     } else if (function_name == "check_tx_info") {
-        json result_json;
-        std::string filename;
         if (argc == 3) {
             tools.query_all_table_tx_info();
-            return 0;
         } else if (argc == 4) {
+            json result_json;
+            std::string filename;
             std::string address{argv[3]};
             tools.query_tx_info(address, result_json);
             filename = address + "_tx_info.json";
+            std::ofstream out_json(filename);
+            out_json << std::setw(4) << result_json;
         } else {
             usage();
             return -1;
         }
-        std::ofstream out_json(filename);
-        out_json << std::setw(4) << result_json;
     } else if (function_name == "check_block_exist") {
         if (argc < 5) {
             usage();
@@ -784,6 +851,17 @@ int main(int argc, char ** argv) {
         std::string height_s{argv[4]};
         uint64_t height = std::stoi(height_s);
         tools.query_block_exist(address, height);
+    } else if (function_name == "check_latest_fullblock") {
+        if (argc == 3) {
+            auto const & all_table_address = tools.get_all_table_address();
+            tools.query_vec_table_latest_fullblock(all_table_address);
+        } else if (argc == 4) {
+            std::vector<std::string> address = {argv[3]};
+            tools.query_vec_table_latest_fullblock(address);
+        } else {
+            usage();
+            return -1;
+        }
     } else {
         usage();
     }
