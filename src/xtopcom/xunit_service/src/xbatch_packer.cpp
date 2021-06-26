@@ -384,6 +384,11 @@ bool xbatch_packer::on_proposal_finish(const base::xvevent_t & event, xcsobject_
     bool is_leader = xcons_utl::xip_equals(xip, _evt_obj->get_target_proposal()->get_cert()->get_validator())
                   || xcons_utl::xip_equals(xip, _evt_obj->get_target_proposal()->get_cert()->get_auditor());
     if (_evt_obj->get_error_code() != xconsensus::enum_xconsensus_code_successful) {
+
+        // accumulated table failed value
+        auto fork_tag = "cons_table_failed_accu_" + get_account();
+        XMETRICS_COUNTER_INCREMENT( fork_tag , 1);
+
         if (is_leader) {
             XMETRICS_GAUGE(metrics::cons_tableblock_leader_finish_fail, 1);
         } else {
@@ -400,6 +405,11 @@ bool xbatch_packer::on_proposal_finish(const base::xvevent_t & event, xcsobject_
                             "error_code", _evt_obj->get_error_code(),
                             "node_xip", xcons_utl::xip_to_hex(get_xip2_addr()));
     } else {
+
+        // reset to 0
+        auto fork_tag = "cons_table_failed_accu_" + get_account();
+        XMETRICS_COUNTER_SET( fork_tag , 0);
+
         if (is_leader) {
             XMETRICS_GAUGE(metrics::cons_tableblock_leader_finish_succ, 1);
         } else {
