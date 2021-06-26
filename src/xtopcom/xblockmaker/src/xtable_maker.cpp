@@ -51,10 +51,9 @@ int32_t xtable_maker_t::check_latest_state(const xblock_ptr_t & latest_block) {
     }
 
     m_check_state_success = false;
-    uint64_t from_height = 0;
     uint64_t lacked_block_height = 0;
     // cache latest block
-    if (!load_and_cache_enough_blocks(latest_block, from_height, lacked_block_height)) {
+    if (!load_and_cache_enough_blocks(latest_block, lacked_block_height)) {
         xwarn("xunit_maker_t::check_latest_state fail-load_and_cache_enough_blocks.account=%s", get_account().c_str());
         return xblockmaker_error_latest_table_blocks_invalid;
     }
@@ -140,7 +139,7 @@ bool xtable_maker_t::create_lightunit_makers(const xtablemaker_para_t & table_pa
         xunit_maker_ptr_t unitmaker = create_unit_maker(unit_account);
         base::xaccount_index_t accountindex;
         tablestate->get_account_index(unit_account, accountindex);
-        int32_t ret = unitmaker->check_latest_state(accountindex);
+        int32_t ret = unitmaker->check_latest_state(cs_para, accountindex);
         if (ret != xsuccess) {
             // TODO(jimmy) sync
             xwarn("xtable_maker_t::create_lightunit_makers fail-tx filtered for unit check_latest_state,%s,account=%s,error_code=%s,tx=%s",
@@ -237,7 +236,7 @@ bool xtable_maker_t::create_non_lightunit_makers(const xtablemaker_para_t & tabl
 
         base::xaccount_index_t accountindex;
         tablestate->get_account_index(unit_account, accountindex);
-        int32_t ret = unitmaker->check_latest_state(accountindex);
+        int32_t ret = unitmaker->check_latest_state(cs_para, accountindex);
         if (ret != xsuccess) {
             // empty unit maker must create success
             xwarn("xtable_maker_t::create_non_lightunit_makers fail-check_latest_state,%s,account=%s,error_code=%s",
@@ -260,7 +259,7 @@ bool xtable_maker_t::create_other_makers(const xtablemaker_para_t & table_para, 
 
         base::xaccount_index_t accountindex;
         tablestate->get_account_index(unit_account, accountindex);
-        int32_t ret = unitmaker->check_latest_state(accountindex);
+        int32_t ret = unitmaker->check_latest_state(cs_para, accountindex);
         if (ret != xsuccess) {
             // other unit maker must create success
             xwarn("xtable_maker_t::create_non_lightunit_makers fail-check_latest_state,%s,account=%s,error_code=%s",

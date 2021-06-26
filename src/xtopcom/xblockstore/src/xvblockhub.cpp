@@ -13,6 +13,9 @@
 #include "xvgenesis.h"
 #include "xvledger/xvdbkey.h"
 
+
+#define __ALLOW_FORK_LOCK__  // XTODO always allow store multi lock blocks
+
 namespace top
 {
     namespace store
@@ -1069,9 +1072,8 @@ namespace top
             if(nullptr == new_raw_block)
                 return false;
 #if defined(ENABLE_METRICS)
-            XMETRICS_GAUGE(metrics::store_block_write_call, 1);
+            XMETRICS_GAUGE(metrics::store_block_call, 1);
 #endif
-
             // xbft will store repeat block, check it firstly
             if(query_index(new_raw_block->get_height(), new_raw_block->get_viewid()) != nullptr)
             {
@@ -1747,9 +1749,7 @@ namespace top
         {
             if( (NULL == index_ptr) || (NULL == block_ptr) )
                 return false;
-#if defined(ENABLE_METRICS)
-            XMETRICS_GAUGE(metrics::store_block_write, 1);
-#endif
+
             if(write_block_object_to_db(index_ptr,block_ptr) == false)
                 return false;
 
@@ -1788,6 +1788,9 @@ namespace top
             //raw block not stored header yet
             if(index_ptr->check_store_flag(base::enum_index_store_flag_mini_block) == false)
             {
+#if defined(ENABLE_METRICS)
+                XMETRICS_GAUGE(metrics::store_block_write, 1);
+#endif
                 std::string blockobj_bin;
                 block_ptr->serialize_to_string(blockobj_bin);
                 const std::string blockobj_key = base::xvdbkey_t::create_block_object_key(*this,block_ptr->get_block_hash());
@@ -1869,6 +1872,9 @@ namespace top
                     const std::string input_res_bin = block_ptr->get_input()->get_resources_data();
                     if(input_res_bin.empty() == false)
                     {
+#if defined(ENABLE_METRICS)
+                        XMETRICS_GAUGE(metrics::store_block_input_write, 1);
+#endif
                         const std::string input_res_key = base::xvdbkey_t::create_block_input_resource_key(*this,block_ptr->get_block_hash());
                         if(base::xvchain_t::instance().get_xdbstore()->set_value(input_res_key, input_res_bin))
                         {
@@ -1964,6 +1970,9 @@ namespace top
             {
                 if(block_ptr->get_output()->get_resources_hash().empty() == false)
                 {
+#if defined(ENABLE_METRICS)
+                    XMETRICS_GAUGE(metrics::store_block_output_write, 1);
+#endif
                     const std::string output_res_bin = block_ptr->get_output()->get_resources_data();
                     if(output_res_bin.empty() == false)
                     {

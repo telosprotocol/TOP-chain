@@ -69,6 +69,7 @@ namespace top
                 return true;
 
             //replace by new one
+            XMETRICS_GAUGE(metrics::store_tx_origin, 1);
             return xvchain_t::instance().get_xdbstore()->set_value(raw_tx_key,raw_tx_bin);
         }
 
@@ -102,6 +103,7 @@ namespace top
 
             xdbg("xvtxstore_t::store_tx_obj,%s",base::xstring_utl::to_hex(raw_tx_key).c_str());
             //replace by new one
+            XMETRICS_GAUGE(metrics::store_tx_origin, 1);
             return xvchain_t::instance().get_xdbstore()->set_value(raw_tx_key,raw_tx_bin);
         }
 
@@ -146,6 +148,16 @@ namespace top
                     v->serialize_to_string(tx_bin);
                     xassert(!tx_bin.empty());
 
+                    if (v->get_tx_phase_type() == enum_transaction_subtype_send) {
+                        XMETRICS_GAUGE(metrics::store_tx_index_send, 1);
+                    } else if (v->get_tx_phase_type() == enum_transaction_subtype_recv) {
+                        XMETRICS_GAUGE(metrics::store_tx_index_recv, 1);
+                    } else if (v->get_tx_phase_type() == enum_transaction_subtype_self) {
+                        XMETRICS_GAUGE(metrics::store_tx_index_self, 1);
+                    } else if (v->get_tx_phase_type() == enum_transaction_subtype_confirm) {
+                        XMETRICS_GAUGE(metrics::store_tx_index_confirm, 1);
+                    }
+
                     if(base::xvchain_t::instance().get_xdbstore()->set_value(tx_key, tx_bin) == false)
                     {
                         xerror("xvtxstore_t::store_txs_index,fail to store tx for block(%s)",block_ptr->dump().c_str());
@@ -157,14 +169,7 @@ namespace top
                     }
 
 #ifdef  LONG_CONFIRM_CHECK
-                    if (v->get_tx_phase_type() == enum_transaction_subtype_send) {
-                        XMETRICS_COUNTER_INCREMENT("store_tx_count_send", 1);
-                    } else if (v->get_tx_phase_type() == enum_transaction_subtype_recv) {
-                        XMETRICS_COUNTER_INCREMENT("store_tx_count_recv", 1);
-                    } else if (v->get_tx_phase_type() == enum_transaction_subtype_self) {
-                        XMETRICS_COUNTER_INCREMENT("store_tx_count_self", 1);
-                    } else if (v->get_tx_phase_type() == enum_transaction_subtype_confirm) {
-                        XMETRICS_COUNTER_INCREMENT("store_tx_count_confirm", 1);
+                    if (v->get_tx_phase_type() == enum_transaction_subtype_confirm) {
                         base::xauto_ptr<base::xvtxindex_t> send_txindex = base::xvchain_t::instance().get_xtxstore()->load_tx_idx(v->get_tx_hash(), base::enum_transaction_subtype_send);
                         if (send_txindex == nullptr)
                         {
@@ -180,14 +185,7 @@ namespace top
                             {
                                 max_time = delay_time;
                             }
-
-                            if (delay_time >= 12) {
-                                XMETRICS_COUNTER_INCREMENT("store_confirmtx_long_time_12clock", 1);
-                            } else if (delay_time >= 6) {
-                                XMETRICS_COUNTER_INCREMENT("store_confirmtx_long_time_6clock", 1);
-                            } // else if (delay_time >= 3) {
-                                // XMETRICS_COUNTER_INCREMENT("store_confirmtx_long_time_3clock", 1);
-                            //}
+                            
                             if (delay_time >= 6)  // 6 clock
                             {
                                 xwarn("xvtxstore_t::store_txs,confirm tx time long.max_time=%ld,time=%ld,tx=%s", (uint64_t)max_time, delay_time, base::xstring_utl::to_hex(v->get_tx_hash()).c_str());

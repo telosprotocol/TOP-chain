@@ -12,19 +12,12 @@ NS_BEG2(top, blockmaker)
 
 // create the state matching latest block and cache it
 bool xblock_maker_t::update_account_state(const xblock_ptr_t & latest_block, uint64_t & lacked_block_height) {
-    if (m_latest_bstate != nullptr && m_latest_bstate->get_block_viewid() == latest_block->get_viewid()) {
+    if (m_latest_bstate != nullptr
+        && m_latest_bstate->get_block_viewid() == latest_block->get_viewid()
+        && m_latest_bstate->get_block_height() == latest_block->get_height()) {
         xdbg("xblock_maker_t::update_account_state find cache state. account=%s,height=%ld",
             get_account().c_str(), latest_block->get_height());
         return true;
-    }
-
-    // check missing block before get target block state
-    base::xauto_ptr<base::xvblock_t> _latest_connected_block = get_blockstore()->get_latest_connected_block(get_account());
-    if (_latest_connected_block->get_height() + 2 < latest_block->get_height()) {
-        lacked_block_height = latest_block->get_height() - 1;
-        xwarn("xblock_maker_t::update_account_state fail-missing block. account=%s,height=%ld,viewid=%ld,connect_height=%ld",
-            get_account().c_str(), latest_block->get_height(), latest_block->get_viewid(), _latest_connected_block->get_height());
-        return false;
     }
 
     base::xauto_ptr<base::xvbstate_t> bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(latest_block.get());
@@ -105,7 +98,7 @@ void xblock_maker_t::reset_latest_cert_block(const xblock_ptr_t & block) {
 }
 
 
-bool xblock_maker_t::load_and_cache_enough_blocks(const xblock_ptr_t & latest_block, uint64_t & from_height, uint64_t & lacked_block_height) {
+bool xblock_maker_t::load_and_cache_enough_blocks(const xblock_ptr_t & latest_block, uint64_t & lacked_block_height) {
     XMETRICS_TIME_RECORD("cons_tableblock_verfiy_proposal_load_and_cache_enough_blocks");
     xblock_ptr_t current_block = latest_block;
     reset_latest_cert_block(latest_block);
@@ -120,7 +113,6 @@ bool xblock_maker_t::load_and_cache_enough_blocks(const xblock_ptr_t & latest_bl
             auto _block = get_blockstore()->load_block_object(*this, current_block->get_height() - 1, current_block->get_last_block_hash(), false);
             if (_block == nullptr) {
                 xwarn("xblock_maker_t::load_and_cache_enough_blocks fail-load block.account=%s,height=%ld", get_account().c_str(), current_block->get_height() - 1);
-                from_height = (latest_block->get_height() >= m_keep_latest_blocks_max) ? (latest_block->get_height() + 1 - m_keep_latest_blocks_max) : 0;
                 lacked_block_height = current_block->get_height() - 1;
                 return false;
             }
