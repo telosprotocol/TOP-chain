@@ -75,9 +75,17 @@ metrics_variant_ptr e_metrics::s_metrics[e_simple_total] = {
     DECL_METRICS(store_block_index_read),
     DECL_METRICS(store_block_input_read),
     DECL_METRICS(store_block_output_read),
-    DECL_METRICS(store_block_write_call),
+    DECL_METRICS(store_block_call),
     DECL_METRICS(store_block_write),
+    DECL_METRICS(store_block_input_write),
+    DECL_METRICS(store_block_output_write),
     DECL_METRICS(store_block_delete),
+    DECL_METRICS(store_tx_index_self),
+    DECL_METRICS(store_tx_index_send),
+    DECL_METRICS(store_tx_index_recv),
+    DECL_METRICS(store_tx_index_confirm),
+    DECL_METRICS(store_tx_origin),
+
 };
 
 void e_metrics::start() {

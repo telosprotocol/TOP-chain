@@ -81,9 +81,18 @@ enum E_SIMPLE_METRICS_TAG {
     store_block_index_read,
     store_block_input_read,
     store_block_output_read,
-    store_block_write_call,
+    store_block_call,
     store_block_write,
+    store_block_input_write,
+    store_block_output_write,
     store_block_delete,
+    store_tx_index_self,
+    store_tx_index_send,
+    store_tx_index_recv,
+    store_tx_index_confirm,
+    store_tx_origin,
+
+
     e_simple_total,
 };
 using xmetircs_tag_t = E_SIMPLE_METRICS_TAG;
