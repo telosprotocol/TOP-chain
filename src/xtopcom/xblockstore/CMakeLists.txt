@@ -14,10 +14,10 @@ target_link_libraries(xblockstore PRIVATE
     xstore
 )
 
-# if (BUILD_METRICS)
-#     add_dependencies(xblockstore xmetrics)
-#     target_link_libraries(xblockstore PRIVATE xmetrics)
-# endif()
+if (BUILD_METRICS)
+    add_dependencies(xblockstore xmetrics)
+    target_link_libraries(xblockstore PRIVATE xmetrics)
+endif()
 
 if (XENABLE_TESTS)
     enable_testing()

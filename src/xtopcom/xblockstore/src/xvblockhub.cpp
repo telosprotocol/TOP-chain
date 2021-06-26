@@ -1072,7 +1072,7 @@ namespace top
                 return false;
 
             #ifdef ENABLE_METRICS
-            XMETRICS_GAUGE(metrics::store_block_write_call, 1);
+            XMETRICS_GAUGE(metrics::store_block_call, 1);
             #endif
 
             // xbft will store repeat block, check it firstly
@@ -1752,10 +1752,6 @@ namespace top
             if( (NULL == index_ptr) || (NULL == block_ptr) )
                 return false;
 
-            #ifdef ENABLE_METRICS
-            XMETRICS_GAUGE(metrics::store_block_write, 1);
-            #endif
-
             if(write_block_object_to_db(index_ptr,block_ptr) == false)
                 return false;
 
@@ -1794,6 +1790,7 @@ namespace top
             //raw block not stored header yet
             if(index_ptr->check_store_flag(base::enum_index_store_flag_mini_block) == false)
             {
+                XMETRICS_GAUGE(metrics::store_block_write, 1);
                 std::string blockobj_bin;
                 block_ptr->serialize_to_string(blockobj_bin);
                 const std::string blockobj_key = base::xvdbkey_t::create_block_object_key(*this,block_ptr->get_block_hash());
@@ -1876,6 +1873,7 @@ namespace top
                     const std::string input_res_bin = block_ptr->get_input()->get_resources_data();
                     if(input_res_bin.empty() == false)
                     {
+                        XMETRICS_GAUGE(metrics::store_block_input_write, 1);
                         const std::string input_res_key = base::xvdbkey_t::create_block_input_resource_key(*this,block_ptr->get_block_hash());
                         if(base::xvchain_t::instance().get_xdbstore()->set_value(input_res_key, input_res_bin))
                         {
@@ -1972,6 +1970,7 @@ namespace top
             {
                 if(block_ptr->get_output()->get_resources_hash().empty() == false)
                 {
+                    XMETRICS_GAUGE(metrics::store_block_output_write, 1);
                     const std::string output_res_bin = block_ptr->get_output()->get_resources_data();
                     if(output_res_bin.empty() == false)
                     {
