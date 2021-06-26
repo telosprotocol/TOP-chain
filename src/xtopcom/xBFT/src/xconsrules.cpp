@@ -5,6 +5,7 @@
 
 #include <inttypes.h>
 #include "xconsdriver.h"
+#include "xmetrics/xmetrics.h"
 
 #define __FAST_CLEAN_PROPOSAL__
 
@@ -786,6 +787,8 @@ namespace top
             {
                 if(_test_for_block->get_justify_cert_hash() != get_lock_block()->get_input_root_hash())
                 {
+                    auto fork_tag = "cons_lock_fork_" + get_account();
+                    XMETRICS_COUNTER_INCREMENT( fork_tag , 1);
                     xerror("xBFTRules::safe_check_follow_locked_branch,fail-proposal justify cert hash unmatch of prev->prev, proposal=%s vs locked=%s at node=0x%llx",_test_for_block->dump().c_str(), get_lock_block()->dump().c_str(),get_xip2_addr().low_addr);
                     return -1;
                 }
