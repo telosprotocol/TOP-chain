@@ -2574,7 +2574,8 @@ namespace top
                     auto cur_it = it;
                     ++it;
 
-                    uint64_t weight = cal_index_base_weight(cur_it->second) + ((cur_it->second->get_prev_block() != NULL) ? 1 : 0);
+                    //uint64_t weight = cal_index_base_weight(cur_it->second) + ((cur_it->second->get_prev_block() != NULL) ? 1 : 0);
+                    uint64_t weight = cal_index_base_weight(cur_it->second);//only care base weight
                     if(cur_it->second->check_block_flag(base::enum_xvblock_flag_committed))
                     {
                         if(false == has_commit_already)
@@ -2608,7 +2609,8 @@ namespace top
                     auto cur_it = it;
                     ++it;
 
-                    const uint64_t weight = cal_index_base_weight(cur_it->second) + ((cur_it->second->get_prev_block() != NULL) ? 1 : 0);
+                    //const uint64_t weight = cal_index_base_weight(cur_it->second) + ((cur_it->second->get_prev_block() != NULL) ? 1 : 0);
+                    const uint64_t weight = cal_index_base_weight(cur_it->second);//only care base weight
                     if(weight < cur_max_weight) //remove lower one
                     {
                         xinfo("xblockacct_t::rebase_chain_at_height,remove existing lower-weight' block(%s) < cur_max_weight(%" PRIu64 ") at store(%s)",cur_it->second->dump().c_str(),cur_max_weight,get_blockstore_path().c_str());
