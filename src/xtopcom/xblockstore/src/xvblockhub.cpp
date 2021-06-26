@@ -6,13 +6,12 @@
 #include <cinttypes>
 #include "xbase/xutl.h"
 #include "xbase/xcontext.h"
+#if defined(ENABLE_METRICS)
+#include "xmetrics/xmetrics.h"
+#endif
 #include "xvblockhub.h"
 #include "xvgenesis.h"
 #include "xvledger/xvdbkey.h"
-
-#ifdef ENABLE_METRICS
-    #include "xmetrics/xmetrics.h"
-#endif
 
 namespace top
 {
@@ -1069,10 +1068,9 @@ namespace top
         {
             if(nullptr == new_raw_block)
                 return false;
-
-            #ifdef ENABLE_METRICS
+#if defined(ENABLE_METRICS)
             XMETRICS_GAUGE(metrics::store_block_write_call, 1);
-            #endif
+#endif
 
             // xbft will store repeat block, check it firstly
             if(query_index(new_raw_block->get_height(), new_raw_block->get_viewid()) != nullptr)
@@ -1145,10 +1143,9 @@ namespace top
 
             if(block_ptr->get_height() == 0)
                 return false; //not allow delete genesis block
-            
-            #ifdef ENABLE_METRICS
+#if defined(ENABLE_METRICS)
             XMETRICS_GAUGE(metrics::store_block_delete, 1);
-            #endif
+#endif
             xkinfo("xblockacct_t::delete_block,delete block:[chainid:%u->account(%s)->height(%" PRIu64 ")->viewid(%" PRIu64 ") at store(%s)",block_ptr->get_chainid(),block_ptr->get_account().c_str(),block_ptr->get_height(),block_ptr->get_viewid(),get_blockstore_path().c_str());
 
             if(false == m_all_blocks.empty())
@@ -1750,11 +1747,9 @@ namespace top
         {
             if( (NULL == index_ptr) || (NULL == block_ptr) )
                 return false;
-            
-            #ifdef ENABLE_METRICS
+#if defined(ENABLE_METRICS)
             XMETRICS_GAUGE(metrics::store_block_write, 1);
-            #endif
-            
+#endif
             if(write_block_object_to_db(index_ptr,block_ptr) == false)
                 return false;
 
@@ -1817,10 +1812,9 @@ namespace top
         {
             if(index_ptr->get_this_block() == NULL)
             {
-                #ifdef ENABLE_METRICS
+#if defined(ENABLE_METRICS)
                 XMETRICS_GAUGE(metrics::store_block_read, 1);
-                #endif
-                
+#endif
                 const std::string blockobj_key = base::xvdbkey_t::create_block_object_key(*this,index_ptr->get_block_hash());
                 const std::string blockobj_bin = base::xvchain_t::instance().get_xdbstore()->get_value(blockobj_key);
                 if(blockobj_bin.empty())
@@ -1921,10 +1915,9 @@ namespace top
                 if(  (block_ptr->get_input()->get_resources_hash().empty() == false) //link resoure data
                    &&(block_ptr->get_input()->has_resource_data() == false) ) //but dont have resource avaiable now
                 {
-                    #ifdef ENABLE_METRICS
+#if defined(ENABLE_METRICS)
                     XMETRICS_GAUGE(metrics::store_block_input_read, 1);
-                    #endif
-                    
+#endif
                     //which means resource are stored at seperatedly
                     const std::string input_resource_key = base::xvdbkey_t::create_block_input_resource_key(*this,block_ptr->get_block_hash());
 
@@ -2020,9 +2013,9 @@ namespace top
                 if(  (block_ptr->get_output()->get_resources_hash().empty() == false) //link resoure data
                    &&(block_ptr->get_output()->has_resource_data() == false) ) //but dont have resource avaiable now
                 {
-                    #ifdef ENABLE_METRICS
+#if defined(ENABLE_METRICS)
                     XMETRICS_GAUGE(metrics::store_block_output_read, 1);
-                    #endif
+#endif
                     //which means resource are stored at seperatedly
                     const std::string output_resource_key = base::xvdbkey_t::create_block_output_resource_key(*this,block_ptr->get_block_hash());
 
@@ -2305,10 +2298,9 @@ namespace top
 
         base::xvbindex_t*   xblockacct_t::read_index_from_db(const std::string & index_db_key_path)
         {
-            #ifdef ENABLE_METRICS
+#if defined(ENABLE_METRICS)
             XMETRICS_GAUGE(metrics::store_block_index_read, 1);
-            #endif
-            
+#endif
             const std::string index_bin = base::xvchain_t::instance().get_xdbstore()->get_value(index_db_key_path);
             if(index_bin.empty())
             {

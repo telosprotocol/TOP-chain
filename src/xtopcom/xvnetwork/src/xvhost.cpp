@@ -16,6 +16,7 @@
 #include "xelection/xcache/xgroup_element.h"
 #include "xelection/xdata_accessor_error.h"
 #include "xmetrics/xmetrics.h"
+#include "xtxpool_service_v2/xtxpool_service.h"
 #include "xutility/xhash.h"
 #include "xvnetwork/xcodec/xmsgpack/xmessage_codec.hpp"
 #include "xvnetwork/xcodec/xmsgpack/xvnetwork_message_codec.hpp"
@@ -562,9 +563,36 @@ void xtop_vhost::do_handle_network_data() {
                                                    "_in_vhost_size" + std::to_string(static_cast<std::uint32_t>(vnetwork_message.message().id())),
                                                bytes.size());
                     #endif
-                    m_filter_manager->filt_message(vnetwork_message);
-                    if (vnetwork_message.empty()) {
-                        continue;
+                    if (vnetwork_message.message_id() != xtxpool_service_v2::xtxpool_msg_send_receipt &&
+                        vnetwork_message.message_id() != xtxpool_service_v2::xtxpool_msg_recv_receipt) {
+                        m_filter_manager->filt_message(vnetwork_message);
+                        if (vnetwork_message.empty()) {
+                            continue;
+                        }
+                    } else {
+                        std::error_code ec{ election::xdata_accessor_errc_t::success };
+                        auto const group_element = m_election_cache_data_accessor->group_element_by_logic_time(receiver.sharding_address(), msg_time, ec);
+                        if (!ec) {
+                            if (receiver.account_election_address().empty()) {
+                                vnetwork_message.receiver(
+                                    common::xnode_address_t{
+                                        receiver.sharding_address(),
+                                        group_element->version(),
+                                        group_element->sharding_size(),
+                                        group_element->associated_blk_height()
+                                    });
+
+                            } else {
+                                vnetwork_message.receiver(
+                                    common::xnode_address_t{
+                                        receiver.sharding_address(),
+                                        receiver.account_election_address(),
+                                        group_element->version(),
+                                        group_element->sharding_size(),
+                                        group_element->associated_blk_height()
+                                    });
+                            }
+                        }
                     }
 
                     xinfo("[vnetwork] message hash: %" PRIx64 " , after  filter:s&r sender is %s , receiver is %s",
