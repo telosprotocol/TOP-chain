@@ -785,11 +785,11 @@ namespace top
                     const uint64_t try_height = m_meta->_highest_genesis_connect_height + 1;
                     if(load_index(try_height) == 0) //missed block
                         break;
-                
+
                     base::xauto_ptr<base::xvbindex_t> next_commit(query_index(try_height, base::enum_xvblock_flag_committed));
                     if(!next_commit) //dont have commited block
                         break;
-                    
+
                     if( (0 == m_meta->_highest_genesis_connect_height) && m_meta->_highest_genesis_connect_hash.empty())
                     {
                         //could be exception case that not event inited yet,so makeup
@@ -2528,6 +2528,14 @@ namespace top
                 return 0;
 
             uint64_t weight = index->get_height();
+
+            #ifdef __ALLOW_FORK_LOCK__
+            if(index->check_block_flag(base::enum_xvblock_flag_committed))
+                weight += base::enum_xvblock_flag_committed;//0x4000
+
+            return weight;
+            #endif //end of __ALLOW_FORK_LOCK__
+
         #ifdef __USE_HIGHEST_FLAG_FOR_WEIGHT
             if(index->check_block_flag(base::enum_xvblock_flag_committed))
                 weight += base::enum_xvblock_flag_committed;//0x4000
@@ -2565,11 +2573,7 @@ namespace top
                     auto cur_it = it;
                     ++it;
 
-                    #ifdef __ALLOW_FORK_LOCK__ //just clean candidates at commited height or un-connected block
-                    uint64_t weight = ((cur_it->second->check_block_flag(base::enum_xvblock_flag_committed)) ? base::enum_xvblock_flag_committed : 0) + ((cur_it->second->get_prev_block() != NULL) ? 1 : 0);
-                    #else
-                    uint64_t weight = cal_index_base_weight(cur_it->second) + ((cur_it->second->get_prev_block() != NULL) ? 1 : 0);
-                    #endif
+                    uint64_t weight = cal_index_base_weight(cur_it->second);
                     if(cur_it->second->check_block_flag(base::enum_xvblock_flag_committed))
                     {
                         if(false == has_commit_already)
@@ -2603,12 +2607,8 @@ namespace top
                     auto cur_it = it;
                     ++it;
 
-                    #ifdef __ALLOW_FORK_LOCK__
-                    const uint64_t weight = ((cur_it->second->check_block_flag(base::enum_xvblock_flag_committed)) ? base::enum_xvblock_flag_committed : 0) + ((cur_it->second->get_prev_block() != NULL) ? 1 : 0);
-                    #else
-                    const uint64_t weight = cal_index_base_weight(cur_it->second) + ((cur_it->second->get_prev_block() != NULL) ? 1 : 0);
-                    #endif
-                    
+                    const uint64_t weight = cal_index_base_weight(cur_it->second);
+
                     if(weight < cur_max_weight) //remove lower one
                     {
                         xinfo("xblockacct_t::rebase_chain_at_height,remove existing lower-weight' block(%s) < cur_max_weight(%" PRIu64 ") at store(%s)",cur_it->second->dump().c_str(),cur_max_weight,get_blockstore_path().c_str());
