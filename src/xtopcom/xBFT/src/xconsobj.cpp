@@ -7,7 +7,7 @@
 #include "xconsobj.h"
 #include "xbase/xhash.h"
 #include "xdata/xnative_contract_address.h"
-
+#include "xmetrics/xmetrics.h"
 
 namespace top
 {
@@ -336,6 +336,7 @@ namespace top
             :xcsobject_t(_context,target_thread_id,type),
              base::xvaccount_t(account_addr)
         {
+            XMETRICS_GAUGE(metrics::dataobject_xcscoreobj_t, 1);
         }
 
         xcscoreobj_t::xcscoreobj_t(xcscoreobj_t & parentobj,base::enum_xobject_type type)
@@ -343,10 +344,12 @@ namespace top
              base::xvaccount_t(parentobj.get_account())
         {
             base::xionode_t::reset_xip_addr(parentobj.get_xip2_addr());//force update xip2 address by following parent
+            XMETRICS_GAUGE(metrics::dataobject_xcscoreobj_t, 1);
         }
 
         xcscoreobj_t::~xcscoreobj_t()
         {
+            XMETRICS_GAUGE(metrics::dataobject_xcscoreobj_t, -1);
         };
 
         void* xcscoreobj_t::query_interface(const int32_t _enum_xobject_type_)

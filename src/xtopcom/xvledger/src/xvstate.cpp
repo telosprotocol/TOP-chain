@@ -55,6 +55,7 @@ namespace top
             :xvexegroup_t(type),
              xvaccount_t()
         {
+            XMETRICS_GAUGE(metrics::dataobject_xvexestate_t, 1);
             //then register execution methods
             REGISTER_XVIFUNC_ID_API(enum_xvinstruct_class_state_function);
         }
@@ -63,6 +64,7 @@ namespace top
             :xvexegroup_t(type),
              xvaccount_t(account_addr)
         {
+            XMETRICS_GAUGE(metrics::dataobject_xvexestate_t, 1);
             //then register execution methods
             REGISTER_XVIFUNC_ID_API(enum_xvinstruct_class_state_function);
         }
@@ -71,12 +73,14 @@ namespace top
             :xvexegroup_t(obj),
              xvaccount_t(obj.get_address())
         {
+            XMETRICS_GAUGE(metrics::dataobject_xvexestate_t, 1);
             //then register execution methods
             REGISTER_XVIFUNC_ID_API(enum_xvinstruct_class_state_function);
         }
     
         xvexestate_t::~xvexestate_t()
         {
+            XMETRICS_GAUGE(metrics::dataobject_xvexestate_t, -1);
         }
         
         bool    xvexestate_t::clone_properties_from(xvexestate_t& source)//note: just only clone the state of properties

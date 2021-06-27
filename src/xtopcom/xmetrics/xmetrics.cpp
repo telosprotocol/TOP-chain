@@ -24,7 +24,7 @@ metrics_variant_ptr e_metrics::s_metrics[e_simple_total] = {
     DECL_METRICS(dataobject_xvtxindex), // xvtxindex
     DECL_METRICS(dataobject_xvbstate), // xvbstate
     DECL_METRICS(dataobject_xvproperty), // xvproperty
-    DECL_METRICS(dataobject_account), // account
+    DECL_METRICS(dataobject_xvaccountobj), // account
     DECL_METRICS(dataobject_exeunit), // exeunit
     DECL_METRICS(dataobject_exegroup), // exegroup
     DECL_METRICS(dataobject_xvexecontxt), // xvexecontxt
@@ -86,6 +86,15 @@ metrics_variant_ptr e_metrics::s_metrics[e_simple_total] = {
     DECL_METRICS(store_tx_index_confirm),
     DECL_METRICS(store_tx_origin),
 
+    // vledger dataobject
+    DECL_METRICS(dataobject_xvnode_t),
+    DECL_METRICS(dataobject_xvexestate_t),
+    DECL_METRICS(dataobject_xvnodegroup),
+    DECL_METRICS(dataobject_xcscoreobj_t),
+    DECL_METRICS(dataobject_xblock_maker_t),
+    DECL_METRICS(dataobject_xblockacct_t),
+    DECL_METRICS(dataobject_xtxpool_table_info_t),
+    DECL_METRICS(dataobject_xacctmeta_t),
 };
 
 void e_metrics::start() {

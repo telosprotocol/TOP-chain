@@ -13,7 +13,6 @@
 #include "xvgenesis.h"
 #include "xvledger/xvdbkey.h"
 
-
 #define __ALLOW_FORK_LOCK__  // XTODO always allow store multi lock blocks
 
 namespace top
@@ -38,6 +37,7 @@ namespace top
         xacctmeta_t::xacctmeta_t()
             :base::xdataobj_t(base::xdataunit_t::enum_xdata_type_vaccountmeta)
         {
+            XMETRICS_GAUGE(metrics::dataobject_xacctmeta_t, 1);
             _reserved_u16 = 0;
             _block_level  = (uint8_t)-1; //init to 255(that ensure is not allocated)
             _meta_spec_version = 1;     //version #1 now
@@ -53,6 +53,7 @@ namespace top
 
         xacctmeta_t::~xacctmeta_t()
         {
+            XMETRICS_GAUGE(metrics::dataobject_xacctmeta_t, -1);
         }
 
         std::string xacctmeta_t::dump() const
@@ -158,6 +159,9 @@ namespace top
             :base::xobject_t(base::enum_xobject_type_vaccount),
              base::xvaccount_t(account_addr)
         {
+#ifdef ENABLE_METRICS
+            XMETRICS_GAUGE(metrics::dataobject_xblockacct_t, 1);
+#endif
             m_meta = NULL;
 
             //need keep it unchanged forever as compatible consdieration
@@ -174,7 +178,9 @@ namespace top
             xinfo("xblockacct_t::destroy,account=%s at blockstore=%s,objectid=% " PRId64 " ",
                   get_address().c_str(),get_blockstore_path().c_str(),
                   (int64_t)get_obj_id());
-
+#ifdef ENABLE_METRICS
+            XMETRICS_GAUGE(metrics::dataobject_xblockacct_t, -1);
+#endif
             close_blocks();
             if(m_meta != nullptr)
                 m_meta->release_ref();

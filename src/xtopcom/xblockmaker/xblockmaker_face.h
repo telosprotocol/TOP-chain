@@ -126,9 +126,8 @@ class xtablemaker_para_t {
 
 class xblock_maker_t : public base::xvaccount_t {
  public:
-    explicit xblock_maker_t(const std::string & account, const xblockmaker_resources_ptr_t & resources, uint32_t latest_blocks_max)
-    : base::xvaccount_t(account), m_resources(resources), m_keep_latest_blocks_max(latest_blocks_max) {}
-    virtual ~xblock_maker_t() {}
+    explicit xblock_maker_t(const std::string & account, const xblockmaker_resources_ptr_t & resources, uint32_t latest_blocks_max);
+    virtual ~xblock_maker_t();
 
  public:
     void                        set_latest_block(const xblock_ptr_t & block);
