@@ -104,6 +104,7 @@ namespace top
                     }
                 }
             }
+            XMETRICS_GAUGE(metrics::dataobject_xvnodegroup, 1);
         }
         
         xvnodegroup_t::xvnodegroup_t(const xvip2_t & group_address,const uint64_t effect_clock_height,std::deque<xvnode_t*> const & nodes)
@@ -137,6 +138,7 @@ namespace top
                     }
                 }
             }
+            XMETRICS_GAUGE(metrics::dataobject_xvnodegroup, 1);
         }
         
         xvnodegroup_t::~xvnodegroup_t()
@@ -148,6 +150,7 @@ namespace top
                     it->release_ref();
                 }
             }
+            XMETRICS_GAUGE(metrics::dataobject_xvnodegroup, -1);
         }
         
         xvnode_t* xvnodegroup_t::get_node(const xvip2_t & target_node_xip2) const

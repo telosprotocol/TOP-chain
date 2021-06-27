@@ -89,6 +89,7 @@ metrics_variant_ptr e_metrics::s_metrics[e_simple_total] = {
     // vledger dataobject
     DECL_METRICS(dataobject_xvnode_t),
     DECL_METRICS(dataobject_xvexestate_t),
+    DECL_METRICS(dataobject_xvnodegroup),
 };
 
 void e_metrics::start() {

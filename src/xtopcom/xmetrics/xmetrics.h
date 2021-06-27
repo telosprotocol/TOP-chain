@@ -95,6 +95,7 @@ enum E_SIMPLE_METRICS_TAG {
     // vledger dataobject
     dataobject_xvnode_t,
     dataobject_xvexestate_t,
+    dataobject_xvnodegroup,
 
     e_simple_total,
 };
