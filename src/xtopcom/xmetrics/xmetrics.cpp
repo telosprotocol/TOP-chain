@@ -90,6 +90,11 @@ metrics_variant_ptr e_metrics::s_metrics[e_simple_total] = {
     DECL_METRICS(dataobject_xvnode_t),
     DECL_METRICS(dataobject_xvexestate_t),
     DECL_METRICS(dataobject_xvnodegroup),
+    DECL_METRICS(dataobject_xcscoreobj_t),
+    DECL_METRICS(dataobject_xblock_maker_t),
+    DECL_METRICS(dataobject_xblockacct_t),
+    DECL_METRICS(dataobject_xtxpool_table_info_t),
+    DECL_METRICS(dataobject_xacctmeta_t),
 };
 
 void e_metrics::start() {

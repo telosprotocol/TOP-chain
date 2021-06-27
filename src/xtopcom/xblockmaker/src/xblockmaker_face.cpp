@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2017-2018 Telos Foundation & contributors
+// Copyright (c) 2017-2018 Telos Foundation & contributors
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -7,9 +7,16 @@
 #include "xdata/xblocktool.h"
 #include "xdata/xcons_transaction.h"
 #include "xblockmaker/xblockmaker_face.h"
+#include "xmetrics/xmetrics.h"
 
 NS_BEG2(top, blockmaker)
-
+xblock_maker_t::xblock_maker_t(const std::string & account, const xblockmaker_resources_ptr_t & resources, uint32_t latest_blocks_max)
+    : base::xvaccount_t(account), m_resources(resources), m_keep_latest_blocks_max(latest_blocks_max) {
+    XMETRICS_GAUGE(metrics::dataobject_xblock_maker_t, 1);
+}
+xblock_maker_t::~xblock_maker_t() {
+    XMETRICS_GAUGE(metrics::dataobject_xblock_maker_t, -1);
+}
 // create the state matching latest block and cache it
 bool xblock_maker_t::update_account_state(const xblock_ptr_t & latest_block, uint64_t & lacked_block_height) {
     if (m_latest_bstate != nullptr

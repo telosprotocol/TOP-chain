@@ -96,6 +96,11 @@ enum E_SIMPLE_METRICS_TAG {
     dataobject_xvnode_t,
     dataobject_xvexestate_t,
     dataobject_xvnodegroup,
+    dataobject_xcscoreobj_t,
+    dataobject_xblock_maker_t,
+    dataobject_xblockacct_t,
+    dataobject_xtxpool_table_info_t,
+    dataobject_xacctmeta_t,
 
     e_simple_total,
 };
