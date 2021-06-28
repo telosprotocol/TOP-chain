@@ -40,7 +40,7 @@ namespace top
             #ifdef ENABLE_METRICS
             XMETRICS_GAUGE(metrics::dataobject_xacctmeta_t, 1);
             #endif
-            
+
             _reserved_u16 = 0;
             _block_level  = (uint8_t)-1; //init to 255(that ensure is not allocated)
             _meta_spec_version = 1;     //version #1 now
@@ -817,7 +817,7 @@ namespace top
                         break;
                     }
                 }
-                
+
                 if(m_meta->_highest_genesis_connect_height > (old_highest_genesis_connect_height + 64))
                     xwarn("xblockacct_t::load_latest_genesis_connected_index,navigate big step(%d) to new height(%" PRIu64 ") vs commit-height(%" PRIu64 ")  of account(%s)",(int)(m_meta->_highest_genesis_connect_height - old_highest_genesis_connect_height) ,m_meta->_highest_genesis_connect_height,m_meta->_highest_commit_block_height,get_address().c_str());
                 else if(m_meta->_highest_genesis_connect_height > old_highest_genesis_connect_height)
@@ -877,10 +877,73 @@ namespace top
         //caller respond to release those returned ptr
         bool    xblockacct_t::load_latest_index_list(base::xvbindex_t* & cert_block,base::xvbindex_t* & lock_block,base::xvbindex_t* & commit_block)
         {
+            base::xvbindex_t* temp_lock_index = nullptr;
+            base::xvbindex_t* temp_cert_index = nullptr;
+            // load index and cache
             commit_block = load_latest_committed_index();
-            lock_block   = load_latest_locked_index();
-            cert_block   = load_latest_cert_index();
-            return true;
+            temp_lock_index = load_latest_locked_index();
+            temp_cert_index = load_latest_cert_index();
+
+            if (m_meta->_highest_cert_block_height <= 1) {
+                lock_block = temp_lock_index;
+                cert_block = temp_cert_index;
+                return true;
+            }
+
+            // cert and lock match
+            if ( (temp_cert_index->get_height() == temp_lock_index->get_height() - 1)
+                && (temp_cert_index->get_last_full_block_hash() == temp_lock_index->get_block_hash()) ) {
+                lock_block = temp_lock_index;
+                cert_block = temp_cert_index;
+                return true;
+            }
+
+            // release old index
+            if (temp_cert_index != nullptr) {
+                temp_cert_index->release_ref();
+                temp_cert_index = nullptr;
+            }
+            if (temp_lock_index != nullptr) {
+                temp_lock_index->release_ref();
+                temp_lock_index = nullptr;
+            }
+
+            // get all cert blocks and try to find matched lock
+            std::vector<base::xvbindex_t*> cert_index_list = query_index(m_meta->_highest_cert_block_height);
+            for(auto & cert_index : cert_index_list)
+            {
+                if(cert_index != NULL)
+                {
+                    temp_lock_index = query_index(cert_index->get_height() - 1, cert_index->get_last_block_hash());
+                    if (temp_lock_index != nullptr) {
+                        cert_index->add_ref();
+                        temp_cert_index = cert_index;
+                        break;
+                    }
+                }
+            }
+            // release all index
+            for(auto & cert_index : cert_index_list) {
+                if(cert_index != NULL) {
+                    cert_index->release_ref();
+                }
+            }
+
+            if (temp_lock_index != nullptr && temp_cert_index != nullptr) {
+                lock_block = temp_lock_index;
+                cert_block = temp_cert_index;
+                xdbg_info("xblockacct_t::load_latest_index_list succ retry. account=%s,cert=%s,lock=%s",
+                    get_account().c_str(), temp_cert_index->dump().c_str(), temp_lock_index->dump().c_str());
+                return true;
+            }
+
+            if (commit_block != nullptr) {
+                commit_block->release_ref();
+                commit_block = nullptr;
+            }
+            xwarn("xblockacct_t::load_latest_index_list fail retry. account=%s,cert=%ld,lock=%ld,commit=%ld",
+                get_account().c_str(), m_meta->_highest_cert_block_height, m_meta->_highest_lock_block_height, m_meta->_highest_commit_block_height);
+            return false;
         }
 
         //load every index of block at target_height into cache layer

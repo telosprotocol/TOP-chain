@@ -66,7 +66,7 @@ namespace top
             const std::string state_db_bin = xvchain_t::instance().get_xdbstore()->get_value(state_db_key);
             if(state_db_bin.empty())
             {
-                xwarn("xvblkstatestore_t::read_state_from_db,fail to read from db for account=%s,height=%ld,hash=%s",target_account.get_account().c_str(), block_height, base::xstring_utl::to_hex(block_hash).c_str());
+                xdbg("xvblkstatestore_t::read_state_from_db,fail to read from db for account=%s,height=%ld,hash=%s",target_account.get_account().c_str(), block_height, base::xstring_utl::to_hex(block_hash).c_str());
                 return NULL;
             }
 
