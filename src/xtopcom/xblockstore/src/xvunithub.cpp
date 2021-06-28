@@ -857,6 +857,7 @@ namespace top
             base::xvbindex_t* target_block = account_obj->query_index(0, 0);
             if (target_block != NULL) {
                 xdbg("xvblockstore_impl::exist_genesis_block target_block not null");
+                target_block->release_ref();
                 return true;
             }
             if (account_obj->load_index_by_height(0) > 0) {
@@ -869,6 +870,9 @@ namespace top
                 xdbg("xvblockstore_impl::exist_genesis_block target_block null after load");
             }
 #endif
+            if(target_block != NULL)
+                target_block->release_ref();
+            
             return (nullptr != target_block);
         }
     };//end of namespace of vstore
