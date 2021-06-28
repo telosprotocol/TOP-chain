@@ -167,7 +167,7 @@ std::string xtop_sync_object::status() const {
 
         base::xauto_ptr<base::xvblock_t> latest_block = m_sync_store->get_latest_cert_block(address);
         xsync_progress_t info;
-        info.cur_height = m_sync_store->get_latest_end_block_height(address, enum_chain_sync_pocliy_full);
+        info.cur_height = m_sync_store->get_latest_end_block_height(address, enum_chain_sync_policy_full);
         info.max_height = latest_block->get_height();
 
         uint64_t height = 0;

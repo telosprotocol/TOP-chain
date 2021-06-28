@@ -60,7 +60,7 @@ TEST(xchain_block_fetcher, block) {
     vnetwork::xvnode_address_t from_address;
     chain_block_fetcher.on_newblock(block4, network_self, from_address);
 
-    base::xauto_ptr<base::xvblock_t> current_block = sync_store.get_latest_end_block(address, enum_chain_sync_pocliy_full);
+    base::xauto_ptr<base::xvblock_t> current_block = sync_store.get_latest_end_block(address, enum_chain_sync_policy_full);
     ASSERT_EQ(current_block->get_height(), 4);
 }
 
@@ -188,19 +188,19 @@ TEST(xchain_block_fetcher, block_hash) {
     // on response
     chain_block_fetcher.on_response_blocks(block4, network_self, target_address);
     {
-        base::xauto_ptr<base::xvblock_t> current_block = sync_store.get_latest_end_block(address, enum_chain_sync_pocliy_full);
+        base::xauto_ptr<base::xvblock_t> current_block = sync_store.get_latest_end_block(address, enum_chain_sync_policy_full);
         ASSERT_EQ(current_block->get_height(), 4);
     }
 
     chain_block_fetcher.on_response_blocks(block5, network_self, target_address);
     {
-        base::xauto_ptr<base::xvblock_t> current_block = sync_store.get_latest_end_block(address, enum_chain_sync_pocliy_full);
+        base::xauto_ptr<base::xvblock_t> current_block = sync_store.get_latest_end_block(address, enum_chain_sync_policy_full);
         ASSERT_EQ(current_block->get_height(), 5);
     }
 
     chain_block_fetcher.on_response_blocks(block6, network_self, target_address);
     {
-        base::xauto_ptr<base::xvblock_t> current_block = sync_store.get_latest_end_block(address, enum_chain_sync_pocliy_full);
+        base::xauto_ptr<base::xvblock_t> current_block = sync_store.get_latest_end_block(address, enum_chain_sync_policy_full);
         ASSERT_EQ(current_block->get_height(), 5);
     }
 }

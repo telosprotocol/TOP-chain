@@ -110,7 +110,7 @@ base::xauto_ptr<base::xvblock_t> xsync_store_t::query_block(const base::xvaccoun
 
 uint64_t xsync_store_t::get_latest_start_block_height(const std::string & account, enum_chain_sync_policy sync_policy) {
     base::xvaccount_t _vaddress(account);
-    if (sync_policy == enum_chain_sync_pocliy_fast) {
+    if (sync_policy == enum_chain_sync_policy_fast) {
         base::xauto_ptr<base::xvblock_t> _full_block = m_blockstore->get_latest_committed_full_block(account);
         if (_full_block != nullptr && _full_block->get_block_level() == base::enum_xvblock_level_table) {
             if (!_full_block->is_full_state_block()) {
@@ -125,7 +125,7 @@ uint64_t xsync_store_t::get_latest_start_block_height(const std::string & accoun
             }
         }
         return _full_block->get_height();
-    } else if (sync_policy == enum_chain_sync_pocliy_full) {
+    } else if (sync_policy == enum_chain_sync_policy_full) {
         return get_genesis_block_height(account);
     }
 
@@ -135,9 +135,9 @@ uint64_t xsync_store_t::get_latest_start_block_height(const std::string & accoun
 uint64_t xsync_store_t::get_latest_end_block_height(const std::string & account, enum_chain_sync_policy sync_policy) {
     base::xvaccount_t _vaddress(account);
     uint64_t connect_height = 0;
-    if (sync_policy == enum_chain_sync_pocliy_fast) {
+    if (sync_policy == enum_chain_sync_policy_fast) {
         connect_height = m_blockstore->get_latest_connected_block_height(account);
-    } else if (sync_policy == enum_chain_sync_pocliy_full) {
+    } else if (sync_policy == enum_chain_sync_policy_full) {
         connect_height = m_blockstore->get_latest_genesis_connected_block_height(account);
     }
 
@@ -154,7 +154,7 @@ uint64_t xsync_store_t::get_latest_end_block_height(const std::string & account,
 
 base::xauto_ptr<base::xvblock_t> xsync_store_t::get_latest_start_block(const std::string & account, enum_chain_sync_policy sync_policy) {
     base::xvaccount_t _vaddress(account);
-    if (sync_policy == enum_chain_sync_pocliy_fast) {
+    if (sync_policy == enum_chain_sync_policy_fast) {
         base::xauto_ptr<base::xvblock_t> _full_block = m_blockstore->get_latest_committed_full_block(account);
         if (_full_block != nullptr && _full_block->get_block_level() == base::enum_xvblock_level_table) {
             if (false == m_blockstore->load_block_output(_vaddress, _full_block.get())
@@ -174,7 +174,7 @@ base::xauto_ptr<base::xvblock_t> xsync_store_t::get_latest_start_block(const std
             }
         }
         return _full_block;
-    } else if (sync_policy == enum_chain_sync_pocliy_full) {
+    } else if (sync_policy == enum_chain_sync_policy_full) {
         auto _genesis_block = m_blockstore->get_genesis_block(account);
         if (false == m_blockstore->load_block_output(_vaddress, _genesis_block.get())
             || false == m_blockstore->load_block_input(_vaddress, _genesis_block.get()) ) {
@@ -193,9 +193,9 @@ base::xauto_ptr<base::xvblock_t> xsync_store_t::get_latest_end_block(const std::
     std::vector<std::vector<xvblock_ptr_t>> blocks;
     xvblock_ptr_t block = nullptr;
     bool exist = false;
-    if (sync_policy == enum_chain_sync_pocliy_fast) {
+    if (sync_policy == enum_chain_sync_policy_fast) {
         block = m_blockstore->get_latest_connected_block(account);
-    } else if (sync_policy == enum_chain_sync_pocliy_full) {
+    } else if (sync_policy == enum_chain_sync_policy_full) {
         block = m_blockstore->get_latest_genesis_connected_block(account);
     }
     if (false == m_blockstore->load_block_output(_vaddress, block.get())
