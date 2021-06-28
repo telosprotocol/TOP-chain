@@ -19,7 +19,7 @@ namespace top
         {
             memset(m_plugins,0,sizeof(m_plugins));
             xinfo("xvaccountobj_t::xvaccountobj_t,acccount(%s)-xvid(%llu)",get_address().c_str(),get_xvid());
-            XMETRICS_GAUGE(metrics::dataobject_account, 1);
+            XMETRICS_GAUGE(metrics::dataobject_xvaccountobj, 1);
         }
     
         xvaccountobj_t::~xvaccountobj_t()
@@ -32,7 +32,7 @@ namespace top
                 if(old_ptr != NULL)//catch exception case if have
                     xcontext_t::instance().delay_release_object(old_ptr);
             }
-            XMETRICS_GAUGE(metrics::dataobject_account, -1);
+            XMETRICS_GAUGE(metrics::dataobject_xvaccountobj, -1);
         }
     
         bool xvaccountobj_t::close(bool force_async)

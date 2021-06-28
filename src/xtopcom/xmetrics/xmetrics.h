@@ -29,7 +29,7 @@ enum E_SIMPLE_METRICS_TAG {
     dataobject_xvtxindex,
     dataobject_xvbstate,
     dataobject_xvproperty,
-    dataobject_account,
+    dataobject_xvaccountobj,
     dataobject_exeunit,
     dataobject_exegroup,
     dataobject_xvexecontxt,
@@ -92,6 +92,15 @@ enum E_SIMPLE_METRICS_TAG {
     store_tx_index_confirm,
     store_tx_origin,
 
+    // vledger dataobject
+    dataobject_xvnode_t,
+    dataobject_xvexestate_t,
+    dataobject_xvnodegroup,
+    dataobject_xcscoreobj_t,
+    dataobject_xblock_maker_t,
+    dataobject_xblockacct_t,
+    dataobject_xtxpool_table_info_t,
+    dataobject_xacctmeta_t,
 
     e_simple_total,
 };

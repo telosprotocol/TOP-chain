@@ -8,6 +8,7 @@
 #include "xdata/xtransaction.h"
 #include "xtxpool_v2/xtxpool_log.h"
 #include "xverifier/xverifier_utl.h"
+#include "xmetrics/xmetrics.h"
 
 namespace top {
 namespace xtxpool_v2 {
@@ -325,10 +326,14 @@ private:
 
 class xtxpool_table_info_t : public base::xvaccount_t {
 public:
+    xtxpool_table_info_t() = delete;
+    xtxpool_table_info_t(const xtxpool_table_info_t &) = delete;
     xtxpool_table_info_t(const std::string & address, xtxpool_shard_info_t * shard, xtxpool_statistic_t * statistic) : base::xvaccount_t(address), m_statistic(statistic) {
+        XMETRICS_GAUGE(metrics::dataobject_xtxpool_table_info_t, 1);
         m_shards.push_back(shard);
     }
     ~xtxpool_table_info_t() {
+        XMETRICS_GAUGE(metrics::dataobject_xtxpool_table_info_t, -1);
         m_statistic->dec_push_tx_send_cur_num(m_counter.get_send_tx_count());
         m_statistic->dec_push_tx_recv_cur_num(m_counter.get_recv_tx_count());
         m_statistic->dec_push_tx_confirm_cur_num(m_counter.get_conf_tx_count());
