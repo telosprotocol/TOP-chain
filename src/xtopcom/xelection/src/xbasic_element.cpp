@@ -133,10 +133,6 @@ xtop_basic_element::version() const noexcept {
     return m_address.version();
 }
 
-common::xlogical_version_t const & xtop_basic_element::logic_epoch() const noexcept {
-    return m_address.logic_epoch();
-}
-
 common::xzone_id_t
 xtop_basic_element::zone_id() const noexcept {
     return m_address.zone_id();

@@ -37,9 +37,10 @@ namespace top
         xacctmeta_t::xacctmeta_t()
             :base::xdataobj_t(base::xdataunit_t::enum_xdata_type_vaccountmeta)
         {
-#if defined(ENABLE_METRICS)
+            #ifdef ENABLE_METRICS
             XMETRICS_GAUGE(metrics::dataobject_xacctmeta_t, 1);
-#endif
+            #endif
+            
             _reserved_u16 = 0;
             _block_level  = (uint8_t)-1; //init to 255(that ensure is not allocated)
             _meta_spec_version = 1;     //version #1 now
@@ -55,9 +56,9 @@ namespace top
 
         xacctmeta_t::~xacctmeta_t()
         {
-#if defined(ENABLE_METRICS)
+            #ifdef ENABLE_METRICS
             XMETRICS_GAUGE(metrics::dataobject_xacctmeta_t, -1);
-#endif
+            #endif
         }
 
         std::string xacctmeta_t::dump() const

@@ -211,8 +211,9 @@ public:
 };
 using xaccount_election_address_t = xtop_account_election_address;
 
-class xtop_logical_version final : public xhashable_t<xtop_logical_version>
-                                 , public xenable_to_string_t<xtop_logical_version> {
+class xtop_logical_version final
+  : public xhashable_t<xtop_logical_version>
+  , public xenable_to_string_t<xtop_logical_version> {
     xversion_t m_version{};
     std::uint16_t m_sharding_size{std::numeric_limits<std::uint16_t>::max()};
     std::uint64_t m_associated_blk_height{std::numeric_limits<std::uint64_t>::max()};
@@ -225,21 +226,16 @@ public:
     using hash_result_type = xhashable_t<xtop_logical_version>::hash_result_type;
 
     xtop_logical_version(xversion_t const & version, std::uint16_t const sharding_size, std::uint64_t const associated_blk_height);
-    xtop_logical_version(std::uint16_t const sharding_size, std::uint64_t const associated_blk_height);
 
     xversion_t const & version() const noexcept;
 
     std::uint16_t sharding_size() const noexcept;
-
-    std::uint16_t group_size() const noexcept;
 
     std::uint64_t associated_blk_height() const noexcept;
 
     void swap(xtop_logical_version & other) noexcept;
 
     bool empty() const noexcept;
-
-    bool has_value() const noexcept;
 
     bool operator==(xtop_logical_version const & other) const noexcept;
 
@@ -260,13 +256,12 @@ public:
     std::string to_string() const override;
 };
 using xlogical_version_t = xtop_logical_version;
-using xlogic_epoch_t = xtop_logical_version;
 
 class xtop_node_address final : public xhashable_t<xtop_node_address>
                               , public xenable_to_string_t<xtop_node_address>
 {
 private:
-    xgroup_address_t m_cluster_address{};
+    xsharding_address_t m_cluster_address{};
     xtop_account_election_address m_account_election_address{};
     xlogical_version_t m_logic_version{};
 
@@ -281,24 +276,17 @@ public:
     ~xtop_node_address()                                     = default;
 
     explicit
-    xtop_node_address(xgroup_address_t const & group_address);
+    xtop_node_address(xsharding_address_t const & sharding_address);
 
-    xtop_node_address(xgroup_address_t const & group_address,
-                      xlogic_epoch_t const & group_logic_epoch);
-
-    xtop_node_address(xgroup_address_t const & group_address,
+    xtop_node_address(xsharding_address_t const & sharding_address,
                       xversion_t const & version,
                       std::uint16_t const sharding_size,
                       std::uint64_t const associated_blk_height);
 
-    xtop_node_address(xgroup_address_t const & group_address,
+    xtop_node_address(xsharding_address_t const & sharding_address,
                       xaccount_election_address_t const & account_election_address);
 
-    xtop_node_address(xgroup_address_t const & group_address,
-                      xaccount_election_address_t const & account_election_address,
-                      xlogic_epoch_t const & group_logic_epoch);
-
-    xtop_node_address(xgroup_address_t const & group_address,
+    xtop_node_address(xsharding_address_t const & sharding_address,
                       xaccount_election_address_t const & account_election_address,
                       xversion_t const & version,
                       std::uint16_t const sharding_size,
@@ -331,13 +319,11 @@ public:
     xaccount_election_address_t const &
     account_election_address() const noexcept;
 
-    xgroup_address_t const &
+    xsharding_address_t const &
     cluster_address() const noexcept;
 
-    xgroup_address_t const &
+    xsharding_address_t const &
     sharding_address() const noexcept;
-
-    xgroup_address_t const & group_address() const noexcept;
 
     xnetwork_id_t
     network_id() const noexcept;
@@ -359,8 +345,6 @@ public:
 
     xlogical_version_t const &
     logical_version() const noexcept;
-
-    xlogic_epoch_t const & logic_epoch() const noexcept;
 
     xversion_t const &
     version() const noexcept;
@@ -405,28 +389,28 @@ private:
 };
 using xnode_address_t = xtop_node_address;
 
-xgroup_address_t
+xsharding_address_t
 build_committee_sharding_address(xnetwork_id_t const & network_id);
 
-xgroup_address_t
+xsharding_address_t
 build_zec_sharding_address(xnetwork_id_t const & network_id);
 
-xgroup_address_t
+xsharding_address_t
 build_edge_sharding_address(xnetwork_id_t const & network_id);
 
-xgroup_address_t
+xsharding_address_t
 build_archive_sharding_address(xgroup_id_t const & group_id, xnetwork_id_t const & network_id);
 
-xgroup_address_t
+xsharding_address_t
 build_consensus_sharding_address(xgroup_id_t const & group_id, xnetwork_id_t const & network_id = xtopchain_network_id);
 
-xgroup_address_t
+xsharding_address_t
 build_network_broadcast_sharding_address(xnetwork_id_t const & network_id);
 
-xgroup_address_t
+xsharding_address_t
 build_platform_broadcast_sharding_address();
 
-xgroup_address_t
+xsharding_address_t
 build_frozen_sharding_address(xnetwork_id_t const & network_id = xtopchain_network_id, xcluster_id_t const & cluster_id = xdefault_cluster_id, xgroup_id_t const & group_id = xdefault_group_id);
 
 xgroup_address_t
@@ -447,10 +431,10 @@ struct hash<top::common::xnode_address_t> final
 };
 
 template <>
-struct hash<top::common::xgroup_address_t> final
+struct hash<top::common::xsharding_address_t> final
 {
     std::size_t
-    operator()(top::common::xgroup_address_t const & cluster_address) const;
+    operator()(top::common::xsharding_address_t const & cluster_address) const;
 };
 
 NS_END1

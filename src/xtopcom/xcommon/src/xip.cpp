@@ -422,7 +422,7 @@ xaddress_domain_t xtop_ip::address_domain() const noexcept {
 }
 
 bool xtop_ip::empty() const noexcept {
-    return broadcast(network_id()) && broadcast(zone_id()) && broadcast(cluster_id()) && broadcast(group_id()) && broadcast(slot_id());
+    return broadcast(network_id());
 }
 
 void xtop_ip::swap(xtop_ip & other) noexcept {

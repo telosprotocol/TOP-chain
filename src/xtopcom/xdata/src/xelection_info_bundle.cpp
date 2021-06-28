@@ -36,22 +36,6 @@ xtop_election_info_bundle::node_id(common::xnode_id_t const & nid) {
     m_node_id = nid;
 }
 
-common::xaccount_address_t const & xtop_election_info_bundle::account_address() const noexcept {
-    return m_node_id;
-}
-
-common::xaccount_address_t & xtop_election_info_bundle::account_address() noexcept {
-    return m_node_id;
-}
-
-void xtop_election_info_bundle::account_address(common::xaccount_address_t && addr) noexcept {
-    m_node_id = std::move(addr);
-}
-
-void xtop_election_info_bundle::account_address(common::xaccount_address_t const & addr) {
-    m_node_id = addr;
-}
-
 xelection_info_t const &
 xtop_election_info_bundle::election_info() const noexcept {
     return m_election_info;

@@ -17,7 +17,6 @@ enum class xtop_data_accessor_errc {
     node_id_empty,
     node_id_mismatch,
     node_not_found,
-    account_not_found = node_not_found,
     node_already_exist,
     node_joined_version_empty,
     node_joined_version_mismatch,
