@@ -41,7 +41,7 @@ bool xreceipt_strategy_t::is_resend_node_for_talbe(uint64_t now, uint32_t table_
     uint64_t random_num = now + (uint64_t)table_id;
     bool is_time_for_resend = ((random_num % receipt_resend_interval) == 0);
     uint16_t resend_node_pos = ((now / receipt_resend_interval) + (uint64_t)table_id) % shard_size;
-    xinfo("xreceipt_strategy_t::is_resend_node_for_talbe table:%d,now:%llu,interval0x%x,is_time_for_resend:%d,shard_size:%d,resend_node_pos:%d,self_node_id:%d",
+    xdbg("xreceipt_strategy_t::is_resend_node_for_talbe table:%d,now:%llu,interval0x%x,is_time_for_resend:%d,shard_size:%d,resend_node_pos:%d,self_node_id:%d",
           table_id,
           now,
           receipt_resend_interval,
@@ -54,14 +54,7 @@ bool xreceipt_strategy_t::is_resend_node_for_talbe(uint64_t now, uint32_t table_
 
 bool xreceipt_strategy_t::is_time_for_node_pull_lacking_receipts(uint64_t now, uint32_t table_id, uint16_t self_node_id) {
     uint64_t random_num = now + (uint64_t)table_id + (uint64_t)self_node_id;
-    bool ret = ((random_num % pull_missing_receipt_interval) == 0);
-    xinfo("xreceipt_strategy_t::is_time_for_node_pull_lacking_receipts table:%d,now:%llu,interval0x%x,ret:%d,self_node_id:%d",
-          table_id,
-          now,
-          pull_missing_receipt_interval,
-          ret,
-          self_node_id);
-    return ret;
+    return (random_num % pull_missing_receipt_interval) == 0;
 }
 
 bool xreceipt_strategy_t::is_selected_resender(const data::xcons_transaction_ptr_t & cons_tx, uint32_t resend_time, uint16_t node_id, uint16_t shard_size) {
