@@ -129,7 +129,7 @@ bool xbatch_packer::start_proposal(base::xblock_mptrs& latest_blocks) {
     xunit_dbg_info("xbatch_packer::start_proposal leader begin make_proposal.%s cert_block_viewid=%ld", proposal_para.dump().c_str(), latest_blocks.get_latest_cert_block()->get_viewid());
     xblock_ptr_t proposal_block = m_proposal_maker->make_proposal(proposal_para);
     if (proposal_block == nullptr) {
-        xunit_warn("xbatch_packer::start_proposal fail-make_proposal.%s", proposal_para.dump().c_str());
+        xunit_dbg("xbatch_packer::start_proposal fail-make_proposal.%s", proposal_para.dump().c_str());  // may has no txs for proposal
         return false;
     }
     base::xauto_ptr<xconsensus::xproposal_start> _event_obj(new xconsensus::xproposal_start(proposal_block.get()));
@@ -158,11 +158,15 @@ bool xbatch_packer::on_view_fire(const base::xvevent_t & event, xcsobject_t * fr
     m_leader_packed = false;
     // fix: viewchange on different rounds
     if (view_ev->get_clock() < m_start_time) {
+        xunit_warn("xbatch_packer::on_view_fire fail-clock expired less than start time.account=%s,viewid=%ld,clock=%ld,start_time=%ld",
+            get_account().c_str(), view_ev->get_viewid(), view_ev->get_clock(), m_start_time);
+        XMETRICS_COUNTER_INCREMENT("cons_view_fire_clock_delay", 1);
         return false;
     }
 
     if (view_ev->get_clock() + 2 < m_para->get_resources()->get_chain_timer()->logic_time()) {
-        xunit_info("xbatch_packer::on_view_fire clock delay:%llu:%llu", view_ev->get_clock(), m_para->get_resources()->get_chain_timer()->logic_time());
+        xunit_warn("xbatch_packer::on_view_fire fail-clock expired less than logic time.account=%s,viewid=%ld,clock=%ld,logic_time=%ld",
+            get_account().c_str(), view_ev->get_viewid(), view_ev->get_clock(), m_para->get_resources()->get_chain_timer()->logic_time());
         XMETRICS_COUNTER_INCREMENT("cons_view_fire_clock_delay", 1);
         return false;
     }
@@ -172,8 +176,14 @@ bool xbatch_packer::on_view_fire(const base::xvevent_t & event, xcsobject_t * fr
     m_last_view_clock = view_ev->get_clock();
 
     base::xblock_mptrs latest_blocks = m_para->get_resources()->get_vblockstore()->get_latest_blocks(get_account());
+    if (latest_blocks.get_latest_cert_block() == nullptr) {
+        xunit_warn("xbatch_packer::on_view_fire fail-invalid latest blocks,account=%s,viewid=%ld,clock=%ld",
+            get_account().c_str(), view_ev->get_viewid(), view_ev->get_clock());
+        return false;
+    }
     if (m_last_view_clock < latest_blocks.get_latest_cert_block()->get_clock()) {
-        xunit_warn("xbatch_packer::on_view_fire fail-clock cur=%ull,prev=%ull", m_last_view_clock, latest_blocks.get_latest_cert_block()->get_clock());
+        xunit_warn("xbatch_packer::on_view_fire fail-clock less than cert block,account=%s,viewid=%ld,clock=%ld,prev=%ull",
+            get_account().c_str(), view_ev->get_viewid(), view_ev->get_clock(), latest_blocks.get_latest_cert_block()->get_clock());
         return false;
     }
 
@@ -199,8 +209,8 @@ bool xbatch_packer::on_view_fire(const base::xvevent_t & event, xcsobject_t * fr
     bool is_leader_node = xcons_utl::xip_equals(leader_xip, local_xip);
     if (!is_leader_node) {
         // backup do nothing
-        xunit_info("xbatch_packer::on_view_fire backup_node this:%p node:%s xip:%s,leader:%s,rotate_mode:%d",
-                this, node_account.c_str(),
+        xunit_info("xbatch_packer::on_view_fire backup_node account=%s,viewid=%ld,clock=%ld,this:%p node:%s xip:%s,leader:%s,rotate_mode:%d",
+                get_account().c_str(), view_ev->get_viewid(), view_ev->get_clock(), this, node_account.c_str(),
                 xcons_utl::xip_to_hex(local_xip).c_str(), xcons_utl::xip_to_hex(leader_xip).c_str(), rotate_mode);
         return true;
     }
@@ -216,6 +226,11 @@ bool  xbatch_packer::on_timer_fire(const int32_t thread_id, const int64_t timer_
     }
     // xunit_dbg("xbatch_packer::on_timer_fire retry start proposal.this:%p node:%s", this, m_para->get_resources()->get_account().c_str());
     base::xblock_mptrs latest_blocks = m_para->get_resources()->get_vblockstore()->get_latest_blocks(get_account());
+    if (latest_blocks.get_latest_cert_block() == nullptr) {  // TODO(jimmy) get_latest_blocks return bool future
+        xunit_warn("xbatch_packer::on_timer_fire fail-invalid latest blocks,account=%s,viewid=%ld,clock=%ld",
+            get_account().c_str(), m_last_view_id, m_last_view_clock);
+        return false;
+    }
     m_leader_packed = start_proposal(latest_blocks);
     return true;
 }

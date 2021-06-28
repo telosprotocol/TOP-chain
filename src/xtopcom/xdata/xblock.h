@@ -155,6 +155,8 @@ class xblock_consensus_para_t {
     void    set_drand_block(base::xvblock_t* _drand_block);
     void    set_latest_blocks(const base::xblock_mptrs & latest_blocks);
     void    update_latest_cert_block(const xblock_ptr_t & proposal_prev_block) {m_latest_cert_block = proposal_prev_block;}
+    void    update_latest_lock_block(const xblock_ptr_t & lock_block) {m_latest_locked_block = lock_block;}
+    void    update_latest_commit_block(const xblock_ptr_t & commit_block) {m_latest_committed_block = commit_block;}
     void    set_validator(const xvip2_t & validator) {m_validator = validator;}
     void    set_common_consensus_para(uint64_t clock,
                                    const xvip2_t & validator,
