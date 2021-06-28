@@ -123,11 +123,11 @@ void xsync_gossip_t::walk_role(const vnetwork::xvnode_address_t &self_addr, cons
         if (!m_role_chains_mgr->exists(it.second.address))
             continue;
 
-        if (it.second.sync_policy == enum_chain_sync_pocliy_fast) {
+        if (it.second.sync_policy == enum_chain_sync_policy_fast) {
             continue;
         }
 
-        base::xauto_ptr<base::xvblock_t> current_block = m_sync_store->get_latest_end_block(it.second.address, enum_chain_sync_pocliy_full);
+        base::xauto_ptr<base::xvblock_t> current_block = m_sync_store->get_latest_end_block(it.second.address, enum_chain_sync_policy_full);
         uint64_t height = current_block->get_height();
         uint64_t view_id = current_block->get_viewid();
 
@@ -214,7 +214,7 @@ void xsync_gossip_t::handle_message(const std::vector<xgossip_chain_info_ptr_t> 
             continue;
         }
 
-        base::xauto_ptr<base::xvblock_t> current_block = m_sync_store->get_latest_end_block(info->owner, enum_chain_sync_pocliy_full);
+        base::xauto_ptr<base::xvblock_t> current_block = m_sync_store->get_latest_end_block(info->owner, enum_chain_sync_policy_full);
         uint64_t local_height = current_block->get_height();
         uint64_t local_view_id = current_block->get_viewid();
 

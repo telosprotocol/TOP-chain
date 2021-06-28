@@ -452,7 +452,7 @@ void xsync_handler_t::gossip(uint32_t msg_size, const vnetwork::xvnode_address_t
         if (info.local_height == info.peer_height)
             continue;
 
-        mbus::xevent_ptr_t ev = make_object_ptr<mbus::xevent_behind_download_t>(address, 0u, info.peer_height, enum_chain_sync_pocliy_full, network_self, from_address, reason);
+        mbus::xevent_ptr_t ev = make_object_ptr<mbus::xevent_behind_download_t>(address, 0u, info.peer_height, enum_chain_sync_policy_full, network_self, from_address, reason);
         m_downloader->push_event(ev);
     }
 }
@@ -545,7 +545,7 @@ void xsync_handler_t::broadcast_chain_state(uint32_t msg_size, const vnetwork::x
         xchain_state_info_t info;
         xblock_ptr_t block = autoptr_to_blockptr(latest_start_block);
         info.address = address;
-        if ((chain_info.sync_policy == enum_chain_sync_pocliy_fast) && !block->is_full_state_block()) {
+        if ((chain_info.sync_policy == enum_chain_sync_policy_fast) && !block->is_full_state_block()) {
             info.start_height = 0;
             info.end_height = 0;
         } else {

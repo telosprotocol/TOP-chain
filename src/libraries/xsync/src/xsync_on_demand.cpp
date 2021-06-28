@@ -67,9 +67,11 @@ void xsync_on_demand_t::on_behind_event(const mbus::xevent_ptr_t &e) {
     bool permit = m_download_tracer.apply(address, std::make_pair(start_height, start_height + count - 1), context);
     if (permit) {
         m_sync_sender->send_get_on_demand_blocks(address, start_height, count, is_consensus, self_addr, target_addr);
+        XMETRICS_COUNTER_INCREMENT("xsync_on_demand_download_request_remote", 1);
     } else {
         xsync_info("xsync_on_demand_t::on_behind_event is not permit because of overflow or during downloading, account: %s",
         address.c_str());
+        XMETRICS_COUNTER_INCREMENT("xsync_on_demand_download_overflow", 1);
     }
 }
 
@@ -101,7 +103,7 @@ void xsync_on_demand_t::handle_blocks_response(const std::vector<data::xblock_pt
         return;
     }
 
-    base::xauto_ptr<base::xvblock_t> current_vblock = m_sync_store->get_latest_start_block(account, enum_chain_sync_pocliy_fast);
+    base::xauto_ptr<base::xvblock_t> current_vblock = m_sync_store->get_latest_start_block(account, enum_chain_sync_policy_fast);
     if (current_vblock != nullptr){
         data::xblock_ptr_t current_block = autoptr_to_blockptr(current_vblock);
         xsync_message_chain_snapshot_meta_t chain_snapshot_meta{account, current_vblock->get_height()};
@@ -123,6 +125,7 @@ void xsync_on_demand_t::handle_blocks_response(const std::vector<data::xblock_pt
     int32_t count = tracer.height_interval().second - tracer.trace_height();
     if (count > 0) {
         m_sync_sender->send_get_on_demand_blocks(account, tracer.trace_height() + 1, count, is_consensus, network_self, to_address);
+        XMETRICS_COUNTER_INCREMENT("xsync_on_demand_download_request_remote", 1);
     } else {
         m_download_tracer.expire(account);
         on_response_event(account);
@@ -249,6 +252,7 @@ void xsync_on_demand_t::handle_chain_snapshot(xsync_message_chain_snapshot_t &ch
     if (count > 0) {
         m_download_tracer.refresh(account);
         m_sync_sender->send_get_on_demand_blocks(account, tracer.trace_height() + 1, count, is_consensus, network_self, to_address);
+        XMETRICS_COUNTER_INCREMENT("xsync_on_demand_download_request_remote", 1);
     } else {
         on_response_event(account);
     }

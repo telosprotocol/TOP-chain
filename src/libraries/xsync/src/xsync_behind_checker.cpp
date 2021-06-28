@@ -1,6 +1,7 @@
 #include "xsync/xsync_behind_checker.h"
 #include "xsync/xsync_log.h"
 #include "xsync/xsync_util.h"
+#include "xmetrics/xmetrics.h"
 
 NS_BEG2(top, sync)
 
@@ -86,13 +87,41 @@ void xsync_behind_checker_t::check_one(const std::string &address, enum_chain_sy
     vnetwork::xvnode_address_t peer_addr;
 
     if (m_peerset->get_newest_peer(self_addr, address, peer_start_height, peer_end_height, peer_addr)) {
+        std::string peer_left_metric_tag_name;
+        std::string peer_right_metric_tag_name;
+        std::string self_left_metric_tag_name;
+        std::string self_right_metric_tag_name;
+        std::string self_full_block_state_metirc_tag_name;
+        if (sync_policy == enum_chain_sync_policy_fast) {
+            peer_left_metric_tag_name = "xsync_max_peer_fast_interval_left_" + address;
+            peer_right_metric_tag_name = "xsync_max_peer_fast_interval_right_" + address;
+            self_left_metric_tag_name = "xsync_self_fast_interval_left_" + address;
+            self_right_metric_tag_name = "xsync_self_fast_interval_right_" + address;
+            self_full_block_state_metirc_tag_name = "xsync_self_fast_full_state_" + address;
+            xblock_ptr_t block = autoptr_to_blockptr(latest_start_block);
+            if (!block->is_full_state_block()) {
+                XMETRICS_COUNTER_SET(self_full_block_state_metirc_tag_name, false);
+            } else {
+                XMETRICS_COUNTER_SET(self_full_block_state_metirc_tag_name, true);
+            }
+        } else if (sync_policy == enum_chain_sync_policy_full) {
+            peer_left_metric_tag_name = "xsync_max_peer_full_interval_left_" + address;
+            peer_right_metric_tag_name = "xsync_max_peer_full_interval_right_" + address;
+            self_left_metric_tag_name = "xsync_self_full_interval_left_" + address;
+            self_right_metric_tag_name = "xsync_self_full_interval_right_" + address;
+        }
+
+        XMETRICS_COUNTER_SET(peer_left_metric_tag_name, peer_start_height);
+        XMETRICS_COUNTER_SET(peer_right_metric_tag_name, peer_end_height);
+        XMETRICS_COUNTER_SET(self_left_metric_tag_name, latest_start_block->get_height());
+        XMETRICS_COUNTER_SET(self_right_metric_tag_name, latest_end_block_height);
 
         if (peer_end_height == 0)
             return;
 
         if (latest_end_block_height >= peer_end_height) {
             xblock_ptr_t block = autoptr_to_blockptr(latest_start_block);
-            if (!((sync_policy == enum_chain_sync_pocliy_fast) && !block->is_full_state_block())) {
+            if (!((sync_policy == enum_chain_sync_policy_fast) && !block->is_full_state_block())) {
                 return;
             }
         }
