@@ -59,6 +59,12 @@ void xtxpool_service_mgr::on_block_to_db_event(mbus::xevent_ptr_t e) {
     auto event_handler = [this, e](base::xcall_t & call, const int32_t cur_thread_id, const uint64_t timenow_ms) -> bool {
         mbus::xevent_store_block_committed_ptr_t block_event = dynamic_xobject_ptr_cast<mbus::xevent_store_block_committed_t>(e);
         const xblock_ptr_t & block = mbus::extract_block_from(block_event);
+        base::xvaccount_t _vaccount(block->get_account());
+        // TODO(jimmy) load block input for get raw tx nonce
+        if (false == base::xvchain_t::instance().get_xblockstore()->load_block_input(_vaccount, block.get())) {
+            xerror("xtxpool_service_mgr::on_block_to_db_event fail-load block input output, block=%s", block->dump().c_str());
+            return true;
+        }
         xassert(block->check_block_flag(base::enum_xvblock_flag_committed));
         on_block_confirmed(block.get());
         return true;
