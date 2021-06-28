@@ -23,7 +23,10 @@ namespace top
         {
             //first process all pending events at this moment
             if(m_raw_ptr != NULL)
+            {
                 m_raw_ptr->process_events();
+                m_raw_ptr->clean_caches(false,false);//light cleanup
+            }
 
             //then release raw ptr
             xblockacct_t * old_ptr = m_raw_ptr;
@@ -168,7 +171,7 @@ namespace top
                 raw_block_ptr->add_ref();//add reference before return
 
                 if(loaded_new_block) //try to keep balance when one new block loaded,so trigger lightly cleanup
-                    target_account->clean_caches(false);//light cleanup
+                    target_account->clean_caches(false,true);//light cleanup
 
                 return raw_block_ptr;
             }
@@ -489,7 +492,7 @@ namespace top
             }
 
             //move clean logic here to reduce risk of reenter process that might clean up some index too early
-            container_account->clean_caches(false);
+            container_account->clean_caches(false,true);
             //then do sotre block
             bool ret = container_account->store_block(container_block);
             if(!ret)
@@ -716,7 +719,7 @@ namespace top
                 return false;
             }
             LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
-            return account_obj->clean_caches(true);
+            return account_obj->clean_caches(true,true);
         }
 
         //clean all cached blocks after reach max idle duration(as default it is 60 seconds)
