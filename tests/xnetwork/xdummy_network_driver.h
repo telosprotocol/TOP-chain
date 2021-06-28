@@ -16,6 +16,9 @@ NS_BEG3(top, tests, network)
 
 class xtop_dummy_network_driver : public top::network::xnetwork_driver_face_t
 {
+protected:
+    common::xaccount_address_t m_account_address{};
+
 public:
     XDECLARE_DEFAULTED_DEFAULT_CONSTRUCTOR(xtop_dummy_network_driver);
     XDECLARE_DELETED_COPY_DEFAULTED_MOVE_SEMANTICS(xtop_dummy_network_driver);
@@ -46,7 +49,19 @@ public:
     host_node_id() const noexcept override
     {
         const static common::xnode_id_t nid = common::xnode_id_t("test1");
+        if (m_account_address.has_value()) {
+            return m_account_address;
+        }
+
         return nid;
+    }
+
+    void account_address(common::xaccount_address_t account_address) {
+        m_account_address = std::move(account_address);
+    }
+
+    common::xaccount_address_t const & account_address() const noexcept {
+        return m_account_address;
     }
 
     top::network::xnode_t
