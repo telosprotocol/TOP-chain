@@ -256,9 +256,84 @@ std::shared_ptr<xgroup_element_t> xtop_cluster_element::group_element(common::xg
     return {};
 }
 
+std::shared_ptr<xgroup_element_t> xtop_cluster_element::group_element(common::xgroup_id_t const & group_id,
+                                                                      common::xlogic_epoch_t const & logic_epoch,
+                                                                      std::error_code & ec) const {
+    assert(!ec);
+    if (group_id.empty() || common::broadcast(group_id)) {
+        ec = xdata_accessor_errc_t::group_id_empty;
+
+        xwarn("%s network %" PRIu32 " zone %" PRIu16 " cluster %" PRIu16 ": looking for an empty group id",
+              ec.category().name(),
+              static_cast<std::uint32_t>(network_id().value()),
+              static_cast<std::uint16_t>(zone_id().value()),
+              static_cast<std::uint16_t>(cluster_id().value()));
+
+        return {};
+    }
+
+    if (logic_epoch.empty()) {
+        ec = xdata_accessor_errc_t::group_version_empty;
+
+        xwarn("%s network %" PRIu32 " zone %" PRIu16 " cluster %" PRIu16 ": looking for group %" PRIu16 " but with empty version",
+              ec.category().name(),
+              static_cast<std::uint32_t>(network_id().value()),
+              static_cast<std::uint16_t>(zone_id().value()),
+              static_cast<std::uint16_t>(cluster_id().value()),
+              static_cast<std::uint16_t>(group_id.value()));
+
+        return {};
+    }
+
+    XLOCK(m_group_elements_mutex);
+    auto const it = m_group_elements.find(group_id);
+    if (it == std::end(m_group_elements)) {
+        ec = xdata_accessor_errc_t::group_not_exist;
+
+        xwarn("%s network %" PRIu32 " zone %" PRIu16 " cluster %" PRIu16 ": doesn't have group %" PRIu16 " with logic epoch %s",
+              ec.category().name(),
+              static_cast<std::uint32_t>(network_id().value()),
+              static_cast<std::uint16_t>(zone_id().value()),
+              static_cast<std::uint16_t>(cluster_id().value()),
+              static_cast<std::uint16_t>(group_id.value()),
+              logic_epoch.to_string().c_str());
+
+        return {};
+    }
+
+    auto const & group_info_store = top::get<xgroup_info_container_t>(*it);
+    for (auto const & group_info : group_info_store) {
+        assert(top::get<std::shared_ptr<xgroup_element_t>>(group_info));
+        auto const & group_element = top::get<std::shared_ptr<xgroup_element_t>>(group_info);
+
+        if (group_element->logic_epoch() == logic_epoch) {
+            return group_element;
+        }
+    }
+
+    ec = xdata_accessor_errc_t::group_not_exist;
+
+    xwarn("%s network %" PRIu32 " zone %" PRIu16 " cluster %" PRIu16 ": doesn't have group %" PRIu16 " with logic epoch %s",
+          ec.category().name(),
+          static_cast<std::uint32_t>(network_id().value()),
+          static_cast<std::uint16_t>(zone_id().value()),
+          static_cast<std::uint16_t>(cluster_id().value()),
+          static_cast<std::uint16_t>(group_id.value()),
+          logic_epoch.to_string().c_str());
+
+    return {};
+}
+
 std::shared_ptr<xgroup_element_t> xtop_cluster_element::group_element(common::xgroup_id_t const & group_id, common::xversion_t const & version) const {
     std::error_code ec;
     auto ret = group_element(group_id, version, ec);
+    top::error::throw_error(ec);
+    return ret;
+}
+
+std::shared_ptr<xgroup_element_t> xtop_cluster_element::group_element(common::xgroup_id_t const & group_id, common::xlogic_epoch_t const & logic_epoch) const {
+    std::error_code ec;
+    auto ret = group_element(group_id, logic_epoch, ec);
     top::error::throw_error(ec);
     return ret;
 }

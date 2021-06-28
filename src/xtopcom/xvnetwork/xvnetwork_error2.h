@@ -16,15 +16,21 @@ enum class xtop_vnetwork_error {
     invalid_src_address,
     invalid_dst_address,
     version_mismatch,
+    epoch_mismatch = version_mismatch,
+    invalid_epoch,
+    empty_message,
+    future_message,
+    expired_message,
+    invalid_account_address,
     not_supported
 };
 using xvnetwork_errc2_t = xtop_vnetwork_error;
 
 std::error_code
-make_error_code(xvnetwork_errc2_t const errc);
+make_error_code(xvnetwork_errc2_t const errc) noexcept;
 
 std::error_condition
-make_error_condition(xvnetwork_errc2_t const errc);
+make_error_condition(xvnetwork_errc2_t const errc) noexcept;
 
 std::error_category const &
 vnetwork_category2();

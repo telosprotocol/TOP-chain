@@ -87,7 +87,7 @@ TEST_F(xvnetwork_driver_fixture_t, test_broadcast_ec) {
     xip2_t broadcast_dst_xip2_v1{
         common::xnetwork_id_t{1}, common::xzone_id_t{1}, common::xcluster_id_t{1}, common::xgroup_id_t{1}, common::xslot_id_t{1023}};
 
-    int & m_cnt2 = tests::network::xdummy_network_driver.m_counter_forward_broadcast;
+    int & m_cnt2 = tests::network::xdummy_network_driver.m_counter_spread_rumor;
     m_cnt2 = 0;
     for (auto i = 0u; i < max_broadcast_count; ++i) {
         vnetwork_driver_test_ptr->broadcast(broadcast_dst_xip2_v1, test_msg, ec);
