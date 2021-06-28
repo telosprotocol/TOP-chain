@@ -59,10 +59,7 @@ public:
                                              std::uint64_t const         associated_election_blk_height);
 
     std::shared_ptr<xgroup_element_t> group_element(common::xgroup_id_t const & group_id, common::xversion_t const & version, std::error_code & ec) const;
-    std::shared_ptr<xgroup_element_t> group_element(common::xgroup_id_t const & group_id, common::xlogic_epoch_t const & logic_epoch, std::error_code & ec) const;
-
     std::shared_ptr<xgroup_element_t> group_element(common::xgroup_id_t const & group_id, common::xversion_t const & version) const;
-    std::shared_ptr<xgroup_element_t> group_element(common::xgroup_id_t const & group_id, common::xlogic_epoch_t const & logic_epoch) const;
 
     std::shared_ptr<xgroup_element_t> group_element_by_height(common::xgroup_id_t const & group_id, uint64_t const election_blk_height, std::error_code & ec) const;
     std::shared_ptr<xgroup_element_t> group_element_by_height(common::xgroup_id_t const & group_id, uint64_t const election_blk_height) const;

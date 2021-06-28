@@ -121,9 +121,9 @@ TEST_F(xvhost_fixture_t, func_msg_ec) {
     EXPECT_EQ(m_cnt_spread_rumor, 2);
 
     // broadcast between different shradings
-    EXPECT_EQ(m_cnt_spread_rumor, 2);
+    EXPECT_EQ(m_cnt_forward_broadcast, 0);
     vhost_test_ptr->broadcast(src_v1, broadcast_dst_xip2_v1, test_msg, ec);
-    EXPECT_EQ(m_cnt_spread_rumor, 3);
+    EXPECT_EQ(m_cnt_forward_broadcast, 1);
     EXPECT_EQ(m_cnt, 5);
     EXPECT_EQ(ec, xvnetwork_errc2_t::success);
 }
