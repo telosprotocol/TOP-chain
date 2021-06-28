@@ -491,12 +491,14 @@ namespace top
             }
             #endif
             
+            #ifdef __EARLY_TIMEOUT_LEADER_PROPOSAL__
             //expire proposal before next view-change(it take max as 3 clock=30s) at leader side
             if(_proposal->is_leader())
             {
                 if(get_lastest_clock() > (_proposal->get_block()->get_clock() + 1) )//expired after 2 clock(20s) for leader
                     return true;
             }
+            #endif //endof __EARLY_TIMEOUT_LEADER_PROPOSAL__
     
             //using clock as upper bound to clean ones, 32 * 10 = 320secons = about 5 minutes
             if(get_lastest_clock() > (_proposal->get_block()->get_clock() + 32) )
