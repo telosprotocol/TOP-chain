@@ -475,9 +475,9 @@ namespace top
         }
 
         //----------------------------------xvchain_t------------------------------------//
+        xvchain_t * xvchain_t::__global_vchain_instance = NULL;
         xvchain_t &  xvchain_t::instance(const uint16_t chain_id)
         {
-            static xvchain_t * __global_vchain_instance = NULL;
             if(__global_vchain_instance != NULL)
                 return *__global_vchain_instance;
             

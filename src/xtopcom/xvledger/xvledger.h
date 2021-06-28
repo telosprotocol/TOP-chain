@@ -271,6 +271,8 @@ namespace top
             uint64_t                m_chain_id;//aka network_id
         protected:
             xvledger_t*   m_ledgers[enum_vchain_has_buckets_count];
+        private:
+            static xvchain_t *      __global_vchain_instance;
         };
         ///////////////////////provide general structure for xledger and related //////////////////
     

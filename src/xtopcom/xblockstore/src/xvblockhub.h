@@ -144,7 +144,7 @@ namespace top
             virtual bool           close(bool force_async = true) override;
             virtual bool           is_live(const uint64_t timenow_ms) override;//test whether has been idel status
             virtual std::string    dump() const override;  //just for debug purpose
-            bool                   clean_caches(bool clean_all); //clean unsed caches of account to recall memory
+            bool                   clean_caches(bool clean_all,bool force_release_unused_block); //clean unsed caches of account to recall memory
             bool                   save_meta();
 
             inline const uint64_t  get_idle_duration()    const {return m_idle_timeout_ms;}

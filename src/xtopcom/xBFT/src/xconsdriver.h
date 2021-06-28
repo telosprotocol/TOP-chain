@@ -141,6 +141,7 @@ namespace top
             int     safe_check_add_cert_fork(base::xvblock_t * _test_for_block);//rule to resolve any possible fork for cert 
             
             //return  > 0 when true, and return  < 0 when false, and return  0  when unknow
+            int     safe_check_follow_commit_branch(base::xvblock_t * _test_for_block); //test whether at commited branch
             int     safe_check_follow_locked_branch(base::xvblock_t * _test_for_block); //test whether at locked branch
             bool    safe_check_for_lock_block(base::xvblock_t * _locking_block);//safe rule for lock block
             

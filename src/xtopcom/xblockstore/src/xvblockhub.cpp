@@ -37,7 +37,10 @@ namespace top
         xacctmeta_t::xacctmeta_t()
             :base::xdataobj_t(base::xdataunit_t::enum_xdata_type_vaccountmeta)
         {
+            #ifdef ENABLE_METRICS
             XMETRICS_GAUGE(metrics::dataobject_xacctmeta_t, 1);
+            #endif
+            
             _reserved_u16 = 0;
             _block_level  = (uint8_t)-1; //init to 255(that ensure is not allocated)
             _meta_spec_version = 1;     //version #1 now
@@ -53,7 +56,9 @@ namespace top
 
         xacctmeta_t::~xacctmeta_t()
         {
+            #ifdef ENABLE_METRICS
             XMETRICS_GAUGE(metrics::dataobject_xacctmeta_t, -1);
+            #endif
         }
 
         std::string xacctmeta_t::dump() const
@@ -280,9 +285,9 @@ namespace top
         }
 
         //clean unsed caches of account to recall memory
-        bool xblockacct_t::clean_caches(bool clean_all)
+        bool xblockacct_t::clean_caches(bool clean_all,bool force_release_unused_block)
         {
-            return clean_blocks(clean_all ? 0 : enum_max_cached_blocks,true);//try all possible clean_caches
+            return clean_blocks(clean_all ? 0 : enum_max_cached_blocks,force_release_unused_block);//try all possible clean_caches
         }
 
         bool xblockacct_t::clean_blocks(const int keep_blocks_count,bool force_release_unused_block)
@@ -784,8 +789,7 @@ namespace top
             //note:when ask_full_search is true ,here may do heavy job to search all blocks until highest one
             if(ask_full_search)
             {
-                xinfo("xblockacct_t::load_latest_genesis_connected_index,start search as genesis_height(%" PRIu64 ") vs commit-height(%" PRIu64 ") ",m_meta->_highest_genesis_connect_height,m_meta->_highest_commit_block_height);
-
+                const uint64_t old_highest_genesis_connect_height = m_meta->_highest_genesis_connect_height;
                 for(uint64_t h = m_meta->_highest_genesis_connect_height + 1; h <= m_meta->_highest_commit_block_height; ++h)
                 {
                     const uint64_t try_height = m_meta->_highest_genesis_connect_height + 1;
@@ -813,8 +817,11 @@ namespace top
                         break;
                     }
                 }
-
-                xinfo("xblockacct_t::load_latest_genesis_connected_index,navigate to new height(%" PRIu64 ") vs commit-height(%" PRIu64 ")  of account(%s)",m_meta->_highest_genesis_connect_height,m_meta->_highest_commit_block_height,get_address().c_str());
+                
+                if(m_meta->_highest_genesis_connect_height > (old_highest_genesis_connect_height + 64))
+                    xwarn("xblockacct_t::load_latest_genesis_connected_index,navigate big step(%d) to new height(%" PRIu64 ") vs commit-height(%" PRIu64 ")  of account(%s)",(int)(m_meta->_highest_genesis_connect_height - old_highest_genesis_connect_height) ,m_meta->_highest_genesis_connect_height,m_meta->_highest_commit_block_height,get_address().c_str());
+                else if(m_meta->_highest_genesis_connect_height > old_highest_genesis_connect_height)
+                    xinfo("xblockacct_t::load_latest_genesis_connected_index,navigate small step(%d) to new height(%" PRIu64 ") vs commit-height(%" PRIu64 ")  of account(%s)",(int)(m_meta->_highest_genesis_connect_height - old_highest_genesis_connect_height) ,m_meta->_highest_genesis_connect_height,m_meta->_highest_commit_block_height,get_address().c_str());
             }
             else
             {
@@ -1587,8 +1594,8 @@ namespace top
             //heavy job to search from current height to m_meta->_highest_commit_block_height
             if(logic_connect_more || geneis_connect_more) //search more
             {
-                xinfo("xblockacct_t::full_connect_to logic_connect_more(%d) or geneis_connect_more(%d) by block=%s",logic_connect_more,geneis_connect_more, this_block->dump().c_str());
-
+                const uint64_t old_highest_genesis_connect_height = m_meta->_highest_genesis_connect_height;
+                const uint64_t old_highest_connect_block_height   = m_meta->_highest_connect_block_height;
                 for(uint64_t it_height = this_block_height + 1; it_height <= m_meta->_highest_commit_block_height; ++it_height)
                 {
                     if( (false == geneis_connect_more) && (false == logic_connect_more) )//quit if both nolonger need search
@@ -1641,7 +1648,12 @@ namespace top
                     }
                 }
 
-                xinfo("xblockacct_t::full_connect_to done search");
+                const int  geneis_connect_step = (int)(m_meta->_highest_genesis_connect_height - old_highest_genesis_connect_height);
+                const int  block_connect_step  = (int)(m_meta->_highest_connect_block_height - old_highest_connect_block_height);
+                if( (geneis_connect_step > 64) || (block_connect_step > 64) )
+                    xwarn("xblockacct_t::full_connect_to,navigate big step(%d) to genesis_connect_height=%" PRIu64 ",step(%d) to _highest_connect_height=%" PRIu64 " ",geneis_connect_step,m_meta->_highest_genesis_connect_height,block_connect_step,m_meta->_highest_connect_block_height);
+                else
+                    xinfo("xblockacct_t::full_connect_to,navigate small step(%d) to genesis_connect_height=%" PRIu64 ",step(%d) to _highest_connect_height=%" PRIu64 " ",geneis_connect_step,m_meta->_highest_genesis_connect_height,block_connect_step,m_meta->_highest_connect_block_height);
             }
 
             //finally send out all events.

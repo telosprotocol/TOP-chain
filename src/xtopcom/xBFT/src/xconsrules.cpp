@@ -491,6 +491,15 @@ namespace top
             }
             #endif
             
+            #ifdef __EARLY_TIMEOUT_LEADER_PROPOSAL__
+            //expire proposal before next view-change(it take max as 3 clock=30s) at leader side
+            if(_proposal->is_leader())
+            {
+                if(get_lastest_clock() > (_proposal->get_block()->get_clock() + 1) )//expired after 2 clock(20s) for leader
+                    return true;
+            }
+            #endif //endof __EARLY_TIMEOUT_LEADER_PROPOSAL__
+    
             //using clock as upper bound to clean ones, 32 * 10 = 320secons = about 5 minutes
             if(get_lastest_clock() > (_proposal->get_block()->get_clock() + 32) )
                 return true; //not allow cache too much proposal
@@ -686,34 +695,8 @@ namespace top
             //allow most blocks pass to blockstore where may keep best one
             
             //rule#1: need follow branch of commit
-            base::xvblock_t *  latest_commit_block = get_commit_block();
-            if(latest_commit_block != NULL)
-            {
-                if(_test_for_block->get_height() == (latest_commit_block->get_height() + 1))
-                {
-                    if(_test_for_block->get_last_block_hash() != latest_commit_block->get_block_hash())
-                    {
-                        xwarn("xBFTRules::safe_check_add_cert_fork,fail-cert not follow the commited branch, cert(%s) vs commited(%s) at node=0x%llx",_test_for_block->dump().c_str(), latest_commit_block->dump().c_str(),get_xip2_addr().low_addr);
-                        return -1;
-                    }
-                }
-                else if(_test_for_block->get_height() == latest_commit_block->get_height())
-                {
-                    if(_test_for_block->get_block_hash() != latest_commit_block->get_block_hash())
-                    {
-                        xwarn("xBFTRules::safe_check_add_cert_fork,fail-cert try fork for the commited branch, cert(%s) vs commited(%s) at node=0x%llx",_test_for_block->dump().c_str(), latest_commit_block->dump().c_str(),get_xip2_addr().low_addr);
-                        return -1;
-                    }
-                }
-                else if(_test_for_block->get_height() == (latest_commit_block->get_height() + 2))
-                {
-                    if(_test_for_block->get_justify_cert_hash() != latest_commit_block->get_input_root_hash())
-                    {
-                        xerror("xBFTRules::safe_check_add_cert_fork,fail-justify cert hash unmatch,cert(%s) vs commited(%s) at node=0x%llx",_test_for_block->dump().c_str(), latest_commit_block->dump().c_str(),get_xip2_addr().low_addr);
-                        return -1;
-                    }
-                }
-            }
+            if(safe_check_follow_commit_branch(_test_for_block) < 0)//allow unknow case continue
+                return -1;
             
             //rule#2: not conflict with existing cert block
             base::xvblock_t *  latest_cert_block = find_cert_block(_test_for_block->get_viewid());
@@ -745,6 +728,58 @@ namespace top
             }
             
             return 1;
+        }
+        
+        //return  1     when true
+        //return  -1    when false
+        //return  0     when unknow
+        int xBFTRules::safe_check_follow_commit_branch(base::xvblock_t * _test_for_block)
+        {
+            if(NULL == _test_for_block)
+                return -1;//failed
+            
+            //need follow branch of commit
+            base::xvblock_t *  latest_commit_block = get_commit_block();
+            if(latest_commit_block != NULL)
+            {
+                if(_test_for_block->get_height() == (uint64_t)(latest_commit_block->get_height() - 1) )
+                {
+                    if(_test_for_block->get_block_hash() != latest_commit_block->get_last_block_hash())
+                    {
+                        xerror("xBFTRules::safe_check_follow_commit_branch,fail-cert not follow the commited branch, cert(%s) vs commited(%s) at node=0x%llx",_test_for_block->dump().c_str(), latest_commit_block->dump().c_str(),get_xip2_addr().low_addr);
+                        return -1;//failed
+                    }
+                    return 1;//good
+                }
+                else if(_test_for_block->get_height() == latest_commit_block->get_height())
+                {
+                    if(_test_for_block->get_block_hash() != latest_commit_block->get_block_hash())
+                    {
+                        xerror("xBFTRules::safe_check_follow_commit_branch,fail-cert try fork from the commited branch, cert(%s) vs commited(%s) at node=0x%llx",_test_for_block->dump().c_str(), latest_commit_block->dump().c_str(),get_xip2_addr().low_addr);
+                        return -1;//failed
+                    }
+                    return 1;//good
+                }
+                else if(_test_for_block->get_height() == (latest_commit_block->get_height() + 1))
+                {
+                    if(_test_for_block->get_last_block_hash() != latest_commit_block->get_block_hash())
+                    {
+                        xerror("xBFTRules::safe_check_follow_commit_branch,fail-cert not follow the commited branch, cert(%s) vs commited(%s) at node=0x%llx",_test_for_block->dump().c_str(), latest_commit_block->dump().c_str(),get_xip2_addr().low_addr);
+                        return -1;//failed
+                    }
+                    return 1;//good
+                }
+                else if(_test_for_block->get_height() == (latest_commit_block->get_height() + 2))
+                {
+                    if(_test_for_block->get_justify_cert_hash() != latest_commit_block->get_input_root_hash())
+                    {
+                        xerror("xBFTRules::safe_check_follow_commit_branch,fail-justify cert hash unmatch,cert(%s) vs commited(%s) at node=0x%llx",_test_for_block->dump().c_str(), latest_commit_block->dump().c_str(),get_xip2_addr().low_addr);
+                        return -1;//failed
+                    }
+                    return 1; //good
+                }
+            }
+            return 0; //un-determined yet
         }
         
         //return  1     when true
