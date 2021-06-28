@@ -226,6 +226,11 @@ bool  xbatch_packer::on_timer_fire(const int32_t thread_id, const int64_t timer_
     }
     // xunit_dbg("xbatch_packer::on_timer_fire retry start proposal.this:%p node:%s", this, m_para->get_resources()->get_account().c_str());
     base::xblock_mptrs latest_blocks = m_para->get_resources()->get_vblockstore()->get_latest_blocks(get_account());
+    if (latest_blocks.get_latest_cert_block() == nullptr) {  // TODO(jimmy) get_latest_blocks return bool future
+        xunit_warn("xbatch_packer::on_timer_fire fail-invalid latest blocks,account=%s,viewid=%ld,clock=%ld",
+            get_account().c_str(), m_last_view_id, m_last_view_clock);
+        return false;
+    }
     m_leader_packed = start_proposal(latest_blocks);
     return true;
 }
