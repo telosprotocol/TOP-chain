@@ -244,14 +244,14 @@ void xtxpool_service::on_message_receipt(vnetwork::xvnode_address_t const & send
 
     XMETRICS_TIME_RECORD("txpool_network_message_dispatch");
 
-    if (message.id() == xtxpool_msg_send_receipt || message.id() == xtxpool_msg_recv_receipt || (message.id() == xtxpool_msg_push_receipt)) {
+    if (message.id() == xtxpool_v2::xtxpool_msg_send_receipt || message.id() == xtxpool_v2::xtxpool_msg_recv_receipt || (message.id() == xtxpool_v2::xtxpool_msg_push_receipt)) {
         if (m_para->get_fast_dispatcher()->is_mailbox_over_limit()) {
             xwarn("xtxpool_service::on_message_receipt fast txpool mailbox limit,drop receipt");
             return;
         }
 
         base::xauto_ptr<txpool_receipt_message_para_t> para = new txpool_receipt_message_para_t(sender, message);
-        if (message.id() == xtxpool_msg_push_receipt) {
+        if (message.id() == xtxpool_v2::xtxpool_msg_push_receipt) {
             auto handler = [this](base::xcall_t & call, const int32_t cur_thread_id, const uint64_t timenow_ms) -> bool {
                 txpool_receipt_message_para_t * para = dynamic_cast<txpool_receipt_message_para_t *>(call.get_param1().get_object());
                 this->on_message_push_receipt_received(para->m_sender, para->m_message);
@@ -269,7 +269,7 @@ void xtxpool_service::on_message_receipt(vnetwork::xvnode_address_t const & send
             base::xcall_t asyn_call(handler, para.get());
             m_para->get_fast_dispatcher()->dispatch(asyn_call);
         }
-    } else if ((message.id() == xtxpool_msg_pull_recv_receipt) || (message.id() == xtxpool_msg_pull_confirm_receipt)) {
+    } else if ((message.id() == xtxpool_v2::xtxpool_msg_pull_recv_receipt) || (message.id() == xtxpool_v2::xtxpool_msg_pull_confirm_receipt)) {
         if (m_para->get_slow_dispatcher()->is_mailbox_over_limit()) {
             xwarn("xtxpool_service::on_message_receipt slow txpool mailbox limit,drop receipt");
             return;
@@ -277,7 +277,7 @@ void xtxpool_service::on_message_receipt(vnetwork::xvnode_address_t const & send
 
         auto handler = [this](base::xcall_t & call, const int32_t cur_thread_id, const uint64_t timenow_ms) -> bool {
             txpool_receipt_message_para_t * para = dynamic_cast<txpool_receipt_message_para_t *>(call.get_param1().get_object());
-            if (para->m_message.id() == xtxpool_msg_pull_recv_receipt) {
+            if (para->m_message.id() == xtxpool_v2::xtxpool_msg_pull_recv_receipt) {
                 this->on_message_pull_recv_receipt_received(para->m_sender, para->m_message);
             } else {
                 this->on_message_pull_confirm_receipt_received(para->m_sender, para->m_message);
@@ -427,7 +427,7 @@ void xtxpool_service::send_receipt_real(const data::xcons_transaction_ptr_t & co
         top::base::xautostream_t<4096> stream(top::base::xcontext_t::instance());
         cons_tx->serialize_to(stream);
         vnetwork::xmessage_t msg =
-            vnetwork::xmessage_t({stream.data(), stream.data() + stream.size()}, cons_tx->is_recv_tx() ? xtxpool_msg_send_receipt : xtxpool_msg_recv_receipt);
+            vnetwork::xmessage_t({stream.data(), stream.data() + stream.size()}, cons_tx->is_recv_tx() ? xtxpool_v2::xtxpool_msg_send_receipt : xtxpool_v2::xtxpool_msg_recv_receipt);
 
         // TODO(jimmy)  first get target account's table id, then get network addr by table id
         auto receiver_cluster_addr =
@@ -582,7 +582,7 @@ void xtxpool_service::send_pull_receipts_of_recv(xreceipt_pull_recv_receipt_t & 
     base::xstream_t stream(base::xcontext_t::instance());
     vnetwork::xmessage_t msg;
     pulled_receipt.serialize_to(stream);
-    msg = vnetwork::xmessage_t({stream.data(), stream.data() + stream.size()}, xtxpool_msg_pull_recv_receipt);
+    msg = vnetwork::xmessage_t({stream.data(), stream.data() + stream.size()}, xtxpool_v2::xtxpool_msg_pull_recv_receipt);
     send_receipt_sync_msg(msg, pulled_receipt.m_tx_from_account);
 }
 
@@ -590,7 +590,7 @@ void xtxpool_service::send_pull_receipts_of_confirm(xreceipt_pull_confirm_receip
     base::xstream_t stream(base::xcontext_t::instance());
     vnetwork::xmessage_t msg;
     pulled_receipt.serialize_to(stream);
-    msg = vnetwork::xmessage_t({stream.data(), stream.data() + stream.size()}, xtxpool_msg_pull_confirm_receipt);
+    msg = vnetwork::xmessage_t({stream.data(), stream.data() + stream.size()}, xtxpool_v2::xtxpool_msg_pull_confirm_receipt);
     send_receipt_sync_msg(msg, pulled_receipt.m_tx_to_account);
 }
 
@@ -598,7 +598,7 @@ void xtxpool_service::send_push_receipts(xreceipt_push_t & pushed_receipt, vnetw
     base::xstream_t stream(base::xcontext_t::instance());
     vnetwork::xmessage_t msg;
     pushed_receipt.serialize_to(stream);
-    msg = vnetwork::xmessage_t({stream.data(), stream.data() + stream.size()}, xtxpool_msg_push_receipt);
+    msg = vnetwork::xmessage_t({stream.data(), stream.data() + stream.size()}, xtxpool_v2::xtxpool_msg_push_receipt);
 
     if (target == pushed_receipt.m_req_node) {
         m_vnet_driver->send_to(target, msg);

@@ -15,6 +15,7 @@
 #include "xcommon/xlogic_time.h"
 #include "xunit_service/xunit_log.h"
 #include "xunit_service/xcons_utl.h"
+#include "xrouter/xrouter_face.h"
 
 #include <string>
 #include <vector>
@@ -45,6 +46,7 @@ public:
     virtual bool add(const std::shared_ptr<vnetwork::xvnetwork_driver_face_t> & network) = 0;
     virtual std::shared_ptr<vnetwork::xvnetwork_driver_face_t> find(const xvip2_t &addr) = 0;
     virtual bool erase(const xvip2_t & addr) = 0;
+    virtual router::xrouter_face_t * get_router() const = 0;
 };
 
 // table index data
@@ -144,6 +146,7 @@ public:
     // node account
     virtual const std::string & get_account() = 0;
     virtual mbus::xmessage_bus_face_t* get_bus() = 0;
+    virtual xtxpool_v2::xtxpool_face_t * get_txpool() = 0;
 };
 
 enum e_cons_type {

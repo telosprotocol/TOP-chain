@@ -6,12 +6,13 @@
 
 #include "xbasic/xmemory.hpp"
 #include "xchain_timer/xchain_timer_face.h"
+#include "xcommon/xmessage_id.h"
 #include "xdata/xblock.h"
 #include "xdata/xcons_transaction.h"
+#include "xdata/xtable_bstate.h"
 #include "xmbus/xmessage_bus.h"
 #include "xstore/xstore_face.h"
 #include "xvledger/xvcertauth.h"
-#include "xdata/xtable_bstate.h"
 
 #include <string>
 #include <vector>
@@ -26,6 +27,12 @@ enum enum_xtx_type_socre_t {
     enum_xtx_type_socre_normal = 0,
     enum_xtx_type_socre_system = 1,
 };
+
+XDEFINE_MSG_ID(xmessage_category_txpool, xtxpool_msg_send_receipt, 0x00000001);
+XDEFINE_MSG_ID(xmessage_category_txpool, xtxpool_msg_recv_receipt, 0x00000002);
+XDEFINE_MSG_ID(xmessage_category_txpool, xtxpool_msg_pull_recv_receipt, 0x00000003);
+XDEFINE_MSG_ID(xmessage_category_txpool, xtxpool_msg_pull_confirm_receipt, 0x00000004);
+XDEFINE_MSG_ID(xmessage_category_txpool, xtxpool_msg_push_receipt, 0x00000005);
 
 class xtx_para_t {
 public:

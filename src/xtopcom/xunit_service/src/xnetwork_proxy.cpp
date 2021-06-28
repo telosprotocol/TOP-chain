@@ -11,7 +11,7 @@
 
 NS_BEG2(top, xunit_service)
 
-xnetwork_proxy::xnetwork_proxy(const std::shared_ptr<xelection_cache_face> & face) : m_elect_face(face) {}
+xnetwork_proxy::xnetwork_proxy(const std::shared_ptr<xelection_cache_face> & face, observer_ptr<router::xrouter_face_t> const & router) : m_elect_face(face), m_router(router)  {}
 
 // network proxy, just send msg according by to address
 bool xnetwork_proxy::send_out(uint32_t msg_type, const xvip2_t & from_addr, const xvip2_t & to_addr, const base::xcspdu_t & packet, int32_t cur_thread_id, uint64_t timenow_ms) {
@@ -279,6 +279,10 @@ bool xnetwork_proxy::erase(const xvip2_t & addr) {
         }
     }
     return false;
+}
+
+router::xrouter_face_t * xnetwork_proxy::get_router() const {
+    return m_router.get();
 }
 
 NS_END2
