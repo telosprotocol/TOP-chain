@@ -238,54 +238,6 @@ public:
     data::xblock_ptr_t block{};
 };
 
-struct xsync_message_v1_newblockhash_t : public top::basic::xserialize_face_t {
-protected:
-    virtual ~xsync_message_v1_newblockhash_t() {}
-public:
-    xsync_message_v1_newblockhash_t() {
-    }
-
-    xsync_message_v1_newblockhash_t(
-            const std::string &_address,
-            uint64_t _height,
-            uint64_t _view_id) :
-    address(_address),
-    height(_height),
-    view_id(_view_id) {
-    }
-
-protected:
-    int32_t do_write(base::xstream_t & stream) override {
-        KEEP_SIZE();
-        SERIALIZE_FIELD_BT(address);
-        SERIALIZE_FIELD_BT(height);
-        SERIALIZE_FIELD_BT(view_id);
-        return CALC_LEN();
-    }
-
-    int32_t do_read(base::xstream_t & stream) override {
-        try {
-            KEEP_SIZE();
-            DESERIALIZE_FIELD_BT(address);
-            DESERIALIZE_FIELD_BT(height);
-            DESERIALIZE_FIELD_BT(view_id);
-            return CALC_LEN();
-
-        } catch (...) {
-            address = "";
-            height = 0;
-            view_id = 0;
-        }
-
-        return 0;
-    }
-
-public:
-    std::string address;
-    uint64_t height;
-    uint64_t view_id;
-};
-
 struct xsync_message_general_newblockhash_t : public top::basic::xserialize_face_t {
 protected:
     virtual ~xsync_message_general_newblockhash_t() {}
