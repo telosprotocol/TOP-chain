@@ -46,20 +46,17 @@ public:
     xevent_blockfetcher_blockhash_t(
                 const std::string &_address,
                 uint64_t _height,
-                uint64_t _view_id,
                 const std::string &_hash,
                 const vnetwork::xvnode_address_t &_network_self,
                 const vnetwork::xvnode_address_t &_from_address):
     xevent_blockfetcher_t(newblockhash, _network_self, _from_address),
     address(_address),
     height(_height),
-    view_id(_view_id),
     hash(_hash) {
     }
 
     std::string address;
     uint64_t height;
-    uint64_t view_id;
     std::string hash;
 };
 

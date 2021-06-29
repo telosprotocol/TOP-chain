@@ -60,7 +60,6 @@ public:
 
 public:
     void push_event(const mbus::xevent_ptr_t &e);
-    bool get_highest_info(const std::string &address, uint64_t &height, uint64_t &view_id) const;
 
 private:
     void process_event(const mbus::xevent_ptr_t &e);

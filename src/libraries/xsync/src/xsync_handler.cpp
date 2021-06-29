@@ -258,29 +258,28 @@ void xsync_handler_t::push_newblockhash(uint32_t msg_size,
 
     const std::string &address = ptr->address;
     uint64_t height = ptr->height;
-    uint64_t view_id = ptr->view_id;
     const std::string &hash = ptr->hash;
 
-    if (address == "" || height == 0 || view_id == 0 || hash == "")
+    if (address == "" || height == 0 || hash == "")
         return;
 
     if (!common::has<common::xnode_type_t::storage>(network_self.type())) {
-        xsync_warn("xsync_handler receive push_newblockhash(target must be archive) %" PRIx64 " %s,height=%lu,viewid=%lu, %s %s",
-            msg_hash, address.c_str(), height, view_id, network_self.to_string().c_str(), from_address.to_string().c_str());
+        xsync_warn("xsync_handler receive push_newblockhash(target must be archive) %" PRIx64 " %s,height=%lu, %s %s",
+            msg_hash, address.c_str(), height, network_self.to_string().c_str(), from_address.to_string().c_str());
         return;
     }
 
     if (!common::has<common::xnode_type_t::rec>(from_address.type()) && !common::has<common::xnode_type_t::zec>(from_address.type()) &&
         !common::has<common::xnode_type_t::consensus>(from_address.type())) {
-        xsync_warn("xsync_handler receive push_newblockhash(target must be consensus) %" PRIx64 " %s,height=%lu,viewid=%lu, %s %s",
-            msg_hash, address.c_str(), height, view_id, network_self.to_string().c_str(), from_address.to_string().c_str());
+        xsync_warn("xsync_handler receive push_newblockhash(target must be consensus) %" PRIx64 " %s,height=%lu, %s %s",
+            msg_hash, address.c_str(), height, network_self.to_string().c_str(), from_address.to_string().c_str());
         return;
     }
 
-    xsync_dbg("xsync_handler receive push_newblockhash %" PRIx64 " wait(%ldms) %s,height=%lu,viewid=%lu %s,",
-        msg_hash, get_time()-recv_time, address.c_str(), height, view_id, from_address.to_string().c_str());
+    xsync_dbg("xsync_handler receive push_newblockhash %" PRIx64 " wait(%ldms) %s,height=%lu %s,",
+        msg_hash, get_time()-recv_time, address.c_str(), height, from_address.to_string().c_str());
 
-    mbus::xevent_ptr_t ev = make_object_ptr<mbus::xevent_blockfetcher_blockhash_t>(address, height, view_id, hash, network_self, from_address);
+    mbus::xevent_ptr_t ev = make_object_ptr<mbus::xevent_blockfetcher_blockhash_t>(address, height, hash, network_self, from_address);
     m_block_fetcher->push_event(ev);
 }
 
@@ -300,28 +299,27 @@ void xsync_handler_t::broadcast_newblockhash(uint32_t msg_size,
 
     const std::string &address = ptr->address;
     uint64_t height = ptr->height;
-    uint64_t view_id = ptr->view_id;
     const std::string &hash = ptr->hash;
 
-    if (address == "" || height == 0 || view_id == 0 || hash == "")
+    if (address == "" || height == 0 || hash == "")
         return;
 
     if (!common::has<common::xnode_type_t::storage_archive>(network_self.type())) {
-        xsync_warn("xsync_handler receive broadcast_newblockhash(target must be archive) %" PRIx64 " %s,height=%lu,viewid=%lu, %s %s",
-            msg_hash, address.c_str(), height, view_id, network_self.to_string().c_str(), from_address.to_string().c_str());
+        xsync_warn("xsync_handler receive broadcast_newblockhash(target must be archive) %" PRIx64 " %s,height=%lu, %s %s",
+            msg_hash, address.c_str(), height, network_self.to_string().c_str(), from_address.to_string().c_str());
         return;
     }
 
     if (!common::has<common::xnode_type_t::storage_archive>(from_address.type())) {
-        xsync_warn("xsync_handler receive broadcast_newblockhash(source must be archive) %" PRIx64 " %s,height=%lu,viewid=%lu, %s %s",
-            msg_hash, address.c_str(), height, view_id, network_self.to_string().c_str(), from_address.to_string().c_str());
+        xsync_warn("xsync_handler receive broadcast_newblockhash(source must be archive) %" PRIx64 " %s,height=%lu, %s %s",
+            msg_hash, address.c_str(), height, network_self.to_string().c_str(), from_address.to_string().c_str());
         return;
     }
 
-    xsync_info("xsync_handler receive broadcast_newblockhash %" PRIx64 " wait(%ldms) %s,height=%lu,view_id=%lu %s,",
-        msg_hash, get_time()-recv_time, address.c_str(), height, view_id, from_address.to_string().c_str());
+    xsync_info("xsync_handler receive broadcast_newblockhash %" PRIx64 " wait(%ldms) %s,height=%lu %s,",
+        msg_hash, get_time()-recv_time, address.c_str(), height, from_address.to_string().c_str());
 
-    mbus::xevent_ptr_t ev = make_object_ptr<mbus::xevent_blockfetcher_blockhash_t>(address, height, view_id, hash, network_self, from_address);
+    mbus::xevent_ptr_t ev = make_object_ptr<mbus::xevent_blockfetcher_blockhash_t>(address, height, hash, network_self, from_address);
     m_block_fetcher->push_event(ev);
 }
 

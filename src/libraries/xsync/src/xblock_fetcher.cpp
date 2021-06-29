@@ -80,10 +80,6 @@ void xblock_fetcher_t::push_event(const mbus::xevent_ptr_t &e) {
     m_monitor->push_event(e);
 }
 
-bool xblock_fetcher_t::get_highest_info(const std::string &address, uint64_t &height, uint64_t &view_id) const {
-    return false;
-}
-
 std::string xblock_fetcher_t::get_address_by_event(const mbus::xevent_ptr_t &e) {
 
     switch(e->major_type) {
@@ -216,11 +212,10 @@ xchain_block_fetcher_ptr_t xblock_fetcher_t::on_newblockhash_event(const std::st
     if (chain != nullptr) {
         auto bme = dynamic_xobject_ptr_cast<mbus::xevent_blockfetcher_blockhash_t>(e);
         uint64_t height = bme->height;
-        uint64_t view_id = bme->view_id;
         std::string hash = bme->hash;
         const vnetwork::xvnode_address_t &network_self = bme->network_self;
         const vnetwork::xvnode_address_t &from_address = bme->from_address;
-        chain->on_newblockhash(height, view_id, hash, network_self, from_address);
+        chain->on_newblockhash(height, hash, network_self, from_address);
     }
     return chain;
 }

@@ -248,11 +248,9 @@ public:
     xsync_message_general_newblockhash_t(
             const std::string &_address,
             uint64_t _height,
-            uint64_t _view_id,
             const std::string &_hash) :
     address(_address),
     height(_height),
-    view_id(_view_id),
     hash(_hash) {
     }
 
@@ -261,7 +259,6 @@ protected:
         KEEP_SIZE();
         SERIALIZE_FIELD_BT(address);
         SERIALIZE_FIELD_BT(height);
-        SERIALIZE_FIELD_BT(view_id);
         SERIALIZE_FIELD_BT(hash);
         return CALC_LEN();
     }
@@ -271,14 +268,12 @@ protected:
             KEEP_SIZE();
             DESERIALIZE_FIELD_BT(address);
             DESERIALIZE_FIELD_BT(height);
-            DESERIALIZE_FIELD_BT(view_id);
             DESERIALIZE_FIELD_BT(hash);
             return CALC_LEN();
 
         } catch (...) {
             address = "";
             height = 0;
-            view_id = 0;
             hash = "";
         }
 
@@ -288,7 +283,6 @@ protected:
 public:
     std::string address;
     uint64_t height;
-    uint64_t view_id;
     std::string hash;
 };
 
