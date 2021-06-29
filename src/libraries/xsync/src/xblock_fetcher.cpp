@@ -67,8 +67,7 @@ m_certauth(certauth),
 m_role_chains_mgr(role_chains_mgr),
 m_sync_store(sync_store),
 m_sync_broadcast(sync_broadcast),
-m_sync_sender(sync_sender),
-m_v1_fetcher(vnode_id, certauth, sync_store, sync_sender) {
+m_sync_sender(sync_sender) {
 
     m_self_mbus = top::make_unique<mbus::xmessage_bus_t>();
     m_monitor = top::make_unique<xblock_fetcher_event_monitor_t>(make_observer(m_self_mbus.get()), iothread, this);
@@ -260,18 +259,6 @@ xchain_block_fetcher_ptr_t xblock_fetcher_t::create_chain(const std::string &add
 
 void xblock_fetcher_t::remove_chain(const std::string &address) {
     m_chains.erase(address);
-}
-
-void xblock_fetcher_t::handle_v1_newblockhash(const std::string &address, uint64_t height, uint64_t view_id, const vnetwork::xvnode_address_t &from_address, const vnetwork::xvnode_address_t &network_self) {
-    m_v1_fetcher.handle_v1_newblockhash(address, height, view_id, from_address, network_self);
-}
-
-bool xblock_fetcher_t::filter_block(data::xblock_ptr_t &block) {
-    return m_v1_fetcher.filter_block(block);
-}
-
-void xblock_fetcher_t::on_timer_check_v1_newblockhash() {
-    return m_v1_fetcher.on_timer_check_v1_newblockhash();
 }
 
 NS_END2
