@@ -1150,12 +1150,7 @@ namespace top
 #if defined(ENABLE_METRICS)
             XMETRICS_GAUGE(metrics::store_block_call, 1);
 #endif
-            // xbft will store repeat block, check it firstly
-            if(query_index(new_raw_block->get_height(), new_raw_block->get_viewid()) != nullptr)
-            {
-                xwarn("xblockacct_t::store_block,repeat block=%s",new_raw_block->dump().c_str());
-                return true;
-            }
+ 
 
             if(   (false == new_raw_block->is_input_ready(true))
                || (false == new_raw_block->is_output_ready(true))
@@ -1169,7 +1164,8 @@ namespace top
             if(new_raw_block->get_height() == 1 && m_meta->_highest_connect_block_hash.empty())
             {
                 // meta is not 100% reliable, query to ensure the existence of genesis block
-                if(query_index(0, 0) == nullptr)
+                base::xauto_ptr<base::xvbindex_t> genesis_index(query_index(0, 0));
+                if(!genesis_index)//if not existing at cache
                 {
                     base::xauto_ptr<base::xvblock_t> generis_block(xgenesis_block::create_genesis_block(get_account()));
                     store_block(generis_block.get());
