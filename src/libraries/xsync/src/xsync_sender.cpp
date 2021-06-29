@@ -178,17 +178,17 @@ void xsync_sender_t::push_newblock(const data::xblock_ptr_t &block, const vnetwo
 }
 
 void xsync_sender_t::push_newblockhash(const data::xblock_ptr_t &block, const vnetwork::xvnode_address_t& self_addr, const vnetwork::xvnode_address_t& target_addr) {
-    auto body = make_object_ptr<xsync_message_general_newblockhash_t>(block->get_account(), block->get_height(), block->get_viewid(), block->get_block_hash());
+    auto body = make_object_ptr<xsync_message_general_newblockhash_t>(block->get_account(), block->get_height(), block->get_block_hash());
     send_message(body, xmessage_id_sync_push_newblockhash, "push_newblockhash", self_addr, target_addr);
-    xsync_dbg("xsync_sender_t send push_newblockhash %s,height=%lu,viewid=%lu,hash=%s, src %s dst %s", 
-        block->get_account().c_str(), block->get_height(), block->get_viewid(), to_hex_str(block->get_block_hash()).c_str(), self_addr.to_string().c_str(), target_addr.to_string().c_str());
+    xsync_dbg("xsync_sender_t send push_newblockhash %s,height=%lu,hash=%s, src %s dst %s", 
+        block->get_account().c_str(), block->get_height(), to_hex_str(block->get_block_hash()).c_str(), self_addr.to_string().c_str(), target_addr.to_string().c_str());
 }
 
 void xsync_sender_t::broadcast_newblockhash(const data::xblock_ptr_t &block, const vnetwork::xvnode_address_t& self_addr, const vnetwork::xvnode_address_t& target_addr) {
-    auto body = make_object_ptr<xsync_message_general_newblockhash_t>(block->get_account(), block->get_height(), block->get_viewid(), block->get_block_hash());
+    auto body = make_object_ptr<xsync_message_general_newblockhash_t>(block->get_account(), block->get_height(), block->get_block_hash());
     send_message(body, xmessage_id_sync_broadcast_newblockhash, "broadcast_newblockhash", self_addr, target_addr);
-    xsync_dbg("xsync_sender_t send broadcast_newblockhash %s,height=%lu,viewid=%lu,hash=%s, src %s dst %s", 
-        block->get_account().c_str(), block->get_height(), block->get_viewid(), to_hex_str(block->get_block_hash()).c_str(), self_addr.to_string().c_str(), target_addr.to_string().c_str());
+    xsync_dbg("xsync_sender_t send broadcast_newblockhash %s,height=%lu,hash=%s, src %s dst %s", 
+        block->get_account().c_str(), block->get_height(), to_hex_str(block->get_block_hash()).c_str(), self_addr.to_string().c_str(), target_addr.to_string().c_str());
 }
 
 void xsync_sender_t::send_get_blocks_by_hashes(const std::vector<xblock_hash_t> &hashes, const vnetwork::xvnode_address_t &self_addr, const vnetwork::xvnode_address_t &target_addr) {

@@ -19,10 +19,9 @@ NS_BEG2(top, sync)
 
 class xsync_block_announce_t {
 public:
-    xsync_block_announce_t(uint64_t _height, uint64_t _viewid, const std::string &_hash,
+    xsync_block_announce_t(uint64_t _height, const std::string &_hash,
         const vnetwork::xvnode_address_t &_network_self, const vnetwork::xvnode_address_t &_from_address, int64_t _tm):
     height(_height),
-    viewid(_viewid),
     hash(_hash),
     network_self(_network_self),
     from_address(_from_address),
@@ -30,7 +29,6 @@ public:
     }
 public:
     uint64_t height;
-    uint64_t viewid;
     std::string hash;
     vnetwork::xvnode_address_t network_self;
     vnetwork::xvnode_address_t from_address;
@@ -51,7 +49,7 @@ public:
 public:
     void on_timer();
     void on_newblock(data::xblock_ptr_t &block, const vnetwork::xvnode_address_t &network_self, const vnetwork::xvnode_address_t &from_address);
-    void on_newblockhash(uint64_t height, uint64_t view_id, const std::string &hash, const vnetwork::xvnode_address_t &network_self, const vnetwork::xvnode_address_t &from_address);
+    void on_newblockhash(uint64_t height, const std::string &hash, const vnetwork::xvnode_address_t &network_self, const vnetwork::xvnode_address_t &from_address);
     void on_response_blocks(xblock_ptr_t &block, const vnetwork::xvnode_address_t &network_self, const vnetwork::xvnode_address_t &from_address);
 
 private:

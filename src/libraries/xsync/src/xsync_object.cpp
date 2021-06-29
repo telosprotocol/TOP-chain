@@ -170,14 +170,6 @@ std::string xtop_sync_object::status() const {
         info.cur_height = m_sync_store->get_latest_end_block_height(address, enum_chain_sync_policy_full);
         info.max_height = latest_block->get_height();
 
-        uint64_t height = 0;
-        uint64_t view_id = 0;
-        bool ret = m_block_fetcher->get_highest_info(address, height, view_id);
-        if (ret) {
-            if (height > info.max_height)
-                info.max_height = height;
-        }
-
         if (info.max_height == 0) {
             info.rate = 100;
         } else {
