@@ -19,6 +19,7 @@
 
 #include <fstream>
 #include <iostream>
+#include <thread>
 
 #define ALWAYS_OVERWRITE false
 
@@ -33,6 +34,7 @@ using namespace top;
 using namespace top::xstake;
 using top::base::xcontext_t;
 using top::base::xstream_t;
+using top::base::xstring_utl;
 
 class xtop_hash_t : public top::base::xhashplugin_t {
 public:
@@ -192,7 +194,7 @@ public:
         }
     }
 
-    std::vector<std::string> get_all_table_address() {
+    static std::vector<std::string> get_all_table_address() {
         std::vector<std::string> all_address;
         const std::map<std::pair<std::string, std::string>, int> addr2name = {
             std::make_pair(std::make_pair(std::string{sys_contract_sharding_table_block_addr}, "sharding"), 256),
@@ -268,7 +270,7 @@ public:
         result_json[account] = result;
     }
 
-    void query_vec_table_latest_fullblock(std::vector<std::string> address_vec) {
+    void query_vec_table_latest_fullblock(std::vector<std::string> const & address_vec) {
         if (address_vec.size() == 0) {
             return;
         }
@@ -288,200 +290,43 @@ public:
         std::cout << "===> " << filename << " generated success!" << std::endl;
     }
 
-    void query_all_table_tx_info() {
-        const std::map<std::pair<std::string, std::string>, int> addr2name = {
-            std::make_pair(std::make_pair(std::string{sys_contract_sharding_table_block_addr}, "sharding"), 256),
-            std::make_pair(std::make_pair(std::string{sys_contract_zec_table_block_addr}, "zec"), 3),
-            std::make_pair(std::make_pair(std::string{sys_contract_beacon_table_block_addr}, "beacon"), 1),
-        };
-        mkdir("all_table_tx_info", 0750);
-        for (auto const & _p : addr2name) {
-            for (auto index = 0; index < _p.second; ++index) {
-                json result_json;
-                std::string address = _p.first.first + "@" + std::to_string(index);
-                std::string filename = "./all_table_tx_info/" + address + "_tx_info.json";
-                std::ofstream out_json(filename);
-                query_tx_info(address, result_json, index);
-                out_json << std::setw(4) << result_json[address];
-                std::cout << "table " << index << " finish" << std::endl;
-            }
+    void query_vec_table_tx_info(std::vector<std::string> const & address_vec) {
+        for (auto const & _p : address_vec) {
+            json result_json;
+            query_table_tx_info(_p, result_json);
+            std::string filename = "./all_table_tx_info/" + _p + "_tx_info.json";
+            std::ofstream out_json(filename);
+            out_json << std::setw(4) << result_json[_p];
+            std::cout << "===> " << filename << " generated success!" << std::endl;
         }
     }
 
-    void query_tx_info(std::string const & account, json & result_json, int tableid = -1) {
-        auto const & latest_block = m_blockstore->get_latest_committed_block(account);
-        auto const block_height = latest_block->get_height();
-        std::map<std::string, tx_ext_t> send;
-        std::map<std::string, tx_ext_t> confirm;
-        std::map<std::string, tx_ext_t> self;
-        std::set<std::string> multi_tx;
-        std::vector<tx_ext_t> multi;
-        for (uint64_t h = 0; h <= block_height; h++) {
-            auto const & vblock = m_blockstore->load_block_object(account,h,0,true);
-            const data::xblock_t * block = dynamic_cast<data::xblock_t *>(vblock.get());
-            if (block == nullptr) {
-                std::cout << " table " << account << " height " << h << " block null" << std::endl;
-                continue;
+    void query_vec_table_tx_info_multi_thread(std::vector<std::string> const & address_vec) {
+        auto thread_helper = [](db_export_tools *arg, std::vector<std::string> const & address_vec) {
+            arg->query_vec_table_tx_info(address_vec);
+        };
+        mkdir("all_table_tx_info", 0750);
+        std::vector<std::vector<std::string>> address_vec_split;
+        uint32_t thread_num = 8;
+        uint32_t address_per_thread = address_vec.size() / thread_num;
+        for (size_t i = 0; i < thread_num; i++) {
+            uint32_t start_index = i * address_per_thread;
+            uint32_t end_index = (i == (thread_num - 1)) ? address_vec.size() : ((i + 1) * address_per_thread);
+            std::vector<std::string> thread_address;
+            for (auto j = start_index; j < end_index; j++) {
+                thread_address.emplace_back(address_vec[j]);
             }
-            assert(block->get_block_level() == base::enum_xvblock_level_table);
-            const uint64_t timestamp = block->get_timestamp();
-            const auto & units = block->get_tableblock_units(false);
-            if (units.empty()) {
-                continue;
-            }
-            for (auto const & unit : units) {
-                const uint64_t unit_height = unit->get_height();
-                auto const & txs = unit->get_txs();
-                for (auto tx : txs) {
-                    tx_ext_t tx_ext;
-                    auto tx_ptr = tx->get_raw_tx();
-                    if (tx_ptr != nullptr) {
-                        tx_ext.src = tx_ptr->get_source_addr();
-                        tx_ext.target = tx_ptr->get_target_addr();
-                    }
-                    if (tableid != -1) {
-                        tx_ext.tableid = tableid;
-                    }
-                    tx_ext.height = h;
-                    tx_ext.timestamp = timestamp;
-                    tx_ext.hash = "0x" + tx->get_tx_hex_hash();
-                    tx_ext.unit_height = unit_height;
-                    tx_ext.phase = tx->get_tx_subtype();
-                    if (tx->get_tx_subtype() == enum_transaction_subtype_self) {
-                        if (self.count(tx_ext.hash)) {
-                            multi_tx.insert(tx_ext.hash);
-                            multi.push_back(self[tx_ext.hash]);
-                            multi.push_back(tx_ext);
-                            self.erase(tx_ext.hash);
-                        } else if (multi_tx.count(tx_ext.hash)) {
-                            multi.push_back(tx_ext);
-                        }
-                    } else if (tx->get_tx_subtype() == enum_transaction_subtype_send) {
-                        if (send.count(tx_ext.hash)) {
-                            multi_tx.insert(tx_ext.hash);
-                            multi.push_back(send[tx_ext.hash]);
-                            multi.push_back(tx_ext);
-                            send.erase(tx_ext.hash);
-                        } else if (multi_tx.count(tx_ext.hash)) {
-                            multi.push_back(tx_ext);
-                        } else {
-                            send[tx_ext.hash] = tx_ext;
-                        }
-                    } else if (tx->get_tx_subtype() == enum_transaction_subtype_confirm) {
-                        if (confirm.count(tx_ext.hash)) {
-                            multi_tx.insert(tx_ext.hash);
-                            multi.push_back(confirm[tx_ext.hash]);
-                            multi.push_back(tx_ext);
-                            confirm.erase(tx_ext.hash);
-                        } else if (multi_tx.count(tx_ext.hash)) {
-                            multi.push_back(tx_ext);
-                        } else {
-                            confirm[tx_ext.hash] = tx_ext;
-                        }
-                    } else {
-                        continue;
-                    }
-                }
-            }
+            address_vec_split.emplace_back(thread_address);
         }
-        // process tx map
-        std::vector<tx_ext_t> sendv;
-        std::vector<tx_ext_t> confirmv;
-        std::vector<tx_ext_t> selfv;
-        std::vector<std::pair<tx_ext_t, tx_ext_t>> confirmedv;
-        auto cmp1 = [](tx_ext_t lhs, tx_ext_t rhs) {
-            return lhs.height < rhs.height;
-        };
-        auto cmp2 = [](std::pair<tx_ext_t, tx_ext_t> lhs, std::pair<tx_ext_t, tx_ext_t> rhs) {
-            return lhs.first.height < rhs.first.height;
-        };
-        auto map_value_to_vec = [](std::map<std::string, tx_ext_t> & map, std::vector<tx_ext_t> & vec) {
-            for (auto const & item : map) {
-                vec.push_back(item.second);
-            }
-        };
-        auto setj = [](std::vector<tx_ext_t> & vec, json & j) {
-            for (auto const & item : vec) {
-                json tx;
-                tx["table height"] = item.height;
-                tx["timestamp"] = item.timestamp;
-                tx["source address"] = item.src;
-                tx["target address"] = item.target;
-                tx["unit height"] = item.unit_height;
-                tx["phase"] = item.phase;
-                if (item.tableid != -1) {
-                    tx["table id"] = item.tableid;
-                }
-                j[item.hash] = tx;
-            }
-        };
-        auto set_confirmedj = [](std::vector<std::pair<tx_ext_t, tx_ext_t>> & vec,
-                                 json & j,
-                                 uint32_t & count,
-                                 uint32_t & total_confirm_time,
-                                 uint32_t & max_confirm_time) {
-            for (auto const & item : vec) {
-                json tx;
-                tx["time cost"] = item.second.timestamp-item.first.timestamp;
-                tx["send time"] =  item.first.timestamp;
-                tx["confirm time"] = item.second.timestamp;
-                tx["send table height"] = item.first.height;
-                tx["confirm table height"] = item.second.height;
-                tx["send unit height"] = item.first.unit_height;
-                tx["confirm unit height"] =item.second.unit_height;
-                tx["source address"] = item.first.src;
-                tx["target address"] = item.first.target;
-                j[item.first.hash] = tx;
-                count++;
-                total_confirm_time += item.second.timestamp-item.first.timestamp;
-                if (item.second.timestamp-item.first.timestamp > max_confirm_time) {
-                    max_confirm_time = item.second.timestamp-item.first.timestamp;
-                }
-            }
-        };
-        for(auto it = send.begin(); it != send.end(); ) {
-            if (confirm.count(it->first)) {
-                confirmedv.push_back(std::make_pair(it->second, confirm[it->first]));
-                confirm.erase(it->first);
-                send.erase(it++);
-            }
-            else{
-                ++it;
-            }
+        std::vector<std::thread> all_thread;
+        int finish_num = 0;
+        for (auto i = 0U; i < thread_num; i++) {
+            std::thread th(thread_helper, this, address_vec_split[i]);
+            all_thread.emplace_back(std::move(th));
         }
-        map_value_to_vec(send, sendv);
-        map_value_to_vec(confirm, confirmv);
-        map_value_to_vec(self, selfv);
-        std::sort(sendv.begin(), sendv.end(), cmp1);
-        std::sort(confirmv.begin(), confirmv.end(), cmp1);
-        std::sort(selfv.begin(), selfv.end(), cmp1);
-        std::sort(confirmedv.begin(), confirmedv.end(), cmp2);
-
-        uint32_t count = 0;
-        uint32_t total_confirm_time = 0;
-        uint32_t max_confirm_time = 0;
-        uint32_t average_confirm_time = 0;
-        json tx_send;
-        json tx_confirm;
-        json tx_self;
-        json tx_multi;
-        json tx_confirmed;
-        set_confirmedj(confirmedv, tx_confirmed, count, total_confirm_time, max_confirm_time);
-        setj(sendv, tx_send);
-        setj(confirmv, tx_confirm);
-        setj(multi, tx_multi);
-        json j;
-        j["confirmed conut"] = count;
-        j["send only count"] = sendv.size();
-        j["confirmed only count"] = confirmv.size();
-        j["confirmed total time"] = total_confirm_time;
-        j["confirmed max time"] = max_confirm_time;
-        j["confirmed avg time"] = float(total_confirm_time) / count;
-        j["confirmed detail"] = tx_confirmed;
-        j["send only detail"] = tx_send;
-        j["confirmed only detail"] = tx_confirm;
-        j["multi detail"] = tx_multi;
-        result_json[account] = j;
+        for (auto i = 0U; i < thread_num; i++) {
+            all_thread[i].join();
+        }
     }
 
     void query_block_exist(std::string const & address, const uint64_t height) {
@@ -687,6 +532,196 @@ private:
             result_json["account_size"] = tablestate->get_account_size();
         }
     }
+    
+    void query_table_tx_info(std::string const & account, json & result_json) {
+        auto const & latest_block = m_blockstore->get_latest_committed_block(account);
+        auto const block_height = latest_block->get_height();
+        std::map<std::string, tx_ext_t> send;
+        std::map<std::string, tx_ext_t> confirm;
+        std::map<std::string, tx_ext_t> self;
+        std::set<std::string> multi_tx;
+        std::vector<tx_ext_t> multi;
+        int tableid{-1};
+        {
+            std::vector<std::string> parts;
+            if(xstring_utl::split_string(account,'@',parts) >= 2) {
+                tableid = xstring_utl::toint32(parts[1]);
+            } else {
+                std::cout << account << " parse table id error" << tableid << std::endl;
+                return;
+            }
+        }
+        base::xvaccount_t _vaccount(account);
+        for (uint64_t h = 0; h <= block_height; h++) {
+            auto const & vblock = m_blockstore->load_block_object(account,h,0,false);
+            const data::xblock_t * block = dynamic_cast<data::xblock_t *>(vblock.get());
+            if (block == nullptr) {
+                std::cout << " table " << account << " height " << h << " block null" << std::endl;
+                continue;
+            }
+            m_blockstore->load_block_input(_vaccount, vblock.get());
+            assert(block->get_block_level() == base::enum_xvblock_level_table);
+            const uint64_t timestamp = block->get_timestamp();
+            const std::vector<base::xventity_t*> & _table_inentitys = block->get_input()->get_entitys();
+            uint32_t entitys_count = _table_inentitys.size();
+            for (uint32_t index = 1; index < entitys_count; index++) {  // unit entity from index#1
+                base::xvinentity_t* _table_unit_inentity = dynamic_cast<base::xvinentity_t*>(_table_inentitys[index]);
+                base::xtable_inentity_extend_t extend;
+                extend.serialize_from_string(_table_unit_inentity->get_extend_data());
+                const xobject_ptr_t<base::xvheader_t> & _unit_header = extend.get_unit_header();
+                const uint64_t unit_height = _unit_header->get_height();
+                const std::vector<base::xvaction_t> &  input_actions = _table_unit_inentity->get_actions();
+                for (auto & action : input_actions) {
+                    if (action.get_org_tx_hash().empty()) {  // not txaction
+                        continue;
+                    }
+                    data::xlightunit_action_t txaction(action);
+                    auto tx_ptr = block->query_raw_transaction(txaction.get_tx_hash());
+                    tx_ext_t tx_ext;
+                    if (tx_ptr != nullptr) {
+                        tx_ext.src = tx_ptr->get_source_addr();
+                        tx_ext.target = tx_ptr->get_target_addr();
+                    }
+                    tx_ext.tableid = tableid;
+                    tx_ext.height = h;
+                    tx_ext.timestamp = timestamp;
+                    tx_ext.hash = "0x" + txaction.get_tx_hex_hash();
+                    tx_ext.unit_height = unit_height;
+                    tx_ext.phase = txaction.get_tx_subtype();
+                    if (txaction.get_tx_subtype() == enum_transaction_subtype_self) {
+                        if (self.count(tx_ext.hash)) {
+                            multi_tx.insert(tx_ext.hash);
+                            multi.push_back(self[tx_ext.hash]);
+                            multi.push_back(tx_ext);
+                            self.erase(tx_ext.hash);
+                        } else if (multi_tx.count(tx_ext.hash)) {
+                            multi.push_back(tx_ext);
+                        }
+                    } else if (txaction.get_tx_subtype() == enum_transaction_subtype_send) {
+                        if (send.count(tx_ext.hash)) {
+                            multi_tx.insert(tx_ext.hash);
+                            multi.push_back(send[tx_ext.hash]);
+                            multi.push_back(tx_ext);
+                            send.erase(tx_ext.hash);
+                        } else if (multi_tx.count(tx_ext.hash)) {
+                            multi.push_back(tx_ext);
+                        } else {
+                            send[tx_ext.hash] = tx_ext;
+                        }
+                    } else if (txaction.get_tx_subtype() == enum_transaction_subtype_confirm) {
+                        if (confirm.count(tx_ext.hash)) {
+                            multi_tx.insert(tx_ext.hash);
+                            multi.push_back(confirm[tx_ext.hash]);
+                            multi.push_back(tx_ext);
+                            confirm.erase(tx_ext.hash);
+                        } else if (multi_tx.count(tx_ext.hash)) {
+                            multi.push_back(tx_ext);
+                        } else {
+                            confirm[tx_ext.hash] = tx_ext;
+                        }
+                    } else {
+                        continue;
+                    }
+                }
+            }
+        }
+        // process tx map
+        std::vector<tx_ext_t> sendv;
+        std::vector<tx_ext_t> confirmv;
+        std::vector<tx_ext_t> selfv;
+        std::vector<std::pair<tx_ext_t, tx_ext_t>> confirmedv;
+        auto cmp1 = [](tx_ext_t lhs, tx_ext_t rhs) {
+            return lhs.height < rhs.height;
+        };
+        auto cmp2 = [](std::pair<tx_ext_t, tx_ext_t> lhs, std::pair<tx_ext_t, tx_ext_t> rhs) {
+            return lhs.first.height < rhs.first.height;
+        };
+        auto map_value_to_vec = [](std::map<std::string, tx_ext_t> & map, std::vector<tx_ext_t> & vec) {
+            for (auto const & item : map) {
+                vec.push_back(item.second);
+            }
+        };
+        auto setj = [](std::vector<tx_ext_t> & vec, json & j) {
+            for (auto const & item : vec) {
+                json tx;
+                tx["table height"] = item.height;
+                tx["timestamp"] = item.timestamp;
+                tx["source address"] = item.src;
+                tx["target address"] = item.target;
+                tx["unit height"] = item.unit_height;
+                tx["phase"] = item.phase;
+                tx["table id"] = item.tableid;
+                j[item.hash] = tx;
+            }
+        };
+        auto set_confirmedj = [](std::vector<std::pair<tx_ext_t, tx_ext_t>> & vec,
+                                 json & j,
+                                 uint32_t & count,
+                                 uint32_t & total_confirm_time,
+                                 uint32_t & max_confirm_time) {
+            for (auto const & item : vec) {
+                json tx;
+                tx["time cost"] = item.second.timestamp-item.first.timestamp;
+                tx["send time"] =  item.first.timestamp;
+                tx["confirm time"] = item.second.timestamp;
+                tx["send table height"] = item.first.height;
+                tx["confirm table height"] = item.second.height;
+                tx["send unit height"] = item.first.unit_height;
+                tx["confirm unit height"] =item.second.unit_height;
+                tx["source address"] = item.first.src;
+                tx["target address"] = item.first.target;
+                j[item.first.hash] = tx;
+                count++;
+                total_confirm_time += item.second.timestamp-item.first.timestamp;
+                if (item.second.timestamp-item.first.timestamp > max_confirm_time) {
+                    max_confirm_time = item.second.timestamp-item.first.timestamp;
+                }
+            }
+        };
+        for(auto it = send.begin(); it != send.end(); ) {
+            if (confirm.count(it->first)) {
+                confirmedv.push_back(std::make_pair(it->second, confirm[it->first]));
+                confirm.erase(it->first);
+                send.erase(it++);
+            }
+            else{
+                ++it;
+            }
+        }
+        map_value_to_vec(send, sendv);
+        map_value_to_vec(confirm, confirmv);
+        map_value_to_vec(self, selfv);
+        std::sort(sendv.begin(), sendv.end(), cmp1);
+        std::sort(confirmv.begin(), confirmv.end(), cmp1);
+        std::sort(selfv.begin(), selfv.end(), cmp1);
+        std::sort(confirmedv.begin(), confirmedv.end(), cmp2);
+
+        uint32_t count = 0;
+        uint32_t total_confirm_time = 0;
+        uint32_t max_confirm_time = 0;
+        uint32_t average_confirm_time = 0;
+        json tx_send;
+        json tx_confirm;
+        json tx_self;
+        json tx_multi;
+        json tx_confirmed;
+        set_confirmedj(confirmedv, tx_confirmed, count, total_confirm_time, max_confirm_time);
+        setj(sendv, tx_send);
+        setj(confirmv, tx_confirm);
+        setj(multi, tx_multi);
+        json j;
+        j["confirmed conut"] = count;
+        j["send only count"] = sendv.size();
+        j["confirmed only count"] = confirmv.size();
+        j["confirmed total time"] = total_confirm_time;
+        j["confirmed max time"] = max_confirm_time;
+        j["confirmed avg time"] = float(total_confirm_time) / count;
+        j["confirmed detail"] = tx_confirmed;
+        j["send only detail"] = tx_send;
+        j["confirmed only detail"] = tx_confirm;
+        j["multi detail"] = tx_multi;
+        result_json[account] = j;
+    }
     // std::unique_ptr<mbus::xmessage_bus_face_t> m_bus;
     // std::shared_ptr<top::db::xdb_face_t> m_db;
     top::xobject_ptr_t<top::store::xstore_face_t> m_store;
@@ -829,15 +864,11 @@ int main(int argc, char ** argv) {
         out_json << std::setw(4) << result_json;
     } else if (function_name == "check_tx_info") {
         if (argc == 3) {
-            tools.query_all_table_tx_info();
+            auto const & all_table_address = db_export_tools::get_all_table_address();
+            tools.query_vec_table_tx_info_multi_thread(all_table_address);
         } else if (argc == 4) {
-            json result_json;
-            std::string filename;
-            std::string address{argv[3]};
-            tools.query_tx_info(address, result_json);
-            filename = address + "_tx_info.json";
-            std::ofstream out_json(filename);
-            out_json << std::setw(4) << result_json;
+            std::vector<std::string> address = {argv[3]};
+            tools.query_vec_table_tx_info(address);
         } else {
             usage();
             return -1;
@@ -847,13 +878,10 @@ int main(int argc, char ** argv) {
             usage();
             return -1;
         }
-        std::string address{argv[3]};
-        std::string height_s{argv[4]};
-        uint64_t height = std::stoi(height_s);
-        tools.query_block_exist(address, height);
+        tools.query_block_exist(argv[3], std::stoi(argv[4]));
     } else if (function_name == "check_latest_fullblock") {
         if (argc == 3) {
-            auto const & all_table_address = tools.get_all_table_address();
+            auto const & all_table_address = db_export_tools::get_all_table_address();
             tools.query_vec_table_latest_fullblock(all_table_address);
         } else if (argc == 4) {
             std::vector<std::string> address = {argv[3]};
