@@ -101,7 +101,8 @@ xunit_service::xcons_service_mgr_ptr xcons_mgr_builder::build(std::string const 
                                                               observer_ptr<time::xchain_time_face_t> const & tx_timer,
                                                               xobject_ptr_t<base::xvcertauth_t> const & certauth,
                                                               observer_ptr<election::cache::xdata_accessor_face_t> const & accessor,
-                                                              observer_ptr<mbus::xmessage_bus_face_t> const & mbus) {
+                                                              observer_ptr<mbus::xmessage_bus_face_t> const & mbus,
+                                                              observer_ptr<router::xrouter_face_t> const & router) {
     // xobject_ptr_t<base::xvcertauth_t> certauth;
     // certauth.attach(&auth::xauthcontext_t::instance(*node_service.get()));
     // TODO(justin): remove mock
@@ -110,10 +111,10 @@ xunit_service::xcons_service_mgr_ptr xcons_mgr_builder::build(std::string const 
 
     auto face = std::make_shared<xunit_service::xelection_cache_imp>();
     std::shared_ptr<xunit_service::xleader_election_face> pelection = std::make_shared<xunit_service::xrotate_leader_election>(blockstore, face);
-    std::shared_ptr<xunit_service::xnetwork_proxy_face> network = std::make_shared<xunit_service::xnetwork_proxy>(face);
+    std::shared_ptr<xunit_service::xnetwork_proxy_face> network = std::make_shared<xunit_service::xnetwork_proxy>(face, router);
 
     // global lifecyle
-    auto p_res = new xunit_service::xresources(node_account, work_pool, certauth, blockstore, network, pelection, tx_timer, accessor, mbus);
+    auto p_res = new xunit_service::xresources(node_account, work_pool, certauth, blockstore, network, pelection, tx_timer, accessor, mbus, txpool);
     auto p_para = new xunit_service::xconsensus_para(xconsensus::enum_xconsensus_pacemaker_type_clock_cert,  // useless parameter
                                                      base::enum_xconsensus_threshold_2_of_3);
     auto p_srv_para = std::make_shared<xunit_service::xcons_service_para>(p_res, p_para);

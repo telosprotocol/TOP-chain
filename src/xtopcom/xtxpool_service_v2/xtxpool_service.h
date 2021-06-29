@@ -24,12 +24,6 @@
 NS_BEG2(top, xtxpool_service_v2)
 using xtxpool_service_v2::xcons_utl;
 
-XDEFINE_MSG_ID(xmessage_category_txpool, xtxpool_msg_send_receipt, 0x00000001);
-XDEFINE_MSG_ID(xmessage_category_txpool, xtxpool_msg_recv_receipt, 0x00000002);
-XDEFINE_MSG_ID(xmessage_category_txpool, xtxpool_msg_pull_recv_receipt, 0x00000003);
-XDEFINE_MSG_ID(xmessage_category_txpool, xtxpool_msg_pull_confirm_receipt, 0x00000004);
-XDEFINE_MSG_ID(xmessage_category_txpool, xtxpool_msg_push_receipt, 0x00000005);
-
 class xtxpool_service final
   : public xtxpool_service_face
   , public std::enable_shared_from_this<xtxpool_service> {

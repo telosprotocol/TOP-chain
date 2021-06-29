@@ -89,7 +89,7 @@ public:
 
 private:
     bool is_account_need_update(const std::string & account_addr) const;
-    // bool is_unconfirm_txs_reached_upper_limmit() const;
+    // bool is_unconfirm_txs_reached_upper_limit() const;
     int32_t verify_tx_common(const xcons_transaction_ptr_t & tx) const;
     int32_t verify_send_tx(const xcons_transaction_ptr_t & tx) const;
     int32_t verify_receipt_tx(const xcons_transaction_ptr_t & tx) const;

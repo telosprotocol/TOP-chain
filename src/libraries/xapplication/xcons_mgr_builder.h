@@ -9,6 +9,7 @@
 #include "xtxpool_v2/xtxpool_face.h"
 #include "xunit_service/xcons_face.h"
 #include "xmbus/xmessage_bus.h"
+#include "xrouter/xrouter_face.h"
 
 #include <string>
 
@@ -69,7 +70,8 @@ public:
                                                       observer_ptr<time::xchain_time_face_t> const & tx_timer,
                                                       xobject_ptr_t<base::xvcertauth_t> const & certauth,
                                                       observer_ptr<election::cache::xdata_accessor_face_t> const & accessor,
-                                                      observer_ptr<mbus::xmessage_bus_face_t> const & mbus);
+                                                      observer_ptr<mbus::xmessage_bus_face_t> const & mbus,
+                                                      observer_ptr<router::xrouter_face_t> const & router);
 };
 
 NS_END2

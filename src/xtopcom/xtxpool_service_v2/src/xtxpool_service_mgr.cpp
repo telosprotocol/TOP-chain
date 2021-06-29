@@ -82,7 +82,7 @@ void xtxpool_service_mgr::on_block_confirmed(xblock_t * block) {
           now_clock,
           block->dump().c_str());
 
-    deal_table_block(block, now_clock);
+    // deal_table_block(block, now_clock);
 
     if (block->is_lighttable()) {
         m_para->get_txpool()->on_block_confirmed(block);

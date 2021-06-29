@@ -425,11 +425,6 @@ bool xbatch_packer::on_proposal_finish(const base::xvevent_t & event, xcsobject_
         auto fork_tag = "cons_table_failed_accu_" + get_account();
         XMETRICS_COUNTER_SET( fork_tag , 0);
 
-        if (is_leader) {
-            XMETRICS_GAUGE(metrics::cons_tableblock_leader_finish_succ, 1);
-        } else {
-            XMETRICS_GAUGE(metrics::cons_tableblock_backup_finish_succ, 1);
-        }
         // xunit_info("xbatch_packer::on_proposal_finish succ. leader:%d,proposal=%s,at_node:%s",
         //     is_leader,
         //     _evt_obj->get_target_proposal()->dump().c_str(),
@@ -445,6 +440,19 @@ bool xbatch_packer::on_proposal_finish(const base::xvevent_t & event, xcsobject_
         vblock->add_ref();
         mbus::xevent_ptr_t ev = make_object_ptr<mbus::xevent_consensus_data_t>(vblock, is_leader);
         m_mbus->push_event(ev);
+
+        if (is_leader) {
+            XMETRICS_GAUGE(metrics::cons_tableblock_leader_finish_succ, 1);
+            if (vblock->get_height() > 2) {
+                base::xauto_ptr<base::xvblock_t> commit_block =
+                    m_para->get_resources()->get_vblockstore()->load_block_object(vblock->get_account(), vblock->get_height() - 2, base::enum_xvblock_flag_committed, true);
+                if (commit_block != nullptr) {
+                    make_receipts_and_send(dynamic_cast<xblock_t *>(commit_block.get()), dynamic_cast<xblock_t *>(vblock));
+                }
+            }
+        } else {
+            XMETRICS_GAUGE(metrics::cons_tableblock_backup_finish_succ, 1);
+        }
     }
     return false;  // throw event up again to let txs-pool or other object start new consensus
 }
@@ -455,6 +463,35 @@ bool xbatch_packer::on_consensus_commit(const base::xvevent_t & event, xcsobject
     xunit_dbg("xbatch_packer::on_consensus_commit, %s class=%d, at_node:%s",
         _evt_obj->get_target_commit()->dump().c_str(), _evt_obj->get_target_commit()->get_block_class(), xcons_utl::xip_to_hex(get_xip2_addr()).c_str());
     return false;  // throw event up again to let txs-pool or other object start new consensus
+}
+
+void xbatch_packer::make_receipts_and_send(xblock_t * commit_block, xblock_t * cert_block) {
+    auto network_proxy = m_para->get_resources()->get_network();
+    xassert(network_proxy != nullptr);
+    if (network_proxy == nullptr) {
+        xwarn("xbatch_packer::make_receipts_and_send get network fail, can not send receipts");
+        return;
+    }
+
+    std::vector<data::xcons_transaction_ptr_t> all_cons_txs;
+    std::vector<base::xfull_txreceipt_t> all_receipts = base::xtxreceipt_build_t::create_all_txreceipts(commit_block, cert_block);
+    for (auto & receipt : all_receipts) {
+        data::xcons_transaction_ptr_t constx = make_object_ptr<data::xcons_transaction_t>(receipt);
+        all_cons_txs.push_back(constx);
+        xassert(constx->is_recv_tx() || constx->is_confirm_tx());
+    }
+
+    for (auto & tx : all_cons_txs) {
+        xinfo("xbatch_packer::make_receipts_and_send tx=%s,commit_block:%s,cert_block:%s", tx->dump().c_str(), commit_block->dump().c_str(), cert_block->dump().c_str());
+        bool need_self_process = false;
+        network_proxy->send_receipt_msg(get_xip2_addr(), tx, need_self_process);
+        if (need_self_process) {
+            xtxpool_v2::xtx_para_t para;
+            std::shared_ptr<xtxpool_v2::xtx_entry> tx_ent = std::make_shared<xtxpool_v2::xtx_entry>(tx, para);
+            m_para->get_resources()->get_txpool()->push_receipt(tx_ent, true, false);
+            XMETRICS_COUNTER_INCREMENT("txpool_received_self_send_receipt_num", 1);
+        }
+    }
 }
 
 NS_END2

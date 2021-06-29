@@ -16,7 +16,7 @@
 #include "xelection/xcache/xgroup_element.h"
 #include "xelection/xdata_accessor_error.h"
 #include "xmetrics/xmetrics.h"
-#include "xtxpool_service_v2/xtxpool_service.h"
+#include "xtxpool_v2/xtxpool_face.h"
 #include "xutility/xhash.h"
 #include "xvnetwork/xcodec/xmsgpack/xmessage_codec.hpp"
 #include "xvnetwork/xcodec/xmsgpack/xvnetwork_message_codec.hpp"
@@ -563,8 +563,8 @@ void xtop_vhost::do_handle_network_data() {
                                                    "_in_vhost_size" + std::to_string(static_cast<std::uint32_t>(vnetwork_message.message().id())),
                                                bytes.size());
                     #endif
-                    if (vnetwork_message.message_id() != xtxpool_service_v2::xtxpool_msg_send_receipt &&
-                        vnetwork_message.message_id() != xtxpool_service_v2::xtxpool_msg_recv_receipt) {
+                    if (vnetwork_message.message_id() != xtxpool_v2::xtxpool_msg_send_receipt &&
+                        vnetwork_message.message_id() != xtxpool_v2::xtxpool_msg_recv_receipt) {
                         m_filter_manager->filt_message(vnetwork_message);
                         if (vnetwork_message.empty()) {
                             continue;

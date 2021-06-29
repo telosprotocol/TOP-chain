@@ -55,7 +55,8 @@ xtop_chain_application::xtop_chain_application(observer_ptr<xapplication_t> cons
                                         m_application->logic_timer(),
                                         m_application->cert_serivce(),
                                         make_observer(m_election_cache_data_accessor),
-                                        m_application->message_bus())}
+                                        m_application->message_bus(),
+                                        m_application->router())}
   , m_txpool_service_mgr{xtxpool_service_v2::xtxpool_service_mgr_instance::create_xtxpool_service_mgr_inst(m_application->store(),
                                                                                                         make_observer(m_application->blockstore().get()),
                                                                                                         m_application->txpool(),

@@ -77,23 +77,23 @@ int32_t xtxpool_table_t::push_send_tx(const std::shared_ptr<xtx_entry> & tx) {
     }
 
     // todo: flow contral by receipt id.
-    // if (is_unconfirm_txs_reached_upper_limmit()) {
-    //     xtxpool_warn("xtxpool_table_t::push_send_tx unconfirm txs reached upper limmit tx:%s", tx->get_tx()->dump().c_str());
-    //     XMETRICS_COUNTER_INCREMENT("txpool_push_tx_send_fail_unconfirm_reached_limmit", 1);
+    // if (is_unconfirm_txs_reached_upper_limit()) {
+    //     xtxpool_warn("xtxpool_table_t::push_send_tx unconfirm txs reached upper limit tx:%s", tx->get_tx()->dump().c_str());
+    //     XMETRICS_COUNTER_INCREMENT("txpool_push_tx_send_fail_unconfirm_reached_limit", 1);
     //     XMETRICS_COUNTER_INCREMENT("txpool_push_tx_send_fail", 1);
     //     return xtxpool_error_account_unconfirm_txs_reached_upper_limit;
     // }
 
     if (tx->get_tx()->is_send_tx()) {
         if (m_unconfirmed_tx_num >= table_unconfirm_txs_num_max) {
-            xtxpool_warn("xtxpool_table_t::push_send_tx node unconfirm txs reached upper limmit tx:%s", tx->get_tx()->dump().c_str());
+            xtxpool_warn("xtxpool_table_t::push_send_tx node unconfirm txs reached upper limit tx:%s", tx->get_tx()->dump().c_str());
             return xtxpool_error_account_unconfirm_txs_reached_upper_limit;
         }
 
         base::xvaccount_t vaccount(tx->get_tx()->get_target_addr());
         auto peer_table_sid = vaccount.get_short_table_id();
-        if (m_receipt_state_cache.is_unconfirmed_num_reach_limmit(peer_table_sid)) {
-            xtxpool_warn("xtxpool_table_t::push_send_tx table-table unconfirm txs reached upper limmit tx:%s,peer_sid:%d", tx->get_tx()->dump().c_str(), peer_table_sid);
+        if (m_receipt_state_cache.is_unconfirmed_num_reach_limit(peer_table_sid)) {
+            xtxpool_warn("xtxpool_table_t::push_send_tx table-table unconfirm txs reached upper limit tx:%s,peer_sid:%d", tx->get_tx()->dump().c_str(), peer_table_sid);
             return xtxpool_error_account_unconfirm_txs_reached_upper_limit;
         }
     }
@@ -262,11 +262,11 @@ const std::vector<xcons_transaction_ptr_t> xtxpool_table_t::get_resend_txs(uint6
     return m_unconfirmed_tx_queue.get_resend_txs(now);
 }
 
-// bool xtxpool_table_t::is_unconfirm_txs_reached_upper_limmit() const {
+// bool xtxpool_table_t::is_unconfirm_txs_reached_upper_limit() const {
 //     std::lock_guard<std::mutex> lck(m_filter_mutex);
 //     uint32_t num = m_table_filter.get_unconfirm_txs_num();
 //     XMETRICS_COUNTER_SET("table_unconfirm_tx" + m_xtable_info.get_table_addr(), num);
-//     xtxpool_warn("xtxpool_table_t::is_unconfirm_txs_reached_upper_limmit table:%s,num:%u,max:%u", m_xtable_info.get_table_addr().c_str(), num, table_unconfirm_txs_num_max);
+//     xtxpool_warn("xtxpool_table_t::is_unconfirm_txs_reached_upper_limit table:%s,num:%u,max:%u", m_xtable_info.get_table_addr().c_str(), num, table_unconfirm_txs_num_max);
 //     return num >= table_unconfirm_txs_num_max;
 // }
 
