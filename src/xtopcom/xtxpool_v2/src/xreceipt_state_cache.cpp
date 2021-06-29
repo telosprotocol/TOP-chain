@@ -41,7 +41,7 @@ uint64_t xreceipt_state_cache_t::last_update_time() const {
     return m_update_time;
 }
 
-bool xreceipt_state_cache_t::is_unconfirmed_num_reach_limmit(base::xtable_shortid_t peer_table_sid) const {
+bool xreceipt_state_cache_t::is_unconfirmed_num_reach_limit(base::xtable_shortid_t peer_table_sid) const {
     base::xreceiptid_pair_t receiptid_pair;
     std::lock_guard<std::mutex> lck(m_mutex);
     m_receiptid_state->find_pair(peer_table_sid, receiptid_pair);

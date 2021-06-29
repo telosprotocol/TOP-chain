@@ -39,7 +39,7 @@ public:
     // erase networkdriver, call before vnode destroy
     virtual bool erase(const xvip2_t &addr);
 
-    router::xrouter_face_t * get_router() const override;
+    void send_receipt_msg(const xvip2_t & from_addr, const data::xcons_transaction_ptr_t & cons_tx, bool & need_self_process) override;
 
 
 protected:

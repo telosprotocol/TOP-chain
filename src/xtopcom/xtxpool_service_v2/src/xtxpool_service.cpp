@@ -321,6 +321,9 @@ void xtxpool_service::on_message_unit_receipt(vnetwork::xvnode_address_t const &
         check_and_response_recv_receipt(receipt);
     }
     if (receipt != nullptr) {
+        if (common::has<common::xnode_type_t::consensus_validator>(sender.type()) || m_vnet_driver->address().cluster_address() == sender.cluster_address()) {
+            return;
+        }
         auditor_forward_receipt_to_shard(receipt, message);
     }
 }
@@ -438,7 +441,7 @@ void xtxpool_service::send_receipt_real(const data::xcons_transaction_ptr_t & co
         xassert(!common::has<common::xnode_type_t::consensus_validator>(m_vnet_driver->type()));
         xassert(m_is_send_receipt_role);
         if (m_vnet_driver->address().cluster_address() == receiver_cluster_addr) {
-            xinfo("xtxpool_service::send_receipt_real broadcast receipt=%s,size=%zu,vnode:%ld", cons_tx->dump().c_str(), stream.size(), m_vnetwork_str.c_str());
+            xinfo("xtxpool_service::send_receipt_real broadcast receipt=%s,size=%zu,vnode:%s", cons_tx->dump().c_str(), stream.size(), m_vnetwork_str.c_str());
             m_vnet_driver->broadcast(msg);
             on_message_unit_receipt(m_vnet_driver->address(), msg);
         } else {

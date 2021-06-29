@@ -46,7 +46,7 @@ public:
     virtual bool add(const std::shared_ptr<vnetwork::xvnetwork_driver_face_t> & network) = 0;
     virtual std::shared_ptr<vnetwork::xvnetwork_driver_face_t> find(const xvip2_t &addr) = 0;
     virtual bool erase(const xvip2_t & addr) = 0;
-    virtual router::xrouter_face_t * get_router() const = 0;
+    virtual void send_receipt_msg(const xvip2_t & from_addr, const data::xcons_transaction_ptr_t & cons_tx, bool & need_self_process) = 0;
 };
 
 // table index data

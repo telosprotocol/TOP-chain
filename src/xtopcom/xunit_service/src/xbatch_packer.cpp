@@ -466,6 +466,13 @@ bool xbatch_packer::on_consensus_commit(const base::xvevent_t & event, xcsobject
 }
 
 void xbatch_packer::make_receipts_and_send(xblock_t * commit_block, xblock_t * cert_block) {
+    auto network_proxy = m_para->get_resources()->get_network();
+    xassert(network_proxy != nullptr);
+    if (network_proxy == nullptr) {
+        xwarn("xbatch_packer::make_receipts_and_send get network fail, can not send receipts");
+        return;
+    }
+
     std::vector<data::xcons_transaction_ptr_t> all_cons_txs;
     std::vector<base::xfull_txreceipt_t> all_receipts = base::xtxreceipt_build_t::create_all_txreceipts(commit_block, cert_block);
     for (auto & receipt : all_receipts) {
@@ -476,51 +483,14 @@ void xbatch_packer::make_receipts_and_send(xblock_t * commit_block, xblock_t * c
 
     for (auto & tx : all_cons_txs) {
         xinfo("xbatch_packer::make_receipts_and_send tx=%s,commit_block:%s,cert_block:%s", tx->dump().c_str(), commit_block->dump().c_str(), cert_block->dump().c_str());
-        send_receipt_real(tx);
-    }
-}
-
-void xbatch_packer::send_receipt_real(const data::xcons_transaction_ptr_t & cons_tx) {
-    try {
-        std::string target_addr = cons_tx->get_receipt_target_account();
-
-        top::base::xautostream_t<4096> stream(top::base::xcontext_t::instance());
-        cons_tx->serialize_to(stream);
-        vnetwork::xmessage_t msg =
-            vnetwork::xmessage_t({stream.data(), stream.data() + stream.size()}, cons_tx->is_recv_tx() ? xtxpool_v2::xtxpool_msg_send_receipt : xtxpool_v2::xtxpool_msg_recv_receipt);
-
-        auto network_proxy = m_para->get_resources()->get_network();
-        xassert(network_proxy != nullptr);
-        if (network_proxy == nullptr) {
-            return;
-        }
-
-        auto router = network_proxy->get_router();
-        auto net_driver = network_proxy->find(get_xip2_addr());
-        xassert(router != nullptr && net_driver != nullptr);
-
-        auto receiver_cluster_addr =
-            router->sharding_address_from_account(common::xaccount_address_t{target_addr}, net_driver->network_id(), common::xnode_type_t::consensus_auditor);
-        assert(common::has<common::xnode_type_t::consensus_auditor>(receiver_cluster_addr.type()) || common::has<common::xnode_type_t::committee>(receiver_cluster_addr.type()) ||
-               common::has<common::xnode_type_t::zec>(receiver_cluster_addr.type()));
-
-        if (net_driver->address().cluster_address() == receiver_cluster_addr) {
-            xinfo("xbatch_packer::send_receipt_real broadcast receipt=%s,size=%zu,vnode:%ld", cons_tx->dump().c_str(), stream.size(), net_driver->address().to_string().c_str());
-            net_driver->broadcast(msg);
-
+        bool need_self_process = false;
+        network_proxy->send_receipt_msg(get_xip2_addr(), tx, need_self_process);
+        if (need_self_process) {
             xtxpool_v2::xtx_para_t para;
-            std::shared_ptr<xtxpool_v2::xtx_entry> tx_ent = std::make_shared<xtxpool_v2::xtx_entry>(cons_tx, para);
+            std::shared_ptr<xtxpool_v2::xtx_entry> tx_ent = std::make_shared<xtxpool_v2::xtx_entry>(tx, para);
             m_para->get_resources()->get_txpool()->push_receipt(tx_ent, true, false);
             XMETRICS_COUNTER_INCREMENT("txpool_received_self_send_receipt_num", 1);
-        } else {
-            xinfo("xbatch_packer::send_receipt_real forward receipt=%s,size=%zu,from_vnode:%s,to_vnode:%s",
-                  cons_tx->dump().c_str(), stream.size(), net_driver->address().to_string().c_str(), receiver_cluster_addr.to_string().c_str());
-            net_driver->forward_broadcast_message(msg, vnetwork::xvnode_address_t{std::move(receiver_cluster_addr)});
         }
-    } catch (top::error::xtop_error_t const & eh) {
-        xwarn("xbatch_packer::send_receipt_real xvnetwork_error_t exception caught: %s; error code: %d", eh.what(), eh.code().value());
-    } catch (const std::exception & eh) {
-        xwarn("xbatch_packer::send_receipt_real std exception caught: %s;", eh.what());
     }
 }
 
