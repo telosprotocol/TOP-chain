@@ -63,11 +63,11 @@ void usage() {
     std::cout << "        - all_account" << std::endl;
     std::cout << "        - all_property" << std::endl;
     std::cout << "        - stake_property" << std::endl;
-    std::cout << "        - check_fast_sync [table|unit] [account address]" << std::endl;
-    std::cout << "        - check_block_exist <account address> <height>" << std::endl;
+    std::cout << "        - check_fast_sync [table|unit|account]" << std::endl;
+    std::cout << "        - check_block_exist <account> <height>" << std::endl;
     std::cout << "        - check_tx_info [table]" << std::endl;
     std::cout << "        - check_latest_fullblock [table]" << std::endl;
-    std::cout << "        - query <account address>" << std::endl;
+    std::cout << "        - query <account>" << std::endl;
     std::cout << "-------  end  -------" << std::endl;
 }
 
@@ -194,8 +194,68 @@ public:
         }
     }
 
-    static std::vector<std::string> get_all_table_address() {
-        std::vector<std::string> all_address;
+    std::vector<std::string> get_all_unit_account() {
+        json accounts_json;
+        std::vector<std::string> accounts_vec; 
+        if (!ALWAYS_OVERWRITE) {
+            try {
+                std::ifstream all_account_file("all_account.json");
+                json j;
+                all_account_file >> j;
+                if ((j.find("sharding@0") != j.end())&&(j.find("zec@0") != j.end())&&(j.find("beacon@0") != j.end())) {
+                    std::cout << "all_account.json file already exist" << std::endl;
+                    accounts_json = j;
+                    for (auto _table : j) {
+                        for (auto _acc : _table) {
+                            accounts_vec.emplace_back(_acc.get<std::string>());
+                        }
+                    }
+                    return accounts_vec;
+                }
+            } catch (...) {
+            }
+        }
+
+        const std::vector<std::pair<std::string, std::string>> addr2name = {
+            std::make_pair(std::string{sys_contract_sharding_table_block_addr}, "sharding"),
+            std::make_pair(std::string{sys_contract_zec_table_block_addr}, "zec"),
+            std::make_pair(std::string{sys_contract_beacon_table_block_addr}, "beacon"),
+        };
+        for (auto const & _p : addr2name) {
+            for (auto index = 0; index < 256; ++index) {
+                std::string address = _p.first + "@" + std::to_string(index);
+                auto latest_block = m_blockstore->get_latest_committed_block(address);
+                auto block_height = latest_block->get_height();
+                if (block_height)
+                    std::cout << index << ": " << block_height << " " << std::endl;
+
+                std::set<std::string> tmp_set;
+                for (uint64_t h = 0; h <= block_height; ++h) {
+                    auto vblock = m_blockstore->load_block_object(address,h,0,true);
+                    data::xblock_t * block = dynamic_cast<data::xblock_t *>(vblock.get());
+                    if (block != nullptr) {
+                        assert(block->get_block_level() == base::enum_xvblock_level_table);
+                        auto const & units = block->get_tableblock_units(false);
+                        if (!units.empty()) {
+                            for (auto & unit : units) {
+                                auto unit_address = unit->get_block_owner();
+                                tmp_set.insert(unit_address);
+                            }
+                        }
+                    }
+                }
+                for (auto & s : tmp_set) {
+                    accounts_vec.emplace_back(s);
+                    accounts_json[std::string{_p.second + "@" + std::to_string(index)}].push_back(s);
+                }
+            }
+        }
+
+        return accounts_vec;
+    }
+
+    static std::vector<std::string> get_all_table_account() {
+        std::vector<std::string> account_vec;
         const std::map<std::pair<std::string, std::string>, int> addr2name = {
             std::make_pair(std::make_pair(std::string{sys_contract_sharding_table_block_addr}, "sharding"), 256),
             std::make_pair(std::make_pair(std::string{sys_contract_zec_table_block_addr}, "zec"), MAIN_CHAIN_ZEC_TABLE_USED_NUM),
@@ -204,70 +264,42 @@ public:
         for (auto const & _p : addr2name) {
             for (auto index = 0; index < _p.second; ++index) {
                 std::string address = _p.first.first + "@" + std::to_string(index);
-                all_address.emplace_back(address);
+                account_vec.emplace_back(address);
             }
         }
-        return all_address;
+        return account_vec;
     }
 
-    void query_all_table_sync_result(json & result_json) {
-        const std::map<std::pair<std::string, std::string>, int> addr2name = {
-            std::make_pair(std::make_pair(std::string{sys_contract_sharding_table_block_addr}, "sharding"), 256),
-            std::make_pair(std::make_pair(std::string{sys_contract_zec_table_block_addr}, "zec"), 3),
-            std::make_pair(std::make_pair(std::string{sys_contract_beacon_table_block_addr}, "beacon"), 1),
+    void query_all_sync_result(std::vector<std::string> const & table, std::vector<std::string> const & unit) {
+        auto thread_helper = [](db_export_tools *arg, std::vector<std::string> const & account_vec, bool is_table) {
+            arg->query_all_sync_result(account_vec, is_table);
         };
-        for (auto const & _p : addr2name) {
-            for (auto index = 0; index < _p.second; ++index) {
-                std::string address = _p.first.first + "@" + std::to_string(index);
-                query_sync_result(address, result_json);
-            }
-        }
+        std::thread th1(thread_helper, this, table, true);
+        std::thread th2(thread_helper, this, unit, false);
+        th1.join();
+        th2.join();
     }
 
-    void query_all_unit_sync_result(std::set<std::string> & accounts_set, json & result_json) {
-        for(auto const & account : accounts_set) {
-            query_sync_result(account, result_json);
+    void query_all_sync_result(std::vector<std::string> const & accounts_vec, bool is_table) {
+        json result_json;
+        for(auto const & account : accounts_vec) {
+            json j;
+            query_sync_result(account, j);
+            result_json[account] = j;
         }
-    }
-
-    void query_sync_result(std::string const & account, json & result_json) {
-        std::string result;
-        int start = 0;
-        int end = -1;
-        auto latest_block = m_blockstore->get_latest_committed_block(account);
-        data::xblock_t * block = dynamic_cast<data::xblock_t *>(latest_block.get());
-        if (latest_block == nullptr) {
-            std::cout << "account " << account << "latest committed block is null" << std::endl;
-            return;
-        }
-        auto block_height = latest_block->get_height();
-        for (uint64_t h = 0; h <= block_height; h++) {
-            auto vblock = m_blockstore->load_block_object(account,h,0,false);
-            data::xblock_t * block = dynamic_cast<data::xblock_t *>(vblock.get());
-            if (block == nullptr) {
-                if (end != -1) {
-                    if (start == end) {
-                        result += std::to_string(start) + ',';
-                    } else {
-                        result += std::to_string(start) + '-' + std::to_string(end) + ',';
-                    }
-                }
-                start = h+1;
-                end = -1;
+        std::string filename;
+        if (accounts_vec.size() == 1) {
+            filename = accounts_vec[0] + "_sync_result.json";
+        } else {
+            if (is_table) {
+                filename = "all_table_sync_result.json";
             } else {
-                end = h;
-            }
-            if (h == block_height) {
-                if (end != -1) {
-                    if (start == end) {
-                        result += std::to_string(start) + ',';
-                    } else {
-                        result += std::to_string(start) + '-' + std::to_string(end) + ',';
-                    }
-                }
+                filename = "all_unit_sync_result.json";
             }
         }
-        result_json[account] = result;
+        std::ofstream out_json(filename);
+        out_json << std::setw(4) << result_json;
+        std::cout << "===> " << filename << " generated success!" << std::endl;
     }
 
     void query_vec_table_latest_fullblock(std::vector<std::string> const & address_vec) {
@@ -519,32 +551,87 @@ private:
     }
 
 private:
+    void query_sync_result(std::string const & account, const uint64_t h_s, const uint64_t e_s, std::string & result) {
+        int start = h_s;
+        int end = -1;
+        for (uint64_t h = h_s; h <= e_s; h++) {
+            auto vblock = m_blockstore->load_block_object(account,h,0,false);
+            data::xblock_t * block = dynamic_cast<data::xblock_t *>(vblock.get());
+            if (block == nullptr) {
+                if (end != -1) {
+                    if (start == end) {
+                        result += std::to_string(start) + ',';
+                    } else {
+                        result += std::to_string(start) + '-' + std::to_string(end) + ',';
+                    }
+                }
+                start = h+1;
+                end = -1;
+            } else {
+                end = h;
+            }
+            if (h == e_s) {
+                if (end != -1) {
+                    if (start == end) {
+                        result += std::to_string(start) + ',';
+                    } else {
+                        result += std::to_string(start) + '-' + std::to_string(end) + ',';
+                    }
+                }
+            }
+        }
+    }
+
+    void query_sync_result(std::string const & account, json & result_json) {
+        auto latest_block = m_blockstore->get_latest_committed_block(account);
+        data::xblock_t * block = dynamic_cast<data::xblock_t *>(latest_block.get());
+        if (latest_block == nullptr) {
+            std::cout << "account " << account << "latest committed block is null" << std::endl;
+            return;
+        }
+        auto block_height = latest_block->get_height();
+        std::string result;
+        query_sync_result(account, 0, block_height, result);
+        result_json = result;
+    }
+
     void query_table_latest_fullblock(std::string const & account, json & result_json) {
+        auto vblock_c = m_blockstore->get_latest_committed_block(account);
+        data::xblock_t * block_c = dynamic_cast<data::xblock_t *>(vblock_c.get());
+        if (block_c == nullptr) {
+            std::cout << " table " << account << " get_latest_committed_block null" << std::endl;
+            return;
+        }
         auto vblock = m_blockstore->get_latest_committed_full_block(account);
         data::xblock_t * block = dynamic_cast<data::xblock_t *>(vblock.get());
         if (block == nullptr) {
             std::cout << " table " << account << " get_latest_committed_full_block null" << std::endl;
             return;
         }
-        if (block->get_height() == 0) {
-            return;
-        }
-        if (!block->is_fulltable()) {
+
+        auto height_c = block_c->get_height();
+        auto height = block->get_height();
+        if (!block->is_fulltable() && height != 0) {
             std::cout << " table " << account << " latest_committed_full_block is not full table" << std::endl;
             return;
         }
-        result_json["height"] = block->get_height();
-        auto root_hash = block->get_fullstate_hash();
-        result_json["hash"] = to_hex_str(root_hash);
-        base::xauto_ptr<base::xvbstate_t> bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(block);
-        data::xtablestate_ptr_t tablestate = bstate != nullptr ? std::make_shared<data::xtable_bstate_t>(bstate.get()) : nullptr;
-        if (bstate == nullptr) {
-            result_json["bstate"] = "null";
-            return;
-        } else {
-            data::xtablestate_ptr_t tablestate = std::make_shared<data::xtable_bstate_t>(bstate.get());
-            result_json["account_size"] = tablestate->get_account_size();
+        result_json["last_committed_block"]["height"] = height_c;
+        result_json["last_full_block"]["height"] = height;
+        if (height != 0) {
+            auto root_hash = block->get_fullstate_hash();
+            result_json["last_full_block"]["hash"] = to_hex_str(root_hash);
+            base::xauto_ptr<base::xvbstate_t> bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(block);
+            if (bstate == nullptr) {
+                result_json["last_full_block"]["bstate"] = "null";
+            } else {
+                data::xtablestate_ptr_t tablestate = std::make_shared<data::xtable_bstate_t>(bstate.get());
+                result_json["last_full_block"]["bstate"] = "ok";
+                result_json["last_full_block"]["bstate_account_size"] = tablestate->get_account_size();
+            }
         }
+        std::string s;
+        query_sync_result(account, height, height_c, s);
+        result_json["exist_block"] = s;
     }
     
     void query_table_tx_info(std::string const & account, json & result_json) {
@@ -829,60 +916,33 @@ int main(int argc, char ** argv) {
         out_json << std::setw(4) << res;
     #endif
     } else if (function_name == "check_fast_sync") {
-        std::set<std::string> accounts_set;
-        json accounts_json;
-        json result_json;
-        std::string file_name;
-
         if (argc == 3) {
-            tools.get_all_unit_account(accounts_set, accounts_json);
-            json table_json;
-            json unit_json;
-            tools.query_all_table_sync_result(table_json);
-            tools.query_all_unit_sync_result(accounts_set, unit_json);
-            result_json["table"] = table_json;
-            result_json["unit"] = unit_json;
-            file_name = "all_sync_result.json";
-        } else {
+            auto const & table_account_vec = db_export_tools::get_all_table_account();
+            auto const & unit_account_vec = tools.get_all_unit_account();
+            tools.query_all_sync_result(table_account_vec, unit_account_vec);
+        } else if (argc == 4) {
             std::string method_name{argv[3]};
             if (method_name == "table") {
-                if (argc == 4) {
-                    tools.query_all_table_sync_result(result_json);
-                    file_name = "all_table_sync_result.json";
-                } else if (argc == 5) {
-                    tools.query_sync_result(argv[4], result_json);
-                    file_name = std::string{argv[4]} + "_table_sync_result.json";
-                } else {
-                    usage();
-                    return -1;
-                }
+                auto const & table_account_vec = db_export_tools::get_all_table_account();
+                tools.query_all_sync_result(table_account_vec, true);
             } else if (method_name == "unit") {
-                tools.get_all_unit_account(accounts_set, accounts_json);
-                if (argc == 4) {
-                    tools.query_all_unit_sync_result(accounts_set, result_json);
-                    file_name = "all_unit_sync_result.json";
-                } else if (argc == 5) {
-                    tools.query_sync_result(argv[4], result_json);
-                    file_name = std::string{argv[4]} + "_unit_sync_result.json";
-                }
-                else {
-                    usage();
-                    return -1;
-                }
+                auto const & unit_account_vec = tools.get_all_unit_account();
+                tools.query_all_sync_result(unit_account_vec, false);
+            } else if (method_name == "account") {
+                std::vector<std::string> account = {argv[4]};
+                tools.query_all_sync_result(account, false);
             }else {
                 usage();
                 return -1;
             }
         }
-        std::ofstream out_json(file_name);
-        out_json << std::setw(4) << result_json;
     } else if (function_name == "check_tx_info") {
         if (argc == 3) {
-            auto const & all_table_address = db_export_tools::get_all_table_address();
-            tools.query_vec_table_tx_info_multi_thread(all_table_address);
+            auto const & account_vec = db_export_tools::get_all_table_account();
+            tools.query_vec_table_tx_info_multi_thread(account_vec);
         } else if (argc == 4) {
-            std::vector<std::string> address = {argv[3]};
-            tools.query_vec_table_tx_info(address);
+            std::vector<std::string> account = {argv[3]};
+            tools.query_vec_table_tx_info(account);
         } else {
             usage();
             return -1;
@@ -895,11 +955,11 @@ int main(int argc, char ** argv) {
         tools.query_block_exist(argv[3], std::stoi(argv[4]));
     } else if (function_name == "check_latest_fullblock") {
         if (argc == 3) {
-            auto const & all_table_address = db_export_tools::get_all_table_address();
-            tools.query_vec_table_latest_fullblock(all_table_address);
+            auto const & account_vec = db_export_tools::get_all_table_account();
+            tools.query_vec_table_latest_fullblock(account_vec);
         } else if (argc == 4) {
-            std::vector<std::string> address = {argv[3]};
-            tools.query_vec_table_latest_fullblock(address);
+            std::vector<std::string> account = {argv[3]};
+            tools.query_vec_table_latest_fullblock(account);
         } else {
             usage();
             return -1;
