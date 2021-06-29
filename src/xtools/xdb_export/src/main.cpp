@@ -330,12 +330,26 @@ public:
     }
 
     void query_block_exist(std::string const & address, const uint64_t height) {
-        auto const & vblock = m_blockstore->load_block_object(address,height,0,false);
-        const data::xblock_t * block = dynamic_cast<data::xblock_t *>(vblock.get());
-        if (block == nullptr) {
+        auto const & vblock = m_blockstore->load_block_object(address, height);
+        auto const & block_vec = vblock.get_vector();
+        bool exist = false;
+        for (auto const & item : block_vec) {
+            if (item != nullptr) {
+                exist = true;
+                break;
+            }
+        }
+        if (!exist) {
             std::cout << "account: " << address << " , height: " << height << " , block not exist" << std::endl;
         } else {
-            std::cout << "account: " << address << " , height: " << height << " , block exist" << std::endl;
+            std::cout << "account: " << address << " , height: " << height << " , block exist, total num: " << block_vec.size() << std::endl;
+            for (auto const item : block_vec) {
+                if (item != nullptr) {
+                    std::cout << item->dump2() << std::endl;
+                } else {
+                    std::cout << "account: " << address << " , height: " << height << " , found one null block!!!" << std::endl;
+                }
+            }
         }
     }
 
