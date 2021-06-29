@@ -79,7 +79,7 @@ TEST(xsync_account, no_response) {
     top::common::xnode_address_t network_self;
     top::common::xnode_address_t target_address;
 
-    chain_downloader->on_behind(0, vblock4->get_height(), enum_chain_sync_pocliy_full, network_self, target_address, reason);
+    chain_downloader->on_behind(0, vblock4->get_height(), enum_chain_sync_policy_full, network_self, target_address, reason);
     {
         xmessage_t msg;
         xvnode_address_t src;
@@ -91,7 +91,7 @@ TEST(xsync_account, no_response) {
     }
 
     std::this_thread::sleep_for(std::chrono::seconds(6));
-    chain_downloader->on_behind(0, vblock4->get_height(), enum_chain_sync_pocliy_full, network_self, target_address, reason);
+    chain_downloader->on_behind(0, vblock4->get_height(), enum_chain_sync_policy_full, network_self, target_address, reason);
     {
         xmessage_t msg;
         xvnode_address_t src;
@@ -188,7 +188,7 @@ TEST(xsync_account, highqc_fork) {
 
     top::common::xnode_address_t network_self;
     top::common::xnode_address_t target_address;
-    chain_downloader->on_behind(0, successor_block->get_height(), enum_chain_sync_pocliy_full, network_self, target_address, reason);
+    chain_downloader->on_behind(0, successor_block->get_height(), enum_chain_sync_policy_full, network_self, target_address, reason);
 
     // sync
     {
@@ -259,7 +259,7 @@ TEST(xsync_account, highqc_fork) {
         chain_downloader->on_response(vector_blocks, network_self, target_address);
     }
 
-    base::xauto_ptr<base::xvblock_t> cur_block = sync_store.get_latest_end_block(address, enum_chain_sync_pocliy_full);
+    base::xauto_ptr<base::xvblock_t> cur_block = sync_store.get_latest_end_block(address, enum_chain_sync_policy_full);
     ASSERT_EQ(cur_block->get_height(), 40);
 
 }
@@ -333,7 +333,7 @@ TEST(xsync_account, lockedqc_fork) {
 
     top::common::xnode_address_t network_self;
     top::common::xnode_address_t target_address;
-    chain_downloader->on_behind(0, successor_block->get_height(), enum_chain_sync_pocliy_full, network_self, target_address, reason);
+    chain_downloader->on_behind(0, successor_block->get_height(), enum_chain_sync_policy_full, network_self, target_address, reason);
 
     // sync
     {
@@ -369,7 +369,7 @@ TEST(xsync_account, lockedqc_fork) {
         chain_downloader->on_response(vector_blocks, network_self, target_address);
     }
 
-    base::xauto_ptr<base::xvblock_t> cur_block = sync_store.get_latest_end_block(address, enum_chain_sync_pocliy_full);
+    base::xauto_ptr<base::xvblock_t> cur_block = sync_store.get_latest_end_block(address, enum_chain_sync_policy_full);
     ASSERT_EQ(cur_block->get_height(), 39);
 
 }
@@ -402,7 +402,7 @@ TEST(xsync_account, chain_snapshot) {
     }
     top::common::xnode_address_t network_self;
     top::common::xnode_address_t target_address;
-    chain_downloader->on_behind(101, 140, enum_chain_sync_pocliy_fast,network_self, target_address, reason);
+    chain_downloader->on_behind(101, 140, enum_chain_sync_policy_fast,network_self, target_address, reason);
     // sync
     {
         xmessage_t msg;
@@ -435,6 +435,6 @@ TEST(xsync_account, chain_snapshot) {
         ptr1->serialize_from(stream1);
         ASSERT_EQ(ptr1->m_height_of_fullblock, 101);
     }
-    base::xauto_ptr<base::xvblock_t> cur_block = sync_store.get_latest_end_block(address, enum_chain_sync_pocliy_fast);
+    base::xauto_ptr<base::xvblock_t> cur_block = sync_store.get_latest_end_block(address, enum_chain_sync_policy_fast);
     ASSERT_EQ(cur_block->get_height(), 118);
 }

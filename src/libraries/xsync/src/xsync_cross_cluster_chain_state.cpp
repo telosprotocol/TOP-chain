@@ -41,13 +41,13 @@ void xsync_cross_cluster_chain_state_t::on_timer() {
         common::xnode_type_t node_type = self_addr.type();
         std::map<enum_chain_sync_policy, std::vector<vnetwork::xvnode_address_t>> archives;
 
-        enum_chain_sync_policy sync_policy = enum_chain_sync_pocliy_fast;
+        enum_chain_sync_policy sync_policy = enum_chain_sync_policy_fast;
         std::vector<vnetwork::xvnode_address_t> archive_list;
 
         if (common::has<common::xnode_type_t::rec>(node_type) || common::has<common::xnode_type_t::zec>(node_type) ||
             common::has<common::xnode_type_t::consensus>(node_type)) {
-            archives[enum_chain_sync_pocliy_fast] = m_role_xips_mgr->get_rand_archives(1);
-            archives[enum_chain_sync_pocliy_full] = m_role_xips_mgr->get_edge_archive_list();
+            archives[enum_chain_sync_policy_fast] = m_role_xips_mgr->get_rand_archives(1);
+            archives[enum_chain_sync_policy_full] = m_role_xips_mgr->get_edge_archive_list();
         } else {
             continue;
         }
@@ -96,9 +96,9 @@ void xsync_cross_cluster_chain_state_t::handle_message(const vnetwork::xvnode_ad
             continue;
         }
 
-        enum_chain_sync_policy sync_policy = enum_chain_sync_pocliy_fast;
+        enum_chain_sync_policy sync_policy = enum_chain_sync_policy_fast;
         if (common::has<common::xnode_type_t::storage_full_node>(network_self.type())) {
-            sync_policy = enum_chain_sync_pocliy_full;
+            sync_policy = enum_chain_sync_policy_full;
         }
 
         uint64_t latest_end_block_height = m_sync_store->get_latest_end_block_height(address, sync_policy);

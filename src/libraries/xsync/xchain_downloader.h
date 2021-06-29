@@ -145,8 +145,8 @@ protected:
     xsync_range_mgr_t m_sync_range_mgr;
     xentire_block_request_ptr_t m_request{nullptr};
 private:
-    xchain_object_t m_chain_objects[enum_chain_sync_pocliy_max];
-    uint32_t m_current_object_index{enum_chain_sync_pocliy_fast};
+    xchain_object_t m_chain_objects[enum_chain_sync_policy_max];
+    uint32_t m_current_object_index{enum_chain_sync_policy_fast};
     xsync_task_t m_task{this};
     uint32_t m_continuous_times{0};
 };

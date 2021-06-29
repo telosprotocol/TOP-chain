@@ -35,21 +35,21 @@ xrole_chains_t::xrole_chains_t(const vnetwork::xvnode_address_t & role, const st
 
 void xrole_chains_t::init_chains() {
 
-    add_tables(nt::frozen, sys_contract_beacon_table_block_addr, enum_chain_sync_pocliy_full);
-    add_tables(nt::frozen, sys_contract_zec_table_block_addr, enum_chain_sync_pocliy_full);
+    add_tables(nt::frozen, sys_contract_beacon_table_block_addr, enum_chain_sync_policy_full);
+    add_tables(nt::frozen, sys_contract_zec_table_block_addr, enum_chain_sync_policy_full);
 
-    add_tables(nt::rec, sys_contract_beacon_table_block_addr, enum_chain_sync_pocliy_full);
-    add_tables(nt::zec, sys_contract_zec_table_block_addr, enum_chain_sync_pocliy_full);
+    add_tables(nt::rec, sys_contract_beacon_table_block_addr, enum_chain_sync_policy_full);
+    add_tables(nt::zec, sys_contract_zec_table_block_addr, enum_chain_sync_policy_full);
 
-    add_tables(nt::consensus_auditor | nt::consensus_validator, sys_contract_sharding_table_block_addr, enum_chain_sync_pocliy_fast);
+    add_tables(nt::consensus_auditor | nt::consensus_validator, sys_contract_sharding_table_block_addr, enum_chain_sync_policy_fast);
 
-    add_tables(nt::storage_archive, sys_contract_beacon_table_block_addr, enum_chain_sync_pocliy_full);
-    add_tables(nt::storage_archive, sys_contract_zec_table_block_addr, enum_chain_sync_pocliy_full);
-    add_tables(nt::storage_archive, sys_contract_sharding_table_block_addr, enum_chain_sync_pocliy_full);
+    add_tables(nt::storage_archive, sys_contract_beacon_table_block_addr, enum_chain_sync_policy_full);
+    add_tables(nt::storage_archive, sys_contract_zec_table_block_addr, enum_chain_sync_policy_full);
+    add_tables(nt::storage_archive, sys_contract_sharding_table_block_addr, enum_chain_sync_policy_full);
 
-    add_tables(nt::storage_full_node, sys_contract_beacon_table_block_addr, enum_chain_sync_pocliy_full);
-    add_tables(nt::storage_full_node, sys_contract_zec_table_block_addr, enum_chain_sync_pocliy_full);
-    add_tables(nt::storage_full_node, sys_contract_sharding_table_block_addr, enum_chain_sync_pocliy_full);
+    add_tables(nt::storage_full_node, sys_contract_beacon_table_block_addr, enum_chain_sync_policy_full);
+    add_tables(nt::storage_full_node, sys_contract_zec_table_block_addr, enum_chain_sync_policy_full);
+    add_tables(nt::storage_full_node, sys_contract_sharding_table_block_addr, enum_chain_sync_policy_full);
 }
 
 void xrole_chains_t::add_chain(common::xnode_type_t allow_types,

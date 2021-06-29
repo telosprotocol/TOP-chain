@@ -143,7 +143,7 @@ void xsync_peer_keeper_t::walk_role(const vnetwork::xvnode_address_t &self_addr,
         xblock_ptr_t block = autoptr_to_blockptr(latest_start_block);
         xchain_state_info_t info;
         info.address = address;
-        if ((chain_info.sync_policy == enum_chain_sync_pocliy_fast) && !block->is_full_state_block()) {
+        if ((chain_info.sync_policy == enum_chain_sync_policy_fast) && !block->is_full_state_block()) {
             info.start_height = 0;
             info.end_height = 0;
         } else {

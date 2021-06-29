@@ -82,8 +82,8 @@ bool xchain_downloader_t::on_timer(int64_t now) {
     vnetwork::xvnode_address_t self_addr;
     vnetwork::xvnode_address_t target_addr;
 
-    for (uint32_t index = (m_current_object_index + 1) % enum_chain_sync_pocliy_max, count = 0; count < enum_chain_sync_pocliy_max;
-            count++, index = (index + 1) % enum_chain_sync_pocliy_max){
+    for (uint32_t index = (m_current_object_index + 1) % enum_chain_sync_policy_max, count = 0; count < enum_chain_sync_policy_max;
+            count++, index = (index + 1) % enum_chain_sync_policy_max){
         if (!m_chain_objects[index].pick(interval, self_addr, target_addr)){
             continue;
         }
@@ -100,7 +100,7 @@ bool xchain_downloader_t::on_timer(int64_t now) {
         }
 
         if (m_continuous_times >= 5){
-            for (uint32_t i = 0; i < enum_chain_sync_pocliy_max; i++) {
+            for (uint32_t i = 0; i < enum_chain_sync_policy_max; i++) {
                 m_chain_objects[i].clear();
             }
 
@@ -217,6 +217,7 @@ bool xchain_downloader_t::check_behind(uint64_t height, const char *elect_addres
 bool xchain_downloader_t::send_request(int64_t now) {
     if (!m_ratelimit->get_token(now)) {
         xsync_dbg("chain_downloader get token failed. %s", m_address.c_str());
+        XMETRICS_COUNTER_INCREMENT("xsync_downloader_overflow", 1);
         return false;
     }
 
@@ -383,10 +384,10 @@ xsync_command_execute_result xchain_downloader_t::execute_download(uint64_t star
     xauto_ptr<xvblock_t> end_vblock = m_sync_store->get_latest_end_block(m_address, sync_policy);
 
     int ret = 0;
-    if (sync_policy == enum_chain_sync_pocliy_fast) {
-        ret = m_sync_range_mgr.set_behind_info(start_height, end_height, enum_chain_sync_pocliy_fast, self_addr, target_addr);
+    if (sync_policy == enum_chain_sync_policy_fast) {
+        ret = m_sync_range_mgr.set_behind_info(start_height, end_height, enum_chain_sync_policy_fast, self_addr, target_addr);
     } else {
-        ret = m_sync_range_mgr.set_behind_info(start_height, end_height, enum_chain_sync_pocliy_full,self_addr, target_addr);
+        ret = m_sync_range_mgr.set_behind_info(start_height, end_height, enum_chain_sync_policy_full,self_addr, target_addr);
     }
 
     if (!ret) {
@@ -405,7 +406,7 @@ xsync_command_execute_result xchain_downloader_t::execute_download(uint64_t star
     XMETRICS_COUNTER_INCREMENT("sync_downloader_block_behind", 1);
     // fast sync for table level block chain, write the full table bock first
     // then write the index snapshot
-    if (sync_policy != enum_chain_sync_pocliy_fast) {
+    if (sync_policy != enum_chain_sync_policy_fast) {
         return handle_next(sync::derministic_height(end_vblock->get_height(), std::make_pair(start_height,end_height)));
     }
 
@@ -495,7 +496,7 @@ xsync_command_execute_result xchain_downloader_t::execute_next_download(std::vec
         }
     }
 
-    if ((0 != fail_cnt) && (sync_policy == enum_chain_sync_pocliy_full)) {
+    if ((0 != fail_cnt) && (sync_policy == enum_chain_sync_policy_full)) {
         xsync_info("chain_downloader update_latest_genesis_connected_block %s,count=%lu,fail_cnt=%lu", m_address.c_str(), count, fail_cnt);
         m_sync_store->update_latest_genesis_connected_block(m_address);
     }
@@ -519,12 +520,12 @@ xsync_command_execute_result xchain_downloader_t::execute_next_download(std::vec
         clear();
         xsync_info("chain_downloader on_response %s, failed to move to expect height, current(height=%lu,viewid=%lu,hash=%s) behind(height=%lu)",
         m_address.c_str(), current_vblock->get_height(), current_vblock->get_viewid(), to_hex_str(current_vblock->get_block_hash()).c_str(), m_sync_range_mgr.get_behind_height());
-        return abort;
+        return abort_overflow;
     }
 
     m_request = nullptr;
 
-    if (sync_policy != enum_chain_sync_pocliy_fast) {
+    if (sync_policy != enum_chain_sync_policy_fast) {
         return handle_next(current_block->get_height());
     }
 
@@ -562,7 +563,7 @@ xsync_command_execute_result xchain_downloader_t::execute_next_download(const st
     XMETRICS_COUNTER_INCREMENT("sync_downloader_response", 1);
     XMETRICS_COUNTER_INCREMENT("sync_cost_peer_response", total_cost);
 
-    base::xauto_ptr<base::xvblock_t> current_vblock = m_sync_store->get_latest_start_block(m_address, enum_chain_sync_pocliy_fast);
+    base::xauto_ptr<base::xvblock_t> current_vblock = m_sync_store->get_latest_start_block(m_address, enum_chain_sync_policy_fast);
     data::xblock_ptr_t current_block = autoptr_to_blockptr(current_vblock);
     if (current_block->is_fullblock() && !current_block->is_full_state_block() && current_block->get_height() == height) {
         if (false == xtable_bstate_t::set_block_offsnapshot(current_vblock.get(), chain_snapshot)) {
@@ -575,7 +576,7 @@ xsync_command_execute_result xchain_downloader_t::execute_next_download(const st
     }
 
     //double check,check block state is really store successfully
-    base::xauto_ptr<base::xvblock_t> current_vblock2 = m_sync_store->get_latest_start_block(m_address, enum_chain_sync_pocliy_fast);
+    base::xauto_ptr<base::xvblock_t> current_vblock2 = m_sync_store->get_latest_start_block(m_address, enum_chain_sync_policy_fast);
     current_block = autoptr_to_blockptr(current_vblock2);
     if (!current_block->is_full_state_block() && current_block->get_height() == height) {
         xsync_error("chain_downloader on_snapshot_response execute height not change. block=%s", current_vblock->dump().c_str());
@@ -589,7 +590,7 @@ xsync_command_execute_result xchain_downloader_t::execute_next_download(const st
         m_address.c_str(), current_vblock->get_height(), current_vblock->get_viewid(), to_hex_str(current_vblock->get_block_hash()).c_str(), m_sync_range_mgr.get_behind_height());
 
     m_request = nullptr;
-    auto current_block_height = m_sync_store->get_latest_end_block_height(m_address,enum_chain_sync_pocliy_fast);
+    auto current_block_height = m_sync_store->get_latest_end_block_height(m_address,enum_chain_sync_policy_fast);
     if (current_block_height >= m_sync_range_mgr.get_behind_height()){
         clear();
         return finish;

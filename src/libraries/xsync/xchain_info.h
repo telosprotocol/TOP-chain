@@ -27,8 +27,8 @@ public:
     }
 
     void merge(const xchain_info_t &other) {
-        if (other.sync_policy == enum_chain_sync_pocliy_full)
-            sync_policy = enum_chain_sync_pocliy_full;
+        if (other.sync_policy == enum_chain_sync_policy_full)
+            sync_policy = enum_chain_sync_policy_full;
     }
 
     bool operator ==(const xchain_info_t &other) const {
@@ -40,7 +40,7 @@ public:
     }
 
     std::string address;
-    enum_chain_sync_policy sync_policy{enum_chain_sync_pocliy_full};
+    enum_chain_sync_policy sync_policy{enum_chain_sync_policy_full};
 };
 
 NS_END2
