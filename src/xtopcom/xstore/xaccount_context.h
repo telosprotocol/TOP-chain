@@ -144,6 +144,8 @@ class xaccount_context_t {
 
     data::xblock_t*
     get_block_by_height(const std::string & owner, uint64_t height) const;
+    data::xblock_t*
+    get_next_full_block(const std::string & owner, const uint64_t cur_full_height) const;
 
     uint64_t get_blockchain_height(const std::string & owner) const;
 
