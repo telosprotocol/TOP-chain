@@ -295,35 +295,6 @@ bool xproposal_maker_t::verify_proposal_drand_block(base::xvblock_t *proposal_bl
     return true;
 }
 
-xblock_ptr_t xproposal_maker_t::verify_proposal_prev_block(base::xvblock_t * proposal_block, const base::xblock_mptrs & latest_blocks) const {
-    XMETRICS_TIME_RECORD("cons_tableblock_verfiy_proposal_prev_block");
-    if (proposal_block->get_last_block_hash() == latest_blocks.get_latest_cert_block()->get_block_hash()
-        && proposal_block->get_height() == latest_blocks.get_latest_cert_block()->get_height() + 1) {
-        xblock_ptr_t proposal_prev_block = xblock_t::raw_vblock_to_object_ptr(latest_blocks.get_latest_cert_block());
-        xassert(proposal_block->get_height() == proposal_prev_block->get_height() + 1);
-        return proposal_prev_block;
-    }
-
-    base::xblock_vector latest_certs = get_blockstore()->load_block_object(*m_table_maker, proposal_block->get_height() - 1);
-    if (false == latest_certs.get_vector().empty()) {
-        for (auto & latest_cert : latest_certs.get_vector()) {
-            if (latest_cert->get_block_hash() == proposal_block->get_last_block_hash()) {  // found conected prev one
-                if (latest_cert->get_height() == 0
-                    || latest_cert->get_last_block_hash() == latest_blocks.get_latest_locked_block()->get_block_hash()) { // should also match lock block
-                    xblock_ptr_t proposal_prev_block = xblock_t::raw_vblock_to_object_ptr(latest_cert);
-                    return proposal_prev_block;
-                }
-                xwarn("xproposal_maker_t::verify_proposal_prev_block fail-cert not match lock block. proposal=%s,cert=%s,lock=%s",
-                    proposal_block->dump().c_str(), latest_cert->dump().c_str(), latest_blocks.get_latest_locked_block()->dump().c_str());
-            } else {
-                xwarn("xproposal_maker_t::verify_proposal_prev_block not match cert block hash. proposal=%s,cert=%s",
-                    proposal_block->dump().c_str(), latest_cert->dump().c_str());
-            }
-        }
-    }
-    return nullptr;
-}
-
 bool xproposal_maker_t::update_txpool_txs(const xblock_consensus_para_t & proposal_para, xtablemaker_para_t & table_para) {
     // update committed receiptid state for txpool, pop output finished txs
     if (proposal_para.get_latest_committed_block()->get_height() > 0) {

@@ -172,7 +172,7 @@ void xvnode_house_t::load_group_from_store(const xvip2_t & target_node) {
 
     // TODO check flag, use committed block?
     base::xvaccount_t _vaddress(elect_address);
-    xauto_ptr<xvblock_t> blk_ptr = m_blockstore->load_block_object(_vaddress, elect_height, base::enum_xvblock_flag_committed, true);
+    xauto_ptr<xvblock_t> blk_ptr = m_blockstore->load_block_object(_vaddress, elect_height, base::enum_xvblock_flag_committed, false);
     if (blk_ptr == nullptr)
         return;
 
