@@ -102,6 +102,17 @@ enum E_SIMPLE_METRICS_TAG {
     dataobject_xtxpool_table_info_t,
     dataobject_xacctmeta_t,
 
+    // message category
+    message_category_begin,
+    message_category_consensus = message_category_begin,
+    message_category_timer,
+    message_category_txpool,
+    message_category_rpc,
+    message_category_sync,
+    message_block_broadcast,
+    message_category_end,
+    message_category_unknown = message_category_end,
+
     e_simple_total,
 };
 using xmetircs_tag_t = E_SIMPLE_METRICS_TAG;

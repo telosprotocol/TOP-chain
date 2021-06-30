@@ -95,6 +95,15 @@ metrics_variant_ptr e_metrics::s_metrics[e_simple_total] = {
     DECL_METRICS(dataobject_xblockacct_t),
     DECL_METRICS(dataobject_xtxpool_table_info_t),
     DECL_METRICS(dataobject_xacctmeta_t),
+
+    // message category
+    DECL_METRICS(message_category_consensus),
+    DECL_METRICS(message_category_timer),
+    DECL_METRICS(message_category_txpool),
+    DECL_METRICS(message_category_rpc),
+    DECL_METRICS(message_category_sync),
+    DECL_METRICS(message_block_broadcast),
+    DECL_METRICS(message_category_unknown),
 };
 
 void e_metrics::start() {
