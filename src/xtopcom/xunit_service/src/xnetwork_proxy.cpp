@@ -292,7 +292,10 @@ void xnetwork_proxy::send_receipt_msg(const xvip2_t & from_addr, const data::xco
             vnetwork::xmessage_t({stream.data(), stream.data() + stream.size()}, cons_tx->is_recv_tx() ? xtxpool_v2::xtxpool_msg_send_receipt : xtxpool_v2::xtxpool_msg_recv_receipt);
 
         auto net_driver = find(from_addr);
-        xassert(net_driver != nullptr);
+        if (net_driver == nullptr) {
+            xerror("xnetwork_proxy::send_receipt_msg driver is null. xip=%s", xcons_utl::xip_to_hex(from_addr).c_str());
+            return;
+        }
 
         auto auditor_cluster_addr =
             m_router->sharding_address_from_account(common::xaccount_address_t{target_addr}, net_driver->network_id(), common::xnode_type_t::consensus_auditor);
