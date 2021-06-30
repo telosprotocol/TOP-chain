@@ -33,8 +33,10 @@ class xunit_maker_t : public xblock_maker_t {
     std::string             dump() const;
     xblock_ptr_t            get_latest_block(const base::xaccount_index_t & account_index);
     void                    find_highest_send_tx(uint64_t & latest_nonce, uint256_t & latest_hash);
-    bool                    is_match_account_fullunit_limit() const;
+    bool                    is_match_account_fullunit_send_tx_limit(uint64_t current_lightunit_count) const;
+    bool                    is_match_account_fullunit_recv_tx_limit(uint64_t current_lightunit_count) const;
     void                    try_sync_lacked_blocks(uint64_t from_height, uint64_t to_height, const std::string & reason, bool is_consensus);
+    uint64_t                get_current_lightunit_count_from_full() const;
 
  private:
     std::vector<xcons_transaction_ptr_t>        m_pending_txs;
