@@ -186,11 +186,9 @@ void xsync_on_demand_t::handle_chain_snapshot_meta(xsync_message_chain_snapshot_
     xsync_dbg("xsync_on_demand_t::handle_chain_snapshot_meta receive snapshot request of account %s, height %llu",
         account.c_str(), chain_meta.m_height_of_fullblock);
 
-    base::xauto_ptr<base::xvblock_t> blk = m_sync_store->load_block_object(account, chain_meta.m_height_of_fullblock);
-    data::xblock_ptr_t current_block = autoptr_to_blockptr(blk);
-    if ((blk != nullptr) && (current_block->is_tableblock())) {
-        xfull_tableblock_t* full_block_ptr = dynamic_cast<xfull_tableblock_t*>(xblock_t::raw_vblock_to_object_ptr(blk.get()).get());
-        if (full_block_ptr != nullptr) {
+    base::xauto_ptr<base::xvblock_t> blk = m_sync_store->load_block_object(account, chain_meta.m_height_of_fullblock, false);
+    if ((blk != nullptr) && (blk->get_block_level() == base::enum_xvblock_level_table)) {
+        if (blk->get_block_level() == base::enum_xvblock_level_table && blk->get_block_class() == base::enum_xvblock_class_full) {
             if (base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_full_block_offsnapshot(blk.get())) {
                 std::string property_snapshot = blk->get_full_state();
                 xsync_message_chain_snapshot_t chain_snapshot(chain_meta.m_account_addr,
@@ -230,7 +228,7 @@ void xsync_on_demand_t::handle_chain_snapshot(xsync_message_chain_snapshot_t &ch
         return;
     }
 
-    base::xauto_ptr<base::xvblock_t> current_vblock = m_sync_store->load_block_object(account, chain_snapshot.m_height_of_fullblock);
+    base::xauto_ptr<base::xvblock_t> current_vblock = m_sync_store->load_block_object(account, chain_snapshot.m_height_of_fullblock, true);
     data::xblock_ptr_t current_block = autoptr_to_blockptr(current_vblock);
     if (current_block->is_tableblock() && current_block->is_fullblock() && !current_block->is_full_state_block()) {
         if (false == xtable_bstate_t::set_block_offsnapshot(current_vblock.get(), chain_snapshot.m_chain_snapshot)) {

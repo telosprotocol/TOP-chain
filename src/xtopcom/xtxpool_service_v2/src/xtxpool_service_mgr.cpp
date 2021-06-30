@@ -74,12 +74,11 @@ void xtxpool_service_mgr::on_block_to_db_event(mbus::xevent_ptr_t e) {
 }
 
 void xtxpool_service_mgr::on_block_confirmed(xblock_t * block) {
-    uint64_t now_clock = m_clock->logic_time();
+    // uint64_t now_clock = m_clock->logic_time();
 
-    xinfo("xtxpool_service_mgr::on_block_confirmed process,level:%d,class:%d,now=%llu,block:%s",
+    xinfo("xtxpool_service_mgr::on_block_confirmed process,level:%d,class:%d,block:%s",
           block->get_block_level(),
           block->get_block_class(),
-          now_clock,
           block->dump().c_str());
 
     // deal_table_block(block, now_clock);

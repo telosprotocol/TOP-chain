@@ -365,7 +365,7 @@ xcons_transaction_ptr_t xtxpool_service::create_confirm_tx_by_hash(const uint256
     xtransaction_t * tx = dynamic_cast<xtransaction_t *>(tx_store->get_raw_tx());
     base::xvaccount_t _vaccount(tx->get_target_addr());
     uint64_t unit_height = tx_store->get_recv_unit_height();
-    base::xauto_ptr<base::xvblock_t> commit_block = m_para->get_vblockstore()->load_block_object(_vaccount, unit_height, base::enum_xvblock_flag_committed, true);
+    base::xauto_ptr<base::xvblock_t> commit_block = m_para->get_vblockstore()->load_block_object(_vaccount, unit_height, base::enum_xvblock_flag_committed, false);
     if (commit_block == nullptr) {
         xerror("xtxpool_service::create_confirm_tx_by_hash fail-commit unit not exist txhash=%s,account=%s,block_height:%ld",
                base::xstring_utl::to_hex(str_hash).c_str(),
@@ -373,6 +373,7 @@ xcons_transaction_ptr_t xtxpool_service::create_confirm_tx_by_hash(const uint256
                unit_height);
         return nullptr;
     }
+    m_para->get_vblockstore()->load_block_input(_vaccount, commit_block.get());
     base::xauto_ptr<base::xvblock_t> cert_block = m_para->get_vblockstore()->load_block_object(_vaccount, unit_height + 2, 0, false);
     if (commit_block == nullptr) {
         xerror("xtxpool_service::create_confirm_tx_by_hash fail-cert unit not exist txhash=%s,account=%s,block_height:%ld",
@@ -527,7 +528,8 @@ int32_t xtxpool_service::request_transaction_consensus(const data::xtransaction_
 }
 
 void xtxpool_service::deal_table_block(xblock_t * block, uint64_t now_clock) {
-    std::string account_addr = block->get_account();
+    const std::string & account_addr = block->get_account();
+    base::xvaccount_t _vaddress(account_addr);
     auto tableid = data::account_map_to_table_id(common::xaccount_address_t{account_addr});
     if (block->get_clock() + block_clock_height_fall_behind_max > now_clock) {
         auto table_height_pair = m_table_db_event_height_map.find(tableid.get_subaddr());
@@ -540,8 +542,9 @@ void xtxpool_service::deal_table_block(xblock_t * block, uint64_t now_clock) {
                     continue;
                 }
                 base::xauto_ptr<base::xvblock_t> blockobj =
-                    m_para->get_vblockstore()->load_block_object(base::xvaccount_t(block->get_account()), height, base::enum_xvblock_flag_committed, true);
+                    m_para->get_vblockstore()->load_block_object(_vaddress, height, base::enum_xvblock_flag_committed, false);
                 if (blockobj != nullptr) {
+                    m_para->get_vblockstore()->load_block_input(_vaddress, blockobj.get());
                     xblock_t * missing_block = dynamic_cast<xblock_t *>(blockobj.get());
                     if (missing_block->get_clock() + block_clock_height_fall_behind_max <= now_clock) {
                         break;

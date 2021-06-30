@@ -179,7 +179,7 @@ bool xstore::string_property_get(base::xvblock_t* block, const std::string& prop
 
 xaccount_ptr_t xstore::get_target_state(const std::string &address, uint64_t height) const {
     base::xvaccount_t _vaddr(address);
-    base::xauto_ptr<base::xvblock_t> _block = base::xvchain_t::instance().get_xblockstore()->load_block_object(_vaddr, height, base::enum_xvblock_flag_committed, true);
+    base::xauto_ptr<base::xvblock_t> _block = base::xvchain_t::instance().get_xblockstore()->load_block_object(_vaddr, height, base::enum_xvblock_flag_committed, false);
     if (_block == nullptr) {
         xwarn("xstore::get_target_state load block fail.account=%s,height=%ld", address.c_str(), height);
         return nullptr;
