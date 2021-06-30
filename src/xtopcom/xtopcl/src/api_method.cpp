@@ -574,6 +574,13 @@ void ApiMethod::export_account(const std::string & account, std::ostringstream &
         out_str << "Keystore file: " << keystore_file << std::endl;
         out_str << "Account Address: " << g_userinfo.account << std::endl;
         out_str << "Private-Key: " << str_pri << "\n\n";
+
+        std::ifstream keyfile(keystore_file, std::ios::in);
+        if (!keyfile)
+        {
+             return;
+        }
+        out_str << keyfile.rdbuf() << std::endl;
         return;
     }
     out_str << "Account address error! The account does not exist." << std::endl;
