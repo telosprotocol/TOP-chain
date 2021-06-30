@@ -558,6 +558,64 @@ void xtop_vhost::do_handle_network_data() {
                          sender.to_string().c_str(),
                          receiver.to_string().c_str());
 
+                    auto const message_category = common::get_message_category(vnetwork_message.message_id());
+                    switch (message_category) {
+#if defined(__clang__)
+#    pragma clang diagnostic push
+#    pragma clang diagnostic ignored "-Wswitch"
+#elif defined(__GNUC__)
+#    pragma GCC diagnostic push
+#    pragma GCC diagnostic ignored "-Wswitch"
+#elif defined(_MSC_VER)
+#    pragma warning(push, 0)
+#endif
+                    case xmessage_category_consensus:
+                    {
+                        XMETRICS_GAUGE(metrics::message_category_consensus, 1);
+                        break;
+                    }
+                    case xmessage_category_timer:
+                    {
+                        XMETRICS_GAUGE(metrics::message_category_timer, 1);
+                        break;
+                    }
+                    case xmessage_category_txpool:
+                    {
+                        XMETRICS_GAUGE(metrics::message_category_txpool, 1);
+                        break;
+                    }
+
+                    case xmessage_category_rpc:
+                    {
+                        XMETRICS_GAUGE(metrics::message_category_rpc, 1);
+                        break;
+                    }
+
+                    case xmessage_category_sync:
+                    {
+                        XMETRICS_GAUGE(metrics::message_category_sync, 1);
+                        break;
+                    }
+
+                    case xmessage_block_broadcast:
+                    {
+                        XMETRICS_GAUGE(metrics::message_block_broadcast, 1);
+                        break;
+                    }
+#if defined(__clang__)
+#    pragma clang diagnostic pop
+#elif defined(__GNUC__)
+#    pragma GCC diagnostic pop
+#elif defined(_MSC_VER)
+#    pragma warning(pop)
+#endif
+                    default:
+                    {
+                        assert(false);
+                        XMETRICS_GAUGE(metrics::message_category_unknown, 1);
+                        break;
+                    }
+                    }
                     #if VHOST_METRICS
                     XMETRICS_COUNTER_INCREMENT("vhost_" + std::to_string(static_cast<std::uint16_t>(common::get_message_category(vnetwork_message.message().id()))) +
                                                    "_in_vhost_size" + std::to_string(static_cast<std::uint32_t>(vnetwork_message.message().id())),
