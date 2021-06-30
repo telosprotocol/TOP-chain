@@ -33,7 +33,6 @@ NS_BEG2(top, sync)
 struct xgossip_chain_info_t {
     std::string owner;
     uint64_t max_height;
-    uint64_t view_id;
 };
 
 using xgossip_chain_info_ptr_t = std::shared_ptr<xgossip_chain_info_t>;
