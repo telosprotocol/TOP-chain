@@ -201,22 +201,22 @@ class xtxpool_table_lacking_confirm_tx_hashs_t {
 public:
     xtxpool_table_lacking_confirm_tx_hashs_t(base::xtable_shortid_t peer_sid) : m_peer_sid(peer_sid) {
     }
-    void add_receipt_hash(uint256_t tx_hash) {
-        m_lacking_receipt_hashs.push_back(tx_hash);
+    void add_receipt_id_hash(uint64_t receiptid, uint256_t tx_hash) {
+        m_lacking_receipt_id_hashs[receiptid] = tx_hash;
     }
     base::xtable_shortid_t get_peer_sid() const {
         return m_peer_sid;
     }
-    const std::vector<uint256_t> & get_receipt_hashs() const {
-        return m_lacking_receipt_hashs;
+    const std::map<uint64_t, uint256_t> & get_receipt_id_hashs() const {
+        return m_lacking_receipt_id_hashs;
     }
     bool empty() const {
-        return m_lacking_receipt_hashs.empty();
+        return m_lacking_receipt_id_hashs.empty();
     }
 
 private:
     base::xtable_shortid_t m_peer_sid;
-    std::vector<uint256_t> m_lacking_receipt_hashs;
+    std::map<uint64_t, uint256_t> m_lacking_receipt_id_hashs;
 };
 
 class xtxpool_face_t : public base::xobject_t {
@@ -242,6 +242,7 @@ public:
     virtual const std::vector<xtxpool_table_lacking_confirm_tx_hashs_t> get_lacking_confirm_tx_hashs(uint8_t zone, uint16_t subaddr, uint32_t max_num) const = 0;
     virtual bool need_sync_lacking_receipts(uint8_t zone, uint16_t subaddr) const = 0;
     virtual void print_statistic_values() const = 0;
+    virtual bool is_consensused_recv_receiptid(const std::string & from_table_addr, const std::string & to_table_addr, uint64_t receipt_id) const =0;
 };
 
 class xtxpool_instance {

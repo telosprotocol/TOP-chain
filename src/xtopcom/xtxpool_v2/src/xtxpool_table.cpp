@@ -446,6 +446,15 @@ xcons_transaction_ptr_t xtxpool_table_t::get_unconfirmed_tx(const std::string & 
     return m_unconfirmed_tx_queue.get_unconfirmed_tx(to_table_addr, receipt_id);
 }
 
+bool xtxpool_table_t::is_consensused_recv_receiptid(const std::string & from_table_addr, uint64_t receipt_id) const {
+    base::xvaccount_t vaccount(from_table_addr);
+    auto peer_table_sid = vaccount.get_short_table_id();
+    if (receipt_id > m_receipt_state_cache.get_recvid_max(peer_table_sid)) {
+        return false;
+    }
+    return true;
+}
+
 bool xtxpool_table_t::need_sync_lacking_receipts() const {
     uint64_t now = xverifier::xtx_utl::get_gmttime_s();
     if (m_receipt_state_cache.last_update_time() + state_update_too_long_time < now) {
@@ -484,7 +493,7 @@ const std::vector<xtxpool_table_lacking_confirm_tx_hashs_t> xtxpool_table_t::get
             if (cons_tx == nullptr) {
                 xtxpool_warn("xtxpool_table_t::get_lacking_confirm_tx_hashs unconfirm tx(peersid:%d,rid:%llu) not found", peer_sid, receipt_id);
             } else {
-                table_lacking_hashs.add_receipt_hash(cons_tx->get_transaction()->digest());
+                table_lacking_hashs.add_receipt_id_hash(receipt_id, cons_tx->get_transaction()->digest());
             }
         }
         if (!table_lacking_hashs.empty()) {
