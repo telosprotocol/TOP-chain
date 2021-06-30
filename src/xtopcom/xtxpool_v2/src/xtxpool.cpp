@@ -49,6 +49,14 @@ void xtxpool_t::print_statistic_values() const {
     m_statistic.print();
 }
 
+bool xtxpool_t::is_consensused_recv_receiptid(const std::string & from_table_addr, const std::string & to_table_addr, uint64_t receipt_id) const {
+    auto table = get_txpool_table_by_addr(to_table_addr);
+    if (table == nullptr) {
+        return false;
+    }
+    return table->is_consensused_recv_receiptid(from_table_addr, receipt_id);
+}
+
 const xcons_transaction_ptr_t xtxpool_t::pop_tx(const tx_info_t & txinfo) {
     auto table = get_txpool_table_by_addr(txinfo.get_addr());
     if (table == nullptr) {

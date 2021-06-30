@@ -49,7 +49,7 @@ protected:
         SERIALIZE_FIELD_BT(m_req_node);
         SERIALIZE_FIELD_BT(m_tx_from_account);
         SERIALIZE_FIELD_BT(m_tx_to_account);
-        SERIALIZE_FIELD_BT(m_hash_of_receipts);
+        SERIALIZE_FIELD_BT(m_id_hash_of_receipts);
 
         return CALC_LEN();
     }
@@ -60,7 +60,7 @@ protected:
         DESERIALIZE_FIELD_BT(m_req_node);
         DESERIALIZE_FIELD_BT(m_tx_from_account);
         DESERIALIZE_FIELD_BT(m_tx_to_account);
-        DESERIALIZE_FIELD_BT(m_hash_of_receipts);
+        DESERIALIZE_FIELD_BT(m_id_hash_of_receipts);
         // restore padding
         return CALC_LEN();
     }
@@ -68,7 +68,7 @@ public:
     common::xnode_address_t m_req_node;
     std::string m_tx_from_account;
     std::string m_tx_to_account;
-    std::vector<uint256_t> m_hash_of_receipts;
+    std::map<uint64_t, uint256_t> m_id_hash_of_receipts;
 };
 
 class xreceipt_push_t : public top::basic::xserialize_face_t{
