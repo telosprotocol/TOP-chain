@@ -1089,18 +1089,19 @@ bool is_prop_name_not_set_property(const std::string & prop_name) {
     return false;
 }
 
-bool query_special_property(xJson::Value & jph, const std::string & owner, const std::string & prop_name, base::xvproperty_t* propobj) {
+bool query_special_property(xJson::Value & jph, const std::string & owner, const std::string & prop_name, xaccount_ptr_t unitstate) {
     if (is_prop_name_already_set_property(prop_name)) {
-        top::contract::xcontract_manager_t::instance().get_contract_data(top::common::xaccount_address_t{owner}, prop_name, top::contract::xjson_format_t::detail, jph);
+        top::contract::xcontract_manager_t::instance().get_contract_data(top::common::xaccount_address_t{owner}, unitstate, prop_name, top::contract::xjson_format_t::detail, jph);
         return true;
     } else if (is_prop_name_not_set_property(prop_name)) {
         xJson::Value jm;
-        top::contract::xcontract_manager_t::instance().get_contract_data(top::common::xaccount_address_t{owner}, prop_name, top::contract::xjson_format_t::detail, jm);
+        top::contract::xcontract_manager_t::instance().get_contract_data(top::common::xaccount_address_t{owner}, unitstate, prop_name, top::contract::xjson_format_t::detail, jm);
         jph[prop_name] = jm;
         return true;
     }
 
     if (XPROPERTY_PLEDGE_VOTE_KEY == prop_name) {
+        base::xvproperty_t* propobj = unitstate->get_bstate()->get_property_object(prop_name);
         base::xmapvar_t<std::string> * var_obj = dynamic_cast<base::xmapvar_t<std::string> *>(propobj);
         std::map<std::string, std::string> pledge_votes = var_obj->query();
         for (auto & v : pledge_votes) {
@@ -1131,11 +1132,11 @@ void get_block_handle::query_account_property_base(xJson::Value & jph, const std
         xwarn("get_block_handle::query_account_property fail-find property.account=%s,prop_name=%s", owner.c_str(), prop_name.c_str());
         return;
     }
-    base::xvproperty_t* propobj = unitstate->get_bstate()->get_property_object(prop_name);
-    if (true == query_special_property(jph, owner, prop_name, propobj)) {
+    if (true == query_special_property(jph, owner, prop_name, unitstate)) {
         return;
     }
 
+    base::xvproperty_t* propobj = unitstate->get_bstate()->get_property_object(prop_name);
     if (propobj->get_obj_type() == base::enum_xobject_type_vprop_string_map) {
         auto propobj_map = unitstate->get_bstate()->load_string_map_var(prop_name);
         auto values = propobj_map->query();
@@ -1175,7 +1176,7 @@ void get_block_handle::query_account_property(xJson::Value & jph, const std::str
     xdbg("get_block_handle::query_account_property account=%s,prop_name=%s,height=%llu", owner.c_str(), prop_name.c_str(),height);
     // load newest account state
     base::xvaccount_t _vaddr(owner);
-    auto _block = base::xvchain_t::instance().get_xblockstore()->load_block_object(_vaddr, height, 0, true);
+    auto _block = base::xvchain_t::instance().get_xblockstore()->load_block_object(_vaddr, height, 0, false);
     if (_block == nullptr) {
         xdbg("get_block_handle::query_account_property block %s, height %llu, not exist", owner.c_str(), height);
         return;
