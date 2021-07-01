@@ -104,6 +104,13 @@ metrics_variant_ptr e_metrics::s_metrics[e_simple_total] = {
     DECL_METRICS(message_category_sync),
     DECL_METRICS(message_block_broadcast),
     DECL_METRICS(message_category_unknown),
+
+    // xsync
+    DECL_METRICS(xsync_recv_new_block),
+    DECL_METRICS(xsync_recv_new_hash),
+    DECL_METRICS(xsync_recv_invalid_block),
+    DECL_METRICS(xsync_recv_duplicate_block),
+    DECL_METRICS(xsync_recv_block_size),
 };
 
 void e_metrics::start() {

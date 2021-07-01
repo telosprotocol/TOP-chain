@@ -14,7 +14,7 @@ namespace top
     namespace base
     {
         //----------------------------------------xvblkstate_api-------------------------------------//
-        xvblkstatestore_t::xvblkstatestore_t() : m_table_state_cache(512), m_unit_state_cache(1024)
+        xvblkstatestore_t::xvblkstatestore_t() : m_table_state_cache(enum_max_table_bstate_lru_cache_max), m_unit_state_cache(enum_max_unit_bstate_lru_cache_max)
         {
 
         }
@@ -33,9 +33,10 @@ namespace top
             std::string state_db_bin;
             if(target_state.serialize_to_string(state_db_bin))
             {
-                xdbg_info("xvblkstatestore_t::write_state_to_db succ.state=%s",target_state.dump().c_str());
-                if(xvchain_t::instance().get_xdbstore()->set_value(state_db_key,state_db_bin))
+                if(xvchain_t::instance().get_xdbstore()->set_value(state_db_key,state_db_bin)) {
+                    xinfo("xvblkstatestore_t::write_state_to_db succ.state=%s",target_state.dump().c_str());
                     return true;
+                }
 
                 xerror("xvblkstatestore_t::write_state_to_db,fail to write into db for path(%s)",state_db_key.c_str());
                 return false;
@@ -358,17 +359,15 @@ namespace top
 
         xobject_ptr_t<xvbstate_t> xvblkstatestore_t::make_state_from_current_block(const xvaccount_t & target_account, xvblock_t * current_block) {
             xobject_ptr_t<xvbstate_t> current_state = nullptr;
-
+            if (false == xvchain_t::instance().get_xblockstore()->load_block_output(target_account, current_block)) {
+                xerror("xvblkstatestore_t::make_state_from_current_block,fail-load block output for block(%s)",current_block->dump().c_str());
+                return nullptr;
+            }
             // try make state form block self
             if (current_block->get_height() == 0
                 || (current_block->get_block_class() == enum_xvblock_class_full && !current_block->get_full_state().empty()) ) {
                 current_state = make_object_ptr<xvbstate_t>(*current_block);
                 if (current_block->get_block_class() != enum_xvblock_class_nil) {
-                    if (false == xvchain_t::instance().get_xblockstore()->load_block_output(target_account, current_block)) {
-                        xerror("xvblkstatestore_t::make_state_from_current_block,fail-load block output for block(%s)",current_block->dump().c_str());
-                        return nullptr;
-                    }
-
                     std::string binlog = current_block->get_block_class() == enum_xvblock_class_light ? current_block->get_binlog() : current_block->get_full_state();
                     xassert(!binlog.empty());
                     if(false == current_state->apply_changes_of_binlog(binlog)) {
@@ -412,24 +411,12 @@ namespace top
 
         bool xvblkstatestore_t::execute_block(xvblock_t * target_block)
         {
-            xvaccount_t target_account(target_block->get_account());
-            xdbg_info("xvblkstatestore_t::execute_block enter,block=%s", target_block->dump().c_str());
-            base::xauto_ptr<base::xvbstate_t> bstate = execute_target_block(target_account, target_block);
+            xauto_ptr<xvbstate_t> bstate = get_block_state(target_block);
             if (bstate == nullptr)
             {
                 xerror("xvblkstatestore_t::execute_block fail-get block state,block=%s", target_block->dump().c_str());
                 return false;
             }
-
-            // TODO(jimmy) only write newest executed bstate to db
-            if (false == write_state_to_db(*bstate.get(),target_block->get_block_hash()))
-            {
-                xerror("xvblkstatestore_t::execute_block fail-write block state to db,block=%s", target_block->dump().c_str());
-                return false;
-            }
-
-            // TODO(jimmy) only write the newest state; how to delete all states in db
-            clear_persisted_state(target_block);
             return true;
         }
 
@@ -437,7 +424,7 @@ namespace top
         xauto_ptr<xvbstate_t>  xvblkstatestore_t::execute_target_block(const xvaccount_t & target_account, xvblock_t * target_block)
         {
             xobject_ptr_t<xvbstate_t> target_bstate = nullptr;
-
+            xdbg("xvblkstatestore_t::execute_target_block enter. block=%s", target_block->dump().c_str());
 
             // 1.try to make state for target block directly, may it is a full block or genesis block
             target_bstate = make_state_from_current_block(target_account, target_block);
@@ -449,20 +436,19 @@ namespace top
             std::map<uint64_t, xobject_ptr_t<xvblock_t>> latest_blocks;
             xobject_ptr_t<xvbstate_t> base_bstate = nullptr;
             if (false == load_latest_blocks_and_state(target_block, base_bstate, latest_blocks)) {
-                xwarn("xvblkstatestore_t::get_block_state fail-load_latest_blocks_and_state.block=%s",target_block->dump().c_str());
+                xwarn("xvblkstatestore_t::execute_target_block fail-load_latest_blocks_and_state.block=%s",target_block->dump().c_str());
                 return nullptr;
             }
 
             target_bstate = rebuild_bstate(target_account, base_bstate, latest_blocks);
             if (target_bstate == nullptr) {
-                xwarn("xvblkstatestore_t::get_block_state fail-rebuild_bstate.block=%s",target_block->dump().c_str());
+                xwarn("xvblkstatestore_t::execute_target_block fail-rebuild_bstate.block=%s",target_block->dump().c_str());
                 return nullptr;
             }
             xassert(target_bstate->get_block_height() == target_block->get_height());
             xassert(target_bstate->get_block_viewid() == target_block->get_viewid());
 
-            set_lru_cache(target_block->get_block_level(), target_block->get_block_hash(), target_bstate);
-            xdbg("xvblkstatestore_t::get_block_state succ.latest_blocks size=%zu,block=%s", latest_blocks.size(), target_block->dump().c_str());
+            xdbg("xvblkstatestore_t::execute_target_block succ.latest_blocks size=%zu,block=%s", latest_blocks.size(), target_block->dump().c_str());
             return target_bstate;
         }
 
@@ -472,12 +458,6 @@ namespace top
             xdbg("xvblkstatestore_t::get_block_state enter.block=%s", target_block->dump().c_str());
             xvaccount_t target_account(target_block->get_account());
             xobject_ptr_t<xvbstate_t> target_bstate = nullptr;
-
-            // 1.try to make state for target block directly, may it is a full block or genesis block
-            target_bstate = make_state_from_current_block(target_account, target_block);
-            if (target_bstate != nullptr) {
-                return target_bstate;
-            }
 
             // try load from cache
             target_bstate = get_lru_cache(target_block->get_block_level(), target_block->get_block_hash());
@@ -490,6 +470,7 @@ namespace top
             xvbstate_t* raw_state = read_state_from_db(target_account, target_block->get_height(), target_block->get_block_hash());
             if (raw_state != nullptr) {
                 target_bstate.attach(raw_state);
+                set_lru_cache(target_block->get_block_level(), target_block->get_block_hash(), target_bstate);
                 xdbg("xvblkstatestore_t::get_block_state succ-get state form db.block=%s",target_block->dump().c_str());
                 return target_bstate;
             }
@@ -497,6 +478,13 @@ namespace top
             // try execute target block state
             target_bstate = execute_target_block(target_account, target_block);
             if (target_bstate != nullptr) {
+                if (false == write_state_to_db(*target_bstate.get(),target_block->get_block_hash()))
+                {
+                    xerror("xvblkstatestore_t::execute_target_block fail-write block state to db,block=%s", target_block->dump().c_str());
+                    return nullptr;
+                }
+                set_lru_cache(target_block->get_block_level(), target_block->get_block_hash(), target_bstate);
+                clear_persisted_state(target_block);
                 xdbg("xvblkstatestore_t::get_block_state succ-get state by execute.block=%s",target_block->dump().c_str());
                 return target_bstate;
             }
@@ -514,13 +502,11 @@ namespace top
         }
 
         void xvblkstatestore_t::set_lru_cache(base::enum_xvblock_level blocklevel, const std::string & hash, const xobject_ptr_t<xvbstate_t> & state) {
-#if 0  // TODO(jimmy) for memory test
             if (blocklevel == enum_xvblock_level_table) {
                 m_table_state_cache.put(hash, state);
             } else if (blocklevel == enum_xvblock_level_unit) {
                 m_unit_state_cache.put(hash, state);
             }
-#endif
         }
 
         xauto_ptr<xvbstate_t>  xvblkstatestore_t::get_block_state_2(xvblock_t * current_block)

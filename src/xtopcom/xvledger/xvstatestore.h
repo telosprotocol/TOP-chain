@@ -19,8 +19,10 @@ namespace top
         {
             enum
             {
-                enum_max_bstate_newest_count            = 4,  //max persisted store bstate count per account
+                enum_max_bstate_newest_count            = 5,  //max persisted store bstate count per account
                 enum_max_bstate_fulltable_count         = 3,  //max persisted store bstate for fulltable snapshot sync
+                enum_max_table_bstate_lru_cache_max     = 256, //max table state lru cache count
+                enum_max_unit_bstate_lru_cache_max      = 1024, //max unit state lru cache count
             };
         protected:
             xvblkstatestore_t();
