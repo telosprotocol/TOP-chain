@@ -363,7 +363,7 @@ xblock_ptr_t xtable_maker_t::make_light_table(bool is_leader, const xtablemaker_
         xwarn("xtable_maker_t::make_light_table fail-verify_proposal other accounts.proposal=%s,leader_size=%zu,actual_size=%zu",
             cs_para.dump().c_str(), table_para.get_other_accounts().size(), table_para.get_proposal()->get_other_accounts().size());
         table_result.m_make_block_error_code = xblockmaker_error_tx_check;
-        XMETRICS_COUNTER_INCREMENT("cons_fail_verify_proposal_unit_count", 1);
+        XMETRICS_GAUGE(metrics::cons_fail_verify_proposal_unit_count, 1);
         return nullptr;
     }
 
@@ -466,7 +466,7 @@ xblock_ptr_t xtable_maker_t::make_proposal(xtablemaker_para_t & table_para,
     int32_t ret = check_latest_state(latest_cert_block);
     if (ret != xsuccess) {
         xwarn("xtable_maker_t::make_proposal fail-check_latest_state. %s", cs_para.dump().c_str());
-        XMETRICS_COUNTER_INCREMENT("cons_fail_make_proposal_table_check_latest_state", 1);
+        XMETRICS_GAUGE(metrics::cons_fail_make_proposal_table_check_latest_state, 1);
         return nullptr;
     }
 
@@ -502,7 +502,7 @@ int32_t xtable_maker_t::verify_proposal(base::xvblock_t* proposal_block, const x
     if (ret != xsuccess) {
         xwarn("xtable_maker_t::verify_proposal fail-check_latest_state.proposal=%s",
             proposal_block->dump().c_str());
-        XMETRICS_COUNTER_INCREMENT("cons_fail_verify_proposal_table_check_latest_state", 1);
+        XMETRICS_GAUGE(metrics::cons_fail_verify_proposal_table_check_latest_state, 1);
         return ret;
     }
 
@@ -546,7 +546,7 @@ int32_t xtable_maker_t::verify_proposal(base::xvblock_t* proposal_block, const x
     if (false == verify_proposal_with_local(proposal_block, local_block.get())) {
         xwarn("xtable_maker_t::verify_proposal fail-verify_proposal_with_local. proposal=%s",
             proposal_block->dump().c_str());
-        XMETRICS_COUNTER_INCREMENT("cons_fail_verify_proposal_table_with_local", 1);
+        XMETRICS_GAUGE(metrics::cons_fail_verify_proposal_table_with_local, 1);
         return xblockmaker_error_proposal_not_match_local;
     }
 

@@ -69,6 +69,21 @@ enum E_SIMPLE_METRICS_TAG {
     cons_tableblock_backup_finish_succ,
     cons_tableblock_leader_finish_fail,
     cons_tableblock_backup_finish_fail,
+    cons_pacemaker_tc_discontinuity,
+    cons_fail_make_proposal_table_state,
+    cons_fail_make_proposal_consensus_para,
+    cons_fail_verify_proposal_blocks_invalid,
+    cons_fail_verify_proposal_table_state_get,
+    cons_fail_verify_proposal_drand_invalid,
+    cons_fail_verify_proposal_consensus_para_get,
+    cons_fail_verify_proposal_unit_count,
+    cons_fail_make_proposal_table_check_latest_state,
+    cons_fail_verify_proposal_table_check_latest_state,
+    cons_fail_verify_proposal_table_with_local,
+    cons_fail_make_proposal_unit_check_state,
+    cons_fail_make_proposal_view_changed,
+    cons_view_fire_clock_delay,
+    cons_fail_backup_view_not_match,
 
     // store
     store_db_read,
@@ -119,6 +134,16 @@ enum E_SIMPLE_METRICS_TAG {
     xsync_recv_invalid_block,
     xsync_recv_duplicate_block,
     xsync_recv_block_size,
+
+    // txpool
+    txpool_received_self_send_receipt_num,
+    txpool_received_other_send_receipt_num,
+    txpool_recv_tx_retry_send,
+    txpool_confirm_tx_retry_send,
+    txpool_recv_tx_first_send,
+    txpool_confirm_tx_first_send,
+    txpool_push_tx_send_fail_pool_full,
+
     e_simple_total,
 };
 using xmetircs_tag_t = E_SIMPLE_METRICS_TAG;

@@ -339,7 +339,7 @@ int32_t xsend_tx_queue_t::push_tx(const std::shared_ptr<xtx_entry> & tx_ent, uin
     clear_expired_txs();
     std::shared_ptr<xtx_entry> to_be_droped_tx = nullptr;
     if (m_send_tx_queue_internal.full()) {
-        XMETRICS_COUNTER_INCREMENT("txpool_push_tx_send_fail_pool_full", 1);
+        XMETRICS_GAUGE(metrics::txpool_push_tx_send_fail_pool_full, 1);
         to_be_droped_tx = m_send_tx_queue_internal.pick_to_be_droped_tx();
         if (to_be_droped_tx == nullptr) {
             return xtxpool_error_queue_reached_upper_limit;
