@@ -334,7 +334,7 @@ namespace top
                 }
                 else if(proposal_block.get_height() == it->second->get_height()) //liveness entry
                 {
-                    if(proposal_block.get_bind_clock_cert()->get_clock() < (it->second->get_clock() + 30) )//5 minute expire
+                    if(proposal_block.get_bind_clock_cert()->get_clock() < (it->second->get_clock() + 5) )//50s expire
                     {
                         xinfo("xBFTRules::add_proposal,fail-proposal(%s) vs non-expired cert(%s)",proposal_block.dump().c_str(),it->second->dump().c_str());
                         return false; //have un-expired cert at same height
