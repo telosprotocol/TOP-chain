@@ -9,28 +9,29 @@
 #include "xapplication/xtop_chain_application.h"
 #include "xbasic/xmemory.hpp"
 #include "xbasic/xutility.h"
+#include "xblockstore/xblockstore_face.h"
 #include "xcertauth/xcertauth_face.h"
 #include "xchain_timer/xchain_timer.h"
 #include "xcodec/xmsgpack_codec.hpp"
 #include "xcommon/xip.h"
+#include "xconfig/xpredefined_configurations.h"
+#include "xconfig/xutility.h"
+#include "xdata/xblocktool.h"
 #include "xdata/xcodec/xmsgpack/xelection_result_store_codec.hpp"
 #include "xdata/xelect_transaction.hpp"
-#include "xdata/xelection/xelection_result_store.h"
 #include "xdata/xelection/xelection_result_property.h"
+#include "xdata/xelection/xelection_result_store.h"
 #include "xdata/xgenesis_data.h"
-#include "xconfig/xpredefined_configurations.h"
-#include "xdata/xblocktool.h"
 #include "xdata/xrootblock.h"
 #include "xdb/xdb_factory.h"
 #include "xelection/xvnode_house.h"
-#include "xloader/xconfig_onchain_loader.h"
 #include "xloader/xconfig_genesis_loader.h"
+#include "xloader/xconfig_onchain_loader.h"
 #include "xrouter/xrouter.h"
 #include "xstake/xstake_algorithm.h"
 #include "xstore/xstore_error.h"
-#include "xblockstore/xblockstore_face.h"
-#include "xvm/xsystem_contracts/deploy/xcontract_deploy.h"
 #include "xvm/manager/xcontract_manager.h"
+#include "xvm/xsystem_contracts/deploy/xcontract_deploy.h"
 
 #include <stdexcept>
 
@@ -124,7 +125,10 @@ void xtop_application::start() {
 
     contract::xcontract_manager_t::set_nodesrv_ptr(node_service());
 
-    if (!is_beacon_account() || !is_genesis_node()) {
+    auto const last_logic_time = this->last_logic_time()->get_height();
+    auto const current_local_logic_time = config::gmttime_to_logic_time(base::xtime_utl::gmttime());
+    bool const offline_too_long = current_local_logic_time < last_logic_time || (last_logic_time != 0 && (current_local_logic_time - last_logic_time >= 30)); // 5min = 300s = 30 logic time
+    if (offline_too_long || (!is_beacon_account() && !is_genesis_node())) {
         m_elect_client->bootstrap_node_join();
     }
 
@@ -133,7 +137,7 @@ void xtop_application::start() {
         chain_app->start();
     }
 
-    m_logic_timer->update_time(last_logic_time()->get_height(), time::xlogic_timer_update_strategy_t::force);
+    m_logic_timer->update_time(last_logic_time, time::xlogic_timer_update_strategy_t::force);
 }
 
 void xtop_application::stop() {
@@ -225,7 +229,7 @@ xobject_ptr_t<store::xsyncvstore_t> xtop_application::syncstore() const noexcept
 }
 
 base::xauto_ptr<top::base::xvblock_t> xtop_application::last_logic_time() const {
-    return blockstore()->get_latest_committed_block(base::xvaccount_t(sys_contract_beacon_timer_addr));
+    return blockstore()->get_latest_cert_block(base::xvaccount_t(sys_contract_beacon_timer_addr));
 }
 
 bool xtop_application::check_rootblock() {
