@@ -286,6 +286,7 @@ void xtop_vnode_manager::on_timer(common::xlogic_time_t time) {
 
                 case common::xnode_type_t::zec:
                     metrics_vnode_status[vnode_real_part_type] = 5;
+                    break;
 
                 case common::xnode_type_t::consensus_auditor:
                     metrics_vnode_status[vnode_real_part_type] = 4;
