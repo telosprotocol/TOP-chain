@@ -482,16 +482,15 @@ void xbatch_packer::make_receipts_and_send(xblock_t * commit_block, xblock_t * c
         xassert(constx->is_recv_tx() || constx->is_confirm_tx());
     }
 
-    for (auto & tx : all_cons_txs) {
-        xinfo("xbatch_packer::make_receipts_and_send tx=%s,commit_block:%s,cert_block:%s", tx->dump().c_str(), commit_block->dump().c_str(), cert_block->dump().c_str());
-        bool need_self_process = false;
-        network_proxy->send_receipt_msg(get_xip2_addr(), tx, need_self_process);
-        if (need_self_process) {
-            xtxpool_v2::xtx_para_t para;
-            std::shared_ptr<xtxpool_v2::xtx_entry> tx_ent = std::make_shared<xtxpool_v2::xtx_entry>(tx, para);
-            m_para->get_resources()->get_txpool()->push_receipt(tx_ent, true, false);
-            XMETRICS_COUNTER_INCREMENT("txpool_received_self_send_receipt_num", 1);
-        }
+    xinfo("xbatch_packer::make_receipts_and_send commit_block:%s,cert_block:%s", commit_block->dump().c_str(), cert_block->dump().c_str());
+    std::vector<data::xcons_transaction_ptr_t> non_shard_cross_receipts;
+    network_proxy->send_receipt_msgs(get_xip2_addr(), all_cons_txs, non_shard_cross_receipts);
+
+    for (auto & tx : non_shard_cross_receipts) {
+        xtxpool_v2::xtx_para_t para;
+        std::shared_ptr<xtxpool_v2::xtx_entry> tx_ent = std::make_shared<xtxpool_v2::xtx_entry>(tx, para);
+        m_para->get_resources()->get_txpool()->push_receipt(tx_ent, true, false);
+        XMETRICS_COUNTER_INCREMENT("txpool_received_self_send_receipt_num", 1);
     }
 }
 
