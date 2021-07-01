@@ -12,6 +12,7 @@
 #include "xstore/xstore_face.h"
 #include "xvledger/xvblock.h"
 #include "xvledger/xvledger.h"
+#include "xvm/manager/xcontract_manager.h"
 
 #include <signal.h>
 #include <sys/stat.h>
@@ -62,13 +63,11 @@ void usage() {
     std::cout << "- ./xdb_export <config_json_file> <function_name>" << std::endl;
     std::cout << "    - <function_name>:" << std::endl;
     std::cout << "        - all_account" << std::endl;
-    std::cout << "        - all_property" << std::endl;
-    std::cout << "        - stake_property" << std::endl;
     std::cout << "        - check_fast_sync [table|unit|account]" << std::endl;
     std::cout << "        - check_block_exist <account> <height>" << std::endl;
     std::cout << "        - check_tx_info [table]" << std::endl;
     std::cout << "        - check_latest_fullblock [table]" << std::endl;
-    std::cout << "        - query <account>" << std::endl;
+    std::cout << "        - check_contract_property <account> <prop>" << std::endl;
     std::cout << "-------  end  -------" << std::endl;
 }
 
@@ -126,16 +125,19 @@ struct tx_ext_t {
 class db_export_tools {
 public:
     db_export_tools(std::string const & db_path) {
-        // std::shared_ptr<db::xdb_face_t> m_db = top::db::xdb_factory_t::instance(db_path);
-        // m_bus = top::make_unique<mbus::xmessage_bus_t>(true, 1000);
+        data::xrootblock_para_t para;
+        data::xrootblock_t::init(para);
+        top::config::config_register.get_instance().set(config::xmin_free_gas_balance_onchain_goverance_parameter_t::name, std::to_string(ASSET_TOP(100)));
+        top::config::config_register.get_instance().set(config::xfree_gas_onchain_goverance_parameter_t::name, std::to_string(25000));
+        top::config::config_register.get_instance().set(config::xmax_validator_stake_onchain_goverance_parameter_t::name, std::to_string(5000));
+        top::config::config_register.get_instance().set(config::xchain_name_configuration_t::name, std::string{top::config::chain_name_testnet});
 
         m_store = top::store::xstore_factory::create_store_with_kvdb(db_path);
         base::xvchain_t::instance().set_xdbstore(m_store.get());
         m_blockstore.attach(store::get_vblockstore());
-        // m_indexstore = store::xindexstore_factory_t::create_indexstorehub(make_observer(m_store), make_observer(m_blockstore));
-
-        // m_store = top::store::xstore_factory::create_store_with_static_kvdb(m_db, make_observer(m_bus));
-        // m_blockstore.attach(store::xblockstorehub_t::instance().get_block_store(*m_store, ""));
+        
+        xobject_ptr_t<store::xsyncvstore_t> m_syncstore;
+        contract::xcontract_manager_t::instance().init(make_observer(m_store), m_syncstore);
     }
 
     void get_all_unit_account(std::set<std::string> & accounts_set, json & accounts_json) {
@@ -385,35 +387,12 @@ public:
         }
     }
 
-    void query_unit_property(std::string const & address, json & accounts_json) {
-        std::cout << "account " << address << std::endl;
-        xaccount_ptr_t account_ptr = m_store->query_account(address);
-        if (account_ptr == nullptr) {
-            std::cout << "nullptr";
-            return;
-        }
-        json jaccount_native;
-        get_unit_native_property(account_ptr, jaccount_native);
-        accounts_json[address]["native_property"] = jaccount_native;
-        json jaccount_user;
-        get_unit_user_property(account_ptr, jaccount_user);
-        accounts_json[address]["user_property"] = jaccount_user;
-    }
-
-    void query_unit_set_property(std::set<std::string> const & accounts_set, json & accounts_json) {
-        for (auto const & account : accounts_set) {
-            std::cout << "account " << account << std::endl;
-            xaccount_ptr_t account_ptr = m_store->query_account(account);
-            if (account_ptr == nullptr) {
-                continue;
-            }
-            json jaccount_native;
-            get_unit_native_property(account_ptr, jaccount_native);
-            accounts_json[account]["native_property"] = jaccount_native;
-            json jaccount_user;
-            get_unit_user_property(account_ptr, jaccount_user);
-            accounts_json[account]["user_property"] = jaccount_user;
-        }
+    void query_contract_property(std::string const & account, std::string const & prop_name) {
+        xJson::Value jm;
+        top::contract::xcontract_manager_t::instance().get_contract_data(top::common::xaccount_address_t{account}, prop_name, top::contract::xjson_format_t::detail, jm);
+        std::string filename = account + "_" + prop_name + "_property.json";
+        std::ofstream out_json(filename);
+        out_json << std::setw(4) << jm;
     }
 
     void get_stake_property_string(std::string const & addr, std::string const & property_key, json & stake_json) {
@@ -460,94 +439,6 @@ public:
             if (!ser_res.empty())
                 stake_json[addr]["@" + std::to_string(index)][property_key] = ser_res;
         }
-    }
-
-    void test_get_stake(json & stake_json){
-        std::map<std::string, std::string> nodes;
-        m_store->map_copy_get(sys_contract_rec_registration_addr,XPORPERTY_CONTRACT_REG_KEY,nodes);
-#if 0
-        for (auto m : nodes) {
-            xstake::xreg_node_info reg_node_info;
-            xstream_t stream(xcontext_t::instance(), (uint8_t *)m.second.data(), m.second.size());
-            reg_node_info.serialize_from(stream);
-            json j;
-            j["account_addr"] = reg_node_info.m_account;
-            j["node_deposit"] = static_cast<unsigned long long>(reg_node_info.m_account_mortgage);
-            if (reg_node_info.m_genesis_node) {
-                j["registered_node_type"] = std::string{"advance,validator,edge"};
-            } else {
-                j["registered_node_type"] = common::to_string(reg_node_info.m_registered_role);
-            }
-            j["vote_amount"] = static_cast<unsigned long long>(reg_node_info.m_vote_amount);
-            {
-                auto credit = static_cast<double>(reg_node_info.m_auditor_credit_numerator) / reg_node_info.m_auditor_credit_denominator;
-                std::stringstream ss;
-                ss << std::fixed << std::setprecision(6) << credit;
-                j["auditor_credit"] = ss.str();
-            }
-            {
-                auto credit = static_cast<double>(reg_node_info.m_validator_credit_numerator) / reg_node_info.m_validator_credit_denominator;
-                std::stringstream ss;
-                ss << std::fixed << std::setprecision(6) << credit;
-                j["validator_credit"] = ss.str();
-            }
-            j["dividend_ratio"] = reg_node_info.m_support_ratio_numerator * 100 / reg_node_info.m_support_ratio_denominator;
-            // j["m_stake"] = static_cast<unsigned long long>(reg_node_info.m_stake);
-            j["auditor_stake"] = static_cast<unsigned long long>(reg_node_info.get_auditor_stake());
-            j["validator_stake"] = static_cast<unsigned long long>(reg_node_info.get_validator_stake());
-            j["rec_stake"] = static_cast<unsigned long long>(reg_node_info.rec_stake());
-            j["zec_stake"] = static_cast<unsigned long long>(reg_node_info.zec_stake());
-            std::string network_ids;
-            for (auto const & net_id : reg_node_info.m_network_ids) {
-                network_ids += base::xstring_utl::tostring(net_id) + ' ';
-            }
-            j["network_id"] = network_ids;
-            j["nodename"] = reg_node_info.nickname;
-            j["node_sign_key"] = reg_node_info.consensus_public_key.to_string();
-            stake_json[m.first] = j;
-        }
-#endif
-    }
-
-private:
-    void get_unit_native_property(xaccount_ptr_t const & account_ptr, json & j) {
-#if 0 // TODO(jimmy)
-        auto property = account_ptr->get_native_property().get_properties();
-        for (auto const & iter : property) {
-            std::string value;
-            auto bytes_num = iter.second.get()->serialize_to_string(value);
-            std::string base64_str = base::xstring_utl::base64_encode((const uint8_t *)value.data(), value.size());
-            j[iter.first] = base64_str;
-#if 0
-            std::cout << iter.first << " raw data:";
-            auto raw = value.data();
-            for (int i = 0; i < bytes_num; i++) {
-                printf("0x%x ", raw[i]);
-            }
-            std::cout << std::endl;
-            std::cout << iter.first << " base64 data:";
-            std::cout << base64_str <<std::endl;
-#endif
-        }
-#endif
-    }
-
-    void get_unit_user_property(xaccount_ptr_t const & account_ptr, json & j) {
-        j["balance"] = base::xstring_utl::tostring(account_ptr->balance());
-        j["burn_balance"] = base::xstring_utl::tostring(account_ptr->burn_balance());
-        j["tgas_balance"] = base::xstring_utl::tostring(account_ptr->tgas_balance());
-        j["disk_balance"] = base::xstring_utl::tostring(account_ptr->disk_balance());
-        j["vote_balance"] = base::xstring_utl::tostring(account_ptr->vote_balance());
-        j["lock_balance"] = base::xstring_utl::tostring(account_ptr->lock_balance());
-        j["lock_tgas"] = base::xstring_utl::tostring(account_ptr->lock_tgas());
-        j["unvote_num"] = base::xstring_utl::tostring(account_ptr->unvote_num());
-        j["get_unconfirm_sendtx_num"] = base::xstring_utl::tostring(account_ptr->get_unconfirm_sendtx_num());
-        j["get_last_full_unit_height"] = base::xstring_utl::tostring(account_ptr->get_last_full_unit_height());
-        j["account_send_trans_number"] = base::xstring_utl::tostring(account_ptr->account_send_trans_number());
-        j["account_recv_trans_number"] = base::xstring_utl::tostring(account_ptr->account_recv_trans_number());
-        j["get_free_tgas"] = base::xstring_utl::tostring(account_ptr->get_free_tgas());
-        j["get_last_tx_hour"] = base::xstring_utl::tostring(account_ptr->get_last_tx_hour());
-        j["get_used_tgas"] = base::xstring_utl::tostring(account_ptr->get_used_tgas());
     }
 
 private:
@@ -830,21 +721,13 @@ private:
         auto t4 = xtime_utl::time_now_ms();
         // std::cout << t2-t1 << " " << t3-t2 << " " << t4-t3 << std::endl;
     }
-    // std::unique_ptr<mbus::xmessage_bus_face_t> m_bus;
-    // std::shared_ptr<top::db::xdb_face_t> m_db;
+
     top::xobject_ptr_t<top::store::xstore_face_t> m_store;
     top::xobject_ptr_t<top::base::xvblockstore_t> m_blockstore;
-    // top::xobject_ptr_t<top::store::xindexstorehub_t> m_indexstore;
 };
 
 int main(int argc, char ** argv) {
     auto hash_plugin = new xtop_hash_t();
-    top::config::config_register.get_instance().set(config::xmin_free_gas_balance_onchain_goverance_parameter_t::name, std::to_string(ASSET_TOP(100)));
-    top::config::config_register.get_instance().set(config::xfree_gas_onchain_goverance_parameter_t::name, std::to_string(25000));
-    top::config::config_register.get_instance().set(config::xmax_validator_stake_onchain_goverance_parameter_t::name, std::to_string(5000));
-    top::config::config_register.get_instance().set(config::xchain_name_configuration_t::name, std::string{top::config::chain_name_testnet});
-    data::xrootblock_para_t para;
-    data::xrootblock_t::init(para);
 
     if (argc < 3) {
         usage();
@@ -870,35 +753,6 @@ int main(int argc, char ** argv) {
         }
         std::ofstream out_json("all_account.json");
         out_json << std::setw(4) << accounts_json;
-    } else if (function_name == "all_property") {
-        std::set<std::string> accounts_set;
-        json accounts_json;
-        json property_json;
-        tools.get_all_unit_account(accounts_set, accounts_json);
-        tools.query_unit_set_property(accounts_set, property_json);
-        std::ofstream out_json("all_property.json");
-        out_json << std::setw(4) << property_json;
-    } else if (function_name == "query") {
-        if (argc < 4) {
-            usage();
-            return -1;
-        }
-        std::string address{argv[3]};
-        json accounts_json;
-        tools.query_unit_property(address, accounts_json);
-        std::ofstream out_json(address + ".json");
-        out_json << std::setw(4) << accounts_json;
-    } else if (function_name == "query_units") {
-        std::set<std::string> accounts_set;
-        json res, _j;
-        tools.get_all_unit_account(accounts_set, _j);
-        for (auto const & s : accounts_set) {
-            json accounts_json;
-            tools.query_unit_property(s, accounts_json);
-            res[s] = accounts_json;
-        }
-        std::ofstream out_json("query_units.json");
-        out_json << std::setw(4) << res;
     }else if (function_name == "stake_property"){
         json res;
         for (auto const & _pair:stake_map_string_string_pair_list) {
@@ -971,6 +825,12 @@ int main(int argc, char ** argv) {
             usage();
             return -1;
         }
+    } else if (function_name == "check_contract_property") {
+        if (argc < 5) {
+            usage();
+            return -1;
+        }
+        tools.query_contract_property(argv[3], argv[4]);
     } else {
         usage();
     }
