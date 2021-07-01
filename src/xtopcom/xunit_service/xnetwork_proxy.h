@@ -39,7 +39,7 @@ public:
     // erase networkdriver, call before vnode destroy
     virtual bool erase(const xvip2_t &addr);
 
-    void send_receipt_msg(const xvip2_t & from_addr, const data::xcons_transaction_ptr_t & cons_tx, bool & need_self_process) override;
+    void send_receipt_msgs(const xvip2_t & from_addr, const std::vector<data::xcons_transaction_ptr_t> & receipts, std::vector<data::xcons_transaction_ptr_t> & non_shard_cross_receipts) override;
 
 
 protected:
@@ -49,6 +49,9 @@ protected:
                     top::vnetwork::xmessage_t const &      message);
 
     bool send_out(common::xmessage_id_t const &id, const xvip2_t &from_addr, const xvip2_t &to_addr, base::xstream_t &stream, const std::string & account);
+    void send_receipt_msg(std::shared_ptr<vnetwork::xvnetwork_driver_face_t> net_driver,
+                          const data::xcons_transaction_ptr_t & receipt,
+                          std::vector<data::xcons_transaction_ptr_t> & non_shard_cross_receipts);
 
     // private:
     //     virtual vnetwork::xvnetwork_driver_face_t* find_network(const xvip2_t& xip);
