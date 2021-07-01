@@ -31,27 +31,13 @@ xtop_vnode_manager::xtop_vnode_manager(observer_ptr<elect::ElectMain> const & el
                                        observer_ptr<xtxpool_service_v2::xtxpool_service_mgr_face> const & txpool_service_mgr,
                                        observer_ptr<xtxpool_v2::xtxpool_face_t> const & txpool,
                                        observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor)
-  : m_logic_timer{logic_timer}
-  , m_vhost{vhost}
-  , m_vnode_factory{top::make_unique<xvnode_factory_t>(elect_main,
-                                                       mbus,
-                                                       store,
-                                                       block_store,
-                                                       logic_timer,
-                                                       router,
-                                                       vhost,
-                                                       sync_object,
-                                                       grpc_mgr,
-                                                       cons_mgr,
-                                                       txpool_service_mgr,
-                                                       txpool,
-                                                       election_cache_data_accessor)} {
+    : xtop_vnode_manager{ logic_timer, vhost, top::make_unique<xvnode_factory_t>(elect_main, mbus, store, block_store, logic_timer, router, vhost, sync_object, grpc_mgr, cons_mgr, txpool_service_mgr, txpool, election_cache_data_accessor) } {
 }
 
-xtop_vnode_manager::xtop_vnode_manager(observer_ptr<time::xchain_time_face_t> logic_timer,
-                                       observer_ptr<vnetwork::xvhost_face_t> vhost,
+xtop_vnode_manager::xtop_vnode_manager(observer_ptr<time::xchain_time_face_t> const & logic_timer,
+                                       observer_ptr<vnetwork::xvhost_face_t> const & vhost,
                                        std::unique_ptr<xvnode_factory_face_t> vnode_factory)
-  : m_logic_timer{std::move(logic_timer)}, m_vhost{std::move(vhost)}, m_vnode_factory{std::move(vnode_factory)} {
+  : m_logic_timer{ logic_timer }, m_vhost{ vhost }, m_vnode_factory{std::move(vnode_factory)} {
     assert(m_vnode_factory != nullptr);
 }
 
@@ -272,6 +258,64 @@ void xtop_vnode_manager::on_timer(common::xlogic_time_t time) {
             }
             }
         }
+
+#if defined(ENABLE_METRICS)
+        if (time % 6 == 0) {    // dump per one minute
+            std::unordered_map<common::xnode_type_t, size_t> metrics_vnode_status;
+            metrics_vnode_status[common::xnode_type_t::storage_archive] = 0;
+            metrics_vnode_status[common::xnode_type_t::storage_full_node] = 0;
+            metrics_vnode_status[common::xnode_type_t::edge] = 0;
+            metrics_vnode_status[common::xnode_type_t::rec] = 0;
+            metrics_vnode_status[common::xnode_type_t::zec] = 0;
+            metrics_vnode_status[common::xnode_type_t::consensus_auditor] = 0;
+            metrics_vnode_status[common::xnode_type_t::consensus_validator] = 0;
+
+            for (auto it = std::begin(m_all_nodes); it != std::end(m_all_nodes); ++it) {
+                auto const & vnode = top::get<std::shared_ptr<xvnode_face_t>>(*it);
+                assert(vnode != nullptr);
+
+                if (vnode->rotation_status(time) != common::xrotation_status_t::started) {
+                    continue;
+                }
+
+                auto const vnode_real_part_type = common::real_part_type(vnode->type());
+                switch (vnode_real_part_type) {
+                case common::xnode_type_t::rec:
+                    metrics_vnode_status[vnode_real_part_type] = 6;
+                    break;
+
+                case common::xnode_type_t::zec:
+                    metrics_vnode_status[vnode_real_part_type] = 5;
+
+                case common::xnode_type_t::consensus_auditor:
+                    metrics_vnode_status[vnode_real_part_type] = 4;
+                    break;
+
+                case common::xnode_type_t::consensus_validator:
+                    metrics_vnode_status[vnode_real_part_type] = 3;
+                    break;
+
+                case common::xnode_type_t::storage_archive:
+                    XATTRIBUTE_FALLTHROUGH;
+                case common::xnode_type_t::storage_full_node:
+                    metrics_vnode_status[vnode_real_part_type] = 2;
+                    break;
+
+                default:
+                    metrics_vnode_status[vnode_real_part_type] = 1;
+                    break;
+                }
+            }
+
+            XMETRICS_PACKET_INFO("vnode_status",
+                                 "rec", metrics_vnode_status[common::xnode_type_t::rec],
+                                 "zec", metrics_vnode_status[common::xnode_type_t::zec],
+                                 "auditor", metrics_vnode_status[common::xnode_type_t::consensus_auditor],
+                                 "validator", metrics_vnode_status[common::xnode_type_t::consensus_validator],
+                                 "archive", metrics_vnode_status[common::xnode_type_t::storage_archive],
+                                 "edge", metrics_vnode_status[common::xnode_type_t::edge]);
+        }
+#endif
     }
 }
 
