@@ -38,7 +38,7 @@ protected:
     table_index       get_tableid(const std::string & account);
     int16_t           get_thread_index(base::xworkerpool_t * pool, table_index& tableid);
     base::xworker_t * get_worker(base::xworkerpool_t * pool, table_index& table_id);
-    void              fire_clock(base::xvblock_t * block, xbatch_packer_ptr_t packer);
+    void              fire_clock(base::xvblock_t * block, base::xworker_t *, xbatch_packer_ptr_t packer);
     void              chain_timer(common::xlogic_time_t time);
     void              on_clock(base::xvblock_t * clock_block) override;
 

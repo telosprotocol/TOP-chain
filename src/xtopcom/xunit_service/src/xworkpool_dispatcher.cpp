@@ -78,11 +78,14 @@ void xworkpool_dispatcher::chain_timer(common::xlogic_time_t time) {
 }
 
 void xworkpool_dispatcher::on_clock(base::xvblock_t * clock_block) {
+    auto work_pool = m_para->get_resources()->get_workpool();
     {
         std::lock_guard<std::mutex> lock(m_mutex);
 
         for (auto const & pair : m_packers) {
-            fire_clock(clock_block, pair.second);
+            auto table_index = pair.first;
+            auto worker = get_worker(work_pool, table_index);
+            fire_clock(clock_block, worker, pair.second);
         }
     }
 }
@@ -188,7 +191,7 @@ base::xworker_t * xworkpool_dispatcher::get_worker(base::xworkerpool_t * pool, t
     return pool->get_thread(pool_index);
 }
 
-void xworkpool_dispatcher::fire_clock(base::xvblock_t * block, xbatch_packer_ptr_t packer) {
+void xworkpool_dispatcher::fire_clock(base::xvblock_t * block, base::xworker_t * worker, xbatch_packer_ptr_t packer) {
     auto _call = [](base::xcall_t & call, const int32_t cur_thread_id, const uint64_t timenow_ms) -> bool {
         auto packer = dynamic_cast<xbatch_packer *>(call.get_param1().get_object());
         auto block_ptr = dynamic_cast<base::xvblock_t *>(call.get_param2().get_object());
@@ -196,7 +199,7 @@ void xworkpool_dispatcher::fire_clock(base::xvblock_t * block, xbatch_packer_ptr
         return true;
     };
     base::xcall_t asyn_call((base::xcallback_t)_call, packer.get(), block);
-    packer->send_call(asyn_call);
+    worker->send_call(asyn_call);
 }
 
 NS_END2
