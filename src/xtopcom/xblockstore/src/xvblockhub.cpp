@@ -42,7 +42,7 @@ namespace top
             #ifdef ENABLE_METRICS
             XMETRICS_GAUGE(metrics::dataobject_xacctmeta_t, 1);
             #endif
-            
+
             _reserved_u16 = 0;
             _block_level  = (uint8_t)-1; //init to 255(that ensure is not allocated)
             _meta_spec_version = 1;     //version #1 now
@@ -1152,7 +1152,7 @@ namespace top
 #if defined(ENABLE_METRICS)
             XMETRICS_GAUGE(metrics::store_block_call, 1);
 #endif
- 
+
 
             if(   (false == new_raw_block->is_input_ready(true))
                || (false == new_raw_block->is_output_ready(true))
@@ -2249,17 +2249,15 @@ namespace top
         }
         void      xblockacct_t::try_execute_all_block(base::xvblock_t * target_block)
         {
-            if (m_meta->_highest_execute_block_height >= m_meta->_highest_commit_block_height  // all commit blocks have been executed
-                || (target_block->get_block_level() != base::enum_xvblock_level_unit && target_block->get_block_level() != base::enum_xvblock_level_table) )  // only unit and table level need execute
-            {
+            if (m_meta->_highest_execute_block_height >= m_meta->_highest_commit_block_height) {
+                return;
+            }
+            // XTODO only tabletable need execute immediately after stored
+            if (target_block->get_block_level() != base::enum_xvblock_level_table) {
                 return;
             }
 
-            #ifdef DEBUG
-                xdbg("xblockacct_t::try_execute_all_block enter. %s", dump().c_str());
-            #else
-                xinfo("xblockacct_t::try_execute_all_block enter");
-            #endif
+            xdbg("xblockacct_t::try_execute_all_block enter. block=%s,meta=%s", target_block->dump().c_str(), dump().c_str());
 
             // try to check and execute from target block firstly, maybe target block include snapshot by syncing
             if (m_meta->_highest_execute_block_height < target_block->get_height()  // target height not executed
@@ -2272,7 +2270,7 @@ namespace top
                 if (_execute_index != nullptr
                     &&  _execute_index->get_block_hash() == target_block->get_block_hash())
                 {
-                    xdbg("xblockacct_t::try_execute_all_block try execute full block. %s,block=%s", dump().c_str(), target_block->dump().c_str());
+                    xinfo("xblockacct_t::try_execute_all_block try execute full block. %s,block=%s", dump().c_str(), target_block->dump().c_str());
                     if(false == execute_block(_execute_index.get(),target_block))
                     {
                         xerror("xblockacct_t::try_execute_all_block fail-execute full block,at block=%s",_execute_index->dump().c_str());
@@ -2343,11 +2341,7 @@ namespace top
             }
             while(max_count-- > 0);
 
-            #ifdef DEBUG
-                xdbg("xblockacct_t::try_execute_all_block finish, %s", dump().c_str());
-            #else
-                xinfo("xblockacct_t::try_execute_all_block finish");
-            #endif
+            xdbg("xblockacct_t::try_execute_all_block finish, %s", dump().c_str());
         }
 
         //return map sorted by viewid from lower to high,caller respond to release ptr later

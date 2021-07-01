@@ -144,10 +144,22 @@ bool xunit_maker_t::push_tx(const data::xblock_consensus_para_t & cs_para, const
         return false;
     }
 
-    if (is_match_account_fullunit_limit()) {
-        // send and self tx is filtered when matching fullunit limit
-        if (tx->is_self_tx() || tx->is_send_tx()) {
-            xwarn("xunit_maker_t::push_tx fail-tx filtered for fullunit limit.%s,tx=%s", cs_para.dump().c_str(), tx->dump().c_str());
+    uint64_t current_lightunit_count = get_current_lightunit_count_from_full();
+
+    // send and self tx is filtered when matching fullunit limit
+    if (tx->is_self_tx() || tx->is_send_tx()) {
+        if (is_match_account_fullunit_send_tx_limit(current_lightunit_count)) {
+            xwarn("xunit_maker_t::push_tx fail-tx filtered for fullunit limit.%s,account=%s,lightunit_count=%ld,tx=%s",
+                cs_para.dump().c_str(), get_account().c_str(), current_lightunit_count, tx->dump().c_str());
+            return false;
+        }
+    }
+
+    // recv tx should also limit for fullunit
+    if (tx->is_recv_tx()) {
+        if (is_match_account_fullunit_recv_tx_limit(current_lightunit_count)) {
+            xwarn("xunit_maker_t::push_tx fail-tx filtered for fullunit limit.%s,account=%s,lightunit_count=%ld,tx=%s",
+                cs_para.dump().c_str(), get_account().c_str(), current_lightunit_count, tx->dump().c_str());
             return false;
         }
     }
@@ -344,12 +356,22 @@ bool xunit_maker_t::is_account_locked() const {
     return false;  // TODO(jimmy)
 }
 
-bool xunit_maker_t::is_match_account_fullunit_limit() const {
+uint64_t xunit_maker_t::get_current_lightunit_count_from_full() const {
     base::xvblock_t* prev_block = get_highest_height_block().get();
     uint64_t current_height = prev_block->get_height() + 1;
     uint64_t current_fullunit_height = prev_block->get_block_class() == base::enum_xvblock_class_full ? prev_block->get_height() : prev_block->get_last_full_block_height();
     uint64_t current_lightunit_count = current_height - current_fullunit_height;
-    uint64_t max_limit_lightunit_count = XGET_ONCHAIN_GOVERNANCE_PARAMETER(fullunit_contain_of_unit_num) * 2; // TODO(jimmy)
+    return current_lightunit_count;
+}
+bool xunit_maker_t::is_match_account_fullunit_send_tx_limit(uint64_t current_lightunit_count) const {
+    uint64_t max_limit_lightunit_count = XGET_ONCHAIN_GOVERNANCE_PARAMETER(fullunit_contain_of_unit_num); // TODO(jimmy)
+    if (current_lightunit_count >= max_limit_lightunit_count) {
+        return true;
+    }
+    return false;
+}
+bool xunit_maker_t::is_match_account_fullunit_recv_tx_limit(uint64_t current_lightunit_count) const {
+    uint64_t max_limit_lightunit_count = XGET_ONCHAIN_GOVERNANCE_PARAMETER(fullunit_contain_of_unit_num)*2; // TODO(jimmy)
     if (current_lightunit_count >= max_limit_lightunit_count) {
         return true;
     }
@@ -362,19 +384,16 @@ bool xunit_maker_t::can_make_next_full_block() const {
         return false;
     }
 
-    base::xvblock_t* prev_block = get_highest_height_block().get();
-    uint64_t current_height = prev_block->get_height() + 1;
-    uint64_t current_fullunit_height = prev_block->get_block_class() == base::enum_xvblock_class_full ? prev_block->get_height() : prev_block->get_last_full_block_height();
-    uint64_t current_lightunit_count = current_height - current_fullunit_height;
+    uint64_t current_lightunit_count = get_current_lightunit_count_from_full();
     xassert(current_lightunit_count > 0);
     uint64_t max_limit_lightunit_count = XGET_ONCHAIN_GOVERNANCE_PARAMETER(fullunit_contain_of_unit_num);
     if (current_lightunit_count >= max_limit_lightunit_count) {
         if (get_latest_bstate()->get_unconfirm_sendtx_num() == 0) {
             return true;
         }
-        if (current_lightunit_count >= max_limit_lightunit_count * 5) {  // TODO(jimmy)
-            xwarn("xunit_maker_t::can_make_next_full_block too many lightunit.current_height=%ld,state_height=%ld,lightunit_count=%ld,unconfirm_sendtx_num=%d",
-                current_height,get_latest_bstate()->get_block_height(), current_lightunit_count, get_latest_bstate()->get_unconfirm_sendtx_num());
+        if (current_lightunit_count >= max_limit_lightunit_count * 2) {  // TODO(jimmy)
+            xwarn("xunit_maker_t::can_make_next_full_block too many lightunit.account=%s,current_height=%ld,lightunit_count=%ld,unconfirm_sendtx_num=%d",
+                get_account().c_str(), get_latest_bstate()->get_block_height(), current_lightunit_count, get_latest_bstate()->get_unconfirm_sendtx_num());
         }
     }
     return false;

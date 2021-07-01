@@ -81,10 +81,10 @@ uint64_t xsync_store_t::get_latest_executed_block_height(const std::string & acc
     return m_blockstore->get_latest_executed_block_height(_vaddress);    
 }
 
-base::xauto_ptr<base::xvblock_t> xsync_store_t::load_block_object(const std::string & account, const uint64_t height, bool ask_full_load) {
+base::xauto_ptr<base::xvblock_t> xsync_store_t::load_block_object(const std::string & account, const uint64_t height, bool ask_full_load, uint64_t viewid) {
     base::xvaccount_t _vaddress(account);
     // TODO(jimmy) need changed
-    return m_blockstore->load_block_object(_vaddress, height, 0, ask_full_load);
+    return m_blockstore->load_block_object(_vaddress, height, viewid, ask_full_load);
 }
 
 // force update _highest_connect_block_height

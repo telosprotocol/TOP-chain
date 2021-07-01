@@ -113,6 +113,12 @@ enum E_SIMPLE_METRICS_TAG {
     message_category_end,
     message_category_unknown = message_category_end,
 
+    // sync 
+    xsync_recv_new_block,
+    xsync_recv_new_hash,
+    xsync_recv_invalid_block,
+    xsync_recv_duplicate_block,
+    xsync_recv_block_size,
     e_simple_total,
 };
 using xmetircs_tag_t = E_SIMPLE_METRICS_TAG;
