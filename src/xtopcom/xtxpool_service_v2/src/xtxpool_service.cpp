@@ -314,9 +314,9 @@ void xtxpool_service::on_message_unit_receipt(vnetwork::xvnode_address_t const &
 
     bool is_self_send = (m_vnet_driver->address() == sender);
     if (is_self_send) {
-        XMETRICS_COUNTER_INCREMENT("txpool_received_self_send_receipt_num", 1);
+        XMETRICS_GAUGE(metrics::txpool_received_self_send_receipt_num, 1);
     } else {
-        XMETRICS_COUNTER_INCREMENT("txpool_received_other_send_receipt_num", 1);
+        XMETRICS_GAUGE(metrics::txpool_received_other_send_receipt_num, 1);
     }
     ret = m_para->get_txpool()->push_receipt(tx_ent, is_self_send, false);
     // push success means may be not consensused. duplicate means already committed, and need response recv receipt
@@ -406,9 +406,9 @@ void xtxpool_service::send_receipt_retry(data::xcons_transaction_ptr_t & cons_tx
     send_receipt_real(cons_tx);
 
     if (cons_tx->is_recv_tx()) {
-        XMETRICS_COUNTER_INCREMENT("txpool_recv_tx_retry_send", 1);
+        XMETRICS_GAUGE(metrics::txpool_recv_tx_retry_send, 1);
     } else {
-        XMETRICS_COUNTER_INCREMENT("txpool_confirm_tx_retry_send", 1);
+        XMETRICS_GAUGE(metrics::txpool_confirm_tx_retry_send, 1);
     }
 }
 
@@ -416,9 +416,9 @@ void xtxpool_service::send_receipt_first_time(data::xcons_transaction_ptr_t & co
     xassert(cons_tx->is_receipt_valid());
     send_receipt_real(cons_tx);
     if (cons_tx->is_recv_tx()) {
-        XMETRICS_COUNTER_INCREMENT("txpool_recv_tx_first_send", 1);
+        XMETRICS_GAUGE(metrics::txpool_recv_tx_first_send, 1);
     } else {
-        XMETRICS_COUNTER_INCREMENT("txpool_confirm_tx_first_send", 1);
+        XMETRICS_GAUGE(metrics::txpool_confirm_tx_first_send, 1);
     }
 }
 

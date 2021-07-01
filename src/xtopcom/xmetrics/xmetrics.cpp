@@ -63,6 +63,21 @@ metrics_variant_ptr e_metrics::s_metrics[e_simple_total] = {
     DECL_METRICS(cons_tableblock_backup_finish_succ),
     DECL_METRICS(cons_tableblock_leader_finish_fail),
     DECL_METRICS(cons_tableblock_backup_finish_fail),
+    DECL_METRICS(cons_pacemaker_tc_discontinuity),
+    DECL_METRICS(cons_fail_make_proposal_table_state),
+    DECL_METRICS(cons_fail_make_proposal_consensus_para),
+    DECL_METRICS(cons_fail_verify_proposal_blocks_invalid),
+    DECL_METRICS(cons_fail_verify_proposal_table_state_get),
+    DECL_METRICS(cons_fail_verify_proposal_drand_invalid),
+    DECL_METRICS(cons_fail_verify_proposal_consensus_para_get),
+    DECL_METRICS(cons_fail_verify_proposal_unit_count),
+    DECL_METRICS(cons_fail_make_proposal_table_check_latest_state),
+    DECL_METRICS(cons_fail_verify_proposal_table_check_latest_state),
+    DECL_METRICS(cons_fail_verify_proposal_table_with_local),
+    DECL_METRICS(cons_fail_make_proposal_unit_check_state),
+    DECL_METRICS(cons_fail_make_proposal_view_changed),
+    DECL_METRICS(cons_view_fire_clock_delay),
+    DECL_METRICS(cons_fail_backup_view_not_match),
 
     // store
     DECL_METRICS(store_db_read),
@@ -111,6 +126,15 @@ metrics_variant_ptr e_metrics::s_metrics[e_simple_total] = {
     DECL_METRICS(xsync_recv_invalid_block),
     DECL_METRICS(xsync_recv_duplicate_block),
     DECL_METRICS(xsync_recv_block_size),
+
+    // txpool
+    DECL_METRICS(txpool_received_self_send_receipt_num),
+    DECL_METRICS(txpool_received_other_send_receipt_num),
+    DECL_METRICS(txpool_recv_tx_retry_send),
+    DECL_METRICS(txpool_confirm_tx_retry_send),
+    DECL_METRICS(txpool_recv_tx_first_send),
+    DECL_METRICS(txpool_confirm_tx_first_send),
+    DECL_METRICS(txpool_push_tx_send_fail_pool_full),
 };
 
 void e_metrics::start() {
