@@ -108,11 +108,11 @@ namespace top
             virtual bool        set_lock_block(base::xvblock_t * lastst_lock_block);//update block of  locked one
  
             //block managed fro proposal
-            xproposal_t*        add_proposal(base::xvblock_t * proposal,base::xvblock_t * parent_block,const uint32_t expired_ms);//add into local cache
+            xproposal_t*        add_proposal(base::xvblock_t * proposal,base::xvblock_t * parent_block,const uint32_t expired_ms,base::xvqcert_t * clock_cert);//add into local cache
             bool                add_proposal(xproposal_t & proposal_block);
-            bool                remove_proposal(const uint64_t view_id);
             bool                clean_proposals();
             xproposal_t*        find_proposal(const uint64_t view_id) const;
+            xproposal_t*        get_latest_proposal() const;
             base::xvblock_t*    get_latest_proposal_block() const;
             
             //block manage for certified block

@@ -13,7 +13,9 @@
 #include "xvgenesis.h"
 #include "xvledger/xvdbkey.h"
 
-#define __ALLOW_FORK_LOCK__  // XTODO always allow store multi lock blocks
+#ifdef __ALLOW_FORK_LOCK__
+    #undef __ALLOW_FORK_LOCK__  // XTODO always allow store multi lock blocks
+#endif
 
 namespace top
 {
@@ -461,7 +463,7 @@ namespace top
                 for(auto height_it = m_all_blocks.rbegin(); height_it != m_all_blocks.rend(); ++height_it)//search from highest height
                 {
                     auto & view_map  = height_it->second;
-                    for(auto view_it = view_map.begin(); view_it != view_map.end(); ++view_it) //search from highest view#
+                    for(auto view_it = view_map.rbegin(); view_it != view_map.rend(); ++view_it) //search from highest view#
                     {
                         if( (cert_block == nullptr) && (view_it->second->check_block_flag(base::enum_xvblock_flag_authenticated)) )
                         {
@@ -511,7 +513,7 @@ namespace top
                 {
                     auto & view_map  = height_it->second;
                     all_blocks_at_height.reserve(view_map.size()); //just reserved intead of resizing
-                    for(auto view_it = view_map.begin(); view_it != view_map.end(); ++view_it) //search from lower view#
+                    for(auto view_it = view_map.rbegin(); view_it != view_map.rend(); ++view_it) //search from higher view#
                     {
                         view_it->second->add_ref();
                         all_blocks_at_height.push_back(view_it->second);
@@ -545,7 +547,7 @@ namespace top
                         base::xvbindex_t* highest_commit = NULL;
                         base::xvbindex_t* highest_lock = NULL;
                         base::xvbindex_t* highest_cert = NULL;
-                        for(auto view_it = view_map.begin(); view_it != view_map.end(); ++view_it) //search from highest view#
+                        for(auto view_it = view_map.rbegin(); view_it != view_map.rend(); ++view_it) //search from highest view#
                         {
                             if( (highest_commit == NULL) && (view_it->second->check_block_flag(base::enum_xvblock_flag_committed)) )
                             {
@@ -613,7 +615,7 @@ namespace top
                 if(height_it != m_all_blocks.end())
                 {
                     auto & view_map  = height_it->second;
-                    for(auto view_it = view_map.begin(); view_it != view_map.end(); ++view_it) //search from highest view#
+                    for(auto view_it = view_map.rbegin(); view_it != view_map.rend(); ++view_it) //search from highest view#
                     {
                         if(view_it->second->check_block_flag(request_flag))
                         {
@@ -635,7 +637,7 @@ namespace top
                 for(auto height_it = m_all_blocks.rbegin(); height_it != m_all_blocks.rend(); ++height_it)//search from highest height
                 {
                     auto & view_map  = height_it->second;
-                    for(auto view_it = view_map.begin(); view_it != view_map.end(); ++view_it) //search from highest view#
+                    for(auto view_it = view_map.rbegin(); view_it != view_map.rend(); ++view_it) //search from highest view#
                     {
                         if(view_it->second->check_block_flag(request_flag))
                         {
@@ -656,7 +658,7 @@ namespace top
                 for(auto height_it = m_all_blocks.rbegin(); height_it != m_all_blocks.rend(); ++height_it)//search from highest height
                 {
                     auto & view_map  = height_it->second;
-                    for(auto view_it = view_map.begin(); view_it != view_map.end(); ++view_it) //search from highest view#
+                    for(auto view_it = view_map.rbegin(); view_it != view_map.rend(); ++view_it) //search from highest view#
                     {
                         if(view_it->second->get_block_class() == request_class)
                         {

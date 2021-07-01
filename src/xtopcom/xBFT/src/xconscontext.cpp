@@ -83,12 +83,7 @@ namespace top
                 {
                     allow_update = true;
                 }
-                else if(   (_new_lock->get_height() == m_latest_lock_block->get_height())
-                        && (_new_lock->get_viewid() <= m_latest_lock_block->get_viewid()) )//perfer small viewid
-                {
-                    allow_update = true;
-                }
-                
+ 
                 if(allow_update)
                 {
                     if(   (_new_lock->get_chainid() == m_latest_lock_block->get_chainid())

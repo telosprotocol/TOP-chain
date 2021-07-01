@@ -24,6 +24,7 @@ namespace top
 
             m_block_height          = obj.get_height();
             m_block_viewid          = obj.get_viewid();
+            m_block_viewtoken       = obj.get_viewtoken();
             m_block_hash            = obj.get_block_hash();
             m_last_block_hash       = obj.get_last_block_hash();
             m_last_fullblock_hash   = obj.get_last_full_block_hash();
@@ -51,6 +52,7 @@ namespace top
             m_block_height          = obj.m_block_height;
             m_last_fullblock_height = obj.m_last_fullblock_height;
             m_block_viewid          = obj.m_block_viewid;
+            m_block_viewtoken       = obj.m_block_viewtoken;
             m_next_viewid_offset    = obj.m_next_viewid_offset;
             m_block_hash            = obj.m_block_hash;
             m_last_block_hash       = obj.m_last_block_hash;
@@ -89,6 +91,7 @@ namespace top
             
             m_block_height          = obj.m_block_height;
             m_block_viewid          = obj.m_block_viewid;
+            m_block_viewtoken       = obj.m_block_viewtoken;
             m_block_hash            = obj.m_block_hash;
             m_last_block_hash       = obj.m_last_block_hash;
             m_last_fullblock_hash   = obj.m_last_fullblock_hash;
@@ -155,6 +158,7 @@ namespace top
             
             m_block_height      = 0;
             m_block_viewid      = 0;
+            m_block_viewtoken   = 0;
             m_last_fullblock_height = 0;
             m_next_viewid_offset= 0;
             
@@ -419,6 +423,7 @@ namespace top
             stream.write_compact_var(get_account());
             stream.write_compact_var(m_block_height);
             stream.write_compact_var(m_block_viewid);
+            stream.write_compact_var(m_block_viewtoken);
             stream.write_tiny_string(m_block_hash);
             stream.write_tiny_string(m_last_block_hash);
             stream.write_tiny_string(m_last_fullblock_hash);
@@ -444,6 +449,7 @@ namespace top
                 stream.read_compact_var(account_addr);
                 stream.read_compact_var(m_block_height);
                 stream.read_compact_var(m_block_viewid);
+                stream.read_compact_var(m_block_viewtoken);
                 stream.read_tiny_string(m_block_hash);
                 stream.read_tiny_string(m_last_block_hash);
                 stream.read_tiny_string(m_last_fullblock_hash);

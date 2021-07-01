@@ -107,13 +107,14 @@ namespace top
         public: //below apis are called from engine'own thread
             bool                 is_leader() const {return m_is_leader;}
             bool                 is_voted()  const {return m_is_voted;}
+            bool                 is_certed() const {return m_is_certed;}
             bool                 is_valid_packet(base::xcspdu_t & packet);
             bool                 is_vote_enable() const {return (m_allow_vote > 0);}
             bool                 is_vote_disable() const {return (m_allow_vote < 0);}
             
             const uint64_t       get_expired_ms() const {return m_expired_ms;}
             void                 set_expired_ms(const uint64_t unit_time_ms){ m_expired_ms = unit_time_ms;}
-            
+            void                 mark_certed() { m_is_certed = true;}
             void                 mark_leader() { m_is_leader = true;} //indicate it is leader'original proposal
             void                 mark_voted()  { m_is_voted = true;}  //indicate whether node has voted for proposal
             void                 enable_vote()  { m_allow_vote = 1;}  //allow vote
@@ -137,6 +138,7 @@ namespace top
             bool                           m_is_leader;                 //indicate whether it is generated from leader'proposal
             bool                           m_is_voted;                  //for node mark whether has voted or not
             //some proposal that is behind locked/commit block is not allow vote anymore ,bu keep it and  waiting related commit-cert to reduce sync
+            bool                           m_is_certed;                 //tell whether it has been a valid cert block at leader
             int                            m_allow_vote;                //unknow for 0, false for < 0 and true for > 0
             int                            m_result_verify_proposal;    //indicated what is result of verify_proposal
             xvip2_t                        m_proposal_from_addr;        //record the source addr,so that we may vote it async mode

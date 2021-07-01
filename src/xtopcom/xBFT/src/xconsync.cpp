@@ -204,18 +204,23 @@ namespace top
                         is_proof_check_pass = true;
                     }
                 }
-                else if( (get_lock_block()->get_height() - packet.get_block_height()) < 128 )//search from blockstore at nearby locked block
+                
+                if(false == is_proof_check_pass)
                 {
-                    base::xauto_ptr<base::xvblock_t> proof_block = get_vblockstore()->load_block_object(*this, packet.get_block_height(),packet.get_block_viewid(),false);//packet carry proof 'info
-                    if(proof_block != nullptr)
+                    //search from blockstore at nearby locked block
                     {
-                        if(  (proof_block->get_viewid()    == packet.get_block_viewid())
-                           &&(proof_block->get_viewtoken() == packet.get_block_viewtoken()) )
+                        base::xauto_ptr<base::xvbindex_t> proof_block = get_vblockstore()->load_block_index(*this, packet.get_block_height(),packet.get_block_viewid());//packet carry proof 'info
+                        if(proof_block != nullptr)
                         {
-                            is_proof_check_pass = true;
+                            if(  (proof_block->get_viewid()    == packet.get_block_viewid())
+                               &&(proof_block->get_viewtoken() == packet.get_block_viewtoken()) )
+                            {
+                                is_proof_check_pass = true;
+                            }
                         }
                     }
                 }
+ 
             }
             if(false == is_proof_check_pass)
             {
@@ -437,16 +442,9 @@ namespace top
 
                 if(add_cert_block(_full_block_))//set certified block(QC block)
                 {
-                    if(remove_proposal(_full_block_->get_viewid()))//note:remove_proposal must paired with fire_proposal_finish_event
-                    {
-                        xinfo("xBFTSyncdrv::fire_verify_syncblock,deliver an proposal-and-authed block:%s at node=0x%llx",_full_block_->dump().c_str(),get_xip2_addr().low_addr);
-                        fire_proposal_finish_event(_full_block_, NULL, get_lock_block(), get_latest_cert_block(), get_latest_proposal_block());//call on_consensus_finish(block) to driver context layer
-                    }
-                    else
-                    {
-                        xinfo("xBFTSyncdrv::fire_verify_syncblock,deliver an replicated-and-authed block:%s at node=0x%llx",_full_block_->dump().c_str(),get_xip2_addr().low_addr);
-                        fire_replicate_finish_event(_full_block_);//call on_replicate_finish(block) to driver context layer
-                    }
+                     xinfo("xBFTSyncdrv::fire_verify_syncblock,deliver an proposal-and-authed block:%s at node=0x%llx",_full_block_->dump().c_str(),get_xip2_addr().low_addr);
+                    
+                    fire_proposal_finish_event(_full_block_, NULL, NULL, NULL, NULL);//call on_consensus_finish(block) to driver context layer
                     
                     //now recheck any existing proposal and could push to voting again
                     on_new_block_fire(_full_block_);

@@ -71,6 +71,9 @@ namespace top
             enum_xconsensus_error_undeliver_header  = -15, //header(QC) has missed content
             enum_xconsensus_error_undeliver_block   = -16, //block has missed content
     
+            enum_xconsensus_error_fail_precheck     = -17,
+            enum_xconsensus_error_fail_postcheck    = -18,
+            enum_xconsensus_error_fail_addproposal  = -19,
             
             enum_xconsensus_error_bad_param         = -20,
             enum_xconsensus_error_bad_packet        = -21,

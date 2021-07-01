@@ -142,9 +142,17 @@ namespace top
                 {
                     proposal->set_audit_signature(get_vcertauth()->do_sign(get_xip2_addr(), proposal->get_cert(),base::xtime_utl::get_fast_random64()));//bring leader 'signature
                 }
-
+                
                 //ready to insert cache now
-                base::xauto_ptr<xproposal_t> _proposal_obj(add_proposal(proposal,proposal->get_prev_block(),_evt_obj->get_expired_ms()));//insert to local cache
+                base::xauto_ptr<xproposal_t> _proposal_obj(add_proposal(proposal,proposal->get_prev_block(),_evt_obj->get_expired_ms(),_evt_obj->get_clock_cert()));//insert to local cache
+                if(!_proposal_obj)
+                {
+                    xwarn("xBFTdriver_t::start_consensus,fail-safe_check for proposal_block=%s vs driver=%s,at node=0x%llx",proposal->dump().c_str(),dump().c_str(),get_xip2_addr().low_addr);
+                    
+                    async_fire_proposal_finish_event(enum_xconsensus_error_outofdate,proposal);
+                    return true;
+                }
+                
                 _proposal_obj->add_voted_cert(get_xip2_addr(),_proposal_obj->get_cert(),get_vcertauth()); //count leader 'vote
                 _proposal_obj->mark_leader(); //mark original proposal at leader side
                 _proposal_obj->mark_voted();  //mark voted,for leader it is always true
@@ -302,15 +310,28 @@ namespace top
             _final_proposal_block->set_proposal_source_addr(from_addr);
             _final_proposal_block->set_proposal_msg_nonce(packet.get_msg_nonce());
 
+            int check_result = enum_xconsensus_code_successful;
             //apply safe rule for view-alignment,after sync check.note: event_obj->get_cookie() carry latest viewid at this node
             if(event_obj->get_cookie() != packet.get_block_viewid()) //a proposal not alignment with current view
             {
+                check_result = enum_xconsensus_error_wrong_view;
                 _final_proposal_block->disable_vote(); //disable vote first
                 xwarn("xBFTdriver_t::handle_proposal_msg,fail-unalignment viewid=%llu vs packet=%s.dump=%s at node=0x%llx",event_obj->get_cookie(),packet.dump().c_str(),dump().c_str(),get_xip2_low_addr());
             }
             else
             {
-                 add_proposal(*_final_proposal_block); //add proposal block then
+                if(safe_precheck_for_voting(_final_proposal_block()) == false) //apply the basic safe-rule for block
+                {
+                    check_result = enum_xconsensus_error_fail_precheck;
+                    _final_proposal_block->disable_vote(); //disable vote
+                    xwarn("xBFTdriver_t::vote_for_proposal,fail-precheck for proposal=%s vs local(%s),at node=0x%llx",_peer_block->dump().c_str(),dump().c_str(),get_xip2_low_addr());
+                }
+                else if(false == add_proposal(*_final_proposal_block))//try add proposal block then
+                {
+                     check_result = enum_xconsensus_error_fail_addproposal;
+                     _final_proposal_block->disable_vote(); //disable vote first
+                     xwarn("xBFTdriver_t::vote_for_proposal,fail-add proposal=%s vs local(%s),at node=0x%llx",_peer_block->dump().c_str(),dump().c_str(),get_xip2_low_addr());
+                }
             }
  
             //step#4: load/sync the missed commit,lock and cert blocks
@@ -319,13 +340,17 @@ namespace top
                 if(result_sync_check != enum_xconsensus_code_successful)
                 {
                     xwarn("xBFTdriver_t::handle_proposal_msg,ask sync blocks for proposal(%s),local dump=%s at node=0x%llx",_peer_block->dump().c_str(),dump().c_str(),get_xip2_low_addr());
-                    return result_sync_check;
+                    
+                    if(check_result != enum_xconsensus_code_successful)
+                        return check_result;
+                    else
+                        return result_sync_check;
                 }
             }
             
-            if(_final_proposal_block->is_vote_disable()) //here throw error of wrong view after trigger sync
-                return enum_xconsensus_error_wrong_view;
-                
+            if(check_result != enum_xconsensus_code_successful)
+                return check_result;
+ 
             //step#5: vote_for_proposal
             {
                 const int result_vote_check = vote_for_proposal(_final_proposal_block());
@@ -395,16 +420,10 @@ namespace top
                 return enum_xconsensus_error_not_authorized;
             }
             
-            if(safe_precheck_for_voting(new_proposal) == false) //apply the basic safe-rule for block
-            {
-                xwarn("xBFTdriver_t::vote_for_proposal,fail-an outofdate proposal=%s,at node=0x%llx",_peer_block->dump().c_str(),get_xip2_low_addr());
-                new_proposal->disable_vote(); //disable vote
-                return enum_xconsensus_error_outofdate;
-            }
-            
             //step#5: verify proposal completely.it is a realy heavy job that run at worker thread,then callback
             std::function<void(void*)> _after_verify_proposal_job = [this,peer_addr](void* _block_ptr)->void{
                 xproposal_t* _proposal = ((xproposal_t*)_block_ptr); //callback running at thread of xBFTdriver_t
+                int errcode = _proposal->get_result_of_verify_proposal();
                 if(_proposal->get_result_of_verify_proposal() == enum_xconsensus_code_successful)
                 {
                     if(safe_finalcheck_for_voting(_proposal)) //apply safe rule again,in case mutiple-thread' race
@@ -425,14 +444,16 @@ namespace top
                     else
                     {
                         _proposal->disable_vote(); //disable vote
+                        errcode = enum_xconsensus_error_fail_postcheck;
                     }
                 }
-                else //fail as verify_proposal
+                
+                //fail as verify_proposal
+                if(errcode != enum_xconsensus_code_successful)
                 {
                     _proposal->disable_vote(); //disable vote
-                    remove_proposal(_proposal->get_viewid());//note:remove verify fail proposal  note:remove_proposal must paired with fire_proposal_finish_event
                     const std::string errdetail;
-                    fire_proposal_finish_event(_proposal->get_result_of_verify_proposal(),errdetail,_proposal->get_block(),NULL,NULL,NULL,NULL);
+                    fire_proposal_finish_event(errcode,errdetail,_proposal->get_block(),NULL,NULL,NULL,NULL);
                 }
                 _proposal->release_ref(); //release reference added by fire_verify_proposal_job
             };
@@ -510,9 +531,7 @@ namespace top
                 if(_local_proposal->check_block_flag(base::enum_xvblock_flag_authenticated))
                 {
                     xinfo("xBFTdriver_t::handle_vote_msg,finish voted for proposal block:%s at node=0x%llx",_local_proposal->dump().c_str(),get_xip2_addr().low_addr);
-
-                    remove_proposal(_local_proposal->get_viewid());//note:remove_proposal must paired with fire_proposal_finish_event
-
+ 
                     //step#8: call on_consensus_finish() to let upper layer know it
                     if(add_cert_block(_local_proposal->get_block()))//set certified block(QC block)
                     {
@@ -682,7 +701,7 @@ namespace top
                     //now safe to clean existing proposal
                     xwarn("xBFTdriver_t::handle_commit_msg,fail-leader notify err-code(%d) for this proposal=%s,from packet,at node=0x%llx",_commit_msg.get_commit_error_code(),_local_proposal_block->dump().c_str(),packet.dump().c_str(),get_xip2_low_addr());
 
-                    remove_proposal(_local_proposal_block->get_viewid());//note:remove_proposal must paired with fire_proposal_finish_event
+                    _local_proposal_block->disable_vote(); //just disable but dont delete until higher-view proposal/cert arrive
 
                     fire_proposal_finish_event(_commit_msg.get_commit_error_code(),_commit_msg.get_commit_error_reason(),_local_proposal_block->get_block(), NULL, NULL, get_latest_cert_block(), NULL);//then fire event
                 }
@@ -728,8 +747,8 @@ namespace top
 
                 if(_report_msg.get_latest_cert_viewid() > 0)
                 {
-                    base::xvblock_t * local_latest_cert = find_cert_block(_report_msg.get_latest_cert_viewid());
-                    if(NULL == local_latest_cert)//sync any unexist cert block
+                    base::xvblock_t * local_latest_cert = get_latest_cert_block();
+                    if( (NULL == local_latest_cert) || (local_latest_cert->get_viewid() < _report_msg.get_latest_cert_viewid()) )//sync any unexist cert block
                     {
                         const uint64_t    sync_target_block_height = _report_msg.get_latest_cert_height();
                         const std::string sync_target_block_hash   = _report_msg.get_latest_cert_hash();
@@ -766,11 +785,16 @@ namespace top
                 ++it; //move forward
 
                 xproposal_t * _proposal = old_it->second;
-                if(is_proposal_expire(_proposal))
+                if(_proposal->is_leader()) //backup only expired when received cert or proposal with higher view/height
                 {
-                    timeout_list.push_back(_proposal);
-                    proposal_blocks.erase(old_it);//erase old one
+                    if(is_proposal_expire(_proposal))
+                    {
+                        _proposal->disable_vote();
+                        timeout_list.push_back(_proposal);
+                        proposal_blocks.erase(old_it);//erase old one
+                    }
                 }
+
             }
             notify_proposal_fail(timeout_list,outofdate_list);
             return true;
@@ -793,10 +817,14 @@ namespace top
                 ++it; //move forward
 
                 xproposal_t * _proposal = old_it->second;
-                if(is_proposal_expire(_proposal))
+                if(_proposal->is_leader()) //backup only expired when received cert or proposal with higher view/height
                 {
-                    timeout_list.push_back(_proposal);
-                    proposal_blocks.erase(old_it);//erase old one
+                    if(is_proposal_expire(_proposal))
+                    {
+                        _proposal->disable_vote();
+                        timeout_list.push_back(_proposal);
+                        proposal_blocks.erase(old_it);//erase old one
+                    }
                 }
             }
             notify_proposal_fail(timeout_list,outofdate_list);
@@ -818,24 +846,14 @@ namespace top
                 {
                     if( (_proposal->is_voted() == false) && (_proposal->is_leader() == false) )
                     {
-                        if(sync_for_proposal(_proposal) == enum_xconsensus_code_successful)
+                        if(_proposal->is_vote_disable() == false)//still available
                         {
-                            if(_proposal->is_vote_disable() == false)
+                            if(sync_for_proposal(_proposal) == enum_xconsensus_code_successful)
                             {
                                 vote_for_proposal(_proposal);
                             }
                         }
                     }
-                }
-                else if(_proposal->get_height() == new_cert_block->get_height()) //clean proposal of same height of cert
-                {
-                    _proposal->close();
-                    _proposal->release_ref();
-                    proposal_blocks.erase(old_it);
-                }
-                else if(_proposal->get_height() < new_cert_block->get_height())//for older proposal than cert
-                {
-                    _proposal->disable_vote(); //not allow vote anymore
                 }
             }
 
@@ -1006,11 +1024,8 @@ namespace top
 
                 if(add_cert_block(_full_block_))//set certified block(QC block)
                 {
-                    if(remove_proposal(_full_block_->get_viewid()))//note:remove_proposal must paired with fire_proposal_finish_event
-                        xinfo("xBFTdriver_t::_after_verify_commit_job,deliver an proposal-and-authed block:%s at node=0x%llx",_full_block_->dump().c_str(),get_xip2_addr().low_addr);
-                    else
-                        xinfo("xBFTdriver_t::_after_verify_commit_job,deliver an replicated-and-authed block:%s at node=0x%llx",_full_block_->dump().c_str(),get_xip2_addr().low_addr);
-
+                    xinfo("xBFTdriver_t::_after_verify_commit_job,deliver an proposal-and-authed block:%s at node=0x%llx",_full_block_->dump().c_str(),get_xip2_addr().low_addr);
+                    
                     fire_proposal_finish_event(_full_block_, NULL, NULL, NULL, NULL);//call on_consensus_finish(block) to driver context layer
                     
                     //now recheck any existing proposal and could push to voting again
