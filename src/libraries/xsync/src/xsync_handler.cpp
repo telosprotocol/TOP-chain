@@ -201,8 +201,8 @@ void xsync_handler_t::push_newblock(uint32_t msg_size,
         xtop_vnetwork_message::hash_result_type msg_hash,
         int64_t recv_time) {
 
-    XMETRICS_COUNTER_INCREMENT("sync_pkgs_push_newblock_recv", 1);
-    XMETRICS_COUNTER_INCREMENT("sync_bytes_push_newblock_recv", msg_size);
+    XMETRICS_GAUGE(metrics::xsync_recv_new_block, 1);
+    XMETRICS_GAUGE(metrics::xsync_recv_block_size, msg_size);
 
     auto ptr = make_object_ptr<xsync_message_push_newblock_t>();
     ptr->serialize_from(stream);
@@ -215,6 +215,7 @@ void xsync_handler_t::push_newblock(uint32_t msg_size,
     if (!common::has<common::xnode_type_t::storage>(network_self.type())) {
         xsync_warn("xsync_handler receive push_newblock(target must be archive) %" PRIx64 " %s %s %s",
             msg_hash, block->dump().c_str(), network_self.to_string().c_str(), from_address.to_string().c_str());
+        XMETRICS_GAUGE(metrics::xsync_recv_invalid_block, 1);
         return;
     }
 
@@ -222,17 +223,27 @@ void xsync_handler_t::push_newblock(uint32_t msg_size,
         !common::has<common::xnode_type_t::consensus>(from_address.type())) {
         xsync_warn("xsync_handler receive push_newblock(source must be consensus) %" PRIx64 " %s %s %s",
             msg_hash, block->dump().c_str(), network_self.to_string().c_str(), from_address.to_string().c_str());
+        XMETRICS_GAUGE(metrics::xsync_recv_invalid_block, 1);
         return;
     }
 
     const std::string &address = block->get_account();
     if (!m_role_chains_mgr->exists(address)) {
         xsync_warn("xsync_handler receive push_newblock(no role) %" PRIx64 " %s %s", msg_hash, block->dump().c_str(), from_address.to_string().c_str());
+        XMETRICS_GAUGE(metrics::xsync_recv_invalid_block, 1);
+        return;
+    }
+
+    // check block existed already
+    auto exist_block = m_sync_store->load_block_object(block->get_account(), block->get_height(), false, block->get_viewid());
+    if (exist_block != nullptr) {
+        XMETRICS_GAUGE(metrics::xsync_recv_duplicate_block, 1);
         return;
     }
 
     if (!check_auth(m_certauth, block)) {
         xsync_warn("xsync_handler receive push_newblock(auth failed) %" PRIx64 " %s %s", msg_hash, block->dump().c_str(), from_address.to_string().c_str());
+        XMETRICS_GAUGE(metrics::xsync_recv_invalid_block, 1);
         return;
     }
 
@@ -250,8 +261,8 @@ void xsync_handler_t::push_newblockhash(uint32_t msg_size,
         xtop_vnetwork_message::hash_result_type msg_hash,
         int64_t recv_time) {
 
-    XMETRICS_COUNTER_INCREMENT("sync_pkgs_push_newblockhash_recv", 1);
-    XMETRICS_COUNTER_INCREMENT("sync_bytes_push_newblockhash_recv", msg_size);
+    XMETRICS_GAUGE(metrics::xsync_recv_new_hash, 1);
+    XMETRICS_GAUGE(metrics::xsync_recv_block_size, msg_size);
 
     auto ptr = make_object_ptr<xsync_message_general_newblockhash_t>();
     ptr->serialize_from(stream);
@@ -292,7 +303,7 @@ void xsync_handler_t::broadcast_newblockhash(uint32_t msg_size,
         int64_t recv_time) {
 
     XMETRICS_COUNTER_INCREMENT("sync_pkgs_broadcast_newblockhash_recv", 1);
-    XMETRICS_COUNTER_INCREMENT("sync_bytes_broadcast_newblockhash_recv", msg_size);
+    XMETRICS_GAUGE(metrics::xsync_recv_block_size, msg_size);
 
     auto ptr = make_object_ptr<xsync_message_general_newblockhash_t>();
     ptr->serialize_from(stream);
