@@ -202,10 +202,10 @@ void xchain_block_fetcher_t::import_block(xblock_ptr_t &block) {
     xsync_info("chain_fetcher handle_block %s,height=%lu,viewid=%lu,hash=%s,",
             m_address.c_str(), block->get_height(), block->get_viewid(), to_hex_str(block->get_block_hash()).c_str());
 
-    if (is_beacon_table(m_address) && !check_auth(m_certauth, block)) {
-        xsync_warn("chain_fetcher handle_block auth failed %s", block->dump().c_str());
-        return;
-    }
+    // if (is_beacon_table(m_address) && !check_auth(m_certauth, block)) {
+    //     xsync_warn("chain_fetcher handle_block auth failed %s", block->dump().c_str());
+    //     return;
+    // }
 
     base::xvblock_t* vblock = dynamic_cast<base::xvblock_t*>(block.get());
     bool ret = m_sync_store->store_block(vblock);
