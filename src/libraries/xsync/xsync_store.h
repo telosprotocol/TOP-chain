@@ -23,7 +23,7 @@ public:
     virtual base::xauto_ptr<base::xvblock_t> get_latest_locked_block(const std::string & account) = 0;
     virtual base::xauto_ptr<base::xvblock_t> get_latest_cert_block(const std::string & account) = 0;
 
-    virtual base::xauto_ptr<base::xvblock_t> load_block_object(const std::string & account, const uint64_t height, bool ask_full_load) = 0;
+    virtual base::xauto_ptr<base::xvblock_t> load_block_object(const std::string & account, const uint64_t height, bool ask_full_load, uint64_t viewid = 0) = 0;
     virtual base::xauto_ptr<base::xvblock_t> get_latest_full_block(const std::string & account) = 0;
     virtual base::xauto_ptr<base::xvblock_t> query_block(const base::xvaccount_t &account, uint64_t height, const std::string &hash) = 0;
     virtual base::xauto_ptr<base::xvblock_t> get_latest_start_block(const std::string & account, enum_chain_sync_policy sync_policy) = 0;
@@ -51,7 +51,7 @@ public:
     virtual base::xauto_ptr<base::xvblock_t> get_latest_locked_block(const std::string & account) {return nullptr;}
     virtual base::xauto_ptr<base::xvblock_t> get_latest_cert_block(const std::string & account) {return nullptr;}
 
-    virtual base::xauto_ptr<base::xvblock_t> load_block_object(const std::string & account, const uint64_t height, bool ask_full_load) {return nullptr;}
+    virtual base::xauto_ptr<base::xvblock_t> load_block_object(const std::string & account, const uint64_t height, bool ask_full_load, uint64_t viewid = 0) {return nullptr;}
     virtual base::xauto_ptr<base::xvblock_t> get_latest_full_block(const std::string & account) {return nullptr;}
     virtual base::xauto_ptr<base::xvblock_t> query_block(const base::xvaccount_t &account, uint64_t height, const std::string &hash) {return nullptr;}
     virtual base::xauto_ptr<base::xvblock_t> get_latest_start_block(const std::string & account, enum_chain_sync_policy sync_policy) {return nullptr;}
@@ -78,7 +78,7 @@ public:
     base::xauto_ptr<base::xvblock_t> get_latest_locked_block(const std::string & account) override;
     base::xauto_ptr<base::xvblock_t> get_latest_cert_block(const std::string & account) override;
 
-    base::xauto_ptr<base::xvblock_t> load_block_object(const std::string & account, const uint64_t height, bool ask_full_load) override;
+    base::xauto_ptr<base::xvblock_t> load_block_object(const std::string & account, const uint64_t height, bool ask_full_load, uint64_t viewid = 0) override;
     base::xauto_ptr<base::xvblock_t> get_latest_full_block(const std::string & account) override;
     base::xauto_ptr<base::xvblock_t> query_block(const base::xvaccount_t & account, uint64_t height, const std::string &hash) override;
     base::xauto_ptr<base::xvblock_t> get_latest_start_block(const std::string & account, enum_chain_sync_policy sync_policy) override;
