@@ -571,35 +571,35 @@ void xtop_vhost::do_handle_network_data() {
 #endif
                     case xmessage_category_consensus:
                     {
-                        XMETRICS_GAUGE(metrics::message_category_consensus, 1);
+                        XMETRICS_GAUGE(metrics::message_category_consensus_contains_duplicate, 1);
                         break;
                     }
                     case xmessage_category_timer:
                     {
-                        XMETRICS_GAUGE(metrics::message_category_timer, 1);
+                        XMETRICS_GAUGE(metrics::message_category_timer_contains_duplicate, 1);
                         break;
                     }
                     case xmessage_category_txpool:
                     {
-                        XMETRICS_GAUGE(metrics::message_category_txpool, 1);
+                        XMETRICS_GAUGE(metrics::message_category_txpool_contains_duplicate, 1);
                         break;
                     }
 
                     case xmessage_category_rpc:
                     {
-                        XMETRICS_GAUGE(metrics::message_category_rpc, 1);
+                        XMETRICS_GAUGE(metrics::message_category_rpc_contains_duplicate, 1);
                         break;
                     }
 
                     case xmessage_category_sync:
                     {
-                        XMETRICS_GAUGE(metrics::message_category_sync, 1);
+                        XMETRICS_GAUGE(metrics::message_category_sync_contains_duplicate, 1);
                         break;
                     }
 
                     case xmessage_block_broadcast:
                     {
-                        XMETRICS_GAUGE(metrics::message_block_broadcast, 1);
+                        XMETRICS_GAUGE(metrics::message_block_broadcast_contains_duplicate, 1);
                         break;
                     }
 #if defined(__clang__)
@@ -612,7 +612,7 @@ void xtop_vhost::do_handle_network_data() {
                     default:
                     {
                         assert(false);
-                        XMETRICS_GAUGE(metrics::message_category_unknown, 1);
+                        XMETRICS_GAUGE(metrics::message_category_unknown_contains_duplicate, 1);
                         break;
                     }
                     }
