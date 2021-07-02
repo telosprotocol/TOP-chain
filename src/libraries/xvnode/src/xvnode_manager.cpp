@@ -84,7 +84,7 @@ std::pair<std::vector<common::xip2_t>, std::vector<common::xip2_t>> xtop_vnode_m
         bool vnode_outdated{false};
         if (outdated_group != nullptr && outdated_group->contains(host_node_id)) {
             auto const & address = outdated_group->node_element(host_node_id)->address();
-            assert(address.slot_id().has_value());
+            assert(!broadcast(address.slot_id()));
 
             auto const it = m_all_nodes.find(address);
             if (it != std::end(m_all_nodes)) {
@@ -108,7 +108,7 @@ std::pair<std::vector<common::xip2_t>, std::vector<common::xip2_t>> xtop_vnode_m
 
         if (faded_group != nullptr && faded_group->contains(host_node_id)) {
             auto const & address = faded_group->node_element(host_node_id)->address();
-            assert(address.slot_id().has_value());
+            assert(!broadcast(address.slot_id()));
 
             auto const & it = m_all_nodes.find(address);
             if (it != std::end(m_all_nodes)) {
@@ -125,7 +125,7 @@ std::pair<std::vector<common::xip2_t>, std::vector<common::xip2_t>> xtop_vnode_m
             vnode_outdated = false;
 
             auto const & address = added_group->node_element(host_node_id)->address();
-            assert(address.slot_id().has_value());
+            assert(!broadcast(address.slot_id()));
 
             auto const it = m_all_nodes.find(address);
             if (it != std::end(m_all_nodes)) {

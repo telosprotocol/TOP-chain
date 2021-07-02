@@ -2,6 +2,7 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
+#include "xbase/xbase.h"
 #include "xbasic/xmemory.hpp"
 #include "xcommon/xsharding_info.h"
 #include "xconfig/xconfig_register.h"
@@ -24,7 +25,7 @@ TEST(xtop_router, address_of_book_id) {
     auto auditor_group_count = XGET_CONFIG(auditor_group_count);
     auto validator_group_count = XGET_CONFIG(validator_group_count);
 
-    for (auto i = 0u; i < 128u; ++i) {
+    for (auto i = 0u; i < enum_vbucket_has_books_count; ++i) {
         auto const empty_address = router->address_of_book_id(static_cast<std::uint16_t>(i), top::common::xnode_type_t::edge, top::common::xtopchain_network_id);
         EXPECT_TRUE(empty_address.empty());
 
@@ -43,7 +44,7 @@ TEST(xtop_router, address_of_book_id) {
             top::common::xtopchain_network_id,
             top::common::xdefault_zone_id,
             top::common::xdefault_cluster_id,
-            top::common::xgroup_id_t{ top::common::xauditor_group_id_value_begin + i / (128u / auditor_group_count) },
+            top::common::xgroup_id_t{ top::common::xauditor_group_id_value_begin + i / (enum_vbucket_has_books_count / auditor_group_count) },
         };
 
         EXPECT_EQ(expected_auditor_address, auditor_address);
@@ -53,7 +54,7 @@ TEST(xtop_router, address_of_book_id) {
             top::common::xtopchain_network_id,
             top::common::xdefault_zone_id,
             top::common::xdefault_cluster_id,
-            top::common::xgroup_id_t{ top::common::xvalidator_group_id_value_begin + i / (128u / validator_group_count) },
+            top::common::xgroup_id_t{ top::common::xvalidator_group_id_value_begin + i / (enum_vbucket_has_books_count / validator_group_count) },
         };
         EXPECT_EQ(expected_validator_address, validator_address);
     }

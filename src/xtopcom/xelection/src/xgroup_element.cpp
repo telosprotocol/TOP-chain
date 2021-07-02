@@ -34,7 +34,7 @@ bool xtop_group_element::exist(common::xslot_id_t const & slot_id) const {
 
 std::shared_ptr<xnode_element_t> xtop_group_element::node_element(common::xslot_id_t const & slot_id, std::error_code & ec) const {
     assert(!ec);
-    if (slot_id.empty()) {
+    if (broadcast(slot_id)) {
         ec = xdata_accessor_errc_t::slot_id_empty;
 
         xwarn("%s network %" PRIu32 " zone %" PRIu16 " cluster %" PRIu16 " group %" PRIu16 ": looking for an empty slot id",
@@ -47,7 +47,7 @@ std::shared_ptr<xnode_element_t> xtop_group_element::node_element(common::xslot_
         return {};
     }
 
-    assert(!slot_id.empty());
+    assert(!broadcast(slot_id));
 
     XLOCK(m_node_elements_mutex);
     auto const it = m_node_elements.find(slot_id);
@@ -143,7 +143,7 @@ void xtop_group_element::set_node_elements(std::map<common::xslot_id_t, data::el
         auto const & election_info = election_info_bundle.election_info();
         auto const & node_id = election_info_bundle.node_id();
 
-        if (slot_id.empty() || common::broadcast(slot_id) || election_info_bundle.empty()) {
+        if (common::broadcast(slot_id) || election_info_bundle.empty()) {
             continue;
         }
 
