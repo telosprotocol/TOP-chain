@@ -192,9 +192,12 @@ namespace top
 
                 xinfo("xBFTdriver_t::start_consensus --> successful at node=0x%llx,for proposal=%s with prev=%s",self_addr.low_addr,proposal->dump().c_str(),proposal->get_prev_block()->dump().c_str());
 
+                std::string latest_clock_cert;
+                _evt_obj->get_clock_cert()->serialize_to_string(latest_clock_cert);
+                
                 std::string last_block_cert;
                 proposal->get_prev_block()->get_cert()->serialize_to_string(last_block_cert);
-                fire_pdu_event_up(xproposal_msg_t::get_msg_type(), msg_stream, 0, self_addr, broadcast_addr, proposal,last_block_cert);
+                fire_pdu_event_up(xproposal_msg_t::get_msg_type(), msg_stream, 0, self_addr, broadcast_addr, proposal,last_block_cert,latest_clock_cert);
             }
             return true;
         }
@@ -581,7 +584,7 @@ namespace top
                         //at last send out commit message
                         //addres of -1 means broadcast to all consensus node,0 means not specified address that upper layer need fillin based on message type
                         xvip2_t broadcast_addr = {(xvip_t)-1,(uint64_t)-1};
-                        fire_pdu_event_up(xcommit_msg_t::get_msg_type(),msg_stream,1,get_xip2_addr(),broadcast_addr,_local_proposal->get_block(),_commit_block_cert);//ship block cert by packet
+                        fire_pdu_event_up(xcommit_msg_t::get_msg_type(),msg_stream,1,get_xip2_addr(),broadcast_addr,_local_proposal->get_block(),_commit_block_cert,std::string());//ship block cert by packet
                         
                         //change-log: sendout commit-packet to replicator first,then let leader continue handle it
                         //fire proposal event now,note:the leader is possible to still be leader of next round
@@ -921,7 +924,7 @@ namespace top
                         _to_remove->dump().c_str(),get_xip2_low_addr(),
                         _to_remove->get_voted_auditors().size(),_to_remove->get_cert()->get_auditor_threshold(),_to_remove->get_voted_validators().size(),_to_remove->get_cert()->get_validator_threshold());
 
-                        fire_pdu_event_up(xcommit_msg_t::get_msg_type(),msg_stream,0,get_xip2_addr(),broadcast_addr,_to_remove->get_block(),_commit_result_cert);//_commit_result_cert embbed into packet'header
+                        fire_pdu_event_up(xcommit_msg_t::get_msg_type(),msg_stream,0,get_xip2_addr(),broadcast_addr,_to_remove->get_block(),_commit_result_cert,std::string());//_commit_result_cert embbed into packet'header
                     }
                     else
                     {
