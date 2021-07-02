@@ -49,12 +49,20 @@ void xtxpool_t::print_statistic_values() const {
     m_statistic.print();
 }
 
-bool xtxpool_t::is_consensused_recv_receiptid(const std::string & from_table_addr, const std::string & to_table_addr, uint64_t receipt_id) const {
-    auto table = get_txpool_table_by_addr(to_table_addr);
+bool xtxpool_t::is_consensused_recv_receiptid(const std::string & from_addr, const std::string & to_addr, uint64_t receipt_id) const {
+    auto table = get_txpool_table_by_addr(to_addr);
     if (table == nullptr) {
         return false;
     }
-    return table->is_consensused_recv_receiptid(from_table_addr, receipt_id);
+    return table->is_consensused_recv_receiptid(from_addr, receipt_id);
+}
+
+bool xtxpool_t::is_consensused_confirm_receiptid(const std::string & from_addr, const std::string & to_addr, uint64_t receipt_id) const {
+    auto table = get_txpool_table_by_addr(from_addr);
+    if (table == nullptr) {
+        return false;
+    }
+    return table->is_consensused_confirm_receiptid(to_addr, receipt_id);
 }
 
 const xcons_transaction_ptr_t xtxpool_t::pop_tx(const tx_info_t & txinfo) {

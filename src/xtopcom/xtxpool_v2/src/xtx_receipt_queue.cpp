@@ -350,6 +350,22 @@ void xreceipt_queue_new_t::update_receipt_id_by_confirmed_tx(const tx_info_t & t
     }
 }
 
+uint64_t xreceipt_queue_new_t::get_latest_recv_receipt_id(base::xtable_shortid_t peer_table_sid) const {
+    auto it = m_recv_tx_peer_table_map.find(peer_table_sid);
+    if (it != m_recv_tx_peer_table_map.end()) {
+        return it->second->get_latest_receipt_id();
+    }
+    return 0;
+}
+
+uint64_t xreceipt_queue_new_t::get_latest_confirm_receipt_id(base::xtable_shortid_t peer_table_sid) const {
+    auto it = m_confirm_tx_peer_table_map.find(peer_table_sid);
+    if (it != m_confirm_tx_peer_table_map.end()) {
+        return it->second->get_latest_receipt_id();
+    }
+    return 0;
+}
+
 const std::vector<xtxpool_table_lacking_receipt_ids_t> xreceipt_queue_new_t::get_lacking_recv_tx_ids(uint32_t max_num) const {
     return get_lacking_receipt_ids(m_recv_tx_peer_table_map, max_num);
 }

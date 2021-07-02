@@ -446,10 +446,23 @@ xcons_transaction_ptr_t xtxpool_table_t::get_unconfirmed_tx(const std::string & 
     return m_unconfirmed_tx_queue.get_unconfirmed_tx(to_table_addr, receipt_id);
 }
 
-bool xtxpool_table_t::is_consensused_recv_receiptid(const std::string & from_table_addr, uint64_t receipt_id) const {
-    base::xvaccount_t vaccount(from_table_addr);
+bool xtxpool_table_t::is_consensused_recv_receiptid(const std::string & from_addr, uint64_t receipt_id) const {
+    base::xvaccount_t vaccount(from_addr);
     auto peer_table_sid = vaccount.get_short_table_id();
-    if (receipt_id > m_receipt_state_cache.get_recvid_max(peer_table_sid)) {
+    uint64_t state_cache_receipt_id_max = m_receipt_state_cache.get_recvid_max(peer_table_sid);
+    uint64_t tx_cache_receipt_id_max = m_txmgr_table.get_latest_recv_receipt_id(peer_table_sid);
+    if (receipt_id > state_cache_receipt_id_max && receipt_id > tx_cache_receipt_id_max) {
+        return false;
+    }
+    return true;
+}
+
+bool xtxpool_table_t::is_consensused_confirm_receiptid(const std::string & to_addr, uint64_t receipt_id) const {
+    base::xvaccount_t vaccount(to_addr);
+    auto peer_table_sid = vaccount.get_short_table_id();
+    uint64_t state_cache_receipt_id_max = m_receipt_state_cache.get_confirmid_max(peer_table_sid);
+    uint64_t tx_cache_receipt_id_max = m_txmgr_table.get_latest_confirm_receipt_id(peer_table_sid);
+    if (receipt_id > state_cache_receipt_id_max && receipt_id > tx_cache_receipt_id_max) {
         return false;
     }
     return true;

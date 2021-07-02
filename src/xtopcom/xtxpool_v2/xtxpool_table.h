@@ -86,7 +86,8 @@ public:
     void add_shard(xtxpool_shard_info_t * shard);
     void remove_shard(xtxpool_shard_info_t * shard);
     bool no_shard() const;
-    bool is_consensused_recv_receiptid(const std::string & from_table_addr, uint64_t receipt_id) const;
+    bool is_consensused_recv_receiptid(const std::string & from_addr, uint64_t receipt_id) const;
+    bool is_consensused_confirm_receiptid(const std::string & to_addr, uint64_t receipt_id) const;
 
 private:
     bool is_account_need_update(const std::string & account_addr) const;

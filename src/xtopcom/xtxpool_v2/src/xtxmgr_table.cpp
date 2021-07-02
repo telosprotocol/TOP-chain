@@ -180,6 +180,14 @@ void xtxmgr_table_t::clear_expired_txs() {
     m_pending_accounts.clear_expired_txs();
 }
 
+uint64_t xtxmgr_table_t::get_latest_recv_receipt_id(base::xtable_shortid_t peer_table_sid) const {
+    return m_new_receipt_queue.get_latest_recv_receipt_id(peer_table_sid);
+}
+
+uint64_t xtxmgr_table_t::get_latest_confirm_receipt_id(base::xtable_shortid_t peer_table_sid) const {
+    return m_new_receipt_queue.get_latest_confirm_receipt_id(peer_table_sid);
+}
+
 void xtxmgr_table_t::send_tx_queue_to_pending() {
     std::vector<std::shared_ptr<xtx_entry>> expired_send_txs;
     std::vector<std::shared_ptr<xtx_entry>> push_succ_send_txs;
