@@ -62,7 +62,7 @@ void usage() {
     std::cout << "------- usage -------" << std::endl;
     std::cout << "- ./xdb_export <config_json_file> <function_name>" << std::endl;
     std::cout << "    - <function_name>:" << std::endl;
-    std::cout << "        - all_account" << std::endl;
+    std::cout << "        - checkout_all_user" << std::endl;
     std::cout << "        - check_fast_sync [table|unit|account]" << std::endl;
     std::cout << "        - check_block_exist <account> <height>" << std::endl;
     std::cout << "        - check_tx_info [table]" << std::endl;
@@ -140,19 +140,16 @@ public:
         contract::xcontract_manager_t::instance().init(make_observer(m_store), m_syncstore);
     }
 
-    void get_all_unit_account(std::set<std::string> & accounts_set, json & accounts_json) {
+    void get_all_unit_account(std::set<std::string> & accounts_set) {
         if (!ALWAYS_OVERWRITE) {
             try {
                 std::ifstream all_account_file("all_account.json");
                 json j;
                 all_account_file >> j;
-                if ((j.find("sharding@0") != j.end())&&(j.find("zec@0") != j.end())&&(j.find("beacon@0") != j.end())) {
-                    std::cout << "all_account.json file already exist" << std::endl;
-                    accounts_json = j;
+                if (!j.empty()) {
                     for (auto _table : j) {
                         for (auto _acc : _table) {
                             accounts_set.insert(_acc.get<std::string>());
-                            // std::cout << _acc << std::endl;
                         }
                     }
                     return;
@@ -161,135 +158,79 @@ public:
             }
         }
 
-        const std::vector<std::pair<std::string, std::string>> addr2name = {
-            std::make_pair(std::string{sys_contract_sharding_table_block_addr}, "sharding"),
-            std::make_pair(std::string{sys_contract_zec_table_block_addr}, "zec"),
-            std::make_pair(std::string{sys_contract_beacon_table_block_addr}, "beacon"),
-        };
-        for (auto const & _p : addr2name) {
-            for (auto index = 0; index < 256; ++index) {
-                std::string address = _p.first + "@" + std::to_string(index);
-                auto latest_block = m_blockstore->get_latest_committed_block(address);
-                auto block_height = latest_block->get_height();
-                if (block_height)
-                    std::cout << index << ": " << block_height << " " << std::endl;
-
-                std::set<std::string> tmp_set;
-                for (uint64_t h = 0; h <= block_height; ++h) {
-                    auto vblock = m_blockstore->load_block_object(address,h,0,true);
-                    data::xblock_t * block = dynamic_cast<data::xblock_t *>(vblock.get());
-                    if (block != nullptr) {
-                        assert(block->get_block_level() == base::enum_xvblock_level_table);
-                        auto const & units = block->get_tableblock_units(false);
-                        if (!units.empty()) {
-                            for (auto & unit : units) {
-                                auto unit_address = unit->get_block_owner();
-                                tmp_set.insert(unit_address);
-                            }
-                        }
-                    }
-                }
-                for (auto & s : tmp_set) {
-                    accounts_set.insert(s);
-                    accounts_json[std::string{_p.second + "@" + std::to_string(index)}].push_back(s);
-                }
-            }
-        }
+        gen_all_unit_account_file2(accounts_set);
     }
 
     std::vector<std::string> get_all_unit_account() {
-        json accounts_json;
-        std::vector<std::string> accounts_vec; 
-        if (!ALWAYS_OVERWRITE) {
-            try {
-                std::ifstream all_account_file("all_account.json");
-                json j;
-                all_account_file >> j;
-                if ((j.find("sharding@0") != j.end())&&(j.find("zec@0") != j.end())&&(j.find("beacon@0") != j.end())) {
-                    std::cout << "all_account.json file already exist" << std::endl;
-                    accounts_json = j;
-                    for (auto _table : j) {
-                        for (auto _acc : _table) {
-                            accounts_vec.emplace_back(_acc.get<std::string>());
-                        }
-                    }
-                    return accounts_vec;
-                }
-            } catch (...) {
-            }
+        std::vector<std::string> accounts_vec;
+        std::set<std::string> accounts_set;
+        get_all_unit_account(accounts_set);
+        for (auto const & item : accounts_set) {
+            accounts_vec.emplace_back(item);
         }
-
-        const std::vector<std::pair<std::string, std::string>> addr2name = {
-            std::make_pair(std::string{sys_contract_sharding_table_block_addr}, "sharding"),
-            std::make_pair(std::string{sys_contract_zec_table_block_addr}, "zec"),
-            std::make_pair(std::string{sys_contract_beacon_table_block_addr}, "beacon"),
-        };
-        for (auto const & _p : addr2name) {
-            for (auto index = 0; index < 256; ++index) {
-                std::string address = _p.first + "@" + std::to_string(index);
-                auto latest_block = m_blockstore->get_latest_committed_block(address);
-                auto block_height = latest_block->get_height();
-                if (block_height)
-                    std::cout << index << ": " << block_height << " " << std::endl;
-
-                std::set<std::string> tmp_set;
-                for (uint64_t h = 0; h <= block_height; ++h) {
-                    auto vblock = m_blockstore->load_block_object(address,h,0,true);
-                    data::xblock_t * block = dynamic_cast<data::xblock_t *>(vblock.get());
-                    if (block != nullptr) {
-                        assert(block->get_block_level() == base::enum_xvblock_level_table);
-                        auto const & units = block->get_tableblock_units(false);
-                        if (!units.empty()) {
-                            for (auto & unit : units) {
-                                auto unit_address = unit->get_block_owner();
-                                tmp_set.insert(unit_address);
-                            }
-                        }
-                    }
-                }
-                for (auto & s : tmp_set) {
-                    accounts_vec.emplace_back(s);
-                    accounts_json[std::string{_p.second + "@" + std::to_string(index)}].push_back(s);
-                }
-            }
-        }
-
         return accounts_vec;
     }
 
     static std::vector<std::string> get_all_table_account() {
         std::vector<std::string> account_vec;
-        const std::map<std::pair<std::string, std::string>, int> addr2name = {
-            std::make_pair(std::make_pair(std::string{sys_contract_sharding_table_block_addr}, "sharding"), 256),
-            std::make_pair(std::make_pair(std::string{sys_contract_zec_table_block_addr}, "zec"), MAIN_CHAIN_ZEC_TABLE_USED_NUM),
-            std::make_pair(std::make_pair(std::string{sys_contract_beacon_table_block_addr}, "beacon"), MAIN_CHAIN_REC_TABLE_USED_NUM),
+        const std::vector<std::pair<std::string, int>> addr2name = {
+            std::make_pair(std::string{sys_contract_sharding_table_block_addr}, 256),
+            std::make_pair(std::string{sys_contract_zec_table_block_addr}, MAIN_CHAIN_ZEC_TABLE_USED_NUM),
+            std::make_pair(std::string{sys_contract_beacon_table_block_addr}, MAIN_CHAIN_REC_TABLE_USED_NUM),
         };
         for (auto const & _p : addr2name) {
             for (auto index = 0; index < _p.second; ++index) {
-                std::string address = _p.first.first + "@" + std::to_string(index);
+                std::string address = _p.first + "@" + std::to_string(index);
                 account_vec.emplace_back(address);
             }
         }
         return account_vec;
     }
 
-    void query_all_sync_result(std::vector<std::string> const & table, std::vector<std::string> const & unit) {
-        auto thread_helper = [](db_export_tools *arg, std::vector<std::string> const & account_vec, bool is_table) {
-            arg->query_all_sync_result(account_vec, is_table);
-        };
-        std::thread th1(thread_helper, this, table, true);
-        std::thread th2(thread_helper, this, unit, false);
-        th1.join();
-        th2.join();
-    }
-
     void query_all_sync_result(std::vector<std::string> const & accounts_vec, bool is_table) {
         json result_json;
-        for(auto const & account : accounts_vec) {
-            json j;
-            query_sync_result(account, j);
-            result_json[account] = j;
+        uint32_t thread_num = 8;
+        if (accounts_vec.size() < thread_num) {
+            for(auto const & account : accounts_vec) {
+                json j;
+                query_sync_result(account, j);
+                result_json[account] = j;
+            }
+        } else {
+            uint32_t address_per_thread = accounts_vec.size() / thread_num;
+            std::vector<std::vector<std::string>> accounts_vec_split;
+            std::vector<json> j_vec(thread_num);
+            for (size_t i = 0; i < thread_num; i++) {
+                uint32_t start_index = i * address_per_thread;
+                uint32_t end_index = (i == (thread_num - 1)) ? accounts_vec.size() : ((i + 1) * address_per_thread);
+                std::vector<std::string> thread_address;
+                for (auto j = start_index; j < end_index; j++) {
+                    thread_address.emplace_back(accounts_vec[j]);
+                }
+                accounts_vec_split.emplace_back(thread_address);
+            }
+            auto thread_helper = [&accounts_vec_split, &j_vec](db_export_tools *arg, int index) {
+                for (auto const & account : accounts_vec_split[index]) {
+                    json j;
+                    arg->query_sync_result(account, j);
+                    j_vec[index][account] = j;
+                }
+            };
+            std::vector<std::thread> all_thread;
+            for (auto i = 0U; i < thread_num; i++) {
+                std::thread th(thread_helper, this, i);
+                all_thread.emplace_back(std::move(th));
+            }
+            for (auto i = 0U; i < thread_num; i++) {
+                all_thread[i].join();
+            }
+            for (auto const & j : j_vec) {            
+                for (auto acc = j.begin(); acc != j.end(); acc++) {
+                    result_json[acc.key()] = acc.value();
+                }
+            }
         }
+
         std::string filename;
         if (accounts_vec.size() == 1) {
             filename = accounts_vec[0] + "_sync_result.json";
@@ -442,6 +383,116 @@ public:
     }
 
 private:
+    void gen_all_unit_account_file(std::set<std::string> & accounts_set) {
+        std::map<std::string, std::string> addr2name = {
+            std::make_pair(std::string{sys_contract_sharding_table_block_addr}, "sharding"),
+            std::make_pair(std::string{sys_contract_zec_table_block_addr}, "zec"),
+            std::make_pair(std::string{sys_contract_beacon_table_block_addr}, "beacon"),
+        };
+
+        json accounts_json;
+        std::cout << "all_account.json generating..." << std::endl;
+        auto const & table_vec = get_all_table_account();
+        for (auto const & account : table_vec) {
+            std::set<std::string> tmp_set;
+            this->query_unit_account(account, tmp_set);
+            for (auto & s : tmp_set) {
+                accounts_set.insert(s);
+                accounts_json[account].push_back(s);
+            }
+        }
+
+        std::ofstream out_json("all_account.json");
+        out_json << std::setw(4) << accounts_json;
+        std::cout << "===> all_account.json generated success!" << std::endl;
+    }
+
+    void gen_all_unit_account_file2(std::set<std::string> & accounts_set) {
+        std::cout << "all_account.json generating..." << std::endl;
+        
+        auto const & table_vec = get_all_table_account();
+        uint32_t thread_num = 8;
+        uint32_t address_per_thread = table_vec.size() / thread_num;
+        std::vector<std::vector<std::string>> table_vec_split;
+        std::vector<json> j_vec(thread_num);
+        for (size_t i = 0; i < thread_num; i++) {
+            uint32_t start_index = i * address_per_thread;
+            uint32_t end_index = (i == (thread_num - 1)) ? table_vec.size() : ((i + 1) * address_per_thread);
+            std::vector<std::string> thread_address;
+            for (auto j = start_index; j < end_index; j++) {
+                thread_address.emplace_back(table_vec[j]);
+            }
+            table_vec_split.emplace_back(thread_address);
+        }
+        auto thread_helper = [&table_vec_split, &j_vec](db_export_tools *arg, int index) {
+            for (auto const & account : table_vec_split[index]) {
+                std::set<std::string> tmp_set;
+                arg->query_unit_account2(account, tmp_set);
+                for (auto & s : tmp_set) {
+                    j_vec[index][account].push_back(s);
+                }
+            }
+        };
+        std::vector<std::thread> all_thread;
+        for (auto i = 0U; i < thread_num; i++) {
+            std::thread th(thread_helper, this, i);
+            all_thread.emplace_back(std::move(th));
+        }
+        for (auto i = 0U; i < thread_num; i++) {
+            all_thread[i].join();
+        }
+        json accounts_json;
+        for (auto const & j : j_vec) {            
+            for (auto table = j.begin(); table != j.end(); table++) {
+                for (auto const & acc : table.value()) {
+                    accounts_set.insert(acc.get<std::string>());
+                }
+                accounts_json[table.key()] = table.value();
+            }
+        }
+        std::ofstream out_json("all_account.json");
+        out_json << std::setw(4) << accounts_json;
+        std::cout << "===> all_account.json generated success!" << std::endl;
+    }
+
+    void query_unit_account(std::string const & account, std::set<std::string> & accounts_set) {
+        auto latest_block = m_blockstore->get_latest_committed_block(account);
+        auto block_height = latest_block->get_height();
+        std::cout << account << " block height:" << block_height << " " << std::endl;
+        for (uint64_t h = 0; h <= block_height; ++h) {
+            auto vblock = m_blockstore->load_block_object(account,h,0,true);
+            data::xblock_t * block = dynamic_cast<data::xblock_t *>(vblock.get());
+            if (block != nullptr) {
+                auto tt3 = xtime_utl::time_now_ms();
+                assert(block->get_block_level() == base::enum_xvblock_level_table);
+                auto const & units = block->get_tableblock_units(false);
+                if (units.empty()) {
+                    continue;
+                }
+                for (auto & unit : units) {
+                    auto unit_address = unit->get_block_owner();
+                    accounts_set.insert(unit_address);
+                }
+            }
+        }
+    }
+
+    void query_unit_account2(std::string const & account, std::set<std::string> & accounts_set) {
+        auto latest_block = m_blockstore->get_latest_committed_block(account);
+        if (latest_block == nullptr) {
+            std::cout << account << " get_latest_committed_block null!" << std::endl;
+            return;
+        }
+        base::xauto_ptr<base::xvbstate_t> bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(latest_block.get());
+        if (bstate == nullptr) {
+            std::cout << account << " get_block_state null!" << std::endl;
+            query_unit_account(account, accounts_set);
+        } else {
+            auto state = std::make_shared<xtable_bstate_t>(bstate.get());
+            accounts_set = state->get_all_accounts();
+        }
+    }
+
     void query_sync_result(std::string const & account, const uint64_t h_s, const uint64_t e_s, std::string & result) {
         int start = h_s;
         int end = -1;
@@ -484,6 +535,7 @@ private:
         std::string result;
         query_sync_result(account, 0, block_height, result);
         result_json = result;
+        std::cout << account << " block sync check finish: " << result << std::endl;
     }
 
     void query_table_latest_fullblock(std::string const & account, json & result_json) {
@@ -744,15 +796,12 @@ int main(int argc, char ** argv) {
     db_export_tools tools{j.at("db_path")};
 
     std::string function_name{argv[2]};
-    if (function_name == "all_account") {
+    if (function_name == "checkout_all_user") {
         std::set<std::string> accounts_set;
-        json accounts_json;
-        tools.get_all_unit_account(accounts_set, accounts_json);
+        tools.get_all_unit_account(accounts_set);
         for (auto const & s : accounts_set) {
             std::cout << s << std::endl;
         }
-        std::ofstream out_json("all_account.json");
-        out_json << std::setw(4) << accounts_json;
     }else if (function_name == "stake_property"){
         json res;
         for (auto const & _pair:stake_map_string_string_pair_list) {
@@ -780,7 +829,8 @@ int main(int argc, char ** argv) {
         if (argc == 3) {
             auto const & table_account_vec = db_export_tools::get_all_table_account();
             auto const & unit_account_vec = tools.get_all_unit_account();
-            tools.query_all_sync_result(table_account_vec, unit_account_vec);
+            tools.query_all_sync_result(table_account_vec, true);
+            tools.query_all_sync_result(unit_account_vec, false);
         } else if (argc == 4) {
             std::string method_name{argv[3]};
             if (method_name == "table") {

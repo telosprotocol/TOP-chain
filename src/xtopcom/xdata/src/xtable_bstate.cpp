@@ -83,6 +83,22 @@ bool xtable_bstate_t::get_account_index(const std::string & account, base::xacco
     return true;
 }
 
+std::set<std::string> xtable_bstate_t::get_all_accounts() const {
+    if (false == get_bstate()->find_property(XPROPERTY_TABLE_ACCOUNT_INDEX)) {
+        xwarn("xtable_bstate_t::get_account_index fail-find property.account=%s,height=%ld", get_account().c_str(), get_block_height());
+        return {};
+    }
+    std::set<std::string> all_accounts;
+    auto propobj = get_bstate()->load_string_map_var(XPROPERTY_TABLE_ACCOUNT_INDEX);
+    std::map<std::string,std::string> values = propobj->query();  // TODO(jimmy)
+    for (auto & v : values) {
+        base::xaccount_index_t account_index;
+        account_index.serialize_from(v.second);
+        all_accounts.insert(v.first);
+    }
+    return all_accounts;
+}
+
 std::set<std::string> xtable_bstate_t::get_unconfirmed_accounts() const {
     if (false == get_bstate()->find_property(XPROPERTY_TABLE_ACCOUNT_INDEX)) {
         xwarn("xtable_bstate_t::get_account_index fail-find property.account=%s,height=%ld", get_account().c_str(), get_block_height());
