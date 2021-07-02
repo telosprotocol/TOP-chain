@@ -81,6 +81,9 @@ public:
         return m_txs.empty();
     }
     void get_lacking_ids(uint32_t max_num, std::vector<uint64_t> & lacking_ids) const;
+    uint64_t get_latest_receipt_id() const {
+        return m_latest_receipt_id;
+    }
 
 private:
     std::map<uint64_t, std::shared_ptr<xtx_entry>> m_txs;
@@ -103,6 +106,8 @@ public:
     const std::vector<xtxpool_table_lacking_receipt_ids_t> get_lacking_recv_tx_ids(uint32_t max_num) const;
     const std::vector<xtxpool_table_lacking_receipt_ids_t> get_lacking_confirm_tx_ids(uint32_t max_num) const;
     void update_receipt_id_by_confirmed_tx(const tx_info_t & txinfo, base::xtable_shortid_t peer_table_sid, uint64_t receiptid);
+    uint64_t get_latest_recv_receipt_id(base::xtable_shortid_t peer_table_sid) const;
+    uint64_t get_latest_confirm_receipt_id(base::xtable_shortid_t peer_table_sid) const;
 
 private:
     xtx_peer_table_map_t & get_peer_table_map(bool is_recv_tx) {

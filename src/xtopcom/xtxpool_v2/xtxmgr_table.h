@@ -40,6 +40,8 @@ public:
     const std::vector<xtxpool_table_lacking_receipt_ids_t> get_lacking_recv_tx_ids(uint32_t max_num) const;
     const std::vector<xtxpool_table_lacking_receipt_ids_t> get_lacking_confirm_tx_ids(uint32_t max_num) const;
     void clear_expired_txs();
+    uint64_t get_latest_recv_receipt_id(base::xtable_shortid_t peer_table_sid) const;
+    uint64_t get_latest_confirm_receipt_id(base::xtable_shortid_t peer_table_sid) const;
 
 private:
     void queue_to_pending();
