@@ -19,6 +19,8 @@ metrics_variant_ptr e_metrics::s_metrics[e_simple_total] = {
     DECL_METRICS(dataobject_cur_xbase_type_cons_transaction),  //txpool_cons_transaction
     DECL_METRICS(vhost_recv_msg), // vhost_recv_msg,
     DECL_METRICS(vhost_recv_callback), // vhost_recv_callback,
+    DECL_METRICS(vnode_recv_msg),
+    DECL_METRICS(vnode_recv_callback),
     DECL_METRICS(dataobject_tx_receipt_t), // tx_receipt
     DECL_METRICS(dataobject_unit_state), // unit_state
     DECL_METRICS(dataobject_xvtxindex), // xvtxindex
@@ -112,6 +114,14 @@ metrics_variant_ptr e_metrics::s_metrics[e_simple_total] = {
     DECL_METRICS(dataobject_xacctmeta_t),
 
     // message category
+    DECL_METRICS(message_category_consensus_contains_duplicate),
+    DECL_METRICS(message_category_timer_contains_duplicate),
+    DECL_METRICS(message_category_txpool_contains_duplicate),
+    DECL_METRICS(message_category_rpc_contains_duplicate),
+    DECL_METRICS(message_category_sync_contains_duplicate),
+    DECL_METRICS(message_block_broadcast_contains_duplicate),
+    DECL_METRICS(message_category_unknown_contains_duplicate),
+
     DECL_METRICS(message_category_consensus),
     DECL_METRICS(message_category_timer),
     DECL_METRICS(message_category_txpool),

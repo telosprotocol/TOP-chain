@@ -24,6 +24,8 @@ enum E_SIMPLE_METRICS_TAG {
     dataobject_cur_xbase_type_cons_transaction,
     vhost_recv_msg,
     vhost_recv_callback,
+    vnode_recv_msg,
+    vnode_recv_callback,
     dataobject_tx_receipt_t,
     dataobject_unit_state,
     dataobject_xvtxindex,
@@ -118,6 +120,16 @@ enum E_SIMPLE_METRICS_TAG {
     dataobject_xacctmeta_t,
 
     // message category
+    message_category_begin_contains_duplicate,
+    message_category_consensus_contains_duplicate = message_category_begin_contains_duplicate,
+    message_category_timer_contains_duplicate,
+    message_category_txpool_contains_duplicate,
+    message_category_rpc_contains_duplicate,
+    message_category_sync_contains_duplicate,
+    message_block_broadcast_contains_duplicate,
+    message_category_end_contains_duplicate,
+    message_category_unknown_contains_duplicate = message_category_end_contains_duplicate,
+
     message_category_begin,
     message_category_consensus = message_category_begin,
     message_category_timer,
