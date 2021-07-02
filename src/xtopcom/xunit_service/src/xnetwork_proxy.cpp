@@ -286,7 +286,7 @@ void xnetwork_proxy::send_receipt_msgs(const xvip2_t & from_addr,
                                        std::vector<data::xcons_transaction_ptr_t> & non_shard_cross_receipts) {
     auto net_driver = find(from_addr);
     if (net_driver == nullptr) {
-        xwarn("xnetwork_proxy::send_receipt_msgs net_driver not found,can not send receipt addr:%s", xcons_utl::xip_to_hex(from_addr).c_str());
+        xunit_warn("xnetwork_proxy::send_receipt_msgs net_driver not found,can not send receipt addr:%s", xcons_utl::xip_to_hex(from_addr).c_str());
         return;
     }
     for (auto & receipt : receipts) {
@@ -316,7 +316,7 @@ void xnetwork_proxy::send_receipt_msg(std::shared_ptr<vnetwork::xvnetwork_driver
                 common::has<common::xnode_type_t::committee>(validator_cluster_addr.type()) || common::has<common::xnode_type_t::zec>(validator_cluster_addr.type()));
 
         if (net_driver->address().cluster_address() == auditor_cluster_addr || net_driver->address().cluster_address() == validator_cluster_addr) {
-            xinfo("xnetwork_proxy::send_receipt_msg broadcast receipt=%s,size=%zu,vnode:%s", receipt->dump().c_str(), stream.size(), net_driver->address().to_string().c_str());
+            xunit_info("xnetwork_proxy::send_receipt_msg broadcast receipt=%s,size=%zu,vnode:%s", receipt->dump().c_str(), stream.size(), net_driver->address().to_string().c_str());
             net_driver->broadcast(msg);
             if (net_driver->address().cluster_address() != validator_cluster_addr) {
                 net_driver->forward_broadcast_message(msg, vnetwork::xvnode_address_t{std::move(validator_cluster_addr)});
@@ -326,7 +326,7 @@ void xnetwork_proxy::send_receipt_msg(std::shared_ptr<vnetwork::xvnetwork_driver
             }
             non_shard_cross_receipts.push_back(receipt);
         } else {
-            xinfo("xnetwork_proxy::send_receipt_msg forward receipt=%s,size=%zu,from_vnode:%s,to_vnode:%s",
+            xunit_info("xnetwork_proxy::send_receipt_msg forward receipt=%s,size=%zu,from_vnode:%s,to_vnode:%s",
                   receipt->dump().c_str(),
                   stream.size(),
                   net_driver->address().to_string().c_str(),
@@ -334,9 +334,9 @@ void xnetwork_proxy::send_receipt_msg(std::shared_ptr<vnetwork::xvnetwork_driver
             net_driver->forward_broadcast_message(msg, vnetwork::xvnode_address_t{std::move(auditor_cluster_addr)});
         }
     } catch (top::error::xtop_error_t const & eh) {
-        xwarn("xnetwork_proxy::send_receipt_msg xvnetwork_error_t exception caught: %s; error code: %d", eh.what(), eh.code().value());
+        xunit_warn("xnetwork_proxy::send_receipt_msg xvnetwork_error_t exception caught: %s; error code: %d", eh.what(), eh.code().value());
     } catch (const std::exception & eh) {
-        xwarn("xnetwork_proxy::send_receipt_msg std exception caught: %s;", eh.what());
+        xunit_warn("xnetwork_proxy::send_receipt_msg std exception caught: %s;", eh.what());
     }
 }
 
