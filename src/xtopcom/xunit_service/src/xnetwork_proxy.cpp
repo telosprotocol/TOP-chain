@@ -285,7 +285,6 @@ void xnetwork_proxy::send_receipt_msgs(const xvip2_t & from_addr,
                                        const std::vector<data::xcons_transaction_ptr_t> & receipts,
                                        std::vector<data::xcons_transaction_ptr_t> & non_shard_cross_receipts) {
     auto net_driver = find(from_addr);
-    xassert(net_driver != nullptr);
     if (net_driver == nullptr) {
         xwarn("xnetwork_proxy::send_receipt_msgs net_driver not found,can not send receipt addr:%s", xcons_utl::xip_to_hex(from_addr).c_str());
         return;
