@@ -113,7 +113,7 @@ int32_t    xunit_maker_t::check_latest_state(const data::xblock_consensus_para_t
         return xsuccess;
     } while(0);
 
-    XMETRICS_COUNTER_INCREMENT("cons_fail_make_proposal_unit_check_state", 1);
+    XMETRICS_GAUGE(metrics::cons_fail_make_proposal_unit_check_state, 1);
     return xblockmaker_error_latest_unit_blocks_invalid;
 }
 
