@@ -367,7 +367,7 @@ namespace top
                         xwarn("xBFTSyncdrv::handle_sync_respond_msg,fail-unmatched packet=%s vs local certified block=%s,at node=0x%llx",packet.dump().c_str(),_local_cert_block->dump().c_str(),get_xip2_low_addr());
                         return enum_xconsensus_error_bad_packet;
                     }
-                    xinfo("xBFTdriver_t::handle_sync_respond_msg,target block has finished and deliver to certified _local_cert_block=%s, at node=0x%llx",_local_cert_block->dump().c_str(),get_xip2_low_addr());
+                    xinfo("xBFTSyncdrv::handle_sync_respond_msg,target block has finished and deliver to certified _local_cert_block=%s, at node=0x%llx",_local_cert_block->dump().c_str(),get_xip2_low_addr());
                     return enum_xconsensus_code_successful;//local proposal block has verified and ready,so it is duplicated commit msg
                 }
             }
@@ -414,9 +414,6 @@ namespace top
                     xinfo("xBFTSyncdrv::handle_sync_respond_msg,pulled un-verified commit-block:%s at node=0x%llx from peer:0x%llx,local(%s)",_sync_block->dump().c_str(),get_xip2_addr().low_addr,from_addr.low_addr,dump().c_str());
                     fire_verify_syncblock_job(_sync_block.get(),NULL);
                 }
-                
-                //allow sync addtional blocks around the locked block
-                resync_local_and_peer(_sync_block(),from_addr,to_addr,event_obj->get_clock());
             }
             else
             {

@@ -203,6 +203,7 @@ namespace top
             inline xvbnode_t*          get_child()   const {return m_child_node;}
 
             inline uint64_t            get_viewid()  const {return m_block->get_viewid();}
+            inline uint64_t            get_viewtoken() const {return m_block->get_viewtoken();}
             inline uint64_t            get_height()  const {return m_block->get_height();}
             inline uint32_t            get_chainid() const {return m_block->get_chainid();}
             inline const std::string&  get_account() const {return m_block->get_account();}

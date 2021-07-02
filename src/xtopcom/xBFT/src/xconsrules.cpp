@@ -115,14 +115,25 @@ namespace top
             base::xvblock_t * locked_block = get_lock_block();
             if(locked_block != NULL)
             {
-                if(  (locked_block->get_height() != new_commit_block->get_height() + 1)
-                   ||(locked_block->get_last_block_hash() != new_commit_block->get_block_hash()) )
+                if(new_commit_block->get_height() != 0)
                 {
-                    return false;
+                    if(  (locked_block->get_height() != new_commit_block->get_height() + 1)
+                       ||(locked_block->get_last_block_hash() != new_commit_block->get_block_hash()) )
+                    {
+                        xerror("xBFTRules::set_commit_block, new-commit=%s agains lock=%s,at node=0x%llx,this=%llx",new_commit_block->dump().c_str(),locked_block->dump().c_str(),get_xip2_addr().low_addr,(int64_t)this);
+                        return false;
+                    }
                 }
                 
                 if(m_latest_commit_block != NULL)
+                {
+                    xkinfo("xBFTRules::set_commit_block, old-commit=%s -> new-commit=%s,at node=0x%llx,this=%llx",m_latest_commit_block->dump().c_str(),new_commit_block->dump().c_str(),get_xip2_addr().low_addr,(int64_t)this);
                     m_latest_commit_block->release_ref();
+                }
+                else
+                {
+                    xkinfo("xBFTRules::set_commit_block, nil-commit -> new-commit=%s,at node=0x%llx,this=%llx",new_commit_block->dump().c_str(),get_xip2_addr().low_addr,(int64_t)this);
+                }
                 
                 m_latest_commit_block = new_commit_block;
                 m_latest_commit_block->add_ref();
@@ -262,7 +273,7 @@ namespace top
                     {
                         xproposal_t * _to_remove = *it;
                         const std::string errdetail;
-                        fire_proposal_finish_event(enum_xconsensus_error_outofdate,errdetail,_to_remove->get_block(), NULL, get_lock_block(), get_latest_cert_block(), get_latest_proposal_block());
+                        fire_proposal_finish_event(enum_xconsensus_error_cancel,errdetail,_to_remove->get_block(), NULL, NULL, NULL, get_latest_proposal_block());
                         
                         _to_remove->release_ref();
                     }
@@ -319,7 +330,7 @@ namespace top
             if(    (proposal_block.get_height() <= get_lock_block()->get_height())
                ||  (proposal_block.get_viewid() <= get_lock_block()->get_viewid()) )
             {
-                xinfo("xBFTRules::add_proposal,fail-proposal(%s) vs local(%s)",proposal_block.dump().c_str(),dump().c_str());
+                xinfo("xBFTRules::add_proposal,fail-proposal(%s) vs local(%s),at node=0x%llx",proposal_block.dump().c_str(),dump().c_str(),get_xip2_addr().low_addr);
                 return false;
             }
             
@@ -329,14 +340,14 @@ namespace top
                 if(  (proposal_block.get_height() <  it->second->get_height())
                    ||(proposal_block.get_viewid() <= it->second->get_viewid()) )
                 {
-                    xinfo("xBFTRules::add_proposal,fail-proposal(%s) vs cert(%s)",proposal_block.dump().c_str(),it->second->dump().c_str());
+                    xinfo("xBFTRules::add_proposal,fail-proposal(%s) vs cert(%s),at node=0x%llx",proposal_block.dump().c_str(),it->second->dump().c_str(),get_xip2_addr().low_addr);
                     return false;
                 }
                 else if(proposal_block.get_height() == it->second->get_height()) //liveness entry
                 {
                     if(proposal_block.get_bind_clock_cert()->get_clock() < (it->second->get_clock() + 5) )//50s expire
                     {
-                        xinfo("xBFTRules::add_proposal,fail-proposal(%s) vs non-expired cert(%s)",proposal_block.dump().c_str(),it->second->dump().c_str());
+                        xinfo("xBFTRules::add_proposal,fail-proposal(%s) vs non-expired cert(%s),at node=0x%llx",proposal_block.dump().c_str(),it->second->dump().c_str(),get_xip2_addr().low_addr);
                         return false; //have un-expired cert at same height
                     }
                 }
@@ -348,14 +359,14 @@ namespace top
                 if(  (proposal_block.get_height() <  it->second->get_height())
                    ||(proposal_block.get_viewid() <= it->second->get_viewid()) )
                 {
-                    xinfo("xBFTRules::add_proposal,fail-proposal(%s) vs exsit proposal(%s)",proposal_block.dump().c_str(),it->second->dump().c_str());
+                    xinfo("xBFTRules::add_proposal,fail-proposal(%s) vs exsit proposal(%s),at node=0x%llx",proposal_block.dump().c_str(),it->second->dump().c_str(),get_xip2_addr().low_addr);
                     return false;
                 }
                 else if(proposal_block.get_height() == it->second->get_height()) //liveness entry
                 {
                     if(proposal_block.get_bind_clock_cert()->get_clock() < (it->second->get_bind_clock_cert()->get_clock() + 3) )
                     {
-                        xinfo("xBFTRules::add_proposal,fail-proposal(%s) vs non-expired proposal(%s)",proposal_block.dump().c_str(),it->second->dump().c_str());
+                        xinfo("xBFTRules::add_proposal,fail-proposal(%s) vs non-expired proposal(%s),at node=0x%llx",proposal_block.dump().c_str(),it->second->dump().c_str(),get_xip2_addr().low_addr);
                         return false; //have un-expired proposal at same height
                     }
                 }
@@ -364,14 +375,14 @@ namespace top
             //rule#3: need follow branch of commit
             if(safe_check_follow_commit_branch(proposal_block.get_block()) < 0)//allow unknow case continue
             {
-                xwarn("xBFTRules::add_proposal,fail-as safe_check_follow_commit_branch for block(%s) vs local(%s)",proposal_block.dump().c_str(),dump().c_str());
+                xwarn("xBFTRules::add_proposal,fail-as safe_check_follow_commit_branch for block(%s) vs local(%s),at node=0x%llx",proposal_block.dump().c_str(),dump().c_str(),get_xip2_addr().low_addr);
                 return false;
             }
             
             //rule#4: need follow branch of lock
             if(safe_check_follow_locked_branch(proposal_block.get_block()) < 0)//allow unknow case continue
             {
-                xwarn("xBFTRules::add_proposal,fail-as safe_check_follow_locked_branch for block(%s) vs local(%s)",proposal_block.dump().c_str(),dump().c_str());
+                xwarn("xBFTRules::add_proposal,fail-as safe_check_follow_locked_branch for block(%s) vs local(%s),at node=0x%llx",proposal_block.dump().c_str(),dump().c_str(),get_xip2_addr().low_addr);
                 return false;
             }
             
@@ -400,7 +411,7 @@ namespace top
                 {
                     if(cur_it->second->get_viewid() < proposal_block.get_viewid())
                     {
-                        xinfo("xBFTRules::add_proposal,clean cert(%s) by new proposal(%s)",cur_it->second->dump().c_str(),proposal_block.dump().c_str());
+                        xinfo("xBFTRules::add_proposal,clean cert(%s) by new proposal(%s),at node=0x%llx",cur_it->second->dump().c_str(),proposal_block.dump().c_str(),get_xip2_addr().low_addr);
                         
                         cur_it->second->release_ref();
                         m_certified_blocks.erase(cur_it);
@@ -416,12 +427,12 @@ namespace top
                 {
                     xproposal_t * _to_remove = *it;
                     
-                    xdbg_info("xBFTRules::add_proposal,clean existing proposal(%s) by new proposal(%s)",_to_remove->dump().c_str(),proposal_block.dump().c_str());
+                    xdbg_info("xBFTRules::add_proposal,clean existing proposal(%s) by new proposal(%s),at node=0x%llx",_to_remove->dump().c_str(),proposal_block.dump().c_str(),get_xip2_addr().low_addr);
                     
                     if(_to_remove->is_certed() == false) //leader may announce at other place
                     {
                         const std::string errdetail;
-                        fire_proposal_finish_event(enum_xconsensus_error_outofdate,errdetail,_to_remove->get_block(), NULL, get_lock_block(), get_latest_cert_block(), get_latest_proposal_block());
+                        fire_proposal_finish_event(enum_xconsensus_error_cancel,errdetail,_to_remove->get_block(), NULL, NULL, NULL, get_latest_proposal_block());
                     }
 
                     _to_remove->release_ref();
@@ -429,7 +440,7 @@ namespace top
                 removed_list.clear();
             }
             
-            xinfo("xBFTRules::add_proposal,successful for new proposal(%s)",proposal_block.dump().c_str());
+            xinfo("xBFTRules::add_proposal,successful for new proposal(%s),at node=0x%llx",proposal_block.dump().c_str(),get_xip2_addr().low_addr);
             return true;
         }
     
@@ -477,14 +488,14 @@ namespace top
             //rule#1: need follow branch of commit
             if(safe_check_follow_commit_branch(_target_block) < 0)//allow unknow case continue
             {
-                xwarn("xBFTRules::add_cert_block,fail-as safe_check_follow_commit_branch for block(%s) vs local(%s)",_target_block->dump().c_str(),dump().c_str());
+                xwarn("xBFTRules::add_cert_block,fail-as safe_check_follow_commit_branch for block(%s) vs local(%s),at node=0x%llx",_target_block->dump().c_str(),dump().c_str(),get_xip2_addr().low_addr);
                 return false;
             }
             
             //rule#2: need follow branch of lock
             if(safe_check_follow_locked_branch(_target_block) < 0)//allow unknow case continue
             {
-                xwarn("xBFTRules::add_cert_block,fail-as safe_check_follow_locked_branch for block(%s) vs local(%s)",_target_block->dump().c_str(),dump().c_str());
+                xwarn("xBFTRules::add_cert_block,fail-as safe_check_follow_locked_branch for block(%s) vs local(%s),at node=0x%llx",_target_block->dump().c_str(),dump().c_str(),get_xip2_addr().low_addr);
                 return false;
             }
             
@@ -495,11 +506,12 @@ namespace top
                 //the voted proposal may locked current height and prev height as well
                 for(auto it = m_proposal_blocks.begin(); it != m_proposal_blocks.end(); ++it)
                 {
-                    if(  (_target_block->get_height() < it->second->get_height())
-                       &&(it->second->is_voted()) )//once voted,the prev cert must has been local
+                    if(  (it->second->is_voted()) //once voted,the prev cert must has been local
+                       &&(it->second->get_height() == (_target_block->get_height() + 1) ) //a block of prev height
+                       &&(it->second->get_last_block_hash() != _target_block->get_block_hash())  )//but a unpointed cer
                     {
                         //once voted at this height,not allow cache any other cert anymore at lower height
-                        xinfo("xBFTRules::add_cert_block,fail-cert(%s) vs exist voted proposal(%s)",_target_block->dump().c_str(),it->second->dump().c_str());
+                        xinfo("xBFTRules::add_cert_block,fail-cert(%s) vs exist voted proposal(%s),at node=0x%llx",_target_block->dump().c_str(),it->second->dump().c_str(),get_xip2_addr().low_addr);
                         return false;
                     }
                     
@@ -507,7 +519,7 @@ namespace top
                     {
                         if(_target_block->get_viewid() < it->second->get_viewid())//only keep higher view of proposal and cert
                         {
-                            xinfo("xBFTRules::add_cert_block,fail-cert(%s) vs exist proposal(%s)",_target_block->dump().c_str(),it->second->dump().c_str());
+                            xinfo("xBFTRules::add_cert_block,fail-cert(%s) vs exist proposal(%s),at node=0x%llx",_target_block->dump().c_str(),it->second->dump().c_str(),get_xip2_addr().low_addr);
                             return false; //only allow have one proposal or cert at same height,keep higher viewid
                         }
                     }
@@ -521,7 +533,7 @@ namespace top
                 {
                     if(_target_block->get_viewid() <= it->second->get_viewid())//just keep highest view
                     {
-                        xinfo("xBFTRules::add_cert_block,a outdated block(%s) vs cert(%s)",_target_block->dump().c_str(),it->second->dump().c_str());
+                        xinfo("xBFTRules::add_cert_block,a outdated block(%s) vs cert(%s),at node=0x%llx",_target_block->dump().c_str(),it->second->dump().c_str(),get_xip2_addr().low_addr);
                         return false;
                     }
                 }
@@ -557,7 +569,7 @@ namespace top
                     
                 if(  (cur_it->second->get_height() == _target_block->get_height())
                    &&(cur_it->second->get_viewid() == _target_block->get_viewid())
-                   &&(cur_it->second->get_block_hash() == _target_block->get_block_hash()) )
+                   &&(cur_it->second->get_viewtoken() == _target_block->get_viewtoken()) )
                 {
                     cur_it->second->mark_certed(); //found matched cert with proposasl
                 }
@@ -581,12 +593,12 @@ namespace top
                 {
                     xproposal_t * _to_remove = *it;
                     
-                    xinfo("xBFTRules::add_cert_block,clean existing proposal(%s) by new cert(%s)",_to_remove->dump().c_str(),_target_block->dump().c_str());
+                    xinfo("xBFTRules::add_cert_block,clean existing proposal(%s) by new cert(%s),at node=0x%llx",_to_remove->dump().c_str(),_target_block->dump().c_str(),get_xip2_addr().low_addr);
                     
                     if(_to_remove->is_certed() == false) //may announce at other place
                     {
                         const std::string errdetail;
-                        fire_proposal_finish_event(enum_xconsensus_error_outofdate,errdetail,_to_remove->get_block(), NULL, get_lock_block(), get_latest_cert_block(), get_latest_proposal_block());
+                        fire_proposal_finish_event(enum_xconsensus_error_cancel,errdetail,_to_remove->get_block(), NULL, NULL, NULL, get_latest_proposal_block());
                     }
 
                     _to_remove->release_ref();
@@ -594,7 +606,7 @@ namespace top
                 removed_list.clear();
             }
             
-            xinfo("xBFTRules::add_cert_block,added new cert block(%s)",_target_block->dump().c_str());
+            xinfo("xBFTRules::add_cert_block,added new cert block(%s),at node=0x%llx",_target_block->dump().c_str(),get_xip2_addr().low_addr);
             return true;//return true means it inserted into map at brandnew
         }
         bool  xBFTRules::remove_cert_block(const uint64_t view_id)

@@ -185,8 +185,8 @@ namespace top
                 _evt_obj->set_latest_commit(latest_list.get_latest_committed_block());
             if(NULL == _evt_obj->get_latest_lock())
                 _evt_obj->set_latest_lock(latest_list.get_latest_locked_block());
-            if(NULL == _evt_obj->get_latest_lock())
-                _evt_obj->set_latest_lock(latest_list.get_latest_cert_block());
+            if(NULL == _evt_obj->get_latest_cert())
+                _evt_obj->set_latest_cert(latest_list.get_latest_cert_block());
 
             if(NULL == _evt_obj->get_latest_clock())//auto fill latest clock
             {

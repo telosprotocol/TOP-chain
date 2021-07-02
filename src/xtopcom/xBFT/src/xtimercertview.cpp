@@ -480,8 +480,13 @@ bool xconspacemaker_t::on_create_block_event(const base::xvevent_t & event,xcsob
 }
 
 bool xconspacemaker_t::on_proposal_start(const base::xvevent_t & event, xcsobject_t * from_parent, const int32_t cur_thread_id, const uint64_t timenow_ms) {
-#if 0
+    
     xproposal_start * _evt_obj = (xproposal_start *)&event;
+    if( (_evt_obj->get_clock_cert() == NULL) && (m_latest_cert != NULL) )
+    {
+        _evt_obj->set_clock_cert(m_latest_cert->get_cert());
+    }
+#if 0
     if (_evt_obj->get_proposal() != NULL)  // proposal from leader
     {
         assert(_evt_obj->get_proposal()->get_height() > 0);

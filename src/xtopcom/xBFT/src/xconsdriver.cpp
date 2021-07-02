@@ -143,6 +143,19 @@ namespace top
                     proposal->set_audit_signature(get_vcertauth()->do_sign(get_xip2_addr(), proposal->get_cert(),base::xtime_utl::get_fast_random64()));//bring leader 'signature
                 }
                 
+                if(_evt_obj->get_clock_cert() == NULL)
+                {
+                     base::xauto_ptr<base::xvblock_t> latest_clock = get_vblockstore()->get_latest_cert_block(get_xclock_account_address());
+                    if(!latest_clock)
+                    {
+                        xerror("xBFTdriver_t::start_consensus,fail-find clock for proposal%s vs driver=%s,at node=0x%llx",proposal->dump().c_str(),dump().c_str(),get_xip2_addr().low_addr);
+                        
+                        async_fire_proposal_finish_event(enum_xconsensus_error_bad_clock_cert,proposal);
+                        return true;
+                    }
+                    _evt_obj->set_clock_cert(latest_clock->get_cert());
+                }
+                
                 //ready to insert cache now
                 base::xauto_ptr<xproposal_t> _proposal_obj(add_proposal(proposal,proposal->get_prev_block(),_evt_obj->get_expired_ms(),_evt_obj->get_clock_cert()));//insert to local cache
                 if(!_proposal_obj)
@@ -200,6 +213,12 @@ namespace top
             {
                 xwarn("xBFTdriver_t::handle_proposal_msg,fail-safe_check_for_proposal_packet=%s vs driver=%s,at node=0x%llx",packet.dump().c_str(),dump().c_str(),get_xip2_low_addr());
                 return enum_xconsensus_error_bad_packet;
+            }
+            
+            if(event_obj->get_xclock_cert() == NULL)
+            {
+                xerror("xBFTdriver_t::handle_proposal_msg,fail-nil clock-cert for proposal=%s,at node=0x%llx",packet.dump().c_str(),get_xip2_low_addr());
+                return enum_xconsensus_error_bad_clock_cert;
             }
             
             //step#2: quick decide whether allow vote for this proposal
@@ -372,6 +391,8 @@ namespace top
             const xvip2_t peer_addr = new_proposal->get_proposal_source_addr();
             base::xvblock_t * _peer_block = new_proposal->get_block();
             
+            xdbg("xBFTdriver_t::sync_for_proposal,start check for proposal(%s) at  node=0x%llx",new_proposal->dump().c_str(),get_xip2_low_addr());
+            
             //step#3: load/sync the missed commit,lock and cert blocks
             //first check whether need sync lock and cert blocks as well
             if(_peer_block->get_height() > (get_lock_block()->get_height() + 1) )
@@ -381,13 +402,20 @@ namespace top
                 {
                     send_sync_request(get_xip2_addr(),peer_addr, (_peer_block->get_height() - 1),_peer_block->get_last_block_hash(),new_proposal->get_last_block_cert() ,(_peer_block->get_height() - 1),get_lastest_clock() + 2,_peer_block->get_chainid());
                     //sync missed cert block
+                    
+                    xinfo("xBFTdriver_t::sync_for_proposal,need sync prev block for proposal(%s) at  node=0x%llx",new_proposal->dump().c_str(),get_xip2_low_addr());
                     return enum_xconsensus_code_need_data;//not voting but trigger sync missed block
                 }
                 else if(_peer_block->get_height() != (get_lock_block()->get_height() + 2))//if prev_prev NOT point to current locked block
                 {
-                    send_sync_request(get_xip2_addr(),peer_addr, (prev_block->get_height() - 1),prev_block->get_last_block_hash(),new_proposal->get_last_block_cert(),(_peer_block->get_height() - 1),get_lastest_clock() + 2,_peer_block->get_chainid());
-                    //sync missed locked block
-                    return enum_xconsensus_code_need_data;//not voting but trigger sync missed block
+                    base::xvblock_t * prev_prev_block = find_cert_block(prev_block->get_height() - 1, prev_block->get_last_block_hash());
+                    if(prev_prev_block != NULL)
+                    {
+                        send_sync_request(get_xip2_addr(),peer_addr, (prev_block->get_height() - 1),prev_block->get_last_block_hash(),new_proposal->get_last_block_cert(),(_peer_block->get_height() - 1),get_lastest_clock() + 2,_peer_block->get_chainid());
+                        //sync missed locked block
+                        xinfo("xBFTdriver_t::sync_for_proposal,need sync prev_prev block for proposal(%s) at  node=0x%llx",new_proposal->dump().c_str(),get_xip2_low_addr());
+                        return enum_xconsensus_code_need_data;//not voting but trigger sync missed block
+                    }
                 }
             }
             //then sync latest commit if need
@@ -399,9 +427,12 @@ namespace top
                 {
                     send_sync_request(get_xip2_addr(),peer_addr, (get_lock_block()->get_height() - 1),get_lock_block()->get_last_block_hash(),new_proposal->get_last_block_cert(),(_peer_block->get_height() - 1),get_lastest_clock() + 2,get_lock_block()->get_chainid());
                     //sync missed committed block
+                    xinfo("xBFTdriver_t::sync_for_proposal,need sync committed block for proposal(%s) at  node=0x%llx",new_proposal->dump().c_str(),get_xip2_low_addr());
                     return enum_xconsensus_code_need_data;//not voting but trigger sync missed block
                 }
             }
+            
+            xinfo("xBFTdriver_t::sync_for_proposal,passed for proposal(%s) at  node=0x%llx",new_proposal->dump().c_str(),get_xip2_low_addr());
             return enum_xconsensus_code_successful; //relatd blocks are ready
         }
 

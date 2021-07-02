@@ -466,8 +466,10 @@ namespace top
             if(any_lock_commit_change)
                 do_clean(_evt_obj->get_latest_cert(),_evt_obj->get_latest_proposal());
             
-            _evt_obj->set_latest_commit(get_latest_commit_block());//update with latest commit block
-            _evt_obj->set_latest_lock(get_latest_lock_block()); //update with latest lock block
+            if(_evt_obj->get_latest_commit() == NULL) //follow blockstore
+                _evt_obj->set_latest_commit(get_latest_commit_block());//update with latest commit block
+            if(_evt_obj->get_latest_lock() == NULL) //follow blockstore
+                _evt_obj->set_latest_lock(get_latest_lock_block()); //update with latest lock block
             return false; //let driver continue handle it
         }
         
