@@ -71,7 +71,7 @@ Status xrpc_serviceimpl::table_stream(ServerContext * context, const xrpc_reques
         auto tmp_tb = tableblock_data.front();
         string rsp = tmp_tb.toStyledString();
         tableblock_data.pop_front();
-        xinfo("grpc stream: tableblock_data after pop size %zu, json string size: %zu", tableblock_data.size(), rsp.size());
+        xdbg("grpc stream: tableblock_data after pop size %zu, json string size: %zu", tableblock_data.size(), rsp.size());
         lck.unlock();
 
         xrpc_reply reply;
