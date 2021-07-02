@@ -33,19 +33,19 @@ template <typename TagT, typename IdT>
 std::int32_t
 operator>>(base::xstream_t & stream, xtop_simple_id<TagT, IdT> & id);
 
-template <typename TagT, typename IdT>
-std::int32_t
-operator<<(base::xstream_t & stream, xtop_nullable_id<TagT, IdT> const & id);
-
-template <typename TagT, typename IdT>
-std::int32_t
-operator>>(base::xstream_t & stream, xtop_nullable_id<TagT, IdT> & id);
-
-template <typename TagT, typename IdT>
-std::int32_t operator<<(base::xbuffer_t & buffer, xtop_nullable_id<TagT, IdT> const & id);
-
-template <typename TagT, typename IdT>
-std::int32_t operator>>(base::xbuffer_t & buffer, xtop_nullable_id<TagT, IdT> & id);
+//template <typename TagT, typename IdT>
+//std::int32_t
+//operator<<(base::xstream_t & stream, xtop_nullable_id<TagT, IdT> const & id);
+//
+//template <typename TagT, typename IdT>
+//std::int32_t
+//operator>>(base::xstream_t & stream, xtop_nullable_id<TagT, IdT> & id);
+//
+//template <typename TagT, typename IdT>
+//std::int32_t operator<<(base::xbuffer_t & buffer, xtop_nullable_id<TagT, IdT> const & id);
+//
+//template <typename TagT, typename IdT>
+//std::int32_t operator>>(base::xbuffer_t & buffer, xtop_nullable_id<TagT, IdT> & id);
 
 /**
  * @brief The id class.  std::uint64_t is the back.
@@ -62,8 +62,8 @@ using xbad_id_access_t = xtop_bad_id_access;
 
 template <typename TagT, typename IdT>
 class xtop_simple_id final : public xhashable_t<xtop_simple_id<TagT, IdT>>
-                    , public xenable_to_string_t<xtop_simple_id<TagT, IdT>>
-                    , public xserializable_based_on<void>
+                           , public xenable_to_string_t<xtop_simple_id<TagT, IdT>>
+                           , public xserializable_based_on<void>
 {
     XSTATIC_ASSERT(std::is_integral<IdT>::value);
 
@@ -592,7 +592,7 @@ public:
             return std::to_string(m_id);
         }
 
-        return u8"(null)";
+        return "(null)";
     }
 
     static
@@ -609,17 +609,17 @@ public:
         return xtop_nullable_id{ std::numeric_limits<value_type>::min() };
     }
 
-    friend
-    std::int32_t
-    operator<< <>(base::xstream_t & stream, xtop_nullable_id const & id);
+    //friend
+    //std::int32_t
+    //operator<< <>(base::xstream_t & stream, xtop_nullable_id const & id);
 
-    friend
-    std::int32_t
-    operator>> <>(base::xstream_t & stream, xtop_nullable_id & id);
+    //friend
+    //std::int32_t
+    //operator>> <>(base::xstream_t & stream, xtop_nullable_id & id);
 
-    friend std::int32_t operator<<<>(base::xbuffer_t & buffer, xtop_nullable_id const & id);
+    //friend std::int32_t operator<<<>(base::xbuffer_t & buffer, xtop_nullable_id const & id);
 
-    friend std::int32_t operator>><>(base::xbuffer_t & buffer, xtop_nullable_id & id);
+    //friend std::int32_t operator>><>(base::xbuffer_t & buffer, xtop_nullable_id & id);
 
 private:
     std::int32_t
@@ -646,27 +646,27 @@ private:
 template <typename TagT, typename IdT>
 using xnullable_id_t = xtop_nullable_id<TagT, IdT>;
 
-template <typename TagT, typename IdT>
-std::int32_t
-operator<<(base::xstream_t & stream, xtop_nullable_id<TagT, IdT> const & id) {
-    return id.serialize_to(stream);
-}
-
-template <typename TagT, typename IdT>
-std::int32_t
-operator>>(base::xstream_t & stream, xtop_nullable_id<TagT, IdT> & id) {
-    return id.serialize_from(stream);
-}
-
-template <typename TagT, typename IdT>
-std::int32_t operator<<(base::xbuffer_t & buffer, xtop_nullable_id<TagT, IdT> const & id) {
-    return id.serialize_to(buffer);
-}
-
-template <typename TagT, typename IdT>
-std::int32_t operator>>(base::xbuffer_t & buffer, xtop_nullable_id<TagT, IdT> & id) {
-    return id.serialize_from(buffer);
-}
+//template <typename TagT, typename IdT>
+//std::int32_t
+//operator<<(base::xstream_t & stream, xtop_nullable_id<TagT, IdT> const & id) {
+//    return id.serialize_to(stream);
+//}
+//
+//template <typename TagT, typename IdT>
+//std::int32_t
+//operator>>(base::xstream_t & stream, xtop_nullable_id<TagT, IdT> & id) {
+//    return id.serialize_from(stream);
+//}
+//
+//template <typename TagT, typename IdT>
+//std::int32_t operator<<(base::xbuffer_t & buffer, xtop_nullable_id<TagT, IdT> const & id) {
+//    return id.serialize_to(buffer);
+//}
+//
+//template <typename TagT, typename IdT>
+//std::int32_t operator>>(base::xbuffer_t & buffer, xtop_nullable_id<TagT, IdT> & id) {
+//    return id.serialize_from(buffer);
+//}
 
 NS_END1
 

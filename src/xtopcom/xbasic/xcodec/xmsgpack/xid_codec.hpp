@@ -86,6 +86,47 @@ struct object_with_zone<top::xnullable_id_t<TagT, IdT>>
     }
 };
 
+template <typename TagT, typename IdT>
+struct as<top::xsimple_id_t<TagT, IdT>, typename std::enable_if<msgpack::has_as<IdT>::value>::type> {
+    top::xsimple_id_t<TagT, IdT> operator()(msgpack::object const & o) const {
+        return o.as<IdT>();
+    }
+};
+
+template <typename TagT, typename IdT>
+struct convert<top::xsimple_id_t<TagT, IdT>> final {
+    msgpack::object const & operator()(msgpack::object const & o, top::xsimple_id_t<TagT, IdT> & v) const {
+        IdT t;
+        msgpack::adaptor::convert<IdT>()(o, t);
+        v = top::xsimple_id_t<TagT, IdT>{ t };
+
+        return o;
+    }
+};
+
+template <typename TagT, typename IdT>
+struct pack<top::xsimple_id_t<TagT, IdT>> {
+    template <typename Stream>
+    msgpack::packer<Stream> & operator()(msgpack::packer<Stream> & o, top::xsimple_id_t<TagT, IdT> const & message) const {
+        o.pack(message.value());
+        return o;
+    }
+};
+
+template <typename TagT, typename IdT>
+struct object<top::xsimple_id_t<TagT, IdT>> {
+    void operator()(msgpack::object & o, top::xsimple_id_t<TagT, IdT> const & message) const {
+        msgpack::adaptor::object<IdT>()(o, message.value());
+    }
+};
+
+template <typename TagT, typename IdT>
+struct object_with_zone<top::xsimple_id_t<TagT, IdT>> {
+    void operator()(msgpack::object::with_zone & o, top::xsimple_id_t<TagT, IdT> const & message) const {
+        msgpack::adaptor::object_with_zone<IdT>()(o, message.value());
+    }
+};
+
 NS_END1
 }
 NS_END1

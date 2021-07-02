@@ -256,7 +256,7 @@ xtop_ip::xtop_ip(xtop_ip const & xip, xaddress_domain_t const domain) noexcept :
 }
 
 xtop_ip::xtop_ip(xnetwork_id_t const & network_id, xaddress_domain_t const domain) noexcept {
-    assert(network_id.has_value());
+    // assert(network_id.has_value());
 
     xvip2_t xip2{m_xip, 0};
     set_raw_xip2_address_domain(xip2, domain);
@@ -268,8 +268,8 @@ xtop_ip::xtop_ip(xnetwork_id_t const & network_id, xaddress_domain_t const domai
 }
 
 xtop_ip::xtop_ip(xnetwork_id_t const & network_id, xzone_id_t const & zone_id, xaddress_domain_t const domain) noexcept {
-    assert(network_id.has_value());
-    assert(zone_id.has_value());
+    // assert(network_id.has_value());
+    // assert(zone_id.has_value());
 
     xvip2_t xip2{m_xip, 0};
     set_raw_xip2_address_domain(xip2, domain);
@@ -283,7 +283,7 @@ xtop_ip::xtop_ip(xnetwork_id_t const & network_id, xzone_id_t const & zone_id, x
 }
 
 xtop_ip::xtop_ip(xnetwork_id_t const & network_id, xzone_id_t const & zone_id, xcluster_id_t const & cluster_id, xaddress_domain_t const domain) noexcept {
-    assert(network_id.has_value());
+    // assert(network_id.has_value());
     assert(zone_id.has_value());
     assert(cluster_id.has_value());
 
@@ -305,7 +305,7 @@ xtop_ip::xtop_ip(xnetwork_id_t const & network_id,
                  xcluster_id_t const & cluster_id,
                  xgroup_id_t const & group_id,
                  xaddress_domain_t const domain) noexcept {
-    assert(network_id.has_value());
+    // assert(network_id.has_value());
     assert(zone_id.has_value());
     assert(cluster_id.has_value());
     assert(group_id.has_value());
@@ -360,7 +360,7 @@ xtop_ip::xtop_ip(xnetwork_id_t const & network_id,
                  xgroup_id_t const & group_id,
                  xslot_id_t const & slot_id,
                  xaddress_domain_t const domain) noexcept {
-    assert(network_id.has_value());
+    // assert(network_id.has_value());
     assert(zone_id.has_value());
     assert(cluster_id.has_value());
     assert(group_id.has_value());
@@ -499,19 +499,11 @@ xtop_ip xtop_ip::sharding() const noexcept {
 }
 
 std::string to_string(xnetwork_version_t const network_version) {
-    if (network_version.has_value()) {
-        return std::to_string(static_cast<std::uint16_t>(network_version.value()));
-    } else {
-        return "(null)";
-    }
+    return std::to_string(static_cast<std::uint16_t>(network_version.value()));
 }
 
 std::string to_string(xnetwork_id_t const & nid) {
-    if (nid.has_value()) {
-        return std::to_string(nid.value());
-    } else {
-        return "(null)";
-    }
+    return std::to_string(nid.value());
 }
 
 std::string to_string(xzone_id_t const & zid) {
@@ -831,7 +823,7 @@ xnode_type_t node_type_from(common::xzone_id_t const & zone_id, common::xcluster
 
 template <>
 bool broadcast<xnetwork_id_t>(xnetwork_id_t const & network_id) noexcept {
-    return network_id.empty() || (network_id.value() & xbroadcast_network_id_value) == xbroadcast_network_id_value;
+    return (network_id & xbroadcast_id_t::network) == xbroadcast_id_t::network;
 }
 
 template <>

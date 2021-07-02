@@ -31,8 +31,8 @@ struct xtag_cluster_id {};
 struct xtag_group_id {};
 struct xtag_slot_id {};
 
-using xnetwork_version_t = xnullable_id_t<xtag_network_version, std::uint8_t>;
-using xnetwork_id_t = xnullable_id_t<xtag_network_id, std::uint32_t>;
+using xnetwork_version_t = xsimple_id_t<xtag_network_version, std::uint8_t>;
+using xnetwork_id_t = xsimple_id_t<xtag_network_id, std::uint32_t>;
 using xzone_id_t = xnullable_id_t<xtag_zone_id, std::uint8_t>;
 using xcluster_id_t = xnullable_id_t<xtag_cluster_id, std::uint8_t>;
 using xgroup_id_t = xnullable_id_t<xtag_group_id, std::uint8_t>;
