@@ -77,44 +77,38 @@ void xsync_behind_checker_t::on_behind_check_event(const mbus::xevent_ptr_t &e) 
 }
 
 void xsync_behind_checker_t::check_one(const std::string &address, enum_chain_sync_policy sync_policy, const vnetwork::xvnode_address_t &self_addr, const std::string &reason) {
-
     base::xauto_ptr<base::xvblock_t> latest_start_block = m_sync_store->get_latest_start_block(address, sync_policy);
     uint64_t latest_end_block_height = m_sync_store->get_latest_end_block_height(address, sync_policy);
 
     uint64_t peer_start_height = 0;
     uint64_t peer_end_height = 0;
+    uint64_t gap_between_interval = 0;
 
     vnetwork::xvnode_address_t peer_addr;
 
     if (m_peerset->get_newest_peer(self_addr, address, peer_start_height, peer_end_height, peer_addr)) {
-        std::string peer_left_metric_tag_name;
-        std::string peer_right_metric_tag_name;
-        std::string self_left_metric_tag_name;
-        std::string self_right_metric_tag_name;
-        std::string self_full_block_state_metirc_tag_name;
-        if (sync_policy == enum_chain_sync_policy_fast) {
-            peer_left_metric_tag_name = "xsync_max_peer_fast_interval_left_" + address;
-            peer_right_metric_tag_name = "xsync_max_peer_fast_interval_right_" + address;
-            self_left_metric_tag_name = "xsync_self_fast_interval_left_" + address;
-            self_right_metric_tag_name = "xsync_self_fast_interval_right_" + address;
-            self_full_block_state_metirc_tag_name = "xsync_self_fast_full_state_" + address;
-            xblock_ptr_t block = autoptr_to_blockptr(latest_start_block);
-            if (!block->is_full_state_block()) {
-                XMETRICS_COUNTER_SET(self_full_block_state_metirc_tag_name, false);
-            } else {
-                XMETRICS_COUNTER_SET(self_full_block_state_metirc_tag_name, true);
+        if ((m_counter | 0x80) == 0x80) {
+            std::string metric_tag_name;
+            std::string gap_metric_tag_name;
+            if (sync_policy == enum_chain_sync_policy_fast) {
+                metric_tag_name = "xsync_fast_mode_interval";
+                gap_metric_tag_name = "xsync_fast_mode_gap_" + address;
+            } else if (sync_policy == enum_chain_sync_policy_full) {
+                metric_tag_name = "xsync_full_mode_interval";
+                gap_metric_tag_name = "xsync_full_mode_gap_" + address;
             }
-        } else if (sync_policy == enum_chain_sync_policy_full) {
-            peer_left_metric_tag_name = "xsync_max_peer_full_interval_left_" + address;
-            peer_right_metric_tag_name = "xsync_max_peer_full_interval_right_" + address;
-            self_left_metric_tag_name = "xsync_self_full_interval_left_" + address;
-            self_right_metric_tag_name = "xsync_self_full_interval_right_" + address;
-        }
 
-        XMETRICS_COUNTER_SET(peer_left_metric_tag_name, peer_start_height);
-        XMETRICS_COUNTER_SET(peer_right_metric_tag_name, peer_end_height);
-        XMETRICS_COUNTER_SET(self_left_metric_tag_name, latest_start_block->get_height());
-        XMETRICS_COUNTER_SET(self_right_metric_tag_name, latest_end_block_height);
+            if (peer_end_height >= latest_end_block_height) {
+                gap_between_interval = peer_end_height - latest_end_block_height;
+            } else {
+                gap_between_interval = 0;
+            }
+
+            XMETRICS_COUNTER_SET(gap_metric_tag_name, gap_between_interval);
+            XMETRICS_PACKET_INFO(metric_tag_name, "table_address", address, 
+                "self_min", latest_start_block->get_height(), "self_max", latest_end_block_height, 
+                "peer_min", peer_start_height, "peer_max", peer_end_height);
+        }
 
         if (peer_end_height == 0)
             return;
@@ -125,7 +119,7 @@ void xsync_behind_checker_t::check_one(const std::string &address, enum_chain_sy
                 return;
             }
         }
-
+        
         xsync_info("behind_checker notify %s,local(start_height=%lu,end_height=%lu) peer(start_height=%lu,end_height=%lu) sync_policy(%d) reason=%s", 
             address.c_str(), latest_start_block->get_height(), latest_end_block_height, peer_start_height, peer_end_height, (int32_t)sync_policy, reason.c_str());
 
