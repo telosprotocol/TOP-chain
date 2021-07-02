@@ -5,6 +5,7 @@
 #include "xconfig/xpredefined_configurations.h"
 #include "xdata/xfull_tableblock.h"
 #include "xdata/xnative_contract_address.h"
+#include "xdata/xproposal_data.h"
 #include "xdata/xrootblock.h"
 #include "xdata/xtable_bstate.h"
 #include "xdb/xdb_factory.h"
@@ -67,7 +68,7 @@ void usage() {
     std::cout << "        - check_block_exist <account> <height>" << std::endl;
     std::cout << "        - check_tx_info [table]" << std::endl;
     std::cout << "        - check_latest_fullblock [table]" << std::endl;
-    std::cout << "        - check_contract_property <account> <prop>" << std::endl;
+    std::cout << "        - check_contract_property <account> <prop> <last|all>" << std::endl;
     std::cout << "-------  end  -------" << std::endl;
 }
 
@@ -328,12 +329,27 @@ public:
         }
     }
 
-    void query_contract_property(std::string const & account, std::string const & prop_name) {
-        xJson::Value jm;
-        top::contract::xcontract_manager_t::instance().get_contract_data(top::common::xaccount_address_t{account}, prop_name, top::contract::xjson_format_t::detail, jm);
-        std::string filename = account + "_" + prop_name + "_property.json";
+    void query_contract_property(std::string const & account, std::string const & prop_name, std::string const & param) {
+        auto vblock = m_blockstore->get_latest_committed_block(account);
+        if (vblock == nullptr) {
+            std::cout << account << " get_latest_committed_block null!" << std::endl;
+        }
+        auto latest_height = vblock->get_height();
+
+        xJson::Value jph;
+        if (param == "last") {
+            query_contract_property(account, prop_name, latest_height, jph);
+        } else if (param == "all") {
+            for (uint64_t i = 0; i < latest_height; i++) {
+                query_contract_property(account, prop_name, latest_height, jph["height " + xstring_utl::tostring(i)]);
+            }
+        } else {
+            return;
+        }
+        std::string filename = account + "_" + prop_name + "_" + param + "_property.json";
         std::ofstream out_json(filename);
-        out_json << std::setw(4) << jm;
+        out_json << std::setw(4) << jph;
+        std::cout << "===> " << filename << " generated success!" << std::endl;
     }
 
     void get_stake_property_string(std::string const & addr, std::string const & property_key, json & stake_json) {
@@ -774,6 +790,103 @@ private:
         // std::cout << t2-t1 << " " << t3-t2 << " " << t4-t3 << std::endl;
     }
 
+    void query_contract_property(std::string const & account, std::string const & prop_name, uint64_t height, xJson::Value & jph) {
+        static std::set<std::string> property_names = {
+            XPROPERTY_CONTRACT_ELECTION_EXECUTED_KEY,
+            XPROPERTY_CONTRACT_STANDBYS_KEY,
+            XPROPERTY_CONTRACT_GROUP_ASSOC_KEY,
+            xstake::XPORPERTY_CONTRACT_GENESIS_STAGE_KEY,
+            xstake::XPROPERTY_CONTRACT_ACCUMULATED_ISSUANCE_YEARLY,
+            xstake::XPORPERTY_CONTRACT_REG_KEY,
+            xstake::XPORPERTY_CONTRACT_TICKETS_KEY,
+            xstake::XPORPERTY_CONTRACT_WORKLOAD_KEY,
+            xstake::XPORPERTY_CONTRACT_VALIDATOR_WORKLOAD_KEY,
+            xstake::XPORPERTY_CONTRACT_TASK_KEY,
+            xstake::XPORPERTY_CONTRACT_VOTES_KEY1,
+            xstake::XPORPERTY_CONTRACT_VOTES_KEY2,
+            xstake::XPORPERTY_CONTRACT_VOTES_KEY3,
+            xstake::XPORPERTY_CONTRACT_VOTES_KEY4,
+            xstake::XPORPERTY_CONTRACT_VOTER_DIVIDEND_REWARD_KEY1,
+            xstake::XPORPERTY_CONTRACT_VOTER_DIVIDEND_REWARD_KEY2,
+            xstake::XPORPERTY_CONTRACT_VOTER_DIVIDEND_REWARD_KEY3,
+            xstake::XPORPERTY_CONTRACT_VOTER_DIVIDEND_REWARD_KEY4,
+            xstake::XPORPERTY_CONTRACT_NODE_REWARD_KEY,
+            xstake::XPORPERTY_CONTRACT_REFUND_KEY,
+            xstake::XPROPERTY_CONTRACT_ACCUMULATED_ISSUANCE,
+            xstake::XPORPERTY_CONTRACT_UNQUALIFIED_NODE_KEY,
+            xstake::XPROPERTY_CONTRACT_SLASH_INFO_KEY,
+            PROPOSAL_MAP_ID,
+            VOTE_MAP_ID
+        };
+
+        auto is_special_contract_property = [](std::string const & prop_name) -> bool {
+            auto iter = property_names.find(prop_name);
+            if (iter != property_names.end()) {
+                return true;
+            }
+            if (prop_name.size() > 3 && XPROPERTY_CONTRACT_ELECTION_RESULT_KEY == prop_name.substr(0, 3)) {
+                return true;
+            }
+            return false;
+        };
+
+        base::xvaccount_t _vaddr(account);
+        auto _block = m_blockstore->load_block_object(_vaddr, height, 0, false);
+        if (_block == nullptr) {
+            std::cout << account << " height " << height << " block null!" << std::endl;
+            return;
+        }
+        if (_block->is_genesis_block() && _block->get_block_class() == base::enum_xvblock_class_nil) {
+            std::cout << account << " height " << height << " block genesis or nil!" << std::endl;
+            return;
+        }
+        base::xauto_ptr<base::xvbstate_t> bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(_block.get());
+        if (bstate == nullptr) {
+            std::cout << account << " height " << height << " bstate null!" << std::endl;
+            return;
+        }
+        xaccount_ptr_t unitstate = std::make_shared<xunit_bstate_t>(bstate.get());
+        if (unitstate == nullptr) {
+            std::cout << account << " height " << height << " unitstate null!" << std::endl;
+            return;
+        }
+        if (false == unitstate->get_bstate()->find_property(prop_name)) {
+            std::cout << account << " height " << height << " fail-find property " << prop_name  << "!" << std::endl;
+            return;
+        }
+        if (is_special_contract_property(prop_name)) {
+            top::contract::xcontract_manager_t::instance().get_contract_data(top::common::xaccount_address_t{account}, unitstate, prop_name, top::contract::xjson_format_t::detail, jph);
+        } else {
+            base::xvproperty_t* propobj = unitstate->get_bstate()->get_property_object(prop_name);
+            if (propobj->get_obj_type() == base::enum_xobject_type_vprop_string_map) {
+                auto propobj_map = unitstate->get_bstate()->load_string_map_var(prop_name);
+                auto values = propobj_map->query();
+                xJson::Value j;
+                for (auto & v : values) {
+                    j[v.first] = v.second;
+                }
+                jph[prop_name] = j;
+            } else if (propobj->get_obj_type() == base::enum_xobject_type_vprop_string) {
+                auto propobj_str = unitstate->get_bstate()->load_string_var(prop_name);
+                jph[prop_name] = propobj_str->query();
+            } else if (propobj->get_obj_type() == base::enum_xobject_type_vprop_string_deque) {
+                auto propobj_deque = unitstate->get_bstate()->load_string_deque_var(prop_name);
+                auto values = propobj_deque->query();
+                for (auto & v : values) {
+                    jph[prop_name].append(v);
+                }
+            } else if (propobj->get_obj_type() == base::enum_xobject_type_vprop_token) {
+                auto propobj = unitstate->get_bstate()->load_token_var(prop_name);
+                base::vtoken_t balance = propobj->get_balance();
+                jph[prop_name] = std::to_string(balance);
+            } else if (propobj->get_obj_type() == base::enum_xobject_type_vprop_uint64) {
+                auto propobj = unitstate->get_bstate()->load_uint64_var(prop_name);
+                uint64_t value = propobj->get();
+                jph[prop_name] = std::to_string(value);
+            }
+        }
+    }
+
     top::xobject_ptr_t<top::store::xstore_face_t> m_store;
     top::xobject_ptr_t<top::base::xvblockstore_t> m_blockstore;
 };
@@ -785,16 +898,24 @@ int main(int argc, char ** argv) {
         usage();
         return -1;
     }
-    std::string file_path{argv[1]};
-    std::cout << file_path << std::endl;
 
-    json j;
-    std::ifstream config_file(file_path);
-    config_file >> j;
-    std::cout << "db_path: " << j.at("db_path") << std::endl;
-
-    db_export_tools tools{j.at("db_path")};
-
+    std::string db_path;
+    {
+        std::string config_file{argv[1]};
+        if (access(config_file.c_str(), 0) != 0) {
+            std::cout << "config file: " << config_file << " not found" << std::endl;
+            return -1;
+        }
+        json confg_json;
+        std::ifstream config_stream(config_file);
+        config_stream >> confg_json;
+        db_path = confg_json.at("db_path");
+        if (access(db_path.c_str(), 0) != 0) {
+            std::cout << "db: " << db_path << "not found!" << std::endl;
+            return -1;
+        }
+    }
+    db_export_tools tools{db_path};
     std::string function_name{argv[2]};
     if (function_name == "checkout_all_user") {
         std::set<std::string> accounts_set;
@@ -876,11 +997,16 @@ int main(int argc, char ** argv) {
             return -1;
         }
     } else if (function_name == "check_contract_property") {
-        if (argc < 5) {
+        if (argc < 6) {
             usage();
             return -1;
         }
-        tools.query_contract_property(argv[3], argv[4]);
+        std::string param{argv[5]};
+        if (param != "last" && param != "all") {
+            usage();
+            return -1;
+        }
+        tools.query_contract_property(argv[3], argv[4], param);
     } else {
         usage();
     }
