@@ -430,6 +430,7 @@ namespace top
         {
             xdbg("jimmy xvblockstore_impl::store_block enter,store block(%s)", container_block->dump().c_str());
 
+            bool did_stored = false;//inited as false
             //then try extract for container if that is
             if(  (container_block->get_block_class() == base::enum_xvblock_class_light) //skip nil block
                &&(container_block->get_block_level() == base::enum_xvblock_level_table) )
@@ -442,6 +443,7 @@ namespace top
                         if((existing_index->get_block_flags() & base::enum_xvblock_flag_unpacked) != 0) //did unpacked
                         {
                             container_block->set_block_flag(base::enum_xvblock_flag_unpacked);//merge flag of unpack
+                            did_stored = true; //table must stored fully since table-block always store full content
                         }
                     }
                 }
@@ -491,14 +493,17 @@ namespace top
                 }
             }
 
-            //move clean logic here to reduce risk of reenter process that might clean up some index too early
-            container_account->clean_caches(false,true);
-            //then do sotre block
-            bool ret = container_account->store_block(container_block);
-            if(!ret)
+            if(false == did_stored)
             {
-                xwarn("xvblockstore_impl::store_block,fail-store block(%s)", container_block->dump().c_str());
-                // return false;
+                //move clean logic here to reduce risk of reenter process that might clean up some index too early
+                container_account->clean_caches(false,true);
+                //then do sotre block
+                bool ret = container_account->store_block(container_block);
+                if(!ret)
+                {
+                    xwarn("xvblockstore_impl::store_block,fail-store block(%s)", container_block->dump().c_str());
+                    // return false;
+                }
             }
 
             if(execute_block)

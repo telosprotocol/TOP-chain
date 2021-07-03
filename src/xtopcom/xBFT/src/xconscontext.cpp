@@ -354,17 +354,6 @@ namespace top
                 {
                     xkinfo("xBFTcontext_t::do_submit at node=0x%llx,submit for block=%s",get_xip2_addr().low_addr,it->dump().c_str());
                     
-                    if( (it->get_child() != NULL) && (it->get_child()->get_child() != NULL) ) //operated by xbft-self
-                    {
-                        base::xvblock_t* lock_block = it->get_child()->get_block();
-                        base::xvblock_t* hqc_block  = it->get_child()->get_child()->get_block();
-                        
-                        fire_consensus_commit_event(it->get_block(), it->get_block(), lock_block, hqc_block);
-                    }
-                    else //sync module operated and transfer it to commited status
-                    {
-                        fire_consensus_commit_event(it->get_block(), it->get_block(), get_latest_lock_block(), highest_cert_block);
-                    }
                 }
                 for(auto it : to_commit_blocks)
                 {
@@ -424,8 +413,6 @@ namespace top
             {
                 xinfo("xBFTcontext_t::do_clean,cancel the block:%s at node=0x%llx",it->dump().c_str(),get_xip2_addr().low_addr);
                 
-                std::string errdetail;//("{\"reason\" = \"outofdate\"}");
-                fire_proposal_finish_event(enum_xconsensus_error_cancel,errdetail,it, NULL, NULL, NULL, NULL);
                 it->release_ref(); //releasae reference holding by queue
             }
             return true;
