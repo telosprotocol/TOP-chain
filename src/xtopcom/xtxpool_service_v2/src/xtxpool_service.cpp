@@ -142,6 +142,10 @@ void xtxpool_service::resend_receipts(uint64_t now) {
             std::vector<xcons_transaction_ptr_t> recv_txs = m_para->get_txpool()->get_resend_txs(m_zone_index, table_id, now);
             for (auto recv_tx : recv_txs) {
                 xassert(recv_tx->is_recv_tx());
+                if (m_para->get_txpool()->is_consensused_confirm_receiptid(recv_tx->get_source_addr(), recv_tx->get_target_addr(), recv_tx->get_last_action_receipt_id())) {
+                    continue;
+                }
+
                 // filter out txs witch has already in txpool, just not consensused and committed.
                 auto tx = m_para->get_txpool()->query_tx(recv_tx->get_source_addr(), recv_tx->get_transaction()->digest());
                 if (tx != nullptr && tx->get_tx()->is_confirm_tx()) {

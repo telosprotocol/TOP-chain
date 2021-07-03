@@ -44,7 +44,8 @@ public:
     const std::vector<xtxpool_table_lacking_confirm_tx_hashs_t> get_lacking_confirm_tx_hashs(uint8_t zone, uint16_t subaddr, uint32_t max_num) const override;
     bool need_sync_lacking_receipts(uint8_t zone, uint16_t subaddr) const override;
     void print_statistic_values() const override;
-    bool is_consensused_recv_receiptid(const std::string & from_table_addr, const std::string & to_table_addr, uint64_t receipt_id) const override;
+    bool is_consensused_recv_receiptid(const std::string & from_addr, const std::string & to_addr, uint64_t receipt_id) const override;
+    bool is_consensused_confirm_receiptid(const std::string & from_addr, const std::string & to_addr, uint64_t receipt_id) const override;
 
 private:
     bool is_table_subscribed(uint8_t zone, uint16_t table_id) const;

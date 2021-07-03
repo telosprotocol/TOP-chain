@@ -472,7 +472,7 @@ void xbatch_packer::make_receipts_and_send(xblock_t * commit_block, xblock_t * c
     auto network_proxy = m_para->get_resources()->get_network();
     xassert(network_proxy != nullptr);
     if (network_proxy == nullptr) {
-        xwarn("xbatch_packer::make_receipts_and_send get network fail, can not send receipts");
+        xunit_warn("xbatch_packer::make_receipts_and_send get network fail, can not send receipts");
         return;
     }
 
@@ -484,7 +484,7 @@ void xbatch_packer::make_receipts_and_send(xblock_t * commit_block, xblock_t * c
         xassert(constx->is_recv_tx() || constx->is_confirm_tx());
     }
 
-    xinfo("xbatch_packer::make_receipts_and_send commit_block:%s,cert_block:%s", commit_block->dump().c_str(), cert_block->dump().c_str());
+    xunit_info("xbatch_packer::make_receipts_and_send commit_block:%s,cert_block:%s", commit_block->dump().c_str(), cert_block->dump().c_str());
     std::vector<data::xcons_transaction_ptr_t> non_shard_cross_receipts;
     network_proxy->send_receipt_msgs(get_xip2_addr(), all_cons_txs, non_shard_cross_receipts);
 

@@ -242,7 +242,8 @@ public:
     virtual const std::vector<xtxpool_table_lacking_confirm_tx_hashs_t> get_lacking_confirm_tx_hashs(uint8_t zone, uint16_t subaddr, uint32_t max_num) const = 0;
     virtual bool need_sync_lacking_receipts(uint8_t zone, uint16_t subaddr) const = 0;
     virtual void print_statistic_values() const = 0;
-    virtual bool is_consensused_recv_receiptid(const std::string & from_table_addr, const std::string & to_table_addr, uint64_t receipt_id) const =0;
+    virtual bool is_consensused_recv_receiptid(const std::string & from_addr, const std::string & to_addr, uint64_t receipt_id) const = 0;
+    virtual bool is_consensused_confirm_receiptid(const std::string & from_addr, const std::string & to_addr, uint64_t receipt_id) const = 0;
 };
 
 class xtxpool_instance {
