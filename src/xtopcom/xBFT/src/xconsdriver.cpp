@@ -574,13 +574,13 @@ namespace top
                 {
                     xinfo("xBFTdriver_t::handle_vote_msg,finish voted for proposal block:%s at node=0x%llx",_local_proposal->dump().c_str(),get_xip2_addr().low_addr);
  
+                    xdbgassert(_local_proposal->get_block()->is_input_ready(true));
+                    xdbgassert(_local_proposal->get_block()->is_output_ready(true));
+                    
                     bool found_matched_proposal = false;
                     //step#8: call on_consensus_finish() to let upper layer know it
                     if(add_cert_block(_local_proposal->get_block(),found_matched_proposal))//set certified block(QC block)
                     {
-                        xdbgassert(_local_proposal->get_block()->is_input_ready(true));
-                        xdbgassert(_local_proposal->get_block()->is_output_ready(true));
-
                         //collect data from propoal first
                         std::string msg_stream;
                         std::string   _commit_block_cert; //ship by packet' header instead of xcommit_msg_t for optimization
@@ -1075,6 +1075,9 @@ namespace top
             std::function<void(void*)> _after_verify_commit_job = [this](void* _block)->void{
                 base::xvblock_t* _full_block_ = (base::xvblock_t*)_block;
 
+                xdbgassert(_full_block_->is_input_ready(true));
+                xdbgassert(_full_block_->is_output_ready(true));
+                
                 bool found_matched_proposal = false;
                 if(add_cert_block(_full_block_,found_matched_proposal))//set certified block(QC block)
                 {
