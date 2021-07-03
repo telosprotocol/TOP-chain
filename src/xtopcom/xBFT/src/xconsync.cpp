@@ -255,7 +255,8 @@ namespace top
                         return enum_xconsensus_error_not_found;
                     }
 
-                    add_cert_block(target_block.get());//fill into cache list
+                    bool found_matched_proposal = false;
+                    add_cert_block(target_block.get(),found_matched_proposal);//fill into cache list
                     xassert(target_block->is_input_ready(true));
                     xassert(target_block->is_output_ready(true));
 
@@ -437,14 +438,21 @@ namespace top
             std::function<void(void*)> _after_verify_commit_job = [this](void* _block)->void{
                 base::xvblock_t* _full_block_ = (base::xvblock_t*)_block;
 
-                if(add_cert_block(_full_block_))//set certified block(QC block)
+                bool found_matched_proposal = false;
+                if(add_cert_block(_full_block_,found_matched_proposal))//set certified block(QC block)
                 {
-                     xinfo("xBFTSyncdrv::fire_verify_syncblock,deliver an proposal-and-authed block:%s at node=0x%llx",_full_block_->dump().c_str(),get_xip2_addr().low_addr);
-                    
-                    fire_proposal_finish_event(_full_block_, NULL, NULL, NULL, NULL);//call on_consensus_finish(block) to driver context layer
-                    
                     //now recheck any existing proposal and could push to voting again
                     on_new_block_fire(_full_block_);
+                    
+                    if(found_matched_proposal)//on_proposal_finish event has been fired by add_cert_block
+                    {
+                        xinfo("xBFTSyncdrv::fire_verify_syncblock,deliver an proposal-and-authed block:%s at node=0x%llx",_full_block_->dump().c_str(),get_xip2_addr().low_addr);
+                    }
+                    else
+                    {
+                        xinfo("xBFTSyncdrv::fire_verify_syncblock,deliver an replicated-and-authed block:%s at node=0x%llx",_full_block_->dump().c_str(),get_xip2_addr().low_addr);
+                        fire_replicate_finish_event(_full_block_);//call on_replicate_finish(block) to driver context layer
+                    }
                 }
                 _full_block_->release_ref(); //release reference hold by _verify_function
             };

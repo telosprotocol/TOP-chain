@@ -117,6 +117,7 @@ namespace top
             m_voted_validators_count = 0;
             m_voted_auditors_count   = 0;
             
+            m_is_expired= false;
             m_is_certed = false;
             m_is_leader = false;
             m_is_voted  = false;
@@ -142,6 +143,7 @@ namespace top
             m_voted_validators_count = 0;
             m_voted_auditors_count   = 0;
             
+            m_is_expired= false;
             m_is_certed = false;
             m_is_leader = false;
             m_is_voted  = false;
@@ -170,6 +172,7 @@ namespace top
             m_proposal_msg_nonce     = obj.m_proposal_msg_nonce;
             m_proposal_from_addr     = obj.m_proposal_from_addr;
             m_result_verify_proposal = obj.m_result_verify_proposal;
+            m_is_expired      = obj.m_is_expired;
             m_is_certed       = obj.m_is_certed;
             m_is_leader       = obj.m_is_leader;
             m_is_voted        = obj.m_is_voted;

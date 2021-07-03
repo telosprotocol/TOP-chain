@@ -161,6 +161,19 @@ bool xconspacemaker_t::on_pdu_event_down(const base::xvevent_t & event, xcsobjec
         _evt_obj->set_clock(m_latest_cert->get_clock());   // carry clock height
         _evt_obj->set_cookie(m_latest_cert->get_clock());  // carry latest viewid
     }
+    
+    const std::string & latest_xclock_cert_bin = _evt_obj->_packet.get_xclock_cert();
+    if(latest_xclock_cert_bin.empty() == false) //try to update clock cert
+    {
+        base::xauto_ptr<base::xvqcert_t> _clock_cert_obj(base::xvblock_t::create_qcert_object(latest_xclock_cert_bin));
+        if(_clock_cert_obj)
+        {
+            //note:#1 safe rule, always cleans up flags carried by peer
+            _clock_cert_obj->reset_block_flags(); //force remove
+            if(_clock_cert_obj->is_deliver())
+                _evt_obj->set_xclock_cert(_clock_cert_obj.get());
+        }
+    }
 
     switch (packet.get_msg_type()) {
     // timeout / sync / resp belong to pacemaker

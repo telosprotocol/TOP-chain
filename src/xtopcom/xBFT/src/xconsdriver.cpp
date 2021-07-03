@@ -42,6 +42,7 @@ namespace top
         {
             xconsensus_update * _evt_obj = (xconsensus_update*)&event;
             set_lock_block(_evt_obj->get_latest_lock());
+            set_commit_block(_evt_obj->get_latest_commit());
             return true;
         }
 
@@ -66,7 +67,10 @@ namespace top
             //now safe to keep commit
             set_commit_block(_evt_obj->get_latest_commit());
             if(_evt_obj->get_latest_cert() != NULL)   //update latest cert block from upper layer
-                add_cert_block(_evt_obj->get_latest_cert());
+            {
+                bool found_matched_proposal = false;
+                add_cert_block(_evt_obj->get_latest_cert(),found_matched_proposal);
+            }
 
             if(NULL != proposal)//leader ' behavior
             {
@@ -428,10 +432,14 @@ namespace top
                 if(   (last_commit_block == nullptr)//get_commit_block already include logic to load it from blockstore
                    || (get_lock_block()->get_height() != (last_commit_block->get_height() + 1)) )
                 {
-                    send_sync_request(get_xip2_addr(),peer_addr, (get_lock_block()->get_height() - 1),get_lock_block()->get_last_block_hash(),new_proposal->get_last_block_cert(),(_peer_block->get_height() - 1),get_lastest_clock() + 2,get_lock_block()->get_chainid());
-                    //sync missed committed block
-                    xinfo("xBFTdriver_t::sync_for_proposal,need sync committed block for proposal(%s) at  node=0x%llx",new_proposal->dump().c_str(),get_xip2_low_addr());
-                    return enum_xconsensus_code_need_data;//not voting but trigger sync missed block
+                    base::xvblock_t * exist_cert = find_cert_block(get_lock_block()->get_height() - 1,get_lock_block()->get_last_block_hash()); //try again from local cert
+                    if(NULL == exist_cert)
+                    {
+                        send_sync_request(get_xip2_addr(),peer_addr, (get_lock_block()->get_height() - 1),get_lock_block()->get_last_block_hash(),new_proposal->get_last_block_cert(),(_peer_block->get_height() - 1),get_lastest_clock() + 2,get_lock_block()->get_chainid());
+                        //sync missed committed block
+                        xinfo("xBFTdriver_t::sync_for_proposal,need sync committed block for proposal(%s) at  node=0x%llx",new_proposal->dump().c_str(),get_xip2_low_addr());
+                        return enum_xconsensus_code_need_data;//not voting but trigger sync missed block
+                    }
                 }
             }
             
@@ -566,8 +574,9 @@ namespace top
                 {
                     xinfo("xBFTdriver_t::handle_vote_msg,finish voted for proposal block:%s at node=0x%llx",_local_proposal->dump().c_str(),get_xip2_addr().low_addr);
  
+                    bool found_matched_proposal = false;
                     //step#8: call on_consensus_finish() to let upper layer know it
-                    if(add_cert_block(_local_proposal->get_block()))//set certified block(QC block)
+                    if(add_cert_block(_local_proposal->get_block(),found_matched_proposal))//set certified block(QC block)
                     {
                         xdbgassert(_local_proposal->get_block()->is_input_ready(true));
                         xdbgassert(_local_proposal->get_block()->is_output_ready(true));
@@ -586,9 +595,9 @@ namespace top
                         xvip2_t broadcast_addr = {(xvip_t)-1,(uint64_t)-1};
                         fire_pdu_event_up(xcommit_msg_t::get_msg_type(),msg_stream,1,get_xip2_addr(),broadcast_addr,_local_proposal->get_block(),_commit_block_cert,std::string());//ship block cert by packet
                         
-                        //change-log: sendout commit-packet to replicator first,then let leader continue handle it
-                        //fire proposal event now,note:the leader is possible to still be leader of next round
-                        fire_proposal_finish_event(_local_proposal->get_block(), NULL, NULL, NULL, NULL);
+                        xassert(found_matched_proposal);
+                        if(false == found_matched_proposal)//exception case
+                            fire_replicate_finish_event(_local_proposal->get_block());//call on_replicate_finish(block) to driver context layer
                     }
                 }
                 _local_proposal->release_ref();//release reference added by fire_verify_vote_job
@@ -819,16 +828,20 @@ namespace top
                 ++it; //move forward
 
                 xproposal_t * _proposal = old_it->second;
-                if(_proposal->is_leader()) //backup only expired when received cert or proposal with higher view/height
+                if(_proposal->is_expired() == false)
                 {
-                    if(is_proposal_expire(_proposal))
+                    if(_proposal->is_leader()) //backup only expired when received cert or proposal with higher view/height
                     {
-                        _proposal->disable_vote();
-                        timeout_list.push_back(_proposal);
-                        proposal_blocks.erase(old_it);//erase old one
+                        if(is_proposal_expire(_proposal))
+                        {
+                            _proposal->mark_expired(); //mark expired to throw proposal_finish event at notify_proposal_fail
+                            _proposal->disable_vote(); //disable vote
+                            
+                            _proposal->add_ref(); //we not remove/delete proposal here,but just send notification
+                            timeout_list.push_back(_proposal);
+                        }
                     }
                 }
-
             }
             notify_proposal_fail(timeout_list,outofdate_list);
             return true;
@@ -851,15 +864,21 @@ namespace top
                 ++it; //move forward
 
                 xproposal_t * _proposal = old_it->second;
-                if(_proposal->is_leader()) //backup only expired when received cert or proposal with higher view/height
+                if(_proposal->is_expired() == false)
                 {
-                    if(is_proposal_expire(_proposal))
+                    if(_proposal->is_leader()) //backup only expired when received cert or proposal with higher view/height
                     {
-                        _proposal->disable_vote();
-                        timeout_list.push_back(_proposal);
-                        proposal_blocks.erase(old_it);//erase old one
+                        if(is_proposal_expire(_proposal))
+                        {
+                            _proposal->mark_expired(); //mark expired to throw proposal_finish event at notify_proposal_fail
+                            _proposal->disable_vote(); //disable vote
+                            
+                            _proposal->add_ref(); //we not remove/delete proposal here,but just send notification
+                            timeout_list.push_back(_proposal);
+                        }
                     }
                 }
+
             }
             notify_proposal_fail(timeout_list,outofdate_list);
             return true;
@@ -1056,14 +1075,21 @@ namespace top
             std::function<void(void*)> _after_verify_commit_job = [this](void* _block)->void{
                 base::xvblock_t* _full_block_ = (base::xvblock_t*)_block;
 
-                if(add_cert_block(_full_block_))//set certified block(QC block)
+                bool found_matched_proposal = false;
+                if(add_cert_block(_full_block_,found_matched_proposal))//set certified block(QC block)
                 {
-                    xinfo("xBFTdriver_t::_after_verify_commit_job,deliver an proposal-and-authed block:%s at node=0x%llx",_full_block_->dump().c_str(),get_xip2_addr().low_addr);
-                    
-                    fire_proposal_finish_event(_full_block_, NULL, NULL, NULL, NULL);//call on_consensus_finish(block) to driver context layer
-                    
                     //now recheck any existing proposal and could push to voting again
                     on_new_block_fire(_full_block_);
+                    
+                    if(found_matched_proposal)//on_proposal_finish event has been fired by add_cert_block
+                    {
+                        xinfo("xBFTdriver_t::_after_verify_commit_job,deliver an proposal-and-authed block:%s at node=0x%llx",_full_block_->dump().c_str(),get_xip2_addr().low_addr);
+                    }
+                    else
+                    {
+                        xinfo("xBFTdriver_t::_after_verify_commit_job,deliver an replicated-and-authed block:%s at node=0x%llx",_full_block_->dump().c_str(),get_xip2_addr().low_addr);
+                        fire_replicate_finish_event(_full_block_);//call on_replicate_finish(block) to driver context layer
+                    }
                 }
                 _full_block_->release_ref(); //release reference hold by _verify_function
             };

@@ -116,7 +116,7 @@ namespace top
             base::xvblock_t*    get_latest_proposal_block() const;
             
             //block manage for certified block
-            bool                add_cert_block(base::xvblock_t* _target_block);
+            bool                add_cert_block(base::xvblock_t* _target_block,bool & found_matched_proposal);
             bool                remove_cert_block(const uint64_t view_id);
             bool                clean_cert_blocks();
             base::xvblock_t*    get_latest_cert_block() const;

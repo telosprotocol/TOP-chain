@@ -108,6 +108,7 @@ namespace top
             bool                 is_leader() const {return m_is_leader;}
             bool                 is_voted()  const {return m_is_voted;}
             bool                 is_certed() const {return m_is_certed;}
+            bool                 is_expired()const {return m_is_expired;}
             bool                 is_valid_packet(base::xcspdu_t & packet);
             bool                 is_vote_enable() const {return (m_allow_vote > 0);}
             bool                 is_vote_disable() const {return (m_allow_vote < 0);}
@@ -117,6 +118,7 @@ namespace top
             void                 mark_certed() { m_is_certed = true;}
             void                 mark_leader() { m_is_leader = true;} //indicate it is leader'original proposal
             void                 mark_voted()  { m_is_voted = true;}  //indicate whether node has voted for proposal
+            void                 mark_expired(){ m_is_expired = true;}
             void                 enable_vote()  { m_allow_vote = 1;}  //allow vote
             void                 disable_vote() { m_allow_vote = -1;} //disallow vote
 
@@ -139,6 +141,7 @@ namespace top
             bool                           m_is_voted;                  //for node mark whether has voted or not
             //some proposal that is behind locked/commit block is not allow vote anymore ,bu keep it and  waiting related commit-cert to reduce sync
             bool                           m_is_certed;                 //tell whether it has been a valid cert block at leader
+            bool                           m_is_expired;                //tell whether proposal expired
             int                            m_allow_vote;                //unknow for 0, false for < 0 and true for > 0
             int                            m_result_verify_proposal;    //indicated what is result of verify_proposal
             xvip2_t                        m_proposal_from_addr;        //record the source addr,so that we may vote it async mode
