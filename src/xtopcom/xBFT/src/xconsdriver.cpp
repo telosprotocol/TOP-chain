@@ -68,9 +68,6 @@ namespace top
             set_commit_block(_evt_obj->get_latest_commit());
             if(_evt_obj->get_latest_cert() != NULL)   //update latest cert block from upper layer
             {
-                get_vblockstore()->load_block_input(*this, _evt_obj->get_latest_cert());
-                get_vblockstore()->load_block_output(*this, _evt_obj->get_latest_cert());
-                
                 bool found_matched_proposal = false;
                 add_cert_block(_evt_obj->get_latest_cert(),found_matched_proposal);
             }

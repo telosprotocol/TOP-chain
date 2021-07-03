@@ -618,8 +618,22 @@ namespace top
                     {
                         xinfo("xBFTRules::add_cert_block,proposal certified now cert(%s),at node=0x%llx",_target_block->dump().c_str(),get_xip2_addr().low_addr);
                         
-                        xdbgassert(_target_block->is_input_ready(true));
-                        xdbgassert(_target_block->is_output_ready(true));
+                        if(  (_target_block->get_input()->get_resources_hash().empty() == false) //link resoure data
+                           &&(_target_block->get_input()->has_resource_data() == false) ) //but dont have resource _target_block now
+                        {
+                            //_local_block need reload input resource
+                            get_vblockstore()->load_block_input(*this, _target_block);
+                            xassert(_target_block->get_input()->has_resource_data());
+                        }
+                        
+                        if(  (_target_block->get_output()->get_resources_hash().empty() == false) //link resoure data
+                           &&(_target_block->get_output()->has_resource_data() == false) ) //but dont have resource avaiable now
+                        {
+                            //_local_block need reload output resource
+                            get_vblockstore()->load_block_output(*this, _target_block);
+                            xassert(_target_block->get_output()->has_resource_data());
+                        }
+       
                         fire_proposal_finish_event(_target_block, NULL, NULL, NULL, NULL);//call on_consensus_finish(block) to driver context layer
                     }
                     _to_remove->release_ref();

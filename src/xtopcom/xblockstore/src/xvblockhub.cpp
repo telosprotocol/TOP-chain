@@ -1136,6 +1136,7 @@ namespace top
                 }
             }
 
+            #ifdef DEBUG
             if(   (false == new_raw_block->is_input_ready(true))
                || (false == new_raw_block->is_output_ready(true))
                || (false == new_raw_block->is_deliver(true)) )//must have full valid data and has mark as enum_xvblock_flag_authenticated
@@ -1143,7 +1144,16 @@ namespace top
                 xwarn("xblockacct_t::store_block,undevlier block=%s",new_raw_block->dump().c_str());
                 return false;
             }
-
+            #else //quick check for release mode
+            if(   (false == new_raw_block->is_input_ready(false))
+               || (false == new_raw_block->is_output_ready(false))
+               || (false == new_raw_block->is_deliver(true)) )//must have full valid data and has mark as enum_xvblock_flag_authenticated
+            {
+                xwarn("xblockacct_t::store_block,undevlier block=%s",new_raw_block->dump().c_str());
+                return false;
+            }
+            #endif
+            
             // TODO(jimmy) should store and execute genesis block
             if(new_raw_block->get_height() == 1 && m_meta->_highest_connect_block_hash.empty())
             {

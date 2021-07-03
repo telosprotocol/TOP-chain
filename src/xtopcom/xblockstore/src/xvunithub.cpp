@@ -521,6 +521,13 @@ namespace top
                 xerror("xvblockstore_impl::store_block,block NOT match account:%",account.get_account().c_str());
                 return false;
             }
+            
+            if(block->check_block_flag(base::enum_xvblock_flag_authenticated) == false)
+            {
+                xerror("xvblockstore_impl::store_block,unauthorized block(%s)",block->dump().c_str());
+                return false;
+            }
+            
             LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
             if(store_block(account_obj,block))
             {
@@ -537,6 +544,13 @@ namespace top
                 xerror("xvblockstore_impl::store_block_but_not_execute,block NOT match account:%",account.get_account().c_str());
                 return false;
             }
+            
+            if(block->check_block_flag(base::enum_xvblock_flag_authenticated) == false)
+            {
+                xerror("xvblockstore_impl::store_block_but_not_execute,unauthorized block(%s)",block->dump().c_str());
+                return false;
+            }
+            
             LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
             if(store_block(account_obj,block,false))//force to not execute anymore
             {
