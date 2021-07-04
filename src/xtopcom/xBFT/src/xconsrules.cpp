@@ -389,14 +389,25 @@ namespace top
             
             //rule5: clean any proposal_block
             std::vector<xproposal_t*> removed_list;
-            for(auto it = m_proposal_blocks.begin(); it != m_proposal_blocks.end(); ++it)
+            for(auto it = m_proposal_blocks.begin(); it != m_proposal_blocks.end();)
             {
-                xproposal_t * _to_remove = it->second;
-                _to_remove->disable_vote();
-                _to_remove->close();
-                removed_list.push_back(_to_remove);//transfer owner to list
+                auto cur_it = it;//copy first
+                ++it; //navigate next
+                
+                //keep lower proposal since the related commist-msg may arrive later
+                if(cur_it->second->get_height() == proposal_block.get_height())
+                {
+                    xproposal_t * _to_remove = cur_it->second;
+                    _to_remove->disable_vote();
+                    removed_list.push_back(_to_remove);//transfer owner to list
+                    m_proposal_blocks.erase(cur_it);
+                }
+                else
+                {
+                    cur_it->second->disable_vote(); //not allow vote anymore
+                    cur_it->second->mark_pending(); //still keep and waiting for new messaging
+                }
             }
-            m_proposal_blocks.clear();
             
             //add new proposal
             m_proposal_blocks[proposal_block.get_viewid()] = &proposal_block;
@@ -525,11 +536,16 @@ namespace top
                     
                     if(_target_block->get_height() == it->second->get_height()) //found same heights
                     {
-                        if(_target_block->get_viewid() < it->second->get_viewid())//only keep higher view of proposal and cert
+                        //skip check with proposal of pending & disabled
+                        if(  (it->second->is_pending() == false)
+                           ||(it->second->is_vote_disable() == false) )
                         {
-                            //consistency gurantee
-                            xinfo("xBFTRules::add_cert_block,fail-cert(%s) vs exist proposal(%s),at node=0x%llx",_target_block->dump().c_str(),it->second->dump().c_str(),get_xip2_addr().low_addr);
-                            return false; //only allow have one proposal or cert at same height,keep higher viewid
+                            if(_target_block->get_viewid() < it->second->get_viewid())//only keep higher view of proposal and cert
+                            {
+                                //consistency gurantee
+                                xinfo("xBFTRules::add_cert_block,fail-cert(%s) vs exist proposal(%s),at node=0x%llx",_target_block->dump().c_str(),it->second->dump().c_str(),get_xip2_addr().low_addr);
+                                return false; //only allow have one proposal or cert at same height,keep higher viewid
+                            }
                         }
                     }
                 }
@@ -592,7 +608,6 @@ namespace top
                 {
                     xproposal_t * _to_remove = cur_it->second;
                     _to_remove->disable_vote();
-                    _to_remove->close();
                     removed_list.push_back(_to_remove);//transfer owner to list
                     
                     m_proposal_blocks.erase(cur_it);//erase old one

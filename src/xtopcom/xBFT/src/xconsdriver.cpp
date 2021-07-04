@@ -397,6 +397,7 @@ namespace top
             
             const xvip2_t peer_addr = new_proposal->get_proposal_source_addr();
             base::xvblock_t * _peer_block = new_proposal->get_block();
+            base::xvqcert_t * _prev_block_cert = new_proposal->get_last_block_cert();
             
             xdbg("xBFTdriver_t::sync_for_proposal,start check for proposal(%s) at  node=0x%llx",new_proposal->dump().c_str(),get_xip2_low_addr());
             
@@ -407,11 +408,25 @@ namespace top
                 base::xvblock_t * prev_block = find_cert_block(_peer_block->get_height() - 1, _peer_block->get_last_block_hash());
                 if(NULL == prev_block) //not voting but trigger sync prev-cert
                 {
-                    send_sync_request(get_xip2_addr(),peer_addr, (_peer_block->get_height() - 1),_peer_block->get_last_block_hash(),new_proposal->get_last_block_cert() ,(_peer_block->get_height() - 1),get_lastest_clock() + 2,_peer_block->get_chainid());
-                    //sync missed cert block
-                    
-                    xinfo("xBFTdriver_t::sync_for_proposal,need sync prev block for proposal(%s) at  node=0x%llx",new_proposal->dump().c_str(),get_xip2_low_addr());
-                    return enum_xconsensus_code_need_data;//not voting but trigger sync missed block
+                    xproposal_t* prev_proposal(find_proposal(_prev_block_cert->get_viewid()));
+                    if(  (NULL == prev_proposal)
+                       ||(prev_proposal->get_viewid() != _prev_block_cert->get_viewid())
+                       ||(prev_proposal->get_viewtoken() != _prev_block_cert->get_viewtoken())
+                       ||(prev_proposal->get_block()->get_header_hash() != _prev_block_cert->get_header_hash())
+                       ||(prev_proposal->get_block()->is_input_ready(true) == false)
+                       ||(prev_proposal->get_block()->is_output_ready(true) == false) )
+                    {
+                        send_sync_request(get_xip2_addr(),peer_addr, (_peer_block->get_height() - 1),_peer_block->get_last_block_hash(),new_proposal->get_last_block_cert() ,(_peer_block->get_height() - 1),get_lastest_clock() + 2,_peer_block->get_chainid());
+                        //sync missed cert block completely
+                        
+                        if(prev_proposal != NULL)
+                            xinfo("xBFTdriver_t::sync_for_proposal,need sync prev block(%s) for proposal(%s) at  node=0x%llx",prev_proposal->dump().c_str(),new_proposal->dump().c_str(),get_xip2_low_addr());
+                        else
+                            xinfo("xBFTdriver_t::sync_for_proposal,need sync prev block for proposal(%s) at  node=0x%llx",new_proposal->dump().c_str(),get_xip2_low_addr());
+                        return enum_xconsensus_code_need_data;//not voting but trigger sync missed block
+                    }
+                    //matche cert and prev_proposal,go to verify
+                    fire_verify_commit_job(prev_proposal->get_block(), _prev_block_cert);
                 }
                 else if(_peer_block->get_height() != (get_lock_block()->get_height() + 2))//if prev_prev NOT point to current locked block
                 {
@@ -458,8 +473,23 @@ namespace top
                       
             if(new_proposal->is_vote_disable())
             {
-                xwarn("xBFTdriver_t::vote_for_proposal,disabled proposal(%s) at  node=0x%llx",_peer_block->dump().c_str(),get_xip2_low_addr());
+                xwarn("xBFTdriver_t::vote_for_proposal,disabled proposal(%s) at  node=0x%llx",new_proposal->dump().c_str(),get_xip2_low_addr());
                 return enum_xconsensus_error_not_authorized;
+            }
+            if(new_proposal->is_vote_enable())
+            {
+                xinfo("xBFTdriver_t::vote_for_proposal,been processing for proposal(%s) at  node=0x%llx",new_proposal->dump().c_str(),get_xip2_low_addr());
+                return enum_xconsensus_code_successful;
+            }
+            if(new_proposal->is_voted())
+            {
+                xinfo("xBFTdriver_t::vote_for_proposal,did voted for proposal(%s) at  node=0x%llx",new_proposal->dump().c_str(),get_xip2_low_addr());
+                return enum_xconsensus_code_successful;
+            }
+            if(_peer_block->check_block_flag(base::enum_xvblock_flag_authenticated))
+            {
+                xinfo("xBFTdriver_t::vote_for_proposal,has certified for proposal(%s) at  node=0x%llx",new_proposal->dump().c_str(),get_xip2_low_addr());
+                return enum_xconsensus_code_successful;
             }
             
             //step#5: verify proposal completely.it is a realy heavy job that run at worker thread,then callback
@@ -897,9 +927,12 @@ namespace top
                 if(  (_proposal->get_height() > new_cert_block->get_height()) //forward-direction of blocks
                    &&((_proposal->get_height() - new_cert_block->get_height()) <= 3) ) //around proposal
                 {
-                    if( (_proposal->is_voted() == false) && (_proposal->is_leader() == false) )
+                    if(   (_proposal->is_voted() == false) //not voted
+                       && (_proposal->is_vote_disable() == false)//not be disabled
+                       && (_proposal->is_leader() == false) //only retry for backup
+                       && (_proposal->get_block()->check_block_flag(base::enum_xvblock_flag_authenticated) == false) )
                     {
-                        if(_proposal->is_vote_disable() == false)//still available
+                        if(_proposal->is_vote_enable() == false)//enable-status means it been processing
                         {
                             if(sync_for_proposal(_proposal) == enum_xconsensus_code_successful)
                             {
@@ -1109,7 +1142,9 @@ namespace top
                         xwarn_err("xBFTdriver_t::fire_verify_commit_job,fail-unmatched commit_cert=%s vs proposal=%s,at node=0x%llx",_merge_cert->dump().c_str(),_for_check_block_->dump().c_str(),get_xip2_low_addr());
                         return true;
                     }
-                    if(get_vcertauth()->verify_muti_sign(_for_check_block_) == base::enum_vcert_auth_result::enum_successful)
+
+                    if( (_for_check_block_->check_block_flag(base::enum_xvblock_flag_authenticated))
+                      ||(get_vcertauth()->verify_muti_sign(_for_check_block_) == base::enum_vcert_auth_result::enum_successful) )
                     {
                         _for_check_block_->get_cert()->set_unit_flag(base::enum_xvblock_flag_authenticated);
                         _for_check_block_->set_block_flag(base::enum_xvblock_flag_authenticated);
