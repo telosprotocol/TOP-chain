@@ -365,7 +365,8 @@ namespace top
                 const int result_sync_check = sync_for_proposal(_final_proposal_block());
                 if(result_sync_check != enum_xconsensus_code_successful)
                 {
-                    xwarn("xBFTdriver_t::handle_proposal_msg,ask sync blocks for proposal(%s),local dump=%s at node=0x%llx",_peer_block->dump().c_str(),dump().c_str(),get_xip2_low_addr());
+                    if(result_sync_check != enum_xconsensus_code_async_back)
+                        xwarn("xBFTdriver_t::handle_proposal_msg,ask sync blocks for proposal(%s),local dump=%s at node=0x%llx",_peer_block->dump().c_str(),dump().c_str(),get_xip2_low_addr());
                     
                     if(check_result != enum_xconsensus_code_successful)
                         return check_result;
@@ -426,7 +427,10 @@ namespace top
                         return enum_xconsensus_code_need_data;//not voting but trigger sync missed block
                     }
                     //matche cert and prev_proposal,go to verify
+                    
+                    xinfo("xBFTdriver_t::sync_for_proposal,need verify prev_cert_proposal(%s) for proposal(%s) at  node=0x%llx",prev_proposal->dump().c_str(),new_proposal->dump().c_str(),get_xip2_low_addr());
                     fire_verify_commit_job(prev_proposal->get_block(), _prev_block_cert);
+                    return enum_xconsensus_code_async_back;
                 }
                 else if(_peer_block->get_height() != (get_lock_block()->get_height() + 2))//if prev_prev NOT point to current locked block
                 {
