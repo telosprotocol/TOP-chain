@@ -235,8 +235,8 @@ void xsync_handler_t::push_newblock(uint32_t msg_size,
     }
 
     // check block existed already
-    auto exist_block = m_sync_store->load_block_object(block->get_account(), block->get_height(), false, block->get_viewid());
-    if (exist_block != nullptr) {
+    auto exist_block = m_sync_store->existed(block->get_account(), block->get_height(), block->get_viewid());
+    if (exist_block) {
         XMETRICS_GAUGE(metrics::xsync_recv_duplicate_block, 1);
         return;
     }
