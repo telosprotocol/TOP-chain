@@ -93,6 +93,13 @@ base::xauto_ptr<base::xvblock_t> xsync_store_t::load_block_object(const std::str
     return m_blockstore->load_block_object(_vaddress, height, viewid, ask_full_load);
 }
 
+bool xsync_store_t::existed(const std::string & account, const uint64_t height, uint64_t viewid) {
+    XMETRICS_TIME_RECORD("xsync_existed");
+    base::xvaccount_t _vaddress(account);
+    auto index = m_blockstore->load_block_index(_vaddress, height, viewid);
+    return index != nullptr;
+}
+
 // force update _highest_connect_block_height
 void xsync_store_t::update_latest_genesis_connected_block(const std::string & account) {
     base::xvaccount_t _vaddress(account);
