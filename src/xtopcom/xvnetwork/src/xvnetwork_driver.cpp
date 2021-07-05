@@ -308,11 +308,7 @@ void xtop_vnetwork_driver::on_vhost_message_data_ready(common::xnode_address_t c
         return;
     }
 
-    #if VHOST_METRICS
-    XMETRICS_COUNTER_INCREMENT("vnetwork_" + std::to_string(static_cast<std::uint16_t>(common::get_message_category(msg.id()))) + "_in_vnetwork_driver" +
-                                   std::to_string(static_cast<std::uint32_t>(msg.id())),
-                               1);
-    #endif
+    XMETRICS_GAUGE(metrics::vnode_recv_msg, 1);
 
     XLOCK_GUARD(m_message_cache_mutex) {
         int ret = 0;
@@ -320,7 +316,7 @@ void xtop_vnetwork_driver::on_vhost_message_data_ready(common::xnode_address_t c
         XMETRICS_TIME_RECORD("vnetwork_lru_cache");
         #endif
         if (m_message_cache.contains(msg.hash())) {
-            xkinfo(u8"[vnetwork driver] received a dup msg %" PRIx64 " message id %" PRIx32, msg.hash(), static_cast<std::uint32_t>(msg.id()));
+            xkinfo("[vnetwork driver] received a dup msg %" PRIx64 " message id %" PRIx32, msg.hash(), static_cast<std::uint32_t>(msg.id()));
             ret = -1;
         }
 
@@ -366,11 +362,67 @@ void xtop_vnetwork_driver::on_vhost_message_data_ready(common::xnode_address_t c
              static_cast<std::uint32_t>(msg.id()),
              address().to_string().c_str(),
              src.to_string().c_str());
-#if defined(ENABLE_METRICS) && defined(VHOST_METRICS) && VHOST_METRICS
-        char msg_info[30] = { 0 };
-        snprintf(msg_info, 29, "%" PRIx32 "|%" PRIx64, static_cast<uint32_t>(message_id), msg.hash());
-        XMETRICS_TIME_RECORD_KEY_WITH_TIMEOUT("vnetdriver_handle_data_callback", msg_info, uint32_t(100000));
+        {
+            auto const message_category = common::get_message_category(msg.id());
+            switch (message_category) {
+#if defined(__clang__)
+#    pragma clang diagnostic push
+#    pragma clang diagnostic ignored "-Wswitch"
+#elif defined(__GNUC__)
+#    pragma GCC diagnostic push
+#    pragma GCC diagnostic ignored "-Wswitch"
+#elif defined(_MSC_VER)
+#    pragma warning(push, 0)
 #endif
+            case xmessage_category_consensus:
+            {
+                XMETRICS_GAUGE(metrics::message_category_consensus, 1);
+                break;
+            }
+            case xmessage_category_timer:
+            {
+                XMETRICS_GAUGE(metrics::message_category_timer, 1);
+                break;
+            }
+            case xmessage_category_txpool:
+            {
+                XMETRICS_GAUGE(metrics::message_category_txpool, 1);
+                break;
+            }
+
+            case xmessage_category_rpc:
+            {
+                XMETRICS_GAUGE(metrics::message_category_rpc, 1);
+                break;
+            }
+
+            case xmessage_category_sync:
+            {
+                XMETRICS_GAUGE(metrics::message_category_sync, 1);
+                break;
+            }
+
+            case xmessage_block_broadcast:
+            {
+                XMETRICS_GAUGE(metrics::message_block_broadcast, 1);
+                break;
+            }
+#if defined(__clang__)
+#    pragma clang diagnostic pop
+#elif defined(__GNUC__)
+#    pragma GCC diagnostic pop
+#elif defined(_MSC_VER)
+#    pragma warning(pop)
+#endif
+            default:
+            {
+                assert(false);
+                XMETRICS_GAUGE(metrics::message_category_unknown, 1);
+                break;
+            }
+            }
+        }
+        XMETRICS_GAUGE(metrics::vnode_recv_callback, 1);
         callback(src, msg, msg_time);
         XLOCK_GUARD(m_message_cache_mutex) { m_message_cache.insert({msg.hash(), std::time(nullptr)}); }
     } else {
