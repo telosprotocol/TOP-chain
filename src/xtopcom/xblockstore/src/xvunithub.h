@@ -76,6 +76,7 @@ namespace top
             virtual base::xauto_ptr<base::xvbindex_t> get_latest_genesis_connected_index(const base::xvaccount_t & account,bool ask_full_search) override; //block has connected to genesis
             virtual base::xauto_ptr<base::xvblock_t>  get_latest_committed_full_block(const base::xvaccount_t & account) override;
 
+            virtual uint64_t get_latest_committed_block_height(const base::xvaccount_t & account) override;
             virtual uint64_t get_latest_connected_block_height(const base::xvaccount_t & account) override;
             virtual uint64_t get_latest_genesis_connected_block_height(const base::xvaccount_t & account) override;
             virtual uint64_t get_latest_executed_block_height(const base::xvaccount_t & account) override;

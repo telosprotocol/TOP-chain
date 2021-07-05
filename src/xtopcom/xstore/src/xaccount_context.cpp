@@ -1359,11 +1359,6 @@ xaccount_context_t::get_block_by_height(const std::string & owner, uint64_t heig
 
 data::xblock_t*
 xaccount_context_t::get_next_full_block(const std::string & owner, const uint64_t cur_full_height) const {
-    if (!is_table_address(common::xaccount_address_t{owner})) {
-        xwarn("xaccount_context_t::get_next_full_block non table address=%s", owner.c_str());
-        return nullptr;
-    }
-
     base::xvaccount_t vaddr(owner);
     uint64_t next_full_height = cur_full_height + XGET_CONFIG(fulltable_interval_block_num);
     base::xauto_ptr<base::xvblock_t> block = base::xvchain_t::instance().get_xblockstore()->load_block_object(vaddr, next_full_height, base::enum_xvblock_flag_committed, false);
@@ -1389,8 +1384,7 @@ xaccount_context_t::get_blockchain_height(const std::string & owner) const {
         height = m_current_table_commit_height;
     } else {
         base::xvaccount_t _vaddr(owner);
-        base::xauto_ptr<base::xvblock_t> _block = base::xvchain_t::instance().get_xblockstore()->get_latest_committed_block(_vaddr);
-        height = _block->get_height();
+        height = base::xvchain_t::instance().get_xblockstore()->get_latest_committed_block_height(_vaddr);
     }
     xdbg("xaccount_context_t::get_blockchain_height owner=%s,height=%" PRIu64 "", owner.c_str(), height);
     return height;

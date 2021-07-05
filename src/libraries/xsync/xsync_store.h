@@ -34,6 +34,7 @@ public:
     virtual void update_latest_genesis_connected_block(const std::string & account) = 0;
 
     virtual uint64_t get_genesis_block_height(const std::string & account) = 0;
+    virtual uint64_t get_latest_committed_block_height(const std::string & account) = 0;
     virtual uint64_t get_latest_connected_block_height(const std::string & account) = 0;
     virtual uint64_t get_latest_genesis_connected_block_height(const std::string & account) = 0;
     virtual uint64_t get_latest_executed_block_height(const std::string & account) = 0;
@@ -62,6 +63,7 @@ public:
     virtual void update_latest_genesis_connected_block(const std::string & account) override;
 
     virtual uint64_t get_genesis_block_height(const std::string & account) override;
+    virtual uint64_t get_latest_committed_block_height(const std::string & account) override;
     virtual uint64_t get_latest_connected_block_height(const std::string & account) override;
     virtual uint64_t get_latest_genesis_connected_block_height(const std::string & account) override;
     virtual uint64_t get_latest_executed_block_height(const std::string & account) override;
@@ -89,6 +91,7 @@ public:
     virtual void update_latest_genesis_connected_block(const std::string & account) override;
 
     virtual uint64_t get_genesis_block_height(const std::string & account) override;
+    virtual uint64_t get_latest_committed_block_height(const std::string & account) override;
     virtual uint64_t get_latest_connected_block_height(const std::string & account) override;
     virtual uint64_t get_latest_genesis_connected_block_height(const std::string & account) override;
     virtual uint64_t get_latest_executed_block_height(const std::string & account) override;

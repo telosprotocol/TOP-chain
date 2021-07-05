@@ -956,8 +956,7 @@ void get_block_handle::getProperty() {
     xJson::Value value;
     uint64_t height = 0;
     if (type == "last") {
-        auto vblock = m_block_store->get_latest_committed_block(_owner_vaddress);
-        height = vblock->get_height();
+        height = m_block_store->get_latest_committed_block_height(_owner_vaddress);
     } else if (type == "height") {
         height = m_js_req["height"].asUInt64();
     }
