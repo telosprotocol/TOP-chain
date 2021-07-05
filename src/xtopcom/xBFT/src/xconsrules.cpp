@@ -399,6 +399,7 @@ namespace top
                 {
                     xproposal_t * _to_remove = cur_it->second;
                     _to_remove->disable_vote();
+                    _to_remove->mark_expired();
                     removed_list.push_back(_to_remove);//transfer owner to list
                     m_proposal_blocks.erase(cur_it);
                 }
@@ -620,14 +621,12 @@ namespace top
                 for(auto it = removed_list.begin(); it != removed_list.end(); ++it)
                 {
                     xproposal_t * _to_remove = *it;
-                    if(false == found_matched_proposal)
+                    if(false == _to_remove->is_certed())
                     {
                         xinfo("xBFTRules::add_cert_block,clean existing proposal(%s) by new cert(%s),at node=0x%llx",_to_remove->dump().c_str(),_target_block->dump().c_str(),get_xip2_addr().low_addr);
                         
                         const std::string errdetail;
                         fire_proposal_finish_event(enum_xconsensus_error_cancel,errdetail,_to_remove->get_block(), NULL, NULL, NULL, get_latest_proposal_block());
-                        
-                        _to_remove->mark_expired(); //prevent throw event again
                     }
                     else //notify U.S the proposal has been successful
                     {
