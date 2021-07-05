@@ -188,26 +188,11 @@ int64_t xchain_downloader_t::get_time() {
 }
 
 bool xchain_downloader_t::check_behind(uint64_t height, const char *elect_address) {
-    base::xauto_ptr<base::xvblock_t> blk_commit = m_sync_store->get_latest_committed_block(elect_address);
-
-    if (blk_commit == nullptr) {
-        xsync_info("chain_downloader on_behind(wait_auth_chain) %s,height=%lu,%s(0,0)",
-                m_address.c_str(), height, elect_address);
-        return false;
-    }
-
-    // TODO consider if latest_fullunit is 0?
-    base::xauto_ptr<base::xvblock_t> blk_connect = m_sync_store->get_latest_connected_block(elect_address);
-
-    if (blk_connect == nullptr) {
-        xsync_info("chain_downloader on_behind(wait_auth_chain) %s,height=%lu,%s(0,%lu)",
-                m_address.c_str(), height, elect_address, blk_commit->get_height());
-        return false;
-    }
-
-    if (blk_connect->get_height() < blk_commit->get_height()) {
+    uint64_t blk_commit_height = m_sync_store->get_latest_committed_block_height(elect_address);
+    uint64_t blk_connect_height = m_sync_store->get_latest_connected_block_height(elect_address);
+    if (blk_connect_height < blk_commit_height) {
         xsync_info("chain_downloader on_behind(wait_auth_chain) %s,height=%lu,%s(%lu,%lu)",
-                m_address.c_str(), height, elect_address, blk_connect->get_height(), blk_commit->get_height());
+                m_address.c_str(), height, elect_address, blk_connect_height, blk_commit_height);
         return false;
     }
 
@@ -435,7 +420,7 @@ xsync_command_execute_result xchain_downloader_t::execute_next_download(std::vec
         return abort;
 
     int64_t now = get_time();
-    int64_t total_cost = (m_request != NULL) ? (now - m_request->send_time) : 0;
+    int64_t total_cost = now - m_request->send_time;
 
     xsync_info("chain_downloader on_response(overview) %s count(%u) cost(%ldms) %s",
         m_address.c_str(), count, total_cost, from_addr.to_string().c_str());
@@ -459,7 +444,6 @@ xsync_command_execute_result xchain_downloader_t::execute_next_download(std::vec
         xblock_ptr_t &block = blocks[count-1];
         if (!check_auth(m_certauth, block)) {
             xsync_info("chain_downloader on_response(auth_failed) %s,height=%lu,", m_address.c_str(), block->get_height());
-            m_sync_range_mgr.clear_behind_info();
             return abort;
         }
     }
@@ -517,7 +501,6 @@ xsync_command_execute_result xchain_downloader_t::execute_next_download(std::vec
     // temporary defend code, need to remove in future
     if ((m_sync_range_mgr.get_current_sync_start_height() >= current_block->get_height()) &&
         (m_sync_range_mgr.get_current_sync_start_height() != m_sync_range_mgr.get_behind_height())){
-        clear();
         xsync_info("chain_downloader on_response %s, failed to move to expect height, current(height=%lu,viewid=%lu,hash=%s) behind(height=%lu)",
         m_address.c_str(), current_vblock->get_height(), current_vblock->get_viewid(), to_hex_str(current_vblock->get_block_hash()).c_str(), m_sync_range_mgr.get_behind_height());
         return abort_overflow;
@@ -543,7 +526,6 @@ xsync_command_execute_result xchain_downloader_t::execute_next_download(std::vec
 
     block = autoptr_to_blockptr(current_vblock);
     if (block->get_height() >= m_sync_range_mgr.get_behind_height()){
-        clear();
         return finish;
     }
 
@@ -568,7 +550,6 @@ xsync_command_execute_result xchain_downloader_t::execute_next_download(const st
     if (current_block->is_fullblock() && !current_block->is_full_state_block() && current_block->get_height() == height) {
         if (false == xtable_bstate_t::set_block_offsnapshot(current_vblock.get(), chain_snapshot)) {
             xsync_error("chain_downloader on_snapshot_response invalid snapshot. block=%s", current_vblock->dump().c_str());
-            clear();
             return abort;
         }
         xsync_dbg("chain_downloader on_snapshot_response valid snapshot. block=%s", current_vblock->dump().c_str());
@@ -580,7 +561,6 @@ xsync_command_execute_result xchain_downloader_t::execute_next_download(const st
     current_block = autoptr_to_blockptr(current_vblock2);
     if (!current_block->is_full_state_block() && current_block->get_height() == height) {
         xsync_error("chain_downloader on_snapshot_response execute height not change. block=%s", current_vblock->dump().c_str());
-        clear();
         return abort;
     }
 
@@ -592,7 +572,6 @@ xsync_command_execute_result xchain_downloader_t::execute_next_download(const st
     m_request = nullptr;
     auto current_block_height = m_sync_store->get_latest_end_block_height(m_address,enum_chain_sync_policy_fast);
     if (current_block_height >= m_sync_range_mgr.get_behind_height()){
-        clear();
         return finish;
     }
 
