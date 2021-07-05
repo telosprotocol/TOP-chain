@@ -188,26 +188,11 @@ int64_t xchain_downloader_t::get_time() {
 }
 
 bool xchain_downloader_t::check_behind(uint64_t height, const char *elect_address) {
-    base::xauto_ptr<base::xvblock_t> blk_commit = m_sync_store->get_latest_committed_block(elect_address);
-
-    if (blk_commit == nullptr) {
-        xsync_info("chain_downloader on_behind(wait_auth_chain) %s,height=%lu,%s(0,0)",
-                m_address.c_str(), height, elect_address);
-        return false;
-    }
-
-    // TODO consider if latest_fullunit is 0?
-    base::xauto_ptr<base::xvblock_t> blk_connect = m_sync_store->get_latest_connected_block(elect_address);
-
-    if (blk_connect == nullptr) {
-        xsync_info("chain_downloader on_behind(wait_auth_chain) %s,height=%lu,%s(0,%lu)",
-                m_address.c_str(), height, elect_address, blk_commit->get_height());
-        return false;
-    }
-
-    if (blk_connect->get_height() < blk_commit->get_height()) {
+    uint64_t blk_commit_height = m_sync_store->get_latest_committed_block_height(elect_address);
+    uint64_t blk_connect_height = m_sync_store->get_latest_connected_block_height(elect_address);
+    if (blk_connect_height < blk_commit_height) {
         xsync_info("chain_downloader on_behind(wait_auth_chain) %s,height=%lu,%s(%lu,%lu)",
-                m_address.c_str(), height, elect_address, blk_connect->get_height(), blk_commit->get_height());
+                m_address.c_str(), height, elect_address, blk_connect_height, blk_commit_height);
         return false;
     }
 

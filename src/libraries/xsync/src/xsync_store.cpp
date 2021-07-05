@@ -66,6 +66,11 @@ uint64_t xsync_store_t::get_genesis_block_height(const std::string & account) {
     return 0;
 }
 
+uint64_t xsync_store_t::get_latest_committed_block_height(const std::string & account) {
+    base::xvaccount_t _vaddress(account);
+    return m_blockstore->get_latest_committed_block_height(_vaddress);
+}
+
 uint64_t xsync_store_t::get_latest_connected_block_height(const std::string & account) {
     base::xvaccount_t _vaddress(account);
     return m_blockstore->get_latest_connected_block_height(_vaddress);
