@@ -145,6 +145,7 @@ namespace top
             virtual bool           close(bool force_async = true) override;
             virtual bool           is_live(const uint64_t timenow_ms) override;//test whether has been idel status
             virtual std::string    dump() const override;  //just for debug purpose
+            const int              get_max_cache_size() const;
             bool                   clean_caches(bool clean_all,bool force_release_unused_block); //clean unsed caches of account to recall memory
             bool                   save_meta();
 

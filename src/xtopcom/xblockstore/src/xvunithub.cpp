@@ -171,7 +171,12 @@ namespace top
                 raw_block_ptr->add_ref();//add reference before return
 
                 if(loaded_new_block) //try to keep balance when one new block loaded,so trigger lightly cleanup
-                    target_account->clean_caches(false,true);//light cleanup
+                {
+                    if(target_index->get_block_level() == base::enum_xvblock_level_table)
+                        target_account->clean_caches(false,false);//cache raw block londer for table with better performance
+                    else
+                        target_account->clean_caches(false,true);//light cleanup
+                }
 
                 return raw_block_ptr;
             }
@@ -502,7 +507,11 @@ namespace top
             if(false == did_stored)
             {
                 //move clean logic here to reduce risk of reenter process that might clean up some index too early
-                container_account->clean_caches(false,true);
+                if(container_block->get_block_level() == base::enum_xvblock_level_table)
+                    container_account->clean_caches(false,false);//cache raw block londer for table with better performance
+                else
+                    container_account->clean_caches(false,true);
+                
                 //then do sotre block
                 bool ret = container_account->store_block(container_block);
                 if(!ret)

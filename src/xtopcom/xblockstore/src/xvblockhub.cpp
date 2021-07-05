@@ -285,11 +285,22 @@ namespace top
             }
             return true;
         }
+    
+        const int  xblockacct_t::get_max_cache_size() const
+        {
+            //note: place code first but  please enable it later
+            #ifdef __ALLOW_TABLE_MORE_CACHE_SIZE__
+            if(base::enum_xvblock_level_table == m_meta->_block_level)
+                return (enum_max_cached_blocks << 1);
+            #endif
+                
+            return enum_max_cached_blocks;
+        }
 
         //clean unsed caches of account to recall memory
         bool xblockacct_t::clean_caches(bool clean_all,bool force_release_unused_block)
         {
-            return clean_blocks(clean_all ? 0 : enum_max_cached_blocks,force_release_unused_block);//try all possible clean_caches
+            return clean_blocks(clean_all ? 0 : get_max_cache_size(),force_release_unused_block);//try all possible clean_caches
         }
 
         bool xblockacct_t::clean_blocks(const int keep_blocks_count,bool force_release_unused_block)
