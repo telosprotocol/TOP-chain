@@ -30,7 +30,7 @@ namespace top
             m_last_fullblock_hash   = obj.get_last_full_block_hash();
             m_last_fullblock_height = obj.get_last_full_block_height();
             
-            m_parent_account_id   = obj.get_parent_account_id();
+            m_parent_account      = obj.get_parent_account();
             m_parent_block_height = obj.get_parent_block_height();
             m_parent_view_id      = obj.get_parent_view_id();
             m_entityid_at_parent  = obj.get_entityid_at_parent();
@@ -49,15 +49,18 @@ namespace top
             
             m_modified              = obj.m_modified;
             m_closed                = obj.m_closed;
+            
             m_block_height          = obj.m_block_height;
-            m_last_fullblock_height = obj.m_last_fullblock_height;
             m_block_viewid          = obj.m_block_viewid;
             m_block_viewtoken       = obj.m_block_viewtoken;
-            m_next_viewid_offset    = obj.m_next_viewid_offset;
             m_block_hash            = obj.m_block_hash;
             m_last_block_hash       = obj.m_last_block_hash;
+            m_last_fullblock_hash   = obj.m_last_fullblock_hash;
+            m_last_fullblock_height = obj.m_last_fullblock_height;
             
-            m_parent_account_id     = obj.m_parent_account_id;
+            m_next_viewid_offset    = obj.m_next_viewid_offset;
+            
+            m_parent_account        = obj.m_parent_account;
             m_parent_block_height   = obj.m_parent_block_height;
             m_parent_view_id        = obj.m_parent_view_id;
             m_entityid_at_parent    = obj.m_entityid_at_parent;
@@ -68,6 +71,10 @@ namespace top
             m_prev_index = obj.m_prev_index;
             m_next_index = obj.m_next_index;
             m_linked_block = obj.m_linked_block;
+            
+            obj.m_prev_index = NULL;
+            obj.m_next_index = NULL;
+            obj.m_linked_block = NULL;
             XMETRICS_GAUGE(metrics::dataobject_xvbindex_t, 1);
         }
     
@@ -99,7 +106,7 @@ namespace top
             
             m_next_viewid_offset    = obj.m_next_viewid_offset;
 
-            m_parent_account_id     = obj.m_parent_account_id;
+            m_parent_account        = obj.m_parent_account;
             m_parent_block_height   = obj.m_parent_block_height;
             m_parent_view_id        = obj.m_parent_view_id;
             m_entityid_at_parent    = obj.m_entityid_at_parent;
@@ -147,7 +154,7 @@ namespace top
                 m_linked_block->release_ref();
             XMETRICS_GAUGE(metrics::dataobject_xvbindex_t, -1);
         }
- 
+  
         void xvbindex_t::init()
         {
             m_modified          = 0;
@@ -162,7 +169,6 @@ namespace top
             m_last_fullblock_height = 0;
             m_next_viewid_offset= 0;
             
-            m_parent_account_id  = 0;
             m_parent_block_height= 0;
             m_parent_view_id     = 0;
             m_entityid_at_parent = 0;
@@ -430,10 +436,10 @@ namespace top
             stream.write_compact_var(m_last_fullblock_height);
             stream.write_compact_var(m_next_viewid_offset);
             
-            stream << m_parent_account_id;
+            stream.write_compact_var(m_parent_account);
             stream.write_compact_var(m_parent_block_height);
             stream.write_compact_var(m_parent_view_id);
-            stream.write_compact_var(m_entityid_at_parent);
+            stream << m_entityid_at_parent;
             stream << m_combineflags;
             stream << m_block_types;
             
@@ -456,10 +462,10 @@ namespace top
                 stream.read_compact_var(m_last_fullblock_height);
                 stream.read_compact_var(m_next_viewid_offset);
                 
-                stream >> m_parent_account_id;
+                stream.read_compact_var(m_parent_account);
                 stream.read_compact_var(m_parent_block_height);
                 stream.read_compact_var(m_parent_view_id);
-                stream.read_compact_var(m_entityid_at_parent);
+                stream >> m_entityid_at_parent;
                 stream >> m_combineflags;
                 stream >> m_block_types;
                 

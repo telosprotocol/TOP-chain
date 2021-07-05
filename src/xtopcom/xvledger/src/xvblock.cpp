@@ -1301,7 +1301,6 @@ namespace top
             m_voutput_ptr  = NULL;
             m_vbstate_ptr  = NULL;
             
-            m_parent_account_id = 0;
             m_parent_viewid     = 0;
             m_entityid_at_parent= 0;
             
@@ -1322,7 +1321,6 @@ namespace top
             m_voutput_ptr  = NULL;
             m_vbstate_ptr  = NULL;
             
-            m_parent_account_id = 0;
             m_parent_viewid     = 0;
             m_entityid_at_parent= 0;
             
@@ -1481,7 +1479,6 @@ namespace top
             m_voutput_ptr  = NULL;
             m_vbstate_ptr  = NULL;
             
-            m_parent_account_id = 0;
             m_parent_viewid     = 0;
             m_entityid_at_parent= 0;
             
@@ -1531,7 +1528,6 @@ namespace top
         : xdataobj_t(type)
         {
             XMETRICS_GAUGE(metrics::dataobject_xvblock, 1);
-            m_parent_account_id = 0;
             m_parent_viewid     = 0;
             m_entityid_at_parent= 0;
             m_next_next_viewid  = 0;
@@ -1569,7 +1565,7 @@ namespace top
             m_vinput_ptr        = other.m_vinput_ptr;
             m_voutput_ptr       = other.m_voutput_ptr;
             m_vbstate_ptr       = other.m_vbstate_ptr;
-            m_parent_account_id = other.m_parent_account_id;
+            m_parent_account    = other.m_parent_account;
             m_parent_viewid     = other.m_parent_viewid;
             m_entityid_at_parent= other.m_entityid_at_parent;
             m_next_next_viewid  = other.m_next_next_viewid;
@@ -2455,13 +2451,18 @@ namespace top
             return (begin_size - stream.size());
         }
     
-        void xvblock_t::set_parent_block(const xvid_t parent_acctid,const uint64_t parent_viewid,const uint16_t entityid_at_parent)
+        bool xvblock_t::set_parent_block(const std::string parent_addr,const uint64_t parent_height,const uint64_t parent_viewid,const uint16_t entityid_at_parent)
         {
-            m_parent_account_id = parent_acctid;
-            m_parent_viewid = parent_viewid;
+            if(get_parent_block_height() != parent_height) //check
+            {
+                xassert(0);
+                return false;
+            }
+            m_parent_account = parent_addr;
+            m_parent_viewid  = parent_viewid;
             m_entityid_at_parent = entityid_at_parent;
+            return true;
         }
-
         
         void xvblock_t::register_object(xcontext_t & _context)
         {
