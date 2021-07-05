@@ -24,7 +24,7 @@ static const int32_t kCheckElectRoutingTableNodesPeriod = 5 * 1000 * 1000;
 
 MultiRouting::MultiRouting() : elect_routing_table_map_(), elect_routing_table_map_mutex_() {
     WrouterRegisterMessageHandler(kRootMessage, [this](transport::protobuf::RoutingMessage & message, base::xpacket_t & packet) { HandleRootMessage(message, packet); });
-    check_elect_routing_ = std::make_shared<base::TimerRepeated>(timer_manager_, "MultiRouting::CheckElectRoutingTableTimer");
+    check_elect_routing_ = std::make_shared<base::TimerRepeated>(timer_manager_, "MultiRouting::CompleteElectRoutingTable");
     check_elect_routing_->Start(kCheckElectRoutingTableNodesPeriod, kCheckElectRoutingTableNodesPeriod, std::bind(&MultiRouting::CompleteElectRoutingTable, this));
 }
 
@@ -125,20 +125,24 @@ void MultiRouting::HandleRootMessage(transport::protobuf::RoutingMessage & messa
 }
 
 void MultiRouting::HandleCacheElectNodesRequest(transport::protobuf::RoutingMessage & message, base::xpacket_t & packet) {
-    std::unique_lock<std::mutex> lock(root_routing_table_mutex_);
-    if (message.des_node_id() != root_routing_table_->get_local_node_info()->kad_key()) {
-        bool closest = false;
-        if (root_routing_table_->ClosestToTarget(message.des_node_id(), closest) != kKadSuccess) {
-            TOP_WARN("root routing closesttotarget goes wrong");
-            return;
+    // TOP-3872  this function get root-mutex first and then try get elect-mutex.
+    // while other functions follow [first elect-mutex and then root-mutex] rules.
+    {
+        std::unique_lock<std::mutex> lock(root_routing_table_mutex_);
+        if (message.des_node_id() != root_routing_table_->get_local_node_info()->kad_key()) {
+            bool closest = false;
+            if (root_routing_table_->ClosestToTarget(message.des_node_id(), closest) != kKadSuccess) {
+                TOP_WARN("root routing closesttotarget goes wrong");
+                return;
+            }
+            if (!closest) {
+                TOP_DEBUG("root routing continue sendtoclosest");
+                return root_routing_table_->SendToClosestNode(message);
+            }
+            TOP_INFO("this is the closest node(%s) of msg.des_node_id(%s)", (root_routing_table_->get_local_node_info()->kad_key()).c_str(), (message.des_node_id()).c_str());
+        } else {
+            TOP_DEBUG("this is the des node(%s)", (root_routing_table_->get_local_node_info()->kad_key()).c_str());
         }
-        if (!closest) {
-            TOP_DEBUG("root routing continue sendtoclosest");
-            return root_routing_table_->SendToClosestNode(message);
-        }
-        TOP_INFO("this is the closest node(%s) of msg.des_node_id(%s)", (root_routing_table_->get_local_node_info()->kad_key()).c_str(), (message.des_node_id()).c_str());
-    } else {
-        TOP_DEBUG("this is the des node(%s)", (root_routing_table_->get_local_node_info()->kad_key()).c_str());
     }
 
     if (!message.has_data() || message.data().empty()) {
@@ -159,6 +163,7 @@ void MultiRouting::HandleCacheElectNodesRequest(transport::protobuf::RoutingMess
     }
     base::ServiceType des_service_type = base::ServiceType(get_nodes_req.des_service_type());
 
+    // TOP-3872 here try get elect-mutex
     auto routing_table = GetElectRoutingTable(des_service_type);
 
     std::vector<NodeInfoPtr> nodes;
@@ -230,18 +235,21 @@ void MultiRouting::HandleCacheElectNodesRequest(transport::protobuf::RoutingMess
         res_message.set_debug(message.debug());
     }
 #endif
-    root_routing_table_->SetFreqMessage(res_message);
-    res_message.set_is_root(true);
-    res_message.set_src_service_type(message.des_service_type());
-    res_message.set_des_service_type(kRoot);
-    res_message.set_des_node_id(message.src_node_id());
-    res_message.set_type(kRootMessage);
-    res_message.set_id(message.id());
+    {
+        std::unique_lock<std::mutex> lock(root_routing_table_mutex_);
+        root_routing_table_->SetFreqMessage(res_message);
+        res_message.set_is_root(true);
+        res_message.set_src_service_type(message.des_service_type());
+        res_message.set_des_service_type(kRoot);
+        res_message.set_des_node_id(message.src_node_id());
+        res_message.set_type(kRootMessage);
+        res_message.set_id(message.id());
 
-    res_message.set_data(root_data);
+        res_message.set_data(root_data);
 
-    TOP_DEBUG("send response of msg.des: %s size: %d", message.des_node_id().c_str(), tmp_ready_nodes);
-    root_routing_table_->SendToClosestNode(res_message);
+        TOP_DEBUG("send response of msg.des: %s size: %d", message.des_node_id().c_str(), tmp_ready_nodes);
+        root_routing_table_->SendToClosestNode(res_message);
+    }
     return;
 }
 
