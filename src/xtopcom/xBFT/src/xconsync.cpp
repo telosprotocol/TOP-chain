@@ -269,8 +269,15 @@ namespace top
                 _local_block = get_lock_block();
                 _local_block->add_ref(); //hold reference
             }
-            else if( (get_lock_block()->get_height() - target_block_height) < 128 )//search from blockstore at nearby locked block
+            
+            if(NULL == _local_block)
             {
+                if( (get_lock_block()->get_height() - target_block_height) < 128 )//search from blockstore at nearby locked block
+                {
+                    xwarn("xBFTSyncdrv::handle_sync_request_msg,fail-sync too old block(heigh:%llu) from packet=%s,at node=0x%llx",target_block_height,packet.dump().c_str(),get_xip2_low_addr());
+                    //return enum_xconsensus_error_outofdate; //note:open for download any block now
+                }
+                
                 bool full_load = (sync_targets & enum_xsync_target_block_input) || (sync_targets & enum_xsync_target_block_output);
                 base::xauto_ptr<base::xvblock_t> target_block = get_vblockstore()->load_block_object(*this, target_block_height,target_block_hash,full_load);//specific load target block
                 if(target_block == nullptr)
@@ -287,11 +294,6 @@ namespace top
 
                 _local_block = target_block.get();
                 _local_block->add_ref(); //hold reference
-            }
-            else
-            {
-                xwarn("xBFTSyncdrv::handle_sync_request_msg,fail-sync too old block(heigh:%llu) from packet=%s,at node=0x%llx",target_block_height,packet.dump().c_str(),get_xip2_low_addr());
-                return enum_xconsensus_error_outofdate;
             }
 
             //step#2: verify view_id & viewtoken etc to protect from DDOS attack by local block
