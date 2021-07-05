@@ -88,13 +88,13 @@ void xsync_behind_checker_t::check_one(const std::string &address, enum_chain_sy
 
     if (m_peerset->get_newest_peer(self_addr, address, peer_start_height, peer_end_height, peer_addr)) {
         if ((m_counter % 120) == 0) {
-            std::string metric_tag_name;
+            std::string sync_mode;
             std::string gap_metric_tag_name;
             if (sync_policy == enum_chain_sync_policy_fast) {
-                metric_tag_name = "xsync_fast_mode_interval";
+                sync_mode = "fast";
                 gap_metric_tag_name = "xsync_fast_mode_gap_" + address;
             } else if (sync_policy == enum_chain_sync_policy_full) {
-                metric_tag_name = "xsync_full_mode_interval";
+                sync_mode = "full";
                 gap_metric_tag_name = "xsync_full_mode_gap_" + address;
             }
 
@@ -105,17 +105,19 @@ void xsync_behind_checker_t::check_one(const std::string &address, enum_chain_sy
             }
 
             XMETRICS_COUNTER_SET(gap_metric_tag_name, gap_between_interval);
-            XMETRICS_PACKET_INFO(metric_tag_name,
-                                "table_address",
-                                address,
-                                "self_min",
-                                latest_start_block->get_height(),
-                                "self_max",
-                                latest_end_block_height,
-                                "peer_min",
-                                peer_start_height,
-                                "peer_max",
-                                peer_end_height);
+            XMETRICS_PACKET_INFO("xsync_interval",
+                                 "mode",
+                                 sync_mode,
+                                 "table_address",
+                                 address,
+                                 "self_min",
+                                 latest_start_block->get_height(),
+                                 "self_max",
+                                 latest_end_block_height,
+                                 "peer_min",
+                                 peer_start_height,
+                                 "peer_max",
+                                 peer_end_height);
         }
 
         if (peer_end_height == 0)
