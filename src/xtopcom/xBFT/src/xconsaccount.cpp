@@ -185,8 +185,8 @@ namespace top
                 _evt_obj->set_latest_commit(latest_list.get_latest_committed_block());
             if(NULL == _evt_obj->get_latest_lock())
                 _evt_obj->set_latest_lock(latest_list.get_latest_locked_block());
-            if(NULL == _evt_obj->get_latest_lock())
-                _evt_obj->set_latest_lock(latest_list.get_latest_cert_block());
+            if(NULL == _evt_obj->get_latest_cert())
+                _evt_obj->set_latest_cert(latest_list.get_latest_cert_block());
 
             if(NULL == _evt_obj->get_latest_clock())//auto fill latest clock
             {
@@ -223,21 +223,8 @@ namespace top
                 _batch_blocks[0] = _target_cert_block;
                 _batch_blocks[1] = _latest_lock_block;
                 //stored larger height block first for commit prove
-                get_vblockstore()->store_blocks(*this,_batch_blocks);//save to blockstore
-            }
-            else if(_evt_obj->get_error_code() == xconsensus::enum_xconsensus_error_outofdate)
-            {
-                base::xvblock_t* _latest_commit_block = _evt_obj->get_latest_commit();
-                base::xvblock_t* _latest_lock_block   = _evt_obj->get_latest_lock();
-                base::xvblock_t* _latest_cert_block   = _evt_obj->get_latest_cert();
-
-                std::vector<base::xvblock_t*> _batch_blocks;
-                _batch_blocks.resize(3);
-                _batch_blocks[0] = _latest_cert_block;
-                _batch_blocks[1] = _latest_lock_block;
-                _batch_blocks[2] = _latest_commit_block;
-                //stored larger height block first for commit prove
-                get_vblockstore()->store_blocks(*this,_batch_blocks);//save to blockstore
+                //get_vblockstore()->store_blocks(*this,_batch_blocks);//save to blockstore
+                get_vblockstore()->store_block(*this,_target_cert_block); //just store cert only
             }
             return false;//throw event up again to let txs-pool or other object start new consensus
         }
@@ -257,7 +244,8 @@ namespace top
             _batch_blocks[2] = _evt_obj->get_target_commit();
 
             //stored larger height block first for commit prove
-            get_vblockstore()->store_blocks(*this,_batch_blocks);//save to blockstore
+            //get_vblockstore()->store_blocks(*this,_batch_blocks);//save to blockstore
+            get_vblockstore()->store_block(*this,_evt_obj->get_target_commit()); //sore commit only
             return false;//throw event up again to let txs-pool or other object start new consensus
         }
 
@@ -292,7 +280,8 @@ namespace top
                 _batch_blocks[0] = _target_cert_block;
                 _batch_blocks[1] = _latest_lock_block;
                 //stored larger height block first for commit prove
-                get_vblockstore()->store_blocks(*this,_batch_blocks);//save to blockstore
+                //get_vblockstore()->store_blocks(*this,_batch_blocks);//save to blockstore
+                get_vblockstore()->store_block(*this,_evt_obj->get_target_block());
             }
             return true; //stop handle anymore
         }

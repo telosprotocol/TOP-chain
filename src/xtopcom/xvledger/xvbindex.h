@@ -45,6 +45,7 @@ namespace top
         public:
             inline const uint64_t       get_height()  const {return m_block_height;}
             inline const uint64_t       get_viewid()  const {return m_block_viewid;}
+            inline const uint64_t       get_viewtoken()  const {return m_block_viewtoken;}
             inline const std::string &  get_block_hash()      const {return m_block_hash;}
             inline const std::string &  get_last_block_hash() const {return m_last_block_hash;}
             inline const std::string &  get_last_full_block_hash()    const {return m_last_fullblock_hash;}
@@ -119,6 +120,7 @@ namespace top
         private: //serialized from/to stream/db
             uint64_t        m_block_height;     //block 'height
             uint64_t        m_block_viewid;     //view#id associated this block
+            uint64_t        m_block_viewtoken;  //view token associated this block
             std::string     m_block_hash;       //point to block'qcert hash that logicaly same as block hash
             std::string     m_last_block_hash;  //point the last block'hash
             std::string     m_last_fullblock_hash; //point to last full-block'hash
@@ -201,6 +203,7 @@ namespace top
             inline xvbnode_t*          get_child()   const {return m_child_node;}
 
             inline uint64_t            get_viewid()  const {return m_block->get_viewid();}
+            inline uint64_t            get_viewtoken() const {return m_block->get_viewtoken();}
             inline uint64_t            get_height()  const {return m_block->get_height();}
             inline uint32_t            get_chainid() const {return m_block->get_chainid();}
             inline const std::string&  get_account() const {return m_block->get_account();}

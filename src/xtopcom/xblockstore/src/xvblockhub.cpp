@@ -13,7 +13,9 @@
 #include "xvgenesis.h"
 #include "xvledger/xvdbkey.h"
 
-#define __ALLOW_FORK_LOCK__  // XTODO always allow store multi lock blocks
+#ifdef __ALLOW_FORK_LOCK__
+    #undef __ALLOW_FORK_LOCK__  // XTODO always allow store multi lock blocks
+#endif
 
 namespace top
 {
@@ -461,7 +463,7 @@ namespace top
                 for(auto height_it = m_all_blocks.rbegin(); height_it != m_all_blocks.rend(); ++height_it)//search from highest height
                 {
                     auto & view_map  = height_it->second;
-                    for(auto view_it = view_map.begin(); view_it != view_map.end(); ++view_it) //search from highest view#
+                    for(auto view_it = view_map.rbegin(); view_it != view_map.rend(); ++view_it) //search from highest view#
                     {
                         if( (cert_block == nullptr) && (view_it->second->check_block_flag(base::enum_xvblock_flag_authenticated)) )
                         {
@@ -511,7 +513,7 @@ namespace top
                 {
                     auto & view_map  = height_it->second;
                     all_blocks_at_height.reserve(view_map.size()); //just reserved intead of resizing
-                    for(auto view_it = view_map.begin(); view_it != view_map.end(); ++view_it) //search from lower view#
+                    for(auto view_it = view_map.rbegin(); view_it != view_map.rend(); ++view_it) //search from higher view#
                     {
                         view_it->second->add_ref();
                         all_blocks_at_height.push_back(view_it->second);
@@ -545,7 +547,7 @@ namespace top
                         base::xvbindex_t* highest_commit = NULL;
                         base::xvbindex_t* highest_lock = NULL;
                         base::xvbindex_t* highest_cert = NULL;
-                        for(auto view_it = view_map.begin(); view_it != view_map.end(); ++view_it) //search from highest view#
+                        for(auto view_it = view_map.rbegin(); view_it != view_map.rend(); ++view_it) //search from highest view#
                         {
                             if( (highest_commit == NULL) && (view_it->second->check_block_flag(base::enum_xvblock_flag_committed)) )
                             {
@@ -613,7 +615,7 @@ namespace top
                 if(height_it != m_all_blocks.end())
                 {
                     auto & view_map  = height_it->second;
-                    for(auto view_it = view_map.begin(); view_it != view_map.end(); ++view_it) //search from highest view#
+                    for(auto view_it = view_map.rbegin(); view_it != view_map.rend(); ++view_it) //search from highest view#
                     {
                         if(view_it->second->check_block_flag(request_flag))
                         {
@@ -635,7 +637,7 @@ namespace top
                 for(auto height_it = m_all_blocks.rbegin(); height_it != m_all_blocks.rend(); ++height_it)//search from highest height
                 {
                     auto & view_map  = height_it->second;
-                    for(auto view_it = view_map.begin(); view_it != view_map.end(); ++view_it) //search from highest view#
+                    for(auto view_it = view_map.rbegin(); view_it != view_map.rend(); ++view_it) //search from highest view#
                     {
                         if(view_it->second->check_block_flag(request_flag))
                         {
@@ -656,7 +658,7 @@ namespace top
                 for(auto height_it = m_all_blocks.rbegin(); height_it != m_all_blocks.rend(); ++height_it)//search from highest height
                 {
                     auto & view_map  = height_it->second;
-                    for(auto view_it = view_map.begin(); view_it != view_map.end(); ++view_it) //search from highest view#
+                    for(auto view_it = view_map.rbegin(); view_it != view_map.rend(); ++view_it) //search from highest view#
                     {
                         if(view_it->second->get_block_class() == request_class)
                         {
@@ -877,73 +879,43 @@ namespace top
         //caller respond to release those returned ptr
         bool    xblockacct_t::load_latest_index_list(base::xvbindex_t* & cert_block,base::xvbindex_t* & lock_block,base::xvbindex_t* & commit_block)
         {
-            base::xvbindex_t* temp_lock_index = nullptr;
-            base::xvbindex_t* temp_cert_index = nullptr;
-            // load index and cache
+            cert_block      = NULL;
+            lock_block      = NULL;
+            commit_block    = NULL;
+            
+            //ptr has been an added-reference
             commit_block = load_latest_committed_index();
-            temp_lock_index = load_latest_locked_index();
-            temp_cert_index = load_latest_cert_index();
-
-            if (m_meta->_highest_cert_block_height <= 1) {
-                lock_block = temp_lock_index;
-                cert_block = temp_cert_index;
-                return true;
-            }
-
-            // cert and lock match
-            if ( (temp_cert_index->get_height() == temp_lock_index->get_height() - 1)
-                && (temp_cert_index->get_last_full_block_hash() == temp_lock_index->get_block_hash()) ) {
-                lock_block = temp_lock_index;
-                cert_block = temp_cert_index;
-                return true;
-            }
-
-            // release old index
-            if (temp_cert_index != nullptr) {
-                temp_cert_index->release_ref();
-                temp_cert_index = nullptr;
-            }
-            if (temp_lock_index != nullptr) {
-                temp_lock_index->release_ref();
-                temp_lock_index = nullptr;
-            }
-
-            // get all cert blocks and try to find matched lock
-            std::vector<base::xvbindex_t*> cert_index_list = query_index(m_meta->_highest_cert_block_height);
-            for(auto & cert_index : cert_index_list)
+            lock_block   = load_latest_locked_index();
+            cert_block   = load_latest_cert_index();
+            
+            if(cert_block->get_height() == (lock_block->get_height() + 1) )
             {
-                if(cert_index != NULL)
+                if(cert_block->get_last_block_hash() != lock_block->get_block_hash())//rare case
                 {
-                    temp_lock_index = query_index(cert_index->get_height() - 1, cert_index->get_last_block_hash());
-                    if (temp_lock_index != nullptr) {
-                        cert_index->add_ref();
-                        temp_cert_index = cert_index;
-                        break;
+                    auto height_it = m_all_blocks.find(cert_block->get_height());
+                    if(height_it != m_all_blocks.end())
+                    {
+                        auto & view_map  = height_it->second;
+                        for(auto view_it = view_map.rbegin(); view_it != view_map.rend(); ++view_it)
+                        {
+                            if(view_it->second->get_last_block_hash() == lock_block->get_block_hash())
+                            {
+                                //release prev holded on
+                                cert_block->release_ref();
+                                cert_block = NULL;
+                                //retake new one
+                                view_it->second->add_ref();
+                                cert_block = view_it->second;
+                                break;
+                            }
+                        }
                     }
+                    xassert(cert_block->get_last_block_hash() == lock_block->get_block_hash());
                 }
             }
-            // release all index
-            for(auto & cert_index : cert_index_list) {
-                if(cert_index != NULL) {
-                    cert_index->release_ref();
-                }
-            }
-
-            if (temp_lock_index != nullptr && temp_cert_index != nullptr) {
-                lock_block = temp_lock_index;
-                cert_block = temp_cert_index;
-                xdbg_info("xblockacct_t::load_latest_index_list succ retry. account=%s,cert=%s,lock=%s",
-                    get_account().c_str(), temp_cert_index->dump().c_str(), temp_lock_index->dump().c_str());
-                return true;
-            }
-
-            if (commit_block != nullptr) {
-                commit_block->release_ref();
-                commit_block = nullptr;
-            }
-            xwarn("xblockacct_t::load_latest_index_list fail retry. account=%s,cert=%ld,lock=%ld,commit=%ld",
-                get_account().c_str(), m_meta->_highest_cert_block_height, m_meta->_highest_lock_block_height, m_meta->_highest_commit_block_height);
-            return false;
+            xdbg_info("xblockacct_t::load_latest_index_list succ retry. account=%s,cert=%s,lock=%s",
+                      get_account().c_str(), cert_block->dump().c_str(), lock_block->dump().c_str());
+            return true;
         }
 
         //load every index of block at target_height into cache layer
@@ -1151,7 +1123,20 @@ namespace top
             XMETRICS_GAUGE(metrics::store_block_call, 1);
 #endif
 
+            base::xauto_ptr<base::xvbindex_t> exist_cert( query_index(new_raw_block->get_height(),new_raw_block->get_block_hash()));
+            if(exist_cert) //found duplicated ones
+            {
+                if(exist_cert->check_block_flag(base::enum_xvblock_flag_stored))//if fully stored
+                {
+                    //transfer flag of unpacked to existing if need
+                    if(new_raw_block->check_block_flag(base::enum_xvblock_flag_unpacked))
+                        exist_cert->set_block_flag(base::enum_xvblock_flag_unpacked);
 
+                    return false;
+                }
+            }
+
+            #ifdef DEBUG
             if(   (false == new_raw_block->is_input_ready(true))
                || (false == new_raw_block->is_output_ready(true))
                || (false == new_raw_block->is_deliver(true)) )//must have full valid data and has mark as enum_xvblock_flag_authenticated
@@ -1159,7 +1144,16 @@ namespace top
                 xwarn("xblockacct_t::store_block,undevlier block=%s",new_raw_block->dump().c_str());
                 return false;
             }
-
+            #else //quick check for release mode
+            if(   (false == new_raw_block->is_input_ready(false))
+               || (false == new_raw_block->is_output_ready(false))
+               || (false == new_raw_block->is_deliver(true)) )//must have full valid data and has mark as enum_xvblock_flag_authenticated
+            {
+                xwarn("xblockacct_t::store_block,undevlier block=%s",new_raw_block->dump().c_str());
+                return false;
+            }
+            #endif
+            
             // TODO(jimmy) should store and execute genesis block
             if(new_raw_block->get_height() == 1 && m_meta->_highest_connect_block_hash.empty())
             {

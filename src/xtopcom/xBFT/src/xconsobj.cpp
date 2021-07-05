@@ -582,7 +582,7 @@ namespace top
             return false;
         }
         
-        bool   xcscoreobj_t::fire_pdu_event_up(const uint8_t msg_type,const std::string & msg_content,const uint16_t msg_nonce,const xvip2_t & from_addr, const xvip2_t & to_addr, base::xvblock_t* for_block,const std::string & vblock_cert_bin)
+        bool   xcscoreobj_t::fire_pdu_event_up(const uint8_t msg_type,const std::string & msg_content,const uint16_t msg_nonce,const xvip2_t & from_addr, const xvip2_t & to_addr, base::xvblock_t* for_block,const std::string & vblock_cert_bin,const std::string & vlatest_clock_cert)
         {
             if(get_parent_node() != NULL)
             {
@@ -595,7 +595,8 @@ namespace top
                 _event_obj->_packet.set_block_height(for_block->get_height());
                 _event_obj->_packet.set_block_clock(for_block->get_clock());
                 _event_obj->_packet.set_vblock_cert(vblock_cert_bin);
-
+                _event_obj->_packet.set_xclock_cert(vlatest_clock_cert);
+                
                 _event_obj->_packet.set_block_viewid(for_block->get_viewid());
                 _event_obj->_packet.set_block_viewtoken(for_block->get_viewtoken());
                 

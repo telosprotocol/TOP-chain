@@ -309,9 +309,12 @@ namespace top
             xcspdu_fire * _evt_obj = (xcspdu_fire*)&event;
             if( (_evt_obj->_packet.get_msg_type() == enum_consensus_msg_type_proposal) || (_evt_obj->_packet.get_msg_type() == enum_consensus_msg_type_commit) )
             {
-                std::string latest_block_cert;
-                m_latest_clock_cert->serialize_to_string(latest_block_cert);
-                _evt_obj->_packet.set_xclock_cert(latest_block_cert);//attach block certification for proposal
+                if(_evt_obj->_packet.get_xclock_cert().empty())
+                {
+                    std::string latest_block_cert;
+                    m_latest_clock_cert->serialize_to_string(latest_block_cert);
+                    _evt_obj->_packet.set_xclock_cert(latest_block_cert);//attach block certification for proposal
+                }
             }
             if(_evt_obj->_packet.get_block_clock() == 0)
             {

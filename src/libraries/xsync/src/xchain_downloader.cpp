@@ -435,7 +435,7 @@ xsync_command_execute_result xchain_downloader_t::execute_next_download(std::vec
         return abort;
 
     int64_t now = get_time();
-    int64_t total_cost = now - m_request->send_time;
+    int64_t total_cost = (m_request != NULL) ? (now - m_request->send_time) : 0;
 
     xsync_info("chain_downloader on_response(overview) %s count(%u) cost(%ldms) %s",
         m_address.c_str(), count, total_cost, from_addr.to_string().c_str());

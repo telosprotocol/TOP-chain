@@ -204,18 +204,23 @@ namespace top
                         is_proof_check_pass = true;
                     }
                 }
-                else if( (get_lock_block()->get_height() - packet.get_block_height()) < 128 )//search from blockstore at nearby locked block
+                
+                if(false == is_proof_check_pass)
                 {
-                    base::xauto_ptr<base::xvblock_t> proof_block = get_vblockstore()->load_block_object(*this, packet.get_block_height(),packet.get_block_viewid(),false);//packet carry proof 'info
-                    if(proof_block != nullptr)
+                    //search from blockstore at nearby locked block
                     {
-                        if(  (proof_block->get_viewid()    == packet.get_block_viewid())
-                           &&(proof_block->get_viewtoken() == packet.get_block_viewtoken()) )
+                        base::xauto_ptr<base::xvbindex_t> proof_block = get_vblockstore()->load_block_index(*this, packet.get_block_height(),packet.get_block_viewid());//packet carry proof 'info
+                        if(proof_block != nullptr)
                         {
-                            is_proof_check_pass = true;
+                            if(  (proof_block->get_viewid()    == packet.get_block_viewid())
+                               &&(proof_block->get_viewtoken() == packet.get_block_viewtoken()) )
+                            {
+                                is_proof_check_pass = true;
+                            }
                         }
                     }
                 }
+ 
             }
             if(false == is_proof_check_pass)
             {
@@ -249,10 +254,11 @@ namespace top
                         xwarn("xBFTSyncdrv::handle_sync_request_msg,fail-found target cert of height:%llu,at node=0x%llx",target_block_height,get_xip2_low_addr());
                         return enum_xconsensus_error_not_found;
                     }
-
-                    add_cert_block(target_block.get());//fill into cache list
                     xassert(target_block->is_input_ready(true));
                     xassert(target_block->is_output_ready(true));
+                    
+                    bool found_matched_proposal = false;
+                    add_cert_block(target_block.get(),found_matched_proposal);//fill into cache list
 
                     _local_block = target_block.get();
                     _local_block->add_ref(); //hold reference
@@ -263,8 +269,15 @@ namespace top
                 _local_block = get_lock_block();
                 _local_block->add_ref(); //hold reference
             }
-            else if( (get_lock_block()->get_height() - target_block_height) < 128 )//search from blockstore at nearby locked block
+            
+            if(NULL == _local_block)
             {
+                if( (get_lock_block()->get_height() - target_block_height) < 128 )//search from blockstore at nearby locked block
+                {
+                    xwarn("xBFTSyncdrv::handle_sync_request_msg,fail-sync too old block(heigh:%llu) from packet=%s,at node=0x%llx",target_block_height,packet.dump().c_str(),get_xip2_low_addr());
+                    //return enum_xconsensus_error_outofdate; //note:open for download any block now
+                }
+                
                 bool full_load = (sync_targets & enum_xsync_target_block_input) || (sync_targets & enum_xsync_target_block_output);
                 base::xauto_ptr<base::xvblock_t> target_block = get_vblockstore()->load_block_object(*this, target_block_height,target_block_hash,full_load);//specific load target block
                 if(target_block == nullptr)
@@ -281,11 +294,6 @@ namespace top
 
                 _local_block = target_block.get();
                 _local_block->add_ref(); //hold reference
-            }
-            else
-            {
-                xwarn("xBFTSyncdrv::handle_sync_request_msg,fail-sync too old block(heigh:%llu) from packet=%s,at node=0x%llx",target_block_height,packet.dump().c_str(),get_xip2_low_addr());
-                return enum_xconsensus_error_outofdate;
             }
 
             //step#2: verify view_id & viewtoken etc to protect from DDOS attack by local block
@@ -362,7 +370,7 @@ namespace top
                         xwarn("xBFTSyncdrv::handle_sync_respond_msg,fail-unmatched packet=%s vs local certified block=%s,at node=0x%llx",packet.dump().c_str(),_local_cert_block->dump().c_str(),get_xip2_low_addr());
                         return enum_xconsensus_error_bad_packet;
                     }
-                    xinfo("xBFTdriver_t::handle_sync_respond_msg,target block has finished and deliver to certified _local_cert_block=%s, at node=0x%llx",_local_cert_block->dump().c_str(),get_xip2_low_addr());
+                    xinfo("xBFTSyncdrv::handle_sync_respond_msg,target block has finished and deliver to certified _local_cert_block=%s, at node=0x%llx",_local_cert_block->dump().c_str(),get_xip2_low_addr());
                     return enum_xconsensus_code_successful;//local proposal block has verified and ready,so it is duplicated commit msg
                 }
             }
@@ -409,9 +417,6 @@ namespace top
                     xinfo("xBFTSyncdrv::handle_sync_respond_msg,pulled un-verified commit-block:%s at node=0x%llx from peer:0x%llx,local(%s)",_sync_block->dump().c_str(),get_xip2_addr().low_addr,from_addr.low_addr,dump().c_str());
                     fire_verify_syncblock_job(_sync_block.get(),NULL);
                 }
-                
-                //allow sync addtional blocks around the locked block
-                resync_local_and_peer(_sync_block(),from_addr,to_addr,event_obj->get_clock());
             }
             else
             {
@@ -435,21 +440,21 @@ namespace top
             std::function<void(void*)> _after_verify_commit_job = [this](void* _block)->void{
                 base::xvblock_t* _full_block_ = (base::xvblock_t*)_block;
 
-                if(add_cert_block(_full_block_))//set certified block(QC block)
+                bool found_matched_proposal = false;
+                if(add_cert_block(_full_block_,found_matched_proposal))//set certified block(QC block)
                 {
-                    if(remove_proposal(_full_block_->get_viewid()))//note:remove_proposal must paired with fire_proposal_finish_event
+                    //now recheck any existing proposal and could push to voting again
+                    on_new_block_fire(_full_block_);
+                    
+                    if(found_matched_proposal)//on_proposal_finish event has been fired by add_cert_block
                     {
                         xinfo("xBFTSyncdrv::fire_verify_syncblock,deliver an proposal-and-authed block:%s at node=0x%llx",_full_block_->dump().c_str(),get_xip2_addr().low_addr);
-                        fire_proposal_finish_event(_full_block_, NULL, get_lock_block(), get_latest_cert_block(), get_latest_proposal_block());//call on_consensus_finish(block) to driver context layer
                     }
                     else
                     {
                         xinfo("xBFTSyncdrv::fire_verify_syncblock,deliver an replicated-and-authed block:%s at node=0x%llx",_full_block_->dump().c_str(),get_xip2_addr().low_addr);
                         fire_replicate_finish_event(_full_block_);//call on_replicate_finish(block) to driver context layer
                     }
-                    
-                    //now recheck any existing proposal and could push to voting again
-                    on_new_block_fire(_full_block_);
                 }
                 _full_block_->release_ref(); //release reference hold by _verify_function
             };

@@ -83,12 +83,7 @@ namespace top
                 {
                     allow_update = true;
                 }
-                else if(   (_new_lock->get_height() == m_latest_lock_block->get_height())
-                        && (_new_lock->get_viewid() <= m_latest_lock_block->get_viewid()) )//perfer small viewid
-                {
-                    allow_update = true;
-                }
-                
+ 
                 if(allow_update)
                 {
                     if(   (_new_lock->get_chainid() == m_latest_lock_block->get_chainid())
@@ -359,17 +354,6 @@ namespace top
                 {
                     xkinfo("xBFTcontext_t::do_submit at node=0x%llx,submit for block=%s",get_xip2_addr().low_addr,it->dump().c_str());
                     
-                    if( (it->get_child() != NULL) && (it->get_child()->get_child() != NULL) ) //operated by xbft-self
-                    {
-                        base::xvblock_t* lock_block = it->get_child()->get_block();
-                        base::xvblock_t* hqc_block  = it->get_child()->get_child()->get_block();
-                        
-                        fire_consensus_commit_event(it->get_block(), it->get_block(), lock_block, hqc_block);
-                    }
-                    else //sync module operated and transfer it to commited status
-                    {
-                        fire_consensus_commit_event(it->get_block(), it->get_block(), get_latest_lock_block(), highest_cert_block);
-                    }
                 }
                 for(auto it : to_commit_blocks)
                 {
@@ -429,8 +413,6 @@ namespace top
             {
                 xinfo("xBFTcontext_t::do_clean,cancel the block:%s at node=0x%llx",it->dump().c_str(),get_xip2_addr().low_addr);
                 
-                std::string errdetail;//("{\"reason\" = \"outofdate\"}");
-                fire_proposal_finish_event(enum_xconsensus_error_cancel,errdetail,it, NULL, NULL, NULL, NULL);
                 it->release_ref(); //releasae reference holding by queue
             }
             return true;
@@ -471,8 +453,10 @@ namespace top
             if(any_lock_commit_change)
                 do_clean(_evt_obj->get_latest_cert(),_evt_obj->get_latest_proposal());
             
-            _evt_obj->set_latest_commit(get_latest_commit_block());//update with latest commit block
-            _evt_obj->set_latest_lock(get_latest_lock_block()); //update with latest lock block
+            if(_evt_obj->get_latest_commit() == NULL) //follow blockstore
+                _evt_obj->set_latest_commit(get_latest_commit_block());//update with latest commit block
+            if(_evt_obj->get_latest_lock() == NULL) //follow blockstore
+                _evt_obj->set_latest_lock(get_latest_lock_block()); //update with latest lock block
             return false; //let driver continue handle it
         }
         
