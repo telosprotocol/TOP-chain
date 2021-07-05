@@ -719,12 +719,12 @@ namespace top
             void                        set_next_next_cert(xvqcert_t * next_next_vqcert_ptr);//reset ptr of next next cert
 
         public: //associated information about parent block(e.g. tableblock)
-            inline const xvid_t         get_parent_account_id()     const {return m_parent_account_id;}
+            inline const std::string    get_parent_account()        const {return m_parent_account;}
             inline const uint64_t       get_parent_block_height()   const {return m_vqcert_ptr->get_parent_block_height();}
             inline const uint64_t       get_parent_view_id()        const {return m_parent_viewid;}
             inline const int            get_entityid_at_parent()    const {return m_entityid_at_parent;}
 
-            void  set_parent_block(const xvid_t parent_acctid,const uint64_t parent_viewid,const uint16_t entityid_at_parent);
+            bool  set_parent_block(const std::string parent_addr,const uint64_t parent_height,const uint64_t parent_viewid,const uint16_t entityid_at_parent);
 
         private:
             //generated the unique path of object(like vblock) under store-space(get_store_path()) to store data to DB
@@ -759,7 +759,7 @@ namespace top
             xvqcert_t*                  m_next_next_qcert;  //temporary hold ptr of next and next hqc to proov this block as commited
 
             //just carry them at memory,might persist at later version
-            uint64_t        m_parent_account_id;//container(e.g.tableblock)'account id(refer xvaccount_t::get_xvid())
+            std::string     m_parent_account;   //container(e.g.tableblock)'account id(refer xvaccount_t::get_xvid())
             uint64_t        m_parent_viewid;    //viewid of container(e.gtableblock) that may carry this block
             uint16_t        m_entityid_at_parent; //entityid of under parent 'block(e.g tableblock)
 
