@@ -32,6 +32,10 @@ bool is_beacon_table(const std::string &address) {
 
 bool check_auth(const observer_ptr<base::xvcertauth_t> &certauth, data::xblock_ptr_t &block) {
     XMETRICS_TIME_RECORD("xsync_store_check_auth");
+    
+    //No.1 safe rule: clean all flags first when sync/replicated one block
+    block->reset_block_flags();
+
     base::enum_vcert_auth_result result = certauth->verify_muti_sign(block.get());
     if (result != base::enum_vcert_auth_result::enum_successful) {
         return false;

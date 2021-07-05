@@ -173,7 +173,9 @@ enum_result_code xchain_downloader_t::handle_block(xblock_ptr_t &block, bool is_
         }
     }
 
+    //XTODO,need doublecheck whether allow set flag of authenticated without verify signature
     block->set_block_flag(enum_xvblock_flag_authenticated);
+    
     base::xvblock_t* vblock = dynamic_cast<base::xvblock_t*>(block.get());
     bool ret = m_sync_store->store_block(vblock);
     if (ret) {
