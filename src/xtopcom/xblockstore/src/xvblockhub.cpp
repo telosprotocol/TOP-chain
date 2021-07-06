@@ -1032,7 +1032,7 @@ namespace top
                 target_block = query_index(target_height, block_hash);//query again after loaded
 
             if(NULL == target_block)
-                xwarn("xblockacct_t::load_index(hash),faild to load index for addr=%s at height=%ld", get_account().c_str(), target_height);
+                xdbg("xblockacct_t::load_index(hash),faild to load index for addr=%s at height=%ld", get_account().c_str(), target_height);
 
             return target_block;
         }
@@ -1052,7 +1052,7 @@ namespace top
                 target_block = query_index(target_height, request_flag);//query again after loaded
 
             if(NULL == target_block)
-                xwarn("xblockacct_t::load_index(flag),faild to load index for addr=%s at height=%ld", get_account().c_str(), target_height);
+                xdbg("xblockacct_t::load_index(flag),faild to load index for addr=%s at height=%ld", get_account().c_str(), target_height);
 
             return target_block;
         }
@@ -1717,7 +1717,7 @@ namespace top
                 if( (geneis_connect_step > 64) || (block_connect_step > 64) )
                     xwarn("xblockacct_t::full_connect_to,navigate big step(%d) to genesis_connect_height=%" PRIu64 ",step(%d) to _highest_connect_height=%" PRIu64 " ",geneis_connect_step,m_meta->_highest_genesis_connect_height,block_connect_step,m_meta->_highest_connect_block_height);
                 else
-                    xinfo("xblockacct_t::full_connect_to,navigate small step(%d) to genesis_connect_height=%" PRIu64 ",step(%d) to _highest_connect_height=%" PRIu64 " ",geneis_connect_step,m_meta->_highest_genesis_connect_height,block_connect_step,m_meta->_highest_connect_block_height);
+                    xdbg("xblockacct_t::full_connect_to,navigate small step(%d) to genesis_connect_height=%" PRIu64 ",step(%d) to _highest_connect_height=%" PRIu64 " ",geneis_connect_step,m_meta->_highest_genesis_connect_height,block_connect_step,m_meta->_highest_connect_block_height);
             }
 
             //finally send out all events.
@@ -2459,7 +2459,7 @@ namespace top
         {
             if(NULL == index_ptr)
                 return false;
-             xdbg("xblockacct_t::on_block_committed,at account=%s,index=%s",get_account().c_str(),index_ptr->dump().c_str());
+            xdbg("xblockacct_t::on_block_committed,at account=%s,index=%s",get_account().c_str(),index_ptr->dump().c_str());
             if(index_ptr->get_block_flags() & base::enum_xvblock_flag_committed
                 && index_ptr->get_height() != 0)
             {
@@ -2810,7 +2810,7 @@ namespace top
                 rebase_chain_at_height(height_view_map);
                 if(height_view_map.find(cached_index_ptr->get_viewid()) == height_view_map.end())
                 {
-                    xinfo("xblockacct_t::new_index,failed-new index (%s) erased after rebase at store(%s)",new_idx->dump().c_str(),get_blockstore_path().c_str());
+                    xdbg("xblockacct_t::new_index,failed-new index (%s) erased after rebase at store(%s)",new_idx->dump().c_str(),get_blockstore_path().c_str());
                     return nullptr;
                 }
             }

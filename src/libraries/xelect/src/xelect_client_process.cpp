@@ -37,7 +37,7 @@ xelect_client_process::xelect_client_process(common::xnetwork_id_t const & netwo
 }
 
 bool xelect_client_process::filter_event(const xevent_ptr_t & e) {
-    xinfo("xelect_client_process::filter_event major type %d minor type %d", static_cast<int>(e->major_type), static_cast<int>(e->minor_type));
+    xdbg("xelect_client_process::filter_event major type %d minor type %d", static_cast<int>(e->major_type), static_cast<int>(e->minor_type));
     switch (e->major_type) {
     case mbus::xevent_major_type_store:
         if (e->minor_type == xevent_store_t::type_block_to_db) {
