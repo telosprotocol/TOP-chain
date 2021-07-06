@@ -175,8 +175,10 @@ enum E_SIMPLE_METRICS_TAG {
     blockstore_access_from_application,
     blockstore_access_from_sync_blk,
     blockstore_access_from_sync_index,
-    blockstore_access_from_unit_service,
     blockstore_access_from_block_maker,
+    blockstore_access_from_us,
+    blockstore_access_from_bft,
+    blockstore_access_from_vnodesrv,
 
     e_simple_total,
 };

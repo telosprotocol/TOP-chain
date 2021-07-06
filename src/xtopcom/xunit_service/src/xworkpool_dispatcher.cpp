@@ -69,6 +69,7 @@ void xworkpool_dispatcher::chain_timer(common::xlogic_time_t time) {
     assert(m_para);
 
     auto * blkstore = m_para->get_resources()->get_vblockstore();
+    XMETRICS_GAUGE(metrics::blockstore_access_from_us, 1);
     auto timer_block = blkstore->get_latest_cert_block(base::xvaccount_t(sys_contract_beacon_timer_addr));
 
     xunit_dbg("xworkpool_dispatcher::chain_timer call on_clock, logic time %" PRIu64 " TC %" PRIu64, time, timer_block->get_height());
