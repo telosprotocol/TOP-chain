@@ -326,12 +326,14 @@ void xnetwork_proxy::send_receipt_msg(std::shared_ptr<vnetwork::xvnetwork_driver
             }
             non_shard_cross_receipts.push_back(receipt);
         } else {
-            xunit_info("xnetwork_proxy::send_receipt_msg forward receipt=%s,size=%zu,from_vnode:%s,to_vnode:%s",
+            xunit_info("xnetwork_proxy::send_receipt_msg forward receipt=%s,size=%zu,from_vnode:%s,to_vnode:%s and %s",
                   receipt->dump().c_str(),
                   stream.size(),
                   net_driver->address().to_string().c_str(),
-                  auditor_cluster_addr.to_string().c_str());
+                  auditor_cluster_addr.to_string().c_str(),
+                  validator_cluster_addr.to_string().c_str());
             net_driver->forward_broadcast_message(msg, vnetwork::xvnode_address_t{std::move(auditor_cluster_addr)});
+            net_driver->forward_broadcast_message(msg, vnetwork::xvnode_address_t{std::move(validator_cluster_addr)});
         }
     } catch (top::error::xtop_error_t const & eh) {
         xunit_warn("xnetwork_proxy::send_receipt_msg xvnetwork_error_t exception caught: %s; error code: %d", eh.what(), eh.code().value());

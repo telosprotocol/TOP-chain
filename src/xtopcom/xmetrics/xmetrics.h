@@ -155,6 +155,8 @@ enum E_SIMPLE_METRICS_TAG {
     txpool_recv_tx_first_send,
     txpool_confirm_tx_first_send,
     txpool_push_tx_send_fail_pool_full,
+    txpool_pull_recv_tx,
+    txpool_pull_confirm_tx,
 
     e_simple_total,
 };
