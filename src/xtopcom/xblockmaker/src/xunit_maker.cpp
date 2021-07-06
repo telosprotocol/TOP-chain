@@ -35,6 +35,7 @@ xunit_maker_t::~xunit_maker_t() {
 xblock_ptr_t xunit_maker_t::get_latest_block(const base::xaccount_index_t & account_index) {
     base::xblock_vector blocks = get_blockstore()->load_block_object(*this, account_index.get_latest_unit_height());
     for (auto & block : blocks.get_vector()) {
+        XMETRICS_GAUGE(metrics::blockstore_access_from_block_maker, 1);
         if (account_index.is_match_unit(block)) {
             return xblock_t::raw_vblock_to_object_ptr(block);
         }
@@ -66,6 +67,7 @@ int32_t    xunit_maker_t::check_latest_state(const data::xblock_consensus_para_t
 
         // find the latest cert block which matching account_index
         auto _latest_cert_block = get_blockstore()->load_block_object(*this, account_index.get_latest_unit_height(), account_index.get_latest_unit_viewid(), false);
+        XMETRICS_GAUGE(metrics::blockstore_access_from_block_maker, 1);
         if (_latest_cert_block == nullptr) {
             xwarn("xunit_maker_t::check_latest_state fail-load unit cert block.%s, account=%s,index=%s,missing_height=%ld",
                 cs_para.dump().c_str(), get_account().c_str(), account_index.dump().c_str(), account_index.get_latest_unit_height());

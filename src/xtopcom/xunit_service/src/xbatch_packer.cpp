@@ -448,6 +448,7 @@ bool xbatch_packer::on_proposal_finish(const base::xvevent_t & event, xcsobject_
             if (vblock->get_height() > 2) {
                 base::xauto_ptr<base::xvblock_t> commit_block =
                     m_para->get_resources()->get_vblockstore()->load_block_object(*this, vblock->get_height() - 2, base::enum_xvblock_flag_committed, false);
+                XMETRICS_GAUGE(metrics::blockstore_access_from_unit_service, 1);
                 if (commit_block != nullptr) {
                     m_para->get_resources()->get_vblockstore()->load_block_input(*this, commit_block.get());
                     make_receipts_and_send(dynamic_cast<xblock_t *>(commit_block.get()), dynamic_cast<xblock_t *>(vblock));
