@@ -145,7 +145,7 @@ namespace top
             if(!target_index)
             {
                 if(target_height != 0)
-                    xwarn("xvblockstore_impl load_block_from_index() fail load index at height(%llu) for account(%s) at store(%s)",target_height,target_account->get_address().c_str(),m_store_path.c_str());
+                    xdbg("xvblockstore_impl load_block_from_index() fail load index at height(%llu) for account(%s) at store(%s)",target_height,target_account->get_address().c_str(),m_store_path.c_str());
                 else
                     xwarn("xvblockstore_impl load_block_from_index() fail load index of latest for account(%s) at store(%s)",target_account->get_address().c_str(),m_store_path.c_str());
                 return nullptr;
@@ -468,7 +468,7 @@ namespace top
                     std::vector<xobject_ptr_t<base::xvblock_t>> sub_blocks;
                     if(container_block->extract_sub_blocks(sub_blocks))
                     {
-                        xinfo("xvblockstore_impl::store_block,table block(%s) carry unit num=%d", container_block->dump().c_str(), (int)sub_blocks.size());
+                        xdbg("xvblockstore_impl::store_block,table block(%s) carry unit num=%d", container_block->dump().c_str(), (int)sub_blocks.size());
 
                         bool table_extract_all_unit_successful = true;
                         for (auto & unit_block : sub_blocks)
@@ -484,7 +484,7 @@ namespace top
                             }
                             else
                             {
-                                xdbg_info("xvblockstore_impl::store_block,stored unit-block=%s",unit_block->dump().c_str());
+                                // xdbg_info("xvblockstore_impl::store_block,stored unit-block=%s",unit_block->dump().c_str());
 
                                 on_block_stored(unit_block.get());//throw event for sub blocks
                             }
