@@ -94,10 +94,10 @@ xtop_sharding_info::swap(xtop_sharding_info & other) noexcept {
     m_gid.swap(other.m_gid);
 }
 
-bool
-xtop_sharding_info::empty() const noexcept {
-    return m_nid.empty();
-}
+//bool
+//xtop_sharding_info::empty() const noexcept {
+//    return m_nid.empty();
+//}
 
 xnetwork_id_t const &
 xtop_sharding_info::network_id() const noexcept {
@@ -123,22 +123,22 @@ xtop_sharding_info::hash_result_type
 xtop_sharding_info::hash() const {
     utl::xxh64_t hasher;
 
-    if (m_nid.has_value()) {
+    {
         auto const value = m_nid.value();
         hasher.update(&value, sizeof(value));
     }
 
-    if (m_zid.has_value()) {
+    {
         auto const value = m_zid.value();
         hasher.update(&value, sizeof(value));
     }
 
-    if (m_cid.has_value()) {
+    {
         auto const value = m_cid.value();
         hasher.update(&value, sizeof(value));
     }
 
-    if (m_gid.has_value()) {
+    {
         auto const value = m_gid.value();
         hasher.update(&value, sizeof(value));
     }
@@ -148,9 +148,9 @@ xtop_sharding_info::hash() const {
 
 std::string
 xtop_sharding_info::to_string() const {
-    return top::common::to_string(m_nid) + u8"/" +
-           top::common::to_string(m_zid) + u8"/" +
-           top::common::to_string(m_cid) + u8"/" +
+    return top::common::to_string(m_nid) + "/" +
+           top::common::to_string(m_zid) + "/" +
+           top::common::to_string(m_cid) + "/" +
            top::common::to_string(m_gid);
 }
 

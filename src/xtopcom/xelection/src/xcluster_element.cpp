@@ -40,7 +40,7 @@ xgroup_update_result_t xtop_cluster_element::add_group_element(common::xgroup_id
     assert(!ec);
     xgroup_update_result_t result;
 
-    if (group_id.empty()) {
+    if (broadcast(group_id)) {
         ec = xdata_accessor_errc_t::group_id_empty;
 
         xwarn("%s network %" PRIu32 " zone %" PRIu16 " cluster %" PRIu16 ": adding empty group id",
@@ -129,7 +129,7 @@ std::shared_ptr<xgroup_element_t> xtop_cluster_element::group_element_by_height(
                                                                                 uint64_t const election_blk_height,
                                                                                 std::error_code & ec) const {
     assert(!ec);
-    if (group_id.empty() || common::broadcast(group_id)) {
+    if (common::broadcast(group_id)) {
         ec = xdata_accessor_errc_t::group_id_empty;
 
         xwarn("%s network %" PRIu32 " zone %" PRIu16 " cluster %" PRIu16 ": looking for an empty group id",
@@ -192,7 +192,7 @@ std::shared_ptr<xgroup_element_t> xtop_cluster_element::group_element_by_height(
 
 std::shared_ptr<xgroup_element_t> xtop_cluster_element::group_element(common::xgroup_id_t const & group_id, common::xversion_t const & version, std::error_code & ec) const {
     assert(!ec);
-    if (group_id.empty() || common::broadcast(group_id)) {
+    if (common::broadcast(group_id)) {
         ec = xdata_accessor_errc_t::group_id_empty;
 
         xwarn("%s network %" PRIu32 " zone %" PRIu16 " cluster %" PRIu16 ": looking for an empty group id",
@@ -265,7 +265,7 @@ std::shared_ptr<xgroup_element_t> xtop_cluster_element::group_element(common::xg
 
 std::shared_ptr<xgroup_element_t> xtop_cluster_element::group_element_by_logic_time(common::xgroup_id_t const & group_id, common::xlogic_time_t const logic_time, std::error_code & ec) const {
     assert(!ec);
-    if (group_id.empty() || common::broadcast(group_id)) {
+    if (common::broadcast(group_id)) {
         ec = xdata_accessor_errc_t::group_id_empty;
 
         xwarn("%s network %" PRIu32 " zone %" PRIu16 " cluster %" PRIu16 ": looking for an empty group id",

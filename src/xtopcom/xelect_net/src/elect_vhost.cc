@@ -57,8 +57,8 @@ base::KadmliaKeyPtr adapt_address(const vnetwork::xvnode_address_t & address) {
     common::xip2_t xip{address.network_id(), address.zone_id(), address.cluster_id(), address.group_id(), address.sharding_size(), address.version().value()};
 
     base::KadmliaKeyPtr kad_key_ptr;
-    if (((xip.network_id().value_or(common::xbroadcast_network_id_value) & common::xbroadcast_network_id_value) == common::xbroadcast_network_id_value) ||
-        ((xip.zone_id().value_or(common::xbroadcast_zone_id_value) & common::xbroadcast_zone_id_value) == common::xbroadcast_zone_id_value)) {
+    if (((xip.network_id() & common::xbroadcast_id_t::network) == common::xbroadcast_id_t::network) ||
+        ((xip.zone_id() & common::xbroadcast_id_t::zone) == common::xbroadcast_id_t::zone)) {
         kad_key_ptr = base::GetRootKadmliaKey(global_node_id);
     } else {
         kad_key_ptr = base::GetKadmliaKey(xip);
@@ -75,8 +75,8 @@ base::KadmliaKeyPtr adapt_address(const common::xsharding_info_t & address) {
     common::xip2_t xip{address.network_id(), address.zone_id(), address.cluster_id(), address.group_id()};
 
     base::KadmliaKeyPtr kad_key_ptr;
-    if (((xip.network_id().value_or(common::xbroadcast_network_id_value) & common::xbroadcast_network_id_value) == common::xbroadcast_network_id_value) ||
-        ((xip.zone_id().value_or(common::xbroadcast_zone_id_value) & common::xbroadcast_zone_id_value) == common::xbroadcast_zone_id_value)) {
+    if (((xip.network_id() & common::xbroadcast_id_t::network) == common::xbroadcast_id_t::network) ||
+        ((xip.zone_id() & common::xbroadcast_id_t::zone) == common::xbroadcast_id_t::zone)) {
         kad_key_ptr = base::GetRootKadmliaKey(global_node_id);
     } else {
         kad_key_ptr = base::GetKadmliaKey(xip);

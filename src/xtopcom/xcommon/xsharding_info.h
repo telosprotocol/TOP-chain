@@ -63,7 +63,7 @@ public:
 
     void swap(xtop_sharding_info & other) noexcept;
 
-    bool empty() const noexcept;
+    // bool empty() const noexcept;
 
     xnetwork_id_t const & network_id() const noexcept;
 

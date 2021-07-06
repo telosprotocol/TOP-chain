@@ -30,7 +30,7 @@ xelect_client_process::xelect_client_process(common::xnetwork_id_t const & netwo
                                              elect_update_handler2 cb2,
                                              observer_ptr<time::xchain_time_face_t> const & xchain_timer)
   : xbase_sync_event_monitor_t(mb), m_network_id{network_id}, m_update_handler2{std::move(cb2)}, m_xchain_timer(xchain_timer) {
-    assert(m_network_id.has_value());
+    assert(!broadcast(m_network_id));
     xdbg("xelect_client_process created %p", mb);
     mb->add_listener((int)mbus::xevent_major_type_store, std::bind(&xelect_client_process::push_event, this, std::placeholders::_1));
     mb->add_listener((int)mbus::xevent_major_type_chain_timer, std::bind(&xelect_client_process::push_event, this, std::placeholders::_1));

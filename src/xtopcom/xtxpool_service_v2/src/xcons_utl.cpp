@@ -45,7 +45,7 @@ common::xnode_address_t xcons_utl::to_address(const xvip2_t & xip2, common::xver
     // assert(common::xnetwork_version_t{network_version_value} == version);  // NOLINT
 
     common::xslot_id_t slot_id{slot_id_value};
-    if (!slot_id.empty()) {
+    if (!broadcast(slot_id)) {
         common::xnode_address_t address{
             common::xcluster_address_t{
                 common::xnetwork_id_t{network_id_value}, common::xzone_id_t{zone_id_value}, common::xcluster_id_t{cluster_id_value}, common::xgroup_id_t{group_id_value}},

@@ -29,7 +29,7 @@ std::shared_ptr<xzone_element_t>
 xtop_network_element::zone_element(common::xzone_id_t const & zone_id,
                                    std::error_code & ec) const {
     assert(!ec);
-    if (zone_id.empty() || common::broadcast(zone_id)) {
+    if (common::broadcast(zone_id)) {
         ec = xdata_accessor_errc_t::zone_id_empty;
 
         xwarn("%s network %" PRIu32 " looking for an empty zone id %" PRIu32,

@@ -245,7 +245,7 @@ xtop_election_group_result::reset(iterator pos) {
 
 void
 xtop_election_group_result::clear(common::xslot_id_t const & slot_id) {
-    assert(!slot_id.empty());
+    assert(!broadcast(slot_id));
     auto const it = m_nodes.find(slot_id);
     if (it != std::end(m_nodes)) {
         do_clear(slot_id);
@@ -259,7 +259,7 @@ xtop_election_group_result::find(common::xnode_id_t const & nid) const noexcept 
         auto const & election_info_bundle = m_nodes.at(slot_id);
 
         if (election_info_bundle.empty()) {
-            if (reclaimed_slot_id.empty()) {
+            if (broadcast(reclaimed_slot_id)) {
                 reclaimed_slot_id = slot_id;
             }
         } else if (election_info_bundle.node_id() == nid) {
@@ -267,7 +267,7 @@ xtop_election_group_result::find(common::xnode_id_t const & nid) const noexcept 
         }
     }
 
-    if (reclaimed_slot_id.empty()) {
+    if (broadcast(reclaimed_slot_id)) {
         reclaimed_slot_id = common::xslot_id_t{ static_cast<common::xslot_id_t::value_type>(m_nodes.size()) };
     }
 
@@ -278,7 +278,7 @@ void xtop_election_group_result::normalize() noexcept {
     auto iter_begin = begin();
     auto iter_end = std::prev(end());
     while (iter_begin != iter_end) {
-        while (top::get<common::xslot_id_t const>(*iter_end).empty() || (top::get<xelection_info_bundle_t>(*iter_end).empty() && iter_begin != iter_end)) {
+        while (broadcast(top::get<common::xslot_id_t const>(*iter_end)) || (top::get<xelection_info_bundle_t>(*iter_end).empty() && iter_begin != iter_end)) {
             --iter_end;
         }
         while (!top::get<xelection_info_bundle_t>(*iter_begin).empty() && iter_begin != iter_end) {
@@ -299,7 +299,7 @@ void xtop_election_group_result::normalize() noexcept {
 
 void
 xtop_election_group_result::do_clear(common::xslot_id_t const & slot_id) {
-    assert(!slot_id.empty());
+    assert(!broadcast(slot_id));
     assert(m_nodes.find(slot_id) != std::end(m_nodes));
     m_nodes[slot_id].clear();
 }
