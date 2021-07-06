@@ -320,9 +320,8 @@ void xtxpool_service::on_message_unit_receipt(vnetwork::xvnode_address_t const &
         return;
     }
 
-    xinfo("xtxpool_service::on_message_unit_receipt receipt=%s,from_vnode:%s,at_node:%s,msg id:%x,hash:%x",
+    xinfo("xtxpool_service::on_message_unit_receipt receipt=%s,at_node:%s,msg id:%x,hash:%x",
           receipt->dump().c_str(),
-          sender.to_string().c_str(),
           m_vnetwork_str.c_str(),
           message.id(),
           message.hash());
@@ -434,11 +433,10 @@ void xtxpool_service::send_receipt_real(const data::xcons_transaction_ptr_t & co
             m_vnet_driver->broadcast(msg);
             on_message_unit_receipt(m_vnet_driver->address(), msg);
         } else {
-            xinfo("xtxpool_service::send_receipt_real forward receipt=%s,size=%zu,from_vnode:%s,to_vnode:%s",
+            xinfo("xtxpool_service::send_receipt_real forward receipt=%s,size=%zu,from_vnode:%s",
                   cons_tx->dump().c_str(),
                   stream.size(),
-                  m_vnetwork_str.c_str(),
-                  receiver_cluster_addr.to_string().c_str());
+                  m_vnetwork_str.c_str());
             m_vnet_driver->forward_broadcast_message(msg, vnetwork::xvnode_address_t{std::move(receiver_cluster_addr)});
         }
     } catch (top::error::xtop_error_t const & eh) {
@@ -592,8 +590,7 @@ void xtxpool_service::send_receipt_sync_msg(const vnetwork::xmessage_t & msg, co
 }
 
 void xtxpool_service::on_message_push_receipt_received(vnetwork::xvnode_address_t const & sender, vnetwork::xmessage_t const & message) {
-    xinfo("xtxpool_service::on_message_push_receipt_received from_vnode:%s,at_node:%s,msg id:%x,hash:%x",
-          sender.to_string().c_str(),
+    xinfo("xtxpool_service::on_message_push_receipt_received at_node:%s,msg id:%x,hash:%x",
           m_vnetwork_str.c_str(),
           message.id(),
           message.hash());
@@ -621,8 +618,7 @@ void xtxpool_service::on_message_push_receipt_received(vnetwork::xvnode_address_
         return;
     }
 
-    xinfo("xtxpool_service::on_message_receipts_received push receipts.reqnode:%s,table:%s:%s,receipts num=%u",
-          pushed_receipt.m_req_node.to_string().c_str(),
+    xinfo("xtxpool_service::on_message_receipts_received push receipts.table:%s:%s,receipts num=%u",
           pushed_receipt.m_tx_from_account.c_str(),
           pushed_receipt.m_tx_to_account.c_str(),
           pushed_receipt.m_receipts.size());
@@ -639,16 +635,14 @@ void xtxpool_service::on_message_push_receipt_received(vnetwork::xvnode_address_
 }
 
 void xtxpool_service::on_message_pull_recv_receipt_received(vnetwork::xvnode_address_t const & sender, vnetwork::xmessage_t const & message) {
-    xinfo("xtxpool_service::on_message_pull_recv_receipt_received from_vnode:%s,at_node:%s,msg id:%x,hash:%x",
-          sender.to_string().c_str(),
+    xinfo("xtxpool_service::on_message_pull_recv_receipt_received at_node:%s,msg id:%x,hash:%x",
           m_vnetwork_str.c_str(),
           message.id(),
           message.hash());
     uint64_t now = xverifier::xtx_utl::get_gmttime_s();
 
     if (!m_is_send_receipt_role) {
-        xinfo("xtxpool_service::on_message_pull_recv_receipt_received xtxpool_msg_pull_recv_receipt droped from_vnode:%s,at_node:%s,msg id:%x",
-              sender.to_string().c_str(),
+        xinfo("xtxpool_service::on_message_pull_recv_receipt_received xtxpool_msg_pull_recv_receipt droped at_node:%s,msg id:%x",
               m_vnetwork_str.c_str(),
               message.id());
         return;
@@ -672,8 +666,7 @@ void xtxpool_service::on_message_pull_recv_receipt_received(vnetwork::xvnode_add
         xdbg("xtxpool_service::on_message_pull_recv_receipt_received forward broadcast message, cluster address is %s", cluster_addr.to_string().c_str());
         m_vnet_driver->forward_broadcast_message(message, vnetwork::xvnode_address_t{std::move(cluster_addr)});
     } else {
-        xinfo("xtxpool_service::on_message_pull_recv_receipt_received recv txs.reqnode:%s,table:%s:%s,receiptid num=%u",
-              pulled_receipt.m_req_node.to_string().c_str(),
+        xinfo("xtxpool_service::on_message_pull_recv_receipt_received recv txs.table:%s:%s,receiptid num=%u",
               pulled_receipt.m_tx_from_account.c_str(),
               pulled_receipt.m_tx_to_account.c_str(),
               pulled_receipt.m_receipt_ids.size());
@@ -703,16 +696,14 @@ void xtxpool_service::on_message_pull_recv_receipt_received(vnetwork::xvnode_add
 }
 
 void xtxpool_service::on_message_pull_confirm_receipt_received(vnetwork::xvnode_address_t const & sender, vnetwork::xmessage_t const & message) {
-    xinfo("xtxpool_service::on_message_pull_confirm_receipt_received from_vnode:%s,at_node:%s,msg id:%x,hash:%x",
-          sender.to_string().c_str(),
+    xinfo("xtxpool_service::on_message_pull_confirm_receipt_received at_node:%s,msg id:%x,hash:%x",
           m_vnetwork_str.c_str(),
           message.id(),
           message.hash());
     uint64_t now = xverifier::xtx_utl::get_gmttime_s();
 
     if (!m_is_send_receipt_role) {
-        xinfo("xtxpool_service::on_message_pull_confirm_receipt_received xtxpool_msg_pull_recv_receipt droped from_vnode:%s,at_node:%s,msg id:%x",
-              sender.to_string().c_str(),
+        xinfo("xtxpool_service::on_message_pull_confirm_receipt_received xtxpool_msg_pull_recv_receipt droped at_node:%s,msg id:%x",
               m_vnetwork_str.c_str(),
               message.id());
         return;
@@ -732,11 +723,9 @@ void xtxpool_service::on_message_pull_confirm_receipt_received(vnetwork::xvnode_
     auto cluster_addr =
         m_router->sharding_address_from_account(common::xaccount_address_t{pulled_receipt.m_tx_to_account}, m_vnet_driver->network_id(), common::xnode_type_t::consensus_auditor);
     if (cluster_addr != m_vnet_driver->address().cluster_address()) {
-        xdbg("xtxpool_service::on_message_pull_confirm_receipt_received forward broadcast message, cluster address is %s", cluster_addr.to_string().c_str());
         m_vnet_driver->forward_broadcast_message(message, vnetwork::xvnode_address_t{std::move(cluster_addr)});
     } else {
-        xinfo("xtxpool_service::on_message_pull_confirm_receipt_received confirm txs.reqnode:%s,table:%s:%s,receipt hash num=%u",
-              pulled_receipt.m_req_node.to_string().c_str(),
+        xinfo("xtxpool_service::on_message_pull_confirm_receipt_received confirm txs.table:%s:%s,receipt hash num=%u",
               pulled_receipt.m_tx_from_account.c_str(),
               pulled_receipt.m_tx_to_account.c_str(),
               pulled_receipt.m_id_hash_of_receipts.size());
@@ -748,16 +737,14 @@ void xtxpool_service::on_message_pull_confirm_receipt_received(vnetwork::xvnode_
         for (auto tx_id_hash : pulled_receipt.m_id_hash_of_receipts) {
             auto & receipt_id = tx_id_hash.first;
             auto & hash = tx_id_hash.second;
-            xdbg("xtxpool_service::on_message_pull_confirm_receipt_received reqnode:%s,table:%s:%s confirm_tx id:%llu,hash:%s",
-                 pulled_receipt.m_req_node.to_string().c_str(),
+            xdbg("xtxpool_service::on_message_pull_confirm_receipt_received table:%s:%s confirm_tx id:%llu,hash:%s",
                  pulled_receipt.m_tx_from_account.c_str(),
                  pulled_receipt.m_tx_to_account.c_str(),
                  receipt_id,
                  std::string(reinterpret_cast<char *>(hash.data()), hash.size()).c_str());
 
             if (!m_para->get_txpool()->is_consensused_recv_receiptid(pulled_receipt.m_tx_from_account, pulled_receipt.m_tx_to_account, receipt_id)) {
-                xinfo("xtxpool_service::on_message_pull_confirm_receipt_received reqnode:%s,table:%s:%s confirm_tx id:%llu,hash:%s not consensused",
-                      pulled_receipt.m_req_node.to_string().c_str(),
+                xinfo("xtxpool_service::on_message_pull_confirm_receipt_received table:%s:%s confirm_tx id:%llu,hash:%s not consensused",
                       pulled_receipt.m_tx_from_account.c_str(),
                       pulled_receipt.m_tx_to_account.c_str(),
                       receipt_id,
@@ -767,8 +754,7 @@ void xtxpool_service::on_message_pull_confirm_receipt_received(vnetwork::xvnode_
 
             auto tranx = get_confirmed_tx(hash);
             if (tranx != nullptr) {
-                xdbg("xtxpool_service::on_message_pull_confirm_receipt_received reqnode:%s,table:%s:%s receiptid:%llu,confirm_tx:%s",
-                     pulled_receipt.m_req_node.to_string().c_str(),
+                xdbg("xtxpool_service::on_message_pull_confirm_receipt_received table:%s:%s receiptid:%llu,confirm_tx:%s",
                      pulled_receipt.m_tx_from_account.c_str(),
                      pulled_receipt.m_tx_to_account.c_str(),
                      receipt_id,
