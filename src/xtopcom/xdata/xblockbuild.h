@@ -53,6 +53,8 @@ class xfullunit_build_t : public base::xvblockmaker_t {
 
 class xlighttable_build_t : public base::xvtableblock_maker_t {
  public:
+    // TODO(jimmy) load mini-unit from mini-table
+    static xobject_ptr_t<base::xvblock_t> unpack_unit_from_table(const base::xvblock_t* _tableblock, uint16_t entityid_at_parent);
     static std::vector<xobject_ptr_t<base::xvblock_t>> unpack_units_from_table(const base::xvblock_t* _tableblock);
  public:
     xlighttable_build_t(base::xvblock_t* prev_block, const xtable_block_para_t & bodypara, const xblock_consensus_para_t & para);

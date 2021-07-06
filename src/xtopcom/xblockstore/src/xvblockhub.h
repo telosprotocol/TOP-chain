@@ -131,7 +131,7 @@ namespace top
             uint64_t            get_latest_genesis_connected_block_height() const { return m_meta->_highest_genesis_connect_height; }
             uint64_t            get_latest_executed_block_height() const { return m_meta->_highest_execute_block_height; }
         public:
-            xblockacct_t(const std::string & account_addr,const uint64_t timeout_ms,const std::string & blockstore_path);
+            xblockacct_t(const std::string & account_addr,const uint64_t timeout_ms,const std::string & blockstore_path,base::xvdbstore_t* xvdb_ptr);
         protected:
             virtual ~xblockacct_t();
         private:
@@ -148,6 +148,7 @@ namespace top
             const int              get_max_cache_size() const;
             bool                   clean_caches(bool clean_all,bool force_release_unused_block); //clean unsed caches of account to recall memory
             bool                   save_meta();
+            base::xvdbstore_t*     get_xdbstore();
 
             inline const uint64_t  get_idle_duration()    const {return m_idle_timeout_ms;}
             inline const uint64_t  get_last_access_time() const {return m_last_access_time_ms;} //UTC ms
@@ -158,7 +159,9 @@ namespace top
             inline int             get_block_level() const {return m_meta->_block_level;}
             inline const std::string &   get_blockstore_path()   const {return m_blockstore_path;};
 
-            bool                   process_events();
+            const std::deque<xblockevent_t> move_events(); //move /transfer all events to outside
+            bool                            process_events();
+            bool                            process_events(const std::deque<xblockevent_t> & events);
 
         public://just search at cache layer
             std::vector<base::xvbindex_t*>  query_index(const uint64_t height);
@@ -278,6 +281,7 @@ namespace top
             std::string     m_last_save_vmeta_bin;
         protected:
             xacctmeta_t *   m_meta;
+            base::xvdbstore_t* m_xvdb_ptr;
             std::deque<xblockevent_t> m_events_queue;  //stored event
             std::map<uint64_t,std::map<uint64_t,base::xvbindex_t*> > m_all_blocks;  // < height#, <view#,block*> > sort from lower to higher
         };
@@ -286,7 +290,7 @@ namespace top
         class xchainacct_t : public xblockacct_t
         {
         public:
-            xchainacct_t(const std::string & account_addr,const uint64_t timeout_ms,const std::string & blockstore_path);
+            xchainacct_t(const std::string & account_addr,const uint64_t timeout_ms,const std::string & blockstore_path,base::xvdbstore_t* xvdb_ptr);
         protected:
             virtual ~xchainacct_t();
         private:
