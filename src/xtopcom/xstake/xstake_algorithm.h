@@ -555,7 +555,7 @@ public:
     common::xlogic_time_t m_last_update_time{0};
     bool m_genesis_node{false};
     // uint32_t    m_network_id {0};
-    std::set<uint32_t> m_network_ids;
+    std::set<common::xnetwork_id_t> m_network_ids;
     std::string nickname;
     xpublic_key_t consensus_public_key;
 

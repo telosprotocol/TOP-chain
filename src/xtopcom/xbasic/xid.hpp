@@ -19,34 +19,6 @@
 
 NS_BEG1(top)
 
-//template <typename TagT, typename IdT = std::uint64_t>
-//class xtop_simple_id;
-//
-//template <typename TagT, typename IdT = std::uint64_t>
-//class xtop_nullable_id;
-//
-//template <typename TagT, typename IdT>
-//std::int32_t
-//operator<<(base::xstream_t & stream, xtop_simple_id<TagT, IdT> const & id);
-//
-//template <typename TagT, typename IdT>
-//std::int32_t
-//operator>>(base::xstream_t & stream, xtop_simple_id<TagT, IdT> & id);
-
-//template <typename TagT, typename IdT>
-//std::int32_t
-//operator<<(base::xstream_t & stream, xtop_nullable_id<TagT, IdT> const & id);
-//
-//template <typename TagT, typename IdT>
-//std::int32_t
-//operator>>(base::xstream_t & stream, xtop_nullable_id<TagT, IdT> & id);
-//
-//template <typename TagT, typename IdT>
-//std::int32_t operator<<(base::xbuffer_t & buffer, xtop_nullable_id<TagT, IdT> const & id);
-//
-//template <typename TagT, typename IdT>
-//std::int32_t operator>>(base::xbuffer_t & buffer, xtop_nullable_id<TagT, IdT> & id);
-
 /**
  * @brief The id class.  std::uint64_t is the back.
  *
@@ -61,18 +33,12 @@ public:
 using xbad_id_access_t = xtop_bad_id_access;
 
 template <typename TagT, typename IdT, IdT MinValue, IdT MaxValue>
-class xtop_simple_id final : public xhashable_t<xtop_simple_id<TagT, IdT, MinValue, MaxValue>>
-                           , public xenable_to_string_t<xtop_simple_id<TagT, IdT, MinValue, MaxValue>>
-                           , public xserializable_based_on<void>
-{
+class xtop_simple_id final {
     XSTATIC_ASSERT(std::is_integral<IdT>::value);
 
 public:
     using tag_type = TagT;
     using value_type = IdT;
-    using hash_result_type = typename xhashable_t<xtop_simple_id<TagT, IdT, MinValue, MaxValue>>::hash_result_type;
-
-    XSTATIC_ASSERT(std::is_integral<hash_result_type>::value && std::is_unsigned<hash_result_type>::value);
 
 private:
     value_type m_id{MaxValue};
@@ -85,70 +51,60 @@ public:
     xtop_simple_id & operator=(xtop_simple_id &&) = default;
     ~xtop_simple_id() = default;
 
-    constexpr
-    explicit
-    xtop_simple_id(value_type const raw_value) noexcept
+    constexpr explicit xtop_simple_id(value_type const raw_value) noexcept
         : m_id{ raw_value } {
     }
 
-    void
-    swap(xtop_simple_id & other) noexcept {
+    void swap(xtop_simple_id & other) noexcept {
         std::swap(m_id, other.m_id);
     }
 
 #if defined XCXX14_OR_ABOVE
     constexpr
 #endif
-    bool
-    operator==(xtop_simple_id const & other) const noexcept {
+    bool operator==(xtop_simple_id const & other) const noexcept {
         return m_id == other.m_id;
     }
 
 #if defined XCXX14_OR_ABOVE
     constexpr
 #endif
-    bool
-    operator!=(xtop_simple_id const & other) const noexcept {
+    bool operator!=(xtop_simple_id const & other) const noexcept {
         return !(*this == other);
     }
 
 #if defined XCXX14_OR_ABOVE
     constexpr
 #endif
-    bool
-    operator<(xtop_simple_id const & other) const noexcept {
+    bool operator<(xtop_simple_id const & other) const noexcept {
         return m_id < other.m_id;
     }
 
 #if defined XCXX14_OR_ABOVE
     constexpr
 #endif
-    bool
-    operator>(xtop_simple_id const & other) const noexcept {
+    bool operator>(xtop_simple_id const & other) const noexcept {
         return other < *this;
     }
 
 #if defined XCXX14_OR_ABOVE
     constexpr
 #endif
-    bool
-    operator<=(xtop_simple_id const & other) const noexcept {
+    bool operator<=(xtop_simple_id const & other) const noexcept {
         return !(other < *this);
     }
 
 #if defined XCXX14_OR_ABOVE
     constexpr
 #endif
-    bool
-    operator>=(xtop_simple_id const & other) const noexcept {
+    bool operator>=(xtop_simple_id const & other) const noexcept {
         return !(*this < other);
     }
 
 #if defined XCXX14_OR_ABOVE
     constexpr
 #endif
-    xtop_simple_id
-    operator++(int) {
+    xtop_simple_id operator++(int) {
         xtop_simple_id ret{ *this };
         operator++();
         return ret;
@@ -157,8 +113,7 @@ public:
 #if defined XCXX14_OR_ABOVE
     constexpr
 #endif
-    xtop_simple_id &
-    operator++() {
+    xtop_simple_id & operator++() {
         ++m_id;
         return *this;
     }
@@ -166,8 +121,7 @@ public:
 #if defined XCXX14_OR_ABOVE
     constexpr
 #endif
-    xtop_simple_id
-    operator--(int) {
+    xtop_simple_id operator--(int) {
         xtop_simple_id ret{ *this };
         operator--();
         return ret;
@@ -176,8 +130,7 @@ public:
 #if defined XCXX14_OR_ABOVE
     constexpr
 #endif
-    xtop_simple_id &
-    operator--() {
+    xtop_simple_id & operator--() {
         --m_id;
         return *this;
     }
@@ -185,24 +138,21 @@ public:
 #if defined XCXX14_OR_ABOVE
     constexpr
 #endif
-    explicit
-    operator value_type() const {
+    explicit operator value_type() const {
         return value();
     }
 
 #if defined XCXX14_OR_ABOVE
     constexpr
 #endif
-    value_type
-    value() const {
+    value_type value() const {
         return m_id;
     }
 
 #if defined XCXX14_OR_ABOVE
     constexpr
 #endif
-    xtop_simple_id &
-    operator|=(xtop_simple_id const & other) noexcept {
+    xtop_simple_id & operator|=(xtop_simple_id const & other) noexcept {
         m_id |= other.m_id;
         return *this;
     }
@@ -210,8 +160,7 @@ public:
 #if defined XCXX14_OR_ABOVE
     constexpr
 #endif
-    xtop_simple_id
-    operator|(xtop_simple_id const & other) const noexcept {
+    xtop_simple_id operator|(xtop_simple_id const & other) const noexcept {
         auto ret = *this;
         return ret |= other;
     }
@@ -219,8 +168,7 @@ public:
 #if defined XCXX14_OR_ABOVE
     constexpr
 #endif
-    xtop_simple_id &
-    operator&=(xtop_simple_id const & other) noexcept {
+    xtop_simple_id & operator&=(xtop_simple_id const & other) noexcept {
         m_id &= other.m_id;
         return *this;
     }
@@ -228,8 +176,7 @@ public:
 #if defined XCXX14_OR_ABOVE
     constexpr
 #endif
-    xtop_simple_id
-    operator&(xtop_simple_id const & other) const noexcept {
+    xtop_simple_id operator&(xtop_simple_id const & other) const noexcept {
         auto ret = *this;
         return ret &= other;
     }
@@ -237,68 +184,86 @@ public:
 #if defined XCXX14_OR_ABOVE
     constexpr
 #endif
-    hash_result_type
-    hash() const override {
-        return static_cast<hash_result_type>(m_id);
+    uint64_t hash() const {
+        return static_cast<uint64_t>(m_id);
     }
 
-    std::string
-    to_string() const override {
+    std::string to_string() const {
         return std::to_string(m_id);
     }
 
-    static
-    constexpr
-    xtop_simple_id
-    max() noexcept {
+    static constexpr xtop_simple_id max() noexcept {
         return xtop_simple_id{ MaxValue };
     }
 
-    static
-    constexpr
-    xtop_simple_id
-    min() noexcept {
+    static constexpr xtop_simple_id min() noexcept {
         return xtop_simple_id{ MinValue };
     }
 
-    //friend
-    //std::int32_t
-    //operator<< <>(base::xstream_t & stream, xtop_simple_id const & id);
+    int32_t serialize_to(base::xstream_t & stream) const {
+        return do_write(stream);
+    }
 
-    //friend
-    //std::int32_t
-    //operator>> <>(base::xstream_t & stream, xtop_simple_id & id);
+    int32_t serialize_from(base::xstream_t & stream) {
+        return do_read(stream);
+    }
+
+    int32_t serialize_to(base::xbuffer_t & buffer) const {
+        return do_write(buffer);
+    }
+
+    int32_t serialize_from(base::xbuffer_t & buffer) {
+        return do_read(buffer);
+    }
 
 private:
-    std::int32_t
-    do_read(base::xstream_t & stream) override {
+    std::int32_t do_read(base::xstream_t & stream) {
         auto const begin_size = stream.size();
         stream >> m_id;
         return begin_size - stream.size();
     }
 
-    std::int32_t
-    do_write(base::xstream_t & stream) const override {
+    std::int32_t do_write(base::xstream_t & stream) const {
         auto const begin_size = stream.size();
         stream << m_id;
         return stream.size() - begin_size;
+    }
+
+    std::int32_t do_read(base::xbuffer_t & buffer) {
+        auto const begin_size = buffer.size();
+        buffer >> m_id;
+        return begin_size - buffer.size();
+    }
+
+    std::int32_t do_write(base::xbuffer_t & buffer) const {
+        auto const begin_size = buffer.size();
+        buffer << m_id;
+        return buffer.size() - begin_size;
     }
 };
 
 template <typename TagT, typename IdT, IdT MinValue, IdT MaxValue>
 using xsimple_id_t = xtop_simple_id<TagT, IdT, MinValue, MaxValue>;
 
-//template <typename TagT, typename IdT>
-//std::int32_t
-//operator<<(base::xstream_t & stream, xtop_simple_id<TagT, IdT> const & id) {
-//    return id.serialize_to(stream);
-//}
-//
-//template <typename TagT, typename IdT>
-//std::int32_t
-//operator>>(base::xstream_t & stream, xtop_simple_id<TagT, IdT> & id) {
-//    return id.serialize_from(stream);
-//}
+template <typename TagT, typename IdT, IdT MinValue, IdT MaxValue>
+std::int32_t operator<<(base::xstream_t & stream, xtop_simple_id<TagT, IdT, MinValue, MaxValue> const & id) {
+    return id.serialize_to(stream);
+}
+
+template <typename TagT, typename IdT, IdT MinValue, IdT MaxValue>
+std::int32_t operator>>(base::xstream_t & stream, xtop_simple_id<TagT, IdT, MinValue, MaxValue> & id) {
+    return id.serialize_from(stream);
+}
+
+template <typename TagT, typename IdT, IdT MinValue, IdT MaxValue>
+std::int32_t operator<<(base::xbuffer_t & buffer, xtop_simple_id<TagT, IdT, MinValue, MaxValue> const & id) {
+    return id.serialize_to(buffer);
+}
+
+template <typename TagT, typename IdT, IdT MinValue, IdT MaxValue>
+std::int32_t operator>>(base::xbuffer_t & buffer, xtop_simple_id<TagT, IdT, MinValue, MaxValue> & id) {
+    return id.serialize_from(buffer);
+}
 
 //template <typename TagT, typename IdT>
 //struct xtop_id_factory final

@@ -96,9 +96,11 @@ struct as<top::xsimple_id_t<TagT, IdT, MinValue, MaxValue>, typename std::enable
 template <typename TagT, typename IdT, IdT MinValue, IdT MaxValue>
 struct convert<top::xsimple_id_t<TagT, IdT, MinValue, MaxValue>> final {
     msgpack::object const & operator()(msgpack::object const & o, top::xsimple_id_t<TagT, IdT, MinValue, MaxValue> & v) const {
-        IdT t;
-        msgpack::adaptor::convert<IdT>()(o, t);
-        v = top::xsimple_id_t<TagT, IdT, MinValue, MaxValue>{ t };
+        if (!o.is_nil()) {
+            IdT t;
+            msgpack::adaptor::convert<IdT>()(o, t);
+            v = top::xsimple_id_t<TagT, IdT, MinValue, MaxValue>{ t };
+        }
 
         return o;
     }
