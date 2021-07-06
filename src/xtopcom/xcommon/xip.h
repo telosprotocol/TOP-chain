@@ -257,14 +257,14 @@ public:
                   uint64_t const height,
                   common::xaddress_domain_t const domain = common::xaddress_domain_t::enum_xaddress_domain_xip2);
 
-    xtop_extended(common::xnetwork_id_t const & network_id,
-                  common::xzone_id_t const & zone_id,
-                  common::xcluster_id_t const & cluster_id,
-                  common::xgroup_id_t const & group_id,
-                  common::xnetwork_version_t const & network_version,
-                  uint16_t const size,
-                  uint64_t const height,
-                  common::xaddress_domain_t const domain = common::xaddress_domain_t::enum_xaddress_domain_xip2);
+    //xtop_extended(common::xnetwork_id_t const & network_id,
+    //              common::xzone_id_t const & zone_id,
+    //              common::xcluster_id_t const & cluster_id,
+    //              common::xgroup_id_t const & group_id,
+    //              common::xnetwork_version_t const & network_version,
+    //              uint16_t const size,
+    //              uint64_t const height,
+    //              common::xaddress_domain_t const domain = common::xaddress_domain_t::enum_xaddress_domain_xip2);
 
     xtop_extended(common::xnetwork_id_t const & network_id,
                   common::xzone_id_t const & zone_id,

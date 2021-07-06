@@ -593,21 +593,21 @@ xtop_extended<common::xip_t>::xtop_extended(common::xnetwork_id_t const & networ
     m_extent = xip2.high_addr;
 }
 
-xtop_extended<common::xip_t>::xtop_extended(common::xnetwork_id_t const & network_id,
-                                            common::xzone_id_t const & zone_id,
-                                            common::xcluster_id_t const & cluster_id,
-                                            common::xgroup_id_t const & group_id,
-                                            common::xnetwork_version_t const & network_version,
-                                            uint16_t const size,
-                                            uint64_t const height,
-                                            common::xaddress_domain_t const domain)
-  : m_xip{network_id, zone_id, cluster_id, group_id, domain} {
-    xvip2_t xip2{0, 0};
-    set_group_nodes_count_to_xip2(xip2, size);
-    set_network_height_to_xip2(xip2, height);
-
-    m_extent = xip2.high_addr;
-}
+//xtop_extended<common::xip_t>::xtop_extended(common::xnetwork_id_t const & network_id,
+//                                            common::xzone_id_t const & zone_id,
+//                                            common::xcluster_id_t const & cluster_id,
+//                                            common::xgroup_id_t const & group_id,
+//                                            common::xnetwork_version_t const & network_version,
+//                                            uint16_t const size,
+//                                            uint64_t const height,
+//                                            common::xaddress_domain_t const domain)
+//  : m_xip{network_id, zone_id, cluster_id, group_id, domain} {
+//    xvip2_t xip2{0, 0};
+//    set_group_nodes_count_to_xip2(xip2, size);
+//    set_network_height_to_xip2(xip2, height);
+//
+//    m_extent = xip2.high_addr;
+//}
 
 xtop_extended<common::xip_t>::xtop_extended(common::xnetwork_id_t const & network_id,
                                             common::xzone_id_t const & zone_id,

@@ -107,7 +107,7 @@ public:
         }
         // nid
         uint16_t slot_idx = uint16_t(get_node_id_from_xip2(leader_xip));
-        common::xslot_id_t slot_id = common::xslot_id_t{slot_idx};
+        // common::xslot_id_t slot_id = common::xslot_id_t{slot_idx};
         if(it_group->second.account_statistics_data.size() < size_t(slot_idx+1)){
             it_group->second.account_statistics_data.resize(slot_idx+1);
         }
@@ -262,7 +262,6 @@ public:
                     group_addr.zone_id(),
                     group_addr.cluster_id(),
                     group_addr.group_id(),
-                    common::xdefault_network_version,
                     (uint16_t)group_account_data.account_statistics_data.size(),
                     static_item.first};
                 xdbg("[xzec_workload_contract_v2::accumulate_workload] group xvip2: %llu, %llu",

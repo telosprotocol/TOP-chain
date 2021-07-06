@@ -38,7 +38,7 @@ TEST_F(xtest_rec_standby_contract_algorithm, test_TOP_3495) {
     node_info.m_registered_role = common::xrole_type_t::advance;
     node_info.m_account = xnode_id;
     node_info.m_genesis_node = false;
-    node_info.m_network_ids = std::set<uint32_t>({255});
+    node_info.m_network_ids = std::set<common::xnetwork_id_t>{ common::xtestnet_id };
     add_reg_info(node_info);
 
     auto & standby_node_info = standby_result_store.result_of(common::xnetwork_id_t{255}).result_of(xnode_id);
@@ -70,7 +70,7 @@ TEST_F(xtest_rec_standby_contract_algorithm, test_on_timer_update_pubkey_and_rol
     node_info.m_registered_role = common::xrole_type_t::advance;
     node_info.m_account = xnode_id;
     node_info.m_genesis_node = false;
-    node_info.m_network_ids = std::set<uint32_t>({255});
+    node_info.m_network_ids = std::set<common::xnetwork_id_t>{ common::xtestnet_id };
     add_reg_info(node_info);
 
     EXPECT_TRUE(rec_standby_contract.nodeJoinNetworkImpl(program_version_1, node_info, standby_result_store));
@@ -172,7 +172,7 @@ TEST_F(xtest_rec_standby_contract_algorithm, test_on_timer_update_stake) {
     node_info.m_registered_role = common::xrole_type_t::advance;
     node_info.m_account = xnode_id;
     node_info.m_genesis_node = false;
-    node_info.m_network_ids = std::set<uint32_t>({255});
+    node_info.m_network_ids = std::set<common::xnetwork_id_t>{ common::xtestnet_id };
     EXPECT_TRUE(add_reg_info(node_info));
 
     EXPECT_TRUE(rec_standby_contract.nodeJoinNetworkImpl(program_version_1, node_info, standby_result_store));

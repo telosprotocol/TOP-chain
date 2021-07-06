@@ -89,7 +89,8 @@ void xelect_client_imp::bootstrap_node_join() {
 
                 xtransaction_ptr_t tx = make_object_ptr<xtransaction_t>();
                 top::base::xstream_t param_stream(base::xcontext_t::instance());
-                param_stream << user_params.account.value();
+                param_stream << user_params.account;
+                param_stream << common::xnetwork_id_t{ static_cast<common::xnetwork_id_t::value_type>(top::config::to_chainid(XGET_CONFIG(chain_name))) };
 #if defined XENABLE_MOCK_ZEC_STAKE
                 ENUM_SERIALIZE(param_stream, user_params.node_role_type);
                 param_stream << user_params.publickey;
