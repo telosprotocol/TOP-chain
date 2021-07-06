@@ -94,6 +94,7 @@ metrics_variant_ptr e_metrics::s_metrics[e_simple_total] = {
     DECL_METRICS(store_block_output_read),
     DECL_METRICS(store_block_call),
     DECL_METRICS(store_block_write),
+    DECL_METRICS(store_block_index_write),
     DECL_METRICS(store_block_input_write),
     DECL_METRICS(store_block_output_write),
     DECL_METRICS(store_block_delete),

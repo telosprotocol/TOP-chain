@@ -162,7 +162,12 @@ namespace top
             return meta_path;
         }
 
-        xblockacct_t::xblockacct_t(const std::string & account_addr,const uint64_t timeout_ms,const std::string & blockstore_path)
+        base::xvdbstore_t* xblockacct_t::get_xdbstore()
+        {
+            return m_xvdb_ptr;
+        }
+
+        xblockacct_t::xblockacct_t(const std::string & account_addr,const uint64_t timeout_ms,const std::string & blockstore_path,base::xvdbstore_t* xvdb_ptr)
             :base::xobject_t(base::enum_xobject_type_vaccount),
              base::xvaccount_t(account_addr)
         {
@@ -170,6 +175,9 @@ namespace top
             XMETRICS_GAUGE(metrics::dataobject_xblockacct_t, 1);
 #endif
             m_meta = NULL;
+            m_xvdb_ptr = NULL;
+
+            m_xvdb_ptr = xvdb_ptr;//ptr never released,so here just keep it
 
             //need keep it unchanged forever as compatible consdieration
             m_blockstore_path = blockstore_path;
@@ -285,7 +293,7 @@ namespace top
             }
             return true;
         }
-    
+
         const int  xblockacct_t::get_max_cache_size() const
         {
             //note: place code first but  please enable it later
@@ -293,7 +301,7 @@ namespace top
             if(base::enum_xvblock_level_table == m_meta->_block_level)
                 return (enum_max_cached_blocks << 1);
             #endif
-                
+
             return enum_max_cached_blocks;
         }
 
@@ -893,12 +901,12 @@ namespace top
             cert_block      = NULL;
             lock_block      = NULL;
             commit_block    = NULL;
-            
+
             //ptr has been an added-reference
             commit_block = load_latest_committed_index();
             lock_block   = load_latest_locked_index();
             cert_block   = load_latest_cert_index();
-            
+
             if(cert_block->get_height() == (lock_block->get_height() + 1) )
             {
                 if(cert_block->get_last_block_hash() != lock_block->get_block_hash())//rare case
@@ -1164,7 +1172,7 @@ namespace top
                 return false;
             }
             #endif
-            
+
             // TODO(jimmy) should store and execute genesis block
             if(new_raw_block->get_height() == 1 && m_meta->_highest_connect_block_hash.empty())
             {
@@ -1415,7 +1423,7 @@ namespace top
 
             if(is_ready_to_executed)
             {
-                const bool executed_result =  base::xvchain_t::instance().get_xdbstore()->execute_block(block_ptr);
+                const bool executed_result =  get_xdbstore()->execute_block(block_ptr);
                 if(executed_result)
                 {
                     index_ptr->set_block_flag(base::enum_xvblock_flag_executed); //update flag of index
@@ -1832,6 +1840,13 @@ namespace top
             if( (NULL == index_ptr) || (NULL == block_ptr) )
                 return false;
 
+            if (index_ptr->has_parent_store())
+            {
+                xassert(block_ptr->get_height() != 0);
+                index_ptr->set_block_flag(base::enum_xvblock_flag_stored); //mark as stored everything
+                return true;
+            }
+
             if(write_block_object_to_db(index_ptr,block_ptr) == false)
                 return false;
 
@@ -1866,6 +1881,7 @@ namespace top
         {
             if(block_ptr == NULL)
                 return false;
+            xassert(!index_ptr->has_parent_store());
 
             //raw block not stored header yet
             if(index_ptr->check_store_flag(base::enum_index_store_flag_mini_block) == false)
@@ -1876,7 +1892,7 @@ namespace top
                 std::string blockobj_bin;
                 block_ptr->serialize_to_string(blockobj_bin);
                 const std::string blockobj_key = base::xvdbkey_t::create_block_object_key(*this,block_ptr->get_block_hash());
-                if(base::xvchain_t::instance().get_xdbstore()->set_value(blockobj_key, blockobj_bin))
+                if(get_xdbstore()->set_value(blockobj_key, blockobj_bin))
                 {
                     //has stored entity of input/output inside of block
                     index_ptr->set_store_flag(base::enum_index_store_flag_input_entity);
@@ -1895,13 +1911,14 @@ namespace top
 
         bool    xblockacct_t::read_block_object_from_db(base::xvbindex_t* index_ptr)
         {
+            xassert(!index_ptr->has_parent_store());
             if(index_ptr->get_this_block() == NULL)
             {
 #if defined(ENABLE_METRICS)
                 XMETRICS_GAUGE(metrics::store_block_read, 1);
 #endif
                 const std::string blockobj_key = base::xvdbkey_t::create_block_object_key(*this,index_ptr->get_block_hash());
-                const std::string blockobj_bin = base::xvchain_t::instance().get_xdbstore()->get_value(blockobj_key);
+                const std::string blockobj_bin = get_xdbstore()->get_value(blockobj_key);
                 if(blockobj_bin.empty())
                 {
                     if(index_ptr->check_store_flag(base::enum_index_store_flag_mini_block)) //has stored header and cert
@@ -1935,7 +1952,7 @@ namespace top
                 std::string input_bin;
                 block_ptr->get_input()->serialize_to_string(input_bin);
                 const std::string input_key = base::xvdbkey_t::create_block_input_key(*this,block_ptr->get_block_hash());
-                if(base::xvchain_t::instance().get_xdbstore()->set_value(input_key, input_bin))
+                if(get_xdbstore()->set_value(input_key, input_bin))
                 {
                     index_ptr->set_store_flag(base::enum_index_store_flag_input_entity);
                     xdbg("xblockacct_t::write_block_input_to_db,store input entity to DB for block(%s),bin_size=%zu",index_ptr->dump().c_str(), input_bin.size());
@@ -1958,7 +1975,7 @@ namespace top
                         XMETRICS_GAUGE(metrics::store_block_input_write, 1);
 #endif
                         const std::string input_res_key = base::xvdbkey_t::create_block_input_resource_key(*this,block_ptr->get_block_hash());
-                        if(base::xvchain_t::instance().get_xdbstore()->set_value(input_res_key, input_res_bin))
+                        if(get_xdbstore()->set_value(input_res_key, input_res_bin))
                         {
                             index_ptr->set_store_flag(base::enum_index_store_flag_input_resource);
                             xdbg("xblockacct_t::write_block_input_to_db,store input resource to DB for block(%s),bin_size=%zu",index_ptr->dump().c_str(), input_res_bin.size());
@@ -2009,7 +2026,7 @@ namespace top
                     //which means resource are stored at seperatedly
                     const std::string input_resource_key = base::xvdbkey_t::create_block_input_resource_key(*this,block_ptr->get_block_hash());
 
-                    const std::string input_resource_bin = base::xvchain_t::instance().get_xdbstore()->get_value(input_resource_key);
+                    const std::string input_resource_bin = get_xdbstore()->get_value(input_resource_key);
                     if(input_resource_bin.empty()) //that possible happen actually
                     {
                         xwarn_err("xblockacct_t::read_block_input_from_db,fail to read resource from db for path(%s)",input_resource_key.c_str());
@@ -2036,7 +2053,7 @@ namespace top
                 std::string output_bin;
                 block_ptr->get_output()->serialize_to_string(output_bin);
                 const std::string output_key = base::xvdbkey_t::create_block_output_key(*this,block_ptr->get_block_hash());
-                if(base::xvchain_t::instance().get_xdbstore()->set_value(output_key, output_bin))
+                if(get_xdbstore()->set_value(output_key, output_bin))
                 {
                     index_ptr->set_store_flag(base::enum_index_store_flag_output_entity);
                     xdbg("xblockacct_t::write_block_output_to_db,store output entity to DB for block(%s),,bin_size=%zu",index_ptr->dump().c_str(), output_bin.size());
@@ -2059,7 +2076,7 @@ namespace top
                     if(output_res_bin.empty() == false)
                     {
                         const std::string output_res_key = base::xvdbkey_t::create_block_output_resource_key(*this,block_ptr->get_block_hash());
-                        if(base::xvchain_t::instance().get_xdbstore()->set_value(output_res_key, output_res_bin))
+                        if(get_xdbstore()->set_value(output_res_key, output_res_bin))
                         {
                             index_ptr->set_store_flag(base::enum_index_store_flag_output_resource);
                             xdbg("xblockacct_t::write_block_output_to_db,store output resource to DB for block(%s),bin_size=%zu",index_ptr->dump().c_str(), output_res_bin.size());
@@ -2110,7 +2127,7 @@ namespace top
                     //which means resource are stored at seperatedly
                     const std::string output_resource_key = base::xvdbkey_t::create_block_output_resource_key(*this,block_ptr->get_block_hash());
 
-                    const std::string output_resource_bin = base::xvchain_t::instance().get_xdbstore()->get_value(output_resource_key);
+                    const std::string output_resource_bin = get_xdbstore()->get_value(output_resource_key);
                     if(output_resource_bin.empty()) //that possible happen actually
                     {
                         xwarn_err("xblockacct_t::read_block_output_from_db,fail to read resource from db for path(%s)",output_resource_key.c_str());
@@ -2137,40 +2154,40 @@ namespace top
                 if(index_ptr->check_store_flag(base::enum_index_store_flag_main_entry))
                 {
                     const std::string index_key = base::xvdbkey_t::create_block_index_key(*this,index_ptr->get_height());
-                    base::xvchain_t::instance().get_xdbstore()->delete_value(index_key);
+                    get_xdbstore()->delete_value(index_key);
                 }
                 else
                 {
                     const std::string index_key = base::xvdbkey_t::create_block_index_key(*this,index_ptr->get_height(),index_ptr->get_viewid());
-                    base::xvchain_t::instance().get_xdbstore()->delete_value(index_key);
+                    get_xdbstore()->delete_value(index_key);
                 }
             }
             //step#2: remove raw block at db
             {
                 const std::string block_obj_key = base::xvdbkey_t::create_block_object_key(*this,index_ptr->get_block_hash());
-                base::xvchain_t::instance().get_xdbstore()->delete_value(block_obj_key);
+                get_xdbstore()->delete_value(block_obj_key);
             }
             //delete input
             {
                 const std::string block_input_key = base::xvdbkey_t::create_block_input_key(*this,index_ptr->get_block_hash());
-                base::xvchain_t::instance().get_xdbstore()->delete_value(block_input_key);
+                get_xdbstore()->delete_value(block_input_key);
 
                 const std::string input_resource_key = base::xvdbkey_t::create_block_input_resource_key(*this,index_ptr->get_block_hash());
-                base::xvchain_t::instance().get_xdbstore()->delete_value(input_resource_key);
+                get_xdbstore()->delete_value(input_resource_key);
             }
             //delete output
             {
                 const std::string block_output_key = base::xvdbkey_t::create_block_output_key(*this,index_ptr->get_block_hash());
-                base::xvchain_t::instance().get_xdbstore()->delete_value(block_output_key);
+                get_xdbstore()->delete_value(block_output_key);
 
                 const std::string output_resource_key = base::xvdbkey_t::create_block_output_resource_key(*this,index_ptr->get_block_hash());
-                base::xvchain_t::instance().get_xdbstore()->delete_value(output_resource_key);
+                get_xdbstore()->delete_value(output_resource_key);
             }
 
             //step#3: remove offdata
             {
                 const std::string offdata_key = base::xvdbkey_t::create_block_offdata_key(*this, index_ptr->get_block_hash());
-                base::xvchain_t::instance().get_xdbstore()->delete_value(offdata_key);
+                get_xdbstore()->delete_value(offdata_key);
             }
             return true;
         }
@@ -2232,13 +2249,17 @@ namespace top
             if(index_obj->check_store_flag(base::enum_index_store_flag_main_entry)) //main index for this height
             {
                 const std::string key_path = base::xvdbkey_t::create_block_index_key(*this,index_obj->get_height());
-                is_stored_db_successful = base::xvchain_t::instance().get_xdbstore()->set_value(key_path,index_bin);
+                is_stored_db_successful = get_xdbstore()->set_value(key_path,index_bin);
             }
             else
             {
                 const std::string key_path = base::xvdbkey_t::create_block_index_key(*this,index_obj->get_height(),index_obj->get_viewid());
-                is_stored_db_successful = base::xvchain_t::instance().get_xdbstore()->set_value(key_path,index_bin);
+                is_stored_db_successful = get_xdbstore()->set_value(key_path,index_bin);
             }
+
+#if defined(ENABLE_METRICS)
+            XMETRICS_GAUGE(metrics::store_block_index_write, 1);
+#endif
 
             if(false == is_stored_db_successful)
             {
@@ -2386,7 +2407,7 @@ namespace top
 #if defined(ENABLE_METRICS)
             XMETRICS_GAUGE(metrics::store_block_index_read, 1);
 #endif
-            const std::string index_bin = base::xvchain_t::instance().get_xdbstore()->get_value(index_db_key_path);
+            const std::string index_bin = get_xdbstore()->get_value(index_db_key_path);
             if(index_bin.empty())
             {
                 xdbg("xblockacct_t::read_index_from_db,fail to read from db for path(%s)",index_db_key_path.c_str());
@@ -2412,18 +2433,18 @@ namespace top
         //compatible for old version,e.g read meta and other stuff
         const std::string   xblockacct_t::load_value_by_path(const std::string & full_path_as_key)
         {
-            return base::xvchain_t::instance().get_xdbstore()->get_value(full_path_as_key);
+            return get_xdbstore()->get_value(full_path_as_key);
         }
         bool                xblockacct_t::delete_value_by_path(const std::string & full_path_as_key)
         {
-            return base::xvchain_t::instance().get_xdbstore()->delete_value(full_path_as_key);
+            return get_xdbstore()->delete_value(full_path_as_key);
         }
         bool                xblockacct_t::store_value_by_path(const std::string & full_path_as_key,const std::string & value)
         {
             if(value.empty())
                 return true;
 
-            return base::xvchain_t::instance().get_xdbstore()->set_value(full_path_as_key,value);
+            return get_xdbstore()->set_value(full_path_as_key,value);
         }
 
         bool      xblockacct_t::on_block_stored(base::xvbindex_t* index_ptr)
@@ -2463,8 +2484,6 @@ namespace top
             if(index_ptr->get_block_flags() & base::enum_xvblock_flag_committed
                 && index_ptr->get_height() != 0)
             {
-                store_txs_to_db(index_ptr); //extract and store txs now
-
                 base::xveventbus_t * mbus = base::xvchain_t::instance().get_xevmbus();
                 xassert(mbus != NULL);
                 if(mbus != NULL)
@@ -2527,9 +2546,19 @@ namespace top
             return true;
         }
 
+        const std::deque<xblockevent_t> xblockacct_t::move_events()
+        {
+             return std::move(m_events_queue);
+        }
+
         bool   xblockacct_t::process_events()
         {
-            std::deque<xblockevent_t> copy_events(std::move(m_events_queue));
+            const std::deque<xblockevent_t> copy_events(std::move(m_events_queue));
+            return process_events(copy_events);
+        }
+
+        bool   xblockacct_t::process_events(const std::deque<xblockevent_t> & copy_events)
+        {
             for(auto & event : copy_events)
             {
                 if(event.get_index() != NULL) //still valid
@@ -2818,8 +2847,8 @@ namespace top
             return cached_index_ptr;
         }
 
-        xchainacct_t::xchainacct_t(const std::string & account_addr,const uint64_t timeout_ms,const std::string & blockstore_path)
-            :xblockacct_t(account_addr,timeout_ms,blockstore_path)
+        xchainacct_t::xchainacct_t(const std::string & account_addr,const uint64_t timeout_ms,const std::string & blockstore_path,base::xvdbstore_t* xvdb_ptr)
+            :xblockacct_t(account_addr,timeout_ms,blockstore_path,xvdb_ptr)
         {
             _lowest_commit_block_height = 0;
         }

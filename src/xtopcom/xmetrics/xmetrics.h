@@ -100,6 +100,7 @@ enum E_SIMPLE_METRICS_TAG {
     store_block_output_read,
     store_block_call,
     store_block_write,
+    store_block_index_write,
     store_block_input_write,
     store_block_output_write,
     store_block_delete,
@@ -140,7 +141,7 @@ enum E_SIMPLE_METRICS_TAG {
     message_category_end,
     message_category_unknown = message_category_end,
 
-    // sync 
+    // sync
     xsync_recv_new_block,
     xsync_recv_new_hash,
     xsync_recv_invalid_block,
