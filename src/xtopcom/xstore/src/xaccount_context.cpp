@@ -1347,6 +1347,7 @@ data::xblock_t*
 xaccount_context_t::get_block_by_height(const std::string & owner, uint64_t height) const {
     // TODO(jimmy)
     base::xvaccount_t _vaddr(owner);
+    XMETRICS_GAUGE(metrics::blockstore_access_from_account_context, 1);
     base::xauto_ptr<base::xvblock_t> _block = base::xvchain_t::instance().get_xblockstore()->load_block_object(_vaddr, height, base::enum_xvblock_flag_committed, false);
     if (_block != nullptr) {
         // system contract only need input for full-table
@@ -1361,6 +1362,7 @@ data::xblock_t*
 xaccount_context_t::get_next_full_block(const std::string & owner, const uint64_t cur_full_height) const {
     base::xvaccount_t vaddr(owner);
     uint64_t next_full_height = cur_full_height + XGET_CONFIG(fulltable_interval_block_num);
+    XMETRICS_GAUGE(metrics::blockstore_access_from_account_context, 1);
     base::xauto_ptr<base::xvblock_t> block = base::xvchain_t::instance().get_xblockstore()->load_block_object(vaddr, next_full_height, base::enum_xvblock_flag_committed, false);
     xdbg("xaccount_context_t::get_next_full_block owner=%s,cur_height=%llu,next_full_height=%llu", owner.c_str(), cur_full_height, next_full_height);
 

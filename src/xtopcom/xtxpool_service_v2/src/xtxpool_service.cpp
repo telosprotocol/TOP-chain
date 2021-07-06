@@ -353,6 +353,7 @@ xcons_transaction_ptr_t xtxpool_service::create_confirm_tx_by_hash(const uint256
     base::xvaccount_t _vaccount(tx->get_target_addr());
     uint64_t unit_height = tx_store->get_recv_unit_height();
     base::xauto_ptr<base::xvblock_t> commit_block = m_para->get_vblockstore()->load_block_object(_vaccount, unit_height, base::enum_xvblock_flag_committed, false);
+    XMETRICS_GAUGE(metrics::blockstore_access_from_txpool, 1);
     if (commit_block == nullptr) {
         xerror("xtxpool_service::create_confirm_tx_by_hash fail-commit unit not exist txhash=%s,account=%s,block_height:%ld",
                base::xstring_utl::to_hex(str_hash).c_str(),
@@ -362,6 +363,7 @@ xcons_transaction_ptr_t xtxpool_service::create_confirm_tx_by_hash(const uint256
     }
     m_para->get_vblockstore()->load_block_input(_vaccount, commit_block.get());
     base::xauto_ptr<base::xvblock_t> cert_block = m_para->get_vblockstore()->load_block_object(_vaccount, unit_height + 2, 0, false);
+    XMETRICS_GAUGE(metrics::blockstore_access_from_txpool, 1);
     if (commit_block == nullptr) {
         xerror("xtxpool_service::create_confirm_tx_by_hash fail-cert unit not exist txhash=%s,account=%s,block_height:%ld",
                base::xstring_utl::to_hex(str_hash).c_str(),
@@ -508,6 +510,7 @@ void xtxpool_service::deal_table_block(xblock_t * block, uint64_t now_clock) {
                     continue;
                 }
                 base::xauto_ptr<base::xvblock_t> blockobj = m_para->get_vblockstore()->load_block_object(_vaddress, height, base::enum_xvblock_flag_committed, false);
+                XMETRICS_GAUGE(metrics::blockstore_access_from_txpool, 1);
                 if (blockobj != nullptr) {
                     m_para->get_vblockstore()->load_block_input(_vaddress, blockobj.get());
                     xblock_t * missing_block = dynamic_cast<xblock_t *>(blockobj.get());
@@ -533,6 +536,7 @@ void xtxpool_service::make_receipts_and_send(xblock_t * block) {
     }
     uint64_t cert_height = block->get_height() + 2;
     base::xauto_ptr<base::xvblock_t> cert_block = m_para->get_vblockstore()->load_block_object(block->get_account(), cert_height, base::enum_xvblock_flag_authenticated, false);
+    XMETRICS_GAUGE(metrics::blockstore_access_from_txpool, 1);
     if (cert_block == nullptr) {
         xerror("xtxpool_service::make_receipts_and_send load cert block fail table:%s,height:%llu", block->get_account().c_str(), cert_height);
         return;

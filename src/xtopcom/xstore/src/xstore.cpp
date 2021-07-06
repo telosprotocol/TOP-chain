@@ -51,6 +51,7 @@ xstore::xstore(const std::shared_ptr<db::xdb_face_t> &db)
 
 xaccount_ptr_t xstore::query_account(const std::string &address) const {
     base::xvaccount_t _vaddr(address);
+    XMETRICS_GAUGE(metrics::blockstore_access_from_store, 1);
     auto _block = base::xvchain_t::instance().get_xblockstore()->get_latest_connected_block(_vaddr);
     if (_block == nullptr) {
         xerror("xstore::query_account fail-load latest connectted block. account=%s", address.c_str());
@@ -179,6 +180,7 @@ bool xstore::string_property_get(base::xvblock_t* block, const std::string& prop
 
 xaccount_ptr_t xstore::get_target_state(const std::string &address, uint64_t height) const {
     base::xvaccount_t _vaddr(address);
+    XMETRICS_GAUGE(metrics::blockstore_access_from_store, 1);
     base::xauto_ptr<base::xvblock_t> _block = base::xvchain_t::instance().get_xblockstore()->load_block_object(_vaddr, height, base::enum_xvblock_flag_committed, false);
     if (_block == nullptr) {
         xwarn("xstore::get_target_state load block fail.account=%s,height=%ld", address.c_str(), height);

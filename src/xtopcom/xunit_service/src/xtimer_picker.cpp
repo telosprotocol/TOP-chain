@@ -34,6 +34,7 @@ xtimer_picker_t::xtimer_picker_t(base::xcontext_t &                             
     base::xauto_ptr<xcscoreobj_t> auto_engine = create_engine(*this, xconsensus::enum_xconsensus_pacemaker_type_timeout_cert);
 
     // init view
+    XMETRICS_GAUGE(metrics::blockstore_access_from_us, 1);
     auto last_block = get_vblockstore()->get_latest_cert_block(get_account());
     assert(last_block != nullptr);
 
@@ -41,6 +42,7 @@ xtimer_picker_t::xtimer_picker_t(base::xcontext_t &                             
 
     // get latest cert clock for drop old tc timeout msg
     base::xvaccount_t _timer_vaddress(sys_contract_beacon_timer_addr);
+    XMETRICS_GAUGE(metrics::blockstore_access_from_us, 1);
     auto last_clock_blk = get_vblockstore()->get_latest_cert_block(_timer_vaddress);
     assert(last_clock_blk != nullptr);
     m_latest_cert_clock = last_clock_blk->get_clock();
