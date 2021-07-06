@@ -960,7 +960,7 @@ namespace top
                 {
                     if(_test_for_block->get_block_hash() != latest_commit_block->get_block_hash())
                     {
-                        xerror("xBFTRules::safe_check_follow_commit_branch,fail-cert try fork from the commited branch, cert(%s) vs commited(%s) at node=0x%llx",_test_for_block->dump().c_str(), latest_commit_block->dump().c_str(),get_xip2_addr().low_addr);
+                        xwarn("xBFTRules::safe_check_follow_commit_branch,fail-cert try fork from the commited branch, cert(%s) vs commited(%s) at node=0x%llx",_test_for_block->dump().c_str(), latest_commit_block->dump().c_str(),get_xip2_addr().low_addr);
                         return -1;//failed
                     }
                     return 1;//good
@@ -1009,7 +1009,7 @@ namespace top
             {
                 if(_test_for_block->get_block_hash() != get_lock_block()->get_block_hash())
                 {
-                    xerror("xBFTRules::safe_check_follow_locked_branch,fail-block with same height of locked,but different hash of proposal=%s vs locked=%s at node=0x%llx",_test_for_block->dump().c_str(), get_lock_block()->dump().c_str(),get_xip2_addr().low_addr);
+                    xwarn("xBFTRules::safe_check_follow_locked_branch,fail-block with same height of locked,but different hash of proposal=%s vs locked=%s at node=0x%llx",_test_for_block->dump().c_str(), get_lock_block()->dump().c_str(),get_xip2_addr().low_addr);
                     return -1;
                 }
                 return 1;

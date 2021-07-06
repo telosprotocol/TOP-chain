@@ -411,6 +411,9 @@ bool xsync_on_demand_t::store_blocks(const std::vector<data::xblock_ptr_t> &bloc
             return false;
         }
 
+        //No.1 safe rule: clean all flags first when sync/replicated one block
+        block->reset_block_flags();
+        //XTODO,here need check hash to connect the prev authorized block,then set enum_xvblock_flag_authenticated
         block->set_block_flag(enum_xvblock_flag_authenticated);
 
         base::xvblock_t* vblock = dynamic_cast<base::xvblock_t*>(block.get());
