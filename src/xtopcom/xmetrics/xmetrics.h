@@ -172,8 +172,9 @@ enum E_SIMPLE_METRICS_TAG {
     blockstore_access_from_store,
     blockstore_access_from_txpool,
     blockstore_access_from_statestore,
-    blockstore_access_from_sync,
     blockstore_access_from_application,
+    blockstore_access_from_sync_blk,
+    blockstore_access_from_sync_index,
 
     e_simple_total,
 };
