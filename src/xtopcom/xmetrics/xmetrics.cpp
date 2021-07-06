@@ -145,6 +145,8 @@ metrics_variant_ptr e_metrics::s_metrics[e_simple_total] = {
     DECL_METRICS(txpool_recv_tx_first_send),
     DECL_METRICS(txpool_confirm_tx_first_send),
     DECL_METRICS(txpool_push_tx_send_fail_pool_full),
+    DECL_METRICS(txpool_pull_recv_tx),
+    DECL_METRICS(txpool_pull_confirm_tx),
 
     // blockstore
     DECL_METRICS(blockstore_index_query),

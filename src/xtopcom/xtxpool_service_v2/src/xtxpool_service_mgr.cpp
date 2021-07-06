@@ -334,7 +334,7 @@ bool xtxpool_service_timer_t::is_mailbox_over_limit() {
     int32_t queue_size = count_calls(in, out);
     bool discard = queue_size >= max_mailbox_num;
     if (discard) {
-        xwarn("xtxpool_service_dispatcher_imp_t::is_mailbox_over_limit in=%ld,out=%ld", in, out);
+        xwarn("xtxpool_service_timer_t::is_mailbox_over_limit in=%ld,out=%ld", in, out);
         return true;
     }
     return false;
