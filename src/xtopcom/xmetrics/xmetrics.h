@@ -164,6 +164,17 @@ enum E_SIMPLE_METRICS_TAG {
     blockstore_blk_query,
     blockstore_blk_load_db,
 
+    // blockstore accessing
+    blockstore_access_from_account_context,
+    blockstore_access_from_contract_runtime,
+    blockstore_access_from_mbus,
+    blockstore_access_from_rpc,
+    blockstore_access_from_store,
+    blockstore_access_from_txpool,
+    blockstore_access_from_statestore,
+    blockstore_access_from_sync,
+    blockstore_access_from_application,
+
     e_simple_total,
 };
 using xmetircs_tag_t = E_SIMPLE_METRICS_TAG;

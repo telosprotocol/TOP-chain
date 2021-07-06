@@ -154,6 +154,14 @@ metrics_variant_ptr e_metrics::s_metrics[e_simple_total] = {
     DECL_METRICS(blockstore_blk_query),
     DECL_METRICS(blockstore_blk_load_db),
 
+    DECL_METRICS(blockstore_access_from_account_context),
+    DECL_METRICS(blockstore_access_from_contract_runtime),
+    DECL_METRICS(blockstore_access_from_mbus),
+    DECL_METRICS(blockstore_access_from_rpc),
+    DECL_METRICS(blockstore_access_from_store),
+    DECL_METRICS(blockstore_access_from_txpool),
+    DECL_METRICS(blockstore_access_from_statestore),
+    DECL_METRICS(blockstore_access_from_sync),
 };
 
 void e_metrics::start() {
