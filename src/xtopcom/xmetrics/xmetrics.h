@@ -158,6 +158,12 @@ enum E_SIMPLE_METRICS_TAG {
     txpool_pull_recv_tx,
     txpool_pull_confirm_tx,
 
+    // blockstore
+    blockstore_index_query,
+    blockstore_index_load_db,
+    blockstore_blk_query,
+    blockstore_blk_load_db,
+
     e_simple_total,
 };
 using xmetircs_tag_t = E_SIMPLE_METRICS_TAG;

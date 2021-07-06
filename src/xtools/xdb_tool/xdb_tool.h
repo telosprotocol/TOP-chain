@@ -1,4 +1,5 @@
 #include <string>
+#include "xdata/xfull_tableblock.h"
 #include "xstore/xstore_face.h"
 #include "xcertauth/src/xsigndata.h"
 
@@ -12,6 +13,8 @@ public:
 
     void credit_data(uint64_t table_id);
     void specific_clockheight(uint64_t start_gmttime, uint64_t end_gmttime);
+
+    top::data::xstatistics_data_t get_fulltable_statistic(std::string const& tableblock_addr, uint64_t height);
 
 private:
     std::string get_multisig_votestr(top::auth::xmutisigdata_t const& aggregated_sig_obj) const;
