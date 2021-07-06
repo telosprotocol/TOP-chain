@@ -83,6 +83,14 @@ int main(int argc, char** argv) {
     clock_height_credit_data_cmd->add_option("end_gmttime", end_gmttime, "the end gmttime")->required();
     clock_height_credit_data_cmd->callback(std::bind(&xdb_tool::specific_clockheight, &tool_instance, std::ref(start_gmttime), std::ref(end_gmttime)));
 
+    // get db statistic
+    auto db_statistic_cmd = dbtool_app.add_subcommand("get_fulltable_statistic", "get db statistic info");
+    std::string table_address;
+    uint64_t height;
+    db_statistic_cmd->add_option("table_address", table_address, "the table address")->required();
+    db_statistic_cmd->add_option("height", height, "the height of the fulltableblock")->required();
+    db_statistic_cmd->callback(std::bind(&xdb_tool::get_fulltable_statistic, &tool_instance, std::ref(table_address), std::ref(height)));
+
     CLI11_PARSE(dbtool_app, argc, argv);
     return 0;
 }

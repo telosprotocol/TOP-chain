@@ -324,3 +324,19 @@ void xdb_tool::specific_clockheight(uint64_t start_gmttime, uint64_t end_gmttime
 
 
 }
+
+top::data::xstatistics_data_t xdb_tool::get_fulltable_statistic(std::string const& tableblock_addr, uint64_t height) {
+        auto vblock = blockstore_->load_block_object(tableblock_addr, height, 0, true);
+        xblock_t* block = dynamic_cast<xblock_t*>(vblock.get());
+
+        assert(block->is_fullblock());
+        xfull_tableblock_t* full_tableblock = dynamic_cast<xfull_tableblock_t*>(block);
+
+        auto statistic = full_tableblock->get_table_statistics();
+        top::base::xstream_t base_stream{top::base::xcontext_t::instance()};
+        base_stream << statistic;
+        std::cout << "size is: " << base_stream.size() << "\n";
+        return statistic;
+
+}
+
