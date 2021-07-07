@@ -176,7 +176,12 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     blockstore_access_from_sync_blk,
     blockstore_access_from_sync_index,
     blockstore_access_from_block_maker,
-    blockstore_access_from_us,
+    blockstore_access_from_us_on_view_fire,
+    blockstore_access_from_us_on_timer_fire,
+    blockstore_access_from_us_on_proposal_finish,
+    blockstore_access_from_us_timer_blk_maker,
+    blockstore_access_from_us_timer_picker_constructor,
+    blockstore_access_from_us_dispatcher_load_tc,
     blockstore_access_from_bft,
     blockstore_access_from_vnodesrv,
 
