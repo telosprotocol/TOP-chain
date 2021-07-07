@@ -37,6 +37,10 @@ jobs:
         run: |
           bash .github/scripts/build_xtop.sh "test build_ci"
 
+      - name: UnitTest
+        run: |
+          bash .github/scripts/test_ut.sh
+
       - name: TEST XTOP AllInOne
         env:
           RUN_NUM: ${{ github.run_number }}
