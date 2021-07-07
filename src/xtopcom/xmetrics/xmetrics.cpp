@@ -420,7 +420,7 @@ xsimple_merics_category g_cates[] = {
 };
 
 bool is_category(E_SIMPLE_METRICS_TAG tag) {
-    for(auto index = 0; index < sizeof(g_cates)/sizeof(g_cates[0]); index++) {
+    for(size_t index = 0; index < sizeof(g_cates)/sizeof(g_cates[0]); index++) {
         if(tag == g_cates[index].category) {
             return true;
         }
@@ -442,7 +442,7 @@ void e_metrics::gauge_dump() {
     }
     
     // summary of category as defined
-    for(auto index = 0; index < sizeof(g_cates)/sizeof(g_cates[0]); index++) {
+    for(size_t index = 0; index < sizeof(g_cates)/sizeof(g_cates[0]); index++) {
         uint64_t cate_val = 0;
         uint64_t cate_count = 0;
         auto cate = g_cates[index];
