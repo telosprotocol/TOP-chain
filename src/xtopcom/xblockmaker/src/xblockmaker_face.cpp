@@ -27,7 +27,7 @@ bool xblock_maker_t::update_account_state(const xblock_ptr_t & latest_block, uin
         return true;
     }
 
-    base::xauto_ptr<base::xvbstate_t> bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(latest_block.get());
+    base::xauto_ptr<base::xvbstate_t> bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(latest_block.get(),metrics::statestore_access_from_blkmaker_update_account_state);
     if (bstate == nullptr) {
         lacked_block_height = latest_block->get_height() - 1;
         xwarn("xblock_maker_t::update_account_state fail-get target state. account=%s,height=%ld,viewid=%ld",

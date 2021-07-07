@@ -23,7 +23,7 @@ namespace xtxpool_v2 {
 #define state_update_too_long_time (600)
 
 data::xtablestate_ptr_t xtxpool_table_t::get_target_tablestate(base::xvblock_t * block) const {
-    base::xauto_ptr<base::xvbstate_t> bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(block);
+    base::xauto_ptr<base::xvbstate_t> bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(block, metrics::statestore_access_from_txpool_get_tablestate);
     if (bstate == nullptr) {
         return nullptr;
     }
@@ -35,7 +35,7 @@ bool xtxpool_table_t::get_account_basic_info(const std::string & account, xaccou
     // TODO(jimmy) try sync behind account unit, make a new function
     auto latest_table = m_para->get_vblockstore()->get_latest_committed_block(m_xtable_info);
     xblock_ptr_t committed_block = xblock_t::raw_vblock_to_object_ptr(latest_table.get());
-    base::xauto_ptr<base::xvbstate_t> bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(committed_block.get());
+    base::xauto_ptr<base::xvbstate_t> bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(committed_block.get(),metrics::statestore_access_from_txpool_get_accountstate);
     if (bstate == nullptr) {
         xwarn("xtxpool_table_t::get_account_basic_info fail-get tablestate. block=%s", committed_block->dump().c_str());
         return false;
@@ -57,7 +57,7 @@ bool xtxpool_table_t::get_account_basic_info(const std::string & account, xaccou
     }
 
     base::xauto_ptr<base::xvblock_t> _start_block_ptr = m_para->get_vblockstore()->get_latest_committed_block(_account_vaddress);
-    base::xauto_ptr<base::xvbstate_t> account_bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(_start_block_ptr.get());
+    base::xauto_ptr<base::xvbstate_t> account_bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(_start_block_ptr.get(), metrics::statestore_access_from_txpool_get_accountstate);
     if (account_bstate == nullptr) {
         xwarn("xtxpool_table_t::get_account_basic_info fail-get unitstate. block=%s", _start_block_ptr->dump().c_str());
         return false;
@@ -330,7 +330,7 @@ int32_t xtxpool_table_t::verify_txs(const std::string & account, const std::vect
 void xtxpool_table_t::refresh_table(bool refresh_unconfirm_txs) {
     base::xvaccount_t _vaddr(m_xtable_info.get_table_addr());
     auto _block = base::xvchain_t::instance().get_xblockstore()->get_latest_committed_block(_vaddr, metrics::blockstore_access_from_txpool_refresh_table);
-    base::xauto_ptr<base::xvbstate_t> bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(_block.get());
+    base::xauto_ptr<base::xvbstate_t> bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(_block.get(), metrics::statestore_access_from_txpool_refreshtable);
     if (bstate == nullptr) {
         xwarn("xtxpool_table_t::refresh_table fail-get bstate.table=%s,block=%s", m_xtable_info.get_table_addr().c_str(), _block->dump().c_str());
         return;

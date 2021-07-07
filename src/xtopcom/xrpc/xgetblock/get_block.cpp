@@ -895,7 +895,7 @@ void get_block_handle::getLatestFullBlock() {
             xfull_tableblock_t* ftp = dynamic_cast<xfull_tableblock_t*>(bp);
             auto root_hash = ftp->get_fullstate_hash();
             jv["root_hash"] = to_hex_str(root_hash);
-            base::xauto_ptr<base::xvbstate_t> bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(bp);
+            base::xauto_ptr<base::xvbstate_t> bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(bp, metrics::statestore_access_from_rpc_get_fullbock);
             data::xtablestate_ptr_t tablestate = bstate != nullptr ? std::make_shared<data::xtable_bstate_t>(bstate.get()) : nullptr;
             if (tablestate != nullptr) {
                 jv["account_size"] = static_cast<xJson::UInt64>(tablestate->get_account_size());
@@ -1195,7 +1195,7 @@ void get_block_handle::query_account_property(xJson::Value & jph, const std::str
         return;
     }
 
-    base::xauto_ptr<base::xvbstate_t> bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(_block.get());
+    base::xauto_ptr<base::xvbstate_t> bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(_block.get(),metrics::statestore_access_from_rpc_query_propery);
     xaccount_ptr_t unitstate = nullptr;
     if (bstate != nullptr) {
         unitstate = std::make_shared<xunit_bstate_t>(bstate.get());
@@ -1335,7 +1335,7 @@ static std::unordered_map<common::xnode_type_t, std::string> node_type_map{
 };
 
 void get_block_handle::set_addition_info(xJson::Value & body, xblock_t * bp) {
-    auto _bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(bp);
+    auto _bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(bp, metrics::statestore_access_from_rpc_set_addition);
     if (nullptr == _bstate) {
         xwarn("get_block_handle::set_addition_info get target state fail.block=%s", bp->dump().c_str());
         return;
@@ -1423,7 +1423,7 @@ void get_block_handle::set_addition_info(xJson::Value & body, xblock_t * bp) {
 void get_block_handle::set_fullunit_info(xJson::Value & j_fu, xblock_t * bp) {
     if (bp->is_fullunit()) {
         // TODO(jimmy)
-        base::xauto_ptr<base::xvbstate_t> bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(bp);
+        base::xauto_ptr<base::xvbstate_t> bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(bp, metrics::statestore_access_from_rpc_set_fullunit);
         xassert(bstate != nullptr);
         data::xunit_bstate_t unitstate(bstate.get());
         j_fu["latest_full_unit_number"] = static_cast<unsigned int>(bp->get_height());

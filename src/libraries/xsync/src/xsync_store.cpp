@@ -139,7 +139,7 @@ uint64_t xsync_store_t::get_latest_start_block_height(const std::string & accoun
             if (!_full_block->is_full_state_block()) {
                 auto _executed_block_height = m_blockstore->get_latest_executed_block_height(account);
                 if (_full_block->get_height() <= _executed_block_height) {
-                    if (false == base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_full_block_offsnapshot(_full_block.get())) {
+                    if (false == base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_full_block_offsnapshot(_full_block.get(),metrics::statestore_access_from_sync_query_offchain)) {
                         xwarn("xsync_store_t::get_latest_start_block_height fail-get off snapshot.block=%s", _full_block->dump().c_str());
                     }
                 } else {
@@ -190,7 +190,7 @@ base::xauto_ptr<base::xvblock_t> xsync_store_t::get_latest_start_block(const std
                 XMETRICS_GAUGE(metrics::blockstore_access_from_sync_blk, 1);
                 base::xauto_ptr<base::xvblock_t> _executed_block = m_blockstore->get_latest_executed_block(account);
                 if (_full_block->get_height() <= _executed_block->get_height()) {
-                    if (false == base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_full_block_offsnapshot(_full_block.get())) {
+                    if (false == base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_full_block_offsnapshot(_full_block.get(), metrics::statestore_access_from_sync_query_offchain)) {
                         xwarn("xsync_store_t::get_latest_start_block fail-get off snapshot.block=%s", _full_block->dump().c_str());
                     }
                 } else {

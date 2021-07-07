@@ -162,7 +162,17 @@ char const * matrics_name(xmetircs_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(blockstore_access_from_txpool_recover);
         RETURN_METRICS_NAME(blockstore_access_from_txpool_refresh_table);
 
+        // blockstore access statestore
         RETURN_METRICS_NAME(blockstore_access_from_statestore);
+        RETURN_METRICS_NAME(blockstore_access_from_statestore_rebuild_state);
+        RETURN_METRICS_NAME(blockstore_access_from_statestore_fullblock);
+        RETURN_METRICS_NAME(blockstore_access_from_statestore_load_state);
+        RETURN_METRICS_NAME(blockstore_access_from_statestore_load_lastest_state);
+        RETURN_METRICS_NAME(blockstore_access_from_statestore_get_block_state);
+        RETURN_METRICS_NAME(blockstore_access_from_statestore_get_block_index_state);
+        RETURN_METRICS_NAME(blockstore_access_from_statestore_get_connect_state);
+        RETURN_METRICS_NAME(blockstore_access_from_statestore_get_commit_state);
+        
         RETURN_METRICS_NAME(blockstore_access_from_application);
         RETURN_METRICS_NAME(blockstore_access_from_sync_blk);
         RETURN_METRICS_NAME(blockstore_access_from_sync_index);
@@ -188,6 +198,31 @@ char const * matrics_name(xmetircs_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(blockstore_access_from_bft_sync);
         RETURN_METRICS_NAME(blockstore_access_from_bft_init_blk);
         RETURN_METRICS_NAME(blockstore_access_from_vnodesrv);
+
+        // state store
+        RETURN_METRICS_NAME(statestore_access_from_blk_ctx);
+        RETURN_METRICS_NAME(statestore_access_from_vledger_load_state);
+        RETURN_METRICS_NAME(statestore_access_from_vnodesrv_load_state);
+        RETURN_METRICS_NAME(statestore_access_from_store_tgas);
+        RETURN_METRICS_NAME(statestore_access_from_store_backup_tgas);
+        RETURN_METRICS_NAME(statestore_access_from_store_bstate);
+        RETURN_METRICS_NAME(statestore_access_from_xelect);
+        RETURN_METRICS_NAME(statestore_access_from_xconfig_update);
+        RETURN_METRICS_NAME(statestore_access_from_rpc_get_fullbock);
+        RETURN_METRICS_NAME(statestore_access_from_rpc_query_propery);
+        RETURN_METRICS_NAME(statestore_access_from_rpc_set_addition);
+        RETURN_METRICS_NAME(statestore_access_from_rpc_set_fullunit);
+        RETURN_METRICS_NAME(statestore_access_from_sync_chain_snapshot);
+        RETURN_METRICS_NAME(statestore_access_from_sync_handle_chain_snapshot_meta);
+        RETURN_METRICS_NAME(statestore_access_from_sync_query_offchain);
+        RETURN_METRICS_NAME(statestore_access_from_application_isbeacon);
+        RETURN_METRICS_NAME(statestore_access_from_application_load_election);
+        RETURN_METRICS_NAME(statestore_access_from_blkmaker_update_account_state);
+        RETURN_METRICS_NAME(statestore_access_from_blkmaker_unit_connect_state);
+        RETURN_METRICS_NAME(statestore_access_from_txpool_get_tablestate);
+        RETURN_METRICS_NAME(statestore_access_from_txpool_get_accountstate);
+        RETURN_METRICS_NAME(statestore_access_from_txpool_refreshtable);
+        RETURN_METRICS_NAME(statestore_access_from_blkmaker_get_target_tablestate);
 
         default: assert(false); return nullptr;
     }

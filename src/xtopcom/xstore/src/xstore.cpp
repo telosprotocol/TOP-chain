@@ -63,7 +63,7 @@ xaccount_ptr_t xstore::query_account(const std::string &address) const {
         return nullptr;
     }
 
-    base::xauto_ptr<base::xvbstate_t> bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(_block.get());
+    base::xauto_ptr<base::xvbstate_t> bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(_block.get(), metrics::statestore_access_from_vnodesrv_load_state);
     if (bstate != nullptr) {
         xaccount_ptr_t account = std::make_shared<xunit_bstate_t>(bstate.get());
         return account;
@@ -157,7 +157,7 @@ xaccount_ptr_t xstore::get_target_state(base::xvblock_t* block) const {
     const std::string & address = block->get_account();
     base::xvaccount_t _vaddr(address);
     base::xvblkstatestore_t* blkstatestore = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store();
-    base::xauto_ptr<base::xvbstate_t> bstate = blkstatestore->get_block_state(block);
+    base::xauto_ptr<base::xvbstate_t> bstate = blkstatestore->get_block_state(block, metrics::statestore_access_from_vnodesrv_load_state);
     if (bstate == nullptr) {
         xwarn("xstore::get_target_state fail-load state.block=%s", block->dump().c_str());
         return nullptr;
@@ -293,7 +293,7 @@ bool  xstore::find_values(const std::string & key,std::vector<std::string> & val
 }
 
 bool  xstore::execute_block(base::xvblock_t* vblock) {
-    return base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->execute_block(vblock);
+    return base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->execute_block(vblock, metrics::statestore_access_from_vnodesrv_load_state);
 }
 
 } // namespace store

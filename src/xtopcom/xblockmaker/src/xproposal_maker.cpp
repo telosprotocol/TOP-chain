@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2017-2018 Telos Foundation & contributors
+// Copyright (c) 2017-2018 Telos Foundation & contributors
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -51,7 +51,7 @@ bool xproposal_maker_t::can_make_proposal(data::xblock_consensus_para_t & propos
 }
 
 xtablestate_ptr_t xproposal_maker_t::get_target_tablestate(base::xvblock_t* block) {
-    base::xauto_ptr<base::xvbstate_t> bstate = m_resources->get_xblkstatestore()->get_block_state(block);
+    base::xauto_ptr<base::xvbstate_t> bstate = m_resources->get_xblkstatestore()->get_block_state(block,metrics::statestore_access_from_blkmaker_get_target_tablestate);
     if (bstate == nullptr) {
         xwarn("xproposal_maker_t::get_target_tablestate fail-get target state.block=%s",block->dump().c_str());
         return nullptr;

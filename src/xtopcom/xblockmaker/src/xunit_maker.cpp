@@ -179,7 +179,7 @@ bool xunit_maker_t::push_tx(const data::xblock_consensus_para_t & cs_para, const
         uint256_t latest_hash;
         find_highest_send_tx(latest_nonce, latest_hash);
         if (tx->get_transaction()->get_last_nonce() != latest_nonce || !tx->get_transaction()->check_last_trans_hash(latest_hash)) {
-            auto commit_bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_latest_connectted_block_state(*this);
+            auto commit_bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_latest_connectted_block_state(*this,metrics::statestore_access_from_blkmaker_unit_connect_state);
             if (commit_bstate != nullptr) {
                 xunit_bstate_t committed_state(commit_bstate.get());
                 uint64_t account_latest_nonce = committed_state.get_latest_send_trans_number();

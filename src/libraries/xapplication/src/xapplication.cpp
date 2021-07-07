@@ -363,7 +363,7 @@ bool xtop_application::is_beacon_account() const noexcept {
 
         std::string result;
         auto latest_vblock = data::xblocktool_t::get_latest_committed_lightunit(m_blockstore.get(), sys_contract_rec_elect_rec_addr);
-        base::xauto_ptr<base::xvbstate_t> bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(latest_vblock.get());
+        base::xauto_ptr<base::xvbstate_t> bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(latest_vblock.get(), metrics::statestore_access_from_application_isbeacon);
         if (bstate == nullptr) {
             xerror("xtop_application::is_beacon_account fail-get state.");
             return false;
