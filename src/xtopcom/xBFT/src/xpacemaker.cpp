@@ -69,10 +69,7 @@ namespace top
                     #ifdef __ENABLE_PRE_INIT_CLOCK_CERT__
                     if((NULL == m_latest_clock_cert))
                     {
-#if defined(ENABLE_METRICS)
-                        XMETRICS_GAUGE(metrics::blockstore_access_from_bft, 1);
-#endif
-                        base::xauto_ptr<base::xvblock_t> latest_clock = get_vblockstore()->get_latest_cert_block(get_xclock_account_address());
+                        base::xauto_ptr<base::xvblock_t> latest_clock = get_vblockstore()->get_latest_cert_block(get_xclock_account_address(), metrics::blockstore_access_from_bft_init_blk);
                         if( (latest_clock) && (latest_clock->is_deliver(false)))
                         {
                             m_latest_clock_cert = latest_clock->get_cert();
@@ -82,10 +79,7 @@ namespace top
                     #endif
                     if(NULL == m_latest_vblock_cert)
                     {
-#if defined(ENABLE_METRICS)
-                        XMETRICS_GAUGE(metrics::blockstore_access_from_bft, 1);
-#endif
-                        base::xauto_ptr<base::xvblock_t> latest_vblock(get_vblockstore()->get_latest_cert_block(account));
+                        base::xauto_ptr<base::xvblock_t> latest_vblock(get_vblockstore()->get_latest_cert_block(account, metrics::blockstore_access_from_bft_init_blk));
                         if( (latest_vblock) && (latest_vblock->is_deliver(false)))
                         {
                             m_latest_vblock_cert = latest_vblock->get_cert();

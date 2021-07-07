@@ -56,10 +56,7 @@ namespace top
             //get prev hqc block from proposal
             if(NULL == hqc) //from backup
             {
-#if defined(ENABLE_METRICS)
-                XMETRICS_GAUGE(metrics::blockstore_access_from_bft, 1);
-#endif
-                base::xblock_vector latest_certs = get_vblockstore()->load_block_object(*this, proposal_block->get_height() - 1);
+                base::xblock_vector latest_certs = get_vblockstore()->load_block_object(*this, proposal_block->get_height() - 1, metrics::blockstore_access_from_bft_check_proposal);
                 if(false == latest_certs.get_vector().empty())
                 {
                     for(auto it = latest_certs.get_vector().begin(); it != latest_certs.get_vector().end(); ++it)
@@ -93,10 +90,7 @@ namespace top
                     it_prev_block= it_cur_block;
                     if(it_cur_block->get_prev_block() == NULL)//xdb might have prev block,let us reload it
                     {
-#if defined(ENABLE_METRICS)
-                        XMETRICS_GAUGE(metrics::blockstore_access_from_bft, 1);
-#endif
-                        base::xauto_ptr<base::xvblock_t> _block = get_vblockstore()->load_block_object(*this, it_cur_block->get_height() -1,0,false);
+                        base::xauto_ptr<base::xvblock_t> _block = get_vblockstore()->load_block_object(*this, it_cur_block->get_height() -1,0,false, metrics::blockstore_access_from_bft_check_proposal);
                         if(_block != nullptr)
                             it_cur_block = _block.get();//safe to assign,since account not be idle at this moment
                         else
@@ -136,10 +130,7 @@ namespace top
             {
                 base::xauto_ptr<xcsobject_t> ptr_engine_obj(create_engine_object());
             }
-#if defined(ENABLE_METRICS)
-            XMETRICS_GAUGE(metrics::blockstore_access_from_bft, 1);
-#endif
-            base::xauto_ptr<base::xvblock_t>  highest_block(get_vblockstore()->get_latest_cert_block(*this));
+            base::xauto_ptr<base::xvblock_t>  highest_block(get_vblockstore()->get_latest_cert_block(*this, metrics::blockstore_access_from_bft_on_clock_fire));
             if(highest_block)
             {
                 xcsclock_fire * _clock_event = (xcsclock_fire*)&event;
@@ -168,11 +159,9 @@ namespace top
             {
                 if(get_child_node() != NULL)
                 {
-#if defined(ENABLE_METRICS)
-                    XMETRICS_GAUGE(metrics::blockstore_access_from_bft, 2);
-#endif
-                    base::xblock_mptrs latest_list = get_vblockstore()->get_latest_blocks(*this);
-                    base::xauto_ptr<base::xvblock_t> latest_clock = get_vblockstore()->get_latest_cert_block(get_xclock_account_address());
+
+                    base::xblock_mptrs latest_list = get_vblockstore()->get_latest_blocks(*this, metrics::blockstore_access_from_bft_pdu_event_down);
+                    base::xauto_ptr<base::xvblock_t> latest_clock = get_vblockstore()->get_latest_cert_block(get_xclock_account_address(), metrics::blockstore_access_from_bft_pdu_event_down);
 
                     base::xauto_ptr<xproposal_start>_event_proposal_start(new xproposal_start());
                     _event_proposal_start->set_latest_commit(latest_list.get_latest_committed_block());
@@ -196,10 +185,7 @@ namespace top
                 return true;
             }
             //xdbgassert(check_proposal(_evt_obj->get_proposal()));
-#if defined(ENABLE_METRICS)
-            XMETRICS_GAUGE(metrics::blockstore_access_from_bft, 1);
-#endif
-            base::xblock_mptrs latest_list = get_vblockstore()->get_latest_blocks(*this);
+            base::xblock_mptrs latest_list = get_vblockstore()->get_latest_blocks(*this, metrics::blockstore_access_from_bft_consaccnt_on_proposal_start);
             if(NULL == _evt_obj->get_latest_commit())
                 _evt_obj->set_latest_commit(latest_list.get_latest_committed_block());
             if(NULL == _evt_obj->get_latest_lock())
@@ -209,10 +195,7 @@ namespace top
 
             if(NULL == _evt_obj->get_latest_clock())//auto fill latest clock
             {
-#if defined(ENABLE_METRICS)
-                XMETRICS_GAUGE(metrics::blockstore_access_from_bft, 1);
-#endif
-                base::xauto_ptr<base::xvblock_t> latest_clock = get_vblockstore()->get_latest_cert_block(get_xclock_account_address());
+                base::xauto_ptr<base::xvblock_t> latest_clock = get_vblockstore()->get_latest_cert_block(get_xclock_account_address(), metrics::blockstore_access_from_bft_consaccnt_on_proposal_start);
                 _evt_obj->set_latest_clock(latest_clock.get());
             }
 

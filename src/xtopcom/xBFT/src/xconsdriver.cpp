@@ -153,10 +153,7 @@ namespace top
                 
                 if(_evt_obj->get_clock_cert() == NULL)
                 {
-#if defined(ENABLE_METRICS)
-                    XMETRICS_GAUGE(metrics::blockstore_access_from_bft, 1);
-#endif
-                    base::xauto_ptr<base::xvblock_t> latest_clock = get_vblockstore()->get_latest_cert_block(get_xclock_account_address());
+                    base::xauto_ptr<base::xvblock_t> latest_clock = get_vblockstore()->get_latest_cert_block(get_xclock_account_address(), metrics::blockstore_access_from_bft_consdriv_on_proposal_start);
                     if(!latest_clock)
                     {
                         xerror("xBFTdriver_t::start_consensus,fail-find clock for proposal%s vs driver=%s,at node=0x%llx",proposal->dump().c_str(),dump().c_str(),get_xip2_addr().low_addr);
