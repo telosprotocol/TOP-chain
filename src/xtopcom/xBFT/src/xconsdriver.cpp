@@ -177,6 +177,7 @@ namespace top
                     return true;
                 }
                 
+                _proposal_obj->get_block()->reset_block_flags(); //reset flags before start proposal
                 _proposal_obj->add_voted_cert(get_xip2_addr(),_proposal_obj->get_cert(),get_vcertauth()); //count leader 'vote
                 _proposal_obj->mark_leader(); //mark original proposal at leader side
                 _proposal_obj->mark_voted();  //mark voted,for leader it is always true
@@ -1083,7 +1084,8 @@ namespace top
                 if(is_close() == false)
                 {
                     base::xvqcert_t* _to_verify_cert_ = (base::xvqcert_t *)call.get_param1().get_object();
-                    if(get_vcertauth()->verify_muti_sign(_to_verify_cert_,get_account()) == base::enum_vcert_auth_result::enum_successful)
+                    if(   _to_verify_cert_->check_unit_flag(base::enum_xvblock_flag_authenticated)
+                       || (get_vcertauth()->verify_muti_sign(_to_verify_cert_,get_account()) == base::enum_vcert_auth_result::enum_successful) )
                     {
                         _to_verify_cert_->set_unit_flag(base::enum_xvblock_flag_authenticated);
                         base::xfunction_t* _callback_ = (base::xfunction_t *)call.get_param2().get_function();
@@ -1193,6 +1195,12 @@ namespace top
                 if(is_close() == false)//running at a specific worker thread of pool
                 {
                     xproposal_t * _proposal = (xproposal_t *)call.get_param1().get_object();
+                    if(_proposal->is_vote_disable()) //quick path to exit while proposal has been disabled
+                    {
+                        xwarn("xBFTdriver_t::fire_verify_vote_job,had disabled proposal=%s,at node=0x%llx",_proposal->dump().c_str(),replica_xip.low_addr);
+                        return true;
+                    }
+
                     if(false == _proposal->is_vote_finish()) //check first as async case,it might be finished already
                     {
                         if(get_vcertauth()->verify_sign(replica_xip, replica_cert,_proposal->get_account()) == base::enum_vcert_auth_result::enum_successful) //verify partial-certication of msg
@@ -1257,7 +1265,18 @@ namespace top
                 if(is_close() == false)//running at a specific worker thread of pool
                 {
                     xproposal_t * _proposal = (xproposal_t *)call.get_param1().get_object();
-                    if(_proposal->get_block()->check_unit_flag(base::enum_xvblock_flag_authenticated))
+                    if(_proposal->is_vote_disable()) //quick path to exit while proposal has been disabled
+                    {
+                        xwarn("xBFTdriver_t::fire_verify_proposal_job,had disabled proposal=%s,at node=0x%llx",_proposal->dump().c_str(),replica_xip.low_addr);
+                        return true;
+                    }
+                    if(_proposal->is_voted()) //quick path to exit while proposal has voted
+                    {
+                        xwarn("xBFTdriver_t::fire_verify_proposal_job,a voted proposal=%s,at node=0x%llx",_proposal->dump().c_str(),replica_xip.low_addr);
+                        return true;
+                    }
+                    if(   _proposal->is_certed()
+                       || _proposal->get_block()->check_block_flag(base::enum_xvblock_flag_authenticated))
                     {
                         xwarn("xBFTdriver_t::fire_verify_proposal_job,proposal had been changed to authenticated by commit msg while async-verifing for proposal=%s,at node=0x%llx",_proposal->dump().c_str(),replica_xip.low_addr);
                         return true;
