@@ -174,7 +174,28 @@ char const * matrics_name(xmetircs_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(blockstore_access_from_statestore_get_commit_state);
         
         RETURN_METRICS_NAME(blockstore_access_from_application);
+
+        // sync access
         RETURN_METRICS_NAME(blockstore_access_from_sync_blk);
+        RETURN_METRICS_NAME(blockstore_access_from_sync_get_latest_connected_block);
+        RETURN_METRICS_NAME(blockstore_access_from_sync_get_latest_committed_block);
+        RETURN_METRICS_NAME(blockstore_access_from_sync_get_latest_locked_block);
+        RETURN_METRICS_NAME(blockstore_access_from_sync_get_latest_cert_block);
+        RETURN_METRICS_NAME(blockstore_access_from_sync_existed_blk);
+        RETURN_METRICS_NAME(blockstore_access_from_sync_update_latest_genesis_connected_block);
+        RETURN_METRICS_NAME(blockstore_access_from_sync_get_latest_committed_full_block);
+        RETURN_METRICS_NAME(blockstore_access_from_sync_get_latest_executed_block);
+        RETURN_METRICS_NAME(blockstore_access_from_sync_get_genesis_block);
+        RETURN_METRICS_NAME(blockstore_access_from_sync_load_block_objects);
+        RETURN_METRICS_NAME(blockstore_access_from_sync_load_block_objects_input);
+        RETURN_METRICS_NAME(blockstore_access_from_sync_load_block_objects_output);
+        RETURN_METRICS_NAME(blockstore_access_from_sync_load_tx);
+        RETURN_METRICS_NAME(blockstore_access_from_sync_load_tx_input);
+        RETURN_METRICS_NAME(blockstore_access_from_sync_load_tx_output);
+        RETURN_METRICS_NAME(blockstore_access_from_sync_store_blk);
+        RETURN_METRICS_NAME(blockstore_access_from_sync_query_blk);
+        RETURN_METRICS_NAME(blockstore_access_from_sync_load_block_object);
+        
         RETURN_METRICS_NAME(blockstore_access_from_sync_index);
         RETURN_METRICS_NAME(blockstore_access_from_blk_mk_ld_and_cache);
         RETURN_METRICS_NAME(blockstore_access_from_blk_mk_proposer_verify_proposal);

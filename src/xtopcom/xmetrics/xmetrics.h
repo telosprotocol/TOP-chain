@@ -191,7 +191,28 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     blockstore_access_from_statestore_get_commit_state,
 
     blockstore_access_from_application,
+    // sync access
     blockstore_access_from_sync_blk,
+    blockstore_access_from_sync_get_latest_connected_block,
+    blockstore_access_from_sync_get_latest_committed_block,
+    blockstore_access_from_sync_get_latest_locked_block,
+    blockstore_access_from_sync_get_latest_cert_block,
+    blockstore_access_from_sync_existed_blk,
+    blockstore_access_from_sync_update_latest_genesis_connected_block,
+    blockstore_access_from_sync_get_latest_committed_full_block,
+    blockstore_access_from_sync_get_latest_executed_block,
+    blockstore_access_from_sync_get_genesis_block,
+    blockstore_access_from_sync_load_block_objects,
+    blockstore_access_from_sync_load_block_objects_input,
+    blockstore_access_from_sync_load_block_objects_output,
+    blockstore_access_from_sync_load_tx,
+    blockstore_access_from_sync_load_tx_input,
+    blockstore_access_from_sync_load_tx_output,
+    blockstore_access_from_sync_store_blk,
+    blockstore_access_from_sync_query_blk,
+    blockstore_access_from_sync_load_block_object,
+
+
     blockstore_access_from_sync_index,
     blockstore_access_from_blk_mk_ld_and_cache,
     blockstore_access_from_blk_mk_proposer_verify_proposal,
