@@ -154,70 +154,70 @@ namespace top
 
             //and return raw ptr with added reference,caller respond to release it after that.
             //please refer enum_xvblock_flag definition for terms of lock,commit,execute,connect
-            virtual xauto_ptr<xvblock_t>  get_genesis_block(const xvaccount_t & account)           = 0;//genesis block
-            virtual xauto_ptr<xvblock_t>  get_latest_cert_block(const xvaccount_t & account)       = 0;//highest view# for any status
-            virtual xauto_ptr<xvblock_t>  get_latest_locked_block(const xvaccount_t & account)     = 0;//block with locked status
-            virtual xauto_ptr<xvblock_t>  get_latest_committed_block(const xvaccount_t & account)  = 0;//block with committed status
-            virtual xauto_ptr<xvblock_t>  get_latest_executed_block(const xvaccount_t & account)   = 0;//block with executed status
-            virtual xauto_ptr<xvblock_t>  get_latest_connected_block(const xvaccount_t & account)  = 0;//block connected to genesis or fullblock
-            virtual xauto_ptr<xvblock_t>  get_latest_genesis_connected_block(const xvaccount_t & account,bool ask_full_search = true) = 0; //block has connected to genesis
-            virtual xauto_ptr<xvbindex_t> get_latest_genesis_connected_index(const xvaccount_t & account,bool ask_full_search = true) = 0; //block has connected to genesis
+            virtual xauto_ptr<xvblock_t>  get_genesis_block(const xvaccount_t & account,const int atag = 0)           = 0;//genesis block
+            virtual xauto_ptr<xvblock_t>  get_latest_cert_block(const xvaccount_t & account,const int atag = 0)       = 0;//highest view# for any status
+            virtual xauto_ptr<xvblock_t>  get_latest_locked_block(const xvaccount_t & account,const int atag = 0)     = 0;//block with locked status
+            virtual xauto_ptr<xvblock_t>  get_latest_committed_block(const xvaccount_t & account,const int atag = 0)  = 0;//block with committed status
+            virtual xauto_ptr<xvblock_t>  get_latest_executed_block(const xvaccount_t & account,const int atag = 0)   = 0;//block with executed status
+            virtual xauto_ptr<xvblock_t>  get_latest_connected_block(const xvaccount_t & account,const int atag = 0)  = 0;//block connected to genesis or fullblock
+            virtual xauto_ptr<xvblock_t>  get_latest_genesis_connected_block(const xvaccount_t & account,bool ask_full_search = true,const int atag = 0) = 0; //block has connected to genesis
+            virtual xauto_ptr<xvbindex_t> get_latest_genesis_connected_index(const xvaccount_t & account,bool ask_full_search = true,const int atag = 0) = 0; //block has connected to genesis
 
-            virtual xauto_ptr<xvblock_t>  get_latest_committed_full_block(const xvaccount_t & account)  = 0; // full block with committed status, genesis is a full block
-            virtual xblock_mptrs          get_latest_blocks(const xvaccount_t & account)      = 0; //better performance for batch operations
-            virtual uint64_t get_latest_committed_block_height(const xvaccount_t & account) = 0;
-            virtual uint64_t get_latest_connected_block_height(const xvaccount_t & account) = 0;
-            virtual uint64_t get_latest_genesis_connected_block_height(const xvaccount_t & account) = 0;
-            virtual uint64_t get_latest_executed_block_height(const xvaccount_t & account) = 0;
+            virtual xauto_ptr<xvblock_t>  get_latest_committed_full_block(const xvaccount_t & account,const int atag = 0)  = 0; // full block with committed status, genesis is a full block
+            virtual xblock_mptrs          get_latest_blocks(const xvaccount_t & account,const int atag = 0)      = 0; //better performance for batch operations
+            virtual uint64_t get_latest_committed_block_height(const xvaccount_t & account,const int atag = 0) = 0;
+            virtual uint64_t get_latest_connected_block_height(const xvaccount_t & account,const int atag = 0) = 0;
+            virtual uint64_t get_latest_genesis_connected_block_height(const xvaccount_t & account,const int atag = 0) = 0;
+            virtual uint64_t get_latest_executed_block_height(const xvaccount_t & account,const int atag = 0) = 0;
 
             //mostly used for query cert-only block,note:return any block at target height if viewid is 0
-            virtual xblock_vector         query_block(const xvaccount_t & account,const uint64_t height) = 0;//might mutiple certs at same height
-            virtual xauto_ptr<xvblock_t>  query_block(const xvaccount_t & account,const uint64_t height,const uint64_t viewid) = 0;
-            virtual xauto_ptr<xvblock_t>  query_block(const xvaccount_t & account,const uint64_t height,const std::string & blockhash) = 0;
-            virtual xauto_ptr<xvblock_t>  query_block(const xvaccount_t & account,const uint64_t height,enum_xvblock_flag required_block) = 0; //just return the highest viewid of matched flag
+            virtual xblock_vector         query_block(const xvaccount_t & account,const uint64_t height,const int atag = 0) = 0;//might mutiple certs at same height
+            virtual xauto_ptr<xvblock_t>  query_block(const xvaccount_t & account,const uint64_t height,const uint64_t viewid,const int atag = 0) = 0;
+            virtual xauto_ptr<xvblock_t>  query_block(const xvaccount_t & account,const uint64_t height,const std::string & blockhash,const int atag = 0) = 0;
+            virtual xauto_ptr<xvblock_t>  query_block(const xvaccount_t & account,const uint64_t height,enum_xvblock_flag required_block,const int atag = 0) = 0; //just return the highest viewid of matched flag
 
 
         public://note:load_block/store/delete may work with both persist db and cache layer
 
             //ask_full_load decide load header only or include input/output(that can be loaded seperately by load_block_input/output)
-            virtual xblock_vector         load_block_object(const xvaccount_t & account,const uint64_t height) = 0;
-            virtual xauto_ptr<xvblock_t>  load_block_object(const xvaccount_t & account,const uint64_t height,const uint64_t viewid,bool ask_full_load) = 0;
-            virtual xauto_ptr<xvblock_t>  load_block_object(const xvaccount_t & account,const uint64_t height,const std::string & blockhash,bool ask_full_load) = 0;
-            virtual xauto_ptr<xvblock_t>  load_block_object(const xvaccount_t & account,const uint64_t height,enum_xvblock_flag required_block,bool ask_full_load) = 0; //just return the highest viewid of matched flag
-            virtual std::vector<base::xvblock_ptr_t> load_block_object(const std::string & tx_hash,const enum_transaction_subtype type) = 0;
+            virtual xblock_vector         load_block_object(const xvaccount_t & account,const uint64_t height,const int atag = 0) = 0;
+            virtual xauto_ptr<xvblock_t>  load_block_object(const xvaccount_t & account,const uint64_t height,const uint64_t viewid,bool ask_full_load,const int atag = 0) = 0;
+            virtual xauto_ptr<xvblock_t>  load_block_object(const xvaccount_t & account,const uint64_t height,const std::string & blockhash,bool ask_full_load,const int atag = 0) = 0;
+            virtual xauto_ptr<xvblock_t>  load_block_object(const xvaccount_t & account,const uint64_t height,enum_xvblock_flag required_block,bool ask_full_load,const int atag = 0) = 0; //just return the highest viewid of matched flag
+            virtual std::vector<base::xvblock_ptr_t> load_block_object(const std::string & tx_hash,const enum_transaction_subtype type,const int atag = 0) = 0;
 
-            virtual bool                  load_block_input(const xvaccount_t & account,xvblock_t* block) = 0;
-            virtual bool                  load_block_output(const xvaccount_t & account,xvblock_t* block) = 0;
-            virtual bool                  load_block_flags(const xvaccount_t & account,xvblock_t* block) = 0;//update block'flags
+            virtual bool                  load_block_input(const xvaccount_t & account,xvblock_t* block,const int atag = 0) = 0;
+            virtual bool                  load_block_output(const xvaccount_t & account,xvblock_t* block,const int atag = 0) = 0;
+            virtual bool                  load_block_flags(const xvaccount_t & account,xvblock_t* block,const int atag = 0) = 0;//update block'flags
 
-            virtual bool                  store_block(const xvaccount_t & account,xvblock_t* block)  = 0;
-            virtual bool                  delete_block(const xvaccount_t & account,xvblock_t* block) = 0;
+            virtual bool                  store_block(const xvaccount_t & account,xvblock_t* block,const int atag = 0)  = 0;
+            virtual bool                  delete_block(const xvaccount_t & account,xvblock_t* block,const int atag = 0) = 0;
 
             //better performance for batch operations
-            virtual bool                  store_blocks(const xvaccount_t & account,std::vector<xvblock_t*> & batch_store_blocks) = 0;
+            virtual bool                  store_blocks(const xvaccount_t & account,std::vector<xvblock_t*> & batch_store_blocks,const int atag = 0) = 0;
 
         public://note:load_index may work with both persist db and cache layer
-            virtual xvbindex_vector       load_block_index(const xvaccount_t & account,const uint64_t height) = 0;
-            virtual xauto_ptr<xvbindex_t> load_block_index(const xvaccount_t & account,const uint64_t height,const uint64_t viewid) = 0;
-            virtual xauto_ptr<xvbindex_t> load_block_index(const xvaccount_t & account,const uint64_t height,const std::string & blockhash) = 0;
-            virtual xauto_ptr<xvbindex_t> load_block_index(const xvaccount_t & account,const uint64_t height,enum_xvblock_flag required_block) = 0;//just return the highest viewid of matched flag
+            virtual xvbindex_vector       load_block_index(const xvaccount_t & account,const uint64_t height,const int atag = 0) = 0;
+            virtual xauto_ptr<xvbindex_t> load_block_index(const xvaccount_t & account,const uint64_t height,const uint64_t viewid,const int atag = 0) = 0;
+            virtual xauto_ptr<xvbindex_t> load_block_index(const xvaccount_t & account,const uint64_t height,const std::string & blockhash,const int atag = 0) = 0;
+            virtual xauto_ptr<xvbindex_t> load_block_index(const xvaccount_t & account,const uint64_t height,enum_xvblock_flag required_block,const int atag = 0) = 0;//just return the highest viewid of matched flag
 
         public:
             //clean unsed caches of account to recall memory. notes: clean caches not affect the persisten data of account
-            virtual bool                  clean_caches(const xvaccount_t & account) = 0;
+            virtual bool                  clean_caches(const xvaccount_t & account,const int atag = 0) = 0;
             //clean all cached blocks after reach max idle duration(as default it is 60 seconds)
-            virtual bool                  reset_cache_timeout(const xvaccount_t & account,const uint32_t max_idle_time_ms) = 0;
+            virtual bool                  reset_cache_timeout(const xvaccount_t & account,const uint32_t max_idle_time_ms,const int atag = 0) = 0;
 
         public:
             //execute_block will move to statestore soon
             //execute block and update state of acccount
             //note: block must be committed and connected
-            virtual bool                 execute_block(const base::xvaccount_t & account,base::xvblock_t* block) = 0;
-            virtual xvtransaction_store_ptr_t  query_tx(const std::string & txhash, enum_transaction_subtype type) = 0;
+            virtual bool                 execute_block(const base::xvaccount_t & account,base::xvblock_t* block,const int atag = 0) = 0;
+            virtual xvtransaction_store_ptr_t  query_tx(const std::string & txhash, enum_transaction_subtype type,const int atag = 0) = 0;
 
         public:
             //check if genesis block exist
-            virtual bool                  exist_genesis_block(const base::xvaccount_t & account) = 0;
+            virtual bool                  exist_genesis_block(const base::xvaccount_t & account,const int atag = 0) = 0;
 
         protected:
             //only allow remove flag within xvblockstore_t

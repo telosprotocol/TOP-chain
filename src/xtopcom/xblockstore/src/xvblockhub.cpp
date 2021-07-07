@@ -1005,11 +1005,15 @@ namespace top
             //#3: load_index_from_db(target_height)
             //#4: for genesis block case
             base::xvbindex_t* target_block = query_index(target_height, view_id);
+            #ifdef ENABLE_METRICS
             XMETRICS_GAUGE(metrics::blockstore_index_query, 1);
+            #endif
             if(target_block != NULL)//the ptr has been add reference by query_index
                 return target_block;//found at cache layer
 
+            #ifdef ENABLE_METRICS
             XMETRICS_GAUGE(metrics::blockstore_index_load_db, 1);
+            #endif
             if(load_index(target_height) > 0)//load from db
                 target_block = query_index(target_height, view_id);//query again after loaded
 
@@ -1027,11 +1031,15 @@ namespace top
             //#3: load_index_from_db(target_height)
             //#4: for genesis block case
             base::xvbindex_t* target_block = query_index(target_height, block_hash);
+            #ifdef ENABLE_METRICS
             XMETRICS_GAUGE(metrics::blockstore_index_query, 1);
+            #endif
             if(target_block != NULL) //the ptr has been add reference by query_index
                 return target_block;//found at cache layer
 
+            #ifdef ENABLE_METRICS
             XMETRICS_GAUGE(metrics::blockstore_index_load_db, 1);
+            #endif
             if(load_index(target_height) > 0)//load from db
                 target_block = query_index(target_height, block_hash);//query again after loaded
 
@@ -1049,11 +1057,16 @@ namespace top
             //#3: load_index_from_db(target_height)
             //#4: for genesis block case
             base::xvbindex_t* target_block = query_index(target_height, request_flag);
+            #ifdef ENABLE_METRICS
             XMETRICS_GAUGE(metrics::blockstore_index_query, 1);
+            #endif
             if(target_block != NULL)//the ptr has been add reference by query_index
                 return target_block;//found at cache layer
 
+            #ifdef ENABLE_METRICS
             XMETRICS_GAUGE(metrics::blockstore_index_load_db, 1);
+            #endif
+            
             if(load_index(target_height) > 0)//load from db
                 target_block = query_index(target_height, request_flag);//query again after loaded
 
@@ -1074,11 +1087,15 @@ namespace top
             if(NULL == index_ptr)
                 return false;
             xdbg("xblockacct_t::load_block_object,target index(%s)",index_ptr->dump().c_str());
+            #ifdef ENABLE_METRICS
             XMETRICS_GAUGE(metrics::blockstore_blk_query, 1);
+            #endif
             if(index_ptr->get_this_block() != NULL)
                 return true;
 
+            #ifdef ENABLE_METRICS
             XMETRICS_GAUGE(metrics::blockstore_blk_load_db, 1);
+            #endif
             return read_block_object_from_db(index_ptr);
         }
 
