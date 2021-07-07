@@ -40,7 +40,7 @@ std::shared_ptr<xcluster_element_t>
 xtop_zone_element::cluster_element(common::xcluster_id_t const & cluster_id,
                                    std::error_code & ec) const {
     assert(!ec);
-    if (cluster_id.empty() || common::broadcast(cluster_id)) {
+    if (common::broadcast(cluster_id)) {
         ec = xdata_accessor_errc_t::cluster_id_empty;
 
         xwarn("%s network %" PRIu32 " zone %" PRIu16 " looking for an empty cluster id",

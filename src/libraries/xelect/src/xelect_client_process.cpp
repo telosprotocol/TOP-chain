@@ -30,14 +30,14 @@ xelect_client_process::xelect_client_process(common::xnetwork_id_t const & netwo
                                              elect_update_handler2 cb2,
                                              observer_ptr<time::xchain_time_face_t> const & xchain_timer)
   : xbase_sync_event_monitor_t(mb), m_network_id{network_id}, m_update_handler2{std::move(cb2)}, m_xchain_timer(xchain_timer) {
-    assert(m_network_id.has_value());
+    assert(!broadcast(m_network_id));
     xdbg("xelect_client_process created %p", mb);
     mb->add_listener((int)mbus::xevent_major_type_store, std::bind(&xelect_client_process::push_event, this, std::placeholders::_1));
     mb->add_listener((int)mbus::xevent_major_type_chain_timer, std::bind(&xelect_client_process::push_event, this, std::placeholders::_1));
 }
 
 bool xelect_client_process::filter_event(const xevent_ptr_t & e) {
-    xinfo("xelect_client_process::filter_event major type %d minor type %d", static_cast<int>(e->major_type), static_cast<int>(e->minor_type));
+    xdbg("xelect_client_process::filter_event major type %d minor type %d", static_cast<int>(e->major_type), static_cast<int>(e->minor_type));
     switch (e->major_type) {
     case mbus::xevent_major_type_store:
         if (e->minor_type == xevent_store_t::type_block_to_db) {

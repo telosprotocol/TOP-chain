@@ -3,10 +3,14 @@
 // Licensed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include <inttypes.h>
+#include <cinttypes>
 
 #include "xconsdriver.h"
 #include "xbase/xutl.h"
+
+#if defined(ENABLE_METRICS)
+#include "xmetrics/xmetrics.h"
+#endif
 
 namespace top
 {
@@ -149,7 +153,10 @@ namespace top
                 
                 if(_evt_obj->get_clock_cert() == NULL)
                 {
-                     base::xauto_ptr<base::xvblock_t> latest_clock = get_vblockstore()->get_latest_cert_block(get_xclock_account_address());
+#if defined(ENABLE_METRICS)
+                    XMETRICS_GAUGE(metrics::blockstore_access_from_bft, 1);
+#endif
+                    base::xauto_ptr<base::xvblock_t> latest_clock = get_vblockstore()->get_latest_cert_block(get_xclock_account_address());
                     if(!latest_clock)
                     {
                         xerror("xBFTdriver_t::start_consensus,fail-find clock for proposal%s vs driver=%s,at node=0x%llx",proposal->dump().c_str(),dump().c_str(),get_xip2_addr().low_addr);

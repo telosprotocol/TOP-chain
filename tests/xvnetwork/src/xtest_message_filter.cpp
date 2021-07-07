@@ -126,7 +126,7 @@ TEST_F(test_message_filter, test1) {
     // dummy_vhost_ptr_info
     common::xnode_id_t    hst_node_id = vhost_ptr->host_node_id();
     std::string           hst_node_id_str = hst_node_id.to_string();  // "test1"
-    common::xnetwork_id_t hst_net_id = vhost_ptr->network_id();       // 1
+    // common::xnetwork_id_t hst_net_id = vhost_ptr->network_id();       // 1
 
     common::xlogic_time_t vhost_logic_test_time = vhost_ptr->last_logic_time();
     int                   t = static_cast<xlogic_time_t>(vhost_logic_test_time);  // 10

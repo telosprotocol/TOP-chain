@@ -166,7 +166,7 @@ void xtop_vhost::send(xmessage_t const & message,
 void xtop_vhost::forward_broadcast_message(xmessage_t const & message, common::xnode_address_t const & src, common::xnode_address_t const & dst) {
     assert(common::has<common::xnode_type_t::group>(dst.cluster_address().type()));
     assert(src.cluster_address() != dst.cluster_address());
-    assert(!dst.group_id().empty());
+    // assert(!dst.group_id().empty());
 
     assert(!src.empty());
     assert(!src.account_address().empty());

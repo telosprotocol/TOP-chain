@@ -66,7 +66,7 @@ common::xnode_address_t xcons_utl::to_address(const xvip2_t & xip2, common::xver
     // assert(common::xnetwork_version_t{network_version_value} == version);  // NOLINT
 
     common::xslot_id_t slot_id{slot_id_value};
-    if (!slot_id.empty() && slot_id.value() != 0x3FF) {
+    if (!broadcast(slot_id)) {
         common::xnode_address_t address{
             common::xcluster_address_t{
                 common::xnetwork_id_t{network_id_value}, common::xzone_id_t{zone_id_value}, common::xcluster_id_t{cluster_id_value}, common::xgroup_id_t{group_id_value}},
@@ -112,7 +112,7 @@ int32_t xcons_utl::get_groupid_by_table(const xvip2_t & local_xip, uint16_t tabl
 
     auto const zone_info = data::mapping_to_zone(book_id, zone_count, std::make_pair(static_cast<std::uint16_t>(0), static_cast<std::uint16_t>(enum_vbucket_has_books_count)));
     auto const cluster_info = data::mapping_to_cluster(book_id, cluster_count, top::get<std::pair<std::uint16_t, std::uint16_t>>(zone_info));
-    auto const auditor_group_info = data::mapping_to_auditor_group(book_id, auditor_group_count, top::get<std::pair<std::uint16_t, std::uint16_t>>(cluster_info));
+    // auto const auditor_group_info = data::mapping_to_auditor_group(book_id, auditor_group_count, top::get<std::pair<std::uint16_t, std::uint16_t>>(cluster_info));
     auto const validator_group_info =
         data::mapping_to_validator_group(book_id, auditor_group_count, validator_group_count, top::get<std::pair<std::uint16_t, std::uint16_t>>(cluster_info));
     return top::get<common::xgroup_id_t>(validator_group_info).value();

@@ -3,8 +3,12 @@
 // Licensed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include <inttypes.h>
+#include <cinttypes>
 #include "xconsdriver.h"
+
+#if defined(ENABLE_METRICS)
+#include "xmetrics/xmetrics.h"
+#endif
 
 namespace top
 {
@@ -248,6 +252,9 @@ namespace top
                 }
                 if(NULL == _local_block) //search from blockstore
                 {
+#if defined(ENABLE_METRICS)
+                    XMETRICS_GAUGE(metrics::blockstore_access_from_bft, 1);
+#endif
                     base::xauto_ptr<base::xvblock_t> target_block = get_vblockstore()->load_block_object(*this, target_block_height, target_block_hash,true);
                     if(target_block == nullptr)
                     {
@@ -279,6 +286,9 @@ namespace top
                 }
                 
                 bool full_load = (sync_targets & enum_xsync_target_block_input) || (sync_targets & enum_xsync_target_block_output);
+#if defined(ENABLE_METRICS)
+                XMETRICS_GAUGE(metrics::blockstore_access_from_bft, 1);
+#endif
                 base::xauto_ptr<base::xvblock_t> target_block = get_vblockstore()->load_block_object(*this, target_block_height,target_block_hash,full_load);//specific load target block
                 if(target_block == nullptr)
                 {

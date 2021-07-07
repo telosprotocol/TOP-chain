@@ -229,6 +229,7 @@ xobject_ptr_t<store::xsyncvstore_t> xtop_application::syncstore() const noexcept
 }
 
 base::xauto_ptr<top::base::xvblock_t> xtop_application::last_logic_time() const {
+    XMETRICS_GAUGE(metrics::blockstore_access_from_application, 1);
     return blockstore()->get_latest_cert_block(base::xvaccount_t(sys_contract_beacon_timer_addr));
 }
 

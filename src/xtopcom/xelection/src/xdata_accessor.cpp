@@ -38,7 +38,7 @@ std::unordered_map<common::xsharding_address_t, xgroup_update_result_t> xtop_dat
     assert(!ec);
     assert(m_network_element);
 
-    if (zone_id.empty()) {
+    if (broadcast(zone_id)) {
         ec = xdata_accessor_errc_t::zone_id_empty;
 
         xwarn("%s network %" PRIu32 ": update zone election data failed due to empty zone id",
@@ -596,7 +596,7 @@ std::unordered_map<common::xsharding_address_t, xgroup_update_result_t> xtop_dat
         auto const & associated_group_id = group_result.associated_group_id();
         auto const & associated_group_version = group_result.associated_group_version();
 
-        if (associated_group_id.empty() || associated_group_version.empty()) {
+        if (broadcast(associated_group_id) || associated_group_version.empty()) {
             continue;
         }
 

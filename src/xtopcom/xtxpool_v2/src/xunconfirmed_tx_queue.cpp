@@ -138,6 +138,7 @@ int32_t xunconfirmed_account_t::update(xblock_t * latest_committed_block, const 
             unit_block = xblock_t::raw_vblock_to_object_ptr(latest_committed_block);
         } else {
             auto _commit_block = m_para->get_vblockstore()->load_block_object(account_addr, cur_height, last_block_hash, false);
+            XMETRICS_GAUGE(metrics::blockstore_access_from_txpool, 1);
             if (_commit_block == nullptr) {
                 base::xauto_ptr<base::xvblock_t> _block_ptr = m_para->get_vblockstore()->get_latest_connected_block(account_addr);
                 uint64_t start_sync_height = _block_ptr->get_height() + 1;
@@ -199,6 +200,7 @@ int32_t xunconfirmed_account_t::update(xblock_t * latest_committed_block, const 
         // create unconfirm sendtxs and insert to cache
         if (!unconfirm_sendtx_actions.empty()) {
             auto _cert_block = m_para->get_vblockstore()->load_block_object(account_addr, cur_height + 2, 0, false);  // only need cert mini-block
+            XMETRICS_GAUGE(metrics::blockstore_access_from_txpool, 1);
             if (_cert_block == nullptr) {
                 xtxpool_warn("xunconfirmed_account_t::update fail-load cert block.account=%s,height=%ld", account_addr.c_str(), cur_height + 2);
                 return xtxpool_error_unitblock_lack;
@@ -346,6 +348,7 @@ void xunconfirmed_tx_queue_t::recover(const xreceipt_state_cache_t & receiptid_s
             m_table_info->get_table_addr().c_str(), tablestate->get_block_height(), account.c_str(), cache_height, account_index.get_latest_unit_height());
         base::xvaccount_t _vaccount(account);
         base::xauto_ptr<base::xvblock_t> unitblock = m_para->get_vblockstore()->load_block_object(_vaccount, account_index.get_latest_unit_height(), account_index.get_latest_unit_viewid(), false);
+        XMETRICS_GAUGE(metrics::blockstore_access_from_txpool, 1);
         if (unitblock != nullptr) {
             m_para->get_vblockstore()->load_block_input(_vaccount, unitblock.get());
             xblock_t * block = dynamic_cast<xblock_t *>(unitblock.get());

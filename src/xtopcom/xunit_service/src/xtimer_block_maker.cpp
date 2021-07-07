@@ -15,6 +15,7 @@ xtimer_block_maker_t::xtimer_block_maker_t(const std::shared_ptr<xcons_service_p
 
 base::xauto_ptr<base::xvblock_t> xtimer_block_maker_t::get_latest_block(const std::string &account) {
     auto block_store = m_param->get_resources()->get_vblockstore();
+    XMETRICS_GAUGE(metrics::blockstore_access_from_us, 1);
     auto latest_block = block_store->get_latest_cert_block(account);
     return latest_block;
 }

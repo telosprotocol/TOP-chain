@@ -8,12 +8,9 @@
 
 #define XBASIC_XID_VERIFY_BODY1(ID_TAG, ID_TYPE, ID_NAME)   \
     struct ID_TAG{};                                        \
-    top::xnullable_id_t<ID_TAG, ID_TYPE> ID_NAME;           \
-    EXPECT_FALSE(ID_NAME.has_value());                      \
-    EXPECT_TRUE(ID_NAME.empty());                           \
-    EXPECT_FALSE(static_cast<bool>(ID_NAME));               \
-    EXPECT_THROW(ID_NAME.value(), top::xbad_id_access_t);   \
-    top::xnullable_id_t<ID_TAG, ID_TYPE> ID_NAME ## 1;      \
+    top::xsimple_id_t<ID_TAG, ID_TYPE, 0, std::numeric_limits<ID_TYPE>::max()> ID_NAME;           \
+    EXPECT_EQ(ID_NAME, ID_NAME.max());               \
+    top::xsimple_id_t<ID_TAG, ID_TYPE, 0, std::numeric_limits<ID_TYPE>::max()> ID_NAME ## 1;      \
     EXPECT_TRUE(ID_NAME == ID_NAME ## 1);                   \
     EXPECT_FALSE(ID_NAME != ID_NAME ## 1);                  \
     EXPECT_FALSE(ID_NAME < ID_NAME ## 1);                   \

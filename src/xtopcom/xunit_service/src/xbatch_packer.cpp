@@ -177,6 +177,7 @@ bool xbatch_packer::on_view_fire(const base::xvevent_t & event, xcsobject_t * fr
     m_last_view_id = view_ev->get_viewid();
     m_last_view_clock = view_ev->get_clock();
 
+    XMETRICS_GAUGE(metrics::blockstore_access_from_us, 1);
     base::xblock_mptrs latest_blocks = m_para->get_resources()->get_vblockstore()->get_latest_blocks(get_account());
     if (latest_blocks.get_latest_cert_block() == nullptr) {
         xunit_warn("xbatch_packer::on_view_fire fail-invalid latest blocks,account=%s,viewid=%ld,clock=%ld",
@@ -227,6 +228,7 @@ bool  xbatch_packer::on_timer_fire(const int32_t thread_id, const int64_t timer_
         return true;
     }
     // xunit_dbg("xbatch_packer::on_timer_fire retry start proposal.this:%p node:%s", this, m_para->get_resources()->get_account().c_str());
+    XMETRICS_GAUGE(metrics::blockstore_access_from_us, 1);
     base::xblock_mptrs latest_blocks = m_para->get_resources()->get_vblockstore()->get_latest_blocks(get_account());
     if (latest_blocks.get_latest_cert_block() == nullptr) {  // TODO(jimmy) get_latest_blocks return bool future
         xunit_warn("xbatch_packer::on_timer_fire fail-invalid latest blocks,account=%s,viewid=%ld,clock=%ld",
@@ -446,6 +448,7 @@ bool xbatch_packer::on_proposal_finish(const base::xvevent_t & event, xcsobject_
         if (is_leader) {
             XMETRICS_GAUGE(metrics::cons_tableblock_leader_finish_succ, 1);
             if (vblock->get_height() > 2) {
+                XMETRICS_GAUGE(metrics::blockstore_access_from_us, 1);
                 base::xauto_ptr<base::xvblock_t> commit_block =
                     m_para->get_resources()->get_vblockstore()->load_block_object(*this, vblock->get_height() - 2, base::enum_xvblock_flag_committed, false);
                 if (commit_block != nullptr) {

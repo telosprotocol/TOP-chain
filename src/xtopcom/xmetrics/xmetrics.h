@@ -155,6 +155,30 @@ enum E_SIMPLE_METRICS_TAG {
     txpool_recv_tx_first_send,
     txpool_confirm_tx_first_send,
     txpool_push_tx_send_fail_pool_full,
+    txpool_pull_recv_tx,
+    txpool_pull_confirm_tx,
+
+    // blockstore
+    blockstore_index_query,
+    blockstore_index_load_db,
+    blockstore_blk_query,
+    blockstore_blk_load_db,
+
+    // blockstore accessing
+    blockstore_access_from_account_context,
+    blockstore_access_from_contract_runtime,
+    blockstore_access_from_mbus,
+    blockstore_access_from_rpc,
+    blockstore_access_from_store,
+    blockstore_access_from_txpool,
+    blockstore_access_from_statestore,
+    blockstore_access_from_application,
+    blockstore_access_from_sync_blk,
+    blockstore_access_from_sync_index,
+    blockstore_access_from_block_maker,
+    blockstore_access_from_us,
+    blockstore_access_from_bft,
+    blockstore_access_from_vnodesrv,
 
     e_simple_total,
 };

@@ -206,6 +206,7 @@ base::xauto_ptr<base::xvblock_t> xblocktool_t::get_latest_committed_lightunit(ba
 base::xauto_ptr<base::xvblock_t> xblocktool_t::get_latest_genesis_connectted_lightunit(base::xvblockstore_t* blockstore, const std::string & account) {
     base::xvaccount_t _vaccount(account);
     // there is mostly two empty units
+    XMETRICS_GAUGE(metrics::blockstore_access_from_application, 1);
     base::xauto_ptr<base::xvblock_t> vblock = blockstore->get_latest_genesis_connected_block(_vaccount);
     if (vblock == nullptr) {
         return nullptr;
@@ -217,6 +218,7 @@ base::xauto_ptr<base::xvblock_t> xblocktool_t::get_latest_genesis_connectted_lig
 
     uint64_t current_height = vblock->get_height();
     while (current_height > 0) {
+        XMETRICS_GAUGE(metrics::blockstore_access_from_application, 1);
         base::xauto_ptr<base::xvblock_t> prev_vblock = blockstore->load_block_object(_vaccount, current_height - 1, base::enum_xvblock_flag_committed, false);
         if (prev_vblock == nullptr || prev_vblock->get_block_class() == base::enum_xvblock_class_light) {
             return prev_vblock;
@@ -229,6 +231,7 @@ base::xauto_ptr<base::xvblock_t> xblocktool_t::get_latest_genesis_connectted_lig
 base::xauto_ptr<base::xvblock_t> xblocktool_t::get_committed_lightunit(base::xvblockstore_t* blockstore, const std::string & account, uint64_t max_height) {
     base::xvaccount_t _vaccount(account);
     // there is mostly two empty units
+    XMETRICS_GAUGE(metrics::blockstore_access_from_application, 1);
     base::xauto_ptr<base::xvblock_t> vblock = blockstore->load_block_object(_vaccount, max_height, base::enum_xvblock_flag_committed, false);
     xassert(vblock->check_block_flag(base::enum_xvblock_flag_committed));
     if (vblock->get_block_class() == base::enum_xvblock_class_light) {
@@ -237,6 +240,7 @@ base::xauto_ptr<base::xvblock_t> xblocktool_t::get_committed_lightunit(base::xvb
 
     uint64_t current_height = vblock->get_height();
     while (current_height > 0) {
+        XMETRICS_GAUGE(metrics::blockstore_access_from_application, 1);
         base::xauto_ptr<base::xvblock_t> prev_vblock = blockstore->load_block_object(_vaccount, current_height - 1, base::enum_xvblock_flag_committed, false);
         if (prev_vblock == nullptr || prev_vblock->get_block_class() == base::enum_xvblock_class_light) {
             return prev_vblock;

@@ -33,7 +33,7 @@ static void calc_workload_data(const xvip2_t leader_xip, const uint32_t txs_coun
     }
     // nid
     uint16_t slot_idx = uint16_t(get_node_id_from_xip2(leader_xip));
-    common::xslot_id_t slot_id = common::xslot_id_t{slot_idx};
+    // common::xslot_id_t slot_id = common::xslot_id_t{slot_idx};
     if(it_group->second.account_statistics_data.size() < size_t(slot_idx+1)){
         it_group->second.account_statistics_data.resize(slot_idx+1);
     }

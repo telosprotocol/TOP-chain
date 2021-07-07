@@ -3,11 +3,15 @@
 // Licensed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include <inttypes.h>
+#include <cinttypes>
 
 #include "xclockcertview.h"
 #include "xtimercertview.h"
 #include <cstdlib>
+
+#if defined(ENABLE_METRICS)
+#include "xmetrics/xmetrics.h"
+#endif
 
 namespace top
 {
@@ -65,6 +69,9 @@ namespace top
                     #ifdef __ENABLE_PRE_INIT_CLOCK_CERT__
                     if((NULL == m_latest_clock_cert))
                     {
+#if defined(ENABLE_METRICS)
+                        XMETRICS_GAUGE(metrics::blockstore_access_from_bft, 1);
+#endif
                         base::xauto_ptr<base::xvblock_t> latest_clock = get_vblockstore()->get_latest_cert_block(get_xclock_account_address());
                         if( (latest_clock) && (latest_clock->is_deliver(false)))
                         {
@@ -75,6 +82,9 @@ namespace top
                     #endif
                     if(NULL == m_latest_vblock_cert)
                     {
+#if defined(ENABLE_METRICS)
+                        XMETRICS_GAUGE(metrics::blockstore_access_from_bft, 1);
+#endif
                         base::xauto_ptr<base::xvblock_t> latest_vblock(get_vblockstore()->get_latest_cert_block(account));
                         if( (latest_vblock) && (latest_vblock->is_deliver(false)))
                         {

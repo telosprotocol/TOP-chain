@@ -118,6 +118,7 @@ bool xblock_maker_t::load_and_cache_enough_blocks(const xblock_ptr_t & latest_bl
         if (prev_block == nullptr) {
             // only mini-block is enough
             auto _block = get_blockstore()->load_block_object(*this, current_block->get_height() - 1, current_block->get_last_block_hash(), false);
+            XMETRICS_GAUGE(metrics::blockstore_access_from_block_maker, 1);
             if (_block == nullptr) {
                 xwarn("xblock_maker_t::load_and_cache_enough_blocks fail-load block.account=%s,height=%ld", get_account().c_str(), current_block->get_height() - 1);
                 lacked_block_height = current_block->get_height() - 1;

@@ -74,6 +74,9 @@ namespace top
             {
                 if(locked_block->get_height() > 0)//
                 {
+#if defined(ENABLE_METRICS)
+                    XMETRICS_GAUGE(metrics::blockstore_access_from_bft, 1);
+#endif
                     base::xauto_ptr<base::xvblock_t> commit_block(get_vblockstore()->load_block_object(*this, locked_block->get_height() - 1,locked_block->get_last_block_hash(),false));
                     if(commit_block)
                     {
@@ -144,6 +147,9 @@ namespace top
             
             if(get_vblockstore() != nullptr)
             {
+#if defined(ENABLE_METRICS)
+                XMETRICS_GAUGE(metrics::blockstore_access_from_bft, 1);
+#endif
                 base::xauto_ptr<base::xvblock_t>  latest_lock_block = get_vblockstore()->get_latest_locked_block(*this);
                 if(latest_lock_block != nullptr)
                     set_lock_block(latest_lock_block.get());

@@ -31,12 +31,12 @@ struct xtag_cluster_id {};
 struct xtag_group_id {};
 struct xtag_slot_id {};
 
-using xnetwork_version_t = xnullable_id_t<xtag_network_version, std::uint8_t>;
-using xnetwork_id_t = xnullable_id_t<xtag_network_id, std::uint32_t>;
-using xzone_id_t = xnullable_id_t<xtag_zone_id, std::uint8_t>;
-using xcluster_id_t = xnullable_id_t<xtag_cluster_id, std::uint8_t>;
-using xgroup_id_t = xnullable_id_t<xtag_group_id, std::uint8_t>;
-using xslot_id_t = xnullable_id_t<xtag_slot_id, std::uint16_t>;
+using xnetwork_version_t = xsimple_id_t<xtag_network_version, std::uint8_t, 0, 0x07>;
+using xnetwork_id_t = xsimple_id_t<xtag_network_id, std::uint32_t, 0, 0x001FFFFF>;
+using xzone_id_t = xsimple_id_t<xtag_zone_id, std::uint8_t, 0, 0x7F>;
+using xcluster_id_t = xsimple_id_t<xtag_cluster_id, std::uint8_t, 0, 0x7F>;
+using xgroup_id_t = xsimple_id_t<xtag_group_id, std::uint8_t, 0, 0xFF>;
+using xslot_id_t = xsimple_id_t<xtag_slot_id, std::uint16_t, 0, 0x3FF>;
 
 XINLINE_CONSTEXPR xnetwork_id_t::value_type xbroadcast_network_id_value{0x001FFFFF};
 XINLINE_CONSTEXPR xzone_id_t::value_type xbroadcast_zone_id_value{0x7F};
@@ -202,18 +202,6 @@ std::string to_string(xgroup_id_t const & group_id);
 
 std::string to_string(xslot_id_t const & slot_id);
 
-struct xtag_interface_id {};
-struct xtag_process_id {};
-struct xtag_router_id {};
-struct xtag_switch_id {};
-struct xtag_local_id {};
-
-using xinterface_id_t = xnullable_id_t<xtag_interface_id, std::uint32_t>;
-using xprocess_id_t = xnullable_id_t<xtag_process_id, std::uint8_t>;
-using xrouter_id_t = xnullable_id_t<xtag_router_id, std::uint8_t>;
-using xswitch_id_t = xnullable_id_t<xtag_switch_id, std::uint8_t>;
-using xlocal_id_t = xnullable_id_t<xtag_local_id, std::uint8_t>;
-
 NS_END2
 
 NS_BEG1(top)
@@ -269,14 +257,14 @@ public:
                   uint64_t const height,
                   common::xaddress_domain_t const domain = common::xaddress_domain_t::enum_xaddress_domain_xip2);
 
-    xtop_extended(common::xnetwork_id_t const & network_id,
-                  common::xzone_id_t const & zone_id,
-                  common::xcluster_id_t const & cluster_id,
-                  common::xgroup_id_t const & group_id,
-                  common::xnetwork_version_t const & network_version,
-                  uint16_t const size,
-                  uint64_t const height,
-                  common::xaddress_domain_t const domain = common::xaddress_domain_t::enum_xaddress_domain_xip2);
+    //xtop_extended(common::xnetwork_id_t const & network_id,
+    //              common::xzone_id_t const & zone_id,
+    //              common::xcluster_id_t const & cluster_id,
+    //              common::xgroup_id_t const & group_id,
+    //              common::xnetwork_version_t const & network_version,
+    //              uint16_t const size,
+    //              uint64_t const height,
+    //              common::xaddress_domain_t const domain = common::xaddress_domain_t::enum_xaddress_domain_xip2);
 
     xtop_extended(common::xnetwork_id_t const & network_id,
                   common::xzone_id_t const & zone_id,
