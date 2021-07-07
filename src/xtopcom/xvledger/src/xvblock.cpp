@@ -280,6 +280,7 @@ namespace top
             m_clock     = 0;
             m_drand_height = 0;
             m_parent_height = 0;
+            m_parent_viewid = 0;
             m_expired   = (uint32_t)-1;
             m_relative_gmtime = 0;
             m_validator.low_addr    = 0;
@@ -305,6 +306,7 @@ namespace top
             m_clock     = 0;
             m_drand_height = 0;
             m_parent_height = 0;
+            m_parent_viewid = 0;
             m_expired   = (uint32_t)-1;
             m_relative_gmtime = 0;
             m_validator.low_addr    = 0;
@@ -332,6 +334,7 @@ namespace top
             m_clock     = 0;
             m_drand_height = 0;
             m_parent_height = 0;
+            m_parent_viewid = 0;
             m_expired   = (uint32_t)-1;
             m_relative_gmtime = 0;
             m_validator.low_addr    = 0;
@@ -356,6 +359,7 @@ namespace top
         
         xvqcert_t & xvqcert_t::operator = (const xvqcert_t & other)
         {
+            m_parent_viewid     = other.m_parent_viewid;
             m_parent_height     = other.m_parent_height;
             m_view_token        = other.m_view_token;
             m_viewid            = other.m_viewid;
@@ -438,6 +442,17 @@ namespace top
             if(is_allow_modify())
             {
                 m_parent_height = parent_block_height;
+                add_modified_count();
+                return;
+            }
+            xassert(0);
+        }
+    
+        void    xvqcert_t::set_parent_viewid(const uint64_t parent_block_viewid)
+        {
+            if(is_allow_modify())
+            {
+                m_parent_viewid = parent_block_viewid;
                 add_modified_count();
                 return;
             }
@@ -889,6 +904,7 @@ namespace top
                || (m_output_root_hash   != other.m_output_root_hash)
                || (m_justify_cert_hash  != other.m_justify_cert_hash)
                || (m_parent_height      != other.m_parent_height)
+               || (m_parent_viewid      != other.m_parent_viewid)
                )
             {
                 return false;
@@ -977,6 +993,7 @@ namespace top
             {
                 stream.write_compact_var(m_nonce);
                 stream.write_compact_var(m_parent_height);
+                stream.write_compact_var(m_parent_viewid);
                 stream.write_compact_var(m_view_token);
                 stream.write_compact_var(m_viewid);
                 stream.write_compact_var(m_drand_height);
@@ -1050,6 +1067,7 @@ namespace top
             {
                 stream.write_compact_var(m_nonce);
                 stream.write_compact_var(m_parent_height);
+                stream.write_compact_var(m_parent_viewid);
                 stream.write_compact_var(m_view_token);
                 stream.write_compact_var(m_viewid);
                 stream.write_compact_var(m_drand_height);
@@ -1085,6 +1103,7 @@ namespace top
             {
                 stream.read_compact_var(m_nonce);
                 stream.read_compact_var(m_parent_height);
+                stream.read_compact_var(m_parent_viewid);
                 stream.read_compact_var(m_view_token);
                 stream.read_compact_var(m_viewid);
                 stream.read_compact_var(m_drand_height);
@@ -1301,9 +1320,6 @@ namespace top
             m_voutput_ptr  = NULL;
             m_vbstate_ptr  = NULL;
             
-            m_parent_viewid     = 0;
-            m_entityid_at_parent= 0;
-            
             set_unit_flag(enum_xdata_flag_acompress);//default do copmression
         }
         
@@ -1320,9 +1336,6 @@ namespace top
             m_vinput_ptr   = NULL;
             m_voutput_ptr  = NULL;
             m_vbstate_ptr  = NULL;
-            
-            m_parent_viewid     = 0;
-            m_entityid_at_parent= 0;
             
             set_unit_flag(enum_xdata_flag_acompress);//default do copmression
         }
@@ -1478,10 +1491,7 @@ namespace top
             m_vinput_ptr   = NULL;
             m_voutput_ptr  = NULL;
             m_vbstate_ptr  = NULL;
-            
-            m_parent_viewid     = 0;
-            m_entityid_at_parent= 0;
-            
+             
             set_unit_flag(enum_xdata_flag_acompress);//default do copmression
          
             if(xvblock_t::prepare_block(_vcert,_vheader,_vinput,_voutput))
@@ -1528,8 +1538,6 @@ namespace top
         : xdataobj_t(type)
         {
             XMETRICS_GAUGE(metrics::dataobject_xvblock, 1);
-            m_parent_viewid     = 0;
-            m_entityid_at_parent= 0;
             m_next_next_viewid  = 0;
             
             m_next_next_qcert  = NULL;
@@ -1566,8 +1574,6 @@ namespace top
             m_voutput_ptr       = other.m_voutput_ptr;
             m_vbstate_ptr       = other.m_vbstate_ptr;
             m_parent_account    = other.m_parent_account;
-            m_parent_viewid     = other.m_parent_viewid;
-            m_entityid_at_parent= other.m_entityid_at_parent;
             m_next_next_viewid  = other.m_next_next_viewid;
             
             m_next_next_qcert   = other.m_next_next_qcert;
@@ -2451,16 +2457,9 @@ namespace top
             return (begin_size - stream.size());
         }
     
-        bool xvblock_t::set_parent_block(const std::string parent_addr,const uint64_t parent_height,const uint64_t parent_viewid,const uint16_t entityid_at_parent)
+        bool xvblock_t::set_parent_block(const std::string parent_addr)
         {
-            if(get_parent_block_height() != parent_height) //check
-            {
-                xassert(0);
-                return false;
-            }
             m_parent_account = parent_addr;
-            m_parent_viewid  = parent_viewid;
-            m_entityid_at_parent = entityid_at_parent;
             return true;
         }
         
