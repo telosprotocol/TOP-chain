@@ -189,7 +189,7 @@ void xsync_on_demand_t::handle_chain_snapshot_meta(xsync_message_chain_snapshot_
     base::xauto_ptr<base::xvblock_t> blk = m_sync_store->load_block_object(account, chain_meta.m_height_of_fullblock, false);
     if ((blk != nullptr) && (blk->get_block_level() == base::enum_xvblock_level_table)) {
         if (blk->get_block_level() == base::enum_xvblock_level_table && blk->get_block_class() == base::enum_xvblock_class_full) {
-            if (base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_full_block_offsnapshot(blk.get())) {
+            if (base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_full_block_offsnapshot(blk.get(), metrics::statestore_access_from_sync_handle_chain_snapshot_meta)) {
                 std::string property_snapshot = blk->get_full_state();
                 xsync_message_chain_snapshot_t chain_snapshot(chain_meta.m_account_addr,
                     property_snapshot, chain_meta.m_height_of_fullblock);

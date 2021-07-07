@@ -6,6 +6,7 @@
 #include "xstake/xstake_algorithm.h"
 #include "xdata/xgenesis_data.h"
 #include "xstore/xtgas_singleton.h"
+#include "xmetrics/xmetrics.h"
 
 NS_BEG2(top, store)
 
@@ -16,7 +17,7 @@ uint64_t xtgas_singleton::get_cache_total_lock_tgas_token() {
 
 bool xtgas_singleton::get_latest_property(std::string & value, uint64_t & height) {
     base::xvaccount_t _zec_workload_vaddress(sys_contract_zec_workload_addr);
-    auto bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_latest_connectted_block_state(_zec_workload_vaddress);
+    auto bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_latest_connectted_block_state(_zec_workload_vaddress, metrics::statestore_access_from_store_tgas);
     if (bstate == nullptr) {
         xassert(false);
         return false;
@@ -72,7 +73,7 @@ bool xtgas_singleton::backup_get_total_lock_tgas_token(uint64_t timer_height, ui
         return true;
     }
     base::xvaccount_t _zec_workload_vaddress(sys_contract_zec_workload_addr);
-    auto bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_committed_block_state(_zec_workload_vaddress, property_height);
+    auto bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_committed_block_state(_zec_workload_vaddress, property_height, metrics::statestore_access_from_store_backup_tgas);
     if (bstate == nullptr) {
         xwarn("xtgas_singleton::backup_get_total_lock_tgas_token can't load block. height=%ld", property_height);
         return false;

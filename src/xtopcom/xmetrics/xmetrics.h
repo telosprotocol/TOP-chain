@@ -18,9 +18,9 @@
 #include <thread>
 NS_BEG2(top, metrics)
 
-enum E_SIMPLE_METRICS_TAG {
+enum E_SIMPLE_METRICS_TAG : size_t {
     e_simple_begin = 0,
-    blockstore_cache_block_total = e_simple_begin,
+    blockstore_cache_block_total = e_simple_begin+1,
     dataobject_cur_xbase_type_cons_transaction,
     vhost_recv_msg,
     vhost_recv_callback,
@@ -170,15 +170,121 @@ enum E_SIMPLE_METRICS_TAG {
     blockstore_access_from_mbus,
     blockstore_access_from_rpc,
     blockstore_access_from_store,
+    // txpool
     blockstore_access_from_txpool,
+    blockstore_access_from_txpool_begin,
+    blockstore_access_from_txpool_on_block_event = blockstore_access_from_txpool_begin,
+    blockstore_access_from_txpool_create_confirm_receipt,
+    blockstore_access_from_txpool_make_receipt,
+    blockstore_access_from_txpool_sync_status,
+    blockstore_access_from_txpool_recover,
+    blockstore_access_from_txpool_refresh_table,
+    blockstore_access_from_txpool_end = blockstore_access_from_txpool_refresh_table,
+
+    // blockstore access statestore
     blockstore_access_from_statestore,
+    blockstore_access_from_statestore_begin,
+    blockstore_access_from_statestore_rebuild_state = blockstore_access_from_statestore_begin,
+    blockstore_access_from_statestore_fullblock,
+    blockstore_access_from_statestore_load_state,
+    blockstore_access_from_statestore_load_lastest_state,
+    blockstore_access_from_statestore_get_block_state,
+    blockstore_access_from_statestore_get_block_index_state,
+    blockstore_access_from_statestore_get_connect_state,
+    blockstore_access_from_statestore_get_commit_state,
+    blockstore_access_from_statestore_end = blockstore_access_from_statestore_get_commit_state,
+
     blockstore_access_from_application,
-    blockstore_access_from_sync_blk,
+    // sync access
+    blockstore_access_from_sync,
+    blockstore_access_from_sync_begin,
+    blockstore_access_from_sync_blk = blockstore_access_from_sync_begin,
+    blockstore_access_from_sync_get_latest_connected_block,
+    blockstore_access_from_sync_get_latest_committed_block,
+    blockstore_access_from_sync_get_latest_locked_block,
+    blockstore_access_from_sync_get_latest_cert_block,
+    blockstore_access_from_sync_existed_blk,
+    blockstore_access_from_sync_update_latest_genesis_connected_block,
+    blockstore_access_from_sync_get_latest_committed_full_block,
+    blockstore_access_from_sync_get_latest_executed_block,
+    blockstore_access_from_sync_get_genesis_block,
+    blockstore_access_from_sync_load_block_objects,
+    blockstore_access_from_sync_load_block_objects_input,
+    blockstore_access_from_sync_load_block_objects_output,
+    blockstore_access_from_sync_load_tx,
+    blockstore_access_from_sync_load_tx_input,
+    blockstore_access_from_sync_load_tx_output,
+    blockstore_access_from_sync_store_blk,
+    blockstore_access_from_sync_query_blk,
+    blockstore_access_from_sync_load_block_object,
+    blockstore_access_from_sync_end = blockstore_access_from_sync_load_block_object,
+
+
     blockstore_access_from_sync_index,
-    blockstore_access_from_block_maker,
+
+    // blockstore_access_from_blk_mk
+    blockstore_access_from_blk_mk,
+    blockstore_access_from_blk_mk_begin,
+    blockstore_access_from_blk_mk_ld_and_cache = blockstore_access_from_blk_mk_begin,
+    blockstore_access_from_blk_mk_proposer_verify_proposal,
+    blockstore_access_from_blk_mk_proposer_verify_proposal_drand,
+    blockstore_access_from_blk_mk_table,
+    blockstore_access_from_blk_mk_unit_ld_last_blk,
+    blockstore_access_from_blk_mk_unit_chk_last_state,
+    blockstore_access_from_blk_mk_end = blockstore_access_from_blk_mk_unit_chk_last_state,
+
+    // blockstore_access_from_us
     blockstore_access_from_us,
+    blockstore_access_from_us_begin,
+    blockstore_access_from_us_on_view_fire = blockstore_access_from_us_begin,
+    blockstore_access_from_us_on_timer_fire,
+    blockstore_access_from_us_on_proposal_finish,
+    blockstore_access_from_us_timer_blk_maker,
+    blockstore_access_from_us_timer_picker_constructor,
+    blockstore_access_from_us_dispatcher_load_tc,
+    blockstore_access_from_us_end = blockstore_access_from_us_dispatcher_load_tc,
+
+    // blockstore_access_from_bft
     blockstore_access_from_bft,
+    blockstore_access_from_bft_begin,
+    blockstore_access_from_bft_check_proposal = blockstore_access_from_bft_begin,
+    blockstore_access_from_bft_on_clock_fire,
+    blockstore_access_from_bft_pdu_event_down,
+    blockstore_access_from_bft_consaccnt_on_proposal_start,
+    blockstore_access_from_bft_consdriv_on_proposal_start,
+    blockstore_access_from_bft_get_commit_blk,
+    blockstore_access_from_bft_get_lock_blk,
+    blockstore_access_from_bft_sync,
+    blockstore_access_from_bft_init_blk,
+    blockstore_access_from_bft_end = blockstore_access_from_bft_init_blk,
+    
     blockstore_access_from_vnodesrv,
+
+    // statestore
+    statestore_access,
+    statestore_access_from_blk_ctx,
+    statestore_access_from_vledger_load_state,
+    statestore_access_from_vnodesrv_load_state,
+    statestore_access_from_store_tgas,
+    statestore_access_from_store_backup_tgas,
+    statestore_access_from_store_bstate,
+    statestore_access_from_xelect,
+    statestore_access_from_xconfig_update,
+    statestore_access_from_rpc_get_fullbock,
+    statestore_access_from_rpc_query_propery,
+    statestore_access_from_rpc_set_addition,
+    statestore_access_from_rpc_set_fullunit,
+    statestore_access_from_sync_chain_snapshot,
+    statestore_access_from_sync_handle_chain_snapshot_meta,
+    statestore_access_from_sync_query_offchain,
+    statestore_access_from_application_isbeacon,
+    statestore_access_from_application_load_election,
+    statestore_access_from_blkmaker_update_account_state,
+    statestore_access_from_blkmaker_unit_connect_state,
+    statestore_access_from_txpool_get_tablestate,
+    statestore_access_from_txpool_get_accountstate,
+    statestore_access_from_txpool_refreshtable,
+    statestore_access_from_blkmaker_get_target_tablestate,
 
     e_simple_total,
 };
@@ -228,8 +334,8 @@ protected:
         std::atomic_long value;
         std::atomic_long call_count;
     };
-    static simple_counter s_counters[e_simple_total]; // simple counter counter
-    static metrics_variant_ptr s_metrics[e_simple_total]; // simple metrics dump info
+    simple_counter s_counters[e_simple_total]; // simple counter counter
+    metrics_variant_ptr s_metrics[e_simple_total]; // simple metrics dump info
 };
 
 class metrics_time_auto {

@@ -27,7 +27,7 @@ bool xblock_maker_t::update_account_state(const xblock_ptr_t & latest_block, uin
         return true;
     }
 
-    base::xauto_ptr<base::xvbstate_t> bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(latest_block.get());
+    base::xauto_ptr<base::xvbstate_t> bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(latest_block.get(),metrics::statestore_access_from_blkmaker_update_account_state);
     if (bstate == nullptr) {
         lacked_block_height = latest_block->get_height() - 1;
         xwarn("xblock_maker_t::update_account_state fail-get target state. account=%s,height=%ld,viewid=%ld",
@@ -117,8 +117,7 @@ bool xblock_maker_t::load_and_cache_enough_blocks(const xblock_ptr_t & latest_bl
         xblock_ptr_t prev_block = get_prev_block_from_cache(current_block);
         if (prev_block == nullptr) {
             // only mini-block is enough
-            auto _block = get_blockstore()->load_block_object(*this, current_block->get_height() - 1, current_block->get_last_block_hash(), false);
-            XMETRICS_GAUGE(metrics::blockstore_access_from_block_maker, 1);
+            auto _block = get_blockstore()->load_block_object(*this, current_block->get_height() - 1, current_block->get_last_block_hash(), false, metrics::blockstore_access_from_blk_mk_ld_and_cache);
             if (_block == nullptr) {
                 xwarn("xblock_maker_t::load_and_cache_enough_blocks fail-load block.account=%s,height=%ld", get_account().c_str(), current_block->get_height() - 1);
                 lacked_block_height = current_block->get_height() - 1;

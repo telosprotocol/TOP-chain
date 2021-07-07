@@ -6,169 +6,264 @@
 
 NS_BEG2(top, metrics)
 
-// simple metrics counters
-e_metrics::simple_counter e_metrics::s_counters[e_simple_total];
+#define RETURN_METRICS_NAME(TAG) case TAG: return #TAG
+char const * matrics_name(xmetircs_tag_t const tag) noexcept {
+    switch (tag) {
+        RETURN_METRICS_NAME(e_simple_begin);
+        RETURN_METRICS_NAME(blockstore_cache_block_total);
+        RETURN_METRICS_NAME(dataobject_cur_xbase_type_cons_transaction);
+        RETURN_METRICS_NAME(vhost_recv_msg);
+        RETURN_METRICS_NAME(vhost_recv_callback);
+        RETURN_METRICS_NAME(vnode_recv_msg);
+        RETURN_METRICS_NAME(vnode_recv_callback);
 
-#ifndef DECL_METRICS
-#define DECL_METRICS(tag)  std::make_shared<metrics_counter_unit>(#tag, 0)
-#endif
+        // dataobjec
+        RETURN_METRICS_NAME(dataobject_tx_receipt_t);
+        RETURN_METRICS_NAME(dataobject_unit_state);
+        RETURN_METRICS_NAME(dataobject_xvtxindex);
+        RETURN_METRICS_NAME(dataobject_xvbstate);
+        RETURN_METRICS_NAME(dataobject_xvproperty);
+        RETURN_METRICS_NAME(dataobject_xvaccountobj);
+        RETURN_METRICS_NAME(dataobject_exeunit);
+        RETURN_METRICS_NAME(dataobject_exegroup);
+        RETURN_METRICS_NAME(dataobject_xvexecontxt);
+        RETURN_METRICS_NAME(dataobject_xaccount_index);
+        RETURN_METRICS_NAME(dataobject_xreceiptid_pair_t);
+        RETURN_METRICS_NAME(dataobject_xvbindex_t);
+        RETURN_METRICS_NAME(dataobject_xtransaction_t);
+        RETURN_METRICS_NAME(dataobject_provcert);
+        RETURN_METRICS_NAME(dataobject_xvaccount);
+        RETURN_METRICS_NAME(dataobject_xvaction);
+        RETURN_METRICS_NAME(dataobject_xvheader);
+        RETURN_METRICS_NAME(dataobject_xvqcert);
+        RETURN_METRICS_NAME(dataobject_xvblock);
+        RETURN_METRICS_NAME(dataobject_xvinput);
+        RETURN_METRICS_NAME(dataobject_xvoutput);
+        RETURN_METRICS_NAME(dataobject_xventity);
 
-// simple metrics description array
-metrics_variant_ptr e_metrics::s_metrics[e_simple_total] = {
-    DECL_METRICS(blockstore_cache_block_total),  //blockstore_cache_block_total
-    DECL_METRICS(dataobject_cur_xbase_type_cons_transaction),  //txpool_cons_transaction
-    DECL_METRICS(vhost_recv_msg), // vhost_recv_msg,
-    DECL_METRICS(vhost_recv_callback), // vhost_recv_callback,
-    DECL_METRICS(vnode_recv_msg),
-    DECL_METRICS(vnode_recv_callback),
-    DECL_METRICS(dataobject_tx_receipt_t), // tx_receipt
-    DECL_METRICS(dataobject_unit_state), // unit_state
-    DECL_METRICS(dataobject_xvtxindex), // xvtxindex
-    DECL_METRICS(dataobject_xvbstate), // xvbstate
-    DECL_METRICS(dataobject_xvproperty), // xvproperty
-    DECL_METRICS(dataobject_xvaccountobj), // account
-    DECL_METRICS(dataobject_exeunit), // exeunit
-    DECL_METRICS(dataobject_exegroup), // exegroup
-    DECL_METRICS(dataobject_xvexecontxt), // xvexecontxt
-    DECL_METRICS(dataobject_xaccount_index), // xvexecontxt
-    DECL_METRICS(dataobject_xreceiptid_pair_t), // xreceiptid_pair_t
-    DECL_METRICS(dataobject_xvbindex_t), // dataobject_xvbindex_t
-    DECL_METRICS(dataobject_xtransaction_t), // dataobject_xtransaction_t
-    DECL_METRICS(dataobject_provcert),
-    DECL_METRICS(dataobject_xvaccount),
-    DECL_METRICS(dataobject_xvaction),
-    DECL_METRICS(dataobject_xvheader),
-    DECL_METRICS(dataobject_xvqcert),
-    DECL_METRICS(dataobject_xvblock),
-    DECL_METRICS(dataobject_xvinput),
-    DECL_METRICS(dataobject_xvoutput),
-    DECL_METRICS(dataobject_xventity),
+        // dbkeys
+        RETURN_METRICS_NAME(db_key_tx);
+        RETURN_METRICS_NAME(db_key_block_index);
+        RETURN_METRICS_NAME(db_key_block);
+        RETURN_METRICS_NAME(db_key_block_object);
+        RETURN_METRICS_NAME(db_key_block_input);
+        RETURN_METRICS_NAME(db_key_block_input_resource);
+        RETURN_METRICS_NAME(db_key_block_output);
+        RETURN_METRICS_NAME(db_key_block_output_resource);
+        RETURN_METRICS_NAME(db_key_block_state);
+        RETURN_METRICS_NAME(db_key_block_offdata);
 
-    //db key value metrics (see declare)
-    DECL_METRICS(db_key_tx),
-    DECL_METRICS(db_key_block_index),
-    DECL_METRICS(db_key_block),
-    DECL_METRICS(db_key_block_object),
-    DECL_METRICS(db_key_block_input),
-    DECL_METRICS(db_key_block_input_resource),
-    DECL_METRICS(db_key_block_output),
-    DECL_METRICS(db_key_block_output_resource),
-    DECL_METRICS(db_key_block_state),
-    DECL_METRICS(db_key_block_offdata),
+        // consensus
+        RETURN_METRICS_NAME(cons_drand_leader_finish_succ);
+        RETURN_METRICS_NAME(cons_drand_backup_finish_succ);
+        RETURN_METRICS_NAME(cons_drand_leader_finish_fail);
+        RETURN_METRICS_NAME(cons_drand_backup_finish_fail);
+        RETURN_METRICS_NAME(cons_tableblock_leader_finish_succ);
+        RETURN_METRICS_NAME(cons_tableblock_backup_finish_succ);
+        RETURN_METRICS_NAME(cons_tableblock_leader_finish_fail);
+        RETURN_METRICS_NAME(cons_tableblock_backup_finish_fail);
+        RETURN_METRICS_NAME(cons_pacemaker_tc_discontinuity);
+        RETURN_METRICS_NAME(cons_fail_make_proposal_table_state);
+        RETURN_METRICS_NAME(cons_fail_make_proposal_consensus_para);
+        RETURN_METRICS_NAME(cons_fail_verify_proposal_blocks_invalid);
+        RETURN_METRICS_NAME(cons_fail_verify_proposal_table_state_get);
+        RETURN_METRICS_NAME(cons_fail_verify_proposal_drand_invalid);
+        RETURN_METRICS_NAME(cons_fail_verify_proposal_consensus_para_get);
+        RETURN_METRICS_NAME(cons_fail_verify_proposal_unit_count);
+        RETURN_METRICS_NAME(cons_fail_make_proposal_table_check_latest_state);
+        RETURN_METRICS_NAME(cons_fail_verify_proposal_table_check_latest_state);
+        RETURN_METRICS_NAME(cons_fail_verify_proposal_table_with_local);
+        RETURN_METRICS_NAME(cons_fail_make_proposal_unit_check_state);
+        RETURN_METRICS_NAME(cons_fail_make_proposal_view_changed);
+        RETURN_METRICS_NAME(cons_view_fire_clock_delay);
+        RETURN_METRICS_NAME(cons_fail_backup_view_not_match);
 
-    // consensus
-    DECL_METRICS(cons_drand_leader_finish_succ),
-    DECL_METRICS(cons_drand_backup_finish_succ),
-    DECL_METRICS(cons_drand_leader_finish_fail),
-    DECL_METRICS(cons_drand_backup_finish_fail),
-    DECL_METRICS(cons_tableblock_leader_finish_succ),
-    DECL_METRICS(cons_tableblock_backup_finish_succ),
-    DECL_METRICS(cons_tableblock_leader_finish_fail),
-    DECL_METRICS(cons_tableblock_backup_finish_fail),
-    DECL_METRICS(cons_pacemaker_tc_discontinuity),
-    DECL_METRICS(cons_fail_make_proposal_table_state),
-    DECL_METRICS(cons_fail_make_proposal_consensus_para),
-    DECL_METRICS(cons_fail_verify_proposal_blocks_invalid),
-    DECL_METRICS(cons_fail_verify_proposal_table_state_get),
-    DECL_METRICS(cons_fail_verify_proposal_drand_invalid),
-    DECL_METRICS(cons_fail_verify_proposal_consensus_para_get),
-    DECL_METRICS(cons_fail_verify_proposal_unit_count),
-    DECL_METRICS(cons_fail_make_proposal_table_check_latest_state),
-    DECL_METRICS(cons_fail_verify_proposal_table_check_latest_state),
-    DECL_METRICS(cons_fail_verify_proposal_table_with_local),
-    DECL_METRICS(cons_fail_make_proposal_unit_check_state),
-    DECL_METRICS(cons_fail_make_proposal_view_changed),
-    DECL_METRICS(cons_view_fire_clock_delay),
-    DECL_METRICS(cons_fail_backup_view_not_match),
+        // store
+        RETURN_METRICS_NAME(store_db_read);
+        RETURN_METRICS_NAME(store_db_write);
+        RETURN_METRICS_NAME(store_db_delete);
+        RETURN_METRICS_NAME(store_state_read);
+        RETURN_METRICS_NAME(store_state_write);
+        RETURN_METRICS_NAME(store_state_delete);
+        RETURN_METRICS_NAME(store_block_read);
+        RETURN_METRICS_NAME(store_block_index_read);
+        RETURN_METRICS_NAME(store_block_input_read);
+        RETURN_METRICS_NAME(store_block_output_read);
+        RETURN_METRICS_NAME(store_block_call);
+        RETURN_METRICS_NAME(store_block_write);
+        RETURN_METRICS_NAME(store_block_input_write);
+        RETURN_METRICS_NAME(store_block_output_write);
+        RETURN_METRICS_NAME(store_block_delete);
+        RETURN_METRICS_NAME(store_tx_index_self);
+        RETURN_METRICS_NAME(store_tx_index_send);
+        RETURN_METRICS_NAME(store_tx_index_recv);
+        RETURN_METRICS_NAME(store_tx_index_confirm);
+        RETURN_METRICS_NAME(store_tx_origin);
 
-    // store
-    DECL_METRICS(store_db_read),
-    DECL_METRICS(store_db_write),
-    DECL_METRICS(store_db_delete),
-    DECL_METRICS(store_state_read),
-    DECL_METRICS(store_state_write),
-    DECL_METRICS(store_state_delete),
-    DECL_METRICS(store_block_read),
-    DECL_METRICS(store_block_index_read),
-    DECL_METRICS(store_block_input_read),
-    DECL_METRICS(store_block_output_read),
-    DECL_METRICS(store_block_call),
-    DECL_METRICS(store_block_write),
-    DECL_METRICS(store_block_input_write),
-    DECL_METRICS(store_block_output_write),
-    DECL_METRICS(store_block_delete),
-    DECL_METRICS(store_tx_index_self),
-    DECL_METRICS(store_tx_index_send),
-    DECL_METRICS(store_tx_index_recv),
-    DECL_METRICS(store_tx_index_confirm),
-    DECL_METRICS(store_tx_origin),
+        // vledger dataobject
+        RETURN_METRICS_NAME(dataobject_xvnode_t);
+        RETURN_METRICS_NAME(dataobject_xvexestate_t);
+        RETURN_METRICS_NAME(dataobject_xvnodegroup);
+        RETURN_METRICS_NAME(dataobject_xcscoreobj_t);
+        RETURN_METRICS_NAME(dataobject_xblock_maker_t);
+        RETURN_METRICS_NAME(dataobject_xblockacct_t);
+        RETURN_METRICS_NAME(dataobject_xtxpool_table_info_t);
+        RETURN_METRICS_NAME(dataobject_xacctmeta_t);
 
-    // vledger dataobject
-    DECL_METRICS(dataobject_xvnode_t),
-    DECL_METRICS(dataobject_xvexestate_t),
-    DECL_METRICS(dataobject_xvnodegroup),
-    DECL_METRICS(dataobject_xcscoreobj_t),
-    DECL_METRICS(dataobject_xblock_maker_t),
-    DECL_METRICS(dataobject_xblockacct_t),
-    DECL_METRICS(dataobject_xtxpool_table_info_t),
-    DECL_METRICS(dataobject_xacctmeta_t),
+        // message category
+        RETURN_METRICS_NAME(message_category_consensus_contains_duplicate);
+        RETURN_METRICS_NAME(message_category_timer_contains_duplicate);
+        RETURN_METRICS_NAME(message_category_txpool_contains_duplicate);
+        RETURN_METRICS_NAME(message_category_rpc_contains_duplicate);
+        RETURN_METRICS_NAME(message_category_sync_contains_duplicate);
+        RETURN_METRICS_NAME(message_block_broadcast_contains_duplicate);
+        RETURN_METRICS_NAME(message_category_unknown_contains_duplicate);
 
-    // message category
-    DECL_METRICS(message_category_consensus_contains_duplicate),
-    DECL_METRICS(message_category_timer_contains_duplicate),
-    DECL_METRICS(message_category_txpool_contains_duplicate),
-    DECL_METRICS(message_category_rpc_contains_duplicate),
-    DECL_METRICS(message_category_sync_contains_duplicate),
-    DECL_METRICS(message_block_broadcast_contains_duplicate),
-    DECL_METRICS(message_category_unknown_contains_duplicate),
+        RETURN_METRICS_NAME(message_category_consensus);
+        RETURN_METRICS_NAME(message_category_timer);
+        RETURN_METRICS_NAME(message_category_txpool);
+        RETURN_METRICS_NAME(message_category_rpc);
+        RETURN_METRICS_NAME(message_category_sync);
+        RETURN_METRICS_NAME(message_block_broadcast);
+        RETURN_METRICS_NAME(message_category_unknown);
 
-    DECL_METRICS(message_category_consensus),
-    DECL_METRICS(message_category_timer),
-    DECL_METRICS(message_category_txpool),
-    DECL_METRICS(message_category_rpc),
-    DECL_METRICS(message_category_sync),
-    DECL_METRICS(message_block_broadcast),
-    DECL_METRICS(message_category_unknown),
+        // sync 
+        RETURN_METRICS_NAME(xsync_recv_new_block);
+        RETURN_METRICS_NAME(xsync_recv_new_hash);
+        RETURN_METRICS_NAME(xsync_recv_invalid_block);
+        RETURN_METRICS_NAME(xsync_recv_duplicate_block);
+        RETURN_METRICS_NAME(xsync_recv_block_size);
 
-    // xsync
-    DECL_METRICS(xsync_recv_new_block),
-    DECL_METRICS(xsync_recv_new_hash),
-    DECL_METRICS(xsync_recv_invalid_block),
-    DECL_METRICS(xsync_recv_duplicate_block),
-    DECL_METRICS(xsync_recv_block_size),
+        // txpool
+        RETURN_METRICS_NAME(txpool_received_self_send_receipt_num);
+        RETURN_METRICS_NAME(txpool_received_other_send_receipt_num);
+        RETURN_METRICS_NAME(txpool_recv_tx_retry_send);
+        RETURN_METRICS_NAME(txpool_confirm_tx_retry_send);
+        RETURN_METRICS_NAME(txpool_recv_tx_first_send);
+        RETURN_METRICS_NAME(txpool_confirm_tx_first_send);
+        RETURN_METRICS_NAME(txpool_push_tx_send_fail_pool_full);
+        RETURN_METRICS_NAME(txpool_pull_recv_tx);
+        RETURN_METRICS_NAME(txpool_pull_confirm_tx);
 
-    // txpool
-    DECL_METRICS(txpool_received_self_send_receipt_num),
-    DECL_METRICS(txpool_received_other_send_receipt_num),
-    DECL_METRICS(txpool_recv_tx_retry_send),
-    DECL_METRICS(txpool_confirm_tx_retry_send),
-    DECL_METRICS(txpool_recv_tx_first_send),
-    DECL_METRICS(txpool_confirm_tx_first_send),
-    DECL_METRICS(txpool_push_tx_send_fail_pool_full),
-    DECL_METRICS(txpool_pull_recv_tx),
-    DECL_METRICS(txpool_pull_confirm_tx),
+        // blockstore
+        RETURN_METRICS_NAME(blockstore_index_query);
+        RETURN_METRICS_NAME(blockstore_index_load_db);
+        RETURN_METRICS_NAME(blockstore_blk_query);
+        RETURN_METRICS_NAME(blockstore_blk_load_db);
 
-    // blockstore
-    DECL_METRICS(blockstore_index_query),
-    DECL_METRICS(blockstore_index_load_db),
-    DECL_METRICS(blockstore_blk_query),
-    DECL_METRICS(blockstore_blk_load_db),
+        // blockstore accessing
+        RETURN_METRICS_NAME(blockstore_access_from_account_context);
+        RETURN_METRICS_NAME(blockstore_access_from_contract_runtime);
+        RETURN_METRICS_NAME(blockstore_access_from_mbus);
+        RETURN_METRICS_NAME(blockstore_access_from_rpc);
+        RETURN_METRICS_NAME(blockstore_access_from_store);
 
-    DECL_METRICS(blockstore_access_from_account_context),
-    DECL_METRICS(blockstore_access_from_contract_runtime),
-    DECL_METRICS(blockstore_access_from_mbus),
-    DECL_METRICS(blockstore_access_from_rpc),
-    DECL_METRICS(blockstore_access_from_store),
-    DECL_METRICS(blockstore_access_from_txpool),
-    DECL_METRICS(blockstore_access_from_statestore),
-    DECL_METRICS(blockstore_access_from_application),
-    DECL_METRICS(blockstore_access_from_sync_blk),
-    DECL_METRICS(blockstore_access_from_sync_index),
-    DECL_METRICS(blockstore_access_from_block_maker),
-    DECL_METRICS(blockstore_access_from_us),
-    DECL_METRICS(blockstore_access_from_bft),
-    DECL_METRICS(blockstore_access_from_vnodesrv),
-};
+        // txpool access
+        RETURN_METRICS_NAME(blockstore_access_from_txpool);
+        RETURN_METRICS_NAME(blockstore_access_from_txpool_on_block_event);
+        RETURN_METRICS_NAME(blockstore_access_from_txpool_create_confirm_receipt);
+        RETURN_METRICS_NAME(blockstore_access_from_txpool_make_receipt);
+        RETURN_METRICS_NAME(blockstore_access_from_txpool_sync_status);
+        RETURN_METRICS_NAME(blockstore_access_from_txpool_recover);
+        RETURN_METRICS_NAME(blockstore_access_from_txpool_refresh_table);
+
+        // blockstore access statestore
+        RETURN_METRICS_NAME(blockstore_access_from_statestore);
+        RETURN_METRICS_NAME(blockstore_access_from_statestore_rebuild_state);
+        RETURN_METRICS_NAME(blockstore_access_from_statestore_fullblock);
+        RETURN_METRICS_NAME(blockstore_access_from_statestore_load_state);
+        RETURN_METRICS_NAME(blockstore_access_from_statestore_load_lastest_state);
+        RETURN_METRICS_NAME(blockstore_access_from_statestore_get_block_state);
+        RETURN_METRICS_NAME(blockstore_access_from_statestore_get_block_index_state);
+        RETURN_METRICS_NAME(blockstore_access_from_statestore_get_connect_state);
+        RETURN_METRICS_NAME(blockstore_access_from_statestore_get_commit_state);
+        
+        RETURN_METRICS_NAME(blockstore_access_from_application);
+
+        // sync access
+        RETURN_METRICS_NAME(blockstore_access_from_sync);
+        RETURN_METRICS_NAME(blockstore_access_from_sync_blk);
+        RETURN_METRICS_NAME(blockstore_access_from_sync_get_latest_connected_block);
+        RETURN_METRICS_NAME(blockstore_access_from_sync_get_latest_committed_block);
+        RETURN_METRICS_NAME(blockstore_access_from_sync_get_latest_locked_block);
+        RETURN_METRICS_NAME(blockstore_access_from_sync_get_latest_cert_block);
+        RETURN_METRICS_NAME(blockstore_access_from_sync_existed_blk);
+        RETURN_METRICS_NAME(blockstore_access_from_sync_update_latest_genesis_connected_block);
+        RETURN_METRICS_NAME(blockstore_access_from_sync_get_latest_committed_full_block);
+        RETURN_METRICS_NAME(blockstore_access_from_sync_get_latest_executed_block);
+        RETURN_METRICS_NAME(blockstore_access_from_sync_get_genesis_block);
+        RETURN_METRICS_NAME(blockstore_access_from_sync_load_block_objects);
+        RETURN_METRICS_NAME(blockstore_access_from_sync_load_block_objects_input);
+        RETURN_METRICS_NAME(blockstore_access_from_sync_load_block_objects_output);
+        RETURN_METRICS_NAME(blockstore_access_from_sync_load_tx);
+        RETURN_METRICS_NAME(blockstore_access_from_sync_load_tx_input);
+        RETURN_METRICS_NAME(blockstore_access_from_sync_load_tx_output);
+        RETURN_METRICS_NAME(blockstore_access_from_sync_store_blk);
+        RETURN_METRICS_NAME(blockstore_access_from_sync_query_blk);
+        RETURN_METRICS_NAME(blockstore_access_from_sync_load_block_object);
+        
+        RETURN_METRICS_NAME(blockstore_access_from_sync_index);
+
+        // blockstore_access_from_blk_mk
+        RETURN_METRICS_NAME(blockstore_access_from_blk_mk);
+        RETURN_METRICS_NAME(blockstore_access_from_blk_mk_ld_and_cache);
+        RETURN_METRICS_NAME(blockstore_access_from_blk_mk_proposer_verify_proposal);
+        RETURN_METRICS_NAME(blockstore_access_from_blk_mk_proposer_verify_proposal_drand);
+        RETURN_METRICS_NAME(blockstore_access_from_blk_mk_table);
+        RETURN_METRICS_NAME(blockstore_access_from_blk_mk_unit_ld_last_blk);
+        RETURN_METRICS_NAME(blockstore_access_from_blk_mk_unit_chk_last_state);
+
+        RETURN_METRICS_NAME(blockstore_access_from_us);
+        RETURN_METRICS_NAME(blockstore_access_from_us_on_view_fire);
+        RETURN_METRICS_NAME(blockstore_access_from_us_on_timer_fire);
+        RETURN_METRICS_NAME(blockstore_access_from_us_on_proposal_finish);
+        RETURN_METRICS_NAME(blockstore_access_from_us_timer_blk_maker);
+        RETURN_METRICS_NAME(blockstore_access_from_us_timer_picker_constructor);
+        RETURN_METRICS_NAME(blockstore_access_from_us_dispatcher_load_tc);
+
+        RETURN_METRICS_NAME(blockstore_access_from_bft);
+        RETURN_METRICS_NAME(blockstore_access_from_bft_check_proposal);
+        RETURN_METRICS_NAME(blockstore_access_from_bft_on_clock_fire);
+        RETURN_METRICS_NAME(blockstore_access_from_bft_pdu_event_down);
+        RETURN_METRICS_NAME(blockstore_access_from_bft_consaccnt_on_proposal_start);
+        RETURN_METRICS_NAME(blockstore_access_from_bft_consdriv_on_proposal_start);
+        RETURN_METRICS_NAME(blockstore_access_from_bft_get_commit_blk);
+        RETURN_METRICS_NAME(blockstore_access_from_bft_get_lock_blk);
+        RETURN_METRICS_NAME(blockstore_access_from_bft_sync);
+        RETURN_METRICS_NAME(blockstore_access_from_bft_init_blk);
+
+        RETURN_METRICS_NAME(blockstore_access_from_vnodesrv);
+
+        // state store
+        RETURN_METRICS_NAME(statestore_access);
+        RETURN_METRICS_NAME(statestore_access_from_blk_ctx);
+        RETURN_METRICS_NAME(statestore_access_from_vledger_load_state);
+        RETURN_METRICS_NAME(statestore_access_from_vnodesrv_load_state);
+        RETURN_METRICS_NAME(statestore_access_from_store_tgas);
+        RETURN_METRICS_NAME(statestore_access_from_store_backup_tgas);
+        RETURN_METRICS_NAME(statestore_access_from_store_bstate);
+        RETURN_METRICS_NAME(statestore_access_from_xelect);
+        RETURN_METRICS_NAME(statestore_access_from_xconfig_update);
+        RETURN_METRICS_NAME(statestore_access_from_rpc_get_fullbock);
+        RETURN_METRICS_NAME(statestore_access_from_rpc_query_propery);
+        RETURN_METRICS_NAME(statestore_access_from_rpc_set_addition);
+        RETURN_METRICS_NAME(statestore_access_from_rpc_set_fullunit);
+        RETURN_METRICS_NAME(statestore_access_from_sync_chain_snapshot);
+        RETURN_METRICS_NAME(statestore_access_from_sync_handle_chain_snapshot_meta);
+        RETURN_METRICS_NAME(statestore_access_from_sync_query_offchain);
+        RETURN_METRICS_NAME(statestore_access_from_application_isbeacon);
+        RETURN_METRICS_NAME(statestore_access_from_application_load_election);
+        RETURN_METRICS_NAME(statestore_access_from_blkmaker_update_account_state);
+        RETURN_METRICS_NAME(statestore_access_from_blkmaker_unit_connect_state);
+        RETURN_METRICS_NAME(statestore_access_from_txpool_get_tablestate);
+        RETURN_METRICS_NAME(statestore_access_from_txpool_get_accountstate);
+        RETURN_METRICS_NAME(statestore_access_from_txpool_refreshtable);
+        RETURN_METRICS_NAME(statestore_access_from_blkmaker_get_target_tablestate);
+
+        default: assert(false); return nullptr;
+    }
+}
+#undef RETURN_METRICS_NAME
 
 void e_metrics::start() {
     if (running()) {
@@ -189,6 +284,10 @@ void e_metrics::stop() {
 }
 
 void e_metrics::run_process() {
+    for (size_t index = e_simple_begin; index < e_simple_total; index++) {
+        s_metrics[index] = std::make_shared<metrics_counter_unit>(matrics_name(static_cast<xmetircs_tag_t>(index)), 0);
+    }
+
     while (running()) {
         process_message_queue();
         std::this_thread::sleep_for(m_queue_procss_behind_sleep_time);
@@ -296,19 +395,65 @@ void e_metrics::flow_count(std::string metrics_name, int64_t value, time_point t
     m_message_queue.push(event_message(metrics::e_metrics_major_id::flow, metrics::e_metrics_minor_id::flow_count, metrics_name, value, metrics_appendant_info{timestamp}));
 }
 void e_metrics::gauge(E_SIMPLE_METRICS_TAG tag, int64_t value) {
-    if (tag >= e_simple_total || tag < e_simple_begin ) {
+    if (tag >= e_simple_total || tag <= e_simple_begin ) {
         return;
     }
     s_counters[tag].value += value;
     s_counters[tag].call_count++;
 }
 
+struct xsimple_merics_category
+{
+    E_SIMPLE_METRICS_TAG category;
+    E_SIMPLE_METRICS_TAG start;
+    E_SIMPLE_METRICS_TAG end;
+};
+
+// categories
+xsimple_merics_category g_cates[] = {
+    {blockstore_access_from_txpool, blockstore_access_from_txpool_begin, blockstore_access_from_txpool_end},
+    {blockstore_access_from_statestore, blockstore_access_from_statestore_begin, blockstore_access_from_statestore_end},
+    {blockstore_access_from_sync, blockstore_access_from_sync_begin, blockstore_access_from_sync_end},
+    {blockstore_access_from_blk_mk, blockstore_access_from_blk_mk_begin, blockstore_access_from_blk_mk_end},
+    {blockstore_access_from_us, blockstore_access_from_us_begin, blockstore_access_from_us_end},
+    {blockstore_access_from_bft, blockstore_access_from_bft_begin, blockstore_access_from_bft_end}
+};
+
+bool is_category(E_SIMPLE_METRICS_TAG tag) {
+    for(size_t index = 0; index < sizeof(g_cates)/sizeof(g_cates[0]); index++) {
+        if(tag == g_cates[index].category) {
+            return true;
+        }
+    }
+    return false;
+}
+
 void e_metrics::gauge_dump() {
-    for(auto index = (int32_t)e_simple_begin; index < (int32_t)e_simple_total; index++) {
+    // detail metrics dump
+    for(auto index = (int32_t)e_simple_begin + 1; index < (int32_t)e_simple_total; index++) {
+        if(is_category((E_SIMPLE_METRICS_TAG)index)) {
+            continue;
+        }
         auto metrics_ptr = s_metrics[index];
         auto ptr = metrics_ptr.GetRef<metrics_counter_unit_ptr>();
         ptr->inner_val = s_counters[index].value;
         ptr->count = s_counters[index].call_count;
+        m_counter_handler.dump_metrics_info(ptr);
+    }
+    
+    // summary of category as defined
+    for(size_t index = 0; index < sizeof(g_cates)/sizeof(g_cates[0]); index++) {
+        uint64_t cate_val = 0;
+        uint64_t cate_count = 0;
+        auto cate = g_cates[index];
+        for(auto cate_index = (int)cate.start; cate_index <= (int)cate.end; cate_index++) {
+            cate_val += s_counters[cate_index].value;
+            cate_count += s_counters[cate_index].call_count;
+        }
+        auto metrics_ptr = s_metrics[cate.category];
+        auto ptr = metrics_ptr.GetRef<metrics_counter_unit_ptr>();
+        ptr->inner_val = cate_val;
+        ptr->count = cate_count;
         m_counter_handler.dump_metrics_info(ptr);
     }
 }

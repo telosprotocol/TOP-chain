@@ -694,7 +694,7 @@ xobject_ptr_t<base::xvbstate_t> xaccount_context_t::load_bstate(const std::strin
 
     // if not assign height, then get latest connect block and state
     base::xvaccount_t _vaddr(other_addr);
-    base::xauto_ptr<base::xvbstate_t> _bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_latest_connectted_block_state(_vaddr);
+    base::xauto_ptr<base::xvbstate_t> _bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_latest_connectted_block_state(_vaddr, metrics::statestore_access_from_store_bstate);
     if (_bstate == nullptr) {
         xerror("xaccount_context_t::load_bstate,fail-get latest connectted state.account=%s", other_addr.c_str());
         return nullptr;
@@ -705,7 +705,7 @@ xobject_ptr_t<base::xvbstate_t> xaccount_context_t::load_bstate(const std::strin
 xobject_ptr_t<base::xvbstate_t> xaccount_context_t::load_bstate(const std::string& other_addr, uint64_t height) {
     std::string query_addr = other_addr.empty() ? get_address() : other_addr;
     base::xvaccount_t _vaddr(query_addr);
-    base::xauto_ptr<base::xvbstate_t> _bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_committed_block_state(_vaddr, height);
+    base::xauto_ptr<base::xvbstate_t> _bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_committed_block_state(_vaddr, height, metrics::statestore_access_from_store_bstate);
     if (_bstate == nullptr) {
         xwarn("xaccount_context_t::load_bstate,fail-get target state fail.account=%s,height=%ld", query_addr.c_str(), height);
         return nullptr;

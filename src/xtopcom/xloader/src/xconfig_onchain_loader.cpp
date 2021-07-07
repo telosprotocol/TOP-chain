@@ -100,7 +100,7 @@ void xconfig_onchain_loader_t::update(mbus::xevent_ptr_t e) {
     xassert(block != nullptr);
 
     xdbg("xconfig_onchain_loader_t::update tcc update begin,height=%ld", block->get_height());
-    base::xauto_ptr<base::xvbstate_t> _bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(block.get());
+    base::xauto_ptr<base::xvbstate_t> _bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(block.get(), metrics::statestore_access_from_xconfig_update);
     if (nullptr == _bstate) {
         xwarn("xconfig_onchain_loader_t::update get target state fail.block=%s", block->dump().c_str());
         return;

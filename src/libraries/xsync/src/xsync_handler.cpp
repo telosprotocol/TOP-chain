@@ -804,7 +804,7 @@ void xsync_handler_t::handle_chain_snapshot_request(
     if (blk != nullptr) {
         if (blk->get_block_level() == base::enum_xvblock_level_table && blk->get_block_class() == base::enum_xvblock_class_full) {
             // it must be full-table block now
-            if (base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_full_block_offsnapshot(blk.get())) {
+            if (base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_full_block_offsnapshot(blk.get(), metrics::statestore_access_from_sync_chain_snapshot)) {
                 std::string property_snapshot = blk->get_full_state();
                 xsync_message_chain_snapshot_t chain_snapshot(ptr->m_account_addr,
                     property_snapshot, ptr->m_height_of_fullblock);

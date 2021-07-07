@@ -998,22 +998,26 @@ namespace top
         }
 
         //load specific index of block with view_id
-        base::xvbindex_t*     xblockacct_t::load_index(const uint64_t target_height,const uint64_t view_id)
+        base::xvbindex_t*     xblockacct_t::load_index(const uint64_t target_height,const uint64_t view_id, const int atag)
         {
             //#1: query_block() at cache layer
             //#2: check certain index with viewid at height
             //#3: load_index_from_db(target_height)
             //#4: for genesis block case
             base::xvbindex_t* target_block = query_index(target_height, view_id);
-            #ifdef ENABLE_METRICS
-            XMETRICS_GAUGE(metrics::blockstore_index_query, 1);
-            #endif
-            if(target_block != NULL)//the ptr has been add reference by query_index
+            if(target_block != NULL) //the ptr has been add reference by query_index
+            {
+                #ifdef ENABLE_METRICS
+                XMETRICS_GAUGE((top::metrics::E_SIMPLE_METRICS_TAG)atag, 1);
+                #endif
                 return target_block;//found at cache layer
-
-            #ifdef ENABLE_METRICS
-            XMETRICS_GAUGE(metrics::blockstore_index_load_db, 1);
-            #endif
+            }
+            else
+            {
+                #ifdef ENABLE_METRICS
+                XMETRICS_GAUGE((top::metrics::E_SIMPLE_METRICS_TAG)atag, 0);
+                #endif
+            }
             if(load_index(target_height) > 0)//load from db
                 target_block = query_index(target_height, view_id);//query again after loaded
 
@@ -1024,22 +1028,27 @@ namespace top
         }
 
         //load specific index of block with block hash
-        base::xvbindex_t*     xblockacct_t::load_index(const uint64_t target_height,const std::string & block_hash)
+        base::xvbindex_t*     xblockacct_t::load_index(const uint64_t target_height,const std::string & block_hash, const int atag)
         {
             //#1: query_index() at cache layer
             //#2: check certain index with blockhash at height
             //#3: load_index_from_db(target_height)
             //#4: for genesis block case
             base::xvbindex_t* target_block = query_index(target_height, block_hash);
-            #ifdef ENABLE_METRICS
-            XMETRICS_GAUGE(metrics::blockstore_index_query, 1);
-            #endif
             if(target_block != NULL) //the ptr has been add reference by query_index
+            {
+                #ifdef ENABLE_METRICS
+                XMETRICS_GAUGE((top::metrics::E_SIMPLE_METRICS_TAG)atag, 1);
+                #endif
                 return target_block;//found at cache layer
+            }
+            else
+            {
+                #ifdef ENABLE_METRICS
+                XMETRICS_GAUGE((top::metrics::E_SIMPLE_METRICS_TAG)atag, 0);
+                #endif
+            }
 
-            #ifdef ENABLE_METRICS
-            XMETRICS_GAUGE(metrics::blockstore_index_load_db, 1);
-            #endif
             if(load_index(target_height) > 0)//load from db
                 target_block = query_index(target_height, block_hash);//query again after loaded
 
@@ -1050,22 +1059,27 @@ namespace top
         }
 
         //load specific index of block with block hash
-        base::xvbindex_t*     xblockacct_t::load_index(const uint64_t target_height,base::enum_xvblock_flag request_flag)
+        base::xvbindex_t*     xblockacct_t::load_index(const uint64_t target_height,base::enum_xvblock_flag request_flag, const int atag)
         {
             //#1: query_index() at cache layer
             //#2: check certain index with flag at height
             //#3: load_index_from_db(target_height)
             //#4: for genesis block case
             base::xvbindex_t* target_block = query_index(target_height, request_flag);
-            #ifdef ENABLE_METRICS
-            XMETRICS_GAUGE(metrics::blockstore_index_query, 1);
-            #endif
+            
             if(target_block != NULL)//the ptr has been add reference by query_index
+            {
+                #ifdef ENABLE_METRICS
+                XMETRICS_GAUGE((top::metrics::E_SIMPLE_METRICS_TAG)atag, 1);
+                #endif
                 return target_block;//found at cache layer
-
-            #ifdef ENABLE_METRICS
-            XMETRICS_GAUGE(metrics::blockstore_index_load_db, 1);
-            #endif
+            }
+            else
+            {
+                #ifdef ENABLE_METRICS
+                XMETRICS_GAUGE((top::metrics::E_SIMPLE_METRICS_TAG)atag, 0);
+                #endif
+            }
             
             if(load_index(target_height) > 0)//load from db
                 target_block = query_index(target_height, request_flag);//query again after loaded
@@ -1082,20 +1096,26 @@ namespace top
             return query_index(target_height);//then query
         }
 
-        bool    xblockacct_t::load_block_object(base::xvbindex_t* index_ptr)
+        bool    xblockacct_t::load_block_object(base::xvbindex_t* index_ptr, const int atag)
         {
             if(NULL == index_ptr)
                 return false;
             xdbg("xblockacct_t::load_block_object,target index(%s)",index_ptr->dump().c_str());
-            #ifdef ENABLE_METRICS
-            XMETRICS_GAUGE(metrics::blockstore_blk_query, 1);
-            #endif
+            
             if(index_ptr->get_this_block() != NULL)
+            {
+                #ifdef ENABLE_METRICS
+                XMETRICS_GAUGE((top::metrics::E_SIMPLE_METRICS_TAG)atag, 1);
+                #endif
                 return true;
+            } 
+            else 
+            {
+                #ifdef ENABLE_METRICS
+                XMETRICS_GAUGE((top::metrics::E_SIMPLE_METRICS_TAG)atag, 0);
+                #endif
+            }
 
-            #ifdef ENABLE_METRICS
-            XMETRICS_GAUGE(metrics::blockstore_blk_load_db, 1);
-            #endif
             return read_block_object_from_db(index_ptr);
         }
 
