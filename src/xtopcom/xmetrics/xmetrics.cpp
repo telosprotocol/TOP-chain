@@ -16,6 +16,8 @@ char const * matrics_name(xmetircs_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(vhost_recv_callback);
         RETURN_METRICS_NAME(vnode_recv_msg);
         RETURN_METRICS_NAME(vnode_recv_callback);
+
+        // dataobjec
         RETURN_METRICS_NAME(dataobject_tx_receipt_t);
         RETURN_METRICS_NAME(dataobject_unit_state);
         RETURN_METRICS_NAME(dataobject_xvtxindex);
@@ -38,6 +40,8 @@ char const * matrics_name(xmetircs_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(dataobject_xvinput);
         RETURN_METRICS_NAME(dataobject_xvoutput);
         RETURN_METRICS_NAME(dataobject_xventity);
+
+        // dbkeys
         RETURN_METRICS_NAME(db_key_tx);
         RETURN_METRICS_NAME(db_key_block_index);
         RETURN_METRICS_NAME(db_key_block);
@@ -153,6 +157,7 @@ char const * matrics_name(xmetircs_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(blockstore_access_from_mbus);
         RETURN_METRICS_NAME(blockstore_access_from_rpc);
         RETURN_METRICS_NAME(blockstore_access_from_store);
+
         // txpool access
         RETURN_METRICS_NAME(blockstore_access_from_txpool);
         RETURN_METRICS_NAME(blockstore_access_from_txpool_on_block_event);
@@ -176,6 +181,7 @@ char const * matrics_name(xmetircs_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(blockstore_access_from_application);
 
         // sync access
+        RETURN_METRICS_NAME(blockstore_access_from_sync);
         RETURN_METRICS_NAME(blockstore_access_from_sync_blk);
         RETURN_METRICS_NAME(blockstore_access_from_sync_get_latest_connected_block);
         RETURN_METRICS_NAME(blockstore_access_from_sync_get_latest_committed_block);
@@ -197,18 +203,25 @@ char const * matrics_name(xmetircs_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(blockstore_access_from_sync_load_block_object);
         
         RETURN_METRICS_NAME(blockstore_access_from_sync_index);
+
+        // blockstore_access_from_blk_mk
+        RETURN_METRICS_NAME(blockstore_access_from_blk_mk);
         RETURN_METRICS_NAME(blockstore_access_from_blk_mk_ld_and_cache);
         RETURN_METRICS_NAME(blockstore_access_from_blk_mk_proposer_verify_proposal);
         RETURN_METRICS_NAME(blockstore_access_from_blk_mk_proposer_verify_proposal_drand);
         RETURN_METRICS_NAME(blockstore_access_from_blk_mk_table);
         RETURN_METRICS_NAME(blockstore_access_from_blk_mk_unit_ld_last_blk);
         RETURN_METRICS_NAME(blockstore_access_from_blk_mk_unit_chk_last_state);
+
+        RETURN_METRICS_NAME(blockstore_access_from_us);
         RETURN_METRICS_NAME(blockstore_access_from_us_on_view_fire);
         RETURN_METRICS_NAME(blockstore_access_from_us_on_timer_fire);
         RETURN_METRICS_NAME(blockstore_access_from_us_on_proposal_finish);
         RETURN_METRICS_NAME(blockstore_access_from_us_timer_blk_maker);
         RETURN_METRICS_NAME(blockstore_access_from_us_timer_picker_constructor);
         RETURN_METRICS_NAME(blockstore_access_from_us_dispatcher_load_tc);
+
+        RETURN_METRICS_NAME(blockstore_access_from_bft);
         RETURN_METRICS_NAME(blockstore_access_from_bft_check_proposal);
         RETURN_METRICS_NAME(blockstore_access_from_bft_on_clock_fire);
         RETURN_METRICS_NAME(blockstore_access_from_bft_pdu_event_down);
@@ -218,9 +231,11 @@ char const * matrics_name(xmetircs_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(blockstore_access_from_bft_get_lock_blk);
         RETURN_METRICS_NAME(blockstore_access_from_bft_sync);
         RETURN_METRICS_NAME(blockstore_access_from_bft_init_blk);
+
         RETURN_METRICS_NAME(blockstore_access_from_vnodesrv);
 
         // state store
+        RETURN_METRICS_NAME(statestore_access);
         RETURN_METRICS_NAME(statestore_access_from_blk_ctx);
         RETURN_METRICS_NAME(statestore_access_from_vledger_load_state);
         RETURN_METRICS_NAME(statestore_access_from_vnodesrv_load_state);
@@ -387,12 +402,46 @@ void e_metrics::gauge(E_SIMPLE_METRICS_TAG tag, int64_t value) {
     s_counters[tag].call_count++;
 }
 
+struct xsimple_merics_category
+{
+    E_SIMPLE_METRICS_TAG category;
+    E_SIMPLE_METRICS_TAG start;
+    E_SIMPLE_METRICS_TAG end;
+};
+
+// categories
+xsimple_merics_category g_cates[] = {
+    {blockstore_access_from_txpool, blockstore_access_from_txpool_begin, blockstore_access_from_txpool_end},
+    {blockstore_access_from_statestore, blockstore_access_from_statestore_begin, blockstore_access_from_statestore_end},
+    {blockstore_access_from_sync, blockstore_access_from_sync_begin, blockstore_access_from_sync_end},
+    {blockstore_access_from_blk_mk, blockstore_access_from_blk_mk_begin, blockstore_access_from_blk_mk_end},
+    {blockstore_access_from_us, blockstore_access_from_us_begin, blockstore_access_from_us_end},
+    {blockstore_access_from_bft, blockstore_access_from_bft_begin, blockstore_access_from_bft_end}
+};
+
 void e_metrics::gauge_dump() {
+    // detail metrics dump
     for(auto index = (int32_t)e_simple_begin + 1; index < (int32_t)e_simple_total; index++) {
         auto metrics_ptr = s_metrics[index];
         auto ptr = metrics_ptr.GetRef<metrics_counter_unit_ptr>();
         ptr->inner_val = s_counters[index].value;
         ptr->count = s_counters[index].call_count;
+        m_counter_handler.dump_metrics_info(ptr);
+    }
+    
+    // summary of category as defined
+    for(auto index = 0; index < sizeof(g_cates)/sizeof(g_cates[0]); index++) {
+        uint64_t cate_val = 0;
+        uint64_t cate_count = 0;
+        auto cate = g_cates[index];
+        for(auto cate_index = cate.start; cate_index <= cate.end; index++) {
+            cate_val += s_counters[cate_index].value;
+            cate_count += s_counters[cate_index].call_count;
+        }
+        auto metrics_ptr = s_metrics[cate.category];
+        auto ptr = metrics_ptr.GetRef<metrics_counter_unit_ptr>();
+        ptr->inner_val = cate_val;
+        ptr->count = cate_count;
         m_counter_handler.dump_metrics_info(ptr);
     }
 }

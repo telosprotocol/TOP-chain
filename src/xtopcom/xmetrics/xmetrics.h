@@ -172,16 +172,19 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     blockstore_access_from_store,
     // txpool
     blockstore_access_from_txpool,
-    blockstore_access_from_txpool_on_block_event,
+    blockstore_access_from_txpool_begin,
+    blockstore_access_from_txpool_on_block_event = blockstore_access_from_txpool_begin,
     blockstore_access_from_txpool_create_confirm_receipt,
     blockstore_access_from_txpool_make_receipt,
     blockstore_access_from_txpool_sync_status,
     blockstore_access_from_txpool_recover,
     blockstore_access_from_txpool_refresh_table,
+    blockstore_access_from_txpool_end = blockstore_access_from_txpool_refresh_table,
 
     // blockstore access statestore
     blockstore_access_from_statestore,
-    blockstore_access_from_statestore_rebuild_state,
+    blockstore_access_from_statestore_begin,
+    blockstore_access_from_statestore_rebuild_state = blockstore_access_from_statestore_begin,
     blockstore_access_from_statestore_fullblock,
     blockstore_access_from_statestore_load_state,
     blockstore_access_from_statestore_load_lastest_state,
@@ -189,10 +192,13 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     blockstore_access_from_statestore_get_block_index_state,
     blockstore_access_from_statestore_get_connect_state,
     blockstore_access_from_statestore_get_commit_state,
+    blockstore_access_from_statestore_end = blockstore_access_from_statestore_get_commit_state,
 
     blockstore_access_from_application,
     // sync access
-    blockstore_access_from_sync_blk,
+    blockstore_access_from_sync,
+    blockstore_access_from_sync_begin,
+    blockstore_access_from_sync_blk = blockstore_access_from_sync_begin,
     blockstore_access_from_sync_get_latest_connected_block,
     blockstore_access_from_sync_get_latest_committed_block,
     blockstore_access_from_sync_get_latest_locked_block,
@@ -211,22 +217,37 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     blockstore_access_from_sync_store_blk,
     blockstore_access_from_sync_query_blk,
     blockstore_access_from_sync_load_block_object,
+    blockstore_access_from_sync_end = blockstore_access_from_sync_load_block_object,
 
 
     blockstore_access_from_sync_index,
-    blockstore_access_from_blk_mk_ld_and_cache,
+
+    // blockstore_access_from_blk_mk
+    blockstore_access_from_blk_mk,
+    blockstore_access_from_blk_mk_begin,
+    blockstore_access_from_blk_mk_ld_and_cache = blockstore_access_from_blk_mk_begin,
     blockstore_access_from_blk_mk_proposer_verify_proposal,
     blockstore_access_from_blk_mk_proposer_verify_proposal_drand,
     blockstore_access_from_blk_mk_table,
     blockstore_access_from_blk_mk_unit_ld_last_blk,
     blockstore_access_from_blk_mk_unit_chk_last_state,
-    blockstore_access_from_us_on_view_fire,
+    blockstore_access_from_blk_mk_end = blockstore_access_from_blk_mk_unit_chk_last_state,
+
+    // blockstore_access_from_us
+    blockstore_access_from_us,
+    blockstore_access_from_us_begin,
+    blockstore_access_from_us_on_view_fire = blockstore_access_from_us_begin,
     blockstore_access_from_us_on_timer_fire,
     blockstore_access_from_us_on_proposal_finish,
     blockstore_access_from_us_timer_blk_maker,
     blockstore_access_from_us_timer_picker_constructor,
     blockstore_access_from_us_dispatcher_load_tc,
-    blockstore_access_from_bft_check_proposal,
+    blockstore_access_from_us_end = blockstore_access_from_us_dispatcher_load_tc,
+
+    // blockstore_access_from_bft
+    blockstore_access_from_bft,
+    blockstore_access_from_bft_begin,
+    blockstore_access_from_bft_check_proposal = blockstore_access_from_bft_begin,
     blockstore_access_from_bft_on_clock_fire,
     blockstore_access_from_bft_pdu_event_down,
     blockstore_access_from_bft_consaccnt_on_proposal_start,
@@ -235,9 +256,12 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     blockstore_access_from_bft_get_lock_blk,
     blockstore_access_from_bft_sync,
     blockstore_access_from_bft_init_blk,
+    blockstore_access_from_bft_end = blockstore_access_from_bft_init_blk,
+    
     blockstore_access_from_vnodesrv,
 
     // statestore
+    statestore_access,
     statestore_access_from_blk_ctx,
     statestore_access_from_vledger_load_state,
     statestore_access_from_vnodesrv_load_state,
