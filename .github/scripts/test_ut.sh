@@ -23,10 +23,10 @@ echo 'unit xml num: ' $(ls cbuild/bin/Linux/ut_report|wc -l)
 cd cbuild/bin/Linux/ut_report
 summary_tests=0
 summary_fails=0
-for utxml in $(ls cbuild/bin/Linux/ut_report/*xml);do
+for utxml in $(ls ./*xml);do
     utx_base=$(basename ${utxml})
     utx_name=${utx_base/.xml/.html}
-    junit2html $utxml $utx_name
+    /usr/local/bin/junit2html $utxml $utx_name
     test_all=$(grep "testsuites" $utxml|grep -oE "tests=\"[0-9]+\""|grep -oE "[0-9]+")
     test_fail=$(grep "testsuites" $utxml|grep -oE "failures=\"[0-9]+\""|grep -oE "[0-9]+")
     test_disable=$(grep "testsuites" $utxml|grep -oE "disabled=\"[0-9]+\""|grep -oE "[0-9]+")
