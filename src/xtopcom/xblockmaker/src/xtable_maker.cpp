@@ -439,8 +439,7 @@ bool    xtable_maker_t::load_table_blocks_from_last_full(const xblock_ptr_t & pr
 
     while (current_block->get_block_class() != base::enum_xvblock_class_full && current_block->get_height() > 1) {
         // only mini-block is enough
-        base::xauto_ptr<base::xvblock_t> _block = get_blockstore()->load_block_object(*this, current_block->get_height() - 1, current_block->get_last_block_hash(), false);
-        XMETRICS_GAUGE(metrics::blockstore_access_from_block_maker, 1);
+        base::xauto_ptr<base::xvblock_t> _block = get_blockstore()->load_block_object(*this, current_block->get_height() - 1, current_block->get_last_block_hash(), false, metrics::blockstore_access_from_blk_mk_table);
         if (_block == nullptr) {
             xerror("xfulltable_builder_t::load_table_blocks_from_last_full fail-load block.account=%s,height=%ld", get_account().c_str(), current_block->get_height() - 1);
             return false;
