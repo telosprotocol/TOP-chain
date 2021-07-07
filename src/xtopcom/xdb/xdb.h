@@ -24,17 +24,17 @@ class xdb : public xdb_face_t {
     ~xdb() noexcept;
     bool open() override;
     bool close() override;
-    bool read(const std::string& key, std::string& value) const override;
-    bool exists(const std::string& key) const override;
-    bool write(const std::string& key, const std::string& value) override;
-    bool write(const std::string& key, const char* data, size_t size) override;
-    bool write(const std::map<std::string, std::string>& batches) override;
-    bool erase(const std::string& key) override;
-    bool erase(const std::vector<std::string>& keys) override;
-    bool batch_change(const std::map<std::string, std::string>& objs, const std::vector<std::string>& delete_keys) override;
+    bool read(const std::string& key, std::string& value, const std::string& column_family = "") const override;
+    bool exists(const std::string& key, const std::string& column_family = "") const override;
+    bool write(const std::string& key, const std::string& value, const std::string& column_family = "") override;
+    bool write(const std::string& key, const char* data, size_t size, const std::string& column_family = "") override;
+    bool write(const std::map<std::string, std::string>& batches, const std::string& column_family = "") override;
+    bool erase(const std::string& key, const std::string& column_family = "") override;
+    bool erase(const std::vector<std::string>& keys, const std::string& column_family = "") override;
+    bool batch_change(const std::map<std::string, std::string>& objs, const std::vector<std::string>& delete_keys, const std::string& column_family = "") override;
     static void destroy(const std::string& m_db_name);
-    bool read_range(const std::string& prefix, std::vector<std::string>& values) const;
-    xdb_transaction_t* begin_transaction() override;
+    bool read_range(const std::string& prefix, std::vector<std::string>& values, const std::string& column_family = "") const;
+    xdb_transaction_t* begin_transaction(const std::string& column_family = "") override;
 
  private:
     class xdb_impl;

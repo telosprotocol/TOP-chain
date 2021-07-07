@@ -26,7 +26,7 @@ class xdb_rocksdb_transaction_t : public xdb_transaction_t {
 public:
     bool rollback() override;
     bool commit() override;
-    xdb_rocksdb_transaction_t(rocksdb::Transaction* txn) : m_txn(txn) { }
+    xdb_rocksdb_transaction_t(rocksdb::Transaction* txn, rocksdb::ColumnFamilyHandle* handle) : m_txn(txn), m_handler(handle) { }
     ~xdb_rocksdb_transaction_t();
     bool read(const std::string& key, std::string& value) const override;
     bool write(const std::string& key, const std::string& value) override;
@@ -34,6 +34,7 @@ public:
     bool erase(const std::string& key) override;
 private:
     rocksdb::Transaction* m_txn {nullptr};
+    rocksdb::ColumnFamilyHandle* m_handler {nullptr};
     void dump_op_status(const rocksdb::Status& status) const;
 };
 
@@ -80,7 +81,7 @@ bool xdb_rocksdb_transaction_t::read(const std::string& key, std::string& value)
     if (m_txn == nullptr) {
         return false;
     }
-    rocksdb::Status s = m_txn->Get(rocksdb::ReadOptions(), rocksdb::Slice(key), &value);
+    rocksdb::Status s = m_txn->Get(rocksdb::ReadOptions(), m_handler, rocksdb::Slice(key), &value);
     if (!s.ok()) {
         if (s.IsNotFound()) {
             return true;
@@ -97,7 +98,7 @@ bool xdb_rocksdb_transaction_t::write(const std::string& key, const std::string&
     if (m_txn == nullptr) {
         return false;
     }
-    rocksdb::Status s = m_txn->Put(rocksdb::Slice(key), rocksdb::Slice(value));
+    rocksdb::Status s = m_txn->Put(m_handler, rocksdb::Slice(key), rocksdb::Slice(value));
     if (!s.ok()) {
         dump_op_status(s);
         return false;
@@ -109,7 +110,7 @@ bool xdb_rocksdb_transaction_t::write(const std::string& key, const char* data, 
     if (m_txn == nullptr) {
         return false;
     }
-    rocksdb::Status s = m_txn->Put(rocksdb::Slice(key), rocksdb::Slice(data, size));
+    rocksdb::Status s = m_txn->Put(m_handler, rocksdb::Slice(key), rocksdb::Slice(data, size));
     if (!s.ok()) {
         dump_op_status(s);
         return false;
@@ -121,7 +122,7 @@ bool xdb_rocksdb_transaction_t::erase(const std::string& key) {
     if (m_txn == nullptr) {
         return false;
     }
-    rocksdb::Status s = m_txn->Delete(rocksdb::Slice(key));
+    rocksdb::Status s = m_txn->Delete(m_handler, rocksdb::Slice(key));
     if (!s.ok()) {
         if (s.IsNotFound()) {
             return true;
@@ -139,16 +140,18 @@ class xdb::xdb_impl final{
     ~xdb_impl();
     bool open();
     bool close();
-    bool read(const std::string& key, std::string& value) const;
-    bool exists(const std::string& key) const;
-    bool write(const std::string& key, const std::string& value);
-    bool write(const std::string& key, const char* data, size_t size);
-    bool write(const std::map<std::string, std::string>& batches);
-    bool erase(const std::string& key);
-    bool erase(const std::vector<std::string>& keys);
-    bool batch_change(const std::map<std::string, std::string>& objs, const std::vector<std::string>& delete_keys);
-    bool read_range(const std::string& prefix, std::vector<std::string>& values) const;
-    xdb_transaction_t* begin_transaction();
+    bool read(const std::string& key, std::string& value, const std::string& column_family = rocksdb::kDefaultColumnFamilyName) const;
+    bool exists(const std::string& key, const std::string& column_family = rocksdb::kDefaultColumnFamilyName) const;
+    bool write(const std::string& key, const std::string& value, const std::string& column_family = rocksdb::kDefaultColumnFamilyName);
+    bool write(const std::string& key, const char* data, size_t size, const std::string& column_family = rocksdb::kDefaultColumnFamilyName);
+    bool write(const std::map<std::string, std::string>& batches, const std::string& column_family = rocksdb::kDefaultColumnFamilyName);
+    bool erase(const std::string& key, const std::string& column_family = rocksdb::kDefaultColumnFamilyName);
+    bool erase(const std::vector<std::string>& keys, const std::string& column_family = rocksdb::kDefaultColumnFamilyName);
+    bool batch_change(const std::map<std::string, std::string>& objs, const std::vector<std::string>& delete_keys, const std::string& column_family = rocksdb::kDefaultColumnFamilyName);
+    bool read_range(const std::string& prefix, std::vector<std::string>& values, const std::string& column_family = rocksdb::kDefaultColumnFamilyName) const;
+    rocksdb::ColumnFamilyHandle* handler(const std::string& column_family) const;
+    std::string get_column_family(const std::string& key) const;
+    xdb_transaction_t* begin_transaction(const std::string& column_family);
 
     static void destroy(const std::string& m_db_name);
 
@@ -159,7 +162,7 @@ class xdb::xdb_impl final{
     rocksdb::Options m_options{};
     rocksdb::WriteBatch m_batch{};
     rocksdb::ColumnFamilyOptions m_cf_opt{};
-    std::vector<rocksdb::ColumnFamilyHandle*> m_handles;
+    std::vector<rocksdb::ColumnFamilyHandle*> m_handles;  
 };
 
 bool xdb::xdb_impl::open() {
@@ -168,8 +171,11 @@ bool xdb::xdb_impl::open() {
         // have to open default column family
         column_families.push_back(rocksdb::ColumnFamilyDescriptor(
                 rocksdb::kDefaultColumnFamilyName, m_cf_opt));
+        column_families.push_back(rocksdb::ColumnFamilyDescriptor("t", m_cf_opt));
+        column_families.push_back(rocksdb::ColumnFamilyDescriptor("i", m_cf_opt));
 
         rocksdb::Status s = rocksdb::OptimisticTransactionDB::Open(m_options, m_db_name, column_families, &m_handles, &m_db);
+        
         handle_error(s);
         return s.ok();
     }
@@ -204,6 +210,7 @@ xdb::xdb_impl::xdb_impl(const std::string& name) {
     m_options.compression_opts.enabled = true;
     m_options.bottommost_compression = rocksdb::kZSTD;
 
+    m_options.create_missing_column_families = true;
     rocksdb::BlockBasedTableOptions table_options;
     table_options.enable_index_compression = false;
 #ifdef DB_CACHE
@@ -212,18 +219,13 @@ xdb::xdb_impl::xdb_impl(const std::string& name) {
     table_options.pin_l0_filter_and_index_blocks_in_cache = true;
 #endif
     table_options.filter_policy.reset(rocksdb::NewBloomFilterPolicy(10, false));
-
     m_cf_opt.table_factory.reset(rocksdb::NewBlockBasedTableFactory(table_options));
-
     m_cf_opt.compression = m_options.compression;
     m_cf_opt.bottommost_compression = m_options.bottommost_compression;
-
     m_cf_opt.compression_opts.enabled = m_options.compression_opts.enabled;
     m_cf_opt.bottommost_compression = m_options.bottommost_compression;
-
     m_cf_opt.num_levels = m_options.num_levels;
     m_cf_opt.compression_per_level = m_options.compression_per_level;
-
     m_cf_opt.level_compaction_dynamic_level_bytes = m_options.level_compaction_dynamic_level_bytes;
 
     open();
@@ -241,8 +243,9 @@ void xdb::xdb_impl::handle_error(const rocksdb::Status& status) const {
     // throw xdb_error(errmsg);
 }
 
-bool xdb::xdb_impl::read(const std::string& key, std::string& value) const {
-    rocksdb::Status s = m_db->Get(rocksdb::ReadOptions(), m_handles[0], rocksdb::Slice(key), &value);
+bool xdb::xdb_impl::read(const std::string& key, std::string& value, const std::string& column_family) const {
+    auto handle = handler(get_column_family(key));
+    rocksdb::Status s = m_db->Get(rocksdb::ReadOptions(), handle, rocksdb::Slice(key), &value);
     if (!s.ok()) {
         if (s.IsNotFound()) {
             return false;
@@ -254,35 +257,39 @@ bool xdb::xdb_impl::read(const std::string& key, std::string& value) const {
     return true;
 }
 
-bool xdb::xdb_impl::exists(const std::string& key) const {
+bool xdb::xdb_impl::exists(const std::string& key, const std::string& column_family) const {
     std::string value;
-    return read(key, value);
+    return read(key, value, column_family);
 }
 
-bool xdb::xdb_impl::write(const std::string& key, const std::string& value) {
-    rocksdb::Status s = m_db->Put(rocksdb::WriteOptions(), m_handles[0], rocksdb::Slice(key), rocksdb::Slice(value));
+bool xdb::xdb_impl::write(const std::string& key, const std::string& value, const std::string& column_family) {
+    auto handle = handler(get_column_family(key));
+    rocksdb::Status s = m_db->Put(rocksdb::WriteOptions(), handle, rocksdb::Slice(key), rocksdb::Slice(value));
     handle_error(s);
     return s.ok();
 }
 
-bool xdb::xdb_impl::write(const std::string& key, const char* data, size_t size) {
-    rocksdb::Status s = m_db->Put(rocksdb::WriteOptions(), m_handles[0], rocksdb::Slice(key), rocksdb::Slice(data, size));
+bool xdb::xdb_impl::write(const std::string& key, const char* data, size_t size, const std::string& column_family) {
+    auto handle = handler(get_column_family(key));
+    rocksdb::Status s = m_db->Put(rocksdb::WriteOptions(), handle, rocksdb::Slice(key), rocksdb::Slice(data, size));
     handle_error(s);
     return s.ok();
 }
 
-bool xdb::xdb_impl::write(const std::map<std::string, std::string>& batches) {
+bool xdb::xdb_impl::write(const std::map<std::string, std::string>& batches,const std::string& column_family) {
     rocksdb::WriteBatch batch;
+    auto handle = handler(get_column_family(batches.begin()->first));
     for (const auto& entry: batches) {
-        batch.Put(m_handles[0], entry.first, entry.second);
+        batch.Put(handle, entry.first, entry.second);
     }
     rocksdb::Status s = m_db->Write(rocksdb::WriteOptions(), &batch);
     handle_error(s);
     return s.ok();
 }
 
-bool xdb::xdb_impl::erase(const std::string& key) {
-    rocksdb::Status s = m_db->Delete(rocksdb::WriteOptions(), m_handles[0], rocksdb::Slice(key));
+bool xdb::xdb_impl::erase(const std::string& key,const std::string& column_family) {
+    auto handle = handler(get_column_family(key));
+    rocksdb::Status s = m_db->Delete(rocksdb::WriteOptions(), handle, rocksdb::Slice(key));
     if (!s.ok()) {
         if (!s.IsNotFound()) {
             handle_error(s);
@@ -292,23 +299,25 @@ bool xdb::xdb_impl::erase(const std::string& key) {
     return true;
 }
 
-bool xdb::xdb_impl::erase(const std::vector<std::string>& keys) {
+bool xdb::xdb_impl::erase(const std::vector<std::string>& keys, const std::string& column_family) {
     rocksdb::WriteBatch batch;
+    auto handle = handler(get_column_family(keys[0]));
     for (const auto& key: keys) {
-        batch.Delete(m_handles[0], key);
+        batch.Delete(handle, key);
     }
     rocksdb::Status s = m_db->Write(rocksdb::WriteOptions(), &batch);
     handle_error(s);
     return s.ok();
 }
 
-bool xdb::xdb_impl::batch_change(const std::map<std::string, std::string>& objs, const std::vector<std::string>& delete_keys) {
+bool xdb::xdb_impl::batch_change(const std::map<std::string, std::string>& objs, const std::vector<std::string>& delete_keys, const std::string& column_family) {
     rocksdb::WriteBatch batch;
+    auto handle = handler(get_column_family(delete_keys[0]));
     for (const auto& entry: objs) {
-        batch.Put(m_handles[0], entry.first, entry.second);
+        batch.Put(handle, entry.first, entry.second);
     }
     for (const auto& key: delete_keys) {
-        batch.Delete(m_handles[0], key);
+        batch.Delete(handle, key);
     }
     rocksdb::Status s = m_db->Write(rocksdb::WriteOptions(), &batch);
     handle_error(s);
@@ -319,9 +328,10 @@ void xdb::xdb_impl::destroy(const std::string& m_db_name) {
     rocksdb::DestroyDB(m_db_name, rocksdb::Options());
 }
 
-bool xdb::xdb_impl::read_range(const std::string& prefix, std::vector<std::string>& values) const {
+bool xdb::xdb_impl::read_range(const std::string& prefix, std::vector<std::string>& values, const std::string& column_family) const {
     bool ret = false;
-    auto iter = m_db->NewIterator(rocksdb::ReadOptions(), m_handles[0]);
+    auto handle = handler(get_column_family(prefix));
+    auto iter = m_db->NewIterator(rocksdb::ReadOptions(), handle);
 
     for (iter->Seek(prefix); iter->Valid() && iter->key().starts_with(prefix); iter->Next()) {
         values.push_back(iter->value().ToString());
@@ -331,14 +341,38 @@ bool xdb::xdb_impl::read_range(const std::string& prefix, std::vector<std::strin
     return ret;
 }
 
-xdb_transaction_t* xdb::xdb_impl::begin_transaction() {
+rocksdb::ColumnFamilyHandle* xdb::xdb_impl::handler(const std::string& column_family) const{
+    for (auto it : m_handles){
+        if (it->GetName() == column_family) {
+            return it;
+        }
+    }
+
+    return nullptr;
+}
+
+std::string xdb::xdb_impl::get_column_family(const std::string& key) const{
+    std::string column;
+    if (key.at(0) == 'i') {
+        column = "i";
+    } else if (key.at(0) == 't') {
+        column = "t";
+    } else {
+        column = rocksdb::kDefaultColumnFamilyName;
+    }
+
+    return column;
+}
+
+xdb_transaction_t* xdb::xdb_impl::begin_transaction(const std::string& column_family) {
     rocksdb::WriteOptions write_options;
     rocksdb::TransactionOptions txn_options;
 
     // Start a transaction
+    auto handle = handler(column_family);
     rocksdb::Transaction* txn = m_db->BeginTransaction(write_options);
 
-    return new xdb_rocksdb_transaction_t(txn);
+    return new xdb_rocksdb_transaction_t(txn, handle);
 }
 
 xdb::xdb(const std::string& name)
@@ -354,48 +388,108 @@ bool xdb::close() {
     return m_db_impl->close();
 }
 
-bool xdb::read(const std::string& key, std::string& value) const {
-    return m_db_impl->read(key, value);
+bool xdb::read(const std::string& key, std::string& value, const std::string& column_family) const {
+    std::string cf;
+    if (column_family == "") {
+        cf = rocksdb::kDefaultColumnFamilyName;
+    } else {
+        cf = column_family;
+    }
+    return m_db_impl->read(key, value, cf);
 }
 
-bool xdb::exists(const std::string& key) const {
-    return m_db_impl->exists(key);
+bool xdb::exists(const std::string& key, const std::string& column_family) const {
+    std::string cf;
+    if (column_family == "") {
+        cf = rocksdb::kDefaultColumnFamilyName;
+    } else {
+        cf = column_family;
+    }
+    return m_db_impl->exists(key, cf);
 }
 
-bool xdb::write(const std::string& key, const std::string& value) {
-    return m_db_impl->write(key, value);
+bool xdb::write(const std::string& key, const std::string& value, const std::string& column_family) {
+    std::string cf;
+    if (column_family == "") {
+        cf = rocksdb::kDefaultColumnFamilyName;
+    } else {
+        cf = column_family;
+    }
+    return m_db_impl->write(key, value, cf);
 }
 
-bool xdb::write(const std::string& key, const char* data, size_t size) {
-    return m_db_impl->write(key, data, size);
+bool xdb::write(const std::string& key, const char* data, size_t size, const std::string& column_family) {
+    std::string cf;
+    if (column_family == "") {
+        cf = rocksdb::kDefaultColumnFamilyName;
+    } else {
+        cf = column_family;
+    }
+    return m_db_impl->write(key, data, size, cf);
 }
 
-bool xdb::write(const std::map<std::string, std::string>& batches) {
-    return m_db_impl->write(batches);
+bool xdb::write(const std::map<std::string, std::string>& batches, const std::string& column_family) {
+    std::string cf;
+    if (column_family == "") {
+        cf = rocksdb::kDefaultColumnFamilyName;
+    } else {
+        cf = column_family;
+    }
+    return m_db_impl->write(batches, cf);
 }
 
-bool xdb::erase(const std::string& key) {
-    return m_db_impl->erase(key);
+bool xdb::erase(const std::string& key, const std::string& column_family) {
+    std::string cf;
+    if (column_family == "") {
+        cf = rocksdb::kDefaultColumnFamilyName;
+    } else {
+        cf = column_family;
+    }
+    return m_db_impl->erase(key, cf);
 }
 
-bool xdb::erase(const std::vector<std::string>& keys) {
-    return m_db_impl->erase(keys);
+bool xdb::erase(const std::vector<std::string>& keys, const std::string& column_family) {
+    std::string cf;
+    if (column_family == "") {
+        cf = rocksdb::kDefaultColumnFamilyName;
+    } else {
+        cf = column_family;
+    }
+    return m_db_impl->erase(keys, cf);
 }
 
-bool xdb::batch_change(const std::map<std::string, std::string>& objs, const std::vector<std::string>& delete_keys) {
-    return m_db_impl->batch_change(objs, delete_keys);
+bool xdb::batch_change(const std::map<std::string, std::string>& objs, const std::vector<std::string>& delete_keys, const std::string& column_family) {
+    std::string cf;
+    if (column_family == "") {
+        cf = rocksdb::kDefaultColumnFamilyName;
+    } else {
+        cf = column_family;
+    }
+    return m_db_impl->batch_change(objs, delete_keys, cf);
 }
 
 void xdb::destroy(const std::string& m_db_name) {
     rocksdb::DestroyDB(m_db_name, rocksdb::Options());
 }
 
-bool xdb::read_range(const std::string& prefix, std::vector<std::string>& values) const {
-    return m_db_impl->read_range(prefix, values);
+bool xdb::read_range(const std::string& prefix, std::vector<std::string>& values, const std::string& column_family) const {
+    std::string cf;
+    if (column_family == "") {
+        cf = rocksdb::kDefaultColumnFamilyName;
+    } else {
+        cf = column_family;
+    }
+    return m_db_impl->read_range(prefix, values, cf);
 }
 
-xdb_transaction_t* xdb::begin_transaction() {
-    return m_db_impl->begin_transaction();
+xdb_transaction_t* xdb::begin_transaction(const std::string& column_family) {
+    std::string cf;
+    if (column_family == "") {
+        cf = rocksdb::kDefaultColumnFamilyName;
+    } else {
+        cf = column_family;
+    }
+    return m_db_impl->begin_transaction(cf);
 }
 
 }  // namespace ledger

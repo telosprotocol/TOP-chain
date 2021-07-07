@@ -27,12 +27,12 @@ class xdb::xdb_impl final{
     ~xdb_impl();
     void open();
     void close();
-    bool read(const std::string& key, std::string& value) const;
-    bool exists(const std::string& key) const;
-    void write(const std::string& key, const std::string& value) const;
-    void write(const std::string& key, const char* data, size_t size) const;
-    void erase(const std::string& key) const;
-    bool read_range(const std::string& prefix, std::vector<std::string>& values) const;
+    bool read(const std::string& key, std::string& value, const std::string& column_family = "") const;
+    bool exists(const std::string& key, const std::string& column_family = "") const;
+    void write(const std::string& key, const std::string& value, const std::string& column_family = "") const;
+    void write(const std::string& key, const char* data, size_t size, const std::string& column_family = "") const;
+    void erase(const std::string& key, const std::string& column_family = "") const;
+    bool read_range(const std::string& prefix, std::vector<std::string>& values, const std::string& column_family = "") const;
     static void destroy(const std::string& m_db_name);
 
  private:
@@ -75,7 +75,7 @@ void xdb::xdb_impl::handle_error(const leveldb::Status& status) const {
     throw xdb_error(errmsg);
 }
 
-bool xdb::xdb_impl::read(const std::string& key, std::string& value) const {
+bool xdb::xdb_impl::read(const std::string& key, std::string& value, const std::string& column_family = "") const {
     leveldb::Status s = m_db->Get(leveldb::ReadOptions(), leveldb::Slice(key), &value);
     if (!s.ok()) {
         if (s.IsNotFound()) {
@@ -87,22 +87,22 @@ bool xdb::xdb_impl::read(const std::string& key, std::string& value) const {
     return true;
 }
 
-bool xdb::xdb_impl::exists(const std::string& key) const {
+bool xdb::xdb_impl::exists(const std::string& key, const std::string& column_family = "") const {
     std::string value;
-    return read(key, value);
+    return read(key, value, column_family);
 }
 
-void xdb::xdb_impl::write(const std::string& key, const std::string& value) const {
+void xdb::xdb_impl::write(const std::string& key, const std::string& value, const std::string& column_family = "") const {
     leveldb::Status s = m_db->Put(leveldb::WriteOptions(), leveldb::Slice(key), leveldb::Slice(value));
     handle_error(s);
 }
 
-void xdb::xdb_impl::write(const std::string& key, const char* data, size_t size) const {
+void xdb::xdb_impl::write(const std::string& key, const char* data, size_t size, const std::string& column_family = "") const {
     leveldb::Status s = m_db->Put(leveldb::WriteOptions(), leveldb::Slice(key), leveldb::Slice(data, size));
     handle_error(s);
 }
 
-void xdb::xdb_impl::erase(const std::string& key) const {
+void xdb::xdb_impl::erase(const std::string& key, const std::string& column_family = "") const {
     leveldb::Status s = m_db->Delete(leveldb::WriteOptions(), leveldb::Slice(key));
     if (!s.ok()) {
         if (!s.IsNotFound()) {
@@ -115,7 +115,7 @@ void xdb::xdb_impl::destroy(const std::string& m_db_name) {
     leveldb::DestroyDB(m_db_name, leveldb::Options());
 }
 
-bool xdb::xdb_impl::read_range(const std::string& prefix, std::vector<std::string>& values) const {
+bool xdb::xdb_impl::read_range(const std::string& prefix, std::vector<std::string>& values, const std::string& column_family = "") const {
     bool ret = false;
     auto iter = m_db->NewIterator(leveldb::ReadOptions());
 
@@ -138,32 +138,32 @@ void xdb::open() {
 void xdb::close() {
     return m_db_impl->close();
 }
-bool xdb::read(const std::string& key, std::string& value) const {
-    return m_db_impl->read(key, value);
+bool xdb::read(const std::string& key, std::string& value, const std::string& column_family = "") const {
+    return m_db_impl->read(key, value, column_family);
 }
 
-bool xdb::exists(const std::string& key) const {
-    return m_db_impl->exists(key);
+bool xdb::exists(const std::string& key, const std::string& column_family = "") const {
+    return m_db_impl->exists(key, column_family);
 }
 
-void xdb::write(const std::string& key, const std::string& value) {
-    return m_db_impl->write(key, value);
+void xdb::write(const std::string& key, const std::string& value, const std::string& column_family = "") {
+    return m_db_impl->write(key, value, column_family);
 }
 
-void xdb::write(const std::string& key, const char* data, size_t size) {
-    return m_db_impl->write(key, data, size);
+void xdb::write(const std::string& key, const char* data, size_t size, const std::string& column_family = "") {
+    return m_db_impl->write(key, data, size, column_family);
 }
 
-void xdb::erase(const std::string& key) {
-    return m_db_impl->erase(key);
+void xdb::erase(const std::string& key, const std::string& column_family = "") {
+    return m_db_impl->erase(key, column_family);
 }
 
 void xdb::destroy(const std::string& m_db_name) {
     return xdb::xdb_impl::destroy(m_db_name);
 }
 
-bool xdb::read_range(const std::string& prefix, std::vector<std::string>& values) const {
-    return m_db_impl->read_range(prefix, values);
+bool xdb::read_range(const std::string& prefix, std::vector<std::string>& values, const std::string& column_family = "") const {
+    return m_db_impl->read_range(prefix, values, column_family);
 }
 
 }  // namespace ledger

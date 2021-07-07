@@ -14,7 +14,7 @@
 
 namespace top { namespace db {
 
-bool xdb_mem_t::read(const std::string& key, std::string& value) const {
+bool xdb_mem_t::read(const std::string& key, std::string& value, const std::string& column_family) const {
     std::lock_guard<std::mutex> lock(m_lock);
     auto iter = m_values.find(key);
     if (iter != m_values.end()) {
@@ -24,7 +24,7 @@ bool xdb_mem_t::read(const std::string& key, std::string& value) const {
     return false;
 }
 
-bool xdb_mem_t::exists(const std::string& key) const {
+bool xdb_mem_t::exists(const std::string& key, const std::string& column_family) const {
     std::lock_guard<std::mutex> lock(m_lock);
     auto iter = m_values.find(key);
     if (iter != m_values.end()) {
@@ -33,20 +33,20 @@ bool xdb_mem_t::exists(const std::string& key) const {
     return false;
 }
 
-bool xdb_mem_t::write(const std::string& key, const std::string& value) {
+bool xdb_mem_t::write(const std::string& key, const std::string& value, const std::string& column_family) {
     std::lock_guard<std::mutex> lock(m_lock);
     m_values[key] = value;
     return true;
 }
 
-bool xdb_mem_t::write(const std::string& key, const char* data, size_t size) {
+bool xdb_mem_t::write(const std::string& key, const char* data, size_t size, const std::string& column_family) {
     std::lock_guard<std::mutex> lock(m_lock);
     std::string value(data, size);
     m_values[key] = value;
     return true;
 }
 
-bool xdb_mem_t::write(const std::map<std::string, std::string>& batches) {
+bool xdb_mem_t::write(const std::map<std::string, std::string>& batches, const std::string& column_family) {
     std::lock_guard<std::mutex> lock(m_lock);
     for (const auto& entry : batches) {
         m_values[entry.first] = entry.second;
@@ -54,13 +54,13 @@ bool xdb_mem_t::write(const std::map<std::string, std::string>& batches) {
     return true;
 }
 
-bool xdb_mem_t::erase(const std::string& key) {
+bool xdb_mem_t::erase(const std::string& key, const std::string& column_family) {
     std::lock_guard<std::mutex> lock(m_lock);
     m_values.erase(key);
     return true;
 }
 
-bool xdb_mem_t::erase(const std::vector<std::string>& keys) {
+bool xdb_mem_t::erase(const std::vector<std::string>& keys, const std::string& column_family) {
     std::lock_guard<std::mutex> lock(m_lock);
     for (const auto& key : keys) {
         m_values.erase(key);
@@ -68,7 +68,7 @@ bool xdb_mem_t::erase(const std::vector<std::string>& keys) {
     return true;
 }
 
-bool xdb_mem_t::batch_change(const std::map<std::string, std::string>& objs, const std::vector<std::string>& delete_keys) {
+bool xdb_mem_t::batch_change(const std::map<std::string, std::string>& objs, const std::vector<std::string>& delete_keys, const std::string& column_family) {
     std::lock_guard<std::mutex> lock(m_lock);
     for (const auto& entry : objs) {
         m_values[entry.first] = entry.second;
@@ -79,7 +79,7 @@ bool xdb_mem_t::batch_change(const std::map<std::string, std::string>& objs, con
     return true;
 }
 
-xdb_transaction_t* xdb_mem_t::begin_transaction() {
+xdb_transaction_t* xdb_mem_t::begin_transaction(const std::string& column_family) {
     return new xdb_memdb_transaction_t(this);
 }
 

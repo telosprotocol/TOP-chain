@@ -152,7 +152,7 @@ void xsync_handler_t::on_event(const mbus::xevent_ptr_t& e) {
     }
 
     if (e->major_type == mbus::xevent_major_type_consensus) {
-        handle_consensus_result(e);
+        // handle_consensus_result(e); // not push to archive
     }
 }
 

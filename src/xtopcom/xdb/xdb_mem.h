@@ -22,18 +22,18 @@ class xdb_mem_t : public xdb_face_t {
  public:
     bool open() override { return true; }
     bool close() override { return true; }
-    bool read(const std::string& key, std::string& value) const override;
-    bool exists(const std::string& key) const override;
+    bool read(const std::string& key, std::string& value, const std::string& column_family = "") const override;
+    bool exists(const std::string& key, const std::string& column_family = "") const override;
 
-    bool write(const std::string& key, const std::string& value) override;
-    bool write(const std::string& key, const char* data, size_t size) override;
-    bool write(const std::map<std::string, std::string>& batches) override;
+    bool write(const std::string& key, const std::string& value, const std::string& column_family = "") override;
+    bool write(const std::string& key, const char* data, size_t size, const std::string& column_family = "") override;
+    bool write(const std::map<std::string, std::string>& batches, const std::string& column_family = "") override;
 
-    bool erase(const std::string& key) override;
-    bool erase(const std::vector<std::string>& keys) override;
-    bool batch_change(const std::map<std::string, std::string>& objs, const std::vector<std::string>& delete_keys) override;
+    bool erase(const std::string& key, const std::string& column_family = "") override;
+    bool erase(const std::vector<std::string>& keys, const std::string& column_family = "") override;
+    bool batch_change(const std::map<std::string, std::string>& objs, const std::vector<std::string>& delete_keys, const std::string& column_family = "") override;
 
-    xdb_transaction_t* begin_transaction() override;
+    xdb_transaction_t* begin_transaction(const std::string& column_family = "") override;
  public:
     std::map<std::string, std::string> m_values;
     mutable std::mutex m_lock;
