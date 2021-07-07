@@ -170,7 +170,15 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     blockstore_access_from_mbus,
     blockstore_access_from_rpc,
     blockstore_access_from_store,
+    // txpool
     blockstore_access_from_txpool,
+    blockstore_access_from_txpool_on_block_event,
+    blockstore_access_from_txpool_create_confirm_receipt,
+    blockstore_access_from_txpool_make_receipt,
+    blockstore_access_from_txpool_sync_status,
+    blockstore_access_from_txpool_recover,
+    blockstore_access_from_txpool_refresh_table,
+
     blockstore_access_from_statestore,
     blockstore_access_from_application,
     blockstore_access_from_sync_blk,

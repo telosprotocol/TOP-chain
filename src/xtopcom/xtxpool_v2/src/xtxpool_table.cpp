@@ -329,8 +329,7 @@ int32_t xtxpool_table_t::verify_txs(const std::string & account, const std::vect
 
 void xtxpool_table_t::refresh_table(bool refresh_unconfirm_txs) {
     base::xvaccount_t _vaddr(m_xtable_info.get_table_addr());
-    XMETRICS_GAUGE(metrics::blockstore_access_from_txpool, 1);
-    auto _block = base::xvchain_t::instance().get_xblockstore()->get_latest_committed_block(_vaddr);
+    auto _block = base::xvchain_t::instance().get_xblockstore()->get_latest_committed_block(_vaddr, metrics::blockstore_access_from_txpool_refresh_table);
     base::xauto_ptr<base::xvbstate_t> bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(_block.get());
     if (bstate == nullptr) {
         xwarn("xtxpool_table_t::refresh_table fail-get bstate.table=%s,block=%s", m_xtable_info.get_table_addr().c_str(), _block->dump().c_str());
