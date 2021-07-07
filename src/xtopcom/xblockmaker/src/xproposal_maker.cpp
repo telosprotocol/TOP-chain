@@ -127,8 +127,7 @@ int xproposal_maker_t::verify_proposal(base::xvblock_t * proposal_block, base::x
         && proposal_block->get_height() == cert_block->get_height() + 1) {
         proposal_prev_block = xblock_t::raw_vblock_to_object_ptr(cert_block.get());
     } else {
-        auto _demand_cert_block = get_blockstore()->load_block_object(*m_table_maker, proposal_block->get_height() - 1, proposal_block->get_last_block_hash(), false);
-        XMETRICS_GAUGE(metrics::blockstore_access_from_block_maker, 1);
+        auto _demand_cert_block = get_blockstore()->load_block_object(*m_table_maker, proposal_block->get_height() - 1, proposal_block->get_last_block_hash(), false, metrics::blockstore_access_from_blk_mk_proposer_verify_proposal);
         if (_demand_cert_block == nullptr) {
             xwarn("xproposal_maker_t::verify_proposal fail-find cert block. proposal=%s", proposal_block->dump().c_str());
             XMETRICS_GAUGE(metrics::cons_fail_verify_proposal_blocks_invalid, 1);
@@ -140,8 +139,7 @@ int xproposal_maker_t::verify_proposal(base::xvblock_t * proposal_block, base::x
 
     //find matched lock block
     if (proposal_prev_block->get_height() > 0) {
-        auto lock_block = get_blockstore()->load_block_object(*m_table_maker, proposal_prev_block->get_height() - 1, proposal_prev_block->get_last_block_hash(), false);
-        XMETRICS_GAUGE(metrics::blockstore_access_from_block_maker, 1);
+        auto lock_block = get_blockstore()->load_block_object(*m_table_maker, proposal_prev_block->get_height() - 1, proposal_prev_block->get_last_block_hash(), false, metrics::blockstore_access_from_blk_mk_proposer_verify_proposal);
         if (lock_block == nullptr) {
             xwarn("xproposal_maker_t::verify_proposal fail-find lock block. proposal=%s", proposal_block->dump().c_str());
             XMETRICS_GAUGE(metrics::cons_fail_verify_proposal_blocks_invalid, 1);
@@ -154,8 +152,7 @@ int xproposal_maker_t::verify_proposal(base::xvblock_t * proposal_block, base::x
     }
     //find matched commit block
     if (cs_para.get_latest_locked_block()->get_height() > 0) {
-        auto commit_block = get_blockstore()->load_block_object(*m_table_maker, cs_para.get_latest_locked_block()->get_height() - 1, cs_para.get_latest_locked_block()->get_last_block_hash(), false);
-        XMETRICS_GAUGE(metrics::blockstore_access_from_block_maker, 1);
+        auto commit_block = get_blockstore()->load_block_object(*m_table_maker, cs_para.get_latest_locked_block()->get_height() - 1, cs_para.get_latest_locked_block()->get_last_block_hash(), false, metrics::blockstore_access_from_blk_mk_proposer_verify_proposal);
         if (commit_block == nullptr) {
             xwarn("xproposal_maker_t::verify_proposal fail-find commit block. proposal=%s", proposal_block->dump().c_str());
             XMETRICS_GAUGE(metrics::cons_fail_verify_proposal_blocks_invalid, 1);
@@ -286,8 +283,7 @@ bool xproposal_maker_t::verify_proposal_drand_block(base::xvblock_t *proposal_bl
         return false;
     }
 
-    base::xauto_ptr<base::xvblock_t> _drand_vblock = get_blockstore()->load_block_object(base::xvaccount_t(sys_drand_addr), drand_height, 0, true);
-    XMETRICS_GAUGE(metrics::blockstore_access_from_block_maker, 1);
+    base::xauto_ptr<base::xvblock_t> _drand_vblock = get_blockstore()->load_block_object(base::xvaccount_t(sys_drand_addr), drand_height, 0, true, metrics::blockstore_access_from_blk_mk_proposer_verify_proposal_drand);
     if (_drand_vblock == nullptr) {
         XMETRICS_PACKET_INFO("consensus_tableblock",
                             "fail_find_drand", proposal_block->dump(),

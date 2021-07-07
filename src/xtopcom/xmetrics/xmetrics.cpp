@@ -157,7 +157,12 @@ char const * matrics_name(xmetircs_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(blockstore_access_from_application);
         RETURN_METRICS_NAME(blockstore_access_from_sync_blk);
         RETURN_METRICS_NAME(blockstore_access_from_sync_index);
-        RETURN_METRICS_NAME(blockstore_access_from_block_maker);
+        RETURN_METRICS_NAME(blockstore_access_from_blk_mk_ld_and_cache);
+        RETURN_METRICS_NAME(blockstore_access_from_blk_mk_proposer_verify_proposal);
+        RETURN_METRICS_NAME(blockstore_access_from_blk_mk_proposer_verify_proposal_drand);
+        RETURN_METRICS_NAME(blockstore_access_from_blk_mk_table);
+        RETURN_METRICS_NAME(blockstore_access_from_blk_mk_unit_ld_last_blk);
+        RETURN_METRICS_NAME(blockstore_access_from_blk_mk_unit_chk_last_state);
         RETURN_METRICS_NAME(blockstore_access_from_us_on_view_fire);
         RETURN_METRICS_NAME(blockstore_access_from_us_on_timer_fire);
         RETURN_METRICS_NAME(blockstore_access_from_us_on_proposal_finish);
