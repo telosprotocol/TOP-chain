@@ -9,6 +9,7 @@ NS_BEG2(top, metrics)
 #define RETURN_METRICS_NAME(TAG) case TAG: return #TAG
 char const * matrics_name(xmetircs_tag_t const tag) noexcept {
     switch (tag) {
+        RETURN_METRICS_NAME(e_simple_begin);
         RETURN_METRICS_NAME(blockstore_cache_block_total);
         RETURN_METRICS_NAME(dataobject_cur_xbase_type_cons_transaction);
         RETURN_METRICS_NAME(vhost_recv_msg);
@@ -315,7 +316,7 @@ void e_metrics::flow_count(std::string metrics_name, int64_t value, time_point t
     m_message_queue.push(event_message(metrics::e_metrics_major_id::flow, metrics::e_metrics_minor_id::flow_count, metrics_name, value, metrics_appendant_info{timestamp}));
 }
 void e_metrics::gauge(E_SIMPLE_METRICS_TAG tag, int64_t value) {
-    if (tag >= e_simple_total || tag < e_simple_begin ) {
+    if (tag >= e_simple_total || tag <= e_simple_begin ) {
         return;
     }
     s_counters[tag].value += value;
@@ -323,7 +324,7 @@ void e_metrics::gauge(E_SIMPLE_METRICS_TAG tag, int64_t value) {
 }
 
 void e_metrics::gauge_dump() {
-    for(auto index = (int32_t)e_simple_begin; index < (int32_t)e_simple_total; index++) {
+    for(auto index = (int32_t)e_simple_begin + 1; index < (int32_t)e_simple_total; index++) {
         auto metrics_ptr = s_metrics[index];
         auto ptr = metrics_ptr.GetRef<metrics_counter_unit_ptr>();
         ptr->inner_val = s_counters[index].value;

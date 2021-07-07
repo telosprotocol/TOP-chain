@@ -187,12 +187,12 @@ namespace top
             bool                   load_latest_index_list(base::xvbindex_t* & cert_block,base::xvbindex_t* & lock_block,base::xvbindex_t* & commit_block);     //latest commit/lock/cert
 
             int                    load_index(const uint64_t target_height);//return how many index at height
-            base::xvbindex_t*      load_index(const uint64_t target_height,const uint64_t view_id);
-            base::xvbindex_t*      load_index(const uint64_t target_height,const std::string & block_hash);
-            base::xvbindex_t*      load_index(const uint64_t target_height,base::enum_xvblock_flag request_flag);
+            base::xvbindex_t*      load_index(const uint64_t target_height,const uint64_t view_id, const int atag = 0);
+            base::xvbindex_t*      load_index(const uint64_t target_height,const std::string & block_hash, const int atag = 0);
+            base::xvbindex_t*      load_index(const uint64_t target_height,base::enum_xvblock_flag request_flag, const int atag = 0);
             std::vector<base::xvbindex_t*>  load_indexes(const uint64_t target_height);//load indexes from db for height
 
-            bool                   load_block_object(base::xvbindex_t* index_ptr);
+            bool                   load_block_object(base::xvbindex_t* index_ptr, const int atag = 0);
             bool                   load_index_input(base::xvbindex_t* target_block);
             bool                   load_index_output(base::xvbindex_t* target_block);
             size_t                 load_index_by_height(const uint64_t target_height);
