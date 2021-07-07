@@ -66,8 +66,9 @@ void usage() {
     std::cout << "        - checkout_all_account" << std::endl;
     std::cout << "        - check_fast_sync [table|unit|account]" << std::endl;
     std::cout << "        - check_block_exist <account> <height>" << std::endl;
+    std::cout << "        - check_block_info" << std::endl;
     std::cout << "        - check_tx_info [table]" << std::endl;
-    std::cout << "        - check_latest_fullblock [table]" << std::endl;
+    std::cout << "        - check_latest_fullblock" << std::endl;
     std::cout << "        - check_contract_property <account> <prop> <last|all>" << std::endl;
     std::cout << "-------  end  -------" << std::endl;
 }
@@ -248,21 +249,13 @@ public:
         std::cout << "===> " << filename << " generated success!" << std::endl;
     }
 
-    void query_table_latest_fullblock(std::vector<std::string> const & address_vec) {
-        if (address_vec.size() == 0) {
-            return;
-        }
+    void query_table_latest_fullblock() {
         json result_json;
-        for (auto const & _p : address_vec) {
+        auto const & account_vec = get_all_table_account();
+        for (auto const & _p : account_vec) {
             query_table_latest_fullblock(_p, result_json[_p]);
         }
-        std::string filename;
-        if (address_vec.size() == 1) {
-            filename = address_vec[0] + "_latest_fullblock_info.json";
-        } else {
-            filename = "all_latest_fullblock_info.json";
-        }
-
+        std::string filename = "all_latest_fullblock_info.json";
         std::ofstream out_json(filename);
         out_json << std::setw(4) << result_json;
         std::cout << "===> " << filename << " generated success!" << std::endl;
@@ -308,6 +301,54 @@ public:
                 all_thread[i].join();
             }
         }
+    }
+
+    void query_block_info() {
+        json j;
+        uint64_t total_table_block_num{0};
+        uint64_t total_unit_block_num{0};
+        j["total_table_block_num"] = 0;
+        j["total_unit_block_num"] = 0;
+        auto const & account_vec = get_all_table_account();
+        for (auto const & account : account_vec) {
+            auto latest_block = m_blockstore->get_latest_committed_block(account);
+            if (latest_block == nullptr) {
+                std::cout << account << " get_latest_committed_block null!" << std::endl;
+                return;
+            }
+            j[account]["table_block_num"] = latest_block->get_height() + 1;
+            total_table_block_num += latest_block->get_height() + 1;
+
+            int unit_block_num{0};
+            base::xauto_ptr<base::xvbstate_t> bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(latest_block.get());
+            if (bstate == nullptr) {
+                std::cout << account << " get_block_state null!" << std::endl;
+                std::set<std::string> account_set;
+                query_unit_account(account, account_set);
+                for (auto const & unit : account_set) {
+                    unit_block_num += (m_blockstore->get_latest_committed_block_height(unit) + 1);
+                }
+                j[account]["unit_block_num"] = 0;
+                j[account]["bstate"] = "null";
+            } else {
+                auto state = std::make_shared<xtable_bstate_t>(bstate.get());
+                std::set<std::string> account_set = state->get_all_accounts();
+                for (auto const & unit : account_set) {
+                    base::xaccount_index_t index;
+                    state->get_account_index(unit, index);
+                    unit_block_num += (index.get_latest_unit_height() + 1);
+                }
+                j[account]["unit_block_num"] = unit_block_num;
+                j[account]["bstate"] = "ok";
+            }
+            total_unit_block_num += unit_block_num;
+        }
+        j["total_table_block_num"] = total_table_block_num;
+        j["total_unit_block_num"] = total_unit_block_num;
+        std::string filename = "all_block_info.json";
+        std::ofstream out_json(filename);
+        out_json << std::setw(4) << j;
+        std::cout << "===> " << filename << " generated success!" << std::endl;
     }
 
     void query_block_exist(std::string const & address, const uint64_t height) {
@@ -502,9 +543,15 @@ private:
         }
     }
 
-    void query_sync_result(std::string const & account, const uint64_t h_s, const uint64_t h_e, std::string & result) {
+    void query_sync_result(std::string const & account, const uint64_t h_s, const uint64_t h_e, std::string & result, int init_s = -1, int init_e = -1) {
         int start = h_s;
         int end = -1;
+        if (init_s != -1) {
+            start = init_s;
+        }
+        if (init_e != -1) {
+            end = init_e;
+        }
         for (uint64_t h = h_s; h <= h_e; h++) {
             auto vblock = m_blockstore->load_block_object(account,h,0,false);
             data::xblock_t * block = dynamic_cast<data::xblock_t *>(vblock.get());
@@ -535,12 +582,22 @@ private:
 
     void query_sync_result(std::string const & account, json & result_json) {
         auto const block_height = m_blockstore->get_latest_committed_block_height(account);
-        std::string result;
-        query_sync_result(account, 0, block_height, result);
-        result_json = result;
+        auto const connect_height = m_blockstore->get_latest_genesis_connected_block_height(account);
+        if (connect_height > block_height) {
+            std::cout << account << " connect_height: " << connect_height << " > block_height: " << block_height << ", error" << std::endl;
+            result_json = "error";
+            return;
+        }
+        if (block_height == connect_height) {
+            result_json = "0-" + xstring_utl::tostring(block_height) + ",";
+        } else {
+            std::string result;
+            query_sync_result(account, connect_height + 1, block_height, result, 0, connect_height);
+            result_json = result;
+        }
     }
 
-    void query_table_latest_fullblock(std::string const & account, json & result_json) {
+    void query_table_latest_fullblock(std::string const & account, json & j) {
         auto vblock = m_blockstore->get_latest_committed_full_block(account);
         data::xblock_t * block = dynamic_cast<data::xblock_t *>(vblock.get());
         if (block == nullptr) {
@@ -548,29 +605,28 @@ private:
             return;
         }
 
-        auto height = block->get_height();
-        auto height_c = m_blockstore->get_latest_committed_block_height(account);
-        if (!block->is_fulltable() && height != 0) {
+        auto height_full = block->get_height();
+        auto height_commit = m_blockstore->get_latest_committed_block_height(account);
+        if (!block->is_fulltable() && height_full != 0) {
             std::cout << " table " << account << " latest_committed_full_block is not full table" << std::endl;
             return;
         }
-        result_json["last_committed_block"]["height"] = height_c;
-        result_json["last_full_block"]["height"] = height;
-        if (height != 0) {
-            auto root_hash = block->get_fullstate_hash();
-            result_json["last_full_block"]["hash"] = to_hex_str(root_hash);
+        j["last_committed_block"]["height"] = height_commit;
+        j["last_full_block"]["height"] = height_full;
+        if (height_full != 0) {
+            j["last_full_block"]["hash"] = to_hex_str(block->get_fullstate_hash());
             base::xauto_ptr<base::xvbstate_t> bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(block);
             if (bstate == nullptr) {
-                result_json["last_full_block"]["bstate"] = "null";
+                j["last_full_block"]["bstate"] = "null";
             } else {
                 data::xtablestate_ptr_t tablestate = std::make_shared<data::xtable_bstate_t>(bstate.get());
-                result_json["last_full_block"]["bstate"] = "ok";
-                result_json["last_full_block"]["bstate_account_size"] = tablestate->get_account_size();
+                j["last_full_block"]["bstate"] = "ok";
+                j["last_full_block"]["bstate_account_size"] = tablestate->get_account_size();
             }
         }
         std::string s;
-        query_sync_result(account, height, height_c, s);
-        result_json["exist_block"] = s;
+        query_sync_result(account, height_full, height_commit, s);
+        j["exist_block"] = s;
     }
     
     void query_table_tx_info(std::string const & account, json & result_json) {
@@ -896,6 +952,10 @@ int main(int argc, char ** argv) {
             return -1;
         }
     }
+    // xinit_log("./xdb_export.log", true, true);
+    // xset_log_level(enum_xlog_level_debug);
+    // xdbg("------------------------------------------------------------------");
+    // xinfo("new log start here");
     db_export_tools tools{db_path};
     std::string function_name{argv[2]};
     if (function_name == "checkout_all_account") {
@@ -966,17 +1026,10 @@ int main(int argc, char ** argv) {
             return -1;
         }
         tools.query_block_exist(argv[3], std::stoi(argv[4]));
+    } else if (function_name == "check_block_info") {
+        tools.query_block_info();
     } else if (function_name == "check_latest_fullblock") {
-        if (argc == 3) {
-            auto const & account_vec = db_export_tools::get_all_table_account();
-            tools.query_table_latest_fullblock(account_vec);
-        } else if (argc == 4) {
-            std::vector<std::string> account = {argv[3]};
-            tools.query_table_latest_fullblock(account);
-        } else {
-            usage();
-            return -1;
-        }
+        tools.query_table_latest_fullblock();
     } else if (function_name == "check_contract_property") {
         if (argc < 6) {
             usage();
