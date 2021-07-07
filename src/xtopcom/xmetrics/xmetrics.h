@@ -18,7 +18,7 @@
 #include <thread>
 NS_BEG2(top, metrics)
 
-enum E_SIMPLE_METRICS_TAG {
+enum E_SIMPLE_METRICS_TAG : size_t {
     e_simple_begin = 0,
     blockstore_cache_block_total = e_simple_begin,
     dataobject_cur_xbase_type_cons_transaction,
@@ -228,8 +228,8 @@ protected:
         std::atomic_long value;
         std::atomic_long call_count;
     };
-    static simple_counter s_counters[e_simple_total]; // simple counter counter
-    static metrics_variant_ptr s_metrics[e_simple_total]; // simple metrics dump info
+    simple_counter s_counters[e_simple_total]; // simple counter counter
+    metrics_variant_ptr s_metrics[e_simple_total]; // simple metrics dump info
 };
 
 class metrics_time_auto {
