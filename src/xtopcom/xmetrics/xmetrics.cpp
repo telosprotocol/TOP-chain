@@ -419,9 +419,21 @@ xsimple_merics_category g_cates[] = {
     {blockstore_access_from_bft, blockstore_access_from_bft_begin, blockstore_access_from_bft_end}
 };
 
+bool is_category(E_SIMPLE_METRICS_TAG tag) {
+    for(auto index = 0; index < sizeof(g_cates)/sizeof(g_cates[0]); index++) {
+        if(tag == g_cates[index].category) {
+            return true;
+        }
+    }
+    return false;
+}
+
 void e_metrics::gauge_dump() {
     // detail metrics dump
     for(auto index = (int32_t)e_simple_begin + 1; index < (int32_t)e_simple_total; index++) {
+        if(is_category((E_SIMPLE_METRICS_TAG)index)) {
+            continue;
+        }
         auto metrics_ptr = s_metrics[index];
         auto ptr = metrics_ptr.GetRef<metrics_counter_unit_ptr>();
         ptr->inner_val = s_counters[index].value;
@@ -434,7 +446,7 @@ void e_metrics::gauge_dump() {
         uint64_t cate_val = 0;
         uint64_t cate_count = 0;
         auto cate = g_cates[index];
-        for(auto cate_index = cate.start; cate_index <= cate.end; index++) {
+        for(auto cate_index = (int)cate.start; cate_index <= (int)cate.end; cate_index++) {
             cate_val += s_counters[cate_index].value;
             cate_count += s_counters[cate_index].call_count;
         }
