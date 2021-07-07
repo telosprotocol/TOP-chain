@@ -169,7 +169,15 @@ char const * matrics_name(xmetircs_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(blockstore_access_from_us_timer_blk_maker);
         RETURN_METRICS_NAME(blockstore_access_from_us_timer_picker_constructor);
         RETURN_METRICS_NAME(blockstore_access_from_us_dispatcher_load_tc);
-        RETURN_METRICS_NAME(blockstore_access_from_bft);
+        RETURN_METRICS_NAME(blockstore_access_from_bft_check_proposal);
+        RETURN_METRICS_NAME(blockstore_access_from_bft_on_clock_fire);
+        RETURN_METRICS_NAME(blockstore_access_from_bft_pdu_event_down);
+        RETURN_METRICS_NAME(blockstore_access_from_bft_consaccnt_on_proposal_start);
+        RETURN_METRICS_NAME(blockstore_access_from_bft_consdriv_on_proposal_start);
+        RETURN_METRICS_NAME(blockstore_access_from_bft_get_commit_blk);
+        RETURN_METRICS_NAME(blockstore_access_from_bft_get_lock_blk);
+        RETURN_METRICS_NAME(blockstore_access_from_bft_sync);
+        RETURN_METRICS_NAME(blockstore_access_from_bft_init_blk);
         RETURN_METRICS_NAME(blockstore_access_from_vnodesrv);
 
         default: assert(false); return nullptr;
