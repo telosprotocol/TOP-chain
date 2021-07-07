@@ -14,6 +14,7 @@
 #include <system_error>
 #include <array>
 
+#if 0
 TEST(xbasic, timer_driver) {
     auto io_context_wrapper = std::make_shared<top::xasio_io_context_wrapper_t>();
     io_context_wrapper->async_start();
@@ -44,7 +45,7 @@ TEST(xbasic, timer_driver) {
     io_context_wrapper->stop();
     io_context_wrapper.reset();
 }
-
+#endif
 
 TEST(xbasic, base_timer_driver_normal) {
     auto io_thread = top::make_object_ptr<top::base::xiothread_t>();
