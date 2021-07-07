@@ -342,39 +342,55 @@ namespace top
             }
             
             //rule#1: not conflict with existing cert block
-            for(auto it = m_certified_blocks.begin(); it != m_certified_blocks.end(); ++it)
+            for(auto it = m_certified_blocks.rbegin(); it != m_certified_blocks.rend(); ++it)
             {
                 if(  (proposal_block.get_height() <  it->second->get_height())
                    ||(proposal_block.get_viewid() <= it->second->get_viewid()) )//consistency protect
                 {
-                    xinfo("xBFTRules::add_proposal,fail-proposal(%s) vs cert(%s),at node=0x%llx",proposal_block.dump().c_str(),it->second->dump().c_str(),get_xip2_addr().low_addr);
+                    xinfo("xBFTRules::add_proposal,fail-lc proposal(%s) vs cert(%s),at node=0x%llx",proposal_block.dump().c_str(),it->second->dump().c_str(),get_xip2_addr().low_addr);
                     return false;
                 }
                 else if(proposal_block.get_height() == it->second->get_height()) //liveness entry
                 {
                     if(proposal_block.get_bind_clock_cert()->get_clock() < (it->second->get_clock() + 5) )//50s expire
                     {
-                        xinfo("xBFTRules::add_proposal,fail-proposal(%s) vs non-expired cert(%s),at node=0x%llx",proposal_block.dump().c_str(),it->second->dump().c_str(),get_xip2_addr().low_addr);
+                        xinfo("xBFTRules::add_proposal,fail-ec proposal(%s) vs non-expired cert(%s),at node=0x%llx",proposal_block.dump().c_str(),it->second->dump().c_str(),get_xip2_addr().low_addr);
+                        return false; //have un-expired cert at same height
+                    }
+                }
+                else if(proposal_block.get_height() == (it->second->get_height() + 1) ) //next height'proposal
+                {
+                    if(proposal_block.get_last_block_cert()->get_viewid() < it->second->get_viewid())
+                    {
+                        xinfo("xBFTRules::add_proposal,fail-hc proposal(%s) vs prev cert(%s),at node=0x%llx",proposal_block.dump().c_str(),it->second->dump().c_str(),get_xip2_addr().low_addr);
                         return false; //have un-expired cert at same height
                     }
                 }
             }
             
             //rule#2: not conflict with existing proposal
-            for(auto it = m_proposal_blocks.begin(); it != m_proposal_blocks.end(); ++it)
+            for(auto it = m_proposal_blocks.rbegin(); it != m_proposal_blocks.rend(); ++it)
             {
                 if(  (proposal_block.get_height() <  it->second->get_height())
                    ||(proposal_block.get_viewid() <= it->second->get_viewid()) )//consistency protect
                 {
-                    xinfo("xBFTRules::add_proposal,fail-proposal(%s) vs exsit proposal(%s),at node=0x%llx",proposal_block.dump().c_str(),it->second->dump().c_str(),get_xip2_addr().low_addr);
+                    xinfo("xBFTRules::add_proposal,fail-lp proposal(%s) vs exsit proposal(%s),at node=0x%llx",proposal_block.dump().c_str(),it->second->dump().c_str(),get_xip2_addr().low_addr);
                     return false;
                 }
                 else if(proposal_block.get_height() == it->second->get_height()) //liveness entry
                 {
                     if(proposal_block.get_bind_clock_cert()->get_clock() < (it->second->get_bind_clock_cert()->get_clock() + 3) )
                     {
-                        xinfo("xBFTRules::add_proposal,fail-proposal(%s) vs non-expired proposal(%s),at node=0x%llx",proposal_block.dump().c_str(),it->second->dump().c_str(),get_xip2_addr().low_addr);
+                        xinfo("xBFTRules::add_proposal,fail-ep proposal(%s) vs non-expired proposal(%s),at node=0x%llx",proposal_block.dump().c_str(),it->second->dump().c_str(),get_xip2_addr().low_addr);
                         return false; //have un-expired proposal at same height
+                    }
+                }
+                else if(proposal_block.get_height() == (it->second->get_height() + 1) )//next height
+                {
+                    if(proposal_block.get_last_block_cert()->get_viewid() < it->second->get_viewid())
+                    {
+                        xinfo("xBFTRules::add_proposal,fail-hp proposal(%s) vs prev proposal(%s),at node=0x%llx",proposal_block.dump().c_str(),it->second->dump().c_str(),get_xip2_addr().low_addr);
+                        return false;
                     }
                 }
             }
@@ -409,7 +425,7 @@ namespace top
                     removed_list.push_back(_to_remove);//transfer owner to list
                     m_proposal_blocks.erase(cur_it);
                 }
-                else
+                else //proposal_block is latest one
                 {
                     cur_it->second->disable_vote(); //not allow vote anymore
                     cur_it->second->mark_pending(); //still keep and waiting for new messaging
@@ -428,13 +444,10 @@ namespace top
                 
                 if( cur_it->second->get_height() == proposal_block.get_height())
                 {
-                    if(cur_it->second->get_viewid() < proposal_block.get_viewid())//consistency protect
-                    {
-                        xinfo("xBFTRules::add_proposal,clean cert(%s) by new proposal(%s),at node=0x%llx",cur_it->second->dump().c_str(),proposal_block.dump().c_str(),get_xip2_addr().low_addr);
-                        
-                        cur_it->second->release_ref();
-                        m_certified_blocks.erase(cur_it);
-                    }
+                    xinfo("xBFTRules::add_proposal,clean cert(%s) by new proposal(%s),at node=0x%llx",cur_it->second->dump().c_str(),proposal_block.dump().c_str(),get_xip2_addr().low_addr);
+                    
+                    cur_it->second->release_ref();
+                    m_certified_blocks.erase(cur_it);
                 }
             }
             
@@ -519,11 +532,9 @@ namespace top
             }
             
             //rule#3: mutex with existing proposal
-            if(  (_target_block->get_height() > get_lock_block()->get_height())
-               &&(_target_block->get_viewid() > get_lock_block()->get_viewid()) )
             {
                 //the voted proposal may locked current height and prev height as well
-                for(auto it = m_proposal_blocks.begin(); it != m_proposal_blocks.end(); ++it)
+                for(auto it = m_proposal_blocks.rbegin(); it != m_proposal_blocks.rend(); ++it)
                 {
                     if(  (it->second->get_height() == (_target_block->get_height() + 1) ) //a block of prev height
                        &&(it->second->get_last_block_hash() != _target_block->get_block_hash())  )//but a unpointed cer
@@ -543,16 +554,11 @@ namespace top
                     
                     if(_target_block->get_height() == it->second->get_height()) //found same heights
                     {
-                        //skip check with proposal of pending & disabled
-                        if(  (it->second->is_pending() == false)
-                           ||(it->second->is_vote_disable() == false) )
+                        if(_target_block->get_viewid() < it->second->get_viewid())//only keep higher view of proposal and cert
                         {
-                            if(_target_block->get_viewid() < it->second->get_viewid())//only keep higher view of proposal and cert
-                            {
-                                //consistency gurantee
-                                xinfo("xBFTRules::add_cert_block,fail-cert(%s) vs exist proposal(%s),at node=0x%llx",_target_block->dump().c_str(),it->second->dump().c_str(),get_xip2_addr().low_addr);
-                                return false; //only allow have one proposal or cert at same height,keep higher viewid
-                            }
+                            //consistency gurantee
+                            xinfo("xBFTRules::add_cert_block,fail-cert(%s) vs exist proposal(%s),at node=0x%llx",_target_block->dump().c_str(),it->second->dump().c_str(),get_xip2_addr().low_addr);
+                            return false; //only allow have one proposal or cert at same height,keep higher viewid
                         }
                     }
                 }
@@ -610,14 +616,18 @@ namespace top
                 }
                 
                 //consistency gurantee
-                if(  (cur_it->second->get_height() <= _target_block->get_height())
-                   ||(cur_it->second->get_viewid() <= _target_block->get_viewid()) )
+                if(cur_it->second->get_height() == _target_block->get_height())
                 {
                     xproposal_t * _to_remove = cur_it->second;
                     _to_remove->disable_vote();
                     removed_list.push_back(_to_remove);//transfer owner to list
                     
                     m_proposal_blocks.erase(cur_it);//erase old one
+                }
+                else if(cur_it->second->get_height() < _target_block->get_height())
+                {
+                    cur_it->second->disable_vote(); //not allow vote anymore
+                    cur_it->second->mark_pending(); //still keep and waiting for new messaging
                 }
             }
             //notify each one to upper layer as enum_xconsensus_error_outofdate

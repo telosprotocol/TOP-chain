@@ -346,7 +346,8 @@ namespace top
             inline  const xvip2_t&     get_validator() const {return m_validator;} //XIP address about who issue/lead this block
             inline  const xvip2_t&     get_auditor()   const {return m_auditor;} //XIP address(wild* address) about who(a cluster or a subset) should audit this certication
             inline  uint64_t           get_parent_block_height() const {return m_parent_height;} //return 0 if not existing
-
+            inline  uint64_t           get_parent_block_viewid() const {return m_parent_viewid;} //return 0 if not existing
+            
             inline  const std::string& get_header_hash()       const {return m_header_hash;}
             inline  const std::string& get_input_root_hash()   const {return m_input_root_hash;}
             inline  const std::string& get_output_root_hash()  const {return m_output_root_hash;}
@@ -388,6 +389,7 @@ namespace top
             void                 set_auditor(const xvip2_t & auditor_xip);
             void                 set_justify_cert_hash(const std::string & hash);
             void                 set_parent_height(const uint64_t parent_block_height);//link to parent container(like tableblock)
+            void                 set_parent_viewid(const uint64_t parent_block_viewid);//link to parent container(like tableblock)
 
             virtual int32_t      serialize_to_string(std::string & bin_data) override final; //wrap function fo serialize_to(stream)
 
@@ -430,7 +432,8 @@ namespace top
             uint32_t            m_expired;          //expired clock'count since m_clock,-1 means valid forever
             uint32_t            m_view_token;       //paried with view#id,random generated token for each view#id and each QC
             uint64_t            m_viewid;           //the view#id under m_account when finish QC or consensus
-            uint64_t            m_parent_height;    //height of container(like tableblock) that may carry this sub-block
+            uint64_t            m_parent_height;    //height of container(like tableblock) that carry this sub-block
+            uint64_t            m_parent_viewid;    //viewid of container(like tableblock) that carry this sub-block
             uint64_t            m_drand_height;     //height/round of d-rand
             uint32_t            m_relative_gmtime;  //seconds since 2019-11-08 05:00:00 UTC(2019-11-08 13:00:00 UTC+8)
 
@@ -719,12 +722,11 @@ namespace top
             void                        set_next_next_cert(xvqcert_t * next_next_vqcert_ptr);//reset ptr of next next cert
 
         public: //associated information about parent block(e.g. tableblock)
-            inline const std::string    get_parent_account()        const {return m_parent_account;}
-            inline const uint64_t       get_parent_block_height()   const {return m_vqcert_ptr->get_parent_block_height();}
-            inline const uint64_t       get_parent_view_id()        const {return m_parent_viewid;}
-            inline const int            get_entityid_at_parent()    const {return m_entityid_at_parent;}
-
-            bool  set_parent_block(const std::string parent_addr,const uint64_t parent_height,const uint64_t parent_viewid,const uint16_t entityid_at_parent);
+            inline const std::string    get_parent_account()      const {return m_parent_account;}
+            inline const uint64_t       get_parent_block_height() const {return m_vqcert_ptr->get_parent_block_height();}
+            inline const uint64_t       get_parent_block_viewid() const {return m_vqcert_ptr->get_parent_block_viewid();}
+           
+            bool  set_parent_block(const std::string parent_addr);
 
         private:
             //generated the unique path of object(like vblock) under store-space(get_store_path()) to store data to DB
@@ -758,14 +760,11 @@ namespace top
             //note: m_next_next_qcert NOT go to persist stored
             xvqcert_t*                  m_next_next_qcert;  //temporary hold ptr of next and next hqc to proov this block as commited
 
-            //just carry them at memory,might persist at later version
-            std::string     m_parent_account;   //container(e.g.tableblock)'account id(refer xvaccount_t::get_xvid())
-            uint64_t        m_parent_viewid;    //viewid of container(e.gtableblock) that may carry this block
-            uint16_t        m_entityid_at_parent; //entityid of under parent 'block(e.g tableblock)
-
         private://just using them at running and stored in sepereated place than xvblock_t.
             std::string                 m_dump_info;        //pre-print debug inforatmion and just for performance
             std::string                 m_offblock_snapshot;  // for sync set and cache
+            std::string                 m_parent_account;   //container(e.g.tableblock)'account id(refer xvaccount_t::get_xvid())
+
         };
         using xvblock_ptr_t = xobject_ptr_t<base::xvblock_t>;
 

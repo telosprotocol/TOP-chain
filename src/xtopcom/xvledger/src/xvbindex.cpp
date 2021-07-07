@@ -30,10 +30,18 @@ namespace top
             m_last_fullblock_hash   = obj.get_last_full_block_hash();
             m_last_fullblock_height = obj.get_last_full_block_height();
             
-            m_parent_account      = obj.get_parent_account();
-            m_parent_block_height = obj.get_parent_block_height();
-            m_parent_view_id      = obj.get_parent_view_id();
-            m_entityid_at_parent  = obj.get_entityid_at_parent();
+            if(obj.get_parent_account().empty() == false)
+            {
+                base::xvaccount_t parent_acct_obj(obj.get_parent_account());
+                m_parent_accountid      = parent_acct_obj.get_xvid();
+            }
+            else //init 0 to mark not relyon parent block
+            {
+                m_parent_accountid = 0;
+            }
+
+            m_parent_block_height   = obj.get_parent_block_height();
+            m_parent_block_viewid   = obj.get_parent_block_viewid();
             
             //copy flags of block,and combine class of block
             //[8bit:block-flags][8bit:index-bits]
@@ -60,10 +68,9 @@ namespace top
             
             m_next_viewid_offset    = obj.m_next_viewid_offset;
             
-            m_parent_account        = obj.m_parent_account;
+            m_parent_accountid      = obj.m_parent_accountid;
             m_parent_block_height   = obj.m_parent_block_height;
-            m_parent_view_id        = obj.m_parent_view_id;
-            m_entityid_at_parent    = obj.m_entityid_at_parent;
+            m_parent_block_viewid   = obj.m_parent_block_viewid;
             
             m_combineflags          = obj.m_combineflags;
             m_block_types           = obj.m_block_types;
@@ -106,10 +113,9 @@ namespace top
             
             m_next_viewid_offset    = obj.m_next_viewid_offset;
 
-            m_parent_account        = obj.m_parent_account;
+            m_parent_accountid      = obj.m_parent_accountid;
             m_parent_block_height   = obj.m_parent_block_height;
-            m_parent_view_id        = obj.m_parent_view_id;
-            m_entityid_at_parent    = obj.m_entityid_at_parent;
+            m_parent_block_viewid   = obj.m_parent_block_viewid;
             
             m_combineflags          = obj.m_combineflags;
             m_block_types           = obj.m_block_types;
@@ -169,9 +175,9 @@ namespace top
             m_last_fullblock_height = 0;
             m_next_viewid_offset= 0;
             
+            m_parent_accountid   = 0;
             m_parent_block_height= 0;
-            m_parent_view_id     = 0;
-            m_entityid_at_parent = 0;
+            m_parent_block_viewid= 0;
             
             m_combineflags      = 0;
             m_block_types       = 0;
@@ -436,10 +442,9 @@ namespace top
             stream.write_compact_var(m_last_fullblock_height);
             stream.write_compact_var(m_next_viewid_offset);
             
-            stream.write_compact_var(m_parent_account);
+            stream << m_parent_accountid;
             stream.write_compact_var(m_parent_block_height);
-            stream.write_compact_var(m_parent_view_id);
-            stream << m_entityid_at_parent;
+            stream.write_compact_var(m_parent_block_viewid);
             stream << m_combineflags;
             stream << m_block_types;
             
@@ -462,10 +467,9 @@ namespace top
                 stream.read_compact_var(m_last_fullblock_height);
                 stream.read_compact_var(m_next_viewid_offset);
                 
-                stream.read_compact_var(m_parent_account);
+                stream >> m_parent_accountid;
                 stream.read_compact_var(m_parent_block_height);
-                stream.read_compact_var(m_parent_view_id);
-                stream >> m_entityid_at_parent;
+                stream.read_compact_var(m_parent_block_viewid);
                 stream >> m_combineflags;
                 stream >> m_block_types;
                 
