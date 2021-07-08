@@ -743,7 +743,8 @@ namespace top
         base::xvbindex_vector   xvblockstore_impl::load_block_index(const base::xvaccount_t & account,const uint64_t height,const int atag)
         {
             LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
-            if(account_obj->load_index(height,atag)) //load first
+            int index_size = account_obj->load_index(height);
+            if(index_size > 0) //load first
                 return base::xvbindex_vector(account_obj->query_index(height));//then query
 
             xwarn("xvblockstore_impl load_block_index(height) fail to load block(%llu) for account(%s) at store(%s)",height,account.get_address().c_str(),m_store_path.c_str());
