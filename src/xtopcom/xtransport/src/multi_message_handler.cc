@@ -31,7 +31,7 @@ ThreadHandler::ThreadHandler(base::xiothread_t * raw_thread_ptr, const uint32_t 
 #ifdef DEBUG
     create_databox(2048, 8192, 131070); //create dedicate databox for packet
 #else
-    create_databox(2048, 8192, 65536); //create dedicate databox for packet
+    create_databox(2048, 8192, 131070); //create dedicate databox for packet
 #endif
     TOP_INFO("m_ptr_databox:%p",get_databox());
 
@@ -49,6 +49,11 @@ ThreadHandler::~ThreadHandler()
 //packet is from   send(xpacket_t & packet) or dispatch(xpacket_t & packet) of xdatabox_t
 //subclass need overwrite this virtual function if they need support signal(xpacket_t) or send(xpacket_t),only allow called internally
 bool  ThreadHandler::on_databox_open(base::xpacket_t & packet,int32_t cur_thread_id, uint64_t time_now_ms)
+{
+    return ThreadHandler::fired_packet(packet,cur_thread_id,time_now_ms,callback_);
+}
+
+bool  ThreadHandler::fired_packet(base::xpacket_t & packet,int32_t cur_thread_id, uint64_t time_now_ms,on_dispatch_callback_t & callback_ptr)
 {
     auto thread_begin_time = GetCurrentTimeMicSec();  // us
     transport::protobuf::RoutingMessage pro_message;
@@ -76,8 +81,8 @@ bool  ThreadHandler::on_databox_open(base::xpacket_t & packet,int32_t cur_thread
                 pro_message.id(),
                 pro_message.is_root());
     }
-    assert(callback_);
-    callback_(pro_message, packet);
+    assert(callback_ptr);
+    callback_ptr(pro_message, packet);
 
     return true;
 }
@@ -95,6 +100,9 @@ void ThreadHandler::unregister_on_dispatch_callback() {
 
 MultiThreadHandler::MultiThreadHandler()
 {
+    #ifdef __DIRECT_PASS_PACKET_WITHOUT_DATABOX__
+    m_callback = nullptr;
+    #endif
 }
 
 void MultiThreadHandler::Init()
@@ -131,12 +139,23 @@ void MultiThreadHandler::register_on_dispatch_callback(on_dispatch_callback_t ca
     for (auto& th : m_worker_threads) {
         th->register_on_dispatch_callback(callback);
     }
+    
+    #ifdef __DIRECT_PASS_PACKET_WITHOUT_DATABOX__
+    std::unique_lock<std::mutex> lock(m_mutex);
+    xassert(nullptr == m_callback);
+    m_callback = callback;
+    #endif
 }
 
 void MultiThreadHandler::unregister_on_dispatch_callback() {
     for (auto& th : m_worker_threads) {
         th->unregister_on_dispatch_callback();
     }
+    
+    #ifdef __DIRECT_PASS_PACKET_WITHOUT_DATABOX__
+    std::unique_lock<std::mutex> lock(m_mutex);
+    m_callback = nullptr;
+    #endif
 }
 
 void MultiThreadHandler::HandleMessage(base::xpacket_t & packet)
@@ -152,6 +171,11 @@ void MultiThreadHandler::HandleMessage(base::xpacket_t & packet)
         TOP_DEBUG("HandleMessage Recv size: %d, from:%s:%d", packet.get_body().size(),packet.get_from_ip_addr().c_str(), packet.get_from_ip_port());
         #endif
     }
+    
+    #ifdef __DIRECT_PASS_PACKET_WITHOUT_DATABOX__
+    ThreadHandler::fired_packet(packet,0,0,m_callback);
+    return;
+    #endif //
 
 #if defined(DEBUG)
     uint32_t index = 0;

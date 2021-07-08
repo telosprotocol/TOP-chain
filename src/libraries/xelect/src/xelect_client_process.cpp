@@ -87,7 +87,7 @@ void xelect_client_process::process_timer(const mbus::xevent_ptr_t & e) {
 void xelect_client_process::process_elect(const mbus::xevent_ptr_t & e) {
     auto bme = dynamic_xobject_ptr_cast<mbus::xevent_store_block_to_db_t>(e);
     assert(bme);
-    xblock_ptr_t const & block = mbus::extract_block_from(bme);
+    xblock_ptr_t const & block = mbus::extract_block_from(bme, metrics::blockstore_access_from_mbus_xelect_process_elect);
 
     // only process light unit, others are filtered
     xassert(block->get_block_class() == base::enum_xvblock_class_light);
