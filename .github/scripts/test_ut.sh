@@ -50,3 +50,12 @@ sed -i 's#<!--content_summary-->#<div class="step"><table><tbody><tr><td class="
 
 # archive
 tar -zcvf report.tar.gz *html
+
+# assert
+let err_count="$test_fail+$test_errors"
+if [ ${err_count} -eq 0 ];then
+    echo "no error testcase, done"
+else
+    echo "error testcase count: ${err_count}"
+    exit -1
+fi
