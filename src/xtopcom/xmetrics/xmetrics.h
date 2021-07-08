@@ -178,8 +178,27 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     blockstore_access_from_mbus_grpc_process_event,
     blockstore_access_from_mbus_end = blockstore_access_from_mbus_grpc_process_event,
 
-
+    // access from rpc
     blockstore_access_from_rpc,
+    blockstore_access_from_rpc_begin,
+    blockstore_access_from_rpc_get_block = blockstore_access_from_rpc_begin,
+    blockstore_access_from_rpc_get_committed_block,
+    blockstore_access_from_rpc_get_chain_info,
+    blockstore_access_from_rpc_get_latest_tables,
+    blockstore_access_from_rpc_get_cert_blk,
+    blockstore_access_from_rpc_get_timer_clock,
+    blockstore_access_from_rpc_get_unit,
+    blockstore_access_from_rpc_get_block_committed_block,
+    blockstore_access_from_rpc_get_block_full_block,
+    blockstore_access_from_rpc_get_block_by_height,
+    blockstore_access_from_rpc_get_block_load_object,
+    blockstore_access_from_rpc_get_block_committed_height,
+    blockstore_access_from_rpc_get_block_query_propery,
+    blockstore_access_from_rpc_get_block_set_table,
+    blockstore_access_from_rpc_get_block_json,
+    blockstore_access_from_rpc_end = blockstore_access_from_rpc_get_block_json,
+
+
     blockstore_access_from_store,
     // txpool
     blockstore_access_from_txpool,
