@@ -116,10 +116,8 @@ namespace top
             if(NULL == proposal_block)
                 return enum_xconsensus_error_bad_proposal;
             
-            if(check_proposal(proposal_block))
-                return enum_xconsensus_code_successful; //good by connect checking
-            else
-                return enum_xconsensus_code_need_data;
+            //xbft has enhanced block check and U.S will do addtional check,so here just pass to improve performance
+            return enum_xconsensus_code_successful;
         }
 
         //clock block always pass by higher layer to lower layer

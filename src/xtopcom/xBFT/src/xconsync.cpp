@@ -425,7 +425,6 @@ namespace top
             else
             {
                 xwarn("xBFTSyncdrv::handle_sync_respond_msg,failed pass safe-check for block:%s at node=0x%llx from peer:0x%llx",_sync_block->dump().c_str(),get_xip2_addr().low_addr,from_addr.low_addr);
-                fire_verify_syncblock_job(_sync_block.get(),NULL);
             }
             return enum_xconsensus_code_successful;
         }
@@ -475,7 +474,8 @@ namespace top
                         xwarn_err("xBFTSyncdrv::fire_verify_syncblock,fail-unmatched commit_cert=%s vs proposal=%s,at node=0x%llx",_merge_cert->dump().c_str(),_for_check_block_->dump().c_str(),get_xip2_low_addr());
                         return true;
                     }
-                    if(get_vcertauth()->verify_muti_sign(_for_check_block_) == base::enum_vcert_auth_result::enum_successful)
+                    if(   _for_check_block_->check_block_flag(base::enum_xvblock_flag_authenticated)
+                       || (get_vcertauth()->verify_muti_sign(_for_check_block_) == base::enum_vcert_auth_result::enum_successful) )
                     {
                         _for_check_block_->get_cert()->set_unit_flag(base::enum_xvblock_flag_authenticated);
                         _for_check_block_->set_block_flag(base::enum_xvblock_flag_authenticated);
