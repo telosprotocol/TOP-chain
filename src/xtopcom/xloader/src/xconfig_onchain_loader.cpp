@@ -10,6 +10,7 @@
 #include "xdata/xelect_transaction.hpp"
 #include "xmbus/xevent.h"
 #include "xmbus/xevent_store.h"
+#include "xmetrics/xmetrics.h"
 
 #include <inttypes.h>
 
@@ -96,7 +97,7 @@ void xconfig_onchain_loader_t::update(mbus::xevent_ptr_t e) {
         return;
     }
 
-    auto block = mbus::extract_block_from(block_event);
+    auto block = mbus::extract_block_from(block_event, metrics::blockstore_access_from_mbus_onchain_loader_t_update);
     xassert(block != nullptr);
 
     xdbg("xconfig_onchain_loader_t::update tcc update begin,height=%ld", block->get_height());
