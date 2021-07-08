@@ -159,8 +159,13 @@ namespace top
             }
 
             bool loaded_new_block = false;
-            if(target_index->get_this_block() == NULL)
+            if(target_index->get_this_block() == NULL) {
                 loaded_new_block = target_account->load_block_object(target_index.get(), atag);
+            } else {
+                #ifdef ENABLE_METRICS
+                XMETRICS_GAUGE((top::metrics::E_SIMPLE_METRICS_TAG)atag, 1);
+                #endif
+            }
 
             if(ask_full_load)
             {

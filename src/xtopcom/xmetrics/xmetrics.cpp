@@ -154,7 +154,15 @@ char const * matrics_name(xmetircs_tag_t const tag) noexcept {
         // blockstore accessing
         RETURN_METRICS_NAME(blockstore_access_from_account_context);
         RETURN_METRICS_NAME(blockstore_access_from_contract_runtime);
+
+        // access from mbus
         RETURN_METRICS_NAME(blockstore_access_from_mbus);
+        RETURN_METRICS_NAME(blockstore_access_from_mbus_onchain_loader_t_update);
+        RETURN_METRICS_NAME(blockstore_access_from_mbus_contract_db_on_block);
+        RETURN_METRICS_NAME(blockstore_access_from_mbus_txpool_db_event_on_block);
+        RETURN_METRICS_NAME(blockstore_access_from_mbus_xelect_process_elect);
+        RETURN_METRICS_NAME(blockstore_access_from_mbus_grpc_process_event);
+
         RETURN_METRICS_NAME(blockstore_access_from_rpc);
         RETURN_METRICS_NAME(blockstore_access_from_store);
 
@@ -416,7 +424,9 @@ xsimple_merics_category g_cates[] = {
     {blockstore_access_from_sync, blockstore_access_from_sync_begin, blockstore_access_from_sync_end},
     {blockstore_access_from_blk_mk, blockstore_access_from_blk_mk_begin, blockstore_access_from_blk_mk_end},
     {blockstore_access_from_us, blockstore_access_from_us_begin, blockstore_access_from_us_end},
-    {blockstore_access_from_bft, blockstore_access_from_bft_begin, blockstore_access_from_bft_end}
+    {blockstore_access_from_bft, blockstore_access_from_bft_begin, blockstore_access_from_bft_end},
+    {statestore_access, statestore_access_begin, statestore_access_end},
+    {blockstore_access_from_mbus, blockstore_access_from_mbus_begin, blockstore_access_from_mbus_end}
 };
 
 bool is_category(E_SIMPLE_METRICS_TAG tag) {
