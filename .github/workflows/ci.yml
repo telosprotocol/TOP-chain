@@ -47,15 +47,5 @@ jobs:
 
       - name: Notify
         if: always()
-        uses: dawidd6/action-send-mail@v3
-        with:
-          server_address: smtp.office365.com
-          server_port: 587
-          username: topqa@topnetwork.org
-          password: ${{ secrets.PSWD }}
-          subject: ${{ github.job }} job of ${{ github.repository }} has ${{ job.status }}
-          body: ${{ github.job }} job in worflow ${{ github.workflow }} of ${{ github.repository }} has ${{ job.status }}
-          to: aries.zhang@topnetwork.org
-          from: topqa
-          secure: true
-          attachments: ./ut_report/report.tar.gz
+        run: |
+          bash .github/scripts/notify.sh ${{ job.status }} "${{ github.job }} job in worflow ${{ github.workflow }} of ${{ github.repository }} has ${{ job.status }}"
