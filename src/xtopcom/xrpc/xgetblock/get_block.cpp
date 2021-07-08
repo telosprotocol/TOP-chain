@@ -1085,6 +1085,7 @@ bool is_prop_name_not_set_property(const std::string & prop_name) {
         xstake::XPROPERTY_CONTRACT_ACCUMULATED_ISSUANCE,
         xstake::XPORPERTY_CONTRACT_UNQUALIFIED_NODE_KEY,
         xstake::XPROPERTY_CONTRACT_SLASH_INFO_KEY,
+        xstake::XPROPERTY_REWARD_DETAIL,
         PROPOSAL_MAP_ID,
         VOTE_MAP_ID
     };
