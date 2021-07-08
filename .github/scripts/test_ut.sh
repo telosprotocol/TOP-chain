@@ -47,3 +47,6 @@ for utxml in $(ls ./*xml);do
     fi
 done
 sed -i 's#<!--content_summary-->#<div class="step"><table><tbody><tr><td class="result"><a>SUMMARY ALL:'$summary_tests' FAIL:'$summary_fails'</a></td></tr></tbody></table></div>\n<!--content_summary-->#g' $UHTML
+
+# archive
+tar -zcvf report.tar.gz *html

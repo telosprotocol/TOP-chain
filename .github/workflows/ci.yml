@@ -10,7 +10,7 @@ on:
 
 jobs:
   build:
-    if: github.repository_owner == 'telosprotocol' && (github.event.action == 'opened' || github.event.action == 'reopened' || github.event.action == 'synchronize' || github.event_name == 'pushed')
+    # if: github.repository_owner == 'telosprotocol' && (github.event.action == 'opened' || github.event.action == 'reopened' || github.event.action == 'synchronize' || github.event_name == 'pushed')
     # if: github.event.action == 'opened' || github.event.action == 'reopened' || github.event_name == 'push'
     runs-on: [self-hosted, Linux, X64]
     
@@ -24,8 +24,6 @@ jobs:
 
       - name: Checkout repository
         uses: actions/checkout@v2
-        with:
-          ssh-key: ${{ secrets.XVM }}
       
       - name: Sync submodule
         run: git submodule sync --recursive
@@ -46,3 +44,18 @@ jobs:
           RUN_NUM: ${{ github.run_number }}
         run: |
           bash .github/scripts/test_xtop_allinone.sh "$RUN_NUM"
+
+      - name: Notify
+        if: always()
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.office365.com
+          server_port: 587
+          username: topqa@topnetwork.org
+          password: ${{ secrets.PSWD }}
+          subject: ${{ github.job }} job of ${{ github.repository }} has ${{ job.status }}
+          body: ${{ github.job }} job in worflow ${{ github.workflow }} of ${{ github.repository }} has ${{ job.status }}
+          to: aries.zhang@topnetwork.org
+          from: topqa
+          secure: true
+          attachments: ./ut_report/report.tar.gz
