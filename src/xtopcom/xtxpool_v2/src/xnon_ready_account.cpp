@@ -12,15 +12,15 @@ namespace top {
 namespace xtxpool_v2 {
 
 int32_t xnon_ready_accounts_t::push_tx(const std::shared_ptr<xtx_entry> & tx_ent) {
-    auto & account_addr = tx_ent->get_tx()->get_account_addr();
+    auto account_addr = tx_ent->get_tx()->get_account_addr();
     auto it = m_account_map.find(account_addr);
     if (it == m_account_map.end()) {
         std::map<std::string, std::shared_ptr<xtx_entry>> txs_map;
-        txs_map[tx_ent->get_tx()->get_transaction()->get_digest_str()] = tx_ent;
+        txs_map[tx_ent->get_tx()->get_tx_hash()] = tx_ent;
         m_account_map[account_addr] = txs_map;
     } else {
         auto & txs_map = it->second;
-        txs_map[tx_ent->get_tx()->get_transaction()->get_digest_str()] = tx_ent;
+        txs_map[tx_ent->get_tx()->get_tx_hash()] = tx_ent;
     }
     m_xtable_info->tx_inc(tx_ent->get_tx()->get_tx_subtype(), 1);
     return xsuccess;

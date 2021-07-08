@@ -40,7 +40,7 @@ TEST_F(test_non_ready_account, non_ready_account_basic) {
     }
 
     for (uint32_t i = 0; i < 5; i++) {
-        auto find_tx = non_ready_accounts.find_tx(txs[i]->get_account_addr(), txs[i]->get_transaction()->digest());
+        auto find_tx = non_ready_accounts.find_tx(txs[i]->get_account_addr(), txs[i]->get_tx_hash_256());
         ASSERT_NE(find_tx, nullptr);
     }
 
@@ -51,14 +51,14 @@ TEST_F(test_non_ready_account, non_ready_account_basic) {
     auto poped_tx1 = non_ready_accounts.pop_tx(txinfo);
     ASSERT_NE(poped_tx1, nullptr);
 
-    auto find_tx1 = non_ready_accounts.find_tx(txs[1]->get_account_addr(), txs[1]->get_transaction()->digest());
+    auto find_tx1 = non_ready_accounts.find_tx(txs[1]->get_account_addr(), txs[1]->get_tx_hash_256());
     ASSERT_EQ(find_tx1, nullptr);
 
     auto poped_txs = non_ready_accounts.pop_account_txs(txs[1]->get_account_addr());
     ASSERT_EQ(poped_txs.size(), 4);
 
     for (uint32_t i = 0; i < 5; i++) {
-        auto find_tx = non_ready_accounts.find_tx(txs[i]->get_account_addr(), txs[i]->get_transaction()->digest());
+        auto find_tx = non_ready_accounts.find_tx(txs[i]->get_account_addr(), txs[i]->get_tx_hash_256());
         ASSERT_EQ(find_tx, nullptr);
     }
 

@@ -63,8 +63,16 @@ uint64_t xlightunit_action_t::get_receipt_id() const {
     }
     return 0;
 }
-base::xtable_shortid_t xlightunit_action_t::get_receipt_id_tableid()const {
-    std::string value = get_action_result_property(xtransaction_exec_state_t::XTX_RECEIPT_ID_TABLE_ID);
+base::xtable_shortid_t xlightunit_action_t::get_receipt_id_self_tableid()const {
+    std::string value = get_action_result_property(xtransaction_exec_state_t::XTX_RECEIPT_ID_SELF_TABLE_ID);
+    if (!value.empty()) {
+        return (base::xtable_shortid_t)base::xstring_utl::touint32(value);
+    }
+    return 0;
+}
+
+base::xtable_shortid_t xlightunit_action_t::get_receipt_id_peer_tableid()const {
+    std::string value = get_action_result_property(xtransaction_exec_state_t::XTX_RECEIPT_ID_PEER_TABLE_ID);
     if (!value.empty()) {
         return (base::xtable_shortid_t)base::xstring_utl::touint32(value);
     }

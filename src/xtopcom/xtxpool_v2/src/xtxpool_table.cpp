@@ -90,8 +90,7 @@ int32_t xtxpool_table_t::push_send_tx(const std::shared_ptr<xtx_entry> & tx) {
             return xtxpool_error_account_unconfirm_txs_reached_upper_limit;
         }
 
-        base::xvaccount_t vaccount(tx->get_tx()->get_target_addr());
-        auto peer_table_sid = vaccount.get_short_table_id();
+        auto peer_table_sid = tx->get_tx()->get_peer_tableid();
         if (m_receipt_state_cache.is_unconfirmed_num_reach_limit(peer_table_sid)) {
             xtxpool_warn("xtxpool_table_t::push_send_tx table-table unconfirm txs reached upper limit tx:%s,peer_sid:%d", tx->get_tx()->dump().c_str(), peer_table_sid);
             return xtxpool_error_account_unconfirm_txs_reached_upper_limit;
@@ -276,7 +275,7 @@ void xtxpool_table_t::unit_block_process(xblock_t * unit_block) {
         const std::vector<xlightunit_tx_info_ptr_t> & txs = lightunit->get_txs();
         for (auto & tx : txs) {
             tx_info_t txinfo(unit_block->get_account(), tx->get_tx_hash_256(), tx->get_tx_subtype());
-            update_id_state(txinfo, tx->get_receipt_id_tableid(), tx->get_receipt_id(), tx->get_last_trans_nonce() + 1);
+            update_id_state(txinfo, tx->get_receipt_id_peer_tableid(), tx->get_receipt_id(), tx->get_last_trans_nonce() + 1);
         }
     }
 
@@ -310,7 +309,7 @@ void xtxpool_table_t::on_block_confirmed(xblock_t * table_block) {
             if (_rawtx != nullptr) {
                 txnonce = _rawtx->get_tx_nonce();
             }
-            update_id_state(txinfo, txaction.get_receipt_id_tableid(), txaction.get_receipt_id(), txnonce);
+            update_id_state(txinfo, txaction.get_receipt_id_peer_tableid(), txaction.get_receipt_id(), txnonce);
         }
     }
 }
@@ -505,7 +504,7 @@ const std::vector<xtxpool_table_lacking_confirm_tx_hashs_t> xtxpool_table_t::get
             if (cons_tx == nullptr) {
                 xtxpool_warn("xtxpool_table_t::get_lacking_confirm_tx_hashs unconfirm tx(peersid:%d,rid:%llu) not found", peer_sid, receipt_id);
             } else {
-                table_lacking_hashs.add_receipt_id_hash(receipt_id, cons_tx->get_transaction()->digest());
+                table_lacking_hashs.add_receipt_id_hash(receipt_id, cons_tx->get_tx_hash_256());
             }
         }
         if (!table_lacking_hashs.empty()) {
@@ -551,13 +550,6 @@ int32_t xtxpool_table_t::verify_send_tx(const xcons_transaction_ptr_t & tx) cons
 
 int32_t xtxpool_table_t::verify_receipt_tx(const xcons_transaction_ptr_t & tx) const {
     XMETRICS_TIME_RECORD("txpool_message_unit_receipt_push_receipt_verify_receipt_tx");
-    // only check digest here for process too long zec_workload contract transaction receipt
-    // should recover length check at later version
-    if (!tx->get_transaction()->digest_check()) {
-        xtxpool_warn("xtxpool_table_t::verify_receipt_tx digest check fail, tx:%s", tx->dump(true).c_str());
-        return xtxpool_error_receipt_invalid;
-    }
-
     if (!tx->verify_cons_transaction()) {
         return xtxpool_error_receipt_invalid;
     }

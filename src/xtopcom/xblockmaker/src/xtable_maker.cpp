@@ -133,7 +133,7 @@ bool xtable_maker_t::create_lightunit_makers(const xtablemaker_para_t & table_pa
     uint64_t last_receipt_id = 0;
 
     for (auto & tx : input_table_txs) {
-        const std::string & unit_account = tx->get_account_addr();
+        std::string unit_account = tx->get_account_addr();
 
         // 1.check unit maker state
         xunit_maker_ptr_t unitmaker = create_unit_maker(unit_account);
@@ -161,9 +161,7 @@ bool xtable_maker_t::create_lightunit_makers(const xtablemaker_para_t & table_pa
         uint64_t cur_receipt_id = 0;
         if (tx->is_recv_tx() || tx->is_confirm_tx()) {
             cur_tx_subtype = tx->get_tx_subtype();
-            auto & target_account_addr = (tx->is_recv_tx()) ? tx->get_source_addr() : tx->get_target_addr();
-            base::xvaccount_t _target_vaccount(target_account_addr);
-            cur_tableid = _target_vaccount.get_short_table_id();
+            cur_tableid = tx->get_peer_tableid();
 
             cur_receipt_id = tx->get_last_action_receipt_id();
             if (last_tx_subtype != cur_tx_subtype || cur_tableid != last_tableid) {
@@ -185,8 +183,7 @@ bool xtable_maker_t::create_lightunit_makers(const xtablemaker_para_t & table_pa
                 continue;
             }
 
-            base::xvaccount_t vaccount(tx->get_target_addr());
-            auto peer_table_sid = vaccount.get_short_table_id();
+            auto peer_table_sid = tx->get_peer_tableid();
             base::xreceiptid_pair_t receiptid_pair;
             tablestate->find_receiptid_pair(peer_table_sid, receiptid_pair);
             if (receiptid_pair.get_unconfirm_num() >= table_pair_unconfirm_tx_num_max) {

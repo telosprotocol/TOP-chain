@@ -79,6 +79,6 @@ TEST_F(test_transaction_executor, executor_2) {
     int32_t ret = xtransaction_executor::exec_batch_txs(account_context.get(), batch_txs, txs_result);
     ASSERT_NE(ret, xsuccess);
     ASSERT_EQ(txs_result.m_exec_succ_txs.size(), 1);
-    ASSERT_EQ(txs_result.m_exec_fail_tx->get_transaction()->digest(), ctx2->get_transaction()->digest());
+    ASSERT_EQ(txs_result.m_exec_fail_tx->get_tx_hash_256(), ctx2->get_tx_hash_256());
     ASSERT_NE(txs_result.m_exec_fail_tx_ret, xsuccess);
 }

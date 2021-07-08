@@ -89,7 +89,7 @@ std::vector<xcons_transaction_ptr_t> test_xtxpool_util_t::create_cons_transfer_t
     uint64_t                             last_tx_nonce = 0;
     for (uint32_t i = 0; i < count; i++) {
         xcons_transaction_ptr_t tx = create_cons_transfer_tx(sender_idx, receiver_idx, last_tx_nonce, now + 1 + i, last_tx_hash);
-        last_tx_hash = tx->get_transaction()->digest();
+        last_tx_hash = tx->get_tx_hash_256();
         last_tx_nonce = tx->get_transaction()->get_tx_nonce();
         txs.push_back(tx);
     }

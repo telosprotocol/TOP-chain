@@ -31,7 +31,7 @@ const std::shared_ptr<xtx_entry> xlocked_txs_t::pop_tx(const tx_info_t & txinfo,
 }
 
 const bool xlocked_txs_t::try_push_tx(const std::shared_ptr<xtx_entry> & tx) {
-    std::string hash_str = tx->get_tx()->get_transaction()->get_digest_str();
+    std::string hash_str = tx->get_tx()->get_tx_hash();
     auto it = m_locked_tx_map.find(hash_str);
     if (it != m_locked_tx_map.end()) {
         auto tx_ent = it->second->get_tx_ent();

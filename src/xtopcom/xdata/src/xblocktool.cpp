@@ -353,30 +353,24 @@ bool xblocktool_t::can_make_next_full_table(base::xvblock_t* latest_cert_block, 
 void xblocktool_t::alloc_transaction_receiptid(const xcons_transaction_ptr_t & tx, const base::xreceiptid_state_ptr_t & receiptid_state) {
     if (tx->is_self_tx()) {
         return;  // self tx has none receiptid
-    } else if (tx->is_send_tx()) {
-        base::xvaccount_t _vaccount(tx->get_transaction()->get_target_addr());
-        base::xtable_shortid_t target_sid = _vaccount.get_short_table_id();
-
-        base::xreceiptid_pair_t receiptid_pair;
-        receiptid_state->find_pair_modified(target_sid, receiptid_pair);
-
-        uint64_t current_receipt_id = receiptid_pair.get_sendid_max() + 1;
-        receiptid_pair.inc_sendid_max();
-        tx->set_current_receipt_id(target_sid, current_receipt_id);
-        receiptid_state->add_pair_modified(target_sid, receiptid_pair);  // save to modified pairs
-    } else if ( tx->is_recv_tx()) {
-        base::xvaccount_t _vaccount(tx->get_transaction()->get_source_addr());
-        base::xtable_shortid_t source_sid = _vaccount.get_short_table_id();
-        // copy receipt id from last phase to current phase
-        uint64_t receipt_id = tx->get_last_action_receipt_id();
-        tx->set_current_receipt_id(source_sid, receipt_id);
-    } else if (tx->is_confirm_tx() ) {
-        base::xvaccount_t _vaccount(tx->get_transaction()->get_target_addr());
-        base::xtable_shortid_t target_sid = _vaccount.get_short_table_id();
-        // copy receipt id from last phase to current phase
-        uint64_t receipt_id = tx->get_last_action_receipt_id();
-        tx->set_current_receipt_id(target_sid, receipt_id);
     }
+
+    base::xtable_shortid_t self_tableid = tx->get_self_tableid();
+    base::xtable_shortid_t peer_tableid = tx->get_peer_tableid();
+    base::xreceiptid_pair_t receiptid_pair;
+    receiptid_state->find_pair_modified(peer_tableid, receiptid_pair);
+    uint64_t current_receipt_id = 0;
+    if (tx->is_send_tx()) {
+        // alloc new receipt id for send tx
+        current_receipt_id = receiptid_pair.get_sendid_max() + 1;
+        receiptid_pair.inc_sendid_max();
+    } else {
+        // copy last actiion receipt id for recv tx and confirm tx
+        current_receipt_id = tx->get_last_action_receipt_id();
+    }
+    // update receipt id info to tx action result
+    tx->set_current_receipt_id(self_tableid, peer_tableid, current_receipt_id);
+    receiptid_state->add_pair_modified(peer_tableid, receiptid_pair);  // save to modified pairs
 }
 
 NS_END2

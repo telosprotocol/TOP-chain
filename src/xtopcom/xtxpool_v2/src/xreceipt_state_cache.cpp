@@ -18,9 +18,7 @@ void xreceipt_state_cache_t::update(const base::xreceiptid_state_ptr_t & receipt
     m_update_time = xverifier::xtx_utl::get_gmttime_s();
 }
 uint64_t xreceipt_state_cache_t::get_tx_corresponding_latest_receipt_id(const std::shared_ptr<xtx_entry> & tx) const {
-    auto & account_addr = (tx->get_tx()->is_recv_tx()) ? tx->get_tx()->get_source_addr() : tx->get_tx()->get_target_addr();
-    base::xvaccount_t vaccount(account_addr);
-    auto peer_table_sid = vaccount.get_short_table_id();
+    auto peer_table_sid = tx->get_tx()->get_peer_tableid();
 
     return tx->get_tx()->is_recv_tx() ? get_recvid_max(peer_table_sid) : get_confirmid_max(peer_table_sid);
 }

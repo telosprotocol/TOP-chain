@@ -94,12 +94,17 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     store_state_read,
     store_state_write,
     store_state_delete,
-    store_block_read,
+    store_block_table_read,
+    store_block_unit_read,
+    store_block_other_read,
     store_block_index_read,
     store_block_input_read,
     store_block_output_read,
     store_block_call,
-    store_block_write,
+    store_block_table_write,
+    store_block_unit_write,
+    store_block_other_write,
+    store_block_index_write,
     store_block_input_write,
     store_block_output_write,
     store_block_delete,
@@ -140,7 +145,7 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     message_category_end,
     message_category_unknown = message_category_end,
 
-    // sync 
+    // sync
     xsync_recv_new_block,
     xsync_recv_new_hash,
     xsync_recv_invalid_block,
@@ -287,7 +292,7 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     blockstore_access_from_bft_sync,
     blockstore_access_from_bft_init_blk,
     blockstore_access_from_bft_end = blockstore_access_from_bft_init_blk,
-    
+
     blockstore_access_from_vnodesrv,
 
     // statestore

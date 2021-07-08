@@ -65,7 +65,7 @@ TEST_F(test_new_receipt_queue, receipt_queue_basic) {
         tx->set_current_receipt_id(0, receipt_id);
         receipt_id++;
     }
-    
+
     xblock_t * block;
     std::vector<xcons_transaction_ptr_t> recvtxs = get_tx(blockstore, xstore, sender, receiver, txs, &block);
 
@@ -74,7 +74,7 @@ TEST_F(test_new_receipt_queue, receipt_queue_basic) {
         std::shared_ptr<xtx_entry> tx_ent = std::make_shared<xtx_entry>(recvtxs[i], para);
         int32_t ret = receipt_queue.push_tx(tx_ent);
         ASSERT_EQ(ret, 0);
-        auto find_receipt = receipt_queue.find(receiver, recvtxs[i]->get_transaction()->digest());
+        auto find_receipt = receipt_queue.find(receiver, recvtxs[i]->get_tx_hash_256());
         ASSERT_NE(find_receipt, nullptr);
     }
 
@@ -88,14 +88,14 @@ TEST_F(test_new_receipt_queue, receipt_queue_basic) {
 
     auto receipts2 = receipt_queue.get_txs(10, 10, receiptid_state);
     ASSERT_EQ(receipts2.size(), tx_num - 1);
-    
-    auto find_receipt0 = receipt_queue.find(receiver, recvtxs[0]->get_transaction()->digest());
+
+    auto find_receipt0 = receipt_queue.find(receiver, recvtxs[0]->get_tx_hash_256());
     ASSERT_EQ(find_receipt0, nullptr);
 
     tx_info_t txinfo(recvtxs[1]);
     auto pop_receipt = receipt_queue.pop_tx(txinfo);
     ASSERT_NE(pop_receipt, nullptr);
 
-    auto find_receipt = receipt_queue.find(receiver, recvtxs[1]->get_transaction()->digest());
+    auto find_receipt = receipt_queue.find(receiver, recvtxs[1]->get_tx_hash_256());
     ASSERT_EQ(find_receipt, nullptr);
 }

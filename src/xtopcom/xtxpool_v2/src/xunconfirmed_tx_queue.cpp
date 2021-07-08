@@ -76,8 +76,7 @@ const xcons_transaction_ptr_t xpeer_table_unconfirmed_txs_t::get_latest_receipt(
 }
 
 void xpeer_tables_t::push_tx(const xcons_transaction_ptr_t & tx) {
-    base::xvaccount_t vaccount(tx->get_target_addr());
-    auto peer_table_sid = vaccount.get_short_table_id();
+    auto peer_table_sid = tx->get_peer_tableid();
     xtxpool_info("xpeer_tables_t::push_tx tx:%s,peer table sid:%d,receipt id:%llu", tx->dump(true).c_str(), peer_table_sid, tx->get_last_action_receipt_id());
     auto it = m_peer_tables.find(peer_table_sid);
     if (it != m_peer_tables.end()) {
@@ -232,8 +231,7 @@ int32_t xunconfirmed_account_t::update(xblock_t * latest_committed_block, const 
 
     for (auto & it_s : unconfirmed_txs) {
         auto & tx = it_s.second;
-        base::xvaccount_t vaccount(tx->get_target_addr());
-        auto peer_table_sid = vaccount.get_short_table_id();
+        auto peer_table_sid = tx->get_peer_tableid();
         auto confirmid_max = receiptid_state_cache.get_confirmid_max(peer_table_sid);
         if (tx->get_last_action_receipt_id() <= confirmid_max) {
             xtxpool_warn("xunconfirmed_account_t::update account:%s tx:%s already confirmed", account_addr.c_str(), tx->dump(true).c_str());

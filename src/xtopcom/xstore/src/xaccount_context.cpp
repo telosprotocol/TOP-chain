@@ -1159,7 +1159,7 @@ bool xaccount_context_t::add_transaction(const xcons_transaction_ptr_t& trans) {
             return false;
         }
         m_latest_exec_sendtx_nonce = trans->get_transaction()->get_tx_nonce();
-        m_latest_exec_sendtx_hash = trans->get_transaction()->digest();
+        m_latest_exec_sendtx_hash = trans->get_tx_hash_256();
 
         // try update latest create nonce
         update_latest_create_nonce_hash(trans);  // self tx may create contract tx
@@ -1191,7 +1191,7 @@ bool xaccount_context_t::finish_exec_all_txs(const std::vector<xcons_transaction
                 xassert(new_sendtx_nonce == tx->get_transaction()->get_last_nonce());
                 xassert(tx->get_transaction()->check_last_trans_hash(new_sendtx_hash));
                 new_sendtx_nonce = tx->get_transaction()->get_tx_nonce();
-                new_sendtx_hash = tx->get_transaction()->digest();
+                new_sendtx_hash = tx->get_tx_hash_256();
             }
             if (tx->is_send_tx()) {
                 send_tx_num++;

@@ -85,12 +85,17 @@ char const * matrics_name(xmetircs_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(store_state_read);
         RETURN_METRICS_NAME(store_state_write);
         RETURN_METRICS_NAME(store_state_delete);
-        RETURN_METRICS_NAME(store_block_read);
+        RETURN_METRICS_NAME(store_block_table_read);
+        RETURN_METRICS_NAME(store_block_unit_read);
+        RETURN_METRICS_NAME(store_block_other_read);
         RETURN_METRICS_NAME(store_block_index_read);
         RETURN_METRICS_NAME(store_block_input_read);
         RETURN_METRICS_NAME(store_block_output_read);
         RETURN_METRICS_NAME(store_block_call);
-        RETURN_METRICS_NAME(store_block_write);
+        RETURN_METRICS_NAME(store_block_table_write);
+        RETURN_METRICS_NAME(store_block_unit_write);
+        RETURN_METRICS_NAME(store_block_other_write);
+        RETURN_METRICS_NAME(store_block_index_write);
         RETURN_METRICS_NAME(store_block_input_write);
         RETURN_METRICS_NAME(store_block_output_write);
         RETURN_METRICS_NAME(store_block_delete);
@@ -127,7 +132,7 @@ char const * matrics_name(xmetircs_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(message_block_broadcast);
         RETURN_METRICS_NAME(message_category_unknown);
 
-        // sync 
+        // sync
         RETURN_METRICS_NAME(xsync_recv_new_block);
         RETURN_METRICS_NAME(xsync_recv_new_hash);
         RETURN_METRICS_NAME(xsync_recv_invalid_block);
@@ -202,7 +207,7 @@ char const * matrics_name(xmetircs_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(blockstore_access_from_statestore_get_block_index_state);
         RETURN_METRICS_NAME(blockstore_access_from_statestore_get_connect_state);
         RETURN_METRICS_NAME(blockstore_access_from_statestore_get_commit_state);
-        
+
         RETURN_METRICS_NAME(blockstore_access_from_application);
 
         // sync access
@@ -226,7 +231,7 @@ char const * matrics_name(xmetircs_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(blockstore_access_from_sync_store_blk);
         RETURN_METRICS_NAME(blockstore_access_from_sync_query_blk);
         RETURN_METRICS_NAME(blockstore_access_from_sync_load_block_object);
-        
+
         RETURN_METRICS_NAME(blockstore_access_from_sync_index);
 
         // blockstore_access_from_blk_mk
@@ -468,7 +473,7 @@ void e_metrics::gauge_dump() {
         ptr->count = s_counters[index].call_count;
         m_counter_handler.dump_metrics_info(ptr);
     }
-    
+
     // summary of category as defined
     for(size_t index = 0; index < sizeof(g_cates)/sizeof(g_cates[0]); index++) {
         uint64_t cate_val = 0;

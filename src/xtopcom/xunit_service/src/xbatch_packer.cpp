@@ -481,6 +481,12 @@ void xbatch_packer::make_receipts_and_send(xblock_t * commit_block, xblock_t * c
         data::xcons_transaction_ptr_t constx = make_object_ptr<data::xcons_transaction_t>(receipt);
         all_cons_txs.push_back(constx);
         xassert(constx->is_recv_tx() || constx->is_confirm_tx());
+        if (constx->is_recv_tx()) {
+            xassert(constx->get_transaction() != nullptr);  // recvtx has no origin tx
+        }
+        if (constx->is_confirm_tx()) {
+            xassert(constx->get_transaction() == nullptr);  // confirmtx has no origin tx
+        }
     }
 
     xunit_info("xbatch_packer::make_receipts_and_send commit_block:%s,cert_block:%s", commit_block->dump().c_str(), cert_block->dump().c_str());

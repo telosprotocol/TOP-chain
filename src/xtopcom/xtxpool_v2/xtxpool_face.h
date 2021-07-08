@@ -122,7 +122,7 @@ public:
     tx_info_t(const std::string & account_addr, const uint256_t & hash, base::enum_transaction_subtype subtype) : m_account_addr(account_addr), m_hash(hash), m_subtype(subtype) {
     }
     tx_info_t(const xcons_transaction_ptr_t & cons_tx)
-      : m_account_addr(cons_tx->get_account_addr()), m_hash(cons_tx->get_transaction()->digest()), m_subtype(cons_tx->get_tx_subtype()) {
+      : m_account_addr(cons_tx->get_account_addr()), m_hash(cons_tx->get_tx_hash_256()), m_subtype(cons_tx->get_tx_subtype()) {
     }
 
     const std::string & get_addr() const {

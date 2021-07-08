@@ -14,11 +14,12 @@ namespace top
 {
     namespace store
     {
+        class xvblockstore_impl;
         class auto_xblockacct_ptr : public base::xauto_ptr<xblockacct_t>
         {
             typedef base::xauto_ptr<xblockacct_t> base_class;
         public:
-            auto_xblockacct_ptr(std::recursive_mutex & locker);
+            auto_xblockacct_ptr(std::recursive_mutex & locker,xvblockstore_impl * store_ptr);
             ~auto_xblockacct_ptr();
         public:
             //transfer owner to auto_xblockacct_ptr from raw_ptr
@@ -31,6 +32,7 @@ namespace top
             auto_xblockacct_ptr & operator = (auto_xblockacct_ptr && moved);
         private:
             std::recursive_mutex &  m_mutex;
+            xvblockstore_impl   *   m_store_ptr;
         };
 
         //note: layers for store :  [xvblock-store] --> [xstore] -->[xdb]
@@ -51,7 +53,7 @@ namespace top
                 #endif
             };
         public:
-            xvblockstore_impl(const std::string & blockstore_path,base::xcontext_t & _context,const int32_t target_thread_id);
+            xvblockstore_impl(const std::string & blockstore_path,base::xcontext_t & _context,const int32_t target_thread_id,base::xvdbstore_t* xvdb_ptr);
         protected:
             virtual ~xvblockstore_impl();
         private:
@@ -127,10 +129,15 @@ namespace top
         public:
             virtual bool                 exist_genesis_block(const base::xvaccount_t & account,const int atag = 0) override;
 
+            bool                         store_txs_to_db(xblockacct_t* target_account,base::xvbindex_t* index_ptr);
         protected:
             bool    get_block_account(base::xvtable_t * target_table,const std::string & account_address,auto_xblockacct_ptr & inout_account_obj);
 
+            base::xvblock_t *            load_block_from_index(xblockacct_t* target_account, base::xvbindex_t* target_index,const uint64_t target_height,bool ask_full_load, const int atag = 0);
             base::xvblock_t *            load_block_from_index(xblockacct_t* target_account, base::xauto_ptr<base::xvbindex_t> target_index,const uint64_t target_height,bool ask_full_load, const int atag = 0);
+
+            base::xvblock_t *            load_block_from_self_index(xblockacct_t* target_account, base::xvbindex_t* target_index,bool ask_full_load, const int atag = 0);
+
 
             //store table/book blocks if they are
             bool                        store_block(base::xauto_ptr<xblockacct_t> & container_account,base::xvblock_t * container_block,bool execute_block = true);
@@ -149,6 +156,7 @@ namespace top
             virtual bool                on_timer_fire(const int32_t thread_id,const int64_t timer_id,const int64_t current_time_ms,const int32_t start_timeout_ms,int32_t & in_out_cur_interval_ms) override;
 
         private: //just access by self thread
+            base::xvdbstore_t*                       m_xvdb_ptr;
             base::xtimer_t*                          m_raw_timer;
             std::multimap<uint64_t,xblockacct_t*>    m_monitor_expire;//key:expired_time(UTC ms), value: xblockaccount_t*,sort from lower
         private://below are accessed by muliple threads

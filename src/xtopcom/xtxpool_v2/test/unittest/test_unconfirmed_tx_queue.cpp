@@ -54,7 +54,7 @@ TEST_F(test_unconfirmed_tx_queue, unconfirmed_tx_queue_basic) {
     receipt_state_cache.update(receiptid_state);
     unconfirmed_tx_queue.udpate_latest_confirmed_block(block, receipt_state_cache);
 
-    auto tx_find = unconfirmed_tx_queue.find(txs[0]->get_source_addr(), txs[0]->get_transaction()->digest());
+    auto tx_find = unconfirmed_tx_queue.find(txs[0]->get_source_addr(), txs[0]->get_tx_hash_256());
     ASSERT_NE(tx_find, nullptr);
 
     auto resend_txs1 = unconfirmed_tx_queue.get_resend_txs(block->get_timestamp() + 50);
@@ -99,7 +99,7 @@ TEST_F(test_unconfirmed_tx_queue, recover) {
 
     for (uint32_t i = 0; i < tx_num; i++) {
         std::cout << "i:" << i << std::endl;
-        auto tx_find = unconfirmed_tx_queue.find(txs[i]->get_source_addr(), txs[i]->get_transaction()->digest());
+        auto tx_find = unconfirmed_tx_queue.find(txs[i]->get_source_addr(), txs[i]->get_tx_hash_256());
         ASSERT_NE(tx_find, nullptr);
     }
 
@@ -112,12 +112,12 @@ TEST_F(test_unconfirmed_tx_queue, recover) {
     unconfirmed_tx_queue.recover(receipt_state_cache);
 
     for (uint32_t i = 0; i < 2; i++) {
-        auto tx_find = unconfirmed_tx_queue.find(txs[i]->get_source_addr(), txs[i]->get_transaction()->digest());
+        auto tx_find = unconfirmed_tx_queue.find(txs[i]->get_source_addr(), txs[i]->get_tx_hash_256());
         ASSERT_EQ(tx_find, nullptr);
     }
 
     for (uint32_t i = 2; i < tx_num; i++) {
-        auto tx_find = unconfirmed_tx_queue.find(txs[i]->get_source_addr(), txs[i]->get_transaction()->digest());
+        auto tx_find = unconfirmed_tx_queue.find(txs[i]->get_source_addr(), txs[i]->get_tx_hash_256());
         ASSERT_NE(tx_find, nullptr);
     }
 

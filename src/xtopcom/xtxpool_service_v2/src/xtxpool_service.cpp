@@ -147,7 +147,7 @@ void xtxpool_service::resend_receipts(uint64_t now) {
                 }
 
                 // filter out txs witch has already in txpool, just not consensused and committed.
-                auto tx = m_para->get_txpool()->query_tx(recv_tx->get_source_addr(), recv_tx->get_transaction()->digest());
+                auto tx = m_para->get_txpool()->query_tx(recv_tx->get_source_addr(), recv_tx->get_tx_hash_256());
                 if (tx != nullptr && tx->get_tx()->is_confirm_tx()) {
                     continue;
                 }
@@ -413,7 +413,7 @@ void xtxpool_service::send_receipt_first_time(data::xcons_transaction_ptr_t & co
 
 void xtxpool_service::send_receipt_real(const data::xcons_transaction_ptr_t & cons_tx) {
     try {
-        std::string target_addr = cons_tx->get_receipt_target_account();
+        base::xtable_index_t target_tableindex = cons_tx->get_peer_table_index();
 
         top::base::xautostream_t<4096> stream(top::base::xcontext_t::instance());
         cons_tx->serialize_to(stream);
@@ -422,7 +422,7 @@ void xtxpool_service::send_receipt_real(const data::xcons_transaction_ptr_t & co
 
         // TODO(jimmy)  first get target account's table id, then get network addr by table id
         auto receiver_cluster_addr =
-            m_router->sharding_address_from_account(common::xaccount_address_t{target_addr}, m_vnet_driver->network_id(), common::xnode_type_t::consensus_auditor);
+            m_router->sharding_address_from_tableindex(target_tableindex, m_vnet_driver->network_id(), common::xnode_type_t::consensus_auditor);
         assert(common::has<common::xnode_type_t::consensus_auditor>(receiver_cluster_addr.type()) || common::has<common::xnode_type_t::committee>(receiver_cluster_addr.type()) ||
                common::has<common::xnode_type_t::zec>(receiver_cluster_addr.type()));
 

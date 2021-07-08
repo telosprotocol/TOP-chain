@@ -24,8 +24,10 @@ xcons_transaction_t::xcons_transaction_t(xtransaction_t* tx) {
 }
 
 xcons_transaction_t::xcons_transaction_t(const base::xfull_txreceipt_t & full_txreceipt) {
-    m_tx = make_object_ptr<data::xtransaction_t>();
-    m_tx->serialize_from_string(full_txreceipt.get_tx_org_bin());
+    if (!full_txreceipt.get_tx_org_bin().empty()) {
+        m_tx = make_object_ptr<data::xtransaction_t>();
+        m_tx->serialize_from_string(full_txreceipt.get_tx_org_bin());
+    }
     m_receipt = full_txreceipt.get_txreceipt();
     XMETRICS_GAUGE(metrics::dataobject_cur_xbase_type_cons_transaction, 1);
     update_transation();
@@ -35,22 +37,22 @@ xcons_transaction_t::~xcons_transaction_t() {
     XMETRICS_GAUGE(metrics::dataobject_cur_xbase_type_cons_transaction, -1);
 }
 
-const std::string & xcons_transaction_t::get_receipt_source_account()const {
-    xassert(is_recv_tx() || is_confirm_tx());
-    if (is_recv_tx()) {
-        return get_source_addr();
-    } else {
-        return get_target_addr();
+bool xcons_transaction_t::set_raw_tx(xtransaction_t* raw_tx) {
+    if (m_tx != nullptr) { // already set raw tx
+        xassert(false);
+        return false;
     }
-}
-
-const std::string & xcons_transaction_t::get_receipt_target_account()const {
-    xassert(is_recv_tx() || is_confirm_tx());
-    if (is_recv_tx()) {
-        return get_target_addr();
-    } else {
-        return get_source_addr();
+    if (m_receipt == nullptr) { // must be receipt tx
+        xassert(false);
+        return false;
     }
+    if (raw_tx->get_digest_str() != m_receipt->get_tx_hash()) {
+        xassert(false);
+        return false;
+    }
+    raw_tx->add_ref();
+    m_tx.attach(raw_tx);
+    return true;
 }
 
 xobject_ptr_t<base::xvqcert_t> xcons_transaction_t::get_receipt_prove_cert_and_account(std::string & account) const {
@@ -63,7 +65,7 @@ xobject_ptr_t<base::xvqcert_t> xcons_transaction_t::get_receipt_prove_cert_and_a
         return nullptr;
     }
 
-    account = get_receipt_source_account();
+    account = get_account_addr();
     if (m_receipt->get_prove_type() == base::enum_xprove_cert_type_table_justify) {
         // change to parent account
         account = account_address_to_block_address(common::xaccount_address_t(account));
@@ -137,7 +139,16 @@ bool xcons_transaction_t::verify_cons_transaction() {
             xerror("xcons_transaction_t::verify_cons_transaction should has receipt");
             return false;
         }
-        if (m_tx->get_digest_str() != m_receipt->get_tx_hash()) {
+
+        // only check digest here for process too long zec_workload contract transaction receipt
+        // should recover length check at later version
+        // raw tx can been load on-demand
+        if (get_transaction() != nullptr && false == get_transaction()->digest_check()) {
+            xerror("xcons_transaction_t::verify_cons_transaction digest check fail");
+            return false;
+        }
+
+        if (get_transaction() != nullptr && get_transaction()->get_digest_str() != m_receipt->get_tx_hash()) {
             xerror("xcons_transaction_t::verify_cons_transaction tx digest not match");
             return false;
         }
@@ -158,24 +169,29 @@ uint64_t xcons_transaction_t::get_dump_receipt_id() const {
 }
 
 std::string xcons_transaction_t::dump(bool detail) const {
+    xassert(m_receipt != nullptr || m_tx != nullptr);// should not both null
     std::stringstream ss;
     ss << "{";
-    ss << base::xvtxkey_t::transaction_hash_subtype_to_string(get_transaction()->get_digest_str(), get_tx_subtype());
-    ss << ",id={" << base::xvaccount_t(get_transaction()->get_source_addr()).get_short_table_id();
-    ss << "->" << base::xvaccount_t(get_transaction()->get_target_addr()).get_short_table_id();
+    if (m_receipt != nullptr) {
+        ss << base::xvtxkey_t::transaction_hash_subtype_to_string(m_receipt->get_tx_hash(), get_tx_subtype());
+    } else if (get_transaction() != nullptr) {
+        ss << base::xvtxkey_t::transaction_hash_subtype_to_string(get_transaction()->get_digest_str(), get_tx_subtype());
+    }
+    ss << ",id={" << get_self_tableid();
+    ss << "->" << get_peer_tableid();
     ss << ":" << get_dump_receipt_id();
     ss << "}";
     if (is_self_tx() || is_send_tx()) {
         ss << ",nonce:" << get_transaction()->get_tx_nonce();
     }
     if (detail) {
-        if (is_self_tx() || is_send_tx()) {
+        if (get_transaction() != nullptr) {
             ss << ",fire:" << get_transaction()->get_fire_timestamp();
             ss << ",duration:" << (uint32_t)get_transaction()->get_expire_duration();
-        }
-        ss << ",addr:" << get_transaction()->get_source_addr();
-        if (get_transaction()->get_source_addr() != get_transaction()->get_target_addr()) {
-            ss << "->" << get_transaction()->get_target_addr();
+            ss << ",addr:" << get_transaction()->get_source_addr();
+            if (get_transaction()->get_source_addr() != get_transaction()->get_target_addr()) {
+                ss << "->" << get_transaction()->get_target_addr();
+            }
         }
         // if (m_receipt != nullptr) {
         //     ss << ",txout:" << m_receipt->get_tx_info()->get_tx_exec_state().dump();
@@ -242,16 +258,88 @@ uint64_t xcons_transaction_t::get_last_action_receipt_id() const {
     }
     return 0;
 }
-base::xtable_shortid_t xcons_transaction_t::get_last_action_receipt_id_tableid() const {
+base::xtable_shortid_t xcons_transaction_t::get_last_action_self_tableid() const {
     if (m_receipt != nullptr) {
-        // TODO(jimmy) need this property ??
-        std::string value = m_receipt->get_tx_result_property(xtransaction_exec_state_t::XTX_RECEIPT_ID_TABLE_ID);
+        std::string value = m_receipt->get_tx_result_property(xtransaction_exec_state_t::XTX_RECEIPT_ID_SELF_TABLE_ID);
         if (!value.empty()) {
             return (base::xtable_shortid_t)base::xstring_utl::touint32(value);
         }
     }
     return 0;
 }
+
+base::xtable_shortid_t xcons_transaction_t::get_last_action_peer_tableid() const {
+    if (m_receipt != nullptr) {
+        std::string value = m_receipt->get_tx_result_property(xtransaction_exec_state_t::XTX_RECEIPT_ID_PEER_TABLE_ID);
+        if (!value.empty()) {
+            return (base::xtable_shortid_t)base::xstring_utl::touint32(value);
+        }
+    }
+    return 0;
+}
+
+std::string xcons_transaction_t::get_tx_hash() const {
+    if (m_receipt != nullptr) {
+        return m_receipt->get_tx_hash();
+    } else if (get_transaction() != nullptr) {
+        return get_transaction()->get_digest_str();
+    } else {
+        xassert(false);
+        return {};
+    }
+}
+
+uint256_t xcons_transaction_t::get_tx_hash_256() const {  // TODO(jimmy) always use string type hash
+    if (get_transaction() != nullptr) {
+        return get_transaction()->digest();
+    } else if (m_receipt != nullptr) {
+        return uint256_t((uint8_t*)m_receipt->get_tx_hash().c_str());
+    } else {
+        xassert(false);
+        return {};
+    }
+}
+
+std::string xcons_transaction_t::get_account_addr() const {
+    if (get_transaction() != nullptr) {
+        return is_recv_tx()? m_tx->get_target_addr() : m_tx->get_source_addr();
+    } else {
+        xassert(m_receipt != nullptr);
+        xassert(!m_receipt->get_caller().empty());
+        xassert(m_receipt->get_caller() != m_receipt->get_contract_address());
+        return m_receipt->get_caller();
+    }
+}
+
+base::xtable_index_t xcons_transaction_t::get_self_table_index() const {
+    base::xtable_shortid_t tableid = get_self_tableid();
+    return base::xtable_index_t(tableid);
+}
+base::xtable_index_t xcons_transaction_t::get_peer_table_index() const {
+    base::xtable_shortid_t tableid = get_peer_tableid();
+    return base::xtable_index_t(tableid);
+}
+
+base::xtable_shortid_t xcons_transaction_t::get_self_tableid() const {
+    if (m_receipt != nullptr) {
+        return get_last_action_peer_tableid();
+    } else {
+        xassert(m_tx != nullptr);
+        base::xvaccount_t _vaddr(get_source_addr());
+        return _vaddr.get_short_table_id();
+    }
+}
+
+base::xtable_shortid_t xcons_transaction_t::get_peer_tableid() const {
+    if (m_receipt != nullptr) {
+        return get_last_action_self_tableid();
+    } else {
+        xassert(m_tx != nullptr);
+        base::xvaccount_t _vaddr(get_target_addr());
+        return _vaddr.get_short_table_id();
+    }
+}
+
 
 }  // namespace data
 }  // namespace top

@@ -16,7 +16,7 @@ ready_accounts_t xordered_ready_txs_t::ready_txs_to_ready_accounts(std::vector<x
     std::map<std::string, std::shared_ptr<xready_account_t>> ready_accounts_map;
 
     for (auto tx : ready_txs) {
-        auto & account_addr = tx->get_account_addr();
+        auto account_addr = tx->get_account_addr();
         auto it_ready_accounts = ready_accounts_map.find(account_addr);
         if (it_ready_accounts != ready_accounts_map.end()) {
             it_ready_accounts->second->put_tx(tx);
@@ -109,9 +109,7 @@ ready_accounts_t xordered_ready_txs_t::get_ready_accounts() const {
 }
 
 void xordered_ready_txs_t::add_tx(const xcons_transaction_ptr_t & tx, xpeer_table_receipt_map_t & peer_table_map) {
-    auto & account_addr = (tx->is_recv_tx()) ? tx->get_source_addr() : tx->get_target_addr();
-    base::xvaccount_t vaccount(account_addr);
-    auto peer_table_sid = vaccount.get_short_table_id();
+    auto peer_table_sid = tx->get_peer_tableid();
     auto it_peer_table_map = peer_table_map.find(peer_table_sid);
     if (it_peer_table_map == peer_table_map.end()) {
         std::map<uint64_t, xcons_transaction_ptr_t> receipt_id_map;

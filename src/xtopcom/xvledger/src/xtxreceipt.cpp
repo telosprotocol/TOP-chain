@@ -5,6 +5,7 @@
 #include <string>
 #include "xvledger/xtxreceipt.h"
 #include "xvledger/xvblockbuild.h"
+#include "xvledger/xvcontract.h"
 #include "xmetrics/xmetrics.h"
 #include "xutility/xhash.h"
 
@@ -116,6 +117,10 @@ namespace top
             return {};
         }
 
+        std::string xtx_receipt_t::get_contract_address() const {
+            return xvcontract_t::get_contract_address(m_tx_action.get_contract_uri());
+        }
+
 
         //----------------------------------------xtxreceipt_build_t-------------------------------------//
         std::vector<xfull_txreceipt_t> xtxreceipt_build_t::create_all_txreceipts(xvblock_t* commit_block, xvblock_t* cert_block, const std::vector<xvaction_t> & actions) {
@@ -147,11 +152,7 @@ namespace top
                 xtx_receipt_ptr_t _receipt_ptr;
                 _receipt_ptr.attach(_receipt);
                 std::string orgtx_bin = commit_block->get_input()->query_resource(action.get_org_tx_hash());
-                if (orgtx_bin.empty()) {
-                    xassert(false);
-                    return {};
-                }
-                xfull_txreceipt_t full_txreceipt(_receipt_ptr, orgtx_bin);
+                xfull_txreceipt_t full_txreceipt(_receipt_ptr, orgtx_bin);  // orgtx_bin may be empty
                 txreceipts.push_back(full_txreceipt);
             }
             xdbg("xtxreceipt_build_t::create_all_txreceipts,block=%s,receipts=%zu,allleafs=%zu,",

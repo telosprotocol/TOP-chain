@@ -20,7 +20,7 @@ protected:
 
     void TearDown() override {
     }
-    
+
     std::vector<xcons_transaction_ptr_t> get_tx(base::xvblockstore_t * blockstore,
                                                 xstore_face_t * store,
                                                 std::string sender,
@@ -54,7 +54,7 @@ TEST_F(test_txmgr_table, sigle_send_tx) {
     std::shared_ptr<xtx_entry> tx_ent = std::make_shared<xtx_entry>(tx, para);
     int32_t ret = txmgr_table.push_send_tx(tx_ent, 0, last_tx_hash);
     ASSERT_EQ(0, ret);
-    auto tx_tmp = txmgr_table.query_tx(tx->get_transaction()->get_source_addr(), tx->get_transaction()->digest());
+    auto tx_tmp = txmgr_table.query_tx(tx->get_transaction()->get_source_addr(), tx->get_tx_hash_256());
     ASSERT_NE(tx_tmp, nullptr);
 
     // duplicate push
@@ -65,13 +65,13 @@ TEST_F(test_txmgr_table, sigle_send_tx) {
     tx_info_t txinfo(tx);
     auto tx_ent_tmp = txmgr_table.pop_tx(txinfo, false);
     ASSERT_NE(tx_ent_tmp, nullptr);
-    tx_tmp = txmgr_table.query_tx(tx->get_transaction()->get_source_addr(), tx->get_transaction()->digest());
+    tx_tmp = txmgr_table.query_tx(tx->get_transaction()->get_source_addr(), tx->get_tx_hash_256());
     ASSERT_EQ(tx_tmp, nullptr);
 
     // push again
     ret = txmgr_table.push_send_tx(tx_ent, 0, last_tx_hash);
     ASSERT_EQ(0, ret);
-    tx_tmp = txmgr_table.query_tx(tx->get_transaction()->get_source_addr(), tx->get_transaction()->digest());
+    tx_tmp = txmgr_table.query_tx(tx->get_transaction()->get_source_addr(), tx->get_tx_hash_256());
     ASSERT_NE(tx_tmp, nullptr);
 }
 
@@ -107,14 +107,14 @@ TEST_F(test_txmgr_table, duplicate_send_tx_to_pending) {
     xtx_para_t para;
 
     xcons_transaction_ptr_t tx0 = test_xtxpool_util_t::create_cons_transfer_tx(0, 1, 0, now + 1, last_tx_hash);
-    last_tx_hash = tx0->get_transaction()->digest();
+    last_tx_hash = tx0->get_tx_hash_256();
 
     std::shared_ptr<xtx_entry> tx_ent0 = std::make_shared<xtx_entry>(tx0, para);
     int32_t ret = txmgr_table.push_send_tx(tx_ent0, 0, {});
     ASSERT_EQ(0, ret);
 
     xcons_transaction_ptr_t tx1 = test_xtxpool_util_t::create_cons_transfer_tx(0, 1, 1, now + 2, last_tx_hash);
-    last_tx_hash = tx1->get_transaction()->digest();
+    last_tx_hash = tx1->get_tx_hash_256();
     uint256_t last_tx_hash_1 = last_tx_hash;
 
     std::shared_ptr<xtx_entry> tx_ent1 = std::make_shared<xtx_entry>(tx1, para);
@@ -122,7 +122,7 @@ TEST_F(test_txmgr_table, duplicate_send_tx_to_pending) {
     ASSERT_EQ(0, ret);
 
     xcons_transaction_ptr_t tx2a = test_xtxpool_util_t::create_cons_transfer_tx(0, 1, 2, now + 3, last_tx_hash);
-    last_tx_hash = tx2a->get_transaction()->digest();
+    last_tx_hash = tx2a->get_tx_hash_256();
 
     std::shared_ptr<xtx_entry> tx_ent2a = std::make_shared<xtx_entry>(tx2a, para);
     ret = txmgr_table.push_send_tx(tx_ent2a, 0, {});
@@ -137,7 +137,7 @@ TEST_F(test_txmgr_table, duplicate_send_tx_to_pending) {
     ASSERT_EQ(tx2a->get_digest_hex_str(), txs[2]->get_digest_hex_str());
 
     xcons_transaction_ptr_t tx2b = test_xtxpool_util_t::create_cons_transfer_tx(0, 1, 2, now + 4, last_tx_hash_1);
-    last_tx_hash = tx2b->get_transaction()->digest();
+    last_tx_hash = tx2b->get_tx_hash_256();
 
     // ret = txmgr_table.push_send_tx(tx_ent0, 0, {});
     // ASSERT_EQ(0, ret);
@@ -147,7 +147,7 @@ TEST_F(test_txmgr_table, duplicate_send_tx_to_pending) {
     ret = txmgr_table.push_send_tx(tx_ent2b, 0, {});
     ASSERT_EQ(0, ret);
 
-    auto tx_q = txmgr_table.query_tx(tx_ent2b->get_tx()->get_account_addr(), tx_ent2b->get_tx()->get_transaction()->digest());
+    auto tx_q = txmgr_table.query_tx(tx_ent2b->get_tx()->get_account_addr(), tx_ent2b->get_tx()->get_tx_hash_256());
     ASSERT_EQ(tx_q->get_tx()->get_digest_hex_str(), tx2b->get_digest_hex_str());
 
     ready_accounts_t ready_accounts2 = txmgr_table.get_ready_accounts(10);
@@ -158,7 +158,7 @@ TEST_F(test_txmgr_table, duplicate_send_tx_to_pending) {
     ASSERT_EQ(tx1->get_digest_hex_str(), txs2[1]->get_digest_hex_str());
     ASSERT_EQ(tx2a->get_digest_hex_str(), txs2[2]->get_digest_hex_str());
 
-    txmgr_table.updata_latest_nonce(tx1->get_account_addr(), tx1->get_transaction()->get_tx_nonce(), tx1->get_transaction()->digest());
+    txmgr_table.updata_latest_nonce(tx1->get_account_addr(), tx1->get_transaction()->get_tx_nonce(), tx1->get_tx_hash_256());
 
     ready_accounts_t ready_accounts3 = txmgr_table.get_ready_accounts(10);
     ASSERT_EQ(1, ready_accounts3.size());
@@ -166,17 +166,17 @@ TEST_F(test_txmgr_table, duplicate_send_tx_to_pending) {
     ASSERT_EQ(1, txs3.size());
     ASSERT_EQ(tx2a->get_digest_hex_str(), txs3[0]->get_digest_hex_str());
 
-    tx_q = txmgr_table.query_tx(tx_ent2b->get_tx()->get_account_addr(), tx_ent2b->get_tx()->get_transaction()->digest());
+    tx_q = txmgr_table.query_tx(tx_ent2b->get_tx()->get_account_addr(), tx_ent2b->get_tx()->get_tx_hash_256());
     ASSERT_NE(tx_q, nullptr);
 
-    txmgr_table.updata_latest_nonce(tx2a->get_account_addr(), tx2a->get_transaction()->get_tx_nonce(), tx2a->get_transaction()->digest());
+    txmgr_table.updata_latest_nonce(tx2a->get_account_addr(), tx2a->get_transaction()->get_tx_nonce(), tx2a->get_tx_hash_256());
     ready_accounts_t ready_accounts4 = txmgr_table.get_ready_accounts(10);
     ASSERT_EQ(0, ready_accounts4.size());
 
-    tx_q = txmgr_table.query_tx(tx2b->get_account_addr(), tx2b->get_transaction()->digest());
+    tx_q = txmgr_table.query_tx(tx2b->get_account_addr(), tx2b->get_tx_hash_256());
     ASSERT_EQ(tx_q, nullptr);
 
-    tx_q = txmgr_table.query_tx(tx2a->get_account_addr(), tx2a->get_transaction()->digest());
+    tx_q = txmgr_table.query_tx(tx2a->get_account_addr(), tx2a->get_tx_hash_256());
     ASSERT_EQ(tx_q, nullptr);
 }
 
@@ -191,43 +191,43 @@ TEST_F(test_txmgr_table, duplicate_send_tx_to_pending_2) {
     xtx_para_t para;
 
     xcons_transaction_ptr_t tx0 = test_xtxpool_util_t::create_cons_transfer_tx(0, 1, 0, now + 1, last_tx_hash);
-    last_tx_hash = tx0->get_transaction()->digest();
+    last_tx_hash = tx0->get_tx_hash_256();
     uint256_t last_tx_hash_0 = last_tx_hash;
     std::shared_ptr<xtx_entry> tx_ent0 = std::make_shared<xtx_entry>(tx0, para);
     int32_t ret = txmgr_table.push_send_tx(tx_ent0, 0, {});
     ASSERT_EQ(0, ret);
 
     xcons_transaction_ptr_t tx1a = test_xtxpool_util_t::create_cons_transfer_tx(0, 1, 1, now + 2, last_tx_hash);
-    last_tx_hash = tx1a->get_transaction()->digest();
+    last_tx_hash = tx1a->get_tx_hash_256();
     std::shared_ptr<xtx_entry> tx_ent1 = std::make_shared<xtx_entry>(tx1a, para);
     ret = txmgr_table.push_send_tx(tx_ent1, 1, last_tx_hash_0);
     ASSERT_EQ(0, ret);
 
     xcons_transaction_ptr_t tx2a = test_xtxpool_util_t::create_cons_transfer_tx(0, 1, 2, now + 3, last_tx_hash);
-    last_tx_hash = tx2a->get_transaction()->digest();
+    last_tx_hash = tx2a->get_tx_hash_256();
     std::shared_ptr<xtx_entry> tx_ent2a = std::make_shared<xtx_entry>(tx2a, para);
     ret = txmgr_table.push_send_tx(tx_ent2a, 1, last_tx_hash_0);
     ASSERT_EQ(0, ret);
 
     xcons_transaction_ptr_t tx3a = test_xtxpool_util_t::create_cons_transfer_tx(0, 1, 3, now + 4, last_tx_hash);
-    last_tx_hash = tx3a->get_transaction()->digest();
+    last_tx_hash = tx3a->get_tx_hash_256();
     std::shared_ptr<xtx_entry> tx_ent3a = std::make_shared<xtx_entry>(tx3a, para);
 
     xcons_transaction_ptr_t tx1b = test_xtxpool_util_t::create_cons_transfer_tx(0, 1, 1, now + 5, last_tx_hash_0);
-    last_tx_hash = tx1b->get_transaction()->digest();
+    last_tx_hash = tx1b->get_tx_hash_256();
     std::shared_ptr<xtx_entry> tx_ent1b = std::make_shared<xtx_entry>(tx1b, para);
     ret = txmgr_table.push_send_tx(tx_ent1b, 1, last_tx_hash_0);
     ASSERT_EQ(0, ret);
 
     xcons_transaction_ptr_t tx2b = test_xtxpool_util_t::create_cons_transfer_tx(0, 1, 2, now + 6, last_tx_hash);
-    last_tx_hash = tx2b->get_transaction()->digest();
+    last_tx_hash = tx2b->get_tx_hash_256();
     std::shared_ptr<xtx_entry> tx_ent2b = std::make_shared<xtx_entry>(tx2b, para);
 
     ret = txmgr_table.push_send_tx(tx_ent3a, 1, last_tx_hash_0);
     ASSERT_EQ(0, ret);
 
     xcons_transaction_ptr_t tx3b = test_xtxpool_util_t::create_cons_transfer_tx(0, 1, 3, now + 7, last_tx_hash);
-    last_tx_hash = tx3b->get_transaction()->digest();
+    last_tx_hash = tx3b->get_tx_hash_256();
     std::shared_ptr<xtx_entry> tx_ent3b = std::make_shared<xtx_entry>(tx3b, para);
     ret = txmgr_table.push_send_tx(tx_ent3b, 1, last_tx_hash_0);
     ASSERT_EQ(0, ret);
@@ -327,7 +327,7 @@ TEST_F(test_txmgr_table, sigle_account_uncontinuous_send_txs) {
     }
 
     for (uint32_t i = 2; i < 5; i++) {
-        auto tx_tmp = txmgr_table.query_tx(txs[i]->get_transaction()->get_source_addr(), txs[i]->get_transaction()->digest());
+        auto tx_tmp = txmgr_table.query_tx(txs[i]->get_transaction()->get_source_addr(), txs[i]->get_tx_hash_256());
         ASSERT_NE(tx_tmp, nullptr);
     }
 
@@ -361,7 +361,7 @@ TEST_F(test_txmgr_table, sigle_account_uncontinuous_send_txs) {
         ASSERT_EQ(1, txs3.size());
     }
 
-    txmgr_table.updata_latest_nonce(txs[0]->get_account_addr(), txs[0]->get_transaction()->get_tx_nonce(), txs[0]->get_transaction()->digest());
+    txmgr_table.updata_latest_nonce(txs[0]->get_account_addr(), txs[0]->get_transaction()->get_tx_nonce(), txs[0]->get_tx_hash_256());
 
     {
         ready_accounts_t ready_accounts3 = txmgr_table.get_ready_accounts(10);
@@ -373,7 +373,7 @@ TEST_F(test_txmgr_table, sigle_account_uncontinuous_send_txs) {
         ASSERT_EQ(txs[3]->get_digest_hex_str(), txs3[2]->get_digest_hex_str());
     }
 
-    txmgr_table.updata_latest_nonce(txs[3]->get_account_addr(), txs[3]->get_transaction()->get_tx_nonce(), txs[3]->get_transaction()->digest());
+    txmgr_table.updata_latest_nonce(txs[3]->get_account_addr(), txs[3]->get_transaction()->get_tx_nonce(), txs[3]->get_tx_hash_256());
 
     ready_accounts_t ready_accounts4 = txmgr_table.get_ready_accounts(10);
     ASSERT_EQ(1, ready_accounts4.size());
@@ -383,7 +383,7 @@ TEST_F(test_txmgr_table, sigle_account_uncontinuous_send_txs) {
     ASSERT_EQ(txs[5]->get_digest_hex_str(), txs3[1]->get_digest_hex_str());
     ASSERT_EQ(txs[6]->get_digest_hex_str(), txs3[2]->get_digest_hex_str());
 
-    txmgr_table.updata_latest_nonce(txs[5]->get_account_addr(), txs[5]->get_transaction()->get_tx_nonce(), txs[5]->get_transaction()->digest());
+    txmgr_table.updata_latest_nonce(txs[5]->get_account_addr(), txs[5]->get_transaction()->get_tx_nonce(), txs[5]->get_tx_hash_256());
 
     ready_accounts_t ready_accounts5 = txmgr_table.get_ready_accounts(10);
     ASSERT_EQ(1, ready_accounts5.size());
@@ -404,7 +404,7 @@ TEST_F(test_txmgr_table, expired_tx) {
     xcons_transaction_ptr_t tx1 = test_xtxpool_util_t::create_cons_transfer_tx(0, 1, 0, now - 300, last_tx_hash, 0);
     std::shared_ptr<xtx_entry> tx_ent1 = std::make_shared<xtx_entry>(tx1, para);
 
-    xcons_transaction_ptr_t tx2 = test_xtxpool_util_t::create_cons_transfer_tx(0, 1, 1, now - 300, tx1->get_transaction()->digest(), 0);
+    xcons_transaction_ptr_t tx2 = test_xtxpool_util_t::create_cons_transfer_tx(0, 1, 1, now - 300, tx1->get_tx_hash_256(), 0);
     std::shared_ptr<xtx_entry> tx_ent2 = std::make_shared<xtx_entry>(tx2, para);
 
     int32_t ret = txmgr_table.push_send_tx(tx_ent2, 0, last_tx_hash);
@@ -414,7 +414,7 @@ TEST_F(test_txmgr_table, expired_tx) {
     ret = txmgr_table.push_send_tx(tx_ent1, 0, last_tx_hash);
     ASSERT_EQ(0, ret);
 
-    auto q_tx = txmgr_table.query_tx(tx2->get_account_addr(), tx2->get_transaction()->digest());
+    auto q_tx = txmgr_table.query_tx(tx2->get_account_addr(), tx2->get_tx_hash_256());
     ASSERT_EQ(q_tx, nullptr);
 
     sleep(1);
@@ -522,7 +522,7 @@ TEST_F(test_txmgr_table, table_rules_filter_basic) {
 
     xblock_t * block0;
     std::vector<xcons_transaction_ptr_t> recvtxs1 = get_tx(blockstore, xstore, account0, account1, txs0, &block0);
-    
+
     xblock_t * block1;
     std::vector<xcons_transaction_ptr_t> recvtxs2 = get_tx(blockstore, xstore, account1, account2, txs1, &block1);
 
@@ -626,7 +626,7 @@ TEST_F(test_txmgr_table, repeat_receipt) {
         tx->set_current_receipt_id(0, receipt_id);
         receipt_id++;
     }
-    
+
     xblock_t * block;
     std::vector<xcons_transaction_ptr_t> recvtxs = get_tx(blockstore, xstore, sender, receiver, txs, &block);
 
