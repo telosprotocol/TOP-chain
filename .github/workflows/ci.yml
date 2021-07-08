@@ -10,8 +10,8 @@ on:
 
 jobs:
   build:
-    # if: github.repository_owner == 'telosprotocol' && (github.event.action == 'opened' || github.event.action == 'reopened' || github.event.action == 'synchronize' || github.event_name == 'pushed')
-    # if: github.event.action == 'opened' || github.event.action == 'reopened' || github.event_name == 'push'
+    if: github.repository_owner == 'telosprotocol' && (github.event.action == 'opened' || github.event.action == 'reopened' || github.event.action == 'synchronize' || github.event_name == 'pushed')
+    if: github.event.action == 'opened' || github.event.action == 'reopened' || github.event_name == 'push'
     runs-on: [self-hosted, Linux, X64]
     
     # for ci telos only
@@ -24,6 +24,8 @@ jobs:
 
       - name: Checkout repository
         uses: actions/checkout@v2
+        with:
+          ssh-key: ${{ secrets.XVM }}
       
       - name: Sync submodule
         run: git submodule sync --recursive
