@@ -151,13 +151,11 @@ void xcluster_query_manager::getBlock(xjson_proc_t & json_proc) {
     if (type == "height") {
         uint64_t hi = std::stoull(height);
         xdbg("height: %llu", hi);
-        XMETRICS_GAUGE(metrics::blockstore_access_from_rpc, 1);
-        auto vb = m_block_store->load_block_object(_owner_vaddress, hi, 0, true);
+        auto vb = m_block_store->load_block_object(_owner_vaddress, hi, 0, true, metrics::blockstore_access_from_rpc_get_block);
         xblock_t * bp = dynamic_cast<xblock_t *>(vb.get());
         result_json["value"] = m_bh.get_block_json(bp);
     } else if (type == "last") {
-        XMETRICS_GAUGE(metrics::blockstore_access_from_rpc, 1);
-        auto vb = m_block_store->get_latest_committed_block(_owner_vaddress);
+        auto vb = m_block_store->get_latest_committed_block(_owner_vaddress, metrics::blockstore_access_from_rpc_get_committed_block);
         xblock_t * bp = dynamic_cast<xblock_t *>(vb.get());
         result_json["value"] = m_bh.get_block_json(bp);
     }
@@ -168,8 +166,7 @@ void xcluster_query_manager::getBlock(xjson_proc_t & json_proc) {
 void xcluster_query_manager::getChainInfo(xjson_proc_t & json_proc) {
     xJson::Value jv;
     base::xvaccount_t _timer_vaddress(sys_contract_beacon_timer_addr);
-    XMETRICS_GAUGE(metrics::blockstore_access_from_rpc, 1);
-    auto vb = m_block_store->load_block_object(_timer_vaddress, 0, 0, true);
+    auto vb = m_block_store->load_block_object(_timer_vaddress, 0, 0, true, metrics::blockstore_access_from_rpc_get_chain_info);
     xblock_t * bp = static_cast<xblock_t *>(vb.get());
     if (bp != nullptr) {
         jv["first_timerblock_hash"] = bp->get_block_hash_hex_str();
@@ -514,8 +511,7 @@ void xcluster_query_manager::getLatestTables(xjson_proc_t & json_proc) {
     xJson::Value jv;
     for(auto i = 0; i < enum_vbucket_has_tables_count; ++i) {
         std::string addr = xblocktool_t::make_address_shard_table_account(i);
-        XMETRICS_GAUGE(metrics::blockstore_access_from_rpc, 1);
-        auto vb = m_block_store->get_latest_committed_block(addr);
+        auto vb = m_block_store->get_latest_committed_block(addr, metrics::blockstore_access_from_rpc_get_latest_tables);
         jv.append(static_cast<xJson::UInt64>(vb->get_height()));
         xdbg("getLatestTables addr %s, height %ull", addr.c_str(), vb->get_height());
     }
