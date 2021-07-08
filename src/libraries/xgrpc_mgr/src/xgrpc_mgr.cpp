@@ -60,7 +60,7 @@ void xgrpc_mgr_t::process_event(const mbus::xevent_ptr_t & e) {
         return;
     }
 
-    auto block = mbus::extract_block_from(block_event);
+    auto block = mbus::extract_block_from(block_event, metrics::blockstore_access_from_mbus_grpc_process_event);
     xdbg("grpc stream get_block_type %d, minor_type %d \n", block->get_block_type(), e->minor_type);
     if (!block->is_tableblock()) {
         return;
