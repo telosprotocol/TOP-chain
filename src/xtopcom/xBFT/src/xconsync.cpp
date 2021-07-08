@@ -252,10 +252,7 @@ namespace top
                 }
                 if(NULL == _local_block) //search from blockstore
                 {
-#if defined(ENABLE_METRICS)
-                    XMETRICS_GAUGE(metrics::blockstore_access_from_bft, 1);
-#endif
-                    base::xauto_ptr<base::xvblock_t> target_block = get_vblockstore()->load_block_object(*this, target_block_height, target_block_hash,true);
+                    base::xauto_ptr<base::xvblock_t> target_block = get_vblockstore()->load_block_object(*this, target_block_height, target_block_hash,true, metrics::blockstore_access_from_bft_sync);
                     if(target_block == nullptr)
                     {
                         xwarn("xBFTSyncdrv::handle_sync_request_msg,fail-found target cert of height:%llu,at node=0x%llx",target_block_height,get_xip2_low_addr());
@@ -286,10 +283,7 @@ namespace top
                 }
                 
                 bool full_load = (sync_targets & enum_xsync_target_block_input) || (sync_targets & enum_xsync_target_block_output);
-#if defined(ENABLE_METRICS)
-                XMETRICS_GAUGE(metrics::blockstore_access_from_bft, 1);
-#endif
-                base::xauto_ptr<base::xvblock_t> target_block = get_vblockstore()->load_block_object(*this, target_block_height,target_block_hash,full_load);//specific load target block
+                base::xauto_ptr<base::xvblock_t> target_block = get_vblockstore()->load_block_object(*this, target_block_height,target_block_hash,full_load, metrics::blockstore_access_from_bft_sync);//specific load target block
                 if(target_block == nullptr)
                 {
                     xwarn("xBFTSyncdrv::handle_sync_request_msg,fail-found target block of height:%llu,at node=0x%llx",target_block_height,get_xip2_low_addr());
@@ -431,7 +425,6 @@ namespace top
             else
             {
                 xwarn("xBFTSyncdrv::handle_sync_respond_msg,failed pass safe-check for block:%s at node=0x%llx from peer:0x%llx",_sync_block->dump().c_str(),get_xip2_addr().low_addr,from_addr.low_addr);
-                fire_verify_syncblock_job(_sync_block.get(),NULL);
             }
             return enum_xconsensus_code_successful;
         }
@@ -481,7 +474,8 @@ namespace top
                         xwarn_err("xBFTSyncdrv::fire_verify_syncblock,fail-unmatched commit_cert=%s vs proposal=%s,at node=0x%llx",_merge_cert->dump().c_str(),_for_check_block_->dump().c_str(),get_xip2_low_addr());
                         return true;
                     }
-                    if(get_vcertauth()->verify_muti_sign(_for_check_block_) == base::enum_vcert_auth_result::enum_successful)
+                    if(   _for_check_block_->check_block_flag(base::enum_xvblock_flag_authenticated)
+                       || (get_vcertauth()->verify_muti_sign(_for_check_block_) == base::enum_vcert_auth_result::enum_successful) )
                     {
                         _for_check_block_->get_cert()->set_unit_flag(base::enum_xvblock_flag_authenticated);
                         _for_check_block_->set_block_flag(base::enum_xvblock_flag_authenticated);

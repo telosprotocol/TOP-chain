@@ -177,7 +177,7 @@ void xvnode_house_t::load_group_from_store(const xvip2_t & target_node) {
     if (blk_ptr == nullptr)
         return;
 
-    base::xauto_ptr<base::xvbstate_t> bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(blk_ptr.get());
+    base::xauto_ptr<base::xvbstate_t> bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(blk_ptr.get(), metrics::statestore_access_from_vnodesrv_load_state);
     if (bstate == nullptr) {
         xwarn("xvnode_house_t::load_group_from_store fail-load state.block=%s", blk_ptr->dump().c_str());
         return;

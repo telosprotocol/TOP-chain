@@ -94,7 +94,7 @@ void xelect_client_process::process_elect(const mbus::xevent_ptr_t & e) {
     common::xaccount_address_t contract_address{ block->get_block_owner() };
     xinfo("xelect_client_process::process_elect %s, %" PRIu64, contract_address.c_str(), block->get_height());
     // TODO(jimmy) db event must stable and order
-    base::xauto_ptr<base::xvbstate_t> bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(block.get());
+    base::xauto_ptr<base::xvbstate_t> bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(block.get(), metrics::statestore_access_from_xelect);
     if (nullptr == bstate) {
         xerror("xelect_client_process::process_elect get target state fail.block=%s", block->dump().c_str());
         return;

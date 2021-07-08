@@ -109,9 +109,8 @@ namespace top
         }
         bool   xvblkstatestore_t::delete_states_of_db(const xvaccount_t & target_account,const uint64_t block_height)
         {
-            XMETRICS_GAUGE(metrics::blockstore_access_from_statestore, 1);
             //delete all stated'object under target height
-            xvbindex_vector auto_vector( xvchain_t::instance().get_xblockstore()->load_block_index(target_account,block_height));
+            xvbindex_vector auto_vector( xvchain_t::instance().get_xblockstore()->load_block_index(target_account,block_height, (int)metrics::blockstore_access_from_statestore_rebuild_state));
             for(auto index : auto_vector.get_vector())
             {
                 if(index != NULL)
@@ -125,9 +124,8 @@ namespace top
 
         xvbstate_t*   xvblkstatestore_t::rebuild_state_for_full_block(const xvbindex_t & target_index)
         {
-            XMETRICS_GAUGE(metrics::blockstore_access_from_statestore, 1);
             base::xauto_ptr<base::xvblock_t> target_block(
-            xvchain_t::instance().get_xblockstore()->load_block_object(target_index, target_index.get_height(),target_index.get_block_hash(),false));
+            xvchain_t::instance().get_xblockstore()->load_block_object(target_index, target_index.get_height(),target_index.get_block_hash(),false,(int)metrics::blockstore_access_from_statestore_fullblock));
             if(!target_block)
             {
                 xerror("xvblkstatestore_t::rebuild_state_for_full_block,fail to load raw block from index(%s)",target_index.dump().c_str());
@@ -162,7 +160,6 @@ namespace top
                 if(NULL == target_block.get_output())
                 {
                     xvaccount_t target_account(target_block.get_account());
-                    XMETRICS_GAUGE(metrics::blockstore_access_from_statestore, 1);
                     if(false == xvchain_t::instance().get_xblockstore()->load_block_output(target_account, &target_block))
                     {
                         xerror("xvblkstatestore_t::rebuild_state_for_block,fail to load output for block(%s)",target_block.dump().c_str());
@@ -184,7 +181,7 @@ namespace top
             }
         }
 
-        xauto_ptr<xvbstate_t>   xvblkstatestore_t::load_block_state(const xvbindex_t * current_index)
+        xauto_ptr<xvbstate_t>   xvblkstatestore_t::load_block_state(const xvbindex_t * current_index, const int etag)
         {
             if(NULL == current_index)
             {
@@ -245,11 +242,10 @@ namespace top
                 }
             }
             //step#3: load prev block'state and apply the bin-log
-            xauto_ptr<xvbstate_t> prev_block_state(get_block_state(*current_index,current_index->get_height() - 1,current_index->get_last_block_hash()));
+            xauto_ptr<xvbstate_t> prev_block_state(get_block_state(*current_index,current_index->get_height() - 1,current_index->get_last_block_hash(), etag));
             if(prev_block_state)//each xvbstate_t object present the full state
             {
-                XMETRICS_GAUGE(metrics::blockstore_access_from_statestore, 1);
-                base::xauto_ptr<base::xvblock_t> current_block( xvchain_t::instance().get_xblockstore()->load_block_object(*current_index, current_index->get_height(),current_index->get_block_hash(),false));
+                base::xauto_ptr<base::xvblock_t> current_block( xvchain_t::instance().get_xblockstore()->load_block_object(*current_index, current_index->get_height(),current_index->get_block_hash(),false,(int)metrics::blockstore_access_from_statestore_load_state));
                 if(!current_block)
                 {
                     xerror("xvblkstatestore_t::load_block_state,fail to load raw block(%s) from blockstore",current_index->dump().c_str());
@@ -285,7 +281,6 @@ namespace top
                 xassert(_block->get_height() == current_state->get_block_height() + 1);
                 current_state = make_object_ptr<xvbstate_t>(*_block.get(), *current_state.get());
                 if (_block->get_block_class() == enum_xvblock_class_light) {
-                    XMETRICS_GAUGE(metrics::blockstore_access_from_statestore, 1);
                     if (false == xvchain_t::instance().get_xblockstore()->load_block_output(target_account, _block.get())) {
                         xerror("xvblkstatestore_t::rebuild_bstate,fail-load block output for block(%s)",_block->dump().c_str());
                         return nullptr;
@@ -340,9 +335,8 @@ namespace top
                     return true;
                 }
 
-                XMETRICS_GAUGE(metrics::blockstore_access_from_statestore, 1);
                 // load prev block
-                auto prev_block = xvchain_t::instance().get_xblockstore()->load_block_object(target_account, cur_block->get_height() - 1, cur_block->get_last_block_hash(), false);
+                auto prev_block = xvchain_t::instance().get_xblockstore()->load_block_object(target_account, cur_block->get_height() - 1, cur_block->get_last_block_hash(), false,(int)metrics::blockstore_access_from_statestore_load_lastest_state);
                 if (nullptr == prev_block) {
                     xwarn("xvblkstatestore_t::load_latest_blocks_and_state fail-load block. account=%s,height=%ld,target_block=%s",
                         target_account.get_account().c_str(), cur_block->get_height() - 1, target_block->dump().c_str());
@@ -415,9 +409,9 @@ namespace top
             }
         }
 
-        bool xvblkstatestore_t::execute_block(xvblock_t * target_block)
+        bool xvblkstatestore_t::execute_block(xvblock_t * target_block, const int etag)
         {
-            xauto_ptr<xvbstate_t> bstate = get_block_state(target_block);
+            xauto_ptr<xvbstate_t> bstate = get_block_state(target_block, etag);
             if (bstate == nullptr)
             {
                 xerror("xvblkstatestore_t::execute_block fail-get block state,block=%s", target_block->dump().c_str());
@@ -459,7 +453,7 @@ namespace top
         }
 
         // implement by load blocks and apply these blocks
-        xauto_ptr<xvbstate_t>  xvblkstatestore_t::get_block_state(xvblock_t * target_block)
+        xauto_ptr<xvbstate_t>  xvblkstatestore_t::get_block_state(xvblock_t * target_block, const int etag)
         {
             xdbg("xvblkstatestore_t::get_block_state enter.block=%s", target_block->dump().c_str());
             xvaccount_t target_account(target_block->get_account());
@@ -469,10 +463,12 @@ namespace top
             target_bstate = get_lru_cache(target_block->get_block_level(), target_block->get_block_hash());
             if (target_bstate != nullptr) {
                 xdbg("xvblkstatestore_t::get_block_state succ-get from cache.block=%s", target_block->dump().c_str());
+                XMETRICS_GAUGE((top::metrics::E_SIMPLE_METRICS_TAG)etag, 1);
                 return target_bstate;
             }
 
             // try load from db
+            XMETRICS_GAUGE((top::metrics::E_SIMPLE_METRICS_TAG)etag, 0);
             xvbstate_t* raw_state = read_state_from_db(target_account, target_block->get_height(), target_block->get_block_hash());
             if (raw_state != nullptr) {
                 target_bstate.attach(raw_state);
@@ -515,7 +511,7 @@ namespace top
             }
         }
 
-        xauto_ptr<xvbstate_t>  xvblkstatestore_t::get_block_state_2(xvblock_t * current_block)
+        xauto_ptr<xvbstate_t>  xvblkstatestore_t::get_block_state_2(xvblock_t * current_block, const int etag)
         {
             if(NULL == current_block)
             {
@@ -528,7 +524,7 @@ namespace top
             {
                 //XTODO
             }
-
+            XMETRICS_GAUGE((top::metrics::E_SIMPLE_METRICS_TAG)etag, 0);
             //step#2:try load from db for state
             {
                 xvbstate_t* db_state_ptr = read_state_from_db(target_account,current_block->get_height(),current_block->get_block_hash());
@@ -579,7 +575,7 @@ namespace top
             }
 
             //step#4: load prev block'state and apply the bin-log
-            xauto_ptr<xvbstate_t> prev_block_state(get_block_state(target_account,current_block->get_height() - 1,current_block->get_last_block_hash()));
+            xauto_ptr<xvbstate_t> prev_block_state(get_block_state(target_account,current_block->get_height() - 1,current_block->get_last_block_hash(),etag));
             if(prev_block_state)//each xvbstate_t object present the full state
             {
                 xdbg("xvblkstatestore_t::get_block_state,succ-find prev block state for block(%s)",current_block->dump().c_str());
@@ -611,38 +607,35 @@ namespace top
             return nullptr;
         }
 
-        xauto_ptr<xvbstate_t> xvblkstatestore_t::get_block_state(const xvaccount_t & target_account,const uint64_t block_height,const std::string& block_hash)
+        xauto_ptr<xvbstate_t> xvblkstatestore_t::get_block_state(const xvaccount_t & target_account,const uint64_t block_height,const std::string& block_hash, const int etag)
         {
             //step#1: check cached states object per 'account and block'hash
             {
                 //XTODO
             }
-            XMETRICS_GAUGE(metrics::blockstore_access_from_statestore, 1);
-            base::xauto_ptr<base::xvblock_t> current_block( xvchain_t::instance().get_xblockstore()->load_block_object(target_account,block_height,block_hash,false));
+            base::xauto_ptr<base::xvblock_t> current_block( xvchain_t::instance().get_xblockstore()->load_block_object(target_account,block_height,block_hash,false, (int)metrics::blockstore_access_from_statestore_get_block_state));
             if(!current_block)
             {
                 xerror("xvblkstatestore_t::get_block_state,fail to load raw block(%s->height(%" PRIu64 ")->hash(%s)) from blockstore",target_account.get_address().c_str(),block_height,block_hash.c_str());
                 return nullptr;
             }
-            return get_block_state(current_block());
+            return get_block_state(current_block(), etag);
         }
 
-        xauto_ptr<xvbstate_t> xvblkstatestore_t::get_block_state(const xvaccount_t & target_account,const uint64_t block_height,const uint64_t block_view_id)
+        xauto_ptr<xvbstate_t> xvblkstatestore_t::get_block_state(const xvaccount_t & target_account,const uint64_t block_height,const uint64_t block_view_id, const int etag)
         {
-            XMETRICS_GAUGE(metrics::blockstore_access_from_statestore, 1);
-            xauto_ptr<xvbindex_t> target_index( xvchain_t::instance().get_xblockstore()->load_block_index(target_account,block_height,block_view_id));
+            xauto_ptr<xvbindex_t> target_index( xvchain_t::instance().get_xblockstore()->load_block_index(target_account,block_height,block_view_id, (int)metrics::blockstore_access_from_statestore_get_block_index_state));
             if(!target_index)
             {
                 xwarn("xvblkstatestore_t::get_block_state,fail load index for block(%s->height(%" PRIu64 ")->viewid(%" PRIu64 "))",target_account.get_address().c_str(),block_height,block_view_id);
                 return nullptr;
             }
-            return load_block_state(target_index());
+            return load_block_state(target_index(), etag);
         }
 
-        xauto_ptr<xvbstate_t> xvblkstatestore_t::get_latest_connectted_block_state(const xvaccount_t & account)
+        xauto_ptr<xvbstate_t> xvblkstatestore_t::get_latest_connectted_block_state(const xvaccount_t & account, const int etag)
         {
-            XMETRICS_GAUGE(metrics::blockstore_access_from_statestore, 1);
-            auto _block = base::xvchain_t::instance().get_xblockstore()->get_latest_connected_block(account);
+            auto _block = base::xvchain_t::instance().get_xblockstore()->get_latest_connected_block(account, (int)metrics::blockstore_access_from_statestore_get_connect_state);
             if (_block == nullptr) {
                 xerror("xvblkstatestore_t::get_latest_connectted_block_state fail-load latest connectted block. account=%s", account.get_account().c_str());
                 return nullptr;
@@ -652,21 +645,20 @@ namespace top
                 xwarn("xvblkstatestore_t::get_latest_connectted_block_state  fail-invalid state for empty genesis block. account=%s", account.get_account().c_str());
                 return nullptr;
             }
-            return get_block_state(_block.get());
+            return get_block_state(_block.get(), etag);
         }
 
-        xauto_ptr<xvbstate_t> xvblkstatestore_t::get_committed_block_state(const xvaccount_t & account,const uint64_t block_height)
+        xauto_ptr<xvbstate_t> xvblkstatestore_t::get_committed_block_state(const xvaccount_t & account,const uint64_t block_height, const int etag)
         {
-            XMETRICS_GAUGE(metrics::blockstore_access_from_statestore, 1);
-            auto _block = base::xvchain_t::instance().get_xblockstore()->load_block_object(account, block_height, enum_xvblock_flag_committed, false);
+            auto _block = base::xvchain_t::instance().get_xblockstore()->load_block_object(account, block_height, enum_xvblock_flag_committed, false, (int)metrics::blockstore_access_from_statestore_get_commit_state);
             if (_block == nullptr) {
                 xwarn("xvblkstatestore_t::get_committed_block_state fail-load committed block. account=%s,height=%ld", account.get_account().c_str(), block_height);
                 return nullptr;
             }
-            return get_block_state(_block.get());
+            return get_block_state(_block.get(), etag);
         }
 
-        bool xvblkstatestore_t::get_full_block_offsnapshot(xvblock_t * current_block)
+        bool xvblkstatestore_t::get_full_block_offsnapshot(xvblock_t * current_block, const int etag)
         {
             if (current_block->is_full_state_block()) {
                 return true;
@@ -676,8 +668,10 @@ namespace top
             do {
                 target_bstate = get_lru_cache(current_block->get_block_level(), current_block->get_block_hash());
                 if (target_bstate != nullptr) {
+                    XMETRICS_GAUGE((top::metrics::E_SIMPLE_METRICS_TAG)etag, 1);
                     break;
                 }
+                XMETRICS_GAUGE((top::metrics::E_SIMPLE_METRICS_TAG)etag, 0);
                 xvbstate_t* raw_state = read_state_from_db(base::xvaccount_t(current_block->get_account()), current_block->get_height(), current_block->get_block_hash());
                 if (raw_state != nullptr) {
                     target_bstate.attach(raw_state);
@@ -724,7 +718,7 @@ namespace top
             //unit block-based state-managment
             if(target_account.get_address() == block_to_hold_state->get_account())
             {
-                xauto_ptr<xvbstate_t> block_state(get_block_state(block_to_hold_state));
+                xauto_ptr<xvbstate_t> block_state(get_block_state(block_to_hold_state, metrics::statestore_access_from_vledger_load_state));
                 if(block_state)
                     block_state->add_ref(); //alloc reference for xauto_ptr<xvexestate_t>
                 return  block_state();

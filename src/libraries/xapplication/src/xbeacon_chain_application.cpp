@@ -90,7 +90,7 @@ static top::data::election::xelection_result_store_t load_election_data(observer
             break;
         }
 
-        base::xauto_ptr<base::xvbstate_t> bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(vblock.get());
+        base::xauto_ptr<base::xvbstate_t> bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(vblock.get(), metrics::statestore_access_from_application_load_election);
         if (bstate == nullptr) {
             // TODO(jimmy)
             ec = error::xerrc_t::load_election_data_missing_state;

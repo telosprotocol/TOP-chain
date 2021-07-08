@@ -34,18 +34,18 @@ namespace top
             xvblkstatestore_t & operator = (const xvblkstatestore_t &);
 
         public:
-            virtual xauto_ptr<xvbstate_t> get_block_state(xvblock_t * target_block);
-            virtual xauto_ptr<xvbstate_t> get_block_state(const xvaccount_t & account,const uint64_t block_height,const std::string& block_hash);
-            virtual xauto_ptr<xvbstate_t> get_block_state(const xvaccount_t & account,const uint64_t block_height,const uint64_t block_view_id);
-            virtual xauto_ptr<xvbstate_t> get_latest_connectted_block_state(const xvaccount_t & account);
-            virtual xauto_ptr<xvbstate_t> get_committed_block_state(const xvaccount_t & account,const uint64_t block_height);
-            virtual bool                  get_full_block_offsnapshot(xvblock_t * target_block);
+            virtual xauto_ptr<xvbstate_t> get_block_state(xvblock_t * target_block, const int etag=0);
+            virtual xauto_ptr<xvbstate_t> get_block_state(const xvaccount_t & account,const uint64_t block_height,const std::string& block_hash, const int etag=0);
+            virtual xauto_ptr<xvbstate_t> get_block_state(const xvaccount_t & account,const uint64_t block_height,const uint64_t block_view_id, const int etag=0);
+            virtual xauto_ptr<xvbstate_t> get_latest_connectted_block_state(const xvaccount_t & account, const int etag=0);
+            virtual xauto_ptr<xvbstate_t> get_committed_block_state(const xvaccount_t & account,const uint64_t block_height, const int etag=0);
+            virtual bool                  get_full_block_offsnapshot(xvblock_t * target_block, const int etag=0);
 
-            virtual xauto_ptr<xvbstate_t> get_block_state_2(xvblock_t * target_block);
-            virtual bool                  execute_block(xvblock_t * target_block);
+            virtual xauto_ptr<xvbstate_t> get_block_state_2(xvblock_t * target_block, const int etag=0);
+            virtual bool                  execute_block(xvblock_t * target_block, const int etag=0);
 
         private:
-            xauto_ptr<xvbstate_t>     load_block_state(const xvbindex_t * target_index);
+            xauto_ptr<xvbstate_t>     load_block_state(const xvbindex_t * target_index, const int etag=0);
 
             bool                      write_state_to_db(xvbstate_t & target_state,const std::string & target_block_hash);
 

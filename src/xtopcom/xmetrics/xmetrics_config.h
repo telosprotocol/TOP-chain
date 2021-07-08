@@ -48,7 +48,7 @@ public:
 
 private:
     e_metrics_config() {
-        config_hub.insert({"dump_interval", (std::size_t)180});
+        config_hub.insert({"dump_interval", (std::size_t)300});
         // config_hub.insert({"default_time_out", std::chrono::seconds{5}}); // todo how to make const variable configuare
         config_hub.insert({"queue_procss_behind_sleep_time", std::chrono::seconds{1}});
         config_hub.insert({"dump_full_unit", (bool)true});
