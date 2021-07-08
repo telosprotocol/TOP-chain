@@ -49,6 +49,8 @@ private:
     ThreadHandler(const ThreadHandler & );
     ThreadHandler & operator = (const ThreadHandler &);
 public:
+    static bool          fired_packet(base::xpacket_t & packet,int32_t cur_thread_id, uint64_t time_now_ms,on_dispatch_callback_t & callback_ptr);
+public:
     base::xiothread_t*   get_raw_thread() {return m_raw_thread;}
  
     //packet is from   send(xpacket_t & packet) or dispatch(xpacket_t & packet) of xdatabox_t
@@ -79,7 +81,13 @@ public:
     void unregister_on_dispatch_callback();
 
 private:
-    size_t m_woker_threads_count{4};  // usally 1 worker thread to handle packet
+    #ifdef __DIRECT_PASS_PACKET_WITHOUT_DATABOX__
+    std::mutex             m_mutex;
+    on_dispatch_callback_t m_callback;
+    size_t m_woker_threads_count{0};  // if need asynch message-handle,may create 1 threads
+    #else
+    size_t m_woker_threads_count{2};  // 2 threads are enough to handle messages
+    #endif
     std::vector<ThreadHandler*> m_worker_threads;
 };
 
