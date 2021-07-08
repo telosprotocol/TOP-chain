@@ -407,7 +407,7 @@ namespace top
             }
             
             //rule#4: need follow branch of lock
-            if(safe_check_follow_locked_branch(proposal_block.get_block()) <= 0)//not allow unknow case continue
+            if(safe_check_follow_locked_branch(proposal_block.get_block()) < 0)//allow unknow case continue
             {
                 xwarn("xBFTRules::add_proposal,fail-as safe_check_follow_locked_branch for block(%s) vs local(%s),at node=0x%llx",proposal_block.dump().c_str(),dump().c_str(),get_xip2_addr().low_addr);
                 return false;
