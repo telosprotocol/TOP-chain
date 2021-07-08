@@ -31,7 +31,7 @@ ThreadHandler::ThreadHandler(base::xiothread_t * raw_thread_ptr, const uint32_t 
 #ifdef DEBUG
     create_databox(2048, 8192, 131070); //create dedicate databox for packet
 #else
-    create_databox(2048, 8192, 65536); //create dedicate databox for packet
+    create_databox(2048, 8192, 131070); //create dedicate databox for packet
 #endif
     TOP_INFO("m_ptr_databox:%p",get_databox());
 
