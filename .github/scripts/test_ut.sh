@@ -1,26 +1,29 @@
 #!/bin/bash
 
+WORK_DIR=$(pwd)
+REPORT_DIR=${WORK_DIR}/ut_report
+TEMP_HTML=.github/scripts/index.html
+UHTML=${REPORT_DIR}/index.html
+
 include_case=("xbasic_test" "xchain_timer_test" "xcommon_test" "xelection_test" "xrouter_test" "xsystem_contract_test" "xvnode_test")
 
 # run unittest
 echo "testcase count:" $(ls cbuild/bin/Linux/*test|wc -l)
 
-if [ -d cbuild/bin/Linux/ut_report ];then
-    rm -fr cbuild/bin/Linux/ut_report
+if [ -d ${REPORT_DIR} ];then
+    rm -fr ${REPORT_DIR}
 fi
-mkdir -p cbuild/bin/Linux/ut_report
+mkdir -p ${REPORT_DIR}
 
 for utest in $(ls cbuild/bin/Linux/*test);do
     utest_file_name=$(basename $utest)
     time ${utest} --gtest_output="xml:"${utest_file_name}"_report.xml"
-    mv ${utest_file_name}"_report.xml" cbuild/bin/Linux/ut_report/
+    mv ${utest_file_name}"_report.xml" ${REPORT_DIR}/
 done
 
-TEMP_HTML=.github/scripts/index.html
-UHTML=cbuild/bin/Linux/ut_report/index.html
 cp $TEMP_HTML $UHTML
-echo 'unit xml num: ' $(ls cbuild/bin/Linux/ut_report|wc -l)
-cd cbuild/bin/Linux/ut_report
+echo 'unit xml num: ' $(ls ${REPORT_DIR}|wc -l)
+cd ${REPORT_DIR}
 summary_tests=0
 summary_fails=0
 for utxml in $(ls ./*xml);do
