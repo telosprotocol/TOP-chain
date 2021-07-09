@@ -7,7 +7,6 @@
 #include "xbase/xbase.h"
 #include "xbase/xrouter.h"
 #include "xkad/routing_table/callback_manager.h"
-#include "xwrouter/message_handler/xwrouter_handler.h"
 #include "xwrouter/wrouter_utils/wrouter_utils.h"
 
 #include <memory>
@@ -27,6 +26,8 @@ class RoutingMessage;
 namespace kadmlia {
 class ElectRoutingTable;
 typedef std::shared_ptr<ElectRoutingTable> ElectRoutingTablePtr;
+class RootRoutingTable;
+typedef std::shared_ptr<RootRoutingTable> RootRoutingTablePtr;
 struct NodeInfo;
 typedef std::shared_ptr<NodeInfo> NodeInfoPtr;
 };  // namespace kadmlia
@@ -39,7 +40,7 @@ namespace wrouter {
 
 using Xip2Header = _xip2_header;
 
-class WrouterXidHandler : public WrouterHandler {
+class WrouterXidHandler {
 public:
     WrouterXidHandler(transport::TransportPtr transport_ptr,
                       std::shared_ptr<gossip::GossipInterface> bloom_gossip_ptr,
@@ -50,10 +51,14 @@ public:
     ~WrouterXidHandler();
 
 public:
-    virtual int32_t SendPacket(transport::protobuf::RoutingMessage & message) override;
+    virtual int32_t SendPacket(transport::protobuf::RoutingMessage & message);
     virtual int32_t RecvPacket(transport::protobuf::RoutingMessage & message, base::xpacket_t & packet);
 
-protected:
+private:
+    kadmlia::RootRoutingTablePtr FindRootRoutingTable();
+
+    kadmlia::ElectRoutingTablePtr FindElectRoutingTable(base::ServiceType service_type);
+
     base::ServiceType ParserServiceType(const std::string & kad_key);
 
     bool MulticastPacketCheck(transport::protobuf::RoutingMessage & message);
@@ -72,6 +77,12 @@ protected:
 
 private:
     DISALLOW_COPY_AND_ASSIGN(WrouterXidHandler);
+
+    transport::TransportPtr transport_ptr_;
+    std::shared_ptr<gossip::GossipInterface> bloom_gossip_ptr_;
+    std::shared_ptr<gossip::GossipInterface> bloom_layer_gossip_ptr_;
+    std::shared_ptr<gossip::GossipInterface> gossip_rrs_ptr_;
+    std::shared_ptr<gossip::GossipInterface> gossip_dispatcher_ptr_;
 };
 
 }  // namespace wrouter
