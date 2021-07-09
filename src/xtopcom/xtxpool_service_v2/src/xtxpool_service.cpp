@@ -197,7 +197,7 @@ void xtxpool_service::pull_lacking_receipts(uint64_t now, xcovered_tables_t & co
                       self_table_addr.c_str(),
                       peer_table_addr.c_str(),
                       receiptid,
-                      std::string(reinterpret_cast<char *>(hash.data()), hash.size()).c_str());
+                      to_hex_str(hash).c_str());
             }
             send_pull_receipts_of_confirm(pulled_confirm_receipt);
             lacking_confirm_tx_num += table_lacking_hashs.get_receipt_id_hashs().size();
@@ -679,14 +679,14 @@ void xtxpool_service::on_message_pull_confirm_receipt_received(vnetwork::xvnode_
                  pulled_receipt.m_tx_from_account.c_str(),
                  pulled_receipt.m_tx_to_account.c_str(),
                  receipt_id,
-                 std::string(reinterpret_cast<char *>(hash.data()), hash.size()).c_str());
+                 to_hex_str(hash).c_str());
 
             if (!m_para->get_txpool()->is_consensused_recv_receiptid(pulled_receipt.m_tx_from_account, pulled_receipt.m_tx_to_account, receipt_id)) {
                 xinfo("xtxpool_service::on_message_pull_confirm_receipt_received table:%s:%s confirm_tx id:%llu,hash:%s not consensused",
                       pulled_receipt.m_tx_from_account.c_str(),
                       pulled_receipt.m_tx_to_account.c_str(),
                       receipt_id,
-                      std::string(reinterpret_cast<char *>(hash.data()), hash.size()).c_str());
+                      to_hex_str(hash).c_str());
                 continue;
             }
 

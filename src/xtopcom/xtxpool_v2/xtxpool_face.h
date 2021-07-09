@@ -148,13 +148,13 @@ class xtxs_pack_para_t {
 public:
     xtxs_pack_para_t(const std::string & table_addr,
                      const base::xreceiptid_state_ptr_t receiptid_state_highqc,
-                     const std::vector<tx_info_t> & locked_tx_vec,
+                     const std::map<std::string, uint64_t> & locked_nonce_map,
                      uint16_t all_txs_max_num,
                      uint16_t confirm_and_recv_txs_max_num,
                      uint16_t confirm_txs_max_num)
       : m_table_addr(table_addr)
       , m_receiptid_state_highqc(receiptid_state_highqc)
-      , m_locked_tx_vec(locked_tx_vec)
+      , m_locked_nonce_map(locked_nonce_map)
       , m_all_txs_max_num(all_txs_max_num)
       , m_confirm_and_recv_txs_max_num(confirm_and_recv_txs_max_num)
       , m_confirm_txs_max_num(confirm_txs_max_num) {
@@ -165,8 +165,8 @@ public:
     const base::xreceiptid_state_ptr_t & get_receiptid_state_highqc() const {
         return m_receiptid_state_highqc;
     }
-    const std::vector<tx_info_t> & get_locked_tx_vec() const {
-        return m_locked_tx_vec;
+    const std::map<std::string, uint64_t> & get_locked_nonce_map() const {
+        return m_locked_nonce_map;
     }
     uint16_t get_all_txs_max_num() const {
         return m_all_txs_max_num;
@@ -181,7 +181,7 @@ public:
 private:
     std::string m_table_addr;
     base::xreceiptid_state_ptr_t m_receiptid_state_highqc;
-    std::vector<tx_info_t> m_locked_tx_vec;
+    std::map<std::string, uint64_t> m_locked_nonce_map;
     uint16_t m_all_txs_max_num;
     uint16_t m_confirm_and_recv_txs_max_num;
     uint16_t m_confirm_txs_max_num;

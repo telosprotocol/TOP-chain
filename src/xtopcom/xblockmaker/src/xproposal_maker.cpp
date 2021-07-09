@@ -296,7 +296,7 @@ bool xproposal_maker_t::verify_proposal_drand_block(base::xvblock_t *proposal_bl
 }
 
 bool xproposal_maker_t::update_txpool_txs(const xblock_consensus_para_t & proposal_para, xtablemaker_para_t & table_para) {
-    std::vector<xtxpool_v2::tx_info_t> locked_tx_vec;
+    std::map<std::string, uint64_t> locked_nonce_map;
     // update committed receiptid state for txpool, pop output finished txs
     if (proposal_para.get_latest_committed_block()->get_height() > 0) {
         auto tablestate_commit = get_target_tablestate(proposal_para.get_latest_committed_block().get());
@@ -308,8 +308,8 @@ bool xproposal_maker_t::update_txpool_txs(const xblock_consensus_para_t & propos
         get_txpool()->update_table_state(tablestate_commit);
 
         // update locked txs for txpool, locked txs come from two latest tableblock
-        get_locked_txs(proposal_para.get_latest_cert_block(), locked_tx_vec);
-        get_locked_txs(proposal_para.get_latest_locked_block(), locked_tx_vec);
+        get_locked_nonce_map(proposal_para.get_latest_locked_block(), locked_nonce_map);
+        get_locked_nonce_map(proposal_para.get_latest_cert_block(), locked_nonce_map);
     }
 
     // get table batch txs for execute and make block
@@ -317,7 +317,7 @@ bool xproposal_maker_t::update_txpool_txs(const xblock_consensus_para_t & propos
     uint16_t all_txs_max_num = 40;  // TODO(jimmy) config paras
     uint16_t confirm_and_recv_txs_max_num = 35;
     uint16_t confirm_txs_max_num = 30;
-    xtxpool_v2::xtxs_pack_para_t txpool_pack_para(proposal_para.get_table_account(), tablestate_highqc->get_receiptid_state(), locked_tx_vec, all_txs_max_num, confirm_and_recv_txs_max_num, confirm_txs_max_num);
+    xtxpool_v2::xtxs_pack_para_t txpool_pack_para(proposal_para.get_table_account(), tablestate_highqc->get_receiptid_state(), locked_nonce_map, all_txs_max_num, confirm_and_recv_txs_max_num, confirm_txs_max_num);
     std::vector<xcons_transaction_ptr_t> origin_txs = get_txpool()->get_ready_txs(txpool_pack_para);
     for (auto & tx : origin_txs) {
         xdbg_info("xproposal_maker_t::update_txpool_txs leader-get txs. %s tx=%s",
@@ -403,7 +403,7 @@ bool xproposal_maker_t::backup_set_consensus_para(base::xvblock_t* latest_cert_b
     return true;
 }
 
-void xproposal_maker_t::get_locked_txs(const xblock_ptr_t & block, std::vector<xtxpool_v2::tx_info_t> & locked_tx_vec) const {
+void xproposal_maker_t::get_locked_nonce_map(const xblock_ptr_t & block, std::map<std::string, uint64_t> & locked_nonce_map) const {
     if (block->get_block_class() == base::enum_xvblock_class_light) {
         const std::vector<base::xventity_t*> & _table_inentitys = block->get_input()->get_entitys();
         uint32_t entitys_count = _table_inentitys.size();
@@ -419,9 +419,23 @@ void xproposal_maker_t::get_locked_txs(const xblock_ptr_t & block, std::vector<x
                     continue;
                 }
                 base::enum_transaction_subtype _subtype = (base::enum_transaction_subtype)action.get_org_tx_action_id();
-                uint256_t _hash256((uint8_t*)action.get_org_tx_hash().data());
-                xtxpool_v2::tx_info_t txinfo(_unit_header->get_account(), _hash256, _subtype);
-                locked_tx_vec.push_back(txinfo);
+
+                if (_subtype == enum_transaction_subtype_self || _subtype == enum_transaction_subtype_send) {
+                    xlightunit_action_t txaction(action);
+                    xtransaction_ptr_t _rawtx = block->query_raw_transaction(txaction.get_tx_hash());
+                    if (_rawtx != nullptr) {
+                        uint64_t txnonce = _rawtx->get_tx_nonce();
+                        auto account_addr = _unit_header->get_account();
+                        auto it = locked_nonce_map.find(account_addr);
+                        if (it == locked_nonce_map.end()) {
+                            locked_nonce_map[account_addr] = txnonce;
+                        } else {
+                            if (it->second < txnonce) {
+                                locked_nonce_map[account_addr] = txnonce;
+                            }
+                        }
+                    }
+                }
             }
         }
     }

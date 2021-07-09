@@ -38,7 +38,7 @@ class xproposal_maker_t : public xunit_service::xproposal_maker_face {
     bool                        verify_proposal_input(base::xvblock_t *proposal_block, xtablemaker_para_t & table_para);
 
  private:
-    void                        get_locked_txs(const xblock_ptr_t & block, std::vector<xtxpool_v2::tx_info_t> & locked_tx_vec) const;
+    void                        get_locked_nonce_map(const xblock_ptr_t & block, std::map<std::string, uint64_t> & locked_nonce_map) const;
     xtablestate_ptr_t           get_target_tablestate(base::xvblock_t* block);
 
     xblockmaker_resources_ptr_t     m_resources{nullptr};
