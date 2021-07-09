@@ -71,7 +71,8 @@ bool xtable_state_cache_t::get_account_index(const std::string & account, base::
             return false;
         }
     }
-    return m_table_state->get_account_index(account, account_index);
+    m_table_state->get_account_index(account, account_index);
+    return true;
 }
 
 bool xtable_state_cache_t::init_table_state() const {
