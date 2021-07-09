@@ -344,13 +344,10 @@ namespace top
                     xinfo("xBFTRules::add_proposal,fail-lc proposal(%s) vs cert(%s),at node=0x%llx",proposal_block.dump().c_str(),it->second->dump().c_str(),get_xip2_addr().low_addr);
                     return false;
                 }
-                else if(proposal_block.get_height() == it->second->get_height()) //liveness entry
+                else if(proposal_block.get_height() == it->second->get_height())
                 {
-                    if(proposal_block.get_bind_clock_cert()->get_clock() < (it->second->get_clock() + 5) )//50s expire
-                    {
-                        xinfo("xBFTRules::add_proposal,fail-ec proposal(%s) vs non-expired cert(%s),at node=0x%llx",proposal_block.dump().c_str(),it->second->dump().c_str(),get_xip2_addr().low_addr);
-                        return false; //have un-expired cert at same height
-                    }
+                    xinfo("xBFTRules::add_proposal,fail-ec proposal(%s) vs non-expired cert(%s),at node=0x%llx",proposal_block.dump().c_str(),it->second->dump().c_str(),get_xip2_addr().low_addr);
+                    return false; //have un-expired cert at same height
                 }
                 else if(proposal_block.get_height() == (it->second->get_height() + 1) ) //next height'proposal
                 {
