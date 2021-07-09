@@ -349,9 +349,9 @@ XDECLARE_CONFIGURATION(local_blacklist, const char *, "");
 XDECLARE_CONFIGURATION(local_whitelist, const char *, "");
 #if defined(XBUILD_DEV) || defined(XBUILD_CI)
 XDECLARE_CONFIGURATION(slash_fulltable_interval, xinterval_t, 30); // 5 minutes
-XDECLARE_CONFIGURATION(slash_table_split_num, uint16_t, 1);
+XDECLARE_CONFIGURATION(slash_table_split_num, uint16_t, 4);
 #else
-XDECLARE_CONFIGURATION(slash_table_split_num, uint16_t, 4); // split num (should divisible by total table num)
+XDECLARE_CONFIGURATION(slash_table_split_num, uint16_t, 128); // split num (should divisible by total table num)
 // slash fulltable interval
 XDECLARE_CONFIGURATION(slash_fulltable_interval, xinterval_t, 120); // 20 minutes
 #endif
