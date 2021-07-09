@@ -41,7 +41,6 @@ public:
     void get_service_table_boundary(base::enum_xchain_zone_index & zone_id, uint32_t & fount_table_id, uint32_t & back_table_id) const override;
     void resend_receipts(uint64_t now) override;
     int32_t request_transaction_consensus(const data::xtransaction_ptr_t & tx, bool local) override;
-    void deal_table_block(xblock_t * block, uint64_t now_clock) override;
     xcons_transaction_ptr_t query_tx(const std::string & account, const uint256_t & hash) const override {
         return nullptr;
     };
@@ -57,9 +56,7 @@ private:
     void send_receipt_real(const data::xcons_transaction_ptr_t & cons_tx);
     bool has_receipt_right(const xcons_transaction_ptr_t & cons_tx, uint32_t resend_time) const;
     void forward_broadcast_message(const vnetwork::xvnode_address_t & addr, const vnetwork::xmessage_t & message);
-    void make_receipts_and_send(xblock_t * block);
     void send_receipt_retry(xcons_transaction_ptr_t & cons_tx);
-    void send_receipt_first_time(data::xcons_transaction_ptr_t & cons_tx, xblock_t * cert_block);
     xcons_transaction_ptr_t create_confirm_tx_by_hash(const uint256_t & hash);
     xcons_transaction_ptr_t get_confirmed_tx(const uint256_t & hash);
     void send_pull_receipts_of_confirm(xreceipt_pull_confirm_receipt_t & pulled_receipt);

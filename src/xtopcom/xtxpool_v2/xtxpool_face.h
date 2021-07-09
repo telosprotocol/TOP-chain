@@ -148,11 +148,13 @@ class xtxs_pack_para_t {
 public:
     xtxs_pack_para_t(const std::string & table_addr,
                      const base::xreceiptid_state_ptr_t receiptid_state_highqc,
+                     const std::vector<tx_info_t> & locked_tx_vec,
                      uint16_t all_txs_max_num,
                      uint16_t confirm_and_recv_txs_max_num,
                      uint16_t confirm_txs_max_num)
       : m_table_addr(table_addr)
       , m_receiptid_state_highqc(receiptid_state_highqc)
+      , m_locked_tx_vec(locked_tx_vec)
       , m_all_txs_max_num(all_txs_max_num)
       , m_confirm_and_recv_txs_max_num(confirm_and_recv_txs_max_num)
       , m_confirm_txs_max_num(confirm_txs_max_num) {
@@ -162,6 +164,9 @@ public:
     }
     const base::xreceiptid_state_ptr_t & get_receiptid_state_highqc() const {
         return m_receiptid_state_highqc;
+    }
+    const std::vector<tx_info_t> & get_locked_tx_vec() const {
+        return m_locked_tx_vec;
     }
     uint16_t get_all_txs_max_num() const {
         return m_all_txs_max_num;
@@ -176,6 +181,7 @@ public:
 private:
     std::string m_table_addr;
     base::xreceiptid_state_ptr_t m_receiptid_state_highqc;
+    std::vector<tx_info_t> m_locked_tx_vec;
     uint16_t m_all_txs_max_num;
     uint16_t m_confirm_and_recv_txs_max_num;
     uint16_t m_confirm_txs_max_num;
@@ -235,7 +241,6 @@ public:
     virtual const std::vector<xcons_transaction_ptr_t> get_resend_txs(uint8_t zone, uint16_t subaddr, uint64_t now) = 0;
     virtual void refresh_table(uint8_t zone, uint16_t subaddr, bool refresh_unconfirm_txs) = 0;
     // virtual void update_non_ready_accounts(uint8_t zone, uint16_t subaddr) = 0;
-    virtual void update_locked_txs(const std::string & table_addr, const std::vector<tx_info_t> & locked_tx_vec) = 0;
     virtual void update_table_state(const data::xtablestate_ptr_t & table_state) = 0;
     virtual xcons_transaction_ptr_t get_unconfirmed_tx(const std::string & from_table_addr, const std::string & to_table_addr, uint64_t receipt_id) const = 0;
     virtual const std::vector<xtxpool_table_lacking_receipt_ids_t> get_lacking_recv_tx_ids(uint8_t zone, uint16_t subaddr, uint32_t max_num) const = 0;

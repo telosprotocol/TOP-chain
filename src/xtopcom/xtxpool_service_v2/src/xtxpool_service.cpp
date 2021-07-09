@@ -84,7 +84,7 @@ void xtxpool_service::set_params(const xvip2_t & xip, const std::shared_ptr<vnet
 
     std::vector<uint16_t> tables = m_vnet_driver->table_ids();
     if (tables.empty()) {
-        xerror("xtxpool_service::set_params xip low addr:%" PRIx64 "node:%s, load table failed", xip.low_addr, m_vnetwork_str.c_str());
+        xerror("xtxpool_service::set_params, load table failed.xip:{%" PRIu64 ", %" PRIu64 "} node:%s", xip.high_addr, xip.low_addr, m_vnetwork_str.c_str());
         return;
     }
     m_cover_front_table_id = tables.front();
@@ -94,7 +94,7 @@ void xtxpool_service::set_params(const xvip2_t & xip, const std::shared_ptr<vnet
 bool xtxpool_service::start(const xvip2_t & xip) {
     m_vnet_driver->register_message_ready_notify(xmessage_category_txpool, std::bind(&xtxpool_service::on_message_receipt, this, std::placeholders::_1, std::placeholders::_2));
 
-    xinfo("xtxpool_service::start node:%s,xip:%llu,%llu zone:%d table:%d %d,is_send_receipt_role:%d",
+    xinfo("xtxpool_service::start node:%s,xip:{%" PRIu64 ", %" PRIu64 "} zone:%d table:%d %d,is_send_receipt_role:%d",
           m_vnetwork_str.c_str(),
           xip.high_addr,
           xip.low_addr,
@@ -106,7 +106,7 @@ bool xtxpool_service::start(const xvip2_t & xip) {
     return m_running;
 }
 bool xtxpool_service::fade(const xvip2_t & xip) {
-    xinfo("xtxpool_service::fade node:%s,xip:%llu,%llu zone:%d table:%d %d,is_send_receipt_role:%d",
+    xinfo("xtxpool_service::fade node:%s,xip:{%" PRIu64 ", %" PRIu64 "} zone:%d table:%d %d,is_send_receipt_role:%d",
           m_vnetwork_str.c_str(),
           xip.high_addr,
           xip.low_addr,
@@ -401,16 +401,6 @@ void xtxpool_service::send_receipt_retry(data::xcons_transaction_ptr_t & cons_tx
     }
 }
 
-void xtxpool_service::send_receipt_first_time(data::xcons_transaction_ptr_t & cons_tx, xblock_t * cert_block) {
-    xassert(cons_tx->is_receipt_valid());
-    send_receipt_real(cons_tx);
-    if (cons_tx->is_recv_tx()) {
-        XMETRICS_GAUGE(metrics::txpool_recv_tx_first_send, 1);
-    } else {
-        XMETRICS_GAUGE(metrics::txpool_confirm_tx_first_send, 1);
-    }
-}
-
 void xtxpool_service::send_receipt_real(const data::xcons_transaction_ptr_t & cons_tx) {
     try {
         std::string target_addr = cons_tx->get_receipt_target_account();
@@ -491,58 +481,6 @@ int32_t xtxpool_service::request_transaction_consensus(const data::xtransaction_
     xtxpool_v2::xtx_para_t para;
     std::shared_ptr<xtxpool_v2::xtx_entry> tx_ent = std::make_shared<xtxpool_v2::xtx_entry>(cons_tx, para);
     return m_para->get_txpool()->push_send_tx(tx_ent);
-}
-
-void xtxpool_service::deal_table_block(xblock_t * block, uint64_t now_clock) {
-    const std::string & account_addr = block->get_account();
-    base::xvaccount_t _vaddress(account_addr);
-    auto tableid = data::account_map_to_table_id(common::xaccount_address_t{account_addr});
-    if (block->get_clock() + block_clock_height_fall_behind_max > now_clock) {
-        auto table_height_pair = m_table_db_event_height_map.find(tableid.get_subaddr());
-        if (table_height_pair != m_table_db_event_height_map.end()) {
-            uint64_t min_height = (block->get_height() > table_height_pair->second + load_blocks_for_missing_block_event_max) ?
-                                      (block->get_height() - load_blocks_for_missing_block_event_max) :
-                                      (table_height_pair->second + 1);
-            for (uint64_t height = block->get_height() - 1; height >= min_height; height--) {
-                if (!xreceipt_strategy_t::is_selected_sender(account_addr, height, m_node_id, m_shard_size)) {
-                    continue;
-                }
-                base::xauto_ptr<base::xvblock_t> blockobj = m_para->get_vblockstore()->load_block_object(_vaddress, height, base::enum_xvblock_flag_committed, false, metrics::blockstore_access_from_txpool_make_receipt);
-                if (blockobj != nullptr) {
-                    m_para->get_vblockstore()->load_block_input(_vaddress, blockobj.get());
-                    xblock_t * missing_block = dynamic_cast<xblock_t *>(blockobj.get());
-                    if (missing_block->get_clock() + block_clock_height_fall_behind_max <= now_clock) {
-                        break;
-                    }
-                    xinfo("xtxpool_service::deal_table_block block:%s", missing_block->dump().c_str());
-                    make_receipts_and_send(missing_block);
-                }
-            }
-        }
-
-        if (xreceipt_strategy_t::is_selected_sender(account_addr, block->get_height(), m_node_id, m_shard_size)) {
-            make_receipts_and_send(block);
-        }
-    }
-    m_table_db_event_height_map[tableid.get_subaddr()] = block->get_height();
-}
-
-void xtxpool_service::make_receipts_and_send(xblock_t * block) {
-    if (!block->is_lighttable()) {
-        return;
-    }
-    uint64_t cert_height = block->get_height() + 2;
-    base::xauto_ptr<base::xvblock_t> cert_block = m_para->get_vblockstore()->load_block_object(block->get_account(), cert_height, base::enum_xvblock_flag_authenticated, false, metrics::blockstore_access_from_txpool_make_receipt);
-    if (cert_block == nullptr) {
-        xerror("xtxpool_service::make_receipts_and_send load cert block fail table:%s,height:%llu", block->get_account().c_str(), cert_height);
-        return;
-    }
-    xblock_t * raw_cert_block = dynamic_cast<xblock_t *>(cert_block.get());
-    auto receipts = xreceipt_strategy_t::make_receipts(block, cert_block.get());
-    for (auto & receipt : receipts) {
-        xinfo("xtxpool_service::make_receipts_and_send tx=%s,block:%s", receipt->dump().c_str(), block->dump().c_str());
-        send_receipt_first_time(receipt, raw_cert_block);
-    }
 }
 
 xcons_transaction_ptr_t xtxpool_service::get_confirmed_tx(const uint256_t & hash) {

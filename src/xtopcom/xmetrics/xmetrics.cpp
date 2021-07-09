@@ -187,7 +187,6 @@ char const * matrics_name(xmetircs_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(blockstore_access_from_txpool);
         RETURN_METRICS_NAME(blockstore_access_from_txpool_on_block_event);
         RETURN_METRICS_NAME(blockstore_access_from_txpool_create_confirm_receipt);
-        RETURN_METRICS_NAME(blockstore_access_from_txpool_make_receipt);
         RETURN_METRICS_NAME(blockstore_access_from_txpool_sync_status);
         RETURN_METRICS_NAME(blockstore_access_from_txpool_recover);
         RETURN_METRICS_NAME(blockstore_access_from_txpool_refresh_table);
@@ -280,7 +279,6 @@ char const * matrics_name(xmetircs_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(statestore_access_from_application_load_election);
         RETURN_METRICS_NAME(statestore_access_from_blkmaker_update_account_state);
         RETURN_METRICS_NAME(statestore_access_from_blkmaker_unit_connect_state);
-        RETURN_METRICS_NAME(statestore_access_from_txpool_get_tablestate);
         RETURN_METRICS_NAME(statestore_access_from_txpool_get_accountstate);
         RETURN_METRICS_NAME(statestore_access_from_txpool_refreshtable);
         RETURN_METRICS_NAME(statestore_access_from_blkmaker_get_target_tablestate);

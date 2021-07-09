@@ -6,7 +6,6 @@
 
 #include "xbasic/xmemory.hpp"
 #include "xdata/xcons_transaction.h"
-#include "xtxpool_v2/xlocked_txs.h"
 #include "xtxpool_v2/xpending_account.h"
 #include "xtxpool_v2/xtx_queue.h"
 #include "xtxpool_v2/xtx_receipt_queue.h"
