@@ -76,7 +76,8 @@ const xcons_transaction_ptr_t xpeer_table_unconfirmed_txs_t::get_latest_receipt(
 }
 
 void xpeer_tables_t::push_tx(const xcons_transaction_ptr_t & tx) {
-    auto peer_table_sid = tx->get_peer_tableid();
+    xassert(tx->is_recv_tx());
+    auto peer_table_sid = tx->get_self_tableid(); // note,here should use self tableid of origin tx target account
     xtxpool_info("xpeer_tables_t::push_tx tx:%s,peer table sid:%d,receipt id:%llu", tx->dump(true).c_str(), peer_table_sid, tx->get_last_action_receipt_id());
     auto it = m_peer_tables.find(peer_table_sid);
     if (it != m_peer_tables.end()) {
