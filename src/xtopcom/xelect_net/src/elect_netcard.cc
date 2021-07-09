@@ -361,46 +361,26 @@ void EcNetcard::HandleRumorMessage(
         { vhost_msg.data().c_str(), vhost_msg.data().c_str() + vhost_msg.data().size() },
             static_cast<common::xmessage_id_t>(vhost_msg.cb_type()));
 
-    uint32_t chain_hash = base::xhash32_t::digest(
-            std::string((char*)msg.payload().data(), msg.payload().size()));
  
-    if (IS_RRS_GOSSIP_MESSAGE(message)) {
-        XMETRICS_PACKET_INFO("p2pperf_vhostrecv_info",
-                             MESSAGE_BASIC_INFO(message),
-                             MESSAGE_RRS_FEATURE(message),
-                             IS_ROOT_BROADCAST(message),
-                             "is_pulled",
-                             IS_RRS_PULLED_MESSAGE(message),
-                             PACKET_SIZE(packet),
-                             NOW_TIME);
-    } else {
-        if (IS_BROADCAST(message)) {
-            XMETRICS_PACKET_INFO(
-                "p2pnormal_vhostrecv_info", MESSAGE_BASIC_INFO(message), MESSAGE_FEATURE(message), IS_ROOT_BROADCAST(message), "is_pulled", 0, PACKET_SIZE(packet), NOW_TIME);
-        }
+    uint32_t msg_hash = base::xhash32_t::digest(std::to_string(message.id()) + data);
+    message.set_msg_hash(msg_hash);
+
+ 
+    // if (IS_RRS_GOSSIP_MESSAGE(message)) {
+    //     XMETRICS_PACKET_INFO("p2pperf_vhostrecv_info",
+    //                          MESSAGE_BASIC_INFO(message),
+    //                          MESSAGE_RRS_FEATURE(message),
+    //                          IS_ROOT_BROADCAST(message),
+    //                          "is_pulled",
+    //                          IS_RRS_PULLED_MESSAGE(message),
+    //                          PACKET_SIZE(packet),
+    //                          NOW_TIME);
+    // } else {
+    if (IS_BROADCAST(message)) {
+        XMETRICS_PACKET_INFO(
+            "p2pbroadcast_vhostrecv_info", MESSAGE_BASIC_INFO(message), MESSAGE_FEATURE(message), IS_ROOT_BROADCAST(message), "is_pulled", 0, PACKET_SIZE(packet), NOW_TIME);
     }
-#ifdef XENABLE_P2P_BENDWIDTH
-
-
-    if (message.type() == kElectVhostRumorP2PMessage) {
-        XMETRICS_FLOW_COUNT("p2p_transport_p2pchain_afterfilter_packet_recv", 1);
-        XMETRICS_FLOW_COUNT("p2p_transport_p2pchain_afterfilter_bandwidth_recv", packet.get_body().size());
-
-        XMETRICS_FLOW_COUNT("p2p_transport_p2pchain_afterfilter_real_packet_recv", 1);
-        XMETRICS_FLOW_COUNT("p2p_transport_p2pchain_afterfilter_real_bandwidth_recv", vhost_msg.data().size());
-    } else if (message.type() == kElectVhostRumorGossipMessage) {
-        XMETRICS_FLOW_COUNT("p2p_transport_gossipchain_afterfilter_packet_recv", 1);
-        XMETRICS_FLOW_COUNT("p2p_transport_gossipchain_afterfilter_bandwidth_recv", packet.get_body().size());
-
-        if (message.is_root()) {
-            XMETRICS_FLOW_COUNT("p2p_transport_gossipchain_root_afterfilter_packet_recv", 1);
-            XMETRICS_FLOW_COUNT("p2p_transport_gossipchain_root_afterfilter_bandwidth_recv", packet.get_body().size());
-        }
-
-        XMETRICS_FLOW_COUNT("p2p_transport_gossipchain_afterfilter_real_packet_recv", 1);
-        XMETRICS_FLOW_COUNT("p2p_transport_gossipchain_afterfilter_real_bandwidth_recv", vhost_msg.data().size());
-    }
-#endif
+    // }
 
     // TODO(smaug) for kRoot message, call all rumor_callback for now
     if (message.is_root()) {
