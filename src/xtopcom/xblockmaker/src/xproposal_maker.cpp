@@ -296,6 +296,7 @@ bool xproposal_maker_t::verify_proposal_drand_block(base::xvblock_t *proposal_bl
 }
 
 bool xproposal_maker_t::update_txpool_txs(const xblock_consensus_para_t & proposal_para, xtablemaker_para_t & table_para) {
+    std::vector<xtxpool_v2::tx_info_t> locked_tx_vec;
     // update committed receiptid state for txpool, pop output finished txs
     if (proposal_para.get_latest_committed_block()->get_height() > 0) {
         auto tablestate_commit = get_target_tablestate(proposal_para.get_latest_committed_block().get());
@@ -307,10 +308,8 @@ bool xproposal_maker_t::update_txpool_txs(const xblock_consensus_para_t & propos
         get_txpool()->update_table_state(tablestate_commit);
 
         // update locked txs for txpool, locked txs come from two latest tableblock
-        std::vector<xtxpool_v2::tx_info_t> locked_tx_vec;
         get_locked_txs(proposal_para.get_latest_cert_block(), locked_tx_vec);
         get_locked_txs(proposal_para.get_latest_locked_block(), locked_tx_vec);
-        get_txpool()->update_locked_txs(get_account(), locked_tx_vec);
     }
 
     // get table batch txs for execute and make block
@@ -318,7 +317,7 @@ bool xproposal_maker_t::update_txpool_txs(const xblock_consensus_para_t & propos
     uint16_t all_txs_max_num = 40;  // TODO(jimmy) config paras
     uint16_t confirm_and_recv_txs_max_num = 35;
     uint16_t confirm_txs_max_num = 30;
-    xtxpool_v2::xtxs_pack_para_t txpool_pack_para(proposal_para.get_table_account(), tablestate_highqc->get_receiptid_state(), all_txs_max_num, confirm_and_recv_txs_max_num, confirm_txs_max_num);
+    xtxpool_v2::xtxs_pack_para_t txpool_pack_para(proposal_para.get_table_account(), tablestate_highqc->get_receiptid_state(), locked_tx_vec, all_txs_max_num, confirm_and_recv_txs_max_num, confirm_txs_max_num);
     std::vector<xcons_transaction_ptr_t> origin_txs = get_txpool()->get_ready_txs(txpool_pack_para);
     for (auto & tx : origin_txs) {
         xdbg_info("xproposal_maker_t::update_txpool_txs leader-get txs. %s tx=%s",

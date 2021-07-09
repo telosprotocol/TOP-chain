@@ -215,14 +215,6 @@ void xtxpool_t::refresh_table(uint8_t zone, uint16_t subaddr, bool refresh_uncon
 //     }
 // }
 
-void xtxpool_t::update_locked_txs(const std::string & table_addr, const std::vector<tx_info_t> & locked_tx_vec) {
-    auto table = get_txpool_table_by_addr(table_addr);
-    if (table == nullptr) {
-        return;
-    }
-    return table->update_locked_txs(locked_tx_vec);
-}
-
 void xtxpool_t::update_table_state(const data::xtablestate_ptr_t & table_state) {
     xtxpool_info("xtxpool_t::update_table_state table:%s height:%llu", table_state->get_account().c_str(), table_state->get_block_height());
     XMETRICS_TIME_RECORD("cons_tableblock_verfiy_proposal_update_receiptid_state");
@@ -230,7 +222,7 @@ void xtxpool_t::update_table_state(const data::xtablestate_ptr_t & table_state) 
     if (table == nullptr) {
         return;
     }
-    table->update_receiptid_state(table_state->get_receiptid_state());
+    table->update_table_state(table_state);
 }
 
 xcons_transaction_ptr_t xtxpool_t::get_unconfirmed_tx(const std::string & from_table_addr, const std::string & to_table_addr, uint64_t receipt_id) const {

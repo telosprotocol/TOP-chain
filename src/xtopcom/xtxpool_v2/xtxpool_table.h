@@ -62,8 +62,7 @@ public:
       , m_txmgr_table(&m_xtable_info)
       // , m_table_filter(para->get_vblockstore())
       , m_unconfirmed_tx_queue(para, &m_xtable_info)
-      // , m_non_ready_accounts(&m_xtable_info)
-      , m_locked_txs(&m_xtable_info) {
+      , m_table_state_cache(para, table_addr) {
     }
     int32_t push_send_tx(const std::shared_ptr<xtx_entry> & tx);
     int32_t push_receipt(const std::shared_ptr<xtx_entry> & tx, bool is_self_send);
@@ -77,8 +76,7 @@ public:
     int32_t verify_txs(const std::string & account, const std::vector<xcons_transaction_ptr_t> & txs, uint64_t latest_commit_unit_height);
     void refresh_table(bool refresh_unconfirm_txs);
     // void update_non_ready_accounts();
-    void update_locked_txs(const std::vector<tx_info_t> & locked_tx_vec);
-    void update_receiptid_state(const base::xreceiptid_state_ptr_t & receiptid_state);
+    void update_table_state(const data::xtablestate_ptr_t & table_state);
     xcons_transaction_ptr_t get_unconfirmed_tx(const std::string & to_table_addr, uint64_t receipt_id) const;
     const std::vector<xtxpool_table_lacking_receipt_ids_t> get_lacking_recv_tx_ids(uint32_t max_num) const;
     const std::vector<xtxpool_table_lacking_confirm_tx_hashs_t> get_lacking_confirm_tx_hashs(uint32_t max_num) const;
@@ -99,7 +97,6 @@ private:
     bool get_account_latest_nonce_hash(const std::string account_addr, uint64_t & latest_nonce, uint256_t & latest_hash) const;
     void unit_block_process(xblock_t * unit_block);
     bool  get_account_basic_info(const std::string & account, xaccount_basic_info_t & account_index_info) const;
-    data::xtablestate_ptr_t get_target_tablestate(base::xvblock_t* block) const;
     void update_id_state(const tx_info_t & txinfo, base::xtable_shortid_t peer_table_sid, uint64_t receiptid, uint64_t nonce);
 
     xtxpool_resources_face * m_para;
@@ -107,11 +104,10 @@ private:
     xtxmgr_table_t m_txmgr_table;
     xunconfirmed_tx_queue_t m_unconfirmed_tx_queue;
     // xnon_ready_accounts_t m_non_ready_accounts;
-    xlocked_txs_t m_locked_txs;
-    mutable std::mutex m_mgr_mutex;  // lock m_txmgr_table and m_locked_txs
+    mutable std::mutex m_mgr_mutex;  // lock m_txmgr_table
     mutable std::mutex m_unconfirm_mutex;  // lock m_unconfirmed_tx_queue
     // mutable std::mutex m_non_ready_mutex;  // lock m_non_ready_accounts
-    xreceipt_state_cache_t m_receipt_state_cache;
+    xtable_state_cache_t m_table_state_cache;
     uint64_t m_unconfirmed_tx_num{0};
 };
 

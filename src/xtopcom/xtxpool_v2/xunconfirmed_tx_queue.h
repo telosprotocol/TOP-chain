@@ -43,7 +43,7 @@ public:
     void push_tx(const xcons_transaction_ptr_t & tx);
     void erase(uint16_t peer_table_sid, uint64_t receipt_id);
     const xcons_transaction_ptr_t find(uint16_t peer_table_sid, uint64_t receipt_id) const;
-    void update_receiptid_state(const xreceipt_state_cache_t & receiptid_state_cache);
+    void update_receiptid_state(const xtable_state_cache_t & table_state_cache);
     const xall_unconfirm_tx_set_t & get_all_txs() const {
         return m_all_unconfirm_txs;
     }
@@ -74,7 +74,7 @@ class xunconfirmed_account_t {
 public:
     xunconfirmed_account_t(xtxpool_resources_face * para, xpeer_tables_t * peer_tables) : m_para(para), m_peer_tables(peer_tables) {
     }
-    int32_t update(xblock_t * latest_committed_block, const xreceipt_state_cache_t & receiptid_state_cache);
+    int32_t update(xblock_t * latest_committed_block, const xtable_state_cache_t & table_state_cache);
     const xcons_transaction_ptr_t find(const uint256_t & hash) const;
     uint32_t size() const {
         return m_unconfirmed_txs.size();
@@ -108,8 +108,8 @@ public:
     ~xunconfirmed_tx_queue_t();
 
 public:
-    void udpate_latest_confirmed_block(xblock_t * block, const xreceipt_state_cache_t & receiptid_state_cache);
-    void recover(const xreceipt_state_cache_t & receiptid_state_cache, const xtablestate_ptr_t & tablestate);
+    void udpate_latest_confirmed_block(xblock_t * block, const xtable_state_cache_t & table_state_cache);
+    void recover(const xtable_state_cache_t & table_state_cache, const xtablestate_ptr_t & tablestate);
     const xcons_transaction_ptr_t find(const std::string & account_addr, const uint256_t & hash) const;
     const std::vector<xcons_transaction_ptr_t> get_resend_txs(uint64_t now);
     uint32_t size() const;

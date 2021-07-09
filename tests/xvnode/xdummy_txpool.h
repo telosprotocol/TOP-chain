@@ -22,9 +22,8 @@ public:
     void on_block_confirmed(xblock_t * block) override {}
     int32_t verify_txs(const std::string & account, const std::vector<xcons_transaction_ptr_t> & txs, uint64_t latest_commit_unit_height) override {return 0;}
     const std::vector<xcons_transaction_ptr_t> get_resend_txs(uint8_t zone, uint16_t subaddr, uint64_t now) override {return {};}
-    void refresh_table(uint8_t zone, uint16_t subaddr, bool refresh_unconfirm_txs) override {}
+    void refresh_table(xblock_t * block, bool refresh_unconfirm_txs) override {}
     // void update_non_ready_accounts(uint8_t zone, uint16_t subaddr) override {}
-    void update_locked_txs(const std::string & table_addr, const std::vector<tx_info_t> & locked_tx_vec) override {}
     void update_table_state(const data::xtablestate_ptr_t & table_state) override {}
     xcons_transaction_ptr_t get_unconfirmed_tx(const std::string & from_table_addr, const std::string & to_table_addr, uint64_t receipt_id) const override {return nullptr;}
     const std::vector<xtxpool_table_lacking_receipt_ids_t> get_lacking_recv_tx_ids(uint8_t zone, uint16_t subaddr, uint32_t max_num) const override {return {};}

@@ -250,12 +250,17 @@ ready_accounts_t xpending_accounts_t::pop_ready_accounts(uint32_t count) {
     return accounts;
 }
 
-ready_accounts_t xpending_accounts_t::get_ready_accounts(uint32_t txs_max_num) {
+ready_accounts_t xpending_accounts_t::get_ready_accounts(uint32_t txs_max_num, const std::set<std::string> & locked_send_tx_accounts) {
     candidate_accounts_t c_accounts;
     auto iter = m_accounts_set.begin();
     uint32_t txs_num = 0;
     while (iter != m_accounts_set.end() && txs_num < txs_max_num) {
         std::shared_ptr<xcandidate_account_entry> acccount_ent = *iter;
+        auto it_locked_account = locked_send_tx_accounts.find(acccount_ent->get_addr());
+        if (it_locked_account != locked_send_tx_accounts.end()) {
+            iter++;
+            continue;
+        }
         acccount_ent->set_select_count_inc(1);
         c_accounts.push_back(acccount_ent);
         xtxpool_dbg("xpending_accounts_t::get_ready_accounts table:%s,account:%s,tx num:%u",
