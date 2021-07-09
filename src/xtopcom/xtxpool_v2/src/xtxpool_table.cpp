@@ -25,7 +25,11 @@ namespace xtxpool_v2 {
 bool xtxpool_table_t::get_account_basic_info(const std::string & account, xaccount_basic_info_t & account_index_info) const {
     // TODO(jimmy) try sync behind account unit, make a new function
     base::xaccount_index_t account_index;
-    m_table_state_cache.get_account_index(account, account_index);
+    bool ret = m_table_state_cache.get_account_index(account, account_index);
+    if (!ret) {
+        xtxpool_warn("xtxpool_table_t::get_account_basic_info get account index fail account:%s", account.c_str());
+        return false;
+    }
     base::xvaccount_t _account_vaddress(account);
     base::xauto_ptr<base::xvblock_t> _block_ptr = m_para->get_vblockstore()->get_latest_cert_block(_account_vaddress);
     xblock_ptr_t latest_cert_unit = xblock_t::raw_vblock_to_object_ptr(_block_ptr.get());
