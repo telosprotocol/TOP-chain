@@ -809,8 +809,10 @@ private:
             }
         }
         auto t3 = xtime_utl::time_now_ms();
+        map_value_to_vec(self, selfv);
         map_value_to_vec(send, sendv);
         map_value_to_vec(confirm, confirmv);
+        std::sort(selfv.begin(), selfv.end(), cmp);
         std::sort(sendv.begin(), sendv.end(), cmp);
         std::sort(confirmv.begin(), confirmv.end(), cmp);
 
@@ -826,6 +828,7 @@ private:
         j["confirmed max time"] = max_confirm_time;
         j["confirmed avg time"] = float(total_confirm_time) / confirmedv.size();
         j["confirmed detail"] = tx_confirmed;
+        j["self detail"] = setj(selfv);
         j["send only detail"] = setj(sendv);
         j["confirmed only detail"] = setj(confirmv);
         j["multi detail"] = setj(multi);
