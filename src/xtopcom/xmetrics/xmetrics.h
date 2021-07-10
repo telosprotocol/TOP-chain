@@ -318,6 +318,16 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     statestore_access_from_blkmaker_get_target_tablestate,
     statestore_access_end = statestore_access_from_blkmaker_get_target_tablestate,
 
+    state_load_blk_state_suc,
+    state_load_blk_state_cache_suc,
+    state_load_blk_state_fail,
+    state_load_blk_state_table_suc,
+    state_load_blk_state_table_fail,
+    state_load_blk_state_table_cache_suc,
+    state_load_blk_state_unit_suc,
+    state_load_blk_state_unit_fail,
+    state_load_blk_state_unit_cache_suc,
+
     e_simple_total,
 };
 using xmetircs_tag_t = E_SIMPLE_METRICS_TAG;
