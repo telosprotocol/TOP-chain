@@ -682,6 +682,7 @@ private:
      */
     std::int32_t do_read(base::xstream_t & stream) override;
 };
+using xgroup_workload_t = cluster_workload_t;
 
 struct xactivation_record final : public xserializable_based_on<void> {
     int activated{0};

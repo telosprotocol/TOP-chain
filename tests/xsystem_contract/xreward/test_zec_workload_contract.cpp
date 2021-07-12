@@ -1,7 +1,6 @@
 // Copyright (c) 2017-2018 Telos Foundation & contributors
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
-
 #include <gtest/gtest.h>
 
 #include <string>
@@ -14,7 +13,6 @@
 #include "xloader/xconfig_onchain_loader.h"
 #include "xstore/xstore_face.h"
 #include "xdata/xblocktool.h"
-#include "xdata/xworkload_info.h"
 #include "xstore/xstore_face.h"
 #include "xvm/manager/xcontract_manager.h"
 #include "xvm/xsystem_contracts/xregistration/xrec_registration_contract.h"
@@ -246,9 +244,7 @@ public:
         return res;
     }
 
-    void test_accumulate_workload(xstatistics_data_t const & stat_data,
-                                                        std::map<common::xgroup_address_t, xauditor_workload_info_t> & auditor_group_workload,
-                                                        std::map<common::xgroup_address_t, xvalidator_workload_info_t> & validator_group_workload) {
+    void test_accumulate_workload(xstatistics_data_t const & stat_data, std::map<common::xgroup_address_t, xgroup_workload_t> & group_workload) {
         // auto node_service = contract::xcontract_manager_t::instance().get_node_service();
         auto workload_per_tableblock = 2;
         auto workload_per_tx = 1;
@@ -264,34 +260,31 @@ public:
                     group_addr.group_id(),
                     (uint16_t)group_account_data.account_statistics_data.size(),
                     static_item.first};
-                xdbg("[xzec_workload_contract_v2::accumulate_workload] group xvip2: %llu, %llu",
-                    group_xvip2.high_addr,
-                    group_xvip2.low_addr);
-                bool is_auditor = false;
-                if (common::has<common::xnode_type_t::auditor>(group_addr.type())) {
-                    is_auditor = true;
-                } else if (common::has<common::xnode_type_t::validator>(group_addr.type())) {
-                    is_auditor = false;
-                } else {
-                    // invalid group
-                    xwarn("[xzec_workload_contract_v2::accumulate_workload] invalid group id: %d", group_addr.group_id().value());
-                    continue;
-                }
+                printf("[xzec_workload_contract_v2::accumulate_workload] group xvip2: %lu, %lu\n",
+                       group_xvip2.high_addr,
+                       group_xvip2.low_addr);
                 for (size_t slotid = 0; slotid < group_account_data.account_statistics_data.size(); ++slotid) {
                     auto account_str = group_addr.to_string() + "_" +std::to_string(slotid);
-                    if (is_auditor) {
-                        accumulate_auditor_workload(group_addr, account_str, slotid, group_account_data, workload_per_tableblock, workload_per_tx, auditor_group_workload);
-                    } else {
-                        accumulate_validator_workload(group_addr, account_str, slotid, group_account_data, workload_per_tableblock, workload_per_tx, validator_group_workload);
+                    uint32_t block_count = group_account_data.account_statistics_data[slotid].block_data.block_count;
+                    uint32_t tx_count = group_account_data.account_statistics_data[slotid].block_data.transaction_count;
+                    uint32_t workload = block_count * workload_per_tableblock + tx_count * workload_per_tx;
+                    if (workload > 0) {
+                        auto it2 = group_workload.find(group_addr);
+                        if (it2 == group_workload.end()) {
+                            xgroup_workload_t group_workload_info;
+                            auto ret = group_workload.insert(std::make_pair(group_addr, group_workload_info));
+                            XCONTRACT_ENSURE(ret.second, "insert workload failed");
+                            it2 = ret.first;
+                        }
+
+                        it2->second.m_leader_count[account_str] += workload;
                     }
                 }
             }
         }
     }
 
-    void test_accumulate_workload_with_fullblock(common::xlogic_time_t const timestamp,
-                                            std::map<common::xgroup_address_t, xauditor_workload_info_t> & auditor_group_workload,
-                                            std::map<common::xgroup_address_t, xvalidator_workload_info_t> & validator_group_workload) {
+    void test_accumulate_workload_with_fullblock(common::xlogic_time_t const timestamp, std::map<common::xgroup_address_t, xgroup_workload_t> & group_workload) {
         // XMETRICS_TIME_RECORD(XWORKLOAD_CONTRACT "accumulate_total_time");
         // xinfo("[xzec_workload_contract_v2::accumulate_workload_with_fullblock] enum_vbucket_has_tables_count %d, timestamp: %llu", enum_vledger_const::enum_vbucket_has_tables_count, timestamp);
         int64_t table_pledge_balance_change_tgas = 0;
@@ -314,7 +307,7 @@ public:
                 xfull_tableblock_t *full_tableblock = dynamic_cast<xfull_tableblock_t *>(full_blocks[block_index].get());
                 assert(full_tableblock != nullptr);
                 auto const & stat_data = full_tableblock->get_table_statistics();
-                test_accumulate_workload(stat_data, auditor_group_workload, validator_group_workload);
+                test_accumulate_workload(stat_data, group_workload);
                 // m_table_pledge_balance_change_tgas
                 table_pledge_balance_change_tgas += full_tableblock->get_pledge_balance_change_tgas();
                 total_table_block_count++;
@@ -423,96 +416,40 @@ TEST_F(xtest_workload_contract_v2_t, test_construct_data){
     EXPECT_EQ(data.detail[10].group_statistics_data[group_addr3].account_statistics_data[6].block_data.transaction_count, 160);
 } 
 
-TEST_F(xtest_workload_contract_v2_t, test_accumulate_auditor_data){
+TEST_F(xtest_workload_contract_v2_t, test_accumulate_workload){
     construct_data();
     auto const stat_data = data;
-    std::map<common::xgroup_address_t, xauditor_workload_info_t> bookload_auditor_group_workload_info;
-    for (auto const static_item: stat_data.detail) {
-        auto elect_statistic = static_item.second;
-        for (auto const group_item: elect_statistic.group_statistics_data) {
-            common::xgroup_address_t const & group_addr = group_item.first;
-            xgroup_related_statistics_data_t const & group_account_data = group_item.second;
-            for (size_t slotid = 0; slotid < group_account_data.account_statistics_data.size(); ++slotid) {
-                auto account_str = std::to_string(slotid);
-                    accumulate_auditor_workload(group_addr, account_str, slotid, group_account_data, 2, 1, bookload_auditor_group_workload_info); 
-            }
-        }
-    }
-    EXPECT_EQ(bookload_auditor_group_workload_info.size(), 3);
+    std::map<common::xgroup_address_t, xgroup_workload_t> group_workload;
+    test_accumulate_workload(stat_data, group_workload);
+    EXPECT_EQ(group_workload.size(), 3);
     common::xgroup_address_t group_addr7(common::xnetwork_id_t{0}, common::xzone_id_t{0}, common::xcluster_id_t{0}, common::xgroup_id_t{7});
     common::xgroup_address_t group_addr6(common::xnetwork_id_t{0}, common::xzone_id_t{0}, common::xcluster_id_t{0}, common::xgroup_id_t{6});
     common::xgroup_address_t group_addr3(common::xnetwork_id_t{0}, common::xzone_id_t{0}, common::xcluster_id_t{0}, common::xgroup_id_t{3});
 
-    EXPECT_EQ(bookload_auditor_group_workload_info[group_addr3].m_leader_count.size(), 5);
-    EXPECT_EQ(bookload_auditor_group_workload_info[group_addr3].m_leader_count[std::to_string(0)], (130+170)+2*30);
-    EXPECT_EQ(bookload_auditor_group_workload_info[group_addr3].m_leader_count[std::to_string(1)], 140+2*14);
-    EXPECT_EQ(bookload_auditor_group_workload_info[group_addr3].m_leader_count[std::to_string(2)], 150+2*15);
-    EXPECT_EQ(bookload_auditor_group_workload_info[group_addr3].m_leader_count[std::to_string(3)], 0);
-    EXPECT_EQ(bookload_auditor_group_workload_info[group_addr3].m_leader_count[std::to_string(4)], 100+2*10);
-    EXPECT_EQ(bookload_auditor_group_workload_info[group_addr3].m_leader_count[std::to_string(5)], 0);
-    EXPECT_EQ(bookload_auditor_group_workload_info[group_addr3].m_leader_count[std::to_string(6)], 160+2*16);
 
-    EXPECT_EQ(bookload_auditor_group_workload_info[group_addr7].m_leader_count.size(), 1);
+    EXPECT_EQ(group_workload[group_addr3].m_leader_count.size(), 5);
+    EXPECT_EQ(group_workload[group_addr3].m_leader_count[group_addr3.to_string() + "_" + std::to_string(0)], (130+170)+2*30);
+    EXPECT_EQ(group_workload[group_addr3].m_leader_count[group_addr3.to_string() + "_" + std::to_string(1)], 140+2*14);
+    EXPECT_EQ(group_workload[group_addr3].m_leader_count[group_addr3.to_string() + "_" + std::to_string(2)], 150+2*15);
+    EXPECT_EQ(group_workload[group_addr3].m_leader_count[group_addr3.to_string() + "_" + std::to_string(3)], 0);
+    EXPECT_EQ(group_workload[group_addr3].m_leader_count[group_addr3.to_string() + "_" + std::to_string(4)], 100+2*10);
+    EXPECT_EQ(group_workload[group_addr3].m_leader_count[group_addr3.to_string() + "_" + std::to_string(5)], 0);
+    EXPECT_EQ(group_workload[group_addr3].m_leader_count[group_addr3.to_string() + "_" + std::to_string(6)], 160+2*16);
+
+    EXPECT_EQ(group_workload[group_addr7].m_leader_count.size(), 1);
     for(size_t slotid = 0; slotid < 9; ++slotid) {
         if(slotid == 8) {
-            EXPECT_EQ(bookload_auditor_group_workload_info[group_addr7].m_leader_count[std::to_string(slotid)], 110+2*11);
+            EXPECT_EQ(group_workload[group_addr7].m_leader_count[group_addr7.to_string() + "_" + std::to_string(slotid)], 110+2*11);
         } else {
-            EXPECT_EQ(bookload_auditor_group_workload_info[group_addr7].m_leader_count[std::to_string(slotid)], 0);
+            EXPECT_EQ(group_workload[group_addr7].m_leader_count[group_addr7.to_string() + "_" + std::to_string(slotid)], 0);
         }
     }
-    EXPECT_EQ(bookload_auditor_group_workload_info[group_addr6].m_leader_count.size(), 1);  
+    EXPECT_EQ(group_workload[group_addr6].m_leader_count.size(), 1);  
     for(size_t slotid = 0; slotid < 9; ++slotid) {
         if(slotid == 8) {
-            EXPECT_EQ(bookload_auditor_group_workload_info[group_addr6].m_leader_count[std::to_string(slotid)], 120+2*12);
+            EXPECT_EQ(group_workload[group_addr6].m_leader_count[group_addr6.to_string() + "_" + std::to_string(slotid)], 120+2*12);
         } else {
-            EXPECT_EQ(bookload_auditor_group_workload_info[group_addr6].m_leader_count[std::to_string(slotid)], 0);
-        }
-    }  
-}
-
-TEST_F(xtest_workload_contract_v2_t, test_accumulate_validator_data){
-    construct_data();
-    auto const stat_data = data;
-    std::map<common::xgroup_address_t, xvalidator_workload_info_t> bookload_validator_group_workload_info;
-    for (auto const static_item: stat_data.detail) {
-        auto elect_statistic = static_item.second;
-        for (auto const group_item: elect_statistic.group_statistics_data) {
-            common::xgroup_address_t const & group_addr = group_item.first;
-            xgroup_related_statistics_data_t const & group_account_data = group_item.second;
-            for (size_t slotid = 0; slotid < group_account_data.account_statistics_data.size(); ++slotid) {
-                auto account_str = std::to_string(slotid);
-                    accumulate_validator_workload(group_addr, account_str, slotid, group_account_data, 2, 1, bookload_validator_group_workload_info); 
-            }
-        }
-    }
-    EXPECT_EQ(bookload_validator_group_workload_info.size(), 3);
-    common::xgroup_address_t group_addr7(common::xnetwork_id_t{0}, common::xzone_id_t{0}, common::xcluster_id_t{0}, common::xgroup_id_t{7});
-    common::xgroup_address_t group_addr6(common::xnetwork_id_t{0}, common::xzone_id_t{0}, common::xcluster_id_t{0}, common::xgroup_id_t{6});
-    common::xgroup_address_t group_addr3(common::xnetwork_id_t{0}, common::xzone_id_t{0}, common::xcluster_id_t{0}, common::xgroup_id_t{3});
-
-    EXPECT_EQ(bookload_validator_group_workload_info[group_addr3].m_leader_count.size(), 5);
-    EXPECT_EQ(bookload_validator_group_workload_info[group_addr3].m_leader_count[std::to_string(0)], (130+170)+2*30);
-    EXPECT_EQ(bookload_validator_group_workload_info[group_addr3].m_leader_count[std::to_string(1)], 140+2*14);
-    EXPECT_EQ(bookload_validator_group_workload_info[group_addr3].m_leader_count[std::to_string(2)], 150+2*15);
-    EXPECT_EQ(bookload_validator_group_workload_info[group_addr3].m_leader_count[std::to_string(3)], 0);
-    EXPECT_EQ(bookload_validator_group_workload_info[group_addr3].m_leader_count[std::to_string(4)], 100+2*10);
-    EXPECT_EQ(bookload_validator_group_workload_info[group_addr3].m_leader_count[std::to_string(5)], 0);
-    EXPECT_EQ(bookload_validator_group_workload_info[group_addr3].m_leader_count[std::to_string(6)], 160+2*16);
-
-    EXPECT_EQ(bookload_validator_group_workload_info[group_addr7].m_leader_count.size(), 1);
-    for(size_t slotid = 0; slotid < 9; ++slotid) {
-        if(slotid == 8) {
-            EXPECT_EQ(bookload_validator_group_workload_info[group_addr7].m_leader_count[std::to_string(slotid)], 110+2*11);
-        } else {
-            EXPECT_EQ(bookload_validator_group_workload_info[group_addr7].m_leader_count[std::to_string(slotid)], 0);
-        }
-    }
-    EXPECT_EQ(bookload_validator_group_workload_info[group_addr6].m_leader_count.size(), 1);  
-    for(size_t slotid = 0; slotid < 9; ++slotid) {
-        if(slotid == 8) {
-            EXPECT_EQ(bookload_validator_group_workload_info[group_addr6].m_leader_count[std::to_string(slotid)], 120+2*12);
-        } else {
-            EXPECT_EQ(bookload_validator_group_workload_info[group_addr6].m_leader_count[std::to_string(slotid)], 0);
+            EXPECT_EQ(group_workload[group_addr6].m_leader_count[group_addr6.to_string() + "_" + std::to_string(slotid)], 0);
         }
     }  
 }
@@ -524,13 +461,12 @@ TEST_F(xtest_workload_contract_v2_t, test_accumulate_workload_with_fullblock) {
     clock_t start, end;
     {
         start = clock();
-        std::map<common::xgroup_address_t, xauditor_workload_info_t> auditor_clusters_workloads;
-        std::map<common::xgroup_address_t, xvalidator_workload_info_t> validator_clusters_workloads;
-        test_accumulate_workload_with_fullblock(20, auditor_clusters_workloads, validator_clusters_workloads);
+        std::map<common::xgroup_address_t, xgroup_workload_t> group_workload;
+        test_accumulate_workload_with_fullblock(20, group_workload);
         end = clock();
         clock_t interval = end - start;
         std::cout << "table num: 20" << ", start: " << start << ", end: " << end << "interval: " << interval << std::endl;
-        // for (auto & entity : auditor_clusters_workloads) {
+        // for (auto & entity : group_workload) {
         //     auto const & group = entity.first;
         //     for (auto const & wl : entity.second.m_leader_count) {
         //         printf("[xzec_workload_contract_v2::accumulate_workload_with_fullblock] workload auditor group: %s, leader: %s, workload: %u\n", group.to_string().c_str(), wl.first.c_str(), wl.second);
@@ -538,28 +474,19 @@ TEST_F(xtest_workload_contract_v2_t, test_accumulate_workload_with_fullblock) {
         //     printf("[xzec_workload_contract_v2::accumulate_workload_with_fullblock] workload auditor group: %s, group id: %u, ends\n\n", group.to_string().c_str(), group.group_id().value());
         // }
 
-        // for (auto & entity : validator_clusters_workloads) {
-        //     auto const & group = entity.first;
-        //     for (auto const & wl : entity.second.m_leader_count) {
-        //         printf("[xzec_workload_contract_v2::accumulate_workload_with_fullblock] workload validator group: %s, leader: %s, workload: %u\n", group.to_string().c_str(), wl.first.c_str(), wl.second);
-        //     }
-        //     printf("[xzec_workload_contract_v2::accumulate_workload_with_fullblock] workload validator group: %s, group id: %u, ends\n\n", group.to_string().c_str(), group.group_id().value());
-        // }
     }
     {
         start = clock();
-        std::map<common::xgroup_address_t, xauditor_workload_info_t> auditor_clusters_workloads;
-        std::map<common::xgroup_address_t, xvalidator_workload_info_t> validator_clusters_workloads;
-        test_accumulate_workload_with_fullblock(50, auditor_clusters_workloads, validator_clusters_workloads);
+        std::map<common::xgroup_address_t, xgroup_workload_t> group_workload;
+        test_accumulate_workload_with_fullblock(50, group_workload);
         end = clock();
         clock_t interval = end - start;
         std::cout << "table num: 50" << ", start: " << start << ", end: " << end << "interval: " << interval << std::endl;
     }
     {
         start = clock();
-        std::map<common::xgroup_address_t, xauditor_workload_info_t> auditor_clusters_workloads;
-        std::map<common::xgroup_address_t, xvalidator_workload_info_t> validator_clusters_workloads;
-        test_accumulate_workload_with_fullblock(100, auditor_clusters_workloads, validator_clusters_workloads);
+        std::map<common::xgroup_address_t, xgroup_workload_t> group_workload;
+        test_accumulate_workload_with_fullblock(100, group_workload);
         end = clock();
         clock_t interval = end - start;
         std::cout << "table num: 100" << ", start: " << start << ", end: " << end << ", interval: " << interval << std::endl;
