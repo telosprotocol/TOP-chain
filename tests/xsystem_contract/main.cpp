@@ -31,9 +31,6 @@ public:
 
 int main(int argc, char * argv[]) {
     new xhashtest_t();
-    top::data::xrootblock_para_t para;
-    para.m_tcc_accounts = {"T00000LfhWJA5JPcKPJovoBVtN4seYnnsVjx2VuB", "T00000LNEZSwcYJk6w8zWbR78Nhw8gbT2X944CBy", "T00000LfVA4mibYtKsGqGpGRxf8VZYHmdwriuZNo"};
-    top::data::xrootblock_t::init(para);
 
     testing::InitGoogleTest(&argc, argv);
     xinit_log("./xsystem_contract_test.log", true, true);
