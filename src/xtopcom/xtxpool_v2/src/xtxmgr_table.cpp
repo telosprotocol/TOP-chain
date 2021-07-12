@@ -81,11 +81,11 @@ std::shared_ptr<xtx_entry> xtxmgr_table_t::pop_tx(const tx_info_t & txinfo, bool
     std::shared_ptr<xtx_entry> tx_ent = nullptr;
     if (txinfo.get_subtype() == enum_transaction_subtype_self || txinfo.get_subtype() == enum_transaction_subtype_send) {
         tx_ent = m_send_tx_queue.pop_tx(txinfo, clear_follower);
+        if (tx_ent == nullptr) {
+            tx_ent = m_pending_accounts.pop_tx(txinfo, clear_follower);
+        }
     } else {
         tx_ent = m_new_receipt_queue.pop_tx(txinfo);
-    }
-    if (tx_ent == nullptr) {
-        tx_ent = m_pending_accounts.pop_tx(txinfo, clear_follower);
     }
 
     return tx_ent;
@@ -110,18 +110,10 @@ std::vector<xcons_transaction_ptr_t> xtxmgr_table_t::get_ready_txs(const xtxs_pa
     // so that receipts in txpool could always be get from txpool to unit service without continuous constraint.
     // receipts not pop from queue to pending, but get from queue to unit service directly,
     // because there is no need for queue and pending to maintain same data structure for manage receipts.
-
-    std::set<std::string> locked_send_tx_accounts;
-    for (auto & txinfo : pack_para.get_locked_tx_vec()) {
-        // only send txs move to m_locked_txs, receipts need not move, because they canbe deduplicate by receipt id.
-        if (txinfo.get_subtype() == enum_transaction_subtype_self || txinfo.get_subtype() == enum_transaction_subtype_send) {
-            locked_send_tx_accounts.insert(txinfo.get_addr());
-        }
-    }
     std::vector<xcons_transaction_ptr_t> ready_txs =
         m_new_receipt_queue.get_txs(pack_para.get_confirm_and_recv_txs_max_num(), pack_para.get_confirm_txs_max_num(), pack_para.get_receiptid_state_highqc());
     send_tx_queue_to_pending();
-    ready_accounts_t send_txs_accounts = m_pending_accounts.get_ready_accounts(pack_para.get_all_txs_max_num() - ready_txs.size(), locked_send_tx_accounts);
+    ready_accounts_t send_txs_accounts = m_pending_accounts.get_ready_accounts(pack_para.get_all_txs_max_num() - ready_txs.size(), pack_para.get_locked_nonce_map());
 
     for (auto send_txs_account : send_txs_accounts) {
         auto & account_txs = send_txs_account->get_txs();

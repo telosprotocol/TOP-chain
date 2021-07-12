@@ -95,7 +95,6 @@ private:
     int32_t verify_receipt_tx(const xcons_transaction_ptr_t & tx) const;
     int32_t verify_cons_tx(const xcons_transaction_ptr_t & tx) const;
     bool get_account_latest_nonce_hash(const std::string account_addr, uint64_t & latest_nonce, uint256_t & latest_hash) const;
-    void unit_block_process(xblock_t * unit_block);
     bool  get_account_basic_info(const std::string & account, xaccount_basic_info_t & account_index_info) const;
     void update_id_state(const tx_info_t & txinfo, base::xtable_shortid_t peer_table_sid, uint64_t receiptid, uint64_t nonce);
 
