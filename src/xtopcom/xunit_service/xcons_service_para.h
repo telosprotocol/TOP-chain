@@ -24,6 +24,7 @@ class xresources : public xresources_face {
 public:
     xresources(const std::string & account,
                const xobject_ptr_t<base::xworkerpool_t> & pwork,
+               const xobject_ptr_t<base::xworkerpool_t> & xbft_pwork,
                const xobject_ptr_t<base::xvcertauth_t> & auth,
                const observer_ptr<base::xvblockstore_t> & blockstore,
                const std::shared_ptr<xnetwork_proxy_face> & network,
@@ -39,6 +40,8 @@ public:
     virtual base::xvcertauth_t * get_certauth();
     // work pool
     virtual base::xworkerpool_t * get_workpool();
+    // work pool
+    virtual base::xworkerpool_t * get_xbft_workpool();
     // network face
     virtual xnetwork_proxy_face * get_network();
     // block store
@@ -56,6 +59,7 @@ public:
 
 private:
     xobject_ptr_t<base::xworkerpool_t> m_worker_pool;
+    xobject_ptr_t<base::xworkerpool_t> m_xbft_worker_pool;
     std::shared_ptr<xnetwork_proxy_face> m_network;
     xobject_ptr_t<base::xvcertauth_t> m_certauth;
     observer_ptr<base::xvblockstore_t> m_blockstore;

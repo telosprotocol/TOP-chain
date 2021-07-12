@@ -1147,6 +1147,11 @@ namespace top
                 if(is_close() == false)
                 {
                     base::xvblock_t* _for_check_block_ = (base::xvblock_t *)call.get_param1().get_object();
+                    if (_for_check_block_->check_block_flag(base::enum_xvblock_flag_authenticated)) {
+                        xinfo("xBFTdriver_t::fire_verify_commit_job,successful already is cert block. block:%s at node=0x%llx",_for_check_block_->dump().c_str(),get_xip2_addr().low_addr);
+                        return true;
+                    }
+                    
                     if( (_merge_cert != nullptr) && (false == _for_check_block_->merge_cert(*_merge_cert)) ) //here is thread-safe to merge cert into block
                     {
                         xwarn_err("xBFTdriver_t::fire_verify_commit_job,fail-unmatched commit_cert=%s vs proposal=%s,at node=0x%llx",_merge_cert->dump().c_str(),_for_check_block_->dump().c_str(),get_xip2_low_addr());
