@@ -190,25 +190,33 @@ namespace top
             return (begin_size - stream.size());
         }
 
-        xvote_report_t::xvote_report_t()
+        xvote_report_t::xvote_report_t(const uint64_t proposal_height,const uint64_t  proposal_viewid)
         {
             m_error_code = 0;
-            
+            m_proposal_height = 0;
+            m_proposal_viewid = 0;
             m_latest_cert_height = 0;
             m_latest_cert_viewid = 0;
             m_latest_lock_height = 0;
             m_latest_commit_height = 0;
+            
+            m_proposal_height = proposal_height;
+            m_proposal_viewid = proposal_viewid;
         }
         
-        xvote_report_t::xvote_report_t(const int32_t error_code,const std::string & error_detail)
+        xvote_report_t::xvote_report_t(const int32_t error_code,const std::string & error_detail,const uint64_t proposal_height,const uint64_t  proposal_viewid)
         {
             m_error_code    = error_code;
             m_error_detail  = error_detail;
-            
+            m_proposal_height = 0;
+            m_proposal_viewid = 0;
             m_latest_cert_height = 0;
             m_latest_cert_viewid = 0;
             m_latest_lock_height = 0;
             m_latest_commit_height = 0;
+            
+            m_proposal_height = proposal_height;
+            m_proposal_viewid = proposal_viewid;
         }
         
         xvote_report_t::~xvote_report_t()
@@ -231,6 +239,18 @@ namespace top
             m_latest_cert_viewid        = viewid;
             m_latest_cert_hash          = block_hash;
         }
+    
+        void   xvote_report_t::set_latest_cert_block(const uint64_t height,base::xvqcert_t * latest_cert)
+        {
+            if(latest_cert != NULL)
+            {
+                m_latest_cert_height = height;
+                m_latest_cert_viewid = latest_cert->get_viewid();
+                m_latest_cert_data.clear();
+                m_latest_cert_hash.clear();
+                latest_cert->serialize_to_string(m_latest_cert_data);
+            }
+        }
         
         void   xvote_report_t::set_latest_lock_block(base::xvblock_t * latest_lock_block)
         {
@@ -249,7 +269,7 @@ namespace top
                 m_latest_commit_hash   = latest_commit_block->get_block_hash();
             }
         }
-        
+
         //return how many bytes readout /writed in, return < 0(enum_xerror_code_type) when have error
         int32_t  xvote_report_t::do_write(base::xstream_t & stream)
         {
@@ -258,14 +278,18 @@ namespace top
             stream << m_error_code;
             stream.write_tiny_string(m_error_detail); //error detail can not over 256 bytes
             
-            stream << m_latest_cert_height;
-            stream << m_latest_cert_viewid;
-            stream.write_tiny_string(m_latest_cert_hash);
+            stream.write_compact_var(m_proposal_height);
+            stream.write_compact_var(m_proposal_viewid);
             
-            stream << m_latest_lock_height;
+            stream.write_compact_var(m_latest_cert_height);
+            stream.write_compact_var(m_latest_cert_viewid);
+            stream.write_tiny_string(m_latest_cert_hash);
+            stream.write_compact_var(m_latest_cert_data);
+            
+            stream.write_compact_var(m_latest_lock_height);
             stream.write_tiny_string(m_latest_lock_hash);
             
-            stream << m_latest_commit_height;
+            stream.write_compact_var(m_latest_commit_height);
             stream.write_tiny_string(m_latest_commit_hash);
             
             return (stream.size() - begin_size);
@@ -276,14 +300,18 @@ namespace top
             stream >> m_error_code;
             stream.read_tiny_string(m_error_detail);
    
-            stream >> m_latest_cert_height;
-            stream >> m_latest_cert_viewid;
-            stream.read_tiny_string(m_latest_cert_hash);
+            stream.read_compact_var(m_proposal_height);
+            stream.read_compact_var(m_proposal_viewid);
             
-            stream >> m_latest_lock_height;
+            stream.read_compact_var(m_latest_cert_height);
+            stream.read_compact_var(m_latest_cert_viewid);
+            stream.read_tiny_string(m_latest_cert_hash);
+            stream.read_compact_var(m_latest_cert_data);
+            
+            stream.read_compact_var(m_latest_lock_height);
             stream.read_tiny_string(m_latest_lock_hash);
             
-            stream >> m_latest_commit_height;
+            stream.read_compact_var(m_latest_commit_height);
             stream.read_tiny_string(m_latest_commit_hash);
             
             return (begin_size - stream.size());

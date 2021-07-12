@@ -80,6 +80,8 @@ namespace top
             virtual ~xproposal_t();
         private:
             xproposal_t();
+            xproposal_t(xproposal_t && obj);
+            xproposal_t & operator = (xproposal_t &&);
             xproposal_t & operator = (const xproposal_t &);
         public:
             #ifdef DEBUG //tracking memory of proposal block
@@ -89,7 +91,7 @@ namespace top
             
             inline base::xvqcert_t* get_last_block_cert()    const {return m_last_block_cert;}
             inline base::xvqcert_t* get_bind_clock_cert()    const {return m_bind_clock_cert;}
-            
+            inline base::xvqcert_t* get_proposal_cert()      const {return m_proposal_cert;}
         public: //note below api might be called from woker'thread of workerpool,but from the same woker'thread for same account
             bool                 add_voted_cert(const xvip2_t & voter_xip,base::xvqcert_t * qcert_ptr,base::xvcertauth_t * cert_auth);
  
@@ -103,6 +105,7 @@ namespace top
             const std::map<xvip2_t,std::string,xvip2_compare> &  get_voted_validators()   const {return m_voted_validators;}
             const std::map<xvip2_t,std::string,xvip2_compare> &  get_voted_auditors()     const {return m_voted_auditors;}
             
+            void                  set_proposal_cert(base::xvqcert_t* new_proposal_cert);
             void                  set_bind_clock_cert(base::xvqcert_t* clock_cert);
         public: //below apis are called from engine'own thread
             bool                 is_leader() const {return m_is_leader;}
@@ -136,6 +139,7 @@ namespace top
             std::map<xvip2_t,std::string,xvip2_compare> m_voted_validators;          //include leader as well
             std::map<xvip2_t,std::string,xvip2_compare> m_voted_auditors;            //include leader as well if need
         private:
+            base::xvqcert_t *              m_proposal_cert;             //dedicated cert to store signature of leader
             base::xvqcert_t *              m_bind_clock_cert;           //each proposal ask carry the related clock cert
             base::xvqcert_t *              m_last_block_cert;           //certification of last header,it might be nil
             uint64_t                       m_expired_ms;                //when the proposal expired to clean up

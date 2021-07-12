@@ -131,6 +131,7 @@ namespace top
             m_expired_ms = -1;
             m_last_block_cert = NULL;
             m_bind_clock_cert = NULL;
+            m_proposal_cert   = NULL;
             if(NULL != parent_block)
             {
                 m_last_block_cert = parent_block->get_cert();
@@ -158,6 +159,7 @@ namespace top
             m_expired_ms = -1;
             m_last_block_cert = NULL;
             m_bind_clock_cert = NULL;
+            m_proposal_cert   = NULL;
             if(NULL != parent_block_cert)
             {
                 m_last_block_cert = (base::xvqcert_t*)parent_block_cert;
@@ -168,6 +170,10 @@ namespace top
         xproposal_t::xproposal_t(const xproposal_t & obj)
         :base::xvbnode_t(NULL,*obj.get_block())
         {
+            m_last_block_cert = NULL;
+            m_bind_clock_cert = NULL;
+            m_proposal_cert   = NULL;
+            
             m_voted_validators_count = (int32_t)obj.m_voted_validators_count;
             m_voted_auditors_count   = (int32_t)obj.m_voted_auditors_count;
             
@@ -189,6 +195,10 @@ namespace top
             if(m_bind_clock_cert != NULL)
                 m_bind_clock_cert->add_ref();
             
+            m_proposal_cert = obj.m_proposal_cert;
+            if(m_proposal_cert != NULL)
+                m_proposal_cert->add_ref();
+            
             m_voted_validators = obj.m_voted_validators;
             m_voted_auditors   = obj.m_voted_auditors;
             m_all_voted_cert   = obj.m_all_voted_cert;
@@ -202,7 +212,21 @@ namespace top
             if(m_bind_clock_cert != NULL)
                 m_bind_clock_cert->release_ref();
             
+            if(m_proposal_cert != NULL)
+                m_proposal_cert->release_ref();
+            
             //xdbg("xproposal_t::destroy,dump=%s",dump().c_str());
+        }
+    
+        void   xproposal_t::set_proposal_cert(base::xvqcert_t* new_proposal_cert)
+        {
+            if(new_proposal_cert != NULL)
+                new_proposal_cert->add_ref();
+            
+            base::xvqcert_t* old_one = m_proposal_cert;
+            m_proposal_cert  = new_proposal_cert;
+            if(old_one != NULL)
+                old_one->release_ref();
         }
         
         void   xproposal_t::set_bind_clock_cert(base::xvqcert_t* new_clock_cert)
