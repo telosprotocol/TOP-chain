@@ -32,6 +32,7 @@ public:
     const xcons_transaction_ptr_t find(uint64_t receipt_id) const;
     void update_receipt_id(uint64_t max_confirm_id, xall_unconfirm_tx_set_t & all_unconfirm_tx_set);
     const xcons_transaction_ptr_t get_latest_receipt() const;
+    const xcons_transaction_ptr_t get_first_receipt() const;
 
 private:
     uint64_t m_max_confirm_id{0};
