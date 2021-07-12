@@ -21,6 +21,7 @@ for utest in $(ls cbuild/bin/Linux/*test);do
     time ${utest} --gtest_output="xml:"${utest_file_name}"_report.xml"
     if [[ $? -ne 0 ]];then
         let run_err_count="${run_err_count}+1"
+        continue
     fi
     mv ${utest_file_name}"_report.xml" ${REPORT_DIR}/
 done
