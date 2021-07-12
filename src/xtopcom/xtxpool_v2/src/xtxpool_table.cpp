@@ -85,8 +85,7 @@ int32_t xtxpool_table_t::push_send_tx(const std::shared_ptr<xtx_entry> & tx) {
     }
 
     uint64_t latest_nonce;
-    uint256_t latest_hash;
-    bool result = get_account_latest_nonce_hash(tx->get_tx()->get_source_addr(), latest_nonce, latest_hash);
+    bool result = get_account_latest_nonce(tx->get_tx()->get_source_addr(), latest_nonce);
     if (!result) {
         // todo : push to non_ready_accounts
         // std::lock_guard<std::mutex> lck(m_non_ready_mutex);
@@ -103,7 +102,7 @@ int32_t xtxpool_table_t::push_send_tx(const std::shared_ptr<xtx_entry> & tx) {
 
     {
         std::lock_guard<std::mutex> lck(m_mgr_mutex);
-        ret = m_txmgr_table.push_send_tx(tx, latest_nonce, latest_hash);
+        ret = m_txmgr_table.push_send_tx(tx, latest_nonce);
     }
     if (ret != xsuccess) {
         // XMETRICS_COUNTER_INCREMENT("txpool_push_tx_send_fail", 1);
@@ -221,9 +220,9 @@ const std::shared_ptr<xtx_entry> xtxpool_table_t::query_tx(const std::string & a
     return nullptr;
 }
 
-void xtxpool_table_t::updata_latest_nonce(const std::string & account_addr, uint64_t latest_nonce, const uint256_t & latest_hash) {
+void xtxpool_table_t::updata_latest_nonce(const std::string & account_addr, uint64_t latest_nonce) {
     std::lock_guard<std::mutex> lck(m_mgr_mutex);
-    return m_txmgr_table.updata_latest_nonce(account_addr, latest_nonce, latest_hash);
+    return m_txmgr_table.updata_latest_nonce(account_addr, latest_nonce);
 }
 
 bool xtxpool_table_t::is_account_need_update(const std::string & account_addr) const {
@@ -502,7 +501,7 @@ int32_t xtxpool_table_t::verify_receipt_tx(const xcons_transaction_ptr_t & tx) c
     return xsuccess;
 }
 
-bool xtxpool_table_t::get_account_latest_nonce_hash(const std::string account_addr, uint64_t & latest_nonce, uint256_t & latest_hash) const {
+bool xtxpool_table_t::get_account_latest_nonce(const std::string account_addr, uint64_t & latest_nonce) const {
     xaccount_basic_info_t account_basic_info;
     bool result = get_account_basic_info(account_addr, account_basic_info);
     if (!result) {
@@ -510,7 +509,7 @@ bool xtxpool_table_t::get_account_latest_nonce_hash(const std::string account_ad
             mbus::xevent_behind_ptr_t ev = make_object_ptr<mbus::xevent_behind_on_demand_t>(
                 account_addr, account_basic_info.get_sync_height_start(), account_basic_info.get_sync_num(), true, "account_state_fall_behind");
             m_para->get_bus()->push_event(ev);
-            xtxpool_info("xtxpool_table_t::get_account_latest_nonce_hash account:%s state fall behind,try sync unit from:%llu,count:%u",
+            xtxpool_info("xtxpool_table_t::get_account_latest_nonce account:%s state fall behind,try sync unit from:%llu,count:%u",
                          account_addr.c_str(),
                          account_basic_info.get_sync_height_start(),
                          account_basic_info.get_sync_num());
@@ -519,7 +518,6 @@ bool xtxpool_table_t::get_account_latest_nonce_hash(const std::string account_ad
     }
 
     latest_nonce = account_basic_info.get_latest_state()->account_send_trans_number();
-    latest_hash = account_basic_info.get_latest_state()->account_send_trans_hash();
     return true;
 }
 

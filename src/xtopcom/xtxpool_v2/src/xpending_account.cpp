@@ -85,22 +85,12 @@ std::vector<std::shared_ptr<xtx_entry>>::iterator xcandidate_account_entry::find
     return txs.end();
 }
 
-void xcandidate_account_entry::updata_latest_nonce(uint64_t latest_nonce, const uint256_t & latest_hash, const std::string & table_addr) {
+void xcandidate_account_entry::updata_latest_nonce(uint64_t latest_nonce, const std::string & table_addr) {
     for (auto it = m_txs.begin(); it != m_txs.end();) {
         uint64_t tx_nonce = it->get()->get_tx()->get_transaction()->get_tx_nonce();
         if (tx_nonce <= latest_nonce) {
             xtxpool_info("xcandidate_account_entry::updata_latest_nonce table:%s erase,tx:%s", table_addr.c_str(), it->get()->get_tx()->dump().c_str());
             it = m_txs.erase(it);
-        } else if (tx_nonce == latest_nonce + 1) {
-            if (it->get()->get_tx()->get_transaction()->check_last_trans_hash(latest_hash)) {
-                break;
-            } else {
-                for (auto &txent : m_txs) {
-                    xtxpool_info("xcandidate_account_entry::updata_latest_nonce table:%s erase,tx:%s", table_addr.c_str(), txent->get_tx()->dump().c_str());
-                }
-                m_txs.clear();
-                return;
-            }
         } else {
             break;
         }
@@ -150,6 +140,10 @@ void xcandidate_account_entry::clear_expired_txs(const std::string & table_addr)
             it++;
         }
     }
+}
+
+uint64_t xcandidate_account_entry::get_latest_nonce() const {
+    return m_txs[0]->get_tx()->get_tx_last_nonce();
 }
 
 int32_t xpending_accounts_t::push_tx(const std::shared_ptr<xtx_entry> & tx_ent) {
@@ -280,12 +274,12 @@ const std::shared_ptr<xtx_entry> xpending_accounts_t::find(const std::string & a
     return nullptr;
 }
 
-void xpending_accounts_t::updata_latest_nonce(const std::string & account_addr, uint64_t latest_nonce, const uint256_t & latest_hash) {
+void xpending_accounts_t::updata_latest_nonce(const std::string & account_addr, uint64_t latest_nonce) {
     auto iter = m_account_map.find(account_addr);
     if (iter != m_account_map.end()) {
         auto & pending_account = *iter->second;
         int32_t tx_num = pending_account->get_txs().size();
-        pending_account->updata_latest_nonce(latest_nonce, latest_hash, m_xtable_info->get_table_addr());
+        pending_account->updata_latest_nonce(latest_nonce, m_xtable_info->get_table_addr());
         m_xtable_info->tx_dec(enum_transaction_subtype_send, (tx_num - pending_account->get_txs().size()));
         if (pending_account->empty()) {
             m_accounts_set.erase(iter->second);
@@ -311,6 +305,16 @@ void xpending_accounts_t::clear_expired_txs() {
     }
 
     m_xtable_info->tx_dec(enum_transaction_subtype_send, deleted_num);
+}
+
+bool xpending_accounts_t::get_account_nonce_cache(const std::string & account_addr, uint64_t & latest_nonce) const {
+    auto iter = m_account_map.find(account_addr);
+    if (iter != m_account_map.end()) {
+        auto & pending_account = *iter->second;
+        latest_nonce = pending_account->get_latest_nonce();
+        return true;
+    }
+    return false;
 }
 
 }  // namespace xtxpool_v2

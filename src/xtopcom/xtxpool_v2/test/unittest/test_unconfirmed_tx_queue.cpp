@@ -89,7 +89,7 @@ TEST_F(test_unconfirmed_tx_queue, recover) {
     std::vector<xcons_transaction_ptr_t> txs = test_xtxpool_util_t::create_cons_transfer_txs(0, 1, tx_num);
     xblock_t * block = test_xtxpool_util_t::create_tableblock_with_send_txs_with_next_two_emptyblock(blockstore, xstore, sender, table_addr, txs, 100);
 
-    base::xreceiptid_state_ptr_t receiptid_state = make_object_ptr<base::xreceiptid_state_t>();
+    base::xreceiptid_state_ptr_t receiptid_state = std::make_shared<base::xreceiptid_state_t>();
     xreceiptid_pair_t receiptid_pair(0, 5, 0);
     receiptid_state->add_pair(0, receiptid_pair);
 

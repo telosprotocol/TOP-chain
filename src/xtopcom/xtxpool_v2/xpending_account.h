@@ -34,10 +34,11 @@ public:
     int32_t push_tx(std::shared_ptr<xtx_entry> tx_ent, const std::string & table_addr);
     std::shared_ptr<xtx_entry> pop_tx(const uint256_t & hash, bool clear_follower, const std::string & table_addr);
     const std::shared_ptr<xtx_entry> find(const uint256_t & hash) const;
-    void updata_latest_nonce(uint64_t latest_nonce, const uint256_t & latest_hash, const std::string & table_addr);
+    void updata_latest_nonce(uint64_t latest_nonce, const std::string & table_addr);
     uint32_t get_select_count() const;
     bool empty();
     void clear_expired_txs(const std::string & table_addr);
+    uint64_t get_latest_nonce() const;
 
 private:
     std::vector<std::shared_ptr<xtx_entry>>::iterator find_tx_ent_by_hash(std::vector<std::shared_ptr<xtx_entry>> & txs, const uint256_t & hash) const;
@@ -72,8 +73,9 @@ public:
     ready_accounts_t pop_ready_accounts(uint32_t count);
     ready_accounts_t get_ready_accounts(uint32_t txs_max_num, const std::map<std::string, uint64_t> & locked_nonce_map);
     const std::shared_ptr<xtx_entry> find(const std::string & account_addr, const uint256_t & hash) const;
-    void updata_latest_nonce(const std::string & account_addr, uint64_t latest_nonce, const uint256_t & latest_hash);
+    void updata_latest_nonce(const std::string & account_addr, uint64_t latest_nonce);
     void clear_expired_txs();
+    bool get_account_nonce_cache(const std::string & account_addr, uint64_t & latest_nonce) const;
 
 private:
     xtxpool_table_info_t * m_xtable_info;

@@ -21,16 +21,16 @@ using data::xcons_transaction_ptr_t;
 #define send_txs_num_pop_from_queue_batch_num (100)
 #define receipts_num_pop_from_queue_batch_num (200)
 
-int32_t xtxmgr_table_t::push_send_tx(const std::shared_ptr<xtx_entry> & tx, uint64_t latest_nonce, const uint256_t & latest_hash) {
+int32_t xtxmgr_table_t::push_send_tx(const std::shared_ptr<xtx_entry> & tx, uint64_t latest_nonce) {
     auto & account_addr = tx->get_tx()->get_transaction()->get_source_addr();
-    updata_latest_nonce(account_addr, latest_nonce, latest_hash);
+    updata_latest_nonce(account_addr, latest_nonce);
 
     if (nullptr != query_tx(account_addr, tx->get_tx()->get_transaction()->digest())) {
         xtxpool_warn("xtxmgr_table_t::push_send_tx tx repeat tx:%s", tx->get_tx()->dump().c_str());
         return xtxpool_error_request_tx_repeat;
     }
 
-    int32_t ret = m_send_tx_queue.push_tx(tx, latest_nonce, latest_hash);
+    int32_t ret = m_send_tx_queue.push_tx(tx, latest_nonce);
     if (ret != xsuccess) {
         xtxpool_warn("xtxmgr_table_t::push_tx fail.table %s,tx:%s,last nonce:%u,ret:%s",
                      m_xtable_info->get_table_addr().c_str(),
@@ -93,7 +93,7 @@ std::shared_ptr<xtx_entry> xtxmgr_table_t::pop_tx(const tx_info_t & txinfo, bool
 
 void xtxmgr_table_t::update_id_state(const tx_info_t & txinfo, base::xtable_shortid_t table_sid, uint64_t receiptid, uint64_t nonce) {
     if (txinfo.get_subtype() == enum_transaction_subtype_self || txinfo.get_subtype() == enum_transaction_subtype_send) {
-        updata_latest_nonce(txinfo.get_addr(), nonce, txinfo.get_hash());
+        updata_latest_nonce(txinfo.get_addr(), nonce);
     }
 
     // only send and self tx push to pending accounts queue.so as pop.
@@ -139,10 +139,10 @@ const std::shared_ptr<xtx_entry> xtxmgr_table_t::query_tx(const std::string & ac
     return tx;
 }
 
-void xtxmgr_table_t::updata_latest_nonce(const std::string & account_addr, uint64_t latest_nonce, const uint256_t & latest_hash) {
+void xtxmgr_table_t::updata_latest_nonce(const std::string & account_addr, uint64_t latest_nonce) {
     xtxpool_info("xtxmgr_table_t::updata_latest_nonce.table %s,account:%s,last nonce:%u", m_xtable_info->get_table_addr().c_str(), account_addr.c_str(), latest_nonce);
-    m_send_tx_queue.updata_latest_nonce(account_addr, latest_nonce, latest_hash);
-    m_pending_accounts.updata_latest_nonce(account_addr, latest_nonce, latest_hash);
+    m_send_tx_queue.updata_latest_nonce(account_addr, latest_nonce);
+    m_pending_accounts.updata_latest_nonce(account_addr, latest_nonce);
 }
 
 bool xtxmgr_table_t::is_account_need_update(const std::string & account_addr) const {
@@ -185,6 +185,14 @@ uint64_t xtxmgr_table_t::get_latest_recv_receipt_id(base::xtable_shortid_t peer_
 
 uint64_t xtxmgr_table_t::get_latest_confirm_receipt_id(base::xtable_shortid_t peer_table_sid) const {
     return m_new_receipt_queue.get_latest_confirm_receipt_id(peer_table_sid);
+}
+
+bool xtxmgr_table_t::get_account_nonce_cache(const std::string & account_addr, uint64_t & latest_nonce) const {
+    bool ret = m_send_tx_queue.get_account_nonce_cache(account_addr, latest_nonce);
+    if (!ret) {
+        return m_pending_accounts.get_account_nonce_cache(account_addr, latest_nonce);
+    }
+    return ret;
 }
 
 void xtxmgr_table_t::send_tx_queue_to_pending() {

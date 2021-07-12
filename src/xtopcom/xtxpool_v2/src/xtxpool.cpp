@@ -102,12 +102,12 @@ const std::shared_ptr<xtx_entry> xtxpool_t::query_tx(const std::string & account
     return table->query_tx(account_addr, hash);
 }
 
-void xtxpool_t::updata_latest_nonce(const std::string & account_addr, uint64_t latest_nonce, const uint256_t & latest_hash) {
+void xtxpool_t::updata_latest_nonce(const std::string & account_addr, uint64_t latest_nonce) {
     auto table = get_txpool_table_by_addr(account_addr);
     if (table == nullptr) {
         return;
     }
-    return table->updata_latest_nonce(account_addr, latest_nonce, latest_hash);
+    return table->updata_latest_nonce(account_addr, latest_nonce);
 }
 
 void xtxpool_t::subscribe_tables(uint8_t zone, uint16_t front_table_id, uint16_t back_table_id) {
