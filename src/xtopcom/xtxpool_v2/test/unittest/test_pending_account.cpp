@@ -61,7 +61,8 @@ TEST_F(test_pending_account, sigle_send_tx) {
 TEST_F(test_pending_account, sigle_account_multi_send_tx) {
     std::string table_addr = "table_test";
     xtxpool_shard_info_t shard(0, 0, 0);
-    xtxpool_table_info_t table_para(table_addr, &shard);
+    xtxpool_statistic_t statistic;
+    xtxpool_table_info_t table_para(table_addr, &shard, &statistic);
     xpending_accounts_t pending_accounts(&table_para);
     uint256_t last_tx_hash = {};
     uint64_t now = xverifier::xtx_utl::get_gmttime_s();

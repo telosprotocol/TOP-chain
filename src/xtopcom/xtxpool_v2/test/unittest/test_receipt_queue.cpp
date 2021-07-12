@@ -41,7 +41,8 @@ protected:
 TEST_F(test_new_receipt_queue, receipt_queue_basic) {
     std::string table_addr = "table_test";
     xtxpool_shard_info_t shard(0, 0, 0);
-    xtxpool_table_info_t table_para(table_addr, &shard);
+    xtxpool_statistic_t statistic;
+    xtxpool_table_info_t table_para(table_addr, &shard, &statistic);
     uint256_t last_tx_hash = {};
     xtx_para_t para;
     uint64_t now = xverifier::xtx_utl::get_gmttime_s();
@@ -78,7 +79,7 @@ TEST_F(test_new_receipt_queue, receipt_queue_basic) {
         ASSERT_NE(find_receipt, nullptr);
     }
 
-    base::xreceiptid_state_ptr_t receiptid_state = make_object_ptr<base::xreceiptid_state_t>();
+    base::xreceiptid_state_ptr_t receiptid_state = std::make_shared<base::xreceiptid_state_t>();
     auto receipts1 = receipt_queue.get_txs(10, 10, receiptid_state);
     ASSERT_EQ(receipts1.size(), tx_num);
 
