@@ -12,7 +12,6 @@
 #include "xloader/xconfig_onchain_loader.h"
 #include "xstore/xstore_face.h"
 #include "xdata/xblocktool.h"
-#include "xdata/xworkload_info.h"
 #include "xvm/manager/xcontract_manager.h"
 #include "xvm/xsystem_contracts/xregistration/xrec_registration_contract.h"
 //#include "xvm/xrec/xelect/xbeacon_timer_contract.h"
