@@ -732,32 +732,43 @@ namespace top
         base::xvtransaction_store_ptr_t  xvblockstore_impl::query_tx(const std::string & txhash, base::enum_transaction_subtype type,const int atag)
         {
             //XTODO:tx always not cache now
-            std::string txkey;
             base::xvtransaction_store_ptr_t txstore = make_object_ptr<base::xvtransaction_store_t>();
             METRICS_TAG(atag, 1);
-            // std::string rawtxkey = base::xvdbkey_t::create_tx_key(txhash);
-            auto raw_tx = base::xvchain_t::instance().get_xtxstore()->load_tx_obj(txhash);
-            if(nullptr == raw_tx)
-            {
-                xwarn("xvblockstore_impl::query_tx tx content read from fail.tx=%s", base::xstring_utl::to_hex(txhash).c_str());
-                return nullptr;
-            }
-            txstore->set_raw_tx(raw_tx.get());
 
             if(type == base::enum_transaction_subtype_all || type == base::enum_transaction_subtype_self || type == base::enum_transaction_subtype_send)
             {
-                base::xvtxindex_ptr txindex = base::xvchain_t::instance().get_xtxstore()->load_tx_idx(txhash, base::enum_transaction_subtype_send);
-                if(!txindex)
+                base::xvtxindex_ptr send_txindex = base::xvchain_t::instance().get_xtxstore()->load_tx_idx(txhash, base::enum_transaction_subtype_send);
+                if(nullptr == send_txindex)
                 {
-                    xwarn("xvblockstore_impl::query_tx send tx not find.tx=%s", base::xstring_utl::to_hex(txhash).c_str());
+                    xwarn("xvblockstore_impl::query_tx fail-send tx index not find.tx=%s", base::xstring_utl::to_hex(txhash).c_str());
                     return nullptr;
                 }
-                txstore->set_send_unit_info(txindex);
-                if(txindex->is_self_tx())
+                base::xvaccount_t _vaddr(send_txindex->get_block_addr());
+                base::xauto_ptr<base::xvblock_t> unit_block = load_block_object(_vaddr, send_txindex->get_block_height(), send_txindex->get_block_hash(), true); // TODO(jimmy) false+input
+                if (nullptr == unit_block)
+                {
+                    xwarn("xvblockstore_impl::query_tx fail-send unit not find.account=%s,tx=%s", send_txindex->get_block_addr().c_str(), base::xstring_utl::to_hex(txhash).c_str());
+                    return nullptr;
+                }
+                std::string orgtx_bin = unit_block->get_input()->query_resource(txhash);
+                if (orgtx_bin.empty())
+                {
+                    xerror("xvblockstore_impl::query_tx fail-query tx from send unit.account=%s,tx=%s", send_txindex->get_block_addr().c_str(), base::xstring_utl::to_hex(txhash).c_str());
+                    return nullptr;
+                }
+                base::xauto_ptr<base::xdataunit_t> raw_tx = base::xdataunit_t::read_from(orgtx_bin);
+                if(nullptr == raw_tx)
+                {
+                    xerror("xvblockstore_impl::query_tx fail-tx content read from fail.tx=%s", base::xstring_utl::to_hex(txhash).c_str());
+                    return nullptr;
+                }
+                txstore->set_raw_tx(raw_tx.get());
+                txstore->set_send_unit_info(send_txindex);
+                if(send_txindex->is_self_tx())
                 {
                     xdbg("xvblockstore_impl::query_tx self tx");  //self tx no need query more
-                    txstore->set_recv_unit_info(txindex);
-                    txstore->set_confirm_unit_info(txindex);
+                    txstore->set_recv_unit_info(send_txindex);
+                    txstore->set_confirm_unit_info(send_txindex);
                     return txstore;
                 }
             }
@@ -1016,7 +1027,7 @@ namespace top
                     // target_account->load_block_object(index_ptr);
                     // target_account->load_block_input(index_ptr->get_this_block());
                     // target_account->load_block_output(index_ptr->get_this_block());
-                    auto ret = base::xvchain_t::instance().get_xtxstore()->store_txs(target_block.get(), true);
+                    auto ret = base::xvchain_t::instance().get_xtxstore()->store_txs(target_block.get(), false);
                     if(ret)
                     {
                         index_ptr->set_store_flag(base::enum_index_store_flag_transactions);

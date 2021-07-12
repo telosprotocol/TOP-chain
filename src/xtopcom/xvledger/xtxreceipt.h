@@ -42,6 +42,9 @@ namespace top
             bool                            is_recv_tx() const {return get_tx_subtype() == base::enum_transaction_subtype_recv;}
             bool                            is_confirm_tx() const {return get_tx_subtype() == base::enum_transaction_subtype_confirm;}
             std::string                     get_tx_result_property(const std::string & key) const;
+            std::string                     get_contract_address() const;
+            std::string                     get_caller() const {return m_tx_action.get_caller();}
+
         private:
             base::xvaction_t                m_tx_action;
             xobject_ptr_t<xprove_cert_t>    m_tx_action_prove{nullptr};

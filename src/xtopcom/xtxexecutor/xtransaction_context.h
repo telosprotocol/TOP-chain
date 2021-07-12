@@ -295,7 +295,7 @@ class xtransaction_redeem_token : public xtransaction_face_t{
         }
         // the redeem token should be locked for some time
         std::string param = assemble_lock_token_param(m_target_action.m_asset.m_amount, redeem_type());
-        return m_account_ctx->lock_token(m_trans->get_transaction()->digest(), m_target_action.m_asset.m_amount, param);
+        return m_account_ctx->lock_token(m_trans->get_tx_hash_256(), m_target_action.m_asset.m_amount, param);
     }
 
 private:

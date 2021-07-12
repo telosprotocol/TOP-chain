@@ -147,7 +147,7 @@ void xtxpool_service::resend_receipts(uint64_t now) {
                 }
 
                 // filter out txs witch has already in txpool, just not consensused and committed.
-                auto tx = m_para->get_txpool()->query_tx(recv_tx->get_source_addr(), recv_tx->get_transaction()->digest());
+                auto tx = m_para->get_txpool()->query_tx(recv_tx->get_source_addr(), recv_tx->get_tx_hash_256());
                 if (tx != nullptr && tx->get_tx()->is_confirm_tx()) {
                     continue;
                 }
@@ -344,15 +344,14 @@ xcons_transaction_ptr_t xtxpool_service::create_confirm_tx_by_hash(const uint256
     // first time consensus transaction has been stored, so it can be found
     // in the second consensus, need check the m_recv_unit_height
 
-    if (tx_store == nullptr || tx_store->get_raw_tx() == nullptr) {
+    if (tx_store == nullptr) {
         xtxpool_warn("xtxpool_service::create_confirm_tx_by_hash fail-query tx from store. txhash=%s", base::xstring_utl::to_hex(str_hash).c_str());
         return nullptr;
     }
 
-    xtransaction_t * tx = dynamic_cast<xtransaction_t *>(tx_store->get_raw_tx());
-    base::xvaccount_t _vaccount(tx->get_target_addr());
+    base::xvaccount_t _vaccount(tx_store->get_recv_unit_addr());
     uint64_t unit_height = tx_store->get_recv_unit_height();
-    base::xauto_ptr<base::xvblock_t> commit_block = m_para->get_vblockstore()->load_block_object(_vaccount, unit_height, base::enum_xvblock_flag_committed, false, metrics::blockstore_access_from_txpool_create_confirm_receipt);
+    base::xauto_ptr<base::xvblock_t> commit_block = m_para->get_vblockstore()->load_block_object(_vaccount, unit_height, tx_store->get_recv_unit_hash(), false, metrics::blockstore_access_from_txpool_create_confirm_receipt);
     if (commit_block == nullptr) {
         xerror("xtxpool_service::create_confirm_tx_by_hash fail-commit unit not exist txhash=%s,account=%s,block_height:%ld",
                base::xstring_utl::to_hex(str_hash).c_str(),
@@ -360,7 +359,7 @@ xcons_transaction_ptr_t xtxpool_service::create_confirm_tx_by_hash(const uint256
                unit_height);
         return nullptr;
     }
-    m_para->get_vblockstore()->load_block_input(_vaccount, commit_block.get());
+    // m_para->get_vblockstore()->load_block_input(_vaccount, commit_block.get()); // TODO(jimmy) confirm tx no need origin tx
     base::xauto_ptr<base::xvblock_t> cert_block = m_para->get_vblockstore()->load_block_object(_vaccount, unit_height + 2, 0, false, metrics::blockstore_access_from_txpool_create_confirm_receipt);
     if (commit_block == nullptr) {
         xerror("xtxpool_service::create_confirm_tx_by_hash fail-cert unit not exist txhash=%s,account=%s,block_height:%ld",
@@ -403,7 +402,7 @@ void xtxpool_service::send_receipt_retry(data::xcons_transaction_ptr_t & cons_tx
 
 void xtxpool_service::send_receipt_real(const data::xcons_transaction_ptr_t & cons_tx) {
     try {
-        std::string target_addr = cons_tx->get_receipt_target_account();
+        base::xtable_index_t target_tableindex = cons_tx->get_peer_table_index();
 
         top::base::xautostream_t<4096> stream(top::base::xcontext_t::instance());
         cons_tx->serialize_to(stream);
@@ -412,7 +411,7 @@ void xtxpool_service::send_receipt_real(const data::xcons_transaction_ptr_t & co
 
         // TODO(jimmy)  first get target account's table id, then get network addr by table id
         auto receiver_cluster_addr =
-            m_router->sharding_address_from_account(common::xaccount_address_t{target_addr}, m_vnet_driver->network_id(), common::xnode_type_t::consensus_auditor);
+            m_router->sharding_address_from_tableindex(target_tableindex, m_vnet_driver->network_id(), common::xnode_type_t::consensus_auditor);
         assert(common::has<common::xnode_type_t::consensus_auditor>(receiver_cluster_addr.type()) || common::has<common::xnode_type_t::committee>(receiver_cluster_addr.type()) ||
                common::has<common::xnode_type_t::zec>(receiver_cluster_addr.type()));
 
@@ -634,7 +633,7 @@ void xtxpool_service::on_message_pull_recv_receipt_received(vnetwork::xvnode_add
 }
 
 void xtxpool_service::on_message_pull_confirm_receipt_received(vnetwork::xvnode_address_t const & sender, vnetwork::xmessage_t const & message) {
-    xinfo("xtxpool_service::on_message_pull_confirm_receipt_received at_node:%s,msg id:%x,hash:%x",
+    xinfo("xtxpool_service::on_message_pull_confirm_receipt_received at_node:%s,msg id:%x,hash:%" PRIx64 "",
           m_vnetwork_str.c_str(),
           message.id(),
           message.hash());
@@ -663,10 +662,11 @@ void xtxpool_service::on_message_pull_confirm_receipt_received(vnetwork::xvnode_
     if (cluster_addr != m_vnet_driver->address().cluster_address()) {
         m_vnet_driver->forward_broadcast_message(message, vnetwork::xvnode_address_t{std::move(cluster_addr)});
     } else {
-        xinfo("xtxpool_service::on_message_pull_confirm_receipt_received confirm txs.table:%s:%s,receipt hash num=%u",
+        xinfo("xtxpool_service::on_message_pull_confirm_receipt_received confirm txs.table:%s:%s,receipt hash num=%u,receiptid=%ld",
               pulled_receipt.m_tx_from_account.c_str(),
               pulled_receipt.m_tx_to_account.c_str(),
-              pulled_receipt.m_id_hash_of_receipts.size());
+              pulled_receipt.m_id_hash_of_receipts.size(),
+              pulled_receipt.m_id_hash_of_receipts.begin()->first);
         xreceipt_push_t pushed_receipt;
         pushed_receipt.m_receipt_type = enum_transaction_subtype_confirm;
         pushed_receipt.m_tx_from_account = pulled_receipt.m_tx_from_account;
@@ -692,7 +692,7 @@ void xtxpool_service::on_message_pull_confirm_receipt_received(vnetwork::xvnode_
 
             auto tranx = get_confirmed_tx(hash);
             if (tranx != nullptr) {
-                xdbg("xtxpool_service::on_message_pull_confirm_receipt_received table:%s:%s receiptid:%llu,confirm_tx:%s",
+                xinfo("xtxpool_service::on_message_pull_confirm_receipt_received table:%s:%s receiptid:%llu,confirm_tx:%s",
                      pulled_receipt.m_tx_from_account.c_str(),
                      pulled_receipt.m_tx_to_account.c_str(),
                      receipt_id,
