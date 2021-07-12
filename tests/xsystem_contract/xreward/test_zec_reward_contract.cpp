@@ -448,7 +448,6 @@ TEST_F(xtest_reward_contract_t, test_nodes_rewards) {
     onchain_param.validator_reward_ratio = 60;
     onchain_param.vote_reward_ratio = 20;
     onchain_param.governance_reward_ratio = 4;
-    onchain_param.cluster_zero_workload = 0;
     onchain_param.shard_zero_workload = 0;
     // make property_param
     xreward_property_param_t property_param;

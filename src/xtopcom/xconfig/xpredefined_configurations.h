@@ -169,7 +169,7 @@ XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(dividend_ratio_change_interval, std::uint6
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(max_vote_nodes_num, std::uint32_t, normal, 5, 1, std::numeric_limits<std::uint32_t>::max());
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(votes_report_interval, xinterval_t, normal, 10, 1, std::numeric_limits<xinterval_t>::max());
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(reward_issue_interval, xinterval_t, normal, 30, 1, std::numeric_limits<xinterval_t>::max());    // 10 minutes
-XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(workload_timer_interval, xinterval_t, normal, 20, 1, std::numeric_limits<xinterval_t>::max());  // 200 seconds
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(reward_update_interval, xinterval_t, normal, 20, 1, std::numeric_limits<xinterval_t>::max());  // 200 seconds
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(min_node_reward, uint64_t, important, 100, 0, std::numeric_limits<uint64_t>::max());
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(min_voter_dividend, uint64_t, important, 100, 0, std::numeric_limits<uint64_t>::max());
 #else
@@ -180,7 +180,7 @@ XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(dividend_ratio_change_interval, std::uint6
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(max_vote_nodes_num, std::uint32_t, normal, 10000, 1, std::numeric_limits<std::uint32_t>::max());
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(votes_report_interval, xinterval_t, normal, 30, 1, std::numeric_limits<xinterval_t>::max());
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(reward_issue_interval, xinterval_t, normal, 8640, 1, std::numeric_limits<xinterval_t>::max());  // 24 hours
-XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(workload_timer_interval, xinterval_t, normal, 17, 1, std::numeric_limits<xinterval_t>::max());  // 180 seconds
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(reward_update_interval, xinterval_t, normal, 17, 1, std::numeric_limits<xinterval_t>::max());  // 180 seconds
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(min_node_reward, uint64_t, important, 0, 0, std::numeric_limits<uint64_t>::max());
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(min_voter_dividend, uint64_t, important, 0, 0, std::numeric_limits<uint64_t>::max());
 #endif
@@ -215,12 +215,10 @@ XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(auditor_reward_ratio, uint16_t, critical, 
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(validator_reward_ratio, uint16_t, critical, 60, 0, 100);  // mean 60%
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(archive_reward_ratio, uint16_t, critical, 4, 0, 100);     // mean 4%
 
-XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(task_num_per_round, uint16_t, normal, 16, 1, std::numeric_limits<uint16_t>::max());
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(workload_per_tx, uint32_t, normal, 1, 1, std::numeric_limits<uint32_t>::max());
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(workload_per_tableblock, uint32_t, normal, 2, 0, std::numeric_limits<uint32_t>::max());
 
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(shard_zero_workload, uint32_t, normal, 0, 0, std::numeric_limits<uint32_t>::max());
-XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(cluster_zero_workload, uint32_t, normal, 0, 0, std::numeric_limits<uint32_t>::max());
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(cross_reading_rec_reg_contract_height_step_limitation, uint64_t, normal, 12, 1, std::numeric_limits<uint64_t>::max());
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(cross_reading_rec_reg_contract_logic_timeout_limitation,
                                       common::xlogic_time_t,
