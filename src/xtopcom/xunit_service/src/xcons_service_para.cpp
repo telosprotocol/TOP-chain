@@ -7,6 +7,7 @@ NS_BEG2(top, xunit_service)
 
 xresources::xresources(const std::string & account,
                        const xobject_ptr_t<base::xworkerpool_t> & pwork,
+                       const xobject_ptr_t<base::xworkerpool_t> & xbft_pwork,
                        const xobject_ptr_t<base::xvcertauth_t> & auth,
                        const observer_ptr<base::xvblockstore_t> & blockstore,
                        const std::shared_ptr<xnetwork_proxy_face> & network,
@@ -16,6 +17,7 @@ xresources::xresources(const std::string & account,
                        observer_ptr<mbus::xmessage_bus_face_t> const & mb,
                        const observer_ptr<xtxpool_v2::xtxpool_face_t> & txpool)
   : m_worker_pool(pwork)
+  , m_xbft_worker_pool(pwork)
   , m_network(network)
   , m_certauth(auth)
   , m_blockstore(blockstore)
@@ -36,6 +38,11 @@ base::xvcertauth_t * xresources::get_certauth() {
 // work pool
 base::xworkerpool_t * xresources::get_workpool() {
     return m_worker_pool.get();
+}
+
+// xbft work pool
+base::xworkerpool_t * xresources::get_xbft_workpool() {
+    return m_xbft_worker_pool.get();
 }
 
 // network face

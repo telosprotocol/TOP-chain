@@ -392,8 +392,8 @@ namespace top
                 } else {
                     XMETRICS_GAUGE(metrics::state_load_blk_state_unit_fail, count);
                 }
-            }
-            xwarn("xvblkstatestore_t::load_latest_blocks_and_state fail-exceed max count.target_block=%s", target_block->dump().c_str());
+                xwarn("xvblkstatestore_t::load_latest_blocks_and_state fail-exceed max count.target_block=%s", target_block->dump().c_str());
+            }            
             return res;
         }
 
