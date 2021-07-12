@@ -35,7 +35,7 @@ std::pair<xobject_ptr_t<base::xvnode_t>, common::xslot_id_t> xtop_mocked_vnode_g
         group_xip2.height()
     };
 
-    base::xvnode_t * node = new base::xvnode_t(account_address.value(), node_xip2.value(), "");
+    base::xvnode_t * node = new base::xvnode_t(account_address.value(), node_xip2.value(), "", "");
     m_nodes.push_back(node);
 
     node->add_ref();
