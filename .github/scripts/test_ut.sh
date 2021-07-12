@@ -15,9 +15,14 @@ if [ -d ${REPORT_DIR} ];then
 fi
 mkdir -p ${REPORT_DIR}
 
+run_err_count=0
 for utest in $(ls cbuild/bin/Linux/*test);do
     utest_file_name=$(basename $utest)
     time ${utest} --gtest_output="xml:"${utest_file_name}"_report.xml"
+    if [[ $? -ne 0 ]];then
+        let run_err_count="${run_err_count}+1"
+        continue
+    fi
     mv ${utest_file_name}"_report.xml" ${REPORT_DIR}/
 done
 
@@ -52,7 +57,7 @@ sed -i 's#<!--content_summary-->#<div class="step"><table><tbody><tr><td class="
 tar -zcvf report.tar.gz *html
 
 # assert
-let err_count="$test_fail+$test_errors"
+let err_count="$test_fail+$test_errors+$run_err_count"
 if [ ${err_count} -eq 0 ];then
     echo "no error testcase, done"
 else
