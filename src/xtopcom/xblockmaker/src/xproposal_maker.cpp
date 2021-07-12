@@ -405,6 +405,8 @@ bool xproposal_maker_t::backup_set_consensus_para(base::xvblock_t* latest_cert_b
 
 void xproposal_maker_t::get_locked_nonce_map(const xblock_ptr_t & block, std::map<std::string, uint64_t> & locked_nonce_map) const {
     if (block->get_block_class() == base::enum_xvblock_class_light) {
+        base::xvaccount_t _vaccount(block->get_account());
+        get_blockstore()->load_block_input(_vaccount, block.get());
         const std::vector<base::xventity_t*> & _table_inentitys = block->get_input()->get_entitys();
         uint32_t entitys_count = _table_inentitys.size();
         for (uint32_t index = 1; index < entitys_count; index++) {  // unit entity from index#1
@@ -427,6 +429,7 @@ void xproposal_maker_t::get_locked_nonce_map(const xblock_ptr_t & block, std::ma
                         uint64_t txnonce = _rawtx->get_tx_nonce();
                         auto account_addr = _unit_header->get_account();
                         auto it = locked_nonce_map.find(account_addr);
+                        xdbg("xproposal_maker_t::get_locked_nonce_map account:%s,nonce:%u", account_addr.c_str(), txnonce);
                         if (it == locked_nonce_map.end()) {
                             locked_nonce_map[account_addr] = txnonce;
                         } else {
