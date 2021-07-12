@@ -18,6 +18,7 @@
 NS_BEG2(top, xtxpool_v2)
 
 #define resend_time_threshold (64)
+#define too_long_time_not_confirm (300)
 
 void xpeer_table_unconfirmed_txs_t::push_tx(const xcons_transaction_ptr_t & tx) {
     auto it = m_unconfirmed_txs.find(tx->get_last_action_receipt_id());
@@ -75,6 +76,13 @@ const xcons_transaction_ptr_t xpeer_table_unconfirmed_txs_t::get_latest_receipt(
     return nullptr;
 }
 
+const xcons_transaction_ptr_t xpeer_table_unconfirmed_txs_t::get_first_receipt() const {
+    if (!m_unconfirmed_txs.empty()) {
+        return m_unconfirmed_txs.begin()->second;
+    }
+    return nullptr;
+}
+
 void xpeer_tables_t::push_tx(const xcons_transaction_ptr_t & tx) {
     base::xvaccount_t vaccount(tx->get_target_addr());
     auto peer_table_sid = vaccount.get_short_table_id();
@@ -117,6 +125,10 @@ void xpeer_tables_t::update_receiptid_state(const xtable_state_cache_t & table_s
 const std::vector<xcons_transaction_ptr_t> xpeer_tables_t::get_latest_receipts_for_resend(uint64_t now) const {
     std::vector<xcons_transaction_ptr_t> latest_receipts;
     for (auto & peer_table : m_peer_tables) {
+        auto first_receipt = peer_table.second->get_first_receipt();
+        if (first_receipt != nullptr && first_receipt->get_receipt_gmtime() + too_long_time_not_confirm < now) {
+            xtxpool_warn("xpeer_tables_t::get_latest_receipts_for_resend tx too long time not confirm:%s,delay:%llu", first_receipt->dump().c_str(), now - first_receipt->get_receipt_gmtime());
+        }
         auto receipt = peer_table.second->get_latest_receipt();
         if (receipt != nullptr && receipt->get_receipt_gmtime() + resend_time_threshold < now) {
             latest_receipts.push_back(receipt);

@@ -244,23 +244,6 @@ const std::vector<xcons_transaction_ptr_t> xtxpool_table_t::get_resend_txs(uint6
 //     return num >= table_unconfirm_txs_num_max;
 // }
 
-void xtxpool_table_t::unit_block_process(xblock_t * unit_block) {
-    if (unit_block->is_lightunit() && !unit_block->is_genesis_block()) {
-        data::xlightunit_block_t * lightunit = dynamic_cast<data::xlightunit_block_t *>(unit_block);
-        const std::vector<xlightunit_tx_info_ptr_t> & txs = lightunit->get_txs();
-        for (auto & tx : txs) {
-            tx_info_t txinfo(unit_block->get_account(), tx->get_tx_hash_256(), tx->get_tx_subtype());
-            update_id_state(txinfo, tx->get_receipt_id_tableid(), tx->get_receipt_id(), tx->get_last_trans_nonce() + 1);
-        }
-    }
-
-    // if (is_account_need_update(block->get_account())) {
-    //     base::xauto_ptr<xblockchain2_t> blockchain(m_para->get_store()->clone_account(block->get_account()));
-    //     xassert(blockchain != nullptr);
-    //     updata_latest_nonce(block->get_account(), blockchain->account_send_trans_number(), blockchain->account_send_trans_hash());
-    // }
-}
-
 void xtxpool_table_t::on_block_confirmed(xblock_t * table_block) {
     // TODO(jimmy)
     const std::vector<base::xventity_t*> & _table_inentitys = table_block->get_input()->get_entitys();
