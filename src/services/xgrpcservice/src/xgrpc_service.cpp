@@ -28,7 +28,7 @@ using top::xrpc_service;
 namespace top {
 namespace rpc {
 
-std::atomic_int rpc_client_num;
+std::atomic_int rpc_client_num{0};
 std::deque<xJson::Value> tableblock_data;
 std::mutex tableblock_mtx;
 std::condition_variable tableblock_cv;
