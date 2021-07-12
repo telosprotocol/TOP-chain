@@ -230,7 +230,8 @@ int to_elect_set(const std::map<common::xslot_id_t, data::xnode_info_t> & node_m
     std::sort(tmp.begin(), tmp.end(), [](const data::xnode_info_t & a, const data::xnode_info_t & b) -> bool { return a.address.slot_id().value() < b.address.slot_id().value(); });
     for (size_t index = 0; index < tmp.size(); index++) {
         auto data = tmp[index];
-        elect_set.push_back({xcons_utl::to_xip2(data.address), data.election_info.joined_version, data.election_info.stake});
+        elect_set.push_back({xcons_utl::to_xip2(data.address), data.election_info.joined_version, data.election_info.comprehensive_stake});
+        xdbg("[xunitservice] account %s comprehensive stake %" PRIu64, data.address.account_address().c_str(), data.election_info.comprehensive_stake);
     }
     return elect_set.size();
 }

@@ -37,8 +37,17 @@ jobs:
         run: |
           bash .github/scripts/build_xtop.sh "test build_ci"
 
+      - name: UnitTest
+        run: |
+          bash .github/scripts/test_ut.sh
+
       - name: TEST XTOP AllInOne
         env:
           RUN_NUM: ${{ github.run_number }}
         run: |
           bash .github/scripts/test_xtop_allinone.sh "$RUN_NUM"
+
+      - name: Notify
+        if: always()
+        run: |
+          bash .github/scripts/notify.sh ${{ job.status }} "${{ github.job }} job in worflow ${{ github.workflow }} of ${{ github.repository }} has ${{ job.status }}"

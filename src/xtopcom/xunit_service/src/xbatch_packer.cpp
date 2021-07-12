@@ -35,6 +35,7 @@ xbatch_packer::xbatch_packer(observer_ptr<mbus::xmessage_bus_face_t> const   &mb
     set_vblockstore(store);
     register_plugin(store);
     base::xauto_ptr<xcsobject_t> ptr_engine_obj(create_engine(*this, xconsensus::enum_xconsensus_pacemaker_type_clock_cert));
+    ptr_engine_obj->register_plugin(para->get_resources()->get_xbft_workpool());  // used for xbft heavy work, such as verify_proposal and signature verify.
     m_proposal_maker = block_maker->get_proposal_maker(account_id);
     m_raw_timer = get_thread()->create_timer((base::xtimersink_t*)this);
     m_raw_timer->start(m_timer_repeat_time_ms, m_timer_repeat_time_ms);

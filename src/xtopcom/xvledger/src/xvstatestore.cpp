@@ -310,6 +310,12 @@ namespace top
         }
 
         bool xvblkstatestore_t::load_latest_blocks_and_state(xvblock_t * target_block, xobject_ptr_t<xvbstate_t> & base_bstate, std::map<uint64_t, xobject_ptr_t<xvblock_t>> & latest_blocks) {
+            bool table = target_block->get_block_level() == enum_xvblock_level_table ? true: false;
+            if (table) {
+                XMETRICS_TIME_RECORD("state_load_blk_state_table_cost");
+            } else {
+                XMETRICS_TIME_RECORD("state_load_blk_state_unit_cost");
+            }
             xvaccount_t target_account(target_block->get_account());
             xobject_ptr_t<xvblock_t> cur_block;
             target_block->add_ref();
@@ -317,13 +323,17 @@ namespace top
             latest_blocks[cur_block->get_height()] = cur_block;  // push target block to latest blocks
             uint32_t max_count = target_block->get_block_level() == enum_xvblock_level_table ? 4 : 0xFFFF; // TODO(jimmy) always read latest tablestate but may read old unitstate
             uint32_t count = 0;
-
+            bool res = false;
+            bool cache = false;
+            
             while (count++ < max_count) {
                 // load prev block state from cache
                 base_bstate = get_lru_cache(cur_block->get_block_level(), cur_block->get_last_block_hash());
                 if (base_bstate != nullptr) {
                     xdbg("xvblkstatestore_t::load_latest_blocks_and_state succ-get prev state from cache.block=%s", target_block->dump().c_str());
-                    return true;
+                    res = true;
+                    cache = true;
+                    break;
                 }
 
                 // load prev block state from db
@@ -332,7 +342,9 @@ namespace top
                 {
                     base_bstate.attach(raw_state);
                     xdbg("xvblkstatestore_t::load_latest_blocks_and_state succ-get prev state form db.height=%ld,block=%s",cur_block->get_height() - 1, target_block->dump().c_str());
-                    return true;
+                    res = true;
+                    break;
+                    // return true;
                 }
 
                 // load prev block
@@ -340,21 +352,49 @@ namespace top
                 if (nullptr == prev_block) {
                     xwarn("xvblkstatestore_t::load_latest_blocks_and_state fail-load block. account=%s,height=%ld,target_block=%s",
                         target_account.get_account().c_str(), cur_block->get_height() - 1, target_block->dump().c_str());
-                    return false;
+                    res = false;
+                    break;
                 }
 
                 // try make prev block state
                 base_bstate = make_state_from_current_block(target_account, prev_block.get());
                 if (base_bstate != nullptr) {
-                    return true;
+                    res = true;
+                    break;
                 }
 
                 // push prev block to latest blocks
                 cur_block = prev_block;
                 latest_blocks[cur_block->get_height()] = cur_block;
             }
-            xwarn("xvblkstatestore_t::load_latest_blocks_and_state fail-exceed max count.target_block=%s", target_block->dump().c_str());
-            return false;
+            if (res) {
+                XMETRICS_GAUGE(metrics::state_load_blk_state_suc, count);
+                if (cache) {
+                    XMETRICS_GAUGE(metrics::state_load_blk_state_cache_suc, count);
+                }
+                if (table) {
+                    XMETRICS_GAUGE(metrics::state_load_blk_state_table_suc, count);
+                    if (cache) {
+                        XMETRICS_GAUGE(metrics::state_load_blk_state_table_cache_suc, count);
+                    }
+                } 
+                else {
+                    XMETRICS_GAUGE(metrics::state_load_blk_state_unit_suc, count);
+                    if (cache) {
+                        XMETRICS_GAUGE(metrics::state_load_blk_state_unit_cache_suc, count);
+                    }
+                }
+                
+            } else {
+                XMETRICS_GAUGE(metrics::state_load_blk_state_fail, count);
+                if (table) {
+                    XMETRICS_GAUGE(metrics::state_load_blk_state_table_fail, count);
+                } else {
+                    XMETRICS_GAUGE(metrics::state_load_blk_state_unit_fail, count);
+                }
+                xwarn("xvblkstatestore_t::load_latest_blocks_and_state fail-exceed max count.target_block=%s", target_block->dump().c_str());
+            }            
+            return res;
         }
 
         xobject_ptr_t<xvbstate_t> xvblkstatestore_t::make_state_from_current_block(const xvaccount_t & target_account, xvblock_t * current_block) {

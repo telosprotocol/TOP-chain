@@ -50,6 +50,10 @@ void xgrpc_mgr_t::process_event(const mbus::xevent_ptr_t & e) {
         xdbg("grpc stream xevent_ptr_t nullptr or not arc");
         return;
     }
+    if (rpc_client_num <= 0) {
+        xdbg("grpc no client connected");
+        return;
+    }
     if (e->minor_type != mbus::xevent_store_t::type_block_to_db)
         return;
 

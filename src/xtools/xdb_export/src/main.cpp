@@ -66,8 +66,7 @@ void usage() {
     std::cout << "        - checkout_all_account" << std::endl;
     std::cout << "        - check_fast_sync [table|unit|account]" << std::endl;
     std::cout << "        - check_block_exist <account> <height>" << std::endl;
-    std::cout << "        - check_block_info" << std::endl;
-    std::cout << "        - check_tx_info [table]" << std::endl;
+    std::cout << "        - check_tx_info [account]" << std::endl;
     std::cout << "        - check_latest_fullblock" << std::endl;
     std::cout << "        - check_contract_property <account> <prop> <last|all>" << std::endl;
     std::cout << "-------  end  -------" << std::endl;
@@ -303,7 +302,7 @@ public:
         }
     }
 
-    void query_block_info() {
+    void query_block_num() {
         json j;
         uint64_t total_table_block_num{0};
         uint64_t total_unit_block_num{0};
@@ -637,8 +636,9 @@ private:
         std::set<std::string> multi_tx;
         std::vector<tx_ext_t> multi;
         json j;
-        int non_null_num{0};
-        int null_num{0};
+        int empty_table_block_num{0};
+        int empty_unit_block_num{0};
+        int total_unit_block_num{0};
         int recv_num{0};
         int tableid{-1};
         {
@@ -656,23 +656,28 @@ private:
             auto const & vblock = m_blockstore->load_block_object(account,h,0,false);
             const data::xblock_t * block = dynamic_cast<data::xblock_t *>(vblock.get());
             if (block == nullptr) {
-                null_num++;
+                empty_table_block_num++;
                 continue;
-            } else {
-                non_null_num++;
             }
             m_blockstore->load_block_input(_vaccount, vblock.get());
             assert(block->get_block_level() == base::enum_xvblock_level_table);
             const uint64_t timestamp = block->get_timestamp();
             const std::vector<base::xventity_t*> & _table_inentitys = block->get_input()->get_entitys();
             uint32_t entitys_count = _table_inentitys.size();
+            if (entitys_count == 0) {
+                empty_table_block_num++;
+            }
             for (uint32_t index = 1; index < entitys_count; index++) {  // unit entity from index#1
+                total_unit_block_num++;
                 base::xvinentity_t* _table_unit_inentity = dynamic_cast<base::xvinentity_t*>(_table_inentitys[index]);
                 base::xtable_inentity_extend_t extend;
                 extend.serialize_from_string(_table_unit_inentity->get_extend_data());
                 const xobject_ptr_t<base::xvheader_t> & _unit_header = extend.get_unit_header();
                 const uint64_t unit_height = _unit_header->get_height();
                 const std::vector<base::xvaction_t> &  input_actions = _table_unit_inentity->get_actions();
+                if (input_actions.empty()) {
+                    empty_unit_block_num++;
+                }
                 for (auto & action : input_actions) {
                     if (action.get_org_tx_hash().empty()) {  // not txaction
                         continue;
@@ -733,9 +738,11 @@ private:
                 }
             }
         }
-        j["table info"]["height"] = block_height;
-        j["table info"]["non-null block num"] = non_null_num;
-        j["table info"]["null block num"] = null_num;
+        j["table info"]["table height"] = block_height;
+        j["table info"]["total table block num"] = block_height + 1;
+        j["table info"]["empty table block num"] = empty_table_block_num;
+        j["table info"]["total unit block num"] = total_unit_block_num;
+        j["table info"]["empty unit block num"] = empty_unit_block_num;
         j["table info"]["total self num"] = self.size();
         j["table info"]["total send num"] = send.size();
         j["table info"]["total recv num"] = recv_num;
@@ -802,8 +809,10 @@ private:
             }
         }
         auto t3 = xtime_utl::time_now_ms();
+        map_value_to_vec(self, selfv);
         map_value_to_vec(send, sendv);
         map_value_to_vec(confirm, confirmv);
+        std::sort(selfv.begin(), selfv.end(), cmp);
         std::sort(sendv.begin(), sendv.end(), cmp);
         std::sort(confirmv.begin(), confirmv.end(), cmp);
 
@@ -819,6 +828,7 @@ private:
         j["confirmed max time"] = max_confirm_time;
         j["confirmed avg time"] = float(total_confirm_time) / confirmedv.size();
         j["confirmed detail"] = tx_confirmed;
+        j["self detail"] = setj(selfv);
         j["send only detail"] = setj(sendv);
         j["confirmed only detail"] = setj(confirmv);
         j["multi detail"] = setj(multi);
@@ -1026,8 +1036,6 @@ int main(int argc, char ** argv) {
             return -1;
         }
         tools.query_block_exist(argv[3], std::stoi(argv[4]));
-    } else if (function_name == "check_block_info") {
-        tools.query_block_info();
     } else if (function_name == "check_latest_fullblock") {
         tools.query_table_latest_fullblock();
     } else if (function_name == "check_contract_property") {

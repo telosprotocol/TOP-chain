@@ -28,6 +28,7 @@ using top::xrpc_service;
 namespace top {
 namespace rpc {
 
+std::atomic_int rpc_client_num{0};
 std::deque<xJson::Value> tableblock_data;
 std::mutex tableblock_mtx;
 std::condition_variable tableblock_cv;
@@ -53,7 +54,7 @@ Status xrpc_serviceimpl::table_stream(ServerContext * context, const xrpc_reques
         xdbg("grpc stream: %s json parse error", req.c_str());
         return Status(grpc::StatusCode::INVALID_ARGUMENT, "Invalid request argument: json parse error.");
     }
-
+    rpc_client_num++;
     xdbg("grpc stream: consuming tableblock_data");
     while (true) {
         std::unique_lock<std::mutex> lck(tableblock_mtx);
@@ -64,6 +65,7 @@ Status xrpc_serviceimpl::table_stream(ServerContext * context, const xrpc_reques
 
         if (context->IsCancelled()) {
             xinfo("grpc stream: cancelled");
+            rpc_client_num--;
             return Status(grpc::StatusCode::CANCELLED, "Deadline exceeded or Client cancelled, abandoning.");
         }
 
@@ -80,9 +82,11 @@ Status xrpc_serviceimpl::table_stream(ServerContext * context, const xrpc_reques
             xinfo("grpc stream: push err");
             std::lock_guard<std::mutex> tmp_lock(tableblock_mtx);
             tableblock_data.push_front(tmp_tb);
+            rpc_client_num--;
             return Status(grpc::StatusCode::UNAVAILABLE, "Writing client failed.");
         }
     }
+    rpc_client_num--;
     return Status(grpc::StatusCode::OK, "Stream finished successfully.");
 }
 

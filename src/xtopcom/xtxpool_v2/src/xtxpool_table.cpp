@@ -22,28 +22,14 @@ namespace xtxpool_v2 {
 
 #define state_update_too_long_time (600)
 
-data::xtablestate_ptr_t xtxpool_table_t::get_target_tablestate(base::xvblock_t * block) const {
-    base::xauto_ptr<base::xvbstate_t> bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(block, metrics::statestore_access_from_txpool_get_tablestate);
-    if (bstate == nullptr) {
-        return nullptr;
-    }
-    data::xtablestate_ptr_t tablestate = std::make_shared<data::xtable_bstate_t>(bstate.get());
-    return tablestate;
-}
-
 bool xtxpool_table_t::get_account_basic_info(const std::string & account, xaccount_basic_info_t & account_index_info) const {
     // TODO(jimmy) try sync behind account unit, make a new function
-    auto latest_table = m_para->get_vblockstore()->get_latest_committed_block(m_xtable_info);
-    xblock_ptr_t committed_block = xblock_t::raw_vblock_to_object_ptr(latest_table.get());
-    base::xauto_ptr<base::xvbstate_t> bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(committed_block.get(),metrics::statestore_access_from_txpool_get_accountstate);
-    if (bstate == nullptr) {
-        xwarn("xtxpool_table_t::get_account_basic_info fail-get tablestate. block=%s", committed_block->dump().c_str());
+    base::xaccount_index_t account_index;
+    bool ret = m_table_state_cache.get_account_index(account, account_index);
+    if (!ret) {
+        xtxpool_warn("xtxpool_table_t::get_account_basic_info get account index fail account:%s", account.c_str());
         return false;
     }
-
-    xtablestate_ptr_t tablestate = std::make_shared<xtable_bstate_t>(bstate.get());
-    base::xaccount_index_t account_index;
-    tablestate->get_account_index(account, account_index);
     base::xvaccount_t _account_vaddress(account);
     base::xauto_ptr<base::xvblock_t> _block_ptr = m_para->get_vblockstore()->get_latest_cert_block(_account_vaddress);
     xblock_ptr_t latest_cert_unit = xblock_t::raw_vblock_to_object_ptr(_block_ptr.get());
@@ -92,15 +78,14 @@ int32_t xtxpool_table_t::push_send_tx(const std::shared_ptr<xtx_entry> & tx) {
 
         base::xvaccount_t vaccount(tx->get_tx()->get_target_addr());
         auto peer_table_sid = vaccount.get_short_table_id();
-        if (m_receipt_state_cache.is_unconfirmed_num_reach_limit(peer_table_sid)) {
+        if (m_table_state_cache.is_unconfirmed_num_reach_limit(peer_table_sid)) {
             xtxpool_warn("xtxpool_table_t::push_send_tx table-table unconfirm txs reached upper limit tx:%s,peer_sid:%d", tx->get_tx()->dump().c_str(), peer_table_sid);
             return xtxpool_error_account_unconfirm_txs_reached_upper_limit;
         }
     }
 
     uint64_t latest_nonce;
-    uint256_t latest_hash;
-    bool result = get_account_latest_nonce_hash(tx->get_tx()->get_source_addr(), latest_nonce, latest_hash);
+    bool result = get_account_latest_nonce(tx->get_tx()->get_source_addr(), latest_nonce);
     if (!result) {
         // todo : push to non_ready_accounts
         // std::lock_guard<std::mutex> lck(m_non_ready_mutex);
@@ -117,10 +102,7 @@ int32_t xtxpool_table_t::push_send_tx(const std::shared_ptr<xtx_entry> & tx) {
 
     {
         std::lock_guard<std::mutex> lck(m_mgr_mutex);
-        if (m_locked_txs.try_push_tx(tx)) {
-            return xsuccess;
-        }
-        ret = m_txmgr_table.push_send_tx(tx, latest_nonce, latest_hash);
+        ret = m_txmgr_table.push_send_tx(tx, latest_nonce);
     }
     if (ret != xsuccess) {
         // XMETRICS_COUNTER_INCREMENT("txpool_push_tx_send_fail", 1);
@@ -130,7 +112,7 @@ int32_t xtxpool_table_t::push_send_tx(const std::shared_ptr<xtx_entry> & tx) {
 }
 
 int32_t xtxpool_table_t::push_receipt(const std::shared_ptr<xtx_entry> & tx, bool is_self_send) {
-    uint64_t latest_receipt_id = m_receipt_state_cache.get_tx_corresponding_latest_receipt_id(tx);
+    uint64_t latest_receipt_id = m_table_state_cache.get_tx_corresponding_latest_receipt_id(tx);
     uint64_t tx_receipt_id = tx->get_tx()->get_last_action_receipt_id();
     if (tx_receipt_id < latest_receipt_id) {
         xtxpool_warn("xtxpool_table_t::push_receipt duplicate receipt:%s,id:%llu:%llu", tx->get_tx()->dump().c_str(), tx_receipt_id, latest_receipt_id);
@@ -192,11 +174,7 @@ std::shared_ptr<xtx_entry> xtxpool_table_t::pop_tx(const tx_info_t & txinfo, boo
     {
         std::lock_guard<std::mutex> lck(m_mgr_mutex);
         bool exist = false;
-        auto tx_ent = m_locked_txs.pop_tx(txinfo, exist);
-        if (exist) {
-            return tx_ent;
-        }
-        tx_ent = m_txmgr_table.pop_tx(txinfo, clear_follower);
+        auto tx_ent = m_txmgr_table.pop_tx(txinfo, clear_follower);
         if (tx_ent != nullptr) {
             return tx_ent;
         }
@@ -210,11 +188,6 @@ std::shared_ptr<xtx_entry> xtxpool_table_t::pop_tx(const tx_info_t & txinfo, boo
 void xtxpool_table_t::update_id_state(const tx_info_t & txinfo, base::xtable_shortid_t peer_table_sid, uint64_t receiptid, uint64_t nonce) {
     {
         std::lock_guard<std::mutex> lck(m_mgr_mutex);
-        bool exist = false;
-        if (txinfo.get_subtype() == enum_transaction_subtype_self || txinfo.get_subtype() == enum_transaction_subtype_send) {
-            m_locked_txs.pop_tx(txinfo, exist);
-        }
-
         m_txmgr_table.update_id_state(txinfo, peer_table_sid, receiptid, nonce);
         return;
     }
@@ -247,9 +220,9 @@ const std::shared_ptr<xtx_entry> xtxpool_table_t::query_tx(const std::string & a
     return nullptr;
 }
 
-void xtxpool_table_t::updata_latest_nonce(const std::string & account_addr, uint64_t latest_nonce, const uint256_t & latest_hash) {
+void xtxpool_table_t::updata_latest_nonce(const std::string & account_addr, uint64_t latest_nonce) {
     std::lock_guard<std::mutex> lck(m_mgr_mutex);
-    return m_txmgr_table.updata_latest_nonce(account_addr, latest_nonce, latest_hash);
+    return m_txmgr_table.updata_latest_nonce(account_addr, latest_nonce);
 }
 
 bool xtxpool_table_t::is_account_need_update(const std::string & account_addr) const {
@@ -269,23 +242,6 @@ const std::vector<xcons_transaction_ptr_t> xtxpool_table_t::get_resend_txs(uint6
 //     xtxpool_warn("xtxpool_table_t::is_unconfirm_txs_reached_upper_limit table:%s,num:%u,max:%u", m_xtable_info.get_table_addr().c_str(), num, table_unconfirm_txs_num_max);
 //     return num >= table_unconfirm_txs_num_max;
 // }
-
-void xtxpool_table_t::unit_block_process(xblock_t * unit_block) {
-    if (unit_block->is_lightunit() && !unit_block->is_genesis_block()) {
-        data::xlightunit_block_t * lightunit = dynamic_cast<data::xlightunit_block_t *>(unit_block);
-        const std::vector<xlightunit_tx_info_ptr_t> & txs = lightunit->get_txs();
-        for (auto & tx : txs) {
-            tx_info_t txinfo(unit_block->get_account(), tx->get_tx_hash_256(), tx->get_tx_subtype());
-            update_id_state(txinfo, tx->get_receipt_id_tableid(), tx->get_receipt_id(), tx->get_last_trans_nonce() + 1);
-        }
-    }
-
-    // if (is_account_need_update(block->get_account())) {
-    //     base::xauto_ptr<xblockchain2_t> blockchain(m_para->get_store()->clone_account(block->get_account()));
-    //     xassert(blockchain != nullptr);
-    //     updata_latest_nonce(block->get_account(), blockchain->account_send_trans_number(), blockchain->account_send_trans_hash());
-    // }
-}
 
 void xtxpool_table_t::on_block_confirmed(xblock_t * table_block) {
     // TODO(jimmy)
@@ -338,7 +294,7 @@ void xtxpool_table_t::refresh_table(bool refresh_unconfirm_txs) {
 
     xtablestate_ptr_t tablestate = std::make_shared<xtable_bstate_t>(bstate.get());
     xtxpool_info("xtxpool_table_t::refresh_table table:%s height:%llu", tablestate->get_account().c_str(), tablestate->get_block_height());
-    update_receiptid_state(tablestate->get_receiptid_state());
+    update_table_state(tablestate);
 
     {
         std::lock_guard<std::mutex> lck(m_mgr_mutex);
@@ -348,7 +304,7 @@ void xtxpool_table_t::refresh_table(bool refresh_unconfirm_txs) {
     if (refresh_unconfirm_txs) {
         std::lock_guard<std::mutex> lck(m_unconfirm_mutex);
         uint32_t tx_num_before = m_unconfirmed_tx_queue.size();
-        m_unconfirmed_tx_queue.recover(m_receipt_state_cache, tablestate);
+        m_unconfirmed_tx_queue.recover(m_table_state_cache, tablestate);
         uint32_t tx_num_after = m_unconfirmed_tx_queue.size();
         m_unconfirmed_tx_num = m_unconfirmed_tx_queue.size();
         // XMETRICS_COUNTER_SET("table_unconfirm_txs_num" + m_xtable_info.get_table_addr(), m_unconfirmed_tx_num);
@@ -386,45 +342,12 @@ void xtxpool_table_t::refresh_table(bool refresh_unconfirm_txs) {
 // }
 // }
 
-void xtxpool_table_t::update_locked_txs(const std::vector<tx_info_t> & locked_tx_vec) {
-    std::vector<std::shared_ptr<xtx_entry>> unlocked_txs;
-    int32_t ret = xsuccess;
-    locked_tx_map_t locked_tx_map;
-    {
-        std::lock_guard<std::mutex> lck(m_mgr_mutex);
-        for (auto & txinfo : locked_tx_vec) {
-            // only send txs move to m_locked_txs, receipts need not move, because they canbe deduplicate by receipt id.
-            if (txinfo.get_subtype() == enum_transaction_subtype_self || txinfo.get_subtype() == enum_transaction_subtype_send) {
-                auto tx_ent = m_txmgr_table.pop_tx(txinfo, false);
-                std::shared_ptr<locked_tx_t> locked_tx = std::make_shared<locked_tx_t>(txinfo, tx_ent);
-                locked_tx_map[txinfo.get_hash_str()] = locked_tx;
-            }
-        }
-        m_locked_txs.update(locked_tx_map, unlocked_txs);
-    }
+void xtxpool_table_t::update_table_state(const data::xtablestate_ptr_t & table_state) {
+    m_table_state_cache.update(table_state);
 
-    // roll back txs push to txpool again. all locked txs are send tx
-    for (auto & unlocked_tx : unlocked_txs) {
-        uint64_t latest_nonce;
-        uint256_t latest_hash;
-        bool result = get_account_latest_nonce_hash(unlocked_tx->get_tx()->get_source_addr(), latest_nonce, latest_hash);
-        if (!result) {
-            // todo : push to non_ready_accounts
-            xtxpool_warn("xtxpool_table_t::update_locked_txs account state fall behind tx:%s", unlocked_tx->get_tx()->dump().c_str());
-            continue;
-        }
-        std::lock_guard<std::mutex> lck(m_mgr_mutex);
-        ret = m_txmgr_table.push_send_tx(unlocked_tx, latest_nonce, latest_hash);
-        xtxpool_info("xtxpool_table_t::update_locked_txs roll back to txmgr table tx:%s,ret:%d", unlocked_tx->get_tx()->dump().c_str(), ret);
-    }
-}
-
-void xtxpool_table_t::update_receiptid_state(const base::xreceiptid_state_ptr_t & receiptid_state) {
-    m_receipt_state_cache.update(receiptid_state);
-
-    int32_t unconfirm_tx_num = (int32_t)receiptid_state->get_unconfirm_tx_num();
+    int32_t unconfirm_tx_num = (int32_t)table_state->get_receiptid_state()->get_unconfirm_tx_num();
     std::lock_guard<std::mutex> lck(m_mgr_mutex);
-    m_txmgr_table.update_receiptid_state(receiptid_state);
+    m_txmgr_table.update_receiptid_state(table_state->get_receiptid_state());
     m_xtable_info.set_unconfirm_tx_num(unconfirm_tx_num);
 }
 
@@ -448,7 +371,7 @@ xcons_transaction_ptr_t xtxpool_table_t::get_unconfirmed_tx(const std::string & 
 bool xtxpool_table_t::is_consensused_recv_receiptid(const std::string & from_addr, uint64_t receipt_id) const {
     base::xvaccount_t vaccount(from_addr);
     auto peer_table_sid = vaccount.get_short_table_id();
-    uint64_t state_cache_receipt_id_max = m_receipt_state_cache.get_recvid_max(peer_table_sid);
+    uint64_t state_cache_receipt_id_max = m_table_state_cache.get_recvid_max(peer_table_sid);
     uint64_t tx_cache_receipt_id_max = m_txmgr_table.get_latest_recv_receipt_id(peer_table_sid);
     if (receipt_id > state_cache_receipt_id_max && receipt_id > tx_cache_receipt_id_max) {
         return false;
@@ -459,7 +382,7 @@ bool xtxpool_table_t::is_consensused_recv_receiptid(const std::string & from_add
 bool xtxpool_table_t::is_consensused_confirm_receiptid(const std::string & to_addr, uint64_t receipt_id) const {
     base::xvaccount_t vaccount(to_addr);
     auto peer_table_sid = vaccount.get_short_table_id();
-    uint64_t state_cache_receipt_id_max = m_receipt_state_cache.get_confirmid_max(peer_table_sid);
+    uint64_t state_cache_receipt_id_max = m_table_state_cache.get_confirmid_max(peer_table_sid);
     uint64_t tx_cache_receipt_id_max = m_txmgr_table.get_latest_confirm_receipt_id(peer_table_sid);
     if (receipt_id > state_cache_receipt_id_max && receipt_id > tx_cache_receipt_id_max) {
         return false;
@@ -469,10 +392,10 @@ bool xtxpool_table_t::is_consensused_confirm_receiptid(const std::string & to_ad
 
 bool xtxpool_table_t::need_sync_lacking_receipts() const {
     uint64_t now = xverifier::xtx_utl::get_gmttime_s();
-    if (m_receipt_state_cache.last_update_time() + state_update_too_long_time < now) {
+    if (m_table_state_cache.last_update_time() + state_update_too_long_time < now) {
         xwarn("xtxpool_table_t::need_sync_lacking_receipts too long time not update receipt state, not sync lacking receipts. table:%s,update time:%llu,now:%llu,threshold:%d",
               m_xtable_info.get_table_addr().c_str(),
-              m_receipt_state_cache.last_update_time(),
+              m_table_state_cache.last_update_time(),
               now,
               state_update_too_long_time);
         return false;
@@ -578,7 +501,7 @@ int32_t xtxpool_table_t::verify_receipt_tx(const xcons_transaction_ptr_t & tx) c
     return xsuccess;
 }
 
-bool xtxpool_table_t::get_account_latest_nonce_hash(const std::string account_addr, uint64_t & latest_nonce, uint256_t & latest_hash) const {
+bool xtxpool_table_t::get_account_latest_nonce(const std::string account_addr, uint64_t & latest_nonce) const {
     xaccount_basic_info_t account_basic_info;
     bool result = get_account_basic_info(account_addr, account_basic_info);
     if (!result) {
@@ -586,7 +509,7 @@ bool xtxpool_table_t::get_account_latest_nonce_hash(const std::string account_ad
             mbus::xevent_behind_ptr_t ev = make_object_ptr<mbus::xevent_behind_on_demand_t>(
                 account_addr, account_basic_info.get_sync_height_start(), account_basic_info.get_sync_num(), true, "account_state_fall_behind");
             m_para->get_bus()->push_event(ev);
-            xtxpool_info("xtxpool_table_t::get_account_latest_nonce_hash account:%s state fall behind,try sync unit from:%llu,count:%u",
+            xtxpool_info("xtxpool_table_t::get_account_latest_nonce account:%s state fall behind,try sync unit from:%llu,count:%u",
                          account_addr.c_str(),
                          account_basic_info.get_sync_height_start(),
                          account_basic_info.get_sync_num());
@@ -595,7 +518,6 @@ bool xtxpool_table_t::get_account_latest_nonce_hash(const std::string account_ad
     }
 
     latest_nonce = account_basic_info.get_latest_state()->account_send_trans_number();
-    latest_hash = account_basic_info.get_latest_state()->account_send_trans_hash();
     return true;
 }
 

@@ -61,30 +61,27 @@ void Wrouter::Init(base::xcontext_t & context, const uint32_t thread_id, transpo
 #define NOW_TIME "timestamp", GetCurrentTimeMsec()
 
 int32_t Wrouter::send(transport::protobuf::RoutingMessage & message) {
-    if (message.has_broadcast() && message.broadcast()) {
-        if (!message.has_msg_hash()) {
-            auto gossip = message.mutable_gossip();
-            std::string bin_data = message.data();
-            if (gossip->has_block()) {
-                bin_data = gossip->block();
-            }
-            if (!gossip->has_block() && gossip->has_header_hash()) {
-                bin_data = gossip->header_hash();
-            }
-            uint32_t msg_hash = base::xhash32_t::digest(message.xid() + std::to_string(message.id()) + bin_data);
-            message.set_msg_hash(msg_hash);
+    // if (message.has_broadcast() && message.broadcast()) {
+    if (!message.has_msg_hash()) {
+        auto gossip = message.mutable_gossip();
+        std::string bin_data = message.data();
+        if (gossip->has_block()) {
+            bin_data = gossip->block();
         }
-    }
-    if (IS_RRS_GOSSIP_MESSAGE(message)) {
-        XMETRICS_PACKET_INFO("p2pperf_wroutersend_info", MESSAGE_BASIC_INFO(message), MESSAGE_RRS_FEATURE(message), IS_ROOT_BROADCAST(message), NOW_TIME);
-    } else {
-        if (IS_BROADCAST(message)) {
-            XMETRICS_PACKET_INFO("p2pnormal_wroutersend_info", MESSAGE_BASIC_INFO(message), MESSAGE_FEATURE(message), IS_ROOT_BROADCAST(message), NOW_TIME);
+        if (!gossip->has_block() && gossip->has_header_hash()) {
+            bin_data = gossip->header_hash();
         }
-        // else{
-        // XMETRICS_PACKET_INFO("p2pnormal_wroutersend_info",MESSAGE_BASIC_INFO(message),)
-        // }
+        uint32_t msg_hash = base::xhash32_t::digest(std::to_string(message.id()) + bin_data);
+        message.set_msg_hash(msg_hash);
     }
+    // }
+    // if (IS_RRS_GOSSIP_MESSAGE(message)) {
+    //     XMETRICS_PACKET_INFO("p2pperf_wroutersend_info", MESSAGE_BASIC_INFO(message), MESSAGE_RRS_FEATURE(message), IS_ROOT_BROADCAST(message), NOW_TIME);
+    // } else {
+    if (IS_BROADCAST(message)) {
+        XMETRICS_PACKET_INFO("p2pbroadcast_wroutersend_info", MESSAGE_BASIC_INFO(message), MESSAGE_FEATURE(message), IS_ROOT_BROADCAST(message), NOW_TIME);
+    }
+    // }
 #ifdef XENABLE_P2P_BENDWIDTH
 #endif
     return wxid_handler_->SendPacket(message);
@@ -103,14 +100,14 @@ int32_t Wrouter::recv(transport::protobuf::RoutingMessage & message, base::xpack
         return enum_xerror_code_fail;
     }
 
-    if (IS_RRS_GOSSIP_MESSAGE(message)) {
-        XMETRICS_PACKET_INFO("p2pperf_wrouterrecv_info", MESSAGE_BASIC_INFO(message), MESSAGE_RRS_FEATURE(message), IS_ROOT_BROADCAST(message), PACKET_SIZE(packet), NOW_TIME);
-    } else {
-        if (IS_BROADCAST(message)) {
-            XMETRICS_PACKET_INFO("p2pnormal_wrouterrecv_info", MESSAGE_BASIC_INFO(message), MESSAGE_FEATURE(message), IS_ROOT_BROADCAST(message), PACKET_SIZE(packet), NOW_TIME);
-        }
-    }
 #ifdef XENABLE_P2P_BENDWIDTH
+    // if (IS_RRS_GOSSIP_MESSAGE(message)) {
+    //     XMETRICS_PACKET_INFO("p2pperf_wrouterrecv_info", MESSAGE_BASIC_INFO(message), MESSAGE_RRS_FEATURE(message), IS_ROOT_BROADCAST(message), PACKET_SIZE(packet), NOW_TIME);
+    // } else {
+    if (IS_BROADCAST(message)) {
+        XMETRICS_PACKET_INFO("p2pnormal_wrouterrecv_info", MESSAGE_BASIC_INFO(message), MESSAGE_FEATURE(message), IS_ROOT_BROADCAST(message), PACKET_SIZE(packet), NOW_TIME);
+    }
+    // }
 #endif
     int32_t rcode = wxid_handler_->RecvPacket(message, packet);
     if (rcode == kRecvOwn) {

@@ -16,6 +16,7 @@
 #include "xtransport/utils/transport_utils.h"
 #include "xwrouter/message_handler/wrouter_message_handler.h"
 #include "xwrouter/multi_routing/service_node_cache.h"
+#include "xwrouter/multi_routing/multi_routing.h"
 
 #include <algorithm>
 
@@ -31,14 +32,30 @@ WrouterXidHandler::WrouterXidHandler(transport::TransportPtr transport_ptr,
                                      std::shared_ptr<gossip::GossipInterface> bloom_layer_gossip_ptr,
                                      std::shared_ptr<gossip::GossipInterface> gossip_rrs_ptr,
                                      std::shared_ptr<gossip::GossipInterface> gossip_dispatcher_ptr)
-
-  : WrouterHandler(transport_ptr, bloom_gossip_ptr, bloom_layer_gossip_ptr, gossip_rrs_ptr, gossip_dispatcher_ptr) {
+  : transport_ptr_(transport_ptr)
+  , bloom_gossip_ptr_(bloom_gossip_ptr)
+  , bloom_layer_gossip_ptr_(bloom_layer_gossip_ptr)
+  , gossip_rrs_ptr_(gossip_rrs_ptr)
+  , gossip_dispatcher_ptr_(gossip_dispatcher_ptr) {
 }
 
 WrouterXidHandler::~WrouterXidHandler() {
+    transport_ptr_ = nullptr;
+    bloom_gossip_ptr_ = nullptr;
+    bloom_layer_gossip_ptr_ = nullptr;
+    gossip_rrs_ptr_ = nullptr;
+    gossip_dispatcher_ptr_ = nullptr;
+}
+
+kadmlia::ElectRoutingTablePtr WrouterXidHandler::FindElectRoutingTable(base::ServiceType service_type) {
+    return MultiRouting::Instance()->GetElectRoutingTable(service_type);
+}
+kadmlia::RootRoutingTablePtr WrouterXidHandler::FindRootRoutingTable() {
+    return MultiRouting::Instance()->GetRootRoutingTable();
 }
 
 int32_t WrouterXidHandler::SendPacket(transport::protobuf::RoutingMessage & message) {
+    assert(message.has_msg_hash());
     if (message.hop_num() >= kadmlia::kHopToLive) {
         xwarn("stop SendPacket hop_num(%d) beyond max_hop_num(%d)", message.hop_num(), kadmlia::kHopToLive);
         return enum_xerror_code_fail;
@@ -69,21 +86,6 @@ int32_t WrouterXidHandler::SendPacket(transport::protobuf::RoutingMessage & mess
             }
             message.set_src_node_id(elect_routing_table->get_local_node_info()->kad_key());
         }
-        // RoutingTablePtr routing_table = nullptr;
-
-        // if (!message.has_is_root() || !message.is_root()) {
-        //     routing_table = FindRoutingTable(false, service_type, false);
-        // }
-
-        // if (!routing_table || routing_table->nodes_size() == 0) {
-        //     routing_table = FindRoutingTable(true, base::ServiceType(kRoot), true, message.des_node_id());
-        // }
-
-        // if (!routing_table) {
-        //     xwarn("FindRoutingTable failed");
-        //     return enum_xerror_code_fail;
-        // }
-        // message.set_src_node_id(routing_table->get_local_node_info()->kad_key());
     }
 
     if (MulticastPacketCheck(message)) {
@@ -195,18 +197,19 @@ int32_t WrouterXidHandler::SendMulticast(transport::protobuf::RoutingMessage & m
     if (message.src_node_id().empty() || message.des_node_id().empty()) {
         assert(false);
     }
-    if (!message.has_msg_hash()) {
-        auto gossip = message.mutable_gossip();
-        std::string bin_data = message.data();
-        if (gossip->has_block()) {
-            bin_data = gossip->block();
-        }
-        if (!gossip->has_block() && gossip->has_header_hash()) {
-            bin_data = gossip->header_hash();
-        }
-        uint32_t msg_hash = base::xhash32_t::digest(message.xid() + std::to_string(message.id()) + bin_data);
-        message.set_msg_hash(msg_hash);
-    }
+    assert(message.has_msg_hash());
+    // if (!message.has_msg_hash()) {
+    //     auto gossip = message.mutable_gossip();
+    //     std::string bin_data = message.data();
+    //     if (gossip->has_block()) {
+    //         bin_data = gossip->block();
+    //     }
+    //     if (!gossip->has_block() && gossip->has_header_hash()) {
+    //         bin_data = gossip->header_hash();
+    //     }
+    //     uint32_t msg_hash = base::xhash32_t::digest(std::to_string(message.id()) + bin_data);
+    //     message.set_msg_hash(msg_hash);
+    // }
 
     base::ServiceType des_service_type = ParserServiceType(message.des_node_id());
     xdbg("[WrouterXidHandler::SendMulticast] service_type: %lld %s", des_service_type.value(), des_service_type.info().c_str());
@@ -247,18 +250,19 @@ int32_t WrouterXidHandler::SendGossip(transport::protobuf::RoutingMessage & mess
         xwarn("SendGossip must be root_msg");
         return enum_xerror_code_fail;
     }
-    if (!message.has_msg_hash()) {
-        auto gossip = message.mutable_gossip();
-        std::string bin_data = message.data();
-        if (gossip->has_block()) {
-            bin_data = gossip->block();
-        }
-        if (!gossip->has_block() && gossip->has_header_hash()) {
-            bin_data = gossip->header_hash();
-        }
-        uint32_t msg_hash = base::xhash32_t::digest(message.xid() + std::to_string(message.id()) + bin_data);
-        message.set_msg_hash(msg_hash);
-    }
+    assert(message.has_msg_hash());
+    // if (!message.has_msg_hash()) {
+    //     auto gossip = message.mutable_gossip();
+    //     std::string bin_data = message.data();
+    //     if (gossip->has_block()) {
+    //         bin_data = gossip->block();
+    //     }
+    //     if (!gossip->has_block() && gossip->has_header_hash()) {
+    //         bin_data = gossip->header_hash();
+    //     }
+    //     uint32_t msg_hash = base::xhash32_t::digest(std::to_string(message.id()) + bin_data);
+    //     message.set_msg_hash(msg_hash);
+    // }
 
     RootRoutingTablePtr routing_table;
     routing_table = FindRootRoutingTable();

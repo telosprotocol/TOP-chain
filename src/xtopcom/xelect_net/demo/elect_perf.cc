@@ -150,7 +150,7 @@ void ElectPerf::TestChainTrade(uint32_t test_num,
         auto new_msg = message;
         message.set_id(CallbackManager::MessageId());
         message.clear_bloomfilter();
-        uint32_t msg_hash = base::xhash32_t::digest(message.xid() + std::to_string(message.id()) + test_raw_data);
+        uint32_t msg_hash = base::xhash32_t::digest(std::to_string(message.id()) + test_raw_data);
         message.set_msg_hash(msg_hash);
         wrouter::Wrouter::Instance()->send(message);
         ++send_count;
@@ -209,7 +209,7 @@ void ElectPerf::TestChainTradeServiceNet(const std::string & src_node_id,
 
         message.set_id(CallbackManager::MessageId());
         message.clear_bloomfilter();
-        uint32_t msg_hash = base::xhash32_t::digest(message.xid() + std::to_string(message.id()) + message.data());
+        uint32_t msg_hash = base::xhash32_t::digest(std::to_string(message.id()) + message.data());
         message.set_msg_hash(msg_hash);
 
         wrouter::Wrouter::Instance()->send(message);
@@ -280,7 +280,7 @@ xJson::Value ElectPerf::rpc_broadcast_all(uint32_t test_num,
         auto new_msg = message;
         message.set_id(CallbackManager::MessageId());
         message.clear_bloomfilter();
-        uint32_t msg_hash = base::xhash32_t::digest(message.xid() + std::to_string(message.id()) + message.data());
+        uint32_t msg_hash = base::xhash32_t::digest(std::to_string(message.id()) + message.data());
         message.set_msg_hash(msg_hash);
 
         XMETRICS_PACKET_INFO("p2pdemo_broadcast_sendmsg_hash",
@@ -365,7 +365,7 @@ xJson::Value ElectPerf::rpc_broadcast_all_new(uint32_t test_num,
         auto new_msg = message;
         message.set_id(CallbackManager::MessageId());
         message.clear_bloomfilter();
-        uint32_t msg_hash = base::xhash32_t::digest(message.xid() + std::to_string(message.id()) + test_raw_data);
+        uint32_t msg_hash = base::xhash32_t::digest(std::to_string(message.id()) + test_raw_data);
         message.set_msg_hash(msg_hash);
 
         XMETRICS_PACKET_INFO("p2pdemo_broadcast_sendmsg_hash",
@@ -443,7 +443,7 @@ xJson::Value ElectPerf::rpc_broadcast_to_cluster(const std::string & src_node_id
 
         message.set_id(CallbackManager::MessageId());
         message.clear_bloomfilter();
-        uint32_t msg_hash = base::xhash32_t::digest(message.xid() + std::to_string(message.id()) + message.data());
+        uint32_t msg_hash = base::xhash32_t::digest(std::to_string(message.id()) + message.data());
         message.set_msg_hash(msg_hash);
 
         XMETRICS_PACKET_INFO("p2pdemo_send_sendmsg_hash",

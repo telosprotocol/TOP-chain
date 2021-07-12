@@ -7,7 +7,7 @@
 #include "xbase/xbase.h"
 #include "xbase/xrouter.h"
 #include "xgossip/gossip_interface.h"
-#include "xwrouter/message_handler/xwrouter_handler.h"
+#include "xwrouter/message_handler/xwrouter_xid_handler.h"
 #include "xwrouter/wrouter_utils/wrouter_utils.h"
 
 #include <memory>
@@ -41,7 +41,7 @@ private:
     int32_t HandleOwnPacket(transport::protobuf::RoutingMessage & message, base::xpacket_t & packet);
 
 private:
-    std::shared_ptr<WrouterHandler> wxid_handler_;
+    std::shared_ptr<WrouterXidHandler> wxid_handler_;
     DISALLOW_COPY_AND_ASSIGN(Wrouter);
 };
 

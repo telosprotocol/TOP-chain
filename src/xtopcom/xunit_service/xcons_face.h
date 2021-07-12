@@ -73,7 +73,7 @@ struct table_index {
     }
 };
 //compare function for table index data map
-struct table_index_compare 
+struct table_index_compare
 {
     bool operator()(const table_index& ti_lhs, const table_index& ti_rhs) const
     {
@@ -133,6 +133,8 @@ public:
     virtual base::xvcertauth_t * get_certauth() = 0;
     // work pool
     virtual base::xworkerpool_t * get_workpool() = 0;
+    // work pool
+    virtual base::xworkerpool_t * get_xbft_workpool() = 0;
     // network face
     virtual xnetwork_proxy_face * get_network() = 0;
     // block store

@@ -265,9 +265,9 @@ void MultiRouting::HandleCacheElectNodesResponse(transport::protobuf::RoutingMes
 
 kadmlia::ElectRoutingTablePtr MultiRouting::GetElectRoutingTable(base::ServiceType const & service_type) {
     std::unique_lock<std::mutex> lock(elect_routing_table_map_mutex_);
-    for (auto const & _p : elect_routing_table_map_) {
-        if (_p.first == service_type) {
-            return _p.second;
+    for (auto riter = elect_routing_table_map_.rbegin(); riter != elect_routing_table_map_.rend(); ++riter) {
+        if (riter->first == service_type) {
+            return riter->second;
         }
     }
     return nullptr;

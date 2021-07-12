@@ -106,12 +106,7 @@ bool GossipFilter::FilterMessage(transport::protobuf::RoutingMessage& message) {
 #ifndef NDEBUG
     AddRepeatMsg(message.msg_hash());
 #endif
-    /*
-    if (message.xid() == global_xid->Get()) {
-        TOP_WARN("message come back this original node,msg.type(%d)", message.type());
-        return true;
-    }
-    */
+
     if (FindData(message.msg_hash())) {
         //TOP_DEBUG("GossipFilter FindData, filter msg");
         return true;
