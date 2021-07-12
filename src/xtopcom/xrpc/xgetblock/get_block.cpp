@@ -127,6 +127,11 @@ xJson::Value get_block_handle::parse_account(const std::string & account) {
         result_json["zone_id"] = addr.zone_id().value();
         result_json["cluster_id"] = addr.cluster_id().value();
         result_json["group_id"] = addr.group_id().value();
+
+        const std::string prop_name(XPROPERTY_PLEDGE_VOTE_KEY);
+        query_account_property(result_json, account, prop_name);
+        result_json["vote_staked_index"] = result_json[XPROPERTY_PLEDGE_VOTE_KEY];
+        result_json.removeMember(XPROPERTY_PLEDGE_VOTE_KEY);
         return result_json;
     } else {
         throw xrpc::xrpc_error{xrpc::enum_xrpc_error_code::rpc_shard_exec_error, "account not found on chain"};
