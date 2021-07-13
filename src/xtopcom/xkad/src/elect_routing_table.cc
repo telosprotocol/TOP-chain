@@ -43,11 +43,11 @@ ElectRoutingTable::ElectRoutingTable(std::shared_ptr<transport::Transport> trans
   : transport_ptr_{transport_ptr}, local_node_ptr_{local_node_ptr}, destroy_(false) {
 }
 
-ElectRoutingTable::~ElectRoutingTable(){
+ElectRoutingTable::~ElectRoutingTable() {
     xdbg("~ElectRoutingTable %p start", this);
     {
         std::unique_lock<std::mutex> lock(m_nodes_mutex);
-        for(auto const &_pair:m_nodes){
+        for (auto const & _pair : m_nodes) {
             xdbg("~ElectRoutingTable %s, %p", _pair.first.c_str(), _pair.second.get());
         }
         m_nodes.clear();
@@ -78,27 +78,14 @@ bool ElectRoutingTable::UnInit() {
     return true;
 }
 
-int ElectRoutingTable::SendData(const xbyte_buffer_t & data, const std::string & peer_ip, uint16_t peer_port, uint16_t priority) {
-    uint8_t local_buf[kUdpPacketBufferSize];
-    base::xpacket_t packet(base::xcontext_t::instance(), local_buf, sizeof(local_buf), 0, 0, false);
-    _xip2_header header;
-    memset(&header, 0, sizeof(header));
-    header.flags |= priority;
-    packet.get_body().push_back((uint8_t *)&header, enum_xip2_header_len);
-    packet.get_body().push_back((uint8_t *)data.data(), data.size());  // NOLINT
-    packet.set_to_ip_addr(peer_ip);
-    packet.set_to_ip_port(peer_port);
-    return transport_ptr_->SendData(packet);
-}
-
 int ElectRoutingTable::SendData(transport::protobuf::RoutingMessage & message, const std::string & peer_ip, uint16_t peer_port) {
-    std::string msg;
-    if (!message.SerializeToString(&msg)) {
+    std::string data;
+    if (!message.SerializeToString(&data)) {
         xdbg("RoutingMessage SerializeToString failed!");
         return kKadFailed;
     }
-    xbyte_buffer_t data{msg.begin(), msg.end()};
-    return SendData(data, peer_ip, peer_port, message.priority());
+    transport::UdpPropertyPtr udp_property;
+    return transport_ptr_->SendDataWithProp(data, peer_ip, peer_port, udp_property, message.priority());
 }
 
 int ElectRoutingTable::SendPing(transport::protobuf::RoutingMessage & message, const std::string & peer_ip, uint16_t peer_port) {
@@ -112,29 +99,12 @@ int ElectRoutingTable::SendPing(transport::protobuf::RoutingMessage & message, c
 }
 
 int ElectRoutingTable::SendData(transport::protobuf::RoutingMessage & message, NodeInfoPtr node) {
-    // if (node->same_vlan) {
-    //     return SendData(message, node->local_ip, node->local_port);
-    // }
-
-    std::string msg;
-    if (!message.SerializeToString(&msg)) {
+    std::string data;
+    if (!message.SerializeToString(&data)) {
         xdbg("RoutingMessage SerializeToString failed!");
         return kKadFailed;
     }
-    xbyte_buffer_t data{msg.begin(), msg.end()};
-    //	return SendData(data, peer_ip, peer_port, message.priority());
-
-    uint8_t local_buf[kUdpPacketBufferSize];
-    base::xpacket_t packet(base::xcontext_t::instance(), local_buf, sizeof(local_buf), 0, 0, false);
-    _xip2_header header;
-    memset(&header, 0, sizeof(header));
-    header.flags |= message.priority();
-    packet.get_body().push_back((uint8_t *)&header, enum_xip2_header_len);
-    packet.get_body().push_back((uint8_t *)data.data(), data.size());  // NOLINT
-    packet.set_to_ip_addr(node->public_ip);
-    packet.set_to_ip_port(node->public_port);
-    xdbg("xkad send message.type:%d size:%d", message.type(), packet.get_size());
-    return transport_ptr_->SendDataWithProp(packet, node->udp_property);
+    return transport_ptr_->SendDataWithProp(data, node->public_ip, node->public_port, node->udp_property, message.priority());
 }
 
 std::size_t ElectRoutingTable::nodes_size() {

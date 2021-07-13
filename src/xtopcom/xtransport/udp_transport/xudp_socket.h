@@ -56,7 +56,6 @@ enum class enum_xudp_msg_encode_type {
     enum_xudp_protobuf,
     enum_xudp_msgpack,
 };
-using Xip2Header = _xip2_header;
 
 class xp2pudp_t;
 class XudpSocket;
@@ -134,17 +133,11 @@ public:
             MultiThreadHandler* message_handler);
     virtual ~XudpSocket() override;
     void Stop() override;
-    int SendData(
-            const xbyte_buffer_t& data,
-            const std::string& peer_ip,
-            uint16_t peer_port) override;
     int SendData(base::xpacket_t& packet) override;
-    int SendDataWithProp(
-            base::xpacket_t& packet,
-            UdpPropertyPtr& udp_property);
+    int SendDataWithProp(std::string const & data,const std::string & peer_ip,uint16_t peer_port,UdpPropertyPtr& udp_property,uint16_t priority_flag = 0);
+    int SendDataWithProp(base::xpacket_t & packet, UdpPropertyPtr & udp_property);
     int SendToLocal(base::xpacket_t& packet) override;
-    int SendToLocal(const xbyte_buffer_t& data) override;
-    void AddXip2Header(base::xpacket_t& packet) override;
+    void AddXip2Header(base::xpacket_t& packet,uint16_t priority_flag = 0) override;
     bool GetSocketStatus() override;
 
     void register_on_receive_callback(on_receive_callback_t callback) override;
@@ -198,7 +191,7 @@ public:
 
 protected:
     virtual xslsocket_t* create_xslsocket(xendpoint_t * parent,xfd_handle_t handle,xsocket_property & property, int32_t cur_thread_id,uint64_t timenow_ms) override;
-    Xip2Header* ParserXip2Header(base::xpacket_t& packet);
+
     int send_ping_packet(
             std::string target_ip_addr,
             uint16_t target_ip_port,
