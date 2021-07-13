@@ -1152,8 +1152,7 @@ size_t xaccount_context_t::get_op_records_size() const {
 bool xaccount_context_t::add_transaction(const xcons_transaction_ptr_t& trans) {
     m_contract_txs.clear();
     if (trans->is_self_tx() || trans->is_send_tx()) {
-        if (m_latest_exec_sendtx_nonce != trans->get_transaction()->get_last_nonce()
-            || false == trans->get_transaction()->check_last_trans_hash(m_latest_exec_sendtx_hash)) {
+        if (m_latest_exec_sendtx_nonce != trans->get_transaction()->get_last_nonce()) {
             xwarn("xaccount_context_t::add_transaction fail-sendtx nonce unmatch. account=%s,account_tx_nonce=%ld,tx=%s",
                 get_address().c_str(), m_latest_exec_sendtx_nonce, trans->dump().c_str());
             return false;
@@ -1183,13 +1182,12 @@ bool xaccount_context_t::finish_exec_all_txs(const std::vector<xcons_transaction
         uint32_t send_tx_num = 0;
         for (auto & tx : txs) {
             if (tx->is_self_tx() || tx->is_send_tx()) {
-                if (new_sendtx_nonce != tx->get_transaction()->get_last_nonce() || false == tx->get_transaction()->check_last_trans_hash(new_sendtx_hash)) {
+                if (new_sendtx_nonce != tx->get_transaction()->get_last_nonce()) {
                     xerror("xaccount_context_t::finish_exec_all_txs fail-match send nonce hash.last_nonce=%ld,tx_nonce=%ld",
                         new_sendtx_nonce, tx->get_transaction()->get_last_nonce());
                     return false;
                 }
                 xassert(new_sendtx_nonce == tx->get_transaction()->get_last_nonce());
-                xassert(tx->get_transaction()->check_last_trans_hash(new_sendtx_hash));
                 new_sendtx_nonce = tx->get_transaction()->get_tx_nonce();
                 new_sendtx_hash = tx->get_transaction()->digest();
             }
@@ -1260,13 +1258,8 @@ void xaccount_context_t::update_latest_create_nonce_hash(const xcons_transaction
     xassert(tx->is_self_tx() || tx->is_send_tx());
     // maybe not need update, it's ok
     if (m_latest_create_sendtx_nonce == tx->get_tx_last_nonce()) {
-        if (true == tx->get_transaction()->check_last_trans_hash(m_latest_create_sendtx_hash)) {
-            m_latest_create_sendtx_nonce = tx->get_tx_nonce();
-            m_latest_create_sendtx_hash = tx->get_tx_hash_256();
-            return;
-        }
-        xerror("xaccount_context_t::update_latest_create_nonce_hash fail-sendtx hash unmatch. account=%s,last_nonce=%ld,tx=%s",
-            get_address().c_str(), m_latest_create_sendtx_nonce, tx->dump().c_str());
+        m_latest_create_sendtx_nonce = tx->get_tx_nonce();
+        m_latest_create_sendtx_hash = tx->get_tx_hash_256();
     }
 }
 

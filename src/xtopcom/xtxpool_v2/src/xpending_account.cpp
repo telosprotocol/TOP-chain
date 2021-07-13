@@ -28,15 +28,9 @@ int32_t xcandidate_account_entry::push_tx(std::shared_ptr<xtx_entry> tx_ent, con
         // send tx nonce must upwards!
         uint64_t new_tx_last_nonce = tx_ent->get_tx()->get_transaction()->get_last_nonce();
         uint64_t txs_back_nonce = m_txs[m_txs.size() - 1]->get_tx()->get_transaction()->get_tx_nonce();
-        if (new_tx_last_nonce == txs_back_nonce) {
-            if (tx_ent->get_tx()->get_transaction()->check_last_trans_hash(m_txs[m_txs.size() - 1]->get_tx()->get_transaction()->digest())) {
-                m_txs.push_back(tx_ent);
-            } else {
-                return xtxpool_error_tx_last_hash_not_match;
-            }
-        } else if (new_tx_last_nonce < txs_back_nonce) {
+        if (new_tx_last_nonce < txs_back_nonce) {
             return xtxpool_error_tx_nonce_expired;
-        } else {
+        } else if (new_tx_last_nonce > txs_back_nonce){
             return xtxpool_error_tx_nonce_uncontinuous;
         }
     } else {
