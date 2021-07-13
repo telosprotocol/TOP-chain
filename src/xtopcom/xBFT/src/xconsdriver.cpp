@@ -340,7 +340,10 @@ namespace top
             _final_proposal_block->set_bind_clock_cert(event_obj->get_xclock_cert());
             _final_proposal_block->set_proposal_source_addr(from_addr);
             _final_proposal_block->set_proposal_msg_nonce(packet.get_msg_nonce());
-
+            //clone a cert object to avoid multiple-thread access
+            base::xauto_ptr<base::xvqcert_t> clone_proposal_cert(new base::xvqcert_t(*_peer_block->get_cert()));
+            _final_proposal_block->set_proposal_cert(clone_proposal_cert.get());
+            
             int check_result = enum_xconsensus_code_successful;
             //apply safe rule for view-alignment,after sync check.note: event_obj->get_cookie() carry latest viewid at this node
             if(event_obj->get_cookie() != packet.get_block_viewid()) //a proposal not alignment with current view
@@ -523,14 +526,14 @@ namespace top
                         
                         _proposal->mark_voted();  //mark voted at replica side
                         
-                        //update hqc certification if need
-                        if(_proposal->get_last_block_cert()->check_unit_flag(base::enum_xvblock_flag_authenticated))
-                            fire_certificate_finish_event(_proposal->get_last_block_cert());
-                        
                         std::string msg_stream;
-                        xvote_msg_t _vote_msg(*_proposal->get_cert());
+                        xvote_msg_t _vote_msg(*_proposal->get_proposal_cert());
                         _vote_msg.serialize_to_string(msg_stream);
                         fire_pdu_event_up(xvote_msg_t::get_msg_type(),msg_stream,_proposal->get_proposal_msg_nonce() + 1,get_xip2_addr(),peer_addr,_proposal->get_block());
+                        
+                        //update hqc certification if need
+                        if(_proposal->get_last_block_cert()->check_unit_flag(base::enum_xvblock_flag_authenticated))
+                            on_cert_verified(_proposal->get_last_block_cert());
                     }
                     else
                     {
@@ -1350,26 +1353,25 @@ namespace top
                         }
                     }
 
-                    if(get_vcertauth()->verify_sign(leader_xip,_proposal->get_block()) == base::enum_vcert_auth_result::enum_successful)//first verify leader'signature as well
+                    if(get_vcertauth()->verify_sign(leader_xip,_proposal->get_proposal_cert(),_proposal->get_block()->get_account()) == base::enum_vcert_auth_result::enum_successful)//first verify leader'signature as well
                     {
                         const int result_of_verify_proposal = verify_proposal(_proposal->get_block(),_bind_xclock_cert,this);
                         _proposal->set_result_of_verify_proposal(result_of_verify_proposal);
                         if(result_of_verify_proposal == enum_xconsensus_code_successful)//verify proposal then
                         {
                             std::string empty;
-                            _proposal->add_voted_cert(leader_xip, _proposal->get_cert(),get_vcertauth());//add leader'cert to list
-                            _proposal->get_block()->set_verify_signature(empty);//reset cert
-                            _proposal->get_block()->set_audit_signature(empty); //reset cert
+                            _proposal->get_proposal_cert()->set_verify_signature(empty);//reset cert
+                            _proposal->get_proposal_cert()->set_audit_signature(empty); //reset cert
 
-                            const std::string signature = get_vcertauth()->do_sign(replica_xip, _proposal->get_cert(),base::xtime_utl::get_fast_random64());//sign for this proposal at replica side
+                            const std::string signature = get_vcertauth()->do_sign(replica_xip, _proposal->get_proposal_cert(),base::xtime_utl::get_fast_random64());//sign for this proposal at replica side
 
-                            if(_proposal->get_cert()->is_validator(replica_xip.low_addr))
-                                _proposal->get_block()->set_verify_signature(signature); //verification node
-                            else  if(_proposal->get_cert()->is_auditor(replica_xip.low_addr))
-                                _proposal->get_block()->set_audit_signature(signature);  //auditor node
+                            if(_proposal->get_proposal_cert()->is_validator(replica_xip.low_addr))
+                                _proposal->get_proposal_cert()->set_verify_signature(signature); //verification node
+                            else  if(_proposal->get_proposal_cert()->is_auditor(replica_xip.low_addr))
+                                _proposal->get_proposal_cert()->set_audit_signature(signature);  //auditor node
                             else //should not happen since has been tested before call
                             {
-                                xwarn("xBFTdriver_t::fire_verify_proposal_job,fail-vote for validator(%llx) and auditor(%llx) as network change for _proposal=%s,at node=0x%llx",_proposal->get_cert()->get_validator().low_addr,_proposal->get_cert()->get_auditor().low_addr,_proposal->dump().c_str(),replica_xip.low_addr);
+                                xwarn("xBFTdriver_t::fire_verify_proposal_job,fail-vote for validator(%llx) and auditor(%llx) as network change for _proposal=%s,at node=0x%llx",_proposal->get_proposal_cert()->get_validator().low_addr,_proposal->get_proposal_cert()->get_auditor().low_addr,_proposal->dump().c_str(),replica_xip.low_addr);
                             }
                             xinfo("xBFTdriver_t::fire_verify_proposal_job,successful finish verification for proposal=%s,at node=0x%llx",_proposal->dump().c_str(),replica_xip.low_addr);
                         }
@@ -1386,7 +1388,7 @@ namespace top
                     }
                     else
                     {
-                        xwarn("xBFTdriver_t::fire_verify_proposal_job,fail-bad signature tested by verify_sign for cert:%s,at node=0x%llx",_proposal->get_cert()->dump().c_str(),replica_xip.low_addr);
+                        xwarn("xBFTdriver_t::fire_verify_proposal_job,fail-bad signature tested by verify_sign for cert:%s,at node=0x%llx",_proposal->get_proposal_cert()->dump().c_str(),replica_xip.low_addr);
                     }
                 }
                 return true;
