@@ -355,13 +355,23 @@ namespace top
                 {
                     check_result = enum_xconsensus_error_fail_precheck;
                     _final_proposal_block->disable_vote(); //disable vote
-                    xwarn("xBFTdriver_t::vote_for_proposal,fail-precheck for proposal=%s vs local(%s),at node=0x%llx",_peer_block->dump().c_str(),dump().c_str(),get_xip2_low_addr());
+                    xwarn("xBFTdriver_t::handle_proposal_msg,fail-precheck for proposal=%s vs local(%s),at node=0x%llx",_peer_block->dump().c_str(),dump().c_str(),get_xip2_low_addr());
                 }
                 else if(false == add_proposal(*_final_proposal_block))//try add proposal block then
                 {
                      check_result = enum_xconsensus_error_fail_addproposal;
                      _final_proposal_block->disable_vote(); //disable vote first
-                     xwarn("xBFTdriver_t::vote_for_proposal,fail-add proposal=%s vs local(%s),at node=0x%llx",_peer_block->dump().c_str(),dump().c_str(),get_xip2_low_addr());
+                     xwarn("xBFTdriver_t::handle_proposal_msg,fail-add proposal=%s vs local(%s),at node=0x%llx",_peer_block->dump().c_str(),dump().c_str(),get_xip2_low_addr());
+                }
+            }
+            
+            base::xvblock_t *  local_latest_cert_block = get_latest_cert_block();
+            {//fast mode to feed cert to leader directly if meet condition
+                if(  (local_latest_cert_block != NULL)
+                   &&(_peer_prev_block_cert->get_viewid() < local_latest_cert_block->get_viewid()) )
+                {
+                    check_result = enum_xconsensus_error_bad_qc;
+                    xwarn("xBFTdriver_t::handle_proposal_msg,fail-old qc(%s) vs local(%s),at node=0x%llx",_peer_prev_block_cert->dump().c_str(),dump().c_str(),get_xip2_low_addr());
                 }
             }
  
@@ -832,9 +842,31 @@ namespace top
                     base::xvblock_t * local_latest_cert = get_latest_cert_block();
                     if( (NULL == local_latest_cert) || (local_latest_cert->get_viewid() < _report_msg.get_latest_cert_viewid()) )//sync any unexist cert block
                     {
-                        const uint64_t    sync_target_block_height = _report_msg.get_latest_cert_height();
-                        const std::string sync_target_block_hash   = _report_msg.get_latest_cert_hash();
-                        send_sync_request(to_addr,from_addr,sync_target_block_height,sync_target_block_hash,get_lock_block()->get_cert(),get_lock_block()->get_height(),(event_obj->get_clock() + 1),packet.get_block_chainid());//download peer 'latest cert block
+                        xproposal_t * proposal = find_proposal(packet.get_block_viewid());
+                        if(  (proposal != NULL) //found leader'proposal
+                           &&(proposal->is_vote_finish() == false) //not vote_finished yet
+                           &&(proposal->is_vote_disable() == false) ) //still allow voting
+                        {
+                            if(_report_msg.get_latest_cert_data().empty()) //empty cert,sync missed cert block
+                            {
+                                const uint64_t    sync_target_block_height = _report_msg.get_latest_cert_height();
+                                const std::string sync_target_block_hash   = _report_msg.get_latest_cert_hash();
+                                send_sync_request(to_addr,from_addr,sync_target_block_height,sync_target_block_hash,get_lock_block()->get_cert(),get_lock_block()->get_height(),(event_obj->get_clock() + 1),packet.get_block_chainid());//download peer 'latest cert block
+                            }
+                            else //report carried prev-cert directly(fast mode)
+                            {
+                                base::xauto_ptr<base::xvqcert_t> _peer_cert(base::xvblock_t::create_qcert_object(_report_msg.get_latest_cert_data()));
+                                if(_peer_cert) //carry invalid cert for commit
+                                {
+                                    _peer_cert->reset_block_flags();//safety rule#1
+                                    if(proposal->set_highest_QC_viewid(_peer_cert->get_viewid()))
+                                    {
+                                        //above condition filter the duplicated cert
+                                        fire_verify_cert_job(_peer_cert());
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -1069,10 +1101,29 @@ namespace top
             std::function<void(void*)> _after_verify_cert_job = [this](void* _cert)->void{
 
                 base::xvqcert_t* _target_cert_ = (base::xvqcert_t*)_cert;
-                xinfo("xBFTdriver_t::_after_verify_cert_job,Valid Certification:%s at node=0x%llx",_target_cert_->dump().c_str(),get_xip2_addr().low_addr);
-
                 if(_target_cert_->check_unit_flag(base::enum_xvblock_flag_authenticated))
-                    fire_certificate_finish_event(_target_cert_);
+                {
+                    xproposal_t* target_proposal(find_proposal(_target_cert_->get_viewid()));
+                    if(  (NULL != target_proposal)
+                       &&(target_proposal->get_block()->check_block_flag(base::enum_xvblock_flag_authenticated) == false)
+                       &&(target_proposal->get_viewid()    == _target_cert_->get_viewid())
+                       &&(target_proposal->get_viewtoken() == _target_cert_->get_viewtoken())
+                       &&(target_proposal->get_block()->get_header_hash() == _target_cert_->get_header_hash())
+                       &&(target_proposal->get_block()->is_input_ready(true))
+                       &&(target_proposal->get_block()->is_output_ready(true))
+                       &&(target_proposal->get_block()->merge_cert(*_target_cert_)) )
+                    {
+                        xinfo("xBFTdriver_t::_after_verify_cert_job,Valid Certification for proposal(%s) at node=0x%llx",target_proposal->dump().c_str(),get_xip2_addr().low_addr);
+                        
+                        bool found_matched_proposal = false;
+                        add_cert_block(target_proposal->get_block(),found_matched_proposal);
+                    }
+                    else
+                    {
+                        xinfo("xBFTdriver_t::_after_verify_cert_job,Valid Certification:%s at node=0x%llx",_target_cert_->dump().c_str(),get_xip2_addr().low_addr);
+                    }
+                    on_cert_verified(_target_cert_);
+                }
 
                 _target_cert_->release_ref(); //release refernce added by _verify_function;
             };
@@ -1362,9 +1413,15 @@ namespace top
 
                 std::string msg_stream;
                 xvote_report_t _vote_msg(result,dump());
-                _vote_msg.set_latest_cert_block(find_first_cert_block(get_lock_block()->get_height() + 1));
                 _vote_msg.set_latest_lock_block(get_lock_block());
                 _vote_msg.set_latest_commit_block(get_commit_block());
+                
+                base::xvblock_t * local_latest_cert_block = get_latest_cert_block();
+                if(enum_xconsensus_error_bad_qc == result)//outdated qc vs local
+                    _vote_msg.set_latest_cert_block(local_latest_cert_block,true);//send qc to leader directly
+                else
+                    _vote_msg.set_latest_cert_block(local_latest_cert_block,false);//just send hash information
+   
                 _vote_msg.serialize_to_string(msg_stream);
 
                 base::xcspdu_t & packet = event_obj->_packet;
@@ -1460,7 +1517,7 @@ namespace top
         {
             std::string msg_stream;
             xvote_report_t _vote_msg(result,dump());
-            _vote_msg.set_latest_cert_block(get_latest_cert_block());
+            _vote_msg.set_latest_cert_block(get_latest_cert_block(),false);
             _vote_msg.set_latest_lock_block(get_lock_block());
             _vote_msg.set_latest_commit_block(get_lock_block()->get_prev_block());
             _vote_msg.serialize_to_string(msg_stream);
