@@ -129,7 +129,8 @@ public:
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(workload_per_tableblock);
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(min_node_reward);
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(min_voter_dividend);
-        XADD_ONCHAIN_GOVERNANCE_PARAMETER(shard_zero_workload);
+        XADD_ONCHAIN_GOVERNANCE_PARAMETER(auditor_group_zero_workload);
+        XADD_ONCHAIN_GOVERNANCE_PARAMETER(validator_group_zero_workload);
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(cross_reading_rec_reg_contract_height_step_limitation);
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(cross_reading_rec_reg_contract_logic_timeout_limitation);
 

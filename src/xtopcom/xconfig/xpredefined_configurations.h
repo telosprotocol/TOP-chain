@@ -218,7 +218,8 @@ XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(archive_reward_ratio, uint16_t, critical, 
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(workload_per_tx, uint32_t, normal, 1, 1, std::numeric_limits<uint32_t>::max());
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(workload_per_tableblock, uint32_t, normal, 2, 0, std::numeric_limits<uint32_t>::max());
 
-XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(shard_zero_workload, uint32_t, normal, 0, 0, std::numeric_limits<uint32_t>::max());
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(auditor_group_zero_workload, uint32_t, normal, 0, 0, std::numeric_limits<uint32_t>::max());
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(validator_group_zero_workload, uint32_t, normal, 0, 0, std::numeric_limits<uint32_t>::max());
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(cross_reading_rec_reg_contract_height_step_limitation, uint64_t, normal, 12, 1, std::numeric_limits<uint64_t>::max());
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(cross_reading_rec_reg_contract_logic_timeout_limitation,
                                       common::xlogic_time_t,
