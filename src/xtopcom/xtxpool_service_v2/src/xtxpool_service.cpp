@@ -402,7 +402,8 @@ void xtxpool_service::send_receipt_retry(data::xcons_transaction_ptr_t & cons_tx
 
 void xtxpool_service::send_receipt_real(const data::xcons_transaction_ptr_t & cons_tx) {
     try {
-        base::xtable_index_t target_tableindex = cons_tx->get_peer_table_index();
+        xassert(cons_tx->is_recv_tx() || cons_tx->is_confirm_tx());
+        base::xtable_index_t target_tableindex = cons_tx->get_self_table_index();// receipt should send to self table
 
         top::base::xautostream_t<4096> stream(top::base::xcontext_t::instance());
         cons_tx->serialize_to(stream);
