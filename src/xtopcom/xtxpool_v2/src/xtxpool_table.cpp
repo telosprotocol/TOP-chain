@@ -502,6 +502,17 @@ int32_t xtxpool_table_t::verify_receipt_tx(const xcons_transaction_ptr_t & tx) c
 }
 
 bool xtxpool_table_t::get_account_latest_nonce(const std::string account_addr, uint64_t & latest_nonce) const {
+    {
+        std::lock_guard<std::mutex> lck(m_mgr_mutex);
+        uint64_t latest_nonce_cache;
+        bool ret = m_txmgr_table.get_account_nonce_cache(account_addr, latest_nonce_cache);
+        if (ret)  {
+            xdbg("xtxpool_table_t::get_account_latest_nonce get by cache succ account:%s,nonce:%llu", account_addr.c_str(), latest_nonce_cache);
+            latest_nonce = latest_nonce_cache;
+            return true;
+        }
+    }
+
     xaccount_basic_info_t account_basic_info;
     bool result = get_account_basic_info(account_addr, account_basic_info);
     if (!result) {
