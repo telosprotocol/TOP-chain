@@ -130,6 +130,9 @@ namespace top
             void                 set_result_of_verify_proposal(const int result){m_result_verify_proposal = result;}
             void                 set_proposal_source_addr(const xvip2_t & from_addr){m_proposal_from_addr = from_addr;}
             void                 set_proposal_msg_nonce(const uint32_t nonce){m_proposal_msg_nonce = nonce;}
+            
+            bool                 set_highest_QC_viewid(const uint64_t new_viewid);
+            const uint64_t       get_highest_QC_viewid() const;
         private:
             std::atomic<int32_t>           m_voted_validators_count;    //atomic for m_voted_validators' size
             std::atomic<int32_t>           m_voted_auditors_count;      //atomic for m_voted_auditors 'size
@@ -153,6 +156,7 @@ namespace top
             int                            m_result_verify_proposal;    //indicated what is result of verify_proposal
             xvip2_t                        m_proposal_from_addr;        //record the source addr,so that we may vote it async mode
             uint32_t                       m_proposal_msg_nonce;        //record orginal message 'nonce
+            uint64_t                       m_highest_QC_viewid;         //record what is highest viewid collected from backup
         };
         struct sort_proposal
         {

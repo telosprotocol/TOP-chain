@@ -190,66 +190,53 @@ namespace top
             return (begin_size - stream.size());
         }
 
-        xvote_report_t::xvote_report_t(const uint64_t proposal_height,const uint64_t  proposal_viewid)
+        xvote_report_t::xvote_report_t()
         {
             m_error_code = 0;
-            m_proposal_height = 0;
-            m_proposal_viewid = 0;
+            
             m_latest_cert_height = 0;
             m_latest_cert_viewid = 0;
             m_latest_lock_height = 0;
             m_latest_commit_height = 0;
-            
-            m_proposal_height = proposal_height;
-            m_proposal_viewid = proposal_viewid;
+
         }
         
-        xvote_report_t::xvote_report_t(const int32_t error_code,const std::string & error_detail,const uint64_t proposal_height,const uint64_t  proposal_viewid)
+        xvote_report_t::xvote_report_t(const int32_t error_code,const std::string & error_detail)
         {
             m_error_code    = error_code;
             m_error_detail  = error_detail;
-            m_proposal_height = 0;
-            m_proposal_viewid = 0;
+            
             m_latest_cert_height = 0;
             m_latest_cert_viewid = 0;
             m_latest_lock_height = 0;
             m_latest_commit_height = 0;
-            
-            m_proposal_height = proposal_height;
-            m_proposal_viewid = proposal_viewid;
         }
         
         xvote_report_t::~xvote_report_t()
         {
         }
         
-        void   xvote_report_t::set_latest_cert_block(base::xvblock_t * latest_cert_block)
+        void   xvote_report_t::set_latest_cert_block(base::xvblock_t * latest_cert_block,bool report_cert_data)
         {
             if(latest_cert_block != NULL)
             {
                 m_latest_cert_height        = latest_cert_block->get_height();
                 m_latest_cert_viewid        = latest_cert_block->get_viewid();
-                m_latest_cert_hash          = latest_cert_block->get_block_hash();
+                
+                m_latest_cert_hash.clear();
+                m_latest_cert_data.clear();
+                if(report_cert_data)
+                    latest_cert_block->get_cert()->serialize_to_string(m_latest_cert_data);
+                else
+                    m_latest_cert_hash      = latest_cert_block->get_block_hash();
             }
         }
-        
+    
         void   xvote_report_t::set_latest_cert_block(const uint64_t height,const uint64_t viewid,const std::string & block_hash)
         {
             m_latest_cert_height        = height;
             m_latest_cert_viewid        = viewid;
             m_latest_cert_hash          = block_hash;
-        }
-    
-        void   xvote_report_t::set_latest_cert_block(const uint64_t height,base::xvqcert_t * latest_cert)
-        {
-            if(latest_cert != NULL)
-            {
-                m_latest_cert_height = height;
-                m_latest_cert_viewid = latest_cert->get_viewid();
-                m_latest_cert_data.clear();
-                m_latest_cert_hash.clear();
-                latest_cert->serialize_to_string(m_latest_cert_data);
-            }
         }
         
         void   xvote_report_t::set_latest_lock_block(base::xvblock_t * latest_lock_block)
@@ -278,9 +265,6 @@ namespace top
             stream << m_error_code;
             stream.write_tiny_string(m_error_detail); //error detail can not over 256 bytes
             
-            stream.write_compact_var(m_proposal_height);
-            stream.write_compact_var(m_proposal_viewid);
-            
             stream.write_compact_var(m_latest_cert_height);
             stream.write_compact_var(m_latest_cert_viewid);
             stream.write_tiny_string(m_latest_cert_hash);
@@ -299,9 +283,6 @@ namespace top
             const int32_t begin_size = stream.size();
             stream >> m_error_code;
             stream.read_tiny_string(m_error_detail);
-   
-            stream.read_compact_var(m_proposal_height);
-            stream.read_compact_var(m_proposal_viewid);
             
             stream.read_compact_var(m_latest_cert_height);
             stream.read_compact_var(m_latest_cert_viewid);

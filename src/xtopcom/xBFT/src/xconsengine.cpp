@@ -116,7 +116,7 @@ namespace top
         {
             m_voted_validators_count = 0;
             m_voted_auditors_count   = 0;
-            
+            m_highest_QC_viewid      = 0;
             m_is_pending= false;
             m_is_expired= false;
             m_is_certed = false;
@@ -136,6 +136,8 @@ namespace top
             {
                 m_last_block_cert = parent_block->get_cert();
                 m_last_block_cert->add_ref();
+                //record qc viewid of prev cert
+                m_highest_QC_viewid = m_last_block_cert->get_viewid();
             }
         }
         
@@ -144,7 +146,7 @@ namespace top
         {
             m_voted_validators_count = 0;
             m_voted_auditors_count   = 0;
-            
+            m_highest_QC_viewid      = 0;
             m_is_pending= false;
             m_is_expired= false;
             m_is_certed = false;
@@ -164,6 +166,8 @@ namespace top
             {
                 m_last_block_cert = (base::xvqcert_t*)parent_block_cert;
                 m_last_block_cert->add_ref();
+                //record qc viewid of prev cert
+                m_highest_QC_viewid = m_last_block_cert->get_viewid();
             }
         }
         
@@ -173,10 +177,10 @@ namespace top
             m_last_block_cert = NULL;
             m_bind_clock_cert = NULL;
             m_proposal_cert   = NULL;
-            
+
             m_voted_validators_count = (int32_t)obj.m_voted_validators_count;
             m_voted_auditors_count   = (int32_t)obj.m_voted_auditors_count;
-            
+            m_highest_QC_viewid      = obj.m_highest_QC_viewid;
             m_proposal_msg_nonce     = obj.m_proposal_msg_nonce;
             m_proposal_from_addr     = obj.m_proposal_from_addr;
             m_result_verify_proposal = obj.m_result_verify_proposal;
@@ -216,6 +220,21 @@ namespace top
                 m_proposal_cert->release_ref();
             
             //xdbg("xproposal_t::destroy,dump=%s",dump().c_str());
+        }
+    
+        bool  xproposal_t::set_highest_QC_viewid(const uint64_t new_viewid)
+        {
+            if(new_viewid > m_highest_QC_viewid)
+            {
+                base::xatomic_t::xstore(m_highest_QC_viewid, new_viewid);
+                return true;
+            }
+            return false;
+        }
+    
+        const uint64_t   xproposal_t::get_highest_QC_viewid() const
+        {
+            return m_highest_QC_viewid;
         }
     
         void   xproposal_t::set_proposal_cert(base::xvqcert_t* new_proposal_cert)

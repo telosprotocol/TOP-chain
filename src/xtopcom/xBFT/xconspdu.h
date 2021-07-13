@@ -136,8 +136,8 @@ namespace top
         public:
             static enum_consensus_msg_type  get_msg_type() {return enum_consensus_msg_type_vote_report;}
         public:
-            xvote_report_t(const uint64_t proposal_height,const uint64_t  proposal_viewid);
-            xvote_report_t(const int32_t error_code,const std::string & error_detail,const uint64_t proposal_height,const uint64_t  proposal_viewid);
+            xvote_report_t();
+            xvote_report_t(const int32_t error_code,const std::string & error_detail);
             virtual ~xvote_report_t();
         private:
             xvote_report_t(const xvote_report_t&);
@@ -145,9 +145,6 @@ namespace top
         public:
             inline const int            get_error_code() const  {return m_error_code;}
             inline const std::string&   get_error_detail()const {return m_error_detail;}
-            
-            inline const uint64_t       get_proposal_height() const {return m_proposal_height;}
-            inline const uint64_t       get_proposal_viewid() const {return m_proposal_viewid;}
             
             inline const uint64_t       get_latest_cert_height() const {return m_latest_cert_height;}
             inline const uint64_t       get_latest_cert_viewid() const {return m_latest_cert_viewid;}
@@ -163,7 +160,7 @@ namespace top
             void            set_latest_cert_block(const uint64_t height,const uint64_t viewid,const std::string & block_hash);
             void            set_latest_cert_block(const uint64_t height,base::xvqcert_t * latest_cert);
             
-            void            set_latest_cert_block(base::xvblock_t * latest_cert_block);
+            void            set_latest_cert_block(base::xvblock_t * latest_cert_block,bool report_cert_data);
             void            set_latest_lock_block(base::xvblock_t * latest_lock_block);
             void            set_latest_commit_block(base::xvblock_t * latest_commit_block);
         protected:
@@ -174,9 +171,6 @@ namespace top
         private:
             int32_t         m_error_code;
             std::string     m_error_detail;
-            
-            uint64_t        m_proposal_height;
-            uint64_t        m_proposal_viewid;
             
             uint64_t        m_latest_cert_height;   //latest cert block'height of node
             uint64_t        m_latest_cert_viewid;   //latest cert block'view#  of node

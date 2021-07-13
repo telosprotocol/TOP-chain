@@ -515,6 +515,26 @@ namespace top
         //////////////////////////////block managed for synchoronization//////////////////////////////
         
         //////////////////////////////block manage for certified block//////////////////////////////
+        bool  xBFTRules::on_cert_verified(base::xvqcert_t * new_cert)
+        {
+            if(new_cert != NULL)
+            {
+                for(auto it = m_proposal_blocks.begin(); it != m_proposal_blocks.end();++it)
+                {
+                    if(it->second->get_last_block_cert()->get_viewid() < new_cert->get_viewid())
+                    {
+                        if(it->second->is_vote_disable() == false)
+                        {
+                            it->second->disable_vote();//outdated proposal < new cert
+                            xinfo("xBFTRules::on_cert_verified,outdated proposal(%s) vs cert(%s),at node=0x%llx",it->second->dump().c_str(),new_cert->dump().c_str(),get_xip2_addr().low_addr);
+                        }
+                    }
+                }
+                return fire_certificate_finish_event(new_cert);
+            }
+            return false;
+        }
+    
         bool  xBFTRules::add_cert_block(base::xvblock_t* _target_block,bool & found_matched_proposal)
         {
             found_matched_proposal = false;
