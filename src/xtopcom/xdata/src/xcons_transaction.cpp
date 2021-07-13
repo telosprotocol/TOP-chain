@@ -93,6 +93,7 @@ void xcons_transaction_t::update_transation() {
             xassert(0);
         }
     }
+    m_dump_str = dump();  // init dump str for performance
 }
 
 int32_t xcons_transaction_t::do_write(base::xstream_t & stream) {
@@ -170,32 +171,33 @@ uint64_t xcons_transaction_t::get_dump_receipt_id() const {
 
 std::string xcons_transaction_t::dump(bool detail) const {
     xassert(m_receipt != nullptr || m_tx != nullptr);// should not both null
+
+    if (!m_dump_str.empty()) {
+        return m_dump_str;
+    }
+
     std::stringstream ss;
     ss << "{";
-    if (m_receipt != nullptr) {
-        ss << base::xvtxkey_t::transaction_hash_subtype_to_string(m_receipt->get_tx_hash(), get_tx_subtype());
-    } else if (get_transaction() != nullptr) {
-        ss << base::xvtxkey_t::transaction_hash_subtype_to_string(get_transaction()->get_digest_str(), get_tx_subtype());
-    }
-    ss << ",id={" << is_recv_tx() ? get_peer_tableid() : get_self_tableid();
-    ss << "->" << is_recv_tx() ? get_self_tableid() : get_peer_tableid();
+    ss << base::xvtxkey_t::transaction_hash_subtype_to_string(get_tx_hash(), get_tx_subtype());
+    base::xtable_shortid_t origin_src_tableid = is_recv_tx() ? get_peer_tableid() : get_self_tableid();
+    base::xtable_shortid_t origin_dst_tableid = is_recv_tx() ? get_self_tableid() : get_peer_tableid();
+
+    ss << ",id={" << (uint32_t)origin_src_tableid;
+    ss << "->" << (uint32_t)origin_dst_tableid;
     ss << ":" << get_dump_receipt_id();
     ss << "}";
     if (is_self_tx() || is_send_tx()) {
         ss << ",nonce:" << get_transaction()->get_tx_nonce();
     }
-    if (detail) {
+    if (is_send_tx() || is_self_tx()) {
         if (get_transaction() != nullptr) {
-            ss << ",fire:" << get_transaction()->get_fire_timestamp();
-            ss << ",duration:" << (uint32_t)get_transaction()->get_expire_duration();
+            // ss << ",fire:" << get_transaction()->get_fire_timestamp();
+            // ss << ",duration:" << (uint32_t)get_transaction()->get_expire_duration();
             ss << ",addr:" << get_transaction()->get_source_addr();
             if (get_transaction()->get_source_addr() != get_transaction()->get_target_addr()) {
                 ss << "->" << get_transaction()->get_target_addr();
             }
         }
-        // if (m_receipt != nullptr) {
-        //     ss << ",txout:" << m_receipt->get_tx_info()->get_tx_exec_state().dump();
-        // }
     }
     ss << "}";
     return ss.str();

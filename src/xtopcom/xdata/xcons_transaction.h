@@ -118,6 +118,7 @@ class xcons_transaction_t : public xbase_dataunit_t<xcons_transaction_t, xdata_t
     enum_transaction_subtype    m_subtype{base::enum_transaction_subtype_invalid};
     uint64_t                    m_push_pool_timestamp{0};
     xtransaction_exec_state_t   m_execute_state;
+    std::string                 m_dump_str;
 };
 
 using xcons_transaction_ptr_t = xobject_ptr_t<xcons_transaction_t>;

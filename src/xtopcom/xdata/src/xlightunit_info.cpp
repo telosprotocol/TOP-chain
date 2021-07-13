@@ -9,6 +9,16 @@
 
 namespace top { namespace data {
 
+xtransaction_exec_state_t::xtransaction_exec_state_t()
+: xblockpara_base_t() {
+
+}
+
+xtransaction_exec_state_t::xtransaction_exec_state_t(const std::map<std::string, std::string> & values)
+: xblockpara_base_t(values) {
+
+}
+
 void xtransaction_exec_state_t::set_tx_exec_status(enum_xunit_tx_exec_status value) {
     set_value(XTX_STATE_TX_EXEC_STATUS, (uint32_t)value);
 }

@@ -17,6 +17,8 @@ NS_BEG2(top, data)
 // value zero will not save actually
 class xblockpara_base_t {
  public:
+    xblockpara_base_t();
+    xblockpara_base_t(const std::map<std::string, std::string> & values);
     virtual std::string dump() const;
     const std::map<std::string, std::string> & get_map_para() const {return m_values;}
 

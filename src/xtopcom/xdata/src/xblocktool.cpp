@@ -371,6 +371,7 @@ void xblocktool_t::alloc_transaction_receiptid(const xcons_transaction_ptr_t & t
     // update receipt id info to tx action result
     tx->set_current_receipt_id(self_tableid, peer_tableid, current_receipt_id);
     receiptid_state->add_pair_modified(peer_tableid, receiptid_pair);  // save to modified pairs
+    xdbg("xblocktool_t::alloc_transaction_receiptid tx=%s,receiptid=%ld", tx->dump().c_str(), current_receipt_id);
 }
 
 NS_END2

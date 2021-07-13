@@ -31,6 +31,10 @@ class xtransaction_exec_state_t : public xblockpara_base_t {
     static XINLINE_CONSTEXPR char const * XTX_RECEIPT_ID_PEER_TABLE_ID                 = "a";
 
  public:
+    xtransaction_exec_state_t();
+    xtransaction_exec_state_t(const std::map<std::string, std::string> & values);
+
+ public:
     void        set_used_disk(uint32_t value) {set_value(XPROPERTY_FEE_TX_USED_DISK, value);}
     void        set_used_tgas(uint32_t value) {set_value(XPROPERTY_FEE_TX_USED_TGAS, value);}
     void        set_used_deposit(uint32_t value) {set_value(XPROPERTY_FEE_TX_USED_DEPOSIT, value);}
