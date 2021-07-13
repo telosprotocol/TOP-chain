@@ -266,6 +266,12 @@ base::xauto_ptr<base::xvoutput_t> xlighttable_build_t::make_unit_output_from_tab
 }
 
 std::vector<xobject_ptr_t<base::xvblock_t>> xlighttable_build_t::unpack_units_from_table(const base::xvblock_t* _tableblock) {
+    if (!_tableblock->is_input_ready(true)
+        || !_tableblock->is_output_ready(true)) {
+        xerror("xlighttable_build_t::unpack_units_from_table not ready block. block=%s", _tableblock->dump().c_str());
+        return {};
+    }
+    base::xvaccount_t _vtable_addr(_tableblock->get_account());
     std::vector<xobject_ptr_t<base::xvblock_t>> _batch_units;
 
     const std::vector<base::xventity_t*> & _table_inentitys = _tableblock->get_input()->get_entitys();
@@ -311,6 +317,10 @@ std::vector<xobject_ptr_t<base::xvblock_t>> xlighttable_build_t::unpack_units_fr
         vbmaker->init_qcert(build_para);
         xobject_ptr_t<base::xvblock_t> _unit = vbmaker->build_new_block();
         xassert(_unit != nullptr);
+        _unit->set_parent_block(_vtable_addr.get_account());
+        _unit->get_cert()->set_parent_height(_tableblock->get_height());
+        _unit->get_cert()->set_parent_viewid(_tableblock->get_viewid());
+
         _batch_units.push_back(_unit);
     }
 
