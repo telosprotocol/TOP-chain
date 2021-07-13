@@ -6,10 +6,10 @@ aux_source_directory(./xrec_standby_algorithm/fixture xrec_standby_algorithm_fix
 aux_source_directory(./xrec_standby_algorithm/src xrec_standby_algorithm)
 # aux_source_directory(./xregistration/ xregistration)
 aux_source_directory(./xreward/ xreward)
-# aux_source_directory(./xslash/ xslash)
+aux_source_directory(./xslash/ xslash)
+aux_source_directory(./xrec_proposal rec_proposal)
 
-# add_executable(xsystem_contract_test ${main_src} ${xelection_algorithm_fixture} ${xelection_algorithm} ${xelect_contract} ${xrec_standby_algorithm_fixture} ${xrec_standby_algorithm} ${xregistration} ${xreward} ${xslash})
-add_executable(xsystem_contract_test ${main_src}  ${xelection_algorithm_fixture} ${xelection_algorithm} ${xelect_contract} ${xrec_standby_algorithm_fixture} ${xrec_standby_algorithm} ${xreward})
+add_executable(xsystem_contract_test ${main_src} ${xelection_algorithm_fixture} ${xelection_algorithm} ${xelect_contract} ${xrec_standby_algorithm_fixture} ${xrec_standby_algorithm} ${xreward} ${xslash} ${rec_proposal})
 
 add_dependencies(xsystem_contract_test xvledger xvm xcommon xstore xblockstore xxbase xloader)
 target_link_libraries(xsystem_contract_test PRIVATE xvledger xvm xvledger xcommon xstore xblockstore xelection_lib xxbase xloader gtest)

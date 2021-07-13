@@ -65,7 +65,6 @@ common::xip2_t test_slash_info_contract::create_group_xip2(uint64_t elect_blk_he
         common::xconsensus_zone_id,
         common::xdefault_cluster_id,
         common::xgroup_id_t{group_id},
-        common::xdefault_network_version,
         group_size,
         elect_blk_height
      };
