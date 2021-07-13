@@ -30,7 +30,7 @@ namespace transport {
 const static uint16_t XUDP_RATELIMIT_INTERVAL = 5;  //  5 minutes
 const static uint16_t XUDP_RATELIMIT_CONNECTION_TIMES = 10;  //  not more than 5 connection times
 const static uint16_t XUDP_RATELIMIT_CONNECTION_TIMES_WITHIN_MINUTE = 3;  //  not more than 3 connection times within one minute
-const static enum_xudp_msg_encode_type CURRENT_XUDP_MSG_TYPE = enum_xudp_msg_encode_type::enum_xudp_protobuf;
+const static std::string XUDP_VERSION_PROTOCOL = "VersionV1ProtocolProtobuf";
 
 const static std::string SUB_NETWORK_MASK = "255.255.255.0";
 const static uint32_t IP_SEG_MAX_ADDR = 5;  // same ip_seg max addr number
@@ -66,30 +66,7 @@ void UdpProperty::SetXudp(xp2pudp_t* xudp_in)
 //        old->release_ref();
     }
 }
-int xp2pudp_t::encode_msg_type()
-{
-    TOP_INFO("encode_msg_type,account:%s,sign size:%d,payload:%s", m_peer_account_id.c_str(),
-        m_peer_account_signature.size(), m_peer_account_payload.c_str());
-    std::string content = m_peer_account_payload;
-    if (content.empty())
-        return enum_xcode_successful;
-//    content = "{\"msg_encode_type\": 0}";
-    xJson::Value root;
-    xJson::Reader reader;
-    bool ret = reader.parse(content, root);
-    if (!ret) {
-        std::cout << "parse config failed" << std::endl;
-        return enum_xerror_code_fail;
-    } else {
-        TOP_INFO("encode_msg_type, msg_encode_type:%d", root["msg_encode_type"].asInt());
-        int encode_type = root["msg_encode_type"].asInt();
-        if (encode_type == 0)
-            m_msg_encode_type = enum_xudp_msg_encode_type::enum_xudp_protobuf;
-        else if (encode_type == 1)
-            m_msg_encode_type = enum_xudp_msg_encode_type::enum_xudp_msgpack;
-    }
-    return enum_xcode_successful;
-}
+
 int xp2pudp_t::add_linkrefcount()
 {
     TOP_DBG_INFO("add_linkrefcount:xudp:%p, m_link_refcount:%d, get_refcount:%d", this, m_link_refcount.load(), get_refcount());
@@ -137,7 +114,6 @@ bool xp2pudp_t::on_endpoint_open(
     } else {
         TOP_INFO("listen_server_ is null");
     }
-    encode_msg_type();
     return result;
 }
 //when associated io-object close happen,post the event to receiver
@@ -275,10 +251,6 @@ int32_t xp2pudp_t::recv(
         TOP_INFO("listen_server_ is null");
         return enum_xcode_successful;
     }
-    if (m_msg_encode_type != CURRENT_XUDP_MSG_TYPE) {
-        TOP_WARN("xudp msg encode type error");
-        return enum_xerror_code_fail;
-    }
 
 #ifdef XENABLE_P2P_BENDWIDTH
     transport::protobuf::RoutingMessage message;
@@ -374,16 +346,33 @@ xslsocket_t* XudpSocket::create_xslsocket(
 }
 xslsocket_t* XudpSocket::on_xslsocket_accept(xfd_handle_t handle,xsocket_property & property, int32_t cur_thread_id,uint64_t timenow_ms)
 {
-    if (m_register_node_callback != nullptr) {
-        if (m_register_node_callback(property._peer_account_id, property._peer_signature) != 0) {
-            TOP_INFO("on_xslsocket_accept,account:%s,sign_size:%s,payload:%s.authentication fail.", property._peer_account_id.c_str(), HexEncode(property._peer_signature).c_str(), property._peer_payload.c_str());
-#ifndef XENABLE_MOCK_ZEC_STAKE
-            return nullptr;
-#endif
-        } else {
-            TOP_INFO("on_xslsocket_accept,account:%s,sign_size:%s,payload:%s.authentication succ.", property._peer_account_id.c_str(), HexEncode(property._peer_signature).c_str(), property._peer_payload.c_str());
-        }
+    // xudp connection version && protocol
+    if (property._peer_payload != XUDP_VERSION_PROTOCOL) {
+        TOP_INFO("on_xslsocket_accept,account:%s,sign_size:%s,payload:%s.authentication fail.",
+                 property._peer_account_id.c_str(),
+                 HexEncode(property._peer_signature).c_str(),
+                 property._peer_payload.c_str());
+        return nullptr;
     }
+    if (m_register_node_callback != nullptr) {
+#ifndef XENABLE_MOCK_ZEC_STAKE
+        if (m_register_node_callback(property._peer_account_id, property._peer_signature) != 0) {
+            // register_callback failed.
+            TOP_INFO("on_xslsocket_accept,account:%s,sign_size:%s,payload:%s.authentication fail.",
+                     property._peer_account_id.c_str(),
+                     HexEncode(property._peer_signature).c_str(),
+                     property._peer_payload.c_str());
+            return nullptr;
+        }
+#endif
+    }
+    // else{}
+    // here ` if m_register_node_callback == nullptr ` means the genesis time. thus no else.
+
+    TOP_INFO("on_xslsocket_accept,account:%s,sign_size:%s,payload:%s.authentication succ.",
+             property._peer_account_id.c_str(),
+             HexEncode(property._peer_signature).c_str(),
+             property._peer_payload.c_str());
 
 #ifdef ENABLE_XSECURITY
     if (!AddToConlimitMap(property._peer_ip_addr)) {
@@ -523,7 +512,7 @@ int XudpSocket::SendDataWithProp(
             return kTransportSuccess;
         }
         TOP_DEBUG("xudp first connect %s:%u", packet.get_to_ip_addr().c_str(), packet.get_to_ip_port());
-        peer_xudp_socket = (xp2pudp_t*)xudplisten_t::create_xslsocket(global_node_id, node_sign, "{\"msg_encode_type\": 0}", enum_socket_type_xudp);
+        peer_xudp_socket = (xp2pudp_t*)xudplisten_t::create_xslsocket(global_node_id, node_sign, XUDP_VERSION_PROTOCOL, enum_socket_type_xudp);
         peer_xudp_socket->connect_xudp(packet.get_to_ip_addr(), packet.get_to_ip_port(), this);
 
         xudp_client_map[to_addr] = peer_xudp_socket;
@@ -554,8 +543,8 @@ int XudpSocket::SendDataWithProp(
                 TOP_ERROR("get sign failed.");
                 return kTransportSuccess;
             }
-        TOP_DEBUG("xudp reconnect %s:%u", packet.get_to_ip_addr().c_str(), packet.get_to_ip_port());
-            peer_xudp_socket = (xp2pudp_t*)xudplisten_t::create_xslsocket(global_node_id, node_sign, "{\"msg_encode_type\": 0}", enum_socket_type_xudp);
+            TOP_DEBUG("xudp reconnect %s:%u", packet.get_to_ip_addr().c_str(), packet.get_to_ip_port());
+            peer_xudp_socket = (xp2pudp_t*)xudplisten_t::create_xslsocket(global_node_id, node_sign, XUDP_VERSION_PROTOCOL, enum_socket_type_xudp);
             peer_xudp_socket->connect_xudp(packet.get_to_ip_addr(), packet.get_to_ip_port(), this);
 
             xudp_client_map[to_addr] = peer_xudp_socket;
