@@ -416,7 +416,8 @@ namespace top
             virtual int32_t     serialize_from(xstream_t & stream) override final;//not allow subclass change behavior
             virtual int32_t     serialize_from_string(const std::string & bin_data)override final; //wrap function fo serialize_from(stream)
             void                reset_modified_count();
-
+            
+        public: //temporary open for access by outside
             //only open for xvblock_t object to set them after verify singature by CA(xvcertauth_t)
             void                set_verify_signature(const std::string & proof);
             void                set_audit_signature(const std::string & proof);
