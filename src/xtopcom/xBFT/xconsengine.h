@@ -50,7 +50,39 @@ namespace top
             
             virtual bool    on_pdu_event_down(const base::xvevent_t & event,xcsobject_t* from_parent,const int32_t cur_thread_id,const uint64_t timenow_ms) override;
         };
-        
+    
+        class block_cert_pair
+        {
+        public:
+            block_cert_pair(base::xvblock_t * _block_ptr,base::xvqcert_t * _cert_ptr)
+            {
+                m_block_ptr = NULL;
+                m_cert_ptr  = NULL;
+                
+                m_block_ptr = _block_ptr;
+                if(m_block_ptr != NULL)
+                    m_block_ptr->add_ref(); //hold reference
+                
+                m_cert_ptr  = _cert_ptr;
+                if(m_cert_ptr != NULL)  //hold reference
+                    m_cert_ptr->add_ref();
+            }
+            ~block_cert_pair()
+            {
+                if(m_block_ptr != NULL)
+                    m_block_ptr->release_ref();
+                
+                if(m_cert_ptr != NULL)
+                    m_cert_ptr->release_ref();
+            }
+        public:
+            base::xvblock_t *   get_block_ptr() const {return m_block_ptr;}
+            base::xvqcert_t *   get_cert_ptr()  const {return m_cert_ptr;}
+        private:
+            base::xvblock_t * m_block_ptr = NULL;
+            base::xvqcert_t * m_cert_ptr = NULL;
+        };
+    
         //note: xcsdriver_t must be running at same thread of xcscontext_t
         //guarantee all message are deliver and handle at single thread that is xcsdriver_t'host thread
         class xcsdriver_t : public xcscoreobj_t //general consenus driver of event & state
