@@ -239,6 +239,17 @@ public:
 
         filter_mgr_ = top::make_unique<top::vnetwork::xmessage_filter_manager_t>(make_observer(vhost_.get()), make_observer(data_accessor_.get()));
 
+        // +------------------------------------------------------------------------------------------------------------------------------------------------+
+        // |                                                                   epoch 1                                                                      |
+        // +------------------------------------------------------------------------------------------------------------------------------------------------+
+        // | rec    | account_pubkey_rec1                                                                                                                   |
+        // | zec    | account_pubkey_zec1                                                                                                                   |
+        // +-----------------------------------------------------------------------+------------------------------------------------------------------------+
+        // |                   account_pubkey_auditor1                             |                            account_pubkey_auditor2                     |
+        // |                       /     |      \                                  |                                /      |   \                            |
+        // |             /               |             \                           |                          /            |           \                    |
+        // | account_pubkey_validator1   |   account_pubkey_validator2             |             account_pubkey_validator3 | account_pubkey_validator4      |
+        // +-----------------------------+-----------------------------------------+---------------------------------------+--------------------------------+
         data::election::xelection_result_store_t election_result_store_epoch_1;
         add_rec(election_result_store_epoch_1, 0, 0, logic_epoch_1_version, account_pubkey_rec1);
         add_zec(election_result_store_epoch_1, 0, 0, logic_epoch_1_version, account_pubkey_zec1);
@@ -252,6 +263,17 @@ public:
                               account_pubkey_auditor2,
                               { account_pubkey_validator3, account_pubkey_validator4 });
 
+        // +------------------------------------------------------------------------------------------------------------------------------------------------+
+        // |                                                                   epoch 2                                                                      |
+        // +------------------------------------------------------------------------------------------------------------------------------------------------+
+        // | rec    | account_pubkey_rec2                                                                                                                   |
+        // | zec    | account_pubkey_zec2                                                                                                                   |
+        // +-----------------------------------------------------------------------+------------------------------------------------------------------------+
+        // |                   account_pubkey_auditor3                             |                            account_pubkey_auditor4                     |
+        // |                       /     |      \                                  |                                /      |   \                            |
+        // |             /               |             \                           |                          /            |           \                    |
+        // | account_pubkey_validator5   |   account_pubkey_validator6             |             account_pubkey_validator7 | account_pubkey_validator8      |
+        // +-----------------------------+-----------------------------------------+---------------------------------------+--------------------------------+
         data::election::xelection_result_store_t election_result_store_epoch_2;
         add_rec(election_result_store_epoch_2, 10, 20, logic_epoch_2_version, account_pubkey_rec2);
         add_zec(election_result_store_epoch_2, 10, 30, logic_epoch_2_version, account_pubkey_zec2);
@@ -259,7 +281,6 @@ public:
                               10, 40, logic_epoch_2_version,
                               account_pubkey_auditor3,
                               { account_pubkey_validator5, account_pubkey_validator6 });
-        // 
         add_auditor_validator(election_result_store_epoch_2,
                               10, 50, logic_epoch_2_version,
                               account_pubkey_auditor4,

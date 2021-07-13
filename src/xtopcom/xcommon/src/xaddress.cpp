@@ -431,20 +431,12 @@ bool xtop_logical_version::operator>=(xtop_logical_version const & other) const 
 }
 
 bool xtop_logical_version::contains(xtop_logical_version const & logical_version) const noexcept {
-    if (broadcast(associated_blk_height())) {
+    if (broadcast(associated_blk_height()) || associated_blk_height() == logical_version.associated_blk_height()) {
         return true;
     }
 
-    if (associated_blk_height() == logical_version.associated_blk_height()) {
+    if (version().empty() || version() == logical_version.version()) {
         return true;
-    }
-
-    if (version().empty()) {
-        return true;
-    }
-
-    if (version() == logical_version.version()) {
-        return false;
     }
 
     return false;

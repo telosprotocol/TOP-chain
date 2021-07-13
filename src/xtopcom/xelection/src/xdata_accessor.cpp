@@ -286,10 +286,10 @@ std::shared_ptr<xgroup_element_t> xtop_data_accessor::parent_group_element(commo
 }
 
 std::shared_ptr<xgroup_element_t> xtop_data_accessor::parent_group_element(common::xgroup_address_t const & child_gropu_address,
-                                                                           common::xlogic_epoch_t const & child_logical_version,
+                                                                           common::xlogic_epoch_t const & child_logic_epoch,
                                                                            std::error_code & ec) const {
     assert(!ec);
-    auto group_element = this->group_element(child_gropu_address, child_logical_version, ec);
+    auto group_element = this->group_element(child_gropu_address, child_logic_epoch, ec);
     if (ec) {
         xwarn("%s %s", ec.category().name(), ec.message().c_str());
         return {};

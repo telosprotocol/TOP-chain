@@ -243,7 +243,7 @@ static void build_vhost() {
 
 NS_END3
 
-#if 1
+#if 0
 TEST(vnet, benchmark) {
     constexpr std::size_t data_pack_count{ 100000 };
     top::vnetwork::tests::build_vhost();

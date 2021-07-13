@@ -496,96 +496,6 @@ NS_BEG2(top, vnetwork)
 //    }
 //}
 
-xtop_message_filter_message_id::xtop_message_filter_message_id(observer_ptr<vnetwork::xvhost_face_t> const & vhost,
-                                                               observer_ptr<election::cache::xdata_accessor_face_t> const & data_accessor) noexcept
-    : m_vhost{ vhost }, m_election_data_accessor{ data_accessor } {
-}
-
-bool xtop_message_filter_message_id::filter(xvnetwork_message_t & vnetwork_message, std::error_code &) const {
-    auto const & message_id = vnetwork_message.message_id();
-    xdbg("message_filter: %s recv message %" PRIx32 " hash %" PRIx64 " from %s to %s ",
-         m_vhost->host_node_id().c_str(),
-         static_cast<uint32_t>(message_id),
-         static_cast<uint64_t>(vnetwork_message.hash()),
-         vnetwork_message.sender().to_string().c_str(),
-         vnetwork_message.receiver().to_string().c_str());
-
-    switch (message_id) {
-#if defined(__clang__)
-#    pragma clang diagnostic push
-#    pragma clang diagnostic ignored "-Wswitch"
-#elif defined(__GNUC__)
-#    pragma GCC diagnostic push
-#    pragma GCC diagnostic ignored "-Wswitch"
-#elif defined(_MSC_VER)
-#    pragma warning(push, 0)
-#endif
-    case top::contract::xmessage_block_broadcast_id:
-        XATTRIBUTE_FALLTHROUGH;
-    case xtxpool_v2::xtxpool_msg_send_receipt:
-        XATTRIBUTE_FALLTHROUGH;
-    case xtxpool_v2::xtxpool_msg_recv_receipt:
-#if defined(__clang__)
-#    pragma clang diagnostic pop
-#elif defined(__GNUC__)
-#    pragma GCC diagnostic pop
-#elif defined(_MSC_VER)
-#    pragma warning(pop)
-#endif
-    {
-        auto const & recver = vnetwork_message.receiver();
-        std::error_code ec{ election::xdata_accessor_errc_t::success };
-        auto const group_element = m_election_data_accessor->group_element_by_logic_time(recver.group_address(), vnetwork_message.logic_time(), ec);
-        if (!ec) {
-            if (recver.account_election_address().empty()) {
-                vnetwork_message.receiver(common::xnode_address_t{ recver.group_address(), group_element->logic_epoch() });
-            } else {
-                auto const & node_element = group_element->node_element(recver.account_address(), ec);
-                if (ec) {
-                    xinfo("message_filter: %s recv message %" PRIx32 " hash %" PRIx64 " from %s to %s; dropped due to %s",
-                          m_vhost->host_node_id().c_str(),
-                          static_cast<uint32_t>(message_id),
-                          static_cast<uint64_t>(vnetwork_message.hash()),
-                          vnetwork_message.sender().to_string().c_str(),
-                          vnetwork_message.receiver().to_string().c_str(),
-                          ec.message().c_str());
-
-                    return false;
-                }
-
-                assert(node_element != nullptr);
-
-                if (broadcast(recver.account_election_address().slot_id())) {
-                    vnetwork_message.receiver(common::xnode_address_t{ recver.group_address(), common::xaccount_election_address_t{ recver.account_address(), node_element->slot_id() }, group_element->logic_epoch() });
-                } else {
-                    if (recver.slot_id() != node_element->slot_id()) {
-                        ec = top::vnetwork::xvnetwork_errc2_t::slot_id_mismatch;
-
-                        xinfo("message_filter: %s recv message %" PRIx32 " hash %" PRIx64 " from %s to %s; dropped due to %s; local slot id %" PRIu16 " msg slot id %" PRIu16,
-                              m_vhost->host_node_id().c_str(),
-                              static_cast<uint32_t>(message_id),
-                              static_cast<uint64_t>(vnetwork_message.hash()),
-                              vnetwork_message.sender().to_string().c_str(),
-                              vnetwork_message.receiver().to_string().c_str(),
-                              ec.message().c_str(),
-                              static_cast<uint16_t>(node_element->slot_id()),
-                              static_cast<uint16_t>(recver.slot_id()));
-
-                        return false;
-                    }
-                    vnetwork_message.receiver(common::xnode_address_t{ recver.group_address(), recver.account_election_address(), group_element->logic_epoch() });
-                }
-            }
-        }
-
-        return false;
-    }
-
-    default:
-        return true;
-    }
-}
-
 xtop_message_filter_sender::xtop_message_filter_sender(observer_ptr<vnetwork::xvhost_face_t> const & vhost,
                                                        observer_ptr< election::cache::xdata_accessor_face_t> const & election_data_accessor) noexcept
     : m_vhost{ vhost }, m_election_data_accessor{ election_data_accessor } {
@@ -770,6 +680,63 @@ bool xtop_message_filter_recver::filter(xvnetwork_message_t & vnetwork_message, 
     return true;
 }
 
+xtop_message_filter_message_id::xtop_message_filter_message_id(observer_ptr<vnetwork::xvhost_face_t> const& vhost,
+    observer_ptr<election::cache::xdata_accessor_face_t> const& data_accessor) noexcept
+    : m_vhost{ vhost }, m_election_data_accessor{ data_accessor } {
+}
+
+bool xtop_message_filter_message_id::filter(xvnetwork_message_t& vnetwork_message, std::error_code& ec) const {
+    auto const& message_id = vnetwork_message.message_id();
+    xdbg("message_filter: %s recv message %" PRIx32 " hash %" PRIx64 " from %s to %s ",
+        m_vhost->host_node_id().c_str(),
+        static_cast<uint32_t>(message_id),
+        static_cast<uint64_t>(vnetwork_message.hash()),
+        vnetwork_message.sender().to_string().c_str(),
+        vnetwork_message.receiver().to_string().c_str());
+
+    switch (message_id) {
+#if defined(__clang__)
+#    pragma clang diagnostic push
+#    pragma clang diagnostic ignored "-Wswitch"
+#elif defined(__GNUC__)
+#    pragma GCC diagnostic push
+#    pragma GCC diagnostic ignored "-Wswitch"
+#elif defined(_MSC_VER)
+#    pragma warning(push, 0)
+#endif
+    case top::contract::xmessage_block_broadcast_id:
+        XATTRIBUTE_FALLTHROUGH;
+    case xtxpool_v2::xtxpool_msg_send_receipt:
+        XATTRIBUTE_FALLTHROUGH;
+    case xtxpool_v2::xtxpool_msg_recv_receipt:
+#if defined(__clang__)
+#    pragma clang diagnostic pop
+#elif defined(__GNUC__)
+#    pragma GCC diagnostic pop
+#elif defined(_MSC_VER)
+#    pragma warning(pop)
+#endif
+    {
+        assert(!broadcast(vnetwork_message.receiver().network_id()));
+        assert(!broadcast(vnetwork_message.receiver().zone_id()));
+        assert(!broadcast(vnetwork_message.receiver().cluster_id()));
+        assert(!broadcast(vnetwork_message.receiver().group_id()));
+
+        if (vnetwork_message.receiver().logic_epoch().empty()) {
+            normalize_message_recver(vnetwork_message, m_vhost, m_election_data_accessor, ec);
+            if (ec) {
+                return false;
+            }
+        }
+
+        return false;
+    }
+
+    default:
+        return true;
+    }
+}
+
 xtop_message_filter_recver_is_validator::xtop_message_filter_recver_is_validator(observer_ptr<vnetwork::xvhost_face_t> const & vhost,
                                                                                  observer_ptr< election::cache::xdata_accessor_face_t> const & election_data_accessor) noexcept
     : m_vhost{ vhost }, m_election_data_accessor{ election_data_accessor } {
@@ -778,6 +745,10 @@ xtop_message_filter_recver_is_validator::xtop_message_filter_recver_is_validator
 bool xtop_message_filter_recver_is_validator::filter(xvnetwork_message_t & vnetwork_message, std::error_code & ec) const {
     assert(!ec);
     assert(vnetwork_message.sender().logic_epoch().has_value());
+    assert(!broadcast(vnetwork_message.receiver().network_id()));
+    assert(!broadcast(vnetwork_message.receiver().zone_id()));
+    assert(!broadcast(vnetwork_message.receiver().cluster_id()));
+    assert(!broadcast(vnetwork_message.receiver().group_id()));
 
     if (!common::has<common::xnode_type_t::consensus_validator>(vnetwork_message.receiver().type())) {
         return true;
@@ -790,6 +761,10 @@ bool xtop_message_filter_recver_is_validator::filter_sender_from_nonconsensus_gr
     assert(!ec);
     assert(vnetwork_message.sender().logic_epoch().has_value());
     assert(common::has<common::xnode_type_t::consensus_validator>(vnetwork_message.receiver().type()));
+    assert(!broadcast(vnetwork_message.receiver().network_id()));
+    assert(!broadcast(vnetwork_message.receiver().zone_id()));
+    assert(!broadcast(vnetwork_message.receiver().cluster_id()));
+    assert(!broadcast(vnetwork_message.receiver().group_id()));
 
     return filter_sender_from_edge(vnetwork_message, ec) && filter_sender_from_storage(vnetwork_message, ec);
 }
@@ -809,27 +784,35 @@ bool xtop_message_filter_recver_is_validator::filter_sender_from_edge(xvnetwork_
     assert(!ec);
     assert(vnetwork_message.sender().logic_epoch().has_value());
     assert(common::has<common::xnode_type_t::consensus_validator>(vnetwork_message.receiver().type()));
+    assert(!broadcast(vnetwork_message.receiver().network_id()));
+    assert(!broadcast(vnetwork_message.receiver().zone_id()));
+    assert(!broadcast(vnetwork_message.receiver().cluster_id()));
+    assert(!broadcast(vnetwork_message.receiver().group_id()));
 
-    if (common::has<common::xnode_type_t::edge>(vnetwork_message.sender().type())) {
-        ec = xvnetwork_errc2_t::invalid_src_address;
-
-        xinfo("[vnetwork][message_filter] hash: %" PRIx64 " node %s receives msg sent to %s from %s. ignored. error: %s",
-              vnetwork_message.hash(),
-              m_vhost->host_node_id().value().c_str(),
-              vnetwork_message.receiver().to_string().c_str(),
-              vnetwork_message.sender().to_string().c_str(),
-              ec.message().c_str());
-
-        return false;
+    if (!common::has<common::xnode_type_t::edge>(vnetwork_message.sender().type())) {
+        return true;
     }
 
-    return true;
+    // we don't allow edge to send message to validator directly.
+    ec = xvnetwork_errc2_t::invalid_src_address;
+    xinfo("[vnetwork][message_filter] hash: %" PRIx64 " node %s receives msg sent to %s from %s. ignored. error: %s",
+            vnetwork_message.hash(),
+            m_vhost->host_node_id().value().c_str(),
+            vnetwork_message.receiver().to_string().c_str(),
+            vnetwork_message.sender().to_string().c_str(),
+            ec.message().c_str());
+
+    return false;
 }
 
 bool xtop_message_filter_recver_is_validator::filter_sender_from_storage(xvnetwork_message_t & vnetwork_message, std::error_code & ec) const {
     assert(!ec);
     assert(common::has<common::xnode_type_t::consensus_validator>(vnetwork_message.receiver().type()));
     assert(vnetwork_message.sender().logic_epoch().has_value());
+    assert(!broadcast(vnetwork_message.receiver().network_id()));
+    assert(!broadcast(vnetwork_message.receiver().zone_id()));
+    assert(!broadcast(vnetwork_message.receiver().cluster_id()));
+    assert(!broadcast(vnetwork_message.receiver().group_id()));
 
     if (!common::has<common::xnode_type_t::storage>(vnetwork_message.sender().type())) {
         return true;
@@ -839,57 +822,9 @@ bool xtop_message_filter_recver_is_validator::filter_sender_from_storage(xvnetwo
 
     // fix receiver if necessary.
     if (recver.logic_epoch().empty()) {
-        auto const validator_group = m_election_data_accessor->group_element_by_logic_time(recver.group_address(), vnetwork_message.logic_time(), ec);
+        normalize_message_recver(vnetwork_message, m_vhost, m_election_data_accessor, ec);
         if (ec) {
-            xinfo("[vnetwork][message_filter] hash: %" PRIx64 ", network %" PRIu32 " node %s receives msg sent to %s from %s. ignored. error: %s",
-                    vnetwork_message.hash(),
-                    static_cast<std::uint32_t>(m_vhost->network_id().value()),
-                    m_vhost->host_node_id().value().c_str(),
-                    recver.to_string().c_str(),
-                    vnetwork_message.sender().to_string().c_str(),
-                    ec.message().c_str());
-
             return false;
-        }
-
-        if (recver.account_election_address().empty()) {
-            vnetwork_message.receiver(common::xnode_address_t{ recver.group_address(), validator_group->logic_epoch() });
-        } else {
-            auto const & node_element = validator_group->node_element(recver.account_address(), ec);
-            if (ec) {
-                xinfo("message_filter: %s recv message %" PRIx32 " hash %" PRIx64 " from %s to %s; dropped due to %s",
-                      m_vhost->host_node_id().c_str(),
-                      static_cast<uint32_t>(vnetwork_message.message_id()),
-                      static_cast<uint64_t>(vnetwork_message.hash()),
-                      vnetwork_message.sender().to_string().c_str(),
-                      vnetwork_message.receiver().to_string().c_str(),
-                      ec.message().c_str());
-
-                return false;
-            }
-
-            assert(node_element != nullptr);
-
-            if (broadcast(recver.account_election_address().slot_id())) {
-                vnetwork_message.receiver(common::xnode_address_t{ recver.group_address(), common::xaccount_election_address_t{ recver.account_address(), node_element->slot_id() }, validator_group->logic_epoch() });
-            } else {
-                if (recver.slot_id() != node_element->slot_id()) {
-                    ec = top::vnetwork::xvnetwork_errc2_t::slot_id_mismatch;
-
-                    xinfo("message_filter: %s recv message %" PRIx32 " hash %" PRIx64 " from %s to %s; dropped due to %s; local slot id %" PRIu16 " msg slot id %" PRIu16,
-                          m_vhost->host_node_id().c_str(),
-                          static_cast<uint32_t>(vnetwork_message.message_id()),
-                          static_cast<uint64_t>(vnetwork_message.hash()),
-                          vnetwork_message.sender().to_string().c_str(),
-                          vnetwork_message.receiver().to_string().c_str(),
-                          ec.message().c_str(),
-                          static_cast<uint16_t>(node_element->slot_id()),
-                          static_cast<uint16_t>(recver.slot_id()));
-
-                    return false;
-                }
-                vnetwork_message.receiver(common::xnode_address_t{ recver.group_address(), recver.account_election_address(), validator_group->logic_epoch() });
-            }
         }
     }
 
@@ -900,6 +835,10 @@ bool xtop_message_filter_recver_is_validator::filter_sender_from_rec(xvnetwork_m
     assert(!ec);
     assert(common::has<common::xnode_type_t::consensus_validator>(vnetwork_message.receiver().type()));
     assert(vnetwork_message.sender().logic_epoch().has_value());
+    assert(!broadcast(vnetwork_message.receiver().network_id()));
+    assert(!broadcast(vnetwork_message.receiver().zone_id()));
+    assert(!broadcast(vnetwork_message.receiver().cluster_id()));
+    assert(!broadcast(vnetwork_message.receiver().group_id()));
 
     if (!common::has<common::xnode_type_t::rec>(vnetwork_message.sender().type())) {
         return true;
@@ -909,57 +848,9 @@ bool xtop_message_filter_recver_is_validator::filter_sender_from_rec(xvnetwork_m
 
     // fix receiver if necessary.
     if (recver.logic_epoch().empty()) {
-        auto const validator_group = m_election_data_accessor->group_element_by_logic_time(recver.group_address(), vnetwork_message.logic_time(), ec);
+        normalize_message_recver(vnetwork_message, m_vhost, m_election_data_accessor, ec);
         if (ec) {
-            xinfo("[vnetwork][message_filter] hash: %" PRIx64 ", network %" PRIu32 " node %s receives msg sent to %s from %s. ignored. error: %s",
-                  vnetwork_message.hash(),
-                  static_cast<std::uint32_t>(m_vhost->network_id().value()),
-                  m_vhost->host_node_id().value().c_str(),
-                  recver.to_string().c_str(),
-                  vnetwork_message.sender().to_string().c_str(),
-                  ec.message().c_str());
-
             return false;
-        }
-
-        if (recver.account_election_address().empty()) {
-            vnetwork_message.receiver(common::xnode_address_t{ recver.group_address(), validator_group->logic_epoch() });
-        } else {
-            auto const & node_element = validator_group->node_element(recver.account_address(), ec);
-            if (ec) {
-                xinfo("message_filter: %s recv message %" PRIx32 " hash %" PRIx64 " from %s to %s; dropped due to %s",
-                      m_vhost->host_node_id().c_str(),
-                      static_cast<uint32_t>(vnetwork_message.message_id()),
-                      static_cast<uint64_t>(vnetwork_message.hash()),
-                      vnetwork_message.sender().to_string().c_str(),
-                      vnetwork_message.receiver().to_string().c_str(),
-                      ec.message().c_str());
-
-                return false;
-            }
-
-            assert(node_element != nullptr);
-
-            if (broadcast(recver.account_election_address().slot_id())) {
-                vnetwork_message.receiver(common::xnode_address_t{ recver.group_address(), common::xaccount_election_address_t{ recver.account_address(), node_element->slot_id() }, validator_group->logic_epoch() });
-            } else {
-                if (recver.slot_id() != node_element->slot_id()) {
-                    ec = top::vnetwork::xvnetwork_errc2_t::slot_id_mismatch;
-
-                    xinfo("message_filter: %s recv message %" PRIx32 " hash %" PRIx64 " from %s to %s; dropped due to %s; local slot id %" PRIu16 " msg slot id %" PRIu16,
-                          m_vhost->host_node_id().c_str(),
-                          static_cast<uint32_t>(vnetwork_message.message_id()),
-                          static_cast<uint64_t>(vnetwork_message.hash()),
-                          vnetwork_message.sender().to_string().c_str(),
-                          vnetwork_message.receiver().to_string().c_str(),
-                          ec.message().c_str(),
-                          static_cast<uint16_t>(node_element->slot_id()),
-                          static_cast<uint16_t>(recver.slot_id()));
-
-                    return false;
-                }
-                vnetwork_message.receiver(common::xnode_address_t{ recver.group_address(), recver.account_election_address(), validator_group->logic_epoch() });
-            }
         }
     }
 
@@ -970,6 +861,10 @@ bool xtop_message_filter_recver_is_validator::filter_sender_from_zec(xvnetwork_m
     assert(!ec);
     assert(common::has<common::xnode_type_t::consensus_validator>(vnetwork_message.receiver().type()));
     assert(vnetwork_message.sender().logic_epoch().has_value());
+    assert(!broadcast(vnetwork_message.receiver().network_id()));
+    assert(!broadcast(vnetwork_message.receiver().zone_id()));
+    assert(!broadcast(vnetwork_message.receiver().cluster_id()));
+    assert(!broadcast(vnetwork_message.receiver().group_id()));
 
     if (!common::has<common::xnode_type_t::zec>(vnetwork_message.sender().type())) {
         return true;
@@ -979,57 +874,9 @@ bool xtop_message_filter_recver_is_validator::filter_sender_from_zec(xvnetwork_m
 
     // fix receiver if necessary.
     if (recver.logic_epoch().empty()) {
-        auto const validator_group = m_election_data_accessor->group_element_by_logic_time(recver.group_address(), vnetwork_message.logic_time(), ec);
+        normalize_message_recver(vnetwork_message, m_vhost, m_election_data_accessor, ec);
         if (ec) {
-            xinfo("[vnetwork][message_filter] hash: %" PRIx64 ", network %" PRIu32 " node %s receives msg sent to %s from %s. ignored. error: %s",
-                  vnetwork_message.hash(),
-                  static_cast<std::uint32_t>(m_vhost->network_id().value()),
-                  m_vhost->host_node_id().value().c_str(),
-                  recver.to_string().c_str(),
-                  vnetwork_message.sender().to_string().c_str(),
-                  ec.message().c_str());
-
             return false;
-        }
-
-        if (recver.account_election_address().empty()) {
-            vnetwork_message.receiver(common::xnode_address_t{ recver.group_address(), validator_group->logic_epoch() });
-        } else {
-            auto const & node_element = validator_group->node_element(recver.account_address(), ec);
-            if (ec) {
-                xinfo("message_filter: %s recv message %" PRIx32 " hash %" PRIx64 " from %s to %s; dropped due to %s",
-                      m_vhost->host_node_id().c_str(),
-                      static_cast<uint32_t>(vnetwork_message.message_id()),
-                      static_cast<uint64_t>(vnetwork_message.hash()),
-                      vnetwork_message.sender().to_string().c_str(),
-                      vnetwork_message.receiver().to_string().c_str(),
-                      ec.message().c_str());
-
-                return false;
-            }
-
-            assert(node_element != nullptr);
-
-            if (broadcast(recver.account_election_address().slot_id())) {
-                vnetwork_message.receiver(common::xnode_address_t{ recver.group_address(), common::xaccount_election_address_t{ recver.account_address(), node_element->slot_id() }, validator_group->logic_epoch() });
-            } else {
-                if (recver.slot_id() != node_element->slot_id()) {
-                    ec = top::vnetwork::xvnetwork_errc2_t::slot_id_mismatch;
-
-                    xinfo("message_filter: %s recv message %" PRIx32 " hash %" PRIx64 " from %s to %s; dropped due to %s; local slot id %" PRIu16 " msg slot id %" PRIu16,
-                          m_vhost->host_node_id().c_str(),
-                          static_cast<uint32_t>(vnetwork_message.message_id()),
-                          static_cast<uint64_t>(vnetwork_message.hash()),
-                          vnetwork_message.sender().to_string().c_str(),
-                          vnetwork_message.receiver().to_string().c_str(),
-                          ec.message().c_str(),
-                          static_cast<uint16_t>(node_element->slot_id()),
-                          static_cast<uint16_t>(recver.slot_id()));
-
-                    return false;
-                }
-                vnetwork_message.receiver(common::xnode_address_t{ recver.group_address(), recver.account_election_address(), validator_group->logic_epoch() });
-            }
         }
     }
 
@@ -1040,6 +887,10 @@ bool xtop_message_filter_recver_is_validator::filter_sender_from_validator(xvnet
     assert(!ec);
     assert(common::has<common::xnode_type_t::consensus_validator>(vnetwork_message.receiver().type()));
     assert(vnetwork_message.sender().logic_epoch().has_value());
+    assert(!broadcast(vnetwork_message.receiver().network_id()));
+    assert(!broadcast(vnetwork_message.receiver().zone_id()));
+    assert(!broadcast(vnetwork_message.receiver().cluster_id()));
+    assert(!broadcast(vnetwork_message.receiver().group_id()));
 
     if (!common::has<common::xnode_type_t::consensus_validator>(vnetwork_message.sender().type())) {
         return true;
@@ -1052,12 +903,46 @@ bool xtop_message_filter_recver_is_validator::filter_sender_from_auditor(xvnetwo
     assert(!ec);
     assert(common::has<common::xnode_type_t::consensus_validator>(vnetwork_message.receiver().type()));
     assert(vnetwork_message.sender().logic_epoch().has_value());
+    assert(!broadcast(vnetwork_message.receiver().network_id()));
+    assert(!broadcast(vnetwork_message.receiver().zone_id()));
+    assert(!broadcast(vnetwork_message.receiver().cluster_id()));
+    assert(!broadcast(vnetwork_message.receiver().group_id()));
 
     if (!common::has<common::xnode_type_t::consensus_auditor>(vnetwork_message.sender().type())) {
         return true;
     }
 
-    return filter_sender_from_associated_auditor(vnetwork_message, ec) && filter_sender_from_non_associated_auditor(vnetwork_message, ec);
+    auto const & sender = vnetwork_message.sender();
+    auto const & recver = vnetwork_message.receiver();
+
+    auto const sender_auditor_group = m_election_data_accessor->group_element(sender.group_address(), sender.logic_epoch(), ec);
+    if (ec) {
+        xinfo("[vnetwork][message_filter] hash: %" PRIx64 ", network %" PRIu32 " node %s receives msg sent to %s from %s. ignored. error: %s",
+              vnetwork_message.hash(),
+              static_cast<std::uint32_t>(m_vhost->network_id().value()),
+              m_vhost->host_node_id().value().c_str(),
+              recver.to_string().c_str(),
+              sender.to_string().c_str(),
+              ec.message().c_str());
+
+        return false;
+    }
+
+    auto const recver_associated_auditor = m_election_data_accessor->parent_group_element(recver.group_address(), recver.logic_epoch(), ec);
+    if (ec) {
+        xinfo("[vnetwork][message_filter] hash: %" PRIx64 ", network %" PRIu32 " node %s receives msg sent to %s from %s. ignored. error: %s",
+              vnetwork_message.hash(),
+              static_cast<std::uint32_t>(m_vhost->network_id().value()),
+              m_vhost->host_node_id().value().c_str(),
+              recver.to_string().c_str(),
+              sender.to_string().c_str(),
+              ec.message().c_str());
+
+        return false;
+    }
+
+    return filter_sender_from_associated_auditor(vnetwork_message, sender_auditor_group, recver_associated_auditor, ec) &&
+           filter_sender_from_non_associated_auditor(vnetwork_message, sender_auditor_group, recver_associated_auditor, ec);
 }
 
 bool xtop_message_filter_recver_is_validator::filter_sender_from_same_validator_group(xvnetwork_message_t & vnetwork_message, std::error_code & ec) const {
@@ -1065,6 +950,10 @@ bool xtop_message_filter_recver_is_validator::filter_sender_from_same_validator_
     assert(common::has<common::xnode_type_t::consensus_validator>(vnetwork_message.receiver().type()));
     assert(vnetwork_message.sender().logic_epoch().has_value());
     assert(common::has<common::xnode_type_t::consensus_validator>(vnetwork_message.sender().type()));
+    assert(!broadcast(vnetwork_message.receiver().network_id()));
+    assert(!broadcast(vnetwork_message.receiver().zone_id()));
+    assert(!broadcast(vnetwork_message.receiver().cluster_id()));
+    assert(!broadcast(vnetwork_message.receiver().group_id()));
 
     auto const & recver = vnetwork_message.receiver();
     auto const & sender = vnetwork_message.sender();
@@ -1075,7 +964,7 @@ bool xtop_message_filter_recver_is_validator::filter_sender_from_same_validator_
 
     assert(sender.group_address() == recver.group_address());
 
-    if (sender.logic_epoch().has_value() && recver.logic_epoch().has_value() && sender.logic_epoch() != recver.logic_epoch()) {
+    if (recver.logic_epoch().has_value() && sender.logic_epoch() != recver.logic_epoch()) {
         auto const & message = vnetwork_message.message();
 
         ec = xvnetwork_errc2_t::epoch_mismatch;
@@ -1094,61 +983,12 @@ bool xtop_message_filter_recver_is_validator::filter_sender_from_same_validator_
     assert(sender.logic_epoch().has_value() || recver.logic_epoch().has_value());
 
     if (recver.logic_epoch().empty()) {
-        if (recver.account_election_address().empty()) {
-            vnetwork_message.receiver(common::xnode_address_t{ recver.group_address(), sender.logic_epoch() });
-        } else {
-            auto const validator_group = m_election_data_accessor->group_element_by_height(recver.group_address(), sender.associated_blk_height(), ec);
-            if (ec) {
-                xinfo("[vnetwork][message_filter] hash: %" PRIx64 ", network %" PRIu32 " node %s receives msg sent to %s from %s. ignored. error: %s",
-                      vnetwork_message.hash(),
-                      static_cast<std::uint32_t>(m_vhost->network_id().value()),
-                      m_vhost->host_node_id().value().c_str(),
-                      recver.to_string().c_str(),
-                      vnetwork_message.sender().to_string().c_str(),
-                      ec.message().c_str());
-
-                return false;
-            }
-
-            auto const & node_element = validator_group->node_element(recver.account_address(), ec);
-            if (ec) {
-                xinfo("message_filter: %s recv message %" PRIx32 " hash %" PRIx64 " from %s to %s; dropped due to %s",
-                      m_vhost->host_node_id().c_str(),
-                      static_cast<uint32_t>(vnetwork_message.message_id()),
-                      static_cast<uint64_t>(vnetwork_message.hash()),
-                      vnetwork_message.sender().to_string().c_str(),
-                      vnetwork_message.receiver().to_string().c_str(),
-                      ec.message().c_str());
-
-                return false;
-            }
-
-            assert(node_element != nullptr);
-
-            if (broadcast(recver.account_election_address().slot_id())) {
-                vnetwork_message.receiver(common::xnode_address_t{ recver.group_address(), common::xaccount_election_address_t{ recver.account_address(), node_element->slot_id() }, validator_group->logic_epoch() });
-            } else {
-                if (recver.slot_id() != node_element->slot_id()) {
-                    ec = top::vnetwork::xvnetwork_errc2_t::slot_id_mismatch;
-
-                    xinfo("message_filter: %s recv message %" PRIx32 " hash %" PRIx64 " from %s to %s; dropped due to %s; local slot id %" PRIu16 " msg slot id %" PRIu16,
-                          m_vhost->host_node_id().c_str(),
-                          static_cast<uint32_t>(vnetwork_message.message_id()),
-                          static_cast<uint64_t>(vnetwork_message.hash()),
-                          vnetwork_message.sender().to_string().c_str(),
-                          vnetwork_message.receiver().to_string().c_str(),
-                          ec.message().c_str(),
-                          static_cast<uint16_t>(node_element->slot_id()),
-                          static_cast<uint16_t>(recver.slot_id()));
-
-                    return false;
-                }
-                vnetwork_message.receiver(common::xnode_address_t{ recver.group_address(), recver.account_election_address(), validator_group->logic_epoch() });
-            }
+        normalize_message_recver_by_message_sender(vnetwork_message, m_vhost, m_election_data_accessor, ec);
+        if (ec) {
+            return false;
         }
     }
     assert(sender.logic_epoch().has_value() && recver.logic_epoch().has_value());
-
 
     return false;
 }
@@ -1158,6 +998,10 @@ bool xtop_message_filter_recver_is_validator::filter_sender_from_different_valid
     assert(common::has<common::xnode_type_t::consensus_validator>(vnetwork_message.receiver().type()));
     assert(vnetwork_message.sender().logic_epoch().has_value());
     assert(common::has<common::xnode_type_t::consensus_validator>(vnetwork_message.sender().type()));
+    assert(!broadcast(vnetwork_message.receiver().network_id()));
+    assert(!broadcast(vnetwork_message.receiver().zone_id()));
+    assert(!broadcast(vnetwork_message.receiver().cluster_id()));
+    assert(!broadcast(vnetwork_message.receiver().group_id()));
 
     auto const & recver = vnetwork_message.receiver();
     auto const & sender = vnetwork_message.sender();
@@ -1165,28 +1009,6 @@ bool xtop_message_filter_recver_is_validator::filter_sender_from_different_valid
     if (sender.group_address() == recver.group_address()) {
         return true;
     }
-
-    return filter_sender_from_different_validator_with_same_associated_auditor_group(vnetwork_message, ec) &&
-           filter_sender_from_different_validator_without_same_associated_auditor_group(vnetwork_message, ec);
-}
-
-bool xtop_message_filter_recver_is_validator::filter_sender_from_different_validator_with_same_associated_auditor_group(xvnetwork_message_t & vnetwork_message, std::error_code & ec) const {
-    assert(!ec);
-    assert(common::has<common::xnode_type_t::consensus_validator>(vnetwork_message.receiver().type()));
-    assert(vnetwork_message.sender().logic_epoch().has_value());
-    assert(common::has<common::xnode_type_t::consensus_validator>(vnetwork_message.sender().type()));
-
-    auto const & recver = vnetwork_message.receiver();
-    auto const & sender = vnetwork_message.sender();
-
-    assert(sender.group_address() != recver.group_address());
-    assert(common::has<common::xnode_type_t::consensus_validator>(sender.type()));
-
-    // for sender from different validator group, we should check to see if sender and recver have same associated auditor group.
-    // if they have same associated auditor group, their logic epoch should be the same (follow the logic defined in the election contract).
-    // if they don't have same associated auditor group, do nothing.
-
-    auto const & message = vnetwork_message.message();
 
     assert(m_election_data_accessor != nullptr);
     auto const sender_associated_auditor = m_election_data_accessor->parent_group_element(sender.group_address(), sender.logic_epoch(), ec);
@@ -1215,6 +1037,32 @@ bool xtop_message_filter_recver_is_validator::filter_sender_from_different_valid
         return false;
     }
 
+    return filter_sender_from_different_validator_with_same_associated_auditor_group(vnetwork_message, sender_associated_auditor, recver_associated_auditor, ec) &&
+           filter_sender_from_different_validator_without_same_associated_auditor_group(vnetwork_message, sender_associated_auditor, recver_associated_auditor, ec);
+}
+
+bool xtop_message_filter_recver_is_validator::filter_sender_from_different_validator_with_same_associated_auditor_group(xvnetwork_message_t & vnetwork_message,
+                                                                                                                        std::shared_ptr<election::cache::xgroup_element_t> const & sender_associated_auditor,
+                                                                                                                        std::shared_ptr<election::cache::xgroup_element_t> const & recver_associated_auditor,
+                                                                                                                        std::error_code & ec) const {
+    assert(!ec);
+    assert(common::has<common::xnode_type_t::consensus_validator>(vnetwork_message.receiver().type()));
+    assert(vnetwork_message.sender().logic_epoch().has_value());
+    assert(common::has<common::xnode_type_t::consensus_validator>(vnetwork_message.sender().type()));
+    assert(!broadcast(vnetwork_message.receiver().network_id()));
+    assert(!broadcast(vnetwork_message.receiver().zone_id()));
+    assert(!broadcast(vnetwork_message.receiver().cluster_id()));
+    assert(!broadcast(vnetwork_message.receiver().group_id()));
+
+    auto const & recver = vnetwork_message.receiver();
+    auto const & sender = vnetwork_message.sender();
+
+    assert(sender.group_address() != recver.group_address());
+    assert(common::has<common::xnode_type_t::consensus_validator>(sender.type()));
+
+    // for sender from different validator group, we should check to see if sender and recver have same associated auditor group.
+    // if they have same associated auditor group, their logic epoch should be the same (follow the logic defined in the election contract).
+    // if they don't have same associated auditor group, do nothing.
     if (sender_associated_auditor->address().group_address() != recver_associated_auditor->address().group_address()) {
         return true;
     }
@@ -1264,13 +1112,13 @@ bool xtop_message_filter_recver_is_validator::filter_sender_from_different_valid
             }
         }
     } else {
-        if (sender_associated_auditor->logic_epoch() != recver_associated_auditor->logic_epoch()) {
-            // if sender and receiver have the same associated auditor group but with different logic epoch,
-            // it means that the associated auditor group deduced by empty recver.logic_epoch() is more recent than the associated auditor group deduced by the validator from sender.
-            recver_associated_auditor = sender_associated_auditor;
-        }
+        // if (sender_associated_auditor->logic_epoch() != recver_associated_auditor->logic_epoch()) {
+        //     // if sender and receiver have the same associated auditor group but with different logic epoch,
+        //     // it means that the associated auditor group deduced by empty recver.logic_epoch() is more recent than the associated auditor group deduced by the validator from sender.
+        //     recver_associated_auditor = sender_associated_auditor;
+        // }
 
-        auto const recver_validator_group = m_election_data_accessor->group_element_by_height(recver.group_address(), recver_associated_auditor->associated_blk_height(), ec);
+        auto const recver_validator_group = m_election_data_accessor->group_element_by_height(recver.group_address(), sender_associated_auditor->associated_blk_height(), ec);
         if (ec) {
             xinfo("[vnetwork][message_filter] hash: %" PRIx64 ", network %" PRIu32 " node %s receives msg sent to %s from %s. ignored. error: %s",
                   vnetwork_message.hash(),
@@ -1328,11 +1176,18 @@ bool xtop_message_filter_recver_is_validator::filter_sender_from_different_valid
     return false;
 }
 
-bool xtop_message_filter_recver_is_validator::filter_sender_from_different_validator_without_same_associated_auditor_group(xvnetwork_message_t & vnetwork_message, std::error_code & ec) const {
+bool xtop_message_filter_recver_is_validator::filter_sender_from_different_validator_without_same_associated_auditor_group(xvnetwork_message_t & vnetwork_message,
+                                                                                                                           std::shared_ptr<election::cache::xgroup_element_t> const & sender_associated_auditor,
+                                                                                                                           std::shared_ptr<election::cache::xgroup_element_t> const & recver_associated_auditor,
+                                                                                                                           std::error_code & ec) const {
     assert(!ec);
     assert(common::has<common::xnode_type_t::consensus_validator>(vnetwork_message.receiver().type()));
     assert(vnetwork_message.sender().logic_epoch().has_value());
     assert(common::has<common::xnode_type_t::consensus_validator>(vnetwork_message.sender().type()));
+    assert(!broadcast(vnetwork_message.receiver().network_id()));
+    assert(!broadcast(vnetwork_message.receiver().zone_id()));
+    assert(!broadcast(vnetwork_message.receiver().cluster_id()));
+    assert(!broadcast(vnetwork_message.receiver().group_id()));
 
     auto const & recver = vnetwork_message.receiver();
     auto const & sender = vnetwork_message.sender();
@@ -1343,144 +1198,46 @@ bool xtop_message_filter_recver_is_validator::filter_sender_from_different_valid
     // for sender from different validator group, we should check to see if sender and recver have same associated auditor group.
     // if they have same associated auditor group, their logic epoch should be the same (follow the logic defined in the election contract).
     // if they don't have same associated auditor group, do nothing.
-
-    auto const & message = vnetwork_message.message();
-
-    assert(m_election_data_accessor != nullptr);
-    auto const sender_associated_auditor = m_election_data_accessor->parent_group_element(sender.group_address(), sender.logic_epoch(), ec);
-    if (ec) {
-        xinfo("[vnetwork][message_filter] hash: %" PRIx64 ", network %" PRIu32 " node %s receives msg sent to %s from %s. ignored. error: %s",
-              vnetwork_message.hash(),
-              static_cast<std::uint32_t>(m_vhost->network_id().value()),
-              m_vhost->host_node_id().value().c_str(),
-              recver.to_string().c_str(),
-              sender.to_string().c_str(),
-              ec.message().c_str());
-
-        return false;
-    }
-
-    auto recver_associated_auditor = m_election_data_accessor->parent_group_element(recver.group_address(), recver.logic_epoch(), ec);
-    if (ec) {
-        xinfo("[vnetwork][message_filter] hash: %" PRIx64 ", network %" PRIu32 " node %s receives msg sent to %s from %s. ignored. error: %s",
-              vnetwork_message.hash(),
-              static_cast<std::uint32_t>(m_vhost->network_id().value()),
-              m_vhost->host_node_id().value().c_str(),
-              recver.to_string().c_str(),
-              sender.to_string().c_str(),
-              ec.message().c_str());
-
-        return false;
-    }
-
     if (sender_associated_auditor->address().group_address() == recver_associated_auditor->address().group_address()) {
         return true;
     }
 
     if (recver.logic_epoch().empty()) {
-        auto const validator_group = m_election_data_accessor->group_element_by_logic_time(recver.group_address(), vnetwork_message.logic_time(), ec);
+        normalize_message_recver(vnetwork_message, m_vhost, m_election_data_accessor, ec);
         if (ec) {
-            xinfo("[vnetwork][message_filter] hash: %" PRIx64 ", network %" PRIu32 " node %s receives msg sent to %s from %s. ignored. error: %s",
-                  vnetwork_message.hash(),
-                  static_cast<std::uint32_t>(m_vhost->network_id().value()),
-                  m_vhost->host_node_id().value().c_str(),
-                  recver.to_string().c_str(),
-                  vnetwork_message.sender().to_string().c_str(),
-                  ec.message().c_str());
-
             return false;
-        }
-
-        if (recver.account_election_address().empty()) {
-            vnetwork_message.receiver(common::xnode_address_t{ recver.group_address(), validator_group->logic_epoch() });
-        } else {
-            auto const & node_element = validator_group->node_element(recver.account_address(), ec);
-            if (ec) {
-                xinfo("message_filter: %s recv message %" PRIx32 " hash %" PRIx64 " from %s to %s; dropped due to %s",
-                      m_vhost->host_node_id().c_str(),
-                      static_cast<uint32_t>(vnetwork_message.message_id()),
-                      static_cast<uint64_t>(vnetwork_message.hash()),
-                      vnetwork_message.sender().to_string().c_str(),
-                      vnetwork_message.receiver().to_string().c_str(),
-                      ec.message().c_str());
-
-                return false;
-            }
-
-            assert(node_element != nullptr);
-
-            if (broadcast(recver.account_election_address().slot_id())) {
-                vnetwork_message.receiver(common::xnode_address_t{ recver.group_address(), common::xaccount_election_address_t{ recver.account_address(), node_element->slot_id() }, validator_group->logic_epoch() });
-            } else {
-                if (recver.slot_id() != node_element->slot_id()) {
-                    ec = top::vnetwork::xvnetwork_errc2_t::slot_id_mismatch;
-
-                    xinfo("message_filter: %s recv message %" PRIx32 " hash %" PRIx64 " from %s to %s; dropped due to %s; local slot id %" PRIu16 " msg slot id %" PRIu16,
-                          m_vhost->host_node_id().c_str(),
-                          static_cast<uint32_t>(vnetwork_message.message_id()),
-                          static_cast<uint64_t>(vnetwork_message.hash()),
-                          vnetwork_message.sender().to_string().c_str(),
-                          vnetwork_message.receiver().to_string().c_str(),
-                          ec.message().c_str(),
-                          static_cast<uint16_t>(node_element->slot_id()),
-                          static_cast<uint16_t>(recver.slot_id()));
-
-                    return false;
-                }
-                vnetwork_message.receiver(common::xnode_address_t{ recver.group_address(), recver.account_election_address(), validator_group->logic_epoch() });
-            }
         }
     }
 
     return false;
 }
 
-bool xtop_message_filter_recver_is_validator::filter_sender_from_associated_auditor(xvnetwork_message_t & vnetwork_message, std::error_code & ec) const {
+bool xtop_message_filter_recver_is_validator::filter_sender_from_associated_auditor(xvnetwork_message_t & vnetwork_message,
+                                                                                    std::shared_ptr<election::cache::xgroup_element_t> const & sender_auditor,
+                                                                                    std::shared_ptr<election::cache::xgroup_element_t> const & recver_associated_auditor,
+                                                                                    std::error_code & ec) const {
     assert(!ec);
     assert(common::has<common::xnode_type_t::consensus_validator>(vnetwork_message.receiver().type()));
     assert(vnetwork_message.sender().logic_epoch().has_value());
     assert(common::has<common::xnode_type_t::consensus_auditor>(vnetwork_message.sender().type()));
+    assert(!broadcast(vnetwork_message.receiver().network_id()));
+    assert(!broadcast(vnetwork_message.receiver().zone_id()));
+    assert(!broadcast(vnetwork_message.receiver().cluster_id()));
+    assert(!broadcast(vnetwork_message.receiver().group_id()));
 
     auto const & sender = vnetwork_message.sender();
     auto const & recver = vnetwork_message.receiver();
 
     assert(common::has<common::xnode_type_t::consensus_auditor>(sender.type()));
-
-    auto const sender_auditor_group = m_election_data_accessor->group_element(sender.group_address(), sender.logic_epoch(), ec);
-    if (ec) {
-        xinfo("[vnetwork][message_filter] hash: %" PRIx64 ", network %" PRIu32 " node %s receives msg sent to %s from %s. ignored. error: %s",
-              vnetwork_message.hash(),
-              static_cast<std::uint32_t>(m_vhost->network_id().value()),
-              m_vhost->host_node_id().value().c_str(),
-              recver.to_string().c_str(),
-              sender.to_string().c_str(),
-              ec.message().c_str());
-
-        return false;
-    }
-
-    auto const associated_auditor_group = m_election_data_accessor->parent_group_element(recver.group_address(), recver.logic_epoch(), ec);
-    if (ec) {
-        xinfo("[vnetwork][message_filter] hash: %" PRIx64 ", network %" PRIu32 " node %s receives msg sent to %s from %s. ignored. error: %s",
-              vnetwork_message.hash(),
-              static_cast<std::uint32_t>(m_vhost->network_id().value()),
-              m_vhost->host_node_id().value().c_str(),
-              recver.to_string().c_str(),
-              sender.to_string().c_str(),
-              ec.message().c_str());
-
-        return false;
-    }
-
-    if (sender_auditor_group->address().group_address() != associated_auditor_group->address().group_address()) {
+    if (sender_auditor->address().group_address() != recver_associated_auditor->address().group_address()) {
         // not from associated auditor group.
         return true;
     }
 
     if (recver.logic_epoch().has_value()) {
-        assert(sender_auditor_group->address().group_address() == associated_auditor_group->address().group_address());
+        assert(sender_auditor->address().group_address() == recver_associated_auditor->address().group_address());
 
-        if (sender_auditor_group->logic_epoch() != associated_auditor_group->logic_epoch()) {
+        if (sender_auditor->logic_epoch() != recver_associated_auditor->logic_epoch()) {
             ec = xvnetwork_errc2_t::epoch_mismatch;
             xinfo("[vnetwork][message_filter] hash: %" PRIx64 ", network %" PRIu32 " node %s receives msg sent to %s from %s. ignored. error: %s",
                   vnetwork_message.hash(),
@@ -1521,7 +1278,7 @@ bool xtop_message_filter_recver_is_validator::filter_sender_from_associated_audi
             }
         }
     } else {
-        auto const validator_group = m_election_data_accessor->group_element_by_height(recver.group_address(), sender_auditor_group->associated_blk_height(), ec);
+        auto const validator_group = m_election_data_accessor->group_element_by_height(recver.group_address(), sender_auditor->associated_blk_height(), ec);
         if (ec) {
             xinfo("[vnetwork][message_filter] hash: %" PRIx64 ", network %" PRIu32 " node %s receives msg sent to %s from %s. ignored. error: %s",
                   vnetwork_message.hash(),
@@ -1578,100 +1335,32 @@ bool xtop_message_filter_recver_is_validator::filter_sender_from_associated_audi
     return false;
 }
 
-bool xtop_message_filter_recver_is_validator::filter_sender_from_non_associated_auditor(xvnetwork_message_t & vnetwork_message, std::error_code & ec) const {
+bool xtop_message_filter_recver_is_validator::filter_sender_from_non_associated_auditor(xvnetwork_message_t & vnetwork_message,
+                                                                                        std::shared_ptr<election::cache::xgroup_element_t> const & sender_auditor,
+                                                                                        std::shared_ptr<election::cache::xgroup_element_t> const & recver_associated_auditor,
+                                                                                        std::error_code & ec) const {
     assert(!ec);
     assert(common::has<common::xnode_type_t::consensus_validator>(vnetwork_message.receiver().type()));
     assert(vnetwork_message.sender().logic_epoch().has_value());
     assert(common::has<common::xnode_type_t::consensus_auditor>(vnetwork_message.sender().type()));
+    assert(!broadcast(vnetwork_message.receiver().network_id()));
+    assert(!broadcast(vnetwork_message.receiver().zone_id()));
+    assert(!broadcast(vnetwork_message.receiver().cluster_id()));
+    assert(!broadcast(vnetwork_message.receiver().group_id()));
 
     auto const & sender = vnetwork_message.sender();
     auto const & recver = vnetwork_message.receiver();
 
     assert(common::has<common::xnode_type_t::consensus_auditor>(sender.type()));
-
-    auto const sender_auditor_group = m_election_data_accessor->group_element(sender.group_address(), sender.logic_epoch(), ec);
-    if (ec) {
-        xinfo("[vnetwork][message_filter] hash: %" PRIx64 ", network %" PRIu32 " node %s receives msg sent to %s from %s. ignored. error: %s",
-              vnetwork_message.hash(),
-              static_cast<std::uint32_t>(m_vhost->network_id().value()),
-              m_vhost->host_node_id().value().c_str(),
-              recver.to_string().c_str(),
-              sender.to_string().c_str(),
-              ec.message().c_str());
-
-        return false;
-    }
-
-    auto const associated_auditor_group = m_election_data_accessor->parent_group_element(recver.group_address(), recver.logic_epoch(), ec);
-    if (ec) {
-        xinfo("[vnetwork][message_filter] hash: %" PRIx64 ", network %" PRIu32 " node %s receives msg sent to %s from %s. ignored. error: %s",
-              vnetwork_message.hash(),
-              static_cast<std::uint32_t>(m_vhost->network_id().value()),
-              m_vhost->host_node_id().value().c_str(),
-              recver.to_string().c_str(),
-              sender.to_string().c_str(),
-              ec.message().c_str());
-
-        return false;
-    }
-
-    if (sender_auditor_group->address().group_address() == associated_auditor_group->address().group_address()) {
+    if (sender_auditor->address().group_address() == recver_associated_auditor->address().group_address()) {
         return true;
     }
 
     // fix receiver if necessary.
     if (recver.logic_epoch().empty()) {
-        auto const validator_group = m_election_data_accessor->group_element_by_logic_time(recver.group_address(), vnetwork_message.logic_time(), ec);
+        normalize_message_recver(vnetwork_message, m_vhost, m_election_data_accessor, ec);
         if (ec) {
-            xinfo("[vnetwork][message_filter] hash: %" PRIx64 ", network %" PRIu32 " node %s receives msg sent to %s from %s. ignored. error: %s",
-                  vnetwork_message.hash(),
-                  static_cast<std::uint32_t>(m_vhost->network_id().value()),
-                  m_vhost->host_node_id().value().c_str(),
-                  recver.to_string().c_str(),
-                  vnetwork_message.sender().to_string().c_str(),
-                  ec.message().c_str());
-
             return false;
-        }
-
-        if (recver.account_election_address().empty()) {
-            vnetwork_message.receiver(common::xnode_address_t{ recver.group_address(), validator_group->logic_epoch() });
-        } else {
-            auto const & node_element = validator_group->node_element(recver.account_address(), ec);
-            if (ec) {
-                xinfo("message_filter: %s recv message %" PRIx32 " hash %" PRIx64 " from %s to %s; dropped due to %s",
-                      m_vhost->host_node_id().c_str(),
-                      static_cast<uint32_t>(vnetwork_message.message_id()),
-                      static_cast<uint64_t>(vnetwork_message.hash()),
-                      vnetwork_message.sender().to_string().c_str(),
-                      vnetwork_message.receiver().to_string().c_str(),
-                      ec.message().c_str());
-
-                return false;
-            }
-
-            assert(node_element != nullptr);
-
-            if (broadcast(recver.account_election_address().slot_id())) {
-                vnetwork_message.receiver(common::xnode_address_t{ recver.group_address(), common::xaccount_election_address_t{ recver.account_address(), node_element->slot_id() }, validator_group->logic_epoch() });
-            } else {
-                if (recver.slot_id() != node_element->slot_id()) {
-                    ec = top::vnetwork::xvnetwork_errc2_t::slot_id_mismatch;
-
-                    xinfo("message_filter: %s recv message %" PRIx32 " hash %" PRIx64 " from %s to %s; dropped due to %s; local slot id %" PRIu16 " msg slot id %" PRIu16,
-                          m_vhost->host_node_id().c_str(),
-                          static_cast<uint32_t>(vnetwork_message.message_id()),
-                          static_cast<uint64_t>(vnetwork_message.hash()),
-                          vnetwork_message.sender().to_string().c_str(),
-                          vnetwork_message.receiver().to_string().c_str(),
-                          ec.message().c_str(),
-                          static_cast<uint16_t>(node_element->slot_id()),
-                          static_cast<uint16_t>(recver.slot_id()));
-
-                    return false;
-                }
-                vnetwork_message.receiver(common::xnode_address_t{ recver.group_address(), recver.account_election_address(), validator_group->logic_epoch() });
-            }
         }
     }
 
@@ -1686,6 +1375,10 @@ xtop_message_filter_recver_is_auditor::xtop_message_filter_recver_is_auditor(obs
 bool xtop_message_filter_recver_is_auditor::filter(xvnetwork_message_t & vnetwork_message, std::error_code & ec) const {
     assert(!ec);
     assert(vnetwork_message.sender().logic_epoch().has_value());
+    assert(!broadcast(vnetwork_message.receiver().network_id()));
+    assert(!broadcast(vnetwork_message.receiver().zone_id()));
+    assert(!broadcast(vnetwork_message.receiver().cluster_id()));
+    assert(!broadcast(vnetwork_message.receiver().group_id()));
 
     if (!common::has<common::xnode_type_t::consensus_auditor>(vnetwork_message.receiver().type())) {
         return true;
@@ -1698,6 +1391,10 @@ bool xtop_message_filter_recver_is_auditor::filter_sender_from_nonconsensus_grou
     assert(!ec);
     assert(vnetwork_message.sender().logic_epoch().has_value());
     assert(common::has<common::xnode_type_t::consensus_auditor>(vnetwork_message.receiver().type()));
+    assert(!broadcast(vnetwork_message.receiver().network_id()));
+    assert(!broadcast(vnetwork_message.receiver().zone_id()));
+    assert(!broadcast(vnetwork_message.receiver().cluster_id()));
+    assert(!broadcast(vnetwork_message.receiver().group_id()));
 
     auto const & sender = vnetwork_message.sender();
     if (!common::has<common::xnode_type_t::edge>(sender.type()) && !common::has<common::xnode_type_t::storage>(sender.type())) {
@@ -1711,6 +1408,10 @@ bool xtop_message_filter_recver_is_auditor::filter_sender_from_consensus_group(x
     assert(!ec);
     assert(vnetwork_message.sender().logic_epoch().has_value());
     assert(common::has<common::xnode_type_t::consensus_auditor>(vnetwork_message.receiver().type()));
+    assert(!broadcast(vnetwork_message.receiver().network_id()));
+    assert(!broadcast(vnetwork_message.receiver().zone_id()));
+    assert(!broadcast(vnetwork_message.receiver().cluster_id()));
+    assert(!broadcast(vnetwork_message.receiver().group_id()));
 
     auto const & sender = vnetwork_message.sender();
     if (!common::has<common::xnode_type_t::consensus>(sender.type()) &&
@@ -1729,6 +1430,10 @@ bool xtop_message_filter_recver_is_auditor::filter_sender_from_edge(xvnetwork_me
     assert(!ec);
     assert(vnetwork_message.sender().logic_epoch().has_value());
     assert(common::has<common::xnode_type_t::consensus_auditor>(vnetwork_message.receiver().type()));
+    assert(!broadcast(vnetwork_message.receiver().network_id()));
+    assert(!broadcast(vnetwork_message.receiver().zone_id()));
+    assert(!broadcast(vnetwork_message.receiver().cluster_id()));
+    assert(!broadcast(vnetwork_message.receiver().group_id()));
 
     auto const & sender = vnetwork_message.sender();
     if (!common::has<common::xnode_type_t::edge>(sender.type())) {
@@ -1739,57 +1444,9 @@ bool xtop_message_filter_recver_is_auditor::filter_sender_from_edge(xvnetwork_me
 
     // fix receiver if necessary.
     if (recver.logic_epoch().empty()) {
-        auto const auditor_group = m_election_data_accessor->group_element_by_logic_time(recver.group_address(), vnetwork_message.logic_time(), ec);
+        normalize_message_recver(vnetwork_message, m_vhost, m_election_data_accessor, ec);
         if (ec) {
-            xinfo("[vnetwork][message_filter] hash: %" PRIx64 ", network %" PRIu32 " node %s receives msg sent to %s from %s. ignored. error: %s",
-                  vnetwork_message.hash(),
-                  static_cast<std::uint32_t>(m_vhost->network_id().value()),
-                  m_vhost->host_node_id().value().c_str(),
-                  recver.to_string().c_str(),
-                  vnetwork_message.sender().to_string().c_str(),
-                  ec.message().c_str());
-
             return false;
-        }
-
-        if (recver.account_election_address().empty()) {
-            vnetwork_message.receiver(common::xnode_address_t{ recver.group_address(), auditor_group->logic_epoch() });
-        } else {
-            auto const & node_element = auditor_group->node_element(recver.account_address(), ec);
-            if (ec) {
-                xinfo("message_filter: %s recv message %" PRIx32 " hash %" PRIx64 " from %s to %s; dropped due to %s",
-                      m_vhost->host_node_id().c_str(),
-                      static_cast<uint32_t>(vnetwork_message.message_id()),
-                      static_cast<uint64_t>(vnetwork_message.hash()),
-                      vnetwork_message.sender().to_string().c_str(),
-                      vnetwork_message.receiver().to_string().c_str(),
-                      ec.message().c_str());
-
-                return false;
-            }
-
-            assert(node_element != nullptr);
-
-            if (broadcast(recver.account_election_address().slot_id())) {
-                vnetwork_message.receiver(common::xnode_address_t{ recver.group_address(), common::xaccount_election_address_t{ recver.account_address(), node_element->slot_id() }, auditor_group->logic_epoch() });
-            } else {
-                if (recver.slot_id() != node_element->slot_id()) {
-                    ec = top::vnetwork::xvnetwork_errc2_t::slot_id_mismatch;
-
-                    xinfo("message_filter: %s recv message %" PRIx32 " hash %" PRIx64 " from %s to %s; dropped due to %s; local slot id %" PRIu16 " msg slot id %" PRIu16,
-                          m_vhost->host_node_id().c_str(),
-                          static_cast<uint32_t>(vnetwork_message.message_id()),
-                          static_cast<uint64_t>(vnetwork_message.hash()),
-                          vnetwork_message.sender().to_string().c_str(),
-                          vnetwork_message.receiver().to_string().c_str(),
-                          ec.message().c_str(),
-                          static_cast<uint16_t>(node_element->slot_id()),
-                          static_cast<uint16_t>(recver.slot_id()));
-
-                    return false;
-                }
-                vnetwork_message.receiver(common::xnode_address_t{ recver.group_address(), recver.account_election_address(), auditor_group->logic_epoch() });
-            }
         }
     }
 
@@ -1800,6 +1457,10 @@ bool xtop_message_filter_recver_is_auditor::filter_sender_from_storage(xvnetwork
     assert(!ec);
     assert(common::has<common::xnode_type_t::consensus_auditor>(vnetwork_message.receiver().type()));
     assert(vnetwork_message.sender().logic_epoch().has_value());
+    assert(!broadcast(vnetwork_message.receiver().network_id()));
+    assert(!broadcast(vnetwork_message.receiver().zone_id()));
+    assert(!broadcast(vnetwork_message.receiver().cluster_id()));
+    assert(!broadcast(vnetwork_message.receiver().group_id()));
 
     if (!common::has<common::xnode_type_t::storage>(vnetwork_message.sender().type())) {
         return true;
@@ -1809,57 +1470,9 @@ bool xtop_message_filter_recver_is_auditor::filter_sender_from_storage(xvnetwork
 
     // fix receiver if necessary.
     if (recver.logic_epoch().empty()) {
-        auto const auditor_group = m_election_data_accessor->group_element_by_logic_time(recver.group_address(), vnetwork_message.logic_time(), ec);
+        normalize_message_recver(vnetwork_message, m_vhost, m_election_data_accessor, ec);
         if (ec) {
-            xinfo("[vnetwork][message_filter] hash: %" PRIx64 ", network %" PRIu32 " node %s receives msg sent to %s from %s. ignored. error: %s",
-                  vnetwork_message.hash(),
-                  static_cast<std::uint32_t>(m_vhost->network_id().value()),
-                  m_vhost->host_node_id().value().c_str(),
-                  recver.to_string().c_str(),
-                  vnetwork_message.sender().to_string().c_str(),
-                  ec.message().c_str());
-
             return false;
-        }
-
-        if (recver.account_election_address().empty()) {
-            vnetwork_message.receiver(common::xnode_address_t{ recver.group_address(), auditor_group->logic_epoch() });
-        } else {
-            auto const & node_element = auditor_group->node_element(recver.account_address(), ec);
-            if (ec) {
-                xinfo("message_filter: %s recv message %" PRIx32 " hash %" PRIx64 " from %s to %s; dropped due to %s",
-                      m_vhost->host_node_id().c_str(),
-                      static_cast<uint32_t>(vnetwork_message.message_id()),
-                      static_cast<uint64_t>(vnetwork_message.hash()),
-                      vnetwork_message.sender().to_string().c_str(),
-                      vnetwork_message.receiver().to_string().c_str(),
-                      ec.message().c_str());
-
-                return false;
-            }
-
-            assert(node_element != nullptr);
-
-            if (broadcast(recver.account_election_address().slot_id())) {
-                vnetwork_message.receiver(common::xnode_address_t{ recver.group_address(), common::xaccount_election_address_t{ recver.account_address(), node_element->slot_id() }, auditor_group->logic_epoch() });
-            } else {
-                if (recver.slot_id() != node_element->slot_id()) {
-                    ec = top::vnetwork::xvnetwork_errc2_t::slot_id_mismatch;
-
-                    xinfo("message_filter: %s recv message %" PRIx32 " hash %" PRIx64 " from %s to %s; dropped due to %s; local slot id %" PRIu16 " msg slot id %" PRIu16,
-                          m_vhost->host_node_id().c_str(),
-                          static_cast<uint32_t>(vnetwork_message.message_id()),
-                          static_cast<uint64_t>(vnetwork_message.hash()),
-                          vnetwork_message.sender().to_string().c_str(),
-                          vnetwork_message.receiver().to_string().c_str(),
-                          ec.message().c_str(),
-                          static_cast<uint16_t>(node_element->slot_id()),
-                          static_cast<uint16_t>(recver.slot_id()));
-
-                    return false;
-                }
-                vnetwork_message.receiver(common::xnode_address_t{ recver.group_address(), recver.account_election_address(), auditor_group->logic_epoch() });
-            }
         }
     }
 
@@ -1870,6 +1483,10 @@ bool xtop_message_filter_recver_is_auditor::filter_sender_from_rec(xvnetwork_mes
     assert(!ec);
     assert(common::has<common::xnode_type_t::consensus_auditor>(vnetwork_message.receiver().type()));
     assert(vnetwork_message.sender().logic_epoch().has_value());
+    assert(!broadcast(vnetwork_message.receiver().network_id()));
+    assert(!broadcast(vnetwork_message.receiver().zone_id()));
+    assert(!broadcast(vnetwork_message.receiver().cluster_id()));
+    assert(!broadcast(vnetwork_message.receiver().group_id()));
 
     if (!common::has<common::xnode_type_t::rec>(vnetwork_message.sender().type())) {
         return true;
@@ -1879,57 +1496,9 @@ bool xtop_message_filter_recver_is_auditor::filter_sender_from_rec(xvnetwork_mes
 
     // fix receiver if necessary.
     if (recver.logic_epoch().empty()) {
-        auto const auditor_group = m_election_data_accessor->group_element_by_logic_time(recver.group_address(), vnetwork_message.logic_time(), ec);
+        normalize_message_recver(vnetwork_message, m_vhost, m_election_data_accessor, ec);
         if (ec) {
-            xinfo("[vnetwork][message_filter] hash: %" PRIx64 ", network %" PRIu32 " node %s receives msg sent to %s from %s. ignored. error: %s",
-                  vnetwork_message.hash(),
-                  static_cast<std::uint32_t>(m_vhost->network_id().value()),
-                  m_vhost->host_node_id().value().c_str(),
-                  recver.to_string().c_str(),
-                  vnetwork_message.sender().to_string().c_str(),
-                  ec.message().c_str());
-
             return false;
-        }
-
-        if (recver.account_election_address().empty()) {
-            vnetwork_message.receiver(common::xnode_address_t{ recver.group_address(), auditor_group->logic_epoch() });
-        } else {
-            auto const & node_element = auditor_group->node_element(recver.account_address(), ec);
-            if (ec) {
-                xinfo("message_filter: %s recv message %" PRIx32 " hash %" PRIx64 " from %s to %s; dropped due to %s",
-                      m_vhost->host_node_id().c_str(),
-                      static_cast<uint32_t>(vnetwork_message.message_id()),
-                      static_cast<uint64_t>(vnetwork_message.hash()),
-                      vnetwork_message.sender().to_string().c_str(),
-                      vnetwork_message.receiver().to_string().c_str(),
-                      ec.message().c_str());
-
-                return false;
-            }
-
-            assert(node_element != nullptr);
-
-            if (broadcast(recver.account_election_address().slot_id())) {
-                vnetwork_message.receiver(common::xnode_address_t{ recver.group_address(), common::xaccount_election_address_t{ recver.account_address(), node_element->slot_id() }, auditor_group->logic_epoch() });
-            } else {
-                if (recver.slot_id() != node_element->slot_id()) {
-                    ec = top::vnetwork::xvnetwork_errc2_t::slot_id_mismatch;
-
-                    xinfo("message_filter: %s recv message %" PRIx32 " hash %" PRIx64 " from %s to %s; dropped due to %s; local slot id %" PRIu16 " msg slot id %" PRIu16,
-                          m_vhost->host_node_id().c_str(),
-                          static_cast<uint32_t>(vnetwork_message.message_id()),
-                          static_cast<uint64_t>(vnetwork_message.hash()),
-                          vnetwork_message.sender().to_string().c_str(),
-                          vnetwork_message.receiver().to_string().c_str(),
-                          ec.message().c_str(),
-                          static_cast<uint16_t>(node_element->slot_id()),
-                          static_cast<uint16_t>(recver.slot_id()));
-
-                    return false;
-                }
-                vnetwork_message.receiver(common::xnode_address_t{ recver.group_address(), recver.account_election_address(), auditor_group->logic_epoch() });
-            }
         }
     }
 
@@ -1940,6 +1509,10 @@ bool xtop_message_filter_recver_is_auditor::filter_sender_from_zec(xvnetwork_mes
     assert(!ec);
     assert(common::has<common::xnode_type_t::consensus_auditor>(vnetwork_message.receiver().type()));
     assert(vnetwork_message.sender().logic_epoch().has_value());
+    assert(!broadcast(vnetwork_message.receiver().network_id()));
+    assert(!broadcast(vnetwork_message.receiver().zone_id()));
+    assert(!broadcast(vnetwork_message.receiver().cluster_id()));
+    assert(!broadcast(vnetwork_message.receiver().group_id()));
 
     if (!common::has<common::xnode_type_t::rec>(vnetwork_message.sender().type())) {
         return true;
@@ -1949,57 +1522,9 @@ bool xtop_message_filter_recver_is_auditor::filter_sender_from_zec(xvnetwork_mes
 
     // fix receiver if necessary.
     if (recver.logic_epoch().empty()) {
-        auto const auditor_group = m_election_data_accessor->group_element_by_logic_time(recver.group_address(), vnetwork_message.logic_time(), ec);
+        normalize_message_recver(vnetwork_message, m_vhost, m_election_data_accessor, ec);
         if (ec) {
-            xinfo("[vnetwork][message_filter] hash: %" PRIx64 ", network %" PRIu32 " node %s receives msg sent to %s from %s. ignored. error: %s",
-                  vnetwork_message.hash(),
-                  static_cast<std::uint32_t>(m_vhost->network_id().value()),
-                  m_vhost->host_node_id().value().c_str(),
-                  recver.to_string().c_str(),
-                  vnetwork_message.sender().to_string().c_str(),
-                  ec.message().c_str());
-
             return false;
-        }
-
-        if (recver.account_election_address().empty()) {
-            vnetwork_message.receiver(common::xnode_address_t{ recver.group_address(), auditor_group->logic_epoch() });
-        } else {
-            auto const & node_element = auditor_group->node_element(recver.account_address(), ec);
-            if (ec) {
-                xinfo("message_filter: %s recv message %" PRIx32 " hash %" PRIx64 " from %s to %s; dropped due to %s",
-                      m_vhost->host_node_id().c_str(),
-                      static_cast<uint32_t>(vnetwork_message.message_id()),
-                      static_cast<uint64_t>(vnetwork_message.hash()),
-                      vnetwork_message.sender().to_string().c_str(),
-                      vnetwork_message.receiver().to_string().c_str(),
-                      ec.message().c_str());
-
-                return false;
-            }
-
-            assert(node_element != nullptr);
-
-            if (broadcast(recver.account_election_address().slot_id())) {
-                vnetwork_message.receiver(common::xnode_address_t{ recver.group_address(), common::xaccount_election_address_t{ recver.account_address(), node_element->slot_id() }, auditor_group->logic_epoch() });
-            } else {
-                if (recver.slot_id() != node_element->slot_id()) {
-                    ec = top::vnetwork::xvnetwork_errc2_t::slot_id_mismatch;
-
-                    xinfo("message_filter: %s recv message %" PRIx32 " hash %" PRIx64 " from %s to %s; dropped due to %s; local slot id %" PRIu16 " msg slot id %" PRIu16,
-                          m_vhost->host_node_id().c_str(),
-                          static_cast<uint32_t>(vnetwork_message.message_id()),
-                          static_cast<uint64_t>(vnetwork_message.hash()),
-                          vnetwork_message.sender().to_string().c_str(),
-                          vnetwork_message.receiver().to_string().c_str(),
-                          ec.message().c_str(),
-                          static_cast<uint16_t>(node_element->slot_id()),
-                          static_cast<uint16_t>(recver.slot_id()));
-
-                    return false;
-                }
-                vnetwork_message.receiver(common::xnode_address_t{ recver.group_address(), recver.account_election_address(), auditor_group->logic_epoch() });
-            }
         }
     }
 
@@ -2010,6 +1535,10 @@ bool xtop_message_filter_recver_is_auditor::filter_sender_from_auditor(xvnetwork
     assert(!ec);
     assert(common::has<common::xnode_type_t::consensus_auditor>(vnetwork_message.receiver().type()));
     assert(vnetwork_message.sender().logic_epoch().has_value());
+    assert(!broadcast(vnetwork_message.receiver().network_id()));
+    assert(!broadcast(vnetwork_message.receiver().zone_id()));
+    assert(!broadcast(vnetwork_message.receiver().cluster_id()));
+    assert(!broadcast(vnetwork_message.receiver().group_id()));
 
     if (!common::has<common::xnode_type_t::consensus_auditor>(vnetwork_message.sender().type())) {
         return true;
@@ -2027,7 +1556,43 @@ bool xtop_message_filter_recver_is_auditor::filter_sender_from_validator(xvnetwo
         return true;
     }
 
-    return filter_sender_from_associated_validator(vnetwork_message, ec) && filter_sender_from_non_associated_validator(vnetwork_message, ec);
+    auto const & recver = vnetwork_message.receiver();
+    auto const & sender = vnetwork_message.sender();
+
+    auto const sender_associated_group = m_election_data_accessor->parent_group_element(sender.group_address(), sender.logic_epoch(), ec);
+    if (ec) {
+        xinfo("[vnetwork][message_filter] hash: %" PRIx64 ", network %" PRIu32 " node %s receives msg sent to %s from %s. ignored. error: %s",
+              vnetwork_message.hash(),
+              static_cast<std::uint32_t>(m_vhost->network_id().value()),
+              m_vhost->host_node_id().value().c_str(),
+              recver.to_string().c_str(),
+              sender.to_string().c_str(),
+              ec.message().c_str());
+
+        return false;
+    }
+
+    std::shared_ptr<election::cache::xgroup_element_t> auditor_group;
+    if (recver.logic_epoch().empty()) {
+        auditor_group = m_election_data_accessor->group_element_by_logic_time(recver.group_address(), vnetwork_message.logic_time(), ec);
+    } else {
+        auditor_group = m_election_data_accessor->group_element(recver.group_address(), recver.logic_epoch(), ec);
+    }
+
+    if (ec) {
+        xinfo("[vnetwork][message_filter] hash: %" PRIx64 ", network %" PRIu32 " node %s receives msg sent to %s from %s. ignored. error: %s",
+              vnetwork_message.hash(),
+              static_cast<std::uint32_t>(m_vhost->network_id()),
+              m_vhost->host_node_id().value().c_str(),
+              recver.to_string().c_str(),
+              sender.to_string().c_str(),
+              ec.message().c_str());
+
+        return false;
+    }
+
+    return filter_sender_from_associated_validator(vnetwork_message, sender_associated_group, auditor_group, ec) &&
+           filter_sender_from_non_associated_validator(vnetwork_message, sender_associated_group, auditor_group, ec);
 }
 
 bool xtop_message_filter_recver_is_auditor::filter_sender_from_same_auditor_group(xvnetwork_message_t & vnetwork_message, std::error_code & ec) const {
@@ -2035,6 +1600,10 @@ bool xtop_message_filter_recver_is_auditor::filter_sender_from_same_auditor_grou
     assert(common::has<common::xnode_type_t::consensus_auditor>(vnetwork_message.receiver().type()));
     assert(vnetwork_message.sender().logic_epoch().has_value());
     assert(common::has<common::xnode_type_t::consensus_auditor>(vnetwork_message.sender().type()));
+    assert(!broadcast(vnetwork_message.receiver().network_id()));
+    assert(!broadcast(vnetwork_message.receiver().zone_id()));
+    assert(!broadcast(vnetwork_message.receiver().cluster_id()));
+    assert(!broadcast(vnetwork_message.receiver().group_id()));
 
     auto const & recver = vnetwork_message.receiver();
     auto const & sender = vnetwork_message.sender();
@@ -2045,7 +1614,7 @@ bool xtop_message_filter_recver_is_auditor::filter_sender_from_same_auditor_grou
 
     assert(sender.group_address() == recver.group_address());
 
-    if (sender.logic_epoch().has_value() && recver.logic_epoch().has_value() && sender.logic_epoch() != recver.logic_epoch()) {
+    if (recver.logic_epoch().has_value() && sender.logic_epoch() != recver.logic_epoch()) {
         auto const & message = vnetwork_message.message();
 
         ec = xvnetwork_errc2_t::epoch_mismatch;
@@ -2063,57 +1632,9 @@ bool xtop_message_filter_recver_is_auditor::filter_sender_from_same_auditor_grou
     assert(sender.logic_epoch().has_value() || recver.logic_epoch().has_value());
 
     if (recver.logic_epoch().empty()) {
-        auto const & auditor_group = m_election_data_accessor->group_element_by_logic_time(recver.group_address(), vnetwork_message.logic_time(), ec);
+        normalize_message_recver_by_message_sender(vnetwork_message, m_vhost, m_election_data_accessor, ec);
         if (ec) {
-            xinfo("message_filter: %s recv message %" PRIx32 " hash %" PRIx64 " from %s to %s; dropped due to %s",
-                  m_vhost->host_node_id().c_str(),
-                  static_cast<uint32_t>(vnetwork_message.message_id()),
-                  static_cast<uint64_t>(vnetwork_message.hash()),
-                  vnetwork_message.sender().to_string().c_str(),
-                  vnetwork_message.receiver().to_string().c_str(),
-                  ec.message().c_str());
-
             return false;
-        }
-
-        if (recver.account_election_address().empty()) {
-            vnetwork_message.receiver(common::xnode_address_t{ sender.group_address(), sender.logic_epoch() });
-        } else {
-            auto const & node_element = auditor_group->node_element(recver.account_address(), ec);
-            if (ec) {
-                xinfo("message_filter: %s recv message %" PRIx32 " hash %" PRIx64 " from %s to %s; dropped due to %s",
-                      m_vhost->host_node_id().c_str(),
-                      static_cast<uint32_t>(vnetwork_message.message_id()),
-                      static_cast<uint64_t>(vnetwork_message.hash()),
-                      vnetwork_message.sender().to_string().c_str(),
-                      vnetwork_message.receiver().to_string().c_str(),
-                      ec.message().c_str());
-
-                return false;
-            }
-
-            assert(node_element != nullptr);
-
-            if (broadcast(recver.account_election_address().slot_id())) {
-                vnetwork_message.receiver(common::xnode_address_t{ recver.group_address(), common::xaccount_election_address_t{ recver.account_address(), node_element->slot_id() }, auditor_group->logic_epoch() });
-            } else {
-                if (recver.slot_id() != node_element->slot_id()) {
-                    ec = top::vnetwork::xvnetwork_errc2_t::slot_id_mismatch;
-
-                    xinfo("message_filter: %s recv message %" PRIx32 " hash %" PRIx64 " from %s to %s; dropped due to %s; local slot id %" PRIu16 " msg slot id %" PRIu16,
-                          m_vhost->host_node_id().c_str(),
-                          static_cast<uint32_t>(vnetwork_message.message_id()),
-                          static_cast<uint64_t>(vnetwork_message.hash()),
-                          vnetwork_message.sender().to_string().c_str(),
-                          vnetwork_message.receiver().to_string().c_str(),
-                          ec.message().c_str(),
-                          static_cast<uint16_t>(node_element->slot_id()),
-                          static_cast<uint16_t>(recver.slot_id()));
-
-                    return false;
-                }
-                vnetwork_message.receiver(common::xnode_address_t{ recver.group_address(), recver.account_election_address(), auditor_group->logic_epoch() });
-            }
         }
     }
     assert(sender.logic_epoch().has_value() && recver.logic_epoch().has_value());
@@ -2126,6 +1647,10 @@ bool xtop_message_filter_recver_is_auditor::filter_sender_from_different_auditor
     assert(common::has<common::xnode_type_t::consensus_auditor>(vnetwork_message.receiver().type()));
     assert(vnetwork_message.sender().logic_epoch().has_value());
     assert(common::has<common::xnode_type_t::consensus_auditor>(vnetwork_message.sender().type()));
+    assert(!broadcast(vnetwork_message.receiver().network_id()));
+    assert(!broadcast(vnetwork_message.receiver().zone_id()));
+    assert(!broadcast(vnetwork_message.receiver().cluster_id()));
+    assert(!broadcast(vnetwork_message.receiver().group_id()));
 
     auto const & recver = vnetwork_message.receiver();
     auto const & sender = vnetwork_message.sender();
@@ -2138,101 +1663,32 @@ bool xtop_message_filter_recver_is_auditor::filter_sender_from_different_auditor
 
     // fix receiver if necessary.
     if (recver.logic_epoch().empty()) {
-        auto const auditor_group = m_election_data_accessor->group_element_by_logic_time(recver.group_address(), vnetwork_message.logic_time(), ec);
+        normalize_message_recver(vnetwork_message, m_vhost, m_election_data_accessor, ec);
         if (ec) {
-            xinfo("[vnetwork][message_filter] hash: %" PRIx64 ", network %" PRIu32 " node %s receives msg sent to %s from %s. ignored. error: %s",
-                  vnetwork_message.hash(),
-                  static_cast<std::uint32_t>(m_vhost->network_id().value()),
-                  m_vhost->host_node_id().value().c_str(),
-                  recver.to_string().c_str(),
-                  vnetwork_message.sender().to_string().c_str(),
-                  ec.message().c_str());
-
             return false;
-        }
-
-        if (recver.account_election_address().empty()) {
-            vnetwork_message.receiver(common::xnode_address_t{ recver.group_address(), auditor_group->logic_epoch() });
-        } else {
-            auto const & node_element = auditor_group->node_element(recver.account_address(), ec);
-            if (ec) {
-                xinfo("message_filter: %s recv message %" PRIx32 " hash %" PRIx64 " from %s to %s; dropped due to %s",
-                      m_vhost->host_node_id().c_str(),
-                      static_cast<uint32_t>(vnetwork_message.message_id()),
-                      static_cast<uint64_t>(vnetwork_message.hash()),
-                      vnetwork_message.sender().to_string().c_str(),
-                      vnetwork_message.receiver().to_string().c_str(),
-                      ec.message().c_str());
-
-                return false;
-            }
-
-            assert(node_element != nullptr);
-
-            if (broadcast(recver.account_election_address().slot_id())) {
-                vnetwork_message.receiver(common::xnode_address_t{ recver.group_address(), common::xaccount_election_address_t{ recver.account_address(), node_element->slot_id() }, auditor_group->logic_epoch() });
-            } else {
-                if (recver.slot_id() != node_element->slot_id()) {
-                    ec = top::vnetwork::xvnetwork_errc2_t::slot_id_mismatch;
-
-                    xinfo("message_filter: %s recv message %" PRIx32 " hash %" PRIx64 " from %s to %s; dropped due to %s; local slot id %" PRIu16 " msg slot id %" PRIu16,
-                          m_vhost->host_node_id().c_str(),
-                          static_cast<uint32_t>(vnetwork_message.message_id()),
-                          static_cast<uint64_t>(vnetwork_message.hash()),
-                          vnetwork_message.sender().to_string().c_str(),
-                          vnetwork_message.receiver().to_string().c_str(),
-                          ec.message().c_str(),
-                          static_cast<uint16_t>(node_element->slot_id()),
-                          static_cast<uint16_t>(recver.slot_id()));
-
-                    return false;
-                }
-                vnetwork_message.receiver(common::xnode_address_t{ recver.group_address(), recver.account_election_address(), auditor_group->logic_epoch() });
-            }
         }
     }
 
     return false;
 }
 
-bool xtop_message_filter_recver_is_auditor::filter_sender_from_associated_validator(xvnetwork_message_t & vnetwork_message, std::error_code & ec) const {
+bool xtop_message_filter_recver_is_auditor::filter_sender_from_associated_validator(xvnetwork_message_t & vnetwork_message,
+                                                                                    std::shared_ptr<election::cache::xgroup_element_t> const & sender_associated_auditor,
+                                                                                    std::shared_ptr<election::cache::xgroup_element_t> const & recver_auditor,
+                                                                                    std::error_code & ec) const {
     assert(!ec);
     assert(common::has<common::xnode_type_t::consensus_auditor>(vnetwork_message.receiver().type()));
     assert(vnetwork_message.sender().logic_epoch().has_value());
     assert(common::has<common::xnode_type_t::consensus_validator>(vnetwork_message.sender().type()));
+    assert(!broadcast(vnetwork_message.receiver().network_id()));
+    assert(!broadcast(vnetwork_message.receiver().zone_id()));
+    assert(!broadcast(vnetwork_message.receiver().cluster_id()));
+    assert(!broadcast(vnetwork_message.receiver().group_id()));
 
     auto const & sender = vnetwork_message.sender();
     auto const & recver = vnetwork_message.receiver();
 
     assert(common::has<common::xnode_type_t::consensus_validator>(sender.type()));
-
-    auto const sender_associated_group = m_election_data_accessor->parent_group_element(sender.group_address(), sender.logic_epoch(), ec);
-    if (ec) {
-        xinfo("[vnetwork][message_filter] hash: %" PRIx64 ", network %" PRIu32 " node %s receives msg sent to %s from %s. ignored. error: %s",
-              vnetwork_message.hash(),
-              static_cast<std::uint32_t>(m_vhost->network_id().value()),
-              m_vhost->host_node_id().value().c_str(),
-              recver.to_string().c_str(),
-              sender.to_string().c_str(),
-              ec.message().c_str());
-
-        return false;
-    }
-
-    auto const & auditor_group = recver.logic_epoch().has_value() ? m_election_data_accessor->group_element(recver.group_address(), recver.logic_epoch(), ec)
-                                                                  : m_election_data_accessor->group_element_by_logic_time(recver.group_address(), vnetwork_message.logic_time(), ec);
-    if (ec) {
-        xinfo("[vnetwork][message_filter] hash: %" PRIx64 ", network %" PRIu32 " node %s receives msg sent to %s from %s. ignored. error: %s",
-              vnetwork_message.hash(),
-              static_cast<std::uint32_t>(m_vhost->network_id()),
-              m_vhost->host_node_id().value().c_str(),
-              recver.to_string().c_str(),
-              sender.to_string().c_str(),
-              ec.message().c_str());
-
-        return false;
-    }
-
 //#if defined(DEBUG)
 //    auto const & sender_associated_group_address = sender_associated_group->address().group_address();
 //    auto const & auditor_group_address = auditor_group->address().group_address();
@@ -2240,14 +1696,14 @@ bool xtop_message_filter_recver_is_auditor::filter_sender_from_associated_valida
 //    auto const auditor_group_id = auditor_group_address.group_id();
 //#endif
 
-    if (sender_associated_group->address().group_address() != auditor_group->address().group_address()) {
+    if (sender_associated_auditor->address().group_address() != recver_auditor->address().group_address()) {
         // not from associated auditor group.
         return true;
     }
 
-    assert(sender_associated_group->address().group_address() == auditor_group->address().group_address());
+    assert(sender_associated_auditor->address().group_address() == recver_auditor->address().group_address());
     if (recver.logic_epoch().has_value()) {
-        if (sender_associated_group->logic_epoch() != auditor_group->logic_epoch()) {
+        if (sender_associated_auditor->logic_epoch() != recver_auditor->logic_epoch()) {
             ec = xvnetwork_errc2_t::epoch_mismatch;
 
             xinfo("[vnetwork][message_filter] hash: %" PRIx64 ", network %" PRIu32 " node %s receives msg sent to %s from %s. ignored. error: %s",
@@ -2261,7 +1717,7 @@ bool xtop_message_filter_recver_is_auditor::filter_sender_from_associated_valida
             return false;
         }
 
-        if (!recver.account_address().empty() && !auditor_group->contains(recver.account_address())) {
+        if (!recver.account_address().empty() && !recver_auditor->contains(recver.account_address())) {
             ec = top::election::xdata_accessor_errc_t::node_not_found;
 
             xinfo("[vnetwork][message_filter] hash: %" PRIx64 ", network %" PRIu32 " node %s receives msg sent to %s from %s. ignored. error: %s",
@@ -2275,110 +1731,40 @@ bool xtop_message_filter_recver_is_auditor::filter_sender_from_associated_valida
             return false;
         }
     } else {
-        if (auditor_group->logic_epoch() != sender_associated_group->logic_epoch()) {
-            ec = xvnetwork_errc2_t::epoch_mismatch;
-
-            xinfo("[vnetwork][message_filter] hash: %" PRIx64 ", network %" PRIu32 " node %s receives msg sent to %s from %s. ignored. error: %s",
-                  vnetwork_message.hash(),
-                  static_cast<std::uint32_t>(m_vhost->network_id().value()),
-                  m_vhost->host_node_id().value().c_str(),
-                  recver.to_string().c_str(),
-                  sender.to_string().c_str(),
-                  ec.message().c_str());
-
+        normalize_message_recver(vnetwork_message, m_vhost, sender_associated_auditor, ec);
+        if (ec) {
             return false;
-        }
-        assert(auditor_group->logic_epoch() == sender_associated_group->logic_epoch());
-
-        if (recver.account_address().empty()) {
-            vnetwork_message.receiver(common::xnode_address_t{ recver.group_address(), auditor_group->logic_epoch() });
-        } else {
-            auto const & node_element = auditor_group->node_element(recver.account_address(), ec);
-            if (ec) {
-                xinfo("message_filter: %s recv message %" PRIx32 " hash %" PRIx64 " from %s to %s; dropped due to %s",
-                      m_vhost->host_node_id().c_str(),
-                      static_cast<uint32_t>(vnetwork_message.message_id()),
-                      static_cast<uint64_t>(vnetwork_message.hash()),
-                      vnetwork_message.sender().to_string().c_str(),
-                      vnetwork_message.receiver().to_string().c_str(),
-                      ec.message().c_str());
-
-                return false;
-            }
-
-            assert(node_element != nullptr);
-
-            if (broadcast(recver.account_election_address().slot_id())) {
-                vnetwork_message.receiver(common::xnode_address_t{ recver.group_address(), common::xaccount_election_address_t{ recver.account_address(), node_element->slot_id() }, auditor_group->logic_epoch() });
-            } else {
-                if (recver.slot_id() != node_element->slot_id()) {
-                    ec = top::vnetwork::xvnetwork_errc2_t::slot_id_mismatch;
-
-                    xinfo("message_filter: %s recv message %" PRIx32 " hash %" PRIx64 " from %s to %s; dropped due to %s; local slot id %" PRIu16 " msg slot id %" PRIu16,
-                          m_vhost->host_node_id().c_str(),
-                          static_cast<uint32_t>(vnetwork_message.message_id()),
-                          static_cast<uint64_t>(vnetwork_message.hash()),
-                          vnetwork_message.sender().to_string().c_str(),
-                          vnetwork_message.receiver().to_string().c_str(),
-                          ec.message().c_str(),
-                          static_cast<uint16_t>(node_element->slot_id()),
-                          static_cast<uint16_t>(recver.slot_id()));
-
-                    return false;
-                }
-                vnetwork_message.receiver(common::xnode_address_t{ recver.group_address(), recver.account_election_address(), auditor_group->logic_epoch() });
-            }
         }
     }
 
     return false;
 }
 
-bool xtop_message_filter_recver_is_auditor::filter_sender_from_non_associated_validator(xvnetwork_message_t & vnetwork_message, std::error_code & ec) const {
+bool xtop_message_filter_recver_is_auditor::filter_sender_from_non_associated_validator(xvnetwork_message_t & vnetwork_message,
+                                                                                        std::shared_ptr<election::cache::xgroup_element_t> const & sender_associated_auditor,
+                                                                                        std::shared_ptr<election::cache::xgroup_element_t> const & recver_auditor,
+                                                                                        std::error_code & ec) const {
     assert(!ec);
     assert(common::has<common::xnode_type_t::consensus_auditor>(vnetwork_message.receiver().type()));
     assert(vnetwork_message.sender().logic_epoch().has_value());
     assert(common::has<common::xnode_type_t::consensus_validator>(vnetwork_message.sender().type()));
+    assert(!broadcast(vnetwork_message.receiver().network_id()));
+    assert(!broadcast(vnetwork_message.receiver().zone_id()));
+    assert(!broadcast(vnetwork_message.receiver().cluster_id()));
+    assert(!broadcast(vnetwork_message.receiver().group_id()));
 
     auto const & sender = vnetwork_message.sender();
     auto const & recver = vnetwork_message.receiver();
 
     assert(common::has<common::xnode_type_t::consensus_validator>(sender.type()));
 
-    auto const & sender_associated_group = m_election_data_accessor->parent_group_element(sender.group_address(), sender.logic_epoch(), ec);
-    if (ec) {
-        xinfo("[vnetwork][message_filter] hash: %" PRIx64 ", network %" PRIu32 " node %s receives msg sent to %s from %s. ignored. error: %s",
-              vnetwork_message.hash(),
-              static_cast<std::uint32_t>(m_vhost->network_id().value()),
-              m_vhost->host_node_id().value().c_str(),
-              recver.to_string().c_str(),
-              sender.to_string().c_str(),
-              ec.message().c_str());
-
-        return false;
-    }
-
-    auto const & auditor_group = recver.logic_epoch().empty() ? m_election_data_accessor->group_element_by_logic_time(recver.group_address(), vnetwork_message.logic_time(), ec)
-                                                                                            : m_election_data_accessor->group_element(recver.group_address(), recver.logic_epoch(), ec);
-    if (ec) {
-        xinfo("[vnetwork][message_filter] hash: %" PRIx64 ", network %" PRIu32 " node %s receives msg sent to %s from %s. ignored. error: %s",
-              vnetwork_message.hash(),
-              static_cast<std::uint32_t>(m_vhost->network_id().value()),
-              m_vhost->host_node_id().value().c_str(),
-              recver.to_string().c_str(),
-              sender.to_string().c_str(),
-              ec.message().c_str());
-
-        return false;
-    }
-
-    if (sender_associated_group->address().group_address() == auditor_group->address().group_address()) {
+    if (sender_associated_auditor->address().group_address() == recver_auditor->address().group_address()) {
         return true;
     }
 
-    assert(sender_associated_group->address().group_address() != auditor_group->address().group_address());
+    assert(sender_associated_auditor->address().group_address() != recver_auditor->address().group_address());
     if (recver.account_address().has_value()) {
-        if (!auditor_group->contains(recver.account_address())) {
+        if (!recver_auditor->contains(recver.account_address())) {
             ec = top::election::xdata_accessor_errc_t::account_not_found;
 
             xinfo("[vnetwork][message_filter] hash: %" PRIx64 ", network %" PRIu32 " node %s receives msg sent to %s from %s. ignored. error: %s",
@@ -2394,44 +1780,9 @@ bool xtop_message_filter_recver_is_auditor::filter_sender_from_non_associated_va
     }
 
     if (recver.logic_epoch().empty()) {
-        if (recver.account_election_address().empty()) {
-            vnetwork_message.receiver(common::xnode_address_t{ recver.group_address(), auditor_group->logic_epoch() });
-        } else {
-            auto const & node_element = auditor_group->node_element(recver.account_address(), ec);
-            if (ec) {
-                xinfo("message_filter: %s recv message %" PRIx32 " hash %" PRIx64 " from %s to %s; dropped due to %s",
-                      m_vhost->host_node_id().c_str(),
-                      static_cast<uint32_t>(vnetwork_message.message_id()),
-                      static_cast<uint64_t>(vnetwork_message.hash()),
-                      vnetwork_message.sender().to_string().c_str(),
-                      vnetwork_message.receiver().to_string().c_str(),
-                      ec.message().c_str());
-
-                return false;
-            }
-
-            assert(node_element != nullptr);
-
-            if (broadcast(recver.account_election_address().slot_id())) {
-                vnetwork_message.receiver(common::xnode_address_t{ recver.group_address(), common::xaccount_election_address_t{ recver.account_address(), node_element->slot_id() }, auditor_group->logic_epoch() });
-            } else {
-                if (recver.slot_id() != node_element->slot_id()) {
-                    ec = top::vnetwork::xvnetwork_errc2_t::slot_id_mismatch;
-
-                    xinfo("message_filter: %s recv message %" PRIx32 " hash %" PRIx64 " from %s to %s; dropped due to %s; local slot id %" PRIu16 " msg slot id %" PRIu16,
-                          m_vhost->host_node_id().c_str(),
-                          static_cast<uint32_t>(vnetwork_message.message_id()),
-                          static_cast<uint64_t>(vnetwork_message.hash()),
-                          vnetwork_message.sender().to_string().c_str(),
-                          vnetwork_message.receiver().to_string().c_str(),
-                          ec.message().c_str(),
-                          static_cast<uint16_t>(node_element->slot_id()),
-                          static_cast<uint16_t>(recver.slot_id()));
-
-                    return false;
-                }
-                vnetwork_message.receiver(common::xnode_address_t{ recver.group_address(), recver.account_election_address(), auditor_group->logic_epoch() });
-            }
+        normalize_message_recver(vnetwork_message, m_vhost, m_election_data_accessor, ec);
+        if (ec) {
+            return false;
         }
     }
 
@@ -2446,6 +1797,10 @@ xtop_message_filter_recver_is_rec::xtop_message_filter_recver_is_rec(observer_pt
 bool xtop_message_filter_recver_is_rec::filter(xvnetwork_message_t & vnetwork_message, std::error_code & ec) const {
     assert(!ec);
     assert(vnetwork_message.sender().logic_epoch().has_value());
+    assert(!broadcast(vnetwork_message.receiver().network_id()));
+    assert(!broadcast(vnetwork_message.receiver().zone_id()));
+    assert(!broadcast(vnetwork_message.receiver().cluster_id()));
+    assert(!broadcast(vnetwork_message.receiver().group_id()));
 
     if (!common::has<common::xnode_type_t::rec>(vnetwork_message.receiver().type())) {
         return true;
@@ -2458,6 +1813,10 @@ bool xtop_message_filter_recver_is_rec::filter_sender_from_rec(xvnetwork_message
     assert(!ec);
     assert(vnetwork_message.sender().logic_epoch().has_value());
     assert(common::has<common::xnode_type_t::rec>(vnetwork_message.receiver().type()));
+    assert(!broadcast(vnetwork_message.receiver().network_id()));
+    assert(!broadcast(vnetwork_message.receiver().zone_id()));
+    assert(!broadcast(vnetwork_message.receiver().cluster_id()));
+    assert(!broadcast(vnetwork_message.receiver().group_id()));
 
     if (!common::has<common::xnode_type_t::rec>(vnetwork_message.sender().type())) {
         return true;
@@ -2466,57 +1825,9 @@ bool xtop_message_filter_recver_is_rec::filter_sender_from_rec(xvnetwork_message
     auto const & recver = vnetwork_message.receiver();
     auto const & sender = vnetwork_message.sender();
     if (recver.logic_epoch().empty()) {
-        auto const & auditor_group = m_election_data_accessor->group_element_by_logic_time(recver.group_address(), vnetwork_message.logic_time(), ec);
+        normalize_message_recver_by_message_sender(vnetwork_message, m_vhost, m_election_data_accessor, ec);
         if (ec) {
-            xinfo("message_filter: %s recv message %" PRIx32 " hash %" PRIx64 " from %s to %s; dropped due to %s",
-                  m_vhost->host_node_id().c_str(),
-                  static_cast<uint32_t>(vnetwork_message.message_id()),
-                  static_cast<uint64_t>(vnetwork_message.hash()),
-                  vnetwork_message.sender().to_string().c_str(),
-                  vnetwork_message.receiver().to_string().c_str(),
-                  ec.message().c_str());
-
             return false;
-        }
-
-        if (recver.account_address().empty()) {
-            vnetwork_message.receiver(common::xnode_address_t{ recver.group_address(), auditor_group->logic_epoch() });
-        } else {
-            auto const & node_element = auditor_group->node_element(recver.account_address(), ec);
-            if (ec) {
-                xinfo("message_filter: %s recv message %" PRIx32 " hash %" PRIx64 " from %s to %s; dropped due to %s",
-                      m_vhost->host_node_id().c_str(),
-                      static_cast<uint32_t>(vnetwork_message.message_id()),
-                      static_cast<uint64_t>(vnetwork_message.hash()),
-                      vnetwork_message.sender().to_string().c_str(),
-                      vnetwork_message.receiver().to_string().c_str(),
-                      ec.message().c_str());
-
-                return false;
-            }
-
-            assert(node_element != nullptr);
-
-            if (broadcast(recver.slot_id())) {
-                vnetwork_message.receiver(common::xnode_address_t{ recver.group_address(), common::xaccount_election_address_t{ recver.account_address(), node_element->slot_id() }, auditor_group->logic_epoch() });
-            } else {
-                if (recver.slot_id() != node_element->slot_id()) {
-                    ec = top::vnetwork::xvnetwork_errc2_t::slot_id_mismatch;
-
-                    xinfo("message_filter: %s recv message %" PRIx32 " hash %" PRIx64 " from %s to %s; dropped due to %s; local slot id %" PRIu16 " msg slot id %" PRIu16,
-                          m_vhost->host_node_id().c_str(),
-                          static_cast<uint32_t>(vnetwork_message.message_id()),
-                          static_cast<uint64_t>(vnetwork_message.hash()),
-                          vnetwork_message.sender().to_string().c_str(),
-                          vnetwork_message.receiver().to_string().c_str(),
-                          ec.message().c_str(),
-                          static_cast<uint16_t>(node_element->slot_id()),
-                          static_cast<uint16_t>(recver.slot_id()));
-
-                    return false;
-                }
-                vnetwork_message.receiver(common::xnode_address_t{ recver.group_address(), recver.account_election_address(), auditor_group->logic_epoch() });
-            }
         }
     }
 
@@ -2527,6 +1838,10 @@ bool xtop_message_filter_recver_is_rec::filter_sender_from_non_rec(xvnetwork_mes
     assert(!ec);
     assert(vnetwork_message.sender().logic_epoch().has_value());
     assert(common::has<common::xnode_type_t::rec>(vnetwork_message.receiver().type()));
+    assert(!broadcast(vnetwork_message.receiver().network_id()));
+    assert(!broadcast(vnetwork_message.receiver().zone_id()));
+    assert(!broadcast(vnetwork_message.receiver().cluster_id()));
+    assert(!broadcast(vnetwork_message.receiver().group_id()));
 
     if (!common::has<common::xnode_type_t::rec>(vnetwork_message.sender().type())) {
         return true;
@@ -2535,57 +1850,9 @@ bool xtop_message_filter_recver_is_rec::filter_sender_from_non_rec(xvnetwork_mes
 
     // fix receiver if necessary.
     if (recver.logic_epoch().empty()) {
-        auto const rec_group = m_election_data_accessor->group_element_by_logic_time(recver.group_address(), vnetwork_message.logic_time(), ec);
+        normalize_message_recver(vnetwork_message, m_vhost, m_election_data_accessor, ec);
         if (ec) {
-            xinfo("[vnetwork][message_filter] hash: %" PRIx64 ", network %" PRIu32 " node %s receives msg sent to %s from %s. ignored. error: %s",
-                  vnetwork_message.hash(),
-                  static_cast<std::uint32_t>(m_vhost->network_id().value()),
-                  m_vhost->host_node_id().value().c_str(),
-                  recver.to_string().c_str(),
-                  vnetwork_message.sender().to_string().c_str(),
-                  ec.message().c_str());
-
             return false;
-        }
-
-        if (recver.account_election_address().empty()) {
-            vnetwork_message.receiver(common::xnode_address_t{ recver.group_address(), rec_group->logic_epoch() });
-        } else {
-            auto const & node_element = rec_group->node_element(recver.account_address(), ec);
-            if (ec) {
-                xinfo("message_filter: %s recv message %" PRIx32 " hash %" PRIx64 " from %s to %s; dropped due to %s",
-                      m_vhost->host_node_id().c_str(),
-                      static_cast<uint32_t>(vnetwork_message.message_id()),
-                      static_cast<uint64_t>(vnetwork_message.hash()),
-                      vnetwork_message.sender().to_string().c_str(),
-                      vnetwork_message.receiver().to_string().c_str(),
-                      ec.message().c_str());
-
-                return false;
-            }
-
-            assert(node_element != nullptr);
-
-            if (broadcast(recver.slot_id())) {
-                vnetwork_message.receiver(common::xnode_address_t{ recver.group_address(), common::xaccount_election_address_t{ recver.account_address(), node_element->slot_id() }, rec_group->logic_epoch() });
-            } else {
-                if (recver.slot_id() != node_element->slot_id()) {
-                    ec = top::vnetwork::xvnetwork_errc2_t::slot_id_mismatch;
-
-                    xinfo("message_filter: %s recv message %" PRIx32 " hash %" PRIx64 " from %s to %s; dropped due to %s; local slot id %" PRIu16 " msg slot id %" PRIu16,
-                          m_vhost->host_node_id().c_str(),
-                          static_cast<uint32_t>(vnetwork_message.message_id()),
-                          static_cast<uint64_t>(vnetwork_message.hash()),
-                          vnetwork_message.sender().to_string().c_str(),
-                          vnetwork_message.receiver().to_string().c_str(),
-                          ec.message().c_str(),
-                          static_cast<uint16_t>(node_element->slot_id()),
-                          static_cast<uint16_t>(recver.slot_id()));
-
-                    return false;
-                }
-                vnetwork_message.receiver(common::xnode_address_t{ recver.group_address(), recver.account_election_address(), rec_group->logic_epoch() });
-            }
         }
     }
 
@@ -2600,6 +1867,10 @@ xtop_message_filter_recver_is_zec::xtop_message_filter_recver_is_zec(observer_pt
 bool xtop_message_filter_recver_is_zec::filter(xvnetwork_message_t & vnetwork_message, std::error_code & ec) const {
     assert(!ec);
     assert(vnetwork_message.sender().logic_epoch().has_value());
+    assert(!broadcast(vnetwork_message.receiver().network_id()));
+    assert(!broadcast(vnetwork_message.receiver().zone_id()));
+    assert(!broadcast(vnetwork_message.receiver().cluster_id()));
+    assert(!broadcast(vnetwork_message.receiver().group_id()));
 
     if (!common::has<common::xnode_type_t::zec>(vnetwork_message.receiver().type())) {
         return true;
@@ -2612,6 +1883,10 @@ bool xtop_message_filter_recver_is_zec::filter_sender_from_zec(xvnetwork_message
     assert(!ec);
     assert(vnetwork_message.sender().logic_epoch().has_value());
     assert(common::has<common::xnode_type_t::zec>(vnetwork_message.receiver().type()));
+    assert(!broadcast(vnetwork_message.receiver().network_id()));
+    assert(!broadcast(vnetwork_message.receiver().zone_id()));
+    assert(!broadcast(vnetwork_message.receiver().cluster_id()));
+    assert(!broadcast(vnetwork_message.receiver().group_id()));
 
     if (!common::has<common::xnode_type_t::zec>(vnetwork_message.sender().type())) {
         return true;
@@ -2620,57 +1895,9 @@ bool xtop_message_filter_recver_is_zec::filter_sender_from_zec(xvnetwork_message
     auto const & recver = vnetwork_message.receiver();
     auto const & sender = vnetwork_message.sender();
     if (recver.logic_epoch().empty()) {
-        auto const & zec_group = m_election_data_accessor->group_element_by_logic_time(recver.group_address(), vnetwork_message.logic_time(), ec);
+        normalize_message_recver_by_message_sender(vnetwork_message, m_vhost, m_election_data_accessor, ec);
         if (ec) {
-            xinfo("message_filter: %s recv message %" PRIx32 " hash %" PRIx64 " from %s to %s; dropped due to %s",
-                  m_vhost->host_node_id().c_str(),
-                  static_cast<uint32_t>(vnetwork_message.message_id()),
-                  static_cast<uint64_t>(vnetwork_message.hash()),
-                  vnetwork_message.sender().to_string().c_str(),
-                  vnetwork_message.receiver().to_string().c_str(),
-                  ec.message().c_str());
-
             return false;
-        }
-
-        if (recver.account_address().empty()) {
-            vnetwork_message.receiver(common::xnode_address_t{ recver.group_address(), zec_group->logic_epoch() });
-        } else {
-            auto const & node_element = zec_group->node_element(recver.account_address(), ec);
-            if (ec) {
-                xinfo("message_filter: %s recv message %" PRIx32 " hash %" PRIx64 " from %s to %s; dropped due to %s",
-                      m_vhost->host_node_id().c_str(),
-                      static_cast<uint32_t>(vnetwork_message.message_id()),
-                      static_cast<uint64_t>(vnetwork_message.hash()),
-                      vnetwork_message.sender().to_string().c_str(),
-                      vnetwork_message.receiver().to_string().c_str(),
-                      ec.message().c_str());
-
-                return false;
-            }
-
-            assert(node_element != nullptr);
-
-            if (broadcast(recver.slot_id())) {
-                vnetwork_message.receiver(common::xnode_address_t{ recver.group_address(), common::xaccount_election_address_t{ recver.account_address(), node_element->slot_id() }, zec_group->logic_epoch() });
-            } else {
-                if (recver.slot_id() != node_element->slot_id()) {
-                    ec = top::vnetwork::xvnetwork_errc2_t::slot_id_mismatch;
-
-                    xinfo("message_filter: %s recv message %" PRIx32 " hash %" PRIx64 " from %s to %s; dropped due to %s; local slot id %" PRIu16 " msg slot id %" PRIu16,
-                          m_vhost->host_node_id().c_str(),
-                          static_cast<uint32_t>(vnetwork_message.message_id()),
-                          static_cast<uint64_t>(vnetwork_message.hash()),
-                          vnetwork_message.sender().to_string().c_str(),
-                          vnetwork_message.receiver().to_string().c_str(),
-                          ec.message().c_str(),
-                          static_cast<uint16_t>(node_element->slot_id()),
-                          static_cast<uint16_t>(recver.slot_id()));
-
-                    return false;
-                }
-                vnetwork_message.receiver(common::xnode_address_t{ recver.group_address(), recver.account_election_address(), zec_group->logic_epoch() });
-            }
         }
     }
 
@@ -2681,6 +1908,10 @@ bool xtop_message_filter_recver_is_zec::filter_sender_from_non_zec(xvnetwork_mes
     assert(!ec);
     assert(vnetwork_message.sender().logic_epoch().has_value());
     assert(common::has<common::xnode_type_t::zec>(vnetwork_message.receiver().type()));
+    assert(!broadcast(vnetwork_message.receiver().network_id()));
+    assert(!broadcast(vnetwork_message.receiver().zone_id()));
+    assert(!broadcast(vnetwork_message.receiver().cluster_id()));
+    assert(!broadcast(vnetwork_message.receiver().group_id()));
 
     if (!common::has<common::xnode_type_t::zec>(vnetwork_message.sender().type())) {
         return true;
@@ -2689,23 +1920,9 @@ bool xtop_message_filter_recver_is_zec::filter_sender_from_non_zec(xvnetwork_mes
 
     // fix receiver if necessary.
     if (recver.logic_epoch().empty()) {
-        auto const zec_group = m_election_data_accessor->group_element_by_logic_time(recver.group_address(), vnetwork_message.logic_time(), ec);
+        normalize_message_recver(vnetwork_message, m_vhost, m_election_data_accessor, ec);
         if (ec) {
-            xinfo("[vnetwork][message_filter] hash: %" PRIx64 ", network %" PRIu32 " node %s receives msg sent to %s from %s. ignored. error: %s",
-                  vnetwork_message.hash(),
-                  static_cast<std::uint32_t>(m_vhost->network_id().value()),
-                  m_vhost->host_node_id().value().c_str(),
-                  recver.to_string().c_str(),
-                  vnetwork_message.sender().to_string().c_str(),
-                  ec.message().c_str());
-
             return false;
-        }
-
-        if (recver.account_election_address().empty()) {
-            vnetwork_message.receiver(common::xnode_address_t{ recver.group_address(), zec_group->logic_epoch() });
-        } else {
-            vnetwork_message.receiver(common::xnode_address_t{ recver.group_address(), recver.account_election_address(), zec_group->logic_epoch() });
         }
     }
 

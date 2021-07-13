@@ -624,6 +624,9 @@ void xtop_vhost::do_handle_network_data() {
                     std::error_code ec;
                     m_filter_manager->filter_message(vnetwork_message, ec);
                     if (ec) {
+                        xinfo("[vnetwork] message filter: message id %" PRIx32 " hash %" PRIx64 " filted out",
+                              static_cast<uint32_t>(message.id()),
+                              static_cast<uint64_t>(message.hash()));
                         continue;
                     }
 

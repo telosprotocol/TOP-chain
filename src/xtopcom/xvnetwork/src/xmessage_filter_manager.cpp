@@ -18,9 +18,9 @@ void xtop_message_filter_manager::start() {
     assert(m_filters.empty());
 
 #define ADD_FILTER(filter_name) m_filters.push_back(top::make_unique<filter_name>(filter_name{ m_vhost, m_election_data_accessor }))
-    ADD_FILTER(xtop_message_filter_message_id);
     ADD_FILTER(xtop_message_filter_sender);
     ADD_FILTER(xtop_message_filter_recver);
+    ADD_FILTER(xtop_message_filter_message_id);
     ADD_FILTER(xtop_message_filter_recver_is_auditor);
     ADD_FILTER(xtop_message_filter_recver_is_validator);
     ADD_FILTER(xtop_message_filter_recver_is_rec);

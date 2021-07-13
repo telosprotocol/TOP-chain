@@ -65,7 +65,7 @@ public:
                                                            std::error_code & ec) const override;
 
     std::shared_ptr<xgroup_element_t> parent_group_element(common::xgroup_address_t const & child_group_address,
-                                                           common::xlogical_version_t const & child_logical_version,
+                                                           common::xlogic_epoch_t const & child_logic_epoch,
                                                            std::error_code & ec) const override;
 
     common::xversion_t version_from(common::xip2_t const & xip2, std::error_code & ec) const override;

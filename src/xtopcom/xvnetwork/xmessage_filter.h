@@ -226,27 +226,47 @@ private:
 
     /// @brief filter message sent from validator from different group but both sender and receiver have the same associated auditor group.
     /// @param vnetwork_message message to be verified.
+    /// @param sender_associated_auditor message's sender associated auditor group element.
+    /// @param recver_associated_auditor message's recver associated auditor group element.
     /// @param ec log the verification error if the filter captures violence.
     /// @return true if vnetwork_message need further verification, otherwise returns false.
-    bool filter_sender_from_different_validator_with_same_associated_auditor_group(xvnetwork_message_t & vnetwork_message, std::error_code & ec) const;
+    bool filter_sender_from_different_validator_with_same_associated_auditor_group(xvnetwork_message_t & vnetwork_message,
+                                                                                   std::shared_ptr<election::cache::xgroup_element_t> const & sender_associated_auditor,
+                                                                                   std::shared_ptr<election::cache::xgroup_element_t> const & recver_associated_auditor,
+                                                                                   std::error_code & ec) const;
 
     /// @brief filter message sent from validator from different group but sender and receiver have different associated auditor group.
     /// @param vnetwork_message message to be verified.
+    /// @param sender_associated_auditor message's sender associated auditor group element.
+    /// @param recver_associated_auditor message's recver associated auditor group element.
     /// @param ec log the verification error if the filter captures violence.
     /// @return true if vnetwork_message need further verification, otherwise returns false.
-    bool filter_sender_from_different_validator_without_same_associated_auditor_group(xvnetwork_message_t & vnetwork_message, std::error_code & ec) const;
+    bool filter_sender_from_different_validator_without_same_associated_auditor_group(xvnetwork_message_t & vnetwork_message,
+                                                                                      std::shared_ptr<election::cache::xgroup_element_t> const & sender_associated_auditor,
+                                                                                      std::shared_ptr<election::cache::xgroup_element_t> const & recver_associated_auditor,
+                                                                                      std::error_code & ec) const;
 
     /// @brief filter message sent from associated auditor.
     /// @param vnetwork_message message to be verified.
+    /// @param sender_auditor auditor group element object message sender located in.
+    /// @param recver_associated_auditor message's recver associated auditor group element.
     /// @param ec log the verification error if the filter captures violence.
     /// @return true if vnetwork_message need further verification, otherwise returns false.
-    bool filter_sender_from_associated_auditor(xvnetwork_message_t & vnetwork_message, std::error_code & ec) const;
+    bool filter_sender_from_associated_auditor(xvnetwork_message_t & vnetwork_message,
+                                               std::shared_ptr<election::cache::xgroup_element_t> const & sender_auditor,
+                                               std::shared_ptr<election::cache::xgroup_element_t> const & recver_associated_auditor,
+                                               std::error_code & ec) const;
 
     /// @brief filter message sent from non-associated auditor.
     /// @param vnetwork_message message to be verified.
+    /// @param sender_auditor auditor group element object message sender located in.
+    /// @param recver_associated_auditor message's recver associated auditor group element.
     /// @param ec log the verification error if the filter captures violence.
     /// @return true if vnetwork_message need further verification, otherwise returns false.
-    bool filter_sender_from_non_associated_auditor(xvnetwork_message_t & vnetwork_message, std::error_code & ec) const;
+    bool filter_sender_from_non_associated_auditor(xvnetwork_message_t & vnetwork_message,
+                                                   std::shared_ptr<election::cache::xgroup_element_t> const & sender_auditor,
+                                                   std::shared_ptr<election::cache::xgroup_element_t> const & recver_associated_auditor,
+                                                   std::error_code & ec) const;
 };
 
 class xtop_message_filter_recver_is_auditor final : public xmessage_filter_base_t {
@@ -322,13 +342,19 @@ private:
     /// @param vnetwork_message message to be verified.
     /// @param ec log the verification error if the filter captures violence.
     /// @return true if vnetwork_message need further verification, otherwise returns false.
-    bool filter_sender_from_associated_validator(xvnetwork_message_t & vnetwork_message, std::error_code & ec) const;
+    bool filter_sender_from_associated_validator(xvnetwork_message_t & vnetwork_message,
+                                                 std::shared_ptr<election::cache::xgroup_element_t> const & sender_associated_auditor,
+                                                 std::shared_ptr<election::cache::xgroup_element_t> const & recver_auditor,
+                                                 std::error_code & ec) const;
 
     /// @brief filter message sent from non-associated auditor.
     /// @param vnetwork_message message to be verified.
     /// @param ec log the verification error if the filter captures violence.
     /// @return true if vnetwork_message need further verification, otherwise returns false.
-    bool filter_sender_from_non_associated_validator(xvnetwork_message_t & vnetwork_message, std::error_code & ec) const;
+    bool filter_sender_from_non_associated_validator(xvnetwork_message_t & vnetwork_message,
+                                                     std::shared_ptr<election::cache::xgroup_element_t> const & sender_associated_auditor,
+                                                     std::shared_ptr<election::cache::xgroup_element_t> const & recver_auditor,
+                                                     std::error_code & ec) const;
 };
 
 class xtop_message_filter_recver_is_rec final : public xmessage_filter_base_t {
