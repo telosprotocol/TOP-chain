@@ -195,7 +195,7 @@ int xp2pudp_t::send(xpacket_t& packet)
 
 #ifdef XENABLE_P2P_BENDWIDTH
     transport::protobuf::RoutingMessage message;
-    if (!message.ParseFromArray((const char*)packet.get_body().data() + enum_xip2_header_len,packet.get_body().size() - enum_xip2_header_len))
+    if (!message.ParseFromArray((const char*)packet.get_body().data() + enum_xbase_header_len,packet.get_body().size() - enum_xbase_header_len))
     {
         TOP_ERROR("Message ParseFromString from string failed!");
         return enum_xcode_successful;
@@ -260,7 +260,7 @@ int32_t xp2pudp_t::recv(
     TransportFilter::Instance()->AddTrafficData(packet.get_size(), packet.get_from_ip_addr());
 #endif
 
-    if (packet.get_size() <= (int)enum_xip2_header_len) {
+    if (packet.get_size() <= (int)enum_xbase_header_len) {
         TOP_ERROR("packet.size(%d) invalid", (int)packet.get_size());
         return 0;
     }
@@ -282,7 +282,7 @@ int32_t xp2pudp_t::recv(
 
 #ifdef XENABLE_P2P_BENDWIDTH
     transport::protobuf::RoutingMessage message;
-    if (!message.ParseFromArray((const char*)packet.get_body().data() + enum_xip2_header_len,packet.get_body().size() - enum_xip2_header_len))
+    if (!message.ParseFromArray((const char*)packet.get_body().data() + enum_xbase_header_len,packet.get_body().size() - enum_xbase_header_len))
     {
         TOP_ERROR("Message ParseFromString from string failed!");
         return enum_xcode_successful;
@@ -428,7 +428,7 @@ void XudpSocket::Stop() {
 }
 
 int XudpSocket::SendToLocal(base::xpacket_t& packet) {
-    if (packet.get_size() <= (int)enum_xip2_header_len) {
+    if (packet.get_size() <= (int)enum_xbase_header_len) {
         TOP_ERROR("<blueshi> packet.size(%d) invalid", (int)packet.get_size());
         return kTransportFailed;
     }
@@ -437,24 +437,14 @@ int XudpSocket::SendToLocal(base::xpacket_t& packet) {
     return kTransportSuccess;
 }
 
-int XudpSocket::SendToLocal(const xbyte_buffer_t& data) {
+int XudpSocket::SendDataWithProp(std::string const & data,const std::string & peer_ip,uint16_t peer_port,UdpPropertyPtr& udp_property,uint16_t priority_flag){
     uint8_t local_buf[kUdpPacketBufferSize];
-    base::xpacket_t packet(base::xcontext_t::instance(), local_buf, sizeof(local_buf), 0, 0,false);
-    packet.get_body().push_back((uint8_t*)data.data(), data.size());  // NOLINT
-    return SendToLocal(packet);
-}
-
-int XudpSocket::SendData(
-        const xbyte_buffer_t& data,
-        const std::string& peer_ip,
-        uint16_t peer_port) {
-    uint8_t local_buf[kUdpPacketBufferSize];
-    base::xpacket_t packet(base::xcontext_t::instance(), local_buf, sizeof(local_buf), 0, 0,false);
-    packet.get_body().push_back((uint8_t*)data.data(), data.size());  // NOLINT
+    base::xpacket_t packet(base::xcontext_t::instance(), local_buf, sizeof(local_buf), 0, 0, false);
+    packet.get_body().push_back((uint8_t *)data.data(), data.size());  // NOLINT
     packet.set_to_ip_addr(peer_ip);
     packet.set_to_ip_port(peer_port);
-    AddXip2Header(packet);
-    return SendData(packet);
+    AddXip2Header(packet,priority_flag);
+    return SendDataWithProp(packet, udp_property);
 }
 
 int XudpSocket::SendData(base::xpacket_t& packet) {
@@ -504,7 +494,7 @@ int XudpSocket::SendDataWithProp(
     if (packet.get_to_ip_port() == 0) {
         TOP_WARN("port is zero.");
         transport::protobuf::RoutingMessage pro_message;
-        if (!pro_message.ParseFromArray((const char*)packet.get_body().data() + enum_xip2_header_len, packet.get_body().size() - enum_xip2_header_len))
+        if (!pro_message.ParseFromArray((const char*)packet.get_body().data() + enum_xbase_header_len, packet.get_body().size() - enum_xbase_header_len))
         {
             TOP_ERROR("Message ParseFromString from string failed!");
             return kTransportFailed;
@@ -652,27 +642,13 @@ bool XudpSocket::CloseXudp(xp2pudp_t* xudpobj_ptr)
     return true;
 }
 
-// parse xip2_header from packet
-Xip2Header* XudpSocket::ParserXip2Header(base::xpacket_t& packet)
-{
-    if(packet.get_size() < (int)enum_xip2_header_len)//test size of header and body together
-    {
-        TOP_WARN("xip2_header_len invalid, packet_size(%d) smaller than enum_xip2_header_len(%d)",
-                packet.get_body().size(),
-                enum_xip2_header_len);
-        return nullptr;
-    }
-    if(packet.get_header().size() > 0)
-        return (Xip2Header*)(packet.get_header().data());
-    else
-        return (Xip2Header*)(packet.get_body().data());
-}
-
-
-void XudpSocket::AddXip2Header(base::xpacket_t& packet) {
-    _xip2_header header;
+void XudpSocket::AddXip2Header(base::xpacket_t & packet, uint16_t priority_flag) {
+    _xbase_header header;
     memset(&header, 0, sizeof(header));  // TODO(blueshi): init header
-    packet.get_body().push_front((uint8_t*)&header, enum_xip2_header_len);
+
+    header.flags |= priority_flag;
+    header.ver_protocol = kVersionV1ProtocolProtobuf;
+    packet.get_body().push_front((uint8_t *)&header, enum_xbase_header_len);
 }
 
 bool XudpSocket::GetSocketStatus() {

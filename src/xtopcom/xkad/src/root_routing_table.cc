@@ -75,8 +75,7 @@ RootRoutingTable::RootRoutingTable(std::shared_ptr<transport::Transport> transpo
 // }
 
 bool RootRoutingTable::Init() {
-
-    // first node will directly set public ip:port 
+    // first node will directly set public ip:port
     // other nodes need to set this value after bootstrap response.
     if (get_local_node_info()->first_node()) {
         get_local_node_info()->set_public_ip(get_local_node_info()->local_ip());
@@ -174,27 +173,14 @@ bool RootRoutingTable::UnInit() {
     return true;
 }
 
-int RootRoutingTable::SendData(const xbyte_buffer_t & data, const std::string & peer_ip, uint16_t peer_port, uint16_t priority) {
-    uint8_t local_buf[kUdpPacketBufferSize];
-    base::xpacket_t packet(base::xcontext_t::instance(), local_buf, sizeof(local_buf), 0, 0, false);
-    _xip2_header header;
-    memset(&header, 0, sizeof(header));
-    header.flags |= priority;
-    packet.get_body().push_back((uint8_t *)&header, enum_xip2_header_len);
-    packet.get_body().push_back((uint8_t *)data.data(), data.size());  // NOLINT
-    packet.set_to_ip_addr(peer_ip);
-    packet.set_to_ip_port(peer_port);
-    return transport_ptr_->SendData(packet);
-}
-
 int RootRoutingTable::SendData(transport::protobuf::RoutingMessage & message, const std::string & peer_ip, uint16_t peer_port) {
-    std::string msg;
-    if (!message.SerializeToString(&msg)) {
+    std::string data;
+    if (!message.SerializeToString(&data)) {
         xdbg("RoutingMessage SerializeToString failed!");
         return kKadFailed;
     }
-    xbyte_buffer_t data{msg.begin(), msg.end()};
-    return SendData(data, peer_ip, peer_port, message.priority());
+    transport::UdpPropertyPtr udp_property;
+    return transport_ptr_->SendDataWithProp(data, peer_ip, peer_port, udp_property, message.priority());
 }
 
 int RootRoutingTable::SendPing(transport::protobuf::RoutingMessage & message, const std::string & peer_ip, uint16_t peer_port) {
@@ -208,29 +194,12 @@ int RootRoutingTable::SendPing(transport::protobuf::RoutingMessage & message, co
 }
 
 int RootRoutingTable::SendData(transport::protobuf::RoutingMessage & message, NodeInfoPtr node) {
-    // if (node->same_vlan) {
-    //     return SendData(message, node->local_ip, node->local_port);
-    // }
-
-    std::string msg;
-    if (!message.SerializeToString(&msg)) {
+    std::string data;
+    if (!message.SerializeToString(&data)) {
         xdbg("RoutingMessage SerializeToString failed!");
         return kKadFailed;
     }
-    xbyte_buffer_t data{msg.begin(), msg.end()};
-    //	return SendData(data, peer_ip, peer_port, message.priority());
-
-    uint8_t local_buf[kUdpPacketBufferSize];
-    base::xpacket_t packet(base::xcontext_t::instance(), local_buf, sizeof(local_buf), 0, 0, false);
-    _xip2_header header;
-    memset(&header, 0, sizeof(header));
-    header.flags |= message.priority();
-    packet.get_body().push_back((uint8_t *)&header, enum_xip2_header_len);
-    packet.get_body().push_back((uint8_t *)data.data(), data.size());  // NOLINT
-    packet.set_to_ip_addr(node->public_ip);
-    packet.set_to_ip_port(node->public_port);
-    xdbg("xkad send message.type:%d size:%d", message.type(), packet.get_size());
-    return transport_ptr_->SendDataWithProp(packet, node->udp_property);
+    return transport_ptr_->SendDataWithProp(data, node->public_ip, node->public_port, node->udp_property, message.priority());
 }
 
 int RootRoutingTable::MultiJoin(const std::set<std::pair<std::string, uint16_t>> & boot_endpoints) {
@@ -546,17 +515,11 @@ int RootRoutingTable::AddNode(NodeInfoPtr node) {
         NodesLock lock(nodes_mutex_);
         SortNodesByTargetXid(get_local_node_info()->kad_key(), nodes_.size());
         if (!NewNodeReplaceOldNode(node, true)) {
-            xinfo("newnodereplaceoldnode failed. node_id:%s, node_bucket:%d, local:%s",
-                  (node->node_id).c_str(),
-                  node->bucket_index,
-                  (get_local_node_info()->kad_key()).c_str());
+            xinfo("newnodereplaceoldnode failed. node_id:%s, node_bucket:%d, local:%s", (node->node_id).c_str(), node->bucket_index, (get_local_node_info()->kad_key()).c_str());
             return kKadFailed;
         }
 
-        xdbg("newnodereplaceoldnode success. node_id:%s, node_bucket:%d, local:%s",
-             node->node_id.c_str(),
-             node->bucket_index,
-             (get_local_node_info()->kad_key()).c_str());
+        xdbg("newnodereplaceoldnode success. node_id:%s, node_bucket:%d, local:%s", node->node_id.c_str(), node->bucket_index, (get_local_node_info()->kad_key()).c_str());
 
         // if (HasNode(node)) {
         //     xdbg("kHandshake: HasNode");
@@ -597,10 +560,8 @@ void RootRoutingTable::DumpNodes() {
     {
         std::string fmt("all nodes:\n");
         xdbg("%s", fmt.c_str());
-        fmt = base::StringUtil::str_fmt("self]: %s, dis(0), pub(%s:%d)\n",
-                                        (get_local_node_info()->kad_key()).c_str(),
-                                        get_local_node_info()->public_ip().c_str(),
-                                        (int)get_local_node_info()->public_port());
+        fmt = base::StringUtil::str_fmt(
+            "self]: %s, dis(0), pub(%s:%d)\n", (get_local_node_info()->kad_key()).c_str(), get_local_node_info()->public_ip().c_str(), (int)get_local_node_info()->public_port());
         xdbg("%s", fmt.c_str());
         for (int i = 0; i < (int)nodes_.size(); ++i) {
             // fmt += base::StringUtil::str_fmt("%d: count(%d)\n", kv.first, kv.second);
@@ -1443,10 +1404,7 @@ void RootRoutingTable::OnHeartbeatFailed(const std::string & ip, uint16_t port) 
 
 void RootRoutingTable::HandleHandshake(transport::protobuf::RoutingMessage & message, base::xpacket_t & packet) {
     if (!IsDestination(message.des_node_id(), false)) {
-        xwarn("handshake message destination id error![%s][%s][%s]",
-              (message.src_node_id()).c_str(),
-              (message.des_node_id()).c_str(),
-              (get_local_node_info()->kad_key()).c_str());
+        xwarn("handshake message destination id error![%s][%s][%s]", message.src_node_id().c_str(), message.des_node_id().c_str(), get_local_node_info()->kad_key().c_str());
         return;
     }
 
