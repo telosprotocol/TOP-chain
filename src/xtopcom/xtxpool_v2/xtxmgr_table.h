@@ -25,7 +25,7 @@ public:
       : m_xtable_info(xtable_info), m_send_tx_queue(xtable_info), m_new_receipt_queue(xtable_info), m_pending_accounts(xtable_info) {
     }
 
-    int32_t push_send_tx(const std::shared_ptr<xtx_entry> & tx, uint64_t latest_nonce);
+    int32_t push_send_tx(const std::shared_ptr<xtx_entry> & tx, uint64_t latest_nonce, bool & is_cached_nonce);
     int32_t push_receipt(const std::shared_ptr<xtx_entry> & tx);
     std::shared_ptr<xtx_entry> pop_tx(const tx_info_t & txinfo, bool clear_follower);
     void update_id_state(const tx_info_t & txinfo, base::xtable_shortid_t table_sid, uint64_t receiptid, uint64_t nonce);

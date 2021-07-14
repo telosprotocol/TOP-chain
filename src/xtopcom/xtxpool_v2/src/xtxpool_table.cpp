@@ -84,7 +84,8 @@ int32_t xtxpool_table_t::push_send_tx(const std::shared_ptr<xtx_entry> & tx) {
     }
 
     uint64_t latest_nonce;
-    bool result = get_account_latest_nonce(tx->get_tx()->get_source_addr(), latest_nonce);
+    bool is_cached_nonce = false;
+    bool result = get_account_latest_nonce(tx->get_tx()->get_source_addr(), latest_nonce, is_cached_nonce);
     if (!result) {
         // todo : push to non_ready_accounts
         // std::lock_guard<std::mutex> lck(m_non_ready_mutex);
@@ -101,7 +102,7 @@ int32_t xtxpool_table_t::push_send_tx(const std::shared_ptr<xtx_entry> & tx) {
 
     {
         std::lock_guard<std::mutex> lck(m_mgr_mutex);
-        ret = m_txmgr_table.push_send_tx(tx, latest_nonce);
+        ret = m_txmgr_table.push_send_tx(tx, latest_nonce, is_cached_nonce);
     }
     if (ret != xsuccess) {
         // XMETRICS_COUNTER_INCREMENT("txpool_push_tx_send_fail", 1);
@@ -493,7 +494,7 @@ int32_t xtxpool_table_t::verify_receipt_tx(const xcons_transaction_ptr_t & tx) c
     return xsuccess;
 }
 
-bool xtxpool_table_t::get_account_latest_nonce(const std::string account_addr, uint64_t & latest_nonce) const {
+bool xtxpool_table_t::get_account_latest_nonce(const std::string account_addr, uint64_t & latest_nonce, bool & is_cached_nonce) const {
     {
         std::lock_guard<std::mutex> lck(m_mgr_mutex);
         uint64_t latest_nonce_cache;
@@ -501,6 +502,7 @@ bool xtxpool_table_t::get_account_latest_nonce(const std::string account_addr, u
         if (ret)  {
             xdbg("xtxpool_table_t::get_account_latest_nonce get by cache succ account:%s,nonce:%llu", account_addr.c_str(), latest_nonce_cache);
             latest_nonce = latest_nonce_cache;
+            is_cached_nonce = true;
             return true;
         }
     }
@@ -521,6 +523,7 @@ bool xtxpool_table_t::get_account_latest_nonce(const std::string account_addr, u
     }
 
     latest_nonce = account_basic_info.get_latest_state()->account_send_trans_number();
+    is_cached_nonce = false;
     return true;
 }
 
