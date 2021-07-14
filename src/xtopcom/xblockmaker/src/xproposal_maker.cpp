@@ -265,6 +265,11 @@ bool xproposal_maker_t::verify_proposal_input(base::xvblock_t *proposal_block, x
         return false;
     }
 
+    ret = get_txpool()->verify_txs(get_account(), origin_txs);
+    if (ret != xsuccess) {
+        return false;
+    }
+
     table_para.set_origin_txs(origin_txs);
     table_para.set_other_accounts(other_accounts);
     return true;
