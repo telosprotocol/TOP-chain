@@ -84,8 +84,8 @@ const xcons_transaction_ptr_t xpeer_table_unconfirmed_txs_t::get_first_receipt()
 }
 
 void xpeer_tables_t::push_tx(const xcons_transaction_ptr_t & tx) {
-    base::xvaccount_t vaccount(tx->get_target_addr());
-    auto peer_table_sid = vaccount.get_short_table_id();
+    xassert(tx->is_recv_tx());
+    auto peer_table_sid = tx->get_self_tableid(); // note,here should use self tableid of origin tx target account
     xtxpool_info("xpeer_tables_t::push_tx tx:%s,peer table sid:%d,receipt id:%llu", tx->dump(true).c_str(), peer_table_sid, tx->get_last_action_receipt_id());
     auto it = m_peer_tables.find(peer_table_sid);
     if (it != m_peer_tables.end()) {
@@ -174,7 +174,7 @@ int32_t xunconfirmed_account_t::update(xblock_t * latest_committed_block, const 
             for (auto & tx_info : m_unconfirmed_txs) {
                 // clear confirmed tx receiptid
                 m_peer_tables->erase(tx_info.second->get_peer_table_sid(), tx_info.second->get_receipt_id());
-                xtxpool_info("xunconfirmed_account_t::update unconfirm pop tx,account=%s,tx=%s", account_addr.c_str(), base::xstring_utl::to_hex(tx_info.first).c_str());
+                xtxpool_info("xunconfirmed_account_t::update pop tx,account=%s,tableid=%d,receiptid=%ld,tx=%s", account_addr.c_str(), tx_info.second->get_peer_table_sid(), tx_info.second->get_receipt_id(), base::xstring_utl::to_hex(tx_info.first).c_str());
             }
             m_unconfirmed_txs.clear();
             break;
@@ -232,9 +232,9 @@ int32_t xunconfirmed_account_t::update(xblock_t * latest_committed_block, const 
     for (auto & hash : confirm_txs) {
         auto it = m_unconfirmed_txs.find(hash);
         if (it != m_unconfirmed_txs.end()) {
+            xtxpool_info("xunconfirmed_account_t::update pop tx,account=%s,tableid=%d,receiptid=%ld,tx=%s", account_addr.c_str(), it->second->get_peer_table_sid(), it->second->get_receipt_id(), base::xstring_utl::to_hex(hash).c_str());
             m_peer_tables->erase(it->second->get_peer_table_sid(), it->second->get_receipt_id());
             m_unconfirmed_txs.erase(it);
-            xtxpool_info("xunconfirmed_account_t::update unconfirm pop tx,account=%s,tx=%s", account_addr.c_str(), base::xstring_utl::to_hex(hash).c_str());
         }
     }
 
@@ -244,14 +244,13 @@ int32_t xunconfirmed_account_t::update(xblock_t * latest_committed_block, const 
 
     for (auto & it_s : unconfirmed_txs) {
         auto & tx = it_s.second;
-        base::xvaccount_t vaccount(tx->get_target_addr());
-        auto peer_table_sid = vaccount.get_short_table_id();
+        auto peer_table_sid = tx->get_self_tableid(); // unconfirm tx is recv tx, self tablid of recv tx is for target account of origin tx
         auto confirmid_max = table_state_cache.get_confirmid_max(peer_table_sid);
         if (tx->get_last_action_receipt_id() <= confirmid_max) {
-            xtxpool_warn("xunconfirmed_account_t::update account:%s tx:%s already confirmed", account_addr.c_str(), tx->dump(true).c_str());
+            xtxpool_warn("xunconfirmed_account_t::update account:%s,tableid=%d,confirmid_max=%ld,tx=%s already confirmed", account_addr.c_str(), peer_table_sid, confirmid_max, tx->dump(true).c_str());
             continue;
         }
-        xtxpool_info("xunconfirmed_account_t::update unconfirm push tx,account=%s,tx=%s", account_addr.c_str(), tx->dump().c_str());
+        xtxpool_info("xunconfirmed_account_t::update push tx,account=%s,tableid=%d,receiptid=%ld,tx=%s", account_addr.c_str(), peer_table_sid, tx->get_last_action_receipt_id(), tx->dump().c_str());
         auto tx_info = std::make_shared<xunconfirmed_tx_info_t>(peer_table_sid, tx->get_last_action_receipt_id());
         m_unconfirmed_txs[it_s.first] = tx_info;
         m_peer_tables->push_tx(tx);

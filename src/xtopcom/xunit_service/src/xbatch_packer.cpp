@@ -116,6 +116,7 @@ bool xbatch_packer::start_proposal(base::xblock_mptrs& latest_blocks) {
     proposal_para.set_latest_blocks(latest_blocks);
 
     if (m_last_view_clock < m_start_time) {
+        xunit_warn("xbatch_packer::start_proposal fail-view clock less than start.%s,start_time=%ld", proposal_para.dump().c_str(), m_start_time);
         return false;
     }
 
@@ -209,11 +210,11 @@ bool xbatch_packer::on_view_fire(const base::xvevent_t & event, xcsobject_t * fr
     uint16_t rotate_mode = enum_rotate_mode_rotate_by_view_id;
     xvip2_t leader_xip = leader_election->get_leader_xip(m_last_view_id, get_account(), latest_blocks.get_latest_cert_block(), local_xip, local_xip, version, rotate_mode);
     bool is_leader_node = xcons_utl::xip_equals(leader_xip, local_xip);
+    xunit_info("xbatch_packer::on_view_fire is_leader=%d account=%s,viewid=%ld,clock=%ld,cert_height=%ld,cert_viewid=%ld,this:%p node:%s xip:%s,leader:%s,rotate_mode:%d",
+            is_leader_node, get_account().c_str(), view_ev->get_viewid(), view_ev->get_clock(), latest_blocks.get_latest_cert_block()->get_height(), 
+            latest_blocks.get_latest_cert_block()->get_clock(), this, node_account.c_str(),
+            xcons_utl::xip_to_hex(local_xip).c_str(), xcons_utl::xip_to_hex(leader_xip).c_str(), rotate_mode);
     if (!is_leader_node) {
-        // backup do nothing
-        xunit_info("xbatch_packer::on_view_fire backup_node account=%s,viewid=%ld,clock=%ld,this:%p node:%s xip:%s,leader:%s,rotate_mode:%d",
-                get_account().c_str(), view_ev->get_viewid(), view_ev->get_clock(), this, node_account.c_str(),
-                xcons_utl::xip_to_hex(local_xip).c_str(), xcons_utl::xip_to_hex(leader_xip).c_str(), rotate_mode);
         return true;
     }
 
@@ -482,6 +483,12 @@ void xbatch_packer::make_receipts_and_send(xblock_t * commit_block, xblock_t * c
         data::xcons_transaction_ptr_t constx = make_object_ptr<data::xcons_transaction_t>(receipt);
         all_cons_txs.push_back(constx);
         xassert(constx->is_recv_tx() || constx->is_confirm_tx());
+        if (constx->is_recv_tx()) {
+            xassert(constx->get_transaction() != nullptr);  // recvtx has no origin tx
+        }
+        if (constx->is_confirm_tx()) {
+            xassert(constx->get_transaction() == nullptr);  // confirmtx has no origin tx
+        }
     }
 
     xunit_info("xbatch_packer::make_receipts_and_send commit_block:%s,cert_block:%s", commit_block->dump().c_str(), cert_block->dump().c_str());

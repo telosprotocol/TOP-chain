@@ -141,7 +141,7 @@ bool xtable_proposal_input_t::delete_fail_tx(const xcons_transaction_ptr_t & inp
     }
     for (auto iter = m_input_txs.begin(); iter != m_input_txs.end(); iter++) {
         auto & tx = *iter;
-        if (tx->get_transaction()->digest() == input_tx->get_transaction()->digest() && tx->get_tx_subtype() == input_tx->get_tx_subtype()) {
+        if (tx->get_tx_hash_256() == input_tx->get_tx_hash_256() && tx->get_tx_subtype() == input_tx->get_tx_subtype()) {
             m_input_txs.erase(iter);
             return true;
         }

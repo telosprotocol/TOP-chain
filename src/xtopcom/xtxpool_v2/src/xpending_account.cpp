@@ -72,7 +72,7 @@ std::shared_ptr<xtx_entry> xcandidate_account_entry::pop_tx(const uint256_t & ha
 std::vector<std::shared_ptr<xtx_entry>>::iterator xcandidate_account_entry::find_tx_ent_by_hash(std::vector<std::shared_ptr<xtx_entry>> & txs, const uint256_t & hash) const {
     std::string hash_str = std::string(reinterpret_cast<char *>(hash.data()), hash.size());
     for (auto it = txs.begin(); it != txs.end(); it++) {
-        if ((*it)->get_tx()->get_transaction()->get_digest_str() == hash_str) {
+        if ((*it)->get_tx()->get_tx_hash() == hash_str) {
             return it;
         }
     }

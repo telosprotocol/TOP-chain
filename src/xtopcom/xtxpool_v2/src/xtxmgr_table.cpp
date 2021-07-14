@@ -25,7 +25,7 @@ int32_t xtxmgr_table_t::push_send_tx(const std::shared_ptr<xtx_entry> & tx, uint
     auto & account_addr = tx->get_tx()->get_transaction()->get_source_addr();
     updata_latest_nonce(account_addr, latest_nonce);
 
-    if (nullptr != query_tx(account_addr, tx->get_tx()->get_transaction()->digest())) {
+    if (nullptr != query_tx(account_addr, tx->get_tx()->get_tx_hash_256())) {
         xtxpool_warn("xtxmgr_table_t::push_send_tx tx repeat tx:%s", tx->get_tx()->dump().c_str());
         return xtxpool_error_request_tx_repeat;
     }
@@ -49,8 +49,8 @@ int32_t xtxmgr_table_t::push_send_tx(const std::shared_ptr<xtx_entry> & tx, uint
 
 int32_t xtxmgr_table_t::push_receipt(const std::shared_ptr<xtx_entry> & tx) {
     XMETRICS_TIME_RECORD("txpool_message_unit_receipt_push_receipt_table_push_receipt");
-    auto & account_addr = tx->get_tx()->get_account_addr();
-    auto tx_inside = query_tx(account_addr, tx->get_tx()->get_transaction()->digest());
+    auto account_addr = tx->get_tx()->get_account_addr();
+    auto tx_inside = query_tx(account_addr, tx->get_tx()->get_tx_hash_256());
     if (tx_inside != nullptr) {
         if (tx_inside->get_tx()->get_tx_subtype() < tx->get_tx()->get_tx_subtype()) {
             xtxpool_dbg("xtxmgr_table_t::push_receipt same tx hash, new tx:%s replace old tx:%s", tx->get_tx()->dump().c_str(), tx_inside->get_tx()->dump().c_str());
@@ -154,8 +154,8 @@ void xtxmgr_table_t::update_receiptid_state(const base::xreceiptid_state_ptr_t &
 }
 
 bool xtxmgr_table_t::is_repeat_tx(const std::shared_ptr<xtx_entry> & tx) const {
-    auto & account_addr = tx->get_tx()->get_account_addr();
-    auto tx_inside = query_tx(account_addr, tx->get_tx()->get_transaction()->digest());
+    auto account_addr = tx->get_tx()->get_account_addr();
+    auto tx_inside = query_tx(account_addr, tx->get_tx()->get_tx_hash_256());
     if (tx_inside != nullptr) {
         if (tx_inside->get_tx()->get_tx_subtype() < tx->get_tx()->get_tx_subtype()) {
             return false;

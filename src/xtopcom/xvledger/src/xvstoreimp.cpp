@@ -165,7 +165,8 @@ namespace top
                     }
                     else
                     {
-                        xinfo("xvtxstore_t::store_txs_index,store tx to DB for tx=%s", base::xvtxkey_t::transaction_hash_subtype_to_string(v->get_tx_hash(), v->get_tx_phase_type()).c_str());
+                        xinfo("xvtxstore_t::store_txs_index,store tx to DB for block=%s,tx=%s",
+                            block_ptr->dump().c_str(), base::xvtxkey_t::transaction_hash_subtype_to_string(v->get_tx_hash(), v->get_tx_phase_type()).c_str());
                     }
 
 #ifdef  LONG_CONFIRM_CHECK
@@ -185,7 +186,7 @@ namespace top
                             {
                                 max_time = delay_time;
                             }
-                            
+
                             if (delay_time >= 6)  // 6 clock
                             {
                                 xwarn("xvtxstore_t::store_txs,confirm tx time long.max_time=%ld,time=%ld,tx=%s", (uint64_t)max_time, delay_time, base::xstring_utl::to_hex(v->get_tx_hash()).c_str());

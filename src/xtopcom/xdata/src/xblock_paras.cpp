@@ -11,6 +11,13 @@
 
 NS_BEG2(top, data)
 
+xblockpara_base_t::xblockpara_base_t() {
+
+}
+
+xblockpara_base_t::xblockpara_base_t(const std::map<std::string, std::string> & values) {
+    m_values = values;
+}
 
 std::string xblockpara_base_t::dump() const {
     std::stringstream ss;

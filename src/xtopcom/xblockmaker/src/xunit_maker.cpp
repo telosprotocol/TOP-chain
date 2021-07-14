@@ -61,8 +61,8 @@ int32_t    xunit_maker_t::check_latest_state(const data::xblock_consensus_para_t
 
     do {
         // firstly, load connected block, always sync unit from latest connected block
-        base::xauto_ptr<base::xvblock_t> _latest_connected_block = get_blockstore()->get_latest_connected_block(get_account());
-        uint64_t start_sync_height = _latest_connected_block->get_height() + 1;
+        uint64_t latest_connect_height = get_blockstore()->get_latest_connected_block_height(*this);
+        uint64_t start_sync_height = latest_connect_height + 1;
 
         // find the latest cert block which matching account_index
         auto _latest_cert_block = get_blockstore()->load_block_object(*this, account_index.get_latest_unit_height(), account_index.get_latest_unit_viewid(), false, metrics::blockstore_access_from_blk_mk_unit_chk_last_state);
@@ -85,11 +85,11 @@ int32_t    xunit_maker_t::check_latest_state(const data::xblock_consensus_para_t
             break;
         }
 
-        // load connectted block before make unit state
-        if (_latest_connected_block->get_height() + 4 < latest_block->get_height()) {  // allow connected height update more slowly
+        // TODO(jimmy) move to statestore load connectted block before make unit state
+        if (latest_connect_height+ 4 < latest_block->get_height()) {  // allow connected height update more slowly
             lacked_block_height = latest_block->get_height() - 1;
             xwarn("xblock_maker_t::update_account_state fail-connect block behind too much. %s, account=%s,index=%s,connect_height=%ld",
-                cs_para.dump().c_str(), get_account().c_str(), account_index.dump().c_str(), _latest_connected_block->get_height());
+                cs_para.dump().c_str(), get_account().c_str(), account_index.dump().c_str(), latest_connect_height);
             try_sync_lacked_blocks(start_sync_height, lacked_block_height, "connect_unit_behind", true);
             break;
         }
@@ -125,7 +125,7 @@ void xunit_maker_t::find_highest_send_tx(uint64_t & latest_nonce, uint256_t & la
         if (tx->is_send_tx() || tx->is_self_tx()) {
             if (tx->get_transaction()->get_tx_nonce() > max_tx_nonce) {
                 max_tx_nonce = tx->get_transaction()->get_tx_nonce();
-                tx_hash = tx->get_transaction()->digest();
+                tx_hash = tx->get_tx_hash_256();
             }
         }
     }
@@ -162,6 +162,24 @@ bool xunit_maker_t::push_tx(const data::xblock_consensus_para_t & cs_para, const
                 cs_para.dump().c_str(), get_account().c_str(), current_lightunit_count, tx->dump().c_str());
             return false;
         }
+    }
+
+    // on demand load origin tx for execute
+    if (tx->get_transaction() == nullptr) {
+        xassert(tx->is_confirm_tx()); // only confirmtx support on demand load
+        // TODO(jimmy) only load origin tx
+        base::xvtransaction_store_ptr_t tx_store = get_blockstore()->query_tx(tx->get_tx_hash(), base::enum_transaction_subtype_send);
+        if (tx_store == nullptr || tx_store->get_raw_tx() == nullptr) {
+            xwarn("xunit_maker_t::push_tx fail-load origin tx.%s tx=%s", cs_para.dump().c_str(), tx->dump().c_str());
+            return false;
+        }
+        xtransaction_t * raw_tx = dynamic_cast<xtransaction_t *>(tx_store->get_raw_tx());
+        if (false == tx->set_raw_tx(raw_tx)) {
+            xerror("xunit_maker_t::push_tx fail-set origin tx.%s tx=%s", cs_para.dump().c_str(), tx->dump().c_str());
+            return false;
+        }
+        xdbg_info("xunit_maker_t::push_tx load and set raw tx succ. %s tx=%s", cs_para.dump().c_str(), tx->dump().c_str());
+        xassert(tx->get_transaction()->get_source_addr() == get_account());
     }
 
     if (tx->is_confirm_tx()) {
@@ -218,7 +236,7 @@ bool xunit_maker_t::push_tx(const data::xblock_consensus_para_t & cs_para, const
     }
 
     for (auto & v : m_pending_txs) {
-        if (tx->get_transaction()->digest() == v->get_transaction()->digest()) {
+        if (tx->get_tx_hash_256() == v->get_tx_hash_256()) {
             xerror("xunit_maker_t::push_tx repeat tx.%s,tx=%s,pendingtx=%s", cs_para.dump().c_str(), tx->dump().c_str(), v->dump().c_str());
             return false;
         }
@@ -298,7 +316,7 @@ xblock_ptr_t xunit_maker_t::make_next_block(const xunitmaker_para_t & unit_para,
         for (auto & tx : lightunit_build_para->get_fail_txs()) {
             xassert(tx->is_self_tx() || tx->is_send_tx());
             xwarn("xunit_maker_t::make_next_block fail-pop send tx. account=%s,tx=%s", get_account().c_str(), tx->dump().c_str());
-            xtxpool_v2::tx_info_t txinfo(get_account(), tx->get_transaction()->digest(), tx->get_tx_subtype());
+            xtxpool_v2::tx_info_t txinfo(get_account(), tx->get_tx_hash_256(), tx->get_tx_subtype());
             get_txpool()->pop_tx(txinfo);
         }
     }
