@@ -7,7 +7,6 @@
 #include "xbase/xcontext.h"
 #include "xbase/xthread.h"
 #include "xvunithub.h"
-#include "xdata/xnative_contract_address.h"
 
 #if defined(ENABLE_METRICS)
 #include "xmetrics/xmetrics.h"
@@ -180,13 +179,7 @@ namespace top
 
         std::string get_parent_table_account_from_unit_account(const base::xvaccount_t & account)
         {
-            // TODO(jimmy) move to xvledger
-            static std::string tableblock_prefix[] = {
-                sys_contract_sharding_table_block_addr,
-                sys_contract_beacon_table_block_addr,
-                sys_contract_zec_table_block_addr
-            };
-            return base::xvaccount_t::make_account_address(tableblock_prefix[account.get_zone_index()], account.get_ledger_subaddr());
+            return base::xvaccount_t::make_table_account_address(account);
         }
 
         /////////////////////////////////new api with better performance by passing base::xvaccount_t
