@@ -30,7 +30,7 @@ namespace transport {
 const static uint16_t XUDP_RATELIMIT_INTERVAL = 5;  //  5 minutes
 const static uint16_t XUDP_RATELIMIT_CONNECTION_TIMES = 10;  //  not more than 5 connection times
 const static uint16_t XUDP_RATELIMIT_CONNECTION_TIMES_WITHIN_MINUTE = 3;  //  not more than 3 connection times within one minute
-const static std::string XUDP_VERSION_PROTOCOL = "VersionV1ProtocolProtobuf";
+const static std::string XUDP_VERSION = "1";
 
 const static std::string SUB_NETWORK_MASK = "255.255.255.0";
 const static uint32_t IP_SEG_MAX_ADDR = 5;  // same ip_seg max addr number
@@ -347,7 +347,7 @@ xslsocket_t* XudpSocket::create_xslsocket(
 xslsocket_t* XudpSocket::on_xslsocket_accept(xfd_handle_t handle,xsocket_property & property, int32_t cur_thread_id,uint64_t timenow_ms)
 {
     // xudp connection version && protocol
-    if (property._peer_payload != XUDP_VERSION_PROTOCOL) {
+    if (property._peer_payload != XUDP_VERSION) {
         TOP_INFO("on_xslsocket_accept,account:%s,sign_size:%s,payload:%s.authentication fail.",
                  property._peer_account_id.c_str(),
                  HexEncode(property._peer_signature).c_str(),
@@ -512,7 +512,7 @@ int XudpSocket::SendDataWithProp(
             return kTransportSuccess;
         }
         TOP_DEBUG("xudp first connect %s:%u", packet.get_to_ip_addr().c_str(), packet.get_to_ip_port());
-        peer_xudp_socket = (xp2pudp_t*)xudplisten_t::create_xslsocket(global_node_id, node_sign, XUDP_VERSION_PROTOCOL, enum_socket_type_xudp);
+        peer_xudp_socket = (xp2pudp_t*)xudplisten_t::create_xslsocket(global_node_id, node_sign, XUDP_VERSION, enum_socket_type_xudp);
         peer_xudp_socket->connect_xudp(packet.get_to_ip_addr(), packet.get_to_ip_port(), this);
 
         xudp_client_map[to_addr] = peer_xudp_socket;
@@ -544,7 +544,7 @@ int XudpSocket::SendDataWithProp(
                 return kTransportSuccess;
             }
             TOP_DEBUG("xudp reconnect %s:%u", packet.get_to_ip_addr().c_str(), packet.get_to_ip_port());
-            peer_xudp_socket = (xp2pudp_t*)xudplisten_t::create_xslsocket(global_node_id, node_sign, XUDP_VERSION_PROTOCOL, enum_socket_type_xudp);
+            peer_xudp_socket = (xp2pudp_t*)xudplisten_t::create_xslsocket(global_node_id, node_sign, XUDP_VERSION, enum_socket_type_xudp);
             peer_xudp_socket->connect_xudp(packet.get_to_ip_addr(), packet.get_to_ip_port(), this);
 
             xudp_client_map[to_addr] = peer_xudp_socket;
