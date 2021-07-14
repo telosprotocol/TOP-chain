@@ -158,6 +158,7 @@ public:
     int32_t serialze_to(xaction_t & action, const uint64_t num, const uint16_t duration);
 
     uint64_t m_vote_num;
+    uint64_t m_lock_token;
     uint16_t m_lock_duration;  // unit day
 };
 

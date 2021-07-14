@@ -308,6 +308,7 @@ int32_t xtransaction_pledge_token_vote::target_action_exec() {
     if (xsuccess != ret) {
         return ret;
     }
+    m_target_action.m_lock_token = m_lock_token;
     ret = m_account_ctx->update_pledge_vote_property(m_target_action);
     return ret;
 }

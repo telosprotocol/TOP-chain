@@ -85,8 +85,10 @@ class xaccount_context_t {
     int32_t update_pledge_vote_property(xaction_pledge_token_vote& action);
     static std::string serilize_vote_map_field(uint16_t duration, uint64_t lock_time);
     static std::string serilize_vote_map_value(uint64_t vote_num);
+    static std::string serilize_vote_map_values(uint64_t vote_num, uint64_t token);
     static void deserilize_vote_map_field(const std::string& str, uint16_t& duration, uint64_t& lock_time);
     static void deserilize_vote_map_value(const std::string& str, uint64_t& vote_num);
+    static void deserilize_vote_map_values(const std::string& str, uint64_t& vote_num, uint64_t& token);
     int32_t merge_pledge_vote_property();
     int32_t insert_pledge_vote_property(xaction_pledge_token_vote& action);
     int32_t redeem_pledge_vote_property(uint64_t num);

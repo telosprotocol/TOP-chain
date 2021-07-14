@@ -458,6 +458,11 @@ void xaccount_context_t::deserilize_vote_map_value(const std::string& str, uint6
     base::xstream_t stream{xcontext_t::instance(), (uint8_t*)str.data(), static_cast<uint32_t>(str.size())};
     stream >> vote_num;
 }
+void xaccount_context_t::deserilize_vote_map_values(const std::string& str, uint64_t& vote_num, uint64_t& token){
+    base::xstream_t stream{xcontext_t::instance(), (uint8_t*)str.data(), static_cast<uint32_t>(str.size())};
+    stream >> vote_num;
+    stream >> token;
+}
 std::string xaccount_context_t::serilize_vote_map_field(uint16_t duration, uint64_t lock_time){
     base::xstream_t stream{xcontext_t::instance()};
     stream << duration;
@@ -467,6 +472,12 @@ std::string xaccount_context_t::serilize_vote_map_field(uint16_t duration, uint6
 std::string xaccount_context_t::serilize_vote_map_value(uint64_t vote_num){
     base::xstream_t stream{xcontext_t::instance()};
     stream << vote_num;
+    return std::string((char*)stream.data(), stream.size());
+}
+std::string xaccount_context_t::serilize_vote_map_values(uint64_t vote_num, uint64_t token){
+    base::xstream_t stream{xcontext_t::instance()};
+    stream << vote_num;
+    stream << token;
     return std::string((char*)stream.data(), stream.size());
 }
 
@@ -480,30 +491,35 @@ int32_t xaccount_context_t::merge_pledge_vote_property(){
     }
 
     uint64_t vote_sum{0};
+    uint64_t lock_token_sum{0};
     uint64_t expire_token{0};
     for (auto & v : pledge_votes) {
         uint64_t vote_num{0};
+        uint64_t lock_token{0};
         uint16_t duration{0};
         uint64_t lock_time{0};
         deserilize_vote_map_field(v.first, duration, lock_time);
-        deserilize_vote_map_value(v.second, vote_num);
+        deserilize_vote_map_values(v.second, vote_num, lock_token);
 
 #ifdef DEBUG
-        if(m_timer_height - lock_time >= duration / 60){
+        if(m_timer_height - lock_time >= duration / 6){
 #else
         if(m_timer_height - lock_time >= duration * 24 * 60 * 6){
 #endif
             map_remove(XPROPERTY_PLEDGE_VOTE_KEY, v.first);
             vote_sum += vote_num;
+            lock_token_sum += lock_token;
+
             if(0 != duration){ // if not calculated in XPROPERTY_EXPIRE_VOTE_TOKEN_KEY
                 expire_token += get_top_by_vote(vote_num, duration);
-                xdbg("xaccount_context_t::merge_pledge_vote_property expire. vote_num=%d,duration=%d,lock_time=%d,clock=%ld,vote_sum=%ld", vote_num, duration, lock_time, m_timer_height, vote_sum);
+                xdbg("xaccount_context_t::merge_pledge_vote_property expire. vote_num=%d,duration=%d,lock_time=%d,clock=%ld,vote_sum=%ld,lock_token_sum=%ld",
+                    vote_num, duration, lock_time, m_timer_height, vote_sum, lock_token_sum);
             }
         }
     }
 
     if(vote_sum > 0){
-        map_set(XPROPERTY_PLEDGE_VOTE_KEY, serilize_vote_map_field(0, 0), serilize_vote_map_value(vote_sum));
+        map_set(XPROPERTY_PLEDGE_VOTE_KEY, serilize_vote_map_field(0, 0), serilize_vote_map_values(vote_sum, lock_token_sum));
     }
     if(expire_token > 0){
         std::string val;
@@ -526,26 +542,28 @@ int32_t xaccount_context_t::insert_pledge_vote_property(xaction_pledge_token_vot
 
     for (auto & v : pledge_votes) {
         uint64_t vote_num{0};
+        uint64_t lock_token{0};
         uint16_t duration{0};
         uint64_t lock_time{0};
         deserilize_vote_map_field(v.first, duration, lock_time);
-        deserilize_vote_map_value(v.second, vote_num);
+        deserilize_vote_map_values(v.second, vote_num, lock_token);
 #ifdef DEBUG
         if(action.m_lock_duration == duration && (m_timer_height - lock_time) < 10){
 #else
         // merge vote with same duration in 24 hours
         if(action.m_lock_duration == duration && (m_timer_height - lock_time) < 24 * 60 * 6){
 #endif
-            xdbg("xaccount_context_t::insert_pledge_vote_property merge old record.clock=%ld,vote_num=%ld,duration=%d,lock_time=%ld,action.m_vote_num=%ld",
-                    m_timer_height, vote_num, duration, lock_time, action.m_vote_num);
+            xdbg("xaccount_context_t::insert_pledge_vote_property merge old record.clock=%ld,vote_num=%ld,duration=%d,lock_time=%ld,m_vote_num=%ld,m_lock_token=%ld",
+                    m_timer_height, vote_num, duration, lock_time, action.m_vote_num, action.m_lock_token);
             action.m_vote_num += vote_num;
-            map_set(XPROPERTY_PLEDGE_VOTE_KEY, v.first, serilize_vote_map_value(action.m_vote_num));
+            action.m_lock_token += lock_token;
+            map_set(XPROPERTY_PLEDGE_VOTE_KEY, v.first, serilize_vote_map_values(action.m_vote_num, action.m_lock_token));
             return xsuccess;
         }
     }
-    xdbg("xaccount_context_t::insert_pledge_vote_property add new record.vote_num=%ld,duration=%d,lock_time=%ld",
-            action.m_vote_num, action.m_lock_duration, m_timer_height);
-    map_set(XPROPERTY_PLEDGE_VOTE_KEY, serilize_vote_map_field(action.m_lock_duration, m_timer_height), serilize_vote_map_value(action.m_vote_num));
+    xdbg("xaccount_context_t::insert_pledge_vote_property add new record.vote_num=%ld,lock_token=%ld,duration=%d,lock_time=%ld",
+            action.m_vote_num, action.m_lock_token, action.m_lock_duration, m_timer_height);
+    map_set(XPROPERTY_PLEDGE_VOTE_KEY, serilize_vote_map_field(action.m_lock_duration, m_timer_height), serilize_vote_map_values(action.m_vote_num, action.m_lock_token));
     return xsuccess;
 }
 
@@ -566,10 +584,11 @@ int32_t xaccount_context_t::redeem_pledge_vote_property(uint64_t num){
 
     for (auto & v : pledge_votes) {
         uint64_t vote_num{0};
+        uint64_t lock_token{0};
         uint16_t duration{0};
         uint64_t lock_time{0};
         deserilize_vote_map_field(v.first, duration, lock_time);
-        deserilize_vote_map_value(v.second, vote_num);
+        deserilize_vote_map_values(v.second, vote_num, lock_token);
 
         if(0 == duration){
             if(num > vote_num){
@@ -586,7 +605,7 @@ int32_t xaccount_context_t::redeem_pledge_vote_property(uint64_t num){
             vote_num -= num;
 
             // update field
-            map_set(XPROPERTY_PLEDGE_VOTE_KEY, serilize_vote_map_field(0, 0), serilize_vote_map_value(vote_num));
+            map_set(XPROPERTY_PLEDGE_VOTE_KEY, serilize_vote_map_field(0, 0), serilize_vote_map_values(vote_num, expire_token - balance_change));
 
             // update unvote num, balance, vote pledge balance
             ret = uint64_sub(XPROPERTY_UNVOTE_NUM, num);

@@ -1110,14 +1110,16 @@ bool query_special_property(xJson::Value & jph, const std::string & owner, const
         std::map<std::string, std::string> pledge_votes = var_obj->query();
         for (auto & v : pledge_votes) {
             uint64_t vote_num{0};
+            uint64_t lock_token{0};
             uint16_t duration{0};
             uint64_t lock_time{0};
             // TODO(jimmy)
             xaccount_context_t::deserilize_vote_map_field(v.first, duration, lock_time);
-            xaccount_context_t::deserilize_vote_map_value(v.second, vote_num);
+            xaccount_context_t::deserilize_vote_map_values(v.second, vote_num, lock_token);
             xdbg("pledge_redeem_vote %d, %d, %d", vote_num, duration, lock_time);
             xJson::Value j;
             j["vote_num"] = static_cast<unsigned long long>(vote_num);
+            j["lock_token"] = static_cast<unsigned long long>(lock_token);
             j["duration"] = duration;
             j["lock_time"] = static_cast<unsigned long long>(lock_time);
             jph[XPROPERTY_PLEDGE_VOTE_KEY].append(j);
