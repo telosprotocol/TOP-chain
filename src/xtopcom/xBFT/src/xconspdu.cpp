@@ -222,13 +222,11 @@ namespace top
             {
                 m_latest_cert_height        = latest_cert_block->get_height();
                 m_latest_cert_viewid        = latest_cert_block->get_viewid();
-                
-                m_latest_cert_hash.clear();
+                m_latest_cert_hash          = latest_cert_block->get_block_hash();
+
                 m_latest_cert_data.clear();
                 if(report_cert_data)
                     latest_cert_block->get_cert()->serialize_to_string(m_latest_cert_data);
-                else
-                    m_latest_cert_hash      = latest_cert_block->get_block_hash();
             }
         }
     

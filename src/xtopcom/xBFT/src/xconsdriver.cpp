@@ -845,18 +845,20 @@ namespace top
                     base::xvblock_t * local_latest_cert = get_latest_cert_block();
                     if( (NULL == local_latest_cert) || (local_latest_cert->get_viewid() < _report_msg.get_latest_cert_viewid()) )//sync any unexist cert block
                     {
+                        //always sync the missed & newer cert block since leader of higher staking is higher chance to be leader later
+                        {
+                            const uint64_t    sync_target_block_height = _report_msg.get_latest_cert_height();
+                            const std::string sync_target_block_hash   = _report_msg.get_latest_cert_hash();
+                            send_sync_request(to_addr,from_addr,sync_target_block_height,sync_target_block_hash,get_lock_block()->get_cert(),get_lock_block()->get_height(),(event_obj->get_clock() + 1),packet.get_block_chainid());//download peer 'latest cert block
+                        }
+                        
                         xproposal_t * proposal = find_proposal(packet.get_block_viewid());
                         if(  (proposal != NULL) //found leader'proposal
                            &&(proposal->is_vote_finish() == false) //not vote_finished yet
                            &&(proposal->is_vote_disable() == false) ) //still allow voting
                         {
-                            if(_report_msg.get_latest_cert_data().empty()) //empty cert,sync missed cert block
-                            {
-                                const uint64_t    sync_target_block_height = _report_msg.get_latest_cert_height();
-                                const std::string sync_target_block_hash   = _report_msg.get_latest_cert_hash();
-                                send_sync_request(to_addr,from_addr,sync_target_block_height,sync_target_block_hash,get_lock_block()->get_cert(),get_lock_block()->get_height(),(event_obj->get_clock() + 1),packet.get_block_chainid());//download peer 'latest cert block
-                            }
-                            else //report carried prev-cert directly(fast mode)
+                            //report carried prev-cert directly(fast mode)
+                            if(_report_msg.get_latest_cert_data().empty() == false)
                             {
                                 base::xauto_ptr<base::xvqcert_t> _peer_cert(base::xvblock_t::create_qcert_object(_report_msg.get_latest_cert_data()));
                                 if(_peer_cert) //carry invalid cert for commit
@@ -865,6 +867,7 @@ namespace top
                                     if(proposal->set_highest_QC_viewid(_peer_cert->get_viewid()))
                                     {
                                         //above condition filter the duplicated cert
+                                        //fire_verify_cert_job may quickly using cert to align both leader and backup,include viewid as well
                                         fire_verify_cert_job(_peer_cert());
                                     }
                                 }
@@ -1104,7 +1107,9 @@ namespace top
             std::function<void(void*)> _after_verify_cert_job = [this](void* _cert)->void{
 
                 base::xvqcert_t* _target_cert_ = (base::xvqcert_t*)_cert;
-                if(_target_cert_->check_unit_flag(base::enum_xvblock_flag_authenticated))
+                if(_target_cert_->check_unit_flag(base::enum_xvblock_flag_authenticated) == false)
+                    _target_cert_->set_unit_flag(base::enum_xvblock_flag_authenticated);
+                
                 {
                     xproposal_t* target_proposal(find_proposal(_target_cert_->get_viewid()));
                     if(  (NULL != target_proposal)
@@ -1138,7 +1143,6 @@ namespace top
                     if(   _to_verify_cert_->check_unit_flag(base::enum_xvblock_flag_authenticated)
                        || (get_vcertauth()->verify_muti_sign(_to_verify_cert_,get_account()) == base::enum_vcert_auth_result::enum_successful) )
                     {
-                        _to_verify_cert_->set_unit_flag(base::enum_xvblock_flag_authenticated);
                         base::xfunction_t* _callback_ = (base::xfunction_t *)call.get_param2().get_function();
                         if(_callback_ != NULL)
                         {
@@ -1169,14 +1173,27 @@ namespace top
                 return false;
 
             //now safe to do heavy job to verify quorum_ceritification completely
-            std::function<void(void*)> _after_verify_commit_job = [this](void* _block)->void{
-                base::xvblock_t* _full_block_ = (base::xvblock_t*)_block;
-
-                xdbgassert(_full_block_->is_input_ready(true));
-                xdbgassert(_full_block_->is_output_ready(true));
+            std::function<void(void*)> _after_verify_commit_job = [this](void* _pair)->void{
                 
+                block_cert_pair * pair_item = (block_cert_pair *)_pair;
+                base::xvblock_t* _full_block_ = pair_item->get_block_ptr();
+                base::xvqcert_t* _commit_cert = pair_item->get_cert_ptr();
+                
+                if(_full_block_->check_block_flag(base::enum_xvblock_flag_authenticated) == false)//check again at main thread
+                {
+                    if(_full_block_->merge_cert(*_commit_cert)) //now is thread-safe to merge cert into block
+                    {
+                        _full_block_->get_cert()->set_unit_flag(base::enum_xvblock_flag_authenticated);
+                        _full_block_->set_block_flag(base::enum_xvblock_flag_authenticated);
+                        
+                        xdbgassert(_full_block_->is_input_ready(true));
+                        xdbgassert(_full_block_->is_output_ready(true));
+                    }
+                }
+       
                 bool found_matched_proposal = false;
-                if(add_cert_block(_full_block_,found_matched_proposal))//set certified block(QC block)
+                if(   _full_block_->check_block_flag(base::enum_xvblock_flag_authenticated) //check again
+                   && add_cert_block(_full_block_,found_matched_proposal) )//set certified block(QC block)
                 {
                     //now recheck any existing proposal and could push to voting again
                     on_new_block_fire(_full_block_);
@@ -1191,7 +1208,7 @@ namespace top
                         fire_replicate_finish_event(_full_block_);//call on_replicate_finish(block) to driver context layer
                     }
                 }
-                _full_block_->release_ref(); //release reference hold by _verify_function
+                delete pair_item; //release holded resource as well
             };
 
             if(paired_cert != nullptr) //manually add reference for _verify_function call
@@ -1206,25 +1223,15 @@ namespace top
                         return true;
                     }
                     
-                    if( (_merge_cert != nullptr) && (false == _for_check_block_->merge_cert(*_merge_cert)) ) //here is thread-safe to merge cert into block
+                    if(get_vcertauth()->verify_muti_sign(_merge_cert.get(),_for_check_block_->get_account()) == base::enum_vcert_auth_result::enum_successful)
                     {
-                        xwarn_err("xBFTdriver_t::fire_verify_commit_job,fail-unmatched commit_cert=%s vs proposal=%s,at node=0x%llx",_merge_cert->dump().c_str(),_for_check_block_->dump().c_str(),get_xip2_low_addr());
-                        return true;
-                    }
-
-                    if( (_for_check_block_->check_block_flag(base::enum_xvblock_flag_authenticated))
-                      ||(get_vcertauth()->verify_muti_sign(_for_check_block_) == base::enum_vcert_auth_result::enum_successful) )
-                    {
-                        _for_check_block_->get_cert()->set_unit_flag(base::enum_xvblock_flag_authenticated);
-                        _for_check_block_->set_block_flag(base::enum_xvblock_flag_authenticated);
-
                         xinfo("xBFTdriver_t::fire_verify_commit_job,successful finish verify for commit block:%s at node=0x%llx",_for_check_block_->dump().c_str(),get_xip2_addr().low_addr);
 
                         base::xfunction_t* _callback_ = (base::xfunction_t *)call.get_param2().get_function();
                         if(_callback_ != NULL)
                         {
-                            _for_check_block_->add_ref(); //hold reference for async
-                            dispatch_call(*_callback_,(void*)_for_check_block_);
+                            block_cert_pair * pair_data = new block_cert_pair(_for_check_block_,_merge_cert.get());
+                            dispatch_call(*_callback_,(void*)pair_data);//pair_data may release later by _callback_
                         }
                     }
                     else
@@ -1248,6 +1255,7 @@ namespace top
 
             replica_cert->add_ref();
             auto _verify_function = [this,replica_xip,replica_cert](base::xcall_t & call, const int32_t cur_thread_id,const uint64_t timenow_ms)->bool{
+                base::xauto_ptr<base::xvqcert_t> _dummy_release(replica_cert);//auto release the added addtional once quit
                 if(is_close() == false)//running at a specific worker thread of pool
                 {
                     xproposal_t * _proposal = (xproposal_t *)call.get_param1().get_object();
@@ -1298,7 +1306,6 @@ namespace top
                             xerror("xBFTdriver_t::fire_verify_vote_job,fail-verify_sign for replica_cert=%s,at node=0x%llx",replica_cert->dump().c_str(),get_xip2_low_addr());
                     }
                 }
-                replica_cert->release_ref();
                 return true;
             };
 
