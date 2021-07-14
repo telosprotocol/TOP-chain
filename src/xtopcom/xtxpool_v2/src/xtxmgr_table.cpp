@@ -21,9 +21,11 @@ using data::xcons_transaction_ptr_t;
 #define send_txs_num_pop_from_queue_batch_num (100)
 #define receipts_num_pop_from_queue_batch_num (200)
 
-int32_t xtxmgr_table_t::push_send_tx(const std::shared_ptr<xtx_entry> & tx, uint64_t latest_nonce) {
+int32_t xtxmgr_table_t::push_send_tx(const std::shared_ptr<xtx_entry> & tx, uint64_t latest_nonce, bool & is_cached_nonce) {
     auto & account_addr = tx->get_tx()->get_transaction()->get_source_addr();
-    updata_latest_nonce(account_addr, latest_nonce);
+    if (!is_cached_nonce) {
+        updata_latest_nonce(account_addr, latest_nonce);
+    }
 
     if (nullptr != query_tx(account_addr, tx->get_tx()->get_transaction()->digest())) {
         xtxpool_warn("xtxmgr_table_t::push_send_tx tx repeat tx:%s", tx->get_tx()->dump().c_str());

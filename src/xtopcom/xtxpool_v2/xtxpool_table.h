@@ -94,7 +94,7 @@ private:
     int32_t verify_send_tx(const xcons_transaction_ptr_t & tx) const;
     int32_t verify_receipt_tx(const xcons_transaction_ptr_t & tx) const;
     int32_t verify_cons_tx(const xcons_transaction_ptr_t & tx) const;
-    bool get_account_latest_nonce(const std::string account_addr, uint64_t & latest_nonce) const;
+    bool get_account_latest_nonce(const std::string account_addr, uint64_t & latest_nonce, bool & is_cached_nonce) const;
     bool  get_account_basic_info(const std::string & account, xaccount_basic_info_t & account_index_info) const;
     void update_id_state(const tx_info_t & txinfo, base::xtable_shortid_t peer_table_sid, uint64_t receiptid, uint64_t nonce);
 

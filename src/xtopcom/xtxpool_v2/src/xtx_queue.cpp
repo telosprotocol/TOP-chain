@@ -407,9 +407,11 @@ void xsend_tx_queue_t::updata_latest_nonce(const std::string & account_addr, uin
     if (send_tx_account != m_send_tx_accounts.end()) {
         send_tx_account->second->update_latest_nonce(latest_nonce);
         if (send_tx_account->second->empty()) {
-            m_account_nonce_lru.put(account_addr, send_tx_account->second->get_latest_nonce());
+            m_account_nonce_lru.put(account_addr, latest_nonce);
             m_send_tx_accounts.erase(account_addr);
         }
+    } else {
+        m_account_nonce_lru.put(account_addr, latest_nonce);
     }
 }
 
