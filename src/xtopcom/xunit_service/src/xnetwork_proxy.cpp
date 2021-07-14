@@ -313,7 +313,8 @@ void xnetwork_proxy::send_receipt_msg(std::shared_ptr<vnetwork::xvnetwork_driver
 
         if (net_driver->address().cluster_address() == auditor_cluster_addr) {
             xunit_info("xnetwork_proxy::send_receipt_msg broadcast receipt=%s,size=%zu,from_vnode:%s", receipt->dump().c_str(), stream.size(), net_driver->address().to_string().c_str());
-            net_driver->broadcast(msg);            
+            net_driver->broadcast(msg);
+            non_shard_cross_receipts.push_back(receipt);
         } else {
             xunit_info("xnetwork_proxy::send_receipt_msg forward receipt=%s,size=%zu,from_vnode:%s,to_vnode:%s", receipt->dump().c_str(), stream.size(), net_driver->address().to_string().c_str(), auditor_cluster_addr.to_string().c_str());
             net_driver->forward_broadcast_message(msg, vnetwork::xvnode_address_t{std::move(auditor_cluster_addr)});
@@ -329,7 +330,8 @@ void xnetwork_proxy::send_receipt_msg(std::shared_ptr<vnetwork::xvnetwork_driver
             xassert(validator_cluster_addr != auditor_cluster_addr);
             if (net_driver->address().cluster_address() == validator_cluster_addr) {
                 xunit_info("xnetwork_proxy::send_receipt_msg broadcast receipt=%s,size=%zu,from_vnode:%s", receipt->dump().c_str(), stream.size(), net_driver->address().to_string().c_str());
-                net_driver->broadcast(msg);            
+                net_driver->broadcast(msg);
+                non_shard_cross_receipts.push_back(receipt);            
             } else {
                 xunit_info("xnetwork_proxy::send_receipt_msg forward receipt=%s,size=%zu,from_vnode:%s,to_vnode:%s", receipt->dump().c_str(), stream.size(), net_driver->address().to_string().c_str(), validator_cluster_addr.to_string().c_str());
                 net_driver->forward_broadcast_message(msg, vnetwork::xvnode_address_t{std::move(validator_cluster_addr)});
