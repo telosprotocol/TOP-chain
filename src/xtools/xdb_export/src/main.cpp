@@ -1,14 +1,20 @@
+#include "../services/xgrpcservice/xgrpc_service.h"
 #include "nlohmann/fifo_map.hpp"
 #include "nlohmann/json.hpp"
 #include "xblockstore/xblockstore_face.h"
 #include "xconfig/xconfig_register.h"
 #include "xconfig/xpredefined_configurations.h"
+#include "xdata/xelection/xelection_info_bundle.h"
+#include "xdata/xelection/xelection_result_property.h"
 #include "xdata/xfull_tableblock.h"
+#include "xdata/xgenesis_data.h"
 #include "xdata/xnative_contract_address.h"
 #include "xdata/xproposal_data.h"
 #include "xdata/xrootblock.h"
 #include "xdata/xtable_bstate.h"
 #include "xdb/xdb_factory.h"
+#include "xelection/xvnode_house.h"
+#include "xrpc/xgetblock/get_block.h"
 #include "xstake/xstake_algorithm.h"
 #include "xstore/xstore_face.h"
 #include "xvledger/xvblock.h"
@@ -34,6 +40,8 @@ using json = unordered_json;
 
 using namespace top;
 using namespace top::xstake;
+using namespace top::data;
+using namespace top::election;
 using top::base::xcontext_t;
 using top::base::xstream_t;
 using top::base::xstring_utl;
@@ -66,6 +74,7 @@ void usage() {
     std::cout << "        - checkout_all_account" << std::endl;
     std::cout << "        - check_fast_sync [table|unit|account]" << std::endl;
     std::cout << "        - check_block_exist <account> <height>" << std::endl;
+    std::cout << "        - check_block_info <account> <height|last>" << std::endl;
     std::cout << "        - check_tx_info [account]" << std::endl;
     std::cout << "        - check_latest_fullblock" << std::endl;
     std::cout << "        - check_contract_property <account> <prop> <last|all>" << std::endl;
@@ -133,12 +142,16 @@ public:
         top::config::config_register.get_instance().set(config::xmax_validator_stake_onchain_goverance_parameter_t::name, std::to_string(5000));
         top::config::config_register.get_instance().set(config::xchain_name_configuration_t::name, std::string{top::config::chain_name_testnet});
 
+        m_node_id = common::xnode_id_t{"T00000LgGPqEpiK6XLCKRj9gVPN8Ej1aMbyAb3Hu"};
+        m_sign_key = "ONhWC2LJtgi9vLUyoa48MF3tiXxqWf7jmT9KtOg/Lwo=";
+        m_bus = top::make_object_ptr<mbus::xmessage_bus_t>(true, 1000);
         m_store = top::store::xstore_factory::create_store_with_kvdb(db_path);
         base::xvchain_t::instance().set_xdbstore(m_store.get());
         m_blockstore.attach(store::get_vblockstore());
-        
-        xobject_ptr_t<store::xsyncvstore_t> m_syncstore;
-        contract::xcontract_manager_t::instance().init(make_observer(m_store), m_syncstore);
+        m_nodesvr_ptr = make_object_ptr<xvnode_house_t>(m_node_id, m_sign_key, m_blockstore, make_observer(m_bus.get()));
+        m_getblock = std::make_shared<chain_info::get_block_handle>(m_store.get(), m_blockstore.get(), nullptr);
+        contract::xcontract_manager_t::instance().init(make_observer(m_store), xobject_ptr_t<store::xsyncvstore_t>{});
+        contract::xcontract_manager_t::set_nodesrv_ptr(m_nodesvr_ptr);
     }
 
     void get_all_unit_account(std::set<std::string> & accounts_set) {
@@ -372,6 +385,36 @@ public:
                 }
             }
         }
+    }
+
+    void query_block_info(std::string const & account, const int64_t height) {
+        xJson::Value root;
+        uint64_t h;
+        // data::xblock_t * bp = nullptr;
+        if (height  < 0) {
+            h = m_blockstore->get_latest_committed_block_height(base::xvaccount_t{account});
+            std::cout << "account: " << account << ", latest committed height: " << h << ", block info:" << std::endl;
+        } else {
+            h = height;
+            std::cout << "account: " << account << ", height: " << h << ", block info:" << std::endl;
+        }
+        auto vblock = m_blockstore->load_block_object(account, h, 0, true);
+        data::xblock_t * bp = dynamic_cast<data::xblock_t *>(vblock.get());
+        if (bp == nullptr) {
+            std::cout << "account: " << account << ", height: " << h << " block null" << std::endl;
+            return;
+        }
+        if (bp->is_genesis_block() && bp->get_block_class() == base::enum_xvblock_class_nil && false == bp->check_block_flag(base::enum_xvblock_flag_stored)) {
+            std::cout << "account: " << account << ", height: " << h << " block genesis && nil && non-stored" << std::endl;
+            return;
+        }
+        if (false == base::xvchain_t::instance().get_xblockstore()->load_block_input(base::xvaccount_t(bp->get_account()), bp)) {
+            std::cout << "account: " << account << ", height: " << h << " load_block_input failed" << std::endl;
+            return;
+        }
+        root = dynamic_cast<chain_info::get_block_handle*>(m_getblock.get())->get_block_json(bp);
+        std::string str = xJson::FastWriter().write(root);
+        std::cout << str << std::endl;
     }
 
     void query_contract_property(std::string const & account, std::string const & prop_name, std::string const & param) {
@@ -960,8 +1003,13 @@ private:
         }
     }
 
-    top::xobject_ptr_t<top::store::xstore_face_t> m_store;
-    top::xobject_ptr_t<top::base::xvblockstore_t> m_blockstore;
+    common::xnode_id_t m_node_id;
+    std::string m_sign_key;
+    xobject_ptr_t<mbus::xmessage_bus_face_t> m_bus;
+    xobject_ptr_t<store::xstore_face_t> m_store;
+    xobject_ptr_t<base::xvblockstore_t> m_blockstore;
+    xobject_ptr_t<base::xvnodesrv_t> m_nodesvr_ptr;
+    std::shared_ptr<rpc::xrpc_handle_face_t> m_getblock;
 };
 
 int main(int argc, char ** argv) {
@@ -1062,6 +1110,16 @@ int main(int argc, char ** argv) {
             return -1;
         }
         tools.query_block_exist(argv[3], std::stoi(argv[4]));
+    } else if (function_name == "check_block_info") {
+        if (argc < 5) {
+            usage();
+            return -1;
+        }
+        int height = -1;
+        if (std::string{argv[4]} != std::string{"last"}) {
+            height = std::stoi(argv[4]);
+        }
+        tools.query_block_info(argv[3], height);
     } else if (function_name == "check_latest_fullblock") {
         tools.query_table_latest_fullblock();
     } else if (function_name == "check_contract_property") {
