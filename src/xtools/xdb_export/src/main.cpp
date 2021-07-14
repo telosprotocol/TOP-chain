@@ -637,7 +637,12 @@ private:
         std::vector<tx_ext_t> multi;
         json j;
         int empty_table_block_num{0};
+        int light_table_block_num{0};
+        int full_table_block_num{0};
+        int missing_table_block_num{0};
         int empty_unit_block_num{0};
+        int light_unit_block_num{0};
+        int full_unit_block_num{0};
         int total_unit_block_num{0};
         int recv_num{0};
         int tableid{-1};
@@ -656,28 +661,44 @@ private:
             auto const & vblock = m_blockstore->load_block_object(account,h,0,false);
             const data::xblock_t * block = dynamic_cast<data::xblock_t *>(vblock.get());
             if (block == nullptr) {
+                missing_table_block_num++;
+                std::cout << account << " missing block at height " << h << std::endl;
+                continue;
+            }
+
+            if (block->get_block_class() == base::enum_xvblock_class_nil) {
                 empty_table_block_num++;
                 continue;
+            } else if (block->get_block_class() == base::enum_xvblock_class_full) {
+                full_table_block_num++;
+                continue;
+            } else {
+                light_table_block_num++;
             }
             m_blockstore->load_block_input(_vaccount, vblock.get());
             assert(block->get_block_level() == base::enum_xvblock_level_table);
             const uint64_t timestamp = block->get_timestamp();
             const std::vector<base::xventity_t*> & _table_inentitys = block->get_input()->get_entitys();
             uint32_t entitys_count = _table_inentitys.size();
-            if (entitys_count == 0) {
-                empty_table_block_num++;
-            }
             for (uint32_t index = 1; index < entitys_count; index++) {  // unit entity from index#1
                 total_unit_block_num++;
                 base::xvinentity_t* _table_unit_inentity = dynamic_cast<base::xvinentity_t*>(_table_inentitys[index]);
                 base::xtable_inentity_extend_t extend;
                 extend.serialize_from_string(_table_unit_inentity->get_extend_data());
                 const xobject_ptr_t<base::xvheader_t> & _unit_header = extend.get_unit_header();
+
+                if (_unit_header->get_block_class() == base::enum_xvblock_class_nil) {
+                    empty_unit_block_num++;
+                    continue;
+                } else if (_unit_header->get_block_class() == base::enum_xvblock_class_full) {
+                    full_unit_block_num++;
+                    continue;
+                } else {
+                    light_unit_block_num++;
+                }                
+                
                 const uint64_t unit_height = _unit_header->get_height();
                 const std::vector<base::xvaction_t> &  input_actions = _table_unit_inentity->get_actions();
-                if (input_actions.empty()) {
-                    empty_unit_block_num++;
-                }
                 for (auto & action : input_actions) {
                     if (action.get_org_tx_hash().empty()) {  // not txaction
                         continue;
@@ -740,9 +761,14 @@ private:
         }
         j["table info"]["table height"] = block_height;
         j["table info"]["total table block num"] = block_height + 1;
+        j["table info"]["miss table block num"] = missing_table_block_num;
         j["table info"]["empty table block num"] = empty_table_block_num;
+        j["table info"]["light table block num"] = light_table_block_num;
+        j["table info"]["full table block num"] = full_table_block_num;
         j["table info"]["total unit block num"] = total_unit_block_num;
         j["table info"]["empty unit block num"] = empty_unit_block_num;
+        j["table info"]["light unit block num"] = light_unit_block_num;
+        j["table info"]["full unit block num"] = full_unit_block_num;
         j["table info"]["total self num"] = self.size();
         j["table info"]["total send num"] = send.size();
         j["table info"]["total recv num"] = recv_num;
