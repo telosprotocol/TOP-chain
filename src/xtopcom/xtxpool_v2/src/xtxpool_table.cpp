@@ -285,8 +285,6 @@ void xtxpool_table_t::on_block_confirmed(xblock_t * table_block) {
 }
 
 int32_t xtxpool_table_t::verify_txs(const std::string & account, const std::vector<xcons_transaction_ptr_t> & txs) {
-    bool deny = false;
-    int32_t final_ret = xsuccess;
     for (auto & tx : txs) {
         {
             std::lock_guard<std::mutex> lck(m_mgr_mutex);
@@ -295,21 +293,22 @@ int32_t xtxpool_table_t::verify_txs(const std::string & account, const std::vect
                 if (tx_inside->get_tx()->get_tx_subtype() == tx->get_tx_subtype()) {
                     continue;
                 } else if(tx_inside->get_tx()->get_tx_subtype() > tx->get_tx_subtype()) {
-                    final_ret = xtxpool_error_request_tx_repeat;
+                    return xtxpool_error_request_tx_repeat;
                 }
             }
         }
         int32_t ret = verify_cons_tx(tx);
         if (ret != xsuccess) {
             xtxpool_warn("xtxpool_table_t::verify_txs verify fail,tx:%s,err:%u", tx->dump(true).c_str(), ret);
-            final_ret = ret;
-            continue;
+            return ret;
         }
 
         xtxpool_v2::xtx_para_t para;
         std::shared_ptr<xtxpool_v2::xtx_entry> tx_ent = std::make_shared<xtxpool_v2::xtx_entry>(tx, para);
         if (tx->is_send_tx() || tx->is_self_tx()) {
             if (!is_reach_limit(tx_ent)) {
+                xtxpool_info("xtxpool_table_t::verify_txs push tx from proposal tx:%s", tx->dump().c_str());
+                XMETRICS_GAUGE(metrics::txpool_push_tx_from_proposal, 1);
                 push_send_tx_real(tx_ent);
             }
         } else {
@@ -317,13 +316,15 @@ int32_t xtxpool_table_t::verify_txs(const std::string & account, const std::vect
             uint64_t tx_receipt_id = tx->get_last_action_receipt_id();
             if (tx_receipt_id < latest_receipt_id) {
                 xtxpool_warn("xtxpool_table_t::push_receipt duplicate receipt:%s,id:%llu:%llu", tx->dump().c_str(), tx_receipt_id, latest_receipt_id);
-                final_ret = xtxpool_error_tx_duplicate;
+                return xtxpool_error_tx_duplicate;
             } else {
+                xtxpool_info("xtxpool_table_t::verify_txs push tx from proposal tx:%s", tx->dump().c_str());
+                XMETRICS_GAUGE(metrics::txpool_push_tx_from_proposal, 1);
                 push_receipt_real(tx_ent);
             }
         }
     }
-    return final_ret;
+    return xsuccess;
 }
 
 void xtxpool_table_t::refresh_table(bool refresh_unconfirm_txs) {

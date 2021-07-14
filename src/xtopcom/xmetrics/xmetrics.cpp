@@ -149,6 +149,7 @@ char const * matrics_name(xmetircs_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(txpool_push_tx_send_fail_pool_full);
         RETURN_METRICS_NAME(txpool_pull_recv_tx);
         RETURN_METRICS_NAME(txpool_pull_confirm_tx);
+        RETURN_METRICS_NAME(txpool_push_tx_from_proposal);
 
         // blockstore
         RETURN_METRICS_NAME(blockstore_index_query);
