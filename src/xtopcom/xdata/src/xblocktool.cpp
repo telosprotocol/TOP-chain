@@ -135,17 +135,7 @@ base::xvblock_t*   xblocktool_t::create_next_fulltable(const xfulltable_block_pa
 }
 
 std::string xblocktool_t::make_address_table_account(base::enum_xchain_zone_index zone, uint16_t subaddr) {
-    xassert(zone <= base::enum_chain_zone_zec_index);
-    xassert(subaddr < enum_vbucket_has_tables_count);
-
-    static std::string tableblock_prefix[] = {
-        sys_contract_sharding_table_block_addr,
-        sys_contract_beacon_table_block_addr,
-        sys_contract_zec_table_block_addr
-    };
-
-    std::string tableblock_addr = make_address_by_prefix_and_subaddr(tableblock_prefix[zone], subaddr).value();
-    return tableblock_addr;
+    return base::xvaccount_t::make_table_account_address(zone, subaddr);
 }
 std::string xblocktool_t::make_address_shard_table_account(uint16_t subaddr) {
     return make_address_table_account(base::enum_chain_zone_consensus_index, subaddr);
