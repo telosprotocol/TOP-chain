@@ -14,8 +14,8 @@
 #include "xverifier/xtx_verifier.h"
 #include "xverifier/xverifier_utl.h"
 #include "xverifier/xwhitelist_verifier.h"
-#include "xvledger/xvledger.h"
 #include "xvledger/xvblockbuild.h"
+#include "xvledger/xvledger.h"
 
 namespace top {
 namespace xtxpool_v2 {
@@ -43,7 +43,8 @@ bool xtxpool_table_t::get_account_basic_info(const std::string & account, xaccou
     }
 
     base::xauto_ptr<base::xvblock_t> _start_block_ptr = m_para->get_vblockstore()->get_latest_committed_block(_account_vaddress);
-    base::xauto_ptr<base::xvbstate_t> account_bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(_start_block_ptr.get(), metrics::statestore_access_from_txpool_get_accountstate);
+    base::xauto_ptr<base::xvbstate_t> account_bstate =
+        base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(_start_block_ptr.get(), metrics::statestore_access_from_txpool_get_accountstate);
     if (account_bstate == nullptr) {
         xwarn("xtxpool_table_t::get_account_basic_info fail-get unitstate. block=%s", _start_block_ptr->dump().c_str());
         return false;
@@ -85,16 +86,26 @@ int32_t xtxpool_table_t::push_send_tx(const std::shared_ptr<xtx_entry> & tx) {
 
     uint64_t latest_nonce;
     bool is_cached_nonce = false;
-    bool result = get_account_latest_nonce(tx->get_tx()->get_source_addr(), latest_nonce, is_cached_nonce);
-    if (!result) {
-        // todo : push to non_ready_accounts
-        // std::lock_guard<std::mutex> lck(m_non_ready_mutex);
-        // m_non_ready_accounts.push_tx(tx);
-        xtxpool_warn("xtxpool_table_t::push_send_tx account state fall behind tx:%s", tx->get_tx()->dump(true).c_str());
-        return xtxpool_error_account_state_fall_behind;
+
+    auto & account_addr = tx->get_tx()->get_source_addr();
+
+    {
+        std::lock_guard<std::mutex> lck(m_mgr_mutex);
+        is_cached_nonce = m_txmgr_table.get_account_nonce_cache(account_addr, latest_nonce);
     }
 
-    if (data::is_sys_contract_address(common::xaccount_address_t{tx->get_tx()->get_source_addr()})) {
+    if (!is_cached_nonce) {
+        bool result = get_account_latest_nonce(account_addr, latest_nonce);
+        if (!result) {
+            // todo : push to non_ready_accounts
+            // std::lock_guard<std::mutex> lck(m_non_ready_mutex);
+            // m_non_ready_accounts.push_tx(tx);
+            xtxpool_warn("xtxpool_table_t::push_send_tx account state fall behind tx:%s", tx->get_tx()->dump(true).c_str());
+            return xtxpool_error_account_state_fall_behind;
+        }
+    }
+
+    if (data::is_sys_contract_address(common::xaccount_address_t{account_addr})) {
         tx->get_para().set_tx_type_score(enum_xtx_type_socre_system);
     } else {
         tx->get_para().set_tx_type_score(enum_xtx_type_socre_normal);
@@ -102,7 +113,10 @@ int32_t xtxpool_table_t::push_send_tx(const std::shared_ptr<xtx_entry> & tx) {
 
     {
         std::lock_guard<std::mutex> lck(m_mgr_mutex);
-        ret = m_txmgr_table.push_send_tx(tx, latest_nonce, is_cached_nonce);
+        if (!is_cached_nonce) {
+            m_txmgr_table.updata_latest_nonce(account_addr, latest_nonce);
+        }
+        ret = m_txmgr_table.push_send_tx(tx, latest_nonce);
     }
     if (ret != xsuccess) {
         // XMETRICS_COUNTER_INCREMENT("txpool_push_tx_send_fail", 1);
@@ -245,15 +259,15 @@ const std::vector<xcons_transaction_ptr_t> xtxpool_table_t::get_resend_txs(uint6
 
 void xtxpool_table_t::on_block_confirmed(xblock_t * table_block) {
     // TODO(jimmy)
-    const std::vector<base::xventity_t*> & _table_inentitys = table_block->get_input()->get_entitys();
+    const std::vector<base::xventity_t *> & _table_inentitys = table_block->get_input()->get_entitys();
     uint32_t entitys_count = _table_inentitys.size();
     for (uint32_t index = 1; index < entitys_count; index++) {  // unit entity from index#1
-        base::xvinentity_t* _table_unit_inentity = dynamic_cast<base::xvinentity_t*>(_table_inentitys[index]);
+        base::xvinentity_t * _table_unit_inentity = dynamic_cast<base::xvinentity_t *>(_table_inentitys[index]);
         base::xtable_inentity_extend_t extend;
         extend.serialize_from_string(_table_unit_inentity->get_extend_data());
         const xobject_ptr_t<base::xvheader_t> & _unit_header = extend.get_unit_header();
 
-        const std::vector<base::xvaction_t> &  input_actions = _table_unit_inentity->get_actions();
+        const std::vector<base::xvaction_t> & input_actions = _table_unit_inentity->get_actions();
         for (auto & action : input_actions) {
             if (action.get_org_tx_hash().empty()) {  // not txaction
                 continue;
@@ -286,7 +300,8 @@ int32_t xtxpool_table_t::verify_txs(const std::string & account, const std::vect
 void xtxpool_table_t::refresh_table(bool refresh_unconfirm_txs) {
     base::xvaccount_t _vaddr(m_xtable_info.get_table_addr());
     auto _block = base::xvchain_t::instance().get_xblockstore()->get_latest_committed_block(_vaddr, metrics::blockstore_access_from_txpool_refresh_table);
-    base::xauto_ptr<base::xvbstate_t> bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(_block.get(), metrics::statestore_access_from_txpool_refreshtable);
+    base::xauto_ptr<base::xvbstate_t> bstate =
+        base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(_block.get(), metrics::statestore_access_from_txpool_refreshtable);
     if (bstate == nullptr) {
         xwarn("xtxpool_table_t::refresh_table fail-get bstate.table=%s,block=%s", m_xtable_info.get_table_addr().c_str(), _block->dump().c_str());
         return;
@@ -494,19 +509,7 @@ int32_t xtxpool_table_t::verify_receipt_tx(const xcons_transaction_ptr_t & tx) c
     return xsuccess;
 }
 
-bool xtxpool_table_t::get_account_latest_nonce(const std::string account_addr, uint64_t & latest_nonce, bool & is_cached_nonce) const {
-    {
-        std::lock_guard<std::mutex> lck(m_mgr_mutex);
-        uint64_t latest_nonce_cache;
-        bool ret = m_txmgr_table.get_account_nonce_cache(account_addr, latest_nonce_cache);
-        if (ret)  {
-            xdbg("xtxpool_table_t::get_account_latest_nonce get by cache succ account:%s,nonce:%llu", account_addr.c_str(), latest_nonce_cache);
-            latest_nonce = latest_nonce_cache;
-            is_cached_nonce = true;
-            return true;
-        }
-    }
-
+bool xtxpool_table_t::get_account_latest_nonce(const std::string account_addr, uint64_t & latest_nonce) const {
     xaccount_basic_info_t account_basic_info;
     bool result = get_account_basic_info(account_addr, account_basic_info);
     if (!result) {
@@ -523,7 +526,6 @@ bool xtxpool_table_t::get_account_latest_nonce(const std::string account_addr, u
     }
 
     latest_nonce = account_basic_info.get_latest_state()->account_send_trans_number();
-    is_cached_nonce = false;
     return true;
 }
 
