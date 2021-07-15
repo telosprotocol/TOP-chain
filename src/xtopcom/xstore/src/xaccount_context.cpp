@@ -489,7 +489,7 @@ int32_t xaccount_context_t::merge_pledge_vote_property(){
         deserilize_vote_map_value(v.second, vote_num);
 
 #ifdef DEBUG
-        if(m_timer_height - lock_time >= duration / 60){
+        if(m_timer_height - lock_time >= duration / 6){
 #else
         if(m_timer_height - lock_time >= duration * 24 * 60 * 6){
 #endif
@@ -605,7 +605,7 @@ int32_t xaccount_context_t::redeem_pledge_vote_property(uint64_t num){
 }
 
 // calculate the top num needed to get specific votes
-uint64_t xaccount_context_t::get_top_by_vote(uint64_t vote_num, uint16_t duration) const {
+uint64_t xaccount_context_t::get_top_by_vote(uint64_t vote_num, uint16_t duration) {
     auto factor = MAX_TOP_VOTE_RATE;
     if (duration < MAX_VOTE_LOCK_DAYS) {
         uint64_t af = AMPLIFY_FACTOR;
