@@ -272,10 +272,11 @@ bool xtxpool_t::is_table_subscribed(uint8_t zone, uint16_t table_id) const {
 }
 
 std::shared_ptr<xtxpool_table_t> xtxpool_t::get_txpool_table_by_addr(const std::string & address) const {
-    auto xid = base::xvaccount_t::get_xid_from_account(address);
-    uint8_t zone = get_vledger_zone_index(xid);
-    uint16_t subaddr = get_vledger_subaddr(xid);
-    xassert(zone < enum_xtxpool_table_type_max);
+    base::xvaccount_t vaddr(address);
+    base::xtable_index_t tableindex = vaddr.get_short_table_id();
+    base::enum_xchain_zone_index zone = tableindex.get_zone_index();
+    uint8_t subaddr = tableindex.get_subaddr();
+    xassert(zone <= base::emum_chain_zone_consensus_max);
     xassert(subaddr < enum_vbucket_has_tables_count);
     if (is_table_subscribed(zone, subaddr)) {
         xassert(m_tables[zone][subaddr] != nullptr);
@@ -287,9 +288,9 @@ std::shared_ptr<xtxpool_table_t> xtxpool_t::get_txpool_table_by_addr(const std::
 
 std::shared_ptr<xtxpool_table_t> xtxpool_t::get_txpool_table_by_addr(const std::shared_ptr<xtx_entry> & tx) const {
     base::xtable_index_t tableindex = tx->get_tx()->get_self_table_index();
-    uint8_t zone = tableindex.get_zone_index();
+    base::enum_xchain_zone_index zone = tableindex.get_zone_index();
     uint8_t subaddr = tableindex.get_subaddr();
-    xassert(zone < enum_xtxpool_table_type_max);
+    xassert(zone <= base::emum_chain_zone_consensus_max);
     xassert(subaddr < enum_vbucket_has_tables_count);
     if (is_table_subscribed(zone, subaddr)) {
         xassert(m_tables[zone][subaddr] != nullptr);

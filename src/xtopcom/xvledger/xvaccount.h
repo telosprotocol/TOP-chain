@@ -61,6 +61,7 @@ namespace top
             enum_chain_zone_consensus_index   = 0,  //for consesnus
             enum_chain_zone_beacon_index      = 1,  //for beacon
             enum_chain_zone_zec_index         = 2,  //for election
+            emum_chain_zone_consensus_max     = enum_chain_zone_zec_index,
             
             enum_chain_zone_archive_index     = 14, //for archive nodes
             enum_chain_zone_edge_index        = 15, //for edge nodes
