@@ -17,6 +17,10 @@
     #undef __ALLOW_FORK_LOCK__  // XTODO always allow store multi lock blocks
 #endif
 
+#ifndef __ALLOW_TABLE_MORE_CACHE_SIZE__
+    #define __ALLOW_TABLE_MORE_CACHE_SIZE__
+#endif
+
 namespace top
 {
     namespace store
@@ -299,7 +303,7 @@ namespace top
             //note: place code first but  please enable it later
             #ifdef __ALLOW_TABLE_MORE_CACHE_SIZE__
             if(base::enum_xvblock_level_table == m_meta->_block_level)
-                return (enum_max_cached_blocks << 1);
+                return (enum_max_cached_blocks << 2);//allow cache to max 128 block
             #endif
 
             return enum_max_cached_blocks;
