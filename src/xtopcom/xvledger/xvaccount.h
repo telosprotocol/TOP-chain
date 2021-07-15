@@ -388,13 +388,7 @@ namespace top
             inline const xtable_longid_t       get_long_table_id()//note: long table_id = [chain_id][zone_index][book_index][table_index]
             {
                 return xtable_longid_t((get_ledger_id() << 10) | get_ledger_subaddr());
-            }
-            inline const xtable_index_t         get_table_index()
-            {
-                xtable_index_t tableindex(get_short_table_id());
-                return tableindex;
-            }
-            
+            }           
             inline const xvid_t         get_xvid()    const {return m_account_xid;}
             inline const xvid_t         get_account_id()    const {return m_account_xid;}
             inline const std::string&   get_xvid_str()const {return m_account_xid_str;}

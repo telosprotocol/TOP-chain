@@ -37,12 +37,11 @@ TEST_F(test_xvledger, xvaccount_tableid) {
 
 TEST_F(test_xvledger, table_address_check_1) {
     {
-        std::string prefix = sys_contract_beacon_table_block_addr;
+        std::string prefix = "Ta0001";
         std::string address = base::xvaccount_t::make_account_address(prefix, 1);
         base::xvaccount_t _vaddr(address);
-        base::xtable_index_t tableindex = _vaddr.get_table_index();
-        ASSERT_EQ(tableindex.get_zone_index(), enum_chain_zone_beacon_index);
-        ASSERT_EQ(tableindex.get_subaddr(), 1);
+        ASSERT_EQ(_vaddr.get_zone_index(), enum_chain_zone_beacon_index);
+        ASSERT_EQ(_vaddr.get_ledger_subaddr(), 1);
         ASSERT_EQ(_vaddr.get_addr_type(), enum_vaccount_addr_type_block_contract);
 
         std::string public_address;
@@ -55,12 +54,11 @@ TEST_F(test_xvledger, table_address_check_1) {
         std::cout << "tableid=" << _vaddr.get_short_table_id() << std::endl;
     }
     {
-        std::string prefix = sys_contract_zec_table_block_addr;
+        std::string prefix = "Ta0002";
         std::string address = base::xvaccount_t::make_account_address(prefix, 255);
         base::xvaccount_t _vaddr(address);
-        base::xtable_index_t tableindex = _vaddr.get_table_index();
-        ASSERT_EQ(tableindex.get_zone_index(), enum_chain_zone_zec_index);
-        ASSERT_EQ(tableindex.get_subaddr(), 255);
+        ASSERT_EQ(_vaddr.get_zone_index(), enum_chain_zone_zec_index);
+        ASSERT_EQ(_vaddr.get_ledger_subaddr(), 255);
         ASSERT_EQ(_vaddr.get_addr_type(), enum_vaccount_addr_type_block_contract);
 
         std::string public_address;
@@ -73,12 +71,11 @@ TEST_F(test_xvledger, table_address_check_1) {
         std::cout << "tableid=" << _vaddr.get_short_table_id() << std::endl;
     }
     {
-        std::string prefix = sys_contract_sharding_table_block_addr;
+        std::string prefix = "Ta0000";
         std::string address = base::xvaccount_t::make_account_address(prefix, 128);
         base::xvaccount_t _vaddr(address);
-        base::xtable_index_t tableindex = _vaddr.get_table_index();
-        ASSERT_EQ(tableindex.get_zone_index(), enum_chain_zone_consensus_index);
-        ASSERT_EQ(tableindex.get_subaddr(), 128);
+        ASSERT_EQ(_vaddr.get_zone_index(), enum_chain_zone_consensus_index);
+        ASSERT_EQ(_vaddr.get_ledger_subaddr(), 128);
         ASSERT_EQ(_vaddr.get_addr_type(), enum_vaccount_addr_type_block_contract);
 
         std::string public_address;
