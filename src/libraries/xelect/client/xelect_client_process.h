@@ -26,11 +26,21 @@ protected:
 
 protected:
     void process_timer(const mbus::xevent_ptr_t & e);
-    void process_elect(const mbus::xevent_ptr_t & e);
+    // void process_elect(const mbus::xevent_ptr_t & e);
+    void update_election_status(common::xlogic_time_t const & current_time);
+    void process_election_block(xobject_ptr_t<base::xvblock_t> const& election_data_block);
 
 private:
     common::xnetwork_id_t m_network_id;
     elect_update_handler2 m_update_handler2{};
     observer_ptr<time::xchain_time_face_t> m_xchain_timer{nullptr};
+
+    struct xtop_internal_election_status {
+        uint64_t height{ 0 };
+        bool initialized{ false };
+    };
+    using xinternal_election_status_t = xtop_internal_election_status;
+
+    std::unordered_map<common::xaccount_address_t, xinternal_election_status_t> m_election_status;
 };
 NS_END2
