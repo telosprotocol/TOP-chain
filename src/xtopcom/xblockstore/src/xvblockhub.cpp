@@ -1267,6 +1267,11 @@ namespace top
                 xinfo("xblockacct_t::store_block,done for block,cache_size:%zu,new_raw_block=%s,dump=%s",m_all_blocks.size(), new_raw_block->dump().c_str(), dump().c_str());
                 return true;
             }
+            else if( (exist_cert) && (exist_cert->check_block_flag(base::enum_xvblock_flag_stored) == false) )
+            {
+                //give chance to store raw block even found duplicated indexx
+                write_block_to_db(exist_cert(),new_raw_block);
+            }
 
             xinfo("xblockacct_t::store_block,cache index fail.block=%s", new_raw_block->dump().c_str());
             return false;
