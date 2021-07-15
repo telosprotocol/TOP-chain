@@ -57,7 +57,7 @@ namespace top
             inline const uint64_t       get_parent_accountid()    const {return m_parent_accountid;}
             inline const uint64_t       get_parent_block_height() const {return m_parent_block_height;}
             inline const uint64_t       get_parent_block_viewid() const {return m_parent_block_viewid;}
-            inline bool                 has_parent_store() const {return m_parent_accountid != 0 && m_parent_block_height != 0 && m_parent_block_viewid != 0;}
+            inline bool                 has_parent_store() const {return false;}
 
             inline enum_xvblock_level   get_block_level()  const {return xvheader_t::cal_block_level(m_block_types);}
             inline enum_xvblock_class   get_block_class()  const {return xvheader_t::cal_block_class(m_block_types);}

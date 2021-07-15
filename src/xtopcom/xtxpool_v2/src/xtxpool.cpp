@@ -290,7 +290,7 @@ std::shared_ptr<xtxpool_table_t> xtxpool_t::get_txpool_table_by_addr(const std::
     uint8_t zone = tableindex.get_zone_index();
     uint8_t subaddr = tableindex.get_subaddr();
     xassert(zone < enum_xtxpool_table_type_max);
-    xassert(subaddr < enum_vbucket_has_tables_count);
+    xassert(subaddr <= (enum_vbucket_has_tables_count -1));
     if (is_table_subscribed(zone, subaddr)) {
         xassert(m_tables[zone][subaddr] != nullptr);
         return m_tables[zone][subaddr];
