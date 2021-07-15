@@ -1,14 +1,20 @@
+#include "../services/xgrpcservice/xgrpc_service.h"
 #include "nlohmann/fifo_map.hpp"
 #include "nlohmann/json.hpp"
 #include "xblockstore/xblockstore_face.h"
 #include "xconfig/xconfig_register.h"
 #include "xconfig/xpredefined_configurations.h"
+#include "xdata/xelection/xelection_info_bundle.h"
+#include "xdata/xelection/xelection_result_property.h"
 #include "xdata/xfull_tableblock.h"
+#include "xdata/xgenesis_data.h"
 #include "xdata/xnative_contract_address.h"
 #include "xdata/xproposal_data.h"
 #include "xdata/xrootblock.h"
 #include "xdata/xtable_bstate.h"
 #include "xdb/xdb_factory.h"
+#include "xelection/xvnode_house.h"
+#include "xrpc/xgetblock/get_block.h"
 #include "xstake/xstake_algorithm.h"
 #include "xstore/xstore_face.h"
 #include "xvledger/xvblock.h"
@@ -34,6 +40,8 @@ using json = unordered_json;
 
 using namespace top;
 using namespace top::xstake;
+using namespace top::data;
+using namespace top::election;
 using top::base::xcontext_t;
 using top::base::xstream_t;
 using top::base::xstring_utl;
@@ -66,6 +74,7 @@ void usage() {
     std::cout << "        - checkout_all_account" << std::endl;
     std::cout << "        - check_fast_sync [table|unit|account]" << std::endl;
     std::cout << "        - check_block_exist <account> <height>" << std::endl;
+    std::cout << "        - check_block_info <account> <height|last>" << std::endl;
     std::cout << "        - check_tx_info [account]" << std::endl;
     std::cout << "        - check_latest_fullblock" << std::endl;
     std::cout << "        - check_contract_property <account> <prop> <last|all>" << std::endl;
@@ -133,12 +142,16 @@ public:
         top::config::config_register.get_instance().set(config::xmax_validator_stake_onchain_goverance_parameter_t::name, std::to_string(5000));
         top::config::config_register.get_instance().set(config::xchain_name_configuration_t::name, std::string{top::config::chain_name_testnet});
 
+        m_node_id = common::xnode_id_t{"T00000LgGPqEpiK6XLCKRj9gVPN8Ej1aMbyAb3Hu"};
+        m_sign_key = "ONhWC2LJtgi9vLUyoa48MF3tiXxqWf7jmT9KtOg/Lwo=";
+        m_bus = top::make_object_ptr<mbus::xmessage_bus_t>(true, 1000);
         m_store = top::store::xstore_factory::create_store_with_kvdb(db_path);
         base::xvchain_t::instance().set_xdbstore(m_store.get());
         m_blockstore.attach(store::get_vblockstore());
-        
-        xobject_ptr_t<store::xsyncvstore_t> m_syncstore;
-        contract::xcontract_manager_t::instance().init(make_observer(m_store), m_syncstore);
+        m_nodesvr_ptr = make_object_ptr<xvnode_house_t>(m_node_id, m_sign_key, m_blockstore, make_observer(m_bus.get()));
+        m_getblock = std::make_shared<chain_info::get_block_handle>(m_store.get(), m_blockstore.get(), nullptr);
+        contract::xcontract_manager_t::instance().init(make_observer(m_store), xobject_ptr_t<store::xsyncvstore_t>{});
+        contract::xcontract_manager_t::set_nodesrv_ptr(m_nodesvr_ptr);
     }
 
     void get_all_unit_account(std::set<std::string> & accounts_set) {
@@ -372,6 +385,36 @@ public:
                 }
             }
         }
+    }
+
+    void query_block_info(std::string const & account, const int64_t height) {
+        xJson::Value root;
+        uint64_t h;
+        // data::xblock_t * bp = nullptr;
+        if (height  < 0) {
+            h = m_blockstore->get_latest_committed_block_height(base::xvaccount_t{account});
+            std::cout << "account: " << account << ", latest committed height: " << h << ", block info:" << std::endl;
+        } else {
+            h = height;
+            std::cout << "account: " << account << ", height: " << h << ", block info:" << std::endl;
+        }
+        auto vblock = m_blockstore->load_block_object(account, h, 0, true);
+        data::xblock_t * bp = dynamic_cast<data::xblock_t *>(vblock.get());
+        if (bp == nullptr) {
+            std::cout << "account: " << account << ", height: " << h << " block null" << std::endl;
+            return;
+        }
+        if (bp->is_genesis_block() && bp->get_block_class() == base::enum_xvblock_class_nil && false == bp->check_block_flag(base::enum_xvblock_flag_stored)) {
+            std::cout << "account: " << account << ", height: " << h << " block genesis && nil && non-stored" << std::endl;
+            return;
+        }
+        if (false == base::xvchain_t::instance().get_xblockstore()->load_block_input(base::xvaccount_t(bp->get_account()), bp)) {
+            std::cout << "account: " << account << ", height: " << h << " load_block_input failed" << std::endl;
+            return;
+        }
+        root = dynamic_cast<chain_info::get_block_handle*>(m_getblock.get())->get_block_json(bp);
+        std::string str = xJson::FastWriter().write(root);
+        std::cout << str << std::endl;
     }
 
     void query_contract_property(std::string const & account, std::string const & prop_name, std::string const & param) {
@@ -637,7 +680,12 @@ private:
         std::vector<tx_ext_t> multi;
         json j;
         int empty_table_block_num{0};
+        int light_table_block_num{0};
+        int full_table_block_num{0};
+        int missing_table_block_num{0};
         int empty_unit_block_num{0};
+        int light_unit_block_num{0};
+        int full_unit_block_num{0};
         int total_unit_block_num{0};
         int recv_num{0};
         int tableid{-1};
@@ -656,28 +704,44 @@ private:
             auto const & vblock = m_blockstore->load_block_object(account,h,0,false);
             const data::xblock_t * block = dynamic_cast<data::xblock_t *>(vblock.get());
             if (block == nullptr) {
+                missing_table_block_num++;
+                std::cout << account << " missing block at height " << h << std::endl;
+                continue;
+            }
+
+            if (block->get_block_class() == base::enum_xvblock_class_nil) {
                 empty_table_block_num++;
                 continue;
+            } else if (block->get_block_class() == base::enum_xvblock_class_full) {
+                full_table_block_num++;
+                continue;
+            } else {
+                light_table_block_num++;
             }
             m_blockstore->load_block_input(_vaccount, vblock.get());
             assert(block->get_block_level() == base::enum_xvblock_level_table);
             const uint64_t timestamp = block->get_timestamp();
             const std::vector<base::xventity_t*> & _table_inentitys = block->get_input()->get_entitys();
             uint32_t entitys_count = _table_inentitys.size();
-            if (entitys_count == 0) {
-                empty_table_block_num++;
-            }
             for (uint32_t index = 1; index < entitys_count; index++) {  // unit entity from index#1
                 total_unit_block_num++;
                 base::xvinentity_t* _table_unit_inentity = dynamic_cast<base::xvinentity_t*>(_table_inentitys[index]);
                 base::xtable_inentity_extend_t extend;
                 extend.serialize_from_string(_table_unit_inentity->get_extend_data());
                 const xobject_ptr_t<base::xvheader_t> & _unit_header = extend.get_unit_header();
+
+                if (_unit_header->get_block_class() == base::enum_xvblock_class_nil) {
+                    empty_unit_block_num++;
+                    continue;
+                } else if (_unit_header->get_block_class() == base::enum_xvblock_class_full) {
+                    full_unit_block_num++;
+                    continue;
+                } else {
+                    light_unit_block_num++;
+                }                
+                
                 const uint64_t unit_height = _unit_header->get_height();
                 const std::vector<base::xvaction_t> &  input_actions = _table_unit_inentity->get_actions();
-                if (input_actions.empty()) {
-                    empty_unit_block_num++;
-                }
                 for (auto & action : input_actions) {
                     if (action.get_org_tx_hash().empty()) {  // not txaction
                         continue;
@@ -740,9 +804,14 @@ private:
         }
         j["table info"]["table height"] = block_height;
         j["table info"]["total table block num"] = block_height + 1;
+        j["table info"]["miss table block num"] = missing_table_block_num;
         j["table info"]["empty table block num"] = empty_table_block_num;
+        j["table info"]["light table block num"] = light_table_block_num;
+        j["table info"]["full table block num"] = full_table_block_num;
         j["table info"]["total unit block num"] = total_unit_block_num;
         j["table info"]["empty unit block num"] = empty_unit_block_num;
+        j["table info"]["light unit block num"] = light_unit_block_num;
+        j["table info"]["full unit block num"] = full_unit_block_num;
         j["table info"]["total self num"] = self.size();
         j["table info"]["total send num"] = send.size();
         j["table info"]["total recv num"] = recv_num;
@@ -934,8 +1003,13 @@ private:
         }
     }
 
-    top::xobject_ptr_t<top::store::xstore_face_t> m_store;
-    top::xobject_ptr_t<top::base::xvblockstore_t> m_blockstore;
+    common::xnode_id_t m_node_id;
+    std::string m_sign_key;
+    xobject_ptr_t<mbus::xmessage_bus_face_t> m_bus;
+    xobject_ptr_t<store::xstore_face_t> m_store;
+    xobject_ptr_t<base::xvblockstore_t> m_blockstore;
+    xobject_ptr_t<base::xvnodesrv_t> m_nodesvr_ptr;
+    std::shared_ptr<rpc::xrpc_handle_face_t> m_getblock;
 };
 
 int main(int argc, char ** argv) {
@@ -1036,6 +1110,16 @@ int main(int argc, char ** argv) {
             return -1;
         }
         tools.query_block_exist(argv[3], std::stoi(argv[4]));
+    } else if (function_name == "check_block_info") {
+        if (argc < 5) {
+            usage();
+            return -1;
+        }
+        int height = -1;
+        if (std::string{argv[4]} != std::string{"last"}) {
+            height = std::stoi(argv[4]);
+        }
+        tools.query_block_info(argv[3], height);
     } else if (function_name == "check_latest_fullblock") {
         tools.query_table_latest_fullblock();
     } else if (function_name == "check_contract_property") {
