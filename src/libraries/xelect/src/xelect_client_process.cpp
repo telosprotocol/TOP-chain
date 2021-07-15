@@ -6,7 +6,10 @@
 
 #include "xbasic/xutility.h"
 #include "xcodec/xmsgpack_codec.hpp"
+#include "xconfig/xconfig_register.h"
+#include "xconfig/xpredefined_configurations.h"
 #include "xdata/xblock.h"
+#include "xdata/xblocktool.h"
 #include "xdata/xcodec/xmsgpack/xelection_result_store_codec.hpp"
 #include "xdata/xelection/xelection_result_property.h"
 #include "xdata/xelection/xelection_result_store.h"
@@ -32,29 +35,41 @@ xelect_client_process::xelect_client_process(common::xnetwork_id_t const & netwo
   : xbase_sync_event_monitor_t(mb), m_network_id{network_id}, m_update_handler2{std::move(cb2)}, m_xchain_timer(xchain_timer) {
     assert(!broadcast(m_network_id));
     xdbg("xelect_client_process created %p", mb);
-    mb->add_listener((int)mbus::xevent_major_type_store, std::bind(&xelect_client_process::push_event, this, std::placeholders::_1));
+    // mb->add_listener((int)mbus::xevent_major_type_store, std::bind(&xelect_client_process::push_event, this, std::placeholders::_1));
     mb->add_listener((int)mbus::xevent_major_type_chain_timer, std::bind(&xelect_client_process::push_event, this, std::placeholders::_1));
+
+    m_election_status[common::xaccount_address_t{ sys_contract_rec_elect_rec_addr }].height = 0;
+    m_election_status[common::xaccount_address_t{ sys_contract_rec_elect_zec_addr }].height = 0;
+    m_election_status[common::xaccount_address_t{ sys_contract_rec_elect_edge_addr }].height = 0;
+    m_election_status[common::xaccount_address_t{ sys_contract_rec_elect_archive_addr }].height = 0;
+    m_election_status[common::xaccount_address_t{ sys_contract_zec_elect_consensus_addr }].height = 0;
+
+    m_election_status[common::xaccount_address_t{ sys_contract_rec_elect_rec_addr }].initialized = false;
+    m_election_status[common::xaccount_address_t{ sys_contract_rec_elect_zec_addr }].initialized = false;
+    m_election_status[common::xaccount_address_t{ sys_contract_rec_elect_edge_addr }].initialized = false;
+    m_election_status[common::xaccount_address_t{ sys_contract_rec_elect_archive_addr }].initialized = false;
+    m_election_status[common::xaccount_address_t{ sys_contract_zec_elect_consensus_addr }].initialized = false;
 }
 
 bool xelect_client_process::filter_event(const xevent_ptr_t & e) {
     xdbg("xelect_client_process::filter_event major type %d minor type %d", static_cast<int>(e->major_type), static_cast<int>(e->minor_type));
     switch (e->major_type) {
-    case mbus::xevent_major_type_store:
-        if (e->minor_type == xevent_store_t::type_block_to_db) {
-            auto bme = dynamic_xobject_ptr_cast<mbus::xevent_store_block_to_db_t>(e);
-            const std::string & owner = bme->owner;
-            if (!(owner == sys_contract_rec_elect_edge_addr || owner == sys_contract_rec_elect_archive_addr || owner == sys_contract_rec_elect_rec_addr ||
-                  owner == sys_contract_rec_elect_zec_addr || owner == sys_contract_zec_elect_consensus_addr)) {
-                return false;
-            }
-            // only process light unit
-            if (bme->blk_class != base::enum_xvblock_class_light) {
-                return false;
-            }
-        } else {
-            xdbg("xelect_client_process ignore event %d", static_cast<int>(e->minor_type));
-        }
-        return e->minor_type == xevent_store_t::type_block_to_db;
+    //case mbus::xevent_major_type_store:
+    //    if (e->minor_type == xevent_store_t::type_block_to_db) {
+    //        auto bme = dynamic_xobject_ptr_cast<mbus::xevent_store_block_to_db_t>(e);
+    //        const std::string & owner = bme->owner;
+    //        if (!(owner == sys_contract_rec_elect_edge_addr || owner == sys_contract_rec_elect_archive_addr || owner == sys_contract_rec_elect_rec_addr ||
+    //              owner == sys_contract_rec_elect_zec_addr || owner == sys_contract_zec_elect_consensus_addr)) {
+    //            return false;
+    //        }
+    //        // only process light unit
+    //        if (bme->blk_class != base::enum_xvblock_class_light) {
+    //            return false;
+    //        }
+    //    } else {
+    //        xdbg("xelect_client_process ignore event %d", static_cast<int>(e->minor_type));
+    //    }
+    //    return e->minor_type == xevent_store_t::type_block_to_db;
     case mbus::xevent_major_type_chain_timer:
         assert(dynamic_xobject_ptr_cast<mbus::xevent_chain_timer_t>(e));
         return dynamic_xobject_ptr_cast<mbus::xevent_chain_timer_t>(e)->time_block->get_account() == sys_contract_beacon_timer_addr;
@@ -65,13 +80,14 @@ bool xelect_client_process::filter_event(const xevent_ptr_t & e) {
 
 void xelect_client_process::process_event(const xevent_ptr_t & e) {
     switch (e->major_type) {
-    case mbus::xevent_major_type_store:
-        process_elect(e);
-        break;
+    //case mbus::xevent_major_type_store:
+    //    process_elect(e);
+    //    break;
     case mbus::xevent_major_type_chain_timer:
         process_timer(e);
         break;
     default:
+        assert(false);
         break;
     }
 }
@@ -80,30 +96,116 @@ void xelect_client_process::process_timer(const mbus::xevent_ptr_t & e) {
     assert(dynamic_xobject_ptr_cast<mbus::xevent_chain_timer_t>(e));
     auto const & event = dynamic_xobject_ptr_cast<mbus::xevent_chain_timer_t>(e);
     auto block = event->time_block;
+
     xdbg("[xelect_client_process::process_timer] update xchain timer to %" PRIu64, block->get_height());
     m_xchain_timer->update_time(block->get_height(), time::xlogic_timer_update_strategy_t::discard_old_value);
+
+    xdbg("[xelect_client_process::process_timer] try update election status at logic time %" PRIu64, block->get_height());
+    update_election_status(block->get_height());
 }
 
-void xelect_client_process::process_elect(const mbus::xevent_ptr_t & e) {
-    auto bme = dynamic_xobject_ptr_cast<mbus::xevent_store_block_to_db_t>(e);
-    assert(bme);
-    xblock_ptr_t const & block = mbus::extract_block_from(bme, metrics::blockstore_access_from_mbus_xelect_process_elect);
+//void xelect_client_process::process_elect(const mbus::xevent_ptr_t & e) {
+//    auto bme = dynamic_xobject_ptr_cast<mbus::xevent_store_block_to_db_t>(e);
+//    assert(bme);
+//    xblock_ptr_t const & block = mbus::extract_block_from(bme, metrics::blockstore_access_from_mbus_xelect_process_elect);
+//
+//    // only process light unit, others are filtered
+//    xassert(block->get_block_class() == base::enum_xvblock_class_light);
+//    common::xaccount_address_t contract_address{ block->get_block_owner() };
+//    xinfo("xelect_client_process::process_elect %s, %" PRIu64, contract_address.c_str(), block->get_height());
+//    // TODO(jimmy) db event must stable and order
+//    base::xauto_ptr<base::xvbstate_t> bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(block.get(), metrics::statestore_access_from_xelect);
+//    if (nullptr == bstate) {
+//        xerror("xelect_client_process::process_elect get target state fail.block=%s", block->dump().c_str());
+//        return;
+//    }
+//    data::xunit_bstate_t unitstate(bstate.get());
+//
+//    std::string result;
+//    auto property_names = data::election::get_property_name_by_addr(contract_address);
+//    for (auto const & property : property_names) {
+//        unitstate.string_get(property, result);
+//        if (result.empty()) {
+//            xerror("[zec election] zone elect finish with empty result. property=%s,block=%s", property.c_str(), block->dump().c_str());
+//            continue;
+//        }
+//        xdbg("xelect_client_process::process_elect %s, %" PRIu64 " done", contract_address.c_str(), block->get_height());
+//        using top::data::election::xelection_result_store_t;
+//        auto const & election_result_store = codec::msgpack_decode<xelection_result_store_t>({std::begin(result), std::end(result)});
+//        if (election_result_store.size() == 0) {
+//            if (!(contract_address == common::xaccount_address_t{ sys_contract_rec_elect_archive_addr } && property == data::election::get_property_by_group_id(common::xfull_node_group_id))) {
+//                xerror("xelect_client_process::process_elect decode property empty, block=%s", block->dump().c_str());
+//                return;
+//            }
+//        }
+//
+//        for (auto const & election_result_info : election_result_store) {
+//            auto const & network_id = top::get<common::xnetwork_id_t const>(election_result_info);
+//            if (network_id != m_network_id) {
+//                continue;
+//            }
+//
+//            auto const & election_network_result = top::get<data::election::xelection_network_result_t>(election_result_info);
+//            for (auto const & election_type_result : election_network_result) {
+//                auto const node_type = top::get<common::xnode_type_t const>(election_type_result);
+//
+//                xdbg("start processing %s data", common::to_string(node_type).c_str());
+//
+//                if (common::has<common::xnode_type_t::consensus>(node_type) || common::has<common::xnode_type_t::consensus_validator>(node_type) ||
+//                    common::has<common::xnode_type_t::consensus_auditor>(node_type)) {
+//                    m_update_handler2(election_result_store, common::xconsensus_zone_id, block->get_height(), false);
+//                } else if (common::has<common::xnode_type_t::zec>(node_type)) {
+//                    m_update_handler2(election_result_store, common::xzec_zone_id, block->get_height(), false);
+//                } else if (common::has<common::xnode_type_t::committee>(node_type)) {
+//                    m_update_handler2(election_result_store, common::xcommittee_zone_id, block->get_height(), false);
+//                } else if (common::has<common::xnode_type_t::edge>(node_type)) {
+//                    m_update_handler2(election_result_store, common::xedge_zone_id, block->get_height(), false);
+//                } else if (common::has<common::xnode_type_t::storage>(node_type)) {
+//                    m_update_handler2(election_result_store, common::xarchive_zone_id, block->get_height(), false);
+//                } else {
+//                    assert(false);
+//                }
+//            }
+//        }
+//    }
+//    return;
+//}
+
+void xelect_client_process::process_election_block(xobject_ptr_t<base::xvblock_t> const& election_data_block) {
+    if (election_data_block == nullptr) {
+        return;
+    }
+
+    auto const block = dynamic_xobject_ptr_cast<data::xblock_t>(election_data_block);
+    if (block == nullptr) {
+        return;
+    }
+
+    common::xaccount_address_t const contract_address{ block->get_block_owner() };
+    auto const it = m_election_status.find(contract_address);
+    if (it == std::end(m_election_status)) {
+        return;
+    }
+
+    auto const local_height = top::get<xinternal_election_status_t>(*it).height;
+    if (top::get<xinternal_election_status_t>(*it).initialized && local_height >= block->get_height()) {
+        return;
+    }
 
     // only process light unit, others are filtered
     xassert(block->get_block_class() == base::enum_xvblock_class_light);
-    common::xaccount_address_t contract_address{ block->get_block_owner() };
     xinfo("xelect_client_process::process_elect %s, %" PRIu64, contract_address.c_str(), block->get_height());
     // TODO(jimmy) db event must stable and order
-    base::xauto_ptr<base::xvbstate_t> bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(block.get(), metrics::statestore_access_from_xelect);
+    base::xauto_ptr<base::xvbstate_t> const bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(block.get(), metrics::statestore_access_from_xelect);
     if (nullptr == bstate) {
         xerror("xelect_client_process::process_elect get target state fail.block=%s", block->dump().c_str());
         return;
     }
-    data::xunit_bstate_t unitstate(bstate.get());
+    data::xunit_bstate_t const unitstate(bstate.get());
 
-    std::string result;
-    auto property_names = data::election::get_property_name_by_addr(contract_address);
+    auto const & property_names = data::election::get_property_name_by_addr(contract_address);
     for (auto const & property : property_names) {
+        std::string result;
         unitstate.string_get(property, result);
         if (result.empty()) {
             xerror("[zec election] zone elect finish with empty result. property=%s,block=%s", property.c_str(), block->dump().c_str());
@@ -111,17 +213,20 @@ void xelect_client_process::process_elect(const mbus::xevent_ptr_t & e) {
         }
         xdbg("xelect_client_process::process_elect %s, %" PRIu64 " done", contract_address.c_str(), block->get_height());
         using top::data::election::xelection_result_store_t;
-        auto const & election_result_store = codec::msgpack_decode<xelection_result_store_t>({std::begin(result), std::end(result)});
-        if (election_result_store.size() == 0) {
+        auto const& election_result_store = codec::msgpack_decode<xelection_result_store_t>({ std::begin(result), std::end(result) });
+        if (election_result_store.empty()) {
             if (!(contract_address == common::xaccount_address_t{ sys_contract_rec_elect_archive_addr } && property == data::election::get_property_by_group_id(common::xfull_node_group_id))) {
-                xerror("xelect_client_process::process_elect decode property empty, block=%s", block->dump().c_str());
+                if (block->get_height() != 0) {
+                    xerror("xelect_client_process::process_elect decode property empty, block=%s", block->dump().c_str());
+                } else {
+                    xwarn("xelect_client_process::process_elect decode property empty, block=%s", block->dump().c_str());
+                }
                 return;
             }
         }
 
-        for (auto const & election_result_info : election_result_store) {
-            auto const & network_id = top::get<common::xnetwork_id_t const>(election_result_info);
-            if (network_id != m_network_id) {
+        for (auto const& election_result_info : election_result_store) {
+            if (top::get<common::xnetwork_id_t const>(election_result_info) != m_network_id) {
                 continue;
             }
 
@@ -148,7 +253,38 @@ void xelect_client_process::process_elect(const mbus::xevent_ptr_t & e) {
             }
         }
     }
-    return;
+
+    top::get<xinternal_election_status_t>(*it).height = block->get_height();
+    top::get<xinternal_election_status_t>(*it).initialized = true;
+}
+
+void xelect_client_process::update_election_status(common::xlogic_time_t const& current_time) {
+    constexpr config::xinterval_t divider = 4;
+
+    auto const update_rec_interval = XGET_ONCHAIN_GOVERNANCE_PARAMETER(rec_election_interval) / divider;
+    if (!m_election_status[common::xaccount_address_t{sys_contract_rec_elect_rec_addr}].initialized || current_time % update_rec_interval == 0) {
+        process_election_block(data::xblocktool_t::get_latest_connectted_light_block(base::xvchain_t::instance().get_xblockstore(), base::xvaccount_t{ sys_contract_rec_elect_rec_addr }));
+    }
+
+    auto const update_zec_interval = XGET_ONCHAIN_GOVERNANCE_PARAMETER(zec_election_interval) / divider;
+    if (!m_election_status[common::xaccount_address_t{ sys_contract_rec_elect_zec_addr }].initialized || current_time % update_zec_interval == 0) {
+        process_election_block(data::xblocktool_t::get_latest_connectted_light_block(base::xvchain_t::instance().get_xblockstore(), base::xvaccount_t{ sys_contract_rec_elect_zec_addr }));
+    }
+
+    auto const update_edge_interval = XGET_ONCHAIN_GOVERNANCE_PARAMETER(edge_election_interval) / divider;
+    if (!m_election_status[common::xaccount_address_t{ sys_contract_rec_elect_edge_addr }].initialized || current_time % update_edge_interval == 0) {
+        process_election_block(data::xblocktool_t::get_latest_connectted_light_block(base::xvchain_t::instance().get_xblockstore(), base::xvaccount_t{ sys_contract_rec_elect_edge_addr }));
+    }
+
+    auto const update_archive_interval = XGET_ONCHAIN_GOVERNANCE_PARAMETER(archive_election_interval) / divider;
+    if (!m_election_status[common::xaccount_address_t{ sys_contract_rec_elect_archive_addr }].initialized || current_time % update_archive_interval == 0) {
+        process_election_block(data::xblocktool_t::get_latest_connectted_light_block(base::xvchain_t::instance().get_xblockstore(), base::xvaccount_t{ sys_contract_rec_elect_archive_addr }));
+    }
+
+    auto const update_consensus_interval = XGET_ONCHAIN_GOVERNANCE_PARAMETER(cluster_election_interval) / divider;
+    if (!m_election_status[common::xaccount_address_t{ sys_contract_zec_elect_consensus_addr }].initialized || current_time % update_consensus_interval) {
+        process_election_block(data::xblocktool_t::get_latest_connectted_light_block(base::xvchain_t::instance().get_xblockstore(), base::xvaccount_t{ sys_contract_zec_elect_consensus_addr }));
+    }
 }
 
 NS_END2
