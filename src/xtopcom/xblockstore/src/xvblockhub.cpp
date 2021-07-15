@@ -1644,7 +1644,30 @@ namespace top
                 m_meta->_highest_connect_block_hash   = this_block->get_block_hash();
                 this_block->set_block_flag(base::enum_xvblock_flag_connected);
             }
-            
+
+            if(false == this_block->check_block_flag(base::enum_xvblock_flag_connected))
+            {
+                //full-block must be a connected block
+                if(   (this_block_height <= m_meta->_highest_connect_block_height)
+                   || (this_block->get_block_class() == base::enum_xvblock_class_full)
+                    )
+                {
+                    this_block->set_block_flag(base::enum_xvblock_flag_connected); //mark connected status
+                }
+                else if(   (this_block_height == (m_meta->_highest_connect_block_height + 1)) //regular check
+                        && (m_meta->_highest_connect_block_hash  == this_block->get_last_block_hash()))
+                {
+                    this_block->set_block_flag(base::enum_xvblock_flag_connected);
+                }
+                else if( (this_block->get_prev_block() != NULL) && (this_block->get_prev_block()->check_block_flag(base::enum_xvblock_flag_connected)) )//quick path
+                {
+                    xassert(this_block->get_prev_block()->check_block_flag(base::enum_xvblock_flag_committed));//must be true
+                    this_block->set_block_flag(base::enum_xvblock_flag_connected);
+                }
+                else if(0 == this_block_height) //force to add it if not
+                    this_block->set_block_flag(base::enum_xvblock_flag_connected);
+            }
+
             if((0 == this_block_height) && (0 == m_meta->_highest_genesis_connect_height))
             {
                 m_meta->_highest_genesis_connect_height = this_block_height;
@@ -1655,6 +1678,21 @@ namespace top
             bool  geneis_connect_more = true;//geneis connection that ask connect connect to all the way to geneis block
             std::vector<base::xauto_ptr<base::xvbindex_t>> fire_stored_events;
             fire_stored_events.reserve(16);//resever some sapce first
+
+            //update record of _highest_connect_block_height/hash now
+            if(this_block->check_block_flag(base::enum_xvblock_flag_connected))
+            {
+                //covered case of genesis block
+                if(   ((0 == this_block_height) && (0 == m_meta->_highest_connect_block_height))
+                   || (this_block_height > m_meta->_highest_connect_block_height) )
+                {
+                    m_meta->_highest_connect_block_height = this_block_height;
+                    m_meta->_highest_connect_block_hash   = this_block->get_block_hash();
+
+                    this_block->add_ref();//fire_stored_events need hold a reference to construct xauto_ptr object
+                    fire_stored_events.emplace_back(base::xauto_ptr<base::xvbindex_t>(this_block));
+                }
+            }
 
             //heavy job to search from current height to m_meta->_highest_commit_block_height
             if(geneis_connect_more) //search more
