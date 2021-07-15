@@ -107,38 +107,38 @@ namespace top
         public://better performance,and return raw ptr with added reference,caller respond to release it after that.
             //please refer enum_xvblock_flag definition for terms of lock,commit,execute,connect
             
-            virtual base::xauto_ptr<base::xvblock_t>  get_genesis_block(const base::xvaccount_t & account) override;
-            virtual base::xauto_ptr<base::xvblock_t>  get_latest_cert_block(const base::xvaccount_t & account)  override;
-            virtual base::xauto_ptr<base::xvblock_t>  get_latest_locked_block(const base::xvaccount_t & account)   override;
-            virtual base::xauto_ptr<base::xvblock_t>  get_latest_committed_block(const base::xvaccount_t & account)override;
-            virtual base::xauto_ptr<base::xvblock_t>  get_latest_executed_block(const base::xvaccount_t & account) override;
-            virtual base::xauto_ptr<base::xvblock_t>  get_latest_connected_block(const base::xvaccount_t & account)override;
-            virtual base::xauto_ptr<base::xvblock_t>  get_latest_full_block(const base::xvaccount_t & account);
+            virtual base::xauto_ptr<base::xvblock_t>  get_genesis_block(const base::xvaccount_t & account,const int atag = 0) override;
+            virtual base::xauto_ptr<base::xvblock_t>  get_latest_cert_block(const base::xvaccount_t & account,const int atag = 0)  override;
+            virtual base::xauto_ptr<base::xvblock_t>  get_latest_locked_block(const base::xvaccount_t & account,const int atag = 0)   override;
+            virtual base::xauto_ptr<base::xvblock_t>  get_latest_committed_block(const base::xvaccount_t & account,const int atag = 0)override;
+            virtual base::xauto_ptr<base::xvblock_t>  get_latest_executed_block(const base::xvaccount_t & account,const int atag = 0) override;
+            virtual base::xauto_ptr<base::xvblock_t>  get_latest_connected_block(const base::xvaccount_t & account,const int atag = 0)override;
+            virtual base::xauto_ptr<base::xvblock_t>  get_latest_full_block(const base::xvaccount_t & account,const int atag = 0);
             
             //mostly used for query cert-only block
-            virtual base::xauto_ptr<base::xvblock_t>  query_block(const base::xvaccount_t & account,const uint64_t height,const uint64_t viewid) override;
-            virtual base::xauto_ptr<base::xvblock_t>  query_block(const base::xvaccount_t & account,const uint64_t height,const std::string & blockhash) override;
-            virtual base::xblock_vector query_block(const base::xvaccount_t & account,const uint64_t height) override;//might mutiple certs at same height
+            virtual base::xauto_ptr<base::xvblock_t>  query_block(const base::xvaccount_t & account,const uint64_t height,const uint64_t viewid,const int atag = 0) override;
+            virtual base::xauto_ptr<base::xvblock_t>  query_block(const base::xvaccount_t & account,const uint64_t height,const std::string & blockhash,const int atag = 0) override;
+            virtual base::xblock_vector query_block(const base::xvaccount_t & account,const uint64_t height,const int atag = 0) override;//might mutiple certs at same height
             
-            virtual base::xblock_vector       load_block_object(const base::xvaccount_t & account,const uint64_t height)override;
-            virtual base::xauto_ptr<base::xvblock_t>  load_block_object(const base::xvaccount_t & account,const uint64_t height,const uint64_t viewid,bool ask_full_load) override;
-            virtual base::xauto_ptr<base::xvblock_t>  load_block_object(const base::xvaccount_t & account,const uint64_t height,const std::string & blockhash,bool ask_full_load) override;
-            virtual base::xauto_ptr<base::xvblock_t>  load_block_object(const base::xvaccount_t & account,const uint64_t height,base::enum_xvblock_flag required_block,bool ask_full_load) override; //just return the highest viewid of matched
+            virtual base::xblock_vector       load_block_object(const base::xvaccount_t & account,const uint64_t height,const int atag = 0)override;
+            virtual base::xauto_ptr<base::xvblock_t>  load_block_object(const base::xvaccount_t & account,const uint64_t height,const uint64_t viewid,bool ask_full_load,const int atag = 0) override;
+            virtual base::xauto_ptr<base::xvblock_t>  load_block_object(const base::xvaccount_t & account,const uint64_t height,const std::string & blockhash,bool ask_full_load,const int atag = 0) override;
+            virtual base::xauto_ptr<base::xvblock_t>  load_block_object(const base::xvaccount_t & account,const uint64_t height,base::enum_xvblock_flag required_block,bool ask_full_load,const int atag = 0) override; //just return the highest viewid of matched
             
-            virtual bool                load_block_input(const base::xvaccount_t & account,base::xvblock_t* block) override;
-            virtual bool                load_block_output(const base::xvaccount_t & account,base::xvblock_t* block) override;
+            virtual bool                load_block_input(const base::xvaccount_t & account,base::xvblock_t* block,const int atag = 0) override;
+            virtual bool                load_block_output(const base::xvaccount_t & account,base::xvblock_t* block,const int atag = 0) override;
             
-            virtual bool                store_block(const base::xvaccount_t & account,base::xvblock_t* block) override;
-            virtual bool                delete_block(const base::xvaccount_t & account,base::xvblock_t* block) override;
+            virtual bool                store_block(const base::xvaccount_t & account,base::xvblock_t* block,const int atag = 0) override;
+            virtual bool                delete_block(const base::xvaccount_t & account,base::xvblock_t* block,const int atag = 0) override;
             
             //clean unsed caches of account to recall memory. notes: clean caches not affect the persisten data of account
-            virtual bool                clean_caches(const base::xvaccount_t & account) override;
+            virtual bool                clean_caches(const base::xvaccount_t & account,const int atag = 0) override;
             
             //clean all cached blocks after reach max idle duration(as default it is 60 seconds)
-            virtual bool                reset_cache_timeout(const base::xvaccount_t & account,const uint32_t max_idle_time_ms) override;
+            virtual bool                reset_cache_timeout(const base::xvaccount_t & account,const uint32_t max_idle_time_ms,const int atag = 0) override;
         public://batch process api
-            virtual base::xblock_mptrs  get_latest_blocks(const base::xvaccount_t & account) override;
-            virtual bool                store_blocks(const base::xvaccount_t & account,std::vector<base::xvblock_t*> & batch_store_blocks) override;
+            virtual base::xblock_mptrs  get_latest_blocks(const base::xvaccount_t & account,const int atag = 0) override;
+            virtual bool                store_blocks(const base::xvaccount_t & account,std::vector<base::xvblock_t*> & batch_store_blocks,const int atag = 0) override;
 
         protected:
             virtual const std::string   load_value_by_path(const std::string & full_path_as_key);
