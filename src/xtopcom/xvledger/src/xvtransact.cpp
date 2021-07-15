@@ -14,11 +14,11 @@ namespace top
             :xdataunit_t((enum_xdata_type)enum_xobject_type_vtransact)
         {
         }
-    
+
         xvtransact_t::~xvtransact_t()
         {
         }
-    
+
         xvtransaction_store_t::xvtransaction_store_t()
         : xdataunit_t(xdataunit_t::enum_xdata_type_undefine) {
 
@@ -74,6 +74,7 @@ namespace top
         void xvtransaction_store_t::set_recv_unit_info(const xvtxindex_ptr & txindex) {
             xassert(txindex->get_block_height() > 0);
             xassert(m_recv_unit_height == 0 && m_recv_unit_hash.empty());
+            m_recv_unit_addr = txindex->get_block_addr();
             m_recv_unit_height = txindex->get_block_height();
             m_recv_unit_hash = txindex->get_block_hash();
             m_is_self_tx = false;

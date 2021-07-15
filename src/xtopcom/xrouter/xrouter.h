@@ -19,6 +19,10 @@ public:
                                                               common::xnetwork_id_t const & nid,
                                                               common::xnode_type_t type) const override;
 
+    common::xsharding_address_t sharding_address_from_tableindex(base::xtable_index_t const & target_tableindex,
+                                                                      common::xnetwork_id_t const & nid,
+                                                                      common::xnode_type_t type) const override;
+
     common::xsharding_address_t address_of_book_id(std::uint16_t const table_id,
                                                    common::xnode_type_t type,
                                                    common::xnetwork_id_t const & nid) const override;

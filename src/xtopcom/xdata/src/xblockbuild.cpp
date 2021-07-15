@@ -62,6 +62,9 @@ base::xvaction_t xlightunit_build_t::make_action(const xcons_transaction_ptr_t &
     uint32_t    contract_version = 0;
     std::string target_uri = base::xvcontract_t::create_contract_uri(contract_addr, contract_name, contract_version);
     std::string method_name = xtransaction_t::transaction_type_to_string(tx->get_tx_type());
+    if (tx->is_recv_tx()) {  // set origin tx source addr for recv tx, confirm tx need know source addr without origin tx
+        caller_addr = tx->get_source_addr();
+    }
 
     base::xvalue_t _action_result(tx->get_tx_execute_state().get_map_para());  // how to set result
     base::xvaction_t _tx_action(tx->get_tx_hash(), caller_addr, target_uri, method_name);
@@ -81,7 +84,7 @@ bool xlightunit_build_t::build_block_body(const xlightunit_block_para_t & para) 
 
     for (auto & tx : para.get_input_txs()) {
         // confirm tx no need take origintx
-        if (tx->is_self_tx() || tx->is_send_tx() || tx->is_recv_tx()) {
+        if (tx->is_self_tx() || tx->is_send_tx()) {
             std::string origintx_bin;
             tx->get_transaction()->serialize_to_string(origintx_bin);
             std::string origintx_hash = tx->get_tx_hash();
@@ -221,7 +224,7 @@ base::xauto_ptr<base::xvinput_t> xlighttable_build_t::make_unit_input_from_table
             if (_org_tx.empty()) {
                 // confirm tx not has origin tx
                 base::enum_transaction_subtype _subtype = (base::enum_transaction_subtype)action.get_org_tx_action_id();
-                if (_subtype != base::enum_transaction_subtype_confirm) {
+                if (_subtype == base::enum_transaction_subtype_send) { // sendtx must has origin tx
                     xassert(false);
                     return nullptr;
                 }
@@ -266,6 +269,12 @@ base::xauto_ptr<base::xvoutput_t> xlighttable_build_t::make_unit_output_from_tab
 }
 
 std::vector<xobject_ptr_t<base::xvblock_t>> xlighttable_build_t::unpack_units_from_table(const base::xvblock_t* _tableblock) {
+    if (!_tableblock->is_input_ready(true)
+        || !_tableblock->is_output_ready(true)) {
+        xerror("xlighttable_build_t::unpack_units_from_table not ready block. block=%s", _tableblock->dump().c_str());
+        return {};
+    }
+    base::xvaccount_t _vtable_addr(_tableblock->get_account());
     std::vector<xobject_ptr_t<base::xvblock_t>> _batch_units;
 
     const std::vector<base::xventity_t*> & _table_inentitys = _tableblock->get_input()->get_entitys();
@@ -311,6 +320,10 @@ std::vector<xobject_ptr_t<base::xvblock_t>> xlighttable_build_t::unpack_units_fr
         vbmaker->init_qcert(build_para);
         xobject_ptr_t<base::xvblock_t> _unit = vbmaker->build_new_block();
         xassert(_unit != nullptr);
+        _unit->set_parent_block(_vtable_addr.get_account());
+        _unit->get_cert()->set_parent_height(_tableblock->get_height());
+        _unit->get_cert()->set_parent_viewid(_tableblock->get_viewid());
+
         _batch_units.push_back(_unit);
     }
 

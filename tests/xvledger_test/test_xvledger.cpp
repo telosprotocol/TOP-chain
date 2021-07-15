@@ -21,7 +21,16 @@ TEST_F(test_xvledger, xvaccount_1) {
     std::cout << "vaddr=" << vaddr.get_xvid() << std::endl;
 }
 
-TEST_F(test_xvledger, xchain_clean_all_1) {
-    // xvchain_t::instance().clean_all();
+TEST_F(test_xvledger, xvaccount_tableid) {
+    {
+        base::xvaccount_t _vaddr("T00000LfhWJA5JPcKPJovoBVtN4seYnnsVjx2VuB");
+        auto tableid = _vaddr.get_short_table_id();
+        std::cout << "tableid=" << tableid << std::endl;
+    }
+    {
+        base::xvaccount_t _vaddr("T2000138Ao4jjYtrXoNwfzb6gdpD2XNBpqUv46p8B@0");
+        auto tableid = _vaddr.get_short_table_id();
+        std::cout << "tableid=" << tableid << std::endl;        
+    }
 }
 

@@ -24,7 +24,7 @@ xtxpool_t::xtxpool_t(const std::shared_ptr<xtxpool_resources_face> & para) : m_p
 }
 
 int32_t xtxpool_t::push_send_tx(const std::shared_ptr<xtx_entry> & tx) {
-    auto table = get_txpool_table_by_addr(tx->get_tx()->get_account_addr());
+    auto table = get_txpool_table_by_addr(tx);
     if (table == nullptr) {
         return xtxpool_error_account_not_in_charge;
     }
@@ -33,7 +33,7 @@ int32_t xtxpool_t::push_send_tx(const std::shared_ptr<xtx_entry> & tx) {
 
 int32_t xtxpool_t::push_receipt(const std::shared_ptr<xtx_entry> & tx, bool is_self_send, bool is_pulled) {
     XMETRICS_TIME_RECORD("txpool_message_unit_receipt_push_receipt");
-    auto table = get_txpool_table_by_addr(tx->get_tx()->get_account_addr());
+    auto table = get_txpool_table_by_addr(tx);
     if (table == nullptr) {
         return xtxpool_error_account_not_in_charge;
     }
@@ -282,6 +282,20 @@ std::shared_ptr<xtxpool_table_t> xtxpool_t::get_txpool_table_by_addr(const std::
         return m_tables[zone][subaddr];
     }
     xtxpool_warn("xtxpool_t::get_txpool_table_by_addr account:%s,table not found:zone:%d,subaddr:%d", address.c_str(), zone, subaddr);
+    return nullptr;
+}
+
+std::shared_ptr<xtxpool_table_t> xtxpool_t::get_txpool_table_by_addr(const std::shared_ptr<xtx_entry> & tx) const {
+    base::xtable_index_t tableindex = tx->get_tx()->get_self_table_index();
+    uint8_t zone = tableindex.get_zone_index();
+    uint8_t subaddr = tableindex.get_subaddr();
+    xassert(zone < enum_xtxpool_table_type_max);
+    xassert(subaddr <= (enum_vbucket_has_tables_count -1));
+    if (is_table_subscribed(zone, subaddr)) {
+        xassert(m_tables[zone][subaddr] != nullptr);
+        return m_tables[zone][subaddr];
+    }
+    xtxpool_warn("xtxpool_t::get_txpool_table_by_addr table not found:zone:%d,subaddr:%d", zone, subaddr);
     return nullptr;
 }
 

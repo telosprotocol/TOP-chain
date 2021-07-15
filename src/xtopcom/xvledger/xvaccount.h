@@ -80,6 +80,31 @@ namespace top
         using xtable_shortid_t = uint16_t;//note: short table_id = [zone_index][book_index][table_index]
         using xtable_longid_t = uint32_t;//note: long table_id = [chain_id][zone_index][book_index][table_index]
         
+        class xtable_index_t
+        {
+        public:
+            xtable_index_t(xvid_t xid) {
+                m_zone_index = (enum_xchain_zone_index)get_vledger_zone_index(xid);
+                m_subaddr = (uint8_t)get_vledger_subaddr(xid);
+            }
+            xtable_index_t(const xtable_index_t & rhs) {
+                m_zone_index = rhs.m_zone_index;
+                m_subaddr = rhs.m_subaddr;
+            }
+            xtable_index_t(xtable_shortid_t tableid) {
+                m_zone_index = (enum_xchain_zone_index)(tableid >> 10);
+                m_subaddr = (uint8_t)tableid & 0xff;
+            }
+        public:
+            uint16_t                get_value() const {return (uint16_t)((m_zone_index << 10) | m_subaddr);}
+            enum_xchain_zone_index  get_zone_index() const {return m_zone_index;}
+            uint8_t                 get_subaddr() const {return m_subaddr;}
+            
+        private:
+            enum_xchain_zone_index m_zone_index;
+            uint8_t                m_subaddr;
+        };
+        
         class xvaccount_t : virtual public xrefcount_t
         {
         public:

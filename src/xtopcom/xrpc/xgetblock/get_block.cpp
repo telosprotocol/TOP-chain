@@ -1118,6 +1118,12 @@ bool query_special_property(xJson::Value & jph, const std::string & owner, const
             xdbg("pledge_redeem_vote %d, %d, %d", vote_num, duration, lock_time);
             xJson::Value j;
             j["vote_num"] = static_cast<unsigned long long>(vote_num);
+            if (duration != 0)
+                j["lock_token"] = static_cast<unsigned long long>(xaccount_context_t::get_top_by_vote(vote_num, duration));
+            else {
+                auto propobj_str = unitstate->get_bstate()->load_string_var(XPROPERTY_EXPIRE_VOTE_TOKEN_KEY);
+                j["lock_token"] = propobj_str->query();
+            }
             j["duration"] = duration;
             j["lock_time"] = static_cast<unsigned long long>(lock_time);
             jph[XPROPERTY_PLEDGE_VOTE_KEY].append(j);

@@ -36,21 +36,26 @@ class xcons_transaction_t : public xbase_dataunit_t<xcons_transaction_t, xdata_t
     int32_t do_read(base::xstream_t & stream) override;
 
  public:
+    bool                            set_raw_tx(xtransaction_t* raw_tx);  //on-demand load and set raw tx
+ public:
     std::string                     dump(bool detail = false) const;
     std::string                     dump_execute_state() const {return m_execute_state.dump();}
     inline xtransaction_t*          get_transaction() const {return m_tx.get();}
-    std::string                     get_tx_hash() const {return m_tx->get_digest_str();}
-    uint256_t                       get_tx_hash_256() const {return m_tx->digest();}
+    std::string                     get_tx_hash() const;
+    uint256_t                       get_tx_hash_256() const;
     uint16_t                        get_tx_type() const {return m_tx->get_tx_type();}
     bool                            verify_cons_transaction();
 
+    base::xtable_index_t            get_self_table_index() const;
+    base::xtable_index_t            get_peer_table_index() const;
+    base::xtable_shortid_t          get_self_tableid() const;
+    base::xtable_shortid_t          get_peer_tableid() const;
+
     const std::string &     get_source_addr()const {return m_tx->get_source_addr();}
-    const std::string &     get_account_addr() const {return is_recv_tx()? m_tx->get_target_addr() : m_tx->get_source_addr();}
+    std::string             get_account_addr() const;
     const std::string &     get_target_addr()const {return m_tx->get_target_addr();}
     uint64_t                get_tx_nonce()const {return m_tx->get_tx_nonce();}
     uint64_t                get_tx_last_nonce()const {return m_tx->get_last_nonce();}
-    const std::string &     get_receipt_source_account()const;
-    const std::string &     get_receipt_target_account()const;
     const xaction_t &       get_source_action()const {return m_tx->get_source_action();}
     const xaction_t &       get_target_action()const {return m_tx->get_target_action();}
 
@@ -68,7 +73,6 @@ class xcons_transaction_t : public xbase_dataunit_t<xcons_transaction_t, xdata_t
     uint32_t                get_last_action_recv_tx_use_send_tx_tgas() const;
     enum_xunit_tx_exec_status   get_last_action_exec_status() const;
     uint64_t                get_last_action_receipt_id() const;
-    base::xtable_shortid_t  get_last_action_receipt_id_tableid() const;
 
  public:
     const xtransaction_exec_state_t & get_tx_execute_state() const {return m_execute_state;}
@@ -85,7 +89,7 @@ class xcons_transaction_t : public xbase_dataunit_t<xcons_transaction_t, xdata_t
     void                    set_current_exec_status(enum_xunit_tx_exec_status status) {m_execute_state.set_tx_exec_status(status);}
     enum_xunit_tx_exec_status   get_current_exec_status() const {return m_execute_state.get_tx_exec_status();}
     uint32_t                get_current_receipt_id() const {return m_execute_state.get_receipt_id();}
-    void                    set_current_receipt_id(base::xtable_shortid_t tableid, uint64_t value) {m_execute_state.set_receipt_id(tableid, value);}
+    void                    set_current_receipt_id(base::xtable_shortid_t self_tableid, base::xtable_shortid_t peer_tableid, uint64_t receiptid) {m_execute_state.set_receipt_id(self_tableid, peer_tableid, receiptid);}
 
     uint64_t                get_receipt_clock() const {return get_prove_cert()->get_clock();}
     uint64_t                get_receipt_gmtime() const {return get_prove_cert()->get_gmtime();}
@@ -103,6 +107,8 @@ class xcons_transaction_t : public xbase_dataunit_t<xcons_transaction_t, xdata_t
     void                    update_transation();
     uint64_t                get_dump_receipt_id() const;
     const xobject_ptr_t<base::xvqcert_t> &  get_prove_cert() const {return m_receipt->get_prove_cert();}
+    base::xtable_shortid_t  get_last_action_self_tableid() const;
+    base::xtable_shortid_t  get_last_action_peer_tableid() const;
 
  private:
     xtransaction_ptr_t          m_tx{nullptr};
@@ -112,6 +118,7 @@ class xcons_transaction_t : public xbase_dataunit_t<xcons_transaction_t, xdata_t
     enum_transaction_subtype    m_subtype{base::enum_transaction_subtype_invalid};
     uint64_t                    m_push_pool_timestamp{0};
     xtransaction_exec_state_t   m_execute_state;
+    std::string                 m_dump_str;
 };
 
 using xcons_transaction_ptr_t = xobject_ptr_t<xcons_transaction_t>;

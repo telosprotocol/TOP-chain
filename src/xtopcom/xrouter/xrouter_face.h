@@ -7,6 +7,7 @@
 #include <memory>
 #include <string>
 
+#include "xvledger/xvaccount.h"
 #include "xcommon/xaddress.h"
 #include "xcommon/xnode_type.h"
 
@@ -28,6 +29,19 @@ struct xtop_router_face {
     virtual common::xsharding_address_t sharding_address_from_account(common::xaccount_address_t const & target_account,
                                                                       common::xnetwork_id_t const & nid,
                                                                       common::xnode_type_t type) const = 0;
+
+    /**
+     * @brief Map account to its corresponding sharding address. If the account is a contract account or table account, type is not considered.
+     *
+     * @param target_account                The account address.
+     * @param nid                           The network id.
+     * @param type                          The type hint for calculating the sharding address. It is used when the target_account is a user account and the type is only common::xnode_type_t::consensus_auditor or common::xnode_type_t::consensus_validator
+     * @return common::xsharding_address_t  The sharding address the target_account belongs to.
+     */
+    virtual common::xsharding_address_t sharding_address_from_tableindex(base::xtable_index_t const & target_tableindex,
+                                                                      common::xnetwork_id_t const & nid,
+                                                                      common::xnode_type_t type) const = 0;
+
 
     /**
      * @brief Map table id to its corresponding sharding address.

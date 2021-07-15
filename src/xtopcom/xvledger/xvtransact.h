@@ -24,13 +24,13 @@ namespace top
             xvtransact_t(const xvtransact_t &);
             xvtransact_t & operator = (xvtransact_t &&);
             xvtransact_t & operator = (const xvtransact_t &);
-            
+
         public:
             virtual bool               is_valid()   const = 0; //verify signature,content,format etc
             virtual const std::string  get_hash()   const = 0; //get tx hash
             virtual const xvaction_t&  get_action() const = 0; //build and return
         };
-    
+
         class xvtransaction_store_t : public xdataunit_t
         {
         public:
@@ -49,6 +49,8 @@ namespace top
         public:
             bool            is_self_tx() const {return m_is_self_tx;}
             uint64_t        get_send_unit_height() const {return m_send_unit_height;}
+            const std::string &     get_recv_unit_addr() const {return m_recv_unit_addr;}
+            const std::string &     get_recv_unit_hash() const {return m_recv_unit_hash;}
             uint64_t        get_recv_unit_height() const {return m_recv_unit_height;}
             uint64_t        get_confirm_unit_height() const {return m_confirm_unit_height;}
             xdataunit_t*    get_raw_tx() const {return m_raw_tx;}  // TODO(jimmy) define xtransaction_t in xvledger
@@ -58,6 +60,7 @@ namespace top
             bool                m_is_self_tx{false};
             uint64_t            m_send_unit_height{0};
             std::string         m_send_unit_hash;
+            std::string         m_recv_unit_addr;
             uint64_t            m_recv_unit_height{0};
             std::string         m_recv_unit_hash;
             uint64_t            m_confirm_unit_height{0};

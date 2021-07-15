@@ -88,7 +88,7 @@ xblock_ptr_t xproposal_maker_t::make_proposal(data::xblock_consensus_para_t & pr
             xwarn("xproposal_maker_t::make_proposal fail-make_proposal.%s error_code=%s",
                 proposal_para.dump().c_str(), chainbase::xmodule_error_to_str(tablemaker_result.m_make_block_error_code).c_str());
         } else {
-            xdbg("xproposal_maker_t::make_proposal no need make table.%s",
+            xinfo("xproposal_maker_t::make_proposal no need make table.%s",
                 proposal_para.dump().c_str());
         }
         return nullptr;
