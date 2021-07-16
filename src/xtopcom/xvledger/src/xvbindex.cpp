@@ -43,7 +43,7 @@ namespace top
             m_parent_block_viewid   = obj.get_parent_block_viewid();
             m_parent_block_entity_id = obj.get_parent_entity_id();
             m_extend_cert = obj.get_cert()->get_extend_cert();
-            m_extend_cert = obj.get_cert()->get_extend_data();
+            m_extend_data = obj.get_cert()->get_extend_data();
             
             //copy flags of block,and combine class of block
             //[8bit:block-flags][8bit:index-bits]
@@ -418,7 +418,7 @@ namespace top
                         
                         return true;
                     }
-                    xinfo("xvbindex_t::reset_this_block,get_block_hash() not match hash,block->dump=%s vs this=%s",_block_ptr->dump().c_str(),dump().c_str());
+                    xerror("xvbindex_t::reset_this_block,get_block_hash() not match hash,block->dump=%s vs this=%s",_block_ptr->dump().c_str(),dump().c_str());
                 }
                 else
                 {
@@ -459,7 +459,8 @@ namespace top
             stream.write_compact_var(m_extend_data);
 
             stream << m_combineflags;
-            stream << m_block_types;
+            stream << m_block_types;            
+            stream.write_compact_var(m_reserved);
             
             return (stream.size() - begin_size);
         }
@@ -489,6 +490,7 @@ namespace top
 
                 stream >> m_combineflags;
                 stream >> m_block_types;
+                stream.read_compact_var(m_reserved);
                 
                 //finally reset account information
                 xvaccount_t::operator=(account_addr);

@@ -148,6 +148,7 @@ namespace top
             
             //(m_block_viewid + m_next_viewid_offset)point the block at same height but different viewid
             int32_t         m_next_viewid_offset;
+            std::string     m_reserved;  //for future
         };
 
         class xvbindex_vector
