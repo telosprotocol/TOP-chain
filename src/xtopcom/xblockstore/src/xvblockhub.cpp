@@ -17,6 +17,10 @@
     #undef __ALLOW_FORK_LOCK__  // XTODO always allow store multi lock blocks
 #endif
 
+#ifndef __ALLOW_TABLE_MORE_CACHE_SIZE__
+    #define __ALLOW_TABLE_MORE_CACHE_SIZE__
+#endif
+
 namespace top
 {
     namespace store
@@ -299,7 +303,7 @@ namespace top
             //note: place code first but  please enable it later
             #ifdef __ALLOW_TABLE_MORE_CACHE_SIZE__
             if(base::enum_xvblock_level_table == m_meta->_block_level)
-                return (enum_max_cached_blocks << 1);
+                return (enum_max_cached_blocks << 2);//allow cache to max 128 block
             #endif
 
             return enum_max_cached_blocks;
@@ -978,6 +982,9 @@ namespace top
             auto it = m_all_blocks.find(target_height);
             if(it == m_all_blocks.end())//load all at certain height
             {
+                #ifdef ENABLE_METRICS
+                XMETRICS_GAUGE(metrics::blockstore_index_load, 0);
+                #endif
                 std::vector<base::xvbindex_t*> _indexes(read_index_from_db(target_height));
                 if(_indexes.empty() == false) //found index at db
                 {
@@ -1002,6 +1009,9 @@ namespace top
                     return 0;
                 }
             }
+            #ifdef ENABLE_METRICS
+            XMETRICS_GAUGE(metrics::blockstore_index_load, 1);
+            #endif
             return (int)it->second.size(); //found existing ones
         }
 
@@ -1017,6 +1027,7 @@ namespace top
             {
                 #ifdef ENABLE_METRICS
                 XMETRICS_GAUGE((top::metrics::E_SIMPLE_METRICS_TAG)atag, 1);
+                XMETRICS_GAUGE(metrics::blockstore_index_load, 1);
                 #endif
                 return target_block;//found at cache layer
             }
@@ -1024,6 +1035,7 @@ namespace top
             {
                 #ifdef ENABLE_METRICS
                 XMETRICS_GAUGE((top::metrics::E_SIMPLE_METRICS_TAG)atag, 0);
+                XMETRICS_GAUGE(metrics::blockstore_index_load, 0);
                 #endif
             }
             if(load_index(target_height) > 0)//load from db
@@ -1047,6 +1059,7 @@ namespace top
             {
                 #ifdef ENABLE_METRICS
                 XMETRICS_GAUGE((top::metrics::E_SIMPLE_METRICS_TAG)atag, 1);
+                XMETRICS_GAUGE(metrics::blockstore_index_load, 1);
                 #endif
                 return target_block;//found at cache layer
             }
@@ -1054,6 +1067,7 @@ namespace top
             {
                 #ifdef ENABLE_METRICS
                 XMETRICS_GAUGE((top::metrics::E_SIMPLE_METRICS_TAG)atag, 0);
+                XMETRICS_GAUGE(metrics::blockstore_index_load, 0);
                 #endif
             }
 
@@ -1079,6 +1093,7 @@ namespace top
             {
                 #ifdef ENABLE_METRICS
                 XMETRICS_GAUGE((top::metrics::E_SIMPLE_METRICS_TAG)atag, 1);
+                XMETRICS_GAUGE(metrics::blockstore_index_load, 1);
                 #endif
                 return target_block;//found at cache layer
             }
@@ -1086,6 +1101,7 @@ namespace top
             {
                 #ifdef ENABLE_METRICS
                 XMETRICS_GAUGE((top::metrics::E_SIMPLE_METRICS_TAG)atag, 0);
+                XMETRICS_GAUGE(metrics::blockstore_index_load, 0);
                 #endif
             }
 
@@ -1262,6 +1278,11 @@ namespace top
 
                 xinfo("xblockacct_t::store_block,done for block,cache_size:%zu,new_raw_block=%s,dump=%s",m_all_blocks.size(), new_raw_block->dump().c_str(), dump().c_str());
                 return true;
+            }
+            else if( (exist_cert) && (exist_cert->check_block_flag(base::enum_xvblock_flag_stored) == false) )
+            {
+                //give chance to store raw block even found duplicated indexx
+                write_block_to_db(exist_cert(),new_raw_block);
             }
 
             xinfo("xblockacct_t::store_block,cache index fail.block=%s", new_raw_block->dump().c_str());

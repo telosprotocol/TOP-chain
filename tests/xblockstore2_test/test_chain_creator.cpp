@@ -10,7 +10,6 @@
 #include "xdata/xemptyblock.h"
 #include "xdata/xblocktool.h"
 #include "xdata/xlightunit.h"
-#include "xdata/tests/test_blockutl.hpp"
 #include "xmbus/xevent_store.h"
 #include "xmbus/xmessage_bus.h"
 
