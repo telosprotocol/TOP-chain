@@ -208,7 +208,7 @@ namespace top
                     return nullptr;
                 }
 
-#if 0
+#if 0  // TODO(jimmy) unpack all sub blocks take more time
                 std::vector<xobject_ptr_t<base::xvblock_t>> sub_blocks;
                 if(parent_block->extract_sub_blocks(sub_blocks))
                 {

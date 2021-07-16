@@ -58,8 +58,11 @@ namespace top
             inline const uint64_t       get_parent_block_height() const {return m_parent_block_height;}
             inline const uint64_t       get_parent_block_viewid() const {return m_parent_block_viewid;}
             inline const uint32_t       get_parent_block_entity() const {return m_parent_block_entity_id;}
+#ifdef STORE_UNIT_BLOCK           
+            inline bool                 has_parent_store() const {return false;}
+#else 
             inline bool                 has_parent_store() const {return m_parent_accountid != 0 && m_parent_block_height != 0 && m_parent_block_viewid != 0;}
-
+#endif
             inline const std::string &  get_extend_cert()      const {return m_extend_cert;}
             inline const std::string &  get_extend_data()      const {return m_extend_data;}
 
