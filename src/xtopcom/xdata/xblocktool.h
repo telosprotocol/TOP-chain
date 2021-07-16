@@ -58,7 +58,6 @@ class xblocktool_t {
 
  public:
     static void             alloc_transaction_receiptid(const xcons_transaction_ptr_t & tx, const base::xreceiptid_state_ptr_t & receiptid_state);
-    static base::xauto_ptr<base::xvblock_t> get_latest_connectted_light_block(base::xvblockstore_t* blockstore, const base::xvaccount_t& account);
 };
 
 // TODO(jimmy) xblocktool_t split to xblock_utl, xreceipt_utl, xaddress_utl

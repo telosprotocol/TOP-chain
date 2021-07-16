@@ -29,6 +29,11 @@ xconfig_onchain_loader_t::xconfig_onchain_loader_t(observer_ptr<store::xstore_fa
     m_action_map[XPROPOSAL_TYPE_TO_STR(tcc::proposal_type::proposal_update_parameter_incremental_delete)] = std::make_shared<config::xconfig_incremental_delete_update_parameter_action_t>();
     m_action_map[XPROPOSAL_TYPE_TO_STR(tcc::proposal_type::proposal_add_parameter)] = std::make_shared<config::xconfig_add_parameter_action_t>();
     m_action_map[XPROPOSAL_TYPE_TO_STR(tcc::proposal_type::proposal_delete_parameter)] = std::make_shared<config::xconfig_delete_parameter_action_t>();
+
+    // set initial onchain param
+    xtcc_transaction_ptr_t tcc_genesis = std::make_shared<xtcc_transaction_t>();
+    last_param_map = tcc_genesis->m_initial_values;
+
 }
 
 void xconfig_onchain_loader_t::start() {
@@ -205,7 +210,7 @@ void xconfig_onchain_loader_t::update_onchain_param(common::xlogic_time_t time) 
     last_update_height = block->get_height();
     base::xauto_ptr<base::xvbstate_t> _bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(block.get(), metrics::statestore_access_from_xconfig_update);
     if (nullptr == _bstate) {
-        xwarn("xconfig_onchain_loader_t::update get target state fail.block=%s", block->dump().c_str());
+        xwarn("xconfig_onchain_loader_t::update_onchain_param get target state fail.block=%s", block->dump().c_str());
         return;
     }
     data::xunit_bstate_t state(_bstate.get());
@@ -218,21 +223,47 @@ void xconfig_onchain_loader_t::update_onchain_param(common::xlogic_time_t time) 
         return;
     }
 
-    if (!onchain_param_changed(params)) {
+    if ( !last_param_map.empty() && !onchain_param_changed(params) ) {
         xinfo("xconfig_onchain_loader_t::update_onchain_param, param map no changed.");
         return;
     }
 
+    std::map<std::string, std::string> changed_param;
+    filter_changes(params, changed_param);
+    config::xconfig_register_t::get_instance().update_cache_and_persist(changed_param);
     last_param_map = params;
-    config::xconfig_register_t::get_instance().load();
+    xdbg("xconfig_onchain_loader_t::update_onchain_param, update param sucessfully");
+}
+
+void xconfig_onchain_loader_t::filter_changes(std::map<std::string, std::string> const& map, std::map<std::string, std::string>& filterd_map) {
+    for (auto& entry : map) {
+        if (!entry.first.empty() && !entry.second.empty()) {
+            if (is_param_changed(entry.first, entry.second)) {
+                filterd_map[entry.first] = entry.second;
+            }
+        }
+    }
+}
+
+bool xconfig_onchain_loader_t::is_param_changed(std::string const& key, std::string const& value) {
+    auto it = last_param_map.find(key);
+    if (it == last_param_map.end()) {
+        return true;
+    }
+
+    return it->second != value;
 }
 
 bool xconfig_onchain_loader_t::onchain_param_changed(std::map<std::string, std::string> const& params) {
     using value_pair = std::pair<std::string, std::string>;
-    return params.size() == last_param_map.size() &&
+    auto is_same = params.size() == last_param_map.size() &&
             std::equal(last_param_map.begin(), last_param_map.end(), params.begin(), [](value_pair const& lhs, value_pair const& rhs){
+            #ifdef DEBUG
+                xdbg("xconfig_onchain_loader_t::update_onchain_param, 1: %s,%s; 2: %s,%s\n", lhs.first.c_str(), lhs.second.c_str(), rhs.first.c_str(), rhs.second.c_str());
+            #endif
                 return lhs.first == rhs.first && lhs.second == rhs.second;
             });
+    return !is_same;
 }
 
 config::xconfig_update_action_ptr_t xconfig_onchain_loader_t::find(const std::string & type) {
