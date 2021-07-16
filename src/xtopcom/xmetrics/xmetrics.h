@@ -165,10 +165,8 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     txpool_push_tx_from_proposal,
 
     // blockstore
-    blockstore_index_query,
-    blockstore_index_load_db,
-    blockstore_blk_query,
-    blockstore_blk_load_db,
+    blockstore_index_load,
+    blockstore_blk_load,
 
     // blockstore accessing
     blockstore_access_from_account_context,
@@ -331,6 +329,10 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     state_load_blk_state_unit_suc,
     state_load_blk_state_unit_fail,
     state_load_blk_state_unit_cache_suc,
+
+    // data structure
+    data_table_unpack_units,
+    data_table_unpack_one_unit,
 
     e_simple_total,
 };

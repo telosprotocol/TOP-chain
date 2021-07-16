@@ -1,7 +1,6 @@
 #include "gtest/gtest.h"
 #include "xdata/xblocktool.h"
 #include "xstore/xstore.h"
-#include "xdata/xaccount_cmd.h"
 #include "xblockstore/xblockstore_face.h"
 #include "tests/mock/xdatamock_address.hpp"
 #include "tests/mock/xcertauth_util.hpp"
@@ -253,73 +252,7 @@ TEST_F(test_api, store_tx_1) {
         ASSERT_TRUE(blockstore->store_block(table_vaddr, tables[i].get()));
     }
 
-    std::vector<xcons_transaction_ptr_t> sendtx_receipts;
-    std::vector<xcons_transaction_ptr_t> recvtx_receipts;
-    xtable_block_t* lighttable = dynamic_cast<xtable_block_t*>(tables[max_block_height-2].get());
-    lighttable->create_txreceipts(sendtx_receipts, recvtx_receipts);
-    xassert(sendtx_receipts.size() > 0);
+    std::vector<base::xfull_txreceipt_t> txreceipts = base::xtxreceipt_build_t::create_all_txreceipts(tables[max_block_height-3].get(), tables[max_block_height-1].get());
+    xassert(txreceipts.size() > 0);
 }
 
-TEST_F(test_api, map_remove_instruction) {
-    xobject_ptr_t<xstore_face_t> store_face = xstore_factory::create_store_with_memdb();
-    std::string address = xblocktool_t::make_address_user_account("11111111111111111111");
-    std::map<std::string, xdataobj_ptr_t> property_objs;
-    {
-        auto account = new xblockchain2_t(address);
-        xaccount_cmd accountcmd1(property_objs);
-        auto ret = accountcmd1.map_create("aaa", true);
-        ASSERT_EQ(ret, 0);
-        ret = accountcmd1.map_set("aaa", "1", "1111", true);
-        ASSERT_EQ(ret, 0);
-        ret = accountcmd1.map_set("aaa", "1", "2222", true);
-        ASSERT_EQ(ret, 0);
-        ret = accountcmd1.map_set("aaa", "1", "3333", true);
-        ASSERT_EQ(ret, 0);
-        ret = accountcmd1.map_remove("aaa", "1", true);
-        ASSERT_EQ(ret, 0);
-        std::string value;
-        ret = accountcmd1.map_get("aaa", "1", value);
-        ASSERT_NE(ret, 0);
-
-        xproperty_log_ptr_t binlog = accountcmd1.get_property_log();
-        ASSERT_NE(binlog, nullptr);
-
-        xaccount_cmd accountcmd2(property_objs);
-        ret = accountcmd2.do_property_log(binlog);
-        ASSERT_EQ(ret, 0);
-        ret = accountcmd2.map_get("aaa", "1", value);
-        ASSERT_NE(ret, 0);
-    }
-}
-
-TEST_F(test_api, map_set_instruction) {
-    xobject_ptr_t<xstore_face_t> store_face = xstore_factory::create_store_with_memdb();
-    std::string address = xblocktool_t::make_address_user_account("11111111111111111111");
-    std::map<std::string, xdataobj_ptr_t> property_objs;
-    {
-        auto account = new xblockchain2_t(address);
-        xaccount_cmd accountcmd1(property_objs);
-        auto ret = accountcmd1.map_create("aaa", true);
-        ASSERT_EQ(ret, 0);
-        ret = accountcmd1.map_set("aaa", "1", "1111", true);
-        ASSERT_EQ(ret, 0);
-        ret = accountcmd1.map_set("aaa", "1", "2222", true);
-        ASSERT_EQ(ret, 0);
-        ret = accountcmd1.map_set("aaa", "1", "3333", true);
-        ASSERT_EQ(ret, 0);
-        std::string value;
-        ret = accountcmd1.map_get("aaa", "1", value);
-        ASSERT_EQ(ret, 0);
-        ASSERT_EQ(value, "3333");
-
-        xproperty_log_ptr_t binlog = accountcmd1.get_property_log();
-        ASSERT_NE(binlog, nullptr);
-
-        xaccount_cmd accountcmd2(property_objs);
-        ret = accountcmd2.do_property_log(binlog);
-        ASSERT_EQ(ret, 0);
-        ret = accountcmd2.map_get("aaa", "1", value);
-        ASSERT_EQ(ret, 0);
-        ASSERT_EQ(value, "3333");
-    }
-}

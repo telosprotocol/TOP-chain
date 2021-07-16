@@ -39,9 +39,11 @@ namespace top
             {
                 m_parent_accountid = 0;
             }
-
             m_parent_block_height   = obj.get_parent_block_height();
             m_parent_block_viewid   = obj.get_parent_block_viewid();
+            m_parent_block_entity_id = obj.get_parent_entity_id();
+            m_extend_cert = obj.get_cert()->get_extend_cert();
+            m_extend_cert = obj.get_cert()->get_extend_data();
             
             //copy flags of block,and combine class of block
             //[8bit:block-flags][8bit:index-bits]
@@ -71,7 +73,10 @@ namespace top
             m_parent_accountid      = obj.m_parent_accountid;
             m_parent_block_height   = obj.m_parent_block_height;
             m_parent_block_viewid   = obj.m_parent_block_viewid;
-            
+            m_parent_block_entity_id = obj.m_parent_block_entity_id;            
+            m_extend_cert           = obj.m_extend_cert;
+            m_extend_data           = obj.m_extend_data;
+
             m_combineflags          = obj.m_combineflags;
             m_block_types           = obj.m_block_types;
  
@@ -116,7 +121,10 @@ namespace top
             m_parent_accountid      = obj.m_parent_accountid;
             m_parent_block_height   = obj.m_parent_block_height;
             m_parent_block_viewid   = obj.m_parent_block_viewid;
-            
+            m_parent_block_entity_id = obj.m_parent_block_entity_id;
+            m_extend_cert           = obj.m_extend_cert;
+            m_extend_data           = obj.m_extend_data;
+
             m_combineflags          = obj.m_combineflags;
             m_block_types           = obj.m_block_types;
 
@@ -178,6 +186,7 @@ namespace top
             m_parent_accountid   = 0;
             m_parent_block_height= 0;
             m_parent_block_viewid= 0;
+            m_parent_block_entity_id = 0;
             
             m_combineflags      = 0;
             m_block_types       = 0;
@@ -445,6 +454,10 @@ namespace top
             stream << m_parent_accountid;
             stream.write_compact_var(m_parent_block_height);
             stream.write_compact_var(m_parent_block_viewid);
+            stream.write_compact_var(m_parent_block_entity_id);
+            stream.write_compact_var(m_extend_cert);
+            stream.write_compact_var(m_extend_data);
+
             stream << m_combineflags;
             stream << m_block_types;
             
@@ -470,6 +483,10 @@ namespace top
                 stream >> m_parent_accountid;
                 stream.read_compact_var(m_parent_block_height);
                 stream.read_compact_var(m_parent_block_viewid);
+                stream.read_compact_var(m_parent_block_entity_id);
+                stream.read_compact_var(m_extend_cert);
+                stream.read_compact_var(m_extend_data);
+
                 stream >> m_combineflags;
                 stream >> m_block_types;
                 

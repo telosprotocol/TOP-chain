@@ -208,23 +208,23 @@ namespace top
                     return nullptr;
                 }
 
+#if 0
                 std::vector<xobject_ptr_t<base::xvblock_t>> sub_blocks;
                 if(parent_block->extract_sub_blocks(sub_blocks))
                 {
-                    for (auto & unit_block : sub_blocks)
+                    for (auto & sub_block : sub_blocks)
                     {
-                        if(  (unit_block->get_height()      == target_index->get_height())
-                           &&(unit_block->get_viewid()      == target_index->get_viewid())
-                           &&(unit_block->get_viewtoken()   == target_index->get_viewtoken())
-                           &&(unit_block->get_account()     == target_index->get_account()) )
+                        if(  (sub_block->get_height()      == target_index->get_height())
+                            &&(sub_block->get_viewid()      == target_index->get_viewid())
+                            &&(sub_block->get_viewtoken()   == target_index->get_viewtoken())
+                            &&(sub_block->get_account()     == target_index->get_account()) )
                         {
                             xdbg("xvblockstore_impl::load_block_from_index succ from parent.unit=%s,parent=%s",
-                                 target_index->dump().c_str(),parent_block->dump().c_str());
-                            unit_block->reset_block_flags(target_index->get_block_flags()); // copy bindex flags to block
-                            // target_index->reset_this_block(unit_block.get()); // TODO(jimmy) always not cache unit block
-                            unit_block->add_ref();
-                            return unit_block.get();//transfer ownership to caller
-                        }
+                                    target_index->dump().c_str(),parent_block->dump().c_str());
+                            sub_block->reset_block_flags(target_index->get_block_flags()); // copy bindex flags to block
+                            // target_index->reset_this_block(sub_block.get()); // TODO(jimmy) always not cache unit block
+                            return sub_block.detach();//transfer ownership to caller
+                        }                        
                     }
                     xerror("xvblockstore_impl::load_block_from_index,fail-found unit(%s) from table block(%s)", target_index->dump().c_str(),parent_block->dump().c_str());
                 }
@@ -232,16 +232,43 @@ namespace top
                 {
                     xerror("xvblockstore_impl::load_block_from_index,fail-extract_sub_blocks unit(%s) from table block(%s)", target_index->dump().c_str(),parent_block->dump().c_str());
                 }
+#else
+                xobject_ptr_t<base::xvblock_t> sub_block;
+                if(parent_block->extract_one_sub_block(target_index->get_parent_block_entity(), target_index->get_extend_cert(), target_index->get_extend_data(), sub_block))
+                {
+                    if(  (sub_block->get_height()      == target_index->get_height())
+                        &&(sub_block->get_viewid()      == target_index->get_viewid())
+                        &&(sub_block->get_viewtoken()   == target_index->get_viewtoken())
+                        &&(sub_block->get_account()     == target_index->get_account()) )
+                    {
+                        xdbg("xvblockstore_impl::load_block_from_index succ from parent.unit=%s,parent=%s",
+                                target_index->dump().c_str(),parent_block->dump().c_str());
+                        sub_block->reset_block_flags(target_index->get_block_flags()); // copy bindex flags to block
+                        target_index->reset_this_block(sub_block.get()); // TODO(jimmy) always not cache unit block
+                        return sub_block.detach();//transfer ownership to caller
+                    }
+                    xerror("xvblockstore_impl::load_block_from_index,fail-found unit(%s) from table block(%s)", target_index->dump().c_str(),parent_block->dump().c_str());
+                }
+                else
+                {
+                    xerror("xvblockstore_impl::load_block_from_index,fail-extract_sub_blocks unit(%s) from table block(%s)", target_index->dump().c_str(),parent_block->dump().c_str());
+                }
+#endif                
                 return nullptr;
             }
             else//load from self block
             {
                 bool loaded_new_block = false;
-                if(target_index->get_this_block() == NULL) {
+                if(target_index->get_this_block() == NULL) {  // load from db
+                    #ifdef ENABLE_METRICS
+                    XMETRICS_GAUGE((top::metrics::E_SIMPLE_METRICS_TAG)atag, 0);
+                    XMETRICS_GAUGE(metrics::blockstore_blk_load, 0);
+                    #endif                                        
                     loaded_new_block = target_account->load_block_object(target_index, atag);
-                } else {
+                } else {  // load from cache
                     #ifdef ENABLE_METRICS
                     XMETRICS_GAUGE((top::metrics::E_SIMPLE_METRICS_TAG)atag, 1);
+                    XMETRICS_GAUGE(metrics::blockstore_blk_load, 1);
                     #endif
                 }
 
