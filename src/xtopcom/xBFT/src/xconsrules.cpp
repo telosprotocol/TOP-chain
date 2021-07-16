@@ -996,7 +996,11 @@ namespace top
             base::xvblock_t *  latest_commit_block = get_commit_block();
             if(latest_commit_block != NULL)
             {
-                if(_test_for_block->get_height() == (uint64_t)(latest_commit_block->get_height() - 1) )
+                if (_test_for_block->get_height() < (uint64_t)(latest_commit_block->get_height() - 2)) {
+                    xwarn("xBFTRules::safe_check_follow_commit_branch,fail-cert not follow the commited branch, cert(%s) long before commited(%s) at node=0x%llx",_test_for_block->dump().c_str(), latest_commit_block->dump().c_str(),get_xip2_addr().low_addr);
+                    return -1;
+                }
+                else if(_test_for_block->get_height() == (uint64_t)(latest_commit_block->get_height() - 1) )
                 {
                     if(_test_for_block->get_block_hash() != latest_commit_block->get_last_block_hash())
                     {
