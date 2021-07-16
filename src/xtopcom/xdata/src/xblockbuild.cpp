@@ -317,6 +317,9 @@ xobject_ptr_t<base::xvblock_t> xlighttable_build_t::unpack_one_unit_from_table(c
 
     _unit->set_extend_cert(extend_cert);
     _unit->set_extend_data(extend_data);
+
+    _unit->set_block_flag(base::enum_xvblock_flag_authenticated);
+    xassert(!_unit->get_block_hash().empty());
     return _unit;
 }
 
