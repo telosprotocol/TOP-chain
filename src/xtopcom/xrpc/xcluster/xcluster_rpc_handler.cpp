@@ -84,6 +84,12 @@ void xcluster_rpc_handler::cluster_process_request(const xrpc_msg_request_t & ed
                message.hash());
 
         if (xsuccess != m_txpool_service->request_transaction_consensus(tx_ptr, false)) {
+            xkinfo("[global_trace][advance_rpc][recv edge msg][push unit_service] tx hash: %s,%s,src %s,dst %s,%" PRIx64 " ignored",
+                  tx_hash.c_str(),
+                  account.c_str(),
+                  edge_sender.to_string().c_str(),
+                  m_cluster_vhost->address().to_string().c_str(),
+                  message.hash());
             return;
         }
     } else {
