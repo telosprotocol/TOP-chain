@@ -33,6 +33,9 @@ private:
     void update(mbus::xevent_ptr_t e);
     void chain_timer(common::xlogic_time_t time);
     void update_onchain_param(common::xlogic_time_t time);
+    void filter_changes(const std::map<std::string, std::string>& map,
+            std::map<std::string, std::string>& filterd_map);
+    bool is_param_changed(const std::string& key, const std::string& value);
     bool onchain_param_changed(std::map<std::string, std::string> const& params);
     config::xconfig_update_action_ptr_t find(const std::string& type);
 
