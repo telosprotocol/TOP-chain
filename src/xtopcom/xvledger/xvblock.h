@@ -679,6 +679,7 @@ namespace top
 
             //note:container(e.g. Table,Book etc) need implement this function as they have mutiple sub blocks inside them,
             virtual bool                extract_sub_blocks(std::vector<xobject_ptr_t<xvblock_t>> & sub_blocks) {return false;}//as default it is none
+            virtual bool                extract_one_sub_block(uint32_t entity_id, const std::string & extend_cert, const std::string & extend_data, xobject_ptr_t<xvblock_t> & sub_block) {return false;}
             //note:container(e.g. Lightunit etc) need implement this function as they have mutiple sub txs inside them,
             virtual bool                extract_sub_txs(std::vector<xvtxindex_ptr> & sub_txs) {return false;}//as default it is none
             virtual std::string         get_offdata_hash() const {return std::string();}//as default has none offdata
@@ -724,10 +725,11 @@ namespace top
 
         public: //associated information about parent block(e.g. tableblock)
             inline const std::string    get_parent_account()      const {return m_parent_account;}
+            inline const uint32_t       get_parent_entity_id()    const {return m_parent_entity_id;}
             inline const uint64_t       get_parent_block_height() const {return m_vqcert_ptr->get_parent_block_height();}
             inline const uint64_t       get_parent_block_viewid() const {return m_vqcert_ptr->get_parent_block_viewid();}
            
-            bool  set_parent_block(const std::string parent_addr);
+            bool  set_parent_block(const std::string parent_addr, uint32_t parent_entity_id);
 
         private:
             //generated the unique path of object(like vblock) under store-space(get_store_path()) to store data to DB
@@ -765,7 +767,7 @@ namespace top
             std::string                 m_dump_info;        //pre-print debug inforatmion and just for performance
             std::string                 m_offblock_snapshot;  // for sync set and cache
             std::string                 m_parent_account;   //container(e.g.tableblock)'account id(refer xvaccount_t::get_xvid())
-
+            uint32_t                    m_parent_entity_id{0};  //entity id of container(like tableblock) that carry this sub-block
         };
         using xvblock_ptr_t = xobject_ptr_t<base::xvblock_t>;
 

@@ -55,10 +55,10 @@ TEST_F(test_xvledger, table_address_check_1) {
     }
     {
         std::string prefix = "Ta0002";
-        std::string address = base::xvaccount_t::make_account_address(prefix, 255);
+        std::string address = base::xvaccount_t::make_account_address(prefix, 25);
         base::xvaccount_t _vaddr(address);
         ASSERT_EQ(_vaddr.get_zone_index(), enum_chain_zone_zec_index);
-        ASSERT_EQ(_vaddr.get_ledger_subaddr(), 255);
+        ASSERT_EQ(_vaddr.get_ledger_subaddr(), 25);
         ASSERT_EQ(_vaddr.get_addr_type(), enum_vaccount_addr_type_block_contract);
 
         std::string public_address;
@@ -72,10 +72,10 @@ TEST_F(test_xvledger, table_address_check_1) {
     }
     {
         std::string prefix = "Ta0000";
-        std::string address = base::xvaccount_t::make_account_address(prefix, 128);
+        std::string address = base::xvaccount_t::make_account_address(prefix, 25);
         base::xvaccount_t _vaddr(address);
         ASSERT_EQ(_vaddr.get_zone_index(), enum_chain_zone_consensus_index);
-        ASSERT_EQ(_vaddr.get_ledger_subaddr(), 128);
+        ASSERT_EQ(_vaddr.get_ledger_subaddr(), 25);
         ASSERT_EQ(_vaddr.get_addr_type(), enum_vaccount_addr_type_block_contract);
 
         std::string public_address;

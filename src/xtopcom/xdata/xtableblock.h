@@ -78,6 +78,7 @@ class xtable_block_t : public xblock_t {
     int64_t         get_pledge_balance_change_tgas() const override;
     const std::vector<xblock_ptr_t> & get_tableblock_units(bool need_parent_cert = false) const override;
     virtual bool    extract_sub_blocks(std::vector<xobject_ptr_t<base::xvblock_t>> & sub_blocks) override;
+    virtual bool    extract_one_sub_block(uint32_t entity_id, const std::string & extend_cert, const std::string & extend_data, xobject_ptr_t<xvblock_t> & sub_block) override;
 
  private:
     mutable std::once_flag              m_once_unpack_flag;

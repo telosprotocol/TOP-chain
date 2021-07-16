@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "xvledger/xvdbstore.h"
 #include "xvledger/xvblockstore.h"
 
 namespace top
@@ -11,6 +12,6 @@ namespace top
     namespace store
     {
         base::xvblockstore_t*  get_vblockstore();
-        base::xvblockstore_t*  create_vblockstore();
+        base::xvblockstore_t*  create_vblockstore(base::xvdbstore_t* xvdb_ptr);
     };//end of namespace of xledger
 };//end of namespace of top
