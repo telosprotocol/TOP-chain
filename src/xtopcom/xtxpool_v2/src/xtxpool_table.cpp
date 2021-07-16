@@ -85,16 +85,16 @@ int32_t xtxpool_table_t::push_send_tx(const std::shared_ptr<xtx_entry> & tx) {
     }
 
     uint64_t latest_nonce;
-    bool is_cached_nonce = false;
+    // bool is_cached_nonce = false;
 
     auto & account_addr = tx->get_tx()->get_source_addr();
 
-    {
-        std::lock_guard<std::mutex> lck(m_mgr_mutex);
-        is_cached_nonce = m_txmgr_table.get_account_nonce_cache(account_addr, latest_nonce);
-    }
+    // {
+    //     std::lock_guard<std::mutex> lck(m_mgr_mutex);
+    //     is_cached_nonce = m_txmgr_table.get_account_nonce_cache(account_addr, latest_nonce);
+    // }
 
-    if (!is_cached_nonce) {
+    // if (!is_cached_nonce) {
         bool result = get_account_latest_nonce(account_addr, latest_nonce);
         if (!result) {
             // todo : push to non_ready_accounts
@@ -103,7 +103,7 @@ int32_t xtxpool_table_t::push_send_tx(const std::shared_ptr<xtx_entry> & tx) {
             xtxpool_warn("xtxpool_table_t::push_send_tx account state fall behind tx:%s", tx->get_tx()->dump(true).c_str());
             return xtxpool_error_account_state_fall_behind;
         }
-    }
+    // }
 
     if (data::is_sys_contract_address(common::xaccount_address_t{account_addr})) {
         tx->get_para().set_tx_type_score(enum_xtx_type_socre_system);
@@ -113,9 +113,9 @@ int32_t xtxpool_table_t::push_send_tx(const std::shared_ptr<xtx_entry> & tx) {
 
     {
         std::lock_guard<std::mutex> lck(m_mgr_mutex);
-        if (!is_cached_nonce) {
+        // if (!is_cached_nonce) {
             m_txmgr_table.updata_latest_nonce(account_addr, latest_nonce);
-        }
+        // }
         ret = m_txmgr_table.push_send_tx(tx, latest_nonce);
     }
     if (ret != xsuccess) {
