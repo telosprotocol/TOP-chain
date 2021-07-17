@@ -220,6 +220,7 @@ base::xauto_ptr<base::xvblock_t> xblocktool_t::get_latest_connectted_light_block
         if (vblock->get_block_class() == base::enum_xvblock_class_full) {
             return nullptr;
         }
+        current_height = prev_vblock->get_height();
     }
     return nullptr;
 }
