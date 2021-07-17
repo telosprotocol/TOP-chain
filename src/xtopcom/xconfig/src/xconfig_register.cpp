@@ -163,20 +163,6 @@ void xconfig_register_t::update_params(const std::map<std::string, std::string>&
 
     filter_changes(map, filterd_map);
     update_cache_and_persist(filterd_map);
-
-    std::list<xconfig_register_listener_ptr_t> removed_list;
-    if (!filterd_map.empty()) {
-        for (auto& l : m_listeners) {
-            l->config_updated(filterd_map);
-        }
-    }
-
-    // remove listeners
-    if (!removed_list.empty()) {
-        for (auto& l : removed_list) {
-            m_listeners.remove(l);
-        }
-    }
 }
 
 void xconfig_register_t::add_delete_params(const std::map<std::string, std::string>& content_map, bool add) {

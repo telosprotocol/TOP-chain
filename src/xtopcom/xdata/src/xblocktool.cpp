@@ -203,6 +203,29 @@ base::xauto_ptr<base::xvblock_t> xblocktool_t::get_latest_committed_lightunit(ba
     return nullptr;
 }
 
+base::xauto_ptr<base::xvblock_t> xblocktool_t::get_latest_connectted_light_block(base::xvblockstore_t* blockstore, const base::xvaccount_t & account) {
+    base::xauto_ptr<base::xvblock_t> vblock = blockstore->get_latest_connected_block(account);
+    if (vblock->get_block_class() == base::enum_xvblock_class_light) {
+        return vblock;
+    }
+    if (vblock->get_block_class() == base::enum_xvblock_class_full) {
+        return nullptr;
+    }
+    uint64_t current_height = vblock->get_height();
+    while (current_height > 0) {
+        base::xauto_ptr<base::xvblock_t> prev_vblock = blockstore->load_block_object(account, current_height - 1, base::enum_xvblock_flag_committed, false);
+        if (prev_vblock == nullptr || prev_vblock->get_block_class() == base::enum_xvblock_class_light) {
+            return prev_vblock;
+        }
+        if (prev_vblock->get_block_class() == base::enum_xvblock_class_full) {
+            return nullptr;
+        }
+        current_height = prev_vblock->get_height();
+    }
+    return nullptr;
+}
+
+
 base::xauto_ptr<base::xvblock_t> xblocktool_t::get_latest_genesis_connectted_lightunit(base::xvblockstore_t* blockstore, const std::string & account) {
     base::xvaccount_t _vaccount(account);
     // there is mostly two empty units
