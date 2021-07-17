@@ -149,12 +149,11 @@ char const * matrics_name(xmetircs_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(txpool_push_tx_send_fail_pool_full);
         RETURN_METRICS_NAME(txpool_pull_recv_tx);
         RETURN_METRICS_NAME(txpool_pull_confirm_tx);
+        RETURN_METRICS_NAME(txpool_push_tx_from_proposal);
 
         // blockstore
-        RETURN_METRICS_NAME(blockstore_index_query);
-        RETURN_METRICS_NAME(blockstore_index_load_db);
-        RETURN_METRICS_NAME(blockstore_blk_query);
-        RETURN_METRICS_NAME(blockstore_blk_load_db);
+        RETURN_METRICS_NAME(blockstore_index_load);
+        RETURN_METRICS_NAME(blockstore_blk_load);
 
         // blockstore accessing
         RETURN_METRICS_NAME(blockstore_access_from_account_context);
@@ -297,6 +296,9 @@ char const * matrics_name(xmetircs_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(state_load_blk_state_unit_suc);
         RETURN_METRICS_NAME(state_load_blk_state_unit_fail);
         RETURN_METRICS_NAME(state_load_blk_state_unit_cache_suc);
+
+        RETURN_METRICS_NAME(data_table_unpack_units);
+        RETURN_METRICS_NAME(data_table_unpack_one_unit);        
 
         default: assert(false); return nullptr;
     }

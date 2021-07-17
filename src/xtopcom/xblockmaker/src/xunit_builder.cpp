@@ -29,6 +29,16 @@ void xlightunit_builder_t::alloc_tx_receiptid(const std::vector<xcons_transactio
     }
 }
 
+xblock_ptr_t xlightunit_builder_t::create_block(const xblock_ptr_t & prev_block, const data::xblock_consensus_para_t & cs_para, const xlightunit_block_para_t & lightunit_para, const base::xreceiptid_state_ptr_t & receiptid_state) {
+    alloc_tx_receiptid(lightunit_para.get_input_txs(), receiptid_state);
+
+    xlightunit_build_t bbuild(prev_block.get(), lightunit_para, cs_para);
+    base::xvblock_t* _proposal_block = data::xblocktool_t::create_next_lightunit(lightunit_para, prev_block.get(), cs_para);
+    xblock_ptr_t proposal_unit;
+    proposal_unit.attach((data::xblock_t*)_proposal_block);
+    return proposal_unit;    
+}
+
 xblock_ptr_t        xlightunit_builder_t::build_block(const xblock_ptr_t & prev_block,
                                                     const xobject_ptr_t<base::xvbstate_t> & prev_bstate,
                                                     const data::xblock_consensus_para_t & cs_para,
@@ -61,15 +71,7 @@ xblock_ptr_t        xlightunit_builder_t::build_block(const xblock_ptr_t & prev_
     lightunit_para.set_account_unconfirm_sendtx_num(exec_result.m_unconfirm_tx_num);
     lightunit_para.set_fullstate_bin(exec_result.m_full_state);
     lightunit_para.set_binlog(exec_result.m_property_binlog);
-
-    base::xreceiptid_state_ptr_t receiptid_state = lightunit_build_para->get_receiptid_state();
-    alloc_tx_receiptid(exec_result.m_exec_succ_txs, receiptid_state);
-
-    xlightunit_build_t bbuild(prev_block.get(), lightunit_para, cs_para);
-    base::xvblock_t* _proposal_block = data::xblocktool_t::create_next_lightunit(lightunit_para, prev_block.get(), cs_para);
-    xblock_ptr_t proposal_unit;
-    proposal_unit.attach((data::xblock_t*)_proposal_block);
-    return proposal_unit;
+    return create_block(prev_block, cs_para, lightunit_para, lightunit_build_para->get_receiptid_state());
 }
 
 std::string     xfullunit_builder_t::make_binlog(const xblock_ptr_t & prev_block,

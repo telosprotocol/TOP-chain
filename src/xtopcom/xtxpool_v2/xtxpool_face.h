@@ -237,7 +237,7 @@ public:
     virtual void subscribe_tables(uint8_t zone, uint16_t front_table_id, uint16_t back_table_id) = 0;
     virtual void unsubscribe_tables(uint8_t zone, uint16_t front_table_id, uint16_t back_table_id) = 0;
     virtual void on_block_confirmed(xblock_t * block) = 0;
-    virtual int32_t verify_txs(const std::string & account, const std::vector<xcons_transaction_ptr_t> & txs, uint64_t latest_commit_unit_height) = 0;
+    virtual int32_t verify_txs(const std::string & account, const std::vector<xcons_transaction_ptr_t> & txs) = 0;
     virtual const std::vector<xcons_transaction_ptr_t> get_resend_txs(uint8_t zone, uint16_t subaddr, uint64_t now) = 0;
     virtual void refresh_table(uint8_t zone, uint16_t subaddr, bool refresh_unconfirm_txs) = 0;
     // virtual void update_non_ready_accounts(uint8_t zone, uint16_t subaddr) = 0;

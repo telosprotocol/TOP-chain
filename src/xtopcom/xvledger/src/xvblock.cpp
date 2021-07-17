@@ -2457,9 +2457,10 @@ namespace top
             return (begin_size - stream.size());
         }
     
-        bool xvblock_t::set_parent_block(const std::string parent_addr)
+        bool xvblock_t::set_parent_block(const std::string parent_addr, uint32_t parent_entity_id)
         {
             m_parent_account = parent_addr;
+            m_parent_entity_id = parent_entity_id;
             return true;
         }
         
