@@ -37,18 +37,6 @@ xelect_client_process::xelect_client_process(common::xnetwork_id_t const & netwo
     xdbg("xelect_client_process created %p", mb);
     // mb->add_listener((int)mbus::xevent_major_type_store, std::bind(&xelect_client_process::push_event, this, std::placeholders::_1));
     mb->add_listener((int)mbus::xevent_major_type_chain_timer, std::bind(&xelect_client_process::push_event, this, std::placeholders::_1));
-
-    m_election_status[common::xaccount_address_t{ sys_contract_rec_elect_rec_addr }].height = 0;
-    m_election_status[common::xaccount_address_t{ sys_contract_rec_elect_zec_addr }].height = 0;
-    m_election_status[common::xaccount_address_t{ sys_contract_rec_elect_edge_addr }].height = 0;
-    m_election_status[common::xaccount_address_t{ sys_contract_rec_elect_archive_addr }].height = 0;
-    m_election_status[common::xaccount_address_t{ sys_contract_zec_elect_consensus_addr }].height = 0;
-
-    m_election_status[common::xaccount_address_t{ sys_contract_rec_elect_rec_addr }].initialized = false;
-    m_election_status[common::xaccount_address_t{ sys_contract_rec_elect_zec_addr }].initialized = false;
-    m_election_status[common::xaccount_address_t{ sys_contract_rec_elect_edge_addr }].initialized = false;
-    m_election_status[common::xaccount_address_t{ sys_contract_rec_elect_archive_addr }].initialized = false;
-    m_election_status[common::xaccount_address_t{ sys_contract_zec_elect_consensus_addr }].initialized = false;
 }
 
 bool xelect_client_process::filter_event(const xevent_ptr_t & e) {
@@ -258,33 +246,31 @@ void xelect_client_process::process_election_block(xobject_ptr_t<base::xvblock_t
     top::get<xinternal_election_status_t>(*it).initialized = true;
 }
 
+void xelect_client_process::process_election_contract(common::xaccount_address_t const& contract_address,
+                                                      common::xlogic_time_t const current_time,
+                                                      common::xlogic_time_t const update_interval) {
+    if (!m_election_status[contract_address].initialized || current_time % update_interval == 0) {
+        process_election_block(data::xblocktool_t::get_latest_connectted_light_block(base::xvchain_t::instance().get_xblockstore(), base::xvaccount_t{ contract_address.value() }));
+    }
+}
+
 void xelect_client_process::update_election_status(common::xlogic_time_t const& current_time) {
-    constexpr config::xinterval_t divider = 4;
+    constexpr config::xinterval_t update_divider = 4;
 
-    auto const update_rec_interval = XGET_ONCHAIN_GOVERNANCE_PARAMETER(rec_election_interval) / divider;
-    if (!m_election_status[common::xaccount_address_t{sys_contract_rec_elect_rec_addr}].initialized || current_time % update_rec_interval == 0) {
-        process_election_block(data::xblocktool_t::get_latest_connectted_light_block(base::xvchain_t::instance().get_xblockstore(), base::xvaccount_t{ sys_contract_rec_elect_rec_addr }));
-    }
+    auto const update_rec_interval = XGET_ONCHAIN_GOVERNANCE_PARAMETER(rec_election_interval) / update_divider;
+    process_election_contract(common::xaccount_address_t{ sys_contract_rec_elect_rec_addr }, current_time, update_rec_interval);
 
-    auto const update_zec_interval = XGET_ONCHAIN_GOVERNANCE_PARAMETER(zec_election_interval) / divider;
-    if (!m_election_status[common::xaccount_address_t{ sys_contract_rec_elect_zec_addr }].initialized || current_time % update_zec_interval == 0) {
-        process_election_block(data::xblocktool_t::get_latest_connectted_light_block(base::xvchain_t::instance().get_xblockstore(), base::xvaccount_t{ sys_contract_rec_elect_zec_addr }));
-    }
+    auto const update_zec_interval = XGET_ONCHAIN_GOVERNANCE_PARAMETER(zec_election_interval) / update_divider;
+    process_election_contract(common::xaccount_address_t{ sys_contract_rec_elect_zec_addr }, current_time, update_zec_interval);
 
-    auto const update_edge_interval = XGET_ONCHAIN_GOVERNANCE_PARAMETER(edge_election_interval) / divider;
-    if (!m_election_status[common::xaccount_address_t{ sys_contract_rec_elect_edge_addr }].initialized || current_time % update_edge_interval == 0) {
-        process_election_block(data::xblocktool_t::get_latest_connectted_light_block(base::xvchain_t::instance().get_xblockstore(), base::xvaccount_t{ sys_contract_rec_elect_edge_addr }));
-    }
+    auto const update_edge_interval = XGET_ONCHAIN_GOVERNANCE_PARAMETER(edge_election_interval) / update_divider;
+    process_election_contract(common::xaccount_address_t{ sys_contract_rec_elect_edge_addr }, current_time, update_edge_interval);
 
-    auto const update_archive_interval = XGET_ONCHAIN_GOVERNANCE_PARAMETER(archive_election_interval) / divider;
-    if (!m_election_status[common::xaccount_address_t{ sys_contract_rec_elect_archive_addr }].initialized || current_time % update_archive_interval == 0) {
-        process_election_block(data::xblocktool_t::get_latest_connectted_light_block(base::xvchain_t::instance().get_xblockstore(), base::xvaccount_t{ sys_contract_rec_elect_archive_addr }));
-    }
+    auto const update_archive_interval = XGET_ONCHAIN_GOVERNANCE_PARAMETER(archive_election_interval) / update_divider;
+    process_election_contract(common::xaccount_address_t{ sys_contract_rec_elect_archive_addr }, current_time, update_archive_interval);
 
-    auto const update_consensus_interval = XGET_ONCHAIN_GOVERNANCE_PARAMETER(cluster_election_interval) / divider;
-    if (!m_election_status[common::xaccount_address_t{ sys_contract_zec_elect_consensus_addr }].initialized || current_time % update_consensus_interval) {
-        process_election_block(data::xblocktool_t::get_latest_connectted_light_block(base::xvchain_t::instance().get_xblockstore(), base::xvaccount_t{ sys_contract_zec_elect_consensus_addr }));
-    }
+    auto const update_consensus_interval = XGET_ONCHAIN_GOVERNANCE_PARAMETER(cluster_election_interval) / update_divider;
+    process_election_contract(common::xaccount_address_t{ sys_contract_zec_elect_consensus_addr }, current_time, update_consensus_interval);
 }
 
 NS_END2

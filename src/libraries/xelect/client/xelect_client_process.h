@@ -29,6 +29,7 @@ protected:
     // void process_elect(const mbus::xevent_ptr_t & e);
     void update_election_status(common::xlogic_time_t const & current_time);
     void process_election_block(xobject_ptr_t<base::xvblock_t> const& election_data_block);
+    void process_election_contract(common::xaccount_address_t const & contract_address, common::xlogic_time_t const current_time, common::xlogic_time_t const update_interval);
 
 private:
     common::xnetwork_id_t m_network_id;
