@@ -30,7 +30,7 @@ namespace transport {
 const static uint16_t XUDP_RATELIMIT_INTERVAL = 5;  //  5 minutes
 const static uint16_t XUDP_RATELIMIT_CONNECTION_TIMES = 10;  //  not more than 5 connection times
 const static uint16_t XUDP_RATELIMIT_CONNECTION_TIMES_WITHIN_MINUTE = 3;  //  not more than 3 connection times within one minute
-const static std::string XUDP_VERSION = "1";
+const static std::string XUDP_VERSION = "{\"msg_encode_type\": 1}";
 
 const static std::string SUB_NETWORK_MASK = "255.255.255.0";
 const static uint32_t IP_SEG_MAX_ADDR = 5;  // same ip_seg max addr number
