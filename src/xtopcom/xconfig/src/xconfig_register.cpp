@@ -108,6 +108,7 @@ void xconfig_register_t::init_static_config() {
     XADD_OFFCHAIN_PARAMETER(config_property_alias_name_max_len);
     XADD_OFFCHAIN_PARAMETER(edge_max_msg_packet_size);
     XADD_OFFCHAIN_PARAMETER(chain_name);
+    XADD_OFFCHAIN_PARAMETER(root_hash);
     XADD_OFFCHAIN_PARAMETER(leader_election_round);
     XADD_OFFCHAIN_PARAMETER(unitblock_confirm_tx_batch_num);
     XADD_OFFCHAIN_PARAMETER(unitblock_recv_transfer_tx_batch_num);
