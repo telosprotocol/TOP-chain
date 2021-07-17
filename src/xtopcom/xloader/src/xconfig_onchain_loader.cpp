@@ -201,11 +201,11 @@ void xconfig_onchain_loader_t::update_onchain_param(common::xlogic_time_t time) 
     std::lock_guard<std::mutex> lock(m_action_param_mutex);
 
     auto block =  data::xblocktool_t::get_latest_connectted_light_block(store::get_vblockstore(), std::string{sys_contract_rec_tcc_addr});
-    xdbg("xconfig_onchain_loader_t::update_onchain_param, current light height=%ld", block->get_height());
     if ( block == nullptr || block->get_height() < last_update_height) {
         xdbg("xconfig_onchain_loader_t::update_onchain_param, height=%" PRIu64 ", last_update_height: %" PRIu64, block->get_height(), last_update_height);
         return;
     }
+    xdbg("xconfig_onchain_loader_t::update_onchain_param, current light height=%ld", block->get_height());
 
     last_update_height = block->get_height();
     base::xauto_ptr<base::xvbstate_t> _bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(block.get(), metrics::statestore_access_from_xconfig_update);
