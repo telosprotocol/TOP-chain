@@ -19,6 +19,7 @@ NS_BEG2(top, config)
         constexpr xtop_##NAME##_onchain_goverance_parameter::type xtop_##NAME##_onchain_goverance_parameter::value
 
 XDEFINE_CONFIGURATION(chain_name);
+XDEFINE_CONFIGURATION(root_hash);
 XDEFINE_CONFIGURATION(global_timer_interval);
 XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(rec_election_interval);
 XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(zec_election_interval);
