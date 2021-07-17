@@ -15,8 +15,8 @@
 #include "xtransport/udp_transport/transport_util.h"
 #include "xtransport/utils/transport_utils.h"
 #include "xwrouter/message_handler/wrouter_message_handler.h"
-#include "xwrouter/multi_routing/service_node_cache.h"
 #include "xwrouter/multi_routing/multi_routing.h"
+#include "xwrouter/multi_routing/service_node_cache.h"
 
 #include <algorithm>
 
@@ -377,40 +377,27 @@ int32_t WrouterXidHandler::SendData(transport::protobuf::RoutingMessage & messag
             message.add_bloomfilter(bloomfilter_vec[i]);
         }
     }
-    base::xpacket_t packet(base::xcontext_t::instance());
-    _xip2_header xip2_header;
-    memset(&xip2_header, 0, sizeof(xip2_header));
-    xip2_header.ver_protocol = kSerializeProtocolProtobuf;
-    std::string header((const char *)&xip2_header, sizeof(xip2_header));
+    xdbg("finally get destnode size:%u", rest_neighbors.size());
+    for (const auto & item : rest_neighbors) {
+        xdbg("finally get %s %s:%u", (item->node_id).c_str(), item->public_ip.c_str(), item->public_port);
+    }
 
-    std::string xbody;
-    if (!message.SerializeToString(&xbody)) {
+    std::string data;
+    if (!message.SerializeToString(&data)) {
         xwarn("wrouter message SerializeToString failed");
         return enum_xerror_code_fail;
     }
-
-    std::string xdata = header + xbody;
-
-    auto each_call = [this, &packet, &message, neighbors, &xdata](kadmlia::NodeInfoPtr node_info_ptr) {
+    auto each_call = [this, &data](kadmlia::NodeInfoPtr node_info_ptr) {
         if (!node_info_ptr) {
             xwarn("kadmlia::NodeInfoPtr null");
             return false;
         }
-        packet.reset();
-        packet.get_body().push_back((uint8_t *)xdata.data(), xdata.size());
-        packet.set_to_ip_addr(node_info_ptr->public_ip);
-        packet.set_to_ip_port(node_info_ptr->public_port);
-        //        if (kadmlia::kKadSuccess != transport_ptr_->SendData(packet)) {
-        if (kadmlia::kKadSuccess != transport_ptr_->SendDataWithProp(packet, node_info_ptr->udp_property)) {
+        if (kadmlia::kKadSuccess != transport_ptr_->SendDataWithProp(data, node_info_ptr->public_ip, node_info_ptr->public_port, node_info_ptr->udp_property)) {
             xwarn("SendData to  endpoint(%s:%d) failed", node_info_ptr->public_ip.c_str(), node_info_ptr->public_port);
             return false;
         }
         return true;
     };
-    xdbg("finally get destnode size:%u", rest_neighbors.size());
-    for (const auto & item : rest_neighbors) {
-        xdbg("finally get %s %s:%u", (item->node_id).c_str(), item->public_ip.c_str(), item->public_port);
-    }
 
     if (message.broadcast()) {
         std::for_each(rest_neighbors.begin(), rest_neighbors.end(), each_call);

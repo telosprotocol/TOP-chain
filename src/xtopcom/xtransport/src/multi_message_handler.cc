@@ -57,7 +57,7 @@ bool  ThreadHandler::fired_packet(base::xpacket_t & packet,int32_t cur_thread_id
 {
     auto thread_begin_time = GetCurrentTimeMicSec();  // us
     transport::protobuf::RoutingMessage pro_message;
-    if (!pro_message.ParseFromArray((const char*)packet.get_body().data() + enum_xip2_header_len,packet.get_body().size() - enum_xip2_header_len))
+    if (!pro_message.ParseFromArray((const char*)packet.get_body().data() + enum_xbase_header_len,packet.get_body().size() - enum_xbase_header_len))
     {
         TOP_ERROR("Message ParseFromString from string failed!");
         return true;
@@ -158,95 +158,81 @@ void MultiThreadHandler::unregister_on_dispatch_callback() {
     #endif
 }
 
-void MultiThreadHandler::HandleMessage(base::xpacket_t & packet)
-{
-    if((size_t)packet.get_body().size() < enum_xip2_header_len) //filter empty packet
+void MultiThreadHandler::HandleMessage(base::xpacket_t & packet) {
+    if ((size_t)packet.get_body().size() < enum_xbase_header_len)  // filter empty packet
     {
-        TOP_WARN("HandleMessage Recv invalid packet with size: %d, from:%s:%d", packet.get_body().size(),packet.get_from_ip_addr().c_str(), packet.get_from_ip_port());
+        TOP_WARN("HandleMessage Recv invalid packet with size: %d, from:%s:%d", packet.get_body().size(), packet.get_from_ip_addr().c_str(), packet.get_from_ip_port());
         return;
+    } else {
+#ifdef DEBUG
+        TOP_DEBUG("HandleMessage Recv size: %d, from:%s:%d", packet.get_body().size(), packet.get_from_ip_addr().c_str(), packet.get_from_ip_port());
+#endif
     }
-    else
-    {
-        #ifdef DEBUG
-        TOP_DEBUG("HandleMessage Recv size: %d, from:%s:%d", packet.get_body().size(),packet.get_from_ip_addr().c_str(), packet.get_from_ip_port());
-        #endif
-    }
-    
-    #ifdef __DIRECT_PASS_PACKET_WITHOUT_DATABOX__
-    ThreadHandler::fired_packet(packet,0,0,m_callback);
+
+    _xbase_header * _raw_head = (_xbase_header *)packet.get_body().data();  // incoming packet store data at body always
+    if (_raw_head->ver_protocol != kVersionV1ProtocolProtobuf)
+        return;
+    const uint16_t priority_level = get_xpacket_priority_type(_raw_head->flags);
+
+#ifdef __DIRECT_PASS_PACKET_WITHOUT_DATABOX__
+    ThreadHandler::fired_packet(packet, 0, 0, m_callback);
     return;
-    #endif //
+#endif  //
 
 #if defined(DEBUG)
     uint32_t index = 0;
 #endif
-    if(m_worker_threads.size() == 1u) //optimize,direct post
+    if (m_worker_threads.size() == 1u)  // optimize,direct post
     {
         m_worker_threads[0]->get_databox()->send_packet(packet);
 #if defined(DEBUG)
         index = 0;
 #endif
-	}
-    else
-    {
-        _xip2_header * _raw_head = (_xip2_header*)packet.get_body().data();//incoming packet store data at body always
-        const int priority_level = get_xpacket_priority_type(_raw_head->flags);
-        if(priority_level >= enum_xpacket_priority_type_flash) //priority packet
+    } else {
+        if (priority_level >= enum_xpacket_priority_type_flash)  // priority packet
         {
             m_worker_threads[0]->get_databox()->send_packet(packet);
 #if defined(DEBUG)
             index = 0;
 #endif
-        }
-        else if(m_worker_threads.size() == 2u)
-        {
+        } else if (m_worker_threads.size() == 2u) {
             m_worker_threads[1]->get_databox()->send_packet(packet);
 #if defined(DEBUG)
             index = 1;
 #endif
-        }
-        else
-        {
-            uint32_t msg_hash = 0;
-            if(0 == _raw_head->sesssion_id)
-            {
-                //route packet based on source ip address, which may ensure  order of packet from same source
-                //const std::string src_ip_address = packet.get_from_ip_rawaddr();
-                //msg_hash = base::xhash32_t::digest(src_ip_address);
+        } else {
+            uint32_t hash_size = 128 < (packet.get_body().size() - enum_xbase_header_len) ? 128 : (packet.get_body().size() - enum_xbase_header_len);
+            const std::string src_data((const char *)packet.get_body().data() + enum_xbase_header_len, hash_size);
+            uint32_t msg_hash = base::xhash32_t::digest(src_data);
 
-                uint32_t hash_size =  128 < (packet.get_body().size() - enum_xip2_header_len)?128:(packet.get_body().size() - enum_xip2_header_len);
-                const std::string src_data((const char*)packet.get_body().data() + enum_xip2_header_len, hash_size);
-                msg_hash = base::xhash32_t::digest(src_data);
-            }
-            else //dispatch based on session_id if have
-            {
-                msg_hash = _raw_head->sesssion_id;
-            }
-            const uint32_t th_index = (msg_hash % (m_worker_threads.size() - 1)) + 1;//thread 0 is reserved for priority packets
+            const uint32_t th_index = (msg_hash % (m_worker_threads.size() - 1)) + 1;  // thread 0 is reserved for priority packets
             m_worker_threads[th_index]->get_databox()->send_packet(packet);
 #if defined(DEBUG)
             index = th_index;
 #endif
         }
-    } // end  if(enum_const_woker_threads_count == 1) //optimize,direct post
+    }  // end  if(enum_const_woker_threads_count == 1) //optimize,direct post
 
-    #ifdef DEBUG
+#if defined(DEBUG)
     static std::atomic<uint32_t> packet_count(0);
     ++packet_count;
     if (packet_count % 64 == 0) {
         int64_t in = 0;
         int64_t out = 0;
         const int32_t total_holding = m_worker_threads[index]->get_databox()->count_packets(in, out);
-        if(total_holding > 8192)//too much packets pending in the queues
+        if (total_holding > 8192)  // too much packets pending in the queues
         {
-            TOP_WARN("TOO MUCH PENDING,packet_count: thread_index:%d,thread_id:%d, packets(in:%lld out:%lld hold:%d)", index, m_worker_threads[index]->get_thread_id(), in, out, total_holding);
-        }
-        else if(packet_count % 1024 == 0)
-        {
+            TOP_WARN("TOO MUCH PENDING,packet_count: thread_index:%d,thread_id:%d, packets(in:%lld out:%lld hold:%d)",
+                     index,
+                     m_worker_threads[index]->get_thread_id(),
+                     in,
+                     out,
+                     total_holding);
+        } else if (packet_count % 1024 == 0) {
             TOP_INFO("packet_count: thread_index:%d,thread_id:%d, packets(in:%lld out:%lld hold:%d)", index, m_worker_threads[index]->get_thread_id(), in, out, total_holding);
         }
     }
-    #endif
+#endif
 }
 
 }  // namespace transport

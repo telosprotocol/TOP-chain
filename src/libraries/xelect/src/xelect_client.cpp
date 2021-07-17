@@ -98,7 +98,7 @@ void xelect_client_imp::bootstrap_node_join() {
 #endif
                 param_stream << PROGRAM_VERSION;
                 std::string param(reinterpret_cast<char *>(param_stream.data()), param_stream.size());
-                tx->make_tx_run_contract("nodeJoinNetwork", param);
+                tx->make_tx_run_contract("nodeJoinNetwork2", param);
                 tx->set_different_source_target_address(user_params.account.value(), sys_contract_rec_standby_pool_addr);
                 tx->set_fire_and_expire_time(600);
                 tx->set_deposit(XGET_ONCHAIN_GOVERNANCE_PARAMETER(min_tx_deposit));
