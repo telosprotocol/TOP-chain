@@ -111,7 +111,6 @@ xtxpool_proxy_face_ptr xtxpool_service_mgr::create(const std::shared_ptr<vnetwor
 // destroy useless txpool services by networkdriver, call by vnode manager while detemine some service useless
 // must call uninit before
 bool xtxpool_service_mgr::destroy(const xvip2_t & xip) {
-    auto key = xcons_utl::erase_version(xip);
     xinfo("xtxpool_service_mgr::destroy xip:{%" PRIu64 ", %" PRIu64 "} ", xip.high_addr, xip.low_addr);
     // erase useless txpool service
     bool need_cleanup = false;
@@ -120,18 +119,23 @@ bool xtxpool_service_mgr::destroy(const xvip2_t & xip) {
     uint32_t back_table_id;
     {
         std::lock_guard<std::mutex> lock(m_mutex);
-        auto iter = m_service_map.find(key);
-        if (iter != m_service_map.end()) {
+        for (auto iter = m_service_map.begin(); iter != m_service_map.end(); iter++)
+        {
             auto txpool_service = iter->second;
-            txpool_service->get_service_table_boundary(zone_id, fount_table_id, back_table_id);
-            need_cleanup = true;
-            m_service_map.erase(iter);
+            if (xcons_utl::xip_equals(xip, txpool_service->get_cluster_xip())) {
+                txpool_service->get_service_table_boundary(zone_id, fount_table_id, back_table_id);
+                need_cleanup = true;
+                m_service_map.erase(iter);
+                break;
+            }
         }
     }
 
     if (need_cleanup) {
         // clear txpool tables corresponding to this service
         m_para->get_txpool()->unsubscribe_tables(zone_id, fount_table_id, back_table_id);
+    } else {
+        xinfo("xtxpool_service_mgr::destroy xip:{%" PRIu64 ", %" PRIu64 "} not found", xip.high_addr, xip.low_addr);
     }
 
     return true;
