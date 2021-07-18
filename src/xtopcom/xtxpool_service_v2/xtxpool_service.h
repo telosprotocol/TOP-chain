@@ -45,6 +45,7 @@ public:
         return nullptr;
     };
     void pull_lacking_receipts(uint64_t now, xcovered_tables_t & covered_tables) override;
+    xvip2_t get_cluster_xip() const override;
 
 private:
     bool is_belong_to_service(xtable_id_t tableid) const;

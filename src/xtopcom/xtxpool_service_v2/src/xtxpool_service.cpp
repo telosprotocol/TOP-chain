@@ -232,6 +232,13 @@ void xtxpool_service::pull_lacking_receipts(uint64_t now, xcovered_tables_t & co
     }
 }
 
+xvip2_t xtxpool_service::get_cluster_xip() const {
+    common::xnode_address_t node_addr = xcons_utl::to_address(m_xip, m_vnet_driver->address().version());
+    auto cluster_address = node_addr.cluster_address();
+    common::xip2_t xip{cluster_address.network_id(), cluster_address.zone_id(), cluster_address.cluster_id(), cluster_address.group_id()};
+    return {xip.raw_low_part(), xip.raw_high_part()};
+}
+
 bool xtxpool_service::is_belong_to_service(xtable_id_t tableid) const {
     if (tableid.get_zone_index() == m_zone_index && (tableid.get_subaddr() >= m_cover_front_table_id && tableid.get_subaddr() <= m_cover_back_table_id)) {
         return true;
