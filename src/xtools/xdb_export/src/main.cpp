@@ -137,7 +137,7 @@ public:
     db_export_tools(std::string const & db_path) {
         data::xrootblock_para_t para;
         data::xrootblock_t::init(para);
-        top::config::config_register.get_instance().set(config::xmin_free_gas_balance_onchain_goverance_parameter_t::name, std::to_string(ASSET_TOP(100)));
+        top::config::config_register.get_instance().set(config::xmin_free_gas_asset_onchain_goverance_parameter_t::name, std::to_string(ASSET_TOP(100)));
         top::config::config_register.get_instance().set(config::xfree_gas_onchain_goverance_parameter_t::name, std::to_string(25000));
         top::config::config_register.get_instance().set(config::xmax_validator_stake_onchain_goverance_parameter_t::name, std::to_string(5000));
         top::config::config_register.get_instance().set(config::xchain_name_configuration_t::name, std::string{top::config::chain_name_testnet});

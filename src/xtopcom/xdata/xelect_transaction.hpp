@@ -73,7 +73,7 @@ public:
         // consensus
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(beacon_tx_fee);
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(total_gas_shard);
-        XADD_ONCHAIN_GOVERNANCE_PARAMETER(min_free_gas_balance);
+        XADD_ONCHAIN_GOVERNANCE_PARAMETER(min_free_gas_asset);
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(free_gas);
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(tx_deposit_gas_exchange_ratio);
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(cpu_gas_exchange_ratio);
