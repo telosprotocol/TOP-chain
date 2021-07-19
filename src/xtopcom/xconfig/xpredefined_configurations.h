@@ -379,24 +379,28 @@ XDECLARE_CONFIGURATION(platform_public_endpoints,
                        char const *,
                        "192.168.50.155:9921,192.168.50.156:9921,192.168.50.157:9921,192.168.50.158:9921,192.168.50.159:9921,192.168.50.160:9921,192.168.50.121:9921,192.168.50.119:9921");
 XDECLARE_CONFIGURATION(platform_url_endpoints, char const *, "http://mainnetwork.org/");
+XDECLARE_CONFIGURATION(root_hash, char const *, "3cf78cd9e5ec0da06e7b61dfc80cd70a68f5a26544a7a8d85a90aaeb26884308");
 #elif defined(XBUILD_DEV)
 XDECLARE_CONFIGURATION(chain_name, char const *, chain_name_testnet);
 XDECLARE_CONFIGURATION(platform_public_endpoints,
                        char const *,
                        "127.0.0.1:9000");
 XDECLARE_CONFIGURATION(platform_url_endpoints, char const *, "http://unreachable.org/");
+XDECLARE_CONFIGURATION(root_hash, char const *, "917125f121cffe38513fb94262eb8a3f7c0eb117200bf278919c1c2a2376750e");
 #elif defined(XBUILD_GALILEO)
 XDECLARE_CONFIGURATION(chain_name, char const *, chain_name_testnet);
 XDECLARE_CONFIGURATION(platform_public_endpoints,
                        char const *,
                        "206.189.201.14:9000,167.172.128.168:9000,206.189.194.250:9000,134.122.123.81:9000");
 XDECLARE_CONFIGURATION(platform_url_endpoints, char const *, "http://galileo.seed.topnetwork.org/");
+XDECLARE_CONFIGURATION(root_hash, char const *, "a450ce6a875d55024f60b7ac2a1e9984689ccc6b5de1690890c3b59d588a2ad0");
 #else
 XDECLARE_CONFIGURATION(chain_name, char const *, chain_name_mainnet);
 XDECLARE_CONFIGURATION(platform_public_endpoints,
                        char const *,
                        "206.189.227.204:9000,206.189.238.224:9000,206.189.205.198:9000,204.48.27.142:9000,206.81.0.133:9000");
 XDECLARE_CONFIGURATION(platform_url_endpoints, char const *, "http://mainnet.seed.topnetwork.org/");
+XDECLARE_CONFIGURATION(root_hash, char const *, "beaa468a921c7cb0344da5b56fcf79ccdbcddb3226a1c042a1020be6d3fc29f2");
 #endif
 
 XDECLARE_CONFIGURATION(platform_first_node, bool, false);

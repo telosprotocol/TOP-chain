@@ -10,6 +10,8 @@ add_dependencies(xblockstore2_test xblockstore)
 include_directories(src/xtopcom/xblockstore/)
 target_link_libraries(xblockstore2_test PRIVATE
     xblockstore
+    xblockmaker
+    xdata
     gtest
 )
 

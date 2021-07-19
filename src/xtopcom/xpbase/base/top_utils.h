@@ -99,10 +99,14 @@ enum RoutingMessageType {
 
 };
 
-enum SerializeProtocol {
+enum VersionProtocol {
     kSerializeProtocolProtobuf = 1,
-    kSerializeProtocolMsgpack,
-    kSerializeProtocolXbase,
+    kSerializeProtocolMsgpack = 2,
+    kSerializeProtocolXbase = 3,
+
+    kVersionV1ProtocolProtobuf = (1 << 12) | kSerializeProtocolProtobuf,
+    kVersionV2ProtocolProtobuf = (2 << 12) | kSerializeProtocolProtobuf,
+    kVersionV3ProtocolProtobuf = (3 << 12) | kSerializeProtocolProtobuf,
 };
 
 } // namespace top

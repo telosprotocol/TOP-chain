@@ -108,6 +108,7 @@ void xconfig_register_t::init_static_config() {
     XADD_OFFCHAIN_PARAMETER(config_property_alias_name_max_len);
     XADD_OFFCHAIN_PARAMETER(edge_max_msg_packet_size);
     XADD_OFFCHAIN_PARAMETER(chain_name);
+    XADD_OFFCHAIN_PARAMETER(root_hash);
     XADD_OFFCHAIN_PARAMETER(leader_election_round);
     XADD_OFFCHAIN_PARAMETER(unitblock_confirm_tx_batch_num);
     XADD_OFFCHAIN_PARAMETER(unitblock_recv_transfer_tx_batch_num);
@@ -162,20 +163,6 @@ void xconfig_register_t::update_params(const std::map<std::string, std::string>&
 
     filter_changes(map, filterd_map);
     update_cache_and_persist(filterd_map);
-
-    std::list<xconfig_register_listener_ptr_t> removed_list;
-    if (!filterd_map.empty()) {
-        for (auto& l : m_listeners) {
-            l->config_updated(filterd_map);
-        }
-    }
-
-    // remove listeners
-    if (!removed_list.empty()) {
-        for (auto& l : removed_list) {
-            m_listeners.remove(l);
-        }
-    }
 }
 
 void xconfig_register_t::add_delete_params(const std::map<std::string, std::string>& content_map, bool add) {

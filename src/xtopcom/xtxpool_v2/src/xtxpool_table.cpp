@@ -57,44 +57,34 @@ bool xtxpool_table_t::get_account_basic_info(const std::string & account, xaccou
     return true;
 }
 
-int32_t xtxpool_table_t::push_send_tx(const std::shared_ptr<xtx_entry> & tx) {
-    int32_t ret = verify_send_tx(tx->get_tx());
-    if (ret != xsuccess) {
-        return ret;
-    }
-
-    // todo: flow contral by receipt id.
-    // if (is_unconfirm_txs_reached_upper_limit()) {
-    //     xtxpool_warn("xtxpool_table_t::push_send_tx unconfirm txs reached upper limit tx:%s", tx->get_tx()->dump().c_str());
-    //     XMETRICS_COUNTER_INCREMENT("txpool_push_tx_send_fail_unconfirm_reached_limit", 1);
-    //     XMETRICS_COUNTER_INCREMENT("txpool_push_tx_send_fail", 1);
-    //     return xtxpool_error_account_unconfirm_txs_reached_upper_limit;
-    // }
-
+bool xtxpool_table_t::is_reach_limit(const std::shared_ptr<xtx_entry> & tx) const {
     if (tx->get_tx()->is_send_tx()) {
         if (m_unconfirmed_tx_num >= table_unconfirm_txs_num_max) {
             xtxpool_warn("xtxpool_table_t::push_send_tx node unconfirm txs reached upper limit tx:%s", tx->get_tx()->dump().c_str());
-            return xtxpool_error_account_unconfirm_txs_reached_upper_limit;
+            return true;
         }
 
         auto peer_table_sid = tx->get_tx()->get_peer_tableid();
         if (m_table_state_cache.is_unconfirmed_num_reach_limit(peer_table_sid)) {
             xtxpool_warn("xtxpool_table_t::push_send_tx table-table unconfirm txs reached upper limit tx:%s,peer_sid:%d", tx->get_tx()->dump().c_str(), peer_table_sid);
-            return xtxpool_error_account_unconfirm_txs_reached_upper_limit;
+            return true;
         }
     }
+    return false;
+}
 
+int32_t xtxpool_table_t::push_send_tx_real(const std::shared_ptr<xtx_entry> & tx) {
     uint64_t latest_nonce;
-    bool is_cached_nonce = false;
+    // bool is_cached_nonce = false;
 
     auto & account_addr = tx->get_tx()->get_source_addr();
 
-    {
-        std::lock_guard<std::mutex> lck(m_mgr_mutex);
-        is_cached_nonce = m_txmgr_table.get_account_nonce_cache(account_addr, latest_nonce);
-    }
+    // {
+    //     std::lock_guard<std::mutex> lck(m_mgr_mutex);
+    //     is_cached_nonce = m_txmgr_table.get_account_nonce_cache(account_addr, latest_nonce);
+    // }
 
-    if (!is_cached_nonce) {
+    // if (!is_cached_nonce) {
         bool result = get_account_latest_nonce(account_addr, latest_nonce);
         if (!result) {
             // todo : push to non_ready_accounts
@@ -103,7 +93,7 @@ int32_t xtxpool_table_t::push_send_tx(const std::shared_ptr<xtx_entry> & tx) {
             xtxpool_warn("xtxpool_table_t::push_send_tx account state fall behind tx:%s", tx->get_tx()->dump(true).c_str());
             return xtxpool_error_account_state_fall_behind;
         }
-    }
+    // }
 
     if (data::is_sys_contract_address(common::xaccount_address_t{account_addr})) {
         tx->get_para().set_tx_type_score(enum_xtx_type_socre_system);
@@ -111,16 +101,61 @@ int32_t xtxpool_table_t::push_send_tx(const std::shared_ptr<xtx_entry> & tx) {
         tx->get_para().set_tx_type_score(enum_xtx_type_socre_normal);
     }
 
+    int32_t ret;
     {
         std::lock_guard<std::mutex> lck(m_mgr_mutex);
-        if (!is_cached_nonce) {
+        // if (!is_cached_nonce) {
             m_txmgr_table.updata_latest_nonce(account_addr, latest_nonce);
-        }
+        // }
         ret = m_txmgr_table.push_send_tx(tx, latest_nonce);
     }
     if (ret != xsuccess) {
         // XMETRICS_COUNTER_INCREMENT("txpool_push_tx_send_fail", 1);
         m_xtable_info.get_statistic()->inc_push_tx_send_fail_num(1);
+    }
+    return ret;
+}
+
+int32_t xtxpool_table_t::push_send_tx(const std::shared_ptr<xtx_entry> & tx) {
+    if (is_reach_limit(tx)) {
+        return xtxpool_error_account_unconfirm_txs_reached_upper_limit;
+    }
+
+    int32_t ret = verify_send_tx(tx->get_tx());
+    if (ret != xsuccess) {
+        return ret;
+    }
+
+    return push_send_tx_real(tx);
+}
+
+int32_t xtxpool_table_t::push_receipt_real(const std::shared_ptr<xtx_entry> & tx) {
+    // auto & account_addr = tx->get_tx()->get_account_addr();
+
+    // store::xaccount_basic_info_t account_basic_info;
+    // bool result = m_table_indexstore->get_account_basic_info(account_addr, account_basic_info);
+    // if (!result) {
+    //     // todo : push to non_ready_accounts
+    //     // std::lock_guard<std::mutex> lck(m_non_ready_mutex);
+    //     // m_non_ready_accounts.push_tx(tx);
+    //     xtxpool_warn("xtxpool_table_t::push_receipt account state fall behind tx:%s", tx->get_tx()->dump(true).c_str());
+    //     return xtxpool_error_account_state_fall_behind;
+    // }
+
+    if (data::is_sys_contract_address(common::xaccount_address_t{tx->get_tx()->get_account_addr()})) {
+        tx->get_para().set_tx_type_score(enum_xtx_type_socre_system);
+    } else {
+        tx->get_para().set_tx_type_score(enum_xtx_type_socre_normal);
+    }
+
+    int32_t ret;
+    {
+        std::lock_guard<std::mutex> lck(m_mgr_mutex);
+        ret = m_txmgr_table.push_receipt(tx);
+    }
+    if (ret != xsuccess) {
+        // XMETRICS_COUNTER_INCREMENT("txpool_push_tx_receipt_fail", 1);
+        m_xtable_info.get_statistic()->inc_push_tx_receipt_fail_num(1);
     }
     return ret;
 }
@@ -146,8 +181,6 @@ int32_t xtxpool_table_t::push_receipt(const std::shared_ptr<xtx_entry> & tx, boo
             return xtxpool_error_request_tx_repeat;
         }
     }
-
-    int32_t ret = xsuccess;
     if (!is_self_send) {
         int32_t ret = verify_receipt_tx(tx->get_tx());
         if (ret != xsuccess) {
@@ -155,33 +188,7 @@ int32_t xtxpool_table_t::push_receipt(const std::shared_ptr<xtx_entry> & tx, boo
         }
     }
 
-    // auto & account_addr = tx->get_tx()->get_account_addr();
-
-    // store::xaccount_basic_info_t account_basic_info;
-    // bool result = m_table_indexstore->get_account_basic_info(account_addr, account_basic_info);
-    // if (!result) {
-    //     // todo : push to non_ready_accounts
-    //     // std::lock_guard<std::mutex> lck(m_non_ready_mutex);
-    //     // m_non_ready_accounts.push_tx(tx);
-    //     xtxpool_warn("xtxpool_table_t::push_receipt account state fall behind tx:%s", tx->get_tx()->dump(true).c_str());
-    //     return xtxpool_error_account_state_fall_behind;
-    // }
-
-    if (data::is_sys_contract_address(common::xaccount_address_t{tx->get_tx()->get_account_addr()})) {
-        tx->get_para().set_tx_type_score(enum_xtx_type_socre_system);
-    } else {
-        tx->get_para().set_tx_type_score(enum_xtx_type_socre_normal);
-    }
-
-    {
-        std::lock_guard<std::mutex> lck(m_mgr_mutex);
-        ret = m_txmgr_table.push_receipt(tx);
-    }
-    if (ret != xsuccess) {
-        // XMETRICS_COUNTER_INCREMENT("txpool_push_tx_receipt_fail", 1);
-        m_xtable_info.get_statistic()->inc_push_tx_receipt_fail_num(1);
-    }
-    return ret;
+    return push_receipt_real(tx);
 }
 
 std::shared_ptr<xtx_entry> xtxpool_table_t::pop_tx(const tx_info_t & txinfo, bool clear_follower) {
@@ -249,14 +256,6 @@ const std::vector<xcons_transaction_ptr_t> xtxpool_table_t::get_resend_txs(uint6
     return m_unconfirmed_tx_queue.get_resend_txs(now);
 }
 
-// bool xtxpool_table_t::is_unconfirm_txs_reached_upper_limit() const {
-//     std::lock_guard<std::mutex> lck(m_filter_mutex);
-//     uint32_t num = m_table_filter.get_unconfirm_txs_num();
-//     XMETRICS_COUNTER_SET("table_unconfirm_tx" + m_xtable_info.get_table_addr(), num);
-//     xtxpool_warn("xtxpool_table_t::is_unconfirm_txs_reached_upper_limit table:%s,num:%u,max:%u", m_xtable_info.get_table_addr().c_str(), num, table_unconfirm_txs_num_max);
-//     return num >= table_unconfirm_txs_num_max;
-// }
-
 void xtxpool_table_t::on_block_confirmed(xblock_t * table_block) {
     // TODO(jimmy)
     const std::vector<base::xventity_t *> & _table_inentitys = table_block->get_input()->get_entitys();
@@ -285,13 +284,44 @@ void xtxpool_table_t::on_block_confirmed(xblock_t * table_block) {
     }
 }
 
-int32_t xtxpool_table_t::verify_txs(const std::string & account, const std::vector<xcons_transaction_ptr_t> & txs, uint64_t latest_commit_unit_height) {
-    bool deny = false;
-    for (auto it : txs) {
-        int32_t ret = verify_cons_tx(it);
+int32_t xtxpool_table_t::verify_txs(const std::string & account, const std::vector<xcons_transaction_ptr_t> & txs) {
+    for (auto & tx : txs) {
+        {
+            std::lock_guard<std::mutex> lck(m_mgr_mutex);
+            auto tx_inside = m_txmgr_table.query_tx(tx->get_account_addr(), tx->get_tx_hash_256());
+            if (tx_inside != nullptr) {
+                if (tx_inside->get_tx()->get_tx_subtype() == tx->get_tx_subtype()) {
+                    continue;
+                } else if(tx_inside->get_tx()->get_tx_subtype() > tx->get_tx_subtype()) {
+                    return xtxpool_error_request_tx_repeat;
+                }
+            }
+        }
+        int32_t ret = verify_cons_tx(tx);
         if (ret != xsuccess) {
-            xtxpool_warn("xtxpool_table_t::verify_txs verify fail,tx:%s,err:%u", it->dump(true).c_str(), ret);
+            xtxpool_warn("xtxpool_table_t::verify_txs verify fail,tx:%s,err:%u", tx->dump(true).c_str(), ret);
             return ret;
+        }
+
+        xtxpool_v2::xtx_para_t para;
+        std::shared_ptr<xtxpool_v2::xtx_entry> tx_ent = std::make_shared<xtxpool_v2::xtx_entry>(tx, para);
+        if (tx->is_send_tx() || tx->is_self_tx()) {
+            if (!is_reach_limit(tx_ent)) {
+                xtxpool_info("xtxpool_table_t::verify_txs push tx from proposal tx:%s", tx->dump().c_str());
+                XMETRICS_GAUGE(metrics::txpool_push_tx_from_proposal, 1);
+                push_send_tx_real(tx_ent);
+            }
+        } else {
+            uint64_t latest_receipt_id = m_table_state_cache.get_tx_corresponding_latest_receipt_id(tx_ent);
+            uint64_t tx_receipt_id = tx->get_last_action_receipt_id();
+            if (tx_receipt_id < latest_receipt_id) {
+                xtxpool_warn("xtxpool_table_t::push_receipt duplicate receipt:%s,id:%llu:%llu", tx->dump().c_str(), tx_receipt_id, latest_receipt_id);
+                return xtxpool_error_tx_duplicate;
+            } else {
+                xtxpool_info("xtxpool_table_t::verify_txs push tx from proposal tx:%s", tx->dump().c_str());
+                XMETRICS_GAUGE(metrics::txpool_push_tx_from_proposal, 1);
+                push_receipt_real(tx_ent);
+            }
         }
     }
     return xsuccess;
@@ -457,9 +487,7 @@ int32_t xtxpool_table_t::verify_cons_tx(const xcons_transaction_ptr_t & tx) cons
     int32_t ret;
     if (tx->is_send_tx() || tx->is_self_tx()) {
         ret = verify_send_tx(tx);
-    } else if (tx->is_recv_tx()) {
-        ret = verify_receipt_tx(tx);
-    } else if (tx->is_confirm_tx()) {
+    } else if (tx->is_recv_tx()|| tx->is_confirm_tx()) {
         ret = verify_receipt_tx(tx);
     } else {
         ret = xtxpool_error_tx_invalid_type;

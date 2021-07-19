@@ -175,6 +175,10 @@ int32_t xtx_verifier::sys_contract_tx_check(data::xtransaction_t const * trx_ptr
         sys_contract_sharding_reward_claiming_addr
     };
 
+    if (trx_ptr->get_target_action_name() == "nodeJoinNetwork") {
+        return xverifier_error::xverifier_error_contract_not_allowed;
+    }
+
     auto source_addr = trx_ptr->get_source_addr();
     auto target_addr = trx_ptr->get_target_addr();
     if (data::is_sys_sharding_contract_address(common::xaccount_address_t{target_addr})) {

@@ -181,13 +181,13 @@ void xtxpool_t::on_block_confirmed(xblock_t * block) {
     table->on_block_confirmed(block);
 }
 
-int32_t xtxpool_t::verify_txs(const std::string & account, const std::vector<xcons_transaction_ptr_t> & txs, uint64_t latest_commit_unit_height) {
+int32_t xtxpool_t::verify_txs(const std::string & account, const std::vector<xcons_transaction_ptr_t> & txs) {
     auto table = get_txpool_table_by_addr(account);
     if (table == nullptr) {
         return xtxpool_error_account_not_in_charge;
     }
 
-    return table->verify_txs(account, txs, latest_commit_unit_height);
+    return table->verify_txs(account, txs);
 }
 
 const std::vector<xcons_transaction_ptr_t> xtxpool_t::get_resend_txs(uint8_t zone, uint16_t subaddr, uint64_t now) {

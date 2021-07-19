@@ -982,6 +982,9 @@ namespace top
             auto it = m_all_blocks.find(target_height);
             if(it == m_all_blocks.end())//load all at certain height
             {
+                #ifdef ENABLE_METRICS
+                XMETRICS_GAUGE(metrics::blockstore_index_load, 0);
+                #endif
                 std::vector<base::xvbindex_t*> _indexes(read_index_from_db(target_height));
                 if(_indexes.empty() == false) //found index at db
                 {
@@ -1006,6 +1009,9 @@ namespace top
                     return 0;
                 }
             }
+            #ifdef ENABLE_METRICS
+            XMETRICS_GAUGE(metrics::blockstore_index_load, 1);
+            #endif
             return (int)it->second.size(); //found existing ones
         }
 
@@ -1021,6 +1027,7 @@ namespace top
             {
                 #ifdef ENABLE_METRICS
                 XMETRICS_GAUGE((top::metrics::E_SIMPLE_METRICS_TAG)atag, 1);
+                XMETRICS_GAUGE(metrics::blockstore_index_load, 1);
                 #endif
                 return target_block;//found at cache layer
             }
@@ -1028,6 +1035,7 @@ namespace top
             {
                 #ifdef ENABLE_METRICS
                 XMETRICS_GAUGE((top::metrics::E_SIMPLE_METRICS_TAG)atag, 0);
+                XMETRICS_GAUGE(metrics::blockstore_index_load, 0);
                 #endif
             }
             if(load_index(target_height) > 0)//load from db
@@ -1051,6 +1059,7 @@ namespace top
             {
                 #ifdef ENABLE_METRICS
                 XMETRICS_GAUGE((top::metrics::E_SIMPLE_METRICS_TAG)atag, 1);
+                XMETRICS_GAUGE(metrics::blockstore_index_load, 1);
                 #endif
                 return target_block;//found at cache layer
             }
@@ -1058,6 +1067,7 @@ namespace top
             {
                 #ifdef ENABLE_METRICS
                 XMETRICS_GAUGE((top::metrics::E_SIMPLE_METRICS_TAG)atag, 0);
+                XMETRICS_GAUGE(metrics::blockstore_index_load, 0);
                 #endif
             }
 
@@ -1083,6 +1093,7 @@ namespace top
             {
                 #ifdef ENABLE_METRICS
                 XMETRICS_GAUGE((top::metrics::E_SIMPLE_METRICS_TAG)atag, 1);
+                XMETRICS_GAUGE(metrics::blockstore_index_load, 1);
                 #endif
                 return target_block;//found at cache layer
             }
@@ -1090,6 +1101,7 @@ namespace top
             {
                 #ifdef ENABLE_METRICS
                 XMETRICS_GAUGE((top::metrics::E_SIMPLE_METRICS_TAG)atag, 0);
+                XMETRICS_GAUGE(metrics::blockstore_index_load, 0);
                 #endif
             }
 

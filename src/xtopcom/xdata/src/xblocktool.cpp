@@ -135,17 +135,7 @@ base::xvblock_t*   xblocktool_t::create_next_fulltable(const xfulltable_block_pa
 }
 
 std::string xblocktool_t::make_address_table_account(base::enum_xchain_zone_index zone, uint16_t subaddr) {
-    xassert(zone <= base::enum_chain_zone_zec_index);
-    xassert(subaddr < enum_vbucket_has_tables_count);
-
-    static std::string tableblock_prefix[] = {
-        sys_contract_sharding_table_block_addr,
-        sys_contract_beacon_table_block_addr,
-        sys_contract_zec_table_block_addr
-    };
-
-    std::string tableblock_addr = make_address_by_prefix_and_subaddr(tableblock_prefix[zone], subaddr).value();
-    return tableblock_addr;
+    return base::xvaccount_t::make_table_account_address(zone, subaddr);
 }
 std::string xblocktool_t::make_address_shard_table_account(uint16_t subaddr) {
     return make_address_table_account(base::enum_chain_zone_consensus_index, subaddr);
@@ -202,6 +192,29 @@ base::xauto_ptr<base::xvblock_t> xblocktool_t::get_latest_committed_lightunit(ba
     }
     return nullptr;
 }
+
+base::xauto_ptr<base::xvblock_t> xblocktool_t::get_latest_connectted_light_block(base::xvblockstore_t* blockstore, const base::xvaccount_t & account) {
+    base::xauto_ptr<base::xvblock_t> vblock = blockstore->get_latest_connected_block(account);
+    if (vblock->get_block_class() == base::enum_xvblock_class_light) {
+        return vblock;
+    }
+    if (vblock->get_block_class() == base::enum_xvblock_class_full) {
+        return nullptr;
+    }
+    uint64_t current_height = vblock->get_height();
+    while (current_height > 0) {
+        base::xauto_ptr<base::xvblock_t> prev_vblock = blockstore->load_block_object(account, current_height - 1, base::enum_xvblock_flag_committed, false);
+        if (prev_vblock == nullptr || prev_vblock->get_block_class() == base::enum_xvblock_class_light) {
+            return prev_vblock;
+        }
+        if (prev_vblock->get_block_class() == base::enum_xvblock_class_full) {
+            return nullptr;
+        }
+        current_height = prev_vblock->get_height();
+    }
+    return nullptr;
+}
+
 
 base::xauto_ptr<base::xvblock_t> xblocktool_t::get_latest_genesis_connectted_lightunit(base::xvblockstore_t* blockstore, const std::string & account) {
     base::xvaccount_t _vaccount(account);

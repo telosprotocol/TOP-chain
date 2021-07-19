@@ -38,8 +38,6 @@ class GossipInterface;
 
 namespace wrouter {
 
-using Xip2Header = _xip2_header;
-
 class WrouterXidHandler {
 public:
     WrouterXidHandler(transport::TransportPtr transport_ptr,
