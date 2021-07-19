@@ -60,7 +60,6 @@ public:
     virtual void get_service_table_boundary(base::enum_xchain_zone_index & zone_id, uint32_t & fount_table_id, uint32_t & back_table_id) const = 0;
     virtual void resend_receipts(uint64_t now) = 0;
     virtual void pull_lacking_receipts(uint64_t now, xcovered_tables_t & covered_tables) = 0;
-    virtual xvip2_t get_cluster_xip() const = 0;
 };
 
 class xtxpool_proxy_face : public xrequest_tx_receiver_face {
