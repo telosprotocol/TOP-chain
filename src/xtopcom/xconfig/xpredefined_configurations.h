@@ -271,7 +271,7 @@ XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(tx_send_timestamp_tolerance, std::uint32_t
                                                                                                                                             // nodes in 5 minutes
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(beacon_tx_fee, uint64_t, normal, ASSET_TOP(100), 0, std::numeric_limits<uint64_t>::max());
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(total_gas_shard, uint64_t, normal, 2160000000000, 1, std::numeric_limits<uint64_t>::max());
-XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(min_free_gas_balance, uint64_t, normal, ASSET_TOP(100), 1, std::numeric_limits<uint64_t>::max());
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(min_free_gas_asset, uint64_t, normal, ASSET_TOP(100), 1, std::numeric_limits<uint64_t>::max());
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(free_gas, uint64_t, normal, 25000, 1, std::numeric_limits<uint64_t>::max());
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(tx_deposit_gas_exchange_ratio, uint64_t, normal, 20, 1, std::numeric_limits<uint64_t>::max());
 // how many micro second 1 tgas can consume

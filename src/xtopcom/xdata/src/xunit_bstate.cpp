@@ -34,7 +34,7 @@ xunit_bstate_t::~xunit_bstate_t() {
 
 uint64_t xunit_bstate_t::get_free_tgas() const {
     uint64_t total_asset = balance() + lock_balance() + tgas_balance() + disk_balance() + vote_balance();
-    if (total_asset >= XGET_ONCHAIN_GOVERNANCE_PARAMETER(min_free_gas_balance)) {
+    if (total_asset >= XGET_ONCHAIN_GOVERNANCE_PARAMETER(min_free_gas_asset)) {
         return XGET_ONCHAIN_GOVERNANCE_PARAMETER(free_gas);
     } else {
         return 0;
