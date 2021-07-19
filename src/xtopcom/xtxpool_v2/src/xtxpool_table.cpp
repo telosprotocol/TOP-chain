@@ -401,14 +401,17 @@ void xtxpool_table_t::update_table_state(const data::xtablestate_ptr_t & table_s
 }
 
 void xtxpool_table_t::add_shard(xtxpool_shard_info_t * shard) {
+    std::lock_guard<std::mutex> lck(m_mgr_mutex);
     m_xtable_info.add_shard(shard);
 }
 
 void xtxpool_table_t::remove_shard(xtxpool_shard_info_t * shard) {
+    std::lock_guard<std::mutex> lck(m_mgr_mutex);
     m_xtable_info.remove_shard(shard);
 }
 
 bool xtxpool_table_t::no_shard() const {
+    std::lock_guard<std::mutex> lck(m_mgr_mutex);
     return m_xtable_info.no_shard();
 }
 
