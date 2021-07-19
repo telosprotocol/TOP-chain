@@ -32,6 +32,10 @@ bool xtxpool_table_t::get_account_basic_info(const std::string & account, xaccou
     }
     base::xvaccount_t _account_vaddress(account);
     base::xauto_ptr<base::xvblock_t> _block_ptr = m_para->get_vblockstore()->get_latest_cert_block(_account_vaddress);
+    if (_block_ptr == nullptr) {
+        xtxpool_warn("xtxpool_table_t::get_account_basic_info get block fail account:%s", account.c_str());
+        return false;
+    }
     xblock_ptr_t latest_cert_unit = xblock_t::raw_vblock_to_object_ptr(_block_ptr.get());
     if (latest_cert_unit->get_height() < account_index.get_latest_unit_height()) {
         base::xauto_ptr<base::xvblock_t> _start_block_ptr = m_para->get_vblockstore()->get_latest_connected_block(_account_vaddress);
