@@ -191,18 +191,22 @@ int32_t xtxpool_t::verify_txs(const std::string & account, const std::vector<xco
 }
 
 const std::vector<xcons_transaction_ptr_t> xtxpool_t::get_resend_txs(uint8_t zone, uint16_t subaddr, uint64_t now) {
-    xassert(is_table_subscribed(zone, subaddr));
-    xassert(m_tables[zone][subaddr] != nullptr);
-    if (m_tables[zone][subaddr] != nullptr) {
+    if (!is_table_subscribed(zone, subaddr)) {
+        return {};
+    }
+    auto table = m_tables[zone][subaddr];
+    if (table != nullptr) {
         return m_tables[zone][subaddr]->get_resend_txs(now);
     }
     return {};
 }
 
 void xtxpool_t::refresh_table(uint8_t zone, uint16_t subaddr, bool refresh_unconfirm_txs) {
-    xassert(is_table_subscribed(zone, subaddr));
-    xassert(m_tables[zone][subaddr] != nullptr);
-    if (m_tables[zone][subaddr] != nullptr) {
+    if (!is_table_subscribed(zone, subaddr)) {
+        return;
+    }
+    auto table = m_tables[zone][subaddr];
+    if (table != nullptr) {
         m_tables[zone][subaddr]->refresh_table(refresh_unconfirm_txs);
     }
 }
@@ -234,27 +238,33 @@ xcons_transaction_ptr_t xtxpool_t::get_unconfirmed_tx(const std::string & from_t
 }
 
 const std::vector<xtxpool_table_lacking_receipt_ids_t> xtxpool_t::get_lacking_recv_tx_ids(uint8_t zone, uint16_t subaddr, uint32_t max_num) const {
-    xassert(is_table_subscribed(zone, subaddr));
-    xassert(m_tables[zone][subaddr] != nullptr);
-    if (m_tables[zone][subaddr] != nullptr) {
+    if (!is_table_subscribed(zone, subaddr)) {
+        return {};
+    }
+    auto table = m_tables[zone][subaddr];
+    if (table != nullptr) {
         return m_tables[zone][subaddr]->get_lacking_recv_tx_ids(max_num);
     }
     return {};
 }
 
 const std::vector<xtxpool_table_lacking_confirm_tx_hashs_t> xtxpool_t::get_lacking_confirm_tx_hashs(uint8_t zone, uint16_t subaddr, uint32_t max_num) const {
-    xassert(is_table_subscribed(zone, subaddr));
-    xassert(m_tables[zone][subaddr] != nullptr);
-    if (m_tables[zone][subaddr] != nullptr) {
+    if (!is_table_subscribed(zone, subaddr)) {
+        return {};
+    }
+    auto table = m_tables[zone][subaddr];
+    if (table != nullptr) {
         return m_tables[zone][subaddr]->get_lacking_confirm_tx_hashs(max_num);
     }
     return {};
 }
 
 bool xtxpool_t::need_sync_lacking_receipts(uint8_t zone, uint16_t subaddr) const {
-    xassert(is_table_subscribed(zone, subaddr));
-    xassert(m_tables[zone][subaddr] != nullptr);
-    if (m_tables[zone][subaddr] != nullptr) {
+    if (!is_table_subscribed(zone, subaddr)) {
+        return false;
+    }
+    auto table = m_tables[zone][subaddr];
+    if (table != nullptr) {
         return m_tables[zone][subaddr]->need_sync_lacking_receipts();
     }
     return false;
