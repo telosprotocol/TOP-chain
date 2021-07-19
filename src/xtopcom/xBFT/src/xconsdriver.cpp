@@ -647,7 +647,7 @@ namespace top
                         xvip2_t broadcast_addr = {(xvip_t)-1,(uint64_t)-1};
                         fire_pdu_event_up(xcommit_msg_t::get_msg_type(),msg_stream,1,get_xip2_addr(),broadcast_addr,_local_proposal->get_block(),_commit_block_cert,std::string());//ship block cert by packet
                         
-                        xassert(found_matched_proposal);
+                        // xassert(found_matched_proposal);
                         if(false == found_matched_proposal)//exception case
                             fire_replicate_finish_event(_local_proposal->get_block());//call on_replicate_finish(block) to driver context layer
                     }
