@@ -46,8 +46,8 @@ private:
     observer_ptr<store::xstore_face_t> m_store_ptr{nullptr};
     observer_ptr<mbus::xmessage_bus_face_t> m_bus{nullptr};
     observer_ptr<time::xchain_time_face_t> m_logic_timer{nullptr};
-    uint64_t last_update_height{0};
-    std::map<std::string, std::string> last_param_map;
+    uint64_t m_last_update_height{0};
+    std::map<std::string, std::string> m_last_param_map;
 
     std::multimap<uint64_t, tcc::proposal_info> m_pending_proposed_parameters{};
 

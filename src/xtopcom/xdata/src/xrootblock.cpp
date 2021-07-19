@@ -107,9 +107,7 @@ bool xrootblock_t::init(const xrootblock_para_t & para) {
         base::xvblock_t* _rootblock = xblocktool_t::create_genesis_root_block(chainid, get_rootblock_address(), para);
         m_instance = dynamic_cast<xrootblock_t*>(_rootblock);
         xkinfo("root-block info. block=%s", m_instance->dump().c_str());
-        auto & config_center = top::config::xconfig_register_t::get_instance();
-        std::string root_hash;
-        config_center.get("root_hash", root_hash);
+        auto const root_hash = XGET_CONFIG(root_hash);
         if (!root_hash.empty() && root_hash != base::xstring_utl::to_hex(_rootblock->get_block_hash())) {
             xerror("xrootblock_t::init chainid: %d, standard root hash: %s, init root hash: %s, error!", chainid, root_hash.c_str(), base::xstring_utl::to_hex(_rootblock->get_block_hash()).c_str());
             return false;
