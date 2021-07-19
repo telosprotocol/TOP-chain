@@ -58,7 +58,7 @@ void xtxpool_service_mgr::on_block_to_db_event(mbus::xevent_ptr_t e) {
 
     auto event_handler = [this, e](base::xcall_t & call, const int32_t cur_thread_id, const uint64_t timenow_ms) -> bool {
         mbus::xevent_store_block_committed_ptr_t block_event = dynamic_xobject_ptr_cast<mbus::xevent_store_block_committed_t>(e);
-        const xblock_ptr_t & block = mbus::extract_block_from(block_event,metrics::blockstore_access_from_mbus_txpool_db_event_on_block);
+        const xblock_ptr_t & block = mbus::extract_block_from(block_event, metrics::blockstore_access_from_mbus_txpool_db_event_on_block);
         base::xvaccount_t _vaccount(block->get_account());
         // TODO(jimmy) load block input for get raw tx nonce
         if (false == base::xvchain_t::instance().get_xblockstore()->load_block_input(_vaccount, block.get(), metrics::blockstore_access_from_txpool_on_block_event)) {
@@ -119,10 +119,12 @@ bool xtxpool_service_mgr::destroy(const xvip2_t & xip) {
     uint32_t back_table_id;
     {
         std::lock_guard<std::mutex> lock(m_mutex);
-        for (auto iter = m_service_map.begin(); iter != m_service_map.end(); iter++)
-        {
-            auto txpool_service = iter->second;
-            if (xcons_utl::xip_equals(xip, txpool_service->get_cluster_xip())) {
+        for (auto iter = m_service_map.begin(); iter != m_service_map.end(); iter++) {
+            auto & service_xip = iter->first;
+            common::xip2_t const group_xip2 = common::xip2_t{service_xip}.sharding();
+            xvip2_t service_group_xip = {group_xip2.raw_low_part(), group_xip2.raw_high_part()};
+            if (xcons_utl::xip_equals(xip, service_group_xip)) {
+                auto & txpool_service = iter->second;
                 txpool_service->get_service_table_boundary(zone_id, fount_table_id, back_table_id);
                 need_cleanup = true;
                 m_service_map.erase(iter);
@@ -135,7 +137,7 @@ bool xtxpool_service_mgr::destroy(const xvip2_t & xip) {
         // clear txpool tables corresponding to this service
         m_para->get_txpool()->unsubscribe_tables(zone_id, fount_table_id, back_table_id);
     } else {
-        xinfo("xtxpool_service_mgr::destroy xip:{%" PRIu64 ", %" PRIu64 "} not found", xip.high_addr, xip.low_addr);
+        xinfo("xtxpool_service_mgr::destroy xip not found:{%" PRIu64 ", %" PRIu64 "}", xip.high_addr, xip.low_addr);
     }
 
     return true;
