@@ -93,7 +93,7 @@ void xconfig_register_t::init_static_config() {
     XADD_OFFCHAIN_PARAMETER(log_path);
     XADD_OFFCHAIN_PARAMETER(db_path);
     XADD_OFFCHAIN_PARAMETER(ip);
-    //XADD_OFFCHAIN_PARAMETER(rec_nodes);
+    XADD_OFFCHAIN_PARAMETER(root_hash);
 
     XADD_OFFCHAIN_PARAMETER(platform_first_node);
     XADD_OFFCHAIN_PARAMETER(platform_business_port);

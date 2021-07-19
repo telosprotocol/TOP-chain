@@ -33,7 +33,6 @@ xconfig_onchain_loader_t::xconfig_onchain_loader_t(observer_ptr<store::xstore_fa
     // set initial onchain param
     xtcc_transaction_ptr_t tcc_genesis = std::make_shared<xtcc_transaction_t>();
     last_param_map = tcc_genesis->m_initial_values;
-
 }
 
 void xconfig_onchain_loader_t::start() {
@@ -197,7 +196,7 @@ void xconfig_onchain_loader_t::chain_timer(common::xlogic_time_t time) {
 }
 
 void xconfig_onchain_loader_t::update_onchain_param(common::xlogic_time_t time) {
-    xdbg("xconfig_onchain_loader_t::update_onchain_param,  logic time is %" PRIu64, m_logic_timer->logic_time());
+    xdbg("xconfig_onchain_loader_t::update_onchain_param,  logic time is %" PRIu64, time);
     std::lock_guard<std::mutex> lock(m_action_param_mutex);
 
     auto block =  data::xblocktool_t::get_latest_connectted_light_block(store::get_vblockstore(), std::string{sys_contract_rec_tcc_addr});
@@ -223,7 +222,7 @@ void xconfig_onchain_loader_t::update_onchain_param(common::xlogic_time_t time) 
         return;
     }
 
-    if ( !last_param_map.empty() && !onchain_param_changed(params) ) {
+    if (!last_param_map.empty() && !onchain_param_changed(params)) {
         xinfo("xconfig_onchain_loader_t::update_onchain_param, param map no changed.");
         return;
     }

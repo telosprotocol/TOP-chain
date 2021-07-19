@@ -379,7 +379,7 @@ XDECLARE_CONFIGURATION(platform_public_endpoints,
                        char const *,
                        "192.168.50.155:9921,192.168.50.156:9921,192.168.50.157:9921,192.168.50.158:9921,192.168.50.159:9921,192.168.50.160:9921,192.168.50.121:9921,192.168.50.119:9921");
 XDECLARE_CONFIGURATION(platform_url_endpoints, char const *, "http://mainnetwork.org/");
-XDECLARE_CONFIGURATION(root_hash, char const *, "3cf78cd9e5ec0da06e7b61dfc80cd70a68f5a26544a7a8d85a90aaeb26884308");
+XDECLARE_CONFIGURATION(root_hash, char const *, "");
 #elif defined(XBUILD_DEV)
 XDECLARE_CONFIGURATION(chain_name, char const *, chain_name_testnet);
 XDECLARE_CONFIGURATION(platform_public_endpoints,
