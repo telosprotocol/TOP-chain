@@ -6,6 +6,10 @@
 
 #include "xvblock.h"
 
+#ifndef STORE_UNIT_BLOCK
+#define STORE_UNIT_BLOCK
+#endif
+
 //index of block
 namespace top
 {
