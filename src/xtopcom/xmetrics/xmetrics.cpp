@@ -150,10 +150,6 @@ char const * matrics_name(xmetircs_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(txpool_pull_recv_tx);
         RETURN_METRICS_NAME(txpool_pull_confirm_tx);
         RETURN_METRICS_NAME(txpool_push_tx_from_proposal);
-        RETURN_METRICS_NAME(txpool_send_tx_cur);
-        RETURN_METRICS_NAME(txpool_recv_tx_cur);
-        RETURN_METRICS_NAME(txpool_confirm_tx_cur);
-        RETURN_METRICS_NAME(txpool_unconfirm_tx_cur);
 
         // blockstore
         RETURN_METRICS_NAME(blockstore_index_load);
