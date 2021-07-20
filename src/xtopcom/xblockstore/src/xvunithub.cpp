@@ -199,7 +199,7 @@ namespace top
             }
 
             // firstly, check self index if has block stored
-            if (target_index->set_block_flag(base::enum_xvblock_flag_stored))//self has stored
+            if (target_index->check_block_flag(base::enum_xvblock_flag_stored))//self has stored
             {
                 bool loaded_new_block = false;
                 if(target_index->get_this_block() == NULL) {  // load from db
