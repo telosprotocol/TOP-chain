@@ -13,6 +13,15 @@
 
 NS_BEG2(top, common)
 
+enum class xenum_old_role_type : uint32_t {
+    invalid = static_cast<std::underlying_type<xold_node_type_t>::type>(xold_node_type_t::invalid),
+    edge = static_cast<std::underlying_type<xold_node_type_t>::type>(xold_node_type_t::edge),
+    advance = static_cast<std::underlying_type<xold_node_type_t>::type>(common::xold_node_type_t::consensus_auditor),
+    consensus = static_cast<std::underlying_type<xold_node_type_t>::type>(common::xold_node_type_t::consensus_validator),
+    archive = static_cast<std::underlying_type<xold_node_type_t>::type>(xold_node_type_t::archive)
+};
+using xold_role_type_t = xenum_old_role_type;
+
 enum class xenum_role_type : uint32_t {
     invalid      = 0x00000000,
     /// @brief edge role which will be elected as 'edge'.

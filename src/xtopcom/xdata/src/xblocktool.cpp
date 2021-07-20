@@ -71,6 +71,102 @@ base::xvblock_t*   xblocktool_t::create_genesis_lightunit(const std::string & ac
     return _new_block.get();  // TODO(jimmy) xblocktool_t return auto ptr
 }
 
+base::xvblock_t * xblocktool_t::create_genesis_lightunit(std::string const & account, chain_reset::reset_data_t const & reset_data) {
+    xtransaction_ptr_t tx = make_object_ptr<xtransaction_t>();
+    data::xproperty_asset asset(reset_data.top_balance);
+    tx->make_tx_transfer(asset);
+    // genesis transfer tx is a special transaction
+    tx->set_same_source_target_address(account);
+    tx->set_fire_timestamp(0);
+    tx->set_expire_duration(0);
+    tx->set_deposit(0);
+    tx->set_digest();
+    tx->set_len();
+
+    xtransaction_result_t result;
+    xobject_ptr_t<base::xvbstate_t> bstate = make_object_ptr<base::xvbstate_t>(account, (uint64_t)0, (uint64_t)0, std::string(), std::string(), (uint64_t)0, (uint32_t)0, (uint16_t)0);
+    xobject_ptr_t<base::xvcanvas_t> canvas = make_object_ptr<base::xvcanvas_t>();
+    auto propobj = bstate->new_uint64_var(XPROPERTY_ACCOUNT_CREATE_TIME, canvas.get());
+    if (reset_data.create_time > 0) {
+        propobj->set(reset_data.create_time, canvas.get());
+    } else {
+        propobj->set(base::TOP_BEGIN_GMTIME, canvas.get());
+    }
+    if (reset_data.top_balance + reset_data.lock_token + reset_data.lock_balance > 0) {
+        auto propobj = bstate->new_token_var(XPROPERTY_BALANCE_AVAILABLE, canvas.get());
+        auto balance = propobj->deposit(base::vtoken_t(reset_data.top_balance + reset_data.lock_token + reset_data.lock_balance), canvas.get());
+        xassert(balance == reset_data.top_balance + reset_data.lock_token + reset_data.lock_balance);
+    }
+    if (reset_data.burn_balance > 0) {
+        auto propobj = bstate->new_token_var(XPROPERTY_BALANCE_BURN, canvas.get());
+        auto balance = propobj->deposit(base::vtoken_t(reset_data.burn_balance), canvas.get());
+        xassert(balance == reset_data.burn_balance);
+    }
+    if (reset_data.tgas_balance > 0) {
+        auto propobj = bstate->new_token_var(XPROPERTY_BALANCE_PLEDGE_TGAS, canvas.get());
+        auto balance = propobj->deposit(base::vtoken_t(reset_data.tgas_balance), canvas.get());
+        xassert(balance == reset_data.tgas_balance);
+    }
+    if (reset_data.vote_balance > 0) {
+        auto propobj = bstate->new_token_var(XPROPERTY_BALANCE_PLEDGE_VOTE, canvas.get());
+        auto balance = propobj->deposit(base::vtoken_t(reset_data.vote_balance), canvas.get());
+        xassert(balance == reset_data.vote_balance);
+    }
+    if (reset_data.lock_tgas > 0) {
+        auto propobj = bstate->new_uint64_var(XPROPERTY_LOCK_TGAS, canvas.get());
+        auto res = propobj->set(base::vtoken_t(reset_data.lock_tgas), canvas.get());
+        xassert(res == true);
+    }
+    if (reset_data.unvote_num > 0) {
+        auto propobj = bstate->new_uint64_var(XPROPERTY_UNVOTE_NUM, canvas.get());
+        auto res = propobj->set(base::vtoken_t(reset_data.unvote_num), canvas.get());
+        xassert(res == true);
+    }
+    if (reset_data.expire_vote > 0) {
+        auto propobj = bstate->new_string_var(XPROPERTY_EXPIRE_VOTE_TOKEN_KEY, canvas.get());
+        auto res = propobj->reset(base::xstring_utl::tostring(reset_data.expire_vote), canvas.get());
+        xassert(res == true);
+    }
+    if (reset_data.pledge_vote.size() > 0) {
+        auto propobj = bstate->new_string_map_var(XPROPERTY_PLEDGE_VOTE_KEY, canvas.get());
+        for (auto const & item : reset_data.pledge_vote) {
+            uint64_t vote_num = 0;
+            uint16_t duration = 0;
+            uint64_t lock_time = 0;
+            base::xstream_t out{base::xcontext_t::instance(), (uint8_t *)item.data(), static_cast<uint32_t>(item.size())};
+            out >> vote_num;
+            out >> duration;
+            out >> lock_time;
+            base::xstream_t in{base::xcontext_t::instance()};
+            in << duration;
+            in << lock_time;
+            auto vote_key_str = std::string((char*)in.data(), in.size());
+            in.reset();
+            in << vote_num;
+            auto vote_val_str =  std::string((char*)in.data(), in.size());
+            auto res = propobj->insert(vote_key_str, vote_val_str, canvas.get());
+            xassert(res == true);
+        }
+    }
+    std::string property_binlog;
+    canvas->encode(property_binlog);
+    std::string fullstate_bin;
+    bstate->take_snapshot(fullstate_bin);
+    // TODO(jimmy) block builder class
+    xinfo("xlightunit_builder_t::build_block account=%s,height=0,binlog_size=%zu",
+        account.c_str(), property_binlog.size());
+
+    xcons_transaction_ptr_t cons_tx = make_object_ptr<xcons_transaction_t>(tx.get());
+    xlightunit_block_para_t bodypara;
+    bodypara.set_one_input_tx(cons_tx);
+    bodypara.set_binlog(property_binlog);
+    bodypara.set_fullstate_bin(fullstate_bin);
+    xlightunit_build_t bbuild(account, bodypara);
+    base::xauto_ptr<base::xvblock_t> _new_block = bbuild.build_new_block();
+    _new_block->add_ref();
+    return _new_block.get();  // TODO(jimmy) xblocktool_t return auto ptr
+}
+
 base::xvblock_t * xblocktool_t::create_genesis_lightunit(const std::string & account,
                                                          const xtransaction_ptr_t & genesis_tx,
                                                          const xtransaction_result_t & result) {

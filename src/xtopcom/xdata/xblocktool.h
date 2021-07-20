@@ -7,14 +7,15 @@
 #include <string>
 #include <vector>
 
-#include "xvledger/xreceiptid.h"
-#include "xdata/xemptyblock.h"
-#include "xdata/xtableblock.h"
-#include "xdata/xfull_tableblock.h"
-#include "xdata/xlightunit.h"
-#include "xdata/xfullunit.h"
+#include "xchain_upgrade/xchain_data_processor.h"
 #include "xdata/xcons_transaction.h"
+#include "xdata/xemptyblock.h"
+#include "xdata/xfull_tableblock.h"
+#include "xdata/xfullunit.h"
+#include "xdata/xlightunit.h"
 #include "xdata/xrootblock.h"
+#include "xdata/xtableblock.h"
+#include "xvledger/xreceiptid.h"
 
 NS_BEG2(top, data)
 
@@ -24,6 +25,7 @@ class xblocktool_t {
     static base::xvblock_t*   create_genesis_empty_unit(const std::string & account);
     static base::xvblock_t*   create_genesis_empty_table(const std::string & account);
     static base::xvblock_t*   create_genesis_lightunit(const std::string & account, int64_t top_balance);
+    static base::xvblock_t*   create_genesis_lightunit(std::string const & account, chain_reset::reset_data_t const & reset_data);
     static base::xvblock_t*   create_genesis_lightunit(const std::string & account, const xtransaction_ptr_t & genesis_tx, const xtransaction_result_t & result);
     static base::xvblock_t*   create_genesis_root_block(base::enum_xchain_id chainid, const std::string & account, const xrootblock_para_t & bodypara);
 
