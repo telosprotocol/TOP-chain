@@ -109,8 +109,11 @@ std::vector<xcons_transaction_ptr_t> xtxmgr_table_t::get_ready_txs(const xtxs_pa
     // so that receipts in txpool could always be get from txpool to unit service without continuous constraint.
     // receipts not pop from queue to pending, but get from queue to unit service directly,
     // because there is no need for queue and pending to maintain same data structure for manage receipts.
+    uint32_t confirm_tx_num = 0;
+    uint32_t recv_tx_num = 0;
     std::vector<xcons_transaction_ptr_t> ready_txs =
-        m_new_receipt_queue.get_txs(pack_para.get_confirm_and_recv_txs_max_num(), pack_para.get_confirm_txs_max_num(), pack_para.get_receiptid_state_highqc());
+        m_new_receipt_queue.get_txs(pack_para.get_confirm_and_recv_txs_max_num(), pack_para.get_confirm_txs_max_num(), pack_para.get_receiptid_state_highqc(), confirm_tx_num);
+    recv_tx_num = ready_txs.size() - confirm_tx_num;
     send_tx_queue_to_pending();
     ready_accounts_t send_txs_accounts = m_pending_accounts.get_ready_accounts(pack_para.get_all_txs_max_num() - ready_txs.size(), pack_para.get_locked_nonce_map());
 
@@ -119,7 +122,14 @@ std::vector<xcons_transaction_ptr_t> xtxmgr_table_t::get_ready_txs(const xtxs_pa
         ready_txs.insert(ready_txs.end(), account_txs.begin(), account_txs.end());
     }
 
-    xtxpool_dbg("xtxmgr_table_t::get_ready_txs table:%s,ready_txs size:%u", m_xtable_info->get_table_addr().c_str(), ready_txs.size());
+    uint32_t send_tx_num = ready_txs.size() - confirm_tx_num - recv_tx_num;
+
+    xtxpool_info("xtxmgr_table_t::get_ready_txs table:%s,ready_txs size:%u,send:%u,recv:%u,confirm:%u",
+                m_xtable_info->get_table_addr().c_str(),
+                ready_txs.size(),
+                send_tx_num,
+                recv_tx_num,
+                confirm_tx_num);
     for (auto & tx : ready_txs) {
         xtxpool_dbg("xtxmgr_table_t::get_ready_txs table:%s,tx:%s", m_xtable_info->get_table_addr().c_str(), tx->dump().c_str());
     }

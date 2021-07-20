@@ -166,7 +166,8 @@ int32_t xreceipt_queue_new_t::push_tx(const std::shared_ptr<xtx_entry> & tx_ent)
 
 const std::vector<xcons_transaction_ptr_t> xreceipt_queue_new_t::get_txs(uint32_t confirm_and_recv_txs_max_num,
                                                                          uint32_t confirm_txs_max_num,
-                                                                         const base::xreceiptid_state_ptr_t & receiptid_state) const {
+                                                                         const base::xreceiptid_state_ptr_t & receiptid_state,
+                                                                         uint32_t & confirm_txs_num) const {
     std::map<base::xtable_shortid_t, std::vector<xcons_transaction_ptr_t>> recv_peer_table_map;
     std::map<base::xtable_shortid_t, std::vector<xcons_transaction_ptr_t>> confirm_peer_table_map;
     uint32_t txs_count = 0;
@@ -237,6 +238,8 @@ const std::vector<xcons_transaction_ptr_t> xreceipt_queue_new_t::get_txs(uint32_
             break;
         }
     }
+
+    confirm_txs_num = ret_txs.size();
 
     for (auto & it_recv_peer_table_map : recv_peer_table_map) {
         auto peer_table_sid = it_recv_peer_table_map.first;

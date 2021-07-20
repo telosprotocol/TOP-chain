@@ -6,9 +6,9 @@
 
 #include "xbasic/xmemory.hpp"
 #include "xdata/xtransaction.h"
+#include "xmetrics/xmetrics.h"
 #include "xtxpool_v2/xtxpool_log.h"
 #include "xverifier/xverifier_utl.h"
-#include "xmetrics/xmetrics.h"
 
 namespace top {
 namespace xtxpool_v2 {
@@ -364,7 +364,7 @@ public:
     void send_tx_dec(int32_t count) {
         m_counter.send_tx_inc(-count);
         for (auto & shard : m_shards) {
-            xtxpool_dbg("send_tx_inc shard(%p) table:%s old send num:%d dec num:%d", shard, get_address().c_str(), shard->get_send_tx_count(), count);
+            xtxpool_dbg("send_tx_dec shard(%p) table:%s old send num:%d dec num:%d", shard, get_address().c_str(), shard->get_send_tx_count(), count);
             shard->send_tx_inc(-count);
         }
         m_statistic->dec_push_tx_send_cur_num(count);
@@ -375,7 +375,7 @@ public:
     void recv_tx_inc(int32_t count) {
         m_counter.recv_tx_inc(count);
         for (auto & shard : m_shards) {
-            xtxpool_dbg("send_tx_inc shard(%p) table:%s old recv num:%d inc num:%d", shard, get_address().c_str(), shard->get_recv_tx_count(), count);
+            xtxpool_dbg("recv_tx_inc shard(%p) table:%s old recv num:%d inc num:%d", shard, get_address().c_str(), shard->get_recv_tx_count(), count);
             shard->recv_tx_inc(count);
         }
         m_statistic->inc_push_tx_recv_cur_num(count);
@@ -386,7 +386,7 @@ public:
     void recv_tx_dec(int32_t count) {
         m_counter.recv_tx_inc(-count);
         for (auto & shard : m_shards) {
-            xtxpool_dbg("send_tx_inc shard(%p) table:%s old recv num:%d dec num:%d", shard, get_address().c_str(), shard->get_recv_tx_count(), count);
+            xtxpool_dbg("recv_tx_dec shard(%p) table:%s old recv num:%d dec num:%d", shard, get_address().c_str(), shard->get_recv_tx_count(), count);
             shard->recv_tx_inc(-count);
         }
         m_statistic->dec_push_tx_recv_cur_num(count);
@@ -397,7 +397,7 @@ public:
     void conf_tx_inc(int32_t count) {
         m_counter.conf_tx_inc(count);
         for (auto & shard : m_shards) {
-            xtxpool_dbg("send_tx_inc shard(%p) table:%s old confirm num:%d inc num:%d", shard, get_address().c_str(), shard->get_conf_tx_count(), count);
+            xtxpool_dbg("conf_tx_inc shard(%p) table:%s old confirm num:%d inc num:%d", shard, get_address().c_str(), shard->get_conf_tx_count(), count);
             shard->conf_tx_inc(count);
         }
         m_statistic->inc_push_tx_confirm_cur_num(count);
@@ -408,7 +408,7 @@ public:
     void conf_tx_dec(int32_t count) {
         m_counter.conf_tx_inc(-count);
         for (auto & shard : m_shards) {
-            xtxpool_dbg("send_tx_inc shard(%p) table:%s old confirm num:%d dec num:%d", shard, get_address().c_str(), shard->get_conf_tx_count(), count);
+            xtxpool_dbg("conf_tx_dec shard(%p) table:%s old confirm num:%d dec num:%d", shard, get_address().c_str(), shard->get_conf_tx_count(), count);
             shard->conf_tx_inc(-count);
         }
         m_statistic->dec_push_tx_confirm_cur_num(count);
@@ -517,6 +517,17 @@ public:
     }
 
     void add_shard(xtxpool_shard_info_t * shard) {
+        xtxpool_dbg("add_shard shard(%p) table:%s old num:%d:%d:%d:%d inc num:%d:%d:%d:%d",
+                    shard,
+                    get_address().c_str(),
+                    shard->get_send_tx_count(),
+                    shard->get_recv_tx_count(),
+                    shard->get_conf_tx_count(),
+                    shard->get_unconfirm_tx_count(),
+                    m_counter.get_send_tx_count(),
+                    m_counter.get_recv_tx_count(),
+                    m_counter.get_conf_tx_count(),
+                    m_counter.get_unconfirm_tx_count());
         shard->send_tx_inc(m_counter.get_send_tx_count());
         shard->recv_tx_inc(m_counter.get_recv_tx_count());
         shard->conf_tx_inc(m_counter.get_conf_tx_count());
@@ -525,6 +536,7 @@ public:
     }
 
     void remove_shard(xtxpool_shard_info_t * shard) {
+        xtxpool_dbg("remove_shard shard(%p) table:%s", shard, get_address().c_str());
         for (auto it = m_shards.begin(); it != m_shards.end(); it++) {
             if ((*it)->is_ids_match(shard->get_zone(), shard->get_front_table_id(), shard->get_back_table_id())) {
                 m_shards.erase(it);
