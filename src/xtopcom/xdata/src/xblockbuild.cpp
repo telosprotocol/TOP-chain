@@ -34,6 +34,8 @@ base::xvaction_t make_block_build_action(const std::string & target_uri) {
     base::xvaction_t _tx_action(tx_hash, caller_addr, target_uri, method_name);
     // base::xvalue_t _action_result(tx->get_tx_execute_state().get_map_para());  // how to set result
     // _tx_action.copy_result(_action_result);  // no action result
+    xassert(_tx_action.get_method_result() == nullptr);
+    xassert(!_tx_action.get_method_uri().empty());
     return _tx_action;
 }
 
@@ -206,6 +208,7 @@ bool xlighttable_build_t::build_block_body(const xtable_block_para_t & para) {
     set_output_full_state(full_state);
     std::string tgas_balance_change = base::xstring_utl::tostring(para.get_tgas_balance_change());
     set_output_entity(base::xvoutentity_t::key_name_tgas_pledge_change(), tgas_balance_change);
+    xdbg("xlighttable_build_t::build_block_body method_uri=%s", _action.get_method_uri().c_str());
     return true;
 }
 

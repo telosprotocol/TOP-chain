@@ -17,9 +17,10 @@
     #undef __ALLOW_FORK_LOCK__  // XTODO always allow store multi lock blocks
 #endif
 
-#ifndef __ALLOW_TABLE_MORE_CACHE_SIZE__
-    #define __ALLOW_TABLE_MORE_CACHE_SIZE__
-#endif
+// XTODO not cache more table now, but need cache more for unit load from table feature in future
+// #ifndef __ALLOW_TABLE_MORE_CACHE_SIZE__
+//     #define __ALLOW_TABLE_MORE_CACHE_SIZE__
+// #endif
 
 namespace top
 {
