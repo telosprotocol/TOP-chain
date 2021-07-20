@@ -51,11 +51,31 @@ class xblockmaker_resources_impl_t : public xblockmaker_resources_t {
 };
 
 struct xunitmaker_result_t {
+ public:
+    void        add_pack_txs(const std::vector<xcons_transaction_ptr_t> & txs) {
+        for (auto & tx : txs) {
+            if (tx->is_self_tx()) {
+                m_self_tx_num++;
+            } else if (tx->is_send_tx()) {
+                m_send_tx_num++;
+            } else if (tx->is_recv_tx()) {
+                m_recv_tx_num++;
+            } else if (tx->is_confirm_tx()) {
+                m_confirm_tx_num++;
+            }
+        }
+        m_pack_txs = txs;
+    }
+
     xblock_ptr_t                            m_block{nullptr};
     int32_t                                 m_make_block_error_code{0};
-    std::vector<xcons_transaction_ptr_t>    m_success_txs;
+    std::vector<xcons_transaction_ptr_t>    m_pack_txs;
     std::vector<xcons_transaction_ptr_t>    m_fail_txs;
     int64_t                                 m_tgas_balance_change{0};
+    uint32_t                                m_self_tx_num{0};
+    uint32_t                                m_send_tx_num{0};
+    uint32_t                                m_recv_tx_num{0};
+    uint32_t                                m_confirm_tx_num{0};
 };
 
 struct xunitmaker_para_t {
@@ -69,10 +89,42 @@ struct xunitmaker_para_t {
     bool                                    m_is_leader{false};
 };
 
-struct xtablemaker_result_t {
+class xtablemaker_result_t {
+ public:
+    void    add_unit_result(const xunitmaker_result_t & unit_result) {
+        m_total_unit_num++;
+        if(unit_result.m_block == nullptr) {
+            m_fail_unit_num++;
+        } else {
+            m_succ_unit_num++;
+            if (unit_result.m_block->get_block_class() == base::enum_xvblock_class_full) m_full_unit_num++;
+            if (unit_result.m_block->get_block_class() == base::enum_xvblock_class_light) m_light_unit_num++;
+            if (unit_result.m_block->get_block_class() == base::enum_xvblock_class_nil) m_empty_unit_num++;
+        }
+
+        m_total_tx_num += (unit_result.m_self_tx_num + unit_result.m_send_tx_num + unit_result.m_recv_tx_num + unit_result.m_confirm_tx_num);
+        m_self_tx_num += unit_result.m_self_tx_num;
+        m_send_tx_num += unit_result.m_send_tx_num;
+        m_recv_tx_num += unit_result.m_recv_tx_num;
+        m_confirm_tx_num += unit_result.m_confirm_tx_num;
+    }
+ public:
     xblock_ptr_t                            m_block{nullptr};
     int32_t                                 m_make_block_error_code{0};
     std::vector<xunitmaker_result_t>        m_unit_results;
+
+    uint32_t                                m_total_tx_num{0};
+    uint32_t                                m_self_tx_num{0};
+    uint32_t                                m_send_tx_num{0};
+    uint32_t                                m_recv_tx_num{0};
+    uint32_t                                m_confirm_tx_num{0};
+
+    uint32_t                                m_total_unit_num{0};
+    uint32_t                                m_fail_unit_num{0};
+    uint32_t                                m_succ_unit_num{0};
+    uint32_t                                m_empty_unit_num{0};
+    uint32_t                                m_light_unit_num{0};
+    uint32_t                                m_full_unit_num{0};
 };
 
 class xtablemaker_para_t {

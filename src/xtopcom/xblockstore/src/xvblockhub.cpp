@@ -1903,13 +1903,16 @@ namespace top
             if( (NULL == index_ptr) || (NULL == block_ptr) )
                 return false;
 
+#ifndef STORE_UNIT_BLOCK  
+            // no-store-unit mode, unit stored only when parent not stored
             if (index_ptr->has_parent_store())
             {
                 xassert(block_ptr->get_height() != 0);
-                index_ptr->set_block_flag(base::enum_xvblock_flag_stored); //mark as stored everything
+                // index_ptr->set_block_flag(base::enum_xvblock_flag_stored); //mark as stored everything
+                xdbg("xblockacct_t::write_block_to_db no need write with non-store unit mode.index=%s", index_ptr->dump().c_str());
                 return true;
             }
-
+#endif
             if(write_block_object_to_db(index_ptr,block_ptr) == false)
                 return false;
 
@@ -1944,7 +1947,6 @@ namespace top
         {
             if(block_ptr == NULL)
                 return false;
-            xassert(!index_ptr->has_parent_store());
 
             //raw block not stored header yet
             if(index_ptr->check_store_flag(base::enum_index_store_flag_mini_block) == false)
@@ -1980,7 +1982,6 @@ namespace top
 
         bool    xblockacct_t::read_block_object_from_db(base::xvbindex_t* index_ptr)
         {
-            xassert(!index_ptr->has_parent_store());
             if(index_ptr->get_this_block() == NULL)
             {
 #if defined(ENABLE_METRICS)

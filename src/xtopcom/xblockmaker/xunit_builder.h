@@ -20,11 +20,15 @@ class xlightunit_builder_para_t : public xblock_builder_para_face_t {
 
     const std::vector<xcons_transaction_ptr_t> &    get_origin_txs() const {return m_origin_txs;}
     const std::vector<xcons_transaction_ptr_t> &    get_fail_txs() const {return m_fail_txs;}
+    const std::vector<xcons_transaction_ptr_t> &    get_pack_txs() const {return m_pack_txs;}
+
     void                                            set_fail_tx(const xcons_transaction_ptr_t & tx) {m_fail_txs.push_back(tx);}
     void                                            set_fail_txs(const std::vector<xcons_transaction_ptr_t> & txs) {m_fail_txs = txs;}
+    void                                            set_pack_txs(const std::vector<xcons_transaction_ptr_t> & txs) {m_pack_txs = txs;}
     const base::xreceiptid_state_ptr_t &            get_receiptid_state() const {return m_receiptid_state;}
  private:
     std::vector<xcons_transaction_ptr_t>        m_origin_txs;
+    std::vector<xcons_transaction_ptr_t>        m_pack_txs;  // txs included in light-unit
     std::vector<xcons_transaction_ptr_t>        m_fail_txs;
     base::xreceiptid_state_ptr_t                m_receiptid_state;
 };

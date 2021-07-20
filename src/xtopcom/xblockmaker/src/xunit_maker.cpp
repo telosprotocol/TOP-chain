@@ -255,6 +255,7 @@ xblock_ptr_t xunit_maker_t::make_proposal(const xunitmaker_para_t & unit_para, c
     xblock_ptr_t proposal_block = make_next_block(unit_para, cs_para, result);
     clear_tx();
     if (proposal_block == nullptr) {
+        xassert(result.m_make_block_error_code != xsuccess);
         if (xblockmaker_error_no_need_make_unit != result.m_make_block_error_code) {
             xwarn("xunit_maker_t::make_proposal fail-make proposal.%s,account=%s,height=%" PRIu64 ",ret=%s",
                 cs_para.dump().c_str(), get_account().c_str(), get_highest_height_block()->get_height(), chainbase::xmodule_error_to_str(result.m_make_block_error_code).c_str());
@@ -264,13 +265,15 @@ xblock_ptr_t xunit_maker_t::make_proposal(const xunitmaker_para_t & unit_para, c
         }
         return nullptr;
     }
-    xinfo("xunit_maker_t::make_proposal succ unit.is_leader=%d,%s,unit=%s,ir=%s,or=%s,ufm=%d,tx=%d,state=%s",
+    xinfo("xunit_maker_t::make_proposal succ unit.is_leader=%d,%s,unit=%s,ir=%s,or=%s,state=%s,txs_info={ufm=%d,total=%d,self=%d,send=%d,recv=%d,confirm=%d}",
         unit_para.m_is_leader, cs_para.dump().c_str(), proposal_block->dump().c_str(),
         base::xstring_utl::to_hex(proposal_block->get_input_root_hash()).c_str(), base::xstring_utl::to_hex(proposal_block->get_output_root_hash()).c_str(),
-        proposal_block->get_unconfirm_sendtx_num(),
-        result.m_success_txs.size(), dump().c_str());
+        dump().c_str(),
+        get_latest_bstate()->get_unconfirm_sendtx_num(),
+        (uint32_t)result.m_pack_txs.size(), result.m_self_tx_num, result.m_send_tx_num, result.m_recv_tx_num, result.m_confirm_tx_num);
+
     uint64_t now = xverifier::xtx_utl::get_gmttime_s();
-    for (auto & tx : result.m_success_txs) {
+    for (auto & tx : result.m_pack_txs) {
         xinfo("xunit_maker_t::make_proposal succ tx.is_leader=%d,%s,unit=%s,tx=%s,delay=%llu",
             unit_para.m_is_leader, cs_para.dump().c_str(), proposal_block->dump().c_str(), tx->dump().c_str(), now - tx->get_push_pool_timestamp());
     }
@@ -310,7 +313,7 @@ xblock_ptr_t xunit_maker_t::make_next_block(const xunitmaker_para_t & unit_para,
                                                         build_para);
         result.m_make_block_error_code = build_para->get_error_code();
         std::shared_ptr<xlightunit_builder_para_t> lightunit_build_para = std::dynamic_pointer_cast<xlightunit_builder_para_t>(build_para);
-        result.m_success_txs = lightunit_build_para->get_origin_txs();
+        result.add_pack_txs(lightunit_build_para->get_pack_txs());
         result.m_fail_txs = lightunit_build_para->get_fail_txs();
         result.m_tgas_balance_change = lightunit_build_para->get_tgas_balance_change();
         for (auto & tx : lightunit_build_para->get_fail_txs()) {
@@ -427,6 +430,7 @@ bool xunit_maker_t::can_make_next_light_block() const {
 }
 
 std::string xunit_maker_t::dump() const {
+#ifdef DEBUG
     char local_param_buf[128];
     uint64_t highest_height = get_highest_height_block()->get_height();
     uint64_t state_height = get_latest_bstate()->get_block_height();
@@ -437,6 +441,9 @@ std::string xunit_maker_t::dump() const {
         get_latest_bstate()->get_latest_send_trans_number(),
         get_highest_height_block()->get_cert()->get_parent_block_height());
     return std::string(local_param_buf);
+#else 
+    return std::string();
+#endif
 }
 
 NS_END2

@@ -30,20 +30,11 @@ namespace top
             m_last_fullblock_hash   = obj.get_last_full_block_hash();
             m_last_fullblock_height = obj.get_last_full_block_height();
             
-            if(obj.get_parent_account().empty() == false)
-            {
-                base::xvaccount_t parent_acct_obj(obj.get_parent_account());
-                m_parent_accountid      = parent_acct_obj.get_xvid();
-            }
-            else //init 0 to mark not relyon parent block
-            {
-                m_parent_accountid = 0;
-            }
             m_parent_block_height   = obj.get_parent_block_height();
             m_parent_block_viewid   = obj.get_parent_block_viewid();
             m_parent_block_entity_id = obj.get_parent_entity_id();
-            m_extend_cert = obj.get_cert()->get_extend_cert();
-            m_extend_data = obj.get_cert()->get_extend_data();
+            // m_extend_cert = obj.get_cert()->get_extend_cert();  XTODO not set extend cert and extend data
+            // m_extend_data = obj.get_cert()->get_extend_data();
             
             //copy flags of block,and combine class of block
             //[8bit:block-flags][8bit:index-bits]
@@ -70,7 +61,6 @@ namespace top
             
             m_next_viewid_offset    = obj.m_next_viewid_offset;
             
-            m_parent_accountid      = obj.m_parent_accountid;
             m_parent_block_height   = obj.m_parent_block_height;
             m_parent_block_viewid   = obj.m_parent_block_viewid;
             m_parent_block_entity_id = obj.m_parent_block_entity_id;            
@@ -118,7 +108,6 @@ namespace top
             
             m_next_viewid_offset    = obj.m_next_viewid_offset;
 
-            m_parent_accountid      = obj.m_parent_accountid;
             m_parent_block_height   = obj.m_parent_block_height;
             m_parent_block_viewid   = obj.m_parent_block_viewid;
             m_parent_block_entity_id = obj.m_parent_block_entity_id;
@@ -183,7 +172,6 @@ namespace top
             m_last_fullblock_height = 0;
             m_next_viewid_offset= 0;
             
-            m_parent_accountid   = 0;
             m_parent_block_height= 0;
             m_parent_block_viewid= 0;
             m_parent_block_entity_id = 0;
@@ -451,7 +439,6 @@ namespace top
             stream.write_compact_var(m_last_fullblock_height);
             stream.write_compact_var(m_next_viewid_offset);
             
-            stream << m_parent_accountid;
             stream.write_compact_var(m_parent_block_height);
             stream.write_compact_var(m_parent_block_viewid);
             stream.write_compact_var(m_parent_block_entity_id);
@@ -481,7 +468,6 @@ namespace top
                 stream.read_compact_var(m_last_fullblock_height);
                 stream.read_compact_var(m_next_viewid_offset);
                 
-                stream >> m_parent_accountid;
                 stream.read_compact_var(m_parent_block_height);
                 stream.read_compact_var(m_parent_block_viewid);
                 stream.read_compact_var(m_parent_block_entity_id);

@@ -64,6 +64,7 @@ xblock_ptr_t        xlightunit_builder_t::build_block(const xblock_ptr_t & prev_
     }
 
     lightunit_build_para->set_tgas_balance_change(exec_result.m_tgas_balance_change);
+    lightunit_build_para->set_pack_txs(exec_result.m_exec_succ_txs);
 
     xlightunit_block_para_t lightunit_para;
     // set lightunit para by tx result

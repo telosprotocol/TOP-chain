@@ -58,15 +58,12 @@ namespace top
             inline const int32_t        get_next_viewid_offset() const {return m_next_viewid_offset;}
             inline const uint64_t       get_next_viewid()  const {return (m_block_viewid + m_next_viewid_offset);}
 
-            inline const uint64_t       get_parent_accountid()    const {return m_parent_accountid;}
             inline const uint64_t       get_parent_block_height() const {return m_parent_block_height;}
             inline const uint64_t       get_parent_block_viewid() const {return m_parent_block_viewid;}
             inline const uint32_t       get_parent_block_entity() const {return m_parent_block_entity_id;}
-#ifdef STORE_UNIT_BLOCK           
-            inline bool                 has_parent_store() const {return false;}
-#else 
-            inline bool                 has_parent_store() const {return m_parent_accountid != 0 && m_parent_block_height != 0 && m_parent_block_viewid != 0;}
-#endif
+
+            inline bool                 has_parent_store() const {return get_parent_block_height() != 0 && get_parent_block_viewid() != 0 && get_parent_block_entity() != 0;}
+
             inline const std::string &  get_extend_cert()      const {return m_extend_cert;}
             inline const std::string &  get_extend_data()      const {return m_extend_data;}
 
@@ -137,7 +134,6 @@ namespace top
             std::string     m_last_fullblock_hash; //point to last full-block'hash
             uint64_t        m_last_fullblock_height;//height of m_last_full_block
             
-            uint64_t        m_parent_accountid;   //container(e.g.tableblock)'account id(refer xvaccount_t::get_xvid())
             uint64_t        m_parent_block_height;//height of container(e.gtableblock) that may carry this block
             uint64_t        m_parent_block_viewid;//viewid of container(e.gtableblock) that may carry this block
             uint32_t        m_parent_block_entity_id{0};//entity id at parent block
