@@ -69,15 +69,19 @@ void xtxpool_service::set_params(const xvip2_t & xip, const std::shared_ptr<vnet
     if (common::has<common::xnode_type_t::committee>(type)) {
         m_is_send_receipt_role = true;
         m_zone_index = base::enum_chain_zone_beacon_index;
+        m_node_type = common::xnode_type_t::committee;
     } else if (common::has<common::xnode_type_t::zec>(type)) {
         m_is_send_receipt_role = true;
         m_zone_index = base::enum_chain_zone_zec_index;
+        m_node_type = common::xnode_type_t::zec;
     } else if (common::has<common::xnode_type_t::auditor>(type)) {
         m_is_send_receipt_role = true;
         m_zone_index = base::enum_chain_zone_consensus_index;
+        m_node_type = common::xnode_type_t::auditor;
     } else if (common::has<common::xnode_type_t::validator>(type)) {
         m_is_send_receipt_role = false;
         m_zone_index = base::enum_chain_zone_consensus_index;
+        m_node_type = common::xnode_type_t::validator;
     } else {
         xassert(0);
     }
@@ -125,10 +129,14 @@ bool xtxpool_service::is_running() const {
     return m_running;
 }
 
-void xtxpool_service::get_service_table_boundary(base::enum_xchain_zone_index & zone_id, uint32_t & fount_table_id, uint32_t & back_table_id) const {
+void xtxpool_service::get_service_table_boundary(base::enum_xchain_zone_index & zone_id,
+                                                 uint32_t & fount_table_id,
+                                                 uint32_t & back_table_id,
+                                                 common::xnode_type_t & node_type) const {
     zone_id = m_zone_index;
     fount_table_id = m_cover_front_table_id;
     back_table_id = m_cover_back_table_id;
+    node_type = m_node_type;
 }
 
 void xtxpool_service::resend_receipts(uint64_t now) {
@@ -243,7 +251,8 @@ bool xtxpool_service::table_boundary_equal_to(std::shared_ptr<xtxpool_service_fa
     base::enum_xchain_zone_index zone_id;
     uint32_t fount_table_id;
     uint32_t back_table_id;
-    service->get_service_table_boundary(zone_id, fount_table_id, back_table_id);
+    common::xnode_type_t node_type;
+    service->get_service_table_boundary(zone_id, fount_table_id, back_table_id, node_type);
     if (zone_id == this->m_zone_index && fount_table_id == m_cover_front_table_id && back_table_id == m_cover_back_table_id) {
         return true;
     }
