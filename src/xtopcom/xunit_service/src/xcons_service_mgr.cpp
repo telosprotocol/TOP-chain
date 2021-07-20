@@ -78,21 +78,16 @@ xcons_proxy_face_ptr xcons_service_mgr::create(const std::shared_ptr<vnetwork::x
 // destroy useless cons services by networkdriver, call by vnode manager while detemine some service useless
 // must call uninit before
 bool xcons_service_mgr::destroy(const xvip2_t & xip) {
+    auto key_ = xcons_utl::erase_version(xip);
     xunit_info("xcons_service_mgr::destroy %s %p", xcons_utl::xip_to_hex(xip).c_str(), this);
     std::vector<std::shared_ptr<xcons_service_face>> services;
     {
         // erase useless consensus service
         std::lock_guard<std::mutex> lock(m_mutex);
-
-        for (auto iter = m_cons_map.begin(); iter != m_cons_map.end(); iter++) {
-            auto & service_xip = iter->first;
-            common::xip2_t const group_xip2 = common::xip2_t{service_xip}.sharding();
-            xvip2_t service_group_xip = {group_xip2.raw_low_part(), group_xip2.raw_high_part()};
-            if (xcons_utl::xip_equals(xip, service_group_xip)) {
-                services.insert(services.begin(), iter->second.begin(), iter->second.end());
-                m_cons_map.erase(iter);
-                break;
-            }
+        auto                        iter = m_cons_map.find(key_);
+        if (iter != m_cons_map.end()) {
+            services.insert(services.begin(), iter->second.begin(), iter->second.end());
+            m_cons_map.erase(iter);
         }
     }
 
