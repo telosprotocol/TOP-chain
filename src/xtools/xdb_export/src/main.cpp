@@ -188,7 +188,7 @@ public:
     static std::vector<std::string> get_all_table_account() {
         std::vector<std::string> account_vec;
         const std::vector<std::pair<std::string, int>> addr2name = {
-            std::make_pair(std::string{sys_contract_sharding_table_block_addr}, 256),
+            std::make_pair(std::string{sys_contract_sharding_table_block_addr}, enum_vledger_const::enum_vbucket_has_tables_count),
             std::make_pair(std::string{sys_contract_zec_table_block_addr}, MAIN_CHAIN_ZEC_TABLE_USED_NUM),
             std::make_pair(std::string{sys_contract_beacon_table_block_addr}, MAIN_CHAIN_REC_TABLE_USED_NUM),
         };
@@ -456,7 +456,7 @@ public:
     }
 
     void get_table_stake_property_string(std::string const &addr,std::string const & property_key,json & stake_json){
-        for (auto index = 0; index < 256; ++index) {
+        for (auto index = 0; index < enum_vledger_const::enum_vbucket_has_tables_count; ++index) {
             std::string table_addr = addr + "@" + std::to_string(index);
             std::string value;
             m_store->string_get(table_addr, property_key, value);
@@ -467,7 +467,7 @@ public:
     }
 
     void get_table_stake_property_map_string_string(std::string const & addr, std::string const & property_key, json & stake_json) {
-        for (auto index = 0; index < 256; ++index) {
+        for (auto index = 0; index < enum_vledger_const::enum_vbucket_has_tables_count; ++index) {
             std::string table_addr = addr + "@" + std::to_string(index);
             json ser_res;
             std::map<std::string, std::string> value;
