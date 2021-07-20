@@ -33,7 +33,7 @@ int32_t xtxmgr_table_t::push_send_tx(const std::shared_ptr<xtx_entry> & tx, uint
     uint32_t send_queue_size = m_send_tx_queue.size();
     uint32_t pending_size = m_pending_accounts.size();
     if (ret != xsuccess) {
-        xtxpool_warn("xtxmgr_table_t::push_tx fail.table %s(q_size:%u,p_size:%u,size:%u,counter:%u),tx:%s,last nonce:%u,ret:%s",
+        xtxpool_warn("xtxmgr_table_t::push_tx fail.table %s(q_size:%u,p_size:%u,size:%u,counter:%d),tx:%s,last nonce:%u,ret:%s",
                      m_xtable_info->get_table_addr().c_str(),
                      send_queue_size,
                      pending_size,
@@ -43,7 +43,7 @@ int32_t xtxmgr_table_t::push_send_tx(const std::shared_ptr<xtx_entry> & tx, uint
                      latest_nonce,
                      xtxpool_error_to_string(ret).c_str());
     } else {
-        xtxpool_info("xtxmgr_table_t::push_tx success.table %s(q_size:%u,p_size:%u,size:%u,counter:%u),tx:%s,last nonce:%u",
+        xtxpool_info("xtxmgr_table_t::push_tx success.table %s(q_size:%u,p_size:%u,size:%u,counter:%d),tx:%s,last nonce:%u",
                      m_xtable_info->get_table_addr().c_str(),
                      send_queue_size,
                      pending_size,
@@ -80,7 +80,7 @@ int32_t xtxmgr_table_t::push_receipt(const std::shared_ptr<xtx_entry> & tx) {
     uint32_t recv_tx_count = m_new_receipt_queue.get_recv_tx_count();
     uint32_t confirm_tx_count = m_new_receipt_queue.size() - recv_tx_count;
     if (ret != xsuccess) {
-        xtxpool_warn("xtxmgr_table_t::push_receipt fail.table %s(recv size:%u,counter:%u,confirm size:%u,counter:%u),tx:%s,ret:%s",
+        xtxpool_warn("xtxmgr_table_t::push_receipt fail.table %s(recv size:%u,counter:%d,confirm size:%u,counter:%d),tx:%s,ret:%s",
                      m_xtable_info->get_table_addr().c_str(),
                      recv_tx_count,
                      m_xtable_info->get_recv_tx_count(),
@@ -89,7 +89,7 @@ int32_t xtxmgr_table_t::push_receipt(const std::shared_ptr<xtx_entry> & tx) {
                      tx->get_tx()->dump(true).c_str(),
                      xtxpool_error_to_string(ret).c_str());
     } else {
-        xtxpool_info("xtxmgr_table_t::push_receipt success.table %s(recv size:%u,counter:%u,confirm size:%u,counter:%u),tx:%s",
+        xtxpool_info("xtxmgr_table_t::push_receipt success.table %s(recv size:%u,counter:%d,confirm size:%u,counter:%d),tx:%s",
                      m_xtable_info->get_table_addr().c_str(),
                      recv_tx_count,
                      m_xtable_info->get_recv_tx_count(),
@@ -149,12 +149,15 @@ std::vector<xcons_transaction_ptr_t> xtxmgr_table_t::get_ready_txs(const xtxs_pa
 
     uint32_t send_tx_num = ready_txs.size() - confirm_tx_num - recv_tx_num;
 
-    xtxpool_info("xtxmgr_table_t::get_ready_txs table:%s,ready_txs size:%u,send:%u,recv:%u,confirm:%u",
+    xtxpool_info("xtxmgr_table_t::get_ready_txs table:%s,total:%u,send:%u,recv:%u,confirm:%u,table cache:%d:%d,%d",
                  m_xtable_info->get_table_addr().c_str(),
                  ready_txs.size(),
                  send_tx_num,
                  recv_tx_num,
-                 confirm_tx_num);
+                 confirm_tx_num,
+                 m_xtable_info->get_send_tx_count(),
+                 m_xtable_info->get_recv_tx_count(),
+                 m_xtable_info->get_conf_tx_count());
     for (auto & tx : ready_txs) {
         xtxpool_dbg("xtxmgr_table_t::get_ready_txs table:%s,tx:%s", m_xtable_info->get_table_addr().c_str(), tx->dump().c_str());
     }
