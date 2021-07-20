@@ -65,7 +65,7 @@ int load_lib(config_t& config);
 int start_monitor_thread(config_t& config);
 int log_monitor_proc(config_t config);  // ntp and log monitor
 int cpu_monitor_proc(config_t config);  // cpu/mem/net monitor
-bool daemon();
+bool daemon(bool & is_ok);
 int spawn_child(config_t& config);
 void block_loop();
 void CheckReStartXtopchain(config_t& config);
