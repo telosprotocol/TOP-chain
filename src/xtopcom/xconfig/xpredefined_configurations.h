@@ -366,8 +366,8 @@ XDECLARE_CONFIGURATION(msg_port, uint16_t, 19084);
 XDECLARE_CONFIGURATION(ws_port, uint16_t, 19085);
 XDECLARE_CONFIGURATION(log_level, uint16_t, 0);
 XDECLARE_CONFIGURATION(network_id, uint32_t, 0);
-XDECLARE_CONFIGURATION(log_path, const char *, "/chain/log/clog"); // config log path
-XDECLARE_CONFIGURATION(db_path, const char *, "/chain/db/cdb");    // config log path
+XDECLARE_CONFIGURATION(log_path, const char *, "/chain/log/clog");  // config log path
+XDECLARE_CONFIGURATION(db_path, const char *, "/chain/db_v2/cdb");     // config log path
 XDECLARE_CONFIGURATION(ip, const char *, "0.0.0.0");
 
 /* end of development parameters */
@@ -407,7 +407,7 @@ XDECLARE_CONFIGURATION(root_hash, char const *, "beaa468a921c7cb0344da5b56fcf79c
 XDECLARE_CONFIGURATION(platform_first_node, bool, false);
 XDECLARE_CONFIGURATION(platform_business_port, std::uint16_t, 9000);
 XDECLARE_CONFIGURATION(platform_show_cmd, bool, false);
-XDECLARE_CONFIGURATION(platform_db_path, char const *, "/chain/db/pdb");
+XDECLARE_CONFIGURATION(platform_db_path, char const *, "/chain/db_v2/pdb");
 
 #undef XDECLARE_CONFIGURATION
 

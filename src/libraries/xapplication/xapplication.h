@@ -15,6 +15,7 @@
 #include "xcommon/xlogic_time.h"
 #include "xcommon/xnode_info.h"
 #include "xconfig/xconfig_register.h"
+#include "xdata/xblocktool.h"
 #include "xelect/client/xelect_client.h"
 #include "xelect_net/include/elect_main.h"
 #include "xmbus/xmessage_bus.h"
@@ -149,6 +150,10 @@ private:
     bool create_genesis_accounts();
 
     bool create_genesis_account(std::string const & address, uint64_t const init_balance);
+
+    bool create_genesis_account(std::string const & address, chain_reset::reset_data_t const & reset_data);
+
+    bool reset_genesis_accounts();
 
     int32_t handle_register_node(std::string const & node_addr, std::string const & node_sign);
 
