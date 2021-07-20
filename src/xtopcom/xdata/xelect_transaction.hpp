@@ -92,7 +92,7 @@ public:
         // tcc
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(min_tcc_proposal_deposit);
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(tcc_proposal_expire_time);
-        XADD_ONCHAIN_GOVERNANCE_PARAMETER2(tcc_member_number, get_tcc_onchain_committee_list());
+        XADD_ONCHAIN_GOVERNANCE_PARAMETER2(tcc_member, get_tcc_onchain_committee_list());
         // whitelist
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(toggle_whitelist);
         XADD_ONCHAIN_GOVERNANCE_PARAMETER2(whitelist, get_genesis_whitelist());
