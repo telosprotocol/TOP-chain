@@ -7,7 +7,7 @@
 #include <string>
 #include <vector>
 
-#include "xchain_upgrade/xchain_reset_center.h"
+#include "xchain_upgrade/xchain_data_processor.h"
 #include "xdata/xcons_transaction.h"
 #include "xdata/xemptyblock.h"
 #include "xdata/xfull_tableblock.h"
