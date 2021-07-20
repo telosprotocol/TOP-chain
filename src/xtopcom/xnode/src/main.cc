@@ -362,7 +362,7 @@ bool process_version_operation(config_t& config) {
 }
 
 // start daemon
-bool daemon() {
+bool daemon(bool & is_ok) {
     int fd;
 
     switch (fork()) {
@@ -371,9 +371,12 @@ bool daemon() {
         case 0:
             // the first child process
             break;
-        default:
+        default:{
             // exit if father process
-            exit(0);
+            // exit(0);
+            is_ok = true;
+            return false;
+        }
     }
 
     // setsid() will create a new session and then, the first child will detach from tty and process group,
@@ -1099,9 +1102,14 @@ int StartNodeSafeBox(const std::string& safebox_addr, uint16_t safebox_port, std
         return -1;
     }
 
-    if (!daemon()) {
-        std::cout << "create daemon process failed" << std::endl;
-        return -1;
+    bool is_ok = false;
+    if (!daemon(is_ok)) {
+        if (is_ok) {
+            return 0;
+        } else {
+            std::cout << "create daemon process failed" << std::endl;
+            return -1;
+        }
     }
 
     // set pid
@@ -1250,9 +1258,14 @@ int StartNode(config_t& config) {
     if (config.daemon) {
         std::cout << "Start node successfully." << std::endl;
         // start as daemon process
-        if (!daemon()) {
-            std::cout << "create daemon process failed" << std::endl;
-            return -1;
+        bool is_ok = false;
+        if (!daemon(is_ok)) {
+            if (is_ok) {
+                exit(0);
+            } else {
+                std::cout << "create daemon process failed" << std::endl;
+                return -1;
+            }
         } else {
             std::cout << "daemon process started" << std::endl;
         }
@@ -1416,13 +1429,12 @@ int main(int argc, char * argv[]) {
 
     generate_extra_config(config);
 
-    // handle other(topcl/xnode/db) commands
-    auto estatus  = ExecuteCommands(argc, argv, config);
-
     if (!check_process_running(config.safebox_pid)) {
         // every command will try to load safebox http server
         StartNodeSafeBox(safebox::safebox_default_addr, safebox::safebox_default_port, config.safebox_pid);
     }
 
+    // handle other(topcl/xnode/db) commands
+    auto estatus  = ExecuteCommands(argc, argv, config);
     return estatus;
 } // end main
