@@ -311,13 +311,5 @@ bool xpending_accounts_t::get_account_nonce_cache(const std::string & account_ad
     return false;
 }
 
-uint32_t xpending_accounts_t::size() const {
-    uint32_t num = 0;
-    for (auto account_entry : m_accounts_set) {
-        num += account_entry->get_txs().size();
-    }
-    return num;
-}
-
 }  // namespace xtxpool_v2
 }  // namespace top

@@ -397,7 +397,7 @@ void xtxpool_table_t::update_table_state(const data::xtablestate_ptr_t & table_s
     int32_t unconfirm_tx_num = (int32_t)table_state->get_receiptid_state()->get_unconfirm_tx_num();
     std::lock_guard<std::mutex> lck(m_mgr_mutex);
     m_txmgr_table.update_receiptid_state(table_state->get_receiptid_state());
-    m_xtable_info.set_unconfirm_tx_count(unconfirm_tx_num);
+    m_xtable_info.set_unconfirm_tx_num(unconfirm_tx_num);
 }
 
 void xtxpool_table_t::add_shard(xtxpool_shard_info_t * shard) {
