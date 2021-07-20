@@ -179,6 +179,9 @@ public:
     bool is_account_need_update(const std::string & account_addr) const;
     void clear_expired_txs();
     bool get_account_nonce_cache(const std::string & account_addr, uint64_t & latest_nonce) const;
+    uint32_t size() const {
+        return m_send_tx_queue_internal.size();
+    }
 
 private:
     xsend_tx_queue_internal_t m_send_tx_queue_internal;

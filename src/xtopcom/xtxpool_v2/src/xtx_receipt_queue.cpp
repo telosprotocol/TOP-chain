@@ -363,6 +363,18 @@ uint64_t xreceipt_queue_new_t::get_latest_confirm_receipt_id(base::xtable_shorti
     return 0;
 }
 
+uint32_t xreceipt_queue_new_t::get_recv_tx_count() const {
+    uint32_t count = 0;
+    for (auto recv_tx_peer_table : m_recv_tx_peer_table_map) {
+        count += recv_tx_peer_table.second->size();
+    }
+    return count;
+}
+
+uint32_t xreceipt_queue_new_t::size() const {
+    return m_receipt_queue_internal.size();
+}
+
 const std::vector<xtxpool_table_lacking_receipt_ids_t> xreceipt_queue_new_t::get_lacking_recv_tx_ids(uint32_t max_num) const {
     return get_lacking_receipt_ids(m_recv_tx_peer_table_map, max_num);
 }
