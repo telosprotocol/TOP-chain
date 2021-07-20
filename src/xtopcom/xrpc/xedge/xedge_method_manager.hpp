@@ -236,7 +236,7 @@ void xedge_method_base<T>::sendTransaction_method(xjson_proc_t & json_proc, cons
         if (!tx->digest_check()) {
             throw xrpc_error{enum_xrpc_error_code::rpc_param_param_error, "transaction hash error"};
         }
-        if (!(target_action.get_account_addr() == sys_contract_rec_standby_pool_addr && target_action.get_action_name() == "nodeJoinNetwork")) {
+        if (!(target_action.get_account_addr() == sys_contract_rec_standby_pool_addr && target_action.get_action_name() == "nodeJoinNetwork2")) {
             if (!tx->sign_check()) {
                 throw xrpc_error{enum_xrpc_error_code::rpc_param_param_error, "transaction sign error"};
             }
