@@ -159,7 +159,7 @@ void xelect_client_process::process_timer(const mbus::xevent_ptr_t & e) {
 //    return;
 //}
 
-void xelect_client_process::process_election_block(xobject_ptr_t<base::xvblock_t> const& election_data_block) {
+void xelect_client_process::process_election_block(xobject_ptr_t<base::xvblock_t> const& election_data_block, common::xlogic_time_t const current_time) {
     if (election_data_block == nullptr) {
         return;
     }
@@ -175,8 +175,10 @@ void xelect_client_process::process_election_block(xobject_ptr_t<base::xvblock_t
         return;
     }
 
+    assert(current_time > m_election_status[contract_address].last_update_time);
+
     auto const local_height = top::get<xinternal_election_status_t>(*it).height;
-    if (top::get<xinternal_election_status_t>(*it).initialized && local_height >= block->get_height()) {
+    if (local_height >= block->get_height()) {
         return;
     }
 
@@ -243,14 +245,15 @@ void xelect_client_process::process_election_block(xobject_ptr_t<base::xvblock_t
     }
 
     top::get<xinternal_election_status_t>(*it).height = block->get_height();
-    top::get<xinternal_election_status_t>(*it).initialized = true;
+    top::get<xinternal_election_status_t>(*it).last_update_time = current_time;
 }
 
 void xelect_client_process::process_election_contract(common::xaccount_address_t const& contract_address,
                                                       common::xlogic_time_t const current_time,
                                                       common::xlogic_time_t const update_interval) {
-    if (!m_election_status[contract_address].initialized || current_time % update_interval == 0) {
-        process_election_block(data::xblocktool_t::get_latest_connectted_light_block(base::xvchain_t::instance().get_xblockstore(), base::xvaccount_t{ contract_address.value() }));
+    if (current_time > m_election_status[contract_address].last_update_time &&
+        current_time - m_election_status[contract_address].last_update_time >= update_interval) {
+        process_election_block(data::xblocktool_t::get_latest_connectted_light_block(base::xvchain_t::instance().get_xblockstore(), base::xvaccount_t{ contract_address.value() }), current_time);
     }
 }
 
