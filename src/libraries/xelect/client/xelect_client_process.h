@@ -28,7 +28,7 @@ protected:
     void process_timer(const mbus::xevent_ptr_t & e);
     // void process_elect(const mbus::xevent_ptr_t & e);
     void update_election_status(common::xlogic_time_t const & current_time);
-    void process_election_block(xobject_ptr_t<base::xvblock_t> const& election_data_block);
+    void process_election_block(xobject_ptr_t<base::xvblock_t> const& election_data_block, common::xlogic_time_t const current_time);
     void process_election_contract(common::xaccount_address_t const & contract_address, common::xlogic_time_t const current_time, common::xlogic_time_t const update_interval);
 
 private:
@@ -38,7 +38,7 @@ private:
 
     struct xtop_internal_election_status {
         uint64_t height{ 0 };
-        bool initialized{ false };
+        common::xlogic_time_t last_update_time{ 0 };
     };
     using xinternal_election_status_t = xtop_internal_election_status;
 
