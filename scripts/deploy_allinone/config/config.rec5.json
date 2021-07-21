@@ -50,5 +50,6 @@
       "business_port" : 9005,
       "url_endpoints": "http://unnecessary.org",
       "public_endpoints" : "127.0.0.1:9001,127.0.0.2:9002,127.0.0.3:9003,127.0.0.4:9004,127.0.0.5:9005,127.0.0.6:9006"
-   }
+   },
+   "root_hash": ""
 }
