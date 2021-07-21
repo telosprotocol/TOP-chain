@@ -151,9 +151,9 @@ private:
 
     bool create_genesis_account(std::string const & address, uint64_t const init_balance);
 
-    bool create_genesis_account(std::string const & address, chain_reset::reset_data_t const & reset_data);
+    bool create_genesis_account(std::string const & address, chain_data::data_processor_t const & data);
 
-    bool reset_genesis_accounts();
+    bool preprocess_accounts_data();
 
     int32_t handle_register_node(std::string const & node_addr, std::string const & node_sign);
 

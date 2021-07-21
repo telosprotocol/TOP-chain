@@ -949,7 +949,18 @@ public:
         std::cout << "===> all_property_check.json generated success!" << std::endl;
     }
 
-    void verify(json const & j, int cnt) {
+    void verify(json const & contract, json const & user) {
+        std::vector<std::pair<uint32_t, std::string>> balance_property = {
+            std::make_pair(0, XPROPERTY_BALANCE_AVAILABLE),
+            std::make_pair(1, XPROPERTY_BALANCE_BURN),
+            std::make_pair(2, XPROPERTY_BALANCE_LOCK),
+            std::make_pair(3, XPROPERTY_BALANCE_PLEDGE_TGAS),
+            std::make_pair(4, XPROPERTY_BALANCE_PLEDGE_VOTE),
+            std::make_pair(5, XPROPERTY_LOCK_TGAS),
+            std::make_pair(6, XPROPERTY_EXPIRE_VOTE_TOKEN_KEY),
+            std::make_pair(7, XPROPERTY_UNVOTE_NUM),
+            std::make_pair(8, XPROPERTY_LOCK_TOKEN_KEY),
+        };
         std::vector<std::string> reward_property = {
             XPORPERTY_CONTRACT_NODE_REWARD_KEY,
             XPORPERTY_CONTRACT_VOTER_DIVIDEND_REWARD_KEY1,
@@ -964,17 +975,40 @@ public:
             XPORPERTY_CONTRACT_VOTES_KEY3,
             XPORPERTY_CONTRACT_VOTES_KEY4,
         };
+        const uint32_t check_table_num = 256;
+        // balance
+        std::cout << "===> balance info: " << std::endl;
+        std::array<uint64_t, 9> balance = {0};
+        for (auto it = contract.begin(); it != contract.end(); it++) {
+            for (size_t i = 0; i < balance_property.size(); i++) {
+                if (it.value().count(balance_property[i].second)) {
+                    balance[balance_property[i].first] += static_cast<uint64_t>(it->at(balance_property[i].second));
+                }
+            }
+        }
+        std::cout << "contract:" << std::endl;
+        for (size_t i = 0; i < balance_property.size(); i++) {
+            std::cout << "total " << balance_property[i].second << ": " << balance[i] << std::endl;
+        }
+        for (auto it = user.begin(); it != user.end(); it++) {
+            for (size_t i = 0; i < balance_property.size(); i++) {
+                if (it.value().count(balance_property[i].second)) {
+                    balance[balance_property[i].first] += static_cast<uint64_t>(it->at(balance_property[i].second));
+                }
+            }
+        }
+        std::cout << "user:" << std::endl << std::endl;
+        for (size_t i = 0; i < balance_property.size(); i++) {
+            std::cout << "total " << balance_property[i].second << ": " << balance[i] << std::endl;
+        }
         // reward
         std::cout << "===> reward info: " << std::endl;
         uint64_t total_reward{0};
         uint64_t total_reward_decimals{0};
-        for (auto i = 0; i < cnt; i++) {
+        for (size_t i = 0; i < check_table_num; i++) {
             std::string address = std::string{sys_contract_sharding_reward_claiming_addr} + "@" + std::to_string(i);
-            // for (auto it = j.begin(); it != j.end(); it++) {
-            //     std::cout << it.key() << std::endl;
-            // }
-            auto it = j.find(address);
-            if (it == j.end()) {
+            auto it = contract.find(address);
+            if (it == contract.end()) {
                 continue;
             }
             uint64_t table_reward{0};
@@ -983,7 +1017,6 @@ public:
                 for (auto it_a = it.value()[p].begin(); it_a != it.value()[p].end(); it_a++) {
                     table_reward += static_cast<uint64_t>(it_a.value()["unclaimed"]);
                     decimals += static_cast<uint32_t>(it_a.value()["unclaimed_decimals"]);
-                    // std::cout << p << "  " << it_a.key() << "  " << it_a.value()["unclaimed"] << "." << it_a.value()["unclaimed_decimals"] << std::endl;
                 }
             }
             total_reward += table_reward;
@@ -992,7 +1025,9 @@ public:
             if (decimals % xstake::REWARD_PRECISION != 0) {
                 table_reward += 1;
             }
-            std::cout << "table " << i << ", $0: " << static_cast<uint64_t>(it->at("$0")) << ", calc_table: " << table_reward << ", miss: " << abs(table_reward - static_cast<uint64_t>(it->at("$0"))) << std::endl;
+            if (static_cast<uint64_t>(it->at("$0")) != 0 || table_reward != 0) {
+                // std::cout << "table " << i << ", $0: " << static_cast<uint64_t>(it->at("$0")) << ", calc_table: " << table_reward << ", miss: " << abs(table_reward - static_cast<uint64_t>(it->at("$0"))) << std::endl;
+            }
         }
         total_reward += total_reward_decimals / xstake::REWARD_PRECISION;
         total_reward_decimals %= xstake::REWARD_PRECISION;
@@ -1001,10 +1036,10 @@ public:
         std::cout << std::endl << "===> vote info: " << std::endl;
         uint64_t total_vote_107{0};
         uint64_t total_vote_121{0};
-        for (auto i = 0; i < cnt; i++) {
+        for (size_t i = 0; i < check_table_num; i++) {
             std::string address = std::string{sys_contract_sharding_vote_addr} + "@" + std::to_string(i);
-            auto it = j.find(address);
-            if (it == j.end()) {
+            auto it = contract.find(address);
+            if (it == contract.end()) {
                 continue;
             }
             uint64_t table_vote_107{0};
@@ -1022,7 +1057,9 @@ public:
             }
             total_vote_107 += table_vote_107;
             total_vote_121 += table_vote_121;
-            std::cout << "table " << i << ", @107: " << table_vote_107 << ", @112: " << table_vote_121 << std::endl;
+            if (table_vote_107 != 0 || table_vote_121 != 0) {
+                // std::cout << "table " << i << ", @107: " << table_vote_107 << ", @112: " << table_vote_121 << std::endl;
+            }
         }
         std::cout << "calc total vote, @107: " << total_vote_107 << ", @112: " << total_vote_121 << std::endl;
     }
@@ -1628,7 +1665,7 @@ int main(int argc, char ** argv) {
         db_reset_t reset(tools);
         reset.query_db_reset(accounts_set);
     } else if (function_name == "verify") {
-        if (argc < 5) {
+        if (argc < 4) {
             usage();
             return -1;
         }
@@ -1637,12 +1674,13 @@ int main(int argc, char ** argv) {
             std::cout << "file: " << file << " not found" << std::endl;
             return -1;
         }
-        int cnt = std::stoi(argv[4]);
-        json json;
+        json contract;
+        json user;
         std::ifstream file_stream(file);
-        file_stream >> json;
+        file_stream >> contract;
+        file_stream >> user;
         db_reset_t reset(tools);
-        reset.verify(json, cnt);
+        reset.verify(contract, user);
     } else if (function_name == "check_fast_sync") {
         if (argc == 3) {
             auto const & table_account_vec = db_export_tools::get_all_table_account();
