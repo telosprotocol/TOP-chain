@@ -5,7 +5,7 @@ using json = nlohmann::json;
 
 namespace top
 {
-    namespace chain_reset
+    namespace chain_data
     {
         static auto stake_property_json = 
             R"T(

@@ -69,23 +69,14 @@ void xtop_application::start() {
         throw std::logic_error{"creating rootblock failed"};
     }
 
-    auto t1 = xtime_utl::time_now_ms();
-    if (!reset_genesis_accounts()) {
-        throw std::logic_error{"reset genesis accounts failed"};
-    }
-    auto t2 = xtime_utl::time_now_ms();
-
     if (!create_genesis_accounts()) {
         throw std::logic_error{"creating genesis accounts failed"};
     }
 
-    auto t3 = xtime_utl::time_now_ms();
     contract::xcontract_deploy_t::instance().deploy_sys_contracts();
     contract::xcontract_manager_t::instance().instantiate_sys_contracts();
     contract::xcontract_manager_t::instance().setup_blockchains(m_blockstore.get());
-    auto t4 = xtime_utl::time_now_ms();
-    xdbg("reset finish, total time: %ldms + %ldms = %ldms", t2-t1, t4-t3, t2-t1+t4-t3);
-    chain_reset::xtop_chain_reset_center::release_reset_property();
+    chain_data::xchain_data_processor_t::release();
     // load configuration first
     auto loader = std::make_shared<loader::xconfig_onchain_loader_t>(make_observer(m_store), make_observer(m_bus.get()), make_observer(m_logic_timer));
     config::xconfig_register_t::get_instance().add_loader(loader);
@@ -259,32 +250,29 @@ bool xtop_application::check_rootblock() {
     return true;
 }
 
-bool xtop_application::reset_genesis_accounts() {
-    const std::string reset_db_key = "reset_genesis_accounts";
-    const std::string reset_db_value = "true";
-    auto value = base::xvchain_t::instance().get_xdbstore()->get_value(reset_db_key);
-    if (reset_db_value == value) {
-        xdbg("xtop_application::reset_genesis_accounts reset already");
+bool xtop_application::preprocess_accounts_data() {
+    if (chain_data::xtop_chain_data_processor::check_state()) {
         return true;
     }
-    std::vector<chain_reset::reset_data_t> reset_data;
-    chain_reset::xtop_chain_reset_center::get_reset_all_user_data(reset_data);
-    for (auto const & data : reset_data) {
+    std::vector<chain_data::data_processor_t> user_data;
+    chain_data::xchain_data_processor_t::get_all_user_data(user_data);
+    for (auto const & data : user_data) {
         if (!create_genesis_account(data.address, data)) {
             xassert(0);
             return false;
         }
     }
-
-    if (!base::xvchain_t::instance().get_xdbstore()->set_value(reset_db_key, reset_db_value)) {
-        xwarn("xtop_application::reset_genesis_accounts write db failed");
-        return false;
+    if (chain_data::xtop_chain_data_processor::set_state()) {
+        return true;
     }
-
-    return true;
+    return false;
 }
 
 bool xtop_application::create_genesis_accounts() {
+    if (!preprocess_accounts_data()) {
+        xwarn("xtop_application::create_genesis_accounts preprocess_accounts_data failed");
+        return false;
+    }
     std::map<std::string, uint64_t> genesis_accounts = xrootblock_t::get_all_genesis_accounts();
     for (auto const & pair : genesis_accounts) {
         common::xaccount_address_t account_address{pair.first};
@@ -321,21 +309,21 @@ bool xtop_application::create_genesis_account(std::string const & address, uint6
     return true;
 }
 
-bool xtop_application::create_genesis_account(std::string const & address, chain_reset::reset_data_t const & reset_data) {
+bool xtop_application::create_genesis_account(std::string const & address, chain_data::data_processor_t const & data) {
     xdbg("xtop_application::create_genesis_account address=%s balance=%ld burn_balance=%ld tgas_balance=%ld vote_balance=%ld lock_balance=%ld lock_tgas=%ld unvote_num=%ld expire_vote=%ld create_time=%ld lock_token=%ld pledge_vote_str_cnt=%ld",
          address.c_str(),
-         reset_data.top_balance,
-         reset_data.burn_balance,
-         reset_data.tgas_balance,
-         reset_data.vote_balance,
-         reset_data.lock_balance,
-         reset_data.lock_tgas,
-         reset_data.unvote_num,
-         reset_data.expire_vote,
-         reset_data.create_time,
-         reset_data.lock_token,
-         reset_data.pledge_vote.size());
-    base::xauto_ptr<base::xvblock_t> genesis_block = data::xblocktool_t::create_genesis_lightunit(address, reset_data);
+         data.top_balance,
+         data.burn_balance,
+         data.tgas_balance,
+         data.vote_balance,
+         data.lock_balance,
+         data.lock_tgas,
+         data.unvote_num,
+         data.expire_vote,
+         data.create_time,
+         data.lock_token,
+         data.pledge_vote.size());
+    base::xauto_ptr<base::xvblock_t> genesis_block = data::xblocktool_t::create_genesis_lightunit(address, data);
     xassert(genesis_block != nullptr);
     base::xvaccount_t _vaddr(address);
     // m_blockstore->delete_block(_vaddr, genesis_block.get());  // delete default genesis block

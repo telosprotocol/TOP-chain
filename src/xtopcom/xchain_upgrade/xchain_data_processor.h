@@ -8,9 +8,9 @@
 
 namespace top
 {
-    namespace chain_reset
+    namespace chain_data
     {
-        struct reset_data_t {
+        struct data_processor_t {
             std::string address;
             int64_t top_balance{0};
             int64_t burn_balance{0};
@@ -24,17 +24,22 @@ namespace top
             int64_t lock_token{0};
             std::vector<std::string> pledge_vote;
         };
-        class xtop_chain_reset_center
+        class xtop_chain_data_processor
         {
         public:
-            static void get_reset_all_user_data(std::vector<reset_data_t> & reset_data);
-            static void get_reset_all_contract_data(std::vector<reset_data_t> & reset_data);
-            static void get_reset_user_data(common::xaccount_address_t const &addr, reset_data_t & reset_data);
-            static void get_reset_contract_data(common::xaccount_address_t const &addr, reset_data_t & reset_data);
-            static void get_reset_stake_string_property(common::xaccount_address_t const &addr, std::string const &property, std::string &value);
-            static void get_reset_stake_map_property(common::xaccount_address_t const &addr, std::string const &property, std::vector<std::pair<std::string, std::string>> &map);
-            static void release_reset_property();
+            static bool check_state();
+            static bool set_state();
+
+            static void get_user_data(common::xaccount_address_t const &addr, data_processor_t & reset_data);
+            static void get_all_user_data(std::vector<data_processor_t> & reset_data);
+
+            static void get_contract_data(common::xaccount_address_t const &addr, data_processor_t & reset_data);
+            static void get_all_contract_data(std::vector<data_processor_t> & reset_data);
+            static void get_stake_string_property(common::xaccount_address_t const &addr, std::string const &property, std::string &value);
+            static void get_stake_map_property(common::xaccount_address_t const &addr, std::string const &property, std::vector<std::pair<std::string, std::string>> &map);
+            
+            static void release();
         };
-        using xchain_reset_center_t = xtop_chain_reset_center;
+        using xchain_data_processor_t = xtop_chain_data_processor;
     }
 }
