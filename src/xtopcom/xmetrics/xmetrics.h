@@ -163,6 +163,10 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     txpool_pull_recv_tx,
     txpool_pull_confirm_tx,
     txpool_push_tx_from_proposal,
+    txpool_send_tx_cur,
+    txpool_recv_tx_cur,
+    txpool_confirm_tx_cur,
+    txpool_unconfirm_tx_cur,
 
     // blockstore
     blockstore_index_load,

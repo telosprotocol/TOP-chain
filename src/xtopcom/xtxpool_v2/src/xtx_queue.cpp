@@ -21,34 +21,41 @@ using namespace top::data;
 
 #define account_send_tx_move_num_max (3)
 
-void xsend_tx_queue_internal_t::insert_ready_tx(const std::shared_ptr<xtx_entry> & tx_ent) {
+void xsend_tx_queue_internal_t::insert_ready_tx(const std::shared_ptr<xtx_entry> & tx_ent, uint32_t account_con_count) {
     uint64_t now = xverifier::xtx_utl::get_gmttime_s();
     tx_ent->get_tx()->set_push_pool_timestamp(now);
     auto it = m_ready_tx_queue.insert(tx_ent);
     m_ready_tx_map[tx_ent->get_tx()->get_tx_hash()] = it;
     m_xtable_info->send_tx_inc(1);
-    xtxpool_info("xsend_tx_queue_internal_t::insert_ready_tx table:%s,tx:%s", m_xtable_info->get_table_addr().c_str(), tx_ent->get_tx()->dump(true).c_str());
+    xtxpool_info("xsend_tx_queue_internal_t::insert_ready_tx push tx to pool table:%s,tx:%s,account_con_count:%u",
+                 m_xtable_info->get_table_addr().c_str(),
+                 tx_ent->get_tx()->dump(true).c_str(),
+                 account_con_count);
 }
 
-void xsend_tx_queue_internal_t::insert_non_ready_tx(const std::shared_ptr<xtx_entry> & tx_ent) {
+void xsend_tx_queue_internal_t::insert_non_ready_tx(const std::shared_ptr<xtx_entry> & tx_ent, uint32_t account_noncon_count) {
     uint64_t now = xverifier::xtx_utl::get_gmttime_s();
     tx_ent->get_tx()->set_push_pool_timestamp(now);
     auto it = m_non_ready_tx_queue.insert(tx_ent);
     m_non_ready_tx_map[tx_ent->get_tx()->get_tx_hash()] = it;
     m_xtable_info->send_tx_inc(1);
-    xtxpool_info("xsend_tx_queue_internal_t::insert_non_ready_tx table:%s,tx:%s", m_xtable_info->get_table_addr().c_str(), tx_ent->get_tx()->dump(true).c_str());
+    xtxpool_info("xsend_tx_queue_internal_t::insert_non_ready_tx push tx to pool table:%s,tx:%s,account_noncon_count:%u",
+                 m_xtable_info->get_table_addr().c_str(),
+                 tx_ent->get_tx()->dump(true).c_str(),
+                 account_noncon_count);
 }
 
-void xsend_tx_queue_internal_t::erase_ready_tx(const uint256_t & hash) {
+void xsend_tx_queue_internal_t::erase_ready_tx(const uint256_t & hash, uint32_t account_con_count) {
     std::string hash_str = std::string(reinterpret_cast<char *>(hash.data()), hash.size());
     auto it_ready = m_ready_tx_map.find(hash_str);
     if (it_ready != m_ready_tx_map.end()) {
         auto & tx_ent = *it_ready->second;
         uint64_t delay = xverifier::xtx_utl::get_gmttime_s() - tx_ent->get_tx()->get_push_pool_timestamp();
-        xtxpool_info("xsend_tx_queue_internal_t::erase_ready_tx from ready txs,table:%s,tx:%s,delay:%llu",
+        xtxpool_info("xsend_tx_queue_internal_t::erase_ready_tx pop tx from pool,table:%s,tx:%s,delay:%llu,account_con_count:%u",
                      m_xtable_info->get_table_addr().c_str(),
                      tx_ent->get_tx()->dump(true).c_str(),
-                     delay);
+                     delay,
+                     account_con_count);
         m_ready_tx_queue.erase(it_ready->second);
         m_ready_tx_map.erase(it_ready);
         m_xtable_info->send_tx_dec(1);
@@ -56,16 +63,17 @@ void xsend_tx_queue_internal_t::erase_ready_tx(const uint256_t & hash) {
     }
 }
 
-void xsend_tx_queue_internal_t::erase_non_ready_tx(const uint256_t & hash) {
+void xsend_tx_queue_internal_t::erase_non_ready_tx(const uint256_t & hash, uint32_t account_noncon_count) {
     std::string hash_str = std::string(reinterpret_cast<char *>(hash.data()), hash.size());
     auto it_non_ready = m_non_ready_tx_map.find(hash_str);
     if (it_non_ready != m_non_ready_tx_map.end()) {
         auto & tx_ent = *it_non_ready->second;
         uint64_t delay = xverifier::xtx_utl::get_gmttime_s() - tx_ent->get_tx()->get_push_pool_timestamp();
-        xtxpool_info("xsend_tx_queue_internal_t::erase_non_ready_tx from non-ready txs,table:%s,tx:%s,delay:%llu",
+        xtxpool_info("xsend_tx_queue_internal_t::erase_non_ready_tx pop tx from pool,table:%s,tx:%s,delay:%llu,account_noncon_count:%u",
                      m_xtable_info->get_table_addr().c_str(),
                      (*it_non_ready->second)->get_tx()->dump(true).c_str(),
-                     delay);
+                     delay,
+                     account_noncon_count);
         m_non_ready_tx_queue.erase(it_non_ready->second);
         m_non_ready_tx_map.erase(it_non_ready);
         m_xtable_info->send_tx_dec(1);
@@ -143,7 +151,7 @@ void xcontinuous_txs_t::update_latest_nonce(uint64_t latest_nonce) {
 void xcontinuous_txs_t::batch_erase(uint32_t from_idx, uint32_t to_idx) {
     for (uint32_t i = from_idx; i < to_idx; i++) {
         xtxpool_info("xcontinuous_txs_t::batch_erase delete tx:%s", m_txs[i]->get_tx()->dump().c_str());
-        m_send_tx_queue_internal->erase_ready_tx(m_txs[i]->get_tx()->get_tx_hash_256());
+        m_send_tx_queue_internal->erase_ready_tx(m_txs[i]->get_tx()->get_tx_hash_256(), m_txs.size() + from_idx - i - 1);
     }
     m_txs.erase(m_txs.begin() + from_idx, m_txs.begin() + to_idx);
 }
@@ -162,7 +170,7 @@ int32_t xcontinuous_txs_t::insert(std::shared_ptr<xtx_entry> tx_ent) {
         return xtxpool_error_tx_nonce_uncontinuous;
     } else if (new_tx_last_nonce == back_nonce) {
         m_txs.push_back(tx_ent);
-        m_send_tx_queue_internal->insert_ready_tx(tx_ent);
+        m_send_tx_queue_internal->insert_ready_tx(tx_ent, m_txs.size());
     } else {
         // simple solution: nonce duplicate, drop the old tx.
         // todo: account tx replace strategy!
@@ -170,9 +178,9 @@ int32_t xcontinuous_txs_t::insert(std::shared_ptr<xtx_entry> tx_ent) {
         if (tx_ent->get_tx()->get_transaction()->get_fire_timestamp() <= m_txs[try_replace_idx]->get_tx()->get_transaction()->get_fire_timestamp()) {
             return xtxpool_error_tx_nonce_duplicate;
         }
-        m_send_tx_queue_internal->erase_ready_tx(m_txs[try_replace_idx]->get_tx()->get_tx_hash_256());
+        m_send_tx_queue_internal->erase_ready_tx(m_txs[try_replace_idx]->get_tx()->get_tx_hash_256(), m_txs.size() - 1);
         m_txs.at(try_replace_idx) = tx_ent;
-        m_send_tx_queue_internal->insert_ready_tx(tx_ent);
+        m_send_tx_queue_internal->insert_ready_tx(tx_ent, m_txs.size());
     }
     return xsuccess;
 }
@@ -210,8 +218,8 @@ const std::vector<std::shared_ptr<xtx_entry>> xcontinuous_txs_t::pop_uncontinuou
     if (m_txs.empty() || m_latest_nonce == m_txs.front()->get_tx()->get_transaction()->get_last_nonce()) {
         return {};
     }
-    for (auto & tx : m_txs) {
-        m_send_tx_queue_internal->erase_ready_tx(tx->get_tx()->get_tx_hash_256());
+    for (uint32_t i = 0; i < m_txs.size(); i++) {
+        m_send_tx_queue_internal->erase_ready_tx(m_txs[i]->get_tx()->get_tx_hash_256(), m_txs.size() - i - 1);
     }
     return std::move(m_txs);
 }
@@ -225,11 +233,11 @@ int32_t xuncontinuous_txs_t::insert(std::shared_ptr<xtx_entry> tx_ent) {
         if (tx_ent->get_tx()->get_transaction()->get_fire_timestamp() <= tx_ent_tmp->get_tx()->get_transaction()->get_fire_timestamp()) {
             return xtxpool_error_tx_nonce_duplicate;
         } else {
-            m_send_tx_queue_internal->erase_non_ready_tx(tx_ent_tmp->get_tx()->get_tx_hash_256());
+            m_send_tx_queue_internal->erase_non_ready_tx(tx_ent_tmp->get_tx()->get_tx_hash_256(), m_txs.size() - 1);
             m_txs.erase(it);
         }
     }
-    m_send_tx_queue_internal->insert_non_ready_tx(tx_ent);
+    m_send_tx_queue_internal->insert_non_ready_tx(tx_ent, m_txs.size());
     m_txs[new_tx_nonce] = tx_ent;
     return xsuccess;
 }
@@ -240,11 +248,11 @@ const std::shared_ptr<xtx_entry> xuncontinuous_txs_t::pop_by_last_nonce(uint64_t
         auto & tx_ent_tmp = it->second;
         auto raw_tx = tx_ent_tmp->get_tx()->get_transaction();
         if (raw_tx->get_last_nonce() < last_nonce) {
-            m_send_tx_queue_internal->erase_non_ready_tx(raw_tx->digest());
+            m_send_tx_queue_internal->erase_non_ready_tx(raw_tx->digest(), m_txs.size() - 1);
             it = m_txs.erase(it);
         } else if (raw_tx->get_last_nonce() == last_nonce) {
             std::shared_ptr<xtx_entry> tx_ent = m_txs.begin()->second;
-            m_send_tx_queue_internal->erase_non_ready_tx(raw_tx->digest());
+            m_send_tx_queue_internal->erase_non_ready_tx(raw_tx->digest(), m_txs.size() - 1);
             m_txs.erase(it);
             return tx_ent;
         } else {
@@ -258,7 +266,7 @@ void xuncontinuous_txs_t::erase(uint64_t nonce) {
     auto it = m_txs.find(nonce);
     if (it != m_txs.end()) {
         auto & tx_ent_tmp = it->second;
-        m_send_tx_queue_internal->erase_non_ready_tx(tx_ent_tmp->get_tx()->get_tx_hash_256());
+        m_send_tx_queue_internal->erase_non_ready_tx(tx_ent_tmp->get_tx()->get_tx_hash_256(), m_txs.size() - 1);
         m_txs.erase(it);
     }
 }

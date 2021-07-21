@@ -20,7 +20,6 @@ using data::xcons_transaction_ptr_t;
 #define xpending_account_send_tx_pack_num_max 3
 
 int32_t xcandidate_account_entry::push_tx(std::shared_ptr<xtx_entry> tx_ent, const std::string & table_addr) {
-
     if (m_txs.size() >= xpending_account_send_tx_num_max) {
         return xtxpool_error_pending_account_reached_upper_limit;
     }
@@ -30,14 +29,19 @@ int32_t xcandidate_account_entry::push_tx(std::shared_ptr<xtx_entry> tx_ent, con
         uint64_t txs_back_nonce = m_txs[m_txs.size() - 1]->get_tx()->get_transaction()->get_tx_nonce();
         if (new_tx_last_nonce < txs_back_nonce) {
             return xtxpool_error_tx_nonce_expired;
-        } else if (new_tx_last_nonce > txs_back_nonce){
+        } else if (new_tx_last_nonce > txs_back_nonce) {
             return xtxpool_error_tx_nonce_uncontinuous;
         }
     } else {
         m_txs.push_back(tx_ent);
     }
 
-    xtxpool_info("xxcandidate_account_entry::push_tx success table:%s tx:%s", table_addr.c_str(), tx_ent->get_tx()->dump().c_str());
+    xtxpool_info("xcandidate_account_entry::push_tx success push tx to pool table:%s account:%s tx:%s size:%u this:%p",
+                 table_addr.c_str(),
+                 m_account.c_str(),
+                 tx_ent->get_tx()->dump().c_str(),
+                 m_txs.size(),
+                 this);
     return xsuccess;
 }
 
@@ -56,12 +60,22 @@ std::shared_ptr<xtx_entry> xcandidate_account_entry::pop_tx(const uint256_t & ha
     uint32_t pos = it->get()->get_tx()->get_transaction()->get_tx_nonce() - m_txs.front()->get_tx()->get_transaction()->get_tx_nonce();
     if (clear_follower) {
         for (uint32_t i = pos; i < m_txs.size(); i++) {
-            xtxpool_info("xcandidate_account_entry::pop_tx table:%s clear fowllower,tx:%s", table_addr.c_str(), m_txs[i]->get_tx()->dump().c_str());
+            xtxpool_info("xcandidate_account_entry::pop_tx pop tx from pool table:%s account:%s clear fowllower,tx:%s size:%u this:%p",
+                         table_addr.c_str(),
+                         m_account.c_str(),
+                         m_txs[i]->get_tx()->dump().c_str(),
+                         m_txs.size() + pos - i - 1,
+                         this);
         }
         m_txs.erase(it, m_txs.end());
     } else {
         for (uint32_t i = 0; i <= pos; i++) {
-            xtxpool_info("xcandidate_account_entry::pop_tx table:%s clear ahead,tx:%s", table_addr.c_str(), m_txs[i]->get_tx()->dump().c_str());
+            xtxpool_info("xcandidate_account_entry::pop_tx pop tx from pool table:%s account:%s clear ahead,tx:%s size:%u this:%p",
+                         table_addr.c_str(),
+                         m_account.c_str(),
+                         m_txs[i]->get_tx()->dump(true).c_str(),
+                         m_txs.size() - i - 1,
+                         this);
         }
         m_txs.erase(m_txs.begin(), it + 1);
     }
@@ -83,7 +97,12 @@ void xcandidate_account_entry::updata_latest_nonce(uint64_t latest_nonce, const 
     for (auto it = m_txs.begin(); it != m_txs.end();) {
         uint64_t tx_nonce = it->get()->get_tx()->get_transaction()->get_tx_nonce();
         if (tx_nonce <= latest_nonce) {
-            xtxpool_info("xcandidate_account_entry::updata_latest_nonce table:%s erase,tx:%s", table_addr.c_str(), it->get()->get_tx()->dump().c_str());
+            xtxpool_info("xcandidate_account_entry::updata_latest_nonce pop tx from pool table:%s account:%s erase tx:%s size:%u this:%p",
+                         table_addr.c_str(),
+                         m_account.c_str(),
+                         it->get()->get_tx()->dump().c_str(),
+                         m_txs.size() - 1,
+                         this);
             it = m_txs.erase(it);
         } else {
             break;
@@ -127,8 +146,12 @@ void xcandidate_account_entry::clear_expired_txs(const std::string & table_addr)
         if (ret == 0) {
             ret = xverifier::xtx_verifier::verify_tx_duration_expiration(it->get()->get_tx()->get_transaction(), now);
         }
-        if(ret != 0) {
-            xtxpool_info("xcandidate_account_entry::clear_expired_txs table:%s erase tx:%s", table_addr.c_str(), it->get()->get_tx()->dump().c_str());
+        if (ret != 0) {
+            xtxpool_info("xcandidate_account_entry::clear_expired_txs pop tx from pool table:%s account:%s erase tx:%s size:%u this:%p",
+                         table_addr.c_str(),
+                         it->get()->get_tx()->dump(true).c_str(),
+                         m_txs.size() - 1,
+                         this);
             it = m_txs.erase(it);
         } else {
             it++;
@@ -242,9 +265,9 @@ ready_accounts_t xpending_accounts_t::get_ready_accounts(uint32_t txs_max_num, c
         acccount_ent->set_select_count_inc(1);
         c_accounts.push_back(acccount_ent);
         xtxpool_dbg("xpending_accounts_t::get_ready_accounts table:%s,account:%s,tx num:%u",
-             m_xtable_info->get_table_addr().c_str(),
-             acccount_ent->get_addr().c_str(),
-             acccount_ent->get_txs().size());
+                    m_xtable_info->get_table_addr().c_str(),
+                    acccount_ent->get_addr().c_str(),
+                    acccount_ent->get_txs().size());
         m_account_selected_lru.put(acccount_ent->get_addr(), acccount_ent->get_select_count());
         m_account_map.erase(acccount_ent->get_addr());
         iter = m_accounts_set.erase(iter);

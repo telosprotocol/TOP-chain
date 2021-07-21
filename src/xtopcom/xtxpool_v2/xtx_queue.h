@@ -70,10 +70,10 @@ class xsend_tx_queue_internal_t {
 public:
     xsend_tx_queue_internal_t(xtxpool_table_info_t * xtable_info) : m_xtable_info(xtable_info) {
     }
-    void insert_ready_tx(const std::shared_ptr<xtx_entry> & tx_ent);
-    void insert_non_ready_tx(const std::shared_ptr<xtx_entry> & tx_ent);
-    void erase_ready_tx(const uint256_t & hash);
-    void erase_non_ready_tx(const uint256_t & hash);
+    void insert_ready_tx(const std::shared_ptr<xtx_entry> & tx_ent, uint32_t account_con_count);
+    void insert_non_ready_tx(const std::shared_ptr<xtx_entry> & tx_ent, uint32_t account_noncon_count);
+    void erase_ready_tx(const uint256_t & hash, uint32_t account_con_count);
+    void erase_non_ready_tx(const uint256_t & hash, uint32_t account_noncon_count);
     const std::shared_ptr<xtx_entry> find(const uint256_t & hash) const;
     const std::shared_ptr<xtx_entry> pick_to_be_droped_tx() const;
     const std::vector<std::shared_ptr<xtx_entry>> get_expired_txs() const;
@@ -82,6 +82,9 @@ public:
     }
     uint32_t size() const {
         return m_ready_tx_queue.size() + m_non_ready_tx_queue.size();
+    }
+    uint32_t non_ready_size() const {
+        return m_non_ready_tx_queue.size();
     }
     bool full() const {
         return m_xtable_info->is_send_tx_reached_upper_limit();
@@ -98,8 +101,7 @@ private:
 class xcontinuous_txs_t {
 public:
     // continuous txs must always keep nonce and hash continuity!
-    xcontinuous_txs_t(xsend_tx_queue_internal_t * send_tx_queue_internal, uint64_t latest_nonce)
-      : m_send_tx_queue_internal(send_tx_queue_internal), m_latest_nonce(latest_nonce) {
+    xcontinuous_txs_t(xsend_tx_queue_internal_t * send_tx_queue_internal, uint64_t latest_nonce) : m_send_tx_queue_internal(send_tx_queue_internal), m_latest_nonce(latest_nonce) {
     }
     uint64_t get_back_nonce() const;
     void update_latest_nonce(uint64_t latest_nonce);
@@ -179,6 +181,12 @@ public:
     bool is_account_need_update(const std::string & account_addr) const;
     void clear_expired_txs();
     bool get_account_nonce_cache(const std::string & account_addr, uint64_t & latest_nonce) const;
+    uint32_t size() const {
+        return m_send_tx_queue_internal.size();
+    }
+    uint32_t non_ready_size() const {
+        return m_send_tx_queue_internal.non_ready_size();
+    }
 
 private:
     xsend_tx_queue_internal_t m_send_tx_queue_internal;
