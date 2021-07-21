@@ -170,7 +170,8 @@ cat > config.tmp << EOF
     "business_port": ${busPort},
     "url_endpoints": "http://unnecessary.org",
     "public_endpoints": "${pubEndPoints}"
-  }
+  },
+  "root_hash": ""
 }
 EOF
 
