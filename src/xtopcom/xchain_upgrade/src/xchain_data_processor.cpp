@@ -5,7 +5,13 @@
 #include "xchain_upgrade/xchain_data_processor.h"
 
 #include "nlohmann/json.hpp"
-#include "xchain_upgrade/xchain_data.h"
+#if defined(XBUILD_CI) || defined(XBUILD_DEV)
+#include "xchain_upgrade/xchain_data_default.h"
+#elif defined(XBUILD_GALILEO)
+#include "xchain_upgrade/xchain_data_galileo.h"
+#else
+#include "xchain_upgrade/xchain_data_new_horizons.h"
+#endif
 #include "xdata/xproperty.h"
 #include "xvledger/xvledger.h"
 
