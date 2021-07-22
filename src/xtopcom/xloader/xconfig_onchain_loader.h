@@ -32,20 +32,12 @@ public:
 private:
     void update(mbus::xevent_ptr_t e);
     void chain_timer(common::xlogic_time_t time);
+    void update_onchain_param(common::xlogic_time_t time);
+    void filter_changes(const std::map<std::string, std::string>& map,
+            std::map<std::string, std::string>& filterd_map);
+    bool is_param_changed(const std::string& key, const std::string& value);
+    bool onchain_param_changed(std::map<std::string, std::string> const& params);
     config::xconfig_update_action_ptr_t find(const std::string& type);
-
-private:
-    class xconfig_bus_monitor : public mbus::xbase_sync_event_monitor_t {
-    public:
-        xconfig_bus_monitor(xconfig_onchain_loader_t* parent);
-        virtual ~xconfig_bus_monitor();
-        void init();
-        void uninit();
-        bool filter_event(const mbus::xevent_ptr_t & e) override;
-        void process_event(const mbus::xevent_ptr_t & e) override;
-    private:
-        xconfig_onchain_loader_t * m_parent;
-    };
 
 private:
     std::mutex m_action_param_mutex;
@@ -54,11 +46,11 @@ private:
     observer_ptr<store::xstore_face_t> m_store_ptr{nullptr};
     observer_ptr<mbus::xmessage_bus_face_t> m_bus{nullptr};
     observer_ptr<time::xchain_time_face_t> m_logic_timer{nullptr};
+    uint64_t m_last_update_height{0};
+    std::map<std::string, std::string> m_last_param_map;
 
     std::multimap<uint64_t, tcc::proposal_info> m_pending_proposed_parameters{};
 
-    uint32_t m_db_id;
-    xconfig_bus_monitor * m_monitor;
 };
 
 NS_END2

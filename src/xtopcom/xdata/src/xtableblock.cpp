@@ -57,6 +57,8 @@ const std::vector<xblock_ptr_t> & xtable_block_t::unpack_and_get_units(bool need
         std::call_once(m_once_unpack_flag, [this] () {
             unpack_proposal_units(m_cache_units);
         });
+    } else {
+        xassert(false);
     }
     return m_cache_units;
 }
@@ -96,6 +98,11 @@ bool  xtable_block_t::extract_sub_blocks(std::vector<xobject_ptr_t<base::xvblock
         sub_blocks.push_back(v);
     }
     return true;
+}
+
+bool xtable_block_t::extract_one_sub_block(uint32_t entity_id, const std::string & extend_cert, const std::string & extend_data, xobject_ptr_t<xvblock_t> & sub_block) {
+    sub_block = xlighttable_build_t::unpack_one_unit_from_table(this, entity_id, extend_cert, extend_data);
+    return sub_block != nullptr ? true : false;
 }
 
 NS_END2

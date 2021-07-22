@@ -37,7 +37,8 @@ XINLINE_CONSTEXPR char const * sys_contract_zec_group_assoc_addr{ "T200024uN3e6A
 XINLINE_CONSTEXPR char const * sys_contract_sharding_vote_addr{ "T20000MVfDLsBKVcy1wMp4CoEHWxUeBEAVBL9ZEa" };
 XINLINE_CONSTEXPR char const * sys_contract_sharding_reward_claiming_addr{ "T20000MTotTKfAJRxrfvEwEJvtgCqzH9GkpMmAUg" };
 
-XINLINE_CONSTEXPR char const * sys_contract_beacon_table_block_addr{ "Ta00013T7BKn5pP8Zi3K5z2Z5BQuSXTf5u37Se79x" };
-XINLINE_CONSTEXPR char const * sys_contract_zec_table_block_addr{ "Ta00025E3y1TBsbnvZHcq1eELBBQH4D5tFbg1jQqY" };
-XINLINE_CONSTEXPR char const * sys_contract_sharding_table_block_addr{ "Ta0000gRD2qVpp2S7UpjAsznRiRhbE1qNnhMbEDp" };
+XINLINE_CONSTEXPR char const * sys_contract_beacon_table_block_addr{ "Ta0001" };
+XINLINE_CONSTEXPR char const * sys_contract_zec_table_block_addr{ "Ta0002" };
+XINLINE_CONSTEXPR char const * sys_contract_sharding_table_block_addr{ "Ta0000" };
+
 }  // namespace top

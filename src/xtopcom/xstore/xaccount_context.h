@@ -90,7 +90,7 @@ class xaccount_context_t {
     int32_t merge_pledge_vote_property();
     int32_t insert_pledge_vote_property(xaction_pledge_token_vote& action);
     int32_t redeem_pledge_vote_property(uint64_t num);
-    uint64_t get_top_by_vote(uint64_t vote_num, uint16_t duration) const ;
+    static uint64_t get_top_by_vote(uint64_t vote_num, uint16_t duration);
 
     void deserilize_vote(const std::string& str, uint64_t& vote_num, uint16_t& duration, uint64_t& lock_time);
     std::string serilize_vote(uint64_t vote_num, uint16_t duration, uint64_t lock_time);

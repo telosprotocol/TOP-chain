@@ -149,6 +149,10 @@ do
         CMAKE_EXTRA_OPTIONS+=" -DLEAK_TRACER=ON"
         echo "BUILD WITH LEAK_TRACER tool"
     ;;
+    store_unit_block)
+        CMAKE_EXTRA_OPTIONS+=" -DSTORE_UNIT_BLOCK=ON"
+        echo "BUILD WITH store unit block tool"
+    ;;    
     *)
         CMAKE_EXTRA_OPTIONS=" -DXENABLE_TESTS=OFF -DXENABLE_CODE_COVERAGE=OFF"
     ;;

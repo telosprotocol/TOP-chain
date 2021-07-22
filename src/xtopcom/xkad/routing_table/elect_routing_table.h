@@ -53,7 +53,6 @@ public:
         return local_node_ptr_;
     }
 
-    int SendData(const xbyte_buffer_t & data, const std::string & peer_ip, uint16_t peer_port, uint16_t priority = enum_xpacket_priority_type_priority);
     int SendData(transport::protobuf::RoutingMessage & message, const std::string & peer_ip, uint16_t peer_port);
     int SendData(transport::protobuf::RoutingMessage & message, NodeInfoPtr node_ptr);
     int SendPing(transport::protobuf::RoutingMessage & message, const std::string & peer_ip, uint16_t peer_port);

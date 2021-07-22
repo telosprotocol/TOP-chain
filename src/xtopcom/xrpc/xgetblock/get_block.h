@@ -46,6 +46,7 @@ public:
         REGISTER_QUERY_METHOD(getGeneralInfos);
         REGISTER_QUERY_METHOD(getRootblockInfo);
         REGISTER_QUERY_METHOD(getTimerInfo);
+        REGISTER_QUERY_METHOD(getCGP);
         REGISTER_QUERY_METHOD(getIssuanceDetail);
         REGISTER_QUERY_METHOD(getWorkloadDetail);
 
@@ -91,6 +92,7 @@ public:
     void getAccount();
     uint64_t get_timer_height() const;
     void getTimerInfo();
+    void getCGP();
     void getIssuanceDetail();
     void getWorkloadDetail();
     uint64_t get_timer_clock() const;

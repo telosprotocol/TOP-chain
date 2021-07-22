@@ -7,7 +7,6 @@
 #include "xbase/xcontext.h"
 #include "xbase/xthread.h"
 #include "xvunithub.h"
-#include "xdata/xnative_contract_address.h"
 
 #if defined(ENABLE_METRICS)
 #include "xmetrics/xmetrics.h"
@@ -180,13 +179,7 @@ namespace top
 
         std::string get_parent_table_account_from_unit_account(const base::xvaccount_t & account)
         {
-            // TODO(jimmy) move to xvledger
-            static std::string tableblock_prefix[] = {
-                sys_contract_sharding_table_block_addr,
-                sys_contract_beacon_table_block_addr,
-                sys_contract_zec_table_block_addr
-            };
-            return base::xvaccount_t::make_account_address(tableblock_prefix[account.get_zone_index()], account.get_ledger_subaddr());
+            return base::xvaccount_t::make_table_account_address(account);
         }
 
         /////////////////////////////////new api with better performance by passing base::xvaccount_t
@@ -205,50 +198,20 @@ namespace top
                 return nullptr;
             }
 
-            if(target_index->has_parent_store())//load from parent block
-            {
-                base::xvaccount_t parent_account(get_parent_table_account_from_unit_account(*target_account));
-                base::xauto_ptr<base::xvblock_t> parent_block(load_block_object(parent_account, target_index->get_parent_block_height(), target_index->get_parent_block_viewid(), true, atag));
-                if(!parent_block)
-                {
-                    xerror("xvblockstore_impl::load_block_from_index fail load parent block from unit(%s) at store(%s)",target_index->dump().c_str(),get_store_path().c_str());
-                    return nullptr;
-                }
-
-                std::vector<xobject_ptr_t<base::xvblock_t>> sub_blocks;
-                if(parent_block->extract_sub_blocks(sub_blocks))
-                {
-                    for (auto & unit_block : sub_blocks)
-                    {
-                        if(  (unit_block->get_height()      == target_index->get_height())
-                           &&(unit_block->get_viewid()      == target_index->get_viewid())
-                           &&(unit_block->get_viewtoken()   == target_index->get_viewtoken())
-                           &&(unit_block->get_account()     == target_index->get_account()) )
-                        {
-                            xdbg("xvblockstore_impl::load_block_from_index succ from parent.unit=%s,parent=%s",
-                                 target_index->dump().c_str(),parent_block->dump().c_str());
-                            unit_block->reset_block_flags(target_index->get_block_flags()); // copy bindex flags to block
-                            // target_index->reset_this_block(unit_block.get()); // TODO(jimmy) always not cache unit block
-                            unit_block->add_ref();
-                            return unit_block.get();//transfer ownership to caller
-                        }
-                    }
-                    xerror("xvblockstore_impl::load_block_from_index,fail-found unit(%s) from table block(%s)", target_index->dump().c_str(),parent_block->dump().c_str());
-                }
-                else
-                {
-                    xerror("xvblockstore_impl::load_block_from_index,fail-extract_sub_blocks unit(%s) from table block(%s)", target_index->dump().c_str(),parent_block->dump().c_str());
-                }
-                return nullptr;
-            }
-            else//load from self block
+            // firstly, check self index if has block stored
+            if (target_index->check_block_flag(base::enum_xvblock_flag_stored))//self has stored
             {
                 bool loaded_new_block = false;
-                if(target_index->get_this_block() == NULL) {
+                if(target_index->get_this_block() == NULL) {  // load from db
+                    #ifdef ENABLE_METRICS
+                    XMETRICS_GAUGE((top::metrics::E_SIMPLE_METRICS_TAG)atag, 0);
+                    XMETRICS_GAUGE(metrics::blockstore_blk_load, 0);
+                    #endif                                        
                     loaded_new_block = target_account->load_block_object(target_index, atag);
-                } else {
+                } else {  // load from cache
                     #ifdef ENABLE_METRICS
                     XMETRICS_GAUGE((top::metrics::E_SIMPLE_METRICS_TAG)atag, 1);
+                    XMETRICS_GAUGE(metrics::blockstore_blk_load, 1);
                     #endif
                 }
 
@@ -277,11 +240,72 @@ namespace top
 
                     return raw_block_ptr;
                 }
-                //XTODO, add code to rebuild block from table block
-
-                xerror("xvblockstore_impl::load_block_from_index fail load block object(%s) at store(%s)",target_index->dump().c_str(),m_store_path.c_str());
-                return nullptr;
             }
+            else if (target_index->has_parent_store() // secondly, if has parent block, try to load from parent block.
+                && (false == target_index->get_extend_cert().empty()) 
+                && (false == target_index->get_extend_data().empty()) )
+            {
+                // TODO(jimmy)
+                // 1.load on-demand by ask-full future
+                // 2.unit extend cert and extend data should be set after proved if has parent store
+                base::xvaccount_t parent_account(get_parent_table_account_from_unit_account(*target_account));
+                base::xauto_ptr<base::xvblock_t> parent_block(load_block_object(parent_account, target_index->get_parent_block_height(), target_index->get_parent_block_viewid(), true, atag));
+                if(!parent_block)
+                {
+                    // parent block may deleted for fork block
+                    xwarn("xvblockstore_impl::load_block_from_index fail-load parent block from unit(%s) at store(%s)",target_index->dump().c_str(),get_store_path().c_str());
+                    return nullptr;
+                }
+#if 0  // TODO(jimmy) unpack all sub blocks take more time, so not use this mode
+                std::vector<xobject_ptr_t<base::xvblock_t>> sub_blocks;
+                if(parent_block->extract_sub_blocks(sub_blocks))
+                {
+                    for (auto & sub_block : sub_blocks)
+                    {
+                        if(  (sub_block->get_height()      == target_index->get_height())
+                            &&(sub_block->get_viewid()      == target_index->get_viewid())
+                            &&(sub_block->get_viewtoken()   == target_index->get_viewtoken())
+                            &&(sub_block->get_account()     == target_index->get_account()) )
+                        {
+                            xdbg("xvblockstore_impl::load_block_from_index succ from parent.unit=%s,parent=%s",
+                                    target_index->dump().c_str(),parent_block->dump().c_str());
+                            sub_block->reset_block_flags(target_index->get_block_flags()); // copy bindex flags to block
+                            // target_index->reset_this_block(sub_block.get()); // TODO(jimmy) always not cache unit block
+                            return sub_block.detach();//transfer ownership to caller
+                        }                        
+                    }
+                    xerror("xvblockstore_impl::load_block_from_index,fail-found unit(%s) from table block(%s)", target_index->dump().c_str(),parent_block->dump().c_str());
+                }
+                else
+                {
+                    xerror("xvblockstore_impl::load_block_from_index,fail-extract_sub_blocks unit(%s) from table block(%s)", target_index->dump().c_str(),parent_block->dump().c_str());
+                }
+#else
+                xobject_ptr_t<base::xvblock_t> sub_block;
+                if(parent_block->extract_one_sub_block(target_index->get_parent_block_entity(), target_index->get_extend_cert(), target_index->get_extend_data(), sub_block))
+                {
+                    if(  (sub_block->get_height()      == target_index->get_height())
+                        &&(sub_block->get_viewid()      == target_index->get_viewid())
+                        &&(sub_block->get_viewtoken()   == target_index->get_viewtoken())
+                        &&(sub_block->get_account()     == target_index->get_account()) )
+                    {
+                        xdbg("xvblockstore_impl::load_block_from_index succ from parent.unit=%s,parent=%s",
+                                target_index->dump().c_str(),parent_block->dump().c_str());
+                        sub_block->reset_block_flags(target_index->get_block_flags()); // copy bindex flags to block
+                        target_index->reset_this_block(sub_block.get());
+                        return sub_block.detach();//transfer ownership to caller
+                    }
+                    xerror("xvblockstore_impl::load_block_from_index,fail-found unit(%s) from table block(%s)", target_index->dump().c_str(),parent_block->dump().c_str());
+                }
+                else
+                {
+                    xerror("xvblockstore_impl::load_block_from_index,fail-extract_sub_blocks unit(%s) from table block(%s)", target_index->dump().c_str(),parent_block->dump().c_str());
+                }
+#endif        
+            }
+
+            xerror("xvblockstore_impl::load_block_from_index fail load block object(%s) at store(%s)",target_index->dump().c_str(),m_store_path.c_str());
+            return nullptr;
         }
 
         base::xauto_ptr<base::xvblock_t>    xvblockstore_impl::get_genesis_block(const base::xvaccount_t & account,const int atag)

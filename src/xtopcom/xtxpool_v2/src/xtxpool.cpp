@@ -110,7 +110,7 @@ void xtxpool_t::updata_latest_nonce(const std::string & account_addr, uint64_t l
     return table->updata_latest_nonce(account_addr, latest_nonce);
 }
 
-void xtxpool_t::subscribe_tables(uint8_t zone, uint16_t front_table_id, uint16_t back_table_id) {
+void xtxpool_t::subscribe_tables(uint8_t zone, uint16_t front_table_id, uint16_t back_table_id, common::xnode_type_t node_type) {
     xtxpool_info("xtxpool_t::subscribe_tables zone:%d,front_table_id:%d,back_table_id:%d", zone, front_table_id, back_table_id);
     xassert(zone < enum_xtxpool_table_type_max);
     xassert(front_table_id <= back_table_id);
@@ -118,13 +118,13 @@ void xtxpool_t::subscribe_tables(uint8_t zone, uint16_t front_table_id, uint16_t
     std::shared_ptr<xtxpool_shard_info_t> shard = nullptr;
     std::lock_guard<std::mutex> lck(m_mutex[zone]);
     for (uint32_t i = 0; i < m_shards.size(); i++) {
-        if (m_shards[i]->is_ids_match(zone, front_table_id, back_table_id)) {
+        if (m_shards[i]->is_ids_match(zone, front_table_id, back_table_id, node_type)) {
             shard = m_shards[i];
             break;
         }
     }
     if (shard == nullptr) {
-        shard = std::make_shared<xtxpool_shard_info_t>(zone, front_table_id, back_table_id);
+        shard = std::make_shared<xtxpool_shard_info_t>(zone, front_table_id, back_table_id, node_type);
         m_shards.push_back(shard);
     }
 
@@ -139,10 +139,9 @@ void xtxpool_t::subscribe_tables(uint8_t zone, uint16_t front_table_id, uint16_t
         }
     }
     m_statistic.inc_table_num(add_table_num);
-    shard->subscribe();
 }
 
-void xtxpool_t::unsubscribe_tables(uint8_t zone, uint16_t front_table_id, uint16_t back_table_id) {
+void xtxpool_t::unsubscribe_tables(uint8_t zone, uint16_t front_table_id, uint16_t back_table_id, common::xnode_type_t node_type) {
     xtxpool_info("xtxpool_t::unsubscribe_tables zone:%d,front_table_id:%d,back_table_id:%d", zone, front_table_id, back_table_id);
     xassert(zone < enum_xtxpool_table_type_max);
     xassert(front_table_id <= back_table_id);
@@ -150,15 +149,12 @@ void xtxpool_t::unsubscribe_tables(uint8_t zone, uint16_t front_table_id, uint16
     std::lock_guard<std::mutex> lck(m_mutex[zone]);
     uint32_t remove_table_num = 0;
     for (auto it = m_shards.begin(); it != m_shards.end(); it++) {
-        if ((*it)->is_ids_match(zone, front_table_id, back_table_id)) {
-            (*it)->unsubscribe();
-            if ((*it)->get_sub_count() == 0) {
-                for (uint16_t i = front_table_id; i <= back_table_id; i++) {
-                    m_tables[zone][i]->remove_shard((*it).get());
-                    if (m_tables[zone][i]->no_shard()) {
-                        m_tables[zone][i] = nullptr;
-                        remove_table_num++;
-                    }
+        if ((*it)->is_ids_match(zone, front_table_id, back_table_id, node_type)) {
+            for (uint16_t i = front_table_id; i <= back_table_id; i++) {
+                m_tables[zone][i]->remove_shard((*it).get());
+                if (m_tables[zone][i]->no_shard()) {
+                    m_tables[zone][i] = nullptr;
+                    remove_table_num++;
                 }
             }
             m_shards.erase(it);
@@ -181,28 +177,32 @@ void xtxpool_t::on_block_confirmed(xblock_t * block) {
     table->on_block_confirmed(block);
 }
 
-int32_t xtxpool_t::verify_txs(const std::string & account, const std::vector<xcons_transaction_ptr_t> & txs, uint64_t latest_commit_unit_height) {
+int32_t xtxpool_t::verify_txs(const std::string & account, const std::vector<xcons_transaction_ptr_t> & txs) {
     auto table = get_txpool_table_by_addr(account);
     if (table == nullptr) {
         return xtxpool_error_account_not_in_charge;
     }
 
-    return table->verify_txs(account, txs, latest_commit_unit_height);
+    return table->verify_txs(account, txs);
 }
 
 const std::vector<xcons_transaction_ptr_t> xtxpool_t::get_resend_txs(uint8_t zone, uint16_t subaddr, uint64_t now) {
-    xassert(is_table_subscribed(zone, subaddr));
-    xassert(m_tables[zone][subaddr] != nullptr);
-    if (m_tables[zone][subaddr] != nullptr) {
+    if (!is_table_subscribed(zone, subaddr)) {
+        return {};
+    }
+    auto table = m_tables[zone][subaddr];
+    if (table != nullptr) {
         return m_tables[zone][subaddr]->get_resend_txs(now);
     }
     return {};
 }
 
 void xtxpool_t::refresh_table(uint8_t zone, uint16_t subaddr, bool refresh_unconfirm_txs) {
-    xassert(is_table_subscribed(zone, subaddr));
-    xassert(m_tables[zone][subaddr] != nullptr);
-    if (m_tables[zone][subaddr] != nullptr) {
+    if (!is_table_subscribed(zone, subaddr)) {
+        return;
+    }
+    auto table = m_tables[zone][subaddr];
+    if (table != nullptr) {
         m_tables[zone][subaddr]->refresh_table(refresh_unconfirm_txs);
     }
 }
@@ -234,27 +234,33 @@ xcons_transaction_ptr_t xtxpool_t::get_unconfirmed_tx(const std::string & from_t
 }
 
 const std::vector<xtxpool_table_lacking_receipt_ids_t> xtxpool_t::get_lacking_recv_tx_ids(uint8_t zone, uint16_t subaddr, uint32_t max_num) const {
-    xassert(is_table_subscribed(zone, subaddr));
-    xassert(m_tables[zone][subaddr] != nullptr);
-    if (m_tables[zone][subaddr] != nullptr) {
+    if (!is_table_subscribed(zone, subaddr)) {
+        return {};
+    }
+    auto table = m_tables[zone][subaddr];
+    if (table != nullptr) {
         return m_tables[zone][subaddr]->get_lacking_recv_tx_ids(max_num);
     }
     return {};
 }
 
 const std::vector<xtxpool_table_lacking_confirm_tx_hashs_t> xtxpool_t::get_lacking_confirm_tx_hashs(uint8_t zone, uint16_t subaddr, uint32_t max_num) const {
-    xassert(is_table_subscribed(zone, subaddr));
-    xassert(m_tables[zone][subaddr] != nullptr);
-    if (m_tables[zone][subaddr] != nullptr) {
+    if (!is_table_subscribed(zone, subaddr)) {
+        return {};
+    }
+    auto table = m_tables[zone][subaddr];
+    if (table != nullptr) {
         return m_tables[zone][subaddr]->get_lacking_confirm_tx_hashs(max_num);
     }
     return {};
 }
 
 bool xtxpool_t::need_sync_lacking_receipts(uint8_t zone, uint16_t subaddr) const {
-    xassert(is_table_subscribed(zone, subaddr));
-    xassert(m_tables[zone][subaddr] != nullptr);
-    if (m_tables[zone][subaddr] != nullptr) {
+    if (!is_table_subscribed(zone, subaddr)) {
+        return false;
+    }
+    auto table = m_tables[zone][subaddr];
+    if (table != nullptr) {
         return m_tables[zone][subaddr]->need_sync_lacking_receipts();
     }
     return false;

@@ -12,6 +12,7 @@
 #include "xblockstore/xblockstore_face.h"
 #include "xcertauth/xcertauth_face.h"
 #include "xchain_timer/xchain_timer.h"
+#include "xchain_upgrade/xchain_data_processor.h"
 #include "xcodec/xmsgpack_codec.hpp"
 #include "xcommon/xip.h"
 #include "xconfig/xpredefined_configurations.h"
@@ -75,7 +76,7 @@ void xtop_application::start() {
     contract::xcontract_deploy_t::instance().deploy_sys_contracts();
     contract::xcontract_manager_t::instance().instantiate_sys_contracts();
     contract::xcontract_manager_t::instance().setup_blockchains(m_blockstore.get());
-
+    chain_data::xchain_data_processor_t::release();
     // load configuration first
     auto loader = std::make_shared<loader::xconfig_onchain_loader_t>(make_observer(m_store), make_observer(m_bus.get()), make_observer(m_logic_timer));
     config::xconfig_register_t::get_instance().add_loader(loader);
@@ -249,7 +250,29 @@ bool xtop_application::check_rootblock() {
     return true;
 }
 
+bool xtop_application::preprocess_accounts_data() {
+    if (chain_data::xtop_chain_data_processor::check_state()) {
+        return true;
+    }
+    std::vector<chain_data::data_processor_t> user_data;
+    chain_data::xchain_data_processor_t::get_all_user_data(user_data);
+    for (auto const & data : user_data) {
+        if (!create_genesis_account(data.address, data)) {
+            xassert(0);
+            return false;
+        }
+    }
+    if (chain_data::xtop_chain_data_processor::set_state()) {
+        return true;
+    }
+    return false;
+}
+
 bool xtop_application::create_genesis_accounts() {
+    if (!preprocess_accounts_data()) {
+        xwarn("xtop_application::create_genesis_accounts preprocess_accounts_data failed");
+        return false;
+    }
     std::map<std::string, uint64_t> genesis_accounts = xrootblock_t::get_all_genesis_accounts();
     for (auto const & pair : genesis_accounts) {
         common::xaccount_address_t account_address{pair.first};
@@ -270,6 +293,37 @@ bool xtop_application::create_genesis_accounts() {
 bool xtop_application::create_genesis_account(std::string const & address, uint64_t const init_balance) {
     xdbg("xtop_application::create_genesis_account address=%s balance=%ld", address.c_str(), init_balance);
     base::xauto_ptr<base::xvblock_t> genesis_block = data::xblocktool_t::create_genesis_lightunit(address, init_balance);
+    xassert(genesis_block != nullptr);
+    base::xvaccount_t _vaddr(address);
+    // m_blockstore->delete_block(_vaddr, genesis_block.get());  // delete default genesis block
+    auto ret = m_blockstore->store_block(_vaddr, genesis_block.get());
+    if (!ret) {
+        xerror("xtop_application::create_genesis_account store genesis block fail");
+        return false;
+    }
+    ret = m_blockstore->execute_block(_vaddr, genesis_block.get());
+    if (!ret) {
+        xerror("xtop_application::create_genesis_account execute genesis block fail");
+        return false;
+    }
+    return true;
+}
+
+bool xtop_application::create_genesis_account(std::string const & address, chain_data::data_processor_t const & data) {
+    xdbg("xtop_application::create_genesis_account address=%s balance=%ld burn_balance=%ld tgas_balance=%ld vote_balance=%ld lock_balance=%ld lock_tgas=%ld unvote_num=%ld expire_vote=%ld create_time=%ld lock_token=%ld pledge_vote_str_cnt=%ld",
+         address.c_str(),
+         data.top_balance,
+         data.burn_balance,
+         data.tgas_balance,
+         data.vote_balance,
+         data.lock_balance,
+         data.lock_tgas,
+         data.unvote_num,
+         data.expire_vote,
+         data.create_time,
+         data.lock_token,
+         data.pledge_vote.size());
+    base::xauto_ptr<base::xvblock_t> genesis_block = data::xblocktool_t::create_genesis_lightunit(address, data);
     xassert(genesis_block != nullptr);
     base::xvaccount_t _vaddr(address);
     // m_blockstore->delete_block(_vaddr, genesis_block.get());  // delete default genesis block

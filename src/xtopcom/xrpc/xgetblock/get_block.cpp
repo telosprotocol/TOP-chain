@@ -170,6 +170,14 @@ uint64_t get_block_handle::get_timer_height() const {
     }
 }
 
+void get_block_handle::getCGP() {
+    xJson::Value j;
+    std::string addr = sys_contract_rec_tcc_addr;
+    std::string prop_name = ONCHAIN_PARAMS;
+    query_account_property(j, addr, prop_name);
+    m_js_rsp["value"] = j[prop_name];
+}
+
 void get_block_handle::getTimerInfo() {
     xJson::Value j;
     auto timer_clock = get_timer_clock();
@@ -1118,6 +1126,12 @@ bool query_special_property(xJson::Value & jph, const std::string & owner, const
             xdbg("pledge_redeem_vote %d, %d, %d", vote_num, duration, lock_time);
             xJson::Value j;
             j["vote_num"] = static_cast<unsigned long long>(vote_num);
+            if (duration != 0)
+                j["lock_token"] = static_cast<unsigned long long>(xaccount_context_t::get_top_by_vote(vote_num, duration));
+            else {
+                auto propobj_str = unitstate->get_bstate()->load_string_var(XPROPERTY_EXPIRE_VOTE_TOKEN_KEY);
+                j["lock_token"] = propobj_str->query();
+            }
             j["duration"] = duration;
             j["lock_time"] = static_cast<unsigned long long>(lock_time);
             jph[XPROPERTY_PLEDGE_VOTE_KEY].append(j);

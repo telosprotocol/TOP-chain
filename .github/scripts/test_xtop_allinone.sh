@@ -52,7 +52,16 @@ if [[ -z ${ret} ]];then
 fi
 echo "hit log, genesis success"
 echo "====== test tx ======"
-login_info=$(./topio wallet setDefaultAccount T00000Lhj29VReFAT958ZqFWZ2ZdMLot2PS5D5YC)
+accounts_info=$(./topio wallet listaccounts)
+balance=$(echo "${accounts_info}"|grep T00000Lhj29VReFAT958ZqFWZ2ZdMLot2PS5D5YC -A 3|grep balance)
+if [[ ${balance} != "balance: 2999997000.000000 TOP" ]];then
+    echo "check god balance fail, see follow output:"
+    echo "${accounts_info}"
+    sh ${clear} -o archive -i ${NUM} -d ${workdir}
+    exit -1
+fi
+sleep 1
+login_info=$(./topio node safebox; ./topio wallet setDefaultAccount T00000Lhj29VReFAT958ZqFWZ2ZdMLot2PS5D5YC)
 login_ret=$(echo "${login_info}"|grep "successfully"|wc -l)
 if [[ ${login_ret} -eq 1 ]];then
     echo "set default account success"
@@ -63,14 +72,6 @@ else
     exit -1
 fi
 sleep 1
-accounts_info=$(./topio wallet listaccounts)
-balance=$(echo "${accounts_info}"|grep T00000Lhj29VReFAT958ZqFWZ2ZdMLot2PS5D5YC -A 3|grep balance)
-if [[ ${balance} != "balance: 2999997000.000000 TOP" ]];then
-    echo "check god balance fail, see follow output:"
-    echo "${accounts_info}"
-    sh ${clear} -o archive -i ${NUM} -d ${workdir}
-    exit -1
-fi
 create_info=$(./topio wallet createaccount)
 addr=$(echo "${create_info}" | grep -a "Account Address:"|awk -F ':' '{print $2}')
 if [[ -z ${addr} ]];then

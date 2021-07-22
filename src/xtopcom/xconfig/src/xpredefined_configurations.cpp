@@ -19,6 +19,7 @@ NS_BEG2(top, config)
         constexpr xtop_##NAME##_onchain_goverance_parameter::type xtop_##NAME##_onchain_goverance_parameter::value
 
 XDEFINE_CONFIGURATION(chain_name);
+XDEFINE_CONFIGURATION(root_hash);
 XDEFINE_CONFIGURATION(global_timer_interval);
 XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(rec_election_interval);
 XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(zec_election_interval);
@@ -51,11 +52,11 @@ XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(tx_send_timestamp_tolerance);
 
 XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(min_tcc_proposal_deposit);
 XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(tcc_proposal_expire_time);
-XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(tcc_member_number);
+XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(tcc_member);
 
 XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(beacon_tx_fee);
 XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(total_gas_shard);
-XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(min_free_gas_balance);
+XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(min_free_gas_asset);
 XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(free_gas);
 XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(tx_deposit_gas_exchange_ratio);
 XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(cpu_gas_exchange_ratio);

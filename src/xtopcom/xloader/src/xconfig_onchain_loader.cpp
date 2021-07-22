@@ -2,9 +2,12 @@
 
 #include "xbase/xlog.h"
 #include "xbase/xutl.h"
-#include "xvledger/xvledger.h"
 #include "xbasic/xmap_utl.hpp"
+#include "xblockstore/xblockstore_face.h"
+#include "xvledger/xvledger.h"
 #include "xconfig/xconfig_update_parameter_action.h"
+#include "xconfig/xconfig_register.h"
+#include "xdata/xblocktool.h"
 #include "xdata/xgenesis_data.h"
 #include "xdata/xproposal_data.h"
 #include "xdata/xelect_transaction.hpp"
@@ -19,70 +22,31 @@ NS_BEG2(top, loader)
 xconfig_onchain_loader_t::xconfig_onchain_loader_t(observer_ptr<store::xstore_face_t> const &     store_ptr,
                                                    observer_ptr<mbus::xmessage_bus_face_t> const &     bus,
                                                    observer_ptr<time::xchain_time_face_t> const & logic_timer)
-  : m_store_ptr{store_ptr}, m_bus{bus}, m_logic_timer{logic_timer}, m_monitor(nullptr) {
+  : m_store_ptr{store_ptr}, m_bus{bus}, m_logic_timer{logic_timer} {
     // create actions
     m_action_map[UPDATE_ACTION_PARAMETER] = std::make_shared<config::xconfig_update_parameter_action_t>();
     m_action_map[XPROPOSAL_TYPE_TO_STR(tcc::proposal_type::proposal_update_parameter_incremental_add)] = std::make_shared<config::xconfig_incremental_add_update_parameter_action_t>();
     m_action_map[XPROPOSAL_TYPE_TO_STR(tcc::proposal_type::proposal_update_parameter_incremental_delete)] = std::make_shared<config::xconfig_incremental_delete_update_parameter_action_t>();
     m_action_map[XPROPOSAL_TYPE_TO_STR(tcc::proposal_type::proposal_add_parameter)] = std::make_shared<config::xconfig_add_parameter_action_t>();
     m_action_map[XPROPOSAL_TYPE_TO_STR(tcc::proposal_type::proposal_delete_parameter)] = std::make_shared<config::xconfig_delete_parameter_action_t>();
+
+    // set initial onchain param
+    xtcc_transaction_ptr_t tcc_genesis = std::make_shared<xtcc_transaction_t>();
+    m_last_param_map = tcc_genesis->m_initial_values;
 }
 
 void xconfig_onchain_loader_t::start() {
     assert(m_bus);
-    // register block event listener
-    if (m_monitor == nullptr) {
-        m_monitor = new xconfig_bus_monitor(this);
-        m_monitor->init();
-    }
-
-    m_logic_timer->watch("xconfig_onchain_parameter_loader", 1, std::bind(&xconfig_onchain_loader_t::chain_timer, shared_from_this(), std::placeholders::_1));
+    m_logic_timer->watch("xconfig_onchain_parameter_loader", 1, std::bind(&xconfig_onchain_loader_t::update_onchain_param, shared_from_this(), std::placeholders::_1));
 }
 
 void xconfig_onchain_loader_t::stop() {
     // unregister block event listener
     assert(m_bus != nullptr);
-    if (m_monitor != nullptr) {
-        m_monitor->uninit();
-        delete m_monitor;
-        m_monitor = nullptr;
-    }
-}
-
-xconfig_onchain_loader_t::xconfig_bus_monitor::xconfig_bus_monitor(xconfig_onchain_loader_t* parent)
-    : xbase_sync_event_monitor_t(parent->m_bus) ,m_parent(parent) {
-}
-
-xconfig_onchain_loader_t::xconfig_bus_monitor::~xconfig_bus_monitor() {
-    m_parent = nullptr;
-}
-
-void xconfig_onchain_loader_t::xconfig_bus_monitor::init() {
-    mbus::xevent_queue_cb_t cb = std::bind(&xconfig_onchain_loader_t::xconfig_bus_monitor::push_event, this, std::placeholders::_1);
-    m_reg_holder.add_listener((int) mbus::xevent_major_type_store, cb);
-}
-
-void xconfig_onchain_loader_t::xconfig_bus_monitor::uninit() {
-    m_reg_holder.clear();
-}
-
-bool xconfig_onchain_loader_t::xconfig_bus_monitor::filter_event(const mbus::xevent_ptr_t & e) {
-    if (e->minor_type != mbus::xevent_store_t::type_block_to_db) {
-        return false;
-    }
-    mbus::xevent_store_block_to_db_ptr_t block_event = dynamic_xobject_ptr_cast<mbus::xevent_store_block_to_db_t>(e);
-    std::string & owner = block_event->owner;
-    return owner == sys_contract_rec_tcc_addr;
-}
-
-void xconfig_onchain_loader_t::xconfig_bus_monitor::process_event(const mbus::xevent_ptr_t & e) {
-    if (m_parent != nullptr) {
-        m_parent->update(e);
-    }
 }
 
 void xconfig_onchain_loader_t::update(mbus::xevent_ptr_t e) {
-    if (e->minor_type != mbus::xevent_store_t::type_block_to_db) {
+if (e->minor_type != mbus::xevent_store_t::type_block_to_db) {
         return;
     }
 
@@ -229,6 +193,82 @@ void xconfig_onchain_loader_t::chain_timer(common::xlogic_time_t time) {
             }
         }
     }
+}
+
+void xconfig_onchain_loader_t::update_onchain_param(common::xlogic_time_t time) {
+    xdbg("xconfig_onchain_loader_t::update_onchain_param,  logic time is %" PRIu64, time);
+    std::lock_guard<std::mutex> lock(m_action_param_mutex);
+
+    auto block =  data::xblocktool_t::get_latest_connectted_light_block(store::get_vblockstore(), std::string{sys_contract_rec_tcc_addr});
+    if (block == nullptr) {
+        xdbg("xconfig_onchain_loader_t::update_onchain_param latest connected light block null");
+        return;
+    }
+
+    if (block->get_height() < m_last_update_height) {
+        xdbg("xconfig_onchain_loader_t::update_onchain_param, height=%" PRIu64 ", last_update_height: %" PRIu64, block->get_height(), m_last_update_height);
+        return;
+    }
+
+    xdbg("xconfig_onchain_loader_t::update_onchain_param, current light height=%ld", block->get_height());
+
+    m_last_update_height = block->get_height();
+    base::xauto_ptr<base::xvbstate_t> _bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(block.get(), metrics::statestore_access_from_xconfig_update);
+    if (nullptr == _bstate) {
+        xwarn("xconfig_onchain_loader_t::update_onchain_param get target state fail.block=%s", block->dump().c_str());
+        return;
+    }
+    data::xunit_bstate_t state(_bstate.get());
+
+    std::map<std::string, std::string> params;
+    state.map_get(ONCHAIN_PARAMS, params);
+
+    if (params.empty()) {
+        xwarn("xconfig_onchain_loader_t::update_onchain_param, get params map fail.");
+        return;
+    }
+
+    if (!m_last_param_map.empty() && !onchain_param_changed(params)) {
+        xinfo("xconfig_onchain_loader_t::update_onchain_param, param map no changed.");
+        return;
+    }
+
+    std::map<std::string, std::string> changed_param;
+    filter_changes(params, changed_param);
+    config::xconfig_register_t::get_instance().update_cache_and_persist(changed_param);
+    m_last_param_map = params;
+    xdbg("xconfig_onchain_loader_t::update_onchain_param, update param sucessfully");
+}
+
+void xconfig_onchain_loader_t::filter_changes(std::map<std::string, std::string> const& map, std::map<std::string, std::string>& filterd_map) {
+    for (auto& entry : map) {
+        if (!entry.first.empty() && !entry.second.empty()) {
+            if (is_param_changed(entry.first, entry.second)) {
+                filterd_map[entry.first] = entry.second;
+            }
+        }
+    }
+}
+
+bool xconfig_onchain_loader_t::is_param_changed(std::string const& key, std::string const& value) {
+    auto it = m_last_param_map.find(key);
+    if (it == m_last_param_map.end()) {
+        return true;
+    }
+
+    return it->second != value;
+}
+
+bool xconfig_onchain_loader_t::onchain_param_changed(std::map<std::string, std::string> const& params) {
+    using value_pair = std::pair<std::string, std::string>;
+    auto is_same = params.size() == m_last_param_map.size() &&
+            std::equal(m_last_param_map.begin(), m_last_param_map.end(), params.begin(), [](value_pair const& lhs, value_pair const& rhs){
+            #ifdef DEBUG
+                xdbg("xconfig_onchain_loader_t::update_onchain_param, 1: %s,%s; 2: %s,%s\n", lhs.first.c_str(), lhs.second.c_str(), rhs.first.c_str(), rhs.second.c_str());
+            #endif
+                return lhs.first == rhs.first && lhs.second == rhs.second;
+            });
+    return !is_same;
 }
 
 config::xconfig_update_action_ptr_t xconfig_onchain_loader_t::find(const std::string & type) {

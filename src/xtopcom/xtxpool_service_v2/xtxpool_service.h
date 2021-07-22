@@ -38,7 +38,7 @@ public:
     bool is_receipt_sender(const xtable_id_t & tableid) const override;
     bool is_send_receipt_role() const override {return m_is_send_receipt_role;}
     bool table_boundary_equal_to(std::shared_ptr<xtxpool_service_face> & service) const override;
-    void get_service_table_boundary(base::enum_xchain_zone_index & zone_id, uint32_t & fount_table_id, uint32_t & back_table_id) const override;
+    void get_service_table_boundary(base::enum_xchain_zone_index & zone_id, uint32_t & fount_table_id, uint32_t & back_table_id, common::xnode_type_t & node_type) const override;
     void resend_receipts(uint64_t now) override;
     int32_t request_transaction_consensus(const data::xtransaction_ptr_t & tx, bool local) override;
     xcons_transaction_ptr_t query_tx(const std::string & account, const uint256_t & hash) const override {
@@ -73,6 +73,7 @@ private:
     uint16_t m_cover_front_table_id;  // [m_front_table_id,m_back_table_id) is the scope for this service
     uint16_t m_cover_back_table_id;   // present empty if m_front_table_id == m_back_table_id
     base::enum_xchain_zone_index m_zone_index;
+    common::xnode_type_t m_node_type;
     uint16_t m_node_id;
     uint16_t m_shard_size;
     volatile bool m_running{false};

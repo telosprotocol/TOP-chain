@@ -73,7 +73,7 @@ public:
     void updata_latest_nonce(const std::string & account_addr, uint64_t latest_nonce);
     const std::vector<xcons_transaction_ptr_t> get_resend_txs(uint64_t now);
     void on_block_confirmed(xblock_t * table_block);
-    int32_t verify_txs(const std::string & account, const std::vector<xcons_transaction_ptr_t> & txs, uint64_t latest_commit_unit_height);
+    int32_t verify_txs(const std::string & account, const std::vector<xcons_transaction_ptr_t> & txs);
     void refresh_table(bool refresh_unconfirm_txs);
     // void update_non_ready_accounts();
     void update_table_state(const data::xtablestate_ptr_t & table_state);
@@ -89,7 +89,6 @@ public:
 
 private:
     bool is_account_need_update(const std::string & account_addr) const;
-    // bool is_unconfirm_txs_reached_upper_limit() const;
     int32_t verify_tx_common(const xcons_transaction_ptr_t & tx) const;
     int32_t verify_send_tx(const xcons_transaction_ptr_t & tx) const;
     int32_t verify_receipt_tx(const xcons_transaction_ptr_t & tx) const;
@@ -97,6 +96,9 @@ private:
     bool get_account_latest_nonce(const std::string account_addr, uint64_t & latest_nonce) const;
     bool  get_account_basic_info(const std::string & account, xaccount_basic_info_t & account_index_info) const;
     void update_id_state(const tx_info_t & txinfo, base::xtable_shortid_t peer_table_sid, uint64_t receiptid, uint64_t nonce);
+    bool is_reach_limit(const std::shared_ptr<xtx_entry> & tx) const;
+    int32_t push_send_tx_real(const std::shared_ptr<xtx_entry> & tx);
+    int32_t push_receipt_real(const std::shared_ptr<xtx_entry> & tx);
 
     xtxpool_resources_face * m_para;
     xtxpool_table_info_t m_xtable_info;

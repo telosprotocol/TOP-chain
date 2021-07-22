@@ -78,7 +78,7 @@ xcons_proxy_face_ptr xcons_service_mgr::create(const std::shared_ptr<vnetwork::x
 // destroy useless cons services by networkdriver, call by vnode manager while detemine some service useless
 // must call uninit before
 bool xcons_service_mgr::destroy(const xvip2_t & xip) {
-    auto                                             key_ = xcons_utl::erase_version(xip);
+    auto key_ = xcons_utl::erase_version(xip);
     xunit_info("xcons_service_mgr::destroy %s %p", xcons_utl::xip_to_hex(xip).c_str(), this);
     std::vector<std::shared_ptr<xcons_service_face>> services;
     {
@@ -99,6 +99,8 @@ bool xcons_service_mgr::destroy(const xvip2_t & xip) {
             service->destroy(xip);
         }
         services.clear();
+    } else {
+        xunit_info("xcons_service_mgr::destroy xip not found %s %p", xcons_utl::xip_to_hex(xip).c_str(), this);
     }
     // erase reference network
     m_network_proxy->erase(xip);

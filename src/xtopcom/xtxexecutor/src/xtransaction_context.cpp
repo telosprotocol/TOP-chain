@@ -222,7 +222,7 @@ int32_t xtransaction_face_t::source_confirm_fee_exec() {
 
 int32_t xtransaction_run_contract::source_fee_exec() {
 #if defined(XENABLE_MOCK_ZEC_STAKE)
-    if (is_sys_contract_address(common::xaccount_address_t{ m_trans->get_target_addr() }) && (m_target_action.m_function_name == "nodeJoinNetwork")) {
+    if (is_sys_contract_address(common::xaccount_address_t{ m_trans->get_target_addr() }) && (m_target_action.m_function_name == "nodeJoinNetwork2")) {
         m_account_ctx->token_deposit(XPROPERTY_BALANCE_AVAILABLE, base::vtoken_t(10000000000));
     }
 #endif

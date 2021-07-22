@@ -81,12 +81,12 @@ xblock_ptr_t xproposal_maker_t::make_proposal(data::xblock_consensus_para_t & pr
         return nullptr;
     }
 
-    xtablemaker_result_t tablemaker_result;
-    xblock_ptr_t proposal_block = m_table_maker->make_proposal(table_para, proposal_para, tablemaker_result);
+    xtablemaker_result_t table_result;
+    xblock_ptr_t proposal_block = m_table_maker->make_proposal(table_para, proposal_para, table_result);
     if (proposal_block == nullptr) {
-        if (xblockmaker_error_no_need_make_table != tablemaker_result.m_make_block_error_code) {
+        if (xblockmaker_error_no_need_make_table != table_result.m_make_block_error_code) {
             xwarn("xproposal_maker_t::make_proposal fail-make_proposal.%s error_code=%s",
-                proposal_para.dump().c_str(), chainbase::xmodule_error_to_str(tablemaker_result.m_make_block_error_code).c_str());
+                proposal_para.dump().c_str(), chainbase::xmodule_error_to_str(table_result.m_make_block_error_code).c_str());
         } else {
             xinfo("xproposal_maker_t::make_proposal no need make table.%s",
                 proposal_para.dump().c_str());
@@ -104,7 +104,11 @@ xblock_ptr_t xproposal_maker_t::make_proposal(data::xblock_consensus_para_t & pr
     proposal_block->get_input()->set_proposal(proposal_input_str);
     bool bret = proposal_block->reset_prev_block(latest_cert_block.get());
     xassert(bret);
-    xdbg("xproposal_maker_t::make_proposal succ.%s,proposal_block=%s", proposal_para.dump().c_str(), proposal_block->dump().c_str());
+    xinfo("xproposal_maker_t::make_proposal succ.proposal_block=%s,units_info={total=%d,fail=%d,succ=%d,empty=%d,light=%d,full=%d},txs_info={txpool=%d,ufm=%d,total=%d,self=%d,send=%d,recv=%d,confirm=%d},proposal_input={size=%zu,txs=%zu,accounts=%zu}", 
+        proposal_block->dump().c_str(),
+        table_result.m_total_unit_num, table_result.m_fail_unit_num, table_result.m_succ_unit_num, table_result.m_empty_unit_num, table_result.m_light_unit_num, table_result.m_full_unit_num,
+        table_para.get_origin_txs().size(), tablestate->get_unconfirm_tx_num(), table_result.m_total_tx_num, table_result.m_self_tx_num, table_result.m_send_tx_num, table_result.m_recv_tx_num, table_result.m_confirm_tx_num,
+        proposal_input_str.size(), proposal_input->get_input_txs().size(), proposal_input->get_other_accounts().size());
     return proposal_block;
 }
 
@@ -262,6 +266,11 @@ bool xproposal_maker_t::verify_proposal_input(base::xvblock_t *proposal_block, x
     if (origin_txs.empty() && other_accounts.empty()) {
         xerror("xproposal_maker_t::verify_proposal_input fail-table proposal input empty. proposal=%s",
             proposal_block->dump().c_str());
+        return false;
+    }
+
+    ret = get_txpool()->verify_txs(get_account(), origin_txs);
+    if (ret != xsuccess) {
         return false;
     }
 

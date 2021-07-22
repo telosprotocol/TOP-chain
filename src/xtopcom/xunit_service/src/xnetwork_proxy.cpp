@@ -274,9 +274,20 @@ bool xnetwork_proxy::erase(const xvip2_t & addr) {
             xunit_info("[xunitservice] network erase %s %p", xcons_utl::xip_to_hex(addr).c_str(), &(iter->second));
             m_networks.erase(iter);
             return true;
-        } else {
-            xunit_info("[xunitservice] network erase %s failed", xcons_utl::xip_to_hex(addr).c_str());
         }
+
+        for (auto iter = m_networks.begin(); iter != m_networks.end(); iter++) {
+            auto & network_xip = iter->first;
+            common::xip2_t const group_xip2 = common::xip2_t{network_xip}.sharding();
+            xvip2_t network_group_xip = {group_xip2.raw_low_part(), group_xip2.raw_high_part()};
+            if (xcons_utl::xip_equals(addr, network_group_xip)) {
+                xunit_info("[xunitservice] network erase %s %p", xcons_utl::xip_to_hex(addr).c_str(), &(iter->second));
+                m_networks.erase(iter);
+                return true;
+            }
+        }
+
+        xunit_info("[xunitservice] network erase %s failed", xcons_utl::xip_to_hex(addr).c_str());
     }
     return false;
 }

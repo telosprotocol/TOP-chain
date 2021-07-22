@@ -21,6 +21,7 @@ xvip2_t xcons_utl::erase_version(const xvip2_t & xip) {
     // We don't use network version field for now.
     // but in case some peer node modifies this field, any correct node should force obey this rule.
     reset_network_ver_to_xip2(xip_copy);
+    set_node_id_to_xip2(xip_copy, 0xFFF);
     return xip_copy;
 }
 

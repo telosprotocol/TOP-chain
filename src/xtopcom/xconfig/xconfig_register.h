@@ -124,13 +124,13 @@ public:
 
     void update_params(const std::map<std::string, std::string>& map);
     void add_delete_params(const std::map<std::string, std::string>& content_map, bool add = true); // default add param
+    void update_cache_and_persist(const std::map<std::string, std::string>& filterd_map);
 
     static xconfig_register_t& get_instance();
 
 private:
     void filter_changes(const std::map<std::string, std::string>& map,
             std::map<std::string, std::string>& filterd_map);
-    void update_cache_and_persist(const std::map<std::string, std::string>& filterd_map);
     bool is_param_changed(const std::string& key, const std::string& value);
 private:
     std::mutex m_listener_lock {};

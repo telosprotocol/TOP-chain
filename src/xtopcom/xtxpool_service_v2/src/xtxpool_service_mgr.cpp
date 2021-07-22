@@ -58,7 +58,7 @@ void xtxpool_service_mgr::on_block_to_db_event(mbus::xevent_ptr_t e) {
 
     auto event_handler = [this, e](base::xcall_t & call, const int32_t cur_thread_id, const uint64_t timenow_ms) -> bool {
         mbus::xevent_store_block_committed_ptr_t block_event = dynamic_xobject_ptr_cast<mbus::xevent_store_block_committed_t>(e);
-        const xblock_ptr_t & block = mbus::extract_block_from(block_event,metrics::blockstore_access_from_mbus_txpool_db_event_on_block);
+        const xblock_ptr_t & block = mbus::extract_block_from(block_event, metrics::blockstore_access_from_mbus_txpool_db_event_on_block);
         base::xvaccount_t _vaccount(block->get_account());
         // TODO(jimmy) load block input for get raw tx nonce
         if (false == base::xvchain_t::instance().get_xblockstore()->load_block_input(_vaccount, block.get(), metrics::blockstore_access_from_txpool_on_block_event)) {
@@ -102,8 +102,9 @@ xtxpool_proxy_face_ptr xtxpool_service_mgr::create(const std::shared_ptr<vnetwor
     base::enum_xchain_zone_index zone_id;
     uint32_t fount_table_id;
     uint32_t back_table_id;
-    txpool_service->get_service_table_boundary(zone_id, fount_table_id, back_table_id);
-    m_para->get_txpool()->subscribe_tables(zone_id, fount_table_id, back_table_id);
+    common::xnode_type_t node_type;
+    txpool_service->get_service_table_boundary(zone_id, fount_table_id, back_table_id, node_type);
+    m_para->get_txpool()->subscribe_tables(zone_id, fount_table_id, back_table_id, node_type);
 
     return std::make_shared<xtxpool_proxy>(xip, vnet_driver, this->shared_from_this(), txpool_service);
 }
@@ -118,12 +119,13 @@ bool xtxpool_service_mgr::destroy(const xvip2_t & xip) {
     base::enum_xchain_zone_index zone_id;
     uint32_t fount_table_id;
     uint32_t back_table_id;
+    common::xnode_type_t node_type;
     {
         std::lock_guard<std::mutex> lock(m_mutex);
         auto iter = m_service_map.find(key);
         if (iter != m_service_map.end()) {
             auto txpool_service = iter->second;
-            txpool_service->get_service_table_boundary(zone_id, fount_table_id, back_table_id);
+            txpool_service->get_service_table_boundary(zone_id, fount_table_id, back_table_id, node_type);
             need_cleanup = true;
             m_service_map.erase(iter);
         }
@@ -131,7 +133,9 @@ bool xtxpool_service_mgr::destroy(const xvip2_t & xip) {
 
     if (need_cleanup) {
         // clear txpool tables corresponding to this service
-        m_para->get_txpool()->unsubscribe_tables(zone_id, fount_table_id, back_table_id);
+        m_para->get_txpool()->unsubscribe_tables(zone_id, fount_table_id, back_table_id, node_type);
+    } else {
+        xinfo("xtxpool_service_mgr::destroy xip not found:{%" PRIu64 ", %" PRIu64 "}", xip.high_addr, xip.low_addr);
     }
 
     return true;
@@ -224,7 +228,8 @@ void xtxpool_service_mgr::on_timer() {
                 base::enum_xchain_zone_index zone_id;
                 uint32_t fount_table_id;
                 uint32_t back_table_id;
-                service->get_service_table_boundary(zone_id, fount_table_id, back_table_id);
+                common::xnode_type_t node_type;
+                service->get_service_table_boundary(zone_id, fount_table_id, back_table_id, node_type);
                 table_boundary_t table_boundary(zone_id, fount_table_id, back_table_id, service->is_send_receipt_role());
                 table_boundarys.push_back(table_boundary);
             }

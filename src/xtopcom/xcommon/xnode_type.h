@@ -11,6 +11,88 @@
 
 NS_BEG2(top, common)
 
+enum class xenum_old_node_type : std::uint32_t {
+    /**
+     * @brief Invalid node type.
+     */
+    invalid = 0x00000000,
+
+    platform = 0x00010000,
+    /**
+     * @brief Network node.  Representing whole network.
+     */
+    network = 0x00020000,
+
+    /**
+     * @brief Zone node manages cluster nodes.
+     */
+    zone = 0x00040000,
+
+    /**
+     * @brief Cluster node manages group nodes
+     */
+    cluster = 0x00080000,
+
+    /**
+     * @brief Group node manages advance nodes & consensus nodes
+     */
+    group = 0x00100000,
+
+    /**
+     * @brief A frozen node.
+     */
+    frozen = 0x00000100,
+
+    /**
+     * @brief Root election committee node (beacon validator node).
+     */
+    rec = 0x00001000,
+
+    /**
+     * @brief Committee type
+     */
+    committee = 0x00001000,
+
+    /**
+     * @brief Consensus type
+     */
+    consensus = 0x00002000,
+
+    /**
+     * @brief Archive node.
+     */
+    archive = 0x00004000,
+
+    /**
+     * @brief A special value for edge node.
+     */
+    edge = 0x00008000,
+
+    /**
+     * @brief Auditor node.
+     */
+    auditor = 0x00000001,
+
+    /**
+     * @brief Validator node.
+     */
+    validator = 0x00000002,
+
+    /**
+     * @brief Zone election committee node.
+     */
+    zec = 0x00000004,
+
+    consensus_auditor = consensus | auditor,
+    consensus_validator = consensus | validator,
+
+    /**
+     * @brief all type
+     */
+    all = 0x0000FFFF,
+};
+using xold_node_type_t = xenum_old_node_type;
+
 /**
  * @brief Node type.  The type is devided into two parts, the real part and the virtual part.
  *        The lower half part is the real part and the higher half part is the virtual part.
