@@ -321,6 +321,8 @@ bool xbatch_packer::recv_in(const xvip2_t & from_addr, const xvip2_t & to_addr, 
                         "pdu_recv_in", packet.dump(),
                         // "from_xip", xcons_utl::xip_to_hex(from_addr),
                         // "to_xip", xcons_utl::xip_to_hex(to_addr),
+                        "clock", m_last_view_clock,
+                        "viewid", m_last_view_id,
                         "node_xip", xcons_utl::xip_to_hex(get_xip2_addr()));
     XMETRICS_TIME_RECORD("cons_tableblock_recv_in_time_consuming");
 
