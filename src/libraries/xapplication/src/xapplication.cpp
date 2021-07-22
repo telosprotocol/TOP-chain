@@ -127,11 +127,17 @@ void xtop_application::start() {
     contract::xcontract_manager_t::set_nodesrv_ptr(node_service());
 
     auto const last_logic_time = this->last_logic_time()->get_height();
-    auto const current_local_logic_time = config::gmttime_to_logic_time(base::xtime_utl::gmttime());
-    bool const offline_too_long = current_local_logic_time < last_logic_time || (last_logic_time != 0 && (current_local_logic_time - last_logic_time >= 30)); // 5min = 300s = 30 logic time
-    if (offline_too_long || (!is_beacon_account() && !is_genesis_node())) {
-        m_elect_client->bootstrap_node_join();
-    }
+    do {
+        if (is_genesis_node()) {
+            break;
+        }
+
+        auto const current_local_logic_time = config::gmttime_to_logic_time(base::xtime_utl::gmttime());
+        bool const offline_too_long = current_local_logic_time < last_logic_time || (last_logic_time != 0 && (current_local_logic_time - last_logic_time >= 30)); // 5min = 300s = 30 logic time
+        if (offline_too_long || !is_beacon_account()) {
+            m_elect_client->bootstrap_node_join();
+        }
+    } while (false);
 
     for (auto i = 0u; i < m_chain_applications.size(); ++i) {
         auto const & chain_app = m_chain_applications[i];
