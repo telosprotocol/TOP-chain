@@ -386,5 +386,9 @@ const std::vector<xtxpool_table_lacking_receipt_ids_t> xreceipt_queue_new_t::get
     return table_lacking_ids_vec;
 }
 
+uint32_t xreceipt_queue_new_t::size() const {
+    return m_receipt_queue_internal.size();
+}
+
 }  // namespace xtxpool_v2
 }  // namespace top
