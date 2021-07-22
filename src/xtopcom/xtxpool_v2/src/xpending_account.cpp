@@ -29,7 +29,9 @@ int32_t xcandidate_account_entry::push_tx(std::shared_ptr<xtx_entry> tx_ent, con
         uint64_t txs_back_nonce = m_txs[m_txs.size() - 1]->get_tx()->get_transaction()->get_tx_nonce();
         if (new_tx_last_nonce < txs_back_nonce) {
             return xtxpool_error_tx_nonce_expired;
-        } else if (new_tx_last_nonce > txs_back_nonce) {
+        } else if (new_tx_last_nonce == txs_back_nonce) {
+            m_txs.push_back(tx_ent);
+        } else {
             return xtxpool_error_tx_nonce_uncontinuous;
         }
     } else {
