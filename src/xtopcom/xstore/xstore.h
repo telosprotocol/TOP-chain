@@ -46,6 +46,7 @@ class xstore final: public xstore_face_t {
 
  public:
     virtual std::string         get_store_path() const  override {return m_store_path;}
+    virtual bool                open() const override;
 
  public://other old api
 
