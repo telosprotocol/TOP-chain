@@ -40,6 +40,8 @@ class xproposal_maker_t : public xunit_service::xproposal_maker_face {
  private:
     void                        get_locked_nonce_map(const xblock_ptr_t & block, std::map<std::string, uint64_t> & locked_nonce_map) const;
     xtablestate_ptr_t           get_target_tablestate(base::xvblock_t* block);
+    void                        sys_contract_sync(const xtablestate_ptr_t & tablestate) const;
+    void                        check_and_sync_account(const xtablestate_ptr_t & tablestate, const std::string & addr) const;
 
     xblockmaker_resources_ptr_t     m_resources{nullptr};
     xtable_maker_ptr_t          m_table_maker{nullptr};

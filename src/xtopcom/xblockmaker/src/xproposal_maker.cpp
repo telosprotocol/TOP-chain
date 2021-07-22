@@ -11,6 +11,7 @@
 #include "xdata/xblocktool.h"
 #include "xdata/xnative_contract_address.h"
 #include "xtxpool_v2/xtxpool_tool.h"
+#include "xmbus/xevent_behind.h"
 
 NS_BEG2(top, blockmaker)
 
@@ -80,6 +81,8 @@ xblock_ptr_t xproposal_maker_t::make_proposal(data::xblock_consensus_para_t & pr
         XMETRICS_GAUGE(metrics::cons_fail_make_proposal_consensus_para, 1);
         return nullptr;
     }
+
+    sys_contract_sync(tablestate);
 
     xtablemaker_result_t table_result;
     xblock_ptr_t proposal_block = m_table_maker->make_proposal(table_para, proposal_para, table_result);
@@ -210,6 +213,8 @@ int xproposal_maker_t::verify_proposal(base::xvblock_t * proposal_block, base::x
         XMETRICS_GAUGE(metrics::cons_fail_verify_proposal_consensus_para_get, 1);
         return xblockmaker_error_proposal_bad_consensus_para;
     }
+
+    sys_contract_sync(tablestate);
 
     int32_t verify_ret = m_table_maker->verify_proposal(proposal_block, table_para, cs_para);
     if (verify_ret != xsuccess) {
@@ -452,5 +457,40 @@ void xproposal_maker_t::get_locked_nonce_map(const xblock_ptr_t & block, std::ma
         }
     }
 }
+
+void xproposal_maker_t::sys_contract_sync(const xtablestate_ptr_t & tablestate) const {
+    // always sync sharding sys contract
+    if (m_table_maker->get_zone_index() != base::enum_chain_zone_consensus_index) {
+        return;  // sync module already do rec and zec table sync
+    }
+    std::string sharding_vote_addr = base::xvaccount_t::make_account_address(sys_contract_sharding_vote_addr, m_table_maker->get_ledger_subaddr());
+    std::string sharding_reward_claiming_addr = base::xvaccount_t::make_account_address(sys_contract_sharding_reward_claiming_addr, m_table_maker->get_ledger_subaddr());
+    check_and_sync_account(tablestate, sharding_vote_addr);
+    check_and_sync_account(tablestate, sharding_reward_claiming_addr);
+}
+
+void xproposal_maker_t::check_and_sync_account(const xtablestate_ptr_t & tablestate, const std::string & addr) const {
+    base::xvaccount_t _vaddr(addr);
+    auto cert_block =  base::xvchain_t::instance().get_xblockstore()->get_latest_cert_block(_vaddr);
+    if (cert_block == nullptr) {
+        xassert(false);
+        return;
+    }
+
+    base::xaccount_index_t accountindex;
+    tablestate->get_account_index(addr, accountindex);
+    if (cert_block->get_height() < accountindex.get_latest_unit_height()) {
+        uint64_t latest_connect_height = base::xvchain_t::instance().get_xblockstore()->get_latest_connected_block_height(_vaddr);
+        uint64_t from_height = latest_connect_height + 1;
+        uint32_t sync_num = (uint32_t)(accountindex.get_latest_unit_height() + 1 - from_height);
+        xinfo("xproposal_maker_t::check_and_sync_account try_sync_lacked_blocks account=%s,try sync unit from:%llu,end:%llu", addr.c_str(), from_height, accountindex.get_latest_unit_height());
+        mbus::xevent_behind_ptr_t ev = make_object_ptr<mbus::xevent_behind_on_demand_t>(
+            addr, from_height, sync_num, true, "proposal_maker_check");
+        base::xvchain_t::instance().get_xevmbus()->push_event(ev);
+    } else {
+        xdbg("xproposal_maker_t::check_and_sync_account same height.account=%s,cert=%ld,index=%ld", addr.c_str(), cert_block->get_height(), accountindex.get_latest_unit_height());
+    }
+}
+
 
 NS_END2
