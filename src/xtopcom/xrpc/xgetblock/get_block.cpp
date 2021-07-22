@@ -170,6 +170,14 @@ uint64_t get_block_handle::get_timer_height() const {
     }
 }
 
+void get_block_handle::getCGP() {
+    xJson::Value j;
+    std::string addr = sys_contract_rec_tcc_addr;
+    std::string prop_name = ONCHAIN_PARAMS;
+    query_account_property(j, addr, prop_name);
+    m_js_rsp["value"] = j[prop_name];
+}
+
 void get_block_handle::getTimerInfo() {
     xJson::Value j;
     auto timer_clock = get_timer_clock();
