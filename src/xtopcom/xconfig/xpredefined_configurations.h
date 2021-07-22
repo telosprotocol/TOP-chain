@@ -185,7 +185,11 @@ XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(min_auditor_deposit, std::uint64_t, normal
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(dividend_ratio_change_interval, std::uint64_t, normal, 14 * 24 * 3600 / 10, 0, std::numeric_limits<std::uint64_t>::max());
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(max_vote_nodes_num, std::uint32_t, normal, 10000, 1, std::numeric_limits<std::uint32_t>::max());
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(votes_report_interval, xinterval_t, normal, 30, 1, std::numeric_limits<xinterval_t>::max());
+#if defined(XBUILD_GALILEO)
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(reward_issue_interval, xinterval_t, normal, 8640, 1, std::numeric_limits<xinterval_t>::max()); // 24 hours
+#else
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(reward_issue_interval, xinterval_t, normal, 4297, 1, std::numeric_limits<xinterval_t>::max()); // 12 hours
+#endif
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(reward_update_interval, xinterval_t, normal, 17, 1, std::numeric_limits<xinterval_t>::max());  // 180 seconds
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(min_node_reward, uint64_t, important, 0, 0, std::numeric_limits<uint64_t>::max());
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(min_voter_dividend, uint64_t, important, 0, 0, std::numeric_limits<uint64_t>::max());
@@ -194,7 +198,7 @@ XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(workload_collection_interval, xinterval_t,
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(min_archive_deposit, std::uint64_t, normal, ASSET_TOP(1000000), 0, std::numeric_limits<std::uint64_t>::max());
 // mainnet node active
 
-#if defined XBUILD_GALILEO
+#if defined(XBUILD_GALILEO)
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(min_mainnet_active_auditors, std::uint32_t, normal, 32, 0, std::numeric_limits<std::uint32_t>::max());
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(min_mainnet_active_validators, std::uint32_t, normal, 64, 0, std::numeric_limits<std::uint32_t>::max());
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(min_mainnet_active_votes, std::uint64_t, normal, 0, 0, std::numeric_limits<std::uint64_t>::max());
@@ -253,10 +257,14 @@ XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(max_nodedeposit_lock_duration, std::uint64
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(punish_collection_interval, xinterval_t, normal, 66, 0, std::numeric_limits<xinterval_t>::max()); // 11minute(just for a prime time)
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(punish_interval_time_block, xinterval_t, normal, 8640, 0, std::numeric_limits<xinterval_t>::max());
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(punish_interval_table_block, std::uint32_t, normal, 368640, 0, std::numeric_limits<uint32_t>::max());
-
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(sign_block_ranking_publishment_threshold_value, std::uint32_t, normal, 10, 0, 100);
+#if defined(XBUILD_GALILEO)
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(award_validator_credit, std::uint64_t, normal, 1 * 30000, 0, 1000000); // validator credit score 0.03;
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(award_auditor_credit, std::uint64_t, normal, 1 * 30000, 0, 1000000);   // auditor credit score 0.03
+#else
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(award_validator_credit, std::uint64_t, normal, 1 * 10000, 0, 1000000);                         // validator credit score 0.01;
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(award_auditor_credit, std::uint64_t, normal, 1 * 10000, 0, 1000000);                           // auditor credit score 0.01
+#endif
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(backward_node_lock_duration_increment, std::uint64_t, normal, 103680, 0, std::numeric_limits<uint64_t>::max());
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(max_nodedeposit_lock_duration, std::uint64_t, normal, 3110400, 0, std::numeric_limits<uint64_t>::max());
 #endif
@@ -268,7 +276,11 @@ XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(tcc_proposal_expire_time, std::uint32_t, n
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(tcc_member, char const *, critical, "", "", "");
 
 // whitelist
-XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(toggle_whitelist, bool, normal, false, false, true); // default not open
+#if defined(XBUILD_CI) || defined(XBUILD_DEV) || defined(XBUILD_GALILEO)
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(toggle_whitelist, bool, normal, false, false, true); // testnets defaults to close
+#else
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(toggle_whitelist, bool, normal, true, false, true); // mainnet defaults to open
+#endif
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(whitelist, char const *, normal, "", "", "");
 
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(tx_send_timestamp_tolerance, std::uint32_t, critical, 300, 1, std::numeric_limits<uint32_t>::max()); // the transaction should arrive any
@@ -369,8 +381,8 @@ XDECLARE_CONFIGURATION(msg_port, uint16_t, 19084);
 XDECLARE_CONFIGURATION(ws_port, uint16_t, 19085);
 XDECLARE_CONFIGURATION(log_level, uint16_t, 0);
 XDECLARE_CONFIGURATION(network_id, uint32_t, 0);
-XDECLARE_CONFIGURATION(log_path, const char *, "/chain/log/clog");  // config log path
-XDECLARE_CONFIGURATION(db_path, const char *, "/chain/db_v2/cdb");     // config log path
+XDECLARE_CONFIGURATION(log_path, const char *, "/chain/log/clog"); // config log path
+XDECLARE_CONFIGURATION(db_path, const char *, "/chain/db_v2/cdb"); // config log path
 XDECLARE_CONFIGURATION(ip, const char *, "0.0.0.0");
 
 /* end of development parameters */
