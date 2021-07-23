@@ -24,4 +24,4 @@ For instructions on how to use, please visit [http://developers.topnetwork.org/]
 
 ## Version
 
-Upgrade version to v1.1.3
+Upgrade version to v1.2.3
