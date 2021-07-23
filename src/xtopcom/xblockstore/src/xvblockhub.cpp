@@ -795,9 +795,28 @@ namespace top
                 //try connect height jump to full height
                 if (m_meta->_highest_connect_block_height < m_meta->_highest_full_block_height)
                 {
-                    load_index(m_meta->_highest_full_block_height);//full-block must be connected status
-                    xinfo("xblockacct_t::load_latest_connected_index,account=%s,navigate to full old_height=%" PRIu64 ",new_height=%" PRIu64 ",full_height=new_height=%" PRIu64 " ",
-                        get_account().c_str(), old_highest_connect_block_height,m_meta->_highest_connect_block_height,m_meta->_highest_full_block_height);
+                    if (load_index(m_meta->_highest_full_block_height) > 0)//full-block must be connected status
+                    {
+                        base::xauto_ptr<base::xvbindex_t> fullindex(query_index(m_meta->_highest_full_block_height, base::enum_xvblock_flag_committed));
+                        if(fullindex != nullptr) //dont have commited block
+                        {
+                            m_meta->_highest_connect_block_height = fullindex->get_height();
+                            m_meta->_highest_connect_block_hash   = fullindex->get_block_hash();
+                            fullindex->set_block_flag(base::enum_xvblock_flag_connected); //mark connected status,and save later    
+                            xinfo("xblockacct_t::load_latest_connected_index,account=%s,navigate to full,old_height=%" PRIu64 ",new_height=%" PRIu64 ",full_height=%" PRIu64 " ",
+                                get_account().c_str(), old_highest_connect_block_height,m_meta->_highest_connect_block_height,m_meta->_highest_full_block_height);
+                        }
+                        else
+                        {
+                            xerror("xblockacct_t::load_latest_connected_index,account=%s,fail query fullindex,full_height=%" PRIu64 ",connnect_height=%" PRIu64 "",
+                                get_account().c_str(), m_meta->_highest_full_block_height, m_meta->_highest_connect_block_height);
+                        }
+                    }
+                    else
+                    {
+                        xerror("xblockacct_t::load_latest_connected_index,account=%s,fail load fullindex,full_height=%" PRIu64 ",connnect_height=%" PRIu64 "",
+                            get_account().c_str(), m_meta->_highest_full_block_height, m_meta->_highest_connect_block_height);
+                    }
                 }
 
                 for(uint64_t h = m_meta->_highest_connect_block_height + 1; h <= m_meta->_highest_commit_block_height; ++h)
@@ -834,7 +853,8 @@ namespace top
                 }
                 const int  block_connect_step  = (int)(m_meta->_highest_connect_block_height - old_highest_connect_block_height);
                 if(block_connect_step > 0)
-                    xinfo("xblockacct_t::load_latest_connected_index,account=%s,navigate step(%d) to _highest_connect_block_height=%" PRIu64 "  ",get_account().c_str(), block_connect_step,m_meta->_highest_connect_block_height);
+                    xinfo("xblockacct_t::load_latest_connected_index,account=%s,navigate step(%d) to old_height=%" PRIu64 ",new_height=%" PRIu64 ",commit_height=%" PRIu64 " ",
+                        get_account().c_str(), block_connect_step,old_highest_connect_block_height,m_meta->_highest_connect_block_height,m_meta->_highest_commit_block_height);
             }
 
             //connected block must be committed as well
