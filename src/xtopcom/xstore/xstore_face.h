@@ -27,6 +27,7 @@ class xstore_face_t : public base::xvdbstore_t {
  protected:
     virtual ~xstore_face_t() {}
  public:
+    virtual bool open() const = 0;
     virtual xaccount_ptr_t query_account(const std::string& address) const = 0;
     virtual bool           string_property_get(base::xvblock_t* block, const std::string& prop, std::string& value) const = 0;
 
