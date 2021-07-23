@@ -242,6 +242,9 @@ void xcluster_query_manager::getIssuanceDetail(xjson_proc_t & json_proc) {
             xstake::XPROPERTY_REWARD_DETAIL);
         return;
     }
+    if (xissue_detail_str.empty()) {
+        return;
+    }
     xstake::xissue_detail issue_detail;
     issue_detail.from_string(xissue_detail_str);
     xdbg("[xcluster_query_manager::getIssuanceDetail] reward contract height: %llu, onchain_timer_round: %llu, m_zec_vote_contract_height: %llu, "
