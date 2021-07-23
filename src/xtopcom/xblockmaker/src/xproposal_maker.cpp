@@ -490,7 +490,8 @@ void xproposal_maker_t::check_and_sync_account(const xtablestate_ptr_t & tablest
         uint64_t latest_connect_height = base::xvchain_t::instance().get_xblockstore()->get_latest_connected_block_height(_vaddr);
         uint64_t from_height = latest_connect_height + 1;
         uint32_t sync_num = (uint32_t)(accountindex.get_latest_unit_height() + 1 - from_height);
-        xinfo("xproposal_maker_t::check_and_sync_account try_sync_lacked_blocks account=%s,try sync unit from:%llu,end:%llu", addr.c_str(), from_height, accountindex.get_latest_unit_height());
+        xinfo("xproposal_maker_t::check_and_sync_account try_sync_lacked_blocks account=%s,try sync unit from:%llu,end:%llu,cert_height=%ld", 
+            addr.c_str(), from_height, accountindex.get_latest_unit_height(), cert_block->get_height());
         mbus::xevent_behind_ptr_t ev = make_object_ptr<mbus::xevent_behind_on_demand_t>(
             addr, from_height, sync_num, true, "proposal_maker_check");
         base::xvchain_t::instance().get_xevmbus()->push_event(ev);

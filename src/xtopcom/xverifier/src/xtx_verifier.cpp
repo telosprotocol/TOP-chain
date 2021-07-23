@@ -315,27 +315,34 @@ int32_t xtx_verifier::verify_send_tx_legitimacy(data::xtransaction_t const * trx
 }
 
 int32_t xtx_verifier::verify_shard_contract_addr(data::xtransaction_t const * trx_ptr) {
+    const auto & source_addr = trx_ptr->get_source_addr();
     const auto & origin_target_addr = trx_ptr->get_origin_target_addr();    
-
+    // user call sys sharding contract, always auto set target addresss
     if (is_sys_sharding_contract_address(common::xaccount_address_t{origin_target_addr})) {
-        if (std::string::npos != origin_target_addr.find("@")) {
-            xwarn("[global_trace][xtx_verifier][verify_shard_contract_addr] fail-already set tableid, tx:%s,origin_target_addr=%s", trx_ptr->dump().c_str(), origin_target_addr.c_str());
-            return xverifier_error_tx_basic_validation_invalid;
-        }
+        if (is_account_address(common::xaccount_address_t{source_addr})) {
+            if (std::string::npos != origin_target_addr.find("@")) {
+                xwarn("[global_trace][xtx_verifier][verify_shard_contract_addr] fail-already set tableid, tx:%s,origin_target_addr=%s", trx_ptr->dump().c_str(), origin_target_addr.c_str());
+                return xverifier_error_tx_basic_validation_invalid;
+            }
 
-        const auto & target_addr = trx_ptr->get_target_addr();
-        if (std::string::npos == target_addr.find("@")) {
-            xwarn("[global_trace][xtx_verifier][verify_shard_contract_addr] fail-not set tableid, tx:%s,target_addr=%s", trx_ptr->dump().c_str(), target_addr.c_str());
-            return xverifier_error_tx_basic_validation_invalid;
-        }
+            const auto & target_addr = trx_ptr->get_target_addr();
+            if (std::string::npos == target_addr.find("@")) {
+                xwarn("[global_trace][xtx_verifier][verify_shard_contract_addr] fail-not set tableid, tx:%s,target_addr=%s", trx_ptr->dump().c_str(), target_addr.c_str());
+                return xverifier_error_tx_basic_validation_invalid;
+            }
 
-        const auto & source_addr = trx_ptr->get_source_addr();
-        base::xvaccount_t _src_vaddr(source_addr);
-        base::xvaccount_t _dst_vaddr(target_addr);
-        if (_src_vaddr.get_ledger_subaddr() != _dst_vaddr.get_ledger_subaddr()
-            || _src_vaddr.get_ledger_id() != _dst_vaddr.get_ledger_id()) {
-            xerror("[global_trace][xtx_verifier][verify_shard_contract_addr] fail-src and dst not match, tx:%s,target_addr=%s", trx_ptr->dump().c_str(), target_addr.c_str());
-            return xverifier_error_tx_basic_validation_invalid;
+            base::xvaccount_t _src_vaddr(source_addr);
+            base::xvaccount_t _dst_vaddr(target_addr);
+            if (_src_vaddr.get_ledger_subaddr() != _dst_vaddr.get_ledger_subaddr()
+                || _src_vaddr.get_ledger_id() != _dst_vaddr.get_ledger_id()) {
+                xerror("[global_trace][xtx_verifier][verify_shard_contract_addr] fail-src and dst not match, tx:%s,target_addr=%s", trx_ptr->dump().c_str(), target_addr.c_str());
+                return xverifier_error_tx_basic_validation_invalid;
+            }
+        } else {
+            if (std::string::npos == origin_target_addr.find("@")) {
+                xwarn("[global_trace][xtx_verifier][verify_shard_contract_addr] fail-sys contract all should set full addr, tx:%s,origin_target_addr=%s", trx_ptr->dump().c_str(), origin_target_addr.c_str());
+                return xverifier_error_tx_basic_validation_invalid;
+            }
         }
     }
     return xverifier_error::xverifier_success;
