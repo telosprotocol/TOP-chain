@@ -112,3 +112,41 @@ TEST_F(test_xvledger, table_address_check_2) {
         std::cout << "table_address=" << table_address << std::endl;
     }        
 }
+
+TEST_F(test_xvledger, table_address_check_3) {
+    std::string unit_address = "T00000LPwjnLXJW9Nb6cXFV5BtoWc8TSbM3vrrRo";
+    xvaccount_t _unit_vaddr(unit_address);
+
+    uint32_t low_hash = (uint32_t)xhash64_t::digest(unit_address);
+    uint32_t ledger_subaddr = (low_hash & enum_vbucket_has_tables_count_mask);
+    std::cout << "T00000LPwjnLXJW9Nb6cXFV5BtoWc8TSbM3vrrRo tableid=" << _unit_vaddr.get_ledger_subaddr() << " subaddr=" << ledger_subaddr << std::endl;    
+    ASSERT_EQ(_unit_vaddr.get_ledger_subaddr(), ledger_subaddr);
+}
+
+TEST_F(test_xvledger, calc_address_tableid) {
+    std::string unit_address = "T00000LN1VBhmjztTBgLPuBCW7iEo9cw58LE1nZF";
+    xvaccount_t _unit_vaddr(unit_address);
+    std::cout << "T00000LN1VBhmjztTBgLPuBCW7iEo9cw58LE1nZF tableid=" << _unit_vaddr.get_ledger_subaddr() << std::endl;    
+    ASSERT_EQ(_unit_vaddr.get_ledger_subaddr(), xvaccount_t::get_ledgersubaddr_from_account(unit_address));
+}
+
+// TEST_F(test_xvledger, tx_auto_set_shard_contract_addr) {
+
+//     std::string src_addr = "T00000LPwjnLXJW9Nb6cXFV5BtoWc8TSbM3vrrRo";
+//     std::string dst_addr = "T20000MTotTKfAJRxrfvEwEJvtgCqzH9GkpMmAUg";
+//     xvaccount_t _src_vaddr(src_addr);
+
+//     using namespace top::data;
+
+//     xtransaction_ptr_t tx = make_object_ptr<xtransaction_t>();
+//     tx->set_different_source_target_address(src_addr, dst_addr);
+//     auto tableid = data::account_map_to_table_id(common::xaccount_address_t{tx->get_source_addr()});
+
+//     if (is_sys_sharding_contract_address(common::xaccount_address_t{tx->get_target_addr()})) {
+//         tx->adjust_target_address(tableid.get_subaddr());
+//     }
+//     std::cout << "target_addr=" << tx->get_target_addr() << std::endl;    
+
+//     xvaccount_t _target_vaddr(tx->get_target_addr());
+//     ASSERT_EQ(_src_vaddr.get_ledger_subaddr(), _target_vaddr.get_ledger_subaddr());
+// }
