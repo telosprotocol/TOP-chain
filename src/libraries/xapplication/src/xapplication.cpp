@@ -65,6 +65,11 @@ xtop_application::xtop_application(common::xnode_id_t const & node_id, xpublic_k
 }
 
 void xtop_application::start() {
+    if ((m_store == nullptr) || !m_store->open()) {
+        xwarn("xtop_application::start db open failed!");
+        exit(0);
+    }
+
     if (!check_rootblock()) {
         throw std::logic_error{"creating rootblock failed"};
     }
