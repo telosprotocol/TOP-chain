@@ -4,12 +4,12 @@
 #include "xstore/xstore_face.h"
 #include "xconfig/xconfig_face.h"
 #include "xloader/xconfig_onchain_loader.h"
-#include "xstore/test/test_datamock.hpp"
 #include "xdata/xtransaction_maker.hpp"
 #include "xdata/xnative_contract_address.h"
 #include "xcrypto/xckey.h"
 #include "xcrypto/xcrypto_util.h"
 #include "xverifier/xtx_verifier.h"
+#include "xverifier/xverifier_errors.h"
 #include "xrpc/xuint_format.h"
 #include "xbasic/xasio_io_context_wrapper.h"
 #include "xbasic/xtimer_driver.h"
@@ -17,6 +17,7 @@
 using namespace top;
 using namespace top::xverifier;
 using namespace top::utl;
+using namespace top::store;
 
 class test_xverifier : public testing::Test {
 protected:
@@ -49,8 +50,9 @@ protected:
     }
 
 };
-
-TEST_F(test_xverifier, trx_verifier) {
+// TODO(jimmy)
+#if 0
+TEST_F(test_xverifier, DISABLED_trx_verifier) {
     using namespace top::xverifier;
 
     auto m_store = xstore_factory::create_store_with_memdb();
@@ -106,7 +108,7 @@ TEST_F(test_xverifier, trx_verifier) {
     ASSERT_EQ(xverifier_error::xverifier_success, ret);
 
 }
-
+#endif
 TEST_F(test_xverifier, generate_address) {
     // just for java sdk debug address
     //xecprikey_t priv;
@@ -155,8 +157,10 @@ xtransaction_ptr_t make_a_normal_transfer_tx() {
     uint16_t ledger_id = base::xvaccount_t::make_ledger_id(base::enum_main_chain_id, base::enum_chain_zone_consensus_index);
     auto src_addr = xcrypto_util::make_address_by_random_key(addr_type, ledger_id);
     auto target_addr = xcrypto_util::make_address_by_random_key(addr_type, ledger_id);
-    xaccount_ptr_t account = make_object_ptr<xblockchain2_t>(src_addr);
-    xtransaction_ptr_t trx_ptr = xtransaction_maker::make_transfer_tx(account, target_addr, 100, 0, 0, 0);
+
+    uint256_t last_hash;
+    uint64_t last_nonce = 0;
+    xtransaction_ptr_t trx_ptr = xtransaction_maker::make_transfer_tx(src_addr, last_hash, last_nonce, target_addr, 100, 0, 0, 0);
     return trx_ptr;
 }
 
@@ -167,11 +171,11 @@ TEST_F(test_xverifier, trx_verifier_validation_normal) {
 
 TEST_F(test_xverifier, trx_verifier_validation_1_local_tx) {
     xtransaction_ptr_t trx_ptr = make_a_normal_transfer_tx();
-    trx_ptr->set_same_source_target_address(sys_contract_sharding_vote_addr);
+    trx_ptr->set_same_source_target_address(sys_contract_rec_elect_edge_addr);
     trx_ptr->set_digest();
     trx_ptr->set_len();
     ASSERT_NE(xtx_verifier::verify_send_tx_validation(trx_ptr.get()), xverifier_error::xverifier_success);
-    trx_ptr->set_same_source_target_address(sys_contract_sharding_vote_addr);
+    trx_ptr->set_same_source_target_address(sys_contract_rec_elect_edge_addr);
     trx_ptr->set_tx_type(xtransaction_type_run_contract);
     trx_ptr->set_digest();
     trx_ptr->set_len();
@@ -186,12 +190,12 @@ TEST_F(test_xverifier, trx_verifier_validation_2_burn_tx) {
     trx_ptr->set_digest();
     trx_ptr->set_len();
     ASSERT_NE(xtx_verifier::verify_send_tx_validation(trx_ptr.get()), xverifier_error::xverifier_success);
-    trx_ptr->set_different_source_target_address(sys_contract_sharding_vote_addr, black_hole_addr);
+    trx_ptr->set_different_source_target_address(sys_contract_rec_elect_edge_addr, black_hole_addr);
     trx_ptr->set_tx_type(xtransaction_type_run_contract);
     trx_ptr->set_digest();
     trx_ptr->set_len();
     ASSERT_NE(xtx_verifier::verify_send_tx_validation(trx_ptr.get()), xverifier_error::xverifier_success);
-    trx_ptr->set_different_source_target_address(sys_contract_sharding_vote_addr, black_hole_addr);
+    trx_ptr->set_different_source_target_address(sys_contract_rec_elect_edge_addr, black_hole_addr);
     trx_ptr->set_tx_type(xtransaction_type_transfer);
     trx_ptr->set_digest();
     trx_ptr->set_len();
@@ -207,11 +211,12 @@ TEST_F(test_xverifier, trx_verifier_validation_3_addr_type) {
     std::string src_addr = trx_ptr->get_source_addr();
     std::string dst_addr = trx_ptr->get_target_addr();
 
-    trx_ptr->set_different_source_target_address(sys_contract_beacon_table_block_addr, dst_addr);
+    std::string bad_src_addr = base::xvaccount_t::make_account_address(sys_contract_beacon_table_block_addr, 1);
+    trx_ptr->set_different_source_target_address(bad_src_addr, dst_addr);
     trx_ptr->set_digest();
     trx_ptr->set_len();
     ASSERT_NE(xtx_verifier::verify_send_tx_validation(trx_ptr.get()), xverifier_error::xverifier_success);
-    trx_ptr->set_different_source_target_address(src_addr, sys_contract_beacon_table_block_addr);
+    trx_ptr->set_different_source_target_address(src_addr, bad_src_addr);
     trx_ptr->set_tx_type(xtransaction_type_run_contract);
     trx_ptr->set_digest();
     trx_ptr->set_len();
@@ -221,7 +226,7 @@ TEST_F(test_xverifier, trx_verifier_validation_3_addr_type) {
     // trx_ptr->set_digest();
     // trx_ptr->set_len();
     // ASSERT_NE(xtx_verifier::verify_send_tx_validation(trx_ptr.get()), xverifier_error::xverifier_success);
-    trx_ptr->set_different_source_target_address(src_addr, sys_contract_sharding_vote_addr);
+    trx_ptr->set_different_source_target_address(src_addr, sys_contract_rec_elect_edge_addr);
     trx_ptr->set_tx_type(xtransaction_type_transfer);
     trx_ptr->set_digest();
     trx_ptr->set_len();
@@ -329,6 +334,40 @@ TEST_F(test_xverifier, trx_verifier_validation_7_tx_type) {
     trx_ptr->set_len();
     ASSERT_EQ(xtx_verifier::verify_send_tx_validation(trx_ptr.get()), xverifier_error::xverifier_success);
 }
+
+TEST_F(test_xverifier, trx_verifier_validation_8_shard_contract_addr) {
+    xtransaction_ptr_t trx_ptr = make_a_normal_transfer_tx();
+    std::string src_addr = trx_ptr->get_source_addr();
+    base::xvaccount_t _src_vaddr(src_addr);
+
+    std::string bad_dst_addr = base::xvaccount_t::make_account_address(sys_contract_sharding_vote_addr, _src_vaddr.get_ledger_subaddr());
+    trx_ptr->set_different_source_target_address(src_addr, bad_dst_addr);
+    trx_ptr->set_digest();
+    trx_ptr->set_len();
+    ASSERT_NE(xtx_verifier::verify_send_tx_validation(trx_ptr.get()), xverifier_error::xverifier_success);
+
+    uint16_t wrong_subaddr = (_src_vaddr.get_ledger_subaddr() + 1) & enum_vbucket_has_tables_count_mask;
+    bad_dst_addr = base::xvaccount_t::make_account_address(sys_contract_sharding_vote_addr, wrong_subaddr);
+    trx_ptr->set_different_source_target_address(src_addr, bad_dst_addr);
+    trx_ptr->set_digest();
+    trx_ptr->set_len();
+    ASSERT_NE(xtx_verifier::verify_send_tx_validation(trx_ptr.get()), xverifier_error::xverifier_success);    
+
+    trx_ptr->set_different_source_target_address(src_addr, sys_contract_sharding_vote_addr);
+    trx_ptr->set_digest();
+    trx_ptr->set_len();
+    ASSERT_NE(xtx_verifier::verify_send_tx_validation(trx_ptr.get()), xverifier_error::xverifier_success);    
+
+    trx_ptr->set_different_source_target_address(src_addr, sys_contract_sharding_vote_addr);
+    trx_ptr->set_tx_type(xtransaction_type_run_contract);
+    trx_ptr->set_digest();
+    trx_ptr->set_len();
+    ASSERT_NE(xtx_verifier::verify_send_tx_validation(trx_ptr.get()), xverifier_error::xverifier_success);       
+
+    trx_ptr->adjust_target_address(_src_vaddr.get_ledger_subaddr());
+    ASSERT_EQ(xtx_verifier::verify_send_tx_validation(trx_ptr.get()), xverifier_error::xverifier_success);      
+}
+
 
 TEST_F(test_xverifier, trx_verifier_source_1) {
     xtransaction_ptr_t trx_ptr = make_a_normal_transfer_tx();
