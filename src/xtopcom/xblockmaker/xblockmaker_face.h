@@ -197,11 +197,10 @@ class xblock_maker_t : public base::xvaccount_t {
     const std::map<uint64_t, xblock_ptr_t> & get_latest_blocks() const {return m_latest_blocks;}
     const xblock_ptr_t &        get_highest_height_block() const;
     xblock_ptr_t                get_prev_block_from_cache(const xblock_ptr_t & current) const;
-    bool                        verify_latest_blocks(base::xvblock_t* latest_cert_block, base::xvblock_t* lock_block, base::xvblock_t* commited_block);
+    // bool                        verify_latest_blocks(base::xvblock_t* latest_cert_block, base::xvblock_t* lock_block, base::xvblock_t* commited_block);
 
  protected:
     bool                        update_account_state(const xblock_ptr_t & latest_committed_block, uint64_t & lacked_block_height);
-    bool                        is_latest_blocks_valid(const base::xblock_mptrs & latest_blocks);
     void                        clear_old_blocks();
 
  private:

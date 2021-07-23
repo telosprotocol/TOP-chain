@@ -111,12 +111,33 @@ void xbatch_packer::invoke_sync(const std::string & account, const std::string &
 }
 
 bool xbatch_packer::start_proposal(base::xblock_mptrs& latest_blocks) {
+    if (latest_blocks.get_latest_cert_block() == nullptr
+        || latest_blocks.get_latest_locked_block() == nullptr
+        || latest_blocks.get_latest_committed_block() == nullptr) {  // TODO(jimmy) get_latest_blocks return bool future
+        xunit_warn("xbatch_packer::start_proposal fail-get latest blocks,account=%s,viewid=%ld,clock=%ld",
+            get_account().c_str(), m_last_view_id, m_last_view_clock);
+        return false;
+    }
+
     uint32_t viewtoken = base::xtime_utl::get_fast_randomu();
     xblock_consensus_para_t proposal_para(get_account(), m_last_view_clock, m_last_view_id, viewtoken, latest_blocks.get_latest_cert_block()->get_height() + 1);
     proposal_para.set_latest_blocks(latest_blocks);
 
     if (m_last_view_clock < m_start_time) {
         xunit_warn("xbatch_packer::start_proposal fail-view clock less than start.%s,start_time=%ld", proposal_para.dump().c_str(), m_start_time);
+        return false;
+    }
+
+    // TODO(jimmy) performance optimize, get cert/lock/connectted directly in future
+    auto latest_connected_block = m_para->get_resources()->get_vblockstore()->get_latest_connected_block(get_account(), metrics::blockstore_access_from_us_on_timer_fire);  // TODO(jimmy) just invoke connect flag update
+    if (latest_connected_block == nullptr) {  // TODO(jimmy) get_latest_blocks return bool future
+        xunit_error("xbatch_packer::start_proposal fail-get latest connect block,%s",
+            proposal_para.dump().c_str());
+        return false;
+    }
+    if (latest_connected_block->get_height() != latest_blocks.get_latest_committed_block()->get_height()) {  // TODO(jimmy) get_latest_blocks return bool future
+        xunit_warn("xbatch_packer::start_proposal fail-latest connect not match committed block,%s,connect_height=%ld",
+            proposal_para.dump().c_str(), latest_connected_block->get_height());
         return false;
     }
 
@@ -229,11 +250,6 @@ bool  xbatch_packer::on_timer_fire(const int32_t thread_id, const int64_t timer_
     }
     // xunit_dbg("xbatch_packer::on_timer_fire retry start proposal.this:%p node:%s", this, m_para->get_resources()->get_account().c_str());
     base::xblock_mptrs latest_blocks = m_para->get_resources()->get_vblockstore()->get_latest_blocks(get_account(), metrics::blockstore_access_from_us_on_timer_fire);
-    if (latest_blocks.get_latest_cert_block() == nullptr) {  // TODO(jimmy) get_latest_blocks return bool future
-        xunit_warn("xbatch_packer::on_timer_fire fail-invalid latest blocks,account=%s,viewid=%ld,clock=%ld",
-            get_account().c_str(), m_last_view_id, m_last_view_clock);
-        return false;
-    }
     m_leader_packed = start_proposal(latest_blocks);
     return true;
 }

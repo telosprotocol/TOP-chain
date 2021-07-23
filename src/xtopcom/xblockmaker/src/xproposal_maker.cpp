@@ -159,13 +159,19 @@ int xproposal_maker_t::verify_proposal(base::xvblock_t * proposal_block, base::x
     }
     //find matched commit block
     if (cs_para.get_latest_locked_block()->get_height() > 0) {
-        auto commit_block = get_blockstore()->load_block_object(*m_table_maker, cs_para.get_latest_locked_block()->get_height() - 1, cs_para.get_latest_locked_block()->get_last_block_hash(), false, metrics::blockstore_access_from_blk_mk_proposer_verify_proposal);
-        if (commit_block == nullptr) {
-            xwarn("xproposal_maker_t::verify_proposal fail-find commit block. proposal=%s", proposal_block->dump().c_str());
+        // XTODO get latest connected block which can also load commit block, and it will invoke to update latest connect height.
+        auto connect_block = get_blockstore()->get_latest_connected_block(*m_table_maker);
+        if (connect_block == nullptr) {
+            xerror("xproposal_maker_t::verify_proposal fail-find connected block. proposal=%s", proposal_block->dump().c_str());
             XMETRICS_GAUGE(metrics::cons_fail_verify_proposal_blocks_invalid, 1);
-            return xblockmaker_error_proposal_cannot_connect_to_cert;
+            return xblockmaker_error_proposal_cannot_connect_to_cert;            
         }
-        xblock_ptr_t prev_commit_block = xblock_t::raw_vblock_to_object_ptr(commit_block.get());
+        if (connect_block->get_height() != cs_para.get_latest_locked_block()->get_height() - 1) {
+            xwarn("xproposal_maker_t::verify_proposal fail-connect not match commit block. proposal=%s,connect_height=%ld", proposal_block->dump().c_str(), connect_block->get_height());
+            XMETRICS_GAUGE(metrics::cons_fail_verify_proposal_blocks_invalid, 1);
+            return xblockmaker_error_proposal_cannot_connect_to_cert;            
+        }
+        xblock_ptr_t prev_commit_block = xblock_t::raw_vblock_to_object_ptr(connect_block.get());
         cs_para.update_latest_commit_block(prev_commit_block);
     } else {
         cs_para.update_latest_commit_block(cs_para.get_latest_locked_block());

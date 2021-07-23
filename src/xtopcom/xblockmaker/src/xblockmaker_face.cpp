@@ -41,11 +41,7 @@ bool xblock_maker_t::update_account_state(const xblock_ptr_t & latest_block, uin
         get_account().c_str(), latest_block->get_height(), latest_block->get_viewid());
     return true;
 }
-
-bool xblock_maker_t::is_latest_blocks_valid(const base::xblock_mptrs & latest_blocks) {
-    return verify_latest_blocks(latest_blocks.get_latest_cert_block(), latest_blocks.get_latest_locked_block(), latest_blocks.get_latest_committed_block());
-}
-
+#if 0
 bool xblock_maker_t::verify_latest_blocks(base::xvblock_t* latest_cert_block, base::xvblock_t* lock_block, base::xvblock_t* commited_block) {
     // TODO(jimmy) table chain should always has different height of commit/lock/highqc, but unit chain may has same height of commit/lock/highqc
     // because blockstore will always unpack tableblock in committed status
@@ -71,7 +67,7 @@ bool xblock_maker_t::verify_latest_blocks(base::xvblock_t* latest_cert_block, ba
     }
     return true;
 }
-
+#endif
 void xblock_maker_t::clear_old_blocks() {
     if (m_latest_blocks.empty()) {
         return;
