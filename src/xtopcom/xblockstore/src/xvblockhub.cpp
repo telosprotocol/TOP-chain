@@ -784,11 +784,71 @@ namespace top
                     }
                 }
             }
-            //connected block must be committed as well
-            base::xvbindex_t* result = query_latest_index(base::enum_xvblock_flag_connected);
-            if(result != nullptr)
-                return result;
 
+            bool full_search_more = true;
+            std::vector<base::xauto_ptr<base::xvbindex_t>> fire_stored_events;
+            fire_stored_events.reserve(16);//resever some sapce first
+            if(full_search_more) //search more
+            {
+                const uint64_t old_highest_connect_block_height = m_meta->_highest_connect_block_height;
+
+                //try connect height jump to full height
+                if (m_meta->_highest_connect_block_height < m_meta->_highest_full_block_height)
+                {
+                    load_index(m_meta->_highest_full_block_height);//full-block must be connected status
+                    xinfo("xblockacct_t::load_latest_connected_index,account=%s,navigate to full old_height=%" PRIu64 ",new_height=%" PRIu64 ",full_height=new_height=%" PRIu64 " ",
+                        get_account().c_str(), old_highest_connect_block_height,m_meta->_highest_connect_block_height,m_meta->_highest_full_block_height);
+                }
+
+                for(uint64_t h = m_meta->_highest_connect_block_height + 1; h <= m_meta->_highest_commit_block_height; ++h)
+                {
+                    const uint64_t try_height = m_meta->_highest_connect_block_height + 1;
+                    if(load_index(try_height) == 0) //missed block
+                        break;
+
+                    base::xauto_ptr<base::xvbindex_t> next_commit(query_index(try_height, base::enum_xvblock_flag_committed));
+                    if(!next_commit) //dont have commited block
+                        break;
+
+                    if(next_commit->get_block_class() == base::enum_xvblock_class_full)
+                    {
+                        m_meta->_highest_connect_block_height = next_commit->get_height();
+                        m_meta->_highest_connect_block_hash   = next_commit->get_block_hash();
+                        next_commit->set_block_flag(base::enum_xvblock_flag_connected); //mark connected status,and save later
+
+                        fire_stored_events.emplace_back(std::move(next_commit));//note:never use cur_commit anymore
+                    }
+                    else if(  (next_commit->get_height() == (m_meta->_highest_connect_block_height + 1))
+                            && (next_commit->get_last_block_hash() == m_meta->_highest_connect_block_hash) )
+                    {
+                        m_meta->_highest_connect_block_height = next_commit->get_height();
+                        m_meta->_highest_connect_block_hash   = next_commit->get_block_hash();
+                        next_commit->set_block_flag(base::enum_xvblock_flag_connected); //mark connected status,and save later
+
+                        fire_stored_events.emplace_back(std::move(next_commit));//note:never use cur_commit anymore
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+                const int  block_connect_step  = (int)(m_meta->_highest_connect_block_height - old_highest_connect_block_height);
+                if(block_connect_step > 0)
+                    xinfo("xblockacct_t::load_latest_connected_index,account=%s,navigate step(%d) to _highest_connect_block_height=%" PRIu64 "  ",get_account().c_str(), block_connect_step,m_meta->_highest_connect_block_height);
+            }
+
+            //connected block must be committed as well
+            base::xvbindex_t* result = query_index(m_meta->_highest_connect_block_height,base::enum_xvblock_flag_committed);
+            //finally send out all events.
+            for(auto & index : fire_stored_events)
+            {
+                //XTODO,it might be good to just send latest one instead every events
+                on_block_stored(index());
+            }
+            if(result != nullptr)
+            {
+                return result;
+            }
             return load_genesis_index();
         }
 
