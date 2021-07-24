@@ -33,7 +33,7 @@ using namespace top::xvm::xcontract;
 using namespace top::xstake;
 using namespace top::contract;
 
-#define DB_PATH "db_test"
+#define DB_TEST_PATH "db_test"
 
 NS_BEG3(top, xvm, system_contracts)
 
