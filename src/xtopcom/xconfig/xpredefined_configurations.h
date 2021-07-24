@@ -20,6 +20,12 @@ constexpr uint64_t TOTAL_ISSUANCE = 200 * 1e8 * TOP_UNIT;
 #define TOP_UNIT_LENGTH 6
 #define TOP_MAX_LENGTH 12 // enough for 20,000,000,000 tokens
 
+#ifdef _WIN32
+#define DB_PATH "\\db_v2"
+#else
+#define DB_PATH "/db_v2"
+#endif
+
 NS_BEG2(top, config)
 
 // declare configuration below and define it in the corresponding cpp file
