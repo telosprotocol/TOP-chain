@@ -73,6 +73,8 @@ xunit_maker_ptr_t xtable_maker_t::create_unit_maker(const std::string & account)
     auto iter = m_unit_makers.find(account);
     if (iter == m_unit_makers.end()) {
         xunit_maker_ptr_t unitmaker = make_object_ptr<xunit_maker_t>(account, get_resources());
+        xassert(get_zone_index() == unitmaker->get_zone_index());
+        xassert(get_ledger_subaddr() == unitmaker->get_ledger_subaddr());
         m_unit_makers[account] = unitmaker;
         xdbg("xtable_maker_t::create_unit_maker unit_maker_changed add. account=%s",
             unitmaker->get_account().c_str());

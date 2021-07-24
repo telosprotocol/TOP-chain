@@ -380,7 +380,12 @@ namespace top
         {
             LOAD_BLOCKACCOUNT_PLUGIN2(account_obj,account);
             METRICS_TAG(atag, 1);
-            return account_obj->get_latest_connected_block_height();
+            // XTODO use load_latest_connected_index for invoke update meta
+            base::xauto_ptr<base::xvbindex_t> _bindex = account_obj->load_latest_connected_index();
+            if (_bindex != nullptr) {
+                return _bindex->get_height();
+            }
+            return 0;
         }
 
         uint64_t xvblockstore_impl::get_latest_genesis_connected_block_height(const base::xvaccount_t & account,const int atag)

@@ -76,13 +76,13 @@ class db_export_tools {
 public:
     friend class db_reset_t;
     db_export_tools(std::string const & db_path) {
-        data::xrootblock_para_t para;
-        data::xrootblock_t::init(para);
         top::config::config_register.get_instance().set(config::xmin_free_gas_asset_onchain_goverance_parameter_t::name, std::to_string(ASSET_TOP(100)));
         top::config::config_register.get_instance().set(config::xfree_gas_onchain_goverance_parameter_t::name, std::to_string(25000));
         top::config::config_register.get_instance().set(config::xmax_validator_stake_onchain_goverance_parameter_t::name, std::to_string(5000));
         top::config::config_register.get_instance().set(config::xchain_name_configuration_t::name, std::string{top::config::chain_name_testnet});
-
+        top::config::config_register.get_instance().set(config::xroot_hash_configuration_t::name, std::string{});
+        data::xrootblock_para_t para;
+        data::xrootblock_t::init(para);
         m_node_id = common::xnode_id_t{"T00000LgGPqEpiK6XLCKRj9gVPN8Ej1aMbyAb3Hu"};
         m_sign_key = "ONhWC2LJtgi9vLUyoa48MF3tiXxqWf7jmT9KtOg/Lwo=";
         m_bus = top::make_object_ptr<mbus::xmessage_bus_t>(true, 1000);
@@ -95,63 +95,61 @@ public:
         contract::xcontract_manager_t::set_nodesrv_ptr(m_nodesvr_ptr);
     }
 
-    bool all_account_file_exist() {
-        std::string file = "all_account.json";
-        if (access(file.c_str(), 0) != 0) {
-            return false;
+    static std::vector<std::string> get_unit_contract_accounts() {
+        std::vector<std::string> v;
+        const std::vector<std::string> unit = {
+            sys_contract_rec_registration_addr,
+            sys_contract_rec_elect_edge_addr,
+            sys_contract_rec_elect_archive_addr,
+            sys_contract_rec_elect_rec_addr,
+            sys_contract_rec_elect_zec_addr,
+            sys_contract_rec_tcc_addr,
+            sys_contract_rec_standby_pool_addr,
+            sys_contract_zec_workload_addr,
+            sys_contract_zec_vote_addr,
+            sys_contract_zec_reward_addr,
+            sys_contract_zec_slash_info_addr,
+            sys_contract_zec_elect_consensus_addr,
+            sys_contract_zec_standby_pool_addr,
+            sys_contract_zec_group_assoc_addr,
+        };
+        const std::vector<std::string> table = {
+            sys_contract_sharding_vote_addr,
+            sys_contract_sharding_reward_claiming_addr,
+        };
+        for (auto const & u : unit) {
+            v.emplace_back(u);
         }
-        std::ifstream file_stream(file);
-        json j;
-        file_stream >> j;
-        return (j.empty()) ? false : true;
-    }
-
-    void get_all_unit_account(std::set<std::string> & accounts_set) {
-        json accounts_json;
-        if (!ALWAYS_OVERWRITE) {
-            try {
-                std::ifstream all_account_file("all_account.json");
-                json j;
-                all_account_file >> j;
-                if (!j.empty()) {
-                    for (auto _table : j) {
-                        for (auto _acc : _table) {
-                            accounts_set.insert(_acc.get<std::string>());
-                        }
-                    }
-                    return;
-                }
-            } catch (...) {
+        for (auto const & t : table) {
+            for (auto i = 0; i < enum_vledger_const::enum_vbucket_has_tables_count; i++) {
+                std::string u{t + "@" + std::to_string(i)};
+                v.emplace_back(u);
             }
         }
-
-        gen_all_unit_account_file2(accounts_set);
+        return v;
     }
 
-    std::vector<std::string> get_all_unit_account() {
-        std::vector<std::string> accounts_vec;
-        std::set<std::string> accounts_set;
-        get_all_unit_account(accounts_set);
-        for (auto const & item : accounts_set) {
-            accounts_vec.emplace_back(item);
-        }
-        return accounts_vec;
-    }
-
-    static std::vector<std::string> get_all_table_account() {
-        std::vector<std::string> account_vec;
-        const std::vector<std::pair<std::string, int>> addr2name = {
+    static std::vector<std::string> get_table_contract_accounts() {
+        std::vector<std::string> v;
+        const std::vector<std::pair<std::string, int>> table = {
             std::make_pair(std::string{sys_contract_sharding_table_block_addr}, enum_vledger_const::enum_vbucket_has_tables_count),
             std::make_pair(std::string{sys_contract_zec_table_block_addr}, MAIN_CHAIN_ZEC_TABLE_USED_NUM),
             std::make_pair(std::string{sys_contract_beacon_table_block_addr}, MAIN_CHAIN_REC_TABLE_USED_NUM),
         };
-        for (auto const & _p : addr2name) {
-            for (auto index = 0; index < _p.second; ++index) {
-                std::string address = _p.first + "@" + std::to_string(index);
-                account_vec.emplace_back(address);
+        for (auto const & t : table) {
+            for (auto i = 0; i < t.second; i++) {
+                std::string u{t.first + "@" + std::to_string(i)};
+                v.emplace_back(u);
             }
         }
-        return account_vec;
+        return v;
+    }
+
+    std::vector<std::string> get_db_unit_accounts() {
+        auto const & s = query_db_unit_accounts();
+        std::vector<std::string> v;
+        v.assign(s.begin(), s.end());
+        return v;
     }
 
     void query_all_sync_result(std::vector<std::string> const & accounts_vec, bool is_table) {
@@ -216,7 +214,7 @@ public:
 
     void query_table_latest_fullblock() {
         json result_json;
-        auto const & account_vec = get_all_table_account();
+        auto const & account_vec = get_table_contract_accounts();
         for (auto const & _p : account_vec) {
             query_table_latest_fullblock(_p, result_json[_p]);
         }
@@ -274,7 +272,7 @@ public:
         uint64_t total_unit_block_num{0};
         j["total_table_block_num"] = 0;
         j["total_unit_block_num"] = 0;
-        auto const & account_vec = get_all_table_account();
+        auto const & account_vec = get_table_contract_accounts();
         for (auto const & account : account_vec) {
             auto latest_block = m_blockstore->get_latest_committed_block(account);
             if (latest_block == nullptr) {
@@ -390,28 +388,47 @@ public:
     }
 
 private:
-    void gen_all_unit_account_file(std::set<std::string> & accounts_set) {
-        json accounts_json;
+    std::set<std::string> query_db_unit_accounts() {
+        std::set<std::string> accounts;
+        std::ifstream file_stream("all_account.json");
+        json j;
+        file_stream >> j;
+        if (!j.empty()) {
+            for (auto _table : j) {
+                for (auto _acc : _table) {
+                    accounts.insert(_acc.get<std::string>());
+                }
+            }
+        } else {
+            generate_db_unit_accounts_file_v2(accounts);
+        }
+        return accounts;
+    }
+
+    std::set<std::string> generate_db_unit_accounts_file() {
+        std::set<std::string> accounts;
+        json j;
         std::cout << "all_account.json generating..." << std::endl;
-        auto const & table_vec = get_all_table_account();
-        for (auto const & account : table_vec) {
-            std::set<std::string> tmp_set;
-            this->query_unit_account(account, tmp_set);
-            for (auto & s : tmp_set) {
-                accounts_set.insert(s);
-                accounts_json[account].push_back(s);
+        auto const & tables = get_table_contract_accounts();
+        for (auto const & table : tables) {
+            std::set<std::string> units;
+            query_unit_account(table, units);
+            for (auto const & unit : units) {
+                accounts.insert(unit);
+                j[table].push_back(unit);
             }
         }
 
-        std::ofstream out_json("all_account.json");
-        out_json << std::setw(4) << accounts_json;
+        std::ofstream file_stream("all_account.json");
+        file_stream << std::setw(4) << j;
         std::cout << "===> all_account.json generated success!" << std::endl;
+        return accounts;
     }
 
-    void gen_all_unit_account_file2(std::set<std::string> & accounts_set) {
+    void generate_db_unit_accounts_file_v2(std::set<std::string> & accounts_set) {
         std::cout << "all_account.json generating..." << std::endl;
         
-        auto const & table_vec = get_all_table_account();
+        auto const & table_vec = get_table_contract_accounts();
         uint32_t thread_num = 8;
         uint32_t address_per_thread = table_vec.size() / thread_num;
         std::vector<std::vector<std::string>> table_vec_split;
@@ -936,13 +953,13 @@ public:
         m_blockstore = tools.m_blockstore;
     }
     ~db_reset_t(){};
-    void query_db_reset(std::set<std::string> & accounts_set) {
+    void generate_reset_check_file(std::vector<std::string> const & accounts) {
         json property_json;
         get_contract_stake_property_map_string_string(property_json);
         get_contract_stake_property_string(property_json);
         get_contract_table_stake_property_map_string_string(property_json);
         get_contract_table_stake_property_string(property_json);
-        get_unit_set_property(accounts_set, property_json);
+        get_unit_set_property(accounts, property_json);
         std::ofstream out_json("all_property_check.json");
         out_json << std::setw(4) << property_json["contract_account_parse"];
         out_json << std::setw(4) << property_json["user_account_parse"];
@@ -1064,46 +1081,10 @@ public:
         std::cout << "calc total vote, @107: " << total_vote_107 << ", @112: " << total_vote_121 << std::endl;
     }
 private:
-    static std::vector<std::string> get_all_system_contract_address() {
-        std::vector<std::string> account_vec;
-        const std::vector<std::string> accounts = {
-            sys_contract_rec_registration_addr,
-            sys_contract_rec_elect_edge_addr,
-            sys_contract_rec_elect_archive_addr,
-            sys_contract_rec_elect_rec_addr,
-            sys_contract_rec_elect_zec_addr,
-            sys_contract_rec_tcc_addr,
-            sys_contract_rec_standby_pool_addr,
-            sys_contract_zec_workload_addr,
-            sys_contract_zec_vote_addr,
-            sys_contract_zec_reward_addr,
-            sys_contract_zec_slash_info_addr,
-            sys_contract_zec_elect_consensus_addr,
-            sys_contract_zec_standby_pool_addr,
-            sys_contract_zec_group_assoc_addr,
-        };
-        const std::vector<std::pair<std::string, int>> table_accounts = {
-            std::make_pair(std::string{sys_contract_sharding_table_block_addr}, enum_vledger_const::enum_vbucket_has_tables_count),
-            std::make_pair(std::string{sys_contract_zec_table_block_addr}, MAIN_CHAIN_ZEC_TABLE_USED_NUM),
-            std::make_pair(std::string{sys_contract_beacon_table_block_addr}, MAIN_CHAIN_REC_TABLE_USED_NUM),
-            std::make_pair(std::string{sys_contract_sharding_vote_addr}, enum_vledger_const::enum_vbucket_has_tables_count),
-            std::make_pair(std::string{sys_contract_sharding_reward_claiming_addr}, enum_vledger_const::enum_vbucket_has_tables_count),
-        };
-        for (auto const & _p : accounts) {
-            account_vec.emplace_back(_p);
-        }
-        for (auto const & _p : table_accounts) {
-            for (auto index = 0; index < _p.second; ++index) {
-                std::string address = _p.first + "@" + std::to_string(index);
-                account_vec.emplace_back(address);
-            }
-        }
-        return account_vec;
-    }
-
-    void get_unit_set_property(std::set<std::string> & accounts_set, json & accounts_json) {
+    void get_unit_set_property(std::vector<std::string> const & accounts_vec, json & accounts_json) {
+        std::set<std::string> accounts_set(accounts_vec.begin(), accounts_vec.end());
         // 1. get all new sys contract address
-        auto const & sys_contract_accounts_vec = get_all_system_contract_address();
+        auto const & sys_contract_accounts_vec = db_export_tools::get_unit_contract_accounts();
         std::set<std::string> sys_contract_accounts_set;
         for (auto const & account : sys_contract_accounts_vec) {
             sys_contract_accounts_set.insert(account);
@@ -1606,7 +1587,6 @@ void usage() {
     std::cout << "------- usage -------" << std::endl;
     std::cout << "- ./xdb_export <config_json_file> <function_name>" << std::endl;
     std::cout << "    - <function_name>:" << std::endl;
-    std::cout << "        - checkout_all_account" << std::endl;
     std::cout << "        - check_db_reset" << std::endl;
     std::cout << "        - check_fast_sync [table|unit|account]" << std::endl;
     std::cout << "        - check_block_exist <account> <height>" << std::endl;
@@ -1649,21 +1629,21 @@ int main(int argc, char ** argv) {
 #endif
     db_export_tools tools{db_path};
     std::string function_name{argv[2]};
-    if (function_name == "checkout_all_account") {
-        std::set<std::string> accounts_set;
-        tools.get_all_unit_account(accounts_set);
-        for (auto const & s : accounts_set) {
-            std::cout << s << std::endl;
-        }
-    } else if (function_name == "check_db_reset") {
-        if (!tools.all_account_file_exist()) {
-            std::cout << "all_account.json not exist!" << std::endl;
+    if (function_name == "check_db_reset") {
+        std::string file = "all_account.json";
+        if (access(file.c_str(), 0) != 0) {
+            std::cout << file << " not exist!" << std::endl;
             return -1;
         }
-        std::set<std::string> accounts_set;
-        tools.get_all_unit_account(accounts_set);
+        std::ifstream file_stream(file);
+        json j;
+        file_stream >> j;
+        if (j.empty()) {
+            std::cout << file << " not exist!" << std::endl;
+            return -1;
+        }
         db_reset_t reset(tools);
-        reset.query_db_reset(accounts_set);
+        reset.generate_reset_check_file(tools.get_db_unit_accounts());
     } else if (function_name == "verify") {
         if (argc < 4) {
             usage();
@@ -1683,17 +1663,17 @@ int main(int argc, char ** argv) {
         reset.verify(contract, user);
     } else if (function_name == "check_fast_sync") {
         if (argc == 3) {
-            auto const & table_account_vec = db_export_tools::get_all_table_account();
-            auto const & unit_account_vec = tools.get_all_unit_account();
+            auto const & table_account_vec = db_export_tools::get_table_contract_accounts();
+            auto const & unit_account_vec = tools.get_db_unit_accounts();
             tools.query_all_sync_result(table_account_vec, true);
             tools.query_all_sync_result(unit_account_vec, false);
         } else if (argc == 4) {
             std::string method_name{argv[3]};
             if (method_name == "table") {
-                auto const & table_account_vec = db_export_tools::get_all_table_account();
+                auto const & table_account_vec = db_export_tools::get_table_contract_accounts();
                 tools.query_all_sync_result(table_account_vec, true);
             } else if (method_name == "unit") {
-                auto const & unit_account_vec = tools.get_all_unit_account();
+                auto const & unit_account_vec = tools.get_db_unit_accounts();
                 tools.query_all_sync_result(unit_account_vec, false);
             } else if (method_name == "account") {
                 std::vector<std::string> account = {argv[4]};
@@ -1705,7 +1685,7 @@ int main(int argc, char ** argv) {
         }
     } else if (function_name == "check_tx_info") {
         if (argc == 3) {
-            auto const & account_vec = db_export_tools::get_all_table_account();
+            auto const & account_vec = db_export_tools::get_table_contract_accounts();
             tools.query_table_tx_info(account_vec);
         } else if (argc == 4) {
             std::vector<std::string> account = {argv[3]};

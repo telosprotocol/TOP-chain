@@ -157,3 +157,99 @@ TEST_F(test_block_store_load, load_units_BENCH) {
     }
 
 }
+
+
+TEST_F(test_block_store_load, mock_table_unit_1) {
+    mock::xvchain_creator creator;
+    base::xvblockstore_t* blockstore = creator.get_blockstore();
+
+    std::string table_addr = xdatamock_address::make_consensus_table_address(1);
+    std::vector<std::string> unit_addrs = xdatamock_address::make_multi_user_address_in_table(table_addr, 4);
+    std::string from_addr = unit_addrs[0];
+    std::string to_addr = unit_addrs[3];
+    mock::xdatamock_table mocktable(table_addr, unit_addrs);
+
+    std::vector<xcons_transaction_ptr_t> send_txs = mocktable.create_send_txs(from_addr, to_addr, 2);
+    mocktable.push_txs(send_txs);
+    xblock_ptr_t _tableblock1 = mocktable.generate_one_table();
+    mocktable.generate_one_table();
+    mocktable.generate_one_table();
+    {
+        xassert(_tableblock1->get_height() == 1);
+        xassert(_tableblock1->get_block_class() == base::enum_xvblock_class_light);
+        std::vector<xobject_ptr_t<base::xvblock_t>> sub_blocks;
+        _tableblock1->extract_sub_blocks(sub_blocks);
+        xassert(sub_blocks.size() == 1);
+    }
+
+    std::vector<xcons_transaction_ptr_t> recv_txs = mocktable.create_receipts(_tableblock1);
+    xassert(recv_txs.size() == send_txs.size());
+    for (auto & tx : recv_txs) {
+        xassert(tx->is_recv_tx());
+    }
+    mocktable.push_txs(recv_txs);    
+    xblock_ptr_t _tableblock2 = mocktable.generate_one_table();
+    mocktable.generate_one_table();
+    mocktable.generate_one_table();    
+    {
+        xassert(_tableblock2->get_height() == 4);
+        xassert(_tableblock2->get_block_class() == base::enum_xvblock_class_light);
+        std::vector<xobject_ptr_t<base::xvblock_t>> sub_blocks;
+        _tableblock2->extract_sub_blocks(sub_blocks);
+        xassert(sub_blocks.size() == 1);
+    }
+
+    std::vector<xcons_transaction_ptr_t> confirm_txs = mocktable.create_receipts(_tableblock2);
+    xassert(confirm_txs.size() == send_txs.size());
+    for (auto & tx : confirm_txs) {
+        xassert(tx->is_confirm_tx());
+    }
+    mocktable.push_txs(confirm_txs); 
+    xblock_ptr_t _tableblock3 = mocktable.generate_one_table();
+    mocktable.generate_one_table();
+    mocktable.generate_one_table();
+    {
+        xassert(_tableblock3->get_height() == 7);
+        xassert(_tableblock3->get_block_class() == base::enum_xvblock_class_light);
+        std::vector<xobject_ptr_t<base::xvblock_t>> sub_blocks;
+        _tableblock3->extract_sub_blocks(sub_blocks);
+        xassert(sub_blocks.size() == 1);
+    }    
+}
+
+TEST_F(test_block_store_load, mock_table_unit_2) {
+    mock::xvchain_creator creator;
+    base::xvblockstore_t* blockstore = creator.get_blockstore();
+
+    std::string table_addr = xdatamock_address::make_consensus_table_address(1);
+    std::vector<std::string> unit_addrs = xdatamock_address::make_multi_user_address_in_table(table_addr, 4);
+    std::string from_addr = unit_addrs[0];
+    std::string to_addr = unit_addrs[3];
+    mock::xdatamock_table mocktable(table_addr, unit_addrs);
+
+    std::vector<xcons_transaction_ptr_t> send_txs = mocktable.create_send_txs(from_addr, to_addr, 2);
+    mocktable.push_txs(send_txs);
+    xblock_ptr_t _tableblock1 = mocktable.generate_one_table();
+    mocktable.generate_one_table();
+    mocktable.generate_one_table();
+
+    std::vector<xcons_transaction_ptr_t> recv_txs = mocktable.create_receipts(_tableblock1);
+    xassert(recv_txs.size() == send_txs.size());
+    for (auto & tx : recv_txs) {
+        xassert(tx->is_recv_tx());
+    }
+    mocktable.push_txs(recv_txs);    
+    xblock_ptr_t _tableblock2 = mocktable.generate_one_table();
+    mocktable.generate_one_table();
+    mocktable.generate_one_table();    
+
+    std::vector<xcons_transaction_ptr_t> confirm_txs = mocktable.create_receipts(_tableblock2);
+    xassert(confirm_txs.size() == send_txs.size());
+    for (auto & tx : confirm_txs) {
+        xassert(tx->is_confirm_tx());
+    }
+    mocktable.push_txs(confirm_txs); 
+    xblock_ptr_t _tableblock3 = mocktable.generate_one_table();
+    mocktable.generate_one_table();
+    mocktable.generate_one_table();
+}

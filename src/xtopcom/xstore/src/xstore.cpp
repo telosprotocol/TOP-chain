@@ -49,6 +49,13 @@ REG_XMODULE_LOG(chainbase::enum_xmodule_type::xmodule_type_xstore, store::xstore
 xstore::xstore(const std::shared_ptr<db::xdb_face_t> &db)
     : m_db(db) {}
 
+bool xstore::open() const {
+    if (m_db == nullptr) {
+        return false;
+    }
+    return m_db->open();
+}
+
 xaccount_ptr_t xstore::query_account(const std::string &address) const {
     base::xvaccount_t _vaddr(address);
     XMETRICS_GAUGE(metrics::blockstore_access_from_store, 1);
