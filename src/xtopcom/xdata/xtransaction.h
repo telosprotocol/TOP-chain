@@ -172,6 +172,7 @@ class xtransaction_t : public xbase_dataunit_t<xtransaction_t, xdata_type_transa
     std::string         get_digest_hex_str() const;
     const std::string & get_source_addr()const {return m_source_action.get_account_addr();}
     const std::string & get_target_addr()const {return m_target_addr.empty() ? m_target_action.get_account_addr() : m_target_addr;}
+    const std::string & get_origin_target_addr()const {return m_target_action.get_account_addr();}
     uint64_t            get_tx_nonce() const {return get_last_nonce() + 1;}
     size_t              get_serialize_size() const;
     std::string         dump() const override;  // just for debug purpose
