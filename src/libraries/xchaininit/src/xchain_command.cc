@@ -24,6 +24,7 @@
 #include "xpbase/base/top_utils.h"
 #include "xtopcl/include/topcl.h"
 #include "xtopcl/include/xcrypto.h"
+#include "xconfig/xpredefined_configurations.h"
 
 #include <dirent.h>
 #include <nlohmann/json.hpp>
@@ -203,8 +204,8 @@ std::string get_working_path() {
 int db_backup(const std::string & from, const std::string & to) {
     std::string errormsg{""};
     // backup db directory
-    std::string from_db_dir = from + "/db";
-    std::string output_file_db = to + "/" + "db";
+    std::string from_db_dir = from + DB_PATH;
+    std::string output_file_db = to + DB_PATH;
 
     if (!isDirExist(from_db_dir)) {
         printf("Backup failed\nError: the %s  does not exist.\n", from_db_dir.c_str());
@@ -234,7 +235,7 @@ int db_restore(const std::string & from, const std::string & to, const int backu
         return -1;
     }
 
-    std::string from_db_dir = from + "/db";
+    std::string from_db_dir = from + DB_PATH;
 
     // user specify the data recover target directory
     std::string target = to;
@@ -258,7 +259,7 @@ int db_restore(const std::string & from, const std::string & to, const int backu
     }
     // create two restore user directory, one for db, the other for pdb
     multiplatform_mkdir(target.c_str());
-    auto db_target = target + "/db";
+    auto db_target = target + DB_PATH;
     multiplatform_mkdir(db_target.c_str());
 
     // printf("resetore from:%s to %s\n", from_db_dir.c_str(),db_target.c_str());
@@ -878,7 +879,7 @@ int parse_execute_command(const char * config_file_extra, int argc, char * argv[
 
     backup->callback([&]() {
         // backup directory can not fill in and that means current directory
-        auto dbdir = backupToDir + "/db";
+        auto dbdir = backupToDir + DB_PATH;
         if (backupFromDir.empty()) {
             // get currrent directory
             backupFromDir = get_working_path();
@@ -898,7 +899,7 @@ int parse_execute_command(const char * config_file_extra, int argc, char * argv[
     auto listversion = db->add_subcommand("listBackups", "List all verions of backup database.");
     listversion->add_option("backupdir", listbackupToDir, "Target database backup directory.")->mandatory();
     listversion->callback([&]() {
-        auto dbdir = listbackupToDir + "/db";
+        auto dbdir = listbackupToDir + DB_PATH;
         auto listvec = db_backup_list_info(dbdir);
         if (listvec.empty()) {
             out_str << "No data." << std::endl;
@@ -930,7 +931,7 @@ int parse_execute_command(const char * config_file_extra, int argc, char * argv[
         }
 
         if (backupid == 0) {
-            auto dbdir = restoreFromDir + "/db";
+            auto dbdir = restoreFromDir + DB_PATH;
             auto listvec = db_backup_list_info(dbdir);
             if (listvec.size() == 0) {
                 out_str << "Restore failed\nError: cannot find the dbversion." << std::endl;

@@ -27,6 +27,7 @@
 #include "xtopcl/include/topcl.h"
 #include "xverifier/xverifier_utl.h"
 #include "xtopcl/include/api_method.h"
+#include "xconfig/xpredefined_configurations.h"
 
 // nlohmann_json
 #include <nlohmann/json.hpp>
@@ -321,12 +322,12 @@ int topchain_noparams_init(const std::string& pub_key, const std::string& pri_ke
     std::string log_path;
     std::string bwlist_path;
 #ifdef _WIN32
-    chain_db_path = datadir + "\\db_v2";
+    chain_db_path = datadir + DB_PATH;
     log_path = datadir + "\\log";
     bwlist_path = datadir + "\\bwlist.json"
     // TODO(smaug) mkdir in windows
 #else
-    chain_db_path = datadir + "/db_v2";
+    chain_db_path = datadir + DB_PATH;
     log_path = datadir + "/log";
     bwlist_path = datadir + "/bwlist.json";
 
