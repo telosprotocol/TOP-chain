@@ -20,7 +20,8 @@ xtop_sync_object::xtop_sync_object(observer_ptr<mbus::xmessage_bus_face_t> const
                                    std::vector<observer_ptr<base::xiothread_t>> const & sync_handler_thread_pool):
     m_bus{ bus },
     m_instance(vhost->host_node_id().c_str()),
-    m_sync_store(top::make_unique<sync::xsync_store_t>(m_instance, make_observer(blockstore))),
+    m_store_shadow(top::make_unique<sync::xsync_store_shadow_t>()),
+    m_sync_store(top::make_unique<sync::xsync_store_t>(m_instance, make_observer(blockstore), m_store_shadow.get())),
     m_blacklist(top::make_unique<sync::xdeceit_node_manager_t>()),
     m_session_mgr(top::make_unique<sync::xsession_manager_t>(XGET_CONFIG(executor_max_sessions))),
     m_role_chains_mgr(top::make_unique<sync::xrole_chains_mgr_t>(m_instance)),
@@ -31,7 +32,7 @@ xtop_sync_object::xtop_sync_object(observer_ptr<mbus::xmessage_bus_face_t> const
     m_sync_pusher(top::make_unique<sync::xsync_pusher_t>(m_instance, m_role_xips_mgr.get(), m_sync_sender.get())),
     m_sync_broadcast(top::make_unique<sync::xsync_broadcast_t>(m_instance, m_peerset.get(), m_sync_sender.get())),
     m_downloader(top::make_unique<sync::xdownloader_t>(m_instance, m_sync_store.get(), bus, make_observer(cert_ptr), m_role_chains_mgr.get(),
-        m_sync_sender.get(), sync_account_thread_pool, m_sync_ratelimit.get())),
+        m_sync_sender.get(), sync_account_thread_pool, m_sync_ratelimit.get(), m_store_shadow.get())),
     m_block_fetcher(top::make_unique<sync::xblock_fetcher_t>(m_instance, sync_thread, bus, make_observer(cert_ptr), m_role_chains_mgr.get(), m_sync_store.get(),
         m_sync_broadcast.get(), m_sync_sender.get())),
     m_sync_gossip(top::make_unique<sync::xsync_gossip_t>(m_instance, m_bus, m_sync_store.get(), m_role_chains_mgr.get(), m_role_xips_mgr.get(), m_sync_sender.get())),
@@ -63,8 +64,7 @@ xtop_sync_object::xtop_sync_object(observer_ptr<mbus::xmessage_bus_face_t> const
             m_instance,
             bus,
             m_sync_handler.get())),
-    m_sync_netmsg_dispatcher(top::make_unique<sync::xsync_netmsg_dispatcher_t>(m_instance, sync_handler_thread_pool, bus, vhost, m_sync_handler.get())) {
-
+    m_sync_netmsg_dispatcher(top::make_unique<sync::xsync_netmsg_dispatcher_t>(m_instance, sync_handler_thread_pool, bus, vhost, m_sync_handler.get())){
 }
 
 void

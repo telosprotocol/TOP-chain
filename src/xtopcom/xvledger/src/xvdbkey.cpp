@@ -23,7 +23,7 @@ namespace top
             return key_path;
         }
 
-        //block-index ->linke block-object,block-state
+        //block-index ->linke block-object,block-state,block-offdata
         const std::string  xvdbkey_t::create_block_index_key(const xvaccount_t & account,const uint64_t target_height)//for main entry
         {
             const std::string key_path = "i/" + account.get_address() + "/" + xstring_utl::uint642hex(target_height);
@@ -72,6 +72,18 @@ namespace top
         const std::string  xvdbkey_t::create_block_state_key(const xvaccount_t & account,const std::string & org_block_hash)
         {
             const std::string key_path = "b/" + account.get_xvid_str() + "/" + org_block_hash + "/s";
+            return key_path;
+        }
+
+        const std::string  xvdbkey_t::create_chain_key(const xvaccount_t & account)
+        {
+            const std::string key_path = "c/" + account.get_xvid_str();
+            return key_path;
+        }
+
+        const std::string  xvdbkey_t::create_chain_span_key(const xvaccount_t & account, const uint64_t height)
+        {
+            const std::string key_path = "c/" + account.get_xvid_str() + "/s/" + xstring_utl::uint642hex(height);
             return key_path;
         }
 
