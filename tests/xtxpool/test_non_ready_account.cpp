@@ -1,8 +1,8 @@
 #include "gtest/gtest.h"
 #include "test_xtxpool_util.h"
-#include "xverifier/xverifier_utl.h"
 #include "xtxpool_v2/xnon_ready_account.h"
 #include "xtxpool_v2/xtxpool_error.h"
+#include "xverifier/xverifier_utl.h"
 
 using namespace top::xtxpool_v2;
 using namespace top::data;
@@ -22,8 +22,9 @@ protected:
 
 TEST_F(test_non_ready_account, non_ready_account_basic) {
     std::string table_addr = "table_test";
-    xtxpool_shard_info_t shard(0, 0, 0);
-    xtxpool_table_info_t table_para(table_addr, &shard);
+    xtxpool_shard_info_t shard(0, 0, 0, common::xnode_type_t::auditor);
+    xtxpool_statistic_t statistic;
+    xtxpool_table_info_t table_para(table_addr, &shard, &statistic);
     xnon_ready_accounts_t non_ready_accounts(&table_para);
     uint256_t last_tx_hash = {};
     uint64_t now = xverifier::xtx_utl::get_gmttime_s();
