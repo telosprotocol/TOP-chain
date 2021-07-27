@@ -18,34 +18,12 @@ protected:
     }
 };
 
-
-    // bool is_send_tx_reached_upper_limit() {
-    //     if (m_counter.get_send_tx_count() >= table_send_tx_queue_size_max || m_counter.get_conf_tx_count() >= table_conf_tx_queue_size_max) {
-    //         return true;
-    //     }
-    //     if (m_shard->get_send_tx_count() >= shard_send_tx_queue_size_max) {
-    //         return true;
-    //     }
-    //     return false;
-    // }
-    // bool is_recv_tx_reached_upper_limit() {
-    //     if (m_counter.get_recv_tx_count() >= table_recv_tx_queue_size_max) {
-    //         return true;
-    //     }
-    //     if (m_shard->get_recv_tx_count() >= shard_recv_tx_queue_size_max) {
-    //         return true;
-    //     }
-    //     return false;
-    // }
-
-
-
-
 TEST_F(test_xtxpool_info, txpool_info) {
-    xtxpool_shard_info_t shard(0,0,0);
+    xtxpool_shard_info_t shard(0, 0, 0, common::xnode_type_t::auditor);
+    xtxpool_statistic_t statistic;
 
-    xtxpool_table_info_t table1("table_test1", &shard);
-    xtxpool_table_info_t table2("table_test2", &shard);
+    xtxpool_table_info_t table1("table_test1", &shard, &statistic);
+    xtxpool_table_info_t table2("table_test2", &shard, &statistic);
 
     
     // table1.send_tx_inc(1);

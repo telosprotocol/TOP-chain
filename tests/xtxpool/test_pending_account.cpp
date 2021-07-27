@@ -22,14 +22,15 @@ protected:
 
 TEST_F(test_pending_account, sigle_send_tx) {
     std::string table_addr = "table_test";
-    xtxpool_shard_info_t shard(0, 0, 0);
-    xtxpool_table_info_t table_para(table_addr, &shard);
+    xtxpool_shard_info_t shard(0, 0, 0, common::xnode_type_t::auditor);
+    xtxpool_statistic_t statistic;
+    xtxpool_table_info_t table_para(table_addr, &shard, &statistic);
     xpending_accounts_t pending_accounts(&table_para);
     uint256_t last_tx_hash = {};
     uint64_t now = xverifier::xtx_utl::get_gmttime_s();
 
     xcons_transaction_ptr_t tx = test_xtxpool_util_t::create_cons_transfer_tx(0, 1, 0, now, last_tx_hash);
-    tx->get_transaction()->set_push_pool_timestamp(now);
+    tx->set_push_pool_timestamp(now);
 
     xtx_para_t para;
     std::shared_ptr<xtx_entry> tx_ent = std::make_shared<xtx_entry>(tx, para);
@@ -60,7 +61,7 @@ TEST_F(test_pending_account, sigle_send_tx) {
 
 TEST_F(test_pending_account, sigle_account_multi_send_tx) {
     std::string table_addr = "table_test";
-    xtxpool_shard_info_t shard(0, 0, 0);
+    xtxpool_shard_info_t shard(0, 0, 0, common::xnode_type_t::auditor);
     xtxpool_statistic_t statistic;
     xtxpool_table_info_t table_para(table_addr, &shard, &statistic);
     xpending_accounts_t pending_accounts(&table_para);

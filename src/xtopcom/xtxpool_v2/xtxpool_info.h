@@ -41,8 +41,8 @@ public:
         xassert(m_unconfirm_tx_count + count >= 0);
         m_unconfirm_tx_count += count;
     }
-    void set_unconfirm_tx_num(uint32_t num) {
-        m_unconfirm_tx_count = num;
+    void set_unconfirm_tx_count(uint32_t count) {
+        m_unconfirm_tx_count = count;
     }
     int32_t get_send_tx_count() const {
         return m_send_tx_count;
@@ -284,7 +284,8 @@ private:
 
 class xtxpool_shard_info_t : public xtx_counter_t {
 public:
-    xtxpool_shard_info_t(uint8_t zone, uint16_t front_table_id, uint16_t back_table_id, common::xnode_type_t node_type) : m_zone(zone), m_front_table_id(front_table_id), m_back_table_id(back_table_id), m_node_type(node_type) {
+    xtxpool_shard_info_t(uint8_t zone, uint16_t front_table_id, uint16_t back_table_id, common::xnode_type_t node_type)
+      : m_zone(zone), m_front_table_id(front_table_id), m_back_table_id(back_table_id), m_node_type(node_type) {
     }
     bool is_ids_match(uint8_t zone, uint16_t front_table_id, uint16_t back_table_id, common::xnode_type_t node_type) const {
         return (m_zone == zone && m_front_table_id == front_table_id && m_back_table_id == back_table_id && m_node_type == node_type);
@@ -330,11 +331,11 @@ public:
         m_statistic->dec_push_tx_send_cur_num(m_counter.get_send_tx_count());
         m_statistic->dec_push_tx_recv_cur_num(m_counter.get_recv_tx_count());
         m_statistic->dec_push_tx_confirm_cur_num(m_counter.get_conf_tx_count());
-        set_unconfirm_tx_num(0);
+        set_unconfirm_tx_count(0);
 
-        // XMETRICS_COUNTER_DECREMENT("txpool_push_tx_send_cur", m_counter.get_send_tx_count());
-        // XMETRICS_COUNTER_DECREMENT("txpool_push_tx_recv_cur", m_counter.get_recv_tx_count());
-        // XMETRICS_COUNTER_DECREMENT("txpool_push_tx_confirm_cur", m_counter.get_conf_tx_count());
+        XMETRICS_GAUGE(metrics::txpool_send_tx_cur, -m_counter.get_send_tx_count());
+        XMETRICS_GAUGE(metrics::txpool_recv_tx_cur, -m_counter.get_recv_tx_count());
+        XMETRICS_GAUGE(metrics::txpool_confirm_tx_cur, -m_counter.get_conf_tx_count());
         // XMETRICS_COUNTER_SET("table_send_tx_cur" + get_address(), 0);
         // XMETRICS_COUNTER_SET("table_recv_tx_cur" + get_address(), 0);
         // XMETRICS_COUNTER_SET("table_confirm_tx_cur" + get_address(), 0);
@@ -350,7 +351,7 @@ public:
         }
 
         m_statistic->inc_push_tx_send_cur_num(count);
-        // XMETRICS_COUNTER_INCREMENT("txpool_push_tx_send_cur", count);
+         XMETRICS_GAUGE(metrics::txpool_send_tx_cur, count);
         // XMETRICS_COUNTER_INCREMENT("table_send_tx_cur" + get_address(), count);
         xdbg("send_tx_inc table %s send queue size:%u", get_address().c_str(), m_counter.get_send_tx_count());
     }
@@ -361,7 +362,7 @@ public:
             shard->send_tx_inc(-count);
         }
         m_statistic->dec_push_tx_send_cur_num(count);
-        // XMETRICS_COUNTER_DECREMENT("txpool_push_tx_send_cur", count);
+        XMETRICS_GAUGE(metrics::txpool_send_tx_cur, -count);
         // XMETRICS_COUNTER_DECREMENT("table_send_tx_cur" + get_address(), count);
         xdbg("send_tx_dec table %s send queue size:%u", get_address().c_str(), m_counter.get_send_tx_count());
     }
@@ -372,7 +373,7 @@ public:
             shard->recv_tx_inc(count);
         }
         m_statistic->inc_push_tx_recv_cur_num(count);
-        // XMETRICS_COUNTER_INCREMENT("txpool_push_tx_recv_cur", count);
+        XMETRICS_GAUGE(metrics::txpool_recv_tx_cur, count);
         // XMETRICS_COUNTER_INCREMENT("table_recv_tx_cur" + get_address(), count);
         xdbg("recv_tx_inc table %s recv queue size:%u", get_address().c_str(), m_counter.get_recv_tx_count());
     }
@@ -383,7 +384,7 @@ public:
             shard->recv_tx_inc(-count);
         }
         m_statistic->dec_push_tx_recv_cur_num(count);
-        // XMETRICS_COUNTER_DECREMENT("txpool_push_tx_recv_cur", count);
+        XMETRICS_GAUGE(metrics::txpool_recv_tx_cur, -count);
         // XMETRICS_COUNTER_DECREMENT("table_recv_tx_cur" + get_address(), count);
         xdbg("recv_tx_dec table %s recv queue size:%u", get_address().c_str(), m_counter.get_recv_tx_count());
     }
@@ -394,7 +395,7 @@ public:
             shard->conf_tx_inc(count);
         }
         m_statistic->inc_push_tx_confirm_cur_num(count);
-        // XMETRICS_COUNTER_INCREMENT("txpool_push_tx_confirm_cur", count);
+        XMETRICS_GAUGE(metrics::txpool_confirm_tx_cur, count);
         // XMETRICS_COUNTER_INCREMENT("table_confirm_tx_cur" + get_address(), count);
         xdbg("conf_tx_inc table %s confirm queue size:%u", get_address().c_str(), m_counter.get_conf_tx_count());
     }
@@ -405,7 +406,7 @@ public:
             shard->conf_tx_inc(-count);
         }
         m_statistic->dec_push_tx_confirm_cur_num(count);
-        // XMETRICS_COUNTER_DECREMENT("txpool_push_tx_confirm_cur", count);
+        XMETRICS_GAUGE(metrics::txpool_confirm_tx_cur, -count);
         // XMETRICS_COUNTER_DECREMENT("table_confirm_tx_cur" + get_address(), count);
         xdbg("conf_tx_dec table %s confirm queue size:%u", get_address().c_str(), m_counter.get_conf_tx_count());
     }
@@ -458,21 +459,19 @@ public:
         return false;
     }
 
-    void set_unconfirm_tx_num(int32_t num) {
-        int32_t old_num = m_counter.get_unconfirm_tx_count();
-        if (num == old_num) {
+    void set_unconfirm_tx_count(int32_t count) {
+        int32_t old_count = m_counter.get_unconfirm_tx_count();
+        if (count == old_count) {
             return;
         }
         for (auto & shard : m_shards) {
-            xtxpool_dbg("set_unconfirm_tx_num shard(%p) table:%s old unconfirm num:%d inc num:%d", shard, get_address().c_str(), shard->get_unconfirm_tx_count(), num - old_num);
-            shard->unconfirm_tx_inc(num - old_num);
+            xtxpool_dbg(
+                "set_unconfirm_tx_count shard(%p) table:%s old unconfirm count:%d inc count:%d", shard, get_address().c_str(), shard->get_unconfirm_tx_count(), count - old_count);
+            shard->unconfirm_tx_inc(count - old_count);
         }
-        m_statistic->inc_unconfirm_tx_num(num - old_num);
-        m_counter.set_unconfirm_tx_num(num);
-    }
-
-    int32_t get_unconfirm_tx_num() const {
-        return m_counter.get_unconfirm_tx_count();
+        m_statistic->inc_unconfirm_tx_num(count - old_count);
+        XMETRICS_GAUGE(metrics::txpool_unconfirm_tx_cur, count - old_count);
+        m_counter.set_unconfirm_tx_count(count);
     }
 
     xtxpool_statistic_t * get_statistic() {
@@ -510,7 +509,7 @@ public:
     }
 
     void add_shard(xtxpool_shard_info_t * shard) {
-        xtxpool_dbg("add_shard shard(%p) table:%s old num:%d:%d:%d:%d inc num:%d:%d:%d:%d",
+        xtxpool_dbg("add_shard shard(%p) table:%s old count:%d:%d:%d:%d inc count:%d:%d:%d:%d",
                     shard,
                     get_address().c_str(),
                     shard->get_send_tx_count(),
@@ -541,6 +540,18 @@ public:
 
     bool no_shard() const {
         return m_shards.empty();
+    }
+
+    int32_t get_send_tx_count() const {
+        return m_counter.get_send_tx_count();
+    }
+
+    int32_t get_recv_tx_count() const {
+        return m_counter.get_recv_tx_count();
+    }
+
+    int32_t get_conf_tx_count() const {
+        return m_counter.get_conf_tx_count();
     }
 
 private:

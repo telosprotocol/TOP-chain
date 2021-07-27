@@ -76,6 +76,9 @@ public:
     void updata_latest_nonce(const std::string & account_addr, uint64_t latest_nonce);
     void clear_expired_txs();
     bool get_account_nonce_cache(const std::string & account_addr, uint64_t & latest_nonce) const;
+    uint32_t account_num() const {
+        return m_accounts_set.size();
+    }
 
 private:
     xtxpool_table_info_t * m_xtable_info;
