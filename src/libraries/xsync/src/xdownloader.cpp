@@ -13,9 +13,12 @@ NS_BEG2(top, sync)
 
 using namespace mbus;
 
-xaccount_timer_t::xaccount_timer_t(std::string vnode_id, base::xcontext_t &_context, int32_t timer_thread_id):
+xaccount_timer_t::xaccount_timer_t(std::string vnode_id, xsync_store_shadow_t* store_shadow, uint32_t thread_index, 
+    base::xcontext_t &_context, int32_t timer_thread_id):
 base::xxtimer_t(_context, timer_thread_id),
-m_vnode_id(vnode_id) {
+m_vnode_id(vnode_id),
+m_store_shadow(store_shadow),
+m_thread_index(thread_index) {
 }
 
 xaccount_timer_t::~xaccount_timer_t() {
@@ -48,23 +51,27 @@ bool xaccount_timer_t::on_timer_fire(const int32_t thread_id,const int64_t timer
         return true; 
     }
 
-    if (m_chains.size() == 0) {
-        return true;
+    if (m_chains.size() != 0) {
+        uint32_t index = m_current_index_Of_chain % m_chains.size();
+        for (uint32_t count = 0; count < m_chains.size(); index = (index + 1) % m_chains.size()) {
+            count++;
+            if (m_chains[index]->downloading(now)){
+                continue;
+            }
+            
+            if (!m_chains[index]->on_timer(now)) {
+                break;
+            }
+        }
+
+        m_current_index_Of_chain = index;
     }
 
-    uint32_t index = m_current_index_Of_chain % m_chains.size();
-    for (uint32_t count = 0; count < m_chains.size(); index = (index + 1) % m_chains.size()) {
-        count++;
-        if (m_chains[index]->downloading(now)){
-            continue;
-        }
-        
-        if (!m_chains[index]->on_timer(now)) {
-            break;
-        }
-    }
+    m_count++;
 
-    m_current_index_Of_chain = index;
+    if (m_count % m_shadow_time_out == 0){
+        m_store_shadow->on_timer(m_thread_index);
+    }
     
     return true;
 }
@@ -81,6 +88,7 @@ m_downloader(downloader) {
     m_reg_holder.add_listener((int) mbus::xevent_major_type_sync_executor, cb);
     m_reg_holder.add_listener((int) mbus::xevent_major_type_behind, cb);
     m_reg_holder.add_listener((int) mbus::xevent_major_type_account, cb);
+    m_reg_holder.add_listener((int) mbus::xevent_major_type_store, cb);
 }
 
 bool xevent_monitor_t::filter_event(const mbus::xevent_ptr_t& e) {
@@ -100,21 +108,22 @@ xdownloader_t::xdownloader_t(std::string vnode_id, xsync_store_face_t *sync_stor
             const observer_ptr<mbus::xmessage_bus_face_t> &mbus,
             const observer_ptr<base::xvcertauth_t> &certauth,
             xrole_chains_mgr_t *role_chains_mgr, xsync_sender_t *sync_sender,
-            const std::vector<observer_ptr<base::xiothread_t>> &thread_pool, xsync_ratelimit_face_t *ratelimit):
+            const std::vector<observer_ptr<base::xiothread_t>> &thread_pool, xsync_ratelimit_face_t *ratelimit, xsync_store_shadow_t * shadow):
 m_vnode_id(vnode_id),
 m_sync_store(sync_store),
 m_mbus(mbus),
 m_certauth(certauth),
 m_role_chains_mgr(role_chains_mgr),
 m_sync_sender(sync_sender),
-m_ratelimit(ratelimit) {
-
+m_ratelimit(ratelimit),
+m_store_shadow(shadow){
+    m_store_shadow->set_downloader(this);
     m_thread_count = thread_pool.size();
     for (uint32_t i=0; i<m_thread_count; i++) {
         std::shared_ptr<xmessage_bus_t> bus = std::make_shared<xmessage_bus_t>();
         m_mbus_list.push_back(bus);
 
-        xaccount_timer_t *timer = new xaccount_timer_t(vnode_id, top::base::xcontext_t::instance(), thread_pool[i]->get_thread_id());
+        xaccount_timer_t *timer = new xaccount_timer_t(vnode_id, m_store_shadow, i, top::base::xcontext_t::instance(), thread_pool[i]->get_thread_id());
         timer->start(0, GET_TOKEN_RETRY_INTERVAL / 10);
         m_timer_list.push_back(timer);
 
@@ -167,6 +176,11 @@ std::string xdownloader_t::get_address_by_event(const mbus::xevent_ptr_t &e) {
             return bme->address;
         }
         break;
+    case mbus::xevent_major_type_store:
+        if (e->minor_type == mbus::xevent_store_t::type_block_committed) {
+            auto bme = dynamic_xobject_ptr_cast<mbus::xevent_store_block_committed_t>(e);
+            return bme->owner;
+        }
     default:
         break;
     }
@@ -212,6 +226,10 @@ void xdownloader_t::process_event(uint32_t idx, const mbus::xevent_ptr_t &e, xac
             chain_downloader = on_remove_role(idx, e, timer);
         }
         break;
+    case mbus::xevent_major_type_store:
+        if (e->minor_type == mbus::xevent_store_t::type_block_committed) {
+            chain_downloader = on_block_committed_event(idx,e);
+        }    
     default:
         break;
     }
@@ -310,6 +328,17 @@ xchain_downloader_face_ptr_t xdownloader_t::on_behind_event(uint32_t idx, const 
         const std::string &reason = bme->reason;
 
         chain_downloader->on_behind(start_height, end_height, sync_policy, self_addr, from_addr, reason);
+    }
+
+    return chain_downloader;
+}
+
+xchain_downloader_face_ptr_t xdownloader_t::on_block_committed_event(uint32_t idx, const mbus::xevent_ptr_t &e) {
+    auto bme = dynamic_xobject_ptr_cast<mbus::xevent_store_block_committed_t>(e);
+    m_store_shadow->on_chain_event(bme->owner, bme->blk_height);
+    xchain_downloader_face_ptr_t chain_downloader = find_chain_downloader(idx, bme->owner);
+    if (chain_downloader != nullptr) {
+        chain_downloader->on_block_committed_event(bme->blk_height);
     }
 
     return chain_downloader;

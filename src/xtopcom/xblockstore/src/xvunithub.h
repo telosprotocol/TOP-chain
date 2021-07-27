@@ -128,6 +128,13 @@ namespace top
 
         public:
             virtual bool                 exist_genesis_block(const base::xvaccount_t & account,const int atag = 0) override;
+        public:
+            // genesis connected information
+            virtual bool        set_genesis_height(const base::xvaccount_t & account, const std::string &height) override;
+            virtual const std::string   get_genesis_height(const base::xvaccount_t & account) override;
+            virtual bool        set_block_span(const base::xvaccount_t & account, const uint64_t height,  const std::string &span) override;
+            virtual bool        delete_block_span(const base::xvaccount_t & account, const uint64_t height) override;
+            virtual const std::string get_block_span(const base::xvaccount_t & account, const uint64_t height) override;
 
             bool                         store_txs_to_db(xblockacct_t* target_account,base::xvbindex_t* index_ptr);
         protected:

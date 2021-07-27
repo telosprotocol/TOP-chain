@@ -219,6 +219,13 @@ namespace top
             //check if genesis block exist
             virtual bool                  exist_genesis_block(const base::xvaccount_t & account,const int atag = 0) = 0;
 
+        public:
+            // genesis connected  blocks
+            virtual bool        set_genesis_height(const base::xvaccount_t & account, const std::string &height) = 0;
+            virtual const std::string    get_genesis_height(const base::xvaccount_t & account) = 0;
+            virtual bool        set_block_span(const base::xvaccount_t & account, const uint64_t height,  const std::string &span) = 0;
+            virtual bool        delete_block_span(const base::xvaccount_t & account, const uint64_t height) = 0;
+            virtual const std::string get_block_span(const base::xvaccount_t & account, const uint64_t height) = 0;
         protected:
             //only allow remove flag within xvblockstore_t
             void                          remove_block_flag(xvblock_t* to_block, enum_xvblock_flag flag);
