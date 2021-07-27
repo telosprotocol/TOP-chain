@@ -19,12 +19,14 @@
 #include "xblockstore/xblockstore_face.h"
 #include "tests/mock/xvchain_creator.hpp"
 #include "tests/mock/xdatamock_table.hpp"
+#include "xblockstore/src/xvblockhub.h"
 
 using namespace top;
 using namespace top::base;
 using namespace top::mbus;
 using namespace top::store;
 using namespace top::data;
+using namespace top::mock;
 
 class test_block_connected : public testing::Test {
 protected:
@@ -580,3 +582,75 @@ TEST_F(test_block_connected, store_block_disorder_highqc_1) {
     }
 }
 #endif
+
+TEST_F(test_block_connected, latest_connect_update_1_BENCH) {  // take 20s
+    mock::xvchain_creator creator;
+    base::xvblockstore_t* blockstore = creator.get_blockstore();    
+
+    uint64_t count = 500;
+    mock::xdatamock_table mocktable;
+    std::string table_addr = mocktable.get_account();
+    blockstore->reset_cache_timeout(mocktable, 1000); // idle time change to 1s
+    std::string meta_path = "0/" + table_addr + "/meta";
+    base::xvdbstore_t* xvdb_ptr = base::xvchain_t::instance().get_xdbstore();
+
+    mocktable.genrate_table_chain(count);
+    const std::vector<xblock_ptr_t> & tables = mocktable.get_history_tables();
+    xassert(tables.size() == count + 1);
+    uint64_t cert_height = (uint64_t)tables.size() - 1;
+    uint64_t connect_height = cert_height - 2;
+
+    for (auto & block : tables) {
+        ASSERT_TRUE(blockstore->store_block(mocktable, block.get()));
+    }
+
+    {
+        const std::string meta_value = xvdb_ptr->get_value(meta_path);
+        base::xauto_ptr<store::xacctmeta_t> meta_obj = new store::xacctmeta_t();
+        meta_obj->serialize_from_string(meta_value);
+        std::cout << "after store.metaobj=" << meta_obj->dump() << std::endl;
+        xassert(meta_obj->_highest_cert_block_height == cert_height);
+        xassert(meta_obj->_highest_connect_block_height < connect_height);  // connect meta delay store
+    }
+
+    auto cert_block = blockstore->get_latest_cert_block(mocktable);
+    xassert(cert_block->get_height() == cert_height);
+    auto lock_block = blockstore->get_latest_locked_block(mocktable);
+    xassert(lock_block->get_height() == cert_height-1);
+    auto commit_block = blockstore->get_latest_committed_block(mocktable);
+    xassert(commit_block->get_height() == cert_height-2);
+    auto connect_block = blockstore->get_latest_connected_block(mocktable);
+    xassert(connect_block->get_height() == cert_height-2);
+
+    xdbg("latest_connect_update_1,begin to stop ======= table=%s",table_addr.c_str());
+    sleep(1*16+2); // wait for meta save to db. table has 16 times than unit
+    sleep(100);
+    xdbg("latest_connect_update_1,end to stop ======= table=%s",table_addr.c_str());
+
+    {
+        const std::string meta_value = xvdb_ptr->get_value(meta_path);
+        base::xauto_ptr<store::xacctmeta_t> meta_obj = new store::xacctmeta_t();
+        meta_obj->serialize_from_string(meta_value);
+        std::cout << "after close,metaobj=" << meta_obj->dump() << std::endl;
+
+        xassert(meta_obj->_highest_connect_block_height == connect_block->get_height());
+        xassert(meta_obj->_highest_connect_block_hash == connect_block->get_block_hash());
+
+        // change to bad 
+        meta_obj->_highest_connect_block_height = tables[10]->get_height();
+        meta_obj->_highest_connect_block_hash = tables[10]->get_block_hash();
+        std::string vmeta_bin;
+        meta_obj->serialize_to_string(vmeta_bin);
+        xvdb_ptr->set_value(meta_path,vmeta_bin);
+
+        const std::string meta_value2 = xvdb_ptr->get_value(meta_path);
+        base::xauto_ptr<store::xacctmeta_t> meta_obj2 = new store::xacctmeta_t();
+        meta_obj2->serialize_from_string(meta_value);
+        xassert(meta_obj->_highest_connect_block_height == tables[10]->get_height());
+        xassert(meta_obj->_highest_connect_block_hash == tables[10]->get_block_hash());
+    }
+    xdbg("latest_connect_update_1,begin to get latest connected=======");
+    auto connect_block2 = blockstore->get_latest_connected_block(mocktable);
+    xassert(connect_block2->get_height() == connect_block->get_height());
+    xassert(connect_block2->get_block_hash() == connect_block->get_block_hash());
+}
