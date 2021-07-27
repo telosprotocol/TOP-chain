@@ -83,7 +83,7 @@ TEST_F(test_chain_creator, test_2) {
     }
 }
 
-TEST_F(test_chain_creator, test_3) {
+TEST_F(test_chain_creator, test_3_BENCH) {
     mock::xvchain_creator creator;
     creator.create_blockstore_with_xstore();
     base::xvblockstore_t* blockstore = creator.get_blockstore();
