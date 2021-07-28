@@ -338,34 +338,32 @@ public:
         }
     }
 
-    void query_block_info(std::string const & account, const int64_t height) {
+    void query_block_info(std::string const & account, std::string const & param) {
         xJson::Value root;
-        uint64_t h;
-        // data::xblock_t * bp = nullptr;
-        if (height  < 0) {
-            h = m_blockstore->get_latest_committed_block_height(base::xvaccount_t{account});
+        if (param == "last") {
+            uint64_t h = m_blockstore->get_latest_committed_block_height(base::xvaccount_t{account});
             std::cout << "account: " << account << ", latest committed height: " << h << ", block info:" << std::endl;
-        } else {
-            h = height;
+            query_block_info(account, h, root);
+            std::string str = xJson::FastWriter().write(root);
+            std::cout << str << std::endl;
+        } else if (param != "all") {
+            uint64_t h = std::stoi(param);
             std::cout << "account: " << account << ", height: " << h << ", block info:" << std::endl;
+            query_block_info(account, h, root);
+            std::string str = xJson::FastWriter().write(root);
+            std::cout << str << std::endl;
+        } else {
+            uint64_t h = m_blockstore->get_latest_committed_block_height(base::xvaccount_t{account});
+            for (size_t i = 0; i <= h; i++) {
+                xJson::Value j;
+                query_block_info(account, i, j);
+                root["height" + std::to_string(i)] = j;
+            }
+            std::string filename = account + "_all_block_info.json";
+            std::ofstream out_json(filename);
+            out_json << std::setw(4) << root;
+            std::cout << "===> " << filename << " generated success!" << std::endl;
         }
-        auto vblock = m_blockstore->load_block_object(account, h, 0, true);
-        data::xblock_t * bp = dynamic_cast<data::xblock_t *>(vblock.get());
-        if (bp == nullptr) {
-            std::cout << "account: " << account << ", height: " << h << " block null" << std::endl;
-            return;
-        }
-        if (bp->is_genesis_block() && bp->get_block_class() == base::enum_xvblock_class_nil && false == bp->check_block_flag(base::enum_xvblock_flag_stored)) {
-            std::cout << "account: " << account << ", height: " << h << " block genesis && nil && non-stored" << std::endl;
-            return;
-        }
-        if (false == base::xvchain_t::instance().get_xblockstore()->load_block_input(base::xvaccount_t(bp->get_account()), bp)) {
-            std::cout << "account: " << account << ", height: " << h << " load_block_input failed" << std::endl;
-            return;
-        }
-        root = dynamic_cast<chain_info::get_block_handle*>(m_getblock.get())->get_block_json(bp);
-        std::string str = xJson::FastWriter().write(root);
-        std::cout << str << std::endl;
     }
 
     void query_contract_property(std::string const & account, std::string const & prop_name, std::string const & param) {
@@ -375,8 +373,8 @@ public:
         if (param == "last") {
             query_contract_property(account, prop_name, latest_height, jph);
         } else if (param == "all") {
-            for (uint64_t i = 0; i < latest_height; i++) {
-                query_contract_property(account, prop_name, latest_height, jph["height " + xstring_utl::tostring(i)]);
+            for (uint64_t i = 0; i <= latest_height; i++) {
+                query_contract_property(account, prop_name, i, jph["height " + xstring_utl::tostring(i)]);
             }
         } else {
             return;
@@ -830,31 +828,49 @@ private:
         // std::cout << t2-t1 << " " << t3-t2 << " " << t4-t3 << std::endl;
     }
 
+    void query_block_info(std::string const & account, const uint64_t h, xJson::Value & root) {
+        auto vblock = m_blockstore->load_block_object(account, h, 0, true);
+        data::xblock_t * bp = dynamic_cast<data::xblock_t *>(vblock.get());
+        if (bp == nullptr) {
+            std::cout << "account: " << account << ", height: " << h << " block null" << std::endl;
+            return;
+        }
+        if (bp->is_genesis_block() && bp->get_block_class() == base::enum_xvblock_class_nil && false == bp->check_block_flag(base::enum_xvblock_flag_stored)) {
+            std::cout << "account: " << account << ", height: " << h << " block genesis && nil && non-stored" << std::endl;
+            return;
+        }
+        if (false == base::xvchain_t::instance().get_xblockstore()->load_block_input(base::xvaccount_t(bp->get_account()), bp)) {
+            std::cout << "account: " << account << ", height: " << h << " load_block_input failed" << std::endl;
+            return;
+        }
+        root = dynamic_cast<chain_info::get_block_handle*>(m_getblock.get())->get_block_json(bp);
+    }
+
     void query_contract_property(std::string const & account, std::string const & prop_name, uint64_t height, xJson::Value & jph) {
         static std::set<std::string> property_names = {
             XPROPERTY_CONTRACT_ELECTION_EXECUTED_KEY,
             XPROPERTY_CONTRACT_STANDBYS_KEY,
             XPROPERTY_CONTRACT_GROUP_ASSOC_KEY,
-            xstake::XPORPERTY_CONTRACT_GENESIS_STAGE_KEY,
-            xstake::XPROPERTY_CONTRACT_ACCUMULATED_ISSUANCE_YEARLY,
-            xstake::XPORPERTY_CONTRACT_REG_KEY,
-            xstake::XPORPERTY_CONTRACT_TICKETS_KEY,
-            xstake::XPORPERTY_CONTRACT_WORKLOAD_KEY,
-            xstake::XPORPERTY_CONTRACT_VALIDATOR_WORKLOAD_KEY,
-            xstake::XPORPERTY_CONTRACT_TASK_KEY,
-            xstake::XPORPERTY_CONTRACT_VOTES_KEY1,
-            xstake::XPORPERTY_CONTRACT_VOTES_KEY2,
-            xstake::XPORPERTY_CONTRACT_VOTES_KEY3,
-            xstake::XPORPERTY_CONTRACT_VOTES_KEY4,
-            xstake::XPORPERTY_CONTRACT_VOTER_DIVIDEND_REWARD_KEY1,
-            xstake::XPORPERTY_CONTRACT_VOTER_DIVIDEND_REWARD_KEY2,
-            xstake::XPORPERTY_CONTRACT_VOTER_DIVIDEND_REWARD_KEY3,
-            xstake::XPORPERTY_CONTRACT_VOTER_DIVIDEND_REWARD_KEY4,
-            xstake::XPORPERTY_CONTRACT_NODE_REWARD_KEY,
-            xstake::XPORPERTY_CONTRACT_REFUND_KEY,
-            xstake::XPROPERTY_CONTRACT_ACCUMULATED_ISSUANCE,
-            xstake::XPORPERTY_CONTRACT_UNQUALIFIED_NODE_KEY,
-            xstake::XPROPERTY_CONTRACT_SLASH_INFO_KEY,
+            XPORPERTY_CONTRACT_GENESIS_STAGE_KEY,
+            XPROPERTY_CONTRACT_ACCUMULATED_ISSUANCE_YEARLY,
+            XPORPERTY_CONTRACT_REG_KEY,
+            XPORPERTY_CONTRACT_TICKETS_KEY,
+            XPORPERTY_CONTRACT_WORKLOAD_KEY,
+            XPORPERTY_CONTRACT_VALIDATOR_WORKLOAD_KEY,
+            XPORPERTY_CONTRACT_TASK_KEY,
+            XPORPERTY_CONTRACT_VOTES_KEY1,
+            XPORPERTY_CONTRACT_VOTES_KEY2,
+            XPORPERTY_CONTRACT_VOTES_KEY3,
+            XPORPERTY_CONTRACT_VOTES_KEY4,
+            XPORPERTY_CONTRACT_VOTER_DIVIDEND_REWARD_KEY1,
+            XPORPERTY_CONTRACT_VOTER_DIVIDEND_REWARD_KEY2,
+            XPORPERTY_CONTRACT_VOTER_DIVIDEND_REWARD_KEY3,
+            XPORPERTY_CONTRACT_VOTER_DIVIDEND_REWARD_KEY4,
+            XPORPERTY_CONTRACT_NODE_REWARD_KEY,
+            XPORPERTY_CONTRACT_REFUND_KEY,
+            XPROPERTY_CONTRACT_ACCUMULATED_ISSUANCE,
+            XPORPERTY_CONTRACT_UNQUALIFIED_NODE_KEY,
+            XPROPERTY_CONTRACT_SLASH_INFO_KEY,
             PROPOSAL_MAP_ID,
             VOTE_MAP_ID
         };
@@ -1590,7 +1606,7 @@ void usage() {
     std::cout << "        - check_db_reset" << std::endl;
     std::cout << "        - check_fast_sync [table|unit|account]" << std::endl;
     std::cout << "        - check_block_exist <account> <height>" << std::endl;
-    std::cout << "        - check_block_info <account> <height|last>" << std::endl;
+    std::cout << "        - check_block_info <account> <height|last|all>" << std::endl;
     std::cout << "        - check_tx_info [table]" << std::endl;
     std::cout << "        - check_latest_fullblock" << std::endl;
     std::cout << "        - check_contract_property <account> <prop> <last|all>" << std::endl;
@@ -1705,11 +1721,7 @@ int main(int argc, char ** argv) {
             usage();
             return -1;
         }
-        int height = -1;
-        if (std::string{argv[4]} != std::string{"last"}) {
-            height = std::stoi(argv[4]);
-        }
-        tools.query_block_info(argv[3], height);
+        tools.query_block_info(argv[3], argv[4]);
     } else if (function_name == "check_latest_fullblock") {
         tools.query_table_latest_fullblock();
     } else if (function_name == "check_contract_property") {
