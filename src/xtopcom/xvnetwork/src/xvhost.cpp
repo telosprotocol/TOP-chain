@@ -622,7 +622,11 @@ void xtop_vhost::do_handle_network_data() {
                                                bytes.size());
                     #endif
                     if (vnetwork_message.message_id() != xtxpool_v2::xtxpool_msg_send_receipt &&
-                        vnetwork_message.message_id() != xtxpool_v2::xtxpool_msg_recv_receipt) {
+                        vnetwork_message.message_id() != xtxpool_v2::xtxpool_msg_recv_receipt &&
+                        vnetwork_message.message_id() != xtxpool_v2::xtxpool_msg_pull_recv_receipt &&
+                        vnetwork_message.message_id() != xtxpool_v2::xtxpool_msg_pull_confirm_receipt &&
+                        vnetwork_message.message_id() != xtxpool_v2::xtxpool_msg_pull_receipt_rsp &&
+                        vnetwork_message.message_id() != xtxpool_v2::xtxpool_msg_batch_receipts) {
                         m_filter_manager->filt_message(vnetwork_message);
                         if (vnetwork_message.empty()) {
                             continue;

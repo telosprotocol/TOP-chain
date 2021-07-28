@@ -71,7 +71,7 @@ public:
     std::map<uint64_t, uint256_t> m_id_hash_of_receipts;
 };
 
-class xreceipt_push_t : public top::basic::xserialize_face_t{
+class xreceipt_pull_rsp_t : public top::basic::xserialize_face_t{
 public:
 protected:
     int32_t do_write(base::xstream_t & stream) override {
@@ -122,6 +122,42 @@ public:
     std::string m_tx_to_account;
     common::xnode_address_t m_req_node;    
     base::enum_transaction_subtype m_receipt_type;
+};
+
+class xbatch_receipts_t : public top::basic::xserialize_face_t{
+public:
+protected:
+    int32_t do_write(base::xstream_t & stream) override {
+        KEEP_SIZE();
+
+        SERIALIZE_CONTAINER(m_receipts) {
+            item->serialize_to(stream);
+        }
+
+        return CALC_LEN();
+    }
+
+    int32_t do_read(base::xstream_t & stream) override {
+        try {
+            KEEP_SIZE();
+
+            DESERIALIZE_CONTAINER(m_receipts) {
+                data::xcons_transaction_ptr_t receipt = make_object_ptr<data::xcons_transaction_t>();
+                receipt->serialize_from(stream);
+
+                if (receipt != nullptr)
+                    m_receipts.push_back(receipt);
+            }
+
+            return CALC_LEN();
+        } catch (...) {
+            m_receipts.clear();
+        }
+
+        return 0;
+    }
+public:
+    std::vector<data::xcons_transaction_ptr_t> m_receipts;
 };
 
 NS_END2

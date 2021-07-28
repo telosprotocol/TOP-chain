@@ -40,7 +40,7 @@ int32_t xtxpool_t::push_receipt(const std::shared_ptr<xtx_entry> & tx, bool is_s
     auto ret = table->push_receipt(tx, is_self_send);
 
     if (ret == xsuccess) {
-        m_statistic.update_receipt_recv_num(tx->get_tx(), is_pulled);
+        m_statistic.update_receipt_recv_num(tx->get_tx(), is_pulled ? receipt_push_type_pull : receipt_push_type_normal);
     }
     return ret;
 }

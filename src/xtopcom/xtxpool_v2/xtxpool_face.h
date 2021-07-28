@@ -32,7 +32,8 @@ XDEFINE_MSG_ID(xmessage_category_txpool, xtxpool_msg_send_receipt, 0x00000001);
 XDEFINE_MSG_ID(xmessage_category_txpool, xtxpool_msg_recv_receipt, 0x00000002);
 XDEFINE_MSG_ID(xmessage_category_txpool, xtxpool_msg_pull_recv_receipt, 0x00000003);
 XDEFINE_MSG_ID(xmessage_category_txpool, xtxpool_msg_pull_confirm_receipt, 0x00000004);
-XDEFINE_MSG_ID(xmessage_category_txpool, xtxpool_msg_push_receipt, 0x00000005);
+XDEFINE_MSG_ID(xmessage_category_txpool, xtxpool_msg_pull_receipt_rsp, 0x00000005);
+XDEFINE_MSG_ID(xmessage_category_txpool, xtxpool_msg_batch_receipts, 0x00000006);
 
 class xtx_para_t {
 public:
@@ -121,8 +122,7 @@ class tx_info_t {
 public:
     tx_info_t(const std::string & account_addr, const uint256_t & hash, base::enum_transaction_subtype subtype) : m_account_addr(account_addr), m_hash(hash), m_subtype(subtype) {
     }
-    tx_info_t(const xcons_transaction_ptr_t & cons_tx)
-      : m_account_addr(cons_tx->get_account_addr()), m_hash(cons_tx->get_tx_hash_256()), m_subtype(cons_tx->get_tx_subtype()) {
+    tx_info_t(const xcons_transaction_ptr_t & cons_tx) : m_account_addr(cons_tx->get_account_addr()), m_hash(cons_tx->get_tx_hash_256()), m_subtype(cons_tx->get_tx_subtype()) {
     }
 
     const std::string & get_addr() const {

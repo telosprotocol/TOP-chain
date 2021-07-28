@@ -15,6 +15,7 @@
 #include "xmbus/xevent_behind.h"
 #include "xconfig/xconfig_register.h"
 #include "xconfig/xpredefined_configurations.h"
+#include "xtxpool_service_v2/xreceipt_sync.h"
 
 #include <cinttypes>
 NS_BEG2(top, xunit_service)
@@ -495,11 +496,11 @@ void xbatch_packer::make_receipts_and_send(xblock_t * commit_block, xblock_t * c
         return;
     }
 
-    std::vector<data::xcons_transaction_ptr_t> all_cons_txs;
+    xunit_info("xbatch_packer::make_receipts_and_send commit_block:%s,cert_block:%s", commit_block->dump().c_str(), cert_block->dump().c_str());
+    std::map<common::xsharding_address_t, std::vector<data::xcons_transaction_ptr_t>> target_addr_receipts_map;
     std::vector<base::xfull_txreceipt_t> all_receipts = base::xtxreceipt_build_t::create_all_txreceipts(commit_block, cert_block);
     for (auto & receipt : all_receipts) {
         data::xcons_transaction_ptr_t constx = make_object_ptr<data::xcons_transaction_t>(receipt);
-        all_cons_txs.push_back(constx);
         xassert(constx->is_recv_tx() || constx->is_confirm_tx());
         if (constx->is_recv_tx()) {
             xassert(constx->get_transaction() != nullptr);  // recvtx has no origin tx
@@ -507,17 +508,41 @@ void xbatch_packer::make_receipts_and_send(xblock_t * commit_block, xblock_t * c
         if (constx->is_confirm_tx()) {
             xassert(constx->get_transaction() == nullptr);  // confirmtx has no origin tx
         }
+
+        std::vector<common::xsharding_address_t> target_addrs;
+        bool ret = network_proxy->get_target_addrs(get_xip2_addr(), constx->get_self_table_index(), target_addrs);
+        if (ret) {
+            xunit_info("xbatch_packer::make_receipts_and_send receipt:%s", constx->dump().c_str());
+            for (auto & addr : target_addrs) {
+                auto it = target_addr_receipts_map.find(addr);
+                if (it == target_addr_receipts_map.end()) {
+                    std::vector<data::xcons_transaction_ptr_t> txs;
+                    txs.push_back(constx);
+                    target_addr_receipts_map[addr] = txs;
+                } else {
+                    it->second.push_back(constx);
+                }
+            }
+        }
     }
 
-    xunit_info("xbatch_packer::make_receipts_and_send commit_block:%s,cert_block:%s", commit_block->dump().c_str(), cert_block->dump().c_str());
-    std::vector<data::xcons_transaction_ptr_t> non_shard_cross_receipts;
-    network_proxy->send_receipt_msgs(get_xip2_addr(), all_cons_txs, non_shard_cross_receipts);
-
-    for (auto & tx : non_shard_cross_receipts) {
-        xtxpool_v2::xtx_para_t para;
-        std::shared_ptr<xtxpool_v2::xtx_entry> tx_ent = std::make_shared<xtxpool_v2::xtx_entry>(tx, para);
-        m_para->get_resources()->get_txpool()->push_receipt(tx_ent, true, false);
-        XMETRICS_GAUGE(metrics::txpool_received_self_send_receipt_num, 1);
+    for (auto & target_addr_receipts : target_addr_receipts_map) {
+        xtxpool_service_v2::xbatch_receipts_t batch_receipts;
+        auto & receipts = target_addr_receipts.second;
+        batch_receipts.m_receipts = receipts;
+        base::xstream_t stream(base::xcontext_t::instance());
+        batch_receipts.serialize_to(stream);
+        vnetwork::xmessage_t msg = vnetwork::xmessage_t({stream.data(), stream.data() + stream.size()}, xtxpool_v2::xtxpool_msg_batch_receipts);
+        bool is_self_group = false;
+        network_proxy->send_receipts_msg(get_xip2_addr(), target_addr_receipts.first, msg, is_self_group);
+        if (is_self_group) {
+            for (auto & receipt : receipts) {
+                xtxpool_v2::xtx_para_t para;
+                std::shared_ptr<xtxpool_v2::xtx_entry> tx_ent = std::make_shared<xtxpool_v2::xtx_entry>(receipt, para);
+                m_para->get_resources()->get_txpool()->push_receipt(tx_ent, true, false);
+                XMETRICS_GAUGE(metrics::txpool_received_self_send_receipt_num, 1);
+            }
+        }
     }
 }
 

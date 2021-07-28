@@ -21,7 +21,7 @@ public:
 TEST_F(test_receipt_strategy, is_time_for_recover) {
     uint32_t select_count = 0;
     uint64_t now = xverifier::xtx_utl::get_gmttime_s();
-    for (uint64_t i = 0; i < 256; i ++) {
+    for (uint64_t i = 0; i < 256; i++) {
         auto ret = xreceipt_strategy_t::is_time_for_refresh_table(now + i);
         if (ret) {
             select_count++;
@@ -31,20 +31,43 @@ TEST_F(test_receipt_strategy, is_time_for_recover) {
     ASSERT_EQ(select_count, 4);
 }
 
-TEST_F(test_receipt_strategy, calc_resend_time) {
+TEST_F(test_receipt_strategy, receipt_pull_msg_receiver) {
+    uint32_t select_count = 0;
     uint64_t now = xverifier::xtx_utl::get_gmttime_s();
-    ASSERT_EQ(xreceipt_strategy_t::calc_resend_time(now - 63, now), 0);
-    ASSERT_EQ(xreceipt_strategy_t::calc_resend_time(now - 64, now), 1);
-    ASSERT_EQ(xreceipt_strategy_t::calc_resend_time(now - 65, now), 1);
-    ASSERT_EQ(xreceipt_strategy_t::calc_resend_time(now - 127, now), 1);
-    ASSERT_EQ(xreceipt_strategy_t::calc_resend_time(now - 128, now), 2);
-    ASSERT_EQ(xreceipt_strategy_t::calc_resend_time(now - 129, now), 2);
-    ASSERT_EQ(xreceipt_strategy_t::calc_resend_time(now - 191, now), 2);
-    ASSERT_EQ(xreceipt_strategy_t::calc_resend_time(now - 192, now), 3);
-    ASSERT_EQ(xreceipt_strategy_t::calc_resend_time(now - 193, now), 3);
+    uint16_t shard_size = 7;
+
+    for (uint64_t i = 0; i < 256; i++) {
+        uint64_t hash = rand();
+        for (uint16_t j = 0; j < shard_size; j++) {
+            auto ret = xreceipt_strategy_t::is_selected_receipt_pull_msg_receiver(hash, now + i, j, shard_size);
+            if (ret) {
+                select_count++;
+            }
+        }
+    }
+    ASSERT_EQ(select_count, 256);
 }
 
-TEST_F(test_receipt_strategy, is_select) {
+TEST_F(test_receipt_strategy, pull_lacking_receipts) {
+    uint32_t select_count = 0;
+    uint64_t now = xverifier::xtx_utl::get_gmttime_s();
+    uint16_t shard_size = 7;
+
+    for (uint32_t table_id = 0; table_id < 64; table_id++) {
+        for (uint64_t i = 0; i < 300; i++) {
+            for (uint16_t j = 0; j < shard_size; j++) {
+                auto ret = xreceipt_strategy_t::is_time_for_node_pull_lacking_receipts(now + i, table_id, shard_size, j);
+                if (ret) {
+                    select_count++;
+                }
+            }
+        }
+        ASSERT_EQ(select_count, 30);
+        select_count = 0;
+    }
+}
+
+TEST_F(test_receipt_strategy, is_selected_pos) {
     ASSERT_EQ(xreceipt_strategy_t::is_selected_pos(0, 0, 1, 4), true);
     ASSERT_EQ(xreceipt_strategy_t::is_selected_pos(1, 0, 1, 4), false);
     ASSERT_EQ(xreceipt_strategy_t::is_selected_pos(2, 0, 1, 4), false);
@@ -97,7 +120,6 @@ TEST_F(test_receipt_strategy, is_select) {
     ASSERT_EQ(xreceipt_strategy_t::is_selected_pos(3, 3, 3, 4), true);
 }
 
-
 TEST_F(test_receipt_strategy, is_resend_node) {
     ASSERT_EQ(xreceipt_strategy_t::is_resend_node_for_talbe(100, 0, 4, 0), false);
     ASSERT_EQ(xreceipt_strategy_t::is_resend_node_for_talbe(100, 0, 4, 1), false);
@@ -143,6 +165,4 @@ TEST_F(test_receipt_strategy, is_resend_node) {
     ASSERT_EQ(xreceipt_strategy_t::is_resend_node_for_talbe(161, 31, 4, 1), true);
     ASSERT_EQ(xreceipt_strategy_t::is_resend_node_for_talbe(161, 31, 4, 2), false);
     ASSERT_EQ(xreceipt_strategy_t::is_resend_node_for_talbe(161, 31, 4, 3), false);
-
 }
-

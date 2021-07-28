@@ -23,6 +23,12 @@ using namespace top::data;
 #define shard_recv_tx_queue_size_max (16384)
 #define shard_conf_tx_queue_size_max (16384)
 
+enum enum_receipt_push_type {
+    receipt_push_type_normal = 0,
+    receipt_push_type_pull = 1,
+    receipt_push_type_proposal = 2,
+};
+
 class xtx_counter_t {
 public:
     void send_tx_inc(int32_t count) {
@@ -82,18 +88,22 @@ public:
         m_unconfirm_tx_cache_num -= num;
     }
 
-    void update_receipt_recv_num(const xcons_transaction_ptr_t & tx, bool is_pulled) {
+    void update_receipt_recv_num(const xcons_transaction_ptr_t & tx, enum_receipt_push_type push_type) {
         if (tx->is_recv_tx()) {
-            if (is_pulled) {
+            if (push_type == receipt_push_type_normal) {
+                m_received_recv_tx_num++;
+            } else if (push_type == receipt_push_type_pull) {
                 m_pulled_recv_tx_num++;
             } else {
-                m_received_recv_tx_num++;
+                m_proposal_sync_recv_tx_num++;
             }
         } else {
-            if (is_pulled) {
+            if (push_type == receipt_push_type_normal) {
+                m_received_confirm_tx_num++;
+            } else if (push_type == receipt_push_type_pull) {
                 m_pulled_confirm_tx_num++;
             } else {
-                m_received_confirm_tx_num++;
+                m_proposal_sync_confirm_tx_num++;
             }
         }
 
@@ -168,7 +178,11 @@ public:
                              "pulled_recv",
                              m_pulled_recv_tx_num.load(),
                              "pulled_confirm",
-                             m_pulled_confirm_tx_num.load());
+                             m_pulled_confirm_tx_num.load(),
+                             "proposal_recv",
+                             m_proposal_sync_recv_tx_num.load(),
+                             "proposal_confirm",
+                             m_proposal_sync_confirm_tx_num.load());
 
         XMETRICS_PACKET_INFO("txpool_receipt_delay",
                              "1clk",
@@ -264,6 +278,8 @@ private:
     std::atomic<uint32_t> m_received_confirm_tx_num{0};
     std::atomic<uint32_t> m_pulled_recv_tx_num{0};
     std::atomic<uint32_t> m_pulled_confirm_tx_num{0};
+    std::atomic<uint32_t> m_proposal_sync_recv_tx_num{0};
+    std::atomic<uint32_t> m_proposal_sync_confirm_tx_num{0};
     std::atomic<uint32_t> m_receipt_recv_num_by_1_clock{0};
     std::atomic<uint32_t> m_receipt_recv_num_by_2_clock{0};
     std::atomic<uint32_t> m_receipt_recv_num_by_3_clock{0};

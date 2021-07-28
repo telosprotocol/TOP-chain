@@ -171,7 +171,7 @@ void xtxpool_service::pull_lacking_receipts(uint64_t now, xcovered_tables_t & co
         return;
     }
     for (uint32_t table_id = m_cover_front_table_id; table_id <= m_cover_back_table_id; table_id++) {
-        if (!xreceipt_strategy_t::is_time_for_node_pull_lacking_receipts(now, table_id, m_node_id)) {
+        if (!xreceipt_strategy_t::is_time_for_node_pull_lacking_receipts(now, table_id, m_shard_size, m_node_id)) {
             continue;
         }
 
@@ -269,17 +269,27 @@ void xtxpool_service::on_message_receipt(vnetwork::xvnode_address_t const & send
 
     xtxpool_info("xtxpool_service::on_message_receipt msg id:%x,hash:%x", message.id(), message.hash());
 
-    if (message.id() == xtxpool_v2::xtxpool_msg_send_receipt || message.id() == xtxpool_v2::xtxpool_msg_recv_receipt || (message.id() == xtxpool_v2::xtxpool_msg_push_receipt)) {
+    if (message.id() == xtxpool_v2::xtxpool_msg_send_receipt || message.id() == xtxpool_v2::xtxpool_msg_recv_receipt || message.id() == xtxpool_v2::xtxpool_msg_pull_receipt_rsp ||
+        message.id() == xtxpool_v2::xtxpool_msg_batch_receipts) {
         if (m_para->get_fast_dispatcher()->is_mailbox_over_limit()) {
             xwarn("xtxpool_service::on_message_receipt fast txpool mailbox limit,drop receipt");
             return;
         }
 
         base::xauto_ptr<txpool_receipt_message_para_t> para = new txpool_receipt_message_para_t(sender, message);
-        if (message.id() == xtxpool_v2::xtxpool_msg_push_receipt) {
+        if (message.id() == xtxpool_v2::xtxpool_msg_pull_receipt_rsp) {
             auto handler = [this](base::xcall_t & call, const int32_t cur_thread_id, const uint64_t timenow_ms) -> bool {
                 txpool_receipt_message_para_t * para = dynamic_cast<txpool_receipt_message_para_t *>(call.get_param1().get_object());
-                this->on_message_push_receipt_received(para->m_sender, para->m_message);
+                this->on_message_pull_receipt_rsp(para->m_sender, para->m_message);
+                return true;
+            };
+
+            base::xcall_t asyn_call(handler, para.get());
+            m_para->get_fast_dispatcher()->dispatch(asyn_call);
+        } else if (message.id() == xtxpool_v2::xtxpool_msg_batch_receipts) {
+            auto handler = [this](base::xcall_t & call, const int32_t cur_thread_id, const uint64_t timenow_ms) -> bool {
+                txpool_receipt_message_para_t * para = dynamic_cast<txpool_receipt_message_para_t *>(call.get_param1().get_object());
+                this->on_message_batch_receipts(para->m_sender, para->m_message);
                 return true;
             };
 
@@ -297,6 +307,11 @@ void xtxpool_service::on_message_receipt(vnetwork::xvnode_address_t const & send
     } else if ((message.id() == xtxpool_v2::xtxpool_msg_pull_recv_receipt) || (message.id() == xtxpool_v2::xtxpool_msg_pull_confirm_receipt)) {
         if (m_para->get_slow_dispatcher()->is_mailbox_over_limit()) {
             xwarn("xtxpool_service::on_message_receipt slow txpool mailbox limit,drop receipt");
+            return;
+        }
+
+        uint64_t now = xverifier::xtx_utl::get_gmttime_s();
+        if (!xreceipt_strategy_t::is_selected_receipt_pull_msg_receiver(message.hash(), now, m_node_id, m_shard_size)) {
             return;
         }
 
@@ -335,6 +350,26 @@ void xtxpool_service::on_message_unit_receipt(vnetwork::xvnode_address_t const &
     std::shared_ptr<xtxpool_v2::xtx_entry> tx_ent = std::make_shared<xtxpool_v2::xtx_entry>(receipt, para);
     XMETRICS_GAUGE(metrics::txpool_received_other_send_receipt_num, 1);
     m_para->get_txpool()->push_receipt(tx_ent, false, false);
+}
+
+void xtxpool_service::on_message_batch_receipts(vnetwork::xvnode_address_t const & sender, vnetwork::xmessage_t const & message) {
+    (void)sender;
+    XMETRICS_TIME_RECORD("on_message_batch_receipts");
+    base::xstream_t stream(top::base::xcontext_t::instance(), (uint8_t *)message.payload().data(), (uint32_t)message.payload().size());
+    xbatch_receipts_t batch_receipts;
+    int32_t ret = batch_receipts.serialize_from(stream);
+    if (ret <= 0) {
+        xerror("xtxpool_service::on_message_batch_receipts receipt serialize_from fail ret:%d", ret);
+        return;
+    }
+
+    for (auto & receipt : batch_receipts.m_receipts) {
+        xinfo("xtxpool_service::on_message_batch_receipts receipt=%s,at_node:%s,msg id:%x,hash:%x", receipt->dump().c_str(), m_vnetwork_str.c_str(), message.id(), message.hash());
+        xtxpool_v2::xtx_para_t para;
+        std::shared_ptr<xtxpool_v2::xtx_entry> tx_ent = std::make_shared<xtxpool_v2::xtx_entry>(receipt, para);
+        m_para->get_txpool()->push_receipt(tx_ent, false, false);
+    }
+    XMETRICS_GAUGE(metrics::txpool_received_other_send_receipt_num, batch_receipts.m_receipts.size());
 }
 
 xcons_transaction_ptr_t xtxpool_service::create_confirm_tx_by_hash(const uint256_t & hash) {
@@ -532,17 +567,16 @@ void xtxpool_service::send_pull_receipts_of_confirm(xreceipt_pull_confirm_receip
     send_receipt_sync_msg(msg, pulled_receipt.m_tx_to_account);
 }
 
-void xtxpool_service::send_push_receipts(xreceipt_push_t & pushed_receipt, vnetwork::xvnode_address_t const & target) {
+void xtxpool_service::send_pull_receipts_rsp(xreceipt_pull_rsp_t & receipt_pull_rsp, vnetwork::xvnode_address_t const & target) {
     base::xstream_t stream(base::xcontext_t::instance());
     vnetwork::xmessage_t msg;
-    pushed_receipt.serialize_to(stream);
-    msg = vnetwork::xmessage_t({stream.data(), stream.data() + stream.size()}, xtxpool_v2::xtxpool_msg_push_receipt);
+    receipt_pull_rsp.serialize_to(stream);
+    msg = vnetwork::xmessage_t({stream.data(), stream.data() + stream.size()}, xtxpool_v2::xtxpool_msg_pull_receipt_rsp);
 
-    if (target == pushed_receipt.m_req_node) {
-        m_vnet_driver->send_to(target, msg);
+    if (receipt_pull_rsp.m_req_node.sharding_address() == m_vnet_driver->address().cluster_address()) {
+        m_vnet_driver->broadcast(msg);
     } else {
-        std::string target_table_addr = pushed_receipt.m_receipt_type == enum_transaction_subtype_recv ? pushed_receipt.m_tx_to_account : pushed_receipt.m_tx_from_account;
-        send_receipt_sync_msg(msg, target_table_addr);
+        m_vnet_driver->forward_broadcast_message(msg, common::xnode_address_t{std::move(receipt_pull_rsp.m_req_node.sharding_address())});
     }
 }
 
@@ -556,41 +590,23 @@ void xtxpool_service::send_receipt_sync_msg(const vnetwork::xmessage_t & msg, co
     }
 }
 
-void xtxpool_service::on_message_push_receipt_received(vnetwork::xvnode_address_t const & sender, vnetwork::xmessage_t const & message) {
-    xinfo("xtxpool_service::on_message_push_receipt_received at_node:%s,msg id:%x,hash:%x", m_vnetwork_str.c_str(), message.id(), message.hash());
+void xtxpool_service::on_message_pull_receipt_rsp(vnetwork::xvnode_address_t const & sender, vnetwork::xmessage_t const & message) {
+    xinfo("xtxpool_service::on_message_pull_receipt_rsp at_node:%s,msg id:%x,hash:%x", m_vnetwork_str.c_str(), message.id(), message.hash());
     uint64_t now = xverifier::xtx_utl::get_gmttime_s();
 
-    xreceipt_push_t pushed_receipt;
+    xreceipt_pull_rsp_t receipt_pull_rsp;
     base::xstream_t stream(top::base::xcontext_t::instance(), (uint8_t *)message.payload().data(), (uint32_t)message.payload().size());
-    pushed_receipt.serialize_from(stream);
-
-    if (pushed_receipt.m_req_node != m_vnet_driver->address()) {
-        xdbg("xtxpool_service::on_message_receipts_received xtxpool_msg_push_receipt this node(%s) is not req node(%s).table:%s:%s",
-             m_vnetwork_str.c_str(),
-             pushed_receipt.m_req_node.to_string().c_str(),
-             pushed_receipt.m_tx_from_account.c_str(),
-             pushed_receipt.m_tx_to_account.c_str());
-        auto type = pushed_receipt.m_req_node.type();
-        if (!common::has<common::xnode_type_t::auditor>(type) &&
-            xreceipt_strategy_t::is_selected_receipt_pull_msg_sender(pushed_receipt.m_tx_from_account, now, m_node_id, m_shard_size)) {
-            xdbg("xtxpool_service::on_message_receipts_received xtxpool_msg_push_receipt transmit to reqnode:%s.table:%s:%s",
-                 pushed_receipt.m_req_node.to_string().c_str(),
-                 pushed_receipt.m_tx_from_account.c_str(),
-                 pushed_receipt.m_tx_to_account.c_str());
-            m_vnet_driver->send_to(pushed_receipt.m_req_node, message);
-        }
-        return;
-    }
+    receipt_pull_rsp.serialize_from(stream);
 
     xinfo("xtxpool_service::on_message_receipts_received push receipts.table:%s:%s,receipts num=%u",
-          pushed_receipt.m_tx_from_account.c_str(),
-          pushed_receipt.m_tx_to_account.c_str(),
-          pushed_receipt.m_receipts.size());
-    for (auto tx : pushed_receipt.m_receipts) {
-        xdbg("xtxpool_service::on_message_receipts_received xtxpool_msg_push_receipt at node:%s,table:%s:%s receipt:%s",
+          receipt_pull_rsp.m_tx_from_account.c_str(),
+          receipt_pull_rsp.m_tx_to_account.c_str(),
+          receipt_pull_rsp.m_receipts.size());
+    for (auto tx : receipt_pull_rsp.m_receipts) {
+        xdbg("xtxpool_service::on_message_receipts_received xtxpool_msg_pull_receipt_rsp at node:%s,table:%s:%s receipt:%s",
              m_vnetwork_str.c_str(),
-             pushed_receipt.m_tx_from_account.c_str(),
-             pushed_receipt.m_tx_to_account.c_str(),
+             receipt_pull_rsp.m_tx_from_account.c_str(),
+             receipt_pull_rsp.m_tx_to_account.c_str(),
              tx->dump().c_str());
         xtxpool_v2::xtx_para_t para;
         std::shared_ptr<xtxpool_v2::xtx_entry> tx_ent = std::make_shared<xtxpool_v2::xtx_entry>(tx, para);
@@ -610,48 +626,41 @@ void xtxpool_service::on_message_pull_recv_receipt_received(vnetwork::xvnode_add
     base::xstream_t stream(top::base::xcontext_t::instance(), (uint8_t *)message.payload().data(), (uint32_t)message.payload().size());
     pulled_receipt.serialize_from(stream);
 
-    if (!xreceipt_strategy_t::is_selected_receipt_pull_msg_sender(pulled_receipt.m_tx_to_account, now, m_node_id, m_shard_size)) {
-        return;
-    }
-
     if (pulled_receipt.m_receipt_ids.size() > max_require_receipts) {
         xerror("xtxpool_service::on_message_pull_recv_receipt_received receipts in one request");
         return;
     }
 
-    auto cluster_addr =
-        m_router->sharding_address_from_account(common::xaccount_address_t{pulled_receipt.m_tx_from_account}, m_vnet_driver->network_id(), common::xnode_type_t::consensus_auditor);
-    if (cluster_addr != m_vnet_driver->address().cluster_address()) {
-        xdbg("xtxpool_service::on_message_pull_recv_receipt_received forward broadcast message, cluster address is %s", cluster_addr.to_string().c_str());
-        m_vnet_driver->forward_broadcast_message(message, vnetwork::xvnode_address_t{std::move(cluster_addr)});
-    } else {
-        xinfo("xtxpool_service::on_message_pull_recv_receipt_received recv txs.table:%s:%s,receiptid num=%u",
-              pulled_receipt.m_tx_from_account.c_str(),
-              pulled_receipt.m_tx_to_account.c_str(),
-              pulled_receipt.m_receipt_ids.size());
-        xreceipt_push_t pushed_receipt;
-        pushed_receipt.m_receipt_type = enum_transaction_subtype_recv;
-        pushed_receipt.m_tx_from_account = pulled_receipt.m_tx_from_account;
-        pushed_receipt.m_tx_to_account = pulled_receipt.m_tx_to_account;
-        pushed_receipt.m_req_node = pulled_receipt.m_req_node;
-        for (auto receiptid : pulled_receipt.m_receipt_ids) {
-            xdbg("xtxpool_service::on_message_pull_recv_receipt_received reqnode:%s,table:%s:%s recv_tx receiptid:%llu",
+    xinfo("xtxpool_service::on_message_pull_recv_receipt_received recv txs.table:%s:%s,receiptid num=%u",
+          pulled_receipt.m_tx_from_account.c_str(),
+          pulled_receipt.m_tx_to_account.c_str(),
+          pulled_receipt.m_receipt_ids.size());
+    xreceipt_pull_rsp_t receipt_pull_rsp;
+    receipt_pull_rsp.m_receipt_type = enum_transaction_subtype_recv;
+    receipt_pull_rsp.m_tx_from_account = pulled_receipt.m_tx_from_account;
+    receipt_pull_rsp.m_tx_to_account = pulled_receipt.m_tx_to_account;
+    receipt_pull_rsp.m_req_node = pulled_receipt.m_req_node;
+    for (auto receiptid : pulled_receipt.m_receipt_ids) {
+        auto tranx = m_para->get_txpool()->get_unconfirmed_tx(pulled_receipt.m_tx_from_account, pulled_receipt.m_tx_to_account, receiptid);
+        if (tranx != nullptr) {
+            xdbg("xtxpool_service::on_message_pull_recv_receipt_received reqnode:%s,table:%s:%s recv_tx:%s",
+                 pulled_receipt.m_req_node.to_string().c_str(),
+                 pulled_receipt.m_tx_from_account.c_str(),
+                 pulled_receipt.m_tx_to_account.c_str(),
+                 tranx->dump().c_str());
+            receipt_pull_rsp.m_receipts.push_back(tranx);
+        } else {
+            xdbg("xtxpool_service::on_message_pull_recv_receipt_received reqnode:%s,table:%s:%s recv_tx receiptid:%llu not found",
                  pulled_receipt.m_req_node.to_string().c_str(),
                  pulled_receipt.m_tx_from_account.c_str(),
                  pulled_receipt.m_tx_to_account.c_str(),
                  receiptid);
-            auto tranx = m_para->get_txpool()->get_unconfirmed_tx(pulled_receipt.m_tx_from_account, pulled_receipt.m_tx_to_account, receiptid);
-            if (tranx != nullptr) {
-                xdbg("xtxpool_service::on_message_pull_recv_receipt_received reqnode:%s,table:%s:%s recv_tx:%s",
-                     pulled_receipt.m_req_node.to_string().c_str(),
-                     pulled_receipt.m_tx_from_account.c_str(),
-                     pulled_receipt.m_tx_to_account.c_str(),
-                     tranx->dump().c_str());
-                pushed_receipt.m_receipts.push_back(tranx);
-            }
         }
-        send_push_receipts(pushed_receipt, sender);
     }
+    if (receipt_pull_rsp.m_receipts.empty()) {
+        return;
+    }
+    send_pull_receipts_rsp(receipt_pull_rsp, sender);
 }
 
 void xtxpool_service::on_message_pull_confirm_receipt_received(vnetwork::xvnode_address_t const & sender, vnetwork::xmessage_t const & message) {
@@ -666,60 +675,54 @@ void xtxpool_service::on_message_pull_confirm_receipt_received(vnetwork::xvnode_
     base::xstream_t stream(top::base::xcontext_t::instance(), (uint8_t *)message.payload().data(), (uint32_t)message.payload().size());
     pulled_receipt.serialize_from(stream);
 
-    if (!xreceipt_strategy_t::is_selected_receipt_pull_msg_sender(pulled_receipt.m_tx_from_account, now, m_node_id, m_shard_size)) {
-        return;
-    }
-
     if (pulled_receipt.m_id_hash_of_receipts.size() > max_require_receipts) {
         xerror("xtxpool_service::on_message_pull_confirm_receipt_received receipts in one request");
         return;
     }
-    auto cluster_addr =
-        m_router->sharding_address_from_account(common::xaccount_address_t{pulled_receipt.m_tx_to_account}, m_vnet_driver->network_id(), common::xnode_type_t::consensus_auditor);
-    if (cluster_addr != m_vnet_driver->address().cluster_address()) {
-        m_vnet_driver->forward_broadcast_message(message, vnetwork::xvnode_address_t{std::move(cluster_addr)});
-    } else {
-        xinfo("xtxpool_service::on_message_pull_confirm_receipt_received confirm txs.table:%s:%s,receipt hash num=%u,receiptid=%ld",
-              pulled_receipt.m_tx_from_account.c_str(),
-              pulled_receipt.m_tx_to_account.c_str(),
-              pulled_receipt.m_id_hash_of_receipts.size(),
-              pulled_receipt.m_id_hash_of_receipts.begin()->first);
-        xreceipt_push_t pushed_receipt;
-        pushed_receipt.m_receipt_type = enum_transaction_subtype_confirm;
-        pushed_receipt.m_tx_from_account = pulled_receipt.m_tx_from_account;
-        pushed_receipt.m_tx_to_account = pulled_receipt.m_tx_to_account;
-        pushed_receipt.m_req_node = pulled_receipt.m_req_node;
-        for (auto tx_id_hash : pulled_receipt.m_id_hash_of_receipts) {
-            auto & receipt_id = tx_id_hash.first;
-            auto & hash = tx_id_hash.second;
-            xdbg("xtxpool_service::on_message_pull_confirm_receipt_received table:%s:%s confirm_tx id:%llu,hash:%s",
-                 pulled_receipt.m_tx_from_account.c_str(),
-                 pulled_receipt.m_tx_to_account.c_str(),
-                 receipt_id,
-                 to_hex_str(hash).c_str());
 
-            if (!m_para->get_txpool()->is_consensused_recv_receiptid(pulled_receipt.m_tx_from_account, pulled_receipt.m_tx_to_account, receipt_id)) {
-                xinfo("xtxpool_service::on_message_pull_confirm_receipt_received table:%s:%s confirm_tx id:%llu,hash:%s not consensused",
-                      pulled_receipt.m_tx_from_account.c_str(),
-                      pulled_receipt.m_tx_to_account.c_str(),
-                      receipt_id,
-                      to_hex_str(hash).c_str());
-                continue;
-            }
+    xinfo("xtxpool_service::on_message_pull_confirm_receipt_received confirm txs.table:%s:%s,receipt hash num=%u,receiptid=%ld",
+          pulled_receipt.m_tx_from_account.c_str(),
+          pulled_receipt.m_tx_to_account.c_str(),
+          pulled_receipt.m_id_hash_of_receipts.size(),
+          pulled_receipt.m_id_hash_of_receipts.begin()->first);
+    xreceipt_pull_rsp_t receipt_pull_rsp;
+    receipt_pull_rsp.m_receipt_type = enum_transaction_subtype_confirm;
+    receipt_pull_rsp.m_tx_from_account = pulled_receipt.m_tx_from_account;
+    receipt_pull_rsp.m_tx_to_account = pulled_receipt.m_tx_to_account;
+    receipt_pull_rsp.m_req_node = pulled_receipt.m_req_node;
+    for (auto tx_id_hash : pulled_receipt.m_id_hash_of_receipts) {
+        auto & receipt_id = tx_id_hash.first;
+        auto & hash = tx_id_hash.second;
+        xdbg("xtxpool_service::on_message_pull_confirm_receipt_received table:%s:%s confirm_tx id:%llu,hash:%s",
+             pulled_receipt.m_tx_from_account.c_str(),
+             pulled_receipt.m_tx_to_account.c_str(),
+             receipt_id,
+             to_hex_str(hash).c_str());
 
-            auto tranx = get_confirmed_tx(hash);
-            if (tranx != nullptr) {
-                xinfo("xtxpool_service::on_message_pull_confirm_receipt_received table:%s:%s receiptid:%llu,confirm_tx:%s",
-                      pulled_receipt.m_tx_from_account.c_str(),
-                      pulled_receipt.m_tx_to_account.c_str(),
-                      receipt_id,
-                      tranx->dump().c_str());
-                pushed_receipt.m_receipts.push_back(tranx);
-                xassert(receipt_id == tranx->get_last_action_receipt_id());
-            }
+        if (!m_para->get_txpool()->is_consensused_recv_receiptid(pulled_receipt.m_tx_from_account, pulled_receipt.m_tx_to_account, receipt_id)) {
+            xinfo("xtxpool_service::on_message_pull_confirm_receipt_received table:%s:%s confirm_tx id:%llu,hash:%s not consensused",
+                  pulled_receipt.m_tx_from_account.c_str(),
+                  pulled_receipt.m_tx_to_account.c_str(),
+                  receipt_id,
+                  to_hex_str(hash).c_str());
+            continue;
         }
-        send_push_receipts(pushed_receipt, sender);
+
+        auto tranx = get_confirmed_tx(hash);
+        if (tranx != nullptr) {
+            xinfo("xtxpool_service::on_message_pull_confirm_receipt_received table:%s:%s receiptid:%llu,confirm_tx:%s",
+                  pulled_receipt.m_tx_from_account.c_str(),
+                  pulled_receipt.m_tx_to_account.c_str(),
+                  receipt_id,
+                  tranx->dump().c_str());
+            receipt_pull_rsp.m_receipts.push_back(tranx);
+            xassert(receipt_id == tranx->get_last_action_receipt_id());
+        }
     }
+    if (receipt_pull_rsp.m_receipts.empty()) {
+        return;
+    }
+    send_pull_receipts_rsp(receipt_pull_rsp, sender);
 }
 
 NS_END2

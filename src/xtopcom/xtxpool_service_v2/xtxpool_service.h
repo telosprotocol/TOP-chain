@@ -11,15 +11,15 @@
 #include "xdata/xblock.h"
 #include "xdata/xtransaction.h"
 #include "xtxpool_service_v2/xcons_utl.h"
+#include "xtxpool_service_v2/xreceipt_sync.h"
 #include "xtxpool_service_v2/xtxpool_service_face.h"
 #include "xtxpool_service_v2/xtxpool_svc_para.h"
 #include "xtxpool_v2/xtxpool_face.h"
-#include "xtxpool_service_v2/xreceipt_sync.h"
 
+#include <map>
 #include <set>
 #include <string>
 #include <vector>
-#include <map>
 
 NS_BEG2(top, xtxpool_service_v2)
 using xtxpool_service_v2::xcons_utl;
@@ -36,7 +36,9 @@ public:
     void set_params(const xvip2_t & xip, const std::shared_ptr<vnetwork::xvnetwork_driver_face_t> & vnet_driver) override;
     bool is_running() const override;
     bool is_receipt_sender(const xtable_id_t & tableid) const override;
-    bool is_send_receipt_role() const override {return m_is_send_receipt_role;}
+    bool is_send_receipt_role() const override {
+        return m_is_send_receipt_role;
+    }
     bool table_boundary_equal_to(std::shared_ptr<xtxpool_service_face> & service) const override;
     void get_service_table_boundary(base::enum_xchain_zone_index & zone_id, uint32_t & fount_table_id, uint32_t & back_table_id, common::xnode_type_t & node_type) const override;
     void resend_receipts(uint64_t now) override;
@@ -50,7 +52,8 @@ private:
     bool is_belong_to_service(xtable_id_t tableid) const;
     void on_message_receipt(vnetwork::xvnode_address_t const & sender, vnetwork::xmessage_t const & message);
     void on_message_unit_receipt(vnetwork::xvnode_address_t const & sender, vnetwork::xmessage_t const & message);
-    void on_message_push_receipt_received(vnetwork::xvnode_address_t const & sender, vnetwork::xmessage_t const & message);
+    void on_message_batch_receipts(vnetwork::xvnode_address_t const & sender, vnetwork::xmessage_t const & message);
+    void on_message_pull_receipt_rsp(vnetwork::xvnode_address_t const & sender, vnetwork::xmessage_t const & message);
     void on_message_pull_recv_receipt_received(vnetwork::xvnode_address_t const & sender, vnetwork::xmessage_t const & message);
     void on_message_pull_confirm_receipt_received(vnetwork::xvnode_address_t const & sender, vnetwork::xmessage_t const & message);
     void send_receipt_real(const data::xcons_transaction_ptr_t & cons_tx);
@@ -61,7 +64,7 @@ private:
     xcons_transaction_ptr_t get_confirmed_tx(const uint256_t & hash);
     void send_pull_receipts_of_confirm(xreceipt_pull_confirm_receipt_t & pulled_receipt);
     void send_pull_receipts_of_recv(xreceipt_pull_recv_receipt_t & pulled_receipt);
-    void send_push_receipts(xreceipt_push_t &pushed_receipt, vnetwork::xvnode_address_t const & target);
+    void send_pull_receipts_rsp(xreceipt_pull_rsp_t & receipt_pull_rsp, vnetwork::xvnode_address_t const & target);
     void send_receipt_sync_msg(const vnetwork::xmessage_t & msg, const std::string & target_table_addr);
 
 private:

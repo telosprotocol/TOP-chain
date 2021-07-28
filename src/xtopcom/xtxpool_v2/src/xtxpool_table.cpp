@@ -325,6 +325,7 @@ int32_t xtxpool_table_t::verify_txs(const std::string & account, const std::vect
                 xtxpool_info("xtxpool_table_t::verify_txs push tx from proposal tx:%s", tx->dump().c_str());
                 XMETRICS_GAUGE(metrics::txpool_push_tx_from_proposal, 1);
                 push_receipt_real(tx_ent);
+                m_xtable_info.get_statistic()->update_receipt_recv_num(tx_ent->get_tx(), receipt_push_type_proposal);
             }
         }
     }
