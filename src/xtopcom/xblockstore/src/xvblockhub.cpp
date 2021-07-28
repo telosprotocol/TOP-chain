@@ -269,6 +269,20 @@ namespace top
                 const std::string meta_path = get_blockstore_path() + get_meta_path(*this);
                 store_value_by_path(meta_path, vmeta_bin);
                 m_last_save_vmeta_bin = vmeta_bin;
+
+                base::enum_vaccount_addr_type addr_type = get_addrtype_from_account(get_address());
+                if (addr_type == base::enum_vaccount_addr_type_block_contract || addr_type == base::enum_vaccount_addr_type_native_contract)
+                {
+                    XMETRICS_PACKET_INFO("blockstore_height_meta",
+                                         "account", get_address(),
+                                         "cert", m_meta->_highest_cert_block_height,
+                                         "lock", m_meta->_highest_lock_block_height,
+                                         "commit", m_meta->_highest_commit_block_height,
+                                         "connect", m_meta->_highest_connect_block_height,
+                                         "execute", m_meta->_highest_execute_block_height,
+                                         "full", m_meta->_highest_full_block_height,
+                                         "genesis_connect", m_meta->_highest_genesis_connect_height);
+                }
             }
             return true;
         }
