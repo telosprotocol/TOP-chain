@@ -44,6 +44,8 @@ xblock_consensus_para_t::xblock_consensus_para_t(const xvip2_t & validator, base
     xvip2_t auditor_xip;
     set_empty_xip2(auditor_xip);
     set_common_consensus_para(prev_block->get_clock() + 1, validator, auditor_xip, viewid, viewtoken, drand_height);
+    m_account = prev_block->get_account();
+    m_proposal_height = prev_block->get_height() + 1;
 }
 void xblock_consensus_para_t::set_xip(const xvip2_t & _validator_xip, const xvip2_t & _auditor_xip) {
     m_validator = _validator_xip;

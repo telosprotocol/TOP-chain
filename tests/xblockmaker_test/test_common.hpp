@@ -6,11 +6,9 @@
 // #include "xstore/test/test_datamock.hpp"
 #include "xstore/xaccount_context.h"
 #include "xblockstore/xblockstore_face.h"
-#include "xindexstore/xindexstore_face.h"
 #include "xdata/xtransaction_maker.hpp"
 #include "xtxpool_v2/xtxpool_face.h"
 #include "tests/mock/xdatamock_table.hpp"
-#include "tests/mock/xdatamock_tx.hpp"
 #include "tests/mock/xcertauth_util.hpp"
 #include "tests/mock/xtestdb.hpp"
 #include "tests/mock/xvchain_creator.hpp"
@@ -103,22 +101,18 @@ class test_xblockmaker_resources_t : public xblockmaker_resources_t {
 
  public:
     test_xblockmaker_resources_t() {
-        m_creator.create_blockstore_with_xstore();
-        m_indexstore = xindexstore_factory_t::create_indexstorehub(make_observer(get_store()), make_observer(get_blockstore()));
         m_ca = make_object_ptr<test_xmock_auth_t>();
         m_bus = make_object_ptr<mbus::xmessage_bus_t>(true, 1000);
-        m_txpool = xtxpool_instance::create_xtxpool_inst(make_observer(get_store()), make_observer(get_blockstore()), make_observer(m_ca.get()), make_observer(m_indexstore.get()), make_observer(m_bus.get()));
+        m_txpool = xtxpool_instance::create_xtxpool_inst(make_observer(m_creator.get_xstore()), make_observer(get_blockstore()), make_observer(m_ca.get()), make_observer(m_bus.get()));
     }
 
-    virtual store::xstore_face_t*       get_store() const {return m_creator.get_xstore();}
     virtual base::xvblockstore_t*       get_blockstore() const {return m_creator.get_blockstore();}
     virtual xtxpool_v2::xtxpool_face_t* get_txpool() const {return m_txpool.get();}
-    virtual store::xindexstorehub_t*    get_indexstorehub() const {return m_indexstore.get();}
     virtual mbus::xmessage_bus_face_t*  get_bus() const {return m_bus.get();}
+    virtual base::xvblkstatestore_t*    get_xblkstatestore() const {return base::xvchain_t::instance().get_xstatestore()->get_blkstate_store();}    
 
  private:
     xvchain_creator                 m_creator;
-    xobject_ptr_t<xindexstorehub_t> m_indexstore{nullptr};
     xobject_ptr_t<base::xvcertauth_t>   m_ca{nullptr};
     xobject_ptr_t<mbus::xmessage_bus_face_t> m_bus{nullptr};
     xobject_ptr_t<xtxpool_face_t>   m_txpool{nullptr};

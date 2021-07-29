@@ -23,7 +23,6 @@ class xdatamock_tx {
         enum_default_transfer_amount = 1,
         enum_default_tx_deposit = 1000000,
         enum_default_tx_duration = 100,
-        enum_default_fullunit_interval_unit_count = 21,
         enum_default_init_balance = 10000000000,
     };
 
@@ -168,7 +167,7 @@ class xdatamock_tx {
     std::string                 m_account;
     xecprikey_t                 m_pri_key_obj;
     uint64_t                    m_init_balance{0};
-    xblockchain_ptr_t           m_blockchain{nullptr};
+    xaccount_ptr_t              m_blockchain{nullptr};                  
     bool                        m_enable_sign{false};
 };
 
