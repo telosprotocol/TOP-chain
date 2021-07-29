@@ -24,7 +24,7 @@ public:
     xtxpool_t(const std::shared_ptr<xtxpool_resources_face> & para);
 
     int32_t push_send_tx(const std::shared_ptr<xtx_entry> & tx) override;
-    int32_t push_receipt(const std::shared_ptr<xtx_entry> & tx, bool is_self_send, bool is_pulled) override;
+    int32_t push_receipt(const std::shared_ptr<xtx_entry> & tx, bool is_self_send, enum_receipt_push_type push_type) override;
     const xcons_transaction_ptr_t pop_tx(const tx_info_t & txinfo) override;
     ready_accounts_t get_ready_accounts(const xtxs_pack_para_t & pack_para) override;
     std::vector<xcons_transaction_ptr_t> get_ready_txs(const xtxs_pack_para_t & pack_para) override;

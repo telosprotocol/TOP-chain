@@ -31,7 +31,7 @@ int32_t xtxpool_t::push_send_tx(const std::shared_ptr<xtx_entry> & tx) {
     return table->push_send_tx(tx);
 }
 
-int32_t xtxpool_t::push_receipt(const std::shared_ptr<xtx_entry> & tx, bool is_self_send, bool is_pulled) {
+int32_t xtxpool_t::push_receipt(const std::shared_ptr<xtx_entry> & tx, bool is_self_send, enum_receipt_push_type push_type) {
     XMETRICS_TIME_RECORD("txpool_message_unit_receipt_push_receipt");
     auto table = get_txpool_table_by_addr(tx);
     if (table == nullptr) {
@@ -40,7 +40,7 @@ int32_t xtxpool_t::push_receipt(const std::shared_ptr<xtx_entry> & tx, bool is_s
     auto ret = table->push_receipt(tx, is_self_send);
 
     if (ret == xsuccess) {
-        m_statistic.update_receipt_recv_num(tx->get_tx(), is_pulled ? receipt_push_type_pull : receipt_push_type_normal);
+        m_statistic.update_receipt_recv_num(tx->get_tx(), push_type);
     }
     return ret;
 }

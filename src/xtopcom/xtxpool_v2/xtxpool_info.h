@@ -23,12 +23,6 @@ using namespace top::data;
 #define shard_recv_tx_queue_size_max (16384)
 #define shard_conf_tx_queue_size_max (16384)
 
-enum enum_receipt_push_type {
-    receipt_push_type_normal = 0,
-    receipt_push_type_pull = 1,
-    receipt_push_type_proposal = 2,
-};
-
 class xtx_counter_t {
 public:
     void send_tx_inc(int32_t count) {
@@ -94,6 +88,8 @@ public:
                 m_received_recv_tx_num++;
             } else if (push_type == receipt_push_type_pull) {
                 m_pulled_recv_tx_num++;
+            } else if (push_type == receipt_push_type_resend) {
+                m_resend_recv_tx_num++;
             } else {
                 m_proposal_sync_recv_tx_num++;
             }
@@ -182,7 +178,9 @@ public:
                              "proposal_recv",
                              m_proposal_sync_recv_tx_num.load(),
                              "proposal_confirm",
-                             m_proposal_sync_confirm_tx_num.load());
+                             m_proposal_sync_confirm_tx_num.load(),
+                             "resend_recv",
+                             m_resend_recv_tx_num.load());
 
         XMETRICS_PACKET_INFO("txpool_receipt_delay",
                              "1clk",
@@ -280,6 +278,7 @@ private:
     std::atomic<uint32_t> m_pulled_confirm_tx_num{0};
     std::atomic<uint32_t> m_proposal_sync_recv_tx_num{0};
     std::atomic<uint32_t> m_proposal_sync_confirm_tx_num{0};
+    std::atomic<uint32_t> m_resend_recv_tx_num{0};
     std::atomic<uint32_t> m_receipt_recv_num_by_1_clock{0};
     std::atomic<uint32_t> m_receipt_recv_num_by_2_clock{0};
     std::atomic<uint32_t> m_receipt_recv_num_by_3_clock{0};
@@ -367,7 +366,7 @@ public:
         }
 
         m_statistic->inc_push_tx_send_cur_num(count);
-         XMETRICS_GAUGE(metrics::txpool_send_tx_cur, count);
+        XMETRICS_GAUGE(metrics::txpool_send_tx_cur, count);
         // XMETRICS_COUNTER_INCREMENT("table_send_tx_cur" + get_address(), count);
         xdbg("send_tx_inc table %s send queue size:%u", get_address().c_str(), m_counter.get_send_tx_count());
     }

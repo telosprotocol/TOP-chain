@@ -154,6 +154,12 @@ char const * matrics_name(xmetircs_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(txpool_recv_tx_cur);
         RETURN_METRICS_NAME(txpool_confirm_tx_cur);
         RETURN_METRICS_NAME(txpool_unconfirm_tx_cur);
+        RETURN_METRICS_NAME(txpool_receipts_first_send_succ);
+        RETURN_METRICS_NAME(txpool_receipts_first_send_fail);
+        RETURN_METRICS_NAME(txpool_receipts_first_recv);
+        RETURN_METRICS_NAME(txpool_pull_msg_send_num);
+        RETURN_METRICS_NAME(txpool_pull_msg_recv_num);
+        RETURN_METRICS_NAME(txpool_pull_msg_proc_num);
 
         // blockstore
         RETURN_METRICS_NAME(blockstore_index_load);

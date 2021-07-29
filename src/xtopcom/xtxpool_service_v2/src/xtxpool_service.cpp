@@ -270,7 +270,7 @@ void xtxpool_service::on_message_receipt(vnetwork::xvnode_address_t const & send
     xtxpool_info("xtxpool_service::on_message_receipt msg id:%x,hash:%x", message.id(), message.hash());
 
     if (message.id() == xtxpool_v2::xtxpool_msg_send_receipt || message.id() == xtxpool_v2::xtxpool_msg_recv_receipt || message.id() == xtxpool_v2::xtxpool_msg_pull_receipt_rsp ||
-        message.id() == xtxpool_v2::xtxpool_msg_batch_receipts) {
+        message.id() == xtxpool_v2::xtxpool_msg_batch_receipts || message.id() == xtxpool_v2::xtxpool_msg_resend_receipt) {
         if (m_para->get_fast_dispatcher()->is_mailbox_over_limit()) {
             xwarn("xtxpool_service::on_message_receipt fast txpool mailbox limit,drop receipt");
             return;
@@ -305,6 +305,7 @@ void xtxpool_service::on_message_receipt(vnetwork::xvnode_address_t const & send
             m_para->get_fast_dispatcher()->dispatch(asyn_call);
         }
     } else if ((message.id() == xtxpool_v2::xtxpool_msg_pull_recv_receipt) || (message.id() == xtxpool_v2::xtxpool_msg_pull_confirm_receipt)) {
+        XMETRICS_GAUGE(metrics::txpool_pull_msg_recv_num, 1);
         if (m_para->get_slow_dispatcher()->is_mailbox_over_limit()) {
             xwarn("xtxpool_service::on_message_receipt slow txpool mailbox limit,drop receipt");
             return;
@@ -322,6 +323,7 @@ void xtxpool_service::on_message_receipt(vnetwork::xvnode_address_t const & send
             } else {
                 this->on_message_pull_confirm_receipt_received(para->m_sender, para->m_message);
             }
+            XMETRICS_GAUGE(metrics::txpool_pull_msg_proc_num, 1);
             return true;
         };
 
@@ -349,7 +351,8 @@ void xtxpool_service::on_message_unit_receipt(vnetwork::xvnode_address_t const &
     xtxpool_v2::xtx_para_t para;
     std::shared_ptr<xtxpool_v2::xtx_entry> tx_ent = std::make_shared<xtxpool_v2::xtx_entry>(receipt, para);
     XMETRICS_GAUGE(metrics::txpool_received_other_send_receipt_num, 1);
-    m_para->get_txpool()->push_receipt(tx_ent, false, false);
+    m_para->get_txpool()->push_receipt(
+        tx_ent, false, (message.id() == xtxpool_v2::xtxpool_msg_resend_receipt) ? xtxpool_v2::receipt_push_type_resend : xtxpool_v2::receipt_push_type_normal);
 }
 
 void xtxpool_service::on_message_batch_receipts(vnetwork::xvnode_address_t const & sender, vnetwork::xmessage_t const & message) {
@@ -363,11 +366,12 @@ void xtxpool_service::on_message_batch_receipts(vnetwork::xvnode_address_t const
         return;
     }
 
+    XMETRICS_GAUGE(metrics::txpool_receipts_first_recv, 1);
     for (auto & receipt : batch_receipts.m_receipts) {
         xinfo("xtxpool_service::on_message_batch_receipts receipt=%s,at_node:%s,msg id:%x,hash:%x", receipt->dump().c_str(), m_vnetwork_str.c_str(), message.id(), message.hash());
         xtxpool_v2::xtx_para_t para;
         std::shared_ptr<xtxpool_v2::xtx_entry> tx_ent = std::make_shared<xtxpool_v2::xtx_entry>(receipt, para);
-        m_para->get_txpool()->push_receipt(tx_ent, false, false);
+        m_para->get_txpool()->push_receipt(tx_ent, false, xtxpool_v2::receipt_push_type_normal);
     }
     XMETRICS_GAUGE(metrics::txpool_received_other_send_receipt_num, batch_receipts.m_receipts.size());
 }
@@ -443,8 +447,7 @@ void xtxpool_service::send_receipt_real(const data::xcons_transaction_ptr_t & co
 
         top::base::xautostream_t<4096> stream(top::base::xcontext_t::instance());
         cons_tx->serialize_to(stream);
-        vnetwork::xmessage_t msg = vnetwork::xmessage_t({stream.data(), stream.data() + stream.size()},
-                                                        cons_tx->is_recv_tx() ? xtxpool_v2::xtxpool_msg_send_receipt : xtxpool_v2::xtxpool_msg_recv_receipt);
+        vnetwork::xmessage_t msg = vnetwork::xmessage_t({stream.data(), stream.data() + stream.size()}, xtxpool_v2::xtxpool_msg_resend_receipt);
         xtxpool_v2::xtx_para_t para;
         std::shared_ptr<xtxpool_v2::xtx_entry> tx_ent = std::make_shared<xtxpool_v2::xtx_entry>(cons_tx, para);
         // TODO(jimmy)  first get target account's table id, then get network addr by table id
@@ -459,7 +462,7 @@ void xtxpool_service::send_receipt_real(const data::xcons_transaction_ptr_t & co
                          m_vnet_driver->address().to_string().c_str());
             m_vnet_driver->broadcast(msg);
             XMETRICS_GAUGE(metrics::txpool_received_self_send_receipt_num, 1);
-            m_para->get_txpool()->push_receipt(tx_ent, true, false);
+            m_para->get_txpool()->push_receipt(tx_ent, true, xtxpool_v2::receipt_push_type_resend);
         } else {
             xtxpool_info("xtxpool_service::send_receipt_real forward receipt=%s,size=%zu,from_vnode:%s,to_vnode:%s",
                          cons_tx->dump().c_str(),
@@ -483,7 +486,7 @@ void xtxpool_service::send_receipt_real(const data::xcons_transaction_ptr_t & co
                              m_vnet_driver->address().to_string().c_str());
                 m_vnet_driver->broadcast(msg);
                 XMETRICS_GAUGE(metrics::txpool_received_self_send_receipt_num, 1);
-                m_para->get_txpool()->push_receipt(tx_ent, true, false);
+                m_para->get_txpool()->push_receipt(tx_ent, true, xtxpool_v2::receipt_push_type_resend);
             } else {
                 xtxpool_info("xtxpool_service::send_receipt_real forward receipt=%s,size=%zu,from_vnode:%s,to_vnode:%s",
                              cons_tx->dump().c_str(),
@@ -557,6 +560,7 @@ void xtxpool_service::send_pull_receipts_of_recv(xreceipt_pull_recv_receipt_t & 
     pulled_receipt.serialize_to(stream);
     msg = vnetwork::xmessage_t({stream.data(), stream.data() + stream.size()}, xtxpool_v2::xtxpool_msg_pull_recv_receipt);
     send_receipt_sync_msg(msg, pulled_receipt.m_tx_from_account);
+    XMETRICS_GAUGE(metrics::txpool_pull_msg_send_num, 1);
 }
 
 void xtxpool_service::send_pull_receipts_of_confirm(xreceipt_pull_confirm_receipt_t & pulled_receipt) {
@@ -565,6 +569,7 @@ void xtxpool_service::send_pull_receipts_of_confirm(xreceipt_pull_confirm_receip
     pulled_receipt.serialize_to(stream);
     msg = vnetwork::xmessage_t({stream.data(), stream.data() + stream.size()}, xtxpool_v2::xtxpool_msg_pull_confirm_receipt);
     send_receipt_sync_msg(msg, pulled_receipt.m_tx_to_account);
+    XMETRICS_GAUGE(metrics::txpool_pull_msg_send_num, 1);
 }
 
 void xtxpool_service::send_pull_receipts_rsp(xreceipt_pull_rsp_t & receipt_pull_rsp, vnetwork::xvnode_address_t const & target) {
@@ -610,7 +615,7 @@ void xtxpool_service::on_message_pull_receipt_rsp(vnetwork::xvnode_address_t con
              tx->dump().c_str());
         xtxpool_v2::xtx_para_t para;
         std::shared_ptr<xtxpool_v2::xtx_entry> tx_ent = std::make_shared<xtxpool_v2::xtx_entry>(tx, para);
-        m_para->get_txpool()->push_receipt(tx_ent, false, true);
+        m_para->get_txpool()->push_receipt(tx_ent, false, xtxpool_v2::receipt_push_type_pull);
     }
 }
 

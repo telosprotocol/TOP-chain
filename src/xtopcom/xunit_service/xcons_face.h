@@ -47,7 +47,7 @@ public:
     virtual std::shared_ptr<vnetwork::xvnetwork_driver_face_t> find(const xvip2_t &addr) = 0;
     virtual bool erase(const xvip2_t & addr) = 0;
     virtual bool get_target_addrs(const xvip2_t & from_addr, const base::xtable_index_t & table_idx, std::vector<common::xsharding_address_t> & target_addrs) = 0;
-    virtual void send_receipts_msg(const xvip2_t & from_addr, const common::xsharding_address_t & target_addr, const top::vnetwork::xmessage_t & msg, bool & is_self_group) = 0;
+    virtual bool send_receipts_msg(const xvip2_t & from_addr, const common::xsharding_address_t & target_addr, const top::vnetwork::xmessage_t & msg, bool & is_self_group) = 0;
 };
 
 // table index data

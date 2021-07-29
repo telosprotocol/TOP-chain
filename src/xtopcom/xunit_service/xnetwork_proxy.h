@@ -41,7 +41,7 @@ public:
 
     bool get_target_addrs(const xvip2_t & from_addr, const base::xtable_index_t & table_idx, std::vector<common::xsharding_address_t> & target_addrs);
 
-    void send_receipts_msg(const xvip2_t & from_addr, const common::xsharding_address_t & target_addr, const top::vnetwork::xmessage_t & msg, bool & is_self_group);
+    bool send_receipts_msg(const xvip2_t & from_addr, const common::xsharding_address_t & target_addr, const top::vnetwork::xmessage_t & msg, bool & is_self_group);
 
 protected:
     // network message callback

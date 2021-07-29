@@ -308,14 +308,14 @@ bool xnetwork_proxy::get_target_addrs(const xvip2_t & from_addr, const base::xta
     return true;
 }
 
-void xnetwork_proxy::send_receipts_msg(const xvip2_t & from_addr,
+bool xnetwork_proxy::send_receipts_msg(const xvip2_t & from_addr,
                                        const common::xsharding_address_t & target_addr,
                                        const top::vnetwork::xmessage_t & msg,
                                        bool & is_self_group) {
     auto net_driver = find(from_addr);
     if (net_driver == nullptr) {
         xunit_warn("xnetwork_proxy::send_receipts_msg net_driver not found,can not send receipt addr:%s", xcons_utl::xip_to_hex(from_addr).c_str());
-        return;
+        return false;
     }
 
     if (net_driver->address().cluster_address() == target_addr) {
@@ -325,6 +325,7 @@ void xnetwork_proxy::send_receipts_msg(const xvip2_t & from_addr,
         net_driver->forward_broadcast_message(msg, vnetwork::xvnode_address_t{std::move(target_addr)});
         is_self_group = false;
     }
+    return true;
 }
 
 NS_END2

@@ -34,6 +34,14 @@ XDEFINE_MSG_ID(xmessage_category_txpool, xtxpool_msg_pull_recv_receipt, 0x000000
 XDEFINE_MSG_ID(xmessage_category_txpool, xtxpool_msg_pull_confirm_receipt, 0x00000004);
 XDEFINE_MSG_ID(xmessage_category_txpool, xtxpool_msg_pull_receipt_rsp, 0x00000005);
 XDEFINE_MSG_ID(xmessage_category_txpool, xtxpool_msg_batch_receipts, 0x00000006);
+XDEFINE_MSG_ID(xmessage_category_txpool, xtxpool_msg_resend_receipt, 0x00000007);
+
+enum enum_receipt_push_type {
+    receipt_push_type_normal = 0,
+    receipt_push_type_pull = 1,
+    receipt_push_type_proposal = 2,
+    receipt_push_type_resend = 3,
+};
 
 class xtx_para_t {
 public:
@@ -228,7 +236,7 @@ private:
 class xtxpool_face_t : public base::xobject_t {
 public:
     virtual int32_t push_send_tx(const std::shared_ptr<xtx_entry> & tx) = 0;
-    virtual int32_t push_receipt(const std::shared_ptr<xtx_entry> & tx, bool is_self_send, bool is_pulled) = 0;
+    virtual int32_t push_receipt(const std::shared_ptr<xtx_entry> & tx, bool is_self_send, enum_receipt_push_type push_type) = 0;
     virtual const xcons_transaction_ptr_t pop_tx(const tx_info_t & txinfo) = 0;
     virtual ready_accounts_t get_ready_accounts(const xtxs_pack_para_t & pack_para) = 0;
     virtual std::vector<xcons_transaction_ptr_t> get_ready_txs(const xtxs_pack_para_t & pack_para) = 0;

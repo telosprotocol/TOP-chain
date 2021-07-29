@@ -489,6 +489,7 @@ bool xbatch_packer::on_consensus_commit(const base::xvevent_t & event, xcsobject
 }
 
 void xbatch_packer::make_receipts_and_send(xblock_t * commit_block, xblock_t * cert_block) {
+    bool ret = true;
     auto network_proxy = m_para->get_resources()->get_network();
     xassert(network_proxy != nullptr);
     if (network_proxy == nullptr) {
@@ -510,7 +511,7 @@ void xbatch_packer::make_receipts_and_send(xblock_t * commit_block, xblock_t * c
         }
 
         std::vector<common::xsharding_address_t> target_addrs;
-        bool ret = network_proxy->get_target_addrs(get_xip2_addr(), constx->get_self_table_index(), target_addrs);
+        ret = network_proxy->get_target_addrs(get_xip2_addr(), constx->get_self_table_index(), target_addrs);
         if (ret) {
             xunit_info("xbatch_packer::make_receipts_and_send receipt:%s", constx->dump().c_str());
             for (auto & addr : target_addrs) {
@@ -523,6 +524,8 @@ void xbatch_packer::make_receipts_and_send(xblock_t * commit_block, xblock_t * c
                     it->second.push_back(constx);
                 }
             }
+        } else {
+            XMETRICS_GAUGE(metrics::txpool_receipts_first_send_fail, 1);
         }
     }
 
@@ -534,14 +537,20 @@ void xbatch_packer::make_receipts_and_send(xblock_t * commit_block, xblock_t * c
         batch_receipts.serialize_to(stream);
         vnetwork::xmessage_t msg = vnetwork::xmessage_t({stream.data(), stream.data() + stream.size()}, xtxpool_v2::xtxpool_msg_batch_receipts);
         bool is_self_group = false;
-        network_proxy->send_receipts_msg(get_xip2_addr(), target_addr_receipts.first, msg, is_self_group);
+        ret = network_proxy->send_receipts_msg(get_xip2_addr(), target_addr_receipts.first, msg, is_self_group);
         if (is_self_group) {
             for (auto & receipt : receipts) {
                 xtxpool_v2::xtx_para_t para;
                 std::shared_ptr<xtxpool_v2::xtx_entry> tx_ent = std::make_shared<xtxpool_v2::xtx_entry>(receipt, para);
-                m_para->get_resources()->get_txpool()->push_receipt(tx_ent, true, false);
+                m_para->get_resources()->get_txpool()->push_receipt(tx_ent, true, xtxpool_v2::receipt_push_type_normal);
                 XMETRICS_GAUGE(metrics::txpool_received_self_send_receipt_num, 1);
             }
+        }
+
+        if (ret) {
+            XMETRICS_GAUGE(metrics::txpool_receipts_first_send_succ, 1);
+        } else {
+            XMETRICS_GAUGE(metrics::txpool_receipts_first_send_fail, 1);
         }
     }
 }
