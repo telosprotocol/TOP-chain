@@ -38,6 +38,7 @@ namespace top
                 // base::xvchain_t::instance().set_xblockstore(blockstore);
             }
             base::xvblockstore_t* get_blockstore() const { return base::xvchain_t::instance().get_xblockstore(); }
+            base::xvblkstatestore_t*    get_xblkstatestore() const { return base::xvchain_t::instance().get_xstatestore()->get_blkstate_store(); }
             void clean_all() {
                 base::xvchain_t::instance().clean_all(false);
             }
