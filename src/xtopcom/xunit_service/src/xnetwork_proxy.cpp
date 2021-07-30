@@ -310,7 +310,7 @@ void xnetwork_proxy::send_receipt_msg(std::shared_ptr<vnetwork::xvnetwork_driver
                                       std::vector<data::xcons_transaction_ptr_t> & non_shard_cross_receipts) {
     try {
         xassert(receipt->is_recv_tx() || receipt->is_confirm_tx());
-        base::xtable_index_t target_tableindex = receipt->get_self_table_index(); // receipt should send to self table
+        base::xtableid_t target_tableindex = receipt->get_self_table_index(); // receipt should send to self table
 
         top::base::xautostream_t<4096> stream(top::base::xcontext_t::instance());
         receipt->serialize_to(stream);

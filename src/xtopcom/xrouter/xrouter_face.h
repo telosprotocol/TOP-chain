@@ -38,7 +38,7 @@ struct xtop_router_face {
      * @param type                          The type hint for calculating the sharding address. It is used when the target_account is a user account and the type is only common::xnode_type_t::consensus_auditor or common::xnode_type_t::consensus_validator
      * @return common::xsharding_address_t  The sharding address the target_account belongs to.
      */
-    virtual common::xsharding_address_t sharding_address_from_tableindex(base::xtable_index_t const & target_tableindex,
+    virtual common::xsharding_address_t sharding_address_from_tableindex(base::xtableid_t const & target_tableindex,
                                                                       common::xnetwork_id_t const & nid,
                                                                       common::xnode_type_t type) const = 0;
 

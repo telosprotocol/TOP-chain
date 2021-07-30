@@ -313,13 +313,13 @@ std::string xcons_transaction_t::get_account_addr() const {
     }
 }
 
-base::xtable_index_t xcons_transaction_t::get_self_table_index() const {
+base::xtableid_t xcons_transaction_t::get_self_table_index() const {
     base::xtable_shortid_t tableid = get_self_tableid();
-    return base::xtable_index_t(tableid);
+    return base::xtableid_t(tableid);
 }
-base::xtable_index_t xcons_transaction_t::get_peer_table_index() const {
+base::xtableid_t xcons_transaction_t::get_peer_table_index() const {
     base::xtable_shortid_t tableid = get_peer_tableid();
-    return base::xtable_index_t(tableid);
+    return base::xtableid_t(tableid);
 }
 
 base::xtable_shortid_t xcons_transaction_t::get_self_tableid() const {

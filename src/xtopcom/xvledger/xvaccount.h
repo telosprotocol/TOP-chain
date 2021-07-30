@@ -80,27 +80,30 @@ namespace top
         using xtable_shortid_t = uint16_t;//note: short table_id = [zone_index][book_index][table_index]
         using xtable_longid_t = uint32_t;//note: long table_id = [chain_id][zone_index][book_index][table_index]
         
-        class xtable_index_t
+        class xtableid_t
         {
         public:
-            xtable_index_t(xvid_t xid) {
+            xtableid_t(enum_xchain_zone_index z_index, uint8_t subaddr)
+            : m_zone_index(z_index),m_subaddr(subaddr) {
+            }
+            xtableid_t(xvid_t xid) {
                 m_zone_index = (enum_xchain_zone_index)get_vledger_zone_index(xid);
                 m_subaddr = (uint8_t)get_vledger_subaddr(xid);
             }
-            xtable_index_t(const xtable_index_t & rhs) {
+            xtableid_t(const xtableid_t & rhs) {
                 m_zone_index = rhs.m_zone_index;
                 m_subaddr = rhs.m_subaddr;
             }
-            xtable_index_t(xtable_shortid_t tableid) {
+            xtableid_t(xtable_shortid_t tableid) {
                 m_zone_index = (enum_xchain_zone_index)(tableid >> 10);
                 m_subaddr = (uint8_t)tableid & 0xff;
             }
         public:
-            uint16_t                get_value() const {return (uint16_t)((m_zone_index << 10) | m_subaddr);}
+            xtable_shortid_t        to_table_shortid() const {return (uint16_t)((m_zone_index << 10) | m_subaddr);}
             enum_xchain_zone_index  get_zone_index() const {return m_zone_index;}
             uint8_t                 get_subaddr() const {return m_subaddr;}
-            
         private:
+            // XTODO chain_id maybe needed in future
             enum_xchain_zone_index m_zone_index;
             uint8_t                m_subaddr;
         };
@@ -381,14 +384,8 @@ namespace top
             inline const int            get_book_index()     const {return get_vledger_book_index(m_account_xid);}
             inline const int            get_table_index()    const {return get_vledger_table_index(m_account_xid);}
             
-            inline const xtable_shortid_t       get_short_table_id()//note: short table_id = [zone_index][book_index][table_index]
-            {
-                  return (xtable_shortid_t)((get_zone_index() << 10) | get_ledger_subaddr());
-            }
-            inline const xtable_longid_t       get_long_table_id()//note: long table_id = [chain_id][zone_index][book_index][table_index]
-            {
-                return xtable_longid_t((get_ledger_id() << 10) | get_ledger_subaddr());
-            }           
+            inline const xtable_shortid_t get_short_table_id() const {return get_tableid().to_table_shortid();}
+            xtableid_t                  get_tableid() const {return xtableid_t(m_account_xid);}
             inline const xvid_t         get_xvid()    const {return m_account_xid;}
             inline const xvid_t         get_account_id()    const {return m_account_xid;}
             inline const std::string&   get_xvid_str()const {return m_account_xid_str;}

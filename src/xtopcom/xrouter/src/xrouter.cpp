@@ -18,13 +18,13 @@ NS_BEG2(top, router)
 common::xsharding_address_t xtop_router::sharding_address_from_account(common::xaccount_address_t const & target_account,
                                                                        common::xnetwork_id_t const & nid,
                                                                        common::xnode_type_t type) const {
-    auto xid = base::xvaccount_t::get_xid_from_account(target_account.value());
-    base::xtable_index_t tableindex = base::xtable_index_t(xid);
+    base::xvaccount_t _vaddr(target_account.value());
+    base::xtableid_t tableindex = _vaddr.get_tableid();
     xdbg("xtop_router::cluster_address_from_account addr:%s zone_index:%d subaddr:%d", target_account.c_str(), tableindex.get_zone_index(), tableindex.get_subaddr());
     return sharding_address_from_tableindex(tableindex, nid, type);
 }
 
-common::xsharding_address_t xtop_router::sharding_address_from_tableindex(base::xtable_index_t const & target_tableindex,
+common::xsharding_address_t xtop_router::sharding_address_from_tableindex(base::xtableid_t const & target_tableindex,
                                                                         common::xnetwork_id_t const & nid,
                                                                         common::xnode_type_t type) const {
     assert(common::has<common::xnode_type_t::consensus_validator>(type) || common::has<common::xnode_type_t::consensus_auditor>(type));

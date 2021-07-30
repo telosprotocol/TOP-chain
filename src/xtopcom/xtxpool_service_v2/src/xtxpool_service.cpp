@@ -240,7 +240,7 @@ void xtxpool_service::pull_lacking_receipts(uint64_t now, xcovered_tables_t & co
     }
 }
 
-bool xtxpool_service::is_belong_to_service(xtable_id_t tableid) const {
+bool xtxpool_service::is_belong_to_service(base::xtableid_t tableid) const {
     if (tableid.get_zone_index() == m_zone_index && (tableid.get_subaddr() >= m_cover_front_table_id && tableid.get_subaddr() <= m_cover_back_table_id)) {
         return true;
     }
@@ -387,7 +387,7 @@ xcons_transaction_ptr_t xtxpool_service::create_confirm_tx_by_hash(const uint256
     return contx;
 }
 
-bool xtxpool_service::is_receipt_sender(const xtable_id_t & tableid) const {
+bool xtxpool_service::is_receipt_sender(const base::xtableid_t & tableid) const {
     return m_running && m_is_send_receipt_role && is_belong_to_service(tableid);
 }
 
@@ -404,7 +404,7 @@ void xtxpool_service::send_receipt_retry(data::xcons_transaction_ptr_t & cons_tx
 void xtxpool_service::send_receipt_real(const data::xcons_transaction_ptr_t & cons_tx) {
     try {
         xassert(cons_tx->is_recv_tx() || cons_tx->is_confirm_tx());
-        base::xtable_index_t target_tableindex = cons_tx->get_self_table_index();  // receipt should send to self table
+        base::xtableid_t target_tableindex = cons_tx->get_self_table_index();  // receipt should send to self table
 
         top::base::xautostream_t<4096> stream(top::base::xcontext_t::instance());
         cons_tx->serialize_to(stream);

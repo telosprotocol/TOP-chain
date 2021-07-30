@@ -46,8 +46,8 @@ class xcons_transaction_t : public xbase_dataunit_t<xcons_transaction_t, xdata_t
     uint16_t                        get_tx_type() const {return m_tx->get_tx_type();}
     bool                            verify_cons_transaction();
 
-    base::xtable_index_t            get_self_table_index() const;
-    base::xtable_index_t            get_peer_table_index() const;
+    base::xtableid_t                get_self_table_index() const;
+    base::xtableid_t                get_peer_table_index() const;
     base::xtable_shortid_t          get_self_tableid() const;
     base::xtable_shortid_t          get_peer_tableid() const;
 

@@ -19,7 +19,7 @@ using xconsensus::xcsaccount_t;
 class xbatch_packer : public xcsaccount_t, public base::xtimersink_t {
 public:
     explicit xbatch_packer(observer_ptr<mbus::xmessage_bus_face_t> const   &mb,
-                           table_index &                                   tableid,
+                           base::xtableid_t &                              tableid,
                            const std::string &                             account_id,
                            std::shared_ptr<xcons_service_para_face> const &para,
                            std::shared_ptr<xblock_maker_face> const &      block_maker,
@@ -36,7 +36,7 @@ public:
 
     virtual bool on_timer_stop(const int32_t errorcode, const int32_t thread_id, const int64_t timer_id, const int64_t cur_time_ms, const int32_t timeout_ms, const int32_t timer_repeat_ms) override;
 
-    virtual table_index get_tableid();
+    virtual base::xtableid_t get_tableid();
 
     // recv_in packet from this object to child layers
     virtual bool recv_in(const xvip2_t &from_addr, const xvip2_t &to_addr, const base::xcspdu_t &packet, int32_t cur_thread_id, uint64_t timenow_ms);
@@ -72,7 +72,7 @@ private:
 
 private:
     observer_ptr<mbus::xmessage_bus_face_t>  m_mbus;
-    table_index                              m_tableid;
+    base::xtableid_t                         m_tableid;
     volatile uint64_t                        m_last_view_id;
     std::shared_ptr<xcons_service_para_face> m_para;
     std::shared_ptr<xblock_maker_face>       m_block_maker;
@@ -96,6 +96,6 @@ private:
 using xbatch_packer_ptr_t = xobject_ptr_t<xbatch_packer>;
 using xbatch_packers = std::vector<xbatch_packer_ptr_t>;
 // batch_packer map for <tableid, packer>
-using xbatch_paker_map = std::map<table_index, xbatch_packer_ptr_t, table_index_compare>;
+using xbatch_paker_map = std::map<base::xtableid_t, xbatch_packer_ptr_t, table_index_compare>;
 
 NS_END2

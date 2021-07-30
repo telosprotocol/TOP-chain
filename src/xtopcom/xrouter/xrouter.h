@@ -19,7 +19,7 @@ public:
                                                               common::xnetwork_id_t const & nid,
                                                               common::xnode_type_t type) const override;
 
-    common::xsharding_address_t sharding_address_from_tableindex(base::xtable_index_t const & target_tableindex,
+    common::xsharding_address_t sharding_address_from_tableindex(base::xtableid_t const & target_tableindex,
                                                                       common::xnetwork_id_t const & nid,
                                                                       common::xnode_type_t type) const override;
 
