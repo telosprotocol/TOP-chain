@@ -69,7 +69,7 @@ void xmessage_filter_manager_t::filter_message(xvnetwork_message_t & message, st
     assert(!m_filters.empty());
 
     for (auto const & filter : m_filters) {
-        if (!filter->filter(message, ec)) {
+        if (xfilter_result_t::stop_filtering == filter->filter(message, ec)) {
             break;
         }
     }
