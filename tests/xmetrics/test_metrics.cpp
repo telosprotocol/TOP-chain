@@ -53,15 +53,15 @@ TEST_F(metrics_test, basic_function) {
     SLEEP_SECOND(1);
     std::size_t test_basic_size = 1000;
     for (std::size_t index = 0; index < test_basic_size; ++index) {
-        XMETRICS_ARRCNT_SET(top::metrics::xmetrics_array_tag_t::test_metrics1, rand() % 64, 999);
+        XMETRICS_ARRCNT_SET(top::metrics::xmetrics_array_tag_t::blockstore_sharding_table_block_commit, rand() % 64, 999);
         XMETRICS_COUNTER_INCREMENT("test_count_metrics1", static_cast<uint64_t>((100 + rand()) % 10000));
         XMETRICS_COUNTER_INCREMENT("test_count_metrics2", static_cast<uint64_t>((100 + rand()) % 10000));
         SLEEP_NANOSECOND(rand() % 10);
-        XMETRICS_ARRCNT_INCR(top::metrics::xmetrics_array_tag_t::test_metrics1, rand() % 64, 100);
+        XMETRICS_ARRCNT_INCR(top::metrics::xmetrics_array_tag_t::blockstore_sharding_table_block_commit, rand() % 64, 100);
         XMETRICS_TIME_RECORD("test_time_metrics");
 
         SLEEP_NANOSECOND(rand() % 10);
-        XMETRICS_ARRCNT_DECR(top::metrics::xmetrics_array_tag_t::test_metrics1, rand() % 64, 100);
+        XMETRICS_ARRCNT_DECR(top::metrics::xmetrics_array_tag_t::blockstore_sharding_table_block_commit, rand() % 64, 100);
         XMETRICS_FLOW_COUNT("test_flow_metrics1", static_cast<uint64_t>(100));
         XMETRICS_FLOW_COUNT("test_flow_metrics2", static_cast<uint64_t>((100 + rand()) % 10000));
         SLEEP_NANOSECOND(rand() % 10);
@@ -94,11 +94,11 @@ TEST_F(metrics_test,array_multi_thread){
     auto data1 = generate_random_data(64,1000);
     auto data2 = generate_random_data(64,1000);
     auto data3 = generate_random_data(64,1000);
-    std::thread t1 = std::thread(&test_metrics_array_counter_thread,top::metrics::xmetrics_array_tag_t::test_metrics2,data1);
+    std::thread t1 = std::thread(&test_metrics_array_counter_thread,top::metrics::xmetrics_array_tag_t::blockstore_sharding_table_block_genesis_connect,data1);
     t1.detach();
-    std::thread t2 = std::thread(&test_metrics_array_counter_thread,top::metrics::xmetrics_array_tag_t::test_metrics2,data2);
+    std::thread t2 = std::thread(&test_metrics_array_counter_thread,top::metrics::xmetrics_array_tag_t::blockstore_sharding_table_block_genesis_connect,data2);
     t2.detach();
-    std::thread t3 = std::thread(&test_metrics_array_counter_thread,top::metrics::xmetrics_array_tag_t::test_metrics2,data3);
+    std::thread t3 = std::thread(&test_metrics_array_counter_thread,top::metrics::xmetrics_array_tag_t::blockstore_sharding_table_block_genesis_connect,data3);
     t3.detach();
 
     std::vector<std::pair<uint64_t,int64_t>> exp_res(64,{0,0});

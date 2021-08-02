@@ -346,11 +346,15 @@ using xmetircs_tag_t = E_SIMPLE_METRICS_TAG;
 enum E_ARRAY_COUNTER_TAG : size_t {
     e_array_counter_begin = 0,
 
-#if defined(XENABLE_TESTS)
-    // for test
-    test_metrics1,
-    test_metrics2,
-#endif
+    blockstore_sharding_table_block_commit,
+    blockstore_beacon_table_block_commit,
+    blockstore_zec_table_block_commit,
+    blockstore_sharding_table_block_full,
+    blockstore_beacon_table_block_full,
+    blockstore_zec_table_block_full,
+    blockstore_sharding_table_block_genesis_connect,
+    blockstore_beacon_table_block_genesis_connect,
+    blockstore_zec_table_block_genesis_connect,
 
     e_array_counter_total,
 };

@@ -314,12 +314,17 @@ std::pair<char const *, std::size_t> array_counter_info(xmetrics_array_tag_t con
     switch (tag) {
         RETURN_METRICS_INFO(e_array_counter_begin, 0);
 
-#if defined(XENABLE_TESTS)
-        // for test
-        RETURN_METRICS_INFO(test_metrics1, 64);
-        RETURN_METRICS_INFO(test_metrics2, 64);
-#endif
+        RETURN_METRICS_INFO(blockstore_sharding_table_block_commit, 64);
+        RETURN_METRICS_INFO(blockstore_beacon_table_block_commit, 1);
+        RETURN_METRICS_INFO(blockstore_zec_table_block_commit, 3);
+        RETURN_METRICS_INFO(blockstore_sharding_table_block_full, 64);
+        RETURN_METRICS_INFO(blockstore_beacon_table_block_full, 1);
+        RETURN_METRICS_INFO(blockstore_zec_table_block_full, 3);
+        RETURN_METRICS_INFO(blockstore_sharding_table_block_genesis_connect, 64);
+        RETURN_METRICS_INFO(blockstore_beacon_table_block_genesis_connect, 1);
+        RETURN_METRICS_INFO(blockstore_zec_table_block_genesis_connect, 3);
         RETURN_METRICS_INFO(e_array_counter_total, 0);
+
     default:
         assert(false);
         return {nullptr, 0};
