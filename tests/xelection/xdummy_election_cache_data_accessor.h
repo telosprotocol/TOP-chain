@@ -54,6 +54,10 @@ public:
         return {};
     }
 
+    std::shared_ptr<top::election::cache::xgroup_element_t> group_element(common::xgroup_address_t const &, common::xlogic_epoch_t const &, std::error_code &) const override {
+        return nullptr;
+    }
+
     std::shared_ptr<top::election::cache::xgroup_element_t>
     group_element_by_logic_time(common::xsharding_address_t const &,
                   common::xlogic_time_t const,
@@ -74,13 +78,17 @@ public:
         return {};
     }
 
+    std::shared_ptr<top::election::cache::xgroup_element_t> parent_group_element(common::xgroup_address_t const &, common::xlogic_epoch_t const &, std::error_code &) const override {
+        return {};
+    }
+
     common::xversion_t
-    version_from(common::xip2_t const & xip2, std::error_code & ec) const {
+    version_from(common::xip2_t const & xip2, std::error_code & ec) const override {
         return common::xversion_t{};
     }
 
     common::xnode_id_t
-    node_id_from(common::xip2_t const & xip2, std::error_code & ec) const {
+    node_id_from(common::xip2_t const & xip2, std::error_code & ec) const override {
         return common::xnode_id_t {};
     }
 };

@@ -24,22 +24,22 @@ constexpr std::size_t version_count{ 2 };
 XDEFINE_MSG_CATEGORY(xmessage_category_benchmark, 0x0001);
 XDEFINE_MSG_ID(xmessage_category_benchmark, xmessage_id_benchmark, 0x00000001);
 
-std::string const receiver_node_id_value{ "consensus_node"};
-std::string const sender_node_id_value{ "advance_node" };
+std::string const receiver_node_id_value{ "T00000LaeGMEceZRTZ7YAtz8NeCLRix2Bnxp9RYz"};
+std::string const sender_node_id_value{ "T00000LSJ3zFwacQCviaEcx82cLxDPscZxz3EeX8" };
 
 common::xnode_id_t receiver_node_id{ receiver_node_id_value };
 common::xnode_id_t sender_node_id{ sender_node_id_value };
 
 common::xsharding_address_t const auditor_sharding_address{
     common::xtestnet_id,
-    common::xdefault_zone_id,
+    common::xconsensus_zone_id,
     common::xdefault_cluster_id,
     common::xauditor_group_id_begin
 };
 
 common::xsharding_address_t const validator_sharding_address{
     common::xtestnet_id,
-    common::xdefault_zone_id,
+    common::xconsensus_zone_id,
     common::xdefault_cluster_id,
     common::xvalidator_group_id_begin
 };
@@ -81,7 +81,7 @@ public:
                 auditor_sharding_address,
                 top::common::xaccount_election_address_t{ sender_node_id, top::common::xslot_id_t{0} },
                 common::xversion_t{ static_cast<common::xversion_t::value_type>(i % version_count) },
-                std::uint16_t{1000},
+                std::uint16_t{1},
                 std::uint64_t{i % version_count}
             };
 
@@ -89,7 +89,7 @@ public:
                 validator_sharding_address,
                 top::common::xaccount_election_address_t{ receiver_node_id, top::common::xslot_id_t{0} },
                 common::xversion_t{ static_cast<common::xversion_t::value_type>(i % version_count) },
-                std::uint16_t{1000},
+                std::uint16_t{1},
                 std::uint64_t{i % version_count}
             };
 
@@ -136,17 +136,13 @@ public:
         return;
     }
 
-    uint64_t logic_time() const noexcept override {
-        return 1;
+    common::xlogic_time_t logic_time() const noexcept override {
+        return common::xjudgement_day;
     }
 
     bool watch(const std::string &, uint64_t, time::xchain_time_watcher) override {
         return true;
     }
-
-    //bool watch_one(uint64_t, time::xchain_time_watcher) override {
-    //    return true;
-    //}
 
     bool unwatch(const std::string &) override {
         return true;
@@ -179,7 +175,7 @@ std::vector<std::shared_ptr<top::vnetwork::xvnetwork_driver_face_t>> build_vnetw
             validator_sharding_address,
             top::common::xaccount_election_address_t{ receiver_node_id, top::common::xslot_id_t{0} },
             common::xversion_t{ static_cast<common::xversion_t::value_type>(i % version_count) },
-            std::uint16_t{1000},
+            std::uint16_t{1},
             std::uint64_t{i % version_count}
         };
         r.push_back(std::make_shared<top::vnetwork::xvnetwork_driver_t>(vhost, address));

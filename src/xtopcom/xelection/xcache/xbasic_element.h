@@ -58,6 +58,8 @@ public:
 
     common::xversion_t const & version() const noexcept;
 
+    common::xlogical_version_t const & logic_epoch() const noexcept;
+
     common::xnetwork_id_t network_id() const noexcept;
 
     common::xzone_id_t zone_id() const noexcept;
