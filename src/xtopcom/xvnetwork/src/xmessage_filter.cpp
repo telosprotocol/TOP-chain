@@ -709,6 +709,16 @@ bool xtop_message_filter_message_id::filter(xvnetwork_message_t& vnetwork_messag
     case xtxpool_v2::xtxpool_msg_send_receipt:
         XATTRIBUTE_FALLTHROUGH;
     case xtxpool_v2::xtxpool_msg_recv_receipt:
+        XATTRIBUTE_FALLTHROUGH;
+    case xtxpool_v2::xtxpool_msg_pull_recv_receipt:
+        XATTRIBUTE_FALLTHROUGH;
+    case xtxpool_v2::xtxpool_msg_pull_confirm_receipt:
+        XATTRIBUTE_FALLTHROUGH;
+    case xtxpool_v2::xtxpool_msg_pull_receipt_rsp:
+        XATTRIBUTE_FALLTHROUGH;
+    case xtxpool_v2::xtxpool_msg_batch_receipts:
+        XATTRIBUTE_FALLTHROUGH;
+    case xtxpool_v2::xtxpool_msg_resend_receipt:
 #if defined(__clang__)
 #    pragma clang diagnostic pop
 #elif defined(__GNUC__)
