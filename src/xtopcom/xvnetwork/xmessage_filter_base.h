@@ -12,8 +12,8 @@
 NS_BEG2(top, vnetwork)
 
 enum class xenum_filter_result : uint8_t {
-    need_further_filtering,
-    no_further_filtering_required,
+    continue_filtering,
+    stop_filtering,
 };
 using xfilter_result_t = xenum_filter_result;
 
@@ -25,7 +25,7 @@ public:
     xtop_message_filter_base & operator=(xtop_message_filter_base &&) = delete;
     virtual ~xtop_message_filter_base() = default;
 
-    virtual bool filter(xvnetwork_message_t & vnetwork_message, std::error_code & ec) const = 0;
+    virtual xfilter_result_t filter(xvnetwork_message_t & vnetwork_message, std::error_code & ec) const = 0;
 
 protected:
     xtop_message_filter_base() = default;
