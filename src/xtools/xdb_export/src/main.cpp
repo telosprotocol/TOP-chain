@@ -88,6 +88,7 @@ public:
         m_bus = top::make_object_ptr<mbus::xmessage_bus_t>(true, 1000);
         m_store = top::store::xstore_factory::create_store_with_kvdb(db_path);
         base::xvchain_t::instance().set_xdbstore(m_store.get());
+        base::xvchain_t::instance().set_xevmbus(m_bus.get());
         m_blockstore.attach(store::get_vblockstore());
         m_nodesvr_ptr = make_object_ptr<xvnode_house_t>(m_node_id, m_sign_key, m_blockstore, make_observer(m_bus.get()));
         m_getblock = std::make_shared<chain_info::get_block_handle>(m_store.get(), m_blockstore.get(), nullptr);
