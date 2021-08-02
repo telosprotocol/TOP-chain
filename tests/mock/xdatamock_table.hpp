@@ -60,11 +60,18 @@ class xdatamock_table : public base::xvaccount_t {
     const base::xvaccount_t &           get_vaccount() const {return *this;}
     const xtablestate_ptr_t &           get_table_state() const {return m_table_state;}
     const std::vector<xblock_ptr_t> &   get_history_tables() const {return m_history_tables;}
-    const std::vector<xdatamock_unit> & get_mock_units() const {return m_mock_units;}
+    const std::vector<xdatamock_unit> & get_mock_units() const {return m_mock_units;}    
     static uint32_t                     get_full_table_interval_count() {return enum_default_full_table_interval_count;}
     xblock_ptr_t                        get_cert_block() const {return m_history_tables.back();}
-    xblock_ptr_t                        get_lock_block() const { return m_history_tables.size() == 1 ? m_history_tables[0] : m_history_tables[m_history_tables.size() - 2];}    
-
+    xblock_ptr_t                        get_lock_block() const { return m_history_tables.size() == 1 ? m_history_tables[0] : m_history_tables[m_history_tables.size() - 2];}
+    xblock_ptr_t                        get_commit_block() const { return m_history_tables.size() < 3 ? get_lock_block() : m_history_tables[m_history_tables.size() - 3];}    
+    std::vector<xblock_ptr_t>           get_all_genesis_units() const {
+        std::vector<xblock_ptr_t> units;
+        for (auto & mockunit : m_mock_units) {
+            units.push_back(mockunit.get_history_units()[0]);
+        }
+        return units;
+    }
 
     std::vector<xcons_transaction_ptr_t>   create_send_txs(const std::string & from, const std::string & to, uint32_t count) {
         for (auto & mockunit : m_mock_units) {
@@ -124,11 +131,26 @@ class xdatamock_table : public base::xvaccount_t {
             xassert(block != nullptr);
             on_table_finish(block);
         }
-    }    
+    }
+
+    xblock_consensus_para_t  init_consensus_para() {
+        xblock_consensus_para_t cs_para(xcertauth_util::instance().get_leader_xip(), get_cert_block().get());
+        cs_para.update_latest_cert_block(get_cert_block());
+        cs_para.update_latest_lock_block(get_lock_block());
+        cs_para.update_latest_commit_block(get_commit_block());
+        cs_para.set_tableblock_consensus_para(1,"1",1,"1");
+        return cs_para;
+    }
+
+    void    do_multi_sign(const xblock_ptr_t & proposal_block) {
+        if (proposal_block != nullptr) {
+            xcertauth_util::instance().do_multi_sign(proposal_block.get());
+        }        
+    }
 
     xblock_ptr_t generate_tableblock() {
         xblock_ptr_t prev_tableblock = get_cert_block();
-        xblock_consensus_para_t cs_para(xcertauth_util::instance().get_leader_xip(), prev_tableblock.get());
+        xblock_consensus_para_t cs_para = init_consensus_para();
         
         xblock_ptr_t proposal_block = nullptr;
         uint32_t history_table_count = m_history_tables.size();
@@ -138,9 +160,7 @@ class xdatamock_table : public base::xvaccount_t {
             cs_para.set_tableblock_consensus_para(1, "1", 1, "1"); // TODO(jimmy) for light-table
             proposal_block = generate_batch_table(cs_para);
         }
-        if (proposal_block != nullptr) {
-            xcertauth_util::instance().do_multi_sign(proposal_block.get());
-        }
+        do_multi_sign(proposal_block);
         return proposal_block;
     }
     void on_table_finish(const xblock_ptr_t & block) {

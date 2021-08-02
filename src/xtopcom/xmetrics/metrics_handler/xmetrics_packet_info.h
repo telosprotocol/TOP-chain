@@ -11,8 +11,9 @@ using val_unit = Variant<std::string, int64_t>;
 
 struct metrics_pack_unit {
     std::string name;
+    std::string type;
     std::vector<std::pair<std::string, val_unit>> pack_content;
-    metrics_pack_unit(std::string _name) : name{_name} {
+    metrics_pack_unit(std::string _name,std::string _type) : name{_name},type{_type} {
     }
 };
 
