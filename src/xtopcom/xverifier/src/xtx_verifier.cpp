@@ -108,6 +108,26 @@ int32_t xtx_verifier::verify_address_type(data::xtransaction_t const * trx) {
             return  xverifier_error::xverifier_error_addr_invalid;
         }
     }
+
+    std::string from(src_addr);
+    if (src_addr_type == top::base::enum_vaccount_addr_type_secp256k1_eth_user_account
+        && from.size() > top::base::xvaccount_t::enum_vaccount_address_prefix_size) {
+        from = from.substr(top::base::xvaccount_t::enum_vaccount_address_prefix_size);
+        std::string from2(from);
+        std::transform(from.begin(), from.end(), from.begin(), ::tolower);
+        if (from != from2)
+            return  xverifier_error::xverifier_error_addr_invalid;
+    }    
+    std::string to(dst_addr);
+    if (dst_addr_type == top::base::enum_vaccount_addr_type_secp256k1_eth_user_account
+        && to.size() > top::base::xvaccount_t::enum_vaccount_address_prefix_size) {
+        to = to.substr(top::base::xvaccount_t::enum_vaccount_address_prefix_size);
+        std::string to2(to);
+        std::transform(to.begin(), to.end(), to.begin(), ::tolower);
+        if (to != to2)
+            return  xverifier_error::xverifier_error_addr_invalid;
+    }    
+
     return xverifier_error::xverifier_success;
 }
 
