@@ -130,6 +130,48 @@ TEST_F(test_xvledger, calc_address_tableid) {
     ASSERT_EQ(_unit_vaddr.get_ledger_subaddr(), xvaccount_t::get_ledgersubaddr_from_account(unit_address));
 }
 
+TEST_F(test_xvledger, calc_address_tableid_2) {
+    std::string unit_address = "T00000LN1VBhmjztTBgLPuBCW7iEo9cw58LE1nZF";
+    xvaccount_t _unit_vaddr(unit_address);
+    ASSERT_EQ(_unit_vaddr.get_ledger_subaddr(), xvaccount_t::get_ledgersubaddr_from_account(unit_address));
+    ASSERT_EQ(_unit_vaddr.get_zone_index(), enum_chain_zone_consensus_index);
+    ASSERT_EQ(_unit_vaddr.get_short_table_id(),  (uint16_t)((enum_chain_zone_consensus_index << 10) | _unit_vaddr.get_ledger_subaddr()));
+
+    ASSERT_EQ(_unit_vaddr.get_zone_index(), _unit_vaddr.get_tableid().get_zone_index());
+    ASSERT_EQ(_unit_vaddr.get_ledger_subaddr(), _unit_vaddr.get_tableid().get_subaddr());
+    ASSERT_EQ(_unit_vaddr.get_short_table_id(), _unit_vaddr.get_tableid().to_table_shortid());
+
+    auto xid = base::xvaccount_t::get_xid_from_account(unit_address);
+    ASSERT_EQ((base::enum_xchain_zone_index)get_vledger_zone_index(xid), _unit_vaddr.get_tableid().get_zone_index());
+    ASSERT_EQ(get_vledger_subaddr(xid), _unit_vaddr.get_tableid().get_subaddr());
+}
+
+TEST_F(test_xvledger, calc_address_tableid_3) {
+    {
+        std::string unit_address = "Ta0001@2";
+        xvaccount_t _unit_vaddr(unit_address);
+        ASSERT_EQ(_unit_vaddr.get_ledger_subaddr(), 2);
+        ASSERT_EQ(_unit_vaddr.get_zone_index(), enum_chain_zone_beacon_index);
+        ASSERT_EQ(_unit_vaddr.get_ledger_subaddr(), _unit_vaddr.get_tableid().get_subaddr());
+        ASSERT_EQ(_unit_vaddr.get_short_table_id(),  (uint16_t)((enum_chain_zone_beacon_index << 10) | 2));
+        ASSERT_EQ(_unit_vaddr.get_zone_index(), _unit_vaddr.get_tableid().get_zone_index());
+        ASSERT_EQ(_unit_vaddr.get_ledger_subaddr(), _unit_vaddr.get_tableid().get_subaddr());
+        ASSERT_EQ(_unit_vaddr.get_short_table_id(), _unit_vaddr.get_tableid().to_table_shortid());    
+    }
+    {
+        std::string unit_address = "Ta0002@34";
+        xvaccount_t _unit_vaddr(unit_address);
+        ASSERT_EQ(_unit_vaddr.get_ledger_subaddr(), 34);
+        ASSERT_EQ(_unit_vaddr.get_zone_index(), enum_chain_zone_zec_index);
+        ASSERT_EQ(_unit_vaddr.get_ledger_subaddr(), _unit_vaddr.get_tableid().get_subaddr());
+        ASSERT_EQ(_unit_vaddr.get_short_table_id(),  (uint16_t)((enum_chain_zone_zec_index << 10) | 34));
+        ASSERT_EQ(_unit_vaddr.get_zone_index(), _unit_vaddr.get_tableid().get_zone_index());
+        ASSERT_EQ(_unit_vaddr.get_ledger_subaddr(), _unit_vaddr.get_tableid().get_subaddr());
+        ASSERT_EQ(_unit_vaddr.get_short_table_id(), _unit_vaddr.get_tableid().to_table_shortid());    
+    }
+}
+
+
 // TEST_F(test_xvledger, tx_auto_set_shard_contract_addr) {
 
 //     std::string src_addr = "T00000LPwjnLXJW9Nb6cXFV5BtoWc8TSbM3vrrRo";

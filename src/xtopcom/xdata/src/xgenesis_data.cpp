@@ -82,15 +82,14 @@ common::xaccount_address_t make_address_by_prefix_and_subaddr(const std::string 
     return common::xaccount_address_t{prefix};
 }
 
-xtable_id_t account_map_to_table_id(common::xaccount_address_t const & addr) {
+base::xtable_index_t account_map_to_table_id(common::xaccount_address_t const & addr) {
     const std::string & account = addr.value();
-    auto xid = base::xvaccount_t::get_xid_from_account(account);
-    xtable_id_t tableid((base::enum_xchain_zone_index)get_vledger_zone_index(xid), get_vledger_subaddr(xid));
-    return tableid;
+    base::xvaccount_t _vaddr(account);
+    return _vaddr.get_tableid();
 }
 
 std::string account_address_to_block_address(common::xaccount_address_t const & addr) {
-    xtable_id_t tableid = account_map_to_table_id(addr);
+    base::xtable_index_t tableid = account_map_to_table_id(addr);
     return xblocktool_t::make_address_table_account(tableid.get_zone_index(), tableid.get_subaddr());
 }
 

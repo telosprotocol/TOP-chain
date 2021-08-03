@@ -82,7 +82,7 @@ namespace top
         
         class xtable_index_t
         {
-        public:
+        public:       
             xtable_index_t(xvid_t xid) {
                 m_zone_index = (enum_xchain_zone_index)get_vledger_zone_index(xid);
                 m_subaddr = (uint8_t)get_vledger_subaddr(xid);
@@ -96,7 +96,7 @@ namespace top
                 m_subaddr = (uint8_t)tableid & 0xff;
             }
         public:
-            uint16_t                get_value() const {return (uint16_t)((m_zone_index << 10) | m_subaddr);}
+            xtable_shortid_t        to_table_shortid() const {return (uint16_t)((m_zone_index << 10) | m_subaddr);}
             enum_xchain_zone_index  get_zone_index() const {return m_zone_index;}
             uint8_t                 get_subaddr() const {return m_subaddr;}
             
@@ -388,7 +388,8 @@ namespace top
             inline const xtable_longid_t       get_long_table_id()//note: long table_id = [chain_id][zone_index][book_index][table_index]
             {
                 return xtable_longid_t((get_ledger_id() << 10) | get_ledger_subaddr());
-            }           
+            }
+            xtable_index_t              get_tableid() const {return xtable_index_t(m_account_xid);}
             inline const xvid_t         get_xvid()    const {return m_account_xid;}
             inline const xvid_t         get_account_id()    const {return m_account_xid;}
             inline const std::string&   get_xvid_str()const {return m_account_xid_str;}
