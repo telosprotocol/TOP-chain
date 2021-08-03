@@ -309,12 +309,48 @@ char const * matrics_name(xmetircs_tag_t const tag) noexcept {
 }
 #undef RETURN_METRICS_NAME
 
+#define RETURN_METRICS_INFO(TAG,SIZE) case TAG: return {#TAG,SIZE}
+std::pair<char const *, std::size_t> array_counter_info(xmetrics_array_tag_t const tag) noexcept {
+    switch (tag) {
+        RETURN_METRICS_INFO(e_array_counter_begin, 0);
+
+        RETURN_METRICS_INFO(blockstore_sharding_table_block_commit, 64);
+        RETURN_METRICS_INFO(blockstore_beacon_table_block_commit, 1);
+        RETURN_METRICS_INFO(blockstore_zec_table_block_commit, 3);
+        RETURN_METRICS_INFO(blockstore_sharding_table_block_full, 64);
+        RETURN_METRICS_INFO(blockstore_beacon_table_block_full, 1);
+        RETURN_METRICS_INFO(blockstore_zec_table_block_full, 3);
+        RETURN_METRICS_INFO(blockstore_sharding_table_block_genesis_connect, 64);
+        RETURN_METRICS_INFO(blockstore_beacon_table_block_genesis_connect, 1);
+        RETURN_METRICS_INFO(blockstore_zec_table_block_genesis_connect, 3);
+        RETURN_METRICS_INFO(e_array_counter_total, 0);
+
+    default:
+        assert(false);
+        return {nullptr, 0};
+    }
+}
+#undef RETURN_METRICS_INFO
+
 void e_metrics::start() {
     if (running()) {
         return;
     }
     XMETRICS_CONFIG_GET("dump_interval", m_dump_interval);
     XMETRICS_CONFIG_GET("queue_procss_behind_sleep_time", m_queue_procss_behind_sleep_time);
+
+    for (size_t index = e_simple_begin; index < e_simple_total; index++) {
+        s_metrics[index] = std::make_shared<metrics_counter_unit>(matrics_name(static_cast<xmetircs_tag_t>(index)), 0);
+    }
+
+    for (size_t index = e_array_counter_begin; index < e_array_counter_total; index++) {
+        auto name = array_counter_info(static_cast<xmetrics_array_tag_t>(index)).first;
+        auto size = array_counter_info(static_cast<xmetrics_array_tag_t>(index)).second;
+        a_metrics[index] = std::make_shared<metrics_array_unit>(name, size, 0);
+        a_counters[index].arr_count.resize(size, copiable_atomwrapper<uint64_t>(0));
+        a_counters[index].arr_value.resize(size, copiable_atomwrapper<int64_t>(0));
+    }
+
     running(true);
     // auto self = shared_from_this();
     // threading::xbackend_thread::spawn([this, self] { run_process(); });
@@ -328,10 +364,6 @@ void e_metrics::stop() {
 }
 
 void e_metrics::run_process() {
-    for (size_t index = e_simple_begin; index < e_simple_total; index++) {
-        s_metrics[index] = std::make_shared<metrics_counter_unit>(matrics_name(static_cast<xmetircs_tag_t>(index)), 0);
-    }
-
     while (running()) {
         process_message_queue();
         std::this_thread::sleep_for(m_queue_procss_behind_sleep_time);
@@ -413,6 +445,10 @@ void e_metrics::update_dump() {
 
     // simpe metrics dump
     gauge_dump();
+
+    // array_counter metrics dump
+    array_count_dump();
+
     XMETRICS_CONFIG_GET("dump_interval", m_dump_interval);
 }
 /*
@@ -444,6 +480,21 @@ void e_metrics::gauge(E_SIMPLE_METRICS_TAG tag, int64_t value) {
     }
     s_counters[tag].value += value;
     s_counters[tag].call_count++;
+}
+
+void e_metrics::array_counter_increase(E_ARRAY_COUNTER_TAG tag, std::size_t index, int64_t value) {
+    a_counters[tag].arr_count[index]++;
+    a_counters[tag].arr_value[index] += value;
+}
+
+void e_metrics::array_counter_decrease(E_ARRAY_COUNTER_TAG tag, std::size_t index, int64_t value) {
+    a_counters[tag].arr_count[index]++;
+    a_counters[tag].arr_value[index] -= value;
+}
+
+void e_metrics::array_counter_set(E_ARRAY_COUNTER_TAG tag, std::size_t index, int64_t value) {
+    a_counters[tag].arr_count[index]++;
+    a_counters[tag].arr_value[index] = value;
 }
 
 struct xsimple_merics_category
@@ -504,4 +555,19 @@ void e_metrics::gauge_dump() {
         m_counter_handler.dump_metrics_info(ptr);
     }
 }
+
+void e_metrics::array_count_dump() {
+    for (auto index = e_array_counter_begin + 1; index < e_array_counter_total; index++) {
+        auto metrics_ptr = a_metrics[index];
+        auto ptr = metrics_ptr.GetRef<metrics_array_unit_ptr>();
+        ptr->all_count = 0;
+        for (std::size_t _i = 0; _i < a_counters[index].arr_count.size(); ++_i) {
+            ptr->all_count += a_counters[index].arr_count[_i].val();
+            ptr->array_count[_i] = a_counters[index].arr_count[_i].val();
+            ptr->array_value[_i] = a_counters[index].arr_value[_i].val();
+        }
+        m_array_counter_handler.dump_metrics_info(ptr);
+    }
+}
+
 NS_END2
