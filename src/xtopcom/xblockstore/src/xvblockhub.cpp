@@ -2373,12 +2373,6 @@ namespace top
                 const std::string output_resource_key = base::xvdbkey_t::create_block_output_resource_key(*this,index_ptr->get_block_hash());
                 get_xdbstore()->delete_value(output_resource_key);
             }
-
-            //step#3: remove offdata
-            {
-                const std::string offdata_key = base::xvdbkey_t::create_block_offdata_key(*this, index_ptr->get_block_hash());
-                get_xdbstore()->delete_value(offdata_key);
-            }
             return true;
         }
 

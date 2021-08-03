@@ -256,16 +256,6 @@ bool xstore::get_vblock_output(const std::string &account, base::xvblock_t* bloc
     return false;
 }
 
-bool xstore::get_vblock_offdata(const std::string & store_path,base::xvblock_t* for_block) const {
-    xassert(false);
-    return false;
-}
-
-bool xstore::set_vblock_offdata(const std::string & store_path,base::xvblock_t* for_block) {
-    xassert(false);
-    return false;
-}
-
 bool xstore::delete_block_by_path(const std::string & store_path,const std::string & account, uint64_t height, bool has_input_output) {
     return false;
 }
