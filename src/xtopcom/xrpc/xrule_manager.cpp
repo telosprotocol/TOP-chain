@@ -226,6 +226,23 @@ void xfilter_manager::sendTransaction_filter(xjson_proc_t & json_proc) {
 
     CONDTION_FAIL_THROW(params["tx_hash"].isString(), enum_xrpc_error_code::rpc_param_param_lack, "miss param params tx_hash");
     CONDTION_FAIL_THROW(params["authorization"].isString(), enum_xrpc_error_code::rpc_param_param_lack, "miss param params authorization");
+
+    std::string from = source_action["tx_sender_account_addr"].asString();
+    if (top::base::xvaccount_t::get_addrtype_from_account(from) == top::base::enum_vaccount_addr_type_secp256k1_eth_user_account
+        && from.size() > top::base::xvaccount_t::enum_vaccount_address_prefix_size) {
+        from = from.substr(top::base::xvaccount_t::enum_vaccount_address_prefix_size);
+        std::string from2(from);
+        std::transform(from.begin(), from.end(), from.begin(), ::tolower);
+        CONDTION_FAIL_THROW(from == from2, enum_xrpc_error_code::rpc_param_param_lack, "tx_sender_account_addr invalid");
+    }
+    std::string to = target_action["tx_receiver_account_addr"].asString();
+    if (top::base::xvaccount_t::get_addrtype_from_account(to) == top::base::enum_vaccount_addr_type_secp256k1_eth_user_account
+        && to.size() > top::base::xvaccount_t::enum_vaccount_address_prefix_size) {
+        to = to.substr(top::base::xvaccount_t::enum_vaccount_address_prefix_size);
+        std::string to2(to);
+        std::transform(to.begin(), to.end(), to.begin(), ::tolower);
+        CONDTION_FAIL_THROW(to == to2, enum_xrpc_error_code::rpc_param_param_lack, "tx_receiver_account_addr invalid");
+    }    
 }
 
 NS_END2
