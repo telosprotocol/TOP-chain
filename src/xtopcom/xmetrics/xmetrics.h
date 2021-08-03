@@ -60,7 +60,6 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     db_key_block_output,
     db_key_block_output_resource,
     db_key_block_state,
-    db_key_block_offdata,
 
     // consensus
     cons_drand_leader_finish_succ,

@@ -51,7 +51,6 @@ char const * matrics_name(xmetircs_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(db_key_block_output);
         RETURN_METRICS_NAME(db_key_block_output_resource);
         RETURN_METRICS_NAME(db_key_block_state);
-        RETURN_METRICS_NAME(db_key_block_offdata);
 
         // consensus
         RETURN_METRICS_NAME(cons_drand_leader_finish_succ);

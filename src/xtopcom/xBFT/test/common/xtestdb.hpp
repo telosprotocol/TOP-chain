@@ -41,17 +41,7 @@ namespace top
             virtual bool                find_values(const std::string & key,std::vector<std::string> & values) override;//support wild search
             
             virtual bool                execute_block(base::xvblock_t* block) override;
-            
-            virtual bool             get_vblock_offdata(const std::string & store_path,base::xvblock_t* for_block) const override //just load offdata
-            {
-                return false;
-            }
-            
-            virtual bool             set_vblock_offdata(const std::string & store_path,base::xvblock_t* for_block) override //just save offdata
-            {
-                return false;
-            }
-            
+                        
         public:
             virtual std::string         get_store_path() const  override {return m_store_path;}
         private:
