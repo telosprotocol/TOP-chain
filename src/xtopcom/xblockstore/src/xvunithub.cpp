@@ -83,16 +83,16 @@ namespace top
             }
         }
 
-        #define LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account_vid) \
+        #define LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account_vid,default_val) \
             if(is_close())\
             {\
                 xwarn_err("xvblockstore has closed at store_path=%s",m_store_path.c_str());\
-                return nullptr;\
+                return default_val;\
             }\
             base::xvtable_t * target_table = base::xvchain_t::instance().get_table(account_vid.get_xvid()); \
             if (target_table == nullptr) { \
-                xwarn_err("xvblockstore invalid account=%s",account_vid.get_address());\
-                return nullptr;\
+                xwarn_err("xvblockstore invalid account=%s",account_vid.get_address().c_str());\
+                return default_val;\
             }\
             auto_xblockacct_ptr account_obj(target_table->get_lock(),this); \
             get_block_account(target_table,account_vid.get_address(),account_obj); \
@@ -105,8 +105,8 @@ namespace top
             }\
             base::xvtable_t * target_table = base::xvchain_t::instance().get_table(account_vid.get_xvid()); \
             if (target_table == nullptr) { \
-                xwarn_err("xvblockstore invalid account=%s",account_vid.get_address());\
-                return nullptr;\
+                xwarn_err("xvblockstore invalid account=%s",account_vid.get_address().c_str());\
+                return 0;\
             }\
             auto_xblockacct_ptr account_obj(target_table->get_lock(),this); \
             get_block_account(target_table,account_vid.get_address(),account_obj); \
@@ -318,45 +318,45 @@ namespace top
 
         base::xauto_ptr<base::xvblock_t>    xvblockstore_impl::get_genesis_block(const base::xvaccount_t & account,const int atag)
         {
-            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
+            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account,nullptr);
             return load_block_from_index(account_obj.get(),account_obj->load_genesis_index(),0,false, atag);
         }
         base::xauto_ptr<base::xvblock_t>    xvblockstore_impl::get_latest_cert_block(const base::xvaccount_t & account,const int atag)
         {
-            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
+            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account,nullptr);
             return load_block_from_index(account_obj.get(),account_obj->load_latest_cert_index(),0,false, atag);
         }
         base::xauto_ptr<base::xvblock_t>    xvblockstore_impl::get_latest_locked_block(const base::xvaccount_t & account,const int atag)
         {
-            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
+            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account,nullptr);
             return load_block_from_index(account_obj.get(),account_obj->load_latest_locked_index(),0,false, atag);
         }
         base::xauto_ptr<base::xvblock_t>    xvblockstore_impl::get_latest_committed_block(const base::xvaccount_t & account,const int atag)
         {
-            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
+            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account,nullptr);
             return load_block_from_index(account_obj.get(),account_obj->load_latest_committed_index(),0,false, atag);
         }
         base::xauto_ptr<base::xvblock_t>    xvblockstore_impl::get_latest_executed_block(const base::xvaccount_t & account,const int atag)
         {
-            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
+            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account,nullptr);
             return load_block_from_index(account_obj.get(),account_obj->load_latest_executed_index(),0,false, atag);
         }
 
         base::xauto_ptr<base::xvblock_t>    xvblockstore_impl::get_latest_connected_block(const base::xvaccount_t & account,const int atag)
         {
-            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
+            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account,nullptr);
             return load_block_from_index(account_obj.get(),account_obj->load_latest_connected_index(),0,false, atag);
         }
 
         base::xauto_ptr<base::xvblock_t>    xvblockstore_impl::get_latest_genesis_connected_block(const base::xvaccount_t & account,bool ask_full_search,const int atag)//block has connected to genesis
         {
-            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
+            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account,nullptr);
             return load_block_from_index(account_obj.get(),account_obj->load_latest_genesis_connected_index(ask_full_search),0,false, atag);
         }
 
         base::xauto_ptr<base::xvbindex_t> xvblockstore_impl::get_latest_genesis_connected_index(const base::xvaccount_t & account,bool ask_full_search,const int atag) //block has connected to genesis
         {
-            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
+            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account,nullptr);
             METRICS_TAG(atag, 1);
             return account_obj->load_latest_genesis_connected_index(ask_full_search);
         }
@@ -413,7 +413,7 @@ namespace top
         //one api to get latest_commit/latest_lock/latest_cert for better performance
         base::xblock_mptrs  xvblockstore_impl::get_latest_blocks(const base::xvaccount_t & account,const int atag)
         {
-            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
+            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account,nullptr);
             METRICS_TAG(atag, 1);
             base::xvbindex_t*  cert_index    = nullptr;
             base::xvbindex_t*  lock_index    = nullptr;
@@ -431,7 +431,7 @@ namespace top
 
         base::xblock_vector xvblockstore_impl::load_block_object(const base::xvaccount_t & account,const uint64_t height,const int atag)//might mutiple certs at same height
         {
-            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
+            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account,nullptr);
             if(account_obj->load_index(height) > 0) //load first
             {
                 std::vector<base::xvbindex_t*> index_list = account_obj->query_index(height);//returned ptr with added reference
@@ -458,18 +458,18 @@ namespace top
 
         base::xauto_ptr<base::xvblock_t>    xvblockstore_impl::load_block_object(const base::xvaccount_t & account,const uint64_t height,const uint64_t viewid,bool ask_full_load,const int atag)
         {
-            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
+            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account,nullptr);
             return load_block_from_index(account_obj.get(),account_obj->load_index(height,viewid),height,ask_full_load,atag);
         }
         base::xauto_ptr<base::xvblock_t>    xvblockstore_impl::load_block_object(const base::xvaccount_t & account,const uint64_t height,const std::string & blockhash,bool ask_full_load,const int atag)
         {
-            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
+            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account,nullptr);
             return load_block_from_index(account_obj.get(),account_obj->load_index(height,blockhash),height,ask_full_load,atag);
         }
 
         base::xauto_ptr<base::xvblock_t>    xvblockstore_impl::load_block_object(const base::xvaccount_t & account,const uint64_t height,base::enum_xvblock_flag required_block,bool ask_full_load,const int atag)  //just return the highest viewid of matched flag
         {
-            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
+            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account,nullptr);
             return load_block_from_index(account_obj.get(),account_obj->load_index(height,required_block),height,ask_full_load,atag);
         }
 
@@ -545,7 +545,7 @@ namespace top
             {
                 return true;
             }
-            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
+            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account,false);
             METRICS_TAG(atag, 1);
             return account_obj->load_block_input(block);//XTODO,add logic to extract from tabeblock
         }
@@ -563,7 +563,7 @@ namespace top
             {
                 return true;
             }
-            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
+            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account,false);
             METRICS_TAG(atag, 1);
             return account_obj->load_block_output(block);//XTODO,add logic to extract from tabeblock
         }
@@ -575,7 +575,7 @@ namespace top
                 xerror("xvblockstore_impl::load_block_flags,block NOT match account:%",account.get_account().c_str());
                 return false;
             }
-            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
+            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account,false);
             METRICS_TAG(atag, 1);
             return account_obj->load_block_flags(block);
         }
@@ -693,7 +693,7 @@ namespace top
                 return false;
             }
 
-            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
+            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account,false);
             METRICS_TAG(atag, 1);
             if(store_block(account_obj,block))
             {
@@ -716,7 +716,7 @@ namespace top
                 return false;
             }
 
-            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
+            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account,false);
             if(store_block(account_obj,block,false))//force to not execute anymore
             {
                 return true;
@@ -729,7 +729,7 @@ namespace top
             if(batch_store_blocks.empty())
                 return true;
 
-            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
+            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account,false);
             for(auto it : batch_store_blocks)
             {
                 if((it != nullptr) && (it->get_account() == account_obj->get_address()) )
@@ -748,7 +748,7 @@ namespace top
                 xerror("xvblockstore_impl::store_block,block NOT match account:%",account.get_account().c_str());
                 return false;
             }
-            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
+            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account,false);
             METRICS_TAG(atag, 1);
             return account_obj->delete_block(block);
         }
@@ -761,7 +761,7 @@ namespace top
                 xerror("xvblockstore_impl::execute_block,block NOT match account:%",account.get_account().c_str());
                 return false;
             }
-            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
+            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account,false);
             METRICS_TAG(atag, 1);
             return account_obj->execute_block(block);
         }
@@ -835,25 +835,25 @@ namespace top
 
         base::xauto_ptr<base::xvblock_t>  xvblockstore_impl::query_block(const base::xvaccount_t & account,const uint64_t height, const uint64_t viewid,const int atag)
         {
-            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
+            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account,nullptr);
             return load_block_from_index(account_obj.get(),account_obj->query_index(height,viewid),height,false,atag);
         }
 
         base::xauto_ptr<base::xvblock_t>  xvblockstore_impl::query_block(const base::xvaccount_t & account,const uint64_t height, const std::string & blockhash,const int atag)
         {
-            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
+            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account,nullptr);
             return load_block_from_index(account_obj.get(),account_obj->query_index(height,blockhash),height,false,atag);
         }
 
         base::xauto_ptr<base::xvblock_t>  xvblockstore_impl::query_block(const base::xvaccount_t & account,const uint64_t height,base::enum_xvblock_flag required_block,const int atag) //just return the highest viewid of matched flag
         {
-            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
+            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account,nullptr);
             return load_block_from_index(account_obj.get(),account_obj->query_index(height,required_block),height,false,atag);
         }
 
         base::xblock_vector xvblockstore_impl::query_block(const base::xvaccount_t & account,const uint64_t height,const int atag)//might mutiple certs at same height
         {
-            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
+            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account,nullptr);
             if(account_obj->load_index(height) > 0) //check and load from db even for query_block
             {
                 std::vector<base::xvbindex_t*> index_list(account_obj->query_index(height));//return raw ptr with added reference
@@ -881,7 +881,7 @@ namespace top
 
         base::xvbindex_vector   xvblockstore_impl::load_block_index(const base::xvaccount_t & account,const uint64_t height,const int atag)
         {
-            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
+            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account,nullptr);
             int index_size = account_obj->load_index(height);
             if(index_size > 0) //load first
                 return base::xvbindex_vector(account_obj->query_index(height));//then query
@@ -892,19 +892,19 @@ namespace top
 
         base::xauto_ptr<base::xvbindex_t>  xvblockstore_impl::load_block_index(const base::xvaccount_t & account,const uint64_t height,const uint64_t viewid,const int atag)
         {
-            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
+            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account,nullptr);
             return account_obj->load_index(height,viewid,atag);
         }
 
         base::xauto_ptr<base::xvbindex_t>  xvblockstore_impl::load_block_index(const base::xvaccount_t & account,const uint64_t height,const std::string & blockhash,const int atag)
         {
-            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
+            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account,nullptr);
             return account_obj->load_index(height,blockhash,atag);
         }
 
         base::xauto_ptr<base::xvbindex_t>  xvblockstore_impl::load_block_index(const base::xvaccount_t & account,const uint64_t height,base::enum_xvblock_flag required_block,const int atag)//just return the highest viewid of matched flag
         {
-            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
+            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account,nullptr);
             return account_obj->load_index(height,required_block,atag);
         }
 
@@ -916,7 +916,7 @@ namespace top
                 xwarn_err("xvblockstore_impl has closed at store_path=%s",m_store_path.c_str());
                 return false;
             }
-            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
+            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account,false);
             METRICS_TAG(atag, 1);
             return account_obj->clean_caches(true,true);
         }
@@ -929,7 +929,7 @@ namespace top
                 xwarn_err("xvblockstore_impl has closed at store_path=%s",m_store_path.c_str());
                 return false;
             }
-            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
+            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account,false);
             METRICS_TAG(atag, 1);
             return account_obj->reset_cache_timeout(max_idle_time_ms);
         }
@@ -1076,7 +1076,7 @@ namespace top
         }
 
         bool      xvblockstore_impl::exist_genesis_block(const base::xvaccount_t & account,const int atag) {
-            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
+            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account,false);
             METRICS_TAG(atag, 1);
             base::xvbindex_t* target_block = account_obj->query_index(0, 0);
             if (target_block != NULL) {
