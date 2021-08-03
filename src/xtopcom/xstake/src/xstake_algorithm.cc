@@ -386,6 +386,11 @@ std::string xissue_detail::to_string() const {
 }
 
 int32_t xissue_detail::from_string(std::string const & s) {
+    if (s.empty()) {
+        xwarn("xissue_detail::from_string invalid input");
+        return -1;
+    }
+
     base::xstream_t _stream(base::xcontext_t::instance(), (uint8_t *)s.data(), (int32_t)s.size());
     int32_t ret = serialize_from(_stream);
     if (ret <= 0) {
