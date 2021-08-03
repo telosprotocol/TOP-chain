@@ -31,7 +31,7 @@ using top::common::xnetwork_id_t;
 using top::common::xnode_address_t;
 using top::common::xnode_id_t;
 using top::common::xsharding_address_t;
-using top::common::xversion_t;
+using top::common::xelection_round_t;
 using top::common::xzone_id_t;
 using top::vnetwork::xmessage_filter_manager_t;
 using top::vnetwork::xmessage_t;
@@ -54,8 +54,8 @@ common::xlogic_epoch_t const arc_epoch_2{ 1, logic_epoch_2_blk_height };
 common::xlogic_epoch_t const edg_epoch_1{ 1, logic_epoch_1_blk_height };
 common::xlogic_epoch_t const edg_epoch_2{ 1, logic_epoch_2_blk_height };
 
-common::xversion_t const logic_epoch_1_version{ 0 };
-common::xversion_t const logic_epoch_2_version{ 1 };
+common::xelection_round_t const logic_epoch_1_version{ 0 };
+common::xelection_round_t const logic_epoch_2_version{ 1 };
 
 struct xtop_account_data_bundle {
     common::xaccount_address_t account;
@@ -129,11 +129,11 @@ private:
     void add_rec(data::election::xelection_result_store_t & election_result_store,
                  common::xlogic_time_t const timestamp,
                  common::xlogic_time_t const start_time,
-                 common::xversion_t const & group_version,
+                 common::xelection_round_t const & group_version,
                  xaccount_data_bundle_t const & rec) {
         auto & rec_group = election_result_store.result_of(common::xtestnet_id).result_of(common::xnode_type_t::rec).result_of(common::xcommittee_cluster_id).result_of(rec.group_id);
 
-        rec_group.election_committee_version(common::xversion_t{ 0 });
+        rec_group.election_committee_version(common::xelection_round_t{ 0 });
         rec_group.timestamp(timestamp);
         rec_group.start_time(start_time);
         rec_group.group_version(group_version);
@@ -153,11 +153,11 @@ private:
     void add_zec(data::election::xelection_result_store_t & election_result_store,
                  common::xlogic_time_t const timestamp,
                  common::xlogic_time_t const start_time,
-                 common::xversion_t const & group_version,
+                 common::xelection_round_t const & group_version,
                  xaccount_data_bundle_t const & zec) {
         auto & zec_group = election_result_store.result_of(common::xtestnet_id).result_of(common::xnode_type_t::zec).result_of(common::xcommittee_cluster_id).result_of(zec.group_id);
 
-        zec_group.election_committee_version(common::xversion_t{ 0 });
+        zec_group.election_committee_version(common::xelection_round_t{ 0 });
         zec_group.timestamp(timestamp);
         zec_group.start_time(start_time);
         zec_group.group_version(group_version);
@@ -177,13 +177,13 @@ private:
     void add_auditor_validator(data::election::xelection_result_store_t & election_result_store,
                                common::xlogic_time_t const timestamp,
                                common::xlogic_time_t const start_time,
-                               common::xversion_t const & group_version,
+                               common::xelection_round_t const & group_version,
                                xaccount_data_bundle_t const & auditor,
                                std::vector<xaccount_data_bundle_t> const & validators) {
         {
             auto & auditor_group = election_result_store.result_of(common::xtestnet_id).result_of(common::xnode_type_t::consensus_auditor).result_of(common::xdefault_cluster_id).result_of(auditor.group_id);
 
-            auditor_group.election_committee_version(common::xversion_t{ 0 });
+            auditor_group.election_committee_version(common::xelection_round_t{ 0 });
             auditor_group.timestamp(timestamp);
             auditor_group.start_time(start_time);
             auditor_group.group_version(group_version);
@@ -206,7 +206,7 @@ private:
 
             auto & validator_group = election_result_store.result_of(common::xtestnet_id).result_of(common::xnode_type_t::consensus_validator).result_of(common::xdefault_cluster_id).result_of(validator_group_id);
 
-            validator_group.election_committee_version(common::xversion_t{ 0 });
+            validator_group.election_committee_version(common::xelection_round_t{ 0 });
             validator_group.timestamp(timestamp);
             validator_group.start_time(start_time);
             validator_group.group_version(group_version);

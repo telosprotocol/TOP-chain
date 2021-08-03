@@ -26,18 +26,18 @@ xtop_election_group_result::associated_group_id(common::xgroup_id_t gid) noexcep
     }
 }
 
-common::xversion_t const &
+common::xelection_round_t const &
 xtop_election_group_result::group_version() const noexcept {
     return m_group_version;
 }
 
-common::xversion_t &
+common::xelection_round_t &
 xtop_election_group_result::group_version() noexcept {
     return m_group_version;
 }
 
 void
-xtop_election_group_result::group_version(common::xversion_t ver) noexcept {
+xtop_election_group_result::group_version(common::xelection_round_t ver) noexcept {
     if (m_group_version.empty() && ver.has_value()) {
         m_group_version = std::move(ver);
     } else if (m_group_version < ver) {
@@ -45,42 +45,42 @@ xtop_election_group_result::group_version(common::xversion_t ver) noexcept {
     }
 }
 
-common::xversion_t const &
+common::xelection_round_t const &
 xtop_election_group_result::associated_group_version() const noexcept {
     return m_associated_group_version;
 }
 
 void
-xtop_election_group_result::associated_group_version(common::xversion_t associated_gp_ver) noexcept {
+xtop_election_group_result::associated_group_version(common::xelection_round_t associated_gp_ver) noexcept {
     if (m_associated_group_version != associated_gp_ver) {
         m_associated_group_version = std::move(associated_gp_ver);
     }
 }
 
-common::xversion_t const &
+common::xelection_round_t const &
 xtop_election_group_result::cluster_version() const noexcept {
     return m_cluster_version;
 }
 
 void
-xtop_election_group_result::cluster_version(common::xversion_t ver) noexcept {
+xtop_election_group_result::cluster_version(common::xelection_round_t ver) noexcept {
     if (m_cluster_version != ver) {
         m_cluster_version = std::move(ver);
     }
 }
 
-common::xversion_t const &
+common::xelection_round_t const &
 xtop_election_group_result::election_committee_version() const noexcept {
     return m_election_committee_version;
 }
 
-common::xversion_t &
+common::xelection_round_t &
 xtop_election_group_result::election_committee_version() noexcept {
     return m_election_committee_version;
 }
 
 void
-xtop_election_group_result::election_committee_version(common::xversion_t committee_ver) noexcept {
+xtop_election_group_result::election_committee_version(common::xelection_round_t committee_ver) noexcept {
     if (m_election_committee_version != committee_ver) {
         m_election_committee_version = std::move(committee_ver);
     }

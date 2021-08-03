@@ -85,7 +85,7 @@ class xelection_cache_face {
 public:
     struct xelect_data {
         xvip2_t xip;
-        common::xversion_t joined_version;
+        common::xelection_round_t joined_version;
         uint64_t staking;
 
         xelect_data& operator=(const xelect_data & data) {
@@ -120,7 +120,7 @@ public:
 class xleader_election_face {
 public:
     // judge node is leader according viewid account and existed data
-    virtual const xvip2_t get_leader_xip(uint64_t viewId, const std::string & account, base::xvblock_t* prev_block, const xvip2_t & local, const xvip2_t & candidate, const common::xversion_t& version, uint16_t rotate_mode = enum_rotate_mode_rotate_by_last_block) = 0;
+    virtual const xvip2_t get_leader_xip(uint64_t viewId, const std::string & account, base::xvblock_t* prev_block, const xvip2_t & local, const xvip2_t & candidate, const common::xelection_round_t& version, uint16_t rotate_mode = enum_rotate_mode_rotate_by_last_block) = 0;
 
     // get election face which manager elect datas
     virtual xelection_cache_face * get_election_cache_face() = 0;

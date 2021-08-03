@@ -36,7 +36,7 @@ using top::common::xslot_id_t;
 
 using top::common::xlogic_time_t;
 using top::common::xrole_type_t;
-using top::common::xversion_t;
+using top::common::xelection_round_t;
 
 NS_BEG3(top, tests, vnode)
 
@@ -47,9 +47,9 @@ struct infos {
     xgroup_id_t group_id;
     xslot_id_t slot_id;
     xrole_type_t role;
-    common::xversion_t version;
+    common::xelection_round_t version;
 
-    infos(xnetwork_id_t n, xzone_id_t z, xcluster_id_t c, xgroup_id_t g, xslot_id_t s, xrole_type_t r, common::xversion_t v) {
+    infos(xnetwork_id_t n, xzone_id_t z, xcluster_id_t c, xgroup_id_t g, xslot_id_t s, xrole_type_t r, common::xelection_round_t v) {
         network_id = n;
         zone_id = z;
         cluster_id = c;

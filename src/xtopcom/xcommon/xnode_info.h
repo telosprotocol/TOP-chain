@@ -15,7 +15,7 @@ NS_BEG2(top, common)
 struct xtop_node_info {
     xpublic_key_t public_key;
     std::uint64_t staking;
-    common::xversion_t joined_version;
+    common::xelection_round_t joined_version;
     common::xnode_address_t node_address;
 };
 

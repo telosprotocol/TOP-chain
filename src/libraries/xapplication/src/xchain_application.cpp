@@ -102,10 +102,10 @@ void xtop_chain_application::start() {
                                                     .result_of(frozen_sharding_address.cluster_id())
                                                     .result_of(frozen_sharding_address.group_id());
     static_sync_group.start_time(0);
-    static_sync_group.group_version(common::xversion_t::max());
+    static_sync_group.group_version(common::xelection_round_t::max());
 
     auto & static_sync_node = static_sync_group.result_of(node_id());
-    static_sync_node.joined_version = common::xversion_t::max();
+    static_sync_node.joined_version = common::xelection_round_t::max();
     static_sync_node.stake = 0;
 
     assert(static_sync_group.size() == 1);

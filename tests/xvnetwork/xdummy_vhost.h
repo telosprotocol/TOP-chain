@@ -60,7 +60,7 @@ public:
 
     std::map<xvnode_address_t, xcrypto_key_t<pub>> crypto_keys(std::vector<xvnode_address_t> const & nodes) const { return {}; }
 
-    std::map<common::xslot_id_t, data::xnode_info_t> members_info_of_group2(xcluster_address_t const &, common::xversion_t const &) const override {
+    std::map<common::xslot_id_t, data::xnode_info_t> members_info_of_group2(xcluster_address_t const &, common::xelection_round_t const &) const override {
         m_counter++;
         return {{}, {}};
     }
