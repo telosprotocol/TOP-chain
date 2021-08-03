@@ -79,7 +79,11 @@ namespace top
                     #endif
                     if(NULL == m_latest_vblock_cert)
                     {
+#if defined(ENABLE_METRICS)
                         base::xauto_ptr<base::xvblock_t> latest_vblock(get_vblockstore()->get_latest_cert_block(account, metrics::blockstore_access_from_bft_init_blk));
+#else
+                        base::xauto_ptr<base::xvblock_t> latest_vblock(get_vblockstore()->get_latest_cert_block(account));
+#endif
                         if( (latest_vblock) && (latest_vblock->is_deliver(false)))
                         {
                             m_latest_vblock_cert = latest_vblock->get_cert();

@@ -252,7 +252,11 @@ namespace top
                 }
                 if(NULL == _local_block) //search from blockstore
                 {
+#if defined(ENABLE_METRICS)
                     base::xauto_ptr<base::xvblock_t> target_block = get_vblockstore()->load_block_object(*this, target_block_height, target_block_hash,true, metrics::blockstore_access_from_bft_sync);
+#else
+                    base::xauto_ptr<base::xvblock_t> target_block = get_vblockstore()->load_block_object(*this, target_block_height, target_block_hash,true);
+#endif
                     if(target_block == nullptr)
                     {
                         xwarn("xBFTSyncdrv::handle_sync_request_msg,fail-found target cert of height:%llu,at node=0x%llx",target_block_height,get_xip2_low_addr());
@@ -283,7 +287,11 @@ namespace top
                 }
                 
                 bool full_load = (sync_targets & enum_xsync_target_block_input) || (sync_targets & enum_xsync_target_block_output);
+#if defined(ENABLE_METRICS)
                 base::xauto_ptr<base::xvblock_t> target_block = get_vblockstore()->load_block_object(*this, target_block_height,target_block_hash,full_load, metrics::blockstore_access_from_bft_sync);//specific load target block
+#else
+                base::xauto_ptr<base::xvblock_t> target_block = get_vblockstore()->load_block_object(*this, target_block_height,target_block_hash,full_load);//specific load target block
+#endif
                 if(target_block == nullptr)
                 {
                     xwarn("xBFTSyncdrv::handle_sync_request_msg,fail-found target block of height:%llu,at node=0x%llx",target_block_height,get_xip2_low_addr());

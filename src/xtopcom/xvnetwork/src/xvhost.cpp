@@ -675,7 +675,7 @@ void xtop_vhost::do_handle_network_data() {
                                      message.hash(),
                                      &callback,
                                      top::get<common::xnode_address_t const>(callback_info).to_string().c_str());
-#ifdef ENABLE_METRICS
+#if defined(ENABLE_METRICS)
                                 char msg_info[30] = {0};
                                 snprintf(msg_info, 29, "%x|%" PRIx64, vnetwork_message.message().id(), message.hash());
                                 XMETRICS_TIME_RECORD_KEY_WITH_TIMEOUT("vhost_handle_data_callback", msg_info, uint32_t(100000));

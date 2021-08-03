@@ -269,6 +269,7 @@ namespace top
                 store_value_by_path(meta_path, vmeta_bin);
                 m_last_save_vmeta_bin = vmeta_bin;
 
+#if defined(ENABLE_METRICS)
                 base::enum_vaccount_addr_type addr_type = get_addrtype_from_account(get_address());
                 if (addr_type == base::enum_vaccount_addr_type_block_contract || addr_type == base::enum_vaccount_addr_type_native_contract)
                 {
@@ -282,6 +283,7 @@ namespace top
                                          "full", m_meta->_highest_full_block_height,
                                          "genesis_connect", m_meta->_highest_genesis_connect_height);
                 }
+#endif
             }
             return true;
         }
