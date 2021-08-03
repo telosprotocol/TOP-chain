@@ -624,7 +624,6 @@ TEST_F(test_block_connected, latest_connect_update_1_BENCH) {  // take 20s
 
     xdbg("latest_connect_update_1,begin to stop ======= table=%s",table_addr.c_str());
     sleep(1*16+2); // wait for meta save to db. table has 16 times than unit
-    sleep(100);
     xdbg("latest_connect_update_1,end to stop ======= table=%s",table_addr.c_str());
 
     {
