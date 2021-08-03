@@ -35,7 +35,7 @@ class xunit_bstate_t {
     inline uint64_t     lock_balance() const {return token_get(XPROPERTY_BALANCE_LOCK);}
     inline uint64_t     lock_tgas() const {return uint64_property_get(XPROPERTY_LOCK_TGAS);}
     inline uint64_t     unvote_num() const {return uint64_property_get(XPROPERTY_UNVOTE_NUM);}
-    uint64_t            get_account_create_time() const {return uint64_property_get(XPROPERTY_ACCOUNT_CREATE_TIME);}
+    uint64_t            get_account_create_time() const {return uint64_property_get(XPROPERTY_ACCOUNT_CREATE_TIME) * 10 + base::TOP_BEGIN_GMTIME;}
     uint32_t            get_unconfirm_sendtx_num() const;
     uint64_t            get_latest_send_trans_number() const;
     uint64_t            account_recv_trans_number() const;
