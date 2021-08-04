@@ -7,7 +7,7 @@
 #include "xrpc_method.h"
 #include "xuint_format.h"
 #include "xverifier/xverifier_utl.h"
-
+#include "xverifier/xverifier_errors.h"
 NS_BEG2(top, xrpc)
 
 #define REGISTER_V1_FILTER(func_name)                                                                                                                                              \
@@ -226,6 +226,11 @@ void xfilter_manager::sendTransaction_filter(xjson_proc_t & json_proc) {
 
     CONDTION_FAIL_THROW(params["tx_hash"].isString(), enum_xrpc_error_code::rpc_param_param_lack, "miss param params tx_hash");
     CONDTION_FAIL_THROW(params["authorization"].isString(), enum_xrpc_error_code::rpc_param_param_lack, "miss param params authorization");
+
+    std::string src_addr = source_action["tx_sender_account_addr"].asString();
+    std::string dst_addr = target_action["tx_receiver_account_addr"].asString();
+    CONDTION_FAIL_THROW(top::xverifier::xverifier_error::xverifier_success == xverifier::xtx_utl::address_is_valid(src_addr), enum_xrpc_error_code::rpc_param_param_lack, "tx_sender_account_addr invalid");
+    CONDTION_FAIL_THROW(top::xverifier::xverifier_error::xverifier_success == xverifier::xtx_utl::address_is_valid(dst_addr), enum_xrpc_error_code::rpc_param_param_lack, "tx_receiver_account_addr invalid");
 }
 
 NS_END2
