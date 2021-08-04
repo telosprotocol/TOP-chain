@@ -427,7 +427,7 @@ TEST_F(test_message_filter, empty_message) {
     top::vnetwork::xvnetwork_message_t empty_message;
     std::error_code ec;
     top::vnetwork::xtop_message_filter_sender const filter{ vhost(), data_accessor() };
-    EXPECT_FALSE(filter.filter(empty_message, ec));
+    EXPECT_EQ(top::vnetwork::xfilter_result_t::stop_filtering, filter.filter(empty_message, ec));
     EXPECT_EQ(ec, top::vnetwork::xvnetwork_errc2_t::empty_message);
 
     ec.clear();
@@ -439,7 +439,7 @@ TEST_F(test_message_filter, invalid_sender_no_account_address) {
     xvnetwork_message_t message{ common::xnode_address_t{}, common::xnode_address_t{}, raw_message, 0 };
     std::error_code ec;
     top::vnetwork::xtop_message_filter_sender const filter{ vhost(), data_accessor() };
-    EXPECT_FALSE(filter.filter(message, ec));
+    EXPECT_EQ(top::vnetwork::xfilter_result_t::stop_filtering, filter.filter(message, ec));
     EXPECT_EQ(ec, top::vnetwork::xvnetwork_errc2_t::empty_message);
 
     ec.clear();
@@ -457,7 +457,7 @@ TEST_F(test_message_filter, invalid_sender_no_group_address) {
 
     std::error_code ec;
     top::vnetwork::xtop_message_filter_sender const filter{ vhost(), data_accessor() };
-    EXPECT_FALSE(filter.filter(message, ec));
+    EXPECT_EQ(top::vnetwork::xfilter_result_t::stop_filtering, filter.filter(message, ec));
     EXPECT_EQ(ec, top::vnetwork::xvnetwork_errc2_t::invalid_src_address);
 
     ec.clear();
@@ -475,7 +475,7 @@ TEST_F(test_message_filter, invalid_sender_no_slot_id) {
 
     std::error_code ec;
     top::vnetwork::xtop_message_filter_sender const filter{ vhost(), data_accessor() };
-    EXPECT_FALSE(filter.filter(message, ec));
+    EXPECT_EQ(top::vnetwork::xfilter_result_t::stop_filtering, filter.filter(message, ec));
     EXPECT_EQ(ec, top::vnetwork::xvnetwork_errc2_t::invalid_src_address);
 
     ec.clear();
@@ -493,7 +493,7 @@ TEST_F(test_message_filter, recver_broadcast) {
 
     std::error_code ec;
     top::vnetwork::xtop_message_filter_recver const filter{ vhost(), data_accessor() };
-    EXPECT_FALSE(filter.filter(message, ec));
+    EXPECT_EQ(top::vnetwork::xfilter_result_t::stop_filtering, filter.filter(message, ec));
     EXPECT_TRUE(!ec);
 
     filter_mgr_->filter_message(message, ec);
@@ -518,7 +518,7 @@ TEST_F(test_message_filter, invalid_recver) {
 
     std::error_code ec;
     top::vnetwork::xtop_message_filter_recver const filter{ vhost(), data_accessor() };
-    EXPECT_FALSE(filter.filter(message, ec));
+    EXPECT_EQ(top::vnetwork::xfilter_result_t::stop_filtering, filter.filter(message, ec));
     EXPECT_EQ(ec, top::vnetwork::xvnetwork_errc2_t::invalid_account_address);
 
     ec.clear();
@@ -550,7 +550,7 @@ TEST_F(test_message_filter, validator_to_associated_auditor_1) {
 
     std::error_code ec;
     top::vnetwork::xtop_message_filter_recver_is_auditor const filter{ vhost(), data_accessor() };
-    EXPECT_FALSE(filter.filter(message, ec));
+    EXPECT_EQ(top::vnetwork::xfilter_result_t::stop_filtering, filter.filter(message, ec));
     EXPECT_TRUE(!ec);
 
     filter_mgr_->filter_message(message, ec);
@@ -574,7 +574,7 @@ TEST_F(test_message_filter, validator_to_associated_auditor_2) {
 
     std::error_code ec;
     top::vnetwork::xtop_message_filter_recver_is_auditor const filter{ vhost(), data_accessor() };
-    EXPECT_FALSE(filter.filter(message, ec));
+    EXPECT_EQ(top::vnetwork::xfilter_result_t::stop_filtering, filter.filter(message, ec));
     EXPECT_TRUE(!ec);
 
     filter_mgr_->filter_message(message, ec);
@@ -598,7 +598,7 @@ TEST_F(test_message_filter, validator_to_associated_auditor_3) {
 
     std::error_code ec;
     top::vnetwork::xtop_message_filter_recver_is_auditor const filter{ vhost(), data_accessor() };
-    EXPECT_FALSE(filter.filter(message, ec));
+    EXPECT_EQ(top::vnetwork::xfilter_result_t::stop_filtering, filter.filter(message, ec));
     EXPECT_EQ(ec, top::vnetwork::xvnetwork_errc2_t::epoch_mismatch);
 
     ec.clear();
@@ -622,7 +622,7 @@ TEST_F(test_message_filter, validator_to_associated_auditor_4) {
 
     std::error_code ec;
     top::vnetwork::xtop_message_filter_recver_is_auditor const filter{ vhost(), data_accessor() };
-    EXPECT_FALSE(filter.filter(message, ec));
+    EXPECT_EQ(top::vnetwork::xfilter_result_t::stop_filtering, filter.filter(message, ec));
     EXPECT_FALSE(!ec);
 
     ec.clear();
@@ -645,7 +645,7 @@ TEST_F(test_message_filter, validator_to_associated_auditor_5) {
 
     std::error_code ec;
     top::vnetwork::xtop_message_filter_recver_is_auditor const filter{ vhost(), data_accessor() };
-    EXPECT_FALSE(filter.filter(message, ec));
+    EXPECT_EQ(top::vnetwork::xfilter_result_t::stop_filtering, filter.filter(message, ec));
     EXPECT_FALSE(!ec);
 
     ec.clear();
@@ -668,7 +668,7 @@ TEST_F(test_message_filter, validator_to_associated_auditor_6) {
 
     std::error_code ec;
     top::vnetwork::xtop_message_filter_recver_is_auditor const filter{ vhost(), data_accessor() };
-    EXPECT_FALSE(filter.filter(message, ec));
+    EXPECT_EQ(top::vnetwork::xfilter_result_t::stop_filtering, filter.filter(message, ec));
     EXPECT_FALSE(!ec);
 
     ec.clear();
@@ -692,7 +692,7 @@ TEST_F(test_message_filter, auditor_to_associated_validator_1) {
 
     std::error_code ec;
     top::vnetwork::xtop_message_filter_recver_is_validator const filter{ vhost(), data_accessor() };
-    EXPECT_FALSE(filter.filter(message, ec));
+    EXPECT_EQ(top::vnetwork::xfilter_result_t::stop_filtering, filter.filter(message, ec));
     EXPECT_TRUE(!ec);
 
     filter_mgr_->filter_message(message, ec);
@@ -716,7 +716,7 @@ TEST_F(test_message_filter, auditor_to_associated_validator_2) {
 
     std::error_code ec;
     top::vnetwork::xtop_message_filter_recver_is_validator const filter{ vhost(), data_accessor() };
-    EXPECT_FALSE(filter.filter(message, ec));
+    EXPECT_EQ(top::vnetwork::xfilter_result_t::stop_filtering, filter.filter(message, ec));
     EXPECT_TRUE(!ec);
 
     filter_mgr_->filter_message(message, ec);
@@ -740,7 +740,7 @@ TEST_F(test_message_filter, auditor_to_associated_validator_3) {
 
     std::error_code ec;
     top::vnetwork::xtop_message_filter_recver_is_validator const filter{ vhost(), data_accessor() };
-    EXPECT_FALSE(filter.filter(message, ec));
+    EXPECT_EQ(top::vnetwork::xfilter_result_t::stop_filtering, filter.filter(message, ec));
     EXPECT_EQ(ec, top::vnetwork::xvnetwork_errc2_t::epoch_mismatch);
 
     ec.clear();
@@ -764,7 +764,7 @@ TEST_F(test_message_filter, auditor_to_associated_validator_4) {
 
     std::error_code ec;
     top::vnetwork::xtop_message_filter_recver_is_validator const filter{ vhost(), data_accessor() };
-    EXPECT_FALSE(filter.filter(message, ec));
+    EXPECT_EQ(top::vnetwork::xfilter_result_t::stop_filtering, filter.filter(message, ec));
     EXPECT_FALSE(!ec);
 
     ec.clear();
@@ -787,7 +787,7 @@ TEST_F(test_message_filter, auditor_to_associated_validator_5) {
 
     std::error_code ec;
     top::vnetwork::xtop_message_filter_recver_is_validator const filter{ vhost(), data_accessor() };
-    EXPECT_FALSE(filter.filter(message, ec));
+    EXPECT_EQ(top::vnetwork::xfilter_result_t::stop_filtering, filter.filter(message, ec));
     EXPECT_FALSE(!ec);
 
     ec.clear();
@@ -810,7 +810,7 @@ TEST_F(test_message_filter, auditor_to_associated_validator_6) {
 
     std::error_code ec;
     top::vnetwork::xtop_message_filter_recver_is_validator const filter{ vhost(), data_accessor() };
-    EXPECT_FALSE(filter.filter(message, ec));
+    EXPECT_EQ(top::vnetwork::xfilter_result_t::stop_filtering, filter.filter(message, ec));
     EXPECT_FALSE(!ec);
     EXPECT_EQ(message.receiver().logic_epoch(), con_epoch_1);
 
@@ -836,7 +836,7 @@ TEST_F(test_message_filter, validator_to_non_associated_auditor_1) {
 
     std::error_code ec;
     top::vnetwork::xtop_message_filter_recver_is_auditor const filter{ vhost(), data_accessor() };
-    EXPECT_FALSE(filter.filter(message, ec));
+    EXPECT_EQ(top::vnetwork::xfilter_result_t::stop_filtering, filter.filter(message, ec));
     EXPECT_TRUE(!ec);
 
     ec.clear();
@@ -861,7 +861,7 @@ TEST_F(test_message_filter, validator_to_non_associated_auditor_2) {
 
     std::error_code ec;
     top::vnetwork::xtop_message_filter_recver_is_auditor const filter{ vhost(), data_accessor() };
-    EXPECT_FALSE(filter.filter(message, ec));
+    EXPECT_EQ(top::vnetwork::xfilter_result_t::stop_filtering, filter.filter(message, ec));
     EXPECT_TRUE(!ec);
     EXPECT_EQ(message.receiver().logic_epoch(), con_epoch_1);
 
@@ -885,7 +885,7 @@ TEST_F(test_message_filter, validator_to_non_associated_auditor_3) {
 
     std::error_code ec;
     top::vnetwork::xtop_message_filter_recver_is_auditor const filter{ vhost(), data_accessor() };
-    EXPECT_FALSE(filter.filter(message, ec));
+    EXPECT_EQ(top::vnetwork::xfilter_result_t::stop_filtering, filter.filter(message, ec));
     EXPECT_FALSE(!ec);
 
     ec.clear();
@@ -910,7 +910,7 @@ TEST_F(test_message_filter, validator_to_validator_same_associated_auditor_1) {
 
     std::error_code ec;
     top::vnetwork::xtop_message_filter_recver_is_validator const filter{ vhost(), data_accessor() };
-    EXPECT_FALSE(filter.filter(message, ec));
+    EXPECT_EQ(top::vnetwork::xfilter_result_t::stop_filtering, filter.filter(message, ec));
     EXPECT_TRUE(!ec);
 
     filter_mgr_->filter_message(message, ec);
@@ -934,7 +934,7 @@ TEST_F(test_message_filter, validator_to_validator_same_associated_auditor_2) {
 
     std::error_code ec;
     top::vnetwork::xtop_message_filter_recver_is_validator const filter{ vhost(), data_accessor() };
-    EXPECT_FALSE(filter.filter(message, ec));
+    EXPECT_EQ(top::vnetwork::xfilter_result_t::stop_filtering, filter.filter(message, ec));
     EXPECT_TRUE(!ec);
 
     filter_mgr_->filter_message(message, ec);
@@ -959,7 +959,7 @@ TEST_F(test_message_filter, validator_to_validator_same_associated_auditor_3) {
 
     std::error_code ec;
     top::vnetwork::xtop_message_filter_recver_is_validator const filter{ vhost(), data_accessor() };
-    EXPECT_FALSE(filter.filter(message, ec));
+    EXPECT_EQ(top::vnetwork::xfilter_result_t::stop_filtering, filter.filter(message, ec));
     EXPECT_FALSE(!ec);
     EXPECT_TRUE(message.receiver().logic_epoch().empty());
 
@@ -985,7 +985,7 @@ TEST_F(test_message_filter, validator_to_validator_same_associated_auditor_4) {
 
     std::error_code ec;
     top::vnetwork::xtop_message_filter_recver_is_validator const filter{ vhost(), data_accessor() };
-    EXPECT_FALSE(filter.filter(message, ec));
+    EXPECT_EQ(top::vnetwork::xfilter_result_t::stop_filtering, filter.filter(message, ec));
     EXPECT_FALSE(!ec);
     EXPECT_EQ(message.receiver().logic_epoch(), con_epoch_2);
 
@@ -1011,7 +1011,7 @@ TEST_F(test_message_filter, validator_to_validator_same_associated_auditor_5) {
 
     std::error_code ec;
     top::vnetwork::xtop_message_filter_recver_is_validator const filter{ vhost(), data_accessor() };
-    EXPECT_FALSE(filter.filter(message, ec));
+    EXPECT_EQ(top::vnetwork::xfilter_result_t::stop_filtering, filter.filter(message, ec));
     EXPECT_FALSE(!ec);
     EXPECT_EQ(message.receiver().logic_epoch(), con_epoch_2);
 

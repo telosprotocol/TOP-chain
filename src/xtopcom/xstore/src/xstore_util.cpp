@@ -22,7 +22,6 @@ std::map<std::string, xmetircs_tag_t> key_end = {
     {"/o", xmetircs_tag_t::db_key_block_output},
     {"/or", xmetircs_tag_t::db_key_block_output_resource},
     {"/s", xmetircs_tag_t::db_key_block_state},
-    {"/d", xmetircs_tag_t::db_key_block_offdata}
 };
 
 void xstore_util::metirc_key_value(std::string const& key, std::string const& value, bool add_or_minus) {

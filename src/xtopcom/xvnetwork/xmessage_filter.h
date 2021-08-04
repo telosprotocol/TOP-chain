@@ -116,7 +116,7 @@ public:
     explicit xtop_message_filter_message_id(observer_ptr<vnetwork::xvhost_face_t> const &,
                                             observer_ptr< election::cache::xdata_accessor_face_t> const &) noexcept;
 
-    bool filter(xvnetwork_message_t & vnetwork_message, std::error_code & ec) const override;
+    xfilter_result_t filter(xvnetwork_message_t & vnetwork_message, std::error_code & ec) const override;
 };
 
 class xtop_message_filter_sender final : public xmessage_filter_base_t {
@@ -134,7 +134,7 @@ public:
     explicit xtop_message_filter_sender(observer_ptr<vnetwork::xvhost_face_t> const & vhost,
                                         observer_ptr< election::cache::xdata_accessor_face_t> const & election_data_accessor) noexcept;
 
-    bool filter(xvnetwork_message_t & vnetwork_message, std::error_code & ec) const override;
+    xfilter_result_t filter(xvnetwork_message_t & vnetwork_message, std::error_code & ec) const override;
 };
 
 class xtop_message_filter_recver final : public xmessage_filter_base_t {
@@ -152,7 +152,7 @@ public:
     explicit xtop_message_filter_recver(observer_ptr<vnetwork::xvhost_face_t> const & vhost,
                                         observer_ptr< election::cache::xdata_accessor_face_t> const & election_data_accessor) noexcept;
 
-    bool filter(xvnetwork_message_t & vnetwork_message, std::error_code & ec) const override;
+    xfilter_result_t filter(xvnetwork_message_t & vnetwork_message, std::error_code & ec) const override;
 };
 
 class xtop_message_filter_recver_is_validator final : public xmessage_filter_base_t {
@@ -170,7 +170,7 @@ public:
     explicit xtop_message_filter_recver_is_validator(observer_ptr<vnetwork::xvhost_face_t> const & vhost,
                                                      observer_ptr< election::cache::xdata_accessor_face_t> const & election_data_accessor) noexcept;
 
-    bool filter(xvnetwork_message_t & vnetwork_message, std::error_code & ec) const override;
+    xfilter_result_t filter(xvnetwork_message_t & vnetwork_message, std::error_code & ec) const override;
 
 private:
     bool filter_sender_from_consensus_group(xvnetwork_message_t & xvnetwork_message, std::error_code & ec) const;
@@ -284,7 +284,7 @@ public:
     explicit xtop_message_filter_recver_is_auditor(observer_ptr<vnetwork::xvhost_face_t> const & vhost,
                                                    observer_ptr< election::cache::xdata_accessor_face_t> const & election_data_accessor) noexcept;
 
-    bool filter(xvnetwork_message_t & vnetwork_message, std::error_code & ec) const override;
+    xfilter_result_t filter(xvnetwork_message_t & vnetwork_message, std::error_code & ec) const override;
 
 private:
     bool filter_sender_from_consensus_group(xvnetwork_message_t & xvnetwork_message, std::error_code & ec) const;
@@ -372,7 +372,7 @@ public:
     explicit xtop_message_filter_recver_is_rec(observer_ptr<vnetwork::xvhost_face_t> const & vhost,
                                                observer_ptr< election::cache::xdata_accessor_face_t> const & election_data_accessor) noexcept;
 
-    bool filter(xvnetwork_message_t & vnetwork_message, std::error_code & ec) const override;
+    xfilter_result_t filter(xvnetwork_message_t & vnetwork_message, std::error_code & ec) const override;
 
 private:
     /// @brief filter message sent from rec.
@@ -403,7 +403,7 @@ public:
     explicit xtop_message_filter_recver_is_zec(observer_ptr<vnetwork::xvhost_face_t> const & vhost,
                                                observer_ptr< election::cache::xdata_accessor_face_t> const & election_data_accessor) noexcept;
 
-    bool filter(xvnetwork_message_t & vnetwork_message, std::error_code & ec) const override;
+    xfilter_result_t filter(xvnetwork_message_t & vnetwork_message, std::error_code & ec) const override;
 
 private:
     /// @brief filter message sent from zec.

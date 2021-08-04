@@ -682,7 +682,6 @@ namespace top
             virtual bool                extract_one_sub_block(uint32_t entity_id, const std::string & extend_cert, const std::string & extend_data, xobject_ptr_t<xvblock_t> & sub_block) {return false;}
             //note:container(e.g. Lightunit etc) need implement this function as they have mutiple sub txs inside them,
             virtual bool                extract_sub_txs(std::vector<xvtxindex_ptr> & sub_txs) {return false;}//as default it is none
-            virtual std::string         get_offdata_hash() const {return std::string();}//as default has none offdata
 
             virtual bool                close(bool force_async = true) override; //close and release this node only
             virtual std::string         dump() const override;  //just for debug purpose

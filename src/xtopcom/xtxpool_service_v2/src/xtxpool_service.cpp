@@ -240,7 +240,7 @@ void xtxpool_service::pull_lacking_receipts(uint64_t now, xcovered_tables_t & co
     }
 }
 
-bool xtxpool_service::is_belong_to_service(xtable_id_t tableid) const {
+bool xtxpool_service::is_belong_to_service(base::xtable_index_t tableid) const {
     if (tableid.get_zone_index() == m_zone_index && (tableid.get_subaddr() >= m_cover_front_table_id && tableid.get_subaddr() <= m_cover_back_table_id)) {
         return true;
     }
@@ -426,7 +426,7 @@ xcons_transaction_ptr_t xtxpool_service::create_confirm_tx_by_hash(const uint256
     return contx;
 }
 
-bool xtxpool_service::is_receipt_sender(const xtable_id_t & tableid) const {
+bool xtxpool_service::is_receipt_sender(const base::xtable_index_t & tableid) const {
     return m_running && m_is_send_receipt_role && is_belong_to_service(tableid);
 }
 

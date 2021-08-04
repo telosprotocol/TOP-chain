@@ -270,18 +270,38 @@ namespace top
                 m_last_save_vmeta_bin = vmeta_bin;
 
                 base::enum_vaccount_addr_type addr_type = get_addrtype_from_account(get_address());
-                if (addr_type == base::enum_vaccount_addr_type_block_contract || addr_type == base::enum_vaccount_addr_type_native_contract)
-                {
-                    XMETRICS_PACKET_INFO("blockstore_height_meta",
-                                         "account", get_address(),
-                                         "cert", m_meta->_highest_cert_block_height,
-                                         "lock", m_meta->_highest_lock_block_height,
-                                         "commit", m_meta->_highest_commit_block_height,
-                                         "connect", m_meta->_highest_connect_block_height,
-                                         "execute", m_meta->_highest_execute_block_height,
-                                         "full", m_meta->_highest_full_block_height,
-                                         "genesis_connect", m_meta->_highest_genesis_connect_height);
+                if (addr_type == base::enum_vaccount_addr_type_block_contract) {
+                    uint16_t subaddr = get_ledgersubaddr_from_account(get_address());
+                    if (get_zone_index() == base::enum_chain_zone_consensus_index) {
+                        XMETRICS_ARRCNT_SET(metrics::xmetrics_array_tag_t::blockstore_sharding_table_block_commit, subaddr, m_meta->_highest_commit_block_height);
+                        XMETRICS_ARRCNT_SET(metrics::xmetrics_array_tag_t::blockstore_sharding_table_block_full, subaddr, m_meta->_highest_full_block_height);
+                        XMETRICS_ARRCNT_SET(metrics::xmetrics_array_tag_t::blockstore_sharding_table_block_genesis_connect, subaddr, m_meta->_highest_genesis_connect_height);
+                    } else if (get_zone_index() == base::enum_chain_zone_beacon_index) {
+                        XMETRICS_ARRCNT_SET(metrics::xmetrics_array_tag_t::blockstore_beacon_table_block_commit, subaddr, m_meta->_highest_commit_block_height);
+                        XMETRICS_ARRCNT_SET(metrics::xmetrics_array_tag_t::blockstore_beacon_table_block_full, subaddr, m_meta->_highest_full_block_height);
+                        XMETRICS_ARRCNT_SET(metrics::xmetrics_array_tag_t::blockstore_beacon_table_block_genesis_connect, subaddr, m_meta->_highest_genesis_connect_height);
+                    } else if (get_zone_index() == base::enum_chain_zone_zec_index) {
+                        XMETRICS_ARRCNT_SET(metrics::xmetrics_array_tag_t::blockstore_zec_table_block_commit, subaddr, m_meta->_highest_commit_block_height);
+                        XMETRICS_ARRCNT_SET(metrics::xmetrics_array_tag_t::blockstore_zec_table_block_full, subaddr, m_meta->_highest_full_block_height);
+                        XMETRICS_ARRCNT_SET(metrics::xmetrics_array_tag_t::blockstore_zec_table_block_genesis_connect, subaddr, m_meta->_highest_genesis_connect_height);
+                    } else {
+                        xwarn("unknown zone id:%d address: %s", get_zone_index(), get_address().c_str());
+                        assert(false);
+                    }
                 }
+
+                // if (addr_type == base::enum_vaccount_addr_type_block_contract || addr_type == base::enum_vaccount_addr_type_native_contract)
+                // {
+                //     XMETRICS_PACKET_INFO("blockstore_height_meta",
+                //                          "account", get_address(),
+                //                          "cert", m_meta->_highest_cert_block_height,
+                //                          "lock", m_meta->_highest_lock_block_height,
+                //                          "commit", m_meta->_highest_commit_block_height,
+                //                          "connect", m_meta->_highest_connect_block_height,
+                //                          "execute", m_meta->_highest_execute_block_height,
+                //                          "full", m_meta->_highest_full_block_height,
+                //                          "genesis_connect", m_meta->_highest_genesis_connect_height);
+                // }
             }
             return true;
         }
@@ -2352,12 +2372,6 @@ namespace top
 
                 const std::string output_resource_key = base::xvdbkey_t::create_block_output_resource_key(*this,index_ptr->get_block_hash());
                 get_xdbstore()->delete_value(output_resource_key);
-            }
-
-            //step#3: remove offdata
-            {
-                const std::string offdata_key = base::xvdbkey_t::create_block_offdata_key(*this, index_ptr->get_block_hash());
-                get_xdbstore()->delete_value(offdata_key);
             }
             return true;
         }

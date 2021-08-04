@@ -35,10 +35,8 @@ public:
     bool fade(const xvip2_t & xip) override;
     void set_params(const xvip2_t & xip, const std::shared_ptr<vnetwork::xvnetwork_driver_face_t> & vnet_driver) override;
     bool is_running() const override;
-    bool is_receipt_sender(const xtable_id_t & tableid) const override;
-    bool is_send_receipt_role() const override {
-        return m_is_send_receipt_role;
-    }
+    bool is_receipt_sender(const base::xtable_index_t & tableid) const override;
+    bool is_send_receipt_role() const override {return m_is_send_receipt_role;}
     bool table_boundary_equal_to(std::shared_ptr<xtxpool_service_face> & service) const override;
     void get_service_table_boundary(base::enum_xchain_zone_index & zone_id, uint32_t & fount_table_id, uint32_t & back_table_id, common::xnode_type_t & node_type) const override;
     void resend_receipts(uint64_t now) override;
@@ -49,7 +47,7 @@ public:
     void pull_lacking_receipts(uint64_t now, xcovered_tables_t & covered_tables) override;
 
 private:
-    bool is_belong_to_service(xtable_id_t tableid) const;
+    bool is_belong_to_service(base::xtable_index_t tableid) const;
     void on_message_receipt(vnetwork::xvnode_address_t const & sender, vnetwork::xmessage_t const & message);
     void on_message_unit_receipt(vnetwork::xvnode_address_t const & sender, vnetwork::xmessage_t const & message);
     void on_message_batch_receipts(vnetwork::xvnode_address_t const & sender, vnetwork::xmessage_t const & message);

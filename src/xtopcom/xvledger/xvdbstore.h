@@ -52,8 +52,6 @@ namespace top
 
         public://execute_block will move to statestore soon
             virtual bool             execute_block(base::xvblock_t* block) = 0;
-            virtual bool             get_vblock_offdata(const std::string & store_path,xvblock_t* for_block) const = 0;//just load offdata
-            virtual bool             set_vblock_offdata(const std::string & store_path,xvblock_t* for_block) = 0;//just save offdata
 
         protected:
 //            using xobject_t::add_ref;

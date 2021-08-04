@@ -501,7 +501,7 @@ xtop_message_filter_sender::xtop_message_filter_sender(observer_ptr<vnetwork::xv
     : m_vhost{ vhost }, m_election_data_accessor{ election_data_accessor } {
 }
 
-bool xtop_message_filter_sender::filter(xvnetwork_message_t & vnetwork_message, std::error_code & ec) const {
+xfilter_result_t xtop_message_filter_sender::filter(xvnetwork_message_t & vnetwork_message, std::error_code & ec) const {
     assert(!ec);
 
     // 1. verify if message is empty. for empty message, just ignore.
@@ -510,7 +510,7 @@ bool xtop_message_filter_sender::filter(xvnetwork_message_t & vnetwork_message, 
 
         xinfo("[vnetwork][message_filter] hash: %" PRIx64 ", vnetwork message empty", vnetwork_message.hash());
 
-        return false;
+        return xfilter_result_t::stop_filtering;
     }
 
     auto const & message = vnetwork_message.message();
@@ -548,7 +548,7 @@ bool xtop_message_filter_sender::filter(xvnetwork_message_t & vnetwork_message, 
               sender.to_string().c_str(),
               recver.to_string().c_str());
 
-        return false;
+        return xfilter_result_t::stop_filtering;
     }
 
     bool const sender_is_from_consensus_group = common::has<common::xnode_type_t::consensus>(sender.type()) ||
@@ -566,7 +566,7 @@ bool xtop_message_filter_sender::filter(xvnetwork_message_t & vnetwork_message, 
                   sender.to_string().c_str(),
                   recver.to_string().c_str());
 
-            return false;
+            return xfilter_result_t::stop_filtering;
         }
     }
 
@@ -581,7 +581,7 @@ bool xtop_message_filter_sender::filter(xvnetwork_message_t & vnetwork_message, 
               sender.to_string().c_str(),
               recver.to_string().c_str());
 
-        return false;
+        return xfilter_result_t::stop_filtering;
     }
 
     if (sender.account_election_address().empty()) {
@@ -594,10 +594,10 @@ bool xtop_message_filter_sender::filter(xvnetwork_message_t & vnetwork_message, 
               sender.to_string().c_str(),
               recver.to_string().c_str());
 
-        return false;
+        return xfilter_result_t::stop_filtering;
     }
 
-    return true;
+    return xfilter_result_t::continue_filtering;
 }
 
 xtop_message_filter_recver::xtop_message_filter_recver(observer_ptr<vnetwork::xvhost_face_t> const & vhost,
@@ -605,7 +605,7 @@ xtop_message_filter_recver::xtop_message_filter_recver(observer_ptr<vnetwork::xv
     : m_vhost{ vhost }, m_election_data_accessor{ election_data_accessor } {
 }
 
-bool xtop_message_filter_recver::filter(xvnetwork_message_t & vnetwork_message, std::error_code & ec) const {
+xfilter_result_t xtop_message_filter_recver::filter(xvnetwork_message_t & vnetwork_message, std::error_code & ec) const {
     assert(!ec);
 
     auto const & message = vnetwork_message.message();
@@ -624,11 +624,11 @@ bool xtop_message_filter_recver::filter(xvnetwork_message_t & vnetwork_message, 
              vnetwork_message.sender().to_string().c_str(),
              vnetwork_message.receiver().to_string().c_str());
 
-        return false;
+        return xfilter_result_t::stop_filtering;
     }
 
     if (common::broadcast(recver.network_id())) {
-        return false;
+        return xfilter_result_t::stop_filtering;
     }
 
     // verify if network id embed in the message matches current chain.
@@ -640,7 +640,7 @@ bool xtop_message_filter_recver::filter(xvnetwork_message_t & vnetwork_message, 
               static_cast<std::uint32_t>(m_vhost->network_id().value()),
               static_cast<std::uint32_t>(recver.network_id().value()));
 
-        return false;
+        return xfilter_result_t::stop_filtering;
     }
 
     // verify if message is expired or not.
@@ -657,7 +657,7 @@ bool xtop_message_filter_recver::filter(xvnetwork_message_t & vnetwork_message, 
                   vnetwork_message.hash(),
                   msg_time,
                   local_time);
-            return false;
+            return xfilter_result_t::stop_filtering;
         }
 
         if ((msg_time != 0) && (msg_time + past_threshold < local_time) && message.id() != top::contract::xmessage_block_broadcast_id) {
@@ -669,15 +669,15 @@ bool xtop_message_filter_recver::filter(xvnetwork_message_t & vnetwork_message, 
                   msg_time,
                   local_time);
 
-            return false;
+            return xfilter_result_t::stop_filtering;
         }
     }
 
     if (broadcast(recver.zone_id()) || broadcast(recver.cluster_id()) || broadcast(recver.group_id())) {
-        return false;
+        return xfilter_result_t::stop_filtering;
     }
 
-    return true;
+    return xfilter_result_t::continue_filtering;
 }
 
 xtop_message_filter_message_id::xtop_message_filter_message_id(observer_ptr<vnetwork::xvhost_face_t> const& vhost,
@@ -685,7 +685,7 @@ xtop_message_filter_message_id::xtop_message_filter_message_id(observer_ptr<vnet
     : m_vhost{ vhost }, m_election_data_accessor{ data_accessor } {
 }
 
-bool xtop_message_filter_message_id::filter(xvnetwork_message_t& vnetwork_message, std::error_code& ec) const {
+xfilter_result_t xtop_message_filter_message_id::filter(xvnetwork_message_t & vnetwork_message, std::error_code & ec) const {
     auto const& message_id = vnetwork_message.message_id();
     xdbg("message_filter: %s recv message %" PRIx32 " hash %" PRIx64 " from %s to %s ",
         m_vhost->host_node_id().c_str(),
@@ -735,15 +735,15 @@ bool xtop_message_filter_message_id::filter(xvnetwork_message_t& vnetwork_messag
         if (vnetwork_message.receiver().logic_epoch().empty()) {
             normalize_message_recver(vnetwork_message, m_vhost, m_election_data_accessor, ec);
             if (ec) {
-                return false;
+                return xfilter_result_t::stop_filtering;
             }
         }
 
-        return false;
+        return xfilter_result_t::stop_filtering;
     }
 
     default:
-        return true;
+        return xfilter_result_t::continue_filtering;
     }
 }
 
@@ -752,7 +752,7 @@ xtop_message_filter_recver_is_validator::xtop_message_filter_recver_is_validator
     : m_vhost{ vhost }, m_election_data_accessor{ election_data_accessor } {
 }
 
-bool xtop_message_filter_recver_is_validator::filter(xvnetwork_message_t & vnetwork_message, std::error_code & ec) const {
+xfilter_result_t xtop_message_filter_recver_is_validator::filter(xvnetwork_message_t & vnetwork_message, std::error_code & ec) const {
     assert(!ec);
     assert(vnetwork_message.sender().logic_epoch().has_value());
     assert(!broadcast(vnetwork_message.receiver().network_id()));
@@ -761,10 +761,14 @@ bool xtop_message_filter_recver_is_validator::filter(xvnetwork_message_t & vnetw
     assert(!broadcast(vnetwork_message.receiver().group_id()));
 
     if (!common::has<common::xnode_type_t::consensus_validator>(vnetwork_message.receiver().type())) {
-        return true;
+        return xfilter_result_t::continue_filtering;
     }
 
-    return filter_sender_from_nonconsensus_group(vnetwork_message, ec) && filter_sender_from_consensus_group(vnetwork_message, ec);
+    if (filter_sender_from_nonconsensus_group(vnetwork_message, ec) && filter_sender_from_consensus_group(vnetwork_message, ec)) {
+        return xfilter_result_t::continue_filtering;
+    }
+
+    return xfilter_result_t::stop_filtering;
 }
 
 bool xtop_message_filter_recver_is_validator::filter_sender_from_nonconsensus_group(xvnetwork_message_t & vnetwork_message, std::error_code & ec) const {
@@ -1382,7 +1386,7 @@ xtop_message_filter_recver_is_auditor::xtop_message_filter_recver_is_auditor(obs
     : m_vhost{ vhost }, m_election_data_accessor{ election_data_accessor } {
 }
 
-bool xtop_message_filter_recver_is_auditor::filter(xvnetwork_message_t & vnetwork_message, std::error_code & ec) const {
+xfilter_result_t xtop_message_filter_recver_is_auditor::filter(xvnetwork_message_t & vnetwork_message, std::error_code & ec) const {
     assert(!ec);
     assert(vnetwork_message.sender().logic_epoch().has_value());
     assert(!broadcast(vnetwork_message.receiver().network_id()));
@@ -1391,10 +1395,14 @@ bool xtop_message_filter_recver_is_auditor::filter(xvnetwork_message_t & vnetwor
     assert(!broadcast(vnetwork_message.receiver().group_id()));
 
     if (!common::has<common::xnode_type_t::consensus_auditor>(vnetwork_message.receiver().type())) {
-        return true;
+        return xfilter_result_t::continue_filtering;
     }
 
-    return filter_sender_from_nonconsensus_group(vnetwork_message, ec) && filter_sender_from_consensus_group(vnetwork_message, ec);
+    if (filter_sender_from_nonconsensus_group(vnetwork_message, ec) && filter_sender_from_consensus_group(vnetwork_message, ec)) {
+        return xfilter_result_t ::continue_filtering;
+    }
+
+    return xfilter_result_t::stop_filtering;
 }
 
 bool xtop_message_filter_recver_is_auditor::filter_sender_from_nonconsensus_group(xvnetwork_message_t & vnetwork_message, std::error_code & ec) const {
@@ -1804,7 +1812,7 @@ xtop_message_filter_recver_is_rec::xtop_message_filter_recver_is_rec(observer_pt
     : m_vhost{ vhost }, m_election_data_accessor{ election_data_accessor } {
 }
 
-bool xtop_message_filter_recver_is_rec::filter(xvnetwork_message_t & vnetwork_message, std::error_code & ec) const {
+xfilter_result_t xtop_message_filter_recver_is_rec::filter(xvnetwork_message_t & vnetwork_message, std::error_code & ec) const {
     assert(!ec);
     assert(vnetwork_message.sender().logic_epoch().has_value());
     assert(!broadcast(vnetwork_message.receiver().network_id()));
@@ -1813,10 +1821,14 @@ bool xtop_message_filter_recver_is_rec::filter(xvnetwork_message_t & vnetwork_me
     assert(!broadcast(vnetwork_message.receiver().group_id()));
 
     if (!common::has<common::xnode_type_t::rec>(vnetwork_message.receiver().type())) {
-        return true;
+        return xfilter_result_t::continue_filtering;
     }
 
-    return filter_sender_from_rec(vnetwork_message, ec) && filter_sender_from_non_rec(vnetwork_message, ec);
+    if (filter_sender_from_rec(vnetwork_message, ec) && filter_sender_from_non_rec(vnetwork_message, ec)) {
+        return xfilter_result_t::continue_filtering;
+    }
+
+    return xfilter_result_t::stop_filtering;
 }
 
 bool xtop_message_filter_recver_is_rec::filter_sender_from_rec(xvnetwork_message_t & vnetwork_message, std::error_code & ec) const {
@@ -1874,7 +1886,7 @@ xtop_message_filter_recver_is_zec::xtop_message_filter_recver_is_zec(observer_pt
     : m_vhost{ vhost }, m_election_data_accessor{ election_data_accessor } {
 }
 
-bool xtop_message_filter_recver_is_zec::filter(xvnetwork_message_t & vnetwork_message, std::error_code & ec) const {
+xfilter_result_t xtop_message_filter_recver_is_zec::filter(xvnetwork_message_t & vnetwork_message, std::error_code & ec) const {
     assert(!ec);
     assert(vnetwork_message.sender().logic_epoch().has_value());
     assert(!broadcast(vnetwork_message.receiver().network_id()));
@@ -1883,10 +1895,14 @@ bool xtop_message_filter_recver_is_zec::filter(xvnetwork_message_t & vnetwork_me
     assert(!broadcast(vnetwork_message.receiver().group_id()));
 
     if (!common::has<common::xnode_type_t::zec>(vnetwork_message.receiver().type())) {
-        return true;
+        return xfilter_result_t::continue_filtering;
     }
 
-    return filter_sender_from_zec(vnetwork_message, ec) && filter_sender_from_non_zec(vnetwork_message, ec);
+    if (filter_sender_from_zec(vnetwork_message, ec) && filter_sender_from_non_zec(vnetwork_message, ec)) {
+        return xfilter_result_t ::continue_filtering;
+    }
+
+    return xfilter_result_t::stop_filtering;
 }
 
 bool xtop_message_filter_recver_is_zec::filter_sender_from_zec(xvnetwork_message_t & vnetwork_message, std::error_code & ec) const {
