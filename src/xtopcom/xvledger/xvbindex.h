@@ -236,7 +236,6 @@ namespace top
 
             inline bool                is_valid(bool deeptest)  {return m_block->is_valid(deeptest);}
             inline bool                is_deliver(bool deeptest){return m_block->is_deliver(deeptest);}
-            inline bool                is_executed() const      {return m_block->is_executed();}     //block has been executed
             inline bool                is_input_ready(bool full_check_resources = false) const   {return m_block->is_input_ready(full_check_resources);}//nil-block return true because it dont need input
             inline bool                is_genesis_block() const {return m_block->is_genesis_block();}//test whether it is a genesis block
 
