@@ -182,6 +182,16 @@ std::string xunit_bstate_t::native_string_get(const std::string & prop) const {
     return propobj->query();
 }
 
+uint64_t xunit_bstate_t::get_account_create_time() const {
+    uint64_t create_time = uint64_property_get(XPROPERTY_ACCOUNT_CREATE_TIME);
+    if (create_time < base::TOP_BEGIN_GMTIME) {
+        // tackle create_time set to be clock bug
+        return create_time * 10 + base::TOP_BEGIN_GMTIME;
+    } else {
+        return create_time;
+    }
+}
+
 uint32_t xunit_bstate_t::get_unconfirm_sendtx_num() const {
     std::string value = native_map_get(XPROPERTY_TX_INFO, XPROPERTY_TX_INFO_UNCONFIRM_TX_NUM);
     if (value.empty()) {
