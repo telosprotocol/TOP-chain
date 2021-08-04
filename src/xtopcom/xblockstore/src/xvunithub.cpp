@@ -91,7 +91,7 @@ namespace top
             }\
             base::xvtable_t * target_table = base::xvchain_t::instance().get_table(account_vid.get_xvid()); \
             if (target_table == nullptr) { \
-                xwarn_err("xvblockstore invalid account=%s",account_vid.get_address());\
+                xwarn_err("xvblockstore invalid account=%s",account_vid.get_address().c_str());\
                 return nullptr;\
             }\
             auto_xblockacct_ptr account_obj(target_table->get_lock(),this); \
@@ -105,7 +105,7 @@ namespace top
             }\
             base::xvtable_t * target_table = base::xvchain_t::instance().get_table(account_vid.get_xvid()); \
             if (target_table == nullptr) { \
-                xwarn_err("xvblockstore invalid account=%s",account_vid.get_address());\
+                xwarn_err("xvblockstore invalid account=%s",account_vid.get_address().c_str());\
                 return nullptr;\
             }\
             auto_xblockacct_ptr account_obj(target_table->get_lock(),this); \
