@@ -8,7 +8,7 @@
 
 NS_BEG2(top, common)
 
-struct xtag_network{};
-using xversion_t = top::xversion_t<xtag_network, std::uint64_t>;
+struct xtag_election{};
+using xelection_round_t = top::xepoch_t<xtag_election, std::uint64_t>;
 
 NS_END2

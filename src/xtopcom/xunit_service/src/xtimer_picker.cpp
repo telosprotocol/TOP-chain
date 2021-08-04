@@ -56,7 +56,7 @@ bool xtimer_picker_t::on_view_fire(const base::xvevent_t & event, xconsensus::xc
     if(m_cur_view < view_event.get_viewid()) {
         m_cur_view = view_event.get_viewid();
         auto local_xip = get_xip2_addr();
-        common::xversion_t version{0};
+        common::xelection_round_t version{0};
         xvip2_t leader_xip = m_leader_selector->get_leader_xip(m_cur_view, get_account(), nullptr, local_xip, local_xip, version, enum_rotate_mode_no_rotate);
         if (xcons_utl::xip_equals(leader_xip, local_xip)) {
             auto blk = m_block_maker->make_block(get_account(), view_event.get_clock(), m_cur_view, 0, get_xip2_addr());
@@ -125,7 +125,7 @@ bool  xtimer_picker_t::on_time_cert_event(const base::xvevent_t & event,xcsobjec
     xconsensus::xcstc_fire const & e = (xconsensus::xcstc_fire const &)event;
     auto tc_block = e.get_tc_block();
     m_latest_cert_clock = tc_block->get_clock();
-    common::xversion_t version{0};
+    common::xelection_round_t version{0};
     xvip2_t to_addr{(uint64_t)-1, (uint64_t)-1};  // broadcast to all
     auto local_xip = get_xip2_addr();
     xunit_dbg("[xtimer_picker_t::on_time_cert_event] broadcast timer cert block %s, height %" PRIu64, tc_block->get_account().c_str(), tc_block->get_height());
@@ -170,7 +170,7 @@ bool xtimer_picker_t::recv_in(const xvip2_t & from_addr, const xvip2_t & to_addr
     }
 
     bool valid = true;
-    common::xversion_t version{0};
+    common::xelection_round_t version{0};
     xvip2_t leader_xip;
     if (type == xconsensus::enum_consensus_msg_type_proposal ||
         type == xconsensus::enum_consensus_msg_type_commit) {

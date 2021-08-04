@@ -150,10 +150,10 @@ public:
      * @brief Get the children' node info (validator group)
      * 
      * @param gid The validator group id 
-     * @param version The version of validator group
+     * @param election_round The election round of validator group
      * @return std::map<common::xslot_id_t, data::xnode_info_t> 
      */
-    virtual std::map<common::xslot_id_t, data::xnode_info_t> children_info2(common::xgroup_id_t const & gid, common::xversion_t const & version) const = 0;
+    virtual std::map<common::xslot_id_t, data::xnode_info_t> children_info2(common::xgroup_id_t const & gid, common::xelection_round_t const & election_round) const = 0;
 
     /**
      * @brief Get the underlying vhost ptr

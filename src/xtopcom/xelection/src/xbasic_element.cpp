@@ -27,7 +27,7 @@ xtop_basic_element::xtop_basic_element(common::xnetwork_id_t const & network_id,
     } {
 }
 
-xtop_basic_element::xtop_basic_element(common::xversion_t const & version,
+xtop_basic_element::xtop_basic_element(common::xelection_round_t const & election_round,
                                        common::xnetwork_id_t const & network_id,
                                        common::xzone_id_t const & zone_id,
                                        common::xcluster_id_t const & cluster_id,
@@ -41,13 +41,13 @@ xtop_basic_element::xtop_basic_element(common::xversion_t const & version,
             cluster_id,
             group_id
         },
-        version,
+        election_round,
         sharding_size,
         associated_blk_height
     } {
 }
 
-xtop_basic_element::xtop_basic_element(common::xversion_t const & version,
+xtop_basic_element::xtop_basic_element(common::xelection_round_t const & election_round,
                                        common::xnetwork_id_t const & network_id,
                                        common::xzone_id_t const & zone_id,
                                        common::xcluster_id_t const & cluster_id,
@@ -67,7 +67,7 @@ xtop_basic_element::xtop_basic_element(common::xversion_t const & version,
             node_id,
             slot_id
         },
-        version,
+        election_round,
         sharding_size,
         associated_blk_height
     } {
@@ -128,9 +128,8 @@ xtop_basic_element::swap(xtop_basic_element & other) noexcept {
     m_address.swap(other.m_address);
 }
 
-common::xversion_t const &
-xtop_basic_element::version() const noexcept {
-    return m_address.version();
+common::xelection_round_t const & xtop_basic_element::election_round() const noexcept {
+    return m_address.election_round();
 }
 
 common::xlogical_version_t const & xtop_basic_element::logic_epoch() const noexcept {

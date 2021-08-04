@@ -113,8 +113,8 @@ void xtop_vhost::send(xmessage_t const & message,
 #endif
 
     try {
-        if (dst.version() != src.version()) {
-            xinfo("[vnetwork] dst version %s, src version %s", dst.version().to_string().c_str(), src.version().to_string().c_str());
+        if (dst.election_round() != src.election_round()) {
+            xinfo("[vnetwork] dst version %s, src version %s", dst.election_round().to_string().c_str(), src.election_round().to_string().c_str());
         }
 
         // auto const target_vnetwork = vnetwork(xvnetwork_id_t{ m_network_info });
@@ -226,7 +226,7 @@ void xtop_vhost::forward_broadcast_message(xmessage_t const & message, common::x
         #endif
 
         on_network_data_ready(host_node_id(), bytes_message);
-        if (dst.version().empty()) {
+        if (dst.election_round().empty()) {
             m_network_driver->forward_broadcast(dst.cluster_address().sharding_info(), dst.type(), bytes_message);
         } else {
             m_network_driver->spread_rumor(bytes_message);
@@ -299,7 +299,7 @@ void xtop_vhost::broadcast(xmessage_t const & message, common::xnode_address_t c
     assert(!src.account_address().empty());
 
     auto const dst = address_cast<common::xnode_type_t::group>(src);
-    assert(src.version() == dst.version());
+    assert(src.election_round() == dst.election_round());
 
 #if defined DEBUG
     if (common::has<common::xnode_type_t::storage>(src.type())) {
@@ -397,12 +397,12 @@ void xtop_vhost::broadcast(common::xnode_address_t const & src, common::xip2_t c
         auto version = m_election_cache_data_accessor->version_from(dst, ec);
         if (ec) {
             xwarn("%s ec category: %s ec msg: %s", vnetwork_category2().name(), ec.category().name(), ec.message().c_str());
-            version = src.version();
+            version = src.election_round();
         }
 
-        if (src.version() != version) {
+        if (src.election_round() != version) {
             ec = xvnetwork_errc2_t::version_mismatch;
-            xwarn("%s %s. src version %s dst version %s", ec.category().name(), ec.message().c_str(), src.version().to_string().c_str(), version.to_string().c_str());
+            xwarn("%s %s. src version %s dst version %s", ec.category().name(), ec.message().c_str(), src.election_round().to_string().c_str(), version.to_string().c_str());
             return;
         }
 
@@ -431,7 +431,7 @@ void xtop_vhost::broadcast(common::xnode_address_t const & src, common::xip2_t c
     } else if (common::broadcast(dst.network_id()) || common::broadcast(dst.zone_id())) {
         // broadcast in the specified network
 
-        common::xnode_address_t to{common::xsharding_address_t{dst.network_id(), dst.zone_id(), dst.cluster_id(), dst.group_id()}, common::xversion_t{}, dst.size(), dst.height()};
+        common::xnode_address_t to{common::xsharding_address_t{dst.network_id(), dst.zone_id(), dst.cluster_id(), dst.group_id()}, common::xelection_round_t{}, dst.size(), dst.height()};
 
         xvnetwork_message_t const vnetwork_message{src, to, message, m_chain_timer->logic_time()};
         auto const bytes_message = top::codec::msgpack_encode(vnetwork_message);
@@ -455,7 +455,7 @@ void xtop_vhost::broadcast(common::xnode_address_t const & src, common::xip2_t c
     } else if (common::broadcast(dst.slot_id())) {
         // broadcast between different shardings
 
-        common::xnode_address_t to{common::xsharding_address_t{dst.network_id(), dst.zone_id(), dst.cluster_id(), dst.group_id()}, common::xversion_t{}, dst.size(), dst.height()};
+        common::xnode_address_t to{common::xsharding_address_t{dst.network_id(), dst.zone_id(), dst.cluster_id(), dst.group_id()}, common::xelection_round_t{}, dst.size(), dst.height()};
 
         xvnetwork_message_t const vmsg{src, to, message, m_chain_timer->logic_time()};
         auto const bytes_message = top::codec::msgpack_encode(vmsg);

@@ -14,7 +14,7 @@ NS_BEG2(top, vnode)
 xtop_vnode::xtop_vnode(observer_ptr<elect::ElectMain> const & elect_main,
                        common::xsharding_address_t const & sharding_address,
                        common::xslot_id_t const & slot_id,
-                       common::xversion_t const & version,
+                       common::xelection_round_t const & version,
                        std::uint16_t const group_size,
                        std::uint64_t const associated_blk_height,
                        observer_ptr<vnetwork::xvhost_face_t> const & vhost,
@@ -78,7 +78,7 @@ xtop_vnode::xtop_vnode(observer_ptr<elect::ElectMain> const & elect_main,
   : xtop_vnode{elect_main,
                group_info->node_element(vhost->host_node_id())->address().sharding_address(),
                group_info->node_element(vhost->host_node_id())->slot_id(),
-               group_info->version(),
+               group_info->election_round(),
                group_info->sharding_size(),
                group_info->associated_blk_height(),
                vhost,
@@ -165,9 +165,9 @@ common::xnode_type_t xtop_vnode::type() const {
     return m_the_binding_driver->type();
 }
 
-common::xversion_t xtop_vnode::version() const {
+common::xelection_round_t xtop_vnode::election_round() const {
     assert(m_the_binding_driver != nullptr);
-    return m_the_binding_driver->address().version();
+    return m_the_binding_driver->address().election_round();
 }
 
 common::xnode_address_t xtop_vnode::address() const {

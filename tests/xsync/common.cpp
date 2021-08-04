@@ -7,7 +7,7 @@ using namespace top;
     top::common::xnode_address_t\
     get_##type##_address(uint32_t nid, uint64_t version, const std::string& node_id) {\
         top::common::xaccount_election_address_t account_address{ top::common::xnode_id_t { node_id }, top::common::xslot_id_t{} };\
-        return {cluster_addr, account_address, top::common::xversion_t{version}, 1, 1};\
+        return {cluster_addr, account_address, top::common::xelection_round_t{version}, 1, 1};\
     }
 
 DEFINE_FUNC(beacon, top::common::build_committee_sharding_address(top::common::xbeacon_network_id))
@@ -25,7 +25,7 @@ get_##type##_address(uint32_t nid, uint64_t version, const std::string& node_id,
         top::common::xgroup_id_t{ static_cast<top::common::xgroup_id_t::value_type>(start + offset) }\
     };\
     top::common::xaccount_election_address_t account_address{ top::common::xnode_id_t { node_id }, top::common::xslot_id_t{} };\
-    return top::common::xnode_address_t(cluster_addr, account_address, top::common::xversion_t{version}, 1, 1);\
+    return top::common::xnode_address_t(cluster_addr, account_address, top::common::xelection_round_t{version}, 1, 1);\
 }
 
 DEFINE_FUNC(auditor, 1)
@@ -63,7 +63,7 @@ DEFINE_FUNC(archive)
 
 
 common::xnode_address_t create_beacon_addr(uint16_t _slot_id, const std::string & name, std::size_t id) {
-    top::common::xversion_t ver(id);
+    top::common::xelection_round_t ver(id);
 
     // common::xnetwork_id_t nid{m_net_id++};
     common::xnetwork_id_t nid{1};
@@ -80,7 +80,7 @@ common::xnode_address_t create_beacon_addr(uint16_t _slot_id, const std::string 
 top::common::xnode_address_t create_zec_addr(uint16_t _slot_id, const std::string & name, std::size_t id) {
     common::xzone_id_t zid{1};
 
-    top::common::xversion_t ver(id);
+    top::common::xelection_round_t ver(id);
 
     // common::xnetwork_id_t nid{m_net_id++};
     common::xnetwork_id_t nid{1};
@@ -97,7 +97,7 @@ top::common::xnode_address_t create_zec_addr(uint16_t _slot_id, const std::strin
 common::xnode_address_t create_archive_addr(uint16_t _slot_id, const std::string & name, std::size_t id) {
     common::xzone_id_t zid{1};
 
-    top::common::xversion_t ver(id);
+    top::common::xelection_round_t ver(id);
 
     // common::xnetwork_id_t nid{m_net_id++};
     common::xnetwork_id_t nid{1};
@@ -115,7 +115,7 @@ common::xnode_address_t create_auditor_addr(uint16_t _slot_id, const std::string
     common::xzone_id_t zid{0};
     common::xgroup_id_t gid{1};
 
-    top::common::xversion_t ver(id);
+    top::common::xelection_round_t ver(id);
 
     // common::xnetwork_id_t nid{m_net_id++};
     common::xnetwork_id_t nid{1};
@@ -131,7 +131,7 @@ common::xnode_address_t create_auditor_addr(uint16_t _slot_id, const std::string
 
 common::xnode_address_t create_validator_addr(uint16_t _slot_id, const std::string & name, std::size_t id) {
     common::xzone_id_t zid{1};
-    top::common::xversion_t ver(id);
+    top::common::xelection_round_t ver(id);
 
     // common::xnetwork_id_t nid{m_net_id++};
     common::xnetwork_id_t nid{1};

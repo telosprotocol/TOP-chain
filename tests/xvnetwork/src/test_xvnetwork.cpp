@@ -23,16 +23,16 @@ using namespace network;    // NOLINT
 using namespace common;     // NOLINT
 
 #define DEFINE_VERSION_AND_NET_ID(NUM)                      \
-    common::xversion_t const version ## NUM {             \
-        static_cast<common::xversion_t::value_type>(NUM)  \
+    common::xelection_round_t const version ## NUM {             \
+        static_cast<common::xelection_round_t::value_type>(NUM)  \
     };                                                      \
     auto const network_id ## NUM = m_network_info.network_id
 
 #if 0
 using xsingle_vhost_fixture = top::vnetwork::tests::xvhost_fixture_t<1, 1, 1>;
 TEST_F(xsingle_vhost_fixture, version) {
-    common::xversion_t const version{
-        static_cast<common::xversion_t::value_type>(0)
+    common::xelection_round_t const version{
+        static_cast<common::xelection_round_t::value_type>(0)
     };
 
     auto vnetwork = m_vhost_manager->object(0).add_vnetwork(m_network_info.network_id);
@@ -66,7 +66,7 @@ TEST(xvnetwork, xcodec) {
             xgroup_id_t{ 1 }
         },
         xaccount_election_address_t{ node_id, top::common::xslot_id_t{} },
-        common::xversion_t{ static_cast<common::xversion_t::value_type>(0) },
+        common::xelection_round_t{ static_cast<common::xelection_round_t::value_type>(0) },
         std::uint16_t{1024},
         std::uint64_t{0}
     };
@@ -121,8 +121,8 @@ TEST_F(xsix_vhost_fixture, send_data) {
     }
 
     std::vector<std::shared_ptr<xvnetwork_t>> vnetworks{ size };
-    common::xversion_t const version{
-        static_cast<common::xversion_t::value_type>(0)
+    common::xelection_round_t const version{
+        static_cast<common::xelection_round_t::value_type>(0)
     };
 
     for (auto i = 0u; i < size; ++i) {
@@ -167,7 +167,7 @@ TEST_F(xsix_vhost_fixture, send_data) {
                            common::xgroup_id_t{ 1 }
                        },
                        xaccount_election_address_t{ node_ids[0], top::common::xslot_id_t{} },
-                       common::xversion_t{ static_cast<common::xversion_t::value_type>(0) }
+                       common::xelection_round_t{ static_cast<common::xelection_round_t::value_type>(0) }
                    },
                    top::common::xnode_address_t{
                        top::common::xcluster_address_t{
@@ -177,7 +177,7 @@ TEST_F(xsix_vhost_fixture, send_data) {
                            common::xgroup_id_t{ 64 }
                        },
                        xaccount_election_address_t{ node_ids[i], top::common::xslot_id_t{} },
-                       common::xversion_t{ static_cast<common::xversion_t::value_type>(0) }
+                       common::xelection_round_t{ static_cast<common::xelection_round_t::value_type>(0) }
                    },
                    {});
     }
@@ -238,7 +238,7 @@ TEST_F(xsix_vhost_fixture, send_data) {
 //             // zone 0 edge_cluster_id is the edge network
 //             case 0: {
 //                 xcluster_address_t edge_cluster_address{ network_id0, xedge_zone_id, xdefault_cluster_id, xdefault_group_id, xvnode_type_t::edge };
-//                 construction_data.add_group_info(edge_cluster_address, 0, version0, common::xversion_t{}, xgroup_id_t{});
+//                 construction_data.add_group_info(edge_cluster_address, 0, version0, common::xelection_round_t{}, xgroup_id_t{});
 //                 construction_data.insert(m_network_driver_manager.object(0).host_node_id(), xslot_id_t{ static_cast<xslot_id_t::value_type>(i) }, edge_cluster_address, version0);
 //                 break;
 //             }
@@ -246,7 +246,7 @@ TEST_F(xsix_vhost_fixture, send_data) {
 //             // other zones are working zones. each zone has a archive cluster.
 //             default: {
 //                 xcluster_address_t archive_cluster_address{ network_id0, xzone_id_t{ static_cast<xzone_id_t::value_type>(i) }, xtop_archive_cid, xarchive_group_id, xvnode_type_t::archive };
-//                 construction_data.add_group_info(archive_cluster_address, 0, version0, common::xversion_t{}, xgroup_id_t{});
+//                 construction_data.add_group_info(archive_cluster_address, 0, version0, common::xelection_round_t{}, xgroup_id_t{});
 
 //                 for (auto j = 0u; j < advance_cluster_count; ++j) {
 //                     xcluster_address_t advance_cluster_address{
@@ -256,7 +256,7 @@ TEST_F(xsix_vhost_fixture, send_data) {
 //                         common::xgroup_id_t{ static_cast<common::xgroup_id_t::value_type>(common::xauditor_group_id_value_begin + j) },
 //                         common::xnode_type_t::consensus_auditor
 //                     };
-//                     construction_data.add_group_info(advance_cluster_address, 0, version0, common::xversion_t{}, common::xgroup_id_t{});
+//                     construction_data.add_group_info(advance_cluster_address, 0, version0, common::xelection_round_t{}, common::xgroup_id_t{});
 //                 }
 
 //                 for (auto j = 0u; j < consensus_cluster_count; ++j) {
@@ -416,7 +416,7 @@ TEST_F(x16_8_8_vhost_fixture, gossip) {
     //     xdefault_cluster_id,
     //     xdefault_group_id
     // };
-    // construction_data0.add_group_info(cluster_addr, 0, version0, common::xversion_t{}, common::xgroup_id_t{});
+    // construction_data0.add_group_info(cluster_addr, 0, version0, common::xelection_round_t{}, common::xgroup_id_t{});
     // for (auto i = 0u; i < m_vhost_manager->object_count(); ++i) {
     //     construction_data0.insert(m_vhost_manager->object(i).host_node_id(), xslot_id_t{ static_cast<xslot_id_t::value_type>(i) }, cluster_addr, version0);
     // }

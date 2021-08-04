@@ -15,29 +15,29 @@ MSGPACK_API_VERSION_NAMESPACE(MSGPACK_DEFAULT_API_NS) {
 NS_BEG1(adaptor)
 
 template <typename TagT, typename ValueT>
-struct as<top::xversion_t<TagT, ValueT>, typename std::enable_if<msgpack::has_as<ValueT>::value>::type>
+struct as<top::xepoch_t<TagT, ValueT>, typename std::enable_if<msgpack::has_as<ValueT>::value>::type>
 {
-    top::xversion_t<TagT, ValueT>
+    top::xepoch_t<TagT, ValueT>
     operator()(msgpack::object const & o) const {
         if (o.is_nil()) {
-            return top::xversion_t<TagT, ValueT>{};
+            return top::xepoch_t<TagT, ValueT>{};
         }
 
-        return top::xversion_t<TagT, ValueT>{ o.as<ValueT>() };
+        return top::xepoch_t<TagT, ValueT>{ o.as<ValueT>() };
     }
 };
 
 template <typename TagT, typename ValueT>
-struct convert<top::xversion_t<TagT, ValueT>> final
+struct convert<top::xepoch_t<TagT, ValueT>> final
 {
     msgpack::object const &
-    operator()(msgpack::object const & o, top::xversion_t<TagT, ValueT> & v) const {
+    operator()(msgpack::object const & o, top::xepoch_t<TagT, ValueT> & v) const {
         if (o.is_nil()) {
-            v = top::xversion_t<TagT, ValueT>{};
+            v = top::xepoch_t<TagT, ValueT>{};
         } else {
             ValueT t;
             msgpack::adaptor::convert<ValueT>{}(o, t);
-            v = top::xversion_t<TagT, ValueT>{ t };
+            v = top::xepoch_t<TagT, ValueT>{ t };
         }
 
         return o;
@@ -45,11 +45,11 @@ struct convert<top::xversion_t<TagT, ValueT>> final
 };
 
 template <typename TagT, typename ValueT>
-struct pack<top::xversion_t<TagT, ValueT>>
+struct pack<top::xepoch_t<TagT, ValueT>>
 {
     template <typename Stream>
     msgpack::packer<Stream> &
-    operator()(msgpack::packer<Stream> & o, top::xversion_t<TagT, ValueT> const & message) const {
+    operator()(msgpack::packer<Stream> & o, top::xepoch_t<TagT, ValueT> const & message) const {
         if (message.has_value()) {
             o.pack(message.value());
         } else {
@@ -61,10 +61,10 @@ struct pack<top::xversion_t<TagT, ValueT>>
 };
 
 template <typename TagT, typename ValueT>
-struct object<top::xversion_t<TagT, ValueT>>
+struct object<top::xepoch_t<TagT, ValueT>>
 {
     void
-    operator()(msgpack::object & o, top::xversion_t<TagT, ValueT> const & message) const {
+    operator()(msgpack::object & o, top::xepoch_t<TagT, ValueT> const & message) const {
         if (message.has_value()) {
             msgpack::adaptor::object<ValueT>{}(o, message.value());
         } else {
@@ -74,10 +74,10 @@ struct object<top::xversion_t<TagT, ValueT>>
 };
 
 template <typename TagT, typename ValueT>
-struct object_with_zone<top::xversion_t<TagT, ValueT>>
+struct object_with_zone<top::xepoch_t<TagT, ValueT>>
 {
     void
-    operator()(msgpack::object::with_zone & o, top::xversion_t<TagT, ValueT> const & message) const {
+    operator()(msgpack::object::with_zone & o, top::xepoch_t<TagT, ValueT> const & message) const {
         if (message.has_value()) {
             msgpack::adaptor::object_with_zone<ValueT>()(o, message.value());
         } else {

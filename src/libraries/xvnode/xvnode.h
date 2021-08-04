@@ -78,7 +78,7 @@ public:
     xtop_vnode(observer_ptr<elect::ElectMain> const & elect_main,
                common::xsharding_address_t const & sharding_address,
                common::xslot_id_t const & slot_id,
-               common::xversion_t const & version,
+               common::xelection_round_t const & version,
                std::uint16_t const group_size,
                std::uint64_t const associated_blk_height,
                observer_ptr<vnetwork::xvhost_face_t> const & vhost,
@@ -106,7 +106,7 @@ public:
 
     common::xnode_type_t type() const override;
 
-    common::xversion_t version() const override;
+    common::xelection_round_t election_round() const override;
 
     common::xnode_address_t address() const override;
 

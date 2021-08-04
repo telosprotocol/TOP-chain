@@ -21,7 +21,7 @@ void xtest_zec_elect_consensus_contract_t::set_association_result_store() {
     auto const validator_group_count_per_auditor_group = validator_group_count / auditor_group_count;
 
     auto & election_association_result = m_election_association_result_store.result_of(common::xdefault_cluster_id);
-    election_association_result.cluster_version(common::xversion_t{0});
+    election_association_result.cluster_version(common::xelection_round_t{0});
     for (std::uint16_t i = 0u; i < validator_group_count; ++i) {
         common::xgroup_id_t consensus_gid{static_cast<common::xgroup_id_t::value_type>(common::xvalidator_group_id_value_begin + i)};
         auto const advance_group_id_offset = static_cast<std::uint16_t>(i / validator_group_count_per_auditor_group);

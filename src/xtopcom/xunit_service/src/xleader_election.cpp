@@ -144,7 +144,7 @@ xvip2_t xelection_cache_imp::get_group_xip2(xvip2_t const & xip) {
 xrandom_leader_election::xrandom_leader_election(const xobject_ptr_t<base::xvblockstore_t> & block_store, const std::shared_ptr<xelection_cache_face> & face)
   : m_blockstore(block_store), m_elector(face) {}
 
-xvip2_t get_leader(const xelection_cache_face::elect_set & nodes, const common::xversion_t& version, uint64_t factor) {
+xvip2_t get_leader(const xelection_cache_face::elect_set & nodes, const common::xelection_round_t& version, uint64_t factor) {
     assert(version.has_value());
     if (nodes.empty()) {
         xunit_warn("[xunitservice] leader_election candidates empty");
@@ -177,7 +177,7 @@ xvip2_t get_leader(const xelection_cache_face::elect_set & nodes, const common::
     return leaders[0].second;
 }
 
-const xvip2_t xrandom_leader_election::get_leader_xip(uint64_t viewId, const std::string & account, base::xvblock_t* prev_block, const xvip2_t & local, const xvip2_t & candidate, const common::xversion_t& version, uint16_t rotate_mode) {
+const xvip2_t xrandom_leader_election::get_leader_xip(uint64_t viewId, const std::string & account, base::xvblock_t* prev_block, const xvip2_t & local, const xvip2_t & candidate, const common::xelection_round_t& version, uint16_t rotate_mode) {
     // TODO(justin): leader maybe cross group for auditor & validator
     // if (!is_xip2_group_equal(local, candidate)) {
     //     xunit_warn("[xunitservice] recv invalid candidiate %s at %s not equal group", xcons_utl::xip_to_hex(candidate).c_str(), xcons_utl::xip_to_hex(local).c_str());
@@ -251,7 +251,7 @@ bool xelection_wrapper::on_network_start(xelection_cache_face * p_election,
 
     // neighbours
     std::error_code ec{election::xdata_accessor_errc_t::success};
-    auto elect_data = elect_cache_ptr->sharding_nodes(shard_address, address.version(), ec);
+    auto elect_data = elect_cache_ptr->sharding_nodes(shard_address, address.election_round(), ec);
     if (ec) {
         return false;
     }
@@ -259,17 +259,17 @@ bool xelection_wrapper::on_network_start(xelection_cache_face * p_election,
     to_elect_set(elect_data, elect_set_);
 
     ec.clear();
-    auto parent_cluster_address = elect_cache_ptr->parent_address(shard_address, address.version(), ec);
+    auto parent_cluster_address = elect_cache_ptr->parent_address(shard_address, address.election_round(), ec);
     auto parent_address = parent_cluster_address.sharding_address();
     ec.clear();
-    auto parent_elect_data = elect_cache_ptr->sharding_nodes(parent_address, address.version(), ec);
+    auto parent_elect_data = elect_cache_ptr->sharding_nodes(parent_address, address.election_round(), ec);
     xelection_cache_imp::elect_set parent_set_;
     to_elect_set(parent_elect_data, parent_set_);
 
     // children data
     std::map<int32_t, xelection_cache_imp::elect_set> child_map;
     ec.clear();
-    auto group_ele = elect_cache_ptr->group_element(shard_address, address.version(), ec);
+    auto group_ele = elect_cache_ptr->group_element(shard_address, address.election_round(), ec);
     if (!ec && group_ele != nullptr) {
         // common::xlogic_time_t       logic_time_now{chain_time};
         ec.clear();
@@ -280,10 +280,10 @@ bool xelection_wrapper::on_network_start(xelection_cache_face * p_election,
             auto child_address = (*iter)->address();
             auto child_shard_address = child_address.sharding_address();
             ec.clear();
-            auto child_elect_data = elect_cache_ptr->sharding_nodes(child_shard_address, child_address.version(), ec);
+            auto child_elect_data = elect_cache_ptr->sharding_nodes(child_shard_address, child_address.election_round(), ec);
             xelection_cache_imp::elect_set children_set_;
             to_elect_set(child_elect_data, children_set_);
-            auto version = child_address.version().value();
+            auto version = child_address.election_round().value();
             auto group_iter = child_map.find(group_id);
             if (group_iter != child_map.end()) {
                 if (group_versions[group_id] < version) {
@@ -322,7 +322,7 @@ bool xrotate_leader_election::is_rotate_xip(const xvip2_t & local) {
     return rotate;
 }
 
-const xvip2_t xrotate_leader_election::get_leader_xip(uint64_t viewId, const std::string & account, base::xvblock_t* prev_block, const xvip2_t & local, const xvip2_t & candidate, const common::xversion_t& version, uint16_t rotate_mode) {
+const xvip2_t xrotate_leader_election::get_leader_xip(uint64_t viewId, const std::string & account, base::xvblock_t* prev_block, const xvip2_t & local, const xvip2_t & candidate, const common::xelection_round_t& version, uint16_t rotate_mode) {
     uint64_t random = viewId + base::xvaccount_t::get_xid_from_account(account);
     xelection_cache_face::elect_set elect_set;
     bool leader = false;

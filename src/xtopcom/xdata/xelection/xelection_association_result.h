@@ -16,7 +16,7 @@ class xtop_election_association_result final
 private:
     using container_t = std::map<common::xgroup_id_t, common::xgroup_id_t>; // std::set<common::xgroup_id_t>??? should we support multiple associations?
     container_t m_assocation_result{};
-    common::xversion_t m_cluster_version{};
+    common::xelection_round_t m_cluster_version{};
 
 public:
     using key_type        = container_t::key_type;
@@ -32,14 +32,14 @@ public:
     using iterator        = container_t::iterator;
     using const_iterator  = container_t::const_iterator;
 
-    common::xversion_t const &
+    common::xelection_round_t const &
     cluster_version() const noexcept;
 
-    common::xversion_t &
+    common::xelection_round_t &
     cluster_version() noexcept;
 
     void
-    cluster_version(common::xversion_t && cluster_ver) noexcept;
+    cluster_version(common::xelection_round_t && cluster_ver) noexcept;
 
     std::map<common::xgroup_id_t, common::xgroup_id_t> const &
     results() const noexcept;

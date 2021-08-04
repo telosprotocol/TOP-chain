@@ -54,7 +54,7 @@ public:
 
         // must bigger than addr.ver
         std::size_t id = 2;
-        common::xversion_t ver{id};
+        common::xelection_round_t ver{id};
 
         //printf("%s %d %d\n", addr.to_string().c_str(), m_neighbor_key.size(), m_parent_key.size());
     }

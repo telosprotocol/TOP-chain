@@ -102,9 +102,9 @@ std::unordered_map<common::xgroup_address_t, xgroup_update_result_t> xtop_data_a
 }
 
 std::map<common::xslot_id_t, data::xnode_info_t> xtop_data_accessor::sharding_nodes(common::xgroup_address_t const & address,
-                                                                                    common::xversion_t const & version,
+                                                                                    common::xelection_round_t const & election_round,
                                                                                     std::error_code & ec) const {
-    xdbg("sharding nodes %s version %s this %p", address.to_string().c_str(), version.to_string().c_str(), this);
+    xdbg("sharding nodes %s version %s this %p", address.to_string().c_str(), election_round.to_string().c_str(), this);
 
     assert(!ec);
     assert(m_network_element != nullptr);
@@ -117,7 +117,7 @@ std::map<common::xslot_id_t, data::xnode_info_t> xtop_data_accessor::sharding_no
         return {};
     }
 
-    auto group_element = this->group_element(address.network_id(), address.zone_id(), address.cluster_id(), address.group_id(), version, ec);
+    auto group_element = this->group_element(address.network_id(), address.zone_id(), address.cluster_id(), address.group_id(), election_round, ec);
 
     if (ec) {
         xwarn("%s %s", ec.category().name(), ec.message().c_str());
@@ -151,7 +151,7 @@ std::map<common::xslot_id_t, data::xnode_info_t> xtop_data_accessor::sharding_no
     return result;
 }
 
-common::xnode_address_t xtop_data_accessor::parent_address(common::xgroup_address_t const & child_address, common::xversion_t const & child_version, std::error_code & ec) const
+common::xnode_address_t xtop_data_accessor::parent_address(common::xgroup_address_t const & child_address, common::xelection_round_t const & child_version, std::error_code & ec) const
     noexcept {
     assert(!ec);
     auto const parent_element = parent_group_element(child_address, child_version, ec);
@@ -165,7 +165,7 @@ common::xnode_address_t xtop_data_accessor::parent_address(common::xgroup_addres
 
 std::shared_ptr<xnode_element_t> xtop_data_accessor::node_element(common::xnode_address_t const & address, std::error_code & ec) const {
     assert(!ec);
-    auto const group_element = this->group_element(address.network_id(), address.zone_id(), address.cluster_id(), address.group_id(), address.version(), ec);
+    auto const group_element = this->group_element(address.network_id(), address.zone_id(), address.cluster_id(), address.group_id(), address.election_round(), ec);
     if (ec) {
         xwarn("%s %s", ec.category().name(), ec.message().c_str());
         return {};
@@ -195,7 +195,7 @@ common::xnode_id_t xtop_data_accessor::node_id_from(common::xip2_t const & xip2,
 }
 
 std::shared_ptr<xgroup_element_t> xtop_data_accessor::group_element(common::xgroup_address_t const & group_address,
-                                                                    common::xversion_t const & version,
+                                                                    common::xelection_round_t const & version,
                                                                     std::error_code & ec) const {
     assert(!ec);
     assert(m_network_element != nullptr);
@@ -266,7 +266,7 @@ std::shared_ptr<xgroup_element_t> xtop_data_accessor::group_element_by_logic_tim
 }
 
 std::shared_ptr<xgroup_element_t> xtop_data_accessor::parent_group_element(common::xgroup_address_t const & child_sharding_address,
-                                                                           common::xversion_t const & child_sharding_version,
+                                                                           common::xelection_round_t const & child_sharding_version,
                                                                            std::error_code & ec) const {
     assert(!ec);
     auto group_element = this->group_element(child_sharding_address, child_sharding_version, ec);
@@ -305,7 +305,7 @@ std::shared_ptr<xgroup_element_t> xtop_data_accessor::parent_group_element(commo
     return associated_parent;
 }
 
-common::xversion_t xtop_data_accessor::version_from(common::xip2_t const & xip2, std::error_code & ec) const {
+common::xelection_round_t xtop_data_accessor::version_from(common::xip2_t const & xip2, std::error_code & ec) const {
     assert(!ec);
     auto group_element = this->group_element_by_height(xip2.network_id(), xip2.zone_id(), xip2.cluster_id(), xip2.group_id(), xip2.height(), ec);
     if (ec) {
@@ -314,7 +314,7 @@ common::xversion_t xtop_data_accessor::version_from(common::xip2_t const & xip2,
     }
     assert(group_element != nullptr);
 
-    return group_element->version();
+    return group_element->election_round();
 }
 
 std::unordered_map<common::xgroup_address_t, xgroup_update_result_t> xtop_data_accessor::update_zone(std::shared_ptr<xzone_element_t> const & zone_element,

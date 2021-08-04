@@ -789,7 +789,7 @@ xnode_type_t node_type_from(common::xzone_id_t const & zone_id, common::xcluster
     return node_type;
 }
 
-//bool operator==(common::xversion_t const & lhs, xnetwork_version_t const & rhs) noexcept {
+//bool operator==(common::xelection_round_t const & lhs, xnetwork_version_t const & rhs) noexcept {
 //    if (!lhs.has_value() || !rhs.has_value()) {
 //        return false;
 //    }

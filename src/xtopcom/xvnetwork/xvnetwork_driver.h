@@ -73,7 +73,7 @@ public:
 
     std::map<common::xslot_id_t, data::xnode_info_t> parents_info2() const override final;
 
-    std::map<common::xslot_id_t, data::xnode_info_t> children_info2(common::xgroup_id_t const & gid, common::xversion_t const & version) const override final;
+    std::map<common::xslot_id_t, data::xnode_info_t> children_info2(common::xgroup_id_t const & gid, common::xelection_round_t const & election_round) const override final;
 
     observer_ptr<xvhost_face_t> virtual_host() const noexcept override;
 

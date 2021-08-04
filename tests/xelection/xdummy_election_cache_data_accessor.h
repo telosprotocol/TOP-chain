@@ -29,14 +29,14 @@ public:
 
     std::map<common::xslot_id_t, data::xnode_info_t>
     sharding_nodes(common::xsharding_address_t const &,
-                   common::xversion_t const &,
+                   common::xelection_round_t const &,
                    std::error_code &) const override {
         return {};
     }
 
     common::xnode_address_t
     parent_address(common::xsharding_address_t const &,
-                   common::xversion_t const &,
+                   common::xelection_round_t const &,
                    std::error_code &) const noexcept override {
         return {};
     }
@@ -49,7 +49,7 @@ public:
 
     std::shared_ptr<top::election::cache::xgroup_element_t>
     group_element(common::xsharding_address_t const &,
-                  common::xversion_t const &,
+                  common::xelection_round_t const &,
                   std::error_code &) const override {
         return {};
     }
@@ -73,7 +73,7 @@ public:
 
     std::shared_ptr<top::election::cache::xgroup_element_t>
     parent_group_element(common::xsharding_address_t const &,
-                         common::xversion_t const &,
+                         common::xelection_round_t const &,
                          std::error_code &) const override {
         return {};
     }
@@ -82,9 +82,9 @@ public:
         return {};
     }
 
-    common::xversion_t
+    common::xelection_round_t
     version_from(common::xip2_t const & xip2, std::error_code & ec) const override {
-        return common::xversion_t{};
+        return common::xelection_round_t{};
     }
 
     common::xnode_id_t

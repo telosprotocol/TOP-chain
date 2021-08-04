@@ -48,18 +48,18 @@ common::xnetwork_id_t const & xtop_basic_vhost::network_id() const noexcept {
     return m_network_id;
 }
 
-std::map<common::xslot_id_t, data::xnode_info_t> xtop_basic_vhost::members_info_of_group2(xcluster_address_t const & group_addr, common::xversion_t const & version) const {
+std::map<common::xslot_id_t, data::xnode_info_t> xtop_basic_vhost::members_info_of_group2(xcluster_address_t const & group_addr, common::xelection_round_t const & election_round) const {
     assert(m_election_cache_data_accessor != nullptr);
 
     std::error_code ec{election::xdata_accessor_errc_t::success};
 
-    return m_election_cache_data_accessor->sharding_nodes(group_addr, version, ec);
+    return m_election_cache_data_accessor->sharding_nodes(group_addr, election_round, ec);
 }
 
 common::xnode_address_t xtop_basic_vhost::parent_group_address(xvnode_address_t const & child_addr) const {
     std::error_code ec{election::xdata_accessor_errc_t::success};
 
-    return m_election_cache_data_accessor->parent_address(child_addr.sharding_address(), child_addr.version(), ec);
+    return m_election_cache_data_accessor->parent_address(child_addr.sharding_address(), child_addr.election_round(), ec);
 }
 
 std::map<xvnode_address_t, xcrypto_key_t<pub>> xtop_basic_vhost::crypto_keys(std::vector<xvnode_address_t> const & nodes) const {

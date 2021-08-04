@@ -59,7 +59,7 @@ void xtxpool_service::set_params(const xvip2_t & xip, const std::shared_ptr<vnet
     m_vnet_driver = vnet_driver;
     m_vnetwork_str = vnet_driver->address().to_string();
 
-    common::xnode_address_t node_addr = xcons_utl::to_address(m_xip, m_vnet_driver->address().version());
+    common::xnode_address_t node_addr = xcons_utl::to_address(m_xip, m_vnet_driver->address().election_round());
 
     m_node_id = static_cast<std::uint16_t>(get_node_id_from_xip2(m_xip));
     m_shard_size = static_cast<std::uint16_t>(get_group_nodes_count_from_xip2(m_xip));
