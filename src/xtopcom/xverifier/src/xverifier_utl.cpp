@@ -42,10 +42,14 @@ int32_t xtx_utl::address_is_valid(const std::string & addr) {
         addrtemp = addrtemp.substr(top::base::xvaccount_t::enum_vaccount_address_prefix_size);
         std::string addrtemp2(addrtemp);
         std::transform(addrtemp.begin(), addrtemp.end(), addrtemp.begin(), ::tolower);
-        if (addrtemp != addrtemp2 || addr[0] != 'T' || is_valid_hex_format(addrtemp) == false) {
+        if (addrtemp != addrtemp2 || is_valid_hex_format(addrtemp) == false) {
             xwarn("[global_trace][verifier][address_is_valid]addr invalid: %s", addr.c_str());
             return  xverifier_error::xverifier_error_addr_invalid;
         }
+    }
+    if (addr[0] != 'T') {
+            xwarn("[global_trace][verifier][address_is_valid]addr invalid: %s", addr.c_str());
+            return  xverifier_error::xverifier_error_addr_invalid;
     }
 
     xdbg("[global_trace][xverifier][address_is_valid][success] address: %s", addr.c_str());
