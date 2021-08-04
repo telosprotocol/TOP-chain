@@ -115,7 +115,7 @@ int32_t xtx_verifier::verify_address_type(data::xtransaction_t const * trx) {
         from = from.substr(top::base::xvaccount_t::enum_vaccount_address_prefix_size);
         std::string from2(from);
         std::transform(from.begin(), from.end(), from.begin(), ::tolower);
-        if (from != from2) {
+        if (from != from2 || src_addr[0] != 'T') {
             xwarn("[global_trace][xtx_verifier][address_verify]src addr invalid, tx:%s", trx->dump().c_str());
             return  xverifier_error::xverifier_error_addr_invalid;
         }
@@ -126,7 +126,7 @@ int32_t xtx_verifier::verify_address_type(data::xtransaction_t const * trx) {
         to = to.substr(top::base::xvaccount_t::enum_vaccount_address_prefix_size);
         std::string to2(to);
         std::transform(to.begin(), to.end(), to.begin(), ::tolower);
-        if (to != to2) {
+        if (to != to2 || dst_addr[0] != 'T') {
             xwarn("[global_trace][xtx_verifier][address_verify]dst addr invalid, tx:%s", trx->dump().c_str());
             return  xverifier_error::xverifier_error_addr_invalid;
         }
