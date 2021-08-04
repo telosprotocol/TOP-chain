@@ -53,7 +53,7 @@ private:
 
     mutable std::shared_ptr<xtxpool_table_t> m_tables[enum_xtxpool_table_type_max][enum_vbucket_has_tables_count];
     bool m_table_recover_flag_arr[enum_xtxpool_table_type_max][enum_vbucket_has_tables_count];
-    std::vector<std::shared_ptr<xtxpool_shard_info_t>> m_shards;
+    std::vector<std::shared_ptr<xtxpool_shard_info_t>> m_shards[enum_xtxpool_table_type_max];
     std::shared_ptr<xtxpool_resources_face> m_para;
     mutable std::mutex m_mutex[enum_xtxpool_table_type_max];
     xtxpool_statistic_t m_statistic;
