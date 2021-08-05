@@ -85,7 +85,7 @@ bool xnetwork_proxy::send_out(common::xmessage_id_t const & id, const xvip2_t & 
             auto to = elect_set[0].xip;
             reset_node_id_to_xip2(to);
             set_node_id_to_xip2(to, 0x3FF);
-            auto dest_to = xcons_utl::to_address(to, network->address().version());
+            auto dest_to = xcons_utl::to_address(to, network->address().election_round());
             network->forward_broadcast_message(msg, dest_to);
 #ifdef DEBUG
             xunit_dbg("[xunitservice] network forward from %s to %#016" PRIx64 ".%016" PRIx64, network->address().to_string().c_str(), to_addr.low_addr, to_addr.high_addr);

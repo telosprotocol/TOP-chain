@@ -25,7 +25,7 @@ xtop_data_accessor::group_element(common::xnetwork_id_t const & network_id,
                                   common::xzone_id_t const & zone_id,
                                   common::xcluster_id_t const & cluster_id,
                                   common::xgroup_id_t const & group_id,
-                                  common::xversion_t const & version,
+                                  common::xelection_round_t const & election_round,
                                   std::error_code & ec) const {
     assert(!ec);
     assert(m_logic_timer != nullptr);
@@ -36,10 +36,10 @@ xtop_data_accessor::group_element(common::xnetwork_id_t const & network_id,
         return {};
     }
 
-    if (version.empty()) {
+    if (election_round.empty()) {
         return cluster_element->group_element_by_logic_time(group_id, m_logic_timer->logic_time(), ec);
     } else {
-        return cluster_element->group_element(group_id, version, ec);
+        return cluster_element->group_element(group_id, election_round, ec);
     }
 }
 

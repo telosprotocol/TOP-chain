@@ -271,7 +271,7 @@ NS_BEG2(top, vnetwork)
 //            return;
 //        }
 //
-//        common::xversion_t max_validator_version;
+//        common::xelection_round_t max_validator_version;
 //        for (auto const & validator : validator_children) {
 //            if ((validator->address().cluster_address() == receiver.cluster_address()) && (max_validator_version < validator->version())) {
 //                max_validator_version = validator->version();

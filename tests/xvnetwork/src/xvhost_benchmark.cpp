@@ -80,7 +80,7 @@ public:
             top::common::xnode_address_t sender{
                 auditor_sharding_address,
                 top::common::xaccount_election_address_t{ sender_node_id, top::common::xslot_id_t{0} },
-                common::xversion_t{ static_cast<common::xversion_t::value_type>(i % version_count) },
+                common::xelection_round_t{ static_cast<common::xelection_round_t::value_type>(i % version_count) },
                 std::uint16_t{1},
                 std::uint64_t{i % version_count}
             };
@@ -88,7 +88,7 @@ public:
             top::common::xnode_address_t receiver{
                 validator_sharding_address,
                 top::common::xaccount_election_address_t{ receiver_node_id, top::common::xslot_id_t{0} },
-                common::xversion_t{ static_cast<common::xversion_t::value_type>(i % version_count) },
+                common::xelection_round_t{ static_cast<common::xelection_round_t::value_type>(i % version_count) },
                 std::uint16_t{1},
                 std::uint64_t{i % version_count}
             };
@@ -174,7 +174,7 @@ std::vector<std::shared_ptr<top::vnetwork::xvnetwork_driver_face_t>> build_vnetw
         top::common::xnode_address_t address{
             validator_sharding_address,
             top::common::xaccount_election_address_t{ receiver_node_id, top::common::xslot_id_t{0} },
-            common::xversion_t{ static_cast<common::xversion_t::value_type>(i % version_count) },
+            common::xelection_round_t{ static_cast<common::xelection_round_t::value_type>(i % version_count) },
             std::uint16_t{1},
             std::uint64_t{i % version_count}
         };
@@ -195,22 +195,22 @@ static void build_election_cache_data_accessor() {
 
         auto & auditor_election_result = result_store.result_of(common::xnode_type_t::consensus_auditor).result_of(common::xdefault_cluster_id).result_of(common::xauditor_group_id_begin);
         auditor_election_result.start_time(i);
-        auditor_election_result.group_version(common::xversion_t{ static_cast<common::xversion_t::value_type>(i) });
+        auditor_election_result.group_version(common::xelection_round_t{ static_cast<common::xelection_round_t::value_type>(i) });
 
         top::data::election::xelection_info_bundle_t election_info_bundle;
         election_info_bundle.node_id(sender_node_id);
-        election_info_bundle.election_info().joined_version = common::xversion_t{ static_cast<common::xversion_t::value_type>(0) };
+        election_info_bundle.election_info().joined_version = common::xelection_round_t{ static_cast<common::xelection_round_t::value_type>(0) };
 
         auditor_election_result.insert(std::move(election_info_bundle));
 
         auto & validator_election_result = result_store.result_of(common::xnode_type_t::consensus_validator).result_of(common::xdefault_cluster_id).result_of(common::xvalidator_group_id_begin);
         validator_election_result.start_time(i);
-        validator_election_result.group_version(common::xversion_t{ static_cast<common::xversion_t::value_type>(i) });
-        validator_election_result.associated_group_version(common::xversion_t{ static_cast<common::xversion_t::value_type>(i) });
+        validator_election_result.group_version(common::xelection_round_t{ static_cast<common::xelection_round_t::value_type>(i) });
+        validator_election_result.associated_group_version(common::xelection_round_t{ static_cast<common::xelection_round_t::value_type>(i) });
         validator_election_result.associated_group_id(common::xauditor_group_id_begin);
 
         election_info_bundle.node_id(receiver_node_id);
-        election_info_bundle.election_info().joined_version = common::xversion_t{ static_cast<common::xversion_t::value_type>(0) };
+        election_info_bundle.election_info().joined_version = common::xelection_round_t{ static_cast<common::xelection_round_t::value_type>(0) };
 
         validator_election_result.insert(std::move(election_info_bundle));
 

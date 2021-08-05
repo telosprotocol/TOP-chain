@@ -37,7 +37,7 @@ struct convert<top::data::election::xelection_association_result_t> final
             }
 
             case xelection_association_result_cluster_version_index: {
-                result.cluster_version(o.via.array.ptr[xelection_association_result_cluster_version_index].as<top::common::xversion_t>());
+                result.cluster_version(o.via.array.ptr[xelection_association_result_cluster_version_index].as<top::common::xelection_round_t>());
                 XATTRIBUTE_FALLTHROUGH;
             }
 

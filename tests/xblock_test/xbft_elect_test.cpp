@@ -59,7 +59,7 @@ class xmock_network_2 : public mock::network_mock {
     }
 
     static top::common::xnode_address_t create_address(int index, const std::string &account, std::size_t version = 1, bool bbeacon = false) {
-        top::common::xversion_t           ver(version);
+        top::common::xelection_round_t           ver(version);
         common::xnetwork_id_t             nid{common::xtestnet_id};
         common::xslot_id_t                slot_id{index};
         top::common::xcluster_address_t cluster_addr;

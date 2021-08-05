@@ -385,7 +385,7 @@ public:
             common::xnode_address_t node_addr{group_addr, account_election_addr};
             xunit_service::xelection_cache_face::xelect_data elect_data;
             elect_data.xip = node_addr.xip2().value();
-            elect_data.joined_version = common::xversion_t{0};
+            elect_data.joined_version = common::xelection_round_t{0};
             elect_data.staking = stake[i];
             elect_set.emplace_back(elect_data);
             // std::cout << "xip: " << node_addr.xip2().value().high_addr << " " << node_addr.xip2().value().low_addr << std::endl;
@@ -504,7 +504,7 @@ public:
             common::xnode_address_t node_addr{group_addr, account_election_addr};
             xunit_service::xelection_cache_face::xelect_data elect_data;
             elect_data.xip = node_addr.xip2().value();
-            elect_data.joined_version = common::xversion_t{0};
+            elect_data.joined_version = common::xelection_round_t{0};
             elect_data.staking = stake[i];
             elect_set.emplace_back(elect_data);
             // std::cout << "xip: " << node_addr.xip2().value().high_addr << " " << node_addr.xip2().value().low_addr << std::endl;

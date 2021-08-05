@@ -21,7 +21,7 @@ class xdummy_vnode; /* : public top::vnode::xvnode_face_t {
         return NodeTypeV;
     }
 
-    top::common::xversion_t version() const override {
+    top::common::xelection_round_t version() const override {
         return {};
     }
 
@@ -59,8 +59,8 @@ class xdummy_vnode; /* : public top::vnode::xvnode_face_t {
             return address_.type();                                                             \
         }                                                                                       \
                                                                                                 \
-        top::common::xversion_t version() const override {                                      \
-            return address_.version();                                                          \
+        top::common::xelection_round_t election_round() const override {                        \
+            return address_.election_round();                                                   \
         }                                                                                       \
                                                                                                 \
         top::common::xnode_address_t address() const override {                                 \

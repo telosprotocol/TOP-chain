@@ -2178,11 +2178,6 @@ namespace top
             return false;
         }
         
-        bool   xvblock_t::is_executed() const
-        {
-            return check_block_flag(enum_xvblock_flag_executed);
-        }
-        
         bool   xvblock_t::is_equal(const xvblock_t & other)  const//compare everyting except certification
         {
             if( (is_valid() == false) || (other.is_valid() == false) ) //must be valid for both

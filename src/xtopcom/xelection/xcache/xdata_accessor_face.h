@@ -37,13 +37,13 @@ public:
     virtual
     std::map<common::xslot_id_t, data::xnode_info_t>
     sharding_nodes(common::xgroup_address_t const & address,
-                   common::xversion_t const & version,
+                   common::xelection_round_t const & election_round,
                    std::error_code & ec) const = 0;
 
     virtual
     common::xnode_address_t
     parent_address(common::xgroup_address_t const & child_address,
-                   common::xversion_t const & child_version,
+                   common::xelection_round_t const & child_election_round,
                    std::error_code & ec) const noexcept = 0;
 
     virtual
@@ -54,7 +54,7 @@ public:
 
     XATTRIBUTE_DEPRECATED
     virtual std::shared_ptr<xgroup_element_t> group_element(common::xgroup_address_t const & group_address,
-                                                            common::xversion_t const & version,
+                                                            common::xelection_round_t const & election_round,
                                                             std::error_code & ec) const = 0;
 
     virtual std::shared_ptr<xgroup_element_t> group_element(common::xgroup_address_t const & group_address,
@@ -71,14 +71,14 @@ public:
 
     XATTRIBUTE_DEPRECATED
     virtual std::shared_ptr<xgroup_element_t> parent_group_element(common::xgroup_address_t const & child_sharding_address,
-                                                                   common::xversion_t const & child_sharding_version,
+                                                                   common::xelection_round_t const & child_group_election_round,
                                                                    std::error_code & ec) const = 0;
 
     virtual std::shared_ptr<xgroup_element_t> parent_group_element(common::xgroup_address_t const & child_group_address,
                                                                    common::xlogic_epoch_t const & child_logical_version,
                                                                    std::error_code & ec) const = 0;
 
-    virtual common::xversion_t version_from(common::xip2_t const & xip2, std::error_code & ec) const = 0;
+    virtual common::xelection_round_t version_from(common::xip2_t const & xip2, std::error_code & ec) const = 0;
 };
 using xdata_accessor_face_t = xtop_data_accessor_face;
 

@@ -892,12 +892,6 @@ namespace top
 
             //connected block must be committed as well
             base::xvbindex_t* result = query_index(m_meta->_highest_connect_block_height,base::enum_xvblock_flag_committed);
-            //finally send out all events.
-            for(auto & index : fire_stored_events)
-            {
-                //XTODO,it might be good to just send latest one instead every events
-                on_block_stored(index());
-            }
             if(result != nullptr)
             {
                 return result;
@@ -1904,13 +1898,6 @@ namespace top
                 xdbg("xblockacct_t::full_connect_to,navigate step(%d) to _highest_connect_block_height=%" PRIu64 "  ",block_connect_step,m_meta->_highest_connect_block_height);
             }
             
-            //finally send out all events.
-            for(auto & index : fire_stored_events)
-            {
-                //XTODO,it might be good to just send latest one instead every events
-                on_block_stored(index());
-            }
-
             return true;
         }
 
@@ -2629,35 +2616,6 @@ namespace top
                 return true;
 
             return get_xdbstore()->set_value(full_path_as_key,value);
-        }
-
-        bool      xblockacct_t::on_block_stored(base::xvbindex_t* index_ptr)
-        {
-            xdbg("jimmy xblockacct_t::on_block_stored,at account=%s,index=%s",get_account().c_str(),index_ptr->dump().c_str());
-            if(index_ptr->get_height() == 0) //ignore genesis block
-                return true;
-            const int block_flags = index_ptr->get_block_flags();
-            if((block_flags & base::enum_xvblock_flag_executed) != 0)
-            {
-                //here notify execution event if need
-            }
-            if( ((block_flags & base::enum_xvblock_flag_committed) != 0) && ((block_flags & base::enum_xvblock_flag_connected) != 0) )
-            {
-                base::xveventbus_t * mbus = base::xvchain_t::instance().get_xevmbus();
-                xassert(mbus != NULL);
-                if(mbus != NULL)
-                {
-                    if(index_ptr->get_height() != 0)
-                    {
-                        mbus::xevent_ptr_t event = mbus->create_event_for_store_index_to_db(index_ptr);
-                        if (event != nullptr) {
-                            mbus->push_event(event);
-                        }
-                    }
-                    xdbg_info("xblockacct_t::on_block_stored,done at store(%s)-> block=%s",get_blockstore_path().c_str(),index_ptr->dump().c_str());
-                }
-            }
-            return true;
         }
 
         bool      xblockacct_t::on_block_committed(base::xvbindex_t* index_ptr)

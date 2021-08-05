@@ -72,7 +72,7 @@ bool xtop_test_election_data_manager_fixture::add_nodes_to_election_result(std::
         common::xnode_id_t node_id{std::string(node_id_prefix + std::to_string(index))};
 
         xelection_info_t new_election_info;
-        new_election_info.joined_version = common::xversion_t{0};
+        new_election_info.joined_version = common::xelection_round_t{0};
         new_election_info.consensus_public_key = top::xpublic_key_t{std::string{"test_publick_key"} + std::to_string(index)};
         new_election_info.stake = index;
         new_election_info.comprehensive_stake = index;

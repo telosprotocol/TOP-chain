@@ -69,7 +69,7 @@ TEST(xkad_test, _kad_key_3) {
     uint64_t height = 0;
 
     common::xip2_t xip2_0{network_id, zid, cluster_id, group_id, slot_id, size, height};
-    common::xip2_t xip2_1{network_id, zid, cluster_id, group_id, slot_id, size, common::xversion_t::max().value()};
+    common::xip2_t xip2_1{network_id, zid, cluster_id, group_id, slot_id, size, common::xelection_round_t::max().value()};
 
     auto s0 = base::GetKadmliaKey(xip2_0)->GetServiceType();
     auto s1 = base::GetKadmliaKey(xip2_1)->GetServiceType();

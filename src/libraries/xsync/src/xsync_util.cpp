@@ -65,7 +65,7 @@ uint32_t vrf_value(const std::string& hash) {
 //    common::xzone_id_t zone_id = common::xzone_id_t{uint8_t(get_zone_id_from_xip2(group_xip2))};
 //    common::xcluster_id_t cluster_id = common::xcluster_id_t{uint8_t(get_cluster_id_from_xip2(group_xip2))};
 //    common::xgroup_id_t group_id = common::xgroup_id_t{uint8_t(get_group_id_from_xip2(group_xip2))};
-//    common::xversion_t ver = common::xversion_t{uint8_t(get_network_ver_from_xip2(group_xip2))};
+//    common::xelection_round_t ver = common::xelection_round_t{uint8_t(get_network_ver_from_xip2(group_xip2))};
 //    common::xnetwork_id_t nid = common::xnetwork_id_t{uint32_t(get_network_id_from_xip2(group_xip2))};
 //    uint64_t elect_height = get_network_height_from_xip2(group_xip2);
 //

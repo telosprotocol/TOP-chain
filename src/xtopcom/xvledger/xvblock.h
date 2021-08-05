@@ -624,7 +624,6 @@ namespace top
         public:
             virtual bool                is_valid(bool deep_test = false)    const;//not verify hash of header&input&output when deep_test is alse
             virtual bool                is_deliver(bool deep_test = false)  const;//test whether has certification ready
-            virtual bool                is_executed() const;                      //block has been executed
             virtual bool                is_input_ready(bool full_check_resources = false)  const;                  //nil-block return true because it dont need input
             virtual bool                is_output_ready(bool full_check_resources = false) const;                  //nil-block return true because it dont need output
             virtual bool                is_execute_ready() const {return true;}//check whether ready to execute bin-log

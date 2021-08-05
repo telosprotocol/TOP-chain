@@ -107,7 +107,7 @@ void xedge_handler_base<T>::edge_send_msg(const std::vector<std::shared_ptr<xrpc
                 auto count = 0;
                 auto msghash = msg.hash();
                 std::error_code ec;
-                auto cluster_addresses = m_election_cache_data_accessor->sharding_nodes(group_addr, common::xversion_t{}, ec);
+                auto cluster_addresses = m_election_cache_data_accessor->sharding_nodes(group_addr, common::xelection_round_t{}, ec);
                 if (ec) {
                     xdbg("%s %s", ec.category().name(), ec.message().c_str());
                     assert(cluster_addresses.empty());

@@ -29,7 +29,7 @@ protected:
      */
     xtop_basic_element(common::xnetwork_id_t const & network_id, common::xzone_id_t const & zone_id, common::xcluster_id_t const & cluster_id);
 
-    xtop_basic_element(common::xversion_t const & version,
+    xtop_basic_element(common::xelection_round_t const & election_round,
                        common::xnetwork_id_t const & network_id,
                        common::xzone_id_t const & zone_id,
                        common::xcluster_id_t const & cluster_id,
@@ -37,7 +37,7 @@ protected:
                        uint16_t const sharding_size,
                        uint64_t const associated_blk_height);
 
-    xtop_basic_element(common::xversion_t const & version,
+    xtop_basic_element(common::xelection_round_t const & election_round,
                        common::xnetwork_id_t const & network_id,
                        common::xzone_id_t const & zone_id,
                        common::xcluster_id_t const & cluster_id,
@@ -56,7 +56,7 @@ public:
 
     common::xnode_type_t type() const noexcept;
 
-    common::xversion_t const & version() const noexcept;
+    common::xelection_round_t const & election_round() const noexcept;
 
     common::xlogical_version_t const & logic_epoch() const noexcept;
 

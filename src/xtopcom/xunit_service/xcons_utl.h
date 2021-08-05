@@ -33,7 +33,7 @@ public:
     static xvip2_t erase_version(const xvip2_t& xip);
     static std::string xip_to_hex(const xvip2_t & xip);
     static bool    xip_equals(const xvip2_t &left, const xvip2_t &right);
-    static common::xnode_address_t to_address(const xvip2_t& xip, common::xversion_t const & version);
+    static common::xnode_address_t to_address(const xvip2_t& xip, common::xelection_round_t const & version);
     static bool is_broadcast_address(const xvip2_t &addr);
     static bool is_auditor(const xvip2_t & xip);
     static bool is_validator(const xvip2_t & xip);

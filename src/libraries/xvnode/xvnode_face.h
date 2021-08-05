@@ -24,7 +24,7 @@ public:
     ~xtop_vnode_face() override = default;
 
     virtual common::xnode_type_t type() const = 0;
-    virtual common::xversion_t version() const = 0;
+    virtual common::xelection_round_t election_round() const = 0;
     virtual common::xnode_address_t address() const = 0;
     // virtual std::vector<common::xnode_address_t> neighbors() const = 0;
 };

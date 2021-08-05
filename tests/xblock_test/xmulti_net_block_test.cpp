@@ -14,7 +14,7 @@ protected:
 
     top::common::xnode_address_t create_address(int index, const std::string &account, common::xnode_type_t node_type, std::size_t version = 1) {
         // std::size_t                       id = 1;
-        top::common::xversion_t           ver(version);
+        top::common::xelection_round_t           ver(version);
         common::xnetwork_id_t             nid{common::xtestnet_id};
         common::xslot_id_t                slot_id{index};
         top::common::xcluster_address_t cluster_addr;

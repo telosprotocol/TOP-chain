@@ -12,7 +12,7 @@ xtop_node_element::xtop_node_element(common::xnode_id_t const & node_id,
                                      data::election::xelection_info_t const & election_info,
                                      std::shared_ptr<xgroup_element_t> const & group_element)
     : xbase_t{
-        group_element->version(),
+        group_element->election_round(),
         group_element->address().network_id(),
         group_element->address().zone_id(),
         group_element->address().cluster_id(),
@@ -42,7 +42,7 @@ xtop_node_element::hash() const {
     return node_id().hash();
 }
 
-common::xversion_t const &
+common::xelection_round_t const &
 xtop_node_element::joined_version() const noexcept {
     return m_election_info.joined_version;
 }

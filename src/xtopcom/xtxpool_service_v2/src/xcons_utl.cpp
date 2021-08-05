@@ -33,7 +33,7 @@ bool xcons_utl::is_broadcast_address(const xvip2_t & addr) {
     return xip_equals(broadcast_ip, addr);
 }
 
-common::xnode_address_t xcons_utl::to_address(const xvip2_t & xip2, common::xversion_t const & version) {
+common::xnode_address_t xcons_utl::to_address(const xvip2_t & xip2, common::xelection_round_t const & version) {
     // auto network_version_value = static_cast<common::xnetwork_version_t::value_type>(get_network_ver_from_xip2(xip2));
     auto network_id_value = static_cast<common::xnetwork_id_t::value_type>(get_network_id_from_xip2(xip2));
     auto zone_id_value = static_cast<common::xzone_id_t::value_type>(get_zone_id_from_xip2(xip2));

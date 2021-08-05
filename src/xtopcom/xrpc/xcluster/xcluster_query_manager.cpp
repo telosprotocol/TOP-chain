@@ -20,7 +20,7 @@ using namespace top::data;
 
 NS_BEG2(top, xrpc)
 using base::xcontext_t;
-using common::xversion_t;
+using common::xelection_round_t;
 using data::xaccount_ptr_t;
 using data::xtransaction_ptr_t;
 using data::xtransaction_t;

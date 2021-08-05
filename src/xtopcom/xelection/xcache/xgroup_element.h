@@ -48,7 +48,7 @@ public:
     xtop_group_element & operator=(xtop_group_element &&)      = default;
     ~xtop_group_element() override                             = default;
 
-    xtop_group_element(common::xversion_t const & version,
+    xtop_group_element(common::xelection_round_t const & election_round,
                        common::xgroup_id_t const & group_id,
                        std::uint16_t const sharding_size,
                        std::uint64_t const associated_election_blk_height,
