@@ -26,6 +26,85 @@ namespace top
 {
     namespace store
     {
+        void   update_block_write_metrics(base::enum_xvblock_level _level, base::enum_xvblock_class _class, enum_blockstore_metrics_type metrics_type, size_t bin_size)
+        {
+#if defined(ENABLE_METRICS)
+            if (metrics_type == enum_blockstore_metrics_type_block_index)
+            {
+                if (_level == base::enum_xvblock_level_table) {
+                    XMETRICS_GAUGE(metrics::store_block_index_table_write, 1);
+                } else if (_level == base::enum_xvblock_level_unit) {
+                    XMETRICS_GAUGE(metrics::store_block_index_unit_write, 1);
+                } else {
+                    XMETRICS_GAUGE(metrics::store_block_index_other_write, 1);
+                }
+            }
+            else if (metrics_type == enum_blockstore_metrics_type_block_object)
+            {
+                if (_level == base::enum_xvblock_level_table) {
+                    XMETRICS_GAUGE(metrics::store_block_table_write, 1);
+                    if (_class == base::enum_xvblock_class_full) {
+                        XMETRICS_GAUGE(metrics::store_dbsize_block_table_full, bin_size);
+                    } else if (_class == base::enum_xvblock_class_light) {
+                        XMETRICS_GAUGE(metrics::store_dbsize_block_table_light, bin_size);
+                    } else {
+                        XMETRICS_GAUGE(metrics::store_dbsize_block_table_empty, bin_size);
+                    }
+                } else if (_level == base::enum_xvblock_level_unit) {
+                    XMETRICS_GAUGE(metrics::store_block_unit_write, 1);
+                    if (_class == base::enum_xvblock_class_full) {
+                        XMETRICS_GAUGE(metrics::store_dbsize_block_unit_full, bin_size);
+                    } else if (_class == base::enum_xvblock_class_light) {
+                        XMETRICS_GAUGE(metrics::store_dbsize_block_unit_light, bin_size);
+                    } else {
+                        XMETRICS_GAUGE(metrics::store_dbsize_block_unit_empty, bin_size);
+                    }
+                } else {
+                    XMETRICS_GAUGE(metrics::store_block_other_write, 1);
+                    XMETRICS_GAUGE(metrics::store_dbsize_block_other, bin_size);
+                }
+            }
+            else if (metrics_type == enum_blockstore_metrics_type_block_input_res)
+            {
+                if (_level == base::enum_xvblock_level_table) {
+                    XMETRICS_GAUGE(metrics::store_block_input_table_write, 1);
+                    if (_class == base::enum_xvblock_class_full) {
+                        XMETRICS_GAUGE(metrics::store_dbsize_block_table_full, bin_size);
+                    } else if (_class == base::enum_xvblock_class_light) {
+                        XMETRICS_GAUGE(metrics::store_dbsize_block_table_light, bin_size);
+                    }
+                } else if (_level == base::enum_xvblock_level_unit) {
+                    XMETRICS_GAUGE(metrics::store_block_input_unit_write, 1);
+                    if (_class == base::enum_xvblock_class_full) {
+                        XMETRICS_GAUGE(metrics::store_dbsize_block_unit_full, bin_size);
+                    } else if (_class == base::enum_xvblock_class_light) {
+                        XMETRICS_GAUGE(metrics::store_dbsize_block_unit_light, bin_size);
+                    }
+                } else {
+                }
+            }
+            else if (metrics_type == enum_blockstore_metrics_type_block_output_res)
+            {
+                if (_level == base::enum_xvblock_level_table) {
+                    XMETRICS_GAUGE(metrics::store_block_output_table_write, 1);
+                    if (_class == base::enum_xvblock_class_full) {
+                        XMETRICS_GAUGE(metrics::store_dbsize_block_table_full, bin_size);
+                    } else if (_class == base::enum_xvblock_class_light) {
+                        XMETRICS_GAUGE(metrics::store_dbsize_block_table_light, bin_size);
+                    }
+                } else if (_level == base::enum_xvblock_level_unit) {
+                    XMETRICS_GAUGE(metrics::store_block_output_unit_write, 1);
+                    if (_class == base::enum_xvblock_class_full) {
+                        XMETRICS_GAUGE(metrics::store_dbsize_block_unit_full, bin_size);
+                    } else if (_class == base::enum_xvblock_class_light) {
+                        XMETRICS_GAUGE(metrics::store_dbsize_block_unit_light, bin_size);
+                    }
+                } else {
+                }
+            }
+#endif
+        }
+
         xacctmeta_t*  xacctmeta_t::load(const std::string & meta_serialized_data)
         {
             if(meta_serialized_data.empty()) //check first
@@ -223,6 +302,7 @@ namespace top
             m_last_save_vmeta_bin.clear();
             const std::string full_meta_path = get_blockstore_path() + get_meta_path(*this);
             const std::string meta_content = load_value_by_path(full_meta_path);
+            XMETRICS_GAUGE(metrics::store_block_meta_read, 1);
             m_meta = xacctmeta_t::load(meta_content);
             if(nullptr == m_meta)
             {
@@ -268,6 +348,7 @@ namespace top
                 const std::string meta_path = get_blockstore_path() + get_meta_path(*this);
                 store_value_by_path(meta_path, vmeta_bin);
                 m_last_save_vmeta_bin = vmeta_bin;
+                XMETRICS_GAUGE(metrics::store_block_meta_write, 1);
 
                 base::enum_vaccount_addr_type addr_type = get_addrtype_from_account(get_address());
                 if (addr_type == base::enum_vaccount_addr_type_block_contract) {
@@ -2052,20 +2133,12 @@ namespace top
             //raw block not stored header yet
             if(index_ptr->check_store_flag(base::enum_index_store_flag_mini_block) == false)
             {
-#if defined(ENABLE_METRICS)
-                if (block_ptr->get_block_level() == base::enum_xvblock_level_table) {
-                    XMETRICS_GAUGE(metrics::store_block_table_write, 1);
-                } else if (block_ptr->get_block_level() == base::enum_xvblock_level_unit) {
-                    XMETRICS_GAUGE(metrics::store_block_unit_write, 1);
-                } else {
-                    XMETRICS_GAUGE(metrics::store_block_other_write, 1);
-                }
-#endif
                 std::string blockobj_bin;
                 block_ptr->serialize_to_string(blockobj_bin);
                 const std::string blockobj_key = base::xvdbkey_t::create_block_object_key(*this,block_ptr->get_block_hash());
                 if(get_xdbstore()->set_value(blockobj_key, blockobj_bin))
                 {
+                    update_block_write_metrics(block_ptr->get_block_level(), block_ptr->get_block_class(), enum_blockstore_metrics_type_block_object, blockobj_bin.size());
                     //has stored entity of input/output inside of block
                     index_ptr->set_store_flag(base::enum_index_store_flag_input_entity);
                     index_ptr->set_store_flag(base::enum_index_store_flag_output_entity);
@@ -2148,9 +2221,8 @@ namespace top
                     const std::string input_res_bin = block_ptr->get_input()->get_resources_data();
                     if(input_res_bin.empty() == false)
                     {
-#if defined(ENABLE_METRICS)
-                        XMETRICS_GAUGE(metrics::store_block_input_write, 1);
-#endif
+                        update_block_write_metrics(block_ptr->get_block_level(), block_ptr->get_block_class(), enum_blockstore_metrics_type_block_input_res, input_res_bin.size());
+
                         const std::string input_res_key = base::xvdbkey_t::create_block_input_resource_key(*this,block_ptr->get_block_hash());
                         if(get_xdbstore()->set_value(input_res_key, input_res_bin))
                         {
@@ -2246,15 +2318,13 @@ namespace top
             {
                 if(block_ptr->get_output()->get_resources_hash().empty() == false)
                 {
-#if defined(ENABLE_METRICS)
-                    XMETRICS_GAUGE(metrics::store_block_output_write, 1);
-#endif
                     const std::string output_res_bin = block_ptr->get_output()->get_resources_data();
                     if(output_res_bin.empty() == false)
                     {
                         const std::string output_res_key = base::xvdbkey_t::create_block_output_resource_key(*this,block_ptr->get_block_hash());
                         if(get_xdbstore()->set_value(output_res_key, output_res_bin))
                         {
+                            update_block_write_metrics(block_ptr->get_block_level(), block_ptr->get_block_class(), enum_blockstore_metrics_type_block_output_res, output_res_bin.size());
                             index_ptr->set_store_flag(base::enum_index_store_flag_output_resource);
                             xdbg("xblockacct_t::write_block_output_to_db,store output resource to DB for block(%s),bin_size=%zu",index_ptr->dump().c_str(), output_res_bin.size());
                         }
@@ -2421,16 +2491,16 @@ namespace top
             {
                 const std::string key_path = base::xvdbkey_t::create_block_index_key(*this,index_obj->get_height());
                 is_stored_db_successful = get_xdbstore()->set_value(key_path,index_bin);
+                xdbg("xblockacct_t::write_index_to_db for main entry.index=%s",index_obj->dump().c_str());
             }
             else
             {
                 const std::string key_path = base::xvdbkey_t::create_block_index_key(*this,index_obj->get_height(),index_obj->get_viewid());
                 is_stored_db_successful = get_xdbstore()->set_value(key_path,index_bin);
+                xdbg("xblockacct_t::write_index_to_db for other entry.index=%s",index_obj->dump().c_str());
             }
 
-#if defined(ENABLE_METRICS)
-            XMETRICS_GAUGE(metrics::store_block_index_write, 1);
-#endif
+            update_block_write_metrics(index_obj->get_block_level(), index_obj->get_block_class(), enum_blockstore_metrics_type_block_index, index_bin.size());
 
             if(false == is_stored_db_successful)
             {

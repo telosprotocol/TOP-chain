@@ -13,6 +13,7 @@
 #include "xdata/xlightunit.h"
 #include "xmbus/xevent_store.h"
 #include "xmbus/xmessage_bus.h"
+#include "xmetrics/xmetrics.h"
 
 // #include "test_blockmock.hpp"
 #include "xstore/xstore.h"
@@ -26,6 +27,7 @@ using namespace top::mbus;
 using namespace top::store;
 using namespace top::data;
 using namespace top::mock;
+using namespace top::metrics;
 
 class test_block_store_load : public testing::Test {
 protected:
@@ -252,4 +254,178 @@ TEST_F(test_block_store_load, mock_table_unit_2) {
     xblock_ptr_t _tableblock3 = mocktable.generate_one_table();
     mocktable.generate_one_table();
     mocktable.generate_one_table();
+}
+
+void print_store_metrics(const db::xdb_meta_t & db_meta) {
+    // db write count statistics
+    std::cout << "=============db write count statistics=============" << std::endl;
+    std::cout << "store_db_write=" << XMETRICS_GAUGE_GET_VALUE(xmetircs_tag_t::store_db_write) << std::endl;
+    std::cout << "store_block_index_table_write=" << XMETRICS_GAUGE_GET_VALUE(xmetircs_tag_t::store_block_index_table_write) << std::endl;
+    std::cout << "store_block_index_unit_write=" << XMETRICS_GAUGE_GET_VALUE(xmetircs_tag_t::store_block_index_unit_write) << std::endl;
+    std::cout << "store_block_index_other_write=" << XMETRICS_GAUGE_GET_VALUE(xmetircs_tag_t::store_block_index_other_write) << std::endl;
+    std::cout << "store_block_table_write=" << XMETRICS_GAUGE_GET_VALUE(xmetircs_tag_t::store_block_table_write) << std::endl;
+    std::cout << "store_block_unit_write=" << XMETRICS_GAUGE_GET_VALUE(xmetircs_tag_t::store_block_unit_write) << std::endl;
+    std::cout << "store_block_other_write=" << XMETRICS_GAUGE_GET_VALUE(xmetircs_tag_t::store_block_other_write) << std::endl;
+    std::cout << "store_block_input_table_write=" << XMETRICS_GAUGE_GET_VALUE(xmetircs_tag_t::store_block_input_table_write) << std::endl;
+    std::cout << "store_block_input_unit_write=" << XMETRICS_GAUGE_GET_VALUE(xmetircs_tag_t::store_block_input_unit_write) << std::endl;
+    std::cout << "store_block_output_table_write=" << XMETRICS_GAUGE_GET_VALUE(xmetircs_tag_t::store_block_output_table_write) << std::endl;
+    std::cout << "store_block_output_unit_write=" << XMETRICS_GAUGE_GET_VALUE(xmetircs_tag_t::store_block_output_unit_write) << std::endl;
+    std::cout << "store_state_table_write=" << XMETRICS_GAUGE_GET_VALUE(xmetircs_tag_t::store_state_table_write) << std::endl;
+    std::cout << "store_state_unit_write=" << XMETRICS_GAUGE_GET_VALUE(xmetircs_tag_t::store_state_unit_write) << std::endl;
+    std::cout << "store_tx_index_self=" << XMETRICS_GAUGE_GET_VALUE(xmetircs_tag_t::store_tx_index_self) << std::endl;
+    std::cout << "store_tx_index_send=" << XMETRICS_GAUGE_GET_VALUE(xmetircs_tag_t::store_tx_index_send) << std::endl;
+    std::cout << "store_tx_index_recv=" << XMETRICS_GAUGE_GET_VALUE(xmetircs_tag_t::store_tx_index_recv) << std::endl;
+    std::cout << "store_tx_index_confirm=" << XMETRICS_GAUGE_GET_VALUE(xmetircs_tag_t::store_tx_index_confirm) << std::endl;
+    std::cout << "store_block_meta_write=" << XMETRICS_GAUGE_GET_VALUE(xmetircs_tag_t::store_block_meta_write) << std::endl;        
+
+    // db read count statistics
+    std::cout << "=============db read count statistics=============" << std::endl;
+    std::cout << "store_db_read=" << XMETRICS_GAUGE_GET_VALUE(xmetircs_tag_t::store_db_read) << std::endl;
+    std::cout << "store_block_index_read=" << XMETRICS_GAUGE_GET_VALUE(xmetircs_tag_t::store_block_index_read) << std::endl;
+    std::cout << "store_block_table_read=" << XMETRICS_GAUGE_GET_VALUE(xmetircs_tag_t::store_block_table_read) << std::endl;
+    std::cout << "store_block_unit_read=" << XMETRICS_GAUGE_GET_VALUE(xmetircs_tag_t::store_block_unit_read) << std::endl;
+    std::cout << "store_block_other_read=" << XMETRICS_GAUGE_GET_VALUE(xmetircs_tag_t::store_block_other_read) << std::endl;
+    std::cout << "store_block_input_read=" << XMETRICS_GAUGE_GET_VALUE(xmetircs_tag_t::store_block_input_read) << std::endl;
+    std::cout << "store_block_output_read=" << XMETRICS_GAUGE_GET_VALUE(xmetircs_tag_t::store_block_output_read) << std::endl;
+    std::cout << "store_block_meta_read=" << XMETRICS_GAUGE_GET_VALUE(xmetircs_tag_t::store_block_meta_read) << std::endl;
+
+    // db delete count statistics       
+    std::cout << "=============db delete count statistics=============" << std::endl; 
+    std::cout << "store_db_delete=" << XMETRICS_GAUGE_GET_VALUE(xmetircs_tag_t::store_db_delete) << std::endl;
+    std::cout << "store_state_delete=" << XMETRICS_GAUGE_GET_VALUE(xmetircs_tag_t::store_state_delete) << std::endl;
+
+    // db size statistics
+    std::cout << "=============db size statistics=============" << std::endl; 
+    std::cout << "db_key_size=" << db_meta.m_db_key_size << std::endl;
+    std::cout << "db_value_size=" << db_meta.m_db_value_size << std::endl;
+    std::cout << "key_count=" << db_meta.m_key_count << std::endl;
+
+    std::cout << "store_dbsize_block_unit_empty=" << XMETRICS_GAUGE_GET_VALUE(xmetircs_tag_t::store_dbsize_block_unit_empty) << std::endl;
+    std::cout << "store_dbsize_block_unit_light=" << XMETRICS_GAUGE_GET_VALUE(xmetircs_tag_t::store_dbsize_block_unit_light) << std::endl;
+    std::cout << "store_dbsize_block_unit_full=" << XMETRICS_GAUGE_GET_VALUE(xmetircs_tag_t::store_dbsize_block_unit_full) << std::endl;
+    std::cout << "store_dbsize_block_table_empty=" << XMETRICS_GAUGE_GET_VALUE(xmetircs_tag_t::store_dbsize_block_table_empty) << std::endl;
+    std::cout << "store_dbsize_block_table_light=" << XMETRICS_GAUGE_GET_VALUE(xmetircs_tag_t::store_dbsize_block_table_light) << std::endl;
+    std::cout << "store_dbsize_block_table_full=" << XMETRICS_GAUGE_GET_VALUE(xmetircs_tag_t::store_dbsize_block_table_full) << std::endl;
+    std::cout << "store_dbsize_block_other=" << XMETRICS_GAUGE_GET_VALUE(xmetircs_tag_t::store_dbsize_block_other) << std::endl;
+}
+
+TEST_F(test_block_store_load, mock_key_value_size_analyze_1_BENCH) {
+    mock::xvchain_creator creator;
+    base::xvblockstore_t* blockstore = creator.get_blockstore();
+
+    std::string table_addr = xdatamock_address::make_consensus_table_address(1);
+    uint32_t addr_count = 2;
+    std::vector<std::string> unit_addrs = xdatamock_address::make_multi_user_address_in_table(table_addr, addr_count);
+    mock::xdatamock_table mocktable(table_addr, unit_addrs);
+    mocktable.disable_fulltable();
+
+    uint64_t count = 200;
+    uint32_t addr_index = 0;
+    uint32_t tx_count = 1;
+    for (uint64_t i = 0; i < count; i++)
+    {
+        std::string from_addr = unit_addrs[addr_index];
+        std::string to_addr = unit_addrs[(addr_index+1) % addr_count];
+        addr_index = (addr_index+1) % addr_count;
+
+        std::vector<xcons_transaction_ptr_t> send_txs = mocktable.create_send_txs(from_addr, to_addr, tx_count);
+        mocktable.push_txs(send_txs);
+        xblock_ptr_t _tableblock1 = mocktable.generate_one_table();
+        mocktable.generate_one_table();
+        mocktable.generate_one_table();
+
+        std::vector<xcons_transaction_ptr_t> recv_txs = mocktable.create_receipts(_tableblock1);
+        xassert(recv_txs.size() == send_txs.size());
+        for (auto & tx : recv_txs) {
+            xassert(tx->is_recv_tx());
+        }
+        mocktable.push_txs(recv_txs);    
+        xblock_ptr_t _tableblock2 = mocktable.generate_one_table();
+        mocktable.generate_one_table();
+        mocktable.generate_one_table();    
+
+        std::vector<xcons_transaction_ptr_t> confirm_txs = mocktable.create_receipts(_tableblock2);
+        xassert(confirm_txs.size() == send_txs.size());
+        for (auto & tx : confirm_txs) {
+            xassert(tx->is_confirm_tx());
+        }
+        mocktable.push_txs(confirm_txs); 
+        xblock_ptr_t _tableblock3 = mocktable.generate_one_table();
+        mocktable.generate_one_table();
+        mocktable.generate_one_table();
+    }
+
+    const std::vector<xblock_ptr_t> & tableblocks = mocktable.get_history_tables();
+    for (auto & block : tableblocks) {
+        ASSERT_TRUE(blockstore->store_block(mocktable, block.get()));
+    }    
+
+    {
+        db::xdb_meta_t db_meta = creator.get_xdb()->get_meta();
+        print_store_metrics(db_meta);
+    }
+}
+
+TEST_F(test_block_store_load, mock_key_value_size_analyze_2_BENCH) {
+    mock::xvchain_creator creator;
+    base::xvblockstore_t* blockstore = creator.get_blockstore();
+
+    std::string table_addr = xdatamock_address::make_consensus_table_address(1);
+    uint32_t addr_count = 20;
+    std::vector<std::string> unit_addrs = xdatamock_address::make_multi_user_address_in_table(table_addr, addr_count);
+    mock::xdatamock_table mocktable(table_addr, unit_addrs);
+    mocktable.disable_fulltable();
+
+    uint64_t count = 200;
+    uint32_t addr_index = 0;
+    uint32_t tx_count = 1;
+    for (uint64_t i = 0; i < count; i++)
+    {
+        std::vector<xcons_transaction_ptr_t> send_txs;
+        for (uint32_t j = 0 ; j < addr_count/2; j++) {
+            std::string from_addr = unit_addrs[addr_index];
+            std::string to_addr = unit_addrs[(addr_index+1) % addr_count];
+            addr_index = (addr_index+1) % addr_count;
+
+            std::vector<xcons_transaction_ptr_t> one_account_send_txs = mocktable.create_send_txs(from_addr, to_addr, tx_count);
+            for (auto & v : one_account_send_txs) {
+                send_txs.push_back(v);
+            }            
+        }
+
+        mocktable.push_txs(send_txs);
+        xblock_ptr_t _tableblock1 = mocktable.generate_one_table();
+        mocktable.generate_one_table();
+        mocktable.generate_one_table();
+
+        std::vector<xcons_transaction_ptr_t> recv_txs = mocktable.create_receipts(_tableblock1);
+        xassert(recv_txs.size() == send_txs.size());
+        for (auto & tx : recv_txs) {
+            xassert(tx->is_recv_tx());
+        }
+        mocktable.push_txs(recv_txs);    
+        xblock_ptr_t _tableblock2 = mocktable.generate_one_table();
+        mocktable.generate_one_table();
+        mocktable.generate_one_table();    
+
+        std::vector<xcons_transaction_ptr_t> confirm_txs = mocktable.create_receipts(_tableblock2);
+        xassert(confirm_txs.size() == send_txs.size());
+        for (auto & tx : confirm_txs) {
+            xassert(tx->is_confirm_tx());
+        }
+        mocktable.push_txs(confirm_txs); 
+        xblock_ptr_t _tableblock3 = mocktable.generate_one_table();
+        mocktable.generate_one_table();
+        mocktable.generate_one_table();
+    }
+
+    const std::vector<xblock_ptr_t> & tableblocks = mocktable.get_history_tables();
+    for (auto & block : tableblocks) {
+        ASSERT_TRUE(blockstore->store_block(mocktable, block.get()));
+    }    
+
+    {
+        db::xdb_meta_t db_meta = creator.get_xdb()->get_meta();
+        print_store_metrics(db_meta);
+    }
 }

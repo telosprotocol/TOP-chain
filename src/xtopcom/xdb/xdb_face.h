@@ -12,6 +12,14 @@
 
 namespace top { namespace db {
 
+// XTODO for test
+struct xdb_meta_t {
+    size_t      m_db_key_size{0};
+    size_t      m_db_value_size{0};
+    size_t      m_key_count{0};
+};
+
+
 class xdb_transaction_t {
 public:
     virtual bool rollback() { return true; }
@@ -36,6 +44,7 @@ class xdb_face_t {
     virtual bool erase(const std::vector<std::string>& keys) = 0;
     virtual bool batch_change(const std::map<std::string, std::string>& objs, const std::vector<std::string>& delete_keys) = 0;
     virtual xdb_transaction_t* begin_transaction() = 0;
+    virtual xdb_meta_t  get_meta() = 0;
 };
 
 }  // namespace ledger
