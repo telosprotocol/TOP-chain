@@ -54,10 +54,10 @@ void xgrpc_mgr_t::process_event(const mbus::xevent_ptr_t & e) {
         xdbg("grpc no client connected");
         return;
     }
-    if (e->minor_type != mbus::xevent_store_t::type_block_to_db)
+    if (e->minor_type != mbus::xevent_store_t::type_block_committed)
         return;
 
-    mbus::xevent_store_block_to_db_ptr_t block_event = dynamic_xobject_ptr_cast<mbus::xevent_store_block_to_db_t>(e);
+    mbus::xevent_store_block_committed_ptr_t block_event = dynamic_xobject_ptr_cast<mbus::xevent_store_block_committed_t>(e);
     // only process light-table
     if (block_event->blk_class != base::enum_xvblock_class_light
         || block_event->blk_level != base::enum_xvblock_level_table) {
