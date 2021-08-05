@@ -786,13 +786,7 @@ namespace top
 
         base::xvbindex_t*    xblockacct_t::load_latest_executed_index()
         {
-            load_index(m_meta->_highest_execute_block_height);
-
-            base::xvbindex_t* result = query_latest_index(base::enum_xvblock_flag_executed);
-            if(result != nullptr)//query_latest_index has been return a added-reference ptr
-                return result;
-
-            return load_genesis_index();
+            return load_index(m_meta->_highest_execute_block_height, 0);
         }
 
         //every connected block required committed
@@ -1566,17 +1560,6 @@ namespace top
                 return false;
             }
 
-            if(index_ptr->check_block_flag(base::enum_xvblock_flag_executed)) //did executed already
-            {
-                if (m_meta->_highest_execute_block_height < index_ptr->get_height())
-                {
-                    xwarn("xblockacct_t::execute_block(index) highest execute block height %" PRIu64 " less than block=%s", m_meta->_highest_execute_block_height, index_ptr->dump().c_str());
-                    m_meta->_highest_execute_block_height = index_ptr->get_height();  //update meta info for executed
-                    m_meta->_highest_execute_block_hash   = index_ptr->get_block_hash();
-                }
-                return true;
-            }
-
             bool  is_ready_to_executed = false;
             if(  (0 == m_meta->_highest_execute_block_height)
                &&(index_ptr->get_height() == 0) ) //allow executed genesis block
@@ -1600,13 +1583,27 @@ namespace top
                 const bool executed_result =  get_xdbstore()->execute_block(block_ptr);
                 if(executed_result)
                 {
-                    index_ptr->set_block_flag(base::enum_xvblock_flag_executed); //update flag of index
-                    block_ptr->set_block_flag(base::enum_xvblock_flag_executed); //update raw block as well
+                    if (index_ptr->get_height() > m_meta->_highest_execute_block_height)
+                    {
+                        m_meta->_highest_execute_block_height = index_ptr->get_height();
+                        m_meta->_highest_execute_block_hash   = index_ptr->get_block_hash();
+                        xdbg_info("xblockacct_t::execute_block,update_meta_execute:address=%s,height:%llu,hash:%s",
+                                   index_ptr->get_account().c_str(),index_ptr->get_height(),base::xstring_utl::to_hex(index_ptr->get_block_hash()).c_str());
+                    }
+                    else if (m_meta->_highest_execute_block_height == 0 && m_meta->_highest_execute_block_hash.empty())
+                    {
+                        m_meta->_highest_execute_block_hash   = index_ptr->get_block_hash();
+                        xdbg_info("xblockacct_t::execute_block,update_genesis_execute:address=%s,hash:%s", index_ptr->get_account().c_str(),base::xstring_utl::to_hex(index_ptr->get_block_hash()).c_str());
+                    }
+
                     xdbg_info("xblockacct_t::execute_block(index),successful-exectued block=%s based on height=%" PRIu64 "  ",index_ptr->dump().c_str(),index_ptr->get_height());
 
                     //note:store_block may update m_meta->_highest_execute_block_height as well
                     update_meta_metric(index_ptr);
-                    write_index_to_db(index_ptr);
+                    if (index_ptr->check_modified_flag())
+                    {
+                        write_index_to_db(index_ptr);
+                    }
                     return true;
                 }
                 else
@@ -1927,13 +1924,6 @@ namespace top
                    &&(new_block_ptr->get_block_class() == base::enum_xvblock_class_full) )
                 {
                     m_meta->_highest_full_block_height = new_block_height;
-                }
-
-                if(  (new_block_height >= m_meta->_highest_execute_block_height)
-                   &&(new_block_ptr->check_block_flag(base::enum_xvblock_flag_executed)) )
-                {
-                    m_meta->_highest_execute_block_height = new_block_height;
-                    m_meta->_highest_execute_block_hash   = new_block_ptr->get_block_hash();
                 }
 
             }
