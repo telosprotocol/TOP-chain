@@ -265,7 +265,6 @@ namespace top
             void                close_blocks(); //clean all cached blocks
             bool                clean_blocks(const int keep_blocks_count,bool force_release_unused_block);
             bool                on_block_revoked(base::xvbindex_t* index_ptr);
-            bool                on_block_stored(base::xvbindex_t* index_ptr);
             bool                on_block_committed(base::xvbindex_t* index_ptr);
             bool                store_txs_to_db(base::xvbindex_t* index_ptr);
 
