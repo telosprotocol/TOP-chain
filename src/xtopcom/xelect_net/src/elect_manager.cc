@@ -120,7 +120,6 @@ void ElectManager::UpdateRoutingTable(std::vector<wrouter::WrouterTableNodes> co
         xerror("init election routing table failed!");
         return;
     }
-    wrouter::MultiRouting::Instance()->AddElectRoutingTable(service_type, routing_table_ptr);
 
     auto root_routing = wrouter::MultiRouting::Instance()->GetRootRoutingTable();
 
@@ -132,6 +131,7 @@ void ElectManager::UpdateRoutingTable(std::vector<wrouter::WrouterTableNodes> co
     local_node_ptr->set_public_ip(root_routing->get_local_node_info()->public_ip());
     local_node_ptr->set_public_port(root_routing->get_local_node_info()->public_port());
 
+    wrouter::MultiRouting::Instance()->AddElectRoutingTable(service_type, routing_table_ptr);
     wrouter::MultiRouting::Instance()->CheckElectRoutingTable(service_type);
     return;
 }

@@ -50,7 +50,7 @@ bool RootRouting::Init() {
         return false;
     }
     assert(get_local_node_info()->kadmlia_key()->xnetwork_id() == kRoot);
-    get_local_node_info()->set_kadmlia_key(global_xid);
+    // get_local_node_info()->set_kadmlia_key(global_xid);
 
     xinfo("root routing table Init success");
     return true;
