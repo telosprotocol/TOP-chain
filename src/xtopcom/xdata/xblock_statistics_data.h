@@ -14,6 +14,7 @@
 #include <set>
 #include <sstream>
 #include <vector>
+#include <iomanip>
 
 namespace top {
 namespace data {

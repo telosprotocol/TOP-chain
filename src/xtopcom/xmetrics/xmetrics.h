@@ -3,15 +3,17 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #pragma once
+#include "xbasic/xrunnable.h"
+#include "xbasic/xthreading/xthreadsafe_queue.hpp"
+#ifdef ENABLE_METRICS
 #include "metrics_handler/array_counter_handler.h"
 #include "metrics_handler/counter_handler.h"
 #include "metrics_handler/flow_handler.h"
 #include "metrics_handler/timer_handler.h"
 #include "metrics_handler/xmetrics_packet_info.h"
-#include "xbasic/xrunnable.h"
-#include "xbasic/xthreading/xthreadsafe_queue.hpp"
 #include "xmetrics_event.h"
 #include "xmetrics_unit.h"
+#endif
 
 #include <chrono>
 #include <map>
@@ -359,6 +361,7 @@ enum E_ARRAY_COUNTER_TAG : size_t {
 };
 using xmetrics_array_tag_t = E_ARRAY_COUNTER_TAG;
 
+#ifdef ENABLE_METRICS
 // ! attention. here the copy is not atomic.
 template <typename T>
 struct copiable_atomwrapper {
@@ -481,15 +484,13 @@ public:
     metrics_appendant_info m_key;
     microseconds m_timed_out;
 };
-
-#ifdef ENABLE_METRICS
 #define XMETRICS_INIT()                                                                                                                                                            \
     {                                                                                                                                                                              \
         auto & ins = top::metrics::e_metrics::get_instance();                                                                                                                      \
         ins.start();                                                                                                                                                               \
     }
 
-#define SSTR(x) static_cast<std::ostringstream &>((std::ostringstream()  << x)).str()
+#define SSTR(x) static_cast<std::ostringstream>((std::ostringstream()  << x)).str()
 #define ADD_THREAD_HASH(metrics_name) SSTR(metrics_name) + "&0x" + std::to_string(std::hash<std::thread::id>{}(std::this_thread::get_id()))
 #define STR_CONCAT_IMPL(a, b) a##b
 #define STR_CONCAT(str_a, str_b) STR_CONCAT_IMPL(str_a, str_b)

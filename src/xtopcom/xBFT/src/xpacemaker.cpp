@@ -8,10 +8,7 @@
 #include "xclockcertview.h"
 #include "xtimercertview.h"
 #include <cstdlib>
-
-#if defined(ENABLE_METRICS)
 #include "xmetrics/xmetrics.h"
-#endif
 
 namespace top
 {

@@ -6,9 +6,7 @@
 #include <cinttypes>
 #include "xbase/xutl.h"
 #include "xbase/xcontext.h"
-#if defined(ENABLE_METRICS)
 #include "xmetrics/xmetrics.h"
-#endif
 #include "xvblockhub.h"
 #include "xvgenesis.h"
 #include "xvledger/xvdbkey.h"
