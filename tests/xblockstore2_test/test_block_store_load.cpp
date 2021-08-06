@@ -259,6 +259,7 @@ TEST_F(test_block_store_load, mock_table_unit_2) {
 void print_store_metrics(const db::xdb_meta_t & db_meta) {
     // db write count statistics
     std::cout << "=============db write count statistics=============" << std::endl;
+    #ifdef ENABLE_METRICS
     std::cout << "store_db_write=" << XMETRICS_GAUGE_GET_VALUE(xmetircs_tag_t::store_db_write) << std::endl;
     std::cout << "store_block_index_table_write=" << XMETRICS_GAUGE_GET_VALUE(xmetircs_tag_t::store_block_index_table_write) << std::endl;
     std::cout << "store_block_index_unit_write=" << XMETRICS_GAUGE_GET_VALUE(xmetircs_tag_t::store_block_index_unit_write) << std::endl;
@@ -307,6 +308,7 @@ void print_store_metrics(const db::xdb_meta_t & db_meta) {
     std::cout << "store_dbsize_block_table_light=" << XMETRICS_GAUGE_GET_VALUE(xmetircs_tag_t::store_dbsize_block_table_light) << std::endl;
     std::cout << "store_dbsize_block_table_full=" << XMETRICS_GAUGE_GET_VALUE(xmetircs_tag_t::store_dbsize_block_table_full) << std::endl;
     std::cout << "store_dbsize_block_other=" << XMETRICS_GAUGE_GET_VALUE(xmetircs_tag_t::store_dbsize_block_other) << std::endl;
+    #endif
 }
 
 TEST_F(test_block_store_load, mock_key_value_size_analyze_1_BENCH) {
