@@ -490,7 +490,13 @@ public:
         ins.start();                                                                                                                                                               \
     }
 
-#define SSTR(x) static_cast<std::ostringstream>((std::ostringstream()  << x)).str()
+#define XMETRICS_UNINT()                                                                                                                                                            \
+    {                                                                                                                                                                              \
+        auto & ins = top::metrics::e_metrics::get_instance();                                                                                                                      \
+        ins.stop();                                                                                                                                                               \
+    }
+
+#define SSTR(x) static_cast<const std::ostringstream&>(std::ostringstream()  << x).str()
 #define ADD_THREAD_HASH(metrics_name) SSTR(metrics_name) + "&0x" + std::to_string(std::hash<std::thread::id>{}(std::this_thread::get_id()))
 #define STR_CONCAT_IMPL(a, b) a##b
 #define STR_CONCAT(str_a, str_b) STR_CONCAT_IMPL(str_a, str_b)
@@ -538,6 +544,7 @@ public:
 
 #else
 #define XMETRICS_INIT()
+#define XMETRICS_UNINT()
 #define XMETRICS_TIME_RECORD(metrics_name)
 #define XMETRICS_TIME_RECORD_KEY(metrics_name, key)
 #define XMETRICS_TIME_RECORD_KEY_WITH_TIMEOUT(metrics_name, key, timeout)
