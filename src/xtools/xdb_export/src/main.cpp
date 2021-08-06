@@ -1046,7 +1046,7 @@ public:
             }
             uint64_t table_reward{0};
             uint32_t decimals{0};
-            for (auto const p : reward_property) {
+            for (auto const & p : reward_property) {
                 for (auto it_a = it.value()[p].begin(); it_a != it.value()[p].end(); it_a++) {
                     table_reward += static_cast<uint64_t>(it_a.value()["unclaimed"]);
                     decimals += static_cast<uint32_t>(it_a.value()["unclaimed_decimals"]);
@@ -1077,7 +1077,7 @@ public:
             }
             uint64_t table_vote_107{0};
             uint64_t table_vote_121{0};
-            for (auto const p : vote_property) {
+            for (auto const & p : vote_property) {
                 for (auto it_a = it.value()[p].begin(); it_a != it.value()[p].end(); it_a++) {
                     if (p == XPORPERTY_CONTRACT_POLLABLE_KEY) {
                         table_vote_107 += static_cast<uint64_t>(it_a.value());
