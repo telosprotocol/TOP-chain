@@ -191,8 +191,8 @@ std::vector<std::string> ElectRoutingTable::get_shuffled_xip2() {
     {
         std::unique_lock<std::mutex> lock(m_xip2_for_shuffle_mutex);
         std::shuffle(m_xip2_for_shuffle.begin(), m_xip2_for_shuffle.end(), g);
+        return m_xip2_for_shuffle;
     }
-    return m_xip2_for_shuffle;
 }
 
 std::size_t ElectRoutingTable::get_self_index() {

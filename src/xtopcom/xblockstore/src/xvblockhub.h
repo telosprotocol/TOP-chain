@@ -22,6 +22,13 @@ namespace top
             enum_blockstore_event_stored     = 4, //block is stored persistedly
         };
 
+        enum enum_blockstore_metrics_type
+        {
+            enum_blockstore_metrics_type_block_index        = 1,
+            enum_blockstore_metrics_type_block_object       = 2,
+            enum_blockstore_metrics_type_block_input_res    = 3,
+            enum_blockstore_metrics_type_block_output_res   = 4,
+        };
         class xblockevent_t
         {
         public:

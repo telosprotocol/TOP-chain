@@ -26,7 +26,12 @@ namespace top
                 xerror("xvblkstatestore_t::write_state_to_db,nil block hash for state(%s)",target_state.dump().c_str());
                 return false;
             }
-            XMETRICS_GAUGE(metrics::store_state_write, 1);
+            if (target_state.get_block_level() == enum_xvblock_level_table) {
+                XMETRICS_GAUGE(metrics::store_state_table_write, 1);
+            } else if (target_state.get_block_level() == enum_xvblock_level_unit) {
+                XMETRICS_GAUGE(metrics::store_state_unit_write, 1);
+            }
+            
             xvaccount_t target_account(target_state.get_address());
             const std::string state_db_key = xvdbkey_t::create_block_state_key(target_account,target_block_hash);
 

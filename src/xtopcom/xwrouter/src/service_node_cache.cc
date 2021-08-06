@@ -35,8 +35,10 @@ ServiceNodes::ServiceNodes() {
 }
 
 ServiceNodes::~ServiceNodes() {
-    update_timer_->Join();
-    update_timer_ = nullptr;
+    if (update_timer_) {
+        update_timer_->Join();
+        update_timer_ = nullptr;
+    }
     TOP_INFO("ServiceNodes destroy");
 }
 

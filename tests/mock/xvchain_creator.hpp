@@ -1,6 +1,7 @@
 #pragma once
 #include <string>
 #include "gtest/gtest.h"
+#include "xdb/xdb_factory.h"
 #include "xstore/xstore_face.h"
 #include "xblockstore/xblockstore_face.h"
 #include "xvledger/xvaccount.h"
@@ -20,7 +21,8 @@ namespace top
                 m_bus = top::make_object_ptr<mbus::xmessage_bus_t>(true, 1000);
                 base::xvchain_t::instance().set_xevmbus(m_bus.get());
 
-                m_store = store::xstore_factory::create_store_with_memdb();
+                m_db = db::xdb_factory_t::create_memdb();
+                m_store = store::xstore_factory::create_store_with_static_kvdb(m_db);
                 base::xvchain_t::instance().set_xdbstore(m_store.get());
 
                 base::xvblockstore_t * blockstore = store::create_vblockstore(m_store.get());
@@ -44,9 +46,11 @@ namespace top
                 base::xvchain_t::instance().clean_all(false);
             }
             store::xstore_face_t* get_xstore() const {return m_store.get();}
-            xobject_ptr_t<mbus::xmessage_bus_face_t> get_mbus() const {return m_bus;}
-            
+            const xobject_ptr_t<mbus::xmessage_bus_face_t> & get_mbus() const {return m_bus;}
+            const std::shared_ptr<db::xdb_face_t> &     get_xdb() const {return m_db;}
+
         private:
+            std::shared_ptr<db::xdb_face_t>      m_db{nullptr};
             xobject_ptr_t<store::xstore_face_t>  m_store{nullptr};
             xobject_ptr_t<mbus::xmessage_bus_face_t> m_bus;
         };
