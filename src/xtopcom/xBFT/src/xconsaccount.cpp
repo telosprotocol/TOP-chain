@@ -47,69 +47,6 @@ namespace top
             return xcscoreobj_t::create_engine(*this,enum_xconsensus_pacemaker_type_clock_cert);
         }
         
-        bool   xcsaccount_t::check_proposal(base::xvblock_t * proposal_block)
-        {
-            if(NULL == proposal_block)
-                return false;
-            
-            base::xvblock_t* hqc = proposal_block->get_prev_block();
-            //get prev hqc block from proposal
-            if(NULL == hqc) //from backup
-            {
-                base::xblock_vector latest_certs = get_vblockstore()->load_block_object(*this, proposal_block->get_height() - 1, metrics::blockstore_access_from_bft_check_proposal);
-                if(false == latest_certs.get_vector().empty())
-                {
-                    for(auto it = latest_certs.get_vector().begin(); it != latest_certs.get_vector().end(); ++it)
-                    {
-                        if((*it)->get_block_hash() == proposal_block->get_last_block_hash()) //found conected prev one
-                        {
-                            hqc = (*it);
-                            proposal_block->reset_prev_block(hqc);//link proposal -> hqc now
-                            break;
-                        }
-                    }
-                }
-            }
-            //continue check whether all the way to latest connected block
-            if(hqc != NULL)
-            {
-                base::xvblock_t* it_prev_block = proposal_block;
-                base::xvblock_t* it_cur_block  = hqc;
-                while(it_cur_block != NULL)
-                {
-                    const int block_flags = it_cur_block->get_block_flags();
-                    if((block_flags & base::enum_xvblock_flag_connected) != 0)//connect must be commit as well
-                    {
-                        return true; //good by connect checking
-                    }
-                    else if((block_flags & base::enum_xvblock_flag_committed) != 0)
-                    {
-                        xwarn("xcsaccount_t::check_proposal,fail-as unconnected commit=%s,at node=%" PRIu64 " ",it_cur_block->dump().c_str(),get_xip2_low_addr());
-                        break;//found a commit but not connected,need trigger sync
-                    }
-                    it_prev_block= it_cur_block;
-                    if(it_cur_block->get_prev_block() == NULL)//xdb might have prev block,let us reload it
-                    {
-                        base::xauto_ptr<base::xvblock_t> _block = get_vblockstore()->load_block_object(*this, it_cur_block->get_height() -1,0,false, metrics::blockstore_access_from_bft_check_proposal);
-                        if(_block != nullptr)
-                            it_cur_block = _block.get();//safe to assign,since account not be idle at this moment
-                        else
-                            it_cur_block = NULL;  //let break while
-                    }
-                    else
-                    {
-                        it_cur_block = it_cur_block->get_prev_block();
-                    }
-                }
-                if(NULL == it_cur_block)
-                    xwarn("xcsaccount_t::check_proposal,last related block=%s,at node=%" PRIu64 " ",it_prev_block->dump().c_str(),get_xip2_low_addr());
-            }
-            xwarn("xcsaccount_t::check_proposal,fail-verify for proposal=%s,at node=%" PRIu64 " ",proposal_block->dump().c_str(),get_xip2_low_addr());
-            
-            //since upper layer may do check whether ok to execute to this hiqhqc, so here just return true for any way
-            return true;
-        }
-        
         //return specific error code(enum_xconsensus_result_code) to let caller know reason
         int    xcsaccount_t::verify_proposal(base::xvblock_t * proposal_block,base::xvqcert_t * bind_clock_cert,xcsobject_t * _from_child) //load and execute block at sanbox
         {
