@@ -57,6 +57,7 @@ class xdatamock_table : public base::xvaccount_t {
         xassert(m_mock_units.size() == user_count);
     }
 
+    void                                disable_fulltable() {m_config_fulltable_interval = 0;}
     const base::xvaccount_t &           get_vaccount() const {return *this;}
     const xtablestate_ptr_t &           get_table_state() const {return m_table_state;}
     const std::vector<xblock_ptr_t> &   get_history_tables() const {return m_history_tables;}
@@ -154,7 +155,7 @@ class xdatamock_table : public base::xvaccount_t {
         
         xblock_ptr_t proposal_block = nullptr;
         uint32_t history_table_count = m_history_tables.size();
-        if ( ((prev_tableblock->get_height() + 1) % enum_default_full_table_interval_count) == 0) {
+        if ( (m_config_fulltable_interval != 0) && (((prev_tableblock->get_height() + 1) % m_config_fulltable_interval) == 0) ) {
             proposal_block = generate_full_table(cs_para);
         } else {
             cs_para.set_tableblock_consensus_para(1, "1", 1, "1"); // TODO(jimmy) for light-table
@@ -300,6 +301,7 @@ class xdatamock_table : public base::xvaccount_t {
     xblock_builder_face_ptr_t       m_fulltable_builder;
     xblock_builder_face_ptr_t       m_lighttable_builder;
     xblockmaker_resources_ptr_t     m_default_resources{nullptr};
+    uint32_t                        m_config_fulltable_interval{enum_default_full_table_interval_count};
 };
 
 }

@@ -34,8 +34,10 @@ class xdb_mem_t : public xdb_face_t {
     bool batch_change(const std::map<std::string, std::string>& objs, const std::vector<std::string>& delete_keys) override;
 
     xdb_transaction_t* begin_transaction() override;
+    xdb_meta_t  get_meta() override {return m_meta;}  // implement for test
  public:
     std::map<std::string, std::string> m_values;
+    xdb_meta_t m_meta;
     mutable std::mutex m_lock;
 };
 

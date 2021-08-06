@@ -82,7 +82,8 @@ char const * matrics_name(xmetircs_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(store_db_write);
         RETURN_METRICS_NAME(store_db_delete);
         RETURN_METRICS_NAME(store_state_read);
-        RETURN_METRICS_NAME(store_state_write);
+        RETURN_METRICS_NAME(store_state_table_write);
+        RETURN_METRICS_NAME(store_state_unit_write);
         RETURN_METRICS_NAME(store_state_delete);
         RETURN_METRICS_NAME(store_block_table_read);
         RETURN_METRICS_NAME(store_block_unit_read);
@@ -94,15 +95,29 @@ char const * matrics_name(xmetircs_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(store_block_table_write);
         RETURN_METRICS_NAME(store_block_unit_write);
         RETURN_METRICS_NAME(store_block_other_write);
-        RETURN_METRICS_NAME(store_block_index_write);
-        RETURN_METRICS_NAME(store_block_input_write);
-        RETURN_METRICS_NAME(store_block_output_write);
+        RETURN_METRICS_NAME(store_block_index_table_write);
+        RETURN_METRICS_NAME(store_block_index_unit_write);
+        RETURN_METRICS_NAME(store_block_index_other_write);     
+        RETURN_METRICS_NAME(store_block_input_table_write);
+        RETURN_METRICS_NAME(store_block_input_unit_write);
+        RETURN_METRICS_NAME(store_block_output_table_write);
+        RETURN_METRICS_NAME(store_block_output_unit_write);
         RETURN_METRICS_NAME(store_block_delete);
         RETURN_METRICS_NAME(store_tx_index_self);
         RETURN_METRICS_NAME(store_tx_index_send);
         RETURN_METRICS_NAME(store_tx_index_recv);
         RETURN_METRICS_NAME(store_tx_index_confirm);
         RETURN_METRICS_NAME(store_tx_origin);
+        RETURN_METRICS_NAME(store_block_meta_write);
+        RETURN_METRICS_NAME(store_block_meta_read);
+
+        RETURN_METRICS_NAME(store_dbsize_block_unit_empty);
+        RETURN_METRICS_NAME(store_dbsize_block_unit_light);
+        RETURN_METRICS_NAME(store_dbsize_block_unit_full);
+        RETURN_METRICS_NAME(store_dbsize_block_table_empty);
+        RETURN_METRICS_NAME(store_dbsize_block_table_light);
+        RETURN_METRICS_NAME(store_dbsize_block_table_full);
+        RETURN_METRICS_NAME(store_dbsize_block_other);
 
         // vledger dataobject
         RETURN_METRICS_NAME(dataobject_xvnode_t);
@@ -479,6 +494,12 @@ void e_metrics::gauge(E_SIMPLE_METRICS_TAG tag, int64_t value) {
     }
     s_counters[tag].value += value;
     s_counters[tag].call_count++;
+}
+int64_t e_metrics::gauge_get_value(E_SIMPLE_METRICS_TAG tag) {
+    if (tag >= e_simple_total || tag <= e_simple_begin ) {
+        return 0;
+    }
+    return s_counters[tag].value;
 }
 
 void e_metrics::array_counter_increase(E_ARRAY_COUNTER_TAG tag, std::size_t index, int64_t value) {

@@ -92,7 +92,8 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     store_db_write,
     store_db_delete,
     store_state_read,
-    store_state_write,
+    store_state_table_write,
+    store_state_unit_write,
     store_state_delete,
     store_block_table_read,
     store_block_unit_read,
@@ -104,15 +105,29 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     store_block_table_write,
     store_block_unit_write,
     store_block_other_write,
-    store_block_index_write,
-    store_block_input_write,
-    store_block_output_write,
+    store_block_index_table_write,
+    store_block_index_unit_write,
+    store_block_index_other_write,
+    store_block_input_table_write,
+    store_block_input_unit_write,
+    store_block_output_table_write,
+    store_block_output_unit_write,
     store_block_delete,
     store_tx_index_self,
     store_tx_index_send,
     store_tx_index_recv,
     store_tx_index_confirm,
     store_tx_origin,
+    store_block_meta_write,
+    store_block_meta_read,
+
+    store_dbsize_block_unit_empty,
+    store_dbsize_block_unit_light,
+    store_dbsize_block_unit_full,
+    store_dbsize_block_table_empty,
+    store_dbsize_block_table_light,
+    store_dbsize_block_table_full,
+    store_dbsize_block_other,
 
     // vledger dataobject
     dataobject_xvnode_t,
@@ -435,6 +450,7 @@ public:
     void counter_set(std::string metrics_name, int64_t value);
     void flow_count(std::string metrics_name, int64_t value, time_point timestamp);
     void gauge(E_SIMPLE_METRICS_TAG tag, int64_t value);
+    int64_t gauge_get_value(E_SIMPLE_METRICS_TAG tag);
     void array_counter_increase(E_ARRAY_COUNTER_TAG tag, std::size_t index, int64_t value);
     void array_counter_decrease(E_ARRAY_COUNTER_TAG tag, std::size_t index, int64_t value);
     void array_counter_set(E_ARRAY_COUNTER_TAG tag, std::size_t index, int64_t value);
@@ -530,6 +546,7 @@ public:
 #define XMETRICS_XBASE_DATA_CATEGORY_NEW(key) XMETRICS_COUNTER_INCREMENT("dataobject_cur_xbase_type" + std::to_string(key), 1);
 #define XMETRICS_XBASE_DATA_CATEGORY_DELETE(key) XMETRICS_COUNTER_INCREMENT("dataobject_cur_xbase_type" + std::to_string(key), -1);
 #define XMETRICS_GAUGE(TAG, value) top::metrics::e_metrics::get_instance().gauge(TAG, value)
+#define XMETRICS_GAUGE_GET_VALUE(TAG) top::metrics::e_metrics::get_instance().gauge_get_value(TAG)
 
 #define XMETRICS_ARRCNT_INCR(metrics_name, index, value) top::metrics::e_metrics::get_instance().array_counter_increase(metrics_name, index, value)
 #define XMETRICS_ARRCNT_DECR(metrics_name, index, value) top::metrics::e_metrics::get_instance().array_counter_decrease(metrics_name, index, value)
@@ -553,6 +570,7 @@ public:
 #define XMETRICS_XBASE_DATA_CATEGORY_NEW(key)
 #define XMETRICS_XBASE_DATA_CATEGORY_DELETE(key)
 #define XMETRICS_GAUGE(TAG, value)
+#define XMETRICS_GAUGE_GET_VALUE(TAG)
 #define XMETRICS_ARRCNT_INCR(metrics_name, index, value)
 #define XMETRICS_ARRCNT_DECR(metrics_name, index, value)
 #define XMETRICS_ARRCNT_SET(metrics_name, index, value)
