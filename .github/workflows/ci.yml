@@ -50,4 +50,4 @@ jobs:
       - name: Notify
         if: always()
         run: |
-          bash .github/scripts/notify.sh ${{ job.status }} "${{ github.job }} job in worflow ${{ github.workflow }} of ${{ github.repository }} has ${{ job.status }}"
+          bash .github/scripts/notify.sh ${{ github.event.number }} ${{ job.status }} "#${{ github.event.number }} from ${{ github.event.pull_request.head.repo.html_url }} to ${{ github.event.repository.html_url }} has ${{ job.status }}, please check ${{ github.event.pull_request.html_url }}"
