@@ -576,7 +576,7 @@ namespace top
             enum_xvblock_flag_authenticated     = 0x1000, //block has been certificated --block'signature has been verified
             enum_xvblock_flag_locked            = 0x2000, //block has been locked   ---block not allow to fork
             enum_xvblock_flag_committed         = 0x4000, //block has been commited ---block to allow change state of account
-            enum_xvblock_flag_executed          = 0x8000, //block has been executed ---block has been executed and changed state
+            // enum_xvblock_flag_executed          = 0x8000, //block has been executed ---block has been executed and changed state
             enum_xvblock_flags_high4bit_mask    = 0xF000, //mask to retrive high 4bit of block flags
 
             enum_xvblock_flags_mask             = 0xFF00, //mask to get all block flags
