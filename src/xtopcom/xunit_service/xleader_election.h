@@ -20,7 +20,7 @@ class xelection_cache_imp : public xelection_cache_face {
 public:
 
     // load manager tables
-    virtual int32_t get_tables(const xvip2_t & xip, std::vector<table_index> * tables);
+    virtual int32_t get_tables(const xvip2_t & xip, std::vector<base::xtable_index_t> * tables);
 
     // load election data from db
     virtual int32_t get_election(const xvip2_t & xip, elect_set * elect_data, bool bself = true);

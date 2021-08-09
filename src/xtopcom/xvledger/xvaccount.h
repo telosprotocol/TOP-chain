@@ -95,6 +95,12 @@ namespace top
                 m_zone_index = (enum_xchain_zone_index)(tableid >> 10);
                 m_subaddr = (uint8_t)tableid & 0xff;
             }
+            xtable_index_t(enum_xchain_zone_index zone_index, uint8_t subaddr) {
+                m_zone_index = zone_index;
+                m_subaddr = subaddr;
+                xassert(m_zone_index <= enum_chain_zone_zec_index);
+                xassert(m_subaddr < enum_vbucket_has_tables_count);
+            }
         public:
             xtable_shortid_t        to_table_shortid() const {return (uint16_t)((m_zone_index << 10) | m_subaddr);}
             enum_xchain_zone_index  get_zone_index() const {return m_zone_index;}
