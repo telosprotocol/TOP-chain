@@ -6,6 +6,7 @@
 #include "xdata/xgenesis_data.h"
 #include "xverifier/xverifier_utl.h"
 #include "xbase/xutl.h"
+#include "xrpc/xuint_format.h"
 
 NS_BEG2(top, xverifier)
 
@@ -32,6 +33,22 @@ int32_t xtx_utl::address_is_valid(const std::string & addr) {
     if (!res) {
         xwarn("[global_trace][xverifier][address_is_valid][fail] address: %s", addr.c_str());
         return xverifier_error::xverifier_error_addr_invalid;
+    }
+    base::enum_vaccount_addr_type addr_type = base::xvaccount_t::get_addrtype_from_account(addr);
+    std::string addrtemp(addr);
+    if (addr_type == top::base::enum_vaccount_addr_type_secp256k1_eth_user_account
+        && addrtemp.size() > top::base::xvaccount_t::enum_vaccount_address_prefix_size) {
+        addrtemp = addrtemp.substr(top::base::xvaccount_t::enum_vaccount_address_prefix_size);
+        std::string addrtemp2(addrtemp);
+        std::transform(addrtemp.begin(), addrtemp.end(), addrtemp.begin(), ::tolower);
+        if (addrtemp != addrtemp2 || is_valid_hex_format(addrtemp) == false) {
+            xwarn("[global_trace][verifier][address_is_valid]addr invalid: %s", addr.c_str());
+            return  xverifier_error::xverifier_error_addr_invalid;
+        }
+    }
+    if (addr[0] != 'T') {
+            xwarn("[global_trace][verifier][address_is_valid]addr invalid: %s", addr.c_str());
+            return  xverifier_error::xverifier_error_addr_invalid;
     }
 
     xdbg("[global_trace][xverifier][address_is_valid][success] address: %s", addr.c_str());
@@ -113,5 +130,12 @@ int32_t  xtx_utl::judge_normal_contract_sendtx(data::xtransaction_ptr_t const& t
 
     return xverifier_error::xverifier_success;
 }
-
+bool xtx_utl::is_valid_hex_format(std::string const& str) {
+    for (size_t i = 0; i < str.size(); ++i) {
+        if (-1 == xrpc::hex_to_dec(str[i])) {
+            return false;
+        }
+    }
+    return true;
+}
 NS_END2
