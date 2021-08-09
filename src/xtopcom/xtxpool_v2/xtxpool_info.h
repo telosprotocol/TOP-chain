@@ -351,7 +351,7 @@ public:
         }
 
         m_statistic->inc_push_tx_send_cur_num(count);
-         XMETRICS_GAUGE(metrics::txpool_send_tx_cur, count);
+        XMETRICS_GAUGE(metrics::txpool_send_tx_cur, count);
         // XMETRICS_COUNTER_INCREMENT("table_send_tx_cur" + get_address(), count);
         xdbg("send_tx_inc table %s send queue size:%u", get_address().c_str(), m_counter.get_send_tx_count());
     }
@@ -434,10 +434,14 @@ public:
     bool is_send_tx_reached_upper_limit() {
         if (m_counter.get_send_tx_count() >= table_send_tx_queue_size_max || m_counter.get_conf_tx_count() >= table_conf_tx_queue_size_max ||
             any_shard_send_tx_reached_upper_limit()) {
-            xwarn("is_send_tx_reached_upper_limit table %s send queue size:%u,confirm queue size:%u",
-                  get_address().c_str(),
-                  m_counter.get_send_tx_count(),
-                  m_counter.get_conf_tx_count());
+            XMETRICS_PACKET_ALARM("txpool_send_tx_reached_upper_limit",
+                                  "table",
+                                  get_address().c_str(),
+                                  "send_queue_size",
+                                  m_counter.get_send_tx_count(),
+                                  "confirm_queue_size",
+                                  m_counter.get_conf_tx_count());
+
             return true;
         }
         return false;
@@ -445,7 +449,7 @@ public:
 
     bool is_recv_tx_reached_upper_limit() {
         if (m_counter.get_recv_tx_count() >= table_recv_tx_queue_size_max || any_shard_recv_tx_reached_upper_limit()) {
-            xwarn("is_recv_tx_reached_upper_limit table %s recv queue size:%u", get_address().c_str(), m_counter.get_recv_tx_count());
+            XMETRICS_PACKET_ALARM("txpool_recv_tx_reached_upper_limit", "table", get_address().c_str(), "recv_queue_size", m_counter.get_recv_tx_count());
             return true;
         }
         return false;
@@ -453,7 +457,7 @@ public:
 
     bool is_confirm_tx_reached_upper_limit() {
         if (m_counter.get_conf_tx_count() >= table_conf_tx_queue_size_max || any_shard_confirm_tx_reached_upper_limit()) {
-            xwarn("is_confirm_tx_reached_upper_limit table %s confirm queue size:%u", get_address().c_str(), m_counter.get_conf_tx_count());
+            XMETRICS_PACKET_ALARM("txpool_confirm_tx_reached_upper_limit", "table", get_address().c_str(), "confirm_queue_size", m_counter.get_conf_tx_count());
             return true;
         }
         return false;
