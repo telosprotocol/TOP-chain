@@ -27,11 +27,12 @@ protected:
 TEST_F(test_tablemaker, make_proposal_1) {
     xblockmaker_resources_ptr_t resources = std::make_shared<test_xblockmaker_resources_t>();
 
-    std::string table_addr = xdatamock_address::make_consensus_table_address(1);
-    std::vector<std::string> unit_addrs = xdatamock_address::make_multi_user_address_in_table(table_addr, 2);
+    mock::xdatamock_table mocktable(1, 2);
+    std::string table_addr = mocktable.get_account();
+    std::vector<std::string> unit_addrs = mocktable.get_unit_accounts();
     std::string from_addr = unit_addrs[0];
     std::string to_addr = unit_addrs[1];
-    mock::xdatamock_table mocktable(table_addr, unit_addrs);
+
     std::vector<xblock_ptr_t> all_gene_units = mocktable.get_all_genesis_units();
     for (auto & v : all_gene_units) {
         resources->get_blockstore()->store_block(base::xvaccount_t(v->get_account()), v.get());

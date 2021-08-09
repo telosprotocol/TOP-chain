@@ -26,21 +26,6 @@ class xdatamock_table : public base::xvaccount_t {
         enum_default_full_table_state_count = 2,
     };
  public:
-    explicit xdatamock_table(const std::string & address, const std::vector<std::string> & unit_addrs)
-    : base::xvaccount_t(address) {
-        m_fulltable_builder = std::make_shared<xfulltable_builder_t>();
-        m_lighttable_builder = std::make_shared<xlighttable_builder_t>();
-
-        xblock_ptr_t _block = build_genesis_table_block();
-        on_table_finish(_block);
-
-        for (auto & user : unit_addrs) {
-            xdatamock_unit datamock_unit(user, xdatamock_unit::enum_default_init_balance);
-            m_mock_units.push_back(datamock_unit);
-        }
-        xassert(m_mock_units.size() == unit_addrs.size());        
-    }
-
     explicit xdatamock_table(uint16_t tableid = 1, uint32_t user_count = 4)
     : base::xvaccount_t(xblocktool_t::make_address_shard_table_account(tableid)) {
         m_fulltable_builder = std::make_shared<xfulltable_builder_t>();
@@ -50,8 +35,8 @@ class xdatamock_table : public base::xvaccount_t {
         on_table_finish(_block);
 
         for (uint32_t i = 0; i < user_count; i++) {
-            std::string user = xdatamock_address::make_user_address_random(tableid);
-            xdatamock_unit datamock_unit(user, xdatamock_unit::enum_default_init_balance);
+            xaddress_key_pair_t addr_pair = xdatamock_address::make_unit_address_with_key(tableid);
+            xdatamock_unit datamock_unit(addr_pair, xdatamock_unit::enum_default_init_balance);
             m_mock_units.push_back(datamock_unit);
         }
         xassert(m_mock_units.size() == user_count);
@@ -72,6 +57,13 @@ class xdatamock_table : public base::xvaccount_t {
             units.push_back(mockunit.get_history_units()[0]);
         }
         return units;
+    }
+    std::vector<std::string>            get_unit_accounts() const {
+        std::vector<std::string> accounts;
+        for (auto & mockunit : m_mock_units) {
+            accounts.push_back(mockunit.get_account());
+        }
+        return accounts;
     }
 
     std::vector<xcons_transaction_ptr_t>   create_send_txs(const std::string & from, const std::string & to, uint32_t count) {
