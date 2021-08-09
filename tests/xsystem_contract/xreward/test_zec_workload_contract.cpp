@@ -26,6 +26,7 @@
 #include "xbasic/xasio_io_context_wrapper.h"
 #include "xbasic/xtimer_driver.h"
 #include <fstream>
+#include <cinttypes>
 
 using namespace top;
 using namespace top::xvm;
@@ -120,7 +121,7 @@ public:
                 vote_count++;
             }
         }
-        printf("[tableblock_statistics] xip: [%lu, %lu], block_height: %lu, group_id: %u, slot_id: %u, "
+        printf("[tableblock_statistics] xip: [%" PRIu64 ", %" PRIu64 "], block_height: %" PRIu64 ", group_id: %u, slot_id: %u, "
             "work add block_count: %u, block_count: %u, add txs_count %u, transaction_count: %u, add vote count: %u, vote_count: %u\n",
                 leader_xip.high_addr,
                 leader_xip.low_addr,
@@ -248,9 +249,9 @@ public:
         // auto node_service = contract::xcontract_manager_t::instance().get_node_service();
         auto workload_per_tableblock = 2;
         auto workload_per_tx = 1;
-        for (auto const static_item: stat_data.detail) {
+        for (auto const & static_item: stat_data.detail) {
             auto elect_statistic = static_item.second;
-            for (auto const group_item: elect_statistic.group_statistics_data) {
+            for (auto const & group_item: elect_statistic.group_statistics_data) {
                 common::xgroup_address_t const & group_addr = group_item.first;
                 xgroup_related_statistics_data_t const & group_account_data = group_item.second;
                 xvip2_t const &group_xvip2 = top::common::xip2_t{
@@ -260,7 +261,7 @@ public:
                     group_addr.group_id(),
                     (uint16_t)group_account_data.account_statistics_data.size(),
                     static_item.first};
-                printf("[xzec_workload_contract_v2::accumulate_workload] group xvip2: %lu, %lu\n",
+                printf("[xzec_workload_contract_v2::accumulate_workload] group xvip2: %" PRIu64 ", %" PRIu64 "\n",
                        group_xvip2.high_addr,
                        group_xvip2.low_addr);
                 for (size_t slotid = 0; slotid < group_account_data.account_statistics_data.size(); ++slotid) {

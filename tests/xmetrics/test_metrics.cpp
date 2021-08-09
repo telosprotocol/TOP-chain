@@ -4,9 +4,13 @@
 
 #define private public
 #define METRICS_UNIT_TEST
+#ifndef ENABLE_METRICS
+#define ENABLE_METRICS
+#endif
 #include "xmetrics/xmetrics.h"
 
 #include <gtest/gtest.h>
+#include <cinttypes>
 
 #define TEST_CASE_SIZE 7
 #define SLEEP_SECOND(t) std::this_thread::sleep_for(std::chrono::seconds(t))
@@ -107,12 +111,12 @@ TEST_F(metrics_test,array_multi_thread){
     calc_expect_res(exp_res,data3);
     printf("each_value:[");
     for (auto const & _p : exp_res) {
-        printf("%ld,",_p.second);
+        printf("%" PRIu64 ",",_p.second);
     }
     printf("]\n");
     printf("each_count:[");
     for (auto const & _p : exp_res) {
-        printf("%ld,",_p.first);
+        printf("%" PRIu64 ",",_p.first);
     }
     printf("]\n");
 

@@ -6,9 +6,7 @@
 #include <cinttypes>
 #include "xconsdriver.h"
 
-#if defined(ENABLE_METRICS)
 #include "xmetrics/xmetrics.h"
-#endif
 
 namespace top
 {

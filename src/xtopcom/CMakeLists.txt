@@ -14,11 +14,11 @@ add_subdirectory(xtransport)
 add_subdirectory(xwrouter)
 add_subdirectory(xgossip)
 add_subdirectory(xelect_net)
-add_subdirectory(xstate_accessor)
 add_subdirectory(xchain_timer)
 add_subdirectory(xrouter)
 add_subdirectory(xstore)
-add_subdirectory(xcontract_common)
+# add_subdirectory(xstate_accessor) # new contract only
+# add_subdirectory(xcontract_common) # new contract only
 if (BUILD_RUSTVM)
     add_subdirectory(xwasm_vm)
 endif()
