@@ -15,7 +15,7 @@ target_link_libraries(xblockstore PRIVATE
 )
 
 if (BUILD_METRICS)
-    add_dependencies(xblockstore xmetrics)
+    # add_dependencies(xblockstore xmetrics)
     target_link_libraries(xblockstore PRIVATE xmetrics)
 endif()
 

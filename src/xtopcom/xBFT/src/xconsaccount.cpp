@@ -5,10 +5,7 @@
 
 #include "xconsaccount.h"
 #include "xconscontext.h"
-
-#if defined(ENABLE_METRICS)
 #include "xmetrics/xmetrics.h"
-#endif
 
 #include <cinttypes>
 

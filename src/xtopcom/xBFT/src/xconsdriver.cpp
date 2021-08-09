@@ -7,10 +7,7 @@
 
 #include "xconsdriver.h"
 #include "xbase/xutl.h"
-
-#if defined(ENABLE_METRICS)
 #include "xmetrics/xmetrics.h"
-#endif
 
 namespace top
 {

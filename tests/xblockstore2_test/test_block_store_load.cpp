@@ -17,6 +17,7 @@
 
 // #include "test_blockmock.hpp"
 #include "xstore/xstore.h"
+#include "xverifier/xtx_verifier.h"
 #include "xblockstore/xblockstore_face.h"
 #include "tests/mock/xvchain_creator.hpp"
 #include "tests/mock/xdatamock_table.hpp"
@@ -26,6 +27,7 @@ using namespace top::base;
 using namespace top::mbus;
 using namespace top::store;
 using namespace top::data;
+using namespace top::xverifier;
 using namespace top::mock;
 using namespace top::metrics;
 
@@ -165,11 +167,10 @@ TEST_F(test_block_store_load, mock_table_unit_1) {
     mock::xvchain_creator creator;
     base::xvblockstore_t* blockstore = creator.get_blockstore();
 
-    std::string table_addr = xdatamock_address::make_consensus_table_address(1);
-    std::vector<std::string> unit_addrs = xdatamock_address::make_multi_user_address_in_table(table_addr, 4);
+    mock::xdatamock_table mocktable(1, 4);
+    std::vector<std::string> unit_addrs = mocktable.get_unit_accounts();
     std::string from_addr = unit_addrs[0];
     std::string to_addr = unit_addrs[3];
-    mock::xdatamock_table mocktable(table_addr, unit_addrs);
 
     std::vector<xcons_transaction_ptr_t> send_txs = mocktable.create_send_txs(from_addr, to_addr, 2);
     mocktable.push_txs(send_txs);
@@ -223,11 +224,10 @@ TEST_F(test_block_store_load, mock_table_unit_2) {
     mock::xvchain_creator creator;
     base::xvblockstore_t* blockstore = creator.get_blockstore();
 
-    std::string table_addr = xdatamock_address::make_consensus_table_address(1);
-    std::vector<std::string> unit_addrs = xdatamock_address::make_multi_user_address_in_table(table_addr, 4);
+    mock::xdatamock_table mocktable(1, 4);
+    std::vector<std::string> unit_addrs = mocktable.get_unit_accounts();
     std::string from_addr = unit_addrs[0];
     std::string to_addr = unit_addrs[3];
-    mock::xdatamock_table mocktable(table_addr, unit_addrs);
 
     std::vector<xcons_transaction_ptr_t> send_txs = mocktable.create_send_txs(from_addr, to_addr, 2);
     mocktable.push_txs(send_txs);
@@ -259,6 +259,7 @@ TEST_F(test_block_store_load, mock_table_unit_2) {
 void print_store_metrics(const db::xdb_meta_t & db_meta) {
     // db write count statistics
     std::cout << "=============db write count statistics=============" << std::endl;
+    #ifdef ENABLE_METRICS
     std::cout << "store_db_write=" << XMETRICS_GAUGE_GET_VALUE(xmetircs_tag_t::store_db_write) << std::endl;
     std::cout << "store_block_index_table_write=" << XMETRICS_GAUGE_GET_VALUE(xmetircs_tag_t::store_block_index_table_write) << std::endl;
     std::cout << "store_block_index_unit_write=" << XMETRICS_GAUGE_GET_VALUE(xmetircs_tag_t::store_block_index_unit_write) << std::endl;
@@ -307,16 +308,16 @@ void print_store_metrics(const db::xdb_meta_t & db_meta) {
     std::cout << "store_dbsize_block_table_light=" << XMETRICS_GAUGE_GET_VALUE(xmetircs_tag_t::store_dbsize_block_table_light) << std::endl;
     std::cout << "store_dbsize_block_table_full=" << XMETRICS_GAUGE_GET_VALUE(xmetircs_tag_t::store_dbsize_block_table_full) << std::endl;
     std::cout << "store_dbsize_block_other=" << XMETRICS_GAUGE_GET_VALUE(xmetircs_tag_t::store_dbsize_block_other) << std::endl;
+    #endif
 }
 
 TEST_F(test_block_store_load, mock_key_value_size_analyze_1_BENCH) {
     mock::xvchain_creator creator;
     base::xvblockstore_t* blockstore = creator.get_blockstore();
 
-    std::string table_addr = xdatamock_address::make_consensus_table_address(1);
     uint32_t addr_count = 2;
-    std::vector<std::string> unit_addrs = xdatamock_address::make_multi_user_address_in_table(table_addr, addr_count);
-    mock::xdatamock_table mocktable(table_addr, unit_addrs);
+    mock::xdatamock_table mocktable(1, addr_count);
+    std::vector<std::string> unit_addrs = mocktable.get_unit_accounts();
     mocktable.disable_fulltable();
 
     uint64_t count = 200;
@@ -370,10 +371,9 @@ TEST_F(test_block_store_load, mock_key_value_size_analyze_2_BENCH) {
     mock::xvchain_creator creator;
     base::xvblockstore_t* blockstore = creator.get_blockstore();
 
-    std::string table_addr = xdatamock_address::make_consensus_table_address(1);
     uint32_t addr_count = 20;
-    std::vector<std::string> unit_addrs = xdatamock_address::make_multi_user_address_in_table(table_addr, addr_count);
-    mock::xdatamock_table mocktable(table_addr, unit_addrs);
+    mock::xdatamock_table mocktable(1, addr_count);
+    std::vector<std::string> unit_addrs = mocktable.get_unit_accounts();
     mocktable.disable_fulltable();
 
     uint64_t count = 200;
@@ -427,5 +427,27 @@ TEST_F(test_block_store_load, mock_key_value_size_analyze_2_BENCH) {
     {
         db::xdb_meta_t db_meta = creator.get_xdb()->get_meta();
         print_store_metrics(db_meta);
+    }
+}
+
+
+TEST_F(test_block_store_load, mock_table_tx_check) {
+    mock::xvchain_creator creator;
+    base::xvblockstore_t* blockstore = creator.get_blockstore();
+
+    mock::xdatamock_table mocktable(1, 4);
+    std::vector<std::string> unit_addrs = mocktable.get_unit_accounts();
+    std::string from_addr = unit_addrs[0];
+    std::string to_addr = unit_addrs[3];
+
+    for (uint32_t i = 0; i < 10; i++) {
+        std::vector<xcons_transaction_ptr_t> send_txs = mocktable.create_send_txs(from_addr, to_addr, 2);
+        for (auto & tx : send_txs) {
+            ASSERT_EQ(0, xtx_verifier::verify_send_tx_legitimacy(tx->get_transaction(), nullptr));
+            ASSERT_EQ(0, xtx_verifier::verify_send_tx_validation(tx->get_transaction()));
+            // std::cout << "tx = " << tx->dump() << std::endl;
+        }
+        mocktable.push_txs(send_txs);
+        xblock_ptr_t _tableblock1 = mocktable.generate_one_table();
     }
 }

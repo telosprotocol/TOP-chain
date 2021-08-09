@@ -27,7 +27,15 @@ protected:
 };
 
 TEST_F(test_new_receipt_queue, receipt_queue_basic) {
-    std::string table_addr = xdatamock_address::make_consensus_table_address(1);
+    mock::xvchain_creator creator;
+    base::xvblockstore_t * blockstore = creator.get_blockstore();
+
+    mock::xdatamock_table mocktable(1, 2);
+    std::string table_addr = mocktable.get_account();
+    std::vector<std::string> unit_addrs = mocktable.get_unit_accounts();
+    std::string sender = unit_addrs[0];
+    std::string receiver = unit_addrs[1];
+
     xtxpool_shard_info_t shard(0, 0, 0, common::xnode_type_t::auditor);
     xtxpool_statistic_t statistic;
     xtxpool_table_info_t table_para(table_addr, &shard, &statistic);
@@ -35,14 +43,6 @@ TEST_F(test_new_receipt_queue, receipt_queue_basic) {
     xtx_para_t para;
 
     xreceipt_queue_new_t receipt_queue(&table_para);
-
-    mock::xvchain_creator creator;
-    base::xvblockstore_t * blockstore = creator.get_blockstore();
-
-    std::vector<std::string> unit_addrs = xdatamock_address::make_multi_user_address_in_table(table_addr, 2);
-    std::string sender = unit_addrs[0];
-    std::string receiver = unit_addrs[1];
-    mock::xdatamock_table mocktable(table_addr, unit_addrs);
 
     uint32_t tx_num = 5;
     std::vector<xcons_transaction_ptr_t> send_txs = mocktable.create_send_txs(sender, receiver, tx_num);

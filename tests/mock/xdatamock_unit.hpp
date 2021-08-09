@@ -9,6 +9,7 @@
 #include "xblockmaker/xunit_builder.h"
 #include "xstore/xaccount_context.h"
 #include "tests/mock/xcertauth_util.hpp"
+#include "tests/mock/xdatamock_address.hpp"
 
 namespace top {
 namespace mock {
@@ -67,8 +68,24 @@ class xdatamock_unit {
     };
 
  public:
-    xdatamock_unit(const std::string & account, uint64_t init_balance = enum_default_init_balance)
-    : m_account(account) {
+    xdatamock_unit(const std::string & address, uint64_t init_balance = enum_default_init_balance)
+    : m_account(address) {
+        m_enable_sign = false;
+
+        m_fullunit_builder = std::make_shared<xfullunit_builder_t>();
+        m_lightunit_builder = std::make_shared<xlightunit_builder_mock_t>();
+        m_emptyunit_builder = std::make_shared<xemptyunit_builder_t>();
+        m_default_builder_para = std::make_shared<xblock_builder_para_face_t>(nullptr);
+
+        xblock_ptr_t genesis_unit = build_genesis_block(init_balance);
+        on_unit_finish(genesis_unit);
+    }
+
+    xdatamock_unit(const xaddress_key_pair_t & addr_pair, uint64_t init_balance = enum_default_init_balance)
+    : m_account(addr_pair.m_address) {
+        m_enable_sign = true;
+        memcpy(m_private_key, addr_pair.m_private_key, 32);
+
         m_fullunit_builder = std::make_shared<xfullunit_builder_t>();
         m_lightunit_builder = std::make_shared<xlightunit_builder_mock_t>();
         m_emptyunit_builder = std::make_shared<xemptyunit_builder_t>();
@@ -85,7 +102,7 @@ class xdatamock_unit {
     const std::vector<xcons_transaction_ptr_t> & get_txs() const {return m_current_txs;}
 
  public:
-    static xtransaction_ptr_t make_transfer_tx(uint256_t last_tx_hash, uint64_t last_tx_nonce, const std::string & from, const std::string & to,
+    xtransaction_ptr_t make_transfer_tx(uint256_t last_tx_hash, uint64_t last_tx_nonce, const std::string & from, const std::string & to,
         uint64_t amount, uint64_t firestamp, uint16_t duration, uint32_t deposit) {
         xtransaction_ptr_t tx = make_object_ptr<xtransaction_t>();
         data::xproperty_asset asset(amount);
@@ -96,6 +113,10 @@ class xdatamock_unit {
         tx->set_expire_duration(duration);
         tx->set_deposit(deposit);
         tx->set_digest();
+        if (m_enable_sign) {
+            std::string signature = utl::xcrypto_util::digest_sign(tx->digest(), m_private_key);
+            tx->set_signature(signature);
+        }
         tx->set_len();
         return tx;
     }
@@ -225,6 +246,8 @@ class xdatamock_unit {
     }
 
  private:
+    bool                                    m_enable_sign{false};
+    uint8_t                                 m_private_key[32];
     std::string                             m_account;
     xaccount_ptr_t                          m_unit_bstate{nullptr};
     std::vector<xcons_transaction_ptr_t>    m_current_txs;

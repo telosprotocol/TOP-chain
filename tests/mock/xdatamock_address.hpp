@@ -7,6 +7,18 @@
 namespace top {
 namespace mock {
 
+struct xaddress_key_pair_t {
+    xaddress_key_pair_t() {
+        utl::xcrypto_util::make_private_key(m_private_key);
+        uint16_t ledger_id = base::xvaccount_t::make_ledger_id(base::enum_main_chain_id, base::enum_chain_zone_consensus_index);
+        uint8_t addr_type = base::enum_vaccount_addr_type_secp256k1_user_account;        
+        m_address = utl::xcrypto_util::make_address_by_assigned_key(m_private_key, addr_type, ledger_id);
+    }
+    std::string         m_address;
+    uint8_t             m_private_key[32];
+};
+
+
 class xdatamock_address {
  public:
     static std::string     make_user_address_random() {
@@ -42,6 +54,18 @@ class xdatamock_address {
             uaddrs.push_back(unitaddr);
         }
         return uaddrs;
+    }
+
+    static xaddress_key_pair_t  make_unit_address_with_key(uint16_t subaddr) {
+        uint32_t count = 1000;
+        while (count--) {
+            xaddress_key_pair_t pair;
+            if (subaddr == base::xvaccount_t::get_ledgersubaddr_from_account(pair.m_address)) {
+                return pair;
+            }
+        }
+        xassert(false);
+        return xaddress_key_pair_t();
     }
 };
 

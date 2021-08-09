@@ -5,8 +5,6 @@ REPORT_DIR=${WORK_DIR}/ut_report
 TEMP_HTML=.github/scripts/index.html
 UHTML=${REPORT_DIR}/index.html
 
-include_case=("xbasic_test" "xchain_timer_test" "xcommon_test" "xelection_test" "xrouter_test" "xsystem_contract_test" "xvnode_test")
-
 # run unittest
 echo "testcase count:" $(ls cbuild/bin/Linux/*test|wc -l)
 
@@ -18,11 +16,14 @@ mkdir -p ${REPORT_DIR}
 run_err_count=0
 for utest in $(ls cbuild/bin/Linux/*test);do
     utest_file_name=$(basename $utest)
-    time ${utest} --gtest_output="xml:"${utest_file_name}"_report.xml"
+    echo "testcase running: ${utest_file_name}"
+    time ${utest} --gtest_output="xml:"${utest_file_name}"_report.xml" --gtest_filter=-*.*BENCH*
     if [[ $? -ne 0 ]];then
+        echo "testcase failed: ${utest_file_name}"
         let run_err_count="${run_err_count}+1"
         continue
     fi
+    echo "testcase finish: ${utest_file_name}"
     mv ${utest_file_name}"_report.xml" ${REPORT_DIR}/
 done
 

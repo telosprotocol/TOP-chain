@@ -406,7 +406,7 @@ public:
                 // for (size_t i = 0; i < 1; i++) {
                     for (size_t j = 0; j < table_num; j++) {
                     // for (size_t j = 0; j < 1; j++) {
-                        std::string table{sys_contract_sharding_workload_addr + '@' + std::to_string(j)};
+                        std::string table(std::string(sys_contract_sharding_workload_addr) + "@" + std::to_string(j));
                         uint64_t random = viewid + base::xvaccount_t::get_xid_from_account(table);
                         random = base::xhash64_t::digest(base::xstring_utl::to_hex(rand_str(64))) + random;
                         std::vector<common::xfts_merkle_tree_t<xvip2_t>::value_type> candidates;
@@ -538,7 +538,7 @@ public:
                 table_time_last[i] = time_this;
                 table_reward_last[i] = reward_this;
                 time_height_left -= time_this;
-                std::string table{sys_contract_sharding_workload_addr + '@' + std::to_string(i)};
+                std::string table{std::string(sys_contract_sharding_workload_addr) + "@" + std::to_string(i)};
                 for (size_t j = 0; j < 128; j++) {
                     uint64_t random = viewid + base::xvaccount_t::get_xid_from_account(table);
                     random = base::xhash64_t::digest(base::xstring_utl::to_hex(rand_str(64))) + random;
