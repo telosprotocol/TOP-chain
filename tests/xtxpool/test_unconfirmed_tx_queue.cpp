@@ -44,10 +44,10 @@ TEST_F(test_unconfirmed_tx_queue, unconfirmed_tx_queue_basic) {
     xunconfirmed_tx_queue_t unconfirmed_tx_queue(&resources, &table_para);
 
     // construct account
-    std::vector<std::string> unit_addrs = xdatamock_address::make_multi_user_address_in_table(table_addr, 2);
-    std::string sender = unit_addrs[0];
-    std::string receiver = unit_addrs[1];
-    mock::xdatamock_table mocktable(table_addr, unit_addrs);
+    mock::xdatamock_table mocktable(1, 2);
+    auto mock_units = mocktable.get_mock_units();
+    std::string sender = mock_units[0].get_account();
+    std::string receiver = mock_units[1].get_account();
 
     // insert committed txs to blockstore
     uint32_t tx_num = 1;
@@ -101,10 +101,10 @@ TEST_F(test_unconfirmed_tx_queue, recover) {
     xunconfirmed_tx_queue_t unconfirmed_tx_queue(&resources, &table_para);
 
     // construct account
-    std::vector<std::string> unit_addrs = xdatamock_address::make_multi_user_address_in_table(table_addr, 2);
-    std::string sender = unit_addrs[0];
-    std::string receiver = unit_addrs[1];
-    mock::xdatamock_table mocktable(table_addr, unit_addrs);
+    mock::xdatamock_table mocktable(1, 2);
+    auto mock_units = mocktable.get_mock_units();
+    std::string sender = mock_units[0].get_account();
+    std::string receiver = mock_units[1].get_account();
 
     // insert committed txs to blockstore
     uint32_t tx_num = 5;
