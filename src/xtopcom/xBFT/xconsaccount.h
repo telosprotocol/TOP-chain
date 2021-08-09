@@ -32,7 +32,6 @@ namespace top
         public:
             virtual void*   query_interface(const int32_t _enum_xobject_type_) override;
 
-            bool            check_proposal(base::xvblock_t * proposal_block);//check whether all the way to latest connected block
             bool            is_mailbox_over_limit(const int32_t max_mailbox_num) ;
 
         protected:

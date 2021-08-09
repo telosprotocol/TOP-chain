@@ -567,7 +567,7 @@ namespace top
         //note:once reset all flags to 0 ->indicate that block is no-longer valid
         enum enum_xvblock_flag
         {
-            enum_xvblock_flag_connected         = 0x0100, //block connected all the ways to genesis block or last full-block
+            // enum_xvblock_flag_connected         = 0x0100, //block connected all the ways to genesis block or last full-block
             enum_xvblock_flag_stored            = 0x0200, //block has been stored to db/xstore fully
             enum_xvblock_flag_unpacked          = 0x0400, //unpacked container(e.g.tableblock) into multiple unit blocks
             enum_xvblock_flag_confirmed         = 0x0800, //block has delivered receipt to receiver who confirmed and finished
