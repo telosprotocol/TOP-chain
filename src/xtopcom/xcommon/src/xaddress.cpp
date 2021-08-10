@@ -360,24 +360,20 @@ xtop_account_election_address::to_string() const {
     return m_account_address.to_string() + "/" + m_slot_id.to_string();
 }
 
-xtop_logical_version::xtop_logical_version(xelection_round_t const & election_round, std::uint16_t const sharding_size, std::uint64_t const associated_blk_height)
-    : m_election_round{ election_round }, m_sharding_size{ sharding_size }, m_associated_blk_height{ associated_blk_height } {
+xtop_logical_version::xtop_logical_version(xelection_round_t const & election_round, std::uint16_t const group_size, std::uint64_t const associated_blk_height)
+    : m_election_round{ election_round }, m_group_size{ group_size }, m_associated_blk_height{ associated_blk_height } {
 }
 
-xtop_logical_version::xtop_logical_version(std::uint16_t const sharding_size, std::uint64_t const associated_blk_height)
-    : m_sharding_size{ sharding_size }, m_associated_blk_height{ associated_blk_height } {
+xtop_logical_version::xtop_logical_version(std::uint16_t const group_size, std::uint64_t const associated_blk_height)
+    : m_group_size{ group_size }, m_associated_blk_height{ associated_blk_height } {
 }
 
 xelection_round_t const & xtop_logical_version::election_round() const noexcept {
     return m_election_round;
 }
 
-std::uint16_t xtop_logical_version::sharding_size() const noexcept {
-    return m_sharding_size;
-}
-
 std::uint16_t xtop_logical_version::group_size() const noexcept {
-    return m_sharding_size;
+    return m_group_size;
 }
 
 std::uint64_t xtop_logical_version::associated_blk_height() const noexcept {
@@ -386,7 +382,7 @@ std::uint64_t xtop_logical_version::associated_blk_height() const noexcept {
 
 void xtop_logical_version::swap(xtop_logical_version & other) noexcept {
     m_election_round.swap(other.m_election_round);
-    std::swap(m_sharding_size, other.m_sharding_size);
+    std::swap(m_group_size, other.m_group_size);
     std::swap(m_associated_blk_height, other.m_associated_blk_height);
 }
 
@@ -399,7 +395,7 @@ bool xtop_logical_version::has_value() const noexcept {
 }
 
 bool xtop_logical_version::operator==(xtop_logical_version const & other) const noexcept {
-    return m_sharding_size == other.m_sharding_size && m_associated_blk_height == other.m_associated_blk_height;
+    return m_group_size == other.m_group_size && m_associated_blk_height == other.m_associated_blk_height;
 }
 
 bool xtop_logical_version::operator!=(xtop_logical_version const & other) const noexcept {
@@ -455,7 +451,7 @@ xtop_logical_version::hash_result_type xtop_logical_version::hash() const {
 }
 
 std::string xtop_logical_version::to_string() const {
-    return m_election_round.to_string() + "/" + std::to_string(m_sharding_size) + "/" + std::to_string(m_associated_blk_height);
+    return m_election_round.to_string() + "/" + std::to_string(m_group_size) + "/" + std::to_string(m_associated_blk_height);
 }
 
 xtop_node_address::xtop_node_address(xgroup_address_t const & group_address)
@@ -509,9 +505,9 @@ xtop_node_address::xtop_node_address(xgroup_address_t const & group_address,
 xtop_node_address::xtop_node_address(xgroup_address_t const & group_address,
                                      xaccount_election_address_t const & account_election_address,
                                      xelection_round_t const & election_round,
-                                     std::uint16_t const sharding_size,
+                                     std::uint16_t const group_size,
                                      std::uint64_t const associated_blk_height)
-    : xtop_node_address{ group_address, account_election_address, {election_round, sharding_size, associated_blk_height} } {
+    : xtop_node_address{ group_address, account_election_address, {election_round, group_size, associated_blk_height} } {
 }
 
 bool
@@ -622,8 +618,8 @@ xlogic_epoch_t const & xtop_node_address::logic_epoch() const noexcept {
 }
 
 std::uint16_t
-xtop_node_address::sharding_size() const noexcept {
-    return m_logic_epoch.sharding_size();
+xtop_node_address::group_size() const noexcept {
+    return m_logic_epoch.group_size();
 }
 
 std::uint64_t
@@ -640,7 +636,7 @@ xtop_node_address::xip2() const noexcept {
         sharding_xip.cluster_id(),
         sharding_xip.group_id(),
         m_account_election_address.slot_id(),
-        sharding_size(),
+        group_size(),
         associated_blk_height()
     };
 }

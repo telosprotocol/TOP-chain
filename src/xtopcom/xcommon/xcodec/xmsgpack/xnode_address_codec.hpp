@@ -106,7 +106,7 @@ struct pack<top::common::xnode_address_t>
         o.pack(message.cluster_address());
         o.pack(message.account_election_address());
         o.pack(message.election_round());
-        o.pack(message.sharding_size());
+        o.pack(message.group_size());
         o.pack(message.associated_blk_height());
 
         return o;
@@ -125,7 +125,7 @@ struct object_with_zone<top::common::xnode_address_t>
         o.via.array.ptr[xnode_address_cluster_address_index] = msgpack::object{ message.cluster_address(), o.zone };
         o.via.array.ptr[xnode_address_account_election_address_index] = msgpack::object{ message.account_election_address(), o.zone };
         o.via.array.ptr[xnode_address_election_round_index] = msgpack::object{ message.election_round(), o.zone };
-        o.via.array.ptr[xnode_address_sharding_size_index] = msgpack::object{ message.sharding_size(), o.zone };
+        o.via.array.ptr[xnode_address_sharding_size_index] = msgpack::object{ message.group_size(), o.zone };
         o.via.array.ptr[xnode_address_associated_blk_height_index] = msgpack::object{ message.associated_blk_height(), o.zone };
     }
 };

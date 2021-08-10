@@ -19,7 +19,7 @@ xtop_node_element::xtop_node_element(common::xnode_id_t const & node_id,
         group_element->address().group_id(),
         node_id,
         slot_id,
-        group_element->sharding_size(),
+        group_element->group_size(),
         group_element->associated_blk_height()
     }
     , m_group_element{ group_element }

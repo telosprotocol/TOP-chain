@@ -214,7 +214,7 @@ using xaccount_election_address_t = xtop_account_election_address;
 class xtop_logical_version final : public xhashable_t<xtop_logical_version>
                                  , public xenable_to_string_t<xtop_logical_version> {
     xelection_round_t m_election_round{};
-    std::uint16_t m_sharding_size{std::numeric_limits<std::uint16_t>::max()};
+    std::uint16_t m_group_size{std::numeric_limits<std::uint16_t>::max()};
     std::uint64_t m_associated_blk_height{std::numeric_limits<std::uint64_t>::max()};
 
 public:
@@ -228,8 +228,6 @@ public:
     xtop_logical_version(std::uint16_t const sharding_size, std::uint64_t const associated_blk_height);
 
     xelection_round_t const & election_round() const noexcept;
-
-    std::uint16_t sharding_size() const noexcept;
 
     std::uint16_t group_size() const noexcept;
 
@@ -364,8 +362,7 @@ public:
 
     xelection_round_t const & election_round() const noexcept;
 
-    std::uint16_t
-    sharding_size() const noexcept;
+    std::uint16_t group_size() const noexcept;
 
     std::uint64_t
     associated_blk_height() const noexcept;

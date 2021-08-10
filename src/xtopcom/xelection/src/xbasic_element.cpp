@@ -32,7 +32,7 @@ xtop_basic_element::xtop_basic_element(common::xelection_round_t const & electio
                                        common::xzone_id_t const & zone_id,
                                        common::xcluster_id_t const & cluster_id,
                                        common::xgroup_id_t const & group_id,
-                                       uint16_t const sharding_size,
+                                       uint16_t const group_size,
                                        uint64_t const associated_blk_height)
     : m_address{
         common::xcluster_address_t{
@@ -42,7 +42,7 @@ xtop_basic_element::xtop_basic_element(common::xelection_round_t const & electio
             group_id
         },
         election_round,
-        sharding_size,
+        group_size,
         associated_blk_height
     } {
 }
@@ -54,7 +54,7 @@ xtop_basic_element::xtop_basic_element(common::xelection_round_t const & electio
                                        common::xgroup_id_t const & group_id,
                                        common::xnode_id_t const & node_id,
                                        common::xslot_id_t const & slot_id,
-                                       uint16_t const sharding_size,
+                                       uint16_t const group_size,
                                        uint64_t const associated_blk_height)
     : m_address{
         common::xcluster_address_t{
@@ -68,7 +68,7 @@ xtop_basic_element::xtop_basic_element(common::xelection_round_t const & electio
             slot_id
         },
         election_round,
-        sharding_size,
+        group_size,
         associated_blk_height
     } {
 }
@@ -76,6 +76,10 @@ xtop_basic_element::xtop_basic_element(common::xelection_round_t const & electio
 common::xnode_address_t const &
 xtop_basic_element::address() const noexcept {
     return m_address;
+}
+
+common::xip2_t xtop_basic_element::xip2() const {
+    return address().xip2();
 }
 
 common::xcluster_id_t
@@ -98,6 +102,10 @@ xtop_basic_element::node_id() const noexcept {
     return m_address.node_id();
 }
 
+common::xaccount_address_t const & xtop_basic_element::account_address() const noexcept {
+    return m_address.account_address();
+}
+
 bool
 xtop_basic_element::operator==(xtop_basic_element const & other) const noexcept {
     return m_address == other.m_address;
@@ -108,9 +116,8 @@ xtop_basic_element::slot_id() const noexcept {
     return m_address.slot_id();
 }
 
-uint16_t
-xtop_basic_element::sharding_size() const noexcept {
-    return m_address.sharding_size();
+uint16_t xtop_basic_element::group_size() const noexcept {
+    return m_address.group_size();
 }
 
 uint64_t

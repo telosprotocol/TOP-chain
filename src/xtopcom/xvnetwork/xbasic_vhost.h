@@ -27,7 +27,6 @@ protected:
     mutable std::mutex m_crypto_keys_mutex{};
     std::unordered_map<common::xnode_id_t, xcrypto_key_t<pub>> m_crypto_keys{};
 
-    // std::weak_ptr<xtimer_driver_t> m_timer_driver;
     observer_ptr<time::xchain_time_face_t> m_chain_timer;
     observer_ptr<election::cache::xdata_accessor_face_t> m_election_cache_data_accessor;
 
@@ -44,7 +43,6 @@ public:
      * @param network_info The network info
      */
     xtop_basic_vhost(common::xnetwork_id_t const & nid,
-                     // std::shared_ptr<xtimer_driver_t> const & timer_driver,
                      observer_ptr<time::xchain_time_face_t> const & chain_timer,
                      observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor);
 
