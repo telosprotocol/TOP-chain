@@ -68,6 +68,7 @@ class xfull_tableblock_t : public xblock_t {
 
  public:
     xstatistics_data_t get_table_statistics() const;
+    std::string get_table_statistics_string() const;
 };
 
 NS_END2
