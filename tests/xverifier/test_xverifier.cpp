@@ -222,7 +222,7 @@ TEST_F(test_xverifier, trx_verifier_validation_3_addr_type) {
     trx_ptr->set_digest();
     trx_ptr->set_len();
     ASSERT_NE(xtx_verifier::verify_send_tx_validation(trx_ptr.get()), xverifier_error::xverifier_success);
-    // trx_ptr->set_different_source_target_address(sys_contract_sharding_vote_addr, sys_contract_sharding_slash_info_addr);
+    // trx_ptr->set_different_source_target_address(sys_contract_sharding_vote_addr, sys_contract_sharding_statistic_info_addr);
     // trx_ptr->set_tx_type(xtransaction_type_transfer);
     // trx_ptr->set_digest();
     // trx_ptr->set_len();
@@ -352,21 +352,21 @@ TEST_F(test_xverifier, trx_verifier_validation_8_shard_contract_addr) {
     trx_ptr->set_different_source_target_address(src_addr, bad_dst_addr);
     trx_ptr->set_digest();
     trx_ptr->set_len();
-    ASSERT_NE(xtx_verifier::verify_send_tx_validation(trx_ptr.get()), xverifier_error::xverifier_success);    
+    ASSERT_NE(xtx_verifier::verify_send_tx_validation(trx_ptr.get()), xverifier_error::xverifier_success);
 
     trx_ptr->set_different_source_target_address(src_addr, sys_contract_sharding_vote_addr);
     trx_ptr->set_digest();
     trx_ptr->set_len();
-    ASSERT_NE(xtx_verifier::verify_send_tx_validation(trx_ptr.get()), xverifier_error::xverifier_success);    
+    ASSERT_NE(xtx_verifier::verify_send_tx_validation(trx_ptr.get()), xverifier_error::xverifier_success);
 
     trx_ptr->set_different_source_target_address(src_addr, sys_contract_sharding_vote_addr);
     trx_ptr->set_tx_type(xtransaction_type_run_contract);
     trx_ptr->set_digest();
     trx_ptr->set_len();
-    ASSERT_NE(xtx_verifier::verify_send_tx_validation(trx_ptr.get()), xverifier_error::xverifier_success);       
+    ASSERT_NE(xtx_verifier::verify_send_tx_validation(trx_ptr.get()), xverifier_error::xverifier_success);
 
     trx_ptr->adjust_target_address(_src_vaddr.get_ledger_subaddr());
-    ASSERT_EQ(xtx_verifier::verify_send_tx_validation(trx_ptr.get()), xverifier_error::xverifier_success);      
+    ASSERT_EQ(xtx_verifier::verify_send_tx_validation(trx_ptr.get()), xverifier_error::xverifier_success);
 }
 
 
