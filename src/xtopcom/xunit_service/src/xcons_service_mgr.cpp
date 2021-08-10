@@ -28,7 +28,7 @@ xcons_service_mgr::~xcons_service_mgr() {
 // create consensus proxy by networkdriver
 xcons_proxy_face_ptr xcons_service_mgr::create(const std::shared_ptr<vnetwork::xvnetwork_driver_face_t> & network) {
     auto xip = xcons_utl::to_xip2(network->address(), true);
-    auto key_ = xcons_utl::erase_version(xip);
+    auto key_ = xip;
     xassert(m_network_proxy != nullptr);
     // add network first
     m_network_proxy->add(network);
@@ -78,7 +78,7 @@ xcons_proxy_face_ptr xcons_service_mgr::create(const std::shared_ptr<vnetwork::x
 // destroy useless cons services by networkdriver, call by vnode manager while detemine some service useless
 // must call uninit before
 bool xcons_service_mgr::destroy(const xvip2_t & xip) {
-    auto key_ = xcons_utl::erase_version(xip);
+    auto key_ = xip;
     xunit_info("xcons_service_mgr::destroy %s %p", xcons_utl::xip_to_hex(xip).c_str(), this);
     std::vector<std::shared_ptr<xcons_service_face>> services;
     {
@@ -95,7 +95,7 @@ bool xcons_service_mgr::destroy(const xvip2_t & xip) {
     if (!services.empty()) {
         for (auto service : services) {
             xunit_dbg("xcons_service_mgr::destroy destroy service %s", xcons_utl::xip_to_hex(xip).c_str());
-            service->fade(xip);
+            // service->fade(xip);
             service->destroy(xip);
         }
         services.clear();
@@ -131,7 +131,7 @@ bool xcons_service_mgr::start(const xvip2_t & xip, const common::xlogic_time_t& 
         m_network_proxy->erase(xip);
         return false;
     }
-    auto                                             key_ = xcons_utl::erase_version(xip);
+    auto                                             key_ = xip;
     xkinfo(" [xunitservice] consrv_mgr start consensus proxy:%s, key:%s", xcons_utl::xip_to_hex(xip).c_str(), xcons_utl::xip_to_hex(key_).c_str()) ;
     std::vector<std::shared_ptr<xcons_service_face>> services;
     // destroy all reference service
@@ -147,7 +147,7 @@ bool xcons_service_mgr::start(const xvip2_t & xip, const common::xlogic_time_t& 
 // uninit data
 bool xcons_service_mgr::fade(const xvip2_t & xip) {
     xkinfo(" [xunitservice] consrv_mgr fade consensus proxy %s", xcons_utl::xip_to_hex(xip).c_str());
-    auto                                             key_ = xcons_utl::erase_version(xip);
+    auto                                             key_ = xip;
     std::vector<std::shared_ptr<xcons_service_face>> services;
     // destroy all reference service
     if (!find(key_, &services)) {
@@ -155,7 +155,8 @@ bool xcons_service_mgr::fade(const xvip2_t & xip) {
             service->fade(xip);
         }
         // erase reference network
-        m_network_proxy->erase(xip);
+        // m_network_proxy->erase(xip);
+        m_network_proxy->fade(xip);
         return true;
     }
     return false;

@@ -84,7 +84,7 @@ void xtxpool_service_mgr::on_block_confirmed(xblock_t * block) {
 // create txpool proxy by networkdriver
 xtxpool_proxy_face_ptr xtxpool_service_mgr::create(const std::shared_ptr<vnetwork::xvnetwork_driver_face_t> & vnet_driver, const observer_ptr<router::xrouter_face_t> & router) {
     auto xip = xcons_utl::to_xip2(vnet_driver->address(), true);
-    auto key = xcons_utl::erase_version(xip);
+    auto key = xip;
     xinfo("xtxpool_service_mgr::create network proxy %s xip:{%" PRIu64 ", %" PRIu64 "} ", vnet_driver->address().to_string().c_str(), xip.high_addr, xip.low_addr);
 
     auto service = find(key);
@@ -112,7 +112,7 @@ xtxpool_proxy_face_ptr xtxpool_service_mgr::create(const std::shared_ptr<vnetwor
 // destroy useless txpool services by networkdriver, call by vnode manager while detemine some service useless
 // must call uninit before
 bool xtxpool_service_mgr::destroy(const xvip2_t & xip) {
-    auto key = xcons_utl::erase_version(xip);
+    auto key = xip;
     xinfo("xtxpool_service_mgr::destroy xip:{%" PRIu64 ", %" PRIu64 "} ", xip.high_addr, xip.low_addr);
     // erase useless txpool service
     bool need_cleanup = false;
@@ -154,7 +154,7 @@ std::shared_ptr<xtxpool_service_face> xtxpool_service_mgr::find(const xvip2_t & 
 
 // init txpool service
 bool xtxpool_service_mgr::start(const xvip2_t & xip, const std::shared_ptr<vnetwork::xvnetwork_driver_face_t> & vnet_driver) {
-    auto key = xcons_utl::erase_version(xip);
+    auto key = xip;
     xinfo("xtxpool_service_mgr::start xip:{%" PRIu64 ", %" PRIu64 "} ", xip.high_addr, xip.low_addr);
     std::shared_ptr<xtxpool_service_face> service = find(key);
     if (service != nullptr) {
@@ -167,14 +167,15 @@ bool xtxpool_service_mgr::start(const xvip2_t & xip, const std::shared_ptr<vnetw
 
 // uninit data
 bool xtxpool_service_mgr::fade(const xvip2_t & xip) {
-    auto key = xcons_utl::erase_version(xip);
-    xinfo("xtxpool_service_mgr::fade xip:{%" PRIu64 ", %" PRIu64 "} ", xip.high_addr, xip.low_addr);
-    std::shared_ptr<xtxpool_service_face> service = find(key);
-    if (service != nullptr) {
-        service->fade(xip);
-        return true;
-    }
-    return false;
+    // auto key = xip;
+    // xinfo("xtxpool_service_mgr::fade xip:{%" PRIu64 ", %" PRIu64 "} ", xip.high_addr, xip.low_addr);
+    // std::shared_ptr<xtxpool_service_face> service = find(key);
+    // if (service != nullptr) {
+    //     service->fade(xip);
+    //     return true;
+    // }
+    // return false;
+    return true;
 }
 
 xcons_transaction_ptr_t xtxpool_service_mgr::query_tx(const std::string & account, const uint256_t & hash) const {

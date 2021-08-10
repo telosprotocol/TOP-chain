@@ -154,7 +154,6 @@ std::shared_ptr<vnetwork::xvnetwork_driver_face_t> xnetwork_proxy::find(xvip2_t 
 bool xnetwork_proxy::listen(const xvip2_t & addr, common::xmessage_category_t category, const xpdu_reactor_ptr & reactor) {
     // auto addr = reactor->get_ip();
     // auto category = reactor->get_category();
-    xkinfo("[xunitservice] network listen %s msg:%x %p", xcons_utl::xip_to_hex(addr).c_str(), category, this);
     {
         std::lock_guard<std::mutex> lock(m_mutex);
         auto iter = m_networks.find(addr);
@@ -163,6 +162,13 @@ bool xnetwork_proxy::listen(const xvip2_t & addr, common::xmessage_category_t ca
 
             // register virtual network message callback
             network->register_message_ready_notify(category, std::bind(&xnetwork_proxy::on_message, this, std::placeholders::_1, network->address(), std::placeholders::_2));
+            // set start
+            auto status_iter = m_status.find(addr);
+            assert(status_iter!=m_status.end());
+            if (status_iter != m_status.end()) {
+                status_iter->second = xnetwork_proxy_status_t::start;
+            }
+            
             // add bridge call back
             auto listen_iter = m_reactors.find(addr);
             if (listen_iter == m_reactors.end()) {
@@ -175,11 +181,34 @@ bool xnetwork_proxy::listen(const xvip2_t & addr, common::xmessage_category_t ca
                 auto & cb_map = listen_iter->second;
                 cb_map[category] = reactor;
             }
+            xkinfo("[xunitservice] network listen success %s msg:%x %p", xcons_utl::xip_to_hex(addr).c_str(), category, this);
             return true;
         } else {
+            xkinfo("[xunitservice] network listen failed %s msg:%x %p", xcons_utl::xip_to_hex(addr).c_str(), category, this);
             return false;
         }
     }
+}
+
+bool xnetwork_proxy::is_started_xvip(const xvip2_t & addr) {
+    std::lock_guard<std::mutex> lock(m_mutex);
+    auto status_iter = m_status.find(addr);
+    if (status_iter != m_status.end()) {
+        return status_iter->second == xnetwork_proxy_status_t::start;
+    }
+    return false;
+}
+
+bool xnetwork_proxy::fade(const xvip2_t & addr) {
+    // set fade
+    auto status_iter = m_status.find(addr);
+    assert(status_iter!=m_status.end());
+    if (status_iter != m_status.end()) {
+        status_iter->second = xnetwork_proxy_status_t::fade;
+        return true;
+    }
+    xkinfo("[xunitservice] network listen failed %s %p", xcons_utl::xip_to_hex(addr).c_str(), this);
+    return false;
 }
 
 // unlisten network message, call while vnode fade out
@@ -195,6 +224,13 @@ bool xnetwork_proxy::unlisten(const xvip2_t & addr, common::xmessage_category_t 
             // unregister virtual network message callback
             network->unregister_message_ready_notify(category);
         }
+        // set outdated
+        auto status_iter = m_status.find(addr);
+        assert(status_iter!=m_status.end());
+        if (status_iter != m_status.end()) {
+            status_iter->second = xnetwork_proxy_status_t::outdate;
+        }
+
         // erase bridge callback
         auto listen_iter = m_reactors.find(addr);
         if (listen_iter != m_reactors.end()) {
@@ -257,6 +293,15 @@ bool xnetwork_proxy::add(const std::shared_ptr<vnetwork::xvnetwork_driver_face_t
         } else {
             xunit_info("[xunitservice] network exist %s %p", xcons_utl::xip_to_hex(xip).c_str(), &(iter->second));
         }
+
+        // set init
+        auto status_iter = m_status.find(xip);
+        if (status_iter == m_status.end()) {
+            xunit_info("[xunitservice] network add status init %s", xcons_utl::xip_to_hex(xip).c_str());
+            m_status.insert({xip, xnetwork_proxy_status_t::init});
+        } else {
+            xunit_info("[xunitservice] network status already exist %s", xcons_utl::xip_to_hex(xip).c_str());
+        }
     }
     return true;
 }
@@ -273,6 +318,12 @@ bool xnetwork_proxy::erase(const xvip2_t & addr) {
         if (iter != m_networks.end()) {
             xunit_info("[xunitservice] network erase %s %p", xcons_utl::xip_to_hex(addr).c_str(), &(iter->second));
             m_networks.erase(iter);
+            auto status_iter = m_status.find(addr);
+            assert(status_iter != m_status.end());
+            if (status_iter != m_status.end()) {
+                assert((status_iter->second) == xnetwork_proxy_status_t::outdate);
+                xunit_info("[xunitservice] network erase %s status", xcons_utl::xip_to_hex(addr).c_str());
+            }
             return true;
         }
 

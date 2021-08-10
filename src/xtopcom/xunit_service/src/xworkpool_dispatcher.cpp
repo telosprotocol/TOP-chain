@@ -109,7 +109,6 @@ bool xworkpool_dispatcher::start(const xvip2_t & xip, const common::xlogic_time_
     // 1. get tableid from election by xip
     // 2. subscribe tableid
     // 3. reset xip
-    xunit_info("xworkpool_dispatcher::start %s %p", xcons_utl::xip_to_hex(xip).c_str(), this);
     m_para->get_resources()->get_chain_timer()->watch(watcher_name(xip), 1, std::bind(&xworkpool_dispatcher::chain_timer, shared_from_this(), std::placeholders::_1));
     auto election_face = m_para->get_resources()->get_election();
     auto elect_face = election_face->get_election_cache_face();
@@ -117,7 +116,11 @@ bool xworkpool_dispatcher::start(const xvip2_t & xip, const common::xlogic_time_
         std::vector<table_index> tables;
         elect_face->get_tables(xip, &tables);
         subscribe(tables, xip, start_time);
+
+        xunit_info("xworkpool_dispatcher::start success %s %p", xcons_utl::xip_to_hex(xip).c_str(), this);
+        return true;
     }
+    xunit_info("xworkpool_dispatcher::start fail %s %p", xcons_utl::xip_to_hex(xip).c_str(), this);
     return false;
 }
 

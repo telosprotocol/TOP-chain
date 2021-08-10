@@ -13,6 +13,14 @@
 
 NS_BEG2(top, xunit_service)
 
+enum class xenum_network_proxy_status : uint8_t {
+    init,
+    start,
+    fade,
+    outdate,  // actually might not have a chance to set.
+};
+using xnetwork_proxy_status_t = xenum_network_proxy_status;
+
 // network proxy, bridge for network and consensus service
 class xnetwork_proxy : public xnetwork_proxy_face {
 public:
@@ -25,10 +33,14 @@ public:
 
     bool send_out(common::xmessage_id_t const &id, const xvip2_t &from_addr, const xvip2_t &to_addr, base::xvblock_t *block) override;
 
-    // listen network message, call while vnode fade in
+    // listen network message, call while vnode start
     bool listen(const xvip2_t &xip, common::xmessage_category_t category, const xpdu_reactor_ptr &reactor) override;
 
-    // unlisten network message, call while vnode fade out
+    bool is_started_xvip(const xvip2_t & addr) override;
+
+    bool fade(const xvip2_t & addr) override;
+
+    // unlisten network message, call while vnode outdated
     bool unlisten(const xvip2_t &xip, common::xmessage_category_t category) override;
 
     // add networkdriver, call while new vnode build
@@ -58,6 +70,7 @@ protected:
 protected:
     std::map<xvip2_t, std::shared_ptr<vnetwork::xvnetwork_driver_face_t>, xvip2_compare>      m_networks;
     std::map<xvip2_t, std::map<common::xmessage_category_t, xpdu_reactor_ptr>, xvip2_compare> m_reactors;
+    std::map<xvip2_t, xnetwork_proxy_status_t, xvip2_compare>                                 m_status;
     std::mutex                                                                                m_mutex;
     const std::shared_ptr<xelection_cache_face>                                               m_elect_face;
     observer_ptr<router::xrouter_face_t>                                                      m_router;

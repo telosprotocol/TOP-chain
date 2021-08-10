@@ -42,6 +42,8 @@ public:
     virtual bool send_out(uint32_t msg_type, const xvip2_t & from_addr, const xvip2_t & to_addr, const base::xcspdu_t & packet, int32_t cur_thread_id, uint64_t timenow_ms) = 0;
     virtual bool send_out(common::xmessage_id_t const & id, const xvip2_t & from_addr, const xvip2_t & to_addr, base::xvblock_t * block) = 0;
     virtual bool listen(const xvip2_t & xip, common::xmessage_category_t category, const xpdu_reactor_ptr & reactor) = 0;
+    virtual bool is_started_xvip(const xvip2_t & addr) = 0;
+    virtual bool fade(const xvip2_t & addr) = 0;
     virtual bool unlisten(const xvip2_t & xip, common::xmessage_category_t category) = 0;
     virtual bool add(const std::shared_ptr<vnetwork::xvnetwork_driver_face_t> & network) = 0;
     virtual std::shared_ptr<vnetwork::xvnetwork_driver_face_t> find(const xvip2_t &addr) = 0;

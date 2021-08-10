@@ -300,6 +300,10 @@ bool xbatch_packer::send_out(const xvip2_t & from_addr, const xvip2_t & to_addr,
                         "node_xip", xcons_utl::xip_to_hex(from_addr));
 
     auto network_proxy = m_para->get_resources()->get_network();
+    if (packet.get_msg_type() == xconsensus::enum_consensus_msg_type_proposal && (!network_proxy->is_started_xvip(from_addr))) {
+        xunit_warn("xbacth_packer::send_out faded round should not do proposal.xip: %s try_send_out: %s", xcons_utl::xip_to_hex(from_addr).c_str(), packet.dump().c_str());
+        return false;
+    }
     xassert(network_proxy != nullptr);
     if (network_proxy != nullptr) {
         return network_proxy->send_out((uint32_t)xBFT_msg, from_addr, to_addr, packet, cur_thread_id, timenow_ms);

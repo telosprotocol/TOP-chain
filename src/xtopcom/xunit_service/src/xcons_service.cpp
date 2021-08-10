@@ -44,8 +44,8 @@ bool xcons_service_t::fade(const xvip2_t & xip) {
     // 2. unregister network proxy
     xunit_info("xcons_service_t::fade %s this=%p", xcons_utl::xip_to_hex(xip).c_str(), this);
     m_dispatcher->fade(xip);
-    auto network_proxy = m_para->get_resources()->get_network();
-    network_proxy->unlisten(xip, get_msg_category());
+    // auto network_proxy = m_para->get_resources()->get_network();
+    // network_proxy->unlisten(xip, get_msg_category());
     // m_running = false;
     return true;
 }
@@ -53,6 +53,8 @@ bool xcons_service_t::fade(const xvip2_t & xip) {
 bool xcons_service_t::destroy(const xvip2_t & xip) {
     xunit_info("xcons_service_t::destroy %s this=%p", xcons_utl::xip_to_hex(xip).c_str(), this);
     m_dispatcher->destroy(xip);
+    auto network_proxy = m_para->get_resources()->get_network();
+    network_proxy->unlisten(xip, get_msg_category());
     m_running = false;
     return !m_running;
 }
