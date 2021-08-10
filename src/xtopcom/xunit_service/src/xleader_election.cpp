@@ -21,15 +21,15 @@ static bool operator==(const xvip2_t & lhs, const xvip2_t & rhs) {
 NS_BEG2(top, xunit_service)
 
 // load manager tables
-int32_t xelection_cache_imp::get_tables(const xvip2_t & xip, std::vector<table_index> * tables) {
+int32_t xelection_cache_imp::get_tables(const xvip2_t & xip, std::vector<base::xtable_index_t> * tables) {
     auto zone_id = get_zone_id_from_xip2(xip);
     if (zone_id == base::enum_chain_zone_beacon_index) {
-        for (uint16_t i = 0; i < MAIN_CHAIN_REC_TABLE_USED_NUM; i++) {
+        for (uint8_t i = 0; i < MAIN_CHAIN_REC_TABLE_USED_NUM; i++) {
             tables->push_back({base::enum_chain_zone_beacon_index, i});
         }
         return tables->size();
     } else if (zone_id == base::enum_chain_zone_zec_index) {
-        for (uint16_t i = 0; i < MAIN_CHAIN_ZEC_TABLE_USED_NUM; i++) {
+        for (uint8_t i = 0; i < MAIN_CHAIN_ZEC_TABLE_USED_NUM; i++) {
             tables->push_back({base::enum_chain_zone_zec_index, i});
         }
     } else {
@@ -40,7 +40,7 @@ int32_t xelection_cache_imp::get_tables(const xvip2_t & xip, std::vector<table_i
             if (iter != m_elect_data.end()) {
                 auto tables_v = iter->second.tables;
                 for(auto iter = tables_v.begin(); iter != tables_v.end(); iter++) {
-                    tables->push_back({base::enum_chain_zone_consensus_index, *iter});
+                    tables->push_back({base::enum_chain_zone_consensus_index, (uint8_t)*iter});
                 } 
                 return tables->size();
             }

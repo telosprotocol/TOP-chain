@@ -24,7 +24,7 @@ public:
 
 public:
     virtual bool dispatch(base::xworkerpool_t * pool, base::xcspdu_t * pdu, const xvip2_t & xip_from, const xvip2_t & xip_to);
-    virtual bool subscribe(const std::vector<table_index> & tables, const xvip2_t & xip, const common::xlogic_time_t& start_time);
+    virtual bool subscribe(const std::vector<base::xtable_index_t> & tables, const xvip2_t & xip, const common::xlogic_time_t& start_time);
 
 public:
     virtual bool start(const xvip2_t & xip, const common::xlogic_time_t& start_time);
@@ -34,10 +34,10 @@ public:
     virtual bool destroy(const xvip2_t & xip);
 
 protected:
-    std::string       account(table_index & tableid);
-    table_index       get_tableid(const std::string & account);
-    int16_t           get_thread_index(base::xworkerpool_t * pool, table_index& tableid);
-    base::xworker_t * get_worker(base::xworkerpool_t * pool, table_index& table_id);
+    std::string       account(base::xtable_index_t & tableid);
+    base::xtable_index_t get_tableid(const std::string & account);
+    int16_t           get_thread_index(base::xworkerpool_t * pool, base::xtable_index_t& tableid);
+    base::xworker_t * get_worker(base::xworkerpool_t * pool, base::xtable_index_t& table_id);
     void              fire_clock(base::xvblock_t * block, base::xworker_t *, xbatch_packer_ptr_t packer);
     void              chain_timer(common::xlogic_time_t time);
     void              on_clock(base::xvblock_t * clock_block) override;
