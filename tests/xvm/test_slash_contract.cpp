@@ -15,7 +15,7 @@
 // #include "xdata/tests/test_blockutl.hpp"
 // #include "tests/xblockstore_test/test_blockmock.hpp"
 // #include "xblockstore/xblockstore_face.h"
-// #include "xvm/xsystem_contracts/xslash/xtable_slash_info_collection_contract.h"
+// #include "xvm/xsystem_contracts/xslash/xtable_statistic_info_collection_contract.h"
 // #include "xvm/xsystem_contracts/xslash/xzec_slash_info_contract.h"
 // #include "xstake/xstake_algorithm.h"
 
@@ -32,7 +32,7 @@
 // using namespace top::xvm::xcontract;
 
 
-// std::string shard_table_slash_addr = std::string(sys_contract_sharding_slash_info_addr) + std::string("@3");
+// std::string shard_table_slash_addr = std::string(sys_contract_sharding_statistic_info_addr) + std::string("@3");
 
 // class test_slash_contract: public testing::Test {
 // public:
@@ -50,9 +50,9 @@
 //         config_center.load();
 
 //         // slash contract
-//         xcontract_manager_t::instance().register_contract<xtable_slash_info_collection_contract>(common::xaccount_address_t{sys_contract_sharding_slash_info_addr}, common::xtopchain_network_id);
-//         xcontract_manager_t::instance().register_contract_cluster_address(common::xaccount_address_t{sys_contract_sharding_slash_info_addr}, common::xaccount_address_t{shard_table_slash_addr});
-//         xcontract_manager_t::instance().setup_chain(common::xaccount_address_t{sys_contract_sharding_slash_info_addr}, m_store.get());
+//         xcontract_manager_t::instance().register_contract<xtable_statistic_info_collection_contract>(common::xaccount_address_t{sys_contract_sharding_statistic_info_addr}, common::xtopchain_network_id);
+//         xcontract_manager_t::instance().register_contract_cluster_address(common::xaccount_address_t{sys_contract_sharding_statistic_info_addr}, common::xaccount_address_t{shard_table_slash_addr});
+//         xcontract_manager_t::instance().setup_chain(common::xaccount_address_t{sys_contract_sharding_statistic_info_addr}, m_store.get());
 
 
 //         xcontract_manager_t::instance().register_contract<xzec_slash_info_contract>(common::xaccount_address_t{sys_contract_zec_slash_info_addr}, common::xtopchain_network_id);
@@ -61,12 +61,12 @@
 //     }
 
 
-//     static data::xtransaction_ptr_t on_collect_slash_info(uint64_t timestamp) {
+//     static data::xtransaction_ptr_t on_collect_statistic_info(uint64_t timestamp) {
 //         xaction_t source_action;
 //         xaction_t destination_action;
 //         source_action.set_account_addr(shard_table_slash_addr);
 //         destination_action.set_account_addr(shard_table_slash_addr);
-//         destination_action.set_action_name("on_collect_slash_info");
+//         destination_action.set_action_name("on_collect_statistic_info");
 
 //         top::base::xstream_t target_stream(base::xcontext_t::instance());
 //         target_stream << timestamp;
@@ -193,11 +193,11 @@
 //     }
 
 
-//     m_table_slash_account_ctx_ptr = make_shared<xaccount_context_t>(sys_contract_sharding_slash_info_addr, m_store.get());
+//     m_table_slash_account_ctx_ptr = make_shared<xaccount_context_t>(sys_contract_sharding_statistic_info_addr, m_store.get());
 //     m_table_slash_account_ctx_ptr->string_create(XPORPERTY_CONTRACT_TIME_KEY);
 
 //     auto const table_time_interval = XGET_ONCHAIN_GOVERNANCE_PARAMETER(tableslash_report_schedule_interval);
-//     auto trx_ptr = on_collect_slash_info(table_time_interval + 1);
+//     auto trx_ptr = on_collect_statistic_info(table_time_interval + 1);
 
 //     xvm_service vs;
 //     xtransaction_trace_ptr trace = make_shared<xtransaction_trace>();
