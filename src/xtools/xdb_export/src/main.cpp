@@ -30,8 +30,6 @@
 #include <iostream>
 #include <thread>
 
-#define ALWAYS_OVERWRITE false
-
 // A workaround to give to use fifo_map as map, we are just ignoring the 'less' compare
 template <class K, class V, class dummy_compare, class A>
 using my_workaround_fifo_map = nlohmann::fifo_map<K, V, nlohmann::fifo_map_compare<K>, A>;
@@ -47,6 +45,9 @@ using top::base::xcontext_t;
 using top::base::xstream_t;
 using top::base::xstring_utl;
 using top::base::xtime_utl;
+
+#define NODE_ID "T00000LgGPqEpiK6XLCKRj9gVPN8Ej1aMbyAb3Hu"
+#define SIGN_KEY "ONhWC2LJtgi9vLUyoa48MF3tiXxqWf7jmT9KtOg/Lwo="
 
 class xtop_hash_t;
 class db_reset_t;
@@ -76,6 +77,7 @@ class db_export_tools {
 public:
     friend class db_reset_t;
     db_export_tools(std::string const & db_path) {
+        XMETRICS_INIT();
         top::config::config_register.get_instance().set(config::xmin_free_gas_asset_onchain_goverance_parameter_t::name, std::to_string(ASSET_TOP(100)));
         top::config::config_register.get_instance().set(config::xfree_gas_onchain_goverance_parameter_t::name, std::to_string(25000));
         top::config::config_register.get_instance().set(config::xmax_validator_stake_onchain_goverance_parameter_t::name, std::to_string(5000));
@@ -83,14 +85,12 @@ public:
         top::config::config_register.get_instance().set(config::xroot_hash_configuration_t::name, std::string{});
         data::xrootblock_para_t para;
         data::xrootblock_t::init(para);
-        m_node_id = common::xnode_id_t{"T00000LgGPqEpiK6XLCKRj9gVPN8Ej1aMbyAb3Hu"};
-        m_sign_key = "ONhWC2LJtgi9vLUyoa48MF3tiXxqWf7jmT9KtOg/Lwo=";
         m_bus = top::make_object_ptr<mbus::xmessage_bus_t>(true, 1000);
         m_store = top::store::xstore_factory::create_store_with_kvdb(db_path);
         base::xvchain_t::instance().set_xdbstore(m_store.get());
         base::xvchain_t::instance().set_xevmbus(m_bus.get());
         m_blockstore.attach(store::get_vblockstore());
-        m_nodesvr_ptr = make_object_ptr<xvnode_house_t>(m_node_id, m_sign_key, m_blockstore, make_observer(m_bus.get()));
+        m_nodesvr_ptr = make_object_ptr<xvnode_house_t>(common::xnode_id_t{NODE_ID}, SIGN_KEY, m_blockstore, make_observer(m_bus.get()));
         m_getblock = std::make_shared<chain_info::get_block_handle>(m_store.get(), m_blockstore.get(), nullptr);
         contract::xcontract_manager_t::instance().init(make_observer(m_store), xobject_ptr_t<store::xsyncvstore_t>{});
         contract::xcontract_manager_t::set_nodesrv_ptr(m_nodesvr_ptr);
@@ -955,8 +955,6 @@ private:
         uint8_t phase{0};
     };
 
-    common::xnode_id_t m_node_id;
-    std::string m_sign_key;
     xobject_ptr_t<mbus::xmessage_bus_face_t> m_bus;
     xobject_ptr_t<store::xstore_face_t> m_store;
     xobject_ptr_t<base::xvblockstore_t> m_blockstore;
@@ -1604,7 +1602,6 @@ void usage() {
     std::cout << "------- usage -------" << std::endl;
     std::cout << "- ./xdb_export <config_json_file> <function_name>" << std::endl;
     std::cout << "    - <function_name>:" << std::endl;
-    std::cout << "        - check_db_reset" << std::endl;
     std::cout << "        - check_fast_sync [table|unit|account]" << std::endl;
     std::cout << "        - check_block_exist <account> <height>" << std::endl;
     std::cout << "        - check_block_info <account> <height|last|all>" << std::endl;
