@@ -97,7 +97,7 @@ char const * matrics_name(xmetircs_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(store_block_other_write);
         RETURN_METRICS_NAME(store_block_index_table_write);
         RETURN_METRICS_NAME(store_block_index_unit_write);
-        RETURN_METRICS_NAME(store_block_index_other_write);     
+        RETURN_METRICS_NAME(store_block_index_other_write);
         RETURN_METRICS_NAME(store_block_input_table_write);
         RETURN_METRICS_NAME(store_block_input_unit_write);
         RETURN_METRICS_NAME(store_block_output_table_write);
@@ -146,7 +146,7 @@ char const * matrics_name(xmetircs_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(message_block_broadcast);
         RETURN_METRICS_NAME(message_category_unknown);
 
-        // sync 
+        // sync
         RETURN_METRICS_NAME(xsync_recv_new_block);
         RETURN_METRICS_NAME(xsync_recv_new_hash);
         RETURN_METRICS_NAME(xsync_recv_invalid_block);
@@ -223,7 +223,7 @@ char const * matrics_name(xmetircs_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(blockstore_access_from_statestore_get_block_index_state);
         RETURN_METRICS_NAME(blockstore_access_from_statestore_get_connect_state);
         RETURN_METRICS_NAME(blockstore_access_from_statestore_get_commit_state);
-        
+
         RETURN_METRICS_NAME(blockstore_access_from_application);
 
         // sync access
@@ -247,7 +247,7 @@ char const * matrics_name(xmetircs_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(blockstore_access_from_sync_store_blk);
         RETURN_METRICS_NAME(blockstore_access_from_sync_query_blk);
         RETURN_METRICS_NAME(blockstore_access_from_sync_load_block_object);
-        
+
         RETURN_METRICS_NAME(blockstore_access_from_sync_index);
 
         // blockstore_access_from_blk_mk
@@ -305,7 +305,7 @@ char const * matrics_name(xmetircs_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(statestore_access_from_txpool_refreshtable);
         RETURN_METRICS_NAME(statestore_access_from_blockstore);
         RETURN_METRICS_NAME(statestore_access_from_blkmaker_get_target_tablestate);
-        
+
         RETURN_METRICS_NAME(state_load_blk_state_suc);
         RETURN_METRICS_NAME(state_load_blk_state_cache_suc);
         RETURN_METRICS_NAME(state_load_blk_state_fail);
@@ -317,7 +317,11 @@ char const * matrics_name(xmetircs_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(state_load_blk_state_unit_cache_suc);
 
         RETURN_METRICS_NAME(data_table_unpack_units);
-        RETURN_METRICS_NAME(data_table_unpack_one_unit);        
+        RETURN_METRICS_NAME(data_table_unpack_one_unit);
+
+        // contract
+        RETURN_METRICS_NAME(contract_table_fullblock_event);
+        RETURN_METRICS_NAME(contract_table_slash_exec_fullblock);
 
         default: assert(false); return nullptr;
     }
@@ -559,7 +563,7 @@ void e_metrics::gauge_dump() {
         ptr->count = s_counters[index].call_count;
         m_counter_handler.dump_metrics_info(ptr);
     }
-    
+
     // summary of category as defined
     for(size_t index = 0; index < sizeof(g_cates)/sizeof(g_cates[0]); index++) {
         uint64_t cate_val = 0;

@@ -162,7 +162,7 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     message_category_end,
     message_category_unknown = message_category_end,
 
-    // sync 
+    // sync
     xsync_recv_new_block,
     xsync_recv_new_hash,
     xsync_recv_invalid_block,
@@ -311,7 +311,7 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     blockstore_access_from_bft_sync,
     blockstore_access_from_bft_init_blk,
     blockstore_access_from_bft_end = blockstore_access_from_bft_init_blk,
-    
+
     blockstore_access_from_vnodesrv,
 
     // statestore
@@ -355,6 +355,10 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     // data structure
     data_table_unpack_units,
     data_table_unpack_one_unit,
+
+    // contract
+    contract_table_fullblock_event,
+    contract_table_slash_exec_fullblock,
 
     e_simple_total,
 };

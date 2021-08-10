@@ -65,4 +65,6 @@ private:
     std::int32_t do_read(base::xstream_t & stream) override;
 };
 
+void print_summarize_info(data::xunqualified_node_info_t const & summarize_slash_info);
+
 NS_END2
