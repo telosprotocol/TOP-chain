@@ -204,7 +204,7 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     message_broad_category_unknown,
     message_broad_category_end = message_broad_category_unknown,
 
-    // sync 
+    // sync
     xsync_recv_new_block,
     xsync_recv_new_hash,
     xsync_recv_invalid_block,
@@ -392,7 +392,7 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     blockstore_access_from_bft_sync,
     blockstore_access_from_bft_init_blk,
     blockstore_access_from_bft_end = blockstore_access_from_bft_init_blk,
-    
+
     blockstore_access_from_vnodesrv,
     blockstore_tick,
     // statestore
@@ -463,6 +463,9 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     // rpc
     rpc_edge_tx_request,
     rpc_edge_query_request,
+    // contract
+    contract_table_fullblock_event,
+    contract_table_slash_exec_fullblock,
 
     e_simple_total,
 };

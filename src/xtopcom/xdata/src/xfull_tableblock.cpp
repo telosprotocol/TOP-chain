@@ -48,4 +48,10 @@ xstatistics_data_t xfull_tableblock_t::get_table_statistics() const {
     return statistics_data;
 }
 
+std::string xfull_tableblock_t::get_table_statistics_string() const {
+    std::string resource_str = get_input()->query_resource(RESOURCE_NODE_SIGN_STATISTICS);
+    xassert(!resource_str.empty());
+    return resource_str;
+}
+
 NS_END2
