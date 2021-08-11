@@ -418,7 +418,7 @@ char const * matrics_name(xmetircs_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(rpc_edge_query_request);        
         // contract
         RETURN_METRICS_NAME(contract_table_fullblock_event);
-        RETURN_METRICS_NAME(contract_table_slash_exec_fullblock);
+        RETURN_METRICS_NAME(contract_table_statistic_exec_fullblock);
 
         default: assert(false); return nullptr;
     }
