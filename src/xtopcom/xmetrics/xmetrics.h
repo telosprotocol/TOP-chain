@@ -358,7 +358,7 @@ enum E_SIMPLE_METRICS_TAG : size_t {
 
     // contract
     contract_table_fullblock_event,
-    contract_table_slash_exec_fullblock,
+    contract_table_statistic_exec_fullblock,
 
     e_simple_total,
 };
