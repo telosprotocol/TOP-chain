@@ -422,6 +422,7 @@ char const * matrics_name(xmetircs_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(contract_table_statistic_report_fullblock);
         RETURN_METRICS_NAME(contract_zec_slash_summarize_fullblock);
 
+
         default: assert(false); return nullptr;
     }
 }
