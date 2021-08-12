@@ -3,6 +3,7 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 #include <gtest/gtest.h>
 #include <string>
+#include <chrono>
 
 #include "tests/xelection/xmocked_vnode_service.h"
 
@@ -147,7 +148,10 @@ TEST_F(test_slash_info_contract, test_accumulate_node_info) {
     }
 
     xunqualified_node_info_t summarize_slash_info;
+    auto time_start = std::chrono::system_clock::now();
     accumulate_node_info(origin_info, summarize_slash_info);
+    auto durarion = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now() - time_start);
+    std::cout << "accumulate_node_info timecost: " << durarion.count() << "\n";
 
     for (std::size_t i = 0; i < account_addrs.size(); ++i) {
         EXPECT_EQ(summarize_slash_info.auditor_info[account_addrs[i]].subset_count, i);
@@ -210,7 +214,10 @@ TEST_F(test_slash_info_contract, test_process_statistic_data) {
     auto group_64_xip2 = create_group_xip2(elect_blk_height, 64, account_addrs.size());
     set_according_block_statistic_data(1, std::vector<common::xip2_t>{group_1_xip2, group_64_xip2});
 
+    auto time_start = std::chrono::system_clock::now();
     auto node_info = process_statistic_data(data, &node_serv);
+    auto durarion = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now() - time_start);
+    std::cout << "accumulate_node_info timecost: " << durarion.count() << "\n";
 
     for (std::size_t i = 0; i < account_addrs.size(); ++i) {
         EXPECT_EQ(node_info.auditor_info[account_addrs[i]].subset_count, i);
