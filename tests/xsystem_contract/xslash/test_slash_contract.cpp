@@ -23,7 +23,8 @@ using namespace top::xvm::xcontract;
 using namespace top::tests::election;
 using namespace top::data;
 
-const uint16_t ACCOUNT_ADDR_NUM = 10;
+const uint16_t ACCOUNT_ADDR_NUM = 192;
+// const uint16_t ACCOUNT_ADDR_NUM = 768;
 
 class test_slash_info_contract: public xzec_slash_info_contract, public testing::Test {
 public:
@@ -181,7 +182,10 @@ TEST_F(test_slash_info_contract, test_filter_node) {
         origin_info.validator_info[account_addrs[i]] = node_vote;
     }
 
+    auto time_start = std::chrono::system_clock::now();
     auto  action_node_info = filter_helper(origin_info, 0, 10, 30, 80);
+    auto durarion = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now() - time_start);
+    std::cout << "filter_helper timecost: " << durarion.count() << "\n";
     int slash_auditor_node_size = 0, award_auditor_node_size= 0;
     int slash_validator_node_size = 0, award_validator_node_size = 0;
 
@@ -204,7 +208,9 @@ TEST_F(test_slash_info_contract, test_filter_node) {
     EXPECT_TRUE(slash_auditor_node_size == 1);
 
     EXPECT_TRUE(award_auditor_node_size == award_validator_node_size);
-    EXPECT_TRUE(award_auditor_node_size == 6);
+    // EXPECT_TRUE(award_auditor_node_size == 6);
+    EXPECT_TRUE(award_auditor_node_size == 153);
+
 }
 
 
@@ -217,7 +223,7 @@ TEST_F(test_slash_info_contract, test_process_statistic_data) {
     auto time_start = std::chrono::system_clock::now();
     auto node_info = process_statistic_data(data, &node_serv);
     auto durarion = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now() - time_start);
-    std::cout << "accumulate_node_info timecost: " << durarion.count() << "\n";
+    std::cout << "process_statistic_data timecost: " << durarion.count() << "\n";
 
     for (std::size_t i = 0; i < account_addrs.size(); ++i) {
         EXPECT_EQ(node_info.auditor_info[account_addrs[i]].subset_count, i);
