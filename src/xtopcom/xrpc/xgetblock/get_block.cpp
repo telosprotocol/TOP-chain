@@ -920,6 +920,11 @@ void get_block_handle::getBlock() {
             std::error_code ec;
             top::contract::xcontract_manager_t::instance().get_contract_data(top::common::xaccount_address_t{ owner }, height, top::contract::xjson_format_t::detail, slash_prop, ec);
             value["property_info"] = slash_prop;
+        } else if (owner.find(sys_contract_sharding_statistic_info_addr) != std::string::npos) {
+            xJson::Value statistic_prop;
+            std::error_code ec;
+            top::contract::xcontract_manager_t::instance().get_contract_data(top::common::xaccount_address_t{ owner }, height, top::contract::xjson_format_t::detail, statistic_prop, ec);
+            value["statistic_info"] = statistic_prop;
         }
     } else if (type == "last") {
         auto vblock = m_block_store->get_latest_committed_block(_owner_vaddress, metrics::blockstore_access_from_rpc_get_block_committed_block);
