@@ -15,7 +15,7 @@ add_library(xrpc STATIC ${error} ${prerequest} ${edge} ${cluster} ${getblock} ${
 
 #add_dependencies(xrpc xconfig xcodec xvnetwork xcommon xrouter xverifier xxbase xxg)
 
-target_link_libraries(xrpc PRIVATE xconfig msgpackc xcodec xvnetwork xcommon xrouter xverifier xbasic xxbase xxg crypto pthread)
+target_link_libraries(xrpc PRIVATE xconfig msgpackc xcodec xvnetwork xcommon xrouter xverifier xbasic xxbase xtopcl xxg crypto pthread)
 
 if (BUILD_METRICS)
     #add_dependencies(xrpc xmetrics)
