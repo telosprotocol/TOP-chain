@@ -133,9 +133,9 @@ class xtransaction_t : public xbase_dataunit_t<xtransaction_t, xdata_type_transa
 
  private:  // not safe for multiple threads
     int32_t do_write_without_hash_signature(base::xstream_t & stream, bool is_write_without_len) const;
-    int32_t do_read_without_hash_signature(base::xstream_t & stream);
 
  public:  // check apis
+    int32_t do_read_without_hash_signature(base::xstream_t & stream);
     bool        transaction_type_check() const;
     bool        unuse_member_check() const;
     bool        transaction_len_check() const;
