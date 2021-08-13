@@ -3,6 +3,7 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #pragma once
+#include "xtopcl/include/protocol.h"
 #include "xbase/xcontext.h"
 #include "xedge_local_method.hpp"
 #include "xedge_rpc_handler.h"
@@ -16,15 +17,17 @@
 #include "xstore/xstore_face.h"
 #include "xverifier/xwhitelist_verifier.h"
 #include "xvnetwork/xvhost_face.h"
+#include "xpbase/rlp/RLP.h"
+#include "xpbase/rlp/Transaction.h"
 
 NS_BEG2(top, xrpc)
 using base::xcontext_t;
 
-using tx_method_handler = std::function<void(xjson_proc_t & json_proc, const std::string & ip)>;
+using tx_method_handler = std::function<void(const std::string& raw_tx, xjson_proc_t & json_proc, const std::string & ip)>;
 
 #define EDGE_REGISTER_V1_ACTION(T, func_name)                                                                                                                                      \
     m_edge_tx_method_map.emplace(                                                                                                                                                  \
-        pair<pair<string, string>, tx_method_handler>{pair<string, string>{"1.0", #func_name}, std::bind(&xedge_method_base<T>::func_name##_method, this, _1, _2)})
+        pair<pair<string, string>, tx_method_handler>{pair<string, string>{"1.0", #func_name}, std::bind(&xedge_method_base<T>::func_name##_method, this, _1, _2, _3)})
 
 template <class T>
 class xedge_method_base {
@@ -41,7 +44,8 @@ public:
     virtual ~xedge_method_base() {
     }
     void do_method(shared_ptr<conn_type> & response, xjson_proc_t & json_proc, const std::string & ip);
-    void sendTransaction_method(xjson_proc_t & json_proc, const std::string & ip);
+    void sendTransaction_method(const std::string& tx, xjson_proc_t & json_proc, const std::string & ip);
+    void sendTransactionV2_method(const std::string& tx, xjson_proc_t & json_proc, const std::string & ip);
     void forward_method(shared_ptr<conn_type> & response, xjson_proc_t & json_proc);
     shared_ptr<xrpc_msg_request_t> generate_request(const xvnode_address_t & source_address, const uint64_t uuid, const string account, xjson_proc_t & json_proc);
     virtual void write_response(shared_ptr<conn_type> & response, const string & content) = 0;
@@ -53,7 +57,8 @@ public:
         m_edge_handler_ptr->reset_edge_handler(edge_vhost);
         m_edge_local_method_ptr->reset_edge_local_method(xip2);
     }
-
+private:
+    int process_trust_data(shared_ptr<conn_type> & response, xjson_proc_t & json_proc, const std::string & ip);
 protected:
     unique_ptr<T> m_edge_handler_ptr;
     unordered_map<pair<string, string>, tx_method_handler> m_edge_tx_method_map;
@@ -123,6 +128,39 @@ xedge_method_base<T>::xedge_method_base(shared_ptr<xrpc_edge_vhost> edge_vhost,
     m_edge_handler_ptr = top::make_unique<T>(edge_vhost, ioc, election_cache_data_accessor);
     m_edge_handler_ptr->init();
     EDGE_REGISTER_V1_ACTION(T, sendTransaction);
+    EDGE_REGISTER_V1_ACTION(T, sendTransactionV2);
+}
+template <class T>
+int xedge_method_base<T>::process_trust_data(shared_ptr<conn_type> & response, xjson_proc_t & json_proc, const std::string & ip)
+{
+    json_proc.m_tx_ptr = make_object_ptr<data::xtransaction_t>();
+    auto & tx = json_proc.m_tx_ptr;
+    auto & request = json_proc.m_request_json["params"];
+    std::vector<std::string> vecTx;
+    int i = 0;
+    for (auto& tx_it : request)
+    {
+        std::string tx = tx_it.asString();
+        vecTx.push_back(top::HexDecode(tx));
+        //xinfo_rpc("trust h5 data: %s", tx.c_str());
+    }
+
+    const string & version = json_proc.m_request_json["version"].asString();
+    const string & method = json_proc.m_request_json["method"].asString();
+    auto version_method = pair<string, string>(version, method);
+
+    auto iter = m_edge_tx_method_map.find(version_method);
+    if (iter == m_edge_tx_method_map.end())
+        return 1;
+
+    for (int i = 0; i < vecTx.size(); i++) {
+        xjson_proc_t json_proc_temp = json_proc;
+        json_proc_temp.m_tx_type = enum_xrpc_tx_type::enum_xrpc_tx_type;
+        iter->second(vecTx[i], json_proc_temp, ip);
+        assert(json_proc_temp.m_account_set.size());
+        forward_method(response, json_proc_temp);
+    }
+    return 0;
 }
 
 template <class T>
@@ -130,6 +168,11 @@ void xedge_method_base<T>::do_method(shared_ptr<conn_type> & response, xjson_pro
     // set account
     const string & version = json_proc.m_request_json["version"].asString();
     const string & method = json_proc.m_request_json["method"].asString();
+    if (method == "sendTransactionV2")  // support multi transactions
+    {
+        process_trust_data(response, json_proc, ip);
+        return;
+    }
     auto version_method = pair<string, string>(version, method);
     if (m_edge_local_method_ptr->do_local_method(version_method, json_proc)) {
         write_response(response, json_proc.get_response());
@@ -138,7 +181,7 @@ void xedge_method_base<T>::do_method(shared_ptr<conn_type> & response, xjson_pro
     auto iter = m_edge_tx_method_map.find(version_method);
     if (iter != m_edge_tx_method_map.end()) {
         json_proc.m_tx_type = enum_xrpc_tx_type::enum_xrpc_tx_type;
-        iter->second(json_proc, ip);
+        iter->second("", json_proc, ip);
     } else {
         if (m_archive_flag) {
             xdbg("local arc query method: %s", method.c_str());
@@ -157,7 +200,68 @@ void xedge_method_base<T>::do_method(shared_ptr<conn_type> & response, xjson_pro
 }
 
 template <class T>
-void xedge_method_base<T>::sendTransaction_method(xjson_proc_t & json_proc, const std::string & ip) {
+void xedge_method_base<T>::sendTransactionV2_method(const std::string& raw_tx, xjson_proc_t & json_proc, const std::string & ip) {
+    json_proc.m_tx_ptr = make_object_ptr<data::xtransaction_t>();
+    auto & tx = json_proc.m_tx_ptr;
+    Ethereum::RLP::DecodedItem decoded = Ethereum::RLP::decode(::data(raw_tx));
+    std::vector<std::string> vecData;
+    for (int i = 0; i < (int)decoded.decoded.size(); i++)
+    {
+        std::string str(decoded.decoded[i].begin(), decoded.decoded[i].end());
+        vecData.push_back(str);
+        //xinfo_rpc("transaction data%d: %s", i, HexEncode(str).c_str());
+    }
+    if (decoded.decoded.size() < 3)
+        throw xrpc_error{enum_xrpc_error_code::rpc_param_param_lack, "transaction missing params"};
+
+    base::xstream_t stream(base::xcontext_t::instance(), (uint8_t*)vecData[0].c_str(), (uint32_t)vecData[0].size());
+    tx->do_read_without_hash_signature(stream);
+
+    xChainSDK::protocol tran_protocol;
+    xjson_proc_t json_proc_temp;
+    tran_protocol.encode_transaction_params(json_proc_temp.m_request_json, tx.get());
+    xfilter_manager filter_manager;
+    filter_manager.sendTransaction_filter(json_proc_temp);
+
+    auto & source_action = tx->get_source_action();
+    auto & target_action = tx->get_target_action();
+    const std::string & from = source_action.get_account_addr();
+    const std::string & to = target_action.get_account_addr();
+    //xinfo_rpc("from:%s, to:%s", from.c_str(), to.c_str());
+    if (vecData[1].size() < 32) {
+        xinfo_rpc("hash size error.");
+        return;
+    }
+    uint256_t hash((uint8_t*)vecData[1].c_str());
+    tx->set_digest(std::move(hash));
+
+    tx->set_authorization(std::move(vecData[2]));
+    if (!tx->digest_check())
+    {
+        throw xrpc_error{enum_xrpc_error_code::rpc_param_param_error, "transaction hash error"};
+    }
+    if (!(target_action.get_account_addr() == sys_contract_rec_standby_pool_addr && target_action.get_action_name() == "nodeJoinNetwork"))
+    {
+        if (!tx->sign_check())
+        {
+            throw xrpc_error{enum_xrpc_error_code::rpc_param_param_error, "transaction sign error"};
+        }
+    }
+
+    tx->set_len();
+
+    const auto & tx_hash = uint_to_str(json_proc.m_tx_ptr->digest().data(), json_proc.m_tx_ptr->digest().size());
+    xinfo_rpc("send tx hash:%s", tx_hash.c_str());
+    XMETRICS_PACKET_INFO("rpc_tx_ip",
+                         "tx_hash", tx_hash,
+                         "client_ip", ip);
+    json_proc.m_account_set.emplace(from);
+    json_proc.m_response_json["tx_hash"] = tx_hash;
+    json_proc.m_response_json["tx_size"] = tx->get_tx_len();
+    return;
+}
+template <class T>
+void xedge_method_base<T>::sendTransaction_method(const std::string& raw_tx, xjson_proc_t & json_proc, const std::string & ip) {
     json_proc.m_tx_ptr = make_object_ptr<data::xtransaction_t>();
     auto & tx = json_proc.m_tx_ptr;
     auto & request = json_proc.m_request_json["params"];
@@ -216,7 +320,7 @@ void xedge_method_base<T>::sendTransaction_method(xjson_proc_t & json_proc, cons
 
     tx->set_digest(std::move(hex_to_uint256(request["tx_hash"].asString())));
 
-    if (m_enable_sign && !request.isMember("authorization")) {
+    if (!request.isMember("authorization")) {
         tx->set_digest();
         std::unique_lock<std::mutex> lock(xedge_local_method<T>::m_mutex);
         auto iter = xedge_local_method<T>::m_account_key_map.find(source_action.get_account_addr());

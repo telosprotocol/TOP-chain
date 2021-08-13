@@ -6,7 +6,7 @@
 #ifndef XCHAIN_REQUEST_RESULT_DIFINITION_H
 #    define XCHAIN_REQUEST_RESULT_DIFINITION_H
 
-#    include "topchain_type.h"
+#    include "xtopcl/include/xtop/topchain_type.h"
 #    include "xbase/xmem.h"
 
 #    include <memory>
