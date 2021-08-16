@@ -225,10 +225,10 @@ public:
         std::cout << "===> " << filename << " generated success!" << std::endl;
     }
 
-    void query_table_tx_info(std::vector<std::string> const & address_vec) {
-        auto query_and_make_file = [](db_export_tools *arg, std::string account) {
+    void query_table_tx_info(std::vector<std::string> const & address_vec, const uint32_t start_timestamp, const uint32_t end_timestamp) {
+        auto query_and_make_file = [start_timestamp, end_timestamp](db_export_tools *arg, std::string account) {
             json result_json;
-            arg->query_table_tx_info(account, result_json);
+            arg->query_table_tx_info(account, start_timestamp, end_timestamp, result_json);
             std::string filename = "./all_table_tx_info/" + account + "_tx_info.json";
             std::ofstream out_json(filename);
             out_json << std::setw(4) << result_json[account];
@@ -594,7 +594,7 @@ private:
         j["exist_block"] = s;
     }
     
-    void query_table_tx_info(std::string const & account, json & result_json) {
+    void query_table_tx_info(std::string const & account, const uint32_t start_timestamp, const uint32_t end_timestamp, json & result_json) {
         auto const block_height = m_blockstore->get_latest_committed_block_height(account);
         std::map<std::string, tx_ext_t> send;
         std::map<std::string, tx_ext_t> confirm;
@@ -644,6 +644,9 @@ private:
             m_blockstore->load_block_input(_vaccount, vblock.get());
             assert(block->get_block_level() == base::enum_xvblock_level_table);
             const uint64_t timestamp = block->get_timestamp();
+            if (timestamp < start_timestamp || timestamp > end_timestamp) {
+                continue;
+            }
             const std::vector<base::xventity_t*> & _table_inentitys = block->get_input()->get_entitys();
             uint32_t entitys_count = _table_inentitys.size();
             for (uint32_t index = 1; index < entitys_count; index++) {  // unit entity from index#1
@@ -1605,7 +1608,7 @@ void usage() {
     std::cout << "        - check_fast_sync [table|unit|account]" << std::endl;
     std::cout << "        - check_block_exist <account> <height>" << std::endl;
     std::cout << "        - check_block_info <account> <height|last|all>" << std::endl;
-    std::cout << "        - check_tx_info [table]" << std::endl;
+    std::cout << "        - check_tx_info [table] [starttime] [endtime]" << std::endl;
     std::cout << "        - check_latest_fullblock" << std::endl;
     std::cout << "        - check_contract_property <account> <prop> <last|all>" << std::endl;
     std::cout << "-------  end  -------" << std::endl;
@@ -1698,12 +1701,50 @@ int main(int argc, char ** argv) {
             }
         }
     } else if (function_name == "check_tx_info") {
-        if (argc == 3) {
+        uint32_t start_timestamp = 0;
+        uint32_t end_timestamp = UINT_MAX;
+        char * start_time_str = nullptr;
+        char * end_time_str = nullptr;
+        if (argc == 5) {
+            start_time_str = argv[3];
+            end_time_str = argv[4];
+        } else if (argc == 6) {
+            start_time_str = argv[4];
+            end_time_str = argv[5];
+        }
+        if (argc >= 5) {
+            int year, month, day, hour, minute,second;
+            if (start_time_str != nullptr && sscanf(start_time_str,"%d-%d-%dT%d:%d:%d", &year, &month, &day, &hour, &minute, &second) == 6) {
+                tm tm_;
+                tm_.tm_year = year - 1900;
+                tm_.tm_mon = month - 1;
+                tm_.tm_mday = day;
+                tm_.tm_hour = hour;
+                tm_.tm_min = minute;
+                tm_.tm_sec = second;
+                tm_.tm_isdst = 0;
+                start_timestamp = mktime(&tm_);
+            }
+            if (end_time_str != nullptr && sscanf(end_time_str,"%d-%d-%dT%d:%d:%d", &year, &month, &day, &hour, &minute, &second) == 6) {
+                tm tm_;
+                tm_.tm_year = year - 1900;
+                tm_.tm_mon = month - 1;
+                tm_.tm_mday = day;
+                tm_.tm_hour = hour;
+                tm_.tm_min = minute;
+                tm_.tm_sec = second;
+                tm_.tm_isdst = 0;
+                end_timestamp = mktime(&tm_);
+            }
+            std::cout << "start_timestamp: " << start_timestamp << ", end_timestamp: " << end_timestamp << std::endl;
+        }
+
+        if (argc == 3 || argc == 5) {
             auto const & account_vec = db_export_tools::get_table_contract_accounts();
-            tools.query_table_tx_info(account_vec);
-        } else if (argc == 4) {
+            tools.query_table_tx_info(account_vec, start_timestamp, end_timestamp);
+        } else if (argc == 4 || argc == 6) {
             std::vector<std::string> account = {argv[3]};
-            tools.query_table_tx_info(account);
+            tools.query_table_tx_info(account, start_timestamp, end_timestamp);
         } else {
             usage();
             return -1;
