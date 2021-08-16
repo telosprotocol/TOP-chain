@@ -145,7 +145,7 @@ namespace top
     
         xvbindex_t::~xvbindex_t()
         {
-            xinfo("xvbindex_t::destroy,dump(%s)",dump().c_str());
+            xdbg("xvbindex_t::destroy,dump(%s)",dump().c_str());
             
             if(m_prev_index != NULL)
                 m_prev_index->release_ref();
