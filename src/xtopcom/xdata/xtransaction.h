@@ -7,6 +7,7 @@
 #include <chrono>
 #include <string>
 #include <vector>
+#include "json/json.h"
 
 #include "xbasic/xcrypto_key.h"
 #include "xbase/xobject_ptr.h"
@@ -181,6 +182,8 @@ class xtransaction_t : public xbase_dataunit_t<xtransaction_t, xdata_type_transa
     const std::string & get_target_action_name() const {return m_target_action.get_action_name();}
     const std::string & get_authorization() const {return m_authorization;}
     const std::string   get_parent_account() const {return m_source_action.get_parent_account();}
+    void                parse_to_json(xJson::Value& tx_json) const;
+    void                construct_from_json(xJson::Value& tx_json);
 
  private:
     xaction_t         m_source_action;        // source(sender) 'action

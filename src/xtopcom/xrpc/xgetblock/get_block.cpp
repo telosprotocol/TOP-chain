@@ -493,46 +493,8 @@ xJson::Value get_block_handle::parse_tx(xtransaction_t * tx_ptr) {
     if (tx_ptr == nullptr) {
         return ori_tx_info;
     }
-    ori_tx_info["tx_structure_version"] = tx_ptr->get_tx_version();
-    ori_tx_info["tx_deposit"] = tx_ptr->get_deposit();
-    ori_tx_info["to_ledger_id"] = tx_ptr->get_to_ledger_id();
-    ori_tx_info["from_ledger_id"] = tx_ptr->get_from_ledger_id();
-    ori_tx_info["tx_type"] = tx_ptr->get_tx_type();
-    ori_tx_info["tx_len"] = tx_ptr->get_tx_len();
-    ori_tx_info["tx_expire_duration"] = tx_ptr->get_expire_duration();
-    ori_tx_info["send_timestamp"] = static_cast<xJson::UInt64>(tx_ptr->get_fire_timestamp());
-    ori_tx_info["tx_random_nonce"] = tx_ptr->get_random_nonce();
-    ori_tx_info["premium_price"] = tx_ptr->get_premium_price();
-    ori_tx_info["last_tx_nonce"] = static_cast<xJson::UInt64>(tx_ptr->get_last_nonce());
-    ori_tx_info["last_tx_hash"] = static_cast<xJson::UInt64>(tx_ptr->get_last_hash());
-    ori_tx_info["tx_hash"] = uint_to_str(tx_ptr->digest().data(), tx_ptr->digest().size());
+    tx_ptr->parse_to_json(ori_tx_info);
     ori_tx_info["authorization"] = uint_to_str(tx_ptr->get_authorization().data(), tx_ptr->get_authorization().size());
-    ori_tx_info["challenge_proof"] = tx_ptr->get_challenge_proof();
-    ori_tx_info["note"] = tx_ptr->get_memo();
-    ori_tx_info["ext"] = uint_to_str(tx_ptr->get_ext().data(), tx_ptr->get_ext().size());
-
-    xJson::Value source_action_json;
-    source_action_json["action_hash"] = tx_ptr->get_source_action().get_action_hash();
-    source_action_json["action_type"] = tx_ptr->get_source_action().get_action_type();
-    source_action_json["action_size"] = tx_ptr->get_source_action().get_action_size();
-    source_action_json["tx_sender_account_addr"] = tx_ptr->get_source_addr();
-    source_action_json["action_name"] = tx_ptr->get_source_action().get_action_name();
-    source_action_json["action_param"] = uint_to_str(tx_ptr->get_source_action().get_action_param().data(), tx_ptr->get_source_action().get_action_param().size());
-    source_action_json["action_ext"] = uint_to_str(tx_ptr->get_source_action().get_action_ext().data(), tx_ptr->get_source_action().get_action_ext().size());
-    source_action_json["action_authorization"] = tx_ptr->get_source_action().get_action_authorization();
-    ori_tx_info["tx_action"]["sender_action"] = source_action_json;
-
-    xJson::Value target_action_json;
-    target_action_json["action_hash"] = tx_ptr->get_target_action().get_action_hash();
-    target_action_json["action_type"] = tx_ptr->get_target_action().get_action_type();
-    target_action_json["action_size"] = tx_ptr->get_target_action().get_action_size();
-    target_action_json["tx_receiver_account_addr"] = tx_ptr->get_target_addr();
-    target_action_json["action_name"] = tx_ptr->get_target_action().get_action_name();
-    target_action_json["action_param"] = uint_to_str(tx_ptr->get_target_action().get_action_param().data(), tx_ptr->get_target_action().get_action_param().size());
-    target_action_json["action_ext"] = uint_to_str(tx_ptr->get_target_action().get_action_ext().data(), tx_ptr->get_target_action().get_action_ext().size());
-    target_action_json["action_authorization"] = tx_ptr->get_target_action().get_action_authorization();
-    ori_tx_info["tx_action"]["receiver_action"] = target_action_json;
-
     return ori_tx_info;
 }
 
@@ -716,7 +678,7 @@ xJson::Value get_block_handle::parse_action(const xaction_t & action) {
 }
 
 void get_block_handle::getTransaction() {
-    uint256_t hash = top::xrpc::hex_to_uint256(m_js_req["tx_hash"].asString());
+    uint256_t hash = top::data::hex_to_uint256(m_js_req["tx_hash"].asString());
     std::string tx_hash_str = std::string(reinterpret_cast<char*>(hash.data()), hash.size());
     try {
         m_js_rsp["value"] = parse_tx(hash);

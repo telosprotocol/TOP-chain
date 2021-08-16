@@ -32,6 +32,7 @@ namespace xcrypto {
 
 using namespace top::utl;
 using namespace top::xrpc;
+using namespace top::data;
 using std::cout;
 using std::endl;
 using std::string;

@@ -105,35 +105,6 @@ class xaction_t {
         return utl::xsha2_256_t::digest((const char*)stream.data(), stream.size());
     }
 
-    static int hex_to_dec(char c) {
-        if ('0' <= c && c <= '9') {
-            return (c - '0');
-        } else if ('a' <= c && c <= 'f') {
-            return (c - 'a' + 10);
-        } else if ('A' <= c && c <= 'F') {
-            return (c - 'A' + 10);
-        } else {
-            return -1;
-        }
-    }
-
-    static std::vector<uint8_t> hex_to_uint(std::string const& str) {
-        if (str.size() <= 2 || str.size() % 2 || str[0] != '0' || str[1] != 'x') {
-            return {};
-        }
-        std::vector<uint8_t> ret_vec;
-        for (size_t i = 2; i < str.size(); i += 2) {
-            int hh = hex_to_dec(str[i]);
-            int ll = hex_to_dec(str[i + 1]);
-            if (-1 == hh || -1 == ll) {
-                return {};
-            } else {
-                ret_vec.emplace_back((hh << 4) + ll);
-            }
-        }
-        return ret_vec;
-    }
-
     const std::string get_authorization() const {
         xJson::Reader reader;
         xJson::Value root;

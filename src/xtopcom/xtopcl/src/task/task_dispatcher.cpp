@@ -13,6 +13,7 @@ extern xChainSDK::user_info g_userinfo;
 
 namespace xChainSDK {
 using namespace top::xrpc;
+using namespace top::data;
 using std::cout;
 using std::endl;
 task_dispatcher * task_dispatcher::s_instance = nullptr;
