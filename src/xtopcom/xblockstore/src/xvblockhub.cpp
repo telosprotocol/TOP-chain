@@ -310,6 +310,11 @@ namespace top
             }
             else
             {
+                //save old meta bin for check if need write to db
+                std::string vmeta_bin;
+                m_meta->serialize_to_string(vmeta_bin);
+                m_last_save_vmeta_bin = vmeta_bin;
+
                 //pre-load latest execution block
                 if(load_index(m_meta->_highest_execute_block_height) == 0)
                 {

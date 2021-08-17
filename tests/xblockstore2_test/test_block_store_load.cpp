@@ -451,3 +451,86 @@ TEST_F(test_block_store_load, mock_table_tx_check) {
         xblock_ptr_t _tableblock1 = mocktable.generate_one_table();
     }
 }
+
+
+TEST_F(test_block_store_load, unit_unpack_repeat_check_BENCH) {
+    mock::xvchain_creator creator;
+    base::xvblockstore_t* blockstore = creator.get_blockstore();
+
+    mock::xdatamock_table mocktable(1, 4);
+    mocktable.genrate_table_chain(10);
+    auto table_blocks = mocktable.get_history_tables();
+    auto test_block = table_blocks[3];
+
+    // store first tableblock
+    test_block->reset_block_flags();
+    test_block->set_block_flag(base::enum_xvblock_flag_authenticated);
+    ASSERT_TRUE(blockstore->store_block(mocktable, test_block.get()));
+
+    db::xdb_meta_t db_meta = creator.get_xdb()->get_meta();
+    #ifdef ENABLE_METRICS
+    auto store_call_1 = XMETRICS_GAUGE_GET_VALUE(metrics::store_block_call);
+    #endif
+
+    // store the same tableblock with 1000 times repeatly
+    for (int i = 0; i < 1000; i++) {
+        test_block->reset_block_flags();
+        test_block->set_block_flag(base::enum_xvblock_flag_authenticated);
+        ASSERT_TRUE(blockstore->store_block(mocktable, test_block.get()));
+    }
+    db::xdb_meta_t db_meta2 = creator.get_xdb()->get_meta();
+    ASSERT_EQ(db_meta.m_write_count, db_meta2.m_write_count);
+    std::cout << "db write count = " << db_meta.m_write_count << std::endl;
+
+    #ifdef ENABLE_METRICS
+    auto store_call_2 = XMETRICS_GAUGE_GET_VALUE(metrics::store_block_call);
+    auto call_sub = store_call_2 - store_call_1;
+    ASSERT_EQ(call_sub, 1000);
+    std::cout << "store_call_2 = " << store_call_2 << std::endl;
+    #endif
+}
+
+TEST_F(test_block_store_load, unit_unpack_repeat_check_2_BENCH) {
+    mock::xvchain_creator creator;
+    base::xvblockstore_t* blockstore = creator.get_blockstore();
+
+    mock::xdatamock_table mocktable(1, 4);
+    mocktable.genrate_table_chain(200);
+    auto table_blocks = mocktable.get_history_tables();
+
+    blockstore->reset_cache_timeout(mocktable, 1000); // idle time change to 1s
+
+    // store first tableblock
+    for (int i = 0; i < 200; i++) {
+        auto test_block = table_blocks[i];
+        test_block->reset_block_flags();
+        test_block->set_block_flag(base::enum_xvblock_flag_authenticated);
+        ASSERT_TRUE(blockstore->store_block(mocktable, test_block.get()));
+    }
+
+    sleep(1*16+5); // wait for meta save to db. table has 16 times than unit
+
+    db::xdb_meta_t db_meta = creator.get_xdb()->get_meta();
+    #ifdef ENABLE_METRICS
+    auto store_call_1 = XMETRICS_GAUGE_GET_VALUE(metrics::store_block_call);
+    #endif
+
+    xdbg("==========unit_unpack_repeat_check_2_BENCH 1===========");
+    // store the tableblocks with 200 times repeatly
+    for (int i = 1; i < 200; i++) {  // TODO(jimmy) height=0 will invoke write to db
+        auto test_block = table_blocks[i];
+        test_block->reset_block_flags();
+        test_block->set_block_flag(base::enum_xvblock_flag_authenticated);
+        ASSERT_TRUE(blockstore->store_block(mocktable, test_block.get()));
+    }
+    db::xdb_meta_t db_meta2 = creator.get_xdb()->get_meta();
+    ASSERT_EQ(db_meta.m_write_count, db_meta2.m_write_count);
+    std::cout << "db write count = " << db_meta.m_write_count << std::endl;
+
+    #ifdef ENABLE_METRICS
+    auto store_call_2 = XMETRICS_GAUGE_GET_VALUE(metrics::store_block_call);
+    auto call_sub = store_call_2 - store_call_1;
+    ASSERT_EQ(call_sub, 200-1);
+    std::cout << "store_call_2 = " << store_call_2 << std::endl;
+    #endif
+}

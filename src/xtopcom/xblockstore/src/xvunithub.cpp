@@ -584,7 +584,6 @@ namespace top
         {
             xdbg("jimmy xvblockstore_impl::store_block enter,store block(%s)", container_block->dump().c_str());
 
-#if 1 // TODO(jimmy)
             //first do store block
             bool ret = container_account->store_block(container_block);
             if(!ret)
@@ -592,28 +591,16 @@ namespace top
                 xwarn("xvblockstore_impl::store_block,fail-store block(%s)", container_block->dump().c_str());
                 // return false;
             }
-#endif
+
             bool did_stored = false;//inited as false
             //then try extract for container if that is
             if(  (container_block->get_block_class() == base::enum_xvblock_class_light) //skip nil block
-               &&(container_block->get_block_level() == base::enum_xvblock_level_table) )
+               &&(container_block->get_block_level() == base::enum_xvblock_level_table)
+               &&(container_block->get_height() != 0) )
             {
-                if(container_block->get_height() != 0) //to avoid regenerate genesis block
+                base::xauto_ptr<base::xvbindex_t> existing_index(container_account->load_index(container_block->get_height(), container_block->get_block_hash()));
+                if(existing_index && (existing_index->get_block_flags() & base::enum_xvblock_flag_unpacked) == 0) //unpacked yet
                 {
-                    base::xauto_ptr<base::xvbindex_t> existing_index(container_account->load_index(container_block->get_height(), container_block->get_block_hash()));
-                    if(existing_index) //double check the existign index to cover some exception cases
-                    {
-                        if((existing_index->get_block_flags() & base::enum_xvblock_flag_unpacked) != 0) //did unpacked
-                        {
-                            container_block->set_block_flag(base::enum_xvblock_flag_unpacked);//merge flag of unpack
-                            did_stored = true; //table must stored fully since table-block always store full content
-                        }
-                    }
-                }
-
-                if((container_block->get_block_flags() & base::enum_xvblock_flag_unpacked) == 0) //unpacked yet
-                {
-                    //XTODO index add flag to avoiding repeat unpack unit
                     xassert(container_block->is_input_ready(true));
                     xassert(container_block->is_output_ready(true));
 
@@ -642,14 +629,18 @@ namespace top
                         //update to block'flag acccording table_extract_all_unit_successful
                         if(table_extract_all_unit_successful)
                         {
-                            container_block->set_block_flag(base::enum_xvblock_flag_unpacked);
-                            xinfo("xvblockstore_impl::store_block,extract_sub_blocks done for talbe block");
+                            existing_index->set_block_flag(base::enum_xvblock_flag_unpacked);
+                            xinfo("xvblockstore_impl::store_block,extract_sub_blocks done for table block, %s", container_block->dump().c_str());
                         }
                     }
                     else
                     {
                         xerror("xvblockstore_impl::store_block,fail-extract_sub_blocks for table block(%s)", container_block->dump().c_str(), (int)sub_blocks.size());
                     }
+                }
+                else
+                {
+                    did_stored = true;
                 }
             }
 
@@ -660,15 +651,6 @@ namespace top
                     container_account->clean_caches(false,false);//cache raw block londer for table with better performance
                 else
                     container_account->clean_caches(false,true);
-#if 0  // TODO(jimmy)
-                //then do sotre block
-                bool ret = container_account->store_block(container_block);
-                if(!ret)
-                {
-                    xwarn("xvblockstore_impl::store_block,fail-store block(%s)", container_block->dump().c_str());
-                    // return false;
-                }
-#endif
             }
 
             if(execute_block)

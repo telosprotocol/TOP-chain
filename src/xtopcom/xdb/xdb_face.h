@@ -17,6 +17,9 @@ struct xdb_meta_t {
     size_t      m_db_key_size{0};
     size_t      m_db_value_size{0};
     size_t      m_key_count{0};
+    size_t      m_write_count{0};
+    mutable size_t      m_read_count{0};
+    size_t      m_erase_count{0};
 };
 
 
