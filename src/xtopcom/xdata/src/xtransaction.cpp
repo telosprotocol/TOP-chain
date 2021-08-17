@@ -400,5 +400,108 @@ std::string xtransaction_t::dump() const {
     return std::string(local_param_buf);
 }
 
+void xtransaction_t::parse_to_json(xJson::Value& result_json) const {
+    result_json["tx_structure_version"] = get_tx_version();
+    result_json["tx_deposit"] = get_deposit();
+    result_json["to_ledger_id"] = get_to_ledger_id();
+    result_json["from_ledger_id"] = get_from_ledger_id();
+    result_json["tx_type"] = get_tx_type();
+    result_json["tx_len"] = get_tx_len();
+    result_json["tx_expire_duration"] = get_expire_duration();
+    result_json["send_timestamp"] = static_cast<xJson::UInt64>(get_fire_timestamp());
+    result_json["tx_random_nonce"] = get_random_nonce();
+    result_json["premium_price"] = get_premium_price();
+    result_json["last_tx_nonce"] = static_cast<xJson::UInt64>(get_last_nonce());
+    result_json["last_tx_hash"] = data::uint64_to_str(get_last_hash());
+    result_json["challenge_proof"] = get_challenge_proof();
+    result_json["note"] = get_memo();
+
+    xJson::Value& s_action_json = result_json["sender_action"];
+    s_action_json["action_hash"] = m_source_action.get_action_hash();
+    s_action_json["action_type"] = m_source_action.get_action_type();
+    s_action_json["action_size"] = m_source_action.get_action_size();
+    s_action_json["tx_sender_account_addr"] = m_source_action.get_account_addr();
+    s_action_json["action_name"] = m_source_action.get_action_name();
+    s_action_json["action_param"] = data::uint_to_str(m_source_action.get_action_param().data(), m_source_action.get_action_param().size());
+    s_action_json["action_ext"] = data::uint_to_str(m_source_action.get_action_ext().data(), m_source_action.get_action_ext().size());
+    s_action_json["action_authorization"] = m_source_action.get_action_authorization();
+
+    xJson::Value& t_action_json = result_json["receiver_action"];
+    t_action_json["action_hash"] = m_target_action.get_action_hash();
+    t_action_json["action_type"] = m_target_action.get_action_type();
+    t_action_json["action_size"] = m_target_action.get_action_size();
+    t_action_json["tx_receiver_account_addr"] = m_target_action.get_account_addr();
+    t_action_json["action_name"] = m_target_action.get_action_name();
+    t_action_json["action_param"] = data::uint_to_str(m_target_action.get_action_param().data(), m_target_action.get_action_param().size());
+    t_action_json["action_ext"] = data::uint_to_str(m_target_action.get_action_ext().data(), m_target_action.get_action_ext().size());
+    t_action_json["action_authorization"] = m_target_action.get_action_authorization();
+
+    result_json["ext"] = data::uint_to_str(get_ext().data(), get_ext().size());
+    result_json["tx_hash"] = data::uint_to_str(digest().data(), digest().size());
+    result_json["authorization"] = get_authorization();
+    xdbg("authorization: %s", to_hex_str(get_authorization()).c_str());
+}
+
+void xtransaction_t::construct_from_json(xJson::Value& request) {
+    set_tx_version(request["tx_structure_version"].asUInt());
+    set_deposit(request["tx_deposit"].asUInt());
+    set_to_ledger_id(static_cast<uint8_t>(request["to_ledger_id"].asUInt()));
+    set_from_ledger_id(static_cast<uint8_t>(request["from_ledger_id"].asUInt()));
+    set_tx_type(static_cast<uint16_t>(request["tx_type"].asUInt()));
+    set_tx_len(static_cast<uint16_t>(request["tx_len"].asUInt()));
+    set_expire_duration(static_cast<uint16_t>(request["tx_expire_duration"].asUInt()));
+    set_fire_timestamp(request["send_timestamp"].asUInt64());
+    set_random_nonce(request["tx_random_nonce"].asUInt());
+    set_premium_price(request["premium_price"].asUInt());
+    set_last_nonce(request["last_tx_nonce"].asUInt64());
+    std::string last_trans_hash = request["last_tx_hash"].asString();
+    set_last_hash(hex_to_uint64(last_trans_hash));
+    set_challenge_proof(request["challenge_proof"].asString());
+    set_memo(request["note"].asString());
+
+    const auto & from = request["sender_action"]["tx_sender_account_addr"].asString();
+    const auto & to = request["receiver_action"]["tx_receiver_account_addr"].asString();
+    auto & source_action = get_source_action();
+    source_action.set_action_hash(request["sender_action"]["action_hash"].asUInt());
+    source_action.set_action_type(static_cast<enum_xaction_type>(request["sender_action"]["action_type"].asUInt()));
+    source_action.set_action_size(static_cast<uint16_t>(request["sender_action"]["action_size"].asUInt()));
+    source_action.set_account_addr(from);
+    source_action.set_action_name(request["sender_action"]["action_name"].asString());
+    auto source_param_vec = hex_to_uint(request["sender_action"]["action_param"].asString());
+    std::string source_param((char *)source_param_vec.data(), source_param_vec.size());
+    source_action.set_action_param(std::move(source_param));
+    auto source_ext_vec = hex_to_uint(request["sender_action"]["action_ext"].asString());
+    std::string source_ext((char *)source_ext_vec.data(), source_ext_vec.size());
+    source_action.set_action_ext(std::move(source_ext));
+
+    source_action.set_action_authorization(request["sender_action"]["action_authorization"].asString());
+
+    auto & target_action = get_target_action();
+    target_action.set_action_hash(request["receiver_action"]["action_hash"].asUInt());
+    target_action.set_action_type(static_cast<enum_xaction_type>(request["receiver_action"]["action_type"].asUInt()));
+    target_action.set_action_size(static_cast<uint16_t>(request["receiver_action"]["action_size"].asUInt()));
+    target_action.set_account_addr(to);
+    target_action.set_action_name(request["receiver_action"]["action_name"].asString());
+    auto target_param_vec = hex_to_uint(request["receiver_action"]["action_param"].asString());
+    std::string target_param((char *)target_param_vec.data(), target_param_vec.size());
+    target_action.set_action_param(std::move(target_param));
+    auto target_ext_vec = hex_to_uint(request["receiver_action"]["action_ext"].asString());
+    std::string target_ext((char *)target_ext_vec.data(), target_ext_vec.size());
+    target_action.set_action_ext(std::move(target_ext));
+
+    target_action.set_action_authorization(request["receiver_action"]["action_authorization"].asString());
+
+    auto ext_vec = hex_to_uint(request["ext"].asString());
+    std::string ext((char *)ext_vec.data(), ext_vec.size());
+    set_ext(ext);
+    set_digest(std::move(hex_to_uint256(request["tx_hash"].asString())));
+
+    auto signature = hex_to_uint(request["authorization"].asString());
+    std::string signature_str((char *)signature.data(), signature.size());  // hex_to_uint client send xstream_t data 0xaaaa => string
+    set_authorization(std::move(signature_str));
+    
+    set_len();
+}
+
 }  // namespace data
 }  // namespace top

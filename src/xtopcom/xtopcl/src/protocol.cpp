@@ -261,45 +261,7 @@ int protocol::encode_transaction_params(xJson::Value & root, top::data::xtransac
         return -1;
 
     xJson::Value & result_json = root["params"];
-
-    result_json["tx_structure_version"] = tx_ptr->get_tx_version();
-    result_json["tx_deposit"] = tx_ptr->get_deposit();
-    result_json["to_ledger_id"] = tx_ptr->get_to_ledger_id();
-    result_json["from_ledger_id"] = tx_ptr->get_from_ledger_id();
-    result_json["tx_type"] = tx_ptr->get_tx_type();
-    result_json["tx_len"] = tx_ptr->get_tx_len();
-    result_json["tx_expire_duration"] = tx_ptr->get_expire_duration();
-    result_json["send_timestamp"] = static_cast<xJson::UInt64>(tx_ptr->get_fire_timestamp());
-    result_json["tx_random_nonce"] = tx_ptr->get_random_nonce();
-    result_json["premium_price"] = tx_ptr->get_premium_price();
-    result_json["last_tx_nonce"] = static_cast<xJson::UInt64>(tx_ptr->get_last_nonce());
-    result_json["last_tx_hash"] = uint64_to_str(tx_ptr->get_last_hash());
-    result_json["challenge_proof"] = tx_ptr->get_challenge_proof();
-    result_json["note"] = tx_ptr->get_memo();
-
-    xJson::Value & s_action_json = root["params"]["sender_action"];
-    s_action_json["action_hash"] = tx_ptr->get_source_action().get_action_hash();
-    s_action_json["action_type"] = tx_ptr->get_source_action().get_action_type();
-    s_action_json["action_size"] = tx_ptr->get_source_action().get_action_size();
-    s_action_json["tx_sender_account_addr"] = tx_ptr->get_source_action().get_account_addr();
-    s_action_json["action_name"] = tx_ptr->get_source_action().get_action_name();
-    s_action_json["action_param"] = uint_to_str(tx_ptr->get_source_action().get_action_param().data(), tx_ptr->get_source_action().get_action_param().size());
-    s_action_json["action_ext"] = uint_to_str(tx_ptr->get_source_action().get_action_ext().data(), tx_ptr->get_source_action().get_action_ext().size());
-    s_action_json["action_authorization"] = tx_ptr->get_source_action().get_action_authorization();
-
-    xJson::Value & t_action_json = root["params"]["receiver_action"];
-    t_action_json["action_hash"] = tx_ptr->get_target_action().get_action_hash();
-    t_action_json["action_type"] = tx_ptr->get_target_action().get_action_type();
-    t_action_json["action_size"] = tx_ptr->get_target_action().get_action_size();
-    t_action_json["tx_receiver_account_addr"] = tx_ptr->get_target_action().get_account_addr();
-    t_action_json["action_name"] = tx_ptr->get_target_action().get_action_name();
-    t_action_json["action_param"] = uint_to_str(tx_ptr->get_target_action().get_action_param().data(), tx_ptr->get_target_action().get_action_param().size());
-    t_action_json["action_ext"] = uint_to_str(tx_ptr->get_target_action().get_action_ext().data(), tx_ptr->get_target_action().get_action_ext().size());
-    t_action_json["action_authorization"] = tx_ptr->get_target_action().get_action_authorization();
-
-    result_json["tx_hash"] = uint_to_str(tx_ptr->digest().data(), tx_ptr->digest().size());
-    result_json["authorization"] = tx_ptr->get_authorization();
-    result_json["ext"] = uint_to_str(tx_ptr->get_ext().data(), tx_ptr->get_ext().size());
+    tx_ptr->parse_to_json(result_json);
 
     return 0;
 }
@@ -628,7 +590,7 @@ void AccountInfoCmd::decode(const std::string & params, task_info * info) {
                     result->_nonce = data["nonce"].asUInt();
                 if (data["latest_tx_hash_xxhash64"].isString()) {
                     auto xxhash_str = data["latest_tx_hash_xxhash64"].asString();
-                    result->_last_hash_xxhash64 = hex_to_uint64(xxhash_str);
+                    result->_last_hash_xxhash64 = top::data::hex_to_uint64(xxhash_str);
                 }
             }
         }

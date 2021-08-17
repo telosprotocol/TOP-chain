@@ -133,7 +133,7 @@ int32_t  xtx_utl::judge_normal_contract_sendtx(data::xtransaction_ptr_t const& t
 }
 bool xtx_utl::is_valid_hex_format(std::string const& str) {
     for (size_t i = 0; i < str.size(); ++i) {
-        if (-1 == top::data::xaction_t::hex_to_dec(str[i])) {
+        if (-1 == top::data::hex_to_dec(str[i])) {
             return false;
         }
     }
