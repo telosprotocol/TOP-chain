@@ -244,16 +244,27 @@ const std::vector<xtxpool_table_lacking_receipt_ids_t> xtxpool_t::get_lacking_re
     return {};
 }
 
-const std::vector<xtxpool_table_lacking_confirm_tx_hashs_t> xtxpool_t::get_lacking_confirm_tx_hashs(uint8_t zone, uint16_t subaddr, uint32_t max_num) const {
+const std::vector<xtxpool_table_lacking_receipt_ids_t> xtxpool_t::get_lacking_confirm_tx_ids(uint8_t zone, uint16_t subaddr, uint32_t max_num) const {
     if (!is_table_subscribed(zone, subaddr)) {
         return {};
     }
     auto table = m_tables[zone][subaddr];
     if (table != nullptr) {
-        return m_tables[zone][subaddr]->get_lacking_confirm_tx_hashs(max_num);
+        return m_tables[zone][subaddr]->get_lacking_confirm_tx_ids(max_num);
     }
     return {};
 }
+
+// const std::vector<xtxpool_table_lacking_confirm_tx_hashs_t> xtxpool_t::get_lacking_confirm_tx_hashs(uint8_t zone, uint16_t subaddr, uint32_t max_num) const {
+//     if (!is_table_subscribed(zone, subaddr)) {
+//         return {};
+//     }
+//     auto table = m_tables[zone][subaddr];
+//     if (table != nullptr) {
+//         return m_tables[zone][subaddr]->get_lacking_confirm_tx_hashs(max_num);
+//     }
+//     return {};
+// }
 
 bool xtxpool_t::need_sync_lacking_receipts(uint8_t zone, uint16_t subaddr) const {
     if (!is_table_subscribed(zone, subaddr)) {
@@ -338,6 +349,31 @@ bool xready_account_t::put_tx(const xcons_transaction_ptr_t & tx) {
     }
     m_txs.push_back(tx);
     return true;
+}
+
+
+void xtxpool_t::update_peer_receipt_id_pair(const std::string & self_addr, base::xtable_shortid_t peer_sid, const base::xreceiptid_pair_t & pair) {
+    auto table = get_txpool_table_by_addr(self_addr);
+    if (table == nullptr) {
+        return;
+    }
+    table->update_peer_receipt_id_pair(peer_sid, pair);
+}
+
+xcons_transaction_ptr_t xtxpool_t::build_recv_tx(const std::string & from_table_addr, const std::string & to_table_addr, uint64_t receipt_id) {
+    auto table = get_txpool_table_by_addr(from_table_addr);
+    if (table == nullptr) {
+        return nullptr;
+    }
+    return table->build_recv_tx(to_table_addr, receipt_id);
+}
+
+xcons_transaction_ptr_t xtxpool_t::build_confirm_tx(const std::string & from_table_addr, const std::string & to_table_addr, uint64_t receipt_id) {
+    auto table = get_txpool_table_by_addr(to_table_addr);
+    if (table == nullptr) {
+        return nullptr;
+    }
+    return table->build_confirm_tx(from_table_addr, receipt_id);
 }
 
 }  // namespace xtxpool_v2

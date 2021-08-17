@@ -43,6 +43,8 @@ public:
     uint64_t get_latest_confirm_receipt_id(base::xtable_shortid_t peer_table_sid) const;
     bool get_account_nonce_cache(const std::string & account_addr, uint64_t & latest_nonce) const;
 
+    void update_peer_receipt_id_pair(base::xtable_shortid_t peer_table_sid, const base::xreceiptid_pair_t & pair);
+
 private:
     void queue_to_pending();
     void send_tx_queue_to_pending();

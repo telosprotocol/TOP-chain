@@ -233,7 +233,8 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     blockstore_access_from_txpool_sync_status,
     blockstore_access_from_txpool_recover,
     blockstore_access_from_txpool_refresh_table,
-    blockstore_access_from_txpool_end = blockstore_access_from_txpool_refresh_table,
+    blockstore_access_from_txpool_create_recv_receipt,
+    blockstore_access_from_txpool_end = blockstore_access_from_txpool_create_recv_receipt,
 
     // blockstore access statestore
     blockstore_access_from_statestore,
@@ -339,7 +340,8 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     statestore_access_from_txpool_get_accountstate,
     statestore_access_from_txpool_refreshtable,
     statestore_access_from_blkmaker_get_target_tablestate,
-    statestore_access_end = statestore_access_from_blkmaker_get_target_tablestate,
+    statestore_access_from_batchpacker_make_receipt_msg,
+    statestore_access_end = statestore_access_from_batchpacker_make_receipt_msg,
 
     state_load_blk_state_suc,
     state_load_blk_state_cache_suc,

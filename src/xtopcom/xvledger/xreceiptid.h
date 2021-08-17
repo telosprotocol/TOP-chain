@@ -83,6 +83,7 @@ class xreceiptid_state_t {
     void        clear_pair_modified();
     bool        find_pair_modified(xtable_shortid_t sid, xreceiptid_pair_t & pair);
     void        add_pair_modified(xtable_shortid_t sid, const xreceiptid_pair_t & pair);
+    const xreceiptid_pairs_ptr_t & get_all_receiptid_pairs() const {return m_binlog;}
 
  private:
     xreceiptid_pairs_ptr_t  m_binlog{nullptr};

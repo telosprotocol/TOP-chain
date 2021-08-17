@@ -51,7 +51,8 @@ void xtxpool_service_mgr::on_block_to_db_event(mbus::xevent_ptr_t e) {
         return;
     }
 
-    if (m_dispatcher->is_mailbox_over_limit()) {
+    // use slow thread to deal with block event
+    if (m_timer->is_mailbox_over_limit()) {
         xwarn("xtxpool_service_mgr::on_block_to_db_event txpool mailbox limit,drop block=%s,height:%llu", block_event->blk_hash.c_str(), block_event->blk_height);
         return;
     }
@@ -70,7 +71,7 @@ void xtxpool_service_mgr::on_block_to_db_event(mbus::xevent_ptr_t e) {
         return true;
     };
     base::xcall_t asyn_call(event_handler);
-    m_dispatcher->dispatch(asyn_call);
+    m_timer->dispatch(asyn_call);
 }
 
 void xtxpool_service_mgr::on_block_confirmed(xblock_t * block) {

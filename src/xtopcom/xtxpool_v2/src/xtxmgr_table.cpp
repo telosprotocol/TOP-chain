@@ -263,5 +263,9 @@ void xtxmgr_table_t::send_tx_queue_to_pending() {
     }
 }
 
+void xtxmgr_table_t::update_peer_receipt_id_pair(base::xtable_shortid_t peer_table_sid, const base::xreceiptid_pair_t & pair) {
+    m_new_receipt_queue.update_peer_receipt_id_pair(peer_table_sid, pair);
+}
+
 }  // namespace xtxpool_v2
 }  // namespace top

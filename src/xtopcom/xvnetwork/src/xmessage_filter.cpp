@@ -709,6 +709,8 @@ xfilter_result_t xtop_message_filter_message_id::filter(xvnetwork_message_t & vn
     case xtxpool_v2::xtxpool_msg_send_receipt:
         XATTRIBUTE_FALLTHROUGH;
     case xtxpool_v2::xtxpool_msg_recv_receipt:
+        XATTRIBUTE_FALLTHROUGH;
+    case xtxpool_v2::xtxpool_msg_resend_receipt:
 #if defined(__clang__)
 #    pragma clang diagnostic pop
 #elif defined(__GNUC__)
