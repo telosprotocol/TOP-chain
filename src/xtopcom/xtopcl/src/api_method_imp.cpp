@@ -451,18 +451,6 @@ bool api_method_imp::getProperty(const user_info & uinfo,
     return true;
 }
 
-std::string api_method_imp::hash_signature_action(top::data::xaction_t & action, const std::array<std::uint8_t, PRI_KEY_LEN> & private_key) {
-    auto action_hash = action.sha2();
-
-    auto hash_str = uint_to_str(action_hash.data(), action_hash.size());
-    auto private_key_str = uint_to_str(private_key.data(), PRI_KEY_LEN);
-    std::cout << "sign action - private: " << private_key_str.c_str() << " hash: " << hash_str.c_str() << std::endl;
-
-    action.set_action_authorization(xcrypto_util::digest_sign(action_hash, private_key));
-    //        action->set_action_authorization(uint_to_str(auth_str.c_str(), auth_str.size()));
-    return hash_str;
-}
-
 bool api_method_imp::hash_signature(top::data::xtransaction_t * trans_action, const std::array<std::uint8_t, PRI_KEY_LEN> & private_key) {
     trans_action->set_digest();
     std::string auth_str = xcrypto_util::digest_sign(trans_action->digest(), private_key);
