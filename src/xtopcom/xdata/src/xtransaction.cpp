@@ -498,5 +498,97 @@ void xtransaction_t::construct_from_json(xJson::Value& request) {
     set_len();
 }
 
+// should be deleted in the end
+int32_t xtransaction_t::parse(enum_xaction_type source_type, enum_xaction_type target_type, xtx_parse_data_t & tx_parse_data) {
+    if (source_type == xaction_type_source_null) {
+        data::xaction_source_null source_action;
+        int32_t ret = source_action.parse(get_source_action());
+        if (ret != xsuccess) {
+            return ret;
+        }
+    }
+
+    if (source_type == xaction_type_asset_out) {
+        data::xaction_asset_out source_action;
+        int32_t ret = source_action.parse(get_source_action());
+        if (ret != xsuccess) {
+            return ret;
+        }
+        tx_parse_data.m_asset = source_action.m_asset_out;
+    }
+
+#ifdef ENABLE_CREATE_USER  // debug use
+    if (target_type == xaction_type_create_user_account) {
+        data::xaction_create_user_account target_action;
+        int32_t ret = target_action.parse(get_target_action());
+        if (ret != xsuccess) {
+            return ret;
+        }
+        tx_parse_data.m_new_account = target_action.m_address;
+    }
+#endif
+
+    if (target_type == xaction_type_asset_in) {
+        data::xaction_asset_in target_action;
+        int32_t ret = target_action.parse(get_target_action());
+        if (ret != xsuccess) {
+            return ret;
+        }
+        if ((source_type == xaction_type_asset_out) && (target_action.m_asset.m_amount != tx_parse_data.m_asset.m_amount)) {
+            return xverifier::xverifier_error::xverifier_error_trnsafer_tx_src_dst_amount_not_same;
+        }
+        tx_parse_data.m_asset = target_action.m_asset;
+    }
+
+    if (target_type == xaction_type_run_contract) {
+        data::xaction_run_contract target_action;
+        int32_t ret = target_action.parse(get_target_action());
+        if (ret != xsuccess) {
+            return ret;
+        }
+        tx_parse_data.m_function_name = target_action.m_function_name;
+        tx_parse_data.m_function_para = target_action.m_para;
+    }
+
+    if (target_type == xaction_type_pledge_token) {
+        data::xaction_pledge_token target_action;
+        int32_t ret = target_action.parse(get_target_action());
+        if (ret != xsuccess) {
+            return ret;
+        }
+        tx_parse_data.m_asset = target_action.m_asset;
+    }
+
+    if (target_type == xaction_type_redeem_token) {
+        data::xaction_redeem_token target_action;
+        int32_t ret = target_action.parse(get_target_action());
+        if (ret != xsuccess) {
+            return ret;
+        }
+        tx_parse_data.m_asset = target_action.m_asset;
+    }
+
+    if (target_type == xaction_type_pledge_token_vote) {
+        data::xaction_pledge_token_vote target_action;
+        int32_t ret = target_action.parse(get_target_action());
+        if (ret != xsuccess) {
+            return ret;
+        }
+        tx_parse_data.m_vote_num = target_action.m_vote_num;
+        tx_parse_data.m_lock_duration = target_action.m_lock_duration;
+    }
+
+    if (target_type == xaction_type_redeem_token_vote) {
+        data::xaction_redeem_token_vote target_action;
+        int32_t ret = target_action.parse(get_target_action());
+        if (ret != xsuccess) {
+            return ret;
+        }
+        tx_parse_data.m_vote_num = target_action.m_vote_num;
+    }
+
+    return 0;
+}
+
 }  // namespace data
 }  // namespace top

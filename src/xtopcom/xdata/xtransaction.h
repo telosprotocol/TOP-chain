@@ -59,6 +59,18 @@ class xtx_used_resource_t {
     uint64_t    m_beacon_service_fee{0};
 };
 
+class xtx_parse_data_t {
+public:
+#ifdef ENABLE_CREATE_USER  // debug use
+    std::string                 m_new_account;
+#endif
+    data::xproperty_asset       m_asset{0};
+    std::string                 m_function_name;
+    std::string                 m_function_para;
+    uint64_t                    m_vote_num;
+    uint16_t                    m_lock_duration;
+};
+
 class xtransaction_t : public xbase_dataunit_t<xtransaction_t, xdata_type_transaction> {
  public:
     static std::string transaction_type_to_string(uint16_t type);
@@ -125,6 +137,7 @@ class xtransaction_t : public xbase_dataunit_t<xtransaction_t, xdata_type_transa
     const std::string & get_authorization() const {return m_authorization;}
     void                parse_to_json(xJson::Value& tx_json) const;
     void                construct_from_json(xJson::Value& tx_json);
+    int32_t             parse(enum_xaction_type source_type, enum_xaction_type target_type, xtx_parse_data_t & tx_parse_data);
 
     // header
  public:
