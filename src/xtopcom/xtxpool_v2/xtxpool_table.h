@@ -126,7 +126,7 @@ private:
     mutable std::mutex m_sender_unconfirm_id_height_mutex;
     xtable_unconfirm_id_height_t m_receiver_unconfirm_id_height;
     mutable std::mutex m_receiver_unconfirm_id_height_mutex;
-    uint64_t m_last_commit_block_height = 0xFFFFFFFFFFFFFFFF;
+    uint64_t m_last_commit_block_height{0xFFFFFFFFFFFFFFFF};
 
     // xnon_ready_accounts_t m_non_ready_accounts;
     // mutable std::mutex m_non_ready_mutex;  // lock m_non_ready_accounts

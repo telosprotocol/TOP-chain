@@ -291,7 +291,7 @@ void xtxpool_table_t::deal_commit_table_block(xblock_t * table_block) {
 }
 
 void xtxpool_table_t::on_block_confirmed(xblock_t * table_block) {
-    for (uint64_t height = m_last_commit_block_height; height < table_block->get_height(); height++) {
+    for (uint64_t height = table_block->get_height() - 1; height > m_last_commit_block_height; height--) {
         base::xauto_ptr<base::xvblock_t> commit_block =
             m_para->get_vblockstore()->load_block_object(m_xtable_info, height, base::enum_xvblock_flag_committed, false, metrics::blockstore_access_from_txpool_on_block_event);
 
@@ -299,12 +299,18 @@ void xtxpool_table_t::on_block_confirmed(xblock_t * table_block) {
             m_para->get_vblockstore()->load_block_input(commit_block->get_account(), commit_block.get());
             deal_commit_table_block(dynamic_cast<xblock_t *>(commit_block.get()));
         } else {
-            xwarn("xtxpool_table_t::on_block_confirmed load table block fail:table:%s,height:%llu", m_xtable_info.get_account().c_str(), height);
+            // try sync table block
+            mbus::xevent_behind_ptr_t ev = make_object_ptr<mbus::xevent_behind_on_demand_t>(
+                m_xtable_info.get_account(), m_last_commit_block_height + 1, (uint32_t)(height - m_last_commit_block_height), true, "lack_of_table_block");
+            m_para->get_bus()->push_event(ev);
+            xwarn("xtxpool_table_t::on_block_confirmed load table block fail:table:%s,height:%llu,try sync %llu-%llu", m_xtable_info.get_account().c_str(), height, m_last_commit_block_height + 1, height);
         }
     }
 
     deal_commit_table_block(table_block);
-    m_last_commit_block_height = table_block->get_height();
+    if (table_block->get_height() > m_last_commit_block_height || m_last_commit_block_height == 0xFFFFFFFFFFFFFFFF) {
+        m_last_commit_block_height = table_block->get_height();
+    }
 }
 
 int32_t xtxpool_table_t::verify_txs(const std::string & account, const std::vector<xcons_transaction_ptr_t> & txs) {
