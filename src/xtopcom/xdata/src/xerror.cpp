@@ -3,7 +3,7 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "xdata/xerror/xerror.h"
-
+#include <string>
 NS_BEG3(top, data, error)
 
 static char const * const errc_to_string(int code) {

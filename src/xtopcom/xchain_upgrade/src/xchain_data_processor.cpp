@@ -50,22 +50,22 @@ namespace top
                 common::xaccount_address_t account_address{it.key()};
                 data_processor_t data;
                 data.address = it.key();
-                data.top_balance = (it->count(data::XPROPERTY_BALANCE_AVAILABLE)) ? base::xstring_utl::touint64(static_cast<std::string>(it->at(data::XPROPERTY_BALANCE_AVAILABLE))) : 0;
-                data.burn_balance = (it->count(data::XPROPERTY_BALANCE_BURN)) ? base::xstring_utl::touint64(static_cast<std::string>(it->at(data::XPROPERTY_BALANCE_BURN))) : 0;
-                data.tgas_balance = (it->count(data::XPROPERTY_BALANCE_PLEDGE_TGAS)) ? base::xstring_utl::touint64(static_cast<std::string>(it->at(data::XPROPERTY_BALANCE_PLEDGE_TGAS))) : 0;
-                data.vote_balance = (it->count(data::XPROPERTY_BALANCE_PLEDGE_VOTE)) ? base::xstring_utl::touint64(static_cast<std::string>(it->at(data::XPROPERTY_BALANCE_PLEDGE_VOTE))) : 0;
-                data.lock_balance = (it->count(data::XPROPERTY_BALANCE_LOCK)) ? base::xstring_utl::touint64(static_cast<std::string>(it->at(data::XPROPERTY_BALANCE_LOCK))) : 0;
-                data.lock_tgas = (it->count(data::XPROPERTY_LOCK_TGAS)) ? base::xstring_utl::touint64(static_cast<std::string>(it->at(data::XPROPERTY_LOCK_TGAS))) : 0;
-                data.unvote_num = (it->count(data::XPROPERTY_UNVOTE_NUM)) ? base::xstring_utl::touint64(static_cast<std::string>(it->at(data::XPROPERTY_UNVOTE_NUM))) : 0;
-                data.create_time = (it->count(data::XPROPERTY_ACCOUNT_CREATE_TIME)) ? base::xstring_utl::touint64(static_cast<std::string>(it->at(data::XPROPERTY_ACCOUNT_CREATE_TIME))) : 0;
-                data.lock_token = (it->count(data::XPROPERTY_LOCK_TOKEN_KEY)) ? base::xstring_utl::touint64(static_cast<std::string>(it->at(data::XPROPERTY_LOCK_TOKEN_KEY))) : 0;
+                data.top_balance = (it->count(data::XPROPERTY_BALANCE_AVAILABLE)) ? base::xstring_utl::touint64(static_cast<std::string>(it->at(data::XPROPERTY_BALANCE_AVAILABLE).get<std::string>())) : 0;
+                data.burn_balance = (it->count(data::XPROPERTY_BALANCE_BURN)) ? base::xstring_utl::touint64(static_cast<std::string>(it->at(data::XPROPERTY_BALANCE_BURN).get<std::string>())) : 0;
+                data.tgas_balance = (it->count(data::XPROPERTY_BALANCE_PLEDGE_TGAS)) ? base::xstring_utl::touint64(static_cast<std::string>(it->at(data::XPROPERTY_BALANCE_PLEDGE_TGAS).get<std::string>())) : 0;
+                data.vote_balance = (it->count(data::XPROPERTY_BALANCE_PLEDGE_VOTE)) ? base::xstring_utl::touint64(static_cast<std::string>(it->at(data::XPROPERTY_BALANCE_PLEDGE_VOTE).get<std::string>())) : 0;
+                data.lock_balance = (it->count(data::XPROPERTY_BALANCE_LOCK)) ? base::xstring_utl::touint64(static_cast<std::string>(it->at(data::XPROPERTY_BALANCE_LOCK).get<std::string>())) : 0;
+                data.lock_tgas = (it->count(data::XPROPERTY_LOCK_TGAS)) ? base::xstring_utl::touint64(static_cast<std::string>(it->at(data::XPROPERTY_LOCK_TGAS).get<std::string>())) : 0;
+                data.unvote_num = (it->count(data::XPROPERTY_UNVOTE_NUM)) ? base::xstring_utl::touint64(static_cast<std::string>(it->at(data::XPROPERTY_UNVOTE_NUM).get<std::string>())) : 0;
+                data.create_time = (it->count(data::XPROPERTY_ACCOUNT_CREATE_TIME)) ? base::xstring_utl::touint64(static_cast<std::string>(it->at(data::XPROPERTY_ACCOUNT_CREATE_TIME).get<std::string>())) : 0;
+                data.lock_token = (it->count(data::XPROPERTY_LOCK_TOKEN_KEY)) ? base::xstring_utl::touint64(static_cast<std::string>(it->at(data::XPROPERTY_LOCK_TOKEN_KEY).get<std::string>())) : 0;
                 if (it->count(data::XPROPERTY_PLEDGE_VOTE_KEY)) {
                     for(auto const & item : it->at(data::XPROPERTY_PLEDGE_VOTE_KEY)) {
                         std::string str = base::xstring_utl::base64_decode(item);
                         data.pledge_vote.emplace_back(str);
                     }
                 }
-                data.expire_vote = (it->count(data::XPROPERTY_EXPIRE_VOTE_TOKEN_KEY)) ? base::xstring_utl::touint64(static_cast<std::string>(it->at(data::XPROPERTY_EXPIRE_VOTE_TOKEN_KEY))) : 0;
+                data.expire_vote = (it->count(data::XPROPERTY_EXPIRE_VOTE_TOKEN_KEY)) ? base::xstring_utl::touint64(static_cast<std::string>(it->at(data::XPROPERTY_EXPIRE_VOTE_TOKEN_KEY).get<std::string>())) : 0;
                 data_vec.emplace_back(data);
             }
         }
@@ -76,22 +76,22 @@ namespace top
             if(it != user_property_json_parse.end())
             {
                 data.address = it.key();
-                data.top_balance = (it->count(data::XPROPERTY_BALANCE_AVAILABLE)) ? base::xstring_utl::touint64(static_cast<std::string>(it->at(data::XPROPERTY_BALANCE_AVAILABLE))) : 0;
-                data.burn_balance = (it->count(data::XPROPERTY_BALANCE_BURN)) ? base::xstring_utl::touint64(static_cast<std::string>(it->at(data::XPROPERTY_BALANCE_BURN))) : 0;
-                data.tgas_balance = (it->count(data::XPROPERTY_BALANCE_PLEDGE_TGAS)) ? base::xstring_utl::touint64(static_cast<std::string>(it->at(data::XPROPERTY_BALANCE_PLEDGE_TGAS))) : 0;
-                data.vote_balance = (it->count(data::XPROPERTY_BALANCE_PLEDGE_VOTE)) ? base::xstring_utl::touint64(static_cast<std::string>(it->at(data::XPROPERTY_BALANCE_PLEDGE_VOTE))) : 0;
-                data.lock_balance = (it->count(data::XPROPERTY_BALANCE_LOCK)) ? base::xstring_utl::touint64(static_cast<std::string>(it->at(data::XPROPERTY_BALANCE_LOCK))) : 0;
-                data.lock_tgas = (it->count(data::XPROPERTY_LOCK_TGAS)) ? base::xstring_utl::touint64(static_cast<std::string>(it->at(data::XPROPERTY_LOCK_TGAS))) : 0;
-                data.unvote_num = (it->count(data::XPROPERTY_UNVOTE_NUM)) ? base::xstring_utl::touint64(static_cast<std::string>(it->at(data::XPROPERTY_UNVOTE_NUM))) : 0;
-                data.create_time = (it->count(data::XPROPERTY_ACCOUNT_CREATE_TIME)) ? base::xstring_utl::touint64(static_cast<std::string>(it->at(data::XPROPERTY_ACCOUNT_CREATE_TIME))) : 0;
-                data.lock_token = (it->count(data::XPROPERTY_LOCK_TOKEN_KEY)) ? base::xstring_utl::touint64(static_cast<std::string>(it->at(data::XPROPERTY_LOCK_TOKEN_KEY))) : 0;
+                data.top_balance = (it->count(data::XPROPERTY_BALANCE_AVAILABLE)) ? base::xstring_utl::touint64(static_cast<std::string>(it->at(data::XPROPERTY_BALANCE_AVAILABLE).get<std::string>())) : 0;
+                data.burn_balance = (it->count(data::XPROPERTY_BALANCE_BURN)) ? base::xstring_utl::touint64(static_cast<std::string>(it->at(data::XPROPERTY_BALANCE_BURN).get<std::string>())) : 0;
+                data.tgas_balance = (it->count(data::XPROPERTY_BALANCE_PLEDGE_TGAS)) ? base::xstring_utl::touint64(static_cast<std::string>(it->at(data::XPROPERTY_BALANCE_PLEDGE_TGAS).get<std::string>())) : 0;
+                data.vote_balance = (it->count(data::XPROPERTY_BALANCE_PLEDGE_VOTE)) ? base::xstring_utl::touint64(static_cast<std::string>(it->at(data::XPROPERTY_BALANCE_PLEDGE_VOTE).get<std::string>())) : 0;
+                data.lock_balance = (it->count(data::XPROPERTY_BALANCE_LOCK)) ? base::xstring_utl::touint64(static_cast<std::string>(it->at(data::XPROPERTY_BALANCE_LOCK).get<std::string>())) : 0;
+                data.lock_tgas = (it->count(data::XPROPERTY_LOCK_TGAS)) ? base::xstring_utl::touint64(static_cast<std::string>(it->at(data::XPROPERTY_LOCK_TGAS).get<std::string>())) : 0;
+                data.unvote_num = (it->count(data::XPROPERTY_UNVOTE_NUM)) ? base::xstring_utl::touint64(static_cast<std::string>(it->at(data::XPROPERTY_UNVOTE_NUM).get<std::string>())) : 0;
+                data.create_time = (it->count(data::XPROPERTY_ACCOUNT_CREATE_TIME)) ? base::xstring_utl::touint64(static_cast<std::string>(it->at(data::XPROPERTY_ACCOUNT_CREATE_TIME).get<std::string>())) : 0;
+                data.lock_token = (it->count(data::XPROPERTY_LOCK_TOKEN_KEY)) ? base::xstring_utl::touint64(static_cast<std::string>(it->at(data::XPROPERTY_LOCK_TOKEN_KEY).get<std::string>())) : 0;
                 if (it->count(data::XPROPERTY_PLEDGE_VOTE_KEY)) {
                     for(auto const & item : it->at(data::XPROPERTY_PLEDGE_VOTE_KEY)) {
                         std::string str = base::xstring_utl::base64_decode(item);
                         data.pledge_vote.emplace_back(str);
                     }
                 }
-                data.expire_vote = (it->count(data::XPROPERTY_EXPIRE_VOTE_TOKEN_KEY)) ? base::xstring_utl::touint64(static_cast<std::string>(it->at(data::XPROPERTY_EXPIRE_VOTE_TOKEN_KEY))) : 0;
+                data.expire_vote = (it->count(data::XPROPERTY_EXPIRE_VOTE_TOKEN_KEY)) ? base::xstring_utl::touint64(static_cast<std::string>(it->at(data::XPROPERTY_EXPIRE_VOTE_TOKEN_KEY).get<std::string>())) : 0;
             }
         }
 
@@ -101,22 +101,22 @@ namespace top
                 common::xaccount_address_t account_address{it.key()};
                 data_processor_t data;
                 data.address = it.key();
-                data.top_balance = (it->count(data::XPROPERTY_BALANCE_AVAILABLE)) ? base::xstring_utl::touint64(static_cast<std::string>(it->at(data::XPROPERTY_BALANCE_AVAILABLE))) : 0;
-                data.burn_balance = (it->count(data::XPROPERTY_BALANCE_BURN)) ? base::xstring_utl::touint64(static_cast<std::string>(it->at(data::XPROPERTY_BALANCE_BURN))) : 0;
-                data.tgas_balance = (it->count(data::XPROPERTY_BALANCE_PLEDGE_TGAS)) ? base::xstring_utl::touint64(static_cast<std::string>(it->at(data::XPROPERTY_BALANCE_PLEDGE_TGAS))) : 0;
-                data.vote_balance = (it->count(data::XPROPERTY_BALANCE_PLEDGE_VOTE)) ? base::xstring_utl::touint64(static_cast<std::string>(it->at(data::XPROPERTY_BALANCE_PLEDGE_VOTE))) : 0;
-                data.lock_balance = (it->count(data::XPROPERTY_BALANCE_LOCK)) ? base::xstring_utl::touint64(static_cast<std::string>(it->at(data::XPROPERTY_BALANCE_LOCK))) : 0;
-                data.lock_tgas = (it->count(data::XPROPERTY_LOCK_TGAS)) ? base::xstring_utl::touint64(static_cast<std::string>(it->at(data::XPROPERTY_LOCK_TGAS))) : 0;
-                data.unvote_num = (it->count(data::XPROPERTY_UNVOTE_NUM)) ? base::xstring_utl::touint64(static_cast<std::string>(it->at(data::XPROPERTY_UNVOTE_NUM))) : 0;
-                data.create_time = (it->count(data::XPROPERTY_ACCOUNT_CREATE_TIME)) ? base::xstring_utl::touint64(static_cast<std::string>(it->at(data::XPROPERTY_ACCOUNT_CREATE_TIME))) : 0;
-                data.lock_token = (it->count(data::XPROPERTY_LOCK_TOKEN_KEY)) ? base::xstring_utl::touint64(static_cast<std::string>(it->at(data::XPROPERTY_LOCK_TOKEN_KEY))) : 0;
+                data.top_balance = (it->count(data::XPROPERTY_BALANCE_AVAILABLE)) ? base::xstring_utl::touint64(static_cast<std::string>(it->at(data::XPROPERTY_BALANCE_AVAILABLE).get<std::string>())) : 0;
+                data.burn_balance = (it->count(data::XPROPERTY_BALANCE_BURN)) ? base::xstring_utl::touint64(static_cast<std::string>(it->at(data::XPROPERTY_BALANCE_BURN).get<std::string>())) : 0;
+                data.tgas_balance = (it->count(data::XPROPERTY_BALANCE_PLEDGE_TGAS)) ? base::xstring_utl::touint64(static_cast<std::string>(it->at(data::XPROPERTY_BALANCE_PLEDGE_TGAS).get<std::string>())) : 0;
+                data.vote_balance = (it->count(data::XPROPERTY_BALANCE_PLEDGE_VOTE)) ? base::xstring_utl::touint64(static_cast<std::string>(it->at(data::XPROPERTY_BALANCE_PLEDGE_VOTE).get<std::string>())) : 0;
+                data.lock_balance = (it->count(data::XPROPERTY_BALANCE_LOCK)) ? base::xstring_utl::touint64(static_cast<std::string>(it->at(data::XPROPERTY_BALANCE_LOCK).get<std::string>())) : 0;
+                data.lock_tgas = (it->count(data::XPROPERTY_LOCK_TGAS)) ? base::xstring_utl::touint64(static_cast<std::string>(it->at(data::XPROPERTY_LOCK_TGAS).get<std::string>())) : 0;
+                data.unvote_num = (it->count(data::XPROPERTY_UNVOTE_NUM)) ? base::xstring_utl::touint64(static_cast<std::string>(it->at(data::XPROPERTY_UNVOTE_NUM).get<std::string>())) : 0;
+                data.create_time = (it->count(data::XPROPERTY_ACCOUNT_CREATE_TIME)) ? base::xstring_utl::touint64(static_cast<std::string>(it->at(data::XPROPERTY_ACCOUNT_CREATE_TIME).get<std::string>())) : 0;
+                data.lock_token = (it->count(data::XPROPERTY_LOCK_TOKEN_KEY)) ? base::xstring_utl::touint64(static_cast<std::string>(it->at(data::XPROPERTY_LOCK_TOKEN_KEY).get<std::string>())) : 0;
                 if (it->count(data::XPROPERTY_PLEDGE_VOTE_KEY)) {
                     for(auto const & item : it->at(data::XPROPERTY_PLEDGE_VOTE_KEY)) {
                         std::string str = base::xstring_utl::base64_decode(item);
                         data.pledge_vote.emplace_back(str);
                     }
                 }
-                data.expire_vote = (it->count(data::XPROPERTY_EXPIRE_VOTE_TOKEN_KEY)) ? base::xstring_utl::touint64(static_cast<std::string>(it->at(data::XPROPERTY_EXPIRE_VOTE_TOKEN_KEY))) : 0;
+                data.expire_vote = (it->count(data::XPROPERTY_EXPIRE_VOTE_TOKEN_KEY)) ? base::xstring_utl::touint64(static_cast<std::string>(it->at(data::XPROPERTY_EXPIRE_VOTE_TOKEN_KEY).get<std::string>())) : 0;
                 data_vec.emplace_back(data);
             }
         }
@@ -127,22 +127,22 @@ namespace top
             if(it != stake_property_json_parse.end())
             {
                 data.address = it.key();
-                data.top_balance = (it->count(data::XPROPERTY_BALANCE_AVAILABLE)) ? base::xstring_utl::touint64(static_cast<std::string>(it->at(data::XPROPERTY_BALANCE_AVAILABLE))) : 0;
-                data.burn_balance = (it->count(data::XPROPERTY_BALANCE_BURN)) ? base::xstring_utl::touint64(static_cast<std::string>(it->at(data::XPROPERTY_BALANCE_BURN))) : 0;
-                data.tgas_balance = (it->count(data::XPROPERTY_BALANCE_PLEDGE_TGAS)) ? base::xstring_utl::touint64(static_cast<std::string>(it->at(data::XPROPERTY_BALANCE_PLEDGE_TGAS))) : 0;
-                data.vote_balance = (it->count(data::XPROPERTY_BALANCE_PLEDGE_VOTE)) ? base::xstring_utl::touint64(static_cast<std::string>(it->at(data::XPROPERTY_BALANCE_PLEDGE_VOTE))) : 0;
-                data.lock_balance = (it->count(data::XPROPERTY_BALANCE_LOCK)) ? base::xstring_utl::touint64(static_cast<std::string>(it->at(data::XPROPERTY_BALANCE_LOCK))) : 0;
-                data.lock_tgas = (it->count(data::XPROPERTY_LOCK_TGAS)) ? base::xstring_utl::touint64(static_cast<std::string>(it->at(data::XPROPERTY_LOCK_TGAS))) : 0;
-                data.unvote_num = (it->count(data::XPROPERTY_UNVOTE_NUM)) ? base::xstring_utl::touint64(static_cast<std::string>(it->at(data::XPROPERTY_UNVOTE_NUM))) : 0;
-                data.create_time = (it->count(data::XPROPERTY_ACCOUNT_CREATE_TIME)) ? base::xstring_utl::touint64(static_cast<std::string>(it->at(data::XPROPERTY_ACCOUNT_CREATE_TIME))) : 0;
-                data.lock_token = (it->count(data::XPROPERTY_LOCK_TOKEN_KEY)) ? base::xstring_utl::touint64(static_cast<std::string>(it->at(data::XPROPERTY_LOCK_TOKEN_KEY))) : 0;
+                data.top_balance = (it->count(data::XPROPERTY_BALANCE_AVAILABLE)) ? base::xstring_utl::touint64(static_cast<std::string>(it->at(data::XPROPERTY_BALANCE_AVAILABLE).get<std::string>())) : 0;
+                data.burn_balance = (it->count(data::XPROPERTY_BALANCE_BURN)) ? base::xstring_utl::touint64(static_cast<std::string>(it->at(data::XPROPERTY_BALANCE_BURN).get<std::string>())) : 0;
+                data.tgas_balance = (it->count(data::XPROPERTY_BALANCE_PLEDGE_TGAS)) ? base::xstring_utl::touint64(static_cast<std::string>(it->at(data::XPROPERTY_BALANCE_PLEDGE_TGAS).get<std::string>())) : 0;
+                data.vote_balance = (it->count(data::XPROPERTY_BALANCE_PLEDGE_VOTE)) ? base::xstring_utl::touint64(static_cast<std::string>(it->at(data::XPROPERTY_BALANCE_PLEDGE_VOTE).get<std::string>())) : 0;
+                data.lock_balance = (it->count(data::XPROPERTY_BALANCE_LOCK)) ? base::xstring_utl::touint64(static_cast<std::string>(it->at(data::XPROPERTY_BALANCE_LOCK).get<std::string>())) : 0;
+                data.lock_tgas = (it->count(data::XPROPERTY_LOCK_TGAS)) ? base::xstring_utl::touint64(static_cast<std::string>(it->at(data::XPROPERTY_LOCK_TGAS).get<std::string>())) : 0;
+                data.unvote_num = (it->count(data::XPROPERTY_UNVOTE_NUM)) ? base::xstring_utl::touint64(static_cast<std::string>(it->at(data::XPROPERTY_UNVOTE_NUM).get<std::string>())) : 0;
+                data.create_time = (it->count(data::XPROPERTY_ACCOUNT_CREATE_TIME)) ? base::xstring_utl::touint64(static_cast<std::string>(it->at(data::XPROPERTY_ACCOUNT_CREATE_TIME).get<std::string>())) : 0;
+                data.lock_token = (it->count(data::XPROPERTY_LOCK_TOKEN_KEY)) ? base::xstring_utl::touint64(static_cast<std::string>(it->at(data::XPROPERTY_LOCK_TOKEN_KEY).get<std::string>())) : 0;
                 if (it->count(data::XPROPERTY_PLEDGE_VOTE_KEY)) {
                     for(auto const & item : it->at(data::XPROPERTY_PLEDGE_VOTE_KEY)) {
                         std::string str = base::xstring_utl::base64_decode(item);
                         data.pledge_vote.emplace_back(str);
                     }
                 }
-                data.expire_vote = (it->count(data::XPROPERTY_EXPIRE_VOTE_TOKEN_KEY)) ? base::xstring_utl::touint64(static_cast<std::string>(it->at(data::XPROPERTY_EXPIRE_VOTE_TOKEN_KEY))) : 0;
+                data.expire_vote = (it->count(data::XPROPERTY_EXPIRE_VOTE_TOKEN_KEY)) ? base::xstring_utl::touint64(static_cast<std::string>(it->at(data::XPROPERTY_EXPIRE_VOTE_TOKEN_KEY).get<std::string>())) : 0;
             }
         }
 
