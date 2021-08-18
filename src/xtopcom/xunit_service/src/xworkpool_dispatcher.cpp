@@ -121,9 +121,9 @@ bool xworkpool_dispatcher::start(const xvip2_t & xip, const common::xlogic_time_
     return false;
 }
 
-bool xworkpool_dispatcher::fade(const xvip2_t & xip) {
+bool xworkpool_dispatcher::unreg(const xvip2_t & xip) {
     // do nothing
-    xunit_info("xworkpool_dispatcher::fade %s %p", xcons_utl::xip_to_hex(xip).c_str(), this);
+    xunit_info("xworkpool_dispatcher::unreg %s %p", xcons_utl::xip_to_hex(xip).c_str(), this);
     m_para->get_resources()->get_chain_timer()->unwatch(watcher_name(xip));
     return false;
 }

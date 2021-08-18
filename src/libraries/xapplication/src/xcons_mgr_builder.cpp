@@ -93,7 +93,7 @@ const std::string xschnorrcert_t::merge_muti_sign(const std::map<xvip2_t, std::s
 const std::string xschnorrcert_t::merge_muti_sign(const std::map<xvip2_t, std::string, xvip2_compare> & muti_nodes_signatures, const base::xvblock_t * for_block) {
     return merge_muti_sign(muti_nodes_signatures, for_block->get_cert());
 }
-
+#if 0
 xunit_service::xcons_service_mgr_ptr xcons_mgr_builder::build(std::string const & node_account,
                                                               observer_ptr<store::xstore_face_t> const & store,
                                                               observer_ptr<base::xvblockstore_t> const & blockstore,
@@ -136,5 +136,5 @@ xunit_service::xcons_dispatcher_ptr xdispatcher_builder::build(observer_ptr<mbus
         return std::make_shared<xunit_service::xtimer_dispatcher_t>(p_srv_para, block_maker);
     }
 }
-
+#endif
 NS_END2

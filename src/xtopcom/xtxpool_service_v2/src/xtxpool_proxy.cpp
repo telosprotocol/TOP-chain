@@ -18,8 +18,8 @@ bool xtxpool_proxy::start() {
 }
 
 // vnode fade
-bool xtxpool_proxy::fade() {
-    return m_txpool_mgr->fade(m_xip);
+bool xtxpool_proxy::unreg() {
+    return m_txpool_mgr->unreg(m_xip);
 }
 
 int32_t xtxpool_proxy::request_transaction_consensus(const data::xtransaction_ptr_t & trans, bool local) {

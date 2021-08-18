@@ -38,12 +38,12 @@ bool xcons_service_t::start(const xvip2_t & xip, const common::xlogic_time_t& st
     return m_running;
 }
 
-bool xcons_service_t::fade(const xvip2_t & xip) {
+bool xcons_service_t::unreg(const xvip2_t & xip) {
     // TODO(justin): add fade implement
     // 1. get elect data from election data
     // 2. unregister network proxy
-    xunit_info("xcons_service_t::fade %s this=%p", xcons_utl::xip_to_hex(xip).c_str(), this);
-    m_dispatcher->fade(xip);
+    xunit_info("xcons_service_t::unreg %s this=%p", xcons_utl::xip_to_hex(xip).c_str(), this);
+    m_dispatcher->unreg(xip);
     auto network_proxy = m_para->get_resources()->get_network();
     network_proxy->unlisten(xip, get_msg_category());
     // m_running = false;

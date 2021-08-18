@@ -10,8 +10,9 @@
 #include "xdata/xdata_common.h"
 #include "xstore/xaccount_context.h"
 #include "xstore/xstore_error.h"
-#include "xvnode/xvnode_factory.h"
 #include "xvnode/xvnode.h"
+#include "xvnode/xvnode_factory.h"
+#include "xvnode/xvnode_role_proxy.h"
 
 #include <algorithm>
 #include <cinttypes>
@@ -24,20 +25,38 @@ xtop_vnode_manager::xtop_vnode_manager(observer_ptr<elect::ElectMain> const & el
                                        observer_ptr<base::xvblockstore_t> const & block_store,
                                        observer_ptr<time::xchain_time_face_t> const & logic_timer,
                                        observer_ptr<router::xrouter_face_t> const & router,
+                                       xobject_ptr_t<base::xvcertauth_t> const & certauth,
                                        observer_ptr<vnetwork::xvhost_face_t> const & vhost,
                                        observer_ptr<sync::xsync_object_t> const & sync_object,
                                        observer_ptr<grpcmgr::xgrpc_mgr_t> const & grpc_mgr,
-                                       observer_ptr<xunit_service::xcons_service_mgr_face> const & cons_mgr,
+                                       //    observer_ptr<xunit_service::xcons_service_mgr_face> const & cons_mgr,
                                        observer_ptr<xtxpool_service_v2::xtxpool_service_mgr_face> const & txpool_service_mgr,
                                        observer_ptr<xtxpool_v2::xtxpool_face_t> const & txpool,
+                                    //    std::vector<xobject_ptr_t<base::xiothread_t>> const & iothreads,
                                        observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor)
-    : xtop_vnode_manager{ logic_timer, vhost, top::make_unique<xvnode_factory_t>(elect_main, mbus, store, block_store, logic_timer, router, vhost, sync_object, grpc_mgr, cons_mgr, txpool_service_mgr, txpool, election_cache_data_accessor) } {
+  : xtop_vnode_manager{logic_timer,
+                       vhost,
+                       top::make_unique<xvnode_factory_t>(elect_main,
+                                                          mbus,
+                                                          store,
+                                                          block_store,
+                                                          logic_timer,
+                                                          router,
+                                                          vhost,
+                                                          sync_object,
+                                                          grpc_mgr,
+                                                          //   cons_mgr,
+                                                          txpool_service_mgr,
+                                                          txpool,
+                                                          election_cache_data_accessor),
+                       top::make_unique<xvnode_role_proxy_t>(mbus, store, block_store, logic_timer, router, certauth, txpool, /*iothreads,*/ election_cache_data_accessor)} {
 }
 
 xtop_vnode_manager::xtop_vnode_manager(observer_ptr<time::xchain_time_face_t> const & logic_timer,
                                        observer_ptr<vnetwork::xvhost_face_t> const & vhost,
-                                       std::unique_ptr<xvnode_factory_face_t> vnode_factory)
-  : m_logic_timer{ logic_timer }, m_vhost{ vhost }, m_vnode_factory{std::move(vnode_factory)} {
+                                       std::unique_ptr<xvnode_factory_face_t> vnode_factory,
+                                       std::unique_ptr<xvnode_role_proxy_face_t> vnode_proxy)
+  : m_logic_timer{logic_timer}, m_vhost{vhost}, m_vnode_factory{std::move(vnode_factory)}, m_vnode_proxy{std::move(vnode_proxy)} {
     assert(m_vnode_factory != nullptr);
 }
 
@@ -57,7 +76,8 @@ void xtop_vnode_manager::stop() {
     m_logic_timer->unwatch(chain_timer_watch_name);
 }
 
-std::pair<std::vector<common::xip2_t>, std::vector<common::xip2_t>> xtop_vnode_manager::handle_election_data(std::unordered_map<common::xcluster_address_t, election::cache::xgroup_update_result_t> const & election_data) {
+std::pair<std::vector<common::xip2_t>, std::vector<common::xip2_t>> xtop_vnode_manager::handle_election_data(
+    std::unordered_map<common::xcluster_address_t, election::cache::xgroup_update_result_t> const & election_data) {
     // if (!running()) {
     //     xwarn("[vnode mgr] is not running");
     //     return {};
@@ -95,7 +115,7 @@ std::pair<std::vector<common::xip2_t>, std::vector<common::xip2_t>> xtop_vnode_m
 
                 xwarn("[vnode mgr] vnode (%p) at address %s will outdate at logic time %" PRIu64, vnode.get(), vnode->address().to_string().c_str(), vnode->outdate_time());
             }
-            
+
             xwarn("[vnode mgr] vnode at address %s is outdated", cluster_address.to_string().c_str());
             common::xip2_t xip{cluster_address.network_id(),
                                cluster_address.zone_id(),
@@ -134,6 +154,7 @@ std::pair<std::vector<common::xip2_t>, std::vector<common::xip2_t>> xtop_vnode_m
 
             assert(m_vnode_factory);
             auto vnode = m_vnode_factory->create_vnode_at(added_group);
+            m_vnode_proxy->create(std::dynamic_pointer_cast<top::vnode::xvnode_t>(vnode)->vnetwork_driver());
             assert(vnode->address() == address);
 
             vnode->rotation_status(common::xrotation_status_t::started, added_group->start_time());
@@ -155,6 +176,7 @@ std::pair<std::vector<common::xip2_t>, std::vector<common::xip2_t>> xtop_vnode_m
             xwarn("[vnode mgr] vnode at address %s is outdated", cluster_address.to_string().c_str());
 
             common::xip2_t xip{cluster_address.network_id(), cluster_address.zone_id(), cluster_address.cluster_id(), cluster_address.group_id()};
+            m_vnode_proxy->destroy({xip.raw_low_part(), xip.raw_high_part()});
 
             logical_outdated_xips.push_back(std::move(xip));
         }
@@ -184,6 +206,7 @@ void xtop_vnode_manager::on_timer(common::xlogic_time_t time) {
             switch (vnode->rotation_status(time)) {
             case common::xrotation_status_t::outdated: {
                 vnode->stop();
+                m_vnode_proxy->unreg(vnode->address());
                 xwarn("[vnode mgr] vnode (%p) at address %s outdates at logic time %" PRIu64 " current logic time %" PRIu64,
                       vnode.get(),
                       vnode->address().to_string().c_str(),
@@ -249,6 +272,7 @@ void xtop_vnode_manager::on_timer(common::xlogic_time_t time) {
                           vnode->address().to_string().c_str(),
                           vnode->start_time(),
                           time);
+                    m_vnode_proxy->change(vnode->address(), vnode->start_time());
                 }
                 break;
             }

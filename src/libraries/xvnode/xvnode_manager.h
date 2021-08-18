@@ -20,6 +20,7 @@
 #include "xvnode/xvnode_face.h"
 #include "xvnode/xvnode_factory_face.h"
 #include "xvnode/xvnode_manager_face.h"
+#include "xvnode/xvnode_role_proxy_face.h"
 
 #include <memory>
 #include <mutex>
@@ -36,6 +37,7 @@ private:
     observer_ptr<time::xchain_time_face_t> m_logic_timer;
     observer_ptr<vnetwork::xvhost_face_t> m_vhost;
     std::unique_ptr<xvnode_factory_face_t> m_vnode_factory;
+    std::unique_ptr<xvnode_role_proxy_face_t> m_vnode_proxy;
 
     std::shared_ptr<vnetwork::xmessage_callback_hub_t> m_message_callback_hub{};
     std::mutex m_nodes_mutex{};
@@ -61,17 +63,20 @@ public:
                        observer_ptr<base::xvblockstore_t> const & block_store,
                        observer_ptr<time::xchain_time_face_t> const & logic_timer,
                        observer_ptr<router::xrouter_face_t> const & router,
+                       xobject_ptr_t<base::xvcertauth_t> const & certauth,
                        observer_ptr<vnetwork::xvhost_face_t> const & vhost,
                        observer_ptr<sync::xsync_object_t> const & sync_object,
                        observer_ptr<grpcmgr::xgrpc_mgr_t> const & grpc_mgr,
-                       observer_ptr<xunit_service::xcons_service_mgr_face> const & cons_mgr,
+                    //    observer_ptr<xunit_service::xcons_service_mgr_face> const & cons_mgr,
                        observer_ptr<xtxpool_service_v2::xtxpool_service_mgr_face> const & txpool_service_mgr,
                        observer_ptr<xtxpool_v2::xtxpool_face_t> const & txpool,
+                    //    std::vector<xobject_ptr_t<base::xiothread_t>> const & iothreads,
                        observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor);
 
     xtop_vnode_manager(observer_ptr<time::xchain_time_face_t> const & logic_timer,
                        observer_ptr<vnetwork::xvhost_face_t> const & vhost,
-                       std::unique_ptr<xvnode_factory_face_t> vnode_factory);
+                       std::unique_ptr<xvnode_factory_face_t> vnode_factory,
+                       std::unique_ptr<xvnode_role_proxy_face_t> vnode_proxy);
 
     void start() override;
 

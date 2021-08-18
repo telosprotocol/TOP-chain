@@ -18,7 +18,7 @@
 #include "xmbus/xmessage_bus.h"
 #include "xstore/xstore_face.h"
 #include "xsync/xsync_object.h"
-#include "xunit_service/xcons_face.h"
+// #include "xunit_service/xcons_face.h"
 #include "xvnetwork/xmessage_callback_hub.h"
 #include "xvnetwork/xvhost_face.h"
 #include "xvnode/xvnode_manager_face.h"
@@ -42,7 +42,7 @@ protected:
     std::shared_ptr<vnetwork::xmessage_callback_hub_t>          m_message_callback_hub;
     std::unique_ptr<sync::xsync_object_t>                       m_sync_obj;
     std::unique_ptr<grpcmgr::xgrpc_mgr_t>                       m_grpc_mgr;
-    xunit_service::xcons_service_mgr_ptr                        m_cons_mgr{};
+    // xunit_service::xcons_service_mgr_ptr                        m_cons_mgr{};
     std::shared_ptr<xtxpool_service_v2::xtxpool_service_mgr_face>  m_txpool_service_mgr;
     std::shared_ptr<vnode::xvnode_manager_face_t>               m_vnode_manager;
 

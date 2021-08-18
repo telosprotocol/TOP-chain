@@ -20,7 +20,7 @@ xtop_vnode_factory::xtop_vnode_factory(observer_ptr<elect::ElectMain> elect_main
                                        observer_ptr<vnetwork::xvhost_face_t> vhost,
                                        observer_ptr<sync::xsync_object_t> sync,
                                        observer_ptr<grpcmgr::xgrpc_mgr_t> grpc,
-                                       observer_ptr<xunit_service::xcons_service_mgr_face> cons_service_mgr,
+                                      //  observer_ptr<xunit_service::xcons_service_mgr_face> cons_service_mgr,
                                        observer_ptr<xtxpool_service_v2::xtxpool_service_mgr_face> txpool_service_mgr,
                                        observer_ptr<xtxpool_v2::xtxpool_face_t> txpool,
                                        observer_ptr<election::cache::xdata_accessor_face_t> cache_data_accessor)
@@ -33,7 +33,7 @@ xtop_vnode_factory::xtop_vnode_factory(observer_ptr<elect::ElectMain> elect_main
   , m_vhost{std::move(vhost)}
   , m_sync_obj{std::move(sync)}
   , m_grpc_mgr{std::move(grpc)}
-  , m_cons_mgr{std::move(cons_service_mgr)}
+  // , m_cons_mgr{std::move(cons_service_mgr)}
   , m_txpool_service_mgr{std::move(txpool_service_mgr)}
   , m_txpool{std::move(txpool)}
   , m_election_cache_data_accessor{std::move(cache_data_accessor)} {}
@@ -49,7 +49,7 @@ std::shared_ptr<xvnode_face_t> xtop_vnode_factory::create_vnode_at(std::shared_p
                                       m_logic_timer,
                                       m_sync_obj,
                                       m_grpc_mgr,
-                                      m_cons_mgr,
+                                      // m_cons_mgr,
                                       m_txpool_service_mgr,
                                       m_txpool,
                                       m_election_cache_data_accessor);
