@@ -40,6 +40,7 @@ int main(int argc, char * argv[]) {
     xset_log_level(enum_xlog_level_debug);
 
     XMETRICS_INIT();
+    auto result = RUN_ALL_TESTS();
     std::this_thread::sleep_for(std::chrono::seconds(2));
-    return RUN_ALL_TESTS();
+    return result;
 }

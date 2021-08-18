@@ -149,10 +149,7 @@ TEST_F(test_slash_info_contract, test_accumulate_node_info) {
     }
 
     xunqualified_node_info_t summarize_slash_info;
-    auto time_start = std::chrono::system_clock::now();
     accumulate_node_info(origin_info, summarize_slash_info);
-    auto durarion = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now() - time_start);
-    std::cout << "accumulate_node_info timecost: " << durarion.count() << "\n";
 
     for (std::size_t i = 0; i < account_addrs.size(); ++i) {
         EXPECT_EQ(summarize_slash_info.auditor_info[account_addrs[i]].subset_count, i);
@@ -182,10 +179,8 @@ TEST_F(test_slash_info_contract, test_filter_node) {
         origin_info.validator_info[account_addrs[i]] = node_vote;
     }
 
-    auto time_start = std::chrono::system_clock::now();
     auto  action_node_info = filter_helper(origin_info, 0, 10, 30, 80);
-    auto durarion = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now() - time_start);
-    std::cout << "filter_helper timecost: " << durarion.count() << "\n";
+
     int slash_auditor_node_size = 0, award_auditor_node_size= 0;
     int slash_validator_node_size = 0, award_validator_node_size = 0;
 
@@ -220,10 +215,7 @@ TEST_F(test_slash_info_contract, test_process_statistic_data) {
     auto group_64_xip2 = create_group_xip2(elect_blk_height, 64, account_addrs.size());
     set_according_block_statistic_data(1, std::vector<common::xip2_t>{group_1_xip2, group_64_xip2});
 
-    auto time_start = std::chrono::system_clock::now();
     auto node_info = process_statistic_data(data, &node_serv);
-    auto durarion = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now() - time_start);
-    std::cout << "process_statistic_data timecost: " << durarion.count() << "\n";
 
     for (std::size_t i = 0; i < account_addrs.size(); ++i) {
         EXPECT_EQ(node_info.auditor_info[account_addrs[i]].subset_count, i);
@@ -237,3 +229,81 @@ TEST_F(test_slash_info_contract, test_process_statistic_data) {
 
 
 }
+
+
+TEST_F(test_slash_info_contract, process_statistic_data_bench) {
+    int count = 100;
+
+    int total_time = 0;
+    for (auto i = 0; i < count; ++i) {
+        uint64_t elect_blk_height = 1;
+        auto group_1_xip2 = create_group_xip2(elect_blk_height, 1, account_addrs.size());
+        auto group_64_xip2 = create_group_xip2(elect_blk_height, 64, account_addrs.size());
+        set_according_block_statistic_data(1, std::vector<common::xip2_t>{group_1_xip2, group_64_xip2});
+
+        auto time_start = std::chrono::system_clock::now();
+        auto node_info = process_statistic_data(data, &node_serv);
+        auto durarion = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now() - time_start);
+        total_time += durarion.count();
+
+    }
+
+    std::cout << "process_statistic_data average timecost: " << total_time/count << "\n";
+
+}
+
+
+TEST_F(test_slash_info_contract, accumulate_node_info_bench) {
+    int count = 100;
+
+    int total_time = 0;
+    for (auto i = 0; i < count; ++i) {
+        xunqualified_node_info_t origin_info;
+
+        for (std::size_t i = 0; i < account_addrs.size(); ++i) {
+            xnode_vote_percent_t node_vote;
+            node_vote.subset_count = i;
+            node_vote.block_count = i;
+            origin_info.auditor_info[account_addrs[i]] = node_vote;
+            origin_info.validator_info[account_addrs[i]] = node_vote;
+        }
+
+        xunqualified_node_info_t summarize_slash_info;
+        auto time_start = std::chrono::system_clock::now();
+        accumulate_node_info(origin_info, summarize_slash_info);
+        auto durarion = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now() - time_start);
+        total_time += durarion.count();
+    }
+
+    std::cout << "accumulate_node_info average timecost: " << total_time/count << "\n";
+
+}
+
+TEST_F(test_slash_info_contract, filter_helper_bench) {
+    int count = 100;
+
+    int total_time = 0;
+    for (auto i = 0; i < count; ++i) {
+        xunqualified_node_info_t origin_info;
+
+        for (std::size_t i = 0; i < account_addrs.size(); ++i) {
+            xnode_vote_percent_t node_vote;
+            node_vote.block_count = i;
+            node_vote.subset_count = 10;
+            origin_info.auditor_info[account_addrs[i]] = node_vote;
+            origin_info.validator_info[account_addrs[i]] = node_vote;
+        }
+
+        auto time_start = std::chrono::system_clock::now();
+        auto  action_node_info = filter_helper(origin_info, 0, 10, 30, 80);
+        auto durarion = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now() - time_start);
+        total_time += durarion.count();
+
+    }
+
+    std::cout << "filter_helper average timecost: " << total_time/count << "\n";
+
+}
+
+
+
