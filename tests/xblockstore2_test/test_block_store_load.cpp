@@ -443,7 +443,7 @@ TEST_F(test_block_store_load, mock_table_tx_check) {
     for (uint32_t i = 0; i < 10; i++) {
         std::vector<xcons_transaction_ptr_t> send_txs = mocktable.create_send_txs(from_addr, to_addr, 2);
         for (auto & tx : send_txs) {
-            ASSERT_EQ(0, xtx_verifier::verify_send_tx_legitimacy(tx->get_transaction(), nullptr));
+            ASSERT_EQ(0, xtx_verifier::verify_tx_signature(tx->get_transaction(), nullptr));
             ASSERT_EQ(0, xtx_verifier::verify_send_tx_validation(tx->get_transaction()));
             // std::cout << "tx = " << tx->dump() << std::endl;
         }
