@@ -32,7 +32,7 @@ public:
 
 public:
     bool start(const xvip2_t & xip) override;
-    bool fade(const xvip2_t & xip) override;
+    bool unreg(const xvip2_t & xip) override;
     void set_params(const xvip2_t & xip, const std::shared_ptr<vnetwork::xvnetwork_driver_face_t> & vnet_driver) override;
     bool is_running() const override;
     bool is_receipt_sender(const base::xtable_index_t & tableid) const override;

@@ -150,7 +150,7 @@ std::shared_ptr<vnetwork::xvnetwork_driver_face_t> xnetwork_proxy::find(xvip2_t 
     return nullptr;
 }
 
-// listen network message, call while vnode fade in
+// listen network message, call while vnode start
 bool xnetwork_proxy::listen(const xvip2_t & addr, common::xmessage_category_t category, const xpdu_reactor_ptr & reactor) {
     // auto addr = reactor->get_ip();
     // auto category = reactor->get_category();
@@ -182,7 +182,7 @@ bool xnetwork_proxy::listen(const xvip2_t & addr, common::xmessage_category_t ca
     }
 }
 
-// unlisten network message, call while vnode fade out
+// unlisten network message, call while vnode outdate (unreg)
 bool xnetwork_proxy::unlisten(const xvip2_t & addr, common::xmessage_category_t category) {
     // auto addr = reactor->get_ip();
     // auto category = reactor->get_category();
@@ -255,7 +255,7 @@ bool xnetwork_proxy::add(const std::shared_ptr<vnetwork::xvnetwork_driver_face_t
             xunit_info("[xunitservice] network add %s %p", xcons_utl::xip_to_hex(xip).c_str(), network.get());
             m_networks.insert({xip, network});
         } else {
-            xunit_info("[xunitservice] network exist %s %p", xcons_utl::xip_to_hex(xip).c_str(), &(iter->second));
+            xunit_info("[xunitservice] network exist %s %p", xcons_utl::xip_to_hex(xip).c_str(), (iter->second).get());
         }
     }
     return true;
@@ -271,7 +271,7 @@ bool xnetwork_proxy::erase(const xvip2_t & addr) {
         // assert(listen_iter == m_reactors.end());
         auto iter = m_networks.find(addr);
         if (iter != m_networks.end()) {
-            xunit_info("[xunitservice] network erase %s %p", xcons_utl::xip_to_hex(addr).c_str(), &(iter->second));
+            xunit_info("[xunitservice] network erase %s %p", xcons_utl::xip_to_hex(addr).c_str(), (iter->second).get());
             m_networks.erase(iter);
             return true;
         }
@@ -281,7 +281,7 @@ bool xnetwork_proxy::erase(const xvip2_t & addr) {
             common::xip2_t const group_xip2 = common::xip2_t{network_xip}.group_xip2();
             xvip2_t network_group_xip = {group_xip2.raw_low_part(), group_xip2.raw_high_part()};
             if (xcons_utl::xip_equals(addr, network_group_xip)) {
-                xunit_info("[xunitservice] network erase %s %p", xcons_utl::xip_to_hex(addr).c_str(), &(iter->second));
+                xunit_info("[xunitservice] network erase %s %p", xcons_utl::xip_to_hex(addr).c_str(), (iter->second).get());
                 m_networks.erase(iter);
                 return true;
             }

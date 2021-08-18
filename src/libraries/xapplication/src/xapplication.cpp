@@ -5,7 +5,7 @@
 #include "xapplication/xapplication.h"
 
 #include "xapplication/xbeacon_chain_application.h"
-#include "xapplication/xcons_mgr_builder.h"
+// #include "xapplication/xcons_mgr_builder.h"
 #include "xapplication/xtop_chain_application.h"
 #include "xbasic/xmemory.hpp"
 #include "xbasic/xutility.h"

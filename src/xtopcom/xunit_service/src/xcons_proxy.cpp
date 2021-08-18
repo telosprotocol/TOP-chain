@@ -1,7 +1,7 @@
 // Copyright (c) 2017-2020 Telos Foundation & contributors
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
-
+#if 0
 #include "xunit_service/xcons_proxy.h"
 #include "xunit_service/xcons_utl.h"
 
@@ -40,3 +40,4 @@ xvip2_t xcons_proxy::get_ip() {
 }
 
 NS_END2
+#endif

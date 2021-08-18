@@ -109,8 +109,8 @@ bool xtxpool_service::start(const xvip2_t & xip) {
     m_running = true;
     return m_running;
 }
-bool xtxpool_service::fade(const xvip2_t & xip) {
-    xinfo("xtxpool_service::fade node:%s,xip:{%" PRIu64 ", %" PRIu64 "} zone:%d table:%d %d,is_send_receipt_role:%d",
+bool xtxpool_service::unreg(const xvip2_t & xip) {
+    xinfo("xtxpool_service::unreg node:%s,xip:{%" PRIu64 ", %" PRIu64 "} zone:%d table:%d %d,is_send_receipt_role:%d",
           m_vnetwork_str.c_str(),
           xip.high_addr,
           xip.low_addr,

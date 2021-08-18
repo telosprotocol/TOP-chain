@@ -1,7 +1,7 @@
 // Copyright (c) 2017-2020 Telos Foundation & contributors
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
-
+# if 0
 #pragma once
 #include "xbasic/xmemory.hpp"
 #include "xchain_timer/xchain_timer_face.h"
@@ -55,3 +55,4 @@ using xdummy_cons_service_mgr_t = xtop_dummy_cons_service_mgr;
 extern xdummy_cons_service_mgr_t dummy_cons_service_mgr;
 
 NS_END3
+#endif
