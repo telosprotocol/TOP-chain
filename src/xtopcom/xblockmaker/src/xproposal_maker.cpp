@@ -484,9 +484,19 @@ void xproposal_maker_t::check_and_sync_account(const xtablestate_ptr_t & tablest
         return;
     }
 
+    bool is_need_sync = false;
     base::xaccount_index_t accountindex;
     tablestate->get_account_index(addr, accountindex);
     if (cert_block->get_height() < accountindex.get_latest_unit_height()) {
+        is_need_sync = true;
+    } else {
+        base::xauto_ptr<base::xvbstate_t> bstate = m_resources->get_xblkstatestore()->get_block_state(cert_block.get(),metrics::statestore_access_from_blkmaker_get_target_tablestate);
+        if (bstate == nullptr) {
+            is_need_sync = true;
+        }
+    }
+
+    if (is_need_sync) {
         uint64_t latest_connect_height = base::xvchain_t::instance().get_xblockstore()->get_latest_connected_block_height(_vaddr);
         uint64_t from_height = latest_connect_height + 1;
         uint32_t sync_num = (uint32_t)(accountindex.get_latest_unit_height() + 1 - from_height);
@@ -495,8 +505,6 @@ void xproposal_maker_t::check_and_sync_account(const xtablestate_ptr_t & tablest
         mbus::xevent_behind_ptr_t ev = make_object_ptr<mbus::xevent_behind_on_demand_t>(
             addr, from_height, sync_num, true, "proposal_maker_check");
         base::xvchain_t::instance().get_xevmbus()->push_event(ev);
-    } else {
-        xdbg("xproposal_maker_t::check_and_sync_account same height.account=%s,cert=%ld,index=%ld", addr.c_str(), cert_block->get_height(), accountindex.get_latest_unit_height());
     }
 }
 
