@@ -190,7 +190,7 @@ TEST_F(test_slash_contract_other, zec_slash_info_summarize) {
     EXPECT_EQ(enum_xvm_error_code::ok, trace->m_errno);
 }
 
-TEST_F(test_slash_contract_other, zec_slash_info_summarize) {
+TEST_F(test_slash_contract_other, zec_slash_info_summarize_not_enough) {
     using namespace top::mock;
     xdatamock_unit  zec_account{sys_contract_zec_slash_info_addr};
 
