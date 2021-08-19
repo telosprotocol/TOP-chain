@@ -53,6 +53,7 @@ private:
     void on_message_push_receipt_received(vnetwork::xvnode_address_t const & sender, vnetwork::xmessage_t const & message);
     void on_message_pull_recv_receipt_received(vnetwork::xvnode_address_t const & sender, vnetwork::xmessage_t const & message);
     void on_message_pull_confirm_receipt_received(vnetwork::xvnode_address_t const & sender, vnetwork::xmessage_t const & message);
+    void on_message_receipt_id_state_received(vnetwork::xvnode_address_t const & sender, vnetwork::xmessage_t const & message);
     void send_receipt_real(const data::xcons_transaction_ptr_t & cons_tx);
     bool has_receipt_right(const xcons_transaction_ptr_t & cons_tx, uint32_t resend_time) const;
     void forward_broadcast_message(const vnetwork::xvnode_address_t & addr, const vnetwork::xmessage_t & message);

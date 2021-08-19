@@ -49,6 +49,7 @@ public:
     bool is_consensused_recv_receiptid(const std::string & from_addr, const std::string & to_addr, uint64_t receipt_id) const override;
     bool is_consensused_confirm_receiptid(const std::string & from_addr, const std::string & to_addr, uint64_t receipt_id) const override;
     void update_peer_receipt_id_pair(const std::string & self_addr, base::xtable_shortid_t peer_sid, const base::xreceiptid_pair_t & pair) override;
+    void update_peer_all_receipt_id_pairs(base::xtable_shortid_t peer_sid, const base::xreceiptid_pairs_t & all_pairs) override;
 
 private:
     bool is_table_subscribed(uint8_t zone, uint16_t table_id) const;
@@ -61,6 +62,7 @@ private:
     std::shared_ptr<xtxpool_resources_face> m_para;
     mutable std::mutex m_mutex[enum_xtxpool_table_type_max];
     xtxpool_statistic_t m_statistic;
+    std::set<base::xtable_shortid_t> m_all_table_sids;
 };
 
 }  // namespace xtxpool_v2

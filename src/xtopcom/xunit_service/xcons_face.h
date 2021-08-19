@@ -48,6 +48,8 @@ public:
     virtual bool erase(const xvip2_t & addr) = 0;
     virtual void send_receipt_msgs(const xvip2_t & from_addr, const std::vector<data::xcons_transaction_ptr_t> & receipts, std::vector<data::xcons_transaction_ptr_t> & non_shard_cross_receipts,
                                        const base::xreceiptid_state_ptr_t & receiptid_state) = 0;
+    // virtual void send_out(const xvip2_t & from_addr, const xvip2_t & to_addr, vnetwork::xmessage_t msg) = 0;
+    virtual bool send_out(common::xmessage_id_t const &id, const xvip2_t &from_addr, const xvip2_t &to_addr, base::xstream_t &stream, const std::string & account) = 0;
 };
 
 //compare function for table index data map

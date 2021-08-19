@@ -15,6 +15,7 @@
 #include "xmbus/xevent_behind.h"
 #include "xconfig/xconfig_register.h"
 #include "xconfig/xpredefined_configurations.h"
+#include "xtxpool_service_v2/xreceipt_sync.h"
 
 #include <cinttypes>
 NS_BEG2(top, xunit_service)
@@ -503,6 +504,31 @@ void xbatch_packer::make_receipts_and_send(xblock_t * commit_block, xblock_t * c
     }
 
     xtablestate_ptr_t tablestate = std::make_shared<xtable_bstate_t>(bstate.get());
+
+    // broadcast receipt id state to all shards
+    if (commit_block->get_block_class() == base::enum_xvblock_class_full) {
+        // todo:存在一个table长时间不出块的情况，所以还不能在这里做通知。还是应该定时去做。
+        xvip2_t to_addr{(uint64_t)-1, (uint64_t)-1};  // broadcast to all
+        auto local_xip = get_xip2_addr();
+        top::base::xautostream_t<4096> stream(top::base::xcontext_t::instance());
+        xtxpool_service_v2::xreceipt_id_state_msg_t receipt_id_state_msg;
+
+        base::xvaccount_t vaccount(commit_block->get_account());
+        receipt_id_state_msg.m_table_sid = vaccount.get_short_table_id();
+        auto & all_pairs = tablestate->get_receiptid_state()->get_all_receiptid_pairs()->get_all_pairs();
+        xinfo("xbatch_packer::make_receipts_and_send broadcast receipt id state fullblock:%s,pairs:%s",
+              commit_block->dump().c_str(), tablestate->get_receiptid_state()->get_all_receiptid_pairs()->dump().c_str());
+        for (auto & pair : all_pairs) {
+            receipt_id_state_msg.m_receiptid_pairs.add_pair(pair.first, pair.second);
+        }
+        receipt_id_state_msg.serialize_to(stream);
+        network_proxy->send_out(xtxpool_v2::xtxpool_msg_receipt_id_state, local_xip, to_addr, stream, commit_block->get_account());
+        // vnetwork::xmessage_t msg = vnetwork::xmessage_t({stream.data(), stream.data() + stream.size()}, xtxpool_v2::xtxpool_msg_receipt_id_state);
+        // network_proxy->send_out(local_xip, to_addr, msg);
+
+        m_para->get_resources()->get_txpool()->update_peer_all_receipt_id_pairs(receipt_id_state_msg.m_table_sid, receipt_id_state_msg.m_receiptid_pairs);
+        return;
+    }
 
     std::vector<data::xcons_transaction_ptr_t> all_cons_txs;
     std::vector<base::xfull_txreceipt_t> all_receipts = base::xtxreceipt_build_t::create_all_txreceipts(commit_block, cert_block);

@@ -392,6 +392,36 @@ void xtxpool_table_t::refresh_table(bool refresh_unconfirm_txs) {
     bool need_sync = false;
     uint64_t left_end;
     uint64_t right_end;
+    bool sender_all_unconfirm_id_recovered = false;
+    bool receiver_all_unconfirm_id_recovered = false;
+    {
+        std::lock_guard<std::mutex> lck(m_sender_unconfirm_id_height_mutex);
+        sender_all_unconfirm_id_recovered = m_sender_unconfirm_id_height.is_all_unconfirm_id_recovered(m_xtable_info.get_all_table_sids());
+    }
+    if (sender_all_unconfirm_id_recovered) {
+        std::lock_guard<std::mutex> lck(m_receiver_unconfirm_id_height_mutex);
+        receiver_all_unconfirm_id_recovered = m_receiver_unconfirm_id_height.is_all_unconfirm_id_recovered(m_xtable_info.get_all_table_sids());
+    }
+
+    if (sender_all_unconfirm_id_recovered && receiver_all_unconfirm_id_recovered) {
+        bool ret;
+        uint64_t sender_min_height;
+        uint64_t receiver_min_height;
+        {
+            std::lock_guard<std::mutex> lck(m_sender_unconfirm_id_height_mutex);
+            ret = m_sender_unconfirm_id_height.get_min_height(sender_min_height, m_xtable_info.get_all_table_sids());
+        }
+        if (ret) {
+            std::lock_guard<std::mutex> lck(m_receiver_unconfirm_id_height_mutex);
+            ret = m_receiver_unconfirm_id_height.get_min_height(receiver_min_height, m_xtable_info.get_all_table_sids());
+        }
+        if (ret) {
+            uint64_t min_height = (sender_min_height < receiver_min_height) ? sender_min_height : receiver_min_height;
+            std::lock_guard<std::mutex> lck(m_processed_height_record_mutex);
+            m_processed_height_record.update_min_height(min_height);
+        }
+    }
+    
     {
         std::lock_guard<std::mutex> lck(m_processed_height_record_mutex);
         need_sync = m_processed_height_record.get_latest_lacking_saction(left_end, right_end);
@@ -679,10 +709,10 @@ void xtxpool_table_t::update_unconfirm_id_height(base::enum_transaction_subtype 
 void xtxpool_table_t::update_sender_unconfirm_id_height(const base::xreceiptid_state_ptr_t & receipt_id_state) {
     std::lock_guard<std::mutex> lck(m_sender_unconfirm_id_height_mutex);
 
-    auto & receiptid_pair_map = receipt_id_state->get_all_receiptid_pairs()->get_all_pairs();
-
-    for (auto & receiptid_pair : receiptid_pair_map) {
-        m_sender_unconfirm_id_height.update_confirm_id(receiptid_pair.first, receiptid_pair.second.get_confirmid_max(), receiptid_pair.second.get_unconfirm_num());
+    for(auto & table_sid : m_xtable_info.get_all_table_sids()) {
+        base::xreceiptid_pair_t pair;
+        receipt_id_state->find_pair(table_sid, pair);
+        m_sender_unconfirm_id_height.update_confirm_id(table_sid, pair.get_confirmid_max(), pair.get_unconfirm_num());
     }
 }
 

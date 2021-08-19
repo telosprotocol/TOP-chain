@@ -58,7 +58,7 @@ class xreceiptid_pairs_t {
     std::string     dump() const;
 
  public:
-    bool            find_pair(xtable_shortid_t sid, xreceiptid_pair_t & pair);
+    bool            find_pair(xtable_shortid_t sid, xreceiptid_pair_t & pair) const;
     const std::map<xtable_shortid_t, xreceiptid_pair_t> & get_all_pairs() const {return m_all_pairs;}
     size_t          get_size() const{return m_all_pairs.size();}
 

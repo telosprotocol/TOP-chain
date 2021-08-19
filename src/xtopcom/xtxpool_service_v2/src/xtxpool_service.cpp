@@ -320,7 +320,8 @@ void xtxpool_service::on_message_receipt(vnetwork::xvnode_address_t const & send
             base::xcall_t asyn_call(handler, para.get());
             m_para->get_fast_dispatcher()->dispatch(asyn_call);
         }
-    } else if ((message.id() == xtxpool_v2::xtxpool_msg_pull_recv_receipt) || (message.id() == xtxpool_v2::xtxpool_msg_pull_confirm_receipt)) {
+    } else if ((message.id() == xtxpool_v2::xtxpool_msg_pull_recv_receipt) || (message.id() == xtxpool_v2::xtxpool_msg_pull_confirm_receipt) ||
+               (message.id() == xtxpool_v2::xtxpool_msg_receipt_id_state)) {
         if (m_para->get_slow_dispatcher()->is_mailbox_over_limit()) {
             xwarn("xtxpool_service::on_message_receipt slow txpool mailbox limit,drop receipt");
             return;
@@ -330,8 +331,10 @@ void xtxpool_service::on_message_receipt(vnetwork::xvnode_address_t const & send
             txpool_receipt_message_para_t * para = dynamic_cast<txpool_receipt_message_para_t *>(call.get_param1().get_object());
             if (para->m_message.id() == xtxpool_v2::xtxpool_msg_pull_recv_receipt) {
                 this->on_message_pull_recv_receipt_received(para->m_sender, para->m_message);
-            } else {
+            } else if (para->m_message.id() == xtxpool_v2::xtxpool_msg_pull_confirm_receipt) {
                 this->on_message_pull_confirm_receipt_received(para->m_sender, para->m_message);
+            } else {
+                this->on_message_receipt_id_state_received(para->m_sender, para->m_message);
             }
             return true;
         };
@@ -756,6 +759,17 @@ void xtxpool_service::on_message_pull_confirm_receipt_received(vnetwork::xvnode_
         }
         send_push_receipts(pushed_receipt, sender);
     }
+}
+
+void xtxpool_service::on_message_receipt_id_state_received(vnetwork::xvnode_address_t const & sender, vnetwork::xmessage_t const & message) {
+    xinfo("xtxpool_service::on_message_receipt_id_state_received at_node:%s,msg id:%x,hash:%" PRIx64 "", m_vnetwork_str.c_str(), message.id(), message.hash());
+    uint64_t now = xverifier::xtx_utl::get_gmttime_s();
+
+    xreceipt_id_state_msg_t receipt_id_state_msg;
+    base::xstream_t stream(top::base::xcontext_t::instance(), (uint8_t *)message.payload().data(), (uint32_t)message.payload().size());
+    receipt_id_state_msg.serialize_from(stream);
+
+    m_para->get_txpool()->update_peer_all_receipt_id_pairs(receipt_id_state_msg.m_table_sid, receipt_id_state_msg.m_receiptid_pairs);
 }
 
 NS_END2

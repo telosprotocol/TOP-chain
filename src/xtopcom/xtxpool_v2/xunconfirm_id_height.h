@@ -126,9 +126,9 @@ public:
         }
         iter->second.add_id_height(receipt_id, height, time);
     }
-    bool get_min_height(uint64_t & min_height) const {
+    bool get_min_height(uint64_t & min_height, const std::set<base::xtable_shortid_t> & all_sid_set) const {
         uint64_t min_tmp = 0xFFFFFFFFFFFFFFFF;
-        if (m_table_sid_unconfirm_list_map.size() < 67) {
+        if (m_table_sid_unconfirm_list_map.size() < all_sid_set.size()) {
             return false;
         }
         for (auto & iter : m_table_sid_unconfirm_list_map) {
@@ -137,12 +137,12 @@ public:
             if (ret == enum_min_height_result_fail) {
                 return false;
             }
-
+            
             if (ret == enum_min_height_result_ok && min_tmp > height) {
                 min_tmp = height;
-                return true;
             }
         }
+        return true;
     }
     bool get_height_by_id(base::xtable_shortid_t table_sid, uint64_t receipt_id, uint64_t & height) const {
         auto iter = m_table_sid_unconfirm_list_map.find(table_sid);
@@ -151,9 +151,9 @@ public:
         }
         return false;
     }
-    bool is_all_unconfirm_id_recovered() const {
-        // todo:table到所有其他table的未确认数据都加到map里，且都找到了左边界，才是真的完全恢复了。
-        if (m_table_sid_unconfirm_list_map.size() < 67) {
+    bool is_all_unconfirm_id_recovered(const std::set<base::xtable_shortid_t> & all_sid_set) const {
+        // table到所有其他table的未确认数据都加到map里，且都找到了左边界，才是真的完全恢复了。
+        if (m_table_sid_unconfirm_list_map.size() < all_sid_set.size()) {
             return false;
         }
         for (auto & iter : m_table_sid_unconfirm_list_map) {

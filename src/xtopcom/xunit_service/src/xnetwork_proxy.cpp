@@ -361,4 +361,13 @@ void xnetwork_proxy::send_receipt_msg(std::shared_ptr<vnetwork::xvnetwork_driver
     }
 }
 
+// void xnetwork_proxy::send_out(const xvip2_t & from_addr, const xvip2_t & to_addr, vnetwork::xmessage_t msg) {
+//     auto net_driver = find(from_addr);
+//     if (net_driver == nullptr) {
+//         xunit_warn("xnetwork_proxy::send_out net_driver not found,can not send receipt addr:%s", xcons_utl::xip_to_hex(from_addr).c_str());
+//         return;
+//     }
+//     auto dest_to = xcons_utl::to_address(to_addr, net_driver->address().election_round());
+//     net_driver->forward_broadcast_message(msg, dest_to);
+// }
 NS_END2

@@ -21,6 +21,20 @@ xtxpool_t::xtxpool_t(const std::shared_ptr<xtxpool_resources_face> & para) : m_p
             m_tables[i][j] = nullptr;
         }
     }
+
+    for (uint16_t i = 0; i < enum_vbucket_has_tables_count; i++) {
+        base::xtable_index_t tableindex(base::enum_chain_zone_consensus_index, i);
+        m_all_table_sids.insert(tableindex.to_table_shortid());
+    }
+    for (uint16_t i = 0; i < MAIN_CHAIN_REC_TABLE_USED_NUM; i++) {
+        base::xtable_index_t tableindex(base::enum_chain_zone_beacon_index, i);
+        m_all_table_sids.insert(tableindex.to_table_shortid());
+    }
+    for (uint16_t i = 0; i < MAIN_CHAIN_ZEC_TABLE_USED_NUM; i++) {
+        base::xtable_index_t tableindex(base::enum_chain_zone_zec_index, i);
+        m_all_table_sids.insert(tableindex.to_table_shortid());
+    }
+
 }
 
 int32_t xtxpool_t::push_send_tx(const std::shared_ptr<xtx_entry> & tx) {
@@ -132,7 +146,7 @@ void xtxpool_t::subscribe_tables(uint8_t zone, uint16_t front_table_id, uint16_t
     for (uint16_t i = front_table_id; i <= back_table_id; i++) {
         std::string table_addr = data::xblocktool_t::make_address_table_account((base::enum_xchain_zone_index)zone, i);
         if (m_tables[zone][i] == nullptr) {
-            m_tables[zone][i] = std::make_shared<xtxpool_table_t>(m_para.get(), table_addr, shard.get(), &m_statistic);
+            m_tables[zone][i] = std::make_shared<xtxpool_table_t>(m_para.get(), table_addr, shard.get(), &m_statistic, &m_all_table_sids);
             add_table_num++;
         } else {
             m_tables[zone][i]->add_shard(shard.get());
@@ -307,7 +321,7 @@ std::shared_ptr<xtxpool_table_t> xtxpool_t::get_txpool_table_by_addr(const std::
     uint8_t zone = tableindex.get_zone_index();
     uint8_t subaddr = tableindex.get_subaddr();
     xassert(zone < enum_xtxpool_table_type_max);
-    xassert(subaddr <= (enum_vbucket_has_tables_count -1));
+    xassert(subaddr <= (enum_vbucket_has_tables_count - 1));
     if (is_table_subscribed(zone, subaddr)) {
         xassert(m_tables[zone][subaddr] != nullptr);
         return m_tables[zone][subaddr];
@@ -351,13 +365,27 @@ bool xready_account_t::put_tx(const xcons_transaction_ptr_t & tx) {
     return true;
 }
 
-
 void xtxpool_t::update_peer_receipt_id_pair(const std::string & self_addr, base::xtable_shortid_t peer_sid, const base::xreceiptid_pair_t & pair) {
     auto table = get_txpool_table_by_addr(self_addr);
     if (table == nullptr) {
         return;
     }
+    xdbg("xtxpool_t::update_peer_receipt_id_pair table:%d,peer:%d,receipt id pair:%s", table->table_sid(), peer_sid, pair.dump().c_str());
     table->update_peer_receipt_id_pair(peer_sid, pair);
+}
+
+void xtxpool_t::update_peer_all_receipt_id_pairs(base::xtable_shortid_t peer_sid, const base::xreceiptid_pairs_t & all_pairs) {
+    xdbg("xtxpool_t::update_peer_all_receipt_id_pairs peer_sid:%d,all_pairs:%s", peer_sid, all_pairs.dump().c_str());
+    for (int32_t i = 0; i < enum_xtxpool_table_type_max; i++) {
+        for (int32_t j = 0; j < enum_vbucket_has_tables_count; j++) {
+            auto table = m_tables[i][j];
+            if (table != nullptr) {
+                base::xreceiptid_pair_t pair;
+                all_pairs.find_pair(table->table_sid(), pair);
+                table->update_peer_receipt_id_pair(peer_sid, pair);
+            }
+        }
+    }
 }
 
 xcons_transaction_ptr_t xtxpool_t::build_recv_tx(const std::string & from_table_addr, const std::string & to_table_addr, uint64_t receipt_id) {

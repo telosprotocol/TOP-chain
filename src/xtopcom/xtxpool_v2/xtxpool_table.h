@@ -73,9 +73,13 @@ private:
 
 class xtxpool_table_t {
 public:
-    xtxpool_table_t(xtxpool_resources_face * para, std::string table_addr, xtxpool_shard_info_t * shard, xtxpool_statistic_t * statistic)
+    xtxpool_table_t(xtxpool_resources_face * para,
+                    std::string table_addr,
+                    xtxpool_shard_info_t * shard,
+                    xtxpool_statistic_t * statistic,
+                    std::set<base::xtable_shortid_t> * all_sid_set = nullptr)
       : m_para(para)
-      , m_xtable_info(table_addr, shard, statistic)
+      , m_xtable_info(table_addr, shard, statistic, all_sid_set)
       , m_txmgr_table(&m_xtable_info)
       , m_unconfirmed_tx_queue(para, &m_xtable_info)
       , m_table_state_cache(para, table_addr) {
@@ -107,6 +111,9 @@ public:
     const std::vector<xtxpool_table_lacking_receipt_ids_t> get_lacking_confirm_tx_ids(uint32_t max_num) const;
     xcons_transaction_ptr_t build_recv_tx(const std::string & peer_table_addr, uint64_t receipt_id);
     xcons_transaction_ptr_t build_confirm_tx(const std::string & peer_table_addr, uint64_t receipt_id);
+    base::xtable_shortid_t table_sid() {
+        return m_xtable_info.get_short_table_id();
+    }
 
 private:
     bool is_account_need_update(const std::string & account_addr) const;
