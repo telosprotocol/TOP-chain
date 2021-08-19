@@ -261,6 +261,10 @@ bool xtxpool_table_t::is_account_need_update(const std::string & account_addr) c
 // }
 
 void xtxpool_table_t::deal_commit_table_block(xblock_t * table_block) {
+    // if (table_block->get_height() % 3 == 0) {
+    //     xwarn("nathan test drop table block:%s", table_block->dump().c_str());
+    //     return;
+    // }
     // TODO(jimmy)
     const std::vector<base::xventity_t *> & _table_inentitys = table_block->get_input()->get_entitys();
     uint32_t entitys_count = _table_inentitys.size();
@@ -288,6 +292,11 @@ void xtxpool_table_t::deal_commit_table_block(xblock_t * table_block) {
                 txaction.get_tx_subtype(), txaction.get_receipt_id_peer_tableid(), txaction.get_receipt_id(), table_block->get_height(), xverifier::xtx_utl::get_gmttime_s());
         }
     }
+
+    {
+        std::lock_guard<std::mutex> lck(m_processed_height_record_mutex);
+        m_processed_height_record.record_height(table_block->get_height());
+    }
 }
 
 void xtxpool_table_t::on_block_confirmed(xblock_t * table_block) {
@@ -303,7 +312,11 @@ void xtxpool_table_t::on_block_confirmed(xblock_t * table_block) {
             mbus::xevent_behind_ptr_t ev = make_object_ptr<mbus::xevent_behind_on_demand_t>(
                 m_xtable_info.get_account(), m_last_commit_block_height + 1, (uint32_t)(height - m_last_commit_block_height), true, "lack_of_table_block");
             m_para->get_bus()->push_event(ev);
-            xwarn("xtxpool_table_t::on_block_confirmed load table block fail:table:%s,height:%llu,try sync %llu-%llu", m_xtable_info.get_account().c_str(), height, m_last_commit_block_height + 1, height);
+            xwarn("xtxpool_table_t::on_block_confirmed load table block fail:table:%s,height:%llu,try sync %llu-%llu",
+                  m_xtable_info.get_account().c_str(),
+                  height,
+                  m_last_commit_block_height + 1,
+                  height);
         }
     }
 
@@ -373,6 +386,22 @@ void xtxpool_table_t::refresh_table(bool refresh_unconfirm_txs) {
     {
         std::lock_guard<std::mutex> lck(m_mgr_mutex);
         m_txmgr_table.clear_expired_txs();
+    }
+
+    // try sync lacking table block
+    bool need_sync = false;
+    uint64_t left_end;
+    uint64_t right_end;
+    {
+        std::lock_guard<std::mutex> lck(m_processed_height_record_mutex);
+        need_sync = m_processed_height_record.get_latest_lacking_saction(left_end, right_end);
+    }
+
+    if (need_sync) {
+        mbus::xevent_behind_ptr_t ev =
+            make_object_ptr<mbus::xevent_behind_on_demand_t>(m_xtable_info.get_account(), left_end, (uint32_t)(right_end - left_end + 1), true, "lack_of_table_block");
+        m_para->get_bus()->push_event(ev);
+        xwarn("xtxpool_table_t::refresh_table table:%s,try sync %llu-%llu", m_xtable_info.get_account().c_str(), left_end, right_end);
     }
 
 #if 0
