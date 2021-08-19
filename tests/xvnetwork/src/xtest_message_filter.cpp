@@ -345,7 +345,7 @@ TEST_F(test_message_filter, validator_to_associated_auditor_2) {
                                    common::xbroadcast_id_t::slot,
                                    common::xlogic_epoch_t{}),
         raw_message,
-        xlogic_time_t{0}
+        logic_timer_->logic_time()
     };
 
     std::dynamic_pointer_cast<top::tests::network::xdummy_network_driver_t>(this->network_driver_)->account_address(account_pubkey_auditor1.account);
@@ -463,7 +463,7 @@ TEST_F(test_message_filter, auditor_to_associated_validator_1) {
                                      common::xslot_id_t{0},
                                      con_epoch_1),
         raw_message,
-        xlogic_time_t{0}
+        logic_timer_->logic_time()
     };
 
     std::dynamic_pointer_cast<top::tests::network::xdummy_network_driver_t>(this->network_driver_)->account_address(account_pubkey_validator1.account);
@@ -487,7 +487,7 @@ TEST_F(test_message_filter, auditor_to_associated_validator_2) {
                                      common::xbroadcast_id_t::slot,
                                      common::xlogic_epoch_t{}),
         raw_message,
-        xlogic_time_t{0}
+        logic_timer_->logic_time()
     };
 
     std::dynamic_pointer_cast<top::tests::network::xdummy_network_driver_t>(this->network_driver_)->account_address(account_pubkey_validator1.account);
@@ -632,7 +632,7 @@ TEST_F(test_message_filter, validator_to_non_associated_auditor_2) {
                                    common::xbroadcast_id_t::slot,
                                    common::xlogic_epoch_t{}),
         raw_message,
-        xlogic_time_t{0}
+        logic_timer_->logic_time()
     };
 
     std::dynamic_pointer_cast<top::tests::network::xdummy_network_driver_t>(this->network_driver_)->account_address(account_pubkey_auditor1.account);
