@@ -495,6 +495,11 @@ xJson::Value get_block_handle::parse_tx(xtransaction_t * tx_ptr) {
     }
     tx_ptr->parse_to_json(ori_tx_info);
     ori_tx_info["authorization"] = uint_to_str(tx_ptr->get_authorization().data(), tx_ptr->get_authorization().size());
+    ori_tx_info["tx_action"]["sender_action"] = ori_tx_info["sender_action"];
+    ori_tx_info["sender_action"].clear();
+    ori_tx_info["tx_action"]["receiver_action"] = ori_tx_info["receiver_action"];
+    ori_tx_info["receiver_action"].clear();
+    ori_tx_info["last_tx_hash"] = static_cast<xJson::UInt64>(tx_ptr->get_last_hash());
     return ori_tx_info;
 }
 

@@ -121,7 +121,7 @@ void xelect_client_imp::bootstrap_node_join() {
                 utl::xecprikey_t pri_key_obj((uint8_t*)sign_key.data());
                 utl::xecdsasig_t signature_obj = pri_key_obj.sign(tx->digest());
                 auto signature = std::string(reinterpret_cast<char *>(signature_obj.get_compact_signature()), signature_obj.get_compact_signature_size());
-                tx->set_signature(signature);
+                tx->set_authorization(signature);
                 tx->set_len();
 
                 std::string send_tx_request = "version=1.0&target_account_addr=" + user_params.account.value() + "&method=sendTransaction&sequence_id=3&token=" + token;
