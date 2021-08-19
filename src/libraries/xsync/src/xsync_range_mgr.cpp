@@ -88,6 +88,7 @@ bool xsync_range_mgr_t::set_behind_info(uint64_t start_height, uint64_t end_heig
     m_behind_self_addr = self_addr;
     m_behind_target_addr = target_addr;
     m_behind_time = now;
+    m_current_sync_start_height = start_height;
     return true;
 }
 
@@ -103,22 +104,14 @@ uint64_t xsync_range_mgr_t::get_current_sync_start_height() const {
     return m_current_sync_start_height;
 }
 
+void xsync_range_mgr_t::set_current_sync_start_height(uint64_t height) {
+    m_current_sync_start_height = height;
+}
+
 void xsync_range_mgr_t::clear_behind_info() {
     m_behind_height = 0;
     m_behind_time = 0;
     m_current_sync_start_height = 0;
-}
-
-int xsync_range_mgr_t::update_progress(const data::xblock_ptr_t &current_block) {
-
-    uint64_t current_height = current_block->get_height();
-
-    // TODO highqc forked??
-    if (current_height >= m_behind_height) {
-        clear_behind_info();
-    }
-
-    return 0;
 }
 
 bool xsync_range_mgr_t::get_next_behind(uint64_t current_height, uint32_t count_limit, uint64_t &start_height, uint32_t &count,

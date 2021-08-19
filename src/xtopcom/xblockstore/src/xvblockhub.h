@@ -221,6 +221,14 @@ namespace top
             bool                   execute_block(base::xvbindex_t* index_ptr,base::xvblock_t * block_ptr);//usall internal useonly
             void                   try_execute_all_block(base::xvblock_t * target_block);
 
+        public:
+            // genesis connected information
+            bool        set_genesis_height(const std::string &height);
+            const std::string    get_genesis_height();
+            bool        set_block_span(const uint64_t height,  const std::string &span);
+            bool        delete_block_span(const uint64_t height);
+            const std::string get_block_span(const uint64_t height);
+
         protected: //help functions
             bool                resort_index_of_store(const uint64_t target_height);
             bool                resort_index_of_store(std::map<uint64_t,base::xvbindex_t*> & target_height_map);
