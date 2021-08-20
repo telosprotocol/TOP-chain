@@ -32,6 +32,8 @@ public:
 
     bool add_standby_node(common::xnode_type_t node_type, common::xnode_id_t node_id, xstandby_node_info_t standby_node_info);
 
+    void add_standby_node_to_result_store(data::election::xstandby_result_store_t & xelection_result_store,common::xnetwork_id_t const & nid,std::size_t node_count,common::xnode_type_t node_type,std::string node_id_perfix);
+
     bool delete_standby_node(common::xnode_type_t node_type, common::xnode_id_t node_id);
 
     bool add_nodes_to_standby(std::size_t node_count, common::xnode_type_t node_type, std::string node_id_prefix);
@@ -39,8 +41,6 @@ public:
     bool dereg_nodes_from_standby(std::size_t node_count, common::xnode_type_t node_type, std::string node_id_prefix);
 
     bool add_election_result(common::xnode_type_t node_type, common::xcluster_id_t cid, common::xgroup_id_t gid, xelection_info_bundle_t election_info_bundle);
-
-    bool delete_election_result(common::xnode_type_t node_type, common::xcluster_id_t cid, common::xgroup_id_t gid, common::xnode_id_t node_id);
 
     bool add_nodes_to_election_result(std::size_t node_count, common::xnode_type_t node_type, common::xcluster_id_t cid, common::xgroup_id_t gid, std::string node_id_prefix);
 };

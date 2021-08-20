@@ -69,10 +69,13 @@ void mock_rec_standby_pool_NodeJoin() {
 // this case is to test logical timer the contracts cost with different parameters
 TEST_F(xtest_zec_elect_consensus_contract_t, test_parameter) {
     adjust_setting();
-    top::config::config_register.get_instance().set(data::xmin_auditor_group_size_onchain_goverance_parameter_t::name, std::to_string(6));
-    top::config::config_register.get_instance().set(data::xmin_validator_group_size_onchain_goverance_parameter_t::name, std::to_string(6));
-    top::config::config_register.get_instance().set(data::xmax_auditor_group_size_onchain_goverance_parameter_t::name, std::to_string(64));
-    top::config::config_register.get_instance().set(data::xmax_validator_group_size_onchain_goverance_parameter_t::name, std::to_string(128));
+    top::config::config_register.get_instance().set(config::xmin_auditor_group_size_onchain_goverance_parameter_t::name, std::to_string(6));
+    top::config::config_register.get_instance().set(config::xmin_validator_group_size_onchain_goverance_parameter_t::name, std::to_string(6));
+    top::config::config_register.get_instance().set(config::xmax_auditor_group_size_onchain_goverance_parameter_t::name, std::to_string(64));
+    top::config::config_register.get_instance().set(config::xmax_validator_group_size_onchain_goverance_parameter_t::name, std::to_string(128));
+
+    top::config::config_register.get_instance().set(config::xauditor_group_count_configuration_t::name, std::to_string(2));
+    top::config::config_register.get_instance().set(config::xvalidator_group_count_configuration_t::name, std::to_string(4));
 
     set_association_result_store();
     common::xnode_type_t auditor_node_type{common::xnode_type_t::consensus_auditor};

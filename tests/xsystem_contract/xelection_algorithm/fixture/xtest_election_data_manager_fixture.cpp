@@ -10,6 +10,21 @@ bool xtop_test_election_data_manager_fixture::add_standby_node(common::xnode_typ
     return standby_network_result.result_of(node_type).insert({node_id, standby_node_info}).second;
 }
 
+void xtop_test_election_data_manager_fixture::add_standby_node_to_result_store(data::election::xstandby_result_store_t & xelection_result_store,
+                                                                               common::xnetwork_id_t const & nid,
+                                                                               std::size_t node_count,
+                                                                               common::xnode_type_t node_type,
+                                                                               std::string node_id_perfix) {
+    std::size_t begin_index{1};
+    for (std::size_t index = begin_index; index < node_count + begin_index; ++index) {
+        common::xnode_id_t node_id{node_id_perfix + std::to_string(index)};
+        xstandby_node_info_t standby_node_info;
+        standby_node_info.consensus_public_key = top::xpublic_key_t{std::string{"test_publick_key_"} + std::to_string(index)};
+        standby_node_info.stake_container.insert({node_type, (200 + index) * 10000});
+        xelection_result_store.result_of(nid).insert({node_id, standby_node_info});
+    }
+}
+
 bool xtop_test_election_data_manager_fixture::delete_standby_node(common::xnode_type_t node_type, common::xnode_id_t node_id) {
     auto & standby_result = standby_network_result.result_of(node_type);
     standby_result.erase(node_id);
@@ -50,15 +65,6 @@ bool xtop_test_election_data_manager_fixture::add_election_result(common::xnode_
                                                                   common::xgroup_id_t gid,
                                                                   xelection_info_bundle_t election_info_bundle) {
     return election_network_result.result_of(node_type).result_of(cid).result_of(gid).insert(election_info_bundle).second;
-}
-
-bool xtop_test_election_data_manager_fixture::delete_election_result(common::xnode_type_t node_type,
-                                                                     common::xcluster_id_t cid,
-                                                                     common::xgroup_id_t gid,
-                                                                     common::xnode_id_t node_id) {
-    auto & election_result = election_network_result.result_of(node_type).result_of(cid).result_of(gid);
-    election_result.reset(node_id);
-    return !election_result.find(node_id).second;
 }
 
 bool xtop_test_election_data_manager_fixture::add_nodes_to_election_result(std::size_t node_count,

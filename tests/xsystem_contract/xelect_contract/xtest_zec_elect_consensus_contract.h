@@ -69,10 +69,7 @@ public:
                                       common::xlogic_time_t const election_timestamp,
                                       common::xlogic_time_t const start_time);
 
-    bool test_elect_non_genesis(common::xzone_id_t const & zid,
-                                common::xcluster_id_t const & cid,
-                                std::uint64_t const random_seed,
-                                common::xlogic_time_t const election_timestamp);
+    bool test_elect_non_genesis(common::xzone_id_t const & zid, common::xcluster_id_t const & cid, std::uint64_t const random_seed, common::xlogic_time_t const election_timestamp);
 
 protected:
     void SetUp() override;

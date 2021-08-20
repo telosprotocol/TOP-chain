@@ -358,14 +358,14 @@ void xtest_zec_elect_consensus_contract_t::TearDown() {}
 // this test is to build consensus_stake_model
 TEST_F(xtest_zec_elect_consensus_contract_t, count_election_in_times) {
     std::size_t auditor_nodes_per_segment{27};
-    top::config::config_register.get_instance().set(data::xmin_auditor_group_size_onchain_goverance_parameter_t::name, std::to_string(64));
-    top::config::config_register.get_instance().set(data::xmax_auditor_group_size_onchain_goverance_parameter_t::name, std::to_string(64));
-    top::config::config_register.get_instance().set(data::xmin_validator_group_size_onchain_goverance_parameter_t::name, std::to_string(128));
-    top::config::config_register.get_instance().set(data::xmax_validator_group_size_onchain_goverance_parameter_t::name, std::to_string(128));
-    top::config::config_register.get_instance().set(data::xauditor_nodes_per_segment_onchain_goverance_parameter_t::name, std::to_string(auditor_nodes_per_segment));
+    top::config::config_register.get_instance().set(config::xmin_auditor_group_size_onchain_goverance_parameter_t::name, std::to_string(64));
+    top::config::config_register.get_instance().set(config::xmax_auditor_group_size_onchain_goverance_parameter_t::name, std::to_string(64));
+    top::config::config_register.get_instance().set(config::xmin_validator_group_size_onchain_goverance_parameter_t::name, std::to_string(128));
+    top::config::config_register.get_instance().set(config::xmax_validator_group_size_onchain_goverance_parameter_t::name, std::to_string(128));
+    top::config::config_register.get_instance().set(config::xauditor_nodes_per_segment_onchain_goverance_parameter_t::name, std::to_string(auditor_nodes_per_segment));
 
-    top::config::config_register.get_instance().set(data::xauditor_group_count_onchain_goverance_parameter_t::name, std::to_string(2));
-    top::config::config_register.get_instance().set(data::xvalidator_group_count_onchain_goverance_parameter_t::name, std::to_string(4));
+    top::config::config_register.get_instance().set(config::xauditor_group_count_configuration_t::name, std::to_string(2));
+    top::config::config_register.get_instance().set(config::xvalidator_group_count_configuration_t::name, std::to_string(4));
 
     set_association_result_store();
     common::xzone_id_t zid{common::xconsensus_zone_id};
@@ -384,8 +384,7 @@ TEST_F(xtest_zec_elect_consensus_contract_t, count_election_in_times) {
         common::xnode_id_t node_id{std::string(TEST_NODE_ID_AUDITOR_PREFIX + std::to_string(index))};
         xstandby_node_info_t standby_node_info;
         standby_node_info.consensus_public_key = top::xpublic_key_t{std::string{"test_publick_key_"} + std::to_string(index)};
-        standby_node_info.comprehensive_stake = 1;
-        standby_node_info.stake_container = (200 + index) * 10000;
+        standby_node_info.stake_container.insert({common::xnode_type_t::consensus_auditor, (200 + index) * 10000});
 #if defined XENABLE_MOCK_ZEC_STAKE
         standby_node_info.user_request_role = common::xrole_type_t::advance;
 #endif
@@ -395,8 +394,7 @@ TEST_F(xtest_zec_elect_consensus_contract_t, count_election_in_times) {
         common::xnode_id_t node_id{std::string(TEST_NODE_ID_AUDITOR_PREFIX + std::to_string(index))};
         xstandby_node_info_t standby_node_info;
         standby_node_info.consensus_public_key = top::xpublic_key_t{std::string{"test_publick_key_"} + std::to_string(index)};
-        standby_node_info.comprehensive_stake = 1;
-        standby_node_info.stake_container = (200 + index) * 10000;
+        standby_node_info.stake_container.insert({common::xnode_type_t::consensus_validator, (200 + index) * 10000});
 #if defined XENABLE_MOCK_ZEC_STAKE
         standby_node_info.user_request_role = common::xrole_type_t::validator;
 #endif
@@ -406,8 +404,7 @@ TEST_F(xtest_zec_elect_consensus_contract_t, count_election_in_times) {
         common::xnode_id_t node_id{std::string(TEST_NODE_ID_VALIDATOR_PREFIX + std::to_string(index))};
         xstandby_node_info_t standby_node_info;
         standby_node_info.consensus_public_key = top::xpublic_key_t{std::string{"test_publick_key_"} + std::to_string(index)};
-        standby_node_info.comprehensive_stake = 1;
-        standby_node_info.stake_container = (200 + index) * 10000;
+        standby_node_info.stake_container.insert({common::xnode_type_t::consensus_validator, (200 + index) * 10000});
 #if defined XENABLE_MOCK_ZEC_STAKE
         standby_node_info.user_request_role = common::xrole_type_t::validator;
 #endif
@@ -483,8 +480,8 @@ TEST_F(xtest_zec_elect_consensus_contract_t, count_adv_node_election_times) {
     top::config::config_register.get_instance().set(config::xmax_validator_group_size_onchain_goverance_parameter_t::name, std::to_string(128));
     top::config::config_register.get_instance().set(config::xauditor_nodes_per_segment_onchain_goverance_parameter_t::name, std::to_string(auditor_nodes_per_segment));
 
-    top::config::config_register.get_instance().set(config::xauditor_group_count_onchain_goverance_parameter_t::name, std::to_string(2));
-    top::config::config_register.get_instance().set(config::xvalidator_group_count_onchain_goverance_parameter_t::name, std::to_string(4));
+    top::config::config_register.get_instance().set(config::xauditor_group_count_configuration_t::name, std::to_string(2));
+    top::config::config_register.get_instance().set(config::xvalidator_group_count_configuration_t::name, std::to_string(4));
 
     set_association_result_store();
     common::xzone_id_t zid{common::xconsensus_zone_id};
