@@ -69,6 +69,7 @@ private:
     bool    start_proposal(base::xblock_mptrs& latest_blocks);
     bool    verify_proposal_packet(const xvip2_t & from_addr, const xvip2_t & local_addr, const base::xcspdu_t & packet);
     void    make_receipts_and_send(xblock_t * commit_block, xblock_t * cert_block);
+    // void    send_receipt_id_state(xblock_t * commit_block);
 
 private:
     observer_ptr<mbus::xmessage_bus_face_t>  m_mbus;
@@ -90,6 +91,7 @@ private:
     // m_leader_packed is used to avoid more than one block produced in one viewid
     bool                                     m_leader_packed{false};
     uint64_t                                 m_last_view_clock{0};
+    // uint64_t                                 m_last_send_receipt_id_state_clock{0};
 
 };
 

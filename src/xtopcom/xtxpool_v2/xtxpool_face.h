@@ -256,6 +256,7 @@ public:
     virtual bool is_consensused_confirm_receiptid(const std::string & from_addr, const std::string & to_addr, uint64_t receipt_id) const = 0;
     virtual void update_peer_receipt_id_pair(const std::string & self_addr, base::xtable_shortid_t peer_sid, const base::xreceiptid_pair_t & pair) = 0;
     virtual void update_peer_all_receipt_id_pairs(base::xtable_shortid_t peer_sid, const base::xreceiptid_pairs_t & all_pairs) = 0;
+    virtual data::xtablestate_ptr_t get_table_state_cache(uint8_t zone, uint16_t subaddr) const = 0;
 };
 
 class xtxpool_instance {

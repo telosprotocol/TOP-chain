@@ -81,7 +81,7 @@ public:
       : m_para(para)
       , m_xtable_info(table_addr, shard, statistic, all_sid_set)
       , m_txmgr_table(&m_xtable_info)
-      , m_unconfirmed_tx_queue(para, &m_xtable_info)
+    //   , m_unconfirmed_tx_queue(para, &m_xtable_info)
       , m_table_state_cache(para, table_addr) {
     }
     int32_t push_send_tx(const std::shared_ptr<xtx_entry> & tx);
@@ -114,6 +114,7 @@ public:
     base::xtable_shortid_t table_sid() {
         return m_xtable_info.get_short_table_id();
     }
+    data::xtablestate_ptr_t get_table_state_cache() const {return m_table_state_cache.get_cache();}
 
 private:
     bool is_account_need_update(const std::string & account_addr) const;
@@ -136,21 +137,19 @@ private:
     xtxpool_resources_face * m_para;
     xtxpool_table_info_t m_xtable_info;
     xtxmgr_table_t m_txmgr_table;
-    xunconfirmed_tx_queue_t m_unconfirmed_tx_queue;
+    // xunconfirmed_tx_queue_t m_unconfirmed_tx_queue;
     mutable std::mutex m_mgr_mutex;        // lock m_txmgr_table
-    mutable std::mutex m_unconfirm_mutex;  // lock m_unconfirmed_tx_queue
+    // mutable std::mutex m_unconfirm_mutex;  // lock m_unconfirmed_tx_queue
     xtable_state_cache_t m_table_state_cache;
-    uint64_t m_unconfirmed_tx_num{0};
+    // uint64_t m_unconfirmed_tx_num{0};
 
-    std::map<base::xtable_shortid_t, base::xreceiptid_pair_t> m_peer_receiptid_map;
-    mutable std::mutex m_peer_receiptid_map_mutex;
-    xtable_unconfirm_id_height_t m_sender_unconfirm_id_height;
-    mutable std::mutex m_sender_unconfirm_id_height_mutex;
-    xtable_unconfirm_id_height_t m_receiver_unconfirm_id_height;
-    mutable std::mutex m_receiver_unconfirm_id_height_mutex;
+    // std::map<base::xtable_shortid_t, base::xreceiptid_pair_t> m_peer_receiptid_map;
+    // mutable std::mutex m_peer_receiptid_map_mutex;
     uint64_t m_last_commit_block_height{0xFFFFFFFFFFFFFFFF};
+    xtable_unconfirm_id_height_t m_sender_unconfirm_id_height;
+    xtable_unconfirm_id_height_t m_receiver_unconfirm_id_height;
     xprocessed_height_record_t m_processed_height_record;
-    mutable std::mutex m_processed_height_record_mutex;
+    mutable std::mutex m_receipt_id_height_record_mutex; // lock m_sender_unconfirm_id_height m_receiver_unconfirm_id_height m_processed_height_record
 
     // xnon_ready_accounts_t m_non_ready_accounts;
     // mutable std::mutex m_non_ready_mutex;  // lock m_non_ready_accounts

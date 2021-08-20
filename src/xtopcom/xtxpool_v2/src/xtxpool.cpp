@@ -404,5 +404,16 @@ xcons_transaction_ptr_t xtxpool_t::build_confirm_tx(const std::string & from_tab
     return table->build_confirm_tx(from_table_addr, receipt_id);
 }
 
+data::xtablestate_ptr_t xtxpool_t::get_table_state_cache(uint8_t zone, uint16_t subaddr) const {
+    if (!is_table_subscribed(zone, subaddr)) {
+        return nullptr;
+    }
+    auto table = m_tables[zone][subaddr];
+    if (table == nullptr) {
+        return nullptr;
+    }
+    return table->get_table_state_cache();
+}
+
 }  // namespace xtxpool_v2
 }  // namespace top

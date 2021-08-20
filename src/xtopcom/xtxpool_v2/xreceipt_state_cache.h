@@ -28,6 +28,7 @@ public:
     uint64_t last_update_time() const;
     bool is_unconfirmed_num_reach_limit(base::xtable_shortid_t peer_table_sid) const;
     bool get_account_index(const std::string & account, base::xaccount_index_t & account_index) const;
+    data::xtablestate_ptr_t get_cache() const {return m_table_state;}
 
 private:
     bool init_table_state() const;
