@@ -89,57 +89,6 @@ class xaction_t {
         return str;
     }
 
-    uint256_t sha2() const {
-        base::xstream_t stream(base::xcontext_t::instance());
-        uint16_t size = 0;
-        stream << m_action_hash;
-        stream << m_action_type;
-        stream << size;
-        stream << m_account_addr;
-        stream << m_action_name;
-        stream << m_action_param;
-        stream << m_action_ext;
-        // uint256_t action_hash = utl::xsha2_256_t::digest((const char*)stream.data(), stream.size());
-        // std::string action_hash_str((char*)action_hash.data(), action_hash.size());
-        // return action_hash_str;
-        return utl::xsha2_256_t::digest((const char*)stream.data(), stream.size());
-    }
-
-    const std::string get_authorization() const {
-        xJson::Reader reader;
-        xJson::Value root;
-        try {
-            if (!reader.parse(m_action_authorization, root)) {
-                return std::string();
-            }
-
-            auto auth_vec = hex_to_uint(root["authorization"].asString());
-            std::string target_auth((char*)auth_vec.data(), auth_vec.size());
-            return target_auth;
-        }
-        catch(...) {
-            xwarn("get action authorization fail:m_action_authorization:%s", m_action_authorization.c_str());
-            return std::string();
-        }
-    };
-
-    const std::string get_parent_account() const {
-        xJson::Reader reader;
-        xJson::Value root;
-        try {
-            if (!reader.parse(m_action_authorization, root)) {
-                return std::string();
-            }
-
-            std::string parent = root["parent_account"].asString();
-            return parent;
-        }
-        catch(...) {
-            xwarn("get action parent account fail:m_action_authorization:%s", m_action_authorization.c_str());
-            return std::string();
-        }
-    };
-
  public:
     void set_action_hash(uint32_t hash) {m_action_hash = hash;};
     uint32_t get_action_hash() const {return m_action_hash;};

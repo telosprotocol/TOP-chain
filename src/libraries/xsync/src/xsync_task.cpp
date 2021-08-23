@@ -16,6 +16,10 @@ xsync_command_execute_result xsync_download_command_t::execute(xchain_downloader
             m_sync_policy, m_self_addr, m_target_addr, "time");
 }
 
+xsync_command_execute_result xsync_on_commit_event_command_t::execute(xchain_downloader_t* downloader) {
+    return downloader->execute_next_download(m_height);
+}
+
 bool xsync_task_t::start(){
     if (m_finished) {
         m_finished = false;
@@ -48,7 +52,9 @@ xsync_command_execute_result xsync_task_t::execute(xsync_command_t<xchain_downlo
             return result;
         }
 
-        m_current_time_ms = base::xtime_utl::gmttime_ms();
+        if (wait_response == result) {
+            m_current_time_ms = base::xtime_utl::gmttime_ms();
+        }
     }
 
     return result;

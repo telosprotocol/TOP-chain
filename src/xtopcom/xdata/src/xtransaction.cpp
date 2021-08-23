@@ -25,7 +25,7 @@ namespace top { namespace data {
 
 REG_CLS(xtransaction_t);
 
-int32_t xtransaction_header::serialize_write(base::xstream_t & stream, bool is_write_without_len) const {
+int32_t xtransaction_t::serialize_write(base::xstream_t & stream, bool is_write_without_len) const {
     const int32_t begin_pos = stream.size();
     stream << m_transaction_type;
     if (is_write_without_len) {
@@ -50,7 +50,7 @@ int32_t xtransaction_header::serialize_write(base::xstream_t & stream, bool is_w
     const int32_t end_pos = stream.size();
     return (end_pos - begin_pos);
 }
-int32_t xtransaction_header::serialize_read(base::xstream_t & stream) {
+int32_t xtransaction_t::serialize_read(base::xstream_t & stream) {
     const int32_t begin_pos = stream.size();
     stream >> m_transaction_type;
     stream >> m_transaction_len;
@@ -83,7 +83,7 @@ xtransaction_t::~xtransaction_t() {
 
 int32_t xtransaction_t::do_write_without_hash_signature(base::xstream_t & stream, bool is_write_without_len) const {
     const int32_t begin_pos = stream.size();
-    xtransaction_header::serialize_write(stream, is_write_without_len);
+    serialize_write(stream, is_write_without_len);
     m_source_action.serialize_write(stream, is_write_without_len);
     m_target_action.serialize_write(stream, is_write_without_len);
     const int32_t end_pos = stream.size();
@@ -92,7 +92,7 @@ int32_t xtransaction_t::do_write_without_hash_signature(base::xstream_t & stream
 
 int32_t xtransaction_t::do_read_without_hash_signature(base::xstream_t & stream) {
     const int32_t begin_pos = stream.size();
-    xtransaction_header::serialize_read(stream);
+    serialize_read(stream);
     m_source_action.serialize_read(stream);
     m_target_action.serialize_read(stream);
     const int32_t end_pos = stream.size();
@@ -155,7 +155,7 @@ void xtransaction_t::set_signature(const std::string & signature) {
 void xtransaction_t::set_len() {
     base::xstream_t stream(base::xcontext_t::instance());
     const int32_t begin_pos = stream.size();
-    xtransaction_header::serialize_write(stream, false);
+    serialize_write(stream, false);
     int32_t action_len = m_source_action.serialize_write(stream, false);
     m_source_action.set_action_size(action_len);
     action_len = m_target_action.serialize_write(stream, false);
@@ -247,7 +247,7 @@ bool xtransaction_t::transaction_len_check() const {
     base::xstream_t stream(base::xcontext_t::instance());
 
     const int32_t begin_pos = stream.size();
-    xtransaction_header::serialize_write(stream, true);
+    serialize_write(stream, true);
     int32_t action_len = m_source_action.serialize_write(stream, true);
     if (action_len != m_source_action.get_action_size()) {
         xwarn("xtransaction_t::transaction_len_check src action_len not match:%d:%d", action_len, m_source_action.get_action_size());
@@ -367,12 +367,7 @@ bool xtransaction_t::sign_check() const {
     }
 
     utl::xecdsasig_t signature_obj((uint8_t *)m_authorization.c_str());
-    if (data::is_sub_account_address(common::xaccount_address_t{ get_source_addr() }) || data::is_user_contract_address(common::xaccount_address_t{ get_source_addr() })) {
-        return key_address.verify_signature(signature_obj, m_transaction_hash, get_parent_account());
-    } else {
-        return key_address.verify_signature(signature_obj, m_transaction_hash);
-    }
-
+    return key_address.verify_signature(signature_obj, m_transaction_hash);
 }
 
 bool xtransaction_t::pub_key_sign_check(xpublic_key_t const & pub_key) const {
@@ -501,6 +496,98 @@ void xtransaction_t::construct_from_json(xJson::Value& request) {
     set_authorization(std::move(signature_str));
     
     set_len();
+}
+
+// should be deleted in the end
+int32_t xtransaction_t::parse(enum_xaction_type source_type, enum_xaction_type target_type, xtx_parse_data_t & tx_parse_data) {
+    if (source_type == xaction_type_source_null) {
+        data::xaction_source_null source_action;
+        int32_t ret = source_action.parse(get_source_action());
+        if (ret != xsuccess) {
+            return ret;
+        }
+    }
+
+    if (source_type == xaction_type_asset_out) {
+        data::xaction_asset_out source_action;
+        int32_t ret = source_action.parse(get_source_action());
+        if (ret != xsuccess) {
+            return ret;
+        }
+        tx_parse_data.m_asset = source_action.m_asset_out;
+    }
+
+#ifdef ENABLE_CREATE_USER  // debug use
+    if (target_type == xaction_type_create_user_account) {
+        data::xaction_create_user_account target_action;
+        int32_t ret = target_action.parse(get_target_action());
+        if (ret != xsuccess) {
+            return ret;
+        }
+        tx_parse_data.m_new_account = target_action.m_address;
+    }
+#endif
+
+    if (target_type == xaction_type_asset_in) {
+        data::xaction_asset_in target_action;
+        int32_t ret = target_action.parse(get_target_action());
+        if (ret != xsuccess) {
+            return ret;
+        }
+        if ((source_type == xaction_type_asset_out) && (target_action.m_asset.m_amount != tx_parse_data.m_asset.m_amount)) {
+            return xverifier::xverifier_error::xverifier_error_trnsafer_tx_src_dst_amount_not_same;
+        }
+        tx_parse_data.m_asset = target_action.m_asset;
+    }
+
+    if (target_type == xaction_type_run_contract) {
+        data::xaction_run_contract target_action;
+        int32_t ret = target_action.parse(get_target_action());
+        if (ret != xsuccess) {
+            return ret;
+        }
+        tx_parse_data.m_function_name = target_action.m_function_name;
+        tx_parse_data.m_function_para = target_action.m_para;
+    }
+
+    if (target_type == xaction_type_pledge_token) {
+        data::xaction_pledge_token target_action;
+        int32_t ret = target_action.parse(get_target_action());
+        if (ret != xsuccess) {
+            return ret;
+        }
+        tx_parse_data.m_asset = target_action.m_asset;
+    }
+
+    if (target_type == xaction_type_redeem_token) {
+        data::xaction_redeem_token target_action;
+        int32_t ret = target_action.parse(get_target_action());
+        if (ret != xsuccess) {
+            return ret;
+        }
+        tx_parse_data.m_asset = target_action.m_asset;
+    }
+
+    if (target_type == xaction_type_pledge_token_vote) {
+        data::xaction_pledge_token_vote target_action;
+        int32_t ret = target_action.parse(get_target_action());
+        if (ret != xsuccess) {
+            return ret;
+        }
+        tx_parse_data.m_vote_num = target_action.m_vote_num;
+        tx_parse_data.m_lock_duration = target_action.m_lock_duration;
+    }
+
+    if (target_type == xaction_type_redeem_token_vote) {
+        data::xaction_redeem_token_vote target_action;
+        int32_t ret = target_action.parse(get_target_action());
+        if (ret != xsuccess) {
+            return ret;
+        }
+        tx_parse_data.m_vote_num = target_action.m_vote_num;
+    }
+
+    return 0;
 }
 
 }  // namespace data

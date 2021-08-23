@@ -3019,6 +3019,47 @@ namespace top
             return cached_index_ptr;
         }
 
+        // genesis connected information
+        bool        xblockacct_t::set_genesis_height(const std::string &height){
+            const std::string key_path = base::xvdbkey_t::create_chain_key(*this);
+            if (!base::xvchain_t::instance().get_xdbstore()->set_value(key_path, height)) {
+                xerror("xblockacct_t::write_chain_information_to_db key %s,fail to writed into db,index dump(%s)",key_path.c_str(), height.c_str());            
+                return false;
+            }
+
+            return true;
+        }
+
+        const std::string    xblockacct_t::get_genesis_height(){
+            const std::string key_path = base::xvdbkey_t::create_chain_key(*this);
+            return base::xvchain_t::instance().get_xdbstore()->get_value(key_path);
+        }
+
+        bool        xblockacct_t::set_block_span(const uint64_t height,  const std::string& span){
+            const std::string key_path = base::xvdbkey_t::create_chain_span_key(*this, height);
+            if (!base::xvchain_t::instance().get_xdbstore()->set_value(key_path, span)) {
+                xerror("xblockacct_t::set_block_span key %s,fail to writed into db,index dump(%s)",key_path.c_str(), span.c_str());            
+                return false;
+            }
+
+            return true;
+        }
+
+        bool        xblockacct_t::delete_block_span(const uint64_t height){
+            const std::string key_path = base::xvdbkey_t::create_chain_span_key(*this, height);
+            if (!base::xvchain_t::instance().get_xdbstore()->delete_value(key_path)) {
+                xerror("xblockacct_t::delete_block_span key %s,fail to delete from db",key_path.c_str());            
+                return false;
+            }
+
+            return true;
+        }
+        
+        const std::string xblockacct_t::get_block_span(const uint64_t height){
+            const std::string key_path = base::xvdbkey_t::create_chain_span_key(*this, height);
+            return base::xvchain_t::instance().get_xdbstore()->get_value(key_path);
+        }
+
         xchainacct_t::xchainacct_t(const std::string & account_addr,const uint64_t timeout_ms,const std::string & blockstore_path,base::xvdbstore_t* xvdb_ptr)
             :xblockacct_t(account_addr,timeout_ms,blockstore_path,xvdb_ptr)
         {
@@ -3138,6 +3179,5 @@ namespace top
             }
             return true;
         }
-
     };//end of namespace of vstore
 };//end of namespace of top

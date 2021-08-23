@@ -1081,5 +1081,30 @@ namespace top
 
             return (nullptr != target_block);
         }
+
+        bool xvblockstore_impl::set_genesis_height(const base::xvaccount_t & account, const std::string &height) {
+            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
+            return account_obj->set_genesis_height(height);
+        }
+
+        const std::string xvblockstore_impl::get_genesis_height(const base::xvaccount_t & account){
+            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
+            return account_obj->get_genesis_height();
+        }
+        
+        bool xvblockstore_impl::set_block_span(const base::xvaccount_t & account, const uint64_t height,  const std::string& span){
+            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
+            return account_obj->set_block_span(height, span);
+        }
+        
+        bool xvblockstore_impl::delete_block_span(const base::xvaccount_t & account, const uint64_t height){
+            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
+            return account_obj->delete_block_span(height);
+        } 
+        
+        const std::string xvblockstore_impl::get_block_span(const base::xvaccount_t & account, const uint64_t height){
+            LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
+            return account_obj->get_block_span(height);
+        }
     };//end of namespace of vstore
 };//end of namespace of top

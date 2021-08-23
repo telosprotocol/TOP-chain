@@ -153,34 +153,34 @@ int32_t xtransaction_context_t::exec() {
     if (m_trans->is_self_tx() || m_trans->is_send_tx()) {
         ret = source_action_exec();
         if (ret) {
-            xwarn("[global_trace][unit_service][tx consensus][tx exec source action][fail]%s action_name:%s error:%s",
-                m_trans->get_digest_hex_str().c_str(), m_trans->get_source_action().get_action_name().c_str(), chainbase::xmodule_error_to_str(ret).c_str());
+            xwarn("[global_trace][unit_service][tx consensus][tx exec source action][fail]%s error:%s",
+                m_trans->get_digest_hex_str().c_str(), chainbase::xmodule_error_to_str(ret).c_str());
             return ret;
         } else {
-            xdbg("[global_trace][unit_service][tx consensus][tx exec source action][success]%s action_name:%s transaction type:%d",
-                m_trans->get_digest_hex_str().c_str(), m_trans->get_source_action().get_action_name().c_str(), m_trans->get_tx_subtype());
+            xdbg("[global_trace][unit_service][tx consensus][tx exec source action][success]%s transaction type:%d",
+                m_trans->get_digest_hex_str().c_str(), m_trans->get_tx_subtype());
         }
     }
     if (m_trans->is_self_tx() || m_trans->is_recv_tx()) {
         ret = target_action_exec();
         if (ret) {
             xwarn("[global_trace][unit_service][tx consensus][tx exec target action][fail]%s action_name:%s error:%s",
-                m_trans->get_digest_hex_str().c_str(), m_trans->get_target_action().get_action_name().c_str(), chainbase::xmodule_error_to_str(ret).c_str());
+                m_trans->get_digest_hex_str().c_str(), m_trans_obj->get_function_name().c_str(), chainbase::xmodule_error_to_str(ret).c_str());
             return ret;
         } else {
             xdbg("[global_trace][unit_service][tx consensus][tx exec target action][success]%s action_name:%s transaction type:%d",
-                m_trans->get_digest_hex_str().c_str(), m_trans->get_target_action().get_action_name().c_str(), m_trans->get_tx_subtype());
+                m_trans->get_digest_hex_str().c_str(), m_trans_obj->get_function_name().c_str(), m_trans->get_tx_subtype());
         }
     }
     if (m_trans->is_confirm_tx()) {
         ret = source_confirm_action_exec();
         if (ret) {
-            xwarn("[global_trace][unit_service][tx consensus][tx exec source confirm action][fail]%s action_name:%s error:%s",
-                m_trans->get_digest_hex_str().c_str(), m_trans->get_source_action().get_action_name().c_str(), chainbase::xmodule_error_to_str(ret).c_str());
+            xwarn("[global_trace][unit_service][tx consensus][tx exec source confirm action][fail]%s error:%s",
+                m_trans->get_digest_hex_str().c_str(), chainbase::xmodule_error_to_str(ret).c_str());
             return ret;
         } else {
-            xdbg("[global_trace][unit_service][tx consensus][tx exec source confirm action][success]%s action_name:%s transaction type:%d",
-                m_trans->get_digest_hex_str().c_str(), m_trans->get_source_action().get_action_name().c_str(), m_trans->get_tx_subtype());
+            xdbg("[global_trace][unit_service][tx consensus][tx exec source confirm action][success]%s transaction type:%d",
+                m_trans->get_digest_hex_str().c_str(), m_trans->get_tx_subtype());
         }
     }
 
@@ -222,20 +222,20 @@ int32_t xtransaction_face_t::source_confirm_fee_exec() {
 
 int32_t xtransaction_run_contract::source_fee_exec() {
 #if defined(XENABLE_MOCK_ZEC_STAKE)
-    if (is_sys_contract_address(common::xaccount_address_t{ m_trans->get_target_addr() }) && (m_target_action.m_function_name == "nodeJoinNetwork2")) {
+    if (is_sys_contract_address(common::xaccount_address_t{ m_trans->get_target_addr() }) && (get_function_name() == "nodeJoinNetwork2")) {
         m_account_ctx->token_deposit(XPROPERTY_BALANCE_AVAILABLE, base::vtoken_t(10000000000));
     }
 #endif
     int32_t ret{0};
-    if (m_fee.need_use_tgas_disk(m_trans->get_source_addr(), m_trans->get_target_addr(), m_target_action.m_function_name)) {
-        ret = m_fee.update_tgas_disk_sender(m_source_action.m_asset_out.m_amount, true);
+    if (m_fee.need_use_tgas_disk(m_trans->get_source_addr(), m_trans->get_target_addr(), get_function_name())) {
+        ret = m_fee.update_tgas_disk_sender(get_amount(), true);
     }
     return ret;
 }
 
 int32_t xtransaction_run_contract::source_action_exec() {
-    if (m_source_action.m_asset_out.m_amount != 0) {
-        int32_t ret = m_account_ctx->available_balance_to_other_balance(XPROPERTY_BALANCE_LOCK, base::vtoken_t(m_source_action.m_asset_out.m_amount));
+    if (get_amount() != 0) {
+        int32_t ret = m_account_ctx->available_balance_to_other_balance(XPROPERTY_BALANCE_LOCK, base::vtoken_t(get_amount()));
         if (ret) {
             return ret;
         }
@@ -245,14 +245,16 @@ int32_t xtransaction_run_contract::source_action_exec() {
 
 int32_t xtransaction_run_contract::target_action_exec() {
     // auto transfer in to contract account
-    if (m_source_action.m_asset_out.m_amount != 0) {
-        auto ret = m_account_ctx->top_token_transfer_in(m_source_action.m_asset_out.m_amount);
+    if (get_amount() != 0) {
+        auto ret = m_account_ctx->top_token_transfer_in(get_amount());
         if (0 != ret) {
             return ret;
         }
     }
 
-    m_account_ctx->set_source_pay_info(m_source_action);
+    data::xaction_asset_out source_action;
+    source_action.m_asset_out = get_asset();
+    m_account_ctx->set_source_pay_info(source_action);
     xtransaction_ptr_t tx;
     xtransaction_t* raw_tx = m_trans->get_transaction();
     raw_tx->add_ref();
@@ -260,7 +262,7 @@ int32_t xtransaction_run_contract::target_action_exec() {
     xvm::xtransaction_trace_ptr trace = m_node.deal_transaction(tx, m_account_ctx);
 
     int32_t ret{0};
-    if(m_fee.need_use_tgas_disk(m_trans->get_target_addr(), m_trans->get_target_addr(), m_target_action.m_function_name)){
+    if(m_fee.need_use_tgas_disk(m_trans->get_target_addr(), m_trans->get_target_addr(), get_function_name())){
         ret= m_fee.update_tgas_disk_after_sc_exec(trace);
         xdbg("[target_action_exec] gas: %u, disk: %u, tx_hash: %s, source: %s, target: %s", trace->m_tgas_usage, trace->m_disk_usage,
               m_trans->get_digest_hex_str().c_str(), m_trans->get_source_addr().c_str(), m_trans->get_target_addr().c_str());
@@ -280,7 +282,7 @@ int32_t xtransaction_run_contract::target_action_exec() {
 
 int32_t xtransaction_transfer::source_fee_exec() {
     int32_t ret{0};
-    auto transfer_amount = m_source_action.m_asset_out.m_amount;
+    auto transfer_amount = get_amount();
     // no check transfer amount for genesis state
     if (!is_contract_address(common::xaccount_address_t{ m_trans->get_source_addr() }) && transfer_amount) {
         ret = m_fee.update_tgas_disk_sender(transfer_amount, false);
@@ -289,7 +291,7 @@ int32_t xtransaction_transfer::source_fee_exec() {
 }
 
 int32_t xtransaction_pledge_token_vote::source_fee_exec(){
-    m_lock_token = m_account_ctx->get_top_by_vote(m_target_action.m_vote_num, m_target_action.m_lock_duration);
+    m_lock_token = m_account_ctx->get_top_by_vote(get_vote_num(), get_lock_duration());
     return m_fee.update_tgas_disk_sender(m_lock_token, false);
 }
 
@@ -304,11 +306,14 @@ int32_t xtransaction_pledge_token_vote::target_action_exec() {
         return ret;
     }
 
-    ret = m_account_ctx->uint64_add(XPROPERTY_UNVOTE_NUM, m_target_action.m_vote_num);
+    ret = m_account_ctx->uint64_add(XPROPERTY_UNVOTE_NUM, get_vote_num());
     if (xsuccess != ret) {
         return ret;
     }
-    ret = m_account_ctx->update_pledge_vote_property(m_target_action);
+    xaction_pledge_token_vote target_action;
+    target_action.m_vote_num = get_vote_num();
+    target_action.m_lock_duration = get_lock_duration();
+    ret = m_account_ctx->update_pledge_vote_property(target_action);
     return ret;
 }
 
@@ -321,7 +326,7 @@ int32_t xtransaction_redeem_token_vote::source_action_exec() {
 }
 
 int32_t xtransaction_redeem_token_vote::target_action_exec() {
-    auto redeem_num = m_target_action.m_vote_num;
+    auto redeem_num = get_vote_num();
     if(redeem_num > m_account_ctx->get_blockchain()->unvote_num()){
         xdbg("pledge_redeem_vote, redeem_num: %llu, unvote_num: %llu", redeem_num, m_account_ctx->get_blockchain()->unvote_num());
         return xtransaction_pledge_redeem_vote_err;
@@ -335,14 +340,14 @@ int32_t xtransaction_vote::source_fee_exec(){
 }
 
 int32_t xtransaction_vote::source_action_exec() {
-    uint64_t vote_num = parse_vote_info(m_target_action.m_para);
+    uint64_t vote_num = parse_vote_info(get_function_para());
     int32_t ret = m_account_ctx->uint64_sub(XPROPERTY_UNVOTE_NUM, vote_num);
     return ret;
 }
 
 int32_t xtransaction_vote::source_confirm_action_exec(){
     auto status = m_trans->get_last_action_exec_status();
-    uint64_t vote_num = parse_vote_info(m_target_action.m_para);
+    uint64_t vote_num = parse_vote_info(get_function_para());
     int32_t ret = xsuccess;
     if(status == enum_xunit_tx_exec_status_fail){
         ret = m_account_ctx->uint64_add(XPROPERTY_UNVOTE_NUM, vote_num);
@@ -366,7 +371,7 @@ int32_t xtransaction_abolish_vote::source_confirm_action_exec() {
         return 0;
     }
 
-    auto vote_num = parse_vote_info(m_target_action.m_para);
+    auto vote_num = parse_vote_info(get_function_para());
     xdbg("pledge_redeem_vote abolish account: %s, vote_num: %d, old unvote_num: %d",
           m_account_ctx->get_address().c_str(), vote_num, m_account_ctx->get_blockchain()->unvote_num());
     int32_t ret = m_account_ctx->uint64_add(XPROPERTY_UNVOTE_NUM, vote_num);

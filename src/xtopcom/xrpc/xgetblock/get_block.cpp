@@ -243,7 +243,10 @@ void get_block_handle::getIssuanceDetail() {
         return;
     }
     xstake::xissue_detail issue_detail;
-    issue_detail.from_string(xissue_detail_str);
+    if (issue_detail.from_string(xissue_detail_str) <= 0) {
+        xwarn("[grpc::getIssuanceDetail] deserialize failed");
+    }
+
     xdbg(
         "[grpc::getIssuanceDetail] reward contract height: %llu, onchain_timer_round: %llu, m_zec_vote_contract_height: %llu, "
         "m_zec_workload_contract_height: %llu, m_zec_reward_contract_height: %llu, "
@@ -495,6 +498,11 @@ xJson::Value get_block_handle::parse_tx(xtransaction_t * tx_ptr) {
     }
     tx_ptr->parse_to_json(ori_tx_info);
     ori_tx_info["authorization"] = uint_to_str(tx_ptr->get_authorization().data(), tx_ptr->get_authorization().size());
+    ori_tx_info["tx_action"]["sender_action"] = ori_tx_info["sender_action"];
+    ori_tx_info["sender_action"].clear();
+    ori_tx_info["tx_action"]["receiver_action"] = ori_tx_info["receiver_action"];
+    ori_tx_info["receiver_action"].clear();
+    ori_tx_info["last_tx_hash"] = static_cast<xJson::UInt64>(tx_ptr->get_last_hash());
     return ori_tx_info;
 }
 

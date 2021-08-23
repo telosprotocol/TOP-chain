@@ -12,8 +12,6 @@ NS_BEG2(top, xrpc)
 {pair<string, string>{"1.0", #func_name}, std::bind(&xedge_local_method<T>::func_name##_method, this, _1)} )
 
 template<class T>
-unordered_map<string, utl::xecprikey_t> xedge_local_method<T>::m_account_key_map;
-template<class T>
 unordered_map<string, vector<string>> xedge_local_method<T>::m_sub_account_map;
 template<class T>
 std::mutex xedge_local_method<T>::m_mutex;

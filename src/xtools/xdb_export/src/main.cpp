@@ -30,8 +30,6 @@
 #include <iostream>
 #include <thread>
 
-#define ALWAYS_OVERWRITE false
-
 // A workaround to give to use fifo_map as map, we are just ignoring the 'less' compare
 template <class K, class V, class dummy_compare, class A>
 using my_workaround_fifo_map = nlohmann::fifo_map<K, V, nlohmann::fifo_map_compare<K>, A>;
@@ -47,6 +45,9 @@ using top::base::xcontext_t;
 using top::base::xstream_t;
 using top::base::xstring_utl;
 using top::base::xtime_utl;
+
+#define NODE_ID "T00000LgGPqEpiK6XLCKRj9gVPN8Ej1aMbyAb3Hu"
+#define SIGN_KEY "ONhWC2LJtgi9vLUyoa48MF3tiXxqWf7jmT9KtOg/Lwo="
 
 class xtop_hash_t;
 class db_reset_t;
@@ -76,6 +77,7 @@ class db_export_tools {
 public:
     friend class db_reset_t;
     db_export_tools(std::string const & db_path) {
+        XMETRICS_INIT();
         top::config::config_register.get_instance().set(config::xmin_free_gas_asset_onchain_goverance_parameter_t::name, std::to_string(ASSET_TOP(100)));
         top::config::config_register.get_instance().set(config::xfree_gas_onchain_goverance_parameter_t::name, std::to_string(25000));
         top::config::config_register.get_instance().set(config::xmax_validator_stake_onchain_goverance_parameter_t::name, std::to_string(5000));
@@ -83,13 +85,12 @@ public:
         top::config::config_register.get_instance().set(config::xroot_hash_configuration_t::name, std::string{});
         data::xrootblock_para_t para;
         data::xrootblock_t::init(para);
-        m_node_id = common::xnode_id_t{"T00000LgGPqEpiK6XLCKRj9gVPN8Ej1aMbyAb3Hu"};
-        m_sign_key = "ONhWC2LJtgi9vLUyoa48MF3tiXxqWf7jmT9KtOg/Lwo=";
         m_bus = top::make_object_ptr<mbus::xmessage_bus_t>(true, 1000);
         m_store = top::store::xstore_factory::create_store_with_kvdb(db_path);
         base::xvchain_t::instance().set_xdbstore(m_store.get());
+        base::xvchain_t::instance().set_xevmbus(m_bus.get());
         m_blockstore.attach(store::get_vblockstore());
-        m_nodesvr_ptr = make_object_ptr<xvnode_house_t>(m_node_id, m_sign_key, m_blockstore, make_observer(m_bus.get()));
+        m_nodesvr_ptr = make_object_ptr<xvnode_house_t>(common::xnode_id_t{NODE_ID}, SIGN_KEY, m_blockstore, make_observer(m_bus.get()));
         m_getblock = std::make_shared<chain_info::get_block_handle>(m_store.get(), m_blockstore.get(), nullptr);
         contract::xcontract_manager_t::instance().init(make_observer(m_store), xobject_ptr_t<store::xsyncvstore_t>{});
         contract::xcontract_manager_t::set_nodesrv_ptr(m_nodesvr_ptr);
@@ -224,10 +225,10 @@ public:
         std::cout << "===> " << filename << " generated success!" << std::endl;
     }
 
-    void query_table_tx_info(std::vector<std::string> const & address_vec) {
-        auto query_and_make_file = [](db_export_tools *arg, std::string account) {
+    void query_table_tx_info(std::vector<std::string> const & address_vec, const uint32_t start_timestamp, const uint32_t end_timestamp) {
+        auto query_and_make_file = [start_timestamp, end_timestamp](db_export_tools *arg, std::string account) {
             json result_json;
-            arg->query_table_tx_info(account, result_json);
+            arg->query_table_tx_info(account, start_timestamp, end_timestamp, result_json);
             std::string filename = "./all_table_tx_info/" + account + "_tx_info.json";
             std::ofstream out_json(filename);
             out_json << std::setw(4) << result_json[account];
@@ -593,7 +594,7 @@ private:
         j["exist_block"] = s;
     }
     
-    void query_table_tx_info(std::string const & account, json & result_json) {
+    void query_table_tx_info(std::string const & account, const uint32_t start_timestamp, const uint32_t end_timestamp, json & result_json) {
         auto const block_height = m_blockstore->get_latest_committed_block_height(account);
         std::map<std::string, tx_ext_t> send;
         std::map<std::string, tx_ext_t> confirm;
@@ -643,6 +644,9 @@ private:
             m_blockstore->load_block_input(_vaccount, vblock.get());
             assert(block->get_block_level() == base::enum_xvblock_level_table);
             const uint64_t timestamp = block->get_timestamp();
+            if (timestamp < start_timestamp || timestamp > end_timestamp) {
+                continue;
+            }
             const std::vector<base::xventity_t*> & _table_inentitys = block->get_input()->get_entitys();
             uint32_t entitys_count = _table_inentitys.size();
             for (uint32_t index = 1; index < entitys_count; index++) {  // unit entity from index#1
@@ -954,8 +958,6 @@ private:
         uint8_t phase{0};
     };
 
-    common::xnode_id_t m_node_id;
-    std::string m_sign_key;
     xobject_ptr_t<mbus::xmessage_bus_face_t> m_bus;
     xobject_ptr_t<store::xstore_face_t> m_store;
     xobject_ptr_t<base::xvblockstore_t> m_blockstore;
@@ -1603,11 +1605,10 @@ void usage() {
     std::cout << "------- usage -------" << std::endl;
     std::cout << "- ./xdb_export <config_json_file> <function_name>" << std::endl;
     std::cout << "    - <function_name>:" << std::endl;
-    std::cout << "        - check_db_reset" << std::endl;
     std::cout << "        - check_fast_sync [table|unit|account]" << std::endl;
     std::cout << "        - check_block_exist <account> <height>" << std::endl;
     std::cout << "        - check_block_info <account> <height|last|all>" << std::endl;
-    std::cout << "        - check_tx_info [table]" << std::endl;
+    std::cout << "        - check_tx_info [table] [starttime] [endtime]" << std::endl;
     std::cout << "        - check_latest_fullblock" << std::endl;
     std::cout << "        - check_contract_property <account> <prop> <last|all>" << std::endl;
     std::cout << "-------  end  -------" << std::endl;
@@ -1700,12 +1701,50 @@ int main(int argc, char ** argv) {
             }
         }
     } else if (function_name == "check_tx_info") {
-        if (argc == 3) {
+        uint32_t start_timestamp = 0;
+        uint32_t end_timestamp = UINT_MAX;
+        char * start_time_str = nullptr;
+        char * end_time_str = nullptr;
+        if (argc == 5) {
+            start_time_str = argv[3];
+            end_time_str = argv[4];
+        } else if (argc == 6) {
+            start_time_str = argv[4];
+            end_time_str = argv[5];
+        }
+        if (argc >= 5) {
+            int year, month, day, hour, minute,second;
+            if (start_time_str != nullptr && sscanf(start_time_str,"%d-%d-%dT%d:%d:%d", &year, &month, &day, &hour, &minute, &second) == 6) {
+                tm tm_;
+                tm_.tm_year = year - 1900;
+                tm_.tm_mon = month - 1;
+                tm_.tm_mday = day;
+                tm_.tm_hour = hour;
+                tm_.tm_min = minute;
+                tm_.tm_sec = second;
+                tm_.tm_isdst = 0;
+                start_timestamp = mktime(&tm_);
+            }
+            if (end_time_str != nullptr && sscanf(end_time_str,"%d-%d-%dT%d:%d:%d", &year, &month, &day, &hour, &minute, &second) == 6) {
+                tm tm_;
+                tm_.tm_year = year - 1900;
+                tm_.tm_mon = month - 1;
+                tm_.tm_mday = day;
+                tm_.tm_hour = hour;
+                tm_.tm_min = minute;
+                tm_.tm_sec = second;
+                tm_.tm_isdst = 0;
+                end_timestamp = mktime(&tm_);
+            }
+            std::cout << "start_timestamp: " << start_timestamp << ", end_timestamp: " << end_timestamp << std::endl;
+        }
+
+        if (argc == 3 || argc == 5) {
             auto const & account_vec = db_export_tools::get_table_contract_accounts();
-            tools.query_table_tx_info(account_vec);
-        } else if (argc == 4) {
+            tools.query_table_tx_info(account_vec, start_timestamp, end_timestamp);
+        } else if (argc == 4 || argc == 6) {
             std::vector<std::string> account = {argv[3]};
-            tools.query_table_tx_info(account);
+            tools.query_table_tx_info(account, start_timestamp, end_timestamp);
         } else {
             usage();
             return -1;
