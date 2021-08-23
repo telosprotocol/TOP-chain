@@ -45,6 +45,7 @@ public:
         return nullptr;
     };
     void pull_lacking_receipts(uint64_t now, xcovered_tables_t & covered_tables) override;
+    void send_receipt_id_state(uint64_t now) override;
 
 private:
     bool is_belong_to_service(base::xtable_index_t tableid) const;
@@ -64,6 +65,7 @@ private:
     void send_pull_receipts_of_recv(xreceipt_pull_recv_receipt_t & pulled_receipt);
     void send_push_receipts(xreceipt_push_t &pushed_receipt, vnetwork::xvnode_address_t const & target);
     void send_receipt_sync_msg(const vnetwork::xmessage_t & msg, const std::string & target_table_addr);
+    void send_receipt_id_state(uint8_t zone, uint16_t table_id);
 
 private:
     xvip2_t m_xip;

@@ -23,7 +23,7 @@ public:
     static uint32_t calc_resend_time(uint64_t tx_cert_time, uint64_t now);
     static bool is_selected_pos(uint32_t pos, uint32_t rand_pos, uint32_t select_num, uint32_t size);
     static bool is_time_for_node_pull_lacking_receipts(uint64_t now, uint32_t table_id, uint16_t self_node_id);
-    // static bool is_receiptid_state_sender_for_talbe(uint64_t now, uint32_t table_id, uint16_t shard_size, uint16_t self_node_id);
+    static bool is_receiptid_state_sender_for_talbe(uint64_t now, uint32_t table_id, uint16_t shard_size, uint16_t self_node_id);
 };
 
 NS_END2

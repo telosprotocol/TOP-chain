@@ -257,6 +257,7 @@ void xtxpool_service_mgr::on_timer() {
 
     for (auto service : receipts_recender_service_vec) {
         service->resend_receipts(now);
+        service->send_receipt_id_state(now);
     }
 
     if ((now % print_txpool_statistic_values_freq) == 0) {

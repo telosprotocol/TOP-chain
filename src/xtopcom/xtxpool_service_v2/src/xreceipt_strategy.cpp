@@ -52,28 +52,22 @@ bool xreceipt_strategy_t::is_resend_node_for_talbe(uint64_t now, uint32_t table_
     return (is_time_for_resend && resend_node_pos == self_node_id);
 }
 
-// bool xreceipt_strategy_t::is_receiptid_state_sender_for_talbe(uint64_t now, uint32_t table_id, uint16_t shard_size, uint16_t self_node_id) {
-//     static uint64_t m_first_send_receipt_state_time = 0;
-//     uint64_t send_interval = 300;
-//     if (m_first_send_receipt_state_time == 0 || now < m_first_send_receipt_state_time + 300){
-//         send_interval = 60;
-//         m_first_send_receipt_state_time = now;
-//     }
-
-//     // different table resend at different time by different advance node
-//     uint64_t random_num = now + (uint64_t)table_id;
-//     bool is_time_for_resend = ((random_num % send_interval) == 0);
-//     uint16_t resend_node_pos = ((now / send_interval) + (uint64_t)table_id) % shard_size;
-//     xdbg("xreceipt_strategy_t::is_receiptid_state_sender_for_talbe table:%d,now:%llu,interval0x%x,is_time_for_resend:%d,shard_size:%d,resend_node_pos:%d,self_node_id:%d",
-//           table_id,
-//           now,
-//           send_interval,
-//           is_time_for_resend,
-//           shard_size,
-//           resend_node_pos,
-//           self_node_id);
-//     return (is_time_for_resend && resend_node_pos == self_node_id);
-// }
+bool xreceipt_strategy_t::is_receiptid_state_sender_for_talbe(uint64_t now, uint32_t table_id, uint16_t shard_size, uint16_t self_node_id) {
+    uint64_t send_interval = 300;
+    // different table resend at different time by different advance node
+    uint64_t random_num = now + (uint64_t)table_id;
+    bool is_time_for_resend = ((random_num % send_interval) == 0);
+    uint16_t resend_node_pos = ((now / send_interval) + (uint64_t)table_id) % shard_size;
+    xdbg("xreceipt_strategy_t::is_receiptid_state_sender_for_talbe table:%d,now:%llu,interval0x%x,is_time_for_resend:%d,shard_size:%d,resend_node_pos:%d,self_node_id:%d",
+          table_id,
+          now,
+          send_interval,
+          is_time_for_resend,
+          shard_size,
+          resend_node_pos,
+          self_node_id);
+    return (is_time_for_resend && resend_node_pos == self_node_id);
+}
 
 bool xreceipt_strategy_t::is_time_for_node_pull_lacking_receipts(uint64_t now, uint32_t table_id, uint16_t self_node_id) {
     uint64_t random_num = now + (uint64_t)table_id + (uint64_t)self_node_id;

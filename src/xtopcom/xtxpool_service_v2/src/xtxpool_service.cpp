@@ -17,6 +17,7 @@
 #include "xverifier/xtx_verifier.h"
 #include "xvledger/xvblock.h"
 #include "xvnetwork/xvnetwork_error.h"
+#include "xvnetwork/xvnetwork_error2.h"
 
 #include <cinttypes>
 
@@ -786,6 +787,57 @@ void xtxpool_service::on_message_receipt_id_state_received(vnetwork::xvnode_addr
     receipt_id_state_msg.serialize_from(stream);
 
     m_para->get_txpool()->update_peer_all_receipt_id_pairs(receipt_id_state_msg.m_table_sid, receipt_id_state_msg.m_receiptid_pairs);
+}
+
+void xtxpool_service::send_receipt_id_state(uint8_t zone, uint16_t table_id) {
+    // todo：带上证明的收据id信息，找出与自己不同group的所有group，一一广播
+    std::string table_addr = data::xblocktool_t::make_address_table_account((base::enum_xchain_zone_index)zone, table_id);
+    base::xvaccount_t vaccount(table_addr);
+    auto commit_block = base::xvchain_t::instance().get_xblockstore()->get_latest_committed_block(vaccount, metrics::blockstore_access_from_txpool_sync_status);
+
+    if (commit_block->get_height() == 0) {
+        xinfo("xtxpool_service::send_receipt_id_state latest commit height is 0, no need send receipt id state.table:%s", table_addr.c_str());
+        return;
+    }
+
+    base::xauto_ptr<base::xvbstate_t> bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(
+        dynamic_cast<xblock_t *>(commit_block.get()), metrics::statestore_access_from_batchpacker_make_receipt_msg);
+    if (bstate == nullptr) {
+        xwarn("xtxpool_service::send_receipt_id_state fail-get bstate.block=%s", commit_block->dump().c_str());
+        return;
+    }
+
+    xtablestate_ptr_t tablestate = std::make_shared<xtable_bstate_t>(bstate.get());
+    top::base::xautostream_t<4096> stream(top::base::xcontext_t::instance());
+    xtxpool_service_v2::xreceipt_id_state_msg_t receipt_id_state_msg;
+
+    receipt_id_state_msg.m_table_sid = vaccount.get_short_table_id();
+    auto & all_pairs = tablestate->get_receiptid_state()->get_all_receiptid_pairs()->get_all_pairs();
+    xinfo("xtxpool_service::send_receipt_id_state broadcast receipt id state fullblock:%s,pairs:%s",
+          commit_block->dump().c_str(),
+          tablestate->get_receiptid_state()->get_all_receiptid_pairs()->dump().c_str());
+    for (auto & pair : all_pairs) {
+        receipt_id_state_msg.m_receiptid_pairs.add_pair(pair.first, pair.second);
+    }
+    receipt_id_state_msg.serialize_to(stream);
+    vnetwork::xmessage_t msg = vnetwork::xmessage_t({stream.data(), stream.data() + stream.size()}, xtxpool_v2::xtxpool_msg_receipt_id_state);
+    std::error_code ec = vnetwork::xvnetwork_errc2_t::success;
+    xvip2_t to_addr{(uint64_t)-1, (uint64_t)-1};  // broadcast to all
+    common::xip2_t dst{to_addr.low_addr, to_addr.high_addr};
+    m_vnet_driver->broadcast(dst, msg, ec);
+
+    m_para->get_txpool()->update_peer_all_receipt_id_pairs(receipt_id_state_msg.m_table_sid, receipt_id_state_msg.m_receiptid_pairs);
+}
+
+void xtxpool_service::send_receipt_id_state(uint64_t now) {
+    if (m_running && m_is_send_receipt_role) {
+        for (uint32_t table_id = m_cover_front_table_id; table_id <= m_cover_back_table_id; table_id++) {
+            if (!xreceipt_strategy_t::is_receiptid_state_sender_for_talbe(now, table_id, m_shard_size, m_node_id)) {
+                continue;
+            }
+            send_receipt_id_state(m_zone_index, table_id);
+        }
+    }
 }
 
 NS_END2
