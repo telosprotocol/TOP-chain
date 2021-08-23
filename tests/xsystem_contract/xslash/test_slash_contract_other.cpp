@@ -190,37 +190,37 @@ TEST_F(test_slash_contract_other, zec_slash_info_summarize) {
     EXPECT_EQ(enum_xvm_error_code::ok, trace->m_errno);
 }
 
-TEST_F(test_slash_contract_other, zec_slash_info_summarize_not_enough) {
-    using namespace top::mock;
-    xdatamock_unit  zec_account{sys_contract_zec_slash_info_addr};
+// TEST_F(test_slash_contract_other, zec_slash_info_summarize_not_enough) {
+//     using namespace top::mock;
+//     xdatamock_unit  zec_account{sys_contract_zec_slash_info_addr};
 
-    m_zec_slash_account_ctx_ptr = make_shared<xaccount_context_t>(zec_account.get_account_state(), m_store.get());
-    m_zec_slash_account_ctx_ptr->map_create(xstake::XPORPERTY_CONTRACT_UNQUALIFIED_NODE_KEY);
-    m_zec_slash_account_ctx_ptr->map_create(xstake::XPROPERTY_CONTRACT_TABLEBLOCK_NUM_KEY);
+//     m_zec_slash_account_ctx_ptr = make_shared<xaccount_context_t>(zec_account.get_account_state(), m_store.get());
+//     m_zec_slash_account_ctx_ptr->map_create(xstake::XPORPERTY_CONTRACT_UNQUALIFIED_NODE_KEY);
+//     m_zec_slash_account_ctx_ptr->map_create(xstake::XPROPERTY_CONTRACT_TABLEBLOCK_NUM_KEY);
 
-    xunqualified_node_info_t  node_info;
-    for (auto i = 0; i < 5; ++i) {
-        xnode_vote_percent_t node_content;
-        node_content.block_count = i + 1;
-        node_content.subset_count = i + 1;
-        node_info.auditor_info[common::xnode_id_t{"auditor" + std::to_string(i)}] = node_content;
-        node_info.validator_info[common::xnode_id_t{"validator" + std::to_string(i)}] = node_content;
-    }
+//     xunqualified_node_info_t  node_info;
+//     for (auto i = 0; i < 5; ++i) {
+//         xnode_vote_percent_t node_content;
+//         node_content.block_count = i + 1;
+//         node_content.subset_count = i + 1;
+//         node_info.auditor_info[common::xnode_id_t{"auditor" + std::to_string(i)}] = node_content;
+//         node_info.validator_info[common::xnode_id_t{"validator" + std::to_string(i)}] = node_content;
+//     }
 
-    base::xstream_t target_stream(base::xcontext_t::instance());
-    node_info.serialize_to(target_stream);
-    uint64_t full_tableblock_height = 10;
-    target_stream << full_tableblock_height;
-    std::string shard_slash_collect = std::string((char*)target_stream.data(), target_stream.size());
+//     base::xstream_t target_stream(base::xcontext_t::instance());
+//     node_info.serialize_to(target_stream);
+//     uint64_t full_tableblock_height = 10;
+//     target_stream << full_tableblock_height;
+//     std::string shard_slash_collect = std::string((char*)target_stream.data(), target_stream.size());
 
-    target_stream.reset();
-    target_stream << shard_slash_collect;
-    auto trx_ptr = summarize_slash_info(std::string((char*) target_stream.data(), target_stream.size()));
+//     target_stream.reset();
+//     target_stream << shard_slash_collect;
+//     auto trx_ptr = summarize_slash_info(std::string((char*) target_stream.data(), target_stream.size()));
 
-    xvm_service vs;
-    xtransaction_trace_ptr trace = vs.deal_transaction(trx_ptr, m_zec_slash_account_ctx_ptr.get());
-    EXPECT_EQ(enum_xvm_error_code::ok, trace->m_errno);
-}
+//     xvm_service vs;
+//     xtransaction_trace_ptr trace = vs.deal_transaction(trx_ptr, m_zec_slash_account_ctx_ptr.get());
+//     EXPECT_EQ(enum_xvm_error_code::ok, trace->m_errno);
+// }
 
 
 TEST_F(test_slash_contract_other, zec_slash_do_slash) {

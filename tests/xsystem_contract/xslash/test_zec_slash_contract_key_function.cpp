@@ -28,9 +28,9 @@ using namespace top::data;
 const uint16_t AUDITOR_ACCOUNT_ADDR_NUM = 256;
 const uint16_t VALIDATOR_ACCOUNT_ADDR_NUM = 512;
 
-class test_slash_info_contract: public xzec_slash_info_contract, public testing::Test {
+class test_zec_slash_contract: public xzec_slash_info_contract, public testing::Test {
 public:
-    test_slash_info_contract(): xzec_slash_info_contract{common::xnetwork_id_t{0}}, node_serv{common::xaccount_address_t{"mocked_nodesvr"}, "null"}{};
+    test_zec_slash_contract(): xzec_slash_info_contract{common::xnetwork_id_t{0}}, node_serv{common::xaccount_address_t{"mocked_nodesvr"}, "null"}{};
 
     void SetUp(){
         create_account_addrs(AUDITOR_ACCOUNT_ADDR_NUM, VALIDATOR_ACCOUNT_ADDR_NUM);
@@ -59,7 +59,7 @@ public:
 };
 
 
-void test_slash_info_contract::create_account_addrs(uint32_t auditor_account_num, uint32_t validator_account_num) {
+void test_zec_slash_contract::create_account_addrs(uint32_t auditor_account_num, uint32_t validator_account_num) {
     auditor_account_addrs.resize(auditor_account_num);
     validator_account_addrs.resize(validator_account_num);
 
@@ -74,7 +74,7 @@ void test_slash_info_contract::create_account_addrs(uint32_t auditor_account_num
 
 }
 
-common::xip2_t test_slash_info_contract::create_group_xip2(uint64_t elect_blk_height, uint8_t group_id, uint16_t group_size) {
+common::xip2_t test_zec_slash_contract::create_group_xip2(uint64_t elect_blk_height, uint8_t group_id, uint16_t group_size) {
      return common::xip2_t{
         common::xnetwork_id_t{0},
         common::xconsensus_zone_id,
@@ -85,7 +85,7 @@ common::xip2_t test_slash_info_contract::create_group_xip2(uint64_t elect_blk_he
      };
  }
 
-void test_slash_info_contract::nodeservice_add_group(uint64_t elect_blk_height, common::xip2_t const& group_xip, std::vector<common::xaccount_address_t> const& nodes) {
+void test_zec_slash_contract::nodeservice_add_group(uint64_t elect_blk_height, common::xip2_t const& group_xip, std::vector<common::xaccount_address_t> const& nodes) {
     node_serv.add_group(
         group_xip.network_id(),
         group_xip.zone_id(),
@@ -112,7 +112,7 @@ void test_slash_info_contract::nodeservice_add_group(uint64_t elect_blk_height, 
 
 }
 
-void test_slash_info_contract::set_according_block_statistic_data(uint64_t elect_blk_height, std::vector<common::xip2_t> const& group_xips) {
+void test_zec_slash_contract::set_according_block_statistic_data(uint64_t elect_blk_height, std::vector<common::xip2_t> const& group_xips) {
     xelection_related_statistics_data_t elect_data;
     for (std::size_t i = 0; i < group_xips.size(); ++i) {
         auto vnode_group = node_serv.get_group(group_xips[i]);
@@ -122,7 +122,7 @@ void test_slash_info_contract::set_according_block_statistic_data(uint64_t elect
         // set vote data
         for (std::size_t i = 0; i < vnode_group->get_size(); ++i) {
             xaccount_related_statistics_data_t account_data;
-            account_data.vote_data.block_count = i;
+            account_data.vote_data.block_count = i + 1;
             account_data.vote_data.vote_count = i;
 
             group_data.account_statistics_data.push_back(account_data);
@@ -130,15 +130,15 @@ void test_slash_info_contract::set_according_block_statistic_data(uint64_t elect
 
         common::xgroup_address_t  group_addr{group_xips[i].xip()};
         elect_data.group_statistics_data[group_addr] = group_data;
-        // std::cout << "[test_slash_info_contract::set_according_block_statistic_data] " << common::xgroup_address_t{group_xips[i].xip()}.to_string() << "\n";
-        // std::cout << "[test_slash_info_contract::set_according_block_statistic_data] " << std::hex <<(int)common::xgroup_address_t{group_xips[i].xip()}.type() << "\n";
+        // std::cout << "[test_zec_slash_contract::set_according_block_statistic_data] " << common::xgroup_address_t{group_xips[i].xip()}.to_string() << "\n";
+        // std::cout << "[test_zec_slash_contract::set_according_block_statistic_data] " << std::hex <<(int)common::xgroup_address_t{group_xips[i].xip()}.type() << "\n";
     }
 
     data.detail[elect_blk_height] = elect_data;
 
 }
 
-xunqualified_node_info_t test_slash_info_contract::process_statistic_data(top::data::xstatistics_data_t const& block_statistic_data, std::vector<base::xvnode_t*> const & auditor_nodes, std::vector<base::xvnode_t*> const & validator_nodes) {
+xunqualified_node_info_t test_zec_slash_contract::process_statistic_data(top::data::xstatistics_data_t const& block_statistic_data, std::vector<base::xvnode_t*> const & auditor_nodes, std::vector<base::xvnode_t*> const & validator_nodes) {
     xunqualified_node_info_t res_node_info;
 
     // process one full tableblock statistic data
@@ -186,7 +186,7 @@ xunqualified_node_info_t test_slash_info_contract::process_statistic_data(top::d
     return res_node_info;
 }
 
-TEST_F(test_slash_info_contract, test_statistic_data) {
+TEST_F(test_zec_slash_contract, test_statistic_data) {
 
     uint64_t elect_blk_height = 1;
     auto auditor_group_xip2 = create_group_xip2(elect_blk_height, 1, auditor_account_addrs.size());
@@ -194,17 +194,17 @@ TEST_F(test_slash_info_contract, test_statistic_data) {
     set_according_block_statistic_data(1, std::vector<common::xip2_t>{auditor_group_xip2, validator_group_xip2});
 
     for (std::size_t i = 0; i < auditor_account_addrs.size(); ++i) {
-        EXPECT_EQ(data.detail[elect_blk_height].group_statistics_data[common::xgroup_address_t{auditor_group_xip2.xip()}].account_statistics_data[i].vote_data.block_count, i);
+        EXPECT_EQ(data.detail[elect_blk_height].group_statistics_data[common::xgroup_address_t{auditor_group_xip2.xip()}].account_statistics_data[i].vote_data.block_count, i+1);
         EXPECT_EQ(data.detail[elect_blk_height].group_statistics_data[common::xgroup_address_t{auditor_group_xip2.xip()}].account_statistics_data[i].vote_data.vote_count, i);
     }
 
     for (std::size_t i = 0; i < validator_account_addrs.size(); ++i) {
-        EXPECT_EQ(data.detail[elect_blk_height].group_statistics_data[common::xgroup_address_t{validator_group_xip2.xip()}].account_statistics_data[i].vote_data.block_count, i);
+        EXPECT_EQ(data.detail[elect_blk_height].group_statistics_data[common::xgroup_address_t{validator_group_xip2.xip()}].account_statistics_data[i].vote_data.block_count, i+1);
         EXPECT_EQ(data.detail[elect_blk_height].group_statistics_data[common::xgroup_address_t{validator_group_xip2.xip()}].account_statistics_data[i].vote_data.vote_count, i);
     }
 }
 
-TEST_F(test_slash_info_contract, test_accumulate_node_info) {
+TEST_F(test_zec_slash_contract, test_accumulate_node_info) {
     xunqualified_node_info_t origin_info;
 
     for (std::size_t i = 0; i < auditor_account_addrs.size(); ++i) {
@@ -248,7 +248,7 @@ TEST_F(test_slash_info_contract, test_accumulate_node_info) {
 }
 
 
-TEST_F(test_slash_info_contract, test_filter_node) {
+TEST_F(test_zec_slash_contract, test_filter_node) {
     xunqualified_node_info_t origin_info;
 
     for (std::size_t i = 0; i < auditor_account_addrs.size(); ++i) {
@@ -296,7 +296,7 @@ TEST_F(test_slash_info_contract, test_filter_node) {
 }
 
 
-TEST_F(test_slash_info_contract, test_process_statistic_data) {
+TEST_F(test_zec_slash_contract, test_process_statistic_data) {
     uint64_t elect_blk_height = 1;
     auto group_1_xip2 = create_group_xip2(elect_blk_height, 1, auditor_account_addrs.size());
     auto group_64_xip2 = create_group_xip2(elect_blk_height, 64, validator_account_addrs.size());
@@ -306,19 +306,151 @@ TEST_F(test_slash_info_contract, test_process_statistic_data) {
     auto node_info = xzec_slash_info_contract::process_statistic_data(data, &node_serv);
 
     for (std::size_t i = 0; i < auditor_account_addrs.size(); ++i) {
-        EXPECT_EQ(node_info.auditor_info[auditor_account_addrs[i]].subset_count, i);
+        EXPECT_EQ(node_info.auditor_info[auditor_account_addrs[i]].subset_count, i+1);
         EXPECT_EQ(node_info.auditor_info[auditor_account_addrs[i]].block_count, i);
     }
 
     for (std::size_t i = 0; i < validator_account_addrs.size(); ++i) {
-        EXPECT_EQ(node_info.validator_info[validator_account_addrs[i]].subset_count, i);
+        EXPECT_EQ(node_info.validator_info[validator_account_addrs[i]].subset_count, i+1);
         EXPECT_EQ(node_info.validator_info[validator_account_addrs[i]].block_count, i);
     }
 
 
 }
 
-TEST_F(test_slash_info_contract, serialize_and_deserialize_bench) {
+
+TEST_F(test_zec_slash_contract, test_summarize_info_internal) {
+    uint64_t elect_blk_height = 1;
+    auto group_1_xip2 = create_group_xip2(elect_blk_height, 1, auditor_account_addrs.size());
+    auto group_64_xip2 = create_group_xip2(elect_blk_height, 64, validator_account_addrs.size());
+    set_according_block_statistic_data(1, std::vector<common::xip2_t>{group_1_xip2, group_64_xip2});
+    auto auditor_group_nodes = node_serv.get_group(group_1_xip2)->get_nodes();
+    auto validator_group_nodes = node_serv.get_group(group_64_xip2)->get_nodes();
+    auto node_info = process_statistic_data(data, auditor_group_nodes, validator_group_nodes);
+
+    uint64_t report_height = 32;
+    base::xstream_t stream(base::xcontext_t::instance());
+    node_info.serialize_to(stream);
+    stream << report_height;
+    auto shard_slash_collect = std::string((char *)stream.data(), stream.size());
+
+    stream.reset();
+    node_info.serialize_to(stream);
+    std::string summarize_info_str = std::string((char*)stream.data(), (size_t)stream.size());
+
+    uint32_t summarize_tableblock_count_for_str = 16;
+    stream.reset();
+    stream << summarize_tableblock_count_for_str;
+    std::string summarize_tableblock_count_str = std::string((char*)stream.data(), (size_t)stream.size());
+
+    xunqualified_node_info_t summarize_info;
+    uint32_t summarize_tableblock_count = 0;
+    std::uint64_t cur_statistic_height = 0;
+
+    // fail height
+    auto res1 = summarize_slash_info_internal(shard_slash_collect, summarize_info_str, summarize_tableblock_count_str, 32,
+                                            summarize_info, summarize_tableblock_count, cur_statistic_height);
+    EXPECT_EQ(cur_statistic_height, 32);
+    EXPECT_FALSE(res1);
+
+    // success height
+    auto res2 = summarize_slash_info_internal(shard_slash_collect, summarize_info_str, summarize_tableblock_count_str, 64,
+                                            summarize_info, summarize_tableblock_count, cur_statistic_height);
+
+    EXPECT_EQ(cur_statistic_height, 32);
+    EXPECT_FALSE(res2);
+}
+
+TEST_F(test_zec_slash_contract, test_do_unqualified_node_slash_internal_normal) {
+    uint64_t elect_blk_height = 1;
+    auto group_1_xip2 = create_group_xip2(elect_blk_height, 1, auditor_account_addrs.size());
+    auto group_64_xip2 = create_group_xip2(elect_blk_height, 64, validator_account_addrs.size());
+    set_according_block_statistic_data(1, std::vector<common::xip2_t>{group_1_xip2, group_64_xip2});
+    auto auditor_group_nodes = node_serv.get_group(group_1_xip2)->get_nodes();
+    auto validator_group_nodes = node_serv.get_group(group_64_xip2)->get_nodes();
+    auto node_info = process_statistic_data(data, auditor_group_nodes, validator_group_nodes);
+
+    std::string last_slash_time_str = "100";
+    xunqualified_node_info_t summarize_info = node_info;
+    uint32_t summarize_tableblock_count = 32;
+    auto punish_interval_table_block_param = XGET_ONCHAIN_GOVERNANCE_PARAMETER(punish_interval_table_block);
+    auto punish_interval_time_block_param = XGET_ONCHAIN_GOVERNANCE_PARAMETER(punish_interval_time_block);
+
+    // get filter param
+    auto slash_vote = XGET_ONCHAIN_GOVERNANCE_PARAMETER(sign_block_publishment_threshold_value);
+    auto slash_persent = XGET_ONCHAIN_GOVERNANCE_PARAMETER(sign_block_ranking_publishment_threshold_value);
+    auto award_vote = XGET_ONCHAIN_GOVERNANCE_PARAMETER(sign_block_ranking_reward_threshold_value);
+    auto award_persent = XGET_ONCHAIN_GOVERNANCE_PARAMETER(sign_block_reward_threshold_value);
+
+    uint64_t timestamp = 200;
+    std::vector<xaction_node_info_t> node_to_action;
+    auto res = do_unqualified_node_slash_internal(last_slash_time_str, summarize_tableblock_count, punish_interval_table_block_param, punish_interval_time_block_param, timestamp,
+                                           summarize_info, slash_vote, slash_persent, award_vote, award_persent, node_to_action);
+    EXPECT_TRUE(res);
+
+}
+
+TEST_F(test_zec_slash_contract, test_do_unqualified_node_slash_internal_fail1) {
+    uint64_t elect_blk_height = 1;
+    auto group_1_xip2 = create_group_xip2(elect_blk_height, 1, auditor_account_addrs.size());
+    auto group_64_xip2 = create_group_xip2(elect_blk_height, 64, validator_account_addrs.size());
+    set_according_block_statistic_data(1, std::vector<common::xip2_t>{group_1_xip2, group_64_xip2});
+    auto auditor_group_nodes = node_serv.get_group(group_1_xip2)->get_nodes();
+    auto validator_group_nodes = node_serv.get_group(group_64_xip2)->get_nodes();
+    auto node_info = process_statistic_data(data, auditor_group_nodes, validator_group_nodes);
+
+    std::string last_slash_time_str = "100";
+    xunqualified_node_info_t summarize_info = node_info;
+    uint32_t summarize_tableblock_count = 10;
+    auto punish_interval_table_block_param = XGET_ONCHAIN_GOVERNANCE_PARAMETER(punish_interval_table_block);
+    auto punish_interval_time_block_param = XGET_ONCHAIN_GOVERNANCE_PARAMETER(punish_interval_time_block);
+
+    // get filter param
+    auto slash_vote = XGET_ONCHAIN_GOVERNANCE_PARAMETER(sign_block_publishment_threshold_value);
+    auto slash_persent = XGET_ONCHAIN_GOVERNANCE_PARAMETER(sign_block_ranking_publishment_threshold_value);
+    auto award_vote = XGET_ONCHAIN_GOVERNANCE_PARAMETER(sign_block_ranking_reward_threshold_value);
+    auto award_persent = XGET_ONCHAIN_GOVERNANCE_PARAMETER(sign_block_reward_threshold_value);
+
+    uint64_t timestamp = 200;
+    std::vector<xaction_node_info_t> node_to_action;
+    auto res = do_unqualified_node_slash_internal(last_slash_time_str, summarize_tableblock_count, punish_interval_table_block_param, punish_interval_time_block_param, timestamp,
+                                           summarize_info, slash_vote, slash_persent, award_vote, award_persent, node_to_action);
+
+    EXPECT_FALSE(res);
+
+}
+
+TEST_F(test_zec_slash_contract, test_do_unqualified_node_slash_internal_fail2) {
+    uint64_t elect_blk_height = 1;
+    auto group_1_xip2 = create_group_xip2(elect_blk_height, 1, auditor_account_addrs.size());
+    auto group_64_xip2 = create_group_xip2(elect_blk_height, 64, validator_account_addrs.size());
+    set_according_block_statistic_data(1, std::vector<common::xip2_t>{group_1_xip2, group_64_xip2});
+    auto auditor_group_nodes = node_serv.get_group(group_1_xip2)->get_nodes();
+    auto validator_group_nodes = node_serv.get_group(group_64_xip2)->get_nodes();
+    auto node_info = process_statistic_data(data, auditor_group_nodes, validator_group_nodes);
+
+    std::string last_slash_time_str = "100";
+    xunqualified_node_info_t summarize_info = node_info;
+    uint32_t summarize_tableblock_count = 32;
+    auto punish_interval_table_block_param = XGET_ONCHAIN_GOVERNANCE_PARAMETER(punish_interval_table_block);
+    auto punish_interval_time_block_param = XGET_ONCHAIN_GOVERNANCE_PARAMETER(punish_interval_time_block);
+
+    // get filter param
+    auto slash_vote = XGET_ONCHAIN_GOVERNANCE_PARAMETER(sign_block_publishment_threshold_value);
+    auto slash_persent = XGET_ONCHAIN_GOVERNANCE_PARAMETER(sign_block_ranking_publishment_threshold_value);
+    auto award_vote = XGET_ONCHAIN_GOVERNANCE_PARAMETER(sign_block_ranking_reward_threshold_value);
+    auto award_persent = XGET_ONCHAIN_GOVERNANCE_PARAMETER(sign_block_reward_threshold_value);
+
+    uint64_t timestamp = 120;
+    std::vector<xaction_node_info_t> node_to_action;
+    auto res = do_unqualified_node_slash_internal(last_slash_time_str, summarize_tableblock_count, punish_interval_table_block_param, punish_interval_time_block_param, timestamp,
+                                           summarize_info, slash_vote, slash_persent, award_vote, award_persent, node_to_action);
+    EXPECT_FALSE(res);
+
+}
+
+
+TEST_F(test_zec_slash_contract, serialize_and_deserialize_bench) {
     uint64_t elect_blk_height = 1;
     auto group_1_xip2 = create_group_xip2(elect_blk_height, 1, auditor_account_addrs.size());
     auto group_64_xip2 = create_group_xip2(elect_blk_height, 64, validator_account_addrs.size());
@@ -342,7 +474,7 @@ TEST_F(test_slash_info_contract, serialize_and_deserialize_bench) {
 
 }
 
-TEST_F(test_slash_info_contract, process_statistic_data_bench) {
+TEST_F(test_zec_slash_contract, process_statistic_data_bench) {
     uint64_t elect_blk_height = 1;
     auto group_1_xip2 = create_group_xip2(elect_blk_height, 1, auditor_account_addrs.size());
     auto group_64_xip2 = create_group_xip2(elect_blk_height, 64, validator_account_addrs.size());
@@ -367,7 +499,7 @@ TEST_F(test_slash_info_contract, process_statistic_data_bench) {
 }
 
 
-TEST_F(test_slash_info_contract, accumulate_node_info_bench) {
+TEST_F(test_zec_slash_contract, accumulate_node_info_bench) {
     xunqualified_node_info_t origin_info;
 
     for (std::size_t i = 0; i < auditor_account_addrs.size(); ++i) {
@@ -400,7 +532,7 @@ TEST_F(test_slash_info_contract, accumulate_node_info_bench) {
 
 }
 
-TEST_F(test_slash_info_contract, filter_helper_bench) {
+TEST_F(test_zec_slash_contract, filter_helper_bench) {
     xunqualified_node_info_t origin_info;
 
     for (std::size_t i = 0; i < auditor_account_addrs.size(); ++i) {
@@ -431,6 +563,99 @@ TEST_F(test_slash_info_contract, filter_helper_bench) {
     std::cout << "filter_helper average timecost: " << total_time/count << "\n";
 
 }
+
+
+TEST_F(test_zec_slash_contract, summarize_info_internal_bench) {
+    uint64_t elect_blk_height = 1;
+    auto group_1_xip2 = create_group_xip2(elect_blk_height, 1, auditor_account_addrs.size());
+    auto group_64_xip2 = create_group_xip2(elect_blk_height, 64, validator_account_addrs.size());
+    set_according_block_statistic_data(1, std::vector<common::xip2_t>{group_1_xip2, group_64_xip2});
+    auto auditor_group_nodes = node_serv.get_group(group_1_xip2)->get_nodes();
+    auto validator_group_nodes = node_serv.get_group(group_64_xip2)->get_nodes();
+    auto node_info = process_statistic_data(data, auditor_group_nodes, validator_group_nodes);
+
+    uint64_t report_height = 32;
+    base::xstream_t stream(base::xcontext_t::instance());
+    node_info.serialize_to(stream);
+    stream << report_height;
+    auto shard_slash_collect = std::string((char *)stream.data(), stream.size());
+
+    stream.reset();
+    node_info.serialize_to(stream);
+    std::string summarize_info_str = std::string((char*)stream.data(), (size_t)stream.size());
+
+    uint32_t summarize_tableblock_count_for_str = 16;
+    stream.reset();
+    stream << summarize_tableblock_count_for_str;
+    std::string summarize_tableblock_count_str = std::string((char*)stream.data(), (size_t)stream.size());
+
+    xunqualified_node_info_t summarize_info;
+    uint32_t summarize_tableblock_count = 0;
+    std::uint64_t cur_statistic_height = 0;
+
+
+
+    int count = 1000;
+
+    int total_time = 0;
+    for (auto i = 0; i < count; ++i) {
+        xunqualified_node_info_t summarize_slash_info;
+        auto time_start = std::chrono::system_clock::now();
+        // success height
+        auto res = summarize_slash_info_internal(shard_slash_collect, summarize_info_str, summarize_tableblock_count_str, 16,
+                                            summarize_info, summarize_tableblock_count, cur_statistic_height);
+        EXPECT_TRUE(res);
+        auto durarion = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now() - time_start);
+        total_time += durarion.count();
+    }
+
+    std::cout << "summarize_info_internal average timecost: " << total_time/count << "\n";
+
+}
+
+
+
+TEST_F(test_zec_slash_contract, do_unqualified_node_slash_internal_bench) {
+    uint64_t elect_blk_height = 1;
+    auto group_1_xip2 = create_group_xip2(elect_blk_height, 1, auditor_account_addrs.size());
+    auto group_64_xip2 = create_group_xip2(elect_blk_height, 64, validator_account_addrs.size());
+    set_according_block_statistic_data(1, std::vector<common::xip2_t>{group_1_xip2, group_64_xip2});
+    auto auditor_group_nodes = node_serv.get_group(group_1_xip2)->get_nodes();
+    auto validator_group_nodes = node_serv.get_group(group_64_xip2)->get_nodes();
+    auto node_info = process_statistic_data(data, auditor_group_nodes, validator_group_nodes);
+
+    std::string last_slash_time_str = "100";
+    xunqualified_node_info_t summarize_info = node_info;
+    uint32_t summarize_tableblock_count = 32;
+    auto punish_interval_table_block_param = XGET_ONCHAIN_GOVERNANCE_PARAMETER(punish_interval_table_block);
+    auto punish_interval_time_block_param = XGET_ONCHAIN_GOVERNANCE_PARAMETER(punish_interval_time_block);
+
+    // get filter param
+    auto slash_vote = XGET_ONCHAIN_GOVERNANCE_PARAMETER(sign_block_publishment_threshold_value);
+    auto slash_persent = XGET_ONCHAIN_GOVERNANCE_PARAMETER(sign_block_ranking_publishment_threshold_value);
+    auto award_vote = XGET_ONCHAIN_GOVERNANCE_PARAMETER(sign_block_ranking_reward_threshold_value);
+    auto award_persent = XGET_ONCHAIN_GOVERNANCE_PARAMETER(sign_block_reward_threshold_value);
+
+    uint64_t timestamp = 200;
+    std::vector<xaction_node_info_t> node_to_action;
+
+    int count = 1000;
+
+    int total_time = 0;
+    for (auto i = 0; i < count; ++i) {
+        auto time_start = std::chrono::system_clock::now();
+        auto res = do_unqualified_node_slash_internal(last_slash_time_str, summarize_tableblock_count, punish_interval_table_block_param, punish_interval_time_block_param, timestamp,
+                                           summarize_info, slash_vote, slash_persent, award_vote, award_persent, node_to_action);
+        EXPECT_TRUE(res);
+        auto durarion = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now() - time_start);
+        total_time += durarion.count();
+    }
+
+    std::cout << "do_unqualified_node_slash_internal average timecost: " << total_time/count << "\n";
+}
+
+
+
 
 
 
