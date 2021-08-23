@@ -260,6 +260,15 @@ uint64_t xcons_transaction_t::get_last_action_receipt_id() const {
     }
     return 0;
 }
+uint64_t xcons_transaction_t::get_last_action_sender_confirmed_receipt_id() const {
+    if (m_receipt != nullptr) {
+        std::string value = m_receipt->get_tx_result_property(xtransaction_exec_state_t::XTX_SENDER_CONFRIMED_RECEIPT_ID);
+        if (!value.empty()) {
+            return base::xstring_utl::touint64(value);
+        }
+    }
+    return 0;
+}
 base::xtable_shortid_t xcons_transaction_t::get_last_action_self_tableid() const {
     if (m_receipt != nullptr) {
         std::string value = m_receipt->get_tx_result_property(xtransaction_exec_state_t::XTX_RECEIPT_ID_SELF_TABLE_ID);

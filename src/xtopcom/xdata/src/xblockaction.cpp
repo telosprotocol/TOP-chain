@@ -78,6 +78,13 @@ base::xtable_shortid_t xlightunit_action_t::get_receipt_id_peer_tableid()const {
     }
     return 0;
 }
+uint64_t xlightunit_action_t::get_sender_confirmed_receipt_id() const {
+    std::string value = get_action_result_property(xtransaction_exec_state_t::XTX_SENDER_CONFRIMED_RECEIPT_ID);
+    if (!value.empty()) {
+        return base::xstring_utl::touint64(value);
+    }
+    return 0;
+}
 
 std::string xlightunit_action_t::get_action_result_property(const std::string & key) const {
     const std::map<std::string,std::string>* map_ptr = get_method_result()->get_map<std::string>();
