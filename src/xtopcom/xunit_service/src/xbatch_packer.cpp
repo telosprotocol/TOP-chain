@@ -544,14 +544,14 @@ void xbatch_packer::make_receipts_and_send(xblock_t * commit_block, xblock_t * c
         return;
     }
 
-    base::xauto_ptr<base::xvbstate_t> bstate =
-        base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(commit_block, metrics::statestore_access_from_batchpacker_make_receipt_msg);
-    if (bstate == nullptr) {
-        xwarn("xbatch_packer::make_receipts_and_send fail-get bstate.block=%s", commit_block->dump().c_str());
-        return;
-    }
+    // base::xauto_ptr<base::xvbstate_t> bstate =
+    //     base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(commit_block, metrics::statestore_access_from_batchpacker_make_receipt_msg);
+    // if (bstate == nullptr) {
+    //     xwarn("xbatch_packer::make_receipts_and_send fail-get bstate.block=%s", commit_block->dump().c_str());
+    //     return;
+    // }
 
-    xtablestate_ptr_t tablestate = std::make_shared<xtable_bstate_t>(bstate.get());
+    // xtablestate_ptr_t tablestate = std::make_shared<xtable_bstate_t>(bstate.get());
 
     std::vector<data::xcons_transaction_ptr_t> all_cons_txs;
     std::vector<base::xfull_txreceipt_t> all_receipts = base::xtxreceipt_build_t::create_all_txreceipts(commit_block, cert_block);
@@ -569,7 +569,7 @@ void xbatch_packer::make_receipts_and_send(xblock_t * commit_block, xblock_t * c
 
     xunit_info("xbatch_packer::make_receipts_and_send commit_block:%s,cert_block:%s", commit_block->dump().c_str(), cert_block->dump().c_str());
     std::vector<data::xcons_transaction_ptr_t> non_shard_cross_receipts;
-    network_proxy->send_receipt_msgs(get_xip2_addr(), all_cons_txs, non_shard_cross_receipts, tablestate->get_receiptid_state());
+    network_proxy->send_receipt_msgs(get_xip2_addr(), all_cons_txs, non_shard_cross_receipts/*, tablestate->get_receiptid_state()*/);
 
     for (auto & tx : non_shard_cross_receipts) {
         xtxpool_v2::xtx_para_t para;

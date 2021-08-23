@@ -288,9 +288,13 @@ void xtxpool_table_t::deal_commit_table_block(xblock_t * table_block) {
                 txnonce = _rawtx->get_tx_nonce();
             }
             update_id_state(txtxpool_info, txaction.get_receipt_id_peer_tableid(), txaction.get_receipt_id(), txnonce);
-            // todo:update peer table confirm receipt id.
-            update_unconfirm_id_height(
-                txaction.get_tx_subtype(), txaction.get_receipt_id_peer_tableid(), txaction.get_receipt_id(), table_block->get_height(), xverifier::xtx_utl::get_gmttime_s());
+            // todo:update peer table confirm receipt id.(nathan)
+            update_unconfirm_id_height(txaction.get_tx_subtype(),
+                                       txaction.get_receipt_id_peer_tableid(),
+                                       txaction.get_receipt_id(),
+                                       txaction.get_sender_confirmed_receipt_id(),
+                                       table_block->get_height(),
+                                       xverifier::xtx_utl::get_gmttime_s());
         }
     }
 
@@ -675,8 +679,8 @@ bool xtxpool_table_t::get_account_latest_nonce(const std::string account_addr, u
     return true;
 }
 
-void xtxpool_table_t::update_peer_receipt_id_pair(base::xtable_shortid_t peer_table_sid, const base::xreceiptid_pair_t & pair) {
-    xtxpool_info("xtxpool_table_t::update_peer_receipt_id_pair table:%s,peer table:%d,new pair:%s", m_xtable_info.get_account().c_str(), peer_table_sid, pair.dump().c_str());
+void xtxpool_table_t::update_peer_confirm_id(base::xtable_shortid_t peer_table_sid, uint64_t confirm_id) {
+    xtxpool_info("xtxpool_table_t::update_peer_receipt_id_pair table:%s,peer table:%d,confirm id:%llu", m_xtable_info.get_account().c_str(), peer_table_sid, confirm_id);
     // {
     //     std::lock_guard<std::mutex> lck(m_peer_receiptid_map_mutex);
     //     auto iter = m_peer_receiptid_map.find(peer_table_sid);
@@ -697,18 +701,19 @@ void xtxpool_table_t::update_peer_receipt_id_pair(base::xtable_shortid_t peer_ta
 
     {
         std::lock_guard<std::mutex> lck(m_receipt_id_height_record_mutex);
-        m_receiver_unconfirm_id_height.update_confirm_id(peer_table_sid, pair.get_confirmid_max());
+        m_receiver_unconfirm_id_height.update_confirm_id(peer_table_sid, confirm_id);
     }
 
-    {
-        std::lock_guard<std::mutex> lck(m_mgr_mutex);
-        m_txmgr_table.update_peer_receipt_id_pair(peer_table_sid, pair);
-    }
+    // {
+    //     std::lock_guard<std::mutex> lck(m_mgr_mutex);
+    //     m_txmgr_table.update_peer_confirm_id(peer_table_sid, pair);
+    // }
 }
 
 void xtxpool_table_t::update_unconfirm_id_height(base::enum_transaction_subtype subtype,
                                                  base::xtable_shortid_t peer_table_sid,
                                                  uint64_t receipt_id,
+                                                 uint64_t confirm_id,
                                                  uint64_t table_height,
                                                  uint64_t time) {
     std::lock_guard<std::mutex> lck(m_receipt_id_height_record_mutex);
@@ -721,11 +726,13 @@ void xtxpool_table_t::update_unconfirm_id_height(base::enum_transaction_subtype 
                      table_height);
 
     } else if (subtype == enum_transaction_subtype_recv) {
+        m_receiver_unconfirm_id_height.update_confirm_id(peer_table_sid, confirm_id);
         m_receiver_unconfirm_id_height.add_id_height(peer_table_sid, receipt_id, table_height, time);
-        xtxpool_info("xtxpool_table_t::update_unconfirm_id_height add receiver unconfirm id height table:%s, peer table:%d, receipt_id::%llu, table_height:%llu",
+        xtxpool_info("xtxpool_table_t::update_unconfirm_id_height add receiver unconfirm id height table:%s, peer table:%d, receipt_id::%llu, confirm id:%llu, table_height:%llu",
                      m_xtable_info.get_account().c_str(),
                      peer_table_sid,
                      receipt_id,
+                     confirm_id,
                      table_height);
     }
 }

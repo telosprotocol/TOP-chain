@@ -294,32 +294,32 @@ bool xnetwork_proxy::erase(const xvip2_t & addr) {
 
 void xnetwork_proxy::send_receipt_msgs(const xvip2_t & from_addr,
                                        const std::vector<data::xcons_transaction_ptr_t> & receipts,
-                                       std::vector<data::xcons_transaction_ptr_t> & non_shard_cross_receipts,
-                                       const base::xreceiptid_state_ptr_t & receiptid_state) {
+                                       std::vector<data::xcons_transaction_ptr_t> & non_shard_cross_receipts/*,
+                                       const base::xreceiptid_state_ptr_t & receiptid_state*/) {
     auto net_driver = find(from_addr);
     if (net_driver == nullptr) {
         xunit_warn("xnetwork_proxy::send_receipt_msgs net_driver not found,can not send receipt addr:%s", xcons_utl::xip_to_hex(from_addr).c_str());
         return;
     }
     for (auto & receipt : receipts) {
-        send_receipt_msg(net_driver, receipt, non_shard_cross_receipts, receiptid_state);
+        send_receipt_msg(net_driver, receipt, non_shard_cross_receipts/*, receiptid_state*/);
     }
 }
 
 void xnetwork_proxy::send_receipt_msg(std::shared_ptr<vnetwork::xvnetwork_driver_face_t> net_driver,
                                       const data::xcons_transaction_ptr_t & receipt,
-                                      std::vector<data::xcons_transaction_ptr_t> & non_shard_cross_receipts,
-                                      const base::xreceiptid_state_ptr_t & receiptid_state) {
+                                      std::vector<data::xcons_transaction_ptr_t> & non_shard_cross_receipts/*,
+                                      const base::xreceiptid_state_ptr_t & receiptid_state*/) {
     try {
         xassert(receipt->is_recv_tx() || receipt->is_confirm_tx());
         base::xtable_index_t target_tableindex = receipt->get_self_table_index(); // receipt should send to self table
 
-        base::xreceiptid_pair_t pair;
-        receiptid_state->find_pair(target_tableindex.to_table_shortid(), pair);
+        // base::xreceiptid_pair_t pair;
+        // receiptid_state->find_pair(target_tableindex.to_table_shortid(), pair);
 
         top::base::xautostream_t<4096> stream(top::base::xcontext_t::instance());
         receipt->serialize_to(stream);
-        pair.do_write(stream);
+        // pair.do_write(stream);
         vnetwork::xmessage_t msg = vnetwork::xmessage_t({stream.data(), stream.data() + stream.size()},
                                                         receipt->is_recv_tx() ? xtxpool_v2::xtxpool_msg_send_receipt : xtxpool_v2::xtxpool_msg_recv_receipt);
 

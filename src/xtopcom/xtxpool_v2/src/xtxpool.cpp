@@ -365,13 +365,13 @@ bool xready_account_t::put_tx(const xcons_transaction_ptr_t & tx) {
     return true;
 }
 
-void xtxpool_t::update_peer_receipt_id_pair(const std::string & self_addr, base::xtable_shortid_t peer_sid, const base::xreceiptid_pair_t & pair) {
+void xtxpool_t::update_peer_confirm_id(const std::string & self_addr, base::xtable_shortid_t peer_sid, uint64_t confirm_id) {
     auto table = get_txpool_table_by_addr(self_addr);
     if (table == nullptr) {
         return;
     }
-    xdbg("xtxpool_t::update_peer_receipt_id_pair table:%d,peer:%d,receipt id pair:%s", table->table_sid(), peer_sid, pair.dump().c_str());
-    table->update_peer_receipt_id_pair(peer_sid, pair);
+    xdbg("xtxpool_t::update_peer_receipt_id_pair table:%d,peer:%d,confirm id:%s", table->table_sid(), peer_sid, confirm_id);
+    table->update_peer_confirm_id(peer_sid, confirm_id);
 }
 
 void xtxpool_t::update_peer_all_receipt_id_pairs(base::xtable_shortid_t peer_sid, const base::xreceiptid_pairs_t & all_pairs) {
@@ -382,7 +382,7 @@ void xtxpool_t::update_peer_all_receipt_id_pairs(base::xtable_shortid_t peer_sid
             if (table != nullptr) {
                 base::xreceiptid_pair_t pair;
                 all_pairs.find_pair(table->table_sid(), pair);
-                table->update_peer_receipt_id_pair(peer_sid, pair);
+                table->update_peer_confirm_id(peer_sid, pair.get_confirmid_max());
             }
         }
     }

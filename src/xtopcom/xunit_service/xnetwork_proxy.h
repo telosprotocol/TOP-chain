@@ -39,8 +39,8 @@ public:
     // erase networkdriver, call before vnode destroy
     virtual bool erase(const xvip2_t &addr);
 
-    void send_receipt_msgs(const xvip2_t & from_addr, const std::vector<data::xcons_transaction_ptr_t> & receipts, std::vector<data::xcons_transaction_ptr_t> & non_shard_cross_receipts,
-                                       const base::xreceiptid_state_ptr_t & receiptid_state) override;
+    void send_receipt_msgs(const xvip2_t & from_addr, const std::vector<data::xcons_transaction_ptr_t> & receipts, std::vector<data::xcons_transaction_ptr_t> & non_shard_cross_receipts/*,
+                                       const base::xreceiptid_state_ptr_t & receiptid_state*/) override;
     // void send_out(const xvip2_t & from_addr, const xvip2_t & to_addr, vnetwork::xmessage_t msg) override;
     bool send_out(common::xmessage_id_t const &id, const xvip2_t &from_addr, const xvip2_t &to_addr, base::xstream_t &stream, const std::string & account) override;
 
@@ -53,8 +53,8 @@ protected:
 
     void send_receipt_msg(std::shared_ptr<vnetwork::xvnetwork_driver_face_t> net_driver,
                           const data::xcons_transaction_ptr_t & receipt,
-                          std::vector<data::xcons_transaction_ptr_t> & non_shard_cross_receipts,
-                          const base::xreceiptid_state_ptr_t & receiptid_state);
+                          std::vector<data::xcons_transaction_ptr_t> & non_shard_cross_receipts/*,
+                          const base::xreceiptid_state_ptr_t & receiptid_state*/);
 
     // private:
     //     virtual vnetwork::xvnetwork_driver_face_t* find_network(const xvip2_t& xip);

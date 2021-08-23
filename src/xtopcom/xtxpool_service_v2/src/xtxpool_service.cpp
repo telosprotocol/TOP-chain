@@ -354,8 +354,8 @@ void xtxpool_service::on_message_unit_receipt(vnetwork::xvnode_address_t const &
     base::xstream_t stream(top::base::xcontext_t::instance(), (uint8_t *)message.payload().data(), (uint32_t)message.payload().size());
     data::xcons_transaction_ptr_t receipt = make_object_ptr<data::xcons_transaction_t>();
     int32_t ret = receipt->serialize_from(stream);
-    base::xreceiptid_pair_t pair;
-    pair.do_read(stream);
+    // base::xreceiptid_pair_t pair;
+    // pair.do_read(stream);
 
     if (ret <= 0) {
         xerror("xtxpool_service::on_message_unit_receipt receipt serialize_from fail ret:%d", ret);
@@ -376,7 +376,7 @@ void xtxpool_service::on_message_unit_receipt(vnetwork::xvnode_address_t const &
     std::shared_ptr<xtxpool_v2::xtx_entry> tx_ent = std::make_shared<xtxpool_v2::xtx_entry>(receipt, para);
     XMETRICS_GAUGE(metrics::txpool_received_other_send_receipt_num, 1);
     ret = m_para->get_txpool()->push_receipt(tx_ent, false, false);
-    m_para->get_txpool()->update_peer_receipt_id_pair(receipt->get_account_addr(), receipt->get_peer_tableid(), pair);
+    m_para->get_txpool()->update_peer_confirm_id(receipt->get_account_addr(), receipt->get_peer_tableid(), receipt->get_last_action_sender_confirmed_receipt_id());
 
     if (message.id() == xtxpool_v2::xtxpool_msg_resend_receipt && ret == xtxpool_v2::xtxpool_error_tx_duplicate && receipt->is_recv_tx()) {
         if (m_running && m_is_send_receipt_role) {

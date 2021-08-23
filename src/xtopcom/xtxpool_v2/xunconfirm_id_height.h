@@ -33,7 +33,7 @@ public:
     }
 
     void add_id_height(uint64_t receipt_id, uint64_t height, uint64_t time) {
-        if (receipt_id > m_confirm_id) {
+        if (receipt_id > m_confirm_id || m_confirm_id == 0xFFFFFFFFFFFFFFFF) {
             m_id_height_map[receipt_id] = height;
             if (m_id_height_map.rbegin()->first == receipt_id) {
                 m_update_time = time;
@@ -65,10 +65,13 @@ public:
     }
 
     bool is_all_loaded() const {
+        if (m_confirm_id == 0xFFFFFFFFFFFFFFFF) {
+            return false;
+        }
         if (m_id_height_map.empty()) {
             return true;
         }
-        return m_id_height_map.size() == (m_id_height_map.rbegin()->first - m_id_height_map.begin()->first + 1);
+        return m_id_height_map.size() == (m_id_height_map.rbegin()->first - m_confirm_id);
     }
 
     bool get_resend_id_height(uint64_t & receipt_id, uint64_t & height, uint64_t cur_time) const {

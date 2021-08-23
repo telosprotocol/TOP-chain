@@ -263,9 +263,9 @@ void xtxmgr_table_t::send_tx_queue_to_pending() {
     }
 }
 
-void xtxmgr_table_t::update_peer_receipt_id_pair(base::xtable_shortid_t peer_table_sid, const base::xreceiptid_pair_t & pair) {
-    m_new_receipt_queue.update_peer_receipt_id_pair(peer_table_sid, pair);
-}
+// void xtxmgr_table_t::update_peer_confirm_id(base::xtable_shortid_t peer_table_sid, uint64_t confirm_id) {
+//     m_new_receipt_queue.update_peer_confirm_id(peer_table_sid, confirm_id);
+// }
 
 }  // namespace xtxpool_v2
 }  // namespace top
