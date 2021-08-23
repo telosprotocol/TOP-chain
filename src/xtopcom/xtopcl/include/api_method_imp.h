@@ -214,8 +214,6 @@ public:
     bool getCGP(const user_info & uinfo, const std::string & target, std::ostringstream & out_str, std::function<void(GetProposalResult *)> func = nullptr);
 
 private:
-    std::string hash_signature_action(top::data::xaction_t & action, const std::array<std::uint8_t, PRI_KEY_LEN> & private_key);
-
     bool hash_signature(top::data::xtransaction_t * trans_action, const std::array<uint8_t, PRI_KEY_LEN> & private_key);
 
     uint64_t get_timestamp();
