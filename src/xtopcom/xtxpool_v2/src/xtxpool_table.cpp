@@ -288,6 +288,7 @@ void xtxpool_table_t::deal_commit_table_block(xblock_t * table_block) {
                 txnonce = _rawtx->get_tx_nonce();
             }
             update_id_state(txtxpool_info, txaction.get_receipt_id_peer_tableid(), txaction.get_receipt_id(), txnonce);
+            // todo:update peer table confirm receipt id.
             update_unconfirm_id_height(
                 txaction.get_tx_subtype(), txaction.get_receipt_id_peer_tableid(), txaction.get_receipt_id(), table_block->get_height(), xverifier::xtx_utl::get_gmttime_s());
         }
@@ -399,10 +400,10 @@ void xtxpool_table_t::refresh_table(bool refresh_unconfirm_txs) {
         uint64_t sender_min_height;
         uint64_t receiver_min_height;
 
-        ret = m_sender_unconfirm_id_height.get_min_height(sender_min_height, m_xtable_info.get_all_table_sids());
+        ret = m_sender_unconfirm_id_height.get_min_height(sender_min_height);
 
         if (ret) {
-            ret = m_receiver_unconfirm_id_height.get_min_height(receiver_min_height, m_xtable_info.get_all_table_sids());
+            ret = m_receiver_unconfirm_id_height.get_min_height(receiver_min_height);
         }
         if (ret) {
             uint64_t min_height = (sender_min_height < receiver_min_height) ? sender_min_height : receiver_min_height;
@@ -411,9 +412,9 @@ void xtxpool_table_t::refresh_table(bool refresh_unconfirm_txs) {
 
         bool sender_all_unconfirm_id_recovered = false;
         bool receiver_all_unconfirm_id_recovered = false;
-        sender_all_unconfirm_id_recovered = m_sender_unconfirm_id_height.is_all_unconfirm_id_recovered(m_xtable_info.get_all_table_sids());
+        sender_all_unconfirm_id_recovered = m_sender_unconfirm_id_height.is_all_unconfirm_id_recovered();
         if (sender_all_unconfirm_id_recovered) {
-            receiver_all_unconfirm_id_recovered = m_receiver_unconfirm_id_height.is_all_unconfirm_id_recovered(m_xtable_info.get_all_table_sids());
+            receiver_all_unconfirm_id_recovered = m_receiver_unconfirm_id_height.is_all_unconfirm_id_recovered();
         }
 
         if (!sender_all_unconfirm_id_recovered || !receiver_all_unconfirm_id_recovered) {
@@ -426,7 +427,7 @@ void xtxpool_table_t::refresh_table(bool refresh_unconfirm_txs) {
         uint64_t load_height_max = right_end;
         uint64_t load_height_min = (right_end >= left_end + 50) ? (right_end - 49) : left_end;
         if (!found_lacking_saction) {
-            if (latest_committed_block->get_height() == 0) {
+            if (latest_committed_block->get_height() <= 1) {
                 xtxpool_warn("xtxpool_table_t::refresh_table load commit block fail,table:%s", m_xtable_info.get_account().c_str());
                 return;
             }
@@ -450,6 +451,7 @@ void xtxpool_table_t::refresh_table(bool refresh_unconfirm_txs) {
                     m_xtable_info.get_account(), sync_from_height, (uint32_t)(height - sync_from_height + 1), true, "lack_of_table_block");
                 m_para->get_bus()->push_event(ev);
                 xtxpool_warn("xtxpool_table_t::refresh_table load table block fail:table:%s,try sync %llu-%llu", m_xtable_info.get_account().c_str(), sync_from_height, height);
+                break;
             }
         }
     }
@@ -735,8 +737,6 @@ void xtxpool_table_t::update_sender_unconfirm_id_height(const base::xreceiptid_s
         base::xreceiptid_pair_t pair;
         receipt_id_state->find_pair(table_sid, pair);
         m_sender_unconfirm_id_height.update_confirm_id(table_sid, pair.get_confirmid_max());
-        m_sender_unconfirm_id_height.update_unconfirm_id(table_sid, pair.get_sendid_max());
-        m_receiver_unconfirm_id_height.update_unconfirm_id(table_sid, pair.get_recvid_max());
     }
 }
 
@@ -868,6 +868,20 @@ const std::vector<xcons_transaction_ptr_t> xtxpool_table_t::get_resend_txs(uint6
     }
 
     return resend_txs;
+}
+
+xcons_transaction_ptr_t xtxpool_table_t::get_resend_confirm_tx(base::xtable_shortid_t peer_sid, uint64_t recv_resend_id) {
+    uint64_t latest_id;
+    uint64_t height;
+    uint64_t confirm_id;
+    auto ret = m_receiver_unconfirm_id_height.get_latest_id_height_and_cofirm_id(peer_sid, latest_id, height, confirm_id);
+    if (ret && recv_resend_id > confirm_id && recv_resend_id <= latest_id) {
+        auto receipt = build_receipt(peer_sid, latest_id, height, enum_transaction_subtype_confirm);
+        if (receipt != nullptr) {
+            return receipt;
+        }
+    }
+    return nullptr;
 }
 
 }  // namespace xtxpool_v2

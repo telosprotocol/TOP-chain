@@ -114,7 +114,8 @@ public:
     base::xtable_shortid_t table_sid() {
         return m_xtable_info.get_short_table_id();
     }
-    data::xtablestate_ptr_t get_table_state_cache() const {return m_table_state_cache.get_cache();}
+    // data::xtablestate_ptr_t get_table_state_cache() const {return m_table_state_cache.get_cache();}
+    xcons_transaction_ptr_t get_resend_confirm_tx(base::xtable_shortid_t peer_sid, uint64_t recv_resend_id);
 
 private:
     bool is_account_need_update(const std::string & account_addr) const;

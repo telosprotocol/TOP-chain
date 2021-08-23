@@ -404,15 +404,24 @@ xcons_transaction_ptr_t xtxpool_t::build_confirm_tx(const std::string & from_tab
     return table->build_confirm_tx(from_table_addr, receipt_id);
 }
 
-data::xtablestate_ptr_t xtxpool_t::get_table_state_cache(uint8_t zone, uint16_t subaddr) const {
-    if (!is_table_subscribed(zone, subaddr)) {
-        return nullptr;
-    }
-    auto table = m_tables[zone][subaddr];
+// data::xtablestate_ptr_t xtxpool_t::get_table_state_cache(uint8_t zone, uint16_t subaddr) const {
+//     if (!is_table_subscribed(zone, subaddr)) {
+//         return nullptr;
+//     }
+//     auto table = m_tables[zone][subaddr];
+//     if (table == nullptr) {
+//         return nullptr;
+//     }
+//     return table->get_table_state_cache();
+// }
+
+xcons_transaction_ptr_t xtxpool_t::get_resend_confirm_tx(const std::string self_addr, base::xtable_shortid_t peer_sid, uint64_t recv_resend_id) {
+    auto table = get_txpool_table_by_addr(self_addr);
     if (table == nullptr) {
         return nullptr;
     }
-    return table->get_table_state_cache();
+
+    return table->get_resend_confirm_tx(peer_sid, recv_resend_id);
 }
 
 }  // namespace xtxpool_v2

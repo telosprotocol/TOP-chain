@@ -374,59 +374,75 @@ void xtxpool_service::on_message_unit_receipt(vnetwork::xvnode_address_t const &
     xtxpool_v2::xtx_para_t para;
     std::shared_ptr<xtxpool_v2::xtx_entry> tx_ent = std::make_shared<xtxpool_v2::xtx_entry>(receipt, para);
     XMETRICS_GAUGE(metrics::txpool_received_other_send_receipt_num, 1);
-    m_para->get_txpool()->push_receipt(tx_ent, false, false);
+    ret = m_para->get_txpool()->push_receipt(tx_ent, false, false);
     m_para->get_txpool()->update_peer_receipt_id_pair(receipt->get_account_addr(), receipt->get_peer_tableid(), pair);
+
+    if (message.id() == xtxpool_v2::xtxpool_msg_resend_receipt && ret == xtxpool_v2::xtxpool_error_tx_duplicate && receipt->is_recv_tx()) {
+        if (m_running && m_is_send_receipt_role) {
+            uint64_t now = xverifier::xtx_utl::get_gmttime_s();
+            if (!xreceipt_strategy_t::is_resend_node_for_talbe(now, receipt->get_self_tableid(), m_shard_size, m_node_id)) {
+                return;
+            }
+            xcons_transaction_ptr_t resend_confirm_tx =
+                m_para->get_txpool()->get_resend_confirm_tx(receipt->get_account_addr(), receipt->get_peer_tableid(), receipt->get_last_action_receipt_id());
+            if (resend_confirm_tx != nullptr) {
+                xinfo("xtxpool_service::on_message_unit_receipt resend_confirm_tx:%s", resend_confirm_tx->dump().c_str());
+                send_receipt_retry(resend_confirm_tx);
+            }
+        }
+    }
 }
 
-xcons_transaction_ptr_t xtxpool_service::create_confirm_tx_by_hash(const uint256_t & hash) {
-    auto str_hash(std::string(reinterpret_cast<char *>(hash.data()), hash.size()));
-    base::xvtransaction_store_ptr_t tx_store = m_para->get_vblockstore()->query_tx(str_hash, base::enum_transaction_subtype_recv);
-    // first time consensus transaction has been stored, so it can be found
-    // in the second consensus, need check the m_recv_unit_height
+// xcons_transaction_ptr_t xtxpool_service::create_confirm_tx_by_hash(const uint256_t & hash) {
+//     auto str_hash(std::string(reinterpret_cast<char *>(hash.data()), hash.size()));
+//     base::xvtransaction_store_ptr_t tx_store = m_para->get_vblockstore()->query_tx(str_hash, base::enum_transaction_subtype_recv);
+//     // first time consensus transaction has been stored, so it can be found
+//     // in the second consensus, need check the m_recv_unit_height
 
-    if (tx_store == nullptr) {
-        xtxpool_warn("xtxpool_service::create_confirm_tx_by_hash fail-query tx from store. txhash=%s", base::xstring_utl::to_hex(str_hash).c_str());
-        return nullptr;
-    }
+//     if (tx_store == nullptr) {
+//         xtxpool_warn("xtxpool_service::create_confirm_tx_by_hash fail-query tx from store. txhash=%s", base::xstring_utl::to_hex(str_hash).c_str());
+//         return nullptr;
+//     }
 
-    base::xvaccount_t _vaccount(tx_store->get_recv_unit_addr());
-    uint64_t unit_height = tx_store->get_recv_unit_height();
-    base::xauto_ptr<base::xvblock_t> commit_block =
-        m_para->get_vblockstore()->load_block_object(_vaccount, unit_height, tx_store->get_recv_unit_hash(), false, metrics::blockstore_access_from_txpool_create_confirm_receipt);
-    if (commit_block == nullptr) {
-        xerror("xtxpool_service::create_confirm_tx_by_hash fail-commit unit not exist txhash=%s,account=%s,block_height:%ld",
-               base::xstring_utl::to_hex(str_hash).c_str(),
-               _vaccount.get_account().c_str(),
-               unit_height);
-        return nullptr;
-    }
-    // m_para->get_vblockstore()->load_block_input(_vaccount, commit_block.get()); // TODO(jimmy) confirm tx no need origin tx
-    base::xauto_ptr<base::xvblock_t> cert_block =
-        m_para->get_vblockstore()->load_block_object(_vaccount, unit_height + 2, 0, false, metrics::blockstore_access_from_txpool_create_confirm_receipt);
-    if (commit_block == nullptr) {
-        xerror("xtxpool_service::create_confirm_tx_by_hash fail-cert unit not exist txhash=%s,account=%s,block_height:%ld",
-               base::xstring_utl::to_hex(str_hash).c_str(),
-               _vaccount.get_account().c_str(),
-               unit_height + 2);
-        return nullptr;
-    }
-    // TODO(jimmy) return txreceipt with origin tx
-    base::xfull_txreceipt_ptr_t txreceipt = base::xtxreceipt_build_t::create_one_txreceipt(commit_block.get(), cert_block.get(), str_hash);
-    if (txreceipt == nullptr) {
-        xerror("xtxpool_service::create_confirm_tx_by_hash fail-create one txreceipt txhash=%s,account=%s,block_height:%ld",
-               base::xstring_utl::to_hex(str_hash).c_str(),
-               _vaccount.get_account().c_str(),
-               unit_height);
-        return nullptr;
-    }
-    data::xcons_transaction_ptr_t contx = make_object_ptr<data::xcons_transaction_t>(*txreceipt.get());
-    xassert(contx->is_confirm_tx());
-    xdbg("xtxpool_service::create_confirm_tx_by_hash succ-txhash=%s,account=%s,block_height:%ld",
-         base::xstring_utl::to_hex(str_hash).c_str(),
-         _vaccount.get_account().c_str(),
-         unit_height);
-    return contx;
-}
+//     base::xvaccount_t _vaccount(tx_store->get_recv_unit_addr());
+//     uint64_t unit_height = tx_store->get_recv_unit_height();
+//     base::xauto_ptr<base::xvblock_t> commit_block =
+//         m_para->get_vblockstore()->load_block_object(_vaccount, unit_height, tx_store->get_recv_unit_hash(), false,
+//         metrics::blockstore_access_from_txpool_create_confirm_receipt);
+//     if (commit_block == nullptr) {
+//         xerror("xtxpool_service::create_confirm_tx_by_hash fail-commit unit not exist txhash=%s,account=%s,block_height:%ld",
+//                base::xstring_utl::to_hex(str_hash).c_str(),
+//                _vaccount.get_account().c_str(),
+//                unit_height);
+//         return nullptr;
+//     }
+//     // m_para->get_vblockstore()->load_block_input(_vaccount, commit_block.get()); // TODO(jimmy) confirm tx no need origin tx
+//     base::xauto_ptr<base::xvblock_t> cert_block =
+//         m_para->get_vblockstore()->load_block_object(_vaccount, unit_height + 2, 0, false, metrics::blockstore_access_from_txpool_create_confirm_receipt);
+//     if (commit_block == nullptr) {
+//         xerror("xtxpool_service::create_confirm_tx_by_hash fail-cert unit not exist txhash=%s,account=%s,block_height:%ld",
+//                base::xstring_utl::to_hex(str_hash).c_str(),
+//                _vaccount.get_account().c_str(),
+//                unit_height + 2);
+//         return nullptr;
+//     }
+//     // TODO(jimmy) return txreceipt with origin tx
+//     base::xfull_txreceipt_ptr_t txreceipt = base::xtxreceipt_build_t::create_one_txreceipt(commit_block.get(), cert_block.get(), str_hash);
+//     if (txreceipt == nullptr) {
+//         xerror("xtxpool_service::create_confirm_tx_by_hash fail-create one txreceipt txhash=%s,account=%s,block_height:%ld",
+//                base::xstring_utl::to_hex(str_hash).c_str(),
+//                _vaccount.get_account().c_str(),
+//                unit_height);
+//         return nullptr;
+//     }
+//     data::xcons_transaction_ptr_t contx = make_object_ptr<data::xcons_transaction_t>(*txreceipt.get());
+//     xassert(contx->is_confirm_tx());
+//     xdbg("xtxpool_service::create_confirm_tx_by_hash succ-txhash=%s,account=%s,block_height:%ld",
+//          base::xstring_utl::to_hex(str_hash).c_str(),
+//          _vaccount.get_account().c_str(),
+//          unit_height);
+//     return contx;
+// }
 
 bool xtxpool_service::is_receipt_sender(const base::xtable_index_t & tableid) const {
     return m_running && m_is_send_receipt_role && is_belong_to_service(tableid);
@@ -554,9 +570,9 @@ int32_t xtxpool_service::request_transaction_consensus(const data::xtransaction_
     return m_para->get_txpool()->push_send_tx(tx_ent);
 }
 
-xcons_transaction_ptr_t xtxpool_service::get_confirmed_tx(const uint256_t & hash) {
-    return create_confirm_tx_by_hash(hash);
-}
+// xcons_transaction_ptr_t xtxpool_service::get_confirmed_tx(const uint256_t & hash) {
+//     return create_confirm_tx_by_hash(hash);
+// }
 
 void xtxpool_service::send_pull_receipts_of_recv(xreceipt_pull_recv_receipt_t & pulled_receipt) {
     base::xstream_t stream(base::xcontext_t::instance());

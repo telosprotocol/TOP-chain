@@ -32,12 +32,6 @@ public:
         }
     }
 
-    void update_unconfirm_id(uint64_t unconfirm_id) {
-        if (unconfirm_id > m_unconfirm_id) {
-            m_unconfirm_id = unconfirm_id;
-        }
-    }
-
     void add_id_height(uint64_t receipt_id, uint64_t height, uint64_t time) {
         if (receipt_id > m_confirm_id) {
             m_id_height_map[receipt_id] = height;
@@ -48,10 +42,7 @@ public:
     }
 
     enum_min_height_result get_min_height(uint64_t & min_height) const {
-        if (m_confirm_id == 0xFFFFFFFFFFFFFFFF || m_unconfirm_id < m_confirm_id) {
-            return enum_min_height_result_fail;
-        }
-        if (m_unconfirm_id == m_confirm_id) {
+        if (m_id_height_map.empty()) {
             return enum_min_height_result_no_unconfirm_id;
         }
 
@@ -74,11 +65,10 @@ public:
     }
 
     bool is_all_loaded() const {
-        if (m_confirm_id == 0xFFFFFFFFFFFFFFFF) {
-            return false;
+        if (m_id_height_map.empty()) {
+            return true;
         }
-        xassert(m_unconfirm_id >= m_confirm_id);
-        return m_id_height_map.size() == (m_unconfirm_id - m_confirm_id);
+        return m_id_height_map.size() == (m_id_height_map.rbegin()->first - m_id_height_map.begin()->first + 1);
     }
 
     bool get_resend_id_height(uint64_t & receipt_id, uint64_t & height, uint64_t cur_time) const {
@@ -88,19 +78,26 @@ public:
 
         auto iter = m_id_height_map.rbegin();
         if (iter != m_id_height_map.rend()) {
-            xassert(m_unconfirm_id >= m_confirm_id);
-            if (iter->first == m_unconfirm_id) {
-                receipt_id = iter->first;
-                height = iter->second;
-                return true;
-            }
+            receipt_id = iter->first;
+            height = iter->second;
+            return true;
+        }
+        return false;
+    }
+
+    bool get_latest_id_height_and_cofirm_id(uint64_t & latest_id, uint64_t & height, uint64_t & confirm_id) const {
+        auto iter = m_id_height_map.rbegin();
+        if (iter != m_id_height_map.rend()) {
+            latest_id = iter->first;
+            height = iter->second;
+            confirm_id = m_confirm_id;
+            return true;
         }
         return false;
     }
 
 private:
     uint64_t m_confirm_id{0xFFFFFFFFFFFFFFFF};
-    uint64_t m_unconfirm_id{0};  // might be less than m_confirm_id, because node might be fail behind.
     std::map<uint64_t, uint64_t> m_id_height_map;
     uint64_t m_update_time{0};
 };
@@ -124,17 +121,6 @@ public:
         iter->second.update_confirm_id(confirm_id);
     }
 
-    void update_unconfirm_id(base::xtable_shortid_t table_sid, uint64_t unconfirm_id) {
-        auto iter = m_table_sid_unconfirm_list_map.find(table_sid);
-        if (iter == m_table_sid_unconfirm_list_map.end()) {
-            xunconfirm_id_height_list_t unconfirm_list;
-            unconfirm_list.update_unconfirm_id(unconfirm_id);
-            m_table_sid_unconfirm_list_map[table_sid] = unconfirm_list;
-            return;
-        }
-        iter->second.update_unconfirm_id(unconfirm_id);
-    }
-
     void add_id_height(base::xtable_shortid_t table_sid, uint64_t receipt_id, uint64_t height, uint64_t time) {
         auto iter = m_table_sid_unconfirm_list_map.find(table_sid);
         if (iter == m_table_sid_unconfirm_list_map.end()) {
@@ -146,11 +132,8 @@ public:
         iter->second.add_id_height(receipt_id, height, time);
     }
 
-    bool get_min_height(uint64_t & min_height, const std::set<base::xtable_shortid_t> & all_sid_set) const {
+    bool get_min_height(uint64_t & min_height) const {
         uint64_t min_tmp = 0xFFFFFFFFFFFFFFFF;
-        if (m_table_sid_unconfirm_list_map.size() < all_sid_set.size()) {
-            return false;
-        }
         for (auto & iter : m_table_sid_unconfirm_list_map) {
             uint64_t height;
             auto ret = iter.second.get_min_height(height);
@@ -173,11 +156,7 @@ public:
         return false;
     }
 
-    bool is_all_unconfirm_id_recovered(const std::set<base::xtable_shortid_t> & all_sid_set) const {
-        xassert(m_table_sid_unconfirm_list_map.size() <= all_sid_set.size());
-        if (m_table_sid_unconfirm_list_map.size() != all_sid_set.size()) {
-            return false;
-        }
+    bool is_all_unconfirm_id_recovered() const {
         for (auto & iter : m_table_sid_unconfirm_list_map) {
             if (!iter.second.is_all_loaded()) {
                 return false;
@@ -200,6 +179,14 @@ public:
             }
         }
         return resend_vec;
+    }
+
+    bool get_latest_id_height_and_cofirm_id(base::xtable_shortid_t table_sid, uint64_t & latest_id, uint64_t & height, uint64_t & confirm_id) const {
+        auto iter = m_table_sid_unconfirm_list_map.find(table_sid);
+        if (iter != m_table_sid_unconfirm_list_map.end()) {
+            return iter->second.get_latest_id_height_and_cofirm_id(latest_id, height, confirm_id);
+        }
+        return false;
     }
 
 private:

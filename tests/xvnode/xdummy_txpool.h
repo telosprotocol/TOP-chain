@@ -34,10 +34,10 @@ public:
     bool need_sync_lacking_receipts(uint8_t zone, uint16_t subaddr) const override {return false;}
     void print_statistic_values() const override {};
     bool is_consensused_recv_receiptid(const std::string & from_addr, const std::string & to_addr, uint64_t receipt_id) const override {return false;};
-    bool is_consensused_confirm_receiptid(const std::string & from_addr, const std::string & to_addr, uint64_t receipt_id) const override {return false;};
-    void update_peer_receipt_id_pair(const std::string & self_addr, base::xtable_shortid_t peer_sid, const base::xreceiptid_pair_t & pair) override {};
-    void update_peer_all_receipt_id_pairs(base::xtable_shortid_t peer_sid, const base::xreceiptid_pairs_t & all_pairs) override {};
-    data::xtablestate_ptr_t get_table_state_cache(uint8_t zone, uint16_t subaddr) const override {return nullptr;};
+    bool is_consensused_confirm_receiptid(const std::string & from_addr, const std::string & to_addr, uint64_t receipt_id) const override {return false;}
+    void update_peer_receipt_id_pair(const std::string & self_addr, base::xtable_shortid_t peer_sid, const base::xreceiptid_pair_t & pair) override {}
+    void update_peer_all_receipt_id_pairs(base::xtable_shortid_t peer_sid, const base::xreceiptid_pairs_t & all_pairs) override {}
+    xcons_transaction_ptr_t get_resend_confirm_tx(const std::string self_addr, base::xtable_shortid_t peer_sid, uint64_t recv_resend_id) {return nullptr;}
 };
 
 using xdummy_txpool_t = xtop_dummy_txpool;
