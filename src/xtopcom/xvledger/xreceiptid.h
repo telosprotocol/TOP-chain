@@ -33,7 +33,6 @@ class xreceiptid_pair_t {
     uint32_t        get_unconfirm_num() const {return m_unconfirm_num;}
 
  public:
-    void            inc_sendid_max() {m_send_id_max++;}
     void            set_sendid_max(uint64_t value);
     void            set_confirmid_max(uint64_t value);
     void            set_recvid_max(uint64_t value);

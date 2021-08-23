@@ -455,15 +455,21 @@ void xblocktool_t::alloc_transaction_receiptid(const xcons_transaction_ptr_t & t
     if (tx->is_send_tx()) {
         // alloc new receipt id for send tx
         current_receipt_id = receiptid_pair.get_sendid_max() + 1;
-        receiptid_pair.inc_sendid_max();
+        receiptid_pair.set_sendid_max(current_receipt_id);
     } else {
         // copy last actiion receipt id for recv tx and confirm tx
         current_receipt_id = tx->get_last_action_receipt_id();
     }
     // update receipt id info to tx action result
     tx->set_current_receipt_id(self_tableid, peer_tableid, current_receipt_id);
+    if (tx->is_send_tx()) {
+        tx->set_current_sender_confirmed_receipt_id(receiptid_pair.get_confirmid_max());
+    } else if (tx->is_recv_tx()) {
+        uint64_t sender_confirmed_id = tx->get_last_action_sender_confirmed_receipt_id();
+        tx->set_current_sender_confirmed_receipt_id(sender_confirmed_id);
+    }
     receiptid_state->add_pair_modified(peer_tableid, receiptid_pair);  // save to modified pairs
-    xdbg("xblocktool_t::alloc_transaction_receiptid tx=%s,receiptid=%ld", tx->dump().c_str(), current_receipt_id);
+    xdbg("xblocktool_t::alloc_transaction_receiptid tx=%s,receiptid=%ld,confirmid_max=%ld,sender_confirmed_id=%ld", tx->dump().c_str(), current_receipt_id, receiptid_pair.get_confirmid_max(), tx->get_last_action_sender_confirmed_receipt_id());
 }
 
 NS_END2
