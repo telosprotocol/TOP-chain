@@ -808,14 +808,18 @@ void xtxpool_service::send_receipt_id_state(uint8_t zone, uint16_t table_id) {
     }
 
     xtablestate_ptr_t tablestate = std::make_shared<xtable_bstate_t>(bstate.get());
-    top::base::xautostream_t<4096> stream(top::base::xcontext_t::instance());
-    xtxpool_service_v2::xreceipt_id_state_msg_t receipt_id_state_msg;
-
-    receipt_id_state_msg.m_table_sid = vaccount.get_short_table_id();
     auto & all_pairs = tablestate->get_receiptid_state()->get_all_receiptid_pairs()->get_all_pairs();
-    xinfo("xtxpool_service::send_receipt_id_state broadcast receipt id state fullblock:%s,pairs:%s",
+    if (all_pairs.empty()) {
+        xinfo("xtxpool_service::send_receipt_id_state pairs empty,not send,latest commit block:%s", commit_block->dump().c_str());
+        return;
+    }
+    xinfo("xtxpool_service::send_receipt_id_state broadcast receipt id state latest commit block:%s,pairs:%s",
           commit_block->dump().c_str(),
           tablestate->get_receiptid_state()->get_all_receiptid_pairs()->dump().c_str());
+
+    top::base::xautostream_t<4096> stream(top::base::xcontext_t::instance());
+    xtxpool_service_v2::xreceipt_id_state_msg_t receipt_id_state_msg;
+    receipt_id_state_msg.m_table_sid = vaccount.get_short_table_id();
     for (auto & pair : all_pairs) {
         receipt_id_state_msg.m_receiptid_pairs.add_pair(pair.first, pair.second);
     }

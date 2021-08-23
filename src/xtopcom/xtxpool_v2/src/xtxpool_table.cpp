@@ -261,10 +261,10 @@ bool xtxpool_table_t::is_account_need_update(const std::string & account_addr) c
 // }
 
 void xtxpool_table_t::deal_commit_table_block(xblock_t * table_block) {
-    // if (table_block->get_height() % 3 == 0) {
-    //     xtxpool_warn("nathan test drop table block:%s", table_block->dump().c_str());
-    //     return;
-    // }
+    if (table_block->get_height() % 3 == 0) {
+        xtxpool_warn("nathan test drop table block:%s", table_block->dump().c_str());
+        return;
+    }
     // TODO(jimmy)
     const std::vector<base::xventity_t *> & _table_inentitys = table_block->get_input()->get_entitys();
     uint32_t entitys_count = _table_inentitys.size();
