@@ -271,7 +271,13 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     blockstore_access_from_sync_store_blk,
     blockstore_access_from_sync_query_blk,
     blockstore_access_from_sync_load_block_object,
-    blockstore_access_from_sync_end = blockstore_access_from_sync_load_block_object,
+    blockstore_access_from_sync_get_latest_genesis_connected_block_height,
+    blockstore_access_from_sync_get_latest_connected_block_height,
+    blockstore_access_from_sync_get_latest_committed_block_height,
+    blockstore_access_from_sync_set_genesis_height,
+    blockstore_access_from_sync_get_genesis_height,
+    blockstore_access_from_sync_set_block_span,
+    blockstore_access_from_sync_end = blockstore_access_from_sync_set_block_span,
 
 
     blockstore_access_from_sync_index,

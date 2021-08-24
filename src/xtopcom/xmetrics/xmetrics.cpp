@@ -247,6 +247,12 @@ char const * matrics_name(xmetircs_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(blockstore_access_from_sync_store_blk);
         RETURN_METRICS_NAME(blockstore_access_from_sync_query_blk);
         RETURN_METRICS_NAME(blockstore_access_from_sync_load_block_object);
+        RETURN_METRICS_NAME(blockstore_access_from_sync_get_latest_genesis_connected_block_height);
+        RETURN_METRICS_NAME(blockstore_access_from_sync_get_latest_connected_block_height);
+        RETURN_METRICS_NAME(blockstore_access_from_sync_get_latest_committed_block_height);
+        RETURN_METRICS_NAME(blockstore_access_from_sync_set_genesis_height);
+        RETURN_METRICS_NAME(blockstore_access_from_sync_get_genesis_height);
+        RETURN_METRICS_NAME(blockstore_access_from_sync_set_block_span);
         
         RETURN_METRICS_NAME(blockstore_access_from_sync_index);
 
