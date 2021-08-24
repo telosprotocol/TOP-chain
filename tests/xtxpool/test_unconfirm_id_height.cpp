@@ -1,6 +1,6 @@
 #include "gtest/gtest.h"
 #include "test_xtxpool_util.h"
-#include "xtxpool_v2/xprocessed_height_record.h"
+#include "xtxpool_v2/xunconfirm_id_height.h"
 
 using namespace top::xtxpool_v2;
 using namespace top::data;
@@ -9,7 +9,7 @@ using namespace top::base;
 using namespace std;
 using namespace top::utl;
 
-class test_processed_height_record : public testing::Test {
+class test_unconfirm_id_height : public testing::Test {
 protected:
     void SetUp() override {
     }
@@ -18,7 +18,7 @@ protected:
     }
 };
 
-TEST_F(test_processed_height_record, processed_table_height) {
+TEST_F(test_unconfirm_id_height, processed_table_height) {
     uint64_t test_arr[] = {0, 59, 63, 64, 100, 127, 128, 193, 192, 191, 200000, 1000, 13343};
 
     xprocessed_height_record_t processed_table_height;
@@ -56,3 +56,33 @@ TEST_F(test_processed_height_record, processed_table_height) {
         ASSERT_EQ(processed_table_height2.is_record_height(test_arr[i]), false);
     }
 }
+
+TEST_F(test_unconfirm_id_height, unconfirm_id_height_list) {
+    xunconfirm_id_height_list_t unconfirm_list;
+    ASSERT_EQ(unconfirm_list.is_all_loaded(), false);
+    unconfirm_list.update_confirm_id(99);
+    ASSERT_EQ(unconfirm_list.is_all_loaded(), true);
+    unconfirm_list.add_id_height(101, 1000, 100000);
+    ASSERT_EQ(unconfirm_list.is_all_loaded(), false);
+    unconfirm_list.update_confirm_id(100);
+    ASSERT_EQ(unconfirm_list.is_all_loaded(), true);
+    uint64_t height;
+    bool ret = unconfirm_list.get_height_by_id(101, height);
+    ASSERT_EQ(ret, true);
+    ASSERT_EQ(height, 1000);
+    ret = unconfirm_list.get_height_by_id(102, height);
+    ASSERT_EQ(ret, false);
+    unconfirm_list.add_id_height(102, 1001, 100010);
+    ret = unconfirm_list.get_height_by_id(102, height);
+    ASSERT_EQ(ret, true);
+    ASSERT_EQ(height, 1001);
+    uint64_t receiptid;
+    ret = unconfirm_list.get_resend_id_height(receiptid, height, 100030);
+    ASSERT_EQ(ret, false);
+    ret = unconfirm_list.get_resend_id_height(receiptid, height, 100070);
+    ASSERT_EQ(ret, true);
+    ASSERT_EQ(receiptid, 102);
+    ASSERT_EQ(height, 1001);
+}
+
+

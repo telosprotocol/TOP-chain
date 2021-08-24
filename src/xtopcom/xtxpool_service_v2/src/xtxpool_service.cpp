@@ -375,23 +375,8 @@ void xtxpool_service::on_message_unit_receipt(vnetwork::xvnode_address_t const &
     xtxpool_v2::xtx_para_t para;
     std::shared_ptr<xtxpool_v2::xtx_entry> tx_ent = std::make_shared<xtxpool_v2::xtx_entry>(receipt, para);
     XMETRICS_GAUGE(metrics::txpool_received_other_send_receipt_num, 1);
-    ret = m_para->get_txpool()->push_receipt(tx_ent, false, false);
+    m_para->get_txpool()->push_receipt(tx_ent, false, false);
     m_para->get_txpool()->update_peer_confirm_id(receipt->get_account_addr(), receipt->get_peer_tableid(), receipt->get_last_action_sender_confirmed_receipt_id());
-
-    if (message.id() == xtxpool_v2::xtxpool_msg_resend_receipt && ret == xtxpool_v2::xtxpool_error_tx_duplicate && receipt->is_recv_tx()) {
-        if (m_running && m_is_send_receipt_role) {
-            uint64_t now = xverifier::xtx_utl::get_gmttime_s();
-            if (!xreceipt_strategy_t::is_resend_node_for_talbe(now, receipt->get_self_tableid(), m_shard_size, m_node_id)) {
-                return;
-            }
-            xcons_transaction_ptr_t resend_confirm_tx =
-                m_para->get_txpool()->get_resend_confirm_tx(receipt->get_account_addr(), receipt->get_peer_tableid(), receipt->get_last_action_receipt_id());
-            if (resend_confirm_tx != nullptr) {
-                xinfo("xtxpool_service::on_message_unit_receipt resend_confirm_tx:%s", resend_confirm_tx->dump().c_str());
-                send_receipt_retry(resend_confirm_tx);
-            }
-        }
-    }
 }
 
 // xcons_transaction_ptr_t xtxpool_service::create_confirm_tx_by_hash(const uint256_t & hash) {

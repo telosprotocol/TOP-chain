@@ -50,8 +50,6 @@ public:
     bool is_consensused_confirm_receiptid(const std::string & from_addr, const std::string & to_addr, uint64_t receipt_id) const override;
     void update_peer_confirm_id(const std::string & self_addr, base::xtable_shortid_t peer_sid, uint64_t confirm_id) override;
     void update_peer_all_receipt_id_pairs(base::xtable_shortid_t peer_sid, const base::xreceiptid_pairs_t & all_pairs) override;
-    // data::xtablestate_ptr_t get_table_state_cache(uint8_t zone, uint16_t subaddr) const override;
-    xcons_transaction_ptr_t get_resend_confirm_tx(const std::string self_addr, base::xtable_shortid_t peer_sid, uint64_t recv_resend_id) override;
 
 private:
     bool is_table_subscribed(uint8_t zone, uint16_t table_id) const;

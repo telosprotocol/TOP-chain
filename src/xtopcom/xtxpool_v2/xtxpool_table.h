@@ -8,7 +8,6 @@
 #include "xdata/xcons_transaction.h"
 #include "xdata/xtable_bstate.h"
 #include "xtxpool_v2/xnon_ready_account.h"
-#include "xtxpool_v2/xprocessed_height_record.h"
 #include "xtxpool_v2/xreceipt_state_cache.h"
 #include "xtxpool_v2/xtxmgr_table.h"
 #include "xtxpool_v2/xtxpool_info.h"
@@ -114,8 +113,6 @@ public:
     base::xtable_shortid_t table_sid() {
         return m_xtable_info.get_short_table_id();
     }
-    // data::xtablestate_ptr_t get_table_state_cache() const {return m_table_state_cache.get_cache();}
-    xcons_transaction_ptr_t get_resend_confirm_tx(base::xtable_shortid_t peer_sid, uint64_t recv_resend_id);
 
 private:
     bool is_account_need_update(const std::string & account_addr) const;
@@ -129,13 +126,6 @@ private:
     bool is_reach_limit(const std::shared_ptr<xtx_entry> & tx) const;
     int32_t push_send_tx_real(const std::shared_ptr<xtx_entry> & tx);
     int32_t push_receipt_real(const std::shared_ptr<xtx_entry> & tx);
-
-    void update_unconfirm_id_height(base::enum_transaction_subtype subtype,
-                                    base::xtable_shortid_t peer_table_sid,
-                                    uint64_t receipt_id,
-                                    uint64_t confirm_id,
-                                    uint64_t table_height,
-                                    uint64_t time);
     void update_sender_unconfirm_id_height(const base::xreceiptid_state_ptr_t & receipt_id_state);
     void deal_commit_table_block(xblock_t * table_block);
     xcons_transaction_ptr_t build_receipt(base::xtable_shortid_t peer_table_sid, uint64_t receipt_id, uint64_t commit_height, enum_transaction_subtype subtype);
@@ -149,13 +139,8 @@ private:
     xtable_state_cache_t m_table_state_cache;
     // uint64_t m_unconfirmed_tx_num{0};
 
-    // std::map<base::xtable_shortid_t, base::xreceiptid_pair_t> m_peer_receiptid_map;
-    // mutable std::mutex m_peer_receiptid_map_mutex;
     uint64_t m_last_commit_block_height{0xFFFFFFFFFFFFFFFF};
-    xtable_unconfirm_id_height_t m_sender_unconfirm_id_height;
-    xtable_unconfirm_id_height_t m_receiver_unconfirm_id_height;
-    xprocessed_height_record_t m_processed_height_record;
-    mutable std::mutex m_receipt_id_height_record_mutex;  // lock m_sender_unconfirm_id_height m_receiver_unconfirm_id_height m_processed_height_record
+    xunconfirm_id_height m_unconfirm_id_height;
 
     // xnon_ready_accounts_t m_non_ready_accounts;
     // mutable std::mutex m_non_ready_mutex;  // lock m_non_ready_accounts
