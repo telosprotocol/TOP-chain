@@ -22,6 +22,7 @@
 #include "nlohmann/json.hpp"
 
 #define private public
+#include "tests/xelection/xmocked_vnode_service.h"
 #include "xvm/xsystem_contracts/xslash/xtable_statistic_info_collection_contract.h"
 #include "xvm/xsystem_contracts/xslash/xzec_slash_info_contract.h"
 #include "xvm/xvm_service.h"
@@ -34,14 +35,14 @@
 using namespace top;
 using namespace top::xvm;
 using namespace top::contract;
+using namespace top::tests::election;
 using namespace top::xvm::xcontract;
 using json = nlohmann::json;
 
-std::string shard_table_slash_addr = std::string(sys_contract_sharding_statistic_info_addr) + std::string("@3");
-
-class test_slash_contract_other: public xzec_slash_info_contract, public testing::Test {
+std::string shard_table_statistic_addr = std::string(sys_contract_sharding_statistic_info_addr) + std::string("@3");
+class test_zec_slash_contract_other: public xzec_slash_info_contract, public testing::Test {
 public:
-    test_slash_contract_other(): xzec_slash_info_contract{common::xnetwork_id_t{0}}{};
+    test_zec_slash_contract_other(): xzec_slash_info_contract{common::xnetwork_id_t{0}}{};
 
     void SetUp() {
         m_store = xstore_factory::create_store_with_memdb();
@@ -57,42 +58,22 @@ public:
         config_center.add_loader(loader);
         config_center.load();
 
-        // table slash statistic contract
-        xcontract_manager_t::instance().register_contract<xtable_statistic_info_collection_contract>(common::xaccount_address_t{sys_contract_sharding_statistic_info_addr}, common::xtopchain_network_id);
-        xcontract_manager_t::instance().register_contract_cluster_address(common::xaccount_address_t{sys_contract_sharding_statistic_info_addr}, common::xaccount_address_t{shard_table_slash_addr});
-        // xcontract_manager_t::instance().setup_chain(common::xaccount_address_t{sys_contract_sharding_statistic_info_addr}, m_blockstore.get());
-
 
         xcontract_manager_t::instance().register_contract<xzec_slash_info_contract>(common::xaccount_address_t{sys_contract_zec_slash_info_addr}, common::xtopchain_network_id);
         xcontract_manager_t::instance().register_contract_cluster_address(common::xaccount_address_t{sys_contract_zec_slash_info_addr}, common::xaccount_address_t{sys_contract_zec_slash_info_addr});
         xcontract_manager_t::instance().setup_chain(common::xaccount_address_t{sys_contract_zec_slash_info_addr}, m_blockstore.get());
     }
 
-    void TearDown(){}
-
-    static data::xtransaction_ptr_t on_collect_statistic_info(uint64_t timestamp) {
-        xaction_t source_action;
-        xaction_t destination_action;
-        source_action.set_account_addr(shard_table_slash_addr);
-        destination_action.set_account_addr(shard_table_slash_addr);
-        destination_action.set_action_name("on_collect_statistic_info");
-
-        top::base::xstream_t target_stream(base::xcontext_t::instance());
-        target_stream << timestamp;
-        destination_action.set_action_param(std::string((char*) target_stream.data(), target_stream.size()));
-
-        data::xtransaction_ptr_t slash_colletion_trx = make_object_ptr<xtransaction_t>();
-        slash_colletion_trx->set_source_action(source_action);
-        slash_colletion_trx->set_target_action(destination_action);
-        return slash_colletion_trx;
+    void TearDown(){
+        std::this_thread::sleep_for(std::chrono::seconds(1));
     }
 
-    static data::xtransaction_ptr_t summarize_slash_info(std::string const& slash_info) {
+    data::xtransaction_ptr_t summarize_slash_info(std::string const& slash_info) {
 
         xaction_t source_action;
         xaction_t destination_action;
         // source_action.set_account_addr(sys_contract_zec_slash_info_addr);
-        source_action.set_account_addr(shard_table_slash_addr);
+        source_action.set_account_addr(shard_table_statistic_addr);
         destination_action.set_account_addr(sys_contract_zec_slash_info_addr);
         destination_action.set_action_name("summarize_slash_info");
 
@@ -106,7 +87,7 @@ public:
 
     }
 
-    static data::xtransaction_ptr_t do_unqualified_node_slash(uint64_t timestamp) {
+    data::xtransaction_ptr_t do_unqualified_node_slash(uint64_t timestamp) {
         xaction_t source_action;
         xaction_t destination_action;
         source_action.set_account_addr(sys_contract_zec_slash_info_addr);
@@ -123,20 +104,13 @@ public:
         return slash_colletion_trx;
     }
 
-   static xobject_ptr_t<xstore_face_t> m_store;
-   static xobject_ptr_t<base::xvblockstore_t> m_blockstore;
-   static shared_ptr<xaccount_context_t> m_table_slash_account_ctx_ptr;
-   static shared_ptr<xaccount_context_t> m_zec_slash_account_ctx_ptr;
+   xobject_ptr_t<xstore_face_t> m_store;
+   xobject_ptr_t<base::xvblockstore_t> m_blockstore;
+   shared_ptr<xaccount_context_t> m_zec_slash_account_ctx_ptr;
 
 };
 
-xobject_ptr_t<xstore_face_t> test_slash_contract_other::m_store;
-xobject_ptr_t<base::xvblockstore_t> test_slash_contract_other::m_blockstore;
-shared_ptr<xaccount_context_t> test_slash_contract_other::m_table_slash_account_ctx_ptr;
-shared_ptr<xaccount_context_t> test_slash_contract_other::m_zec_slash_account_ctx_ptr;
-
-
-TEST_F(test_slash_contract_other, zec_setup_reset_data) {
+TEST_F(test_zec_slash_contract_other, zec_setup_reset_data) {
     using namespace top::mock;
     xdatamock_unit  zec_account{sys_contract_zec_slash_info_addr};
     m_zec_slash_account_ctx_ptr = make_shared<xaccount_context_t>(zec_account.get_account_state(), m_store.get());
@@ -157,8 +131,7 @@ TEST_F(test_slash_contract_other, zec_setup_reset_data) {
 
 }
 
-
-TEST_F(test_slash_contract_other, zec_slash_info_summarize) {
+TEST_F(test_zec_slash_contract_other, zec_slash_info_summarize) {
     using namespace top::mock;
     xdatamock_unit  zec_account{sys_contract_zec_slash_info_addr};
 
@@ -190,40 +163,7 @@ TEST_F(test_slash_contract_other, zec_slash_info_summarize) {
     EXPECT_EQ(enum_xvm_error_code::ok, trace->m_errno);
 }
 
-// TEST_F(test_slash_contract_other, zec_slash_info_summarize_not_enough) {
-//     using namespace top::mock;
-//     xdatamock_unit  zec_account{sys_contract_zec_slash_info_addr};
-
-//     m_zec_slash_account_ctx_ptr = make_shared<xaccount_context_t>(zec_account.get_account_state(), m_store.get());
-//     m_zec_slash_account_ctx_ptr->map_create(xstake::XPORPERTY_CONTRACT_UNQUALIFIED_NODE_KEY);
-//     m_zec_slash_account_ctx_ptr->map_create(xstake::XPROPERTY_CONTRACT_TABLEBLOCK_NUM_KEY);
-
-//     xunqualified_node_info_t  node_info;
-//     for (auto i = 0; i < 5; ++i) {
-//         xnode_vote_percent_t node_content;
-//         node_content.block_count = i + 1;
-//         node_content.subset_count = i + 1;
-//         node_info.auditor_info[common::xnode_id_t{"auditor" + std::to_string(i)}] = node_content;
-//         node_info.validator_info[common::xnode_id_t{"validator" + std::to_string(i)}] = node_content;
-//     }
-
-//     base::xstream_t target_stream(base::xcontext_t::instance());
-//     node_info.serialize_to(target_stream);
-//     uint64_t full_tableblock_height = 10;
-//     target_stream << full_tableblock_height;
-//     std::string shard_slash_collect = std::string((char*)target_stream.data(), target_stream.size());
-
-//     target_stream.reset();
-//     target_stream << shard_slash_collect;
-//     auto trx_ptr = summarize_slash_info(std::string((char*) target_stream.data(), target_stream.size()));
-
-//     xvm_service vs;
-//     xtransaction_trace_ptr trace = vs.deal_transaction(trx_ptr, m_zec_slash_account_ctx_ptr.get());
-//     EXPECT_EQ(enum_xvm_error_code::ok, trace->m_errno);
-// }
-
-
-TEST_F(test_slash_contract_other, zec_slash_do_slash) {
+TEST_F(test_zec_slash_contract_other, zec_slash_do_slash) {
     using namespace top::mock;
     xdatamock_unit  zec_account{sys_contract_zec_slash_info_addr};
 

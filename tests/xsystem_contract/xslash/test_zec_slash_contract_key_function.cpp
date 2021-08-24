@@ -318,6 +318,19 @@ TEST_F(test_zec_slash_contract, test_process_statistic_data) {
 
 }
 
+TEST_F(test_zec_slash_contract, test_print_summarize_info) {
+    xunqualified_node_info_t  node_info;
+    for (auto i = 0; i < 5; ++i) {
+        xnode_vote_percent_t node_content;
+        node_content.block_count = i + 1;
+        node_content.subset_count = i + 1;
+        node_info.auditor_info[common::xnode_id_t{"auditor" + std::to_string(i)}] = node_content;
+        node_info.validator_info[common::xnode_id_t{"validator" + std::to_string(i)}] = node_content;
+    }
+
+    print_summarize_info(node_info);
+}
+
 
 TEST_F(test_zec_slash_contract, test_summarize_info_internal) {
     uint64_t elect_blk_height = 1;
