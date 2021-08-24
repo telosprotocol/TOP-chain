@@ -16,7 +16,7 @@ NS_BEG2(top, data)
 class xprocessed_height_record_t {
 public:
     void update_min_height(uint64_t height) {
-        uint64_t new_min_height = (height & 0xFFFFFFFFFFFFFFC0);
+        uint64_t new_min_height = (height & 0xFFFFFFFFFFFFFFC0UL);
         if (new_min_height > m_min_height) {
             uint32_t delete_record_num = ((new_min_height - m_min_height) >> 6);
             if (m_bit_record.size() > delete_record_num) {
@@ -40,7 +40,7 @@ public:
         print();
     }
     void record_height(uint64_t height) {
-        uint64_t new_min_height = (height & 0xFFFFFFFFFFFFFFC0);
+        uint64_t new_min_height = (height & 0xFFFFFFFFFFFFFFC0UL);
         if (new_min_height < m_min_height) {
             uint32_t add_record_num = (m_min_height - new_min_height) >> 6;
             for (uint32_t i = 0; i < add_record_num; i++) {
@@ -49,7 +49,7 @@ public:
             m_min_height = new_min_height;
         }
 
-        uint64_t new_max_height = (height & 0xFFFFFFFFFFFFFFC0) + 64;
+        uint64_t new_max_height = (height & 0xFFFFFFFFFFFFFFC0UL) + 64;
         if (new_max_height > m_max_height) {
             uint32_t add_record_num = (new_max_height - m_max_height) >> 6;
             for (uint32_t i = 0; i < add_record_num; i++) {
@@ -83,7 +83,7 @@ public:
             return false;
         }
 
-        uint64_t new_min_height = (height & 0xFFFFFFFFFFFFFFC0);
+        uint64_t new_min_height = (height & 0xFFFFFFFFFFFFFFC0UL);
         uint32_t recordidx = ((new_min_height - m_min_height) >> 6);
 
         uint64_t bit_num = (1UL << (height - new_min_height));
@@ -108,7 +108,7 @@ public:
 
         // todo:先确定一个u64的记录中有没有0，有0的取反，算出来最高位和最低位，这样速度会快很多。
         for (uint64_t height = m_max_record_height - 1; height >= min_check_height; height--) {
-            uint64_t new_min_height = (height & 0xFFFFFFFFFFFFFFC0);
+            uint64_t new_min_height = (height & 0xFFFFFFFFFFFFFFC0UL);
             uint32_t recordidx = ((new_min_height - m_min_height) >> 6);
             if (!right_end_found) {
                 if (!(m_bit_record[recordidx] & (1UL << (height - new_min_height)))) {
