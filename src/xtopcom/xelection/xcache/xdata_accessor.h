@@ -40,12 +40,28 @@ public:
                                                                     common::xelection_round_t const & election_round,
                                                                     std::error_code & ec) const override;
 
-    common::xnode_address_t parent_address(common::xsharding_address_t const & child_address, common::xelection_round_t const & child_election_round, std::error_code & ec) const
-        noexcept override;
+    std::map<common::xslot_id_t, data::xnode_info_t> group_nodes(common::xgroup_address_t const & group_address,
+                                                                 common::xlogic_epoch_t const & group_logic_epoch,
+                                                                 std::error_code & ec) const override;
 
-    std::shared_ptr<xnode_element_t> node_element(common::xnode_address_t const & address, std::error_code & ec) const override;
+    common::xnode_address_t parent_address(common::xsharding_address_t const & child_address,
+                                           common::xelection_round_t const & child_election_round,
+                                           std::error_code & ec) const noexcept override;
 
-    common::xnode_id_t node_id_from(common::xip2_t const & xip2, std::error_code & ec) const override;
+    common::xnode_address_t parent_address(common::xgroup_address_t const & child_address,
+                                           common::xlogic_epoch_t const & child_logic_epoch,
+                                           std::error_code & ec) const noexcept override;
+
+    std::vector<common::xnode_address_t> child_addresses(common::xgroup_address_t const & parent_group_address,
+                                                         common::xlogic_epoch_t const & parent_logic_epoch,
+                                                         std::error_code & ec) const noexcept override;
+
+    std::shared_ptr<xnode_element_t> node_element(common::xgroup_address_t const & address,
+                                                  common::xlogic_epoch_t const & logic_epoch,
+                                                  common::xslot_id_t const & slot_id,
+                                                  std::error_code & ec) const override;
+
+    common::xaccount_address_t account_address_from(common::xip2_t const & xip2, std::error_code & ec) const override;
 
     std::shared_ptr<xgroup_element_t> group_element(common::xsharding_address_t const & sharding_address, common::xelection_round_t const & election_round, std::error_code & ec) const override;
     std::shared_ptr<xgroup_element_t> group_element(common::xgroup_address_t const & group_address,
@@ -68,7 +84,7 @@ public:
                                                            common::xlogic_epoch_t const & child_logic_epoch,
                                                            std::error_code & ec) const override;
 
-    common::xelection_round_t version_from(common::xip2_t const & xip2, std::error_code & ec) const override;
+    common::xelection_round_t election_epoch_from(common::xip2_t const & xip2, std::error_code & ec) const override;
 
 private:
     std::unordered_map<common::xcluster_address_t, xgroup_update_result_t> update_zone(std::shared_ptr<xzone_element_t> const & zone_element,

@@ -1,11 +1,13 @@
-// Copyright (c) 2017-2018 Telos Foundation & contributors
+// Copyright (c) 2017-2021 Telos Foundation & contributors
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #pragma once
 
 #include "xbase/xlog.h"
+#include "xbasic/xerror/xthrow_error.h"
 #include "xbasic/xthreading/xutility.h"
+#include "xcommon/xerror/xerror.h"
 #include "xcommon/xlogic_time.h"
 
 #include <atomic>

@@ -150,7 +150,7 @@ void xtop_group_element::set_node_elements(std::map<common::xslot_id_t, data::el
         xdbg("adding %s %s", node_id.c_str(), common::to_string(node_type_from(zone_id())).c_str());
         m_node_elements.insert({slot_id, std::make_shared<xnode_element_t>(node_id, slot_id, election_info, shared_from_this())});
     }
-    assert(sharding_size() == m_node_elements.size());
+    assert(group_size() == m_node_elements.size());
 }
 
 void xtop_group_element::associate_parent_group(std::shared_ptr<xtop_group_element> const & parent_group, std::error_code & ec) {
@@ -369,6 +369,10 @@ std::vector<std::shared_ptr<xtop_group_element>> xtop_group_element::associated_
     }
 
     return ret;
+}
+
+std::vector<std::shared_ptr<xtop_group_element>> xtop_group_element::associated_child_groups(std::error_code & ec) const {
+    return associated_child_groups(common::xjudgement_day, ec);
 }
 
 bool xtop_group_element::enabled(common::xlogic_time_t const logic_time) const noexcept {
