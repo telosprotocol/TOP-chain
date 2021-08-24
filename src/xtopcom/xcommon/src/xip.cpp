@@ -494,7 +494,7 @@ xtop_ip::value_type xtop_ip::value() const noexcept {
     return m_xip;
 }
 
-xtop_ip xtop_ip::sharding() const noexcept {
+xtop_ip xtop_ip::group_xip() const noexcept {
     return {network_id(), zone_id(), cluster_id(), group_id()};
 }
 

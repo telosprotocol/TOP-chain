@@ -5,7 +5,7 @@
 #include "tests/xnetwork/xdummy_network_driver.h"
 #include "tests/xvnetwork/xdummy_chain_timer.h"
 #include "tests/xvnetwork/xdummy_vhost.h"
-#include "tests/xvnetwork/xtest_vhost_fixture.h"
+#include "tests/xvnetwork/xvnetwork_fixture.h"
 #include "xcommon/xaddress.h"
 #include "xcommon/xlogic_time.h"
 #include "xcommon/xversion.h"
@@ -40,61 +40,6 @@ using top::vnetwork::xvnetwork_message_type_t;
 
 NS_BEG3(top, tests, vnetwork)
 
-uint64_t const logic_epoch_1_blk_height{ 0 };
-uint64_t const logic_epoch_2_blk_height{ 1 };
-
-common::xlogic_epoch_t const rec_epoch_1{ 1, logic_epoch_1_blk_height };
-common::xlogic_epoch_t const rec_epoch_2{ 1, logic_epoch_2_blk_height };
-common::xlogic_epoch_t const zec_epoch_1{ 1, logic_epoch_1_blk_height };
-common::xlogic_epoch_t const zec_epoch_2{ 1, logic_epoch_2_blk_height };
-common::xlogic_epoch_t const con_epoch_1{ 1, logic_epoch_1_blk_height };
-common::xlogic_epoch_t const con_epoch_2{ 1, logic_epoch_2_blk_height };
-common::xlogic_epoch_t const arc_epoch_1{ 1, logic_epoch_1_blk_height };
-common::xlogic_epoch_t const arc_epoch_2{ 1, logic_epoch_2_blk_height };
-common::xlogic_epoch_t const edg_epoch_1{ 1, logic_epoch_1_blk_height };
-common::xlogic_epoch_t const edg_epoch_2{ 1, logic_epoch_2_blk_height };
-
-common::xelection_round_t const logic_epoch_1_version{ 0 };
-common::xelection_round_t const logic_epoch_2_version{ 1 };
-
-struct xtop_account_data_bundle {
-    common::xaccount_address_t account;
-    xpublic_key_t public_key;
-    common::xgroup_id_t group_id;
-
-    xtop_account_data_bundle(xtop_account_data_bundle const &) = default;
-    xtop_account_data_bundle(xtop_account_data_bundle &&) = default;
-    xtop_account_data_bundle & operator=(xtop_account_data_bundle const &) = default;
-    xtop_account_data_bundle & operator=(xtop_account_data_bundle &&) = default;
-    ~xtop_account_data_bundle() = default;
-
-    xtop_account_data_bundle(std::string account_string,
-                             std::string pubkey_string,
-                             common::xgroup_id_t gid)
-        : account{ std::move(account_string) }, public_key{ std::move(pubkey_string) }, group_id{ std::move(gid) } {
-    }
-};
-using xaccount_data_bundle_t = xtop_account_data_bundle;
-
-xaccount_data_bundle_t const account_pubkey_rec1{ "T00000LcUgUwZaZSd33Zjcd1C3Ht7wRCjptg6xzS", "BE+kB7LJMrX28C1PA3tcNksXrSOq4GaNIaia97kKZZ4IkJQmLwFeTnvvsmx0Njo2qhbjKnd6ZChKt3UfNCmJfKE=", common::xcommittee_group_id };
-xaccount_data_bundle_t const account_pubkey_rec2{ "T00000LYU9DnWdDbqfFJJAeNXhvasjpc6dAfmDcH", "BDv+A5IKcXpkUsk8113UnFFYByCUctRNm7/03dcGsH2iukxXM7YftHTblKXGVd3hXb3U1rrCj002xG5RxFMU5EQ=", common::xcommittee_group_id };
-xaccount_data_bundle_t const account_pubkey_zec1{ "T00000LbNqFnNw9sUNzCMkkaPajVuSDbVt78SovU", "BHYR3i2Ey2IwXpNDrQzpn31+JyJJuHK/AlF3XzT4NbNiKLHk5BCGwXF49gc0ohBIWm6fxGxZoDYHklVJ1IME+kI=", common::xcommittee_group_id };
-xaccount_data_bundle_t const account_pubkey_zec2{ "T00000LcVdbKvxjKzDEJv54UH2U5Cg1a46HxU5jJ", "BKdqc2/gmmV93vBRFtD6hXKFvnbt0+uaxiboz5q8NEcol9VrnHTDZQpxzNFTA6DMWn2pPgPTOOmvceSgd1IBeKs=", common::xcommittee_group_id };
-
-xaccount_data_bundle_t const account_pubkey_auditor1{ "T00000LaSpXSpj81nh6AGd4RXMFcSCUagdfL3Mya", "BDmEkMyasFb07c/XIjaQJzN7eU8RfseNFUvVjcOaArgojxZz9W5eNTfkonVzHpur5njX6tRX3KXq8MFXfKHDbYY=", common::xgroup_id_t{common::xauditor_group_id_value_begin} };
-xaccount_data_bundle_t const account_pubkey_auditor2{ "T00000Le7aYQwY3dXcj9SfbJWa7uzH8EqzjqyrM4", "BOnR9NUP9XMk4NtT+k6jG0V1SEuTAnsrDYKiwgwRsuvabCAYOWpvPb4rAxDX82A8OJTLHag3NZfC20Mq8VnXunQ=", common::xgroup_id_t{common::xauditor_group_id_value_begin + 1} };
-xaccount_data_bundle_t const account_pubkey_auditor3{ "T00000LTZQNJXhEomDFjBWejfv1nSjhaFzYLPac7", "BCwn7Fyc5UcD2G+/fmVc0mfnpwJp+3XnKWft+rvlbLPwbk71C0zXTyY2vyk+hlY3uNi72O0hFwNygOSI7r0Pqr0=", common::xgroup_id_t{common::xauditor_group_id_value_begin} };
-xaccount_data_bundle_t const account_pubkey_auditor4{ "T00000LMizP6araEVWkyiBtVdFyB9po4aBMX6N3X", "BCVS6OhkoQOIWeZJIBwnCm09hbwVoYUefDLh+tC1in1hpiseg6d7TrpvW+6c9kWCaVcxmchKeR7/LWGJlpk+O6Y=", common::xgroup_id_t{common::xauditor_group_id_value_begin + 1} };
-
-xaccount_data_bundle_t const account_pubkey_validator1{ "T00000LaSck6QhQi1m9qftdVJ1UB6qVceLwh78kT", "BJXR/P4ridigvmkzVz+zBvz7Rq0FWKa2+SoxljY6Ec7J/kYTCoARuWlFlmmBC0yQ+GGnYybsiXf/abF9ztgCqlg=", common::xgroup_id_t{common::xvalidator_group_id_value_begin} };
-xaccount_data_bundle_t const account_pubkey_validator2{ "T00000LNLPsxqAsPVQVbeY2wvQYjBA3PrgDG4VZG", "BITWoMosu6gQghgE4dyMqg/neq49J3XA34RzVWg3CiYILj/Vni0IeQ1n9RlR181xN9MCQgBojYzBmUle/MiyRJY=", common::xgroup_id_t{common::xvalidator_group_id_value_begin + 1} };
-xaccount_data_bundle_t const account_pubkey_validator3{ "T00000LcDUW3zwybcsT9uMTueaNxearZngTMHo58", "BChaDdjtSL4EA05lBqZgOborgcuEExik9l8WLCKd6B3nnd/uCYaiqg9VrK5e5NA+9VRZOz0+wAMcKDuMUL6RgyU=", common::xgroup_id_t{common::xvalidator_group_id_value_begin + 2} };
-xaccount_data_bundle_t const account_pubkey_validator4{ "T00000LSs9ST9JQA2zn5EwutcEct5MhGvkQS6Nzr", "BE4Oj3i/K+ptz0AaRuPCnaufIkwXpG6EGDxALSmyynVg+m80NMk2pB50JXjRWDv5JhK76aY1c9lZbLFLXMlhBsk=", common::xgroup_id_t{common::xvalidator_group_id_value_begin + 3} };
-xaccount_data_bundle_t const account_pubkey_validator5{ "T00000LWUMxH125uF6UuAzzHduBB1kn68S7HnUJt", "BAo/TbJ//1+EKc3njAQKAk6dqnN4986q/9EWnueV1OqDUNSSam5Vclr5Wh8OMQS7/gWTnYOpF8idYWnR4AOg5MQ=", common::xgroup_id_t{common::xvalidator_group_id_value_begin} };
-xaccount_data_bundle_t const account_pubkey_validator6{ "T00000Lb8N4rsH2BLdDeKDChvURZSVKKmUjgecak", "BPJ1RQWCbO3ZXnWVU85YD7xsg6dd3yeQZ80xJlV698znblPhtnVnAoSrreMOMokzIntJIEJoIIW9v8If/ZtesnA=", common::xgroup_id_t{common::xvalidator_group_id_value_begin + 1} };
-xaccount_data_bundle_t const account_pubkey_validator7{ "T00000LdZssB2ayjJyVr94qprUjbw6LuRBreFzQn", "BJpAFgA6EFM3GJTh7aqVjYAsv7KbdYzThNzwze3z0j8htze9CBqomOSSwyjQ/NZ/aTMRD31ccsHJG8E4eIMyI8Y=", common::xgroup_id_t{common::xvalidator_group_id_value_begin + 2} };
-xaccount_data_bundle_t const account_pubkey_validator8{ "T00000LLTaHKwki5i6QsxzvLCvdjDsv2v3Kcxqu2", "BGkwfXHAW/YuQRzneuSdfgd2nsH6xIglo12V9LMQXIQNDiFbJmtB8v4BWCKR9WoR9K6g+RhlmUbJiwvUkZgO0UA=", common::xgroup_id_t{common::xvalidator_group_id_value_begin + 3} };
-
 class xtop_message_filter_chain_timer final : public tests::chain_timer::xdummy_chain_timer_t {
 public:
     xtop_message_filter_chain_timer() = default;
@@ -109,12 +54,10 @@ public:
     }
 };
 using xmessage_filter_chain_timer_t = xtop_message_filter_chain_timer;
-top::xobject_ptr_t<time::xchain_time_face_t> message_filter_chain_timer{ make_object_ptr<xmessage_filter_chain_timer_t>() };
 
-class test_message_filter : public testing::Test {
+
+class test_message_filter : public xvnetwork_fixture2_t {
 protected:
-    std::unique_ptr<election::cache::xdata_accessor_face_t> data_accessor_;
-    std::shared_ptr<top::vnetwork::xvhost_t> vhost_;
     std::unique_ptr<top::vnetwork::xmessage_filter_manager_face_t> filter_mgr_;
 
 public:
@@ -125,204 +68,39 @@ public:
     test_message_filter & operator=(test_message_filter &&) = default;
     ~test_message_filter() override = default;
 
-private:
-    void add_rec(data::election::xelection_result_store_t & election_result_store,
-                 common::xlogic_time_t const timestamp,
-                 common::xlogic_time_t const start_time,
-                 common::xelection_round_t const & group_version,
-                 xaccount_data_bundle_t const & rec) {
-        auto & rec_group = election_result_store.result_of(common::xtestnet_id).result_of(common::xnode_type_t::rec).result_of(common::xcommittee_cluster_id).result_of(rec.group_id);
-
-        rec_group.election_committee_version(common::xelection_round_t{ 0 });
-        rec_group.timestamp(timestamp);
-        rec_group.start_time(start_time);
-        rec_group.group_version(group_version);
-
-        data::election::xelection_info_t election_info{};
-        election_info.joined_version = group_version;
-        election_info.stake = 0;
-        election_info.consensus_public_key = rec.public_key;
-
-        data::election::xelection_info_bundle_t election_info_bundle{};
-        election_info_bundle.account_address(rec.account);
-        election_info_bundle.election_info(std::move(election_info));
-
-        rec_group.insert(std::move(election_info_bundle));
-    }
-
-    void add_zec(data::election::xelection_result_store_t & election_result_store,
-                 common::xlogic_time_t const timestamp,
-                 common::xlogic_time_t const start_time,
-                 common::xelection_round_t const & group_version,
-                 xaccount_data_bundle_t const & zec) {
-        auto & zec_group = election_result_store.result_of(common::xtestnet_id).result_of(common::xnode_type_t::zec).result_of(common::xcommittee_cluster_id).result_of(zec.group_id);
-
-        zec_group.election_committee_version(common::xelection_round_t{ 0 });
-        zec_group.timestamp(timestamp);
-        zec_group.start_time(start_time);
-        zec_group.group_version(group_version);
-
-        data::election::xelection_info_t election_info{};
-        election_info.joined_version = group_version;
-        election_info.stake = 0;
-        election_info.consensus_public_key = zec.public_key;
-
-        data::election::xelection_info_bundle_t election_info_bundle{};
-        election_info_bundle.account_address(zec.account);
-        election_info_bundle.election_info(std::move(election_info));
-
-        zec_group.insert(std::move(election_info_bundle));
-    }
-
-    void add_auditor_validator(data::election::xelection_result_store_t & election_result_store,
-                               common::xlogic_time_t const timestamp,
-                               common::xlogic_time_t const start_time,
-                               common::xelection_round_t const & group_version,
-                               xaccount_data_bundle_t const & auditor,
-                               std::vector<xaccount_data_bundle_t> const & validators) {
-        {
-            auto & auditor_group = election_result_store.result_of(common::xtestnet_id).result_of(common::xnode_type_t::consensus_auditor).result_of(common::xdefault_cluster_id).result_of(auditor.group_id);
-
-            auditor_group.election_committee_version(common::xelection_round_t{ 0 });
-            auditor_group.timestamp(timestamp);
-            auditor_group.start_time(start_time);
-            auditor_group.group_version(group_version);
-
-            data::election::xelection_info_t election_info{};
-            election_info.joined_version = group_version;
-            election_info.stake = 0;
-            election_info.consensus_public_key = auditor.public_key;
-
-            data::election::xelection_info_bundle_t election_info_bundle{};
-            election_info_bundle.account_address(auditor.account);
-            election_info_bundle.election_info(std::move(election_info));
-
-            auditor_group.insert(std::move(election_info_bundle));
-        }
-
-        for (auto i = 0u; i < validators.size(); ++i) {
-            auto const & validator = validators[i];
-            auto const & validator_group_id = validator.group_id;
-
-            auto & validator_group = election_result_store.result_of(common::xtestnet_id).result_of(common::xnode_type_t::consensus_validator).result_of(common::xdefault_cluster_id).result_of(validator_group_id);
-
-            validator_group.election_committee_version(common::xelection_round_t{ 0 });
-            validator_group.timestamp(timestamp);
-            validator_group.start_time(start_time);
-            validator_group.group_version(group_version);
-
-            validator_group.associated_group_id(auditor.group_id);
-            // validator_group.cluster_version(association_cluster_result.cluster_version());
-            validator_group.associated_group_version(group_version);
-
-            data::election::xelection_info_t election_info{};
-            election_info.joined_version = group_version;
-            election_info.stake = 0;
-            election_info.consensus_public_key = validator.public_key;
-
-            data::election::xelection_info_bundle_t election_info_bundle{};
-            election_info_bundle.account_address(validator.account);
-            election_info_bundle.election_info(std::move(election_info));
-
-            validator_group.insert(std::move(election_info_bundle));
-        }
-    }
 public:
+    xobject_ptr_t<time::xchain_time_face_t> create_logic_chain_timer() const override {
+        return top::xobject_ptr_t<time::xchain_time_face_t>{make_object_ptr<xmessage_filter_chain_timer_t>()};
+    }
+
+    std::unique_ptr<election::cache::xdata_accessor_face_t> create_election_data_accessor() const override {
+        return top::make_unique<election::cache::xdata_accessor_t>(common::xtestnet_id, make_observer(this->logic_timer_.get()));
+    }
+
+    std::shared_ptr<top::network::xnetwork_driver_face_t> create_netwrok_driver() const override {
+        return std::make_shared<top::tests::network::xdummy_network_driver_t>();
+    }
 
     void SetUp() override {
-        data_accessor_ = top::make_unique<election::cache::xdata_accessor_t>(common::xtestnet_id, make_observer(tests::vnetwork::message_filter_chain_timer));
-
-        vhost_ = std::make_shared<top::vnetwork::xvhost_t>(make_observer(&tests::network::xdummy_network_driver),
-                                                           make_observer(tests::vnetwork::message_filter_chain_timer),
-                                                           common::xtestnet_id,
-                                                           make_observer(data_accessor_.get()));
+        xvnetwork_fixture2_t::SetUp();
 
         filter_mgr_ = top::make_unique<top::vnetwork::xmessage_filter_manager_t>(make_observer(vhost_.get()), make_observer(data_accessor_.get()));
-
-        // +------------------------------------------------------------------------------------------------------------------------------------------------+
-        // |                                                                   epoch 1                                                                      |
-        // +------------------------------------------------------------------------------------------------------------------------------------------------+
-        // | rec    | account_pubkey_rec1                                                                                                                   |
-        // | zec    | account_pubkey_zec1                                                                                                                   |
-        // +-----------------------------------------------------------------------+------------------------------------------------------------------------+
-        // |                   account_pubkey_auditor1                             |                            account_pubkey_auditor2                     |
-        // |                       /     |      \                                  |                                /      |   \                            |
-        // |             /               |             \                           |                          /            |           \                    |
-        // | account_pubkey_validator1   |   account_pubkey_validator2             |             account_pubkey_validator3 | account_pubkey_validator4      |
-        // +-----------------------------+-----------------------------------------+---------------------------------------+--------------------------------+
-        data::election::xelection_result_store_t election_result_store_epoch_1;
-        add_rec(election_result_store_epoch_1, 0, 0, logic_epoch_1_version, account_pubkey_rec1);
-        add_zec(election_result_store_epoch_1, 0, 0, logic_epoch_1_version, account_pubkey_zec1);
-        add_auditor_validator(election_result_store_epoch_1,
-                              0, 0, logic_epoch_1_version,
-                              account_pubkey_auditor1,
-                              { account_pubkey_validator1, account_pubkey_validator2 });
-
-        add_auditor_validator(election_result_store_epoch_1,
-                              0, 0, logic_epoch_1_version,
-                              account_pubkey_auditor2,
-                              { account_pubkey_validator3, account_pubkey_validator4 });
-
-        // +------------------------------------------------------------------------------------------------------------------------------------------------+
-        // |                                                                   epoch 2                                                                      |
-        // +------------------------------------------------------------------------------------------------------------------------------------------------+
-        // | rec    | account_pubkey_rec2                                                                                                                   |
-        // | zec    | account_pubkey_zec2                                                                                                                   |
-        // +-----------------------------------------------------------------------+------------------------------------------------------------------------+
-        // |                   account_pubkey_auditor3                             |                            account_pubkey_auditor4                     |
-        // |                       /     |      \                                  |                                /      |   \                            |
-        // |             /               |             \                           |                          /            |           \                    |
-        // | account_pubkey_validator5   |   account_pubkey_validator6             |             account_pubkey_validator7 | account_pubkey_validator8      |
-        // +-----------------------------+-----------------------------------------+---------------------------------------+--------------------------------+
-        data::election::xelection_result_store_t election_result_store_epoch_2;
-        add_rec(election_result_store_epoch_2, 10, 20, logic_epoch_2_version, account_pubkey_rec2);
-        add_zec(election_result_store_epoch_2, 10, 30, logic_epoch_2_version, account_pubkey_zec2);
-        add_auditor_validator(election_result_store_epoch_2,
-                              10, 40, logic_epoch_2_version,
-                              account_pubkey_auditor3,
-                              { account_pubkey_validator5, account_pubkey_validator6 });
-        add_auditor_validator(election_result_store_epoch_2,
-                              10, 50, logic_epoch_2_version,
-                              account_pubkey_auditor4,
-                              { account_pubkey_validator7, account_pubkey_validator8 });
-
-        std::error_code ec;
-        data_accessor_->update_zone(common::xcommittee_zone_id, election_result_store_epoch_1, logic_epoch_1_blk_height, ec);
-        ASSERT_TRUE(!ec);
-        data_accessor_->update_zone(common::xzec_zone_id, election_result_store_epoch_1, logic_epoch_1_blk_height, ec);
-        ASSERT_TRUE(!ec);
-        data_accessor_->update_zone(common::xconsensus_zone_id, election_result_store_epoch_1, logic_epoch_1_blk_height, ec);
-        ASSERT_TRUE(!ec);
-
-        data_accessor_->update_zone(common::xcommittee_zone_id, election_result_store_epoch_2, logic_epoch_2_blk_height, ec);
-        ASSERT_TRUE(!ec);
-        data_accessor_->update_zone(common::xzec_zone_id, election_result_store_epoch_2, logic_epoch_2_blk_height, ec);
-        ASSERT_TRUE(!ec);
-        data_accessor_->update_zone(common::xconsensus_zone_id, election_result_store_epoch_2, logic_epoch_2_blk_height, ec);
-        ASSERT_TRUE(!ec);
-
-        vhost_->start();
         filter_mgr_->start();
     }
 
     void TearDown() override {
         filter_mgr_->stop();
-        vhost_->stop();
-
         filter_mgr_.reset();
-        vhost_.reset();
-        data_accessor_.reset();
-
-        network::xdummy_network_driver.account_address({});
+        xvnetwork_fixture2_t::TearDown();
     }
 
-    observer_ptr<top::vnetwork::xvhost_face_t> vhost() const noexcept {
-        return top::make_observer<top::vnetwork::xvhost_face_t>(vhost_.get());
-    }
+    //observer_ptr<top::vnetwork::xvhost_face_t> vhost() const noexcept {
+    //    return top::make_observer<top::vnetwork::xvhost_face_t>(vhost_.get());
+    //}
 
-    observer_ptr<top::election::cache::xdata_accessor_face_t> data_accessor() const noexcept {
-        return top::make_observer<top::election::cache::xdata_accessor_face_t>(data_accessor_.get());
-    }
+    //observer_ptr<top::election::cache::xdata_accessor_face_t> data_accessor() const noexcept {
+    //    return top::make_observer<top::election::cache::xdata_accessor_face_t>(data_accessor_.get());
+    //}
 };
 
 common::xnode_address_t build_node_address(common::xaccount_address_t account_address,
@@ -488,7 +266,7 @@ TEST_F(test_message_filter, recver_broadcast) {
         build_rec_node_address(common::xaccount_address_t{"T00000LQ3ammXf22Y9RjDSDetF67DjVNiGK3HeL8"}, common::xslot_id_t{0}, rec_epoch_1),
         common::xnode_address_t{},
         raw_message,
-        message_filter_chain_timer->logic_time()
+        logic_timer_->logic_time()
     };
 
     std::error_code ec;
@@ -513,7 +291,7 @@ TEST_F(test_message_filter, invalid_recver) {
                                       common::xdefault_group_id
                                   }),
         raw_message,
-        message_filter_chain_timer->logic_time()
+        logic_timer_->logic_time()
     };
 
     std::error_code ec;
@@ -546,7 +324,7 @@ TEST_F(test_message_filter, validator_to_associated_auditor_1) {
         0
     };
 
-    network::xdummy_network_driver.account_address(account_pubkey_auditor1.account);
+    std::dynamic_pointer_cast<top::tests::network::xdummy_network_driver_t>(this->network_driver_)->account_address(account_pubkey_auditor1.account);
 
     std::error_code ec;
     top::vnetwork::xtop_message_filter_recver_is_auditor const filter{ vhost(), data_accessor() };
@@ -567,10 +345,10 @@ TEST_F(test_message_filter, validator_to_associated_auditor_2) {
                                    common::xbroadcast_id_t::slot,
                                    common::xlogic_epoch_t{}),
         raw_message,
-        xlogic_time_t{0}
+        logic_timer_->logic_time()
     };
 
-    network::xdummy_network_driver.account_address(account_pubkey_auditor1.account);
+    std::dynamic_pointer_cast<top::tests::network::xdummy_network_driver_t>(this->network_driver_)->account_address(account_pubkey_auditor1.account);
 
     std::error_code ec;
     top::vnetwork::xtop_message_filter_recver_is_auditor const filter{ vhost(), data_accessor() };
@@ -594,7 +372,7 @@ TEST_F(test_message_filter, validator_to_associated_auditor_3) {
         xlogic_time_t{0}
     };
 
-    network::xdummy_network_driver.account_address(account_pubkey_auditor1.account);
+    std::dynamic_pointer_cast<top::tests::network::xdummy_network_driver_t>(this->network_driver_)->account_address(account_pubkey_auditor1.account);
 
     std::error_code ec;
     top::vnetwork::xtop_message_filter_recver_is_auditor const filter{ vhost(), data_accessor() };
@@ -618,7 +396,7 @@ TEST_F(test_message_filter, validator_to_associated_auditor_4) {
         xlogic_time_t{0}
     };
 
-    network::xdummy_network_driver.account_address(account_pubkey_auditor1.account);
+    std::dynamic_pointer_cast<top::tests::network::xdummy_network_driver_t>(this->network_driver_)->account_address(account_pubkey_auditor1.account);
 
     std::error_code ec;
     top::vnetwork::xtop_message_filter_recver_is_auditor const filter{ vhost(), data_accessor() };
@@ -685,10 +463,10 @@ TEST_F(test_message_filter, auditor_to_associated_validator_1) {
                                      common::xslot_id_t{0},
                                      con_epoch_1),
         raw_message,
-        xlogic_time_t{0}
+        logic_timer_->logic_time()
     };
 
-    network::xdummy_network_driver.account_address(account_pubkey_validator1.account);
+    std::dynamic_pointer_cast<top::tests::network::xdummy_network_driver_t>(this->network_driver_)->account_address(account_pubkey_validator1.account);
 
     std::error_code ec;
     top::vnetwork::xtop_message_filter_recver_is_validator const filter{ vhost(), data_accessor() };
@@ -709,10 +487,10 @@ TEST_F(test_message_filter, auditor_to_associated_validator_2) {
                                      common::xbroadcast_id_t::slot,
                                      common::xlogic_epoch_t{}),
         raw_message,
-        xlogic_time_t{0}
+        logic_timer_->logic_time()
     };
 
-    network::xdummy_network_driver.account_address(account_pubkey_validator1.account);
+    std::dynamic_pointer_cast<top::tests::network::xdummy_network_driver_t>(this->network_driver_)->account_address(account_pubkey_validator1.account);
 
     std::error_code ec;
     top::vnetwork::xtop_message_filter_recver_is_validator const filter{ vhost(), data_accessor() };
@@ -733,10 +511,10 @@ TEST_F(test_message_filter, auditor_to_associated_validator_3) {
                                      common::xslot_id_t{0},
                                      con_epoch_1),
         raw_message,
-        message_filter_chain_timer->logic_time()
+        logic_timer_->logic_time()
     };
 
-    network::xdummy_network_driver.account_address(account_pubkey_validator1.account);
+    std::dynamic_pointer_cast<top::tests::network::xdummy_network_driver_t>(this->network_driver_)->account_address(account_pubkey_validator1.account);
 
     std::error_code ec;
     top::vnetwork::xtop_message_filter_recver_is_validator const filter{ vhost(), data_accessor() };
@@ -760,7 +538,7 @@ TEST_F(test_message_filter, auditor_to_associated_validator_4) {
         xlogic_time_t{0}
     };
 
-    network::xdummy_network_driver.account_address(account_pubkey_validator1.account);
+    std::dynamic_pointer_cast<top::tests::network::xdummy_network_driver_t>(this->network_driver_)->account_address(account_pubkey_validator1.account);
 
     std::error_code ec;
     top::vnetwork::xtop_message_filter_recver_is_validator const filter{ vhost(), data_accessor() };
@@ -832,7 +610,7 @@ TEST_F(test_message_filter, validator_to_non_associated_auditor_1) {
         xlogic_time_t{0}
     };
 
-    network::xdummy_network_driver.account_address(account_pubkey_auditor1.account);
+    std::dynamic_pointer_cast<top::tests::network::xdummy_network_driver_t>(this->network_driver_)->account_address(account_pubkey_auditor1.account);
 
     std::error_code ec;
     top::vnetwork::xtop_message_filter_recver_is_auditor const filter{ vhost(), data_accessor() };
@@ -854,10 +632,10 @@ TEST_F(test_message_filter, validator_to_non_associated_auditor_2) {
                                    common::xbroadcast_id_t::slot,
                                    common::xlogic_epoch_t{}),
         raw_message,
-        xlogic_time_t{0}
+        logic_timer_->logic_time()
     };
 
-    network::xdummy_network_driver.account_address(account_pubkey_auditor1.account);
+    std::dynamic_pointer_cast<top::tests::network::xdummy_network_driver_t>(this->network_driver_)->account_address(account_pubkey_auditor1.account);
 
     std::error_code ec;
     top::vnetwork::xtop_message_filter_recver_is_auditor const filter{ vhost(), data_accessor() };
@@ -906,7 +684,7 @@ TEST_F(test_message_filter, validator_to_validator_same_associated_auditor_1) {
         xlogic_time_t{0}
     };
 
-    network::xdummy_network_driver.account_address(account_pubkey_validator1.account);
+    std::dynamic_pointer_cast<top::tests::network::xdummy_network_driver_t>(this->network_driver_)->account_address(account_pubkey_validator1.account);
 
     std::error_code ec;
     top::vnetwork::xtop_message_filter_recver_is_validator const filter{ vhost(), data_accessor() };
@@ -930,7 +708,7 @@ TEST_F(test_message_filter, validator_to_validator_same_associated_auditor_2) {
         xlogic_time_t{0}
     };
 
-    network::xdummy_network_driver.account_address(account_pubkey_validator1.account);
+    std::dynamic_pointer_cast<top::tests::network::xdummy_network_driver_t>(this->network_driver_)->account_address(account_pubkey_validator1.account);
 
     std::error_code ec;
     top::vnetwork::xtop_message_filter_recver_is_validator const filter{ vhost(), data_accessor() };
@@ -952,10 +730,10 @@ TEST_F(test_message_filter, validator_to_validator_same_associated_auditor_3) {
                                      common::xbroadcast_id_t::slot,
                                      common::xlogic_epoch_t{}),
         raw_message,
-        message_filter_chain_timer->logic_time()
+        logic_timer_->logic_time()
     };
 
-    network::xdummy_network_driver.account_address(account_pubkey_validator1.account);
+    std::dynamic_pointer_cast<top::tests::network::xdummy_network_driver_t>(this->network_driver_)->account_address(account_pubkey_validator1.account);
 
     std::error_code ec;
     top::vnetwork::xtop_message_filter_recver_is_validator const filter{ vhost(), data_accessor() };
@@ -981,7 +759,7 @@ TEST_F(test_message_filter, validator_to_validator_same_associated_auditor_4) {
         xlogic_time_t{0}
     };
 
-    network::xdummy_network_driver.account_address(account_pubkey_validator1.account);
+    std::dynamic_pointer_cast<top::tests::network::xdummy_network_driver_t>(this->network_driver_)->account_address(account_pubkey_validator1.account);
 
     std::error_code ec;
     top::vnetwork::xtop_message_filter_recver_is_validator const filter{ vhost(), data_accessor() };
@@ -1007,7 +785,7 @@ TEST_F(test_message_filter, validator_to_validator_same_associated_auditor_5) {
         xlogic_time_t{0}
     };
 
-    network::xdummy_network_driver.account_address(account_pubkey_validator1.account);
+    std::dynamic_pointer_cast<top::tests::network::xdummy_network_driver_t>(this->network_driver_)->account_address(account_pubkey_validator1.account);
 
     std::error_code ec;
     top::vnetwork::xtop_message_filter_recver_is_validator const filter{ vhost(), data_accessor() };

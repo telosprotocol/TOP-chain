@@ -31,9 +31,15 @@ public:
 
     void running(bool const) noexcept override {}
 
-    void send(common::xnode_address_t const & src, common::xip2_t const & dst, xmessage_t const & message, std::error_code & ec) {}
+    void send(common::xnode_address_t const & src, common::xip2_t const & dst, xmessage_t const & message, std::error_code & ec) override {}
 
-    void broadcast(common::xnode_address_t const & src, common::xip2_t const & dst, xmessage_t const & message, std::error_code & ec) {}
+    void broadcast(common::xnode_address_t const & src, common::xip2_t const & dst, xmessage_t const & message, std::error_code & ec) override {}
+
+    void send_to(common::xnode_address_t const & src, common::xnode_address_t const & dst, xmessage_t const & message, std::error_code & ec) override {
+    }
+
+    void broadcast(common::xnode_address_t const & src, common::xnode_address_t const & dst, xmessage_t const & message, std::error_code & ec) override {
+    }
 
     void send(xmessage_t const &, xvnode_address_t const &, xvnode_address_t const &, top::network::xtransmission_property_t const &) override { m_counter++; }
 

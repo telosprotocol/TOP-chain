@@ -102,6 +102,8 @@ public:
     std::vector<std::shared_ptr<xtop_group_element>>
     associated_child_groups(common::xlogic_time_t const logic_time, std::error_code & ec) const;
 
+    std::vector<std::shared_ptr<xtop_group_element>> associated_child_groups(std::error_code & ec) const;
+
 private:
     void
     associate_child_group(std::shared_ptr<xtop_group_element> const & child_group,

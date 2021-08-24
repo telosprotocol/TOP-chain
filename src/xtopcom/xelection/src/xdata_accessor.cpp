@@ -151,6 +151,56 @@ std::map<common::xslot_id_t, data::xnode_info_t> xtop_data_accessor::sharding_no
     return result;
 }
 
+std::map<common::xslot_id_t, data::xnode_info_t> xtop_data_accessor::group_nodes(common::xgroup_address_t const & group_address,
+                                                                                 common::xlogic_epoch_t const & group_logic_epoch,
+                                                                                 std::error_code & ec) const {
+    xdbg("group nodes %s logic epoch %s this %p", group_address.to_string().c_str(), group_logic_epoch.to_string().c_str(), this);
+
+    assert(!ec);
+    assert(m_network_element != nullptr);
+
+    if (group_address.empty()) {
+        ec = xdata_accessor_errc_t::address_empty;
+
+        xwarn("%s address empty", ec.category().name());
+
+        return {};
+    }
+
+    auto group_element = this->group_element(group_address.network_id(), group_address.zone_id(), group_address.cluster_id(), group_address.group_id(), group_logic_epoch, ec);
+
+    if (ec) {
+        xwarn("%s %s", ec.category().name(), ec.message().c_str());
+        return {};
+    }
+    assert(group_element != nullptr);
+
+    std::map<common::xslot_id_t, data::xnode_info_t> result;
+    auto node_elements_info = group_element->children(ec);
+    if (ec) {
+        xwarn("%s %s", ec.category().name(), ec.message().c_str());
+        return {};
+    }
+
+    assert(!node_elements_info.empty());
+
+    for (auto const & node_element_info : node_elements_info) {
+        auto const & slot_id = top::get<common::xslot_id_t const>(node_element_info);
+        auto const & node_element = top::get<std::shared_ptr<xnode_element_t>>(node_element_info);
+        auto const & election_info = node_element->election_info();
+
+        assert(slot_id == node_element->address().slot_id());
+
+        data::xnode_info_t node_info;
+        node_info.election_info = election_info;
+        node_info.address = node_element->address();
+
+        result.insert({slot_id, std::move(node_info)});
+    }
+
+    return result;
+}
+
 common::xnode_address_t xtop_data_accessor::parent_address(common::xgroup_address_t const & child_address, common::xelection_round_t const & child_version, std::error_code & ec) const
     noexcept {
     assert(!ec);
@@ -163,19 +213,61 @@ common::xnode_address_t xtop_data_accessor::parent_address(common::xgroup_addres
     return parent_element->address();
 }
 
-std::shared_ptr<xnode_element_t> xtop_data_accessor::node_element(common::xnode_address_t const & address, std::error_code & ec) const {
+common::xnode_address_t xtop_data_accessor::parent_address(common::xgroup_address_t const & child_address,
+                                                           common::xlogic_epoch_t const & child_logic_epoch,
+                                                           std::error_code & ec) const noexcept {
     assert(!ec);
-    auto const group_element = this->group_element(address.network_id(), address.zone_id(), address.cluster_id(), address.group_id(), address.election_round(), ec);
+    auto const parent_element = parent_group_element(child_address, child_logic_epoch, ec);
+    if (ec) {
+        xwarn("%s %s", ec.category().name(), ec.message().c_str());
+        return {};
+    }
+
+    return parent_element->address();
+}
+
+std::vector<common::xnode_address_t> xtop_data_accessor::child_addresses(common::xgroup_address_t const & parent_group_address,
+                                                                         common::xlogic_epoch_t const & parent_logic_epoch,
+                                                                         std::error_code & ec) const noexcept {
+    assert(!ec);
+    auto const parent_element = group_element(parent_group_address, parent_logic_epoch, ec);
+    if (ec) {
+        xwarn("%s %s", ec.category().name(), ec.message().c_str());
+        return {};
+    }
+
+    auto const & child_group_elments = parent_element->associated_child_groups(ec);
+    if (ec) {
+        xwarn("xdata_accessor_t::child_addresses failed; %s %s", ec.category().name(), ec.message().c_str());
+        return {};
+    }
+
+    std::vector<common::xnode_address_t> ret;
+    std::transform(std::begin(child_group_elments),
+                   std::end(child_group_elments),
+                   std::back_inserter(ret),
+                   [](std::shared_ptr<election::cache::xgroup_element_t> const & child_group) {
+                       return child_group->address();
+                   });
+    return ret;
+}
+
+std::shared_ptr<xnode_element_t> xtop_data_accessor::node_element(common::xgroup_address_t const & address,
+                                                     common::xlogic_epoch_t const & logic_epoch,
+                                                     common::xslot_id_t const & slot_id,
+                                                     std::error_code & ec) const {
+    assert(!ec);
+    auto const group_element = this->group_element(address.network_id(), address.zone_id(), address.cluster_id(), address.group_id(), logic_epoch, ec);
     if (ec) {
         xwarn("%s %s", ec.category().name(), ec.message().c_str());
         return {};
     }
     assert(group_element != nullptr);
 
-    return group_element->node_element(address.slot_id(), ec);
+    return group_element->node_element(slot_id, ec);
 }
 
-common::xnode_id_t xtop_data_accessor::node_id_from(common::xip2_t const & xip2, std::error_code & ec) const {
+common::xaccount_address_t xtop_data_accessor::account_address_from(common::xip2_t const & xip2, std::error_code & ec) const {
     assert(!ec);
     auto group_element = this->group_element_by_height(xip2.network_id(), xip2.zone_id(), xip2.cluster_id(), xip2.group_id(), xip2.height(), ec);
     if (ec) {
@@ -289,7 +381,9 @@ std::shared_ptr<xgroup_element_t> xtop_data_accessor::parent_group_element(commo
                                                                            common::xlogic_epoch_t const & child_logic_epoch,
                                                                            std::error_code & ec) const {
     assert(!ec);
-    auto group_element = this->group_element(child_gropu_address, child_logic_epoch, ec);
+    auto const group_element = child_logic_epoch.empty() ? group_element_by_logic_time(child_gropu_address, m_logic_timer->logic_time(), ec)
+                                                         : group_element_by_height(child_gropu_address, child_logic_epoch.associated_blk_height(), ec);
+
     if (ec) {
         xwarn("%s %s", ec.category().name(), ec.message().c_str());
         return {};
@@ -305,7 +399,7 @@ std::shared_ptr<xgroup_element_t> xtop_data_accessor::parent_group_element(commo
     return associated_parent;
 }
 
-common::xelection_round_t xtop_data_accessor::version_from(common::xip2_t const & xip2, std::error_code & ec) const {
+common::xelection_round_t xtop_data_accessor::election_epoch_from(common::xip2_t const & xip2, std::error_code & ec) const {
     assert(!ec);
     auto group_element = this->group_element_by_height(xip2.network_id(), xip2.zone_id(), xip2.cluster_id(), xip2.group_id(), xip2.height(), ec);
     if (ec) {

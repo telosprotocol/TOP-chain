@@ -8,6 +8,7 @@
 #include "xmbus/xevent_role.h"
 #include "xvm/manager/xcontract_manager.h"
 #include "xvnetwork/xvnetwork_driver.h"
+#include "xvnode/xerror/xerror.h"
 
 NS_BEG2(top, vnode)
 
@@ -29,17 +30,22 @@ xtop_vnode::xtop_vnode(observer_ptr<elect::ElectMain> const & elect_main,
                        observer_ptr<xtxpool_service_v2::xtxpool_service_mgr_face> const & txpool_service_mgr,
                        observer_ptr<xtxpool_v2::xtxpool_face_t> const & txpool,
                        observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor)
-  : m_elect_main{elect_main}
+  : xbasic_vnode_t{common::xnode_address_t{sharding_address,
+                                           common::xaccount_election_address_t{vhost->host_node_id(), slot_id},
+                                           version,
+                                           group_size,
+                                           associated_blk_height},
+                   vhost,
+                   election_cache_data_accessor}
+  , m_elect_main{elect_main}
   , m_router{router}
   , m_store{store}
   , m_block_store{block_store}
   , m_bus{bus}
   , m_logic_timer{logic_timer}
-  , m_vhost{vhost}
   , m_sync_obj{sync_obj}
   , m_grpc_mgr{grpc_mgr}
   , m_txpool{txpool}
-  , m_election_cache_data_accessor{election_cache_data_accessor}
   , m_dev_params{make_observer(std::addressof(data::xdev_params::get_instance()))}
   , m_user_params{make_observer(std::addressof(data::xuser_params::get_instance()))}
   , m_the_binding_driver{std::make_shared<vnetwork::xvnetwork_driver_t>(
@@ -79,7 +85,7 @@ xtop_vnode::xtop_vnode(observer_ptr<elect::ElectMain> const & elect_main,
                group_info->node_element(vhost->host_node_id())->address().sharding_address(),
                group_info->node_element(vhost->host_node_id())->slot_id(),
                group_info->election_round(),
-               group_info->sharding_size(),
+               group_info->group_size(),
                group_info->associated_blk_height(),
                vhost,
                router,
@@ -160,21 +166,6 @@ void xtop_vnode::stop() {
     xkinfo("[virtual node] vnode (%p) stop running at address %s", this, m_the_binding_driver->address().to_string().c_str());
 }
 
-common::xnode_type_t xtop_vnode::type() const {
-    assert(m_the_binding_driver != nullptr);
-    return m_the_binding_driver->type();
-}
-
-common::xelection_round_t xtop_vnode::election_round() const {
-    assert(m_the_binding_driver != nullptr);
-    return m_the_binding_driver->address().election_round();
-}
-
-common::xnode_address_t xtop_vnode::address() const {
-    assert(m_the_binding_driver != nullptr);
-    return m_the_binding_driver->address();
-}
-
 void xtop_vnode::new_driver_added() {
     // need call by order, if depends on other components
     // for example : store depends on message bus, then
@@ -229,5 +220,13 @@ void xtop_vnode::sync_remove_vnet() {
 
     //}
 }
+
+//std::vector<common::xip2_t> get_group_nodes_xip2_from(std::shared_ptr<xvnode_face_t> const & vnode, common::xip_t const & group_xip, std::error_code & ec) const {
+//    assert(!ec);
+//
+//    if (address().xip2().xip().group_xip() == group_xip) {
+//        return neighbors_xip2(ec);
+//    }
+//}
 
 NS_END2

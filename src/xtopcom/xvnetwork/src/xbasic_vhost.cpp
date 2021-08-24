@@ -87,15 +87,6 @@ std::map<xvnode_address_t, xcrypto_key_t<pub>> xtop_basic_vhost::crypto_keys(std
     return result;
 }
 
-// std::unordered_map<common::xcluster_address_t, xgroup_update_result_t> xtop_basic_vhost::build_vnetwork(xvnetwork_construction_data_t const & vnetwork_construction_data) {
-//     return {};
-// }
-
-// std::unordered_map<common::xcluster_address_t, xgroup_update_result_t> xtop_basic_vhost::build_vnetwork(data::election::xelection_result_store_t const & election_result_store,
-//                                                                                                         common::xzone_id_t const & zid) {
-//     return {};
-// }
-
 common::xlogic_time_t xtop_basic_vhost::last_logic_time() const noexcept {
     return m_chain_timer->logic_time();
 }

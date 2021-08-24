@@ -9,7 +9,7 @@ static xvip2_t broadcast_ip{(uint64_t)-1, (uint64_t)-1};
 xvip2_t xcons_utl::to_xip2(const common::xnode_address_t & address, bool bwith_version) {
     xvip2_t xip = address.xip2();
     if (!bwith_version) {
-        xip = address.xip2().sharding();
+        xip = address.xip2().group_xip2();
     }
     return xip;
 }
