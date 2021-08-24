@@ -122,7 +122,7 @@ inline uint64_t hex_to_uint64(std::string& str) {
 inline uint256_t hex_to_uint256(const std::string& str) {
     std::vector<uint8_t> ret_vec = std::move(hex_to_uint(str));
     if (ret_vec.size() != 32) {
-        xerror("%s: length is not correct", str.c_str());
+        return {};
     }
     return uint256_t(ret_vec.data());
 }
