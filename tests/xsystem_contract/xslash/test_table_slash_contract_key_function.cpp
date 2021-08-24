@@ -183,7 +183,6 @@ xunqualified_node_info_t test_table_slash_contract::process_statistic_data(top::
     return res_node_info;
 }
 
-
 TEST_F(test_table_slash_contract, collect_slash_statistic_info_bench) {
     uint64_t elect_blk_height = 1;
     auto group_1_xip2 = create_group_xip2(elect_blk_height, 1, auditor_account_addrs.size());
@@ -214,9 +213,8 @@ TEST_F(test_table_slash_contract, collect_slash_statistic_info_bench) {
     for (auto i = 0; i < count; ++i) {
         auto time_start = std::chrono::system_clock::now();
         // success height
-        auto res = collect_slash_statistic_info(data, &node_serv, summarize_info_str, summarize_tableblock_count_str,
+        collect_slash_statistic_info(data, &node_serv, summarize_info_str, summarize_tableblock_count_str,
                                                 summarize_info, summarize_tableblock_count);
-        EXPECT_TRUE(res);
         auto durarion = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now() - time_start);
         total_time += durarion.count();
     }
