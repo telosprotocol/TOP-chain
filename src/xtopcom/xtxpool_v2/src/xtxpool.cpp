@@ -370,7 +370,7 @@ void xtxpool_t::update_peer_confirm_id(const std::string & self_addr, base::xtab
     if (table == nullptr) {
         return;
     }
-    xdbg("xtxpool_t::update_peer_receipt_id_pair table:%d,peer:%d,confirm id:%s", table->table_sid(), peer_sid, confirm_id);
+    xdbg("xtxpool_t::update_peer_receipt_id_pair table:%d,peer:%d,confirm id:%llu", table->table_sid(), peer_sid, confirm_id);
     table->update_peer_confirm_id(peer_sid, confirm_id);
 }
 
